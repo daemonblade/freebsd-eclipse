@@ -10,11 +10,20 @@ then
 fi
 . ./config.sh
 
+PATCHDIRS="
+	eclipse-platform-parent
+	eclipse.platform.releng.tychoeclipsebuilder
+	rt.equinox.framework
+"
 mkdir -p patches
 
 AGGR_MODULE=$(basename $ECLIPSE_AGGR)
-(
-	cd ${AGGR_MODULE}
-	diff -ruN ../${AGGR_MODULE}.base .
 
-) > patches/patch-all
+for DIR in ${PATCHDIRS}
+do
+	echo "INFO: Inspecting ${DIR}"
+	(
+		cd ${AGGR_MODULE}
+		diff -ruN ../${AGGR_MODULE}.base/${DIR} ${DIR}
+	) > patches/patch-${DIR}
+done

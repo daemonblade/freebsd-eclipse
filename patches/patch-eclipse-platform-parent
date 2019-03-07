@@ -1,0 +1,20 @@
+diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse-platform-parent/pom.xml eclipse-platform-parent/pom.xml
+--- ../eclipse.platform.releng.aggregator.base/eclipse-platform-parent/pom.xml	2019-03-01 18:49:30.000000000 +1300
++++ eclipse-platform-parent/pom.xml	2019-03-08 09:37:41.678082000 +1300
+@@ -262,6 +262,16 @@
+           </target>
+           <environments>
+             <environment>
++              <os>freebsd</os>
++              <ws>gtk</ws>
++              <arch>amd64</arch>
++            </environment>
++            <environment>
++              <os>freebsd</os>
++              <ws>i386</ws>
++              <arch>amd64</arch>
++            </environment>
++            <environment>
+               <os>linux</os>
+               <ws>gtk</ws>
+               <arch>x86_64</arch>
