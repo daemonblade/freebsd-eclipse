@@ -1,0 +1,31 @@
+#!/bin/sh
+set -x
+#
+# Attempt eclipse build
+#
+ARCH=$(uname -p)
+REPO="maven-repo"
+export MAVEN_OPT="-Xmx2048m"
+
+if [ ! -x bin/$(basename $0) ]
+then
+	echo "ERROR: Run this from top level"
+	exit 1
+fi
+. ./config.sh
+
+AGGR_MODULE=$(basename $ECLIPSE_AGGR)
+if [ ! -d ${AGGR_MODULE} ]
+then
+	echo "ERROR: bin/patch-prepare and bin/patch-apply needs to be run first"
+	exit 1
+fi
+
+mkdir -p ${REPO}
+REPO_PATH=$(realpath ${REPO})
+
+cd ${AGGR_MODULE}
+mvn clean verify \
+	-DskipTests=true \
+	-Dmaven.repo.local=${REPO_PATH} \
+	-Dnative=gtk.freebsd.${ARCH}
