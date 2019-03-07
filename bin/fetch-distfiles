@@ -4,32 +4,6 @@
 # Copy distfiles from git.eclipse.org
 #
 HTTP_BASE="https://git.eclipse.org/c"
-MODULES="
-	jdt/eclipse.jdt
-	jdt/eclipse.jdt.core
-	jdt/eclipse.jdt.core.binaries
-	jdt/eclipse.jdt.debug
-	jdt/eclipse.jdt.ui
-	pde/eclipse.pde.build
-	pde/eclipse.pde.ui
-	platform/eclipse.platform
-	platform/eclipse.platform.common
-	platform/eclipse.platform.debug
-	platform/eclipse.platform.releng
-	platform/eclipse.platform.resources
-	platform/eclipse.platform.runtime
-	platform/eclipse.platform.swt
-	platform/eclipse.platform.swt.binaries
-	platform/eclipse.platform.team
-	platform/eclipse.platform.text
-	platform/eclipse.platform.ua
-	platform/eclipse.platform.ui
-	equinox/rt.equinox.binaries
-	equinox/rt.equinox.bundles
-	equinox/rt.equinox.framework
-	equinox/rt.equinox.p2
-	equinox/eclipse.platform.ui.tools
-"
 
 if [ ! -x bin/$(basename $0) ]
 then
@@ -39,9 +13,16 @@ fi
 . ./config.sh
 
 mkdir -p distfiles
-for M in ${MODULES}
+for M in ${ECLIPSE_AGGR} ${ECLIPSE_MODULES}
 do
+	PROJECT=$(dirname $M)
 	MODULE=$(basename $M)
-	URL="${HTTP_BASE}/${M}.git/snapshot/${MODULE}-${ECLIPSE_TAG}.tar.xz"
-	fetch -o distfiles ${URL}
+	FILE="${MODULE}-${ECLIPSE_TAG}.tar.xz"
+	if [ -r distfiles/${FILE} ]
+	then
+		echo "INFO: ${PROJECT}/${FILE} present."
+	else
+		echo "INFO: Fetching ${PROJECT}/${FILE}"
+		fetch -o distfiles ${HTTP_BASE}/${M}.git/snapshot/${FILE}
+	fi
 done

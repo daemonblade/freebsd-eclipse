@@ -1,0 +1,37 @@
+#!/bin/sh
+set -x
+#
+# Unpack aggregator and projects
+#
+
+if [ ! -x bin/$(basename $0) ]
+then
+	echo "ERROR: Run this from top level"
+	exit 1
+fi
+. ./config.sh
+
+AGGR_MODULE=$(basename $ECLIPSE_AGGR)
+
+rm -rf ${AGGR_MODULE}
+
+tar xf distfiles/${AGGR_MODULE}-${ECLIPSE_TAG}.tar.xz
+mv ${AGGR_MODULE}-${ECLIPSE_TAG} ${AGGR_MODULE}
+
+for M in ${ECLIPSE_MODULES}
+do
+	MODULE=$(basename $M)
+	SNAP="${MODULE}-${ECLIPSE_TAG}"
+	SUBDIR="${AGGR_MODULE}/${MODULE}"
+	ARCHIVE="distfiles/${SNAP}.tar.xz"
+
+	if [ ! -r ${ARCHIVE} ]
+	then
+		echo "ERROR: ${ARCHIVE} not found"
+		continue
+	fi
+
+	rm -rf ${SUBDIR}
+	tar xf ${ARCHIVE}
+	mv ${SNAP} ${SUBDIR}
+done
