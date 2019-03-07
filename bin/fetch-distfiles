@@ -23,6 +23,6 @@ do
 		echo "INFO: ${PROJECT}/${FILE} present."
 	else
 		echo "INFO: Fetching ${PROJECT}/${FILE}"
-		fetch -o distfiles ${HTTP_BASE}/${M}.git/snapshot/${FILE}
+		fetch --retry -o distfiles ${HTTP_BASE}/${M}.git/snapshot/${FILE}
 	fi
 done

@@ -1,3 +1,4 @@
 distfiles
 eclipse.platform.releng.aggregator
+eclipse.platform.releng.aggregator.base
 maven-repo
