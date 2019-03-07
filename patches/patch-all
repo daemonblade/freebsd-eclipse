@@ -1,0 +1,38 @@
+diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh ./rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh
+--- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	2019-02-19 05:22:44.000000000 +1300
++++ ./rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	2019-03-08 09:05:20.669863000 +1300
+@@ -126,6 +126,8 @@
+ 				;;
+ 		esac
+ 		;;
++	FreeBSD)
++		makefile="make_linux.mak";;
+ 	*)
+ 	echo "Unknown OS -- build aborted"
+ 	;;
+@@ -178,10 +180,10 @@
+ 		make -f $makefile $extraArgs
+ 	else
+ 		echo "Building $OS launcher. Defaults: -os $DEFAULT_OS -arch $DEFAULT_OS_ARCH -ws $DEFAULT_WS"
+-		make -f $makefile clean
++		gmake -f $makefile clean
+ 		case x$CC in
+-		  x*gcc*) make -f $makefile all PICFLAG=-fpic ;;
+-		  *)      make -f $makefile all ;;
++		  x*gcc*) gmake -f $makefile all PICFLAG=-fpic ;;
++		  *)      gmake -f $makefile all ;;
+ 		esac
+ 	fi
+ else
+diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak ./rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak
+--- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak	2019-02-19 05:22:44.000000000 +1300
++++ ./rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak	2019-03-08 09:05:20.670064000 +1300
+@@ -102,7 +102,7 @@
+ 	$(GTK_LIBS) \
+ 	-I. \
+ 	-I.. \
+-	-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux \
++	-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/freebsd \
+ 	`pkg-config --cflags gtk+-3.0`
+ 
+ all: $(EXEC) $(DLL)

@@ -1,0 +1,20 @@
+#!/bin/sh
+#set -x
+#
+# Generate patches
+#
+if [ ! -x bin/$(basename $0) ]
+then
+	echo "ERROR: Run this from top level"
+	exit 1
+fi
+. ./config.sh
+
+mkdir -p patches
+
+AGGR_MODULE=$(basename $ECLIPSE_AGGR)
+(
+	cd ${AGGR_MODULE}
+	diff -ruN ../${AGGR_MODULE}.base .
+
+) > patches/patch-all

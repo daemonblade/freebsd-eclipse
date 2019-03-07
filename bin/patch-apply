@@ -1,0 +1,14 @@
+#!/bin/sh
+#set -x
+#
+# Apply patches
+#
+if [ ! -x bin/$(basename $0) ]
+then
+	echo "ERROR: Run this from top level"
+	exit 1
+fi
+. ./config.sh
+
+AGGR_MODULE=$(basename $ECLIPSE_AGGR)
+cat patches/patch-* | patch --directory ${AGGR_MODULE} --fuzz 0 -V none
