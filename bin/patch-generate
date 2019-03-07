@@ -13,6 +13,7 @@ fi
 PATCHDIRS="
 	eclipse-platform-parent
 	eclipse.platform.releng.tychoeclipsebuilder
+	eclipse.platform.resources
 	rt.equinox.framework
 "
 mkdir -p patches
