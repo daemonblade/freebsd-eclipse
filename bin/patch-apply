@@ -10,5 +10,12 @@ then
 fi
 . ./config.sh
 
+
 AGGR_MODULE=$(basename $ECLIPSE_AGGR)
-cat patches/patch-* | patch --directory ${AGGR_MODULE} --fuzz 0 -V none
+if [ ! -d ${AGGR_MODULE}.base ]
+then
+	echo "ERROR: bin/patch-prepare needs to be run first"
+	exit 1
+fi
+
+cat patches/patch-* | patch --directory ${AGGR_MODULE} --fuzz 0 -V none --quiet
