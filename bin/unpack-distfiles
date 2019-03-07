@@ -1,5 +1,5 @@
 #!/bin/sh
-set -x
+#set -x
 #
 # Unpack aggregator and projects
 #
@@ -31,6 +31,7 @@ do
 		continue
 	fi
 
+	echo "INFO: ${M}"
 	rm -rf ${SUBDIR}
 	tar xf ${ARCHIVE}
 	mv ${SNAP} ${SUBDIR}
