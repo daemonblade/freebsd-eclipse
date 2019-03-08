@@ -46,12 +46,13 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak
 --- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
-@@ -106,9 +106,9 @@
+@@ -106,9 +106,10 @@
  		$(NATIVE_STATS) \
  		$(SWT_DEBUG) \
  		$(SWT_WEBKIT_DEBUG) \
 -		-DLINUX -DGTK \
 +		-DFREEBSD -DGTK \
++		-I/usr/local/include \
  		-I$(JAVA_HOME)/include \
 -		-I$(JAVA_HOME)/include/linux \
 +		-I$(JAVA_HOME)/include/freebsd \

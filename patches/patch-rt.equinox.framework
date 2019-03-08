@@ -340,11 +340,12 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/li
  	-DDEFAULT_OS="\"$(DEFAULT_OS)\"" \
  	-DDEFAULT_OS_ARCH="\"$(DEFAULT_OS_ARCH)\"" \
  	-DDEFAULT_WS="\"$(DEFAULT_WS)\"" \
-@@ -102,7 +102,7 @@
+@@ -102,7 +102,8 @@
  	$(GTK_LIBS) \
  	-I. \
  	-I.. \
 -	-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux \
++	-I/usr/local/include \
 +	-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/freebsd \
  	`pkg-config --cflags gtk+-3.0`
  
