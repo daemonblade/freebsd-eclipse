@@ -3,13 +3,6 @@
 #
 # Generate patches
 #
-if [ ! -x bin/$(basename $0) ]
-then
-	echo "ERROR: Run this from top level"
-	exit 1
-fi
-. ./config.sh
-
 PATCHDIRS="
 	eclipse-platform-parent
 	eclipse.platform.releng.tychoeclipsebuilder
@@ -17,15 +10,32 @@ PATCHDIRS="
 	eclipse.platform.team
 	rt.equinox.framework
 "
-mkdir -p patches
+if [ ! -x bin/$(basename $0) ]
+then
+	echo "ERROR: Run this from top level"
+	exit 1
+fi
+. ./config.sh
 
 AGGR_MODULE=$(basename $ECLIPSE_AGGR)
+if [ ! -d ${AGGR_MODULE}.base ]
+then
+	echo "ERROR: run bin/patch-prepare"
+	exit 1
+fi
 
+scrub_patches ()
+{
+	sed -E 's/^(--- .*	)[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{9} .[0-9]{4}/\10000-00-00 00:00:00.000000000 +0000/' |
+	sed -E 's/^(\+\+\+ .*	)[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{9} .[0-9]{4}/\10000-00-00 00:00:00.000000000 +0000/'
+}
+
+mkdir -p patches
 for DIR in ${PATCHDIRS}
 do
 	echo "INFO: Inspecting ${DIR}"
 	(
 		cd ${AGGR_MODULE}
 		diff -ruN ../${AGGR_MODULE}.base/${DIR} ${DIR}
-	) > patches/patch-${DIR}
+	) | scrub_patches > patches/patch-${DIR}
 done

@@ -1,6 +1,6 @@
 diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundles/org.eclipse.core.net/natives/unix/freebsd/makefile eclipse.platform.team/bundles/org.eclipse.core.net/natives/unix/freebsd/makefile
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundles/org.eclipse.core.net/natives/unix/freebsd/makefile	2019-02-19 07:50:02.000000000 +1300
-+++ eclipse.platform.team/bundles/org.eclipse.core.net/natives/unix/freebsd/makefile	2019-03-08 11:54:17.794548000 +1300
+--- ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundles/org.eclipse.core.net/natives/unix/freebsd/makefile	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.team/bundles/org.eclipse.core.net/natives/unix/freebsd/makefile	0000-00-00 00:00:00.000000000 +0000
 @@ -22,7 +22,7 @@
  LIB_NAME = gnomeproxy.so
  LIB_NAME_FULL = libgnomeproxy-1.0.0.so
@@ -11,8 +11,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundl
  INCLUDE = `pkg-config --cflags gio-2.0`
  COMPILER_FLAGS = -O0 -fPIC -g3 -Wall -c -fmessage-length=0 ${TARGET_ENVIRONMENT}
 diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/BUILD_INFO.txt eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/BUILD_INFO.txt
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/BUILD_INFO.txt	2019-02-19 07:50:02.000000000 +1300
-+++ eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/BUILD_INFO.txt	2019-03-08 11:56:47.372174000 +1300
+--- ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/BUILD_INFO.txt	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/BUILD_INFO.txt	0000-00-00 00:00:00.000000000 +0000
 @@ -1,10 +1,10 @@
  Native Build Info:
  ------------------
@@ -31,8 +31,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundl
 +Compiler version: FreeBSD clang version 6.0.1
 +Java version:     Java(TM) 8 Runtime Environment, Standard Edition (1.8.0.171)
 diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/META-INF/MANIFEST.MF eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/META-INF/MANIFEST.MF
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/META-INF/MANIFEST.MF	2019-02-19 07:50:02.000000000 +1300
-+++ eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/META-INF/MANIFEST.MF	2019-03-08 11:57:33.284347000 +1300
+--- ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 @@ -3,9 +3,9 @@
  Bundle-Name: %fragmentName
  Bundle-Vendor: %providerName
@@ -47,8 +47,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundl
 -Automatic-Module-Name: org.eclipse.core.net.linux.x86_64
 +Automatic-Module-Name: org.eclipse.core.net.freebsd.amd64
 diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/pom.xml eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/pom.xml	2019-02-19 07:50:02.000000000 +1300
-+++ eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/pom.xml	2019-03-08 11:58:29.397222000 +1300
+--- ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -18,7 +18,7 @@
      <relativePath>../../</relativePath>
    </parent>
@@ -92,8 +92,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/bundl
                        </fileset>
                      </copy>
 diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/pom.xml eclipse.platform.team/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/pom.xml	2019-02-19 07:50:02.000000000 +1300
-+++ eclipse.platform.team/pom.xml	2019-03-08 11:59:27.309883000 +1300
+--- ../eclipse.platform.releng.aggregator.base/eclipse.platform.team/pom.xml	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.team/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -74,7 +74,7 @@
      <module>features/org.eclipse.cvs-feature</module>
  

@@ -1,6 +1,6 @@
 diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh
---- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	2019-02-19 05:22:44.000000000 +1300
-+++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	2019-03-08 11:51:53.550853000 +1300
+--- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	0000-00-00 00:00:00.000000000 +0000
++++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	0000-00-00 00:00:00.000000000 +0000
 @@ -126,6 +126,8 @@
  				;;
  		esac
@@ -25,8 +25,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/featur
  	fi
  else
 diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak
---- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak	2019-02-19 05:22:44.000000000 +1300
-+++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak	2019-03-08 11:51:53.551031000 +1300
+--- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
++++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
 @@ -102,7 +102,7 @@
  	$(GTK_LIBS) \
  	-I. \

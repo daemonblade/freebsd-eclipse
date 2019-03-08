@@ -1,6 +1,6 @@
 diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile	2019-02-19 09:54:14.000000000 +1300
-+++ eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile	2019-03-08 11:51:53.550548000 +1300
+--- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile	0000-00-00 00:00:00.000000000 +0000
 @@ -20,7 +20,7 @@
  LIB_NAME_FULL = libunixfile_1_0_0.so
  
@@ -30,8 +30,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/
 -	rm -f ../../../../org.eclipse.core.filesystem.linux.x86/os/linux/x86/libunixfile_1_0_0.so
 -	mv libunixfile_1_0_0.so ../../../../org.eclipse.core.filesystem.linux.x86/os/linux/x86/
 diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/pom.xml eclipse.platform.resources/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/pom.xml	2019-02-19 09:54:14.000000000 +1300
-+++ eclipse.platform.resources/pom.xml	2019-03-08 13:08:14.216574000 +1300
+--- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/pom.xml	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.resources/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -52,8 +52,8 @@
  
    <modules>

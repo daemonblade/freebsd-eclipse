@@ -1,6 +1,6 @@
 diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse-platform-parent/pom.xml eclipse-platform-parent/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse-platform-parent/pom.xml	2019-03-01 18:49:30.000000000 +1300
-+++ eclipse-platform-parent/pom.xml	2019-03-08 11:51:53.548748000 +1300
+--- ../eclipse.platform.releng.aggregator.base/eclipse-platform-parent/pom.xml	0000-00-00 00:00:00.000000000 +0000
++++ eclipse-platform-parent/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -262,6 +262,16 @@
            </target>
            <environments>
