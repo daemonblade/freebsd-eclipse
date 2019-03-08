@@ -1,5 +1,5 @@
-diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/META-INF/MANIFEST.MF rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/META-INF/MANIFEST.MF
---- ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
+diff -ruN rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/META-INF/MANIFEST.MF rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/META-INF/MANIFEST.MF
+--- rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 @@ -1,13 +1,13 @@
  Manifest-Version: 1.0
@@ -19,8 +19,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/bundles/
 +Export-Package: org.eclipse.equinox.internal.security.freebsd;x-internal:=true
 +Automatic-Module-Name: org.eclipse.equinox.security.freebsd.amd64
  Eclipse-BundleShape: dir
-diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/keystorelinuxnative/makefile rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/keystorelinuxnative/makefile
---- ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/keystorelinuxnative/makefile	0000-00-00 00:00:00.000000000 +0000
+diff -ruN rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/keystorelinuxnative/makefile rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/keystorelinuxnative/makefile
+--- rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/keystorelinuxnative/makefile	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/keystorelinuxnative/makefile	0000-00-00 00:00:00.000000000 +0000
 @@ -1,7 +1,7 @@
  LIBSECRET_CFLAGS = `pkg-config --cflags libsecret-1`
@@ -40,8 +40,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/bundles/
  
  ../target: 
  	mkdir -p ../target
-diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/pom.xml rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/pom.xml
---- ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/pom.xml rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/pom.xml
+--- rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -18,7 +18,7 @@
      <relativePath>../../</relativePath>
@@ -82,8 +82,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/bundles/
                    </target>
                  </configuration>
                  <goals>
-diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/src/org/eclipse/equinox/internal/security/linux/nls/messages.properties rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/src/org/eclipse/equinox/internal/security/linux/nls/messages.properties
---- ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/src/org/eclipse/equinox/internal/security/linux/nls/messages.properties	0000-00-00 00:00:00.000000000 +0000
+diff -ruN rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/src/org/eclipse/equinox/internal/security/linux/nls/messages.properties rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/src/org/eclipse/equinox/internal/security/linux/nls/messages.properties
+--- rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/src/org/eclipse/equinox/internal/security/linux/nls/messages.properties	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/src/org/eclipse/equinox/internal/security/linux/nls/messages.properties	0000-00-00 00:00:00.000000000 +0000
 @@ -12,7 +12,7 @@
  #     Julien HENRY - Linux implementation
@@ -95,8 +95,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/bundles/
  saveMasterPasswordError=Secure storage was unable to save the master password.
 -newMasterPasswordGenerated=New secure storage master password was generated (Linux libsecret integration module). 
 +newMasterPasswordGenerated=New secure storage master password was generated (FreeBSD libsecret integration module). 
-diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/pom.xml rt.equinox.bundles/pom.xml
---- ../eclipse.platform.releng.aggregator.base/rt.equinox.bundles/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN rt.equinox.bundles/pom.xml rt.equinox.bundles/pom.xml
+--- rt.equinox.bundles/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.bundles/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -90,7 +90,7 @@
      <module>bundles/org.eclipse.equinox.security</module>

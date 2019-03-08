@@ -1,5 +1,5 @@
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java
+--- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java	0000-00-00 00:00:00.000000000 +0000
 @@ -74,6 +74,7 @@
  
@@ -9,8 +9,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundle
  	if (osName.equals ("Linux")) return "linux"; //$NON-NLS-1$ $NON-NLS-2$
  	if (osName.equals ("Mac OS X")) return "macosx"; //$NON-NLS-1$ $NON-NLS-2$
  	if (osName.startsWith ("Win")) return "win32"; //$NON-NLS-1$ $NON-NLS-2$
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/build.sh eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/build.sh
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/build.sh	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/build.sh eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/build.sh
+--- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/build.sh	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/build.sh	0000-00-00 00:00:00.000000000 +0000
 @@ -72,7 +72,7 @@
  
@@ -43,8 +43,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundle
 -fi
 \ No newline at end of file
 +fi
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak
+--- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
 @@ -106,9 +106,9 @@
  		$(NATIVE_STATS) \
@@ -58,8 +58,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundle
  		${SWT_PTR_CFLAGS}
  LFLAGS = -shared -fPIC ${SWT_LFLAGS}
  
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf
+--- eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf	0000-00-00 00:00:00.000000000 +0000
 @@ -16,11 +16,11 @@
  requires.3.filter = (&(osgi.os=macosx)(osgi.ws=cocoa)(osgi.arch=x86_64)(!(org.eclipse.swt.buildtime=true)))
@@ -77,8 +77,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundle
  requires.5.range = [$version$,$version$]
 -requires.5.filter = (&(osgi.os=linux)(osgi.ws=gtk)(osgi.arch=ppc64le)(!(org.eclipse.swt.buildtime=true)))
 +requires.5.filter = (&(osgi.os=freebsd)(osgi.ws=gtk)(osgi.arch=powerpc64)(!(org.eclipse.swt.buildtime=true)))
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundles/org.eclipse.swt/buildSWT.xml eclipse.platform.swt/bundles/org.eclipse.swt/buildSWT.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundles/org.eclipse.swt/buildSWT.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt/bundles/org.eclipse.swt/buildSWT.xml eclipse.platform.swt/bundles/org.eclipse.swt/buildSWT.xml
+--- eclipse.platform.swt/bundles/org.eclipse.swt/buildSWT.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/buildSWT.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -63,11 +63,11 @@
  		</antcall>
@@ -153,8 +153,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundle
  		</condition>
  		<fail if="m_fail" message="Failed"/>
  	</target>
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundles/org.eclipse.swt.tools/Oomph/platformSwt.setup eclipse.platform.swt/bundles/org.eclipse.swt.tools/Oomph/platformSwt.setup
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundles/org.eclipse.swt.tools/Oomph/platformSwt.setup	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt/bundles/org.eclipse.swt.tools/Oomph/platformSwt.setup eclipse.platform.swt/bundles/org.eclipse.swt.tools/Oomph/platformSwt.setup
+--- eclipse.platform.swt/bundles/org.eclipse.swt.tools/Oomph/platformSwt.setup	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt.tools/Oomph/platformSwt.setup	0000-00-00 00:00:00.000000000 +0000
 @@ -103,7 +103,7 @@
                xsi:type="predicates:NotPredicate">
@@ -165,8 +165,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/bundle
            </operand>
            <operand
                xsi:type="predicates:NamePredicate"
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/local-build/org.eclipse.swt.fragments.localbuild/META-INF/p2.inf eclipse.platform.swt/local-build/org.eclipse.swt.fragments.localbuild/META-INF/p2.inf
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt/local-build/org.eclipse.swt.fragments.localbuild/META-INF/p2.inf	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt/local-build/org.eclipse.swt.fragments.localbuild/META-INF/p2.inf eclipse.platform.swt/local-build/org.eclipse.swt.fragments.localbuild/META-INF/p2.inf
+--- eclipse.platform.swt/local-build/org.eclipse.swt.fragments.localbuild/META-INF/p2.inf	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/local-build/org.eclipse.swt.fragments.localbuild/META-INF/p2.inf	0000-00-00 00:00:00.000000000 +0000
 @@ -10,11 +10,11 @@
  requires.2.filter = (&(osgi.os=macosx)(osgi.ws=cocoa)(osgi.arch=x86_64))

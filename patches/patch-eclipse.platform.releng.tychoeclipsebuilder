@@ -1,5 +1,5 @@
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml
+--- eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -14,6 +14,7 @@
    <target name="equinoxlaunchers">
@@ -9,8 +9,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tyc
      <buildRepos os="linux" ws="gtk" arch="x86_64" archiveName="${archiveRoot}-linux.gtk.x86_64.${buildId}.tar.gz" />
      <buildRepos os="linux" ws="gtk" arch="ppc64le" archiveName="${archiveRoot}-linux.gtk.ppc64le.${buildId}.tar.gz" />
      <buildRepos os="macosx" ws="cocoa" arch="x86_64" archiveName="${archiveRoot}-macosx.cocoa.x86_64.${buildId}.tar.gz" />
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/pom.xml eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/pom.xml eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/pom.xml
+--- eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -43,6 +43,11 @@
            <resolver>p2</resolver>
@@ -32,8 +32,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tyc
                  <linux>tar.gz</linux>
                  <macosx>tar.gz</macosx>
                </formats>
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tychoeclipsebuilder/platform/pom.xml eclipse.platform.releng.tychoeclipsebuilder/platform/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tychoeclipsebuilder/platform/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.releng.tychoeclipsebuilder/platform/pom.xml eclipse.platform.releng.tychoeclipsebuilder/platform/pom.xml
+--- eclipse.platform.releng.tychoeclipsebuilder/platform/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/platform/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -79,6 +79,7 @@
              <configuration>
@@ -43,8 +43,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tyc
                  <linux>tar.gz</linux>
                  <macosx>tar.gz</macosx>
                </formats>
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tychoeclipsebuilder/platform.sdk/platform.sdk.product eclipse.platform.releng.tychoeclipsebuilder/platform.sdk/platform.sdk.product
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tychoeclipsebuilder/platform.sdk/platform.sdk.product	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.releng.tychoeclipsebuilder/platform.sdk/platform.sdk.product eclipse.platform.releng.tychoeclipsebuilder/platform.sdk/platform.sdk.product
+--- eclipse.platform.releng.tychoeclipsebuilder/platform.sdk/platform.sdk.product	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/platform.sdk/platform.sdk.product	0000-00-00 00:00:00.000000000 +0000
 @@ -18,6 +18,7 @@
     <splash
@@ -54,8 +54,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tyc
        <linux icon="icons/icon.xpm"/>
        <macosx icon="icons/Eclipse.icns"/>
        <win useIco="true">
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties
+--- eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties	0000-00-00 00:00:00.000000000 +0000
 @@ -35,6 +35,9 @@
  root.linux.gtk.x86_64=rootfiles/linux.gtk.x86_64,../../rt.equinox.binaries/org.eclipse.equinox.executable/bin/gtk/linux/x86_64
@@ -67,8 +67,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tyc
  bin.includes = feature.properties
  
  
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tychoeclipsebuilder/sdk/pom.xml eclipse.platform.releng.tychoeclipsebuilder/sdk/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng.tychoeclipsebuilder/sdk/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.releng.tychoeclipsebuilder/sdk/pom.xml eclipse.platform.releng.tychoeclipsebuilder/sdk/pom.xml
+--- eclipse.platform.releng.tychoeclipsebuilder/sdk/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/sdk/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -77,6 +77,7 @@
              <configuration>

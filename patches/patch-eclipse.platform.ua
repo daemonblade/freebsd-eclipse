@@ -1,5 +1,5 @@
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.ua/org.eclipse.help.base/plugin.xml eclipse.platform.ua/org.eclipse.help.base/plugin.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.ua/org.eclipse.help.base/plugin.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.ua/org.eclipse.help.base/plugin.xml eclipse.platform.ua/org.eclipse.help.base/plugin.xml
+--- eclipse.platform.ua/org.eclipse.help.base/plugin.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.ua/org.eclipse.help.base/plugin.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -131,7 +131,7 @@
              </parameter>
@@ -28,8 +28,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.ua/org.ecl
              </parameter>
           </factoryclass>
        </browser>
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/base/HelpBasePreferenceInitializer.java eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/base/HelpBasePreferenceInitializer.java
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/base/HelpBasePreferenceInitializer.java	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/base/HelpBasePreferenceInitializer.java eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/base/HelpBasePreferenceInitializer.java
+--- eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/base/HelpBasePreferenceInitializer.java	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/base/HelpBasePreferenceInitializer.java	0000-00-00 00:00:00.000000000 +0000
 @@ -35,7 +35,7 @@
  			prefs
@@ -40,8 +40,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.ua/org.ecl
  			prefs.put("custom_browser_path", //$NON-NLS-1$
  					"konqueror %1"); //$NON-NLS-1$
  		} else {
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/browser/BrowserManager.java eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/browser/BrowserManager.java
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/browser/BrowserManager.java	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/browser/BrowserManager.java eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/browser/BrowserManager.java
+--- eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/browser/BrowserManager.java	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.ua/org.eclipse.help.base/src/org/eclipse/help/internal/browser/BrowserManager.java	0000-00-00 00:00:00.000000000 +0000
 @@ -103,6 +103,7 @@
  				setDefaultBrowserID(BROWSER_ID_SYSTEM);
@@ -51,8 +51,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.ua/org.ecl
  					|| (Constants.OS_LINUX.equalsIgnoreCase(os))
  					|| (Constants.OS_SOLARIS.equalsIgnoreCase(os))) {
  				setDefaultBrowserID(BROWSER_ID_MOZILLA);
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.ua/org.eclipse.help.ui/src/org/eclipse/help/ui/internal/browser/embedded/EmbeddedBrowserFactory.java eclipse.platform.ua/org.eclipse.help.ui/src/org/eclipse/help/ui/internal/browser/embedded/EmbeddedBrowserFactory.java
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.ua/org.eclipse.help.ui/src/org/eclipse/help/ui/internal/browser/embedded/EmbeddedBrowserFactory.java	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.ua/org.eclipse.help.ui/src/org/eclipse/help/ui/internal/browser/embedded/EmbeddedBrowserFactory.java eclipse.platform.ua/org.eclipse.help.ui/src/org/eclipse/help/ui/internal/browser/embedded/EmbeddedBrowserFactory.java
+--- eclipse.platform.ua/org.eclipse.help.ui/src/org/eclipse/help/ui/internal/browser/embedded/EmbeddedBrowserFactory.java	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.ua/org.eclipse.help.ui/src/org/eclipse/help/ui/internal/browser/embedded/EmbeddedBrowserFactory.java	0000-00-00 00:00:00.000000000 +0000
 @@ -67,6 +67,7 @@
  	 */

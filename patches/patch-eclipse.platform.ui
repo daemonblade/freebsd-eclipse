@@ -1,5 +1,5 @@
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.ui/bundles/org.eclipse.ui.browser/plugin.xml eclipse.platform.ui/bundles/org.eclipse.ui.browser/plugin.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.ui/bundles/org.eclipse.ui.browser/plugin.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.ui/bundles/org.eclipse.ui.browser/plugin.xml eclipse.platform.ui/bundles/org.eclipse.ui.browser/plugin.xml
+--- eclipse.platform.ui/bundles/org.eclipse.ui.browser/plugin.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.ui/bundles/org.eclipse.ui.browser/plugin.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -94,7 +94,7 @@
        <browser
@@ -43,8 +43,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.ui/bundles
           executable="epiphany">
           <location>
           	usr/bin/epiphany
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.ui/bundles/org.eclipse.ui.themes/plugin.xml eclipse.platform.ui/bundles/org.eclipse.ui.themes/plugin.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.ui/bundles/org.eclipse.ui.themes/plugin.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.ui/bundles/org.eclipse.ui.themes/plugin.xml eclipse.platform.ui/bundles/org.eclipse.ui.themes/plugin.xml
+--- eclipse.platform.ui/bundles/org.eclipse.ui.themes/plugin.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.ui/bundles/org.eclipse.ui.themes/plugin.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -12,6 +12,12 @@
          basestylesheeturi="css/e4-dark.css"

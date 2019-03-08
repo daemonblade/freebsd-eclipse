@@ -1,5 +1,5 @@
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/META-INF/MANIFEST.MF eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/META-INF/MANIFEST.MF
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/META-INF/MANIFEST.MF eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/META-INF/MANIFEST.MF
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 @@ -2,7 +2,7 @@
  Fragment-Host: org.eclipse.swt; bundle-version="[3.0.0,4.0.0)"
@@ -22,8 +22,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
  SWT-Arch: aarch64
 -Automatic-Module-Name: org.eclipse.swt.gtk.linux.aarch64
 +Automatic-Module-Name: org.eclipse.swt.gtk.freebsd.aarch64
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/build.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/build.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/build.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/build.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/build.xml
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/build.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/build.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -1,8 +1,8 @@
  <?xml version="1.0" encoding="UTF-8"?>
@@ -36,8 +36,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
  	<property name="swt.arch" value="aarch64" />
  	<property name="targets" value="install"/>
  	
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/pom.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/pom.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/pom.xml
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.aarch64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -20,12 +20,12 @@
      <relativePath>../binaries-parent/</relativePath>
@@ -63,8 +63,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
          </property>
        </activation>
        <build>
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/META-INF/MANIFEST.MF eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/META-INF/MANIFEST.MF
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/META-INF/MANIFEST.MF eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/META-INF/MANIFEST.MF
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 @@ -2,7 +2,7 @@
  Fragment-Host: org.eclipse.swt; bundle-version="[3.0.0,4.0.0)"
@@ -88,8 +88,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
 +SWT-OS: freebsd
 +SWT-Arch: amd64
 +Automatic-Module-Name: org.eclipse.swt.gtk.freebsd.amd64
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/build.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/build.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/build.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/build.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/build.xml
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/build.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/build.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -1,9 +1,9 @@
  <?xml version="1.0" encoding="UTF-8"?>
@@ -104,8 +104,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
  	<property name="targets" value="install"/>
  	
  	<!-- These properties are used by eclipse when exporting as Deployable plugin and fragments -->
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/mvnBuildSwtJar.sh eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/mvnBuildSwtJar.sh
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/mvnBuildSwtJar.sh	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/mvnBuildSwtJar.sh eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/mvnBuildSwtJar.sh
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/mvnBuildSwtJar.sh	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/mvnBuildSwtJar.sh	0000-00-00 00:00:00.000000000 +0000
 @@ -36,10 +36,10 @@
  
@@ -121,8 +121,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
  else
  	echo "Note:" 
  	echo "  Set DEV_ECLIPSE to your development eclipse folder to have the *.jar files copied into it automatically."
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/pom.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/pom.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/pom.xml
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -20,14 +20,14 @@
      <relativePath>../binaries-parent/</relativePath>
@@ -151,8 +151,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
          </property>
        </activation>
        <build>
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/META-INF/MANIFEST.MF eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/META-INF/MANIFEST.MF
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/META-INF/MANIFEST.MF eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/META-INF/MANIFEST.MF
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 @@ -2,7 +2,7 @@
  Fragment-Host: org.eclipse.swt; bundle-version="[3.0.0,4.0.0)"
@@ -176,8 +176,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
 +SWT-OS: freebsd
 +SWT-Arch: armv7
 +Automatic-Module-Name: org.eclipse.swt.gtk.freebsd.armv7
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/build.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/build.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/build.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/build.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/build.xml
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/build.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/build.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -1,9 +1,9 @@
  <?xml version="1.0" encoding="UTF-8"?>
@@ -192,8 +192,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
  	<property name="targets" value="install"/>
  	
  	<!-- These properties are used by eclipse when exporting as Deployable plugin and fragments -->
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/pom.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/pom.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/pom.xml
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.armv7/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -20,14 +20,14 @@
      <relativePath>../binaries-parent/</relativePath>
@@ -222,8 +222,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
          </property>
        </activation>
        <build>
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/META-INF/MANIFEST.MF eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/META-INF/MANIFEST.MF
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/META-INF/MANIFEST.MF eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/META-INF/MANIFEST.MF
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 @@ -2,7 +2,7 @@
  Fragment-Host: org.eclipse.swt; bundle-version="[3.0.0,4.0.0)"
@@ -245,8 +245,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
 -SWT-Arch: x86
 +SWT-OS: freebsd
 +SWT-Arch: i386
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/build.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/build.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/build.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/build.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/build.xml
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/build.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/build.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -1,9 +1,9 @@
  <?xml version="1.0" encoding="UTF-8"?>
@@ -261,8 +261,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
  	<property name="targets" value="install"/>
  	
  	<!-- These properties are used by eclipse when exporting as Deployable plugin and fragments -->
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/pom.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/pom.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/pom.xml
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.i386/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -20,14 +20,14 @@
      <relativePath>../binaries-parent/</relativePath>
@@ -291,8 +291,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
          </property>
        </activation>
        <build>
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/META-INF/MANIFEST.MF eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/META-INF/MANIFEST.MF
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/META-INF/MANIFEST.MF eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/META-INF/MANIFEST.MF
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 @@ -2,7 +2,7 @@
  Fragment-Host: org.eclipse.swt; bundle-version="[3.0.0,4.0.0)"
@@ -316,8 +316,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
 +SWT-OS: freebsd
 +SWT-Arch: powerpc64
 +Automatic-Module-Name: org.eclipse.swt.gtk.freebsd.powerpc64
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/build.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/build.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/build.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/build.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/build.xml
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/build.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/build.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -1,9 +1,9 @@
  <?xml version="1.0" encoding="UTF-8"?>
@@ -332,8 +332,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
  	<property name="targets" value="install"/>
  	
  	<!-- These properties are used by eclipse when exporting as Deployable plugin and fragments -->
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/pom.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/pom.xml eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/pom.xml
+--- eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.freebsd.powerpc64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -20,14 +20,14 @@
      <relativePath>../binaries-parent/</relativePath>
@@ -362,8 +362,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binari
          </property>
        </activation>
        <build>
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/pom.xml eclipse.platform.swt.binaries/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.swt.binaries/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.swt.binaries/pom.xml eclipse.platform.swt.binaries/pom.xml
+--- eclipse.platform.swt.binaries/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt.binaries/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -54,8 +54,8 @@
  

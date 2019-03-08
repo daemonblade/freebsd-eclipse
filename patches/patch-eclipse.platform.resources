@@ -1,5 +1,5 @@
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile
+--- eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/freebsd/Makefile	0000-00-00 00:00:00.000000000 +0000
 @@ -20,7 +20,7 @@
  LIB_NAME_FULL = libunixfile_1_0_0.so
@@ -29,8 +29,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/
 -install: core
 -	rm -f ../../../../org.eclipse.core.filesystem.linux.x86/os/linux/x86/libunixfile_1_0_0.so
 -	mv libunixfile_1_0_0.so ../../../../org.eclipse.core.filesystem.linux.x86/os/linux/x86/
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/META-INF/MANIFEST.MF eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/META-INF/MANIFEST.MF
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/META-INF/MANIFEST.MF eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/META-INF/MANIFEST.MF
+--- eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 @@ -1,9 +1,9 @@
  Manifest-Version: 1.0
@@ -44,8 +44,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/
  Bundle-Localization: fragment
 -Eclipse-PlatformFilter: (& (osgi.os=linux) (osgi.arch=x86_64))
 +Eclipse-PlatformFilter: (& (osgi.os=freebsd) (osgi.arch=amd64))
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/pom.xml eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/pom.xml eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/pom.xml
+--- eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -18,7 +18,7 @@
      <relativePath>../../</relativePath>
@@ -92,8 +92,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/
                 <include name="libunixfile_*.so"/>
             </fileset>
             </copy>
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/META-INF/MANIFEST.MF eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/META-INF/MANIFEST.MF
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/META-INF/MANIFEST.MF eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/META-INF/MANIFEST.MF
+--- eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 @@ -1,9 +1,9 @@
  Manifest-Version: 1.0
@@ -107,8 +107,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/
  Bundle-Localization: fragment
 -Eclipse-PlatformFilter: (& (osgi.os=linux) (osgi.arch=x86))
 +Eclipse-PlatformFilter: (& (osgi.os=freebsd) (osgi.arch=i386))
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/pom.xml eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/pom.xml eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/pom.xml
+--- eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.i386/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -18,7 +18,7 @@
      <relativePath>../../</relativePath>
@@ -153,8 +153,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/
                 <include name="libunixfile_*.so"/>
             </fileset>
             </copy>
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/META-INF/MANIFEST.MF eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/META-INF/MANIFEST.MF
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/META-INF/MANIFEST.MF eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/META-INF/MANIFEST.MF
+--- eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 @@ -1,9 +1,9 @@
  Manifest-Version: 1.0
@@ -168,8 +168,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/
  Bundle-Localization: fragment
 -Eclipse-PlatformFilter: (& (osgi.os=linux) (osgi.arch=ppc64le))
 +Eclipse-PlatformFilter: (& (osgi.os=freebsd) (osgi.arch=powerpc64))
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/pom.xml eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/pom.xml eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/pom.xml
+--- eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.powerpc64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -18,7 +18,7 @@
      <relativePath>../../</relativePath>
@@ -192,8 +192,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/
              </environment>
            </environments>
          </configuration>
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/pom.xml eclipse.platform.resources/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.resources/pom.xml eclipse.platform.resources/pom.xml
+--- eclipse.platform.resources/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.resources/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -52,8 +52,8 @@
  
@@ -206,8 +206,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/
      <module>bundles/org.eclipse.core.filesystem.macosx</module>
      <module>bundles/org.eclipse.core.filesystem.win32.x86_64</module>
  
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/tests/org.eclipse.core.tests.filesystem.feature/feature.xml eclipse.platform.resources/tests/org.eclipse.core.tests.filesystem.feature/feature.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.resources/tests/org.eclipse.core.tests.filesystem.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.resources/tests/org.eclipse.core.tests.filesystem.feature/feature.xml eclipse.platform.resources/tests/org.eclipse.core.tests.filesystem.feature/feature.xml
+--- eclipse.platform.resources/tests/org.eclipse.core.tests.filesystem.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.resources/tests/org.eclipse.core.tests.filesystem.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -28,9 +28,9 @@
           unpack="false"/-->

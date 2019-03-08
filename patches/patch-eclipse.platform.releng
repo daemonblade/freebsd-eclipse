@@ -1,5 +1,5 @@
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng/features/org.eclipse.platform-feature/feature.xml eclipse.platform.releng/features/org.eclipse.platform-feature/feature.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng/features/org.eclipse.platform-feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.releng/features/org.eclipse.platform-feature/feature.xml eclipse.platform.releng/features/org.eclipse.platform-feature/feature.xml
+--- eclipse.platform.releng/features/org.eclipse.platform-feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng/features/org.eclipse.platform-feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -96,9 +96,9 @@
           unpack="false"/>
@@ -53,8 +53,8 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng/fea
           download-size="0"
           install-size="0"
           version="0.0.0"
-diff -ruN ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng/features/org.eclipse.platform-feature/pom.xml eclipse.platform.releng/features/org.eclipse.platform-feature/pom.xml
---- ../eclipse.platform.releng.aggregator.base/eclipse.platform.releng/features/org.eclipse.platform-feature/pom.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN eclipse.platform.releng/features/org.eclipse.platform-feature/pom.xml eclipse.platform.releng/features/org.eclipse.platform-feature/pom.xml
+--- eclipse.platform.releng/features/org.eclipse.platform-feature/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng/features/org.eclipse.platform-feature/pom.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -55,10 +55,10 @@
                </plugins>

@@ -1,5 +1,5 @@
-diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml
---- ../eclipse.platform.releng.aggregator.base/rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
+diff -ruN rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml
+--- rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
 @@ -185,9 +185,9 @@
           unpack="false"/>
