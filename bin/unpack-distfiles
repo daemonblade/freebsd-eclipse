@@ -27,8 +27,8 @@ do
 
 	if [ ! -r ${ARCHIVE} ]
 	then
-		echo "ERROR: ${ARCHIVE} not found"
-		continue
+		echo "FATAL: ${ARCHIVE} not found"
+		exit 1
 	fi
 
 	echo "INFO: ${M}"
