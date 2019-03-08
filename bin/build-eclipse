@@ -17,7 +17,7 @@ fi
 AGGR_MODULE=$(basename $ECLIPSE_AGGR)
 if [ ! -d ${AGGR_MODULE} ]
 then
-	echo "ERROR: bin/patch-prepare and bin/patch-apply needs to be run first"
+	echo "ERROR: bin/prepare-tree and bin/patch-apply needs to be run first"
 	exit 1
 fi
 

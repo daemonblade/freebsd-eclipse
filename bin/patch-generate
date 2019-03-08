@@ -23,7 +23,7 @@ fi
 AGGR_MODULE=$(basename $ECLIPSE_AGGR)
 if [ ! -d ${AGGR_MODULE}.base ]
 then
-	echo "ERROR: run bin/patch-prepare"
+	echo "ERROR: run bin/prepare-tree"
 	exit 1
 fi
 
