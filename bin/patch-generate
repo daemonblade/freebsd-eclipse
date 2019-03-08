@@ -8,6 +8,7 @@ PATCHDIRS="
 	eclipse.platform.releng.tychoeclipsebuilder
 	eclipse.platform.resources
 	eclipse.platform.team
+	eclipse.platform.swt.binaries
 	rt.equinox.framework
 "
 if [ ! -x bin/$(basename $0) ]
