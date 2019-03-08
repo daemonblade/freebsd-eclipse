@@ -8,8 +8,9 @@ PATCHDIRS="
 	eclipse.platform.releng
 	eclipse.platform.releng.tychoeclipsebuilder
 	eclipse.platform.resources
-	eclipse.platform.team
 	eclipse.platform.swt.binaries
+	eclipse.platform.team
+	eclipse.platform.ua
 	rt.equinox.bundles
 	rt.equinox.framework
 	rt.equinox.p2
