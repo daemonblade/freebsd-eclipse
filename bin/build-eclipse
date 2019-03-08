@@ -4,7 +4,6 @@
 # Attempt eclipse build
 #
 ARCH=$(uname -p)
-REPO="maven-repo"
 export MAVEN_OPT="-Xmx2048m"
 
 if [ ! -x bin/$(basename $0) ]
@@ -21,11 +20,13 @@ then
 	exit 1
 fi
 
+REPO="maven-repo.${ECLIPSE_TAG}"
 mkdir -p ${REPO}
 REPO_PATH=$(realpath ${REPO})
-
-cd ${AGGR_MODULE}
-mvn clean verify \
-	-DskipTests=true \
-	-Dmaven.repo.local=${REPO_PATH} \
-	-Dnative=gtk.freebsd.${ARCH}
+(
+	cd ${AGGR_MODULE}
+	mvn clean verify \
+		-DskipTests=true \
+		-Dmaven.repo.local=${REPO_PATH} \
+		-Dnative=gtk.freebsd.${ARCH} 2>&1
+) | tee build.log

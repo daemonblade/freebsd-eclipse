@@ -1,4 +1,9 @@
+# distribution archive
 distfiles
+
+# top-level, and baseline comparator
 eclipse.platform.releng.aggregator
 .baseline.eclipse.platform.releng.aggregator
-maven-repo
+
+# Repository for builds
+maven-repo.*
