@@ -62,5 +62,6 @@ AGGR_MODULE=$(basename $ECLIPSE_AGGR)
 
 # Make a baseline copy
 echo "INFO: Making baseline copy"
-rm -rf ${AGGR_MODULE}.base
-cd ${AGGR_MODULE} && find . -print | cpio -pdum ../${AGGR_MODULE}.base
+BASELINE=".baseline.${AGGR_MODULE}"
+rm -rf ${BASELINE}
+cd ${AGGR_MODULE} && find . -print | cpio -pdum ../${BASELINE}

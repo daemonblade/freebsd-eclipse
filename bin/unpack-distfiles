@@ -11,9 +11,10 @@ fi
 . ./config.sh
 
 AGGR_MODULE=$(basename $ECLIPSE_AGGR)
+BASELINE=".baseline.${AGGR_MODULE}"
 
 echo "INFO: ${ECLIPSE_AGGR}"
-rm -rf ${AGGR_MODULE} ${AGGR_MODULE}.base
+rm -rf ${AGGR_MODULE} ${BASELINE}
 tar xf distfiles/${AGGR_MODULE}-${ECLIPSE_TAG}.tar.xz
 mv ${AGGR_MODULE}-${ECLIPSE_TAG} ${AGGR_MODULE}
 

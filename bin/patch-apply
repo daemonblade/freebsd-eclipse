@@ -12,7 +12,8 @@ fi
 
 
 AGGR_MODULE=$(basename $ECLIPSE_AGGR)
-if [ ! -d ${AGGR_MODULE}.base ]
+BASELINE=".baseline.${AGGR_MODULE}"
+if [ ! -d ${BASELINE} ]
 then
 	echo "ERROR: bin/prepare-tree needs to be run first"
 	exit 1
