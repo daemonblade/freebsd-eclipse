@@ -47,6 +47,6 @@ do
 	echo "INFO: Inspecting ${DIR}"
 	(
 		cd ${AGGR_MODULE}
-		diff -ruN ../${BASELINE}/${DIR} ${DIR}
+		diff -ru ../${BASELINE}/${DIR} ${DIR}
 	) | scrub_patches > patches/patch-${DIR}
 done
