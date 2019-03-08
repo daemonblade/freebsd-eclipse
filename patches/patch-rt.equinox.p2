@@ -1,0 +1,16 @@
+diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml
+--- ../eclipse.platform.releng.aggregator.base/rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
++++ rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -185,9 +185,9 @@
+          unpack="false"/>
+ 
+    <plugin
+-         id="org.eclipse.equinox.security.linux.x86_64"
+-         os="linux"
+-         arch="x86_64"
++         id="org.eclipse.equinox.security.freebsd.amd64"
++         os="freebsd"
++         arch="amd64"
+          download-size="0"
+          install-size="0"
+          version="0.0.0"

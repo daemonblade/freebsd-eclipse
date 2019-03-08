@@ -12,6 +12,7 @@ PATCHDIRS="
 	eclipse.platform.swt.binaries
 	rt.equinox.bundles
 	rt.equinox.framework
+	rt.equinox.p2
 "
 if [ ! -x bin/$(basename $0) ]
 then
