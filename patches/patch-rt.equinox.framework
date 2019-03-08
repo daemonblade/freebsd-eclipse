@@ -253,6 +253,55 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/bundle
  	 * Constant string (value "win32") indicating the platform is running on a
  	 * Window 32-bit operating system (e.g., Windows 98, NT, 2000).
  	 */
+diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/build.properties rt.equinox.framework/features/org.eclipse.equinox.executable.feature/build.properties
+--- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/build.properties	0000-00-00 00:00:00.000000000 +0000
++++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/build.properties	0000-00-00 00:00:00.000000000 +0000
+@@ -24,11 +24,11 @@
+ root.win32.win32.x86_64=bin/win32/win32/x86_64
+ root.win32.win32.x86_64.permissions.755=launcher.exe
+ 
+-root.linux.gtk.ppc64le=bin/gtk/linux/ppc64le,gtk_root
+-root.linux.gtk.ppc64le.permissions.755=launcher
++root.freebsd.gtk.powerpc64=bin/gtk/freebsd/powerpc64,gtk_root
++root.freebsd.gtk.powerpc64.permissions.755=launcher
+ 
+ root.macosx.cocoa.x86_64=bin/cocoa/macosx/x86_64
+ root.macosx.cocoa.x86_64.permissions.755=Eclipse.app/Contents/MacOS/launcher
+ 
+-root.linux.gtk.x86_64=bin/gtk/linux/x86_64,gtk_root
+-root.linux.gtk.x86_64.permissions.755=libcairo-swt.so
++root.freebsd.gtk.amd64=bin/gtk/freebsd/amd64,gtk_root
++root.freebsd.gtk.amd64.permissions.755=libcairo-swt.so
+diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/feature.xml rt.equinox.framework/features/org.eclipse.equinox.executable.feature/feature.xml
+--- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
++++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -32,20 +32,20 @@
+          fragment="true"/>
+ 
+    <plugin
+-         id="org.eclipse.equinox.launcher.gtk.linux.ppc64le"
+-         os="linux"
++         id="org.eclipse.equinox.launcher.gtk.freebsd.powerpc64"
++         os="freebsd"
+          ws="gtk"
+-         arch="ppc64le"
++         arch="powerpc64"
+          download-size="0"
+          install-size="0"
+          version="0.0.0"
+          fragment="true"/>
+ 
+    <plugin
+-         id="org.eclipse.equinox.launcher.gtk.linux.x86_64"
+-         os="linux"
++         id="org.eclipse.equinox.launcher.gtk.freebsd.amd64"
++         os="freebsd"
+          ws="gtk"
+-         arch="x86_64"
++         arch="amd64"
+          download-size="0"
+          install-size="0"
+          version="0.0.0"
 diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh
 --- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	0000-00-00 00:00:00.000000000 +0000
@@ -282,6 +331,15 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/featur
 diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak
 --- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
+@@ -94,7 +94,7 @@
+ LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic 
+ CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -s -Wall\
+ 	-fpic \
+-	-DLINUX \
++	-DFREEBSD \
+ 	-DDEFAULT_OS="\"$(DEFAULT_OS)\"" \
+ 	-DDEFAULT_OS_ARCH="\"$(DEFAULT_OS_ARCH)\"" \
+ 	-DDEFAULT_WS="\"$(DEFAULT_WS)\"" \
 @@ -102,7 +102,7 @@
  	$(GTK_LIBS) \
  	-I. \
@@ -291,6 +349,129 @@ diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/featur
  	`pkg-config --cflags gtk+-3.0`
  
  all: $(EXEC) $(DLL)
+diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/pom.xml rt.equinox.framework/features/org.eclipse.equinox.executable.feature/pom.xml
+--- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/pom.xml	0000-00-00 00:00:00.000000000 +0000
++++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/pom.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -127,8 +127,8 @@
+                     <copy todir="bin" verbose="true" includeEmptyDirs="false" failonerror="true">
+                       <fileset dir="${rt.equinox.binaries.loc}/rt.equinox.binaries/org.eclipse.equinox.executable/bin/">
+                         <include name="cocoa/macosx/x86_64/**/*"/>
+-                        <include name="gtk/linux/ppc64le/**/*"/>
+-                        <include name="gtk/linux/x86_64/**/*"/>
++                        <include name="gtk/freebsd/powerpc64/**/*"/>
++                        <include name="gtk/freebsd/amd64/**/*"/>
+                         <include name="win32/win32/x86_64/**/*"/>
+                       </fileset>
+                     </copy>
+diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/resources/build.properties rt.equinox.framework/features/org.eclipse.equinox.executable.feature/resources/build.properties
+--- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/resources/build.properties	0000-00-00 00:00:00.000000000 +0000
++++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/resources/build.properties	0000-00-00 00:00:00.000000000 +0000
+@@ -20,12 +20,12 @@
+ root.win32.win32.x86_64=file:bin/win32/win32/x86_64/launcher.exe
+ root.win32.win32.x86_64.permissions.755=launcher.exe
+ 
+-root.linux.gtk.ppc64le=bin/gtk/linux/ppc64le,gtk_root
+-root.linux.gtk.ppc64le.permissions.755=launcher
++root.freebsd.gtk.powerpc64=bin/gtk/freebsd/powerpc64,gtk_root
++root.freebsd.gtk.powerpc64.permissions.755=launcher
+ 
+ root.macosx.cocoa.x86_64=bin/cocoa/macosx/x86_64
+ root.macosx.cocoa.x86_64.permissions.755=Contents/MacOS/${launcherName}
+ 
+-root.linux.gtk.x86_64=bin/gtk/linux/x86_64,gtk_root
+-root.linux.gtk.x86_64.permissions.755=libcairo-swt.so
++root.freebsd.gtk.amd64=bin/gtk/freebsd/amd64,gtk_root
++root.freebsd.gtk.amd64.permissions.755=libcairo-swt.so
+ 
+diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/resources/build.xml rt.equinox.framework/features/org.eclipse.equinox.executable.feature/resources/build.xml
+--- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/features/org.eclipse.equinox.executable.feature/resources/build.xml	0000-00-00 00:00:00.000000000 +0000
++++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/resources/build.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -118,13 +118,13 @@
+ 		<chmod perm="755" dir="${feature.base}/macosx.cocoa.x86_64/${collectingFolder}" includes="${launcherName}" />
+ 		<chmod perm="755" dir="${feature.base}/macosx.cocoa.x86_64/${collectingFolder}" includes="Eclipse.app/Contents/MacOS/launcher" />
+ 	</target>
+-	<target name="rootFileslinux_gtk_x86">
+-		<mkdir dir="${feature.base}/linux.gtk.x86/${collectingFolder}"/>
+-		<copy todir="${feature.base}/linux.gtk.x86/${collectingFolder}" failonerror="true" overwrite="true">
+-			<fileset dir="${basedir}/bin/gtk/linux/x86" includes="**"			/>
++	<target name="rootFilesfreebsd_gtk_i386">
++		<mkdir dir="${feature.base}/freebsd.gtk.i386/${collectingFolder}"/>
++		<copy todir="${feature.base}/freebsd.gtk.i386/${collectingFolder}" failonerror="true" overwrite="true">
++			<fileset dir="${basedir}/bin/gtk/freebsd/i386" includes="**"			/>
+ 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
+ 		</copy>
+-		<chmod perm="755" dir="${feature.base}/linux.gtk.x86/${collectingFolder}" includes="launcher" />
++		<chmod perm="755" dir="${feature.base}/freebsd.gtk.i386/${collectingFolder}" includes="launcher" />
+ 	</target>
+ 	<target name="rootFileslinux_gtk_ppc">
+ 		<mkdir dir="${feature.base}/linux.gtk.ppc/${collectingFolder}"/>
+@@ -134,37 +134,37 @@
+ 		</copy>
+ 		<chmod perm="755" dir="${feature.base}/linux.gtk.ppc/${collectingFolder}" includes="launcher" />
+ 	</target>
+-	<target name="rootFileslinux_gtk_ppc64le">
+-		<mkdir dir="${feature.base}/linux.gtk.ppc64le/${collectingFolder}"/>
+-		<copy todir="${feature.base}/linux.gtk.ppc64le/${collectingFolder}" failonerror="true" overwrite="true">
+-			<fileset dir="${basedir}/bin/gtk/linux/ppc64le" includes="**"			/>
++	<target name="rootFilesfreebsd_gtk_powerpc64">
++		<mkdir dir="${feature.base}/freebsd.gtk.powerpc64/${collectingFolder}"/>
++		<copy todir="${feature.base}/freebsd.gtk.powerpc64/${collectingFolder}" failonerror="true" overwrite="true">
++			<fileset dir="${basedir}/bin/gtk/freebsd/powerpc64" includes="**"			/>
+ 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
+ 		</copy>
+-		<chmod perm="755" dir="${feature.base}/linux.gtk.ppc64le/${collectingFolder}" includes="launcher" />
++		<chmod perm="755" dir="${feature.base}/freebsd.gtk.powerpc64/${collectingFolder}" includes="launcher" />
+ 	</target>
+-        <target name="rootFileslinux_gtk_arm">
+-		<mkdir dir="${feature.base}/linux.gtk.arm/${collectingFolder}"/>
+-		<copy todir="${feature.base}/linux.gtk.arm/${collectingFolder}" failonerror="true" overwrite="true">
+-			<fileset dir="${basedir}/bin/gtk/linux/arm" includes="**"			/>
++        <target name="rootFilesfreebsd_gtk_armv7">
++		<mkdir dir="${feature.base}/freebsd.gtk.armv7/${collectingFolder}"/>
++		<copy todir="${feature.base}/freebsd.gtk.armv7/${collectingFolder}" failonerror="true" overwrite="true">
++			<fileset dir="${basedir}/bin/gtk/freebsd/armv7" includes="**"			/>
+ 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
+ 		</copy>
+-		<chmod perm="755" dir="${feature.base}/linux.gtk.arm/${collectingFolder}" includes="launcher" />
++		<chmod perm="755" dir="${feature.base}/freebsd.gtk.armv7/${collectingFolder}" includes="launcher" />
+ 	</target>
+-        <target name="rootFileslinux_gtk_aarch64">
+-		<mkdir dir="${feature.base}/linux.gtk.aarch64/${collectingFolder}"/>
+-		<copy todir="${feature.base}/linux.gtk.aarch64/${collectingFolder}" failonerror="true" overwrite="true">
+-			<fileset dir="${basedir}/bin/gtk/linux/aarch64" includes="**"			/>
++        <target name="rootFilesfreebsd_gtk_aarch64">
++		<mkdir dir="${feature.base}/freebsd.gtk.aarch64/${collectingFolder}"/>
++		<copy todir="${feature.base}/freebsd.gtk.aarch64/${collectingFolder}" failonerror="true" overwrite="true">
++			<fileset dir="${basedir}/bin/gtk/freebsd/aarch64" includes="**"			/>
+ 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
+ 		</copy>
+-		<chmod perm="755" dir="${feature.base}/linux.gtk.aarch64/${collectingFolder}" includes="launcher" />
++		<chmod perm="755" dir="${feature.base}/freebsd.gtk.aarch64/${collectingFolder}" includes="launcher" />
+ 	</target>
+-	<target name="rootFileslinux_gtk_x86_64">
+-		<mkdir dir="${feature.base}/linux.gtk.x86_64/${collectingFolder}"/>
+-		<copy todir="${feature.base}/linux.gtk.x86_64/${collectingFolder}" failonerror="true" overwrite="true">
+-			<fileset dir="${basedir}/bin/gtk/linux/x86_64" includes="**"			/>
++	<target name="rootFilesfreebsd_gtk_amd64">
++		<mkdir dir="${feature.base}/freebsd.gtk.amd64/${collectingFolder}"/>
++		<copy todir="${feature.base}/freebsd.gtk.amd64/${collectingFolder}" failonerror="true" overwrite="true">
++			<fileset dir="${basedir}/bin/gtk/freebsd/amd64" includes="**"			/>
+ 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
+ 		</copy>
+-		<chmod perm="755" dir="${feature.base}/linux.gtk.x86_64/${collectingFolder}" includes="launcher" />
++		<chmod perm="755" dir="${feature.base}/freebsd.gtk.amd64/${collectingFolder}" includes="launcher" />
+ 	</target>
+ 	<target name="rootFileslinux_gtk_ia64">
+ 		<mkdir dir="${feature.base}/linux.gtk.ia64/${collectingFolder}"/>
+@@ -212,7 +212,7 @@
+ 	<target name="rootFilesgroup_group_group">
+ 		<antcall target="rootFileswin32_win32_x86_64"/>
+ 		<antcall target="rootFilesmacosx_cocoa_x86_64"/>
+-		<antcall target="rootFileslinux_gtk_ppc64le"/>
++		<antcall target="rootFileslinux_gtk_powerpc64"/>
+ 		<antcall target="rootFileslinux_gtk_x86_64"/>
+ 	</target>
+ 
 diff -ruN ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/pom.xml rt.equinox.framework/pom.xml
 --- ../eclipse.platform.releng.aggregator.base/rt.equinox.framework/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.framework/pom.xml	0000-00-00 00:00:00.000000000 +0000
