@@ -12,6 +12,7 @@ PATCHDIRS="
 	eclipse.platform.swt.binaries
 	eclipse.platform.team
 	eclipse.platform.ua
+	eclipse.platform.ui
 	rt.equinox.bundles
 	rt.equinox.framework
 	rt.equinox.p2
