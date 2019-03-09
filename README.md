@@ -17,10 +17,11 @@ FreeBSD's /usr/ports/java/eclipse.
 
 # Prerequisite Ports
 
-* java/openjdk8
 * devel/apache-ant
+* devel/pkgconf
 * devel/gmake
 * devel/maven
+* java/openjdk8
 * security/libsecret
 * x11-toolkits/gtk30
 
