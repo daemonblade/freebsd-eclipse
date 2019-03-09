@@ -13,6 +13,7 @@ FreeBSD's /usr/ports/java/eclipse.
 * **eclipse.platform.releng.aggregator** working copy
 * **.baseline.eclipse.platform.releng.aggregator** pristine unpacked tree
 * **.patched.eclipse.platform.releng.aggregator** patched tree without build artifacts
+* **maven-repo._tag_** Maven repository for build, (to be used for port-build on FreeBSD)
 
 # Workflow
 

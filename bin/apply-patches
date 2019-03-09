@@ -30,13 +30,13 @@ fi
 #
 for P in patches/patch-*
 do
-	echo "INFO: ${P}"
 	patch --directory ${AGGR_MODULE} --fuzz 0 -V none --quiet < ${P}
 	if [ $? -ne 0 ]
 	then
 		echo "ERROR: Unclean ${P}"
 		exit 1
 	fi
+	echo "INFO: Applied ${P}"
 done
 
 echo "INFO: Creating patched copy"
