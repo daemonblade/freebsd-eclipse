@@ -21,7 +21,15 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
  
  export CFLAGS='-O -Wall -fPIC'
  
-@@ -93,14 +93,7 @@
+@@ -86,21 +86,14 @@
+ 		MAKEFILE=make_win32.mak
+ 		;;
+ 	*)
+-		SWT_OS=`uname -s | tr -s '[:upper:]' '[:lower:]'`
++		SWT_OS=`uname -s | tr '[:upper:]' '[:lower:]'`
+ 		MAKEFILE=make_linux.mak
+ 		;;
+ esac
  
  # Determine which CPU type we are building for
  if [ "${MODEL}" = "" ]; then
@@ -62,6 +70,17 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
  
  ifndef NO_STRIP
  	# -s = Remove all symbol table and relocation information from the executable.
+@@ -253,10 +254,6 @@
+ 	cp $(ALL_SWT_LIBS) $(OUTPUT_DIR)
+ ifeq ($(BUILD_WEBKIT2EXTENSION),yes)
+ 	@# Copy webextension into it's own folder, but create folder first.
+-	@# CAREFULLY delete '.so' files inside webextension*. Then carefully remove the directories. 'rm -rf' seemed too risky of an approach.
+-	@-[ "$$(ls -d $(OUTPUT_DIR)/$(WEBEXTENSION_BASE_DIR)*/*.so)" ] && rm -v `ls -d $(OUTPUT_DIR)/$(WEBEXTENSION_BASE_DIR)*/*.so`
+-	@-[ "$$(ls -d $(OUTPUT_DIR)/$(WEBEXTENSION_BASE_DIR)*)" ] && rmdir -v `ls -d $(OUTPUT_DIR)/$(WEBEXTENSION_BASE_DIR)*`
+-
+ 	@# Copying webextension is not critical for build to succeed, thus we use '-'. SWT can still function without a webextension.
+ 	@-[ -d $(OUTPUT_DIR)/$(WEBEXTENSION_DIR) ] || mkdir -v $(OUTPUT_DIR)/$(WEBEXTENSION_DIR)  # If folder does not exist, make it.
+ 	-cp $(WEBKIT_EXTENSION_LIB) $(OUTPUT_DIR)/$(WEBEXTENSION_DIR)/
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf
 --- eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf	0000-00-00 00:00:00.000000000 +0000
