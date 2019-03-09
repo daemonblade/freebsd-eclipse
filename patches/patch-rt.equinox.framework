@@ -331,8 +331,12 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/li
 diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak
 --- rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
-@@ -94,7 +94,7 @@
- LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic 
+@@ -91,10 +91,10 @@
+  -DGTK3_LIB="\"libgtk-3.so.0\"" -DGDK3_LIB="\"libgdk-3.so.0\"" \
+  -DPIXBUF_LIB="\"libgdk_pixbuf-2.0.so.0\"" -DGOBJ_LIB="\"libgobject-2.0.so.0\"" \
+  -DGIO_LIB="\"libgio-2.0.so.0\"" -DGLIB_LIB="\"libglib-2.0.so.0\""
+-LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic 
++LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic -L/usr/local/lib
  CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -s -Wall\
  	-fpic \
 -	-DLINUX \
