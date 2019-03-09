@@ -207,3 +207,14 @@ diff -ru eclipse.platform.swt/local-build/org.eclipse.swt.fragments.localbuild/M
  requires.4.range = 0.0.0
 -requires.4.filter = (&(osgi.os=linux)(osgi.ws=gtk)(osgi.arch=ppc64le))
 +requires.4.filter = (&(osgi.os=freebsd)(osgi.ws=gtk)(osgi.arch=powerpc64))
+diff -ru eclipse.platform.swt/pom.xml eclipse.platform.swt/pom.xml
+--- eclipse.platform.swt/pom.xml	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.swt/pom.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -85,7 +85,6 @@
+       <activation>
+         <os>
+           <family>unix</family>
+-          <name>Linux</name>
+ 	</os>
+       </activation>
+ 	  <modules>
