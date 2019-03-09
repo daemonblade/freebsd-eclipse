@@ -1,8 +1,19 @@
 #!/bin/sh
 #set -x
 #
-# Unpack aggregator and projects
+# 1. Unpack aggregator and projects
+# 2. Reorg source files, reusing Linux sources as the base for FreeBSD builds.
 #
+DIRS="
+	eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.linux.*
+	eclipse.platform.resources/bundles/org.eclipse.core.filesystem.linux.*
+	eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/linux
+	eclipse.platform.team/bundles/org.eclipse.core.net.linux.*
+	eclipse.platform.team/bundles/org.eclipse.core.net/natives/unix/linux
+	rt.equinox.bundles/bundles/org.eclipse.equinox.security.linux.*
+	rt.equinox.binaries/org.eclipse.equinox.launcher.gtk.linux.*
+	rt.equinox.framework/bundles/org.eclipse.equinox.launcher.gtk.linux.*"
+
 if [ ! -x bin/$(basename $0) ]
 then
 	echo "ERROR: Run this from top level"
@@ -13,7 +24,7 @@ fi
 AGGR_MODULE=$(basename $ECLIPSE_AGGR)
 BASELINE=".baseline.${AGGR_MODULE}"
 
-echo "INFO: ${ECLIPSE_AGGR}"
+echo "INFO: Unpacking ${ECLIPSE_AGGR}"
 rm -rf ${AGGR_MODULE} ${BASELINE}
 tar xf distfiles/${AGGR_MODULE}-${ECLIPSE_TAG}.tar.xz
 mv ${AGGR_MODULE}-${ECLIPSE_TAG} ${AGGR_MODULE}
@@ -31,8 +42,53 @@ do
 		exit 1
 	fi
 
-	echo "INFO: ${M}"
+	echo "INFO: Unpacking ${M}"
 	rm -rf ${SUBDIR}
 	tar xf ${ARCHIVE}
 	mv ${SNAP} ${SUBDIR}
 done
+
+rename_arch ()
+{
+	# Rename to FreeBSD TARGET_ARCH names
+	F=$(echo $1 | sed -e s/linux/freebsd/)
+	case $F in
+	*.arm)
+		echo $(echo $F | sed -e 's/arm/armv7/');;
+	*.ppc64le)
+		echo $(echo $F | sed -e 's/ppc64le/powerpc64/');;
+	*.x86)
+		echo $(echo $F | sed -e 's/x86/i386/');;
+	*.x86_64)
+		echo $(echo $F | sed -e 's/x86_64/amd64/');;
+	*)
+		echo ${F};;
+	esac
+}
+
+AGGR_MODULE=$(basename $ECLIPSE_AGGR)
+(
+	echo "INFO: Renaming native files"
+	cd ${AGGR_MODULE}
+
+	for D in ${DIRS}
+	do
+		if [ ! -e ${D} ]
+		then
+			continue
+		fi
+
+		NEWNAME=$(rename_arch ${D})
+		mv ${D} ${NEWNAME}
+	done
+
+	# Clean up binaries
+	rm -rf rt.equinox.binaries/org.eclipse.equinox.executable/bin/gtk/linux
+	find . -name '*.so' -delete
+)
+
+# Make a baseline copy
+echo "INFO: Making baseline copy"
+BASELINE=".baseline.${AGGR_MODULE}"
+rm -rf ${BASELINE}
+cd ${AGGR_MODULE} && find . -print | cpio -pdum ../${BASELINE}
