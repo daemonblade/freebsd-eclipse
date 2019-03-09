@@ -19,4 +19,16 @@ then
 	exit 1
 fi
 
-cat patches/patch-* | patch --directory ${AGGR_MODULE} --fuzz 0 -V none --quiet
+#
+# Apply patches one-by-one so that errors can be identified
+#
+for P in patches/patch-*
+do
+	echo "INFO: ${P}"
+	patch --directory ${AGGR_MODULE} --fuzz 0 -V none --quiet < ${P}
+	if [ $? -ne 0 ]
+	then
+		echo "ERROR: Unclean ${P}"
+		exit 1
+	fi
+done
