@@ -13,9 +13,15 @@ fi
 
 AGGR_MODULE=$(basename $ECLIPSE_AGGR)
 BASELINE=".baseline.${AGGR_MODULE}"
+PATCHED=".patched.${AGGR_MODULE}"
 if [ ! -d ${BASELINE} ]
 then
 	echo "ERROR: bin/prepare-tree needs to be run first"
+	exit 1
+fi
+if [ -d ${PATCHED} ]
+then
+	echo "ERROR: work-tree already patched"
 	exit 1
 fi
 
@@ -32,3 +38,6 @@ do
 		exit 1
 	fi
 done
+
+echo "INFO: Creating patched copy"
+cd ${AGGR_MODULE} && find . -print | cpio -pdum ../${PATCHED}
