@@ -15,6 +15,15 @@ FreeBSD's /usr/ports/java/eclipse.
 * **.patched.eclipse.platform.releng.aggregator** patched tree without build artifacts
 * **maven-repo._tag_** Maven repository for build, (to be used for port-build on FreeBSD)
 
+# Prerequisite Ports
+
+* java/openjdk8
+* devel/apache-ant
+* devel/gmake
+* devel/maven
+* security/libsecret
+* x11-toolkits/gtk30
+
 # Workflow
 
 1. `bin/fetch-distfiles`
