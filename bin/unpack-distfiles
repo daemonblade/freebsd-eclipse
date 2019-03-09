@@ -66,7 +66,6 @@ rename_arch ()
 	esac
 }
 
-AGGR_MODULE=$(basename $ECLIPSE_AGGR)
 (
 	echo "INFO: Renaming native files"
 	cd ${AGGR_MODULE}
@@ -89,6 +88,4 @@ AGGR_MODULE=$(basename $ECLIPSE_AGGR)
 
 # Make a baseline copy
 echo "INFO: Making baseline copy"
-BASELINE=".baseline.${AGGR_MODULE}"
-rm -rf ${BASELINE}
 cd ${AGGR_MODULE} && find . -print | cpio -pdum ../${BASELINE}
