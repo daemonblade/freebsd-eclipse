@@ -4,6 +4,7 @@ distfiles
 # top-level, and baseline comparator
 eclipse.platform.releng.aggregator
 .baseline.eclipse.platform.releng.aggregator
+.patched.eclipse.platform.releng.aggregator
 
 # Build artifacts
 maven-repo.*
