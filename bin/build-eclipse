@@ -25,8 +25,9 @@ mkdir -p ${REPO}
 REPO_PATH=$(realpath ${REPO})
 (
 	cd ${AGGR_MODULE}
-	mvn clean verify \
+	mvn $* \
 		-DskipTests=true \
 		-Dmaven.repo.local=${REPO_PATH} \
-		-Dnative=gtk.freebsd.${ARCH} 2>&1
+		-Dnative=gtk.freebsd.${ARCH} \
+		clean verify 2>&1
 ) | tee build.log
