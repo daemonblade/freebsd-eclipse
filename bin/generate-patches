@@ -5,6 +5,7 @@
 #
 PATCHDIRS="
 	eclipse-platform-parent
+	eclipse.pde.build
 	eclipse.platform.releng
 	eclipse.platform.releng.tychoeclipsebuilder
 	eclipse.platform.resources
