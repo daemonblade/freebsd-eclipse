@@ -84,7 +84,7 @@ diff -ru eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/pom.xm
                  <configuration>
                    <target>
 -                    <exec executable="make" newenvironment="false" dir="../org.eclipse.core.net/natives/unix/linux/"/>
-+                    <exec executable="make" newenvironment="false" dir="../org.eclipse.core.net/natives/unix/freebsd/"/>
++                    <exec executable="gmake" newenvironment="false" dir="../org.eclipse.core.net/natives/unix/freebsd/"/>
                      <copy todir=".">
 -                      <fileset dir="../org.eclipse.core.net/natives/unix/linux/">
 +                      <fileset dir="../org.eclipse.core.net/natives/unix/freebsd/">

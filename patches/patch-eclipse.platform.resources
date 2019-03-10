@@ -85,7 +85,7 @@ diff -ru eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.
 -           <mkdir dir="os/linux/x86_64/"/>
 -           <copy todir="os/linux/x86_64/">
 -           <fileset dir="../org.eclipse.core.filesystem/natives/unix/linux/">
-+                    <exec executable="make" newenvironment="false" dir="../org.eclipse.core.filesystem/natives/unix/freebsd/"/>
++                    <exec executable="gmake" newenvironment="false" dir="../org.eclipse.core.filesystem/natives/unix/freebsd/"/>
 +           <mkdir dir="os/freebsd/amd64/"/>
 +           <copy todir="os/freebsd/amd64/">
 +           <fileset dir="../org.eclipse.core.filesystem/natives/unix/freebsd/">
@@ -147,7 +147,7 @@ diff -ru eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.
 -                    <exec executable="make" newenvironment="false" dir="../org.eclipse.core.filesystem/natives/unix/linux/"/>
 -           <copy todir="os/linux/x86">
 -           <fileset dir="../org.eclipse.core.filesystem/natives/unix/linux/">
-+                    <exec executable="make" newenvironment="false" dir="../org.eclipse.core.filesystem/natives/unix/freebsd/"/>
++                    <exec executable="gmake" newenvironment="false" dir="../org.eclipse.core.filesystem/natives/unix/freebsd/"/>
 +           <copy todir="os/freebsd/i386">
 +           <fileset dir="../org.eclipse.core.filesystem/natives/unix/freebsd/">
                 <include name="libunixfile_*.so"/>

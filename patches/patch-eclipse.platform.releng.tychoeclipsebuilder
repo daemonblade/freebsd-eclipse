@@ -1,3 +1,52 @@
+diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/pom.xml eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/pom.xml
+--- eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/pom.xml	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/pom.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -138,9 +138,9 @@
+           <resolver>p2</resolver>
+           <environments>
+             <environment>
+-              <os>linux</os>
++              <os>freebsd</os>
+               <ws>gtk</ws>
+-              <arch>x86_64</arch>
++              <arch>amd64</arch>
+             </environment>
+             <environment>
+               <os>win32</os>
+diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/resources/equinoxp2tests.properties eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/resources/equinoxp2tests.properties
+--- eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/resources/equinoxp2tests.properties	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/resources/equinoxp2tests.properties	0000-00-00 00:00:00.000000000 +0000
+@@ -1,11 +1,11 @@
+ #Properties required by equinox p2 tests
+ # Version from .../eclipse-junit-tests/src/main/resources/
+ 
+-org.eclipse.equinox.p2.reconciler.tests.platform.archive.linux-x86_64=\${basedir}/eclipse-platform-${buildId}-linux-gtk-x86_64.tar.gz
++org.eclipse.equinox.p2.reconciler.tests.platform.archive.freebsd-amd64=\${basedir}/eclipse-platform-${buildId}-freebsd-gtk-amd64.tar.gz
+ org.eclipse.equinox.p2.reconciler.tests.platform.archive.win32-x86_64=\${basedir}\\\\eclipse-platform-${buildId}-win32-x86_64.zip
+ org.eclipse.equinox.p2.reconciler.tests.platform.archive.macosx-x86_64=\${basedir}/eclipse-platform-${buildId}-macosx-cocoa-x86_64.tar.gz
+ 
+-org.eclipse.equinox.p2.reconciler.tests.lastrelease.platform.archive.linux-x86_64=\${basedir}/eclipse-platform-4.10-linux-gtk-x86_64.tar.gz
++org.eclipse.equinox.p2.reconciler.tests.lastrelease.platform.archive.freebsd-x86_64=\${basedir}/eclipse-platform-4.10-freebsd-gtk-amd64.tar.gz
+ org.eclipse.equinox.p2.reconciler.tests.lastrelease.platform.archive.win32-x86_64=\${basedir}\\\\eclipse-platform-4.10-win32-x86_64.zip
+ org.eclipse.equinox.p2.reconciler.tests.lastrelease.platform.archive.macosx-x86_64=\${basedir}/eclipse-platform-4.10-macosx-cocoa-x86_64.tar.gz
+ 
+diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/scripts/getPreviousRelease.sh eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/scripts/getPreviousRelease.sh
+--- eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/scripts/getPreviousRelease.sh	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/src/main/scripts/getPreviousRelease.sh	0000-00-00 00:00:00.000000000 +0000
+@@ -7,10 +7,10 @@
+ 
+ 
+ mkdir -p workarea/${buildId}/eclipse-testing
+-#cp /home/files/buildzips/oxygen/R/R-4.10-201812060815/eclipse-SDK-4.10-linux-gtk-x86_64.tar.gz ./workarea/${buildId}/eclipse-testing/
+-cp /home/files/buildzips/oxygen/R/R-4.10-201812060815/eclipse-platform-4.10-linux-gtk-x86_64.tar.gz ./workarea/${buildId}/eclipse-testing/platformLocation/
++#cp /home/files/buildzips/oxygen/R/R-4.10-201812060815/eclipse-SDK-4.10-freebsd-gtk-amd64.tar.gz ./workarea/${buildId}/eclipse-testing/
++cp /home/files/buildzips/oxygen/R/R-4.10-201812060815/eclipse-platform-4.10-freebsd-gtk-amd64.tar.gz ./workarea/${buildId}/eclipse-testing/platformLocation/
+ 
+-cp ../../eclipse-SDK-${buildId}-linux-gtk-x86_64.tar.gz workarea/${buildId}/eclipse-testing/
++cp ../../eclipse-SDK-${buildId}-freebsd-gtk-amd64.tar.gz workarea/${buildId}/eclipse-testing/
+ 
+ cp eclipse-junit-tests-${buildId}.zip workarea/${buildId}/eclipse-testing/
+ 
 diff -ru eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml
 --- eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml	0000-00-00 00:00:00.000000000 +0000

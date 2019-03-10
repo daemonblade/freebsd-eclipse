@@ -1,3 +1,29 @@
+diff -ru rt.equinox.p2/bundles/org.eclipse.equinox.p2.tests/pom.xml rt.equinox.p2/bundles/org.eclipse.equinox.p2.tests/pom.xml
+--- rt.equinox.p2/bundles/org.eclipse.equinox.p2.tests/pom.xml	0000-00-00 00:00:00.000000000 +0000
++++ rt.equinox.p2/bundles/org.eclipse.equinox.p2.tests/pom.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -22,9 +22,7 @@
+ 	<properties>
+ 		<testSuite>${project.artifactId}</testSuite>
+ 		<testClass>org.eclipse.equinox.p2.tests.AutomatedTests</testClass>
+-		<!-- despite best inentions I was not able to add automatiz detection here -->
+-		<!-- Linux is default because Hudson runs those tests on Linux -->
+-		<dropinsProduct>org.eclipse.equinox.p2.reconciler-linux.gtk.x86_64.tar.gz</dropinsProduct>
++		<dropinsProduct>org.eclipse.equinox.p2.reconciler-freebsd.gtk.amd64.tar.gz</dropinsProduct>
+ 	</properties>
+ 
+ 	<build>
+diff -ru rt.equinox.p2/bundles/org.eclipse.equinox.p2.tests.reconciler.product/pom.xml rt.equinox.p2/bundles/org.eclipse.equinox.p2.tests.reconciler.product/pom.xml
+--- rt.equinox.p2/bundles/org.eclipse.equinox.p2.tests.reconciler.product/pom.xml	0000-00-00 00:00:00.000000000 +0000
++++ rt.equinox.p2/bundles/org.eclipse.equinox.p2.tests.reconciler.product/pom.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -39,7 +39,7 @@
+ 						</goals>
+ 						<configuration>
+ 							<formats>
+-								<linux>tar.gz</linux>
++								<freebsd>tar.gz</freebsd>
+ 							</formats>
+ 						</configuration>
+ 					</execution>
 diff -ru rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml
 --- rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.p2/features/org.eclipse.equinox.p2.core.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
