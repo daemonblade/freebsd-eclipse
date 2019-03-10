@@ -20,6 +20,8 @@ then
 	exit 1
 fi
 
+BUILD_SUFFIX=$(echo $* | tr -d '[:space:]')
+
 REPO="maven-repo.${ECLIPSE_TAG}"
 mkdir -p ${REPO}
 REPO_PATH=$(realpath ${REPO})
@@ -30,4 +32,4 @@ REPO_PATH=$(realpath ${REPO})
 		-Dmaven.repo.local=${REPO_PATH} \
 		-Dnative=gtk.freebsd.${ARCH} \
 		clean verify 2>&1
-) | tee build-$(date '+%Y%m%d-%H%M').log
+) | tee build-$(date '+%Y%m%d-%H%M')${BUILD_SUFFIX}.log
