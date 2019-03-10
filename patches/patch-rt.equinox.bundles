@@ -95,6 +95,35 @@ diff -ru rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/s
  saveMasterPasswordError=Secure storage was unable to save the master password.
 -newMasterPasswordGenerated=New secure storage master password was generated (Linux libsecret integration module). 
 +newMasterPasswordGenerated=New secure storage master password was generated (FreeBSD libsecret integration module). 
+diff -ru rt.equinox.bundles/features/org.eclipse.equinox.core.sdk/feature.xml rt.equinox.bundles/features/org.eclipse.equinox.core.sdk/feature.xml
+--- rt.equinox.bundles/features/org.eclipse.equinox.core.sdk/feature.xml	0000-00-00 00:00:00.000000000 +0000
++++ rt.equinox.bundles/features/org.eclipse.equinox.core.sdk/feature.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -217,9 +217,9 @@
+          unpack="false"/>
+ 
+    <plugin
+-         id="org.eclipse.equinox.security.linux.x86_64"
+-         os="linux"
+-         arch="x86_64"
++         id="org.eclipse.equinox.security.freebsd.amd64"
++         os="freebsd"
++         arch="amd64"
+          download-size="0"
+          install-size="0"
+          version="0.0.0"
+@@ -227,9 +227,9 @@
+          unpack="false"/>
+ 
+    <plugin
+-         id="org.eclipse.equinox.security.linux.x86_64.source"
+-         os="linux"
+-         arch="x86_64"
++         id="org.eclipse.equinox.security.freebsd.amd64.source"
++         os="freebsd"
++         arch="amd64"
+          download-size="0"
+          install-size="0"
+          version="0.0.0"
 diff -ru rt.equinox.bundles/pom.xml rt.equinox.bundles/pom.xml
 --- rt.equinox.bundles/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.bundles/pom.xml	0000-00-00 00:00:00.000000000 +0000
