@@ -30,4 +30,4 @@ REPO_PATH=$(realpath ${REPO})
 		-Dmaven.repo.local=${REPO_PATH} \
 		-Dnative=gtk.freebsd.${ARCH} \
 		clean verify 2>&1
-) | tee build.log
+) | tee build-$(date '+%Y%m%d-%H%M').log
