@@ -40,4 +40,4 @@ do
 done
 
 echo "INFO: Creating patched copy"
-cd ${AGGR_MODULE} && find . -print | cpio -pdum ../${PATCHED}
+cd ${AGGR_MODULE} && find . -print | cpio -pduml ../${PATCHED}
