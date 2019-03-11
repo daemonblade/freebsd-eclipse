@@ -228,7 +228,7 @@ diff -ru eclipse.platform.swt/local-build/org.eclipse.swt.fragments.localbuild/M
 diff -ru eclipse.platform.swt/pom.xml eclipse.platform.swt/pom.xml
 --- eclipse.platform.swt/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/pom.xml	0000-00-00 00:00:00.000000000 +0000
-@@ -85,7 +85,6 @@
+@@ -85,11 +85,12 @@
        <activation>
          <os>
            <family>unix</family>
@@ -236,6 +236,22 @@ diff -ru eclipse.platform.swt/pom.xml eclipse.platform.swt/pom.xml
  	</os>
        </activation>
  	  <modules>
++		<!-- disable test
+ 	    <module>tests/org.eclipse.swt.tests.gtk</module>
++		  -->
+ 	  </modules>
+     </profile>
+     <profile>
+@@ -118,7 +119,9 @@
+     <module>examples/org.eclipse.swt.examples.ole.win32</module>
+     <module>examples/org.eclipse.swt.examples.views</module>
+     <module>tests/org.eclipse.swt.tests.fragments.feature</module>
++	<!-- disable test
+     <module>tests/org.eclipse.swt.tests</module>
++	  -->
+     <module>features/org.eclipse.swt.tools.feature</module>
+   </modules>
+ </project>
 diff -ru eclipse.platform.swt/tests/org.eclipse.swt.tests.fragments.feature/feature.xml eclipse.platform.swt/tests/org.eclipse.swt.tests.fragments.feature/feature.xml
 --- eclipse.platform.swt/tests/org.eclipse.swt.tests.fragments.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/tests/org.eclipse.swt.tests.fragments.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
