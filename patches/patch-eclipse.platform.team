@@ -24,7 +24,7 @@ diff -ru eclipse.platform.team/bundles/org.eclipse.core.net/natives/unix/freebsd
  	@echo "Building target: $(LIB_NAME_FULL)"
 -	@echo "Invoking: GCC C Linker"
 -	gcc $(LINKER_FLAGS) -shared -Wl,-soname,$(LIB_NAME) -o $(LIB_NAME_FULL) $(LIBS) $(GNOMEPROXY.O) -lc
-+	$(LD) $(LINKER_FLAGS) -shared -Wl,-soname,$(LIB_NAME) -o $(LIB_NAME_FULL) $(LIBS) $(GNOMEPROXY.O) -lc
++	$(CC) $(LINKER_FLAGS) -shared -Wl,-soname,$(LIB_NAME) -o $(LIB_NAME_FULL) $(LIBS) $(GNOMEPROXY.O)
  	@echo "Finished building target: $(LIB_NAME_FULL)"
  	@echo " "
  
