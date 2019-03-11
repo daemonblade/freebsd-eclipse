@@ -316,17 +316,29 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/fe
 diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh
 --- rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	0000-00-00 00:00:00.000000000 +0000
-@@ -126,6 +126,8 @@
+@@ -126,6 +126,9 @@
  				;;
  		esac
  		;;
 +	FreeBSD)
++		defaultOS="freebsd"
 +		makefile="make_linux.mak";;
  	*)
  	echo "Unknown OS -- build aborted"
  	;;
-@@ -178,10 +180,10 @@
- 		make -f $makefile $extraArgs
+@@ -169,19 +172,20 @@
+ 
+ LIBRARY_DIR="$EXEC_DIR/../org.eclipse.equinox.launcher.$defaultWS.$defaultOS.$defaultOSArch"
+ OUTPUT_DIR="$EXEC_DIR/bin/$defaultWS/$defaultOS/$defaultOSArch"
++mkdir -p ${OUTPUT_DIR}
+ 
+ export OUTPUT_DIR PROGRAM_OUTPUT DEFAULT_OS DEFAULT_OS_ARCH DEFAULT_WS DEFAULT_JAVA LIBRARY_DIR
+ 
+ # If the OS is supported (a makefile exists)
+ if [ "$makefile" != "" ]; then
+ 	if [ "$extraArgs" != "" ]; then
+-		make -f $makefile $extraArgs
++		gmake -f $makefile $extraArgs
  	else
  		echo "Building $OS launcher. Defaults: -os $DEFAULT_OS -arch $DEFAULT_OS_ARCH -ws $DEFAULT_WS"
 -		make -f $makefile clean
