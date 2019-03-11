@@ -5,6 +5,7 @@
 #
 PATCHDIRS="
 	eclipse-platform-parent
+	production
 	eclipse.pde.build
 	eclipse.pde.ui
 	eclipse.platform.releng

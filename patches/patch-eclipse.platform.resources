@@ -29,6 +29,17 @@ diff -ru eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/
 -install: core
 -	rm -f ../../../../org.eclipse.core.filesystem.linux.x86/os/linux/x86/libunixfile_1_0_0.so
 -	mv libunixfile_1_0_0.so ../../../../org.eclipse.core.filesystem.linux.x86/os/linux/x86/
+diff -ru eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/.project eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/.project
+--- eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/.project	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/.project	0000-00-00 00:00:00.000000000 +0000
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <projectDescription>
+-	<name>org.eclipse.core.filesystem.linux.x86_64</name>
++	<name>org.eclipse.core.filesystem.freebsd.amd64</name>
+ 	<comment></comment>
+ 	<projects>
+ 	</projects>
 diff -ru eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/META-INF/MANIFEST.MF eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/META-INF/MANIFEST.MF
 --- eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.amd64/META-INF/MANIFEST.MF	0000-00-00 00:00:00.000000000 +0000

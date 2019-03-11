@@ -10,6 +10,17 @@ diff -ru eclipse.platform.team/bundles/org.eclipse.core.net/natives/unix/freebsd
  JDK_INCLUDE = -I${JAVA_HOME}/include -I${JAVA_HOME}/include/${OS_TYPE}
  INCLUDE = `pkg-config --cflags gio-2.0`
  COMPILER_FLAGS = -O0 -fPIC -g3 -Wall -c -fmessage-length=0 ${TARGET_ENVIRONMENT}
+diff -ru eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/.project eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/.project
+--- eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/.project	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/.project	0000-00-00 00:00:00.000000000 +0000
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <projectDescription>
+-	<name>org.eclipse.core.net.linux.x86_64</name>
++	<name>org.eclipse.core.net.freebsd.amd64</name>
+ 	<comment></comment>
+ 	<projects>
+ 	</projects>
 diff -ru eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/BUILD_INFO.txt eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/BUILD_INFO.txt
 --- eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/BUILD_INFO.txt	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/BUILD_INFO.txt	0000-00-00 00:00:00.000000000 +0000
