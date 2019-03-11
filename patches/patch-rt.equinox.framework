@@ -316,17 +316,21 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/fe
 diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh
 --- rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	0000-00-00 00:00:00.000000000 +0000
-@@ -126,6 +126,9 @@
+@@ -126,8 +126,12 @@
  				;;
  		esac
  		;;
-+	FreeBSD)
++	FreeBSD|freebsd)
 +		defaultOS="freebsd"
-+		makefile="make_linux.mak";;
++		makefile="make_linux.mak"
++		;;
  	*)
- 	echo "Unknown OS -- build aborted"
+-	echo "Unknown OS -- build aborted"
++	echo "Unknown OS $defaultOS -- build aborted"
  	;;
-@@ -169,19 +172,20 @@
+ esac
+ export CC
+@@ -169,19 +173,20 @@
  
  LIBRARY_DIR="$EXEC_DIR/../org.eclipse.equinox.launcher.$defaultWS.$defaultOS.$defaultOSArch"
  OUTPUT_DIR="$EXEC_DIR/bin/$defaultWS/$defaultOS/$defaultOSArch"
@@ -359,8 +363,9 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/li
   -DPIXBUF_LIB="\"libgdk_pixbuf-2.0.so.0\"" -DGOBJ_LIB="\"libgobject-2.0.so.0\"" \
   -DGIO_LIB="\"libgio-2.0.so.0\"" -DGLIB_LIB="\"libglib-2.0.so.0\""
 -LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic 
+-CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -s -Wall\
 +LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic -L/usr/local/lib
- CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -s -Wall\
++CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -Wall\
  	-fpic \
 -	-DLINUX \
 +	-DFREEBSD \
