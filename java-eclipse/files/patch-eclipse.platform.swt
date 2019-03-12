@@ -81,7 +81,7 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak
 --- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
-@@ -101,16 +101,19 @@
+@@ -101,16 +101,18 @@
  WEBKIT_OBJECTS = swt.o webkitgtk.o webkitgtk_structs.o webkitgtk_stats.o webkitgtk_custom.o
  GLX_OBJECTS = swt.o glx.o glx_structs.o glx_stats.o
  
@@ -93,7 +93,6 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
  		$(SWT_WEBKIT_DEBUG) \
 -		-DLINUX -DGTK \
 +		-DFREEBSD -DGTK \
-+		-DNO_memmove__III \
 +		-I$(port_prefix)/include \
  		-I$(JAVA_HOME)/include \
 -		-I$(JAVA_HOME)/include/linux \
@@ -104,7 +103,7 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
  
  ifndef NO_STRIP
  	# -s = Remove all symbol table and relocation information from the executable.
-@@ -253,10 +256,6 @@
+@@ -253,10 +255,6 @@
  	cp $(ALL_SWT_LIBS) $(OUTPUT_DIR)
  ifeq ($(BUILD_WEBKIT2EXTENSION),yes)
  	@# Copy webextension into it's own folder, but create folder first.
