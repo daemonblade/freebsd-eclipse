@@ -13,6 +13,15 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/.classpath_gtk eclipse.pla
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java
 --- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java	0000-00-00 00:00:00.000000000 +0000
+@@ -52,7 +52,7 @@
+ 
+ 
+ 	/* 64-bit support */
+-	static final boolean IS_64 = longConst() == (long /*int*/)longConst();
++	static final boolean IS_64 = true;
+ 	static final String SUFFIX_64 = "-64";	//$NON-NLS-1$
+ 	static final String SWT_LIB_DIR;
+ 
 @@ -68,12 +68,12 @@
  static String arch() {
  	String osArch = System.getProperty("os.arch"); //$NON-NLS-1$
