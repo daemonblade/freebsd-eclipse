@@ -108,6 +108,20 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
  	@# Copying webextension is not critical for build to succeed, thus we use '-'. SWT can still function without a webextension.
  	@-[ -d $(OUTPUT_DIR)/$(WEBEXTENSION_DIR) ] || mkdir -v $(OUTPUT_DIR)/$(WEBEXTENSION_DIR)  # If folder does not exist, make it.
  	-cp $(WEBKIT_EXTENSION_LIB) $(OUTPUT_DIR)/$(WEBEXTENSION_DIR)/
+diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/org/eclipse/swt/internal/gtk/OS.java eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/org/eclipse/swt/internal/gtk/OS.java
+--- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/org/eclipse/swt/internal/gtk/OS.java	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/org/eclipse/swt/internal/gtk/OS.java	0000-00-00 00:00:00.000000000 +0000
+@@ -58,8 +58,8 @@
+ 
+ 		/* Initialize the OS flags and locale constants */
+ 		String osName = System.getProperty ("os.name");
+-		boolean isLinux = false, isWin32 = false;
+-		if (osName.equals ("Linux")) isLinux = true;
++		boolean isLinux = osName.equals ("Linux") || osName.equals ("FreeBSD");
++		boolean isWin32 = false;
+ 		if (osName.startsWith("Windows")) isWin32 = true;
+ 		IsLinux = isLinux;  IsWin32 = isWin32;
+ 
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf
 --- eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf	0000-00-00 00:00:00.000000000 +0000
