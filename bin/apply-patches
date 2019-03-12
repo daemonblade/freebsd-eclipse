@@ -28,7 +28,7 @@ fi
 #
 # Apply patches one-by-one so that errors can be identified
 #
-for P in patches/patch-*
+for P in ${PATCH_DIR}/patch-*
 do
 	patch --directory ${AGGR_MODULE} --fuzz 0 -V none --quiet < ${P}
 	if [ $? -ne 0 ]
