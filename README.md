@@ -33,3 +33,19 @@ FreeBSD's /usr/ports/java/eclipse.
 1. Work on **eclipse.platform.releng.aggregator**
 1. `bin/build-eclipse`
 1. `bin/generate-patches`
+
+# Notes
+
+The porting-strategy is based on using the Linux port as the
+base and converting it to FreeBSD. The pre-patch stage renames
+Linux specific directories, and most of the work devolves to
+changing the following lines of text:
+* `linux.x86_64` => `freebsd.amd64
+* `linux.ppc64le` => `freebsd.powerpc64`
+
+Some modules have been disabled as they involve updates to a
+maven repository; but also some tests don't compile.
+* org.eclipse.swt.tests
+* tests/org.eclipse.swt.tests.gtk
+* eclipse-junit-tests
+* eclipse.platform.repository
