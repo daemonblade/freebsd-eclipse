@@ -13,7 +13,7 @@ fi
 . ./config.sh
 
 mkdir -p distfiles
-for M in ${ECLIPSE_AGGR} ${ECLIPSE_MODULES}
+for M in ${ECLIPSE_TOP} ${ECLIPSE_MODULES}
 do
 	PROJECT=$(dirname $M)
 	MODULE=$(basename $M)

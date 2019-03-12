@@ -13,7 +13,7 @@ then
 fi
 . ./config.sh
 
-AGGR_MODULE=$(basename $ECLIPSE_AGGR)
+AGGR_MODULE=$(basename $ECLIPSE_TOP)
 if [ ! -d ${AGGR_MODULE} ]
 then
 	echo "ERROR: bin/prepare-tree and bin/patch-apply needs to be run first"

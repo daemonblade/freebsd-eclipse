@@ -4,7 +4,32 @@
 # 1. Unpack aggregator and projects
 # 2. Reorg source files, reusing Linux sources as the base for FreeBSD builds.
 #
-DIRS="
+ECLIPSE_MODULES="
+	jdt/eclipse.jdt
+	jdt/eclipse.jdt.core
+	jdt/eclipse.jdt.core.binaries
+	jdt/eclipse.jdt.debug
+	jdt/eclipse.jdt.ui
+	pde/eclipse.pde.build
+	pde/eclipse.pde.ui
+	platform/eclipse.platform
+	platform/eclipse.platform.common
+	platform/eclipse.platform.debug
+	platform/eclipse.platform.releng
+	platform/eclipse.platform.resources
+	platform/eclipse.platform.runtime
+	platform/eclipse.platform.swt
+	platform/eclipse.platform.swt.binaries
+	platform/eclipse.platform.team
+	platform/eclipse.platform.text
+	platform/eclipse.platform.ua
+	platform/eclipse.platform.ui
+	platform/eclipse.platform.ui.tools
+	equinox/rt.equinox.binaries
+	equinox/rt.equinox.bundles
+	equinox/rt.equinox.framework
+	equinox/rt.equinox.p2"
+LINUX_DIRS="
 	eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.linux.*
 	eclipse.platform.resources/bundles/org.eclipse.core.filesystem.linux.*
 	eclipse.platform.resources/bundles/org.eclipse.core.filesystem/natives/unix/linux
@@ -21,11 +46,11 @@ then
 fi
 . ./config.sh
 
-AGGR_MODULE=$(basename $ECLIPSE_AGGR)
+AGGR_MODULE=$(basename $ECLIPSE_TOP)
 BASELINE=".baseline.${AGGR_MODULE}"
 PATCHED=".patched.${AGGR_MODULE}"
 
-echo "INFO: Unpacking ${ECLIPSE_AGGR}"
+echo "INFO: Unpacking ${ECLIPSE_TOP}"
 rm -rf ${AGGR_MODULE} ${BASELINE} ${PATCHED}
 tar xf distfiles/${AGGR_MODULE}-${ECLIPSE_TAG}.tar.xz
 mv ${AGGR_MODULE}-${ECLIPSE_TAG} ${AGGR_MODULE}
@@ -71,7 +96,7 @@ rename_arch ()
 	echo "INFO: Renaming native files"
 	cd ${AGGR_MODULE}
 
-	for D in ${DIRS}
+	for D in ${LINUX_DIRS}
 	do
 		if [ ! -e ${D} ]
 		then

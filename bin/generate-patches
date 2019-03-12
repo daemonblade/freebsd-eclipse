@@ -28,7 +28,7 @@ then
 fi
 . ./config.sh
 
-AGGR_MODULE=$(basename $ECLIPSE_AGGR)
+AGGR_MODULE=$(basename $ECLIPSE_TOP)
 BASELINE=".baseline.${AGGR_MODULE}"
 if [ ! -d ${BASELINE} ]
 then
