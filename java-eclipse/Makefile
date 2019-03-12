@@ -4,12 +4,14 @@
 PORTNAME=   	eclipse
 PORTVERSION=    4.11
 CATEGORIES= 	java devel
-MASTER_SITES= 	https://git.eclipse.org/c/jdt:jdt \
-		https://git.eclipse.org/c/pde:pde \
-		https://git.eclipse.org/c/plateform:platform \
-		https://git.eclipse.org/c/equinox:equinox \
-		https://github.com/daemonblade/eclipse-maven-repo/archive:mvn_repo
-ECLIPSE_SUFX=	${PORTVERSION:C/^([0-9]+)\.([0-9]+)/R\1_\2/}.tar.xz
+MASTER_SITES= 	https://git.eclipse.org/c/jdt/:jdt \
+		https://git.eclipse.org/c/pde/:pde \
+		https://git.eclipse.org/c/plateform/:platform \
+		https://git.eclipse.org/c/equinox/:equinox \
+		GH:mvn_repo
+#ECLIPSE_TAG=	${PORTVERSION:C/^([0-9]+)\.([0-9]+)/R\1_\2/}.tar.xz
+ECLIPSE_TAG=	${PORTVERSION:C/^([0-9]+)\.([0-9]+)/S\1_\2/}_0_RC2
+ECLIPSE_SUFX=	${ECLIPSE_TAG}.tar.xz
 DISTFILES=	eclipse.jdt-${ECLIPSE_SUFX}:jdt \
 		eclipse.jdt.core-${ECLIPSE_SUFX}:jdt \
 		eclipse.jdt.core.binaries-${ECLIPSE_SUFX}:jdt \
@@ -21,6 +23,7 @@ DISTFILES=	eclipse.jdt-${ECLIPSE_SUFX}:jdt \
 		eclipse.platform.common-${ECLIPSE_SUFX}:platform \
 		eclipse.platform.debug-${ECLIPSE_SUFX}:platform \
 		eclipse.platform.releng-${ECLIPSE_SUFX}:platform \
+		eclipse.platform.releng.aggregator-${ECLIPSE_SUFX}:platform \
 		eclipse.platform.resources-${ECLIPSE_SUFX}:platform \
 		eclipse.platform.runtime-${ECLIPSE_SUFX}:platform \
 		eclipse.platform.swt-${ECLIPSE_SUFX}:platform \
@@ -34,8 +37,11 @@ DISTFILES=	eclipse.jdt-${ECLIPSE_SUFX}:jdt \
 		rt.equinox.bundles-${ECLIPSE_SUFX}:equinox \
 		rt.equinox.framework-${ECLIPSE_SUFX}:equinox \
 		rt.equinox.p2-${ECLIPSE_SUFX}:equinox \
-		eclipse-maven-repo-${PORTVERSION}:mvn_repo
+		maven-repo-${PORTVERSION}.tar.gz:mvn_repo
 DIST_SUBDIR=	${PORTNAME}
+USE_GH=		yes
+GH_ACCOUNT=	daemonblade
+GH_PROJECT=	maven-repo
 
 MAINTAINER=	jonc@chen.org.nz
 
@@ -48,5 +54,7 @@ ONLY_FOR_ARCHS=	amd64
 
 USE_JAVA=       yes
 JAVA_VERSION=   1.8+
+
+WRKSRC=		${WRKDIR}/eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
 
 .include <bsd.port.mk>

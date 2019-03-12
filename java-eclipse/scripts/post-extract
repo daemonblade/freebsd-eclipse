@@ -3,7 +3,6 @@
 #
 # Move sub-projects into the right place
 #
-ECLIPSE_TOP="eclipse.platform.releng.aggregator"
 ECLIPSE_MODULES="
 	eclipse.jdt
 	eclipse.jdt.core
@@ -30,23 +29,9 @@ ECLIPSE_MODULES="
 	rt.equinox.framework
 	rt.equinox.p2"
 
-mv ${AGGR_MODULE}-${ECLIPSE_TAG} ${AGGR_MODULE}
-
+cd ${WRKSRC}
 for M in ${ECLIPSE_MODULES}
 do
-	MODULE=$(basename $M)
-	SNAP="${MODULE}-${ECLIPSE_TAG}"
-	SUBDIR="${AGGR_MODULE}/${MODULE}"
-	ARCHIVE="distfiles/${SNAP}.tar.xz"
-
-	if [ ! -r ${ARCHIVE} ]
-	then
-		echo "FATAL: ${ARCHIVE} not found"
-		exit 1
-	fi
-
-	echo "INFO: Unpacking ${M}"
-	rm -rf ${SUBDIR}
-	tar xf ${ARCHIVE}
-	mv ${SNAP} ${SUBDIR}
+	rm -r ${M}
+	mv ${WRKDIR}/${M}-* ${M}
 done
