@@ -236,7 +236,7 @@ diff -ru eclipse.platform.swt/pom.xml eclipse.platform.swt/pom.xml
  	</os>
        </activation>
  	  <modules>
-+		<!-- disable test
++		<!-- disabled
  	    <module>tests/org.eclipse.swt.tests.gtk</module>
 +		  -->
  	  </modules>
@@ -246,7 +246,7 @@ diff -ru eclipse.platform.swt/pom.xml eclipse.platform.swt/pom.xml
      <module>examples/org.eclipse.swt.examples.ole.win32</module>
      <module>examples/org.eclipse.swt.examples.views</module>
      <module>tests/org.eclipse.swt.tests.fragments.feature</module>
-+	<!-- disable test
++	<!-- disabled
      <module>tests/org.eclipse.swt.tests</module>
 +	  -->
      <module>features/org.eclipse.swt.tools.feature</module>

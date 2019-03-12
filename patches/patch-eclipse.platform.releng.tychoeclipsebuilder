@@ -1,3 +1,22 @@
+diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse/getBaseBuilderAndTools.xml eclipse.platform.releng.tychoeclipsebuilder/eclipse/getBaseBuilderAndTools.xml
+--- eclipse.platform.releng.tychoeclipsebuilder/eclipse/getBaseBuilderAndTools.xml	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.releng.tychoeclipsebuilder/eclipse/getBaseBuilderAndTools.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -111,7 +111,7 @@
+     -->
+     <property
+       name="platformFile"
+-      value="eclipse-platform-${eclispeBaseLabel}-linux-gtk-x86_64.tar.gz" />
++      value="eclipse-platform-${eclispeBaseLabel}-freebsd-gtk-amd64.tar.gz" />
+ 
+     <!--
+       mavenproperties.properties is produced during the build and contains
+@@ -334,4 +334,4 @@
+       file="${settingsDir}/org.eclipse.core.net.prefs" />
+   </target>
+ 
+-</project>
+\ No newline at end of file
++</project>
 diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/testManifest.xml eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/testManifest.xml
 --- eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/testManifest.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/testManifest.xml	0000-00-00 00:00:00.000000000 +0000
@@ -187,6 +206,19 @@ diff -ru eclipse.platform.releng.tychoeclipsebuilder/platform.sdk/platform.sdk.p
        <macosx icon="icons/Eclipse.icns"/>
        <win useIco="true">
           <ico path="icons/eclipse.ico"/>
+diff -ru eclipse.platform.releng.tychoeclipsebuilder/pom.xml eclipse.platform.releng.tychoeclipsebuilder/pom.xml
+--- eclipse.platform.releng.tychoeclipsebuilder/pom.xml	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.releng.tychoeclipsebuilder/pom.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -36,7 +36,9 @@
+     <module>platform</module>
+     <module>platform.sdk</module>
+     <module>sdk</module>
++	<!-- disabled
+     <module>eclipse-junit-tests</module>
++	  -->
+     <module>eclipse.platform.repository</module>
+   </modules>
+ </project>
 diff -ru eclipse.platform.releng.tychoeclipsebuilder/rcp/rcp.product eclipse.platform.releng.tychoeclipsebuilder/rcp/rcp.product
 --- eclipse.platform.releng.tychoeclipsebuilder/rcp/rcp.product	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/rcp/rcp.product	0000-00-00 00:00:00.000000000 +0000
