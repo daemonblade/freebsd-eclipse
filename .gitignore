@@ -9,3 +9,4 @@ eclipse.platform.releng.aggregator
 # Build artifacts
 maven-repo.*
 *.log
+*.gz
