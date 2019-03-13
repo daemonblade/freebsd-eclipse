@@ -4,7 +4,7 @@
 # Attempt eclipse build
 #
 ARCH=$(uname -p)
-export MAVEN_OPT="-Xmx2048m"
+export MAVEN_OPTS="-Xmx1024m"
 
 if [ ! -x bin/$(basename $0) ]
 then

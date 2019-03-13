@@ -57,4 +57,11 @@ JAVA_VERSION=   1.8+
 
 WRKSRC=		${WRKDIR}/eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
 
+MAVEN_OPTS=	MAVEN_OPTS=-Xmx1024m 
+MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/maven-repo
+MAVEN_NATIVE=	-Dnative=gtk.freebsd.${ARCH}
+
+do-build:
+	cd ${WRKSRC} && ${SETENV} ${MAVEN_OPTS} mvn --offline ${MAVEN_REPO} ${MAVEN_NATIVE} -DskipTests clean verify
+
 .include <bsd.port.mk>
