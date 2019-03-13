@@ -36,6 +36,7 @@ for D in ${LINUX_DIRS}
 do
 	if [ ! -e ${D} ]
 	then
+		echo "ERROR: ${D} not found"
 		continue
 	fi
 

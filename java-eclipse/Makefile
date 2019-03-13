@@ -19,6 +19,7 @@ ECLIPSE_MODULES=jdt/eclipse.jdt \
 		platform/eclipse.platform.common \
 		platform/eclipse.platform.debug \
 		platform/eclipse.platform.releng \
+		platform/eclipse.platform.releng.aggregator \
 		platform/eclipse.platform.resources \
 		platform/eclipse.platform.runtime \
 		platform/eclipse.platform.swt \
@@ -40,14 +41,15 @@ DISTFILES+=	${M:C/.*\///}-${ECLIPSE_SUFX}:${M:C/[\.\/]//g}
 
 DIST_SUBDIR=	${PORTNAME}
 USE_GITHUB=	yes
-GH_TUPLE=	daemonblade:maven-repo:${PORTVERSION}
+GH_ACCOUNT=	daemonblade
+GH_PROJECT=	maven-repo
+GH_TAGNAME=	${PORTVERSION}
 
 MAINTAINER=	jonc@chen.org.nz
 
 LICENSE=	EPL
 
-BUILD_DEPENDS=	ant:devel/apache-ant \
-		git:devel/git-lite \
+BUILD_DEPENDS=	git:devel/git-lite \
 		${LOCALBASE}/share/java/maven/bin/mvn:devel/maven
 LIB_DEPENDS=	libsecret-1.so:security/libsecret
 USES=		gmake pkgconfig
@@ -58,11 +60,12 @@ ONLY_FOR_ARCHS=	amd64 power64
 USE_JAVA=       yes
 JAVA_VERSION=   1.8+
 
-WRKSRC=		${WRKDIR}/eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
-
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m 
-MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/maven-repo
+MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
 MAVEN_NATIVE=	-Dnative=gtk.freebsd.${ARCH}
+
+# Let's abuse this to get to the right place.
+WRKSRC_SUBDIR=	../eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
 
 do-build:
 	cd ${WRKSRC} && ${SETENV} ${MAVEN_ENV} mvn --offline ${MAVEN_REPO} ${MAVEN_NATIVE} -DskipTests clean verify

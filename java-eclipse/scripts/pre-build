@@ -5,6 +5,9 @@
 cd ${WRKSRC}
 
 # Create repo for jgit
-git init
-git add pom.xml
-git commit -m "Dummy" ${FILE}
+if [ ! -d .git ]
+then
+	git init
+	git add pom.xml
+	git commit -m "Dummy" ${FILE}
+fi
