@@ -47,7 +47,11 @@ MAINTAINER=	jonc@chen.org.nz
 
 LICENSE=	EPL
 
-BUILD_DEPENDS=	${LOCALBASE}/share/java/maven/bin/mvn:devel/maven
+BUILD_DEPENDS=	ant:devel/apache-ant \
+		git:devel/git-lite \
+		${LOCALBASE}/share/java/maven/bin/mvn:devel/maven
+LIB_DEPENDS=	libsecret-1.so:security/libsecret
+USES=		gmake pkgconfig
 USE_GNOME=	gtk30
 
 ONLY_FOR_ARCHS=	amd64
