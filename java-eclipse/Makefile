@@ -37,10 +37,10 @@ DISTFILES=	eclipse.jdt-${ECLIPSE_SUFX}:jdt \
 		rt.equinox.bundles-${ECLIPSE_SUFX}:equinox \
 		rt.equinox.framework-${ECLIPSE_SUFX}:equinox \
 		rt.equinox.p2-${ECLIPSE_SUFX}:equinox \
-		eclipse-maven-repo-${PORTVERSION}.tar.gz:mvn_repo
+		daemonblade-maven-repo-${PORTVERSION}_GH0.tar.gz:mvn_repo
 DIST_SUBDIR=	${PORTNAME}
 USE_GITHUB=	yes
-GH_TUPLE=	daemonblade:eclipse-maven-repo:${PORTVERSION}
+GH_TUPLE=	daemonblade:maven-repo:${PORTVERSION}
 
 MAINTAINER=	jonc@chen.org.nz
 
@@ -61,7 +61,7 @@ JAVA_VERSION=   1.8+
 WRKSRC=		${WRKDIR}/eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
 
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m 
-MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/eclipse-maven-repo
+MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/maven-repo
 MAVEN_NATIVE=	-Dnative=gtk.freebsd.${ARCH}
 
 do-build:
