@@ -2,7 +2,7 @@
 # $FreeBSD$
 
 PORTNAME=   	eclipse
-PORTVERSION=    4.11
+PORTVERSION=    4.11.RC2
 CATEGORIES= 	java devel
 MASTER_SITES= 	https://git.eclipse.org/c/jdt/:jdt \
 		https://git.eclipse.org/c/pde/:pde \
@@ -10,7 +10,7 @@ MASTER_SITES= 	https://git.eclipse.org/c/jdt/:jdt \
 		https://git.eclipse.org/c/equinox/:equinox \
 		GH:mvn_repo
 #ECLIPSE_TAG=	${PORTVERSION:C/^([0-9]+)\.([0-9]+)/R\1_\2/}.tar.xz
-ECLIPSE_TAG=	${PORTVERSION:C/^([0-9]+)\.([0-9]+)/S\1_\2/}_0_RC2
+ECLIPSE_TAG=	S4_11_0_RC2
 ECLIPSE_SUFX=	${ECLIPSE_TAG}.tar.xz
 DISTFILES=	eclipse.jdt-${ECLIPSE_SUFX}:jdt \
 		eclipse.jdt.core-${ECLIPSE_SUFX}:jdt \
@@ -37,11 +37,10 @@ DISTFILES=	eclipse.jdt-${ECLIPSE_SUFX}:jdt \
 		rt.equinox.bundles-${ECLIPSE_SUFX}:equinox \
 		rt.equinox.framework-${ECLIPSE_SUFX}:equinox \
 		rt.equinox.p2-${ECLIPSE_SUFX}:equinox \
-		maven-repo-${PORTVERSION}.tar.gz:mvn_repo
+		eclipse-maven-repo-${PORTVERSION}.tar.gz:mvn_repo
 DIST_SUBDIR=	${PORTNAME}
-USE_GH=		yes
-GH_ACCOUNT=	daemonblade
-GH_PROJECT=	maven-repo
+USE_GITHUB=	yes
+GH_TUPLE=	daemonblade:eclipse-maven-repo:${PORTVERSION}
 
 MAINTAINER=	jonc@chen.org.nz
 
@@ -54,7 +53,7 @@ LIB_DEPENDS=	libsecret-1.so:security/libsecret
 USES=		gmake pkgconfig
 USE_GNOME=	gtk30
 
-ONLY_FOR_ARCHS=	amd64
+ONLY_FOR_ARCHS=	amd64 power64
 
 USE_JAVA=       yes
 JAVA_VERSION=   1.8+
@@ -62,7 +61,7 @@ JAVA_VERSION=   1.8+
 WRKSRC=		${WRKDIR}/eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
 
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m 
-MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/maven-repo
+MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/eclipse-maven-repo
 MAVEN_NATIVE=	-Dnative=gtk.freebsd.${ARCH}
 
 do-build:

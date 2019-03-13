@@ -31,13 +31,6 @@ ECLIPSE_MODULES="
 
 cd ${WRKSRC}
 
-# Create repo for jgit
-git init
-FILE=date-$(date +%Y-%M-%d)
-touch ${FILE}
-git add ${FILE}
-git commit -m "Dummy" ${FILE}
-
 # Reorg
 for M in ${ECLIPSE_MODULES}
 do

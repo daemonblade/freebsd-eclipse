@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# Build quirks
+#
+cd ${WRKSRC}
+
+# Create repo for jgit
+git init
+git add pom.xml
+git commit -m "Dummy" ${FILE}
