@@ -61,6 +61,8 @@ ONLY_FOR_ARCHS=	amd64 power64
 USE_JAVA=       yes
 JAVA_VERSION=   1.8+
 
+SUB_FILES=	${PORTNAME}.in
+
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m 
 MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
 MAVEN_NATIVE=	-Dnative=gtk.freebsd.${ARCH}
@@ -76,5 +78,6 @@ do-build:
 do-install:
 	${MKDIR} ${STAGEDIR}${DATADIR}
 	${TAR} -x --directory ${STAGEDIR}${DATADIR} --file ${WRKSRC}/${ECLIPSE_RESULT}
+	${INSTALL_SCRIPT} ${WRKDIR}/${PORTNAME} ${STAGEDIR}${PREFIX}/bin
 
 .include <bsd.port.mk>
