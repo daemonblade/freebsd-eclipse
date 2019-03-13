@@ -7,8 +7,7 @@ CATEGORIES= 	java devel
 MASTER_SITES= 	https://git.eclipse.org/c/jdt/:jdt \
 		https://git.eclipse.org/c/pde/:pde \
 		https://git.eclipse.org/c/plateform/:platform \
-		https://git.eclipse.org/c/equinox/:equinox \
-		GH:mvn_repo
+		https://git.eclipse.org/c/equinox/:equinox
 #ECLIPSE_TAG=	${PORTVERSION:C/^([0-9]+)\.([0-9]+)/R\1_\2/}.tar.xz
 ECLIPSE_TAG=	S4_11_0_RC2
 ECLIPSE_SUFX=	${ECLIPSE_TAG}.tar.xz
@@ -36,8 +35,7 @@ DISTFILES=	eclipse.jdt-${ECLIPSE_SUFX}:jdt \
 		rt.equinox.binaries-${ECLIPSE_SUFX}:equinox \
 		rt.equinox.bundles-${ECLIPSE_SUFX}:equinox \
 		rt.equinox.framework-${ECLIPSE_SUFX}:equinox \
-		rt.equinox.p2-${ECLIPSE_SUFX}:equinox \
-		daemonblade-maven-repo-${PORTVERSION}_GH0.tar.gz:mvn_repo
+		rt.equinox.p2-${ECLIPSE_SUFX}:equinox
 DIST_SUBDIR=	${PORTNAME}
 USE_GITHUB=	yes
 GH_TUPLE=	daemonblade:maven-repo:${PORTVERSION}
