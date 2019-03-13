@@ -51,8 +51,9 @@ LICENSE=	EPL
 
 BUILD_DEPENDS=	git:devel/git-lite \
 		${LOCALBASE}/share/java/maven/bin/mvn:devel/maven
-LIB_DEPENDS=	libsecret-1.so:security/libsecret
-USES=		gmake pkgconfig
+LIB_DEPENDS=	libsecret-1.so:security/libsecret \
+		libwebkit2gtk-4.0.so:www/webkit2-gtk3
+USES=		gmake pkgconfig gnome
 USE_GNOME=	gtk30
 
 ONLY_FOR_ARCHS=	amd64 power64
