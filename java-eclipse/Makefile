@@ -66,7 +66,7 @@ SUB_FILES=	${PORTNAME}.in
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m 
 MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
 MAVEN_NATIVE=	-Dnative=gtk.freebsd.${ARCH}
-P2_STUB=	-Dcomparator.repo=file://${WRKSRC}
+P2_STUB=	-Dcomparator.repo=file://${WRKSRC}/p2-stub
 
 ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
 
