@@ -66,6 +66,7 @@ SUB_FILES=	${PORTNAME}.in
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m 
 MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
 MAVEN_NATIVE=	-Dnative=gtk.freebsd.${ARCH}
+P2_STUB=	-Dcomparator.repo=file://${WRKSRC}
 
 ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
 
@@ -73,7 +74,7 @@ ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/
 WRKSRC_SUBDIR=	../eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
 
 do-build:
-	cd ${WRKSRC} && ${SETENV} ${MAVEN_ENV} mvn --offline ${MAVEN_REPO} ${MAVEN_NATIVE} -DskipTests clean verify
+	cd ${WRKSRC} && ${SETENV} ${MAVEN_ENV} mvn --offline ${MAVEN_REPO} ${MAVEN_NATIVE} ${P2_STUB} -DskipTests clean verify
 
 do-install:
 	${MKDIR} ${STAGEDIR}${DATADIR}

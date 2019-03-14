@@ -20,7 +20,7 @@ then
 	exit 1
 fi
 
-BUILD_SUFFIX=$(echo $* | tr -d '[:space:]')
+BUILD_SUFFIX=$(echo $* | tr -d '[:space:]/')
 
 REPO="maven-repo.${ECLIPSE_TAG}"
 mkdir -p ${REPO}
