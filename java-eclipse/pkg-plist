@@ -280,10 +280,6 @@ bin/eclipse
 %%DATADIR%%/p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profile/.data/.settings/org.eclipse.equinox.p2.metadata.repository.prefs
 %%DATADIR%%/p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profile/.data/org.eclipse.equinox.internal.p2.touchpoint.eclipse.actions/jvmargs
 %%DATADIR%%/p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profile/.lock
-%%DATADIR%%/p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profile/1552635532332.profile.gz
-%%DATADIR%%/p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profile/1552635532334.profile.gz
-%%DATADIR%%/p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profile/1552635539087.profile.gz
-%%DATADIR%%/p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profile/1552635539803.profile.gz
 %%DATADIR%%/plugins/com.google.gson.source_2.8.2.v20180104-1110.jar
 %%DATADIR%%/plugins/com.google.gson_2.8.2.v20180104-1110.jar
 %%DATADIR%%/plugins/com.ibm.icu.source_63.1.0.v20181030-1705.jar

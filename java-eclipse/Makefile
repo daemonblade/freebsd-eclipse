@@ -73,6 +73,7 @@ MAVEN_NATIVE=	-Dnative=gtk.freebsd.${ARCH}
 P2_STUB=	-Dcomparator.repo=file://${WRKSRC}/p2-stub -DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
 ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
+ECLIPSE_PROFS=	p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profile
 
 # Let's abuse this to get to the right place.
 WRKSRC_SUBDIR=	../eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
@@ -83,6 +84,7 @@ do-build:
 do-install:
 	${MKDIR} ${STAGEDIR}${DATADIR}
 	${TAR} -x --directory ${STAGEDIR}${DATADIR}/.. --file ${WRKSRC}/${ECLIPSE_RESULT}
+	${RM} ${STAGEDIR}${DATADIR}/${ECLIPSE_PROFS}/*.profile.gz
 	${INSTALL_SCRIPT} ${WRKDIR}/${PORTNAME} ${STAGEDIR}${PREFIX}/bin
 
 .include <bsd.port.mk>
