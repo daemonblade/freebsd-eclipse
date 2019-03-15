@@ -5,8 +5,11 @@ PORTNAME=   	eclipse
 PORTVERSION=    4.11.RC2
 CATEGORIES= 	java devel
 
+# Update to git-tag and approx timestamp
 #ECLIPSE_TAG=	${PORTVERSION:C/^([0-9]+)\.([0-9]+)/R\1_\2/}.tar.xz
 ECLIPSE_TAG=	S4_11_0_RC2
+ECLIPSE_TSTAMP=	20190308-0216
+
 ECLIPSE_SUFX=	${ECLIPSE_TAG}.tar.xz
 ECLIPSE_MODULES=jdt/eclipse.jdt \
 		jdt/eclipse.jdt.core \
@@ -67,7 +70,7 @@ SUB_LIST=	JAVA_HOME=${JAVA_HOME}
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m 
 MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
 MAVEN_NATIVE=	-Dnative=gtk.freebsd.${ARCH}
-P2_STUB=	-Dcomparator.repo=file://${WRKSRC}/p2-stub
+P2_STUB=	-Dcomparator.repo=file://${WRKSRC}/p2-stub -DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
 ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
 
