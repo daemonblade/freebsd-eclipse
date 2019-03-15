@@ -11,8 +11,8 @@ FreeBSD's /usr/ports/java/eclipse.
 * **java-eclipse** Port to be eventually released to /usr/ports/java/eclipse
 * **java-eclipse/files/patch-** Generated patches to port Eclipse to FreeBSD
 * **eclipse.platform.releng.aggregator (generated)** working copy
-* **.baseline.eclipse.platform.releng.aggregator (generated) ** pristine unpacked tree
-* **.patched.eclipse.platform.releng.aggregator (generated) ** patched tree without build artifacts
+* **.baseline.eclipse.platform.releng.aggregator (generated)** pristine unpacked tree
+* **.patched.eclipse.platform.releng.aggregator (generated)** patched tree without build artifacts
 * **maven-repo._tag_ (generated)** Maven repository for build, (to be used for port-build on FreeBSD)
 
 # Prerequisite Ports
