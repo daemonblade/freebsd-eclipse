@@ -82,7 +82,7 @@ do-build:
 
 do-install:
 	${MKDIR} ${STAGEDIR}${DATADIR}
-	${TAR} -x --directory ${STAGEDIR}${DATADIR} --file ${WRKSRC}/${ECLIPSE_RESULT}
+	${TAR} -x --directory ${STAGEDIR}${DATADIR}/.. --file ${WRKSRC}/${ECLIPSE_RESULT}
 	${INSTALL_SCRIPT} ${WRKDIR}/${PORTNAME} ${STAGEDIR}${PREFIX}/bin
 
 .include <bsd.port.mk>
