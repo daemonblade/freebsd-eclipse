@@ -316,12 +316,13 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/fe
 diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh
 --- rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/build.sh	0000-00-00 00:00:00.000000000 +0000
-@@ -126,8 +126,12 @@
+@@ -126,8 +126,13 @@
  				;;
  		esac
  		;;
 +	FreeBSD|freebsd)
 +		defaultOS="freebsd"
++		defaultJava=DEFAULT_JAVA_EXEC
 +		makefile="make_linux.mak"
 +		;;
  	*)
@@ -330,7 +331,7 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/li
  	;;
  esac
  export CC
-@@ -169,19 +173,20 @@
+@@ -169,19 +174,20 @@
  
  LIBRARY_DIR="$EXEC_DIR/../org.eclipse.equinox.launcher.$defaultWS.$defaultOS.$defaultOSArch"
  OUTPUT_DIR="$EXEC_DIR/bin/$defaultWS/$defaultOS/$defaultOSArch"
@@ -358,13 +359,14 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/li
 diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak
 --- rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/library/gtk/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
-@@ -91,10 +91,10 @@
+@@ -91,10 +91,11 @@
   -DGTK3_LIB="\"libgtk-3.so.0\"" -DGDK3_LIB="\"libgdk-3.so.0\"" \
   -DPIXBUF_LIB="\"libgdk_pixbuf-2.0.so.0\"" -DGOBJ_LIB="\"libgobject-2.0.so.0\"" \
   -DGIO_LIB="\"libgio-2.0.so.0\"" -DGLIB_LIB="\"libglib-2.0.so.0\""
 -LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic 
 -CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -s -Wall\
-+LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic -L/usr/local/lib
++port_prefix=`pkg-config --variable=prefix gtk+-3.0`
++LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic -L$(port_prefix)/lib
 +CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -Wall\
  	-fpic \
 -	-DLINUX \
@@ -372,12 +374,12 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/li
  	-DDEFAULT_OS="\"$(DEFAULT_OS)\"" \
  	-DDEFAULT_OS_ARCH="\"$(DEFAULT_OS_ARCH)\"" \
  	-DDEFAULT_WS="\"$(DEFAULT_WS)\"" \
-@@ -102,7 +102,8 @@
+@@ -102,7 +103,8 @@
  	$(GTK_LIBS) \
  	-I. \
  	-I.. \
 -	-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux \
-+	-I/usr/local/include \
++	-I$(port_prefix)/include \
 +	-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/freebsd \
  	`pkg-config --cflags gtk+-3.0`
  
