@@ -35,7 +35,7 @@ REPO_PATH=$(realpath ${REPO})
 ) | tee build-$(date '+%Y%m%d-%H%M')${BUILD_SUFFIX}.log
 
 RESULT="org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz"
-SOURCE="${TOP_MODULE}/eclipse.platform.releng.aggregator/eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/${RESULT}"
+SOURCE="${TOP_MODULE}/eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/${RESULT}"
 
 rm -f ${RESULT}
 if [ -e ${SOURCE} ]
