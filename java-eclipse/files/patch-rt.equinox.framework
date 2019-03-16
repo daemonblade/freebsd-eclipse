@@ -366,7 +366,7 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/li
 -LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic 
 -CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -s -Wall\
 +port_prefix=`pkg-config --variable=prefix gtk+-3.0`
-+LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic -L$(port_prefix)/lib
++LFLAGS = ${M_ARCH} -shared --export-dynamic --strip-all -L$(prefix)/lib
 +CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -Wall\
  	-fpic \
 -	-DLINUX \
@@ -384,6 +384,20 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/li
  	`pkg-config --cflags gtk+-3.0`
  
  all: $(EXEC) $(DLL)
+@@ -140,11 +142,11 @@
+ 
+ $(EXEC): $(MAIN_OBJS) $(COMMON_OBJS)
+ 	$(info Linking and generating: $(EXEC))
+-	$(CC) ${M_ARCH} -o $(EXEC) $(MAIN_OBJS) $(COMMON_OBJS) $(LIBS)
++	$(CC) ${M_ARCH} -s -o $(EXEC) $(MAIN_OBJS) $(COMMON_OBJS) $(LIBS)
+ 
+ $(DLL): $(DLL_OBJS) $(COMMON_OBJS)
+ 	$(info Linking and generating: $(DLL))
+-	$(CC) $(LFLAGS) -o $(DLL) $(DLL_OBJS) $(COMMON_OBJS) $(LIBS)
++	$(LD) $(LFLAGS) -s -o $(DLL) $(DLL_OBJS) $(COMMON_OBJS) $(LIBS)
+ 
+ install: all
+ 	cp $(EXEC) $(OUTPUT_DIR)
 diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/pom.xml rt.equinox.framework/features/org.eclipse.equinox.executable.feature/pom.xml
 --- rt.equinox.framework/features/org.eclipse.equinox.executable.feature/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/pom.xml	0000-00-00 00:00:00.000000000 +0000
