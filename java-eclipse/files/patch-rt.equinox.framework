@@ -394,7 +394,7 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/li
  $(DLL): $(DLL_OBJS) $(COMMON_OBJS)
  	$(info Linking and generating: $(DLL))
 -	$(CC) $(LFLAGS) -o $(DLL) $(DLL_OBJS) $(COMMON_OBJS) $(LIBS)
-+	$(LD) $(LFLAGS) -s -o $(DLL) $(DLL_OBJS) $(COMMON_OBJS) $(LIBS)
++	$(LD) $(LFLAGS) -o $(DLL) $(DLL_OBJS) $(COMMON_OBJS) $(LIBS)
  
  install: all
  	cp $(EXEC) $(OUTPUT_DIR)
