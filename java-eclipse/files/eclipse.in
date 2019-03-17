@@ -15,7 +15,7 @@ ECLIPSE_HOME=%%DATADIR%%
 
 # Determine the JDK home directory
 if [ -z "${JAVA_HOME}" ]; then
-	JAVA_HOME=${DEFAULT_JAVA_HOME}
+	export JAVA_HOME=${DEFAULT_JAVA_HOME}
 fi
 
 # Check if 'eclipse' executable can be found
