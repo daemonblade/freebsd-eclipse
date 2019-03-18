@@ -54,12 +54,16 @@ diff -ru rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/k
  
  all: ../libkeystorelinuxnative.so
  
-@@ -12,7 +12,7 @@
- 	$(CC) $(CFLAGS) -o $@ $< $(LIBSECRET_LIBS)
+@@ -9,10 +9,10 @@
+ 	rm ../libkeystorelinuxnative.so ../target/keystoreLinuxNative.o
+ 	
+ ../libkeystorelinuxnative.so: ../target/keystoreLinuxNative.o
+-	$(CC) $(CFLAGS) -o $@ $< $(LIBSECRET_LIBS)
++	$(CC) $(CFLAGS) -s -o $@ $< $(LIBSECRET_LIBS)
  	
  ../target/keystoreLinuxNative.o: ../target keystoreLinuxNative.c
 -	$(CC) -c -fPIC -I"${JAVA_HOME}/include" -I"${JAVA_HOME}/include/linux" -o $@ $(TESTFLAGS) $(LIBSECRET_CFLAGS) keystoreLinuxNative.c
-+	$(CC) -c -fPIC -I"${JAVA_HOME}/include" -I"${JAVA_HOME}/include/freebsd" -s -o $@ $(TESTFLAGS) $(LIBSECRET_CFLAGS) keystoreLinuxNative.c
++	$(CC) -c -fPIC -I"${JAVA_HOME}/include" -I"${JAVA_HOME}/include/freebsd" -o $@ $(TESTFLAGS) $(LIBSECRET_CFLAGS) keystoreLinuxNative.c
  
  ../target: 
  	mkdir -p ../target
