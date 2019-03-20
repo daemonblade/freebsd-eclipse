@@ -62,7 +62,28 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
  fi
  case $MODEL in
  	"x86_64")
-@@ -364,4 +357,4 @@
+@@ -194,7 +187,7 @@
+ 
+ 
+ # For 64-bit CPUs, we have a switch
+-if [ ${MODEL} = 'x86_64' -o ${MODEL} = 'ia64' -o ${MODEL} = 's390x' -o ${MODEL} = 'ppc64le' -o ${MODEL} = 'aarch64' ]; then
++if [ ${MODEL} = 'amd64' -o ${MODEL} = 'ia64' -o ${MODEL} = 's390x' -o ${MODEL} = 'ppc64le' -o ${MODEL} = 'aarch64' ]; then
+ 	SWT_PTR_CFLAGS=-DJNI64
+ 	if [ -d /lib64 ]; then
+ 		XLIB64=-L/usr/X11R6/lib64
+@@ -205,6 +198,11 @@
+ 		XLIB64="${XLIB64} -L/usr/lib64"
+ 		SWT_LFLAGS=-m64
+ 		export SWT_LFLAGS
++	fi
++	if [ ${SWT_OS} = "freebsd" ]
++	then
++		SWT_PTR_CFLAGS="${SWT_PTR_CFLAGS} -m64"
++		export SWT_LFLAGS=-m64
+ 	fi
+ 	export SWT_PTR_CFLAGS
+ fi
+@@ -364,4 +362,4 @@
  elif [ "${GTK_VERSION}" = "3.0" -o "${GTK_VERSION}" = "" ]; then
  	export GTK_VERSION="3.0"
  	func_build_gtk3 "$@"
@@ -72,7 +93,7 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak
 --- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
-@@ -101,16 +101,19 @@
+@@ -101,16 +101,18 @@
  WEBKIT_OBJECTS = swt.o webkitgtk.o webkitgtk_structs.o webkitgtk_stats.o webkitgtk_custom.o
  GLX_OBJECTS = swt.o glx.o glx_structs.o glx_stats.o
  
@@ -84,7 +105,6 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
  		$(SWT_WEBKIT_DEBUG) \
 -		-DLINUX -DGTK \
 +		-DFREEBSD -DGTK \
-+		-DJNI64 -m64 \
 +		-I$(port_prefix)/include \
  		-I$(JAVA_HOME)/include \
 -		-I$(JAVA_HOME)/include/linux \
@@ -95,7 +115,7 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
  
  ifndef NO_STRIP
  	# -s = Remove all symbol table and relocation information from the executable.
-@@ -253,10 +256,6 @@
+@@ -253,10 +255,6 @@
  	cp $(ALL_SWT_LIBS) $(OUTPUT_DIR)
  ifeq ($(BUILD_WEBKIT2EXTENSION),yes)
  	@# Copy webextension into it's own folder, but create folder first.
