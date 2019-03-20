@@ -13,15 +13,6 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/.classpath_gtk eclipse.pla
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java
 --- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java	0000-00-00 00:00:00.000000000 +0000
-@@ -52,7 +52,7 @@
- 
- 
- 	/* 64-bit support */
--	static final boolean IS_64 = longConst() == (long /*int*/)longConst();
-+	static final boolean IS_64 = true;
- 	static final String SUFFIX_64 = "-64";	//$NON-NLS-1$
- 	static final String SWT_LIB_DIR;
- 
 @@ -68,12 +68,12 @@
  static String arch() {
  	String osArch = System.getProperty("os.arch"); //$NON-NLS-1$
@@ -81,7 +72,7 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak
 --- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library/make_linux.mak	0000-00-00 00:00:00.000000000 +0000
-@@ -101,16 +101,18 @@
+@@ -101,16 +101,19 @@
  WEBKIT_OBJECTS = swt.o webkitgtk.o webkitgtk_structs.o webkitgtk_stats.o webkitgtk_custom.o
  GLX_OBJECTS = swt.o glx.o glx_structs.o glx_stats.o
  
@@ -93,17 +84,18 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
  		$(SWT_WEBKIT_DEBUG) \
 -		-DLINUX -DGTK \
 +		-DFREEBSD -DGTK \
++		-DJNI64 -m64 \
 +		-I$(port_prefix)/include \
  		-I$(JAVA_HOME)/include \
 -		-I$(JAVA_HOME)/include/linux \
 +		-I$(JAVA_HOME)/include/freebsd \
  		${SWT_PTR_CFLAGS}
 -LFLAGS = -shared -fPIC ${SWT_LFLAGS}
-+LFLAGS = -shared -fPIC ${SWT_LFLAGS} -L$(port_prefix)/lib
++LFLAGS = -shared -fPIC -m64 ${SWT_LFLAGS} -L$(port_prefix)/lib
  
  ifndef NO_STRIP
  	# -s = Remove all symbol table and relocation information from the executable.
-@@ -253,10 +255,6 @@
+@@ -253,10 +256,6 @@
  	cp $(ALL_SWT_LIBS) $(OUTPUT_DIR)
  ifeq ($(BUILD_WEBKIT2EXTENSION),yes)
  	@# Copy webextension into it's own folder, but create folder first.
