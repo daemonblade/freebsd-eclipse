@@ -377,7 +377,7 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/li
 -LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic 
 -CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -s -Wall\
 +port_prefix=`pkg-config --variable=prefix gtk+-3.0`
-+LFLAGS = ${M_ARCH} -shared --export-dynamic --strip-all
++LFLAGS = -shared --export-dynamic --strip-all
 +CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -Wall\
  	-fpic \
 -	-DLINUX \
