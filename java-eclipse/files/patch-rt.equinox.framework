@@ -331,7 +331,18 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/li
  	;;
  esac
  export CC
-@@ -169,19 +174,20 @@
+@@ -149,7 +154,9 @@
+ 	export JAVA_HOME
+ fi
+ 
+-if [ $defaultOSArch = "ppc64le" ];  then
++if [ $defaultOSArch = "amd64" ];  then
++	export M_ARCH=-m64
++elif [ $defaultOSArch = "ppc64le" ];  then
+ 	M_ARCH=-m64
+ 	export M_ARCH
+ elif [ "$defaultOSArch" = "s390" ];  then
+@@ -169,19 +176,20 @@
  
  LIBRARY_DIR="$EXEC_DIR/../org.eclipse.equinox.launcher.$defaultWS.$defaultOS.$defaultOSArch"
  OUTPUT_DIR="$EXEC_DIR/bin/$defaultWS/$defaultOS/$defaultOSArch"
