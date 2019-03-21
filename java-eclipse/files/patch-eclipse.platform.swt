@@ -159,6 +159,20 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/META-INF/p2.inf eclipse.pl
  requires.5.range = [$version$,$version$]
 -requires.5.filter = (&(osgi.os=linux)(osgi.ws=gtk)(osgi.arch=ppc64le)(!(org.eclipse.swt.buildtime=true)))
 +requires.5.filter = (&(osgi.os=freebsd)(osgi.ws=gtk)(osgi.arch=powerpc64)(!(org.eclipse.swt.buildtime=true)))
+diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/buildFragment.xml eclipse.platform.swt/bundles/org.eclipse.swt/buildFragment.xml
+--- eclipse.platform.swt/bundles/org.eclipse.swt/buildFragment.xml	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.swt/bundles/org.eclipse.swt/buildFragment.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -237,8 +237,9 @@
+ 		<condition property="is64" value="true">
+ 			<or>
+ 				<equals arg1="${swt.arch}" arg2="x86_64"/>
++				<equals arg1="${swt.arch}" arg2="amd64"/>
+ 				<equals arg1="${swt.arch}" arg2="ia64"/>
+-				<equals arg1="${swt.arch}" arg2="ppc64le"/>
++				<equals arg1="${swt.arch}" arg2="powerpc64"/>
+ 				<equals arg1="${swt.arch}" arg2="s390x"/>
+ 				<equals arg1="${swt.arch}" arg2="sparcv9"/>
+ 				<equals arg1="${swt.arch}" arg2="aarch64"/>
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/buildSWT.xml eclipse.platform.swt/bundles/org.eclipse.swt/buildSWT.xml
 --- eclipse.platform.swt/bundles/org.eclipse.swt/buildSWT.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/buildSWT.xml	0000-00-00 00:00:00.000000000 +0000
