@@ -2,13 +2,12 @@
 # $FreeBSD$
 
 PORTNAME=   	eclipse
-PORTVERSION=    4.11.RC2
+PORTVERSION=    4.11
 CATEGORIES= 	java devel
 
-# Update to git-tag and approx timestamp
-#ECLIPSE_TAG=	${PORTVERSION:C/^([0-9]+)\.([0-9]+)/R\1_\2/}.tar.xz
-ECLIPSE_TAG=	S4_11_0_RC2
-ECLIPSE_TSTAMP=	20190308-0216
+# Update to git-tag and timestamp on git.eclipse.org
+ECLIPSE_TAG=	R4_11
+ECLIPSE_TSTAMP=	20190321-0023
 
 ECLIPSE_SUFX=	${ECLIPSE_TAG}.tar.xz
 ECLIPSE_MODULES=jdt/eclipse.jdt \
@@ -62,7 +61,7 @@ USE_GNOME=	gtk30
 ONLY_FOR_ARCHS=	amd64 power64
 
 USE_JAVA=       yes
-JAVA_VERSION=   1.8+
+JAVA_VERSION=   1.8
 
 SUB_FILES=	${PORTNAME}
 SUB_LIST=	JAVA_HOME=${JAVA_HOME}
