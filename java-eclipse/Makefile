@@ -4,6 +4,7 @@
 PORTNAME=   	eclipse
 PORTVERSION=    4.11
 CATEGORIES= 	java devel
+COMMENT=	Eclipse IDE 2019-03
 
 # Update to git-tag and timestamp on git.eclipse.org
 ECLIPSE_TAG=	R4_11
@@ -58,6 +59,12 @@ LIB_DEPENDS=	libsecret-1.so:security/libsecret \
 USES=		gmake pkgconfig gnome
 USE_GNOME=	gtk30
 
+DESKTOP_ENTRIES="Eclipse" \
+		"${COMMENT}" \
+		"${DATADIR}/plugins/org.eclipse.platform_4.11.0.v${ECLIPSE_TSTAMP}" \
+		"${PORTNAME}" \
+		"Development;Java" \
+		"false"
 ONLY_FOR_ARCHS=	amd64 power64
 
 USE_JAVA=       yes
