@@ -4,7 +4,6 @@
 PORTNAME=   	eclipse
 PORTVERSION=    4.11
 CATEGORIES= 	java devel
-COMMENT=	Eclipse IDE 2019-03
 
 # Update to git-tag and timestamp on git.eclipse.org
 ECLIPSE_TAG=	R4_11
@@ -43,14 +42,13 @@ DISTFILES+=	${M:C/.*\///}-${ECLIPSE_SUFX}:${M:C/[\.\/]//g}
 .endfor
 
 DIST_SUBDIR=	${PORTNAME}
-USE_GITHUB=	yes
-GH_ACCOUNT=	daemonblade
-GH_PROJECT=	maven-repo
-GH_TAGNAME=	${PORTVERSION}
 
 MAINTAINER=	jonc@chen.org.nz
+COMMENT=	Eclipse IDE 2019-03
 
 LICENSE=	EPL
+
+ONLY_FOR_ARCHS=	amd64 power64
 
 BUILD_DEPENDS=	git:devel/git-lite \
 		${LOCALBASE}/share/java/maven/bin/mvn:devel/maven
@@ -59,16 +57,20 @@ LIB_DEPENDS=	libsecret-1.so:security/libsecret \
 USES=		gmake pkgconfig gnome
 USE_GNOME=	gtk30
 
+USE_GITHUB=	yes
+GH_ACCOUNT=	daemonblade
+GH_PROJECT=	maven-repo
+GH_TAGNAME=	${PORTVERSION}
+
+USE_JAVA=       yes
+JAVA_VERSION=   1.8
+
 DESKTOP_ENTRIES="Eclipse" \
 		"${COMMENT}" \
 		"${PORTNAME}" \
 		"${PORTNAME}" \
 		"Development;IDE;Java;" \
 		"false"
-ONLY_FOR_ARCHS=	amd64 power64
-
-USE_JAVA=       yes
-JAVA_VERSION=   1.8
 
 SUB_FILES=	${PORTNAME}
 SUB_LIST=	JAVA_HOME=${JAVA_HOME}
