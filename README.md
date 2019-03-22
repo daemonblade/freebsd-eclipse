@@ -36,7 +36,10 @@ FreeBSD's /usr/ports/java/eclipse.
 # Generated Output
 
 On a successful build, `org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz` is found
-on top level. Unpack the archive to try it out.
+on top level. Unpack the archive to try it out. You need to manually set the
+Java VM to use, eg:
+
+`./eclipse -vm /usr/local/bin/openjdk8/bin/java`
 
 # Notes
 
