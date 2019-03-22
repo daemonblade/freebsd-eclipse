@@ -58,6 +58,26 @@ diff -ru eclipse.platform.ui/bundles/org.eclipse.ui.browser/plugin.xml eclipse.p
           executable="epiphany">
           <location>
           	usr/bin/epiphany
+diff -ru eclipse.platform.ui/bundles/org.eclipse.ui.forms/src/org/eclipse/ui/internal/forms/widgets/TitleRegion.java eclipse.platform.ui/bundles/org.eclipse.ui.forms/src/org/eclipse/ui/internal/forms/widgets/TitleRegion.java
+--- eclipse.platform.ui/bundles/org.eclipse.ui.forms/src/org/eclipse/ui/internal/forms/widgets/TitleRegion.java	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.ui/bundles/org.eclipse.ui.forms/src/org/eclipse/ui/internal/forms/widgets/TitleRegion.java	0000-00-00 00:00:00.000000000 +0000
+@@ -206,7 +206,8 @@
+ 				if (titleLabel.getVisible()) {
+ 					int tw = width - HMARGIN * 2 - SPACING * 2;
+ 					String os = System.getProperty("os.name"); //$NON-NLS-1$
+-					if (Constants.OS_LINUX.equalsIgnoreCase(os)) {
++					if (Constants.OS_LINUX.equalsIgnoreCase(os) ||
++						Constants.OS_FREEBSD.equalsIgnoreCase(os)) {
+ 						tw += 1; // See Bug 342610
+ 					}
+ 					if (bsize != null)
+@@ -543,4 +544,4 @@
+ 		target.setTransfer(transferTypes);
+ 		target.addDropListener(listener);
+ 	}
+-}
+\ No newline at end of file
++}
 diff -ru eclipse.platform.ui/bundles/org.eclipse.ui.themes/plugin.xml eclipse.platform.ui/bundles/org.eclipse.ui.themes/plugin.xml
 --- eclipse.platform.ui/bundles/org.eclipse.ui.themes/plugin.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.ui/bundles/org.eclipse.ui.themes/plugin.xml	0000-00-00 00:00:00.000000000 +0000
