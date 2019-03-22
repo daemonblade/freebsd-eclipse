@@ -1,5 +1,4 @@
 #!/bin/sh
-#set -x
 #
 # Move sub-projects into the right place
 #

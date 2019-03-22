@@ -90,7 +90,15 @@ do-build:
 do-install:
 	${MKDIR} ${STAGEDIR}${DATADIR}
 	${TAR} -x --directory ${STAGEDIR}${DATADIR}/.. --file ${WRKSRC}/${ECLIPSE_RESULT}
-	${RM} ${STAGEDIR}${DATADIR}/${ECLIPSE_PROFS}/*.profile.gz
 	${INSTALL_SCRIPT} ${WRKDIR}/${PORTNAME} ${STAGEDIR}${PREFIX}/bin
+
+# Rename profiles to stabilise pkg-plist
+post-install:
+	N=0; \
+	for P in ${STAGEDIR}${DATADIR}/${ECLIPSE_PROFS}/*.profile.gz; \
+	do \
+		mv $$P ${STAGEDIR}${DATADIR}/${ECLIPSE_PROFS}/$$N.profile.gz; \
+		N=$$(($$N + 1)); \
+	done
 
 .include <bsd.port.mk>
