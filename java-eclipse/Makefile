@@ -63,7 +63,7 @@ DESKTOP_ENTRIES="Eclipse" \
 		"${COMMENT}" \
 		"${DATADIR}/plugins/org.eclipse.platform_4.11.0.v${ECLIPSE_TSTAMP}" \
 		"${PORTNAME}" \
-		"Development;Java" \
+		"Development;Java;" \
 		"false"
 ONLY_FOR_ARCHS=	amd64 power64
 
