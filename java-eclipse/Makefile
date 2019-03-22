@@ -61,9 +61,9 @@ USE_GNOME=	gtk30
 
 DESKTOP_ENTRIES="Eclipse" \
 		"${COMMENT}" \
-		"${DATADIR}/plugins/org.eclipse.platform_4.11.0.v${ECLIPSE_TSTAMP}"/eclipse48 \
 		"${PORTNAME}" \
-		"Development;Java;" \
+		"${PORTNAME}" \
+		"Development;IDE;Java;" \
 		"false"
 ONLY_FOR_ARCHS=	amd64 power64
 
