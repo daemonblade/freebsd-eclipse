@@ -5,9 +5,8 @@ PORTNAME=   	eclipse
 PORTVERSION=    4.11
 CATEGORIES= 	java devel
 
-# Update to git-tag and timestamp on git.eclipse.org
+# Update to git-tag on git.eclipse.org
 ECLIPSE_TAG=	R4_11
-ECLIPSE_TSTAMP=	20190321-0023
 
 ECLIPSE_SUFX=	${ECLIPSE_TAG}.tar.xz
 ECLIPSE_MODULES=jdt/eclipse.jdt \
@@ -77,10 +76,9 @@ SUB_LIST=	JAVA_HOME=${JAVA_HOME}
 
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m 
 MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
-MAVEN_ECLIPSE=	-Dnative=gtk.freebsd.${ARCH} -DforceContextQualifier=v${ECLIPSE_TSTAMP}
+MAVEN_ECLIPSE=	-Dnative=gtk.freebsd.${ARCH}
 
 ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
-ECLIPSE_PROFS=	p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profile
 
 # Let's abuse this to get to the right place.
 WRKSRC_SUBDIR=	../eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
@@ -91,13 +89,11 @@ do-build:
 do-install:
 	${MKDIR} ${STAGEDIR}${DATADIR}
 	${TAR} -x --directory ${STAGEDIR}${DATADIR}/.. --file ${WRKSRC}/${ECLIPSE_RESULT}
-	# Rename profiles to stabilise pkg-plist
-	N=0; \
-	for P in ${STAGEDIR}${DATADIR}/${ECLIPSE_PROFS}/*.profile.gz; \
-	do \
-		mv $$P ${STAGEDIR}${DATADIR}/${ECLIPSE_PROFS}/$$N.profile.gz; \
-		N=$$(($$N + 1)); \
-	done
 	${INSTALL_SCRIPT} ${WRKDIR}/${PORTNAME} ${STAGEDIR}${PREFIX}/bin
+
+# generate dynamic plist, as artifacts are qualified with build-timestamp
+post-install:
+	cd ${STAGEDIR}${PREFIX} && ${FIND} -s bin/${PORTNAME} share/${PORTNAME} -not -type d >> ${TMPPLIST}
+	cd ${STAGEDIR}${PREFIX} && ${FIND} -ds share/${PORTNAME} -type d | ${SED} -e 's,^,@dir ,' >> ${TMPPLIST}
 
 .include <bsd.port.mk>
