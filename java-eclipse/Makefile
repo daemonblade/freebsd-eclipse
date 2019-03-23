@@ -77,8 +77,7 @@ SUB_LIST=	JAVA_HOME=${JAVA_HOME}
 
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m 
 MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
-MAVEN_NATIVE=	-Dnative=gtk.freebsd.${ARCH}
-P2_STUB=	-Dcomparator.repo=file://${WRKSRC}/p2-stub -DforceContextQualifier=v${ECLIPSE_TSTAMP}
+MAVEN_ECLIPSE=	-Dnative=gtk.freebsd.${ARCH} -DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
 ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
 ECLIPSE_PROFS=	p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profile
@@ -87,7 +86,7 @@ ECLIPSE_PROFS=	p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profi
 WRKSRC_SUBDIR=	../eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
 
 do-build:
-	cd ${WRKSRC} && ${SETENV} ${MAVEN_ENV} mvn --offline ${MAVEN_REPO} ${MAVEN_NATIVE} ${P2_STUB} -DskipTests clean verify
+	cd ${WRKSRC} && ${SETENV} ${MAVEN_ENV} mvn --offline ${MAVEN_REPO} ${MAVEN_ECLIPSE} -DskipTests clean verify
 
 do-install:
 	${MKDIR} ${STAGEDIR}${DATADIR}
