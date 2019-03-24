@@ -26,7 +26,7 @@ FreeBSD's /usr/ports/java/eclipse.
 
 # Workflow
 
-1. `bin/fetch-distfiles`
+1. `bin/fetch-distfiles [additional fetch(1) flags]`
 1. `bin/unpack-distfiles`
 1. `bin/apply-patches`
 1. Work on **eclipse.platform.releng.aggregator**

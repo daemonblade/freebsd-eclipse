@@ -16,7 +16,7 @@ BASELINE=".baseline.${AGGR_MODULE}"
 PATCHED=".patched.${AGGR_MODULE}"
 if [ ! -d ${BASELINE} ]
 then
-	echo "ERROR: bin/prepare-tree needs to be run first"
+	echo "ERROR: bin/unpack-distfiles needs to be run first"
 	exit 1
 fi
 if [ -d ${PATCHED} ]
