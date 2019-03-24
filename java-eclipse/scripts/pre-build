@@ -4,10 +4,12 @@
 #
 cd ${WRKSRC}
 
+TSTAMP="2019-03-21 00:45:11 +0000"
+
 # Create repo for jgit
 if [ ! -d .git ]
 then
 	git init
-	git add pom.xml
-	git commit -m "Dummy" ${FILE}
+	git add .
+	git commit -q -m "java/eclipse" --date="format:iso8601:${TSTAMP}"
 fi
