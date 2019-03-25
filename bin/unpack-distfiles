@@ -82,8 +82,15 @@ rename_arch ()
 		mv ${D} ${NEWNAME}
 	done
 
+	# Fixup binary locations
+	GTK_EXE="rt.equinox.binaries/org.eclipse.equinox.executable/bin/gtk"
+	rm -rf ${GTK_EXE}/linux
+	for ARCH in amd64 powerpc64
+	do
+		mkdir -p ${GTK_EXE}/freebsd/${ARCH}
+		touch ${GTK_EXE}/freebsd/${ARCH}/eclipse
+	done
 	# Clean up binaries
-	rm -rf rt.equinox.binaries/org.eclipse.equinox.executable/bin/gtk/linux
 	find . -name '*.so' -delete
 )
 

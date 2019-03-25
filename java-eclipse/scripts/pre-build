@@ -4,6 +4,7 @@
 #
 cd ${WRKSRC}
 
+ARCHS="amd64 powerpc64"
 TSTAMP="2019-03-21 00:45:11 +0000"
 
 # Create repo for jgit
@@ -13,3 +14,11 @@ then
 	git add .
 	git commit -q -m "java/eclipse" --date="format:iso8601:${TSTAMP}"
 fi
+
+# Create dummy destinations
+GTK_EXE="rt.equinox.binaries/org.eclipse.equinox.executable/bin/gtk"
+for A in ${ARCHS}
+do
+	mkdir -p ${GTK_EXE}/freebsd/${A}
+	touch ${GTK_EXE}/freebsd/${A}/eclipse
+done
