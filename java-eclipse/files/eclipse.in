@@ -6,4 +6,4 @@
 #
 # $FreeBSD$
 #
-%%DATADIR%%/eclipse -vm %%JAVA_HOME%%/bin/java $@
+%%DATADIR%%/eclipse
