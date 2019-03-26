@@ -1,0 +1,10 @@
+Native Build Info:
+------------------
+
+platform:         freebsd.gtk.amd64
+built by:         Eric Williams, ericwill@redhat.com
+build date:       24-May-2018
+OS Name:          FreeBSD
+OS Version:       12
+Compiler version: FreeBSD clang version 6.0.1
+Java version:     Java(TM) 8 Runtime Environment, Standard Edition (1.8.0.171)

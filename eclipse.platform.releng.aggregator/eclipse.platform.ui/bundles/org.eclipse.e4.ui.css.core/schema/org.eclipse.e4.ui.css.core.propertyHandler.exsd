@@ -1,0 +1,176 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.e4.ui.css.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.e4.ui.css.core" id="org.eclipse.e4.ui.css.core.propertyHandler" name="Properties"/>
+      </appinfo>
+      <documentation>
+         This extension point binds a handler class for a set of properties for a particular type of DOM elements.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="handler" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="handler">
+      <annotation>
+         <documentation>
+            A handler defines a binding from a set of property names to a property handler for a particular DOM element.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="property-name" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="composite" type="boolean">
+            <annotation>
+               <documentation>
+                  If true, then this handler represents a composite CSS Property (e.g., &quot;background&quot; is CSS Property composed with background-color, background-image, and others).
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="adapter" type="string" use="required">
+            <annotation>
+               <documentation>
+                  This property handler applies only to DOM elements of this type.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn="org.eclipse.e4.ui.css.core.dom.ElementAdapter:"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="handler" type="string">
+            <annotation>
+               <documentation>
+                  implements the property fetching and setting. This class must implement &lt;samp&gt;org.eclipse.e4.ui.css.core.dom.properties.ICSSPropertyHandler&lt;/samp&gt;.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.e4.ui.css.core.dom.properties.ICSSPropertyHandler"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="property-name">
+      <complexType>
+         <attribute name="name" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The CSS property name.  If not officially part of the W3C&apos;s &lt;a href=&quot;http://www.w3.org/TR/CSS2/&quot;&gt;CSS 2 Standard&lt;/a&gt; then the property should be prefixed.  For example, SWT-specific properties are prefixed with &lt;tt&gt;swt-&lt;/tt&gt; . (Due to a bug in the underlying implementation, we cannot use a leading hyphen as specified in the standard, &quot;-swt-&quot;.)
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="deprecated" type="string">
+            <annotation>
+               <documentation>
+                  If specified, indicates this property-name is deprecated.  Specifies a deprecation message typically intended to indicate alternatives to using this property.  This message is typically logged on first use of this property-name.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="since"/>
+      </appinfo>
+      <documentation>
+         0.9
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         &lt;extension point=&quot;org.eclipse.e4.ui.css.core.propertyHandler&quot;&gt;
+  &lt;handler
+      adapter=&quot;org.eclipse.e4.ui.css.swt.dom.ControlElement&quot;
+      composite=&quot;true&quot;
+      handler=&quot;org.eclipse.e4.ui.css.swt.properties.css2.CSSPropertyBackgroundSWTHandler&quot;&gt;
+    &lt;property-name name=&quot;background&quot;/&gt;
+    &lt;property-name name=&quot;background-color&quot;/&gt;
+    &lt;property-name name=&quot;background-image&quot;/&gt;
+  &lt;/handler&gt;
+&lt;/extension&gt;
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="apiinfo"/>
+      </appinfo>
+      <documentation>
+         &lt;tt&gt;propertyHandler&lt;/tt&gt; is currently internal and should not be considered API.
+&lt;p&gt;
+The property handler &lt;em&gt;provider&lt;/em&gt; must implement the &lt;samp&gt;org.eclipse.e4.ui.css.core.dom.properties.ICSSPropertyHandlerProvider&lt;/samp&gt; interface.  In addition to providing property handlers, the provider is also expected to provide the default style declaration for an element.
+&lt;/p&gt;
+&lt;p&gt;
+Property handlers must implement the &lt;samp&gt;org.eclipse.e4.ui.css.core.dom.properties.ICSSPropertyHandler&lt;samp&gt; interface; there are several specializations to allow providing additional functionality.  There are a number of specialized interfaces, abstract classes, and helper classes, for implementing property handlers.  There is also some support for defining composite CSS2 properties, such as &lt;em&gt;background&lt;/em&gt;, defined in &lt;samp&gt;org.eclipse.e4.ui.css.core.dom.properties.css2&lt;/samp&gt;.
+&lt;/p&gt;
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="implementation"/>
+      </appinfo>
+      <documentation>
+         Supplied interfaces provide abstract classes to simplify implementation.
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="copyright"/>
+      </appinfo>
+      <documentation>
+         Copyright (c) 2008 - 2012 Angelo Zerr and others.&lt;br&gt;
+
+This program and the accompanying materials are made
+available under the terms of the Eclipse Public License 2.0 which accompanies
+this distribution, and is available at &lt;a 
+href=&quot;https://www.eclipse.org/legal/epl-2.0&quot;&gt;https://www.eclipse.org/legal/epl-v20.html&lt;/a&gt;/
+
+SPDX-License-Identifier: EPL-2.0
+      </documentation>
+   </annotation>
+
+</schema>

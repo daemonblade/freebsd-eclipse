@@ -1,0 +1,15 @@
+/.project
+/*/*/bin/
+/bundles/*/fragments/*/bin/
+*~
+*.rej
+*.bak
+javacore.*
+heapdump.*
+core.*
+Snap.*
+.DS_Store
+
+# maven
+/*/*/target/
+/bundles/org.eclipse.core.net/fragments/*/target/

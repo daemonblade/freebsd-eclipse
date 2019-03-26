@@ -1,0 +1,157 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.e4.ui.css.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.e4.ui.css.core" id="org.eclipse.e4.ui.css.core.elementProvider" name="DOM Element Provider"/>
+      </appinfo>
+      <documentation>
+         &lt;p&gt;
+The &lt;code&gt;org.eclipse.e4.ui.css.core.elementProvider&lt;/code&gt; extension point is used to map widgets or objects to elements of a &lt;em&gt;Document Object Model&lt;/em&gt; (DOM).  The Element Provider is responsible for checking whether the supplied widgets/objects are compatible with the provided CSS Engine.
+&lt;/p&gt;
+
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="provider"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="provider">
+      <annotation>
+         <documentation>
+            An object that maps widgets/objects to DOM elements.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="widget" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="class" type="string">
+            <annotation>
+               <documentation>
+                  the implementation class for the element provider. This class must implement the &lt;samp&gt;org.eclipse.e4.ui.css.core.dom.IElementProvider&lt;/samp&gt; interface.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.e4.ui.css.core.dom.IElementProvider"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="widget">
+      <annotation>
+         <documentation>
+            A type of widget/object that this provider can map to a DOM element.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  the type of a widget/object supported by this element provider. This type may be either a class or interface.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="since"/>
+      </appinfo>
+      <documentation>
+         0.9
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         &lt;pre&gt;
+   &lt;extension point=&quot;org.eclipse.e4.ui.css.core.elementProvider&quot;&gt;
+      &lt;provider class=&quot;org.eclipse.e4.ui.css.swt.dom.SWTElementProvider&quot;&gt;
+         &lt;widget class=&quot;org.eclipse.swt.widgets.Control&quot;/&gt;
+      &lt;/provider&gt;
+   &lt;/extension&gt;
+&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="apiinfo"/>
+      </appinfo>
+      <documentation>
+         &lt;tt&gt;elementProvider&lt;/tt&gt; is currently internal and should not be considered API.
+&lt;p&gt;
+The supplied element provider must implement the &lt;samp&gt;org.eclipse.e4.ui.css.core.dom.IElementProvider&lt;samp&gt; interface.
+&lt;/p&gt; 
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="implementation"/>
+      </appinfo>
+      <documentation>
+         None.
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="copyright"/>
+      </appinfo>
+      <documentation>
+         Copyright (c) 2008 Angelo Zerr and others.&lt;br&gt;
+
+This program and the accompanying materials are made
+available under the terms of the Eclipse Public License 2.0 which accompanies
+this distribution, and is available at &lt;a 
+href=&quot;https://www.eclipse.org/legal/epl-2.0&quot;&gt;https://www.eclipse.org/legal/epl-v20.html&lt;/a&gt;/
+
+SPDX-License-Identifier: EPL-2.0
+      </documentation>
+   </annotation>
+
+</schema>

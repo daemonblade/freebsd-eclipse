@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<!--
+     Copyright (c) 2005, 2018 IBM Corporation and others.
+
+     This program and the accompanying materials
+     are made available under the terms of the Eclipse Public License 2.0
+     which accompanies this distribution, and is available at
+     https://www.eclipse.org/legal/epl-2.0/
+
+     SPDX-License-Identifier: EPL-2.0
+    
+     Contributors:
+         IBM Corporation - initial API and implementation
+         Lars Vogel (vogella GmbH) - ongoing maintenance
+         Alexander Fedorov <alexander.fedorov@arsysop.ru> - Bug 534758
+ -->
+<plugin>
+   <extension
+         point="org.eclipse.ui.genericeditor.presentationReconcilers">
+      <presentationReconciler
+            class="org.eclipse.pde.internal.genericeditor.target.extension.reconciler.presentation.TargetPlatformPresentationReconciler"
+            contentType="org.eclipse.pde.targetFile">
+      </presentationReconciler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.genericeditor.contentAssistProcessors">
+      <contentAssistProcessor
+            class="org.eclipse.pde.internal.genericeditor.target.extension.autocomplete.TargetDefinitionContentAssist"
+            contentType="org.eclipse.pde.targetFile">
+      </contentAssistProcessor>
+   </extension>
+   <extension
+         point="org.eclipse.core.filebuffers.documentSetup">
+      <participant
+            class="org.eclipse.pde.internal.genericeditor.target.extension.validator.TargedDefinitionSetupParticipant"
+            contentTypeId="org.eclipse.pde.targetFile"
+            extensions="target">
+      </participant>
+   </extension>
+   <extension
+         point="org.eclipse.ui.genericeditor.reconcilers">
+      <reconciler
+            class="org.eclipse.pde.internal.genericeditor.target.extension.reconciler.folding.TargetPlatformFoldingReconciler"
+            contentType="org.eclipse.pde.targetFile">
+      </reconciler>
+      <reconciler
+            class="org.eclipse.jface.text.codemining.CodeMiningReconciler"
+            contentType="org.eclipse.pde.targetFile">
+      </reconciler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            categoryId="org.eclipse.pde.ui.category.source"
+            description="%command.description"
+            id="org.eclipse.pde.updateUnitVersions"
+            name="%command.name">
+      </command>
+      <category
+            description="%command.category.source.description"
+            id="org.eclipse.pde.genericeditor.extension.category.source"
+            name="%command.category.source.name">
+      </category>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+		    allPopups="true"
+		    locationURI="popup:#TextEditorContext?after=additions">
+		 <command
+		       commandId="org.eclipse.pde.updateUnitVersions"
+		       label="%command.name"
+		       style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with variable="activeEditorInput">
+                  <adapt type="org.eclipse.core.resources.IResource">
+                     <test
+                           property="org.eclipse.core.resources.contentTypeId"
+                           value="org.eclipse.pde.targetFile">
+                     </test>
+                  </adapt>
+               </with>
+            </visibleWhen>
+		 </command>
+		</menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            commandId="org.eclipse.pde.updateUnitVersions"
+            class="org.eclipse.pde.internal.genericeditor.target.extension.command.UpdateUnitVersions">
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.themes">
+      <themeElementCategory
+            id="org.eclipse.pde.genericeditor.target.extension.presentation"
+            label="%themeElementCategory.label">
+      </themeElementCategory>
+      <colorDefinition
+            categoryId="org.eclipse.pde.genericeditor.target.extension.presentation"
+            id="org.eclipse.pde.genericeditor.extension.editor.color.tag"
+            label="%colorDefinition.tag"
+            value="0,128,128">
+      </colorDefinition>
+      <colorDefinition
+            categoryId="org.eclipse.pde.genericeditor.target.extension.presentation"
+            id="org.eclipse.pde.genericeditor.extension.editor.color.attribute"
+            label="%colorDefinition.attribute"
+            value="128,0,0">
+      </colorDefinition>
+      <colorDefinition
+            categoryId="org.eclipse.pde.genericeditor.target.extension.presentation"
+            id="org.eclipse.pde.genericeditor.extension.editor.color.header"
+            label="%colorDefinition.header"
+            value="192,192,192">
+      </colorDefinition>
+      <colorDefinition
+            categoryId="org.eclipse.pde.genericeditor.target.extension.presentation"
+            id="org.eclipse.pde.genericeditor.extension.editor.color.text"
+            label="%colorDefinition.text"
+            value="0,128,0">
+      </colorDefinition>
+      <colorDefinition
+            categoryId="org.eclipse.pde.genericeditor.target.extension.presentation"
+            id="org.eclipse.pde.genericeditor.extension.editor.color.comment"
+            label="%colorDefinition.comment"
+            value="0,128,0">
+      </colorDefinition>
+      <colorDefinition
+            categoryId="org.eclipse.pde.genericeditor.target.extension.presentation"
+            id="org.eclipse.pde.genericeditor.extension.editor.color.quote"
+            label="%colorDefinition.quote"
+            value="0,0,255">
+      </colorDefinition>
+   </extension>
+   <extension
+          point="org.eclipse.e4.ui.css.swt.theme">
+       <stylesheet
+             uri="css/e4-dark_pde_prefstyle.css">
+          <themeid
+                refid="org.eclipse.e4.ui.css.theme.e4_dark">
+          </themeid>
+       </stylesheet>
+    </extension>
+   <extension
+         point="org.eclipse.ui.workbench.texteditor.codeMiningProviders">
+      <codeMiningProvider
+            class="org.eclipse.pde.internal.genericeditor.target.extension.codemining.TargetDefinitionCodeMiningProvider"
+            id="org.eclipse.pde.genericeditor.target.extension.codeminingprovider.targetdefinition"
+            label="%codeMiningProvider.targetdefinition.label">
+         <enabledWhen>
+            <with
+                  variable="editorInput">
+               <test
+                     property="org.eclipse.pde.genericeditor.extension.contentTypeId"
+                     value="org.eclipse.pde.targetFile">
+               </test>
+            </with>
+         </enabledWhen>
+      </codeMiningProvider>
+   </extension>
+   <extension
+         point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="org.eclipse.pde.internal.genericeditor.target.extension.expressions.EditorInputPropertyTester"
+            id="org.eclipse.pde.genericeditor.extension.editorInputPropertyTester"
+            namespace="org.eclipse.pde.genericeditor.extension"
+            properties="contentTypeId"
+            type="org.eclipse.ui.IEditorInput">
+      </propertyTester>
+   </extension>
+    <extension
+         point="org.eclipse.ui.editors.annotationTypes">
+      <type
+         name="org.eclipse.pde.genericeditor.error"
+         super="org.eclipse.ui.workbench.texteditor.error"
+         markerSeverity="2">
+      </type>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors.markerAnnotationSpecification">
+      <specification
+            annotationType="org.eclipse.pde.genericeditor.error">
+      </specification>
+
+	</extension>
+</plugin>

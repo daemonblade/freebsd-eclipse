@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<component id="org.eclipse.equinox.p2.operations" version="2">
+    <resource path="src/org/eclipse/equinox/internal/p2/operations/RequestFlexer.java" type="org.eclipse.equinox.internal.p2.operations.RequestFlexer">
+        <filter comment="Workaround for bug 411257: .api_description files in Kepler release do not contain @noreference restrictions" id="640712815">
+            <message_arguments>
+                <message_argument value="IPlanner"/>
+                <message_argument value="RequestFlexer"/>
+                <message_argument value="updatesFor(IInstallableUnit, ProvisioningContext, IProgressMonitor)"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="src/org/eclipse/equinox/p2/operations/RemediationOperation.java" type="org.eclipse.equinox.p2.operations.RemediationOperation">
+        <filter comment="Workaround for bug 411257: .api_description files in Kepler release do not contain @noreference restrictions" id="643842064">
+            <message_arguments>
+                <message_argument value="ProfileChangeRequest"/>
+                <message_argument value="RemediationOperation"/>
+                <message_argument value="getOriginalRequest()"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="src/org/eclipse/equinox/p2/operations/Remedy.java" type="org.eclipse.equinox.p2.operations.Remedy">
+        <filter comment="Workaround for bug 411257: .api_description files in Kepler release do not contain @noreference restrictions" id="643842064">
+            <message_arguments>
+                <message_argument value="ProfileChangeRequest"/>
+                <message_argument value="Remedy"/>
+                <message_argument value="getRequest()"/>
+            </message_arguments>
+        </filter>
+        <filter comment="Workaround for bug 411257: .api_description files in Kepler release do not contain @noreference restrictions" id="643846161">
+            <message_arguments>
+                <message_argument value="ProfileChangeRequest"/>
+                <message_argument value="Remedy"/>
+                <message_argument value="setRequest(ProfileChangeRequest)"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="src/org/eclipse/equinox/p2/operations/UpdateOperation.java" type="org.eclipse.equinox.p2.operations.UpdateOperation">
+        <filter comment="Workaround for bug 411257: .api_description files in Kepler release do not contain @noreference restrictions" id="640712815">
+            <message_arguments>
+                <message_argument value="IPlanner"/>
+                <message_argument value="UpdateOperation"/>
+                <message_argument value="updatesFor(IInstallableUnit, ProvisioningContext, IProgressMonitor)"/>
+            </message_arguments>
+        </filter>
+    </resource>
+</component>

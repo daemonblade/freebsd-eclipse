@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<component id="org.eclipse.jdt.debug.ui" version="2">
+    <resource path="META-INF/MANIFEST.MF">
+        <filter comment="API was backported to 4.7.1a" id="926941240">
+            <message_arguments>
+                <message_argument value="3.9.0"/>
+                <message_argument value="3.8.50"/>
+            </message_arguments>
+        </filter>
+        <filter comment="Photon changes" id="926941240">
+            <message_arguments>
+                <message_argument value="3.9.0"/>
+                <message_argument value="3.8.51"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="ui/org/eclipse/jdt/debug/ui/launchConfigurations/JavaClasspathTab.java" type="org.eclipse.jdt.debug.ui.launchConfigurations.JavaClasspathTab">
+        <filter comment="Known illegal extension" id="576720909">
+            <message_arguments>
+                <message_argument value="AbstractJavaClasspathTab"/>
+                <message_argument value="JavaClasspathTab"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="ui/org/eclipse/jdt/internal/debug/ui/classpath/ClasspathEntry.java" type="org.eclipse.jdt.internal.debug.ui.classpath.ClasspathEntry">
+        <filter comment="Known illegal implementation" id="574619656">
+            <message_arguments>
+                <message_argument value="IRuntimeClasspathEntry"/>
+                <message_argument value="ClasspathEntry"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="ui/org/eclipse/jdt/internal/debug/ui/display/DisplayViewerConfiguration.java" type="org.eclipse.jdt.internal.debug.ui.display.DisplayViewerConfiguration">
+        <filter id="571473929">
+            <message_arguments>
+                <message_argument value="JavaSourceViewerConfiguration"/>
+                <message_argument value="DisplayViewerConfiguration"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="ui/org/eclipse/jdt/internal/debug/ui/launcher/AppletSelectionDialog.java" type="org.eclipse.jdt.internal.debug.ui.launcher.AppletSelectionDialog$PackageRenderer">
+        <filter comment="known API usage" id="571473929">
+            <message_arguments>
+                <message_argument value="JavaElementLabelProvider"/>
+                <message_argument value="PackageRenderer"/>
+            </message_arguments>
+        </filter>
+    </resource>
+</component>

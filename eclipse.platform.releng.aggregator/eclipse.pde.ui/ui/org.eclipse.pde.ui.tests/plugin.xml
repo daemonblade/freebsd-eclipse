@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<!--
+     Copyright (c) 2005, 2013 IBM Corporation and others.
+
+     This program and the accompanying materials
+     are made available under the terms of the Eclipse Public License 2.0
+     which accompanies this distribution, and is available at
+     https://www.eclipse.org/legal/epl-2.0/
+
+     SPDX-License-Identifier: EPL-2.0
+    
+     Contributors:
+         IBM Corporation - initial API and implementation
+ -->
+
+<plugin>
+   
+   <extension
+         point="org.eclipse.jdt.launching.executionEnvironments">
+      <environment
+            description="Java 1.3 without sound APIs (PDE test suite)"
+            id="J2SE-1.3-NO-SOUND"
+            profileProperties="profiles/J2SE-1.3-NO-SOUND.profile">
+      </environment>
+      <analyzer
+            class="org.eclipse.pde.ui.tests.ee.EnvironmentAnalyzerDelegate"
+            id="org.eclipse.pde.ui.tests.ee.analyzer">
+      </analyzer>
+   </extension>
+   <extension
+         point="org.eclipse.pde.ui.launchShortcuts">
+      <shortcut
+            id="org.eclipse.jdt.debug.ui.javaAppletShortcut"
+            label="Run this bundle"
+            mode="run"
+            projectSpecific="true">
+      </shortcut>
+      <shortcut
+            id="org.eclipse.jdt.debug.ui.javaAppletShortcut"
+            label="Debug this bundle"
+            mode="debug"
+            projectSpecific="true">
+      </shortcut>
+   </extension>
+   <extension
+         point="org.eclipse.jdt.core.classpathContainerInitializer">
+      <classpathContainerInitializer
+            class="org.eclipse.pde.ui.tests.project.ClasspathContainerInitializer"
+            id="org.eclipse.pde.ui.tests.classpath.container">
+      </classpathContainerInitializer>
+   </extension>
+   <extension
+         point="org.eclipse.pde.core.bundleClasspathResolvers">
+      <resolver
+            class="org.eclipse.pde.ui.tests.classpathresolver.TestBundleClasspathResolver"
+            nature="org.eclipse.pde.ui.tests.testNature">
+      </resolver>
+   </extension>
+   <extension
+         point="org.eclipse.pde.core.pluginClasspathContributors">
+      <contributor
+            class="org.eclipse.pde.ui.tests.classpathcontributor.TestClasspathContributor">
+      </contributor>
+   </extension>
+   <extension
+         id="testNature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run
+               class="org.eclipse.pde.ui.tests.classpathresolver.TestProjectNature">
+         </run>
+      </runtime>
+   </extension>
+</plugin>

@@ -1,0 +1,96 @@
+/*******************************************************************************
+ * Copyright (c) 2006 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.debug.internal.ui.commands.actions;
+
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IStatusMonitor;
+
+/**
+ * Common function for request monitors
+ *
+ * @since 3.3
+ *
+ */
+public abstract class AbstractRequestMonitor implements IStatusMonitor {
+
+	private IStatus fStatus;
+	private boolean fCancelled = false;
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.debug.internal.ui.viewers.provisional.IStatusMonitor#setStatus(org.eclipse.core.runtime.IStatus)
+	 */
+	@Override
+	public void setStatus(IStatus status) {
+		fStatus = status;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IProgressMonitor#beginTask(java.lang.String, int)
+	 */
+	@Override
+	public void beginTask(String name, int totalWork) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IProgressMonitor#internalWorked(double)
+	 */
+	@Override
+	public void internalWorked(double work) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IProgressMonitor#isCanceled()
+	 */
+	@Override
+	public boolean isCanceled() {
+		return fCancelled;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IProgressMonitor#setCanceled(boolean)
+	 */
+	@Override
+	public void setCanceled(boolean value) {
+		fCancelled = value;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IProgressMonitor#setTaskName(java.lang.String)
+	 */
+	@Override
+	public void setTaskName(String name) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IProgressMonitor#subTask(java.lang.String)
+	 */
+	@Override
+	public void subTask(String name) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IProgressMonitor#worked(int)
+	 */
+	@Override
+	public void worked(int work) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.debug.internal.ui.viewers.provisional.IStatusMonitor#getStatus()
+	 */
+	@Override
+	public IStatus getStatus() {
+		return fStatus;
+	}
+}

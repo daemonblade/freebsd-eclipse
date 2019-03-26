@@ -1,0 +1,4 @@
+org.eclipse.ui.forms/debug=false
+org.eclipse.ui.forms/debug/text=false
+org.eclipse.ui.forms/debug/focus=false
+org.eclipse.ui.forms/debug/textsize=false

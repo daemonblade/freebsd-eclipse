@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="copyright" content="Copyright (c) Eclipse contributors and others 2018. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."/>
+<meta http-equiv="Content-Language" content="en-us"/>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<link rel="STYLESHEET" href="../book.css" type="text/css"/>
+<style type="text/css">
+body {max-width: 900px;}
+table.news col.title {width: 30%;}
+/*img {max-width: 520px;}*/
+table.news {table-layout: fixed; border-collapse: collapse; width: 100%;}
+table.news td {border-top: solid thin black; padding: 10px; overflow: visible;}
+table.news tr {vertical-align: top;}
+table.news tr td.section {font-size: 20px; font-weight: bold;}
+table.news tr td.title {vertical-align: top; font-weight: bold;}
+table.news tr td.content {vertical-align: top;}
+ul {padding-left: 13px;}
+</style>
+<title>What's New in 4.11 (PDE)</title>
+</head>
+
+<body>
+<h2>What's New in 4.11 (PDE)</h2>
+<p>Here are descriptions of some of the more interesting or significant changes made to the Plug-in Development Environment (PDE)
+for the 4.11 release of Eclipse. They are grouped into:</p>
+<ul> <!-- NOTE: Sync ../topics_WhatsNew.xml with this! -->
+	<li><a href="#dialogs-wizards-views">Dialogs, Wizards and Views</a></li>
+	<li><a href="#editors">Editors</a></li>
+	<!-- <li><a href="#APITools">API Tools</a></li> -->
+	<li><a href="#pde-compiler">PDE Compiler</a></li>
+</ul>
+<p>See also the
+<b><a href="../../org.eclipse.platform.doc.user/whatsNew/platform_whatsnew.html">Eclipse Platform What's New</a></b>
+and
+<b><a href="../../org.eclipse.jdt.doc.user/whatsNew/jdt_whatsnew.html">JDT What's New</a></b>
+documents.</p>
+<p>We also recommend to read the <a href="../tips/pde_tips.htm">Tips and Tricks</a>.</p>
+<br/>
+
+<!-- ****************** START OF N&N TABLE****************** -->
+<table class="news">
+<colgroup>
+  <col class="title" />
+  <col />
+</colgroup>
+<tbody>
+  <!-- ******************** Dialogs, Editors and Views ********************** -->
+  <tr>
+    <td id="dialogs-wizards-views" class="section" colspan="2"><h2>Dialogs, Wizards and Views</h2></td>
+  </tr>
+
+  <tr id="remove-error-log"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=50517 -->
+   <td class="title">Removal of Error Log view</td>
+    <td class="content">
+      The <b>Error Log</b> view has been moved to the Platform project.
+      See <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=50517" target="_blank">bug 50517</a> for details. 
+    </td>
+  </tr>
+  <!-- ******************** End of Dialogs, Editors and Views ********************** -->
+  
+  <!-- ******************** Editors ********************** -->
+  <tr>
+    <td id="editors" class="section" colspan="2"><h2>Editors</h2></td>
+  </tr>
+  
+    <tr id="root-mode-install"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=539802 -->
+   <td class="title">Root mode support in product editor</td>
+    <td class="content">
+      Root mode support enables you to maintain the root mode installation of a product feature in 
+      the <b>Product configuration editor</b>. 
+      Once installed, root features can be updated and removed separately.
+     <p>
+        <img src="images/product-editor-installmode.png" alt="" />
+        <img src="images/product-editor-installmode-props.png" alt="" />
+     </p>
+    </td>
+  </tr>
+  
+  <tr id="manifest-editor-marker"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=511127 -->
+    <td class="title">Error markers for dependencies in Manifest Editor</td>
+    <td class="content">
+      The <b>Manifest editor</b>'s dependency tab now displays error markers for all unsatisfied dependencies.
+      <p>
+        <img src="images/manifest-editor-marker-plugin.png" alt="" />
+        <img src="images/manifest-editor-marker-package.png" alt="" />
+      </p>
+    </td>
+  </tr>
+  
+  <!-- ******************** End of Editors ********************** -->
+
+  <!-- ******************** PDE Compiler ********************** -->
+  <tr>
+    <td id="pde-compiler" class="section" colspan="2"><h2>PDE Compiler</h2></td>
+  </tr>
+  
+  <tr id="eclipse-pde-compiler-multi-quick-fixes"><!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=541334 -->
+    <td class="title">PDE compiler Quick Fixes are multi-fix</td>
+    <td class="content">
+     All errors or warnings reported by the PDE compiler that belong to the same category can now be fixed in one
+     go by applying a single <b>Quick Fix (Ctrl+1)</b> for the reported problem category.
+       <p>
+         <img src="images/pde-compiler-multifix.png" alt="" />
+       </p>
+    </td>
+  </tr>
+  <!-- ******************** End of PDE Compiler ********************** -->
+</tbody>
+</table>
+</body>
+</html>

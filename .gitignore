@@ -1,12 +1,37 @@
 # distribution archive
 distfiles
 
-# top-level, and baseline comparator
-eclipse.platform.releng.aggregator
-.baseline.eclipse.platform.releng.aggregator
-.patched.eclipse.platform.releng.aggregator
+# baseline comparator
+/.baseline.eclipse.platform.releng.aggregator
 
 # Build artifacts
-maven-repo.*
-*.log
-*.gz
+/maven-repo.*
+/build-*.log
+/*.tar.gz
+
+# Generated
+*.o
+*.so
+eclipse.platform.releng.aggregator/rt.equinox.binaries/org.eclipse.equinox.executable
+eclipse.platform.releng.aggregator/eclipse.jdt.core/org.eclipse.jdt.core/jdtCompilerAdapter.jar
+eclipse.platform.releng.aggregator/eclipse.jdt.debug/org.eclipse.jdt.debug.tests/javadebugtests.jar
+eclipse.platform.releng.aggregator/eclipse.jdt.debug/org.eclipse.jdt.debug/jdi.jar
+eclipse.platform.releng.aggregator/eclipse.jdt.debug/org.eclipse.jdt.debug/jdimodel.jar
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.jdt.doc.isv/index/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.jdt.doc.user/index/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.pde.doc.user/index/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/index/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.compare.examples.xml/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.compare.examples/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.swt.examples.launcher/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.swt.examples.ole.win32/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.swt.examples.views/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.swt.examples/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.team.examples.filesystem/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.ui.examples.fieldassist/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.ui.examples.javaeditor/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.ui.examples.multipageeditor/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.ui.examples.propertysheet/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.ui.examples.readmetool/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/samples/org.eclipse.ui.examples.undo/
+eclipse.platform.releng.aggregator/eclipse.platform.common/bundles/org.eclipse.platform.doc.user/index/

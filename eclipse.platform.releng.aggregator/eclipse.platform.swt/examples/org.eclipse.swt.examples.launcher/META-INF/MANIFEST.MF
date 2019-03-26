@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: %plugin.SWTLauncherExample.name
+Bundle-SymbolicName: org.eclipse.swt.examples.launcher; singleton:=true
+Bundle-Version: 3.106.200.qualifier
+Bundle-Activator: org.eclipse.swt.examples.launcher.LauncherPlugin
+Bundle-Vendor: %providerName
+Bundle-Localization: plugin
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.ui
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Automatic-Module-Name: org.eclipse.swt.examples.launcher

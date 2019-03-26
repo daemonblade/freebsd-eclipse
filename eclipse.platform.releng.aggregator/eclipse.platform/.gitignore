@@ -1,0 +1,17 @@
+/.project
+ant/org.eclipse.ant.tests.core/anttestscore.jar
+ant/org.eclipse.ant.tests.ui/anttestsui.jar
+platform/org.eclipse.platform/platform.jar
+platform/org.eclipse.platform/bin-intro/
+/*/*/bin/
+/*/*/target/
+platform/org.eclipse.platform/bin-intro/
+*~
+*.rej
+*.bak
+*.patch
+javacore.*
+heapdump.*
+core.*
+Snap.*
+

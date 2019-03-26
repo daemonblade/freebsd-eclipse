@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<component id="org.eclipse.ui.forms" version="2">
+    <resource path="src/org/eclipse/ui/forms/editor/FormEditor.java" type="org.eclipse.ui.forms.editor.FormEditor$FormEditorSelectionProvider">
+        <filter id="571473929">
+            <message_arguments>
+                <message_argument value="MultiPageSelectionProvider"/>
+                <message_argument value="FormEditorSelectionProvider"/>
+            </message_arguments>
+        </filter>
+    </resource>
+</component>

@@ -1,0 +1,12 @@
+# To force a version qualifier update add the bug here
+Bug 416293 - build failed due to issue in Starter Kit or p2.core.feature
+Bug 409868 - pickup new build of ECF
+Bug 403352 - Update all parent versions to match our build stream
+Bug 395188 - Consume new SAT4J
+Bug 406845 - Update repository of ECF in parent pom
+Bug 406845 - Update repository of ECF in parent pom (new update)
+Bug 423196 - Filetransfer update for Luna M5: httpcomponents 4.2.5/4.2.6
+Bug 419647 - React to ECF feature restructuring
+Bug 432209 - needs to touch 3 equinox/p2 features, for qualifier change in org.sat4j.pb
+Bug 458346 - Unusual, hard to decipher error in I-build
+Bug 506597 - Build failure on I20161026-2000

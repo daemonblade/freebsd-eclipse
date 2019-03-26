@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+     Copyright (c) 2005, 2013 IBM Corporation and others.
+
+     This program and the accompanying materials
+     are made available under the terms of the Eclipse Public License 2.0
+     which accompanies this distribution, and is available at
+     https://www.eclipse.org/legal/epl-2.0/
+
+     SPDX-License-Identifier: EPL-2.0
+    
+     Contributors:
+         IBM Corporation - initial API and implementation
+ -->
+
+<project name="Build Ant support JAR" default="build" basedir="..">
+
+	<target name="build" description="Cleans, builds and refreshes the impacted resources" depends="clean, lib/antsupportlib.jar"/>
+
+	<target name="init">
+		<property name="temp.folder" value="${basedir}/temp.folder"/>
+		<property name="build.result.folder" value="${basedir}"/>
+	</target>
+
+	<target name="lib/antsupportlib.jar" depends="init" description="Creates the lib/antsupportlib.jar">
+		<property name="destdir" value="${temp.folder}/lib/antsupportlib.jar.bin"/>
+		<delete dir="${destdir}"/>
+		<mkdir dir="${destdir}"/>
+		<!-- copy necessary resources -->
+		<copy todir="${destdir}">
+			<fileset dir="${basedir}/src_ant_bin/"/>
+		</copy>
+		<mkdir dir="${build.result.folder}/lib"/>
+		<jar destfile="${build.result.folder}/lib/antsupportlib.jar" basedir="${destdir}"/>
+		<delete dir="${temp.folder}"/>
+	</target>
+
+	<target name="clean" depends="init">
+		<delete file="${build.result.folder}/lib/antsupportlib.jar"/>
+		<delete dir="${temp.folder}"/>
+	</target>
+
+</project>

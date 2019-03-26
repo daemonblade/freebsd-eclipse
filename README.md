@@ -10,36 +10,47 @@ FreeBSD's /usr/ports/java/eclipse.
 * **distfiles** Cached copy of Eclipse tarballs
 * **java-eclipse** Port to be eventually released to /usr/ports/java/eclipse
 * **java-eclipse/files/patch-** Generated patches to port Eclipse to FreeBSD
-* **eclipse.platform.releng.aggregator (generated)** working copy
+* **eclipse.platform.releng.aggregator** Eclipse patched for FreeBSD
 * **.baseline.eclipse.platform.releng.aggregator (generated)** pristine unpacked tree
-* **.patched.eclipse.platform.releng.aggregator (generated)** patched tree without build artifacts
-* **maven-repo._tag_ (generated)** Maven repository for build, (to be used for port-build on FreeBSD)
+* **maven-repo.${tag}** Maven repository for Eclipse build
 
 # Prerequisite Ports
 
-* devel/pkgconf
 * devel/gmake
 * devel/maven
+* devel/pkgconf
 * java/openjdk8
 * security/libsecret
 * x11-toolkits/gtk30
 
 # Workflow
 
+## Setup
+
 1. `bin/fetch-distfiles [additional fetch(1) flags]`
 1. `bin/unpack-distfiles`
 1. `bin/apply-patches`
+
+Unpacked distfiles + up-to-date patches => **eclipse.platform.releng.aggregator**
+
+## Development
+
 1. Work on **eclipse.platform.releng.aggregator**
 1. `bin/build-eclipse [additional maven flags]` 
-1. `bin/generate-patches`
+1. Optionally `bin/generate-patches`
 
-# Generated Output
+## java/eclipse port
+
+1. `bin/generate-patches`
+1. Update [maven-repo project](https://github.com/daemonblade/maven-repo)
+1. Update **java-eclipse** Makefile, distinfo, etc
+1. Verify port build and installation
+1. Submit port
+
+# Output
 
 On a successful build, `org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz` is found
-on top level. Unpack the archive to try it out. You need to manually set the
-Java VM to use, eg:
-
-`./eclipse -vm /usr/local/bin/openjdk8/bin/java`
+on top level. Unpack the archive to to run the executable `eclipse/eclipse`
 
 # Notes
 
@@ -51,7 +62,8 @@ changing the following lines of text:
 * `linux.ppc64le` => `freebsd.powerpc64`
 
 Some modules have been disabled as they involve updates to a
-maven repository; but also some tests don't compile.
+maven repository. Some tests have been disabled as they won't
+compile.
 * org.eclipse.swt.tests
 * tests/org.eclipse.swt.tests.gtk
 * eclipse-junit-tests

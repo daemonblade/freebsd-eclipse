@@ -14,14 +14,38 @@ fi
 . ./config.sh
 
 TOP_MODULE=$(basename $ECLIPSE_TOP)
-if [ ! -d ${TOP_MODULE} ]
-then
-	echo "ERROR: bin/prepare-tree and bin/patch-apply needs to be run first"
-	exit 1
-fi
 
+#
+# Create dummies for output and packaging.
+#
+BINDIR="${TOP_MODULE}/rt.equinox.binaries"
+SUBDIRS="
+	org.eclipse.equinox.launcher.cocoa.macosx.x86_64
+	org.eclipse.equinox.launcher.gtk.freebsd.amd64
+	org.eclipse.equinox.launcher.gtk.freebsd.powerpc64
+	org.eclipse.equinox.launcher.win32.win32.x86_64"
+for D in ${SUBDIRS}
+do
+	mkdir -p ${BINDIR}/${D}
+done
+
+BINDIR="${TOP_MODULE}/rt.equinox.binaries/org.eclipse.equinox.executable/bin"
+EXECS="
+	gtk/freebsd/amd64/eclipse
+	gtk/freebsd/powerpc64/eclipse
+	cocoa/macosx/x86_64/Eclipse.app/Contents/MacOS/eclipse
+	win32/win32/x86_64/eclipse.exe
+	win32/win32/x86_64/eclipsec.exe"
+for EXE in ${EXECS}
+do
+	mkdir -p $(dirname ${BINDIR}/${EXE})
+	touch ${BINDIR}/${EXE}
+done
+
+#
+# Maven build
+#
 BUILD_SUFFIX=$(echo $* | tr -d '[:space:]/')
-
 REPO="maven-repo.${ECLIPSE_TAG}"
 mkdir -p ${REPO}
 REPO_PATH=$(realpath ${REPO})
@@ -34,11 +58,13 @@ REPO_PATH=$(realpath ${REPO})
 		clean verify 2>&1
 ) | tee build-$(date '+%Y%m%d-%H%M')${BUILD_SUFFIX}.log
 
-RESULT="org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz"
-SOURCE="${TOP_MODULE}/eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/${RESULT}"
-
-rm -f ${RESULT}
-if [ -e ${SOURCE} ]
+#
+# Link result back to top
+#
+TGZ="org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz"
+RESULT="${TOP_MODULE}/eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/${TGZ}"
+rm -f ${TGZ}
+if [ -e ${RESULT} ]
 then
-	ln ${SOURCE} .
+	ln ${RESULT} .
 fi

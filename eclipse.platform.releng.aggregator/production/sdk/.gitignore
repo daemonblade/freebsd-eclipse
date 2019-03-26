@@ -1,0 +1,6 @@
+promotion/queue/*.sh
+testjobdata/*.txt
+tempIndex.txt
+promotion-err.txt
+promotion-out.txt
+testTraceLog.txt

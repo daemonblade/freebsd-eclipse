@@ -1,0 +1,270 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.e4.ui.css.swt.theme" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.e4.ui.css.swt.theme" id="org.eclipse.e4.ui.css.swt.theme" name="Themes"/>
+      </appinfo>
+      <documentation>
+         This extension point provides the possibility to define themes and/or contribute stylesheets and resources to already defined themes
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="stylesheet" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="theme" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="themeAssociation" minOccurs="0" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="stylesheet">
+      <annotation>
+         <documentation>
+            Contribute a stylehsheet to themes
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="themeid" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="osgiresourcelocator" minOccurs="0" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="uri" type="string" use="required">
+            <annotation>
+               <documentation>
+                  bundle relative uri to the stylesheet
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="resource"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="os" type="string">
+            <annotation>
+               <documentation>
+                  the operating system the style is applicable for or empty to apply on all
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="ws" type="string">
+            <annotation>
+               <documentation>
+                  the windowing system the style is applicable for or empty to apply to all
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="theme">
+      <complexType>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  Id for the theme. It is possible use the same id multiple times but then it has to have distinct OS and WS filter values
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="label" type="string" use="required">
+            <annotation>
+               <documentation>
+                  the label used when displayed to the user
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="basestylesheeturi" type="string" use="required">
+            <annotation>
+               <documentation>
+                  the base stylesheet uri relative to the bundle
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="resource"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="os" type="string">
+            <annotation>
+               <documentation>
+                  the operating system the theme is applicable for or empty to apply on all
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="ws" type="string">
+            <annotation>
+               <documentation>
+                  the windowing system the theme is applicable for or empty to apply to all
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="os_version" type="string">
+            <annotation>
+               <documentation>
+                  the version the operating system  the theme is applicable for or empty to apply on all. The value can be a comma-separated string to specify multiple versions.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="themeid">
+      <complexType>
+         <attribute name="refid" type="string">
+            <annotation>
+               <documentation>
+                  a referenced stylesheet
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="identifier" basedOn="org.eclipse.e4.ui.css.swt.theme/theme/@id"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="osgiresourcelocator">
+      <complexType>
+         <attribute name="uri" type="string" use="required">
+            <annotation>
+               <documentation>
+                  an url starting with platform:/plugin
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="themeAssociation">
+      <complexType>
+         <attribute name="themeId" type="string" use="required">
+            <annotation>
+               <documentation>
+                  an Eclipse CSS theme id
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="identifier" basedOn="org.eclipse.e4.ui.css.swt.theme/theme/@id"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="colorAndFontId" type="string" use="required">
+            <annotation>
+               <documentation>
+                  an Eclipse legacy Color and Font theme id
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="identifier" basedOn="org.eclipse.ui.themes/theme/@id"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="os_version" type="string">
+            <annotation>
+               <documentation>
+                  an optional attribute used to better match the themes
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="identifier" basedOn="org.eclipse.e4.ui.css.swt.theme/theme/@os_version"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="since"/>
+      </appinfo>
+      <documentation>
+         0.9
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         &lt;p&gt;
+A theme which only applies on Win32/WinXP:
+&lt;pre&gt;
+&lt;theme
+  basestylesheeturi=&quot;css/e4_default_winxp_blu.css&quot;
+  id=&quot;org.eclipse.e4.ui.css.theme.e4_default&quot;
+  label=&quot;e4DefaultWinXPBlue&quot;
+  os=&quot;win32&quot;
+  ws=&quot;winxp&quot;&gt;
+&lt;/theme&gt;
+&lt;/pre&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+A stylesheet contributed to all Systems:
+&lt;pre&gt;
+&lt;stylesheet
+  uri=&quot;css/default.css&quot;&gt;
+&lt;/stylesheet&gt;
+&lt;/pre&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+The CSS theme and the legacy Colors and Fonts association:
+&lt;pre&gt;
+&lt;themeAssociation
+ themeId=&quot;org.eclipse.e4.ui.css.theme.e4_classic&quot;
+ colorAndFontId=&quot;org.eclipse.ui.defaultTheme&quot;&gt; 
+&lt;/themeassociation&gt;
+&lt;/pre&gt;
+&lt;/p&gt;
+      </documentation>
+   </annotation>
+
+
+
+   <annotation>
+      <appinfo>
+         <meta.section type="copyright"/>
+      </appinfo>
+      <documentation>
+         Copyright (c) 2010 Tom Schindl and others.&lt;br&gt;
+
+This program and the accompanying materials are made 
+available under the terms of the Eclipse Public License 2.0 which 
+accompanies 
+this distribution, and is available at 
+&lt;a 
+href=&quot;https://www.eclipse.org/legal/epl-2.0&quot;&gt;https://www.eclipse.org/legal/epl-v20.html&lt;/a&gt;/
+
+SPDX-License-Identifier: EPL-2.0
+      </documentation>
+   </annotation>
+
+</schema>

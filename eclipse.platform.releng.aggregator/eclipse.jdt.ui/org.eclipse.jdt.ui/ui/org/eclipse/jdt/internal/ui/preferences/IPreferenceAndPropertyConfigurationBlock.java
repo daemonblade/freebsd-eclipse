@@ -1,0 +1,38 @@
+/*******************************************************************************
+ * Copyright (c) 2000, 2008 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.jdt.internal.ui.preferences;
+
+/**
+ * Interface for preference and property configuration blocks which can either be
+ * wrapped by a {@link org.eclipse.jdt.internal.ui.preferences.AbstractConfigurationBlockPreferenceAndPropertyPage}
+ * or be included some preference page.
+ * <p>
+ * Clients may implement this interface.
+ * </p>
+ *
+ * @since 3.3
+ */
+public interface IPreferenceAndPropertyConfigurationBlock extends IPreferenceConfigurationBlock {
+
+	/**
+	 * Disable project specific settings for the settings configured by this block.
+	 */
+	public abstract void disableProjectSettings();
+
+	/**
+	 * Enabled project specific settings for the settings configured by this block.
+	 */
+	public abstract void enableProjectSettings();
+
+}

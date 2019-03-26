@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.urischeme.uriSchemeHandlers">
+      <uriSchemeHandler
+            class="org.eclipse.ui.examples.urischemehandler.uriHandlers.HelloSchemeHandler"
+            uriSchemeDescription="The Hello World demo protocol"
+            uriScheme="hello">
+      </uriSchemeHandler>
+      <uriSchemeHandler
+            class="org.eclipse.ui.examples.urischemehandler.uriHandlers.Hello1SchemeHandler"
+            uriSchemeDescription="The Hello1 World demo protocol"
+            uriScheme="hello1">
+      </uriSchemeHandler>
+      <uriSchemeHandler
+            class="org.eclipse.ui.examples.urischemehandler.uriHandlers.Hello2SchemeHandler"
+            uriSchemeDescription="The Hello2 World demo protocol"
+            uriScheme="hello2">
+      </uriSchemeHandler>
+   </extension>
+
+</plugin>

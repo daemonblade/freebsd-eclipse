@@ -1,0 +1,19 @@
+# To force a version qualifier update add the bug here
+Bug 416293 - build failed due to issue in Starter Kit or p2.core.feature
+Bug 409868 - pickup new build of ECF 
+Bug 403352 - Update all parent versions to match our build stream
+Bug 406851 - Consume new sat4j
+Bug 406845 - Update repository of ECF in parent pom
+Bug 407389 - Source features are partially broken
+Bug 406845 - Update repository of ECF in parent pom (new update)
+Bug 423196 - Filetransfer update for Luna M5: httpcomponents 4.2.5/4.2.6
+Bug 419647 - React to ECF feature restructuring
+Bug 419647 - React to ECF feature restructuring
+Bug 432209 - needs to touch 3 equinox/p2 features, for qualifier change in org.sat4j.pb
+Bug 458346 - Unusual, hard to decipher error in I-build
+Bug 506597 - Build failure on I20161026-2000
+Bug 510206 - Please update to xz-java 1.5
+Bug 518051 - Update to xz-java 1.6 
+Bug 529908 - Update xz-java 1.8
+Bug 444188 - Fix concurrent access to listener collections
+Bug 542873 - IBuild I20181217-1800 failed due to unresolved project dependencies.

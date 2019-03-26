@@ -1,0 +1,52 @@
+/*******************************************************************************
+ * Copyright (c) 2009, 2013 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.debug.internal.core;
+
+import java.util.Comparator;
+
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.RefreshUtil;
+
+/**
+ * Compares refresh scope attributes as the format has changed from a working
+ * set memento to an XML memento of resource paths. Avoids migrating attribute
+ * to new format until something else in the configuration changes.
+ *
+ * @since 3.6
+ */
+public class RefreshScopeComparator implements Comparator<String> {
+
+	@Override
+	public int compare(String o1, String o2) {
+		String m1 = o1;
+		String m2 = o2;
+		try {
+			IResource[] r1 = RefreshUtil.toResources(m1);
+			IResource[] r2 = RefreshUtil.toResources(m2);
+			if (r1.length == r2.length) {
+				for (int i = 0; i < r2.length; i++) {
+					if (!r1[i].equals(r2[i])) {
+						return -1;
+					}
+				}
+				return 0;
+			}
+		} catch (CoreException e) {
+			return -1;
+		}
+		return -1;
+	}
+
+}

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) 2012, 2017 Eclipse Foundation and others.
+  All rights reserved. This program and the accompanying materials
+  are made available under the terms of the Eclipse Distribution License v1.0
+  which accompanies this distribution, and is available at
+  http://www.eclipse.org/org/documents/edl-v10.php
+
+  Contributors:
+     Igor Fedorenko - initial implementation
+     Mickael Istria (Red Hat Inc.) - 416912: tycho-surefire-plugin configuration
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>tests-pom</artifactId>
+    <groupId>eclipse.jdt.core</groupId>
+    <version>4.11.0-SNAPSHOT</version>
+    <relativePath>../tests-pom/</relativePath>
+  </parent>
+  <groupId>org.eclipse.jdt</groupId>
+  <artifactId>org.eclipse.jdt.core.tests.model</artifactId>
+  <version>3.10.800-SNAPSHOT</version>
+  <packaging>eclipse-test-plugin</packaging>
+
+  <properties>
+    <defaultSigning-excludeInnerJars>true</defaultSigning-excludeInnerJars>
+    <code.ignoredWarnings>-warn:+fieldHiding,-unavoidableGenericProblems</code.ignoredWarnings>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+      	<groupId>org.eclipse.tycho</groupId>
+      	<artifactId>tycho-surefire-plugin</artifactId>
+      	<version>${tycho.version}</version>
+      	<configuration>
+      	  <argLine>-Djdt.default.test.compliance=1.8 ${tycho.surefire.argLine}</argLine>
+      	  <includes>
+      	  	<include>org/eclipse/jdt/core/tests/model/AllJavaModelTestsTracing.class</include>
+      	  	<include>org/eclipse/jdt/core/tests/dom/RunAllTestsTracing.class</include>
+      	  	<include>org/eclipse/jdt/core/tests/RunFormatterTests.class</include>
+      	  </includes>
+      	</configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+	<profile>
+		<id>test-on-javase-9</id>
+		<build>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-toolchains-plugin</artifactId>
+					<version>1.1</version>
+					<executions>
+						<execution>
+							<phase>validate</phase>
+							<goals>
+								<goal>toolchain</goal>
+							</goals>
+						</execution>
+					</executions>
+					<configuration>
+						<toolchains>
+							<jdk>
+								<id>JavaSE-9</id>
+							</jdk>
+						</toolchains>
+					</configuration>
+				</plugin>
+			</plugins>
+		</build>
+		<properties>
+			<tycho.surefire.argLine>--add-modules ALL-SYSTEM</tycho.surefire.argLine>
+		</properties>
+	</profile>
+	<profile>
+	<id>test-on-javase-10</id>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-toolchains-plugin</artifactId>
+				<version>1.1</version>
+				<executions>
+					<execution>
+						<phase>validate</phase>
+						<goals>
+							<goal>toolchain</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<toolchains>
+						<jdk>
+							<id>JavaSE-10</id>
+						</jdk>
+					</toolchains>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<properties>
+		<!-- Overridden in https://ci.eclipse.org/jdt/job/eclipse.jdt.core-run.javac-10/configure  -->
+		<tycho.surefire.argLine>--add-modules ALL-SYSTEM -Dcompliance=1.4,1.7,1.8,10</tycho.surefire.argLine>
+	</properties>
+	</profile>
+	<profile>
+		<id>test-on-javase-11</id>
+		<build>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-toolchains-plugin</artifactId>
+					<version>1.1</version>
+					<executions>
+						<execution>
+							<phase>validate</phase>
+							<goals>
+								<goal>toolchain</goal>
+							</goals>
+						</execution>
+					</executions>
+					<configuration>
+						<toolchains>
+							<jdk>
+								<id>JavaSE-11</id>
+							</jdk>
+						</toolchains>
+					</configuration>
+				</plugin>
+			</plugins>
+		</build>
+		<properties>
+			<!-- Overridden in https://ci.eclipse.org/jdt/job/eclipse.jdt.core-run.javac-11/configure  -->
+			<tycho.surefire.argLine>--add-modules ALL-SYSTEM -Dcompliance=1.4,1.7,1.8,11</tycho.surefire.argLine>
+		</properties>
+	</profile>
+  </profiles>
+
+</project>

@@ -38,6 +38,3 @@ do
 	fi
 	echo "INFO: Applied ${P}"
 done
-
-echo "INFO: Creating patched copy"
-cd ${AGGR_MODULE} && find . -print | cpio -pduml ../${PATCHED}

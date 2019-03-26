@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) 2012, 2018 Eclipse Foundation and others.
+  All rights reserved. This program and the accompanying materials
+  are made available under the terms of the Eclipse Distribution License v1.0
+  which accompanies this distribution, and is available at
+  http://www.eclipse.org/org/documents/edl-v10.php
+
+  Contributors:
+     Igor Fedorenko - initial implementation
+     Lars Vogel <Lars.Vogel@vogella.com> - Ongoing maintenance
+     Lucas Bullen <lbullen@redhat.com> - Bug 529467 - Move genericeditor.extension tests to own project
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.eclipse</groupId>
+    <artifactId>eclipse-platform-parent</artifactId>
+    <version>4.11.0-SNAPSHOT</version>
+    <relativePath>../eclipse-platform-parent</relativePath>
+  </parent>
+
+  <groupId>eclipse.pde.ui</groupId>
+  <artifactId>eclipse.pde.ui</artifactId>
+  <version>4.11.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <properties>
+    <tycho.scmUrl>scm:git:git://git.eclipse.org/gitroot/pde/eclipse.pde.ui.git</tycho.scmUrl>
+  </properties>
+
+  <!--
+    To build individual bundles, we specify a repository where to find parent pom,
+    in case it is not in local maven cache already
+    and that parent pom also has fuller individual-bundle profile
+    defined that is combined with this one. -->
+  <profiles>
+    <profile>
+      <id>build-individual-bundles</id>
+      <repositories>
+        <repository>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+          <id>eclipse-hosted</id>
+          <url>https://repo.eclipse.org/content/repositories/eclipse/</url>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+
+  <modules>
+    <module>apitools/org.eclipse.pde.api.tools</module>
+    <module>apitools/org.eclipse.pde.api.tools.annotations</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.cdcfoundation10</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.cdcfoundation11</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.feature</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.j2se12</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.j2se13</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.j2se14</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.j2se15</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.javase16</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.javase17</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.javase18</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.javase9</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.jre11</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.osgiminimum10</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.osgiminimum11</module>
+    <module>apitools/org.eclipse.pde.api.tools.ee.osgiminimum12</module>
+    <module>apitools/org.eclipse.pde.api.tools.tests</module>
+    <module>apitools/org.eclipse.pde.api.tools.ui</module>
+    <module>ds/org.eclipse.pde.ds.core</module>
+    <module>ds/org.eclipse.pde.ds.tests</module>
+    <module>ds/org.eclipse.pde.ds.ui</module>
+    <module>ds/org.eclipse.pde.ds.lib</module>
+    <module>ds/org.eclipse.pde.ds1_2.lib</module>
+    <module>ds/org.eclipse.pde.ds.annotations</module>
+    <module>ua/org.eclipse.pde.ua.core</module>
+    <module>ua/org.eclipse.pde.ua.tests</module>
+    <module>ua/org.eclipse.pde.ua.ui</module>
+    <module>ui/org.eclipse.pde</module>
+    <module>ui/org.eclipse.pde.core</module>
+    <module>ui/org.eclipse.pde.junit.runtime</module>
+    <module>ui/org.eclipse.pde.launching</module>
+    <module>ui/org.eclipse.pde.runtime</module>
+    <module>ui/org.eclipse.pde.ui</module>
+    <module>ui/org.eclipse.pde.ui.templates</module>
+    <module>ui/org.eclipse.pde.ui.tests</module>
+    <module>ui/org.eclipse.pde.ui.tests.smartimport</module>
+    <module>ui/org.eclipse.tools.layout.spy</module>
+    <module>ui/org.eclipse.pde.ui.templates.tests</module>
+    <module>ui/org.eclipse.ui.trace</module>
+    <module>ui/org.eclipse.pde.genericeditor.extension</module>
+    <module>ui/org.eclipse.pde.genericeditor.extension.tests</module>
+    <module>features/org.eclipse.pde-feature</module>
+  </modules>
+</project>

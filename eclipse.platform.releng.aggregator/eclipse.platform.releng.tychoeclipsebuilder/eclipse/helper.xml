@@ -1,0 +1,201 @@
+<!--
+  Copyright (c) 2016 IBM Corporation and others.
+
+  This program and the accompanying materials
+  are made available under the terms of the Eclipse Public License 2.0
+  which accompanies this distribution, and is available at
+  https://www.eclipse.org/legal/epl-2.0/
+
+  SPDX-License-Identifier: EPL-2.0
+
+  Contributors:
+  David Williams - initial API and implementation
+-->
+<project
+  name="Helper targets"
+  default="noDefault">
+
+
+  <target
+    name="publish"
+    depends="init"
+    description="Preparing to post the build...">
+    <echo message="[DEBUG] Eclipse helper.xml publish starting" />
+    <fail
+      unless="AGGR_DIR"
+      message="AGGR_DIR must be defined for this this script" />
+
+    <mkdir dir="${buildDirectory}/checksum" />
+    <exec
+      executable="/bin/bash"
+      dir="${buildDirectory}">
+      <arg line="${EBuilderDir}/eclipse/extras/produceChecksum.sh" />
+    </exec>
+
+    <!--get static files required in the buildLabel directory -->
+    <copy todir="${buildDirectory}">
+      <fileset dir="${publishingContent}/staticDropFiles" />
+    </copy>
+
+    <antcall target="generateEclipseIndex" />
+
+    <!--copy javadoc logs -->
+    <echo message="DEBUG: BUILD_FAILED: env.BUILD_FAILED: ${env.BUILD_FAILED}" />
+    <!--copy javadoc logs: we use failonerror=false and quiet=true since if "build failed"
+      this files likely do not exist, and quiet=false (default) results in warnings being
+      logged to error log. This can be more distracting, than constructive. And, if the
+      files can not be created, for some reason, then that will cause a failure during main part of build.
+    -->
+    <copy
+      file="${AGGR_DIR}/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/target/doc.bin.log"
+      tofile="${buildDirectory}/compilelogs/platform.doc.isv.javadoc.txt"
+      failonerror="false"
+      quiet="true" />
+    <copy
+      file="${AGGR_DIR}/eclipse.platform.common/bundles/org.eclipse.jdt.doc.isv/target/doc.bin.log"
+      tofile="${buildDirectory}/compilelogs/jdt.doc.isv.javadoc.txt"
+      failonerror="false"
+      quiet="true" />
+    <copy
+      file="${AGGR_DIR}/eclipse.platform.common/bundles/org.eclipse.pde.doc.user/target/doc.bin.log"
+      tofile="${buildDirectory}/compilelogs/pde.doc.user.javadoc.txt"
+      failonerror="false"
+      quiet="true" />
+    <copy
+      file="${AGGR_DIR}/eclipse.platform.common/bundles/org.eclipse.platform.doc.isv/target/platformconvert.txt"
+      tofile="${buildDirectory}/compilelogs/platform.doc.isv.schema.txt"
+      failonerror="false"
+      quiet="true" />
+    <copy
+      file="${AGGR_DIR}/eclipse.platform.common/bundles/org.eclipse.jdt.doc.isv/target/jdtconvert.txt"
+      tofile="${buildDirectory}/compilelogs/jdt.doc.isv.schema.txt"
+      failonerror="false"
+      quiet="true" />
+    <copy
+      file="${AGGR_DIR}/eclipse.platform.common/bundles/org.eclipse.pde.doc.user/target/pdeconvert.txt"
+      tofile="${buildDirectory}/compilelogs/pde.doc.user.schema.txt"
+      failonerror="false"
+      quiet="true" />
+    <echo message="[DEBUG] Eclipse helper.xml publish ending normally" />
+  </target>
+
+  <target
+    name="generateEclipseIndex"
+    depends="init">
+    <property
+      name="generatorClass"
+      value="org.eclipse.releng.generators.TestResultsGenerator" />
+
+    <available
+      classname="${generatorClass}"
+      property="class"
+      value="${generatorClass}" />
+
+    <fail
+      unless="buildType"
+      message="buildType must be defined to generateIndex before calling publish.xml" />
+    <!-- this section that checks for 'eclipseStream' and computes major, minor, etc. was
+      copy/pasted from 'genTestIndexes.xml'. In principle, should be
+      abstracted out into a "utility" file -->
+    <fail
+      unless="eclipseStream"
+      message="eclipseStream must be provided by caller" />
+    <condition property="streamOK">
+      <matches
+        pattern="\d+\.\d+\.\d+"
+        string="${eclipseStream}" />
+    </condition>
+    <fail
+      message="eclipseStream variable had unexpected format. Should be digit.digit.digit, but was ${eclipseStream}"
+      unless="streamOK" />
+    <script language="javascript">
+      <![CDATA[
+            var eclipseStream = project.getProperty("eclipseStream");
+            var pattern = new
+            RegExp(/(\d+)\.(\d+)\.(\d+)/);
+
+            var sArray = pattern.exec(eclipseStream);
+            // sArray[0] is "whole match"
+            project.setProperty("eclipseStreamMajor", sArray[1]);
+            project.setProperty("eclipseStreamMinor", sArray[2]);
+            project.setProperty("eclipseStreamService", sArray[3]);
+          ]]>
+    </script>
+
+    <!--regenerate the index page with links to test results -->
+    <ant
+      antfile="${EBuilderDir}/eclipse/buildScripts/publish.xml"
+      dir="${publishingContent}"
+      target="generateIndex">
+      <property
+        name="isBuildTested"
+        value="true" />
+
+    </ant>
+
+  </target>
+
+  <target
+    name="verifyCompile"
+    depends="init"
+    if="eclipse.running">
+    <echo message="DEBUG: in helper.xml: Checking for compile errors..." />
+    <!--create html output for compile logs -->
+    <eclipse.convert
+      input="${buildDirectory}/compilelogs/plugins"
+      validation="true" />
+    <!-- Sends email to recipient list in monitor.properties with compile logs attached if errors found -->
+    <!-- <verifyCompile install="${buildDirectory}/compilelogs/pugins" /> -->
+  </target>
+
+  <target name="init">
+    <!-- we make sure 'job' has some value (that would not match conditions),
+      so "conditions" will work, ultimately getting some
+      "no match" default value. But not setting
+      it to something seems to cause them to "bomb out"
+      TODO: eliminate "job" as a variable.
+      That only works if doing one job at a time, which
+      is not always true.
+    -->
+    <property
+      name="job"
+      value="jobNOTpassedin" />
+    <echo message="in helper.xml the value of job passed in (or, not) was ${job}" />
+
+
+    <property environment="env" />
+
+    <fail
+      unless="EBuilderDir"
+      message="EBuilderDir (tychoeclipsebuilder dir) must be passed in to this script" />
+    <fail
+      unless="postingDirectory"
+      message="postingDirectory must be passed to this script." />
+    <fail
+      unless="buildLabel"
+      message="buildLabel must be passed to this script." />
+    <property
+      name="publishingContent"
+      value="${EBuilderDir}/eclipse/publishingFiles" />
+
+    <fail
+      unless="buildLabel"
+      message="buildLabel must be passed in to helper.xml" />
+
+    <property
+      name="buildDirectory"
+      value="${postingDirectory}/${buildLabel}" />
+
+    <!-- should already exist ... but, just in case not ... -->
+    <mkdir dir="${buildDirectory}" />
+
+  </target>
+
+  <!-- ===================================================================== -->
+  <!-- Default target -->
+  <!-- ===================================================================== -->
+  <target name="noDefault">
+    <echo message="You must specify a target when invoking this file" />
+  </target>
+
+</project>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Copyright (c) IBM Corporation and others 2008, 2013 This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.
+	
+	All Platform Debug contexts, those for org.eclipse.debug.ui, are located in this file
+	All contexts are grouped by their relation, with all relations grouped alphabetically.
+-->
+<project name="Build API Tools Ant Support Jar" default="build" basedir="..">
+
+	<target name="build" description="Cleans, builds and refreshes" depends="clean, lib/apitooling-ant.jar"/>
+
+	<target name="init" depends="properties">
+		<property name="temp.folder" value="${basedir}/temp.folder"/>
+		<property name="build.result.folder" value="${basedir}"/>
+	</target>
+
+	<target name="properties" if="eclipse.running">
+		<property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
+	</target>
+			
+	<target name="lib/apitooling-ant.jar" description= "Creates the lib/apitooling-ant.jar" depends="init">
+		<property name="destdir" value="${temp.folder}/lib/apitooling-ant.bin"/>
+		<delete dir="${destdir}"/>
+		<mkdir dir="${destdir}"/>
+		<!-- copy necessary resources -->
+        <copy todir="${destdir}">
+            <fileset dir="${basedir}/bin_ant/"/>
+        </copy>
+		<!-- copy default XSLT files to the jar location -->
+		<copy todir="${destdir}" failonerror="true" overwrite="false">
+			<fileset dir="xml/">
+				<exclude name="**/*.xsd"/>
+				<exclude name="**/*.xml"/>
+			</fileset>
+		</copy>
+		<jar destfile="${build.result.folder}/lib/apitooling-ant.jar" basedir="${destdir}"/>
+		<delete dir="${temp.folder}"/>
+	</target>
+
+	<target name="clean" description="Deletes previous build remnants" depends="init">
+		<delete file="${build.result.folder}/lib/apitooling-ant.jar"/>
+		<delete dir="${temp.folder}"/>
+	</target>
+</project>

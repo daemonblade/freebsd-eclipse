@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2012, 2017 Eclipse Foundation. All rights reserved. This program
+	and the accompanying materials are made available under the terms of the
+	Eclipse Distribution License v1.0 which accompanies this distribution, and
+	is available at http://www.eclipse.org/org/documents/edl-v10.php Contributors:
+	Igor Fedorenko - initial implementation -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.eclipse</groupId>
+		<artifactId>org.eclipse.equinox.p2.tests-parent</artifactId>
+		<version>4.11.0-SNAPSHOT</version>
+		<relativePath>../../org.eclipse.equinox.p2.releng/org.eclipse.equinox.p2.tests-parent</relativePath>
+	</parent>
+
+	<groupId>org.eclipse.equinox</groupId>
+	<artifactId>org.eclipse.equinox.p2.tests</artifactId>
+	<version>1.7.500-SNAPSHOT</version>
+	<packaging>eclipse-test-plugin</packaging>
+
+	<properties>
+		<testSuite>${project.artifactId}</testSuite>
+		<testClass>org.eclipse.equinox.p2.tests.AutomatedTests</testClass>
+		<dropinsProduct>org.eclipse.equinox.p2.reconciler-freebsd.gtk.amd64.tar.gz</dropinsProduct>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-surefire-plugin</artifactId>
+				<configuration>
+					<argLine>-Xmx512m -Dorg.eclipse.equinox.p2.reconciler.tests.platform.archive=${project.build.directory}/../../org.eclipse.equinox.p2.tests.reconciler.product/target/products/${dropinsProduct} -Dorg.eclipse.equinox.p2.reconciler.tests.35.platform.archive=${platform.archive.name} -Dorg.eclipse.equinox.p2.repository -Dorg.eclipse.equinox.p2.transport.ecf.retry=5</argLine>
+					<appArgLine>-consoleLog -debug</appArgLine>
+					<explodedBundles>
+						<explodedBundle>org.apache.ant</explodedBundle>
+					</explodedBundles>
+					<dependencies>
+						<dependency>
+							<type>eclipse-plugin</type>
+							<artifactId>org.eclipse.osgi.compatibility.state</artifactId>
+							<version>0.0.0</version>
+						</dependency>
+					</dependencies>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

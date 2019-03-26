@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<component id="org.eclipse.jface.text" version="2">
+    <resource path="src/org/eclipse/jface/text/TextViewer.java" type="org.eclipse.jface.text.TextViewer">
+        <filter id="572522506">
+            <message_arguments>
+                <message_argument value="ChildDocumentManager"/>
+                <message_argument value="TextViewer"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="src/org/eclipse/jface/text/templates/persistence/TemplatePersistenceData.java" type="org.eclipse.jface.text.templates.persistence.TemplatePersistenceData">
+        <filter comment="Extended to prevent API breakage" id="571473929">
+            <message_arguments>
+                <message_argument value="TemplatePersistenceData"/>
+                <message_argument value="TemplatePersistenceData"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="src/org/eclipse/jface/text/templates/persistence/TemplateReaderWriter.java" type="org.eclipse.jface.text.templates.persistence.TemplateReaderWriter">
+        <filter comment="Extended to prevent API breakage" id="571473929">
+            <message_arguments>
+                <message_argument value="TemplateReaderWriter"/>
+                <message_argument value="TemplateReaderWriter"/>
+            </message_arguments>
+        </filter>
+    </resource>
+</component>

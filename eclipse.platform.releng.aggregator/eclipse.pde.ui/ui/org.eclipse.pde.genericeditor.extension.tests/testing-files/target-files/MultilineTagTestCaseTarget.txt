@@ -1,0 +1,22 @@
+<target>
+<locations>
+<pro
+<location>
+<unit  version=""/>
+<unit
+	
+	version="" />
+<unit  version=""/>
+</location>
+<pro
+</locations>
+<environment>
+<ws>coc</ws>
+<os>
+
+linu
+
+</os>
+<arch>x</arch>
+</environment>
+</target>

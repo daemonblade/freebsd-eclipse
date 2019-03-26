@@ -1,0 +1,24 @@
+# To force a version qualifier update add the bug here
+Bug 403352 - Update all parent versions to match our build stream
+ -- Force update for luna
+Bug 417264 - We should update our version of Jetty
+Bug 416718 - We should update our version of Jetty for SR2
+Bug 436039 - Hard to explain build failure in I20140528-0115
+Bug 436758 - Installing a bundle that requires Java 7 when running 6 with -clean cannot recover
+Bug 448567 - Update Orbit for M3
+Bug 453678 - Upgrade to Jetty 9.2.5 for Mars M4, and 9.3 for Mars M5
+Bug 457171 - adopt and adjust to new jasper.glassfish bundle from Orbit
+Bug 458346 - Unusual, hard to decipher error in I-build
+Bug 462096 - Latest X-build fails on "equinox-sdk" product due to dependencies missing
+Bug 481453 - May need to 'touch' some features for I-build
+Bug 495069 - Try to move up to Jetty 9.3.9
+Bug 506597 - Build failure on I20161026-2000
+Bug 521792 - I-builds are failing from September 1 2017 
+Bug 528810 - Compilation failure in I20171214-2000
+Bug 533464 - Build failure in I20180411-0530
+Bug 444188 - EclipsePreferences is not thread safe
+Bug 537705 - I-Build: I20180805-2000 build failed
+Bug 538962 - I-Build I20180911-1400 build failed 
+Needs a touch for felix.scr qualifier update
+Build I20180920-0430 failed
+Bug 544317 - IBuild I20190210-1800 failed due to unresolved project dependencies.

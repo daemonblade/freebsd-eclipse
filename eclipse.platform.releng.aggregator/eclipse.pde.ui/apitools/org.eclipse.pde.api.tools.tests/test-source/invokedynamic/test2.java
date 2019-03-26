@@ -1,0 +1,33 @@
+package invokedynamic;
+import java.util.Arrays;
+
+/*******************************************************************************
+ * Copyright (c) Mar 26, 2014 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+
+/**
+ * Tests an invoke dynamic reference for an instance method ref 
+ */
+public class test2 {
+	class MR {
+		public int mrCompare(String str1, String str2) {
+			return 0;
+		}
+	};
+	
+	void m1() {
+		MR mr = new MR();
+		String[] array = {"one"};
+		Arrays.sort(array, mr::mrCompare);
+	}
+}

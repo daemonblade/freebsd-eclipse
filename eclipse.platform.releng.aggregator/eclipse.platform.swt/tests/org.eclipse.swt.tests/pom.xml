@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) 2012, 2017 Eclipse Foundation and others.
+  All rights reserved. This program and the accompanying materials
+  are made available under the terms of the Eclipse Distribution License v1.0
+  which accompanies this distribution, and is available at
+  http://www.eclipse.org/org/documents/edl-v10.php
+
+  Contributors:
+     Igor Fedorenko - initial implementation
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>eclipse.platform.swt.localbuild</artifactId>
+    <groupId>eclipse.platform.swt</groupId>
+    <version>4.11.0-SNAPSHOT</version>
+    <relativePath>../../local-build/local-build-parent/</relativePath>
+  </parent>
+  <groupId>org.eclipse.swt</groupId>
+  <artifactId>org.eclipse.swt.tests</artifactId>
+  <version>3.106.400-SNAPSHOT</version>
+  <packaging>eclipse-test-plugin</packaging>
+  <properties>
+    <code.ignoredWarnings>${tests.ignoredWarnings}</code.ignoredWarnings>
+    <tycho.testArgLine></tycho.testArgLine>
+    <test>AllTests</test>
+    <surefire.version>2.22.1</surefire.version>
+  </properties>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>target-platform-configuration</artifactId>
+        <configuration>
+          <!-- Make all platform-specific fragments available (and optional) via a feature -->
+	      <dependency-resolution>
+	         <extraRequirements>
+	            <requirement>
+	               <type>eclipse-feature</type>
+	               <id>org.eclipse.swt.tests.fragments.feature</id>
+	               <versionRange>0.0.0</versionRange>
+	            </requirement>
+	         </extraRequirements>
+	      </dependency-resolution>
+	      <!-- but only resolve against current environment as we don't want all fragments simultaneously in test -->
+	      <environments combine.self="override"/> <!--  we only want platform specific artifacts here -->
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-surefire-plugin</artifactId>
+        <configuration>
+          <skipTests>true</skipTests> <!-- Use maven surefire -->
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire.version}</version>
+        <executions>
+          <execution>
+            <id>test</id>
+            <goals><goal>test</goal></goals>
+            <phase>integration-test</phase>
+            <configuration>
+              <testClassesDirectory>${project.build.outputDirectory}</testClassesDirectory>
+              <argLine>@{tycho.testArgLine} -Dorg.eclipse.swt.internal.gtk.disablePrinting ${os-jvm-flags}</argLine>
+              <systemPropertyVariables>
+                <user.home>${project.build.directory}</user.home> <!-- used as cache directory for SWT native libraries -->
+                <org.eclipse.swt.internal.gtk.enableStrictChecks>true</org.eclipse.swt.internal.gtk.enableStrictChecks> <!-- see bug 532632 -->
+              </systemPropertyVariables>
+            </configuration>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-junit47</artifactId>
+            <version>${surefire.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+  </build>
+</project>

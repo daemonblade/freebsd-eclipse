@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+ <extension
+       id="phaseTest"
+       point="org.eclipse.equinox.p2.engine.touchpoints">
+    <touchpoint
+          class="org.eclipse.equinox.p2.tests.engine.TouchpointTest$PhaseTestTouchpoint"
+          type="phaseTest"
+          version="1.0.0">
+    </touchpoint>
+ </extension>
+ 
+ <extension
+       id="operandTest"
+       point="org.eclipse.equinox.p2.engine.touchpoints">
+    <touchpoint
+          class="org.eclipse.equinox.p2.tests.engine.TouchpointTest$OperandTestTouchpoint"
+          type="operandTest"
+          version="1.0.0">
+    </touchpoint>
+ </extension>
+	<extension
+			point="org.eclipse.equinox.p2.artifact.repository.processingSteps"
+			id="org.eclipse.equinox.p2.processing.ByteShifter">
+		<step class="org.eclipse.equinox.p2.tests.artifact.repository.processing.ByteShifter"/>
+	</extension>
+
+	<extension
+			point="org.eclipse.equinox.p2.artifact.repository.processingSteps"
+			id="org.eclipse.equinox.p2.processing.Adder">
+		<step class="org.eclipse.equinox.p2.tests.artifact.repository.processing.Adder"/>
+	</extension>
+
+	<extension
+			point="org.eclipse.equinox.p2.artifact.repository.processingSteps"
+			id="org.eclipse.equinox.p2.processing.Multiplier">
+		<step class="org.eclipse.equinox.p2.tests.artifact.repository.processing.Multiplier"/>
+	</extension>
+	<extension
+			point="org.eclipse.equinox.p2.artifact.repository.processingSteps"
+			id="org.eclipse.equinox.p2.processing.AlwaysDisabled">
+		<step class="org.eclipse.equinox.p2.tests.artifact.repository.processing.AlwaysDisabled"/>
+	</extension>
+	<extension
+			point="org.eclipse.equinox.p2.artifact.repository.processingSteps"
+			id="org.eclipse.equinox.p2.processing.MultipleSteps">
+		<step class="org.eclipse.equinox.p2.tests.artifact.repository.processing.Adder"/>
+		<step class="org.eclipse.equinox.p2.tests.artifact.repository.processing.ByteShifter"/>
+		<step class="org.eclipse.equinox.p2.tests.artifact.repository.processing.Multiplier"/>
+	</extension>
+ <extension
+       point="org.eclipse.equinox.p2.engine.actions">
+    <action
+          class="org.eclipse.equinox.p2.tests.engine.PhaseTest$TestAction"
+          name="test1.test"
+          version="1.0.0">
+    </action>
+  </extension>
+   <extension
+       point="org.eclipse.equinox.p2.engine.actions">
+    <action
+          class="org.eclipse.equinox.p2.tests.engine.VariableTest$Action"
+          name="test.actionForVariableTesting"
+          version="1.0.0">
+    </action>
+  </extension>
+   <extension
+       point="org.eclipse.equinox.p2.engine.actions">
+    <action
+          class="org.eclipse.equinox.p2.tests.engine.VariableTest2$Action"
+          name="test.actionForVariableTesting2"
+          version="1.0.0">
+    </action>
+  </extension>  
+    <extension
+       point="org.eclipse.equinox.p2.engine.actions">
+    <action
+          class="org.eclipse.equinox.p2.tests.engine.VariableTest3$Action"
+          name="test.actionForVariableTesting3"
+          version="1.0.0">
+    </action>
+  </extension>  
+ <extension
+       point="org.eclipse.equinox.p2.engine.actions">
+    <action
+          class="org.eclipse.equinox.p2.tests.engine.PhaseTest$TestAction"
+          name="phasetest.test"
+          touchpointType="phaseTest"
+          touchpointVersion="1.0.0"
+          version="1">
+    </action>
+ </extension>
+ <extension
+       point="org.eclipse.equinox.p2.engine.actions">
+    <action
+          class="org.eclipse.equinox.p2.tests.engine.PhaseTest$TestAction"
+          name="operandtest.test"
+          touchpointType="operandTest"
+          touchpointVersion="1.0.0"
+          version="1">
+    </action>
+ </extension>
+ <extension
+       id="phaseTest"
+       point="org.eclipse.equinox.p2.engine.touchpoints">
+    <touchpoint
+          class="org.eclipse.equinox.p2.tests.engine.InstructionParserTest$InstructionParserTestTouchpoint"
+          type="InstructionParserTestTouchpoint"
+          version="1.0.0">
+    </touchpoint>
+ </extension>
+ <extension
+       point="org.eclipse.equinox.p2.engine.actions">
+    <action
+          class="org.eclipse.equinox.p2.tests.engine.InstructionParserTest$TestAction"
+          name="instructionparsertest.goodAction"
+          touchpointType="InstructionParserTestTouchpoint"
+          touchpointVersion="1.0.0"
+          version="1.0.0">
+    </action>
+ </extension>
+ <extension
+       point="org.eclipse.equinox.p2.engine.actions">
+    <action
+          class="org.eclipse.equinox.p2.tests.engine.PhaseTest$TestAction"
+          name="test2.test"
+          version="1.0.0">
+    </action>
+ </extension>
+ <extension
+       point="org.eclipse.equinox.p2.metadata.repository.metadataRepositories">
+        <filter suffix="broken.xml"/>
+    <factory
+          class="org.eclipse.equinox.p2.tests.FailingMetadataRepositoryFactory">
+    </factory>
+ </extension>
+ <extension
+       point="org.eclipse.equinox.p2.metadata.repository.metadataRepositories">
+    <factory
+          class="org.eclipse.equinox.p2.tests.repository.RepositoryExtensionPointTest$TestMetadataRepositoryRegistry">
+    </factory>
+    <filter
+          suffix="@testMetadataRepositoryRegistry">
+    </filter>
+ </extension>
+ <extension
+       point="org.eclipse.equinox.p2.artifact.repository.artifactRepositories">
+    <factory
+          class="org.eclipse.equinox.p2.tests.repository.RepositoryExtensionPointTest$TestArtifactRepositoryRegistry">
+    </factory>
+    <filter
+          suffix="@testArtifactRepositoryRegistry">
+    </filter>
+ </extension>
+</plugin>

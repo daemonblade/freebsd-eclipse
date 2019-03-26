@@ -1,0 +1,14 @@
+/*/*/bin/
+/*/*/bin_ant/
+*~
+*.rej
+*.bak
+javacore.*
+heapdump.*
+core.*
+Snap.*
+/.project
+
+# maven
+/*/*/target/
+.DS_Store

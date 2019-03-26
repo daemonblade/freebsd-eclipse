@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<!--
+    Copyright (c) 2005, 2017 IBM Corporation and others.
+
+    This program and the accompanying materials
+    are made available under the terms of the Eclipse Public License 2.0
+    which accompanies this distribution, and is available at
+    https://www.eclipse.org/legal/epl-2.0/
+
+    SPDX-License-Identifier: EPL-2.0
+   
+    Contributors:
+        IBM Corporation - initial API and implementation
+        Fabian Steeg <steeg@hbz-nrw.de> - Pass automatically provided options to Java 6 processors - https://bugs.eclipse.org/341298
+ -->
+
+<plugin>
+   <extension
+         point="org.eclipse.jdt.apt.core.annotationProcessorFactory">
+      <java6processors
+            enableDefault="true">
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.genclass6.GenClass6Proc">
+         </java6processor>
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.message6.Message6Proc">
+         </java6processor>
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.filertester.FilerTesterProc">
+         </java6processor>
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.buildertester.InheritedAnnoProc">
+         </java6processor>
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.buildertester.TestFinalRoundProc">
+         </java6processor>
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.buildertester.BugsProc">
+         </java6processor>
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.modeltester.ModelTesterProc">
+         </java6processor>
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.modeltester.ModelTester8Proc">
+         </java6processor>
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.buildertester.Bug387956Processor">
+         </java6processor>
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.buildertester.Bug468893Processor">
+         </java6processor>
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.genclass6.Bug419769Proc">
+         </java6processor>
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.buildertester.Bug510118Processor">
+         </java6processor>
+         <java6processor
+               class="org.eclipse.jdt.apt.pluggable.tests.processors.buildertester.Bug341298Processor">
+         </java6processor>
+      </java6processors>
+   </extension>
+</plugin>

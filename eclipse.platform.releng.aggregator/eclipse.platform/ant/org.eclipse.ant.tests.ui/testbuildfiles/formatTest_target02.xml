@@ -1,0 +1,34 @@
+<!--
+     Copyright (c) 2005, 2006 IBM Corporation and others.
+
+     This program and the accompanying materials
+     are made available under the terms of the Eclipse Public License 2.0
+     which accompanies this distribution, and is available at
+     https://www.eclipse.org/legal/epl-2.0/
+
+     SPDX-License-Identifier: EPL-2.0
+    
+     Contributors:
+         IBM Corporation - initial API and implementation
+ -->
+<project default="formatTest">
+
+       <!-- = = = = = = -->
+       <!-- formatTest  -->
+       <!-- = = = = = = -->
+       <target name="formatTest" depends="init" description="--> test target one">
+              <!-- hello world -->
+              <greeting />
+       </target>
+
+       <!-- - - - - - - -->
+       <!-- init        -->
+       <!-- - - - - - - -->
+       <target name="init">
+              <property name="greeting" value="hi" />
+              <presetdef name="greeting">
+                     <echo>${greeting}</echo>
+              </presetdef>
+       </target>
+
+</project>

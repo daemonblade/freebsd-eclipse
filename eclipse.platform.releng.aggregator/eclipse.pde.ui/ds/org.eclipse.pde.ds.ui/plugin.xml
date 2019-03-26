@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<!--
+    Copyright (c) 2008, 2012 IBM Corporation and others.
+
+    This program and the accompanying materials
+    are made available under the terms of the Eclipse Public License 2.0
+    which accompanies this distribution, and is available at
+    https://www.eclipse.org/legal/epl-2.0/
+
+    SPDX-License-Identifier: EPL-2.0
+   
+    Contributors:
+        IBM Corporation - initial API and implementation
+ -->
+
+<plugin>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="org.eclipse.pde.internal.ds.ui.editor.DSEditor"
+            contributorClass="org.eclipse.pde.internal.ds.ui.editor.DSEditorContributor"
+            default="true"
+            icon="$nl$/icons/obj16/ds_obj.png"
+            id="org.eclipse.pde.ds.ui.editor"
+            name="%editors.ds.name">
+         <contentTypeBinding
+               contentTypeId="org.eclipse.pde.ds.core.content-type">
+         </contentTypeBinding>
+      </editor>
+   </extension>
+   <extension
+         point="org.eclipse.ui.actionSetPartAssociations">
+      <actionSetPartAssociation
+            targetID="org.eclipse.ui.edit.text.actionSet.presentation">
+         <part
+               id="org.eclipse.pde.ds.ui.editor">
+         </part>
+      </actionSetPartAssociation>
+   </extension>
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <wizard
+            category="org.eclipse.pde.PDE"
+            class="org.eclipse.pde.internal.ds.ui.wizards.DSNewWizard"
+            icon="$nl$/icons/obj16/ds_wizard_obj.png"
+            id="org.eclipse.pde.ds.ui.wizard"
+            name="%wizard.name">
+         <description>
+            %new.wizard.description
+         </description>
+      </wizard>
+   </extension>
+   
+   <extension point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension targetID="org.eclipse.pde.ui.PDEPerspective">
+         <newWizardShortcut id="org.eclipse.pde.ds.ui.wizard"/>
+      </perspectiveExtension>
+   </extension> 
+</plugin>

@@ -1,0 +1,308 @@
+/*******************************************************************************
+ * Copyright (c) 2009, 2015 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *     Matthew Hall - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.ui.databinding;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import org.eclipse.core.databinding.observable.list.ListDiff;
+import org.eclipse.core.databinding.property.INativePropertyListener;
+import org.eclipse.core.databinding.property.IProperty;
+import org.eclipse.core.databinding.property.ISimplePropertyListener;
+import org.eclipse.core.databinding.property.NativePropertyListener;
+import org.eclipse.core.databinding.property.list.IListProperty;
+import org.eclipse.core.databinding.property.list.SimpleListProperty;
+import org.eclipse.core.databinding.property.value.IValueProperty;
+import org.eclipse.core.databinding.property.value.SimpleValueProperty;
+import org.eclipse.core.runtime.IAdapterManager;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.ui.ISelectionListener;
+import org.eclipse.ui.ISelectionService;
+import org.eclipse.ui.IWorkbenchPart;
+
+/**
+ * Factory methods for creating properties for the Workbench.
+ *
+ * <p>
+ * Examples:
+ * </p>
+ *
+ * <pre>
+ * WorkbenchProperties.singleSelection().observe(getSite().getService(ISelectionService.class))
+ * </pre>
+ *
+ * @since 3.5
+ */
+public class WorkbenchProperties {
+	/**
+	 * Returns a value property which observes the source object as the adapted
+	 * type, using the platform adapter manager. If the source is of the target
+	 * type, or can be adapted to the target type, this is used as the value of
+	 * property, otherwise <code>null</code>.
+	 *
+	 * @param adapter
+	 *            the adapter class
+	 * @return a value property which observes the source object as the adapted
+	 *         type.
+	 */
+	public static IValueProperty adaptedValue(Class adapter) {
+		return adaptedValue(adapter, Platform.getAdapterManager());
+	}
+
+	/**
+	 * Returns a value property which observes the source object as the adapted
+	 * type. If the source object is of the target type, or can be adapted to
+	 * the target type, this is used as the value of property, otherwise
+	 * <code>null</code>.
+	 *
+	 * @param adapter
+	 *            the adapter class
+	 * @param adapterManager
+	 *            the adapter manager used to adapt source objects
+	 * @return a value property which observes the source object as the adapted
+	 *         type.
+	 */
+	static IValueProperty adaptedValue(final Class adapter,
+			final IAdapterManager adapterManager) {
+		return new AdaptedValueProperty(adapter, adapterManager);
+	}
+
+	/**
+	 * Returns a property for observing the first element of a structured
+	 * selection as exposed by {@link ISelectionService}.
+	 *
+	 * @return an observable value
+	 */
+	public static IValueProperty singleSelection() {
+		return singleSelection(null, false);
+	}
+
+	/**
+	 * Returns a property for observing the first element of a structured
+	 * selection as exposed by {@link ISelectionService}.
+	 *
+	 * @param partId
+	 *            the part id, or <code>null</code> if the selection can be from
+	 *            any part
+	 * @param postSelection
+	 *            <code>true</code> if the selection should be delayed for
+	 *            keyboard-triggered selections
+	 *
+	 * @return an observable value
+	 */
+	public static IValueProperty singleSelection(String partId,
+			boolean postSelection) {
+		return new SingleSelectionProperty(partId, postSelection);
+	}
+
+	/**
+	 * Returns a property for observing the elements of a structured selection
+	 * as exposed by {@link ISelectionService}.
+	 *
+	 * @return an observable value
+	 */
+	public static IListProperty multipleSelection() {
+		return multipleSelection(null, false);
+	}
+
+	/**
+	 * Returns a property for observing the elements of a structured selection
+	 * as exposed by {@link ISelectionService}.
+	 *
+	 * @param partId
+	 *            the part id, or <code>null</code> if the selection can be from
+	 *            any part
+	 * @param postSelection
+	 *            <code>true</code> if the selection should be delayed for
+	 *            keyboard-triggered selections
+	 *
+	 * @return an observable value
+	 */
+	public static IListProperty multipleSelection(String partId,
+			boolean postSelection) {
+		return new MultiSelectionProperty(partId, postSelection);
+	}
+
+	static final class AdaptedValueProperty extends SimpleValueProperty {
+		private final Class adapter;
+		private final IAdapterManager adapterManager;
+
+		private AdaptedValueProperty(Class adapter,
+				IAdapterManager adapterManager) {
+			this.adapter = adapter;
+			this.adapterManager = adapterManager;
+		}
+
+		@Override
+		public Object getValueType() {
+			return adapter;
+		}
+
+		@Override
+		protected Object doGetValue(Object source) {
+			if (adapter.isInstance(source))
+				return source;
+			return adapterManager.getAdapter(source, adapter);
+		}
+
+		@Override
+		protected void doSetValue(Object source, Object value) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public INativePropertyListener adaptListener(
+				ISimplePropertyListener listener) {
+			return null;
+		}
+	}
+
+	static class SingleSelectionProperty extends SimpleValueProperty {
+		private final String partId;
+		private final boolean post;
+
+		SingleSelectionProperty(String partId, boolean post) {
+			this.partId = partId;
+			this.post = post;
+		}
+
+		@Override
+		public INativePropertyListener adaptListener(
+				ISimplePropertyListener listener) {
+			return new SelectionServiceListener(this, listener, partId, post);
+		}
+
+		@Override
+		protected Object doGetValue(Object source) {
+			ISelection selection;
+			if (partId != null) {
+				selection = ((ISelectionService) source).getSelection(partId);
+			} else {
+				selection = ((ISelectionService) source).getSelection();
+			}
+			if (selection instanceof IStructuredSelection) {
+				return ((IStructuredSelection) selection).getFirstElement();
+			}
+			return null;
+		}
+
+		@Override
+		protected void doSetValue(Object source, Object value) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Object getValueType() {
+			return Object.class;
+		}
+	}
+
+	static class MultiSelectionProperty extends SimpleListProperty {
+		private final String partId;
+		private final boolean post;
+
+		MultiSelectionProperty(String partId, boolean post) {
+			this.partId = partId;
+			this.post = post;
+		}
+
+		@Override
+		public INativePropertyListener adaptListener(
+				ISimplePropertyListener listener) {
+			return new SelectionServiceListener(this, listener, partId, post);
+		}
+
+		@Override
+		public Object getElementType() {
+			return Object.class;
+		}
+
+		@Override
+		protected List doGetList(Object source) {
+			ISelection selection;
+			if (partId != null) {
+				selection = ((ISelectionService) source).getSelection(partId);
+			} else {
+				selection = ((ISelectionService) source).getSelection();
+			}
+			if (selection instanceof IStructuredSelection) {
+				return new ArrayList(((IStructuredSelection) selection)
+						.toList());
+			}
+			return Collections.EMPTY_LIST;
+		}
+
+		@Override
+		protected void doSetList(Object source, List list, ListDiff diff) {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	static class SelectionServiceListener extends NativePropertyListener
+			implements ISelectionListener {
+		private final String partId;
+		private final boolean post;
+
+		public SelectionServiceListener(IProperty property,
+				ISimplePropertyListener wrapped, String partID, boolean post) {
+			super(property, wrapped);
+			this.partId = partID;
+			this.post = post;
+		}
+
+		@Override
+		protected void doAddTo(Object source) {
+			ISelectionService selectionService = (ISelectionService) source;
+			if (post) {
+				if (partId != null) {
+					selectionService.addPostSelectionListener(partId, this);
+				} else {
+					selectionService.addPostSelectionListener(this);
+				}
+			} else {
+				if (partId != null) {
+					selectionService.addSelectionListener(partId, this);
+				} else {
+					selectionService.addSelectionListener(this);
+				}
+			}
+		}
+
+		@Override
+		protected void doRemoveFrom(Object source) {
+			ISelectionService selectionService = (ISelectionService) source;
+			if (post) {
+				if (partId != null) {
+					selectionService.removePostSelectionListener(partId, this);
+				} else {
+					selectionService.removePostSelectionListener(this);
+				}
+			} else {
+				if (partId != null) {
+					selectionService.removeSelectionListener(partId, this);
+				} else {
+					selectionService.removeSelectionListener(this);
+				}
+			}
+		}
+
+		@Override
+		public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+			fireChange(part, null);
+		}
+	}
+}
