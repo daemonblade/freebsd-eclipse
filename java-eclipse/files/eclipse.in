@@ -6,4 +6,4 @@
 #
 # $FreeBSD$
 #
-%%DATADIR%%/eclipse
+exec %%DATADIR%%/eclipse "$@"
