@@ -7,6 +7,7 @@ CATEGORIES= 	java devel
 
 # Update to git-tag on git.eclipse.org
 ECLIPSE_TAG=	R4_11
+ECLIPSE_TSTAMP=	20190321-0023
 
 ECLIPSE_SUFX=	${ECLIPSE_TAG}.tar.xz
 ECLIPSE_MODULES=jdt/eclipse.jdt \
@@ -75,9 +76,10 @@ SUB_FILES=	${PORTNAME}
 
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m 
 MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
-MAVEN_ECLIPSE=	-Dnative=gtk.freebsd.${ARCH} -Dcomparator.repo=file://${WRKDIR}/${GH_PROJECT}-${PORTVERSION}/p2-stub
+MAVEN_ECLIPSE=	-Dnative=gtk.freebsd.${ARCH} -Dcomparator.repo=file://${WRKDIR}/${GH_PROJECT}-${PORTVERSION}/p2-stub -DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
 ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
+ECLIPSE_PROFS=	p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profile
 
 # Let's abuse this to get to the right place.
 WRKSRC_SUBDIR=	../eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
@@ -90,9 +92,8 @@ do-install:
 	${TAR} -x --directory ${STAGEDIR}${DATADIR}/.. --file ${WRKSRC}/${ECLIPSE_RESULT}
 	${INSTALL_SCRIPT} ${WRKDIR}/${PORTNAME} ${STAGEDIR}${PREFIX}/bin
 
-# generate dynamic plist, as artifacts are qualified with build-timestamp
+# dynamically add timestamped profiles, which should be excluded from pkg-plist
 post-install:
-	cd ${STAGEDIR}${PREFIX} && ${FIND} -s bin/${PORTNAME} share/${PORTNAME} -not -type d >> ${TMPPLIST}
-	cd ${STAGEDIR}${PREFIX} && ${FIND} -ds share/${PORTNAME} -type d | ${SED} -e 's,^,@dir ,' >> ${TMPPLIST}
+	cd ${STAGEDIR}${PREFIX} && ${FIND} -s share/${PORTNAME} -name '*.profile.gz' >> ${TMPPLIST}
 
 .include <bsd.port.mk>
