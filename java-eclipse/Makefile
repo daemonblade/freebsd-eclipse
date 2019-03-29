@@ -79,7 +79,6 @@ MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
 MAVEN_ECLIPSE=	-Dnative=gtk.freebsd.${ARCH} -Dcomparator.repo=file://${WRKDIR}/${GH_PROJECT}-${PORTVERSION}/p2-stub -DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
 ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
-ECLIPSE_PROFS=	p2/org.eclipse.equinox.p2.engine/profileRegistry/SDKProfile.profile
 
 # Let's abuse this to get to the right place.
 WRKSRC_SUBDIR=	../eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
