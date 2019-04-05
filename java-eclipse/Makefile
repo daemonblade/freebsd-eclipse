@@ -59,7 +59,7 @@ USE_GNOME=	gtk30
 
 USE_GITHUB=	yes
 GH_ACCOUNT=	daemonblade
-GH_PROJECT=	maven-repo
+GH_PROJECT=	eclipse-maven-repo
 GH_TAGNAME=	${PORTVERSION}
 
 USE_JAVA=       yes
