@@ -11,7 +11,7 @@ if [ ! -d .git ]
 then
 	git init
 	git add .
-	git commit -q -m "java/eclipse"
+	git commit -q --message="java/eclipse" --author="Eclipse <eclipse@freebsd.org>"
 fi
 
 # Create dummy targets
