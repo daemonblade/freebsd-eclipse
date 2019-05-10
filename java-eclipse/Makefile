@@ -48,7 +48,7 @@ COMMENT=	Eclipse IDE 2019-03
 
 LICENSE=	EPL
 
-ONLY_FOR_ARCHS=	amd64 power64
+ONLY_FOR_ARCHS=	amd64 powerpc64
 
 BUILD_DEPENDS=	git:devel/git-lite \
 		${LOCALBASE}/share/java/maven/bin/mvn:devel/maven
