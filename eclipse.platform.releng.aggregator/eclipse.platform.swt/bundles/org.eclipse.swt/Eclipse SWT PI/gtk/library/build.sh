@@ -116,6 +116,16 @@ case $MODEL in
 esac
 
 case $SWT_OS.$SWT_ARCH in
+	"freebsd.ppc64")
+		if [ "${CC}" = "" ]; then
+			export CC=gcc
+		fi
+		if [ "${JAVA_HOME}" = "" ]; then
+			DYNAMIC_JAVA_HOME=`readlink -f /usr/local/bin/java | sed "s:jre/::" | sed "s:bin/java::"`
+			JAVA_HOME = $DYNAMIC_JAVA_HOME
+			export JAVA_HOME
+		fi
+		;;
 	"linux.x86")
 		if [ "${CC}" = "" ]; then
 			export CC=gcc
