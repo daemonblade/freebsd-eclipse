@@ -1,9 +1,9 @@
 # Created by: Jonathan Chen <jonc@chen.org.nz>
 # $FreeBSD$
 
-PORTNAME=   	eclipse
-PORTVERSION=    4.11
-CATEGORIES= 	java devel
+PORTNAME=	eclipse
+PORTVERSION=	4.11
+CATEGORIES=	java devel
 
 # Update to git-tag on git.eclipse.org
 ECLIPSE_TAG=	R4_11
@@ -62,8 +62,8 @@ GH_ACCOUNT=	daemonblade
 GH_PROJECT=	eclipse-maven-repo
 GH_TAGNAME=	${PORTVERSION}
 
-USE_JAVA=       yes
-JAVA_VERSION=   1.8
+USE_JAVA=	yes
+JAVA_VERSION=	1.8
 
 DESKTOP_ENTRIES="Eclipse" \
 		"${COMMENT}" \
@@ -74,7 +74,7 @@ DESKTOP_ENTRIES="Eclipse" \
 
 SUB_FILES=	${PORTNAME}
 
-MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m 
+MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m
 MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
 MAVEN_ECLIPSE=	-Dnative=gtk.freebsd.${ARCH} -Dcomparator.repo=file://${WRKDIR}/${GH_PROJECT}-${PORTVERSION}/p2-stub -DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
