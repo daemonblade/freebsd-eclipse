@@ -13,15 +13,9 @@ fi
 
 AGGR_MODULE=$(basename $ECLIPSE_TOP)
 BASELINE=".baseline.${AGGR_MODULE}"
-PATCHED=".patched.${AGGR_MODULE}"
 if [ ! -d ${BASELINE} ]
 then
 	echo "ERROR: bin/unpack-distfiles needs to be run first"
-	exit 1
-fi
-if [ -d ${PATCHED} ]
-then
-	echo "ERROR: work-tree already patched"
 	exit 1
 fi
 
