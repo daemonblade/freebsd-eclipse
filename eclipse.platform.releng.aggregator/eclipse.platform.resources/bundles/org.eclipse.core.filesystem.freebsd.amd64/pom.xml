@@ -14,11 +14,11 @@
   <parent>
     <artifactId>eclipse.platform.resources</artifactId>
     <groupId>eclipse.platform.resources</groupId>
-    <version>4.11.0-SNAPSHOT</version>
+    <version>4.12.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.core</groupId>
-  <artifactId>org.eclipse.core.filesystem.freebsd.amd64</artifactId>
+  <artifactId>org.eclipse.core.filesystem.linux.x86_64</artifactId>
   <version>1.2.300-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 
@@ -33,9 +33,9 @@
           <resolver>p2</resolver>
           <environments>
             <environment>
-              <os>freebsd</os>
+              <os>linux</os>
               <ws>gtk</ws>
-              <arch>amd64</arch>
+              <arch>x86_64</arch>
             </environment>
           </environments>
         </configuration>
@@ -50,7 +50,7 @@
         <property>
           <!-- This has to be hardcoded. Profiles are not allowed to use pom defined properties :-( -->
           <name>native</name>
-          <value>gtk.freebsd.amd64</value>
+          <value>gtk.linux.x86_64</value>
         </property>
       </activation>
       <build>
@@ -63,10 +63,10 @@
                 <phase>process-resources</phase>
                 <configuration>
                   <target>
-                    <exec executable="gmake" newenvironment="false" dir="../org.eclipse.core.filesystem/natives/unix/freebsd/"/>
-           <mkdir dir="os/freebsd/amd64/"/>
-           <copy todir="os/freebsd/amd64/">
-           <fileset dir="../org.eclipse.core.filesystem/natives/unix/freebsd/">
+                    <exec executable="make" newenvironment="false" dir="../org.eclipse.core.filesystem/natives/unix/linux/"/>
+           <mkdir dir="os/linux/x86_64/"/>
+           <copy todir="os/linux/x86_64/">
+           <fileset dir="../org.eclipse.core.filesystem/natives/unix/linux/">
                <include name="libunixfile_*.so"/>
            </fileset>
            </copy>

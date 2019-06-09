@@ -29,35 +29,27 @@ import org.eclipse.team.internal.ccvs.ui.operations.UpdateOperation;
  * @since 3.1
  */
 public class UpdateSilentAction extends WorkspaceTraversalAction {
-    
-    /*
-     * @see org.eclipse.team.internal.ccvs.ui.actions.WorkspaceAction#isEnabledForAddedResources()
-     */
-    protected boolean isEnabledForAddedResources() {
-        return false;
-    }
+	
+	@Override
+	protected boolean isEnabledForAddedResources() {
+		return false;
+	}
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ccvs.ui.actions.WorkspaceAction#isEnabledForNonExistantResources()
-     */
-    protected boolean isEnabledForNonExistantResources() {
-        return true;
-    }
-    
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#execute(org.eclipse.jface.action.IAction)
-	 */
+	@Override
+	protected boolean isEnabledForNonExistantResources() {
+		return true;
+	}
+	
+	@Override
 	public void execute(IAction action) throws InterruptedException, InvocationTargetException {
 		if (CVSUIPlugin.getPlugin().getPreferenceStore().getString(ICVSUIConstants.PREF_UPDATE_HANDLING).equals(ICVSUIConstants.PREF_UPDATE_HANDLING_TRADITIONAL)) {
 			new UpdateOperation(getTargetPart(), getCVSResourceMappings(), Command.NO_LOCAL_OPTIONS, null /* no tag */).run();
 		} else {
-	    	new ModelUpdateOperation(getTargetPart(), getSelectedResourceMappings(CVSProviderPlugin.getTypeId())).run();
-	    }
+			new ModelUpdateOperation(getTargetPart(), getSelectedResourceMappings(CVSProviderPlugin.getTypeId())).run();
+		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#getId()
-	 */
+	@Override
 	public String getId() {
 		return ICVSUIConstants.CMD_UPDATE;
 	}

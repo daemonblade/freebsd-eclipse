@@ -17,7 +17,7 @@ package org.eclipse.jface.tests.databinding.scenarios;
 
 import static org.junit.Assert.assertEquals;
 
-import org.eclipse.core.databinding.beans.BeanProperties;
+import org.eclipse.core.databinding.beans.typed.BeanProperties;
 import org.eclipse.core.databinding.beans.BeansObservables;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.databinding.observable.list.IObservableList;
@@ -51,6 +51,7 @@ public class ListViewerScenario extends ScenariosTestCase {
 	private ListViewer listViewer;
 
 	@Before
+	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 		// do any setup work here
@@ -60,6 +61,7 @@ public class ListViewerScenario extends ScenariosTestCase {
 	}
 
 	@After
+	@Override
 	public void tearDown() throws Exception {
 		list.dispose();
 		list = null;

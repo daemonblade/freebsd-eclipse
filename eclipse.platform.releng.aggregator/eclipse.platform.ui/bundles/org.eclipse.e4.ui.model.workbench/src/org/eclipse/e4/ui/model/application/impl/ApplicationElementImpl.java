@@ -47,7 +47,8 @@ import org.eclipse.emf.ecore.util.InternalEList;
  * @since 1.0
  * @generated
  */
-public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.MinimalEObjectImpl.Container implements MApplicationElement {
+public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.MinimalEObjectImpl.Container
+		implements MApplicationElement {
 	/**
 	 * The default value of the '{@link #getElementId() <em>Element Id</em>}' attribute.
 	 * <!-- begin-user-doc -->
@@ -142,6 +143,7 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getElementId() {
 		return elementId;
 	}
@@ -151,11 +153,13 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setElementId(String newElementId) {
 		String oldElementId = elementId;
 		elementId = newElementId;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, ApplicationPackageImpl.APPLICATION_ELEMENT__ELEMENT_ID, oldElementId, elementId));
+			eNotify(new ENotificationImpl(this, Notification.SET,
+					ApplicationPackageImpl.APPLICATION_ELEMENT__ELEMENT_ID, oldElementId, elementId));
 	}
 
 	/**
@@ -163,9 +167,11 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public Map<String, String> getPersistedState() {
 		if (persistedState == null) {
-			persistedState = new EcoreEMap<String,String>(ApplicationPackageImpl.Literals.STRING_TO_STRING_MAP, StringToStringMapImpl.class, this, ApplicationPackageImpl.APPLICATION_ELEMENT__PERSISTED_STATE);
+			persistedState = new EcoreEMap<String, String>(ApplicationPackageImpl.Literals.STRING_TO_STRING_MAP,
+					StringToStringMapImpl.class, this, ApplicationPackageImpl.APPLICATION_ELEMENT__PERSISTED_STATE);
 		}
 		return persistedState.map();
 	}
@@ -175,9 +181,11 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public List<String> getTags() {
 		if (tags == null) {
-			tags = new EDataTypeUniqueEList<String>(String.class, this, ApplicationPackageImpl.APPLICATION_ELEMENT__TAGS);
+			tags = new EDataTypeUniqueEList<String>(String.class, this,
+					ApplicationPackageImpl.APPLICATION_ELEMENT__TAGS);
 		}
 		return tags;
 	}
@@ -187,6 +195,7 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getContributorURI() {
 		return contributorURI;
 	}
@@ -194,12 +203,19 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @generated
 	 */
-	public void setContributorURI(String newContributorURI) {
+	private void setContributorURIGen(String newContributorURI) {
 		String oldContributorURI = contributorURI;
-		contributorURI = (newContributorURI == null) ? null : newContributorURI.intern();
+		contributorURI = newContributorURI;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, ApplicationPackageImpl.APPLICATION_ELEMENT__CONTRIBUTOR_URI, oldContributorURI, contributorURI));
+			eNotify(new ENotificationImpl(this, Notification.SET,
+					ApplicationPackageImpl.APPLICATION_ELEMENT__CONTRIBUTOR_URI, oldContributorURI, contributorURI));
+	}
+
+	@Override
+	public void setContributorURI(String newContributorURI) {
+		setContributorURIGen(newContributorURI == null ? null : newContributorURI.intern());
 	}
 
 	/**
@@ -207,9 +223,11 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public Map<String, Object> getTransientData() {
 		if (transientData == null) {
-			transientData = new EcoreEMap<String,Object>(ApplicationPackageImpl.Literals.STRING_TO_OBJECT_MAP, StringToObjectMapImpl.class, this, ApplicationPackageImpl.APPLICATION_ELEMENT__TRANSIENT_DATA);
+			transientData = new EcoreEMap<String, Object>(ApplicationPackageImpl.Literals.STRING_TO_OBJECT_MAP,
+					StringToObjectMapImpl.class, this, ApplicationPackageImpl.APPLICATION_ELEMENT__TRANSIENT_DATA);
 		}
 		return transientData.map();
 	}
@@ -222,10 +240,12 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__PERSISTED_STATE:
-				return ((InternalEList<?>)((EMap.InternalMapView<String, String>)getPersistedState()).eMap()).basicRemove(otherEnd, msgs);
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__TRANSIENT_DATA:
-				return ((InternalEList<?>)((EMap.InternalMapView<String, Object>)getTransientData()).eMap()).basicRemove(otherEnd, msgs);
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__PERSISTED_STATE:
+			return ((InternalEList<?>) ((EMap.InternalMapView<String, String>) getPersistedState()).eMap())
+					.basicRemove(otherEnd, msgs);
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__TRANSIENT_DATA:
+			return ((InternalEList<?>) ((EMap.InternalMapView<String, Object>) getTransientData()).eMap())
+					.basicRemove(otherEnd, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -238,18 +258,22 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__ELEMENT_ID:
-				return getElementId();
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__PERSISTED_STATE:
-				if (coreType) return ((EMap.InternalMapView<String, String>)getPersistedState()).eMap();
-				else return getPersistedState();
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__TAGS:
-				return getTags();
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__CONTRIBUTOR_URI:
-				return getContributorURI();
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__TRANSIENT_DATA:
-				if (coreType) return ((EMap.InternalMapView<String, Object>)getTransientData()).eMap();
-				else return getTransientData();
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__ELEMENT_ID:
+			return getElementId();
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__PERSISTED_STATE:
+			if (coreType)
+				return ((EMap.InternalMapView<String, String>) getPersistedState()).eMap();
+			else
+				return getPersistedState();
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__TAGS:
+			return getTags();
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__CONTRIBUTOR_URI:
+			return getContributorURI();
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__TRANSIENT_DATA:
+			if (coreType)
+				return ((EMap.InternalMapView<String, Object>) getTransientData()).eMap();
+			else
+				return getTransientData();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -263,22 +287,24 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__ELEMENT_ID:
-				setElementId((String)newValue);
-				return;
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__PERSISTED_STATE:
-				((EStructuralFeature.Setting)((EMap.InternalMapView<String, String>)getPersistedState()).eMap()).set(newValue);
-				return;
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__TAGS:
-				getTags().clear();
-				getTags().addAll((Collection<? extends String>)newValue);
-				return;
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__CONTRIBUTOR_URI:
-				setContributorURI((String)newValue);
-				return;
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__TRANSIENT_DATA:
-				((EStructuralFeature.Setting)((EMap.InternalMapView<String, Object>)getTransientData()).eMap()).set(newValue);
-				return;
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__ELEMENT_ID:
+			setElementId((String) newValue);
+			return;
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__PERSISTED_STATE:
+			((EStructuralFeature.Setting) ((EMap.InternalMapView<String, String>) getPersistedState()).eMap())
+					.set(newValue);
+			return;
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__TAGS:
+			getTags().clear();
+			getTags().addAll((Collection<? extends String>) newValue);
+			return;
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__CONTRIBUTOR_URI:
+			setContributorURI((String) newValue);
+			return;
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__TRANSIENT_DATA:
+			((EStructuralFeature.Setting) ((EMap.InternalMapView<String, Object>) getTransientData()).eMap())
+					.set(newValue);
+			return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -291,21 +317,21 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__ELEMENT_ID:
-				setElementId(ELEMENT_ID_EDEFAULT);
-				return;
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__PERSISTED_STATE:
-				getPersistedState().clear();
-				return;
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__TAGS:
-				getTags().clear();
-				return;
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__CONTRIBUTOR_URI:
-				setContributorURI(CONTRIBUTOR_URI_EDEFAULT);
-				return;
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__TRANSIENT_DATA:
-				getTransientData().clear();
-				return;
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__ELEMENT_ID:
+			setElementId(ELEMENT_ID_EDEFAULT);
+			return;
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__PERSISTED_STATE:
+			getPersistedState().clear();
+			return;
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__TAGS:
+			getTags().clear();
+			return;
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__CONTRIBUTOR_URI:
+			setContributorURI(CONTRIBUTOR_URI_EDEFAULT);
+			return;
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__TRANSIENT_DATA:
+			getTransientData().clear();
+			return;
 		}
 		super.eUnset(featureID);
 	}
@@ -318,16 +344,17 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__ELEMENT_ID:
-				return ELEMENT_ID_EDEFAULT == null ? elementId != null : !ELEMENT_ID_EDEFAULT.equals(elementId);
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__PERSISTED_STATE:
-				return persistedState != null && !persistedState.isEmpty();
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__TAGS:
-				return tags != null && !tags.isEmpty();
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__CONTRIBUTOR_URI:
-				return CONTRIBUTOR_URI_EDEFAULT == null ? contributorURI != null : !CONTRIBUTOR_URI_EDEFAULT.equals(contributorURI);
-			case ApplicationPackageImpl.APPLICATION_ELEMENT__TRANSIENT_DATA:
-				return transientData != null && !transientData.isEmpty();
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__ELEMENT_ID:
+			return ELEMENT_ID_EDEFAULT == null ? elementId != null : !ELEMENT_ID_EDEFAULT.equals(elementId);
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__PERSISTED_STATE:
+			return persistedState != null && !persistedState.isEmpty();
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__TAGS:
+			return tags != null && !tags.isEmpty();
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__CONTRIBUTOR_URI:
+			return CONTRIBUTOR_URI_EDEFAULT == null ? contributorURI != null
+					: !CONTRIBUTOR_URI_EDEFAULT.equals(contributorURI);
+		case ApplicationPackageImpl.APPLICATION_ELEMENT__TRANSIENT_DATA:
+			return transientData != null && !transientData.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}
@@ -338,7 +365,8 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 	 * @generated
 	 */
 	private String toStringGen() {
-		if (eIsProxy()) return super.toString();
+		if (eIsProxy())
+			return super.toString();
 
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (elementId: "); //$NON-NLS-1$
@@ -351,6 +379,7 @@ public abstract class ApplicationElementImpl extends org.eclipse.emf.ecore.impl.
 		return result.toString();
 	}
 
+	@Override
 	public String toString() {
 		String result = toStringGen();
 		if (elementId != null) {

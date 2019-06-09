@@ -420,14 +420,6 @@ public class Project extends Container implements IProject {
 	}
 
 	@Override
-	@Deprecated
-	public IPath getPluginWorkingLocation(IPluginDescriptor plugin) {
-		if (plugin == null)
-			return null;
-		return getWorkingLocation(plugin.getUniqueIdentifier());
-	}
-
-	@Override
 	public IProject getProject() {
 		return this;
 	}
@@ -890,8 +882,8 @@ public class Project extends Container implements IProject {
 		// get the children via the workspace since we know that this
 		// resource exists (it is local).
 		IResource[] children = getChildren(IResource.NONE);
-		for (int i = 0; i < children.length; i++)
-			if (!children[i].isLocal(depth))
+		for (IResource element : children)
+			if (!element.isLocal(depth))
 				return false;
 		return true;
 	}

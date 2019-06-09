@@ -33,8 +33,6 @@ public interface IOperatingSystemRegistration {
 	 * @return an instance of IOperatingSystemRegistration
 	 */
 	static IOperatingSystemRegistration getInstance() {
-		if (Platform.OS_FREEBSD.equals(Platform.getOS()))
-			return new RegistrationLinux();
 		if (Platform.OS_MACOSX.equals(Platform.getOS())) {
 			return new RegistrationMacOsX();
 		} else if (Platform.OS_LINUX.equals(Platform.getOS())) {
@@ -68,5 +66,18 @@ public interface IOperatingSystemRegistration {
 	 * @return the Eclipse executable
 	 */
 	String getEclipseLauncher();
+
+	/**
+	 *
+	 * This method returns if the current operating system allows to register an uri
+	 * scheme that this already handled by another application.
+	 *
+	 * If the operating system does store this information in de-central way the
+	 * implementation should return false.
+	 *
+	 * @return <code>true</code> if registering of other application's uri scheme is
+	 *         supported - <code>false</code> otherwise.
+	 */
+	boolean canOverwriteOtherApplicationsRegistration();
 
 }

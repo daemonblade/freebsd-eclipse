@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2015 IBM Corporation and others.
+ * Copyright (c) 2008, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -204,7 +204,7 @@ public class FindClassResolutionsOperation implements IRunnableWithProgress {
 				BundleDescription desc = currentPackage.getExporter();
 				// Ignore already required bundles and duplicate proposals (currently we do not consider version constraints)
 				if (desc != null && !bundleNames.contains(desc.getName())) {
-					fCollector.addRequireBundleModification(fProject, currentPackage, 16, fCompilationUnit,
+					fCollector.addRequireBundleModification(fProject, currentPackage, 3, fCompilationUnit,
 							currentEntry.getKey());
 					bundleNames.add(desc.getName());
 				}
@@ -256,10 +256,23 @@ public class FindClassResolutionsOperation implements IRunnableWithProgress {
 			ImportPackageSpecification[] importPkgs, Set<IPackageFragment> packagesToExport, IProgressMonitor monitor) {
 		SubMonitor subMonitor = SubMonitor.convert(monitor);
 
+		IPluginModelBase[] activeModels = PluginRegistry.getActiveModels();
+		Set<IJavaProject> javaProjects = new LinkedHashSet<>(activeModels.length * 2);
+
+		for (IPluginModelBase model : activeModels) {
+			IResource resource = model.getUnderlyingResource();
+			if (resource != null && resource.isAccessible()) {
+				IJavaProject javaProject = JavaCore.create(resource.getProject());
+				if (javaProject.exists()) {
+					javaProjects.add(javaProject);
+				}
+			}
+		}
 		final IJavaProject currentJavaProject = JavaCore.create(fProject);
+		javaProjects.remove(currentJavaProject); // no need to search in current project itself
 
 		try {
-			IJavaSearchScope searchScope = PDESearchScope.create();
+			IJavaSearchScope searchScope = SearchEngine.createJavaSearchScope(javaProjects.toArray(new IJavaElement[javaProjects.size()]));
 
 			final Map<String, IPackageFragment> packages = new HashMap<>();
 			final Map<String, String> qualifiedTypeNames = new HashMap<>();

@@ -61,6 +61,7 @@ public abstract class HandledItemImpl extends ItemImpl implements MHandledItem {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @see #getWbCommand()
+	 * @noreference
 	 * @generated
 	 * @ordered
 	 */
@@ -71,6 +72,7 @@ public abstract class HandledItemImpl extends ItemImpl implements MHandledItem {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @see #getWbCommand()
+	 * @noreference
 	 * @generated
 	 * @ordered
 	 */
@@ -110,13 +112,15 @@ public abstract class HandledItemImpl extends ItemImpl implements MHandledItem {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public MCommand getCommand() {
-		if (command != null && ((EObject)command).eIsProxy()) {
-			InternalEObject oldCommand = (InternalEObject)command;
-			command = (MCommand)eResolveProxy(oldCommand);
+		if (command != null && ((EObject) command).eIsProxy()) {
+			InternalEObject oldCommand = (InternalEObject) command;
+			command = (MCommand) eResolveProxy(oldCommand);
 			if (command != oldCommand) {
 				if (eNotificationRequired())
-					eNotify(new ENotificationImpl(this, Notification.RESOLVE, MenuPackageImpl.HANDLED_ITEM__COMMAND, oldCommand, command));
+					eNotify(new ENotificationImpl(this, Notification.RESOLVE, MenuPackageImpl.HANDLED_ITEM__COMMAND,
+							oldCommand, command));
 			}
 		}
 		return command;
@@ -136,18 +140,22 @@ public abstract class HandledItemImpl extends ItemImpl implements MHandledItem {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setCommand(MCommand newCommand) {
 		MCommand oldCommand = command;
 		command = newCommand;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, MenuPackageImpl.HANDLED_ITEM__COMMAND, oldCommand, command));
+			eNotify(new ENotificationImpl(this, Notification.SET, MenuPackageImpl.HANDLED_ITEM__COMMAND, oldCommand,
+					command));
 	}
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @noreference
 	 * @generated
 	 */
+	@Override
 	public ParameterizedCommand getWbCommand() {
 		return wbCommand;
 	}
@@ -155,13 +163,16 @@ public abstract class HandledItemImpl extends ItemImpl implements MHandledItem {
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @noreference
 	 * @generated
 	 */
+	@Override
 	public void setWbCommand(ParameterizedCommand newWbCommand) {
 		ParameterizedCommand oldWbCommand = wbCommand;
 		wbCommand = newWbCommand;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, MenuPackageImpl.HANDLED_ITEM__WB_COMMAND, oldWbCommand, wbCommand));
+			eNotify(new ENotificationImpl(this, Notification.SET, MenuPackageImpl.HANDLED_ITEM__WB_COMMAND,
+					oldWbCommand, wbCommand));
 	}
 
 	/**
@@ -169,9 +180,11 @@ public abstract class HandledItemImpl extends ItemImpl implements MHandledItem {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public List<MParameter> getParameters() {
 		if (parameters == null) {
-			parameters = new EObjectContainmentEList<MParameter>(MParameter.class, this, MenuPackageImpl.HANDLED_ITEM__PARAMETERS);
+			parameters = new EObjectContainmentEList<MParameter>(MParameter.class, this,
+					MenuPackageImpl.HANDLED_ITEM__PARAMETERS);
 		}
 		return parameters;
 	}
@@ -184,8 +197,8 @@ public abstract class HandledItemImpl extends ItemImpl implements MHandledItem {
 	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
-			case MenuPackageImpl.HANDLED_ITEM__PARAMETERS:
-				return ((InternalEList<?>)getParameters()).basicRemove(otherEnd, msgs);
+		case MenuPackageImpl.HANDLED_ITEM__PARAMETERS:
+			return ((InternalEList<?>) getParameters()).basicRemove(otherEnd, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -198,13 +211,14 @@ public abstract class HandledItemImpl extends ItemImpl implements MHandledItem {
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case MenuPackageImpl.HANDLED_ITEM__COMMAND:
-				if (resolve) return getCommand();
-				return basicGetCommand();
-			case MenuPackageImpl.HANDLED_ITEM__WB_COMMAND:
-				return getWbCommand();
-			case MenuPackageImpl.HANDLED_ITEM__PARAMETERS:
-				return getParameters();
+		case MenuPackageImpl.HANDLED_ITEM__COMMAND:
+			if (resolve)
+				return getCommand();
+			return basicGetCommand();
+		case MenuPackageImpl.HANDLED_ITEM__WB_COMMAND:
+			return getWbCommand();
+		case MenuPackageImpl.HANDLED_ITEM__PARAMETERS:
+			return getParameters();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -218,16 +232,16 @@ public abstract class HandledItemImpl extends ItemImpl implements MHandledItem {
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case MenuPackageImpl.HANDLED_ITEM__COMMAND:
-				setCommand((MCommand)newValue);
-				return;
-			case MenuPackageImpl.HANDLED_ITEM__WB_COMMAND:
-				setWbCommand((ParameterizedCommand)newValue);
-				return;
-			case MenuPackageImpl.HANDLED_ITEM__PARAMETERS:
-				getParameters().clear();
-				getParameters().addAll((Collection<? extends MParameter>)newValue);
-				return;
+		case MenuPackageImpl.HANDLED_ITEM__COMMAND:
+			setCommand((MCommand) newValue);
+			return;
+		case MenuPackageImpl.HANDLED_ITEM__WB_COMMAND:
+			setWbCommand((ParameterizedCommand) newValue);
+			return;
+		case MenuPackageImpl.HANDLED_ITEM__PARAMETERS:
+			getParameters().clear();
+			getParameters().addAll((Collection<? extends MParameter>) newValue);
+			return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -240,15 +254,15 @@ public abstract class HandledItemImpl extends ItemImpl implements MHandledItem {
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case MenuPackageImpl.HANDLED_ITEM__COMMAND:
-				setCommand((MCommand)null);
-				return;
-			case MenuPackageImpl.HANDLED_ITEM__WB_COMMAND:
-				setWbCommand(WB_COMMAND_EDEFAULT);
-				return;
-			case MenuPackageImpl.HANDLED_ITEM__PARAMETERS:
-				getParameters().clear();
-				return;
+		case MenuPackageImpl.HANDLED_ITEM__COMMAND:
+			setCommand((MCommand) null);
+			return;
+		case MenuPackageImpl.HANDLED_ITEM__WB_COMMAND:
+			setWbCommand(WB_COMMAND_EDEFAULT);
+			return;
+		case MenuPackageImpl.HANDLED_ITEM__PARAMETERS:
+			getParameters().clear();
+			return;
 		}
 		super.eUnset(featureID);
 	}
@@ -261,12 +275,12 @@ public abstract class HandledItemImpl extends ItemImpl implements MHandledItem {
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case MenuPackageImpl.HANDLED_ITEM__COMMAND:
-				return command != null;
-			case MenuPackageImpl.HANDLED_ITEM__WB_COMMAND:
-				return WB_COMMAND_EDEFAULT == null ? wbCommand != null : !WB_COMMAND_EDEFAULT.equals(wbCommand);
-			case MenuPackageImpl.HANDLED_ITEM__PARAMETERS:
-				return parameters != null && !parameters.isEmpty();
+		case MenuPackageImpl.HANDLED_ITEM__COMMAND:
+			return command != null;
+		case MenuPackageImpl.HANDLED_ITEM__WB_COMMAND:
+			return WB_COMMAND_EDEFAULT == null ? wbCommand != null : !WB_COMMAND_EDEFAULT.equals(wbCommand);
+		case MenuPackageImpl.HANDLED_ITEM__PARAMETERS:
+			return parameters != null && !parameters.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}
@@ -278,7 +292,8 @@ public abstract class HandledItemImpl extends ItemImpl implements MHandledItem {
 	 */
 	@Override
 	public String toString() {
-		if (eIsProxy()) return super.toString();
+		if (eIsProxy())
+			return super.toString();
 
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (wbCommand: "); //$NON-NLS-1$

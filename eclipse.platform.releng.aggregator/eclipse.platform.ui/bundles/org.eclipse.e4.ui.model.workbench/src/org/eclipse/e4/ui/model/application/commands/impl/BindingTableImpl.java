@@ -89,9 +89,11 @@ public class BindingTableImpl extends ApplicationElementImpl implements MBinding
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public List<MKeyBinding> getBindings() {
 		if (bindings == null) {
-			bindings = new EObjectContainmentEList<MKeyBinding>(MKeyBinding.class, this, CommandsPackageImpl.BINDING_TABLE__BINDINGS);
+			bindings = new EObjectContainmentEList<MKeyBinding>(MKeyBinding.class, this,
+					CommandsPackageImpl.BINDING_TABLE__BINDINGS);
 		}
 		return bindings;
 	}
@@ -101,13 +103,15 @@ public class BindingTableImpl extends ApplicationElementImpl implements MBinding
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public MBindingContext getBindingContext() {
-		if (bindingContext != null && ((EObject)bindingContext).eIsProxy()) {
-			InternalEObject oldBindingContext = (InternalEObject)bindingContext;
-			bindingContext = (MBindingContext)eResolveProxy(oldBindingContext);
+		if (bindingContext != null && ((EObject) bindingContext).eIsProxy()) {
+			InternalEObject oldBindingContext = (InternalEObject) bindingContext;
+			bindingContext = (MBindingContext) eResolveProxy(oldBindingContext);
 			if (bindingContext != oldBindingContext) {
 				if (eNotificationRequired())
-					eNotify(new ENotificationImpl(this, Notification.RESOLVE, CommandsPackageImpl.BINDING_TABLE__BINDING_CONTEXT, oldBindingContext, bindingContext));
+					eNotify(new ENotificationImpl(this, Notification.RESOLVE,
+							CommandsPackageImpl.BINDING_TABLE__BINDING_CONTEXT, oldBindingContext, bindingContext));
 			}
 		}
 		return bindingContext;
@@ -127,11 +131,13 @@ public class BindingTableImpl extends ApplicationElementImpl implements MBinding
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setBindingContext(MBindingContext newBindingContext) {
 		MBindingContext oldBindingContext = bindingContext;
 		bindingContext = newBindingContext;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.BINDING_TABLE__BINDING_CONTEXT, oldBindingContext, bindingContext));
+			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.BINDING_TABLE__BINDING_CONTEXT,
+					oldBindingContext, bindingContext));
 	}
 
 	/**
@@ -142,8 +148,8 @@ public class BindingTableImpl extends ApplicationElementImpl implements MBinding
 	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
-			case CommandsPackageImpl.BINDING_TABLE__BINDINGS:
-				return ((InternalEList<?>)getBindings()).basicRemove(otherEnd, msgs);
+		case CommandsPackageImpl.BINDING_TABLE__BINDINGS:
+			return ((InternalEList<?>) getBindings()).basicRemove(otherEnd, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -156,11 +162,12 @@ public class BindingTableImpl extends ApplicationElementImpl implements MBinding
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case CommandsPackageImpl.BINDING_TABLE__BINDINGS:
-				return getBindings();
-			case CommandsPackageImpl.BINDING_TABLE__BINDING_CONTEXT:
-				if (resolve) return getBindingContext();
-				return basicGetBindingContext();
+		case CommandsPackageImpl.BINDING_TABLE__BINDINGS:
+			return getBindings();
+		case CommandsPackageImpl.BINDING_TABLE__BINDING_CONTEXT:
+			if (resolve)
+				return getBindingContext();
+			return basicGetBindingContext();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -174,13 +181,13 @@ public class BindingTableImpl extends ApplicationElementImpl implements MBinding
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case CommandsPackageImpl.BINDING_TABLE__BINDINGS:
-				getBindings().clear();
-				getBindings().addAll((Collection<? extends MKeyBinding>)newValue);
-				return;
-			case CommandsPackageImpl.BINDING_TABLE__BINDING_CONTEXT:
-				setBindingContext((MBindingContext)newValue);
-				return;
+		case CommandsPackageImpl.BINDING_TABLE__BINDINGS:
+			getBindings().clear();
+			getBindings().addAll((Collection<? extends MKeyBinding>) newValue);
+			return;
+		case CommandsPackageImpl.BINDING_TABLE__BINDING_CONTEXT:
+			setBindingContext((MBindingContext) newValue);
+			return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -193,12 +200,12 @@ public class BindingTableImpl extends ApplicationElementImpl implements MBinding
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case CommandsPackageImpl.BINDING_TABLE__BINDINGS:
-				getBindings().clear();
-				return;
-			case CommandsPackageImpl.BINDING_TABLE__BINDING_CONTEXT:
-				setBindingContext((MBindingContext)null);
-				return;
+		case CommandsPackageImpl.BINDING_TABLE__BINDINGS:
+			getBindings().clear();
+			return;
+		case CommandsPackageImpl.BINDING_TABLE__BINDING_CONTEXT:
+			setBindingContext((MBindingContext) null);
+			return;
 		}
 		super.eUnset(featureID);
 	}
@@ -211,10 +218,10 @@ public class BindingTableImpl extends ApplicationElementImpl implements MBinding
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case CommandsPackageImpl.BINDING_TABLE__BINDINGS:
-				return bindings != null && !bindings.isEmpty();
-			case CommandsPackageImpl.BINDING_TABLE__BINDING_CONTEXT:
-				return bindingContext != null;
+		case CommandsPackageImpl.BINDING_TABLE__BINDINGS:
+			return bindings != null && !bindings.isEmpty();
+		case CommandsPackageImpl.BINDING_TABLE__BINDING_CONTEXT:
+			return bindingContext != null;
 		}
 		return super.eIsSet(featureID);
 	}

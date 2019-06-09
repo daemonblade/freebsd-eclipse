@@ -25,6 +25,7 @@ import org.eclipse.ui.internal.EditorReference;
 public class NullEditorInput implements IEditorInput {
 
 	private EditorReference editorReference;
+	private String name;
 
 	/**
 	 * Creates a <code>NullEditorInput</code>.
@@ -33,55 +34,51 @@ public class NullEditorInput implements IEditorInput {
 	}
 
 	/**
-	 * Creates a <code>NullEditorInput</code> for the
-	 * given editor reference.
+	 * Creates a <code>NullEditorInput</code> for the given editor reference.
 	 *
 	 * @param editorReference the editor reference
 	 * @since 3.4
 	 */
 	public NullEditorInput(EditorReference editorReference) {
 		Assert.isLegal(editorReference != null);
-		this.editorReference= editorReference;
+		this.name = editorReference.getName();
+		this.editorReference = editorReference;
 
 	}
 
-    @Override
+	@Override
 	public boolean exists() {
-        return false;
-    }
+		return false;
+	}
 
-    @Override
+	@Override
 	public ImageDescriptor getImageDescriptor() {
-        return ImageDescriptor.getMissingImageDescriptor();
-    }
+		return ImageDescriptor.getMissingImageDescriptor();
+	}
 
-    @Override
+	@Override
 	public String getName() {
-		String result = null;
-		if (editorReference != null) {
-			result = editorReference.getName();
+		if (name != null) {
+			return name;
 		}
-		if (result != null) {
-			return result;
-		}
-        return ""; //$NON-NLS-1$
-    }
+		return ""; //$NON-NLS-1$
+	}
 
-    @Override
+	@Override
 	public IPersistableElement getPersistable() {
-        return null;
-    }
+		return null;
+	}
 
-    @Override
+	@Override
 	public String getToolTipText() {
 		if (editorReference != null)
 			return editorReference.getTitleToolTip();
-        return ""; //$NON-NLS-1$
-    }
+		return ""; //$NON-NLS-1$
+	}
 
-    @Override
+	@Override
 	public <T> T getAdapter(Class<T> adapter) {
-        return null;
-    }
+		return null;
+	}
 
 }

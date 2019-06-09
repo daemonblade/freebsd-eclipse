@@ -16,9 +16,6 @@ package org.eclipse.team.tests.ccvs.core.subscriber;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -36,6 +33,9 @@ import org.eclipse.team.internal.ccvs.core.client.Command.KSubstOption;
 import org.eclipse.team.internal.ccvs.core.resources.CVSWorkspaceRoot;
 import org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo;
 import org.eclipse.team.tests.ccvs.core.CVSTestSetup;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 
 /**
@@ -219,12 +219,12 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 		assertSyncEquals("testMergableConflicts", subscriber, project, 
 				new String[] { "file1.txt", "file2.txt"}, 
 				true, new int[] {
-							  SyncInfo.CONFLICTING | SyncInfo.CHANGE, 
-							  		SyncInfo.CONFLICTING | SyncInfo.CHANGE});
+							SyncInfo.CONFLICTING | SyncInfo.CHANGE, 
+									SyncInfo.CONFLICTING | SyncInfo.CHANGE});
 		
 		// Perform a merge
 		mergeResources(subscriber, project, new String[] { 
-													   "file1.txt",
+														"file1.txt",
 		"file2.txt"}, 
 		false /* allow overwrite */);
 		
@@ -232,8 +232,8 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 		assertSyncEquals("testMergableConflicts", getWorkspaceSubscriber(), project, 
 				new String[] { "file1.txt", "file2.txt"}, 
 				true, new int[] {
-							  SyncInfo.OUTGOING | SyncInfo.CHANGE,
-							  		SyncInfo.OUTGOING  | SyncInfo.CHANGE});
+							SyncInfo.OUTGOING | SyncInfo.CHANGE,
+									SyncInfo.OUTGOING  | SyncInfo.CHANGE});
 		
 		//TODO: How do we know if the right thing happened to the file contents?	
 	}
@@ -272,12 +272,12 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 		assertSyncEquals("testUnmergableConflicts", subscriber, project, 
 				new String[] { "delete.txt", "file1.txt", "file2.txt", "addition.txt", "folder1/a.txt", "folder1/b.txt"}, 
 				true, new int[] {
-							  SyncInfo.IN_SYNC, /* TODO: is this OK */
-							  		SyncInfo.CONFLICTING | SyncInfo.CHANGE, 
-							  		SyncInfo.CONFLICTING | SyncInfo.CHANGE,
-							  		SyncInfo.CONFLICTING | SyncInfo.ADDITION,
-							  		SyncInfo.CONFLICTING | SyncInfo.CHANGE,
-							  		SyncInfo.CONFLICTING | SyncInfo.CHANGE});
+								SyncInfo.IN_SYNC, /* TODO: is this OK */
+										SyncInfo.CONFLICTING | SyncInfo.CHANGE, 
+										SyncInfo.CONFLICTING | SyncInfo.CHANGE,
+										SyncInfo.CONFLICTING | SyncInfo.ADDITION,
+										SyncInfo.CONFLICTING | SyncInfo.CHANGE,
+										SyncInfo.CONFLICTING | SyncInfo.CHANGE});
 		
 		// TODO: Should actually perform the merge and check the results
 		// However, this would require the changes to be redone
@@ -289,12 +289,12 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 		assertSyncEquals("testUnmergableConflicts", subscriber, project, 
 				new String[] { "delete.txt", "file1.txt", "file2.txt", "addition.txt", "folder1/a.txt", "folder1/b.txt"}, 
 				true, new int[] {
-							  SyncInfo.IN_SYNC, /* TODO: is this OK */
-							  		SyncInfo.CONFLICTING | SyncInfo.CHANGE, 
-							  		SyncInfo.CONFLICTING | SyncInfo.CHANGE,
-							  		SyncInfo.CONFLICTING | SyncInfo.ADDITION,
-							  		SyncInfo.CONFLICTING | SyncInfo.CHANGE,
-							  		SyncInfo.CONFLICTING | SyncInfo.CHANGE});
+								SyncInfo.IN_SYNC, /* TODO: is this OK */
+										SyncInfo.CONFLICTING | SyncInfo.CHANGE, 
+										SyncInfo.CONFLICTING | SyncInfo.CHANGE,
+										SyncInfo.CONFLICTING | SyncInfo.ADDITION,
+										SyncInfo.CONFLICTING | SyncInfo.CHANGE,
+										SyncInfo.CONFLICTING | SyncInfo.CHANGE});
 		
 		// Perform a merge
 		mergeResources(subscriber, project, new String[] { "delete.txt", "file1.txt", "file2.txt", "addition.txt", "folder1/a.txt", "folder1/b.txt"}, true /* allow overwrite */);
@@ -303,11 +303,11 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 		assertSyncEquals("testUnmergableConflicts", getWorkspaceSubscriber(), project, 
 				new String[] { "file1.txt", "file2.txt", "addition.txt", "folder1/a.txt", "folder1/b.txt"}, 
 				true, new int[] {
-							  SyncInfo.OUTGOING | SyncInfo.CHANGE,
-							  		SyncInfo.OUTGOING | SyncInfo.CHANGE,
-							  		SyncInfo.OUTGOING | SyncInfo.CHANGE,
-							  		SyncInfo.OUTGOING | SyncInfo.DELETION,
-							  		SyncInfo.OUTGOING | SyncInfo.ADDITION});
+								SyncInfo.OUTGOING | SyncInfo.CHANGE,
+										SyncInfo.OUTGOING | SyncInfo.CHANGE,
+										SyncInfo.OUTGOING | SyncInfo.CHANGE,
+										SyncInfo.OUTGOING | SyncInfo.DELETION,
+										SyncInfo.OUTGOING | SyncInfo.ADDITION});
 		assertDeleted("testUnmergableConflicts", project, new String[] { "delete.txt" });
 		
 		//TODO: How do we know if the right thing happend to the file contents?
@@ -343,20 +343,19 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 		assertSyncEquals("testLocalScrub", subscriber, project, 
 				new String[] { "delete.txt", "file1.txt", "works.txt", "addition.txt", "folder1/a.txt", "folder1/b.txt"}, 
 				true, new int[] {
-							  SyncInfo.INCOMING | SyncInfo.DELETION,
-							  		SyncInfo.INCOMING | SyncInfo.CHANGE, 
-							  		SyncInfo.INCOMING | SyncInfo.CHANGE,
-							  		SyncInfo.INCOMING | SyncInfo.ADDITION,
-							  		SyncInfo.INCOMING | SyncInfo.DELETION,
-							  		SyncInfo.INCOMING | SyncInfo.CHANGE});
+								SyncInfo.INCOMING | SyncInfo.DELETION,
+										SyncInfo.INCOMING | SyncInfo.CHANGE, 
+										SyncInfo.INCOMING | SyncInfo.CHANGE,
+										SyncInfo.INCOMING | SyncInfo.ADDITION,
+										SyncInfo.INCOMING | SyncInfo.DELETION,
+										SyncInfo.INCOMING | SyncInfo.CHANGE});
 		
 		//Refresh project to make sure we delete all existing files. See bug 403309
 		project.refreshLocal(IProject.DEPTH_INFINITE, DEFAULT_MONITOR);
 		
 		// scrub the project contents
 		IResource[] members = project.members();
-		for (int i = 0; i < members.length; i++) {
-			IResource resource = members[i];
+		for (IResource resource : members) {
 			if (resource.getName().equals(".project"))
 				continue;
 			delete(resource, IResource.FORCE, DEFAULT_MONITOR);
@@ -529,11 +528,11 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 		assertSyncEquals("testMarkAsMergedConflicts", subscriber, project, 
 				new String[] { "delete.txt", "file1.txt", "file2.txt", "addition.txt", "folder1/a.txt"}, 
 				true, new int[] {
-							  SyncInfo.CONFLICTING | SyncInfo.CHANGE,
-							  		SyncInfo.CONFLICTING | SyncInfo.CHANGE, 
-							  		SyncInfo.CONFLICTING | SyncInfo.CHANGE,
-							  		SyncInfo.CONFLICTING | SyncInfo.ADDITION,
-							  		SyncInfo.CONFLICTING | SyncInfo.CHANGE});
+								SyncInfo.CONFLICTING | SyncInfo.CHANGE,
+										SyncInfo.CONFLICTING | SyncInfo.CHANGE, 
+										SyncInfo.CONFLICTING | SyncInfo.CHANGE,
+										SyncInfo.CONFLICTING | SyncInfo.ADDITION,
+										SyncInfo.CONFLICTING | SyncInfo.CHANGE});
 		
 		markAsMerged(subscriber, project, new String[] { "delete.txt", "file1.txt", "file2.txt", "addition.txt", "folder1/a.txt"});
 		
@@ -541,16 +540,14 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 		assertSyncEquals("testMarkAsMerged", subscriber, project, 
 				new String[] { "delete.txt", "file1.txt", "file2.txt", "addition.txt", "folder1/a.txt"}, 
 				true, new int[] {
-							  SyncInfo.IN_SYNC,
-							  		SyncInfo.IN_SYNC, 
-							  		SyncInfo.IN_SYNC,
-							  		SyncInfo.IN_SYNC,
-							  		SyncInfo.IN_SYNC});				
+								SyncInfo.IN_SYNC,
+										SyncInfo.IN_SYNC, 
+										SyncInfo.IN_SYNC,
+										SyncInfo.IN_SYNC,
+										SyncInfo.IN_SYNC});				
 	} 
 	
-	/* (non-Javadoc)
-	 * @see junit.framework.TestCase#tearDown()
-	 */
+	@Override
 	protected void tearDown() throws Exception {
 		getSyncInfoSource().tearDown();
 		super.tearDown();
@@ -659,59 +656,59 @@ public class CVSMergeSubscriberTest extends CVSSyncSubscriberTest {
 		assertContentsEqual(project, branchedProject);
 	}
 	
-    public void testBinaryAddition() throws CoreException {
-    	// See bug 132255
-    	KSubstOption option = CVSProviderPlugin.getPlugin().getDefaultTextKSubstOption();
-    	try {
-	    	CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(Command.KSUBST_TEXT_KEYWORDS_ONLY);
-	    	IProject project = createProject(new String[] { "a.txt"});
+	public void testBinaryAddition() throws CoreException {
+		// See bug 132255
+		KSubstOption option = CVSProviderPlugin.getPlugin().getDefaultTextKSubstOption();
+		try {
+			CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(Command.KSUBST_TEXT_KEYWORDS_ONLY);
+			IProject project = createProject(new String[] { "a.txt"});
 			// Checkout and branch a copy
 			CVSTag root = new CVSTag("root_branch1", CVSTag.VERSION);
 			CVSTag branch = new CVSTag("branch1", CVSTag.BRANCH);
 			IProject branchedProject = branchProject(project, root, branch);
 			// Add a binary file to the branch that contains LFs
-	    	create(branchedProject.getFile("binaryFile"), true);
-	    	setContentsAndEnsureModified(branchedProject.getFile("binaryFile"), "/n/n\n\n");
-	    	addResources(new IResource[] { branchedProject.getFile("binaryFile") });
-	    	commitProject(branchedProject);
-	    	// Merge the addition with HEAD
-	    	CVSMergeSubscriber subscriber = getSyncInfoSource().createMergeSubscriber(project, root, branch);
-	    	getSyncInfoSource().refresh(subscriber, project);
-	    	getSyncInfoSource().updateResources(subscriber, new IResource[] { project.getFile("binaryFile") });
-	    	assertContentsEqual(branchedProject.getFile("binaryFile"), project.getFile("binaryFile"));
-    	} finally {
-    		CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(option);
-    	}
-    }
-    
-    public void testBinaryMarkAsMerged() throws CoreException, InvocationTargetException, InterruptedException {
-    	// See bug 132255
-    	KSubstOption option = CVSProviderPlugin.getPlugin().getDefaultTextKSubstOption();
-    	try {
-	    	CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(Command.KSUBST_TEXT_KEYWORDS_ONLY);
-	    	IProject project = createProject(new String[] { "a.txt"});
+			create(branchedProject.getFile("binaryFile"), true);
+			setContentsAndEnsureModified(branchedProject.getFile("binaryFile"), "/n/n\n\n");
+			addResources(new IResource[] { branchedProject.getFile("binaryFile") });
+			commitProject(branchedProject);
+			// Merge the addition with HEAD
+			CVSMergeSubscriber subscriber = getSyncInfoSource().createMergeSubscriber(project, root, branch);
+			getSyncInfoSource().refresh(subscriber, project);
+			getSyncInfoSource().updateResources(subscriber, new IResource[] { project.getFile("binaryFile") });
+			assertContentsEqual(branchedProject.getFile("binaryFile"), project.getFile("binaryFile"));
+		} finally {
+			CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(option);
+		}
+	}
+	
+	public void testBinaryMarkAsMerged() throws CoreException, InvocationTargetException, InterruptedException {
+		// See bug 132255
+		KSubstOption option = CVSProviderPlugin.getPlugin().getDefaultTextKSubstOption();
+		try {
+			CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(Command.KSUBST_TEXT_KEYWORDS_ONLY);
+			IProject project = createProject(new String[] { "a.txt"});
 			// Checkout and branch a copy
 			CVSTag root = new CVSTag("root_branch1", CVSTag.VERSION);
 			CVSTag branch = new CVSTag("branch1", CVSTag.BRANCH);
 			IProject branchedProject = branchProject(project, root, branch);
 			// Add a binary file to the branch that contains LFs
-	    	create(branchedProject.getFile("binaryFile"), true);
-	    	setContentsAndEnsureModified(branchedProject.getFile("binaryFile"), "/n/n\n\n");
-	    	addResources(new IResource[] { branchedProject.getFile("binaryFile") });
-	    	commitProject(branchedProject);
-	    	// Add the same file to the project but don't share it
-	    	create(project.getFile("binaryFile"), true);
-	    	setContentsAndEnsureModified(project.getFile("binaryFile"), "/n/nSome Content\n\n");
-	    	// Merge the addition with HEAD
-	    	CVSMergeSubscriber subscriber = getSyncInfoSource().createMergeSubscriber(project, root, branch);
-	    	getSyncInfoSource().refresh(subscriber, project);
-	    	getSyncInfoSource().markAsMerged(subscriber, new IResource[] { project.getFile("binaryFile") });
-	    	assertIsBinary(project.getFile("binaryFile"));
-    	} finally {
-    		CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(option);
-    	}
-    }
-    
+			create(branchedProject.getFile("binaryFile"), true);
+			setContentsAndEnsureModified(branchedProject.getFile("binaryFile"), "/n/n\n\n");
+			addResources(new IResource[] { branchedProject.getFile("binaryFile") });
+			commitProject(branchedProject);
+			// Add the same file to the project but don't share it
+			create(project.getFile("binaryFile"), true);
+			setContentsAndEnsureModified(project.getFile("binaryFile"), "/n/nSome Content\n\n");
+			// Merge the addition with HEAD
+			CVSMergeSubscriber subscriber = getSyncInfoSource().createMergeSubscriber(project, root, branch);
+			getSyncInfoSource().refresh(subscriber, project);
+			getSyncInfoSource().markAsMerged(subscriber, new IResource[] { project.getFile("binaryFile") });
+			assertIsBinary(project.getFile("binaryFile"));
+		} finally {
+			CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(option);
+		}
+	}
+	
 	public void testMergeNewFileToBranch() throws InvocationTargetException, InterruptedException, CoreException {
 		// Create a project
 		IProject project = createProject(new String[] {"file1.txt"});

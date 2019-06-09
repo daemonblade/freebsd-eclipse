@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2018 GK Software AG, and others.
+ * Copyright (c) 2013, 2019 GK Software AG, and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,6 +21,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +33,7 @@ import org.eclipse.jdt.internal.compiler.ast.FunctionalExpression;
 import org.eclipse.jdt.internal.compiler.ast.Invocation;
 import org.eclipse.jdt.internal.compiler.ast.LambdaExpression;
 import org.eclipse.jdt.internal.compiler.ast.ReferenceExpression;
+import org.eclipse.jdt.internal.compiler.ast.SwitchExpression;
 import org.eclipse.jdt.internal.compiler.ast.Wildcard;
 import org.eclipse.jdt.internal.compiler.lookup.TypeConstants.BoundCheckStatus;
 import org.eclipse.jdt.internal.compiler.util.Sorting;
@@ -158,6 +160,7 @@ public class InferenceContext18 {
 	public List<ConstraintFormula> constraintsWithUncheckedConversion;
 	public boolean usesUncheckedConversion;
 	public InferenceContext18 outerContext;
+	private Set<InferenceContext18> seenInnerContexts;
 	Scope scope;
 	LookupEnvironment environment;
 	ReferenceBinding object; // java.lang.Object
@@ -311,7 +314,7 @@ public class InferenceContext18 {
 		}
 		InferenceVariable[] newVariables = new InferenceVariable[len];
 		for (int i = 0; i < len; i++)
-			newVariables[i] = InferenceVariable.get(typeVariables[i], i, this.currentInvocation, this.scope, this.object);
+			newVariables[i] = InferenceVariable.get(typeVariables[i], i, this.currentInvocation, this.scope, this.object, true);
 		addInferenceVariables(newVariables);
 		return newVariables;
 	}
@@ -339,7 +342,7 @@ public class InferenceContext18 {
 				newVariables[i] = (InferenceVariable) typeVariables[i]; // prevent double substitution of an already-substituted inferenceVariable
 			else
 				toAdd[numToAdd++] =
-					newVariables[i] = InferenceVariable.get(typeVariables[i], i, this.currentInvocation, this.scope, this.object);
+					newVariables[i] = InferenceVariable.get(typeVariables[i], i, this.currentInvocation, this.scope, this.object, false);
 		}
 		if (numToAdd > 0) {
 			int start = 0;
@@ -402,7 +405,7 @@ public class InferenceContext18 {
 			// bullets 1&2: definitions only.
 			if (expectedType != null
 					&& expectedType != TypeBinding.VOID
-					&& invocationSite instanceof Expression
+					&& invocationSite instanceof Expression && ((Expression) invocationSite).isTrulyExpression()
 					&& ((Expression)invocationSite).isPolyExpression(method)) 
 			{
 				// 3. bullet: special treatment for poly expressions
@@ -573,6 +576,15 @@ public class InferenceContext18 {
 			if (addJDK_8153748ConstraintsFromExpression(ce.valueIfTrue, parameter, method, substitution) == ReductionResult.FALSE)
 				return ReductionResult.FALSE;
 			return addJDK_8153748ConstraintsFromExpression(ce.valueIfFalse, parameter, method, substitution);
+		} else if (argument instanceof SwitchExpression) {
+			SwitchExpression se = (SwitchExpression) argument;
+			ReductionResult result = ReductionResult.FALSE;
+			for (Expression re : se.resultExpressions) {
+				result = addJDK_8153748ConstraintsFromExpression(re, parameter, method, substitution);
+				if (result == ReductionResult.FALSE)
+					break;
+			}
+			return result;
 		}
 		return null;
 	}
@@ -709,6 +721,13 @@ public class InferenceContext18 {
 			ConditionalExpression ce = (ConditionalExpression) expri;
 			return addConstraintsToC_OneExpr(ce.valueIfTrue, c, fsi, substF, method)
 					&& addConstraintsToC_OneExpr(ce.valueIfFalse, c, fsi, substF, method);
+		} else if (expri instanceof SwitchExpression) {
+			SwitchExpression se = (SwitchExpression) expri;
+			for (Expression re : se.resultExpressions) {
+				if (!addConstraintsToC_OneExpr(re, c, fsi, substF, method))
+					return false;
+			}
+			return true;
 		}
 		return true;
 	}
@@ -950,6 +969,13 @@ public class InferenceContext18 {
 		} else if (expri instanceof ConditionalExpression) {
 			ConditionalExpression cond = (ConditionalExpression) expri;
 			return  checkExpression(cond.valueIfTrue, u, r1, v, r2) && checkExpression(cond.valueIfFalse, u, r1, v, r2);
+		} else if (expri instanceof SwitchExpression) {
+			SwitchExpression se = (SwitchExpression) expri;
+			for (Expression re : se.resultExpressions) {
+				if (!checkExpression(re, u, r1, v, r2))
+					return false;
+			}
+			return true;
 		} else {
 			return false;
 		}
@@ -1593,18 +1619,24 @@ public class InferenceContext18 {
 		this.usesUncheckedConversion = innerCtx.usesUncheckedConversion;
 	}
 
-	public void resumeSuspendedInference(SuspendedInferenceRecord record) {
+	public void resumeSuspendedInference(SuspendedInferenceRecord record, InferenceContext18 innerContext) {
 		// merge inference variables:
+		boolean firstTime = collectInnerContext(innerContext);
 		if (this.inferenceVariables == null) { // no new ones, assume we aborted prematurely
 			this.inferenceVariables = record.inferenceVariables;
+		} else if(!firstTime) {
+			// Use a set to eliminate duplicates.
+			final Set<InferenceVariable> uniqueVariables = new LinkedHashSet<>();
+			uniqueVariables.addAll(Arrays.asList(record.inferenceVariables));
+			uniqueVariables.addAll(Arrays.asList(this.inferenceVariables));
+			this.inferenceVariables = uniqueVariables.toArray(new InferenceVariable[uniqueVariables.size()]);
 		} else {
 			int l1 = this.inferenceVariables.length;
 			int l2 = record.inferenceVariables.length;
-			// move to back, add previous to front:
 			System.arraycopy(this.inferenceVariables, 0, this.inferenceVariables=new InferenceVariable[l1+l2], l2, l1);
 			System.arraycopy(record.inferenceVariables, 0, this.inferenceVariables, 0, l2);
 		}
-
+		
 		// replace invocation site & arguments:
 		this.currentInvocation = record.site;
 		this.invocationArguments = record.invocationArguments;
@@ -1612,6 +1644,16 @@ public class InferenceContext18 {
 		this.usesUncheckedConversion = record.usesUncheckedConversion;
 	}
 
+	private boolean collectInnerContext(final InferenceContext18 innerContext) {
+		if(innerContext == null) {
+			return false;
+		}
+		if(this.seenInnerContexts == null) {
+			this.seenInnerContexts = new HashSet<>();
+		}
+		return this.seenInnerContexts.add(innerContext);
+	}
+	
 	private Substitution getResultSubstitution(final BoundSet result) {
 		return new Substitution() {
 			@Override

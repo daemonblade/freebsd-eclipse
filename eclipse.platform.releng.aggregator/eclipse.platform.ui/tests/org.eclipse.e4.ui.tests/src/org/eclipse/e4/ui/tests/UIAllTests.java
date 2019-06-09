@@ -24,8 +24,10 @@ import org.eclipse.e4.ui.tests.application.ModelRobustnessTest;
 import org.eclipse.e4.ui.tests.application.ResourceHandlerTest;
 import org.eclipse.e4.ui.tests.application.StartupTestSuite;
 import org.eclipse.e4.ui.tests.application.UIEventTypesTest;
+import org.eclipse.e4.ui.tests.workbench.AreaRendererTest;
 import org.eclipse.e4.ui.tests.workbench.Bug308317Test;
 import org.eclipse.e4.ui.tests.workbench.ContextTest;
+import org.eclipse.e4.ui.tests.workbench.ContributionsAnalyzerTest;
 import org.eclipse.e4.ui.tests.workbench.ExtensionsSortTests;
 import org.eclipse.e4.ui.tests.workbench.HandlerActivationTest;
 import org.eclipse.e4.ui.tests.workbench.HandlerTest;
@@ -56,8 +58,6 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-		// Hack: bug 422676, run InjectionEventTest first
-		InjectionEventTest.class,
 		StartupTestSuite.class,
 		UIEventTypesTest.class,
 		Bug299755Test.class,
@@ -68,6 +68,7 @@ import org.junit.runners.Suite;
 		SashRendererTest.class,
 		MApplicationCommandAccessTest.class,
 		MMenuItemTest.class,
+		ContributionsAnalyzerTest.class,
 		MPartTest.class,
 		MPartSashContainerTest.class,
 		MSaveablePartTest.class,
@@ -79,6 +80,7 @@ import org.junit.runners.Suite;
 		Bug308317Test.class,
 		ModelRobustnessTest.class,
 		ResourceHandlerTest.class,
+		InjectionEventTest.class,
 		// Commented out due the bug 505678
 		// PartFocusTest.class,
 		ModelElementTest.class,
@@ -89,7 +91,7 @@ import org.junit.runners.Suite;
 		ExtensionsSortTests.class,
 		HandlerActivationTest.class,
 		ModelAssemblerTests.class,
-		ModelAssemblerFragmentOrderingTests.class, E4ResourceTest.class
+		ModelAssemblerFragmentOrderingTests.class, E4ResourceTest.class, AreaRendererTest.class
 		// SWTPartRendererTest.class,
 })
 public class UIAllTests {

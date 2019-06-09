@@ -33,7 +33,6 @@ import org.eclipse.jface.util.OpenStrategy;
 import org.eclipse.jface.util.Policy;
 import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.TableTreeItem;
 import org.eclipse.swt.dnd.DragSource;
 import org.eclipse.swt.dnd.DragSourceListener;
 import org.eclipse.swt.dnd.DropTarget;
@@ -276,39 +275,6 @@ public abstract class StructuredViewer extends ContentViewer implements IPostSel
 			clear();
 		}
 
-		@Override
-		public void applyFontsAndColors(TableTreeItem control) {
-
-			if(colorProvider == null){
-				if(usedDecorators){
-					//If there is no provider only apply set values
-					if(background != null) {
-						control.setBackground(background);
-					}
-
-					if(foreground != null) {
-						control.setForeground(foreground);
-					}
-				}
-			}
-			else{
-				//Always set the value if there is a provider
-				control.setBackground(background);
-				control.setForeground(foreground);
-			}
-
-			if(fontProvider == null){
-				if(usedDecorators && font != null) {
-					control.setFont(font);
-				}
-			} else {
-				control.setFont(font);
-			}
-
-			clear();
-		}
-
-
 	}
 
 	/**
@@ -392,29 +358,6 @@ public abstract class StructuredViewer extends ContentViewer implements IPostSel
 		 * @param control
 		 */
 		public void applyFontsAndColors(TreeItem control) {
-			if(usedDecorators){
-				//If there is no provider only apply set values
-				if(background != null) {
-					control.setBackground(background);
-				}
-
-				if(foreground != null) {
-					control.setForeground(foreground);
-				}
-
-				if(font != null) {
-					control.setFont(font);
-				}
-			}
-			clear();
-		}
-
-		/**
-		 * Apply the fonts and colors to the control if
-		 * required.
-		 * @param control
-		 */
-		public void applyFontsAndColors(TableTreeItem control) {
 			if(usedDecorators){
 				//If there is no provider only apply set values
 				if(background != null) {
@@ -1091,9 +1034,9 @@ public abstract class StructuredViewer extends ContentViewer implements IPostSel
 	 * one.  If this viewer has a comparator that was set via
 	 * <code>setComparator(ViewerComparator)</code> then this method will return
 	 * <code>null</code> if the comparator is not an instance of ViewerSorter.
-     * <p>
-     * It is recommended to use <code>getComparator()</code> instead.
-     * </p>
+	 * <p>
+	 * It is recommended to use <code>getComparator()</code> instead.
+	 * </p>
 	 *
 	 * @return a viewer sorter, or <code>null</code> if none or if the comparator is
 	 * 				not an instance of ViewerSorter
@@ -1109,7 +1052,7 @@ public abstract class StructuredViewer extends ContentViewer implements IPostSel
 	 * This method should be used instead of <code>getSorter()</code>.
 	 *
 	 * @return a viewer comparator, or <code>null</code> if none
-     *
+	 *
 	 * @since 3.2
 	 */
 	public ViewerComparator getComparator(){
@@ -1541,9 +1484,9 @@ public abstract class StructuredViewer extends ContentViewer implements IPostSel
 	 * this method.
 	 * </p>
 	 * @param widget
-     *            the widget
+	 *            the widget
 	 * @param element
-     *            the element
+	 *            the element
 	 */
 	protected final void refreshItem(Widget widget, Object element) {
 		SafeRunnable.run(new UpdateItemSafeRunnable(widget, element, true));
@@ -1786,16 +1729,16 @@ public abstract class StructuredViewer extends ContentViewer implements IPostSel
 	 * Sets this viewer's comparator to be used for sorting elements, and triggers refiltering and
 	 * resorting of this viewer's element.  <code>null</code> turns sorting off.
 	 * To get the viewer's comparator, call <code>getComparator()</code>.
-     * <p>
-     * IMPORTANT: This method was introduced in 3.2. If a reference to this viewer object
-     * is passed to clients who call <code>getSorter()</code>, null may be returned from
-     * from that method even though the viewer is sorting its elements using the
-     * viewer's comparator.
-     * </p>
+	 * <p>
+	 * IMPORTANT: This method was introduced in 3.2. If a reference to this viewer object
+	 * is passed to clients who call <code>getSorter()</code>, null may be returned from
+	 * from that method even though the viewer is sorting its elements using the
+	 * viewer's comparator.
+	 * </p>
 	 *
 	 * @param comparator a viewer comparator, or <code>null</code> if none
-     *
-     * @since 3.2
+	 *
+	 * @since 3.2
 	 */
 	public void setComparator(ViewerComparator comparator){
 		if (this.sorter != comparator){
@@ -2090,24 +2033,24 @@ public abstract class StructuredViewer extends ContentViewer implements IPostSel
 	}
 
 	/**
-     * Updates the given element's presentation when one or more of its
-     * properties changes. Only the given element is updated.
-     * <p>
-     * EXPERIMENTAL.  Not to be used except by JDT.
-     * This method was added to support JDT's explorations
-     * into grouping by working sets, which requires viewers to support multiple
-     * equal elements.  See bug 76482 for more details.  This support will
-     * likely be removed in Eclipse 3.3 in favor of proper support for
-     * multiple equal elements (which was implemented for AbtractTreeViewer in 3.2).
-     * </p>
-     * @param widget
-     *            the widget for the element
-     * @param element
-     *            the element
-     * @param properties
-     *            the properties that have changed, or <code>null</code> to
-     *            indicate unknown
-     */
+	 * Updates the given element's presentation when one or more of its
+	 * properties changes. Only the given element is updated.
+	 * <p>
+	 * EXPERIMENTAL.  Not to be used except by JDT.
+	 * This method was added to support JDT's explorations
+	 * into grouping by working sets, which requires viewers to support multiple
+	 * equal elements.  See bug 76482 for more details.  This support will
+	 * likely be removed in Eclipse 3.3 in favor of proper support for
+	 * multiple equal elements (which was implemented for AbtractTreeViewer in 3.2).
+	 * </p>
+	 * @param widget
+	 *            the widget for the element
+	 * @param element
+	 *            the element
+	 * @param properties
+	 *            the properties that have changed, or <code>null</code> to
+	 *            indicate unknown
+	 */
 	protected void internalUpdate(Widget widget, Object element, String[] properties) {
 		boolean needsRefilter = false;
 		if (properties != null) {

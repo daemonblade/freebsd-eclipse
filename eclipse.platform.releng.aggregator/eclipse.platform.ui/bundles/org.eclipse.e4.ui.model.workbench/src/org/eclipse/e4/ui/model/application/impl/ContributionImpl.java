@@ -101,6 +101,7 @@ public abstract class ContributionImpl extends ApplicationElementImpl implements
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public String getContributionURI() {
 		return contributionURI;
 	}
@@ -111,11 +112,13 @@ public abstract class ContributionImpl extends ApplicationElementImpl implements
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public void setContributionURI(String newContributionURI) {
 		String oldContributionURI = contributionURI;
 		contributionURI = newContributionURI;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI, oldContributionURI, contributionURI));
+			eNotify(new ENotificationImpl(this, Notification.SET, ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI,
+					oldContributionURI, contributionURI));
 	}
 
 	/**
@@ -123,6 +126,7 @@ public abstract class ContributionImpl extends ApplicationElementImpl implements
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public Object getObject() {
 		return object;
 	}
@@ -132,11 +136,13 @@ public abstract class ContributionImpl extends ApplicationElementImpl implements
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setObject(Object newObject) {
 		Object oldObject = object;
 		object = newObject;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, ApplicationPackageImpl.CONTRIBUTION__OBJECT, oldObject, object));
+			eNotify(new ENotificationImpl(this, Notification.SET, ApplicationPackageImpl.CONTRIBUTION__OBJECT,
+					oldObject, object));
 	}
 
 	/**
@@ -147,10 +153,10 @@ public abstract class ContributionImpl extends ApplicationElementImpl implements
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI:
-				return getContributionURI();
-			case ApplicationPackageImpl.CONTRIBUTION__OBJECT:
-				return getObject();
+		case ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI:
+			return getContributionURI();
+		case ApplicationPackageImpl.CONTRIBUTION__OBJECT:
+			return getObject();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -163,12 +169,12 @@ public abstract class ContributionImpl extends ApplicationElementImpl implements
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI:
-				setContributionURI((String)newValue);
-				return;
-			case ApplicationPackageImpl.CONTRIBUTION__OBJECT:
-				setObject(newValue);
-				return;
+		case ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI:
+			setContributionURI((String) newValue);
+			return;
+		case ApplicationPackageImpl.CONTRIBUTION__OBJECT:
+			setObject(newValue);
+			return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -181,12 +187,12 @@ public abstract class ContributionImpl extends ApplicationElementImpl implements
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI:
-				setContributionURI(CONTRIBUTION_URI_EDEFAULT);
-				return;
-			case ApplicationPackageImpl.CONTRIBUTION__OBJECT:
-				setObject(OBJECT_EDEFAULT);
-				return;
+		case ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI:
+			setContributionURI(CONTRIBUTION_URI_EDEFAULT);
+			return;
+		case ApplicationPackageImpl.CONTRIBUTION__OBJECT:
+			setObject(OBJECT_EDEFAULT);
+			return;
 		}
 		super.eUnset(featureID);
 	}
@@ -199,10 +205,11 @@ public abstract class ContributionImpl extends ApplicationElementImpl implements
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI:
-				return CONTRIBUTION_URI_EDEFAULT == null ? contributionURI != null : !CONTRIBUTION_URI_EDEFAULT.equals(contributionURI);
-			case ApplicationPackageImpl.CONTRIBUTION__OBJECT:
-				return OBJECT_EDEFAULT == null ? object != null : !OBJECT_EDEFAULT.equals(object);
+		case ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI:
+			return CONTRIBUTION_URI_EDEFAULT == null ? contributionURI != null
+					: !CONTRIBUTION_URI_EDEFAULT.equals(contributionURI);
+		case ApplicationPackageImpl.CONTRIBUTION__OBJECT:
+			return OBJECT_EDEFAULT == null ? object != null : !OBJECT_EDEFAULT.equals(object);
 		}
 		return super.eIsSet(featureID);
 	}
@@ -214,7 +221,8 @@ public abstract class ContributionImpl extends ApplicationElementImpl implements
 	 */
 	@Override
 	public String toString() {
-		if (eIsProxy()) return super.toString();
+		if (eIsProxy())
+			return super.toString();
 
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (contributionURI: "); //$NON-NLS-1$

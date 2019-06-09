@@ -41,9 +41,7 @@ public class DeferredResourceChangeHandler extends BackgroundEventHandler {
 	private Set recreatedResources = new HashSet();
 	private Set conflictingDeletion = new HashSet();
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.BackgroundEventHandler#processEvent(org.eclipse.team.core.subscribers.BackgroundEventHandler.Event, org.eclipse.core.runtime.IProgressMonitor)
-	 */
+	@Override
 	protected void processEvent(Event event, IProgressMonitor monitor) throws TeamException {
 		int type = event.getType();
 		switch (type) {
@@ -84,18 +82,16 @@ public class DeferredResourceChangeHandler extends BackgroundEventHandler {
 			queueEvent(new ResourceEvent(resource, RECREATED_CVS_RESOURCE, IResource.DEPTH_ZERO), false);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.subscribers.BackgroundEventHandler#dispatchEvents()
-	 */
+	@Override
 	protected boolean doDispatchEvents(IProgressMonitor monitor) {
 		// Handle ignore file changes
 		boolean workDone = !changedIgnoreFiles.isEmpty() || !recreatedResources.isEmpty();
 		try {
-            EclipseSynchronizer.getInstance().ignoreFilesChanged(getParents(changedIgnoreFiles));
-        } catch (CVSException e) {
-            // Log and continue
-            CVSProviderPlugin.log(e);
-        }
+			EclipseSynchronizer.getInstance().ignoreFilesChanged(getParents(changedIgnoreFiles));
+		} catch (CVSException e) {
+			// Log and continue
+			CVSProviderPlugin.log(e);
+		}
 		changedIgnoreFiles.clear();
 		// Handle recreations by project to reduce locking granularity
 		Map recreations = getResourcesByProject((IResource[]) recreatedResources.toArray(new IResource[recreatedResources.size()]));

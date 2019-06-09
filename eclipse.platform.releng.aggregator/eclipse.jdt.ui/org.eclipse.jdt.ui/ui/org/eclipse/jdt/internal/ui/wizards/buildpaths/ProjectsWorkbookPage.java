@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -74,8 +74,6 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 	private IJavaProject fCurrJProject;
 
 	private final TreeListDialogField<CPListElement> fProjectsList;
-
-	private Control fSWTControl;
 
 	private final IWorkbenchPreferenceContainer fPageContainer;
 	
@@ -654,7 +652,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 			Object[] selectArr= getNotYetRequiredProjects();
 			new JavaElementComparator().sort(null, selectArr);
 
-			ListSelectionDialog dialog= new ListSelectionDialog(getShell(), Arrays.asList(selectArr), new ArrayContentProvider(), new JavaUILabelProvider(), NewWizardMessages.ProjectsWorkbookPage_chooseProjects_message);
+			ListSelectionDialog dialog= new ListSelectionDialog(getShell(), Arrays.asList(selectArr), ArrayContentProvider.getInstance(), new JavaUILabelProvider(), NewWizardMessages.ProjectsWorkbookPage_chooseProjects_message);
 			dialog.setTitle(NewWizardMessages.ProjectsWorkbookPage_chooseProjects_title);
 			dialog.setHelpAvailable(false);
 			if (dialog.open() == Window.OK) {
@@ -785,4 +783,8 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 	public void setFocus() {
     	fProjectsList.setFocus();
     }
+
+	public void selectRootNode(boolean modulePath) {
+		selectRootNode(fProjectsList, modulePath);
+	}
 }

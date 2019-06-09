@@ -32,11 +32,11 @@ public class TextViewerAction extends Action implements IUpdate {
 	private ITextOperationTarget fOperationTarget;
 
 	/**
-	 * Constructs a new action in the given text viewer with
-	 * the specified operation code.
+	 * Constructs a new action in the given text viewer with the specified operation
+	 * code.
 	 *
-	 * @param viewer
-	 * @param operationCode
+	 * @param viewer        The viewer containing the action.
+	 * @param operationCode The operation code of the action.
 	 */
 	public TextViewerAction(ITextViewer viewer, int operationCode) {
 		fOperationCode= operationCode;
@@ -44,13 +44,14 @@ public class TextViewerAction extends Action implements IUpdate {
 		update();
 	}
 
-	/* (non-Javadoc)
+	/*
 	 * @see org.eclipse.ui.texteditor.IUpdate#update()
 	 *
-	 * Updates the enabled state of the action.
-	 * Fires a property change if the enabled state changes.
+	 * Updates the enabled state of the action. Fires a property change if the
+	 * enabled state changes.
 	 *
-	 * @see org.eclipse.jface.action.Action#firePropertyChange(String, Object, Object)
+	 * @see org.eclipse.jface.action.Action#firePropertyChange(String, Object,
+	 * Object)
 	 */
 	@Override
 	public void update() {
@@ -64,9 +65,6 @@ public class TextViewerAction extends Action implements IUpdate {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.action.IAction#run()
-	 */
 	@Override
 	public void run() {
 		if (fOperationCode != -1 && fOperationTarget != null) {

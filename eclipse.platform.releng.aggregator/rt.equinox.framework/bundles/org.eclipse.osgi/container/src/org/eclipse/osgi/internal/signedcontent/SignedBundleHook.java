@@ -151,6 +151,7 @@ public class SignedBundleHook implements ActivatorHookFactory, BundleFileWrapper
 		}
 	}
 
+	@Override
 	public BundleFileWrapper wrapBundleFile(BundleFile bundleFile, Generation generation, boolean base) {
 		try {
 			if (bundleFile != null) {
@@ -173,14 +174,13 @@ public class SignedBundleHook implements ActivatorHookFactory, BundleFileWrapper
 					return new BundleFileWrapper(signedBaseFile);
 				}
 			}
-		} catch (IOException e) {
-			log("Bad bundle file: " + bundleFile.getBaseFile(), FrameworkLogEntry.WARNING, e); //$NON-NLS-1$
-		} catch (GeneralSecurityException e) {
+		} catch (IOException | GeneralSecurityException e) {
 			log("Bad bundle file: " + bundleFile.getBaseFile(), FrameworkLogEntry.WARNING, e); //$NON-NLS-1$
 		}
 		return null;
 	}
 
+	@Override
 	public void addHooks(HookRegistry hookRegistry) {
 		container = hookRegistry.getContainer();
 		hookRegistry.addActivatorHookFactory(this);
@@ -203,6 +203,7 @@ public class SignedBundleHook implements ActivatorHookFactory, BundleFileWrapper
 		}
 	}
 
+	@Override
 	public SignedContent getSignedContent(File content) throws IOException, InvalidKeyException, SignatureException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException {
 		if (content == null)
 			throw new IllegalArgumentException("null content"); //$NON-NLS-1$
@@ -233,6 +234,7 @@ public class SignedBundleHook implements ActivatorHookFactory, BundleFileWrapper
 		return new SignedContentFile(result.getSignedContent());
 	}
 
+	@Override
 	public SignedContent getSignedContent(Bundle bundle) throws IOException, InvalidKeyException, SignatureException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, IllegalArgumentException {
 		final Generation generation = (Generation) ((EquinoxBundle) bundle).getModule().getCurrentRevision().getRevisionInfo();
 		StorageHookImpl hook = generation.getStorageHook(SignedStorageHook.class);
@@ -244,6 +246,7 @@ public class SignedBundleHook implements ActivatorHookFactory, BundleFileWrapper
 			return getSignedContent(generation.getBundleFile().getBaseFile());
 		try {
 			return AccessController.doPrivileged(new PrivilegedExceptionAction<SignedContent>() {
+		    @Override
 				public SignedContent run() throws Exception {
 					return getSignedContent(generation.getBundleFile().getBaseFile());
 				}

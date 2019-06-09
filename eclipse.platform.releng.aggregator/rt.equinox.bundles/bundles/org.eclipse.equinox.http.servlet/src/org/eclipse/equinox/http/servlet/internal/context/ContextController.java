@@ -602,19 +602,27 @@ public class ContextController {
 		shutdown = true;
 	}
 
+	public void createContextAttributes() {
+		getProxyContext().createContextAttributes(this);
+	}
+
+	public void destroyContextAttributes() {
+		if (shutdown) {
+			return;
+		}
+
+		proxyContext.destroyContextAttributes(this);
+	}
+
 	public boolean isLegacyContext() {
 		return serviceReference.getProperty(HTTP_SERVICE_CONTEXT_PROPERTY) != null;
 	}
 
 	public String getContextName() {
-		checkShutdown();
-
 		return contextName;
 	}
 
 	public String getContextPath() {
-		checkShutdown();
-
 		return contextPath;
 	}
 
@@ -769,26 +777,18 @@ public class ContextController {
 	}
 
 	public Map<String, HttpSessionAdaptor> getActiveSessions() {
-		checkShutdown();
-
 		return activeSessions;
 	}
 
 	public Set<EndpointRegistration<?>> getEndpointRegistrations() {
-		checkShutdown();
-
 		return endpointRegistrations;
 	}
 
 	public EventListeners getEventListeners() {
-		checkShutdown();
-
 		return eventListeners;
 	}
 
 	public Set<FilterRegistration> getFilterRegistrations() {
-		checkShutdown();
-
 		return filterRegistrations;
 	}
 
@@ -824,8 +824,6 @@ public class ContextController {
 	}
 
 	public HttpServiceRuntimeImpl getHttpServiceRuntime() {
-		checkShutdown();
-
 		return httpServiceRuntime;
 	}
 
@@ -834,29 +832,21 @@ public class ContextController {
 	}
 
 	public Set<ListenerRegistration> getListenerRegistrations() {
-		checkShutdown();
-
 		return listenerRegistrations;
 	}
 
 	public ProxyContext getProxyContext() {
-		checkShutdown();
-
 		return proxyContext;
 	}
 
 	public long getServiceId() {
-		checkShutdown();
-
 		return contextServiceId;
 	}
 
 	public synchronized ServletContextDTO getServletContextDTO(){
-		checkShutdown();
-
 		ServletContextDTO servletContextDTO = new ServletContextDTO();
 
-		ServletContext servletContext = getProxyContext().getServletContext();
+		ServletContext servletContext = proxyContext.getServletContext();
 
 		servletContextDTO.attributes = getDTOAttributes(servletContext);
 		servletContextDTO.contextPath = getContextPath();
@@ -872,13 +862,21 @@ public class ContextController {
 	}
 
 	public boolean matches(ServiceReference<?> whiteBoardService) {
-		String contextSelector = (String) whiteBoardService.getProperty(
-			HTTP_WHITEBOARD_CONTEXT_SELECT);
 		// make sure the context helper is either one of the built-in ones registered by this http whiteboard implementation;
 		// or is visible to the whiteboard registering bundle.
+
 		if (!visibleContextHelper(whiteBoardService)) {
 			return false;
 		}
+
+		String contextSelector = (String) whiteBoardService.getProperty(
+			HTTP_WHITEBOARD_CONTEXT_SELECT);
+
+		// custom equinox behaviour
+		if (contextName.equals(contextSelector)) {
+			return true;
+		}
+
 		if (contextSelector == null) {
 			contextSelector = httpServiceRuntime.getDefaultContextSelectFilter(whiteBoardService);
 			if (contextSelector == null) {
@@ -888,25 +886,31 @@ public class ContextController {
 			}
 		}
 
-		if (!contextSelector.startsWith(Const.OPEN_PAREN)) {
-			contextSelector = Const.OPEN_PAREN +
-				HTTP_WHITEBOARD_CONTEXT_NAME +
-					Const.EQUAL + contextSelector + Const.CLOSE_PAREN;
+		if (contextSelector.startsWith(Const.OPEN_PAREN)) {
+			org.osgi.framework.Filter targetFilter;
+
+			try {
+				targetFilter = FrameworkUtil.createFilter(contextSelector);
+			}
+			catch (InvalidSyntaxException ise) {
+				throw new IllegalArgumentException(ise);
+			}
+
+			if (matches(targetFilter)) {
+				return true;
+			}
 		}
 
-		org.osgi.framework.Filter targetFilter;
-
-		try {
-			targetFilter = FrameworkUtil.createFilter(contextSelector);
-		}
-		catch (InvalidSyntaxException ise) {
-			throw new HttpWhiteboardFailureException(ise.getMessage(), DTOConstants.FAILURE_REASON_VALIDATION_FAILED);
-		}
-
-		return matches(targetFilter);
+		return false;
 	}
 
 	private boolean visibleContextHelper(ServiceReference<?> whiteBoardService) {
+		if (consumingContext.getBundle().equals(serviceReference.getBundle())) {
+			Boolean defaultContextHelper = (Boolean) serviceReference.getProperty(Const.EQUINOX_HTTP_WHITEBOARD_CONTEXT_HELPER_DEFAULT);
+			if (defaultContextHelper == null) {
+				return true;
+			}
+		}
 		try {
 			if (whiteBoardService.getBundle().getBundleContext().getAllServiceReferences(ServletContextHelper.class.getName(), servletContextHelperRefFilter) != null) {
 				return true;
@@ -1253,6 +1257,10 @@ public class ContextController {
 	}
 
 	public void fireSessionIdChanged(String oldSessionId) {
+		if (shutdown) {
+			return;
+		}
+
 		ServletContext servletContext = proxyContext.getServletContext();
 		if ((servletContext.getMajorVersion() <= 3) && (servletContext.getMinorVersion() < 1)) {
 			return;

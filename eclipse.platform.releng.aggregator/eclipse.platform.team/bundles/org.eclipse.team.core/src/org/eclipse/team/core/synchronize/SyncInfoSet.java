@@ -134,7 +134,7 @@ public class SyncInfoSet {
 	/**
 	 * Return the number of out-of-sync resources in the given set whose sync kind
 	 * matches the given kind and mask (e.g.
-	 * <code>(SyncInfo#getKind() & mask) == kind</code>).
+	 * <code>(SyncInfo#getKind() &amp; mask) == kind</code>).
 	 * <p>
 	 * For example, this will return the number of outgoing changes in the set:
 	 * </p>
@@ -513,7 +513,7 @@ public class SyncInfoSet {
 	 * <code>endInput</code> should be done in a finally block as illustrated in the
 	 * following code snippet.
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * try {
 	 * 	set.beginInput();
@@ -667,14 +667,14 @@ public class SyncInfoSet {
 		return errors.values().toArray(new ITeamStatus[errors.size()]);
 	}
 
-    /**
-     * Return an iterator over all <code>SyncInfo</code>
-     * contained in this set.
-     * @return an iterator over all <code>SyncInfo</code>
-     * contained in this set.
-     * @since 3.1
-     */
-    public Iterator iterator() {
-        return resources.values().iterator();
-    }
+	/**
+	 * Return an iterator over all <code>SyncInfo</code>
+	 * contained in this set.
+	 * @return an iterator over all <code>SyncInfo</code>
+	 * contained in this set.
+	 * @since 3.1
+	 */
+	public Iterator iterator() {
+		return resources.values().iterator();
+	}
 }

@@ -14,11 +14,16 @@
 
 package org.eclipse.osgi.internal.log;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
 import org.eclipse.equinox.log.Logger;
 import org.eclipse.osgi.framework.log.FrameworkLog;
 import org.eclipse.osgi.framework.log.FrameworkLogEntry;
-import org.osgi.framework.*;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkEvent;
+import org.osgi.framework.ServiceFactory;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.log.LogService;
 
 class EquinoxLogFactory implements ServiceFactory<FrameworkLog> {
@@ -30,6 +35,7 @@ class EquinoxLogFactory implements ServiceFactory<FrameworkLog> {
 		this.logManager = logManager;
 	}
 
+	@Override
 	public FrameworkLog getService(final Bundle bundle, ServiceRegistration<FrameworkLog> registration) {
 		return createFrameworkLog(bundle, defaultWriter);
 	}
@@ -39,22 +45,27 @@ class EquinoxLogFactory implements ServiceFactory<FrameworkLog> {
 		final Logger logger = bundle == null ? logManager.getSystemBundleLog().getLogger(eclipseWriter.getLoggerName()) : logManager.getSystemBundleLog().getLogger(bundle, logWriter.getLoggerName());
 		return new FrameworkLog() {
 
+			@Override
 			public void setWriter(Writer newWriter, boolean append) {
 				logWriter.setWriter(newWriter, append);
 			}
 
+			@Override
 			public void setFile(File newFile, boolean append) throws IOException {
 				logWriter.setFile(newFile, append);
 			}
 
+			@Override
 			public void setConsoleLog(boolean consoleLog) {
 				logWriter.setConsoleLog(consoleLog);
 			}
 
+			@Override
 			public void log(FrameworkLogEntry logEntry) {
 				logger.log(logEntry, convertLevel(logEntry), logEntry.getMessage(), logEntry.getThrowable());
 			}
 
+			@Override
 			public void log(FrameworkEvent frameworkEvent) {
 				Bundle b = frameworkEvent.getBundle();
 				Throwable t = frameworkEvent.getThrowable();
@@ -77,20 +88,24 @@ class EquinoxLogFactory implements ServiceFactory<FrameworkLog> {
 				log(logEntry);
 			}
 
+			@Override
 			public File getFile() {
 				return logWriter.getFile();
 			}
 
+			@Override
 			public void close() {
 				logWriter.close();
 			}
 		};
 	}
 
+	@Override
 	public void ungetService(Bundle bundle, ServiceRegistration<FrameworkLog> registration, FrameworkLog service) {
 		// nothing
 	}
 
+	@SuppressWarnings("deprecation")
 	static int convertLevel(FrameworkLogEntry logEntry) {
 		switch (logEntry.getSeverity()) {
 			case FrameworkLogEntry.ERROR :

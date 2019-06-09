@@ -6,7 +6,7 @@
 	<property name="swt.arch" value="x86_64" />
 	
 	<!-- These properties are used by eclipse when exporting as Deployable plugin and fragments -->
-	<property name="version.suffix" value="3.110.0" />
+	<property name="version.suffix" value="3.111.0" />
 	
 	<condition property="plugindir" value="../../../eclipse.platform.swt/bundles/org.eclipse.swt" else="${buildDirectory}/plugins/org.eclipse.swt">
 		<available file="../../../eclipse.platform.swt/bundles/org.eclipse.swt" type="dir"/>

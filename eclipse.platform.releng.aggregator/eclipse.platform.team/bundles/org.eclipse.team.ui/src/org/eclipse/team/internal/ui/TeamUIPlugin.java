@@ -14,6 +14,7 @@
 package org.eclipse.team.internal.ui;
 
 import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,7 +30,6 @@ import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.dialogs.MessageDialogWithToggle;
@@ -188,11 +188,11 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 
 		// Convert the old compressed folder preference to the new layout preference
 		if (!store.isDefault(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS) && !store.getBoolean(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS)) {
-		    // Set the compress folder preference to the default true) \
-		    // so will will ignore it in the future
-		    store.setToDefault(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS);
-		    // Set the layout to tree (which was used when compress folder was false)
-		    store.setDefault(IPreferenceIds.SYNCVIEW_DEFAULT_LAYOUT, IPreferenceIds.TREE_LAYOUT);
+			// Set the compress folder preference to the default true) \
+			// so will will ignore it in the future
+			store.setToDefault(IPreferenceIds.SYNCVIEW_COMPRESS_FOLDERS);
+			// Set the layout to tree (which was used when compress folder was false)
+			store.setDefault(IPreferenceIds.SYNCVIEW_DEFAULT_LAYOUT, IPreferenceIds.TREE_LAYOUT);
 		}
 	}
 
@@ -230,9 +230,6 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 		log(new Status(severity, ID, 0, message, e));
 	}
 
-	/**
-	 * @see Plugin#start(BundleContext)
-	 */
 	@Override
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
@@ -246,9 +243,6 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 		StreamMergerDelegate.start();
 	}
 
-	/* (non-Javadoc)
-	 * @see Plugin#stop(BundleContext)
-	 */
 	@Override
 	public void stop(BundleContext context) throws Exception {
 		try {
@@ -308,12 +302,12 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 		plugin.privateCreateImageDescriptor(id);
 	}
 	private void privateCreateImageDescriptor(String id) {
-        ImageDescriptor desc = ImageDescriptor.createFromURL(getImageUrl(id));
-        imageDescriptors.put(id, desc);
+		ImageDescriptor desc = ImageDescriptor.createFromURL(getImageUrl(id));
+		imageDescriptors.put(id, desc);
 	}
 	private void privateCreateImageDescriptor(String id, String imageUrl) {
-        ImageDescriptor desc = ImageDescriptor.createFromURL(getImageUrl(imageUrl));
-        imageDescriptors.put(id, desc);
+		ImageDescriptor desc = ImageDescriptor.createFromURL(getImageUrl(imageUrl));
+		imageDescriptors.put(id, desc);
 	}
 
 	/**
@@ -342,8 +336,20 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 	 * @return the image
 	 */
 	public static ImageDescriptor getImageDescriptorFromExtension(IExtension extension, String subdirectoryAndFilename) {
-		URL fullPathString = FileLocator.find(Platform.getBundle(extension.getContributor().getName()), new Path(subdirectoryAndFilename), null);
-		return ImageDescriptor.createFromURL(fullPathString);
+		URL iconURL = FileLocator.find(Platform.getBundle(extension.getContributor().getName()), new Path(subdirectoryAndFilename), null);
+		if (iconURL != null) {
+			return ImageDescriptor.createFromURL(iconURL);
+		}
+		// try to search as a URL in case it is absolute path
+		try {
+			iconURL = FileLocator.find(new URL(subdirectoryAndFilename));
+			if (iconURL != null) {
+				return ImageDescriptor.createFromURL(iconURL);
+			}
+		} catch (MalformedURLException e) {
+			//ignore
+		}
+		return null;
 	}
 
 	public static final String FILE_DIRTY_OVR = "ovr/dirty_ov.png"; //$NON-NLS-1$
@@ -417,9 +423,9 @@ public class TeamUIPlugin extends AbstractUIPlugin {
 		createImageDescriptor(plugin, ITeamUIImages.IMG_LOCALREVISION_TABLE);
 	}
 
-    private URL getImageUrl(String relative) {
-        return FileLocator.find(Platform.getBundle(PLUGIN_ID), new Path(ICON_PATH + relative), null);
-    }
+	private URL getImageUrl(String relative) {
+		return FileLocator.find(Platform.getBundle(PLUGIN_ID), new Path(ICON_PATH + relative), null);
+	}
 
 	/**
 	 * Returns the standard display to be used. The method first checks, if the

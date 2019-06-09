@@ -55,7 +55,7 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 	public static final String CONTEXT_MENU_CONTRIBUTION_GROUP_3 = "context_group_3"; //$NON-NLS-1$
 	public static final String CONTEXT_MENU_CONTRIBUTION_GROUP_4 = "context_group_4"; //$NON-NLS-1$
 
-    private WorkspaceChangeSetCapability capability;
+	private WorkspaceChangeSetCapability capability;
 
 	/**
 	 * CVS workspace action contribution
@@ -145,48 +145,39 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 	}
 	
 	public class WorkspaceChangeSetCapability extends CVSChangeSetCapability {
-        /* (non-Javadoc)
-         * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#createChangeSet(org.eclipse.team.core.synchronize.SyncInfo[])
-         */
-        @Override
+		@Override
 		public ActiveChangeSet createChangeSet(ISynchronizePageConfiguration configuration, IDiff[] infos) {
-	        ActiveChangeSet set = getActiveChangeSetManager().createSet(CVSUIMessages.WorkspaceChangeSetCapability_1, new IDiff[0]); 
+			ActiveChangeSet set = getActiveChangeSetManager().createSet(CVSUIMessages.WorkspaceChangeSetCapability_1, new IDiff[0]); 
 			CommitSetDialog dialog = new CommitSetDialog(configuration.getSite().getShell(), set, getResources(infos), CommitSetDialog.NEW);  
 			dialog.open();
 			if (dialog.getReturnCode() != Window.OK) return null;
 			set.add(infos);
 			return set;
-        }
+		}
 
-        private IResource[] getResources(IDiff[] diffs) {
+		private IResource[] getResources(IDiff[] diffs) {
 			Set<IResource> result = new HashSet<>();
-        	for (int i = 0; i < diffs.length; i++) {
+			for (int i = 0; i < diffs.length; i++) {
 				IDiff diff = diffs[i];
 				IResource resource = ResourceDiffTree.getResourceFor(diff);
 				if (resource != null)
 					result.add(resource);
 			}
-            return result.toArray(new IResource[result.size()]);
-        }
-        
-        /* (non-Javadoc)
-         * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#editChangeSet(org.eclipse.team.core.subscribers.ActiveChangeSet)
-         */
-        @Override
+			return result.toArray(new IResource[result.size()]);
+		}
+		
+		@Override
 		public void editChangeSet(ISynchronizePageConfiguration configuration, ActiveChangeSet set) {
-	        CommitSetDialog dialog = new CommitSetDialog(configuration.getSite().getShell(), set, set.getResources(), CommitSetDialog.EDIT);
+			CommitSetDialog dialog = new CommitSetDialog(configuration.getSite().getShell(), set, set.getResources(), CommitSetDialog.EDIT);
 			dialog.open();
 			if (dialog.getReturnCode() != Window.OK) return;
 			// Nothing to do here as the set was updated by the dialog 
-        }
+		}
 
-        /* (non-Javadoc)
-         * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#getActiveChangeSetManager()
-         */
-        @Override
+		@Override
 		public ActiveChangeSetManager getActiveChangeSetManager() {
-            return CVSUIPlugin.getPlugin().getChangeSetManager();
-        }
+			return CVSUIPlugin.getPlugin().getChangeSetManager();
+		}
 	}
 	
 	/**
@@ -261,18 +252,12 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.ISynchronizeParticipant#init(org.eclipse.ui.IMemento)
-	 */
 	@Override
 	public void init(String secondaryId, IMemento memento) throws PartInitException {
 		super.init(secondaryId, memento);
 		setSubscriber(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber());
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant#initializeConfiguration(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
-	 */
 	@Override
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
 		super.initializeConfiguration(configuration);
@@ -300,7 +285,7 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 	}
 	
 	protected  ILabelDecorator getLabelDecorator(ISynchronizePageConfiguration configuration) {
-	    return new CVSParticipantLabelDecorator(configuration);
+		return new CVSParticipantLabelDecorator(configuration);
 	}
 	
 	@Override
@@ -308,48 +293,36 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 		return TeamUI.getSynchronizeManager().getParticipantDescriptor(ID);
 	}
 	
-	/* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.SubscriberParticipant#updateLabels(org.eclipse.team.ui.synchronize.ISynchronizeModelElement, org.eclipse.compare.CompareConfiguration, org.eclipse.core.runtime.IProgressMonitor)
-     */
-    @Override
+	@Override
 	public void prepareCompareInput(ISynchronizeModelElement element, CompareConfiguration config, IProgressMonitor monitor) throws TeamException {
-        monitor.beginTask(null, 100);
-        CVSParticipant.deriveBaseContentsFromLocal(element, Policy.subMonitorFor(monitor, 10));
-        super.prepareCompareInput(element, config, Policy.subMonitorFor(monitor, 80));
-        CVSParticipant.updateLabelsForCVS(element, config, Policy.subMonitorFor(monitor, 10));
-        monitor.done();
-    }
-    
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant#getPreferencePages()
-     */
-    @Override
+		monitor.beginTask(null, 100);
+		CVSParticipant.deriveBaseContentsFromLocal(element, Policy.subMonitorFor(monitor, 10));
+		super.prepareCompareInput(element, config, Policy.subMonitorFor(monitor, 80));
+		CVSParticipant.updateLabelsForCVS(element, config, Policy.subMonitorFor(monitor, 10));
+		monitor.done();
+	}
+	
+	@Override
 	public PreferencePage[] getPreferencePages() {
-        return CVSParticipant.addCVSPreferencePages(super.getPreferencePages());
-    }
-    
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant#getChangeSetCapability()
-     */
-    @Override
+		return CVSParticipant.addCVSPreferencePages(super.getPreferencePages());
+	}
+	
+	@Override
 	public ChangeSetCapability getChangeSetCapability() {
-        if (capability == null) {
-            capability = new WorkspaceChangeSetCapability();
-        }
-        return capability;
-    }
-    
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant#isViewerContributionsSupported()
-     */
-    @Override
+		if (capability == null) {
+			capability = new WorkspaceChangeSetCapability();
+		}
+		return capability;
+	}
+	
+	@Override
 	protected boolean isViewerContributionsSupported() {
-        return true;
-    }
+		return true;
+	}
 
-    public void refresh(IResource[] resources, IWorkbenchPartSite site) {
-        refresh(resources, getShortTaskName(), getLongTaskName(resources), site);
-    }
+	public void refresh(IResource[] resources, IWorkbenchPartSite site) {
+		refresh(resources, getShortTaskName(), getLongTaskName(resources), site);
+	}
 
 	@Override
 	public void dispose() {
@@ -357,9 +330,6 @@ public class WorkspaceSynchronizeParticipant extends ScopableSubscriberParticipa
 		((IEclipsePreferences) CVSUIPlugin.getPlugin().getInstancePreferences().node("")).removePreferenceChangeListener(this); //$NON-NLS-1$
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener#preferenceChange(org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent)
-	 */
 	@Override
 	public void preferenceChange(PreferenceChangeEvent event) {
 		if (event.getKey().equals(ICVSUIConstants.PREF_CONSIDER_CONTENTS) || event.getKey().equals(ICVSUIConstants.PREF_SYNCVIEW_REGEX_FILTER_PATTERN)) {

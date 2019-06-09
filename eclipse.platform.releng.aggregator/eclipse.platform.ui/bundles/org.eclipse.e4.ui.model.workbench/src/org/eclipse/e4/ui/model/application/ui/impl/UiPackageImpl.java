@@ -52,6 +52,7 @@ import org.eclipse.emf.ecore.impl.EPackageImpl;
  * <ul>
  *   <li>each class,</li>
  *   <li>each feature of each class,</li>
+ *   <li>each operation of each class,</li>
  *   <li>each enum,</li>
  *   <li>and each data type</li>
  * </ul>
@@ -60,6 +61,7 @@ import org.eclipse.emf.ecore.impl.EPackageImpl;
  * @model kind="package"
  * @generated
  */
+@SuppressWarnings("deprecation")
 public class UiPackageImpl extends EPackageImpl {
 	/**
 	 * The package name.
@@ -196,63 +198,54 @@ public class UiPackageImpl extends EPackageImpl {
 	public static final int DIRTYABLE_OPERATION_COUNT = 0;
 
 	/**
-	 * The meta object id for the
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MInput <em>Input</em>}' class.
-	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.MInput <em>Input</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @see org.eclipse.e4.ui.model.application.ui.MInput
 	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getInput()
 	 * @since 1.0
 	 * @deprecated See {@link MInput model documentation} for details.
-	 * @generated NOT
-	 * @noreference This field is not intended to be referenced by clients.
-	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868">Bug
-	 *      509868</a>
+	 * @noreference See {@link MInput model documentation} for details.
+	 * @generated
 	 */
 	@Deprecated
 	public static final int INPUT = 2;
 
 	/**
-	 * The feature id for the '<em><b>Input URI</b></em>' attribute. <!--
-	 * begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The feature id for the '<em><b>Input URI</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @since 1.0
-	 * @deprecated See {@link MInput model documentation} for details.
-	 * @generated NOT
+	 * @deprecated See {@link org.eclipse.e4.ui.model.application.ui.MInput#getInputURI() model documentation} for details.
+	 * @noreference See {@link org.eclipse.e4.ui.model.application.ui.MInput#getInputURI() model documentation} for details.
+	 * @generated
 	 * @ordered
-	 * @noreference This field is not intended to be referenced by clients.
-	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868">Bug
-	 *      509868</a>
 	 */
 	@Deprecated
 	public static final int INPUT__INPUT_URI = 0;
 
 	/**
-	 * The number of structural features of the '<em>Input</em>' class. <!--
-	 * begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The number of structural features of the '<em>Input</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @since 1.0
 	 * @deprecated See {@link MInput model documentation} for details.
-	 * @generated NOT
+	 * @noreference See {@link MInput model documentation} for details.
+	 * @generated
 	 * @ordered
-	 * @noreference This field is not intended to be referenced by clients.
-	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868">Bug
-	 *      509868</a>
 	 */
 	@Deprecated
 	public static final int INPUT_FEATURE_COUNT = 1;
 
 	/**
-	 * The number of operations of the '<em>Input</em>' class. <!-- begin-user-doc
-	 * --> <!-- end-user-doc -->
-	 * 
+	 * The number of operations of the '<em>Input</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @since 1.0
 	 * @deprecated See {@link MInput model documentation} for details.
-	 * @generated NOT
+	 * @noreference See {@link MInput model documentation} for details.
+	 * @generated
 	 * @ordered
-	 * @noreference This field is not intended to be referenced by clients.
-	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868">Bug
-	 *      509868</a>
 	 */
 	@Deprecated
 	public static final int INPUT_OPERATION_COUNT = 0;
@@ -416,7 +409,8 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 * @ordered
 	 */
-	public static final int UI_ELEMENT__ACCESSIBILITY_PHRASE = ApplicationPackageImpl.APPLICATION_ELEMENT_FEATURE_COUNT + 9;
+	public static final int UI_ELEMENT__ACCESSIBILITY_PHRASE = ApplicationPackageImpl.APPLICATION_ELEMENT_FEATURE_COUNT
+			+ 9;
 
 	/**
 	 * The feature id for the '<em><b>Localized Accessibility Phrase</b></em>' attribute.
@@ -426,7 +420,8 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 * @ordered
 	 */
-	public static final int UI_ELEMENT__LOCALIZED_ACCESSIBILITY_PHRASE = ApplicationPackageImpl.APPLICATION_ELEMENT_FEATURE_COUNT + 10;
+	public static final int UI_ELEMENT__LOCALIZED_ACCESSIBILITY_PHRASE = ApplicationPackageImpl.APPLICATION_ELEMENT_FEATURE_COUNT
+			+ 10;
 
 	/**
 	 * The number of structural features of the '<em>UI Element</em>' class.
@@ -446,7 +441,8 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 * @ordered
 	 */
-	public static final int UI_ELEMENT___UPDATE_LOCALIZATION = ApplicationPackageImpl.APPLICATION_ELEMENT_OPERATION_COUNT + 0;
+	public static final int UI_ELEMENT___UPDATE_LOCALIZATION = ApplicationPackageImpl.APPLICATION_ELEMENT_OPERATION_COUNT
+			+ 1;
 
 	/**
 	 * The number of operations of the '<em>UI Element</em>' class.
@@ -456,18 +452,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 * @ordered
 	 */
-	public static final int UI_ELEMENT_OPERATION_COUNT = ApplicationPackageImpl.APPLICATION_ELEMENT_OPERATION_COUNT + 1;
-
-	/**
-	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.MUILabel <em>UI Label</em>}' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel
-	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getUILabel()
-	 * @since 1.0
-	 * @generated
-	 */
-	public static final int UI_LABEL = 5;
+	public static final int UI_ELEMENT_OPERATION_COUNT = ApplicationPackageImpl.APPLICATION_ELEMENT_OPERATION_COUNT + 2;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.impl.ElementContainerImpl <em>Element Container</em>}' class.
@@ -691,72 +676,6 @@ public class UiPackageImpl extends EPackageImpl {
 	public static final int ELEMENT_CONTAINER_OPERATION_COUNT = UI_ELEMENT_OPERATION_COUNT + 0;
 
 	/**
-	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.impl.GenericStackImpl <em>Generic Stack</em>}' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.e4.ui.model.application.ui.impl.GenericStackImpl
-	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getGenericStack()
-	 * @since 1.0
-	 * @generated
-	 */
-	public static final int GENERIC_STACK = 6;
-
-	/**
-	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.impl.GenericTileImpl <em>Generic Tile</em>}' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.e4.ui.model.application.ui.impl.GenericTileImpl
-	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getGenericTile()
-	 * @since 1.0
-	 * @generated
-	 */
-	public static final int GENERIC_TILE = 7;
-
-	/**
-	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.impl.GenericTrimContainerImpl <em>Generic Trim Container</em>}' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.e4.ui.model.application.ui.impl.GenericTrimContainerImpl
-	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getGenericTrimContainer()
-	 * @since 1.0
-	 * @generated
-	 */
-	public static final int GENERIC_TRIM_CONTAINER = 8;
-
-	/**
-	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.impl.ExpressionImpl <em>Expression</em>}' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.e4.ui.model.application.ui.impl.ExpressionImpl
-	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getExpression()
-	 * @since 1.0
-	 * @generated
-	 */
-	public static final int EXPRESSION = 9;
-
-	/**
-	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.impl.CoreExpressionImpl <em>Core Expression</em>}' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.e4.ui.model.application.ui.impl.CoreExpressionImpl
-	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getCoreExpression()
-	 * @since 1.0
-	 * @generated
-	 */
-	public static final int CORE_EXPRESSION = 10;
-
-	/**
-	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.MSnippetContainer <em>Snippet Container</em>}' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.e4.ui.model.application.ui.MSnippetContainer
-	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getSnippetContainer()
-	 * @since 1.0
-	 * @generated
-	 */
-	public static final int SNIPPET_CONTAINER = 12;
-
-	/**
 	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.MLocalizable <em>Localizable</em>}' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -796,6 +715,17 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @ordered
 	 */
 	public static final int LOCALIZABLE_OPERATION_COUNT = 1;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.MUILabel <em>UI Label</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel
+	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getUILabel()
+	 * @since 1.0
+	 * @generated
+	 */
+	public static final int UI_LABEL = 5;
 
 	/**
 	 * The feature id for the '<em><b>Label</b></em>' attribute.
@@ -876,6 +806,17 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @ordered
 	 */
 	public static final int UI_LABEL_OPERATION_COUNT = LOCALIZABLE_OPERATION_COUNT + 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.impl.GenericStackImpl <em>Generic Stack</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.e4.ui.model.application.ui.impl.GenericStackImpl
+	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getGenericStack()
+	 * @since 1.0
+	 * @generated
+	 */
+	public static final int GENERIC_STACK = 6;
 
 	/**
 	 * The feature id for the '<em><b>Element Id</b></em>' attribute.
@@ -1086,6 +1027,17 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @ordered
 	 */
 	public static final int GENERIC_STACK_OPERATION_COUNT = ELEMENT_CONTAINER_OPERATION_COUNT + 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.impl.GenericTileImpl <em>Generic Tile</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.e4.ui.model.application.ui.impl.GenericTileImpl
+	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getGenericTile()
+	 * @since 1.0
+	 * @generated
+	 */
+	public static final int GENERIC_TILE = 7;
 
 	/**
 	 * The feature id for the '<em><b>Element Id</b></em>' attribute.
@@ -1308,6 +1260,17 @@ public class UiPackageImpl extends EPackageImpl {
 	public static final int GENERIC_TILE_OPERATION_COUNT = ELEMENT_CONTAINER_OPERATION_COUNT + 0;
 
 	/**
+	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.impl.GenericTrimContainerImpl <em>Generic Trim Container</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.e4.ui.model.application.ui.impl.GenericTrimContainerImpl
+	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getGenericTrimContainer()
+	 * @since 1.0
+	 * @generated
+	 */
+	public static final int GENERIC_TRIM_CONTAINER = 8;
+
+	/**
 	 * The feature id for the '<em><b>Element Id</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1528,6 +1491,17 @@ public class UiPackageImpl extends EPackageImpl {
 	public static final int GENERIC_TRIM_CONTAINER_OPERATION_COUNT = ELEMENT_CONTAINER_OPERATION_COUNT + 0;
 
 	/**
+	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.impl.ExpressionImpl <em>Expression</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.e4.ui.model.application.ui.impl.ExpressionImpl
+	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getExpression()
+	 * @since 1.0
+	 * @generated
+	 */
+	public static final int EXPRESSION = 9;
+
+	/**
 	 * The feature id for the '<em><b>Element Id</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1596,6 +1570,17 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @ordered
 	 */
 	public static final int EXPRESSION_OPERATION_COUNT = ApplicationPackageImpl.APPLICATION_ELEMENT_OPERATION_COUNT + 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.impl.CoreExpressionImpl <em>Core Expression</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.e4.ui.model.application.ui.impl.CoreExpressionImpl
+	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getCoreExpression()
+	 * @since 1.0
+	 * @generated
+	 */
+	public static final int CORE_EXPRESSION = 10;
 
 	/**
 	 * The feature id for the '<em><b>Element Id</b></em>' attribute.
@@ -1795,6 +1780,17 @@ public class UiPackageImpl extends EPackageImpl {
 	public static final int IMPERATIVE_EXPRESSION_OPERATION_COUNT = EXPRESSION_OPERATION_COUNT + 0;
 
 	/**
+	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.MSnippetContainer <em>Snippet Container</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.e4.ui.model.application.ui.MSnippetContainer
+	 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getSnippetContainer()
+	 * @since 1.0
+	 * @generated
+	 */
+	public static final int SNIPPET_CONTAINER = 12;
+
+	/**
 	 * The feature id for the '<em><b>Snippets</b></em>' containment reference list.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1852,13 +1848,11 @@ public class UiPackageImpl extends EPackageImpl {
 	private EClass dirtyableEClass = null;
 
 	/**
-	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @since 1.0
 	 * @deprecated See {@link MInput model documentation} for details.
-	 * @generated NOT
--	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868">Bug
-	 *      509868</a>
+	 * @generated
 	 */
 	@Deprecated
 	private EClass inputEClass = null;
@@ -1877,7 +1871,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @since 1.0
 	 * @generated
 	 */
-	private EClass uiLabelEClass = null;
+	private EClass elementContainerEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -1885,7 +1879,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @since 1.0
 	 * @generated
 	 */
-	private EClass elementContainerEClass = null;
+	private EClass uiLabelEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -1974,7 +1968,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	private UiPackageImpl() {
-		super(eNS_URI, ((EFactory)MUiFactory.INSTANCE));
+		super(eNS_URI, ((EFactory) MUiFactory.INSTANCE));
 	}
 
 	/**
@@ -1997,27 +1991,42 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public static UiPackageImpl init() {
-		if (isInited) return (UiPackageImpl)EPackage.Registry.INSTANCE.getEPackage(UiPackageImpl.eNS_URI);
+		if (isInited)
+			return (UiPackageImpl) EPackage.Registry.INSTANCE.getEPackage(UiPackageImpl.eNS_URI);
 
 		// Obtain or create and register package
 		Object registeredUiPackage = EPackage.Registry.INSTANCE.get(eNS_URI);
-		UiPackageImpl theUiPackage = registeredUiPackage instanceof UiPackageImpl ? (UiPackageImpl)registeredUiPackage : new UiPackageImpl();
+		UiPackageImpl theUiPackage = registeredUiPackage instanceof UiPackageImpl ? (UiPackageImpl) registeredUiPackage
+				: new UiPackageImpl();
 
 		isInited = true;
 
 		// Obtain or create and register interdependencies
 		Object registeredPackage = EPackage.Registry.INSTANCE.getEPackage(ApplicationPackageImpl.eNS_URI);
-		ApplicationPackageImpl theApplicationPackage = (ApplicationPackageImpl)(registeredPackage instanceof ApplicationPackageImpl ? registeredPackage : ApplicationPackageImpl.eINSTANCE);
+		ApplicationPackageImpl theApplicationPackage = (ApplicationPackageImpl) (registeredPackage instanceof ApplicationPackageImpl
+				? registeredPackage
+				: ApplicationPackageImpl.eINSTANCE);
 		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(CommandsPackageImpl.eNS_URI);
-		CommandsPackageImpl theCommandsPackage = (CommandsPackageImpl)(registeredPackage instanceof CommandsPackageImpl ? registeredPackage : CommandsPackageImpl.eINSTANCE);
+		CommandsPackageImpl theCommandsPackage = (CommandsPackageImpl) (registeredPackage instanceof CommandsPackageImpl
+				? registeredPackage
+				: CommandsPackageImpl.eINSTANCE);
 		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(MenuPackageImpl.eNS_URI);
-		MenuPackageImpl theMenuPackage = (MenuPackageImpl)(registeredPackage instanceof MenuPackageImpl ? registeredPackage : MenuPackageImpl.eINSTANCE);
+		MenuPackageImpl theMenuPackage = (MenuPackageImpl) (registeredPackage instanceof MenuPackageImpl
+				? registeredPackage
+				: MenuPackageImpl.eINSTANCE);
 		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(BasicPackageImpl.eNS_URI);
-		BasicPackageImpl theBasicPackage = (BasicPackageImpl)(registeredPackage instanceof BasicPackageImpl ? registeredPackage : BasicPackageImpl.eINSTANCE);
+		BasicPackageImpl theBasicPackage = (BasicPackageImpl) (registeredPackage instanceof BasicPackageImpl
+				? registeredPackage
+				: BasicPackageImpl.eINSTANCE);
 		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(AdvancedPackageImpl.eNS_URI);
-		AdvancedPackageImpl theAdvancedPackage = (AdvancedPackageImpl)(registeredPackage instanceof AdvancedPackageImpl ? registeredPackage : AdvancedPackageImpl.eINSTANCE);
-		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eNS_URI);
-		org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl theBasicPackage_1 = (org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl)(registeredPackage instanceof org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl ? registeredPackage : org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eINSTANCE);
+		AdvancedPackageImpl theAdvancedPackage = (AdvancedPackageImpl) (registeredPackage instanceof AdvancedPackageImpl
+				? registeredPackage
+				: AdvancedPackageImpl.eINSTANCE);
+		registeredPackage = EPackage.Registry.INSTANCE
+				.getEPackage(org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eNS_URI);
+		org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl theBasicPackage_1 = (org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl) (registeredPackage instanceof org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl
+				? registeredPackage
+				: org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eINSTANCE);
 
 		// Create package meta-data objects
 		theUiPackage.createPackageContents();
@@ -2045,7 +2054,6 @@ public class UiPackageImpl extends EPackageImpl {
 		return theUiPackage;
 	}
 
-
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.MContext <em>Context</em>}'.
 	 * <!-- begin-user-doc -->
@@ -2070,7 +2078,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getContext_Context() {
-		return (EAttribute)contextEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) contextEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -2084,7 +2092,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getContext_Variables() {
-		return (EAttribute)contextEClass.getEStructuralFeatures().get(1);
+		return (EAttribute) contextEClass.getEStructuralFeatures().get(1);
 	}
 
 	/**
@@ -2098,7 +2106,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getContext_Properties() {
-		return (EReference)contextEClass.getEStructuralFeatures().get(2);
+		return (EReference) contextEClass.getEStructuralFeatures().get(2);
 	}
 
 	/**
@@ -2125,22 +2133,19 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getDirtyable_Dirty() {
-		return (EAttribute)dirtyableEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) dirtyableEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
-	 * Returns the meta object for class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MInput <em>Input</em>}'. <!--
-	 * begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.MInput <em>Input</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @return the meta object for class '<em>Input</em>'.
 	 * @see org.eclipse.e4.ui.model.application.ui.MInput
 	 * @since 1.0
 	 * @deprecated See {@link MInput model documentation} for details.
-	 * @generated NOT
-	 * @noreference This method is not intended to be referenced by clients.
-	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868">Bug
-	 *      509868</a>
+	 * @noreference See {@link MInput model documentation} for details.
+	 * @generated
 	 */
 	@Deprecated
 	public EClass getInput() {
@@ -2148,23 +2153,20 @@ public class UiPackageImpl extends EPackageImpl {
 	}
 
 	/**
-	 * Returns the meta object for the attribute
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MInput#getInputURI <em>Input
-	 * URI</em>}'. <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MInput#getInputURI <em>Input URI</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @return the meta object for the attribute '<em>Input URI</em>'.
 	 * @see org.eclipse.e4.ui.model.application.ui.MInput#getInputURI()
 	 * @see #getInput()
 	 * @since 1.0
-	 * @deprecated See {@link MInput model documentation} for details.
-	 * @generated NOT
-	 * @noreference this method is not intended to be referenced by clients.
-	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868">Bug
-	 *      509868</a>
+	 * @deprecated See {@link org.eclipse.e4.ui.model.application.ui.MInput#getInputURI() model documentation} for details.
+	 * @noreference See {@link org.eclipse.e4.ui.model.application.ui.MInput#getInputURI() model documentation} for details.
+	 * @generated
 	 */
 	@Deprecated
 	public EAttribute getInput_InputURI() {
-		return (EAttribute)inputEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) inputEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -2191,7 +2193,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getUIElement_Widget() {
-		return (EAttribute)uiElementEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) uiElementEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -2205,7 +2207,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getUIElement_Renderer() {
-		return (EAttribute)uiElementEClass.getEStructuralFeatures().get(1);
+		return (EAttribute) uiElementEClass.getEStructuralFeatures().get(1);
 	}
 
 	/**
@@ -2219,7 +2221,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getUIElement_ToBeRendered() {
-		return (EAttribute)uiElementEClass.getEStructuralFeatures().get(2);
+		return (EAttribute) uiElementEClass.getEStructuralFeatures().get(2);
 	}
 
 	/**
@@ -2233,7 +2235,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getUIElement_OnTop() {
-		return (EAttribute)uiElementEClass.getEStructuralFeatures().get(3);
+		return (EAttribute) uiElementEClass.getEStructuralFeatures().get(3);
 	}
 
 	/**
@@ -2247,7 +2249,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getUIElement_Visible() {
-		return (EAttribute)uiElementEClass.getEStructuralFeatures().get(4);
+		return (EAttribute) uiElementEClass.getEStructuralFeatures().get(4);
 	}
 
 	/**
@@ -2261,7 +2263,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getUIElement_Parent() {
-		return (EReference)uiElementEClass.getEStructuralFeatures().get(5);
+		return (EReference) uiElementEClass.getEStructuralFeatures().get(5);
 	}
 
 	/**
@@ -2275,7 +2277,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getUIElement_ContainerData() {
-		return (EAttribute)uiElementEClass.getEStructuralFeatures().get(6);
+		return (EAttribute) uiElementEClass.getEStructuralFeatures().get(6);
 	}
 
 	/**
@@ -2289,9 +2291,8 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getUIElement_CurSharedRef() {
-		return (EReference)uiElementEClass.getEStructuralFeatures().get(7);
+		return (EReference) uiElementEClass.getEStructuralFeatures().get(7);
 	}
-
 
 	/**
 	 * Returns the meta object for the containment reference '{@link org.eclipse.e4.ui.model.application.ui.MUIElement#getVisibleWhen <em>Visible When</em>}'.
@@ -2304,9 +2305,8 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getUIElement_VisibleWhen() {
-		return (EReference)uiElementEClass.getEStructuralFeatures().get(8);
+		return (EReference) uiElementEClass.getEStructuralFeatures().get(8);
 	}
-
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MUIElement#getAccessibilityPhrase <em>Accessibility Phrase</em>}'.
@@ -2319,9 +2319,8 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getUIElement_AccessibilityPhrase() {
-		return (EAttribute)uiElementEClass.getEStructuralFeatures().get(9);
+		return (EAttribute) uiElementEClass.getEStructuralFeatures().get(9);
 	}
-
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MUIElement#getLocalizedAccessibilityPhrase <em>Localized Accessibility Phrase</em>}'.
@@ -2334,94 +2333,21 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getUIElement_LocalizedAccessibilityPhrase() {
-		return (EAttribute)uiElementEClass.getEStructuralFeatures().get(10);
-	}
-
-
-	/**
-	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.MUILabel <em>UI Label</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for class '<em>UI Label</em>'.
-	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel
-	 * @since 1.0
-	 * @generated
-	 */
-	public EClass getUILabel() {
-		return uiLabelEClass;
+		return (EAttribute) uiElementEClass.getEStructuralFeatures().get(10);
 	}
 
 	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MUILabel#getLabel <em>Label</em>}'.
+	 * Returns the meta object for the '{@link org.eclipse.e4.ui.model.application.ui.MUIElement#updateLocalization() <em>Update Localization</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Label</em>'.
-	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel#getLabel()
-	 * @see #getUILabel()
-	 * @since 1.0
+	 * @return the meta object for the '<em>Update Localization</em>' operation.
+	 * @see org.eclipse.e4.ui.model.application.ui.MUIElement#updateLocalization()
+	 * @since 1.1
 	 * @generated
 	 */
-	public EAttribute getUILabel_Label() {
-		return (EAttribute)uiLabelEClass.getEStructuralFeatures().get(0);
+	public EOperation getUIElement__UpdateLocalization() {
+		return uiElementEClass.getEOperations().get(0);
 	}
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MUILabel#getIconURI <em>Icon URI</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Icon URI</em>'.
-	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel#getIconURI()
-	 * @see #getUILabel()
-	 * @since 1.0
-	 * @generated
-	 */
-	public EAttribute getUILabel_IconURI() {
-		return (EAttribute)uiLabelEClass.getEStructuralFeatures().get(1);
-	}
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MUILabel#getTooltip <em>Tooltip</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Tooltip</em>'.
-	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel#getTooltip()
-	 * @see #getUILabel()
-	 * @since 1.0
-	 * @generated
-	 */
-	public EAttribute getUILabel_Tooltip() {
-		return (EAttribute)uiLabelEClass.getEStructuralFeatures().get(2);
-	}
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MUILabel#getLocalizedLabel <em>Localized Label</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Localized Label</em>'.
-	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel#getLocalizedLabel()
-	 * @see #getUILabel()
-	 * @since 1.0
-	 * @generated
-	 */
-	public EAttribute getUILabel_LocalizedLabel() {
-		return (EAttribute)uiLabelEClass.getEStructuralFeatures().get(3);
-	}
-
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MUILabel#getLocalizedTooltip <em>Localized Tooltip</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Localized Tooltip</em>'.
-	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel#getLocalizedTooltip()
-	 * @see #getUILabel()
-	 * @since 1.0
-	 * @generated
-	 */
-	public EAttribute getUILabel_LocalizedTooltip() {
-		return (EAttribute)uiLabelEClass.getEStructuralFeatures().get(4);
-	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.MElementContainer <em>Element Container</em>}'.
@@ -2447,7 +2373,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getElementContainer_Children() {
-		return (EReference)elementContainerEClass.getEStructuralFeatures().get(0);
+		return (EReference) elementContainerEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -2461,7 +2387,90 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getElementContainer_SelectedElement() {
-		return (EReference)elementContainerEClass.getEStructuralFeatures().get(1);
+		return (EReference) elementContainerEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.MUILabel <em>UI Label</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>UI Label</em>'.
+	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel
+	 * @since 1.0
+	 * @generated
+	 */
+	public EClass getUILabel() {
+		return uiLabelEClass;
+	}
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MUILabel#getLabel <em>Label</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Label</em>'.
+	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel#getLabel()
+	 * @see #getUILabel()
+	 * @since 1.0
+	 * @generated
+	 */
+	public EAttribute getUILabel_Label() {
+		return (EAttribute) uiLabelEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MUILabel#getIconURI <em>Icon URI</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Icon URI</em>'.
+	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel#getIconURI()
+	 * @see #getUILabel()
+	 * @since 1.0
+	 * @generated
+	 */
+	public EAttribute getUILabel_IconURI() {
+		return (EAttribute) uiLabelEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MUILabel#getTooltip <em>Tooltip</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Tooltip</em>'.
+	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel#getTooltip()
+	 * @see #getUILabel()
+	 * @since 1.0
+	 * @generated
+	 */
+	public EAttribute getUILabel_Tooltip() {
+		return (EAttribute) uiLabelEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MUILabel#getLocalizedLabel <em>Localized Label</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Localized Label</em>'.
+	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel#getLocalizedLabel()
+	 * @see #getUILabel()
+	 * @since 1.0
+	 * @generated
+	 */
+	public EAttribute getUILabel_LocalizedLabel() {
+		return (EAttribute) uiLabelEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MUILabel#getLocalizedTooltip <em>Localized Tooltip</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Localized Tooltip</em>'.
+	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel#getLocalizedTooltip()
+	 * @see #getUILabel()
+	 * @since 1.0
+	 * @generated
+	 */
+	public EAttribute getUILabel_LocalizedTooltip() {
+		return (EAttribute) uiLabelEClass.getEStructuralFeatures().get(4);
 	}
 
 	/**
@@ -2501,7 +2510,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getGenericTile_Horizontal() {
-		return (EAttribute)genericTileEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) genericTileEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -2528,7 +2537,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getGenericTrimContainer_Side() {
-		return (EAttribute)genericTrimContainerEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) genericTrimContainerEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -2544,7 +2553,6 @@ public class UiPackageImpl extends EPackageImpl {
 		return expressionEClass;
 	}
 
-
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.MCoreExpression <em>Core Expression</em>}'.
 	 * <!-- begin-user-doc -->
@@ -2558,7 +2566,6 @@ public class UiPackageImpl extends EPackageImpl {
 		return coreExpressionEClass;
 	}
 
-
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MCoreExpression#getCoreExpressionId <em>Core Expression Id</em>}'.
 	 * <!-- begin-user-doc -->
@@ -2570,9 +2577,8 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getCoreExpression_CoreExpressionId() {
-		return (EAttribute)coreExpressionEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) coreExpressionEClass.getEStructuralFeatures().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MCoreExpression#getCoreExpression <em>Core Expression</em>}'.
@@ -2585,9 +2591,8 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getCoreExpression_CoreExpression() {
-		return (EAttribute)coreExpressionEClass.getEStructuralFeatures().get(1);
+		return (EAttribute) coreExpressionEClass.getEStructuralFeatures().get(1);
 	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.MImperativeExpression <em>Imperative Expression</em>}'.
@@ -2601,7 +2606,6 @@ public class UiPackageImpl extends EPackageImpl {
 		return imperativeExpressionEClass;
 	}
 
-
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.MImperativeExpression#isTracking <em>Tracking</em>}'.
 	 * <!-- begin-user-doc -->
@@ -2612,9 +2616,8 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getImperativeExpression_Tracking() {
-		return (EAttribute)imperativeExpressionEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) imperativeExpressionEClass.getEStructuralFeatures().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.MSnippetContainer <em>Snippet Container</em>}'.
@@ -2629,7 +2632,6 @@ public class UiPackageImpl extends EPackageImpl {
 		return snippetContainerEClass;
 	}
 
-
 	/**
 	 * Returns the meta object for the containment reference list '{@link org.eclipse.e4.ui.model.application.ui.MSnippetContainer#getSnippets <em>Snippets</em>}'.
 	 * <!-- begin-user-doc -->
@@ -2641,9 +2643,8 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getSnippetContainer_Snippets() {
-		return (EReference)snippetContainerEClass.getEStructuralFeatures().get(0);
+		return (EReference) snippetContainerEClass.getEStructuralFeatures().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.MLocalizable <em>Localizable</em>}'.
@@ -2658,7 +2659,6 @@ public class UiPackageImpl extends EPackageImpl {
 		return localizableEClass;
 	}
 
-
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.e4.ui.model.application.ui.MLocalizable#updateLocalization() <em>Update Localization</em>}' operation.
 	 * <!-- begin-user-doc -->
@@ -2671,7 +2671,6 @@ public class UiPackageImpl extends EPackageImpl {
 	public EOperation getLocalizable__UpdateLocalization() {
 		return localizableEClass.getEOperations().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for enum '{@link org.eclipse.e4.ui.model.application.ui.SideValue <em>Side Value</em>}'.
@@ -2694,7 +2693,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public MUiFactory getUiFactory() {
-		return (MUiFactory)getEFactoryInstance();
+		return (MUiFactory) getEFactoryInstance();
 	}
 
 	/**
@@ -2712,7 +2711,8 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public void createPackageContents() {
-		if (isCreated) return;
+		if (isCreated)
+			return;
 		isCreated = true;
 
 		// Create classes and their features
@@ -2739,6 +2739,7 @@ public class UiPackageImpl extends EPackageImpl {
 		createEReference(uiElementEClass, UI_ELEMENT__VISIBLE_WHEN);
 		createEAttribute(uiElementEClass, UI_ELEMENT__ACCESSIBILITY_PHRASE);
 		createEAttribute(uiElementEClass, UI_ELEMENT__LOCALIZED_ACCESSIBILITY_PHRASE);
+		createEOperation(uiElementEClass, UI_ELEMENT___UPDATE_LOCALIZATION);
 
 		elementContainerEClass = createEClass(ELEMENT_CONTAINER);
 		createEReference(elementContainerEClass, ELEMENT_CONTAINER__CHILDREN);
@@ -2793,7 +2794,8 @@ public class UiPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public void initializePackageContents() {
-		if (isInitialized) return;
+		if (isInitialized)
+			return;
 		isInitialized = true;
 
 		// Initialize package
@@ -2802,10 +2804,14 @@ public class UiPackageImpl extends EPackageImpl {
 		setNsURI(eNS_URI);
 
 		// Obtain other dependent packages
-		MenuPackageImpl theMenuPackage = (MenuPackageImpl)EPackage.Registry.INSTANCE.getEPackage(MenuPackageImpl.eNS_URI);
-		BasicPackageImpl theBasicPackage = (BasicPackageImpl)EPackage.Registry.INSTANCE.getEPackage(BasicPackageImpl.eNS_URI);
-		AdvancedPackageImpl theAdvancedPackage = (AdvancedPackageImpl)EPackage.Registry.INSTANCE.getEPackage(AdvancedPackageImpl.eNS_URI);
-		ApplicationPackageImpl theApplicationPackage = (ApplicationPackageImpl)EPackage.Registry.INSTANCE.getEPackage(ApplicationPackageImpl.eNS_URI);
+		MenuPackageImpl theMenuPackage = (MenuPackageImpl) EPackage.Registry.INSTANCE
+				.getEPackage(MenuPackageImpl.eNS_URI);
+		BasicPackageImpl theBasicPackage = (BasicPackageImpl) EPackage.Registry.INSTANCE
+				.getEPackage(BasicPackageImpl.eNS_URI);
+		AdvancedPackageImpl theAdvancedPackage = (AdvancedPackageImpl) EPackage.Registry.INSTANCE
+				.getEPackage(AdvancedPackageImpl.eNS_URI);
+		ApplicationPackageImpl theApplicationPackage = (ApplicationPackageImpl) EPackage.Registry.INSTANCE
+				.getEPackage(ApplicationPackageImpl.eNS_URI);
 
 		// Add subpackages
 		getESubpackages().add(theMenuPackage);
@@ -2852,66 +2858,128 @@ public class UiPackageImpl extends EPackageImpl {
 
 		// Initialize classes, features, and operations; add parameters
 		initEClass(contextEClass, MContext.class, "Context", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getContext_Context(), theApplicationPackage.getIEclipseContext(), "context", null, 0, 1, MContext.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getContext_Variables(), ecorePackage.getEString(), "variables", null, 0, -1, MContext.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, !IS_ORDERED); //$NON-NLS-1$
-		initEReference(getContext_Properties(), theApplicationPackage.getStringToStringMap(), null, "properties", null, 0, -1, MContext.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEAttribute(getContext_Context(), theApplicationPackage.getIEclipseContext(), "context", null, 0, 1, //$NON-NLS-1$
+				MContext.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				IS_DERIVED, IS_ORDERED);
+		initEAttribute(getContext_Variables(), ecorePackage.getEString(), "variables", null, 0, -1, MContext.class, //$NON-NLS-1$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED,
+				!IS_ORDERED);
+		initEReference(getContext_Properties(), theApplicationPackage.getStringToStringMap(), null, "properties", null, //$NON-NLS-1$
+				0, -1, MContext.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(dirtyableEClass, MDirtyable.class, "Dirtyable", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getDirtyable_Dirty(), ecorePackage.getEBoolean(), "dirty", null, 0, 1, MDirtyable.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(dirtyableEClass, MDirtyable.class, "Dirtyable", IS_ABSTRACT, IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getDirtyable_Dirty(), ecorePackage.getEBoolean(), "dirty", null, 0, 1, MDirtyable.class, //$NON-NLS-1$
+				IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED);
 
 		initEClass(inputEClass, MInput.class, "Input", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getInput_InputURI(), ecorePackage.getEString(), "inputURI", null, 0, 1, MInput.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEAttribute(getInput_InputURI(), ecorePackage.getEString(), "inputURI", null, 0, 1, MInput.class, //$NON-NLS-1$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(uiElementEClass, MUIElement.class, "UIElement", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getUIElement_Widget(), ecorePackage.getEJavaObject(), "widget", null, 0, 1, MUIElement.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getUIElement_Renderer(), ecorePackage.getEJavaObject(), "renderer", null, 0, 1, MUIElement.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getUIElement_ToBeRendered(), ecorePackage.getEBoolean(), "toBeRendered", "true", 0, 1, MUIElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$ //$NON-NLS-2$
-		initEAttribute(getUIElement_OnTop(), ecorePackage.getEBoolean(), "onTop", null, 0, 1, MUIElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getUIElement_Visible(), ecorePackage.getEBoolean(), "visible", "true", 0, 1, MUIElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$ //$NON-NLS-2$
+		initEClass(uiElementEClass, MUIElement.class, "UIElement", IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getUIElement_Widget(), ecorePackage.getEJavaObject(), "widget", null, 0, 1, MUIElement.class, //$NON-NLS-1$
+				IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED);
+		initEAttribute(getUIElement_Renderer(), ecorePackage.getEJavaObject(), "renderer", null, 0, 1, MUIElement.class, //$NON-NLS-1$
+				IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED);
+		initEAttribute(getUIElement_ToBeRendered(), ecorePackage.getEBoolean(), "toBeRendered", "true", 0, 1, //$NON-NLS-1$//$NON-NLS-2$
+				MUIElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
+		initEAttribute(getUIElement_OnTop(), ecorePackage.getEBoolean(), "onTop", null, 0, 1, MUIElement.class, //$NON-NLS-1$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getUIElement_Visible(), ecorePackage.getEBoolean(), "visible", "true", 0, 1, MUIElement.class, //$NON-NLS-1$//$NON-NLS-2$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		g1 = createEGenericType(this.getElementContainer());
 		g2 = createEGenericType(this.getUIElement());
 		g1.getETypeArguments().add(g2);
-		initEReference(getUIElement_Parent(), g1, this.getElementContainer_Children(), "parent", null, 0, 1, MUIElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getUIElement_ContainerData(), ecorePackage.getEString(), "containerData", null, 0, 1, MUIElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEReference(getUIElement_CurSharedRef(), theAdvancedPackage.getPlaceholder(), null, "curSharedRef", null, 0, 1, MUIElement.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEReference(getUIElement_VisibleWhen(), this.getExpression(), null, "visibleWhen", null, 0, 1, MUIElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getUIElement_AccessibilityPhrase(), ecorePackage.getEString(), "accessibilityPhrase", null, 0, 1, MUIElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getUIElement_LocalizedAccessibilityPhrase(), ecorePackage.getEString(), "localizedAccessibilityPhrase", null, 0, 1, MUIElement.class, IS_TRANSIENT, IS_VOLATILE, !IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEReference(getUIElement_Parent(), g1, this.getElementContainer_Children(), "parent", null, 0, 1, //$NON-NLS-1$
+				MUIElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, !IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getUIElement_ContainerData(), ecorePackage.getEString(), "containerData", null, 0, 1, //$NON-NLS-1$
+				MUIElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
+		initEReference(getUIElement_CurSharedRef(), theAdvancedPackage.getPlaceholder(), null, "curSharedRef", null, 0, //$NON-NLS-1$
+				1, MUIElement.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, IS_DERIVED, IS_ORDERED);
+		initEReference(getUIElement_VisibleWhen(), this.getExpression(), null, "visibleWhen", null, 0, 1, //$NON-NLS-1$
+				MUIElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getUIElement_AccessibilityPhrase(), ecorePackage.getEString(), "accessibilityPhrase", null, 0, 1, //$NON-NLS-1$
+				MUIElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
+		initEAttribute(getUIElement_LocalizedAccessibilityPhrase(), ecorePackage.getEString(),
+				"localizedAccessibilityPhrase", null, 0, 1, MUIElement.class, IS_TRANSIENT, IS_VOLATILE, !IS_CHANGEABLE, //$NON-NLS-1$
+				!IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED);
 
-		initEClass(elementContainerEClass, MElementContainer.class, "ElementContainer", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEOperation(getUIElement__UpdateLocalization(), null, "updateLocalization", 0, 1, IS_UNIQUE, IS_ORDERED); //$NON-NLS-1$
+
+		initEClass(elementContainerEClass, MElementContainer.class, "ElementContainer", IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 		g1 = createEGenericType(elementContainerEClass_T);
-		initEReference(getElementContainer_Children(), g1, this.getUIElement_Parent(), "children", null, 0, -1, MElementContainer.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEReference(getElementContainer_Children(), g1, this.getUIElement_Parent(), "children", null, 0, -1, //$NON-NLS-1$
+				MElementContainer.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		g1 = createEGenericType(elementContainerEClass_T);
-		initEReference(getElementContainer_SelectedElement(), g1, null, "selectedElement", null, 0, 1, MElementContainer.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEReference(getElementContainer_SelectedElement(), g1, null, "selectedElement", null, 0, 1, //$NON-NLS-1$
+				MElementContainer.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(uiLabelEClass, MUILabel.class, "UILabel", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getUILabel_Label(), ecorePackage.getEString(), "label", null, 0, 1, MUILabel.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getUILabel_IconURI(), ecorePackage.getEString(), "iconURI", null, 0, 1, MUILabel.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getUILabel_Tooltip(), ecorePackage.getEString(), "tooltip", null, 0, 1, MUILabel.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getUILabel_LocalizedLabel(), ecorePackage.getEString(), "localizedLabel", "", 0, 1, MUILabel.class, IS_TRANSIENT, IS_VOLATILE, !IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED); //$NON-NLS-1$ //$NON-NLS-2$
-		initEAttribute(getUILabel_LocalizedTooltip(), ecorePackage.getEString(), "localizedTooltip", "", 0, 1, MUILabel.class, IS_TRANSIENT, IS_VOLATILE, !IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED); //$NON-NLS-1$ //$NON-NLS-2$
+		initEAttribute(getUILabel_Label(), ecorePackage.getEString(), "label", null, 0, 1, MUILabel.class, //$NON-NLS-1$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getUILabel_IconURI(), ecorePackage.getEString(), "iconURI", null, 0, 1, MUILabel.class, //$NON-NLS-1$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getUILabel_Tooltip(), ecorePackage.getEString(), "tooltip", null, 0, 1, MUILabel.class, //$NON-NLS-1$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getUILabel_LocalizedLabel(), ecorePackage.getEString(), "localizedLabel", "", 0, 1, //$NON-NLS-1$//$NON-NLS-2$
+				MUILabel.class, IS_TRANSIENT, IS_VOLATILE, !IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				IS_DERIVED, IS_ORDERED);
+		initEAttribute(getUILabel_LocalizedTooltip(), ecorePackage.getEString(), "localizedTooltip", "", 0, 1, //$NON-NLS-1$//$NON-NLS-2$
+				MUILabel.class, IS_TRANSIENT, IS_VOLATILE, !IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				IS_DERIVED, IS_ORDERED);
 
-		initEClass(genericStackEClass, MGenericStack.class, "GenericStack", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEClass(genericStackEClass, MGenericStack.class, "GenericStack", IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 
-		initEClass(genericTileEClass, MGenericTile.class, "GenericTile", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getGenericTile_Horizontal(), ecorePackage.getEBoolean(), "horizontal", null, 0, 1, MGenericTile.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(genericTileEClass, MGenericTile.class, "GenericTile", IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getGenericTile_Horizontal(), ecorePackage.getEBoolean(), "horizontal", null, 0, 1, //$NON-NLS-1$
+				MGenericTile.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
 
-		initEClass(genericTrimContainerEClass, MGenericTrimContainer.class, "GenericTrimContainer", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getGenericTrimContainer_Side(), this.getSideValue(), "side", null, 1, 1, MGenericTrimContainer.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(genericTrimContainerEClass, MGenericTrimContainer.class, "GenericTrimContainer", IS_ABSTRACT, //$NON-NLS-1$
+				!IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getGenericTrimContainer_Side(), this.getSideValue(), "side", null, 1, 1, //$NON-NLS-1$
+				MGenericTrimContainer.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID,
+				IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(expressionEClass, MExpression.class, "Expression", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEClass(expressionEClass, MExpression.class, "Expression", IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 
-		initEClass(coreExpressionEClass, MCoreExpression.class, "CoreExpression", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getCoreExpression_CoreExpressionId(), ecorePackage.getEString(), "coreExpressionId", "", 0, 1, MCoreExpression.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$ //$NON-NLS-2$
-		initEAttribute(getCoreExpression_CoreExpression(), ecorePackage.getEJavaObject(), "coreExpression", null, 0, 1, MCoreExpression.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(coreExpressionEClass, MCoreExpression.class, "CoreExpression", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getCoreExpression_CoreExpressionId(), ecorePackage.getEString(), "coreExpressionId", "", 0, 1, //$NON-NLS-1$//$NON-NLS-2$
+				MCoreExpression.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
+		initEAttribute(getCoreExpression_CoreExpression(), ecorePackage.getEJavaObject(), "coreExpression", null, 0, 1, //$NON-NLS-1$
+				MCoreExpression.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
 
-		initEClass(imperativeExpressionEClass, MImperativeExpression.class, "ImperativeExpression", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getImperativeExpression_Tracking(), ecorePackage.getEBoolean(), "tracking", null, 0, 1, MImperativeExpression.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(imperativeExpressionEClass, MImperativeExpression.class, "ImperativeExpression", !IS_ABSTRACT, //$NON-NLS-1$
+				!IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getImperativeExpression_Tracking(), ecorePackage.getEBoolean(), "tracking", null, 0, 1, //$NON-NLS-1$
+				MImperativeExpression.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID,
+				IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(snippetContainerEClass, MSnippetContainer.class, "SnippetContainer", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEReference(getSnippetContainer_Snippets(), this.getUIElement(), null, "snippets", null, 0, -1, MSnippetContainer.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(snippetContainerEClass, MSnippetContainer.class, "SnippetContainer", IS_ABSTRACT, IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getSnippetContainer_Snippets(), this.getUIElement(), null, "snippets", null, 0, -1, //$NON-NLS-1$
+				MSnippetContainer.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(localizableEClass, MLocalizable.class, "Localizable", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEClass(localizableEClass, MLocalizable.class, "Localizable", IS_ABSTRACT, IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 
 		initEOperation(getLocalizable__UpdateLocalization(), null, "updateLocalization", 0, 1, IS_UNIQUE, IS_ORDERED); //$NON-NLS-1$
 
@@ -2929,6 +2997,7 @@ public class UiPackageImpl extends EPackageImpl {
 	 * <ul>
 	 *   <li>each class,</li>
 	 *   <li>each feature of each class,</li>
+	 *   <li>each operation of each class,</li>
 	 *   <li>each enum,</li>
 	 *   <li>and each data type</li>
 	 * </ul>
@@ -2995,32 +3064,27 @@ public class UiPackageImpl extends EPackageImpl {
 		public static final EAttribute DIRTYABLE__DIRTY = eINSTANCE.getDirtyable_Dirty();
 
 		/**
-		 * The meta object literal for the
-		 * '{@link org.eclipse.e4.ui.model.application.ui.MInput <em>Input</em>}' class.
-		 * <!-- begin-user-doc --> <!-- end-user-doc -->
-		 * 
+		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.MInput <em>Input</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
 		 * @see org.eclipse.e4.ui.model.application.ui.MInput
 		 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getInput()
 		 * @since 1.0
 		 * @deprecated See {@link MInput model documentation} for details.
-		 * @generated NOT
-		 * @noreference This field is not intended to be referenced by clients.
-		 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868">Bug
-		 *      509868</a>
+		 * @noreference See {@link MInput model documentation} for details.
+		 * @generated
 		 */
 		@Deprecated
 		public static final EClass INPUT = eINSTANCE.getInput();
 
 		/**
-		 * The meta object literal for the '<em><b>Input URI</b></em>' attribute
-		 * feature. <!-- begin-user-doc --> <!-- end-user-doc -->
-		 * 
+		 * The meta object literal for the '<em><b>Input URI</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
 		 * @since 1.0
-		 * @deprecated See {@link MInput model documentation} for details.
-		 * @generated NOT
-		 * @noreference This field is not intended to be referenced by clients.
-		 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868">Bug
-		 *      509868</a>
+		 * @deprecated See {@link org.eclipse.e4.ui.model.application.ui.MInput#getInputURI() model documentation} for details.
+		 * @noreference See {@link org.eclipse.e4.ui.model.application.ui.MInput#getInputURI() model documentation} for details.
+		 * @generated
 		 */
 		@Deprecated
 		public static final EAttribute INPUT__INPUT_URI = eINSTANCE.getInput_InputURI();
@@ -3133,7 +3197,47 @@ public class UiPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EAttribute UI_ELEMENT__LOCALIZED_ACCESSIBILITY_PHRASE = eINSTANCE.getUIElement_LocalizedAccessibilityPhrase();
+		public static final EAttribute UI_ELEMENT__LOCALIZED_ACCESSIBILITY_PHRASE = eINSTANCE
+				.getUIElement_LocalizedAccessibilityPhrase();
+
+		/**
+		 * The meta object literal for the '<em><b>Update Localization</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @since 1.1
+		 * @generated
+		 */
+		public static final EOperation UI_ELEMENT___UPDATE_LOCALIZATION = eINSTANCE.getUIElement__UpdateLocalization();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.impl.ElementContainerImpl <em>Element Container</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.e4.ui.model.application.ui.impl.ElementContainerImpl
+		 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getElementContainer()
+		 * @since 1.0
+		 * @generated
+		 */
+		public static final EClass ELEMENT_CONTAINER = eINSTANCE.getElementContainer();
+
+		/**
+		 * The meta object literal for the '<em><b>Children</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @since 1.0
+		 * @generated
+		 */
+		public static final EReference ELEMENT_CONTAINER__CHILDREN = eINSTANCE.getElementContainer_Children();
+
+		/**
+		 * The meta object literal for the '<em><b>Selected Element</b></em>' reference feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @since 1.0
+		 * @generated
+		 */
+		public static final EReference ELEMENT_CONTAINER__SELECTED_ELEMENT = eINSTANCE
+				.getElementContainer_SelectedElement();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.MUILabel <em>UI Label</em>}' class.
@@ -3190,35 +3294,6 @@ public class UiPackageImpl extends EPackageImpl {
 		 * @generated
 		 */
 		public static final EAttribute UI_LABEL__LOCALIZED_TOOLTIP = eINSTANCE.getUILabel_LocalizedTooltip();
-
-		/**
-		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.impl.ElementContainerImpl <em>Element Container</em>}' class.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @see org.eclipse.e4.ui.model.application.ui.impl.ElementContainerImpl
-		 * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl#getElementContainer()
-		 * @since 1.0
-		 * @generated
-		 */
-		public static final EClass ELEMENT_CONTAINER = eINSTANCE.getElementContainer();
-
-		/**
-		 * The meta object literal for the '<em><b>Children</b></em>' containment reference list feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @since 1.0
-		 * @generated
-		 */
-		public static final EReference ELEMENT_CONTAINER__CHILDREN = eINSTANCE.getElementContainer_Children();
-
-		/**
-		 * The meta object literal for the '<em><b>Selected Element</b></em>' reference feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @since 1.0
-		 * @generated
-		 */
-		public static final EReference ELEMENT_CONTAINER__SELECTED_ELEMENT = eINSTANCE.getElementContainer_SelectedElement();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.impl.GenericStackImpl <em>Generic Stack</em>}' class.
@@ -3300,7 +3375,8 @@ public class UiPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EAttribute CORE_EXPRESSION__CORE_EXPRESSION_ID = eINSTANCE.getCoreExpression_CoreExpressionId();
+		public static final EAttribute CORE_EXPRESSION__CORE_EXPRESSION_ID = eINSTANCE
+				.getCoreExpression_CoreExpressionId();
 
 		/**
 		 * The meta object literal for the '<em><b>Core Expression</b></em>' attribute feature.
@@ -3367,7 +3443,8 @@ public class UiPackageImpl extends EPackageImpl {
 		 * @since 1.1
 		 * @generated
 		 */
-		public static final EOperation LOCALIZABLE___UPDATE_LOCALIZATION = eINSTANCE.getLocalizable__UpdateLocalization();
+		public static final EOperation LOCALIZABLE___UPDATE_LOCALIZATION = eINSTANCE
+				.getLocalizable__UpdateLocalization();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.SideValue <em>Side Value</em>}' enum.

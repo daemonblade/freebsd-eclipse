@@ -11,8 +11,6 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Red Hat Inc. - stop generating pre 1.2 JNI code
- *     Martin Oberhuber (WindRiver) - [515610] Fix incorrect code for memmove()
- *     Thomas Wolf <thomas.wolf@paranor.ch> [534923] Fix incorrect casts
  *******************************************************************************/
 package org.eclipse.swt.tools.internal;
 
@@ -264,31 +262,14 @@ void generateNativeMacro(JNIClass clazz) {
 	outputln();
 }
 
-boolean generateGetParameter(JNIMethod method, JNIParameter param, boolean critical, int indent) {
+boolean generateGetParameter(JNIParameter param, boolean critical, int indent) {
 	JNIType paramType = param.getType(), paramType64 = param.getType64();
 	if (paramType.isPrimitive() || isSystemClass(paramType)) return false;
 	String iStr = String.valueOf(param.getParameter());
 	for (int j = 0; j < indent; j++) output("\t");
-	//if(!paramType.isArray() && !paramType.isType("java.lang.String") && param.getFlag(FLAG_NO_IN)) {
-	if("memmove".equals(method.getName()) && param.getFlag(FLAG_NO_IN)) {
-		// Bug 515610: Fix incorect fall-through for memmove().
-		// A similar issue might be present in other cases as well. 
-		// Keep diagnostic code (commented-out) below for diagnosing these.
-		output("if (!arg");
-		output(iStr);
-		outputln(") goto fail;");
-		//output(") {fprintf(stderr,\"fail: method=");
-		//output(method.getName());
-		//output(", arg");
-		//output(iStr);
-		//output("\\n\"); goto fail;}\n");
-		for (int j = 0; j < indent; j++) output("\t");
-		output("if ((lparg");
-	} else {
-		output("if (arg");
-		output(iStr);
-		output(") if ((lparg");
-	}
+	output("if (arg");
+	output(iStr);
+	output(") if ((lparg");
 	output(iStr);
 	output(" = ");
 	boolean isCPP = getCPP();
@@ -524,13 +505,13 @@ boolean generateLocalVars(JNIParameter[] params, JNIType returnType, JNIType ret
 	return needsReturn;
 }
 
-boolean generateGetters(JNIMethod method, JNIParameter[] params) {
+boolean generateGetters(JNIParameter[] params) {
 	boolean genFailTag = false;
 	int criticalCount = 0;
 	for (int i = 0; i < params.length; i++) {
 		JNIParameter param = params[i];
 		if (!isCritical(param)) {
-			genFailTag |= generateGetParameter(method, param, false, 1);
+			genFailTag |= generateGetParameter(param, false, 1);
 		} else {
 			criticalCount++;
 		}
@@ -539,7 +520,7 @@ boolean generateGetters(JNIMethod method, JNIParameter[] params) {
 		for (int i = 0; i < params.length; i++) {
 			JNIParameter param = params[i];
 			if (isCritical(param)) {
-				genFailTag |= generateGetParameter(method, param, true, 2);
+				genFailTag |= generateGetParameter(param, true, 2);
 			}
 		}
 	}
@@ -794,14 +775,12 @@ void generateFunctionCall(JNIMethod method, JNIParameter[] params, JNIType retur
 		if (method.getFlag(Flags.FLAG_CAST)) {
 			output("((");
 			String returnCast = returnType.getTypeSignature2(!returnType.equals(returnType64));
-			if ((name.equals("objc_msgSend_bool") || name.equals("objc_msgSendSuper_bool")) && returnCast.equals("jboolean")) {
+			if (name.equals("objc_msgSend_bool") && returnCast.equals("jboolean")) {
 				returnCast = "BOOL";
 			}
 			output(returnCast);
 			output(" (*)(");
-			int fixedargs = getNumberOfFixedArguments(method);
-			int n = fixedargs > 0 ? fixedargs : params.length;
-			for (int i = 0; i < n; i++) {
+			for (int i = 0; i < params.length; i++) {
 				if (i != 0) output(", ");
 				JNIParameter param = params[i];
 				String cast = param.getCast();
@@ -818,9 +797,6 @@ void generateFunctionCall(JNIMethod method, JNIParameter[] params, JNIType retur
 					}
 					output(paramType.getTypeSignature4(!paramType.equals(paramType64), param.getFlag(FLAG_STRUCT)));
 				}
-			}
-			if (fixedargs > 0) {
-				output(", ...");
 			}
 			output("))");
 		}
@@ -881,8 +857,7 @@ void generate_objc_msgSend_stret (JNIParameter[] params, String func) {
 	JNIType paramType = params[0].getType(), paramType64 = params[0].getType64();
 	output(paramType.getTypeSignature4(!paramType.equals(paramType64), true));
 	output(" (*)(");
-	// Only the fixed arguments
-	for (int i = 1; i <= 2; i++) {
+	for (int i = 1; i < params.length; i++) {
 		if (i != 1) output(", ");
 		JNIParameter param = params[i];
 		String cast = param.getCast();
@@ -900,31 +875,9 @@ void generate_objc_msgSend_stret (JNIParameter[] params, String func) {
 			output(paramType.getTypeSignature4(!paramType.equals(paramType64), param.getFlag(FLAG_STRUCT)));
 		}
 	}
-	output(", ...");
 	output("))");
 	output(func);
 	output(")");
-}
-
-/**
- * Determines whether the {@code method} has variadic arguments. If so, returns
- * the number of fixed parameters (always {@code > 0}). Otherwise returns zero,
- * which indicates that all parameters are fixed.
- * 
- * @param method to examine
- * @return the number of fixed parameters, or zero if all parameters are fixed
- *         (the method has no varargs)
- */
-int getNumberOfFixedArguments(JNIMethod method) {
-	Object param = method.getParam("fixedargs");
-	if (param == null) {
-		return 0;
-	}
-	String number = param.toString();
-	if (number.isEmpty()) {
-		return 0;
-	}
-	return Integer.parseInt(number);
 }
 
 void generateReturn(JNIType returnType, boolean needsReturn) {
@@ -959,7 +912,7 @@ void generateFunctionBody(JNIMethod method, String function, String function64, 
 	} else {
 		boolean needsReturn = generateLocalVars(params, returnType, returnType64);
 		generateEnterExitMacro(method, function, function64, true);
-		boolean genFailTag = generateGetters(method, params);
+		boolean genFailTag = generateGetters(params);
 		if (method.getFlag(FLAG_DYNAMIC)) {
 			generateDynamicFunctionCall(method, params, returnType, returnType64, needsReturn);
 		} else {

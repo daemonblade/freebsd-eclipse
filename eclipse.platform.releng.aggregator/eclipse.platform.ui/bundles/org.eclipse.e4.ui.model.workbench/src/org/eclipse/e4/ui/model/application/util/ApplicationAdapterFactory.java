@@ -14,7 +14,10 @@
 package org.eclipse.e4.ui.model.application.util;
 
 import java.util.Map;
-import org.eclipse.e4.ui.model.application.*;
+import org.eclipse.e4.ui.model.application.MAddon;
+import org.eclipse.e4.ui.model.application.MApplication;
+import org.eclipse.e4.ui.model.application.MApplicationElement;
+import org.eclipse.e4.ui.model.application.MContribution;
 import org.eclipse.e4.ui.model.application.commands.MBindingTableContainer;
 import org.eclipse.e4.ui.model.application.commands.MBindings;
 import org.eclipse.e4.ui.model.application.commands.MHandlerContainer;
@@ -76,7 +79,7 @@ public class ApplicationAdapterFactory extends AdapterFactoryImpl {
 			return true;
 		}
 		if (object instanceof EObject) {
-			return ((EObject)object).eClass().getEPackage() == modelPackage;
+			return ((EObject) object).eClass().getEPackage() == modelPackage;
 		}
 		return false;
 	}
@@ -87,85 +90,102 @@ public class ApplicationAdapterFactory extends AdapterFactoryImpl {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	protected ApplicationSwitch<Adapter> modelSwitch =
-		new ApplicationSwitch<Adapter>() {
-			@Override
-			public Adapter caseStringToStringMap(Map.Entry<String, String> object) {
-				return createStringToStringMapAdapter();
-			}
-			@Override
-			public Adapter caseApplication(MApplication object) {
-				return createApplicationAdapter();
-			}
-			@Override
-			public Adapter caseApplicationElement(MApplicationElement object) {
-				return createApplicationElementAdapter();
-			}
-			@Override
-			public Adapter caseContribution(MContribution object) {
-				return createContributionAdapter();
-			}
-			@Override
-			public Adapter caseAddon(MAddon object) {
-				return createAddonAdapter();
-			}
-			@Override
-			public Adapter caseStringToObjectMap(Map.Entry<String, Object> object) {
-				return createStringToObjectMapAdapter();
-			}
-			@Override
-			public Adapter caseLocalizable(MLocalizable object) {
-				return createLocalizableAdapter();
-			}
-			@Override
-			public Adapter caseUIElement(MUIElement object) {
-				return createUIElementAdapter();
-			}
-			@Override
-			public <T extends MUIElement> Adapter caseElementContainer(MElementContainer<T> object) {
-				return createElementContainerAdapter();
-			}
-			@Override
-			public Adapter caseContext(MContext object) {
-				return createContextAdapter();
-			}
-			@Override
-			public Adapter caseHandlerContainer(MHandlerContainer object) {
-				return createHandlerContainerAdapter();
-			}
-			@Override
-			public Adapter caseBindingTableContainer(MBindingTableContainer object) {
-				return createBindingTableContainerAdapter();
-			}
-			@Override
-			public Adapter casePartDescriptorContainer(MPartDescriptorContainer object) {
-				return createPartDescriptorContainerAdapter();
-			}
-			@Override
-			public Adapter caseBindings(MBindings object) {
-				return createBindingsAdapter();
-			}
-			@Override
-			public Adapter caseMenuContributions(MMenuContributions object) {
-				return createMenuContributionsAdapter();
-			}
-			@Override
-			public Adapter caseToolBarContributions(MToolBarContributions object) {
-				return createToolBarContributionsAdapter();
-			}
-			@Override
-			public Adapter caseTrimContributions(MTrimContributions object) {
-				return createTrimContributionsAdapter();
-			}
-			@Override
-			public Adapter caseSnippetContainer(MSnippetContainer object) {
-				return createSnippetContainerAdapter();
-			}
-			@Override
-			public Adapter defaultCase(EObject object) {
-				return createEObjectAdapter();
-			}
-		};
+	protected ApplicationSwitch<Adapter> modelSwitch = new ApplicationSwitch<Adapter>() {
+		@Override
+		public Adapter caseStringToStringMap(Map.Entry<String, String> object) {
+			return createStringToStringMapAdapter();
+		}
+
+		@Override
+		public Adapter caseApplication(MApplication object) {
+			return createApplicationAdapter();
+		}
+
+		@Override
+		public Adapter caseApplicationElement(MApplicationElement object) {
+			return createApplicationElementAdapter();
+		}
+
+		@Override
+		public Adapter caseContribution(MContribution object) {
+			return createContributionAdapter();
+		}
+
+		@Override
+		public Adapter caseAddon(MAddon object) {
+			return createAddonAdapter();
+		}
+
+		@Override
+		public Adapter caseStringToObjectMap(Map.Entry<String, Object> object) {
+			return createStringToObjectMapAdapter();
+		}
+
+		@Override
+		public Adapter caseLocalizable(MLocalizable object) {
+			return createLocalizableAdapter();
+		}
+
+		@Override
+		public Adapter caseUIElement(MUIElement object) {
+			return createUIElementAdapter();
+		}
+
+		@Override
+		public <T extends MUIElement> Adapter caseElementContainer(MElementContainer<T> object) {
+			return createElementContainerAdapter();
+		}
+
+		@Override
+		public Adapter caseContext(MContext object) {
+			return createContextAdapter();
+		}
+
+		@Override
+		public Adapter caseHandlerContainer(MHandlerContainer object) {
+			return createHandlerContainerAdapter();
+		}
+
+		@Override
+		public Adapter caseBindingTableContainer(MBindingTableContainer object) {
+			return createBindingTableContainerAdapter();
+		}
+
+		@Override
+		public Adapter casePartDescriptorContainer(MPartDescriptorContainer object) {
+			return createPartDescriptorContainerAdapter();
+		}
+
+		@Override
+		public Adapter caseBindings(MBindings object) {
+			return createBindingsAdapter();
+		}
+
+		@Override
+		public Adapter caseMenuContributions(MMenuContributions object) {
+			return createMenuContributionsAdapter();
+		}
+
+		@Override
+		public Adapter caseToolBarContributions(MToolBarContributions object) {
+			return createToolBarContributionsAdapter();
+		}
+
+		@Override
+		public Adapter caseTrimContributions(MTrimContributions object) {
+			return createTrimContributionsAdapter();
+		}
+
+		@Override
+		public Adapter caseSnippetContainer(MSnippetContainer object) {
+			return createSnippetContainerAdapter();
+		}
+
+		@Override
+		public Adapter defaultCase(EObject object) {
+			return createEObjectAdapter();
+		}
+	};
 
 	/**
 	 * Creates an adapter for the <code>target</code>.
@@ -177,9 +197,8 @@ public class ApplicationAdapterFactory extends AdapterFactoryImpl {
 	 */
 	@Override
 	public Adapter createAdapter(Notifier target) {
-		return modelSwitch.doSwitch((EObject)target);
+		return modelSwitch.doSwitch((EObject) target);
 	}
-
 
 	/**
 	 * Creates a new adapter for an object of class '{@link java.util.Map.Entry <em>String To String Map</em>}'.
@@ -398,6 +417,7 @@ public class ApplicationAdapterFactory extends AdapterFactoryImpl {
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MMenuContributions
 	 * @since 1.0
+	 * @noreference See {@link MMenuContributions model documentation} for details.
 	 * @generated
 	 */
 	public Adapter createMenuContributionsAdapter() {
@@ -413,6 +433,7 @@ public class ApplicationAdapterFactory extends AdapterFactoryImpl {
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MToolBarContributions
 	 * @since 1.0
+	 * @noreference See {@link MToolBarContributions model documentation} for details.
 	 * @generated
 	 */
 	public Adapter createToolBarContributionsAdapter() {
@@ -428,6 +449,7 @@ public class ApplicationAdapterFactory extends AdapterFactoryImpl {
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MTrimContributions
 	 * @since 1.0
+	 * @noreference See {@link MTrimContributions model documentation} for details.
 	 * @generated
 	 */
 	public Adapter createTrimContributionsAdapter() {

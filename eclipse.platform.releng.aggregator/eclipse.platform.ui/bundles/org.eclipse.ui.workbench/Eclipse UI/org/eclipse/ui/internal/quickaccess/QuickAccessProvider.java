@@ -11,15 +11,16 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-
 package org.eclipse.ui.internal.quickaccess;
 
 import java.util.Arrays;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.ui.quickaccess.QuickAccessElement;
 
 /**
- * @since 3.3
+ * Returns {@link QuickAccessElement}s. It implements a cache by default.
  *
+ * @noreference This class is not intended to be referenced by clients.
  */
 public abstract class QuickAccessProvider {
 
@@ -65,21 +66,42 @@ public abstract class QuickAccessProvider {
 	 * Returns the element for the given ID if available, or null if no matching
 	 * element is available.
 	 *
-	 * @param id
-	 *            the ID of an element
+	 * @param id the ID of an element
 	 * @return the element with the given ID, or null if not found.
 	 */
-	public abstract QuickAccessElement getElementForId(String id);
+	public QuickAccessElement getElementForId(String id) {
+		if (id == null) {
+			return null;
+		}
+		if (sortedElements != null) {
+			for (QuickAccessElement element : sortedElements) {
+				if (id.equals(element.getId())) {
+					return element;
+				}
+			}
+		}
+		return null;
+	}
 
 	public boolean isAlwaysPresent() {
 		return false;
 	}
 
-	public void reset() {
+	/**
+	 * Resets the cache, so next invocation of {@link #getElements()} and related
+	 * method will retrigger computation of elements.
+	 */
+	public final void reset() {
 		sortedElements = null;
 		doReset();
 	}
 
+	/**
+	 * Additional operations to reset cache.
+	 *
+	 * @noreference This method is not intended to be referenced by clients. Use
+	 *              {@link #reset()} instead.
+	 */
 	protected abstract void doReset();
 
 	/**

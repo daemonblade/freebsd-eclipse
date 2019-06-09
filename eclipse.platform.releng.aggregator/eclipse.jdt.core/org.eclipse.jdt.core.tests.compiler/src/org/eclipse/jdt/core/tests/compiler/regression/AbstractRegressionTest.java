@@ -35,6 +35,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,6 +94,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeConstants;
 import org.eclipse.jdt.internal.compiler.problem.AbortCompilation;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
+import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.search.JavaSearchParticipant;
 import org.eclipse.jdt.internal.core.search.indexing.BinaryIndexer;
 import org.eclipse.jdt.internal.core.util.Messages;
@@ -298,6 +300,8 @@ static class JavacCompiler {
 			return JavaCore.VERSION_10;
 		} else if(rawVersion.startsWith("11")) {
 			return JavaCore.VERSION_11;
+		} else if(rawVersion.startsWith("12")) {
+			return JavaCore.VERSION_12;
 		} else {
 			throw new RuntimeException("unknown javac version: " + rawVersion);
 		}
@@ -405,6 +409,17 @@ static class JavacCompiler {
 				return 0100;
 			}
 			if ("11.0.2".equals(rawVersion)) {
+				return 0200;
+			}
+		}
+		if (version == JavaCore.VERSION_12) {
+			if ("12".equals(rawVersion)) {
+				return 0000;
+			}
+			if ("12.0.1".equals(rawVersion)) {
+				return 0100;
+			}
+			if ("12.0.2".equals(rawVersion)) {
 				return 0200;
 			}
 		}
@@ -1719,6 +1734,9 @@ protected static class JavacTestOptions {
 			JavacTestOptions.DEFAULT /* default javac test options */);
 	}
 	protected void runConformTest(String[] testFiles, String expectedOutput, Map customOptions) {
+		runConformTest(testFiles, expectedOutput, customOptions, null);
+	}
+	protected void runConformTest(String[] testFiles, String expectedOutput, Map customOptions, String[] vmArguments) {
 		runTest(
 			// test directory preparation
 			true /* flush output directory */,
@@ -1733,7 +1751,7 @@ protected static class JavacTestOptions {
 			null /* do not check compiler log */,
 			// runtime options
 			false /* do not force execution */,
-			null /* no vm arguments */,
+			vmArguments /* no vm arguments */,
 			// runtime results
 			expectedOutput /* expected output string */,
 			null /* do not check error string */,
@@ -2212,6 +2230,8 @@ protected void runJavac(
 						File.separator + compiler.rawVersion); // need to change output directory per javac version
 				if (shouldFlushOutputDirectory) {
 					Util.delete(javacOutputDirectory);
+				} else {
+					deleteSourceFiles(javacOutputDirectory);
 				}
 				javacOutputDirectory.mkdirs();
 				// write test files
@@ -2330,6 +2350,17 @@ protected void runJavac(
 			handleMismatch(compiler, testName, testFiles, expectedCompilerLog, expectedOutputString,
 					expectedErrorString, compilerLog, output, err, excuse, mismatch);
 		}
+	}
+}
+private void deleteSourceFiles(File directory) {
+	try {
+		Files.walk(directory.toPath())
+			.filter(f -> f.endsWith(SuffixConstants.SUFFIX_STRING_java))
+			.map(java.nio.file.Path::toFile)
+			.filter(File::isFile)
+			.forEach(File::delete);
+	} catch (IOException e) {
+		e.printStackTrace();
 	}
 }
 private boolean errorStringMatch(String expectedErrorStringStart, String actualError) {
@@ -2553,10 +2584,19 @@ protected void runNegativeTest(boolean skipJavac, JavacTestOptions javacTestOpti
 						JavacTestOptions.DEFAULT /* javac test options */);
 		}
 	protected void runNegativeTest(
+			String[] testFiles,
+			String expectedCompilerLog,
+			String[] classLibraries,
+			boolean shouldFlushOutputDirectory,
+			Map customOptions) {
+		runNegativeTest(testFiles, expectedCompilerLog, classLibraries, shouldFlushOutputDirectory, null, customOptions);
+	}
+	protected void runNegativeTest(
 		String[] testFiles,
 		String expectedCompilerLog,
 		String[] classLibraries,
 		boolean shouldFlushOutputDirectory,
+		String[] vmArguments,
 		Map customOptions) {
 		runTest(
 	 		// test directory preparation
@@ -2577,7 +2617,7 @@ protected void runNegativeTest(boolean skipJavac, JavacTestOptions javacTestOpti
 			expectedCompilerLog /* expected compiler log */,
 			// runtime options
 			false /* do not force execution */,
-			null /* no vm arguments */,
+			vmArguments /* no vm arguments */,
 			// runtime results
 			null /* do not check output string */,
 			null /* do not check error string */,

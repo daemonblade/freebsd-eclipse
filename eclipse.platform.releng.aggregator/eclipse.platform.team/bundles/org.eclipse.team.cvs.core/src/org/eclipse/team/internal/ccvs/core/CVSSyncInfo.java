@@ -51,9 +51,7 @@ public class CVSSyncInfo extends SyncInfo {
 		return subscriber;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.sync.SyncInfo#computeSyncKind(org.eclipse.core.runtime.IProgressMonitor)
-	 */
+	@Override
 	protected int calculateKind() throws TeamException {
 		// special handling for folders, the generic sync algorithm doesn't work well
 		// with CVS because folders are not in namespaces (e.g. they exist in all versions
@@ -269,13 +267,13 @@ public class CVSSyncInfo extends SyncInfo {
 	 *  </ul>
 	 * </ul>
 	 */
-	 public IStatus makeInSync() throws CVSException {
-	 	
-	 	// Only works on folders
+	public IStatus makeInSync() throws CVSException {
+		
+		// Only works on folders
 		if (getLocal().getType() == IResource.FILE) {
 			return new CVSStatus(IStatus.WARNING, INVALID_RESOURCE_TYPE, NLS.bind(CVSMessages.CVSSyncInfo_7, new String[] { getLocal().getFullPath().toString()}), getLocal()); 
 		} 
-	 	
+		
 		// Only works on outgoing and conflicting changes
 		boolean outgoing = (getKind() & DIRECTION_MASK) == OUTGOING;
 		if (outgoing) {
@@ -320,9 +318,9 @@ public class CVSSyncInfo extends SyncInfo {
 		// It is also impossible for an incomming folder to be static.
 		FolderSyncInfo remoteInfo = remote.getFolderSyncInfo();
 		FolderSyncInfo localInfo = local.getParent().getFolderSyncInfo();
-        MutableFolderSyncInfo newInfo = remoteInfo.cloneMutable();
-        newInfo.setTag(localInfo.getTag());
-        newInfo.setStatic(false);
+		MutableFolderSyncInfo newInfo = remoteInfo.cloneMutable();
+		newInfo.setTag(localInfo.getTag());
+		newInfo.setStatic(false);
 		local.setFolderSyncInfo(newInfo);
 		return Status.OK_STATUS;
 	}
@@ -353,10 +351,7 @@ public class CVSSyncInfo extends SyncInfo {
 		return info != null ? info.getRevision() : null;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.synchronize.SyncInfo#getLocalAuthor(org.eclipse.core.runtime.IProgressMonitor)
-	 * @since 3.6
-	 */
+	@Override
 	public String getLocalAuthor(IProgressMonitor monitor) {
 		final ICVSFile cvsFile= getCVSFile();
 		if (cvsFile == null)

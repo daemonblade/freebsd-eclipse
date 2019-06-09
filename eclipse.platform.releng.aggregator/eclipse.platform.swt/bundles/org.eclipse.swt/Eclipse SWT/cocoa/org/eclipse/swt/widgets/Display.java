@@ -110,7 +110,9 @@ public class Display extends Device {
 	enum APPEARANCE {
 		Dark, Light,
 	}
-	APPEARANCE appAppearance = null;
+	APPEARANCE appAppearance;
+	/* System property to be set for SWT application to use the system's theme */
+	static final String USE_SYSTEM_THEME = "org.eclipse.swt.display.useSystemTheme";
 
 	/* Windows and Events */
 	Event [] eventQueue;
@@ -173,7 +175,7 @@ public class Display extends Device {
 	boolean escAsAcceleratorPresent = false;
 
 	NSApplication application;
-	long /*int*/ applicationClass;
+	long applicationClass;
 	NSImage dockImage;
 	boolean isEmbedded;
 	static boolean launched = false;
@@ -191,12 +193,12 @@ public class Display extends Device {
 	int[] screenID = new int[32];
 	NSPoint[] screenCascade = new NSPoint[32];
 
-	long /*int*/ runLoopObserver;
+	long runLoopObserver;
 	Callback observerCallback;
 
 	boolean lockCursor = true;
 	static final String LOCK_CURSOR = "org.eclipse.swt.internal.lockCursor"; //$NON-NLS-1$
-	long /*int*/ oldCursorSetProc;
+	long oldCursorSetProc;
 	Callback cursorSetCallback;
 
 	Combo currentCombo;
@@ -231,9 +233,9 @@ public class Display extends Device {
 	Cursor [] cursors = new Cursor [SWT.CURSOR_HAND + 1];
 
 	/* System Colors */
-	double /*float*/ [][] colors;
-	double /*float*/ [] alternateSelectedControlTextColor, selectedControlTextColor;
-	double /*float*/ [] alternateSelectedControlColor, secondarySelectedControlColor;
+	double [][] colors;
+	double [] alternateSelectedControlTextColor, selectedControlTextColor;
+	double [] alternateSelectedControlColor, secondarySelectedControlColor;
 
 	/* Key Mappings. */
 	static int [] [] KeyTable = {
@@ -568,7 +570,7 @@ void addSkinnableWidget (Widget widget) {
 
 void addWidget (NSObject view, Widget widget) {
 	if (view == null) return;
-	long /*int*/ ivar = OS.object_setInstanceVariable (view.id, SWT_OBJECT, widget.jniRef);
+	long ivar = OS.object_setInstanceVariable (view.id, SWT_OBJECT, widget.jniRef);
 
 	if (ivar == 0) {
 		if (dynamicObjectMap == null) {
@@ -839,9 +841,8 @@ protected void create (DeviceData data) {
 }
 
 void createDisplay (DeviceData data) {
-	if (OS.VERSION < 0x1050) {
-		System.out.println ("***WARNING: SWT requires MacOS X version " + 10 + "." + 5 + " or greater"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		System.out.println ("***WARNING: Detected: " + Integer.toHexString((OS.VERSION & 0xFF00) >> 8) + "." + Integer.toHexString((OS.VERSION & 0xF0) >> 4) + "." + Integer.toHexString(OS.VERSION & 0xF)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+	if (OS.VERSION < OS.VERSION (10, 10, 0)) {
+		System.out.println ("***WARNING: SWT requires MacOS X version 10.10 or greater"); //$NON-NLS-1$
 		error(SWT.ERROR_NOT_IMPLEMENTED);
 	}
 
@@ -876,13 +877,11 @@ void createDisplay (DeviceData data) {
 	int [] psn = new int [2];
 	if (OS.GetCurrentProcess (psn) == OS.noErr) {
 		int pid = OS.getpid ();
-		long /*int*/ ptr = getApplicationName().UTF8String();
+		long ptr = getApplicationName().UTF8String();
 		if (ptr != 0) OS.CPSSetProcessName (psn, ptr);
 		if (!isBundled ()) {
-			if (OS.VERSION_MMB >= OS.VERSION_MMB (10, 9, 0)) {
-				application.setActivationPolicy (OS.NSApplicationActivationPolicyRegular);
-				NSRunningApplication.currentApplication().activateWithOptions (OS.NSApplicationActivateIgnoringOtherApps);
-			}
+			application.setActivationPolicy (OS.NSApplicationActivationPolicyRegular);
+			NSRunningApplication.currentApplication().activateWithOptions (OS.NSApplicationActivateIgnoringOtherApps);
 		}
 		ptr = C.getenv (ascii ("APP_ICON_" + pid));
 		if (ptr != 0) {
@@ -895,20 +894,20 @@ void createDisplay (DeviceData data) {
 	}
 
 	String className = "SWTApplication";
-	long /*int*/ cls;
+	long cls;
 	if ((cls = OS.objc_lookUpClass (className)) == 0) {
 		Class clazz = getClass();
 		applicationCallback2 = new Callback(clazz, "applicationProc", 2);
-		long /*int*/ proc2 = applicationCallback2.getAddress();
+		long proc2 = applicationCallback2.getAddress();
 		if (proc2 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		applicationCallback3 = new Callback(clazz, "applicationProc", 3);
-		long /*int*/ proc3 = applicationCallback3.getAddress();
+		long proc3 = applicationCallback3.getAddress();
 		if (proc3 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		applicationCallback4 = new Callback(clazz, "applicationProc", 4);
-		long /*int*/ proc4 = applicationCallback4.getAddress();
+		long proc4 = applicationCallback4.getAddress();
 		if (proc4 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		applicationCallback6 = new Callback(clazz, "applicationProc", 6);
-		long /*int*/ proc6 = applicationCallback6.getAddress();
+		long proc6 = applicationCallback6.getAddress();
 		if (proc6 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		long superClassID = OS.object_getClass(application.id);
 		if (new NSObject(superClassID).className().getString().equals("NSKVONotifying_NSApplication")) {
@@ -935,9 +934,9 @@ void createDisplay (DeviceData data) {
 
 	className = "SWTApplicationDelegate";
 	if (OS.objc_lookUpClass (className) == 0) {
-		long /*int*/ appProc3 = applicationCallback3.getAddress();
+		long appProc3 = applicationCallback3.getAddress();
 		if (appProc3 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
-		long /*int*/ appProc4 = applicationCallback4.getAddress();
+		long appProc4 = applicationCallback4.getAddress();
 		if (appProc4 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		cls = OS.objc_allocateClassPair(OS.class_NSObject, className, 0);
 		OS.class_addMethod(cls, OS.sel_applicationWillFinishLaunching_, appProc3, "@:@");
@@ -964,7 +963,7 @@ void createDisplay (DeviceData data) {
 }
 
 void createMainMenu () {
-	NSString appName = getApplicationName();
+	String appName = getApplicationName().getString();
 	NSString emptyStr = NSString.string();
 	NSMenu mainMenu = (NSMenu)new NSMenu().alloc();
 	mainMenu.initWithTitle(emptyStr);
@@ -972,14 +971,14 @@ void createMainMenu () {
 
 	NSMenuItem menuItem;
 	NSMenu appleMenu;
-	NSString format = NSString.stringWith("%@ %@"), title;
+	NSString title;
 
 	NSMenuItem appItem = menuItem = mainMenu.addItemWithTitle(emptyStr, 0, emptyStr);
 	appleMenu = (NSMenu)new NSMenu().alloc();
 	appleMenu.initWithTitle(emptyStr);
 	OS.objc_msgSend(application.id, OS.sel_registerName("setAppleMenu:"), appleMenu.id);
 
-	title = new NSString(OS.objc_msgSend(OS.class_NSString, OS.sel_stringWithFormat_, format.id, NSString.stringWith(SWT.getMessage("About")).id, appName.id));
+	title = NSString.stringWith(SWT.getMessage("About") + " " + appName);
 	menuItem = appleMenu.addItemWithTitle(title, OS.sel_orderFrontStandardAboutPanel_, emptyStr);
 	menuItem.setTarget(applicationDelegate);
 
@@ -1006,7 +1005,7 @@ void createMainMenu () {
 
 	appleMenu.addItem(NSMenuItem.separatorItem());
 
-	title = new NSString(OS.objc_msgSend(OS.class_NSString, OS.sel_stringWithFormat_, format.id, NSString.stringWith(SWT.getMessage("Hide")).id, appName.id));
+	title = NSString.stringWith(SWT.getMessage("Hide") + " " + appName);
 	menuItem = appleMenu.addItemWithTitle(title, OS.sel_hide_, NSString.stringWith("h"));
 	menuItem.setTarget(applicationDelegate);
 
@@ -1021,7 +1020,7 @@ void createMainMenu () {
 
 	appleMenu.addItem(NSMenuItem.separatorItem());
 
-	title = new NSString(OS.objc_msgSend(OS.class_NSString, OS.sel_stringWithFormat_, format.id, NSString.stringWith(SWT.getMessage("Quit")).id, appName.id));
+	title = NSString.stringWith(SWT.getMessage("Quit") + " " + appName);
 	menuItem = appleMenu.addItemWithTitle(title, OS.sel_applicationShouldTerminate_, NSString.stringWith("q"));
 	menuItem.setTarget(applicationDelegate);
 
@@ -1041,7 +1040,7 @@ NSMutableArray currentTouches() {
 	return currentTouches;
 }
 
-long /*int*/ cursorSetProc (long /*int*/ id, long /*int*/ sel) {
+long cursorSetProc (long id, long sel) {
 	if (lockCursor) {
 		if (currentControl != null) {
 			Cursor cursor = currentControl.findCursor ();
@@ -1151,7 +1150,7 @@ boolean filters (int eventType) {
  *
  * @noreference This method is not intended to be referenced by clients.
  */
-public Widget findWidget (long /*int*/ handle) {
+public Widget findWidget (long handle) {
 	checkDevice ();
 	return getWidget (handle);
 }
@@ -1180,7 +1179,7 @@ public Widget findWidget (long /*int*/ handle) {
  *
  * @since 3.1
  */
-public Widget findWidget (long /*int*/ handle, long /*int*/ id) {
+public Widget findWidget (long handle, long id) {
 	checkDevice ();
 	return getWidget (handle);
 }
@@ -1204,7 +1203,7 @@ public Widget findWidget (long /*int*/ handle, long /*int*/ id) {
  *
  * @since 3.3
  */
-public Widget findWidget (Widget widget, long /*int*/ id) {
+public Widget findWidget (Widget widget, long id) {
 	checkDevice ();
 	return null;
 }
@@ -1320,14 +1319,14 @@ Rectangle getBounds (NSArray screens) {
 
 	NSScreen screen = new NSScreen(screens.objectAtIndex(0));
 	NSRect primaryFrame = screen.frame();
-	double /*float*/ minX = Float.MAX_VALUE, maxX = Float.MIN_VALUE;
-	double /*float*/ minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
-	long /*int*/ count = screens.count();
+	double minX = Float.MAX_VALUE, maxX = Float.MIN_VALUE;
+	double minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
+	long count = screens.count();
 	for (int i = 0; i < count; i++) {
 		screen = new NSScreen(screens.objectAtIndex(i));
 		NSRect frame = screen.frame();
-		double /*float*/ x1 = frame.x, x2 = frame.x + frame.width;
-		double /*float*/ y1 = primaryFrame.height - frame.y, y2 = primaryFrame.height - (frame.y + frame.height);
+		double x1 = frame.x, x2 = frame.x + frame.width;
+		double y1 = primaryFrame.height - frame.y, y2 = primaryFrame.height - (frame.y + frame.height);
 		if (x1 < minX) minX = x1;
 		if (x2 < minX) minX = x2;
 		if (x1 > maxX) maxX = x1;
@@ -1379,7 +1378,7 @@ public Rectangle getClientArea () {
 	NSScreen screen = new NSScreen(screens.objectAtIndex(0));
 	NSRect frame = screen.frame();
 	NSRect visibleFrame = screen.visibleFrame();
-	double /*float*/ y = frame.height - (visibleFrame.y + visibleFrame.height);
+	double y = frame.height - (visibleFrame.y + visibleFrame.height);
 	return new Rectangle((int)visibleFrame.x, (int)y, (int)visibleFrame.width, (int)visibleFrame.height);
 }
 
@@ -1706,7 +1705,7 @@ public Monitor [] getMonitors () {
 	if (screens == null) return new Monitor[] {};
 
 	NSRect primaryFrame = new NSScreen(screens.objectAtIndex(0)).frame();
-	int count = (int)/*64*/screens.count();
+	int count = (int)screens.count();
 	Monitor [] monitors = new Monitor [count];
 	for (int i=0; i<count; i++) {
 		Monitor monitor = new Monitor ();
@@ -1777,7 +1776,7 @@ public Shell [] getShells () {
 	checkDevice ();
 	NSArray windows = application.windows();
 	int index = 0;
-	Shell [] result = new Shell [(int)/*64*/windows.count()];
+	Shell [] result = new Shell [(int)windows.count()];
 	for (int i = 0; i < result.length; i++) {
 		NSWindow window = new NSWindow(windows.objectAtIndex(i));
 		Widget widget = getWidget(window.contentView());
@@ -1868,14 +1867,11 @@ Color getWidgetColor (int id) {
 	return null;
 }
 
-double /*float*/ [] getWidgetColorRGB (int id) {
+double [] getWidgetColorRGB (int id) {
 	NSColor color = null;
 	switch (id) {
 		case SWT.COLOR_INFO_FOREGROUND: color = NSColor.blackColor (); break;
-		case SWT.COLOR_INFO_BACKGROUND: return
-				OS.VERSION_MMB >= OS.VERSION_MMB (10, 10, 0)
-						? new double /*float*/ [] {236/255f, 235/255f, 236/255f, 1}
-						: new double /*float*/ [] {.984f, .988f, 0.773f, 1};
+		case SWT.COLOR_INFO_BACKGROUND: return new double [] {236/255f, 235/255f, 236/255f, 1};
 		case SWT.COLOR_TITLE_FOREGROUND: color = NSColor.windowFrameTextColor(); break;
 		case SWT.COLOR_TITLE_BACKGROUND: color = NSColor.alternateSelectedControlColor(); break;
 		case SWT.COLOR_TITLE_BACKGROUND_GRADIENT: color = NSColor.selectedControlColor(); break;
@@ -1884,20 +1880,20 @@ double /*float*/ [] getWidgetColorRGB (int id) {
 		case SWT.COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT: color = NSColor.secondarySelectedControlColor(); break;
 		case SWT.COLOR_WIDGET_DARK_SHADOW: color = NSColor.controlDarkShadowColor(); break;
 		case SWT.COLOR_WIDGET_NORMAL_SHADOW:
-			if (OS.VERSION_MMB >= OS.VERSION_MMB (10, 14, 0)) {
-				return new double /*float*/ [] {159/255f, 159/255f, 159/255f, 1};
+			if (OS.VERSION >= OS.VERSION (10, 14, 0)) {
+				return new double [] {159/255f, 159/255f, 159/255f, 1};
 			}
 			color = NSColor.controlShadowColor();
 			break;
 		case SWT.COLOR_WIDGET_LIGHT_SHADOW:
-			if (OS.VERSION_MMB >= OS.VERSION_MMB (10, 14, 0)) {
-				return new double /*float*/ [] {232/255f, 232/255f, 232/255f, 1};
+			if (OS.VERSION >= OS.VERSION (10, 14, 0)) {
+				return new double [] {232/255f, 232/255f, 232/255f, 1};
 			}
 			color = NSColor.controlHighlightColor();
 			break;
 		case SWT.COLOR_WIDGET_HIGHLIGHT_SHADOW: color = NSColor.controlLightHighlightColor(); break;
 		case SWT.COLOR_WIDGET_BACKGROUND:
-			color = OS.VERSION_MMB >= OS.VERSION_MMB (10, 14, 0) ? NSColor.windowBackgroundColor()
+			color = OS.VERSION >= OS.VERSION (10, 14, 0) ? NSColor.windowBackgroundColor()
 					: NSColor.controlHighlightColor();
 			break;
 		case SWT.COLOR_WIDGET_FOREGROUND: color = NSColor.controlTextColor(); break;
@@ -1918,16 +1914,16 @@ double /*float*/ [] getWidgetColorRGB (int id) {
 	return getNSColorRGB (color);
 }
 
-double /*float*/ [] getNSColorRGB (NSColor color) {
+double [] getNSColorRGB (NSColor color) {
 	if (color == null) return null;
 	NSColorSpace colorSpace = color.colorSpace();
 	if (colorSpace == null || colorSpace.colorSpaceModel() != OS.NSRGBColorSpaceModel) {
 		color = color.colorUsingColorSpaceName(OS.NSDeviceRGBColorSpace);
 	}
 	if (color == null) return null;
-	double /*float*/[] components = new double /*float*/[(int)/*64*/color.numberOfComponents()];
+	double[] components = new double[(int)color.numberOfComponents()];
 	color.getComponents(components);
-	return new double /*float*/ []{components[0], components[1], components[2], components[3]};
+	return new double []{components[0], components[1], components[2], components[3]};
 }
 
 /**
@@ -1982,7 +1978,7 @@ public Cursor getSystemCursor (int id) {
 }
 
 NSImage getSystemImageForID(int osType) {
-	long /*int*/ iconRef[] = new long /*int*/ [1];
+	long iconRef[] = new long [1];
 	OS.GetIconRefFromTypeInfo(OS.kSystemIconsCreator, osType, 0, 0, 0, iconRef);
 	NSImage nsImage = (NSImage)new NSImage().alloc();
 	nsImage = nsImage.initWithIconRef(iconRef[0]);
@@ -2088,7 +2084,7 @@ public Menu getSystemMenu () {
 		appMenu = new Menu(this, nsAppMenu);
 
 		// Create menu items that correspond to the NSMenuItems.
-		long /*int*/ nsCount = nsAppMenu.numberOfItems();
+		long nsCount = nsAppMenu.numberOfItems();
 		for (int j = 0; j < nsCount; j++) {
 			NSMenuItem currMenuItem = nsAppMenu.itemAtIndex(j);
 			new MenuItem(appMenu, currMenuItem);
@@ -2165,8 +2161,7 @@ public Thread getThread () {
  */
 public boolean getTouchEnabled() {
 	checkDevice();
-	// Gestures are available on OS X 10.5.3 and later. Touch events are only available on 10.6 and later.
-	return (OS.VERSION > 0x1053);
+	return true;
 }
 
 int getToolTipTime () {
@@ -2175,14 +2170,14 @@ int getToolTipTime () {
 	return 560;
 }
 
-Widget getWidget (long /*int*/ id) {
+Widget getWidget (long id) {
 	return GetWidget (id);
 }
 
-static Widget GetWidget (long /*int*/ id) {
+static Widget GetWidget (long id) {
 	if (id == 0) return null;
-	long /*int*/ [] jniRef = new long /*int*/ [1];
-	long /*int*/ iVar = OS.object_getInstanceVariable(id, SWT_OBJECT, jniRef);
+	long [] jniRef = new long [1];
+	long iVar = OS.object_getInstanceVariable(id, SWT_OBJECT, jniRef);
 	if (iVar == 0) {
 		if (dynamicObjectMap != null) {
 			NSObject key = new NSObject(id);
@@ -2202,7 +2197,7 @@ Widget getWidget (NSView view) {
 
 boolean hasDefaultButton () {
 	NSArray windows = application.windows();
-	long /*int*/ count = windows.count();
+	long count = windows.count();
 	for (int i = 0; i < count; i++) {
 		NSWindow window  = new NSWindow(windows.objectAtIndex(i));
 		if (window.defaultButtonCell() != null) {
@@ -2224,6 +2219,13 @@ boolean hasDefaultButton () {
 @Override
 protected void init () {
 	super.init ();
+
+	if ("true".equalsIgnoreCase(System.getProperty(USE_SYSTEM_THEME))) {
+		if (OS.isSystemDarkAppearance()) {
+			setAppAppearance(APPEARANCE.Dark);
+		}
+	}
+
 	initClasses ();
 	initColors ();
 	initFonts ();
@@ -2238,7 +2240,7 @@ protected void init () {
 
 		if (currAppDelegate == null) {
 			if (OS.class_JRSAppKitAWT != 0) {
-				long /*int*/ currDelegatePtr = OS.objc_msgSend(OS.class_JRSAppKitAWT, OS.sel_awtAppDelegate);
+				long currDelegatePtr = OS.objc_msgSend(OS.class_JRSAppKitAWT, OS.sel_awtAppDelegate);
 				if (currDelegatePtr != 0) {
 					currAppDelegate = new NSObject(currDelegatePtr);
 					currAppDelegate.retain();
@@ -2283,7 +2285,7 @@ protected void init () {
 	if (prefsItem != null) prefsItem.setTag(SWT.ID_PREFERENCES);
 
 	observerCallback = new Callback (this, "observerProc", 3); //$NON-NLS-1$
-	long /*int*/ observerProc = observerCallback.getAddress ();
+	long observerProc = observerCallback.getAddress ();
 	if (observerProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	int activities = OS.kCFRunLoopBeforeWaiting;
 	runLoopObserver = OS.CFRunLoopObserverCreate (0, activities, true, 0, observerProc, 0);
@@ -2291,18 +2293,18 @@ protected void init () {
 	OS.CFRunLoopAddObserver (OS.CFRunLoopGetCurrent (), runLoopObserver, OS.kCFRunLoopCommonModes ());
 
 	// Add AWT Runloop mode for SWT/AWT.
-	long /*int*/ cls = OS.objc_lookUpClass("JNFRunLoop"); //$NON-NLS-1$
+	long cls = OS.objc_lookUpClass("JNFRunLoop"); //$NON-NLS-1$
 	if (cls != 0) {
-		long /*int*/ mode = OS.objc_msgSend(cls, OS.sel_javaRunLoopMode);
+		long mode = OS.objc_msgSend(cls, OS.sel_javaRunLoopMode);
 		if (mode != 0) {
 			OS.CFRunLoopAddObserver (OS.CFRunLoopGetCurrent (), runLoopObserver, mode);
 		}
 	}
 
 	cursorSetCallback = new Callback(this, "cursorSetProc", 2);
-	long /*int*/ cursorSetProc = cursorSetCallback.getAddress();
+	long cursorSetProc = cursorSetCallback.getAddress();
 	if (cursorSetProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
-	long /*int*/ method = OS.class_getInstanceMethod(OS.class_NSCursor, OS.sel_set);
+	long method = OS.class_getInstanceMethod(OS.class_NSCursor, OS.sel_set);
 	if (method != 0) oldCursorSetProc = OS.method_setImplementation(method, cursorSetProc);
 
 	timerDelegate = (SWTWindowDelegate)new SWTWindowDelegate().alloc().init();
@@ -2319,7 +2321,7 @@ protected void init () {
 	textView.release ();
 
 	NSUserDefaults defaults = NSUserDefaults.standardUserDefaults();
-	defaults.setInteger(0, NSString.stringWith(OS.VERSION >= 0x1080 ? "NSScrollAnimationEnabled" : "AppleScrollAnimationEnabled"));
+	defaults.setInteger(0, NSString.stringWith("NSScrollAnimationEnabled"));
 	id blink = defaults.objectForKey(NSString.stringWith("NSTextInsertionPointBlinkPeriod"));
 	if (blink != null) blinkTime = (int)new NSNumber(blink).integerValue();
 	if (blinkTime == 0) blinkTime = 560;
@@ -2332,7 +2334,7 @@ protected void init () {
 	isPainting = isPainting.initWithCapacity(12);
 }
 
-void addEventMethods (long /*int*/ cls, long /*int*/ proc2, long /*int*/ proc3, long /*int*/ drawRectProc, long /*int*/ hitTestProc, long /*int*/ needsDisplayInRectProc) {
+void addEventMethods (long cls, long proc2, long proc3, long drawRectProc, long hitTestProc, long needsDisplayInRectProc) {
 	if (proc3 != 0) {
 		OS.class_addMethod(cls, OS.sel_mouseDown_, proc3, "@:@");
 		OS.class_addMethod(cls, OS.sel_mouseUp_, proc3, "@:@");
@@ -2387,12 +2389,12 @@ void addEventMethods (long /*int*/ cls, long /*int*/ proc2, long /*int*/ proc3, 
 	}
 }
 
-void addFrameMethods(long /*int*/ cls, long /*int*/ setFrameOriginProc, long /*int*/ setFrameSizeProc) {
+void addFrameMethods(long cls, long setFrameOriginProc, long setFrameSizeProc) {
 	OS.class_addMethod(cls, OS.sel_setFrameOrigin_, setFrameOriginProc, "@:{NSPoint}");
 	OS.class_addMethod(cls, OS.sel_setFrameSize_, setFrameSizeProc, "@:{NSSize}");
 }
 
-void addAccessibilityMethods(long /*int*/ cls, long /*int*/ proc2, long /*int*/ proc3, long /*int*/ proc4, long /*int*/ accessibilityHitTestProc) {
+void addAccessibilityMethods(long cls, long proc2, long proc3, long proc4, long accessibilityHitTestProc) {
 	OS.class_addMethod(cls, OS.sel_accessibilityActionNames, proc2, "@:");
 	OS.class_addMethod(cls, OS.sel_accessibilityAttributeNames, proc2, "@:");
 	OS.class_addMethod(cls, OS.sel_accessibilityParameterizedAttributeNames, proc2, "@:");
@@ -2408,24 +2410,24 @@ void addAccessibilityMethods(long /*int*/ cls, long /*int*/ proc2, long /*int*/ 
 	OS.class_addMethod(cls, OS.sel_accessibleHandle, proc2, "@:");
 }
 
-long /*int*/ registerCellSubclass(long /*int*/ cellClass, int size, int align, byte[] types) {
+long registerCellSubclass(long cellClass, int size, int align, byte[] types) {
 	String cellClassName = OS.class_getName(cellClass);
-	long /*int*/ cls = OS.objc_allocateClassPair(cellClass, "SWTAccessible" + cellClassName, 0);
+	long cls = OS.objc_allocateClassPair(cellClass, "SWTAccessible" + cellClassName, 0);
 	OS.class_addIvar(cls, SWT_OBJECT, size, (byte)align, types);
 	OS.objc_registerClassPair(cls);
 	return cls;
 }
 
-long /*int*/ createWindowSubclass(long /*int*/ baseClass, String newClass, boolean isDynamic) {
-	long /*int*/ cls = OS.objc_lookUpClass(newClass);
+long createWindowSubclass(long baseClass, String newClass, boolean isDynamic) {
+	long cls = OS.objc_lookUpClass(newClass);
 	if (cls != 0) return cls;
 	cls = OS.objc_allocateClassPair(baseClass, newClass, 0);
-	long /*int*/ proc3 = windowCallback3.getAddress();
-	long /*int*/ proc2 = windowCallback2.getAddress();
-	long /*int*/ proc4 = windowCallback4.getAddress();
-	long /*int*/ proc6 = windowCallback6.getAddress();
-	long /*int*/ view_stringForToolTip_point_userDataProc = OS.CALLBACK_view_stringForToolTip_point_userData_(proc6);
-	long /*int*/ accessibilityHitTestProc = OS.CALLBACK_accessibilityHitTest_(proc3);
+	long proc3 = windowCallback3.getAddress();
+	long proc2 = windowCallback2.getAddress();
+	long proc4 = windowCallback4.getAddress();
+	long proc6 = windowCallback6.getAddress();
+	long view_stringForToolTip_point_userDataProc = OS.CALLBACK_view_stringForToolTip_point_userData_(proc6);
+	long accessibilityHitTestProc = OS.CALLBACK_accessibilityHitTest_(proc3);
 
 	if (!isDynamic) OS.class_addIvar(cls, SWT_OBJECT, size, (byte)align, types);
 	OS.class_addMethod(cls, OS.sel_sendEvent_, proc3, "@:@");
@@ -2440,12 +2442,12 @@ long /*int*/ createWindowSubclass(long /*int*/ baseClass, String newClass, boole
 	return cls;
 }
 
-long /*int*/ createMenuSubclass(long /*int*/ baseClass, String newClass, boolean isDynamic) {
-	long /*int*/ cls = OS.objc_lookUpClass(newClass);
+long createMenuSubclass(long baseClass, String newClass, boolean isDynamic) {
+	long cls = OS.objc_lookUpClass(newClass);
 	if (cls != 0) return cls;
 	cls = OS.objc_allocateClassPair(baseClass, newClass, 0);
-	long /*int*/ proc3 = windowCallback3.getAddress();
-	long /*int*/ proc4 = windowCallback4.getAddress();
+	long proc3 = windowCallback3.getAddress();
+	long proc4 = windowCallback4.getAddress();
 	OS.class_addIvar(cls, SWT_OBJECT, size, (byte)align, types);
 	OS.class_addMethod(cls, OS.sel_menuWillOpen_, proc3, "@:@");
 	OS.class_addMethod(cls, OS.sel_menuDidClose_, proc3, "@:@");
@@ -2455,11 +2457,11 @@ long /*int*/ createMenuSubclass(long /*int*/ baseClass, String newClass, boolean
 	return cls;
 }
 
-long /*int*/ createMenuItemSubclass(long /*int*/ baseClass, String newClass, boolean isDynamic) {
-	long /*int*/ cls = OS.objc_lookUpClass(newClass);
+long createMenuItemSubclass(long baseClass, String newClass, boolean isDynamic) {
+	long cls = OS.objc_lookUpClass(newClass);
 	if (cls != 0) return cls;
 	cls = OS.objc_allocateClassPair(baseClass, newClass, 0);
-	long /*int*/ proc2 = windowCallback2.getAddress();
+	long proc2 = windowCallback2.getAddress();
 	if (!isDynamic) OS.class_addIvar(cls, SWT_OBJECT, size, (byte)align, types);
 	OS.class_addMethod(cls, OS.sel_sendSelection, proc2, "@:");
 	OS.objc_registerClassPair(cls);
@@ -2471,71 +2473,71 @@ void initClasses () {
 
 	Class clazz = getClass ();
 	dialogCallback3 = new Callback(clazz, "dialogProc", 3);
-	long /*int*/ dialogProc3 = dialogCallback3.getAddress();
+	long dialogProc3 = dialogCallback3.getAddress();
 	if (dialogProc3 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	dialogCallback4 = new Callback(clazz, "dialogProc", 4);
-	long /*int*/ dialogProc4 = dialogCallback4.getAddress();
+	long dialogProc4 = dialogCallback4.getAddress();
 	if (dialogProc4 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	dialogCallback5 = new Callback(clazz, "dialogProc", 5);
-	long /*int*/ dialogProc5 = dialogCallback5.getAddress();
+	long dialogProc5 = dialogCallback5.getAddress();
 	if (dialogProc5 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	windowCallback3 = new Callback(clazz, "windowProc", 3);
-	long /*int*/ proc3 = windowCallback3.getAddress();
+	long proc3 = windowCallback3.getAddress();
 	if (proc3 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	windowCallback2 = new Callback(clazz, "windowProc", 2);
-	long /*int*/ proc2 = windowCallback2.getAddress();
+	long proc2 = windowCallback2.getAddress();
 	if (proc2 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	windowCallback4 = new Callback(clazz, "windowProc", 4);
-	long /*int*/ proc4 = windowCallback4.getAddress();
+	long proc4 = windowCallback4.getAddress();
 	if (proc4 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	windowCallback5 = new Callback(clazz, "windowProc", 5);
-	long /*int*/ proc5 = windowCallback5.getAddress();
+	long proc5 = windowCallback5.getAddress();
 	if (proc5 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	windowCallback6 = new Callback(clazz, "windowProc", 6);
-	long /*int*/ proc6 = windowCallback6.getAddress();
+	long proc6 = windowCallback6.getAddress();
 	if (proc6 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
-	long /*int*/ isFlippedProc = OS.isFlipped_CALLBACK();
-	long /*int*/ drawRectProc = OS.CALLBACK_drawRect_(proc3);
-	long /*int*/ drawInteriorWithFrameInViewProc = OS.CALLBACK_drawInteriorWithFrame_inView_ (proc4);
-	long /*int*/ drawBezelWithFrameInViewProc = OS.CALLBACK_drawBezelWithFrame_inView_ (proc4);
-	long /*int*/ drawWithExpansionFrameProc = OS.CALLBACK_drawWithExpansionFrame_inView_ (proc4);
-	long /*int*/ imageRectForBoundsProc = OS.CALLBACK_imageRectForBounds_ (proc3);
-	long /*int*/ titleRectForBoundsProc = OS.CALLBACK_titleRectForBounds_ (proc3);
-	long /*int*/ cellSizeForBoundsProc = OS.CALLBACK_cellSizeForBounds_ (proc3);
-	long /*int*/ hitTestForEvent_inRect_ofViewProc = OS.CALLBACK_hitTestForEvent_inRect_ofView_ (proc5);
-	long /*int*/ cellSizeProc = OS.CALLBACK_cellSize (proc2);
-	long /*int*/ drawImageWithFrameInViewProc = OS.CALLBACK_drawImage_withFrame_inView_ (proc5);
-	long /*int*/ drawTitleWithFrameInViewProc = OS.CALLBACK_drawTitle_withFrame_inView_ (proc5);
-	long /*int*/ setFrameOriginProc = OS.CALLBACK_setFrameOrigin_(proc3);
-	long /*int*/ setFrameSizeProc = OS.CALLBACK_setFrameSize_(proc3);
-	long /*int*/ hitTestProc = OS.CALLBACK_hitTest_(proc3);
-	long /*int*/ markedRangeProc = OS.CALLBACK_markedRange (proc2);
-	long /*int*/ selectedRangeProc = OS.CALLBACK_selectedRange (proc2);
-	long /*int*/ highlightSelectionInClipRectProc = OS.CALLBACK_highlightSelectionInClipRect_ (proc3);
-	long /*int*/ setMarkedText_selectedRangeProc = OS.CALLBACK_setMarkedText_selectedRange_(proc4);
-	long /*int*/ attributedSubstringFromRangeProc = OS.CALLBACK_attributedSubstringFromRange_(proc3);
-	long /*int*/ characterIndexForPointProc = OS.CALLBACK_characterIndexForPoint_(proc3);
-	long /*int*/ firstRectForCharacterRangeProc = OS.CALLBACK_firstRectForCharacterRange_(proc3);
-	long /*int*/ textWillChangeSelectionProc = OS.CALLBACK_textView_willChangeSelectionFromCharacterRange_toCharacterRange_(proc5);
-	long /*int*/ accessibilityHitTestProc = OS.CALLBACK_accessibilityHitTest_(proc3);
-	long /*int*/ shouldChangeTextInRange_replacementString_Proc = OS.CALLBACK_shouldChangeTextInRange_replacementString_(proc4);
-	long /*int*/ view_stringForToolTip_point_userDataProc = OS.CALLBACK_view_stringForToolTip_point_userData_(proc6);
-	long /*int*/ canDragRowsWithIndexes_atPoint_Proc = OS.CALLBACK_canDragRowsWithIndexes_atPoint_(proc4);
-	long /*int*/ setNeedsDisplayInRectProc = OS.CALLBACK_setNeedsDisplayInRect_(proc3);
-	long /*int*/ expansionFrameWithFrameProc = OS.CALLBACK_expansionFrameWithFrame_inView_ (proc4);
-	long /*int*/ focusRingMaskBoundsForFrameProc = OS.CALLBACK_focusRingMaskBoundsForFrame_inView_ (proc4);
-	long /*int*/ cacheDisplayInRect_toBitmapImageRepProc = OS.CALLBACK_cacheDisplayInRect_toBitmapImageRep_ (proc4);
-	long /*int*/ sizeOfLabelProc = OS.CALLBACK_sizeOfLabel_ (proc3);
-	long /*int*/ drawLabelInRectProc = OS.CALLBACK_drawLabel_inRect_ (proc4);
-	long /*int*/ drawViewBackgroundInRectProc = OS.CALLBACK_drawViewBackgroundInRect_(proc3);
-	long /*int*/ drawBackgroundInClipRectProc = OS.CALLBACK_drawBackgroundInClipRect_(proc3);
-	long /*int*/ scrollClipView_ToPointProc = OS.CALLBACK_scrollClipView_toPoint_(proc4);
-	long /*int*/ headerRectOfColumnProc = OS.CALLBACK_headerRectOfColumn_(proc3);
-	long /*int*/ columnAtPointProc = OS.CALLBACK_columnAtPoint_(proc3);
+	long isFlippedProc = OS.isFlipped_CALLBACK();
+	long drawRectProc = OS.CALLBACK_drawRect_(proc3);
+	long drawInteriorWithFrameInViewProc = OS.CALLBACK_drawInteriorWithFrame_inView_ (proc4);
+	long drawBezelWithFrameInViewProc = OS.CALLBACK_drawBezelWithFrame_inView_ (proc4);
+	long drawWithExpansionFrameProc = OS.CALLBACK_drawWithExpansionFrame_inView_ (proc4);
+	long imageRectForBoundsProc = OS.CALLBACK_imageRectForBounds_ (proc3);
+	long titleRectForBoundsProc = OS.CALLBACK_titleRectForBounds_ (proc3);
+	long cellSizeForBoundsProc = OS.CALLBACK_cellSizeForBounds_ (proc3);
+	long hitTestForEvent_inRect_ofViewProc = OS.CALLBACK_hitTestForEvent_inRect_ofView_ (proc5);
+	long cellSizeProc = OS.CALLBACK_cellSize (proc2);
+	long drawImageWithFrameInViewProc = OS.CALLBACK_drawImage_withFrame_inView_ (proc5);
+	long drawTitleWithFrameInViewProc = OS.CALLBACK_drawTitle_withFrame_inView_ (proc5);
+	long setFrameOriginProc = OS.CALLBACK_setFrameOrigin_(proc3);
+	long setFrameSizeProc = OS.CALLBACK_setFrameSize_(proc3);
+	long hitTestProc = OS.CALLBACK_hitTest_(proc3);
+	long markedRangeProc = OS.CALLBACK_markedRange (proc2);
+	long selectedRangeProc = OS.CALLBACK_selectedRange (proc2);
+	long highlightSelectionInClipRectProc = OS.CALLBACK_highlightSelectionInClipRect_ (proc3);
+	long setMarkedText_selectedRangeProc = OS.CALLBACK_setMarkedText_selectedRange_(proc4);
+	long attributedSubstringFromRangeProc = OS.CALLBACK_attributedSubstringFromRange_(proc3);
+	long characterIndexForPointProc = OS.CALLBACK_characterIndexForPoint_(proc3);
+	long firstRectForCharacterRangeProc = OS.CALLBACK_firstRectForCharacterRange_(proc3);
+	long textWillChangeSelectionProc = OS.CALLBACK_textView_willChangeSelectionFromCharacterRange_toCharacterRange_(proc5);
+	long accessibilityHitTestProc = OS.CALLBACK_accessibilityHitTest_(proc3);
+	long shouldChangeTextInRange_replacementString_Proc = OS.CALLBACK_shouldChangeTextInRange_replacementString_(proc4);
+	long view_stringForToolTip_point_userDataProc = OS.CALLBACK_view_stringForToolTip_point_userData_(proc6);
+	long canDragRowsWithIndexes_atPoint_Proc = OS.CALLBACK_canDragRowsWithIndexes_atPoint_(proc4);
+	long setNeedsDisplayInRectProc = OS.CALLBACK_setNeedsDisplayInRect_(proc3);
+	long expansionFrameWithFrameProc = OS.CALLBACK_expansionFrameWithFrame_inView_ (proc4);
+	long focusRingMaskBoundsForFrameProc = OS.CALLBACK_focusRingMaskBoundsForFrame_inView_ (proc4);
+	long cacheDisplayInRect_toBitmapImageRepProc = OS.CALLBACK_cacheDisplayInRect_toBitmapImageRep_ (proc4);
+	long sizeOfLabelProc = OS.CALLBACK_sizeOfLabel_ (proc3);
+	long drawLabelInRectProc = OS.CALLBACK_drawLabel_inRect_ (proc4);
+	long drawViewBackgroundInRectProc = OS.CALLBACK_drawViewBackgroundInRect_(proc3);
+	long drawBackgroundInClipRectProc = OS.CALLBACK_drawBackgroundInClipRect_(proc3);
+	long scrollClipView_ToPointProc = OS.CALLBACK_scrollClipView_toPoint_(proc4);
+	long headerRectOfColumnProc = OS.CALLBACK_headerRectOfColumn_(proc3);
+	long columnAtPointProc = OS.CALLBACK_columnAtPoint_(proc3);
 
 	String className;
-	long /*int*/ cls;
+	long cls;
 
 	className = "SWTBox";
 	cls = OS.objc_allocateClassPair(OS.class_NSBox, className, 0);
@@ -2569,9 +2571,7 @@ void initClasses () {
 	OS.class_addMethod(cls, OS.sel_drawBezelWithFrame_inView_, drawBezelWithFrameInViewProc, "@:{NSRect}@");
 	OS.class_addMethod(cls, OS.sel_titleRectForBounds_, titleRectForBoundsProc, "@:{NSRect}");
 	OS.class_addMethod(cls, OS.sel_cellSizeForBounds_, cellSizeForBoundsProc, "@:{NSRect}");
-	if (OS.VERSION_MMB >= OS.VERSION_MMB(10, 10, 0)) {
-		OS.class_addMethod(cls, OS.sel_focusRingMaskBoundsForFrame_inView_, focusRingMaskBoundsForFrameProc, "@:{NSRect}@");
-	}
+	OS.class_addMethod(cls, OS.sel_focusRingMaskBoundsForFrame_inView_, focusRingMaskBoundsForFrameProc, "@:{NSRect}@");
 	OS.objc_registerClassPair (cls);
 
 	className = "SWTCanvasView";
@@ -2745,9 +2745,7 @@ void initClasses () {
 	// NSPopUpButtonCell
 	cls = registerCellSubclass(NSPopUpButton.cellClass(), size, align, types);
 	addAccessibilityMethods(cls, proc2, proc3, proc4, accessibilityHitTestProc);
-	if (OS.VERSION_MMB >= OS.VERSION_MMB(10, 10, 0)) {
-		OS.class_addMethod(cls, OS.sel_focusRingMaskBoundsForFrame_inView_, focusRingMaskBoundsForFrameProc, "@:{NSRect}@");
-	}
+	OS.class_addMethod(cls, OS.sel_focusRingMaskBoundsForFrame_inView_, focusRingMaskBoundsForFrameProc, "@:{NSRect}@");
 
 	className = "SWTProgressIndicator";
 	cls = OS.objc_allocateClassPair(OS.class_NSProgressIndicator, className, 0);
@@ -2767,11 +2765,9 @@ void initClasses () {
 	addFrameMethods(cls, setFrameOriginProc, setFrameSizeProc);
 	addAccessibilityMethods(cls, proc2, proc3, proc4, accessibilityHitTestProc);
 	OS.objc_registerClassPair(cls);
-	if (OS.VERSION >= 0x1070) {
-		/* Note that isFlippedProc is used for performance and convenience */
-		long /*int*/ metaClass = OS.objc_getMetaClass(className);
-		OS.class_addMethod(metaClass, OS.sel_isCompatibleWithOverlayScrollers, isFlippedProc, "@:");
-	}
+	/* Note that isFlippedProc is used for performance and convenience */
+	long metaClass = OS.objc_getMetaClass(className);
+	OS.class_addMethod(metaClass, OS.sel_isCompatibleWithOverlayScrollers, isFlippedProc, "@:");
 
 	className = "SWTScrollView";
 	cls = OS.objc_allocateClassPair(OS.class_NSScrollView, className, 0);
@@ -2827,7 +2823,7 @@ void initClasses () {
 	OS.class_addMethod(cls, OS.sel_textView_willChangeSelectionFromCharacterRange_toCharacterRange_, textWillChangeSelectionProc, "@:@{NSRange}{NSRange}");
 	OS.objc_registerClassPair(cls);
 
-	long /*int*/ nsSecureTextViewClass = OS.objc_lookUpClass("NSSecureTextView");
+	long nsSecureTextViewClass = OS.objc_lookUpClass("NSSecureTextView");
 	if (nsSecureTextViewClass != 0) {
 		className = "SWTSecureEditorView";
 		cls = OS.objc_allocateClassPair(nsSecureTextViewClass, className, 0);
@@ -3036,9 +3032,9 @@ void initClasses () {
 	OS.objc_registerClassPair(cls);
 }
 
-NSFont getFont (long /*int*/ cls, long /*int*/ sel) {
-	long /*int*/ widget = OS.objc_msgSend (OS.objc_msgSend (cls, OS.sel_alloc), OS.sel_initWithFrame_, new NSRect());
-	long /*int*/ font = 0;
+NSFont getFont (long cls, long sel) {
+	long widget = OS.objc_msgSend (OS.objc_msgSend (cls, OS.sel_alloc), OS.sel_initWithFrame_, new NSRect());
+	long font = 0;
 	if (OS.objc_msgSend_bool (widget, OS.sel_respondsToSelector_, sel)) {
 		font = OS.objc_msgSend (widget, sel);
 	}
@@ -3058,9 +3054,9 @@ void initColors (boolean ignoreColorChange) {
 		/*
 		 * Code to ignore changes to System textColor, textBackgroundColor and controlTextColor
 		 */
-		double /*float*/ [] color_list_foreground = colors[SWT.COLOR_LIST_FOREGROUND];
-		double /*float*/ [] color_list_background = colors[SWT.COLOR_LIST_BACKGROUND];
-		double /*float*/ [] color_widget_foreground = colors[SWT.COLOR_WIDGET_FOREGROUND];
+		double [] color_list_foreground = colors[SWT.COLOR_LIST_FOREGROUND];
+		double [] color_list_background = colors[SWT.COLOR_LIST_BACKGROUND];
+		double [] color_widget_foreground = colors[SWT.COLOR_WIDGET_FOREGROUND];
 		initColors ();
 		colors[SWT.COLOR_LIST_FOREGROUND] = color_list_foreground;
 		colors[SWT.COLOR_LIST_BACKGROUND] = color_list_background;
@@ -3071,7 +3067,7 @@ void initColors (boolean ignoreColorChange) {
 }
 
 void initColors () {
-	colors = new double /*float*/ [SWT.COLOR_LINK_FOREGROUND + 1][];
+	colors = new double [SWT.COLOR_LINK_FOREGROUND + 1][];
 	colors[SWT.COLOR_INFO_FOREGROUND] = getWidgetColorRGB(SWT.COLOR_INFO_FOREGROUND);
 	colors[SWT.COLOR_INFO_BACKGROUND] = getWidgetColorRGB(SWT.COLOR_INFO_BACKGROUND);
 	colors[SWT.COLOR_TITLE_FOREGROUND] = getWidgetColorRGB(SWT.COLOR_TITLE_FOREGROUND);
@@ -3141,7 +3137,7 @@ void initFonts () {
  * @noreference This method is not intended to be referenced by clients.
  */
 @Override
-public long /*int*/ internal_new_GC (GCData data) {
+public long internal_new_GC (GCData data) {
 	if (isDisposed()) error(SWT.ERROR_DEVICE_DISPOSED);
 	if (screenWindow == null) {
 		NSWindow window = (NSWindow) new NSWindow ().alloc ();
@@ -3151,6 +3147,18 @@ public long /*int*/ internal_new_GC (GCData data) {
 		screenWindow = window;
 	}
 	NSGraphicsContext context = screenWindow.graphicsContext();
+	if (context == null) {
+		// create a bitmap based context, which will still work e.g. for text size computations
+		// it is unclear if the bitmap needs to be larger than the text to be measured.
+		// the following values should be big enough in any case.
+		int width = 1920;
+		int height = 256;
+		NSBitmapImageRep rep = (NSBitmapImageRep) new NSBitmapImageRep().alloc();
+		rep = rep.initWithBitmapDataPlanes(0, width, height, 8, 3, false, false, OS.NSDeviceRGBColorSpace,
+				OS.NSAlphaFirstBitmapFormat | OS.NSAlphaNonpremultipliedBitmapFormat, width * 4, 32);
+		context = NSGraphicsContext.graphicsContextWithBitmapImageRep(rep);
+		rep.release();
+	}
 //	NSAffineTransform transform = NSAffineTransform.transform();
 //	NSSize size = handle.size();
 //	transform.translateXBy(0, size.height);
@@ -3185,7 +3193,7 @@ public long /*int*/ internal_new_GC (GCData data) {
  * @noreference This method is not intended to be referenced by clients.
  */
 @Override
-public void internal_dispose_GC (long /*int*/ hDC, GCData data) {
+public void internal_dispose_GC (long hDC, GCData data) {
 	if (isDisposed()) error(SWT.ERROR_DEVICE_DISPOSED);
 }
 
@@ -3277,8 +3285,8 @@ public boolean post(Event event) {
 	synchronized (Device.class) {
 		if (isDisposed ()) error (SWT.ERROR_DEVICE_DISPOSED);
 		if (event == null) error (SWT.ERROR_NULL_ARGUMENT);
-		long /*int*/ eventRef = 0;
-		long /*int*/ eventSource = OS.CGEventSourceCreate(OS.kCGEventSourceStateHIDSystemState);
+		long eventRef = 0;
+		long eventSource = OS.CGEventSourceCreate(OS.kCGEventSourceStateHIDSystemState);
 		if (eventSource == 0) return false;
 		boolean returnValue = false;
 		int deadKeyState[] = new int[1];
@@ -3288,9 +3296,9 @@ public boolean post(Event event) {
 			case SWT.KeyUp: {
 				short vKey = (short)Display.untranslateKey (event.keyCode);
 				if (vKey == 0) {
-					long /*int*/ uchrPtr = 0;
-					long /*int*/ currentKbd = OS.TISCopyCurrentKeyboardInputSource();
-					long /*int*/ uchrCFData = OS.TISGetInputSourceProperty(currentKbd, OS.kTISPropertyUnicodeKeyLayoutData());
+					long uchrPtr = 0;
+					long currentKbd = OS.TISCopyCurrentKeyboardInputSource();
+					long uchrCFData = OS.TISGetInputSourceProperty(currentKbd, OS.kTISPropertyUnicodeKeyLayoutData());
 
 					if (uchrCFData == 0) return false;
 					uchrPtr = OS.CFDataGetBytePtr(uchrCFData);
@@ -3330,11 +3338,7 @@ public boolean post(Event event) {
 				}
 
 				if (vKey != -1) {
-					if (OS.VERSION < 0x1060) {
-						returnValue = OS.CGPostKeyboardEvent((short)0, vKey, type == SWT.KeyDown) == OS.noErr;
-					} else {
-						eventRef = OS.CGEventCreateKeyboardEvent(eventSource, vKey, type == SWT.KeyDown);
-					}
+					eventRef = OS.CGEventCreateKeyboardEvent(eventSource, vKey, type == SWT.KeyDown);
 				}
 				break;
 			}
@@ -3387,17 +3391,14 @@ public boolean post(Event event) {
 			}
 		}
 
-		// returnValue is true if we called CGPostKeyboardEvent (10.5 only).
-		if (returnValue == false) {
-			if (eventRef != 0) {
-				OS.CGEventPost(OS.kCGHIDEventTap, eventRef);
-				OS.CFRelease(eventRef);
-				try {
-					Thread.sleep(1);
-				} catch (Exception e) {
-				}
-				returnValue = true;
+		if (eventRef != 0) {
+			OS.CGEventPost(OS.kCGHIDEventTap, eventRef);
+			OS.CFRelease(eventRef);
+			try {
+				Thread.sleep(1);
+			} catch (Exception e) {
 			}
+			returnValue = true;
 		}
 
 		if (eventSource != 0) OS.CFRelease(eventSource);
@@ -3675,8 +3676,8 @@ public Rectangle map (Control from, Control to, int x, int y, int width, int hei
 	return rectangle;
 }
 
-long /*int*/ observerProc (long /*int*/ observer, long /*int*/ activity, long /*int*/ info) {
-	switch ((int)/*64*/activity) {
+long observerProc (long observer, long activity, long info) {
+	switch ((int)activity) {
 		case OS.kCFRunLoopBeforeWaiting:
 			if (runAsyncMessages) {
 				if (runAsyncMessages (false)) wakeThread ();
@@ -3690,8 +3691,8 @@ boolean performKeyEquivalent(NSWindow window, NSEvent nsEvent) {
 	if (modalDialog == null) return false;
 	if (nsEvent.type() != OS.NSKeyDown) return false;
 	int stateMask = 0;
-	long /*int*/ selector = 0;
-	long /*int*/ modifierFlags = nsEvent.modifierFlags();
+	long selector = 0;
+	long modifierFlags = nsEvent.modifierFlags();
 	if ((modifierFlags & OS.NSAlternateKeyMask) != 0) stateMask |= SWT.ALT;
 	if ((modifierFlags & OS.NSShiftKeyMask) != 0) stateMask |= SWT.SHIFT;
 	if ((modifierFlags & OS.NSControlKeyMask) != 0) stateMask |= SWT.CONTROL;
@@ -3929,7 +3930,7 @@ void releaseDisplay () {
 	markedAttributes = null;
 
 	if (oldCursorSetProc != 0) {
-		long /*int*/ method = OS.class_getInstanceMethod(OS.class_NSCursor, OS.sel_set);
+		long method = OS.class_getInstanceMethod(OS.class_NSCursor, OS.sel_set);
 		OS.method_setImplementation(method, oldCursorSetProc);
 	}
 	if (cursorSetCallback != null) cursorSetCallback.dispose();
@@ -3945,7 +3946,7 @@ void releaseDisplay () {
 	if (!isEmbedded) {
 		//remove all existing menu items except the application menu
 		NSMenu menubar = application.mainMenu();
-		long /*int*/ count = menubar.numberOfItems();
+		long count = menubar.numberOfItems();
 		while (count > 1) {
 			menubar.removeItemAtIndex(count - 1);
 			count--;
@@ -4051,8 +4052,8 @@ public void removeListener (int eventType, Listener listener) {
 
 Widget removeWidget (NSObject view) {
 	if (view == null) return null;
-	long /*int*/ [] jniRef = new long /*int*/ [1];
-	long /*int*/ iVar = OS.object_getInstanceVariable(view.id, SWT_OBJECT, jniRef);
+	long [] jniRef = new long [1];
+	long iVar = OS.object_getInstanceVariable(view.id, SWT_OBJECT, jniRef);
 
 	if (iVar == 0) {
 		if (dynamicObjectMap != null) {
@@ -4103,9 +4104,9 @@ boolean runAsyncMessages (boolean all) {
 }
 
 boolean runAWTInvokeLater() {
-	long /*int*/ cls = OS.objc_lookUpClass("JNFRunLoop");
+	long cls = OS.objc_lookUpClass("JNFRunLoop");
 	if (cls == 0) return false;
-	long /*int*/ mode = OS.objc_msgSend(cls, OS.sel_javaRunLoopMode);
+	long mode = OS.objc_msgSend(cls, OS.sel_javaRunLoopMode);
 	if (mode == 0) return false;
 	NSString javaRunLoopMode = new NSString(mode);
 	allowTimers = runAsyncMessages = false;
@@ -4195,7 +4196,7 @@ NSArray runLoopModes() {
 boolean runPaint () {
 	if (needsDisplay == null && needsDisplayInRect == null) return false;
 	if (needsDisplay != null) {
-		long /*int*/ count = needsDisplay.count();
+		long count = needsDisplay.count();
 		for (int i = 0; i < count; i++) {
 			OS.objc_msgSend(needsDisplay.objectAtIndex(i).id, OS.sel_setNeedsDisplay_, true);
 		}
@@ -4203,7 +4204,7 @@ boolean runPaint () {
 		needsDisplay = null;
 	}
 	if (needsDisplayInRect != null) {
-		long /*int*/ count = needsDisplayInRect.count();
+		long count = needsDisplayInRect.count();
 		for (int i = 0; i < count; i+=2) {
 			NSValue value = new NSValue(needsDisplayInRect.objectAtIndex(i+1));
 			OS.objc_msgSend(needsDisplayInRect.objectAtIndex(i).id, OS.sel_setNeedsDisplayInRect_, value.rectValue());
@@ -4236,13 +4237,13 @@ boolean runSettings () {
 	runSettings = false;
 
 	boolean ignoreColorChange = false;
-	/**
+	/*
 	 * Feature in Cocoa: When dark mode is enabled on OSX version >= 10.10 and a SWT TrayItem (NSStatusItem) is present in the menubar,
 	 * changing the OSX appearance or changing the configuration of attached displays causes the textColor and textBackground color to change.
 	 * This sets the text foreground of several widgets as white and hence text is invisible. The workaround is to detect this case and prevent
 	 * the update of LIST_FOREGROUND, LIST_BACKGROUND and COLOR_WIDGET_FOREGROUND colors.
 	 */
-	if (OS.VERSION_MMB >= OS.VERSION_MMB (10, 10, 0) && tray != null && tray.itemCount > 0) {
+	if (tray != null && tray.itemCount > 0) {
 		/*
 		 * osxMode will be "Dark" when in OSX dark mode. Otherwise, it'll be null.
 		 */
@@ -4271,7 +4272,7 @@ NSAppearance getAppearance (APPEARANCE newMode) {
 }
 
 void setAppAppearance (APPEARANCE newMode) {
-	if (OS.VERSION_MMB < OS.VERSION_MMB (10, 14, 0)) return;
+	if (OS.VERSION < OS.VERSION (10, 14, 0)) return;
 
 	NSAppearance appearance = getAppearance(newMode);
 	if (appearance != null && application != null) {
@@ -4287,7 +4288,7 @@ void setWindowAppearance (NSWindow window, NSAppearance appearance) {
 }
 
 void setWindowsAppearance (APPEARANCE newMode) {
-	if (OS.VERSION_MMB < OS.VERSION_MMB (10, 14, 0)) return;
+	if (OS.VERSION < OS.VERSION (10, 14, 0)) return;
 
 	NSAppearance appearance = getAppearance(newMode);
 	if (appearance != null) {
@@ -4420,7 +4421,7 @@ public void sendPostExternalEventDispatchEvent () {
 static NSString getApplicationName() {
 	NSString name = null;
 	int pid = OS.getpid ();
-	long /*int*/ ptr = C.getenv (ascii ("APP_NAME_" + pid));
+	long ptr = C.getenv (ascii ("APP_NAME_" + pid));
 	if (ptr != 0) name = NSString.stringWithUTF8String(ptr);
 	if (name == null && APP_NAME != null) name = NSString.stringWith(APP_NAME);
 	if (name == null) {
@@ -4661,7 +4662,7 @@ public void setData (String key, Object value) {
 
 	if (key.equals(RUN_AWT_INVOKE_LATER_KEY)) {
 		if (value != null) {
-			value = new Boolean (runAWTInvokeLater());
+			value = runAWTInvokeLater();
 		}
 	}
 
@@ -4729,7 +4730,7 @@ void setMenuBar (Menu menu) {
 	*/
 //	menubar.cancelTracking();
 	OS.CancelMenuTracking (OS.AcquireRootMenu (), true, 0);
-	long /*int*/ count = menubar.numberOfItems();
+	long count = menubar.numberOfItems();
 	while (count > 1) {
 		menubar.removeItemAtIndex(count - 1);
 		count--;
@@ -4746,11 +4747,9 @@ void setMenuBar (Menu menu) {
 			* menu for languages other than english.  The fix is to detect
 			* it ourselves.
 			*/
-			if (OS.VERSION >= 0x1060) {
-				NSMenu submenu = nsItem.submenu();
-				if (submenu != null && submenu.title().getString().equals(SWT.getMessage("SWT_Help"))) {
-					application.setHelpMenu(submenu);
-				}
+			NSMenu submenu = nsItem.submenu();
+			if (submenu != null && submenu.title().getString().equals(SWT.getMessage("SWT_Help"))) {
+				application.setHelpMenu(submenu);
 			}
 
 			nsItem.setMenu(null);
@@ -5054,7 +5053,7 @@ public void timerExec (int milliseconds, Runnable runnable) {
 	}
 }
 
-long /*int*/ timerProc (long /*int*/ id, long /*int*/ sel, long /*int*/ timerID) {
+long timerProc (long id, long sel, long timerID) {
 	NSTimer timer = new NSTimer (timerID);
 	try {
 		NSNumber number = new NSNumber(timer.userInfo());
@@ -5130,7 +5129,7 @@ void updateQuitMenu () {
 		NSMenu sm = appitem.submenu();
 
 		// Normally this would be sel_terminate_ but we changed it so terminate: doesn't kill the app.
-		long /*int*/ quitIndex = sm.indexOfItemWithTarget(applicationDelegate, OS.sel_applicationShouldTerminate_);
+		long quitIndex = sm.indexOfItemWithTarget(applicationDelegate, OS.sel_applicationShouldTerminate_);
 
 		if (quitIndex != -1) {
 			NSMenuItem quitItem = sm.itemAtIndex(quitIndex);
@@ -5172,18 +5171,7 @@ Control findControl (boolean checkTrim) {
 Control findControl (boolean checkTrim, NSView[] hitView) {
 	NSView view = null;
 	NSPoint screenLocation = NSEvent.mouseLocation();
-	long /*int*/ hitWindowNumber = 0;
-	if (OS.VERSION >= 0x1060) {
-		hitWindowNumber = NSWindow.windowNumberAtPoint(screenLocation, 0);
-	} else {
-		long /*int*/ outWindow[] = new long /*int*/ [1];
-		OS.FindWindow ((long /*int*/)screenLocation.x, (long /*int*/)(getPrimaryFrame().height - screenLocation.y), outWindow);
-
-		if (outWindow[0] != 0) {
-			hitWindowNumber = OS.HIWindowGetCGWindowID(outWindow[0]);
-		}
-	}
-
+	long hitWindowNumber = NSWindow.windowNumberAtPoint(screenLocation, 0);
 	NSWindow window = application.windowWithWindowNumber(hitWindowNumber);
 	if (window != null) {
 		NSView contentView = window.contentView();
@@ -5215,7 +5203,7 @@ Control findControl (boolean checkTrim, NSView[] hitView) {
 	return control;
 }
 
-void finishLaunching (long /*int*/ id, long /*int*/ sel) {
+void finishLaunching (long id, long sel) {
 	/*
 	* [NSApplication finishLaunching] cannot run multiple times otherwise
 	* multiple main menus are added.
@@ -5228,7 +5216,7 @@ void finishLaunching (long /*int*/ id, long /*int*/ sel) {
 	OS.objc_msgSendSuper(super_struct, sel);
 }
 
-void applicationDidBecomeActive (long /*int*/ id, long /*int*/ sel, long /*int*/ notification) {
+void applicationDidBecomeActive (long id, long sel, long notification) {
 	NSWindow keyWindow = application.keyWindow();
 	if (keyWindow != null) {
 		keyWindow.orderFrontRegardless();
@@ -5239,19 +5227,19 @@ void applicationDidBecomeActive (long /*int*/ id, long /*int*/ sel, long /*int*/
 	checkEnterExit(findControl(true), null, false);
 }
 
-void applicationDidResignActive (long /*int*/ id, long /*int*/ sel, long /*int*/ notification) {
+void applicationDidResignActive (long id, long sel, long notification) {
 	checkFocus();
 	checkEnterExit(null, null, false);
 }
 
-long /*int*/ applicationNextEventMatchingMask (long /*int*/ id, long /*int*/ sel, long /*int*/ mask, long /*int*/ expiration, long /*int*/ mode, long /*int*/ dequeue) {
+long applicationNextEventMatchingMask (long id, long sel, long mask, long expiration, long mode, long dequeue) {
 	if (dequeue != 0 && trackingControl != null && !trackingControl.isDisposed()) runDeferredEvents();
 	sendPreExternalEventDispatchEvent();
 	try {
 		objc_super super_struct = new objc_super();
 		super_struct.receiver = id;
 		super_struct.super_class = OS.objc_msgSend(id, OS.sel_superclass);
-		long /*int*/ result = OS.objc_msgSendSuper(super_struct, sel, mask, expiration, mode, dequeue != 0);
+		long result = OS.objc_msgSendSuper(super_struct, sel, mask, expiration, mode, dequeue != 0);
 		if (result != 0) {
 			/*
 			 * Feature of Cocoa.  When an NSComboBox's items list is visible it runs an event
@@ -5285,7 +5273,7 @@ long /*int*/ applicationNextEventMatchingMask (long /*int*/ id, long /*int*/ sel
 }
 
 void applicationSendTrackingEvent (NSEvent nsEvent, Control trackingControl) {
-	int type = (int)/*64*/nsEvent.type();
+	int type = (int)nsEvent.type();
 	boolean runEnterExit = false;
 	Control runEnterExitControl = null;
 	switch (type) {
@@ -5323,13 +5311,13 @@ void applicationSendTrackingEvent (NSEvent nsEvent, Control trackingControl) {
 	}
 }
 
-void applicationSendEvent (long /*int*/ id, long /*int*/ sel, long /*int*/ event) {
+void applicationSendEvent (long id, long sel, long event) {
 	NSEvent nsEvent = new NSEvent(event);
 	NSWindow window = nsEvent.window ();
 
 	if (performKeyEquivalent(window, nsEvent)) return;
 
-	int type = (int)/*64*/nsEvent.type ();
+	int type = (int)nsEvent.type ();
 	boolean activate = false, down = false;
 	switch (type) {
 		case OS.NSLeftMouseDown:
@@ -5398,7 +5386,7 @@ void applicationSendEvent (long /*int*/ id, long /*int*/ sel, long /*int*/ event
 	if (type != OS.NSAppKitDefined) sendEvent = false;
 }
 
-void applicationWillFinishLaunching (long /*int*/ id, long /*int*/ sel, long /*int*/ notification) {
+void applicationWillFinishLaunching (long id, long sel, long notification) {
 	boolean loaded = false;
 
 	/*
@@ -5411,7 +5399,7 @@ void applicationWillFinishLaunching (long /*int*/ id, long /*int*/ sel, long /*i
 	 * return a non-zero value indicating failure, which we ignore.
 	 */
 	if (isEmbedded) {
-		long /*int*/ outMenu [] = new long /*int*/ [1];
+		long outMenu [] = new long [1];
 		short outIndex[] = new short[1];
 		int status = OS.GetIndMenuItemWithCommandID(0, OS.kHICommandHide, 1, outMenu, outIndex);
 		if (status == 0) OS.DeleteMenuItem(outMenu[0], outIndex[0]);
@@ -5443,16 +5431,19 @@ void applicationWillFinishLaunching (long /*int*/ id, long /*int*/ sel, long /*i
 	 * 		/System/Library/..../Resources/English.lproj/DefaultApp.nib.
 	 * 		/System/Library/..../Resources/en.lproj/DefaultApp.nib.
 	 */
-	NSBundle bundle = NSBundle.bundleWithIdentifier(NSString.stringWith("com.apple.JavaVM"));
+	NSString path;
 	NSDictionary dict = NSDictionary.dictionaryWithObject(applicationDelegate, NSString.stringWith("NSOwner"));
-	NSString path = bundle.pathForResource(NSString.stringWith("DefaultApp"), NSString.stringWith("nib"), null, languageDisplayName);
-	if (path == null) path = bundle.pathForResource(NSString.stringWith("DefaultApp"), NSString.stringWith("nib"), null, NSString.stringWith(languageISOValue));
-	if (path == null) path = bundle.pathForResource(NSString.stringWith("DefaultApp"), NSString.stringWith("nib"));
-	if (!loaded) loaded = path != null && NSBundle.loadNibFile(path, dict, 0);
-	if (!loaded) {
-		path = bundle.pathForResource(NSString.stringWith("DefaultApp"), NSString.stringWith("nib"), null, NSString.stringWith("English"));
-		if (path == null) path = bundle.pathForResource(NSString.stringWith("DefaultApp"), NSString.stringWith("nib"), null, NSString.stringWith("en"));
-		loaded = path != null && NSBundle.loadNibFile(path, dict, 0);
+	NSBundle bundle = NSBundle.bundleWithIdentifier(NSString.stringWith("com.apple.JavaVM"));
+	if (bundle != null) {
+		path = bundle.pathForResource(NSString.stringWith("DefaultApp"), NSString.stringWith("nib"), null, languageDisplayName);
+		if (path == null) path = bundle.pathForResource(NSString.stringWith("DefaultApp"), NSString.stringWith("nib"), null, NSString.stringWith(languageISOValue));
+		if (path == null) path = bundle.pathForResource(NSString.stringWith("DefaultApp"), NSString.stringWith("nib"));
+		if (!loaded) loaded = path != null && NSBundle.loadNibFile(path, dict, 0);
+		if (!loaded) {
+			path = bundle.pathForResource(NSString.stringWith("DefaultApp"), NSString.stringWith("nib"), null, NSString.stringWith("English"));
+			if (path == null) path = bundle.pathForResource(NSString.stringWith("DefaultApp"), NSString.stringWith("nib"), null, NSString.stringWith("en"));
+			loaded = path != null && NSBundle.loadNibFile(path, dict, 0);
+		}
 	}
 	if (!loaded) {
 		path = NSString.stringWith(System.getProperty("java.home") + "/../Resources/English.lproj/DefaultApp.nib");
@@ -5475,7 +5466,7 @@ void applicationWillFinishLaunching (long /*int*/ id, long /*int*/ sel, long /*i
 			NSMenuItem ni = new NSMenuItem(ia.objectAtIndex(i));
 			NSString title = ni.title().stringByReplacingOccurrencesOfString(match, name);
 			ni.setTitle(title);
-			long /*int*/ newTag = 0;
+			long newTag = 0;
 			switch(i) {
 				case 0:
 					newTag = SWT.ID_ABOUT;
@@ -5499,7 +5490,7 @@ void applicationWillFinishLaunching (long /*int*/ id, long /*int*/ sel, long /*i
 			if (newTag != 0) ni.setTag(newTag);
 		}
 
-		long /*int*/ quitIndex = sm.indexOfItemWithTarget(applicationDelegate, OS.sel_terminate_);
+		long quitIndex = sm.indexOfItemWithTarget(applicationDelegate, OS.sel_terminate_);
 
 		if (quitIndex != -1) {
 			NSMenuItem quitItem = sm.itemAtIndex(quitIndex);
@@ -5508,7 +5499,7 @@ void applicationWillFinishLaunching (long /*int*/ id, long /*int*/ sel, long /*i
 	}
 }
 
-static long /*int*/ applicationProc(long /*int*/ id, long /*int*/ sel) {
+static long applicationProc(long id, long sel) {
 	//TODO optimize getting the display
 	Display display = getCurrent ();
 	if (display == null) {
@@ -5527,7 +5518,7 @@ static long /*int*/ applicationProc(long /*int*/ id, long /*int*/ sel) {
 	return 0;
 }
 
-static long /*int*/ applicationProc(long /*int*/ id, long /*int*/ sel, long /*int*/ arg0) {
+static long applicationProc(long id, long sel, long arg0) {
 	//TODO optimize getting the display
 	Display display = getCurrent ();
 	if (display == null && id != applicationDelegate.id) {
@@ -5612,7 +5603,7 @@ static long /*int*/ applicationProc(long /*int*/ id, long /*int*/ sel, long /*in
 	}
 }
 
-static long /*int*/ applicationProc(long /*int*/ id, long /*int*/ sel, long /*int*/ arg0, long /*int*/ arg1) {
+static long applicationProc(long id, long sel, long arg0, long arg1) {
 	Display display = getCurrent();
 
 	if (display == null && id != applicationDelegate.id) {
@@ -5637,7 +5628,7 @@ static long /*int*/ applicationProc(long /*int*/ id, long /*int*/ sel, long /*in
 		}
 		case sel_application_openFiles_: {
 			NSArray files = new NSArray(arg1);
-			long /*int*/ count = files.count();
+			long count = files.count();
 			for (int i=0; i<count; i++) {
 				String file = new NSString(files.objectAtIndex(i)).getString();
 				Event event = new Event();
@@ -5649,7 +5640,7 @@ static long /*int*/ applicationProc(long /*int*/ id, long /*int*/ sel, long /*in
 		}
 		case sel_application_openUrls_: {
 			NSArray urls = new NSArray(arg1);
-			long /*int*/ count = urls.count();
+			long count = urls.count();
 			for (int i=0; i<count; i++) {
 				String url = new NSString(urls.objectAtIndex(i)).getString();
 				Event event = new Event();
@@ -5670,7 +5661,7 @@ static long /*int*/ applicationProc(long /*int*/ id, long /*int*/ sel, long /*in
 	}
 }
 
-static long /*int*/ applicationProc(long /*int*/ id, long /*int*/sel, long /*int*/ arg0, long /*int*/ arg1, long /*int*/ arg2, long /*int*/ arg3) {
+static long applicationProc(long id, long sel, long arg0, long arg1, long arg2, long arg3) {
 	//TODO optimize getting the display
 	Display display = getCurrent ();
 	if (display == null && id != applicationDelegate.id) {
@@ -5685,8 +5676,8 @@ static long /*int*/ applicationProc(long /*int*/ id, long /*int*/sel, long /*int
 	return 0;
 }
 
-static long /*int*/ dialogProc(long /*int*/ id, long /*int*/ sel, long /*int*/ arg0) {
-	long /*int*/ [] jniRef = new long /*int*/ [1];
+static long dialogProc(long id, long sel, long arg0) {
+	long [] jniRef = new long [1];
 	OS.object_getInstanceVariable(id, SWT_OBJECT, jniRef);
 	if (jniRef[0] == 0) return 0;
 
@@ -5729,8 +5720,8 @@ static long /*int*/ dialogProc(long /*int*/ id, long /*int*/ sel, long /*int*/ a
 	}
 }
 
-static long /*int*/ dialogProc(long /*int*/ id, long /*int*/ sel, long /*int*/ arg0, long /*int*/ arg1) {
-	long /*int*/ [] jniRef = new long /*int*/ [1];
+static long dialogProc(long id, long sel, long arg0, long arg1) {
+	long [] jniRef = new long [1];
 	OS.object_getInstanceVariable(id, SWT_OBJECT, jniRef);
 	if (jniRef[0] == 0) return 0;
 	if (sel == OS.sel_panel_shouldShowFilename_) {
@@ -5747,8 +5738,8 @@ static long /*int*/ dialogProc(long /*int*/ id, long /*int*/ sel, long /*int*/ a
 	return 0;
 }
 
-static long /*int*/ dialogProc(long /*int*/ id, long /*int*/ sel, long /*int*/ arg0, long /*int*/ arg1, long /*int*/ arg2) {
-	long /*int*/ [] jniRef = new long /*int*/ [1];
+static long dialogProc(long id, long sel, long arg0, long arg1, long arg2) {
+	long [] jniRef = new long [1];
 	OS.object_getInstanceVariable(id, SWT_OBJECT, jniRef);
 	if (jniRef[0] == 0) return 0;
 	if (sel == OS.sel_panelDidEnd_returnCode_contextInfo_) {
@@ -5759,7 +5750,7 @@ static long /*int*/ dialogProc(long /*int*/ id, long /*int*/ sel, long /*int*/ a
 	return 0;
 }
 
-static Widget LookupWidget (long /*int*/ id, long /*int*/ sel) {
+static Widget LookupWidget (long id, long sel) {
 	Widget widget = GetWidget(id);
 	if (widget == null) {
 		NSView view = new NSView (id);
@@ -5772,10 +5763,10 @@ static Widget LookupWidget (long /*int*/ id, long /*int*/ sel) {
 	return widget;
 }
 
-static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel) {
+static long windowProc(long id, long sel) {
 	if (sel == OS.sel_cellClass) {
-		long /*int*/ superCls = OS.objc_msgSend(OS.class_getSuperclass(id), sel);
-		long /*int*/ cls = OS.objc_lookUpClass("SWTAccessible" + OS.class_getName(superCls));
+		long superCls = OS.objc_msgSend(OS.class_getSuperclass(id), sel);
+		long cls = OS.objc_lookUpClass("SWTAccessible" + OS.class_getName(superCls));
 		return cls != 0 ? cls : superCls;
 	}
 	/*
@@ -5859,21 +5850,21 @@ static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel) {
 		case sel_markedRange: {
 			NSRange range = widget.markedRange (id, sel);
 			/* NOTE that this is freed in C */
-			long /*int*/ result = C.malloc (NSRange.sizeof);
+			long result = C.malloc (NSRange.sizeof);
 			OS.memmove (result, range, NSRange.sizeof);
 			return result;
 		}
 		case sel_selectedRange: {
 			NSRange range = widget.selectedRange (id, sel);
 			/* NOTE that this is freed in C */
-			long /*int*/ result = C.malloc (NSRange.sizeof);
+			long result = C.malloc (NSRange.sizeof);
 			OS.memmove (result, range, NSRange.sizeof);
 			return result;
 		}
 		case sel_cellSize: {
 			NSSize size = widget.cellSize (id, sel);
 			/* NOTE that this is freed in C */
-			long /*int*/ result = C.malloc (NSSize.sizeof);
+			long result = C.malloc (NSSize.sizeof);
 			OS.memmove (result, size, NSSize.sizeof);
 			return result;
 		}
@@ -5938,7 +5929,7 @@ static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel) {
 	}
 }
 
-static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel, long /*int*/ arg0) {
+static long windowProc(long id, long sel, long arg0) {
 	/*
 	* Feature in Cocoa.  In Cocoa, the default button animation is done
 	* in a separate thread that calls drawRect() and isOpaque() from
@@ -6429,7 +6420,7 @@ static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel, long /*int*/ a
 	}
 }
 
-static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel, long /*int*/ arg0, long /*int*/ arg1) {
+static long windowProc(long id, long sel, long arg0, long arg1) {
 	Widget widget = LookupWidget(id, sel);
 	if (widget == null) return 0;
 
@@ -6512,7 +6503,7 @@ static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel, long /*int*/ a
 			OS.memmove(rect, arg0, NSRect.sizeof);
 			rect = widget.expansionFrameWithFrame_inView(id, sel, rect, arg1);
 			/* NOTE that this is freed in C */
-			long /*int*/ result = C.malloc (NSRect.sizeof);
+			long result = C.malloc (NSRect.sizeof);
 			OS.memmove (result, rect, NSRect.sizeof);
 			return result;
 		}
@@ -6521,7 +6512,7 @@ static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel, long /*int*/ a
 			OS.memmove(rect, arg0, NSRect.sizeof);
 			rect = widget.focusRingMaskBoundsForFrame(id, sel, rect, arg1);
 			/* NOTE that this is freed in C */
-			long /*int*/ result = C.malloc (NSRect.sizeof);
+			long result = C.malloc (NSRect.sizeof);
 			OS.memmove (result, rect, NSRect.sizeof);
 			return result;
 		}
@@ -6560,7 +6551,7 @@ static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel, long /*int*/ a
 	}
 }
 
-static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel, long /*int*/ arg0, long /*int*/ arg1, long /*int*/ arg2) {
+static long windowProc(long id, long sel, long arg0, long arg1, long arg2) {
 	Widget widget = LookupWidget(id, sel);
 	if (widget == null) return 0;
 
@@ -6592,7 +6583,7 @@ static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel, long /*int*/ a
 		case sel_textView_willChangeSelectionFromCharacterRange_toCharacterRange_: {
 			NSRange range = widget.textView_willChangeSelectionFromCharacterRange_toCharacterRange(id, sel, arg0, arg1, arg2);
 			/* NOTE that this is freed in C */
-			long /*int*/ result = C.malloc (NSRange.sizeof);
+			long result = C.malloc (NSRange.sizeof);
 			OS.memmove (result, range, NSRange.sizeof);
 			return result;
 		}
@@ -6612,7 +6603,7 @@ static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel, long /*int*/ a
 			OS.memmove (rect, arg1, NSRect.sizeof);
 			rect = widget.drawTitleWithFrameInView (id, sel, arg0, rect, arg2);
 			/* NOTE that this is freed in C */
-			long /*int*/ result = C.malloc (NSRect.sizeof);
+			long result = C.malloc (NSRect.sizeof);
 			OS.memmove (result, rect, NSRect.sizeof);
 			return result;
 		}
@@ -6636,7 +6627,7 @@ static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel, long /*int*/ a
 	}
 }
 
-static long /*int*/ windowProc(long /*int*/ id, long /*int*/ sel, long /*int*/ arg0, long /*int*/ arg1, long /*int*/ arg2, long /*int*/ arg3) {
+static long windowProc(long id, long sel, long arg0, long arg1, long arg2, long arg3) {
 	Widget widget = LookupWidget(id, sel);
 	if (widget == null) return 0;
 

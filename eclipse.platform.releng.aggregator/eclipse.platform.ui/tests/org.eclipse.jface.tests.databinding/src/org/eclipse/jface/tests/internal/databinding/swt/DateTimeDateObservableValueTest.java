@@ -24,7 +24,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import org.eclipse.core.databinding.observable.value.IObservableValue;
-import org.eclipse.jface.databinding.swt.WidgetProperties;
+import org.eclipse.jface.databinding.swt.typed.WidgetProperties;
 import org.eclipse.jface.tests.databinding.AbstractSWTTestCase;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.DateTime;
@@ -40,10 +40,11 @@ public class DateTimeDateObservableValueTest extends AbstractSWTTestCase {
 	private IObservableValue dateObservable;
 
 	@Before
+	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 		dateTime = new DateTime(getShell(), SWT.DATE);
-		dateObservable = WidgetProperties.selection().observe(dateTime);
+		dateObservable = WidgetProperties.dateTimeSelection().observe(dateTime);
 	}
 
 	@Test

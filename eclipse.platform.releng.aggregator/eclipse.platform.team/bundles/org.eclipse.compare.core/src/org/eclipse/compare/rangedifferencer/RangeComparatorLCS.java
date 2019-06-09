@@ -151,7 +151,7 @@ import org.eclipse.core.runtime.*;
 	 * @param length The number of non-empty (i.e non-zero) entries in LCS
 	 * @param comparator The comparator used to generate the LCS
 	 */
-	 private void compactAndShiftLCS(int[] lcsSide, int length,
+	private void compactAndShiftLCS(int[] lcsSide, int length,
 			IRangeComparator comparator) {
 		// If the LCS is empty, just return
 		if (length == 0)
@@ -185,9 +185,6 @@ import org.eclipse.core.runtime.*;
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.internal.LCS#longestCommonSubsequence(org.eclipse.core.runtime.SubMonitor)
-	 */
 	@Override
 	public void longestCommonSubsequence(SubMonitor subMonitor) {
 		super.longestCommonSubsequence(subMonitor);

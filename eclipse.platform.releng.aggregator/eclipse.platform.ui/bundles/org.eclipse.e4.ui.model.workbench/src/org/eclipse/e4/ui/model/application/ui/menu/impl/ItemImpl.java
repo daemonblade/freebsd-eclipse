@@ -13,13 +13,17 @@
  */
 package org.eclipse.e4.ui.model.application.ui.menu.impl;
 
+import java.lang.reflect.InvocationTargetException;
 import org.eclipse.e4.ui.model.LocalizationHelper;
+import org.eclipse.e4.ui.model.application.ui.MLocalizable;
+import org.eclipse.e4.ui.model.application.ui.MUIElement;
 import org.eclipse.e4.ui.model.application.ui.MUILabel;
 import org.eclipse.e4.ui.model.application.ui.impl.UIElementImpl;
 import org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl;
 import org.eclipse.e4.ui.model.application.ui.menu.ItemType;
 import org.eclipse.e4.ui.model.application.ui.menu.MItem;
 import org.eclipse.emf.common.notify.Notification;
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 
@@ -216,6 +220,7 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public String getLabel() {
 		return label;
 	}
@@ -226,6 +231,7 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public void setLabel(String newLabel) {
 		String oldLabel = label;
 		label = newLabel;
@@ -239,6 +245,7 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public String getIconURI() {
 		return iconURI;
 	}
@@ -249,6 +256,7 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public void setIconURI(String newIconURI) {
 		String oldIconURI = iconURI;
 		iconURI = newIconURI;
@@ -262,6 +270,7 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public String getTooltip() {
 		return tooltip;
 	}
@@ -272,6 +281,7 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public void setTooltip(String newTooltip) {
 		String oldTooltip = tooltip;
 		tooltip = newTooltip;
@@ -284,6 +294,27 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
+	public String getLocalizedLabel() {
+		return LocalizationHelper.getLocalizedFeature(UiPackageImpl.Literals.UI_LABEL__LABEL, this);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String getLocalizedTooltip() {
+		return LocalizationHelper.getLocalizedFeature(UiPackageImpl.Literals.UI_LABEL__TOOLTIP, this);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public boolean isEnabled() {
 		return enabled;
 	}
@@ -293,6 +324,7 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setEnabled(boolean newEnabled) {
 		boolean oldEnabled = enabled;
 		enabled = newEnabled;
@@ -305,6 +337,7 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public boolean isSelected() {
 		return selected;
 	}
@@ -314,11 +347,13 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setSelected(boolean newSelected) {
 		boolean oldSelected = selected;
 		selected = newSelected;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, MenuPackageImpl.ITEM__SELECTED, oldSelected, selected));
+			eNotify(new ENotificationImpl(this, Notification.SET, MenuPackageImpl.ITEM__SELECTED, oldSelected,
+					selected));
 	}
 
 	/**
@@ -326,6 +361,7 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public ItemType getType() {
 		return type;
 	}
@@ -335,6 +371,7 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setType(ItemType newType) {
 		ItemType oldType = type;
 		type = newType == null ? TYPE_EDEFAULT : newType;
@@ -345,31 +382,18 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
 	 */
 	@Override
 	public void updateLocalization() {
 		if (eNotificationRequired()) {
-			eNotify(new ENotificationImpl(
-					this, Notification.SET, MenuPackageImpl.ITEM__LOCALIZED_LABEL, null, getLocalizedLabel()));
-			eNotify(new ENotificationImpl(
-					this, Notification.SET, MenuPackageImpl.ITEM__LOCALIZED_TOOLTIP, null, getLocalizedTooltip()));
+			super.updateLocalization();
+			eNotify(new ENotificationImpl(this, Notification.SET, MenuPackageImpl.ITEM__LOCALIZED_LABEL, null,
+					getLocalizedLabel()));
+			eNotify(new ENotificationImpl(this, Notification.SET, MenuPackageImpl.ITEM__LOCALIZED_TOOLTIP, null,
+					getLocalizedTooltip()));
 		}
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 */
-	public String getLocalizedLabel() {
-		return LocalizationHelper.getLocalizedLabel(this);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 */
-	public String getLocalizedTooltip() {
-		return LocalizationHelper.getLocalizedTooltip(this);
 	}
 
 	/**
@@ -380,22 +404,22 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case MenuPackageImpl.ITEM__LABEL:
-				return getLabel();
-			case MenuPackageImpl.ITEM__ICON_URI:
-				return getIconURI();
-			case MenuPackageImpl.ITEM__TOOLTIP:
-				return getTooltip();
-			case MenuPackageImpl.ITEM__LOCALIZED_LABEL:
-				return getLocalizedLabel();
-			case MenuPackageImpl.ITEM__LOCALIZED_TOOLTIP:
-				return getLocalizedTooltip();
-			case MenuPackageImpl.ITEM__ENABLED:
-				return isEnabled();
-			case MenuPackageImpl.ITEM__SELECTED:
-				return isSelected();
-			case MenuPackageImpl.ITEM__TYPE:
-				return getType();
+		case MenuPackageImpl.ITEM__LABEL:
+			return getLabel();
+		case MenuPackageImpl.ITEM__ICON_URI:
+			return getIconURI();
+		case MenuPackageImpl.ITEM__TOOLTIP:
+			return getTooltip();
+		case MenuPackageImpl.ITEM__LOCALIZED_LABEL:
+			return getLocalizedLabel();
+		case MenuPackageImpl.ITEM__LOCALIZED_TOOLTIP:
+			return getLocalizedTooltip();
+		case MenuPackageImpl.ITEM__ENABLED:
+			return isEnabled();
+		case MenuPackageImpl.ITEM__SELECTED:
+			return isSelected();
+		case MenuPackageImpl.ITEM__TYPE:
+			return getType();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -408,24 +432,24 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case MenuPackageImpl.ITEM__LABEL:
-				setLabel((String)newValue);
-				return;
-			case MenuPackageImpl.ITEM__ICON_URI:
-				setIconURI((String)newValue);
-				return;
-			case MenuPackageImpl.ITEM__TOOLTIP:
-				setTooltip((String)newValue);
-				return;
-			case MenuPackageImpl.ITEM__ENABLED:
-				setEnabled((Boolean)newValue);
-				return;
-			case MenuPackageImpl.ITEM__SELECTED:
-				setSelected((Boolean)newValue);
-				return;
-			case MenuPackageImpl.ITEM__TYPE:
-				setType((ItemType)newValue);
-				return;
+		case MenuPackageImpl.ITEM__LABEL:
+			setLabel((String) newValue);
+			return;
+		case MenuPackageImpl.ITEM__ICON_URI:
+			setIconURI((String) newValue);
+			return;
+		case MenuPackageImpl.ITEM__TOOLTIP:
+			setTooltip((String) newValue);
+			return;
+		case MenuPackageImpl.ITEM__ENABLED:
+			setEnabled((Boolean) newValue);
+			return;
+		case MenuPackageImpl.ITEM__SELECTED:
+			setSelected((Boolean) newValue);
+			return;
+		case MenuPackageImpl.ITEM__TYPE:
+			setType((ItemType) newValue);
+			return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -438,24 +462,24 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case MenuPackageImpl.ITEM__LABEL:
-				setLabel(LABEL_EDEFAULT);
-				return;
-			case MenuPackageImpl.ITEM__ICON_URI:
-				setIconURI(ICON_URI_EDEFAULT);
-				return;
-			case MenuPackageImpl.ITEM__TOOLTIP:
-				setTooltip(TOOLTIP_EDEFAULT);
-				return;
-			case MenuPackageImpl.ITEM__ENABLED:
-				setEnabled(ENABLED_EDEFAULT);
-				return;
-			case MenuPackageImpl.ITEM__SELECTED:
-				setSelected(SELECTED_EDEFAULT);
-				return;
-			case MenuPackageImpl.ITEM__TYPE:
-				setType(TYPE_EDEFAULT);
-				return;
+		case MenuPackageImpl.ITEM__LABEL:
+			setLabel(LABEL_EDEFAULT);
+			return;
+		case MenuPackageImpl.ITEM__ICON_URI:
+			setIconURI(ICON_URI_EDEFAULT);
+			return;
+		case MenuPackageImpl.ITEM__TOOLTIP:
+			setTooltip(TOOLTIP_EDEFAULT);
+			return;
+		case MenuPackageImpl.ITEM__ENABLED:
+			setEnabled(ENABLED_EDEFAULT);
+			return;
+		case MenuPackageImpl.ITEM__SELECTED:
+			setSelected(SELECTED_EDEFAULT);
+			return;
+		case MenuPackageImpl.ITEM__TYPE:
+			setType(TYPE_EDEFAULT);
+			return;
 		}
 		super.eUnset(featureID);
 	}
@@ -468,22 +492,24 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case MenuPackageImpl.ITEM__LABEL:
-				return LABEL_EDEFAULT == null ? label != null : !LABEL_EDEFAULT.equals(label);
-			case MenuPackageImpl.ITEM__ICON_URI:
-				return ICON_URI_EDEFAULT == null ? iconURI != null : !ICON_URI_EDEFAULT.equals(iconURI);
-			case MenuPackageImpl.ITEM__TOOLTIP:
-				return TOOLTIP_EDEFAULT == null ? tooltip != null : !TOOLTIP_EDEFAULT.equals(tooltip);
-			case MenuPackageImpl.ITEM__LOCALIZED_LABEL:
-				return LOCALIZED_LABEL_EDEFAULT == null ? getLocalizedLabel() != null : !LOCALIZED_LABEL_EDEFAULT.equals(getLocalizedLabel());
-			case MenuPackageImpl.ITEM__LOCALIZED_TOOLTIP:
-				return LOCALIZED_TOOLTIP_EDEFAULT == null ? getLocalizedTooltip() != null : !LOCALIZED_TOOLTIP_EDEFAULT.equals(getLocalizedTooltip());
-			case MenuPackageImpl.ITEM__ENABLED:
-				return enabled != ENABLED_EDEFAULT;
-			case MenuPackageImpl.ITEM__SELECTED:
-				return selected != SELECTED_EDEFAULT;
-			case MenuPackageImpl.ITEM__TYPE:
-				return type != TYPE_EDEFAULT;
+		case MenuPackageImpl.ITEM__LABEL:
+			return LABEL_EDEFAULT == null ? label != null : !LABEL_EDEFAULT.equals(label);
+		case MenuPackageImpl.ITEM__ICON_URI:
+			return ICON_URI_EDEFAULT == null ? iconURI != null : !ICON_URI_EDEFAULT.equals(iconURI);
+		case MenuPackageImpl.ITEM__TOOLTIP:
+			return TOOLTIP_EDEFAULT == null ? tooltip != null : !TOOLTIP_EDEFAULT.equals(tooltip);
+		case MenuPackageImpl.ITEM__LOCALIZED_LABEL:
+			return LOCALIZED_LABEL_EDEFAULT == null ? getLocalizedLabel() != null
+					: !LOCALIZED_LABEL_EDEFAULT.equals(getLocalizedLabel());
+		case MenuPackageImpl.ITEM__LOCALIZED_TOOLTIP:
+			return LOCALIZED_TOOLTIP_EDEFAULT == null ? getLocalizedTooltip() != null
+					: !LOCALIZED_TOOLTIP_EDEFAULT.equals(getLocalizedTooltip());
+		case MenuPackageImpl.ITEM__ENABLED:
+			return enabled != ENABLED_EDEFAULT;
+		case MenuPackageImpl.ITEM__SELECTED:
+			return selected != SELECTED_EDEFAULT;
+		case MenuPackageImpl.ITEM__TYPE:
+			return type != TYPE_EDEFAULT;
 		}
 		return super.eIsSet(featureID);
 	}
@@ -497,12 +523,18 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	public int eBaseStructuralFeatureID(int derivedFeatureID, Class<?> baseClass) {
 		if (baseClass == MUILabel.class) {
 			switch (derivedFeatureID) {
-				case MenuPackageImpl.ITEM__LABEL: return UiPackageImpl.UI_LABEL__LABEL;
-				case MenuPackageImpl.ITEM__ICON_URI: return UiPackageImpl.UI_LABEL__ICON_URI;
-				case MenuPackageImpl.ITEM__TOOLTIP: return UiPackageImpl.UI_LABEL__TOOLTIP;
-				case MenuPackageImpl.ITEM__LOCALIZED_LABEL: return UiPackageImpl.UI_LABEL__LOCALIZED_LABEL;
-				case MenuPackageImpl.ITEM__LOCALIZED_TOOLTIP: return UiPackageImpl.UI_LABEL__LOCALIZED_TOOLTIP;
-				default: return -1;
+			case MenuPackageImpl.ITEM__LABEL:
+				return UiPackageImpl.UI_LABEL__LABEL;
+			case MenuPackageImpl.ITEM__ICON_URI:
+				return UiPackageImpl.UI_LABEL__ICON_URI;
+			case MenuPackageImpl.ITEM__TOOLTIP:
+				return UiPackageImpl.UI_LABEL__TOOLTIP;
+			case MenuPackageImpl.ITEM__LOCALIZED_LABEL:
+				return UiPackageImpl.UI_LABEL__LOCALIZED_LABEL;
+			case MenuPackageImpl.ITEM__LOCALIZED_TOOLTIP:
+				return UiPackageImpl.UI_LABEL__LOCALIZED_TOOLTIP;
+			default:
+				return -1;
 			}
 		}
 		return super.eBaseStructuralFeatureID(derivedFeatureID, baseClass);
@@ -517,12 +549,18 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	public int eDerivedStructuralFeatureID(int baseFeatureID, Class<?> baseClass) {
 		if (baseClass == MUILabel.class) {
 			switch (baseFeatureID) {
-				case UiPackageImpl.UI_LABEL__LABEL: return MenuPackageImpl.ITEM__LABEL;
-				case UiPackageImpl.UI_LABEL__ICON_URI: return MenuPackageImpl.ITEM__ICON_URI;
-				case UiPackageImpl.UI_LABEL__TOOLTIP: return MenuPackageImpl.ITEM__TOOLTIP;
-				case UiPackageImpl.UI_LABEL__LOCALIZED_LABEL: return MenuPackageImpl.ITEM__LOCALIZED_LABEL;
-				case UiPackageImpl.UI_LABEL__LOCALIZED_TOOLTIP: return MenuPackageImpl.ITEM__LOCALIZED_TOOLTIP;
-				default: return -1;
+			case UiPackageImpl.UI_LABEL__LABEL:
+				return MenuPackageImpl.ITEM__LABEL;
+			case UiPackageImpl.UI_LABEL__ICON_URI:
+				return MenuPackageImpl.ITEM__ICON_URI;
+			case UiPackageImpl.UI_LABEL__TOOLTIP:
+				return MenuPackageImpl.ITEM__TOOLTIP;
+			case UiPackageImpl.UI_LABEL__LOCALIZED_LABEL:
+				return MenuPackageImpl.ITEM__LOCALIZED_LABEL;
+			case UiPackageImpl.UI_LABEL__LOCALIZED_TOOLTIP:
+				return MenuPackageImpl.ITEM__LOCALIZED_TOOLTIP;
+			default:
+				return -1;
 			}
 		}
 		return super.eDerivedStructuralFeatureID(baseFeatureID, baseClass);
@@ -534,8 +572,56 @@ public abstract class ItemImpl extends UIElementImpl implements MItem {
 	 * @generated
 	 */
 	@Override
+	public int eDerivedOperationID(int baseOperationID, Class<?> baseClass) {
+		if (baseClass == MLocalizable.class) {
+			switch (baseOperationID) {
+			case UiPackageImpl.LOCALIZABLE___UPDATE_LOCALIZATION:
+				return MenuPackageImpl.ITEM___UPDATE_LOCALIZATION;
+			default:
+				return super.eDerivedOperationID(baseOperationID, baseClass);
+			}
+		}
+		if (baseClass == MUIElement.class) {
+			switch (baseOperationID) {
+			case UiPackageImpl.UI_ELEMENT___UPDATE_LOCALIZATION:
+				return MenuPackageImpl.ITEM___UPDATE_LOCALIZATION;
+			default:
+				return super.eDerivedOperationID(baseOperationID, baseClass);
+			}
+		}
+		if (baseClass == MUILabel.class) {
+			switch (baseOperationID) {
+			default:
+				return -1;
+			}
+		}
+		return super.eDerivedOperationID(baseOperationID, baseClass);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public Object eInvoke(int operationID, EList<?> arguments) throws InvocationTargetException {
+		switch (operationID) {
+		case MenuPackageImpl.ITEM___UPDATE_LOCALIZATION:
+			updateLocalization();
+			return null;
+		}
+		return super.eInvoke(operationID, arguments);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public String toString() {
-		if (eIsProxy()) return super.toString();
+		if (eIsProxy())
+			return super.toString();
 
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (label: "); //$NON-NLS-1$

@@ -261,7 +261,7 @@ public final class TableWrapLayout extends Layout implements ILayoutExtension {
 				columnWidths = maxColumnWidths;
 			} else {
 				columnWidths = new int[numColumns];
-			    int extra = parentWidth - maxWidth;
+				int extra = parentWidth - maxWidth;
 				int colExtra = extra / growingColumns.length;
 				for (int i = 0; i < numColumns; i++) {
 					columnWidths[i] = maxColumnWidths[i];
@@ -425,12 +425,18 @@ public final class TableWrapLayout extends Layout implements ILayoutExtension {
 			xloc = x + colWidth - width;
 		}
 		// align vertically
-		if (td.valign == TableWrapData.MIDDLE) {
+		switch (td.valign) {
+		case TableWrapData.MIDDLE:
 			yloc = y + (slotHeight - height) / 2;
-		} else if (td.valign == TableWrapData.BOTTOM) {
+			break;
+		case TableWrapData.BOTTOM:
 			yloc = y + slotHeight - height;
-		} else if (td.valign == TableWrapData.FILL) {
+			break;
+		case TableWrapData.FILL:
 			height = slotHeight;
+			break;
+		default:
+			break;
 		}
 		control.setBounds(xloc, yloc, width, height);
 	}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -1860,7 +1860,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 				return false;
 
 			return getInformationPresenter().openFocusedAnnotationHover(annotationHover, line);
-        }
+		}
 
 		/**
 		 * Returns the information presenter (creates it if necessary).
@@ -2975,7 +2975,25 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 				private long fMouseUpDelta= 0;
 
 				private void triggerAction(String actionID, MouseEvent e) {
-					IAction action= getAction(actionID);
+					// ActionId can be prefixed with modifiers
+					StringBuffer newActionId = new StringBuffer(""); //$NON-NLS-1$
+					if ((e.stateMask & SWT.MOD1) > 0) {
+						newActionId.append("M1+"); //$NON-NLS-1$
+					}
+					if ((e.stateMask & SWT.MOD2) > 0) {
+						newActionId.append("M2+"); //$NON-NLS-1$
+					}
+					if ((e.stateMask & SWT.MOD3) > 0) {
+						newActionId.append("M3+"); //$NON-NLS-1$
+					}
+					newActionId.append(actionID);
+					IAction action = getAction(newActionId.toString());
+					// If action does not exist with specified
+					// modifiers+actionId, try to retrieve action with only
+					// actionId
+					if (action == null) {
+						action = getAction(actionID);
+					}
 					if (action != null) {
 						if (action instanceof IUpdate)
 							((IUpdate) action).update();
@@ -3156,16 +3174,16 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		} catch (InvocationTargetException x) {
 			Throwable t= x.getTargetException();
 			if (t instanceof CoreException) {
-                /*
-                /* XXX: Remove unpacking of CoreException once the following bug is
-                 *		fixed: https://bugs.eclipse.org/bugs/show_bug.cgi?id=81640
-                 */
-                CoreException e= (CoreException)t;
-                IStatus status= e.getStatus();
-                if (status.getException() != null)
-                    throw new PartInitException(status);
-               	throw new PartInitException(new Status(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), t));
-            }
+				/*
+				/* XXX: Remove unpacking of CoreException once the following bug is
+				 *		fixed: https://bugs.eclipse.org/bugs/show_bug.cgi?id=81640
+				 */
+				CoreException e= (CoreException)t;
+				IStatus status= e.getStatus();
+				if (status.getException() != null)
+					throw new PartInitException(status);
+				throw new PartInitException(new Status(status.getSeverity(), status.getPlugin(), status.getCode(), status.getMessage(), t));
+			}
 			throw new PartInitException(new Status(IStatus.ERROR, TextEditorPlugin.PLUGIN_ID, IStatus.OK, EditorMessages.Editor_error_init, t));
 		}
 	}
@@ -3667,14 +3685,14 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 	}
 
 	/**
-     * Tells whether the editor input should be included when adding object
-     * contributions to this editor's context menu.
-     * <p>
-     * This implementation always returns <code>true</code>.
-     * </p>
-     *
+	 * Tells whether the editor input should be included when adding object
+	 * contributions to this editor's context menu.
+	 * <p>
+	 * This implementation always returns <code>true</code>.
+	 * </p>
+	 *
 	 * @return <code>true</code> if the editor input should be considered
-     * @since 3.2
+	 * @since 3.2
 	 */
 	protected boolean isEditorInputIncludedInContextMenu() {
 		return true;
@@ -6032,11 +6050,11 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 	 * @param newGroup the new group
 	 */
 	protected final void addGroup(IMenuManager menu, String existingGroup, String newGroup) {
- 		IMenuManager subMenu= menu.findMenuUsingPath(existingGroup);
- 		if (subMenu != null)
- 			subMenu.add(new Separator(newGroup));
- 		else
- 			menu.appendToGroup(existingGroup, new Separator(newGroup));
+		IMenuManager subMenu= menu.findMenuUsingPath(existingGroup);
+		if (subMenu != null)
+			subMenu.add(new Separator(newGroup));
+		else
+			menu.appendToGroup(existingGroup, new Separator(newGroup));
 	}
 
 	/**
@@ -6578,7 +6596,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			styledText.setCaret(fNonDefaultCaret);
 			fNonDefaultCaretImage= fNonDefaultCaret.getImage();
 		} else if (fInitialCaret != styledText.getCaret())
-		    styledText.setCaret(fInitialCaret);
+			styledText.setCaret(fInitialCaret);
 	}
 
 	private void disposeNonDefaultCaret() {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -198,7 +198,6 @@ public final class JavaRuntime {
 	 * (value <code>executionEnvironments</code>)</li>
 	 * <li>Identifier of a contributed execution environment</li>
 	 * </ol>
-	 * </p>
 	 * @since 2.0
 	 */
 	public static final String JRE_CONTAINER = LaunchingPlugin.getUniqueIdentifier() + ".JRE_CONTAINER"; //$NON-NLS-1$
@@ -1868,15 +1867,15 @@ public final class JavaRuntime {
 	}
 
 	/**
-	 * Saves the VM configuration information to the preferences. This includes
-	 * the following information:
+	 * Saves the VM configuration information to the preferences. This includes the following information:
 	 * <ul>
 	 * <li>The list of all defined IVMInstall instances.</li>
 	 * <li>The default VM</li>
-	 * <ul>
-	 * This state will be read again upon first access to VM
-	 * configuration information.
-	 * @throws CoreException if trying to save the current state of VMs encounters a problem
+	 * </ul>
+	 * This state will be read again upon first access to VM configuration information.
+	 *
+	 * @throws CoreException
+	 *             if trying to save the current state of VMs encounters a problem
 	 */
 	public static void saveVMConfiguration() throws CoreException {
 		if (fgVMTypes == null) {
@@ -2233,6 +2232,15 @@ public final class JavaRuntime {
 				// Create a stand-in for the detected VM and add it to the result collector
 				String vmID = String.valueOf(unique);
 				VMStandin detectedVMStandin = new VMStandin(vmType, vmID);
+
+				// Java 9 and above needs the vmInstall location till jre
+				File pluginDir = new File(detectedLocation, "plugins"); //$NON-NLS-1$
+				File featuresDir = new File(detectedLocation, "features"); //$NON-NLS-1$
+				if (pluginDir.exists() && featuresDir.exists()) {
+					if (isJREVersionAbove8(vmType, detectedLocation)) {
+						detectedLocation = new File(detectedLocation, "jre"); //$NON-NLS-1$
+					}
+				}
 				detectedVMStandin.setInstallLocation(detectedLocation);
 				detectedVMStandin.setName(generateDetectedVMName(detectedVMStandin));
 				if (vmType instanceof AbstractVMInstallType) {
@@ -2248,6 +2256,23 @@ public final class JavaRuntime {
 			}
 		}
 		return null;
+	}
+
+	private static boolean isJREVersionAbove8(IVMInstallType vmType, File installLocation) {
+		LibraryLocation[] locations = vmType.getDefaultLibraryLocations(installLocation);
+		boolean exist = true;
+		for (int i = 0; i < locations.length; i++) {
+			exist = exist && new File(locations[i].getSystemLibraryPath().toOSString()).exists();
+		}
+		if (exist) {
+			return false;
+		}
+		exist = true;
+		LibraryLocation[] newLocations = vmType.getDefaultLibraryLocations(new File(installLocation, "jre")); //$NON-NLS-1$
+		for (int i = 0; i < newLocations.length; i++) {
+			exist = exist && new File(newLocations[i].getSystemLibraryPath().toOSString()).exists();
+		}
+		return exist;
 	}
 
 	/**
@@ -2456,7 +2481,6 @@ public final class JavaRuntime {
 	 * <li>When there is no Java project associated with a configuration, the workspace
 	 * default JRE is used to create a container path.</li>
 	 * </ol>
-	 * </p>
 	 * @param configuration the backing {@link ILaunchConfiguration}
 	 * @return classpath container path identifying a JRE or <code>null</code>
 	 * @exception org.eclipse.core.runtime.CoreException if an exception occurs retrieving
@@ -3300,8 +3324,11 @@ public final class JavaRuntime {
 				} else if (javaVersion.startsWith(JavaCore.VERSION_11)
 						&& (javaVersion.length() == JavaCore.VERSION_11.length() || javaVersion.charAt(JavaCore.VERSION_11.length()) == '.')) {
 					compliance = JavaCore.VERSION_11;
+				} else if (javaVersion.startsWith(JavaCore.VERSION_12)
+						&& (javaVersion.length() == JavaCore.VERSION_12.length() || javaVersion.charAt(JavaCore.VERSION_12.length()) == '.')) {
+					compliance = JavaCore.VERSION_12;
 				} else {
-					compliance = JavaCore.VERSION_11; // use latest by default
+					compliance = JavaCore.VERSION_12; // use latest by default
 				}
 
             	Hashtable<String, String> options= JavaCore.getOptions();
@@ -3314,6 +3341,10 @@ public final class JavaRuntime {
             			equals(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, options, bundleDefaults) &&
             			equals(JavaCore.COMPILER_PB_ASSERT_IDENTIFIER, options, bundleDefaults) &&
             			equals(JavaCore.COMPILER_PB_ENUM_IDENTIFIER, options, bundleDefaults);
+				if (JavaCore.compareJavaVersions(compliance, JavaCore.VERSION_10) > 0) {
+					isDefault = isDefault && equals(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, options, bundleDefaults)
+							&& equals(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, options, bundleDefaults);
+				}
             	// only update the compliance settings if they are default settings, otherwise the
             	// settings have already been modified by a tool or user
             	if (isDefault) {
@@ -3436,6 +3467,7 @@ public final class JavaRuntime {
 	 * {@link IClasspathAttribute}s of the following names:
 	 * <ul>
 	 * <li>{@link IClasspathAttribute#ADD_EXPORTS}</li>
+	 * <li>{@link IClasspathAttribute#ADD_OPENS}</li>
 	 * <li>{@link IClasspathAttribute#ADD_READS}</li>
 	 * <li>{@link IClasspathAttribute#LIMIT_MODULES}</li>
 	 * </ul>
@@ -3459,10 +3491,9 @@ public final class JavaRuntime {
 				String optName = classpathAttribute.getName();
 				switch (optName) {
 					case IClasspathAttribute.ADD_EXPORTS:
+					case IClasspathAttribute.ADD_OPENS:
 					case IClasspathAttribute.ADD_READS:
-						for (String value : classpathAttribute.getValue().split(COMMA)) {
-							buf.append(OPTION_START).append(optName).append(BLANK).append(value).append(BLANK);
-						}
+						buf.append(OPTION_START).append(optName).append(BLANK).append(classpathAttribute.getValue()).append(BLANK);
 						break;
 					case IClasspathAttribute.LIMIT_MODULES:
 						addLimitModules(buf, project, systemLibrary, classpathAttribute.getValue());

@@ -31,7 +31,8 @@ import org.eclipse.ui.*;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.WorkingSetFilterActionGroup;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
-import org.eclipse.ui.part.*;
+import org.eclipse.ui.part.DrillDownAdapter;
+import org.eclipse.ui.part.ViewPart;
 
 /**
  * This class acts as a superclass to all remote CVS tree views.
@@ -76,9 +77,6 @@ public abstract class RemoteViewPart extends ViewPart implements ISelectionListe
 		setWorkingSet(set, false);
 	}
 	
-	/**
-	 * @see org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
-	 */
 	@Override
 	public void createPartControl(Composite parent) {
 		viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
@@ -98,12 +96,9 @@ public abstract class RemoteViewPart extends ViewPart implements ISelectionListe
 		// F1 Help
 		String helpID = getHelpContextId();
 		if (helpID != null)
-            PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(), helpID);
+			PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(), helpID);
 	}
 	
-	/**
-	 * @see WorkbenchPart#setFocus
-	 */
 	@Override
 	public void setFocus() {
 		viewer.getControl().setFocus();
@@ -238,23 +233,23 @@ public abstract class RemoteViewPart extends ViewPart implements ISelectionListe
 		bars.updateActionBars();
 	}
 	
-    /**
-     * Returns the action group.
-     * 
-     * @return the action group
-     */
-    private WorkingSetFilterActionGroup getWorkingSetActionGroup() {
-        return workingSetActionGroup;
-    }
+	/**
+	 * Returns the action group.
+	 * 
+	 * @return the action group
+	 */
+	private WorkingSetFilterActionGroup getWorkingSetActionGroup() {
+		return workingSetActionGroup;
+	}
 
-    /**
-     * Sets the action group.
-     * 
-     * @param actionGroup the action group
-     */
-    private void setActionGroup(WorkingSetFilterActionGroup actionGroup) {
-        this.workingSetActionGroup = actionGroup;
-    }
+	/**
+	 * Sets the action group.
+	 * 
+	 * @param actionGroup the action group
+	 */
+	private void setActionGroup(WorkingSetFilterActionGroup actionGroup) {
+		this.workingSetActionGroup = actionGroup;
+	}
 	
 	/**
 	 * Add the menu actions that were contributed in plugin.xml
@@ -291,9 +286,9 @@ public abstract class RemoteViewPart extends ViewPart implements ISelectionListe
 		((RemoteContentProvider)viewer.getContentProvider()).cancelJobs(CVSUIPlugin.getPlugin().getRepositoryManager().getKnownRepositoryRoots());
 		((RemoteContentProvider)viewer.getContentProvider()).purgeCache();
 		CVSUIPlugin.getPlugin().getRepositoryManager().purgeCache();
-        viewer.getControl().setRedraw(false);
+		viewer.getControl().setRedraw(false);
 		viewer.refresh();
-        viewer.getControl().setRedraw(true);
+		viewer.getControl().setRedraw(true);
 	}
 	
 	public void collapseAll() {
@@ -332,22 +327,16 @@ public abstract class RemoteViewPart extends ViewPart implements ISelectionListe
 		return viewer;
 	}
 
-	/**
-	 * @see org.eclipse.ui.ISelectionListener#selectionChanged(org.eclipse.ui.IWorkbenchPart, org.eclipse.jface.viewers.ISelection)
-	 */
 	@Override
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 	}
 
-	/**
-	 * @see org.eclipse.ui.IWorkbenchPart#dispose()
-	 */
 	@Override
 	public void dispose() {
 		getSite().getWorkbenchWindow().getSelectionService().removePostSelectionListener(this);
-        if (getWorkingSetActionGroup() != null) {
-            getWorkingSetActionGroup().dispose();
-        }
+		if (getWorkingSetActionGroup() != null) {
+			getWorkingSetActionGroup().dispose();
+		}
 		super.dispose();
 		viewer = null;
 	}

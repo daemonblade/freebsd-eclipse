@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2000, 2018 IBM Corporation and others.
+ *  Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  *  This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  *  Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Paul Pazderski  - Bug 545769: fixed rare UTF-8 character corruption bug
  *******************************************************************************/
 package org.eclipse.debug.internal.ui.views.console;
 
@@ -20,6 +21,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -439,11 +442,11 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
     @Override
 	protected void init() {
         super.init();
+		DebugPlugin.getDefault().addDebugEventListener(this);
         if (fProcess.isTerminated()) {
             closeStreams();
             resetName();
-        } else {
-            DebugPlugin.getDefault().addDebugEventListener(this);
+			DebugPlugin.getDefault().removeDebugEventListener(this);
         }
         IPreferenceStore store = DebugUIPlugin.getDefault().getPreferenceStore();
         store.addPropertyChangeListener(this);
@@ -489,7 +492,7 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
     /**
      * resets the name of this console to the original computed name
      */
-    private void resetName() {
+	private synchronized void resetName() {
         final String newName = computeName();
         String name = getName();
         if (!name.equals(newName)) {
@@ -621,12 +624,6 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
             streamAppended(null, monitor);
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see org.eclipse.debug.core.IStreamListener#streamAppended(java.lang.String,
-         *      org.eclipse.debug.core.model.IStreamMonitor)
-         */
         @Override
 		public void streamAppended(String text, IStreamMonitor monitor) {
             String encoding = getEncoding();
@@ -713,10 +710,31 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 
         private IStreamsProxy streamsProxy;
 
+		/**
+		 * The {@link InputStream} this job is currently reading from or maybe blocking
+		 * on. May be <code>null</code>.
+		 */
+		private InputStream readingStream;
+
         InputReadJob(IStreamsProxy streamsProxy) {
             super("Process Console Input Job"); //$NON-NLS-1$
             this.streamsProxy = streamsProxy;
         }
+
+		@Override
+		protected void canceling() {
+			super.canceling();
+			if (readingStream != null) {
+				// Close stream or job may not be able to cancel.
+				// This is primary for IOConsoleInputStream because there is no guarantee an
+				// arbitrary InputStream will release a blocked read() on close.
+				try {
+					readingStream.close();
+				} catch (IOException e) {
+					DebugUIPlugin.log(e);
+				}
+			}
+		}
 
         @Override
 		public boolean belongsTo(Object family) {
@@ -725,38 +743,40 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 
 		@Override
 		protected IStatus run(IProgressMonitor monitor) {
-            String encoding = getEncoding();
+			if (fInput == null) {
+				return monitor.isCanceled() ? Status.CANCEL_STATUS : Status.OK_STATUS;
+			}
+			Charset encoding = getCharset();
+			readingStream = fInput;
+			InputStreamReader streamReader = (encoding == null ? new InputStreamReader(readingStream)
+					: new InputStreamReader(readingStream, encoding));
             try {
-                byte[] b = new byte[1024];
-                int read = 0;
-				while (read >= 0) {
-					InputStream input = fInput;
-					if (input == null) {
+				char[] cbuf = new char[1024];
+				int charRead = 0;
+				while (charRead >= 0 && !monitor.isCanceled()) {
+					if (fInput == null) {
 						break;
 					}
-					read = input.read(b);
-                    if (read > 0) {
-                        String s;
-                        if (encoding != null) {
-							s = new String(b, 0, read, encoding);
-						} else {
-							s = new String(b, 0, read);
-						}
+					if (fInput != readingStream) {
+						readingStream = fInput;
+						streamReader = (encoding == null ? new InputStreamReader(readingStream)
+								: new InputStreamReader(readingStream, encoding));
+					}
+
+					charRead = streamReader.read(cbuf);
+					if (charRead > 0) {
+						String s = new String(cbuf, 0, charRead);
                         streamsProxy.write(s);
                     }
                 }
             } catch (IOException e) {
                 DebugUIPlugin.log(e);
             }
-            return Status.OK_STATUS;
+			readingStream = null;
+			return monitor.isCanceled() ? Status.CANCEL_STATUS : Status.OK_STATUS;
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.eclipse.ui.console.IConsole#getImageDescriptor()
-     */
     @Override
 	public ImageDescriptor getImageDescriptor() {
         if (super.getImageDescriptor() == null) {
@@ -901,9 +921,6 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
         }
     }
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.console.AbstractConsole#getHelpContextId()
-	 */
 	@Override
 	public String getHelpContextId() {
 		return IDebugHelpContextIds.PROCESS_CONSOLE;

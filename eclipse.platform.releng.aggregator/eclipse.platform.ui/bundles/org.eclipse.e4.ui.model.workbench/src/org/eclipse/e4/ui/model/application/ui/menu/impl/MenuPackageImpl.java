@@ -60,6 +60,7 @@ import org.eclipse.emf.ecore.impl.EPackageImpl;
  * <ul>
  *   <li>each class,</li>
  *   <li>each feature of each class,</li>
+ *   <li>each operation of each class,</li>
  *   <li>each enum,</li>
  *   <li>and each data type</li>
  * </ul>
@@ -99,7 +100,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public static final MenuPackageImpl eINSTANCE = org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl.init();
+	public static final MenuPackageImpl eINSTANCE = org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl
+			.init();
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.menu.impl.ItemImpl <em>Item</em>}' class.
@@ -370,7 +372,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 * @ordered
 	 */
-	public static final int ITEM___UPDATE_LOCALIZATION = UiPackageImpl.UI_ELEMENT___UPDATE_LOCALIZATION;
+	public static final int ITEM___UPDATE_LOCALIZATION = UiPackageImpl.UI_ELEMENT_OPERATION_COUNT + 0;
 
 	/**
 	 * The number of operations of the '<em>Item</em>' class.
@@ -380,7 +382,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 * @ordered
 	 */
-	public static final int ITEM_OPERATION_COUNT = UiPackageImpl.UI_ELEMENT_OPERATION_COUNT + 0;
+	public static final int ITEM_OPERATION_COUNT = UiPackageImpl.UI_ELEMENT_OPERATION_COUNT + 1;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.menu.impl.HandledItemImpl <em>Handled Item</em>}' class.
@@ -648,6 +650,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference
 	 * @generated
 	 * @ordered
 	 */
@@ -935,16 +938,6 @@ public class MenuPackageImpl extends EPackageImpl {
 	public static final int MENU_ELEMENT_FEATURE_COUNT = UiPackageImpl.UI_ELEMENT_FEATURE_COUNT + 6;
 
 	/**
-	 * The operation id for the '<em>Update Localization</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @since 1.1
-	 * @generated
-	 * @ordered
-	 */
-	public static final int MENU_ELEMENT___UPDATE_LOCALIZATION = UiPackageImpl.UI_ELEMENT___UPDATE_LOCALIZATION;
-
-	/**
 	 * The operation id for the '<em>Get Localized Mnemonics</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -955,6 +948,16 @@ public class MenuPackageImpl extends EPackageImpl {
 	public static final int MENU_ELEMENT___GET_LOCALIZED_MNEMONICS = UiPackageImpl.UI_ELEMENT_OPERATION_COUNT + 0;
 
 	/**
+	 * The operation id for the '<em>Update Localization</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
+	 * @ordered
+	 */
+	public static final int MENU_ELEMENT___UPDATE_LOCALIZATION = UiPackageImpl.UI_ELEMENT_OPERATION_COUNT + 1;
+
+	/**
 	 * The number of operations of the '<em>Element</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -962,7 +965,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 * @ordered
 	 */
-	public static final int MENU_ELEMENT_OPERATION_COUNT = UiPackageImpl.UI_ELEMENT_OPERATION_COUNT + 1;
+	public static final int MENU_ELEMENT_OPERATION_COUNT = UiPackageImpl.UI_ELEMENT_OPERATION_COUNT + 2;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.menu.impl.MenuItemImpl <em>Item</em>}' class.
@@ -1236,16 +1239,6 @@ public class MenuPackageImpl extends EPackageImpl {
 	public static final int MENU_ITEM_FEATURE_COUNT = ITEM_FEATURE_COUNT + 1;
 
 	/**
-	 * The operation id for the '<em>Update Localization</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @since 1.1
-	 * @generated
-	 * @ordered
-	 */
-	public static final int MENU_ITEM___UPDATE_LOCALIZATION = ITEM___UPDATE_LOCALIZATION;
-
-	/**
 	 * The operation id for the '<em>Get Localized Mnemonics</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1256,6 +1249,16 @@ public class MenuPackageImpl extends EPackageImpl {
 	public static final int MENU_ITEM___GET_LOCALIZED_MNEMONICS = ITEM_OPERATION_COUNT + 0;
 
 	/**
+	 * The operation id for the '<em>Update Localization</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
+	 * @ordered
+	 */
+	public static final int MENU_ITEM___UPDATE_LOCALIZATION = ITEM_OPERATION_COUNT + 2;
+
+	/**
 	 * The number of operations of the '<em>Item</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1263,7 +1266,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 * @ordered
 	 */
-	public static final int MENU_ITEM_OPERATION_COUNT = ITEM_OPERATION_COUNT + 1;
+	public static final int MENU_ITEM_OPERATION_COUNT = ITEM_OPERATION_COUNT + 3;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.ui.menu.impl.MenuSeparatorImpl <em>Separator</em>}' class.
@@ -1507,16 +1510,6 @@ public class MenuPackageImpl extends EPackageImpl {
 	public static final int MENU_SEPARATOR_FEATURE_COUNT = MENU_ELEMENT_FEATURE_COUNT + 0;
 
 	/**
-	 * The operation id for the '<em>Update Localization</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @since 1.1
-	 * @generated
-	 * @ordered
-	 */
-	public static final int MENU_SEPARATOR___UPDATE_LOCALIZATION = MENU_ELEMENT___UPDATE_LOCALIZATION;
-
-	/**
 	 * The operation id for the '<em>Get Localized Mnemonics</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1525,6 +1518,16 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @ordered
 	 */
 	public static final int MENU_SEPARATOR___GET_LOCALIZED_MNEMONICS = MENU_ELEMENT___GET_LOCALIZED_MNEMONICS;
+
+	/**
+	 * The operation id for the '<em>Update Localization</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
+	 * @ordered
+	 */
+	public static final int MENU_SEPARATOR___UPDATE_LOCALIZATION = MENU_ELEMENT___UPDATE_LOCALIZATION;
 
 	/**
 	 * The number of operations of the '<em>Separator</em>' class.
@@ -1808,16 +1811,6 @@ public class MenuPackageImpl extends EPackageImpl {
 	public static final int MENU_FEATURE_COUNT = MENU_ELEMENT_FEATURE_COUNT + 3;
 
 	/**
-	 * The operation id for the '<em>Update Localization</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @since 1.1
-	 * @generated
-	 * @ordered
-	 */
-	public static final int MENU___UPDATE_LOCALIZATION = MENU_ELEMENT___UPDATE_LOCALIZATION;
-
-	/**
 	 * The operation id for the '<em>Get Localized Mnemonics</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1826,6 +1819,16 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @ordered
 	 */
 	public static final int MENU___GET_LOCALIZED_MNEMONICS = MENU_ELEMENT___GET_LOCALIZED_MNEMONICS;
+
+	/**
+	 * The operation id for the '<em>Update Localization</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
+	 * @ordered
+	 */
+	public static final int MENU___UPDATE_LOCALIZATION = MENU_ELEMENT___UPDATE_LOCALIZATION;
 
 	/**
 	 * The number of operations of the '<em>Menu</em>' class.
@@ -1844,6 +1847,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuContributionImpl
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl#getMenuContribution()
 	 * @since 1.0
+	 * @noreference See {@link MMenuContribution model documentation} for details.
 	 * @generated
 	 */
 	public static final int MENU_CONTRIBUTION = 6;
@@ -2053,6 +2057,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MMenuContribution model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
@@ -2073,6 +2078,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MMenuContribution model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
@@ -2380,16 +2386,6 @@ public class MenuPackageImpl extends EPackageImpl {
 	public static final int POPUP_MENU_FEATURE_COUNT = MENU_FEATURE_COUNT + 3;
 
 	/**
-	 * The operation id for the '<em>Update Localization</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @since 1.1
-	 * @generated
-	 * @ordered
-	 */
-	public static final int POPUP_MENU___UPDATE_LOCALIZATION = MENU___UPDATE_LOCALIZATION;
-
-	/**
 	 * The operation id for the '<em>Get Localized Mnemonics</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -2398,6 +2394,16 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @ordered
 	 */
 	public static final int POPUP_MENU___GET_LOCALIZED_MNEMONICS = MENU___GET_LOCALIZED_MNEMONICS;
+
+	/**
+	 * The operation id for the '<em>Update Localization</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
+	 * @ordered
+	 */
+	public static final int POPUP_MENU___UPDATE_LOCALIZATION = MENU___UPDATE_LOCALIZATION;
 
 	/**
 	 * The number of operations of the '<em>Popup Menu</em>' class.
@@ -2701,16 +2707,6 @@ public class MenuPackageImpl extends EPackageImpl {
 	public static final int DIRECT_MENU_ITEM_FEATURE_COUNT = MENU_ITEM_FEATURE_COUNT + 2;
 
 	/**
-	 * The operation id for the '<em>Update Localization</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @since 1.1
-	 * @generated
-	 * @ordered
-	 */
-	public static final int DIRECT_MENU_ITEM___UPDATE_LOCALIZATION = MENU_ITEM___UPDATE_LOCALIZATION;
-
-	/**
 	 * The operation id for the '<em>Get Localized Mnemonics</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -2719,6 +2715,16 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @ordered
 	 */
 	public static final int DIRECT_MENU_ITEM___GET_LOCALIZED_MNEMONICS = MENU_ITEM___GET_LOCALIZED_MNEMONICS;
+
+	/**
+	 * The operation id for the '<em>Update Localization</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
+	 * @ordered
+	 */
+	public static final int DIRECT_MENU_ITEM___UPDATE_LOCALIZATION = MENU_ITEM___UPDATE_LOCALIZATION;
 
 	/**
 	 * The number of operations of the '<em>Direct Menu Item</em>' class.
@@ -3006,6 +3012,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference
 	 * @generated
 	 * @ordered
 	 */
@@ -3032,16 +3039,6 @@ public class MenuPackageImpl extends EPackageImpl {
 	public static final int HANDLED_MENU_ITEM_FEATURE_COUNT = MENU_ITEM_FEATURE_COUNT + 3;
 
 	/**
-	 * The operation id for the '<em>Update Localization</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @since 1.1
-	 * @generated
-	 * @ordered
-	 */
-	public static final int HANDLED_MENU_ITEM___UPDATE_LOCALIZATION = MENU_ITEM___UPDATE_LOCALIZATION;
-
-	/**
 	 * The operation id for the '<em>Get Localized Mnemonics</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -3050,6 +3047,16 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @ordered
 	 */
 	public static final int HANDLED_MENU_ITEM___GET_LOCALIZED_MNEMONICS = MENU_ITEM___GET_LOCALIZED_MNEMONICS;
+
+	/**
+	 * The operation id for the '<em>Update Localization</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
+	 * @ordered
+	 */
+	public static final int HANDLED_MENU_ITEM___UPDATE_LOCALIZATION = MENU_ITEM___UPDATE_LOCALIZATION;
 
 	/**
 	 * The number of operations of the '<em>Handled Menu Item</em>' class.
@@ -4271,6 +4278,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference
 	 * @generated
 	 * @ordered
 	 */
@@ -4835,6 +4843,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MMenuContributions
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl#getMenuContributions()
 	 * @since 1.0
+	 * @noreference See {@link MMenuContributions model documentation} for details.
 	 * @generated
 	 */
 	public static final int MENU_CONTRIBUTIONS = 17;
@@ -4854,6 +4863,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MMenuContributions model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
@@ -4864,6 +4874,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MMenuContributions model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
@@ -4876,6 +4887,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.ToolBarContributionImpl
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl#getToolBarContribution()
 	 * @since 1.0
+	 * @noreference See {@link MToolBarContribution model documentation} for details.
 	 * @generated
 	 */
 	public static final int TOOL_BAR_CONTRIBUTION = 18;
@@ -5078,13 +5090,15 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 * @ordered
 	 */
-	public static final int TOOL_BAR_CONTRIBUTION__POSITION_IN_PARENT = UiPackageImpl.ELEMENT_CONTAINER_FEATURE_COUNT + 1;
+	public static final int TOOL_BAR_CONTRIBUTION__POSITION_IN_PARENT = UiPackageImpl.ELEMENT_CONTAINER_FEATURE_COUNT
+			+ 1;
 
 	/**
 	 * The number of structural features of the '<em>Tool Bar Contribution</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MToolBarContribution model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
@@ -5105,6 +5119,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MToolBarContribution model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
@@ -5117,6 +5132,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MToolBarContributions
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl#getToolBarContributions()
 	 * @since 1.0
+	 * @noreference See {@link MToolBarContributions model documentation} for details.
 	 * @generated
 	 */
 	public static final int TOOL_BAR_CONTRIBUTIONS = 19;
@@ -5136,6 +5152,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MToolBarContributions model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
@@ -5146,6 +5163,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MToolBarContributions model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
@@ -5158,6 +5176,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.TrimContributionImpl
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl#getTrimContribution()
 	 * @since 1.0
+	 * @noreference See {@link MTrimContribution model documentation} for details.
 	 * @generated
 	 */
 	public static final int TRIM_CONTRIBUTION = 20;
@@ -5367,6 +5386,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MTrimContribution model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
@@ -5387,6 +5407,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MTrimContribution model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
@@ -5399,6 +5420,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MTrimContributions
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl#getTrimContributions()
 	 * @since 1.0
+	 * @noreference See {@link MTrimContributions model documentation} for details.
 	 * @generated
 	 */
 	public static final int TRIM_CONTRIBUTIONS = 21;
@@ -5418,6 +5440,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MTrimContributions model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
@@ -5428,6 +5451,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MTrimContributions model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
@@ -5725,16 +5749,6 @@ public class MenuPackageImpl extends EPackageImpl {
 	public static final int DYNAMIC_MENU_CONTRIBUTION_FEATURE_COUNT = MENU_ITEM_FEATURE_COUNT + 2;
 
 	/**
-	 * The operation id for the '<em>Update Localization</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @since 1.1
-	 * @generated
-	 * @ordered
-	 */
-	public static final int DYNAMIC_MENU_CONTRIBUTION___UPDATE_LOCALIZATION = MENU_ITEM___UPDATE_LOCALIZATION;
-
-	/**
 	 * The operation id for the '<em>Get Localized Mnemonics</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -5743,6 +5757,16 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @ordered
 	 */
 	public static final int DYNAMIC_MENU_CONTRIBUTION___GET_LOCALIZED_MNEMONICS = MENU_ITEM___GET_LOCALIZED_MNEMONICS;
+
+	/**
+	 * The operation id for the '<em>Update Localization</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
+	 * @ordered
+	 */
+	public static final int DYNAMIC_MENU_CONTRIBUTION___UPDATE_LOCALIZATION = MENU_ITEM___UPDATE_LOCALIZATION;
 
 	/**
 	 * The number of operations of the '<em>Dynamic Menu Contribution</em>' class.
@@ -5973,7 +5997,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	private MenuPackageImpl() {
-		super(eNS_URI, ((EFactory)MMenuFactory.INSTANCE));
+		super(eNS_URI, ((EFactory) MMenuFactory.INSTANCE));
 	}
 
 	/**
@@ -5996,27 +6020,42 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public static MenuPackageImpl init() {
-		if (isInited) return (MenuPackageImpl)EPackage.Registry.INSTANCE.getEPackage(MenuPackageImpl.eNS_URI);
+		if (isInited)
+			return (MenuPackageImpl) EPackage.Registry.INSTANCE.getEPackage(MenuPackageImpl.eNS_URI);
 
 		// Obtain or create and register package
 		Object registeredMenuPackage = EPackage.Registry.INSTANCE.get(eNS_URI);
-		MenuPackageImpl theMenuPackage = registeredMenuPackage instanceof MenuPackageImpl ? (MenuPackageImpl)registeredMenuPackage : new MenuPackageImpl();
+		MenuPackageImpl theMenuPackage = registeredMenuPackage instanceof MenuPackageImpl
+				? (MenuPackageImpl) registeredMenuPackage
+				: new MenuPackageImpl();
 
 		isInited = true;
 
 		// Obtain or create and register interdependencies
 		Object registeredPackage = EPackage.Registry.INSTANCE.getEPackage(ApplicationPackageImpl.eNS_URI);
-		ApplicationPackageImpl theApplicationPackage = (ApplicationPackageImpl)(registeredPackage instanceof ApplicationPackageImpl ? registeredPackage : ApplicationPackageImpl.eINSTANCE);
+		ApplicationPackageImpl theApplicationPackage = (ApplicationPackageImpl) (registeredPackage instanceof ApplicationPackageImpl
+				? registeredPackage
+				: ApplicationPackageImpl.eINSTANCE);
 		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(CommandsPackageImpl.eNS_URI);
-		CommandsPackageImpl theCommandsPackage = (CommandsPackageImpl)(registeredPackage instanceof CommandsPackageImpl ? registeredPackage : CommandsPackageImpl.eINSTANCE);
+		CommandsPackageImpl theCommandsPackage = (CommandsPackageImpl) (registeredPackage instanceof CommandsPackageImpl
+				? registeredPackage
+				: CommandsPackageImpl.eINSTANCE);
 		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(UiPackageImpl.eNS_URI);
-		UiPackageImpl theUiPackage = (UiPackageImpl)(registeredPackage instanceof UiPackageImpl ? registeredPackage : UiPackageImpl.eINSTANCE);
+		UiPackageImpl theUiPackage = (UiPackageImpl) (registeredPackage instanceof UiPackageImpl ? registeredPackage
+				: UiPackageImpl.eINSTANCE);
 		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(BasicPackageImpl.eNS_URI);
-		BasicPackageImpl theBasicPackage = (BasicPackageImpl)(registeredPackage instanceof BasicPackageImpl ? registeredPackage : BasicPackageImpl.eINSTANCE);
+		BasicPackageImpl theBasicPackage = (BasicPackageImpl) (registeredPackage instanceof BasicPackageImpl
+				? registeredPackage
+				: BasicPackageImpl.eINSTANCE);
 		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(AdvancedPackageImpl.eNS_URI);
-		AdvancedPackageImpl theAdvancedPackage = (AdvancedPackageImpl)(registeredPackage instanceof AdvancedPackageImpl ? registeredPackage : AdvancedPackageImpl.eINSTANCE);
-		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eNS_URI);
-		org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl theBasicPackage_1 = (org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl)(registeredPackage instanceof org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl ? registeredPackage : org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eINSTANCE);
+		AdvancedPackageImpl theAdvancedPackage = (AdvancedPackageImpl) (registeredPackage instanceof AdvancedPackageImpl
+				? registeredPackage
+				: AdvancedPackageImpl.eINSTANCE);
+		registeredPackage = EPackage.Registry.INSTANCE
+				.getEPackage(org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eNS_URI);
+		org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl theBasicPackage_1 = (org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl) (registeredPackage instanceof org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl
+				? registeredPackage
+				: org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eINSTANCE);
 
 		// Create package meta-data objects
 		theMenuPackage.createPackageContents();
@@ -6044,7 +6083,6 @@ public class MenuPackageImpl extends EPackageImpl {
 		return theMenuPackage;
 	}
 
-
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.menu.MItem <em>Item</em>}'.
 	 * <!-- begin-user-doc -->
@@ -6069,7 +6107,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getItem_Enabled() {
-		return (EAttribute)itemEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) itemEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -6083,7 +6121,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getItem_Selected() {
-		return (EAttribute)itemEClass.getEStructuralFeatures().get(1);
+		return (EAttribute) itemEClass.getEStructuralFeatures().get(1);
 	}
 
 	/**
@@ -6097,7 +6135,20 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getItem_Type() {
-		return (EAttribute)itemEClass.getEStructuralFeatures().get(2);
+		return (EAttribute) itemEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.e4.ui.model.application.ui.menu.MItem#updateLocalization() <em>Update Localization</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Update Localization</em>' operation.
+	 * @see org.eclipse.e4.ui.model.application.ui.menu.MItem#updateLocalization()
+	 * @since 1.1
+	 * @generated
+	 */
+	public EOperation getItem__UpdateLocalization() {
+		return itemEClass.getEOperations().get(0);
 	}
 
 	/**
@@ -6124,7 +6175,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getHandledItem_Command() {
-		return (EReference)handledItemEClass.getEStructuralFeatures().get(0);
+		return (EReference) handledItemEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -6135,10 +6186,11 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MHandledItem#getWbCommand()
 	 * @see #getHandledItem()
 	 * @since 1.0
+	 * @noreference
 	 * @generated
 	 */
 	public EAttribute getHandledItem_WbCommand() {
-		return (EAttribute)handledItemEClass.getEStructuralFeatures().get(1);
+		return (EAttribute) handledItemEClass.getEStructuralFeatures().get(1);
 	}
 
 	/**
@@ -6152,7 +6204,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getHandledItem_Parameters() {
-		return (EReference)handledItemEClass.getEStructuralFeatures().get(2);
+		return (EReference) handledItemEClass.getEStructuralFeatures().get(2);
 	}
 
 	/**
@@ -6179,9 +6231,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getMenuElement_Mnemonics() {
-		return (EAttribute)menuElementEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) menuElementEClass.getEStructuralFeatures().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.e4.ui.model.application.ui.menu.MMenuElement#getLocalizedMnemonics() <em>Get Localized Mnemonics</em>}' operation.
@@ -6196,6 +6247,18 @@ public class MenuPackageImpl extends EPackageImpl {
 		return menuElementEClass.getEOperations().get(0);
 	}
 
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.e4.ui.model.application.ui.menu.MMenuElement#updateLocalization() <em>Update Localization</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Update Localization</em>' operation.
+	 * @see org.eclipse.e4.ui.model.application.ui.menu.MMenuElement#updateLocalization()
+	 * @since 1.1
+	 * @generated
+	 */
+	public EOperation getMenuElement__UpdateLocalization() {
+		return menuElementEClass.getEOperations().get(1);
+	}
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.menu.MMenuItem <em>Item</em>}'.
@@ -6208,6 +6271,19 @@ public class MenuPackageImpl extends EPackageImpl {
 	 */
 	public EClass getMenuItem() {
 		return menuItemEClass;
+	}
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.e4.ui.model.application.ui.menu.MMenuItem#updateLocalization() <em>Update Localization</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Update Localization</em>' operation.
+	 * @see org.eclipse.e4.ui.model.application.ui.menu.MMenuItem#updateLocalization()
+	 * @since 1.1
+	 * @generated
+	 */
+	public EOperation getMenuItem__UpdateLocalization() {
+		return menuItemEClass.getEOperations().get(0);
 	}
 
 	/**
@@ -6247,7 +6323,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getMenu_Enabled() {
-		return (EAttribute)menuEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) menuEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -6257,12 +6333,12 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @return the meta object for class '<em>Contribution</em>'.
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MMenuContribution
 	 * @since 1.0
+	 * @noreference See {@link MMenuContribution model documentation} for details.
 	 * @generated
 	 */
 	public EClass getMenuContribution() {
 		return menuContributionEClass;
 	}
-
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.menu.MMenuContribution#getPositionInParent <em>Position In Parent</em>}'.
@@ -6275,9 +6351,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getMenuContribution_PositionInParent() {
-		return (EAttribute)menuContributionEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) menuContributionEClass.getEStructuralFeatures().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.menu.MMenuContribution#getParentId <em>Parent Id</em>}'.
@@ -6290,9 +6365,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getMenuContribution_ParentId() {
-		return (EAttribute)menuContributionEClass.getEStructuralFeatures().get(1);
+		return (EAttribute) menuContributionEClass.getEStructuralFeatures().get(1);
 	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.menu.MPopupMenu <em>Popup Menu</em>}'.
@@ -6306,7 +6380,6 @@ public class MenuPackageImpl extends EPackageImpl {
 	public EClass getPopupMenu() {
 		return popupMenuEClass;
 	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.menu.MDirectMenuItem <em>Direct Menu Item</em>}'.
@@ -6358,9 +6431,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getToolItem_Menu() {
-		return (EReference)toolItemEClass.getEStructuralFeatures().get(0);
+		return (EReference) toolItemEClass.getEStructuralFeatures().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.menu.MToolBar <em>Tool Bar</em>}'.
@@ -6447,12 +6519,12 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @return the meta object for class '<em>Contributions</em>'.
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MMenuContributions
 	 * @since 1.0
+	 * @noreference See {@link MMenuContributions model documentation} for details.
 	 * @generated
 	 */
 	public EClass getMenuContributions() {
 		return menuContributionsEClass;
 	}
-
 
 	/**
 	 * Returns the meta object for the containment reference list '{@link org.eclipse.e4.ui.model.application.ui.menu.MMenuContributions#getMenuContributions <em>Menu Contributions</em>}'.
@@ -6465,9 +6537,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getMenuContributions_MenuContributions() {
-		return (EReference)menuContributionsEClass.getEStructuralFeatures().get(0);
+		return (EReference) menuContributionsEClass.getEStructuralFeatures().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.menu.MToolBarContribution <em>Tool Bar Contribution</em>}'.
@@ -6476,12 +6547,12 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @return the meta object for class '<em>Tool Bar Contribution</em>'.
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MToolBarContribution
 	 * @since 1.0
+	 * @noreference See {@link MToolBarContribution model documentation} for details.
 	 * @generated
 	 */
 	public EClass getToolBarContribution() {
 		return toolBarContributionEClass;
 	}
-
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.menu.MToolBarContribution#getParentId <em>Parent Id</em>}'.
@@ -6494,9 +6565,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getToolBarContribution_ParentId() {
-		return (EAttribute)toolBarContributionEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) toolBarContributionEClass.getEStructuralFeatures().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.menu.MToolBarContribution#getPositionInParent <em>Position In Parent</em>}'.
@@ -6509,9 +6579,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getToolBarContribution_PositionInParent() {
-		return (EAttribute)toolBarContributionEClass.getEStructuralFeatures().get(1);
+		return (EAttribute) toolBarContributionEClass.getEStructuralFeatures().get(1);
 	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.menu.MToolBarContributions <em>Tool Bar Contributions</em>}'.
@@ -6520,12 +6589,12 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @return the meta object for class '<em>Tool Bar Contributions</em>'.
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MToolBarContributions
 	 * @since 1.0
+	 * @noreference See {@link MToolBarContributions model documentation} for details.
 	 * @generated
 	 */
 	public EClass getToolBarContributions() {
 		return toolBarContributionsEClass;
 	}
-
 
 	/**
 	 * Returns the meta object for the containment reference list '{@link org.eclipse.e4.ui.model.application.ui.menu.MToolBarContributions#getToolBarContributions <em>Tool Bar Contributions</em>}'.
@@ -6538,9 +6607,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getToolBarContributions_ToolBarContributions() {
-		return (EReference)toolBarContributionsEClass.getEStructuralFeatures().get(0);
+		return (EReference) toolBarContributionsEClass.getEStructuralFeatures().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.menu.MTrimContribution <em>Trim Contribution</em>}'.
@@ -6549,12 +6617,12 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @return the meta object for class '<em>Trim Contribution</em>'.
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MTrimContribution
 	 * @since 1.0
+	 * @noreference See {@link MTrimContribution model documentation} for details.
 	 * @generated
 	 */
 	public EClass getTrimContribution() {
 		return trimContributionEClass;
 	}
-
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.menu.MTrimContribution#getParentId <em>Parent Id</em>}'.
@@ -6567,9 +6635,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getTrimContribution_ParentId() {
-		return (EAttribute)trimContributionEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) trimContributionEClass.getEStructuralFeatures().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.e4.ui.model.application.ui.menu.MTrimContribution#getPositionInParent <em>Position In Parent</em>}'.
@@ -6582,9 +6649,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getTrimContribution_PositionInParent() {
-		return (EAttribute)trimContributionEClass.getEStructuralFeatures().get(1);
+		return (EAttribute) trimContributionEClass.getEStructuralFeatures().get(1);
 	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.menu.MTrimContributions <em>Trim Contributions</em>}'.
@@ -6593,12 +6659,12 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @return the meta object for class '<em>Trim Contributions</em>'.
 	 * @see org.eclipse.e4.ui.model.application.ui.menu.MTrimContributions
 	 * @since 1.0
+	 * @noreference See {@link MTrimContributions model documentation} for details.
 	 * @generated
 	 */
 	public EClass getTrimContributions() {
 		return trimContributionsEClass;
 	}
-
 
 	/**
 	 * Returns the meta object for the containment reference list '{@link org.eclipse.e4.ui.model.application.ui.menu.MTrimContributions#getTrimContributions <em>Trim Contributions</em>}'.
@@ -6611,9 +6677,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getTrimContributions_TrimContributions() {
-		return (EReference)trimContributionsEClass.getEStructuralFeatures().get(0);
+		return (EReference) trimContributionsEClass.getEStructuralFeatures().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.ui.menu.MDynamicMenuContribution <em>Dynamic Menu Contribution</em>}'.
@@ -6627,7 +6692,6 @@ public class MenuPackageImpl extends EPackageImpl {
 	public EClass getDynamicMenuContribution() {
 		return dynamicMenuContributionEClass;
 	}
-
 
 	/**
 	 * Returns the meta object for enum '{@link org.eclipse.e4.ui.model.application.ui.menu.ItemType <em>Item Type</em>}'.
@@ -6650,7 +6714,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public MMenuFactory getMenuFactory() {
-		return (MMenuFactory)getEFactoryInstance();
+		return (MMenuFactory) getEFactoryInstance();
 	}
 
 	/**
@@ -6668,7 +6732,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public void createPackageContents() {
-		if (isCreated) return;
+		if (isCreated)
+			return;
 		isCreated = true;
 
 		// Create classes and their features
@@ -6676,6 +6741,7 @@ public class MenuPackageImpl extends EPackageImpl {
 		createEAttribute(itemEClass, ITEM__ENABLED);
 		createEAttribute(itemEClass, ITEM__SELECTED);
 		createEAttribute(itemEClass, ITEM__TYPE);
+		createEOperation(itemEClass, ITEM___UPDATE_LOCALIZATION);
 
 		handledItemEClass = createEClass(HANDLED_ITEM);
 		createEReference(handledItemEClass, HANDLED_ITEM__COMMAND);
@@ -6685,8 +6751,10 @@ public class MenuPackageImpl extends EPackageImpl {
 		menuElementEClass = createEClass(MENU_ELEMENT);
 		createEAttribute(menuElementEClass, MENU_ELEMENT__MNEMONICS);
 		createEOperation(menuElementEClass, MENU_ELEMENT___GET_LOCALIZED_MNEMONICS);
+		createEOperation(menuElementEClass, MENU_ELEMENT___UPDATE_LOCALIZATION);
 
 		menuItemEClass = createEClass(MENU_ITEM);
+		createEOperation(menuItemEClass, MENU_ITEM___UPDATE_LOCALIZATION);
 
 		menuSeparatorEClass = createEClass(MENU_SEPARATOR);
 
@@ -6756,7 +6824,8 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public void initializePackageContents() {
-		if (isInitialized) return;
+		if (isInitialized)
+			return;
 		isInitialized = true;
 
 		// Initialize package
@@ -6765,10 +6834,13 @@ public class MenuPackageImpl extends EPackageImpl {
 		setNsURI(eNS_URI);
 
 		// Obtain other dependent packages
-		UiPackageImpl theUiPackage = (UiPackageImpl)EPackage.Registry.INSTANCE.getEPackage(UiPackageImpl.eNS_URI);
-		CommandsPackageImpl theCommandsPackage = (CommandsPackageImpl)EPackage.Registry.INSTANCE.getEPackage(CommandsPackageImpl.eNS_URI);
-		ApplicationPackageImpl theApplicationPackage = (ApplicationPackageImpl)EPackage.Registry.INSTANCE.getEPackage(ApplicationPackageImpl.eNS_URI);
-		BasicPackageImpl theBasicPackage = (BasicPackageImpl)EPackage.Registry.INSTANCE.getEPackage(BasicPackageImpl.eNS_URI);
+		UiPackageImpl theUiPackage = (UiPackageImpl) EPackage.Registry.INSTANCE.getEPackage(UiPackageImpl.eNS_URI);
+		CommandsPackageImpl theCommandsPackage = (CommandsPackageImpl) EPackage.Registry.INSTANCE
+				.getEPackage(CommandsPackageImpl.eNS_URI);
+		ApplicationPackageImpl theApplicationPackage = (ApplicationPackageImpl) EPackage.Registry.INSTANCE
+				.getEPackage(ApplicationPackageImpl.eNS_URI);
+		BasicPackageImpl theBasicPackage = (BasicPackageImpl) EPackage.Registry.INSTANCE
+				.getEPackage(BasicPackageImpl.eNS_URI);
 
 		// Create type parameters
 
@@ -6829,70 +6901,129 @@ public class MenuPackageImpl extends EPackageImpl {
 
 		// Initialize classes, features, and operations; add parameters
 		initEClass(itemEClass, MItem.class, "Item", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getItem_Enabled(), ecorePackage.getEBoolean(), "enabled", "true", 0, 1, MItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$ //$NON-NLS-2$
-		initEAttribute(getItem_Selected(), ecorePackage.getEBoolean(), "selected", null, 0, 1, MItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getItem_Type(), this.getItemType(), "type", null, 1, 1, MItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEAttribute(getItem_Enabled(), ecorePackage.getEBoolean(), "enabled", "true", 0, 1, MItem.class, //$NON-NLS-1$//$NON-NLS-2$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getItem_Selected(), ecorePackage.getEBoolean(), "selected", null, 0, 1, MItem.class, //$NON-NLS-1$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getItem_Type(), this.getItemType(), "type", null, 1, 1, MItem.class, !IS_TRANSIENT, !IS_VOLATILE, //$NON-NLS-1$
+				IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(handledItemEClass, MHandledItem.class, "HandledItem", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEReference(getHandledItem_Command(), theCommandsPackage.getCommand(), null, "command", null, 0, 1, MHandledItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getHandledItem_WbCommand(), theCommandsPackage.getParameterizedCommand(), "wbCommand", null, 0, 1, MHandledItem.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEReference(getHandledItem_Parameters(), theCommandsPackage.getParameter(), null, "parameters", null, 0, -1, MHandledItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEOperation(getItem__UpdateLocalization(), null, "updateLocalization", 0, 1, IS_UNIQUE, IS_ORDERED); //$NON-NLS-1$
 
-		initEClass(menuElementEClass, MMenuElement.class, "MenuElement", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getMenuElement_Mnemonics(), ecorePackage.getEString(), "mnemonics", null, 0, 1, MMenuElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(handledItemEClass, MHandledItem.class, "HandledItem", IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getHandledItem_Command(), theCommandsPackage.getCommand(), null, "command", null, 0, 1, //$NON-NLS-1$
+				MHandledItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getHandledItem_WbCommand(), theCommandsPackage.getParameterizedCommand(), "wbCommand", null, 0, //$NON-NLS-1$
+				1, MHandledItem.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
+		initEReference(getHandledItem_Parameters(), theCommandsPackage.getParameter(), null, "parameters", null, 0, -1, //$NON-NLS-1$
+				MHandledItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEOperation(getMenuElement__GetLocalizedMnemonics(), ecorePackage.getEString(), "getLocalizedMnemonics", 0, 1, IS_UNIQUE, IS_ORDERED); //$NON-NLS-1$
+		initEClass(menuElementEClass, MMenuElement.class, "MenuElement", IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getMenuElement_Mnemonics(), ecorePackage.getEString(), "mnemonics", null, 0, 1, //$NON-NLS-1$
+				MMenuElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
 
-		initEClass(menuItemEClass, MMenuItem.class, "MenuItem", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEOperation(getMenuElement__GetLocalizedMnemonics(), ecorePackage.getEString(), "getLocalizedMnemonics", 0, //$NON-NLS-1$
+				1, IS_UNIQUE, IS_ORDERED);
 
-		initEClass(menuSeparatorEClass, MMenuSeparator.class, "MenuSeparator", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEOperation(getMenuElement__UpdateLocalization(), null, "updateLocalization", 0, 1, IS_UNIQUE, IS_ORDERED); //$NON-NLS-1$
+
+		initEClass(menuItemEClass, MMenuItem.class, "MenuItem", IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+
+		initEOperation(getMenuItem__UpdateLocalization(), null, "updateLocalization", 0, 1, IS_UNIQUE, IS_ORDERED); //$NON-NLS-1$
+
+		initEClass(menuSeparatorEClass, MMenuSeparator.class, "MenuSeparator", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 
 		initEClass(menuEClass, MMenu.class, "Menu", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getMenu_Enabled(), ecorePackage.getEBoolean(), "enabled", "true", 0, 1, MMenu.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$ //$NON-NLS-2$
+		initEAttribute(getMenu_Enabled(), ecorePackage.getEBoolean(), "enabled", "true", 0, 1, MMenu.class, //$NON-NLS-1$//$NON-NLS-2$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(menuContributionEClass, MMenuContribution.class, "MenuContribution", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getMenuContribution_PositionInParent(), ecorePackage.getEString(), "positionInParent", "", 0, 1, MMenuContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$ //$NON-NLS-2$
-		initEAttribute(getMenuContribution_ParentId(), ecorePackage.getEString(), "parentId", null, 1, 1, MMenuContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(menuContributionEClass, MMenuContribution.class, "MenuContribution", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getMenuContribution_PositionInParent(), ecorePackage.getEString(), "positionInParent", "", 0, 1, //$NON-NLS-1$//$NON-NLS-2$
+				MMenuContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
+		initEAttribute(getMenuContribution_ParentId(), ecorePackage.getEString(), "parentId", null, 1, 1, //$NON-NLS-1$
+				MMenuContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
 
-		initEClass(popupMenuEClass, MPopupMenu.class, "PopupMenu", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEClass(popupMenuEClass, MPopupMenu.class, "PopupMenu", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 
-		initEClass(directMenuItemEClass, MDirectMenuItem.class, "DirectMenuItem", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEClass(directMenuItemEClass, MDirectMenuItem.class, "DirectMenuItem", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 
-		initEClass(handledMenuItemEClass, MHandledMenuItem.class, "HandledMenuItem", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEClass(handledMenuItemEClass, MHandledMenuItem.class, "HandledMenuItem", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 
-		initEClass(toolItemEClass, MToolItem.class, "ToolItem", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEReference(getToolItem_Menu(), this.getMenu(), null, "menu", null, 0, 1, MToolItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(toolItemEClass, MToolItem.class, "ToolItem", IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getToolItem_Menu(), this.getMenu(), null, "menu", null, 0, 1, MToolItem.class, !IS_TRANSIENT, //$NON-NLS-1$
+				!IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED,
+				IS_ORDERED);
 
 		initEClass(toolBarEClass, MToolBar.class, "ToolBar", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
 
-		initEClass(toolBarElementEClass, MToolBarElement.class, "ToolBarElement", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEClass(toolBarElementEClass, MToolBarElement.class, "ToolBarElement", IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 
-		initEClass(toolControlEClass, MToolControl.class, "ToolControl", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEClass(toolControlEClass, MToolControl.class, "ToolControl", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 
-		initEClass(handledToolItemEClass, MHandledToolItem.class, "HandledToolItem", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEClass(handledToolItemEClass, MHandledToolItem.class, "HandledToolItem", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 
-		initEClass(directToolItemEClass, MDirectToolItem.class, "DirectToolItem", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEClass(directToolItemEClass, MDirectToolItem.class, "DirectToolItem", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 
-		initEClass(toolBarSeparatorEClass, MToolBarSeparator.class, "ToolBarSeparator", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEClass(toolBarSeparatorEClass, MToolBarSeparator.class, "ToolBarSeparator", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
 
-		initEClass(menuContributionsEClass, MMenuContributions.class, "MenuContributions", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEReference(getMenuContributions_MenuContributions(), this.getMenuContribution(), null, "menuContributions", null, 0, -1, MMenuContributions.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(menuContributionsEClass, MMenuContributions.class, "MenuContributions", IS_ABSTRACT, IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getMenuContributions_MenuContributions(), this.getMenuContribution(), null, "menuContributions", //$NON-NLS-1$
+				null, 0, -1, MMenuContributions.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE,
+				!IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(toolBarContributionEClass, MToolBarContribution.class, "ToolBarContribution", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getToolBarContribution_ParentId(), ecorePackage.getEString(), "parentId", null, 0, 1, MToolBarContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getToolBarContribution_PositionInParent(), ecorePackage.getEString(), "positionInParent", null, 0, 1, MToolBarContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(toolBarContributionEClass, MToolBarContribution.class, "ToolBarContribution", !IS_ABSTRACT, //$NON-NLS-1$
+				!IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getToolBarContribution_ParentId(), ecorePackage.getEString(), "parentId", null, 0, 1, //$NON-NLS-1$
+				MToolBarContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID,
+				IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getToolBarContribution_PositionInParent(), ecorePackage.getEString(), "positionInParent", null, //$NON-NLS-1$
+				0, 1, MToolBarContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID,
+				IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(toolBarContributionsEClass, MToolBarContributions.class, "ToolBarContributions", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEReference(getToolBarContributions_ToolBarContributions(), this.getToolBarContribution(), null, "toolBarContributions", null, 0, -1, MToolBarContributions.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(toolBarContributionsEClass, MToolBarContributions.class, "ToolBarContributions", IS_ABSTRACT, //$NON-NLS-1$
+				IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getToolBarContributions_ToolBarContributions(), this.getToolBarContribution(), null,
+				"toolBarContributions", null, 0, -1, MToolBarContributions.class, !IS_TRANSIENT, !IS_VOLATILE, //$NON-NLS-1$
+				IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(trimContributionEClass, MTrimContribution.class, "TrimContribution", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getTrimContribution_ParentId(), ecorePackage.getEString(), "parentId", null, 0, 1, MTrimContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getTrimContribution_PositionInParent(), ecorePackage.getEString(), "positionInParent", null, 0, 1, MTrimContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(trimContributionEClass, MTrimContribution.class, "TrimContribution", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getTrimContribution_ParentId(), ecorePackage.getEString(), "parentId", null, 0, 1, //$NON-NLS-1$
+				MTrimContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
+		initEAttribute(getTrimContribution_PositionInParent(), ecorePackage.getEString(), "positionInParent", null, 0, //$NON-NLS-1$
+				1, MTrimContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID,
+				IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(trimContributionsEClass, MTrimContributions.class, "TrimContributions", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEReference(getTrimContributions_TrimContributions(), this.getTrimContribution(), null, "trimContributions", null, 0, -1, MTrimContributions.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(trimContributionsEClass, MTrimContributions.class, "TrimContributions", IS_ABSTRACT, IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getTrimContributions_TrimContributions(), this.getTrimContribution(), null, "trimContributions", //$NON-NLS-1$
+				null, 0, -1, MTrimContributions.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE,
+				!IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(dynamicMenuContributionEClass, MDynamicMenuContribution.class, "DynamicMenuContribution", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEClass(dynamicMenuContributionEClass, MDynamicMenuContribution.class, "DynamicMenuContribution", //$NON-NLS-1$
+				!IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 
 		// Initialize enums and add enum literals
 		initEEnum(itemTypeEEnum, ItemType.class, "ItemType"); //$NON-NLS-1$
@@ -6907,6 +7038,7 @@ public class MenuPackageImpl extends EPackageImpl {
 	 * <ul>
 	 *   <li>each class,</li>
 	 *   <li>each feature of each class,</li>
+	 *   <li>each operation of each class,</li>
 	 *   <li>each enum,</li>
 	 *   <li>and each data type</li>
 	 * </ul>
@@ -6953,6 +7085,15 @@ public class MenuPackageImpl extends EPackageImpl {
 		public static final EAttribute ITEM__TYPE = eINSTANCE.getItem_Type();
 
 		/**
+		 * The meta object literal for the '<em><b>Update Localization</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @since 1.1
+		 * @generated
+		 */
+		public static final EOperation ITEM___UPDATE_LOCALIZATION = eINSTANCE.getItem__UpdateLocalization();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.menu.impl.HandledItemImpl <em>Handled Item</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -6977,6 +7118,7 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @since 1.0
+		 * @noreference
 		 * @generated
 		 */
 		public static final EAttribute HANDLED_ITEM__WB_COMMAND = eINSTANCE.getHandledItem_WbCommand();
@@ -7017,7 +7159,18 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EOperation MENU_ELEMENT___GET_LOCALIZED_MNEMONICS = eINSTANCE.getMenuElement__GetLocalizedMnemonics();
+		public static final EOperation MENU_ELEMENT___GET_LOCALIZED_MNEMONICS = eINSTANCE
+				.getMenuElement__GetLocalizedMnemonics();
+
+		/**
+		 * The meta object literal for the '<em><b>Update Localization</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @since 1.1
+		 * @generated
+		 */
+		public static final EOperation MENU_ELEMENT___UPDATE_LOCALIZATION = eINSTANCE
+				.getMenuElement__UpdateLocalization();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.menu.impl.MenuItemImpl <em>Item</em>}' class.
@@ -7029,6 +7182,15 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @generated
 		 */
 		public static final EClass MENU_ITEM = eINSTANCE.getMenuItem();
+
+		/**
+		 * The meta object literal for the '<em><b>Update Localization</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @since 1.1
+		 * @generated
+		 */
+		public static final EOperation MENU_ITEM___UPDATE_LOCALIZATION = eINSTANCE.getMenuItem__UpdateLocalization();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.menu.impl.MenuSeparatorImpl <em>Separator</em>}' class.
@@ -7068,6 +7230,7 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuContributionImpl
 		 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl#getMenuContribution()
 		 * @since 1.0
+		 * @noreference See {@link MMenuContribution model documentation} for details.
 		 * @generated
 		 */
 		public static final EClass MENU_CONTRIBUTION = eINSTANCE.getMenuContribution();
@@ -7079,7 +7242,8 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EAttribute MENU_CONTRIBUTION__POSITION_IN_PARENT = eINSTANCE.getMenuContribution_PositionInParent();
+		public static final EAttribute MENU_CONTRIBUTION__POSITION_IN_PARENT = eINSTANCE
+				.getMenuContribution_PositionInParent();
 
 		/**
 		 * The meta object literal for the '<em><b>Parent Id</b></em>' attribute feature.
@@ -7216,6 +7380,7 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @see org.eclipse.e4.ui.model.application.ui.menu.MMenuContributions
 		 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl#getMenuContributions()
 		 * @since 1.0
+		 * @noreference See {@link MMenuContributions model documentation} for details.
 		 * @generated
 		 */
 		public static final EClass MENU_CONTRIBUTIONS = eINSTANCE.getMenuContributions();
@@ -7227,7 +7392,8 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EReference MENU_CONTRIBUTIONS__MENU_CONTRIBUTIONS = eINSTANCE.getMenuContributions_MenuContributions();
+		public static final EReference MENU_CONTRIBUTIONS__MENU_CONTRIBUTIONS = eINSTANCE
+				.getMenuContributions_MenuContributions();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.menu.impl.ToolBarContributionImpl <em>Tool Bar Contribution</em>}' class.
@@ -7236,6 +7402,7 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.ToolBarContributionImpl
 		 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl#getToolBarContribution()
 		 * @since 1.0
+		 * @noreference See {@link MToolBarContribution model documentation} for details.
 		 * @generated
 		 */
 		public static final EClass TOOL_BAR_CONTRIBUTION = eINSTANCE.getToolBarContribution();
@@ -7256,7 +7423,8 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EAttribute TOOL_BAR_CONTRIBUTION__POSITION_IN_PARENT = eINSTANCE.getToolBarContribution_PositionInParent();
+		public static final EAttribute TOOL_BAR_CONTRIBUTION__POSITION_IN_PARENT = eINSTANCE
+				.getToolBarContribution_PositionInParent();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.menu.MToolBarContributions <em>Tool Bar Contributions</em>}' class.
@@ -7265,6 +7433,7 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @see org.eclipse.e4.ui.model.application.ui.menu.MToolBarContributions
 		 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl#getToolBarContributions()
 		 * @since 1.0
+		 * @noreference See {@link MToolBarContributions model documentation} for details.
 		 * @generated
 		 */
 		public static final EClass TOOL_BAR_CONTRIBUTIONS = eINSTANCE.getToolBarContributions();
@@ -7276,7 +7445,8 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EReference TOOL_BAR_CONTRIBUTIONS__TOOL_BAR_CONTRIBUTIONS = eINSTANCE.getToolBarContributions_ToolBarContributions();
+		public static final EReference TOOL_BAR_CONTRIBUTIONS__TOOL_BAR_CONTRIBUTIONS = eINSTANCE
+				.getToolBarContributions_ToolBarContributions();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.menu.impl.TrimContributionImpl <em>Trim Contribution</em>}' class.
@@ -7285,6 +7455,7 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.TrimContributionImpl
 		 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl#getTrimContribution()
 		 * @since 1.0
+		 * @noreference See {@link MTrimContribution model documentation} for details.
 		 * @generated
 		 */
 		public static final EClass TRIM_CONTRIBUTION = eINSTANCE.getTrimContribution();
@@ -7305,7 +7476,8 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EAttribute TRIM_CONTRIBUTION__POSITION_IN_PARENT = eINSTANCE.getTrimContribution_PositionInParent();
+		public static final EAttribute TRIM_CONTRIBUTION__POSITION_IN_PARENT = eINSTANCE
+				.getTrimContribution_PositionInParent();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.menu.MTrimContributions <em>Trim Contributions</em>}' class.
@@ -7314,6 +7486,7 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @see org.eclipse.e4.ui.model.application.ui.menu.MTrimContributions
 		 * @see org.eclipse.e4.ui.model.application.ui.menu.impl.MenuPackageImpl#getTrimContributions()
 		 * @since 1.0
+		 * @noreference See {@link MTrimContributions model documentation} for details.
 		 * @generated
 		 */
 		public static final EClass TRIM_CONTRIBUTIONS = eINSTANCE.getTrimContributions();
@@ -7325,7 +7498,8 @@ public class MenuPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EReference TRIM_CONTRIBUTIONS__TRIM_CONTRIBUTIONS = eINSTANCE.getTrimContributions_TrimContributions();
+		public static final EReference TRIM_CONTRIBUTIONS__TRIM_CONTRIBUTIONS = eINSTANCE
+				.getTrimContributions_TrimContributions();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.ui.menu.impl.DynamicMenuContributionImpl <em>Dynamic Menu Contribution</em>}' class.

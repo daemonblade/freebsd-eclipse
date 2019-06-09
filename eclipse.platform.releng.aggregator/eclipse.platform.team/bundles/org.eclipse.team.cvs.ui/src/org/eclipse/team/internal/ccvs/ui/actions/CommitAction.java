@@ -52,9 +52,6 @@ public class CommitAction extends WorkspaceTraversalAction {
 		}
 	}
 
-	/*
-	 * @see CVSAction#execute(IAction)
-	 */
 	@Override
 	public void execute(IAction action) throws InvocationTargetException, InterruptedException {
 		final ResourceTraversal[][] traversals = new ResourceTraversal[][] { null };
@@ -76,34 +73,22 @@ public class CommitAction extends WorkspaceTraversalAction {
 			}
 		}, false, PROGRESS_BUSYCURSOR);
 	}
-    
-	/**
-	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#getErrorTitle()
-	 */
+	
 	@Override
 	protected String getErrorTitle() {
 		return CVSUIMessages.CommitAction_commitFailed; 
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.ui.actions.WorkspaceAction#isEnabledForUnmanagedResources()
-	 */
 	@Override
 	protected boolean isEnabledForUnmanagedResources() {
 		return true;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.actions.WorkspaceAction#isEnabledForNonExistantResources()
-	 */
 	@Override
 	protected boolean isEnabledForNonExistantResources() {
 		return true;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#getId()
-	 */
 	@Override
 	public String getId() {
 		return ICVSUIConstants.CMD_COMMIT;
@@ -125,7 +110,7 @@ public class CommitAction extends WorkspaceTraversalAction {
 		if (option.equals(MessageDialogWithToggle.NEVER))
 			return false; // no, never switch
 		
-	    // Ask the user whether to switch
+		// Ask the user whether to switch
 		final int[] result = new int[] { 0 };
 		Utils.syncExec((Runnable) () -> {
 			final MessageDialogWithToggle m = MessageDialogWithToggle.openYesNoQuestion(shell,
@@ -139,10 +124,10 @@ public class CommitAction extends WorkspaceTraversalAction {
 		// yes
 		case IDialogConstants.YES_ID:
 		case IDialogConstants.OK_ID :
-		    return true;
+			return true;
 		// no
 		case IDialogConstants.NO_ID :
-		    return false;
+			return false;
 		}
 		return false;
 	}

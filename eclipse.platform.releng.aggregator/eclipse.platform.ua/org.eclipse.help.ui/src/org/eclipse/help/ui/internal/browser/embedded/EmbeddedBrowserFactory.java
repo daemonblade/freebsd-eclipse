@@ -67,7 +67,6 @@ public class EmbeddedBrowserFactory implements IBrowserFactory {
 	 */
 	private boolean test() {
 		if (!Constants.OS_WIN32.equalsIgnoreCase(Platform.getOS())
-				&& !Constants.OS_FREEBSD.equalsIgnoreCase(Platform.getOS())
 				&& !Constants.OS_LINUX.equalsIgnoreCase(Platform.getOS())) {
 			return false;
 		}

@@ -61,6 +61,7 @@ public class JavaLaunchDelegate extends AbstractJavaLaunchConfigurationDelegate 
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private VMRunnerConfiguration getVMRunnerConfiguration(ILaunchConfiguration configuration, String mode, IProgressMonitor monitor) throws CoreException {
 
 		monitor.beginTask(NLS.bind("{0}...", new String[]{configuration.getName()}), 3); //$NON-NLS-1$
@@ -97,6 +98,7 @@ public class JavaLaunchDelegate extends AbstractJavaLaunchConfigurationDelegate 
 		runConfig.setVMArguments(execArgs.getVMArgumentsArray());
 		runConfig.setWorkingDirectory(workingDirName);
 		runConfig.setVMSpecificAttributesMap(vmAttributesMap);
+		runConfig.setPreviewEnabled(supportsPreviewFeatures(configuration));
 		if (supportsModule()) {
 			// current module name, if so
 			try {

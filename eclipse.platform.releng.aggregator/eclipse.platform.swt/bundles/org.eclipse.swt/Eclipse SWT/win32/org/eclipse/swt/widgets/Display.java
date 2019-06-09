@@ -1682,16 +1682,16 @@ public Object getData (String key) {
 	checkDevice ();
 	if (key == null) error (SWT.ERROR_NULL_ARGUMENT);
 	if (key.equals (RUN_MESSAGES_IN_IDLE_KEY)) {
-		return new Boolean (runMessagesInIdle);
+		return runMessagesInIdle;
 	}
 	if (key.equals (RUN_MESSAGES_IN_MESSAGE_PROC_KEY)) {
-		return new Boolean (runMessagesInMessageProc);
+		return runMessagesInMessageProc;
 	}
 	if (key.equals (USE_OWNDC_KEY)) {
-		return new Boolean (useOwnDC);
+		return useOwnDC;
 	}
 	if (key.equals (ACCEL_KEY_HIT)) {
-		return new Boolean (accelKeyHit);
+		return accelKeyHit;
 	}
 	if (keys == null) return null;
 	for (int i=0; i<keys.length; i++) {
@@ -4788,8 +4788,8 @@ int textWidth (String text, long /*int*/ handle) {
 	long /*int*/ newFont = OS.SendMessage (handle, OS.WM_GETFONT, 0, 0);
 	if (newFont != 0) oldFont = OS.SelectObject (hDC, newFont);
 	int flags = OS.DT_CALCRECT | OS.DT_SINGLELINE | OS.DT_NOPREFIX;
-	TCHAR buffer = new TCHAR(0, text, false);
-	OS.DrawText (hDC, buffer, buffer.length (), rect, flags);
+	char [] buffer = text.toCharArray ();
+	OS.DrawText (hDC, buffer, buffer.length, rect, flags);
 	if (newFont != 0) OS.SelectObject (hDC, oldFont);
 	OS.ReleaseDC (handle, hDC);
 	return (rect.right - rect.left);

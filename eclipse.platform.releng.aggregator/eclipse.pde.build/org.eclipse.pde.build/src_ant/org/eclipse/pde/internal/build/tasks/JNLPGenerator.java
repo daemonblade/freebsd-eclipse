@@ -306,8 +306,6 @@ public class JNLPGenerator extends DefaultHandler {
 	private String convertOS(String os) {
 		if (os == null)
 			return null;
-		if ("freebsd".equalsIgnoreCase(os)) //$NON-NLS-1$
-			return "FreeBSD"; //$NON-NLS-1$
 		if ("win32".equalsIgnoreCase(os)) //$NON-NLS-1$
 			return "Windows"; //$NON-NLS-1$
 		if ("macosx".equalsIgnoreCase(os)) //$NON-NLS-1$

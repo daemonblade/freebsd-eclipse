@@ -32,30 +32,26 @@ import org.eclipse.team.internal.ccvs.core.util.SyncFileWriter;
  */
 public class TemplateHandler extends ResponseHandler {
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.client.ResponseHandler#getResponseID()
-	 */
+	@Override
 	public String getResponseID() {
 		return "Template"; //$NON-NLS-1$
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.client.ResponseHandler#handle(org.eclipse.team.internal.ccvs.core.client.Session, java.lang.String, org.eclipse.core.runtime.IProgressMonitor)
-	 */
+	@Override
 	public void handle(Session session, String localDir, IProgressMonitor monitor) throws CVSException {
 		session.readLine(); /* read the remote dir which is not needed */
-        // Only read the template file if the container exists.
-        // This is OK as we only use the template from the project folder which must exist
-        ICVSFolder localFolder = session.getLocalRoot().getFolder(localDir);
+		// Only read the template file if the container exists.
+		// This is OK as we only use the template from the project folder which must exist
+		ICVSFolder localFolder = session.getLocalRoot().getFolder(localDir);
 		IContainer container = (IContainer)localFolder.getIResource();
 		ICVSStorage templateFile = null;
 		if (container != null && container.exists()) {
-		    try {
-                templateFile = CVSWorkspaceRoot.getCVSFileFor(SyncFileWriter.getTemplateFile(container));
-            } catch (CVSException e) {
-                // Log the inability to create the template file
-                CVSProviderPlugin.log(new CVSStatus(IStatus.ERROR, CVSStatus.ERROR, "Could not write template file in " + container.getFullPath() + ": " + e.getMessage(), e, session.getLocalRoot())); //$NON-NLS-1$ //$NON-NLS-2$
-            }
+			try {
+				templateFile = CVSWorkspaceRoot.getCVSFileFor(SyncFileWriter.getTemplateFile(container));
+			} catch (CVSException e) {
+				// Log the inability to create the template file
+				CVSProviderPlugin.log(new CVSStatus(IStatus.ERROR, CVSStatus.ERROR, "Could not write template file in " + container.getFullPath() + ": " + e.getMessage(), e, session.getLocalRoot())); //$NON-NLS-1$ //$NON-NLS-2$
+			}
 		}
 		if (container == null || templateFile == null) {
 			// Create a dummy storage handle to recieve the contents from the server
@@ -102,12 +98,12 @@ public class TemplateHandler extends ResponseHandler {
 			};
 		}
 		try {
-            session.receiveFile(templateFile, false, UpdatedHandler.HANDLE_UPDATED, monitor);
-        } catch (CVSException e) {
-            if (!(templateFile instanceof ICVSFile && handleInvalidResourceName(session, (ICVSFile)templateFile, e))) {
-                throw e;
-            }
-        }
+			session.receiveFile(templateFile, false, UpdatedHandler.HANDLE_UPDATED, monitor);
+		} catch (CVSException e) {
+			if (!(templateFile instanceof ICVSFile && handleInvalidResourceName(session, (ICVSFile)templateFile, e))) {
+				throw e;
+			}
+		}
 	}
 
 }

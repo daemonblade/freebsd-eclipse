@@ -97,10 +97,12 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		return (CVSSyncTreeSubscriber)getWorkspaceSubscriber();
 	}
 	
-	/* (non-Javadoc)
-	 * 
+	/*
 	 * The shareProject method is invoked when creating new projects.
-	 * @see org.eclipse.team.tests.ccvs.core.EclipseTest#shareProject(org.eclipse.core.resources.IProject)
+	 * 
+	 * @see
+	 * org.eclipse.team.tests.ccvs.core.EclipseTest#shareProject(org.eclipse.core.
+	 * resources.IProject)
 	 */
 	@Override
 	protected void shareProject(final IProject project) throws TeamException, CoreException {
@@ -196,9 +198,6 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		registerSubscriberListener(getSubscriber());
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.tests.ccvs.core.EclipseTest#deleteResources(org.eclipse.core.resources.IResource[])
-	 */
 	@Override
 	protected void deleteResources(IResource[] resources) throws TeamException, CoreException {
 		IResource[] affected = collect(resources, new ResourceCondition(), IResource.DEPTH_INFINITE);
@@ -220,9 +219,6 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		return deregisterSubscriberListener(getSubscriber());
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.tests.ccvs.core.EclipseTest#commitResources(org.eclipse.core.resources.IResource[])
-	 */
 	@Override
 	protected void commitResources(IResource[] resources, int depth) throws TeamException, CVSException, CoreException {
 		IResource[] affected = collect(resources, new ResourceCondition() {
@@ -242,9 +238,6 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.tests.ccvs.core.EclipseTest#unmanageResources(org.eclipse.core.resources.IResource[])
-	 */
 	@Override
 	protected void unmanageResources(IResource[] resources) throws CoreException, TeamException {
 		IResource[] affected = collect(resources, new ResourceCondition() {
@@ -462,41 +455,41 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 	}
 	
 	public void testOverideAndUpdateSimple() throws CVSException, CoreException, IOException {
-		 IProject project = createProject("testOutgoingChangesOverideAndUpdate", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+		IProject project = createProject("testOutgoingChangesOverideAndUpdate", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
 	
-		 // Make some modifications
-		 setContentsAndEnsureModified(project.getFile("folder1/a.txt"));
-		 addResources(project, new String[] { "folder2/folder3/add.txt" }, false);
-		 deleteResources(project, new String[] {"folder1/b.txt"}, false);
+		// Make some modifications
+		setContentsAndEnsureModified(project.getFile("folder1/a.txt"));
+		addResources(project, new String[] { "folder2/folder3/add.txt" }, false);
+		deleteResources(project, new String[] {"folder1/b.txt"}, false);
 
-		 // Get the sync tree for the project
-		 assertSyncEquals("testOutgoingChangesOverwrite", project, 
-			 new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
-			 true, new int[] {
-				 SyncInfo.IN_SYNC,
-				 SyncInfo.IN_SYNC,
-				 SyncInfo.OUTGOING | SyncInfo.CHANGE,
-				 SyncInfo.OUTGOING | SyncInfo.DELETION,
-				 SyncInfo.IN_SYNC, /* adding a folder creates it remotely */
-				 SyncInfo.IN_SYNC, /* adding a folder creates it remotely */
-				 SyncInfo.OUTGOING | SyncInfo.ADDITION});
+		// Get the sync tree for the project
+		assertSyncEquals("testOutgoingChangesOverwrite", project, 
+			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
+			true, new int[] {
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.OUTGOING | SyncInfo.CHANGE,
+				SyncInfo.OUTGOING | SyncInfo.DELETION,
+				SyncInfo.IN_SYNC, /* adding a folder creates it remotely */
+				SyncInfo.IN_SYNC, /* adding a folder creates it remotely */
+				SyncInfo.OUTGOING | SyncInfo.ADDITION});
 			
-		 // Revert the changes
-		 overrideAndUpdate(project, new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, true /* should prompt */);
+		// Revert the changes
+		overrideAndUpdate(project, new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, true /* should prompt */);
 	
-		 // Ensure we're in sync
-		 assertSyncEquals("testOutgoingChangesOverwrite", project, 
-			 new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
-			 true, new int[] {
-				 SyncInfo.IN_SYNC,
-				 SyncInfo.IN_SYNC,
-				 SyncInfo.IN_SYNC,
-				 SyncInfo.IN_SYNC,
-				 SyncInfo.IN_SYNC,
-				 SyncInfo.IN_SYNC});
+		// Ensure we're in sync
+		assertSyncEquals("testOutgoingChangesOverwrite", project, 
+			new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder2/", "folder2/folder3/", "folder2/folder3/add.txt"}, 
+			true, new int[] {
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC,
+				SyncInfo.IN_SYNC});
 			
-		 // Ensure deleted resource is re-created
-		 assertExistsInWorkspace("testOutgoingChangesOverwrite", project.getFile(new Path("folder1/b.txt")));
+		// Ensure deleted resource is re-created
+		assertExistsInWorkspace("testOutgoingChangesOverwrite", project.getFile(new Path("folder1/b.txt")));
 
 		// Test conflicting changes
 		IProject copy = checkoutCopy(project, "-copy");
@@ -656,7 +649,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		update(
 			project,
 			new String[] {"file1.txt"});
-								 
+								
 		assertSyncEquals("testFileConflict", project, 
 			new String[] { "file1.txt", "folder1/", "folder1/a.txt"}, 
 			true, new int[] {
@@ -918,7 +911,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 				SyncInfo.INCOMING | SyncInfo.ADDITION,
 				SyncInfo.INCOMING | SyncInfo.ADDITION});
 	}
-	 
+	
 	/*
 	 * Test that a deleted file can still be deleted through the team provider
 	 */
@@ -989,9 +982,9 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC});
 	}
-	 
-	 public void testSyncOnBranch() throws CoreException {
-	 	
+	
+	public void testSyncOnBranch() throws CoreException {
+		
 		// Create a test project and a branch
 		IProject project = createProject(new String[] { "file1.txt", "file2.txt", "file3.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
 		CVSTag branch = new CVSTag("branch1", CVSTag.BRANCH);
@@ -1026,8 +1019,8 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 				SyncInfo.INCOMING | SyncInfo.ADDITION,
 				SyncInfo.INCOMING | SyncInfo.ADDITION,
 				SyncInfo.INCOMING | SyncInfo.ADDITION});
-	 }
-	 
+	}
+	
 	public void testRenameProject() throws CoreException {
 		String[] resourceNames = new String[] { "changed.txt", "folder1/", "folder1/a.txt" };
 		int[] inSync = new int[] {SyncInfo.IN_SYNC, SyncInfo.IN_SYNC, SyncInfo.IN_SYNC};
@@ -1085,9 +1078,9 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		assertSyncEquals("testFolderDeletion sync check", project,
 						 new String[] { "folder1/", "folder1/a.txt", "folder1/folder2/", "folder1/folder2/file.txt"},
 						 true, new int[] { SyncInfo.IN_SYNC,
-									  SyncInfo.OUTGOING | SyncInfo.DELETION,
-									  SyncInfo.IN_SYNC,
-									  SyncInfo.OUTGOING | SyncInfo.DELETION});
+										SyncInfo.OUTGOING | SyncInfo.DELETION,
+										SyncInfo.IN_SYNC,
+										SyncInfo.OUTGOING | SyncInfo.DELETION});
 		
 		// commit folder1/a.txt
 		commit(project, new String[] { "folder1/a.txt" });
@@ -1096,8 +1089,8 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		assertSyncEquals("testFolderDeletion sync check", project,
 						 new String[] { "folder1/", "folder1/folder2/", "folder1/folder2/file.txt"},
 						 true, new int[] { SyncInfo.IN_SYNC,
-									  SyncInfo.IN_SYNC,
-									  SyncInfo.OUTGOING | SyncInfo.DELETION});
+										SyncInfo.IN_SYNC,
+										SyncInfo.OUTGOING | SyncInfo.DELETION});
 		assertDeleted("testFolderDeletion", project, new String[] {"folder1/a.txt"});
 		
 		// Commit folder1/folder2/file.txt
@@ -1107,10 +1100,10 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		assertDeleted("testFolderDeletion", project, new String[] {"folder1/", "folder1/folder2/", "folder1/folder2/file.txt"});
 	}
 	/**
-	  * There is special handling required when building a sync tree for a tag when there are undiscovered folders
-	  * that only contain other folders.
-	  */
-	 public void testTagRetrievalForFolderWithNoFile() throws TeamException, CoreException {
+	 * There is special handling required when building a sync tree for a tag when there are undiscovered folders
+	 * that only contain other folders.
+	 */
+	public void testTagRetrievalForFolderWithNoFile() throws TeamException, CoreException {
 		IProject project = createProject("testTagRetrievalForFolderWithNoFile", new String[] { "changed.txt", "deleted.txt", "folder1/", "folder1/a.txt"});
 		// Checkout, branch and modify a copy
 		IProject copy = checkoutCopy(project, "-copy");
@@ -1122,15 +1115,15 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		// Fetch the tree corresponding to the branch using the original as the base.
 		// XXX This will fail for CVSNT with directory pruning on
 		refresh(getSubscriber(), project);
-	 }
-	 
-	 public void testIgnoredResource() throws CoreException, TeamException {
+	}
+	
+	public void testIgnoredResource() throws CoreException, TeamException {
 		// Create a test project (which commits it as well)
 		IProject project = createProject("testIgnoredResource", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
 		
 		// Create a new file without adding it to version control
 		buildResources(project, new String[] {"ignored.txt"}, false);
-	 	
+		
 		// Get the sync tree for the project
 		assertSyncEquals("testIgnoredResource", project, 
 			new String[] { "ignored.txt"}, 
@@ -1145,29 +1138,29 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 			true, new int[] {
 				SyncInfo.IN_SYNC, 
 				SyncInfo.OUTGOING | SyncInfo.ADDITION});
-	 }
+	}
 
 	public void testRenameUnshared() throws CoreException, TeamException {
-	   // Create a test project (which commits it as well)
-	   IProject project = createProject("testRenameUnshared", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
+		// Create a test project (which commits it as well)
+		IProject project = createProject("testRenameUnshared", new String[] { "file1.txt", "folder1/", "folder1/a.txt", "folder1/b.txt"});
 		
-	   // Create a new file without adding it to version control
-	   buildResources(project, new String[] {"oldName.txt"}, false);
-	 	
-	   // Get the sync tree for the project
-	   assertSyncEquals("testRenameUnshared", project, 
-		   new String[] { "oldName.txt" }, 
-		   true, new int[] {SyncInfo.OUTGOING | SyncInfo.ADDITION});
+		// Create a new file without adding it to version control
+		buildResources(project, new String[] {"oldName.txt"}, false);
+		
+		// Get the sync tree for the project
+		assertSyncEquals("testRenameUnshared", project, 
+			new String[] { "oldName.txt" }, 
+			true, new int[] {SyncInfo.OUTGOING | SyncInfo.ADDITION});
 			
-	   IFile rename = project.getFile("oldName.txt");
-	   rename.move(new Path("newName.txt"), false, false, DEFAULT_MONITOR);
+		IFile rename = project.getFile("oldName.txt");
+		rename.move(new Path("newName.txt"), false, false, DEFAULT_MONITOR);
 	
-	   assertDeleted("testRenameUnshared", project, new String[] {"oldName.txt"});
+		assertDeleted("testRenameUnshared", project, new String[] {"oldName.txt"});
 
-	   assertSyncEquals("testRenameUnshared", project, 
-		   new String[] { "newName.txt"}, 
-		   true, new int[] {
-			   SyncInfo.OUTGOING | SyncInfo.ADDITION});
+		assertSyncEquals("testRenameUnshared", project, 
+			new String[] { "newName.txt"}, 
+			true, new int[] {
+				SyncInfo.OUTGOING | SyncInfo.ADDITION});
 	}
 	
 	public void testOutgoingEmptyFolder() throws CoreException, TeamException {
@@ -1201,7 +1194,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 	}
 	
 	/*
-	 * @see https://bugs.eclipse.org/bugs/show_bug.cgi?id=40221
+	 * Test https://bugs.eclipse.org/bugs/show_bug.cgi?id=40221
 	 */
 	public void testConflictingFolderDeletion() throws CoreException {
 		// Create a test project (which commits it as well)
@@ -1216,9 +1209,9 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		
 		// The files should show up as outgoing deletions
 		assertSyncEquals("testConflictingFolderDeletion sync check", project,
-			 new String[] { "folder1/", "folder1/a.txt", "folder1/b.txt"},
-			 true, new int[] { 
-			 	SyncInfo.IN_SYNC,
+			new String[] { "folder1/", "folder1/a.txt", "folder1/b.txt"},
+			true, new int[] { 
+				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC, /* conflicting deletions are handled automatically */
 				SyncInfo.IN_SYNC});
 	}
@@ -1240,7 +1233,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		assertSyncEquals("testProjectClose sync check", project,
 				new String[] { "file1.txt"},
 				true, new int[] { 
-							  SyncInfo.OUTGOING | SyncInfo.CHANGE,
+								SyncInfo.OUTGOING | SyncInfo.CHANGE,
 					});
 		
 		project.close(null);
@@ -1403,61 +1396,61 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 		assertTrue(project.getFile("file1.txt").exists());
 	}
 	
-    public void testBinaryAddition() throws CoreException {
-    	// See bug 132255
-    	KSubstOption option = CVSProviderPlugin.getPlugin().getDefaultTextKSubstOption();
-    	try {
-	    	CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(Command.KSUBST_TEXT_KEYWORDS_ONLY);
-	    	IProject project = createProject(new String[] { "a.txt"});
+	public void testBinaryAddition() throws CoreException {
+		// See bug 132255
+		KSubstOption option = CVSProviderPlugin.getPlugin().getDefaultTextKSubstOption();
+		try {
+			CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(Command.KSUBST_TEXT_KEYWORDS_ONLY);
+			IProject project = createProject(new String[] { "a.txt"});
 			// Checkout a copy
-	    	IProject copy = checkoutCopy(project, "-copy");
+			IProject copy = checkoutCopy(project, "-copy");
 			// Add a binary file that contains LFs
-	    	create(copy.getFile("binaryFile"), true);
-	    	setContentsAndEnsureModified(copy.getFile("binaryFile"), "/n/n\n\n");
-	    	addResources(new IResource[] { copy.getFile("binaryFile") });
-	    	commitProject(copy);
-	    	// Update
-	    	getSyncInfoSource().refresh(getSubscriber(), project);
-	    	getSyncInfoSource().updateResources(getSubscriber(), new IResource[] { project.getFile("binaryFile") });
-	    	assertContentsEqual(copy.getFile("binaryFile"), project.getFile("binaryFile"));
-    	} finally {
-    		CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(option);
-    	}
-    }
-    
-    public void testBinaryMarkAsMerged() throws CoreException, InvocationTargetException, InterruptedException {
-    	KSubstOption option = CVSProviderPlugin.getPlugin().getDefaultTextKSubstOption();
-    	try {
-	    	CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(Command.KSUBST_TEXT_KEYWORDS_ONLY);
-	    	IProject project = createProject(new String[] { "a.txt"});
+			create(copy.getFile("binaryFile"), true);
+			setContentsAndEnsureModified(copy.getFile("binaryFile"), "/n/n\n\n");
+			addResources(new IResource[] { copy.getFile("binaryFile") });
+			commitProject(copy);
+			// Update
+			getSyncInfoSource().refresh(getSubscriber(), project);
+			getSyncInfoSource().updateResources(getSubscriber(), new IResource[] { project.getFile("binaryFile") });
+			assertContentsEqual(copy.getFile("binaryFile"), project.getFile("binaryFile"));
+		} finally {
+			CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(option);
+		}
+	}
+	
+	public void testBinaryMarkAsMerged() throws CoreException, InvocationTargetException, InterruptedException {
+		KSubstOption option = CVSProviderPlugin.getPlugin().getDefaultTextKSubstOption();
+		try {
+			CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(Command.KSUBST_TEXT_KEYWORDS_ONLY);
+			IProject project = createProject(new String[] { "a.txt"});
 			// Checkout a copy
-	    	IProject copy = checkoutCopy(project, "-copy");
+			IProject copy = checkoutCopy(project, "-copy");
 			// Add a binary file to the copy and commit
-	    	create(copy.getFile("binaryFile"), true);
-	    	setContentsAndEnsureModified(copy.getFile("binaryFile"), "/n/n\n\n");
-	    	addResources(new IResource[] { copy.getFile("binaryFile") });
-	    	commitProject(copy);
-	    	// Add the same file to the project but don't share it
-	    	create(project.getFile("binaryFile"), true);
-	    	setContentsAndEnsureModified(project.getFile("binaryFile"), "/n/nSome Content\n\n");
-	    	// Sync and mark as merged
-	    	getSyncInfoSource().refresh(getSubscriber(), project);
-	    	getSyncInfoSource().markAsMerged(getSubscriber(), new IResource[] { project.getFile("binaryFile") });
-	    	assertIsBinary(project.getFile("binaryFile"));
-    	} finally {
-    		CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(option);
-    	}
-    }
-    
-    public void testDisabledDirectoryDiscovery() throws CoreException {
-    	// Create a project and disable new directory discovery
-    	IProject project = createProject(new String[] { "file1.txt"});
-    	setFetchAbsentDirectories(project, false);
-    	
-    	IProject copy = checkoutCopy(project, "-copy");
-    	addResources(copy, new String[] { "added.txt", "folder2/", "folder2/added.txt" }, true);
-    	
-    	// The new subfolder (folder2) and its contents should not have sync info (i.e. in_sync)
+			create(copy.getFile("binaryFile"), true);
+			setContentsAndEnsureModified(copy.getFile("binaryFile"), "/n/n\n\n");
+			addResources(new IResource[] { copy.getFile("binaryFile") });
+			commitProject(copy);
+			// Add the same file to the project but don't share it
+			create(project.getFile("binaryFile"), true);
+			setContentsAndEnsureModified(project.getFile("binaryFile"), "/n/nSome Content\n\n");
+			// Sync and mark as merged
+			getSyncInfoSource().refresh(getSubscriber(), project);
+			getSyncInfoSource().markAsMerged(getSubscriber(), new IResource[] { project.getFile("binaryFile") });
+			assertIsBinary(project.getFile("binaryFile"));
+		} finally {
+			CVSProviderPlugin.getPlugin().setDefaultTextKSubstOption(option);
+		}
+	}
+	
+	public void testDisabledDirectoryDiscovery() throws CoreException {
+		// Create a project and disable new directory discovery
+		IProject project = createProject(new String[] { "file1.txt"});
+		setFetchAbsentDirectories(project, false);
+		
+		IProject copy = checkoutCopy(project, "-copy");
+		addResources(copy, new String[] { "added.txt", "folder2/", "folder2/added.txt" }, true);
+		
+		// The new subfolder (folder2) and its contents should not have sync info (i.e. in_sync)
 		assertSyncEquals("testDisabledDirectoryDiscovery", project,
 				new String[] {"file1.txt", "added.txt", "folder2/", "folder2/added.txt" },
 				true, new int[] { 
@@ -1466,7 +1459,7 @@ public class CVSWorkspaceSubscriberTest extends CVSSyncSubscriberTest {
 				SyncInfo.IN_SYNC,
 				SyncInfo.IN_SYNC
 		});
-    }
+	}
 
 	private void setFetchAbsentDirectories(IProject project, boolean fetch) throws CVSException {
 		RepositoryProvider provider = RepositoryProvider.getProvider(project, CVSProviderPlugin.getTypeId());

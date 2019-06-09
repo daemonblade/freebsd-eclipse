@@ -13,12 +13,16 @@
  */
 package org.eclipse.e4.ui.model.application.ui.advanced.impl;
 
+import java.lang.reflect.InvocationTargetException;
 import org.eclipse.e4.ui.model.LocalizationHelper;
+import org.eclipse.e4.ui.model.application.ui.MLocalizable;
+import org.eclipse.e4.ui.model.application.ui.MUIElement;
 import org.eclipse.e4.ui.model.application.ui.MUILabel;
 import org.eclipse.e4.ui.model.application.ui.advanced.MArea;
 import org.eclipse.e4.ui.model.application.ui.basic.impl.PartSashContainerImpl;
 import org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl;
 import org.eclipse.emf.common.notify.Notification;
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 
@@ -152,6 +156,7 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public String getLabel() {
 		return label;
 	}
@@ -162,6 +167,7 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public void setLabel(String newLabel) {
 		String oldLabel = label;
 		label = newLabel;
@@ -175,6 +181,7 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public String getIconURI() {
 		return iconURI;
 	}
@@ -185,11 +192,13 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public void setIconURI(String newIconURI) {
 		String oldIconURI = iconURI;
 		iconURI = newIconURI;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, AdvancedPackageImpl.AREA__ICON_URI, oldIconURI, iconURI));
+			eNotify(new ENotificationImpl(this, Notification.SET, AdvancedPackageImpl.AREA__ICON_URI, oldIconURI,
+					iconURI));
 	}
 
 	/**
@@ -198,6 +207,7 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public String getTooltip() {
 		return tooltip;
 	}
@@ -208,40 +218,49 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public void setTooltip(String newTooltip) {
 		String oldTooltip = tooltip;
 		tooltip = newTooltip;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, AdvancedPackageImpl.AREA__TOOLTIP, oldTooltip, tooltip));
+			eNotify(new ENotificationImpl(this, Notification.SET, AdvancedPackageImpl.AREA__TOOLTIP, oldTooltip,
+					tooltip));
 	}
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @generated
 	 */
+	@Override
 	public String getLocalizedLabel() {
-		return LocalizationHelper.getLocalizedLabel(this);
+		return LocalizationHelper.getLocalizedFeature(UiPackageImpl.Literals.UI_LABEL__LABEL, this);
 	}
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @generated
 	 */
+	@Override
 	public String getLocalizedTooltip() {
-		return LocalizationHelper.getLocalizedTooltip(this);
+		return LocalizationHelper.getLocalizedFeature(UiPackageImpl.Literals.UI_LABEL__TOOLTIP, this);
 	}
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
 	 */
 	@Override
 	public void updateLocalization() {
 		if (eNotificationRequired()) {
-			eNotify(new ENotificationImpl(
-					this, Notification.SET, AdvancedPackageImpl.AREA__LOCALIZED_LABEL, null, getLocalizedLabel()));
-			eNotify(new ENotificationImpl(
-					this, Notification.SET, AdvancedPackageImpl.AREA__LOCALIZED_TOOLTIP, null, getLocalizedTooltip()));
+			super.updateLocalization();
+			eNotify(new ENotificationImpl(this, Notification.SET, AdvancedPackageImpl.AREA__LOCALIZED_LABEL, null,
+					getLocalizedLabel()));
+			eNotify(new ENotificationImpl(this, Notification.SET, AdvancedPackageImpl.AREA__LOCALIZED_TOOLTIP, null,
+					getLocalizedTooltip()));
 		}
 	}
 
@@ -253,16 +272,16 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case AdvancedPackageImpl.AREA__LABEL:
-				return getLabel();
-			case AdvancedPackageImpl.AREA__ICON_URI:
-				return getIconURI();
-			case AdvancedPackageImpl.AREA__TOOLTIP:
-				return getTooltip();
-			case AdvancedPackageImpl.AREA__LOCALIZED_LABEL:
-				return getLocalizedLabel();
-			case AdvancedPackageImpl.AREA__LOCALIZED_TOOLTIP:
-				return getLocalizedTooltip();
+		case AdvancedPackageImpl.AREA__LABEL:
+			return getLabel();
+		case AdvancedPackageImpl.AREA__ICON_URI:
+			return getIconURI();
+		case AdvancedPackageImpl.AREA__TOOLTIP:
+			return getTooltip();
+		case AdvancedPackageImpl.AREA__LOCALIZED_LABEL:
+			return getLocalizedLabel();
+		case AdvancedPackageImpl.AREA__LOCALIZED_TOOLTIP:
+			return getLocalizedTooltip();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -275,15 +294,15 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case AdvancedPackageImpl.AREA__LABEL:
-				setLabel((String)newValue);
-				return;
-			case AdvancedPackageImpl.AREA__ICON_URI:
-				setIconURI((String)newValue);
-				return;
-			case AdvancedPackageImpl.AREA__TOOLTIP:
-				setTooltip((String)newValue);
-				return;
+		case AdvancedPackageImpl.AREA__LABEL:
+			setLabel((String) newValue);
+			return;
+		case AdvancedPackageImpl.AREA__ICON_URI:
+			setIconURI((String) newValue);
+			return;
+		case AdvancedPackageImpl.AREA__TOOLTIP:
+			setTooltip((String) newValue);
+			return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -296,15 +315,15 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case AdvancedPackageImpl.AREA__LABEL:
-				setLabel(LABEL_EDEFAULT);
-				return;
-			case AdvancedPackageImpl.AREA__ICON_URI:
-				setIconURI(ICON_URI_EDEFAULT);
-				return;
-			case AdvancedPackageImpl.AREA__TOOLTIP:
-				setTooltip(TOOLTIP_EDEFAULT);
-				return;
+		case AdvancedPackageImpl.AREA__LABEL:
+			setLabel(LABEL_EDEFAULT);
+			return;
+		case AdvancedPackageImpl.AREA__ICON_URI:
+			setIconURI(ICON_URI_EDEFAULT);
+			return;
+		case AdvancedPackageImpl.AREA__TOOLTIP:
+			setTooltip(TOOLTIP_EDEFAULT);
+			return;
 		}
 		super.eUnset(featureID);
 	}
@@ -317,16 +336,18 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case AdvancedPackageImpl.AREA__LABEL:
-				return LABEL_EDEFAULT == null ? label != null : !LABEL_EDEFAULT.equals(label);
-			case AdvancedPackageImpl.AREA__ICON_URI:
-				return ICON_URI_EDEFAULT == null ? iconURI != null : !ICON_URI_EDEFAULT.equals(iconURI);
-			case AdvancedPackageImpl.AREA__TOOLTIP:
-				return TOOLTIP_EDEFAULT == null ? tooltip != null : !TOOLTIP_EDEFAULT.equals(tooltip);
-			case AdvancedPackageImpl.AREA__LOCALIZED_LABEL:
-				return LOCALIZED_LABEL_EDEFAULT == null ? getLocalizedLabel() != null : !LOCALIZED_LABEL_EDEFAULT.equals(getLocalizedLabel());
-			case AdvancedPackageImpl.AREA__LOCALIZED_TOOLTIP:
-				return LOCALIZED_TOOLTIP_EDEFAULT == null ? getLocalizedTooltip() != null : !LOCALIZED_TOOLTIP_EDEFAULT.equals(getLocalizedTooltip());
+		case AdvancedPackageImpl.AREA__LABEL:
+			return LABEL_EDEFAULT == null ? label != null : !LABEL_EDEFAULT.equals(label);
+		case AdvancedPackageImpl.AREA__ICON_URI:
+			return ICON_URI_EDEFAULT == null ? iconURI != null : !ICON_URI_EDEFAULT.equals(iconURI);
+		case AdvancedPackageImpl.AREA__TOOLTIP:
+			return TOOLTIP_EDEFAULT == null ? tooltip != null : !TOOLTIP_EDEFAULT.equals(tooltip);
+		case AdvancedPackageImpl.AREA__LOCALIZED_LABEL:
+			return LOCALIZED_LABEL_EDEFAULT == null ? getLocalizedLabel() != null
+					: !LOCALIZED_LABEL_EDEFAULT.equals(getLocalizedLabel());
+		case AdvancedPackageImpl.AREA__LOCALIZED_TOOLTIP:
+			return LOCALIZED_TOOLTIP_EDEFAULT == null ? getLocalizedTooltip() != null
+					: !LOCALIZED_TOOLTIP_EDEFAULT.equals(getLocalizedTooltip());
 		}
 		return super.eIsSet(featureID);
 	}
@@ -340,12 +361,18 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	public int eBaseStructuralFeatureID(int derivedFeatureID, Class<?> baseClass) {
 		if (baseClass == MUILabel.class) {
 			switch (derivedFeatureID) {
-				case AdvancedPackageImpl.AREA__LABEL: return UiPackageImpl.UI_LABEL__LABEL;
-				case AdvancedPackageImpl.AREA__ICON_URI: return UiPackageImpl.UI_LABEL__ICON_URI;
-				case AdvancedPackageImpl.AREA__TOOLTIP: return UiPackageImpl.UI_LABEL__TOOLTIP;
-				case AdvancedPackageImpl.AREA__LOCALIZED_LABEL: return UiPackageImpl.UI_LABEL__LOCALIZED_LABEL;
-				case AdvancedPackageImpl.AREA__LOCALIZED_TOOLTIP: return UiPackageImpl.UI_LABEL__LOCALIZED_TOOLTIP;
-				default: return -1;
+			case AdvancedPackageImpl.AREA__LABEL:
+				return UiPackageImpl.UI_LABEL__LABEL;
+			case AdvancedPackageImpl.AREA__ICON_URI:
+				return UiPackageImpl.UI_LABEL__ICON_URI;
+			case AdvancedPackageImpl.AREA__TOOLTIP:
+				return UiPackageImpl.UI_LABEL__TOOLTIP;
+			case AdvancedPackageImpl.AREA__LOCALIZED_LABEL:
+				return UiPackageImpl.UI_LABEL__LOCALIZED_LABEL;
+			case AdvancedPackageImpl.AREA__LOCALIZED_TOOLTIP:
+				return UiPackageImpl.UI_LABEL__LOCALIZED_TOOLTIP;
+			default:
+				return -1;
 			}
 		}
 		return super.eBaseStructuralFeatureID(derivedFeatureID, baseClass);
@@ -360,12 +387,18 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	public int eDerivedStructuralFeatureID(int baseFeatureID, Class<?> baseClass) {
 		if (baseClass == MUILabel.class) {
 			switch (baseFeatureID) {
-				case UiPackageImpl.UI_LABEL__LABEL: return AdvancedPackageImpl.AREA__LABEL;
-				case UiPackageImpl.UI_LABEL__ICON_URI: return AdvancedPackageImpl.AREA__ICON_URI;
-				case UiPackageImpl.UI_LABEL__TOOLTIP: return AdvancedPackageImpl.AREA__TOOLTIP;
-				case UiPackageImpl.UI_LABEL__LOCALIZED_LABEL: return AdvancedPackageImpl.AREA__LOCALIZED_LABEL;
-				case UiPackageImpl.UI_LABEL__LOCALIZED_TOOLTIP: return AdvancedPackageImpl.AREA__LOCALIZED_TOOLTIP;
-				default: return -1;
+			case UiPackageImpl.UI_LABEL__LABEL:
+				return AdvancedPackageImpl.AREA__LABEL;
+			case UiPackageImpl.UI_LABEL__ICON_URI:
+				return AdvancedPackageImpl.AREA__ICON_URI;
+			case UiPackageImpl.UI_LABEL__TOOLTIP:
+				return AdvancedPackageImpl.AREA__TOOLTIP;
+			case UiPackageImpl.UI_LABEL__LOCALIZED_LABEL:
+				return AdvancedPackageImpl.AREA__LOCALIZED_LABEL;
+			case UiPackageImpl.UI_LABEL__LOCALIZED_TOOLTIP:
+				return AdvancedPackageImpl.AREA__LOCALIZED_TOOLTIP;
+			default:
+				return -1;
 			}
 		}
 		return super.eDerivedStructuralFeatureID(baseFeatureID, baseClass);
@@ -377,8 +410,56 @@ public class AreaImpl extends PartSashContainerImpl implements MArea {
 	 * @generated
 	 */
 	@Override
+	public int eDerivedOperationID(int baseOperationID, Class<?> baseClass) {
+		if (baseClass == MLocalizable.class) {
+			switch (baseOperationID) {
+			case UiPackageImpl.LOCALIZABLE___UPDATE_LOCALIZATION:
+				return AdvancedPackageImpl.AREA___UPDATE_LOCALIZATION;
+			default:
+				return super.eDerivedOperationID(baseOperationID, baseClass);
+			}
+		}
+		if (baseClass == MUIElement.class) {
+			switch (baseOperationID) {
+			case UiPackageImpl.UI_ELEMENT___UPDATE_LOCALIZATION:
+				return AdvancedPackageImpl.AREA___UPDATE_LOCALIZATION;
+			default:
+				return super.eDerivedOperationID(baseOperationID, baseClass);
+			}
+		}
+		if (baseClass == MUILabel.class) {
+			switch (baseOperationID) {
+			default:
+				return -1;
+			}
+		}
+		return super.eDerivedOperationID(baseOperationID, baseClass);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public Object eInvoke(int operationID, EList<?> arguments) throws InvocationTargetException {
+		switch (operationID) {
+		case AdvancedPackageImpl.AREA___UPDATE_LOCALIZATION:
+			updateLocalization();
+			return null;
+		}
+		return super.eInvoke(operationID, arguments);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public String toString() {
-		if (eIsProxy()) return super.toString();
+		if (eIsProxy())
+			return super.toString();
 
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (label: "); //$NON-NLS-1$

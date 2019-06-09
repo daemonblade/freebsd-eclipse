@@ -169,11 +169,20 @@ protected void verifyAllTagsCompletion() {
 		TAG_LINK,
 		TAG_DOC_ROOT,
 	};
+	char[][]  allTagsJava8 = {
+			// Block tags
+			TAG_AUTHOR, TAG_DEPRECATED, TAG_EXCEPTION, TAG_PARAM, TAG_RETURN, TAG_SEE, TAG_VERSION, TAG_CATEGORY,
+			TAG_SINCE,
+			TAG_SERIAL, TAG_SERIAL_DATA, TAG_SERIAL_FIELD , TAG_THROWS,   TAG_API_NOTE, TAG_IMPL_SPEC, TAG_IMPL_NOTE,
+			// Inline tags
+			TAG_LINK,
+			TAG_DOC_ROOT
+		};
 	char[][]  allTagsJava9Plus = {
 				// Block tags
 				TAG_AUTHOR, TAG_DEPRECATED, TAG_EXCEPTION, TAG_PARAM, TAG_RETURN, TAG_SEE, TAG_VERSION, TAG_CATEGORY,
 				TAG_SINCE,
-				TAG_SERIAL, TAG_SERIAL_DATA, TAG_SERIAL_FIELD , TAG_THROWS, TAG_USES, TAG_PROVIDES,
+				TAG_SERIAL, TAG_SERIAL_DATA, TAG_SERIAL_FIELD , TAG_THROWS, TAG_API_NOTE, TAG_IMPL_SPEC, TAG_IMPL_NOTE, TAG_HIDDEN, TAG_USES, TAG_PROVIDES,
 				// Inline tags
 				TAG_LINK,
 				TAG_DOC_ROOT
@@ -183,13 +192,30 @@ protected void verifyAllTagsCompletion() {
 		additionalTags = new char[][] {
 			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE
 		};
-	} else if(this.complianceLevel > ClassFileConstants.JDK1_4) {
+	} else if(this.complianceLevel > ClassFileConstants.JDK1_4
+			&& this.complianceLevel < ClassFileConstants.JDK9) {
 		additionalTags = new char[][] {
 			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
 			TAG_CODE, TAG_LITERAL
 		};
+	} else if (this.complianceLevel == ClassFileConstants.JDK9) {
+		additionalTags = new char[][] {
+			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
+			TAG_CODE, TAG_LITERAL, TAG_INDEX
+		};
+	} else if (this.complianceLevel > ClassFileConstants.JDK9
+			&& this.complianceLevel < ClassFileConstants.JDK12) {
+		additionalTags = new char[][] {
+			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
+			TAG_CODE, TAG_LITERAL, TAG_INDEX, TAG_SUMMARY
+		};
+	} else if(this.complianceLevel >= ClassFileConstants.JDK12) {
+		additionalTags = new char[][] {
+			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
+			TAG_CODE, TAG_LITERAL, TAG_INDEX, TAG_SUMMARY, TAG_SYSTEM_PROPERTY
+		};
 	}
-	allTagsFinal = this.complianceLevel > ClassFileConstants.JDK1_8 ? allTagsJava9Plus  : allTags;
+	allTagsFinal = this.complianceLevel > ClassFileConstants.JDK1_8 ? allTagsJava9Plus  :  this.complianceLevel == ClassFileConstants.JDK1_8 ? allTagsJava8 : allTags  ;
 	if (additionalTags != null) {
 		int length = allTagsFinal.length;
 		int add = additionalTags.length;
@@ -279,10 +305,29 @@ public void test006() {
 		additionalTags = new char[][] {
 			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE
 		};
-	} else if (this.complianceLevel > ClassFileConstants.JDK1_4) {
+	} else if (this.complianceLevel > ClassFileConstants.JDK1_4
+			&& this.complianceLevel < ClassFileConstants.JDK9) {
 		additionalTags = new char[][] {
 			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
 			TAG_CODE, TAG_LITERAL
+		};
+	} else if (this.complianceLevel == ClassFileConstants.JDK9) {
+		additionalTags = new char[][] {
+			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
+			TAG_CODE, TAG_LITERAL,
+			TAG_INDEX
+		};
+	} else if (this.complianceLevel >= ClassFileConstants.JDK10
+			&& this.complianceLevel < ClassFileConstants.JDK12) {
+		additionalTags = new char[][] {
+			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
+			TAG_CODE, TAG_LITERAL,
+			TAG_INDEX, TAG_SUMMARY
+		};
+	} else if(this.complianceLevel >= ClassFileConstants.JDK12) {
+		additionalTags = new char[][] {
+			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
+			TAG_CODE, TAG_LITERAL, TAG_INDEX, TAG_SUMMARY, TAG_SYSTEM_PROPERTY
 		};
 	}
 	if (additionalTags != null) {
@@ -422,7 +467,20 @@ public void test020() {
 		" */\n" +
 		"public class Test {}\n";
 	verifyCompletionInJavadoc(source, "@s");
-	verifyCompletionOnJavadocTag("s".toCharArray(), new char[][] { TAG_SEE, TAG_SINCE, TAG_SERIAL, TAG_SERIAL_DATA, TAG_SERIAL_FIELD }, false);
+	char[][] expectedTags = new char[][] {
+		TAG_SEE, TAG_SINCE, TAG_SERIAL, TAG_SERIAL_DATA, TAG_SERIAL_FIELD
+	};
+	if (this.complianceLevel > ClassFileConstants.JDK9
+			&& this.complianceLevel < ClassFileConstants.JDK12) {
+		expectedTags = new char[][] {
+			TAG_SEE, TAG_SINCE, TAG_SERIAL, TAG_SERIAL_DATA, TAG_SERIAL_FIELD, TAG_SUMMARY
+		};
+	} else if (this.complianceLevel >= ClassFileConstants.JDK12) {
+		expectedTags = new char[][] {
+			TAG_SEE, TAG_SINCE, TAG_SERIAL, TAG_SERIAL_DATA, TAG_SERIAL_FIELD, TAG_SUMMARY, TAG_SYSTEM_PROPERTY
+		};
+	}
+	verifyCompletionOnJavadocTag("s".toCharArray(), expectedTags, false);
 	CompletionOnJavadocTag completionTag = (CompletionOnJavadocTag) this.javadoc.getCompletionNode();
 	assertEquals("Invalid tag start position", 24, completionTag.tagSourceStart);
 	assertEquals("Invalid tag end position", 28, completionTag.tagSourceEnd+1);
@@ -500,11 +558,30 @@ public void test025() {
 		additionalTags = new char[][] {
 			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE
 		};
-	}
-	else if (this.complianceLevel > ClassFileConstants.JDK1_4) {
+	} else if (this.complianceLevel > ClassFileConstants.JDK1_4
+			&& this.complianceLevel < ClassFileConstants.JDK9) {
 		additionalTags = new char[][] {
 			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
 			TAG_CODE, TAG_LITERAL
+		};
+	} else if (this.complianceLevel == ClassFileConstants.JDK9) {
+		additionalTags = new char[][] {
+			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
+			TAG_CODE, TAG_LITERAL,
+			TAG_INDEX
+		};
+	} else if (this.complianceLevel > ClassFileConstants.JDK9
+			&& this.complianceLevel < ClassFileConstants.JDK12) {
+		additionalTags = new char[][] {
+			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
+			TAG_CODE, TAG_LITERAL,
+			TAG_INDEX, TAG_SUMMARY
+		};
+	} else if (this.complianceLevel >= ClassFileConstants.JDK12) {
+		additionalTags = new char[][] {
+			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
+			TAG_CODE, TAG_LITERAL, 
+			TAG_INDEX, TAG_SUMMARY, TAG_SYSTEM_PROPERTY
 		};
 	}
 	if (additionalTags != null) {
@@ -574,11 +651,30 @@ public void test028() {
 		additionalTags = new char[][] {
 			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE
 		};
-	}
-	else if (this.complianceLevel > ClassFileConstants.JDK1_4) {
+	} else if (this.complianceLevel > ClassFileConstants.JDK1_4
+			&& this.complianceLevel < ClassFileConstants.JDK9) {
 		additionalTags = new char[][] {
 			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
 			TAG_CODE, TAG_LITERAL
+		};
+	} else if (this.complianceLevel == ClassFileConstants.JDK9) {
+		additionalTags = new char[][] {
+			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
+			TAG_CODE, TAG_LITERAL,
+			TAG_INDEX
+		};
+	} else if (this.complianceLevel > ClassFileConstants.JDK9
+			&& this.complianceLevel < ClassFileConstants.JDK12) {
+		additionalTags = new char[][] {
+			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
+			TAG_CODE, TAG_LITERAL,
+			TAG_INDEX, TAG_SUMMARY
+		};
+	} else if(this.complianceLevel >= ClassFileConstants.JDK12) {
+		additionalTags = new char[][] {
+			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
+			TAG_CODE, TAG_LITERAL,
+			TAG_INDEX, TAG_SUMMARY, TAG_SYSTEM_PROPERTY
 		};
 	}
 	if (additionalTags != null) {
@@ -632,4 +728,41 @@ public void test030() {
 	int end = source.indexOf('+');
 	assertEquals("Invalid tag end position", end, completionTag.tagSourceEnd);
 }
+
+public void test031() {
+	String source = "package javadoc;\n" +
+		"/**\n" +
+		" * @u+\n" +
+		" */\n" +
+		"module newproj {}\n";
+	verifyCompletionInJavadoc(source, "@u");
+	char[][] allTags = this.complianceLevel < ClassFileConstants.JDK9
+		? null
+		: new char[][] { TAG_USES  };
+	verifyCompletionOnJavadocTag("u".toCharArray(), allTags, false);
+	CompletionOnJavadocTag completionTag = (CompletionOnJavadocTag) this.javadoc.getCompletionNode();
+	int start = source.indexOf("@u");
+	assertEquals("Invalid tag start position", start, completionTag.tagSourceStart);
+	int end = source.indexOf('+');
+	assertEquals("Invalid tag end position", end, completionTag.tagSourceEnd);
+}
+
+public void test032() {
+	String source = "package javadoc;\n" +
+		"/**\n" +
+		" * @p+\n" +
+		" */\n" +
+		"module newproj {}\n";
+	verifyCompletionInJavadoc(source, "@p");
+	char[][] allTags = this.complianceLevel < ClassFileConstants.JDK9
+		? new char[][] { TAG_PARAM }
+		: new char[][] { TAG_PARAM, TAG_PROVIDES  };
+	verifyCompletionOnJavadocTag("p".toCharArray(), allTags, false);
+	CompletionOnJavadocTag completionTag = (CompletionOnJavadocTag) this.javadoc.getCompletionNode();
+	int start = source.indexOf("@p");
+	assertEquals("Invalid tag start position", start, completionTag.tagSourceStart);
+	int end = source.indexOf('+');
+	assertEquals("Invalid tag end position", end, completionTag.tagSourceEnd);
+}
+
 }

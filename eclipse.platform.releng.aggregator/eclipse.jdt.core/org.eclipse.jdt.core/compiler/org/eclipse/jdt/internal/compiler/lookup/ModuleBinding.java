@@ -73,9 +73,18 @@ public class ModuleBinding extends Binding implements IUpdatableModule {
 		}
 		@Override
 		public boolean canAccess(PackageBinding pkg) {
-			ModuleBinding mod = pkg.enclosingModule;
-			if (mod != null && mod != this)
-				return mod.isPackageExportedTo(pkg, this);
+			if (pkg instanceof SplitPackageBinding) {
+				for (PackageBinding p : ((SplitPackageBinding) pkg).incarnations) {
+					if (canAccess(p)) {
+						return true;
+					}
+				}
+				return false;
+			} else {
+				ModuleBinding mod = pkg.enclosingModule;
+				if (mod != null && mod != this)
+					return mod.isPackageExportedTo(pkg, this);
+			}
 			return true;
 		}
 		@Override
@@ -90,6 +99,10 @@ public class ModuleBinding extends Binding implements IUpdatableModule {
 		@Override
 		public char[] nameForLookup() {
 			return ANY;
+		}
+		@Override
+		public char[] nameForCUCheck() {
+			return UNNAMED;
 		}
 		@Override
 		public char[] readableName() {
@@ -241,7 +254,8 @@ public class ModuleBinding extends Binding implements IUpdatableModule {
 				this.requires[len] = requiredModule;
 			}
 		} else {
-			// TODO(SHMOD) report error
+			this.environment.problemReporter.missingModuleAddReads(requiredModuleName);
+			return;
 		}
 		// update known packages:
 		HashtableOfPackage knownPackages = this.environment.knownPackages;
@@ -295,7 +309,7 @@ public class ModuleBinding extends Binding implements IUpdatableModule {
 	public void addResolvedExport(PackageBinding declaredPackage, char[][] targetModules) {
 		int len = this.exportedPackages.length;
 		if (declaredPackage == null || !declaredPackage.isValidBinding()) {
-			// FIXME(SHMOD) use a problem binding? See https://bugs.eclipse.org/518794#c13
+			// TODO(SHMOD) use a problem binding (if needed by DOM clients)? See https://bugs.eclipse.org/518794#c13
 			return;
 		}
 		if (len == 0) {
@@ -311,7 +325,7 @@ public class ModuleBinding extends Binding implements IUpdatableModule {
 	public void addResolvedOpens(PackageBinding declaredPackage, char[][] targetModules) {
 		int len = this.openedPackages.length;
 		if (declaredPackage == null || !declaredPackage.isValidBinding()) {
-			// FIXME(SHMOD) use a problem binding? See https://bugs.eclipse.org/518794#c13
+			// TODO(SHMOD) use a problem binding (if needed by DOM clients)? See https://bugs.eclipse.org/518794#c13
 			return;
 		}
 		if (len == 0) {
@@ -413,7 +427,6 @@ public class ModuleBinding extends Binding implements IUpdatableModule {
 
 		Collection<ModuleBinding> allRequires = dependencyCollector().get();
 		if (allRequires.contains(this)) {
-			// TODO(SHMOD): report (when? where?)
 			return NO_MODULES; // avoid entering unbounded recursion due to cyclic requires
 		}
 		ModuleBinding javaBase = this.environment.javaBaseModule();
@@ -612,7 +625,11 @@ public class ModuleBinding extends Binding implements IUpdatableModule {
 					&& !packageMayBeIncomplete  // don't remember package that may still lack some siblings
 					&& !(parent instanceof SplitPackageBinding)) // don't store problem into SPB, because from different focus things may look differently
 			{
-				parent.knownPackages.put(name, binding == null ? LookupEnvironment.TheNotFoundPackage : binding);
+				if (binding == null) {
+					parent.addNotFoundPackage(name);
+				} else {
+					parent.knownPackages.put(name, binding);
+				}
 			}
 			return null;
 		}

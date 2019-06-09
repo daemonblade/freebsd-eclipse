@@ -78,7 +78,6 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 	// this internally to be Solaris.
 	private static final String INTERNAL_OS_SUNOS = "SunOS"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_LINUX = "Linux"; //$NON-NLS-1$
-	private static final String INTERNAL_OS_FREEBSD = "FreeBSD"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_MACOSX = "Mac OS"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_AIX = "AIX"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_HPUX = "HP-UX"; //$NON-NLS-1$
@@ -224,7 +223,10 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 	public static final String PROP_ALLOW_RESTRICTED_PROVIDES = "osgi.equinox.allow.restricted.provides"; //$NON-NLS-1$
 	public static final String PROP_LOG_HISTORY_MAX = "equinox.log.history.max"; //$NON-NLS-1$
 
+	@Deprecated
 	public static final String PROP_RESOLVER_THREAD_COUNT = "equinox.resolver.thead.count"; //$NON-NLS-1$
+	public static final String PROP_EQUINOX_RESOLVER_THREAD_COUNT = "equinox.resolver.thread.count"; //$NON-NLS-1$
+	public static final String PROP_EQUINOX_START_LEVEL_THREAD_COUNT = "equinox.start.level.thread.count"; //$NON-NLS-1$
 	public static final String PROP_RESOLVER_REVISION_BATCH_SIZE = "equinox.resolver.revision.batch.size"; //$NON-NLS-1$
 	public static final String PROP_RESOLVER_BATCH_TIMEOUT = "equinox.resolver.batch.timeout"; //$NON-NLS-1$
 
@@ -680,38 +682,47 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 		return inCheckConfigurationMode;
 	}
 
+	@Override
 	public boolean inDevelopmentMode() {
 		return inDevelopmentMode;
 	}
 
+	@Override
 	public boolean inDebugMode() {
 		return debugOptions.isDebugEnabled();
 	}
 
+	@Override
 	public String[] getCommandLineArgs() {
 		return allArgs;
 	}
 
+	@Override
 	public String[] getFrameworkArgs() {
 		return frameworkArgs;
 	}
 
+	@Override
 	public String[] getNonFrameworkArgs() {
 		return appArgs;
 	}
 
+	@Override
 	public String getOSArch() {
 		return getConfiguration(PROP_OSGI_ARCH);
 	}
 
+	@Override
 	public String getNL() {
 		return getConfiguration(PROP_OSGI_NL);
 	}
 
+	@Override
 	public String getOS() {
 		return getConfiguration(PROP_OSGI_OS);
 	}
 
+	@Override
 	public String getWS() {
 		return getConfiguration(PROP_OSGI_WS);
 	}
@@ -735,7 +746,7 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 		// setup default values for known OSes if nothing was specified
 		if (osName.equals(Constants.OS_WIN32))
 			return Constants.WS_WIN32;
-		if (osName.equals(Constants.OS_LINUX) || osName.equals(Constants.OS_FREEBSD))
+		if (osName.equals(Constants.OS_LINUX))
 			return Constants.WS_GTK;
 		if (osName.equals(Constants.OS_MACOSX))
 			return Constants.WS_COCOA;
@@ -758,8 +769,6 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 		// EXCEPTION: All mappings of SunOS convert to Solaris
 		if (osName.equalsIgnoreCase(INTERNAL_OS_SUNOS))
 			return Constants.OS_SOLARIS;
-		if (osName.equalsIgnoreCase(INTERNAL_OS_FREEBSD))
-			return Constants.OS_FREEBSD;
 		if (osName.equalsIgnoreCase(INTERNAL_OS_LINUX))
 			return Constants.OS_LINUX;
 		if (osName.equalsIgnoreCase(INTERNAL_OS_QNX))

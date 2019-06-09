@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2018 AGETO Service GmbH and others.
+ * Copyright (c) 2010, 2019 AGETO Service GmbH and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -40,6 +40,19 @@ import org.eclipse.releng.tools.RepositoryProviderCopyrightAdapter;
 public class GitCopyrightAdapter extends RepositoryProviderCopyrightAdapter {
 
 	private static String filterString = "copyright"; // lowercase //$NON-NLS-1$
+	
+	/**
+	 * Bugs to be filtered because they modified a lot of files in a trivial way
+	 * and should not change the copyright year.
+	 * <p>
+	 * If the last commit message for a checked file starts with one of these
+	 * strings the year will not be modified for this file.
+	 * </p>
+	 */
+	private static final String[] FILTER_BUGS = new String[] { 
+			"Bug 535802", // license version update //$NON-NLS-1$
+			"Bug 543933", // build javadocs with Java 11  //$NON-NLS-1$
+	};
 
 	public GitCopyrightAdapter(IResource[] resources) {
 		super(resources);
@@ -57,6 +70,9 @@ public class GitCopyrightAdapter extends RepositoryProviderCopyrightAdapter {
 						walk.setTreeFilter(AndTreeFilter.create(PathFilter.create(mapping.getRepoRelativePath(file)),
 								TreeFilter.ANY_DIFF));
 						walk.markStart(walk.lookupCommit(start));
+						// dramatically increase performance for this use case
+						// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=468850#c17
+						walk.setRewriteParents(false);
 						final RevCommit commit = walk.next();
 						if (commit != null) {
 							if (filterString != null
@@ -64,6 +80,12 @@ public class GitCopyrightAdapter extends RepositoryProviderCopyrightAdapter {
 								// the last update was a copyright check in -
 								// ignore
 								return 0;
+							}
+							
+							for (String bugId : FILTER_BUGS) {
+								if (commit.getShortMessage().startsWith(bugId)) {
+									return 0;
+								}
 							}
 
 							boolean isSWT = file.getProject().getName().startsWith("org.eclipse.swt"); //$NON-NLS-1$
@@ -98,8 +120,6 @@ public class GitCopyrightAdapter extends RepositoryProviderCopyrightAdapter {
 
 	@Override
 	public void initialize(IProgressMonitor monitor) throws CoreException {
-		// TODO We should perform a bulk "log" command to get the last modified
-		// year
 	}
 
 }

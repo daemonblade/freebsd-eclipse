@@ -77,10 +77,6 @@ public enum SideValue implements InternalSideValue {
 	/**
 	 * The '<em><b>Top</b></em>' literal value.
 	 * <!-- begin-user-doc -->
-	 * <p>
-	 * If the meaning of '<em><b>Top</b></em>' literal object isn't clear,
-	 * there really should be more of a description here...
-	 * </p>
 	 * <!-- end-user-doc -->
 	 * @see #TOP
 	 * @model name="Top"
@@ -92,10 +88,6 @@ public enum SideValue implements InternalSideValue {
 	/**
 	 * The '<em><b>Bottom</b></em>' literal value.
 	 * <!-- begin-user-doc -->
-	 * <p>
-	 * If the meaning of '<em><b>Bottom</b></em>' literal object isn't clear,
-	 * there really should be more of a description here...
-	 * </p>
 	 * <!-- end-user-doc -->
 	 * @see #BOTTOM
 	 * @model name="Bottom"
@@ -107,10 +99,6 @@ public enum SideValue implements InternalSideValue {
 	/**
 	 * The '<em><b>Left</b></em>' literal value.
 	 * <!-- begin-user-doc -->
-	 * <p>
-	 * If the meaning of '<em><b>Left</b></em>' literal object isn't clear,
-	 * there really should be more of a description here...
-	 * </p>
 	 * <!-- end-user-doc -->
 	 * @see #LEFT
 	 * @model name="Left"
@@ -122,10 +110,6 @@ public enum SideValue implements InternalSideValue {
 	/**
 	 * The '<em><b>Right</b></em>' literal value.
 	 * <!-- begin-user-doc -->
-	 * <p>
-	 * If the meaning of '<em><b>Right</b></em>' literal object isn't clear,
-	 * there really should be more of a description here...
-	 * </p>
 	 * <!-- end-user-doc -->
 	 * @see #RIGHT
 	 * @model name="Right"
@@ -140,13 +124,7 @@ public enum SideValue implements InternalSideValue {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	private static final SideValue[] VALUES_ARRAY =
-		new SideValue[] {
-			TOP,
-			BOTTOM,
-			LEFT,
-			RIGHT,
-		};
+	private static final SideValue[] VALUES_ARRAY = new SideValue[] { TOP, BOTTOM, LEFT, RIGHT, };
 
 	/**
 	 * A public read-only list of all the '<em><b>Side Value</b></em>' enumerators.
@@ -202,10 +180,14 @@ public enum SideValue implements InternalSideValue {
 	 */
 	public static SideValue get(int value) {
 		switch (value) {
-			case TOP_VALUE: return TOP;
-			case BOTTOM_VALUE: return BOTTOM;
-			case LEFT_VALUE: return LEFT;
-			case RIGHT_VALUE: return RIGHT;
+		case TOP_VALUE:
+			return TOP;
+		case BOTTOM_VALUE:
+			return BOTTOM;
+		case LEFT_VALUE:
+			return LEFT;
+		case RIGHT_VALUE:
+			return RIGHT;
 		}
 		return null;
 	}
@@ -248,8 +230,9 @@ public enum SideValue implements InternalSideValue {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public int getValue() {
-	  return value;
+		return value;
 	}
 
 	/**
@@ -257,8 +240,9 @@ public enum SideValue implements InternalSideValue {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getName() {
-	  return name;
+		return name;
 	}
 
 	/**
@@ -266,8 +250,9 @@ public enum SideValue implements InternalSideValue {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getLiteral() {
-	  return literal;
+		return literal;
 	}
 
 	/**
@@ -290,5 +275,5 @@ public enum SideValue implements InternalSideValue {
  * @generated
  */
 interface InternalSideValue extends org.eclipse.emf.common.util.Enumerator {
-	// Empty
+	// Empty 
 }

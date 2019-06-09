@@ -44,16 +44,13 @@ public class ConfigurationWizardAutoconnectPage extends CVSWizardPage {
 		super(pageName, title, titleImage);
 	}
 
-	/*
-	 * @see IDialogPage#createControl(Composite)
-	 */
 	@Override
 	public void createControl(Composite parent) {
 		Composite composite = createComposite(parent, 2, false);
 		setControl(composite);
 		
 		// set F1 help
-        PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IHelpContextIds.SHARING_AUTOCONNECT_PAGE);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IHelpContextIds.SHARING_AUTOCONNECT_PAGE);
 		
 		Label description = new Label(composite, SWT.WRAP);
 		GridData data = new GridData();

@@ -86,6 +86,7 @@ public class QuickFixTest extends TestCase {
 		TestSuite suite= new TestSuite(QuickFixTest.class.getName());
 		suite.addTest(QuickFixTest9.suite());
 		suite.addTest(QuickFixTest18.suite());
+		suite.addTest(QuickFixTest12.suite());
 		suite.addTest(SerialVersionQuickFixTest.suite());
 		suite.addTest(UtilitiesTest.suite());
 		suite.addTest(UnresolvedTypesQuickFixTest.suite());
@@ -105,6 +106,7 @@ public class QuickFixTest extends TestCase {
 		suite.addTest(AssistQuickFixTest.suite());
 		suite.addTest(AssistQuickFixTest17.suite());
 		suite.addTest(AssistQuickFixTest18.suite());
+		suite.addTest(AssistQuickFixTest12.suite());
 		suite.addTest(ChangeNonStaticToStaticTest.suite());
 		suite.addTest(MarkerResolutionTest.suite());
 		suite.addTest(JavadocQuickFixTest.suite());

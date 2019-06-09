@@ -14,10 +14,10 @@
   <parent>
     <artifactId>eclipse.platform.debug</artifactId>
     <groupId>eclipse.platform.debug</groupId>
-    <version>4.11.0-SNAPSHOT</version>
+    <version>4.12.0-SNAPSHOT</version>
   </parent>
   <groupId>org.eclipse.debug</groupId>
   <artifactId>org.eclipse.debug.core</artifactId>
-  <version>3.13.200-SNAPSHOT</version>
+  <version>3.13.300-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 </project>

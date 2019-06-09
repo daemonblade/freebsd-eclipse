@@ -16,7 +16,8 @@ package org.eclipse.e4.ui.model.application.descriptor.basic.util;
 import org.eclipse.e4.ui.model.application.MApplicationElement;
 import org.eclipse.e4.ui.model.application.commands.MBindings;
 import org.eclipse.e4.ui.model.application.commands.MHandlerContainer;
-import org.eclipse.e4.ui.model.application.descriptor.basic.*;
+import org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptor;
+import org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptorContainer;
 import org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl;
 import org.eclipse.e4.ui.model.application.ui.MLocalizable;
 import org.eclipse.e4.ui.model.application.ui.MUILabel;
@@ -68,7 +69,7 @@ public class BasicAdapterFactory extends AdapterFactoryImpl {
 			return true;
 		}
 		if (object instanceof EObject) {
-			return ((EObject)object).eClass().getEPackage() == modelPackage;
+			return ((EObject) object).eClass().getEPackage() == modelPackage;
 		}
 		return false;
 	}
@@ -79,41 +80,47 @@ public class BasicAdapterFactory extends AdapterFactoryImpl {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	protected BasicSwitch<Adapter> modelSwitch =
-		new BasicSwitch<Adapter>() {
-			@Override
-			public Adapter casePartDescriptor(MPartDescriptor object) {
-				return createPartDescriptorAdapter();
-			}
-			@Override
-			public Adapter casePartDescriptorContainer(MPartDescriptorContainer object) {
-				return createPartDescriptorContainerAdapter();
-			}
-			@Override
-			public Adapter caseApplicationElement(MApplicationElement object) {
-				return createApplicationElementAdapter();
-			}
-			@Override
-			public Adapter caseLocalizable(MLocalizable object) {
-				return createLocalizableAdapter();
-			}
-			@Override
-			public Adapter caseUILabel(MUILabel object) {
-				return createUILabelAdapter();
-			}
-			@Override
-			public Adapter caseHandlerContainer(MHandlerContainer object) {
-				return createHandlerContainerAdapter();
-			}
-			@Override
-			public Adapter caseBindings(MBindings object) {
-				return createBindingsAdapter();
-			}
-			@Override
-			public Adapter defaultCase(EObject object) {
-				return createEObjectAdapter();
-			}
-		};
+	protected BasicSwitch<Adapter> modelSwitch = new BasicSwitch<Adapter>() {
+		@Override
+		public Adapter casePartDescriptor(MPartDescriptor object) {
+			return createPartDescriptorAdapter();
+		}
+
+		@Override
+		public Adapter casePartDescriptorContainer(MPartDescriptorContainer object) {
+			return createPartDescriptorContainerAdapter();
+		}
+
+		@Override
+		public Adapter caseApplicationElement(MApplicationElement object) {
+			return createApplicationElementAdapter();
+		}
+
+		@Override
+		public Adapter caseLocalizable(MLocalizable object) {
+			return createLocalizableAdapter();
+		}
+
+		@Override
+		public Adapter caseUILabel(MUILabel object) {
+			return createUILabelAdapter();
+		}
+
+		@Override
+		public Adapter caseHandlerContainer(MHandlerContainer object) {
+			return createHandlerContainerAdapter();
+		}
+
+		@Override
+		public Adapter caseBindings(MBindings object) {
+			return createBindingsAdapter();
+		}
+
+		@Override
+		public Adapter defaultCase(EObject object) {
+			return createEObjectAdapter();
+		}
+	};
 
 	/**
 	 * Creates an adapter for the <code>target</code>.
@@ -125,9 +132,8 @@ public class BasicAdapterFactory extends AdapterFactoryImpl {
 	 */
 	@Override
 	public Adapter createAdapter(Notifier target) {
-		return modelSwitch.doSwitch((EObject)target);
+		return modelSwitch.doSwitch((EObject) target);
 	}
-
 
 	/**
 	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptor <em>Part Descriptor</em>}'.
@@ -156,6 +162,36 @@ public class BasicAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createPartDescriptorContainerAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.MApplicationElement <em>Element</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.e4.ui.model.application.MApplicationElement
+	 * @since 1.0
+	 * @generated
+	 */
+	public Adapter createApplicationElementAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MLocalizable <em>Localizable</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.e4.ui.model.application.ui.MLocalizable
+	 * @since 1.1
+	 * @generated
+	 */
+	public Adapter createLocalizableAdapter() {
 		return null;
 	}
 
@@ -201,36 +237,6 @@ public class BasicAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createBindingsAdapter() {
-		return null;
-	}
-
-	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.MApplicationElement <em>Element</em>}'.
-	 * <!-- begin-user-doc -->
-	 * This default implementation returns null so that we can easily ignore cases;
-	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
-	 * <!-- end-user-doc -->
-	 * @return the new adapter.
-	 * @see org.eclipse.e4.ui.model.application.MApplicationElement
-	 * @since 1.0
-	 * @generated
-	 */
-	public Adapter createApplicationElementAdapter() {
-		return null;
-	}
-
-	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MLocalizable <em>Localizable</em>}'.
-	 * <!-- begin-user-doc -->
-	 * This default implementation returns null so that we can easily ignore cases;
-	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
-	 * <!-- end-user-doc -->
-	 * @return the new adapter.
-	 * @see org.eclipse.e4.ui.model.application.ui.MLocalizable
-	 * @since 1.1
-	 * @generated
-	 */
-	public Adapter createLocalizableAdapter() {
 		return null;
 	}
 

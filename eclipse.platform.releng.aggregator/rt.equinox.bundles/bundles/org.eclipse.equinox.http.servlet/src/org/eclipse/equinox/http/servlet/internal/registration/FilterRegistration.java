@@ -25,6 +25,8 @@ import org.eclipse.equinox.http.servlet.internal.context.ServiceHolder;
 import org.eclipse.equinox.http.servlet.internal.servlet.FilterChainImpl;
 import org.eclipse.equinox.http.servlet.internal.servlet.Match;
 import org.eclipse.equinox.http.servlet.internal.util.Const;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.service.http.runtime.dto.FilterDTO;
 
@@ -56,10 +58,26 @@ public class FilterRegistration
 		} else {
 			classLoader = filterHolder.getBundle().adapt(BundleWiring.class).getClassLoader();
 		}
-		initDestoyWithContextController = true;
+		String legacyContextFilter = (String) filterHolder.getServiceReference().getProperty(Const.EQUINOX_LEGACY_CONTEXT_SELECT);
+		if (legacyContextFilter != null) {
+			// This is a legacy Filter registration.  
+			// This filter tells us the real context controller,
+			// backed by an HttpContext that should be used to init/destroy this Filter
+			org.osgi.framework.Filter f = null;
+			try {
+				f = FrameworkUtil.createFilter(legacyContextFilter);
+			}
+			catch (InvalidSyntaxException e) {
+				// nothing
+			}
+			initDestoyWithContextController = f == null || contextController.matches(f);
+		} else {
+			initDestoyWithContextController = true;
+		}
 		needDecode = MatchableRegistration.patternsRequireDecode(filterDTO.patterns);
 	}
 
+	@Override
 	public int compareTo(FilterRegistration otherFilterRegistration) {
 		int priorityDifference = priority - otherFilterRegistration.priority;
 		if (priorityDifference != 0)
@@ -72,6 +90,7 @@ public class FilterRegistration
 		return (thisId < otherId) ? -1 : ((thisId == otherId) ? 0 : 1);
 	}
 
+	@Override
 	public void destroy() {
 		if (!initDestoyWithContextController) {
 			return;
@@ -188,13 +207,11 @@ public class FilterRegistration
 	}
 
 	private void createContextAttributes() {
-		contextController.getProxyContext().createContextAttributes(
-			contextController);
+		contextController.createContextAttributes();
 	}
 
 	private void destroyContextAttributes() {
-		contextController.getProxyContext().destroyContextAttributes(
-			contextController);
+		contextController.destroyContextAttributes();
 	}
 
 	protected boolean isPathWildcardMatch(String pattern, String path) {

@@ -74,9 +74,7 @@ public class PServerConnection implements IServerConnection {
 	private InputStream inputStream;
 	private OutputStream outputStream;
 	
-	/**
-	 * @see Connection#doClose()
-	 */
+	@Override
 	public void close() throws IOException {
 		try {
 			if (inputStream != null) inputStream.close();
@@ -95,9 +93,7 @@ public class PServerConnection implements IServerConnection {
 		}
 	}
 
-	/**
-	 * @see Connection#doOpen()
-	 */
+	@Override
 	public void open(IProgressMonitor monitor) throws IOException, CVSAuthenticationException {
 		
 		monitor.subTask(CVSMessages.PServerConnection_authenticating);
@@ -105,31 +101,31 @@ public class PServerConnection implements IServerConnection {
 		
 		InputStream is = null;
 		OutputStream os = null;
-        
-        Proxy proxy = getProxy();
-        if (proxy!=null) {
-          String host = cvsroot.getHost();
-          int port = cvsroot.getPort();
-          if (port == ICVSRepositoryLocation.USE_DEFAULT_PORT) {
-            port = DEFAULT_PORT;
-          }
-          try {
-            int timeout = CVSProviderPlugin.getPlugin().getTimeout() * 1000;
-            IJSchService service = CVSProviderPlugin.getPlugin().getJSchService();
-            service.connect(proxy, host, port, timeout, monitor);
-          } catch( Exception ex) {
-            ex.printStackTrace();
-            throw new IOException(ex.getMessage());
-          }
-          is = proxy.getInputStream();
-          os = proxy.getOutputStream();
-          
-        } else {
-          fSocket = createSocket(monitor);
-          is = fSocket.getInputStream();
-          os = fSocket.getOutputStream();
-        }
-        
+		
+		Proxy proxy = getProxy();
+		if (proxy!=null) {
+			String host = cvsroot.getHost();
+			int port = cvsroot.getPort();
+			if (port == ICVSRepositoryLocation.USE_DEFAULT_PORT) {
+			port = DEFAULT_PORT;
+		}
+		try {
+			int timeout = CVSProviderPlugin.getPlugin().getTimeout() * 1000;
+			IJSchService service = CVSProviderPlugin.getPlugin().getJSchService();
+			service.connect(proxy, host, port, timeout, monitor);
+		} catch( Exception ex) {
+			ex.printStackTrace();
+			throw new IOException(ex.getMessage());
+		}
+		is = proxy.getInputStream();
+		os = proxy.getOutputStream();
+		
+		} else {
+			fSocket = createSocket(monitor);
+			is = fSocket.getInputStream();
+			os = fSocket.getOutputStream();
+		}
+		
 		boolean connected = false;
 		try {
 			this.inputStream = new BufferedInputStream(new PollingInputStream(is,
@@ -151,18 +147,14 @@ public class PServerConnection implements IServerConnection {
 		Proxy proxy = service.getProxyForHost(cvsroot.getHost(), IProxyData.SOCKS_PROXY_TYPE);
 		if (proxy == null)
 			proxy = service.getProxyForHost(cvsroot.getHost(), IProxyData.HTTPS_PROXY_TYPE);
-        return proxy;
-    }
+		return proxy;
+	}
 
-    /**
-	 * @see Connection#getInputStream()
-	 */
+	@Override
 	public InputStream getInputStream() {
 		return inputStream;
 	}
-	/**
-	 * @see Connection#getOutputStream()
-	 */
+	@Override
 	public OutputStream getOutputStream() {
 		return outputStream;
 	}
@@ -212,29 +204,29 @@ public class PServerConnection implements IServerConnection {
 		String message = "";//$NON-NLS-1$
 		String separator = ""; //$NON-NLS-1$
 
-        if(!CVSProviderPlugin.getPlugin().isUseProxy()) {
-          while (line.length() > 0 && line.charAt(0) == ERROR_CHAR) {
-  		    if (line.length() > 2) {
-  		        message += separator + line.substring(2);
-  			    separator = " "; //$NON-NLS-1$
-  		    }
-  		    line = Connection.readLine(cvsroot, getInputStream());
-          }
-        } else {
-            while (line.length() > 0) {
-                message += separator + line;
-                separator = "\n"; //$NON-NLS-1$
-                line = Connection.readLine(cvsroot, getInputStream());
-            }
-        }
+		if(!CVSProviderPlugin.getPlugin().isUseProxy()) {
+			while (line.length() > 0 && line.charAt(0) == ERROR_CHAR) {
+				if (line.length() > 2) {
+					message += separator + line.substring(2);
+					separator = " "; //$NON-NLS-1$
+				}
+				line = Connection.readLine(cvsroot, getInputStream());
+			}
+		} else {
+			while (line.length() > 0) {
+				message += separator + line;
+				separator = "\n"; //$NON-NLS-1$
+				line = Connection.readLine(cvsroot, getInputStream());
+			}
+		}
 		
 		// If the last line is the login failed (I HATE YOU) message, return authentication failure
 		if (LOGIN_FAILED.equals(line)) {
-		    if (message.length() == 0) {
-		        throw new CVSAuthenticationException(CVSMessages.PServerConnection_loginRefused, CVSAuthenticationException.RETRY,cvsroot);
-		    } else {
-		        throw new CVSAuthenticationException(message, CVSAuthenticationException.RETRY,cvsroot);
-		    }
+			if (message.length() == 0) {
+				throw new CVSAuthenticationException(CVSMessages.PServerConnection_loginRefused, CVSAuthenticationException.RETRY,cvsroot);
+			} else {
+				throw new CVSAuthenticationException(message, CVSAuthenticationException.RETRY,cvsroot);
+			}
 		}
 		
 		// Remove leading "error 0"
@@ -284,5 +276,5 @@ public class PServerConnection implements IServerConnection {
 	private void throwInValidCharacter() throws CVSAuthenticationException {
 		throw new CVSAuthenticationException(CVSMessages.PServerConnection_invalidChars, CVSAuthenticationException.RETRY, cvsroot);
 	}
-    
+	
 }

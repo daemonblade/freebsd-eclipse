@@ -249,6 +249,7 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public Object getWidget() {
 		return widget;
 	}
@@ -258,6 +259,7 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setWidget(Object newWidget) {
 		Object oldWidget = widget;
 		widget = newWidget;
@@ -270,6 +272,7 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public Object getRenderer() {
 		return renderer;
 	}
@@ -279,11 +282,13 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setRenderer(Object newRenderer) {
 		Object oldRenderer = renderer;
 		renderer = newRenderer;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__RENDERER, oldRenderer, renderer));
+			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__RENDERER, oldRenderer,
+					renderer));
 	}
 
 	/**
@@ -291,6 +296,7 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public boolean isToBeRendered() {
 		return toBeRendered;
 	}
@@ -300,11 +306,13 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setToBeRendered(boolean newToBeRendered) {
 		boolean oldToBeRendered = toBeRendered;
 		toBeRendered = newToBeRendered;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__TO_BE_RENDERED, oldToBeRendered, toBeRendered));
+			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__TO_BE_RENDERED,
+					oldToBeRendered, toBeRendered));
 	}
 
 	/**
@@ -312,6 +320,7 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public boolean isOnTop() {
 		return onTop;
 	}
@@ -321,6 +330,7 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setOnTop(boolean newOnTop) {
 		boolean oldOnTop = onTop;
 		onTop = newOnTop;
@@ -333,6 +343,7 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public boolean isVisible() {
 		return visible;
 	}
@@ -342,11 +353,13 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setVisible(boolean newVisible) {
 		boolean oldVisible = visible;
 		visible = newVisible;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__VISIBLE, oldVisible, visible));
+			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__VISIBLE, oldVisible,
+					visible));
 	}
 
 	/**
@@ -355,9 +368,11 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * @generated
 	 */
 	@SuppressWarnings("unchecked")
+	@Override
 	public MElementContainer<MUIElement> getParent() {
-		if (eContainerFeatureID() != UiPackageImpl.UI_ELEMENT__PARENT) return null;
-		return (MElementContainer<MUIElement>)eInternalContainer();
+		if (eContainerFeatureID() != UiPackageImpl.UI_ELEMENT__PARENT)
+			return null;
+		return (MElementContainer<MUIElement>) eInternalContainer();
 	}
 
 	/**
@@ -366,7 +381,7 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * @generated
 	 */
 	public NotificationChain basicSetParent(MElementContainer<MUIElement> newParent, NotificationChain msgs) {
-		msgs = eBasicSetContainer((InternalEObject)newParent, UiPackageImpl.UI_ELEMENT__PARENT, msgs);
+		msgs = eBasicSetContainer((InternalEObject) newParent, UiPackageImpl.UI_ELEMENT__PARENT, msgs);
 		return msgs;
 	}
 
@@ -375,20 +390,24 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setParent(MElementContainer<MUIElement> newParent) {
-		if (newParent != eInternalContainer() || (eContainerFeatureID() != UiPackageImpl.UI_ELEMENT__PARENT && newParent != null)) {
-			if (EcoreUtil.isAncestor(this, (EObject)newParent))
+		if (newParent != eInternalContainer()
+				|| (eContainerFeatureID() != UiPackageImpl.UI_ELEMENT__PARENT && newParent != null)) {
+			if (EcoreUtil.isAncestor(this, (EObject) newParent))
 				throw new IllegalArgumentException("Recursive containment not allowed for " + toString()); //$NON-NLS-1$
 			NotificationChain msgs = null;
 			if (eInternalContainer() != null)
 				msgs = eBasicRemoveFromContainer(msgs);
 			if (newParent != null)
-				msgs = ((InternalEObject)newParent).eInverseAdd(this, UiPackageImpl.ELEMENT_CONTAINER__CHILDREN, MElementContainer.class, msgs);
+				msgs = ((InternalEObject) newParent).eInverseAdd(this, UiPackageImpl.ELEMENT_CONTAINER__CHILDREN,
+						MElementContainer.class, msgs);
 			msgs = basicSetParent(newParent, msgs);
-			if (msgs != null) msgs.dispatch();
-		}
-		else if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__PARENT, newParent, newParent));
+			if (msgs != null)
+				msgs.dispatch();
+		} else if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__PARENT, newParent,
+					newParent));
 	}
 
 	/**
@@ -396,6 +415,7 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getContainerData() {
 		return containerData;
 	}
@@ -405,11 +425,13 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setContainerData(String newContainerData) {
 		String oldContainerData = containerData;
 		containerData = newContainerData;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__CONTAINER_DATA, oldContainerData, containerData));
+			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__CONTAINER_DATA,
+					oldContainerData, containerData));
 	}
 
 	/**
@@ -417,13 +439,15 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public MPlaceholder getCurSharedRef() {
-		if (curSharedRef != null && ((EObject)curSharedRef).eIsProxy()) {
-			InternalEObject oldCurSharedRef = (InternalEObject)curSharedRef;
-			curSharedRef = (MPlaceholder)eResolveProxy(oldCurSharedRef);
+		if (curSharedRef != null && ((EObject) curSharedRef).eIsProxy()) {
+			InternalEObject oldCurSharedRef = (InternalEObject) curSharedRef;
+			curSharedRef = (MPlaceholder) eResolveProxy(oldCurSharedRef);
 			if (curSharedRef != oldCurSharedRef) {
 				if (eNotificationRequired())
-					eNotify(new ENotificationImpl(this, Notification.RESOLVE, UiPackageImpl.UI_ELEMENT__CUR_SHARED_REF, oldCurSharedRef, curSharedRef));
+					eNotify(new ENotificationImpl(this, Notification.RESOLVE, UiPackageImpl.UI_ELEMENT__CUR_SHARED_REF,
+							oldCurSharedRef, curSharedRef));
 			}
 		}
 		return curSharedRef;
@@ -443,11 +467,13 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setCurSharedRef(MPlaceholder newCurSharedRef) {
 		MPlaceholder oldCurSharedRef = curSharedRef;
 		curSharedRef = newCurSharedRef;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__CUR_SHARED_REF, oldCurSharedRef, curSharedRef));
+			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__CUR_SHARED_REF,
+					oldCurSharedRef, curSharedRef));
 	}
 
 	/**
@@ -455,6 +481,7 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public MExpression getVisibleWhen() {
 		return visibleWhen;
 	}
@@ -468,8 +495,12 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 		MExpression oldVisibleWhen = visibleWhen;
 		visibleWhen = newVisibleWhen;
 		if (eNotificationRequired()) {
-			ENotificationImpl notification = new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN, oldVisibleWhen, newVisibleWhen);
-			if (msgs == null) msgs = notification; else msgs.add(notification);
+			ENotificationImpl notification = new ENotificationImpl(this, Notification.SET,
+					UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN, oldVisibleWhen, newVisibleWhen);
+			if (msgs == null)
+				msgs = notification;
+			else
+				msgs.add(notification);
 		}
 		return msgs;
 	}
@@ -479,18 +510,22 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setVisibleWhen(MExpression newVisibleWhen) {
 		if (newVisibleWhen != visibleWhen) {
 			NotificationChain msgs = null;
 			if (visibleWhen != null)
-				msgs = ((InternalEObject)visibleWhen).eInverseRemove(this, EOPPOSITE_FEATURE_BASE - UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN, null, msgs);
+				msgs = ((InternalEObject) visibleWhen).eInverseRemove(this,
+						EOPPOSITE_FEATURE_BASE - UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN, null, msgs);
 			if (newVisibleWhen != null)
-				msgs = ((InternalEObject)newVisibleWhen).eInverseAdd(this, EOPPOSITE_FEATURE_BASE - UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN, null, msgs);
+				msgs = ((InternalEObject) newVisibleWhen).eInverseAdd(this,
+						EOPPOSITE_FEATURE_BASE - UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN, null, msgs);
 			msgs = basicSetVisibleWhen(newVisibleWhen, msgs);
-			if (msgs != null) msgs.dispatch();
-		}
-		else if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN, newVisibleWhen, newVisibleWhen));
+			if (msgs != null)
+				msgs.dispatch();
+		} else if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN,
+					newVisibleWhen, newVisibleWhen));
 	}
 
 	/**
@@ -498,6 +533,7 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getAccessibilityPhrase() {
 		return accessibilityPhrase;
 	}
@@ -507,17 +543,21 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setAccessibilityPhrase(String newAccessibilityPhrase) {
 		String oldAccessibilityPhrase = accessibilityPhrase;
 		accessibilityPhrase = newAccessibilityPhrase;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__ACCESSIBILITY_PHRASE, oldAccessibilityPhrase, accessibilityPhrase));
+			eNotify(new ENotificationImpl(this, Notification.SET, UiPackageImpl.UI_ELEMENT__ACCESSIBILITY_PHRASE,
+					oldAccessibilityPhrase, accessibilityPhrase));
 	}
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @generated
 	 */
+	@Override
 	public String getLocalizedAccessibilityPhrase() {
 		return LocalizationHelper.getLocalizedAccessibilityPhrase(this);
 	}
@@ -525,11 +565,14 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
 	 */
+	@Override
 	public void updateLocalization() {
 		if (eNotificationRequired()) {
-			eNotify(new ENotificationImpl(
-					this, Notification.SET, UiPackageImpl.UI_ELEMENT__LOCALIZED_ACCESSIBILITY_PHRASE, null, getLocalizedAccessibilityPhrase()));
+			eNotify(new ENotificationImpl(this, Notification.SET,
+					UiPackageImpl.UI_ELEMENT__LOCALIZED_ACCESSIBILITY_PHRASE, null, getLocalizedAccessibilityPhrase()));
 		}
 	}
 
@@ -542,10 +585,10 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	@Override
 	public NotificationChain eInverseAdd(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
-			case UiPackageImpl.UI_ELEMENT__PARENT:
-				if (eInternalContainer() != null)
-					msgs = eBasicRemoveFromContainer(msgs);
-				return basicSetParent((MElementContainer<MUIElement>)otherEnd, msgs);
+		case UiPackageImpl.UI_ELEMENT__PARENT:
+			if (eInternalContainer() != null)
+				msgs = eBasicRemoveFromContainer(msgs);
+			return basicSetParent((MElementContainer<MUIElement>) otherEnd, msgs);
 		}
 		return super.eInverseAdd(otherEnd, featureID, msgs);
 	}
@@ -558,10 +601,10 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
-			case UiPackageImpl.UI_ELEMENT__PARENT:
-				return basicSetParent(null, msgs);
-			case UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN:
-				return basicSetVisibleWhen(null, msgs);
+		case UiPackageImpl.UI_ELEMENT__PARENT:
+			return basicSetParent(null, msgs);
+		case UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN:
+			return basicSetVisibleWhen(null, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -574,8 +617,9 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	@Override
 	public NotificationChain eBasicRemoveFromContainerFeature(NotificationChain msgs) {
 		switch (eContainerFeatureID()) {
-			case UiPackageImpl.UI_ELEMENT__PARENT:
-				return eInternalContainer().eInverseRemove(this, UiPackageImpl.ELEMENT_CONTAINER__CHILDREN, MElementContainer.class, msgs);
+		case UiPackageImpl.UI_ELEMENT__PARENT:
+			return eInternalContainer().eInverseRemove(this, UiPackageImpl.ELEMENT_CONTAINER__CHILDREN,
+					MElementContainer.class, msgs);
 		}
 		return super.eBasicRemoveFromContainerFeature(msgs);
 	}
@@ -588,29 +632,30 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case UiPackageImpl.UI_ELEMENT__WIDGET:
-				return getWidget();
-			case UiPackageImpl.UI_ELEMENT__RENDERER:
-				return getRenderer();
-			case UiPackageImpl.UI_ELEMENT__TO_BE_RENDERED:
-				return isToBeRendered();
-			case UiPackageImpl.UI_ELEMENT__ON_TOP:
-				return isOnTop();
-			case UiPackageImpl.UI_ELEMENT__VISIBLE:
-				return isVisible();
-			case UiPackageImpl.UI_ELEMENT__PARENT:
-				return getParent();
-			case UiPackageImpl.UI_ELEMENT__CONTAINER_DATA:
-				return getContainerData();
-			case UiPackageImpl.UI_ELEMENT__CUR_SHARED_REF:
-				if (resolve) return getCurSharedRef();
-				return basicGetCurSharedRef();
-			case UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN:
-				return getVisibleWhen();
-			case UiPackageImpl.UI_ELEMENT__ACCESSIBILITY_PHRASE:
-				return getAccessibilityPhrase();
-			case UiPackageImpl.UI_ELEMENT__LOCALIZED_ACCESSIBILITY_PHRASE:
-				return getLocalizedAccessibilityPhrase();
+		case UiPackageImpl.UI_ELEMENT__WIDGET:
+			return getWidget();
+		case UiPackageImpl.UI_ELEMENT__RENDERER:
+			return getRenderer();
+		case UiPackageImpl.UI_ELEMENT__TO_BE_RENDERED:
+			return isToBeRendered();
+		case UiPackageImpl.UI_ELEMENT__ON_TOP:
+			return isOnTop();
+		case UiPackageImpl.UI_ELEMENT__VISIBLE:
+			return isVisible();
+		case UiPackageImpl.UI_ELEMENT__PARENT:
+			return getParent();
+		case UiPackageImpl.UI_ELEMENT__CONTAINER_DATA:
+			return getContainerData();
+		case UiPackageImpl.UI_ELEMENT__CUR_SHARED_REF:
+			if (resolve)
+				return getCurSharedRef();
+			return basicGetCurSharedRef();
+		case UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN:
+			return getVisibleWhen();
+		case UiPackageImpl.UI_ELEMENT__ACCESSIBILITY_PHRASE:
+			return getAccessibilityPhrase();
+		case UiPackageImpl.UI_ELEMENT__LOCALIZED_ACCESSIBILITY_PHRASE:
+			return getLocalizedAccessibilityPhrase();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -624,36 +669,36 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case UiPackageImpl.UI_ELEMENT__WIDGET:
-				setWidget(newValue);
-				return;
-			case UiPackageImpl.UI_ELEMENT__RENDERER:
-				setRenderer(newValue);
-				return;
-			case UiPackageImpl.UI_ELEMENT__TO_BE_RENDERED:
-				setToBeRendered((Boolean)newValue);
-				return;
-			case UiPackageImpl.UI_ELEMENT__ON_TOP:
-				setOnTop((Boolean)newValue);
-				return;
-			case UiPackageImpl.UI_ELEMENT__VISIBLE:
-				setVisible((Boolean)newValue);
-				return;
-			case UiPackageImpl.UI_ELEMENT__PARENT:
-				setParent((MElementContainer<MUIElement>)newValue);
-				return;
-			case UiPackageImpl.UI_ELEMENT__CONTAINER_DATA:
-				setContainerData((String)newValue);
-				return;
-			case UiPackageImpl.UI_ELEMENT__CUR_SHARED_REF:
-				setCurSharedRef((MPlaceholder)newValue);
-				return;
-			case UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN:
-				setVisibleWhen((MExpression)newValue);
-				return;
-			case UiPackageImpl.UI_ELEMENT__ACCESSIBILITY_PHRASE:
-				setAccessibilityPhrase((String)newValue);
-				return;
+		case UiPackageImpl.UI_ELEMENT__WIDGET:
+			setWidget(newValue);
+			return;
+		case UiPackageImpl.UI_ELEMENT__RENDERER:
+			setRenderer(newValue);
+			return;
+		case UiPackageImpl.UI_ELEMENT__TO_BE_RENDERED:
+			setToBeRendered((Boolean) newValue);
+			return;
+		case UiPackageImpl.UI_ELEMENT__ON_TOP:
+			setOnTop((Boolean) newValue);
+			return;
+		case UiPackageImpl.UI_ELEMENT__VISIBLE:
+			setVisible((Boolean) newValue);
+			return;
+		case UiPackageImpl.UI_ELEMENT__PARENT:
+			setParent((MElementContainer<MUIElement>) newValue);
+			return;
+		case UiPackageImpl.UI_ELEMENT__CONTAINER_DATA:
+			setContainerData((String) newValue);
+			return;
+		case UiPackageImpl.UI_ELEMENT__CUR_SHARED_REF:
+			setCurSharedRef((MPlaceholder) newValue);
+			return;
+		case UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN:
+			setVisibleWhen((MExpression) newValue);
+			return;
+		case UiPackageImpl.UI_ELEMENT__ACCESSIBILITY_PHRASE:
+			setAccessibilityPhrase((String) newValue);
+			return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -666,36 +711,36 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case UiPackageImpl.UI_ELEMENT__WIDGET:
-				setWidget(WIDGET_EDEFAULT);
-				return;
-			case UiPackageImpl.UI_ELEMENT__RENDERER:
-				setRenderer(RENDERER_EDEFAULT);
-				return;
-			case UiPackageImpl.UI_ELEMENT__TO_BE_RENDERED:
-				setToBeRendered(TO_BE_RENDERED_EDEFAULT);
-				return;
-			case UiPackageImpl.UI_ELEMENT__ON_TOP:
-				setOnTop(ON_TOP_EDEFAULT);
-				return;
-			case UiPackageImpl.UI_ELEMENT__VISIBLE:
-				setVisible(VISIBLE_EDEFAULT);
-				return;
-			case UiPackageImpl.UI_ELEMENT__PARENT:
-				setParent((MElementContainer<MUIElement>)null);
-				return;
-			case UiPackageImpl.UI_ELEMENT__CONTAINER_DATA:
-				setContainerData(CONTAINER_DATA_EDEFAULT);
-				return;
-			case UiPackageImpl.UI_ELEMENT__CUR_SHARED_REF:
-				setCurSharedRef((MPlaceholder)null);
-				return;
-			case UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN:
-				setVisibleWhen((MExpression)null);
-				return;
-			case UiPackageImpl.UI_ELEMENT__ACCESSIBILITY_PHRASE:
-				setAccessibilityPhrase(ACCESSIBILITY_PHRASE_EDEFAULT);
-				return;
+		case UiPackageImpl.UI_ELEMENT__WIDGET:
+			setWidget(WIDGET_EDEFAULT);
+			return;
+		case UiPackageImpl.UI_ELEMENT__RENDERER:
+			setRenderer(RENDERER_EDEFAULT);
+			return;
+		case UiPackageImpl.UI_ELEMENT__TO_BE_RENDERED:
+			setToBeRendered(TO_BE_RENDERED_EDEFAULT);
+			return;
+		case UiPackageImpl.UI_ELEMENT__ON_TOP:
+			setOnTop(ON_TOP_EDEFAULT);
+			return;
+		case UiPackageImpl.UI_ELEMENT__VISIBLE:
+			setVisible(VISIBLE_EDEFAULT);
+			return;
+		case UiPackageImpl.UI_ELEMENT__PARENT:
+			setParent((MElementContainer<MUIElement>) null);
+			return;
+		case UiPackageImpl.UI_ELEMENT__CONTAINER_DATA:
+			setContainerData(CONTAINER_DATA_EDEFAULT);
+			return;
+		case UiPackageImpl.UI_ELEMENT__CUR_SHARED_REF:
+			setCurSharedRef((MPlaceholder) null);
+			return;
+		case UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN:
+			setVisibleWhen((MExpression) null);
+			return;
+		case UiPackageImpl.UI_ELEMENT__ACCESSIBILITY_PHRASE:
+			setAccessibilityPhrase(ACCESSIBILITY_PHRASE_EDEFAULT);
+			return;
 		}
 		super.eUnset(featureID);
 	}
@@ -708,28 +753,31 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case UiPackageImpl.UI_ELEMENT__WIDGET:
-				return WIDGET_EDEFAULT == null ? widget != null : !WIDGET_EDEFAULT.equals(widget);
-			case UiPackageImpl.UI_ELEMENT__RENDERER:
-				return RENDERER_EDEFAULT == null ? renderer != null : !RENDERER_EDEFAULT.equals(renderer);
-			case UiPackageImpl.UI_ELEMENT__TO_BE_RENDERED:
-				return toBeRendered != TO_BE_RENDERED_EDEFAULT;
-			case UiPackageImpl.UI_ELEMENT__ON_TOP:
-				return onTop != ON_TOP_EDEFAULT;
-			case UiPackageImpl.UI_ELEMENT__VISIBLE:
-				return visible != VISIBLE_EDEFAULT;
-			case UiPackageImpl.UI_ELEMENT__PARENT:
-				return getParent() != null;
-			case UiPackageImpl.UI_ELEMENT__CONTAINER_DATA:
-				return CONTAINER_DATA_EDEFAULT == null ? containerData != null : !CONTAINER_DATA_EDEFAULT.equals(containerData);
-			case UiPackageImpl.UI_ELEMENT__CUR_SHARED_REF:
-				return curSharedRef != null;
-			case UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN:
-				return visibleWhen != null;
-			case UiPackageImpl.UI_ELEMENT__ACCESSIBILITY_PHRASE:
-				return ACCESSIBILITY_PHRASE_EDEFAULT == null ? accessibilityPhrase != null : !ACCESSIBILITY_PHRASE_EDEFAULT.equals(accessibilityPhrase);
-			case UiPackageImpl.UI_ELEMENT__LOCALIZED_ACCESSIBILITY_PHRASE:
-				return LOCALIZED_ACCESSIBILITY_PHRASE_EDEFAULT == null ? getLocalizedAccessibilityPhrase() != null : !LOCALIZED_ACCESSIBILITY_PHRASE_EDEFAULT.equals(getLocalizedAccessibilityPhrase());
+		case UiPackageImpl.UI_ELEMENT__WIDGET:
+			return WIDGET_EDEFAULT == null ? widget != null : !WIDGET_EDEFAULT.equals(widget);
+		case UiPackageImpl.UI_ELEMENT__RENDERER:
+			return RENDERER_EDEFAULT == null ? renderer != null : !RENDERER_EDEFAULT.equals(renderer);
+		case UiPackageImpl.UI_ELEMENT__TO_BE_RENDERED:
+			return toBeRendered != TO_BE_RENDERED_EDEFAULT;
+		case UiPackageImpl.UI_ELEMENT__ON_TOP:
+			return onTop != ON_TOP_EDEFAULT;
+		case UiPackageImpl.UI_ELEMENT__VISIBLE:
+			return visible != VISIBLE_EDEFAULT;
+		case UiPackageImpl.UI_ELEMENT__PARENT:
+			return getParent() != null;
+		case UiPackageImpl.UI_ELEMENT__CONTAINER_DATA:
+			return CONTAINER_DATA_EDEFAULT == null ? containerData != null
+					: !CONTAINER_DATA_EDEFAULT.equals(containerData);
+		case UiPackageImpl.UI_ELEMENT__CUR_SHARED_REF:
+			return curSharedRef != null;
+		case UiPackageImpl.UI_ELEMENT__VISIBLE_WHEN:
+			return visibleWhen != null;
+		case UiPackageImpl.UI_ELEMENT__ACCESSIBILITY_PHRASE:
+			return ACCESSIBILITY_PHRASE_EDEFAULT == null ? accessibilityPhrase != null
+					: !ACCESSIBILITY_PHRASE_EDEFAULT.equals(accessibilityPhrase);
+		case UiPackageImpl.UI_ELEMENT__LOCALIZED_ACCESSIBILITY_PHRASE:
+			return LOCALIZED_ACCESSIBILITY_PHRASE_EDEFAULT == null ? getLocalizedAccessibilityPhrase() != null
+					: !LOCALIZED_ACCESSIBILITY_PHRASE_EDEFAULT.equals(getLocalizedAccessibilityPhrase());
 		}
 		return super.eIsSet(featureID);
 	}
@@ -743,8 +791,10 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	public int eDerivedOperationID(int baseOperationID, Class<?> baseClass) {
 		if (baseClass == MLocalizable.class) {
 			switch (baseOperationID) {
-				case UiPackageImpl.LOCALIZABLE___UPDATE_LOCALIZATION: return UiPackageImpl.UI_ELEMENT___UPDATE_LOCALIZATION;
-				default: return -1;
+			case UiPackageImpl.LOCALIZABLE___UPDATE_LOCALIZATION:
+				return UiPackageImpl.UI_ELEMENT___UPDATE_LOCALIZATION;
+			default:
+				return -1;
 			}
 		}
 		return super.eDerivedOperationID(baseOperationID, baseClass);
@@ -758,9 +808,9 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	@Override
 	public Object eInvoke(int operationID, EList<?> arguments) throws InvocationTargetException {
 		switch (operationID) {
-			case UiPackageImpl.UI_ELEMENT___UPDATE_LOCALIZATION:
-				updateLocalization();
-				return null;
+		case UiPackageImpl.UI_ELEMENT___UPDATE_LOCALIZATION:
+			updateLocalization();
+			return null;
 		}
 		return super.eInvoke(operationID, arguments);
 	}
@@ -772,7 +822,8 @@ public abstract class UIElementImpl extends ApplicationElementImpl implements MU
 	 */
 	@Override
 	public String toString() {
-		if (eIsProxy()) return super.toString();
+		if (eIsProxy())
+			return super.toString();
 
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (widget: "); //$NON-NLS-1$

@@ -221,7 +221,7 @@ void destroyItem (TabItem item) {
 }
 
 @Override
-void drawBackground (long /*int*/ id, NSGraphicsContext context, NSRect rect) {
+void drawBackground (long id, NSGraphicsContext context, NSRect rect) {
 	if (id != view.id) return;
 	fillBackground (view, context, rect, -1);
 }
@@ -522,7 +522,7 @@ void setFont (NSFont font) {
 }
 
 @Override
-void setForeground (double /*float*/ [] color) {
+void setForeground (double [] color) {
 	super.setForeground(color);
 	int index = getSelectionIndex();
 	for (int i = 0; i < itemCount; i++) {
@@ -655,7 +655,7 @@ boolean traversePage (boolean next) {
 }
 
 @Override
-void tabView_willSelectTabViewItem(long /*int*/ id, long /*int*/ sel, long /*int*/ tabView, long /*int*/ tabViewItem) {
+void tabView_willSelectTabViewItem(long id, long sel, long tabView, long tabViewItem) {
 	if (tabViewItem == 0) return;
 	for (int i = 0; i < itemCount; i++) {
 		TabItem item = items [i];
@@ -664,7 +664,7 @@ void tabView_willSelectTabViewItem(long /*int*/ id, long /*int*/ sel, long /*int
 			if (currentIndex != -1) {
 				TabItem selected = items [currentIndex];
 				if (selected != null) {
-					if (OS.VERSION >= 0x1070) selected.updateText(false);
+					selected.updateText(false);
 					Control control = selected.control;
 					if (control != null && !control.isDisposed ()) {
 						control.setVisible (false);
@@ -675,14 +675,14 @@ void tabView_willSelectTabViewItem(long /*int*/ id, long /*int*/ sel, long /*int
 			if (control != null && !control.isDisposed ()) {
 				control.setVisible (true);
 			}
-			if (OS.VERSION >= 0x1070) item.updateText(true);
+			item.updateText(true);
 			break;
 		}
 	}
 }
 
 @Override
-void tabView_didSelectTabViewItem(long /*int*/ id, long /*int*/ sel, long /*int*/ tabView, long /*int*/ tabViewItem) {
+void tabView_didSelectTabViewItem(long id, long sel, long tabView, long tabViewItem) {
 	if (tabViewItem == 0) return;
 	for (int i = 0; i < itemCount; i++) {
 		TabItem item = items [i];

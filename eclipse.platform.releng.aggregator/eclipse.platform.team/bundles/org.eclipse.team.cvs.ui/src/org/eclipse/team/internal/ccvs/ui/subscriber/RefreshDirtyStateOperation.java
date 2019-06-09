@@ -46,22 +46,19 @@ public class RefreshDirtyStateOperation extends CVSSubscriberOperation {
 		super(configuration, elements);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberOperation#run(org.eclipse.team.core.synchronize.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
-	 */
 	@Override
 	protected void runWithProjectRule(IProject project, SyncInfoSet set, IProgressMonitor monitor) throws TeamException {
 		final SyncInfo[] infos = set.getSyncInfos();
 		if (infos.length == 0) return;
-        monitor.beginTask(null, 200);
-        ensureBaseContentsCached(project, infos, Policy.subMonitorFor(monitor, 100));
-        performCleanTimestamps(project, infos, monitor);
-        monitor.done();
+		monitor.beginTask(null, 200);
+		ensureBaseContentsCached(project, infos, Policy.subMonitorFor(monitor, 100));
+		performCleanTimestamps(project, infos, monitor);
+		monitor.done();
 	}
 
 	private void performCleanTimestamps(IProject project, final SyncInfo[] infos, IProgressMonitor monitor) throws CVSException {
 		ICVSFolder folder = CVSWorkspaceRoot.getCVSFolderFor(project);
-        final ContentComparisonSyncInfoFilter comparator = new SyncInfoFilter.ContentComparisonSyncInfoFilter(false);
+		final ContentComparisonSyncInfoFilter comparator = new SyncInfoFilter.ContentComparisonSyncInfoFilter(false);
 		folder.run(monitor1 -> {
 			monitor1.beginTask(null, infos.length * 100);
 			for (int i = 0; i < infos.length; i++) {
@@ -119,16 +116,13 @@ public class RefreshDirtyStateOperation extends CVSSubscriberOperation {
 		} catch (InterruptedException e) {
 			throw new OperationCanceledException();
 		}
-    }
-    
-    @Override
+	}
+	
+	@Override
 	protected String getErrorTitle() {
 		return CVSUIMessages.RefreshDirtyStateOperation_0; 
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberAction#getJobName(org.eclipse.team.ui.sync.SyncInfoSet)
-	 */
 	@Override
 	protected String getJobName() {
 		return CVSUIMessages.RefreshDirtyStateOperation_1; 

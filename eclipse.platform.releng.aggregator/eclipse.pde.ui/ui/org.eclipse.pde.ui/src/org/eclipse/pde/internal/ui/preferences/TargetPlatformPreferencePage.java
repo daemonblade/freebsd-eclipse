@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 EclipseSource Corporation and others.
+ * Copyright (c) 2009, 2019 EclipseSource Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,6 +11,7 @@
  * Contributors:
  *     EclipseSource Corporation - initial API and implementation
  *     IBM Corporation - ongoing enhancements
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - Bug 541067, 546400
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.preferences;
 
@@ -27,6 +28,7 @@ import org.eclipse.core.runtime.jobs.*;
 import org.eclipse.equinox.frameworkadmin.BundleInfo;
 import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.preference.PreferencePage;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.*;
@@ -39,17 +41,18 @@ import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.*;
 import org.eclipse.pde.internal.core.target.*;
 import org.eclipse.pde.internal.ui.*;
-import org.eclipse.pde.internal.ui.editor.targetdefinition.TargetEditor;
 import org.eclipse.pde.internal.ui.shared.target.*;
 import org.eclipse.pde.internal.ui.shared.target.Messages;
 import org.eclipse.pde.internal.ui.util.SWTUtil;
 import org.eclipse.pde.internal.ui.util.SharedLabelProvider;
 import org.eclipse.pde.internal.ui.wizards.target.*;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.*;
 import org.eclipse.ui.progress.UIJob;
@@ -415,9 +418,11 @@ public class TargetPlatformPreferencePage extends PreferencePage implements IWor
 		Composite comp = SWTFactory.createComposite(container, 1, 1, GridData.FILL_BOTH, 0, 0);
 		((GridData) comp.getLayoutData()).widthHint = 350;
 		SWTFactory.createWrapLabel(comp, PDEUIMessages.TargetPlatformPreferencePage2_0, 2);
-		SWTFactory.createVerticalSpacer(comp, 1);
+		SashForm sash = new SashForm(comp, SWT.VERTICAL);
+		sash.setLayout(new GridLayout());
+		sash.setLayoutData(GridDataFactory.fillDefaults().grab(true, true).create());
 
-		Composite tableComposite = SWTFactory.createComposite(comp, 2, 1, GridData.FILL_BOTH, 0, 0);
+		Composite tableComposite = SWTFactory.createComposite(sash, 2, 1, GridData.FILL_BOTH, 0, 0);
 		SWTFactory.createLabel(tableComposite, PDEUIMessages.TargetPlatformPreferencePage2_2, 2);
 
 		fTableViewer = CheckboxTableViewer.newCheckList(tableComposite, SWT.MULTI | SWT.BORDER);
@@ -507,12 +512,13 @@ public class TargetPlatformPreferencePage extends PreferencePage implements IWor
 
 		updateButtons();
 
-		Composite detailsComposite = SWTFactory.createComposite(comp, 1, 1, GridData.FILL_HORIZONTAL, 0, 0);
+		Composite detailsComposite = SWTFactory.createComposite(sash, 1, 1, GridData.FILL_BOTH, 0, 0);
+		sash.setWeights(new int[] { 70, 30 });
 		SWTFactory.createLabel(detailsComposite, PDEUIMessages.TargetPlatformPreferencePage2_25, 1);
 		fDetails = new TreeViewer(detailsComposite);
 		fDetails.setLabelProvider(new TargetLocationLabelProvider(true, true));
 		fDetails.setContentProvider(new TargetLocationContentProvider());
-		gd = new GridData(GridData.FILL_HORIZONTAL);
+		gd = new GridData(GridData.FILL_BOTH);
 		gd.heightHint = 50;
 		fDetails.getControl().setLayoutData(gd);
 
@@ -956,24 +962,8 @@ public class TargetPlatformPreferencePage extends PreferencePage implements IWor
 				}
 			};
 
-			if (fPrevious.getHandle() instanceof WorkspaceFileTargetHandle) {
-				WorkspaceFileTargetHandle wrkHandle = (WorkspaceFileTargetHandle) fPrevious.getHandle();
-				Object object = wrkHandle.getWorkspaceEditor();
-				if (object instanceof TargetEditor) {
-					TargetEditor targetEditor = (TargetEditor) object;
-					targetEditor.updateHyperlinkText(PDEUIMessages.AbstractTargetPage_setTarget);
-				}
-			}
 			LoadTargetDefinitionJob.load(toLoad, listener);
 
-			if ((toLoad != null) && (toLoad.getHandle() instanceof WorkspaceFileTargetHandle)) {
-				WorkspaceFileTargetHandle wrkHandle = (WorkspaceFileTargetHandle) toLoad.getHandle();
-				Object object = wrkHandle.getWorkspaceEditor();
-				if (object instanceof TargetEditor) {
-					TargetEditor targetEditor = (TargetEditor) object;
-					targetEditor.updateHyperlinkText(PDEUIMessages.AbstractTargetPage_reloadTarget);
-				}
-			}
 			fPrevious = toLoad == null ? null : toLoad;
 
 			// Start a separate job to clean p2 bundle pool

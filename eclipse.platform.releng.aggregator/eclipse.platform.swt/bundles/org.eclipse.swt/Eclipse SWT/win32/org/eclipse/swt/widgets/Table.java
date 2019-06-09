@@ -877,7 +877,7 @@ LRESULT CDDS_PREPAINT (NMLVCUSTOMDRAW nmcd, long /*int*/ wParam, long /*int*/ lP
 		OS.SetRect (rect, nmcd.left, nmcd.top, nmcd.right, nmcd.bottom);
 		if (explorerTheme && columnCount == 0) {
 			long /*int*/ hDC = nmcd.hdc;
-			if (OS.IsWindowEnabled (handle) || findImageControl () != null || hasCustomBackground()) {
+			if (OS.IsWindowEnabled (handle) || findImageControl () != null) {
 				drawBackground (hDC, rect);
 			} else {
 				fillBackground (hDC, OS.GetSysColor (OS.COLOR_3DFACE), rect);
@@ -887,26 +887,25 @@ LRESULT CDDS_PREPAINT (NMLVCUSTOMDRAW nmcd, long /*int*/ wParam, long /*int*/ lP
 			if (control != null && control.backgroundImage != null) {
 				fillImageBackground (nmcd.hdc, control, rect, 0, 0);
 			} else {
-				if ((int)/*64*/OS.SendMessage (handle, OS.LVM_GETBKCOLOR, 0, 0) == OS.CLR_NONE || hasCustomBackground()) {
-					if (OS.IsWindowEnabled (handle) || hasCustomBackground()) {
-						if (control == null) control = this;
-						fillBackground (nmcd.hdc, control.getBackgroundPixel (), rect);
-						if (OS.IsAppThemed ()) {
-							if (sortColumn != null && sortDirection != SWT.NONE) {
-								int index = indexOf (sortColumn);
-								if (index != -1) {
-									parent.forceResize ();
-									int clrSortBk = getSortColumnPixel ();
-									RECT columnRect = new RECT (), headerRect = new RECT ();
-									OS.GetClientRect (handle, columnRect);
-									long /*int*/ hwndHeader = OS.SendMessage (handle, OS.LVM_GETHEADER, 0, 0);
-									if (OS.SendMessage (hwndHeader, OS.HDM_GETITEMRECT, index, headerRect) != 0) {
-										OS.MapWindowPoints (hwndHeader, handle, headerRect, 2);
-										columnRect.left = headerRect.left;
-										columnRect.right = headerRect.right;
-										if (OS.IntersectRect(columnRect, columnRect, rect)) {
-											fillBackground (nmcd.hdc, clrSortBk, columnRect);
-										}
+				final boolean enabled = OS.IsWindowEnabled (handle);
+				if (enabled && (int)/*64*/OS.SendMessage (handle, OS.LVM_GETBKCOLOR, 0, 0) == OS.CLR_NONE || !enabled && hasCustomBackground()) {
+					if (control == null) control = this;
+					fillBackground (nmcd.hdc, control.getBackgroundPixel (), rect);
+					if (OS.IsAppThemed ()) {
+						if (sortColumn != null && sortDirection != SWT.NONE) {
+							int index = indexOf (sortColumn);
+							if (index != -1) {
+								parent.forceResize ();
+								int clrSortBk = getSortColumnPixel ();
+								RECT columnRect = new RECT (), headerRect = new RECT ();
+								OS.GetClientRect (handle, columnRect);
+								long /*int*/ hwndHeader = OS.SendMessage (handle, OS.LVM_GETHEADER, 0, 0);
+								if (OS.SendMessage (hwndHeader, OS.HDM_GETITEMRECT, index, headerRect) != 0) {
+									OS.MapWindowPoints (hwndHeader, handle, headerRect, 2);
+									columnRect.left = headerRect.left;
+									columnRect.right = headerRect.right;
+									if (OS.IntersectRect(columnRect, columnRect, rect)) {
+										fillBackground (nmcd.hdc, clrSortBk, columnRect);
 									}
 								}
 							}
@@ -1016,8 +1015,8 @@ LRESULT CDDS_SUBITEMPREPAINT (NMLVCUSTOMDRAW nmcd, long /*int*/ wParam, long /*i
 	* image.  The fix is emulate LVS_EX_FULLROWSELECT by
 	* drawing the selection.
 	*/
-	final boolean isWindowEnabled = OS.IsWindowEnabled (handle);
-	if (OS.IsWindowVisible (handle) && isWindowEnabled) {
+	final boolean enabled = OS.IsWindowEnabled (handle);
+	if (OS.IsWindowVisible (handle) && enabled) {
 		if (!explorerTheme && !ignoreDrawSelection && (style & SWT.FULL_SELECTION) != 0) {
 			int bits = (int)/*64*/OS.SendMessage (handle, OS.LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
 			if ((bits & OS.LVS_EX_FULLROWSELECT) == 0) {
@@ -1077,7 +1076,7 @@ LRESULT CDDS_SUBITEMPREPAINT (NMLVCUSTOMDRAW nmcd, long /*int*/ wParam, long /*i
 		if (hasAttributes) {
 			if (hFont == -1) hFont = OS.SendMessage (handle, OS.WM_GETFONT, 0, 0);
 			OS.SelectObject (hDC, hFont);
-			if (isWindowEnabled) {
+			if (enabled) {
 				nmcd.clrText = clrText == -1 ? getForegroundPixel () : clrText;
 				if (clrTextBk == -1) {
 					nmcd.clrTextBk = OS.CLR_NONE;
@@ -1098,40 +1097,36 @@ LRESULT CDDS_SUBITEMPREPAINT (NMLVCUSTOMDRAW nmcd, long /*int*/ wParam, long /*i
 			code |= OS.CDRF_NEWFONT;
 		}
 	}
-	if (isWindowEnabled || hasCustomBackground()) {
-		/*
-		* Feature in Windows.  When there is a sort column, the sort column
-		* color draws on top of the background color for an item.  The fix
-		* is to clear the sort column in CDDS_SUBITEMPREPAINT, and reset it
-		* in CDDS_SUBITEMPOSTPAINT.
-		*
-		* Update region is saved and restored around LVM_SETSELECTEDCOLUMN
-		* to prevent infinite WM_PAINT on Vista.
-		*/
-		if (clrTextBk != -1 || hasCustomBackground()) {
-			int oldColumn = (int)/*64*/OS.SendMessage (handle, OS.LVM_GETSELECTEDCOLUMN, 0, 0);
-			if (oldColumn != -1 && oldColumn == nmcd.iSubItem) {
-				long /*int*/ rgn = OS.CreateRectRgn (0, 0, 0, 0);
-				int result = OS.GetUpdateRgn (handle, rgn, true);
-				OS.SendMessage (handle, OS.LVM_SETSELECTEDCOLUMN, -1, 0);
-				OS.ValidateRect (handle, null);
-				if (result != OS.NULLREGION) OS.InvalidateRgn (handle, rgn, true);
-				OS.DeleteObject (rgn);
-				code |= OS.CDRF_NOTIFYPOSTPAINT;
-			}
+	/*
+	* Feature in Windows.  When there is a sort column, the sort column
+	* color draws on top of the background color for an item.  The fix
+	* is to clear the sort column in CDDS_SUBITEMPREPAINT, and reset it
+	* in CDDS_SUBITEMPOSTPAINT.
+	*
+	* Update region is saved and restored around LVM_SETSELECTEDCOLUMN
+	* to prevent infinite WM_PAINT on Vista.
+	*/
+	if ((enabled && clrTextBk != -1) || (!enabled && hasCustomBackground())) {
+		int oldColumn = (int)/*64*/OS.SendMessage (handle, OS.LVM_GETSELECTEDCOLUMN, 0, 0);
+		if (oldColumn != -1 && oldColumn == nmcd.iSubItem) {
+			long /*int*/ rgn = OS.CreateRectRgn (0, 0, 0, 0);
+			int result = OS.GetUpdateRgn (handle, rgn, true);
+			OS.SendMessage (handle, OS.LVM_SETSELECTEDCOLUMN, -1, 0);
+			OS.ValidateRect (handle, null);
+			if (result != OS.NULLREGION) OS.InvalidateRgn (handle, rgn, true);
+			OS.DeleteObject (rgn);
+			code |= OS.CDRF_NOTIFYPOSTPAINT;
 		}
 	}
-	if (!isWindowEnabled || hasCustomBackground() || hasCustomForeground()) {
+	if (!enabled) {
 		/*
 		* Feature in Windows.  When the table is disabled, it draws
 		* with a gray background but does not gray the text.  The fix
 		* is to explicitly gray the text, but only, when it wasn't customized.
 		*/
-		nmcd.clrText = isWindowEnabled ? getForegroundPixel() : OS.GetSysColor (OS.COLOR_GRAYTEXT);
-		if (findImageControl () != null || hasCustomBackground() || isWindowEnabled) {
+		nmcd.clrText = OS.GetSysColor (OS.COLOR_GRAYTEXT);
+		if (findImageControl () != null || hasCustomBackground()) {
 			nmcd.clrTextBk = OS.CLR_NONE;
-		} else {
-			nmcd.clrTextBk = OS.GetSysColor (OS.COLOR_3DFACE);
 		}
 		nmcd.uItemState &= ~OS.CDIS_SELECTED;
 		OS.MoveMemory (lParam, nmcd, NMLVCUSTOMDRAW.sizeof);
@@ -4853,9 +4848,9 @@ boolean setScrollWidth (TableItem item, boolean force) {
 					long /*int*/ hDC = OS.GetDC (handle);
 					long /*int*/ oldFont = OS.SelectObject (hDC, hFont);
 					int flags = OS.DT_CALCRECT | OS.DT_SINGLELINE | OS.DT_NOPREFIX;
-					TCHAR buffer = new TCHAR (getCodePage (), string, false);
+					char [] buffer = string.toCharArray ();
 					RECT rect = new RECT ();
-					OS.DrawText (hDC, buffer, buffer.length (), rect, flags);
+					OS.DrawText (hDC, buffer, buffer.length, rect, flags);
 					OS.SelectObject (hDC, oldFont);
 					OS.ReleaseDC (handle, hDC);
 					newWidth = Math.max (newWidth, rect.right - rect.left);
@@ -4878,7 +4873,7 @@ boolean setScrollWidth (TableItem item, boolean force) {
 		* space.
 		*/
 		if (newWidth == 0) {
-			TCHAR buffer = new TCHAR (getCodePage (), " ", true);
+			char [] buffer = {' ', '\0'};
 			newWidth = Math.max (newWidth, (int)/*64*/OS.SendMessage (handle, OS.LVM_GETSTRINGWIDTH, 0, buffer));
 		}
 		long /*int*/ hStateList = OS.SendMessage (handle, OS.LVM_GETIMAGELIST, OS.LVSIL_STATE, 0);
@@ -6996,15 +6991,15 @@ LRESULT wmNotifyHeader (NMHDR hdr, long /*int*/ wParam, long /*int*/ lParam) {
 							int flags = OS.DT_NOPREFIX | OS.DT_SINGLELINE | OS.DT_VCENTER;
 							if ((columns[i].style & SWT.CENTER) != 0) flags |= OS.DT_CENTER;
 							if ((columns[i].style & SWT.RIGHT) != 0) flags |= OS.DT_RIGHT;
-							TCHAR buffer = new TCHAR (getCodePage (), columns[i].text, false);
+							char [] buffer = columns[i].text.toCharArray ();
 							OS.SetBkMode(nmcd.hdc, OS.TRANSPARENT);
 							OS.SetTextColor(nmcd.hdc, getHeaderForegroundPixel());
 							RECT textRect = new RECT();
 							textRect.left = x;
 							textRect.top = rects[i].top;
-							textRect.right = rects[i].right;
+							textRect.right = rects[i].right - (x - rects[i].left);
 							textRect.bottom = rects[i].bottom;
-							OS.DrawText (nmcd.hdc, buffer, buffer.length (), textRect, flags);
+							OS.DrawText (nmcd.hdc, buffer, buffer.length, textRect, flags);
 						}
 					}
 
@@ -7330,10 +7325,10 @@ LRESULT wmNotifyToolTip (NMTTCUSTOMDRAW nmcd, long /*int*/ lParam) {
 							if ((column.style & SWT.CENTER) != 0) flags |= OS.DT_CENTER;
 							if ((column.style & SWT.RIGHT) != 0) flags |= OS.DT_RIGHT;
 						}
-						TCHAR buffer = new TCHAR (getCodePage (), string, false);
+						char [] buffer = string.toCharArray ();
 						RECT textRect = new RECT ();
 						OS.SetRect (textRect, x, cellRect.top, cellRect.right, cellRect.bottom);
-						OS.DrawText (nmcd.hdc, buffer, buffer.length (), textRect, flags);
+						OS.DrawText (nmcd.hdc, buffer, buffer.length, textRect, flags);
 					}
 					gc.dispose ();
 					OS.RestoreDC (nmcd.hdc, nSavedDC);

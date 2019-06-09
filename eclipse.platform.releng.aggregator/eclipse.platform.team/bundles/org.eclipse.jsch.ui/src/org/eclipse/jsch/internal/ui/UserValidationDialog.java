@@ -14,17 +14,22 @@
 package org.eclipse.jsch.internal.ui;
 
 
-import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.TrayDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
 
 /**
@@ -57,23 +62,19 @@ public class UserValidationDialog extends TrayDialog {
 	 */
 	public UserValidationDialog(Shell parentShell, String location, String defaultName, String message) {
 		super(parentShell);
-        setShellStyle(getShellStyle() | SWT.RESIZE);
+		setShellStyle(getShellStyle() | SWT.RESIZE);
 		this.defaultUsername = defaultName;
 		this.domain = location;
 		this.message = message;
 	}
-	/**
-	 * @see Window#configureShell
-	 */
+	@Override
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
 		newShell.setText(Messages.UserValidationDialog_0);
 		// set F1 help
-        PlatformUI.getWorkbench().getHelpSystem().setHelp(newShell, IHelpContextIds.USER_VALIDATION_DIALOG);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(newShell, IHelpContextIds.USER_VALIDATION_DIALOG);
 	}
-	/**
-	 * @see Window#create
-	 */
+	@Override
 	public void create() {
 		super.create();
 		// add some default values
@@ -89,9 +90,7 @@ public class UserValidationDialog extends TrayDialog {
 		}
 	}
 
-	/**
-	 * @see Dialog#createDialogArea
-	 */
+	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite top = new Composite(parent, SWT.NONE);
 		GridLayout layout = new GridLayout();
@@ -147,13 +146,14 @@ public class UserValidationDialog extends TrayDialog {
 			data.horizontalSpan = 3;
 			allowCachingButton.setLayoutData(data);
 			allowCachingButton.addSelectionListener(new SelectionAdapter() {
+				@Override
 				public void widgetSelected(SelectionEvent e) {
 					allowCaching = allowCachingButton.getSelection();
 				}
 			});
 		}
 
-        Dialog.applyDialogFont(parent);
+		Dialog.applyDialogFont(parent);
 
 		return main;
 	}
@@ -224,6 +224,7 @@ public class UserValidationDialog extends TrayDialog {
 	 * and closes the dialog. Subclasses may override.
 	 * </p>
 	 */
+	@Override
 	protected void okPressed() {
 		password = passwordField.getText();
 		username = usernameField.getText();
@@ -231,10 +232,11 @@ public class UserValidationDialog extends TrayDialog {
 		super.okPressed();
 	}
 
+	@Override
 	protected void cancelPressed(){
-	  password = null;
-	  username = null;
-	  super.cancelPressed();
+		password = null;
+		username = null;
+		super.cancelPressed();
 	}
 
 	/**
@@ -248,9 +250,7 @@ public class UserValidationDialog extends TrayDialog {
 		isUsernameMutable = value;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.dialogs.Dialog#close()
-	 */
+	@Override
 	public boolean close() {
 		if(keyLockImage != null) {
 			keyLockImage.dispose();

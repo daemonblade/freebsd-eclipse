@@ -97,8 +97,7 @@ static HashMap<String, SimpleSet> findPackagesInModules(final ClasspathJrt jrt) 
 			}
 
 			@Override
-			public FileVisitResult visitModule(Path mod) throws IOException {
-				String name = mod.toString();
+			public FileVisitResult visitModule(Path path, String name) throws IOException {
 				try {
 					jrt.acceptModule(JRTUtil.getClassfileContent(imageFile, IModule.MODULE_INFO_CLASS, name));
 				} catch (ClassFormatException e) {
@@ -143,9 +142,9 @@ public static void loadModules(final ClasspathJrt jrt) {
 				}
 
 				@Override
-				public FileVisitResult visitModule(Path mod) throws IOException {
+				public FileVisitResult visitModule(Path path, String name) throws IOException {
 					try {
-						jrt.acceptModule(JRTUtil.getClassfileContent(imageFile, IModule.MODULE_INFO_CLASS, mod.toString()));
+						jrt.acceptModule(JRTUtil.getClassfileContent(imageFile, IModule.MODULE_INFO_CLASS, name));
 					} catch (ClassFormatException e) {
 						e.printStackTrace();
 					}
@@ -323,6 +322,9 @@ protected Collection<String> selectModules(Set<String> keySet, Collection<String
 
 protected void addRequired(String mod, Set<String> allModules) {
 	IModule iMod = getModule(mod.toCharArray());
+	if(iMod == null) {
+		return;
+	}
 	for (IModuleReference requiredRef : iMod.requires()) {
 		IModule reqMod = getModule(requiredRef.name());
 		if (reqMod != null) {

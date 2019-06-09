@@ -29,7 +29,14 @@ import org.eclipse.emf.ecore.impl.EPackageImpl;
 
 /**
  * <!-- begin-user-doc -->
- * An implementation of the model <b>Package</b>.
+ * The <b>Package</b> for the model.
+ * It contains accessors for the meta objects to represent
+ * <ul>
+ *   <li>each class,</li>
+ *   <li>each feature of each class,</li>
+ *   <li>each enum,</li>
+ *   <li>and each data type</li>
+ * </ul>
  * <!-- end-user-doc -->
  * @see org.eclipse.e4.ui.model.fragment.MFragmentFactory
  * @model kind="package"
@@ -66,7 +73,8 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public static final FragmentPackageImpl eINSTANCE = org.eclipse.e4.ui.model.fragment.impl.FragmentPackageImpl.init();
+	public static final FragmentPackageImpl eINSTANCE = org.eclipse.e4.ui.model.fragment.impl.FragmentPackageImpl
+			.init();
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.e4.ui.model.fragment.impl.ModelFragmentsImpl <em>Model Fragments</em>}' class.
@@ -110,6 +118,16 @@ public class FragmentPackageImpl extends EPackageImpl {
 	public static final int MODEL_FRAGMENTS_FEATURE_COUNT = 2;
 
 	/**
+	 * The number of operations of the '<em>Model Fragments</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.0
+	 * @generated
+	 * @ordered
+	 */
+	public static final int MODEL_FRAGMENTS_OPERATION_COUNT = 0;
+
+	/**
 	 * The meta object id for the '{@link org.eclipse.e4.ui.model.fragment.impl.ModelFragmentImpl <em>Model Fragment</em>}' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -139,6 +157,26 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * @ordered
 	 */
 	public static final int MODEL_FRAGMENT_FEATURE_COUNT = 1;
+
+	/**
+	 * The operation id for the '<em>Merge</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.0
+	 * @generated
+	 * @ordered
+	 */
+	public static final int MODEL_FRAGMENT___MERGE__MAPPLICATION = 0;
+
+	/**
+	 * The number of operations of the '<em>Model Fragment</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.0
+	 * @generated
+	 * @ordered
+	 */
+	public static final int MODEL_FRAGMENT_OPERATION_COUNT = 1;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.e4.ui.model.fragment.impl.StringModelFragmentImpl <em>String Model Fragment</em>}' class.
@@ -202,6 +240,26 @@ public class FragmentPackageImpl extends EPackageImpl {
 	public static final int STRING_MODEL_FRAGMENT_FEATURE_COUNT = MODEL_FRAGMENT_FEATURE_COUNT + 3;
 
 	/**
+	 * The operation id for the '<em>Merge</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.0
+	 * @generated
+	 * @ordered
+	 */
+	public static final int STRING_MODEL_FRAGMENT___MERGE__MAPPLICATION = MODEL_FRAGMENT___MERGE__MAPPLICATION;
+
+	/**
+	 * The number of operations of the '<em>String Model Fragment</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.0
+	 * @generated
+	 * @ordered
+	 */
+	public static final int STRING_MODEL_FRAGMENT_OPERATION_COUNT = MODEL_FRAGMENT_OPERATION_COUNT + 0;
+
+	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
@@ -241,7 +299,7 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	private FragmentPackageImpl() {
-		super(eNS_URI, ((EFactory)MFragmentFactory.INSTANCE));
+		super(eNS_URI, ((EFactory) MFragmentFactory.INSTANCE));
 	}
 
 	/**
@@ -264,11 +322,14 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public static FragmentPackageImpl init() {
-		if (isInited) return (FragmentPackageImpl)EPackage.Registry.INSTANCE.getEPackage(FragmentPackageImpl.eNS_URI);
+		if (isInited)
+			return (FragmentPackageImpl) EPackage.Registry.INSTANCE.getEPackage(FragmentPackageImpl.eNS_URI);
 
 		// Obtain or create and register package
 		Object registeredFragmentPackage = EPackage.Registry.INSTANCE.get(eNS_URI);
-		FragmentPackageImpl theFragmentPackage = registeredFragmentPackage instanceof FragmentPackageImpl ? (FragmentPackageImpl)registeredFragmentPackage : new FragmentPackageImpl();
+		FragmentPackageImpl theFragmentPackage = registeredFragmentPackage instanceof FragmentPackageImpl
+				? (FragmentPackageImpl) registeredFragmentPackage
+				: new FragmentPackageImpl();
 
 		isInited = true;
 
@@ -313,7 +374,7 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getModelFragments_Imports() {
-		return (EReference)modelFragmentsEClass.getEStructuralFeatures().get(0);
+		return (EReference) modelFragmentsEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -327,7 +388,7 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getModelFragments_Fragments() {
-		return (EReference)modelFragmentsEClass.getEStructuralFeatures().get(1);
+		return (EReference) modelFragmentsEClass.getEStructuralFeatures().get(1);
 	}
 
 	/**
@@ -354,7 +415,20 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getModelFragment_Elements() {
-		return (EReference)modelFragmentEClass.getEStructuralFeatures().get(0);
+		return (EReference) modelFragmentEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.e4.ui.model.fragment.MModelFragment#merge(org.eclipse.e4.ui.model.application.MApplication) <em>Merge</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Merge</em>' operation.
+	 * @see org.eclipse.e4.ui.model.fragment.MModelFragment#merge(org.eclipse.e4.ui.model.application.MApplication)
+	 * @since 1.0
+	 * @generated
+	 */
+	public EOperation getModelFragment__Merge__MApplication() {
+		return modelFragmentEClass.getEOperations().get(0);
 	}
 
 	/**
@@ -381,7 +455,7 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getStringModelFragment_Featurename() {
-		return (EAttribute)stringModelFragmentEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) stringModelFragmentEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -395,7 +469,7 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getStringModelFragment_ParentElementId() {
-		return (EAttribute)stringModelFragmentEClass.getEStructuralFeatures().get(1);
+		return (EAttribute) stringModelFragmentEClass.getEStructuralFeatures().get(1);
 	}
 
 	/**
@@ -409,7 +483,7 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getStringModelFragment_PositionInList() {
-		return (EAttribute)stringModelFragmentEClass.getEStructuralFeatures().get(2);
+		return (EAttribute) stringModelFragmentEClass.getEStructuralFeatures().get(2);
 	}
 
 	/**
@@ -420,7 +494,7 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public MFragmentFactory getFragmentFactory() {
-		return (MFragmentFactory)getEFactoryInstance();
+		return (MFragmentFactory) getEFactoryInstance();
 	}
 
 	/**
@@ -438,7 +512,8 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public void createPackageContents() {
-		if (isCreated) return;
+		if (isCreated)
+			return;
 		isCreated = true;
 
 		// Create classes and their features
@@ -448,6 +523,7 @@ public class FragmentPackageImpl extends EPackageImpl {
 
 		modelFragmentEClass = createEClass(MODEL_FRAGMENT);
 		createEReference(modelFragmentEClass, MODEL_FRAGMENT__ELEMENTS);
+		createEOperation(modelFragmentEClass, MODEL_FRAGMENT___MERGE__MAPPLICATION);
 
 		stringModelFragmentEClass = createEClass(STRING_MODEL_FRAGMENT);
 		createEAttribute(stringModelFragmentEClass, STRING_MODEL_FRAGMENT__FEATURENAME);
@@ -470,7 +546,8 @@ public class FragmentPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public void initializePackageContents() {
-		if (isInitialized) return;
+		if (isInitialized)
+			return;
 		isInitialized = true;
 
 		// Initialize package
@@ -479,7 +556,8 @@ public class FragmentPackageImpl extends EPackageImpl {
 		setNsURI(eNS_URI);
 
 		// Obtain other dependent packages
-		ApplicationPackageImpl theApplicationPackage = (ApplicationPackageImpl)EPackage.Registry.INSTANCE.getEPackage(ApplicationPackageImpl.eNS_URI);
+		ApplicationPackageImpl theApplicationPackage = (ApplicationPackageImpl) EPackage.Registry.INSTANCE
+				.getEPackage(ApplicationPackageImpl.eNS_URI);
 
 		// Create type parameters
 
@@ -488,21 +566,37 @@ public class FragmentPackageImpl extends EPackageImpl {
 		// Add supertypes to classes
 		stringModelFragmentEClass.getESuperTypes().add(this.getModelFragment());
 
-		// Initialize classes and features; add operations and parameters
-		initEClass(modelFragmentsEClass, MModelFragments.class, "ModelFragments", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEReference(getModelFragments_Imports(), theApplicationPackage.getApplicationElement(), null, "imports", null, 0, -1, MModelFragments.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEReference(getModelFragments_Fragments(), this.getModelFragment(), null, "fragments", null, 0, -1, MModelFragments.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		// Initialize classes, features, and operations; add parameters
+		initEClass(modelFragmentsEClass, MModelFragments.class, "ModelFragments", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getModelFragments_Imports(), theApplicationPackage.getApplicationElement(), null, "imports", //$NON-NLS-1$
+				null, 0, -1, MModelFragments.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE,
+				!IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getModelFragments_Fragments(), this.getModelFragment(), null, "fragments", null, 0, -1, //$NON-NLS-1$
+				MModelFragments.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(modelFragmentEClass, MModelFragment.class, "ModelFragment", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEReference(getModelFragment_Elements(), theApplicationPackage.getApplicationElement(), null, "elements", null, 0, -1, MModelFragment.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(modelFragmentEClass, MModelFragment.class, "ModelFragment", IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getModelFragment_Elements(), theApplicationPackage.getApplicationElement(), null, "elements", //$NON-NLS-1$
+				null, 0, -1, MModelFragment.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE,
+				!IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		EOperation op = addEOperation(modelFragmentEClass, theApplicationPackage.getApplicationElement(), "merge", 0, -1, IS_UNIQUE, IS_ORDERED); //$NON-NLS-1$
+		EOperation op = initEOperation(getModelFragment__Merge__MApplication(),
+				theApplicationPackage.getApplicationElement(), "merge", 0, -1, IS_UNIQUE, IS_ORDERED); //$NON-NLS-1$
 		addEParameter(op, theApplicationPackage.getApplication(), "application", 0, 1, IS_UNIQUE, IS_ORDERED); //$NON-NLS-1$
 
-		initEClass(stringModelFragmentEClass, MStringModelFragment.class, "StringModelFragment", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getStringModelFragment_Featurename(), ecorePackage.getEString(), "featurename", null, 1, 1, MStringModelFragment.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getStringModelFragment_ParentElementId(), ecorePackage.getEString(), "parentElementId", null, 1, 1, MStringModelFragment.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getStringModelFragment_PositionInList(), ecorePackage.getEString(), "positionInList", null, 0, 1, MStringModelFragment.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(stringModelFragmentEClass, MStringModelFragment.class, "StringModelFragment", !IS_ABSTRACT, //$NON-NLS-1$
+				!IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getStringModelFragment_Featurename(), ecorePackage.getEString(), "featurename", null, 1, 1, //$NON-NLS-1$
+				MStringModelFragment.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID,
+				IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStringModelFragment_ParentElementId(), ecorePackage.getEString(), "parentElementId", null, 1, //$NON-NLS-1$
+				1, MStringModelFragment.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID,
+				IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStringModelFragment_PositionInList(), ecorePackage.getEString(), "positionInList", null, 0, 1, //$NON-NLS-1$
+				MStringModelFragment.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID,
+				IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		// Create resource
 		createResource(eNS_URI);
@@ -571,6 +665,16 @@ public class FragmentPackageImpl extends EPackageImpl {
 		public static final EReference MODEL_FRAGMENT__ELEMENTS = eINSTANCE.getModelFragment_Elements();
 
 		/**
+		 * The meta object literal for the '<em><b>Merge</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @since 1.0
+		 * @generated
+		 */
+		public static final EOperation MODEL_FRAGMENT___MERGE__MAPPLICATION = eINSTANCE
+				.getModelFragment__Merge__MApplication();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.fragment.impl.StringModelFragmentImpl <em>String Model Fragment</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -588,7 +692,8 @@ public class FragmentPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EAttribute STRING_MODEL_FRAGMENT__FEATURENAME = eINSTANCE.getStringModelFragment_Featurename();
+		public static final EAttribute STRING_MODEL_FRAGMENT__FEATURENAME = eINSTANCE
+				.getStringModelFragment_Featurename();
 
 		/**
 		 * The meta object literal for the '<em><b>Parent Element Id</b></em>' attribute feature.
@@ -597,7 +702,8 @@ public class FragmentPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EAttribute STRING_MODEL_FRAGMENT__PARENT_ELEMENT_ID = eINSTANCE.getStringModelFragment_ParentElementId();
+		public static final EAttribute STRING_MODEL_FRAGMENT__PARENT_ELEMENT_ID = eINSTANCE
+				.getStringModelFragment_ParentElementId();
 
 		/**
 		 * The meta object literal for the '<em><b>Position In List</b></em>' attribute feature.
@@ -606,7 +712,8 @@ public class FragmentPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EAttribute STRING_MODEL_FRAGMENT__POSITION_IN_LIST = eINSTANCE.getStringModelFragment_PositionInList();
+		public static final EAttribute STRING_MODEL_FRAGMENT__POSITION_IN_LIST = eINSTANCE
+				.getStringModelFragment_PositionInList();
 
 	}
 

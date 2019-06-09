@@ -48,6 +48,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.compiler.ast;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -108,7 +109,7 @@ public abstract class ASTNode implements TypeConstants, TypeIds {
 	public final static int Bit18 = 0x20000;			// non null (expression) | onDemand (import reference)
 	public final static int Bit19 = 0x40000;			// didResolve (parameterized qualified type ref/parameterized single type ref)  | empty (javadoc return statement) | needReceiverGenericCast (msg/fieldref)
 	public final static int Bit20 = 0x80000;			// contains syntax errors (method declaration, type declaration, field declarations, initializer), typeref: <> name ref: lambda capture)
-	public final static int Bit21 = 0x100000;
+	public final static int Bit21 = 0x100000;			// for all declarations that can contain type references that have type annotations | insideExpressionStatement
 	public final static int Bit22 = 0x200000;			// parenthesis count (expression) | used (import reference) shadows outer local (local declarations)
 	public final static int Bit23 = 0x400000;			// parenthesis count (expression) | second or later declarator in declaration (local declarations)
 	public final static int Bit24 = 0x800000;			// parenthesis count (expression)
@@ -325,7 +326,7 @@ public abstract class ASTNode implements TypeConstants, TypeIds {
 	public static final int IsDiamond = Bit20;
 
 	// this is only used for method invocation as the expression inside an expression statement
-	public static final int InsideExpressionStatement = Bit5;
+	public static final int InsideExpressionStatement = Bit21;
 
 	// for annotation reference, signal if annotation was created from a default:
 	public static final int IsSynthetic = ASTNode.Bit7;
@@ -677,11 +678,13 @@ public abstract class ASTNode implements TypeConstants, TypeIds {
 	 * @param method the method produced by lookup (possibly involving type inference).
 	 * @param argumentTypes the argument types as collected from first resolving the invocation arguments and as used for the method lookup.
 	 * @param scope scope for resolution.
+	 * @return either the original method or a problem method
 	 */
-	public static void resolvePolyExpressionArguments(Invocation invocation, MethodBinding method, TypeBinding[] argumentTypes, BlockScope scope) {
+	public static MethodBinding resolvePolyExpressionArguments(Invocation invocation, MethodBinding method, TypeBinding[] argumentTypes, BlockScope scope) {
 		MethodBinding candidateMethod = method.isValidBinding() ? method : method instanceof ProblemMethodBinding ? ((ProblemMethodBinding) method).closestMatch : null;
 		if (candidateMethod == null)
-			return;
+			return method;
+		ProblemMethodBinding problemMethod = null;
 		boolean variableArity = candidateMethod.isVarargs();
 		final TypeBinding[] parameters = candidateMethod.parameters;
 		Expression[] arguments = invocation.arguments();
@@ -704,8 +707,20 @@ public abstract class ASTNode implements TypeConstants, TypeIds {
 					boolean skipKosherCheck = method.problemId() == ProblemReasons.Ambiguous;
 					updatedArgumentType = lambda.resolveType(scope, skipKosherCheck);
 					// additional checks, because LE.resolveType may return a valid binding even in the presence of structural errors
-					if (!lambda.isCompatibleWith(parameterType, scope) || lambda.hasErrors())
+					if (lambda.hasErrors() || lambda.hasDescripterProblem) {
 						continue;
+					}
+					if (!lambda.isCompatibleWith(parameterType, scope)) {
+						if (method.isValidBinding() && problemMethod == null) {
+							TypeBinding[] originalArguments = Arrays.copyOf(argumentTypes, argumentTypes.length);
+							if (lambda.reportShapeError(parameterType, scope)) {
+								problemMethod = new ProblemMethodBinding(candidateMethod, method.selector, originalArguments, ProblemReasons.ErrorAlreadyReported);
+							} else {
+								problemMethod = new ProblemMethodBinding(candidateMethod, method.selector, originalArguments, ProblemReasons.NotFound);
+							}
+						}
+						continue;
+					}
 					// avoid that preliminary local type bindings escape beyond this point:
 					lambda.updateLocalTypesInMethod(candidateMethod);
 				} else {
@@ -723,6 +738,9 @@ public abstract class ASTNode implements TypeConstants, TypeIds {
 			if (ic18 != null)
 				ic18.flushBoundOutbox(); // overload resolution is done, now perform the push of bounds from inner to outer
 		}
+		if (problemMethod != null)
+			return problemMethod;
+		return method;
 	}
 
 	public static void resolveAnnotations(BlockScope scope, Annotation[] sourceAnnotations, Binding recipient) {

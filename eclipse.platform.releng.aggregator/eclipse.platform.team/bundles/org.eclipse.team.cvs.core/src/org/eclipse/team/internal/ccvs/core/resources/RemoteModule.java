@@ -54,11 +54,11 @@ public class RemoteModule extends RemoteFolder {
 		}
 	}
 	
-    private static ICVSFolder getRemoteRootFolder(ICVSRepositoryLocation repository) {
-        return new RemoteFolder(null, repository, "/", null); //$NON-NLS-1$
-    }
+	private static ICVSFolder getRemoteRootFolder(ICVSRepositoryLocation repository) {
+		return new RemoteFolder(null, repository, "/", null); //$NON-NLS-1$
+	}
 
-    /**
+	/**
 	 * Create a set of RemoteModules from the provided module definition strings returned from the server
 	 * 
 	 * At the moment, we are very restrictive on the types of modules we support.
@@ -111,7 +111,7 @@ public class RemoteModule extends RemoteFolder {
 				CVSProviderPlugin.log(IStatus.WARNING, NLS.bind(CVSMessages.RemoteModule_invalidDefinition, new String[] { moduleDefinitionStrings[i], repository.getLocation(true) }), null); 
 				continue;
 			}
-			LocalOption[] localOptions = (LocalOption[]) localOptionsList.toArray(new LocalOption[localOptionsList.size()]);
+			LocalOption[] localOptions = localOptionsList.toArray(new LocalOption[localOptionsList.size()]);
 			
 			if (Checkout.ALIAS.isElementOf(localOptions)) {
 				
@@ -191,7 +191,7 @@ public class RemoteModule extends RemoteFolder {
 								// XXX Unsupported for now
 								expandable = false;
 							} else {
-								 referencedFolders.add(child);
+								referencedFolders.add(child);
 							}
 						}
 					}
@@ -233,7 +233,7 @@ public class RemoteModule extends RemoteFolder {
 					}
 				}
 				if (expandable) {
-					module.setReferencedModules((ICVSRemoteResource[]) referencedFolders.toArray(new ICVSRemoteResource[referencedFolders.size()]));
+					module.setReferencedModules(referencedFolders.toArray(new ICVSRemoteResource[referencedFolders.size()]));
 				} else {
 					module.setExpandable(false);
 				}
@@ -301,9 +301,6 @@ public class RemoteModule extends RemoteFolder {
 		return Checkout.ALIAS.isElementOf(localOptions);
 	}
 	
-	/**
-	 * @see ICVSRemoteFolder#isExpandable()
-	 */
 	public boolean isExpandable() {
 		return expandable;
 	}
@@ -312,9 +309,6 @@ public class RemoteModule extends RemoteFolder {
 		this.expandable = expandable;
 	}
 	
-	/**
-	 * @see ICVSRemoteFolder#forTag(CVSTag)
-	 */
 	public ICVSRemoteResource forTag(ICVSRemoteFolder parent, CVSTag tagName) {
 		RemoteModule r = new RemoteModule(label, (RemoteFolder)parent, getRepository(), folderInfo.getRepository(), localOptions, tagName, folderInfo.getIsStatic());
 		r.setExpandable(expandable);
@@ -340,15 +334,9 @@ public class RemoteModule extends RemoteFolder {
 		return r;
 	}
 	
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSRemoteFolder#isDefinedModule()
-	 */
 	public boolean isDefinedModule() {
 		return true;
 	}
-	/**
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	public boolean equals(Object arg0) {
 		if (arg0 instanceof RemoteModule) {
 			RemoteModule module = (RemoteModule) arg0;
@@ -357,16 +345,10 @@ public class RemoteModule extends RemoteFolder {
 		return false;
 	}
 	
-	/**
-	 * @see java.lang.Object#hashCode()
-	 */
 	public int hashCode() {
 		return super.hashCode() | getName().hashCode();
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFolder#getChild(java.lang.String)
-	 */
 	public ICVSResource getChild(String path) throws CVSException {
 		if (path.equals(Session.CURRENT_LOCAL_FOLDER) || path.length() == 0)
 			return this;

@@ -72,9 +72,6 @@ public final class ParticipantPagePane {
 		this.pageConfiguration = pageConfiguration;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.SaveablePartAdapter#dispose()
-	 */
 	public void dispose() {
 		if(titleImage != null) {
 			titleImage.dispose();
@@ -86,9 +83,6 @@ public final class ParticipantPagePane {
 			site.dispose();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IWorkbenchPart#getTitleImage()
-	 */
 	public Image getTitleImage() {
 		if(titleImage == null) {
 			titleImage = participant.getImageDescriptor().createImage();
@@ -96,16 +90,10 @@ public final class ParticipantPagePane {
 		return titleImage;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IWorkbenchPart#getTitle()
-	 */
 	public String getTitle() {
 		return Utils.shortenText(SynchronizeView.MAX_NAME_LENGTH, participant.getName());
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IWorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
-	 */
 	public Control createPartControl(Composite parent) {
 		Composite top = new Composite(parent, SWT.NULL);
 		GridLayout layout = new GridLayout();
@@ -129,7 +117,7 @@ public final class ParticipantPagePane {
 		try {
 			((ISynchronizePage)fPage).init(pageConfiguration.getSite());
 		} catch (PartInitException e1) {
-		   TeamUIPlugin.log(IStatus.ERROR, TeamUIMessages.ParticipantPagePane_0, e1);
+			TeamUIPlugin.log(IStatus.ERROR, TeamUIMessages.ParticipantPagePane_0, e1);
 		}
 
 		fPage.createControl(fEditionPane);

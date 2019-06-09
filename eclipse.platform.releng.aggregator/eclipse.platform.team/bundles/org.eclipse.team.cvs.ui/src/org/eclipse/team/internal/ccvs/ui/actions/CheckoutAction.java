@@ -29,30 +29,26 @@ import org.eclipse.team.internal.ccvs.ui.operations.ProjectMetaFileOperation;
  */
 public class CheckoutAction extends CVSAction {
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#execute(org.eclipse.jface.action.IAction)
-	 */
+	@Override
 	protected void execute(IAction action) throws InvocationTargetException, InterruptedException {
 		new CheckoutMultipleProjectsOperation(getTargetPart(), getSelectedRemoteFoldersWithProjectName(), null)
 			.run();
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.actions.TeamAction#isEnabled()
-	 */
-   public boolean isEnabled() {
-	   ICVSRemoteFolder[] folders = getSelectedRemoteFolders();
-	   if (folders.length == 0) return false;
-	   // only enabled when all folders are in the same repository
-	   ICVSRepositoryLocation location = folders[0].getRepository();
-	   for (int i = 1; i < folders.length; i++) {
-		   ICVSRemoteFolder folder = folders[i];
-		   if (!folder.getRepository().equals(location)) {
-			   return false;
-		   }
-	   }
-	   return true;
-   }
+	@Override
+	public boolean isEnabled() {
+		ICVSRemoteFolder[] folders = getSelectedRemoteFolders();
+		if (folders.length == 0) return false;
+		// only enabled when all folders are in the same repository
+		ICVSRepositoryLocation location = folders[0].getRepository();
+		for (int i = 1; i < folders.length; i++) {
+			ICVSRemoteFolder folder = folders[i];
+			if (!folder.getRepository().equals(location)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	/**
 	 * Get selected CVS remote folders, and add Project Description 

@@ -22,10 +22,13 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.jface.text.Position;
+import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.ISourceViewer;
+import org.eclipse.jface.text.source.projection.ProjectionViewer;
 
 /**
  * Abstract class for inlined annotation.
@@ -72,11 +75,21 @@ public abstract class AbstractInlinedAnnotation extends Annotation {
 	}
 
 	/**
-	 * Returns the position where the annotation must be drawn.
+	 * Returns the position where the annotation must be drawn. For {@link ITextViewerExtension5}
+	 * (enabling folding with widget/model projection), this position is the <strong>model</strong>
+	 * position.
 	 *
-	 * @return the position where the annotation must be drawn.
+	 * @return the model position where the annotation must be drawn.
 	 */
 	public Position getPosition() {
+		return position;
+	}
+
+	final Position computeWidgetPosition() {
+		if (fViewer instanceof ITextViewerExtension5) {
+			IRegion region= ((ITextViewerExtension5) fViewer).modelRange2WidgetRange(new Region(position.getOffset(), position.getLength()));
+			return new Position(region.getOffset(), region.getLength());
+		}
 		return position;
 	}
 
@@ -119,15 +132,15 @@ public abstract class AbstractInlinedAnnotation extends Annotation {
 	 * Draw the inlined annotation. By default it draw the text of the annotation with gray color.
 	 * User can override this method to draw anything.
 	 *
-	 * @param gc         the graphics context
+	 * @param gc the graphics context
 	 * @param textWidget the text widget to draw on
-	 * @param offset     the offset of the line
-	 * @param length     the length of the line
-	 * @param color      the color of the line
-	 * @param x          the x position of the annotation
-	 * @param y          the y position of the annotation
+	 * @param widgetOffset the offset
+	 * @param length the length of the line
+	 * @param color the color of the line
+	 * @param x the x position of the annotation
+	 * @param y the y position of the annotation
 	 */
-	public void draw(GC gc, StyledText textWidget, int offset, int length, Color color, int x, int y) {
+	public void draw(GC gc, StyledText textWidget, int widgetOffset, int length, Color color, int x, int y) {
 		gc.setForeground(color);
 		gc.setBackground(textWidget.getBackground());
 		gc.drawString(getText(), x, y, true);
@@ -174,6 +187,15 @@ public abstract class AbstractInlinedAnnotation extends Annotation {
 	 */
 	protected boolean isInVisibleLines() {
 		return support.isInVisibleLines(getPosition().getOffset());
+	}
+
+	boolean isFirstVisibleOffset(int widgetOffset) {
+		if (fViewer instanceof ProjectionViewer) {
+			IRegion widgetRange= ((ProjectionViewer) fViewer).modelRange2WidgetRange(new Region(position.getOffset(), position.getLength()));
+			return widgetOffset == widgetRange.getOffset();
+		} else {
+			return position.getOffset() == widgetOffset;
+		}
 	}
 
 	/**

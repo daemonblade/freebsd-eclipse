@@ -15,17 +15,17 @@
     <parent>
         <artifactId>eclipse.platform.swt.binaries</artifactId>
         <groupId>eclipse.platform.swt.binaries</groupId>
-        <version>4.11.0-SNAPSHOT</version>
+        <version>4.12.0-SNAPSHOT</version>
         <relativePath>../../</relativePath>
     </parent>
       
     <groupId>eclipse.platform.swt.binaries</groupId>
     <artifactId>binaries-parent</artifactId>
-    <version>4.11.0-SNAPSHOT</version>
+    <version>4.12.0-SNAPSHOT</version>
     <packaging>pom</packaging>
       
     <properties>
-        <forceContextQualifier>v20190305-0602</forceContextQualifier>
+        <forceContextQualifier>v20190605-1801</forceContextQualifier>
     </properties>
       
     <build>
@@ -84,7 +84,7 @@
                     <dependency>
                         <groupId>org.apache.ant</groupId>
                         <artifactId>ant-apache-bsf</artifactId>
-                        <version>1.10.5</version>
+                        <version>1.10.6</version>
                     </dependency>
                 </dependencies>
             </plugin>

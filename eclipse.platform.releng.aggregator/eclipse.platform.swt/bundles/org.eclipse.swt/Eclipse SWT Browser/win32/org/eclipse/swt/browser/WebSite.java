@@ -31,6 +31,7 @@ class WebSite extends OleControlSite {
 	COMObject iAuthenticate;
 	COMObject iDispatch;
 	boolean ignoreNextMessage, ignoreAllMessages;
+	boolean isForceTrusted;
 	Boolean canExecuteApplets;
 
 	static final int OLECMDID_SHOWSCRIPTERROR = 40;
@@ -559,12 +560,7 @@ int MapUrlToZone(long /*int*/ pwszUrl, long /*int*/ pdwZone, int dwFlags) {
 	* to follow local links.  The workaround is to return URLZONE_INTRANET
 	* instead of the default value URLZONE_LOCAL_MACHINE.
 	*/
-	IE ie = (IE)((Browser)getParent().getParent()).webBrowser;
-	/*
-	* For some reason IE8 invokes this function after the Browser has
-	* been disposed.  To detect this case check for ie.auto != null.
-	*/
-	if (ie.auto != null && ie.isAboutBlank && !ie.untrustedText) {
+	if (isForceTrusted) {
 		OS.MoveMemory(pdwZone, new int[] {IE.URLZONE_INTRANET}, 4);
 		return COM.S_OK;
 	}
@@ -861,13 +857,13 @@ Object convertToJava (Variant variant) {
 		case OLE.VT_EMPTY:
 		case OLE.VT_NULL: return null;
 		case OLE.VT_BSTR: return variant.getString ();
-		case OLE.VT_BOOL: return new Boolean (variant.getBoolean ());
+		case OLE.VT_BOOL: return variant.getBoolean ();
 		case OLE.VT_I2:
 		case OLE.VT_I4:
 		case OLE.VT_I8:
 		case OLE.VT_R4:
 		case OLE.VT_R8:
-			return new Double (variant.getDouble ());
+			return variant.getDouble ();
 		case OLE.VT_DISPATCH: {
 			Object[] args = null;
 			OleAutomation auto = variant.getAutomation ();

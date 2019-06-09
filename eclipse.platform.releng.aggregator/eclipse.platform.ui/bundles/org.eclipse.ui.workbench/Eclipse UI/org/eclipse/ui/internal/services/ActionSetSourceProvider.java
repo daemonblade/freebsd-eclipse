@@ -14,15 +14,14 @@
 
 package org.eclipse.ui.internal.services;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.eclipse.ui.AbstractSourceProvider;
 import org.eclipse.ui.ISources;
 import org.eclipse.ui.internal.ActionSetsEvent;
 import org.eclipse.ui.internal.menus.IActionSetsListener;
 import org.eclipse.ui.internal.registry.IActionSetDescriptor;
-import org.eclipse.ui.internal.util.Util;
 
 /**
  * <p>
@@ -35,8 +34,7 @@ import org.eclipse.ui.internal.util.Util;
  *
  * @since 3.2
  */
-public final class ActionSetSourceProvider extends AbstractSourceProvider
-		implements IActionSetsListener {
+public final class ActionSetSourceProvider extends AbstractSourceProvider implements IActionSetsListener {
 
 	/**
 	 * The names of the sources supported by this source provider.
@@ -44,8 +42,8 @@ public final class ActionSetSourceProvider extends AbstractSourceProvider
 	private static final String[] PROVIDED_SOURCE_NAMES = new String[] { ISources.ACTIVE_ACTION_SETS_NAME };
 
 	/**
-	 * The action sets last seen as active by this source provider. This value
-	 * may be <code>null</code>.
+	 * The action sets last seen as active by this source provider. This value may
+	 * be <code>null</code>.
 	 */
 	private IActionSetDescriptor[] activeActionSets;
 
@@ -56,7 +54,7 @@ public final class ActionSetSourceProvider extends AbstractSourceProvider
 	@Override
 	public void actionSetsChanged(final ActionSetsEvent event) {
 		final IActionSetDescriptor[] newActionSets = event.getNewActionSets();
-		if (!Util.equals(newActionSets, activeActionSets)) {
+		if (!Arrays.equals(newActionSets, activeActionSets)) {
 			if (DEBUG) {
 				final StringBuilder message = new StringBuilder();
 				message.append("Action sets changed to ["); //$NON-NLS-1$
@@ -73,8 +71,7 @@ public final class ActionSetSourceProvider extends AbstractSourceProvider
 			}
 
 			activeActionSets = newActionSets;
-			fireSourceChanged(ISources.ACTIVE_ACTION_SETS,
-					ISources.ACTIVE_ACTION_SETS_NAME, activeActionSets);
+			fireSourceChanged(ISources.ACTIVE_ACTION_SETS, ISources.ACTIVE_ACTION_SETS_NAME, activeActionSets);
 
 		}
 	}

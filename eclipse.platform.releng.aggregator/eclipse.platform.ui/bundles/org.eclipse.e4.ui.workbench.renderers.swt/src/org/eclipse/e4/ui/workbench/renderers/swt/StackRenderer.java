@@ -56,6 +56,7 @@ import org.eclipse.e4.ui.model.application.ui.basic.MStackElement;
 import org.eclipse.e4.ui.model.application.ui.basic.MWindow;
 import org.eclipse.e4.ui.model.application.ui.menu.MMenu;
 import org.eclipse.e4.ui.model.application.ui.menu.MMenuElement;
+import org.eclipse.e4.ui.model.application.ui.menu.MPopupMenu;
 import org.eclipse.e4.ui.model.application.ui.menu.MToolBar;
 import org.eclipse.e4.ui.workbench.IPresentationEngine;
 import org.eclipse.e4.ui.workbench.UIEvents;
@@ -81,11 +82,8 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.RowData;
@@ -181,6 +179,7 @@ public class StackRenderer extends LazyStackRenderer implements IPreferenceChang
 	private static int MIN_EDITOR_CHARS = 15;
 
 	private Image viewMenuImage;
+	private String viewMenuURI = "platform:/plugin/org.eclipse.e4.ui.workbench.renderers.swt/icons/full/elcl16/view_menu.png"; //$NON-NLS-1$
 
 	@Inject
 	private IEventBroker eventBroker;
@@ -298,8 +297,9 @@ public class StackRenderer extends LazyStackRenderer implements IPreferenceChang
 	void subscribeTopicChildrenChanged(@UIEventTopic(UIEvents.ElementContainer.TOPIC_CHILDREN) Event event) {
 
 		Object changedObj = event.getProperty(UIEvents.EventTags.ELEMENT);
-		// only interested in changes to toolbars
-		if (!(changedObj instanceof MToolBar)) {
+		// only interested in changes to toolbars and view menu (not popup menus)
+		if (!(changedObj instanceof MToolBar)
+				&& !(changedObj instanceof MMenu && !(changedObj instanceof MPopupMenu))) {
 			return;
 		}
 
@@ -699,7 +699,6 @@ public class StackRenderer extends LazyStackRenderer implements IPreferenceChang
 	 */
 	private void addTopRight(CTabFolder tabFolder) {
 		Composite trComp = new Composite(tabFolder, SWT.NONE);
-		trComp.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_DARK_CYAN));
 		RowLayout rl = new RowLayout();
 		trComp.setLayout(rl);
 		rl.marginBottom = rl.marginTop = rl.marginRight = rl.marginLeft = 0;
@@ -1352,43 +1351,11 @@ public class StackRenderer extends LazyStackRenderer implements IPreferenceChang
 
 	private Image getViewMenuImage() {
 		if (viewMenuImage == null) {
-			Display d = Display.getCurrent();
-
-			Image viewMenu = new Image(d, 16, 16);
-			Image viewMenuMask = new Image(d, 16, 16);
-
-			Display display = Display.getCurrent();
-			GC gc = new GC(viewMenu);
-			GC maskgc = new GC(viewMenuMask);
-			gc.setForeground(display.getSystemColor(SWT.COLOR_WIDGET_DARK_SHADOW));
-			gc.setBackground(display.getSystemColor(SWT.COLOR_LIST_BACKGROUND));
-
-			int[] shapeArray = new int[] { 6, 3, 15, 3, 11, 7, 10, 7 };
-			gc.fillPolygon(shapeArray);
-			gc.drawPolygon(shapeArray);
-
-			Color black = display.getSystemColor(SWT.COLOR_BLACK);
-			Color white = display.getSystemColor(SWT.COLOR_WHITE);
-
-			maskgc.setBackground(black);
-			maskgc.fillRectangle(0, 0, 16, 16);
-
-			maskgc.setBackground(white);
-			maskgc.setForeground(white);
-			maskgc.fillPolygon(shapeArray);
-			maskgc.drawPolygon(shapeArray);
-			gc.dispose();
-			maskgc.dispose();
-
-			ImageData data = viewMenu.getImageData();
-			data.transparentPixel = data.getPixel(0, 0);
-
-			viewMenuImage = new Image(d, viewMenu.getImageData(), viewMenuMask.getImageData());
-			viewMenu.dispose();
-			viewMenuMask.dispose();
+			viewMenuImage = getImageFromURI(viewMenuURI);
 		}
 		return viewMenuImage;
 	}
+
 
 	private void openMenuFor(MPart part, CTabFolder folder, Point point) {
 		Menu tabMenu = createTabMenu(folder, part);

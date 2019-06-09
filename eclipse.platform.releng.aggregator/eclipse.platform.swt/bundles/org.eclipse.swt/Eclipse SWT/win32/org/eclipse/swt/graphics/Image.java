@@ -807,12 +807,8 @@ boolean refreshImageForZoom () {
 }
 
 void initNative(String filename) {
+	device.checkGDIP();
 	boolean gdip = true;
-	try {
-		device.checkGDIP();
-	} catch (SWTException e) {
-		gdip = false;
-	}
 	/*
 	* Bug in GDI+.  For some reason, Bitmap.LockBits() segment faults
 	* when loading GIF files in 64-bit Windows.  The fix is to not use
@@ -1451,15 +1447,6 @@ public ImageData getImageDataAtCurrentZoom() {
 			/* Create the DC and select the bitmap */
 			long /*int*/ hBitmapDC = OS.CreateCompatibleDC(hDC);
 			long /*int*/ hOldBitmap = OS.SelectObject(hBitmapDC, hBitmap);
-			/* Select the palette if necessary */
-			long /*int*/ oldPalette = 0;
-			if (depth <= 8) {
-				long /*int*/ hPalette = device.hPalette;
-				if (hPalette != 0) {
-					oldPalette = OS.SelectPalette(hBitmapDC, hPalette, false);
-					OS.RealizePalette(hBitmapDC);
-				}
-			}
 			/* Find the size of the image and allocate data */
 			int imageSize;
 			/* Call with null lpBits to get the image size */
@@ -1534,10 +1521,6 @@ public ImageData getImageDataAtCurrentZoom() {
 			}
 			/* Clean up */
 			OS.SelectObject(hBitmapDC, hOldBitmap);
-			if (oldPalette != 0) {
-				OS.SelectPalette(hBitmapDC, oldPalette, false);
-				OS.RealizePalette(hBitmapDC);
-			}
 			OS.DeleteDC(hBitmapDC);
 
 			/* Release the HDC for the device */
@@ -1594,15 +1577,6 @@ public ImageData getImageDataAtCurrentZoom() {
 			/* Create the DC and select the bitmap */
 			long /*int*/ hBitmapDC = OS.CreateCompatibleDC(hDC);
 			long /*int*/ hOldBitmap = OS.SelectObject(hBitmapDC, handle);
-			/* Select the palette if necessary */
-			long /*int*/ oldPalette = 0;
-			if (!isDib && depth <= 8) {
-				long /*int*/ hPalette = device.hPalette;
-				if (hPalette != 0) {
-					oldPalette = OS.SelectPalette(hBitmapDC, hPalette, false);
-					OS.RealizePalette(hBitmapDC);
-				}
-			}
 			/* Find the size of the image and allocate data */
 			int imageSize;
 			if (isDib) {
@@ -1651,10 +1625,6 @@ public ImageData getImageDataAtCurrentZoom() {
 			}
 			/* Clean up */
 			OS.SelectObject(hBitmapDC, hOldBitmap);
-			if (oldPalette != 0) {
-				OS.SelectPalette(hBitmapDC, oldPalette, false);
-				OS.RealizePalette(hBitmapDC);
-			}
 			OS.DeleteDC(hBitmapDC);
 
 			/* Release the HDC for the device */

@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -130,6 +132,7 @@ public final class ModuleContainer implements DebugOptionsListener {
 	private final boolean autoStartOnResolve;
 
 	boolean DEBUG_MONITOR_LAZY = false;
+	boolean DEBUG_BUNDLE_START_TIME = false;
 
 	/**
 	 * Constructs a new container with the specified adaptor, module database.
@@ -1552,6 +1555,7 @@ public final class ModuleContainer implements DebugOptionsListener {
 		frameworkStartLevel.setDebugOptions();
 		if (options != null) {
 			this.DEBUG_MONITOR_LAZY = options.getBooleanOption(Debug.OPTION_MONITOR_LAZY, false);
+			this.DEBUG_BUNDLE_START_TIME = options.getBooleanOption(Debug.OPTION_DEBUG_BUNDLE_START_TIME, false);
 		}
 	}
 
@@ -1563,7 +1567,7 @@ public final class ModuleContainer implements DebugOptionsListener {
 		private final Object eventManagerLock = new Object();
 		private EventManager startLevelThread = null;
 		private final Object frameworkStartLevelLock = new Object();
-		private boolean debugStartLevel = false;
+		boolean debugStartLevel = false;
 		{
 			setDebugOptions();
 		}
@@ -1708,6 +1712,8 @@ public final class ModuleContainer implements DebugOptionsListener {
 					List<Module> sorted = null;
 					long currentTimestamp = Long.MIN_VALUE;
 					if (newStartLevel > currentSL) {
+						List<Module> lazyStart = null;
+						List<Module> eagerStart = null;
 						for (int i = currentSL; i < newStartLevel; i++) {
 							int toStartLevel = i + 1;
 							activeStartLevel.set(toStartLevel);
@@ -1718,12 +1724,15 @@ public final class ModuleContainer implements DebugOptionsListener {
 								moduleDatabase.readLock();
 								try {
 									sorted = moduleDatabase.getSortedModules(Sort.BY_START_LEVEL);
+									lazyStart = new ArrayList<>(sorted.size());
+									eagerStart = new ArrayList<>(sorted.size());
+									separateModulesByActivationPolicy(sorted, lazyStart, eagerStart);
 									currentTimestamp = moduleDatabase.getTimestamp();
 								} finally {
 									moduleDatabase.readUnlock();
 								}
 							}
-							incStartLevel(toStartLevel, sorted);
+							incStartLevel(toStartLevel, lazyStart, eagerStart);
 						}
 					} else {
 						for (int i = currentSL; i > newStartLevel; i--) {
@@ -1749,23 +1758,34 @@ public final class ModuleContainer implements DebugOptionsListener {
 						// of launching or shutting down the framework
 						adaptor.publishContainerEvent(ContainerEvent.START_LEVEL, module, null, listeners);
 					}
-				} catch (Error e) {
-					adaptor.publishContainerEvent(ContainerEvent.ERROR, module, e, listeners);
-					throw e;
-				} catch (RuntimeException e) {
+				} catch (Error | RuntimeException e) {
 					adaptor.publishContainerEvent(ContainerEvent.ERROR, module, e, listeners);
 					throw e;
 				}
 			}
 		}
 
-		private void incStartLevel(int toStartLevel, List<Module> sortedModules) {
-			incStartLevel(toStartLevel, sortedModules, true);
-			incStartLevel(toStartLevel, sortedModules, false);
+		private void incStartLevel(int toStartLevel, List<Module> lazyStart, List<Module> eagerStart) {
+			incStartLevel(toStartLevel, lazyStart);
+			incStartLevel(toStartLevel, eagerStart);
 		}
 
-		private void incStartLevel(int toStartLevel, List<Module> sortedModules, boolean lazyOnly) {
+		private void separateModulesByActivationPolicy(List<Module> sortedModules, List<Module> lazyStart, List<Module> eagerStart) {
 			for (Module module : sortedModules) {
+				if (module.isLazyActivate()) {
+					lazyStart.add(module);
+				} else {
+					eagerStart.add(module);
+				}
+			}
+		}
+
+		private void incStartLevel(final int toStartLevel, List<Module> candidatesToStart) {
+			if (candidatesToStart.isEmpty()) {
+				return;
+			}
+			List<Module> toStart = new ArrayList<>();
+			for (final Module module : candidatesToStart) {
 				if (isRefreshingSystemModule()) {
 					return;
 				}
@@ -1775,28 +1795,44 @@ public final class ModuleContainer implements DebugOptionsListener {
 						// skip modules who should have already been started
 						continue;
 					} else if (moduleStartLevel == toStartLevel) {
-						boolean isLazyStart = module.isLazyActivate();
-						if (lazyOnly ? isLazyStart : !isLazyStart) {
-							if (debugStartLevel) {
-								Debug.println("StartLevel: resuming bundle; " + toString(module) + "; with startLevel=" + moduleStartLevel); //$NON-NLS-1$ //$NON-NLS-2$
-							}
-							try {
-								module.start(StartOptions.TRANSIENT_IF_AUTO_START, StartOptions.TRANSIENT_RESUME);
-							} catch (BundleException e) {
-								adaptor.publishContainerEvent(ContainerEvent.ERROR, module, e);
-							} catch (IllegalStateException e) {
-								// been uninstalled
-								continue;
-							}
-						}
+						toStart.add(module);
 					} else {
-						// can stop resuming since any remaining modules have a greater startlevel than the active startlevel
 						break;
 					}
 				} catch (IllegalStateException e) {
 					// been uninstalled
 					continue;
 				}
+			}
+			if (toStart.isEmpty()) {
+				return;
+			}
+			final Executor executor = adaptor.getStartLevelExecutor();
+			final CountDownLatch done = new CountDownLatch(toStart.size());
+			for (final Module module : toStart) {
+				executor.execute(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							if (debugStartLevel) {
+								Debug.println("StartLevel: resuming bundle; " + ContainerStartLevel.this.toString(module) + "; with startLevel=" + toStartLevel); //$NON-NLS-1$ //$NON-NLS-2$
+							}
+							module.start(StartOptions.TRANSIENT_IF_AUTO_START, StartOptions.TRANSIENT_RESUME);
+						} catch (BundleException e) {
+							adaptor.publishContainerEvent(ContainerEvent.ERROR, module, e);
+						} catch (IllegalStateException e) {
+							// been uninstalled
+						} finally {
+							done.countDown();
+						}
+					}
+				});
+
+			}
+			try {
+				done.await();
+			} catch (InterruptedException e) {
+				adaptor.publishContainerEvent(ContainerEvent.ERROR, moduleDatabase.getModule(0), e);
 			}
 		}
 
@@ -1865,7 +1901,7 @@ public final class ModuleContainer implements DebugOptionsListener {
 			}
 		}
 
-		private String toString(Module m) {
+		String toString(Module m) {
 			Bundle b = m.getBundle();
 			return b != null ? b.toString() : m.toString();
 		}

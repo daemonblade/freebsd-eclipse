@@ -84,9 +84,6 @@ public class ModelSynchronizeParticipantActionGroup extends SynchronizePageActio
 	private MergeAction overwrite;
 	private MergeAction markAsMerged;
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SynchronizePageActionGroup#initialize(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
-	 */
 	@Override
 	public void initialize(ISynchronizePageConfiguration configuration) {
 		super.initialize(configuration);
@@ -123,15 +120,12 @@ public class ModelSynchronizeParticipantActionGroup extends SynchronizePageActio
 	@Override
 	public void fillActionBars(IActionBars actionBars) {
 		super.fillActionBars(actionBars);
-        if (actionBars != null && showPreferences != null) {
-        	IMenuManager menu = actionBars.getMenuManager();
-        	appendToGroup(menu, ISynchronizePageConfiguration.PREFERENCES_GROUP, showPreferences);
-        }
+		if (actionBars != null && showPreferences != null) {
+			IMenuManager menu = actionBars.getMenuManager();
+			appendToGroup(menu, ISynchronizePageConfiguration.PREFERENCES_GROUP, showPreferences);
+		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SynchronizePageActionGroup#fillContextMenu(org.eclipse.jface.action.IMenuManager)
-	 */
 	@Override
 	public void fillContextMenu(IMenuManager menu) {
 		super.fillContextMenu(menu);
@@ -140,22 +134,22 @@ public class ModelSynchronizeParticipantActionGroup extends SynchronizePageActio
 			addMergeActions(cmm);
 		}
 		Object[] elements = ((IStructuredSelection)getContext().getSelection()).toArray();
-    	if (elements.length > 0 && openInCompareAction != null) {
-    		IContributionItem fileGroup = findGroup(menu, ISynchronizePageConfiguration.FILE_GROUP);
-    		if (fileGroup != null) {
-    			ModelSynchronizeParticipant msp = ((ModelSynchronizeParticipant)getConfiguration().getParticipant());
-    			boolean allElementsHaveCompareInput = true;
-    			for (int i = 0; i < elements.length; i++) {
-    				if (!msp.hasCompareInputFor(elements[i])) {
-    					allElementsHaveCompareInput = false;
-    					break;
-    				}
-    			}
-    			if (allElementsHaveCompareInput) {
-    				menu.appendToGroup(fileGroup.getId(), openInCompareAction);
-    			}
-    		}
-    	}
+		if (elements.length > 0 && openInCompareAction != null) {
+			IContributionItem fileGroup = findGroup(menu, ISynchronizePageConfiguration.FILE_GROUP);
+			if (fileGroup != null) {
+				ModelSynchronizeParticipant msp = ((ModelSynchronizeParticipant)getConfiguration().getParticipant());
+				boolean allElementsHaveCompareInput = true;
+				for (int i = 0; i < elements.length; i++) {
+					if (!msp.hasCompareInputFor(elements[i])) {
+						allElementsHaveCompareInput = false;
+						break;
+					}
+				}
+				if (allElementsHaveCompareInput) {
+					menu.appendToGroup(fileGroup.getId(), openInCompareAction);
+				}
+			}
+		}
 	}
 
 	/*
@@ -283,9 +277,6 @@ public class ModelSynchronizeParticipantActionGroup extends SynchronizePageActio
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.SynchronizePageActionGroup#dispose()
-	 */
 	@Override
 	public void dispose() {
 		if (modelPicker != null)

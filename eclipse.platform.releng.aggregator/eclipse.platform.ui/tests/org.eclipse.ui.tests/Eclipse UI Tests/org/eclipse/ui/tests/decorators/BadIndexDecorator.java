@@ -13,7 +13,6 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.decorators;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -26,65 +25,63 @@ import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProviderChangedEvent;
-import org.eclipse.ui.tests.TestPlugin;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
 public class BadIndexDecorator implements ILightweightLabelDecorator {
 
 	private Set<ILabelProviderListener> listeners = new HashSet<>();
 
-    private ImageDescriptor descriptor;
+	private ImageDescriptor descriptor;
 
 
-    @Override
+	@Override
 	public void addListener(ILabelProviderListener listener) {
-        listeners.add(listener);
-    }
+		listeners.add(listener);
+	}
 
-    @Override
+	@Override
 	public void dispose() {
 		listeners = new HashSet<>();
-    }
+	}
 
-    @Override
+	@Override
 	public boolean isLabelProperty(Object element, String property) {
-        return false;
-    }
+		return false;
+	}
 
-    @Override
+	@Override
 	public void removeListener(ILabelProviderListener listener) {
-        listeners.remove(listener);
-    }
+		listeners.remove(listener);
+	}
 
-    /**
-     * Refresh the listeners to update the decorators for
-     * element.
-     */
+	/**
+	 * Refresh the listeners to update the decorators for
+	 * element.
+	 */
 
-    public void refreshListeners(Object element) {
+	public void refreshListeners(Object element) {
 		Iterator<ILabelProviderListener> iterator = listeners.iterator();
 		while (iterator.hasNext()) {
 			LabelProviderChangedEvent event = new LabelProviderChangedEvent(this, element);
 			iterator.next().labelProviderChanged(event);
 		}
-    }
+	}
 
-    public ImageDescriptor getOverlay(Object element) {
+	public ImageDescriptor getOverlay(Object element) {
 		Assert.isTrue(element instanceof IResource);
 		if (descriptor == null) {
-			URL source = TestPlugin.getDefault().getDescriptor().getInstallURL();
-			try {
-				descriptor = ImageDescriptor.createFromURL(new URL(source, "icons/binary_co.gif"));
-			} catch (MalformedURLException exception) {
-				return null;
-			}
+			Bundle bundle = FrameworkUtil.getBundle(BadIndexDecorator.class);
+			URL entry = bundle.getEntry("icons/binary_co.gif");
+			descriptor = ImageDescriptor.createFromURL(entry);
 		}
 		return descriptor;
 
-    }
+	}
 
-    @Override
+	@Override
 	public void decorate(Object element, IDecoration decoration) {
-        decoration.addOverlay(getOverlay(element), 17);
-    }
+		decoration.addOverlay(getOverlay(element), 17);
+	}
 
 }

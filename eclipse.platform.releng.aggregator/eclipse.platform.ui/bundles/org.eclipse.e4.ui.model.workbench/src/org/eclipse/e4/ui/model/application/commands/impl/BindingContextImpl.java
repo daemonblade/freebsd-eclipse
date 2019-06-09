@@ -117,6 +117,7 @@ public class BindingContextImpl extends ApplicationElementImpl implements MBindi
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getName() {
 		return name;
 	}
@@ -126,11 +127,13 @@ public class BindingContextImpl extends ApplicationElementImpl implements MBindi
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setName(String newName) {
 		String oldName = name;
 		name = newName;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.BINDING_CONTEXT__NAME, oldName, name));
+			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.BINDING_CONTEXT__NAME, oldName,
+					name));
 	}
 
 	/**
@@ -138,6 +141,7 @@ public class BindingContextImpl extends ApplicationElementImpl implements MBindi
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getDescription() {
 		return description;
 	}
@@ -147,11 +151,13 @@ public class BindingContextImpl extends ApplicationElementImpl implements MBindi
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setDescription(String newDescription) {
 		String oldDescription = description;
 		description = newDescription;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.BINDING_CONTEXT__DESCRIPTION, oldDescription, description));
+			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.BINDING_CONTEXT__DESCRIPTION,
+					oldDescription, description));
 	}
 
 	/**
@@ -159,9 +165,11 @@ public class BindingContextImpl extends ApplicationElementImpl implements MBindi
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public List<MBindingContext> getChildren() {
 		if (children == null) {
-			children = new EObjectContainmentEList<MBindingContext>(MBindingContext.class, this, CommandsPackageImpl.BINDING_CONTEXT__CHILDREN);
+			children = new EObjectContainmentEList<MBindingContext>(MBindingContext.class, this,
+					CommandsPackageImpl.BINDING_CONTEXT__CHILDREN);
 		}
 		return children;
 	}
@@ -174,8 +182,8 @@ public class BindingContextImpl extends ApplicationElementImpl implements MBindi
 	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
-			case CommandsPackageImpl.BINDING_CONTEXT__CHILDREN:
-				return ((InternalEList<?>)getChildren()).basicRemove(otherEnd, msgs);
+		case CommandsPackageImpl.BINDING_CONTEXT__CHILDREN:
+			return ((InternalEList<?>) getChildren()).basicRemove(otherEnd, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -188,12 +196,12 @@ public class BindingContextImpl extends ApplicationElementImpl implements MBindi
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case CommandsPackageImpl.BINDING_CONTEXT__NAME:
-				return getName();
-			case CommandsPackageImpl.BINDING_CONTEXT__DESCRIPTION:
-				return getDescription();
-			case CommandsPackageImpl.BINDING_CONTEXT__CHILDREN:
-				return getChildren();
+		case CommandsPackageImpl.BINDING_CONTEXT__NAME:
+			return getName();
+		case CommandsPackageImpl.BINDING_CONTEXT__DESCRIPTION:
+			return getDescription();
+		case CommandsPackageImpl.BINDING_CONTEXT__CHILDREN:
+			return getChildren();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -207,16 +215,16 @@ public class BindingContextImpl extends ApplicationElementImpl implements MBindi
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case CommandsPackageImpl.BINDING_CONTEXT__NAME:
-				setName((String)newValue);
-				return;
-			case CommandsPackageImpl.BINDING_CONTEXT__DESCRIPTION:
-				setDescription((String)newValue);
-				return;
-			case CommandsPackageImpl.BINDING_CONTEXT__CHILDREN:
-				getChildren().clear();
-				getChildren().addAll((Collection<? extends MBindingContext>)newValue);
-				return;
+		case CommandsPackageImpl.BINDING_CONTEXT__NAME:
+			setName((String) newValue);
+			return;
+		case CommandsPackageImpl.BINDING_CONTEXT__DESCRIPTION:
+			setDescription((String) newValue);
+			return;
+		case CommandsPackageImpl.BINDING_CONTEXT__CHILDREN:
+			getChildren().clear();
+			getChildren().addAll((Collection<? extends MBindingContext>) newValue);
+			return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -229,15 +237,15 @@ public class BindingContextImpl extends ApplicationElementImpl implements MBindi
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case CommandsPackageImpl.BINDING_CONTEXT__NAME:
-				setName(NAME_EDEFAULT);
-				return;
-			case CommandsPackageImpl.BINDING_CONTEXT__DESCRIPTION:
-				setDescription(DESCRIPTION_EDEFAULT);
-				return;
-			case CommandsPackageImpl.BINDING_CONTEXT__CHILDREN:
-				getChildren().clear();
-				return;
+		case CommandsPackageImpl.BINDING_CONTEXT__NAME:
+			setName(NAME_EDEFAULT);
+			return;
+		case CommandsPackageImpl.BINDING_CONTEXT__DESCRIPTION:
+			setDescription(DESCRIPTION_EDEFAULT);
+			return;
+		case CommandsPackageImpl.BINDING_CONTEXT__CHILDREN:
+			getChildren().clear();
+			return;
 		}
 		super.eUnset(featureID);
 	}
@@ -250,12 +258,12 @@ public class BindingContextImpl extends ApplicationElementImpl implements MBindi
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case CommandsPackageImpl.BINDING_CONTEXT__NAME:
-				return NAME_EDEFAULT == null ? name != null : !NAME_EDEFAULT.equals(name);
-			case CommandsPackageImpl.BINDING_CONTEXT__DESCRIPTION:
-				return DESCRIPTION_EDEFAULT == null ? description != null : !DESCRIPTION_EDEFAULT.equals(description);
-			case CommandsPackageImpl.BINDING_CONTEXT__CHILDREN:
-				return children != null && !children.isEmpty();
+		case CommandsPackageImpl.BINDING_CONTEXT__NAME:
+			return NAME_EDEFAULT == null ? name != null : !NAME_EDEFAULT.equals(name);
+		case CommandsPackageImpl.BINDING_CONTEXT__DESCRIPTION:
+			return DESCRIPTION_EDEFAULT == null ? description != null : !DESCRIPTION_EDEFAULT.equals(description);
+		case CommandsPackageImpl.BINDING_CONTEXT__CHILDREN:
+			return children != null && !children.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}
@@ -267,7 +275,8 @@ public class BindingContextImpl extends ApplicationElementImpl implements MBindi
 	 */
 	@Override
 	public String toString() {
-		if (eIsProxy()) return super.toString();
+		if (eIsProxy())
+			return super.toString();
 
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (name: "); //$NON-NLS-1$

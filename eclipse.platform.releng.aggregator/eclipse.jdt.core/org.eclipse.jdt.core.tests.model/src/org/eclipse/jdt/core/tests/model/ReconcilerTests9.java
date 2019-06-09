@@ -15,7 +15,9 @@
 package org.eclipse.jdt.core.tests.model;
 
 
+import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Hashtable;
 
 import org.eclipse.core.resources.IMarker;
@@ -32,6 +34,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.tests.util.Util;
 
 import junit.framework.Test;
 
@@ -647,6 +650,205 @@ public void testBug544017() throws CoreException {
 		deleteProject(testa);
 		deleteProject(testb);
 		deleteProject(testmain);
+	}
+}
+
+public void testBug545687() throws CoreException, IOException {
+	if (!isJRE9)
+		return;
+	IJavaProject p = null;
+	Hashtable<String, String> options = JavaCore.getOptions();
+	try {
+		p = createJava9Project("testproj", "9");
+		createFolder("/testproj/src/javax/xml/dummy");
+		createFile("/testproj/src/javax/xml/dummy/Dummy.java", //
+				"package javax.xml.dummy;\n" + //
+				"public class Dummy {\n" + //
+				"}\n");
+		createFolder("/testproj/src/test");
+		String testSrc = "package test;\n" + //
+				"import javax.xml.XMLConstants;\n" + //
+				"public class Test {\n" + //
+				"    String s = XMLConstants.NULL_NS_URI;\n" + //
+				"}\n";
+		createFile("/testproj/src/test/Test.java", testSrc);
+		this.workingCopy.discardWorkingCopy();
+		this.problemRequestor.initialize(testSrc.toCharArray());
+		this.workingCopy = getCompilationUnit("testproj/src/test/Test.java").getWorkingCopy(this.wcOwner, null);
+		this.problemRequestor.initialize(this.workingCopy.getSource().toCharArray());
+		this.workingCopy.reconcile(AST_INTERNAL_JLS11, true, this.wcOwner, null);
+		assertProblems("Expecting no problems", "----------\n" + "----------\n", this.problemRequestor);
+
+		IMarker[] markers = p.getProject().findMarkers(null, true, IResource.DEPTH_INFINITE);
+		assertMarkers("Unexpected markers on client", "", markers);
+	} finally {
+		if (p != null)
+			deleteProject(p);
+		JavaCore.setOptions(options);
+	}
+}
+public void testBug546315() throws Exception {
+	if (!isJRE9)
+		return;
+	IJavaProject p = null;
+	String outputDirectory = Util.getOutputDirectory();
+	try {
+		String fooPath = "externalLib/foo.jar";
+		Util.createJar(
+				new String[] {
+					"test/src/foo/Foo.java", //$NON-NLS-1$
+					"package foo;\n" +
+					"public class Foo {\n" +
+					"	public static String get() { return \"\"; }\n" +
+					"}",
+				},
+				null,
+				new HashMap<>(),
+				null,
+				getExternalResourcePath(fooPath));
+
+		String fooBarPath = "externalLib/foo.bar.jar";
+		Util.createJar(
+				new String[] {
+					"test/src/foo/bar/FooBar.java", //$NON-NLS-1$
+					"package foo.bar;\n" +
+					"public class FooBar {\n" +
+					"	public static String get() { return \"\"; }\n" +
+					"}",
+				},
+				null,
+				new HashMap<>(),
+				null,
+				getExternalResourcePath(fooBarPath));
+
+		String fooBar2Path = "externalLib/foo.bar2.jar";
+		Util.createJar(
+				new String[] {
+					"test/src/foo/bar2/FooBar2.java", //$NON-NLS-1$
+					"package foo.bar2;\n" +
+					"public class FooBar2 {\n" +
+					"	public static String get() { return \"\"; }\n" +
+					"}",
+				},
+				null,
+				new HashMap<>(),
+				null,
+				getExternalResourcePath(fooBar2Path));
+
+		p = createJava9Project("p", "11");
+		IClasspathAttribute[] testAttrs = { JavaCore.newClasspathAttribute("test", "true") };
+		addClasspathEntry(p, JavaCore.newSourceEntry(new Path("/p/src-test"), null, null, new Path("/p/bin-test"), testAttrs));
+		addModularLibraryEntry(p, new Path(getExternalResourcePath(fooBarPath)), null);
+		addLibraryEntry(p, new Path(getExternalResourcePath(fooPath)), null, null, null, null, testAttrs, false);
+		addLibraryEntry(p, new Path(getExternalResourcePath(fooBar2Path)), null, null, null, null, testAttrs, false);
+		
+		createFolder("p/src/main");
+		createFile("p/src/main/Main.java",
+				"package main;\n" + 
+				"\n" + 
+				"import foo.bar.FooBar;\n" + 
+				"\n" + 
+				"public class Main {\n" + 
+				"\n" + 
+				"	public static void main(String[] args) {\n" + 
+				"		System.out.println(FooBar.get());\n" + 
+				"	}\n" + 
+				"\n" + 
+				"}\n");
+		createFile("p/src/module-info.java",
+				"module com.example.main {\n" + 
+				"	requires foo.bar;\n" + 
+				"}\n");
+		String testSource =
+				"package test;\n" + 
+				"\n" + 
+				"// errors shown in Java editor (but not in Problems view)\n" + 
+				"// can be run without dialog \"error exists...\"\n" + 
+				"\n" + 
+				"import foo.bar.FooBar;\n" + 
+				"import foo.bar2.FooBar2;\n" + 
+				"import foo.Foo; // <- The package foo is accessible from more than one module: <unnamed>, foo.bar\n" + 
+				"\n" + 
+				"public class Test {\n" + 
+				"\n" + 
+				"	public static void main(String[] args) {\n" + 
+				"		System.out.println(Foo.get()); // <- Foo cannot be resolved\n" + 
+				"		System.out.println(FooBar.get());\n" + 
+				"		System.out.println(FooBar2.get());\n" + 
+				"	}\n" + 
+				"\n" + 
+				"}\n";
+		createFolder("p/src-test/test");
+		String mPath = "p/src-test/test/Test.java";
+		createFile(mPath,
+				testSource);
+		p.getProject().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, null);
+		waitForAutoBuild();
+		IMarker[] markers = p.getProject().findMarkers(null, true, IResource.DEPTH_INFINITE);
+		assertMarkers("Unexpected markers",
+				"Name of automatic module \'foo.bar\' is unstable, it is derived from the module\'s file name.",  markers);
+
+		this.workingCopy.discardWorkingCopy();
+		this.problemRequestor.initialize(testSource.toCharArray());
+		this.workingCopy = getCompilationUnit("p/src-test/test/Test.java").getWorkingCopy(this.wcOwner, null);
+		this.problemRequestor.initialize(this.workingCopy.getSource().toCharArray());
+		this.workingCopy.reconcile(AST_INTERNAL_JLS11, true, this.wcOwner, null);
+		assertProblems("Expecting no problems", "----------\n" + "----------\n", this.problemRequestor);
+
+		markers = p.getProject().findMarkers(null, true, IResource.DEPTH_INFINITE);
+		assertMarkers("Unexpected markers", "Name of automatic module \'foo.bar\' is unstable, it is derived from the module\'s file name.", markers);
+	} finally {
+		deleteExternalResource("externalLib");
+		deleteProject(p);
+		File outputDir = new File(outputDirectory);
+		if (outputDir.exists())
+			Util.flushDirectoryContent(outputDir);
+	}
+}
+public void testBug544306() throws Exception {
+	if (!isJRE9)
+		return;
+	IJavaProject p1 = createJava9Project("p1");
+	IJavaProject p2 = createJava9Project("p2");
+	try {
+		createFolder("p1/src/p1");
+		createFile("p1/src/p1/P1.java",
+				"package p1;\n" + 
+				"public class P1 {\n" + 
+				"}\n");
+		createFile("p1/src/module-info.java",
+				"module p1 {\n" + 
+				"	exports p1;\n" + 
+				"}\n");
+
+		IClasspathAttribute[] testAttrs = { JavaCore.newClasspathAttribute("test", "true") };
+		addClasspathEntry(p2, JavaCore.newProjectEntry(p1.getPath(), null, false, testAttrs, false));
+		addClasspathEntry(p2, JavaCore.newSourceEntry(new Path("/p2/src-test"), null, null, new Path("/p2/bin-test"), testAttrs));
+		createFolder("p2/src/p2");
+		createFolder("p2/src-test/p2");
+
+		createFile("p2/src/module-info.java",
+				"module p2 {\n" + 
+				"}\n");
+		String testSource = "package p2;\n" +
+		"import p1.P1;\n" +
+		"class Test extends P1{ }";
+		
+		createFile("p2/src-test/p2/Test.java", testSource);
+		waitForAutoBuild();
+		IMarker[] markers = p1.getProject().findMarkers(null, true, IResource.DEPTH_INFINITE);
+		assertMarkers("Unexpected markers",
+				"",  markers);
+		
+		this.workingCopy.discardWorkingCopy();
+		this.workingCopy = getCompilationUnit("p2/src-test/p2/Test.java").getWorkingCopy(this.wcOwner, null);
+		this.problemRequestor.initialize(testSource.toCharArray());
+		this.workingCopy.reconcile(AST_INTERNAL_JLS11, true, this.wcOwner, null);
+		assertProblems("Expecting no problems", "----------\n" + "----------\n", this.problemRequestor);
+		this.workingCopy.discardWorkingCopy();
+	} finally {
+		deleteProject(p1);
+		deleteProject(p2);
 	}
 }
 }

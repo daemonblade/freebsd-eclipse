@@ -29,20 +29,24 @@ package org.eclipse.ui.commands;
  * @see org.eclipse.ui.commands.ICategory#addCategoryListener(ICategoryListener)
  * @see org.eclipse.ui.commands.ICategory#removeCategoryListener(ICategoryListener)
  * @see org.eclipse.core.commands.ICategoryListener
- * @deprecated Please use the "org.eclipse.core.commands" plug-in instead.
+ * @deprecated Please use the "org.eclipse.core.commands" plug-in instead. This
+ *             API is scheduled for deletion, see Bug 431177 for details
+ * @noreference This interface is scheduled for deletion.
+ * @noimplement This interface is not intended to be implemented by clients.
+ * @noextend This interface is not intended to be extended by clients.
  */
 @Deprecated
 @SuppressWarnings("all")
 public interface ICategoryListener {
 
-    /**
-     * Notifies that one or more attributes of an instance of
-     * <code>ICategory</code> have changed. Specific details are described in
-     * the <code>CategoryEvent</code>.
-     *
-     * @param categoryEvent
-     *            the category event. Guaranteed not to be <code>null</code>.
-     */
+	/**
+	 * Notifies that one or more attributes of an instance of <code>ICategory</code>
+	 * have changed. Specific details are described in the
+	 * <code>CategoryEvent</code>.
+	 *
+	 * @param categoryEvent the category event. Guaranteed not to be
+	 *                      <code>null</code>.
+	 */
 	@Deprecated
-    void categoryChanged(CategoryEvent categoryEvent);
+	void categoryChanged(CategoryEvent categoryEvent);
 }

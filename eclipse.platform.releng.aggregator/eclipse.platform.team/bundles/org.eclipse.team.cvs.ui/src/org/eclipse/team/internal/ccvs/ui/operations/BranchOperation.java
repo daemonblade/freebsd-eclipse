@@ -56,9 +56,6 @@ public class BranchOperation extends RepositoryProviderOperation {
 		this.update = updateToBranch;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.TeamOperation#shouldRun()
-	 */
 	@Override
 	protected boolean shouldRun() {
 		try {
@@ -74,8 +71,8 @@ public class BranchOperation extends RepositoryProviderOperation {
 		} catch (InterruptedException e1) {
 			throw new OperationCanceledException();
 		}
-    	
-        IResource[] resources = getTraversalRoots();
+		
+		IResource[] resources = getTraversalRoots();
 		boolean allSticky = areAllResourcesSticky(resources);
 		String initialVersionName = calculateInitialVersionName(resources,allSticky);
 		final BranchPromptDialog dialog = new BranchPromptDialog(getShell(),
@@ -111,9 +108,6 @@ public class BranchOperation extends RepositoryProviderOperation {
 		return super.shouldRun();
 	}
 
-    /* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.operations.RepositoryProviderOperation#execute(org.eclipse.team.internal.ccvs.core.CVSTeamProvider, org.eclipse.core.resources.IResource[], org.eclipse.core.runtime.IProgressMonitor)
-	 */
 	@Override
 	protected void execute(CVSTeamProvider provider, IResource[] providerResources, boolean recurse, IProgressMonitor monitor) throws CVSException, InterruptedException {
 		try {
@@ -140,7 +134,7 @@ public class BranchOperation extends RepositoryProviderOperation {
 		try {
 			// Build the arguments list
 			ICVSResource[] arguments = getCVSArguments(resources);
-            LocalOption[] localOptions = getLocalOptions(recurse);
+			LocalOption[] localOptions = getLocalOptions(recurse);
 			
 			// Tag the remote resources
 			IStatus status = null;
@@ -182,7 +176,7 @@ public class BranchOperation extends RepositoryProviderOperation {
 				Session session = new Session(getRemoteLocation(provider), getLocalRoot(provider), true /* output to console */);
 				session.open(Policy.subMonitorFor(monitor, 5), true /* open for modification */);
 				try {
-                    status = Command.CUSTOM_TAG.execute(
+					status = Command.CUSTOM_TAG.execute(
 						session,
 						Command.NO_GLOBAL_OPTIONS,
 						localOptions,
@@ -275,17 +269,11 @@ public class BranchOperation extends RepositoryProviderOperation {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#getTaskName()
-	 */
 	@Override
 	protected String getTaskName() {
 		return CVSUIMessages.BranchOperation_0; 
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.operations.RepositoryProviderOperation#getTaskName(org.eclipse.team.internal.ccvs.core.CVSTeamProvider)
-	 */
 	@Override
 	protected String getTaskName(CVSTeamProvider provider) {
 		return NLS.bind(CVSUIMessages.BranchOperation_1, new String[] { provider.getProject().getName() }); 

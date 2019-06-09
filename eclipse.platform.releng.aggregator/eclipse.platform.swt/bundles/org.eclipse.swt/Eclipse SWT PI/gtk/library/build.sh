@@ -72,7 +72,7 @@ echo -e "${RED}*** ${@}${NC}"
 
 cd `dirname $0`
 
-MAKE_TYPE=gmake
+MAKE_TYPE=make
 
 export CFLAGS='-O -Wall -fPIC'
 
@@ -86,14 +86,21 @@ case $OS in
 		MAKEFILE=make_win32.mak
 		;;
 	*)
-		SWT_OS=`uname -s | tr '[:upper:]' '[:lower:]'`
+		SWT_OS=`uname -s | tr -s '[:upper:]' '[:lower:]'`
 		MAKEFILE=make_linux.mak
 		;;
 esac
 
 # Determine which CPU type we are building for
 if [ "${MODEL}" = "" ]; then
+	if uname -i > /dev/null 2>&1; then
+		MODEL=`uname -i`
+		if [ ${MODEL} = 'unknown' ]; then
+		  MODEL=`uname -m`
+		fi
+	else
 		MODEL=`uname -m`
+	fi
 fi
 case $MODEL in
 	"x86_64")
@@ -104,11 +111,6 @@ case $MODEL in
 		SWT_ARCH=x86
 		AWT_ARCH=i386
 		;;
-	"powerpc" | "powerpc64")
-		SWT_ARCH=ppc64
-		AWT_ARCH=ppc64
-		MODEL=`uname -p`
-		;;
 	*)
 		SWT_ARCH=$MODEL
 		AWT_ARCH=$MODEL
@@ -116,16 +118,6 @@ case $MODEL in
 esac
 
 case $SWT_OS.$SWT_ARCH in
-	"freebsd.ppc64")
-		if [ "${CC}" = "" ]; then
-			export CC=gcc
-		fi
-		if [ "${JAVA_HOME}" = "" ]; then
-			DYNAMIC_JAVA_HOME=`readlink -f /usr/local/bin/java | sed "s:jre/::" | sed "s:bin/java::"`
-			JAVA_HOME = $DYNAMIC_JAVA_HOME
-			export JAVA_HOME
-		fi
-		;;
 	"linux.x86")
 		if [ "${CC}" = "" ]; then
 			export CC=gcc
@@ -139,7 +131,7 @@ case $SWT_OS.$SWT_ARCH in
 			#   java-1.8.0-openjdk-........i386
 			#   java-9-openjdk....i386
 			JAVA_FOLDER=$(ls /usr/lib/jvm | grep java | grep -i openjdk | grep i386 | sort | tail -n 1)
-			if [ "${JAVA_FOLDER}" == "" ]; then
+			if [ "${JAVA_FOLDER}" = "" ]; then
 				func_echo_error "ERROR: Could not find JAVA_HOME/AWT_LIB_PATH on 32bit build system automatically. Expecting it to be in /usr/lib/jvm/ but none was found. See also Bug 533496"
 			fi
 
@@ -164,12 +156,12 @@ case $SWT_OS.$SWT_ARCH in
 				# Cross-platform method of finding JAVA_HOME.
 				# Tested on Fedora 24 and Ubuntu 16
 				DYNAMIC_JAVA_HOME=`readlink -f /usr/bin/java | sed "s:jre/::" | sed "s:bin/java::"`
-				if [ -a "${DYNAMIC_JAVA_HOME}include/jni.h" ]; then
-                	func_echo_plus "JAVA_HOME not set, but jni.h found, dynamically configured to $DYNAMIC_JAVA_HOME"
-            		export JAVA_HOME="$DYNAMIC_JAVA_HOME"
-                else
-                	func_echo_error "JAVA_HOME not set and jni.h could not be located. You might get a compile error about include 'jni.h'. You should install 'java-*-openjdk-devel' package or if you have it installed already, find jni.h and  set JAVA_HOME manually to base of 'include' folder"
-                fi
+				if [ -e "${DYNAMIC_JAVA_HOME}include/jni.h" ]; then
+					func_echo_plus "JAVA_HOME not set, but jni.h found, dynamically configured to $DYNAMIC_JAVA_HOME"
+					export JAVA_HOME="$DYNAMIC_JAVA_HOME"
+				else
+					func_echo_error "JAVA_HOME not set and jni.h could not be located. You might get a compile error about include 'jni.h'. You should install 'java-*-openjdk-devel' package or if you have it installed already, find jni.h and  set JAVA_HOME manually to base of 'include' folder"
+				fi
 			fi
 		fi
 		if [ "${PKG_CONFIG_PATH}" = "" ]; then
@@ -198,11 +190,11 @@ case $SWT_OS.$SWT_ARCH in
 			export PKG_CONFIG_PATH="/usr/lib64/pkgconfig"
 		fi
 		;;
-esac	
+esac
 
 
 # For 64-bit CPUs, we have a switch
-if [ ${MODEL} = 'amd64' -o ${MODEL} = 'ia64' -o ${MODEL} = 's390x' -o ${MODEL} = 'ppc64le' -o ${MODEL} = 'aarch64' -o ${MODEL} = 'powerpc64' ]; then
+if [ ${MODEL} = 'x86_64' -o ${MODEL} = 'ia64' -o ${MODEL} = 's390x' -o ${MODEL} = 'ppc64le' -o ${MODEL} = 'aarch64' ]; then
 	SWT_PTR_CFLAGS=-DJNI64
 	if [ -d /lib64 ]; then
 		XLIB64=-L/usr/X11R6/lib64
@@ -213,11 +205,6 @@ if [ ${MODEL} = 'amd64' -o ${MODEL} = 'ia64' -o ${MODEL} = 's390x' -o ${MODEL} =
 		XLIB64="${XLIB64} -L/usr/lib64"
 		SWT_LFLAGS=-m64
 		export SWT_LFLAGS
-	fi
-	if [ ${SWT_OS} = "freebsd" ]
-	then
-		SWT_PTR_CFLAGS="${SWT_PTR_CFLAGS} -m64"
-		export SWT_LFLAGS=-m64
 	fi
 	export SWT_PTR_CFLAGS
 fi
@@ -263,7 +250,7 @@ fi
 
 ## Interaction(s) with makefile(s) below:
 
-# Configure OUTPUT_DIR 
+# Configure OUTPUT_DIR
 if [ "x${OUTPUT_DIR}" = "x" ]; then
 	OUTPUT_DIR=../../../../../eclipse.platform.swt.binaries/bundles/org.eclipse.swt.gtk.${SWT_OS}.${SWT_ARCH}
 	if [ -d "$OUTPUT_DIR" ]; then
@@ -320,10 +307,10 @@ func_build_gtk4 () {
 
 	# Dictate Webkit2 Extension only if pkg-config flags exist
 	pkg-config --exists webkit2gtk-web-extension-4.0
-	if [ $? == 0 ]; then
+	if [ $? = 0 ]; then
 		export BUILD_WEBKIT2EXTENSION="yes";
 	else
-		func_echo_error "Warning: Cannot compile Webkit2 Extension because 'pkg-config --exists webkit2gtk-web-extension-4-0' check failed. Please install webkitgtk4-devel.ARCH on your system."
+		func_echo_error "Warning: Cannot compile Webkit2 Extension because 'pkg-config --exists webkit2gtk-web-extension-4.0' check failed. Please install webkitgtk4-devel.ARCH on your system."
 	fi
 
 	func_echo_plus "Building GTK4 bindings:"
@@ -342,10 +329,10 @@ func_build_gtk3 () {
 
 	# Dictate Webkit2 Extension only if pkg-config flags exist
 	pkg-config --exists webkit2gtk-web-extension-4.0
-	if [ $? == 0 ]; then
+	if [ $? = 0 ]; then
 		export BUILD_WEBKIT2EXTENSION="yes";
 	else
-		func_echo_error "Warning: Cannot compile Webkit2 Extension because 'pkg-config --exists webkit2gtk-web-extension-4-0' check failed. Please install webkitgtk4-devel.ARCH on your system."
+		func_echo_error "Warning: Cannot compile Webkit2 Extension because 'pkg-config --exists webkit2gtk-web-extension-4.0' check failed. Please install webkitgtk4-devel.ARCH on your system."
 	fi
 
 	func_echo_plus "Building GTK3 bindings:"

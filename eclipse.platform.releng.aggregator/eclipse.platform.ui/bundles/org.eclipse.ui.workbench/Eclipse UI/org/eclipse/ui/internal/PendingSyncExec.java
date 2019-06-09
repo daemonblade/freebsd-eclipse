@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.ui.internal;
 
+import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -26,26 +27,32 @@ public final class PendingSyncExec {
 	// Accessed by multiple threads. Synchronize on "this" before accessing.
 	private boolean hasFinishedRunning;
 
-    public PendingSyncExec(Runnable runnable) {
-        this.runnable = runnable;
-    }
+	public PendingSyncExec(Runnable runnable) {
+		this.runnable = runnable;
+	}
 
-    /**
-     * Attempts to acquire this semaphore.  Returns true if it was successfully acquired,
-     * and false otherwise.
-     */
+	/**
+	 * Attempts to acquire this semaphore. Returns true if it was successfully
+	 * acquired, and false otherwise.
+	 */
 	private boolean acquire(long delay) throws InterruptedException {
 		return semaphore.tryAcquire(delay, TimeUnit.MILLISECONDS);
-    }
+	}
 
-    @Override
+	@Override
 	public boolean equals(Object obj) {
-        return (runnable == ((PendingSyncExec) obj).runnable);
-    }
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof PendingSyncExec)) {
+			return false;
+		}
+		return (runnable == ((PendingSyncExec) obj).runnable);
+	}
 
-    public Thread getOperationThread() {
-        return operation;
-    }
+	public Thread getOperationThread() {
+		return operation;
+	}
 
 	public void run() {
 		// Clear the interrupted flag. The blocked thread may have been
@@ -89,18 +96,18 @@ public final class PendingSyncExec {
 		}
 	}
 
-    @Override
+	@Override
 	public int hashCode() {
-        return runnable == null ? 0 : runnable.hashCode();
-    }
+		return Objects.hashCode(runnable);
+	}
 
-    public void setOperationThread(Thread operation) {
-        this.operation = operation;
-    }
+	public void setOperationThread(Thread operation) {
+		this.operation = operation;
+	}
 
-    // for debug only
-    @Override
+	// for debug only
+	@Override
 	public String toString() {
 		return "PendingSyncExec(" + runnable + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-    }
+	}
 }

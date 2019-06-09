@@ -124,9 +124,6 @@ public class HistoryTableProvider {
 			return dateFormat;
 		}
 		
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.IColorProvider#getForeground(java.lang.Object)
-		 */
 		@Override
 		public Color getForeground(Object element) {
 			ILogEntry entry = adaptToLogEntry(element);
@@ -136,17 +133,12 @@ public class HistoryTableProvider {
 				return null;
 			}
 		}
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.IColorProvider#getBackground(java.lang.Object)
-		 */
+
 		@Override
 		public Color getBackground(Object element) {
 			return null;
 		}
-		/*
-		 * (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.IFontProvider#getFont(java.lang.Object)
-		 */
+
 		@Override
 		public Font getFont(Object element) {
 			ILogEntry entry = adaptToLogEntry(element);
@@ -417,7 +409,7 @@ public class HistoryTableProvider {
 	 */
 	private SelectionListener getColumnListener(final TableViewer tableViewer) {
 		/**
-	 	 * This class handles selections of the column headers.
+		 * This class handles selections of the column headers.
 		 * Selection of the column header will cause resorting
 		 * of the shown tasks using that column's sorter.
 		 * Repeated selection of the header will toggle

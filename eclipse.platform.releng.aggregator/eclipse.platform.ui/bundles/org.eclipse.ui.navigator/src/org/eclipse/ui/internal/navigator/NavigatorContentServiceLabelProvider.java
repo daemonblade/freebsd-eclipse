@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2015 IBM Corporation and others.
+ * Copyright (c) 2003, 2015, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,6 +11,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Fair Issac Corp - bug 287103 - NCSLabelProvider does not properly handle overrides
+ *     Stefan Winkler <stefan@winklerweb.net> - bug 178019 - CNF Tooltip support
  *******************************************************************************/
 package org.eclipse.ui.internal.navigator;
 
@@ -27,6 +28,7 @@ import org.eclipse.jface.viewers.IFontProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.IToolTipProvider;
 import org.eclipse.jface.viewers.ITreePathLabelProvider;
 import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.jface.viewers.StyledString;
@@ -64,7 +66,8 @@ import org.eclipse.ui.navigator.INavigatorContentService;
  * @see org.eclipse.ui.internal.navigator.NavigatorContentServiceContentProvider
  */
 public class NavigatorContentServiceLabelProvider extends EventManager
-		implements ILabelProvider, IColorProvider, IFontProvider, ITreePathLabelProvider, ITableLabelProvider, ILabelProviderListener, IStyledLabelProvider {
+		implements ILabelProvider, IColorProvider, IFontProvider, ITreePathLabelProvider, ITableLabelProvider,
+		ILabelProviderListener, IStyledLabelProvider, IToolTipProvider {
 
 	private final NavigatorContentService contentService;
 	private final boolean isContentServiceSelfManaged;
@@ -249,6 +252,21 @@ public class NavigatorContentServiceLabelProvider extends EventManager
 		return null;
 	}
 
+	@Override
+	public String getToolTipText(Object anElement) {
+		ILabelProvider[] labelProviders = contentService.findRelevantLabelProviders(anElement);
+		for (ILabelProvider provider : labelProviders) {
+			if (provider instanceof IToolTipProvider) {
+				IToolTipProvider tooltipProvider = (IToolTipProvider) provider;
+				String tooltip = tooltipProvider.getToolTipText(anElement);
+				if (tooltip != null && !tooltip.isEmpty()) {
+					return tooltip;
+				}
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * <p>
 	 * Indicates whether anElelement has aProperty that affects the display of the label.
@@ -322,26 +340,26 @@ public class NavigatorContentServiceLabelProvider extends EventManager
 	}
 
 	/**
-     * Fires a label provider changed event to all registered listeners
-     * Only listeners registered at the time this method is called are notified.
-     *
-     * @param event a label provider changed event
-     *
-     * @see ILabelProviderListener#labelProviderChanged
-     */
-    protected void fireLabelProviderChanged(
-            final LabelProviderChangedEvent event) {
+	 * Fires a label provider changed event to all registered listeners
+	 * Only listeners registered at the time this method is called are notified.
+	 *
+	 * @param event a label provider changed event
+	 *
+	 * @see ILabelProviderListener#labelProviderChanged
+	 */
+	protected void fireLabelProviderChanged(
+			final LabelProviderChangedEvent event) {
 		for (Object listener : getListeners()) {
 			final ILabelProviderListener labelProviderListener = (ILabelProviderListener) listener;
-            SafeRunner.run(new SafeRunnable() {
-                @Override
+			SafeRunner.run(new SafeRunnable() {
+				@Override
 				public void run() {
 					labelProviderListener.labelProviderChanged(event);
-                }
-            });
+				}
+			});
 
-        }
-    }
+		}
+	}
 
 	@Override
 	public void updateLabel(ViewerLabel label, TreePath elementPath) {

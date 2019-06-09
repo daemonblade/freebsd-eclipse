@@ -1,19 +1,21 @@
 /*******************************************************************************
-.
-. This
-* program and the accompanying materials are made available under the terms of
-* the Eclipse Public License 2.0 which accompanies this distribution, and is
-t https://www.eclipse.org/legal/epl-2.0/
-t
-t SPDX-License-Identifier: EPL-2.0
-*
-* Contributors:
-*   EclipseSource - initial API and implementation
-*   IBM Corporation - ongoing enhancements
-*   Red Hat Inc - Support for bundles and nested categories
-*   Martin Karpisek <martin.karpisek@gmail.com> - Bug 296392, 351356
-*   Lars Vogel <Lars.Vogel@vogella.com> - Bug 487943
-******************************************************************************/
+ * Copyright (c) 2009, 2019 EclipseSource and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     EclipseSource - initial API and implementation
+ *     IBM Corporation - ongoing enhancements
+ *     Red Hat Inc - Support for bundles and nested categories
+ *     Martin Karpisek <martin.karpisek@gmail.com> - Bug 296392, 351356
+ *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 487943
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - ongoing enhancements
+ ******************************************************************************/
 package org.eclipse.pde.internal.ui.editor.category;
 
 import java.util.*;
@@ -46,7 +48,6 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.Section;
-import org.osgi.framework.Version;
 
 public class CategorySection extends TreeSection implements IFeatureModelListener {
 
@@ -683,7 +684,8 @@ public class CategorySection extends TreeSection implements IFeatureModelListene
 		ISiteFeature featureCopy = adapter.feature;
 		ISiteFeature[] features = fModel.getSite().getFeatures();
 		for (ISiteFeature feature : features) {
-			if (feature.getId().equals(featureCopy.getId()) && feature.getVersion().equals(featureCopy.getVersion())) {
+			if (Objects.equals(feature.getId(), featureCopy.getId())
+					&& Objects.equals(feature.getVersion(), featureCopy.getVersion())) {
 				return feature;
 			}
 		}
@@ -759,6 +761,9 @@ public class CategorySection extends TreeSection implements IFeatureModelListene
 
 	@Override
 	public void modelChanged(IModelChangedEvent e) {
+		if (e.getChangeType() == IModelChangedEvent.WORLD_CHANGED) {
+			fCategoryViewer.setSelection(StructuredSelection.EMPTY);
+		}
 		markStale();
 	}
 
@@ -868,11 +873,14 @@ public class CategorySection extends TreeSection implements IFeatureModelListene
 	private boolean canAdd(IFeatureModel candidate) {
 		ISiteFeature[] features = fModel.getSite().getFeatures();
 		IFeature cfeature = candidate.getFeature();
+		String id = cfeature.getId();
+		String version = cfeature.getVersion();
 
 		for (ISiteFeature bfeature : features) {
-			if (bfeature.getId() != null && bfeature.getId().equals(cfeature.getId()) && bfeature.getVersion() != null
-					&& bfeature.getVersion().equals(cfeature.getVersion()))
+			boolean idEquals = Objects.equals(bfeature.getId(), id);
+			if (idEquals && (bfeature.getVersion() == null || Objects.equals(bfeature.getVersion(), version))) {
 				return false;
+			}
 		}
 		return true;
 	}
@@ -881,9 +889,12 @@ public class CategorySection extends TreeSection implements IFeatureModelListene
 		ISiteBundle[] currentBundles = fModel.getSite().getBundles();
 		IPluginBase candidateBundle = candidate.getPluginBase();
 
+		String candidateId = candidateBundle.getId();
+		String candidateVersion = candidateBundle.getVersion();
+
 		for (ISiteBundle currentBundle : currentBundles) {
-			if (currentBundle.getId().equals(candidateBundle.getId()) && currentBundle.getVersion() != null
-					&& currentBundle.getVersion().equals(candidateBundle.getVersion()))
+			if (currentBundle.getId().equals(candidateId)
+					&& (currentBundle.getVersion() == null || currentBundle.getVersion().equals(candidateVersion)))
 				return false;
 		}
 		return true;
@@ -893,11 +904,6 @@ public class CategorySection extends TreeSection implements IFeatureModelListene
 		IFeature feature = featureModel.getFeature();
 		ISiteFeature sfeature = model.getFactory().createFeature();
 		sfeature.setId(feature.getId());
-		sfeature.setVersion(feature.getVersion());
-		// sfeature.setURL(model.getBuildModel().getSiteBuild().getFeatureLocation()
-		// + "/" + feature.getId() + "_" + feature.getVersion() + ".jar");
-		// //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		sfeature.setURL("features/" + feature.getId() + "_" + formatVersion(feature.getVersion()) + ".jar"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		sfeature.setOS(feature.getOS());
 		sfeature.setWS(feature.getWS());
 		sfeature.setArch(feature.getArch());
@@ -909,17 +915,7 @@ public class CategorySection extends TreeSection implements IFeatureModelListene
 	private ISiteBundle createSiteBundle(ISiteModel model, IPluginModelBase candidate) throws CoreException {
 		ISiteBundle newBundle = model.getFactory().createBundle();
 		newBundle.setId(candidate.getPluginBase().getId());
-		newBundle.setVersion(candidate.getPluginBase().getVersion());
 		return newBundle;
-	}
-
-	private static String formatVersion(String version) {
-		try {
-			Version v = new Version(version);
-			return v.toString();
-		} catch (IllegalArgumentException e) {
-		}
-		return version;
 	}
 
 	private static boolean isFeaturePatch(IFeature feature) {

@@ -56,25 +56,16 @@ public abstract class CVSOperation extends TeamOperation implements IShellProvid
 		super(part);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.actions.TeamOperation#getJobName()
-	 */
 	@Override
 	protected String getJobName() {
 		return getTaskName();
 	}
 		
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.TeamOperation#getOperationIcon()
-	 */
 	@Override
 	protected URL getOperationIcon() {
 		return Platform.find(CVSUIPlugin.getPlugin().getBundle(), new Path(ICVSUIConstants.ICON_PATH + ICVSUIConstants.IMG_CVS_PERSPECTIVE));
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
-	 */
 	@Override
 	public final void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 		startOperation();
@@ -185,7 +176,7 @@ public abstract class CVSOperation extends TeamOperation implements IShellProvid
 	 */
 	protected final void handleErrors(IStatus[] errors) throws CVSException {
 		// We are only concerned with reportable errors.
-	    // Others will appear in the console
+		// Others will appear in the console
 		List<IStatus> reportableErrors = new ArrayList<>();
 		for (int i = 0; i < errors.length; i++) {
 			IStatus status = errors[i];
@@ -203,7 +194,7 @@ public abstract class CVSOperation extends TeamOperation implements IShellProvid
 			}
 		}
 		if (!reportableErrors.isEmpty())
-		    asException(reportableErrors.toArray(new IStatus[reportableErrors.size()]));
+			asException(reportableErrors.toArray(new IStatus[reportableErrors.size()]));
 	}
 
 	/**
@@ -212,11 +203,11 @@ public abstract class CVSOperation extends TeamOperation implements IShellProvid
 	 * @param status an error status
 	 * @return whether the status is reportable or should be ignored
 	 */
-    protected boolean isReportableError(IStatus status) {
-        return status.getCode() == CVSStatus.SERVER_ERROR || CVSStatus.isInternalError(status) || status.getCode() == TeamException.UNABLE;
-    }
+	protected boolean isReportableError(IStatus status) {
+		return status.getCode() == CVSStatus.SERVER_ERROR || CVSStatus.isInternalError(status) || status.getCode() == TeamException.UNABLE;
+	}
 
-    protected String getErrorMessage(IStatus[] failures, int totalOperations) {
+	protected String getErrorMessage(IStatus[] failures, int totalOperations) {
 		return NLS.bind(CVSUIMessages.CVSOperation_0, new String[] { String.valueOf(failures.length), String.valueOf(totalOperations) }); 
 	}
 
@@ -282,9 +273,6 @@ public abstract class CVSOperation extends TeamOperation implements IShellProvid
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.actions.TeamOperation#getShell()
-	 */
 	@Override
 	public Shell getShell() {
 		// Use the shell assigned to the operation if possible
@@ -304,41 +292,35 @@ public abstract class CVSOperation extends TeamOperation implements IShellProvid
 		this.shell = shell;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.TeamOperation#canRunAsJob()
-	 */
 	@Override
 	protected boolean canRunAsJob() {
 		// Put CVS jobs in the background by default.
 		return true;
 	}
 	
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.TeamOperation#isSameFamilyAs(org.eclipse.team.ui.TeamOperation)
-     */
-    @Override
+	@Override
 	protected boolean isSameFamilyAs(TeamOperation operation) {
-        // Trat all CVS operations as a single family
-        return operation instanceof CVSOperation;
-    }
-    
-    /*
-     * Action to show the console that can be used by subclasses
-     * that wish to link the progress service to the console
-     */
-    protected IAction getShowConsoleAction() {
-        // Show the console as the goto action
-        return new Action(CVSUIMessages.CVSOperation_1) { 
-            @Override
+		// Trat all CVS operations as a single family
+		return operation instanceof CVSOperation;
+	}
+	
+	/*
+	 * Action to show the console that can be used by subclasses
+	 * that wish to link the progress service to the console
+	 */
+	protected IAction getShowConsoleAction() {
+		// Show the console as the goto action
+		return new Action(CVSUIMessages.CVSOperation_1) { 
+			@Override
 			public void run() {
-                CVSOutputConsole console = CVSUIPlugin.getPlugin().getConsole();
-                if (console != null)
-                    console.show(true);
-            }
-            @Override
+				CVSOutputConsole console = CVSUIPlugin.getPlugin().getConsole();
+				if (console != null)
+					console.show(true);
+			}
+			@Override
 			public String getToolTipText() {
-                return CVSUIMessages.CVSOperation_2; 
-            }
-        };
-    }
+				return CVSUIMessages.CVSOperation_2; 
+			}
+		};
+	}
 }

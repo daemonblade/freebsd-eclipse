@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2016 IBM Corporation and others.
+ * Copyright (c) 2006, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -91,10 +91,17 @@ public class StackMapFrameCodeStream extends CodeStream {
 			StringBuffer buffer = new StringBuffer();
 			buffer.append('(').append(this.pc).append(',').append(this.delta);
 			if (this.typeBinding != null) {
-				buffer
-					.append(',')
-					.append(this.typeBinding.qualifiedPackageName())
-					.append(this.typeBinding.qualifiedSourceName());
+				if (this.typeBinding.isBaseType()) {
+					buffer
+						.append(',')
+						.append(this.typeBinding.qualifiedSourceName());
+				} else {
+					buffer
+						.append(',')
+						.append(this.typeBinding.qualifiedPackageName())
+						.append('.')
+						.append(this.typeBinding.qualifiedSourceName());
+				}
 			}
 			buffer.append(')');
 			return String.valueOf(buffer);
@@ -152,31 +159,13 @@ public StackMapFrameCodeStream(ClassFile givenClassFile) {
 @Override
 public void addDefinitelyAssignedVariables(Scope scope, int initStateIndex) {
 	// Required to fix 1PR0XVS: LFRE:WINNT - Compiler: variable table for method appears incorrect
-	loop: for (int i = 0; i < this.visibleLocalsCount; i++) {
+	for (int i = 0; i < this.visibleLocalsCount; i++) {
 		LocalVariableBinding localBinding = this.visibleLocals[i];
 		if (localBinding != null) {
 			// Check if the local is definitely assigned
 			boolean isDefinitelyAssigned = isDefinitelyAssigned(scope, initStateIndex, localBinding);
 			if (!isDefinitelyAssigned) {
-				if (this.stateIndexes != null) {
-					for (int j = 0, max = this.stateIndexesCounter; j < max; j++) {
-						if (isDefinitelyAssigned(scope, this.stateIndexes[j], localBinding)) {
-							if ((localBinding.initializationCount == 0) || (localBinding.initializationPCs[((localBinding.initializationCount - 1) << 1) + 1] != -1)) {
-								/* There are two cases:
-								 * 1) there is no initialization interval opened ==> add an opened interval
-								 * 2) there is already some initialization intervals but the last one is closed ==> add an opened interval
-								 * An opened interval means that the value at localBinding.initializationPCs[localBinding.initializationCount - 1][1]
-								 * is equals to -1.
-								 * initializationPCs is a collection of pairs of int:
-								 * 	first value is the startPC and second value is the endPC. -1 one for the last value means that the interval
-								 * 	is not closed yet.
-								 */
-								localBinding.recordInitializationStartPC(this.position);
-							}
-							continue loop;
-						}
-					}
-				}
+				continue;
 			} else {
 				if ((localBinding.initializationCount == 0) || (localBinding.initializationPCs[((localBinding.initializationCount - 1) << 1) + 1] != -1)) {
 					/* There are two cases:
@@ -226,6 +215,7 @@ public void addFramePosition(int pc) {
 public void optimizeBranch(int oldPosition, BranchLabel lbl) {
 	super.optimizeBranch(oldPosition, lbl);
 	removeFramePosition(oldPosition);
+	removeStackMapMarkers(oldPosition);
 }
 public void removeFramePosition(int pc) {
 	Integer entry = Integer.valueOf(pc);
@@ -234,6 +224,17 @@ public void removeFramePosition(int pc) {
 		value.counter--;
 		if (value.counter <= 0) {
 			this.framePositions.remove(entry);
+		}
+	}
+}
+public void removeStackMapMarkers(int markerOldPosition) {
+	if (this.stackDepthMarkers != null) {
+		for (int i = this.stackDepthMarkers.size() - 1; i >= 0; i--) {
+			StackDepthMarker marker = (StackDepthMarker) this.stackDepthMarkers.get(i);
+			if (marker.pc == markerOldPosition) {
+				this.stackDepthMarkers.remove(i);
+				break;
+			}
 		}
 	}
 }
@@ -283,6 +284,26 @@ public void decrStackSize(int offset) {
 @Override
 public void recordExpressionType(TypeBinding typeBinding) {
 	addStackDepthMarker(this.position, 0, typeBinding);
+}
+@Override
+public void recordExpressionType(TypeBinding typeBinding, int delta, boolean adjustStackDepth) {
+	addStackDepthMarker(this.position, delta, typeBinding);
+	if (adjustStackDepth) {
+		// optimized goto
+		// the break label already adjusted the stack depth (-1 or -2 depending on the return type)
+		// we need to adjust back to what it was
+		switch(typeBinding.id) {
+			case TypeIds.T_long :
+			case TypeIds.T_double :
+				this.stackDepth+=2;
+				break;
+			case TypeIds.T_void :
+				break;
+			default :
+				this.stackDepth++;
+				break;
+		}
+	}
 }
 /**
  * Macro for building a class descriptor object

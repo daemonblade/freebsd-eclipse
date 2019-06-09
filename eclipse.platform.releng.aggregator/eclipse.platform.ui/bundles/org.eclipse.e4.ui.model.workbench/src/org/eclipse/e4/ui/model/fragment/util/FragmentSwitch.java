@@ -14,7 +14,9 @@
  */
 package org.eclipse.e4.ui.model.fragment.util;
 
-import org.eclipse.e4.ui.model.fragment.*;
+import org.eclipse.e4.ui.model.fragment.MModelFragment;
+import org.eclipse.e4.ui.model.fragment.MModelFragments;
+import org.eclipse.e4.ui.model.fragment.MStringModelFragment;
 import org.eclipse.e4.ui.model.fragment.impl.FragmentPackageImpl;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
@@ -77,26 +79,31 @@ public class FragmentSwitch<T> extends Switch<T> {
 	@Override
 	protected T doSwitch(int classifierID, EObject theEObject) {
 		switch (classifierID) {
-			case FragmentPackageImpl.MODEL_FRAGMENTS: {
-				MModelFragments modelFragments = (MModelFragments)theEObject;
-				T result = caseModelFragments(modelFragments);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			case FragmentPackageImpl.MODEL_FRAGMENT: {
-				MModelFragment modelFragment = (MModelFragment)theEObject;
-				T result = caseModelFragment(modelFragment);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			case FragmentPackageImpl.STRING_MODEL_FRAGMENT: {
-				MStringModelFragment stringModelFragment = (MStringModelFragment)theEObject;
-				T result = caseStringModelFragment(stringModelFragment);
-				if (result == null) result = caseModelFragment(stringModelFragment);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			default: return defaultCase(theEObject);
+		case FragmentPackageImpl.MODEL_FRAGMENTS: {
+			MModelFragments modelFragments = (MModelFragments) theEObject;
+			T result = caseModelFragments(modelFragments);
+			if (result == null)
+				result = defaultCase(theEObject);
+			return result;
+		}
+		case FragmentPackageImpl.MODEL_FRAGMENT: {
+			MModelFragment modelFragment = (MModelFragment) theEObject;
+			T result = caseModelFragment(modelFragment);
+			if (result == null)
+				result = defaultCase(theEObject);
+			return result;
+		}
+		case FragmentPackageImpl.STRING_MODEL_FRAGMENT: {
+			MStringModelFragment stringModelFragment = (MStringModelFragment) theEObject;
+			T result = caseStringModelFragment(stringModelFragment);
+			if (result == null)
+				result = caseModelFragment(stringModelFragment);
+			if (result == null)
+				result = defaultCase(theEObject);
+			return result;
+		}
+		default:
+			return defaultCase(theEObject);
 		}
 	}
 

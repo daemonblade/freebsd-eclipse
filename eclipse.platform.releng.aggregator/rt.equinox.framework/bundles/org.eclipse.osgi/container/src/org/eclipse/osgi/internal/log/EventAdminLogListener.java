@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.osgi.internal.log;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import org.eclipse.equinox.log.SynchronousLogListener;
@@ -61,6 +63,7 @@ public class EventAdminLogListener implements SynchronousLogListener {
 		event = eventClass.getConstructor(String.class, Dictionary.class);
 	}
 
+	@Override
 	public void logged(LogEntry entry) {
 		try {
 			Object convertedEvent = convertEvent(entry);
@@ -73,15 +76,13 @@ public class EventAdminLogListener implements SynchronousLogListener {
 				throw (Error) t;
 			// unexpected
 			throw new RuntimeException(e);
-		} catch (IllegalAccessException e) {
-			// unexpected
-			throw new RuntimeException(e);
-		} catch (InstantiationException e) {
+		} catch (IllegalAccessException | InstantiationException e) {
 			// unexpected
 			throw new RuntimeException(e);
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private Object convertEvent(LogEntry entry) throws InstantiationException, IllegalAccessException, InvocationTargetException {
 		String topic = TOPIC;
 		int level = entry.getLevel();

@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.jface.resource;
 
+import java.util.Arrays;
+
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -24,110 +26,95 @@ import org.eclipse.swt.graphics.FontData;
  */
 final class ArrayFontDescriptor extends FontDescriptor {
 
-    private FontData[] data;
-    private Font originalFont = null;
+	private FontData[] data;
+	private Font originalFont = null;
 
-    /**
-     * Creates a font descriptor for a font with the given name, height,
-     * and style. These arguments are passed directly to the constructor
-     * of Font.
-     *
-     * @param data FontData describing the font to create
-     *
-     * @see org.eclipse.swt.graphics.Font#Font(org.eclipse.swt.graphics.Device, org.eclipse.swt.graphics.FontData)
-     * @since 3.1
-     */
-    public ArrayFontDescriptor(FontData[] data) {
-        this.data = data;
-    }
+	/**
+	 * Creates a font descriptor for a font with the given name, height,
+	 * and style. These arguments are passed directly to the constructor
+	 * of Font.
+	 *
+	 * @param data FontData describing the font to create
+	 *
+	 * @see org.eclipse.swt.graphics.Font#Font(org.eclipse.swt.graphics.Device, org.eclipse.swt.graphics.FontData)
+	 * @since 3.1
+	 */
+	public ArrayFontDescriptor(FontData[] data) {
+		this.data = data;
+	}
 
-    /**
-     * Creates a font descriptor that describes the given font.
-     *
-     * @param originalFont font to be described
-     *
-     * @see FontDescriptor#createFrom(org.eclipse.swt.graphics.Font)
-     * @since 3.1
-     */
-    public ArrayFontDescriptor(Font originalFont) {
-        this(originalFont.getFontData());
-        this.originalFont = originalFont;
-    }
+	/**
+	 * Creates a font descriptor that describes the given font.
+	 *
+	 * @param originalFont font to be described
+	 *
+	 * @see FontDescriptor#createFrom(org.eclipse.swt.graphics.Font)
+	 * @since 3.1
+	 */
+	public ArrayFontDescriptor(Font originalFont) {
+		this(originalFont.getFontData());
+		this.originalFont = originalFont;
+	}
 
-    @Override
+	@Override
 	public FontData[] getFontData() {
-    	// Copy the original array to ensure that callers will not modify it
-    	return copy(data);
-    }
+		// Copy the original array to ensure that callers will not modify it
+		return copy(data);
+	}
 
 
-    @Override
+	@Override
 	public Font createFont(Device device) {
 
-        // If this descriptor is an existing font, then we can return the original font
-        // if this is the same device.
-        if (originalFont != null) {
-            // If we're allocating on the same device as the original font, return the original.
-            if (originalFont.getDevice() == device) {
-                return originalFont;
-            }
-        }
+		// If this descriptor is an existing font, then we can return the original font
+		// if this is the same device.
+		if (originalFont != null) {
+			// If we're allocating on the same device as the original font, return the original.
+			if (originalFont.getDevice() == device) {
+				return originalFont;
+			}
+		}
 
-        return new Font(device, data);
-    }
+		return new Font(device, data);
+	}
 
-    @Override
+	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof ArrayFontDescriptor) {
-            ArrayFontDescriptor descr = (ArrayFontDescriptor)obj;
+			ArrayFontDescriptor descr = (ArrayFontDescriptor)obj;
 
-            if (descr.originalFont != originalFont) {
-                return false;
-            }
+			if (descr.originalFont != originalFont) {
+				return false;
+			}
 
-            if (originalFont != null) {
-                return true;
-            }
+			if (originalFont != null) {
+				return true;
+			}
 
-            if (data.length != descr.data.length) {
-                return false;
-            }
+			if (!Arrays.equals(data, descr.data)) {
+				return false;
+			}
 
-            for (int i = 0; i < data.length; i++) {
-                FontData fd = data[i];
-                FontData fd2 = descr.data[i];
+			return true;
+		}
 
-                if (!fd.equals(fd2)) {
-                    return false;
-                }
-            }
+		return false;
+	}
 
-            return true;
-        }
-
-        return false;
-    }
-
-    @Override
+	@Override
 	public int hashCode() {
-        if (originalFont != null) {
-            return originalFont.hashCode();
-        }
+		if (originalFont != null) {
+			return originalFont.hashCode();
+		}
+		return Arrays.hashCode(data);
+	}
 
-        int code = 0;
-
-        for (FontData fd : data) {
-            code += fd.hashCode();
-        }
-        return code;
-    }
-
-    @Override
+	@Override
 	public void destroyFont(Font previouslyCreatedFont) {
-        if (previouslyCreatedFont == originalFont) {
-            return;
-        }
-        previouslyCreatedFont.dispose();
-    }
+		if (previouslyCreatedFont == originalFont) {
+			return;
+		}
+		previouslyCreatedFont.dispose();
+	}
 
 }

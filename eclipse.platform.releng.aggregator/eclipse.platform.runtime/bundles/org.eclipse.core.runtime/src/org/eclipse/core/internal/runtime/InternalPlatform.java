@@ -30,13 +30,17 @@ import org.eclipse.equinox.app.IApplicationContext;
 import org.eclipse.equinox.internal.app.*;
 import org.eclipse.equinox.internal.app.Activator;
 import org.eclipse.equinox.log.*;
+import org.eclipse.osgi.container.ModuleContainer;
 import org.eclipse.osgi.framework.log.FrameworkLog;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.eclipse.osgi.service.debug.DebugOptions;
 import org.eclipse.osgi.service.environment.EnvironmentInfo;
 import org.eclipse.osgi.service.resolver.PlatformAdmin;
 import org.osgi.framework.*;
-import org.osgi.service.packageadmin.PackageAdmin;
+import org.osgi.framework.namespace.HostNamespace;
+import org.osgi.framework.namespace.IdentityNamespace;
+import org.osgi.framework.wiring.*;
+import org.osgi.resource.Namespace;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
@@ -45,7 +49,7 @@ import org.osgi.util.tracker.ServiceTracker;
  */
 public final class InternalPlatform {
 
-	private static final String[] ARCH_LIST = { Platform.ARCH_X86 };
+	private static final String[] ARCH_LIST = { Platform.ARCH_X86, Platform.ARCH_X86_64 };
 
 	// debug support:  set in loadOptions()
 	public static boolean DEBUG = false;
@@ -59,7 +63,7 @@ public final class InternalPlatform {
 	//XXX This is not synchronized
 	private Map<Bundle,Log> logs = new HashMap<>(5);
 
-	private static final String[] OS_LIST = { Platform.OS_FREEBSD, Platform.OS_LINUX, Platform.OS_MACOSX, Platform.OS_WIN32 };
+	private static final String[] OS_LIST = { Platform.OS_LINUX, Platform.OS_MACOSX, Platform.OS_WIN32 };
 	private String password = ""; //$NON-NLS-1$
 	private static final String PASSWORD = "-password"; //$NON-NLS-1$
 
@@ -88,6 +92,7 @@ public final class InternalPlatform {
 	private Path cachedInstanceLocation; // Cache the path of the instance location
 	private ServiceTracker<Location,Location> configurationLocation = null;
 	private BundleContext context;
+	private FrameworkWiring fwkWiring;
 
 	private Map<IBundleGroupProvider,ServiceRegistration<IBundleGroupProvider>> groupProviders = new HashMap<>(3);
 	private ServiceTracker<Location,Location> installLocation = null;
@@ -101,7 +106,7 @@ public final class InternalPlatform {
 
 	private ServiceTracker<EnvironmentInfo,EnvironmentInfo> environmentTracker = null;
 	private ServiceTracker<FrameworkLog,FrameworkLog> logTracker = null;
-	private ServiceTracker<PackageAdmin,PackageAdmin> bundleTracker = null;
+	private ServiceTracker<PlatformAdmin, PlatformAdmin> platformTracker = null;
 	private ServiceTracker<DebugOptions,DebugOptions> debugTracker = null;
 	private ServiceTracker<IContentTypeManager,IContentTypeManager> contentTracker = null;
 	private ServiceTracker<IPreferencesService,IPreferencesService> preferencesTracker = null;
@@ -172,22 +177,6 @@ public final class InternalPlatform {
 		return value.equalsIgnoreCase("true"); //$NON-NLS-1$
 	}
 
-	public Bundle getBundle(String symbolicName) {
-		PackageAdmin packageAdmin = getBundleAdmin();
-		if (packageAdmin == null)
-			return null;
-		Bundle[] bundles = packageAdmin.getBundles(symbolicName, null);
-		if (bundles == null)
-			return null;
-		//Return the first bundle that is not installed or uninstalled
-		for (Bundle bundle : bundles) {
-			if ((bundle.getState() & (Bundle.INSTALLED | Bundle.UNINSTALLED)) == 0) {
-				return bundle;
-			}
-		}
-		return null;
-	}
-
 	public BundleContext getBundleContext() {
 		return context;
 	}
@@ -231,31 +220,42 @@ public final class InternalPlatform {
 		registration.unregister();
 	}
 
-	public Bundle[] getBundles(String symbolicName, String version) {
-		PackageAdmin packageAdmin = getBundleAdmin();
-		if (packageAdmin == null)
-			return null;
-		Bundle[] bundles = packageAdmin.getBundles(symbolicName, version);
-		if (bundles == null)
-			return null;
-		// optimize for common case; length==1
-		if (bundles.length == 1 && (bundles[0].getState() & (Bundle.INSTALLED | Bundle.UNINSTALLED)) == 0)
-			return bundles;
-		//Remove all the bundles that are installed or uninstalled
-		Bundle[] selectedBundles = new Bundle[bundles.length];
-		int added = 0;
-		for (Bundle bundle : bundles) {
-			if ((bundle.getState() & (Bundle.INSTALLED | Bundle.UNINSTALLED)) == 0) {
-				selectedBundles[added++] = bundle;
-			}
-		}
-		if (added == 0)
-			return null;
+	public Bundle getBundle(String symbolicName) {
+		Bundle[] bundles = getBundles(symbolicName, null);
+		return bundles != null && bundles.length > 0 ? bundles[0] : null;
+	}
 
-		//return an array of the correct size
-		Bundle[] results = new Bundle[added];
-		System.arraycopy(selectedBundles, 0, results, 0, added);
-		return results;
+	public Bundle[] getBundles(String symbolicName, String versionRange) {
+		Map<String, String> directives = Collections.singletonMap(Namespace.REQUIREMENT_FILTER_DIRECTIVE,
+				getRequirementFilter(symbolicName, versionRange));
+		Collection<BundleCapability> matchingBundleCapabilities = fwkWiring.findProviders(ModuleContainer
+				.createRequirement(IdentityNamespace.IDENTITY_NAMESPACE, directives, Collections.emptyMap()));
+
+		if (matchingBundleCapabilities.isEmpty()) {
+			return null;
+		}
+
+		Bundle[] results = matchingBundleCapabilities.stream().map(c -> c.getRevision().getBundle())
+				// Remove all the bundles that are installed or uninstalled
+				.filter(bundle -> (bundle.getState() & (Bundle.INSTALLED | Bundle.UNINSTALLED)) == 0)
+				.sorted((b1, b2) -> b2.getVersion().compareTo(b1.getVersion())) // highest version first
+				.toArray(Bundle[]::new);
+
+		return results.length > 0 ? results : null;
+	}
+
+	private String getRequirementFilter(String symbolicName, String versionRange) {
+		VersionRange range = versionRange == null ? null : new VersionRange(versionRange);
+		StringBuilder filter = new StringBuilder();
+		if (range != null) {
+			filter.append("(&"); //$NON-NLS-1$
+		}
+		filter.append('(').append(IdentityNamespace.IDENTITY_NAMESPACE).append('=').append(symbolicName).append(')');
+
+		if (range != null) {
+			filter.append(range.toFilterString(IdentityNamespace.CAPABILITY_VERSION_ATTRIBUTE)).append(')');
+		}
+		return filter.toString();
 	}
 
 	public String[] getCommandLineArgs() {
@@ -275,25 +275,41 @@ public final class InternalPlatform {
 	}
 
 	public EnvironmentInfo getEnvironmentInfoService() {
-		return  environmentTracker == null ? null : (EnvironmentInfo) environmentTracker.getService();
-	}
-
-	public Bundle[] getFragments(Bundle bundle) {
-		PackageAdmin packageAdmin = getBundleAdmin();
-		if (packageAdmin == null)
-			return null;
-		return packageAdmin.getFragments(bundle);
+		return environmentTracker == null ? null : (EnvironmentInfo) environmentTracker.getService();
 	}
 
 	public FrameworkLog getFrameworkLog() {
 		return logTracker == null ? null : (FrameworkLog) logTracker.getService();
 	}
 
-	public Bundle[] getHosts(Bundle bundle) {
-		PackageAdmin packageAdmin = getBundleAdmin();
-		if (packageAdmin == null)
+	public Bundle[] getFragments(Bundle bundle) {
+		BundleWiring wiring = bundle.adapt(BundleWiring.class);
+		if (wiring == null) {
 			return null;
-		return packageAdmin.getHosts(bundle);
+		}
+		List<BundleWire> hostWires = wiring.getProvidedWires(HostNamespace.HOST_NAMESPACE);
+		if (hostWires == null) {
+			// we don't hold locks while checking the graph, just return if no longer valid
+			return null;
+		}
+		Bundle[] result = hostWires.stream().map(wire -> wire.getRequirer().getBundle()).filter(Objects::nonNull)
+				.toArray(Bundle[]::new);
+		return result.length > 0 ? result : null;
+	}
+
+	public Bundle[] getHosts(Bundle bundle) {
+		BundleWiring wiring = bundle.adapt(BundleWiring.class);
+		if (wiring == null) {
+			return null;
+		}
+		List<BundleWire> hostWires = wiring.getRequiredWires(HostNamespace.HOST_NAMESPACE);
+		if (hostWires == null) {
+			// we don't hold locks while checking the graph, just return if no longer valid
+			return null;
+		}
+		Bundle[] result = hostWires.stream().map(wire -> wire.getProvider().getBundle()).filter(Objects::nonNull)
+				.toArray(Bundle[]::new);
+		return result.length > 0 ? result : null;
 	}
 
 	public Location getInstallLocation() {
@@ -395,12 +411,7 @@ public final class InternalPlatform {
 	}
 
 	public PlatformAdmin getPlatformAdmin() {
-		if (context == null)
-			return null;
-		ServiceReference<PlatformAdmin> platformAdminReference = context.getServiceReference(PlatformAdmin.class);
-		if (platformAdminReference == null)
-			return null;
-		return context.getService(platformAdminReference);
+		return platformTracker == null ? null : platformTracker.getService();
 	}
 
 	//TODO I guess it is now time to get rid of that
@@ -572,10 +583,13 @@ public final class InternalPlatform {
 	}
 
 	public boolean isFragment(Bundle bundle) {
-		PackageAdmin packageAdmin = getBundleAdmin();
-		if (packageAdmin == null)
+		BundleRevisions bundleRevisions = bundle.adapt(BundleRevisions.class);
+		List<BundleRevision> revisions = bundleRevisions.getRevisions();
+		if (revisions.isEmpty()) {
+			// bundle is uninstalled and not current users; just return false
 			return false;
-		return (packageAdmin.getBundleType(bundle) & PackageAdmin.BUNDLE_TYPE_FRAGMENT) > 0;
+		}
+		return (revisions.get(0).getTypes() & BundleRevision.TYPE_FRAGMENT) != 0;
 	}
 
 	/*
@@ -695,6 +709,7 @@ public final class InternalPlatform {
 	 */
 	public void start(BundleContext runtimeContext) {
 		this.context = runtimeContext;
+		this.fwkWiring = runtimeContext.getBundle(Constants.SYSTEM_BUNDLE_LOCATION).adapt(FrameworkWiring.class);
 		openOSGiTrackers();
 		splashEnded = false;
 		processCommandLine(getEnvironmentInfoService().getNonFrameworkArgs());
@@ -768,8 +783,8 @@ public final class InternalPlatform {
 		}
 
 		if (context != null) {
-			bundleTracker = new ServiceTracker<>(context, PackageAdmin.class, null);
-			bundleTracker.open();
+			platformTracker = new ServiceTracker<>(context, PlatformAdmin.class, null);
+			platformTracker.open();
 		}
 
 		if (context != null) {
@@ -822,10 +837,6 @@ public final class InternalPlatform {
 		}
 	}
 
-	private PackageAdmin getBundleAdmin() {
-		return bundleTracker == null ? null : bundleTracker.getService();
-	}
-
 	private DebugOptions getDebugOptions() {
 		return debugTracker == null ? null : debugTracker.getService();
 	}
@@ -843,9 +854,9 @@ public final class InternalPlatform {
 			debugTracker.close();
 			debugTracker = null;
 		}
-		if (bundleTracker != null) {
-			bundleTracker.close();
-			bundleTracker = null;
+		if (platformTracker != null) {
+			platformTracker.close();
+			platformTracker = null;
 		}
 		if (logTracker != null) {
 			logTracker.close();

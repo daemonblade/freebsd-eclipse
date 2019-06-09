@@ -1,3 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Lars Vogel and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     Lars Vogel - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.ui.tests.releng;
 
 import static org.junit.Assert.assertTrue;
@@ -11,9 +24,12 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.tests.harness.util.TestRunLogUtil;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestWatcher;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 
@@ -31,6 +47,8 @@ import org.osgi.framework.FrameworkUtil;
  */
 
 public class PluginActivationTests {
+	@Rule
+	public TestWatcher LOG_TESTRUN = TestRunLogUtil.LOG_TESTRUN;
 
 	private static String[] NOT_ACTIVE_BUNDLES = new String[] {
 			"org.apache.xerces",

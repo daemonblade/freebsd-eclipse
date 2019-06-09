@@ -13,7 +13,11 @@
  */
 package org.eclipse.e4.ui.model.application.ui.advanced.impl;
 
-import org.eclipse.e4.ui.model.application.ui.advanced.*;
+import org.eclipse.e4.ui.model.application.ui.advanced.MAdvancedFactory;
+import org.eclipse.e4.ui.model.application.ui.advanced.MArea;
+import org.eclipse.e4.ui.model.application.ui.advanced.MPerspective;
+import org.eclipse.e4.ui.model.application.ui.advanced.MPerspectiveStack;
+import org.eclipse.e4.ui.model.application.ui.advanced.MPlaceholder;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
@@ -43,12 +47,12 @@ public class AdvancedFactoryImpl extends EFactoryImpl implements MAdvancedFactor
 	 */
 	public static AdvancedFactoryImpl init() {
 		try {
-			AdvancedFactoryImpl theAdvancedFactory = (AdvancedFactoryImpl)EPackage.Registry.INSTANCE.getEFactory(AdvancedPackageImpl.eNS_URI);
+			AdvancedFactoryImpl theAdvancedFactory = (AdvancedFactoryImpl) EPackage.Registry.INSTANCE
+					.getEFactory(AdvancedPackageImpl.eNS_URI);
 			if (theAdvancedFactory != null) {
 				return theAdvancedFactory;
 			}
-		}
-		catch (Exception exception) {
+		} catch (Exception exception) {
 			EcorePlugin.INSTANCE.log(exception);
 		}
 		return new AdvancedFactoryImpl();
@@ -72,12 +76,16 @@ public class AdvancedFactoryImpl extends EFactoryImpl implements MAdvancedFactor
 	@Override
 	public EObject create(EClass eClass) {
 		switch (eClass.getClassifierID()) {
-			case AdvancedPackageImpl.PLACEHOLDER: return (EObject)createPlaceholder();
-			case AdvancedPackageImpl.PERSPECTIVE: return (EObject)createPerspective();
-			case AdvancedPackageImpl.PERSPECTIVE_STACK: return (EObject)createPerspectiveStack();
-			case AdvancedPackageImpl.AREA: return (EObject)createArea();
-			default:
-				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier"); //$NON-NLS-1$ //$NON-NLS-2$
+		case AdvancedPackageImpl.PLACEHOLDER:
+			return (EObject) createPlaceholder();
+		case AdvancedPackageImpl.PERSPECTIVE:
+			return (EObject) createPerspective();
+		case AdvancedPackageImpl.PERSPECTIVE_STACK:
+			return (EObject) createPerspectiveStack();
+		case AdvancedPackageImpl.AREA:
+			return (EObject) createArea();
+		default:
+			throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
@@ -87,6 +95,7 @@ public class AdvancedFactoryImpl extends EFactoryImpl implements MAdvancedFactor
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MPlaceholder createPlaceholder() {
 		PlaceholderImpl placeholder = new PlaceholderImpl();
 		return placeholder;
@@ -98,6 +107,7 @@ public class AdvancedFactoryImpl extends EFactoryImpl implements MAdvancedFactor
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MPerspective createPerspective() {
 		PerspectiveImpl perspective = new PerspectiveImpl();
 		return perspective;
@@ -109,6 +119,7 @@ public class AdvancedFactoryImpl extends EFactoryImpl implements MAdvancedFactor
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MPerspectiveStack createPerspectiveStack() {
 		PerspectiveStackImpl perspectiveStack = new PerspectiveStackImpl();
 		return perspectiveStack;
@@ -120,6 +131,7 @@ public class AdvancedFactoryImpl extends EFactoryImpl implements MAdvancedFactor
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MArea createArea() {
 		AreaImpl area = new AreaImpl();
 		return area;
@@ -131,7 +143,7 @@ public class AdvancedFactoryImpl extends EFactoryImpl implements MAdvancedFactor
 	 * @generated
 	 */
 	public AdvancedPackageImpl getAdvancedPackage() {
-		return (AdvancedPackageImpl)getEPackage();
+		return (AdvancedPackageImpl) getEPackage();
 	}
 
 	/**

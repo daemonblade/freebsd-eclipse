@@ -582,11 +582,11 @@ public class GenerateDiffFileWizard extends Wizard {
 			 * Ensure the page is in a valid state.
 			 */
 			/*if (!validatePage()) {
-                store.storeRadioSelection(CLIPBOARD);
-                initializeDefaultValues();
-                validatePage();
-            }
-            pageValid= true;*/
+				store.storeRadioSelection(CLIPBOARD);
+				initializeDefaultValues();
+				validatePage();
+			}
+			pageValid= true;*/
 			validatePage();
 
 			updateEnablements();
@@ -1045,7 +1045,7 @@ public class GenerateDiffFileWizard extends Wizard {
 		public final static int FORMAT_STANDARD = 3;
 
 		/**
-    	The possible root of the patch
+		The possible root of the patch
 		 */
 		public final static int ROOT_WORKSPACE = 1;
 		public final static int ROOT_PROJECT = 2;
@@ -1086,9 +1086,6 @@ public class GenerateDiffFileWizard extends Wizard {
 			this.store = store;
 		}
 
-		/*
-		 * @see IDialogPage#createControl(Composite)
-		 */
 		@Override
 		public void createControl(Composite parent) {
 			Composite composite= new Composite(parent, SWT.NULL);
@@ -1306,11 +1303,11 @@ public class GenerateDiffFileWizard extends Wizard {
 		public LocalOption[] getOptions() {
 			List<LocalOption> options = new ArrayList<>(5);
 			/*  if(includeNewFilesOptions.getSelection()) {
-                options.add(Diff.INCLUDE_NEWFILES);
-            }
-            if(!recurseOption.getSelection()) {
-                options.add(Command.DO_NOT_RECURSE);
-            }*/
+				options.add(Diff.INCLUDE_NEWFILES);
+			}
+			if(!recurseOption.getSelection()) {
+				options.add(Command.DO_NOT_RECURSE);
+			}*/
 
 			//Add new files for now
 			options.add(Diff.INCLUDE_NEWFILES);
@@ -1485,9 +1482,6 @@ public class GenerateDiffFileWizard extends Wizard {
 		}
 	}
 
-	/* (Non-javadoc)
-	 * Method declared on IWizard.
-	 */
 	@Override
 	public boolean needsProgressMonitor() {
 		return true;
@@ -1551,11 +1545,11 @@ public class GenerateDiffFileWizard extends Wizard {
 				defaultValuesStore.storeLocationSelection(LocationPage.WORKSPACE);
 				defaultValuesStore.storeWorkspacePath(workspaceResource);
 				/* try {
-	                workspaceResource.getParent().refreshLocal(IResource.DEPTH_ONE, null);
-	            } catch(CoreException e) {
-	                CVSUIPlugin.openError(getShell(), CVSUIMessages.GenerateCVSDiff_error, null, e);
-	                return false;
-	            } */
+					workspaceResource.getParent().refreshLocal(IResource.DEPTH_ONE, null);
+				} catch(CoreException e) {
+					CVSUIPlugin.openError(getShell(), CVSUIMessages.GenerateCVSDiff_error, null, e);
+					return false;
+				} */
 			} else {
 				//Problem with workspace location, open with clipboard next time
 				defaultValuesStore.storeLocationSelection(LocationPage.CLIPBOARD);

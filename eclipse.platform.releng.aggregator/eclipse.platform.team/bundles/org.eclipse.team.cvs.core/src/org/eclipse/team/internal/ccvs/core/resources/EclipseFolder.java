@@ -39,9 +39,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		super(container);		
 	}
 	
-	/**
-	 * @see ICVSFolder#members(int)
-	 */
+	@Override
 	public ICVSResource[] members(int flags) throws CVSException {		
 		final List<ICVSResource> result = new ArrayList<>();
 		IResource[] resources = EclipseSynchronizer.getInstance().members((IContainer)resource);
@@ -55,39 +53,37 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		for (int i = 0; i < resources.length; i++) {
 			IResource resource = resources[i];
 			int type = resource.getType();
-            if ((includeFiles && (type==IResource.FILE)) 
+			if ((includeFiles && (type==IResource.FILE)) 
 					|| (includeFolders && (type==IResource.FOLDER))) {
-                boolean exists = resource.exists();
-                if ((includeExisting && exists) || (includePhantoms && !exists)) {
-                    ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
-                    boolean includeResource = false;
-                    if ((includeManaged && includeUnmanaged && includeIgnored)) {
-                        includeResource = true;
-                    } else {
-        				boolean isManaged = cvsResource.isManaged();
-                        if (isManaged && includeManaged) {
-                            includeResource = true;
-                        } else if (exists) {
-            				boolean isIgnored = cvsResource.isIgnored();
-                            if (isIgnored && includeIgnored) {
-                                includeResource = true;
-                            } else if (! isManaged && ! isIgnored && includeUnmanaged) {
-                                includeResource = true;
-            				}
-                        }
-                    }
-                    if (includeResource) {
-                        result.add(cvsResource);
-                    }
-                }
+				boolean exists = resource.exists();
+				if ((includeExisting && exists) || (includePhantoms && !exists)) {
+					ICVSResource cvsResource = CVSWorkspaceRoot.getCVSResourceFor(resource);
+					boolean includeResource = false;
+					if ((includeManaged && includeUnmanaged && includeIgnored)) {
+						includeResource = true;
+					} else {
+						boolean isManaged = cvsResource.isManaged();
+						if (isManaged && includeManaged) {
+							includeResource = true;
+						} else if (exists) {
+							boolean isIgnored = cvsResource.isIgnored();
+							if (isIgnored && includeIgnored) {
+								includeResource = true;
+							} else if (! isManaged && ! isIgnored && includeUnmanaged) {
+								includeResource = true;
+							}
+						}
+					}
+					if (includeResource) {
+						result.add(cvsResource);
+					}
+				}
 			}		
 		}	
-		return (ICVSResource[]) result.toArray(new ICVSResource[result.size()]);
+		return result.toArray(new ICVSResource[result.size()]);
 	}
 
-	/**
-	 * @see ICVSFolder#createFolder(String)
-	 */
+	@Override
 	public ICVSFolder getFolder(String name) throws CVSException {
 		if ((CURRENT_LOCAL_FOLDER.equals(name)) || ((CURRENT_LOCAL_FOLDER + SEPARATOR).equals(name)))
 			return this;
@@ -99,16 +95,12 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		}
 	}
 
-	/**
-	 * @see ICVSFolder#createFile(String)
-	 */
+	@Override
 	public ICVSFile getFile(String name) throws CVSException {
 		return new EclipseFile(((IContainer)resource).getFile(new Path(null, name)));
 	}
 
-	/**
-	 * @see ICVSFolder#mkdir()
-	 */
+	@Override
 	public void mkdir() throws CVSException {
 		ISchedulingRule rule = null;
 		try {
@@ -132,16 +124,12 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		}
 	}
 		
-	/**
-	 * @see ICVSResource#isFolder()
-	 */
+	@Override
 	public boolean isFolder() {
 		return true;
 	}
 		
-	/**
-	 * @see ICVSFolder#acceptChildren(ICVSResourceVisitor)
-	 */
+	@Override
 	public void acceptChildren(ICVSResourceVisitor visitor) throws CVSException {
 		
 		// Visit files and then folders
@@ -155,16 +143,12 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		}
 	}
 
-	/**
-	 * @see ICVSResource#accept(ICVSResourceVisitor)
-	 */
+	@Override
 	public void accept(ICVSResourceVisitor visitor) throws CVSException {
 		visitor.visitFolder(this);
 	}
 	
-	/**
-	 * @see ICVSResource#accept(ICVSResourceVisitor, boolean)
-	 */
+	@Override
 	public void accept(ICVSResourceVisitor visitor, boolean recurse) throws CVSException {
 		visitor.visitFolder(this);
 		ICVSResource[] resources;
@@ -178,9 +162,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		}
 	}
 
-	/**
-	 * @see ICVSResource#getRemoteLocation(ICVSFolder)
-	 */
+	@Override
 	public String getRemoteLocation(ICVSFolder stopSearching) throws CVSException {
 				
 		if (getFolderSyncInfo() != null) {
@@ -198,9 +180,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		return null;
 	}
 
-	/*
-	 * @see ICVSFolder#getFolderInfo()
-	 */
+	@Override
 	public FolderSyncInfo getFolderSyncInfo() throws CVSException {
 		if (resource.getType() != IResource.ROOT && !resource.getProject().isAccessible()) {
 			return null;
@@ -208,9 +188,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		return EclipseSynchronizer.getInstance().getFolderSync((IContainer)resource);
 	}
 
-	/*
-	 * @see ICVSFolder#setFolderInfo(FolderSyncInfo)
-	 */
+	@Override
 	public void setFolderSyncInfo(final FolderSyncInfo folderInfo) throws CVSException {
 		// ignore folder sync on the root (i.e. CVSROOT/config/TopLevelAdmin=yes but we just ignore it)
 		if (resource.getType() == IResource.ROOT) return;
@@ -229,16 +207,12 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 
 	}
 
-	/*
-	 * @see ICVSFolder#isCVSFolder()
-	 */
+	@Override
 	public boolean isCVSFolder() throws CVSException {
 		return EclipseSynchronizer.getInstance().getFolderSync((IContainer)resource) != null;
 	}
 
-	/*
-	 * @see ICVSResource#unmanage()
-	 */
+	@Override
 	public void unmanage(IProgressMonitor monitor) throws CVSException {
 		run((ICVSRunnable) monitor1 -> {
 			monitor1 = Policy.monitorFor(monitor1);
@@ -260,12 +234,12 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 				monitor.worked(1);
 				IResource resource = members[i];
 				if (resource.getType() == IResource.FILE) {
-                    ResourceAttributes attrs = resource.getResourceAttributes();
-                    if (attrs != null && attrs.isReadOnly()) {
-                        attrs.setReadOnly(false);
-                        resource.setResourceAttributes(attrs);
-                    }
-                } else {
+					ResourceAttributes attrs = resource.getResourceAttributes();
+					if (attrs != null && attrs.isReadOnly()) {
+						attrs.setReadOnly(false);
+						resource.setResourceAttributes(attrs);
+					}
+				} else {
 					recursiveUnmanage((IContainer) resource, monitor);
 				}
 			}
@@ -276,9 +250,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		}
 	}
 	
-	/*
-	 * @see ICVSResource#isIgnored()
-	 */
+	@Override
 	public boolean isIgnored() throws CVSException {
 		if(isCVSFolder()) {
 			return false;
@@ -286,16 +258,14 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		return super.isIgnored();
 	}
 	
-	/*
-	 * @see ICVSFolder#getChild(String)
-	 */
+	@Override
 	public ICVSResource getChild(String namedPath) throws CVSException {
-	    if (namedPath.equals(Session.CURRENT_LOCAL_FOLDER)) {
-	        return this;
-	    }
+		if (namedPath.equals(Session.CURRENT_LOCAL_FOLDER)) {
+			return this;
+		}
 		IPath path = new Path(null, namedPath);
 		if(path.segmentCount()==0) {
-			 return this;
+			return this;
 		}
 		IResource child = ((IContainer)resource).findMember(path, true /* include phantoms */);
 		if(child!=null) {
@@ -308,15 +278,11 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		return null;
 	}
 	
-	/**
-	 * @see ICVSFolder#fetchChildren(IProgressMonitor)
-	 */
+	@Override
 	public ICVSResource[] fetchChildren(IProgressMonitor monitor) throws CVSException {
 		return members(FILE_MEMBERS | FOLDER_MEMBERS);
 	}
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSResource#delete()
-	 */
+	@Override
 	public void delete() throws CVSException {
 		if (!exists()) return;
 		try {
@@ -401,9 +367,7 @@ class EclipseFolder extends EclipseResource implements ICVSFolder {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSResource#getRepositoryRelativePath()
-	 */
+	@Override
 	public String getRepositoryRelativePath() throws CVSException {
 		FolderSyncInfo info = getFolderSyncInfo();
 		if (info == null) return null;

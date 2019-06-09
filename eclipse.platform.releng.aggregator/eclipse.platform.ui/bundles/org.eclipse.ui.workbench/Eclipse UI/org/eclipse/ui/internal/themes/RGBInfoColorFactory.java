@@ -1,3 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2016, 2017 Leo Ufimtsev and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     Leo Ufimtsev - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.ui.internal.themes;
 
 import java.util.Hashtable;
@@ -28,11 +41,11 @@ public class RGBInfoColorFactory implements IColorFactory, IExecutableExtension 
 			return rgb;
 		}
 		/**
-		 * Starting with ~Gnome 3.06, COLOR_INFO_BACKGROUND and
-		 * COLOR_INFO_FOREGROUND are inverted, often producing hoverboxes with
-		 * black background with white text on an otherwise white background and
-		 * black text. However, on Windows/Cocoa COLOR_INFO_* looks ok. Solution
-		 * is to generate a different color based on platform.
+		 * Starting with ~Gnome 3.06, COLOR_INFO_BACKGROUND and COLOR_INFO_FOREGROUND
+		 * are inverted, often producing hoverboxes with black background with white
+		 * text on an otherwise white background and black text. However, on
+		 * Windows/Cocoa COLOR_INFO_* looks ok. Solution is to generate a different
+		 * color based on platform.
 		 */
 		if (Util.isGtk()) {
 			switch (color) {
@@ -49,7 +62,7 @@ public class RGBInfoColorFactory implements IColorFactory, IExecutableExtension 
 				rgb = ColorUtil.getColorValue("COLOR_INFO_FOREGROUND"); //$NON-NLS-1$
 				break;
 			case "background": //$NON-NLS-1$
-				rgb = ColorUtil.getColorValue("COLOR_INFO_BACKGROUND");  //$NON-NLS-1$
+				rgb = ColorUtil.getColorValue("COLOR_INFO_BACKGROUND"); //$NON-NLS-1$
 				break;
 			}
 		}

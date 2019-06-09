@@ -44,12 +44,11 @@ public class ProxyStreamTransformer extends StreamTransformer {
 
 	}
 
+	@Override
 	public InputStream getInputStream(InputStream inputStream, URL transformerUrl) throws IOException {
 		try {
 			return (InputStream) method.invoke(object, new Object[] {inputStream, transformerUrl});
-		} catch (IllegalArgumentException e) {
-			throw new IOException(e.getMessage());
-		} catch (IllegalAccessException e) {
+		} catch (IllegalArgumentException | IllegalAccessException e) {
 			throw new IOException(e.getMessage());
 		} catch (InvocationTargetException e) {
 			if (e.getCause() instanceof IOException)

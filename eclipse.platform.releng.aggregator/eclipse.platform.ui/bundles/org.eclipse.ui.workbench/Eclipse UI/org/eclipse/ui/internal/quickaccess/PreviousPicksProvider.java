@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.internal.IWorkbenchGraphicConstants;
 import org.eclipse.ui.internal.WorkbenchImages;
+import org.eclipse.ui.quickaccess.QuickAccessElement;
 
 class PreviousPicksProvider extends QuickAccessProvider {
 

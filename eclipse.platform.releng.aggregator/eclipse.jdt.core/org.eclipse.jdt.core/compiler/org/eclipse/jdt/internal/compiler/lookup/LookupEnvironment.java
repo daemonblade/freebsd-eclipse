@@ -137,12 +137,18 @@ public class LookupEnvironment implements ProblemReasons, TypeConstants {
 	/** Global access to the outermost active inference context as the universe for inference variable interning. */
 	InferenceContext18 currentInferenceContext;
 
+	/**
+	 * Flag that should be set during annotation traversal or similar runs
+	 * to prevent caching of failures regarding imports of yet to be generated classes.
+	 */
+	public boolean suppressImportErrors;			// per module
+
 	final static int BUILD_FIELDS_AND_METHODS = 4;
 	final static int BUILD_TYPE_HIERARCHY = 1;
 	final static int CHECK_AND_SET_IMPORTS = 2;
 	final static int CONNECT_TYPE_HIERARCHY = 3;
 
-	static final ProblemPackageBinding TheNotFoundPackage = new ProblemPackageBinding(CharOperation.NO_CHAR, NotFound);
+	static final ProblemPackageBinding TheNotFoundPackage = new ProblemPackageBinding(CharOperation.NO_CHAR, NotFound, null/*not perfect*/);
 	static final ProblemReferenceBinding TheNotFoundType = new ProblemReferenceBinding(CharOperation.NO_CHAR_CHAR, null, NotFound);
 	static final ModuleBinding TheNotFoundModule = new ModuleBinding(CharOperation.NO_CHAR);
 
@@ -383,11 +389,13 @@ private NameEnvironmentAnswer[] askForTypeFromModules(ModuleBinding clientModule
 		for (int i = 0; i < otherModules.length; i++) {
 			NameEnvironmentAnswer answer = oracle.apply(otherModules[i]);
 			if (answer != null) {
-				char[] nameFromAnswer = answer.moduleName();
-				if (nameFromAnswer == null || CharOperation.equals(nameFromAnswer, otherModules[i].moduleName)) {
-					answer.moduleBinding = otherModules[i];
-				} else {
-					answer.moduleBinding = getModule(nameFromAnswer);
+				if (answer.moduleBinding == null) {
+					char[] nameFromAnswer = answer.moduleName();
+					if (CharOperation.equals(nameFromAnswer, otherModules[i].moduleName)) {
+						answer.moduleBinding = otherModules[i];
+					} else {
+						answer.moduleBinding = getModule(nameFromAnswer);
+					}
 				}
 				answers[i] = answer;
 				found = true;
@@ -570,12 +578,13 @@ public void completeTypeBindings(CompilationUnitDeclaration parsedUnit) {
 public void completeTypeBindings(CompilationUnitDeclaration parsedUnit, boolean buildFieldsAndMethods) {
 	if (parsedUnit.scope == null) return; // parsing errors were too severe
 	LookupEnvironment rootEnv = this.root;
+	CompilationUnitDeclaration previousUnitBeingCompleted = rootEnv.unitBeingCompleted;
 	(rootEnv.unitBeingCompleted = parsedUnit).scope.checkAndSetImports();
 	parsedUnit.scope.connectTypeHierarchy();
 	parsedUnit.scope.checkParameterizedTypes();
 	if (buildFieldsAndMethods)
 		parsedUnit.scope.buildFieldsAndMethods();
-	rootEnv.unitBeingCompleted = null;
+	rootEnv.unitBeingCompleted = previousUnitBeingCompleted;
 }
 
 /*
@@ -1563,8 +1572,7 @@ private void initializeUsesNullTypeAnnotation() {
 	this.mayTolerateMissingType = true;
 	try {
 		nullable = this.nullableAnnotation != null ? this.nullableAnnotation.getAnnotationType()
-				: getType(this.getNullableAnnotationName(), this.UnNamedModule); // FIXME(SHMOD) module for null
-																					// annotations??
+				: getType(this.getNullableAnnotationName(), this.UnNamedModule); // FIXME(SHMOD) module for null annotations??
 		nonNull = this.nonNullAnnotation != null ? this.nonNullAnnotation.getAnnotationType()
 				: getType(this.getNonNullAnnotationName(), this.UnNamedModule);
 	} finally {
@@ -1731,7 +1739,8 @@ private ReferenceBinding getTypeFromCompoundName(char[][] compoundName, boolean 
 			}
 			packageBinding.addType(binding);
 		}
-	} else if (binding == TheNotFoundType) {
+	}
+	if (binding == TheNotFoundType) {
 		// report the missing class file first
 		if (!wasMissingType) {
 			/* Since missing types have been already been complained against while producing binaries, there is no class path 
@@ -1866,6 +1875,9 @@ TypeBinding getTypeFromSignature(char[] signature, int start, int end, boolean i
 }
 
 private TypeBinding annotateType(TypeBinding binding, ITypeAnnotationWalker walker, char[][][] missingTypeNames) {
+	if (walker == ITypeAnnotationWalker.EMPTY_ANNOTATION_WALKER) {
+		return binding;
+	}
 	int depth = binding.depth() + 1;
 	if (depth > 1) {
 		// need to count non-static nesting levels, resolved binding required for precision
@@ -1974,13 +1986,13 @@ public TypeBinding getTypeFromTypeSignature(SignatureWrapper wrapper, TypeVariab
 
 	// type must be a ReferenceBinding at this point, cannot be a BaseTypeBinding or ArrayTypeBinding
 	ReferenceBinding actualType = (ReferenceBinding) type;
-	if (actualType instanceof UnresolvedReferenceBinding)
+	if (walker != ITypeAnnotationWalker.EMPTY_ANNOTATION_WALKER && actualType instanceof UnresolvedReferenceBinding)
 		if (actualType.depth() > 0)
 			actualType = (ReferenceBinding) BinaryTypeBinding.resolveType(actualType, this, false /* no raw conversion */); // must resolve member types before asking for enclosingType
 	ReferenceBinding actualEnclosing = actualType.enclosingType();
 
 	ITypeAnnotationWalker savedWalker = walker;
-	if(actualType.depth() > 0) {
+	if(walker != ITypeAnnotationWalker.EMPTY_ANNOTATION_WALKER && actualType.depth() > 0) {
 		int nonStaticNestingLevels = countNonStaticNestingLevels(actualType);
 		for (int i = 0; i < nonStaticNestingLevels; i++) {
 			walker = walker.toNextNestedType();
@@ -2110,6 +2122,7 @@ public void reset() {
 		this.root.reset();
 		return;
 	}
+	this.stepCompleted = 0;
 	this.knownModules = new HashtableOfModule();
 	this.UnNamedModule = new ModuleBinding.UnNamedModule(this);
 	this.module = this.UnNamedModule;

@@ -2,9 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-Vendor: %providerName
-Bundle-SymbolicName: org.eclipse.equinox.launcher.gtk.freebsd.i386;singleton:=true
+Bundle-SymbolicName: org.eclipse.equinox.launcher.gtk.linux.x86;singleton:=true
 Bundle-Version: 1.1.1000.qualifier
 Fragment-Host: org.eclipse.equinox.launcher;bundle-version="[1.0.0,1.6.0)"
-Eclipse-PlatformFilter: (& (osgi.ws=gtk) (osgi.os=freebsd) (osgi.arch=i386))
-Bundle-Localization: launcher.gtk.freebsd.i386
+Eclipse-PlatformFilter: (& (osgi.ws=gtk) (osgi.os=linux) (osgi.arch=x86))
+Bundle-Localization: launcher.gtk.linux.x86
 Eclipse-BundleShape: dir

@@ -445,7 +445,7 @@ public class FormHeading extends Canvas {
 				if (oldControl != null && oldControl.getVisible())
 					oldControl.setVisible(false);
 				if (oldType != newType)
-			        updateForeground();
+					updateForeground();
 				return;
 			}
 			ensureControlExists();
@@ -705,6 +705,19 @@ public class FormHeading extends Canvas {
 	 */
 	public void setText(String text) {
 		titleRegion.setText(text);
+	}
+
+	/**
+	 * Sets whether ther text in the title region should be selectable.
+	 * <p>
+	 * Note: If {@link #addDragSupport(int, Transfer[], DragSourceListener) drag
+	 * support} is also enabled, text selection has priority. Dragging still works
+	 * in the non-text parts of the title area.
+	 *
+	 * @param selectable whether the title text should be selectable
+	 */
+	public void setTextSelectable(boolean selectable) {
+		titleRegion.setTextSelectable(selectable);
 	}
 
 	@Override

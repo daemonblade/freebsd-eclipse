@@ -1013,7 +1013,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		threadLockTest.loadClass("thread.locktest.ATest"); //$NON-NLS-1$
 
 		Object[] expectedEvents = new Object[2];
-		expectedEvents[0] = new Long(5000);
+		expectedEvents[0] = Long.valueOf(5000);
 		expectedEvents[1] = new BundleEvent(BundleEvent.STARTED, threadLockTest);
 		Object[] actualEvents = simpleResults.getResults(2);
 		compareResults(expectedEvents, actualEvents);
@@ -1506,6 +1506,10 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 	}
 
 	public void testUninstallInUse01() throws BundleException {
+		if (getContext().getServiceReference("org.eclipse.equinox.region.RegionDigraph") != null) {
+			System.out.println("Cannot test uninstall in use with RegionDigraph service");
+			return;
+		}
 		Bundle exporter1 = installer.installBundle("exporter.importer1"); //$NON-NLS-1$
 		BundleRevision iExporter1 = exporter1.adapt(BundleRevision.class);
 		Bundle exporter2 = installer.installBundle("exporter.importer2"); //$NON-NLS-1$
@@ -2119,7 +2123,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 	}
 
 	private String readURL(URL url) {
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		try {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
 			try {

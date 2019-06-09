@@ -16,9 +16,9 @@ package org.eclipse.core.commands;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
 
 import org.eclipse.core.commands.common.NamedHandleObject;
-import org.eclipse.core.internal.commands.util.Util;
 
 /**
  * <p>
@@ -94,10 +94,10 @@ public final class Category extends NamedHandleObject {
 		final boolean definedChanged = !this.defined;
 		this.defined = true;
 
-		final boolean nameChanged = !Util.equals(this.name, name);
+		final boolean nameChanged = !Objects.equals(this.name, name);
 		this.name = name;
 
-		final boolean descriptionChanged = !Util.equals(this.description, description);
+		final boolean descriptionChanged = !Objects.equals(this.description, description);
 		this.description = description;
 
 		fireCategoryChanged(new CategoryEvent(this, definedChanged, descriptionChanged, nameChanged));
@@ -145,14 +145,14 @@ public final class Category extends NamedHandleObject {
 	public String toString() {
 		if (string == null) {
 			final StringBuilder stringBuffer = new StringBuilder("Category("); //$NON-NLS-1$
-            stringBuffer.append(id);
-            stringBuffer.append(',');
-            stringBuffer.append(name);
-            stringBuffer.append(',');
-            stringBuffer.append(description);
-            stringBuffer.append(',');
+			stringBuffer.append(id);
+			stringBuffer.append(',');
+			stringBuffer.append(name);
+			stringBuffer.append(',');
+			stringBuffer.append(description);
+			stringBuffer.append(',');
 			stringBuffer.append(defined);
-            stringBuffer.append(')');
+			stringBuffer.append(')');
 			string = stringBuffer.toString();
 		}
 		return string;

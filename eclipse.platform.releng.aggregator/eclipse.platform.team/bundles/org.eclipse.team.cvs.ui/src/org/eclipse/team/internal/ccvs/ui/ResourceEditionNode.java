@@ -96,9 +96,6 @@ public class ResourceEditionNode implements IStructureComparator, ITypedElement,
 		return children;
 	}
 
-	/**
-	 * @see IStreamContentAccessor#getContents()
-	 */
 	@Override
 	public InputStream getContents() throws CoreException {
 		IStorage storage = getStorage();
@@ -141,17 +138,11 @@ public class ResourceEditionNode implements IStructureComparator, ITypedElement,
 		return name.length() == 0 ? UNKNOWN_TYPE : name;
 	}
 	
-	/**
-	 * @see IComparator#equals
-	 */
 	@Override
 	public int hashCode() {
 		return getName().hashCode();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.IEncodedStreamContentAccessor#getCharset()
-	 */
 	@Override
 	public String getCharset() throws CoreException {
 		// Use the local file encoding if there is one

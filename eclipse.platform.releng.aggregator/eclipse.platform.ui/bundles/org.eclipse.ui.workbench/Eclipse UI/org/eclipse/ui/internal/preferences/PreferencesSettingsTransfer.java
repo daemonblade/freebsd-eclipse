@@ -1,3 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2017, 2018 David Weiser and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     David Weiser - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.ui.internal.preferences;
 
 import java.io.File;
@@ -19,7 +32,7 @@ import org.eclipse.ui.internal.WorkbenchMessages;
  * @since 3.110
  *
  */
-public class PreferencesSettingsTransfer extends WorkbenchSettingsTransfer{
+public class PreferencesSettingsTransfer extends WorkbenchSettingsTransfer {
 
 	@Override
 	public IStatus transferSettings(IPath newWorkspaceRoot) {
@@ -51,18 +64,14 @@ public class PreferencesSettingsTransfer extends WorkbenchSettingsTransfer{
 	}
 
 	private void copyFiles(File src, File dest) throws IOException {
-		FileInputStream fis = new FileInputStream(src);
-		FileOutputStream fos = new FileOutputStream(dest);
 
-		byte[] buffer = new byte[1024];
-
-		int length;
-		while ((length = fis.read(buffer)) > 0) {
-			fos.write(buffer, 0, length);
+		try (FileOutputStream fos = new FileOutputStream(dest); FileInputStream fis = new FileInputStream(src)) {
+			byte[] buffer = new byte[1024];
+			int length;
+			while ((length = fis.read(buffer)) > 0) {
+				fos.write(buffer, 0, length);
+			}
 		}
-
-		fis.close();
-		fos.close();
 	}
 
 	@Override

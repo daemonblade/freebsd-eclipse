@@ -111,6 +111,7 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getKeySequence() {
 		return keySequence;
 	}
@@ -120,11 +121,13 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setKeySequence(String newKeySequence) {
 		String oldKeySequence = keySequence;
 		keySequence = newKeySequence;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE, oldKeySequence, keySequence));
+			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE,
+					oldKeySequence, keySequence));
 	}
 
 	/**
@@ -132,13 +135,15 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public MCommand getCommand() {
-		if (command != null && ((EObject)command).eIsProxy()) {
-			InternalEObject oldCommand = (InternalEObject)command;
-			command = (MCommand)eResolveProxy(oldCommand);
+		if (command != null && ((EObject) command).eIsProxy()) {
+			InternalEObject oldCommand = (InternalEObject) command;
+			command = (MCommand) eResolveProxy(oldCommand);
 			if (command != oldCommand) {
 				if (eNotificationRequired())
-					eNotify(new ENotificationImpl(this, Notification.RESOLVE, CommandsPackageImpl.KEY_BINDING__COMMAND, oldCommand, command));
+					eNotify(new ENotificationImpl(this, Notification.RESOLVE, CommandsPackageImpl.KEY_BINDING__COMMAND,
+							oldCommand, command));
 			}
 		}
 		return command;
@@ -158,11 +163,13 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setCommand(MCommand newCommand) {
 		MCommand oldCommand = command;
 		command = newCommand;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.KEY_BINDING__COMMAND, oldCommand, command));
+			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.KEY_BINDING__COMMAND, oldCommand,
+					command));
 	}
 
 	/**
@@ -170,9 +177,11 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public List<MParameter> getParameters() {
 		if (parameters == null) {
-			parameters = new EObjectContainmentEList<MParameter>(MParameter.class, this, CommandsPackageImpl.KEY_BINDING__PARAMETERS);
+			parameters = new EObjectContainmentEList<MParameter>(MParameter.class, this,
+					CommandsPackageImpl.KEY_BINDING__PARAMETERS);
 		}
 		return parameters;
 	}
@@ -185,8 +194,8 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
-			case CommandsPackageImpl.KEY_BINDING__PARAMETERS:
-				return ((InternalEList<?>)getParameters()).basicRemove(otherEnd, msgs);
+		case CommandsPackageImpl.KEY_BINDING__PARAMETERS:
+			return ((InternalEList<?>) getParameters()).basicRemove(otherEnd, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -199,13 +208,14 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE:
-				return getKeySequence();
-			case CommandsPackageImpl.KEY_BINDING__COMMAND:
-				if (resolve) return getCommand();
-				return basicGetCommand();
-			case CommandsPackageImpl.KEY_BINDING__PARAMETERS:
-				return getParameters();
+		case CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE:
+			return getKeySequence();
+		case CommandsPackageImpl.KEY_BINDING__COMMAND:
+			if (resolve)
+				return getCommand();
+			return basicGetCommand();
+		case CommandsPackageImpl.KEY_BINDING__PARAMETERS:
+			return getParameters();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -219,16 +229,16 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE:
-				setKeySequence((String)newValue);
-				return;
-			case CommandsPackageImpl.KEY_BINDING__COMMAND:
-				setCommand((MCommand)newValue);
-				return;
-			case CommandsPackageImpl.KEY_BINDING__PARAMETERS:
-				getParameters().clear();
-				getParameters().addAll((Collection<? extends MParameter>)newValue);
-				return;
+		case CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE:
+			setKeySequence((String) newValue);
+			return;
+		case CommandsPackageImpl.KEY_BINDING__COMMAND:
+			setCommand((MCommand) newValue);
+			return;
+		case CommandsPackageImpl.KEY_BINDING__PARAMETERS:
+			getParameters().clear();
+			getParameters().addAll((Collection<? extends MParameter>) newValue);
+			return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -241,15 +251,15 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE:
-				setKeySequence(KEY_SEQUENCE_EDEFAULT);
-				return;
-			case CommandsPackageImpl.KEY_BINDING__COMMAND:
-				setCommand((MCommand)null);
-				return;
-			case CommandsPackageImpl.KEY_BINDING__PARAMETERS:
-				getParameters().clear();
-				return;
+		case CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE:
+			setKeySequence(KEY_SEQUENCE_EDEFAULT);
+			return;
+		case CommandsPackageImpl.KEY_BINDING__COMMAND:
+			setCommand((MCommand) null);
+			return;
+		case CommandsPackageImpl.KEY_BINDING__PARAMETERS:
+			getParameters().clear();
+			return;
 		}
 		super.eUnset(featureID);
 	}
@@ -262,12 +272,12 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE:
-				return KEY_SEQUENCE_EDEFAULT == null ? keySequence != null : !KEY_SEQUENCE_EDEFAULT.equals(keySequence);
-			case CommandsPackageImpl.KEY_BINDING__COMMAND:
-				return command != null;
-			case CommandsPackageImpl.KEY_BINDING__PARAMETERS:
-				return parameters != null && !parameters.isEmpty();
+		case CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE:
+			return KEY_SEQUENCE_EDEFAULT == null ? keySequence != null : !KEY_SEQUENCE_EDEFAULT.equals(keySequence);
+		case CommandsPackageImpl.KEY_BINDING__COMMAND:
+			return command != null;
+		case CommandsPackageImpl.KEY_BINDING__PARAMETERS:
+			return parameters != null && !parameters.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}
@@ -281,8 +291,10 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	public int eBaseStructuralFeatureID(int derivedFeatureID, Class<?> baseClass) {
 		if (baseClass == MKeySequence.class) {
 			switch (derivedFeatureID) {
-				case CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE: return CommandsPackageImpl.KEY_SEQUENCE__KEY_SEQUENCE;
-				default: return -1;
+			case CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE:
+				return CommandsPackageImpl.KEY_SEQUENCE__KEY_SEQUENCE;
+			default:
+				return -1;
 			}
 		}
 		return super.eBaseStructuralFeatureID(derivedFeatureID, baseClass);
@@ -297,8 +309,10 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	public int eDerivedStructuralFeatureID(int baseFeatureID, Class<?> baseClass) {
 		if (baseClass == MKeySequence.class) {
 			switch (baseFeatureID) {
-				case CommandsPackageImpl.KEY_SEQUENCE__KEY_SEQUENCE: return CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE;
-				default: return -1;
+			case CommandsPackageImpl.KEY_SEQUENCE__KEY_SEQUENCE:
+				return CommandsPackageImpl.KEY_BINDING__KEY_SEQUENCE;
+			default:
+				return -1;
 			}
 		}
 		return super.eDerivedStructuralFeatureID(baseFeatureID, baseClass);
@@ -311,7 +325,8 @@ public class KeyBindingImpl extends ApplicationElementImpl implements MKeyBindin
 	 */
 	@Override
 	public String toString() {
-		if (eIsProxy()) return super.toString();
+		if (eIsProxy())
+			return super.toString();
 
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (keySequence: "); //$NON-NLS-1$

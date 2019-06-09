@@ -30,66 +30,51 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 public class WorkspaceChangeSetCapability extends ModelParticipantChangeSetCapability {
 
-    /* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.ChangeSetCapability#supportsActiveChangeSets()
-	 */
 	@Override
 	public boolean supportsActiveChangeSets() {
 		return true;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.ChangeSetCapability#enableActiveChangeSetsFor(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
-	 */
 	@Override
 	public boolean enableActiveChangeSetsFor(ISynchronizePageConfiguration configuration) {
-        return supportsActiveChangeSets() && 
-    	configuration.getMode() != ISynchronizePageConfiguration.INCOMING_MODE;
+		return supportsActiveChangeSets() && 
+		configuration.getMode() != ISynchronizePageConfiguration.INCOMING_MODE;
 	}
 	
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ui.synchronize.ChangeSetCapability#createChangeSet(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration, org.eclipse.team.core.diff.IDiff[])
-     */
-    @Override
+	@Override
 	public ActiveChangeSet createChangeSet(ISynchronizePageConfiguration configuration, IDiff[] infos) {
-        ActiveChangeSet set = getActiveChangeSetManager().createSet(CVSUIMessages.WorkspaceChangeSetCapability_1, new IDiff[0]); 
+		ActiveChangeSet set = getActiveChangeSetManager().createSet(CVSUIMessages.WorkspaceChangeSetCapability_1, new IDiff[0]); 
 		CommitSetDialog dialog = new CommitSetDialog(configuration.getSite().getShell(), set, getResources(infos), CommitSetDialog.NEW);
 		dialog.open();
 		if (dialog.getReturnCode() != Window.OK) return null;
 		set.add(infos);
 		return set;
-    }
+	}
 
-    private IResource[] getResources(IDiff[] diffs) {
+	private IResource[] getResources(IDiff[] diffs) {
 		Set<IResource> result = new HashSet<>();
-    	for (int i = 0; i < diffs.length; i++) {
+		for (int i = 0; i < diffs.length; i++) {
 			IDiff diff = diffs[i];
 			IResource resource = ResourceDiffTree.getResourceFor(diff);
 			if (resource != null)
 				result.add(resource);
 		}
-        return result.toArray(new IResource[result.size()]);
-    }
-    
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#editChangeSet(org.eclipse.team.core.subscribers.ActiveChangeSet)
-     */
-    @Override
+		return result.toArray(new IResource[result.size()]);
+	}
+	
+	@Override
 	public void editChangeSet(ISynchronizePageConfiguration configuration, ActiveChangeSet set) {
-        CommitSetDialog dialog = new CommitSetDialog(configuration.getSite().getShell(), set, set.getResources(), CommitSetDialog.EDIT);
+		CommitSetDialog dialog = new CommitSetDialog(configuration.getSite().getShell(), set, set.getResources(), CommitSetDialog.EDIT);
 		dialog.open();
 		if (dialog.getReturnCode() != Window.OK) return;
 		// Nothing to do here as the set was updated by the dialog 
-    }
+	}
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.ChangeSetCapability#getActiveChangeSetManager()
-     */
-    @Override
+	@Override
 	public ActiveChangeSetManager getActiveChangeSetManager() {
-        return CVSUIPlugin.getPlugin().getChangeSetManager();
-    }
-    
+		return CVSUIPlugin.getPlugin().getChangeSetManager();
+	}
+	
 	@Override
 	public CheckedInChangeSetCollector createCheckedInChangeSetCollector(ISynchronizePageConfiguration configuration) {
 		return new CheckedInChangeSetCollector(configuration, CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber());

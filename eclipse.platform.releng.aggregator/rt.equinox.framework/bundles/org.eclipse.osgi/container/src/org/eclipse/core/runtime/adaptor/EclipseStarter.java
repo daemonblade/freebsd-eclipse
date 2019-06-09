@@ -1006,10 +1006,7 @@ public class EclipseStarter {
 				// include basic bundles in case they were not resolved before
 				if ((osgiBundle.getState() & Bundle.INSTALLED) != 0)
 					toRefresh.add(osgiBundle);
-			} catch (BundleException e) {
-				FrameworkLogEntry entry = new FrameworkLogEntry(EquinoxContainer.NAME, FrameworkLogEntry.ERROR, 0, NLS.bind(Msg.ECLIPSE_STARTUP_FAILED_INSTALL, initialBundles[i].location), 0, e, null);
-				log.log(entry);
-			} catch (IOException e) {
+			} catch (BundleException | IOException e) {
 				FrameworkLogEntry entry = new FrameworkLogEntry(EquinoxContainer.NAME, FrameworkLogEntry.ERROR, 0, NLS.bind(Msg.ECLIPSE_STARTUP_FAILED_INSTALL, initialBundles[i].location), 0, e, null);
 				log.log(entry);
 			}
@@ -1155,11 +1152,13 @@ public class EclipseStarter {
 			this.frameworkEventType = frameworkEventType;
 		}
 
+		@Override
 		public void bundleChanged(BundleEvent event) {
 			if (event.getBundle().getBundleId() == 0 && event.getType() == BundleEvent.STOPPING)
 				semaphore.release();
 		}
 
+		@Override
 		public void frameworkEvent(FrameworkEvent event) {
 			if (event.getType() == frameworkEventType)
 				semaphore.release();
@@ -1420,6 +1419,7 @@ public class EclipseStarter {
 		for (Iterator<Runnable> it = shutdownHandlers.iterator(); it.hasNext();) {
 			final Runnable handler = it.next();
 			BundleListener listener = new BundleListener() {
+				@Override
 				public void bundleChanged(BundleEvent event) {
 					if (event.getBundle() == systemBundle && event.getType() == BundleEvent.STOPPED) {
 						handler.run();

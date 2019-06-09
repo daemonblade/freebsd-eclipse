@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Benjamin Muskalla - Contribution for bug 239066
@@ -154,6 +154,7 @@ import org.eclipse.jdt.internal.compiler.ast.ReferenceExpression;
 import org.eclipse.jdt.internal.compiler.ast.ReturnStatement;
 import org.eclipse.jdt.internal.compiler.ast.SingleNameReference;
 import org.eclipse.jdt.internal.compiler.ast.Statement;
+import org.eclipse.jdt.internal.compiler.ast.SwitchExpression;
 import org.eclipse.jdt.internal.compiler.ast.SwitchStatement;
 import org.eclipse.jdt.internal.compiler.ast.ThisReference;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
@@ -662,6 +663,8 @@ public static int getIrritant(int problemID) {
 			return CompilerOptions.APILeak;
 		case IProblem.UnstableAutoModuleName:
 			return CompilerOptions.UnstableAutoModuleName;
+		case IProblem.PreviewFeatureUsed:
+			return CompilerOptions.PreviewFeatureUsed;
 }
 	return 0;
 }
@@ -792,6 +795,7 @@ public static int getProblemCategory(int severity, int problemID) {
 	switch (problemID) {
 		case IProblem.IsClassPathCorrect :
 		case IProblem.CorruptedSignature :
+		case IProblem.UndefinedModuleAddReads :
 			return CategorizedProblem.CAT_BUILDPATH;
 		case IProblem.ProblemNotAnalysed :
 			return CategorizedProblem.CAT_UNNECESSARY_CODE;
@@ -806,6 +810,8 @@ public static int getProblemCategory(int severity, int problemID) {
 				return CategorizedProblem.CAT_MEMBER;
 			if ((problemID & IProblem.ModuleRelated) != 0)
 				return CategorizedProblem.CAT_MODULE;
+			if ((problemID & IProblem.Compliance) != 0)
+				return CategorizedProblem.CAT_COMPLIANCE;
 	}
 	return CategorizedProblem.CAT_INTERNAL;
 }
@@ -1521,6 +1527,13 @@ public void lambdaExpressionCannotImplementGenericMethod(LambdaExpression lambda
 			lambda.sourceStart,
 			lambda.diagnosticsSourceEnd());
 }
+public void missingValueFromLambda(LambdaExpression lambda, TypeBinding returnType) {
+	this.handle(IProblem.MissingValueFromLambda, 
+			new String[] {new String(returnType.readableName())},
+			new String[] {new String(returnType.shortReadableName())},
+			lambda.sourceStart,
+			lambda.diagnosticsSourceEnd());
+}
 public void caseExpressionMustBeConstant(Expression expression) {
 	this.handle(
 		IProblem.NonConstantExpression,
@@ -1776,10 +1789,7 @@ public void deprecatedMethod(final MethodBinding method, ASTNode location) {
 			// omit the new keyword from the warning marker
 			// https://bugs.eclipse.org/bugs/show_bug.cgi?id=300031
 			AllocationExpression allocationExpression = (AllocationExpression) location;
-			if (allocationExpression.enumConstant != null) {
-				start = allocationExpression.enumConstant.sourceStart;
-			}
-			start = allocationExpression.type.sourceStart;
+			start = allocationExpression.nameSourceStart();
 		}
 	} else {
 		if (location instanceof MessageSend) {
@@ -4338,6 +4348,8 @@ public void invalidMethod(MessageSend messageSend, MethodBinding method, Scope s
 	int id = IProblem.UndefinedMethod; //default...
     MethodBinding shownMethod = method;
 	switch (method.problemId()) {
+		case ProblemReasons.ErrorAlreadyReported:
+			return;
 		case ProblemReasons.NoSuchMethodOnArray :
 			return; // secondary error.
 		case ProblemReasons.NotFound :
@@ -6060,7 +6072,8 @@ public boolean expressionNonNullComparison(Expression expr, boolean checkForNull
 			|| expr instanceof ThisReference) {
 		// fall through to bottom
 	} else if (expr instanceof Literal
-				|| expr instanceof ConditionalExpression) {
+				|| expr instanceof ConditionalExpression
+				|| expr instanceof SwitchExpression) {
 		if (expr instanceof NullLiteral) {
 			needImplementation(location); // reported as nonnull??
 			return false;
@@ -6156,7 +6169,8 @@ public void localVariableNullInstanceof(LocalVariableBinding local, ASTNode loca
 }
 
 public void localVariableNullReference(LocalVariableBinding local, ASTNode location) {
-	if (location instanceof Expression && (((Expression)location).implicitConversion & TypeIds.UNBOXING) != 0) {
+	if (location instanceof Expression &&  ((Expression) location).isTrulyExpression() &&
+			(((Expression)location).implicitConversion & TypeIds.UNBOXING) != 0) {
 		nullUnboxing(location, local.type);
 		return;
 	}
@@ -6220,11 +6234,13 @@ public void localVariablePotentialNullReference(LocalVariableBinding local, ASTN
 		localVariableFreeTypeVariableReference(local, location);
 		return;
 	}
-	if (location instanceof Expression && (((Expression)location).implicitConversion & TypeIds.UNBOXING) != 0) {
+	if (location instanceof Expression &&  ((Expression) location).isTrulyExpression()
+			&& (((Expression)location).implicitConversion & TypeIds.UNBOXING) != 0) {
 		potentialNullUnboxing(location, local.type);
 		return;
 	}
-	if ((local.type.tagBits & TagBits.AnnotationNullable) != 0 && location instanceof Expression) {
+	if ((local.type.tagBits & TagBits.AnnotationNullable) != 0 && location instanceof Expression
+			&&  ((Expression) location).isTrulyExpression()) {
 		dereferencingNullableExpression((Expression) location);
 		return;
 	}
@@ -6479,13 +6495,28 @@ public void notAFunctionalInterface(TypeDeclaration type) {
 		type.sourceStart,
 		type.sourceEnd);
 }
+
 public void missingEnumConstantCase(SwitchStatement switchStatement, FieldBinding enumConstant) {
+	missingEnumConstantCase(switchStatement.defaultCase, enumConstant, switchStatement.expression);
+}
+public void missingEnumConstantCase(SwitchExpression switchExpression, FieldBinding enumConstant) {
+	missingSwitchExpressionEnumConstantCase(switchExpression.defaultCase, enumConstant, switchExpression.expression);
+}
+private void missingSwitchExpressionEnumConstantCase(CaseStatement defaultCase, FieldBinding enumConstant, ASTNode expression) {
 	this.handle(
-		switchStatement.defaultCase == null ? IProblem.MissingEnumConstantCase : IProblem.MissingEnumConstantCaseDespiteDefault,
-		new String[] {new String(enumConstant.declaringClass.readableName()), new String(enumConstant.name) },
-		new String[] {new String(enumConstant.declaringClass.shortReadableName()), new String(enumConstant.name) },
-		switchStatement.expression.sourceStart,
-		switchStatement.expression.sourceEnd);
+			IProblem.SwitchExpressionMissingEnumConstantCase,
+			new String[] {new String(enumConstant.declaringClass.readableName()), new String(enumConstant.name) },
+			new String[] {new String(enumConstant.declaringClass.shortReadableName()), new String(enumConstant.name) },
+			expression.sourceStart,
+			expression.sourceEnd);
+}
+private void missingEnumConstantCase(CaseStatement defaultCase, FieldBinding enumConstant, ASTNode expression) {
+	this.handle(
+			defaultCase == null ? IProblem.MissingEnumConstantCase : IProblem.MissingEnumConstantCaseDespiteDefault,
+			new String[] {new String(enumConstant.declaringClass.readableName()), new String(enumConstant.name) },
+			new String[] {new String(enumConstant.declaringClass.shortReadableName()), new String(enumConstant.name) },
+			expression.sourceStart,
+			expression.sourceEnd);
 }
 public void missingDefaultCase(SwitchStatement switchStatement, boolean isEnumSwitch, TypeBinding expressionType) {
 	if (isEnumSwitch) {
@@ -6497,7 +6528,8 @@ public void missingDefaultCase(SwitchStatement switchStatement, boolean isEnumSw
 				switchStatement.expression.sourceEnd);
 	} else {
 		this.handle(
-				IProblem.MissingDefaultCase,
+				switchStatement instanceof SwitchExpression ?
+						IProblem.SwitchExpressionMissingDefaultCase : IProblem.MissingDefaultCase,
 				NoArgument,
 				NoArgument,
 				switchStatement.expression.sourceStart,
@@ -8675,7 +8707,7 @@ public void unreachableCode(Statement statement) {
 		LocalDeclaration declaration = (LocalDeclaration) statement;
 		sourceStart = declaration.declarationSourceStart;
 		sourceEnd = declaration.declarationSourceEnd;
-	} else if (statement instanceof Expression) {
+	} else if (statement instanceof Expression &&  ((Expression) statement).isTrulyExpression()) {
 		int statemendEnd = ((Expression) statement).statementEnd;
 		if (statemendEnd != -1) sourceEnd = statemendEnd;
 	}
@@ -9248,6 +9280,32 @@ public void problemNotAnalysed(Expression token, String optionKey) {
 		new String[] { token.constant.stringValue() },
 		token.sourceStart,
 		token.sourceEnd);
+}
+public void previewFeatureNotEnabled(int sourceStart, int sourceEnd, String featureName) {
+	String[] args = new String[] {featureName};
+	this.handle(
+			IProblem.PreviewFeatureDisabled,
+			args,
+			args,
+			sourceStart,
+			sourceEnd);
+}
+public void previewFeatureUsed(int sourceStart, int sourceEnd) {
+	this.handle(
+			IProblem.PreviewFeatureUsed,
+			NoArgument,
+			NoArgument,
+			sourceStart,
+			sourceEnd);
+}
+public void previewFeatureNotSupported(int sourceStart, int sourceEnd, String featureName, String sourceLevel) {
+	String[] args = new String[] {featureName, sourceLevel};
+	this.handle(
+			IProblem.PreviewFeatureNotSupported,
+			args,
+			args,
+			sourceStart,
+			sourceEnd);
 }
 public void useAssertAsAnIdentifier(int sourceStart, int sourceEnd) {
 	this.handle(
@@ -10883,6 +10941,10 @@ public void invalidModule(ModuleReference ref) {
 		NoArgument, new String[] { CharOperation.charToString(ref.moduleName) },
 		ref.sourceStart, ref.sourceEnd);
 }
+public void missingModuleAddReads(char[] requiredModuleName) {
+	String[] args = new String[] { new String(requiredModuleName) };
+	this.handle(IProblem.UndefinedModuleAddReads, args, args, 0, 0);
+}
 public void invalidOpensStatement(OpensStatement statement, ModuleDeclaration module) {
 	this.handle(IProblem.InvalidOpensStatement,
 		NoArgument, new String[] { CharOperation.charToString(module.moduleName) },
@@ -10988,5 +11050,78 @@ public void autoModuleWithUnstableName(ModuleReference moduleReference) {
 			args,
 			moduleReference.sourceStart,
 			moduleReference.sourceEnd);
+}
+public void switchExpressionIncompatibleResultExpressions(SwitchExpression expression) {
+	TypeBinding type = expression.resultExpressions.get(0).resolvedType;
+	this.handle(
+		IProblem.SwitchExpressionsIncompatibleResultExpressionTypes,
+		new String[] {new String(type.readableName())},
+		new String[] {new String(type.shortReadableName())},
+		expression.sourceStart,
+		expression.sourceEnd);
+}
+public void switchExpressionEmptySwitchBlock(SwitchExpression expression) {
+	this.handle(
+		IProblem.SwitchExpressionsEmptySwitchBlock,
+		NoArgument,
+		NoArgument,
+		expression.sourceStart,
+		expression.sourceEnd);
+}
+public void switchExpressionNoResultExpressions(SwitchExpression expression) {
+	this.handle(
+		IProblem.SwitchExpressionsNoResultExpression,
+		NoArgument,
+		NoArgument,
+		expression.sourceStart,
+		expression.sourceEnd);
+}
+public void switchExpressionSwitchLabeledBlockCompletesNormally(Block block) {
+	this.handle(
+		IProblem.SwitchExpressionSwitchLabeledBlockCompletesNormally,
+		NoArgument,
+		NoArgument,
+		block.sourceStart,
+		block.sourceEnd);
+}
+public void switchExpressionLastStatementCompletesNormally(Statement stmt) {
+	this.handle(
+		IProblem.SwitchExpressionSwitchLabeledBlockCompletesNormally,
+		NoArgument,
+		NoArgument,
+		stmt.sourceStart,
+		stmt.sourceEnd);
+}
+public void switchExpressionIllegalLastStatement(Statement stmt) {
+	this.handle(
+		IProblem.SwitchExpressionIllegalLastStatement,
+		NoArgument,
+		NoArgument,
+		stmt.sourceStart,
+		stmt.sourceEnd);
+}
+public void switchExpressionTrailingSwitchLabels(Statement stmt) {
+	this.handle(
+		IProblem.SwitchExpressionTrailingSwitchLabels,
+		NoArgument,
+		NoArgument,
+		stmt.sourceStart,
+		stmt.sourceEnd);
+}
+public void switchExpressionMixedCase(ASTNode statement) {
+	this.handle(
+		IProblem.switchMixedCase,
+		NoArgument,
+		NoArgument,
+		statement.sourceStart,
+		statement.sourceEnd);
+}
+public void switchExpressionBreakMissingValue(ASTNode statement) {
+	this.handle(
+		IProblem.SwitchExpressionBreakMissingValue,
+		NoArgument,
+		NoArgument,
+		statement.sourceStart,
+		statement.sourceEnd);
 }
 }

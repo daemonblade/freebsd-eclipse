@@ -100,41 +100,37 @@ public class CVSTeamProvider extends RepositoryProvider {
 	 * @param project the project
 	 */
 	public static void markAsTempShare(IProject project) {
-    	if (RepositoryProvider.isShared(project))
-    		return;
-    	try {
-    		project.setSessionProperty(CVSTeamProvider.TEMP_SHARED, Boolean.TRUE);
+		if (RepositoryProvider.isShared(project))
+			return;
+		try {
+			project.setSessionProperty(CVSTeamProvider.TEMP_SHARED, Boolean.TRUE);
 		} catch (CoreException e) {
 			CVSProviderPlugin.log(e);
 		}
 	}
 	
-    /**
-     * Return the file modification validator used for all CVS repository providers.
-     * @return the file modification validator used for all CVS repository providers
-     */
-    protected static CVSCoreFileModificationValidator internalGetFileModificationValidator() {
-        if (CVSTeamProvider.fileModificationValidator == null) {
-            CVSTeamProvider.fileModificationValidator = new CVSCoreFileModificationValidator();
-        }
-        return CVSTeamProvider.fileModificationValidator;
-    }
-    
+	/**
+	 * Return the file modification validator used for all CVS repository providers.
+	 * @return the file modification validator used for all CVS repository providers
+	 */
+	protected static CVSCoreFileModificationValidator internalGetFileModificationValidator() {
+		if (CVSTeamProvider.fileModificationValidator == null) {
+			CVSTeamProvider.fileModificationValidator = new CVSCoreFileModificationValidator();
+		}
+		return CVSTeamProvider.fileModificationValidator;
+	}
+	
 	/**
 	 * No-arg Constructor for IProjectNature conformance
 	 */
 	public CVSTeamProvider() {
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.core.resources.IProjectNature#deconfigure()
-	 */
+	@Override
 	public void deconfigure() {
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.RepositoryProvider#deconfigured()
-	 */
+	@Override
 	public void deconfigured() {
 		// when a nature is removed from the project, notify the synchronizer that
 		// we no longer need the sync info cached. This does not affect the actual CVS
@@ -149,16 +145,12 @@ public class CVSTeamProvider extends RepositoryProvider {
 		}
 		ResourceStateChangeListeners.getListener().projectDeconfigured(getProject());
 	}
-	/**
-	 * @see IProjectNature#getProject()
-	 */
+	@Override
 	public IProject getProject() {
 		return project;
 	}
 
-	/**
-	 * @see IProjectNature#setProject(IProject)
-	 */
+	@Override
 	public void setProject(IProject project) {
 		this.project = project;
 		this.workspaceRoot = new CVSWorkspaceRoot(project);
@@ -192,13 +184,13 @@ public class CVSTeamProvider extends RepositoryProvider {
 	/*
 	 * Generate an exception if the resource is not a child of the project
 	 */
-	 private void checkIsChild(IResource resource) throws CVSException {
-	 	if (!isChildResource(resource))
-	 		throw new CVSException(new Status(IStatus.ERROR, CVSProviderPlugin.ID, TeamException.UNABLE, 
-	 			NLS.bind(CVSMessages.CVSTeamProvider_invalidResource, (new Object[] {resource.getFullPath().toString(), project.getName()})), 
-	 			null));
-	 }
-	 
+	private void checkIsChild(IResource resource) throws CVSException {
+		if (!isChildResource(resource))
+			throw new CVSException(new Status(IStatus.ERROR, CVSProviderPlugin.ID, TeamException.UNABLE, 
+				NLS.bind(CVSMessages.CVSTeamProvider_invalidResource, (new Object[] {resource.getFullPath().toString(), project.getName()})), 
+				null));
+	}
+	
 	/*
 	 * Get the arguments to be passed to a commit or update
 	 */
@@ -250,8 +242,8 @@ public class CVSTeamProvider extends RepositoryProvider {
 							FolderSyncInfo info = folder.getFolderSyncInfo();
 							if (info != null) {
 								monitor1.subTask(NLS.bind(CVSMessages.CVSTeamProvider_updatingFolder, new String[] { info.getRepository() })); 
-			                    MutableFolderSyncInfo newInfo = info.cloneMutable();
-			                    newInfo.setRoot(root);
+								MutableFolderSyncInfo newInfo = info.cloneMutable();
+								newInfo.setRoot(root);
 								folder.setFolderSyncInfo(newInfo);
 								folder.acceptChildren(this);
 							}
@@ -459,30 +451,22 @@ public class CVSTeamProvider extends RepositoryProvider {
 		}
 	}
 	
-	/*
-	 * @see RepositoryProvider#getID()
-	 */
+	@Override
 	public String getID() {
 		return CVSProviderPlugin.getTypeId();
 	}
 	
-	/*
-	 * @see RepositoryProvider#getMoveDeleteHook()
-	 */
+	@Override
 	public IMoveDeleteHook getMoveDeleteHook() {
 		return moveDeleteHook;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.RepositoryProvider#getFileModificationValidator()
-	 */
+	@Override
 	public IFileModificationValidator getFileModificationValidator() {
 		return getFileModificationValidator2();
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.RepositoryProvider#getFileModificationValidator2()
-	 */
+	@Override
 	public FileModificationValidator getFileModificationValidator2() {
 		return internalGetFileModificationValidator();
 	}
@@ -660,23 +644,17 @@ public class CVSTeamProvider extends RepositoryProvider {
 		}
 	}
 	
-	/**
-	 * @see org.eclipse.team.core.RepositoryProvider#canHandleLinkedResources()
-	 */
+	@Override
 	public boolean canHandleLinkedResources() {
 		return true;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.RepositoryProvider#canHandleLinkedResourceURI()
-	 */
+	@Override
 	public boolean canHandleLinkedResourceURI() {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.RepositoryProvider#validateCreateLink(org.eclipse.core.resources.IResource, int, org.eclipse.core.runtime.IPath)
-	 */
+	@Override
 	public IStatus validateCreateLink(IResource resource, int updateFlags, IPath location) {
 		return internalValidateCreateLink(resource);
 	}
@@ -701,9 +679,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 		return Status.OK_STATUS;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.RepositoryProvider#validateCreateLink(org.eclipse.core.resources.IResource, int, java.net.URI)
-	 */
+	@Override
 	public IStatus validateCreateLink(IResource resource, int updateFlags, URI location) {
 		return internalValidateCreateLink(resource);
 	}
@@ -850,20 +826,16 @@ public class CVSTeamProvider extends RepositoryProvider {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.RepositoryProvider#getRuleFactory()
-	 */
+	@Override
 	public IResourceRuleFactory getRuleFactory() {
 		return RESOURCE_RULE_FACTORY;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.RepositoryProvider#getFileHistoryProvider()
-	 */
+	@Override
 	public IFileHistoryProvider getFileHistoryProvider() {
-		   if (CVSTeamProvider.fileHistoryProvider == null) {
-	            CVSTeamProvider.fileHistoryProvider = new CVSFileHistoryProvider();
-	        }
-	        return CVSTeamProvider.fileHistoryProvider;
+			if (CVSTeamProvider.fileHistoryProvider == null) {
+				CVSTeamProvider.fileHistoryProvider = new CVSFileHistoryProvider();
+			}
+			return CVSTeamProvider.fileHistoryProvider;
 	}
 }

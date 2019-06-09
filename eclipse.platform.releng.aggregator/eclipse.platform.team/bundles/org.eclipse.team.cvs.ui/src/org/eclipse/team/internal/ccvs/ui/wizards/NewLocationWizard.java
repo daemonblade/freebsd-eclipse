@@ -81,9 +81,6 @@ public class NewLocationWizard extends Wizard implements INewWizard {
 		return new ConfigurationWizardMainPage("repositoryPage1", CVSUIMessages.NewLocationWizard_heading, CVSUIPlugin.getPlugin().getImageDescriptor(ICVSUIConstants.IMG_WIZBAN_NEW_LOCATION)); //$NON-NLS-1$ 
 	}
 	
-	/*
-	 * @see IWizard#performFinish
-	 */
 	@Override
 	public boolean performFinish() {
 		final ICVSRepositoryLocation[] location = new ICVSRepositoryLocation[] { null };
@@ -143,9 +140,9 @@ public class NewLocationWizard extends Wizard implements INewWizard {
 		if (keepLocation) {
 			KnownRepositories.getInstance().addRepository(location[0], true /* let the world know */);
 			if (switchPerspectives) {
-		        final IWorkbench workbench= PlatformUI.getWorkbench();
-		        final IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
-		        
+				final IWorkbench workbench= PlatformUI.getWorkbench();
+				final IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+				
 				final String defaultPerspectiveID= promptForPerspectiveSwitch();
 
 				if (defaultPerspectiveID != null) {
@@ -196,7 +193,7 @@ public class NewLocationWizard extends Wizard implements INewWizard {
 		}
 		
 		if (desired != null) {
-		    
+			
 			String message;;
 			String desc = desired.getDescription();
 			if (desc == null) {
@@ -204,25 +201,25 @@ public class NewLocationWizard extends Wizard implements INewWizard {
 			} else {
 				message = NLS.bind(CVSUIMessages.NewLocationWizard_3, new String[] { desired.getLabel(), desc });
 			}
-		    // Ask the user whether to switch
+			// Ask the user whether to switch
 			final MessageDialogWithToggle m = MessageDialogWithToggle.openYesNoQuestion(
-			        Utils.getShell(null),
-			        CVSUIMessages.NewLocationWizard_1, 
-			        message, 
-			        CVSUIMessages.NewLocationWizard_4,   
-			        false /* toggle state */,
-			        store,
-			        ICVSUIConstants.PREF_CHANGE_PERSPECTIVE_ON_NEW_REPOSITORY_LOCATION);
+					Utils.getShell(null),
+					CVSUIMessages.NewLocationWizard_1, 
+					message, 
+					CVSUIMessages.NewLocationWizard_4,   
+					false /* toggle state */,
+					store,
+					ICVSUIConstants.PREF_CHANGE_PERSPECTIVE_ON_NEW_REPOSITORY_LOCATION);
 			
 			final int result = m.getReturnCode();
 			switch (result) {
 			// yes
 			case IDialogConstants.YES_ID:
 			case IDialogConstants.OK_ID :
-			    return desiredID;
+				return desiredID;
 			// no
 			case IDialogConstants.NO_ID :
-			    return null;
+				return null;
 			}
 		}
 		return null;

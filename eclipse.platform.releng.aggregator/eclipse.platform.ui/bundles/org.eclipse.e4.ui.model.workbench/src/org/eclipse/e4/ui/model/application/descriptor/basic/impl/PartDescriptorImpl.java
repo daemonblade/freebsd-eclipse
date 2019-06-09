@@ -79,6 +79,7 @@ import org.eclipse.emf.ecore.util.InternalEList;
  * @since 1.0
  * @generated
  */
+@SuppressWarnings("deprecation")
 public class PartDescriptorImpl extends ApplicationElementImpl implements MPartDescriptor {
 	/**
 	 * The default value of the '{@link #getLabel() <em>Label</em>}' attribute.
@@ -267,32 +268,27 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	protected boolean closeable = CLOSEABLE_EDEFAULT;
 
 	/**
-	 * The default value of the '{@link #isDirtyable() <em>Dirtyable</em>}'
-	 * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The default value of the '{@link #isDirtyable() <em>Dirtyable</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @see #isDirtyable()
-	 * @generated NOT
+	 * @deprecated See {@link org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptor#isDirtyable() model documentation} for details.
+	 * @noreference See {@link org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptor#isDirtyable() model documentation} for details.
+	 * @generated
 	 * @ordered
-	 * @deprecated dirtyable is managed by part
-	 * @noreference This method is not intented to be referenced by clients.
-	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=530887">Bug
-	 *      530887</a>
 	 */
 	@Deprecated
 	protected static final boolean DIRTYABLE_EDEFAULT = false;
 
 	/**
-	 * The cached value of the '{@link #isDirtyable() <em>Dirtyable</em>}'
-	 * attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The cached value of the '{@link #isDirtyable() <em>Dirtyable</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @see #isDirtyable()
-	 * @generated NOT
+	 * @deprecated See {@link org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptor#isDirtyable() model documentation} for details.
+	 * @noreference See {@link org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptor#isDirtyable() model documentation} for details.
+	 * @generated
 	 * @ordered
-	 * @deprecated dirtyable is managed by part
-	 * @noreference This method is not intented to be referenced by clients.
-	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=530887">Bug
-	 *      530887</a>
-	 * 
 	 */
 	@Deprecated
 	protected boolean dirtyable = DIRTYABLE_EDEFAULT;
@@ -404,6 +400,7 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public String getLabel() {
 		return label;
 	}
@@ -414,11 +411,13 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public void setLabel(String newLabel) {
 		String oldLabel = label;
 		label = newLabel;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__LABEL, oldLabel, label));
+			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__LABEL, oldLabel,
+					label));
 	}
 
 	/**
@@ -427,6 +426,7 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public String getIconURI() {
 		return iconURI;
 	}
@@ -437,11 +437,13 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public void setIconURI(String newIconURI) {
 		String oldIconURI = iconURI;
 		iconURI = newIconURI;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__ICON_URI, oldIconURI, iconURI));
+			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__ICON_URI,
+					oldIconURI, iconURI));
 	}
 
 	/**
@@ -450,6 +452,7 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public String getTooltip() {
 		return tooltip;
 	}
@@ -460,11 +463,13 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public void setTooltip(String newTooltip) {
 		String oldTooltip = tooltip;
 		tooltip = newTooltip;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__TOOLTIP, oldTooltip, tooltip));
+			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__TOOLTIP, oldTooltip,
+					tooltip));
 	}
 
 	/**
@@ -472,9 +477,31 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
+	public String getLocalizedLabel() {
+		return LocalizationHelper.getLocalizedFeature(UiPackageImpl.Literals.UI_LABEL__LABEL, this);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String getLocalizedTooltip() {
+		return LocalizationHelper.getLocalizedFeature(UiPackageImpl.Literals.UI_LABEL__TOOLTIP, this);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public List<MHandler> getHandlers() {
 		if (handlers == null) {
-			handlers = new EObjectContainmentEList<MHandler>(MHandler.class, this, BasicPackageImpl.PART_DESCRIPTOR__HANDLERS);
+			handlers = new EObjectContainmentEList<MHandler>(MHandler.class, this,
+					BasicPackageImpl.PART_DESCRIPTOR__HANDLERS);
 		}
 		return handlers;
 	}
@@ -484,9 +511,11 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public List<MBindingContext> getBindingContexts() {
 		if (bindingContexts == null) {
-			bindingContexts = new EObjectResolvingEList<MBindingContext>(MBindingContext.class, this, BasicPackageImpl.PART_DESCRIPTOR__BINDING_CONTEXTS);
+			bindingContexts = new EObjectResolvingEList<MBindingContext>(MBindingContext.class, this,
+					BasicPackageImpl.PART_DESCRIPTOR__BINDING_CONTEXTS);
 		}
 		return bindingContexts;
 	}
@@ -496,6 +525,7 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public boolean isAllowMultiple() {
 		return allowMultiple;
 	}
@@ -505,11 +535,13 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setAllowMultiple(boolean newAllowMultiple) {
 		boolean oldAllowMultiple = allowMultiple;
 		allowMultiple = newAllowMultiple;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__ALLOW_MULTIPLE, oldAllowMultiple, allowMultiple));
+			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__ALLOW_MULTIPLE,
+					oldAllowMultiple, allowMultiple));
 	}
 
 	/**
@@ -517,6 +549,7 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getCategory() {
 		return category;
 	}
@@ -526,11 +559,13 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setCategory(String newCategory) {
 		String oldCategory = category;
 		category = newCategory;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__CATEGORY, oldCategory, category));
+			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__CATEGORY,
+					oldCategory, category));
 	}
 
 	/**
@@ -538,6 +573,7 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public List<MMenu> getMenus() {
 		if (menus == null) {
 			menus = new EObjectContainmentEList<MMenu>(MMenu.class, this, BasicPackageImpl.PART_DESCRIPTOR__MENUS);
@@ -550,6 +586,7 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public MToolBar getToolbar() {
 		return toolbar;
 	}
@@ -563,8 +600,12 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 		MToolBar oldToolbar = toolbar;
 		toolbar = newToolbar;
 		if (eNotificationRequired()) {
-			ENotificationImpl notification = new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__TOOLBAR, oldToolbar, newToolbar);
-			if (msgs == null) msgs = notification; else msgs.add(notification);
+			ENotificationImpl notification = new ENotificationImpl(this, Notification.SET,
+					BasicPackageImpl.PART_DESCRIPTOR__TOOLBAR, oldToolbar, newToolbar);
+			if (msgs == null)
+				msgs = notification;
+			else
+				msgs.add(notification);
 		}
 		return msgs;
 	}
@@ -574,18 +615,22 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setToolbar(MToolBar newToolbar) {
 		if (newToolbar != toolbar) {
 			NotificationChain msgs = null;
 			if (toolbar != null)
-				msgs = ((InternalEObject)toolbar).eInverseRemove(this, EOPPOSITE_FEATURE_BASE - BasicPackageImpl.PART_DESCRIPTOR__TOOLBAR, null, msgs);
+				msgs = ((InternalEObject) toolbar).eInverseRemove(this,
+						EOPPOSITE_FEATURE_BASE - BasicPackageImpl.PART_DESCRIPTOR__TOOLBAR, null, msgs);
 			if (newToolbar != null)
-				msgs = ((InternalEObject)newToolbar).eInverseAdd(this, EOPPOSITE_FEATURE_BASE - BasicPackageImpl.PART_DESCRIPTOR__TOOLBAR, null, msgs);
+				msgs = ((InternalEObject) newToolbar).eInverseAdd(this,
+						EOPPOSITE_FEATURE_BASE - BasicPackageImpl.PART_DESCRIPTOR__TOOLBAR, null, msgs);
 			msgs = basicSetToolbar(newToolbar, msgs);
-			if (msgs != null) msgs.dispatch();
-		}
-		else if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__TOOLBAR, newToolbar, newToolbar));
+			if (msgs != null)
+				msgs.dispatch();
+		} else if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__TOOLBAR, newToolbar,
+					newToolbar));
 	}
 
 	/**
@@ -593,6 +638,7 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public boolean isCloseable() {
 		return closeable;
 	}
@@ -602,40 +648,43 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setCloseable(boolean newCloseable) {
 		boolean oldCloseable = closeable;
 		closeable = newCloseable;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__CLOSEABLE, oldCloseable, closeable));
+			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__CLOSEABLE,
+					oldCloseable, closeable));
 	}
 
 	/**
-	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
-	 * @deprecated dirtyable is managed by part
-	 * @noreference This method is not intented to be referenced by clients.
-	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=530887">Bug
-	 *      530887</a>
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @deprecated See {@link org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptor#isDirtyable() model documentation} for details.
+	 * @noreference See {@link org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptor#isDirtyable() model documentation} for details.
+	 * @generated
 	 */
 	@Deprecated
+	@Override
 	public boolean isDirtyable() {
 		return dirtyable;
 	}
 
 	/**
-	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
-	 * @deprecated dirtyable is managed by part
-	 * @noreference This method is not intented to be referenced by clients.
-	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=530887">Bug
-	 *      530887</a>
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @deprecated See {@link org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptor#isDirtyable() model documentation} for details.
+	 * @noreference See {@link org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptor#isDirtyable() model documentation} for details.
+	 * @generated
 	 */
 	@Deprecated
+	@Override
 	public void setDirtyable(boolean newDirtyable) {
 		boolean oldDirtyable = dirtyable;
 		dirtyable = newDirtyable;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__DIRTYABLE, oldDirtyable, dirtyable));
+			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__DIRTYABLE,
+					oldDirtyable, dirtyable));
 	}
 
 	/**
@@ -643,6 +692,7 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getContributionURI() {
 		return contributionURI;
 	}
@@ -652,11 +702,13 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setContributionURI(String newContributionURI) {
 		String oldContributionURI = contributionURI;
 		contributionURI = newContributionURI;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__CONTRIBUTION_URI, oldContributionURI, contributionURI));
+			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__CONTRIBUTION_URI,
+					oldContributionURI, contributionURI));
 	}
 
 	/**
@@ -664,6 +716,7 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getDescription() {
 		return description;
 	}
@@ -673,17 +726,21 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setDescription(String newDescription) {
 		String oldDescription = description;
 		description = newDescription;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__DESCRIPTION, oldDescription, description));
+			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__DESCRIPTION,
+					oldDescription, description));
 	}
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @generated
 	 */
+	@Override
 	public String getLocalizedDescription() {
 		return LocalizationHelper.getLocalizedFeature(BasicPackageImpl.Literals.PART_DESCRIPTOR__DESCRIPTION, this);
 	}
@@ -693,9 +750,11 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public List<String> getVariables() {
 		if (variables == null) {
-			variables = new EDataTypeUniqueEList<String>(String.class, this, BasicPackageImpl.PART_DESCRIPTOR__VARIABLES);
+			variables = new EDataTypeUniqueEList<String>(String.class, this,
+					BasicPackageImpl.PART_DESCRIPTOR__VARIABLES);
 		}
 		return variables;
 	}
@@ -705,9 +764,11 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public Map<String, String> getProperties() {
 		if (properties == null) {
-			properties = new EcoreEMap<String,String>(ApplicationPackageImpl.Literals.STRING_TO_STRING_MAP, StringToStringMapImpl.class, this, BasicPackageImpl.PART_DESCRIPTOR__PROPERTIES);
+			properties = new EcoreEMap<String, String>(ApplicationPackageImpl.Literals.STRING_TO_STRING_MAP,
+					StringToStringMapImpl.class, this, BasicPackageImpl.PART_DESCRIPTOR__PROPERTIES);
 		}
 		return properties.map();
 	}
@@ -719,9 +780,11 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 * </p>
 	 * @generated
 	 */
+	@Override
 	public List<MTrimBar> getTrimBars() {
 		if (trimBars == null) {
-			trimBars = new EObjectContainmentEList<MTrimBar>(MTrimBar.class, this, BasicPackageImpl.PART_DESCRIPTOR__TRIM_BARS);
+			trimBars = new EObjectContainmentEList<MTrimBar>(MTrimBar.class, this,
+					BasicPackageImpl.PART_DESCRIPTOR__TRIM_BARS);
 		}
 		return trimBars;
 	}
@@ -729,32 +792,19 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
 	 */
+	@Override
 	public void updateLocalization() {
 		if (eNotificationRequired()) {
-			eNotify(new ENotificationImpl(
-					this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_LABEL, null, getLocalizedLabel()));
-			eNotify(new ENotificationImpl(
-					this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_TOOLTIP, null, getLocalizedTooltip()));
-			eNotify(new ENotificationImpl(
-					this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_DESCRIPTION, null, getLocalizedDescription()));
+			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_LABEL,
+					null, getLocalizedLabel()));
+			eNotify(new ENotificationImpl(this, Notification.SET, BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_TOOLTIP,
+					null, getLocalizedTooltip()));
+			eNotify(new ENotificationImpl(this, Notification.SET,
+					BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_DESCRIPTION, null, getLocalizedDescription()));
 		}
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 */
-	public String getLocalizedLabel() {
-		return LocalizationHelper.getLocalizedFeature(UiPackageImpl.Literals.UI_LABEL__LABEL, this);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 */
-	public String getLocalizedTooltip() {
-		return LocalizationHelper.getLocalizedFeature(UiPackageImpl.Literals.UI_LABEL__TOOLTIP, this);
 	}
 
 	/**
@@ -766,15 +816,16 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
 		case BasicPackageImpl.PART_DESCRIPTOR__HANDLERS:
-			return ((InternalEList<?>)getHandlers()).basicRemove(otherEnd, msgs);
+			return ((InternalEList<?>) getHandlers()).basicRemove(otherEnd, msgs);
 		case BasicPackageImpl.PART_DESCRIPTOR__MENUS:
-			return ((InternalEList<?>)getMenus()).basicRemove(otherEnd, msgs);
+			return ((InternalEList<?>) getMenus()).basicRemove(otherEnd, msgs);
 		case BasicPackageImpl.PART_DESCRIPTOR__TOOLBAR:
 			return basicSetToolbar(null, msgs);
 		case BasicPackageImpl.PART_DESCRIPTOR__PROPERTIES:
-			return ((InternalEList<?>)((EMap.InternalMapView<String, String>)getProperties()).eMap()).basicRemove(otherEnd, msgs);
+			return ((InternalEList<?>) ((EMap.InternalMapView<String, String>) getProperties()).eMap())
+					.basicRemove(otherEnd, msgs);
 		case BasicPackageImpl.PART_DESCRIPTOR__TRIM_BARS:
-			return ((InternalEList<?>)getTrimBars()).basicRemove(otherEnd, msgs);
+			return ((InternalEList<?>) getTrimBars()).basicRemove(otherEnd, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -822,8 +873,10 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 		case BasicPackageImpl.PART_DESCRIPTOR__VARIABLES:
 			return getVariables();
 		case BasicPackageImpl.PART_DESCRIPTOR__PROPERTIES:
-			if (coreType) return ((EMap.InternalMapView<String, String>)getProperties()).eMap();
-			else return getProperties();
+			if (coreType)
+				return ((EMap.InternalMapView<String, String>) getProperties()).eMap();
+			else
+				return getProperties();
 		case BasicPackageImpl.PART_DESCRIPTOR__TRIM_BARS:
 			return getTrimBars();
 		}
@@ -840,57 +893,58 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
 		case BasicPackageImpl.PART_DESCRIPTOR__LABEL:
-			setLabel((String)newValue);
+			setLabel((String) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__ICON_URI:
-			setIconURI((String)newValue);
+			setIconURI((String) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__TOOLTIP:
-			setTooltip((String)newValue);
+			setTooltip((String) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__HANDLERS:
 			getHandlers().clear();
-			getHandlers().addAll((Collection<? extends MHandler>)newValue);
+			getHandlers().addAll((Collection<? extends MHandler>) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__BINDING_CONTEXTS:
 			getBindingContexts().clear();
-			getBindingContexts().addAll((Collection<? extends MBindingContext>)newValue);
+			getBindingContexts().addAll((Collection<? extends MBindingContext>) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__ALLOW_MULTIPLE:
-			setAllowMultiple((Boolean)newValue);
+			setAllowMultiple((Boolean) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__CATEGORY:
-			setCategory((String)newValue);
+			setCategory((String) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__MENUS:
 			getMenus().clear();
-			getMenus().addAll((Collection<? extends MMenu>)newValue);
+			getMenus().addAll((Collection<? extends MMenu>) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__TOOLBAR:
-			setToolbar((MToolBar)newValue);
+			setToolbar((MToolBar) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__CLOSEABLE:
-			setCloseable((Boolean)newValue);
+			setCloseable((Boolean) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__DIRTYABLE:
-			setDirtyable((Boolean)newValue);
+			setDirtyable((Boolean) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__CONTRIBUTION_URI:
-			setContributionURI((String)newValue);
+			setContributionURI((String) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__DESCRIPTION:
-			setDescription((String)newValue);
+			setDescription((String) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__VARIABLES:
 			getVariables().clear();
-			getVariables().addAll((Collection<? extends String>)newValue);
+			getVariables().addAll((Collection<? extends String>) newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__PROPERTIES:
-			((EStructuralFeature.Setting)((EMap.InternalMapView<String, String>)getProperties()).eMap()).set(newValue);
+			((EStructuralFeature.Setting) ((EMap.InternalMapView<String, String>) getProperties()).eMap())
+					.set(newValue);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__TRIM_BARS:
 			getTrimBars().clear();
-			getTrimBars().addAll((Collection<? extends MTrimBar>)newValue);
+			getTrimBars().addAll((Collection<? extends MTrimBar>) newValue);
 			return;
 		}
 		super.eSet(featureID, newValue);
@@ -929,7 +983,7 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 			getMenus().clear();
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__TOOLBAR:
-			setToolbar((MToolBar)null);
+			setToolbar((MToolBar) null);
 			return;
 		case BasicPackageImpl.PART_DESCRIPTOR__CLOSEABLE:
 			setCloseable(CLOSEABLE_EDEFAULT);
@@ -971,9 +1025,11 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 		case BasicPackageImpl.PART_DESCRIPTOR__TOOLTIP:
 			return TOOLTIP_EDEFAULT == null ? tooltip != null : !TOOLTIP_EDEFAULT.equals(tooltip);
 		case BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_LABEL:
-			return LOCALIZED_LABEL_EDEFAULT == null ? getLocalizedLabel() != null : !LOCALIZED_LABEL_EDEFAULT.equals(getLocalizedLabel());
+			return LOCALIZED_LABEL_EDEFAULT == null ? getLocalizedLabel() != null
+					: !LOCALIZED_LABEL_EDEFAULT.equals(getLocalizedLabel());
 		case BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_TOOLTIP:
-			return LOCALIZED_TOOLTIP_EDEFAULT == null ? getLocalizedTooltip() != null : !LOCALIZED_TOOLTIP_EDEFAULT.equals(getLocalizedTooltip());
+			return LOCALIZED_TOOLTIP_EDEFAULT == null ? getLocalizedTooltip() != null
+					: !LOCALIZED_TOOLTIP_EDEFAULT.equals(getLocalizedTooltip());
 		case BasicPackageImpl.PART_DESCRIPTOR__HANDLERS:
 			return handlers != null && !handlers.isEmpty();
 		case BasicPackageImpl.PART_DESCRIPTOR__BINDING_CONTEXTS:
@@ -991,11 +1047,13 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 		case BasicPackageImpl.PART_DESCRIPTOR__DIRTYABLE:
 			return dirtyable != DIRTYABLE_EDEFAULT;
 		case BasicPackageImpl.PART_DESCRIPTOR__CONTRIBUTION_URI:
-			return CONTRIBUTION_URI_EDEFAULT == null ? contributionURI != null : !CONTRIBUTION_URI_EDEFAULT.equals(contributionURI);
+			return CONTRIBUTION_URI_EDEFAULT == null ? contributionURI != null
+					: !CONTRIBUTION_URI_EDEFAULT.equals(contributionURI);
 		case BasicPackageImpl.PART_DESCRIPTOR__DESCRIPTION:
 			return DESCRIPTION_EDEFAULT == null ? description != null : !DESCRIPTION_EDEFAULT.equals(description);
 		case BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_DESCRIPTION:
-			return LOCALIZED_DESCRIPTION_EDEFAULT == null ? getLocalizedDescription() != null : !LOCALIZED_DESCRIPTION_EDEFAULT.equals(getLocalizedDescription());
+			return LOCALIZED_DESCRIPTION_EDEFAULT == null ? getLocalizedDescription() != null
+					: !LOCALIZED_DESCRIPTION_EDEFAULT.equals(getLocalizedDescription());
 		case BasicPackageImpl.PART_DESCRIPTOR__VARIABLES:
 			return variables != null && !variables.isEmpty();
 		case BasicPackageImpl.PART_DESCRIPTOR__PROPERTIES:
@@ -1015,29 +1073,40 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	public int eBaseStructuralFeatureID(int derivedFeatureID, Class<?> baseClass) {
 		if (baseClass == MLocalizable.class) {
 			switch (derivedFeatureID) {
-			default: return -1;
+			default:
+				return -1;
 			}
 		}
 		if (baseClass == MUILabel.class) {
 			switch (derivedFeatureID) {
-			case BasicPackageImpl.PART_DESCRIPTOR__LABEL: return UiPackageImpl.UI_LABEL__LABEL;
-			case BasicPackageImpl.PART_DESCRIPTOR__ICON_URI: return UiPackageImpl.UI_LABEL__ICON_URI;
-			case BasicPackageImpl.PART_DESCRIPTOR__TOOLTIP: return UiPackageImpl.UI_LABEL__TOOLTIP;
-			case BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_LABEL: return UiPackageImpl.UI_LABEL__LOCALIZED_LABEL;
-			case BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_TOOLTIP: return UiPackageImpl.UI_LABEL__LOCALIZED_TOOLTIP;
-			default: return -1;
+			case BasicPackageImpl.PART_DESCRIPTOR__LABEL:
+				return UiPackageImpl.UI_LABEL__LABEL;
+			case BasicPackageImpl.PART_DESCRIPTOR__ICON_URI:
+				return UiPackageImpl.UI_LABEL__ICON_URI;
+			case BasicPackageImpl.PART_DESCRIPTOR__TOOLTIP:
+				return UiPackageImpl.UI_LABEL__TOOLTIP;
+			case BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_LABEL:
+				return UiPackageImpl.UI_LABEL__LOCALIZED_LABEL;
+			case BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_TOOLTIP:
+				return UiPackageImpl.UI_LABEL__LOCALIZED_TOOLTIP;
+			default:
+				return -1;
 			}
 		}
 		if (baseClass == MHandlerContainer.class) {
 			switch (derivedFeatureID) {
-			case BasicPackageImpl.PART_DESCRIPTOR__HANDLERS: return CommandsPackageImpl.HANDLER_CONTAINER__HANDLERS;
-			default: return -1;
+			case BasicPackageImpl.PART_DESCRIPTOR__HANDLERS:
+				return CommandsPackageImpl.HANDLER_CONTAINER__HANDLERS;
+			default:
+				return -1;
 			}
 		}
 		if (baseClass == MBindings.class) {
 			switch (derivedFeatureID) {
-			case BasicPackageImpl.PART_DESCRIPTOR__BINDING_CONTEXTS: return CommandsPackageImpl.BINDINGS__BINDING_CONTEXTS;
-			default: return -1;
+			case BasicPackageImpl.PART_DESCRIPTOR__BINDING_CONTEXTS:
+				return CommandsPackageImpl.BINDINGS__BINDING_CONTEXTS;
+			default:
+				return -1;
 			}
 		}
 		return super.eBaseStructuralFeatureID(derivedFeatureID, baseClass);
@@ -1052,29 +1121,40 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	public int eDerivedStructuralFeatureID(int baseFeatureID, Class<?> baseClass) {
 		if (baseClass == MLocalizable.class) {
 			switch (baseFeatureID) {
-			default: return -1;
+			default:
+				return -1;
 			}
 		}
 		if (baseClass == MUILabel.class) {
 			switch (baseFeatureID) {
-			case UiPackageImpl.UI_LABEL__LABEL: return BasicPackageImpl.PART_DESCRIPTOR__LABEL;
-			case UiPackageImpl.UI_LABEL__ICON_URI: return BasicPackageImpl.PART_DESCRIPTOR__ICON_URI;
-			case UiPackageImpl.UI_LABEL__TOOLTIP: return BasicPackageImpl.PART_DESCRIPTOR__TOOLTIP;
-			case UiPackageImpl.UI_LABEL__LOCALIZED_LABEL: return BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_LABEL;
-			case UiPackageImpl.UI_LABEL__LOCALIZED_TOOLTIP: return BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_TOOLTIP;
-			default: return -1;
+			case UiPackageImpl.UI_LABEL__LABEL:
+				return BasicPackageImpl.PART_DESCRIPTOR__LABEL;
+			case UiPackageImpl.UI_LABEL__ICON_URI:
+				return BasicPackageImpl.PART_DESCRIPTOR__ICON_URI;
+			case UiPackageImpl.UI_LABEL__TOOLTIP:
+				return BasicPackageImpl.PART_DESCRIPTOR__TOOLTIP;
+			case UiPackageImpl.UI_LABEL__LOCALIZED_LABEL:
+				return BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_LABEL;
+			case UiPackageImpl.UI_LABEL__LOCALIZED_TOOLTIP:
+				return BasicPackageImpl.PART_DESCRIPTOR__LOCALIZED_TOOLTIP;
+			default:
+				return -1;
 			}
 		}
 		if (baseClass == MHandlerContainer.class) {
 			switch (baseFeatureID) {
-			case CommandsPackageImpl.HANDLER_CONTAINER__HANDLERS: return BasicPackageImpl.PART_DESCRIPTOR__HANDLERS;
-			default: return -1;
+			case CommandsPackageImpl.HANDLER_CONTAINER__HANDLERS:
+				return BasicPackageImpl.PART_DESCRIPTOR__HANDLERS;
+			default:
+				return -1;
 			}
 		}
 		if (baseClass == MBindings.class) {
 			switch (baseFeatureID) {
-			case CommandsPackageImpl.BINDINGS__BINDING_CONTEXTS: return BasicPackageImpl.PART_DESCRIPTOR__BINDING_CONTEXTS;
-			default: return -1;
+			case CommandsPackageImpl.BINDINGS__BINDING_CONTEXTS:
+				return BasicPackageImpl.PART_DESCRIPTOR__BINDING_CONTEXTS;
+			default:
+				return -1;
 			}
 		}
 		return super.eDerivedStructuralFeatureID(baseFeatureID, baseClass);
@@ -1089,23 +1169,28 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	public int eDerivedOperationID(int baseOperationID, Class<?> baseClass) {
 		if (baseClass == MLocalizable.class) {
 			switch (baseOperationID) {
-			case UiPackageImpl.LOCALIZABLE___UPDATE_LOCALIZATION: return BasicPackageImpl.PART_DESCRIPTOR___UPDATE_LOCALIZATION;
-			default: return -1;
+			case UiPackageImpl.LOCALIZABLE___UPDATE_LOCALIZATION:
+				return BasicPackageImpl.PART_DESCRIPTOR___UPDATE_LOCALIZATION;
+			default:
+				return -1;
 			}
 		}
 		if (baseClass == MUILabel.class) {
 			switch (baseOperationID) {
-			default: return -1;
+			default:
+				return -1;
 			}
 		}
 		if (baseClass == MHandlerContainer.class) {
 			switch (baseOperationID) {
-			default: return -1;
+			default:
+				return -1;
 			}
 		}
 		if (baseClass == MBindings.class) {
 			switch (baseOperationID) {
-			default: return -1;
+			default:
+				return -1;
 			}
 		}
 		return super.eDerivedOperationID(baseOperationID, baseClass);
@@ -1133,7 +1218,8 @@ public class PartDescriptorImpl extends ApplicationElementImpl implements MPartD
 	 */
 	@Override
 	public String toString() {
-		if (eIsProxy()) return super.toString();
+		if (eIsProxy())
+			return super.toString();
 
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (label: "); //$NON-NLS-1$

@@ -40,9 +40,6 @@ public class ExtMethodPreferencePage extends PreferencePage implements IWorkbenc
 	private Combo methodType;
 	private Control internal, external;
 
-	/*
-	 * @see PreferencePage#createContents(Composite)
-	 */
 	@Override
 	protected Control createContents(Composite parent) {
 		Composite composite = new Composite(parent, SWT.NULL);
@@ -108,7 +105,7 @@ public class ExtMethodPreferencePage extends PreferencePage implements IWorkbenc
 		ssh2Link.getControl().setLayoutData(data);
 
 		initializeDefaults();
-        PlatformUI.getWorkbench().getHelpSystem().setHelp(getControl(), IHelpContextIds.EXT_PREFERENCE_PAGE);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(getControl(), IHelpContextIds.EXT_PREFERENCE_PAGE);
 		Dialog.applyDialogFont(parent);
 		return composite;
 	}
@@ -195,9 +192,9 @@ public class ExtMethodPreferencePage extends PreferencePage implements IWorkbenc
 		data.horizontalAlignment = GridData.FILL;
 		cvsServer.setLayoutData(data);
 		
-        PlatformUI.getWorkbench().getHelpSystem().setHelp(cvsRsh, IHelpContextIds.EXT_PREFERENCE_RSH);
-        PlatformUI.getWorkbench().getHelpSystem().setHelp(cvsRshParameters, IHelpContextIds.EXT_PREFERENCE_PARAM);
-        PlatformUI.getWorkbench().getHelpSystem().setHelp(cvsServer, IHelpContextIds.EXT_PREFERENCE_SERVER);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(cvsRsh, IHelpContextIds.EXT_PREFERENCE_RSH);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(cvsRshParameters, IHelpContextIds.EXT_PREFERENCE_PARAM);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(cvsServer, IHelpContextIds.EXT_PREFERENCE_SERVER);
 		return composite;
 	}
 	
@@ -213,20 +210,14 @@ public class ExtMethodPreferencePage extends PreferencePage implements IWorkbenc
 	/*
 	 * Set CVS_RSH program
 	 */
-	 protected void setCvsRshText(String s) {
-	 	cvsRsh.setText(s);
-	 }
+	protected void setCvsRshText(String s) {
+		cvsRsh.setText(s);
+	}
 	
-	/*
-	 * @see IWorkbenchPreferencePage#init(IWorkbench)
-	 */
 	@Override
 	public void init(IWorkbench workbench) {
 	}
 	
-	/*
-	 * @see IPreferencePage#performOk()
-	 */
 	@Override
 	public boolean performOk() {
 		IPreferenceStore store = getPreferenceStore();
@@ -247,22 +238,19 @@ public class ExtMethodPreferencePage extends PreferencePage implements IWorkbenc
 		CVSUIPlugin.getPlugin().savePluginPreferences();
 		return super.performOk();
 	}
-    
-	/* 
-     * @see PreferencePage#performDefaults()
-     */
-    @Override
+	
+	@Override
 	protected void performDefaults() {
-        IPreferenceStore store = getPreferenceStore();
+		IPreferenceStore store = getPreferenceStore();
 		String rsh = store.getDefaultString(ICVSUIConstants.PREF_CVS_RSH);
 		String parameter = store.getDefaultString(ICVSUIConstants.PREF_CVS_RSH_PARAMETERS);
 		String server = store.getDefaultString(ICVSUIConstants.PREF_CVS_SERVER);
 		String method = store.getDefaultString(ICVSUIConstants.PREF_EXT_CONNECTION_METHOD_PROXY);
 		initializeDefaults(rsh, parameter, server, method);
-        super.performDefaults();
-    }
-    
-    private void initializeDefaults(String rsh, String parameters, String server, String method) {
+		super.performDefaults();
+	}
+	
+	private void initializeDefaults(String rsh, String parameters, String server, String method) {
 		cvsRsh.setText(rsh);
 		cvsRshParameters.setText(parameters);
 		cvsServer.setText(server);
@@ -281,11 +269,8 @@ public class ExtMethodPreferencePage extends PreferencePage implements IWorkbenc
 		useExternal.setSelection(method.equals("ext")); //$NON-NLS-1$
 		useInternal.setSelection(!method.equals("ext")); //$NON-NLS-1$
 		updateEnablements();
-    }
-    
-	/*
-	 * @see PreferencePage#doGetPreferenceStore()
-	 */
+	}
+	
 	@Override
 	protected IPreferenceStore doGetPreferenceStore() {
 		return CVSUIPlugin.getPlugin().getPreferenceStore();

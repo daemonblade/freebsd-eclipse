@@ -14,15 +14,10 @@
 package org.eclipse.e4.ui.model.application.ui.menu.impl;
 
 import org.eclipse.e4.ui.model.application.MContribution;
-
 import org.eclipse.e4.ui.model.application.impl.ApplicationPackageImpl;
-
 import org.eclipse.e4.ui.model.application.ui.menu.MDynamicMenuContribution;
-
 import org.eclipse.emf.common.notify.Notification;
-
 import org.eclipse.emf.ecore.EClass;
-
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 
 /**
@@ -108,6 +103,7 @@ public class DynamicMenuContributionImpl extends MenuItemImpl implements MDynami
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public String getContributionURI() {
 		return contributionURI;
 	}
@@ -118,11 +114,13 @@ public class DynamicMenuContributionImpl extends MenuItemImpl implements MDynami
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public void setContributionURI(String newContributionURI) {
 		String oldContributionURI = contributionURI;
 		contributionURI = newContributionURI;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI, oldContributionURI, contributionURI));
+			eNotify(new ENotificationImpl(this, Notification.SET,
+					MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI, oldContributionURI, contributionURI));
 	}
 
 	/**
@@ -130,6 +128,7 @@ public class DynamicMenuContributionImpl extends MenuItemImpl implements MDynami
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public Object getObject() {
 		return object;
 	}
@@ -139,11 +138,13 @@ public class DynamicMenuContributionImpl extends MenuItemImpl implements MDynami
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setObject(Object newObject) {
 		Object oldObject = object;
 		object = newObject;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT, oldObject, object));
+			eNotify(new ENotificationImpl(this, Notification.SET, MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT,
+					oldObject, object));
 	}
 
 	/**
@@ -154,10 +155,10 @@ public class DynamicMenuContributionImpl extends MenuItemImpl implements MDynami
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI:
-				return getContributionURI();
-			case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT:
-				return getObject();
+		case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI:
+			return getContributionURI();
+		case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT:
+			return getObject();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -170,12 +171,12 @@ public class DynamicMenuContributionImpl extends MenuItemImpl implements MDynami
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI:
-				setContributionURI((String)newValue);
-				return;
-			case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT:
-				setObject(newValue);
-				return;
+		case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI:
+			setContributionURI((String) newValue);
+			return;
+		case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT:
+			setObject(newValue);
+			return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -188,12 +189,12 @@ public class DynamicMenuContributionImpl extends MenuItemImpl implements MDynami
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI:
-				setContributionURI(CONTRIBUTION_URI_EDEFAULT);
-				return;
-			case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT:
-				setObject(OBJECT_EDEFAULT);
-				return;
+		case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI:
+			setContributionURI(CONTRIBUTION_URI_EDEFAULT);
+			return;
+		case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT:
+			setObject(OBJECT_EDEFAULT);
+			return;
 		}
 		super.eUnset(featureID);
 	}
@@ -206,10 +207,11 @@ public class DynamicMenuContributionImpl extends MenuItemImpl implements MDynami
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI:
-				return CONTRIBUTION_URI_EDEFAULT == null ? contributionURI != null : !CONTRIBUTION_URI_EDEFAULT.equals(contributionURI);
-			case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT:
-				return OBJECT_EDEFAULT == null ? object != null : !OBJECT_EDEFAULT.equals(object);
+		case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI:
+			return CONTRIBUTION_URI_EDEFAULT == null ? contributionURI != null
+					: !CONTRIBUTION_URI_EDEFAULT.equals(contributionURI);
+		case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT:
+			return OBJECT_EDEFAULT == null ? object != null : !OBJECT_EDEFAULT.equals(object);
 		}
 		return super.eIsSet(featureID);
 	}
@@ -223,9 +225,12 @@ public class DynamicMenuContributionImpl extends MenuItemImpl implements MDynami
 	public int eBaseStructuralFeatureID(int derivedFeatureID, Class<?> baseClass) {
 		if (baseClass == MContribution.class) {
 			switch (derivedFeatureID) {
-				case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI: return ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI;
-				case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT: return ApplicationPackageImpl.CONTRIBUTION__OBJECT;
-				default: return -1;
+			case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI:
+				return ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI;
+			case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT:
+				return ApplicationPackageImpl.CONTRIBUTION__OBJECT;
+			default:
+				return -1;
 			}
 		}
 		return super.eBaseStructuralFeatureID(derivedFeatureID, baseClass);
@@ -240,9 +245,12 @@ public class DynamicMenuContributionImpl extends MenuItemImpl implements MDynami
 	public int eDerivedStructuralFeatureID(int baseFeatureID, Class<?> baseClass) {
 		if (baseClass == MContribution.class) {
 			switch (baseFeatureID) {
-				case ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI: return MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI;
-				case ApplicationPackageImpl.CONTRIBUTION__OBJECT: return MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT;
-				default: return -1;
+			case ApplicationPackageImpl.CONTRIBUTION__CONTRIBUTION_URI:
+				return MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__CONTRIBUTION_URI;
+			case ApplicationPackageImpl.CONTRIBUTION__OBJECT:
+				return MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION__OBJECT;
+			default:
+				return -1;
 			}
 		}
 		return super.eDerivedStructuralFeatureID(baseFeatureID, baseClass);
@@ -255,7 +263,8 @@ public class DynamicMenuContributionImpl extends MenuItemImpl implements MDynami
 	 */
 	@Override
 	public String toString() {
-		if (eIsProxy()) return super.toString();
+		if (eIsProxy())
+			return super.toString();
 
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (contributionURI: "); //$NON-NLS-1$

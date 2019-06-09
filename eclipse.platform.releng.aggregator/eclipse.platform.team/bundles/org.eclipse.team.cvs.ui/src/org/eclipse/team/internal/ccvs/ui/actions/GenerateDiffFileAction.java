@@ -36,10 +36,7 @@ import org.eclipse.ui.PlatformUI;
  * by a create patch command in the compare viewer.
  */
 public class GenerateDiffFileAction extends WorkspaceTraversalAction{
-    
-	/** (Non-javadoc)
-	 * Method declared on IActionDelegate.
-	 */
+	
 	@Override
 	public void execute(IAction action) {
 
@@ -60,66 +57,57 @@ public class GenerateDiffFileAction extends WorkspaceTraversalAction{
 		}
 	}
 
-	 private IResource[] getDeepResourcesToPatch(IProgressMonitor monitor) throws CoreException {
-	        ResourceMapping[] mappings = getCVSResourceMappings();
+	private IResource[] getDeepResourcesToPatch(IProgressMonitor monitor) throws CoreException {
+		ResourceMapping[] mappings = getCVSResourceMappings();
 		List<IResource> roots = new ArrayList<>();
-	        for (int i = 0; i < mappings.length; i++) {
-	            ResourceMapping mapping = mappings[i];
-	            ResourceTraversal[] traversals = mapping.getTraversals(
-	            		SubscriberResourceMappingContext.createContext(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber()), 
-	            		monitor);
-	            for (int j = 0; j < traversals.length; j++) {
-	                ResourceTraversal traversal = traversals[j];
-	                IResource[] resources = traversal.getResources();
-	                if (traversal.getDepth() == IResource.DEPTH_INFINITE) {
-	                    roots.addAll(Arrays.asList(resources));
-	                } else if (traversal.getDepth() == IResource.DEPTH_ZERO) {
-	                    collectShallowFiles(resources, roots);
-	                } else if (traversal.getDepth() == IResource.DEPTH_ONE) {
-	                    collectShallowFiles(resources, roots);
-	                    for (int k = 0; k < resources.length; k++) {
-	                        IResource resource = resources[k];
-	                        if (resource.getType() != IResource.FILE) {
-	                            collectShallowFiles(members(resource), roots);
-	                        }
-	                    }
-	                }
-	            }
-	        }
-	        return roots.toArray(new IResource[roots.size()]);
-	    }
-	 
+		for (int i = 0; i < mappings.length; i++) {
+			ResourceMapping mapping = mappings[i];
+			ResourceTraversal[] traversals = mapping.getTraversals(
+					SubscriberResourceMappingContext.createContext(CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber()), 
+					monitor);
+			for (int j = 0; j < traversals.length; j++) {
+				ResourceTraversal traversal = traversals[j];
+				IResource[] resources = traversal.getResources();
+				if (traversal.getDepth() == IResource.DEPTH_INFINITE) {
+					roots.addAll(Arrays.asList(resources));
+				} else if (traversal.getDepth() == IResource.DEPTH_ZERO) {
+					collectShallowFiles(resources, roots);
+				} else if (traversal.getDepth() == IResource.DEPTH_ONE) {
+					collectShallowFiles(resources, roots);
+					for (int k = 0; k < resources.length; k++) {
+						IResource resource = resources[k];
+						if (resource.getType() != IResource.FILE) {
+							collectShallowFiles(members(resource), roots);
+						}
+					}
+				}
+			}
+		}
+		return roots.toArray(new IResource[roots.size()]);
+	}
+	
 	private void collectShallowFiles(IResource[] resources, List<IResource> roots) {
-	        for (int k = 0; k < resources.length; k++) {
-	            IResource resource = resources[k];
-	            if (resource.getType() == IResource.FILE)
-	                roots.add(resource);
-	        }
-	    }
-	   
-	   private IResource[] members(IResource resource) throws CoreException {
-	        return CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().members(resource);
-	    }
-	/**
-	 * @see org.eclipse.team.internal.ccvs.ui.actions.WorkspaceAction#isEnabledForMultipleResources()
-	 */
+		for (int k = 0; k < resources.length; k++) {
+			IResource resource = resources[k];
+			if (resource.getType() == IResource.FILE)
+				roots.add(resource);
+		}
+	}
+	
+	private IResource[] members(IResource resource) throws CoreException {
+		return CVSProviderPlugin.getPlugin().getCVSWorkspaceSubscriber().members(resource);
+	}
 	@Override
 	protected boolean isEnabledForMultipleResources() {
 			return true;
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.ui.actions.WorkspaceAction#isEnabledForUnmanagedResources()
-	 */
 	@Override
 	protected boolean isEnabledForUnmanagedResources() {
 		return true;
 	}
 
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#getId()
-	 */
 	@Override
 	public String getId() {
 		return ICVSUIConstants.CMD_CREATEPATCH;

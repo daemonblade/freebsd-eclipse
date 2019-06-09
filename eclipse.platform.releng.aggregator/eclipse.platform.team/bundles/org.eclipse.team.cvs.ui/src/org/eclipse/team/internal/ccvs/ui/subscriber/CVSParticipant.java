@@ -39,9 +39,6 @@ public class CVSParticipant extends SubscriberParticipant implements IChangeSetP
 	
 	private CVSChangeSetCapability capability;
 
-    /* (non-Javadoc)
-	 * @see org.eclipse.team.ui.synchronize.subscribers.SubscriberParticipant#initializeConfiguration(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
-	 */
 	@Override
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
 		super.initializeConfiguration(configuration);
@@ -50,141 +47,129 @@ public class CVSParticipant extends SubscriberParticipant implements IChangeSetP
 		configuration.addLabelDecorator(labelDecorator);
 	}
 	
-	/* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.SubscriberParticipant#updateLabels(org.eclipse.team.ui.synchronize.ISynchronizeModelElement, org.eclipse.compare.CompareConfiguration, org.eclipse.core.runtime.IProgressMonitor)
-     */
-    @Override
+	@Override
 	public void prepareCompareInput(ISynchronizeModelElement element, CompareConfiguration config, IProgressMonitor monitor) throws TeamException {
-        monitor.beginTask(null, 100);
-        deriveBaseContentsFromLocal(element, Policy.subMonitorFor(monitor, 10));
-        super.prepareCompareInput(element, config, Policy.subMonitorFor(monitor, 80));
-        updateLabelsForCVS(element, config, Policy.subMonitorFor(monitor, 10));
-        monitor.done();
-    }
-
-    /**
-     * Helper method for updating compare editor labels
-     */
-    protected static void updateLabelsForCVS(ISynchronizeModelElement element, CompareConfiguration config, IProgressMonitor monitor) {
-        // Add the author to the remote or base
-        if (TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SHOW_AUTHOR_IN_COMPARE_EDITOR)) {
-	        SyncInfo info = getSyncInfo(element);
-	        if (info != null) {
-	    		final IResourceVariant remote = info.getRemote();
-	    		final IResourceVariant base = info.getBase();
-	    		String remoteAuthor = null;
-	    		if (remote != null && !remote.isContainer()) {
-	    		    try {
-	                    ILogEntry entry = ((ICVSRemoteFile)remote).getLogEntry(monitor);
-	                    remoteAuthor = entry.getAuthor();
-	                    config.setRightLabel(NLS.bind(CVSUIMessages.CVSParticipant_0, new String[] { remote.getContentIdentifier(), remoteAuthor })); 
-	                } catch (TeamException e) {
-	                    CVSUIPlugin.log(e);
-	                }
-	    		}
-	    		if (base != null && !base.isContainer()) {
-	    		    try {
-                        String baseAuthor;
-                        if (remoteAuthor != null && remote.getContentIdentifier().equals(base.getContentIdentifier())) {
-                            baseAuthor = remoteAuthor;
-                        } else {
-                            ILogEntry entry = ((ICVSRemoteFile)base).getLogEntry(monitor);
-                            baseAuthor = entry.getAuthor();
-                        }
-                        config.setAncestorLabel(NLS.bind(CVSUIMessages.CVSParticipant_1, new String[] { base.getContentIdentifier(), baseAuthor })); 
-                    } catch (TeamException e) {
-                        CVSUIPlugin.log(e);
-                    }
-	    		}
-	        }
-        }
-    }
-    
-	protected static SyncInfo getSyncInfo(ISynchronizeModelElement element) {
-	    if (element instanceof IAdaptable) {
-		    return ((IAdaptable)element).getAdapter(SyncInfo.class);
-	    }
-	    return null;
+		monitor.beginTask(null, 100);
+		deriveBaseContentsFromLocal(element, Policy.subMonitorFor(monitor, 10));
+		super.prepareCompareInput(element, config, Policy.subMonitorFor(monitor, 80));
+		updateLabelsForCVS(element, config, Policy.subMonitorFor(monitor, 10));
+		monitor.done();
 	}
 
-    /**
-     * If the local is not modified and the base matches the local then 
-     * cache the local contents as the contents of the base.
-     * @param element
-     * @throws CoreException
-     * @throws TeamException
-     */
-    public static void deriveBaseContentsFromLocal(ISynchronizeModelElement element, IProgressMonitor monitor) throws TeamException {
-        SyncInfo info = getSyncInfo(element);
-        if (info == null) 
-            return;
-        
-        // We need a base that is a file and a local that is a file
-        IResource local = info.getLocal();
-        IResourceVariant base = info.getBase();
-        if (base == null || base.isContainer() || local.getType() != IResource.FILE || !local.exists())
-            return;
-        
-        // We can only use the local contents for incoming changes.
-        // Outgoing or conflicting changes imply that the local has changed
-        if ((info.getKind() & SyncInfo.DIRECTION_MASK) != SyncInfo.INCOMING)
-            return;
-        
-        try {
-            RemoteFile remoteFile = (RemoteFile)base;
-            if (!remoteFile.isContentsCached())
-                (remoteFile).setContents((IFile)local, monitor);
-        } catch (CoreException e) {
-            if (e.getStatus().getCode() == IResourceStatus.RESOURCE_NOT_FOUND) {
-                // The file must have just been deleted
-                return;
-            }
-            throw CVSException.wrapException(e);
-        }
-    }
-    
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant#getPreferencePages()
-     */
-    @Override
+	/**
+	 * Helper method for updating compare editor labels
+	 */
+	protected static void updateLabelsForCVS(ISynchronizeModelElement element, CompareConfiguration config, IProgressMonitor monitor) {
+		// Add the author to the remote or base
+		if (TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.SHOW_AUTHOR_IN_COMPARE_EDITOR)) {
+			SyncInfo info = getSyncInfo(element);
+			if (info != null) {
+				final IResourceVariant remote = info.getRemote();
+				final IResourceVariant base = info.getBase();
+				String remoteAuthor = null;
+				if (remote != null && !remote.isContainer()) {
+					try {
+						ILogEntry entry = ((ICVSRemoteFile)remote).getLogEntry(monitor);
+						remoteAuthor = entry.getAuthor();
+						config.setRightLabel(NLS.bind(CVSUIMessages.CVSParticipant_0, new String[] { remote.getContentIdentifier(), remoteAuthor })); 
+					} catch (TeamException e) {
+						CVSUIPlugin.log(e);
+					}
+				}
+				if (base != null && !base.isContainer()) {
+					try {
+						String baseAuthor;
+						if (remoteAuthor != null && remote.getContentIdentifier().equals(base.getContentIdentifier())) {
+							baseAuthor = remoteAuthor;
+						} else {
+							ILogEntry entry = ((ICVSRemoteFile)base).getLogEntry(monitor);
+							baseAuthor = entry.getAuthor();
+						}
+						config.setAncestorLabel(NLS.bind(CVSUIMessages.CVSParticipant_1, new String[] { base.getContentIdentifier(), baseAuthor })); 
+					} catch (TeamException e) {
+						CVSUIPlugin.log(e);
+					}
+				}
+			}
+		}
+	}
+	
+	protected static SyncInfo getSyncInfo(ISynchronizeModelElement element) {
+		if (element instanceof IAdaptable) {
+			return ((IAdaptable)element).getAdapter(SyncInfo.class);
+		}
+		return null;
+	}
+
+	/**
+	 * If the local is not modified and the base matches the local then 
+	 * cache the local contents as the contents of the base.
+	 * @param element
+	 * @throws CoreException
+	 * @throws TeamException
+	 */
+	public static void deriveBaseContentsFromLocal(ISynchronizeModelElement element, IProgressMonitor monitor) throws TeamException {
+		SyncInfo info = getSyncInfo(element);
+		if (info == null) 
+			return;
+		
+		// We need a base that is a file and a local that is a file
+		IResource local = info.getLocal();
+		IResourceVariant base = info.getBase();
+		if (base == null || base.isContainer() || local.getType() != IResource.FILE || !local.exists())
+			return;
+		
+		// We can only use the local contents for incoming changes.
+		// Outgoing or conflicting changes imply that the local has changed
+		if ((info.getKind() & SyncInfo.DIRECTION_MASK) != SyncInfo.INCOMING)
+			return;
+		
+		try {
+			RemoteFile remoteFile = (RemoteFile)base;
+			if (!remoteFile.isContentsCached())
+				(remoteFile).setContents((IFile)local, monitor);
+		} catch (CoreException e) {
+			if (e.getStatus().getCode() == IResourceStatus.RESOURCE_NOT_FOUND) {
+				// The file must have just been deleted
+				return;
+			}
+			throw CVSException.wrapException(e);
+		}
+	}
+	
+	@Override
 	public PreferencePage[] getPreferencePages() {
-        return addCVSPreferencePages(super.getPreferencePages());
-    }
+		return addCVSPreferencePages(super.getPreferencePages());
+	}
 
-    public static PreferencePage[] addCVSPreferencePages(PreferencePage[] inheritedPages) {
-        PreferencePage[] pages = new PreferencePage[inheritedPages.length + 1];
-        for (int i = 0; i < inheritedPages.length; i++) {
-            pages[i] = inheritedPages[i];
-        }
-        pages[pages.length - 1] = new ComparePreferencePage();
-        pages[pages.length - 1].setTitle(CVSUIMessages.CVSParticipant_2); 
-        return pages;
-    }
-    
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant#getChangeSetCapability()
-     */
-    @Override
+	public static PreferencePage[] addCVSPreferencePages(PreferencePage[] inheritedPages) {
+		PreferencePage[] pages = new PreferencePage[inheritedPages.length + 1];
+		for (int i = 0; i < inheritedPages.length; i++) {
+			pages[i] = inheritedPages[i];
+		}
+		pages[pages.length - 1] = new ComparePreferencePage();
+		pages[pages.length - 1].setTitle(CVSUIMessages.CVSParticipant_2); 
+		return pages;
+	}
+	
+	@Override
 	public ChangeSetCapability getChangeSetCapability() {
-        if (capability == null) {
-            capability = createChangeSetCapability();
-        }
-        return capability;
-    }
+		if (capability == null) {
+			capability = createChangeSetCapability();
+		}
+		return capability;
+	}
 
-    /**
-     * Create the change set capability for this particpant.
-     * @return the created capability
-     */
-    protected CVSChangeSetCapability createChangeSetCapability() {
-        return new CVSChangeSetCapability();
-    }
-    
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant#isViewerContributionsSupported()
-     */
-    @Override
+	/**
+	 * Create the change set capability for this particpant.
+	 * @return the created capability
+	 */
+	protected CVSChangeSetCapability createChangeSetCapability() {
+		return new CVSChangeSetCapability();
+	}
+	
+	@Override
 	protected boolean isViewerContributionsSupported() {
-        return true;
-    }
+		return true;
+	}
 }

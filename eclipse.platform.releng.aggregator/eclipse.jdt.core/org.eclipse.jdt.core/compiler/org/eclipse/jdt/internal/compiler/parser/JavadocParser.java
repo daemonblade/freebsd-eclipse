@@ -523,6 +523,9 @@ public class JavadocParser extends AbstractCommentParser {
 				if (length == TAG_AUTHOR_LENGTH && CharOperation.equals(TAG_AUTHOR, tagName, 0, length)) {
 					this.tagValue = TAG_AUTHOR_VALUE;
 					this.tagWaitingForDescription = this.tagValue;
+				}else if (length == TAG_API_NOTE_LENGTH && CharOperation.equals(TAG_API_NOTE, tagName, 0, length)) {
+					this.tagValue = TAG_API_NOTE_VALUE;
+					this.tagWaitingForDescription = this.tagValue;
 				}
 				break;
 			case 'c':
@@ -557,8 +560,18 @@ public class JavadocParser extends AbstractCommentParser {
 					}
 				}
 				break;
+			case 'h':
+				if (length == TAG_HIDDEN_LENGTH && CharOperation.equals(TAG_HIDDEN, tagName, 0, length)) {
+					valid = true;
+					this.tagValue = TAG_HIDDEN_VALUE;
+				}
+				break;
 			case 'i':
-				if (length == TAG_INHERITDOC_LENGTH && CharOperation.equals(TAG_INHERITDOC, tagName, 0, length)) {
+				if (length == TAG_INDEX_LENGTH && CharOperation.equals(TAG_INDEX, tagName, 0, length)) {
+					valid = true;
+					this.tagValue = TAG_INDEX_VALUE;
+					this.tagWaitingForDescription = this.tagValue;
+				} else if (length == TAG_INHERITDOC_LENGTH && CharOperation.equals(TAG_INHERITDOC, tagName, 0, length)) {
 					// https://bugs.eclipse.org/bugs/show_bug.cgi?id=247037, @inheritDoc usage is illegal
 					// outside of few block tags and the main description.
 					switch (this.lastBlockTagValue) {
@@ -584,6 +597,12 @@ public class JavadocParser extends AbstractCommentParser {
 							}
 					}
 					this.tagValue = TAG_INHERITDOC_VALUE;
+				} else if (length == TAG_IMPL_SPEC_LENGTH && CharOperation.equals(TAG_IMPL_SPEC, tagName, 0, length)) {
+					this.tagValue = TAG_IMPL_SPEC_VALUE;
+					this.tagWaitingForDescription = this.tagValue;
+				} else if (length == TAG_IMPL_NOTE_LENGTH && CharOperation.equals(TAG_IMPL_NOTE, tagName, 0, length)) {
+					this.tagValue = TAG_IMPL_NOTE_VALUE;
+					this.tagWaitingForDescription = this.tagValue;
 				}
 				break;
 			case 'l':
@@ -608,8 +627,7 @@ public class JavadocParser extends AbstractCommentParser {
 					if (!this.inlineTagStarted) {
 						valid = parseParam();
 					}
-				}
-				if (length == TAG_PROVIDES_LENGTH && CharOperation.equals(TAG_PROVIDES, tagName, 0, length)) {
+				} else if (length == TAG_PROVIDES_LENGTH && CharOperation.equals(TAG_PROVIDES, tagName, 0, length)) {
 					this.tagValue = TAG_PROVIDES_VALUE;
 					this.tagWaitingForDescription = this.tagValue;
 				}
@@ -639,6 +657,12 @@ public class JavadocParser extends AbstractCommentParser {
 					this.tagWaitingForDescription = this.tagValue;
 				} else if (length == TAG_SINCE_LENGTH && CharOperation.equals(TAG_SINCE, tagName, 0, length)) {
 					this.tagValue = TAG_SINCE_VALUE;
+					this.tagWaitingForDescription = this.tagValue;
+				} else if (length == TAG_SYSTEM_PROPERTY_LENGTH && CharOperation.equals(TAG_SYSTEM_PROPERTY, tagName, 0, length)) {
+					this.tagValue = TAG_SYSTEM_PROPERTY_VALUE;
+					this.tagWaitingForDescription = this.tagValue;
+				} else if (length == TAG_SUMMARY_LENGTH && CharOperation.equals(TAG_SUMMARY, tagName, 0, length)) {
+					this.tagValue = TAG_SUMMARY_VALUE;
 					this.tagWaitingForDescription = this.tagValue;
 				}
 				break;

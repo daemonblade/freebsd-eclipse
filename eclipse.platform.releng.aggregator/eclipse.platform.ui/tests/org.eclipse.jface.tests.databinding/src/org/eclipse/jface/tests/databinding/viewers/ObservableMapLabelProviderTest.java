@@ -20,7 +20,7 @@ import static org.junit.Assert.assertNull;
 
 import java.util.HashSet;
 
-import org.eclipse.core.databinding.beans.BeansObservables;
+import org.eclipse.core.databinding.beans.typed.BeanProperties;
 import org.eclipse.core.databinding.observable.set.WritableSet;
 import org.eclipse.jface.databinding.viewers.ObservableMapLabelProvider;
 import org.eclipse.jface.examples.databinding.ModelObject;
@@ -32,40 +32,42 @@ import org.junit.Test;
  */
 public class ObservableMapLabelProviderTest extends AbstractDefaultRealmTestCase {
 
-    @Test
+	@Test
 	public void testGetColumnText() throws Exception {
-        WritableSet set = new WritableSet(new HashSet(), Item.class);
-        Item item = new Item();
-        String value = "value";
-        item.setValue(value);
-        set.add(item);
+		WritableSet<Item> set = new WritableSet<>(new HashSet<>(), Item.class);
+		Item item = new Item();
+		String value = "value";
+		item.setValue(value);
+		set.add(item);
 
-        ObservableMapLabelProvider labelProvider = new ObservableMapLabelProvider(BeansObservables.observeMap(set, Item.class, "value"));
-        assertEquals(item.getValue(), labelProvider.getColumnText(item, 0));
-    }
+		ObservableMapLabelProvider labelProvider = new ObservableMapLabelProvider(
+				BeanProperties.value(Item.class, "value").observeDetail(set));
+		assertEquals(item.getValue(), labelProvider.getColumnText(item, 0));
+	}
 
-    @Test
+	@Test
 	public void testGetColumnTextNullValue() throws Exception {
-        WritableSet set = new WritableSet(new HashSet(), Item.class);
-        Item item = new Item();
-        set.add(item);
+		WritableSet<Item> set = new WritableSet<>(new HashSet<>(), Item.class);
+		Item item = new Item();
+		set.add(item);
 
-        ObservableMapLabelProvider labelProvider = new ObservableMapLabelProvider(BeansObservables.observeMap(set, Item.class, "value"));
-        assertNull(item.getValue());
-        assertEquals("", labelProvider.getColumnText(item, 0));
-    }
+		ObservableMapLabelProvider labelProvider = new ObservableMapLabelProvider(
+				BeanProperties.value(Item.class, "value").observeDetail(set));
+		assertNull(item.getValue());
+		assertEquals("", labelProvider.getColumnText(item, 0));
+	}
 
-    private static class Item extends ModelObject {
-        private String value;
+	private static class Item extends ModelObject {
+		private String value;
 
-        public String getValue() {
-            return value;
-        }
+		public String getValue() {
+			return value;
+		}
 
-        public void setValue(String value) {
-            String old = this.value;
+		public void setValue(String value) {
+			String old = this.value;
 
-            firePropertyChange("value", old, this.value = value);
-        }
-    }
+			firePropertyChange("value", old, this.value = value);
+		}
+	}
 }

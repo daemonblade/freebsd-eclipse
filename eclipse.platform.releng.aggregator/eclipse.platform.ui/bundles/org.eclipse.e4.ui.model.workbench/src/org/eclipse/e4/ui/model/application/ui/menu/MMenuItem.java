@@ -13,7 +13,6 @@
  */
 package org.eclipse.e4.ui.model.application.ui.menu;
 
-
 /**
  * <!-- begin-user-doc -->
  * A representation of the model object '<em><b>Item</b></em>'.
@@ -32,5 +31,4 @@ package org.eclipse.e4.ui.model.application.ui.menu;
  * @generated
  */
 public interface MMenuItem extends MItem, MMenuElement {
-
 } // MMenuItem

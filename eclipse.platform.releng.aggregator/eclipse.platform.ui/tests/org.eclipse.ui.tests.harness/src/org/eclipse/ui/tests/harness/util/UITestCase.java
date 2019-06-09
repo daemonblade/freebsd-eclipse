@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,7 @@
  *     IBM Corporation - initial API and implementation
  *     Jeanderson Candido <http://jeandersonbc.github.io> - Bug 444070
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 474957
+ *     Paul Pazderski <paul-eclipse@ppazderski.de> - Bug 546537: improve compatibility with BlockJUnit4ClassRunner
  *******************************************************************************/
 package org.eclipse.ui.tests.harness.util;
 
@@ -37,6 +38,13 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.WorkbenchException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
+import org.junit.runner.RunWith;
+import org.junit.runners.BlockJUnit4ClassRunner;
 
 import junit.framework.TestCase;
 
@@ -59,46 +67,67 @@ public abstract class UITestCase extends TestCase {
 	}
 
 	class TestWindowListener implements IWindowListener {
-        private boolean enabled = true;
+		private boolean enabled = true;
 
-        public void setEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
+		public void setEnabled(boolean enabled) {
+			this.enabled = enabled;
+		}
 
-        @Override
+		@Override
 		public void windowActivated(IWorkbenchWindow window) {
-            // do nothing
-        }
+			// do nothing
+		}
 
-        @Override
+		@Override
 		public void windowDeactivated(IWorkbenchWindow window) {
-            // do nothing
-        }
+			// do nothing
+		}
 
-        @Override
+		@Override
 		public void windowClosed(IWorkbenchWindow window) {
-            if (enabled)
-                testWindows.remove(window);
-        }
+			if (enabled)
+				testWindows.remove(window);
+		}
 
-        @Override
+		@Override
 		public void windowOpened(IWorkbenchWindow window) {
-            if (enabled)
-                testWindows.add(window);
-        }
-    }
+			if (enabled)
+				testWindows.add(window);
+		}
+	}
 
-    protected IWorkbench fWorkbench;
+	protected IWorkbench fWorkbench;
 
-    private List<IWorkbenchWindow> testWindows;
+	private List<IWorkbenchWindow> testWindows;
 
-    private TestWindowListener windowListener;
+	private TestWindowListener windowListener;
 
-    public UITestCase(String testName) {
-        super(testName);
-        //		ErrorDialog.NO_UI = true;
-        testWindows = new ArrayList<>(3);
-    }
+	/**
+	 * Required to preserve the existing logging output when running tests with
+	 * {@link BlockJUnit4ClassRunner}.
+	 */
+	@Rule
+	public TestWatcher testWatcher = new TestWatcher() {
+		@Override
+		protected void starting(Description description) {
+			runningTest = description.getMethodName();
+		}
+		@Override
+		protected void finished(Description description) {
+			runningTest = null;
+		}
+	};
+	/**
+	 * Name of the currently executed test method. Only valid if test is executed
+	 * with {@link BlockJUnit4ClassRunner}.
+	 */
+	private String runningTest = null;
+
+	public UITestCase(String testName) {
+		super(testName);
+		//		ErrorDialog.NO_UI = true;
+		testWindows = new ArrayList<>(3);
+	}
 
 	/**
 	 * Fails the test due to the given throwable.
@@ -151,91 +180,102 @@ public abstract class UITestCase extends TestCase {
 	}
 
 	/**
-     * Adds a window listener to the workbench to keep track of
-     * opened test windows.
-     */
-    private void addWindowListener() {
-        windowListener = new TestWindowListener();
-        fWorkbench.addWindowListener(windowListener);
-    }
+	 * Adds a window listener to the workbench to keep track of
+	 * opened test windows.
+	 */
+	private void addWindowListener() {
+		windowListener = new TestWindowListener();
+		fWorkbench.addWindowListener(windowListener);
+	}
 
-    /**
-     * Removes the listener added by <code>addWindowListener</code>.
-     */
-    private void removeWindowListener() {
-        if (windowListener != null) {
-            fWorkbench.removeWindowListener(windowListener);
-        }
-    }
+	/**
+	 * Removes the listener added by <code>addWindowListener</code>.
+	 */
+	private void removeWindowListener() {
+		if (windowListener != null) {
+			fWorkbench.removeWindowListener(windowListener);
+		}
+	}
 
-    /**
-     * Outputs a trace message to the trace output device, if enabled.
-     * By default, trace messages are sent to <code>System.out</code>.
-     *
-     * @param msg the trace message
-     */
-    protected void trace(String msg) {
-        System.out.println(msg);
-    }
+	/**
+	 * Outputs a trace message to the trace output device, if enabled.
+	 * By default, trace messages are sent to <code>System.out</code>.
+	 *
+	 * @param msg the trace message
+	 */
+	protected void trace(String msg) {
+		System.out.println(msg);
+	}
 
-    /**
-     * Simple implementation of setUp. Subclasses are prevented
-     * from overriding this method to maintain logging consistency.
-     * doSetUp() should be overriden instead.
-     */
-    @Override
-	protected final void setUp() throws Exception {
-    	super.setUp();
+	/**
+	 * Simple implementation of setUp. Subclasses are prevented from overriding this
+	 * method to maintain logging consistency. doSetUp() should be overridden
+	 * instead.
+	 * <p>
+	 * This method is public and annotated with {@literal @}{@link Before} to setup
+	 * tests which are configured to {@link RunWith} JUnit4 runner.
+	 * </p>
+	 */
+	@Before
+	@Override
+	public final void setUp() throws Exception {
+		super.setUp();
 		fWorkbench = PlatformUI.getWorkbench();
-    	trace("----- " + this.getName()); //$NON-NLS-1$
-        trace(this.getName() + ": setUp..."); //$NON-NLS-1$
-        addWindowListener();
-        doSetUp();
+		String name = runningTest != null ? runningTest : this.getName();
+		trace(TestRunLogUtil.formatTestStartMessage(name));
+		addWindowListener();
+		doSetUp();
 
-    }
+	}
 
-    /**
-     * Sets up the fixture, for example, open a network connection.
-     * This method is called before a test is executed.
-     * The default implementation does nothing.
-     * Subclasses may extend.
-     */
-    protected void doSetUp() throws Exception {
-        // do nothing.
-    }
+	/**
+	 * Sets up the fixture, for example, open a network connection.
+	 * This method is called before a test is executed.
+	 * The default implementation does nothing.
+	 * Subclasses may extend.
+	 */
+	protected void doSetUp() throws Exception {
+		// do nothing.
+	}
 
-    /**
-     * Simple implementation of tearDown.  Subclasses are prevented
-     * from overriding this method to maintain logging consistency.
-     * doTearDown() should be overriden instead.
-     */
-    @Override
-	protected final void tearDown() throws Exception {
-        trace(this.getName() + ": tearDown...\n"); //$NON-NLS-1$
-        removeWindowListener();
-        doTearDown();
-    	fWorkbench = null;
-    }
+	/**
+	 * Simple implementation of tearDown. Subclasses are prevented from overriding
+	 * this method to maintain logging consistency. doTearDown() should be
+	 * overridden instead.
+	 * <p>
+	 * This method is public and annotated with {@literal @}{@link After} to setup
+	 * tests which are configured to {@link RunWith} JUnit4 runner.
+	 * </p>
+	 */
+	@After
+	@Override
+	public final void tearDown() throws Exception {
+		String name = runningTest != null ? runningTest : this.getName();
+		trace(TestRunLogUtil.formatTestFinishedMessage(name));
+		removeWindowListener();
+		doTearDown();
+		fWorkbench = null;
+	}
 
-    /**
-     * Tears down the fixture, for example, close a network connection.
-     * This method is called after a test is executed.
-     * The default implementation closes all test windows, processing events both before
-     * and after doing so.
-     * Subclasses may extend.
-     */
-    protected void doTearDown() throws Exception {
-        processEvents();
-        closeAllTestWindows();
-        processEvents();
-    }
+	/**
+	 * Tears down the fixture, for example, close a network connection.
+	 * This method is called after a test is executed.
+	 * The default implementation closes all test windows, processing events both before
+	 * and after doing so.
+	 * Subclasses may extend.
+	 */
+	protected void doTearDown() throws Exception {
+		processEvents();
+		closeAllTestWindows();
+		processEvents();
+	}
 
 	public static void processEvents() {
-        Display display = PlatformUI.getWorkbench().getDisplay();
-        if (display != null)
-            while (display.readAndDispatch())
-                ;
-    }
+		Display display = PlatformUI.getWorkbench().getDisplay();
+		if (display != null)
+			while (display.readAndDispatch())
+				;
+	}
 
 	/**
 	 * Utility for waiting until the execution of jobs of any family has
@@ -355,9 +395,9 @@ public abstract class UITestCase extends TestCase {
 		}
 	}
 
-    protected static interface Condition {
-    	public boolean compute();
-    }
+	protected static interface Condition {
+		public boolean compute();
+	}
 
 	/**
 	 *
@@ -387,17 +427,17 @@ public abstract class UITestCase extends TestCase {
 		return true;
 	}
 
-    /**
-     * Open a test window with the empty perspective.
-     */
-    public IWorkbenchWindow openTestWindow() {
-        return openTestWindow(EmptyPerspective.PERSP_ID);
-    }
+	/**
+	 * Open a test window with the empty perspective.
+	 */
+	public IWorkbenchWindow openTestWindow() {
+		return openTestWindow(EmptyPerspective.PERSP_ID);
+	}
 
-    /**
-     * Open a test window with the provided perspective.
-     */
-    public IWorkbenchWindow openTestWindow(String perspectiveId) {
+	/**
+	 * Open a test window with the provided perspective.
+	 */
+	public IWorkbenchWindow openTestWindow(String perspectiveId) {
 		try {
 			IWorkbenchWindow window = fWorkbench.openWorkbenchWindow(
 					perspectiveId, getPageInput());
@@ -409,7 +449,7 @@ public abstract class UITestCase extends TestCase {
 		}
 	}
 
-    /**
+	/**
 	 * Try and process events until the new shell is the active shell. This may
 	 * never happen, so time out after a suitable period.
 	 *
@@ -425,66 +465,67 @@ public abstract class UITestCase extends TestCase {
 	/**
 	 * Close all test windows.
 	 */
-    public void closeAllTestWindows() {
+	public void closeAllTestWindows() {
 		List<IWorkbenchWindow> testWindowsCopy = new ArrayList<>(testWindows);
 		for (IWorkbenchWindow testWindow : testWindowsCopy) {
 			testWindow.close();
-        }
+		}
 		testWindows.clear();
-    }
+	}
 
-    /**
-     * Open a test page with the empty perspective in a window.
-     */
-    public IWorkbenchPage openTestPage(IWorkbenchWindow win) {
-        IWorkbenchPage[] pages = openTestPage(win, 1);
-        if (pages != null) {
-            return pages[0];
-        }
-        return null;
-    }
+	/**
+	 * Open a test page with the empty perspective in a window.
+	 */
+	public IWorkbenchPage openTestPage(IWorkbenchWindow win) {
+		IWorkbenchPage[] pages = openTestPage(win, 1);
+		if (pages != null) {
+			return pages[0];
+		}
+		return null;
+	}
 
-    /**
-     * Open "n" test pages with the empty perspective in a window.
-     */
-    public IWorkbenchPage[] openTestPage(IWorkbenchWindow win, int pageTotal) {
-        try {
-            IWorkbenchPage[] pages = new IWorkbenchPage[pageTotal];
-            IAdaptable input = getPageInput();
+	/**
+	 * Open "n" test pages with the empty perspective in a window.
+	 */
+	public IWorkbenchPage[] openTestPage(IWorkbenchWindow win, int pageTotal) {
+		try {
+			IWorkbenchPage[] pages = new IWorkbenchPage[pageTotal];
+			IAdaptable input = getPageInput();
 
-            for (int i = 0; i < pageTotal; i++) {
-                pages[i] = win.openPage(EmptyPerspective.PERSP_ID, input);
-            }
-            return pages;
-        } catch (WorkbenchException e) {
-        	fail("Problem opening test page", e);
-            return null;
-        }
-    }
+			for (int i = 0; i < pageTotal; i++) {
+				pages[i] = win.openPage(EmptyPerspective.PERSP_ID, input);
+			}
+			return pages;
+		} catch (WorkbenchException e) {
+			fail("Problem opening test page", e);
+			return null;
+		}
+	}
 
-    /**
-     * Close all pages within a window.
-     */
-    public void closeAllPages(IWorkbenchWindow window) {
-        IWorkbenchPage[] pages = window.getPages();
-        for (int i = 0; i < pages.length; i++)
-            pages[i].close();
-    }
+	/**
+	 * Close all pages within a window.
+	 */
+	public void closeAllPages(IWorkbenchWindow window) {
+		IWorkbenchPage[] pages = window.getPages();
+		for (IWorkbenchPage page : pages) {
+			page.close();
+		}
+	}
 
-    /**
-     * Set whether the window listener will manage opening and closing of created windows.
-     */
-    protected void manageWindows(boolean manage) {
-        windowListener.setEnabled(manage);
-    }
+	/**
+	 * Set whether the window listener will manage opening and closing of created windows.
+	 */
+	protected void manageWindows(boolean manage) {
+		windowListener.setEnabled(manage);
+	}
 
-    /**
-     * Returns the workbench.
-     *
-     * @return the workbench
-     * @since 3.1
-     */
-    protected IWorkbench getWorkbench() {
-        return fWorkbench;
-    }
+	/**
+	 * Returns the workbench.
+	 *
+	 * @return the workbench
+	 * @since 3.1
+	 */
+	protected IWorkbench getWorkbench() {
+		return fWorkbench;
+	}
 }

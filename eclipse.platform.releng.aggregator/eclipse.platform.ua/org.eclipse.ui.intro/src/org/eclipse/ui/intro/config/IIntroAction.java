@@ -22,7 +22,7 @@ import org.eclipse.ui.intro.IIntroSite;
  * An Intro action. Classes that implement this interface can be used as valid
  * value for the "class" parameter for the following intro url:
  * <p>
- * http://org.eclipse.ui.intro/runAction?pluginId=x.y.z&class=x.y.z.someClass
+ * http://org.eclipse.ui.intro/runAction?pluginId=x.y.z&amp;class=x.y.z.someClass
  * </p>
  *
  * @since 3.0
@@ -33,8 +33,8 @@ public interface IIntroAction {
      * Called to run this intro command. The properties represents the key=value
      * pairs extracted from the intro URL query.
      *
-     * @param site
-     * @param params
+     * @param site The part to execute the command on.
+     * @param params Parameters for the command as extracted from the URL.
      */
     public void run(IIntroSite site, Properties params);
 

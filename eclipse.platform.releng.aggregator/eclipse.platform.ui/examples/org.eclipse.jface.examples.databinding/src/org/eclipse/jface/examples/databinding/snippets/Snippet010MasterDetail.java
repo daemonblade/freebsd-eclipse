@@ -21,12 +21,12 @@ import java.beans.PropertyChangeSupport;
 
 import org.eclipse.core.databinding.DataBindingContext;
 import org.eclipse.core.databinding.UpdateValueStrategy;
-import org.eclipse.core.databinding.beans.BeanProperties;
+import org.eclipse.core.databinding.beans.typed.BeanProperties;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.databinding.observable.value.IObservableValue;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
-import org.eclipse.jface.databinding.swt.WidgetProperties;
-import org.eclipse.jface.databinding.viewers.ViewersObservables;
+import org.eclipse.jface.databinding.swt.typed.WidgetProperties;
+import org.eclipse.jface.databinding.viewers.typed.ViewerProperties;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.swt.SWT;
@@ -56,17 +56,16 @@ public class Snippet010MasterDetail {
 			Text name = new Text(shell, SWT.BORDER | SWT.READ_ONLY);
 
 			// 1. Observe changes in selection.
-			IObservableValue<Object> selection = ViewersObservables.observeSingleSelection(viewer);
+			IObservableValue<Person> selection = ViewerProperties.singleSelection(Person.class).observe(viewer);
 
 			// 2. Observe the name property of the current selection.
 			IObservableValue<String> detailObservable = BeanProperties
-					.value((Class<?>) selection.getValueType(), "name", String.class).observeDetail(selection);
+					.value(Person.class, "name", String.class).observeDetail(selection);
 
 			// 3. Bind the Text widget to the name detail (selection's
 			// name).
-			new DataBindingContext().bindValue((IObservableValue<String>) WidgetProperties.text(SWT.NONE).observe(name),
-					detailObservable, new UpdateValueStrategy<Object, String>(false, UpdateValueStrategy.POLICY_NEVER),
-					null);
+			new DataBindingContext().bindValue(WidgetProperties.text(SWT.NONE).observe(name), detailObservable,
+					new UpdateValueStrategy<>(false, UpdateValueStrategy.POLICY_NEVER), null);
 
 			shell.open();
 			while (!shell.isDisposed()) {

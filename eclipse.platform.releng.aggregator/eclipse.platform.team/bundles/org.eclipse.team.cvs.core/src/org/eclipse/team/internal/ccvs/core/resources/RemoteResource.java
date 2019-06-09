@@ -46,23 +46,14 @@ public abstract class RemoteResource extends CachedResourceVariant implements IC
 		this.name = name;
 	}
 
-	/*
-	 * @see ICVSRemoteResource#getName()
-	 */
 	public String getName() {
 		return name;
 	}
 
-	/*
-	 * @see ICVSResource#getRelativePath(ICVSFolder)
-	 */
 	public String getRelativePath(ICVSFolder ancestor) throws CVSException {
 		return Util.appendPath(parent.getRelativePath(ancestor), getName());
 	}
 	
-	/*
-	 * @see ICVSRemoteResource#getParent()
-	 */
 	public ICVSRemoteResource getRemoteParent() {
 		return parent;
 	}
@@ -71,17 +62,14 @@ public abstract class RemoteResource extends CachedResourceVariant implements IC
 	
 	public abstract ICVSRepositoryLocation getRepository();
 	
- 	public int getWorkspaceSyncState() {
- 		return workspaceSyncState;
- 	}
- 	
- 	public void setWorkspaceSyncState(int workspaceSyncState) {
- 		this.workspaceSyncState = workspaceSyncState;
- 	}
+	public int getWorkspaceSyncState() {
+		return workspaceSyncState;
+	}
 	
-	/*
-	 * @see ICVSResource#delete()
-	 */
+	public void setWorkspaceSyncState(int workspaceSyncState) {
+		this.workspaceSyncState = workspaceSyncState;
+	}
+	
 	public void delete() {
 		// For now, do nothing but we could provide this in the future.
 	}
@@ -98,30 +86,18 @@ public abstract class RemoteResource extends CachedResourceVariant implements IC
 		return true;
 	}
 	
-	/*
-	 * @see ICVSRemoteResource#exists(IProgressMonitor)
-	 */
 	public boolean exists(IProgressMonitor monitor) throws TeamException {
 		return parent.exists(this, monitor);
 	}
 
-	/*
-	 * @see ICVSResource#getParent()
-	 */
 	public ICVSFolder getParent() {
 		return parent;
- 	}
+	}
 
-	/*
-	 * @see ICVSResource#isIgnored()
-	 */
 	public boolean isIgnored() {
 		return false;
 	}
 
-	/*
-	 * @see ICVSResource#isManaged()
-	 */
 	public boolean isManaged() {
 		return parent != null;
 	}
@@ -132,16 +108,10 @@ public abstract class RemoteResource extends CachedResourceVariant implements IC
 		return true;
 	}
 	
-	/*
-	 * @see ICVSResource#unmanage()
-	 */
 	public void unmanage(IProgressMonitor monitor) throws CVSException {
 		// do nothing
 	}
 
-	/*
-	 * @see ICVSResource#getSyncInfo()
-	 */
 	public abstract ResourceSyncInfo getSyncInfo();
 	
 	public boolean equals(Object target) {
@@ -155,17 +125,11 @@ public abstract class RemoteResource extends CachedResourceVariant implements IC
 		&& remote.getRepositoryRelativePath().equals(getRepositoryRelativePath());
 	}
 
-	/*
-	 * @see ICVSResource#setIgnoredAs(String)
-	 */
 	public void setIgnoredAs(String pattern) throws CVSException {
 		// ensure that clients are not trying to set sync info on remote handles.
 		Assert.isTrue(false);
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSResource#getIResource()
-	 */
 	public IResource getIResource() {
 		return null;
 	}
@@ -180,9 +144,6 @@ public abstract class RemoteResource extends CachedResourceVariant implements IC
 	 */
 	public abstract ICVSRemoteResource forTag(ICVSRemoteFolder parent, CVSTag tagName);
 
-	/**
-	 * @see java.lang.Object#hashCode()
-	 */
 	public int hashCode() {
 		return getRepositoryRelativePath().hashCode();
 	}
@@ -204,9 +165,7 @@ public abstract class RemoteResource extends CachedResourceVariant implements IC
 		return "Remote " + (isContainer() ? "Folder: " : "File: ") + getName(); //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.synchronize.ResourceVariant#getUniquePath()
-	 */
+	@Override
 	public String getCachePath() {
 		ICVSRepositoryLocation location = getRepository();
 		IPath path = new Path(null, location.getHost());
@@ -216,16 +175,12 @@ public abstract class RemoteResource extends CachedResourceVariant implements IC
 		return path.toString();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.synchronize.ResourceVariant#getCacheId()
-	 */
+	@Override
 	protected String getCacheId() {
 		return CVSProviderPlugin.ID;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.core.variants.IResourceVariant#asBytes()
-	 */
+	@Override
 	public byte[] asBytes() {
 		return getSyncBytes();
 	}

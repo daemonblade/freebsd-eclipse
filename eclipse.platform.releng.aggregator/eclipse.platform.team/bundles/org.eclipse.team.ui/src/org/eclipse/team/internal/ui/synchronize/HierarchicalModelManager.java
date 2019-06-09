@@ -24,27 +24,21 @@ public class HierarchicalModelManager extends SynchronizeModelManager {
 		super(configuration);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.SynchronizeModelManager#getSupportedModelProviders()
-	 */
 	@Override
 	protected ISynchronizeModelProviderDescriptor[] getSupportedModelProviders() {
 		return new ISynchronizeModelProviderDescriptor[] {
-		        new FlatModelProvider.FlatModelProviderDescriptor(),
+				new FlatModelProvider.FlatModelProviderDescriptor(),
 				new HierarchicalModelProvider.HierarchicalModelProviderDescriptor(),
 				new CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor() };
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.synchronize.SynchronizeModelManager#createModelProvider(java.lang.String)
-	 */
 	@Override
 	protected ISynchronizeModelProvider createModelProvider(String id) {
 		if(id == null) {
 			id = getDefaultProviderId();
 		}
 		if (id.endsWith(FlatModelProvider.FlatModelProviderDescriptor.ID)) {
-		    return new FlatModelProvider(getConfiguration(), getSyncInfoSet());
+			return new FlatModelProvider(getConfiguration(), getSyncInfoSet());
 		} else if(id.endsWith(CompressedFoldersModelProvider.CompressedFolderModelProviderDescriptor.ID)) {
 			return new CompressedFoldersModelProvider(getConfiguration(), getSyncInfoSet());
 		} else {

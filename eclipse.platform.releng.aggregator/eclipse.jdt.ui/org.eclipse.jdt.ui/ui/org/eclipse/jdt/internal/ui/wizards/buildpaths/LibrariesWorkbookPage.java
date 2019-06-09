@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -102,7 +102,6 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 
 	private final TreeListDialogField<CPListElement> fLibrariesList;
 
-	private Control fSWTControl;
 	private final IWorkbenchPreferenceContainer fPageContainer;
 
 	private final int IDX_ADDJAR= 0;
@@ -371,7 +370,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 
 	}
 
-	private boolean isJREContainer(IPath path) {
+	static boolean isJREContainer(IPath path) {
 		if (path == null)
 			return false;
 		String[] segments= path.segments();
@@ -1439,4 +1438,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
     	fLibrariesList.setFocus();
     }
 
+	public void selectRootNode(boolean modulePath) {
+		selectRootNode(fLibrariesList, modulePath);
+	}
 }

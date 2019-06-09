@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 Alena Laskavaia and others.
+ * Copyright (c) 2015, 2019 Alena Laskavaia and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,17 +16,17 @@ package org.eclipse.ui.tests.quickaccess;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.tests.harness.util.TestRunLogUtil;
+import org.junit.Rule;
 import org.junit.Test;
-
-import junit.framework.TestCase;
+import org.junit.rules.TestWatcher;
 
 /**
  * @since 3.5
  */
-public class ShellClosingTest extends TestCase {
-	public ShellClosingTest() {
-		super(ShellClosingTest.class.getName());
-	}
+public class ShellClosingTest {
+	@Rule
+	public TestWatcher LOG_TESTRUN = TestRunLogUtil.LOG_TESTRUN;
 
 	/**
 	 * Bug 433746: dispose SearchField shell

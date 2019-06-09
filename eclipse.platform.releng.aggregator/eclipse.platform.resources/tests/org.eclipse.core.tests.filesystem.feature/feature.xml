@@ -28,9 +28,9 @@
          unpack="false"/-->
 
    <plugin
-         id="org.eclipse.core.filesystem.freebsd.amd64"
-         os="freebsd"
-         arch="amd64"
+         id="org.eclipse.core.filesystem.linux.x86_64"
+         os="linux"
+         arch="x86_64"
          download-size="0"
          install-size="0"
          version="0.0.0"

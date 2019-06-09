@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2017 Freescale Semiconductor and others.
+ * Copyright (c) 2008, 2019 Freescale Semiconductor and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.TreeMap;
@@ -582,14 +583,14 @@ public class ResourceFilterGroup {
 	 */
 	public Control createContents(Composite parent) {
 
-        Font font = parent.getFont();
+		Font font = parent.getFont();
 		shell = parent.getShell();
 
 		if (resource == null) {
 			Label label = new Label(parent, SWT.NONE);
 			label.setText(NLS.bind(
 					IDEWorkbenchMessages.ResourceFilterPage_noResource, null));
-	        label.setFont(font);
+			label.setFont(font);
 			return label;
 		}
 
@@ -734,8 +735,8 @@ public class ResourceFilterGroup {
 			FontData base = originalData[i];
 			styleData[i] = new FontData(base.getName(), base.getHeight(), base.getStyle() | additionalStyle);
 		}
-       	return styleData;
-    }
+		return styleData;
+	}
 
 	class EditFilterAction extends Action {
 
@@ -1277,12 +1278,13 @@ public class ResourceFilterGroup {
 				FilterCopy[] myTypes = (FilterCopy[]) object;
 				try {
 					ByteArrayOutputStream out = new ByteArrayOutputStream();
-					DataOutputStream writeOut = new DataOutputStream(out);
-					writeOut.writeInt(myTypes.length);
-					for (FilterCopy myType : myTypes)
-						writeOut.writeInt(myType.getSerialNumber());
-					byte[] buffer = out.toByteArray();
-					writeOut.close();
+					byte[] buffer;
+					try (DataOutputStream writeOut = new DataOutputStream(out)) {
+						writeOut.writeInt(myTypes.length);
+						for (FilterCopy myType : myTypes)
+							writeOut.writeInt(myType.getSerialNumber());
+						buffer = out.toByteArray();
+					}
 					super.javaToNative(buffer, transferData);
 				} catch (IOException e) {
 				}
@@ -1298,20 +1300,20 @@ public class ResourceFilterGroup {
 				FilterCopy[] myData;
 				try {
 					ByteArrayInputStream in = new ByteArrayInputStream(buffer);
-					DataInputStream readIn = new DataInputStream(in);
+					try (DataInputStream readIn = new DataInputStream(in)) {
 					int size = readIn.readInt();
 
 					LinkedList<FilterCopy> droppedFilters = new LinkedList<>();
 					for (int i = 0; i < size; i++) {
 						int serialNumber = readIn.readInt();
 						FilterCopy tmp = filters
-								.findBySerialNumber(serialNumber);
+							.findBySerialNumber(serialNumber);
 						if (tmp != null)
-							droppedFilters.add(tmp);
+						droppedFilters.add(tmp);
 					}
 					myData = droppedFilters
-							.toArray(new FilterCopy[0]);
-					readIn.close();
+						.toArray(new FilterCopy[0]);
+					}
 				} catch (IOException ex) {
 					return null;
 				}
@@ -1952,23 +1954,23 @@ class FilterEditDialog extends TrayDialog {
 		label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
 		Composite composite = new Composite(parent, SWT.NONE);
-    	GridLayout layout = new GridLayout();
-    	layout.marginWidth = 0;
-    	layout.marginHeight = 0;
-    	layout.horizontalSpacing = 0;
-    	composite.setLayout(layout);
-    	composite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-    	composite.setFont(parent.getFont());
+		GridLayout layout = new GridLayout();
+		layout.marginWidth = 0;
+		layout.marginHeight = 0;
+		layout.horizontalSpacing = 0;
+		composite.setLayout(layout);
+		composite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+		composite.setFont(parent.getFont());
 
 		// create help control if needed
-        if (isHelpAvailable()) {
-        	Control helpControl = createHelpControl(composite);
-        	((GridData) helpControl.getLayoutData()).horizontalIndent = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_MARGIN);
+		if (isHelpAvailable()) {
+			Control helpControl = createHelpControl(composite);
+			((GridData) helpControl.getLayoutData()).horizontalIndent = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_MARGIN);
 		}
 
-        Control buttonSection = dialogCreateButtonBar(composite);
-        ((GridData) buttonSection.getLayoutData()).grabExcessHorizontalSpace = true;
-        return composite;
+		Control buttonSection = dialogCreateButtonBar(composite);
+		((GridData) buttonSection.getLayoutData()).grabExcessHorizontalSpace = true;
+		return composite;
 	}
 
 	private Control dialogCreateButtonBar(Composite parent) {
@@ -2382,6 +2384,11 @@ interface ICustomFilterArgumentUI {
 
 class MultiMatcherCustomFilterArgumentUI implements ICustomFilterArgumentUI {
 
+	/**
+	 * This is the minimum year that is accepted by {@link DateTime#setYear}.
+	 */
+	private static final int DateTime_MIN_YEAR = 1752;
+
 	Shell shell;
 	FilterCopy filter;
 	protected Button argumentsCaseSensitive;
@@ -2406,6 +2413,7 @@ class MultiMatcherCustomFilterArgumentUI implements ICustomFilterArgumentUI {
 	protected FilterEditDialog dialog;
 	protected Label dummyLabel1;
 	protected Label dummyLabel2;
+	protected static GregorianCalendar gregorianCalendar = new GregorianCalendar();
 
 	/**
 	 * @param dialog
@@ -2804,7 +2812,7 @@ class MultiMatcherCustomFilterArgumentUI implements ICustomFilterArgumentUI {
 				}
 				argumentsDate.setDay(calendar.get(Calendar.DAY_OF_MONTH));
 				argumentsDate.setMonth(calendar.get(Calendar.MONTH));
-				argumentsDate.setYear(calendar.get(Calendar.YEAR));
+				argumentsDate.setYear(getDateYear(calendar));
 			}
 		}
 		if (selectedKeyOperatorType.equals(Boolean.class)) {
@@ -2922,6 +2930,29 @@ class MultiMatcherCustomFilterArgumentUI implements ICustomFilterArgumentUI {
 		return Long.toString(Long.parseLong(string));
 	}
 
+	private int getDateYear(Calendar calendar) {
+		Date calendarDate = calendar.getTime();
+		int calendarYear = calendar.get(Calendar.YEAR);
+		if (calendarYear >= DateTime_MIN_YEAR) {
+			return calendarYear;
+		}
+		gregorianCalendar.setTime(calendarDate);
+		return gregorianCalendar.get(Calendar.YEAR);
+	}
+
+	private int getCalendarYear() {
+		Calendar calendar = Calendar.getInstance();
+		int calendarYear = calendar.get(Calendar.YEAR);
+		int dateYear = argumentsDate.getYear();
+		if (calendarYear >= DateTime_MIN_YEAR) {
+			return dateYear;
+		}
+
+		gregorianCalendar.setTime(new Date());
+		int currentYear = gregorianCalendar.get(Calendar.YEAR);
+		return dateYear = calendarYear + (dateYear - currentYear);
+	}
+
 	private void storeMultiSelection() {
 		if (intiantiatedKeyOperatorType != null) {
 			String selectedKey = MultiMatcherLocalization.getMultiMatcherKey(multiKey.getText());
@@ -2933,7 +2964,7 @@ class MultiMatcherCustomFilterArgumentUI implements ICustomFilterArgumentUI {
 
 			if (intiantiatedKeyOperatorType.equals(Date.class) && argumentsDate != null) {
 				Calendar calendar = Calendar.getInstance();
-				calendar.set(argumentsDate.getYear(), argumentsDate.getMonth(), argumentsDate.getDay());
+				calendar.set(getCalendarYear(), argumentsDate.getMonth(), argumentsDate.getDay());
 				argument.pattern = Long.toString(calendar.getTimeInMillis());
 			}
 			if (intiantiatedKeyOperatorType.equals(String.class) && arguments != null) {

@@ -54,6 +54,7 @@ public abstract class EndpointRegistration<D extends DTO>
 		createContextAttributes();
 	}
 
+	@Override
 	public void destroy() {
 		ClassLoader original = Thread.currentThread().getContextClassLoader();
 		try {
@@ -162,13 +163,11 @@ public abstract class EndpointRegistration<D extends DTO>
 	}
 
 	private void createContextAttributes() {
-		contextController.getProxyContext().createContextAttributes(
-			contextController);
+		contextController.createContextAttributes();
 	}
 
 	private void destroyContextAttributes() {
-		contextController.getProxyContext().destroyContextAttributes(
-			contextController);
+		contextController.destroyContextAttributes();
 	}
 
 	@Override

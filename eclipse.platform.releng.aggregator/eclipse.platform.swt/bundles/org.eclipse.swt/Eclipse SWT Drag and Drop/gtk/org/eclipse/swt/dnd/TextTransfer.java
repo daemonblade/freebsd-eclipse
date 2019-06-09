@@ -76,9 +76,9 @@ public void javaToNative (Object object, TransferData transferData) {
 	String string = (String)object;
 	byte[] utf8 = Converter.wcsToMbcs (string, true);
 	if  (OS.isX11() && transferData.type ==  COMPOUND_TEXT_ID) {
-		long /*int*/[] encoding = new long /*int*/[1];
+		long [] encoding = new long [1];
 		int[] format = new int[1];
-		long /*int*/[] ctext = new long /*int*/[1];
+		long [] ctext = new long [1];
 		int[] length = new int[1];
 		boolean result = GDK.gdk_x11_display_utf8_to_compound_text (GDK.gdk_display_get_default(), utf8, encoding, format, ctext, length);
 		if (!result) return;
@@ -89,7 +89,7 @@ public void javaToNative (Object object, TransferData transferData) {
 		transferData.result = 1;
 	}
 	if (transferData.type == UTF8_STRING_ID) {
-		long /*int*/ pValue = OS.g_malloc(utf8.length);
+		long pValue = OS.g_malloc(utf8.length);
 		if (pValue ==  0) return;
 		C.memmove(pValue, utf8, utf8.length);
 		transferData.type = UTF8_STRING_ID;
@@ -99,7 +99,7 @@ public void javaToNative (Object object, TransferData transferData) {
 		transferData.result = 1;
 	}
 	if (transferData.type == STRING_ID) {
-		long /*int*/ string_target = GDK.gdk_utf8_to_string_target(utf8);
+		long string_target = GDK.gdk_utf8_to_string_target(utf8);
 		if (string_target ==  0) return;
 		transferData.type = STRING_ID;
 		transferData.format = 8;
@@ -121,10 +121,10 @@ public void javaToNative (Object object, TransferData transferData) {
 @Override
 public Object nativeToJava(TransferData transferData){
 	if (!isSupportedType(transferData) ||  transferData.pValue == 0) return null;
-	long /*int*/[] list = new long /*int*/[1];
+	long [] list = new long [1];
 	int count = GDK.gdk_text_property_to_utf8_list_for_display(GDK.gdk_display_get_default(), transferData.type, transferData.format, transferData.pValue, transferData.length, list);
 	if (count == 0) return null;
-	long /*int*/[] ptr = new long /*int*/[1];
+	long [] ptr = new long [1];
 	C.memmove(ptr, list[0], C.PTR_SIZEOF);
 	int length = C.strlen(ptr[0]);
 	byte[] utf8 = new byte[length];

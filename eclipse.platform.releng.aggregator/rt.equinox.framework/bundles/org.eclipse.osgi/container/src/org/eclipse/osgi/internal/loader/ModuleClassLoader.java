@@ -43,6 +43,7 @@ public abstract class ModuleClassLoader extends ClassLoader implements BundleRef
 			this.generation = generation;
 		}
 
+		@Override
 		public Bundle getBundle() {
 			return generation.getRevision().getBundle();
 		}
@@ -145,6 +146,7 @@ public abstract class ModuleClassLoader extends ClassLoader implements BundleRef
 	 * @return The Class object.
 	 * @throws ClassNotFoundException if the class is not found.
 	 */
+	@Override
 	protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
 		if (getDebug().DEBUG_LOADER)
 			Debug.println("ModuleClassLoader[" + getBundleLoader() + "].loadClass(" + name + ")"); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
@@ -155,13 +157,7 @@ public abstract class ModuleClassLoader extends ClassLoader implements BundleRef
 			if (resolve)
 				resolveClass(clazz);
 			return (clazz);
-		} catch (Error e) {
-			if (getDebug().DEBUG_LOADER) {
-				Debug.println("ModuleClassLoader[" + getBundleLoader() + "].loadClass(" + name + ") failed."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				Debug.printStackTrace(e);
-			}
-			throw e;
-		} catch (ClassNotFoundException e) {
+		} catch (Error | ClassNotFoundException e) {
 			// If the class is not found do not try to look for it locally.
 			// The delegate would have already done that for us.
 			if (getDebug().DEBUG_LOADER) {
@@ -195,6 +191,7 @@ public abstract class ModuleClassLoader extends ClassLoader implements BundleRef
 	 * @param name The resource path to get.
 	 * @return The URL of the resource or null if it does not exist.
 	 */
+	@Override
 	public URL getResource(String name) {
 		if (getDebug().DEBUG_LOADER) {
 			Debug.println("ModuleClassLoader[" + getBundleLoader() + "].getResource(" + name + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -230,6 +227,7 @@ public abstract class ModuleClassLoader extends ClassLoader implements BundleRef
 	 * @param name The resource path to get.
 	 * @return The Enumeration of the resource URLs.
 	 */
+	@Override
 	public Enumeration<URL> getResources(String name) throws IOException {
 		if (getDebug().DEBUG_LOADER) {
 			Debug.println("ModuleClassLoader[" + getBundleLoader() + "].getResources(" + name + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -254,6 +252,7 @@ public abstract class ModuleClassLoader extends ClassLoader implements BundleRef
 	 * @param libname The library to find.
 	 * @return The absolution path to the library or null if not found
 	 */
+	@Override
 	protected String findLibrary(String libname) {
 		// let the manager find the library for us
 		return getClasspathManager().findLibrary(libname);
@@ -374,6 +373,7 @@ public abstract class ModuleClassLoader extends ClassLoader implements BundleRef
 		}
 	}
 
+	@Override
 	public Bundle getBundle() {
 		return getGeneration().getRevision().getBundle();
 	}
@@ -390,6 +390,7 @@ public abstract class ModuleClassLoader extends ClassLoader implements BundleRef
 		return getClasspathManager().listLocalResources(path, filePattern, options);
 	}
 
+	@Override
 	public String toString() {
 		Bundle b = getBundle();
 		StringBuffer result = new StringBuffer(super.toString());

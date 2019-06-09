@@ -45,9 +45,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		super(file);
 	}
 
-	/*
-	 * @see ICVSResource#delete()
-	 */
+	@Override
 	public void delete() throws CVSException {
 		try {
 			((IFile)resource).delete(false /*force*/, true /*keepHistory*/, null);
@@ -61,16 +59,14 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 	}
 
 	public InputStream getContents() throws CVSException {
- 		try {
+		try {
 			return getIFile().getContents();
 		} catch (CoreException e) {
- 			throw CVSException.wrapException(resource, NLS.bind(CVSMessages.EclipseFile_Problem_accessing_resource, new String[] { resource.getFullPath().toString(), e.getStatus().getMessage() }), e); // 
- 		}
- 	}
+			throw CVSException.wrapException(resource, NLS.bind(CVSMessages.EclipseFile_Problem_accessing_resource, new String[] { resource.getFullPath().toString(), e.getStatus().getMessage() }), e); // 
+		}
+	}
 	
-	/*
-	 * @see ICVSFile#getTimeStamp()
-	 */
+	@Override
 	public Date getTimeStamp() {
 		long timestamp = getIFile().getLocalTimeStamp();
 		if( timestamp == IResource.NULL_STAMP) {
@@ -80,9 +76,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		return new Date((timestamp/1000)*1000);
 	}
  
-	/*
-	 * @see ICVSFile#setTimeStamp(Date)
-	 */
+	@Override
 	public void setTimeStamp(Date date) throws CVSException {
 		long time;
 		if (date == null) {
@@ -93,9 +87,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		EclipseSynchronizer.getInstance().setTimeStamp(this, time);
 	}
 
-	/*
-	 * @see ICVSResource#isFolder()
-	 */
+	@Override
 	public boolean isFolder() {
 		return false;
 	}
@@ -129,16 +121,12 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		return EclipseSynchronizer.getInstance().setModified(this, UNKNOWN);
 	}
 	
-	/*
-	 * @see ICVSResource#accept(ICVSResourceVisitor)
-	 */
+	@Override
 	public void accept(ICVSResourceVisitor visitor) throws CVSException {
 		visitor.visitFile(this);
 	}
 
-	/*
-	 * @see ICVSResource#accept(ICVSResourceVisitor, boolean)
-	 */
+	@Override
 	public void accept(ICVSResourceVisitor visitor, boolean recurse) throws CVSException {
 		visitor.visitFile(this);
 	}
@@ -161,16 +149,12 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		}
 	}
 
-	/*
-	 * @see ICVSResource#getRemoteLocation()
-	 */
+	@Override
 	public String getRemoteLocation(ICVSFolder stopSearching) throws CVSException {
 		return getParent().getRemoteLocation(stopSearching) + SEPARATOR + getName();
 	}
 		
-	/*
-	 * @see ICVSFile#setReadOnly()
-	 */
+	@Override
 	public void setContents(InputStream stream, int responseType, boolean keepLocalHistory, IProgressMonitor monitor) throws CVSException {
 		try {
 			IFile file = getIFile();
@@ -214,46 +198,38 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		}
 	}
 			
-	/*
-	 * @see ICVSFile#setReadOnly()
-	 */
+	@Override
 	public void setReadOnly(boolean readOnly) throws CVSException {
 		ResourceAttributes attributes = resource.getResourceAttributes();
 		if (attributes != null) {
 			attributes.setReadOnly(readOnly);
 			try {
-                resource.setResourceAttributes(attributes);
-            } catch (CoreException e) {
-                throw CVSException.wrapException(e);
-            }
+				resource.setResourceAttributes(attributes);
+			} catch (CoreException e) {
+				throw CVSException.wrapException(e);
+			}
 		}
 	}
 
-	/*
-	 * @see ICVSFile#isReadOnly()
-	 */
+	@Override
 	public boolean isReadOnly() throws CVSException {
 		return getIFile().isReadOnly();
 	}
 	
-	/*
-	 * @see ICVSFile#setExecutable()
-	 */
+	@Override
 	public void setExecutable(boolean executable) throws CVSException {
 		ResourceAttributes attributes = resource.getResourceAttributes();
 		if (attributes != null) {
 			attributes.setExecutable(executable);
 			try {
-                resource.setResourceAttributes(attributes);
-            } catch (CoreException e) {
-                throw CVSException.wrapException(e);
-            }
+				resource.setResourceAttributes(attributes);
+			} catch (CoreException e) {
+				throw CVSException.wrapException(e);
+			}
 		}
 	}
 
-	/*
-	 * @see ICVSFile#isExectuable()
-	 */
+	@Override
 	public boolean isExecutable() throws CVSException {
 		ResourceAttributes attributes = resource.getResourceAttributes();
 		if (attributes != null) {
@@ -280,9 +256,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		}
 		return null;
 	}
-	/**
-	 * @see ICVSFile#getLogEntries(IProgressMonitor)
-	 */
+	@Override
 	public ILogEntry[] getLogEntries(IProgressMonitor monitor)	throws TeamException {
 		
 		// try fetching log entries only when the file's project is accessible
@@ -343,9 +317,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		return null;
 	}
 	
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#checkout(int)
-	 */
+	@Override
 	public void edit(final int notifications, boolean notifyForWritable, IProgressMonitor monitor) throws CVSException {
 		if (!notifyForWritable && !isReadOnly()) return;
 		run(monitor1 -> {
@@ -368,7 +340,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 					notificationCharacters.add(Character.valueOf(NotifyInfo.COMMIT));
 				internalFormat = new char[notificationCharacters.size()];
 				for (int i = 0; i < internalFormat.length; i++) {
-					internalFormat[i] = ((Character)notificationCharacters.get(i)).charValue();
+					internalFormat[i] = notificationCharacters.get(i).charValue();
 				}
 			}
 			
@@ -383,19 +355,17 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 			}
 			
 			try {
-		        // allow editing
-		        setReadOnly(false);
-		    } catch (CVSException e) {
-		        // Just log and keep going
-		        CVSProviderPlugin.log(e);
-		    }
+				// allow editing
+				setReadOnly(false);
+			} catch (CVSException e) {
+				// Just log and keep going
+				CVSProviderPlugin.log(e);
+			}
 		}, monitor);
 		
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#uncheckout()
-	 */
+	@Override
 	public void unedit(IProgressMonitor monitor) throws CVSException {
 		if (isReadOnly()) return;
 		run(monitor1 -> {
@@ -430,32 +400,26 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 			setBaserevInfo(null);
 				
 			try {
-		        // prevent editing
-		        setReadOnly(true);
-		    } catch (CVSException e) {
-		        // Just log and keep going
-		        CVSProviderPlugin.log(e);
-		    }
+				// prevent editing
+				setReadOnly(true);
+			} catch (CVSException e) {
+				// Just log and keep going
+				CVSProviderPlugin.log(e);
+			}
 		}, monitor);
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#notificationCompleted()
-	 */
+	@Override
 	public void notificationCompleted() throws CVSException {
 		EclipseSynchronizer.getInstance().deleteNotifyInfo(resource);
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#getPendingNotification()
-	 */
+	@Override
 	public NotifyInfo getPendingNotification() throws CVSException {
 		return getNotifyInfo();
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#checkedIn(java.lang.String)
-	 */
+	@Override
 	public void checkedIn(String entryLine, boolean commit) throws CVSException {
 		ResourceSyncInfo oldInfo = getSyncInfo();
 		ResourceSyncInfo newInfo = null;
@@ -478,28 +442,28 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 			modificationState = ICVSFile.DIRTY;
 		} else {
 			// cvs commit: commit of a changed file
-		    // cvs update: update of a file whose contents match the server contents
-		    Date timeStamp;
-		    if (commit) {
-		        // This is a commit. Put the file timestamp in the entry
-		        timeStamp = getTimeStamp();
-		    } else {
-		        // This is an update. We need to change the tiemstamp in the
-                // entry file to match the file timestamp returned by Java
-		        timeStamp = oldInfo.getTimeStamp();
-		        if (timeStamp == null) {
-		            timeStamp = getTimeStamp();
-		        } else {
-                    // First, set the timestamp of the file to the timestamp from the entry
-                    // There is a chance this will do nothing as the call to Java on some
-                    // file systems munges the timestamps
-		            setTimeStamp(timeStamp);
-                    // To compensate for the above, reset the timestamp in the entry
-                    // to match the timestamp in the file
-                    timeStamp = getTimeStamp();
-		        }
-		    }
-	        newInfo = new ResourceSyncInfo(entryLine, timeStamp);
+			// cvs update: update of a file whose contents match the server contents
+			Date timeStamp;
+			if (commit) {
+				// This is a commit. Put the file timestamp in the entry
+				timeStamp = getTimeStamp();
+			} else {
+				// This is an update. We need to change the tiemstamp in the
+				// entry file to match the file timestamp returned by Java
+				timeStamp = oldInfo.getTimeStamp();
+				if (timeStamp == null) {
+					timeStamp = getTimeStamp();
+				} else {
+					// First, set the timestamp of the file to the timestamp from the entry
+					// There is a chance this will do nothing as the call to Java on some
+					// file systems munges the timestamps
+					setTimeStamp(timeStamp);
+					// To compensate for the above, reset the timestamp in the entry
+					// to match the timestamp in the file
+					timeStamp = getTimeStamp();
+				}
+			}
+			newInfo = new ResourceSyncInfo(entryLine, timeStamp);
 			
 		}
 		//see bug 106876
@@ -519,28 +483,26 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		if (base != null) {
 			setBaserevInfo(null);
 			try {
-                setReadOnly(true);
-            } catch (CVSException e) {
-                // Just log and keep going
-                CVSProviderPlugin.log(e);
-            }
+				setReadOnly(true);
+			} catch (CVSException e) {
+				// Just log and keep going
+				CVSProviderPlugin.log(e);
+			}
 		} else {
-            // Check to see if watch-edit is enabled for the project
-            CVSTeamProvider provider = (CVSTeamProvider)RepositoryProvider.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());
-            if (provider != null && provider.isWatchEditEnabled()) {
-                try {
-                    setReadOnly(true);
-                } catch (CVSException e) {
-                    // Just log and keep going
-                    CVSProviderPlugin.log(e);
-                }
-            }
-        }
+			// Check to see if watch-edit is enabled for the project
+			CVSTeamProvider provider = (CVSTeamProvider)RepositoryProvider.getProvider(resource.getProject(), CVSProviderPlugin.getTypeId());
+			if (provider != null && provider.isWatchEditEnabled()) {
+				try {
+					setReadOnly(true);
+				} catch (CVSException e) {
+					// Just log and keep going
+					CVSProviderPlugin.log(e);
+				}
+			}
+		}
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSResource#unmanage(org.eclipse.core.runtime.IProgressMonitor)
-	 */
+	@Override
 	public void unmanage(IProgressMonitor monitor) throws CVSException {
 		run(monitor1 -> {
 			EclipseFile.super.unmanage(monitor1);
@@ -548,23 +510,17 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		}, monitor);
 	}
 	
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSFile#isEdited()
-	 */
+	@Override
 	public boolean isEdited() throws CVSException {
 		return EclipseSynchronizer.getInstance().isEdited(getIFile());
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSResource#setSyncInfo(org.eclipse.team.internal.ccvs.core.syncinfo.ResourceSyncInfo)
-	 */
+	@Override
 	public void setSyncInfo(ResourceSyncInfo info, int modificationState) throws CVSException {
 		setSyncBytes(info.getBytes(), info, modificationState);
 	}
 	
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.resources.EclipseResource#setSyncBytes(byte[], int)
-	 */
+	@Override
 	public void setSyncBytes(byte[] syncBytes, int modificationState) throws CVSException {
 		setSyncBytes(syncBytes, null, modificationState);
 	}
@@ -595,9 +551,7 @@ public class EclipseFile extends EclipseResource implements ICVSFile {
 		EclipseSynchronizer.getInstance().setModified(this, UNKNOWN);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.ICVSResource#getRepositoryRelativePath()
-	 */
+	@Override
 	public String getRepositoryRelativePath() throws CVSException {
 		if (!isManaged()) return null;
 		String parentPath = getParent().getRepositoryRelativePath();

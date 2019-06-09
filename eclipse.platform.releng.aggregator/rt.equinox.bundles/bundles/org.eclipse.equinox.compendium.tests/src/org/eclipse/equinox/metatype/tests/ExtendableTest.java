@@ -26,6 +26,7 @@ public class ExtendableTest extends AbstractTest {
 	private Bundle bundle;
 
 	@Before
+	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 		bundle = bundleInstaller.installBundle("extendable.tb1"); //$NON-NLS-1$
@@ -33,7 +34,13 @@ public class ExtendableTest extends AbstractTest {
 	}
 
 	@Test
-	public void testExtensions() {
+	public void testExtensions() throws Exception {
+		doTestExtensions();
+		restartMetatype();
+		doTestExtensions();
+	}
+
+	private void doTestExtensions() {
 		EquinoxMetaTypeInformation mti = metatype.getMetaTypeInformation(bundle);
 		EquinoxObjectClassDefinition ocd = mti.getObjectClassDefinition("metatype.extendable.tb1.1", null); //$NON-NLS-1$
 		Set<String> schemas = ocd.getExtensionUris();

@@ -75,6 +75,11 @@ public void tearDown() {
 		}
 	}
 	assertTrue(shell.isDisposed());
+	if(SwtTestUtil.isCocoa) {
+		// process pending events to properly close the shell
+		while (display != null && !display.isDisposed() && display.readAndDispatch()) {
+		}
+	}
 	if(SwtTestUtil.isLinux && display != null) {
 		assertNotExists(getWidgetTable(display), shell);
 	}
@@ -206,8 +211,8 @@ protected String getTestName() {
     if(index != -1)
         test = test.substring(index+1, test.length());
     String clss = getClassName();
-    if((!test.equals("MenuDetect") || clss.equals("Table") || clss.equals("TableTree") || test.startsWith("Chevron")) &&
-       (!test.equals("DragDetect") || clss.equals("Tree") || clss.equals("TableTree") || test.startsWith("Chevron")) &&
+    if((!test.equals("MenuDetect") || clss.equals("Table") || test.startsWith("Chevron")) &&
+       (!test.equals("DragDetect") || clss.equals("Tree") || test.startsWith("Chevron")) &&
        (!test.equals("DoubleClick") || clss.equals("List")) &&
        (!test.equals("KeySelection") || clss.equals("Slider") || clss.equals("Combo") || clss.equals("CCombo") || clss.equals("CTabFolder")) &&
        (!test.equals("EnterSelection") || clss.equals("Button") || clss.equals("ToolBar") || clss.equals("CCombo") || clss.equals("ExpandBar")))

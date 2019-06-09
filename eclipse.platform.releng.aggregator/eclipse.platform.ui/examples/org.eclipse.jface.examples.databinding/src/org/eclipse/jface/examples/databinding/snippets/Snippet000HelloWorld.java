@@ -21,10 +21,10 @@ package org.eclipse.jface.examples.databinding.snippets;
 import static org.eclipse.swt.events.SelectionListener.widgetSelectedAdapter;
 
 import org.eclipse.core.databinding.DataBindingContext;
-import org.eclipse.core.databinding.beans.PojoProperties;
+import org.eclipse.core.databinding.beans.typed.PojoProperties;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
-import org.eclipse.jface.databinding.swt.WidgetProperties;
+import org.eclipse.jface.databinding.swt.typed.WidgetProperties;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -55,9 +55,6 @@ public class Snippet000HelloWorld {
 				}
 			}
 		});
-		// Print the results
-		System.out.println("person.getName() = "
-				+ viewModel.getPerson().getName());
 	}
 
 	// The data model class. This is normally a persistent class of some sort.
@@ -103,7 +100,7 @@ public class Snippet000HelloWorld {
 	// The GUI view
 	static class View {
 		private ViewModel viewModel;
-		private Text name;
+		private Text textName;
 		private Person person;
 
 		public View(ViewModel viewModel) {
@@ -114,7 +111,7 @@ public class Snippet000HelloWorld {
 			Display display = Display.getDefault();
 			Shell shell = new Shell(display);
 			shell.setLayout(new GridLayout(1, false));
-			name = new Text(shell, SWT.BORDER);
+			textName = new Text(shell, SWT.BORDER);
 			Button button = new Button(shell, SWT.PUSH);
 			button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
 			button.setText("Print to console");
@@ -124,7 +121,7 @@ public class Snippet000HelloWorld {
 			person = viewModel.getPerson();
 
 			bindingContext.bindValue(
-					WidgetProperties.text(SWT.Modify).observe(name),
+					WidgetProperties.text(SWT.Modify).observe(textName),
 					PojoProperties.value("name").observe(person));
 
 			// Open and return the Shell

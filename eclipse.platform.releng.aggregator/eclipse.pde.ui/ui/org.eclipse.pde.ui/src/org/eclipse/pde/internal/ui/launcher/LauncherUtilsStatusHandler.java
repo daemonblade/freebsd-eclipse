@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2017 eXXcellent solutions gmbh, EclipseSource Corporation,
+ * Copyright (c) 2009, 2019 eXXcellent solutions gmbh, EclipseSource Corporation,
  * IBM Corporation and others.
  *
  * This program and the accompanying materials
@@ -88,15 +88,21 @@ public class LauncherUtilsStatusHandler implements IStatusHandler {
 
 	private Boolean generateConfigIni() {
 		String message = PDEUIMessages.LauncherUtils_generateConfigIni;
-		return Boolean.valueOf(generateDialog(message).intValue() == 0);
+		return Boolean.valueOf(
+				generateConfirmDialog(message, IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL, 0).intValue() == 0);
 	}
 
 	private Integer deleteWorkspace(String path) {
-		return generateDialog(NLS.bind(PDEUIMessages.WorkbenchLauncherConfigurationDelegate_confirmDeleteWorkspace, path));
+		return generateConfirmDialog(
+				NLS.bind(PDEUIMessages.WorkbenchLauncherConfigurationDelegate_confirmDeleteWorkspace, path),
+				PDEUIMessages.WorkbenchLauncherConfigurationDelegate_clearButtonLabel,
+				PDEUIMessages.WorkbenchLauncherConfigurationDelegate_dontClearButtonLabel, 1);
 	}
 
 	private Integer clearLog() {
-		return generateDialog(PDEUIMessages.LauncherUtils_clearLogFile);
+		return generateConfirmDialog(PDEUIMessages.LauncherUtils_clearLogFile,
+				PDEUIMessages.WorkbenchLauncherConfigurationDelegate_clearButtonLabel,
+				PDEUIMessages.WorkbenchLauncherConfigurationDelegate_dontClearButtonLabel, 0);
 	}
 
 	private void handleWorkspaceLocked(String workspace, ILaunchConfiguration launchConfig, String mode) {
@@ -160,16 +166,18 @@ public class LauncherUtilsStatusHandler implements IStatusHandler {
 	 * Creates a message dialog using a syncExec in case we are launching in the background.
 	 * Dialog will be a question dialog with Yes, No and Cancel buttons.
 	 * @param message Message to use in the dialog
+	 * @param yesLabel the label for the accepting button
+	 * @param noLabel the label for the rejecting button
+	 * @param defaultButton the initial selected button (0 for yes, 1 for no, 2 for cancel)
 	 * @return int representing the button clicked (-1 or 2 for cancel, 0 for yes, 1 for no).
 	 */
-	private static Integer generateDialog(final String message) {
+	private static Integer generateConfirmDialog(final String message, final String yesLabel, final String noLabel,
+			final int defaultButton) {
 		final int[] result = new int[1];
 		getDisplay().syncExec(() -> {
 			String title = PDEUIMessages.LauncherUtils_title;
-			MessageDialog dialog = new MessageDialog(getActiveShell(), title, null, message, MessageDialog.QUESTION, 0,
-					PDEUIMessages.WorkbenchLauncherConfigurationDelegate_clearButtonLabel,
-					PDEUIMessages.WorkbenchLauncherConfigurationDelegate_dontClearButtonLabel,
-					IDialogConstants.CANCEL_LABEL);
+			MessageDialog dialog = new MessageDialog(getActiveShell(), title, null, message, MessageDialog.QUESTION,
+					defaultButton, yesLabel, noLabel, IDialogConstants.CANCEL_LABEL);
 			result[0] = dialog.open();
 		});
 		return Integer.valueOf(result[0]);

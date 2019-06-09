@@ -159,9 +159,6 @@ public class WorkspaceModelParticipant extends
 			}
 		}
 		
-		/* (non-Javadoc)
-		 * @see org.eclipse.team.ui.operations.MergeActionGroup#configureMergeAction(java.lang.String, org.eclipse.jface.action.Action)
-		 */
 		@Override
 		protected void configureMergeAction(String mergeActionId, Action action) {
 			if (mergeActionId == SynchronizationActionProvider.MERGE_ACTION_ID) {
@@ -220,63 +217,51 @@ public class WorkspaceModelParticipant extends
 		isConsultChangeSets = isConsultChangeSets(context.getScopeManager());
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.operations.ModelSynchronizeParticipant#initializeConfiguration(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
-	 */
 	@Override
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
 		configuration.setProperty(ISynchronizePageConfiguration.P_VIEWER_ID, VIEWER_ID);
 		super.initializeConfiguration(configuration);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.operations.ResourceMappingSynchronizeParticipant#createMergeActionGroup()
-	 */
 	@Override
 	protected ModelSynchronizeParticipantActionGroup createMergeActionGroup() {
 		return new WorkspaceMergeActionGroup();
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.operations.ModelSynchronizeParticipant#restoreContext(org.eclipse.team.core.mapping.IResourceMappingScope, org.eclipse.core.runtime.IProgressMonitor)
-	 */
 	@Override
 	protected MergeContext restoreContext(ISynchronizationScopeManager manager) {
 		return WorkspaceSubscriberContext.createContext(manager, ISynchronizationContext.THREE_WAY);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.operations.ModelSynchronizeParticipant#createScopeManager(org.eclipse.core.resources.mapping.ResourceMapping[])
-	 */
 	@Override
 	protected ISynchronizationScopeManager createScopeManager(ResourceMapping[] mappings) {
 		return WorkspaceSubscriberContext.createWorkspaceScopeManager(mappings, true, isConsultChangeSets);
 	}
 	
-    @Override
+	@Override
 	public ChangeSetCapability getChangeSetCapability() {
-        if (capability == null) {
-            capability = new WorkspaceChangeSetCapability();
-        }
-        return capability;
+		if (capability == null) {
+			capability = new WorkspaceChangeSetCapability();
+		}
+		return capability;
 	}
-    
-    @Override
+	
+	@Override
 	public void saveState(IMemento memento) {
-    	super.saveState(memento);
-    	memento.putString(CTX_CONSULT_CHANGE_SETS, Boolean.toString(isConsultChangeSets));
-    }
-    
-    @Override
+		super.saveState(memento);
+		memento.putString(CTX_CONSULT_CHANGE_SETS, Boolean.toString(isConsultChangeSets));
+	}
+	
+	@Override
 	public void init(String secondaryId, IMemento memento) throws PartInitException {
-    	try {
-    		String consult = memento.getString(CTX_CONSULT_CHANGE_SETS);
-    		if (consult != null)
-    			isConsultChangeSets = Boolean.valueOf(consult).booleanValue();
-    	} finally {
-    		super.init(secondaryId, memento);
-    	}
-    }
+		try {
+			String consult = memento.getString(CTX_CONSULT_CHANGE_SETS);
+			if (consult != null)
+				isConsultChangeSets = Boolean.valueOf(consult).booleanValue();
+		} finally {
+			super.init(secondaryId, memento);
+		}
+	}
 
 	private boolean isConsultChangeSets(ISynchronizationScopeManager manager) {
 		if (manager instanceof ChangeSetSubscriberScopeManager) {

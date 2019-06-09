@@ -1,15 +1,15 @@
 /**
- * Copyright (c) 2008, 2015 IBM Corporation and others.
- *
- * This program and the accompanying materials
+ * Copyright (c) 2010, 2018 IBM Corporation and others.
+ * 
+ *  This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
- *
  * SPDX-License-Identifier: EPL-2.0
- *
+ * 
  * Contributors:
  *      IBM Corporation - initial API and implementation
+ *      vogella GmbH - ongoing maintenance
  */
 package org.eclipse.e4.ui.model.application.ui.util;
 
@@ -36,26 +36,27 @@ import org.eclipse.emf.common.notify.impl.AdapterFactoryImpl;
 import org.eclipse.emf.ecore.EObject;
 
 /**
- * <!-- begin-user-doc --> The <b>Adapter Factory</b> for the model. It provides
- * an adapter <code>createXXX</code> method for each class of the model. <!--
- * end-user-doc -->
- * 
+ * <!-- begin-user-doc -->
+ * The <b>Adapter Factory</b> for the model.
+ * It provides an adapter <code>createXXX</code> method for each class of the model.
+ * <!-- end-user-doc -->
  * @see org.eclipse.e4.ui.model.application.ui.impl.UiPackageImpl
  * @generated
  */
 @SuppressWarnings("deprecation")
 public class UiAdapterFactory extends AdapterFactoryImpl {
 	/**
-	 * The cached model package. <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The cached model package.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @generated
 	 */
 	protected static UiPackageImpl modelPackage;
 
 	/**
-	 * Creates an instance of the adapter factory. <!-- begin-user-doc --> <!--
-	 * end-user-doc -->
-	 * 
+	 * Creates an instance of the adapter factory.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @generated
 	 */
 	public UiAdapterFactory() {
@@ -65,11 +66,10 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Returns whether this factory is applicable for the type of the object. <!--
-	 * begin-user-doc --> This implementation returns <code>true</code> if the
-	 * object is either the model's package or is an instance object of the model.
+	 * Returns whether this factory is applicable for the type of the object.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns <code>true</code> if the object is either the model's package or is an instance object of the model.
 	 * <!-- end-user-doc -->
-	 * 
 	 * @return whether this factory is applicable for the type of the object.
 	 * @generated
 	 */
@@ -85,9 +85,9 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * The switch that delegates to the <code>createXXX</code> methods. <!--
-	 * begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The switch that delegates to the <code>createXXX</code> methods.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @generated
 	 */
 	protected UiSwitch<Adapter> modelSwitch = new UiSwitch<Adapter>() {
@@ -101,12 +101,7 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 			return createDirtyableAdapter();
 		}
 
-		/**
-		 * @noreference This method is not intended to be referenced by clients.
-		 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868">Bug
-		 *      509868</a>
-		 */
-		@Deprecated
+		@Override
 		public Adapter caseInput(MInput object) {
 			return createInputAdapter();
 		}
@@ -183,11 +178,10 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	};
 
 	/**
-	 * Creates an adapter for the <code>target</code>. <!-- begin-user-doc --> <!--
-	 * end-user-doc -->
-	 * 
-	 * @param target
-	 *            the object to adapt.
+	 * Creates an adapter for the <code>target</code>.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param target the object to adapt.
 	 * @return the adapter for the <code>target</code>.
 	 * @generated
 	 */
@@ -197,12 +191,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MContext <em>Context</em>}'.
-	 * <!-- begin-user-doc --> This default implementation returns null so that we
-	 * can easily ignore cases; it's useful to ignore a case when inheritance will
-	 * catch all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MContext <em>Context</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MContext
 	 * @since 1.0
@@ -213,12 +206,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MDirtyable
-	 * <em>Dirtyable</em>}'. <!-- begin-user-doc --> This default implementation
-	 * returns null so that we can easily ignore cases; it's useful to ignore a case
-	 * when inheritance will catch all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MDirtyable <em>Dirtyable</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MDirtyable
 	 * @since 1.0
@@ -229,20 +221,17 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MInput <em>Input</em>}'. <!--
-	 * begin-user-doc --> This default implementation returns null so that we can
-	 * easily ignore cases; it's useful to ignore a case when inheritance will catch
-	 * all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MInput <em>Input</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MInput
 	 * @since 1.0
 	 * @deprecated See {@link MInput model documentation} for details.
-	 * @generated NOT
-	 * @noreference This field is not intended to be referenced by clients.
-	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868">Bug
-	 *      509868</a>
+	 * @noreference See {@link MInput model documentation} for details.
+	 * @generated
 	 */
 	@Deprecated
 	public Adapter createInputAdapter() {
@@ -250,12 +239,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MUIElement <em>UI
-	 * Element</em>}'. <!-- begin-user-doc --> This default implementation returns
-	 * null so that we can easily ignore cases; it's useful to ignore a case when
-	 * inheritance will catch all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MUIElement <em>UI Element</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MUIElement
 	 * @since 1.0
@@ -266,28 +254,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MUILabel <em>UI Label</em>}'.
-	 * <!-- begin-user-doc --> This default implementation returns null so that we
-	 * can easily ignore cases; it's useful to ignore a case when inheritance will
-	 * catch all the cases anyway. <!-- end-user-doc -->
-	 * 
-	 * @return the new adapter.
-	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel
-	 * @since 1.0
-	 * @generated
-	 */
-	public Adapter createUILabelAdapter() {
-		return null;
-	}
-
-	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MElementContainer <em>Element
-	 * Container</em>}'. <!-- begin-user-doc --> This default implementation returns
-	 * null so that we can easily ignore cases; it's useful to ignore a case when
-	 * inheritance will catch all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MElementContainer <em>Element Container</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MElementContainer
 	 * @since 1.0
@@ -298,12 +269,26 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MGenericStack <em>Generic
-	 * Stack</em>}'. <!-- begin-user-doc --> This default implementation returns
-	 * null so that we can easily ignore cases; it's useful to ignore a case when
-	 * inheritance will catch all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MUILabel <em>UI Label</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.e4.ui.model.application.ui.MUILabel
+	 * @since 1.0
+	 * @generated
+	 */
+	public Adapter createUILabelAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MGenericStack <em>Generic Stack</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MGenericStack
 	 * @since 1.0
@@ -314,12 +299,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MGenericTile <em>Generic
-	 * Tile</em>}'. <!-- begin-user-doc --> This default implementation returns null
-	 * so that we can easily ignore cases; it's useful to ignore a case when
-	 * inheritance will catch all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MGenericTile <em>Generic Tile</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MGenericTile
 	 * @since 1.0
@@ -330,13 +314,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MGenericTrimContainer
-	 * <em>Generic Trim Container</em>}'. <!-- begin-user-doc --> This default
-	 * implementation returns null so that we can easily ignore cases; it's useful
-	 * to ignore a case when inheritance will catch all the cases anyway. <!--
-	 * end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MGenericTrimContainer <em>Generic Trim Container</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MGenericTrimContainer
 	 * @since 1.0
@@ -347,12 +329,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MExpression
-	 * <em>Expression</em>}'. <!-- begin-user-doc --> This default implementation
-	 * returns null so that we can easily ignore cases; it's useful to ignore a case
-	 * when inheritance will catch all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MExpression <em>Expression</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MExpression
 	 * @since 1.0
@@ -363,12 +344,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MCoreExpression <em>Core
-	 * Expression</em>}'. <!-- begin-user-doc --> This default implementation
-	 * returns null so that we can easily ignore cases; it's useful to ignore a case
-	 * when inheritance will catch all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MCoreExpression <em>Core Expression</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MCoreExpression
 	 * @since 1.0
@@ -379,13 +359,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MImperativeExpression
-	 * <em>Imperative Expression</em>}'. <!-- begin-user-doc --> This default
-	 * implementation returns null so that we can easily ignore cases; it's useful
-	 * to ignore a case when inheritance will catch all the cases anyway. <!--
-	 * end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MImperativeExpression <em>Imperative Expression</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MImperativeExpression
 	 * @generated
@@ -395,12 +373,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MSnippetContainer <em>Snippet
-	 * Container</em>}'. <!-- begin-user-doc --> This default implementation returns
-	 * null so that we can easily ignore cases; it's useful to ignore a case when
-	 * inheritance will catch all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MSnippetContainer <em>Snippet Container</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MSnippetContainer
 	 * @since 1.0
@@ -411,12 +388,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.ui.MLocalizable
-	 * <em>Localizable</em>}'. <!-- begin-user-doc --> This default implementation
-	 * returns null so that we can easily ignore cases; it's useful to ignore a case
-	 * when inheritance will catch all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.ui.MLocalizable <em>Localizable</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.ui.MLocalizable
 	 * @since 1.1
@@ -427,12 +403,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.MApplicationElement
-	 * <em>Element</em>}'. <!-- begin-user-doc --> This default implementation
-	 * returns null so that we can easily ignore cases; it's useful to ignore a case
-	 * when inheritance will catch all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.MApplicationElement <em>Element</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.MApplicationElement
 	 * @since 1.0
@@ -443,12 +418,11 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class
-	 * '{@link org.eclipse.e4.ui.model.application.MContribution
-	 * <em>Contribution</em>}'. <!-- begin-user-doc --> This default implementation
-	 * returns null so that we can easily ignore cases; it's useful to ignore a case
-	 * when inheritance will catch all the cases anyway. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for an object of class '{@link org.eclipse.e4.ui.model.application.MContribution <em>Contribution</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.e4.ui.model.application.MContribution
 	 * @since 1.0
@@ -459,9 +433,10 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for the default case. <!-- begin-user-doc --> This
-	 * default implementation returns null. <!-- end-user-doc -->
-	 * 
+	 * Creates a new adapter for the default case.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null.
+	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @generated
 	 */
@@ -469,4 +444,4 @@ public class UiAdapterFactory extends AdapterFactoryImpl {
 		return null;
 	}
 
-} // UiAdapterFactory
+} //UiAdapterFactory

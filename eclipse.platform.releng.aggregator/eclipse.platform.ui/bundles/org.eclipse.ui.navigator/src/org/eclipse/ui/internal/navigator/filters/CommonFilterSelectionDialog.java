@@ -120,11 +120,13 @@ public class CommonFilterSelectionDialog extends TrayDialog {
 				CommonNavigatorMessages.CommonFilterSelectionDialog_Available_Filters,
 				commonFiltersTab, FILTER_ICON);
 
-		this.userFiltersTab = new UserFiltersTab(customizationsTabFolder, this.commonViewer);
-		createTabItem(
-				customizationsTabFolder,
-				CommonNavigatorMessages.CommonFilterSelectionDialog_User_Resource_Filters,
-				userFiltersTab, FILTER_ICON);
+		if (contentService.getViewerDescriptor()
+				.isVisibleContentExtension("org.eclipse.ui.navigator.resourceContent")) { //$NON-NLS-1$
+			this.userFiltersTab = new UserFiltersTab(customizationsTabFolder, this.commonViewer);
+			createTabItem(customizationsTabFolder,
+					CommonNavigatorMessages.CommonFilterSelectionDialog_User_Resource_Filters, userFiltersTab,
+					FILTER_ICON);
+		}
 
 		boolean hideExtensionsTab = contentService.getViewerDescriptor()
 				.getBooleanConfigProperty(
@@ -188,7 +190,7 @@ public class CommonFilterSelectionDialog extends TrayDialog {
 	private void customize() {
 		ColorRegistry reg = JFaceResources.getColorRegistry();
 		Color c1 = reg.get("org.eclipse.ui.workbench.ACTIVE_TAB_BG_START"), //$NON-NLS-1$
-		  c2 = reg.get("org.eclipse.ui.workbench.ACTIVE_TAB_BG_END"); //$NON-NLS-1$
+		c2 = reg.get("org.eclipse.ui.workbench.ACTIVE_TAB_BG_END"); //$NON-NLS-1$
 		customizationsTabFolder.setSelectionBackground(new Color[] {c1, c2},	new int[] {100}, true);
 		customizationsTabFolder.setSelectionForeground(reg.get("org.eclipse.ui.workbench.ACTIVE_TAB_TEXT_COLOR")); //$NON-NLS-1$
 		customizationsTabFolder.setSimple(true);
@@ -198,9 +200,9 @@ public class CommonFilterSelectionDialog extends TrayDialog {
 			Composite composite, String imageKey) {
 		CTabItem extensionsTabItem = new CTabItem(aTabFolder, SWT.BORDER);
 		extensionsTabItem.setText(label);
- 		extensionsTabItem.setControl(composite);
- 		extensionsTabItem.setImage(NavigatorPlugin.getDefault().getImage(imageKey));
- 		return extensionsTabItem;
+		extensionsTabItem.setControl(composite);
+		extensionsTabItem.setImage(NavigatorPlugin.getDefault().getImage(imageKey));
+		return extensionsTabItem;
 	}
 
 	private void createDescriptionText(Composite composite) {

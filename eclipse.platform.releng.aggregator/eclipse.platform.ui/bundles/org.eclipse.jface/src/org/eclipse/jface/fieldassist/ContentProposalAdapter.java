@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corporation and others.
+ * Copyright (c) 2005, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -620,6 +620,7 @@ public class ContentProposalAdapter {
 			proposalTable.addListener(SWT.SetData, listener);
 			// set the proposals to force population of the table.
 			setProposals(filterProposals(proposals, filterText));
+			proposalTable.setTextDirection(SWT.AUTO_TEXT_DIRECTION);
 
 			proposalTable.setHeaderVisible(false);
 			proposalTable.addSelectionListener(new SelectionListener() {
@@ -673,6 +674,11 @@ public class ContentProposalAdapter {
 				proposalTable.setLayoutData(data);
 				getShell().pack();
 				popupSize = getShell().getSize();
+			}
+
+			int dir = proposalTable.getTextDirection();
+			if (dir == SWT.RIGHT_TO_LEFT) {
+				initialX = initialX - popupSize.x;
 			}
 
 			// Constrain to the display
@@ -2124,7 +2130,7 @@ public class ContentProposalAdapter {
 	 */
 	private boolean allowsAutoActivate() {
 		return (autoActivateString != null && autoActivateString.length() > 0) // there are specific autoactivation chars supplied
-		  || (autoActivateString == null && triggerKeyStroke == null);    // we autoactivate on everything
+			|| (autoActivateString == null && triggerKeyStroke == null);    // we autoactivate on everything
 	}
 
 	/**

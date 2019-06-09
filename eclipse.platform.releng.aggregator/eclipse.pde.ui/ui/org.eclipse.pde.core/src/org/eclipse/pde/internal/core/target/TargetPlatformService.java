@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corporation and others.
+ * Copyright (c) 2008, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - Bug 541067
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
@@ -29,6 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
 import org.eclipse.core.resources.IFile;
@@ -48,6 +50,9 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.e4.core.contexts.EclipseContextFactory;
+import org.eclipse.e4.core.contexts.IEclipseContext;
+import org.eclipse.e4.core.services.events.IEventBroker;
 import org.eclipse.equinox.frameworkadmin.BundleInfo;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.osgi.service.datalocation.Location;
@@ -60,6 +65,7 @@ import org.eclipse.pde.core.target.ITargetLocation;
 import org.eclipse.pde.core.target.ITargetPlatformService;
 import org.eclipse.pde.core.target.NameVersionDescriptor;
 import org.eclipse.pde.core.target.TargetBundle;
+import org.eclipse.pde.core.target.TargetEvents;
 import org.eclipse.pde.internal.core.ICoreConstants;
 import org.eclipse.pde.internal.core.PDECore;
 import org.eclipse.pde.internal.core.PDECoreMessages;
@@ -313,7 +319,7 @@ public class TargetPlatformService implements ITargetPlatformService {
 			target = handle.getTargetDefinition();
 		}
 
-		fWorkspaceTarget = target;
+		setWorkspaceTargetDefinition(target);
 		return target;
 	}
 
@@ -327,7 +333,15 @@ public class TargetPlatformService implements ITargetPlatformService {
 	 * @param target the new workspace target definition
 	 */
 	public void setWorkspaceTargetDefinition(ITargetDefinition target) {
+		boolean changed = !Objects.equals(fWorkspaceTarget, target);
 		fWorkspaceTarget = target;
+		if (changed) {
+			IEclipseContext context = EclipseContextFactory.getServiceContext(PDECore.getDefault().getBundleContext());
+			IEventBroker broker = context.get(IEventBroker.class);
+			if (broker != null) {
+				broker.send(TargetEvents.TOPIC_WORKSPACE_TARGET_CHANGED, target);
+			}
+		}
 	}
 
 	/**

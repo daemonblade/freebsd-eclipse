@@ -15,7 +15,7 @@
 package org.eclipse.ui.internal.services;
 
 import java.util.Comparator;
-
+import java.util.Objects;
 import org.eclipse.ui.internal.util.Util;
 
 /**
@@ -36,7 +36,7 @@ public final class EvaluationResultCacheComparator implements Comparator {
 
 	@Override
 	public int compare(final Object object1, final Object object2) {
-		if (Util.equals(object2, object1)) {
+		if (Objects.equals(object2, object1)) {
 			return 0;
 		}
 
@@ -45,16 +45,14 @@ public final class EvaluationResultCacheComparator implements Comparator {
 		int comparison;
 
 		/*
-		 * Note: all of the comparisons are flipped intentionally. This allows
-		 * those items with greater values to appear earlier when using an
-		 * iterator.
+		 * Note: all of the comparisons are flipped intentionally. This allows those
+		 * items with greater values to appear earlier when using an iterator.
 		 */
 		// if objects went to the trouble to implement Comparable
 		// we should use it ... this algorithm can accept a natural ordering
 		// that's not compatible with equals.
 		if (object1 instanceof Comparable && object2 instanceof Comparable) {
-			comparison = Util.compare((Comparable) object2,
-					(Comparable) object1);
+			comparison = Util.compare((Comparable) object2, (Comparable) object1);
 			if (comparison != 0) {
 				return comparison;
 			}
@@ -63,4 +61,3 @@ public final class EvaluationResultCacheComparator implements Comparator {
 		return Util.compareIdentity(cache2, cache1);
 	}
 }
-

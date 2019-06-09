@@ -227,9 +227,6 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 		return null;
 	}
 
-	/*
-	 * @see IWizard#performFinish
-	 */
 	@Override
 	public boolean performFinish() {
 		final boolean[] result = new boolean[] { true };
@@ -273,9 +270,6 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 		return result[0];
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.wizard.IWizard#performCancel()
-	 */
 	@Override
 	public boolean performCancel() {
 		boolean disposeLocation = isNewLocation;
@@ -374,9 +368,6 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 		return location;
 	}
 	
-	/*
-	 * @see IConfigurationWizard#init(IWorkbench, IProject)
-	 */
 	@Override
 	public void init(IWorkbench workbench, IProject project) {
 		this.project = project;
@@ -538,9 +529,6 @@ public class SharingWizard extends Wizard implements IConfigurationWizard, ICVSW
 		});
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.wizard.IWizard#getPreviousPage(org.eclipse.jface.wizard.IWizardPage)
-	 */
 	@Override
 	public IWizardPage getPreviousPage(IWizardPage page) {
 		if (page == syncPage) {

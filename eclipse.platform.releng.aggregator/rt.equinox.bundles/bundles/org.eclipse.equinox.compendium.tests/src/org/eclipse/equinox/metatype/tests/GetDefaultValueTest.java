@@ -30,7 +30,13 @@ public class GetDefaultValueTest extends AbstractTest {
 	private Bundle bundle;
 
 	@Test
-	public void testGetDefaultValue() {
+	public void testGetDefaultValue() throws Exception {
+		doTestGetDefaultValue();
+		restartMetatype();
+		doTestGetDefaultValue();
+	}
+
+	private void doTestGetDefaultValue() {
 		MetaTypeInformation mti = metatype.getMetaTypeInformation(bundle);
 		Assert.assertNotNull("Metatype information was null", mti); //$NON-NLS-1$
 		ObjectClassDefinition ocd = mti.getObjectClassDefinition("org.eclipse.equinox.metatype.tests.tb1.getDefaultValues", null); //$NON-NLS-1$
@@ -120,6 +126,7 @@ public class GetDefaultValueTest extends AbstractTest {
 	}
 
 	@Before
+	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 		bundle = bundleInstaller.installBundle("tb1"); //$NON-NLS-1$

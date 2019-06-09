@@ -28,6 +28,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -60,8 +61,8 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 	}
 
 	static {
-//		 TESTS_NAMES = new String[] { "testBug522330" };
-	}
+//		 TESTS_NAMES = new String[] { "testReleaseOption8" };
+	} 
 	private String sourceWorkspacePath = null;
 	protected ProblemRequestor problemRequestor;
 	public static Test suite() {
@@ -3316,6 +3317,71 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 			deleteProject("com.greetings");
 		}
 	}
+
+	// test that the compilation of a class using same package defined in the java.util module
+	// works if a special option is given
+	public void test_no_conflicting_packages_for_debugger_global() throws CoreException {
+		Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
+		try {
+			Hashtable<String, String> newOptions=new Hashtable<>(javaCoreOptions);
+			newOptions.put(CompilerOptions.OPTION_JdtDebugCompileMode, JavaCore.ENABLED);
+			JavaCore.setOptions(newOptions);
+			String[] sources = new String[] {
+					"src/java/util/Map___.java",
+					"package java.util;\n" +
+					"abstract class Map___ implements java.util.Map {\n" +
+					"  Map___() {\n" +
+					"    super();\n" +
+					"  }\n" +
+					"  Object[] ___run() throws Throwable {\n" +
+					"    return entrySet().toArray();\n" +
+					"  }\n" +
+					"}"
+			};
+			IClasspathEntry dep = JavaCore.newContainerEntry(new Path(JavaCore.MODULE_PATH_CONTAINER_ID));
+			IJavaProject p1= setupModuleProject("debugger_project", sources, new IClasspathEntry[]{dep});
+			p1.getProject().getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, null);
+			assertNoErrors();
+
+			assertNull("Option should not be stored", JavaCore.getOption(CompilerOptions.OPTION_JdtDebugCompileMode));
+		} finally {
+			deleteProject("debugger_project");
+			JavaCore.setOptions(javaCoreOptions);
+		}
+	}
+
+	// test that the special OPTION_JdtDebugCompileMode cannot be persisted on a project
+	public void test_no_conflicting_packages_for_debugger_project() throws CoreException {
+		try {
+			String[] sources = new String[] {
+					"src/java/util/Map___.java",
+					"package java.util;\n" +
+					"abstract class Map___ implements java.util.Map {\n" +
+					"  Map___() {\n" +
+					"    super();\n" +
+					"  }\n" +
+					"  Object[] ___run() throws Throwable {\n" +
+					"    return entrySet().toArray();\n" +
+					"  }\n" +
+					"}"
+			};
+			IClasspathEntry dep = JavaCore.newContainerEntry(new Path(JavaCore.MODULE_PATH_CONTAINER_ID));
+			IJavaProject p1= setupModuleProject("debugger_project", sources, new IClasspathEntry[]{dep});
+			p1.setOption(CompilerOptions.OPTION_JdtDebugCompileMode, JavaCore.ENABLED);
+			assertNull("Option should not be stored", p1.getOption(CompilerOptions.OPTION_JdtDebugCompileMode, false));
+			p1.getProject().getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, null);
+			IMarker[] markers = p1.getProject().findMarkers(null, true, IResource.DEPTH_INFINITE);
+			sortMarkers(markers);
+			assertMarkers("Unexpected markers", 
+					"The package java.util conflicts with a package accessible from another module: java.base\n" +
+					"The package java.util is accessible from more than one module: <unnamed>, java.base\n" +
+					"The method entrySet() is undefined for the type Map___",
+					markers);
+		} finally {
+			deleteProject("debugger_project");
+		}
+	}
+
 	// test that a package declared in a module conflicts with an accessible package
 	// of the same name declared in another required module
 	public void test_conflicting_packages_declaredvsaccessible() throws CoreException {
@@ -4963,10 +5029,10 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 			getWorkingCopy("/Test/src/X.java", src, true);
 			assertProblems("should have not problems",
 					"----------\n" + 
-					"1. WARNING in /Test/src/X.java (at line 1)\n" + 
+					"1. ERROR in /Test/src/X.java (at line 1)\n" + 
 					"	import java.*;\n" + 
 					"	       ^^^^\n" + 
-					"The import java is never used\n" + 
+					"The package java is not accessible\n" + 
 					"----------\n",
 					this.problemRequestor);
 		} finally {
@@ -5410,7 +5476,7 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 		try {
 			IClasspathAttribute[] attributes = {
 					JavaCore.newClasspathAttribute(IClasspathAttribute.MODULE, "true"),
-					JavaCore.newClasspathAttribute(IClasspathAttribute.PATCH_MODULE, "java.base")
+					JavaCore.newClasspathAttribute(IClasspathAttribute.PATCH_MODULE, "java.desktop=/missing.path::java.base=/org.astro.patch/src:/org.astro.patch/src2")
 			};
 			IJavaProject patchProject = createJava9ProjectWithJREAttributes("org.astro.patch", new String[]{"src", "src2"}, attributes);
 
@@ -5466,7 +5532,7 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 			IJavaProject patchProject = createJava9Project("mod.one.patch");			
 			IClasspathAttribute[] attributes = {
 					JavaCore.newClasspathAttribute(IClasspathAttribute.MODULE, "true"),
-					JavaCore.newClasspathAttribute(IClasspathAttribute.PATCH_MODULE, "mod.one")
+					JavaCore.newClasspathAttribute(IClasspathAttribute.PATCH_MODULE, "mod.one=/mod.one.patch")
 			};
 			addClasspathEntry(patchProject, JavaCore.newLibraryEntry(new Path(jarPath), null, null, null, attributes, false));
 
@@ -6184,6 +6250,7 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 	}
 
 	public void testBug526054() throws Exception {
+		if (!isJRE9) return;
 		ClasspathJrt.resetCaches();
 		try {
 			// jdk.rmic is not be visible to code in an unnamed module, but using requires we can see the module.
@@ -6807,6 +6874,7 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 		}
 	}
 	public void testBug527569c() throws CoreException {
+		if (!isJRE9) return;
 		IJavaProject p1 = createJava9Project("Bug527569", "1.7");
 		Map<String, String> options = new HashMap<>();
 		// Make sure the new options map doesn't reset.
@@ -6856,6 +6924,7 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 		}
 	}
 	public void testBug527569e() throws CoreException {
+		if (!isJRE9 || isJRE12) return;
 		IJavaProject p1 = createJava9Project("Bug527569", "1.8");
 		Map<String, String> options = new HashMap<>();
 		// Make sure the new options map doesn't reset.
@@ -7650,39 +7719,39 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 		}
 	}
 	public void testBug543195() throws CoreException {
-		IJavaProject pj1 = createJava9Project("p1");
-		IJavaProject pj2 = createJava9Project("p2");
+		IJavaProject pj1 = createJava9Project("pj1");
+		IJavaProject pj2 = createJava9Project("pj2");
 		IJavaProject ptest = createJava9Project("ptest");
 		try {
 			addModularProjectEntry(pj2, pj1);
 			addModularProjectEntry(ptest, pj2);
 
-			createFolder("p1/src/p");
-			createFile("p1/src/p/Missing.java",
+			createFolder("pj1/src/p");
+			createFile("pj1/src/p/Missing.java",
 					"package p;\n" +
 					"public class Missing {\n" +
 					"	public void miss() {}\n" +
 					"}\n");
-			createFile("p1/src/module-info.java",
-					"module p1 {\n" +
+			createFile("pj1/src/module-info.java",
+					"module pj1 {\n" +
 					"	exports p;\n" +
 					"}\n");
 
-			createFolder("p2/src/q");
-			createFile("p2/src/q/API.java",
+			createFolder("pj2/src/q");
+			createFile("pj2/src/q/API.java",
 					"package q;\n" +
 					"public class API extends p.Missing {}\n");
-			createFile("p2/src/q/API2.java",
+			createFile("pj2/src/q/API2.java",
 					"package q;\n" +
 					"public class API2 extends API {}\n");
-			createFile("p2/src/module-info.java",
-					"module p2 {\n" +
-					"	requires p1;\n" +
+			createFile("pj2/src/module-info.java",
+					"module pj2 {\n" +
+					"	requires pj1;\n" +
 					"	exports q;\n" +
 					"}\n");
 			getWorkspace().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, null);
 
-			deleteFile("p1/bin/p/Missing.class");
+			deleteFile("pj1/bin/p/Missing.class");
 			pj1.getProject().close(null);
 
 			createFolder("ptest/src/p/r");
@@ -8485,6 +8554,154 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 			File outputDir = new File(outputDirectory);
 			if (outputDir.exists())
 				Util.flushDirectoryContent(outputDir);
+		}
+	}
+	public void testBug547114a() throws CoreException, IOException {
+		String outputDirectory = Util.getOutputDirectory();
+		String jarPath = outputDirectory + File.separator + "lib.jar";
+		try {
+			// focus project has no module-info, to trigger path where LE#knownPackages is not empty when processing add-reads
+			String[] sources = new String[] {
+					"src/org/astro/World.java",
+					"package org.astro;\n" +
+					"import p.C;\n" +
+					"public class World {\n" +
+					"	C f;\n" +
+					"}\n"
+			};
+			IJavaProject p = setupModuleProject("org.astro", sources);
+
+			Util.createJar(new String[] {
+					"/lib/src/module-info.java",
+					"module lib {\n" +
+					"	exports p;\n" +
+					"}\n",
+					"/lib/src/p/C.java",
+					"package p;\n" +
+					"public class C {}\n",
+				},
+				jarPath,
+				"9");
+			addClasspathEntry(p, JavaCore.newLibraryEntry(new Path(jarPath), null, null, null,
+					new IClasspathAttribute[] {
+						JavaCore.newClasspathAttribute(IClasspathAttribute.MODULE, "true"),
+						JavaCore.newClasspathAttribute(IClasspathAttribute.ADD_READS, "lib=missing.module") // problematic directive on jar-dependency
+					},
+					false));
+
+			p.getProject().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, null);
+			waitForAutoBuild();
+			
+			IMarker[] markers = p.getProject().findMarkers(null, true, IResource.DEPTH_INFINITE);
+			// 1. marker is on the project, second on the "current" CU: World.java.
+			assertMarkers("Unexpected markers",
+					"The project was not built since its build path has a problem: missing.module cannot be resolved to a module, it is referenced from an add-reads directive. Fix the build path then try building this project\n" + 
+					"missing.module cannot be resolved to a module, it is referenced from an add-reads directive",
+					markers);
+		} finally {
+			deleteProject("org.astro");
+			deleteFile(jarPath);
+		}
+	}
+	public void testBug547114b() throws CoreException, IOException {
+		try {
+			IJavaProject p = setupModuleProject("org.astro", new String[] {
+					"src/module-info.java",
+					"module org.astro {\n" +
+					"	requires lib;\n" +
+					"}\n",
+					"src/org/astro/World.java",
+					"package org.astro;\n" +
+					"import p.C;\n" +
+					"public class World {\n" +
+					"	C f;\n" +
+					"}\n"
+			});
+			
+			IJavaProject lib = setupModuleProject("lib", new String[] {
+					"src/module-info.java",
+					"module lib {\n" +
+					"	exports p;\n" +
+					"}\n",
+					"src/p/C.java",
+					"package p;\n" +
+					"public class C {}\n",
+			});
+			addClasspathEntry(p, JavaCore.newProjectEntry(lib.getPath(), null, false,
+					new IClasspathAttribute[] {
+						JavaCore.newClasspathAttribute(IClasspathAttribute.MODULE, "true"),
+						JavaCore.newClasspathAttribute(IClasspathAttribute.ADD_READS, "lib=missing.module") // problematic directive on project dependency
+					},
+					false));
+
+			ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, null);
+			waitForAutoBuild();
+
+			IMarker[] markers = p.getProject().findMarkers(null, true, IResource.DEPTH_INFINITE);
+			// 1. marker is on the project, second on the "current" CU: World.java.
+			assertMarkers("Unexpected markers",
+					"The project was not built since its build path has a problem: missing.module cannot be resolved to a module, it is referenced from an add-reads directive. Fix the build path then try building this project\n" + 
+					"missing.module cannot be resolved to a module, it is referenced from an add-reads directive",
+					markers);
+		} finally {
+			deleteProject("org.astro");
+			deleteProject("lib");
+		}
+	}
+	public void testBug547479() throws CoreException {
+		int max = org.eclipse.jdt.internal.core.builder.AbstractImageBuilder.MAX_AT_ONCE;
+
+		IJavaProject prjA = createJava9Project("A");
+		IJavaProject prjB = createJava9Project("B");
+		try {
+			createFile("A/src/module-info.java",
+				"module A {\n" + 
+				"}\n");
+
+			addModularProjectEntry(prjB, prjA);
+			// prepare files to be compiled in two batches à 2 files:
+			org.eclipse.jdt.internal.core.builder.AbstractImageBuilder.MAX_AT_ONCE = 2;
+			// ---1---
+			createFolder("B/src/b");
+			createFile("B/src/b/Class1.java",
+				"package b;\n" + 
+				"import java.sql.Connection;\n" + 
+				"public class Class1 {\n" + 
+				"	Connection connection;\n" + 
+				"}\n");
+			createFile("B/src/b/Class2.java",
+				"package b;\n" + 
+				"import java.sql.Connection;\n" + 
+				"public class Class2 {\n" + 
+				"	Connection connection;\n" + 
+				"}\n");
+			// ---2---
+			createFile("B/src/module-info.java",
+				"module B {\n" + 
+				"	requires java.sql;\n" + 
+				"	requires A;\n" + 
+				"}\n");
+			String bPath = "B/src/b/Class3.java";
+			String bSource =
+				"package b;\n" + // <= this triggered createPackage in an inconsistent state
+				"import java.sql.Connection;\n" + 
+				"public class Class3 {\n" + 
+				"	Connection connection;\n" + 
+				"}\n";
+			createFile(bPath, bSource);
+			getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, null);
+			assertNoErrors();
+
+			this.problemRequestor.initialize(bSource.toCharArray());
+			getCompilationUnit(bPath).getWorkingCopy(this.wcOwner, null);
+			assertProblems("unexpected problems",
+					"----------\n" + 
+					"----------\n",
+					this.problemRequestor);
+		} finally {
+			org.eclipse.jdt.internal.core.builder.AbstractImageBuilder.MAX_AT_ONCE = max;
+			deleteProject(prjA);
+			deleteProject(prjB);
 		}
 	}
 	protected void assertNoErrors() throws CoreException {

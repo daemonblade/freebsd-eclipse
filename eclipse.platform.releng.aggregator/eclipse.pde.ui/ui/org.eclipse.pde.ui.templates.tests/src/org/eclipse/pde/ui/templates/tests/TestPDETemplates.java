@@ -13,6 +13,9 @@
  *******************************************************************************/
 package org.eclipse.pde.ui.templates.tests;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsEqual.equalTo;
+
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -23,6 +26,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.osgi.internal.framework.EquinoxBundle;
 import org.eclipse.osgi.storage.BundleInfo.Generation;
 import org.eclipse.pde.core.target.*;
+import org.eclipse.pde.ds.internal.annotations.Messages;
 import org.eclipse.pde.internal.core.ICoreConstants;
 import org.eclipse.pde.internal.core.builders.CompilerFlags;
 import org.eclipse.pde.internal.core.builders.PDEMarkerFactory;
@@ -34,7 +38,6 @@ import org.eclipse.pde.ui.IFieldData;
 import org.eclipse.pde.ui.IPluginContentWizard;
 import org.eclipse.ui.PlatformUI;
 import org.junit.*;
-import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
@@ -93,7 +96,7 @@ public class TestPDETemplates {
 	@Parameter
 	public static WizardElement template;
 
-	@Parameters
+	@Parameters(name = "{index}: {0}")
 	public static Collection<WizardElement> allTemplateWizards() {
 		return Arrays.asList(new NewPluginProjectWizard().getAvailableCodegenWizards().getChildren()).stream()
 				.filter(o -> (o instanceof WizardElement))
@@ -165,16 +168,21 @@ public class TestPDETemplates {
 		// ignore missing package export marker
 		if (markers.length == 1 && CompilerFlags.P_MISSING_EXPORT_PKGS
 				.equals(markers[0].getAttribute(PDEMarkerFactory.compilerKey, ""))) {
+			System.out.println("Template '" + template.getLabel() + "' ignored errors.");
+			System.out.println(markers[0]);
+			System.out.println("--------------------------------------------------------");
 			markers = new IMarker[0];
 		}
-		if (markers.length > 0) {
-			System.out.println("Template '" + template.getLabel() + "' generates errors.");
-			for (IMarker marker : markers) {
-				System.out.println(marker);
-			}
+		// ignore "DS Annotations missing from permanent build path"
+		if (markers.length == 1 && Messages.DSAnnotationCompilationParticipant_buildpathProblemMarker_message
+				.equals(markers[0].getAttribute(IMarker.MESSAGE, ""))) {
+			System.out.println("Template '" + template.getLabel() + "' ignored errors.");
+			System.out.println(markers[0]);
 			System.out.println("--------------------------------------------------------");
+			markers = new IMarker[0];
 		}
-		Assert.assertArrayEquals("Template '" + template.getLabel() + "' generates errors.", new IMarker[0], markers);
+
+		assertThat("Template '" + template.getLabel() + "' generates errors.", markers, equalTo(new IMarker[0]));
 	}
 
 	@After

@@ -47,9 +47,6 @@ public class ShareProjectOperation extends CVSOperation {
 		this.location = location;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#execute(org.eclipse.core.runtime.IProgressMonitor)
-	 */
 	@Override
 	protected void execute(IProgressMonitor monitor) throws CVSException, InterruptedException {
 		try {
@@ -113,7 +110,7 @@ public class ShareProjectOperation extends CVSOperation {
 		monitor.beginTask(null, IProgressMonitor.UNKNOWN);
 		purgeAnyCVSFolders(Policy.subMonitorFor(monitor, IProgressMonitor.UNKNOWN));
 		// Link the project to the newly created module
-        monitor.subTask(NLS.bind(CVSUIMessages.ShareProjectOperation_3, new String[] { project.getName(), remote.getRepositoryRelativePath() }));
+		monitor.subTask(NLS.bind(CVSUIMessages.ShareProjectOperation_3, new String[] { project.getName(), remote.getRepositoryRelativePath() }));
 		ICVSFolder folder = (ICVSFolder)CVSWorkspaceRoot.getCVSResourceFor(project);
 		folder.setFolderSyncInfo(remote.getFolderSyncInfo());
 		//Register it with Team.  If it already is, no harm done.
@@ -166,9 +163,6 @@ public class ShareProjectOperation extends CVSOperation {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#getTaskName()
-	 */
 	@Override
 	protected String getTaskName() {
 		return NLS.bind(CVSUIMessages.ShareProjectOperation_0, new String[] { project.getName(), moduleName }); 
@@ -181,9 +175,6 @@ public class ShareProjectOperation extends CVSOperation {
 		return project;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#getShell()
-	 */
 	@Override
 	public Shell getShell() {
 		return shell;
@@ -196,7 +187,7 @@ public class ShareProjectOperation extends CVSOperation {
 	 */
 	private void purgeAnyCVSFolders(final IProgressMonitor monitor) {
 		try {
-            monitor.beginTask(null, IProgressMonitor.UNKNOWN);
+			monitor.beginTask(null, IProgressMonitor.UNKNOWN);
 			ICVSFolder folder = CVSWorkspaceRoot.getCVSFolderFor(project);
 			folder.accept(new ICVSResourceVisitor() {
 				@Override
@@ -205,7 +196,7 @@ public class ShareProjectOperation extends CVSOperation {
 				}
 				@Override
 				public void visitFolder(ICVSFolder folder) throws CVSException {
-                    monitor.subTask(NLS.bind(CVSUIMessages.ShareProjectOperation_2, new String[] { folder.getIResource().getFullPath().toString() } ));
+					monitor.subTask(NLS.bind(CVSUIMessages.ShareProjectOperation_2, new String[] { folder.getIResource().getFullPath().toString() } ));
 					if (folder.isCVSFolder()) {
 						// for now, just unmanage
 						folder.unmanage(null);
@@ -216,7 +207,7 @@ public class ShareProjectOperation extends CVSOperation {
 			// log the exception and return null
 			CVSUIPlugin.log(e);
 		} finally {
-		    monitor.done();
-        }
+			monitor.done();
+		}
 	}
 }

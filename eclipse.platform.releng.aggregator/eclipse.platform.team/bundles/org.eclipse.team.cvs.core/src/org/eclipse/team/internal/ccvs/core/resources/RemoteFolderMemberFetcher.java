@@ -105,7 +105,7 @@ public class RemoteFolderMemberFetcher implements IUpdateMessageListener, IStatu
 			return Command.UPDATE.execute(
 				session,
 				new GlobalOption[] { Command.DO_NOT_CHANGE },
-				(LocalOption[])localOptions.toArray(new LocalOption[localOptions.size()]),
+				localOptions.toArray(new LocalOption[localOptions.size()]),
 				new ICVSResource[] { parentFolder },
 				new UpdateListener(this),
 			Policy.subMonitorFor(progress, 90));
@@ -159,37 +159,33 @@ public class RemoteFolderMemberFetcher implements IUpdateMessageListener, IStatu
 		// Report any internal exceptions that occurred fetching the members
 		if ( ! exceptions.isEmpty()) {
 			if (exceptions.size() == 1) {
-				throw (CVSException)exceptions.get(0);
+				throw exceptions.get(0);
 			} else {
 				MultiStatus multi = new MultiStatus(CVSProviderPlugin.ID, 0, errorTitle, null);
 				for (int i = 0; i < exceptions.size(); i++) {
-					multi.merge(((CVSException)exceptions.get(i)).getStatus());
+					multi.merge(exceptions.get(i).getStatus());
 				}
 				throw new CVSException(multi);
 			}
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.client.listeners.IUpdateMessageListener#directoryInformation(org.eclipse.team.internal.ccvs.core.ICVSFolder, java.lang.String, boolean)
-	 */
+	@Override
 	public void directoryInformation(ICVSFolder commandRoot, String stringPath, boolean newDirectory) {
 		try {
 			IPath path = this.parentFolder.getRelativePathFromRootRelativePath(commandRoot, new Path(null, stringPath));
 			if (path.segmentCount() == 1) {
-			    String pathName = path.lastSegment();
-			    if (!pathName.equals(".")) { //$NON-NLS-1$
-			        recordFolder(path.lastSegment());
-			    }
+				String pathName = path.lastSegment();
+				if (!pathName.equals(".")) { //$NON-NLS-1$
+					recordFolder(path.lastSegment());
+				}
 			}
 		} catch (CVSException e) {
 			exceptions.add(e);
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.client.listeners.IUpdateMessageListener#directoryDoesNotExist(org.eclipse.team.internal.ccvs.core.ICVSFolder, java.lang.String)
-	 */
+	@Override
 	public void directoryDoesNotExist(ICVSFolder parent, String stringPath) {
 		try {
 			IPath path = this.parentFolder.getRelativePathFromRootRelativePath(parent, new Path(null, stringPath));
@@ -201,9 +197,7 @@ public class RemoteFolderMemberFetcher implements IUpdateMessageListener, IStatu
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.client.listeners.IUpdateMessageListener#fileInformation(int, org.eclipse.team.internal.ccvs.core.ICVSFolder, java.lang.String)
-	 */
+	@Override
 	public void fileInformation(int type, ICVSFolder parent, String filename) {
 		try {
 			IPath filePath = new Path(null, filename);
@@ -217,15 +211,11 @@ public class RemoteFolderMemberFetcher implements IUpdateMessageListener, IStatu
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.client.listeners.IUpdateMessageListener#fileDoesNotExist(org.eclipse.team.internal.ccvs.core.ICVSFolder, java.lang.String)
-	 */
+	@Override
 	public void fileDoesNotExist(ICVSFolder parent, String filename) {
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.client.listeners.IStatusListener#fileStatus(org.eclipse.team.internal.ccvs.core.ICVSFolder, java.lang.String, java.lang.String)
-	 */
+	@Override
 	public void fileStatus(ICVSFolder commandRoot, String path, String remoteRevision) {
 		if (remoteRevision == IStatusListener.FOLDER_REVISION)
 			// Ignore any folders
@@ -295,7 +285,7 @@ public class RemoteFolderMemberFetcher implements IUpdateMessageListener, IStatu
 	 * @return
 	 */
 	protected ICVSFile[] getFiles() {
-		return (ICVSFile[]) files.toArray(new ICVSFile[files.size()]);
+		return files.toArray(new ICVSFile[files.size()]);
 	}
 	
 	/**

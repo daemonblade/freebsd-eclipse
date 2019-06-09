@@ -8,7 +8,7 @@
     https://www.eclipse.org/legal/epl-2.0/
 
     SPDX-License-Identifier: EPL-2.0
-   
+
     Contributors:
         IBM Corporation - initial API and implementation
  -->
@@ -156,7 +156,6 @@
 			<fileset dir="${plugindir}/Eclipse SWT Program/common/"/>
 		</copy>
 		<antcall target="copy.translationfiles"/>
-		<antcall target="replace64"/>
 	</target>
 
 	<target name="copy.gtk.src">
@@ -192,9 +191,8 @@
 			<fileset dir="${plugindir}/Eclipse SWT WebKit/gtk/"/>
 		</copy>
 		<antcall target="copy.translationfiles"/>
-		<antcall target="replace64"/>
 	</target>
-		
+
 	<target name="copy.win32.src">
 		<property name="copy.src.dir" value="${temp.folder}/@dot.src"/>
 		<delete dir="${copy.src.dir}" quiet="true"/>
@@ -223,7 +221,6 @@
 			<fileset dir="${plugindir}/Eclipse SWT Program/win32/"/>
 		</copy>
 		<antcall target="copy.translationfiles"/>
-		<antcall target="replace64"/>
 	</target>
 
 	<target name="copy.translationfiles" if="includetranslationfiles">
@@ -232,29 +229,6 @@
 			<mapper type="glob" from="*._properties" to="*.properties" />
 		</copy>
 	</target>
-
-	<target name="is64">
-		<condition property="is64" value="true">
-			<or>
-				<equals arg1="${swt.arch}" arg2="x86_64"/>
-				<equals arg1="${swt.arch}" arg2="amd64"/>
-				<equals arg1="${swt.arch}" arg2="ia64"/>
-				<equals arg1="${swt.arch}" arg2="powerpc64"/>
-				<equals arg1="${swt.arch}" arg2="s390x"/>
-				<equals arg1="${swt.arch}" arg2="sparcv9"/>
-				<equals arg1="${swt.arch}" arg2="aarch64"/>
-			</or>
-		</condition>
-		<echo>Is64=${is64}</echo>
-	</target>
-		
-    <target name="replace64" depends="is64" unless="is64">
-    	<echo>Converting java files to 32 bit</echo>
-    	<replace dir="${copy.src.dir}" includes="**/*.java" value="int /*long*/" token="long /*int*/"/>
-    	<replace dir="${copy.src.dir}" includes="**/*.java" value="int[] /*long[]*/" token="long[] /*int[]*/"/>
-    	<replace dir="${copy.src.dir}" includes="**/*.java" value="float /*double*/" token="double /*float*/"/>
-    	<replace dir="${copy.src.dir}" includes="**/*.java" value="float[] /*double[]*/" token="double[] /*float[]*/"/>
-    </target>
 
 	<target name="build.sources" depends="init">
 		<available property="src.zip" file="${build.result.folder}/src.zip" />
@@ -297,9 +271,9 @@
 			<fileset dir="${build.result.folder}/@dot" includes="**" />
 		</copy>
 		<copy todir="${destination.temp.folder}/${full.name}">
-			<fileset dir="${fragmentdir}" includes="fragment.properties,about.html,about_files/,swt*.dll,libswt*.so,libswt*.sl,libswt*.a,libswt*.jnilib,libXm.so.2,META-INF/" />
+			<fileset dir="${fragmentdir}" includes="fragment.properties,about.html,about_files/,swt*.dll,libswt*.so,libswt*.sl,libswt*.a,libswt*.jnilib,libXm.so.2,webkitextensions*/libswt*.so,META-INF/" />
 		</copy>
-		<chmod perm="755" dir="${destination.temp.folder}/${full.name}" includes="swt*.dll,libswt*.so,libswt*.sl,libswt*.a,libswt*.jnilib,libXm.so.2" />
+		<chmod perm="755" dir="${destination.temp.folder}/${full.name}" includes="swt*.dll,libswt*.so,libswt*.sl,libswt*.a,libswt*.jnilib,libXm.so.2,webkitextensions*/libswt*.so" />
 		<eclipse.versionReplacer path="${destination.temp.folder}/${full.name}" version="${version.suffix}" />
 	</target>
 
@@ -309,7 +283,7 @@
 		<mkdir dir="${temp.folder}/swtdownload/" />
 		<property name="includetranslationfiles" value="true" />
 		<antcall target="build.jars" />
-		<jar jarfile="${build.result.folder}/swt.jar" basedir="${fragmentdir}" update="true" includes="swt*.dll,libswt*.so,libswt*.sl,libswt*.a,libswt*.jnilib,libXm.so.2" />
+		<jar jarfile="${build.result.folder}/swt.jar" basedir="${fragmentdir}" update="true" includes="swt*.dll,libswt*.so,libswt*.sl,libswt*.a,libswt*.jnilib,libXm.so.2,webkitextensions*/libswt*.so" />
 		<move file="${build.result.folder}/swt.jar" todir="${temp.folder}/swtdownload" />
 		<delete dir="${build.result.folder}/@dot" />
 		<antcall target="build.sources" />

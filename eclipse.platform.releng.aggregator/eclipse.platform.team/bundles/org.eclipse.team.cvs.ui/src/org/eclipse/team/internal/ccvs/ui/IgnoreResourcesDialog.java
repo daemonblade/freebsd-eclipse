@@ -50,14 +50,14 @@ public class IgnoreResourcesDialog extends TitleAreaDialog {
 	// layout controls
 	private static final int LABEL_INDENT_WIDTH = 32;
 	
-    /**
-     * Image for title area
-     */
-    private Image dlgTitleImage = null;
-    
-    // to avoid an error/warning message at startup default values are as below
-    private boolean resourceWithSpaces = false;
-    private boolean allResourecesHaveExtensions = true;
+	/**
+	 * Image for title area
+	 */
+	private Image dlgTitleImage = null;
+	
+	// to avoid an error/warning message at startup default values are as below
+	private boolean resourceWithSpaces = false;
+	private boolean allResourecesHaveExtensions = true;
 	private boolean allResourcesWithSpacesHaveExtensions = true;
 
 	/**
@@ -106,27 +106,18 @@ public class IgnoreResourcesDialog extends TitleAreaDialog {
 		throw new IllegalStateException();
 	}
 
-	/* (non-Javadoc)
-	 * Method declared on Dialog.
-	 */
 	@Override
 	protected void createButtonsForButtonBar(Composite parent) {
 		createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
 		createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
 	}
 
-	/* (non-Javadoc)
-	 * Method declared on Dialog.
-	 */
 	@Override
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
 		newShell.setText(CVSUIMessages.IgnoreResourcesDialog_dialogTitle);
 	}
 	
-	/* (non-Javadoc)
-	 * Method declared on Dialog.
-	 */
 	@Override
 	protected Control createContents(Composite parent) {
 		Control control = super.createContents(parent);
@@ -140,9 +131,6 @@ public class IgnoreResourcesDialog extends TitleAreaDialog {
 		return control;
 	}
 
-	/* (non-Javadoc)
-	 * Method declared on Dialog.
-	 */
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite top = new Composite((Composite) super
@@ -155,7 +143,7 @@ public class IgnoreResourcesDialog extends TitleAreaDialog {
 		top.setLayout(layout);
 		top.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
-        PlatformUI.getWorkbench().getHelpSystem().setHelp(top, IHelpContextIds.ADD_TO_CVSIGNORE);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(top, IHelpContextIds.ADD_TO_CVSIGNORE);
 		
 		Listener selectionListener = event -> updateEnablements();
 		Listener modifyListener = event -> validate();
@@ -214,7 +202,7 @@ public class IgnoreResourcesDialog extends TitleAreaDialog {
 				addCustomEntryButton.setSelection(true);
 				selectedAction = ADD_CUSTOM_ENTRY;
 			} 
-  
+	
 		} else {
 			customEntryText = createIndentedText(top, resources[0].getName(),
 					LABEL_INDENT_WIDTH);
@@ -227,9 +215,6 @@ public class IgnoreResourcesDialog extends TitleAreaDialog {
 		return top;
 	}
 
-	/* (non-Javadoc)
-	 * Method declared on Dialog.
-	 */
 	@Override
 	protected void okPressed() {
 		settings.put(ACTION_KEY, selectedAction);
@@ -368,11 +353,11 @@ public class IgnoreResourcesDialog extends TitleAreaDialog {
 		return false;
 	}
 	
-    @Override
+	@Override
 	public boolean close() {
-        if (dlgTitleImage != null) {
+		if (dlgTitleImage != null) {
 			dlgTitleImage.dispose();
 		}
-        return super.close();
-    }
+		return super.close();
+	}
 }

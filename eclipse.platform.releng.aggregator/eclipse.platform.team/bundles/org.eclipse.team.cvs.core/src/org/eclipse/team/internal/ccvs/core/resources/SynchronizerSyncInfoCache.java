@@ -118,9 +118,6 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 		}
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#getCachedSyncBytes(org.eclipse.core.resources.IResource, boolean)
-	 */
 	byte[] getCachedSyncBytes(IResource resource, boolean threadSafeAccess) throws CVSException {
 		try {
 			byte[] bytes = null;
@@ -146,9 +143,6 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 		}
 	}
 	
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#setCachedSyncBytes(org.eclipse.core.resources.IResource, byte[])
-	 */
 	void setCachedSyncBytes(IResource resource, byte[] syncBytes, boolean canModifyWorkspace) throws CVSException {
 		byte[] oldBytes = getCachedSyncBytes(resource, true);
 		try {
@@ -202,9 +196,7 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 		return Util.equals(syncBytes, oldBytes);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#getDirtyIndicator(org.eclipse.core.resources.IResource)
-	 */
+	@Override
 	String getDirtyIndicator(IResource resource, boolean threadSafeAccess) throws CVSException {		
 		if (resource.getType() == IResource.FILE) {
 			// a phantom file is dirty if it was managed before it was deleted			 
@@ -216,17 +208,13 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#setDirtyIndicator(org.eclipse.core.resources.IResource, java.lang.String)
-	 */
+	@Override
 	void setDirtyIndicator(IResource resource, String indicator) throws CVSException {
 		// We don't cache the dirty count for folders because it would cause
 		// resource delta's in the decorator thread and possible deadlock.
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#cachesDirtyState()
-	 */
+	@Override
 	public boolean cachesDirtyState() {
 		// We don't cache the dirty count for folders because it would cause
 		// resource delta's in the decorator thread and possible deadlock.
@@ -241,23 +229,15 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 		return true;
 	}
 	
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#isResourceSyncInfoCached(org.eclipse.core.resources.IContainer)
-	 */
 	boolean isResourceSyncInfoCached(IContainer container) throws CVSException {
 		// the sync info is always cahced when using the synchronizer
 		return true;
 	}
 	
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#setResourceSyncInfoCached(org.eclipse.core.resources.IContainer)
-	 */
 	void setResourceSyncInfoCached(IContainer container) throws CVSException {
 		// do nothing
 	}
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.resources.SyncInfoCache#isFolderSyncInfoCached(org.eclipse.core.resources.IContainer)
-	 */
+	
 	boolean isFolderSyncInfoCached(IContainer container) throws CVSException {
 		return true;
 	}
@@ -333,7 +313,7 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 			
 			if (cachedResources.size() != 0){
 				IResource[] resources = folder.members(true);
-				IResource[] cachedResourcesArray = (IResource[]) cachedResources.toArray(new IResource[cachedResources.size()]);
+				IResource[] cachedResourcesArray = cachedResources.toArray(new IResource[cachedResources.size()]);
 				IResource[]finalResources = new IResource[resources.length + cachedResourcesArray.length];
 				System.arraycopy(resources, 0, finalResources, 0, resources.length);
 				System.arraycopy(cachedResourcesArray, 0, finalResources, resources.length, cachedResourcesArray.length);
@@ -417,7 +397,7 @@ import org.eclipse.team.internal.ccvs.core.util.Util;
 		synchronized (pendingCacheWrites) {
 			if (pendingCacheWrites.isEmpty())
 				return null;
-			return (IResource[]) pendingCacheWrites.keySet().toArray(new IResource[pendingCacheWrites.size()]);
+			return pendingCacheWrites.keySet().toArray(new IResource[pendingCacheWrites.size()]);
 		}
 	}
 }

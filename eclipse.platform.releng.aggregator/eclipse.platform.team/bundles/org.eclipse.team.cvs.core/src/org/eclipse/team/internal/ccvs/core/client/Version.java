@@ -37,9 +37,7 @@ public class Version extends RemoteCommand {
 	private static final String CVS_NT_PREFIX_1 = "Concurrent Versions System (CVS) NT "; //$NON-NLS-1$
 	private static final String CVS_NT_PREFIX_2 = "Concurrent Versions System (CVSNT) "; //$NON-NLS-1$
 	private static final String CVS_PREFIX = "Concurrent Versions System (CVS) "; //$NON-NLS-1$
-	/**
-	 * @see Request#getRequestId()
-	 */
+	@Override
 	protected String getRequestId() {
 		return "version"; //$NON-NLS-1$
 	}
@@ -72,13 +70,13 @@ public class Version extends RemoteCommand {
 				if (knownPrefix != null) {
 					String versionNumber = line.substring(knownPrefix.length(), line.indexOf(' ', knownPrefix.length() + 1));
 					if (versionNumber.startsWith("1.10") || versionNumber.equals("1.11") || versionNumber.equals("1.11.1")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-					    serverType = CVSRepositoryLocation.UNSUPPORTED_SERVER;
+						serverType = CVSRepositoryLocation.UNSUPPORTED_SERVER;
 						status = new CVSStatus(IStatus.WARNING, CVSStatus.UNSUPPORTED_SERVER_VERSION, NLS.bind(CVSMessages.Version_unsupportedVersion, new String[] { location.getHost(), versionNumber }),location);
 					} else if (isCVSNT) {
-					    serverType = CVSRepositoryLocation.CVSNT_SERVER;
+						serverType = CVSRepositoryLocation.CVSNT_SERVER;
 					}
 				} else {
-				    serverType = CVSRepositoryLocation.UNKNOWN_SERVER;
+					serverType = CVSRepositoryLocation.UNKNOWN_SERVER;
 					status = new CVSStatus(IStatus.INFO, CVSStatus.SERVER_IS_UNKNOWN, NLS.bind(CVSMessages.Version_unknownVersionFormat, new String[] { location.getHost(), line }), location);
 				}
 				((CVSRepositoryLocation)location).setServerPlaform(serverType);
@@ -92,9 +90,7 @@ public class Version extends RemoteCommand {
 		return execute(session, NO_GLOBAL_OPTIONS, NO_LOCAL_OPTIONS, new String[] {}, listener, monitor);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.client.Command#isWorkspaceModification()
-	 */
+	@Override
 	protected boolean isWorkspaceModification() {
 		return false;
 	}

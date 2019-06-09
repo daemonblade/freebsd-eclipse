@@ -14,23 +14,24 @@
 
 package org.eclipse.ui.keys;
 
+import java.util.Objects;
 import org.eclipse.jface.bindings.keys.IKeyLookup;
 import org.eclipse.jface.bindings.keys.KeyLookupFactory;
 import org.eclipse.ui.internal.util.Util;
 
 /**
  * <p>
- * <code>Key</code> is the abstract base class for all objects representing
- * keys on the keyboard.
+ * <code>Key</code> is the abstract base class for all objects representing keys
+ * on the keyboard.
  * </p>
  * <p>
- * All <code>Key</code> objects have a formal string representation, called
- * the 'name' of the key, available via the <code>toString()</code> method.
+ * All <code>Key</code> objects have a formal string representation, called the
+ * 'name' of the key, available via the <code>toString()</code> method.
  * </p>
  * <p>
- * All <code>Key</code> objects, via the <code>format()</code> method,
- * provide a version of their formal string representation translated by
- * platform and locale, suitable for display to a user.
+ * All <code>Key</code> objects, via the <code>format()</code> method, provide a
+ * version of their formal string representation translated by platform and
+ * locale, suitable for display to a user.
  * </p>
  * <p>
  * <code>Key</code> objects are immutable. Clients are not permitted to extend
@@ -55,8 +56,7 @@ public abstract class Key implements Comparable {
 	 * Constructs an instance of <code>Key</code> given its formal string
 	 * representation.
 	 *
-	 * @param key
-	 *            the integer representation of this key, as defined by
+	 * @param key the integer representation of this key, as defined by
 	 *            <code>KeyLookupFactory.getDefault()</code>.
 	 */
 	Key(final int key) {
@@ -82,14 +82,14 @@ public abstract class Key implements Comparable {
 
 	@Override
 	public final int hashCode() {
-		return Util.hashCode(key);
+		return Objects.hashCode(key);
 	}
 
 	/**
 	 * Returns the formal string representation for this key.
 	 *
-	 * @return The formal string representation for this key. Guaranteed not to
-	 *         be <code>null</code>.
+	 * @return The formal string representation for this key. Guaranteed not to be
+	 *         <code>null</code>.
 	 */
 	@Override
 	public final String toString() {

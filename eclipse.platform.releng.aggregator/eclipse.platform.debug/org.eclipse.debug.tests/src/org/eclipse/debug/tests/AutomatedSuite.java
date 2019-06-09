@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corporation and others.
+ * Copyright (c) 2009, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,8 +16,13 @@
 package org.eclipse.debug.tests;
 
 import org.eclipse.debug.tests.breakpoint.BreakpointOrderingTests;
+import org.eclipse.debug.tests.console.ConsoleDocumentAdapterTests;
 import org.eclipse.debug.tests.console.ConsoleManagerTests;
 import org.eclipse.debug.tests.console.ConsoleTests;
+import org.eclipse.debug.tests.console.IOConsoleTests;
+import org.eclipse.debug.tests.console.ProcessConsoleManagerTests;
+import org.eclipse.debug.tests.console.ProcessConsoleTests;
+import org.eclipse.debug.tests.console.StreamsProxyTests;
 import org.eclipse.debug.tests.launching.AcceleratorSubstitutionTests;
 import org.eclipse.debug.tests.launching.ArgumentParsingTests;
 import org.eclipse.debug.tests.launching.LaunchConfigurationTests;
@@ -107,8 +112,13 @@ public class AutomatedSuite extends TestSuite {
 		addTest(new TestSuite(StepFiltersTests.class));
 
 		// Console view
+		addTest(new TestSuite(ConsoleDocumentAdapterTests.class));
 		addTest(new TestSuite(ConsoleManagerTests.class));
 		addTest(new TestSuite(ConsoleTests.class));
+		addTest(new TestSuite(IOConsoleTests.class));
+		addTest(new TestSuite(ProcessConsoleManagerTests.class));
+		addTest(new TestSuite(ProcessConsoleTests.class));
+		addTest(new TestSuite(StreamsProxyTests.class));
 
 		// Launch Groups
 		addTest(new TestSuite(LaunchGroupTests.class));

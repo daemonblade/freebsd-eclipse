@@ -25,9 +25,15 @@ for some input. The same master password is then used for all subsequent use of 
 <p align="center"><b>Picture 1. Lifecycle of a master password.</b></p>
 
 <p>Once the master password is obtained from the password provider, it is cached in memory until 
-the application is closed or the password cache is cleared using the <b>Secure Storage</b> preference page.</p>
+the application is closed or the password cache is cleared using the 
+<a class="command-link" href='javascript:executeCommand("org.eclipse.ui.window.preferences(preferencePageId=org.eclipse.equinox.security.ui.storage)")'>
+<img src="PLUGINS_ROOT/org.eclipse.help/command_link.svg" alt="command link">
+<b>General &gt; Security &gt; Secure Storage</b></a> preference page.</p>
 
-<p>The master password can be changed using the <b>Secure Storage</b> preference page. Depending on 
+<p>The master password can be changed using the 
+<a class="command-link" href='javascript:executeCommand("org.eclipse.ui.window.preferences(preferencePageId=org.eclipse.equinox.security.ui.storage)")'>
+<img src="PLUGINS_ROOT/org.eclipse.help/command_link.svg" alt="command link">
+<b>Secure Storage</b></a> preference page. Depending on 
 the provider, the password change operation might require some input from you or might happen completely 
 behind the scenes.</p>
 
@@ -37,14 +43,14 @@ a UI prompt was used to enter a password and the user forgot the password. If an
 module was used, the operating system might have been re-installed or an entry deleted in the system keyring 
 that was used for the master password.</p>
 
-<p><img alt="Related concepts" src="../images/ngrelc.png" border="0">
-  <br><A href="ref-securestorage-start.htm">Secure storage</A>
+<h3 class="related">Related concepts</h3>
+      <A href="ref-securestorage-start.htm">Secure storage</A>
   <br><A href="ref-securestorage-works.htm">How secure storage works</A>
-</p>
-<p><img alt="Related reference" src="../images/ngrelr.png" border="0">
-  <br><a href="ref-securestorage-prefs.htm">Secure storage preference page</a>
+
+<h3 class="related">Related reference</h3>
+      <a href="ref-securestorage-prefs.htm">Secure storage preference page</a>
   <br><a href="ref-securestorage-options.htm">Secure storage runtime options</a>
-</p>
+
 
 </BODY>
 </HTML>

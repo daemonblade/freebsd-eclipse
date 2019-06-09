@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2006 IBM Corporation and others.
+ * Copyright (c) 2004, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -36,7 +36,7 @@ public class UserSaveableMockViewPart extends MockViewPart implements
 	@Override
 	public void doSave(IProgressMonitor monitor) {
 		callTrace.add("doSave" );
-		isDirty = false;
+		setDirty(false);
 		saveNeeded = false;
 	}
 
@@ -65,16 +65,16 @@ public class UserSaveableMockViewPart extends MockViewPart implements
 
 	public void setDirty(boolean d) {
 		this.isDirty = d;
-        firePropertyChange(PROP_DIRTY);
+		firePropertyChange(PROP_DIRTY);
 	}
 
-    public void setSaveAsAllowed(boolean isSaveAsAllowed) {
-        this.saveAsAllowed = isSaveAsAllowed;
-    }
+	public void setSaveAsAllowed(boolean isSaveAsAllowed) {
+		this.saveAsAllowed = isSaveAsAllowed;
+	}
 
-    public void setSaveNeeded(boolean isSaveOnCloseNeeded) {
-        this.saveNeeded = isSaveOnCloseNeeded;
-    }
+	public void setSaveNeeded(boolean isSaveOnCloseNeeded) {
+		this.saveNeeded = isSaveOnCloseNeeded;
+	}
 
 	@Override
 	public int promptToSaveOnClose() {

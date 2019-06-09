@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.eclipse.core.databinding.beans.BeanProperties;
+import org.eclipse.core.databinding.beans.typed.BeanProperties;
 import org.eclipse.core.databinding.observable.list.IObservableList;
 import org.eclipse.core.databinding.observable.list.WritableList;
 import org.eclipse.jface.databinding.viewers.ViewerSupport;
@@ -66,6 +66,7 @@ public class TableScenarios extends ScenariosTestCase {
 	private TableColumn fancyColumn;
 
 	@Before
+	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 		getComposite().setLayout(new FillLayout());
@@ -91,6 +92,7 @@ public class TableScenarios extends ScenariosTestCase {
 	}
 
 	@After
+	@Override
 	public void tearDown() throws Exception {
 		// do any teardown work here
 		super.tearDown();

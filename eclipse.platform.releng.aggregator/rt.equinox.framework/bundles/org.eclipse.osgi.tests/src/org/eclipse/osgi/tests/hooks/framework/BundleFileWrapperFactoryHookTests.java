@@ -32,6 +32,7 @@ public class BundleFileWrapperFactoryHookTests extends AbstractFrameworkHookTest
 	private Framework framework;
 	private String location;
 
+	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		String loc = bundleInstaller.getBundleLocation(HOOK_CONFIGURATOR_BUNDLE);
@@ -45,6 +46,7 @@ public class BundleFileWrapperFactoryHookTests extends AbstractFrameworkHookTest
 		framework = createFramework(configuration);
 	}
 
+	@Override
 	protected void tearDown() throws Exception {
 		stopQuietly(framework);
 		super.tearDown();
@@ -68,7 +70,7 @@ public class BundleFileWrapperFactoryHookTests extends AbstractFrameworkHookTest
 	}
 
 	private String readURL(URL url) {
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		try {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
 			try {

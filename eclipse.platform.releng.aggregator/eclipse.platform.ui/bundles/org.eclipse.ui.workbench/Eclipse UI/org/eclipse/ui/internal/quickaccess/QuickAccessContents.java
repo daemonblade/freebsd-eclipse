@@ -18,12 +18,17 @@
 package org.eclipse.ui.internal.quickaccess;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.eclipse.core.runtime.Adapters;
 import org.eclipse.jface.bindings.TriggerSequence;
@@ -64,10 +69,12 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbenchPreferenceConstants;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.internal.IWorkbenchGraphicConstants;
+import org.eclipse.ui.internal.WorkbenchImages;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.keys.IBindingService;
+import org.eclipse.ui.quickaccess.QuickAccessElement;
 import org.eclipse.ui.themes.ColorUtil;
-
 
 /**
  * Provides the contents for the quick access shell created by
@@ -77,8 +84,8 @@ import org.eclipse.ui.themes.ColorUtil;
  */
 public abstract class QuickAccessContents {
 	/**
-	 * When opened in a popup we were given the command used to open it. Now
-	 * that we have a shell, we are just using a hard coded command id.
+	 * When opened in a popup we were given the command used to open it. Now that we
+	 * have a shell, we are just using a hard coded command id.
 	 */
 	private static final String QUICK_ACCESS_COMMAND_ID = "org.eclipse.ui.window.quickAccess"; //$NON-NLS-1$
 	private static final int INITIAL_COUNT_PER_PROVIDER = 5;
@@ -89,18 +96,20 @@ public abstract class QuickAccessContents {
 	protected Text filterText;
 
 	private QuickAccessProvider[] providers;
+	private Map<String, QuickAccessProvider> providerMap = new HashMap<>();
+	private Map<QuickAccessElement, QuickAccessProvider> elementsToProviders = new HashMap<>();
+	private Map<QuickAccessElement, QuickAccessMatcher> elementsToMatchers = new HashMap<>();
 
 	protected Table table;
 	protected Label infoLabel;
 
-	private LocalResourceManager resourceManager = new LocalResourceManager(
-			JFaceResources.getResources());
+	private LocalResourceManager resourceManager = new LocalResourceManager(JFaceResources.getResources());
 
 	protected String rememberedText;
 
 	/**
-	 * A color for dulled out items created by mixing the table foreground. Will
-	 * be disposed when the {@link #resourceManager} is disposed.
+	 * A color for dulled out items created by mixing the table foreground. Will be
+	 * disposed when the {@link #resourceManager} is disposed.
 	 */
 	private Color grayColor;
 	private TextLayout textLayout;
@@ -116,17 +125,16 @@ public abstract class QuickAccessContents {
 	 * Returns the number of items the table can fit in its current layout
 	 */
 	private int computeNumberOfItems() {
-		Rectangle rect = table.getClientArea ();
-		int itemHeight = table.getItemHeight ();
-		int headerHeight = table.getHeaderHeight ();
+		Rectangle rect = table.getClientArea();
+		int itemHeight = table.getItemHeight();
+		int headerHeight = table.getHeaderHeight();
 		return (rect.height - headerHeight + itemHeight - 1) / (itemHeight + table.getGridLineWidth());
 	}
 
 	/**
 	 * Refreshes the contents of the quick access shell
 	 *
-	 * @param filter
-	 *            The filter text to apply to results
+	 * @param filter The filter text to apply to results
 	 *
 	 */
 	public void refresh(String filter) {
@@ -164,40 +172,39 @@ public abstract class QuickAccessContents {
 
 	QuickAccessEntry searchHelpEntry = null;
 	QuickAccessProvider searchHelpProvider = null;
-	QuickAccessSearchElement searchHelpElement = null;
+	QuickAccessHelpSearchElement searchHelpElement = null;
 
 	/**
-	 * Instantiate a new {@link QuickAccessEntry} to search the given text in
-	 * the eclipse help
+	 * Instantiate a new {@link QuickAccessEntry} to search the given text in the
+	 * eclipse help
 	 *
-	 * @param text
-	 *            String to search in the Eclipse Help
+	 * @param text String to search in the Eclipse Help
 	 *
 	 * @return the {@link QuickAccessEntry} to perform the action
 	 */
 	private QuickAccessEntry makeHelpSearchEntry(String text) {
 		if (searchHelpEntry == null) {
-			searchHelpProvider = Stream.of(providers).filter(p -> p instanceof ActionProvider).findFirst().get();
-			searchHelpElement = new QuickAccessSearchElement(searchHelpProvider);
+			searchHelpProvider = new QuickAccessHelpSearchProvider();
+			searchHelpElement = new QuickAccessHelpSearchElement();
 			searchHelpEntry = new QuickAccessEntry(searchHelpElement, searchHelpProvider, new int[][] {},
 					new int[][] {}, QuickAccessEntry.MATCH_PERFECT);
+			searchHelpEntry.firstInCategory = true;
 		}
 		searchHelpElement.searchText = text;
 		return searchHelpEntry;
 	}
 
-	static class QuickAccessSearchElement extends QuickAccessElement {
+	/**
+	 * "Search X in help" element shown at the end of the list.
+	 */
+	static class QuickAccessHelpSearchElement extends QuickAccessElement {
 
 		/** identifier */
 		private static final String SEARCH_IN_HELP_ID = "search.in.help"; //$NON-NLS-1$
 
 		String searchText;
 
-		/**
-		 * @param provider
-		 */
-		public QuickAccessSearchElement(QuickAccessProvider provider) {
-			super(provider);
+		public QuickAccessHelpSearchElement() {
 		}
 
 		@Override
@@ -217,29 +224,64 @@ public abstract class QuickAccessContents {
 
 		@Override
 		public ImageDescriptor getImageDescriptor() {
-			return null;
+			return WorkbenchImages.getImageDescriptor(IWorkbenchGraphicConstants.IMG_ETOOL_HELP_SEARCH);
 		}
 
 	}
 
 	/**
-	 * Allows the quick access content owner to mark a quick access element as
-	 * being a perfect match, putting it at the start of the table.
+	 * Provider for the "Search X in help" element. Only used to have a category
+	 * "Help".
+	 */
+	static class QuickAccessHelpSearchProvider extends QuickAccessProvider {
+		@Override
+		public String getName() {
+			return QuickAccessMessages.QuickAccessContents_HelpCategory;
+		}
+
+		@Override
+		public String getId() {
+			return "search.help"; //$NON-NLS-1$
+		}
+
+		@Override
+		public ImageDescriptor getImageDescriptor() {
+			return null;
+		}
+
+		@Override
+		public QuickAccessElement[] getElements() {
+			return null;
+		}
+
+		@Override
+		public QuickAccessElement getElementForId(String id) {
+			return null;
+		}
+
+		@Override
+		protected void doReset() {
+			// empty
+		}
+	}
+
+	/**
+	 * Allows the quick access content owner to mark a quick access element as being
+	 * a perfect match, putting it at the start of the table.
 	 *
-	 * @param filter
-	 *            the filter text used to find a match
+	 * @param filter the filter text used to find a match
 	 * @return an element to be put at the top of the table or <code>null</code>
 	 */
 	protected abstract QuickAccessElement getPerfectMatch(String filter);
 
 	/**
-	 * Notifies the quick access content owner that the contents of the table
-	 * have been changed.
+	 * Notifies the quick access content owner that the contents of the table have
+	 * been changed.
 	 *
-	 * @param filterTextEmpty
-	 *            whether the filter text used to calculate matches was empty
-	 * @param showAllMatches
-	 *            whether the results were constrained by the size of the dialog
+	 * @param filterTextEmpty whether the filter text used to calculate matches was
+	 *                        empty
+	 * @param showAllMatches  whether the results were constrained by the size of
+	 *                        the dialog
 	 *
 	 */
 	protected abstract void updateFeedback(boolean filterTextEmpty, boolean showAllMatches);
@@ -248,8 +290,7 @@ public abstract class QuickAccessContents {
 	 * Sets whether to display all matches to the current filter or limit the
 	 * results. Will refresh the table contents and update the info label.
 	 *
-	 * @param showAll
-	 *            whether to display all matches
+	 * @param showAll whether to display all matches
 	 */
 	public void setShowAllMatches(boolean showAll) {
 		if (showAllMatches != showAll) {
@@ -278,25 +319,24 @@ public abstract class QuickAccessContents {
 	}
 
 	/**
-	 * Returns the trigger sequence that can be used to open the quick access
-	 * dialog as well as toggle the show all results feature. Can return
-	 * <code>null</code> if no trigger sequence is known.
+	 * Returns the trigger sequence that can be used to open the quick access dialog
+	 * as well as toggle the show all results feature. Can return <code>null</code>
+	 * if no trigger sequence is known.
 	 *
 	 * @return the trigger sequence used to open the quick access or
 	 *         <code>null</code>
 	 */
 	public TriggerSequence getTriggerSequence() {
 		if (keySequence == null) {
-			IBindingService bindingService =
-					Adapters.adapt(PlatformUI.getWorkbench(), IBindingService.class);
+			IBindingService bindingService = Adapters.adapt(PlatformUI.getWorkbench(), IBindingService.class);
 			keySequence = bindingService.getBestActiveBindingFor(QUICK_ACCESS_COMMAND_ID);
 		}
 		return keySequence;
 	}
 
 	/**
-	 * Return whether the shell is currently set to display all matches or limit
-	 * the results.
+	 * Return whether the shell is currently set to display all matches or limit the
+	 * results.
 	 *
 	 * @return whether all matches will be displayed
 	 */
@@ -339,8 +379,7 @@ public abstract class QuickAccessContents {
 					item.setText(0, entry.provider.getName());
 					item.setText(1, entry.element.getLabel());
 					if (Util.isWpf()) {
-						item.setImage(1, entry.getImage(entry.element,
-							resourceManager));
+						item.setImage(1, entry.getImage(entry.element, resourceManager));
 					}
 					index++;
 				}
@@ -363,9 +402,9 @@ public abstract class QuickAccessContents {
 	int numberOfFilteredResults;
 
 	/**
-	 * Compute how many items are effectively filtered at a specific point in
-	 * time. So doing, the quick access content can perform operations that
-	 * depends on this number, i.e. hide the info label.
+	 * Compute how many items are effectively filtered at a specific point in time.
+	 * So doing, the quick access content can perform operations that depends on
+	 * this number, i.e. hide the info label.
 	 *
 	 * @return number number of elements filtered
 	 */
@@ -374,25 +413,22 @@ public abstract class QuickAccessContents {
 	}
 
 	/**
-	 * Returns a list per provider containing matching {@link QuickAccessEntry}
-	 * that should be displayed in the table given a text filter and a perfect
-	 * match entry that should be given priority. The number of items returned
-	 * is affected by {@link #getShowAllMatches()} and the size of the table's
-	 * composite.
+	 * Returns a list per provider containing matching {@link QuickAccessEntry} that
+	 * should be displayed in the table given a text filter and a perfect match
+	 * entry that should be given priority. The number of items returned is affected
+	 * by {@link #getShowAllMatches()} and the size of the table's composite.
 	 *
-	 * @param filter
-	 *            the string text filter to apply, possibly empty
-	 * @param perfectMatch
-	 *            a quick access element that should be given priority or
-	 *            <code>null</code>
-	 * @param extraEntries
-	 *            extra entries that will be added to the tabular visualization
-	 *            after computing matching entries, i.e. Search in Help
+	 * @param filter       the string text filter to apply, possibly empty
+	 * @param perfectMatch a quick access element that should be given priority or
+	 *                     <code>null</code>
+	 * @param extraEntries extra entries that will be added to the tabular
+	 *                     visualization after computing matching entries, i.e.
+	 *                     Search in Help
 	 * @return the array of lists (one per provider) contains the quick access
 	 *         entries that should be added to the table, possibly empty
 	 */
-	private List<QuickAccessEntry>[] computeMatchingEntries(String filter,
-			QuickAccessElement perfectMatch, List<QuickAccessEntry> extraEntries) {
+	private List<QuickAccessEntry>[] computeMatchingEntries(String filter, QuickAccessElement perfectMatch,
+			List<QuickAccessEntry> extraEntries) {
 		// collect matches in an array of lists
 		@SuppressWarnings("unchecked")
 		List<QuickAccessEntry>[] entries = new List[providers.length];
@@ -421,8 +457,7 @@ public abstract class QuickAccessContents {
 				category = categoryMatcher.group(1);
 				filter = category + " " + categoryMatcher.group(2); //$NON-NLS-1$
 			}
-			for (int i = 0; i < providers.length
-					&& (showAllMatches || countTotal < maxCount); i++) {
+			for (int i = 0; i < providers.length && (showAllMatches || countTotal < maxCount); i++) {
 				if (entries[i] == null) {
 					entries[i] = new ArrayList<>();
 					indexPerProvider[i] = 0;
@@ -437,6 +472,11 @@ public abstract class QuickAccessContents {
 				}
 				if (filter.length() > 0 || provider.isAlwaysPresent() || showAllMatches) {
 					QuickAccessElement[] sortedElements = provider.getElementsSorted();
+					if (!(provider instanceof PreviousPicksProvider)) {
+						for (QuickAccessElement element : sortedElements) {
+							elementsToProviders.put(element, provider);
+						}
+					}
 
 					// count previous picks and store ids
 					if (isPreviousPickProvider) {
@@ -459,13 +499,13 @@ public abstract class QuickAccessContents {
 						QuickAccessEntry entry = null;
 						if (filter.length() == 0) {
 							if (i == 0 || showAllMatches) {
-								entry = new QuickAccessEntry(element, provider, new int[0][0],
-										new int[0][0], QuickAccessEntry.MATCH_PERFECT);
+								entry = new QuickAccessEntry(element, provider, new int[0][0], new int[0][0],
+										QuickAccessEntry.MATCH_PERFECT);
 							} else {
 								entry = null;
 							}
 						} else {
-							QuickAccessEntry possibleMatch = element.match(filter, provider);
+							QuickAccessEntry possibleMatch = getMatcherFor(element).match(filter, provider);
 							if (possibleMatch != null) {
 								entry = possibleMatch;
 							}
@@ -498,7 +538,7 @@ public abstract class QuickAccessContents {
 		} while ((showAllMatches || countTotal < maxCount) && !done);
 
 		if (!perfectMatchAdded) {
-			QuickAccessEntry entry = perfectMatch.match(filter, providers[0]);
+			QuickAccessEntry entry = getMatcherFor(perfectMatch).match(filter, providers[0]);
 			if (entryEnabled(providers[0], entry)) {
 				if (entries[0] == null) {
 					entries[0] = new ArrayList<>();
@@ -516,8 +556,8 @@ public abstract class QuickAccessContents {
 	Pattern categoryPattern;
 
 	/**
-	 * Return a pattern like {@code "^(:?Views|Perspective):\\s?(.*)"}, with all
-	 * the provider names separated by semicolon.
+	 * Return a pattern like {@code "^(:?Views|Perspective):\\s?(.*)"}, with all the
+	 * provider names separated by semicolon.
 	 *
 	 * @return Returns the patternProvider.
 	 */
@@ -552,7 +592,7 @@ public abstract class QuickAccessContents {
 		// also provide the element
 		if (provider instanceof PreviousPicksProvider) {
 			QuickAccessElement element = entry.element;
-			final QuickAccessProvider originalProvider = element.getProvider();
+			final QuickAccessProvider originalProvider = getProviderFor(element);
 			QuickAccessElement match = originalProvider.getElementForId(element.getId());
 			return match != null;
 		}
@@ -572,8 +612,7 @@ public abstract class QuickAccessContents {
 	}
 
 	protected IDialogSettings getDialogSettings() {
-		final IDialogSettings workbenchDialogSettings = WorkbenchPlugin
-				.getDefault().getDialogSettings();
+		final IDialogSettings workbenchDialogSettings = WorkbenchPlugin.getDefault().getDialogSettings();
 		IDialogSettings result = workbenchDialogSettings.getSection(getId());
 		if (result == null) {
 			result = workbenchDialogSettings.addNewSection(getId());
@@ -591,8 +630,7 @@ public abstract class QuickAccessContents {
 		QuickAccessElement selectedElement = null;
 		String text = filterText.getText().toLowerCase();
 		if (table.getSelectionCount() == 1) {
-			QuickAccessEntry entry = (QuickAccessEntry) table
-					.getSelection()[0].getData();
+			QuickAccessEntry entry = (QuickAccessEntry) table.getSelection()[0].getData();
 			selectedElement = entry == null ? null : entry.element;
 		}
 		if (selectedElement != null) {
@@ -602,9 +640,8 @@ public abstract class QuickAccessContents {
 	}
 
 	/**
-	 * Should be called by the owner of the parent composite when the shell is
-	 * being activated (made visible). This allows the show all keybinding to be
-	 * updated.
+	 * Should be called by the owner of the parent composite when the shell is being
+	 * activated (made visible). This allows the show all keybinding to be updated.
 	 */
 	public void preOpen() {
 		// Make sure we always start filtering
@@ -615,13 +652,15 @@ public abstract class QuickAccessContents {
 	}
 
 	/**
-	 * Informs the owner of the parent composite that the quick access dialog
-	 * should be closed
+	 * Informs the owner of the parent composite that the quick access dialog should
+	 * be closed
 	 */
 	protected abstract void doClose();
 
 	/**
-	 * Allows the dialog contents to interact correctly with the text box used to open it
+	 * Allows the dialog contents to interact correctly with the text box used to
+	 * open it
+	 *
 	 * @param filterText text box to hook up
 	 */
 	public void hookFilterText(Text filterText) {
@@ -663,12 +702,12 @@ public abstract class QuickAccessContents {
 		});
 	}
 
-	private Text hintText;
+	Label hintText;
 	private boolean displayHintText;
 
 	/** Create HintText as child of the given parent composite */
-	Text createHintText(Composite composite, int defaultOrientation) {
-		hintText = new Text(composite, SWT.FILL);
+	Label createHintText(Composite composite, int defaultOrientation) {
+		hintText = new Label(composite, SWT.FILL);
 		hintText.setOrientation(defaultOrientation);
 		displayHintText = true;
 		return hintText;
@@ -712,8 +751,10 @@ public abstract class QuickAccessContents {
 	/**
 	 * Creates the table providing the contents for the quick access dialog
 	 *
-	 * @param composite parent composite with {@link GridLayout}
-	 * @param defaultOrientation the window orientation to use for the table {@link SWT#RIGHT_TO_LEFT} or {@link SWT#LEFT_TO_RIGHT}
+	 * @param composite          parent composite with {@link GridLayout}
+	 * @param defaultOrientation the window orientation to use for the table
+	 *                           {@link SWT#RIGHT_TO_LEFT} or
+	 *                           {@link SWT#LEFT_TO_RIGHT}
 	 * @return the created table
 	 */
 	public Table createTable(Composite composite, int defaultOrientation) {
@@ -725,8 +766,7 @@ public abstract class QuickAccessContents {
 		table = new Table(tableComposite, SWT.SINGLE | SWT.FULL_SELECTION);
 		textLayout = new TextLayout(table.getDisplay());
 		textLayout.setOrientation(defaultOrientation);
-		Font boldFont = resourceManager.createFont(FontDescriptor.createFrom(
-				table.getFont()).setStyle(SWT.BOLD));
+		Font boldFont = resourceManager.createFont(FontDescriptor.createFrom(table.getFont()).setStyle(SWT.BOLD));
 		textLayout.setFont(table.getFont());
 		textLayout.setText(QuickAccessMessages.QuickAccess_AvailableCategories);
 		int maxProviderWidth = (textLayout.getBounds().width);
@@ -747,7 +787,8 @@ public abstract class QuickAccessContents {
 					if (!resized) {
 						resized = true;
 						e.display.timerExec(100, () -> {
-							if (table != null && !table.isDisposed() && filterText !=null && !filterText.isDisposed()) {
+							if (table != null && !table.isDisposed() && filterText != null
+									&& !filterText.isDisposed()) {
 								refresh(filterText.getText().toLowerCase());
 							}
 							resized = false;
@@ -799,9 +840,7 @@ public abstract class QuickAccessContents {
 				if (table.equals(e.getSource())) {
 					TableItem tableItem = table.getItem(new Point(e.x, e.y));
 					if (lastItem == null ^ tableItem == null) {
-						table.setCursor(tableItem == null ? null
-								: table.getDisplay().getSystemCursor(
-								SWT.CURSOR_HAND));
+						table.setCursor(tableItem == null ? null : table.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
 					}
 					if (tableItem != null) {
 						if (!tableItem.equals(lastItem)) {
@@ -823,11 +862,10 @@ public abstract class QuickAccessContents {
 		});
 
 		final TextStyle boldStyle;
-		if (PlatformUI.getPreferenceStore().getBoolean(
-				IWorkbenchPreferenceConstants.USE_COLORED_LABELS)) {
+		if (PlatformUI.getPreferenceStore().getBoolean(IWorkbenchPreferenceConstants.USE_COLORED_LABELS)) {
 			boldStyle = new TextStyle(boldFont, null, null);
-			grayColor = resourceManager.createColor(ColorUtil.blend(table.getBackground().getRGB(),
-					table.getForeground().getRGB()));
+			grayColor = resourceManager
+					.createColor(ColorUtil.blend(table.getBackground().getRGB(), table.getForeground().getRGB()));
 		} else {
 			boldStyle = null;
 		}
@@ -855,8 +893,8 @@ public abstract class QuickAccessContents {
 	}
 
 	/**
-	 * Creates a label which will display the key binding to expand
-	 * the search results.
+	 * Creates a label which will display the key binding to expand the search
+	 * results.
 	 *
 	 * @param parent parent composite with {@link GridLayout}
 	 * @return the created label
@@ -878,6 +916,35 @@ public abstract class QuickAccessContents {
 		for (QuickAccessProvider provider : providers) {
 			provider.reset();
 		}
+	}
+
+	QuickAccessProvider getProvider(String providerId) {
+		if (providers == null || providers.length == 0) {
+			return null;
+		}
+		if (providerMap == null || providerMap.size() != providers.length) {
+			providerMap = Arrays.stream(providers)
+					.collect(Collectors.toMap(QuickAccessProvider::getId, Function.identity()));
+		}
+		return providerMap.get(providerId);
+	}
+
+	QuickAccessProvider getProviderFor(QuickAccessElement quickAccessElement) {
+		return elementsToProviders.get(quickAccessElement);
+	}
+
+	private QuickAccessMatcher getMatcherFor(QuickAccessElement element) {
+		if (!elementsToMatchers.containsKey(element)) {
+			elementsToMatchers.put(element, new QuickAccessMatcher(element));
+		}
+		return elementsToMatchers.get(element);
+	}
+
+	void registerProviderFor(QuickAccessElement quickAccessElement, QuickAccessProvider quickAccessProvider) {
+		if (quickAccessElement == null || quickAccessProvider == null) {
+			return;
+		}
+		elementsToProviders.put(quickAccessElement, quickAccessProvider);
 	}
 
 }

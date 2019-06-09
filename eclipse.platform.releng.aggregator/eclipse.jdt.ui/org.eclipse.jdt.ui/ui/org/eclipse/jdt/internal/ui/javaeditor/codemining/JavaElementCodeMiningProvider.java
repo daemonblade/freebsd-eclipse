@@ -1,20 +1,21 @@
-/**
- *  Copyright (c) 2018 Angelo ZERR.
- *  All rights reserved. This program and the accompanying materials
- *  are made available under the terms of the Eclipse Public License v1.0
- *  which accompanies this distribution, and is available at
- *  http://www.eclipse.org/legal/epl-v10.html
+/*******************************************************************************
+ * Copyright (c) 2018 Angelo Zerr and others.
  *
- *  Contributors:
- *     Angelo Zerr <angelo.zerr@gmail.com> - [CodeMining] Provide Java References/Implementation CodeMinings - Bug 529127
- */
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ * - Angelo Zerr: initial API and implementation
+ *******************************************************************************/
 package org.eclipse.jdt.internal.ui.javaeditor.codemining;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -28,6 +29,7 @@ import org.eclipse.jface.text.source.ISourceViewerExtension5;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
@@ -35,6 +37,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ui.PreferenceConstants;
 
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
+import org.eclipse.jdt.internal.ui.javaeditor.JavaCodeMiningReconciler;
 import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor;
 import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesPropertyTester;
 
@@ -49,12 +52,6 @@ import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesPropertyTester;
  * @since 3.16
  */
 public class JavaElementCodeMiningProvider extends AbstractCodeMiningProvider {
-
-	/**
-	 * Stores the set of viewers for which source is reconciled and requests
-	 * for references can be performed.
-	 */
-	private static final Set<ISourceViewerExtension5> reconciledViewers = new HashSet<>();
 
 	private final boolean showAtLeastOne;
 
@@ -88,8 +85,8 @@ public class JavaElementCodeMiningProvider extends AbstractCodeMiningProvider {
 		}
 		if (viewer instanceof ISourceViewerExtension5) {
 			ISourceViewerExtension5 codeMiningViewer = (ISourceViewerExtension5)viewer;
-			if (!reconciledViewers.contains(codeMiningViewer)) {
-				// the provider isn't able to return code minings for non-reconciled viewerss
+			if (!JavaCodeMiningReconciler.isReconciled(codeMiningViewer)) {
+				// the provider isn't able to return code minings for non-reconciled viewers
 				return CompletableFuture.completedFuture(Collections.emptyList());
 			}
 		}
@@ -104,6 +101,13 @@ public class JavaElementCodeMiningProvider extends AbstractCodeMiningProvider {
 				IJavaElement[] elements= unit.getChildren();
 				List<ICodeMining> minings= new ArrayList<>(elements.length);
 				collectMinings(unit, textEditor, unit.getChildren(), minings, viewer, monitor);
+				// interrupt if editor was marked to be reconciled in the meantime
+				if (viewer instanceof ISourceViewerExtension5) {
+					ISourceViewerExtension5 codeMiningViewer= (ISourceViewerExtension5)viewer;
+					if (!JavaCodeMiningReconciler.isReconciled(codeMiningViewer)) {
+						monitor.setCanceled(true);
+					}
+				}
 				monitor.isCanceled();
 				return minings;
 			} catch (JavaModelException e) {
@@ -160,38 +164,26 @@ public class JavaElementCodeMiningProvider extends AbstractCodeMiningProvider {
 				}
 			}
 			if (showImplementations) {
+				// support methods, classes, and interfaces
+				boolean addMining= false;
 				if (element instanceof IType) {
 					IType type= (IType) element;
 					if (type.isInterface() || type.isClass()) {
-						try {
-							minings.add(new JavaImplementationCodeMining(type, (JavaEditor) textEditor, viewer.getDocument(), this,
-									showAtLeastOne));
-						} catch (BadLocationException e) {
-							// Should never occur
-						}
+						addMining= true;
+					}
+				} else if (element instanceof IMethod) {
+					addMining= true;
+				}
+				if (addMining) {
+					try {
+						minings.add(new JavaImplementationCodeMining(element, (JavaEditor) textEditor, viewer.getDocument(), this,
+								showAtLeastOne));
+					} catch (BadLocationException e) {
+						// Should never occur
 					}
 				}
 			}
 		}
 	}
 
-	/**
-	 * Marks the content of the viewer is reconciled with AST. This is
-	 * required for the code minings to be computed.
-	 * If code minings are requested on a viewer which wasn't marked as
-	 * reconciled via this method, the provider skips the queries and
-	 * returns an empty list.
-	 * @param viewer a viewer with reconciled input.
-	 */
-	public static void markReconciledViewer(ISourceViewerExtension5 viewer) {
-		reconciledViewers.add(viewer);
-	}
-
-	/**
-	 * Removes a viewer from the list of viewers the provider will process.
-	 * @param viewer the viewer to stop providing minings for.
-	 */
-	public static void discardViewer(ISourceViewerExtension5 viewer) {
-		reconciledViewers.remove(viewer);
-	}
 }

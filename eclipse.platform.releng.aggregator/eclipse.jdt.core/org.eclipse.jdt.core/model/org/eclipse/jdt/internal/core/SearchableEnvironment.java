@@ -107,6 +107,15 @@ public class SearchableEnvironment
 					this.moduleUpdater.computeModuleUpdates(entry);
 		}
 	}
+
+	/**
+	 * Note: this is required for (abandoned) Scala-IDE
+	 */
+	@Deprecated
+	public SearchableEnvironment(JavaProject project, WorkingCopyOwner owner) throws JavaModelException {
+		this(project, owner, false);
+	}
+
 	/**
 	 * Creates a SearchableEnvironment on the given project
 	 */
@@ -984,7 +993,7 @@ private void findPackagesFromRequires(char[] prefix, boolean isMatchAllPrefix, I
 			this.rootToModule = new HashMap<>();
 		}
 		for (IPackageFragmentRoot root : roots) {
-			IModuleDescription moduleDescription = NameLookup.getModuleDescription(root, this.rootToModule, this.nameLookup.rootToResolvedEntries::get);
+			IModuleDescription moduleDescription = NameLookup.getModuleDescription(this.project, root, this.rootToModule, this.nameLookup.rootToResolvedEntries::get);
 			if (moduleDescription != null)
 				return moduleDescription;
 		}

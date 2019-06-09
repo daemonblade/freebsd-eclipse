@@ -13,7 +13,22 @@
  */
 package org.eclipse.e4.ui.model.application.ui.menu.impl;
 
-import org.eclipse.e4.ui.model.application.ui.menu.*;
+import org.eclipse.e4.ui.model.application.ui.menu.ItemType;
+import org.eclipse.e4.ui.model.application.ui.menu.MDirectMenuItem;
+import org.eclipse.e4.ui.model.application.ui.menu.MDirectToolItem;
+import org.eclipse.e4.ui.model.application.ui.menu.MDynamicMenuContribution;
+import org.eclipse.e4.ui.model.application.ui.menu.MHandledMenuItem;
+import org.eclipse.e4.ui.model.application.ui.menu.MHandledToolItem;
+import org.eclipse.e4.ui.model.application.ui.menu.MMenu;
+import org.eclipse.e4.ui.model.application.ui.menu.MMenuContribution;
+import org.eclipse.e4.ui.model.application.ui.menu.MMenuFactory;
+import org.eclipse.e4.ui.model.application.ui.menu.MMenuSeparator;
+import org.eclipse.e4.ui.model.application.ui.menu.MPopupMenu;
+import org.eclipse.e4.ui.model.application.ui.menu.MToolBar;
+import org.eclipse.e4.ui.model.application.ui.menu.MToolBarContribution;
+import org.eclipse.e4.ui.model.application.ui.menu.MToolBarSeparator;
+import org.eclipse.e4.ui.model.application.ui.menu.MToolControl;
+import org.eclipse.e4.ui.model.application.ui.menu.MTrimContribution;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
@@ -44,12 +59,12 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 */
 	public static MenuFactoryImpl init() {
 		try {
-			MenuFactoryImpl theMenuFactory = (MenuFactoryImpl)EPackage.Registry.INSTANCE.getEFactory(MenuPackageImpl.eNS_URI);
+			MenuFactoryImpl theMenuFactory = (MenuFactoryImpl) EPackage.Registry.INSTANCE
+					.getEFactory(MenuPackageImpl.eNS_URI);
 			if (theMenuFactory != null) {
 				return theMenuFactory;
 			}
-		}
-		catch (Exception exception) {
+		} catch (Exception exception) {
 			EcorePlugin.INSTANCE.log(exception);
 		}
 		return new MenuFactoryImpl();
@@ -73,22 +88,36 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	@Override
 	public EObject create(EClass eClass) {
 		switch (eClass.getClassifierID()) {
-			case MenuPackageImpl.MENU_SEPARATOR: return (EObject)createMenuSeparator();
-			case MenuPackageImpl.MENU: return (EObject)createMenu();
-			case MenuPackageImpl.MENU_CONTRIBUTION: return (EObject)createMenuContribution();
-			case MenuPackageImpl.POPUP_MENU: return (EObject)createPopupMenu();
-			case MenuPackageImpl.DIRECT_MENU_ITEM: return (EObject)createDirectMenuItem();
-			case MenuPackageImpl.HANDLED_MENU_ITEM: return (EObject)createHandledMenuItem();
-			case MenuPackageImpl.TOOL_BAR: return (EObject)createToolBar();
-			case MenuPackageImpl.TOOL_CONTROL: return (EObject)createToolControl();
-			case MenuPackageImpl.HANDLED_TOOL_ITEM: return (EObject)createHandledToolItem();
-			case MenuPackageImpl.DIRECT_TOOL_ITEM: return (EObject)createDirectToolItem();
-			case MenuPackageImpl.TOOL_BAR_SEPARATOR: return (EObject)createToolBarSeparator();
-			case MenuPackageImpl.TOOL_BAR_CONTRIBUTION: return (EObject)createToolBarContribution();
-			case MenuPackageImpl.TRIM_CONTRIBUTION: return (EObject)createTrimContribution();
-			case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION: return (EObject)createDynamicMenuContribution();
-			default:
-				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier"); //$NON-NLS-1$ //$NON-NLS-2$
+		case MenuPackageImpl.MENU_SEPARATOR:
+			return (EObject) createMenuSeparator();
+		case MenuPackageImpl.MENU:
+			return (EObject) createMenu();
+		case MenuPackageImpl.MENU_CONTRIBUTION:
+			return (EObject) createMenuContribution();
+		case MenuPackageImpl.POPUP_MENU:
+			return (EObject) createPopupMenu();
+		case MenuPackageImpl.DIRECT_MENU_ITEM:
+			return (EObject) createDirectMenuItem();
+		case MenuPackageImpl.HANDLED_MENU_ITEM:
+			return (EObject) createHandledMenuItem();
+		case MenuPackageImpl.TOOL_BAR:
+			return (EObject) createToolBar();
+		case MenuPackageImpl.TOOL_CONTROL:
+			return (EObject) createToolControl();
+		case MenuPackageImpl.HANDLED_TOOL_ITEM:
+			return (EObject) createHandledToolItem();
+		case MenuPackageImpl.DIRECT_TOOL_ITEM:
+			return (EObject) createDirectToolItem();
+		case MenuPackageImpl.TOOL_BAR_SEPARATOR:
+			return (EObject) createToolBarSeparator();
+		case MenuPackageImpl.TOOL_BAR_CONTRIBUTION:
+			return (EObject) createToolBarContribution();
+		case MenuPackageImpl.TRIM_CONTRIBUTION:
+			return (EObject) createTrimContribution();
+		case MenuPackageImpl.DYNAMIC_MENU_CONTRIBUTION:
+			return (EObject) createDynamicMenuContribution();
+		default:
+			throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
@@ -100,10 +129,10 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	@Override
 	public Object createFromString(EDataType eDataType, String initialValue) {
 		switch (eDataType.getClassifierID()) {
-			case MenuPackageImpl.ITEM_TYPE:
-				return createItemTypeFromString(eDataType, initialValue);
-			default:
-				throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier"); //$NON-NLS-1$ //$NON-NLS-2$
+		case MenuPackageImpl.ITEM_TYPE:
+			return createItemTypeFromString(eDataType, initialValue);
+		default:
+			throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
@@ -115,10 +144,10 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	@Override
 	public String convertToString(EDataType eDataType, Object instanceValue) {
 		switch (eDataType.getClassifierID()) {
-			case MenuPackageImpl.ITEM_TYPE:
-				return convertItemTypeToString(eDataType, instanceValue);
-			default:
-				throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier"); //$NON-NLS-1$ //$NON-NLS-2$
+		case MenuPackageImpl.ITEM_TYPE:
+			return convertItemTypeToString(eDataType, instanceValue);
+		default:
+			throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
@@ -128,6 +157,7 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MMenuSeparator createMenuSeparator() {
 		MenuSeparatorImpl menuSeparator = new MenuSeparatorImpl();
 		return menuSeparator;
@@ -139,6 +169,7 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MMenu createMenu() {
 		MenuImpl menu = new MenuImpl();
 		return menu;
@@ -148,8 +179,10 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MMenuContribution model documentation} for details.
 	 * @generated
 	 */
+	@Override
 	public MMenuContribution createMenuContribution() {
 		MenuContributionImpl menuContribution = new MenuContributionImpl();
 		return menuContribution;
@@ -161,6 +194,7 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MPopupMenu createPopupMenu() {
 		PopupMenuImpl popupMenu = new PopupMenuImpl();
 		return popupMenu;
@@ -172,6 +206,7 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MDirectMenuItem createDirectMenuItem() {
 		DirectMenuItemImpl directMenuItem = new DirectMenuItemImpl();
 		return directMenuItem;
@@ -183,6 +218,7 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MHandledMenuItem createHandledMenuItem() {
 		HandledMenuItemImpl handledMenuItem = new HandledMenuItemImpl();
 		return handledMenuItem;
@@ -194,6 +230,7 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MToolBar createToolBar() {
 		ToolBarImpl toolBar = new ToolBarImpl();
 		return toolBar;
@@ -205,6 +242,7 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MToolControl createToolControl() {
 		ToolControlImpl toolControl = new ToolControlImpl();
 		return toolControl;
@@ -216,6 +254,7 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MHandledToolItem createHandledToolItem() {
 		HandledToolItemImpl handledToolItem = new HandledToolItemImpl();
 		return handledToolItem;
@@ -227,6 +266,7 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MDirectToolItem createDirectToolItem() {
 		DirectToolItemImpl directToolItem = new DirectToolItemImpl();
 		return directToolItem;
@@ -238,6 +278,7 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MToolBarSeparator createToolBarSeparator() {
 		ToolBarSeparatorImpl toolBarSeparator = new ToolBarSeparatorImpl();
 		return toolBarSeparator;
@@ -247,8 +288,10 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MToolBarContribution model documentation} for details.
 	 * @generated
 	 */
+	@Override
 	public MToolBarContribution createToolBarContribution() {
 		ToolBarContributionImpl toolBarContribution = new ToolBarContributionImpl();
 		return toolBarContribution;
@@ -258,8 +301,10 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.0
+	 * @noreference See {@link MTrimContribution model documentation} for details.
 	 * @generated
 	 */
+	@Override
 	public MTrimContribution createTrimContribution() {
 		TrimContributionImpl trimContribution = new TrimContributionImpl();
 		return trimContribution;
@@ -271,6 +316,7 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * @since 1.0
 	 * @generated
 	 */
+	@Override
 	public MDynamicMenuContribution createDynamicMenuContribution() {
 		DynamicMenuContributionImpl dynamicMenuContribution = new DynamicMenuContributionImpl();
 		return dynamicMenuContribution;
@@ -284,7 +330,9 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 */
 	public ItemType createItemTypeFromString(EDataType eDataType, String initialValue) {
 		ItemType result = ItemType.get(initialValue);
-		if (result == null) throw new IllegalArgumentException("The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		if (result == null)
+			throw new IllegalArgumentException(
+					"The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		return result;
 	}
 
@@ -304,7 +352,7 @@ public class MenuFactoryImpl extends EFactoryImpl implements MMenuFactory {
 	 * @generated
 	 */
 	public MenuPackageImpl getMenuPackage() {
-		return (MenuPackageImpl)getEPackage();
+		return (MenuPackageImpl) getEPackage();
 	}
 
 	/**

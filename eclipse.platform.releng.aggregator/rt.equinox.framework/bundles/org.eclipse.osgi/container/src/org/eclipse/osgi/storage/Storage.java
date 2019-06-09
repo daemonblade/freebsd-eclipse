@@ -474,7 +474,7 @@ public class Storage {
 			}
 		}
 		mruList.shutdown();
-		adaptor.shutdownResolverExecutor();
+		adaptor.shutdownExecutors();
 	}
 
 	private boolean needUpdate(ModuleRevision currentRevision, ModuleRevisionBuilder newBuilder) {
@@ -555,6 +555,7 @@ public class Storage {
 				/**
 				 * @throws IOException  
 				 */
+				@Override
 				public void connect() throws IOException {
 					connected = true;
 				}
@@ -562,6 +563,7 @@ public class Storage {
 				/**
 				 * @throws IOException  
 				 */
+				@Override
 				public InputStream getInputStream() throws IOException {
 					return (in);
 				}
@@ -580,6 +582,7 @@ public class Storage {
 		if (System.getSecurityManager() == null)
 			return getUpdateLocation0(module);
 		return AccessController.doPrivileged(new PrivilegedAction<String>() {
+			@Override
 			public String run() {
 				return getUpdateLocation0(module);
 			}
@@ -922,6 +925,7 @@ public class Storage {
 			return getContentFile0(staged, isReference, bundleID, generationID);
 		try {
 			return AccessController.doPrivileged(new PrivilegedExceptionAction<File>() {
+				@Override
 				public File run() throws BundleException {
 					return getContentFile0(staged, isReference, bundleID, generationID);
 				}
@@ -955,10 +959,35 @@ public class Storage {
 		return bundleID + "/" + generationID + "/" + BUNDLE_FILE_NAME; //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	/**
+	 * Gets a file from storage and conditionally checks the parent storage area
+	 * if the file does not exist in the child configuration.
+	 * Note, this method does not check for escaping of paths from the root storage area.
+	 * @param path the path relative to the root of the storage area
+	 * @param checkParent if true then check the parent storage (if any) when the file
+	 * does not exist in the child storage area
+	 * @return the file being requested. A {@code null} value is never returned.  The file
+	 * returned may not exist.
+	 * @throws StorageException if there was an issue getting the file
+	 */
 	public File getFile(String path, boolean checkParent) throws StorageException {
 		return getFile(null, path, checkParent);
 	}
 
+	/**
+	 * Same as {@link #getFile(String, boolean)} except takes a base parameter which is
+	 * appended to the root storage area before looking for the path.  If base is not
+	 * null then additional checks are done to make sure the path does not escape out
+	 * of the base path.
+	 * @param base the additional base path to append to the root storage area.  May be
+	 * {@code null}, in which case no check is done for escaping out of the base path.
+	 * @param path the path relative to the root + base storage area.
+	 * @param checkParent if true then check the parent storage (if any) when the file
+	 * does not exist in the child storage area
+	 * @return the file being requested. A {@code null} value is never returned.  The file
+	 * returned may not exist.
+	 * @throws StorageException if there was an issue getting the file
+	 */
 	public File getFile(String base, String path, boolean checkParent) throws StorageException {
 		// first check the child location
 		File childPath = getFile(childRoot, base, path);
@@ -978,12 +1007,16 @@ public class Storage {
 	}
 
 	private static File getFile(File root, String base, String path) {
-		if (base != null) {
-			// if base is not null then move root to include the base
-			root = new File(root, base);
+		if (base == null) {
+			// return quick; no need to check for path traversal
+			return new File(root, path);
 		}
+
+		// if base is not null then move root to include the base
+		root = new File(root, base);
 		File result = new File(root, path);
 
+		// do the extra check to make sure the path did not escape the root path
 		try {
 			String resultCanonical = result.getCanonicalPath();
 			String rootCanonical = root.getCanonicalPath();
@@ -1001,6 +1034,7 @@ public class Storage {
 			return stageContent0(in, sourceURL);
 		try {
 			return AccessController.doPrivileged(new PrivilegedExceptionAction<File>() {
+				@Override
 				public File run() throws BundleException {
 					return stageContent0(in, sourceURL);
 				}
@@ -1157,6 +1191,7 @@ public class Storage {
 		} else {
 			try {
 				AccessController.doPrivileged(new PrivilegedExceptionAction<Void>() {
+					@Override
 					public Void run() throws IOException {
 						delete0(delete);
 						return null;
@@ -1187,6 +1222,7 @@ public class Storage {
 		} else {
 			try {
 				AccessController.doPrivileged(new PrivilegedExceptionAction<Void>() {
+					@Override
 					public Void run() throws IOException {
 						save0();
 						return null;
@@ -1504,6 +1540,7 @@ public class Storage {
 		return result;
 	}
 
+	@SuppressWarnings("deprecation")
 	private void loadVMProfile(Generation systemGeneration) {
 		EquinoxConfiguration equinoxConfig = equinoxContainer.getConfiguration();
 		Properties profileProps = findVMProfile(systemGeneration);
@@ -1650,6 +1687,7 @@ public class Storage {
 		return null;
 	}
 
+	@SuppressWarnings("deprecation")
 	private Properties calculateVMProfile(Version javaVersion) {
 		String systemPackages = calculateVMPackages();
 		if (systemPackages == null) {
@@ -1830,6 +1868,7 @@ public class Storage {
 			private int curDataIndex = 0;
 			private URL nextElement = null;
 
+			@Override
 			public boolean hasMoreElements() {
 				if (nextElement != null)
 					return true;
@@ -1837,6 +1876,7 @@ public class Storage {
 				return nextElement != null;
 			}
 
+			@Override
 			public URL nextElement() {
 				if (!hasMoreElements())
 					throw new NoSuchElementException();

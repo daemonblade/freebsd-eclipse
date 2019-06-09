@@ -44,35 +44,32 @@ public class BranchPromptDialog extends DetailsDialog {
 	private static final int TAG_AREA_HEIGHT_HINT = 200;
 	
 	// widgets;
-    private TagSource tagSource;
-    private TagSelectionArea tagArea;
-    private final IResource[] resources;
+	private TagSource tagSource;
+	private TagSelectionArea tagArea;
+	private final IResource[] resources;
 	
 	public BranchPromptDialog(Shell parentShell, String title, IResource[] resources, boolean allResourcesSticky, String versionName) {
 		super(parentShell, title);
-        this.resources = resources;
+		this.resources = resources;
 		this.tagSource = TagSource.create(resources);
 		this.allStickyResources = allResourcesSticky;
 		this.versionName = versionName;
 	}	
 
-	/**
-	 * @see DetailsDialog#createMainDialogArea(Composite)
-	 */
 	@Override
 	protected void createMainDialogArea(Composite composite) {
 		
 		applyDialogFont(composite);
 		initializeDialogUnits(composite);
 		
-        final int areaWidth= convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH);
-        
-        final Label description= SWTUtils.createLabel(composite, allStickyResources ? CVSUIMessages.BranchWizardPage_pageDescriptionVersion : CVSUIMessages.BranchWizardPage_pageDescription);  
-        description.setLayoutData(SWTUtils.createGridData(areaWidth, SWT.DEFAULT, true, false));
-        
+		final int areaWidth= convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH);
+		
+		final Label description= SWTUtils.createLabel(composite, allStickyResources ? CVSUIMessages.BranchWizardPage_pageDescriptionVersion : CVSUIMessages.BranchWizardPage_pageDescription);  
+		description.setLayoutData(SWTUtils.createGridData(areaWidth, SWT.DEFAULT, true, false));
+		
 		final Label name= SWTUtils.createLabel(composite, CVSUIMessages.BranchWizardPage_branchName); 
-        name.setLayoutData(SWTUtils.createGridData(areaWidth, SWT.DEFAULT, true, false));
-        
+		name.setLayoutData(SWTUtils.createGridData(areaWidth, SWT.DEFAULT, true, false));
+		
 		branchText = CVSWizardPage.createTextField(composite);
 		branchText.addListener(SWT.Modify, event -> {
 			branchTag = branchText.getText();
@@ -87,11 +84,11 @@ public class BranchPromptDialog extends DetailsDialog {
 		update = true;
 		
 		final Label versionLabel1= SWTUtils.createLabel(composite, CVSUIMessages.BranchWizardPage_specifyVersion); 
-        versionLabel1.setLayoutData(SWTUtils.createGridData(areaWidth, SWT.DEFAULT, true, false));
+		versionLabel1.setLayoutData(SWTUtils.createGridData(areaWidth, SWT.DEFAULT, true, false));
 
 		final Label versionLabel2= SWTUtils.createLabel(composite, CVSUIMessages.BranchWizardPage_versionName); 
 		versionLabel2.setLayoutData(SWTUtils.createGridData(areaWidth, SWT.DEFAULT, true, false));
-        
+		
 		versionText = CVSWizardPage.createTextField(composite);
 		versionText.addListener(SWT.Modify, event -> {
 			versionTag = versionText.getText();
@@ -107,24 +104,21 @@ public class BranchPromptDialog extends DetailsDialog {
 		branchText.setFocus();
 	}
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#getHelpContextId()
-     */
-    @Override
+	@Override
 	protected String getHelpContextId() {
-        return IHelpContextIds.BRANCH_DIALOG;
-    }
-    private void addBranchContentAssist() {
-        TagSource projectTagSource = LocalProjectTagSource.create(getSeedProject());
-        if (projectTagSource != null)
-            TagContentAssistProcessor.createContentAssistant(branchText, projectTagSource, TagSelectionArea.INCLUDE_BRANCHES); 
-    }
+		return IHelpContextIds.BRANCH_DIALOG;
+	}
+	private void addBranchContentAssist() {
+		TagSource projectTagSource = LocalProjectTagSource.create(getSeedProject());
+		if (projectTagSource != null)
+			TagContentAssistProcessor.createContentAssistant(branchText, projectTagSource, TagSelectionArea.INCLUDE_BRANCHES); 
+	}
 
-    private IProject getSeedProject() {
-        return resources[0].getProject();
-    }
+	private IProject getSeedProject() {
+		return resources[0].getProject();
+	}
 
-    /**
+	/**
 	 * Updates version name
 	 */
 	protected void updateVersionName(String branchName) {
@@ -133,9 +127,6 @@ public class BranchPromptDialog extends DetailsDialog {
 		}
 	}
 	
-	/**
-	 * @see DetailsDialog#createDropDownDialogArea(Composite)
-	 */
 	@Override
 	protected Composite createDropDownDialogArea(Composite parent) {
 		
@@ -207,12 +198,9 @@ public class BranchPromptDialog extends DetailsDialog {
 		return update;
 	}
 	
-	/* (non-Javadoc)
-     * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#isMainGrabVertical()
-     */
-    @Override
+	@Override
 	protected boolean isMainGrabVertical() {
-        return false;
-    }
+		return false;
+	}
 
 }

@@ -25,6 +25,7 @@ import org.eclipse.debug.internal.ui.SWTFactory;
 import org.eclipse.debug.internal.ui.views.variables.details.DefaultDetailPane;
 import org.eclipse.jdt.debug.core.IJavaVariable;
 import org.eclipse.jdt.internal.debug.ui.ExpressionInformationControlCreator;
+import org.eclipse.jdt.internal.debug.ui.JDIContentAssistPreference;
 import org.eclipse.jdt.internal.debug.ui.JDIDebugUIPlugin;
 import org.eclipse.jdt.internal.debug.ui.propertypages.PropertyPageMessages;
 import org.eclipse.jface.dialogs.DialogSettings;
@@ -61,6 +62,7 @@ public class JavaVariablesDetailPane extends DefaultDetailPane {
 	public static final String DESCRIPTION = PropertyPageMessages.JavaVariableDetailsPane_description;
 
 	private FocusListener focusListener;
+	private Composite fDetailPaneContainer;
 	private Combo fExpressionHistory;
 	private IDialogSettings fExpressionHistoryDialogSettings;
 	private static final int MAX_HISTORY_SIZE = 20;
@@ -84,8 +86,12 @@ public class JavaVariablesDetailPane extends DefaultDetailPane {
 			c.setBackground(ExpressionInformationControlCreator.getSystemBackgroundColor());
 			return c;
 		}
+		Composite container = parent;
 		if (fExpressionHistoryDialogSettings != null) {
-			fExpressionHistory = SWTFactory.createCombo(parent, SWT.DROP_DOWN | SWT.READ_ONLY, 1, null);
+			container = SWTFactory.createComposite(parent, parent.getFont(), 1, 1, GridData.FILL_BOTH, 0, 0);
+			fDetailPaneContainer = container;
+
+			fExpressionHistory = SWTFactory.createCombo(container, SWT.DROP_DOWN | SWT.READ_ONLY, 1, null);
 			fExpressionHistory.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -96,19 +102,20 @@ public class JavaVariablesDetailPane extends DefaultDetailPane {
 					}
 				}
 			});
-			GridData data = new GridData(GridData.FILL_HORIZONTAL);
-			data.widthHint = 10;
+			GridData data = new GridData(SWT.FILL, SWT.TOP, true, false);
+
 			fExpressionHistory.setLayoutData(data);
 			fExpressionHistory.setEnabled(false);
 		}
-		Control newControl = super.createControl(parent);
+
+		Control newControl = super.createControl(container);
 		SourceViewer viewer = getSourceViewer();
 		// Light bulb for content assist hint
 		ControlDecoration decoration = new ControlDecoration(viewer.getControl(), SWT.TOP | SWT.LEFT);
 		decoration.setShowOnlyOnFocus(true);
 		FieldDecoration dec = FieldDecorationRegistry.getDefault().getFieldDecoration(FieldDecorationRegistry.DEC_CONTENT_PROPOSAL);
 		decoration.setImage(dec.getImage());
-		decoration.setDescriptionText(dec.getDescription());
+		decoration.setDescriptionText(JDIContentAssistPreference.getContentAssistDescription());
 
 		focusListener = new FocusListener() {
 			@Override
@@ -294,6 +301,9 @@ public class JavaVariablesDetailPane extends DefaultDetailPane {
 	public void dispose() {
 		if (fExpressionHistory != null) {
 			fExpressionHistory.dispose();
+		}
+		if (fDetailPaneContainer != null) {
+			fDetailPaneContainer.dispose();
 		}
 		if (focusListener != null && getSourceViewer() != null && getSourceViewer().getTextWidget() != null) {
 			getSourceViewer().getTextWidget().removeFocusListener(focusListener);

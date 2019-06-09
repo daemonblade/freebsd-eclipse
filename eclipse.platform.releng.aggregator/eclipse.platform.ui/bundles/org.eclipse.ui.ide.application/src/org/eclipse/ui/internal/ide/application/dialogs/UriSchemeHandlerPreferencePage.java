@@ -10,13 +10,33 @@
 *******************************************************************************/
 package org.eclipse.ui.internal.ide.application.dialogs;
 
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UriHandlerPreferencePage_Confirm_Handle;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UriHandlerPreferencePage_Warning_OtherApp;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UriHandlerPreferencePage_Warning_OtherApp_Confirmation;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UriHandlerPreferencePage_Warning_OtherApp_Confirmation_Description;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UriHandlerPreferencePage_Warning_OtherApp_Description;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UrlHandlerPreferencePage_ColumnName_Handler;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UrlHandlerPreferencePage_ColumnName_SchemeDescription;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UrlHandlerPreferencePage_ColumnName_SchemeName;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UrlHandlerPreferencePage_Column_Handler_Text_Current_Application;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UrlHandlerPreferencePage_Column_Handler_Text_Other_Application;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UrlHandlerPreferencePage_Error_Reading_Scheme;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UrlHandlerPreferencePage_Error_Writing_Scheme;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UrlHandlerPreferencePage_Handler_Label;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UrlHandlerPreferencePage_Handler_Text_No_Application;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UrlHandlerPreferencePage_LauncherCannotBeDetermined;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UrlHandlerPreferencePage_Page_Description;
+import static org.eclipse.ui.internal.ide.IDEWorkbenchMessages.UrlHandlerPreferencePage_UnsupportedOperatingSystem;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -33,13 +53,14 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.widgets.TableColumnFactory;
+import org.eclipse.jface.widgets.WidgetFactory;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -48,7 +69,6 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.IWorkbenchHelpContextIds;
-import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.urischeme.IOperatingSystemRegistration;
@@ -61,6 +81,7 @@ import org.eclipse.urischeme.IUriSchemeExtensionReader;
  * General section
  *
  */
+@SuppressWarnings("restriction")
 public class UriSchemeHandlerPreferencePage extends PreferencePage implements IWorkbenchPreferencePage {
 
 	Text handlerLocation;
@@ -77,7 +98,7 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 
 	@SuppressWarnings("javadoc")
 	public UriSchemeHandlerPreferencePage() {
-		super.setDescription(IDEWorkbenchMessages.UrlHandlerPreferencePage_Page_Description);
+		super.setDescription(UrlHandlerPreferencePage_Page_Description);
 	}
 
 	@Override
@@ -104,46 +125,49 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 		addFiller(parent);
 		createTableViewerForSchemes(parent);
 		createHandlerLocationControls(parent);
+		if (operatingSystemRegistration == null) {
+			setErrorMessage(NLS.bind(UrlHandlerPreferencePage_UnsupportedOperatingSystem,
+					Platform.isRunning() ? Platform.getOS() : null)); // running check for plain JUnit tests
+			tableViewer.getControl().setEnabled(false);
+		} else if (currentLocation == null) {
+			setErrorMessage(UrlHandlerPreferencePage_LauncherCannotBeDetermined);
+			tableViewer.getControl().setEnabled(false);
+		}
 		return parent;
 	}
 
 	private void addFiller(Composite composite) {
 		PixelConverter pixelConverter = new PixelConverter(composite);
-		Label filler = new Label(composite, SWT.LEFT);
 		GridData gd = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
 		gd.horizontalSpan = 2;
 		gd.heightHint = pixelConverter.convertHeightInCharsToPixels(1) / 2;
-		filler.setLayoutData(gd);
+
+		WidgetFactory.label(SWT.LEFT).layoutData(() -> gd).create(composite);
 	}
 
 	private void createTableViewerForSchemes(Composite parent) {
-		Composite tableComposite = new Composite(parent, SWT.NONE);
-		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		gridData.horizontalSpan = 2;
-		gridData.horizontalIndent = 0;
-		tableComposite.setLayoutData(gridData);
-		Table schemeTable = new Table(tableComposite,
-				SWT.H_SCROLL | SWT.V_SCROLL | SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION | SWT.CHECK);
-		schemeTable.setHeaderVisible(true);
-		schemeTable.setLinesVisible(true);
-		schemeTable.setFont(parent.getFont());
+		GridDataFactory gridDataFactory = GridDataFactory.fillDefaults().grab(true, true);
+		gridDataFactory.span(2, 1).indent(0, SWT.DEFAULT);
 
-		// Table columns, Scheme name and Scheme Descriptions
-		TableColumnLayout tableColumnlayout = new TableColumnLayout();
-		tableComposite.setLayout(tableColumnlayout);
+		TableColumnLayout tableColumnLayout = new TableColumnLayout();
 
-		TableColumn nameColumn = new TableColumn(schemeTable, SWT.NONE, 0);
-		nameColumn.setText(IDEWorkbenchMessages.UrlHandlerPreferencePage_ColumnName_SchemeName);
+		Composite tableComposite = WidgetFactory.composite(SWT.NONE).layoutData(gridDataFactory.create())
+				.layout(tableColumnLayout).create(parent);
 
-		TableColumn descriptionColumn = new TableColumn(schemeTable, SWT.NONE, 1);
-		descriptionColumn.setText(IDEWorkbenchMessages.UrlHandlerPreferencePage_ColumnName_SchemeDescription);
+		Table schemeTable = WidgetFactory
+				.table(SWT.H_SCROLL | SWT.V_SCROLL | SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION | SWT.CHECK)
+				.headerVisible(true).linesVisible(true).font(parent.getFont()).create(tableComposite);
 
-		TableColumn appColumn = new TableColumn(schemeTable, SWT.NONE, 2);
-		appColumn.setText(IDEWorkbenchMessages.UrlHandlerPreferencePage_ColumnName_Handler);
+		TableColumnFactory columnFactory = WidgetFactory.tableColumn(SWT.NONE);
 
-		tableColumnlayout.setColumnData(nameColumn, new ColumnWeightData(20));
-		tableColumnlayout.setColumnData(descriptionColumn, new ColumnWeightData(60));
-		tableColumnlayout.setColumnData(appColumn, new ColumnWeightData(20));
+		TableColumn nameColumn = columnFactory.text(UrlHandlerPreferencePage_ColumnName_SchemeName).create(schemeTable);
+		TableColumn descriptionColumn = columnFactory.text(UrlHandlerPreferencePage_ColumnName_SchemeDescription)
+				.create(schemeTable);
+		TableColumn appColumn = columnFactory.text(UrlHandlerPreferencePage_ColumnName_Handler).create(schemeTable);
+
+		tableColumnLayout.setColumnData(nameColumn, new ColumnWeightData(20));
+		tableColumnLayout.setColumnData(descriptionColumn, new ColumnWeightData(60));
+		tableColumnLayout.setColumnData(appColumn, new ColumnWeightData(20));
 
 		tableViewer = new CheckboxTableViewer(schemeTable);
 		tableViewer.setContentProvider(ArrayContentProvider.getInstance());
@@ -159,7 +183,7 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 			schemeInformationList = retrieveSchemeInformationList();
 		} catch (Exception e) {
 			IStatus status = new Status(IStatus.ERROR, IDEWorkbenchPlugin.IDE_WORKBENCH, 1,
-					IDEWorkbenchMessages.UrlHandlerPreferencePage_Error_Reading_Scheme, e);
+					UrlHandlerPreferencePage_Error_Reading_Scheme, e);
 			statusManagerWrapper.handle(status, StatusManager.BLOCK | StatusManager.LOG);
 		}
 		tableViewer.setInput(schemeInformationList);
@@ -174,10 +198,10 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(handlerComposite);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(handlerComposite);
 
-		new Label(handlerComposite, SWT.NONE).setText(IDEWorkbenchMessages.UrlHandlerPreferencePage_Handler_Label);
+		WidgetFactory.label(SWT.NONE).text(UrlHandlerPreferencePage_Handler_Label).create(handlerComposite);
 
-		handlerLocation = new Text(handlerComposite, SWT.READ_ONLY | SWT.BORDER);
-		handlerLocation.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		handlerLocation = WidgetFactory.text(SWT.READ_ONLY | SWT.BORDER)
+				.layoutData(() -> new GridData(SWT.FILL, SWT.CENTER, true, false)).create(handlerComposite);
 
 		handlerComposite.setVisible(false); // set visible on table selection
 	}
@@ -208,7 +232,7 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean performOk() {
-		if (operatingSystemRegistration == null) {
+		if (operatingSystemRegistration == null || currentLocation == null) {
 			return true;
 		}
 
@@ -227,7 +251,7 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 			operatingSystemRegistration.handleSchemes(toAdd, toRemove);
 		} catch (Exception e) {
 			IStatus status = new Status(IStatus.ERROR, IDEWorkbenchPlugin.IDE_WORKBENCH, 1,
-					IDEWorkbenchMessages.UrlHandlerPreferencePage_Error_Writing_Scheme, e);
+					UrlHandlerPreferencePage_Error_Writing_Scheme, e);
 			statusManagerWrapper.handle(status, StatusManager.BLOCK | StatusManager.LOG);
 		}
 		return true;
@@ -280,28 +304,36 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 				// - no other handler handles it
 				// - or this eclipse handled it before (checkbox was unchecked but not yet
 				// applied)
-				handlerLocation.setText(IDEWorkbenchMessages.UrlHandlerPreferencePage_Handler_Text_No_Application);
+				handlerLocation.setText(UrlHandlerPreferencePage_Handler_Text_No_Application);
 			}
 		}
 
 		private void handleCheckbox(CheckStateChangedEvent event) {
 			UiSchemeInformation schemeInformation = (UiSchemeInformation) event.getElement();
-
 			if (event.getChecked() && schemeIsHandledByOther(schemeInformation.information)) {
-				// macOS: As lsregister always registers all plist files we cannot set a handler
-				// for a scheme that is already handled by another application.
-				// For Windows and Linux this might work - needs to be tested.
-				// As we think this is a edge case we start with a restrictive implementation.
-				schemeInformation.checked = false;
-				tableViewer.setChecked(schemeInformation, schemeInformation.checked);
+				if (operatingSystemRegistration.canOverwriteOtherApplicationsRegistration()) {
+					boolean answer = messageDialogWrapper.openQuestion(getShell(),
+							UriHandlerPreferencePage_Warning_OtherApp_Confirmation,
+							NLS.bind(UriHandlerPreferencePage_Warning_OtherApp_Confirmation_Description,
+							schemeInformation.information.getHandlerInstanceLocation(),
+							schemeInformation.information.getName()));
+					if (answer == false) {
+						schemeInformation.checked = false;
+						tableViewer.setChecked(schemeInformation, schemeInformation.checked);
+						return;
+					}
+				} else {
+					schemeInformation.checked = false;
+					tableViewer.setChecked(schemeInformation, schemeInformation.checked);
 
-				messageDialogWrapper.openWarning(getShell(),
-						IDEWorkbenchMessages.UriHandlerPreferencePage_Warning_OtherApp,
-						NLS.bind(IDEWorkbenchMessages.UriHandlerPreferencePage_Warning_OtherApp_Description,
-								schemeInformation.information.getHandlerInstanceLocation(),
-								schemeInformation.information.getName()));
+					messageDialogWrapper.openWarning(getShell(), UriHandlerPreferencePage_Warning_OtherApp,
+							NLS.bind(UriHandlerPreferencePage_Warning_OtherApp_Description,
+									schemeInformation.information.getHandlerInstanceLocation(),
+									schemeInformation.information.getName()));
 
-				return;
+					return;
+				}
+
 			}
 			schemeInformation.checked = event.getChecked();
 			setSchemeDetails(schemeInformation);
@@ -335,10 +367,10 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 				case 2:
 					String text = ""; //$NON-NLS-1$
 					if (schemeInfo.checked) {
-						text = IDEWorkbenchMessages.UrlHandlerPreferencePage_Column_Handler_Text_Current_Application;
+						text = UrlHandlerPreferencePage_Column_Handler_Text_Current_Application;
 
 					} else if (schemeIsHandledByOther(schemeInfo.information)) {
-						text = IDEWorkbenchMessages.UrlHandlerPreferencePage_Column_Handler_Text_Other_Application;
+						text = UrlHandlerPreferencePage_Column_Handler_Text_Other_Application;
 					}
 					return text;
 				default:
@@ -373,6 +405,16 @@ public class UriSchemeHandlerPreferencePage extends PreferencePage implements IW
 	interface IMessageDialogWrapper {
 		default void openWarning(Shell shell, String title, String message) {
 			MessageDialog.openWarning(shell, title, message);
+		}
+
+		default boolean openQuestion(Shell parent, String title, String message) {
+			MessageDialog dlg = new MessageDialog(parent, title, null, message, MessageDialog.CONFIRM,
+					0, UriHandlerPreferencePage_Confirm_Handle, IDialogConstants.CANCEL_LABEL);
+			dlg.open();
+			if (dlg.getReturnCode() != IDialogConstants.OK_ID) {
+				return false;
+			}
+			return true;
 		}
 	}
 }

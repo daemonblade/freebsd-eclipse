@@ -30,6 +30,7 @@ import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EGenericType;
+import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.impl.EPackageImpl;
@@ -41,6 +42,7 @@ import org.eclipse.emf.ecore.impl.EPackageImpl;
  * <ul>
  *   <li>each class,</li>
  *   <li>each feature of each class,</li>
+ *   <li>each operation of each class,</li>
  *   <li>each enum,</li>
  *   <li>and each data type</li>
  * </ul>
@@ -80,7 +82,8 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public static final ApplicationPackageImpl eINSTANCE = org.eclipse.e4.ui.model.application.impl.ApplicationPackageImpl.init();
+	public static final ApplicationPackageImpl eINSTANCE = org.eclipse.e4.ui.model.application.impl.ApplicationPackageImpl
+			.init();
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.impl.StringToStringMapImpl <em>String To String Map</em>}' class.
@@ -555,9 +558,12 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @since 1.1
+	 * @deprecated
+	 * @noreference See {@link org.eclipse.e4.ui.model.application.MApplication#getDialogs() model documentation} for details.
 	 * @generated
 	 * @ordered
 	 */
+	@Deprecated
 	public static final int APPLICATION__DIALOGS = UiPackageImpl.ELEMENT_CONTAINER_FEATURE_COUNT + 15;
 
 	/**
@@ -581,6 +587,16 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	public static final int APPLICATION___UPDATE_LOCALIZATION = UiPackageImpl.ELEMENT_CONTAINER___UPDATE_LOCALIZATION;
 
 	/**
+	 * The operation id for the '<em>Get Command</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @since 1.2
+	 * @generated
+	 * @ordered
+	 */
+	public static final int APPLICATION___GET_COMMAND__STRING = UiPackageImpl.ELEMENT_CONTAINER_OPERATION_COUNT + 0;
+
+	/**
 	 * The number of operations of the '<em>Application</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -588,7 +604,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 * @ordered
 	 */
-	public static final int APPLICATION_OPERATION_COUNT = UiPackageImpl.ELEMENT_CONTAINER_OPERATION_COUNT + 0;
+	public static final int APPLICATION_OPERATION_COUNT = UiPackageImpl.ELEMENT_CONTAINER_OPERATION_COUNT + 1;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.e4.ui.model.application.impl.ContributionImpl <em>Contribution</em>}' class.
@@ -917,7 +933,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	private ApplicationPackageImpl() {
-		super(eNS_URI, ((EFactory)MApplicationFactory.INSTANCE));
+		super(eNS_URI, ((EFactory) MApplicationFactory.INSTANCE));
 	}
 
 	/**
@@ -940,27 +956,42 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public static ApplicationPackageImpl init() {
-		if (isInited) return (ApplicationPackageImpl)EPackage.Registry.INSTANCE.getEPackage(ApplicationPackageImpl.eNS_URI);
+		if (isInited)
+			return (ApplicationPackageImpl) EPackage.Registry.INSTANCE.getEPackage(ApplicationPackageImpl.eNS_URI);
 
 		// Obtain or create and register package
 		Object registeredApplicationPackage = EPackage.Registry.INSTANCE.get(eNS_URI);
-		ApplicationPackageImpl theApplicationPackage = registeredApplicationPackage instanceof ApplicationPackageImpl ? (ApplicationPackageImpl)registeredApplicationPackage : new ApplicationPackageImpl();
+		ApplicationPackageImpl theApplicationPackage = registeredApplicationPackage instanceof ApplicationPackageImpl
+				? (ApplicationPackageImpl) registeredApplicationPackage
+				: new ApplicationPackageImpl();
 
 		isInited = true;
 
 		// Obtain or create and register interdependencies
 		Object registeredPackage = EPackage.Registry.INSTANCE.getEPackage(CommandsPackageImpl.eNS_URI);
-		CommandsPackageImpl theCommandsPackage = (CommandsPackageImpl)(registeredPackage instanceof CommandsPackageImpl ? registeredPackage : CommandsPackageImpl.eINSTANCE);
+		CommandsPackageImpl theCommandsPackage = (CommandsPackageImpl) (registeredPackage instanceof CommandsPackageImpl
+				? registeredPackage
+				: CommandsPackageImpl.eINSTANCE);
 		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(UiPackageImpl.eNS_URI);
-		UiPackageImpl theUiPackage = (UiPackageImpl)(registeredPackage instanceof UiPackageImpl ? registeredPackage : UiPackageImpl.eINSTANCE);
+		UiPackageImpl theUiPackage = (UiPackageImpl) (registeredPackage instanceof UiPackageImpl ? registeredPackage
+				: UiPackageImpl.eINSTANCE);
 		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(MenuPackageImpl.eNS_URI);
-		MenuPackageImpl theMenuPackage = (MenuPackageImpl)(registeredPackage instanceof MenuPackageImpl ? registeredPackage : MenuPackageImpl.eINSTANCE);
+		MenuPackageImpl theMenuPackage = (MenuPackageImpl) (registeredPackage instanceof MenuPackageImpl
+				? registeredPackage
+				: MenuPackageImpl.eINSTANCE);
 		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(BasicPackageImpl.eNS_URI);
-		BasicPackageImpl theBasicPackage = (BasicPackageImpl)(registeredPackage instanceof BasicPackageImpl ? registeredPackage : BasicPackageImpl.eINSTANCE);
+		BasicPackageImpl theBasicPackage = (BasicPackageImpl) (registeredPackage instanceof BasicPackageImpl
+				? registeredPackage
+				: BasicPackageImpl.eINSTANCE);
 		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(AdvancedPackageImpl.eNS_URI);
-		AdvancedPackageImpl theAdvancedPackage = (AdvancedPackageImpl)(registeredPackage instanceof AdvancedPackageImpl ? registeredPackage : AdvancedPackageImpl.eINSTANCE);
-		registeredPackage = EPackage.Registry.INSTANCE.getEPackage(org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eNS_URI);
-		org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl theBasicPackage_1 = (org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl)(registeredPackage instanceof org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl ? registeredPackage : org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eINSTANCE);
+		AdvancedPackageImpl theAdvancedPackage = (AdvancedPackageImpl) (registeredPackage instanceof AdvancedPackageImpl
+				? registeredPackage
+				: AdvancedPackageImpl.eINSTANCE);
+		registeredPackage = EPackage.Registry.INSTANCE
+				.getEPackage(org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eNS_URI);
+		org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl theBasicPackage_1 = (org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl) (registeredPackage instanceof org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl
+				? registeredPackage
+				: org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eINSTANCE);
 
 		// Create package meta-data objects
 		theApplicationPackage.createPackageContents();
@@ -988,7 +1019,6 @@ public class ApplicationPackageImpl extends EPackageImpl {
 		return theApplicationPackage;
 	}
 
-
 	/**
 	 * Returns the meta object for class '{@link java.util.Map.Entry <em>String To String Map</em>}'.
 	 * <!-- begin-user-doc -->
@@ -1013,7 +1043,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getStringToStringMap_Key() {
-		return (EAttribute)stringToStringMapEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) stringToStringMapEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -1026,7 +1056,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getStringToStringMap_Value() {
-		return (EAttribute)stringToStringMapEClass.getEStructuralFeatures().get(1);
+		return (EAttribute) stringToStringMapEClass.getEStructuralFeatures().get(1);
 	}
 
 	/**
@@ -1053,7 +1083,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getApplication_Commands() {
-		return (EReference)applicationEClass.getEStructuralFeatures().get(0);
+		return (EReference) applicationEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -1067,7 +1097,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getApplication_Addons() {
-		return (EReference)applicationEClass.getEStructuralFeatures().get(1);
+		return (EReference) applicationEClass.getEStructuralFeatures().get(1);
 	}
 
 	/**
@@ -1081,9 +1111,8 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getApplication_Categories() {
-		return (EReference)applicationEClass.getEStructuralFeatures().get(2);
+		return (EReference) applicationEClass.getEStructuralFeatures().get(2);
 	}
-
 
 	/**
 	 * Returns the meta object for the reference list '{@link org.eclipse.e4.ui.model.application.MApplication#getDialogs <em>Dialogs</em>}'.
@@ -1093,12 +1122,27 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @see org.eclipse.e4.ui.model.application.MApplication#getDialogs()
 	 * @see #getApplication()
 	 * @since 1.1
+	 * @deprecated
+	 * @noreference See {@link org.eclipse.e4.ui.model.application.MApplication#getDialogs() model documentation} for details.
 	 * @generated
 	 */
+	@Deprecated
 	public EReference getApplication_Dialogs() {
-		return (EReference)applicationEClass.getEStructuralFeatures().get(3);
+		return (EReference) applicationEClass.getEStructuralFeatures().get(3);
 	}
 
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.e4.ui.model.application.MApplication#getCommand(java.lang.String) <em>Get Command</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Command</em>' operation.
+	 * @see org.eclipse.e4.ui.model.application.MApplication#getCommand(java.lang.String)
+	 * @since 1.2
+	 * @generated
+	 */
+	public EOperation getApplication__GetCommand__String() {
+		return applicationEClass.getEOperations().get(0);
+	}
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.MApplicationElement <em>Element</em>}'.
@@ -1124,7 +1168,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getApplicationElement_ElementId() {
-		return (EAttribute)applicationElementEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) applicationElementEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -1138,9 +1182,8 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getApplicationElement_PersistedState() {
-		return (EReference)applicationElementEClass.getEStructuralFeatures().get(1);
+		return (EReference) applicationElementEClass.getEStructuralFeatures().get(1);
 	}
-
 
 	/**
 	 * Returns the meta object for the attribute list '{@link org.eclipse.e4.ui.model.application.MApplicationElement#getTags <em>Tags</em>}'.
@@ -1153,7 +1196,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getApplicationElement_Tags() {
-		return (EAttribute)applicationElementEClass.getEStructuralFeatures().get(2);
+		return (EAttribute) applicationElementEClass.getEStructuralFeatures().get(2);
 	}
 
 	/**
@@ -1167,9 +1210,8 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getApplicationElement_ContributorURI() {
-		return (EAttribute)applicationElementEClass.getEStructuralFeatures().get(3);
+		return (EAttribute) applicationElementEClass.getEStructuralFeatures().get(3);
 	}
-
 
 	/**
 	 * Returns the meta object for the map '{@link org.eclipse.e4.ui.model.application.MApplicationElement#getTransientData <em>Transient Data</em>}'.
@@ -1182,9 +1224,8 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EReference getApplicationElement_TransientData() {
-		return (EReference)applicationElementEClass.getEStructuralFeatures().get(4);
+		return (EReference) applicationElementEClass.getEStructuralFeatures().get(4);
 	}
-
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.e4.ui.model.application.MContribution <em>Contribution</em>}'.
@@ -1210,7 +1251,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getContribution_ContributionURI() {
-		return (EAttribute)contributionEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) contributionEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -1224,7 +1265,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getContribution_Object() {
-		return (EAttribute)contributionEClass.getEStructuralFeatures().get(1);
+		return (EAttribute) contributionEClass.getEStructuralFeatures().get(1);
 	}
 
 	/**
@@ -1254,7 +1295,6 @@ public class ApplicationPackageImpl extends EPackageImpl {
 		return stringToObjectMapEClass;
 	}
 
-
 	/**
 	 * Returns the meta object for the attribute '{@link java.util.Map.Entry <em>Key</em>}'.
 	 * <!-- begin-user-doc -->
@@ -1265,9 +1305,8 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getStringToObjectMap_Key() {
-		return (EAttribute)stringToObjectMapEClass.getEStructuralFeatures().get(0);
+		return (EAttribute) stringToObjectMapEClass.getEStructuralFeatures().get(0);
 	}
-
 
 	/**
 	 * Returns the meta object for the attribute '{@link java.util.Map.Entry <em>Value</em>}'.
@@ -1279,9 +1318,8 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public EAttribute getStringToObjectMap_Value() {
-		return (EAttribute)stringToObjectMapEClass.getEStructuralFeatures().get(1);
+		return (EAttribute) stringToObjectMapEClass.getEStructuralFeatures().get(1);
 	}
-
 
 	/**
 	 * Returns the meta object for data type '{@link org.eclipse.e4.core.contexts.IEclipseContext <em>IEclipse Context</em>}'.
@@ -1304,7 +1342,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public MApplicationFactory getApplicationFactory() {
-		return (MApplicationFactory)getEFactoryInstance();
+		return (MApplicationFactory) getEFactoryInstance();
 	}
 
 	/**
@@ -1322,7 +1360,8 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * @generated
 	 */
 	public void createPackageContents() {
-		if (isCreated) return;
+		if (isCreated)
+			return;
 		isCreated = true;
 
 		// Create classes and their features
@@ -1335,6 +1374,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 		createEReference(applicationEClass, APPLICATION__ADDONS);
 		createEReference(applicationEClass, APPLICATION__CATEGORIES);
 		createEReference(applicationEClass, APPLICATION__DIALOGS);
+		createEOperation(applicationEClass, APPLICATION___GET_COMMAND__STRING);
 
 		applicationElementEClass = createEClass(APPLICATION_ELEMENT);
 		createEAttribute(applicationElementEClass, APPLICATION_ELEMENT__ELEMENT_ID);
@@ -1371,8 +1411,10 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@SuppressWarnings("deprecation")
 	public void initializePackageContents() {
-		if (isInitialized) return;
+		if (isInitialized)
+			return;
 		isInitialized = true;
 
 		// Initialize package
@@ -1381,11 +1423,15 @@ public class ApplicationPackageImpl extends EPackageImpl {
 		setNsURI(eNS_URI);
 
 		// Obtain other dependent packages
-		CommandsPackageImpl theCommandsPackage = (CommandsPackageImpl)EPackage.Registry.INSTANCE.getEPackage(CommandsPackageImpl.eNS_URI);
-		UiPackageImpl theUiPackage = (UiPackageImpl)EPackage.Registry.INSTANCE.getEPackage(UiPackageImpl.eNS_URI);
-		org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl theBasicPackage_1 = (org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl)EPackage.Registry.INSTANCE.getEPackage(org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eNS_URI);
-		BasicPackageImpl theBasicPackage = (BasicPackageImpl)EPackage.Registry.INSTANCE.getEPackage(BasicPackageImpl.eNS_URI);
-		MenuPackageImpl theMenuPackage = (MenuPackageImpl)EPackage.Registry.INSTANCE.getEPackage(MenuPackageImpl.eNS_URI);
+		CommandsPackageImpl theCommandsPackage = (CommandsPackageImpl) EPackage.Registry.INSTANCE
+				.getEPackage(CommandsPackageImpl.eNS_URI);
+		UiPackageImpl theUiPackage = (UiPackageImpl) EPackage.Registry.INSTANCE.getEPackage(UiPackageImpl.eNS_URI);
+		org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl theBasicPackage_1 = (org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl) EPackage.Registry.INSTANCE
+				.getEPackage(org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicPackageImpl.eNS_URI);
+		BasicPackageImpl theBasicPackage = (BasicPackageImpl) EPackage.Registry.INSTANCE
+				.getEPackage(BasicPackageImpl.eNS_URI);
+		MenuPackageImpl theMenuPackage = (MenuPackageImpl) EPackage.Registry.INSTANCE
+				.getEPackage(MenuPackageImpl.eNS_URI);
 
 		// Add subpackages
 		getESubpackages().add(theCommandsPackage);
@@ -1423,35 +1469,72 @@ public class ApplicationPackageImpl extends EPackageImpl {
 		addonEClass.getESuperTypes().add(this.getContribution());
 
 		// Initialize classes, features, and operations; add parameters
-		initEClass(stringToStringMapEClass, Map.Entry.class, "StringToStringMap", !IS_ABSTRACT, !IS_INTERFACE, !IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getStringToStringMap_Key(), ecorePackage.getEString(), "key", null, 0, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getStringToStringMap_Value(), ecorePackage.getEString(), "value", null, 0, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(stringToStringMapEClass, Map.Entry.class, "StringToStringMap", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				!IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getStringToStringMap_Key(), ecorePackage.getEString(), "key", null, 0, 1, Map.Entry.class, //$NON-NLS-1$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStringToStringMap_Value(), ecorePackage.getEString(), "value", null, 0, 1, Map.Entry.class, //$NON-NLS-1$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(applicationEClass, MApplication.class, "Application", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEReference(getApplication_Commands(), theCommandsPackage.getCommand(), null, "commands", null, 0, -1, MApplication.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEReference(getApplication_Addons(), this.getAddon(), null, "addons", null, 0, -1, MApplication.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEReference(getApplication_Categories(), theCommandsPackage.getCategory(), null, "categories", null, 0, -1, MApplication.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEReference(getApplication_Dialogs(), theBasicPackage.getDialog(), null, "dialogs", null, 0, -1, MApplication.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(applicationEClass, MApplication.class, "Application", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getApplication_Commands(), theCommandsPackage.getCommand(), null, "commands", null, 0, -1, //$NON-NLS-1$
+				MApplication.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getApplication_Addons(), this.getAddon(), null, "addons", null, 0, -1, MApplication.class, //$NON-NLS-1$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE,
+				IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getApplication_Categories(), theCommandsPackage.getCategory(), null, "categories", null, 0, -1, //$NON-NLS-1$
+				MApplication.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getApplication_Dialogs(), theBasicPackage.getDialog(), null, "dialogs", null, 0, -1, //$NON-NLS-1$
+				MApplication.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES,
+				!IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(applicationElementEClass, MApplicationElement.class, "ApplicationElement", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getApplicationElement_ElementId(), ecorePackage.getEString(), "elementId", null, 0, 1, MApplicationElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEReference(getApplicationElement_PersistedState(), this.getStringToStringMap(), null, "persistedState", null, 0, -1, MApplicationElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getApplicationElement_Tags(), ecorePackage.getEString(), "tags", null, 0, -1, MApplicationElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getApplicationElement_ContributorURI(), ecorePackage.getEString(), "contributorURI", null, 0, 1, MApplicationElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEReference(getApplicationElement_TransientData(), this.getStringToObjectMap(), null, "transientData", null, 0, -1, MApplicationElement.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		EOperation op = initEOperation(getApplication__GetCommand__String(), theCommandsPackage.getCommand(),
+				"getCommand", 0, 1, IS_UNIQUE, IS_ORDERED); //$NON-NLS-1$
+		addEParameter(op, ecorePackage.getEString(), "elementId", 0, 1, IS_UNIQUE, IS_ORDERED); //$NON-NLS-1$
 
-		initEClass(contributionEClass, MContribution.class, "Contribution", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getContribution_ContributionURI(), ecorePackage.getEString(), "contributionURI", null, 0, 1, MContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getContribution_Object(), ecorePackage.getEJavaObject(), "object", null, 0, 1, MContribution.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(applicationElementEClass, MApplicationElement.class, "ApplicationElement", IS_ABSTRACT, //$NON-NLS-1$
+				!IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getApplicationElement_ElementId(), ecorePackage.getEString(), "elementId", null, 0, 1, //$NON-NLS-1$
+				MApplicationElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID,
+				IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getApplicationElement_PersistedState(), this.getStringToStringMap(), null, "persistedState", //$NON-NLS-1$
+				null, 0, -1, MApplicationElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE,
+				!IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getApplicationElement_Tags(), ecorePackage.getEString(), "tags", null, 0, -1, //$NON-NLS-1$
+				MApplicationElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID,
+				IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getApplicationElement_ContributorURI(), ecorePackage.getEString(), "contributorURI", null, 0, 1, //$NON-NLS-1$
+				MApplicationElement.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID,
+				IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getApplicationElement_TransientData(), this.getStringToObjectMap(), null, "transientData", null, //$NON-NLS-1$
+				0, -1, MApplicationElement.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE,
+				!IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(contributionEClass, MContribution.class, "Contribution", IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getContribution_ContributionURI(), ecorePackage.getEString(), "contributionURI", null, 0, 1, //$NON-NLS-1$
+				MContribution.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
+		initEAttribute(getContribution_Object(), ecorePackage.getEJavaObject(), "object", null, 0, 1, //$NON-NLS-1$
+				MContribution.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				IS_DERIVED, IS_ORDERED);
 
 		initEClass(addonEClass, MAddon.class, "Addon", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
 
-		initEClass(stringToObjectMapEClass, Map.Entry.class, "StringToObjectMap", !IS_ABSTRACT, !IS_INTERFACE, !IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
-		initEAttribute(getStringToObjectMap_Key(), ecorePackage.getEString(), "key", null, 0, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
-		initEAttribute(getStringToObjectMap_Value(), ecorePackage.getEJavaObject(), "value", null, 0, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEClass(stringToObjectMapEClass, Map.Entry.class, "StringToObjectMap", !IS_ABSTRACT, !IS_INTERFACE, //$NON-NLS-1$
+				!IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getStringToObjectMap_Key(), ecorePackage.getEString(), "key", null, 0, 1, Map.Entry.class, //$NON-NLS-1$
+				!IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStringToObjectMap_Value(), ecorePackage.getEJavaObject(), "value", null, 0, 1, //$NON-NLS-1$
+				Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE,
+				!IS_DERIVED, IS_ORDERED);
 
 		// Initialize data types
-		initEDataType(iEclipseContextEDataType, IEclipseContext.class, "IEclipseContext", !IS_SERIALIZABLE, !IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$
+		initEDataType(iEclipseContextEDataType, IEclipseContext.class, "IEclipseContext", !IS_SERIALIZABLE, //$NON-NLS-1$
+				!IS_GENERATED_INSTANCE_CLASS);
 
 		// Create resource
 		createResource(eNS_URI);
@@ -1463,6 +1546,7 @@ public class ApplicationPackageImpl extends EPackageImpl {
 	 * <ul>
 	 *   <li>each class,</li>
 	 *   <li>each feature of each class,</li>
+	 *   <li>each operation of each class,</li>
 	 *   <li>each enum,</li>
 	 *   <li>and each data type</li>
 	 * </ul>
@@ -1539,9 +1623,22 @@ public class ApplicationPackageImpl extends EPackageImpl {
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @since 1.1
+		 * @deprecated
+		 * @noreference See {@link org.eclipse.e4.ui.model.application.MApplication#getDialogs() model documentation} for details.
 		 * @generated
 		 */
+		@Deprecated
 		public static final EReference APPLICATION__DIALOGS = eINSTANCE.getApplication_Dialogs();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Command</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @since 1.2
+		 * @generated
+		 */
+		public static final EOperation APPLICATION___GET_COMMAND__STRING = eINSTANCE
+				.getApplication__GetCommand__String();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.impl.ApplicationElementImpl <em>Element</em>}' class.
@@ -1570,7 +1667,8 @@ public class ApplicationPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EReference APPLICATION_ELEMENT__PERSISTED_STATE = eINSTANCE.getApplicationElement_PersistedState();
+		public static final EReference APPLICATION_ELEMENT__PERSISTED_STATE = eINSTANCE
+				.getApplicationElement_PersistedState();
 
 		/**
 		 * The meta object literal for the '<em><b>Tags</b></em>' attribute list feature.
@@ -1588,7 +1686,8 @@ public class ApplicationPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EAttribute APPLICATION_ELEMENT__CONTRIBUTOR_URI = eINSTANCE.getApplicationElement_ContributorURI();
+		public static final EAttribute APPLICATION_ELEMENT__CONTRIBUTOR_URI = eINSTANCE
+				.getApplicationElement_ContributorURI();
 
 		/**
 		 * The meta object literal for the '<em><b>Transient Data</b></em>' map feature.
@@ -1597,7 +1696,8 @@ public class ApplicationPackageImpl extends EPackageImpl {
 		 * @since 1.0
 		 * @generated
 		 */
-		public static final EReference APPLICATION_ELEMENT__TRANSIENT_DATA = eINSTANCE.getApplicationElement_TransientData();
+		public static final EReference APPLICATION_ELEMENT__TRANSIENT_DATA = eINSTANCE
+				.getApplicationElement_TransientData();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.e4.ui.model.application.impl.ContributionImpl <em>Contribution</em>}' class.

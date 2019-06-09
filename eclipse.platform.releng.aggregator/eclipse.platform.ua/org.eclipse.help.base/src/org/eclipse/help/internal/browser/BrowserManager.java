@@ -103,7 +103,6 @@ public class BrowserManager {
 				setDefaultBrowserID(BROWSER_ID_SYSTEM);
 			} else if (Constants.OS_AIX.equalsIgnoreCase(os)
 					|| (Constants.OS_HPUX.equalsIgnoreCase(os))
-					|| (Constants.OS_FREEBSD.equalsIgnoreCase(os))
 					|| (Constants.OS_LINUX.equalsIgnoreCase(os))
 					|| (Constants.OS_SOLARIS.equalsIgnoreCase(os))) {
 				setDefaultBrowserID(BROWSER_ID_MOZILLA);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -38,6 +38,7 @@ public class VMRunnerConfiguration {
 	private String fModuleDescription;
 	private String fWorkingDirectory;
 	private String fOverrideDependencies;
+	private Boolean fPreviewEnabled = false;
 	private Map<String, Object> fVMSpecificAttributesMap;
 	private boolean fResume = true;
 
@@ -177,7 +178,6 @@ public class VMRunnerConfiguration {
 	 * <li>ATTR_BOOTPATH_APPEND</li>
 	 * <li>ATTR_BOOTPATH</li>
 	 * </ul>
-	 * </p>
 	 * @return The boot classpath. An empty array indicates an empty
 	 *  bootpath and <code>null</code> indicates a default bootpath.
 	 * @see #setBootClassPath(String[])
@@ -315,7 +315,7 @@ public class VMRunnerConfiguration {
 
 	/**
 	 * Gets the fOverrideDependencies.
-	 * 
+	 *
 	 * @return the fOverrideDependencies
 	 * @since 3.10
 	 */
@@ -325,13 +325,34 @@ public class VMRunnerConfiguration {
 
 	/**
 	 * Sets the fOverrideDependencies.
-	 * 
+	 *
 	 * @param fOverrideDependencies
 	 *            the fOverrideDependencies to set
 	 * @since 3.10
 	 */
 	public void setOverrideDependencies(String fOverrideDependencies) {
 		this.fOverrideDependencies = fOverrideDependencies;
+	}
+
+	/**
+	 * Gets the fPreviewEnabled.
+	 *
+	 * @return the fPreviewEnabled
+	 * @since 3.14
+	 */
+	public boolean isPreviewEnabled() {
+		return fPreviewEnabled;
+	}
+
+	/**
+	 * Sets the fPreviewEnabled.
+	 *
+	 * @param fPreviewEnabled
+	 *            the fPreviewEnabled to set
+	 * @since 3.14
+	 */
+	public void setPreviewEnabled(boolean fPreviewEnabled) {
+		this.fPreviewEnabled = fPreviewEnabled;
 	}
 
 }

@@ -51,67 +51,46 @@ public class HistoryItem implements IEncodedStreamContentAccessor, ITypedElement
 		fFileState= fileState;
 	}
 
-	/* (non-Javadoc)
-	 * see ITypedElement.getName
-	 */
 	@Override
 	public String getName() {
 		return fBase.getName();
 	}
 
-	/* (non-Javadoc)
-	 * see ITypedElement.getImage
-	 */
 	@Override
 	public Image getImage() {
 		return fBase.getImage();
 	}
 
-	/* (non-Javadoc)
-	 * see ITypedElement.getType
-	 */
 	@Override
 	public String getType() {
 		return fBase.getType();
 	}
 
-	/* (non-Javadoc)
-	 * see IModificationDate.getModificationDate
-	 */
 	@Override
 	public long getModificationDate() {
 		return fFileState.getModificationTime();
 	}
 
-	/* (non-Javadoc)
-	 * see IStreamContentAccessor.getContents
-	 */
 	@Override
 	public InputStream getContents() throws CoreException {
 		return new BufferedInputStream(fFileState.getContents());
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.IEncodedStreamContentAccessor#getCharset()
-	 */
 	@Override
 	public String getCharset() throws CoreException {
-	    String charset= fFileState.getCharset();
-	    if (charset == null) {
-		    IResource resource= getResource();
-		    if (resource instanceof IEncodedStorage)
-		    	charset= ((IEncodedStorage)resource).getCharset();
-	    }
+		String charset= fFileState.getCharset();
+		if (charset == null) {
+			IResource resource= getResource();
+			if (resource instanceof IEncodedStorage)
+				charset= ((IEncodedStorage)resource).getCharset();
+		}
 		return charset;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.compare.internal.IResourceProvider#getResource()
-	 */
 	@Override
 	public IResource getResource() {
-	    IPath fullPath= fFileState.getFullPath();
-	    return ResourcesPlugin.getWorkspace().getRoot().findMember(fullPath);
+		IPath fullPath= fFileState.getFullPath();
+		return ResourcesPlugin.getWorkspace().getRoot().findMember(fullPath);
 	}
 }
 

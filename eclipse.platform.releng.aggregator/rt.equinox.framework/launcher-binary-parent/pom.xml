@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.eclipse.equinox.framework</groupId>
     <artifactId>rt.equinox.framework</artifactId>
-    <version>4.11.0-SNAPSHOT</version>
+    <version>4.12.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>launcher-binary-parent</artifactId>
@@ -47,7 +47,7 @@
               <property name="feature.base" value="."/>
               <target>
                 <copy todir="${project.build.directory}" overwrite="true">
-                  <fileset dir="../../../rt.equinox.binaries/${project.artifactId}/">
+                  <fileset dir="${rt.equinox.binaries.loc}/${project.artifactId}">
                     <include name="*.so"/>
                     <include name="*.dll"/>
                   </fileset>

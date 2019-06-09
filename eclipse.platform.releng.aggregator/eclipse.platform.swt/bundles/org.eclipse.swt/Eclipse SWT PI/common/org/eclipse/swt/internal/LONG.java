@@ -15,9 +15,9 @@ package org.eclipse.swt.internal;
 
 /** @jniclass flags=no_gen */
 public class LONG {
-	public long /*int*/ value;
+	public long value;
 
-	public LONG (long /*int*/ value) {
+	public LONG (long value) {
 		this.value = value;
 	}
 
@@ -31,6 +31,6 @@ public class LONG {
 
 	@Override
 	public int hashCode () {
-		return (int)/*64*/(value ^ (value >>> 32));
+		return (int)(value ^ (value >>> 32));
 	}
 }

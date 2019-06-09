@@ -106,18 +106,11 @@ public class RunToLineAction extends Action implements IUpdate {
 		initializeListeners();
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see org.eclipse.jface.action.IAction#run()
-	 */
 	@Override
 	public void run() {
 		doIt();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.action.Action#runWithEvent(org.eclipse.swt.widgets.Event)
-	 */
 	@Override
 	public void runWithEvent(Event event) {
 		if (event.widget instanceof MenuItem) {
@@ -158,7 +151,12 @@ public class RunToLineAction extends Action implements IUpdate {
 	public void dispose() {
 		IDebugContextManager manager = DebugUITools.getDebugContextManager();
 		if (fActivePart != null) {
-			manager.getContextService(fActivePart.getSite().getWorkbenchWindow()).removeDebugContextListener(fContextListener);
+			IWorkbenchWindow ww = fActivePart.getSite().getWorkbenchWindow();
+			if (ww != null) {
+				manager.getContextService(ww).removeDebugContextListener(fContextListener);
+			} else {
+				manager.removeDebugContextListener(fContextListener);
+			}
 		}
 		fActivePart = null;
 		fTargetElement = null;
@@ -166,11 +164,6 @@ public class RunToLineAction extends Action implements IUpdate {
 
 	}
 
-
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.texteditor.IUpdate#update()
-	 */
 	@Override
 	public void update() {
 		Runnable r = () -> setEnabled(isTargetEnabled());

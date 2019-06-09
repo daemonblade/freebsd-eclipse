@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -293,10 +293,10 @@ int computeLeftMargin () {
 		long /*int*/ hDC = OS.GetDC (handle);
 		long /*int*/ newFont = OS.SendMessage (handle, OS.WM_GETFONT, 0, 0);
 		if (newFont != 0) oldFont = OS.SelectObject (hDC, newFont);
-		TCHAR buffer = new TCHAR (getCodePage (), text, true);
+		char [] buffer = text.toCharArray ();
 		RECT rect = new RECT ();
 		int flags = OS.DT_CALCRECT | OS.DT_SINGLELINE;
-		OS.DrawText (hDC, buffer, -1, rect, flags);
+		OS.DrawText (hDC, buffer, buffer.length, rect, flags);
 		margin += rect.right - rect.left;
 		if (newFont != 0) OS.SelectObject (hDC, oldFont);
 		OS.ReleaseDC (handle, hDC);
@@ -362,7 +362,7 @@ int computeLeftMargin () {
 					height = Math.max (height, lptm.tmHeight);
 				} else {
 					extra = Math.max (MARGIN * 2, lptm.tmAveCharWidth);
-					TCHAR buffer = new TCHAR (getCodePage (), text, true);
+					char [] buffer = text.toCharArray ();
 					RECT rect = new RECT ();
 					int flags = OS.DT_CALCRECT | OS.DT_SINGLELINE;
 					if ((style & SWT.WRAP) != 0 && wHint != SWT.DEFAULT) {
@@ -380,7 +380,7 @@ int computeLeftMargin () {
 							}
 						}
 					}
-					OS.DrawText (hDC, buffer, -1, rect, flags);
+					OS.DrawText (hDC, buffer, buffer.length, rect, flags);
 					width += rect.right - rect.left;
 					height = Math.max (height, rect.bottom - rect.top);
 				}
@@ -987,20 +987,6 @@ boolean setRadioSelection (boolean value) {
 	return true;
 }
 
-@Override
-boolean setSavedFocus () {
-	/*
-	* Feature in Windows.  When a radio button gets focus,
-	* it selects the button in WM_SETFOCUS.  If the previous
-	* saved focus widget was a radio button, allowing the shell
-	* to automatically restore the focus to the previous radio
-	* button will unexpectedly check that button.  The fix is to
-	* not assign focus to an unselected radio button.
-	*/
-	if ((style & SWT.RADIO) != 0 && !getSelection ()) return false;
-	return super.setSavedFocus ();
-}
-
 /**
  * Sets the selection state of the receiver, if it is of type <code>CHECK</code>,
  * <code>RADIO</code>, or <code>TOGGLE</code>.
@@ -1396,7 +1382,7 @@ LRESULT wmNotifyChild (NMHDR hdr, long /*int*/ wParam, long /*int*/ lParam) {
 						OS.SetRect (textRect, left, nmcd.top + border, right, nmcd.bottom - border);
 
 						// draw text
-						TCHAR buffer = new TCHAR (getCodePage (), text, false);
+						char [] buffer = text.toCharArray ();
 						int flags = 0;
 						if ((style & SWT.WRAP) != 0) {
 							flags |= OS.DT_WORDBREAK;
@@ -1406,7 +1392,7 @@ LRESULT wmNotifyChild (NMHDR hdr, long /*int*/ wParam, long /*int*/ lParam) {
 						} else {
 							flags |= OS.DT_SINGLELINE; // TODO: this always draws the prefix
 						}
-						OS.DrawText(nmcd.hdc, buffer, buffer.length(), textRect, flags | OS.DT_CALCRECT);
+						OS.DrawText(nmcd.hdc, buffer, buffer.length, textRect, flags | OS.DT_CALCRECT);
 						OS.OffsetRect(textRect, 0, Math.max(0, (nmcd.bottom  - textRect.bottom - border) / 2));
 						if (image != null) {
 							// The default button with an image doesn't respect the text alignment. So we do the same for styled buttons.
@@ -1425,7 +1411,7 @@ LRESULT wmNotifyChild (NMHDR hdr, long /*int*/ wParam, long /*int*/ lParam) {
 						}
 						OS.SetBkMode(nmcd.hdc, OS.TRANSPARENT);
 						OS.SetTextColor(nmcd.hdc, foreground);
-						OS.DrawText(nmcd.hdc, buffer, buffer.length(), textRect, flags);
+						OS.DrawText(nmcd.hdc, buffer, buffer.length, textRect, flags);
 
 						// draw focus rect
 						if ((nmcd.uItemState & OS.CDIS_FOCUS) != 0) {

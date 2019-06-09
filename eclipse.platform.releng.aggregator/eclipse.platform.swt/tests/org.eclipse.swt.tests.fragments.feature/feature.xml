@@ -20,10 +20,10 @@
    </license>
 
    <plugin
-         id="org.eclipse.swt.gtk.freebsd.amd64"
-         os="freebsd"
+         id="org.eclipse.swt.gtk.linux.x86_64"
+         os="linux"
          ws="gtk"
-         arch="amd64"
+         arch="x86_64"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -31,10 +31,10 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.swt.gtk.freebsd.powerpc64"
-         os="freebsd"
+         id="org.eclipse.swt.gtk.linux.ppc64le"
+         os="linux"
          ws="gtk"
-         arch="powerpc64"
+         arch="ppc64le"
          download-size="0"
          install-size="0"
          version="0.0.0"

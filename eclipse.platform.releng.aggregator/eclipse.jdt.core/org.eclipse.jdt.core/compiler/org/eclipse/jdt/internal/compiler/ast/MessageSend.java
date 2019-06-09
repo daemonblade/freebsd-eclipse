@@ -70,7 +70,6 @@ import static org.eclipse.jdt.internal.compiler.ast.ExpressionContext.*;
 import java.util.HashMap;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.codegen.CodeStream;
@@ -549,9 +548,10 @@ public void manageSyntheticAccessIfNecessary(BlockScope currentScope, FlowInfo f
 	// if method from parameterized type got found, use the original method at codegen time
 	MethodBinding codegenBinding = this.binding.original();
 	if (this.binding.isPrivate()){
-
+		boolean useNesting = currentScope.enclosingSourceType().isNestmateOf(codegenBinding.declaringClass) &&
+				!(this.receiver instanceof QualifiedSuperReference);
 		// depth is set for both implicit and explicit access (see MethodBinding#canBeSeenBy)
-		if (!currentScope.enclosingSourceType().isNestmateOf(codegenBinding.declaringClass) &&
+		if (!useNesting &&
 				TypeBinding.notEquals(currentScope.enclosingSourceType(), codegenBinding.declaringClass)){
 			this.syntheticAccessor = ((SourceTypeBinding)codegenBinding.declaringClass).addSyntheticMethod(codegenBinding, false /* not super access there */);
 			currentScope.problemReporter().needToEmulateMethodAccess(codegenBinding, this);
@@ -677,8 +677,7 @@ public TypeBinding resolveType(BlockScope scope) {
 		}
 		this.actualReceiverType = this.receiver.resolveType(scope);
 		if (this.actualReceiverType instanceof InferenceVariable) {
-			scope.referenceContext().tagAsHavingIgnoredMandatoryErrors(IProblem.UndefinedMethod);
-			return null; // not yet ready for resolving
+				return null; // not yet ready for resolving
 		}
 		this.receiverIsType = this.receiver instanceof NameReference && (((NameReference) this.receiver).bits & Binding.TYPE) != 0;
 		if (receiverCast && this.actualReceiverType != null) {
@@ -958,7 +957,7 @@ protected TypeBinding findMethodBinding(BlockScope scope) {
 		    return new PolyTypeBinding(this);
 	    }
 	}
-	resolvePolyExpressionArguments(this, this.binding, this.argumentTypes, scope);
+	this.binding = resolvePolyExpressionArguments(this, this.binding, this.argumentTypes, scope);
 	return this.binding.returnType;
 }
 

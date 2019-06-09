@@ -116,7 +116,7 @@ public class Update extends Command {
 				newOptions.add(Command.PRUNE_EMPTY_DIRECTORIES);
 			}
 		}
-		localOptions = (LocalOption[]) newOptions.toArray(new LocalOption[newOptions.size()]);
+		localOptions = newOptions.toArray(new LocalOption[newOptions.size()]);
 		return super.filterLocalOptions(session, globalOptions, localOptions);
 	}
 	
@@ -171,17 +171,15 @@ public class Update extends Command {
 				folder = resources[i].getParent();
 			}
 			if (folder==null || (!folder.isCVSFolder() && folder.exists())) {
-                if (folder == null)
-                    folder = (ICVSFolder)resources[i];
-                IStatus status = new CVSStatus(IStatus.ERROR,CVSStatus.ERROR,NLS.bind(CVSMessages.Command_argumentNotManaged, new String[] { folder.getName() }),session.getLocalRoot());
+				if (folder == null)
+					folder = (ICVSFolder)resources[i];
+				IStatus status = new CVSStatus(IStatus.ERROR,CVSStatus.ERROR,NLS.bind(CVSMessages.Command_argumentNotManaged, new String[] { folder.getName() }),session.getLocalRoot());
 				throw new CVSException(status);
 			}
 		}
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.core.client.Command#doExecute(org.eclipse.team.internal.ccvs.core.client.Session, org.eclipse.team.internal.ccvs.core.client.Command.GlobalOption, org.eclipse.team.internal.ccvs.core.client.Command.LocalOption, java.lang.String, org.eclipse.team.internal.ccvs.core.client.listeners.ICommandOutputListener, org.eclipse.core.runtime.IProgressMonitor)
-	 */
+	@Override
 	protected IStatus doExecute(
 			Session session,
 			GlobalOption[] globalOptions,

@@ -25,10 +25,11 @@ source $1
 cd $CJE_ROOT/gitCache/eclipse.platform.releng.aggregator
 mvn clean verify -DskipTests=true -Pbree-libs \
   -Dtycho.debug.artifactcomparator \
+  -Dtycho.localArtifacts=ignore \
   -Dcbi.jarsigner.continueOnFail=true \
   -Djgit.dirtyWorkingTree=error \
   -Dmaven.repo.local=$LOCAL_REPO \
-  -Djava.io.tmpdir=$CJE_ROOT/tmp \
+  -Djava.io.tmpdir=$CJE_ROOT/$TMP_DIR \
   -DaggregatorBuild=true \
   -DbuildTimestamp=$TIMESTAMP \
   -DbuildType=$BUILD_TYPE \

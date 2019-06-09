@@ -45,24 +45,18 @@ public class UpdateContentCachingService implements IUpdateMessageListener {
 
 	public class SandboxUpdate extends Update {
 		
-		/* (non-Javadoc)
-		 * @see org.eclipse.team.internal.ccvs.core.client.Update#shouldRetrieveAbsentDirectories(org.eclipse.team.internal.ccvs.core.client.Session)
-		 */
+		@Override
 		protected boolean shouldRetrieveAbsentDirectories(Session session) {
 			return fetchAbsentDirectories;
 		}
 		
-		/* (non-Javadoc)
-		 * @see org.eclipse.team.internal.ccvs.core.client.Command#commandFinished(org.eclipse.team.internal.ccvs.core.client.Session, org.eclipse.team.internal.ccvs.core.client.Command.GlobalOption[], org.eclipse.team.internal.ccvs.core.client.Command.LocalOption[], org.eclipse.team.internal.ccvs.core.ICVSResource[], org.eclipse.core.runtime.IProgressMonitor, org.eclipse.core.runtime.IStatus)
-		 */
+		@Override
 		protected IStatus commandFinished(Session session, GlobalOption[] globalOptions, LocalOption[] localOptions, ICVSResource[] resources, IProgressMonitor monitor, IStatus status) throws CVSException {
 			// Don't do anything (i.e. don't prune)
 			return status;
 		}
 
-		/* (non-Javadoc)
-		 * @see org.eclipse.team.internal.ccvs.core.client.Command#doExecute(org.eclipse.team.internal.ccvs.core.client.Session, org.eclipse.team.internal.ccvs.core.client.Command.GlobalOption[], org.eclipse.team.internal.ccvs.core.client.Command.LocalOption[], java.lang.String[], org.eclipse.team.internal.ccvs.core.client.listeners.ICommandOutputListener, org.eclipse.core.runtime.IProgressMonitor)
-		 */
+		@Override
 		protected IStatus doExecute(Session session, GlobalOption[] globalOptions, LocalOption[] localOptions, String[] arguments, ICommandOutputListener listener, IProgressMonitor monitor) throws CVSException {
 			session.registerResponseHandler(new SandboxUpdatedHandler(UpdatedHandler.HANDLE_CREATED));
 			session.registerResponseHandler(new SandboxUpdatedHandler(UpdatedHandler.HANDLE_MERGED));
@@ -80,9 +74,7 @@ public class UpdateContentCachingService implements IUpdateMessageListener {
 		public SandboxUpdatedHandler(int type) {
 			super(type);
 		}
-		/* (non-Javadoc)
-		 * @see org.eclipse.team.internal.ccvs.core.client.UpdatedHandler#receiveTargetFile(org.eclipse.team.internal.ccvs.core.client.Session, org.eclipse.team.internal.ccvs.core.ICVSFile, java.lang.String, java.util.Date, boolean, boolean, org.eclipse.core.runtime.IProgressMonitor)
-		 */
+		@Override
 		protected void receiveTargetFile(
 			Session session,
 			ICVSFile mFile,
@@ -105,10 +97,10 @@ public class UpdateContentCachingService implements IUpdateMessageListener {
 			// Handle execute
 			try {
 				if (executable) mFile.setExecutable(true);
-	        } catch (CVSException e) {
-	            // Just log and keep going
-	            CVSProviderPlugin.log(e);
-	        }
+			} catch (CVSException e) {
+				// Just log and keep going
+				CVSProviderPlugin.log(e);
+			}
 		}
 	}
 	
@@ -172,14 +164,14 @@ public class UpdateContentCachingService implements IUpdateMessageListener {
 			IProgressMonitor subProgress = Policy.infiniteSubMonitorFor(progress, 100);
 			subProgress.beginTask(null, 512);  
 			subProgress.subTask(NLS.bind(CVSMessages.RemoteFolderTreeBuilder_buildingBase, new String[] { root.getName() })); 
-	 		RemoteFolder tree = builder.buildBaseTree(null, root, subProgress);
-	 		if (tree == null) {
-	 			// The local tree is empty and was pruned.
-	 			// Return the root folder so that the operation can proceed
-	 			FolderSyncInfo folderSyncInfo = root.getFolderSyncInfo();
-	 			if (folderSyncInfo == null) return null;
-	 			return new RemoteFolderSandbox(null, root.getName(), repository, folderSyncInfo.getRepository(), folderSyncInfo.getTag(), folderSyncInfo.getIsStatic());
-	 		}
+			RemoteFolder tree = builder.buildBaseTree(null, root, subProgress);
+			if (tree == null) {
+				// The local tree is empty and was pruned.
+				// Return the root folder so that the operation can proceed
+				FolderSyncInfo folderSyncInfo = root.getFolderSyncInfo();
+				if (folderSyncInfo == null) return null;
+				return new RemoteFolderSandbox(null, root.getName(), repository, folderSyncInfo.getRepository(), folderSyncInfo.getTag(), folderSyncInfo.getIsStatic());
+			}
 			return tree;
 		} finally {
 			progress.done();
@@ -258,8 +250,8 @@ public class UpdateContentCachingService implements IUpdateMessageListener {
 	private boolean isReportableError(IStatus status) {
 		return CVSStatus.isInternalError(status) 
 			|| status.getCode() == TeamException.UNABLE
-        	|| status.getCode() == CVSStatus.INVALID_LOCAL_RESOURCE_PATH
-        	|| status.getCode() == CVSStatus.RESPONSE_HANDLING_FAILURE;
+			|| status.getCode() == CVSStatus.INVALID_LOCAL_RESOURCE_PATH
+			|| status.getCode() == CVSStatus.RESPONSE_HANDLING_FAILURE;
 	}
 
 	private LocalOption[] getLocalOptions() {
@@ -274,7 +266,7 @@ public class UpdateContentCachingService implements IUpdateMessageListener {
 			options.add(Update.RETRIEVE_ABSENT_DIRECTORIES);
 		
 		if (!options.isEmpty())
-			return (LocalOption[]) options.toArray(new LocalOption[options.size()]);
+			return options.toArray(new LocalOption[options.size()]);
 		
 		return Command.NO_LOCAL_OPTIONS;
 	}

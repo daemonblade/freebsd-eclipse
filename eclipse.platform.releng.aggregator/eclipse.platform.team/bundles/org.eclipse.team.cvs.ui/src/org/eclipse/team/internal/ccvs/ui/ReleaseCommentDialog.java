@@ -35,7 +35,7 @@ public class ReleaseCommentDialog extends DetailsDialog {
 	//	dialogs settings that are persistent between workbench sessions
 	private IDialogSettings settings;
 	
-    private static final int DEFAULT_WIDTH_IN_CHARS= 80;
+	private static final int DEFAULT_WIDTH_IN_CHARS= 80;
 
 	private static final String HEIGHT_KEY = "width-key"; //$NON-NLS-1$
 	private static final String WIDTH_KEY = "height-key"; //$NON-NLS-1$
@@ -63,23 +63,17 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		}		
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#includeDetailsButton()
-	 */
+	@Override
 	protected boolean includeDetailsButton() {
 		return false;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#includeErrorMessage()
-	 */
+	@Override
 	protected boolean includeErrorMessage() {
 		return false;
 	}
 	
-	/*
-	 * @see Dialog#createDialogArea(Composite)
-	 */
+	@Override
 	protected void createMainDialogArea(Composite parent) {
 		getShell().setText(CVSUIMessages.ReleaseCommentDialog_title); 
 		Composite composite = new Composite(parent, SWT.NULL);
@@ -88,33 +82,30 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		
 		commitCommentArea.createArea(composite);
 		commitCommentArea.addPropertyChangeListener(new IPropertyChangeListener() {
+			@Override
 			public void propertyChange(PropertyChangeEvent event) {
 				if (event.getProperty() == CommitCommentArea.OK_REQUESTED)
 					okPressed();
 			}
 		});
 		
-        Dialog.applyDialogFont(parent);
+		Dialog.applyDialogFont(parent);
 	}
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#getHelpContextId()
-     */
-    protected String getHelpContextId() {
-        return IHelpContextIds.RELEASE_COMMENT_DIALOG;
-    }
-    
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.window.Window#getInitialSize()
-	 */
+	@Override
+	protected String getHelpContextId() {
+		return IHelpContextIds.RELEASE_COMMENT_DIALOG;
+	}
+	
+	@Override
 	protected Point getInitialSize() {
 		try {
-		    return new Point(settings.getInt(WIDTH_KEY), settings.getInt(HEIGHT_KEY));
+			return new Point(settings.getInt(WIDTH_KEY), settings.getInt(HEIGHT_KEY));
 		} catch(NumberFormatException e) {
-		    final Point size= super.getInitialSize();
-		    size.x= convertWidthInCharsToPixels(DEFAULT_WIDTH_IN_CHARS);
-		    size.y += convertHeightInCharsToPixels(8);
-		    return size;
+			final Point size= super.getInitialSize();
+			size.x= convertWidthInCharsToPixels(DEFAULT_WIDTH_IN_CHARS);
+			size.y += convertHeightInCharsToPixels(8);
+			return size;
 		}
 	}
 	
@@ -122,22 +113,16 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		return commitCommentArea.getComment(true);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#createDropDownDialogArea(org.eclipse.swt.widgets.Composite)
-	 */
+	@Override
 	protected Composite createDropDownDialogArea(Composite parent) {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.dialogs.DetailsDialog#updateEnablements()
-	 */
+	@Override
 	protected void updateEnablements() {
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.window.Window#close()
-	 */
+	@Override
 	public boolean close() {
 		Rectangle bounds = getShell().getBounds();
 		settings.put(HEIGHT_KEY, bounds.height);
@@ -145,9 +130,7 @@ public class ReleaseCommentDialog extends DetailsDialog {
 		return super.close();
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.dialogs.Dialog#createContents(org.eclipse.swt.widgets.Composite)
-	 */
+	@Override
 	protected Control createContents(Composite parent) {
 		Control c =  super.createContents(parent);
 		commitCommentArea.setFocus();

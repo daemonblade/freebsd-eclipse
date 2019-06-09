@@ -34,42 +34,27 @@ public class ModelReplaceOperation extends ModelUpdateOperation {
 		super(part, selectedMappings, consultModels);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.TeamOperation#getJobName()
-	 */
 	@Override
 	protected String getJobName() {
 		return CVSUIMessages.ReplaceOperation_taskName;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.operations.ResourceMappingMergeOperation#isAttemptHeadlessMerge()
-	 */
 	@Override
 	protected boolean isAttemptHeadlessMerge() {
 		return true;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.operations.ResourceMappingMergeOperation#hasChangesOfInterest()
-	 */
 	@Override
 	protected boolean hasChangesOfInterest() {
 		IMergeContext context = (IMergeContext)getContext();
 		return !context.getDiffTree().isEmpty();
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.mappings.ModelUpdateOperation#getMergeType()
-	 */
 	@Override
 	protected int getMergeType() {
 		return ISynchronizationContext.TWO_WAY;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.operations.ResourceMappingMergeOperation#performMerge(org.eclipse.core.runtime.IProgressMonitor)
-	 */
 	@Override
 	protected IStatus performMerge(IProgressMonitor monitor) throws CoreException {
 		if (!hasLocalChanges() || promptForOverwrite()) {
@@ -99,10 +84,10 @@ public class ModelReplaceOperation extends ModelUpdateOperation {
 			result[0] = dialog.open();
 
 		});
-        if (result[0] == 2)
-        	throw new OperationCanceledException();
-        hasPrompted = true;
-        return result[0] == 0;
+		if (result[0] == 2)
+			throw new OperationCanceledException();
+		hasPrompted = true;
+		return result[0] == 0;
 	}
 
 	private boolean hasLocalChanges() {

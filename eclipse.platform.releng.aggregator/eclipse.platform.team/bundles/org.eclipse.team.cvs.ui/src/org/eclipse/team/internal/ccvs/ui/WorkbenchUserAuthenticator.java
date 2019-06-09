@@ -56,9 +56,6 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 		}
 		USE_ALTERNATE_PROMPTER = false;
 	}
-	/**
-	 * @see IUserAuthenticator#authenticateUser
-	 */
 	@Override
 	public void promptForUserInfo(final ICVSRepositoryLocation location, final IUserInfo userinfo, final String message) throws CVSException {
 		if (!userinfo.isUsernameMutable() && USE_ALTERNATE_PROMPTER) {
@@ -169,24 +166,24 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 	 */
 	@Override
 	public String[] promptForKeyboradInteractive(final ICVSRepositoryLocation location,
-						     final String destination,
-						     final String name,
-						     final String instruction,
-						     final String[] prompt,
-						     final boolean[] echo) throws CVSException {
-	    final String[][] result = new String[1][];
-	    final boolean[] allowCaching=new boolean[1];
-	    Display display = Display.getCurrent();
-	    if (display != null) {
+							 final String destination,
+							 final String name,
+							 final String instruction,
+							 final String[] prompt,
+							 final boolean[] echo) throws CVSException {
+		final String[][] result = new String[1][];
+		final boolean[] allowCaching=new boolean[1];
+		Display display = Display.getCurrent();
+		if (display != null) {
 		result[0]=_promptForUserInteractive(location, destination, name, instruction, prompt, echo, allowCaching);
-	    } 
-	    else {
-	    	// sync exec in default thread
+		} 
+		else {
+			// sync exec in default thread
 			Display.getDefault().syncExec(() -> result[0] = _promptForUserInteractive(location, destination, name,
 					instruction, prompt, echo, allowCaching));
-	    }
-	    if (result[0] != null && location != null && 
-	    		KeyboardInteractiveDialog.isPasswordAuth(prompt)) {
+		}
+		if (result[0] != null && location != null && 
+				KeyboardInteractiveDialog.isPasswordAuth(prompt)) {
 			location.setPassword(result[0][0]);
 			location.setAllowCaching(allowCaching[0]);
 		}
@@ -194,12 +191,12 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 	}
 
 	private String[] _promptForUserInteractive(final ICVSRepositoryLocation location, 
-						   final String destination,
-						   final String name,
-						   final String instruction,
-						   final String[] prompt,
-						   final boolean[] echo,
-						   final boolean[] allowCaching) {
+							 final String destination,
+							 final String name,
+							 final String instruction,
+							 final String[] prompt,
+							 final boolean[] echo,
+							 final boolean[] allowCaching) {
 	
 		String domain = location == null ? null : location.getLocation(true);
 		String userName = location == null ? null : location.getUsername();
@@ -236,10 +233,10 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 										 echo,
 										 cachingCheckbox);
 		dialog.open();
-	    String[] _result=dialog.getResult();
-	    if(_result!=null)
-	      allowCaching[0]=dialog.getAllowCaching();
-	    return _result;
+		String[] _result=dialog.getResult();
+		if(_result!=null)
+			allowCaching[0]=dialog.getAllowCaching();
+		return _result;
 	}
 	
 	/**
@@ -274,9 +271,6 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 		userinfo.setPassword(result[0]);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.core.IUserAuthenticator#prompt(org.eclipse.team.internal.ccvs.core.ICVSRepositoryLocation, int, java.lang.String, java.lang.String, int[], int)
-	 */
 	@Override
 	public int prompt(final ICVSRepositoryLocation location, final int promptType, final String title, final String message, final int[] promptResponses, final int defaultResponse) {
 		final Display display = CVSUIPlugin.getStandardDisplay();
@@ -300,25 +294,20 @@ public class WorkbenchUserAuthenticator implements IUserAuthenticator {
 		});
 		return retval[0];
 	}
-    
-    @Override
+	
+	@Override
 	public boolean promptForHostKeyChange(final ICVSRepositoryLocation location) {
-        final boolean[] openConfirm = new boolean[] { false };
-        final Display display = CVSUIPlugin.getStandardDisplay();
+		final boolean[] openConfirm = new boolean[] { false };
+		final Display display = CVSUIPlugin.getStandardDisplay();
 		display.syncExec(
 				() -> openConfirm[0] = MessageDialog.openConfirm(null, CVSUIMessages.WorkbenchUserAuthenticator_1,
 						NLS.bind(CVSUIMessages.WorkbenchUserAuthenticator_2, new String[] { location.getHost() })));
-        if (!openConfirm[0]) {
-            throw new OperationCanceledException();
-        }
-        return openConfirm[0];
-    }
-    
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.team.internal.ccvs.core.IUserAuthenticator#promptToConfigureRepositoryLocations(java.util.Map)
-	 */
+		if (!openConfirm[0]) {
+			throw new OperationCanceledException();
+		}
+		return openConfirm[0];
+	}
+	
 	@Override
 	public Map promptToConfigureRepositoryLocations(final Map alternativeMap) {
 		final Map[] result = new Map[1];

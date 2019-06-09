@@ -16,6 +16,7 @@ package org.eclipse.ui.internal.tweaklets;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -42,11 +43,7 @@ public class Tweaklets {
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result
-					+ ((tweakClass == null) ? 0 : tweakClass.hashCode());
-			return result;
+			return Objects.hashCode(tweakClass);
 		}
 
 		@Override
@@ -58,12 +55,7 @@ public class Tweaklets {
 			if (getClass() != obj.getClass())
 				return false;
 			final TweakKey other = (TweakKey) obj;
-			if (tweakClass == null) {
-				if (other.tweakClass != null)
-					return false;
-			} else if (!tweakClass.equals(other.tweakClass))
-				return false;
-			return true;
+			return Objects.equals(tweakClass, other.tweakClass);
 		}
 	}
 
@@ -100,12 +92,10 @@ public class Tweaklets {
 	 * @return
 	 */
 	private static Object createTweaklet(TweakKey definition) {
-		IConfigurationElement[] elements = Platform
-				.getExtensionRegistry()
+		IConfigurationElement[] elements = Platform.getExtensionRegistry()
 				.getConfigurationElementsFor("org.eclipse.ui.internalTweaklets"); //$NON-NLS-1$
 		for (IConfigurationElement element : elements) {
-			if (definition.tweakClass.getName().equals(
-					element.getAttribute("definition"))) { //$NON-NLS-1$
+			if (definition.tweakClass.getName().equals(element.getAttribute("definition"))) { //$NON-NLS-1$
 				try {
 					Object tweaklet = element.createExecutableExtension("implementation"); //$NON-NLS-1$
 					tweaklets.put(definition, tweaklet);

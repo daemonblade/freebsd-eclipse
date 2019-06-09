@@ -173,6 +173,7 @@ public class StyledText extends Canvas {
 	AccessibleTextExtendedAdapter accTextExtendedAdapter;
 	AccessibleAdapter accAdapter;
 	MouseNavigator mouseNavigator;
+	boolean middleClickPressed;
 
 	//block selection
 	boolean blockSelection;
@@ -5805,6 +5806,14 @@ void installListeners() {
 	addListener(SWT.Resize, listener);
 	addListener(SWT.Traverse, listener);
 	ime.addListener(SWT.ImeComposition, event -> {
+		if (!editable) {
+			event.doit = false;
+			event.start = 0;
+			event.end = 0;
+			event.text = "";
+			return;
+		}
+
 		switch (event.detail) {
 			case SWT.COMPOSITION_SELECTION: handleCompositionSelection(event); break;
 			case SWT.COMPOSITION_CHANGED: handleCompositionChanged(event); break;
@@ -5954,6 +5963,7 @@ void handleCompositionChanged(Event event) {
 		}
 		setCaretOffset(ime.getCaretOffset(), alignment);
 	}
+	resetSelection();
 	showCaret();
 }
 /**
@@ -6137,18 +6147,23 @@ void handleMouseDown(Event event) {
 	if (dragDetect && checkDragDetect(event)) return;
 
 	//paste clipboard selection
-	boolean mouseNavigationRunning = mouseNavigator != null && mouseNavigator.navigationActivated;
-	if (event.button == 2 && !mouseNavigationRunning) {
-		String text = (String)getClipboardContent(DND.SELECTION_CLIPBOARD);
-		if (text != null && text.length() > 0) {
-			// position cursor
-			doMouseLocationChange(event.x, event.y, false);
-			// insert text
-			Event e = new Event();
-			e.start = selection.x;
-			e.end = selection.y;
-			e.text = getModelDelimitedText(text);
-			sendKeyEvent(e);
+	if (event.button == 2) {
+		// On GTK, if mouseNavigator is enabled we have to distinguish a short middle-click (to paste content) from
+		// a long middle-click (mouse navigation started)
+		if (IS_GTK && mouseNavigator != null) {
+			middleClickPressed = true;
+			getDisplay().timerExec(200, ()->{
+				boolean click = middleClickPressed;
+				middleClickPressed = false;
+				if (click && mouseNavigator !=null) {
+					mouseNavigator.onMouseDown(event);
+				} else {
+					pasteOnMiddleClick(event);
+				}
+			});
+			return;
+		} else {
+			pasteOnMiddleClick(event);
 		}
 	}
 
@@ -6208,6 +6223,7 @@ void handleMouseMove(Event event) {
  * Autoscrolling ends when the mouse button is released.
  */
 void handleMouseUp(Event event) {
+	middleClickPressed = false;
 	clickCount = 0;
 	endAutoScroll();
 	if (event.button == 1) {
@@ -7472,6 +7488,19 @@ public void paste(){
 		}
 		event.text = delimitedText;
 		sendKeyEvent(event);
+	}
+}
+private void pasteOnMiddleClick(Event event) {
+	String text = (String)getClipboardContent(DND.SELECTION_CLIPBOARD);
+	if (text != null && text.length() > 0) {
+		// position cursor
+		doMouseLocationChange(event.x, event.y, false);
+		// insert text
+		Event e = new Event();
+		e.start = selection.x;
+		e.end = selection.y;
+		e.text = getModelDelimitedText(text);
+		sendKeyEvent(e);
 	}
 }
 /**

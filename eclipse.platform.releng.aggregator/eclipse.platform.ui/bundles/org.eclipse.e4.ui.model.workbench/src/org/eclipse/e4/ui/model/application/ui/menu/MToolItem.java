@@ -37,7 +37,6 @@ package org.eclipse.e4.ui.model.application.ui.menu;
  * @generated
  */
 public interface MToolItem extends MItem, MToolBarElement {
-
 	/**
 	 * Returns the value of the '<em><b>Menu</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
@@ -64,4 +63,5 @@ public interface MToolItem extends MItem, MToolBarElement {
 	 * @generated
 	 */
 	void setMenu(MMenu value);
+
 } // MToolItem

@@ -182,7 +182,6 @@
 #define NO_GdkEventAny
 #define NO_GdkEventButton
 #define NO_GdkEventCrossing
-#define NO_GdkEventExpose
 #define NO_GdkEventFocus
 #define NO_GdkEventKey
 #define NO_GdkEventMotion
@@ -205,8 +204,6 @@
 #define NO_memmove__Jorg_eclipse_swt_internal_gtk_GdkEventCrossing_2J
 #define NO_memmove__Lorg_eclipse_swt_internal_gtk_GdkEventCrossing_2II
 #define NO_memmove__Lorg_eclipse_swt_internal_gtk_GdkEventCrossing_2JJ
-#define NO_memmove__Lorg_eclipse_swt_internal_gtk_GdkEventExpose_2II
-#define NO_memmove__Lorg_eclipse_swt_internal_gtk_GdkEventExpose_2JJ
 #define NO_memmove__Iorg_eclipse_swt_internal_gtk_GdkEventFocus_2I
 #define NO_memmove__Jorg_eclipse_swt_internal_gtk_GdkEventFocus_2J
 #define NO_memmove__Lorg_eclipse_swt_internal_gtk_GdkEventFocus_2II
@@ -416,14 +413,21 @@
 #define NO__1gdk_1surface_1get_1frame_1extents
 #define NO__1gdk_1surface_1get_1width
 #define NO__1gdk_1surface_1get_1height
+#define NO__1gdk_1surface_1get_1state
 #define NO__1gdk_1surface_1resize
 #define NO__1gdk_1surface_1move
+#define NO__1gdk_1surface_1move_1resize
 #define NO__1gdk_1surface_1hide
 #define NO__1gdk_1surface_1set_1decorations
 #define NO__1gdk_1surface_1set_1functions
 #define NO__1gdk_1surface_1get_1root_1origin
 #define NO__1gdk_1surface_1invalidate_1region
 #define NO__1gdk_1event_1get_1surface
+
+// No GdkClipboard on GTK3
+#define NO__1gdk_1clipboard_1set_1content
+#define NO__1gdk_1display_1get_1clipboard
+#define NO__1gdk_1display_1get_1primary_1clipboard
 
 // No GtkSnapshot on GTK3
 #define NO__1gtk_1snapshot_1append_1cairo
@@ -441,15 +445,18 @@
 #define NO__1gtk_1widget_1measure
 #define NO__1gtk_1style_1context_1add_1provider_1for_1display
 #define NO__1gtk_1widget_1get_1first_1child
+#define NO__1gtk_1widget_1get_1next_1sibling
 #define NO__1gtk_1css_1provider_1load_1from_1data__I_3BI
 #define NO__1gtk_1css_1provider_1load_1from_1data__J_3BJ
-
+#define NO__1gdk_1display_1is_1composited
 #define NO__1gtk_1gesture_1multi_1press_1new
+#define NO__1gtk_1style_1context_1get_1margin
 
 // GdkCursor API changes from GTK3 -> GTK4
 #define NO__1gdk_1cursor_1new_1from_1name___3BI
 #define NO__1gdk_1cursor_1new_1from_1name___3BJ
 #define NO__1gdk_1cursor_1new_1from_1texture
+#define NO__1gtk_1widget_1set_1cursor
 
 // No GdkTexture on GTK3
 #define NO__1gdk_1texture_1new_1for_1pixbuf

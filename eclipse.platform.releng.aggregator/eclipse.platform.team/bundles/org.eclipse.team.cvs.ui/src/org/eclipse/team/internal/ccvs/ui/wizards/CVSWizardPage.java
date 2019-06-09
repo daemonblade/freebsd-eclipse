@@ -40,7 +40,7 @@ import org.eclipse.ui.views.navigator.ResourceComparator;
  * for widget creation.
  */
 public abstract class CVSWizardPage extends WizardPage {
-    
+	
 	protected static final int LABEL_WIDTH_HINT = 400;
 	protected static final int LABEL_INDENT_WIDTH = 32;
 	protected static final int LIST_HEIGHT_HINT = 100;
@@ -293,9 +293,6 @@ public abstract class CVSWizardPage extends WizardPage {
 		this.wizard = wizard;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.wizard.WizardPage#getNextPage()
-	 */
 	@Override
 	public IWizardPage getNextPage() {
 		ICVSWizard w = getCVSWizard();
@@ -307,9 +304,6 @@ public abstract class CVSWizardPage extends WizardPage {
 		return super.getNextPage();
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.wizard.WizardPage#canFlipToNextPage()
-	 */
 	@Override
 	public boolean canFlipToNextPage() {
 		ICVSWizard w = getCVSWizard();

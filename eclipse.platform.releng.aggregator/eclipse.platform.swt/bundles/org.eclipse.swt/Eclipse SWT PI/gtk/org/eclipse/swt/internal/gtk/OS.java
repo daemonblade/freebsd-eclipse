@@ -32,18 +32,18 @@ import org.eclipse.swt.internal.*;
 // boolean   -> int  ex setenv
 // gboolean  -> boolean
 //
-// Pointers: (the /*int*/ tells 32bit linux to use int instead of long.
-// gpointer -> long /*int*/
-// void *   -> long /*int*/    # C pointers (*) are normally long /*int*/
+// Pointers:
+// gpointer -> long
+// void *   -> long
 //
 // Strings:
-// gchar *      -> long /*int*/
+// gchar *      -> long
 // const char * -> byte[]  ex setenv
 // const gchar* -> byte[]  ex g_log_remove_handler
 //
 // Special types:
 // GQuark -> int
-// GError ** -> long /*int*/[]  ex g_filename_to_uri
+// GError ** -> long []  ex g_filename_to_uri
 
 
 /**
@@ -58,13 +58,13 @@ public class OS extends C {
 
 		/* Initialize the OS flags and locale constants */
 		String osName = System.getProperty ("os.name");
-		boolean isLinux = osName.equals ("Linux") || osName.equals ("FreeBSD");
-		boolean isWin32 = false;
+		boolean isLinux = false, isWin32 = false;
+		if (osName.equals ("Linux")) isLinux = true;
 		if (osName.startsWith("Windows")) isWin32 = true;
 		IsLinux = isLinux;  IsWin32 = isWin32;
 
 		byte[] buffer = new byte[4];
-		long /*int*/ ptr = C.malloc(4);
+		long ptr = C.malloc(4);
 		C.memmove(ptr, new int[]{1}, 4);
 		C.memmove(buffer, ptr, 1);
 		C.free(ptr);
@@ -122,7 +122,7 @@ public class OS extends C {
 
 	public static String getEnvironmentalVariable (String envVarName) {
 		String envVarValue = null;
-		long /*int*/ ptr = C.getenv(ascii(envVarName));
+		long ptr = C.getenv(ascii(envVarName));
 		if (ptr != 0) {
 			int length = C.strlen(ptr);
 			byte[] buffer = new byte[length];
@@ -382,6 +382,7 @@ public class OS extends C {
 	public static final byte[] unrealize = ascii("unrealize");
 	public static final byte[] value_changed = ascii("value-changed");
 	public static final byte[] window_state_event = ascii("window-state-event");
+	public static final byte[] notify_state = ascii("notify::state");
 
 	/** Properties */
 	public static final byte[] active = ascii("active");
@@ -407,8 +408,8 @@ public class OS extends C {
 	public static final byte[] inconsistent = ascii("inconsistent");
 	public static final byte[] indicator_size = ascii("indicator-size");
 	public static final byte[] indicator_spacing = ascii("indicator-spacing");
-	public static final byte[] initial_gap = ascii("initial-gap");
 	public static final byte[] interior_focus = ascii("interior-focus");
+	public static final byte[] margin = ascii("margin");
 	public static final byte[] mode = ascii("mode");
 	public static final byte[] model = ascii("model");
 	public static final byte[] spacing = ascii("spacing");
@@ -458,27 +459,27 @@ public class OS extends C {
 	/** @method flags=no_gen
 	 * @category custom
 	 */
-	public static final native long /*int*/ pangoLayoutNewProc_CALLBACK(long /*int*/ func);
+	public static final native long pangoLayoutNewProc_CALLBACK(long func);
 	/** @method flags=no_gen
 	 * @category custom
 	 */
-	public static final native long /*int*/ pangoFontFamilyNewProc_CALLBACK(long /*int*/ func);
+	public static final native long pangoFontFamilyNewProc_CALLBACK(long func);
 	/** @method flags=no_gen
 	 * @category custom
 	 */
-	public static final native long /*int*/ pangoFontFaceNewProc_CALLBACK(long /*int*/ func);
+	public static final native long pangoFontFaceNewProc_CALLBACK(long func);
 	/** @method flags=no_gen
 	 * @category custom
 	 */
-	public static final native long /*int*/ printerOptionWidgetNewProc_CALLBACK(long /*int*/ func);
+	public static final native long printerOptionWidgetNewProc_CALLBACK(long func);
 	/** @method flags=no_gen
 	 * @category custom
 	 */
-	public static final native long /*int*/ imContextNewProc_CALLBACK(long /*int*/ func);
+	public static final native long imContextNewProc_CALLBACK(long func);
 	/** @method flags=no_gen
 	 * @category custom
 	 */
-	public static final native long /*int*/ imContextLast();
+	public static final native long imContextLast();
 	/** @method flags=no_gen
 	 * @category custom
 	 */
@@ -508,8 +509,8 @@ public class OS extends C {
 	}
 
 	/** @category custom */
-	public static final native long /*int*/ _swt_fixed_get_type();
-	public static final long /*int*/ swt_fixed_get_type() {
+	public static final native long _swt_fixed_get_type();
+	public static final long swt_fixed_get_type() {
 		lock.lock();
 		try {
 			return _swt_fixed_get_type();
@@ -519,8 +520,8 @@ public class OS extends C {
 	}
 
 	/** @category custom */
-	public static final native long /*int*/ _swt_fixed_accessible_get_type();
-	public static final long /*int*/ swt_fixed_accessible_get_type() {
+	public static final native long _swt_fixed_accessible_get_type();
+	public static final long swt_fixed_accessible_get_type() {
 		lock.lock();
 		try {
 			return _swt_fixed_accessible_get_type();
@@ -534,8 +535,8 @@ public class OS extends C {
 	 * @param to_map cast=(GtkWidget *)
 	 * @category custom
 	 */
-	public static final native void _swt_fixed_accessible_register_accessible(long /*int*/ obj, boolean is_native, long /*int*/ to_map);
-	public static final void swt_fixed_accessible_register_accessible(long /*int*/ obj, boolean is_native, long /*int*/ to_map) {
+	public static final native void _swt_fixed_accessible_register_accessible(long obj, boolean is_native, long to_map);
+	public static final void swt_fixed_accessible_register_accessible(long obj, boolean is_native, long to_map) {
 		lock.lock();
 		try {
 			_swt_fixed_accessible_register_accessible(obj, is_native, to_map);
@@ -549,8 +550,8 @@ public class OS extends C {
 	 * @param sibling cast=(GtkWidget*)
 	 * @category custom
 	 */
-	public static final native void _swt_fixed_restack(long /*int*/ fixed, long /*int*/ widget, long /*int*/ sibling, boolean above);
-	public static final void swt_fixed_restack(long /*int*/ fixed, long /*int*/ widget, long /*int*/ sibling, boolean above) {
+	public static final native void _swt_fixed_restack(long fixed, long widget, long sibling, boolean above);
+	public static final void swt_fixed_restack(long fixed, long widget, long sibling, boolean above) {
 		lock.lock();
 		try {
 			_swt_fixed_restack(fixed, widget, sibling, above);
@@ -563,8 +564,8 @@ public class OS extends C {
 	 * @param widget cast=(GtkWidget*)
 	 * @category custom
 	 */
-	public static final native void _swt_fixed_move(long /*int*/ fixed, long /*int*/ widget, int x, int y);
-	public static final void swt_fixed_move(long /*int*/ fixed, long /*int*/ widget, int x, int y) {
+	public static final native void _swt_fixed_move(long fixed, long widget, int x, int y);
+	public static final void swt_fixed_move(long fixed, long widget, int x, int y) {
 		lock.lock();
 		try {
 			_swt_fixed_move(fixed, widget, x, y);
@@ -577,8 +578,8 @@ public class OS extends C {
 	 * @param widget cast=(GtkWidget*)
 	 * @category custom
 	 */
-	public static final native void _swt_fixed_resize(long /*int*/ fixed, long /*int*/ widget, int width, int height);
-	public static final void swt_fixed_resize(long /*int*/ fixed, long /*int*/ widget, int width, int height) {
+	public static final native void _swt_fixed_resize(long fixed, long widget, int width, int height);
+	public static final void swt_fixed_resize(long fixed, long widget, int width, int height) {
 		lock.lock();
 		try {
 			_swt_fixed_resize(fixed, widget, width, height);
@@ -590,9 +591,9 @@ public class OS extends C {
 	/** @param str cast=(const gchar *)
 	 * @category custom
 	 */
-	public static final native long /*int*/ _g_utf16_offset_to_pointer(long /*int*/ str, long /*int*/ offset);
+	public static final native long _g_utf16_offset_to_pointer(long str, long offset);
 	/** Custom version of g_utf8_pointer_to_offset */
-	public static final long /*int*/ g_utf16_offset_to_pointer(long /*int*/ str, long /*int*/ offset) {
+	public static final long g_utf16_offset_to_pointer(long str, long offset) {
 		lock.lock();
 		try {
 			return _g_utf16_offset_to_pointer(str, offset);
@@ -606,9 +607,9 @@ public class OS extends C {
 	 * @param pos cast=(const gchar *)
 	 * @category custom
 	 */
-	public static final native long /*int*/ _g_utf16_pointer_to_offset(long /*int*/ str, long /*int*/ pos);
+	public static final native long _g_utf16_pointer_to_offset(long str, long pos);
 	/** Custom version of g_utf8_pointer_to_offset */
-	public static final long /*int*/ g_utf16_pointer_to_offset(long /*int*/ str, long /*int*/ pos) {
+	public static final long g_utf16_pointer_to_offset(long str, long pos) {
 		lock.lock();
 		try {
 			return _g_utf16_pointer_to_offset(str, pos);
@@ -619,9 +620,9 @@ public class OS extends C {
 	/** @param str cast=(const gchar *)
 	 * @category custom
 	 */
-	public static final native long /*int*/ _g_utf16_strlen(long /*int*/ str, long /*int*/ max);
+	public static final native long _g_utf16_strlen(long str, long max);
 	/** custom version of g_utf8 for 16 bit */
-	public static final long /*int*/ g_utf16_strlen(long /*int*/ str, long /*int*/ max) {
+	public static final long g_utf16_strlen(long str, long max) {
 		lock.lock();
 		try {
 			return _g_utf16_strlen(str, max);
@@ -632,9 +633,9 @@ public class OS extends C {
 	/** @param str cast=(const gchar *)
 	 * @category custom
 	 */
-	public static final native long /*int*/ _g_utf8_offset_to_utf16_offset(long /*int*/ str, long /*int*/ offset);
+	public static final native long _g_utf8_offset_to_utf16_offset(long str, long offset);
 	/** custom version of g_utf8 for 16 bit */
-	public static final long /*int*/ g_utf8_offset_to_utf16_offset(long /*int*/ str, long /*int*/ offset) {
+	public static final long g_utf8_offset_to_utf16_offset(long str, long offset) {
 		lock.lock();
 		try {
 			return _g_utf8_offset_to_utf16_offset(str, offset);
@@ -645,9 +646,9 @@ public class OS extends C {
 	/** @param str cast=(const gchar *)
 	 * @category custom
 	 */
-	public static final native long /*int*/ _g_utf16_offset_to_utf8_offset(long /*int*/ str, long /*int*/ offset);
+	public static final native long _g_utf16_offset_to_utf8_offset(long str, long offset);
 	/** custom version of g_utf8 for 16 bit */
-	public static final long /*int*/ g_utf16_offset_to_utf8_offset(long /*int*/ str, long /*int*/ offset) {
+	public static final long g_utf16_offset_to_utf8_offset(long str, long offset) {
 		lock.lock();
 		try {
 			return _g_utf16_offset_to_utf8_offset(str, offset);
@@ -815,26 +816,26 @@ public static final native int XAnyEvent_sizeof();
 public static final native int XEvent_sizeof();
 public static final native int XExposeEvent_sizeof();
 public static final native int XFocusChangeEvent_sizeof();
-public static final native long /*int*/ localeconv_decimal_point();
+public static final native long localeconv_decimal_point();
 /**
  * @param path cast=(const char *)
  * @param realPath cast=(char *)
  */
-public static final native long /*int*/ realpath(byte[] path, byte[] realPath);
+public static final native long realpath(byte[] path, byte[] realPath);
 
 
 /** Object private fields accessors */
 /** @param object_class cast=(GObjectClass *) */
-public static final native long /*int*/ G_OBJECT_CLASS_CONSTRUCTOR(long /*int*/ object_class);
+public static final native long G_OBJECT_CLASS_CONSTRUCTOR(long object_class);
 /**
  * @param object_class cast=(GObjectClass *)
  * @paramOFF constructor cast=(GObject* (*) (GType, guint, GObjectConstructParam *))
  */
-public static final native void G_OBJECT_CLASS_SET_CONSTRUCTOR(long /*int*/ object_class, long /*int*/ constructor);
+public static final native void G_OBJECT_CLASS_SET_CONSTRUCTOR(long object_class, long constructor);
 /** @param xevent cast=(XEvent *) */
-public static final native int X_EVENT_TYPE(long /*int*/ xevent);
+public static final native int X_EVENT_TYPE(long xevent);
 /** @param xevent cast=(XAnyEvent *) */
-public static final native long /*int*/ X_EVENT_WINDOW(long /*int*/ xevent);
+public static final native long X_EVENT_WINDOW(long xevent);
 
 /** X11 Native methods and constants */
 public static final int Above = 0;
@@ -851,7 +852,7 @@ public static final int FocusOut = 10;
 public static final int GraphicsExpose = 13;
 public static final int NoExpose = 14;
 public static final int ExposureMask = 1 << 15;
-public static final long /*int*/ NoEventMask = 0;
+public static final long NoEventMask = 0;
 public static final int NotifyNormal = 0;
 public static final int NotifyGrab = 1;
 public static final int NotifyHint = 1;
@@ -863,8 +864,8 @@ public static final int NotifyNonlinear = 3;
 public static final int NotifyNonlinearVirtual = 4;
 public static final int NotifyPointer = 5;
 public static final int RevertToParent = 2;
-public static final native int _Call(long /*int*/ proc, long /*int*/ arg1, long /*int*/ arg2);
-public static final int Call(long /*int*/ proc, long /*int*/ arg1, long /*int*/ arg2) {
+public static final native int _Call(long proc, long arg1, long arg2);
+public static final int Call(long proc, long arg1, long arg2) {
 	lock.lock();
 	try {
 		return _Call(proc, arg1, arg2);
@@ -872,8 +873,8 @@ public static final int Call(long /*int*/ proc, long /*int*/ arg1, long /*int*/ 
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _call (long /*int*/ function, long /*int*/ arg0, long /*int*/ arg1, long /*int*/ arg2, long /*int*/ arg3, long /*int*/ arg4, long /*int*/ arg5, long /*int*/ arg6);
-public static final long /*int*/ call (long /*int*/ function, long /*int*/ arg0, long /*int*/ arg1, long /*int*/ arg2, long /*int*/ arg3, long /*int*/ arg4, long /*int*/ arg5, long /*int*/ arg6) {
+public static final native long _call (long function, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5, long arg6);
+public static final long call (long function, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5, long arg6) {
 	lock.lock();
 	try {
 		return _call(function, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -881,8 +882,8 @@ public static final long /*int*/ call (long /*int*/ function, long /*int*/ arg0,
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _call (long /*int*/ function, long /*int*/ arg0, long /*int*/ arg1, long /*int*/ arg2, long /*int*/ arg3);
-public static final long /*int*/ call (long /*int*/ function, long /*int*/ arg0, long /*int*/ arg1, long /*int*/ arg2, long /*int*/ arg3) {
+public static final native long _call (long function, long arg0, long arg1, long arg2, long arg3);
+public static final long call (long function, long arg0, long arg1, long arg2, long arg3) {
 	lock.lock();
 	try {
 		return _call(function, arg0, arg1, arg2, arg3);
@@ -890,8 +891,8 @@ public static final long /*int*/ call (long /*int*/ function, long /*int*/ arg0,
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _call (long /*int*/ function, long /*int*/ arg0, long /*int*/ arg1, long /*int*/ arg2, long /*int*/ arg3, long /*int*/ arg4, long /*int*/ arg5);
-public static final long /*int*/ call (long /*int*/ function, long /*int*/ arg0, long /*int*/ arg1, long /*int*/ arg2, long /*int*/ arg3, long /*int*/ arg4, long /*int*/ arg5) {
+public static final native long _call (long function, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5);
+public static final long call (long function, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5) {
 	lock.lock();
 	try {
 		return _call(function, arg0, arg1, arg2, arg3, arg4, arg5);
@@ -905,8 +906,8 @@ public static final long /*int*/ call (long /*int*/ function, long /*int*/ arg0,
  * @param predicate cast=(Bool (*)())
  * @param arg cast=(XPointer)
  */
-public static final native boolean _XCheckIfEvent(long /*int*/ display, long /*int*/ event_return, long /*int*/ predicate, long /*int*/ arg);
-public static final boolean XCheckIfEvent(long /*int*/ display, long /*int*/ event_return, long /*int*/ predicate, long /*int*/ arg) {
+public static final native boolean _XCheckIfEvent(long display, long event_return, long predicate, long arg);
+public static final boolean XCheckIfEvent(long display, long event_return, long predicate, long arg) {
 	lock.lock();
 	try {
 		return _XCheckIfEvent(display, event_return, predicate, arg);
@@ -915,8 +916,8 @@ public static final boolean XCheckIfEvent(long /*int*/ display, long /*int*/ eve
 	}
 }
 /** @param display cast=(Display *) */
-public static final native int _XDefaultScreen(long /*int*/ display);
-public static final int XDefaultScreen(long /*int*/ display) {
+public static final native int _XDefaultScreen(long display);
+public static final int XDefaultScreen(long display) {
 	lock.lock();
 	try {
 		return _XDefaultScreen(display);
@@ -925,8 +926,8 @@ public static final int XDefaultScreen(long /*int*/ display) {
 	}
 }
 /** @param display cast=(Display *) */
-public static final native long /*int*/ _XDefaultRootWindow(long /*int*/ display);
-public static final long /*int*/ XDefaultRootWindow(long /*int*/ display) {
+public static final native long _XDefaultRootWindow(long display);
+public static final long XDefaultRootWindow(long display) {
 	lock.lock();
 	try {
 		return _XDefaultRootWindow(display);
@@ -935,8 +936,8 @@ public static final long /*int*/ XDefaultRootWindow(long /*int*/ display) {
 	}
 }
 /** @param address cast=(void *) */
-public static final native void _XFree(long /*int*/ address);
-public static final void XFree(long /*int*/ address) {
+public static final native void _XFree(long address);
+public static final void XFree(long address) {
 	lock.lock();
 	try {
 		_XFree(address);
@@ -956,8 +957,8 @@ public static final void XFree(long /*int*/ address) {
  * @param win_y_return cast=(int *)
  * @param mask_return cast=(unsigned int *)
  */
-public static final native int _XQueryPointer(long /*int*/ display, long /*int*/ w, long /*int*/[] root_return, long /*int*/[] child_return, int[] root_x_return, int[] root_y_return, int[] win_x_return, int[] win_y_return, int[] mask_return);
-public static final int XQueryPointer(long /*int*/ display, long /*int*/ w, long /*int*/[] root_return, long /*int*/[] child_return, int[] root_x_return, int[] root_y_return, int[] win_x_return, int[] win_y_return, int[] mask_return) {
+public static final native int _XQueryPointer(long display, long w, long [] root_return, long [] child_return, int[] root_x_return, int[] root_y_return, int[] win_x_return, int[] win_y_return, int[] mask_return);
+public static final int XQueryPointer(long display, long w, long [] root_return, long [] child_return, int[] root_x_return, int[] root_y_return, int[] win_x_return, int[] win_y_return, int[] mask_return) {
 	lock.lock();
 	try {
 		return _XQueryPointer(display, w, root_return, child_return, root_x_return, root_y_return, win_x_return, win_y_return, mask_return);
@@ -966,8 +967,8 @@ public static final int XQueryPointer(long /*int*/ display, long /*int*/ w, long
 	}
 }
 /** @param handler cast=(XIOErrorHandler) */
-public static final native long /*int*/ _XSetIOErrorHandler(long /*int*/ handler);
-public static final long /*int*/ XSetIOErrorHandler(long /*int*/ handler) {
+public static final native long _XSetIOErrorHandler(long handler);
+public static final long XSetIOErrorHandler(long handler) {
 	lock.lock();
 	try {
 		return _XSetIOErrorHandler(handler);
@@ -976,8 +977,8 @@ public static final long /*int*/ XSetIOErrorHandler(long /*int*/ handler) {
 	}
 }
 /** @param handler cast=(XErrorHandler) */
-public static final native long /*int*/ _XSetErrorHandler(long /*int*/ handler);
-public static final long /*int*/ XSetErrorHandler(long /*int*/ handler) {
+public static final native long _XSetErrorHandler(long handler);
+public static final long XSetErrorHandler(long handler) {
 	lock.lock();
 	try {
 		return _XSetErrorHandler(handler);
@@ -989,8 +990,8 @@ public static final long /*int*/ XSetErrorHandler(long /*int*/ handler) {
  * @param display cast=(Display *)
  * @param window cast=(Window)
  */
-public static final native int _XSetInputFocus(long /*int*/ display, long /*int*/ window, int revert, int time);
-public static final int XSetInputFocus(long /*int*/ display, long /*int*/ window, int revert, int time) {
+public static final native int _XSetInputFocus(long display, long window, int revert, int time);
+public static final int XSetInputFocus(long display, long window, int revert, int time) {
 	lock.lock();
 	try {
 		return _XSetInputFocus(display, window, revert, time);
@@ -1003,8 +1004,8 @@ public static final int XSetInputFocus(long /*int*/ display, long /*int*/ window
  * @param w cast=(Window)
  * @param prop_window cast=(Window)
  */
-public static final native int _XSetTransientForHint(long /*int*/ display, long /*int*/ w, long /*int*/ prop_window);
-public static final int XSetTransientForHint(long /*int*/ display, long /*int*/ w, long /*int*/ prop_window) {
+public static final native int _XSetTransientForHint(long display, long w, long prop_window);
+public static final int XSetTransientForHint(long display, long w, long prop_window) {
 	lock.lock();
 	try {
 		return _XSetTransientForHint(display, w, prop_window);
@@ -1013,8 +1014,8 @@ public static final int XSetTransientForHint(long /*int*/ display, long /*int*/ 
 	}
 }
 /** @param display cast=(Display *) */
-public static final native long /*int*/ _XSynchronize(long /*int*/ display, boolean onoff);
-public static final long /*int*/ XSynchronize(long /*int*/ display, boolean onoff) {
+public static final native long _XSynchronize(long display, boolean onoff);
+public static final long XSynchronize(long display, boolean onoff) {
 	lock.lock();
 	try {
 		return _XSynchronize(display, onoff);
@@ -1027,19 +1028,19 @@ public static final long /*int*/ XSynchronize(long /*int*/ display, boolean onof
  * @param src cast=(const void *),flags=no_out
  * @param size cast=(size_t)
  */
-public static final native void memmove(long /*int*/ dest, XExposeEvent src, long /*int*/ size);
+public static final native void memmove(long dest, XExposeEvent src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(XExposeEvent dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(XExposeEvent dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(XFocusChangeEvent dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(XFocusChangeEvent dest, long src, long size);
 
 /** @method flags=const */
 public static final native int RTLD_GLOBAL();
@@ -1050,10 +1051,10 @@ public static final native int RTLD_LAZY();
 
 
 /** Natives */
-public static final native int Call (long /*int*/ func, long /*int*/ arg0, int arg1, int arg2);
-public static final native long Call (long /*int*/ func, long /*int*/ arg0, int arg1, long arg2);
-public static final native long /*int*/ _G_OBJECT_CLASS (long /*int*/ klass);
-public static final long /*int*/ G_OBJECT_CLASS (long /*int*/ klass) {
+public static final native int Call (long func, long arg0, int arg1, int arg2);
+public static final native long Call (long func, long arg0, int arg1, long arg2);
+public static final native long _G_OBJECT_CLASS (long klass);
+public static final long G_OBJECT_CLASS (long klass) {
 	lock.lock();
 	try {
 		return _G_OBJECT_CLASS(klass);
@@ -1061,8 +1062,8 @@ public static final long /*int*/ G_OBJECT_CLASS (long /*int*/ klass) {
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _G_OBJECT_GET_CLASS (long /*int*/ object);
-public static final long /*int*/ G_OBJECT_GET_CLASS (long /*int*/ object) {
+public static final native long _G_OBJECT_GET_CLASS (long object);
+public static final long G_OBJECT_GET_CLASS (long object) {
 	lock.lock();
 	try {
 		return _G_OBJECT_GET_CLASS(object);
@@ -1070,8 +1071,8 @@ public static final long /*int*/ G_OBJECT_GET_CLASS (long /*int*/ object) {
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _G_OBJECT_TYPE_NAME (long /*int*/ object);
-public static final long /*int*/ G_OBJECT_TYPE_NAME (long /*int*/ object) {
+public static final native long _G_OBJECT_TYPE_NAME (long object);
+public static final long G_OBJECT_TYPE_NAME (long object) {
 	lock.lock();
 	try {
 		return _G_OBJECT_TYPE_NAME(object);
@@ -1080,7 +1081,7 @@ public static final long /*int*/ G_OBJECT_TYPE_NAME (long /*int*/ object) {
 	}
 }
 
-public static final native boolean _G_TYPE_CHECK_INSTANCE_TYPE (long /*int*/ instance, long /*int*/ type);
+public static final native boolean _G_TYPE_CHECK_INSTANCE_TYPE (long instance, long type);
 /**
  * Note: G_TYPE_CHECK_INSTANCE_TYPE is not a good way to check for instance type,
  * The C-Macro doesn't seem to work reliably in the context of being invoked from Java
@@ -1088,7 +1089,7 @@ public static final native boolean _G_TYPE_CHECK_INSTANCE_TYPE (long /*int*/ ins
  * But webkit1 development has halted and it's not worth the effort to change this.
  * I.e, kept for legacy reason but don't use this. Instead, to identify type, use user_data. (see Webkit proc3 as example).
  */
-public static final boolean G_TYPE_CHECK_INSTANCE_TYPE (long /*int*/ instance, long /*int*/ type) {
+public static final boolean G_TYPE_CHECK_INSTANCE_TYPE (long instance, long type) {
 	lock.lock();
 	try {
 		return _G_TYPE_CHECK_INSTANCE_TYPE(instance, type);
@@ -1097,18 +1098,18 @@ public static final boolean G_TYPE_CHECK_INSTANCE_TYPE (long /*int*/ instance, l
 	}
 }
 /** @method flags=const */
-public static final native long /*int*/ G_TYPE_BOOLEAN();
+public static final native long G_TYPE_BOOLEAN();
 /** @method flags=const */
-public static final native long /*int*/ G_TYPE_DOUBLE();
+public static final native long G_TYPE_DOUBLE();
 /** @method flags=const */
-public static final native long /*int*/ G_TYPE_FLOAT();
+public static final native long G_TYPE_FLOAT();
 /** @method flags=const */
-public static final native long /*int*/ G_TYPE_INT();
+public static final native long G_TYPE_INT();
 /** @method flags=const */
-public static final native long /*int*/ G_TYPE_INT64();
-public static final native long /*int*/ G_VALUE_TYPE(long /*int*/ value);
-public static final native long /*int*/ _G_OBJECT_TYPE (long /*int*/ instance);
-public static final long /*int*/ G_OBJECT_TYPE (long /*int*/ instance) {
+public static final native long G_TYPE_INT64();
+public static final native long G_VALUE_TYPE(long value);
+public static final native long _G_OBJECT_TYPE (long instance);
+public static final long G_OBJECT_TYPE (long instance) {
 	lock.lock();
 	try {
 		return _G_OBJECT_TYPE(instance);
@@ -1117,8 +1118,8 @@ public static final long /*int*/ G_OBJECT_TYPE (long /*int*/ instance) {
 	}
 }
 /** @method flags=const */
-public static final native long /*int*/ _G_TYPE_STRING();
-public static final long /*int*/ G_TYPE_STRING() {
+public static final native long _G_TYPE_STRING();
+public static final long G_TYPE_STRING() {
 	lock.lock();
 	try {
 		return _G_TYPE_STRING();
@@ -1136,8 +1137,8 @@ public static final int PANGO_PIXELS(int dimension) {
 	}
 }
 /** @method flags=const */
-public static final native long /*int*/ _PANGO_TYPE_FONT_DESCRIPTION();
-public static final long /*int*/ PANGO_TYPE_FONT_DESCRIPTION() {
+public static final native long _PANGO_TYPE_FONT_DESCRIPTION();
+public static final long PANGO_TYPE_FONT_DESCRIPTION() {
 	lock.lock();
 	try {
 		return _PANGO_TYPE_FONT_DESCRIPTION();
@@ -1146,8 +1147,8 @@ public static final long /*int*/ PANGO_TYPE_FONT_DESCRIPTION() {
 	}
 }
 /** @method flags=const */
-public static final native long /*int*/ _PANGO_TYPE_FONT_FAMILY();
-public static final long /*int*/ PANGO_TYPE_FONT_FAMILY() {
+public static final native long _PANGO_TYPE_FONT_FAMILY();
+public static final long PANGO_TYPE_FONT_FAMILY() {
 	lock.lock();
 	try {
 		return _PANGO_TYPE_FONT_FAMILY();
@@ -1156,8 +1157,8 @@ public static final long /*int*/ PANGO_TYPE_FONT_FAMILY() {
 	}
 }
 /** @method flags=const */
-public static final native long /*int*/ _PANGO_TYPE_FONT_FACE();
-public static final long /*int*/ PANGO_TYPE_FONT_FACE() {
+public static final native long _PANGO_TYPE_FONT_FACE();
+public static final long PANGO_TYPE_FONT_FACE() {
 	lock.lock();
 	try {
 		return _PANGO_TYPE_FONT_FACE();
@@ -1166,8 +1167,8 @@ public static final long /*int*/ PANGO_TYPE_FONT_FACE() {
 	}
 }
 /** @method flags=const */
-public static final native long /*int*/ _PANGO_TYPE_LAYOUT();
-public static final long /*int*/ PANGO_TYPE_LAYOUT() {
+public static final native long _PANGO_TYPE_LAYOUT();
+public static final long PANGO_TYPE_LAYOUT() {
 	lock.lock();
 	try {
 		return _PANGO_TYPE_LAYOUT();
@@ -1176,8 +1177,8 @@ public static final long /*int*/ PANGO_TYPE_LAYOUT() {
 	}
 }
 /** @param filename cast=(const char *) */
-public static final native long /*int*/ _dlopen(byte[] filename, int flag);
-public static final long /*int*/ dlopen(byte[] filename, int flag) {
+public static final native long _dlopen(byte[] filename, int flag);
+public static final long dlopen(byte[] filename, int flag) {
 	lock.lock();
 	try {
 		return _dlopen(filename, flag);
@@ -1191,8 +1192,8 @@ public static final long /*int*/ dlopen(byte[] filename, int flag) {
  * @param flags cast=(GAppInfoCreateFlags)
  * @param error cast=(GError **)
  */
-public static final native long /*int*/ _g_app_info_create_from_commandline(byte[] commandline, byte[] applName, long /*int*/ flags, long /*int*/ error);
-public static final long /*int*/ g_app_info_create_from_commandline(byte[] commandline, byte[] applName, long /*int*/ flags, long /*int*/ error) {
+public static final native long _g_app_info_create_from_commandline(byte[] commandline, byte[] applName, long flags, long error);
+public static final long g_app_info_create_from_commandline(byte[] commandline, byte[] applName, long flags, long error) {
 	lock.lock();
 	try {
 		return _g_app_info_create_from_commandline(commandline, applName, flags, error);
@@ -1200,8 +1201,8 @@ public static final long /*int*/ g_app_info_create_from_commandline(byte[] comma
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _g_app_info_get_all();
-public static final long /*int*/ g_app_info_get_all() {
+public static final native long _g_app_info_get_all();
+public static final long g_app_info_get_all() {
 	lock.lock();
 	try {
 		return _g_app_info_get_all();
@@ -1212,8 +1213,8 @@ public static final long /*int*/ g_app_info_get_all() {
 /**
  * @param appInfo cast=(GAppInfo *)
  */
-public static final native long /*int*/ _g_app_info_get_executable(long /*int*/ appInfo);
-public static final long /*int*/ g_app_info_get_executable(long /*int*/ appInfo) {
+public static final native long _g_app_info_get_executable(long appInfo);
+public static final long g_app_info_get_executable(long appInfo) {
 	lock.lock();
 	try {
 		return _g_app_info_get_executable(appInfo);
@@ -1224,8 +1225,8 @@ public static final long /*int*/ g_app_info_get_executable(long /*int*/ appInfo)
 /**
  * @param appInfo cast=(GAppInfo *)
  */
-public static final native long /*int*/ _g_app_info_get_icon(long /*int*/ appInfo);
-public static final long /*int*/ g_app_info_get_icon(long /*int*/ appInfo) {
+public static final native long _g_app_info_get_icon(long appInfo);
+public static final long g_app_info_get_icon(long appInfo) {
 	lock.lock();
 	try {
 		return _g_app_info_get_icon(appInfo);
@@ -1236,8 +1237,8 @@ public static final long /*int*/ g_app_info_get_icon(long /*int*/ appInfo) {
 /**
  * @param appInfo cast=(GAppInfo *)
  */
-public static final native long /*int*/ _g_app_info_get_name(long /*int*/ appInfo);
-public static final long /*int*/ g_app_info_get_name(long /*int*/ appInfo) {
+public static final native long _g_app_info_get_name(long appInfo);
+public static final long g_app_info_get_name(long appInfo) {
 	lock.lock();
 	try {
 		return _g_app_info_get_name(appInfo);
@@ -1251,8 +1252,8 @@ public static final long /*int*/ g_app_info_get_name(long /*int*/ appInfo) {
  * @param launchContext cast=(GAppLaunchContext *)
  * @param error cast=(GError **)
  */
-public static final native boolean _g_app_info_launch(long /*int*/ appInfo, long /*int*/ list, long /*int*/ launchContext, long /*int*/ error);
-public static final boolean g_app_info_launch(long /*int*/ appInfo, long /*int*/ list, long /*int*/ launchContext, long /*int*/ error) {
+public static final native boolean _g_app_info_launch(long appInfo, long list, long launchContext, long error);
+public static final boolean g_app_info_launch(long appInfo, long list, long launchContext, long error) {
 	lock.lock();
 	try {
 		return _g_app_info_launch(appInfo, list, launchContext, error);
@@ -1264,8 +1265,8 @@ public static final boolean g_app_info_launch(long /*int*/ appInfo, long /*int*/
  * @param mimeType cast=(gchar *)
  * @param mustSupportURIs cast=(gboolean)
  */
-public static final native long /*int*/ _g_app_info_get_default_for_type(byte[] mimeType, boolean mustSupportURIs);
-public static final long /*int*/ g_app_info_get_default_for_type(byte[] mimeType, boolean mustSupportURIs) {
+public static final native long _g_app_info_get_default_for_type(byte[] mimeType, boolean mustSupportURIs);
+public static final long g_app_info_get_default_for_type(byte[] mimeType, boolean mustSupportURIs) {
 	lock.lock();
 	try {
 		return _g_app_info_get_default_for_type(mimeType, mustSupportURIs);
@@ -1278,8 +1279,8 @@ public static final long /*int*/ g_app_info_get_default_for_type(byte[] mimeType
  * @param launchContext cast=(GAppLaunchContext *)
  * @param error cast=(GError **)
  */
-public static final native boolean _g_app_info_launch_default_for_uri(long /*int*/ uri, long /*int*/ launchContext, long /*int*/ error);
-public static final boolean g_app_info_launch_default_for_uri(long /*int*/ uri, long /*int*/ launchContext, long /*int*/ error) {
+public static final native boolean _g_app_info_launch_default_for_uri(long uri, long launchContext, long error);
+public static final boolean g_app_info_launch_default_for_uri(long uri, long launchContext, long error) {
 	lock.lock();
 	try {
 		return _g_app_info_launch_default_for_uri(uri, launchContext, error);
@@ -1290,8 +1291,8 @@ public static final boolean g_app_info_launch_default_for_uri(long /*int*/ uri, 
 /**
  * @param appInfo cast=(GAppInfo *)
  */
-public static final native boolean _g_app_info_should_show(long /*int*/ appInfo);
-public static final boolean g_app_info_should_show(long /*int*/ appInfo) {
+public static final native boolean _g_app_info_should_show(long appInfo);
+public static final boolean g_app_info_should_show(long appInfo) {
 	lock.lock();
 	try {
 		return _g_app_info_should_show(appInfo);
@@ -1302,8 +1303,8 @@ public static final boolean g_app_info_should_show(long /*int*/ appInfo) {
 /**
  * @param appInfo cast=(GAppInfo *)
  */
-public static final native boolean _g_app_info_supports_uris(long /*int*/ appInfo);
-public static final boolean g_app_info_supports_uris(long /*int*/ appInfo) {
+public static final native boolean _g_app_info_supports_uris(long appInfo);
+public static final boolean g_app_info_supports_uris(long appInfo) {
 	lock.lock();
 	try {
 		return _g_app_info_supports_uris(appInfo);
@@ -1314,8 +1315,8 @@ public static final boolean g_app_info_supports_uris(long /*int*/ appInfo) {
 /**
  * @param error cast=(GError *)
  */
-public static final native long /*int*/ _g_error_get_message (long /*int*/ error);
-public static final long /*int*/ g_error_get_message (long /*int*/ error) {
+public static final native long _g_error_get_message (long error);
+public static final long g_error_get_message (long error) {
 	lock.lock();
 	try {
 		return _g_error_get_message (error);
@@ -1327,8 +1328,8 @@ public static final long /*int*/ g_error_get_message (long /*int*/ error) {
 /**
  * @param gerror cast=(GError *)
  */
-public static final native void _g_error_free(long /*int*/ gerror);
-public static final void g_error_free(long /*int*/ gerror) {
+public static final native void _g_error_free(long gerror);
+public static final void g_error_free(long gerror) {
 	lock.lock();
 	try {
 		_g_error_free(gerror);
@@ -1341,8 +1342,8 @@ public static final void g_error_free(long /*int*/ gerror) {
  * @param type1 cast=(gchar *)
  * @param type2 cast=(gchar *)
  */
-public static final native boolean _g_content_type_equals(long /*int*/ type1, byte[] type2);
-public static final boolean g_content_type_equals(long /*int*/ type1, byte[] type2) {
+public static final native boolean _g_content_type_equals(long type1, byte[] type2);
+public static final boolean g_content_type_equals(long type1, byte[] type2) {
 	lock.lock();
 	try {
 		return _g_content_type_equals(type1, type2);
@@ -1354,8 +1355,8 @@ public static final boolean g_content_type_equals(long /*int*/ type1, byte[] typ
  * @param type cast=(gchar *)
  * @param supertype cast=(gchar *)
  */
-public static final native boolean _g_content_type_is_a(long /*int*/ type, byte[] supertype);
-public static final boolean g_content_type_is_a(long /*int*/ type, byte[] supertype) {
+public static final native boolean _g_content_type_is_a(long type, byte[] supertype);
+public static final boolean g_content_type_is_a(long type, byte[] supertype) {
 	lock.lock();
 	try {
 		return _g_content_type_is_a(type, supertype);
@@ -1366,8 +1367,8 @@ public static final boolean g_content_type_is_a(long /*int*/ type, byte[] supert
 /**
  * @param info cast=(GFileInfo *)
  */
-public static final native long /*int*/ _g_file_info_get_content_type (long /*int*/ info);
-public static final long /*int*/ g_file_info_get_content_type (long /*int*/ info) {
+public static final native long _g_file_info_get_content_type (long info);
+public static final long g_file_info_get_content_type (long info) {
 	lock.lock();
 	try {
 		return _g_file_info_get_content_type (info);
@@ -1378,8 +1379,8 @@ public static final long /*int*/ g_file_info_get_content_type (long /*int*/ info
 /**
  * @param file cast=(GFile *)
  */
-public static final native long /*int*/ _g_file_get_uri(long /*int*/ file);
-public static final long /*int*/ g_file_get_uri (long /*int*/ file) {
+public static final native long _g_file_get_uri(long file);
+public static final long g_file_get_uri (long file) {
 	lock.lock();
 	try {
 		return _g_file_get_uri(file);
@@ -1388,8 +1389,8 @@ public static final long /*int*/ g_file_get_uri (long /*int*/ file) {
 	}
 }
 /** @param fileName cast=(const char *) */
-public static final native long /*int*/ _g_file_new_for_path(byte[] fileName);
-public static final long /*int*/ g_file_new_for_path(byte[] fileName) {
+public static final native long _g_file_new_for_path(byte[] fileName);
+public static final long g_file_new_for_path(byte[] fileName) {
 	lock.lock();
 	try {
 		return _g_file_new_for_path(fileName);
@@ -1400,8 +1401,8 @@ public static final long /*int*/ g_file_new_for_path(byte[] fileName) {
 /**
  * @param fileName cast=(const char *)
  */
-public static final native long /*int*/ _g_file_new_for_commandline_arg(byte[] fileName);
-public static final long /*int*/ g_file_new_for_commandline_arg(byte[] fileName) {
+public static final native long _g_file_new_for_commandline_arg(byte[] fileName);
+public static final long g_file_new_for_commandline_arg(byte[] fileName) {
 	lock.lock();
 	try {
 		return _g_file_new_for_commandline_arg(fileName);
@@ -1410,8 +1411,8 @@ public static final long /*int*/ g_file_new_for_commandline_arg(byte[] fileName)
 	}
 }
 /** @param fileName cast=(const char *) */
-public static final native long /*int*/ _g_file_new_for_uri(byte[] fileName);
-public static final long /*int*/ g_file_new_for_uri(byte[] fileName) {
+public static final native long _g_file_new_for_uri(byte[] fileName);
+public static final long g_file_new_for_uri(byte[] fileName) {
 	lock.lock();
 	try {
 		return _g_file_new_for_uri(fileName);
@@ -1426,8 +1427,8 @@ public static final long /*int*/ g_file_new_for_uri(byte[] fileName) {
  * @param cancellable cast=(GCancellable *)
  * @param error cast=(GError **)
  */
-public static final native long /*int*/ _g_file_query_info  (long /*int*/ file, byte[] attributes, long /*int*/ flags, long /*int*/ cancellable, long /*int*/ error);
-public static final long /*int*/ g_file_query_info  (long /*int*/ file,byte[] attributes, long /*int*/ flags, long /*int*/ cancellable, long /*int*/ error) {
+public static final native long _g_file_query_info  (long file, byte[] attributes, long flags, long cancellable, long error);
+public static final long g_file_query_info  (long file,byte[] attributes, long flags, long cancellable, long error) {
 	lock.lock();
 	try {
 		return _g_file_query_info (file, attributes, flags, cancellable, error);
@@ -1449,8 +1450,8 @@ public static final boolean /*long*/ g_file_test(byte[] file, int test) {
 	}
 }
 /** @param icon cast=(GIcon *) */
-public static final native long /*int*/ _g_icon_to_string(long /*int*/ icon);
-public static final long /*int*/ g_icon_to_string (long /*int*/ icon) {
+public static final native long _g_icon_to_string(long icon);
+public static final long g_icon_to_string (long icon) {
 	lock.lock();
 	try {
 		return _g_icon_to_string(icon);
@@ -1462,8 +1463,8 @@ public static final long /*int*/ g_icon_to_string (long /*int*/ icon) {
  * @param str cast=(const gchar *)
  * @param error cast=(GError **)
  */
-public static final native long /*int*/ _g_icon_new_for_string(byte[] str, long /*int*/ error[]);
-public static final long /*int*/ g_icon_new_for_string (byte[] str, long /*int*/ error[]) {
+public static final native long _g_icon_new_for_string(byte[] str, long error[]);
+public static final long g_icon_new_for_string (byte[] str, long error[]) {
 	lock.lock();
 	try {
 		return _g_icon_new_for_string(str, error);
@@ -1478,8 +1479,8 @@ public static final long /*int*/ g_icon_new_for_string (byte[] str, long /*int*/
  * @param hook_data cast=(gpointer)
  * @param data_destroy cast=(GDestroyNotify)
  */
-public static final native long /*int*/ _g_signal_add_emission_hook(int signal_id, int detail, long /*int*/ hook_func, long /*int*/ hook_data, long /*int*/ data_destroy);
-public static final long /*int*/ g_signal_add_emission_hook(int signal_id, int detail, long /*int*/ hook_func, long /*int*/ hook_data, long /*int*/ data_destroy) {
+public static final native long _g_signal_add_emission_hook(int signal_id, int detail, long hook_func, long hook_data, long data_destroy);
+public static final long g_signal_add_emission_hook(int signal_id, int detail, long hook_func, long hook_data, long data_destroy) {
 	lock.lock();
 	try {
 		return _g_signal_add_emission_hook(signal_id, detail, hook_func, hook_data, data_destroy);
@@ -1491,8 +1492,8 @@ public static final long /*int*/ g_signal_add_emission_hook(int signal_id, int d
  * @param signal_id cast=(guint)
  * @param hook_id cast=(gulong)
  */
-public static final native void _g_signal_remove_emission_hook(int signal_id, long /*int*/ hook_id);
-public static final void g_signal_remove_emission_hook(int signal_id, long /*int*/ hook_id) {
+public static final native void _g_signal_remove_emission_hook(int signal_id, long hook_id);
+public static final void g_signal_remove_emission_hook(int signal_id, long hook_id) {
 	lock.lock();
 	try {
 		 _g_signal_remove_emission_hook (signal_id, hook_id);
@@ -1505,8 +1506,8 @@ public static final void g_signal_remove_emission_hook(int signal_id, long /*int
  * @param user_data cast=(gpointer)
  * @param destroy_data cast=(GClosureNotify)
  */
-public static final native long /*int*/ _g_cclosure_new(long /*int*/ callback_func, long /*int*/ user_data, long /*int*/ destroy_data);
-public static final long /*int*/ g_cclosure_new(long /*int*/ callback_func, long /*int*/ user_data, long /*int*/ destroy_data) {
+public static final native long _g_cclosure_new(long callback_func, long user_data, long destroy_data);
+public static final long g_cclosure_new(long callback_func, long user_data, long destroy_data) {
 	lock.lock();
 	try {
 		return _g_cclosure_new(callback_func, user_data, destroy_data);
@@ -1515,8 +1516,8 @@ public static final long /*int*/ g_cclosure_new(long /*int*/ callback_func, long
 	}
 }
 /** @param closure cast=(GClosure *) */
-public static final native long /*int*/ _g_closure_ref(long /*int*/ closure);
-public static final long /*int*/ g_closure_ref(long /*int*/ closure) {
+public static final native long _g_closure_ref(long closure);
+public static final long g_closure_ref(long closure) {
 	lock.lock();
 	try {
 		return _g_closure_ref(closure);
@@ -1525,8 +1526,8 @@ public static final long /*int*/ g_closure_ref(long /*int*/ closure) {
 	}
 }
 /** @param closure cast=(GClosure *) */
-public static final native void _g_closure_sink(long /*int*/ closure);
-public static final void g_closure_sink(long /*int*/ closure) {
+public static final native void _g_closure_sink(long closure);
+public static final void g_closure_sink(long closure) {
 	lock.lock();
 	try {
 		_g_closure_sink(closure);
@@ -1535,8 +1536,8 @@ public static final void g_closure_sink(long /*int*/ closure) {
 	}
 }
 /** @param closure cast=(GClosure *) */
-public static final native void _g_closure_unref(long /*int*/ closure);
-public static final void g_closure_unref(long /*int*/ closure) {
+public static final native void _g_closure_unref(long closure);
+public static final void g_closure_unref(long closure) {
 	lock.lock();
 	try {
 		_g_closure_unref(closure);
@@ -1545,8 +1546,8 @@ public static final void g_closure_unref(long /*int*/ closure) {
 	}
 }
 /** @param context cast=(GMainContext *) */
-public static final native boolean _g_main_context_acquire(long /*int*/ context);
-public static final boolean g_main_context_acquire(long /*int*/ context) {
+public static final native boolean _g_main_context_acquire(long context);
+public static final boolean g_main_context_acquire(long context) {
 	lock.lock();
 	try {
 		return _g_main_context_acquire(context);
@@ -1558,8 +1559,8 @@ public static final boolean g_main_context_acquire(long /*int*/ context) {
  * @param context cast=(GMainContext *)
  * @param fds cast=(GPollFD *)
  */
-public static final native int _g_main_context_check(long /*int*/ context, int max_priority, long /*int*/ fds, int n_fds);
-public static final int g_main_context_check(long /*int*/ context, int max_priority, long /*int*/ fds, int n_fds) {
+public static final native int _g_main_context_check(long context, int max_priority, long fds, int n_fds);
+public static final int g_main_context_check(long context, int max_priority, long fds, int n_fds) {
 	lock.lock();
 	try {
 		return _g_main_context_check(context, max_priority, fds, n_fds);
@@ -1567,8 +1568,8 @@ public static final int g_main_context_check(long /*int*/ context, int max_prior
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _g_main_context_default();
-public static final long /*int*/ g_main_context_default() {
+public static final native long _g_main_context_default();
+public static final long g_main_context_default() {
 	lock.lock();
 	try {
 		return _g_main_context_default();
@@ -1577,8 +1578,8 @@ public static final long /*int*/ g_main_context_default() {
 	}
 }
 /** @param context cast=(GMainContext *) */
-public static final native boolean _g_main_context_iteration(long /*int*/ context, boolean may_block);
-public static final boolean g_main_context_iteration(long /*int*/ context, boolean may_block) {
+public static final native boolean _g_main_context_iteration(long context, boolean may_block);
+public static final boolean g_main_context_iteration(long context, boolean may_block) {
 	lock.lock();
 	try {
 		return _g_main_context_iteration(context, may_block);
@@ -1587,8 +1588,8 @@ public static final boolean g_main_context_iteration(long /*int*/ context, boole
 	}
 }
 /** @param context cast=(GMainContext *) */
-public static final native long /*int*/ _g_main_context_get_poll_func(long /*int*/ context);
-public static final long /*int*/ g_main_context_get_poll_func(long /*int*/ context) {
+public static final native long _g_main_context_get_poll_func(long context);
+public static final long g_main_context_get_poll_func(long context) {
 	lock.lock();
 	try {
 		return _g_main_context_get_poll_func(context);
@@ -1600,8 +1601,8 @@ public static final long /*int*/ g_main_context_get_poll_func(long /*int*/ conte
  * @param context cast=(GMainContext *)
  * @param priority cast=(gint *)
  */
-public static final native boolean _g_main_context_prepare(long /*int*/ context, int[] priority);
-public static final boolean g_main_context_prepare(long /*int*/ context, int[] priority) {
+public static final native boolean _g_main_context_prepare(long context, int[] priority);
+public static final boolean g_main_context_prepare(long context, int[] priority) {
 	lock.lock();
 	try {
 		return _g_main_context_prepare(context, priority);
@@ -1614,8 +1615,8 @@ public static final boolean g_main_context_prepare(long /*int*/ context, int[] p
  * @param fds cast=(GPollFD *)
  * @param timeout_ cast=(gint *)
  */
-public static final native int _g_main_context_query(long /*int*/ context, int max_priority, int[] timeout_, long /*int*/ fds, int n_fds);
-public static final int g_main_context_query(long /*int*/ context, int max_priority, int[] timeout_, long /*int*/ fds, int n_fds) {
+public static final native int _g_main_context_query(long context, int max_priority, int[] timeout_, long fds, int n_fds);
+public static final int g_main_context_query(long context, int max_priority, int[] timeout_, long fds, int n_fds) {
 	lock.lock();
 	try {
 		return _g_main_context_query(context, max_priority, timeout_, fds, n_fds);
@@ -1624,8 +1625,8 @@ public static final int g_main_context_query(long /*int*/ context, int max_prior
 	}
 }
 /** @param context cast=(GMainContext *) */
-public static final native void _g_main_context_release(long /*int*/ context);
-public static final void g_main_context_release(long /*int*/ context) {
+public static final native void _g_main_context_release(long context);
+public static final void g_main_context_release(long context) {
 	lock.lock();
 	try {
 		_g_main_context_release(context);
@@ -1634,7 +1635,7 @@ public static final void g_main_context_release(long /*int*/ context) {
 	}
 }
 /** @param context cast=(GMainContext *) */
-public static final native void g_main_context_wakeup(long /*int*/ context);
+public static final native void g_main_context_wakeup(long context);
 /**
  * @param opsysstring cast=(const gchar *)
  * @param len cast=(gssize)
@@ -1642,8 +1643,8 @@ public static final native void g_main_context_wakeup(long /*int*/ context);
  * @param bytes_written cast=(gsize *)
  * @param error cast=(GError **)
  */
-public static final native long /*int*/ _g_filename_to_utf8(long /*int*/ opsysstring, long /*int*/ len, long /*int*/[] bytes_read, long /*int*/[] bytes_written, long /*int*/[] error);
-public static final long /*int*/ g_filename_to_utf8(long /*int*/ opsysstring, long /*int*/ len, long /*int*/[] bytes_read, long /*int*/[] bytes_written, long /*int*/[] error) {
+public static final native long _g_filename_to_utf8(long opsysstring, long len, long [] bytes_read, long [] bytes_written, long [] error);
+public static final long g_filename_to_utf8(long opsysstring, long len, long [] bytes_read, long [] bytes_written, long [] error) {
 	lock.lock();
 	try {
 		return _g_filename_to_utf8(opsysstring, len, bytes_read, bytes_written, error);
@@ -1652,8 +1653,8 @@ public static final long /*int*/ g_filename_to_utf8(long /*int*/ opsysstring, lo
 	}
 }
 /** @param filename cast=(const gchar *) */
-public static final native long /*int*/ _g_filename_display_name(long /*int*/ filename);
-public static final long /*int*/ g_filename_display_name(long /*int*/ filename) {
+public static final native long _g_filename_display_name(long filename);
+public static final long g_filename_display_name(long filename) {
 	lock.lock();
 	try {
 		return _g_filename_display_name(filename);
@@ -1666,8 +1667,8 @@ public static final long /*int*/ g_filename_display_name(long /*int*/ filename) 
  * @param hostname cast=(const char *)
  * @param error cast=(GError **)
  */
-public static final native long /*int*/ _g_filename_to_uri(long /*int*/ filename, long /*int*/ hostname, long /*int*/[] error);
-public static final long /*int*/ g_filename_to_uri(long /*int*/ filename, long /*int*/ hostname, long /*int*/[] error) {
+public static final native long _g_filename_to_uri(long filename, long hostname, long [] error);
+public static final long g_filename_to_uri(long filename, long hostname, long [] error) {
 	lock.lock();
 	try {
 		return _g_filename_to_uri(filename, hostname, error);
@@ -1682,8 +1683,8 @@ public static final long /*int*/ g_filename_to_uri(long /*int*/ filename, long /
  * @param bytes_written cast=(gsize *)
  * @param error cast=(GError **)
  */
-public static final native long /*int*/ _g_filename_from_utf8(long /*int*/ opsysstring, long /*int*/ len,  long /*int*/[] bytes_read, long /*int*/[] bytes_written, long /*int*/[] error);
-public static final long /*int*/ g_filename_from_utf8(long /*int*/ opsysstring, long /*int*/ len,  long /*int*/[] bytes_read, long /*int*/[] bytes_written, long /*int*/[] error) {
+public static final native long _g_filename_from_utf8(long opsysstring, long len,  long [] bytes_read, long [] bytes_written, long [] error);
+public static final long g_filename_from_utf8(long opsysstring, long len,  long [] bytes_read, long [] bytes_written, long [] error) {
 	lock.lock();
 	try {
 		return _g_filename_from_utf8(opsysstring, len, bytes_read, bytes_written, error);
@@ -1696,8 +1697,8 @@ public static final long /*int*/ g_filename_from_utf8(long /*int*/ opsysstring, 
  * @param hostname cast=(char **)
  * @param error cast=(GError **)
  */
-public static final native long /*int*/ _g_filename_from_uri(long /*int*/ uri, long /*int*/[] hostname, long /*int*/[] error);
-public static final long /*int*/ g_filename_from_uri(long /*int*/ uri, long /*int*/[] hostname, long /*int*/[] error) {
+public static final native long _g_filename_from_uri(long uri, long [] hostname, long [] error);
+public static final long g_filename_from_uri(long uri, long [] hostname, long [] error) {
 	lock.lock();
 	try {
 		return _g_filename_from_uri(uri, hostname, error);
@@ -1706,11 +1707,16 @@ public static final long /*int*/ g_filename_from_uri(long /*int*/ uri, long /*in
 	}
 }
 /** @param mem cast=(gpointer) */
-public static final native void _g_free(long /*int*/ mem);
-public static final void g_free(long /*int*/ mem) {
+// NOTE: Lock is not used, see Bug 546743 and Bug 547093
+public static final native void g_free(long mem);
+/**
+ * @param variable cast=(const gchar *),flags=no_out
+ */
+public static final native long _g_getenv(byte [] variable);
+public static final long g_getenv(byte [] variable) {
 	lock.lock();
 	try {
-		_g_free(mem);
+		return _g_getenv(variable);
 	} finally {
 		lock.unlock();
 	}
@@ -1718,8 +1724,8 @@ public static final void g_free(long /*int*/ mem) {
 /**
  * @param table cast=(GHashTable *)
  */
-public static final native long /*int*/ _g_hash_table_get_values(long /*int*/ table);
-public static final long /*int*/ g_hash_table_get_values(long /*int*/ table) {
+public static final native long _g_hash_table_get_values(long table);
+public static final long g_hash_table_get_values(long table) {
 	lock.lock();
 	try {
 		return _g_hash_table_get_values(table);
@@ -1731,8 +1737,8 @@ public static final long /*int*/ g_hash_table_get_values(long /*int*/ table) {
  * @param function cast=(GSourceFunc)
  * @param data cast=(gpointer)
  */
-public static final native int _g_idle_add(long /*int*/ function, long /*int*/ data);
-public static final int g_idle_add(long /*int*/ function, long /*int*/ data) {
+public static final native int _g_idle_add(long function, long data);
+public static final int g_idle_add(long function, long data) {
 	lock.lock();
 	try {
 		return _g_idle_add(function, data);
@@ -1744,8 +1750,8 @@ public static final int g_idle_add(long /*int*/ function, long /*int*/ data) {
  * @param list cast=(GList *)
  * @param data cast=(gpointer)
  */
-public static final native long /*int*/ _g_list_append(long /*int*/ list, long /*int*/ data);
-public static final long /*int*/ g_list_append(long /*int*/ list, long /*int*/ data) {
+public static final native long _g_list_append(long list, long data);
+public static final long g_list_append(long list, long data) {
 	lock.lock();
 	try {
 		return _g_list_append(list, data);
@@ -1754,8 +1760,8 @@ public static final long /*int*/ g_list_append(long /*int*/ list, long /*int*/ d
 	}
 }
 /** @param list cast=(GList *) */
-public static final native long /*int*/ _g_list_data(long /*int*/ list);
-public static final long /*int*/ g_list_data(long /*int*/ list) {
+public static final native long _g_list_data(long list);
+public static final long g_list_data(long list) {
 	lock.lock();
 	try {
 		return _g_list_data(list);
@@ -1764,8 +1770,8 @@ public static final long /*int*/ g_list_data(long /*int*/ list) {
 	}
 }
 /** @param list cast=(GList *) */
-public static final native void _g_list_free(long /*int*/ list);
-public static final void g_list_free(long /*int*/ list) {
+public static final native void _g_list_free(long list);
+public static final void g_list_free(long list) {
 	lock.lock();
 	try {
 		_g_list_free(list);
@@ -1774,8 +1780,8 @@ public static final void g_list_free(long /*int*/ list) {
 	}
 }
 /** @param list cast=(GList *) */
-public static final native void _g_list_free_1(long /*int*/ list);
-public static final void g_list_free_1(long /*int*/ list) {
+public static final native void _g_list_free_1(long list);
+public static final void g_list_free_1(long list) {
 	lock.lock();
 	try {
 		_g_list_free_1(list);
@@ -1786,8 +1792,8 @@ public static final void g_list_free_1(long /*int*/ list) {
 /**
  * @param list cast=(GList *)
  */
-public static final native long /*int*/ _g_list_last(long /*int*/ list);
-public static final long /*int*/ g_list_last(long /*int*/ list) {
+public static final native long _g_list_last(long list);
+public static final long g_list_last(long list) {
 	lock.lock();
 	try {
 		return _g_list_last(list);
@@ -1796,8 +1802,8 @@ public static final long /*int*/ g_list_last(long /*int*/ list) {
 	}
 }
 /** @param list cast=(GList *) */
-public static final native int _g_list_length(long /*int*/ list);
-public static final int g_list_length(long /*int*/ list) {
+public static final native int _g_list_length(long list);
+public static final int g_list_length(long list) {
 	lock.lock();
 	try {
 		return _g_list_length(list);
@@ -1809,8 +1815,8 @@ public static final int g_list_length(long /*int*/ list) {
  * @param list cast=(GList *)
  * @param llist cast=(GList *)
  */
-public static final native void _g_list_set_next(long /*int*/ list, long /*int*/ llist);
-public static final void g_list_set_next(long /*int*/ list, long /*int*/ llist) {
+public static final native void _g_list_set_next(long list, long llist);
+public static final void g_list_set_next(long list, long llist) {
 	lock.lock();
 	try {
 		_g_list_set_next(list, llist);
@@ -1818,8 +1824,8 @@ public static final void g_list_set_next(long /*int*/ list, long /*int*/ llist) 
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _g_list_next(long /*int*/ list);
-public static final long /*int*/ g_list_next(long /*int*/ list) {
+public static final native long _g_list_next(long list);
+public static final long g_list_next(long list) {
 	lock.lock();
 	try {
 		return _g_list_next(list);
@@ -1831,8 +1837,8 @@ public static final long /*int*/ g_list_next(long /*int*/ list) {
  * @param list cast=(GList *)
  * @param n cast=(guint)
  */
-public static final native long /*int*/ _g_list_nth(long /*int*/ list, int n);
-public static final long /*int*/ g_list_nth(long /*int*/ list, int n) {
+public static final native long _g_list_nth(long list, int n);
+public static final long g_list_nth(long list, int n) {
 	lock.lock();
 	try {
 		return _g_list_nth(list, n);
@@ -1844,8 +1850,8 @@ public static final long /*int*/ g_list_nth(long /*int*/ list, int n) {
  * @param list cast=(GList *)
  * @param n cast=(guint)
  */
-public static final native long /*int*/ _g_list_nth_data(long /*int*/ list, int n);
-public static final long /*int*/ g_list_nth_data(long /*int*/ list, int n) {
+public static final native long _g_list_nth_data(long list, int n);
+public static final long g_list_nth_data(long list, int n) {
 	lock.lock();
 	try {
 		return _g_list_nth_data(list, n);
@@ -1857,8 +1863,8 @@ public static final long /*int*/ g_list_nth_data(long /*int*/ list, int n) {
  * @param list cast=(GList *)
  * @param data cast=(gpointer)
  */
-public static final native long /*int*/ _g_list_prepend(long /*int*/ list, long /*int*/ data);
-public static final long /*int*/ g_list_prepend(long /*int*/ list, long /*int*/ data) {
+public static final native long _g_list_prepend(long list, long data);
+public static final long g_list_prepend(long list, long data) {
 	lock.lock();
 	try {
 		return _g_list_prepend(list, data);
@@ -1870,8 +1876,8 @@ public static final long /*int*/ g_list_prepend(long /*int*/ list, long /*int*/ 
  * @param list cast=(GList *)
  * @param llist cast=(GList *)
  */
-public static final native void _g_list_set_previous(long /*int*/ list, long /*int*/ llist);
-public static final void g_list_set_previous(long /*int*/ list, long /*int*/ llist) {
+public static final native void _g_list_set_previous(long list, long llist);
+public static final void g_list_set_previous(long list, long llist) {
 	lock.lock();
 	try {
 		_g_list_set_previous(list, llist);
@@ -1879,8 +1885,8 @@ public static final void g_list_set_previous(long /*int*/ list, long /*int*/ lli
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _g_list_previous(long /*int*/ list);
-public static final long /*int*/ g_list_previous(long /*int*/ list) {
+public static final native long _g_list_previous(long list);
+public static final long g_list_previous(long list) {
 	lock.lock();
 	try {
 		return _g_list_previous(list);
@@ -1892,8 +1898,8 @@ public static final long /*int*/ g_list_previous(long /*int*/ list) {
  * @param list cast=(GList *)
  * @param link cast=(GList *)
  */
-public static final native long /*int*/ _g_list_remove_link(long /*int*/ list, long /*int*/ link);
-public static final long /*int*/ g_list_remove_link(long /*int*/ list, long /*int*/ link) {
+public static final native long _g_list_remove_link(long list, long link);
+public static final long g_list_remove_link(long list, long link) {
 	lock.lock();
 	try {
 		return _g_list_remove_link(list, link);
@@ -1907,8 +1913,8 @@ public static final long /*int*/ g_list_remove_link(long /*int*/ list, long /*in
  * @param message cast=(gchar *)
  * @param unused_data cast=(gpointer)
  */
-public static final native void _g_log_default_handler(long /*int*/ log_domain, int log_levels, long /*int*/ message, long /*int*/ unused_data);
-public static final void g_log_default_handler(long /*int*/ log_domain, int log_levels, long /*int*/ message, long /*int*/ unused_data) {
+public static final native void _g_log_default_handler(long log_domain, int log_levels, long message, long unused_data);
+public static final void g_log_default_handler(long log_domain, int log_levels, long message, long unused_data) {
 	lock.lock();
 	try {
 		_g_log_default_handler(log_domain, log_levels, message, unused_data);
@@ -1935,8 +1941,8 @@ public static final void g_log_remove_handler(byte[] log_domain, int handler_id)
  * @param log_func cast=(GLogFunc)
  * @param user_data cast=(gpointer)
  */
-public static final native int _g_log_set_handler(byte[] log_domain, int log_levels, long /*int*/ log_func, long /*int*/ user_data);
-public static final int g_log_set_handler(byte[] log_domain, int log_levels, long /*int*/ log_func, long /*int*/ user_data) {
+public static final native int _g_log_set_handler(byte[] log_domain, int log_levels, long log_func, long user_data);
+public static final int g_log_set_handler(byte[] log_domain, int log_levels, long log_func, long user_data) {
 	lock.lock();
 	try {
 		return _g_log_set_handler(log_domain, log_levels, log_func, user_data);
@@ -1945,8 +1951,8 @@ public static final int g_log_set_handler(byte[] log_domain, int log_levels, lon
 	}
 }
 /** @param size cast=(gulong) */
-public static final native long /*int*/ _g_malloc(long /*int*/ size);
-public static final long /*int*/ g_malloc(long /*int*/ size) {
+public static final native long _g_malloc(long size);
+public static final long g_malloc(long size) {
 	lock.lock();
 	try {
 		return _g_malloc(size);
@@ -1958,8 +1964,8 @@ public static final long /*int*/ g_malloc(long /*int*/ size) {
  * @param oclass cast=(GObjectClass *)
  * @param property_name cast=(const gchar *)
  */
-public static final native long /*int*/ _g_object_class_find_property(long /*int*/ oclass, byte[] property_name);
-public static final long /*int*/ g_object_class_find_property(long /*int*/ oclass, byte[] property_name) {
+public static final native long _g_object_class_find_property(long oclass, byte[] property_name);
+public static final long g_object_class_find_property(long oclass, byte[] property_name) {
 	lock.lock();
 	try {
 		return _g_object_class_find_property(oclass, property_name);
@@ -1972,8 +1978,8 @@ public static final long /*int*/ g_object_class_find_property(long /*int*/ oclas
  * @param first_property_name cast=(const gchar *),flags=no_out
  * @param terminator cast=(const gchar *),flags=sentinel
  */
-public static final native void _g_object_get(long /*int*/ object, byte[] first_property_name, int[] value, long /*int*/ terminator);
-public static final void g_object_get(long /*int*/ object, byte[] first_property_name, int[] value, long /*int*/ terminator) {
+public static final native void _g_object_get(long object, byte[] first_property_name, int[] value, long terminator);
+public static final void g_object_get(long object, byte[] first_property_name, int[] value, long terminator) {
 	lock.lock();
 	try {
 		_g_object_get(object, first_property_name, value, terminator);
@@ -1986,8 +1992,8 @@ public static final void g_object_get(long /*int*/ object, byte[] first_property
  * @param first_property_name cast=(const gchar *),flags=no_out
  * @param terminator cast=(const gchar *),flags=sentinel
  */
-public static final native void _g_object_get(long /*int*/ object, byte[] first_property_name, long[] value, long /*int*/ terminator);
-public static final void g_object_get(long /*int*/ object, byte[] first_property_name, long[] value, long /*int*/ terminator) {
+public static final native void _g_object_get(long object, byte[] first_property_name, long[] value, long terminator);
+public static final void g_object_get(long object, byte[] first_property_name, long[] value, long terminator) {
 	lock.lock();
 	try {
 		_g_object_get(object, first_property_name, value, terminator);
@@ -1999,8 +2005,8 @@ public static final void g_object_get(long /*int*/ object, byte[] first_property
  * @param object cast=(GObject *)
  * @param quark cast=(GQuark)
  */
-public static final native long /*int*/ _g_object_get_qdata(long /*int*/ object, int quark);
-public static final long /*int*/ g_object_get_qdata(long /*int*/ object, int quark) {
+public static final native long _g_object_get_qdata(long object, int quark);
+public static final long g_object_get_qdata(long object, int quark) {
 	lock.lock();
 	try {
 		return _g_object_get_qdata(object, quark);
@@ -2012,8 +2018,8 @@ public static final long /*int*/ g_object_get_qdata(long /*int*/ object, int qua
  * @param type cast=(GType)
  * @param first_property_name cast=(const gchar *)
  */
-public static final native long /*int*/ _g_object_new (long /*int*/ type, long /*int*/ first_property_name);
-public static final long /*int*/ g_object_new (long /*int*/ type, long /*int*/ first_property_name) {
+public static final native long _g_object_new (long type, long first_property_name);
+public static final long g_object_new (long type, long first_property_name) {
 	lock.lock();
 	try {
 		return _g_object_new(type, first_property_name);
@@ -2025,8 +2031,8 @@ public static final long /*int*/ g_object_new (long /*int*/ type, long /*int*/ f
  * @param object cast=(GObject *)
  * @param property_name cast=(const gchar *)
  */
-public static final native void _g_object_notify (long /*int*/ object, byte[] property_name);
-public static final void g_object_notify (long /*int*/ object, byte[] property_name) {
+public static final native void _g_object_notify (long object, byte[] property_name);
+public static final void g_object_notify (long object, byte[] property_name) {
 	lock.lock();
 	try {
 		_g_object_notify(object, property_name);
@@ -2035,8 +2041,8 @@ public static final void g_object_notify (long /*int*/ object, byte[] property_n
 	}
 }
 /** @param object cast=(gpointer) */
-public static final native long /*int*/ _g_object_ref(long /*int*/ object);
-public static final long /*int*/ g_object_ref(long /*int*/ object) {
+public static final native long _g_object_ref(long object);
+public static final long g_object_ref(long object) {
 	lock.lock();
 	try {
 		return _g_object_ref(object);
@@ -2049,8 +2055,8 @@ public static final long /*int*/ g_object_ref(long /*int*/ object) {
  * @param first_property_name cast=(const gchar *),flags=no_out
  * @param terminator cast=(const gchar *),flags=sentinel
  */
-public static final native void _g_object_set(long /*int*/ object, byte[] first_property_name, boolean data, long /*int*/ terminator);
-public static final void g_object_set(long /*int*/ object, byte[] first_property_name, boolean data, long /*int*/ terminator) {
+public static final native void _g_object_set(long object, byte[] first_property_name, boolean data, long terminator);
+public static final void g_object_set(long object, byte[] first_property_name, boolean data, long terminator) {
 	lock.lock();
 	try {
 		_g_object_set(object, first_property_name, data, terminator);
@@ -2063,8 +2069,8 @@ public static final void g_object_set(long /*int*/ object, byte[] first_property
  * @param first_property_name cast=(const gchar *),flags=no_out
  * @param terminator cast=(const gchar *),flags=sentinel
  */
-public static final native void _g_object_set(long /*int*/ object, byte[] first_property_name, byte[] data, long /*int*/ terminator);
-public static final void g_object_set(long /*int*/ object, byte[] first_property_name, byte[] data, long /*int*/ terminator) {
+public static final native void _g_object_set(long object, byte[] first_property_name, byte[] data, long terminator);
+public static final void g_object_set(long object, byte[] first_property_name, byte[] data, long terminator) {
 	lock.lock();
 	try {
 		_g_object_set(object, first_property_name, data, terminator);
@@ -2080,8 +2086,8 @@ public static final void g_object_set(long /*int*/ object, byte[] first_property
  * @param first_property_name cast=(const gchar *)
  * @param terminator cast=(const gchar *),flags=sentinel
  */
-public static final native void _g_object_set(long /*int*/ object, byte[] first_property_name, GdkRGBA data, long /*int*/ terminator);
-public static final void g_object_set(long /*int*/ object, byte[] first_property_name, GdkRGBA data, long /*int*/ terminator) {
+public static final native void _g_object_set(long object, byte[] first_property_name, GdkRGBA data, long terminator);
+public static final void g_object_set(long object, byte[] first_property_name, GdkRGBA data, long terminator) {
 	lock.lock();
 	try {
 		_g_object_set(object, first_property_name, data, terminator);
@@ -2095,8 +2101,8 @@ public static final void g_object_set(long /*int*/ object, byte[] first_property
  * @param first_property_name cast=(const gchar *),flags=no_out
  * @param terminator cast=(const gchar *),flags=sentinel
  */
-public static final native void _g_object_set(long /*int*/ object, byte[] first_property_name, int data, long /*int*/ terminator);
-public static final void g_object_set(long /*int*/ object, byte[] first_property_name, int data, long /*int*/ terminator) {
+public static final native void _g_object_set(long object, byte[] first_property_name, int data, long terminator);
+public static final void g_object_set(long object, byte[] first_property_name, int data, long terminator) {
 	lock.lock();
 	try {
 		_g_object_set(object, first_property_name, data, terminator);
@@ -2109,8 +2115,8 @@ public static final void g_object_set(long /*int*/ object, byte[] first_property
  * @param first_property_name cast=(const gchar *),flags=no_out
  * @param terminator cast=(const gchar *),flags=sentinel
  */
-public static final native void _g_object_set(long /*int*/ object, byte[] first_property_name, float data, long /*int*/ terminator);
-public static final void g_object_set(long /*int*/ object, byte[] first_property_name, float data, long /*int*/ terminator) {
+public static final native void _g_object_set(long object, byte[] first_property_name, float data, long terminator);
+public static final void g_object_set(long object, byte[] first_property_name, float data, long terminator) {
 	lock.lock();
 	try {
 		_g_object_set(object, first_property_name, data, terminator);
@@ -2123,8 +2129,8 @@ public static final void g_object_set(long /*int*/ object, byte[] first_property
  * @param first_property_name cast=(const gchar *),flags=no_out
  * @param terminator cast=(const gchar *),flags=sentinel
  */
-public static final native void _g_object_set(long /*int*/ object, byte[] first_property_name, long data, long /*int*/ terminator);
-public static final void g_object_set(long /*int*/ object, byte[] first_property_name, long data, long /*int*/ terminator) {
+public static final native void _g_object_set(long object, byte[] first_property_name, long data, long terminator);
+public static final void g_object_set(long object, byte[] first_property_name, long data, long terminator) {
 	lock.lock();
 	try {
 		_g_object_set(object, first_property_name, data, terminator);
@@ -2137,8 +2143,8 @@ public static final void g_object_set(long /*int*/ object, byte[] first_property
  * @param quark cast=(GQuark)
  * @param data cast=(gpointer)
  */
-public static final native void _g_object_set_qdata(long /*int*/ object, int quark, long /*int*/ data);
-public static final void g_object_set_qdata(long /*int*/ object, int quark, long /*int*/ data) {
+public static final native void _g_object_set_qdata(long object, int quark, long data);
+public static final void g_object_set_qdata(long object, int quark, long data) {
 	lock.lock();
 	try {
 		_g_object_set_qdata(object, quark, data);
@@ -2147,23 +2153,15 @@ public static final void g_object_set_qdata(long /*int*/ object, int quark, long
 	}
 }
 /** @param object cast=(gpointer) */
-public static final native void _g_object_unref(long /*int*/ object);
-public static final void g_object_unref(long /*int*/ object) {
-	lock.lock();
-	try {
-		_g_object_unref(object);
-	} finally {
-		lock.unlock();
-	}
-}
-
+// NOTE: Lock is not used, see Bug 546743 and Bug 547093
+public static final native void g_object_unref(long object);
 
 /**
  * @param data cast=(gconstpointer)
  * @param size cast=(gsize)
  */
-public static final native long /*int*/ _g_bytes_new (byte [] data, long /*int*/ size);
-public static final long /*int*/ g_bytes_new (byte [] data, long /*int*/ size) {
+public static final native long _g_bytes_new (byte [] data, long size);
+public static final long g_bytes_new (byte [] data, long size) {
 	lock.lock();
 	try {
 		return _g_bytes_new (data, size);
@@ -2175,8 +2173,8 @@ public static final long /*int*/ g_bytes_new (byte [] data, long /*int*/ size) {
 /**
  * @param gBytes cast=(GBytes *)
  */
-public static final native void _g_bytes_unref (long /*int*/ gBytes);
-public static final void g_bytes_unref (long /*int*/ gBytes) {
+public static final native void _g_bytes_unref (long gBytes);
+public static final void g_bytes_unref (long gBytes) {
 	lock.lock();
 	try {
 		_g_bytes_unref (gBytes);
@@ -2211,8 +2209,8 @@ public static final void g_set_prgname(byte[] prgname) {
  * @param proc cast=(GCallback)
  * @param data cast=(gpointer)
  */
-public static final native int _g_signal_connect(long /*int*/ instance, byte[] detailed_signal, long /*int*/ proc, long /*int*/ data);
-public static final int g_signal_connect(long /*int*/ instance, byte[] detailed_signal, long /*int*/ proc, long /*int*/ data) {
+public static final native int _g_signal_connect(long instance, byte[] detailed_signal, long proc, long data);
+public static final int g_signal_connect(long instance, byte[] detailed_signal, long proc, long data) {
 	lock.lock();
 	try {
 		return _g_signal_connect(instance, detailed_signal, proc, data);
@@ -2226,8 +2224,8 @@ public static final int g_signal_connect(long /*int*/ instance, byte[] detailed_
  * @param closure cast=(GClosure *)
  * @param after cast=(gboolean)
  */
-public static final native int _g_signal_connect_closure(long /*int*/ instance, byte[] detailed_signal, long /*int*/ closure, boolean after);
-public static final int g_signal_connect_closure(long /*int*/ instance, byte[] detailed_signal, long /*int*/ closure, boolean after) {
+public static final native int _g_signal_connect_closure(long instance, byte[] detailed_signal, long closure, boolean after);
+public static final int g_signal_connect_closure(long instance, byte[] detailed_signal, long closure, boolean after) {
 	lock.lock();
 	try {
 		return _g_signal_connect_closure(instance, detailed_signal, closure, after);
@@ -2242,8 +2240,8 @@ public static final int g_signal_connect_closure(long /*int*/ instance, byte[] d
  * @param closure cast=(GClosure *)
  * @param after cast=(gboolean)
  */
-public static final native int _g_signal_connect_closure_by_id(long /*int*/ instance, int signal_id, int detail, long /*int*/ closure, boolean after);
-public static final int g_signal_connect_closure_by_id(long /*int*/ instance, int signal_id, int detail, long /*int*/ closure, boolean after) {
+public static final native int _g_signal_connect_closure_by_id(long instance, int signal_id, int detail, long closure, boolean after);
+public static final int g_signal_connect_closure_by_id(long instance, int signal_id, int detail, long closure, boolean after) {
 	lock.lock();
 	try {
 		return _g_signal_connect_closure_by_id(instance, signal_id, detail, closure, after);
@@ -2255,8 +2253,8 @@ public static final int g_signal_connect_closure_by_id(long /*int*/ instance, in
  * @param instance cast=(gpointer)
  * @param detailed_signal cast=(const gchar *),flags=no_out
  */
-public static final native void _g_signal_emit_by_name(long /*int*/ instance, byte[] detailed_signal);
-public static final void g_signal_emit_by_name(long /*int*/ instance, byte[] detailed_signal) {
+public static final native void _g_signal_emit_by_name(long instance, byte[] detailed_signal);
+public static final void g_signal_emit_by_name(long instance, byte[] detailed_signal) {
 	lock.lock();
 	try {
 		_g_signal_emit_by_name(instance, detailed_signal);
@@ -2268,8 +2266,8 @@ public static final void g_signal_emit_by_name(long /*int*/ instance, byte[] det
  * @param instance cast=(gpointer)
  * @param detailed_signal cast=(const gchar *),flags=no_out
  */
-public static final native void _g_signal_emit_by_name(long /*int*/ instance, byte[] detailed_signal, long /*int*/ data);
-public static final void g_signal_emit_by_name(long /*int*/ instance, byte[] detailed_signal, long /*int*/ data) {
+public static final native void _g_signal_emit_by_name(long instance, byte[] detailed_signal, long data);
+public static final void g_signal_emit_by_name(long instance, byte[] detailed_signal, long data) {
 	lock.lock();
 	try {
 		_g_signal_emit_by_name(instance, detailed_signal, data);
@@ -2281,8 +2279,8 @@ public static final void g_signal_emit_by_name(long /*int*/ instance, byte[] det
  * @param instance cast=(gpointer)
  * @param detailed_signal cast=(const gchar *),flags=no_out
  */
-public static final native void _g_signal_emit_by_name(long /*int*/ instance, byte[] detailed_signal, GdkRectangle data);
-public static final void g_signal_emit_by_name(long /*int*/ instance, byte[] detailed_signal, GdkRectangle data) {
+public static final native void _g_signal_emit_by_name(long instance, byte[] detailed_signal, GdkRectangle data);
+public static final void g_signal_emit_by_name(long instance, byte[] detailed_signal, GdkRectangle data) {
 	lock.lock();
 	try {
 		_g_signal_emit_by_name(instance, detailed_signal, data);
@@ -2294,8 +2292,8 @@ public static final void g_signal_emit_by_name(long /*int*/ instance, byte[] det
  * @param instance cast=(gpointer)
  * @param detailed_signal cast=(const gchar *),flags=no_out
  */
-public static final native void _g_signal_emit_by_name(long /*int*/ instance, byte[] detailed_signal, long /*int*/ data1, long /*int*/ data2);
-public static final void g_signal_emit_by_name(long /*int*/ instance, byte[] detailed_signal, long /*int*/ data1, long /*int*/ data2) {
+public static final native void _g_signal_emit_by_name(long instance, byte[] detailed_signal, long data1, long data2);
+public static final void g_signal_emit_by_name(long instance, byte[] detailed_signal, long data1, long data2) {
 	lock.lock();
 	try {
 		_g_signal_emit_by_name(instance, detailed_signal, data1, data2);
@@ -2307,8 +2305,8 @@ public static final void g_signal_emit_by_name(long /*int*/ instance, byte[] det
  * @param instance cast=(gpointer)
  * @param detailed_signal cast=(const gchar *),flags=no_out
  */
-public static final native void _g_signal_emit_by_name(long /*int*/ instance, byte[] detailed_signal, byte [] data);
-public static final void g_signal_emit_by_name(long /*int*/ instance, byte[] detailed_signal, byte [] data) {
+public static final native void _g_signal_emit_by_name(long instance, byte[] detailed_signal, byte [] data);
+public static final void g_signal_emit_by_name(long instance, byte[] detailed_signal, byte [] data) {
 	lock.lock();
 	try {
 		_g_signal_emit_by_name(instance, detailed_signal, data);
@@ -2320,8 +2318,8 @@ public static final void g_signal_emit_by_name(long /*int*/ instance, byte[] det
  * @param instance cast=(gpointer)
  * @param handler_id cast=(gulong)
  */
-public static final native void _g_signal_handler_disconnect(long /*int*/ instance, int handler_id);
-public static final void g_signal_handler_disconnect(long /*int*/ instance, int handler_id) {
+public static final native void _g_signal_handler_disconnect(long instance, int handler_id);
+public static final void g_signal_handler_disconnect(long instance, int handler_id) {
 	lock.lock();
 	try {
 		_g_signal_handler_disconnect(instance, handler_id);
@@ -2336,8 +2334,8 @@ public static final void g_signal_handler_disconnect(long /*int*/ instance, int 
  * @param func cast=(gpointer)
  * @param data cast=(gpointer)
  */
-public static final native int _g_signal_handler_find(long /*int*/ instance, int mask, int signal_id, int detail, long /*int*/ closure, long /*int*/ func, long /*int*/ data);
-public static final int g_signal_handler_find(long /*int*/ instance, int mask, int signal_id, int detail, long /*int*/ closure, long /*int*/ func, long /*int*/ data) {
+public static final native int _g_signal_handler_find(long instance, int mask, int signal_id, int detail, long closure, long func, long data);
+public static final int g_signal_handler_find(long instance, int mask, int signal_id, int detail, long closure, long func, long data) {
 	lock.lock();
 	try {
 		return _g_signal_handler_find(instance, mask, signal_id, detail, closure, func, data);
@@ -2354,8 +2352,8 @@ public static final int g_signal_handler_find(long /*int*/ instance, int mask, i
  * @param func cast=(gpointer)
  * @param data cast=(gpointer)
  */
-public static final native int _g_signal_handlers_block_matched(long /*int*/ instance, int mask, int signal_id, int detail, long /*int*/ closure, long /*int*/ func, long /*int*/ data);
-public static final int g_signal_handlers_block_matched(long /*int*/ instance, int mask, int signal_id, int detail, long /*int*/ closure, long /*int*/ func, long /*int*/ data) {
+public static final native int _g_signal_handlers_block_matched(long instance, int mask, int signal_id, int detail, long closure, long func, long data);
+public static final int g_signal_handlers_block_matched(long instance, int mask, int signal_id, int detail, long closure, long func, long data) {
 	lock.lock();
 	try {
 		return _g_signal_handlers_block_matched(instance, mask, signal_id, detail, closure, func, data);
@@ -2372,8 +2370,8 @@ public static final int g_signal_handlers_block_matched(long /*int*/ instance, i
  * @param func cast=(gpointer)
  * @param data cast=(gpointer)
  */
-public static final native int _g_signal_handlers_unblock_matched(long /*int*/ instance, int mask, int signal_id, int detail, long /*int*/ closure, long /*int*/ func, long /*int*/ data);
-public static final int g_signal_handlers_unblock_matched(long /*int*/ instance, int mask, int signal_id, int detail, long /*int*/ closure, long /*int*/ func, long /*int*/ data) {
+public static final native int _g_signal_handlers_unblock_matched(long instance, int mask, int signal_id, int detail, long closure, long func, long data);
+public static final int g_signal_handlers_unblock_matched(long instance, int mask, int signal_id, int detail, long closure, long func, long data) {
 	lock.lock();
 	try {
 		return _g_signal_handlers_unblock_matched(instance, mask, signal_id, detail, closure, func, data);
@@ -2382,8 +2380,8 @@ public static final int g_signal_handlers_unblock_matched(long /*int*/ instance,
 	}
 }
 /** @param name cast=(const gchar *),flags=no_out */
-public static final native int _g_signal_lookup (byte[] name, long /*int*/ itype);
-public static final int g_signal_lookup (byte[] name, long /*int*/ itype) {
+public static final native int _g_signal_lookup (byte[] name, long itype);
+public static final int g_signal_lookup (byte[] name, long itype) {
 	lock.lock();
 	try {
 		return _g_signal_lookup(name, itype);
@@ -2395,8 +2393,8 @@ public static final int g_signal_lookup (byte[] name, long /*int*/ itype) {
  * @param instance cast=(gpointer)
  * @param detailed_signal cast=(const gchar *),flags=no_out
  */
-public static final native void _g_signal_stop_emission_by_name(long /*int*/ instance, byte[] detailed_signal);
-public static final void g_signal_stop_emission_by_name(long /*int*/ instance, byte[] detailed_signal) {
+public static final native void _g_signal_stop_emission_by_name(long instance, byte[] detailed_signal);
+public static final void g_signal_stop_emission_by_name(long instance, byte[] detailed_signal) {
 	lock.lock();
 	try {
 		_g_signal_stop_emission_by_name(instance, detailed_signal);
@@ -2405,8 +2403,8 @@ public static final void g_signal_stop_emission_by_name(long /*int*/ instance, b
 	}
 }
 /** @param tag cast=(guint) */
-public static final native boolean /*long*/ _g_source_remove (long /*int*/ tag);
-public static final boolean /*long*/ g_source_remove (long /*int*/ tag) {
+public static final native boolean /*long*/ _g_source_remove (long tag);
+public static final boolean /*long*/ g_source_remove (long tag) {
 	lock.lock();
 	try {
 		return _g_source_remove(tag);
@@ -2418,8 +2416,8 @@ public static final boolean /*long*/ g_source_remove (long /*int*/ tag) {
  * @param list cast=(GSList *)
  * @param data cast=(gpointer)
  */
-public static final native long /*int*/ _g_slist_append(long /*int*/ list, long /*int*/ data);
-public static final long /*int*/ g_slist_append(long /*int*/ list, long /*int*/ data) {
+public static final native long _g_slist_append(long list, long data);
+public static final long g_slist_append(long list, long data) {
 	lock.lock();
 	try {
 		return _g_slist_append(list, data);
@@ -2428,8 +2426,8 @@ public static final long /*int*/ g_slist_append(long /*int*/ list, long /*int*/ 
 	}
 }
 /** @param list cast=(GSList *) */
-public static final native long /*int*/ _g_slist_data (long /*int*/ list);
-public static final long /*int*/ g_slist_data (long /*int*/ list) {
+public static final native long _g_slist_data (long list);
+public static final long g_slist_data (long list) {
 	lock.lock();
 	try {
 		return _g_slist_data(list);
@@ -2438,8 +2436,8 @@ public static final long /*int*/ g_slist_data (long /*int*/ list) {
 	}
 }
 /** @param list cast=(GSList *) */
-public static final native void _g_slist_free (long /*int*/ list);
-public static final void g_slist_free (long /*int*/ list) {
+public static final native void _g_slist_free (long list);
+public static final void g_slist_free (long list) {
 	lock.lock();
 	try {
 		_g_slist_free(list);
@@ -2448,8 +2446,8 @@ public static final void g_slist_free (long /*int*/ list) {
 	}
 }
 /** @param list cast=(GSList *) */
-public static final native long /*int*/ _g_slist_next (long /*int*/ list);
-public static final long /*int*/ g_slist_next (long /*int*/ list) {
+public static final native long _g_slist_next (long list);
+public static final long g_slist_next (long list) {
 	lock.lock();
 	try {
 		return _g_slist_next(list);
@@ -2458,8 +2456,8 @@ public static final long /*int*/ g_slist_next (long /*int*/ list) {
 	}
 }
 /** @param list cast=(GSList *) */
-public static final native int _g_slist_length (long /*int*/ list);
-public static final int g_slist_length (long /*int*/ list) {
+public static final native int _g_slist_length (long list);
+public static final int g_slist_length (long list) {
 	lock.lock();
 	try {
 		return _g_slist_length(list);
@@ -2468,8 +2466,8 @@ public static final int g_slist_length (long /*int*/ list) {
 	}
 }
 /** @param string_array cast=(gchar **) */
-public static final native void _g_strfreev(long /*int*/ string_array);
-public static final void g_strfreev(long /*int*/ string_array) {
+public static final native void _g_strfreev(long string_array);
+public static final void g_strfreev(long string_array) {
 	lock.lock();
 	try {
 		_g_strfreev(string_array);
@@ -2481,8 +2479,8 @@ public static final void g_strfreev(long /*int*/ string_array) {
  * @method flags=getter
  * @param string cast=(GString *)
  */
-public static final native int _GString_len(long /*int*/ string);
-public static final int GString_len(long /*int*/ string) {
+public static final native int _GString_len(long string);
+public static final int GString_len(long string) {
 	lock.lock();
 	try {
 		return _GString_len(string);
@@ -2494,8 +2492,8 @@ public static final int GString_len(long /*int*/ string) {
  * @method flags=getter
  * @param string cast=(GString *)
  */
-public static final native long /*int*/ _GString_str(long /*int*/ string);
-public static final long /*int*/ GString_str(long /*int*/ string) {
+public static final native long _GString_str(long string);
+public static final long GString_str(long string) {
 	lock.lock();
 	try {
 		return _GString_str(string);
@@ -2507,9 +2505,9 @@ public static final long /*int*/ GString_str(long /*int*/ string) {
 /**
  * @param init cast=(const gchar *)
  */
-public static final native long /*int*/ _g_string_new_len(long /*int*/ init, long /*int*/ gssize);
+public static final native long _g_string_new_len(long init, long gssize);
 /** 				   GString * g_string_new_len (const gchar *init, gssize len); */
-public static final long /*int*/ g_string_new_len(long /*int*/ init, long /*int*/ gssize) {
+public static final long g_string_new_len(long init, long gssize) {
 	lock.lock();
 	try {
 		return _g_string_new_len(init, gssize);
@@ -2521,9 +2519,9 @@ public static final long /*int*/ g_string_new_len(long /*int*/ init, long /*int*
 /**
  * @param GString cast=(GString *)
  */
-public static final native long /*int*/ _g_string_free(long /*int*/ GString, int gboolen_free_segment);
+public static final native long _g_string_free(long GString, int gboolen_free_segment);
 /** 					 gchar * g_string_free (GString *string, gboolean free_segment);*/
-public static final long /*int*/ g_string_free(long /*int*/ GString, int gboolen_free_segment) {
+public static final long g_string_free(long GString, int gboolen_free_segment) {
 	lock.lock();
 	try {
 		return _g_string_free(GString, gboolen_free_segment);
@@ -2536,8 +2534,8 @@ public static final long /*int*/ g_string_free(long /*int*/ GString, int gboolen
  * @param str cast=(const gchar *)
  * @param endptr cast=(gchar **)
  */
-public static final native double _g_strtod(long /*int*/ str, long /*int*/[] endptr);
-public static final double g_strtod(long /*int*/ str, long /*int*/[] endptr) {
+public static final native double _g_strtod(long str, long [] endptr);
+public static final double g_strtod(long str, long [] endptr) {
 	lock.lock();
 	try {
 		return _g_strtod(str, endptr);
@@ -2546,14 +2544,14 @@ public static final double g_strtod(long /*int*/ str, long /*int*/[] endptr) {
 	}
 }
 /** @param str cast=(char *) */
-public static final native long /*int*/ g_strdup (long /*int*/ str);
+public static final native long g_strdup (long str);
 /**
  * @param instance_type cast=(GType)
  * @param interface_type cast=(GType)
  * @param info cast=(const GInterfaceInfo *)
  */
-public static final native void _g_type_add_interface_static (long /*int*/ instance_type, long /*int*/ interface_type, long /*int*/ info);
-public static final void g_type_add_interface_static (long /*int*/ instance_type, long /*int*/ interface_type, long /*int*/ info) {
+public static final native void _g_type_add_interface_static (long instance_type, long interface_type, long info);
+public static final void g_type_add_interface_static (long instance_type, long interface_type, long info) {
 	lock.lock();
 	try {
 		_g_type_add_interface_static(instance_type, interface_type, info);
@@ -2562,8 +2560,8 @@ public static final void g_type_add_interface_static (long /*int*/ instance_type
 	}
 }
 /** @param g_class cast=(GType) */
-public static final native long /*int*/ _g_type_class_peek (long /*int*/ g_class);
-public static final long /*int*/ g_type_class_peek (long /*int*/ g_class) {
+public static final native long _g_type_class_peek (long g_class);
+public static final long g_type_class_peek (long g_class) {
 	lock.lock();
 	try {
 		return _g_type_class_peek(g_class);
@@ -2572,8 +2570,8 @@ public static final long /*int*/ g_type_class_peek (long /*int*/ g_class) {
 	}
 }
 /** @param g_class cast=(gpointer) */
-public static final native long /*int*/ _g_type_class_peek_parent (long /*int*/ g_class);
-public static final long /*int*/ g_type_class_peek_parent (long /*int*/ g_class) {
+public static final native long _g_type_class_peek_parent (long g_class);
+public static final long g_type_class_peek_parent (long g_class) {
 	lock.lock();
 	try {
 		return _g_type_class_peek_parent(g_class);
@@ -2582,8 +2580,8 @@ public static final long /*int*/ g_type_class_peek_parent (long /*int*/ g_class)
 	}
 }
 /** @param g_class cast=(GType) */
-public static final native long /*int*/ _g_type_class_ref (long /*int*/ g_class);
-public static final long /*int*/ g_type_class_ref (long /*int*/ g_class) {
+public static final native long _g_type_class_ref (long g_class);
+public static final long g_type_class_ref (long g_class) {
 	lock.lock();
 	try {
 		return _g_type_class_ref(g_class);
@@ -2592,8 +2590,8 @@ public static final long /*int*/ g_type_class_ref (long /*int*/ g_class) {
 	}
 }
 /** @param g_class cast=(gpointer) */
-public static final native void _g_type_class_unref (long /*int*/ g_class);
-public static final void g_type_class_unref (long /*int*/ g_class) {
+public static final native void _g_type_class_unref (long g_class);
+public static final void g_type_class_unref (long g_class) {
 	lock.lock();
 	try {
 		_g_type_class_unref(g_class);
@@ -2602,8 +2600,8 @@ public static final void g_type_class_unref (long /*int*/ g_class) {
 	}
 }
 /** @param iface cast=(gpointer) */
-public static final native long /*int*/ _g_type_interface_peek_parent (long /*int*/ iface);
-public static final long /*int*/ g_type_interface_peek_parent (long /*int*/ iface) {
+public static final native long _g_type_interface_peek_parent (long iface);
+public static final long g_type_interface_peek_parent (long iface) {
 	lock.lock();
 	try {
 		return _g_type_interface_peek_parent(iface);
@@ -2615,8 +2613,8 @@ public static final long /*int*/ g_type_interface_peek_parent (long /*int*/ ifac
  * @param type cast=(GType)
  * @param is_a_type cast=(GType)
  */
-public static final native boolean _g_type_is_a (long /*int*/ type, long /*int*/ is_a_type);
-public static final boolean g_type_is_a (long /*int*/ type, long /*int*/ is_a_type) {
+public static final native boolean _g_type_is_a (long type, long is_a_type);
+public static final boolean g_type_is_a (long type, long is_a_type) {
 	lock.lock();
 	try {
 		return _g_type_is_a(type, is_a_type);
@@ -2625,8 +2623,8 @@ public static final boolean g_type_is_a (long /*int*/ type, long /*int*/ is_a_ty
 	}
 }
 /** @param type cast=(GType) */
-public static final native long /*int*/ _g_type_parent (long /*int*/ type);
-public static final long /*int*/ g_type_parent (long /*int*/ type) {
+public static final native long _g_type_parent (long type);
+public static final long g_type_parent (long type) {
 	lock.lock();
 	try {
 		return _g_type_parent(type);
@@ -2638,8 +2636,8 @@ public static final long /*int*/ g_type_parent (long /*int*/ type) {
  * @param type cast=(GType)
  * @param query cast=(GTypeQuery *)
  */
-public static final native void _g_type_query (long /*int*/ type, long /*int*/ query);
-public static final void g_type_query (long /*int*/ type, long /*int*/ query) {
+public static final native void _g_type_query (long type, long query);
+public static final void g_type_query (long type, long query) {
 	lock.lock();
 	try {
 		_g_type_query(type, query);
@@ -2653,8 +2651,8 @@ public static final void g_type_query (long /*int*/ type, long /*int*/ query) {
  * @param info cast=(const GTypeInfo *)
  * @param flags cast=(GTypeFlags)
  */
-public static final native long /*int*/ _g_type_register_static (long /*int*/ parent_type, byte[] type_name, long /*int*/ info, int flags);
-public static final long /*int*/ g_type_register_static (long /*int*/ parent_type, byte[] type_name, long /*int*/ info, int flags) {
+public static final native long _g_type_register_static (long parent_type, byte[] type_name, long info, int flags);
+public static final long g_type_register_static (long parent_type, byte[] type_name, long info, int flags) {
 	lock.lock();
 	try {
 		return _g_type_register_static(parent_type, type_name, info, flags);
@@ -2669,21 +2667,14 @@ public static final long /*int*/ g_type_register_static (long /*int*/ parent_typ
  * @param items_written cast=(glong *),flags=critical
  * @param error cast=(GError **),flags=critical
  */
-public static final native long /*int*/ _g_utf16_to_utf8(char[] str, long /*int*/ len, long /*int*/[] items_read, long /*int*/[] items_written, long /*int*/[] error);
-public static final long /*int*/ g_utf16_to_utf8(char[] str, long /*int*/ len, long /*int*/[] items_read, long /*int*/[] items_written, long /*int*/[] error) {
-	lock.lock();
-	try {
-		return _g_utf16_to_utf8(str, len, items_read, items_written, error);
-	} finally {
-		lock.unlock();
-	}
-}
+// NOTE: Lock is not used, see Bug 546743 and Bug 547093
+public static final native long g_utf16_to_utf8(char[] str, long len, long [] items_read, long [] items_written, long [] error);
 /**
  * @param str cast=(const gchar *)
  * @param pos cast=(const gchar *)
  */
-public static final native long /*int*/ _g_utf8_pointer_to_offset(long /*int*/ str, long /*int*/ pos);
-public static final long /*int*/ g_utf8_pointer_to_offset(long /*int*/ str, long /*int*/ pos) {
+public static final native long _g_utf8_pointer_to_offset(long str, long pos);
+public static final long g_utf8_pointer_to_offset(long str, long pos) {
 	lock.lock();
 	try {
 		return _g_utf8_pointer_to_offset(str, pos);
@@ -2692,8 +2683,8 @@ public static final long /*int*/ g_utf8_pointer_to_offset(long /*int*/ str, long
 	}
 }
 /** @param str cast=(const gchar *) */
-public static final native long /*int*/ _g_utf8_strlen(long /*int*/ str, long /*int*/ max);
-public static final long /*int*/ g_utf8_strlen(long /*int*/ str, long /*int*/ max) {
+public static final native long _g_utf8_strlen(long str, long max);
+public static final long g_utf8_strlen(long str, long max) {
 	lock.lock();
 	try {
 		return _g_utf8_strlen(str, max);
@@ -2708,8 +2699,8 @@ public static final long /*int*/ g_utf8_strlen(long /*int*/ str, long /*int*/ ma
  * @param items_written cast=(glong *),flags=critical
  * @param error cast=(GError **),flags=critical
  */
-public static final native long /*int*/ _g_utf8_to_utf16(byte[] str, long /*int*/ len, long /*int*/[] items_read, long /*int*/[] items_written, long /*int*/[] error);
-public static final long /*int*/ g_utf8_to_utf16(byte[] str, long /*int*/ len, long /*int*/[] items_read, long /*int*/[] items_written, long /*int*/[] error) {
+public static final native long _g_utf8_to_utf16(byte[] str, long len, long [] items_read, long [] items_written, long [] error);
+public static final long g_utf8_to_utf16(byte[] str, long len, long [] items_read, long [] items_written, long [] error) {
 	lock.lock();
 	try {
 		return _g_utf8_to_utf16(str, len, items_read, items_written, error);
@@ -2724,8 +2715,8 @@ public static final long /*int*/ g_utf8_to_utf16(byte[] str, long /*int*/ len, l
  * @param items_written cast=(glong *),flags=critical
  * @param error cast=(GError **),flags=critical
  */
-public static final native long /*int*/ _g_utf8_to_utf16(long /*int*/ str, long /*int*/ len, long /*int*/[] items_read, long /*int*/[] items_written, long /*int*/[] error);
-public static final long /*int*/ g_utf8_to_utf16(long /*int*/ str, long /*int*/ len, long /*int*/[] items_read, long /*int*/[] items_written, long /*int*/[] error) {
+public static final native long _g_utf8_to_utf16(long str, long len, long [] items_read, long [] items_written, long [] error);
+public static final long g_utf8_to_utf16(long str, long len, long [] items_read, long [] items_written, long [] error) {
 	lock.lock();
 	try {
 		return _g_utf8_to_utf16(str, len, items_read, items_written, error);
@@ -2737,28 +2728,28 @@ public static final long /*int*/ g_utf8_to_utf16(long /*int*/ str, long /*int*/ 
  * @param value cast=(GValue *)
  * @param type cast=(GType)
  */
-public static final native long /*int*/ g_value_init (long /*int*/ value, long /*int*/ type);
+public static final native long g_value_init (long value, long type);
 /** @param value cast=(GValue *) */
-public static final native int g_value_get_int (long /*int*/ value);
+public static final native int g_value_get_int (long value);
 /** @param value cast=(GValue *) */
-public static final native void g_value_set_int (long /*int*/ value, int v);
+public static final native void g_value_set_int (long value, int v);
 /** @param value cast=(GValue *) */
-public static final native double g_value_get_double (long /*int*/ value);
+public static final native double g_value_get_double (long value);
 /** @param value cast=(GValue *) */
-public static final native void g_value_set_double (long /*int*/ value, double v);
+public static final native void g_value_set_double (long value, double v);
 /** @param value cast=(GValue *) */
-public static final native float g_value_get_float (long /*int*/ value);
+public static final native float g_value_get_float (long value);
 /** @param value cast=(GValue *) */
-public static final native void g_value_set_float (long /*int*/ value, float v);
+public static final native void g_value_set_float (long value, float v);
 /** @param value cast=(GValue *) */
-public static final native long g_value_get_int64 (long /*int*/ value);
+public static final native long g_value_get_int64 (long value);
 /** @param value cast=(GValue *) */
-public static final native void g_value_set_int64 (long /*int*/ value, long v);
+public static final native void g_value_set_int64 (long value, long v);
 /** @param value cast=(GValue *) */
-public static final native void g_value_unset (long /*int*/ value);
+public static final native void g_value_unset (long value);
 /** @param value cast=(const GValue *) */
-public static final native long /*int*/ _g_value_peek_pointer (long /*int*/ value);
-public static final  long /*int*/ g_value_peek_pointer (long /*int*/ value) {
+public static final native long _g_value_peek_pointer (long value);
+public static final  long g_value_peek_pointer (long value) {
 	lock.lock();
 	try {
 		return _g_value_peek_pointer(value);
@@ -2766,7 +2757,18 @@ public static final  long /*int*/ g_value_peek_pointer (long /*int*/ value) {
 		lock.unlock();
 	}
 }
-
+/**
+ * @param variable cast=(const gchar *),flags=no_out
+ */
+public static final native void _g_unsetenv(byte [] variable);
+public static final void g_unsetenv(byte [] variable) {
+	lock.lock();
+	try {
+		_g_unsetenv(variable);
+	} finally {
+		lock.unlock();
+	}
+}
 /** @method flags=const */
 public static final native int _glib_major_version();
 public static final int glib_major_version() {
@@ -2803,8 +2805,8 @@ public static final int glib_micro_version() {
  * @param function cast=(GSourceFunc)
  * @param data cast=(gpointer)
  */
-public static final native int _g_timeout_add(int interval, long /*int*/ function, long /*int*/ data);
-public static final int g_timeout_add(int interval, long /*int*/ function, long /*int*/ data) {
+public static final native int _g_timeout_add(int interval, long function, long data);
+public static final int g_timeout_add(int interval, long function, long data) {
 	lock.lock();
 	try {
 		return _g_timeout_add(interval, function, data);
@@ -2814,8 +2816,8 @@ public static final int g_timeout_add(int interval, long /*int*/ function, long 
 }
 
 /** @method flags=dynamic */
-public static final native boolean _FcConfigAppFontAddFile(long /*int*/ config, byte[] file);
-public static final boolean FcConfigAppFontAddFile(long /*int*/ config, byte[] file) {
+public static final native boolean _FcConfigAppFontAddFile(long config, byte[] file);
+public static final boolean FcConfigAppFontAddFile(long config, byte[] file) {
 	lock.lock();
 	try {
 		return _FcConfigAppFontAddFile(config, file);
@@ -2843,176 +2845,170 @@ public static final int getpid() {
  * @param src cast=(const void *),flags=no_out
  * @param size cast=(size_t)
  */
-public static final native void memmove(long /*int*/ dest, GInterfaceInfo src, int size);
+public static final native void memmove(long dest, GInterfaceInfo src, int size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *),flags=no_out
  */
-public static final native void memmove(long /*int*/ dest, GObjectClass src);
+public static final native void memmove(long dest, GObjectClass src);
 /**
  * @param dest cast=(void *)
  * @param src cast=(const void *),flags=no_out
  * @param size cast=(size_t)
  */
-public static final native void memmove(long /*int*/ dest, GTypeInfo src, int size);
+public static final native void memmove(long dest, GTypeInfo src, int size);
 /**
  * @param dest cast=(void *)
  * @param src cast=(const void *),flags=no_out
  * @param size cast=(size_t)
  */
-public static final native void memmove(long /*int*/ dest, GtkTargetEntry src, long /*int*/ size);
+public static final native void memmove(long dest, GtkTargetEntry src, long size);
 /**
  * @param dest cast=(void *)
  * @param src cast=(const void *),flags=no_out
  * @param size cast=(size_t)
  */
-public static final native void memmove(long /*int*/ dest, GdkRGBA src, long /*int*/ size);
+public static final native void memmove(long dest, GdkRGBA src, long size);
 /**
  * @param dest cast=(void *)
  * @param src cast=(const void *),flags=no_out
  * @param size cast=(size_t)
  */
-public static final native void memmove(long /*int*/ dest, GdkEventButton src, long /*int*/ size);
+public static final native void memmove(long dest, GdkEventButton src, long size);
 /**
  * @param dest cast=(void *)
  * @param src cast=(const void *),flags=no_out
  * @param size cast=(size_t)
  */
-public static final native void memmove(long /*int*/ dest, GdkEventKey src, long /*int*/ size);
+public static final native void memmove(long dest, GdkEventKey src, long size);
 /** @param src flags=no_out */
-public static final native void memmove(long /*int*/ dest, GtkWidgetClass src);
+public static final native void memmove(long dest, GtkWidgetClass src);
 /**
  * @param dest cast=(void *)
  * @param src cast=(const void *),flags=no_out
  * @param size cast=(size_t)
  */
-public static final native void memmove(long /*int*/ dest, PangoAttribute src, long /*int*/ size);
+public static final native void memmove(long dest, PangoAttribute src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  */
-public static final native void memmove(GObjectClass  dest, long /*int*/ src);
+public static final native void memmove(GObjectClass  dest, long src);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(GTypeQuery dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(GTypeQuery dest, long src, long size);
 /** @param dest flags=no_in */
-public static final native void memmove(GtkWidgetClass dest, long /*int*/ src);
+public static final native void memmove(GtkWidgetClass dest, long src);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(GtkBorder dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(GtkBorder dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(GdkKeymapKey dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(GdkKeymapKey dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(GdkRGBA dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(GdkRGBA dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(GdkEventButton dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(GdkEventButton dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(GdkEventCrossing dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(GdkEventCrossing dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(GdkEventExpose dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(GdkEventFocus dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(GdkEventFocus dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(GdkEventKey dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(GdkEventKey dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(GdkEventMotion dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(GdkEventMotion dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(GdkEventWindowState dest, long src, long size);
+public static final native void memmove(long dest, GtkCellRendererClass src);
+public static final native void memmove(GtkCellRendererClass dest, long src);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(GdkEventWindowState dest, long /*int*/ src, long /*int*/ size);
-public static final native void memmove(long /*int*/ dest, GtkCellRendererClass src);
-public static final native void memmove(GtkCellRendererClass dest, long /*int*/ src);
+public static final native void memmove(GdkRectangle dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(GdkRectangle dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(PangoAttribute dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(PangoAttribute dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(PangoAttrColor dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(PangoAttrColor dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(PangoAttrInt dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(PangoAttrInt dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(PangoItem dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(PangoItem dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(PangoLayoutLine dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(PangoLayoutLine dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(PangoLayoutRun dest, long src, long size);
 /**
  * @param dest cast=(void *),flags=no_in
  * @param src cast=(const void *)
  * @param size cast=(size_t)
  */
-public static final native void memmove(PangoLayoutRun dest, long /*int*/ src, long /*int*/ size);
-/**
- * @param dest cast=(void *),flags=no_in
- * @param src cast=(const void *)
- * @param size cast=(size_t)
- */
-public static final native void memmove(PangoLogAttr dest, long /*int*/ src, long /*int*/ size);
+public static final native void memmove(PangoLogAttr dest, long src, long size);
 /** @param attribute cast=(const PangoAttribute *) */
-public static final native long /*int*/ _pango_attribute_copy (long /*int*/ attribute);
-public static final long /*int*/ pango_attribute_copy (long /*int*/ attribute) {
+public static final native long _pango_attribute_copy (long attribute);
+public static final long pango_attribute_copy (long attribute) {
 	lock.lock();
 	try {
 		return _pango_attribute_copy(attribute);
@@ -3020,8 +3016,8 @@ public static final long /*int*/ pango_attribute_copy (long /*int*/ attribute) {
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _pango_attr_background_new (short red, short green, short blue);
-public static final long /*int*/ pango_attr_background_new (short red, short green, short blue) {
+public static final native long _pango_attr_background_new (short red, short green, short blue);
+public static final long pango_attr_background_new (short red, short green, short blue) {
 	lock.lock();
 	try {
 		return _pango_attr_background_new(red, green, blue);
@@ -3030,8 +3026,8 @@ public static final long /*int*/ pango_attr_background_new (short red, short gre
 	}
 }
 /** @param desc cast=(const PangoFontDescription *) */
-public static final native long /*int*/ _pango_attr_font_desc_new(long /*int*/ desc);
-public static final long /*int*/ pango_attr_font_desc_new(long /*int*/ desc) {
+public static final native long _pango_attr_font_desc_new(long desc);
+public static final long pango_attr_font_desc_new(long desc) {
 	lock.lock();
 	try {
 		return _pango_attr_font_desc_new(desc);
@@ -3039,8 +3035,8 @@ public static final long /*int*/ pango_attr_font_desc_new(long /*int*/ desc) {
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _pango_attr_foreground_new (short red, short green, short blue);
-public static final long /*int*/ pango_attr_foreground_new (short red, short green, short blue) {
+public static final native long _pango_attr_foreground_new (short red, short green, short blue);
+public static final long pango_attr_foreground_new (short red, short green, short blue) {
 	lock.lock();
 	try {
 		return _pango_attr_foreground_new(red, green, blue);
@@ -3048,8 +3044,8 @@ public static final long /*int*/ pango_attr_foreground_new (short red, short gre
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _pango_attr_rise_new(int rise);
-public static final long /*int*/ pango_attr_rise_new(int rise) {
+public static final native long _pango_attr_rise_new(int rise);
+public static final long pango_attr_rise_new(int rise) {
 	lock.lock();
 	try {
 		return _pango_attr_rise_new(rise);
@@ -3061,8 +3057,8 @@ public static final long /*int*/ pango_attr_rise_new(int rise) {
  * @param ink_rect flags=no_out
  * @param logical_rect flags=no_out
  */
-public static final native long /*int*/ _pango_attr_shape_new(PangoRectangle ink_rect, PangoRectangle logical_rect);
-public static final long /*int*/ pango_attr_shape_new(PangoRectangle ink_rect, PangoRectangle logical_rect) {
+public static final native long _pango_attr_shape_new(PangoRectangle ink_rect, PangoRectangle logical_rect);
+public static final long pango_attr_shape_new(PangoRectangle ink_rect, PangoRectangle logical_rect) {
 	lock.lock();
 	try {
 		return _pango_attr_shape_new(ink_rect, logical_rect);
@@ -3074,8 +3070,8 @@ public static final long /*int*/ pango_attr_shape_new(PangoRectangle ink_rect, P
  * @param list cast=(PangoAttrList *)
  * @param attr cast=(PangoAttribute *)
  */
-public static final native void _pango_attr_list_insert(long /*int*/ list, long /*int*/ attr);
-public static final void pango_attr_list_insert(long /*int*/ list, long /*int*/ attr) {
+public static final native void _pango_attr_list_insert(long list, long attr);
+public static final void pango_attr_list_insert(long list, long attr) {
 	lock.lock();
 	try {
 		_pango_attr_list_insert(list, attr);
@@ -3084,8 +3080,8 @@ public static final void pango_attr_list_insert(long /*int*/ list, long /*int*/ 
 	}
 }
 /** @param list cast=(PangoAttrList *) */
-public static final native long /*int*/ _pango_attr_list_get_iterator(long /*int*/ list);
-public static final long /*int*/ pango_attr_list_get_iterator(long /*int*/ list) {
+public static final native long _pango_attr_list_get_iterator(long list);
+public static final long pango_attr_list_get_iterator(long list) {
 	lock.lock();
 	try {
 		return _pango_attr_list_get_iterator(list);
@@ -3094,8 +3090,8 @@ public static final long /*int*/ pango_attr_list_get_iterator(long /*int*/ list)
 	}
 }
 /** @param iterator cast=(PangoAttrIterator *) */
-public static final native boolean _pango_attr_iterator_next(long /*int*/ iterator);
-public static final boolean pango_attr_iterator_next(long /*int*/ iterator) {
+public static final native boolean _pango_attr_iterator_next(long iterator);
+public static final boolean pango_attr_iterator_next(long iterator) {
 	lock.lock();
 	try {
 		return _pango_attr_iterator_next(iterator);
@@ -3108,8 +3104,8 @@ public static final boolean pango_attr_iterator_next(long /*int*/ iterator) {
  * @param start cast=(gint *)
  * @param end cast=(gint *)
  */
-public static final native void _pango_attr_iterator_range(long /*int*/ iterator, int[] start, int[] end);
-public static final void pango_attr_iterator_range(long /*int*/ iterator, int[] start, int[] end) {
+public static final native void _pango_attr_iterator_range(long iterator, int[] start, int[] end);
+public static final void pango_attr_iterator_range(long iterator, int[] start, int[] end) {
 	lock.lock();
 	try {
 		_pango_attr_iterator_range(iterator, start, end);
@@ -3121,8 +3117,8 @@ public static final void pango_attr_iterator_range(long /*int*/ iterator, int[] 
  * @param iterator cast=(PangoAttrIterator *)
  * @param type cast=(PangoAttrType)
  */
-public static final native long /*int*/ _pango_attr_iterator_get(long /*int*/ iterator, int type);
-public static final long /*int*/ pango_attr_iterator_get(long /*int*/ iterator, int type) {
+public static final native long _pango_attr_iterator_get(long iterator, int type);
+public static final long pango_attr_iterator_get(long iterator, int type) {
 	lock.lock();
 	try {
 		return _pango_attr_iterator_get(iterator, type);
@@ -3131,8 +3127,8 @@ public static final long /*int*/ pango_attr_iterator_get(long /*int*/ iterator, 
 	}
 }
 /** @param iterator cast=(PangoAttrIterator *) */
-public static final native void _pango_attr_iterator_destroy(long /*int*/ iterator);
-public static final void pango_attr_iterator_destroy(long /*int*/ iterator) {
+public static final native void _pango_attr_iterator_destroy(long iterator);
+public static final void pango_attr_iterator_destroy(long iterator) {
 	lock.lock();
 	try {
 		_pango_attr_iterator_destroy(iterator);
@@ -3140,8 +3136,8 @@ public static final void pango_attr_iterator_destroy(long /*int*/ iterator) {
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _pango_attr_list_new();
-public static final long /*int*/ pango_attr_list_new() {
+public static final native long _pango_attr_list_new();
+public static final long pango_attr_list_new() {
 	lock.lock();
 	try {
 		return _pango_attr_list_new();
@@ -3150,8 +3146,8 @@ public static final long /*int*/ pango_attr_list_new() {
 	}
 }
 /** @param list cast=(PangoAttrList *) */
-public static final native void _pango_attr_list_unref(long /*int*/ list);
-public static final void pango_attr_list_unref(long /*int*/ list) {
+public static final native void _pango_attr_list_unref(long list);
+public static final void pango_attr_list_unref(long list) {
 	lock.lock();
 	try {
 		_pango_attr_list_unref(list);
@@ -3159,8 +3155,8 @@ public static final void pango_attr_list_unref(long /*int*/ list) {
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _pango_attr_strikethrough_color_new(short red, short green, short blue);
-public static final long /*int*/ pango_attr_strikethrough_color_new(short red, short green, short blue) {
+public static final native long _pango_attr_strikethrough_color_new(short red, short green, short blue);
+public static final long pango_attr_strikethrough_color_new(short red, short green, short blue) {
 	lock.lock();
 	try {
 		return _pango_attr_strikethrough_color_new(red, green, blue);
@@ -3168,8 +3164,8 @@ public static final long /*int*/ pango_attr_strikethrough_color_new(short red, s
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _pango_attr_strikethrough_new(boolean strikethrough);
-public static final long /*int*/ pango_attr_strikethrough_new(boolean strikethrough) {
+public static final native long _pango_attr_strikethrough_new(boolean strikethrough);
+public static final long pango_attr_strikethrough_new(boolean strikethrough) {
 	lock.lock();
 	try {
 		return _pango_attr_strikethrough_new(strikethrough);
@@ -3177,8 +3173,8 @@ public static final long /*int*/ pango_attr_strikethrough_new(boolean strikethro
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _pango_attr_underline_color_new(short red, short green, short blue);
-public static final long /*int*/ pango_attr_underline_color_new(short red, short green, short blue) {
+public static final native long _pango_attr_underline_color_new(short red, short green, short blue);
+public static final long pango_attr_underline_color_new(short red, short green, short blue) {
 	lock.lock();
 	try {
 		return _pango_attr_underline_color_new(red, green, blue);
@@ -3186,8 +3182,8 @@ public static final long /*int*/ pango_attr_underline_color_new(short red, short
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _pango_attr_underline_new(int underline);
-public static final long /*int*/ pango_attr_underline_new(int underline) {
+public static final native long _pango_attr_underline_new(int underline);
+public static final long pango_attr_underline_new(int underline) {
 	lock.lock();
 	try {
 		return _pango_attr_underline_new(underline);
@@ -3195,8 +3191,8 @@ public static final long /*int*/ pango_attr_underline_new(int underline) {
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _pango_attr_weight_new(int weight);
-public static final long /*int*/ pango_attr_weight_new(int weight) {
+public static final native long _pango_attr_weight_new(int weight);
+public static final long pango_attr_weight_new(int weight) {
 	lock.lock();
 	try {
 		return _pango_attr_weight_new(weight);
@@ -3207,8 +3203,8 @@ public static final long /*int*/ pango_attr_weight_new(int weight) {
 /**
  * @param cairo cast=(cairo_t *)
  */
-public static final native long /*int*/ _pango_cairo_create_layout(long /*int*/ cairo);
-public static final long /*int*/ pango_cairo_create_layout(long /*int*/ cairo) {
+public static final native long _pango_cairo_create_layout(long cairo);
+public static final long pango_cairo_create_layout(long cairo) {
 	lock.lock();
 	try {
 		return _pango_cairo_create_layout(cairo);
@@ -3216,8 +3212,8 @@ public static final long /*int*/ pango_cairo_create_layout(long /*int*/ cairo) {
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _pango_cairo_font_map_get_default();
-public static final long /*int*/ pango_cairo_font_map_get_default() {
+public static final native long _pango_cairo_font_map_get_default();
+public static final long pango_cairo_font_map_get_default() {
 	lock.lock();
 	try {
 		return _pango_cairo_font_map_get_default();
@@ -3228,8 +3224,8 @@ public static final long /*int*/ pango_cairo_font_map_get_default() {
 /**
  * @param context cast=(PangoContext *)
  */
-public static final native long /*int*/ _pango_cairo_context_get_font_options(long /*int*/ context);
-public static final long /*int*/ pango_cairo_context_get_font_options(long /*int*/ context) {
+public static final native long _pango_cairo_context_get_font_options(long context);
+public static final long pango_cairo_context_get_font_options(long context) {
 	lock.lock();
 	try {
 		return _pango_cairo_context_get_font_options(context);
@@ -3241,8 +3237,8 @@ public static final long /*int*/ pango_cairo_context_get_font_options(long /*int
  * @param context cast=(PangoContext *)
  * @param options cast=( cairo_font_options_t *)
  */
-public static final native void _pango_cairo_context_set_font_options(long /*int*/ context, long /*int*/ options);
-public static final void pango_cairo_context_set_font_options(long /*int*/ context, long /*int*/ options) {
+public static final native void _pango_cairo_context_set_font_options(long context, long options);
+public static final void pango_cairo_context_set_font_options(long context, long options) {
 	lock.lock();
 	try {
 		_pango_cairo_context_set_font_options(context, options);
@@ -3254,8 +3250,8 @@ public static final void pango_cairo_context_set_font_options(long /*int*/ conte
  * @param cairo cast=(cairo_t *)
  * @param layout cast=(PangoLayout *)
  */
-public static final native void _pango_cairo_layout_path(long /*int*/ cairo, long /*int*/ layout);
-public static final void pango_cairo_layout_path(long /*int*/ cairo, long /*int*/ layout) {
+public static final native void _pango_cairo_layout_path(long cairo, long layout);
+public static final void pango_cairo_layout_path(long cairo, long layout) {
 	lock.lock();
 	try {
 		_pango_cairo_layout_path(cairo, layout);
@@ -3267,8 +3263,8 @@ public static final void pango_cairo_layout_path(long /*int*/ cairo, long /*int*
  * @param cairo cast=(cairo_t *)
  * @param layout cast=(PangoLayout *)
  */
-public static final native void _pango_cairo_show_layout(long /*int*/ cairo, long /*int*/ layout);
-public static final void pango_cairo_show_layout(long /*int*/ cairo, long /*int*/ layout) {
+public static final native void _pango_cairo_show_layout(long cairo, long layout);
+public static final void pango_cairo_show_layout(long cairo, long layout) {
 	lock.lock();
 	try {
 		_pango_cairo_show_layout(cairo, layout);
@@ -3277,8 +3273,8 @@ public static final void pango_cairo_show_layout(long /*int*/ cairo, long /*int*
 	}
 }
 /** @param context cast=(PangoContext *) */
-public static final native int _pango_context_get_base_dir(long /*int*/ context);
-public static final int pango_context_get_base_dir(long /*int*/ context) {
+public static final native int _pango_context_get_base_dir(long context);
+public static final int pango_context_get_base_dir(long context) {
 	lock.lock();
 	try {
 		return _pango_context_get_base_dir(context);
@@ -3287,8 +3283,8 @@ public static final int pango_context_get_base_dir(long /*int*/ context) {
 	}
 }
 /** @param context cast=(PangoContext *) */
-public static final native long /*int*/ _pango_context_get_language(long /*int*/ context);
-public static final long /*int*/ pango_context_get_language(long /*int*/ context) {
+public static final native long _pango_context_get_language(long context);
+public static final long pango_context_get_language(long context) {
 	lock.lock();
 	try {
 		return _pango_context_get_language(context);
@@ -3301,8 +3297,8 @@ public static final long /*int*/ pango_context_get_language(long /*int*/ context
  * @param desc cast=(const PangoFontDescription *)
  * @param language cast=(PangoLanguage *)
  */
-public static final native long /*int*/ _pango_context_get_metrics(long /*int*/ context, long /*int*/ desc, long /*int*/ language);
-public static final long /*int*/ pango_context_get_metrics(long /*int*/ context, long /*int*/ desc, long /*int*/ language) {
+public static final native long _pango_context_get_metrics(long context, long desc, long language);
+public static final long pango_context_get_metrics(long context, long desc, long language) {
 	lock.lock();
 	try {
 		return _pango_context_get_metrics(context, desc, language);
@@ -3315,8 +3311,8 @@ public static final long /*int*/ pango_context_get_metrics(long /*int*/ context,
  * @param families cast=(PangoFontFamily ***)
  * @param n_families cast=(int *)
  */
-public static final native void _pango_context_list_families(long /*int*/ context, long /*int*/[] families, int[] n_families);
-public static final void pango_context_list_families(long /*int*/ context, long /*int*/[] families, int[] n_families) {
+public static final native void _pango_context_list_families(long context, long [] families, int[] n_families);
+public static final void pango_context_list_families(long context, long [] families, int[] n_families) {
 	lock.lock();
 	try {
 		_pango_context_list_families(context, families, n_families);
@@ -3325,8 +3321,8 @@ public static final void pango_context_list_families(long /*int*/ context, long 
 	}
 }
 /** @param context cast=(PangoContext *) */
-public static final native void _pango_context_set_base_dir(long /*int*/ context, int direction);
-public static final void pango_context_set_base_dir(long /*int*/ context, int direction) {
+public static final native void _pango_context_set_base_dir(long context, int direction);
+public static final void pango_context_set_base_dir(long context, int direction) {
 	lock.lock();
 	try {
 		_pango_context_set_base_dir(context, direction);
@@ -3338,8 +3334,8 @@ public static final void pango_context_set_base_dir(long /*int*/ context, int di
  * @param context cast=(PangoContext *)
  * @param language cast=(PangoLanguage *)
  */
-public static final native void _pango_context_set_language(long /*int*/ context, long /*int*/ language);
-public static final void pango_context_set_language(long /*int*/ context, long /*int*/ language) {
+public static final native void _pango_context_set_language(long context, long language);
+public static final void pango_context_set_language(long context, long language) {
 	lock.lock();
 	try {
 		_pango_context_set_language(context, language);
@@ -3348,8 +3344,8 @@ public static final void pango_context_set_language(long /*int*/ context, long /
 	}
 }
 /** @param desc cast=(PangoFontDescription *) */
-public static final native long /*int*/ _pango_font_description_copy(long /*int*/ desc);
-public static final long /*int*/ pango_font_description_copy(long /*int*/ desc) {
+public static final native long _pango_font_description_copy(long desc);
+public static final long pango_font_description_copy(long desc) {
 	lock.lock();
 	try {
 		return _pango_font_description_copy(desc);
@@ -3358,8 +3354,8 @@ public static final long /*int*/ pango_font_description_copy(long /*int*/ desc) 
 	}
 }
 /** @param desc cast=(PangoFontDescription *) */
-public static final native void _pango_font_description_free(long /*int*/ desc);
-public static final void pango_font_description_free(long /*int*/ desc) {
+public static final native void _pango_font_description_free(long desc);
+public static final void pango_font_description_free(long desc) {
 	lock.lock();
 	try {
 		_pango_font_description_free(desc);
@@ -3368,8 +3364,8 @@ public static final void pango_font_description_free(long /*int*/ desc) {
 	}
 }
 /** @param str cast=(const char *),flags=no_out critical */
-public static final native long /*int*/ _pango_font_description_from_string(byte[] str);
-public static final long /*int*/ pango_font_description_from_string(byte[] str) {
+public static final native long _pango_font_description_from_string(byte[] str);
+public static final long pango_font_description_from_string(byte[] str) {
 	lock.lock();
 	try {
 		return _pango_font_description_from_string(str);
@@ -3378,8 +3374,8 @@ public static final long /*int*/ pango_font_description_from_string(byte[] str) 
 	}
 }
 /** @param desc cast=(PangoFontDescription *) */
-public static final native long /*int*/ _pango_font_description_get_family(long /*int*/ desc);
-public static final long /*int*/ pango_font_description_get_family(long /*int*/ desc) {
+public static final native long _pango_font_description_get_family(long desc);
+public static final long pango_font_description_get_family(long desc) {
 	lock.lock();
 	try {
 		return _pango_font_description_get_family(desc);
@@ -3388,8 +3384,8 @@ public static final long /*int*/ pango_font_description_get_family(long /*int*/ 
 	}
 }
 /** @param desc cast=(PangoFontDescription *) */
-public static final native int _pango_font_description_get_size(long /*int*/ desc);
-public static final int pango_font_description_get_size(long /*int*/ desc) {
+public static final native int _pango_font_description_get_size(long desc);
+public static final int pango_font_description_get_size(long desc) {
 	lock.lock();
 	try {
 		return _pango_font_description_get_size(desc);
@@ -3398,8 +3394,8 @@ public static final int pango_font_description_get_size(long /*int*/ desc) {
 	}
 }
 /** @param desc cast=(PangoFontDescription *) */
-public static final native int _pango_font_description_get_stretch(long /*int*/ desc);
-public static final int pango_font_description_get_stretch(long /*int*/ desc) {
+public static final native int _pango_font_description_get_stretch(long desc);
+public static final int pango_font_description_get_stretch(long desc) {
 	lock.lock();
 	try {
 		return _pango_font_description_get_stretch(desc);
@@ -3408,8 +3404,8 @@ public static final int pango_font_description_get_stretch(long /*int*/ desc) {
 	}
 }
 /** @param desc cast=(PangoFontDescription *) */
-public static final native int _pango_font_description_get_variant(long /*int*/ desc);
-public static final int pango_font_description_get_variant(long /*int*/ desc) {
+public static final native int _pango_font_description_get_variant(long desc);
+public static final int pango_font_description_get_variant(long desc) {
 	lock.lock();
 	try {
 		return _pango_font_description_get_variant(desc);
@@ -3418,8 +3414,8 @@ public static final int pango_font_description_get_variant(long /*int*/ desc) {
 	}
 }
 /** @param desc cast=(PangoFontDescription *) */
-public static final native int _pango_font_description_get_style(long /*int*/ desc);
-public static final int pango_font_description_get_style(long /*int*/ desc) {
+public static final native int _pango_font_description_get_style(long desc);
+public static final int pango_font_description_get_style(long desc) {
 	lock.lock();
 	try {
 		return _pango_font_description_get_style(desc);
@@ -3428,8 +3424,8 @@ public static final int pango_font_description_get_style(long /*int*/ desc) {
 	}
 }
 /** @param desc cast=(PangoFontDescription *) */
-public static final native int _pango_font_description_get_weight(long /*int*/ desc);
-public static final int pango_font_description_get_weight(long /*int*/ desc) {
+public static final native int _pango_font_description_get_weight(long desc);
+public static final int pango_font_description_get_weight(long desc) {
 	lock.lock();
 	try {
 		return _pango_font_description_get_weight(desc);
@@ -3437,8 +3433,8 @@ public static final int pango_font_description_get_weight(long /*int*/ desc) {
 		lock.unlock();
 	}
 }
-public static final native long /*int*/ _pango_font_description_new();
-public static final long /*int*/ pango_font_description_new() {
+public static final native long _pango_font_description_new();
+public static final long pango_font_description_new() {
 	lock.lock();
 	try {
 		return _pango_font_description_new();
@@ -3450,8 +3446,8 @@ public static final long /*int*/ pango_font_description_new() {
  * @param desc cast=(PangoFontDescription *)
  * @param family cast=(const char *),flags=no_out critical
  */
-public static final native void _pango_font_description_set_family(long /*int*/ desc, byte[] family);
-public static final void pango_font_description_set_family(long /*int*/ desc, byte[] family) {
+public static final native void _pango_font_description_set_family(long desc, byte[] family);
+public static final void pango_font_description_set_family(long desc, byte[] family) {
 	lock.lock();
 	try {
 		_pango_font_description_set_family(desc, family);
@@ -3463,8 +3459,8 @@ public static final void pango_font_description_set_family(long /*int*/ desc, by
  * @param desc cast=(PangoFontDescription *)
  * @param size cast=(gint)
  */
-public static final native void _pango_font_description_set_size(long /*int*/ desc, int size);
-public static final void pango_font_description_set_size(long /*int*/ desc, int size) {
+public static final native void _pango_font_description_set_size(long desc, int size);
+public static final void pango_font_description_set_size(long desc, int size) {
 	lock.lock();
 	try {
 		_pango_font_description_set_size(desc, size);
@@ -3476,8 +3472,8 @@ public static final void pango_font_description_set_size(long /*int*/ desc, int 
  * @param desc cast=(PangoFontDescription *)
  * @param stretch cast=(PangoStretch)
  */
-public static final native void _pango_font_description_set_stretch(long /*int*/ desc, int stretch);
-public static final void pango_font_description_set_stretch(long /*int*/ desc, int stretch) {
+public static final native void _pango_font_description_set_stretch(long desc, int stretch);
+public static final void pango_font_description_set_stretch(long desc, int stretch) {
 	lock.lock();
 	try {
 		_pango_font_description_set_stretch(desc, stretch);
@@ -3489,8 +3485,8 @@ public static final void pango_font_description_set_stretch(long /*int*/ desc, i
  * @param desc cast=(PangoFontDescription *)
  * @param weight cast=(PangoStyle)
  */
-public static final native void _pango_font_description_set_style(long /*int*/ desc, int weight);
-public static final void pango_font_description_set_style(long /*int*/ desc, int weight) {
+public static final native void _pango_font_description_set_style(long desc, int weight);
+public static final void pango_font_description_set_style(long desc, int weight) {
 	lock.lock();
 	try {
 		_pango_font_description_set_style(desc, weight);
@@ -3502,8 +3498,8 @@ public static final void pango_font_description_set_style(long /*int*/ desc, int
  * @param desc cast=(PangoFontDescription *)
  * @param weight cast=(PangoWeight)
  */
-public static final native void _pango_font_description_set_weight(long /*int*/ desc, int weight);
-public static final void pango_font_description_set_weight(long /*int*/ desc, int weight) {
+public static final native void _pango_font_description_set_weight(long desc, int weight);
+public static final void pango_font_description_set_weight(long desc, int weight) {
 	lock.lock();
 	try {
 		_pango_font_description_set_weight(desc, weight);
@@ -3515,8 +3511,8 @@ public static final void pango_font_description_set_weight(long /*int*/ desc, in
  * @param desc cast=(PangoFontDescription *)
  * @param variant cast=(PangoVariant)
  */
-public static final native void _pango_font_description_set_variant(long /*int*/ desc, int variant);
-public static final void pango_font_description_set_variant(long /*int*/ desc, int variant) {
+public static final native void _pango_font_description_set_variant(long desc, int variant);
+public static final void pango_font_description_set_variant(long desc, int variant) {
 	lock.lock();
 	try {
 		_pango_font_description_set_variant(desc, variant);
@@ -3525,8 +3521,8 @@ public static final void pango_font_description_set_variant(long /*int*/ desc, i
 	}
 }
 /** @param desc cast=(PangoFontDescription *) */
-public static final native long /*int*/ _pango_font_description_to_string(long /*int*/ desc);
-public static final long /*int*/ pango_font_description_to_string(long /*int*/ desc) {
+public static final native long _pango_font_description_to_string(long desc);
+public static final long pango_font_description_to_string(long desc) {
 	lock.lock();
 	try {
 		return _pango_font_description_to_string(desc);
@@ -3535,8 +3531,8 @@ public static final long /*int*/ pango_font_description_to_string(long /*int*/ d
 	}
 }
 /** @param face cast=(PangoFontFace *) */
-public static final native long /*int*/ _pango_font_face_describe(long /*int*/ face);
-public static final long /*int*/ pango_font_face_describe(long /*int*/ face) {
+public static final native long _pango_font_face_describe(long face);
+public static final long pango_font_face_describe(long face) {
 	lock.lock();
 	try {
 		return _pango_font_face_describe(face);
@@ -3545,8 +3541,8 @@ public static final long /*int*/ pango_font_face_describe(long /*int*/ face) {
 	}
 }
 /** @param family cast=(PangoFontFamily *) */
-public static final native long /*int*/ _pango_font_family_get_name(long /*int*/ family);
-public static final long /*int*/ pango_font_family_get_name(long /*int*/ family) {
+public static final native long _pango_font_family_get_name(long family);
+public static final long pango_font_family_get_name(long family) {
 	lock.lock();
 	try {
 		return _pango_font_family_get_name(family);
@@ -3559,8 +3555,8 @@ public static final long /*int*/ pango_font_family_get_name(long /*int*/ family)
  * @param faces cast=(PangoFontFace ***)
  * @param n_faces cast=(int *)
  */
-public static final native void _pango_font_family_list_faces(long /*int*/ family, long /*int*/[] faces, int[] n_faces);
-public static final void pango_font_family_list_faces(long /*int*/ family, long /*int*/[] faces, int[] n_faces) {
+public static final native void _pango_font_family_list_faces(long family, long [] faces, int[] n_faces);
+public static final void pango_font_family_list_faces(long family, long [] faces, int[] n_faces) {
 	lock.lock();
 	try {
 		_pango_font_family_list_faces(family, faces, n_faces);
@@ -3572,8 +3568,8 @@ public static final void pango_font_family_list_faces(long /*int*/ family, long 
  * @param font cast=(PangoFont *)
  * @param language cast=(PangoLanguage *)
  */
-public static final native long /*int*/ _pango_font_get_metrics(long /*int*/ font, long /*int*/ language);
-public static final long /*int*/ pango_font_get_metrics(long /*int*/ font, long /*int*/ language) {
+public static final native long _pango_font_get_metrics(long font, long language);
+public static final long pango_font_get_metrics(long font, long language) {
 	lock.lock();
 	try {
 		return _pango_font_get_metrics(font, language);
@@ -3584,8 +3580,8 @@ public static final long /*int*/ pango_font_get_metrics(long /*int*/ font, long 
 /**
  * @param fontMap cast=(PangoFontMap *)
  */
-public static final native long /*int*/ _pango_font_map_create_context(long /*int*/ fontMap);
-public static final long /*int*/ pango_font_map_create_context(long /*int*/ fontMap) {
+public static final native long _pango_font_map_create_context(long fontMap);
+public static final long pango_font_map_create_context(long fontMap) {
 	lock.lock();
 	try {
 		return _pango_font_map_create_context(fontMap);
@@ -3594,8 +3590,8 @@ public static final long /*int*/ pango_font_map_create_context(long /*int*/ font
 	}
 }
 /** @param metrics cast=(PangoFontMetrics *) */
-public static final native int _pango_font_metrics_get_approximate_char_width(long /*int*/ metrics);
-public static final int pango_font_metrics_get_approximate_char_width(long /*int*/ metrics) {
+public static final native int _pango_font_metrics_get_approximate_char_width(long metrics);
+public static final int pango_font_metrics_get_approximate_char_width(long metrics) {
 	lock.lock();
 	try {
 		return _pango_font_metrics_get_approximate_char_width(metrics);
@@ -3604,8 +3600,8 @@ public static final int pango_font_metrics_get_approximate_char_width(long /*int
 	}
 }
 /** @param metrics cast=(PangoFontMetrics *) */
-public static final native int _pango_font_metrics_get_ascent(long /*int*/ metrics);
-public static final int pango_font_metrics_get_ascent(long /*int*/ metrics) {
+public static final native int _pango_font_metrics_get_ascent(long metrics);
+public static final int pango_font_metrics_get_ascent(long metrics) {
 	lock.lock();
 	try {
 		return _pango_font_metrics_get_ascent(metrics);
@@ -3614,8 +3610,8 @@ public static final int pango_font_metrics_get_ascent(long /*int*/ metrics) {
 	}
 }
 /** @param metrics cast=(PangoFontMetrics *) */
-public static final native int _pango_font_metrics_get_descent(long /*int*/ metrics);
-public static final int pango_font_metrics_get_descent(long /*int*/ metrics) {
+public static final native int _pango_font_metrics_get_descent(long metrics);
+public static final int pango_font_metrics_get_descent(long metrics) {
 	lock.lock();
 	try {
 		return _pango_font_metrics_get_descent(metrics);
@@ -3624,8 +3620,8 @@ public static final int pango_font_metrics_get_descent(long /*int*/ metrics) {
 	}
 }
 /** @param metrics cast=(PangoFontMetrics *) */
-public static final native void _pango_font_metrics_unref(long /*int*/ metrics);
-public static final void pango_font_metrics_unref(long /*int*/ metrics) {
+public static final native void _pango_font_metrics_unref(long metrics);
+public static final void pango_font_metrics_unref(long metrics) {
 	lock.lock();
 	try {
 		_pango_font_metrics_unref(metrics);
@@ -3634,8 +3630,8 @@ public static final void pango_font_metrics_unref(long /*int*/ metrics) {
 	}
 }
 /** @param layout cast=(PangoLayout *) */
-public static final native void _pango_layout_context_changed(long /*int*/ layout);
-public static final void pango_layout_context_changed(long /*int*/ layout) {
+public static final native void _pango_layout_context_changed(long layout);
+public static final void pango_layout_context_changed(long layout) {
 	lock.lock();
 	try {
 		_pango_layout_context_changed(layout);
@@ -3644,8 +3640,8 @@ public static final void pango_layout_context_changed(long /*int*/ layout) {
 	}
 }
 /** @param layout cast=(PangoLayout*) */
-public static final native int _pango_layout_get_alignment(long /*int*/ layout);
-public static final int pango_layout_get_alignment(long /*int*/ layout) {
+public static final native int _pango_layout_get_alignment(long layout);
+public static final int pango_layout_get_alignment(long layout) {
 	lock.lock();
 	try {
 		return _pango_layout_get_alignment(layout);
@@ -3654,8 +3650,8 @@ public static final int pango_layout_get_alignment(long /*int*/ layout) {
 	}
 }
 /** @param layout cast=(PangoLayout *) */
-public static final native long /*int*/ _pango_layout_get_context(long /*int*/ layout);
-public static final long /*int*/ pango_layout_get_context(long /*int*/ layout) {
+public static final native long _pango_layout_get_context(long layout);
+public static final long pango_layout_get_context(long layout) {
 	lock.lock();
 	try {
 		return _pango_layout_get_context(layout);
@@ -3664,8 +3660,8 @@ public static final long /*int*/ pango_layout_get_context(long /*int*/ layout) {
 	}
 }
 /** @param layout cast=(PangoLayout*) */
-public static final native int _pango_layout_get_indent(long /*int*/ layout);
-public static final int pango_layout_get_indent(long /*int*/ layout) {
+public static final native int _pango_layout_get_indent(long layout);
+public static final int pango_layout_get_indent(long layout) {
 	lock.lock();
 	try {
 		return _pango_layout_get_indent(layout);
@@ -3674,8 +3670,8 @@ public static final int pango_layout_get_indent(long /*int*/ layout) {
 	}
 }
 /** @param layout cast=(PangoLayout*) */
-public static final native long /*int*/ _pango_layout_get_iter(long /*int*/ layout);
-public static final long /*int*/ pango_layout_get_iter(long /*int*/ layout) {
+public static final native long _pango_layout_get_iter(long layout);
+public static final long pango_layout_get_iter(long layout) {
 	lock.lock();
 	try {
 		return _pango_layout_get_iter(layout);
@@ -3684,8 +3680,8 @@ public static final long /*int*/ pango_layout_get_iter(long /*int*/ layout) {
 	}
 }
 /** @param layout cast=(PangoLayout*) */
-public static final native boolean _pango_layout_get_justify(long /*int*/ layout);
-public static final boolean pango_layout_get_justify(long /*int*/ layout) {
+public static final native boolean _pango_layout_get_justify(long layout);
+public static final boolean pango_layout_get_justify(long layout) {
 	lock.lock();
 	try {
 		return _pango_layout_get_justify(layout);
@@ -3694,8 +3690,8 @@ public static final boolean pango_layout_get_justify(long /*int*/ layout) {
 	}
 }
 /** @param layout cast=(PangoLayout *) */
-public static final native long /*int*/ _pango_layout_get_line(long /*int*/ layout, int line);
-public static final long /*int*/ pango_layout_get_line(long /*int*/ layout, int line) {
+public static final native long _pango_layout_get_line(long layout, int line);
+public static final long pango_layout_get_line(long layout, int line) {
 	lock.lock();
 	try {
 		return _pango_layout_get_line(layout, line);
@@ -3704,8 +3700,8 @@ public static final long /*int*/ pango_layout_get_line(long /*int*/ layout, int 
 	}
 }
 /** @param layout cast=(PangoLayout*) */
-public static final native int _pango_layout_get_line_count(long /*int*/ layout);
-public static final int pango_layout_get_line_count(long /*int*/ layout) {
+public static final native int _pango_layout_get_line_count(long layout);
+public static final int pango_layout_get_line_count(long layout) {
 	lock.lock();
 	try {
 		return _pango_layout_get_line_count(layout);
@@ -3718,8 +3714,8 @@ public static final int pango_layout_get_line_count(long /*int*/ layout) {
  * @param attrs cast=(PangoLogAttr **)
  * @param n_attrs cast=(int *)
  */
-public static final native void _pango_layout_get_log_attrs(long /*int*/ layout, long /*int*/[] attrs, int[] n_attrs);
-public static final void pango_layout_get_log_attrs(long /*int*/ layout, long /*int*/[] attrs, int[] n_attrs) {
+public static final native void _pango_layout_get_log_attrs(long layout, long [] attrs, int[] n_attrs);
+public static final void pango_layout_get_log_attrs(long layout, long [] attrs, int[] n_attrs) {
 	lock.lock();
 	try {
 		_pango_layout_get_log_attrs(layout, attrs, n_attrs);
@@ -3732,8 +3728,8 @@ public static final void pango_layout_get_log_attrs(long /*int*/ layout, long /*
  * @param width cast=(int *)
  * @param height cast=(int *)
  */
-public static final native void _pango_layout_get_size(long /*int*/ layout, int[] width, int[] height);
-public static final void pango_layout_get_size(long /*int*/ layout, int[] width, int[] height) {
+public static final native void _pango_layout_get_size(long layout, int[] width, int[] height);
+public static final void pango_layout_get_size(long layout, int[] width, int[] height) {
 	lock.lock();
 	try {
 		_pango_layout_get_size(layout, width, height);
@@ -3746,8 +3742,8 @@ public static final void pango_layout_get_size(long /*int*/ layout, int[] width,
  * @param width cast=(int *)
  * @param height cast=(int *)
  */
-public static final native void _pango_layout_get_pixel_size(long /*int*/ layout, int[] width, int[] height);
-public static final void pango_layout_get_pixel_size(long /*int*/ layout, int[] width, int[] height) {
+public static final native void _pango_layout_get_pixel_size(long layout, int[] width, int[] height);
+public static final void pango_layout_get_pixel_size(long layout, int[] width, int[] height) {
 	lock.lock();
 	try {
 		_pango_layout_get_pixel_size(layout, width, height);
@@ -3756,8 +3752,8 @@ public static final void pango_layout_get_pixel_size(long /*int*/ layout, int[] 
 	}
 }
 /** @param layout cast=(PangoLayout*) */
-public static final native int _pango_layout_get_spacing(long /*int*/ layout);
-public static final int pango_layout_get_spacing(long /*int*/ layout) {
+public static final native int _pango_layout_get_spacing(long layout);
+public static final int pango_layout_get_spacing(long layout) {
 	lock.lock();
 	try {
 		return _pango_layout_get_spacing(layout);
@@ -3766,8 +3762,8 @@ public static final int pango_layout_get_spacing(long /*int*/ layout) {
 	}
 }
 /** @param layout cast=(PangoLayout *) */
-public static final native long /*int*/ _pango_layout_get_text(long /*int*/ layout);
-public static final long /*int*/ pango_layout_get_text(long /*int*/ layout) {
+public static final native long _pango_layout_get_text(long layout);
+public static final long pango_layout_get_text(long layout) {
 	lock.lock();
 	try {
 		return _pango_layout_get_text(layout);
@@ -3776,8 +3772,8 @@ public static final long /*int*/ pango_layout_get_text(long /*int*/ layout) {
 	}
 }
 /** @param layout cast=(PangoLayout *) */
-public static final native int _pango_layout_get_width(long /*int*/ layout);
-public static final int pango_layout_get_width(long /*int*/ layout) {
+public static final native int _pango_layout_get_width(long layout);
+public static final int pango_layout_get_width(long layout) {
 	lock.lock();
 	try {
 		return _pango_layout_get_width(layout);
@@ -3789,8 +3785,8 @@ public static final int pango_layout_get_width(long /*int*/ layout) {
  * @param layout cast=(PangoLayout*)
  * @param pos flags=no_in
  */
-public static final native void _pango_layout_index_to_pos(long /*int*/ layout, int index, PangoRectangle pos);
-public static final void pango_layout_index_to_pos(long /*int*/ layout, int index, PangoRectangle pos) {
+public static final native void _pango_layout_index_to_pos(long layout, int index, PangoRectangle pos);
+public static final void pango_layout_index_to_pos(long layout, int index, PangoRectangle pos) {
 	lock.lock();
 	try {
 		_pango_layout_index_to_pos(layout, index, pos);
@@ -3799,8 +3795,8 @@ public static final void pango_layout_index_to_pos(long /*int*/ layout, int inde
 	}
 }
 /** @param iter cast=(PangoLayoutIter*) */
-public static final native void _pango_layout_iter_free(long /*int*/ iter);
-public static final void pango_layout_iter_free(long /*int*/ iter) {
+public static final native void _pango_layout_iter_free(long iter);
+public static final void pango_layout_iter_free(long iter) {
 	lock.lock();
 	try {
 		_pango_layout_iter_free(iter);
@@ -3813,8 +3809,8 @@ public static final void pango_layout_iter_free(long /*int*/ iter) {
  * @param ink_rect flags=no_in
  * @param logical_rect flags=no_in
  */
-public static final native void _pango_layout_iter_get_line_extents(long /*int*/ iter, PangoRectangle ink_rect, PangoRectangle logical_rect);
-public static final void pango_layout_iter_get_line_extents(long /*int*/ iter, PangoRectangle ink_rect, PangoRectangle logical_rect) {
+public static final native void _pango_layout_iter_get_line_extents(long iter, PangoRectangle ink_rect, PangoRectangle logical_rect);
+public static final void pango_layout_iter_get_line_extents(long iter, PangoRectangle ink_rect, PangoRectangle logical_rect) {
 	lock.lock();
 	try {
 		_pango_layout_iter_get_line_extents(iter, ink_rect, logical_rect);
@@ -3823,8 +3819,8 @@ public static final void pango_layout_iter_get_line_extents(long /*int*/ iter, P
 	}
 }
 /** @param iter cast=(PangoLayoutIter*) */
-public static final native int _pango_layout_iter_get_index(long /*int*/ iter);
-public static final int pango_layout_iter_get_index(long /*int*/ iter) {
+public static final native int _pango_layout_iter_get_index(long iter);
+public static final int pango_layout_iter_get_index(long iter) {
 	lock.lock();
 	try {
 		return _pango_layout_iter_get_index(iter);
@@ -3833,8 +3829,8 @@ public static final int pango_layout_iter_get_index(long /*int*/ iter) {
 	}
 }
 /** @param iter cast=(PangoLayoutIter*) */
-public static final native long /*int*/ _pango_layout_iter_get_run(long /*int*/ iter);
-public static final long /*int*/ pango_layout_iter_get_run(long /*int*/ iter) {
+public static final native long _pango_layout_iter_get_run(long iter);
+public static final long pango_layout_iter_get_run(long iter) {
 	lock.lock();
 	try {
 		return _pango_layout_iter_get_run(iter);
@@ -3843,8 +3839,8 @@ public static final long /*int*/ pango_layout_iter_get_run(long /*int*/ iter) {
 	}
 }
 /** @param iter cast=(PangoLayoutIter*) */
-public static final native boolean _pango_layout_iter_next_line(long /*int*/ iter);
-public static final boolean pango_layout_iter_next_line(long /*int*/ iter) {
+public static final native boolean _pango_layout_iter_next_line(long iter);
+public static final boolean pango_layout_iter_next_line(long iter) {
 	lock.lock();
 	try {
 		return _pango_layout_iter_next_line(iter);
@@ -3853,8 +3849,8 @@ public static final boolean pango_layout_iter_next_line(long /*int*/ iter) {
 	}
 }
 /** @param iter cast=(PangoLayoutIter*) */
-public static final native boolean _pango_layout_iter_next_run(long /*int*/ iter);
-public static final boolean pango_layout_iter_next_run(long /*int*/ iter) {
+public static final native boolean _pango_layout_iter_next_run(long iter);
+public static final boolean pango_layout_iter_next_run(long iter) {
 	lock.lock();
 	try {
 		return _pango_layout_iter_next_run(iter);
@@ -3867,8 +3863,8 @@ public static final boolean pango_layout_iter_next_run(long /*int*/ iter) {
  * @param ink_rect cast=(PangoRectangle *),flags=no_in
  * @param logical_rect cast=(PangoRectangle *),flags=no_in
  */
-public static final native void _pango_layout_line_get_extents(long /*int*/ line, PangoRectangle ink_rect, PangoRectangle logical_rect);
-public static final void pango_layout_line_get_extents(long /*int*/ line, PangoRectangle ink_rect, PangoRectangle logical_rect) {
+public static final native void _pango_layout_line_get_extents(long line, PangoRectangle ink_rect, PangoRectangle logical_rect);
+public static final void pango_layout_line_get_extents(long line, PangoRectangle ink_rect, PangoRectangle logical_rect) {
 	lock.lock();
 	try {
 		_pango_layout_line_get_extents(line, ink_rect, logical_rect);
@@ -3877,8 +3873,8 @@ public static final void pango_layout_line_get_extents(long /*int*/ line, PangoR
 	}
 }
 /** @param context cast=(PangoContext *) */
-public static final native long /*int*/ _pango_layout_new(long /*int*/ context);
-public static final long /*int*/ pango_layout_new(long /*int*/ context) {
+public static final native long _pango_layout_new(long context);
+public static final long pango_layout_new(long context) {
 	lock.lock();
 	try {
 		return _pango_layout_new(context);
@@ -3887,8 +3883,8 @@ public static final long /*int*/ pango_layout_new(long /*int*/ context) {
 	}
 }
 /** @param layout cast=(PangoLayout *) */
-public static final native void _pango_layout_set_alignment (long /*int*/ layout, int alignment);
-public static final void pango_layout_set_alignment (long /*int*/ layout, int alignment) {
+public static final native void _pango_layout_set_alignment (long layout, int alignment);
+public static final void pango_layout_set_alignment (long layout, int alignment) {
 	lock.lock();
 	try {
 		_pango_layout_set_alignment(layout, alignment);
@@ -3900,8 +3896,8 @@ public static final void pango_layout_set_alignment (long /*int*/ layout, int al
  * @param layout cast=(PangoLayout *)
  * @param attrs cast=(PangoAttrList *)
  */
-public static final native void _pango_layout_set_attributes(long /*int*/ layout, long /*int*/ attrs);
-public static final void pango_layout_set_attributes(long /*int*/ layout, long /*int*/ attrs) {
+public static final native void _pango_layout_set_attributes(long layout, long attrs);
+public static final void pango_layout_set_attributes(long layout, long attrs) {
 	lock.lock();
 	try {
 		_pango_layout_set_attributes(layout, attrs);
@@ -3912,8 +3908,8 @@ public static final void pango_layout_set_attributes(long /*int*/ layout, long /
 /**
  * @param layout cast=(PangoLayout *)
  */
-public static final native void _pango_layout_set_auto_dir(long /*int*/ layout, boolean auto_dir);
-public static final void pango_layout_set_auto_dir(long /*int*/ layout, boolean auto_dir) {
+public static final native void _pango_layout_set_auto_dir(long layout, boolean auto_dir);
+public static final void pango_layout_set_auto_dir(long layout, boolean auto_dir) {
 	lock.lock();
 	try {
 		_pango_layout_set_auto_dir(layout, auto_dir);
@@ -3925,8 +3921,8 @@ public static final void pango_layout_set_auto_dir(long /*int*/ layout, boolean 
  * @param context cast=(PangoLayout *)
  * @param descr cast=(PangoFontDescription *)
  */
-public static final native void _pango_layout_set_font_description(long /*int*/ context, long /*int*/ descr);
-public static final void pango_layout_set_font_description(long /*int*/ context, long /*int*/ descr) {
+public static final native void _pango_layout_set_font_description(long context, long descr);
+public static final void pango_layout_set_font_description(long context, long descr) {
 	lock.lock();
 	try {
 		_pango_layout_set_font_description(context, descr);
@@ -3935,8 +3931,8 @@ public static final void pango_layout_set_font_description(long /*int*/ context,
 	}
 }
 /** @param layout cast=(PangoLayout*) */
-public static final native void _pango_layout_set_indent(long /*int*/ layout, int indent);
-public static final void pango_layout_set_indent(long /*int*/ layout, int indent) {
+public static final native void _pango_layout_set_indent(long layout, int indent);
+public static final void pango_layout_set_indent(long layout, int indent) {
 	lock.lock();
 	try {
 		_pango_layout_set_indent(layout, indent);
@@ -3945,8 +3941,8 @@ public static final void pango_layout_set_indent(long /*int*/ layout, int indent
 	}
 }
 /** @param layout cast=(PangoLayout*) */
-public static final native void _pango_layout_set_justify(long /*int*/ layout, boolean justify);
-public static final void pango_layout_set_justify(long /*int*/ layout, boolean justify) {
+public static final native void _pango_layout_set_justify(long layout, boolean justify);
+public static final void pango_layout_set_justify(long layout, boolean justify) {
 	lock.lock();
 	try {
 		_pango_layout_set_justify(layout, justify);
@@ -3958,8 +3954,8 @@ public static final void pango_layout_set_justify(long /*int*/ layout, boolean j
  * @param context cast=(PangoLayout *)
  * @param setting cast=(gboolean)
  */
-public static final native void _pango_layout_set_single_paragraph_mode(long /*int*/ context, boolean setting);
-public static final void pango_layout_set_single_paragraph_mode(long /*int*/ context, boolean setting) {
+public static final native void _pango_layout_set_single_paragraph_mode(long context, boolean setting);
+public static final void pango_layout_set_single_paragraph_mode(long context, boolean setting) {
 	lock.lock();
 	try {
 		_pango_layout_set_single_paragraph_mode(context, setting);
@@ -3968,8 +3964,8 @@ public static final void pango_layout_set_single_paragraph_mode(long /*int*/ con
 	}
 }
 /** @param layout cast=(PangoLayout *) */
-public static final native void _pango_layout_set_spacing(long /*int*/ layout, int spacing);
-public static final void pango_layout_set_spacing(long /*int*/ layout, int spacing) {
+public static final native void _pango_layout_set_spacing(long layout, int spacing);
+public static final void pango_layout_set_spacing(long layout, int spacing) {
 	lock.lock();
 	try {
 		_pango_layout_set_spacing(layout, spacing);
@@ -3981,8 +3977,8 @@ public static final void pango_layout_set_spacing(long /*int*/ layout, int spaci
  * @param layout cast=(PangoLayout *)
  * @param tabs cast=(PangoTabArray *)
  */
-public static final native void _pango_layout_set_tabs(long /*int*/ layout, long /*int*/ tabs);
-public static final void pango_layout_set_tabs(long /*int*/ layout, long /*int*/ tabs) {
+public static final native void _pango_layout_set_tabs(long layout, long tabs);
+public static final void pango_layout_set_tabs(long layout, long tabs) {
 	lock.lock();
 	try {
 		_pango_layout_set_tabs(layout, tabs);
@@ -3995,8 +3991,8 @@ public static final void pango_layout_set_tabs(long /*int*/ layout, long /*int*/
  * @param text cast=(const char *),flags=no_out critical
  * @param length cast=(int)
  */
-public static final native void _pango_layout_set_text(long /*int*/ layout, byte[] text, int length);
-public static final void pango_layout_set_text(long /*int*/ layout, byte[] text, int length) {
+public static final native void _pango_layout_set_text(long layout, byte[] text, int length);
+public static final void pango_layout_set_text(long layout, byte[] text, int length) {
 	lock.lock();
 	try {
 		_pango_layout_set_text(layout, text, length);
@@ -4005,8 +4001,8 @@ public static final void pango_layout_set_text(long /*int*/ layout, byte[] text,
 	}
 }
 /** @param layout cast=(PangoLayout *) */
-public static final native void _pango_layout_set_width(long /*int*/ layout, int width);
-public static final void pango_layout_set_width(long /*int*/ layout, int width) {
+public static final native void _pango_layout_set_width(long layout, int width);
+public static final void pango_layout_set_width(long layout, int width) {
 	lock.lock();
 	try {
 		_pango_layout_set_width(layout, width);
@@ -4015,8 +4011,8 @@ public static final void pango_layout_set_width(long /*int*/ layout, int width) 
 	}
 }
 /** @param layout cast=(PangoLayout *) */
-public static final native void _pango_layout_set_wrap (long /*int*/ layout, int wrap);
-public static final void pango_layout_set_wrap (long /*int*/ layout, int wrap) {
+public static final native void _pango_layout_set_wrap (long layout, int wrap);
+public static final void pango_layout_set_wrap (long layout, int wrap) {
 	lock.lock();
 	try {
 		_pango_layout_set_wrap(layout, wrap);
@@ -4029,8 +4025,8 @@ public static final void pango_layout_set_wrap (long /*int*/ layout, int wrap) {
  * @param index cast=(int *)
  * @param trailing cast=(int *)
  */
-public static final native boolean _pango_layout_xy_to_index(long /*int*/ layout, int x, int y, int[] index, int[] trailing);
-public static final boolean pango_layout_xy_to_index(long /*int*/ layout, int x, int y, int[] index, int[] trailing) {
+public static final native boolean _pango_layout_xy_to_index(long layout, int x, int y, int[] index, int[] trailing);
+public static final boolean pango_layout_xy_to_index(long layout, int x, int y, int[] index, int[] trailing) {
 	lock.lock();
 	try {
 		return _pango_layout_xy_to_index(layout, x, y, index, trailing);
@@ -4039,8 +4035,8 @@ public static final boolean pango_layout_xy_to_index(long /*int*/ layout, int x,
 	}
 }
 /** @param tab_array cast=(PangoTabArray *) */
-public static final native void _pango_tab_array_free(long /*int*/ tab_array);
-public static final void pango_tab_array_free(long /*int*/ tab_array) {
+public static final native void _pango_tab_array_free(long tab_array);
+public static final void pango_tab_array_free(long tab_array) {
 	lock.lock();
 	try {
 		_pango_tab_array_free(tab_array);
@@ -4052,8 +4048,8 @@ public static final void pango_tab_array_free(long /*int*/ tab_array) {
  * @param initial_size cast=(gint)
  * @param positions_in_pixels cast=(gboolean)
  */
-public static final native long /*int*/ _pango_tab_array_new(int initial_size, boolean positions_in_pixels);
-public static final long /*int*/ pango_tab_array_new(int initial_size, boolean positions_in_pixels) {
+public static final native long _pango_tab_array_new(int initial_size, boolean positions_in_pixels);
+public static final long pango_tab_array_new(int initial_size, boolean positions_in_pixels) {
 	lock.lock();
 	try {
 		return _pango_tab_array_new(initial_size, positions_in_pixels);
@@ -4067,8 +4063,8 @@ public static final long /*int*/ pango_tab_array_new(int initial_size, boolean p
  * @param alignment cast=(PangoTabAlign)
  * @param location cast=(gint)
  */
-public static final native void _pango_tab_array_set_tab(long /*int*/ tab_array, int tab_index, long /*int*/ alignment, int location);
-public static final void pango_tab_array_set_tab(long /*int*/ tab_array, int tab_index, long /*int*/ alignment, int location) {
+public static final native void _pango_tab_array_set_tab(long tab_array, int tab_index, long alignment, int location);
+public static final void pango_tab_array_set_tab(long tab_array, int tab_index, long alignment, int location) {
 	lock.lock();
 	try {
 		_pango_tab_array_set_tab(tab_array, tab_index, alignment, location);
@@ -4079,8 +4075,8 @@ public static final void pango_tab_array_set_tab(long /*int*/ tab_array, int tab
 /**
  * @method flags=dynamic
  */
-public static final native long /*int*/_ubuntu_menu_proxy_get();
-public static final long /*int*/ ubuntu_menu_proxy_get() {
+public static final native long _ubuntu_menu_proxy_get();
+public static final long ubuntu_menu_proxy_get() {
 	lock.lock();
 	try {
 		return _ubuntu_menu_proxy_get();
@@ -4104,7 +4100,7 @@ public static final int access (byte [] path, int amode) {
  * @param s1 cast=(const char*)
  * @param s2 cast=(const char*)
  */
-public static final native int strcmp (long /*int*/ s1, byte [] s2);
+public static final native int strcmp (long s1, byte [] s2);
 
 /**
  * Theme name as given by OS.
@@ -4128,8 +4124,8 @@ public static final String getThemeName() {
 public static final byte [] getThemeNameBytes() {
 	byte [] buffer = null;
 	int length;
-	long /*int*/ settings = GTK.gtk_settings_get_default ();
-	long /*int*/ [] ptr = new long /*int*/ [1];
+	long settings = GTK.gtk_settings_get_default ();
+	long [] ptr = new long [1];
 	OS.g_object_get (settings, GTK.gtk_theme_name, ptr, 0);
 	if (ptr [0] == 0) {
 		return buffer;
@@ -4138,7 +4134,8 @@ public static final byte [] getThemeNameBytes() {
 	if (length == 0) {
 		return buffer;
 	}
-	buffer = new byte [length];
+	/* String will be passed to C function later, needs to be zero-terminated */
+	buffer = new byte [length + 1];
 	C.memmove (buffer, ptr [0], length);
 	OS.g_free (ptr [0]);
 	return buffer;
@@ -4166,10 +4163,10 @@ public static final byte [] getThemeNameBytes() {
  * @param error cast=(GError **)
  * @category gdbus
  */
-public static final native long /*int*/ _g_dbus_proxy_new_for_bus_sync (int bus_type, int flags, long /*int*/ info, byte [] name, byte [] object_path, byte [] interface_name,
-		long /*int*/ cancellable, long /*int*/[] error);
-public static final long /*int*/ g_dbus_proxy_new_for_bus_sync (int bus_type, int flags, long /*int*/ info, byte [] name, byte [] object_path, byte [] interface_name,
-		long /*int*/ cancellable, long /*int*/[] error) {
+public static final native long _g_dbus_proxy_new_for_bus_sync (int bus_type, int flags, long info, byte [] name, byte [] object_path, byte [] interface_name,
+		long cancellable, long [] error);
+public static final long g_dbus_proxy_new_for_bus_sync (int bus_type, int flags, long info, byte [] name, byte [] object_path, byte [] interface_name,
+		long cancellable, long [] error) {
   lock.lock();
   try {
     return _g_dbus_proxy_new_for_bus_sync (bus_type, flags, info, name, object_path, interface_name, cancellable, error);
@@ -4186,15 +4183,8 @@ public static final long /*int*/ g_dbus_proxy_new_for_bus_sync (int bus_type, in
  * @param error cast=(GError **)
  * @category gdbus
  */
-public static final native long /*int*/ _g_dbus_proxy_call_sync (long /*int*/ proxy, byte[] method_name, long /*int*/ parameters, int flags, int timeout_msec, long /*int*/ cancellable, long /*int*/[] error);
-public static final long /*int*/ g_dbus_proxy_call_sync (long /*int*/ proxy, byte[] method_name, long /*int*/ parameters, int flags, int timeout_msec, long /*int*/ cancellable, long /*int*/[] error) {
-	lock.lock();
-	try {
-		return _g_dbus_proxy_call_sync (proxy, method_name, parameters, flags, timeout_msec, cancellable, error);
-	} finally {
-		lock.unlock();
-	}
-}
+// NOTE: Lock is not used, see Bug 546743 and Bug 547093
+public static final native long g_dbus_proxy_call_sync (long proxy, byte[] method_name, long parameters, int flags, int timeout_msec, long cancellable, long [] error);
 
 /**
  * @param proxy cast=(GDBusProxy *)
@@ -4205,11 +4195,18 @@ public static final long /*int*/ g_dbus_proxy_call_sync (long /*int*/ proxy, byt
  * @param error cast=(GError **)
  * @category gdbus
  */
-public static final native void _g_dbus_proxy_call (long /*int*/ proxy, byte[] method_name, long /*int*/ parameters, int flags, int timeout_msec, long /*int*/ cancellable, long /*int*/ callback, long /*int*/[] error);
-public static final void g_dbus_proxy_call (long /*int*/ proxy, byte[] method_name, long /*int*/ parameters, int flags, int timeout_msec, long /*int*/ cancellable, long /*int*/ callback, long /*int*/[] error) {
+// NOTE: Lock is not used, see Bug 546743 and Bug 547093
+public static final native void g_dbus_proxy_call (long proxy, byte[] method_name, long parameters, int flags, int timeout_msec, long cancellable, long callback, long [] error);
+
+/**
+ * @param proxy cast=(GDBusProxy *)
+ * @category gdbus
+ */
+public static final native long _g_dbus_proxy_get_name_owner (long proxy);
+public static final long g_dbus_proxy_get_name_owner (long proxy) {
 	lock.lock();
 	try {
-		_g_dbus_proxy_call (proxy, method_name, parameters, flags, timeout_msec, cancellable, callback, error);
+		return _g_dbus_proxy_get_name_owner (proxy);
 	} finally {
 		lock.unlock();
 	}
@@ -4221,8 +4218,8 @@ public static final void g_dbus_proxy_call (long /*int*/ proxy, byte[] method_na
  * @param error cast=(GError **)
  * @category gdbus
  */
-public static final native long /*int*/ _g_dbus_proxy_call_finish (long /*int*/ proxy, long /*int*/ res, long /*int*/[] error);
-public static final long /*int*/ g_dbus_proxy_call_finish (long /*int*/ proxy, long /*int*/ res, long /*int*/[] error) {
+public static final native long _g_dbus_proxy_call_finish (long proxy, long res, long [] error);
+public static final long g_dbus_proxy_call_finish (long proxy, long res, long [] error) {
 	lock.lock();
 	try {
 		return _g_dbus_proxy_call_finish (proxy, res, error);
@@ -4236,9 +4233,9 @@ public static final long /*int*/ g_dbus_proxy_call_finish (long /*int*/ proxy, l
  * @param error cast=(GError **)
  * @category gdbus
  */
-public static final native long /*int*/ _g_dbus_node_info_new_for_xml (byte[] xml_data, long /*int*/[] error);
+public static final native long _g_dbus_node_info_new_for_xml (byte[] xml_data, long [] error);
 /** @category gdbus */
-public static final long /*int*/ g_dbus_node_info_new_for_xml (byte[] xml_data, long /*int*/[] error) {
+public static final long g_dbus_node_info_new_for_xml (byte[] xml_data, long [] error) {
   lock.lock();
   try {
     return _g_dbus_node_info_new_for_xml (xml_data, error);
@@ -4258,9 +4255,9 @@ public static final long /*int*/ g_dbus_node_info_new_for_xml (byte[] xml_data, 
  * @param user_data_free_func cast=(GDestroyNotify)
  * @category gdbus
  */
-public static final native int _g_bus_own_name (int bus_type, byte[] name, int flags, long /*int*/ bus_acquired_handler, long /*int*/ name_acquired_handler, long /*int*/ name_lost_handler, long /*int*/  user_data, long /*int*/ user_data_free_func);
+public static final native int _g_bus_own_name (int bus_type, byte[] name, int flags, long bus_acquired_handler, long name_acquired_handler, long name_lost_handler, long  user_data, long user_data_free_func);
 /** @category gdbus */
-public static final int g_bus_own_name (int bus_type, byte[] name, int flags, long /*int*/ bus_acquired_handler, long /*int*/ name_acquired_handler, long /*int*/ name_lost_handler, long /*int*/  user_data, long /*int*/ user_data_free_func) {
+public static final int g_bus_own_name (int bus_type, byte[] name, int flags, long bus_acquired_handler, long name_acquired_handler, long name_lost_handler, long  user_data, long user_data_free_func) {
 	lock.lock();
 	try {
 		return _g_bus_own_name(bus_type, name, flags, bus_acquired_handler, name_acquired_handler, name_lost_handler, user_data, user_data_free_func);
@@ -4279,9 +4276,9 @@ public static final int g_bus_own_name (int bus_type, byte[] name, int flags, lo
  * @param error cast=(GError **)
  * @category gdbus
  */
-public static final native int _g_dbus_connection_register_object (long /*int*/ connection, byte[] object_path, long /*int*/ interface_info, long /*int*/[] vtable, long /*int*/ user_data, long /*int*/ user_data_free_func, long /*int*/[] error);
+public static final native int _g_dbus_connection_register_object (long connection, byte[] object_path, long interface_info, long [] vtable, long user_data, long user_data_free_func, long [] error);
 /** @category gdbus */
-public static final int g_dbus_connection_register_object (long /*int*/ connection, byte[] object_path, long /*int*/ interface_info, long /*int*/[] vtable, long /*int*/ user_data, long /*int*/ user_data_free_func, long /*int*/[] error) {
+public static final int g_dbus_connection_register_object (long connection, byte[] object_path, long interface_info, long [] vtable, long user_data, long user_data_free_func, long [] error) {
 	lock.lock();
 	try {
 		return _g_dbus_connection_register_object( connection,  object_path,  interface_info,  vtable,  user_data,  user_data_free_func, error);
@@ -4295,9 +4292,9 @@ public static final int g_dbus_connection_register_object (long /*int*/ connecti
  * @param name cast=(const gchar *)
  * @category gdbus
  */
-public static final native long /*int*/ _g_dbus_node_info_lookup_interface (long /*int*/ info, byte [] name);
+public static final native long _g_dbus_node_info_lookup_interface (long info, byte [] name);
 /** @category gdbus */
-public static final long /*int*/ g_dbus_node_info_lookup_interface (long /*int*/ info, byte [] name) {
+public static final long g_dbus_node_info_lookup_interface (long info, byte [] name) {
 	lock.lock();
 	try {
 		return _g_dbus_node_info_lookup_interface(info, name);
@@ -4311,9 +4308,9 @@ public static final long /*int*/ g_dbus_node_info_lookup_interface (long /*int*/
  * @param parameters cast=(GVariant *)
  * @category gdbus
  */
-public static final native void _g_dbus_method_invocation_return_value (long /*int*/ invocation, long /*int*/ parameters);
+public static final native void _g_dbus_method_invocation_return_value (long invocation, long parameters);
 /** @category gdbus */
-public static final void g_dbus_method_invocation_return_value (long /*int*/ invocation, long /*int*/ parameters) {
+public static final void g_dbus_method_invocation_return_value (long invocation, long parameters) {
 	lock.lock();
 	try {
 		_g_dbus_method_invocation_return_value (invocation, parameters);
@@ -4326,9 +4323,9 @@ public static final void g_dbus_method_invocation_return_value (long /*int*/ inv
  * @param type cast=(const GVariantType *)
  * @category gdbus
  */
-public static final native long /*int*/ _g_variant_builder_new (long /*int*/ type);
+public static final native long _g_variant_builder_new (long type);
 /** @category gdbus */
-public static final long /*int*/ g_variant_builder_new (long /*int*/ type) {
+public static final long g_variant_builder_new (long type) {
 	lock.lock();
 	try {
 		return _g_variant_builder_new(type);
@@ -4342,9 +4339,9 @@ public static final long /*int*/ g_variant_builder_new (long /*int*/ type) {
  * @param value cast=(GVariant *)
  * @category gdbus
  */
-public static final native void /*int*/ _g_variant_builder_add_value (long /*int*/ builder, long /*int*/ value);
+public static final native void _g_variant_builder_add_value (long builder, long value);
 /** @category gdbus */
-public static final void /*int*/ g_variant_builder_add_value (long /*int*/ builder, long /*int*/ value) {
+public static final void g_variant_builder_add_value (long builder, long value) {
 	lock.lock();
 	try {
 		_g_variant_builder_add_value(builder, value);
@@ -4354,12 +4351,27 @@ public static final void /*int*/ g_variant_builder_add_value (long /*int*/ build
 }
 
 /**
+ * @param type cast=(GVariantType *)
+ * @category gdbus
+ */
+public static final native void _g_variant_type_free (long type);
+/** @category gdbus */
+public static final void g_variant_type_free (long type) {
+	lock.lock();
+	try {
+		_g_variant_type_free(type);
+	} finally {
+		lock.unlock();
+	}
+}
+
+/**
  * @param type cast=(const gchar *)
  * @category gdbus
  */
-public static final native long /*int*/ _g_variant_type_new (byte [] type);
+public static final native long _g_variant_type_new (byte [] type);
 /** @category gdbus */
-public static final long /*int*/ g_variant_type_new (byte [] type) {
+public static final long g_variant_type_new (byte [] type) {
 	lock.lock();
 	try {
 		return _g_variant_type_new(type);
@@ -4372,9 +4384,9 @@ public static final long /*int*/ g_variant_type_new (byte [] type) {
  * @param builder cast=(GVariantBuilder *)
  * @category gdbus
  */
-public static final native long /*int*/ _g_variant_builder_end (long /*int*/ builder);
+public static final native long _g_variant_builder_end (long builder);
 /** @category gdbus */
-public static final long /*int*/ g_variant_builder_end (long /*int*/ builder) {
+public static final long g_variant_builder_end (long builder) {
 	lock.lock();
 	try {
 		return _g_variant_builder_end(builder);
@@ -4387,9 +4399,9 @@ public static final long /*int*/ g_variant_builder_end (long /*int*/ builder) {
  * @param builder cast=(GVariantBuilder *)
  * @category gdbus
  */
-public static final native void /*int*/ _g_variant_builder_unref (long /*int*/ builder);
+public static final native void _g_variant_builder_unref (long builder);
 /** @category gdbus */
-public static final void /*int*/ g_variant_builder_unref (long /*int*/ builder) {
+public static final void g_variant_builder_unref (long builder) {
 	lock.lock();
 	try {
 		_g_variant_builder_unref(builder);
@@ -4399,12 +4411,38 @@ public static final void /*int*/ g_variant_builder_unref (long /*int*/ builder) 
 }
 
 /**
+ * @param format_string cast=(const gchar *),flags=no_out
+ * @param arg0 cast=(const gchar *),flags=no_out
+ * @category gdbus
+ */
+// NOTE: Lock is not used, see Bug 546743 and Bug 547093
+public static final native long g_variant_new (byte[] format_string, byte[] arg0);
+
+/**
+ * @param format_string cast=(const gchar *),flags=no_out
+ * @param arg0 cast=(gboolean)
+ * @param arg1 cast=(const gchar *),flags=no_out
+ * @category gdbus
+ */
+// NOTE: Lock is not used, see Bug 546743 and Bug 547093
+public static final native long g_variant_new (byte[] format_string, boolean arg0, byte[] arg1);
+
+/**
+ * @param format_string cast=(const gchar *),flags=no_out
+ * @param arg0 cast=(const gchar *),flags=no_out
+ * @param arg1 cast=(const gchar *),flags=no_out
+ * @category gdbus
+ */
+// NOTE: Lock is not used, see Bug 546743 and Bug 547093
+public static final native long g_variant_new (byte[] format_string, byte[] arg0, byte[] arg1);
+
+/**
  * @param intval cast=(gint32)
  * @category gdbus
  */
-public static final native long /*int*/ _g_variant_new_int32 (int intval);
+public static final native long _g_variant_new_int32 (int intval);
 /** @category gdbus */
-public static final long /*int*/ g_variant_new_int32 (int intval) {
+public static final long g_variant_new_int32 (int intval) {
 	lock.lock();
 	try {
 		return _g_variant_new_int32(intval);
@@ -4419,9 +4457,9 @@ public static final long /*int*/ g_variant_new_int32 (int intval) {
  * @category gdbus
  * @return int
  */
-public static final native int _g_variant_get_int32 (long /*int*/ gvariant);
+public static final native int _g_variant_get_int32 (long gvariant);
 /** @category gdbus */
-public static final int g_variant_get_int32 (long /*int*/ gvariant) {
+public static final int g_variant_get_int32 (long gvariant) {
 	lock.lock();
 	try {
 		return _g_variant_get_int32 (gvariant);
@@ -4435,9 +4473,9 @@ public static final int g_variant_get_int32 (long /*int*/ gvariant) {
  * @category gdbus
  * @return guchar
  */
-public static final native byte _g_variant_get_byte (long /*int*/ gvariant);
+public static final native byte _g_variant_get_byte (long gvariant);
 /** @category gdbus */
-public static final byte g_variant_get_byte (long /*int*/ gvariant) {
+public static final byte g_variant_get_byte (long gvariant) {
 	lock.lock();
 	try {
 		return _g_variant_get_byte (gvariant);
@@ -4450,9 +4488,9 @@ public static final byte g_variant_get_byte (long /*int*/ gvariant) {
  * @param gvariant cast=(GVariant *)
  * @category gdbus
  */
-public static final native boolean /*int*/ _g_variant_get_boolean (long /*int*/ gvariant);
+public static final native boolean _g_variant_get_boolean (long gvariant);
 /** @category gdbus */
-public static final boolean /*int*/ g_variant_get_boolean (long /*int*/ gvariant) {
+public static final boolean g_variant_get_boolean (long gvariant) {
 	lock.lock();
 	try {
 		return _g_variant_get_boolean (gvariant);
@@ -4466,9 +4504,9 @@ public static final boolean /*int*/ g_variant_get_boolean (long /*int*/ gvariant
  * @param index cast=(gsize)
  * @category gdbus
  */
-public static final native long /*int*/ _g_variant_get_child_value (long /*int*/ gvariant, int index);
+public static final native long _g_variant_get_child_value (long gvariant, int index);
 /** @category gdbus */
-public static final long /*int*/ g_variant_get_child_value (long /*int*/ gvariant, int index) {
+public static final long g_variant_get_child_value (long gvariant, int index) {
 	lock.lock();
 	try {
 		return _g_variant_get_child_value (gvariant, index);
@@ -4481,9 +4519,9 @@ public static final long /*int*/ g_variant_get_child_value (long /*int*/ gvarian
  * @param gvariant cast=(GVariant *)
  * @category gdbus
  */
-public static final native double _g_variant_get_double (long /*int*/ gvariant);
+public static final native double _g_variant_get_double (long gvariant);
 /** @category gdbus */
-public static final double g_variant_get_double (long /*int*/ gvariant) {
+public static final double g_variant_get_double (long gvariant) {
 	lock.lock();
 	try {
 		return _g_variant_get_double (gvariant);
@@ -4492,8 +4530,8 @@ public static final double g_variant_get_double (long /*int*/ gvariant) {
 	}
 }
 
-public static final native long /*int*/ _g_variant_new_uint64 (long value);
-public static final long /*int*/ g_variant_new_uint64 (long value) {
+public static final native long _g_variant_new_uint64 (long value);
+public static final long g_variant_new_uint64 (long value) {
 	lock.lock();
 	try {
 		return _g_variant_new_uint64 (value);
@@ -4506,9 +4544,9 @@ public static final long /*int*/ g_variant_new_uint64 (long value) {
  * @param gvariant cast=(GVariant *)
  * @category gdbus
  */
-public static final native long _g_variant_get_uint64 (long /*int*/ gvariant);
+public static final native long _g_variant_get_uint64 (long gvariant);
 /** @category gdbus */
-public static final long g_variant_get_uint64 (long /*int*/ gvariant) {
+public static final long g_variant_get_uint64 (long gvariant) {
 	lock.lock();
 	try {
 		return _g_variant_get_uint64 (gvariant);
@@ -4522,9 +4560,9 @@ public static final long g_variant_get_uint64 (long /*int*/ gvariant) {
  * @param length cast=(gsize *)
  * @category gdbus
  */
-public static final native long /*int*/ _g_variant_get_string (long /*int*/ gvariant, long[] length);
+public static final native long _g_variant_get_string (long gvariant, long[] length);
 /** @category gdbus */
-public static final long /*int*/ g_variant_get_string (long /*int*/ gvariant, long[] length) {
+public static final long g_variant_get_string (long gvariant, long[] length) {
 	lock.lock();
 	try {
 		return _g_variant_get_string (gvariant, length);
@@ -4538,9 +4576,9 @@ public static final long /*int*/ g_variant_get_string (long /*int*/ gvariant, lo
  * @return const GVariantType *
  * @category gdbus
  */
-public static final native long /*int*/ _g_variant_get_type (long /*int*/ gvariant);
+public static final native long _g_variant_get_type (long gvariant);
 /** @category gdbus */
-public static final long /*int*/ g_variant_get_type (long /*int*/ gvariant) {
+public static final long g_variant_get_type (long gvariant) {
 	lock.lock();
 	try {
 		return _g_variant_get_type (gvariant);
@@ -4553,9 +4591,9 @@ public static final long /*int*/ g_variant_get_type (long /*int*/ gvariant) {
  * @param gvariant cast=(GVariant *)
  * @category gdbus
  */
-public static final native long /*int*/  _g_variant_get_type_string (long /*int*/ gvariant);
+public static final native long  _g_variant_get_type_string (long gvariant);
 /** @category gdbus */
-public static final long /*int*/ g_variant_get_type_string (long /*int*/ gvariant) {
+public static final long g_variant_get_type_string (long gvariant) {
 	lock.lock();
 	try {
 		return _g_variant_get_type_string (gvariant);
@@ -4569,9 +4607,9 @@ public static final long /*int*/ g_variant_get_type_string (long /*int*/ gvarian
  * @param type cast=(const GVariantType *)
  * @category gdbus
  */
-public static final native boolean _g_variant_is_of_type (long /*int*/ gvariant, byte[] type);
+public static final native boolean _g_variant_is_of_type (long gvariant, byte[] type);
 /** @category gdbus */
-public static final boolean g_variant_is_of_type (long /*int*/ gvariant, byte[] type) {
+public static final boolean g_variant_is_of_type (long gvariant, byte[] type) {
 	lock.lock();
 	try {
 		return _g_variant_is_of_type (gvariant, type);
@@ -4599,9 +4637,9 @@ public static final long g_variant_n_children (long gvariant) {
  * @param value cast=(gboolean)
  * @category gdbus
  */
-public static final native long /*int*/ _g_variant_new_boolean (boolean value);
+public static final native long _g_variant_new_boolean (boolean value);
 /** @category gdbus */
-public static final long /*int*/ g_variant_new_boolean (boolean value) {
+public static final long g_variant_new_boolean (boolean value) {
 	lock.lock();
 	try {
 		return _g_variant_new_boolean (value);
@@ -4614,9 +4652,9 @@ public static final long /*int*/ g_variant_new_boolean (boolean value) {
  * @param value cast=(gboolean)
  * @category gdbus
  */
-public static final native long /*int*/ _g_variant_new_double (double value);
+public static final native long _g_variant_new_double (double value);
 /** @category gdbus */
-public static final long /*int*/ g_variant_new_double (double value) {
+public static final long g_variant_new_double (double value) {
 	lock.lock();
 	try {
 		return _g_variant_new_double (value);
@@ -4629,9 +4667,9 @@ public static final long /*int*/ g_variant_new_double (double value) {
  * @param value cast=(guchar)
  * @category gdbus
  */
-public static final native long /*int*/ _g_variant_new_byte (byte value);
+public static final native long _g_variant_new_byte (byte value);
 /** @category gdbus */
-public static final long /*int*/ g_variant_new_byte (byte value) {
+public static final long g_variant_new_byte (byte value) {
 	lock.lock();
 	try {
 		return _g_variant_new_byte (value);
@@ -4645,9 +4683,9 @@ public static final long /*int*/ g_variant_new_byte (byte value) {
  * @param length cast=(gsize)
  * @category gdbus
  */
-public static final native long /*int*/ _g_variant_new_tuple (long /*int*/[] items, long length);
+public static final native long _g_variant_new_tuple (long [] items, long length);
 /** @category gdbus */
-public static final long /*int*/ g_variant_new_tuple (long /*int*/[] items, long length ) {
+public static final long g_variant_new_tuple (long [] items, long length ) {
 	lock.lock();
 	try {
 		return _g_variant_new_tuple (items, length);
@@ -4660,9 +4698,9 @@ public static final long /*int*/ g_variant_new_tuple (long /*int*/[] items, long
  * @param string cast=(const gchar *)
  * @category gdbus
  */
-public static final native long /*int*/ _g_variant_new_string (byte[] string);
+public static final native long _g_variant_new_string (byte[] string);
 /** @category gdbus */
-public static final long /*int*/ g_variant_new_string (byte[] string) {
+public static final long g_variant_new_string (byte[] string) {
 	lock.lock();
 	try {
 		return _g_variant_new_string (string);
@@ -4672,11 +4710,26 @@ public static final long /*int*/ g_variant_new_string (byte[] string) {
 }
 
 /**
+ * @param value cast=(GVariant *)
+ * @category gdbus
+ */
+public static final native void _g_variant_unref (long value);
+/** @category gdbus */
+public static final void g_variant_unref (long value) {
+	lock.lock();
+	try {
+		_g_variant_unref (value);
+	} finally {
+		lock.unlock();
+	}
+}
+
+/**
  * @param object cast=(GObject *)
  */
-public static final native long /*int*/ _g_object_ref_sink(long /*int*/ object);
+public static final native long _g_object_ref_sink(long object);
 
-public static final long /*int*/ g_object_ref_sink(long /*int*/ object) {
+public static final long g_object_ref_sink(long object) {
 	lock.lock();
 	try {
 		return _g_object_ref_sink(object);

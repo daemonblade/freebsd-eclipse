@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -989,11 +989,6 @@ void enableWidget (boolean enabled) {
 
 void fillBackground (long /*int*/ hDC, int pixel, RECT rect) {
 	if (rect.left > rect.right || rect.top > rect.bottom) return;
-	long /*int*/ hPalette = display.hPalette;
-	if (hPalette != 0) {
-		OS.SelectPalette (hDC, hPalette, false);
-		OS.RealizePalette (hDC);
-	}
 	OS.FillRect (hDC, rect, findBrush (pixel, OS.BS_SOLID));
 }
 
@@ -3742,10 +3737,6 @@ public void setRegion (Region region) {
 	this.region = region;
 }
 
-boolean setSavedFocus () {
-	return forceFocus ();
-}
-
 /**
  * Sets the receiver's size to the point specified by the arguments.
  * <p>
@@ -4823,13 +4814,11 @@ long /*int*/ windowProc (long /*int*/ hwnd, int msg, long /*int*/ wParam, long /
 		case OS.WM_NCPAINT:				result = WM_NCPAINT (wParam, lParam); break;
 		case OS.WM_NOTIFY:				result = WM_NOTIFY (wParam, lParam); break;
 		case OS.WM_PAINT:				result = WM_PAINT (wParam, lParam); break;
-		case OS.WM_PALETTECHANGED:		result = WM_PALETTECHANGED (wParam, lParam); break;
 		case OS.WM_PARENTNOTIFY:		result = WM_PARENTNOTIFY (wParam, lParam); break;
 		case OS.WM_PASTE:				result = WM_PASTE (wParam, lParam); break;
 		case OS.WM_PRINT:				result = WM_PRINT (wParam, lParam); break;
 		case OS.WM_PRINTCLIENT:			result = WM_PRINTCLIENT (wParam, lParam); break;
 		case OS.WM_QUERYENDSESSION:		result = WM_QUERYENDSESSION (wParam, lParam); break;
-		case OS.WM_QUERYNEWPALETTE:		result = WM_QUERYNEWPALETTE (wParam, lParam); break;
 		case OS.WM_QUERYOPEN:			result = WM_QUERYOPEN (wParam, lParam); break;
 		case OS.WM_RBUTTONDBLCLK:		result = WM_RBUTTONDBLCLK (wParam, lParam); break;
 		case OS.WM_RBUTTONDOWN:			result = WM_RBUTTONDOWN (wParam, lParam); break;
@@ -4922,11 +4911,6 @@ LRESULT WM_CONTEXTMENU (long /*int*/ wParam, long /*int*/ lParam) {
 }
 
 LRESULT WM_CTLCOLOR (long /*int*/ wParam, long /*int*/ lParam) {
-	long /*int*/ hPalette = display.hPalette;
-	if (hPalette != 0) {
-		OS.SelectPalette (wParam, hPalette, false);
-		OS.RealizePalette (wParam);
-	}
 	Control control = display.getControl (lParam);
 	if (control == null) return null;
 	return control.wmColorChild (wParam, lParam);
@@ -5372,10 +5356,6 @@ LRESULT WM_PAINT (long /*int*/ wParam, long /*int*/ lParam) {
 	return wmPaint (handle, wParam, lParam);
 }
 
-LRESULT WM_PALETTECHANGED (long /*int*/ wParam, long /*int*/ lParam) {
-	return null;
-}
-
 LRESULT WM_PARENTNOTIFY (long /*int*/ wParam, long /*int*/ lParam) {
 	return null;
 }
@@ -5393,10 +5373,6 @@ LRESULT WM_PRINTCLIENT (long /*int*/ wParam, long /*int*/ lParam) {
 }
 
 LRESULT WM_QUERYENDSESSION (long /*int*/ wParam, long /*int*/ lParam) {
-	return null;
-}
-
-LRESULT WM_QUERYNEWPALETTE (long /*int*/ wParam, long /*int*/ lParam) {
 	return null;
 }
 

@@ -18,7 +18,7 @@
   <parent>
     <groupId>eclipse.platform.releng.tychoeclipsebuilder</groupId>
     <artifactId>eclipse.platform.releng.tychoeclipsebuilder</artifactId>
-    <version>4.11.0-SNAPSHOT</version>
+    <version>4.12.0-SNAPSHOT</version>
   </parent>
 
   <!--
@@ -77,7 +77,7 @@
             <configuration>
               <formats>
                 <win32>zip</win32>
-                <freebsd>tar.gz</freebsd>
+                <linux>tar.gz</linux>
                 <macosx>tar.gz</macosx>
               </formats>
             </configuration>

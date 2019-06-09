@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -144,6 +144,7 @@ public final class NewWizardMessages extends NLS {
 	public static String NewTypeWizardPage_modifiers_static;
 	public static String NewTypeWizardPage_addcomment_label;
 	public static String NewTypeWizardPage_addcomment_description;
+	public static String NewTypeWizardPage_addcomment_description2;
 	public static String NewTypeWizardPage_error_EnterTypeName;
 	public static String NewTypeWizardPage_error_TypeNameExists;
 	public static String NewTypeWizardPage_error_TypeNameExistsDifferentCase;
@@ -296,6 +297,7 @@ public final class NewWizardMessages extends NLS {
 	public static String BuildPathsBlock_tab_projects;
 	public static String BuildPathsBlock_tab_libraries;
 	public static String BuildPathsBlock_tab_order;
+	public static String BuildPathsBlock_tab_modules;
 	public static String BuildPathsBlock_classpath_label;
 	public static String BuildPathsBlock_classpath_up_button;
 	public static String BuildPathsBlock_classpath_down_button;
@@ -458,6 +460,9 @@ public final class NewWizardMessages extends NLS {
 	public static String ModuleDialog_errorOnContentsTab_error;
 	public static String ModuleDialog_errorOnDetailsTab_error;
 
+	public static String ModuleDialog_deprecated_warning;
+	public static String ModuleDialog_switchToTab_button;
+
 	public static String ModuleDialog_contents_tab;
 	public static String ModuleDialog_availableModules_list;
 	public static String ModuleDialog_availableModules_tooltip;
@@ -512,7 +517,66 @@ public final class NewWizardMessages extends NLS {
 	public static String AddReadsBlock_sourceModule_label;
 	public static String AddReadsBlock_targetModule_label;
 	//
-	
+	public static String ModuleDependenciesPage_modules_label;
+	public static String ModuleDependenciesPage_addSystemModule_button;
+	public static String ModuleDependenciesPage_details_label;
+	public static String ModuleDependenciesPage_nonModularProject_dummy;
+	public static String ModuleDependenciesPage_outOfSync_warning;
+	// buttons:
+	public static String ModuleDependenciesPage_modules_remove_button;
+	public static String ModuleDependenciesPage_modules_read_button;
+	public static String ModuleDependenciesPage_modules_expose_package_button;
+	public static String ModuleDependenciesPage_modules_patch_button;
+	public static String ModuleDependenciesPage_modules_edit_button;
+	public static String ModuleDependenciesPage_showJPMSOptions_button;
+	// dialogs:
+	public static String ModuleSelectionDialog_addSystemModules_title;
+	public static String ModuleSelectionDialog_addSystemModules_message;
+	public static String ModuleSelectionDialog_selectAll_button;
+	public static String ModuleSelectionDialog_add_button;
+
+	public static String ModuleSelectionDialog_selectModule_title;
+	public static String ModuleSelectionDialog_selectReadModule_message;
+	public static String ModuleSelectionDialog_searchModules_job;
+	public static String ModuleSelectionDialog_searchModules_temp_message;
+
+	public static String ModuleDependenciesAdapter_addSystemModule_title;
+	public static String ModuleDependenciesAdapter_addSystemModules_question;
+	public static String ModuleDependenciesAdapter_add_button;
+	public static String ModuleDependenciesAdapter_addReadsNotOnModulepath_error;
+	public static String ModuleDependenciesAdapter_goToLibrariesTab_button;
+	public static String ModuleDependenciesAdapter_goToProjectsTab_button;
+
+	public static String ModulePatchSourceSelectionDialog_patchSourceLocation_message;
+	public static String ModulePatchSourceSelectionDialog_patchSourceLocation_title;
+
+	public static String ShowJPMSOptionsDialog_dialog_title;
+	public static String ShowJPMSOptionsDialog_explanation_label;
+	public static String ShowJPMSOptionsDialog_close_button;
+	public static String ShowJPMSOptionsDialog_copyAndCopy_button;
+	public static String ShowJPMSOptionsDialog_empty_message;
+	public static String ShowJPMSOptionsDialog_retrieve_error;
+
+	public static String ModuleDependenciesPage_removeModule_dialog_title;
+	public static String ModuleDependenciesPage_removingModule_message;
+	public static String ModuleDependenciesPage_removingModuleTransitive_message;
+	public static String ModuleDependenciesPage_remove_button;
+	public static String ModuleDependenciesPage_removeCurrentModule_error;
+	public static String ModuleDependenciesPage_removeModule_error_with_hint;
+	public static String ModuleDependenciesPage_removeSystemModule_error_hint;
+
+	public static String ModuleDependenciesAdapter_patchConflict_title;
+	public static String ModuleDependenciesAdapter_patchConflict_message;
+	public static String ModuleDependenciesAdapter_patchOutputConflict_validationError;
+	public static String ModuleDependenciesAdapter_project_kind;
+	public static String ModuleDependenciesAdapter_sourceFolder_kind;
+	public static String ModuleDependenciesAdapter_configure_error;
+
+	// detail tree:
+	public static String ModuleDependenciesAdapter_declared_node;
+	public static String ModuleDependenciesAdapter_configured_node;
+	//
+
 	public static String EditVariableEntryDialog_title;
 	public static String EditVariableEntryDialog_filename_varlabel;
 	public static String EditVariableEntryDialog_filename_variable_button;

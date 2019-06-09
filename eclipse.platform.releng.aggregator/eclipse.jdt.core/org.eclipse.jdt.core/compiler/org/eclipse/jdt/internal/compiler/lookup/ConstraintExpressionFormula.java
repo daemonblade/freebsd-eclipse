@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2017 GK Software AG.
+ * Copyright (c) 2013, 2019 GK Software AG.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -30,6 +30,7 @@ import org.eclipse.jdt.internal.compiler.ast.Invocation;
 import org.eclipse.jdt.internal.compiler.ast.LambdaExpression;
 import org.eclipse.jdt.internal.compiler.ast.MessageSend;
 import org.eclipse.jdt.internal.compiler.ast.ReferenceExpression;
+import org.eclipse.jdt.internal.compiler.ast.SwitchExpression;
 import org.eclipse.jdt.internal.compiler.ast.Wildcard;
 import org.eclipse.jdt.internal.compiler.lookup.InferenceContext18.SuspendedInferenceRecord;
 
@@ -103,6 +104,7 @@ class ConstraintExpressionFormula extends ConstraintFormula {
 				SuspendedInferenceRecord prevInvocation = inferenceContext.enterPolyInvocation(invocation, invocation.arguments());
 
 				// Invocation Applicability Inference: 18.5.1 & Invocation Type Inference: 18.5.2
+				InferenceContext18 innerCtx = null;
 				try {
 					Expression[] arguments = invocation.arguments();
 					TypeBinding[] argumentTypes = arguments == null ? Binding.NO_PARAMETERS : new TypeBinding[arguments.length];
@@ -110,7 +112,7 @@ class ConstraintExpressionFormula extends ConstraintFormula {
 						argumentTypes[i] = arguments[i].resolvedType;
 					if (previousMethod instanceof ParameterizedGenericMethodBinding) {
 						// find the previous inner inference context to see what inference kind this invocation needs:
-						InferenceContext18 innerCtx = invocation.getInferenceContext((ParameterizedGenericMethodBinding) previousMethod);
+						innerCtx = invocation.getInferenceContext((ParameterizedGenericMethodBinding) previousMethod);
 						if (innerCtx == null) { 
 							/* No inference context -> the method was likely manufactured by Scope.findExactMethod -> assume it wasn't really poly after all.
 							   -> proceed as for non-poly expressions.
@@ -136,7 +138,7 @@ class ConstraintExpressionFormula extends ConstraintFormula {
 						return FALSE;
 					return null; // already incorporated
 				} finally {
-					inferenceContext.resumeSuspendedInference(prevInvocation);
+					inferenceContext.resumeSuspendedInference(prevInvocation, innerCtx);
 				}
 			} else if (this.left instanceof ConditionalExpression) {
 				ConditionalExpression conditional = (ConditionalExpression) this.left;
@@ -144,9 +146,19 @@ class ConstraintExpressionFormula extends ConstraintFormula {
 					new ConstraintExpressionFormula(conditional.valueIfTrue, this.right, this.relation, this.isSoft),
 					new ConstraintExpressionFormula(conditional.valueIfFalse, this.right, this.relation, this.isSoft)
 				};
+			}  else if (this.left instanceof SwitchExpression) {
+				SwitchExpression se = (SwitchExpression) this.left;
+				ConstraintFormula[] cfs = new ConstraintFormula[se.resultExpressions.size()];
+				int i = 0;
+				for (Expression re : se.resultExpressions) {
+					cfs[i++] = new ConstraintExpressionFormula(re, this.right, this.relation, this.isSoft);
+				}
+				return cfs;
 			} else if (this.left instanceof LambdaExpression) {
 				LambdaExpression lambda = (LambdaExpression) this.left;
 				BlockScope scope = lambda.enclosingScope;
+				if (this.right instanceof InferenceVariable)
+					return TRUE; // assume inner inference will handle the fine print
 				if (!this.right.isFunctionalInterface(scope))
 					return FALSE;
 				
@@ -222,7 +234,7 @@ class ConstraintExpressionFormula extends ConstraintFormula {
 			try {
 				return inferenceContext.inferFunctionalInterfaceParameterization(lambda, scope, targetTypeWithWildCards);
 			} finally {
-				inferenceContext.resumeSuspendedInference(previous);
+				inferenceContext.resumeSuspendedInference(previous, null);
 			}
 		}
 	}
@@ -303,8 +315,9 @@ class ConstraintExpressionFormula extends ConstraintFormula {
 				SuspendedInferenceRecord prevInvocation = inferenceContext.enterPolyInvocation(reference, reference.createPseudoExpressions(argumentTypes));
 
 				// Invocation Applicability Inference: 18.5.1 & Invocation Type Inference: 18.5.2
+				InferenceContext18 innerContext = null;
 				try {
-					InferenceContext18 innerContext = reference.getInferenceContext((ParameterizedMethodBinding) compileTimeDecl);
+					innerContext = reference.getInferenceContext((ParameterizedMethodBinding) compileTimeDecl);
 					int innerInferenceKind = determineInferenceKind(compileTimeDecl, argumentTypes, innerContext);
 					inferInvocationApplicability(inferenceContext, original, argumentTypes, original.isConstructor()/*mimic a diamond?*/, innerInferenceKind);
 					if (!inferenceContext.computeB3(reference, r, original))
@@ -313,7 +326,7 @@ class ConstraintExpressionFormula extends ConstraintFormula {
 				} catch (InferenceFailureException e) {
 					return FALSE;
 				} finally {
-					inferenceContext.resumeSuspendedInference(prevInvocation);
+					inferenceContext.resumeSuspendedInference(prevInvocation, innerContext);
 				}
 			}
 			TypeBinding rPrime = compileTimeDecl.isConstructor() ? compileTimeDecl.declaringClass : compileTimeDecl.returnType.capture(inferenceContext.scope, reference.sourceStart(), reference.sourceEnd());
@@ -521,6 +534,13 @@ class ConstraintExpressionFormula extends ConstraintFormula {
 			Set<InferenceVariable> variables = new HashSet<>();
 			variables.addAll(new ConstraintExpressionFormula(expr.valueIfTrue, this.right, COMPATIBLE).inputVariables(context));
 			variables.addAll(new ConstraintExpressionFormula(expr.valueIfFalse, this.right, COMPATIBLE).inputVariables(context));
+			return variables;
+		} else if (this.left instanceof SwitchExpression && this.left.isPolyExpression()) {
+			SwitchExpression expr = (SwitchExpression) this.left;
+			Set<InferenceVariable> variables = new HashSet<>();
+			for (Expression re : expr.resultExpressions) {
+				variables.addAll(new ConstraintExpressionFormula(re, this.right, COMPATIBLE).inputVariables(context));
+			}
 			return variables;
 		}
 		return EMPTY_VARIABLE_LIST;

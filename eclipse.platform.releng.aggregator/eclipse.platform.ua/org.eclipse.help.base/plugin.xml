@@ -131,7 +131,7 @@
             </parameter>
             <parameter
                   name="os"
-                  value="FreeBSD,Linux,AIX,HP,SunOS">
+                  value="Linux,AIX,HP,SunOS">
             </parameter>
          </factoryclass>
       </browser>
@@ -150,7 +150,7 @@
             </parameter>
             <parameter
                   name="os"
-                  value="FreeBSD,Linux,AIX,HP,SunOS">
+                  value="Linux,AIX,HP,SunOS">
             </parameter>
          </factoryclass>
       </browser>
@@ -169,7 +169,7 @@
             </parameter>
             <parameter
                   name="os"
-                  value="FreeBSD,Linux,AIX,HP,SunOS">
+                  value="Linux,AIX,HP,SunOS">
             </parameter>
          </factoryclass>
       </browser>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- *
+ * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -119,17 +119,31 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTRequestor;
+import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.BreakStatement;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.SwitchExpression;
+import org.eclipse.jdt.core.dom.SwitchStatement;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.ui.JavaUI;
 
 
 public class ASTView extends ViewPart implements IShowInSource, IShowInTargetList {
 	
-	static final int JLS_LATEST= AST.JLS11;
+	static final int JLS_LATEST= AST.JLS12;
 
+	private static final int JLS12= AST.JLS12;
+	
+	/**
+	 * @deprecated to get rid of deprecation warnings in code
+	 */
+	@Deprecated
 	private static final int JLS11= AST.JLS11;
 	
 	/**
@@ -383,7 +397,60 @@ public class ASTView extends ViewPart implements IShowInSource, IShowInTargetLis
 			// not interesting
 		}
 	}
-		
+
+	private static final class BreakStatementChecker extends ASTVisitor {
+
+		@Override
+		public boolean visit(BreakStatement node) {
+			try {
+				if (node != null && node.isImplicit() && isInSwitchExpressionOrStatement(node)) {
+					ASTNode parent= node.getParent();
+					List<Statement> statements= null;
+					if (parent instanceof Block) {
+						statements= ((Block) parent).statements();
+					} else if (parent instanceof SwitchExpression) {
+						statements= ((SwitchExpression) parent).statements();
+					} else if (parent instanceof SwitchStatement) {
+						statements= ((SwitchStatement) parent).statements();
+					}
+					if (statements == null) {
+						return true;
+					}
+					Expression exp= node.getExpression();
+					if (exp == null) {
+						statements.remove(node);
+						return false;
+					} else {
+						int index= statements.indexOf(node);
+						statements.remove(node);
+						node.setExpression(null);
+						ExpressionStatement exprStmt= node.getAST().newExpressionStatement(exp);
+						exprStmt.setSourceRange(node.getStartPosition(), node.getLength());
+						statements.add(index, exprStmt);
+						exprStmt.accept(this);
+						return false;
+					}
+				}
+			} catch (UnsupportedOperationException e) {
+				// do nothing
+			}
+			return true;
+		}
+
+		private boolean isInSwitchExpressionOrStatement(BreakStatement node) {
+			boolean result= false;
+			ASTNode parent= node;
+			while (parent != null) {
+				if (parent instanceof SwitchStatement || parent instanceof SwitchExpression) {
+					result= true;
+					break;
+				}
+				parent= parent.getParent();
+			}
+			return result;
+		}
+	}
+
 	private final static String SETTINGS_LINK_WITH_EDITOR= "link_with_editor"; //$NON-NLS-1$
 	private final static String SETTINGS_INPUT_KIND= "input_kind"; //$NON-NLS-1$
 	private final static String SETTINGS_NO_BINDINGS= "create_bindings"; //$NON-NLS-1$
@@ -469,6 +536,7 @@ public class ASTView extends ViewPart implements IShowInSource, IShowInTargetLis
 				case JLS9:
 				case JLS10:
 				case JLS11:
+				case JLS12:
 					fCurrentASTLevel= level;
 			}
 		} catch (NumberFormatException e) {
@@ -650,7 +718,8 @@ public class ASTView extends ViewPart implements IShowInSource, IShowInTargetLis
 			endTime= System.currentTimeMillis();
 		}
 		if (root != null) {
-			updateContentDescription(input, root, endTime - startTime);
+			root.accept(new BreakStatementChecker());	
+			updateContentDescription(input, root, endTime - startTime);			
 		}
 		return root;
 	}
@@ -1098,6 +1167,7 @@ public class ASTView extends ViewPart implements IShowInSource, IShowInTargetLis
 				new ASTLevelToggle("AST Level &9 (9)", JLS9), //$NON-NLS-1$
 				new ASTLevelToggle("AST Level 1&0 (10)", JLS10), //$NON-NLS-1$
 				new ASTLevelToggle("AST Level 1&1 (11)", JLS11), //$NON-NLS-1$
+				new ASTLevelToggle("AST Level 1&2 (12)", JLS12), //$NON-NLS-1$
 		};
 		
 		fAddToTrayAction= new Action() {

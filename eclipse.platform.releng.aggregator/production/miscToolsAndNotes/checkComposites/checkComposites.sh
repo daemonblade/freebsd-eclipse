@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #*******************************************************************************
-# Copyright (c) 2016 IBM Corporation and others.
+# Copyright (c) 2019 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -22,17 +22,19 @@
 # and then executed in "bash script" build step.
 
 baseEclipseAccessDir=/home/data/httpd/download.eclipse.org
-baseEclipseDirSegment=eclipse/downloads/drops4/R-4.10-201812060815
-baseEclipse=eclipse-platform-4.10-linux-gtk-x86_64.tar.gz
+baseEclipseDirSegment=eclipse/downloads/drops4/R-4.11-201903070500
+baseEclipse=eclipse-platform-4.11-linux-gtk-x86_64.tar.gz
 repoFileAccess=file:///home/data/httpd/download.eclipse.org/
 repoHttpAccess=http://download.eclipse.org
 repoAccess=${repoFileAccess}
 # TODO: reduce this list soon
 repoList="\
 /eclipse/updates/4.11/ \
-/eclipse/updates/4.10/ \
-/eclipse/updates/4.10-I-builds/ \
-/eclipse/updates/4.10milestones/ \
+/eclipse/updates/4.12/ \
+/eclipse/updates/4.12-I-builds/ \
+/eclipse/updates/4.12milestones/ \
+/eclipse/updates/4.12-Y-builds/ \
+/eclipse/updates/4.12-P-builds/ \
 /eclipse/updates/4.11-I-builds/ \
 /eclipse/updates/4.11milestones/ \
 /eclipse/updates/4.11-Y-builds/ \

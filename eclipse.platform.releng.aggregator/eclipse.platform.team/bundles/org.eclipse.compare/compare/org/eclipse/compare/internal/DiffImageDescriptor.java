@@ -69,17 +69,11 @@ public class DiffImageDescriptor extends CompositeImageDescriptor {
 		return hash;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.resource.CompositeImageDescriptor#getSize()
-	 */
 	@Override
 	protected Point getSize() {
 		return new Point(fWidth, HEIGHT);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.resource.CompositeImageDescriptor#drawCompositeImage(int, int)
-	 */
 	@Override
 	protected void drawCompositeImage(int width, int height) {
 		if (fLeft) {
@@ -107,17 +101,11 @@ public class DiffImageDescriptor extends CompositeImageDescriptor {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return hashCode;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this)
@@ -145,7 +133,7 @@ public class DiffImageDescriptor extends CompositeImageDescriptor {
 				/* && i1.palette == i2.palette */
 				&& i1.transparentPixel == i2.transparentPixel
 				&& i1.maskPad == i2.maskPad
-	            && i1.alpha == i2.alpha
+				&& i1.alpha == i2.alpha
 				&& i1.type == i2.type && i1.x == i2.x && i1.y == i2.y
 				&& i1.disposalMethod == i2.disposalMethod && i1.delayTime == i2.delayTime
 				&& equals(i1.data,i2.data) && equals(i1.maskData, i2.maskData)

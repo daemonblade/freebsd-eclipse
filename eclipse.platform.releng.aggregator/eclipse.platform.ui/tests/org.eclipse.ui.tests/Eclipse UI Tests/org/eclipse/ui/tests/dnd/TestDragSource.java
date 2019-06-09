@@ -17,35 +17,34 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.WorkbenchPage;
 import org.eclipse.ui.internal.WorkbenchWindow;
-import org.eclipse.ui.internal.dnd.TestDropLocation;
 
 /**
  * @since 3.0
  */
 public abstract class TestDragSource implements IWorkbenchWindowProvider {
-    private WorkbenchPage page;
+	private WorkbenchPage page;
 
-    @Override
+	@Override
 	public abstract String toString();
 
-    public abstract void drag(TestDropLocation target);
+	public abstract void drag(TestDropLocation target);
 
-    public void setPage(WorkbenchPage page) {
-        this.page = page;
-    }
+	public void setPage(WorkbenchPage page) {
+		this.page = page;
+	}
 
-    @Override
+	@Override
 	public IWorkbenchWindow getWorkbenchWindow() {
-        return getPage().getWorkbenchWindow();
-    }
+		return getPage().getWorkbenchWindow();
+	}
 
-    public WorkbenchPage getPage() {
-        if (page == null) {
-            page = (WorkbenchPage) ((WorkbenchWindow) PlatformUI
-                    .getWorkbench().getActiveWorkbenchWindow()).getActivePage();
-        }
-        return page;
-    }
+	public WorkbenchPage getPage() {
+		if (page == null) {
+			page = (WorkbenchPage) ((WorkbenchWindow) PlatformUI
+					.getWorkbench().getActiveWorkbenchWindow()).getActivePage();
+		}
+		return page;
+	}
 
 
 }

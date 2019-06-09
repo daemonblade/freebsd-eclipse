@@ -112,8 +112,8 @@ public class WorkbookEditorsHandler extends FilteredTableBaseHandler {
 			searchPattern = null;
 		} else {
 			SearchPattern patternMatcher = new SearchPattern();
-			if (pattern.indexOf("*") != 0 && pattern.indexOf("?") != 0 && pattern.indexOf(".") != 0) {//$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				pattern = "*" + pattern; //$NON-NLS-1$
+			if (pattern.indexOf('*') != 0 && pattern.indexOf('?') != 0 && pattern.indexOf('.') != 0) {
+				pattern = '*' + pattern;
 			}
 			patternMatcher.setPattern(pattern);
 			searchPattern = patternMatcher;
@@ -162,17 +162,6 @@ public class WorkbookEditorsHandler extends FilteredTableBaseHandler {
 		});
 
 		ColumnViewerToolTipSupport.enableFor(tableViewerColumn.getViewer());
-	}
-
-	/** Extends generated label adding the resource path for duplicates */
-	@Override
-	protected String getWorkbenchPartReferenceText(WorkbenchPartReference ref) {
-		StringBuilder str = new StringBuilder(super.getWorkbenchPartReferenceText(ref));
-		if (ref instanceof EditorReference) {
-			str.append(" - "); //$NON-NLS-1$
-			str.append(ref.getTitleToolTip());
-		}
-		return str.toString();
 	}
 
 	/** True if the given model represents the active editor */

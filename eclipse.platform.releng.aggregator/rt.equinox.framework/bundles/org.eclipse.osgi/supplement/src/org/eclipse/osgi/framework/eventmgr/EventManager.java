@@ -196,6 +196,7 @@ public class EventManager {
 		if (thread == null) {
 			/* if there is no thread, then create a new one */
 			thread = AccessController.doPrivileged(new PrivilegedAction<EventThread<K, V, E>>() {
+				@Override
 				public EventThread<K, V, E> run() {
 					EventThread<K, V, E> t = new EventThread<>(threadGroup, threadName);
 					return t;
@@ -333,6 +334,7 @@ public class EventManager {
 		 * This method pulls events from
 		 * the queue and dispatches them.
 		 */
+		@Override
 		public void run() {
 			try {
 				while (true) {
@@ -346,12 +348,7 @@ public class EventManager {
 					// will not automatically clear this variable for each loop iteration.
 					item = null;
 				}
-			} catch (RuntimeException e) {
-				if (EventManager.DEBUG) {
-					e.printStackTrace();
-				}
-				throw e;
-			} catch (Error e) {
+			} catch (RuntimeException | Error e) {
 				if (EventManager.DEBUG) {
 					e.printStackTrace();
 				}

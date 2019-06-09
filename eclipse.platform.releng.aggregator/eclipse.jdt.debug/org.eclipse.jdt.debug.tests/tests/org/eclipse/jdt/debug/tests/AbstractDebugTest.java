@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -188,6 +188,7 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 	public static final String ONE_FIVE_PROJECT_NAME = "OneFive";
 	public static final String ONE_SEVEN_PROJECT_NAME = "OneSeven";
 	public static final String ONE_EIGHT_PROJECT_NAME = "OneEight";
+	public static final String NINE_PROJECT_NAME = "Nine";
 	public static final String BOUND_JRE_PROJECT_NAME = "BoundJRE";
 	public static final String CLONE_SUFFIX = "Clone";
 
@@ -238,6 +239,7 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 	private static boolean loaded15 = false;
 	private static boolean loaded17 = false;
 	private static boolean loaded18 = false;
+	private static boolean loaded9 = false;
 	private static boolean loadedEE = false;
 	private static boolean loadedJRE = false;
 	private static boolean loadedMulti = false;
@@ -267,6 +269,8 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 		loaded17 = pro.exists();
 		pro = ResourcesPlugin.getWorkspace().getRoot().getProject(ONE_EIGHT_PROJECT_NAME);
 		loaded18 = pro.exists();
+		pro = ResourcesPlugin.getWorkspace().getRoot().getProject(NINE_PROJECT_NAME);
+		loaded9 = pro.exists();
 		pro = ResourcesPlugin.getWorkspace().getRoot().getProject(BOUND_JRE_PROJECT_NAME);
 		loadedJRE = pro.exists();
 		pro = ResourcesPlugin.getWorkspace().getRoot().getProject(BOUND_EE_PROJECT_NAME);
@@ -344,7 +348,7 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 	        	catch(Exception e) {
 	        		handleProjectCreationException(e, ONE_FOUR_PROJECT_CLOSED_NAME, jp);
 	        	}
-	        	jp = createProject(ONE_FOUR_PROJECT_NAME, JavaProjectHelper.TEST_SRC_DIR.toString(), JavaProjectHelper.J2SE_1_4_EE_NAME, false);
+				jp = createProject(ONE_FOUR_PROJECT_NAME, JavaProjectHelper.TEST_SRC_DIR.toString(), JavaProjectHelper.JAVA_SE_1_7_EE_NAME, false);
 	        	IPackageFragmentRoot src = jp.findPackageFragmentRoot(new Path(ONE_FOUR_PROJECT_NAME).append(JavaProjectHelper.SRC_DIR).makeAbsolute());
 	        	assertNotNull("The 'src' package fragment root should not be null", src);
 	        	File root = JavaTestPlugin.getDefault().getFileInPlugin(new Path("testjars"));
@@ -394,7 +398,7 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 		ArrayList<ILaunchConfiguration> cfgs = new ArrayList<>(1);
         try {
 	        if (!loaded15) {
-				jp = createProject(ONE_FIVE_PROJECT_NAME, JavaProjectHelper.TEST_1_5_SRC_DIR.toString(), JavaProjectHelper.J2SE_1_5_EE_NAME, true);
+				jp = createProject(ONE_FIVE_PROJECT_NAME, JavaProjectHelper.TEST_1_5_SRC_DIR.toString(), JavaProjectHelper.JAVA_SE_1_7_EE_NAME, true);
 				cfgs.add(createLaunchConfiguration(jp, "a.b.c.MethodBreakpoints"));
 				cfgs.add(createLaunchConfiguration(jp, "a.b.c.IntegerAccess"));
 				cfgs.add(createLaunchConfiguration(jp, "a.b.c.StepIntoSelectionWithGenerics"));
@@ -496,6 +500,34 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 	}
 
 	/**
+	 * Creates the Java 9 compliant project
+	 */
+	synchronized void assert9Project() {
+		IJavaProject jp = null;
+		ArrayList<ILaunchConfiguration> cfgs = new ArrayList<>(1);
+		try {
+			if (!loaded9) {
+				jp = createProject(NINE_PROJECT_NAME, JavaProjectHelper.TEST_9_SRC_DIR.toString(), JavaProjectHelper.JAVA_SE_9_EE_NAME, false);
+				cfgs.add(createLaunchConfiguration(jp, "LogicalStructures"));
+				loaded9 = true;
+				waitForBuild();
+			}
+		} catch (Exception e) {
+			try {
+				if (jp != null) {
+					jp.getProject().delete(true, true, null);
+					for (int i = 0; i < cfgs.size(); i++) {
+						cfgs.get(i).delete();
+					}
+				}
+			} catch (CoreException ce) {
+				// ignore
+			}
+			handleProjectCreationException(e, NINE_PROJECT_NAME, jp);
+		}
+	}
+
+	/**
 	 * Creates the 'BoundJRE' project used for the JRE testing
 	 */
 	synchronized void assertBoundJreProject() {
@@ -536,7 +568,7 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 		        JavaProjectHelper.addSourceContainer(jp, JavaProjectHelper.SRC_DIR, JavaProjectHelper.BIN_DIR);
 
 		        // add VM specific JRE container
-		        IExecutionEnvironment j2se14 = JavaRuntime.getExecutionEnvironmentsManager().getEnvironment(JavaProjectHelper.J2SE_1_4_EE_NAME);
+				IExecutionEnvironment j2se14 = JavaRuntime.getExecutionEnvironmentsManager().getEnvironment(JavaProjectHelper.JAVA_SE_1_7_EE_NAME);
 		        assertNotNull("Missing J2SE-1.4 environment", j2se14);
 		        IPath path = JavaRuntime.newJREContainerPath(j2se14);
 		        JavaProjectHelper.addContainerEntry(jp, path);
@@ -763,6 +795,16 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 	protected IJavaProject get18Project() {
 		assert18Project();
 		return getJavaProject(ONE_EIGHT_PROJECT_NAME);
+	}
+
+	/**
+	 * Returns the 'Nine' project, used for Java 9 tests.
+	 *
+	 * @return the test project
+	 */
+	protected IJavaProject get9Project() {
+		assert9Project();
+		return getJavaProject(NINE_PROJECT_NAME);
 	}
 
 	/**

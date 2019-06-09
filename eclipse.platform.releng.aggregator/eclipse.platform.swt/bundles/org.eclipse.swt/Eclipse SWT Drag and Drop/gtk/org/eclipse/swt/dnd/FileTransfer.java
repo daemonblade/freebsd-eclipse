@@ -90,13 +90,13 @@ public void javaToNative(Object object, TransferData transferData) {
 		if (length == 0) continue;
 		char[] chars = new char[length];
 		string.getChars(0, length, chars, 0);
-		long /*int*/[] error = new long /*int*/[1];
-		long /*int*/ utf8Ptr = OS.g_utf16_to_utf8(chars, chars.length, null, null, error);
+		long [] error = new long [1];
+		long utf8Ptr = OS.g_utf16_to_utf8(chars, chars.length, null, null, error);
 		if (error[0] != 0 || utf8Ptr == 0) continue;
-		long /*int*/ localePtr = OS.g_filename_from_utf8(utf8Ptr, -1, null, null, error);
+		long localePtr = OS.g_filename_from_utf8(utf8Ptr, -1, null, null, error);
 		OS.g_free(utf8Ptr);
 		if (error[0] != 0 || localePtr == 0) continue;
-		long /*int*/ uriPtr = OS.g_filename_to_uri(localePtr, 0, error);
+		long uriPtr = OS.g_filename_to_uri(localePtr, 0, error);
 		OS.g_free(localePtr);
 		if (error[0] != 0 || uriPtr == 0) continue;
 		length = C.strlen(uriPtr);
@@ -116,7 +116,7 @@ public void javaToNative(Object object, TransferData transferData) {
 		buffer = newBuffer;
 	}
 	if (buffer.length == 0) return;
-	long /*int*/ ptr = OS.g_malloc(buffer.length+1);
+	long ptr = OS.g_malloc(buffer.length+1);
 	C.memset(ptr, '\0', buffer.length+1);
 	C.memmove(ptr, buffer, buffer.length);
 	transferData.pValue = ptr;
@@ -143,7 +143,7 @@ public Object nativeToJava(TransferData transferData) {
 	C.memmove(temp, transferData.pValue, length);
 	boolean gnomeList = transferData.type == GNOME_LIST_ID;
 	int sepLength = gnomeList ? 1 : 2;
-	long /*int*/[] files = new long /*int*/[0];
+	long [] files = new long [0];
 	int offset = 0;
 	for (int i = 0; i < temp.length - 1; i++) {
 		boolean terminator = gnomeList ? temp[i] == '\n' : temp[i] == '\r' && temp[i+1] == '\n';
@@ -151,11 +151,11 @@ public Object nativeToJava(TransferData transferData) {
 			if (!(gnomeList && offset == 0)) {
 				/* The content of the first line in a gnome-list is always either 'copy' or 'cut' */
 				int size =  i - offset;
-				long /*int*/ file = OS.g_malloc(size + 1);
+				long file = OS.g_malloc(size + 1);
 				byte[] fileBuffer = new byte[size + 1];
 				System.arraycopy(temp, offset, fileBuffer, 0, size);
 				C.memmove(file, fileBuffer, size + 1);
-				long /*int*/[] newFiles = new long /*int*/[files.length + 1];
+				long [] newFiles = new long [files.length + 1];
 				System.arraycopy(files, 0, newFiles, 0, files.length);
 				newFiles[files.length] = file;
 				files = newFiles;
@@ -165,30 +165,30 @@ public Object nativeToJava(TransferData transferData) {
 	}
 	if (offset < temp.length - sepLength) {
 		int size =  temp.length - offset;
-		long /*int*/ file = OS.g_malloc(size + 1);
+		long file = OS.g_malloc(size + 1);
 		byte[] fileBuffer = new byte[size + 1];
 		System.arraycopy(temp, offset, fileBuffer, 0, size);
 		C.memmove(file, fileBuffer, size + 1);
-		long /*int*/[] newFiles = new long /*int*/[files.length + 1];
+		long [] newFiles = new long [files.length + 1];
 		System.arraycopy(files, 0, newFiles, 0, files.length);
 		newFiles[files.length] = file;
 		files = newFiles;
 	}
 	String[] fileNames = new String[0];
 	for (int i = 0; i < files.length; i++) {
-		long /*int*/[] error = new long /*int*/[1];
-		long /*int*/ localePtr = OS.g_filename_from_uri(files[i], null, error);
+		long [] error = new long [1];
+		long localePtr = OS.g_filename_from_uri(files[i], null, error);
 		OS.g_free(files[i]);
 		if (error[0] != 0 || localePtr == 0) continue;
-		long /*int*/ utf8Ptr = OS.g_filename_to_utf8(localePtr, -1, null, null, null);
+		long utf8Ptr = OS.g_filename_to_utf8(localePtr, -1, null, null, null);
 		if (utf8Ptr == 0) utf8Ptr = OS.g_filename_display_name (localePtr);
 		if (localePtr != utf8Ptr) OS.g_free (localePtr);
 		if (utf8Ptr == 0) continue;
-		long /*int*/[] items_written = new long /*int*/[1];
-		long /*int*/ utf16Ptr = OS.g_utf8_to_utf16(utf8Ptr, -1, null, items_written, null);
+		long [] items_written = new long [1];
+		long utf16Ptr = OS.g_utf8_to_utf16(utf8Ptr, -1, null, items_written, null);
 		OS.g_free(utf8Ptr);
 		if (utf16Ptr == 0) continue;
-		length = (int)/*64*/items_written[0];
+		length = (int)items_written[0];
 		char[] buffer = new char[length];
 		C.memmove(buffer, utf16Ptr, length * 2);
 		OS.g_free(utf16Ptr);

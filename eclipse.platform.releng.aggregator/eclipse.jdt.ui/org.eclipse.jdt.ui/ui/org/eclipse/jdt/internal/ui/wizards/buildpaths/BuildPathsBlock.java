@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -143,6 +143,7 @@ public class BuildPathsBlock {
 	private BuildPathBasePage fSourceContainerPage;
 	private ProjectsWorkbookPage fProjectsPage;
 	private LibrariesWorkbookPage fLibrariesPage;
+	private ModuleDependenciesPage fModulesPage;
 
 	private BuildPathBasePage fCurrPage;
 
@@ -271,10 +272,18 @@ public class BuildPathsBlock {
 		item.setData(ordpage);
 		item.setControl(ordpage.getControl(folder));
 
+		fModulesPage= new ModuleDependenciesPage(fContext, fClassPathList);
+		item= new TabItem(folder, SWT.NONE);
+		item.setText(NewWizardMessages.BuildPathsBlock_tab_modules);
+		item.setImage(JavaPluginImages.get(JavaPluginImages.IMG_OBJS_MODULE));
+		item.setData(fModulesPage);
+		item.setControl(fModulesPage.getControl(folder));
+
 		if (fCurrJProject != null) {
 			fSourceContainerPage.init(fCurrJProject);
 			fLibrariesPage.init(fCurrJProject);
 			fProjectsPage.init(fCurrJProject);
+			fModulesPage.init(fCurrJProject);
 			fIs9OrHigher= JavaModelUtil.is9OrHigher(fCurrJProject);
 		}
 
@@ -357,6 +366,7 @@ public class BuildPathsBlock {
 			fSourceContainerPage.init(fCurrJProject);
 			fProjectsPage.init(fCurrJProject);
 			fLibrariesPage.init(fCurrJProject);
+			// fModulesPage will be unconditionally initialized in updateUI() below
 			fIs9OrHigher= JavaModelUtil.is9OrHigher(fCurrJProject);
 		}
 
@@ -394,6 +404,7 @@ public class BuildPathsBlock {
 			fProjectsPage.init(fCurrJProject);
 			fIs9OrHigher= is9OrHigherAfter;
 		}
+		fModulesPage.init(fCurrJProject); // always update, Apply might have made more modules visible
 		doStatusLineUpdate();
 	}
 

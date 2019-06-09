@@ -20,43 +20,42 @@ package org.eclipse.ui.commands;
  * </p>
  *
  * @since 3.0
- * @deprecated Please use the "org.eclipse.core.commands" plug-in instead.
+ * @deprecated Please use the "org.eclipse.core.commands" plug-in instead. This
+ *             API is scheduled for deletion, see Bug 431177 for details
  * @see org.eclipse.core.commands.ExecutionException
+ * @noreference This class is scheduled for deletion.
  */
 @Deprecated
 @SuppressWarnings("all")
 public final class ExecutionException extends CommandException {
 
-    /**
-     * Generated serial version UID for this class.
-     *
-     * @since 3.1
-     */
-    private static final long serialVersionUID = 3258130262767448120L;
+	/**
+	 * Generated serial version UID for this class.
+	 *
+	 * @since 3.1
+	 */
+	private static final long serialVersionUID = 3258130262767448120L;
 
-    /**
-     * Creates a new instance of this class with the specified detail message
-     * and cause.
-     *
-     * @param message
-     *            the detail message.
-     * @param cause
-     *            the cause.
-     */
-    public ExecutionException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * Creates a new instance of this class with the specified detail message and
+	 * cause.
+	 *
+	 * @param message the detail message.
+	 * @param cause   the cause.
+	 */
+	public ExecutionException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * Constructs a new instance of <code>ExecutionException</code> using an
-     * instance of the new <code>ExecutionException</code>.
-     *
-     * @param e
-     *            The exception from which this exception should be created;
-     *            must not be <code>null</code>.
-     * @since 3.1
-     */
-    public ExecutionException(final org.eclipse.core.commands.ExecutionException e) {
-        super(e.getMessage(), e);
-    }
+	/**
+	 * Constructs a new instance of <code>ExecutionException</code> using an
+	 * instance of the new <code>ExecutionException</code>.
+	 *
+	 * @param e The exception from which this exception should be created; must not
+	 *          be <code>null</code>.
+	 * @since 3.1
+	 */
+	public ExecutionException(final org.eclipse.core.commands.ExecutionException e) {
+		super(e.getMessage(), e);
+	}
 }

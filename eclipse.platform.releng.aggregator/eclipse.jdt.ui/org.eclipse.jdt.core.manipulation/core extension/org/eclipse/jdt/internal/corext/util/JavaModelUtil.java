@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -77,7 +77,7 @@ public final class JavaModelUtil {
 	 */
 	public static final String VERSION_LATEST;
 	static {
-		VERSION_LATEST= JavaCore.VERSION_11; // make sure it is not inlined
+		VERSION_LATEST= JavaCore.VERSION_12; // make sure it is not inlined
 	}
 
 	public static final int VALIDATE_EDIT_CHANGED_CONTENT= 10003;
@@ -820,6 +820,10 @@ public final class JavaModelUtil {
 		return !isVersionLessThan(compliance, JavaCore.VERSION_11);
 	}
 
+	public static boolean is12OrHigher(String compliance) {
+		return !isVersionLessThan(compliance, JavaCore.VERSION_12);
+	}
+
 	/**
 	 * Checks if the given project or workspace has source compliance 1.5 or greater.
 	 *
@@ -881,6 +885,10 @@ public final class JavaModelUtil {
 	public static boolean is11OrHigher(IJavaProject project) {
 		return is11OrHigher(getSourceCompliance(project));
 	}
+	
+	public static boolean is12OrHigher(IJavaProject project) {
+		return is12OrHigher(getSourceCompliance(project));
+	}
 
 	private static String getSourceCompliance(IJavaProject project) {
 		return project != null ? project.getOption(JavaCore.COMPILER_SOURCE, true) : JavaCore.getOption(JavaCore.COMPILER_SOURCE);
@@ -915,6 +923,8 @@ public final class JavaModelUtil {
 		String version= vMInstall.getJavaVersion();
 		if (version == null) {
 			return defaultCompliance;
+		} else if (version.startsWith(JavaCore.VERSION_12)) {
+			return JavaCore.VERSION_12;
 		} else if (version.startsWith(JavaCore.VERSION_11)) {
 			return JavaCore.VERSION_11;
 		} else if (version.startsWith(JavaCore.VERSION_10)) {
@@ -951,7 +961,9 @@ public final class JavaModelUtil {
 		
 		// fallback:
 		String desc= executionEnvironment.getId();
-		if (desc.indexOf(JavaCore.VERSION_11) != -1) {
+		if (desc.indexOf(JavaCore.VERSION_12) != -1) {
+			return JavaCore.VERSION_12;
+		} else if (desc.indexOf(JavaCore.VERSION_11) != -1) {
 			return JavaCore.VERSION_11;
 		} else if (desc.indexOf(JavaCore.VERSION_10) != -1) {
 			return JavaCore.VERSION_10;

@@ -13,11 +13,15 @@
  */
 package org.eclipse.jface.text.source.inlined;
 
+import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.GlyphMetrics;
 
+import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.jface.text.Position;
+import org.eclipse.jface.text.TextPresentation;
 import org.eclipse.jface.text.source.ISourceViewer;
 
 /**
@@ -95,6 +99,59 @@ public class LineContentAnnotation extends AbstractInlinedAnnotation {
 	@Override
 	boolean contains(int x, int y) {
 		return (x >= this.fX && x <= this.fX + width && y >= this.fY && y <= this.fY + getTextWidget().getLineHeight());
+	}
+
+	/**
+	 * Returns the style to apply with GlyphMetrics width only if needed.
+	 *
+	 * As it's using Widget position, the results can be passed directly to
+	 * {@link StyledText#setStyleRange(StyleRange)} and family. However, in case of a Viewer
+	 * providing project/folder with {@link ITextViewerExtension5}, the range must be transformed to
+	 * model position before passing it to a {@link TextPresentation}.
+	 *
+	 * @param style the current style and null otherwise.
+	 * @return the style to apply with GlyphMetrics width only if needed. It uses widget position,
+	 *         not model position.
+	 */
+	StyleRange updateStyle(StyleRange style) {
+		Position widgetPosition= computeWidgetPosition();
+		boolean usePreviousChar= drawRightToPreviousChar(widgetPosition.getOffset());
+		if (width == 0 || getRedrawnCharacterWidth() == 0) {
+			return null;
+		}
+		int fullWidth= width + getRedrawnCharacterWidth();
+		if (style == null) {
+			style= new StyleRange();
+			style.start= widgetPosition.getOffset();
+			if (usePreviousChar) {
+				style.start--;
+			}
+			style.length= 1;
+		}
+		GlyphMetrics metrics= style.metrics;
+		if (!isMarkedDeleted()) {
+			if (metrics == null) {
+				metrics= new GlyphMetrics(0, 0, fullWidth);
+			} else {
+				if (metrics.width == fullWidth) {
+					return null;
+				}
+				/**
+				 * We must create a new GlyphMetrics instance because comparison with similarTo used
+				 * later in StyledText#setStyleRange will compare the same (modified) and won't
+				 * realize an update happened.
+				 */
+				metrics= new GlyphMetrics(0, 0, fullWidth);
+			}
+		} else {
+			metrics= null;
+		}
+		style.metrics= metrics;
+		return style;
+	}
+
+	boolean drawRightToPreviousChar(int widgetOffset) {
+		return widgetOffset > 0 && getTextWidget().getLineAtOffset(widgetOffset) == getTextWidget().getLineAtOffset(widgetOffset - 1);
 	}
 
 }

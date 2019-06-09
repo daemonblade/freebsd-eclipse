@@ -66,10 +66,6 @@ public enum ItemType implements InternalItemType {
 	/**
 	 * The '<em><b>Push</b></em>' literal value.
 	 * <!-- begin-user-doc -->
-	 * <p>
-	 * If the meaning of '<em><b>Push</b></em>' literal object isn't clear,
-	 * there really should be more of a description here...
-	 * </p>
 	 * <!-- end-user-doc -->
 	 * @see #PUSH
 	 * @model name="Push"
@@ -81,10 +77,6 @@ public enum ItemType implements InternalItemType {
 	/**
 	 * The '<em><b>Check</b></em>' literal value.
 	 * <!-- begin-user-doc -->
-	 * <p>
-	 * If the meaning of '<em><b>Check</b></em>' literal object isn't clear,
-	 * there really should be more of a description here...
-	 * </p>
 	 * <!-- end-user-doc -->
 	 * @see #CHECK
 	 * @model name="Check"
@@ -96,10 +88,6 @@ public enum ItemType implements InternalItemType {
 	/**
 	 * The '<em><b>Radio</b></em>' literal value.
 	 * <!-- begin-user-doc -->
-	 * <p>
-	 * If the meaning of '<em><b>Radio</b></em>' literal object isn't clear,
-	 * there really should be more of a description here...
-	 * </p>
 	 * <!-- end-user-doc -->
 	 * @see #RADIO
 	 * @model name="Radio"
@@ -114,12 +102,7 @@ public enum ItemType implements InternalItemType {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	private static final ItemType[] VALUES_ARRAY =
-		new ItemType[] {
-			PUSH,
-			CHECK,
-			RADIO,
-		};
+	private static final ItemType[] VALUES_ARRAY = new ItemType[] { PUSH, CHECK, RADIO, };
 
 	/**
 	 * A public read-only list of all the '<em><b>Item Type</b></em>' enumerators.
@@ -175,9 +158,12 @@ public enum ItemType implements InternalItemType {
 	 */
 	public static ItemType get(int value) {
 		switch (value) {
-			case PUSH_VALUE: return PUSH;
-			case CHECK_VALUE: return CHECK;
-			case RADIO_VALUE: return RADIO;
+		case PUSH_VALUE:
+			return PUSH;
+		case CHECK_VALUE:
+			return CHECK;
+		case RADIO_VALUE:
+			return RADIO;
 		}
 		return null;
 	}
@@ -220,8 +206,9 @@ public enum ItemType implements InternalItemType {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public int getValue() {
-	  return value;
+		return value;
 	}
 
 	/**
@@ -229,8 +216,9 @@ public enum ItemType implements InternalItemType {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getName() {
-	  return name;
+		return name;
 	}
 
 	/**
@@ -238,8 +226,9 @@ public enum ItemType implements InternalItemType {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getLiteral() {
-	  return literal;
+		return literal;
 	}
 
 	/**
@@ -262,5 +251,5 @@ public enum ItemType implements InternalItemType {
  * @generated
  */
 interface InternalItemType extends org.eclipse.emf.common.util.Enumerator {
-	// Empty
+	// Empty 
 }

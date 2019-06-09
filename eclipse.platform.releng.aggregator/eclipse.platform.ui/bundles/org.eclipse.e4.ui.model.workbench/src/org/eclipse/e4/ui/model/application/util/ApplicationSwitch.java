@@ -14,7 +14,10 @@
 package org.eclipse.e4.ui.model.application.util;
 
 import java.util.Map;
-import org.eclipse.e4.ui.model.application.*;
+import org.eclipse.e4.ui.model.application.MAddon;
+import org.eclipse.e4.ui.model.application.MApplication;
+import org.eclipse.e4.ui.model.application.MApplicationElement;
+import org.eclipse.e4.ui.model.application.MContribution;
 import org.eclipse.e4.ui.model.application.commands.MBindingTableContainer;
 import org.eclipse.e4.ui.model.application.commands.MBindings;
 import org.eclipse.e4.ui.model.application.commands.MHandlerContainer;
@@ -89,59 +92,84 @@ public class ApplicationSwitch<T1> extends Switch<T1> {
 	@Override
 	protected T1 doSwitch(int classifierID, EObject theEObject) {
 		switch (classifierID) {
-			case ApplicationPackageImpl.STRING_TO_STRING_MAP: {
-				@SuppressWarnings("unchecked") Map.Entry<String, String> stringToStringMap = (Map.Entry<String, String>)theEObject;
-				T1 result = caseStringToStringMap(stringToStringMap);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			case ApplicationPackageImpl.APPLICATION: {
-				MApplication application = (MApplication)theEObject;
-				T1 result = caseApplication(application);
-				if (result == null) result = caseElementContainer(application);
-				if (result == null) result = caseContext(application);
-				if (result == null) result = caseHandlerContainer(application);
-				if (result == null) result = caseBindingTableContainer(application);
-				if (result == null) result = casePartDescriptorContainer(application);
-				if (result == null) result = caseBindings(application);
-				if (result == null) result = caseMenuContributions(application);
-				if (result == null) result = caseToolBarContributions(application);
-				if (result == null) result = caseTrimContributions(application);
-				if (result == null) result = caseSnippetContainer(application);
-				if (result == null) result = caseUIElement(application);
-				if (result == null) result = caseApplicationElement(application);
-				if (result == null) result = caseLocalizable(application);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			case ApplicationPackageImpl.APPLICATION_ELEMENT: {
-				MApplicationElement applicationElement = (MApplicationElement)theEObject;
-				T1 result = caseApplicationElement(applicationElement);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			case ApplicationPackageImpl.CONTRIBUTION: {
-				MContribution contribution = (MContribution)theEObject;
-				T1 result = caseContribution(contribution);
-				if (result == null) result = caseApplicationElement(contribution);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			case ApplicationPackageImpl.ADDON: {
-				MAddon addon = (MAddon)theEObject;
-				T1 result = caseAddon(addon);
-				if (result == null) result = caseContribution(addon);
-				if (result == null) result = caseApplicationElement(addon);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			case ApplicationPackageImpl.STRING_TO_OBJECT_MAP: {
-				@SuppressWarnings("unchecked") Map.Entry<String, Object> stringToObjectMap = (Map.Entry<String, Object>)theEObject;
-				T1 result = caseStringToObjectMap(stringToObjectMap);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			default: return defaultCase(theEObject);
+		case ApplicationPackageImpl.STRING_TO_STRING_MAP: {
+			@SuppressWarnings("unchecked")
+			Map.Entry<String, String> stringToStringMap = (Map.Entry<String, String>) theEObject;
+			T1 result = caseStringToStringMap(stringToStringMap);
+			if (result == null)
+				result = defaultCase(theEObject);
+			return result;
+		}
+		case ApplicationPackageImpl.APPLICATION: {
+			MApplication application = (MApplication) theEObject;
+			T1 result = caseApplication(application);
+			if (result == null)
+				result = caseElementContainer(application);
+			if (result == null)
+				result = caseContext(application);
+			if (result == null)
+				result = caseHandlerContainer(application);
+			if (result == null)
+				result = caseBindingTableContainer(application);
+			if (result == null)
+				result = casePartDescriptorContainer(application);
+			if (result == null)
+				result = caseBindings(application);
+			if (result == null)
+				result = caseMenuContributions(application);
+			if (result == null)
+				result = caseToolBarContributions(application);
+			if (result == null)
+				result = caseTrimContributions(application);
+			if (result == null)
+				result = caseSnippetContainer(application);
+			if (result == null)
+				result = caseUIElement(application);
+			if (result == null)
+				result = caseApplicationElement(application);
+			if (result == null)
+				result = caseLocalizable(application);
+			if (result == null)
+				result = defaultCase(theEObject);
+			return result;
+		}
+		case ApplicationPackageImpl.APPLICATION_ELEMENT: {
+			MApplicationElement applicationElement = (MApplicationElement) theEObject;
+			T1 result = caseApplicationElement(applicationElement);
+			if (result == null)
+				result = defaultCase(theEObject);
+			return result;
+		}
+		case ApplicationPackageImpl.CONTRIBUTION: {
+			MContribution contribution = (MContribution) theEObject;
+			T1 result = caseContribution(contribution);
+			if (result == null)
+				result = caseApplicationElement(contribution);
+			if (result == null)
+				result = defaultCase(theEObject);
+			return result;
+		}
+		case ApplicationPackageImpl.ADDON: {
+			MAddon addon = (MAddon) theEObject;
+			T1 result = caseAddon(addon);
+			if (result == null)
+				result = caseContribution(addon);
+			if (result == null)
+				result = caseApplicationElement(addon);
+			if (result == null)
+				result = defaultCase(theEObject);
+			return result;
+		}
+		case ApplicationPackageImpl.STRING_TO_OBJECT_MAP: {
+			@SuppressWarnings("unchecked")
+			Map.Entry<String, Object> stringToObjectMap = (Map.Entry<String, Object>) theEObject;
+			T1 result = caseStringToObjectMap(stringToObjectMap);
+			if (result == null)
+				result = defaultCase(theEObject);
+			return result;
+		}
+		default:
+			return defaultCase(theEObject);
 		}
 	}
 
@@ -377,6 +405,7 @@ public class ApplicationSwitch<T1> extends Switch<T1> {
 	 * @return the result of interpreting the object as an instance of '<em>Contributions</em>'.
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @since 1.0
+	 * @noreference See {@link MMenuContributions model documentation} for details.
 	 * @generated
 	 */
 	public T1 caseMenuContributions(MMenuContributions object) {
@@ -393,6 +422,7 @@ public class ApplicationSwitch<T1> extends Switch<T1> {
 	 * @return the result of interpreting the object as an instance of '<em>Tool Bar Contributions</em>'.
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @since 1.0
+	 * @noreference See {@link MToolBarContributions model documentation} for details.
 	 * @generated
 	 */
 	public T1 caseToolBarContributions(MToolBarContributions object) {
@@ -409,6 +439,7 @@ public class ApplicationSwitch<T1> extends Switch<T1> {
 	 * @return the result of interpreting the object as an instance of '<em>Trim Contributions</em>'.
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @since 1.0
+	 * @noreference See {@link MTrimContributions model documentation} for details.
 	 * @generated
 	 */
 	public T1 caseTrimContributions(MTrimContributions object) {

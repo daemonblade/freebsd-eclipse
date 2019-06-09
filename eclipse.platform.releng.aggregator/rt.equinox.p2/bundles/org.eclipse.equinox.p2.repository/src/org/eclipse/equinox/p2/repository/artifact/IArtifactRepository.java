@@ -59,9 +59,9 @@ public interface IArtifactRepository extends IRepository<IArtifactKey> {
 
 	/**
 	 * Create an instance of {@link IArtifactKey}
-	 * @param classifier
-	 * @param id
-	 * @param version
+	 * @param classifier The classifier for this artifact key.
+	 * @param id The id for this artifact key.
+	 * @param version The version for this artifact key. 
 	 * @return a new IArtifactKey
 	 */
 	public IArtifactKey createArtifactKey(String classifier, String id, Version version);
@@ -74,6 +74,7 @@ public interface IArtifactRepository extends IRepository<IArtifactKey> {
 	 * @param descriptor the descriptor to add.
 	 * @deprecated See {{@link #addDescriptor(IArtifactDescriptor, IProgressMonitor)}
 	 */
+	@Deprecated
 	public void addDescriptor(IArtifactDescriptor descriptor);
 
 	/**
@@ -93,6 +94,7 @@ public interface IArtifactRepository extends IRepository<IArtifactKey> {
 	 * @param descriptors the artifact descriptors to add
 	 * @deprecated See {{@link #addDescriptors(IArtifactDescriptor[], IProgressMonitor)}
 	 */
+	@Deprecated
 	public void addDescriptors(IArtifactDescriptor[] descriptors);
 
 	/**
@@ -154,7 +156,7 @@ public interface IArtifactRepository extends IRepository<IArtifactKey> {
 	/**
 	 * Executes the given artifact requests on this byte server.
 	 * @param requests The artifact requests
-	 * @param monitor
+	 * @param monitor A progress monitor use to track progress and cancel the operation.
 	 * @return a status object that is <code>OK</code> if requests were
 	 * processed successfully. Otherwise, a status indicating information,
 	 * warnings, or errors that occurred while executing the artifact requests
@@ -186,6 +188,7 @@ public interface IArtifactRepository extends IRepository<IArtifactKey> {
 	 * Remove the all keys, descriptors, and contents from this repository.
 	 * @deprecated See {@link #removeAll(IProgressMonitor)}
 	 */
+	@Deprecated
 	public void removeAll();
 
 	/**
@@ -201,6 +204,7 @@ public interface IArtifactRepository extends IRepository<IArtifactKey> {
 	 * @param descriptor the descriptor to remove.
 	 * @deprecated See {@link #removeDescriptor(IArtifactDescriptor, IProgressMonitor)}
 	 */
+	@Deprecated
 	public void removeDescriptor(IArtifactDescriptor descriptor);
 
 	/**
@@ -217,6 +221,7 @@ public interface IArtifactRepository extends IRepository<IArtifactKey> {
 	 * @param key the key to remove.
 	 * @deprecated See {@link #removeDescriptor(IArtifactKey, IProgressMonitor)}
 	 */
+	@Deprecated
 	public void removeDescriptor(IArtifactKey key);
 
 	/**
@@ -235,6 +240,7 @@ public interface IArtifactRepository extends IRepository<IArtifactKey> {
 	 * @since 2.1
 	 * @deprecated See {@link #removeDescriptors(IArtifactDescriptor[], IProgressMonitor)}
 	 */
+	@Deprecated
 	public void removeDescriptors(IArtifactDescriptor[] descriptors);
 
 	/**
@@ -250,16 +256,17 @@ public interface IArtifactRepository extends IRepository<IArtifactKey> {
 	/**
 	 * Remove the given list of keys and all related content and descriptors from this
 	 * repository.
-	 * @param keys
+	 * @param keys The keys to remove.
 	 * @since 2.1
 	 * @deprecated See {@link #removeDescriptors(IArtifactKey[], IProgressMonitor)}
 	 */
+	@Deprecated
 	public void removeDescriptors(IArtifactKey[] keys);
 
 	/**
 	 * Remove the given list of keys and all related content and descriptors from this
 	 * repository.
-	 * @param keys
+	 * @param keys The keys to remove.
 	 * @param monitor A progress monitor use to track progress and cancel the operation.  This may
 	 * be a long running operation if another process holds the lock on this location
 	 * @since 2.1

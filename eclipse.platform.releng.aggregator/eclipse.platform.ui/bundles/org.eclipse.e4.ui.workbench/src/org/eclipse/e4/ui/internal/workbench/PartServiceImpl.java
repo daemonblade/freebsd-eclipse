@@ -341,7 +341,7 @@ public class PartServiceImpl implements EPartService {
 		if (application.getSelectedElement() != null)
 			return application.getSelectedElement();
 		List<MWindow> windows = application.getChildren();
-		if (windows.size() != 0)
+		if (!windows.isEmpty())
 			return windows.get(0);
 		return null;
 	}
@@ -1463,6 +1463,7 @@ public class PartServiceImpl implements EPartService {
 	 *      509868</a>
 	 */
 	@Deprecated
+	@Override
 	public Collection<MInputPart> getInputParts(String inputUri) {
 		Assert.isNotNull(inputUri, "Input uri must not be null"); //$NON-NLS-1$
 

@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- *
+ * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Benjamin Muskalla <b.muskalla@gmx.net> - [quick fix] Quick fix for missing synchronized modifier - https://bugs.eclipse.org/bugs/show_bug.cgi?id=245250
@@ -115,6 +115,7 @@ public final class CorrectionMessages extends NLS {
 	public static String LocalCorrectionsSubProcessor_addexceptionstoexistingcatch_description;
 	public static String LocalCorrectionsSubProcessor_unnecessaryinstanceof_description;
 	public static String LocalCorrectionsSubProcessor_unnecessarythrow_description;
+	public static String LocalCorrectionsSubProcessor_changeconstructor_public_description;
 	public static String LocalCorrectionsSubProcessor_classtointerface_description;
 	public static String LocalCorrectionsSubProcessor_externalizestrings_description;
 	public static String LocalCorrectionsSubProcessor_extendstoimplements_description;
@@ -271,6 +272,7 @@ public final class CorrectionMessages extends NLS {
 	public static String NewCUCompletionUsingWizardProposal_createnewinterface_inpackage_description;
 	public static String NewCUCompletionUsingWizardProposal_createnewannotation_inpackage_description;
 	public static String NewCUCompletionUsingWizardProposal_createnewenum_inpackage_description;
+	public static String ConfigureProblemSeveritySubProcessor_compiler_info;
 	public static String ConfigureProblemSeveritySubProcessor_info;
 	public static String ConfigureProblemSeveritySubProcessor_name;
 	public static String ConstructorFromSuperclassProposal_description;
@@ -294,6 +296,7 @@ public final class CorrectionMessages extends NLS {
 	public static String QuickAssistProcessor_unwrap_labeledstatement;
 	public static String QuickAssistProcessor_unwrap_methodinvocation;
 	public static String QuickAssistProcessor_unwrap_synchronizedstatement;
+	public static String QuickAssistProcessor_split_case_labels;
 	public static String QuickAssistProcessor_splitdeclaration_description;
 	public static String QuickAssistProcessor_joindeclaration_description;
 	public static String QuickAssistProcessor_add_inferred_lambda_parameter_types;
@@ -403,6 +406,8 @@ public final class CorrectionMessages extends NLS {
 	public static String ReorgCorrectionsSubProcessor_accessrules_description;
 	public static String ReorgCorrectionsSubProcessor_project_seup_fix_description;
 	public static String ReorgCorrectionsSubProcessor_project_seup_fix_info;
+	public static String ReorgCorrectionsSubProcessor_open_required_project_description;
+	public static String ReorgCorrectionsSubProcessor_open_required_projects_description;
 	public static String UnresolvedElementsSubProcessor_change_full_type_description;
 	public static String UnresolvedElementsSubProcessor_copy_annotation_jar_description;
 	public static String UnresolvedElementsSubProcessor_copy_annotation_jar_info;
@@ -438,4 +443,12 @@ public final class CorrectionMessages extends NLS {
 	public static String VarargsWarningsSubProcessor_remove_safevarargs_label;
 	public static String NullAnnotationsCorrectionProcessor_change_local_variable_to_nonNull;
 	public static String NullAnnotationsCorrectionProcessor_create_packageInfo_with_defaultnullness;
+	public static String PreviewFeaturesSubProcessor_enable_preview_features;
+	public static String PreviewFeaturesSubProcessor_enable_preview_features_workspace;
+	public static String PreviewFeaturesSubProcessor_enable_preview_features_info;
+	public static String PreviewFeaturesSubProcessor_enable_preview_features_workspace_info;
+	public static String PreviewFeaturesSubProcessor_open_compliance_page_enable_preview_features;
+	public static String PreviewFeaturesSubProcessor_open_compliance_page_enable_preview_features_info;
+	public static String PreviewFeaturesSubProcessor_open_compliance_properties_page_enable_preview_features;
+	public static String PreviewFeaturesSubProcessor_open_compliance_properties_page_enable_preview_features_info;
 }

@@ -16,7 +16,6 @@ package org.eclipse.e4.ui.workbench.addons.dndaddon;
 import org.eclipse.e4.ui.internal.workbench.swt.AbstractPartRenderer;
 import org.eclipse.e4.ui.model.application.ui.MUIElement;
 import org.eclipse.e4.ui.model.application.ui.basic.MWindow;
-import org.eclipse.e4.ui.workbench.modeling.EModelService;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.DragDetectEvent;
@@ -37,7 +36,6 @@ class DnDInfo {
 
 	MUIElement curElement;
 	MUIElement itemElement;
-	int itemIndex;
 	Rectangle itemRect;
 
 	Shell dragHost = null;
@@ -49,13 +47,10 @@ class DnDInfo {
 	MWindow topLevelWindow;
 	Display display;
 
-	EModelService modelService;
-
 	public DnDInfo(MWindow topWin) {
 		topLevelWindow = topWin;
 		display = ((Control) (topWin.getWidget())).getDisplay();
 
-		modelService = topWin.getContext().get(EModelService.class);
 		update();
 	}
 
@@ -121,7 +116,6 @@ class DnDInfo {
 		curItem = null;
 		curElement = null;
 		itemElement = null;
-		itemIndex = -1;
 		itemRect = null;
 	}
 
@@ -140,7 +134,6 @@ class DnDInfo {
 			if (curItem != null) {
 				itemElement = (MUIElement) curItem.getData(AbstractPartRenderer.OWNING_ME);
 				if (itemElement != null) {
-					itemIndex = ctf.indexOf((CTabItem) curItem);
 					itemRect = display.map(ctf, ctf.getShell(), ((CTabItem) curItem).getBounds());
 				}
 			}
@@ -151,7 +144,6 @@ class DnDInfo {
 			if (curItem != null) {
 				itemElement = (MUIElement) curItem.getData(AbstractPartRenderer.OWNING_ME);
 				if (itemElement != null) {
-					itemIndex = tb.indexOf(curItem);
 					itemRect = display.map(tb, tb.getShell(), curItem.getBounds());
 				}
 			}

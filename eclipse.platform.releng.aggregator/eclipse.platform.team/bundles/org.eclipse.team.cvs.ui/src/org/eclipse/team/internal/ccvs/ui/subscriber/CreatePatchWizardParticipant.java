@@ -19,29 +19,26 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 
 public class CreatePatchWizardParticipant extends WorkspaceSynchronizeParticipant {
-	 
-    final GenerateDiffFileWizard fWizard;
-    
-    public CreatePatchWizardParticipant(ISynchronizeScope scope, GenerateDiffFileWizard wizard) {
-        super(scope);
-        fWizard= wizard;
-    }
+	
+	final GenerateDiffFileWizard fWizard;
+	
+	public CreatePatchWizardParticipant(ISynchronizeScope scope, GenerateDiffFileWizard wizard) {
+		super(scope);
+		fWizard= wizard;
+	}
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ccvs.ui.subscriber.WorkspaceSynchronizeParticipant#initializeConfiguration(org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration)
-     */
-    protected void initializeConfiguration( ISynchronizePageConfiguration configuration) {
-        super.initializeConfiguration(configuration);
-        configuration.setProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU, new String[] {ISynchronizePageConfiguration.LAYOUT_GROUP});
-        configuration.setProperty(ISynchronizePageConfiguration.P_CONTEXT_MENU, ISynchronizePageConfiguration.DEFAULT_CONTEXT_MENU);
-        ((SynchronizePageConfiguration)configuration).setViewerStyle(SynchronizePageConfiguration.CHECKBOX);
-        configuration.setSupportedModes(ISynchronizePageConfiguration.OUTGOING_MODE);
-        configuration.setMode(ISynchronizePageConfiguration.OUTGOING_MODE);
-    }
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant#doesSupportSynchronize()
-     */
-    public boolean doesSupportSynchronize() {
-        return false;
-    }
+	@Override
+	protected void initializeConfiguration( ISynchronizePageConfiguration configuration) {
+		super.initializeConfiguration(configuration);
+		configuration.setProperty(ISynchronizePageConfiguration.P_TOOLBAR_MENU, new String[] {ISynchronizePageConfiguration.LAYOUT_GROUP});
+		configuration.setProperty(ISynchronizePageConfiguration.P_CONTEXT_MENU, ISynchronizePageConfiguration.DEFAULT_CONTEXT_MENU);
+		((SynchronizePageConfiguration)configuration).setViewerStyle(SynchronizePageConfiguration.CHECKBOX);
+		configuration.setSupportedModes(ISynchronizePageConfiguration.OUTGOING_MODE);
+		configuration.setMode(ISynchronizePageConfiguration.OUTGOING_MODE);
+	}
+
+	@Override
+	public boolean doesSupportSynchronize() {
+		return false;
+	}
 }

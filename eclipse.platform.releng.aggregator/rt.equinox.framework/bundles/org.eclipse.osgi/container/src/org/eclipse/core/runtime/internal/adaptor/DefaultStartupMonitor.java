@@ -38,17 +38,17 @@ public class DefaultStartupMonitor implements StartupMonitor {
 
 		try {
 			updateMethod = splashHandler.getClass().getMethod("updateSplash", (Class[]) null); //$NON-NLS-1$
-		} catch (SecurityException e) {
-			throw new IllegalStateException(e.getMessage(), e);
-		} catch (NoSuchMethodException e) {
+		} catch (SecurityException | NoSuchMethodException e) {
 			//TODO maybe we could do something else in the update method in this case, like print something to the console?
 			throw new IllegalStateException(e.getMessage(), e);
 		}
+    
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.adaptor.StartupMonitor#update()
 	 */
+	@Override
 	public void update() {
 		if (updateMethod != null) {
 			try {
@@ -61,6 +61,7 @@ public class DefaultStartupMonitor implements StartupMonitor {
 		}
 	}
 
+	@Override
 	public void applicationRunning() {
 		if (EclipseStarter.debug) {
 			String timeString = equinoxConfig.getConfiguration("eclipse.startTime"); //$NON-NLS-1$ 

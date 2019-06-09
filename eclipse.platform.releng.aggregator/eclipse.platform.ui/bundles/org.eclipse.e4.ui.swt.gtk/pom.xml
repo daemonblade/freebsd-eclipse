@@ -14,7 +14,7 @@
   <parent>
     <artifactId>eclipse.platform.ui</artifactId>
     <groupId>eclipse.platform.ui</groupId>
-    <version>4.11.0-SNAPSHOT</version>
+    <version>4.12.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.e4</groupId>
@@ -32,9 +32,9 @@
           <resolver>p2</resolver>
           <environments>
             <environment>
-              <os>freebsd</os>
+              <os>linux</os>
               <ws>gtk</ws>
-              <arch>amd64</arch>
+              <arch>x86_64</arch>
             </environment>
           </environments>
         </configuration>

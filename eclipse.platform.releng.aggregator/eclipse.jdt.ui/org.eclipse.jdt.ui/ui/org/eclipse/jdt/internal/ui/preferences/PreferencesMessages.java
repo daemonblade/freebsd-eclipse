@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -259,7 +259,8 @@ public final class PreferencesMessages extends NLS {
 	public static String JavadocConfigurationBlock_MalformedURL_error;
 	public static String JavadocConfigurationBlock_validate_button;
 	public static String JavadocConfigurationBlock_InvalidLocation_message;
-	public static String JavadocConfigurationBlock_ValidLocation_message;
+	public static String JavadocConfigurationBlock_ValidPackageListJavadocLocation_message;
+	public static String JavadocConfigurationBlock_ValidElementListJavadocLocation_message;
 	public static String JavadocConfigurationBlock_OK_label;
 	public static String JavadocConfigurationBlock_Open_label;
 	public static String JavadocConfigurationBlock_UnableToValidateLocation_message;
@@ -531,6 +532,8 @@ public final class PreferencesMessages extends NLS {
 	public static String ComplianceConfigurationBlock_codegen_method_parameters_attr;
 	public static String ComplianceConfigurationBlock_compiler_compliance_label;
 	public static String ComplianceConfigurationBlock_default_settings_label;
+	public static String ComplianceConfigurationBlock_enable_preview_label;
+	public static String ComplianceConfigurationBlock_enable_preview_severity_label;
 	public static String ComplianceConfigurationBlock_source_compatibility_label;
 	public static String ComplianceConfigurationBlock_codegen_targetplatform_label;
 	public static String ComplianceConfigurationBlock_pb_assert_as_identifier_label;
@@ -812,10 +815,10 @@ public final class PreferencesMessages extends NLS {
 	public static String ComplianceConfigurationBlock_jrecompliance_info;
 	public static String ComplianceConfigurationBlock_jrecompliance_info_project;
 	public static String ComplianceConfigurationBlock_jrecompliance_backwardcompatibility_info;
+	public static String ComplianceConfigurationBlock_jrecompliance_backwardcompatibility_warning;
 	public static String ComplianceConfigurationBlock_jrecompliance_backwardcompatibility_label;
 	public static String ProblemSeveritiesConfigurationBlock_section_generics;
 	public static String JavaBasePreferencePage_dialogs;
-	public static String JavaBasePreferencePage_EnableNewJavaIndex;
 	public static String JavaBasePreferencePage_do_not_hide_description;
 	public static String JavaBasePreferencePage_do_not_hide_button;
 	public static String JavaBasePreferencePage_do_not_hide_dialog_title;
@@ -828,6 +831,7 @@ public final class PreferencesMessages extends NLS {
 	public static String ComplianceConfigurationBlock_version9;
 	public static String ComplianceConfigurationBlock_version10;
 	public static String ComplianceConfigurationBlock_version_11;
+	public static String ComplianceConfigurationBlock_version_12;
 	public static String ComplianceConfigurationBlock_versionCLDC11;
 	public static String ComplianceConfigurationBlock_src_greater_compliance;
 	public static String ComplianceConfigurationBlock_classfile_greater_compliance;
@@ -891,4 +895,5 @@ public final class PreferencesMessages extends NLS {
 	public static String JavaEditorCodeMiningConfigurationBlock_showReferences_onFields_label;
 	public static String JavaEditorCodeMiningConfigurationBlock_showReferences_onMethods_label;
 	public static String JavaEditorCodeMiningConfigurationBlock_showImplementations_label;
+	public static String JavaEditorCodeMiningConfigurationBlock_showParameterNames_label;
 }

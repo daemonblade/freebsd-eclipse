@@ -110,9 +110,6 @@ public class FlatModelProvider extends SynchronizeModelProvider {
 			return collator.compare(s1, s2);
 		}
 
-		/* (non-Javadoc)
-		 * Method declared on ViewerSorter.
-		 */
 		@Override
 		public int compare(Viewer viewer, Object o1, Object o2) {
 
@@ -153,7 +150,7 @@ public class FlatModelProvider extends SynchronizeModelProvider {
 		@Override
 		public void run() {
 			if (isChecked() && sortCriteria != criteria) {
-			    sortCriteria = criteria;
+				sortCriteria = criteria;
 				String key = getSettingsKey();
 				IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
 				if(pageSettings != null) {
@@ -169,7 +166,7 @@ public class FlatModelProvider extends SynchronizeModelProvider {
 		}
 
 		protected String getSettingsKey() {
-		    return P_LAST_RESOURCESORT;
+			return P_LAST_RESOURCESORT;
 		}
 	}
 
@@ -196,9 +193,6 @@ public class FlatModelProvider extends SynchronizeModelProvider {
 			sortByResource.add(new ToggleSortOrderAction(TeamUIMessages.FlatModelProvider_9, FlatSorter.PARENT_NAME));
 		}
 
-        /* (non-Javadoc)
-		 * @see org.eclipse.team.ui.synchronize.SynchronizePageActionGroup#dispose()
-		 */
 		@Override
 		public void dispose() {
 			sortByResource.dispose();
@@ -207,17 +201,17 @@ public class FlatModelProvider extends SynchronizeModelProvider {
 		}
 	}
 
-    public FlatModelProvider(ISynchronizePageConfiguration configuration, SyncInfoSet set) {
-        super(configuration, set);
-        initialize(configuration);
-    }
+	public FlatModelProvider(ISynchronizePageConfiguration configuration, SyncInfoSet set) {
+		super(configuration, set);
+		initialize(configuration);
+	}
 
-    public FlatModelProvider(AbstractSynchronizeModelProvider parentProvider, ISynchronizeModelElement modelRoot, ISynchronizePageConfiguration configuration, SyncInfoSet set) {
-        super(parentProvider, modelRoot, configuration, set);
-        initialize(configuration);
-    }
+	public FlatModelProvider(AbstractSynchronizeModelProvider parentProvider, ISynchronizeModelElement modelRoot, ISynchronizePageConfiguration configuration, SyncInfoSet set) {
+		super(parentProvider, modelRoot, configuration, set);
+		initialize(configuration);
+	}
 
-    private void initialize(ISynchronizePageConfiguration configuration) {
+	private void initialize(ISynchronizePageConfiguration configuration) {
 		try {
 			IDialogSettings pageSettings = getConfiguration().getSite().getPageSettings();
 			if(pageSettings != null) {
@@ -227,87 +221,69 @@ public class FlatModelProvider extends SynchronizeModelProvider {
 			// ignore and use the defaults.
 		}
 		switch (sortCriteria) {
-        case FlatSorter.PATH:
-        case FlatSorter.NAME:
-        case FlatSorter.PARENT_NAME:
-            break;
-        default:
-            sortCriteria = FlatSorter.PATH;
-            break;
-        }
-    }
+		case FlatSorter.PATH:
+		case FlatSorter.NAME:
+		case FlatSorter.PARENT_NAME:
+			break;
+		default:
+			sortCriteria = FlatSorter.PATH;
+			break;
+		}
+	}
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#createActionGroup()
-     */
-    @Override
+	@Override
 	protected SynchronizePageActionGroup createActionGroup() {
-        return new FlatActionGroup();
-    }
+		return new FlatActionGroup();
+	}
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider#getViewerSorter()
-     */
-    @Override
+	@Override
 	public ViewerSorter getViewerSorter() {
 		return new FlatSorter(sortCriteria);
-    }
+	}
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#buildModelObjects(org.eclipse.team.ui.synchronize.ISynchronizeModelElement)
-     */
-    @Override
+	@Override
 	protected IDiffElement[] buildModelObjects(ISynchronizeModelElement node) {
-        if (node == getModelRoot());
-        SyncInfo[] infos = getSyncInfoSet().getSyncInfos();
-        List result = new ArrayList();
-        for (int i = 0; i < infos.length; i++) {
-            SyncInfo info = infos[i];
-            result.add(createModelObject(node, info));
-        }
-        return (IDiffElement[]) result.toArray(new IDiffElement[result.size()]);
-    }
+		if (node == getModelRoot());
+		SyncInfo[] infos = getSyncInfoSet().getSyncInfos();
+		List result = new ArrayList();
+		for (int i = 0; i < infos.length; i++) {
+			SyncInfo info = infos[i];
+			result.add(createModelObject(node, info));
+		}
+		return (IDiffElement[]) result.toArray(new IDiffElement[result.size()]);
+	}
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#handleResourceAdditions(org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent)
-     */
-    @Override
+	@Override
 	protected void handleResourceAdditions(ISyncInfoTreeChangeEvent event) {
-        addResources(event.getAddedResources());
-    }
+		addResources(event.getAddedResources());
+	}
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ui.synchronize.AbstractSynchronizeModelProvider#handleResourceRemovals(org.eclipse.team.core.synchronize.ISyncInfoTreeChangeEvent)
-     */
-    @Override
+	@Override
 	protected void handleResourceRemovals(ISyncInfoTreeChangeEvent event) {
-        IResource[] resources = event.getRemovedResources();
-        removeFromViewer(resources);
-    }
+		IResource[] resources = event.getRemovedResources();
+		removeFromViewer(resources);
+	}
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.internal.ui.synchronize.ISynchronizeModelProvider#getDescriptor()
-     */
-    @Override
+	@Override
 	public ISynchronizeModelProviderDescriptor getDescriptor() {
-        return flatDescriptor;
-    }
+		return flatDescriptor;
+	}
 
 	@Override
 	protected void addResource(SyncInfo info) {
 		// Add the node to the root
-        ISynchronizeModelElement node = getModelObject(info.getLocal());
-        if (node != null) {
-        	// Somehow the node exists. Remove it and read it to ensure
-        	// what is shown matches the contents of the sync set
-        	removeFromViewer(info.getLocal());
-        }
+		ISynchronizeModelElement node = getModelObject(info.getLocal());
+		if (node != null) {
+			// Somehow the node exists. Remove it and read it to ensure
+			// what is shown matches the contents of the sync set
+			removeFromViewer(info.getLocal());
+		}
 		createModelObject(getModelRoot(), info);
 	}
 
 	@Override
 	protected ISynchronizeModelElement createModelObject(ISynchronizeModelElement parent, SyncInfo info) {
-	    SynchronizeModelElement newNode = new FullPathSyncInfoElement(parent, info);
+		SynchronizeModelElement newNode = new FullPathSyncInfoElement(parent, info);
 		addToViewer(newNode);
 		return newNode;
 	}

@@ -13,20 +13,12 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ccvs.ui;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.viewers.CheckStateChangedEvent;
-import org.eclipse.jface.viewers.CheckboxTableViewer;
-import org.eclipse.jface.viewers.ICheckStateListener;
-import org.eclipse.jface.viewers.ILabelProvider;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -68,15 +60,13 @@ public class ListSelectionArea extends DialogArea {
 		this.initialSelections = new ArrayList();
 	}
 
-	/**
-	 * @see org.eclipse.team.internal.ccvs.ui.DialogArea#createArea(org.eclipse.swt.widgets.Composite)
-	 */
+	@Override
 	public void createArea(Composite parent) {
 
-	    Dialog.applyDialogFont(parent);
+		Dialog.applyDialogFont(parent);
 
-        final Composite composite = createComposite(parent, 1, true);
-        
+		final Composite composite = createComposite(parent, 1, true);
+		
 		initializeDialogUnits(composite);
 
 		if (message != null)
@@ -92,6 +82,7 @@ public class ListSelectionArea extends DialogArea {
 		listViewer.setContentProvider(contentProvider);
 		
 		listViewer.addCheckStateListener(new ICheckStateListener() {
+			@Override
 			public void checkStateChanged(CheckStateChangedEvent event) {
 				Object[] checkedElements = getViewer().getCheckedElements();
 				firePropertyChangeChange(LIST_SELECTION, previousCheckedElements, checkedElements);
@@ -138,6 +129,7 @@ public class ListSelectionArea extends DialogArea {
 		Button selectButton = createButton(buttonComposite, CVSUIMessages.ListSelectionArea_selectAll, GridData.HORIZONTAL_ALIGN_FILL); 
 
 		SelectionListener listener = new SelectionAdapter() {
+			@Override
 			public void widgetSelected(SelectionEvent e) {
 				listViewer.setAllChecked(true);
 			}
@@ -148,6 +140,7 @@ public class ListSelectionArea extends DialogArea {
 		Button deselectButton = createButton(buttonComposite, CVSUIMessages.ListSelectionArea_deselectAll, GridData.HORIZONTAL_ALIGN_FILL); 
 
 		listener = new SelectionAdapter() {
+			@Override
 			public void widgetSelected(SelectionEvent e) {
 				listViewer.setAllChecked(false);
 
@@ -163,7 +156,7 @@ public class ListSelectionArea extends DialogArea {
 	protected List getInitialElementSelections(){
 		return initialSelections;
 	}
-    
+	
 	/**
 	 * Returns the listViewer.
 	 * @return CheckboxTableViewer

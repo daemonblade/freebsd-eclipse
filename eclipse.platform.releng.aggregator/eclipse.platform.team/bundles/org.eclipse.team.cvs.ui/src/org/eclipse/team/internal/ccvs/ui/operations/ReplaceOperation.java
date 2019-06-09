@@ -44,20 +44,14 @@ public class ReplaceOperation extends UpdateOperation {
 	}
 
 	public ReplaceOperation(IWorkbenchPart part, ResourceMapping[] mappings, CVSTag tag) {
-        super(part, mappings, new LocalOption[] { Update.IGNORE_LOCAL_CHANGES }, tag);
-    }
+		super(part, mappings, new LocalOption[] { Update.IGNORE_LOCAL_CHANGES }, tag);
+	}
 
-    /* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.operations.CVSOperation#getTaskName()
-	 */
 	@Override
 	protected String getTaskName() {
 		return CVSUIMessages.ReplaceOperation_taskName; 
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.operations.SingleCommandOperation#executeCommand(org.eclipse.team.internal.ccvs.core.client.Session, org.eclipse.team.internal.ccvs.core.CVSTeamProvider, org.eclipse.core.resources.IResource[], org.eclipse.core.runtime.IProgressMonitor)
-	 */
 	@Override
 	protected IStatus executeCommand(
 		final Session session,
@@ -66,8 +60,8 @@ public class ReplaceOperation extends UpdateOperation {
 		final boolean recurse, IProgressMonitor monitor)
 		throws CVSException, InterruptedException {
 		
-        final IStatus[] status = new IStatus[] { Status.OK_STATUS };
-        try {
+		final IStatus[] status = new IStatus[] { Status.OK_STATUS };
+		try {
 			ResourcesPlugin.getWorkspace().run((IWorkspaceRunnable) monitor1 -> {
 				try {
 					status[0] = internalExecuteCommand(session, provider, resources, recurse, monitor1);
@@ -75,9 +69,9 @@ public class ReplaceOperation extends UpdateOperation {
 					throw new OperationCanceledException();
 				}
 			}, null, IWorkspace.AVOID_UPDATE, monitor);
-        } catch (CoreException e) {
-            throw CVSException.wrapException(e);
-        }
+		} catch (CoreException e) {
+			throw CVSException.wrapException(e);
+		}
 		return status[0];
 	}
 
@@ -91,41 +85,41 @@ public class ReplaceOperation extends UpdateOperation {
 	private boolean ignoreResourcesIfTagDoesNotExist;
 
 
-    private IStatus internalExecuteCommand(Session session, CVSTeamProvider provider, ICVSResource[] resources, boolean recurse, IProgressMonitor monitor) throws CVSException, InterruptedException {
-        monitor.beginTask(null, 100);
-        ICVSResource[] managedResources = getResourcesToUpdate(resources, Policy.subMonitorFor(monitor, 5));
+	private IStatus internalExecuteCommand(Session session, CVSTeamProvider provider, ICVSResource[] resources, boolean recurse, IProgressMonitor monitor) throws CVSException, InterruptedException {
+		monitor.beginTask(null, 100);
+		ICVSResource[] managedResources = getResourcesToUpdate(resources, Policy.subMonitorFor(monitor, 5));
 		if (ignoreResourcesIfTagDoesNotExist && managedResources.length == 0)
 			return OK;
 
-        try {
-        	// Purge any unmanaged or added files
-        	PrepareForReplaceVisitor pfrv = new PrepareForReplaceVisitor(session, getTag());
-        	pfrv.visitResources(
-        		provider.getProject(), 
-        		resources, 
-        		CVSUIMessages.ReplaceOperation_1, 
-        		recurse ? IResource.DEPTH_INFINITE : IResource.DEPTH_ONE, 
-        		Policy.subMonitorFor(monitor, 25));
-        	prepDeletedFiles = pfrv.getDeletedFiles();
-        	
-        	// Only perform the remote command if some of the resources being replaced were managed
-        	IStatus status = OK;
-        	if (managedResources.length > 0) {
-        		// Perform an update, ignoring any local file modifications
-        		status = super.executeCommand(session, provider, managedResources, recurse, Policy.subMonitorFor(monitor, 70));
-        	}
-        	
-        	// Prune any empty folders left after the resources were purged.
-        	// This is done to prune any empty folders that contained only unmanaged resources
-        	if (status.isOK() && CVSProviderPlugin.getPlugin().getPruneEmptyDirectories()) {
-        		new PruneFolderVisitor().visit(session, resources);
-        	}
-        	
-        	return status;
-        } finally {
-        	monitor.done();
-        }
-    }
+		try {
+			// Purge any unmanaged or added files
+			PrepareForReplaceVisitor pfrv = new PrepareForReplaceVisitor(session, getTag());
+			pfrv.visitResources(
+				provider.getProject(), 
+				resources, 
+				CVSUIMessages.ReplaceOperation_1, 
+				recurse ? IResource.DEPTH_INFINITE : IResource.DEPTH_ONE, 
+				Policy.subMonitorFor(monitor, 25));
+			prepDeletedFiles = pfrv.getDeletedFiles();
+			
+			// Only perform the remote command if some of the resources being replaced were managed
+			IStatus status = OK;
+			if (managedResources.length > 0) {
+				// Perform an update, ignoring any local file modifications
+				status = super.executeCommand(session, provider, managedResources, recurse, Policy.subMonitorFor(monitor, 70));
+			}
+			
+			// Prune any empty folders left after the resources were purged.
+			// This is done to prune any empty folders that contained only unmanaged resources
+			if (status.isOK() && CVSProviderPlugin.getPlugin().getPruneEmptyDirectories()) {
+				new PruneFolderVisitor().visit(session, resources);
+			}
+			
+			return status;
+		} finally {
+			monitor.done();
+		}
+	}
 
 	/**
 	 * Return the resources that need to be updated from the server.
@@ -187,9 +181,6 @@ public class ReplaceOperation extends UpdateOperation {
 		return Arrays.asList(tags).contains(tag);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.operations.UpdateOperation#getUpdateCommand()
-	 */
 	@Override
 	protected Update getUpdateCommand() {
 		// Use a special replace command that doesn't set back the timestamps
@@ -197,9 +188,6 @@ public class ReplaceOperation extends UpdateOperation {
 		return new Replace(prepDeletedFiles);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.operations.RepositoryProviderOperation#getTaskName(org.eclipse.team.internal.ccvs.core.CVSTeamProvider)
-	 */
 	@Override
 	protected String getTaskName(CVSTeamProvider provider) {
 		return NLS.bind(CVSUIMessages.ReplaceOperation_0, new String[] { provider.getProject().getName() }); 

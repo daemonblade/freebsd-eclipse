@@ -82,15 +82,12 @@ public class CheckoutAsProjectSelectionPage extends CVSWizardPage {
 		return remoteFolders[0].getFolderSyncInfo().getRoot();
 	}
 	
-	/**
-	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
-	 */
 	@Override
 	public void createControl(Composite parent) {
 		Composite composite= createComposite(parent, 2, false);
 		setControl(composite);
 		
-        PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IHelpContextIds.CHECKOUT_PROJECT_SELECTION_PAGE);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IHelpContextIds.CHECKOUT_PROJECT_SELECTION_PAGE);
 		
 		if (isSingleFolder()) {
 			createLabel(composite, CVSUIMessages.CheckoutAsProjectSelectionPage_name); 
@@ -126,7 +123,7 @@ public class CheckoutAsProjectSelectionPage extends CVSWizardPage {
 		initializeValues();
 		updateWidgetEnablements();
 		tree.getControl().setFocus();
-        Dialog.applyDialogFont(parent);
+		Dialog.applyDialogFont(parent);
 	}
 
 	/**

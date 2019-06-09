@@ -10,11 +10,11 @@ requires.2.range = 0.0.0
 requires.2.filter = (&(osgi.os=macosx)(osgi.ws=cocoa)(osgi.arch=x86_64))
 
 requires.3.namespace = org.eclipse.equinox.p2.iu
-requires.3.name = org.eclipse.swt.gtk.freebsd.amd64
+requires.3.name = org.eclipse.swt.gtk.linux.x86_64
 requires.3.range = 0.0.0
-requires.3.filter = (&(osgi.os=freebsd)(osgi.ws=gtk)(osgi.arch=amd64))
+requires.3.filter = (&(osgi.os=linux)(osgi.ws=gtk)(osgi.arch=x86_64))
 
 requires.4.namespace = org.eclipse.equinox.p2.iu
-requires.4.name = org.eclipse.swt.gtk.freebsd.powerpc64
+requires.4.name = org.eclipse.swt.gtk.linux.ppc64le
 requires.4.range = 0.0.0
-requires.4.filter = (&(osgi.os=freebsd)(osgi.ws=gtk)(osgi.arch=powerpc64))
+requires.4.filter = (&(osgi.os=linux)(osgi.ws=gtk)(osgi.arch=ppc64le))

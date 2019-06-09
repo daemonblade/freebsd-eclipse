@@ -20,9 +20,11 @@ package org.eclipse.ui.commands;
  * </p>
  *
  * @since 3.0
- * @deprecated Please use the "org.eclipse.core.commands" plug-in instead.
+ * @deprecated Please use the "org.eclipse.core.commands" plug-in instead. This
+ *             API is scheduled for deletion, see Bug 431177 for details
  * @see org.eclipse.core.commands.common.CommandException
  * @noextend This class is not intended to be subclassed by clients.
+ * @noreference This class is scheduled for deletion.
  */
 @Deprecated
 @SuppressWarnings("all")
@@ -33,48 +35,44 @@ public abstract class CommandException extends Exception {
 	 *
 	 * @since 3.4
 	 */
-	private static final long serialVersionUID= 1776879459633730964L;
-
+	private static final long serialVersionUID = 1776879459633730964L;
 
 	private Throwable cause;
 
-    /**
-     * Creates a new instance of this class with the specified detail message.
-     *
-     * @param message
-     *            the detail message.
-     */
+	/**
+	 * Creates a new instance of this class with the specified detail message.
+	 *
+	 * @param message the detail message.
+	 */
 	@Deprecated
-    public CommandException(String message) {
-        super(message);
-    }
+	public CommandException(String message) {
+		super(message);
+	}
 
-    /**
-     * Creates a new instance of this class with the specified detail message
-     * and cause.
-     *
-     * @param message
-     *            the detail message.
-     * @param cause
-     *            the cause.
-     */
+	/**
+	 * Creates a new instance of this class with the specified detail message and
+	 * cause.
+	 *
+	 * @param message the detail message.
+	 * @param cause   the cause.
+	 */
 	@Deprecated
-    public CommandException(String message, Throwable cause) {
-        super(message);
-        // don't pass the cause to super, to allow compilation against JCL Foundation
-        this.cause = cause;
-    }
+	public CommandException(String message, Throwable cause) {
+		super(message);
+		// don't pass the cause to super, to allow compilation against JCL Foundation
+		this.cause = cause;
+	}
 
-    /**
-     * Returns the cause of this throwable or <code>null</code> if the
-     * cause is nonexistent or unknown.
-     *
-     * @return the cause or <code>null</code>
-     * @since 3.1
-     */
+	/**
+	 * Returns the cause of this throwable or <code>null</code> if the cause is
+	 * nonexistent or unknown.
+	 *
+	 * @return the cause or <code>null</code>
+	 * @since 3.1
+	 */
 	@Override
 	@Deprecated
-    public Throwable getCause() {
-        return cause;
-    }
+	public Throwable getCause() {
+		return cause;
+	}
 }

@@ -29,40 +29,34 @@ import org.eclipse.team.internal.ccvs.ui.operations.BranchOperation;
  */
 public class BranchAction extends WorkspaceTraversalAction {
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#execute(org.eclipse.jface.action.IAction)
-	 */
 	@Override
 	public void execute(IAction action) throws InvocationTargetException, InterruptedException {
 		ResourceMapping[] resourceMappings = getCVSResourceMappings();
-        if (resourceMappings == null || resourceMappings.length == 0) {
-            // Could be a sync element tat is selected
-            IResource[] resources = getSelectedResources();
-            resourceMappings = getResourceMappings(resources);
-        }
-        if (resourceMappings == null || resourceMappings.length == 0) {
-            // Nothing is select so just return
-            return;
-        }
-        new BranchOperation(getTargetPart(), resourceMappings).run();
+		if (resourceMappings == null || resourceMappings.length == 0) {
+			// Could be a sync element tat is selected
+			IResource[] resources = getSelectedResources();
+			resourceMappings = getResourceMappings(resources);
+		}
+		if (resourceMappings == null || resourceMappings.length == 0) {
+			// Nothing is select so just return
+			return;
+		}
+		new BranchOperation(getTargetPart(), resourceMappings).run();
 	}
 	
 	private ResourceMapping[] getResourceMappings(IResource[] resources) {
 		List<ResourceMapping> mappings = new ArrayList<>();
-        for (int i = 0; i < resources.length; i++) {
-            IResource resource = resources[i];
-            Object o = getAdapter(resource, ResourceMapping.class);
-            if (o instanceof ResourceMapping) {
-                ResourceMapping mapping = (ResourceMapping) o;
-                mappings.add(mapping);
-            }
-        }
-        return mappings.toArray(new ResourceMapping[mappings.size()]);
-    }
+		for (int i = 0; i < resources.length; i++) {
+			IResource resource = resources[i];
+			Object o = getAdapter(resource, ResourceMapping.class);
+			if (o instanceof ResourceMapping) {
+				ResourceMapping mapping = (ResourceMapping) o;
+				mappings.add(mapping);
+			}
+		}
+		return mappings.toArray(new ResourceMapping[mappings.size()]);
+	}
 
-    /* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.actions.CVSAction#getId()
-	 */
 	@Override
 	public String getId() {
 		return ICVSUIConstants.CMD_BRANCH;

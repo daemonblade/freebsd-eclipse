@@ -157,6 +157,7 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getCommandName() {
 		return commandName;
 	}
@@ -166,11 +167,13 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setCommandName(String newCommandName) {
 		String oldCommandName = commandName;
 		commandName = newCommandName;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.COMMAND__COMMAND_NAME, oldCommandName, commandName));
+			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.COMMAND__COMMAND_NAME,
+					oldCommandName, commandName));
 	}
 
 	/**
@@ -178,6 +181,7 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public String getDescription() {
 		return description;
 	}
@@ -187,11 +191,13 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setDescription(String newDescription) {
 		String oldDescription = description;
 		description = newDescription;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.COMMAND__DESCRIPTION, oldDescription, description));
+			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.COMMAND__DESCRIPTION,
+					oldDescription, description));
 	}
 
 	/**
@@ -199,9 +205,11 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public List<MCommandParameter> getParameters() {
 		if (parameters == null) {
-			parameters = new EObjectContainmentEList<MCommandParameter>(MCommandParameter.class, this, CommandsPackageImpl.COMMAND__PARAMETERS);
+			parameters = new EObjectContainmentEList<MCommandParameter>(MCommandParameter.class, this,
+					CommandsPackageImpl.COMMAND__PARAMETERS);
 		}
 		return parameters;
 	}
@@ -211,13 +219,15 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public MCategory getCategory() {
-		if (category != null && ((EObject)category).eIsProxy()) {
-			InternalEObject oldCategory = (InternalEObject)category;
-			category = (MCategory)eResolveProxy(oldCategory);
+		if (category != null && ((EObject) category).eIsProxy()) {
+			InternalEObject oldCategory = (InternalEObject) category;
+			category = (MCategory) eResolveProxy(oldCategory);
 			if (category != oldCategory) {
 				if (eNotificationRequired())
-					eNotify(new ENotificationImpl(this, Notification.RESOLVE, CommandsPackageImpl.COMMAND__CATEGORY, oldCategory, category));
+					eNotify(new ENotificationImpl(this, Notification.RESOLVE, CommandsPackageImpl.COMMAND__CATEGORY,
+							oldCategory, category));
 			}
 		}
 		return category;
@@ -237,17 +247,21 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
 	public void setCategory(MCategory newCategory) {
 		MCategory oldCategory = category;
 		category = newCategory;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.COMMAND__CATEGORY, oldCategory, category));
+			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.COMMAND__CATEGORY, oldCategory,
+					category));
 	}
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @generated
 	 */
+	@Override
 	public String getLocalizedCommandName() {
 		return LocalizationHelper.getLocalizedFeature(CommandsPackageImpl.Literals.COMMAND__COMMAND_NAME, this);
 	}
@@ -255,7 +269,9 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @generated
 	 */
+	@Override
 	public String getLocalizedDescription() {
 		return LocalizationHelper.getLocalizedFeature(CommandsPackageImpl.Literals.COMMAND__DESCRIPTION, this);
 	}
@@ -263,13 +279,16 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * @since 1.1
+	 * @generated
 	 */
+	@Override
 	public void updateLocalization() {
 		if (eNotificationRequired()) {
-			eNotify(new ENotificationImpl(
-					this, Notification.SET, CommandsPackageImpl.COMMAND__LOCALIZED_COMMAND_NAME, null, getLocalizedCommandName()));
-			eNotify(new ENotificationImpl(
-					this, Notification.SET, CommandsPackageImpl.COMMAND__LOCALIZED_DESCRIPTION, null, getLocalizedDescription()));
+			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.COMMAND__LOCALIZED_COMMAND_NAME,
+					null, getLocalizedCommandName()));
+			eNotify(new ENotificationImpl(this, Notification.SET, CommandsPackageImpl.COMMAND__LOCALIZED_DESCRIPTION,
+					null, getLocalizedDescription()));
 		}
 	}
 
@@ -281,8 +300,8 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
-			case CommandsPackageImpl.COMMAND__PARAMETERS:
-				return ((InternalEList<?>)getParameters()).basicRemove(otherEnd, msgs);
+		case CommandsPackageImpl.COMMAND__PARAMETERS:
+			return ((InternalEList<?>) getParameters()).basicRemove(otherEnd, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -295,19 +314,20 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case CommandsPackageImpl.COMMAND__COMMAND_NAME:
-				return getCommandName();
-			case CommandsPackageImpl.COMMAND__DESCRIPTION:
-				return getDescription();
-			case CommandsPackageImpl.COMMAND__PARAMETERS:
-				return getParameters();
-			case CommandsPackageImpl.COMMAND__CATEGORY:
-				if (resolve) return getCategory();
-				return basicGetCategory();
-			case CommandsPackageImpl.COMMAND__LOCALIZED_COMMAND_NAME:
-				return getLocalizedCommandName();
-			case CommandsPackageImpl.COMMAND__LOCALIZED_DESCRIPTION:
-				return getLocalizedDescription();
+		case CommandsPackageImpl.COMMAND__COMMAND_NAME:
+			return getCommandName();
+		case CommandsPackageImpl.COMMAND__DESCRIPTION:
+			return getDescription();
+		case CommandsPackageImpl.COMMAND__PARAMETERS:
+			return getParameters();
+		case CommandsPackageImpl.COMMAND__CATEGORY:
+			if (resolve)
+				return getCategory();
+			return basicGetCategory();
+		case CommandsPackageImpl.COMMAND__LOCALIZED_COMMAND_NAME:
+			return getLocalizedCommandName();
+		case CommandsPackageImpl.COMMAND__LOCALIZED_DESCRIPTION:
+			return getLocalizedDescription();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -321,19 +341,19 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case CommandsPackageImpl.COMMAND__COMMAND_NAME:
-				setCommandName((String)newValue);
-				return;
-			case CommandsPackageImpl.COMMAND__DESCRIPTION:
-				setDescription((String)newValue);
-				return;
-			case CommandsPackageImpl.COMMAND__PARAMETERS:
-				getParameters().clear();
-				getParameters().addAll((Collection<? extends MCommandParameter>)newValue);
-				return;
-			case CommandsPackageImpl.COMMAND__CATEGORY:
-				setCategory((MCategory)newValue);
-				return;
+		case CommandsPackageImpl.COMMAND__COMMAND_NAME:
+			setCommandName((String) newValue);
+			return;
+		case CommandsPackageImpl.COMMAND__DESCRIPTION:
+			setDescription((String) newValue);
+			return;
+		case CommandsPackageImpl.COMMAND__PARAMETERS:
+			getParameters().clear();
+			getParameters().addAll((Collection<? extends MCommandParameter>) newValue);
+			return;
+		case CommandsPackageImpl.COMMAND__CATEGORY:
+			setCategory((MCategory) newValue);
+			return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -346,18 +366,18 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case CommandsPackageImpl.COMMAND__COMMAND_NAME:
-				setCommandName(COMMAND_NAME_EDEFAULT);
-				return;
-			case CommandsPackageImpl.COMMAND__DESCRIPTION:
-				setDescription(DESCRIPTION_EDEFAULT);
-				return;
-			case CommandsPackageImpl.COMMAND__PARAMETERS:
-				getParameters().clear();
-				return;
-			case CommandsPackageImpl.COMMAND__CATEGORY:
-				setCategory((MCategory)null);
-				return;
+		case CommandsPackageImpl.COMMAND__COMMAND_NAME:
+			setCommandName(COMMAND_NAME_EDEFAULT);
+			return;
+		case CommandsPackageImpl.COMMAND__DESCRIPTION:
+			setDescription(DESCRIPTION_EDEFAULT);
+			return;
+		case CommandsPackageImpl.COMMAND__PARAMETERS:
+			getParameters().clear();
+			return;
+		case CommandsPackageImpl.COMMAND__CATEGORY:
+			setCategory((MCategory) null);
+			return;
 		}
 		super.eUnset(featureID);
 	}
@@ -370,18 +390,20 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case CommandsPackageImpl.COMMAND__COMMAND_NAME:
-				return COMMAND_NAME_EDEFAULT == null ? commandName != null : !COMMAND_NAME_EDEFAULT.equals(commandName);
-			case CommandsPackageImpl.COMMAND__DESCRIPTION:
-				return DESCRIPTION_EDEFAULT == null ? description != null : !DESCRIPTION_EDEFAULT.equals(description);
-			case CommandsPackageImpl.COMMAND__PARAMETERS:
-				return parameters != null && !parameters.isEmpty();
-			case CommandsPackageImpl.COMMAND__CATEGORY:
-				return category != null;
-			case CommandsPackageImpl.COMMAND__LOCALIZED_COMMAND_NAME:
-				return LOCALIZED_COMMAND_NAME_EDEFAULT == null ? getLocalizedCommandName() != null : !LOCALIZED_COMMAND_NAME_EDEFAULT.equals(getLocalizedCommandName());
-			case CommandsPackageImpl.COMMAND__LOCALIZED_DESCRIPTION:
-				return LOCALIZED_DESCRIPTION_EDEFAULT == null ? getLocalizedDescription() != null : !LOCALIZED_DESCRIPTION_EDEFAULT.equals(getLocalizedDescription());
+		case CommandsPackageImpl.COMMAND__COMMAND_NAME:
+			return COMMAND_NAME_EDEFAULT == null ? commandName != null : !COMMAND_NAME_EDEFAULT.equals(commandName);
+		case CommandsPackageImpl.COMMAND__DESCRIPTION:
+			return DESCRIPTION_EDEFAULT == null ? description != null : !DESCRIPTION_EDEFAULT.equals(description);
+		case CommandsPackageImpl.COMMAND__PARAMETERS:
+			return parameters != null && !parameters.isEmpty();
+		case CommandsPackageImpl.COMMAND__CATEGORY:
+			return category != null;
+		case CommandsPackageImpl.COMMAND__LOCALIZED_COMMAND_NAME:
+			return LOCALIZED_COMMAND_NAME_EDEFAULT == null ? getLocalizedCommandName() != null
+					: !LOCALIZED_COMMAND_NAME_EDEFAULT.equals(getLocalizedCommandName());
+		case CommandsPackageImpl.COMMAND__LOCALIZED_DESCRIPTION:
+			return LOCALIZED_DESCRIPTION_EDEFAULT == null ? getLocalizedDescription() != null
+					: !LOCALIZED_DESCRIPTION_EDEFAULT.equals(getLocalizedDescription());
 		}
 		return super.eIsSet(featureID);
 	}
@@ -395,8 +417,10 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	public int eDerivedOperationID(int baseOperationID, Class<?> baseClass) {
 		if (baseClass == MLocalizable.class) {
 			switch (baseOperationID) {
-				case UiPackageImpl.LOCALIZABLE___UPDATE_LOCALIZATION: return CommandsPackageImpl.COMMAND___UPDATE_LOCALIZATION;
-				default: return -1;
+			case UiPackageImpl.LOCALIZABLE___UPDATE_LOCALIZATION:
+				return CommandsPackageImpl.COMMAND___UPDATE_LOCALIZATION;
+			default:
+				return -1;
 			}
 		}
 		return super.eDerivedOperationID(baseOperationID, baseClass);
@@ -410,9 +434,9 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	@Override
 	public Object eInvoke(int operationID, EList<?> arguments) throws InvocationTargetException {
 		switch (operationID) {
-			case CommandsPackageImpl.COMMAND___UPDATE_LOCALIZATION:
-				updateLocalization();
-				return null;
+		case CommandsPackageImpl.COMMAND___UPDATE_LOCALIZATION:
+			updateLocalization();
+			return null;
 		}
 		return super.eInvoke(operationID, arguments);
 	}
@@ -424,7 +448,8 @@ public class CommandImpl extends ApplicationElementImpl implements MCommand {
 	 */
 	@Override
 	public String toString() {
-		if (eIsProxy()) return super.toString();
+		if (eIsProxy())
+			return super.toString();
 
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (commandName: "); //$NON-NLS-1$

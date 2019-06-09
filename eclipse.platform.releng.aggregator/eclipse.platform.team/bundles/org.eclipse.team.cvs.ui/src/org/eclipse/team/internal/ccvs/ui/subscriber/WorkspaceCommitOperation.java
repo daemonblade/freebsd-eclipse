@@ -54,35 +54,23 @@ public class WorkspaceCommitOperation extends CVSSubscriberOperation {
 		this.override = override;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberOperation#getErrorTitle()
-	 */
 	@Override
 	protected String getErrorTitle() {
 		return CVSUIMessages.CommitAction_commitFailed; 
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.actions.TeamOperation#getJobName()
-	 */
 	@Override
 	protected String getJobName() {
 		SyncInfoSet syncSet = getSyncInfoSet();
 		return NLS.bind(CVSUIMessages.CommitAction_jobName, new String[] { Integer.valueOf(syncSet.size()).toString() }); 
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.TeamOperation#shouldRun()
-	 */
 	@Override
 	public boolean shouldRun() {
 		SyncInfoSet set = getSyncInfoSet();
 		return !set.isEmpty();
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.internal.ui.actions.SubscriberOperation#getSyncInfoSet()
-	 */
 	@Override
 	protected SyncInfoSet getSyncInfoSet() {
 		if (syncSet == null) {
@@ -129,10 +117,6 @@ public class WorkspaceCommitOperation extends CVSSubscriberOperation {
 		return true;
 	}
 	
-	/*
-	 *  (non-Javadoc)
-	 * @see org.eclipse.team.internal.ccvs.ui.subscriber.CVSSubscriberOperation#run(org.eclipse.team.core.synchronize.SyncInfoSet, org.eclipse.core.runtime.IProgressMonitor)
-	 */
 	@Override
 	public void runWithProjectRule(IProject project, SyncInfoSet syncSet, IProgressMonitor monitor) throws TeamException {
 		
@@ -286,37 +270,37 @@ public class WorkspaceCommitOperation extends CVSSubscriberOperation {
 	 * @return the comment, or null to cancel
 	 */
 	protected String promptForComment(RepositoryManager manager, IResource[] resourcesToCommit) {
-	    String proposedComment = getProposedComment(resourcesToCommit);
+		String proposedComment = getProposedComment(resourcesToCommit);
 		return manager.promptForComment(getShell(), resourcesToCommit, proposedComment);
 	}
 
-    private String getProposedComment(IResource[] resourcesToCommit) {
-    	StringBuffer comment = new StringBuffer();
-        ChangeSet[] sets = CVSUIPlugin.getPlugin().getChangeSetManager().getSets();
-        Arrays.sort(sets, new ChangeSetComparator());
-        int numMatchedSets = 0;
-        for (int i = 0; i < sets.length; i++) {
-            ChangeSet set = sets[i];
-            if (containsOne(set, resourcesToCommit)) {
-            	if(numMatchedSets > 0) comment.append(System.getProperty("line.separator")); //$NON-NLS-1$
-                comment.append(set.getComment());
-                numMatchedSets++;
-            }
-        }
-        return comment.toString();
-    }
-    
-    private boolean containsOne(ChangeSet set, IResource[] resourcesToCommit) {
-    	 for (int j = 0; j < resourcesToCommit.length; j++) {
-            IResource resource = resourcesToCommit[j];
-            if (set.contains(resource)) {
-                return true;
-            }
-        }
-        return false;
-    }
+	private String getProposedComment(IResource[] resourcesToCommit) {
+		StringBuffer comment = new StringBuffer();
+		ChangeSet[] sets = CVSUIPlugin.getPlugin().getChangeSetManager().getSets();
+		Arrays.sort(sets, new ChangeSetComparator());
+		int numMatchedSets = 0;
+		for (int i = 0; i < sets.length; i++) {
+			ChangeSet set = sets[i];
+			if (containsOne(set, resourcesToCommit)) {
+				if(numMatchedSets > 0) comment.append(System.getProperty("line.separator")); //$NON-NLS-1$
+				comment.append(set.getComment());
+				numMatchedSets++;
+			}
+		}
+		return comment.toString();
+	}
+	
+	private boolean containsOne(ChangeSet set, IResource[] resourcesToCommit) {
+		for (int j = 0; j < resourcesToCommit.length; j++) {
+			IResource resource = resourcesToCommit[j];
+			if (set.contains(resource)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
-    protected IResource[] promptForResourcesToBeAdded(RepositoryManager manager, IResource[] unadded) {
+	protected IResource[] promptForResourcesToBeAdded(RepositoryManager manager, IResource[] unadded) {
 		return manager.promptForResourcesToBeAdded(getShell(), unadded);
 	}
 	

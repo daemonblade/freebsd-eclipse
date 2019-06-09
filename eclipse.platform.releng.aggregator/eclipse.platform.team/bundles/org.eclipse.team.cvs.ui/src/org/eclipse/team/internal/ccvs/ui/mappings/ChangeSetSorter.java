@@ -32,22 +32,20 @@ public class ChangeSetSorter extends ResourceModelSorter {
 		super();
 	}
 
-	/* (non-Javadoc)
-	 * Method declared on ViewerSorter.
-	 */
+	@Override
 	public int compare(Viewer viewer, Object o1, Object o2) {
 		//have to deal with non-resources in navigator
 		//if one or both objects are not resources, returned a comparison 
 		//based on class.
 		if (o1 instanceof  ChangeSet && o2 instanceof ChangeSet) {
-		    ChangeSet s1 = (ChangeSet) o1;
-		    ChangeSet s2 = (ChangeSet) o2;
-		    if (s1 instanceof ActiveChangeSet && s2 instanceof ActiveChangeSet) {
-		        return compareNames(((ActiveChangeSet)s1).getTitle(), ((ActiveChangeSet)s2).getTitle());
-		    }
-		    if (s1 instanceof CVSCheckedInChangeSet && s2 instanceof CVSCheckedInChangeSet) {
-		    	CVSCheckedInChangeSet r1 = (CVSCheckedInChangeSet)s1;
-		    	CVSCheckedInChangeSet r2 = (CVSCheckedInChangeSet)s2;
+			ChangeSet s1 = (ChangeSet) o1;
+			ChangeSet s2 = (ChangeSet) o2;
+			if (s1 instanceof ActiveChangeSet && s2 instanceof ActiveChangeSet) {
+				return compareNames(((ActiveChangeSet)s1).getTitle(), ((ActiveChangeSet)s2).getTitle());
+			}
+			if (s1 instanceof CVSCheckedInChangeSet && s2 instanceof CVSCheckedInChangeSet) {
+				CVSCheckedInChangeSet r1 = (CVSCheckedInChangeSet)s1;
+				CVSCheckedInChangeSet r2 = (CVSCheckedInChangeSet)s2;
 				if (getCommentCriteria() == DATE)
 					return r1.getDate().compareTo(r2.getDate());
 				else if (getCommentCriteria() == COMMENT)
@@ -56,17 +54,17 @@ public class ChangeSetSorter extends ResourceModelSorter {
 					return compareNames(r1.getAuthor(), r2.getAuthor());
 				else
 					return 0;
-		    }
-		    if (s1 instanceof ActiveChangeSet) {
-		        return -1;
-		    } else if (s2 instanceof ActiveChangeSet) {
-		        return 1;
-		    }
-		    if (s1 instanceof CVSCheckedInChangeSet) {
-		        return -1;
-		    } else if (s2 instanceof CVSCheckedInChangeSet) {
-		        return 1;
-		    }
+			}
+			if (s1 instanceof ActiveChangeSet) {
+				return -1;
+			} else if (s2 instanceof ActiveChangeSet) {
+				return 1;
+			}
+			if (s1 instanceof CVSCheckedInChangeSet) {
+				return -1;
+			} else if (s2 instanceof CVSCheckedInChangeSet) {
+				return 1;
+			}
 		}
 		return super.compare(viewer, o1, o2);
 	}

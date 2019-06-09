@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2009 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -41,6 +41,12 @@ public class DateTagDialog extends TrayDialog {
 	public class DateArea extends DialogArea {
 		private DateTime date;
 
+		/**
+		 * This is the minimum year that is accepted by {@link DateTime#setYear}.
+		 */
+		private static final int DateTime_MIN_YEAR = 1752;
+
+		@Override
 		public void createArea(Composite parent) {
 			Composite composite = createComposite(parent, 2, false);
 			initializeDialogUnits(composite);
@@ -60,8 +66,16 @@ public class DateTagDialog extends TrayDialog {
 		}
 		
 		public void adjustCalendar(Calendar calendar) {
+			int dateYear = date.getYear();
+			int todaysYear = calendar.get(Calendar.YEAR);
+			if (todaysYear < DateTime_MIN_YEAR) {
+				// year would be ignored by DateTime if it is less than MIN_YEAR
+				// The code below is to specify the correct year as per the calendar chosen
+				int extended_year = calendar.get(Calendar.EXTENDED_YEAR);
+				dateYear = todaysYear + (dateYear - extended_year);
+			}
 			calendar.set(
-					date.getYear(),
+					dateYear,
 					date.getMonth(),
 					date.getDay(),
 					0,0,0);
@@ -72,9 +86,7 @@ public class DateTagDialog extends TrayDialog {
 		private Button includeTime, localTime, utcTime;
 		private DateTime time;
 
-		/* (non-Javadoc)
-		 * @see org.eclipse.team.internal.ui.dialogs.DialogArea#createArea(org.eclipse.swt.widgets.Composite)
-		 */
+		@Override
 		public void createArea(Composite parent) {
 			Composite composite = createComposite(parent, 2, false);
 			initializeDialogUnits(composite);
@@ -85,6 +97,7 @@ public class DateTagDialog extends TrayDialog {
 			utcTime = createRadioButton(composite, CVSUIMessages.DateTagDialog_4, 2);  
 			
 			includeTime.addSelectionListener(new SelectionAdapter() {
+				@Override
 				public void widgetSelected(SelectionEvent e) {
 					updateWidgetEnablements();
 				}
@@ -126,17 +139,13 @@ public class DateTagDialog extends TrayDialog {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * Method declared on Window.
-	 */
+	@Override
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
 		newShell.setText(CVSUIMessages.DateTagDialog_5); 
 	} 
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
-	 */
+	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite topLevel = new Composite(parent, SWT.NONE);
 		GridLayout layout = new GridLayout();
@@ -152,7 +161,7 @@ public class DateTagDialog extends TrayDialog {
 		updateWidgetEnablements();
 		
 		// set F1 help
-        PlatformUI.getWorkbench().getHelpSystem().setHelp(topLevel, IHelpContextIds.DATE_TAG_DIALOG);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(topLevel, IHelpContextIds.DATE_TAG_DIALOG);
 		Dialog.applyDialogFont(parent);
 		return topLevel;
 	}
@@ -193,9 +202,7 @@ public class DateTagDialog extends TrayDialog {
 		return calendar.getTime();
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.dialogs.Dialog#buttonPressed(int)
-	 */
+	@Override
 	protected void buttonPressed(int buttonId) {
 		if (buttonId == IDialogConstants.OK_ID) {
 			dateEntered = privateGetDate();

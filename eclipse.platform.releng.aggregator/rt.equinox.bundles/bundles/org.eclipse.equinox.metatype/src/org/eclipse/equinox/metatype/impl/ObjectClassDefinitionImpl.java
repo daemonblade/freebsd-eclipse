@@ -19,6 +19,7 @@ import java.net.URL;
 import java.util.*;
 import org.eclipse.equinox.metatype.EquinoxAttributeDefinition;
 import org.eclipse.equinox.metatype.EquinoxObjectClassDefinition;
+import org.eclipse.equinox.metatype.impl.Persistence.Writer;
 import org.osgi.framework.Bundle;
 
 /**
@@ -26,6 +27,7 @@ import org.osgi.framework.Bundle;
  */
 public class ObjectClassDefinitionImpl extends LocalizationElement implements EquinoxObjectClassDefinition, Cloneable {
 	private static final Comparator<Icon> iconComparator = new Comparator<Icon>() {
+		@Override
 		public int compare(Icon icon1, Icon icon2) {
 			return icon1.getIconSize().compareTo(icon2.getIconSize());
 		}
@@ -35,12 +37,11 @@ public class ObjectClassDefinitionImpl extends LocalizationElement implements Eq
 	private final String _id;
 	private final String _description;
 	private final int _type;
-	private final Vector<AttributeDefinitionImpl> _required = new Vector<AttributeDefinitionImpl>(7);
-	private final Vector<AttributeDefinitionImpl> _optional = new Vector<AttributeDefinitionImpl>(7);
+	private final List<AttributeDefinitionImpl> _required = new ArrayList<>(7);
+	private final List<AttributeDefinitionImpl> _optional = new ArrayList<>(7);
 	private final ExtendableHelper helper;
 
-	// @GuardedBy("this")
-	private List<Icon> icons;
+	private volatile List<Icon> icons = null;
 
 	/*
 	 * Constructor of class ObjectClassDefinitionImpl.
@@ -64,19 +65,19 @@ public class ObjectClassDefinitionImpl extends LocalizationElement implements Eq
 	/*
 	 * 
 	 */
-	public synchronized Object clone() {
+	@Override
+	public Object clone() {
 
 		ObjectClassDefinitionImpl ocd = new ObjectClassDefinitionImpl(_name, _description, _id, _type, getLocalization(), helper);
-		for (int i = 0; i < _required.size(); i++) {
-			AttributeDefinitionImpl ad = _required.elementAt(i);
+		for (AttributeDefinitionImpl ad : _required) {
 			ocd.addAttributeDefinition((AttributeDefinitionImpl) ad.clone(), true);
 		}
-		for (int i = 0; i < _optional.size(); i++) {
-			AttributeDefinitionImpl ad = _optional.elementAt(i);
+		for (AttributeDefinitionImpl ad : _optional) {
 			ocd.addAttributeDefinition((AttributeDefinitionImpl) ad.clone(), false);
 		}
-		if (icons != null)
+		if (icons != null) {
 			ocd.setIcons(new ArrayList<Icon>(icons));
+		}
 		return ocd;
 	}
 
@@ -112,6 +113,7 @@ public class ObjectClassDefinitionImpl extends LocalizationElement implements Eq
 	 * 
 	 * @see org.osgi.service.metatype.ObjectClassDefinition#getAttributeDefinitions(int)
 	 */
+	@Override
 	public EquinoxAttributeDefinition[] getAttributeDefinitions(int filter) {
 
 		EquinoxAttributeDefinition[] atts;
@@ -127,15 +129,13 @@ public class ObjectClassDefinitionImpl extends LocalizationElement implements Eq
 			case ALL :
 			default :
 				atts = new EquinoxAttributeDefinition[_required.size() + _optional.size()];
-				Enumeration<AttributeDefinitionImpl> e = _required.elements();
 				int i = 0;
-				while (e.hasMoreElements()) {
-					atts[i] = e.nextElement();
+				for (AttributeDefinitionImpl attr : _required) {
+					atts[i] = attr;
 					i++;
 				}
-				e = _optional.elements();
-				while (e.hasMoreElements()) {
-					atts[i] = e.nextElement();
+				for (AttributeDefinitionImpl attr : _optional) {
+					atts[i] = attr;
 					i++;
 				}
 				return atts;
@@ -148,9 +148,9 @@ public class ObjectClassDefinitionImpl extends LocalizationElement implements Eq
 	void addAttributeDefinition(AttributeDefinitionImpl ad, boolean isRequired) {
 
 		if (isRequired) {
-			_required.addElement(ad);
+			_required.add(ad);
 		} else {
-			_optional.addElement(ad);
+			_optional.add(ad);
 		}
 	}
 
@@ -159,7 +159,7 @@ public class ObjectClassDefinitionImpl extends LocalizationElement implements Eq
 	 * 
 	 * @see org.osgi.service.metatype.ObjectClassDefinition#getIcon(int)
 	 */
-	public synchronized InputStream getIcon(int sizeHint) throws IOException {
+	public InputStream getIcon(int sizeHint) throws IOException {
 		// The parameter simply represents a requested size. This method should never return null if an
 		// icon exists.
 		// Temporary icon to hold the requested size for use in binary search comparator.
@@ -206,7 +206,7 @@ public class ObjectClassDefinitionImpl extends LocalizationElement implements Eq
 		return null;
 	}
 
-	synchronized void setIcons(List<Icon> icons) {
+	void setIcons(List<Icon> icons) {
 		// Do nothing if icons is null or empty.
 		if (icons == null || icons.isEmpty())
 			return;
@@ -222,24 +222,91 @@ public class ObjectClassDefinitionImpl extends LocalizationElement implements Eq
 	 */
 	void setResourceBundle(String assignedLocale, Bundle bundle) {
 		setLocaleAndBundle(assignedLocale, bundle);
-		Enumeration<AttributeDefinitionImpl> allADReqs = _required.elements();
-		while (allADReqs.hasMoreElements()) {
-			AttributeDefinitionImpl ad = allADReqs.nextElement();
+		for (AttributeDefinitionImpl ad : _required) {
 			ad.setLocaleAndBundle(assignedLocale, bundle);
 		}
-
-		Enumeration<AttributeDefinitionImpl> allADOpts = _optional.elements();
-		while (allADOpts.hasMoreElements()) {
-			AttributeDefinitionImpl ad = allADOpts.nextElement();
+		for (AttributeDefinitionImpl ad : _optional) {
 			ad.setLocaleAndBundle(assignedLocale, bundle);
 		}
 	}
 
+	@Override
 	public Map<String, String> getExtensionAttributes(String schema) {
 		return helper.getExtensionAttributes(schema);
 	}
 
+	@Override
 	public Set<String> getExtensionUris() {
 		return helper.getExtensionUris();
+	}
+
+	void getStrings(Set<String> strings) {
+		helper.getStrings(strings);
+		strings.add(_description);
+		strings.add(_id);
+		strings.add(_name);
+		strings.add(getLocalization());
+		@SuppressWarnings("hiding")
+		List<Icon> icons = this.icons;
+		if (icons != null) {
+			for (Icon icon : icons) {
+				icon.getStrings(strings);
+			}
+		}
+	}
+
+	static ObjectClassDefinitionImpl load(Bundle b, LogTracker logger, Persistence.Reader reader) throws IOException {
+		String description = reader.readString();
+		String id = reader.readString();
+		String name = reader.readString();
+		int type = reader.readInt();
+		String localization = reader.readString();
+		ExtendableHelper helper = ExtendableHelper.load(reader);
+		ObjectClassDefinitionImpl result = new ObjectClassDefinitionImpl(name, description, id, type, localization, helper);
+
+		int numIcons = reader.readInt();
+		List<Icon> icons = null;
+		if (numIcons > 0) {
+			icons = new ArrayList<>(numIcons);
+			for (int i = 0; i < numIcons; i++) {
+				icons.add(Icon.load(reader, b));
+			}
+		}
+		result.setIcons(icons);
+
+		int numRequired = reader.readInt();
+		for (int i = 0; i < numRequired; i++) {
+			result.addAttributeDefinition(AttributeDefinitionImpl.load(reader, logger), true);
+		}
+		int numOptional = reader.readInt();
+		for (int i = 0; i < numOptional; i++) {
+			result.addAttributeDefinition(AttributeDefinitionImpl.load(reader, logger), false);
+		}
+
+		return result;
+	}
+
+	void write(Writer writer) throws IOException {
+		writer.writeString(_description);
+		writer.writeString(_id);
+		writer.writeString(_name);
+		writer.writeInt(_type);
+		writer.writeString(getLocalization());
+		helper.write(writer);
+		List<Icon> curIcons = this.icons;
+		writer.writeInt(curIcons == null ? 0 : curIcons.size());
+		if (curIcons != null) {
+			for (Icon icon : curIcons) {
+				icon.write(writer);
+			}
+		}
+		writer.writeInt(_required.size());
+		for (AttributeDefinitionImpl ad : _required) {
+			ad.write(writer);
+		}
+		writer.writeInt(_optional.size());
+		for (AttributeDefinitionImpl ad : _optional) {
+			ad.write(writer);
+		}
 	}
 }

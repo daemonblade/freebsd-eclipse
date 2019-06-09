@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.equinox.http.servlet.testbase;
 
+import org.eclipse.equinox.http.servlet.tests.ContextHelperCustomizerTests;
 import org.eclipse.equinox.http.servlet.tests.AuthenticationTest;
 import org.eclipse.equinox.http.servlet.tests.DispatchingTest;
 import org.eclipse.equinox.http.servlet.tests.PreprocessorTestCase;
@@ -35,6 +36,7 @@ import org.eclipse.equinox.http.servlet.tests.Test_140_4_42to44;
 import org.eclipse.equinox.http.servlet.tests.Test_140_4_9;
 import org.eclipse.equinox.http.servlet.tests.Test_140_6_1;
 import org.eclipse.equinox.http.servlet.tests.Test_140_6_20to21_commonProperties;
+import org.eclipse.equinox.http.servlet.tests.Test_140_7_validation;
 import org.eclipse.equinox.http.servlet.tests.Test_140_9_ServletContextDTO_custom_listener;
 import org.eclipse.equinox.http.servlet.tests.Test_140_9_ServletContextDTO_default_listener;
 import org.eclipse.equinox.http.servlet.tests.Test_table_140_1_HTTP_WHITEBOARD_CONTEXT_NAME_bindUsingContextSelect;
@@ -74,6 +76,7 @@ import org.junit.runners.Suite.SuiteClasses;
 	Test_140_4_9.class,
 	Test_140_6_1.class,
 	Test_140_6_20to21_commonProperties.class,
+	Test_140_7_validation.class,
 	Test_140_9_ServletContextDTO_custom_listener.class,
 	Test_140_9_ServletContextDTO_default_listener.class,
 	Test_table_140_1_HTTP_WHITEBOARD_CONTEXT_NAME_bindUsingContextSelect.class,
@@ -91,6 +94,7 @@ import org.junit.runners.Suite.SuiteClasses;
 	TestHttpServiceAndErrorPage.class,
 	TestHttpServiceAndNamedServlet.class,
 	TestUpload.class,
+	ContextHelperCustomizerTests.class
 })
 public class AllTests {
 	// see @SuiteClasses

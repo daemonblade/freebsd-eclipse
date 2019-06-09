@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,9 +16,7 @@ package org.eclipse.ui.internal.dialogs;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.preference.IPreferenceNode;
-import org.eclipse.jface.preference.IPreferencePage;
 import org.eclipse.jface.preference.PreferenceManager;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -26,7 +24,6 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.activities.WorkbenchActivityHelper;
 import org.eclipse.ui.internal.IWorkbenchHelpContextIds;
 import org.eclipse.ui.internal.WorkbenchPlugin;
-import org.eclipse.ui.internal.dnd.SwtUtil;
 
 /**
  * Prefence dialog for the workbench including the ability to load/save
@@ -43,33 +40,29 @@ public class WorkbenchPreferenceDialog extends FilteredPreferenceDialog {
 	private static WorkbenchPreferenceDialog instance = null;
 
 	/**
-	 * The bounds of this dialog will be persisted in the dialog settings.
-	 * This is defined at the most concrete level of the hierarchy so that
-	 * different concrete implementations don't necessarily store their bounds
-	 * in the same settings.
+	 * The bounds of this dialog will be persisted in the dialog settings. This is
+	 * defined at the most concrete level of the hierarchy so that different
+	 * concrete implementations don't necessarily store their bounds in the same
+	 * settings.
 	 *
 	 * @since 3.2
 	 */
 	private static final String DIALOG_SETTINGS_SECTION = "WorkbenchPreferenceDialogSettings"; //$NON-NLS-1$
 
-	private String initialPageId;
-
-
 	/**
-	 * Creates a workbench preference dialog to a particular preference page. It
-	 * is the responsibility of the caller to then call <code>open()</code>.
-	 * The call to <code>open()</code> will not return until the dialog
-	 * closes, so this is the last chance to manipulate the dialog.
+	 * Creates a workbench preference dialog to a particular preference page. It is
+	 * the responsibility of the caller to then call <code>open()</code>. The call
+	 * to <code>open()</code> will not return until the dialog closes, so this is
+	 * the last chance to manipulate the dialog.
 	 *
-	 * @param shell
-	 * 			The Shell to parent the dialog off of if it is not
-	 * 			already created. May be <code>null</code>
-	 * 			in which case the active workbench window will be used
-	 * 			if available.
-	 * @param preferencePageId
-	 *            The identifier of the preference page to open; may be
-	 *            <code>null</code>. If it is <code>null</code>, then the
-	 *            preference page is not selected or modified in any way.
+	 * @param shell            The Shell to parent the dialog off of if it is not
+	 *                         already created. May be <code>null</code> in which
+	 *                         case the active workbench window will be used if
+	 *                         available.
+	 * @param preferencePageId The identifier of the preference page to open; may be
+	 *                         <code>null</code>. If it is <code>null</code>, then
+	 *                         the preference page is not selected or modified in
+	 *                         any way.
 	 * @return The selected preference page.
 	 * @since 3.1
 	 */
@@ -78,8 +71,8 @@ public class WorkbenchPreferenceDialog extends FilteredPreferenceDialog {
 
 		if (instance == null) {
 			/*
-			 * There is no existing preference dialog, so open a new one with
-			 * the given selected page.
+			 * There is no existing preference dialog, so open a new one with the given
+			 * selected page.
 			 */
 
 			Shell parentShell = shell;
@@ -95,27 +88,27 @@ public class WorkbenchPreferenceDialog extends FilteredPreferenceDialog {
 			}
 
 			// Create the dialog
-			final PreferenceManager preferenceManager = PlatformUI.getWorkbench()
-					.getPreferenceManager();
+			final PreferenceManager preferenceManager = PlatformUI.getWorkbench().getPreferenceManager();
 			dialog = new WorkbenchPreferenceDialog(parentShell, preferenceManager);
 			if (preferencePageId != null) {
 				dialog.setSelectedNode(preferencePageId);
-				dialog.setInitialPage(preferencePageId);
 			}
 			dialog.create();
-			PlatformUI.getWorkbench().getHelpSystem().setHelp(
-					dialog.getShell(),
+			if (preferencePageId != null) {
+				dialog.getCurrentPage().getControl().setFocus();
+			}
+			PlatformUI.getWorkbench().getHelpSystem().setHelp(dialog.getShell(),
 					IWorkbenchHelpContextIds.PREFERENCE_DIALOG);
 
 		} else {
 			/*
-			 * There is an existing preference dialog, so let's just select the
-			 * given preference page.
+			 * There is an existing preference dialog, so let's just select the given
+			 * preference page.
 			 */
 			dialog = instance;
 			if (preferencePageId != null) {
 				dialog.setCurrentPageId(preferencePageId);
-				dialog.setInitialPage(preferencePageId);
+				dialog.getCurrentPage().getControl().setFocus();
 			}
 
 		}
@@ -128,19 +121,15 @@ public class WorkbenchPreferenceDialog extends FilteredPreferenceDialog {
 	 * Creates a new preference dialog under the control of the given preference
 	 * manager.
 	 *
-	 * @param parentShell
-	 *            the parent shell
-	 * @param manager
-	 *            the preference manager
+	 * @param parentShell the parent shell
+	 * @param manager     the preference manager
 	 */
 	public WorkbenchPreferenceDialog(Shell parentShell, PreferenceManager manager) {
 		super(parentShell, manager);
-		Assert.isTrue((instance == null),
-				"There cannot be two preference dialogs at once in the workbench."); //$NON-NLS-1$
+		Assert.isTrue((instance == null), "There cannot be two preference dialogs at once in the workbench."); //$NON-NLS-1$
 		instance = this;
 
 	}
-
 
 	@Override
 	public boolean close() {
@@ -148,12 +137,10 @@ public class WorkbenchPreferenceDialog extends FilteredPreferenceDialog {
 		return super.close();
 	}
 
-
 	/**
-	 * Differs from super implementation in that if the node is found but should
-	 * be filtered based on a call to
-	 * <code>WorkbenchActivityHelper.filterItem()</code> then
-	 * <code>null</code> is returned.
+	 * Differs from super implementation in that if the node is found but should be
+	 * filtered based on a call to <code>WorkbenchActivityHelper.filterItem()</code>
+	 * then <code>null</code> is returned.
 	 *
 	 * @see org.eclipse.jface.preference.PreferenceDialog#findNodeMatching(java.lang.String)
 	 */
@@ -173,54 +160,23 @@ public class WorkbenchPreferenceDialog extends FilteredPreferenceDialog {
 
 	@Override
 	protected IDialogSettings getDialogBoundsSettings() {
-        IDialogSettings settings = WorkbenchPlugin.getDefault().getDialogSettings();
-        IDialogSettings section = settings.getSection(DIALOG_SETTINGS_SECTION);
-        if (section == null) {
-            section = settings.addNewSection(DIALOG_SETTINGS_SECTION);
-        }
-        return section;
+		IDialogSettings settings = WorkbenchPlugin.getDefault().getDialogSettings();
+		IDialogSettings section = settings.getSection(DIALOG_SETTINGS_SECTION);
+		if (section == null) {
+			section = settings.addNewSection(DIALOG_SETTINGS_SECTION);
+		}
+		return section;
 	}
 
 	/**
-	 * Overridden to persist only the location, not the size, since the current
-	 * page dictates the most appropriate size for the dialog.
+	 * Overridden to persist only the location, not the size, since the current page
+	 * dictates the most appropriate size for the dialog.
 	 *
 	 * @since 3.2
 	 */
 	@Override
 	protected int getDialogBoundsStrategy() {
 		return DIALOG_PERSISTLOCATION;
-	}
-
-	/**
-	 *
-	 * Overrides to set focus to the specific page if it a specific page was
-	 * requested.
-	 *
-	 * @since 3.5
-	 */
-	@Override
-	public int open() {
-		IPreferencePage selectedPage = getCurrentPage();
-		if ((initialPageId != null) && (selectedPage != null)) {
-			Shell shell = getShell();
-			if ((shell != null) && (!shell.isDisposed())) {
-				shell.open(); // make the dialog visible to properly set the focus
-				Control control = selectedPage.getControl();
-				if (!SwtUtil.isFocusAncestor(control))
-					control.setFocus();
-			}
-		}
-		return super.open();
-	}
-
-	/**
-	 * Remembers the initial page ID
-	 * @param pageId ID of the initial page to display
-	 * @since 3.5
-	 */
-	public void setInitialPage(String pageId) {
-		initialPageId = pageId;
 	}
 
 }
