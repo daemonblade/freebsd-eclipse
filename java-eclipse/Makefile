@@ -54,13 +54,12 @@ BUILD_DEPENDS=	git:devel/git-lite \
 		${LOCALBASE}/share/java/maven/bin/mvn:devel/maven
 LIB_DEPENDS=	libsecret-1.so:security/libsecret \
 		libwebkit2gtk-4.0.so:www/webkit2-gtk3
-USES=		compiler:c11 gmake pkgconfig gnome
+USES=		compiler:c++11-lang gmake pkgconfig gnome
 USE_GNOME=	gtk30
 
 USE_GITHUB=	yes
 GH_ACCOUNT=	daemonblade
 GH_PROJECT=	eclipse-maven-repo
-GH_TAGNAME=	${PORTVERSION}
 
 USE_JAVA=	yes
 JAVA_VERSION=	1.8
