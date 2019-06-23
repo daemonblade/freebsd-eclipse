@@ -31,3 +31,22 @@ ECLIPSE_MODULES="
 	equinox/rt.equinox.p2"
 
 PATCH_DIR="java-eclipse/files"
+PATCHED_DIRS="
+	eclipse-platform-parent
+	production
+	eclipse.pde.build
+	eclipse.pde.ui
+	eclipse.platform.releng
+	eclipse.platform.releng.prereqs.sdk
+	eclipse.platform.releng.tychoeclipsebuilder
+	eclipse.platform.resources
+	eclipse.platform.runtime
+	eclipse.platform.swt
+	eclipse.platform.swt.binaries
+	eclipse.platform.team
+	eclipse.platform.ua
+	eclipse.platform.ui
+	rt.equinox.bundles
+	rt.equinox.framework
+	rt.equinox.p2
+"

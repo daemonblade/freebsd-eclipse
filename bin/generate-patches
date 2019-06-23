@@ -3,36 +3,18 @@
 #
 # Generate patches
 #
-INSPECT="
-	eclipse-platform-parent
-	production
-	eclipse.pde.build
-	eclipse.pde.ui
-	eclipse.platform.releng
-	eclipse.platform.releng.prereqs.sdk
-	eclipse.platform.releng.tychoeclipsebuilder
-	eclipse.platform.resources
-	eclipse.platform.runtime
-	eclipse.platform.swt
-	eclipse.platform.swt.binaries
-	eclipse.platform.team
-	eclipse.platform.ua
-	eclipse.platform.ui
-	rt.equinox.bundles
-	rt.equinox.framework
-	rt.equinox.p2
-"
 if [ ! -x bin/$(basename $0) ]
 then
 	echo "ERROR: Run this from top level"
 	exit 1
 fi
+. ./config.sh
+
+# Overrides
 if [ $# -gt 0 ]
 then
-	INSPECT="$*"
+	PATCHED_DIRS="$*"
 fi
-
-. ./config.sh
 
 AGGR_MODULE=$(basename $ECLIPSE_TOP)
 BASELINE=".baseline.${AGGR_MODULE}"
@@ -52,7 +34,7 @@ s/^(\+{3} .*	)[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{9} .[0
 /^Only in ${1}.*/d"
 }
 
-for DIR in ${INSPECT}
+for DIR in ${PATCHED_DIRS}
 do
 	if [ ! -d ${AGGR_MODULE}/${DIR} ]
 	then
