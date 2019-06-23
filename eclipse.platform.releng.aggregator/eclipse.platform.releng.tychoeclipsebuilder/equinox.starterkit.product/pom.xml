@@ -43,9 +43,9 @@
           <resolver>p2</resolver>
           <environments>
             <environment>
-              <os>linux</os>
+              <os>freebsd</os>
               <ws>gtk</ws>
-              <arch>x86_64</arch>
+              <arch>amd64</arch>
             </environment>
             <environment>
               <os>win32</os>
@@ -91,7 +91,7 @@
             <configuration>
               <formats>
                 <win32>zip</win32>
-                <linux>tar.gz</linux>
+                <freebsd>tar.gz</freebsd>
                 <macosx>tar.gz</macosx>
               </formats>
             </configuration>

@@ -16,7 +16,7 @@
    </launcherArgs>
 
    <launcher name="eclipse">
-      <linux icon="icons/icon.xpm"/>
+      <freebsd icon="icons/icon.xpm"/>
       <macosx icon="icons/Eclipse.icns"/>
       <win useIco="true">
          <ico path="icons/eclipse.ico"/>

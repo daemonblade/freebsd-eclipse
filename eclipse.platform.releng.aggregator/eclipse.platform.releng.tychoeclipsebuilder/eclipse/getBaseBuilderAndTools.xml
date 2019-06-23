@@ -111,7 +111,7 @@
     -->
     <property
       name="platformFile"
-      value="eclipse-platform-${eclispeBaseLabel}-linux-gtk-x86_64.tar.gz" />
+      value="eclipse-platform-${eclispeBaseLabel}-freebsd-gtk-amd64.tar.gz" />
 
     <!--
       mavenproperties.properties is produced during the build and contains
