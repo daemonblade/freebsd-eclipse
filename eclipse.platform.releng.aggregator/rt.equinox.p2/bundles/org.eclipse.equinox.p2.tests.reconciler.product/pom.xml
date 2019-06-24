@@ -39,7 +39,7 @@
 						</goals>
 						<configuration>
 							<formats>
-								<linux>tar.gz</linux>
+								<freebsd>tar.gz</freebsd>
 							</formats>
 						</configuration>
 					</execution>
