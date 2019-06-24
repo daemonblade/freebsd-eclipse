@@ -217,9 +217,9 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.equinox.security.linux.x86_64"
-         os="linux"
-         arch="x86_64"
+         id="org.eclipse.equinox.security.freebsd.amd64"
+         os="freebsd"
+         arch="amd64"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -227,9 +227,9 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.equinox.security.linux.x86_64.source"
-         os="linux"
-         arch="x86_64"
+         id="org.eclipse.equinox.security.freebsd.amd64.source"
+         os="freebsd"
+         arch="amd64"
          download-size="0"
          install-size="0"
          version="0.0.0"
