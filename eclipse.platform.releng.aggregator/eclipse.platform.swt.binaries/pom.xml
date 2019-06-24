@@ -54,8 +54,8 @@
 
   <modules>
     <module>bundles/org.eclipse.swt.cocoa.macosx.x86_64</module>
-    <module>bundles/org.eclipse.swt.gtk.linux.ppc64le</module>
-    <module>bundles/org.eclipse.swt.gtk.linux.x86_64</module>
+    <module>bundles/org.eclipse.swt.gtk.freebsd.powerpc64</module>
+    <module>bundles/org.eclipse.swt.gtk.freebsd.amd64</module>
     <module>bundles/org.eclipse.swt.win32.win32.x86_64</module>
   </modules>
 
