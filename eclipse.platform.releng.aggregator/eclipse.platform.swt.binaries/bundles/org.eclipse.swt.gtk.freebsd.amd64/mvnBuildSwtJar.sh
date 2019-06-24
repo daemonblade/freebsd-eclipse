@@ -36,10 +36,10 @@ echo -e "---\nIf Maven build went well, the *swt*.jar can be found in ./target/"
 
 if [ "${DEV_ECLIPSE}" != "" ]; then
 	echo " Copying generated *.jar files into your ${DEV_ECLIPSE} folder"
-	cp -v ./target/org.eclipse.swt.gtk.linux.x86_64-*-SNAPSHOT.jar ${DEV_ECLIPSE}/plugins/org.eclipse.swt.gtk.linux.x86_64_*
-	cp -v ./target/org.eclipse.swt.gtk.linux.x86_64-*-SNAPSHOT-sources.jar ${DEV_ECLIPSE}/plugins/org.eclipse.swt.gtk.linux.x86_64.source_*.jar
+	cp -v ./target/org.eclipse.swt.gtk.freebsd.amd64-*-SNAPSHOT.jar ${DEV_ECLIPSE}/plugins/org.eclipse.swt.gtk.freebsd.amd64_*
+	cp -v ./target/org.eclipse.swt.gtk.freebsd.amd64-*-SNAPSHOT-sources.jar ${DEV_ECLIPSE}/plugins/org.eclipse.swt.gtk.freebsd.amd64.source_*.jar
 	echo "Note: Below should list newly generated *jar files with current timestamp"
-	ls -l --color=auto -a ${DEV_ECLIPSE}/plugins/org.eclipse.swt.gtk.linux.x86_64*
+	ls -l --color=auto -a ${DEV_ECLIPSE}/plugins/org.eclipse.swt.gtk.freebsd.amd64*
 else
 	echo "Note:" 
 	echo "  Set DEV_ECLIPSE to your development eclipse folder to have the *.jar files copied into it automatically."

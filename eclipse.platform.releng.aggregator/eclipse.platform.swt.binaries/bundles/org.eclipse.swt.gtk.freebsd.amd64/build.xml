@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="org.eclipse.swt.gtk.linux.x86_64" default="build.jars" basedir=".">
+<project name="org.eclipse.swt.gtk.freebsd.amd64" default="build.jars" basedir=".">
 
 	<property name="swt.ws" value="gtk" />
-	<property name="swt.os" value="linux" />
-	<property name="swt.arch" value="x86_64" />
+	<property name="swt.os" value="freebsd" />
+	<property name="swt.arch" value="amd64" />
 	<property name="targets" value="install"/>
 	
 	<!-- These properties are used by eclipse when exporting as Deployable plugin and fragments -->
