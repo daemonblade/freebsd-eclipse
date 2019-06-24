@@ -18,7 +18,7 @@
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.core</groupId>
-  <artifactId>org.eclipse.core.filesystem.linux.ppc64le</artifactId>
+  <artifactId>org.eclipse.core.filesystem.freebsd.powerpc64</artifactId>
   <version>1.4.100-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 
@@ -33,9 +33,9 @@
           <resolver>p2</resolver>
           <environments>
             <environment>
-              <os>linux</os>
+              <os>freebsd</os>
               <ws>gtk</ws>
-              <arch>ppc64le</arch>
+              <arch>powerpc64</arch>
             </environment>
           </environments>
         </configuration>
