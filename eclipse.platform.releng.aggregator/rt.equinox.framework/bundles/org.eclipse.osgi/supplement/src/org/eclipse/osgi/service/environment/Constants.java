@@ -26,6 +26,12 @@ public interface Constants {
 	//TODO These constants need to be aligned with the OSGi ones. See page 64-588 of the spec
 
 	/**
+	 * Constant string (value "freebsd") indicating the platform is running on a
+	 * FreeBSD-based operating system.
+	 */
+	public static final String OS_FREEBSD = "freebsd";//$NON-NLS-1$
+
+	/**
 	 * Constant string (value "win32") indicating the platform is running on a
 	 * Window 32-bit operating system (e.g., Windows 98, NT, 2000).
 	 */

@@ -118,13 +118,13 @@
 		<chmod perm="755" dir="${feature.base}/macosx.cocoa.x86_64/${collectingFolder}" includes="${launcherName}" />
 		<chmod perm="755" dir="${feature.base}/macosx.cocoa.x86_64/${collectingFolder}" includes="Eclipse.app/Contents/MacOS/launcher" />
 	</target>
-	<target name="rootFileslinux_gtk_x86">
-		<mkdir dir="${feature.base}/linux.gtk.x86/${collectingFolder}"/>
-		<copy todir="${feature.base}/linux.gtk.x86/${collectingFolder}" failonerror="true" overwrite="true">
-			<fileset dir="${basedir}/bin/gtk/linux/x86" includes="**"			/>
+	<target name="rootFilesfreebsd_gtk_i386">
+		<mkdir dir="${feature.base}/freebsd.gtk.i386/${collectingFolder}"/>
+		<copy todir="${feature.base}/freebsd.gtk.i386/${collectingFolder}" failonerror="true" overwrite="true">
+			<fileset dir="${basedir}/bin/gtk/freebsd/i386" includes="**"			/>
 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
 		</copy>
-		<chmod perm="755" dir="${feature.base}/linux.gtk.x86/${collectingFolder}" includes="launcher" />
+		<chmod perm="755" dir="${feature.base}/freebsd.gtk.i386/${collectingFolder}" includes="launcher" />
 	</target>
 	<target name="rootFileslinux_gtk_ppc">
 		<mkdir dir="${feature.base}/linux.gtk.ppc/${collectingFolder}"/>
@@ -134,37 +134,37 @@
 		</copy>
 		<chmod perm="755" dir="${feature.base}/linux.gtk.ppc/${collectingFolder}" includes="launcher" />
 	</target>
-	<target name="rootFileslinux_gtk_ppc64le">
-		<mkdir dir="${feature.base}/linux.gtk.ppc64le/${collectingFolder}"/>
-		<copy todir="${feature.base}/linux.gtk.ppc64le/${collectingFolder}" failonerror="true" overwrite="true">
-			<fileset dir="${basedir}/bin/gtk/linux/ppc64le" includes="**"			/>
+	<target name="rootFilesfreebsd_gtk_powerpc64">
+		<mkdir dir="${feature.base}/freebsd.gtk.powerpc64/${collectingFolder}"/>
+		<copy todir="${feature.base}/freebsd.gtk.powerpc64/${collectingFolder}" failonerror="true" overwrite="true">
+			<fileset dir="${basedir}/bin/gtk/freebsd/powerpc64" includes="**"			/>
 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
 		</copy>
-		<chmod perm="755" dir="${feature.base}/linux.gtk.ppc64le/${collectingFolder}" includes="launcher" />
+		<chmod perm="755" dir="${feature.base}/freebsd.gtk.powerpc64/${collectingFolder}" includes="launcher" />
 	</target>
-        <target name="rootFileslinux_gtk_arm">
-		<mkdir dir="${feature.base}/linux.gtk.arm/${collectingFolder}"/>
-		<copy todir="${feature.base}/linux.gtk.arm/${collectingFolder}" failonerror="true" overwrite="true">
-			<fileset dir="${basedir}/bin/gtk/linux/arm" includes="**"			/>
+        <target name="rootFilesfreebsd_gtk_armv7">
+		<mkdir dir="${feature.base}/freebsd.gtk.armv7/${collectingFolder}"/>
+		<copy todir="${feature.base}/freebsd.gtk.armv7/${collectingFolder}" failonerror="true" overwrite="true">
+			<fileset dir="${basedir}/bin/gtk/freebsd/armv7" includes="**"			/>
 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
 		</copy>
-		<chmod perm="755" dir="${feature.base}/linux.gtk.arm/${collectingFolder}" includes="launcher" />
+		<chmod perm="755" dir="${feature.base}/freebsd.gtk.armv7/${collectingFolder}" includes="launcher" />
 	</target>
-        <target name="rootFileslinux_gtk_aarch64">
-		<mkdir dir="${feature.base}/linux.gtk.aarch64/${collectingFolder}"/>
-		<copy todir="${feature.base}/linux.gtk.aarch64/${collectingFolder}" failonerror="true" overwrite="true">
-			<fileset dir="${basedir}/bin/gtk/linux/aarch64" includes="**"			/>
+        <target name="rootFilesfreebsd_gtk_aarch64">
+		<mkdir dir="${feature.base}/freebsd.gtk.aarch64/${collectingFolder}"/>
+		<copy todir="${feature.base}/freebsd.gtk.aarch64/${collectingFolder}" failonerror="true" overwrite="true">
+			<fileset dir="${basedir}/bin/gtk/freebsd/aarch64" includes="**"			/>
 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
 		</copy>
-		<chmod perm="755" dir="${feature.base}/linux.gtk.aarch64/${collectingFolder}" includes="launcher" />
+		<chmod perm="755" dir="${feature.base}/freebsd.gtk.aarch64/${collectingFolder}" includes="launcher" />
 	</target>
-	<target name="rootFileslinux_gtk_x86_64">
-		<mkdir dir="${feature.base}/linux.gtk.x86_64/${collectingFolder}"/>
-		<copy todir="${feature.base}/linux.gtk.x86_64/${collectingFolder}" failonerror="true" overwrite="true">
-			<fileset dir="${basedir}/bin/gtk/linux/x86_64" includes="**"			/>
+	<target name="rootFilesfreebsd_gtk_amd64">
+		<mkdir dir="${feature.base}/freebsd.gtk.amd64/${collectingFolder}"/>
+		<copy todir="${feature.base}/freebsd.gtk.amd64/${collectingFolder}" failonerror="true" overwrite="true">
+			<fileset dir="${basedir}/bin/gtk/freebsd/amd64" includes="**"			/>
 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
 		</copy>
-		<chmod perm="755" dir="${feature.base}/linux.gtk.x86_64/${collectingFolder}" includes="launcher" />
+		<chmod perm="755" dir="${feature.base}/freebsd.gtk.amd64/${collectingFolder}" includes="launcher" />
 	</target>
 	<target name="rootFileslinux_gtk_ia64">
 		<mkdir dir="${feature.base}/linux.gtk.ia64/${collectingFolder}"/>
@@ -212,7 +212,7 @@
 	<target name="rootFilesgroup_group_group">
 		<antcall target="rootFileswin32_win32_x86_64"/>
 		<antcall target="rootFilesmacosx_cocoa_x86_64"/>
-		<antcall target="rootFileslinux_gtk_ppc64le"/>
+		<antcall target="rootFileslinux_gtk_powerpc64"/>
 		<antcall target="rootFileslinux_gtk_x86_64"/>
 	</target>
 
