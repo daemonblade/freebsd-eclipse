@@ -63,7 +63,7 @@ public final class InternalPlatform {
 	//XXX This is not synchronized
 	private Map<Bundle,Log> logs = new HashMap<>(5);
 
-	private static final String[] OS_LIST = { Platform.OS_LINUX, Platform.OS_MACOSX, Platform.OS_WIN32 };
+	private static final String[] OS_LIST = { Platform.OS_FREEBSD, Platform.OS_LINUX, Platform.OS_MACOSX, Platform.OS_WIN32 };
 	private String password = ""; //$NON-NLS-1$
 	private static final String PASSWORD = "-password"; //$NON-NLS-1$
 
