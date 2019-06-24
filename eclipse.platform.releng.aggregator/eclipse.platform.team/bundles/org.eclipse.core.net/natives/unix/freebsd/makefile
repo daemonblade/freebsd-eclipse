@@ -22,7 +22,7 @@ GNOMEPROXY.O = gnomeproxy.o
 LIB_NAME = gnomeproxy.so
 LIB_NAME_FULL = libgnomeproxy-1.0.0.so
 
-OS_TYPE = linux
+OS_TYPE = freebsd
 JDK_INCLUDE = -I${JAVA_HOME}/include -I${JAVA_HOME}/include/${OS_TYPE}
 INCLUDE = `pkg-config --cflags gio-2.0`
 COMPILER_FLAGS = -O0 -fPIC -g3 -Wall -c -fmessage-length=0 ${TARGET_ENVIRONMENT}
@@ -34,15 +34,13 @@ all: link
 
 compile:
 	@echo "Building file: $(GNOMEPROXY.O)"
-	@echo "Invoking: GCC C Compiler"
-	gcc $(INCLUDE) $(JDK_INCLUDE) $(COMPILER_FLAGS) -o $(GNOMEPROXY.O) $(GNOMEPROXY.C)
+	$(CC) $(INCLUDE) $(JDK_INCLUDE) $(COMPILER_FLAGS) -o $(GNOMEPROXY.O) $(GNOMEPROXY.C)
 	@echo "Finished building: $(GNOMEPROXY.O)"
 	@echo " "
 
 link: compile
 	@echo "Building target: $(LIB_NAME_FULL)"
-	@echo "Invoking: GCC C Linker"
-	gcc $(LINKER_FLAGS) -shared -Wl,-soname,$(LIB_NAME) -o $(LIB_NAME_FULL) $(LIBS) $(GNOMEPROXY.O) -lc
+	$(CC) $(LINKER_FLAGS) -shared -Wl,-soname,$(LIB_NAME) -o $(LIB_NAME_FULL) $(LIBS) $(GNOMEPROXY.O)
 	@echo "Finished building target: $(LIB_NAME_FULL)"
 	@echo " "
 
