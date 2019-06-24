@@ -210,7 +210,8 @@ public class TitleRegion extends Canvas {
 				if (currentTitleControl.getVisible()) {
 					int tw = width - HMARGIN * 2 - SPACING * 2;
 					String os = System.getProperty("os.name"); //$NON-NLS-1$
-					if (Constants.OS_LINUX.equalsIgnoreCase(os)) {
+					if (Constants.OS_LINUX.equalsIgnoreCase(os) ||
+						Constants.OS_FREEBSD.equalsIgnoreCase(os)) {
 						tw += 1; // See Bug 342610
 					}
 					if (bsize != null)
