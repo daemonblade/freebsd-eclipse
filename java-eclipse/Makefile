@@ -3,6 +3,7 @@
 
 PORTNAME=	eclipse
 PORTVERSION=	4.11
+PORTREVISION=	1
 CATEGORIES=	java devel
 
 # Update to git-tag on git.eclipse.org
@@ -73,7 +74,7 @@ DESKTOP_ENTRIES="Eclipse" \
 
 SUB_FILES=	${PORTNAME}
 
-MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC}
+MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME}
 MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
 MAVEN_ECLIPSE=	-Dnative=gtk.freebsd.${ARCH} -Dcomparator.repo=file://${WRKDIR}/${GH_PROJECT}-${PORTVERSION}/p2-stub -DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
