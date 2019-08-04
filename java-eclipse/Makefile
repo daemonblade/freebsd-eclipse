@@ -61,8 +61,7 @@ USE_GITHUB=	yes
 GH_ACCOUNT=	daemonblade
 GH_PROJECT=	eclipse-maven-repo
 
-USE_JAVA=	yes
-JAVA_VERSION=	1.8
+USE_JAVA=	8
 
 DESKTOP_ENTRIES="Eclipse" \
 		"${COMMENT}" \
