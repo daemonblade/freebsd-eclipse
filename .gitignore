@@ -8,6 +8,7 @@ distfiles
 /maven-repo.*
 /build-*.log
 /*.tar.gz
+/eclipse
 
 # Generated
 *.o

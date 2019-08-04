@@ -21,6 +21,7 @@ FreeBSD's /usr/ports/java/eclipse.
 * devel/pkgconf
 * java/openjdk8
 * security/libsecret
+* www/webkit2-gtk3
 * x11-toolkits/gtk30
 
 # Workflow
@@ -37,20 +38,30 @@ Unpacked distfiles + up-to-date patches => **eclipse.platform.releng.aggregator*
 
 1. Work on **eclipse.platform.releng.aggregator**
 1. `bin/build-eclipse [additional maven flags]` 
-1. Optionally `bin/generate-patches`
+
+The challenge is to get a working build. Changes to
+**eclipse.platform.releng.aggregator** should be committed and pushed to
+the repo as required. At stable checkpoints, patches for the port should
+be generated with:
+
+1. `bin/generate-patches`
+
+On a successful build, `org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz` is
+generated. This can be unpacked to test the generated executable:
+
+1. `tar xf org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz`
+2. `eclipse/eclipse`
 
 ## java/eclipse port
+
+When a usable executable has been generated the java/eclipse port can be
+updated:
 
 1. `bin/generate-patches`
 1. Update [maven-repo project](https://github.com/daemonblade/maven-repo)
 1. Update **java-eclipse** Makefile, distinfo, etc
 1. Verify port build and installation
 1. Submit port
-
-# Output
-
-On a successful build, `org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz` is found
-on top level. Unpack the archive to to run the executable `eclipse/eclipse`
 
 # Notes
 
