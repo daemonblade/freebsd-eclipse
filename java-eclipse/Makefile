@@ -3,6 +3,7 @@
 
 PORTNAME=	eclipse
 PORTVERSION=	4.12
+PORTREVISION=	1
 CATEGORIES=	java devel
 
 # Update to git-tag on git.eclipse.org
