@@ -18,14 +18,14 @@
     <relativePath>../../launcher-binary-parent</relativePath>
   </parent>
   <groupId>org.eclipse.equinox</groupId>
-  <artifactId>org.eclipse.equinox.launcher.gtk.linux.x86_64</artifactId>
+  <artifactId>org.eclipse.equinox.launcher.gtk.freebsd.amd64</artifactId>
   <version>1.1.1100-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 
   <properties>
-    <os>linux</os>
+    <os>freebsd</os>
     <ws>gtk</ws>
-    <arch>x86_64</arch>
+    <arch>amd64</arch>
     <skipAPIAnalysis>true</skipAPIAnalysis>
   </properties>
 </project>
