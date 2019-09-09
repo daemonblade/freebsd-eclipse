@@ -18,7 +18,7 @@
    <windowImages/>
 
    <launcher name="rt">
-      <linux icon="icon.xpm"/>
+      <freebsd icon="icon.xpm"/>
       <macosx icon="rt.icns"/>
       <win useIco="false">
          <bmp/>
