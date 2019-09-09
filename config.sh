@@ -1,7 +1,7 @@
 #
 # Configuration
 #
-ECLIPSE_TAG="R4_12"
+ECLIPSE_TAG="R4_13"
 
 ECLIPSE_TOP="platform/eclipse.platform.releng.aggregator"
 ECLIPSE_MODULES="
