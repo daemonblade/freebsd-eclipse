@@ -157,7 +157,7 @@ class WebKit extends WebBrowser {
 	 * https://www.nczonline.net/blog/2009/01/05/what-determines-that-a-script-is-long-running/
 	 * https://stackoverflow.com/questions/3030024/maximum-execution-time-for-javascript
 	 */
-	static final int ASYNC_EXEC_TIMEOUT_MS = 10000; // Webkit2.
+	static final int ASYNC_EXEC_TIMEOUT_MS = 100; // Dirty hack for webkit issues on FreeBSD
 
 	static boolean bug522733FirstInstanceCreated = false; //Webkit2 workaround for Bug 522733
 

@@ -85,11 +85,12 @@
       <activation>
         <os>
           <family>unix</family>
-          <name>Linux</name>
 	</os>
       </activation>
 	  <modules>
+		<!-- disabled
 	    <module>tests/org.eclipse.swt.tests.gtk</module>
+		  -->
 	  </modules>
     </profile>
     <profile>
@@ -118,7 +119,9 @@
     <module>examples/org.eclipse.swt.examples.ole.win32</module>
     <module>examples/org.eclipse.swt.examples.views</module>
     <module>tests/org.eclipse.swt.tests.fragments.feature</module>
+	<!-- disabled
     <module>tests/org.eclipse.swt.tests</module>
+	  -->
     <module>features/org.eclipse.swt.tools.feature</module>
   </modules>
 </project>
