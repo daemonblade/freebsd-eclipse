@@ -148,7 +148,7 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/library
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/org/eclipse/swt/internal/gtk/OS.java eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/org/eclipse/swt/internal/gtk/OS.java
 --- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/org/eclipse/swt/internal/gtk/OS.java	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/org/eclipse/swt/internal/gtk/OS.java	0000-00-00 00:00:00.000000000 +0000
-@@ -58,8 +58,8 @@
+@@ -60,8 +60,8 @@
  
  		/* Initialize the OS flags and locale constants */
  		String osName = System.getProperty ("os.name");
@@ -162,7 +162,7 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/gtk/org/ecl
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT WebKit/gtk/org/eclipse/swt/browser/WebKit.java eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT WebKit/gtk/org/eclipse/swt/browser/WebKit.java
 --- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT WebKit/gtk/org/eclipse/swt/browser/WebKit.java	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT WebKit/gtk/org/eclipse/swt/browser/WebKit.java	0000-00-00 00:00:00.000000000 +0000
-@@ -155,7 +155,7 @@
+@@ -157,7 +157,7 @@
  	 * https://www.nczonline.net/blog/2009/01/05/what-determines-that-a-script-is-long-running/
  	 * https://stackoverflow.com/questions/3030024/maximum-execution-time-for-javascript
  	 */

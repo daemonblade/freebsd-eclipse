@@ -87,7 +87,7 @@ diff -ru eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/pom.xm
    <version>1.2.300-SNAPSHOT</version>
    <packaging>eclipse-plugin</packaging>
  
-@@ -30,9 +30,9 @@
+@@ -34,9 +34,9 @@
          <configuration>
            <environments>
              <environment>
@@ -99,7 +99,7 @@ diff -ru eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/pom.xm
              </environment>
            </environments>
          </configuration>
-@@ -47,7 +47,7 @@
+@@ -51,7 +51,7 @@
          <property>
            <!-- This has to be hardcoded. Profiles are not allowed to use pom defined properties :-( -->
            <name>native</name>
@@ -108,7 +108,7 @@ diff -ru eclipse.platform.team/bundles/org.eclipse.core.net.freebsd.amd64/pom.xm
          </property>
        </activation>
        <build>
-@@ -60,9 +60,9 @@
+@@ -64,9 +64,9 @@
                  <phase>process-resources</phase>
                  <configuration>
                    <target>
