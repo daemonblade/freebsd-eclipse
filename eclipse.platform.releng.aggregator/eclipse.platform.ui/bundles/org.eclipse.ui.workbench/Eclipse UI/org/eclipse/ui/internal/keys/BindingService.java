@@ -163,8 +163,7 @@ public final class BindingService implements IBindingService {
 
 	@Override
 	public TriggerSequence getBestActiveBindingFor(ParameterizedCommand command) {
-		TriggerSequence seq = bindingService.getBestSequenceFor(command);
-		return seq;
+		return bindingService.getBestSequenceFor(command);
 	}
 
 	@Override
@@ -525,7 +524,7 @@ public final class BindingService implements IBindingService {
 	 */
 	private MBindingTable getMTable(String contextId) {
 		for (MBindingTable bt : application.getBindingTables()) {
-			if (bt.getBindingContext().getElementId().equals(contextId)) {
+			if (contextId.equals(bt.getElementId())) {
 				return bt;
 			}
 		}

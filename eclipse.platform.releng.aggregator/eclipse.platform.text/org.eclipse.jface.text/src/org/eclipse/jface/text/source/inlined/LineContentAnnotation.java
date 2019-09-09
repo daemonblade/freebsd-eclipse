@@ -115,6 +115,9 @@ public class LineContentAnnotation extends AbstractInlinedAnnotation {
 	 */
 	StyleRange updateStyle(StyleRange style) {
 		Position widgetPosition= computeWidgetPosition();
+		if (widgetPosition == null) {
+			return null;
+		}
 		boolean usePreviousChar= drawRightToPreviousChar(widgetPosition.getOffset());
 		if (width == 0 || getRedrawnCharacterWidth() == 0) {
 			return null;
@@ -151,7 +154,8 @@ public class LineContentAnnotation extends AbstractInlinedAnnotation {
 	}
 
 	boolean drawRightToPreviousChar(int widgetOffset) {
-		return widgetOffset > 0 && getTextWidget().getLineAtOffset(widgetOffset) == getTextWidget().getLineAtOffset(widgetOffset - 1);
+		return widgetOffset > 0 &&
+				getTextWidget().getLineAtOffset(widgetOffset) == getTextWidget().getLineAtOffset(widgetOffset - 1);
 	}
 
 }

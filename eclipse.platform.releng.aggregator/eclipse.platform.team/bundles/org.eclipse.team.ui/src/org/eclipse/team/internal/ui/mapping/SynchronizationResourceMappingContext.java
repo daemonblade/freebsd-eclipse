@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.ui.mapping;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -122,13 +123,9 @@ public final class SynchronizationResourceMappingContext extends
 	public IResource[] fetchMembers(IContainer container, IProgressMonitor monitor) throws CoreException {
 		Set<IResource> result = new HashSet<>();
 		IResource[] children = container.members();
-		for (int i = 0; i < children.length; i++) {
-			IResource resource = children[i];
-			result.add(resource);
-		}
+		Collections.addAll(result, children);
 		IPath[] childPaths = context.getDiffTree().getChildren(container.getFullPath());
-		for (int i = 0; i < childPaths.length; i++) {
-			IPath path = childPaths[i];
+		for (IPath path : childPaths) {
 			IDiff delta = context.getDiffTree().getDiff(path);
 			IResource child;
 			if (delta == null) {
@@ -159,8 +156,7 @@ public final class SynchronizationResourceMappingContext extends
 	public IProject[] getProjects() {
 		Set<IProject> projects = new HashSet<>();
 		IResource[] roots = context.getScope().getRoots();
-		for (int i = 0; i < roots.length; i++) {
-			IResource resource = roots[i];
+		for (IResource resource : roots) {
 			projects.add(resource.getProject());
 		}
 		return projects.toArray(new IProject[projects.size()]);

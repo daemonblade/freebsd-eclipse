@@ -320,10 +320,10 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 	 * <p>
 	 * Examples:<br>
 	 * To use the default style without the SWT.APPLICATION_MODAL bit:<br>
-	 * <code>setShellStyle(getShellStyle() & ~SWT.APPLICATION_MODAL)</code>
+	 * <code>setShellStyle(getShellStyle() &amp; ~SWT.APPLICATION_MODAL)</code>
 	 * <p>
 	 * To use the default style without the SWT.RESIZE bit:<br>
-	 * <code>setShellStyle(getShellStyle() & ~SWT.RESIZE)</code>
+	 * <code>setShellStyle(getShellStyle() &amp; ~SWT.RESIZE)</code>
 	 *
 	 * <p>
 	 * {@inheritDoc}
@@ -804,7 +804,7 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 	 * @return MessageDalog
 	 */
 	private MessageDialog createWizardClosingDialog() {
-		MessageDialog result = new MessageDialog(getShell(),
+		return new MessageDialog(getShell(),
 				JFaceResources.getString("WizardClosingDialog.title"), //$NON-NLS-1$
 				null,
 				JFaceResources.getString("WizardClosingDialog.message"), //$NON-NLS-1$
@@ -815,7 +815,6 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 				return super.getShellStyle() | SWT.SHEET;
 			}
 		};
-		return result;
 	}
 
 	/**

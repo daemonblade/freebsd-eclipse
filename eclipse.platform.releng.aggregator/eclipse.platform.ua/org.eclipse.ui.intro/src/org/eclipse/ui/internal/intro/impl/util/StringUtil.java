@@ -18,13 +18,13 @@ import java.net.URLDecoder;
 
 public class StringUtil {
 
-    public static String concat(String... strings) {
-    	StringBuilder buffer = new StringBuilder();
-    	for (String string : strings) {
+	public static String concat(String... strings) {
+		StringBuilder buffer = new StringBuilder();
+		for (String string : strings) {
 			buffer.append(string);
 		}
-    	return buffer.toString();
-    }
+		return buffer.toString();
+	}
 
 	public static String decode(String s, String enc) throws UnsupportedEncodingException {
 		try {
@@ -36,14 +36,14 @@ public class StringUtil {
 		}
 	}
 
-    // Removes leading and trailing whitespace and replaces other
-    // occurrences with a single space.
+	// Removes leading and trailing whitespace and replaces other
+	// occurrences with a single space.
 
 	public static String normalizeWhiteSpace(String input) {
 		if (input == null) {
 			return null;
 		}
-		StringBuffer result = new StringBuffer();
+		StringBuilder result = new StringBuilder();
 		boolean atStart = true;
 		boolean whitespaceToInsert = false;
 		for (int i = 0; i < input.length(); i++) {

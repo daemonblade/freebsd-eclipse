@@ -29,9 +29,9 @@ public class RestartAllAction extends Action {
 	private ICompositeCheatSheet model;
 
 	public RestartAllAction(ICompositeCheatSheet model) {
-        this.model = model;
+		this.model = model;
 		this.setText(Messages.RESTART_ALL_MENU);
-		IPath path = CheatSheetPlugin.ICONS_PATH.append(CheatSheetPlugin.T_ELCL).append("restart_all.gif");//$NON-NLS-1$
+		IPath path = CheatSheetPlugin.ICONS_PATH.append(CheatSheetPlugin.T_ELCL).append("restart_all.png");//$NON-NLS-1$
 		ImageDescriptor restartImage = CheatSheetPlugin.createImageDescriptor(CheatSheetPlugin.getPlugin().getBundle(), path);
 		this.setImageDescriptor(restartImage);
 	}
@@ -39,7 +39,7 @@ public class RestartAllAction extends Action {
 	@Override
 	public void run() {
 		if (confirmRestart()) {
-		    ((CompositeCheatSheetModel)model).resetAllTasks(null);
+			((CompositeCheatSheetModel)model).resetAllTasks(null);
 		}
 	}
 

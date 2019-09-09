@@ -18,6 +18,8 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.osgi.util.NLS;
@@ -25,6 +27,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants;
 import org.eclipse.ui.quickaccess.IQuickAccessComputer;
+import org.eclipse.ui.quickaccess.IQuickAccessComputerExtension;
 import org.eclipse.ui.quickaccess.QuickAccessElement;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
@@ -123,12 +126,12 @@ public class QuickAccessExtensionManager {
 		}
 
 		@Override
-		public QuickAccessElement[] getElementsSorted() {
+		public QuickAccessElement[] getElementsSorted(String filter, IProgressMonitor monitor) {
 			if (canDelegate()) {
 				if (computer.needsRefresh()) {
 					reset();
 				}
-				return super.getElementsSorted();
+				return super.getElementsSorted(filter, monitor);
 			}
 			return activateElement;
 		}
@@ -142,10 +145,27 @@ public class QuickAccessExtensionManager {
 		}
 
 		@Override
+		public QuickAccessElement[] getElements(String filter, IProgressMonitor monitor) {
+			if (canDelegate()) {
+				if (computer instanceof IQuickAccessComputerExtension) {
+					return ((IQuickAccessComputerExtension) computer).computeElements(filter, monitor);
+				}
+				return new QuickAccessElement[0];
+			}
+			return activateElement;
+		}
+
+		@Override
 		protected void doReset() {
 			if (canDelegate()) {
 				computer.resetState();
 			}
+		}
+
+		@Override
+		public QuickAccessElement getElementForId(String id) {
+			getElementsSorted(null, new NullProgressMonitor()); // initialize content
+			return super.getElementForId(id);
 		}
 
 	}

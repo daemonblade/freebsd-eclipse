@@ -1277,6 +1277,9 @@
 		<method selector="deltaY" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
+		<method class_method="true" selector="doubleClickInterval" swt_gen="true">
+			<retval swt_gen="true"></retval>
+		</method>
 		<method class_method="true" selector="enterExitEventWithType:location:modifierFlags:timestamp:windowNumber:context:eventNumber:trackingNumber:userData:" swt_gen="true">
 			<arg swt_gen="true"></arg>
 			<arg swt_gen="true"></arg>
@@ -1314,6 +1317,9 @@
 			<arg swt_gen="true"></arg>
 			<arg swt_gen="true"></arg>
 			<arg swt_gen="true"></arg>
+			<retval swt_gen="true"></retval>
+		</method>
+		<method class_method="true" selector="pressedMouseButtons" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
 		<method selector="rotation" swt_gen="true">
@@ -2803,6 +2809,9 @@
 		<method selector="filename" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
+		<method selector="nameFieldStringValue" swt_gen="true">
+			<retval swt_gen="true"></retval>
+		</method>
 		<method selector="runModal" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
@@ -4116,6 +4125,9 @@
 		<method selector="lockFocus" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
+		<method selector="lockFocusIfCanDraw" swt_gen="true">
+			<retval swt_gen="true"></retval>
+		</method>
 		<method selector="menuForEvent:" swt_gen="true">
 			<arg swt_gen="true"></arg>
 			<retval swt_gen="true"></retval>
@@ -5305,6 +5317,19 @@
 			<retval></retval>
 		</method>
 	</informal_protocol>
+	<informal_protocol name="NSOpenSavePanelDelegate" swt_gen="mixed">
+		<method selector="panel:shouldEnableURL:" swt_gen="true">
+			<arg swt_gen="true"></arg>
+			<arg swt_gen="true"></arg>
+			<retval swt_gen="true"></retval>
+		</method>
+		<method selector="panel:userEnteredFilename:confirmed:" swt_gen="true">
+			<arg swt_gen="true"></arg>
+			<arg swt_gen="true"></arg>
+			<arg swt_gen="true"></arg>
+			<retval swt_gen="true"></retval>
+		</method>
+	</informal_protocol>
 	<informal_protocol name="NSOutlineViewDataSource" swt_gen="mixed">
 		<method selector="outlineView:acceptDrop:item:childIndex:" swt_gen="true">
 			<arg swt_gen="true"></arg>
@@ -5402,12 +5427,6 @@
 			<arg swt_gen="true"></arg>
 			<arg swt_gen="true"></arg>
 			<retval></retval>
-		</method>
-	</informal_protocol>
-	<informal_protocol name="NSSavePanelDelegate" swt_gen="mixed">
-		<method selector="panel:shouldShowFilename:" swt_gen="true">
-			<arg swt_gen="true"></arg>
-			<arg swt_gen="true"></arg>
 		</method>
 	</informal_protocol>
 	<informal_protocol name="NSTabViewDelegate" swt_gen="mixed">

@@ -64,10 +64,11 @@ public final class TextLayout extends Resource {
 
 	static final int TAB_COUNT = 32;
 	static final int UNDERLINE_THICK = 1 << 16;
-	static final RGB LINK_FOREGROUND = new RGB (0, 51, 153);
 	int[] invalidOffsets;
 	private boolean ignoreSegments;
 	static final char LTR_MARK = '\u200E', RTL_MARK = '\u200F';
+
+	static NSColor linkForeground;
 
 	static class StyleItem {
 		TextStyle style;
@@ -267,7 +268,7 @@ void computeRuns() {
 				case SWT.UNDERLINE_LINK: {
 					underlineStyle = OS.NSUnderlineStyleSingle;
 					if (foreground == null) {
-						NSColor color = NSColor.colorWithDeviceRed(LINK_FOREGROUND.red / 255f, LINK_FOREGROUND.green / 255f, LINK_FOREGROUND.blue / 255f, 1);
+						NSColor color = getLinkForeground();
 						attrStr.addAttribute(OS.NSForegroundColorAttributeName, color, range);
 					}
 					break;
@@ -335,9 +336,9 @@ void computeRuns() {
 	long rangePtr = C.malloc(NSRange.sizeof);
 	NSRange lineRange = new NSRange();
 	for (numberOfLines = 0, index = 0; index < numberOfGlyphs; numberOfLines++){
-	    layoutManager.lineFragmentUsedRectForGlyphAtIndex(index, rangePtr, true);
-	    OS.memmove(lineRange, rangePtr, NSRange.sizeof);
-	    index = lineRange.location + lineRange.length;
+		layoutManager.lineFragmentUsedRectForGlyphAtIndex(index, rangePtr, true);
+		OS.memmove(lineRange, rangePtr, NSRange.sizeof);
+		index = lineRange.location + lineRange.length;
 	}
 	if (numberOfLines == 0) numberOfLines++;
 	int[] offsets = new int[numberOfLines + 1];
@@ -345,9 +346,9 @@ void computeRuns() {
 	for (numberOfLines = 0, index = 0; index < numberOfGlyphs; numberOfLines++){
 		bounds[numberOfLines] = layoutManager.lineFragmentUsedRectForGlyphAtIndex(index, rangePtr, true);
 		if (numberOfLines < bounds.length - 1) bounds[numberOfLines].height -= spacing;
-	    OS.memmove(lineRange, rangePtr, NSRange.sizeof);
-	    offsets[numberOfLines] = (int)lineRange.location;
-	    index = lineRange.location + lineRange.length;
+		OS.memmove(lineRange, rangePtr, NSRange.sizeof);
+		offsets[numberOfLines] = (int)lineRange.location;
+		index = lineRange.location + lineRange.length;
 	}
 	if (numberOfLines == 0) {
 		Font font = this.font != null ? this.font : device.systemFont;
@@ -1057,6 +1058,20 @@ public FontMetrics getLineMetrics (int lineIndex) {
 	} finally {
 		if (pool != null) pool.release();
 	}
+}
+
+NSColor getLinkForeground() {
+	if (linkForeground == null) {
+		/*
+		 * Color used is same as SWT.COLOR_LINK_FOREGROUND computed in Display.getWidgetColorRGB()
+		 */
+		NSTextView textView = (NSTextView)new NSTextView().alloc();
+		textView.init ();
+		NSDictionary dict = textView.linkTextAttributes();
+		linkForeground = new NSColor(dict.valueForKey(OS.NSForegroundColorAttributeName));
+		textView.release ();
+	}
+	return linkForeground;
 }
 
 /**
@@ -2361,7 +2376,7 @@ public void setDefaultTabWidth(int tabLength) {
 
 	checkLayout();
 	String oldString = getText();
-	StringBuffer tabBuffer = new StringBuffer(tabLength);
+	StringBuilder tabBuffer = new StringBuilder(tabLength);
 	for (int i = 0; i < tabLength; i++) {
 		tabBuffer.append(' ');
 	}

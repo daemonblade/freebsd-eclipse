@@ -88,8 +88,7 @@ public class BasicFactoryImpl extends EFactoryImpl implements MBasicFactory {
 	 */
 	@Override
 	public MPartDescriptor createPartDescriptor() {
-		PartDescriptorImpl partDescriptor = new PartDescriptorImpl();
-		return partDescriptor;
+		return new PartDescriptorImpl();
 	}
 
 	/**
@@ -99,17 +98,6 @@ public class BasicFactoryImpl extends EFactoryImpl implements MBasicFactory {
 	 */
 	public BasicPackageImpl getBasicPackage() {
 		return (BasicPackageImpl) getEPackage();
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @deprecated
-	 * @generated
-	 */
-	@Deprecated
-	public static BasicPackageImpl getPackage() {
-		return BasicPackageImpl.eINSTANCE;
 	}
 
 } //BasicFactoryImpl

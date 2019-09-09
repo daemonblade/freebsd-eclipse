@@ -350,7 +350,7 @@ public class ManifestElement {
 			if (next == null)
 				throw new BundleException(NLS.bind(Msg.MANIFEST_INVALID_HEADER_EXCEPTION, header, value), BundleException.MANIFEST_ERROR);
 			List<String> headerValues = new ArrayList<>();
-			StringBuffer headerValue = new StringBuffer(next);
+			StringBuilder headerValue = new StringBuilder(next);
 			headerValues.add(next);
 
 			if (SupplementDebug.STATIC_DEBUG_MANIFEST)
@@ -589,7 +589,7 @@ public class ManifestElement {
 		Enumeration<String> directiveKeys = getDirectiveKeys();
 		if (attrKeys == null && directiveKeys == null)
 			return mainValue;
-		StringBuffer result = new StringBuffer(mainValue);
+		StringBuilder result = new StringBuilder(mainValue);
 		if (attrKeys != null) {
 			while (attrKeys.hasMoreElements()) {
 				String key = attrKeys.nextElement();
@@ -605,14 +605,14 @@ public class ManifestElement {
 		return result.toString();
 	}
 
-	private void addValues(boolean directive, String key, String[] values, StringBuffer result) {
+	private void addValues(boolean directive, String key, String[] values, StringBuilder result) {
 		if (values == null)
 			return;
-		for (int i = 0; i < values.length; i++) {
+		for (String value : values) {
 			result.append(';').append(key);
 			if (directive)
 				result.append(':');
-			result.append("=\"").append(values[i]).append('\"'); //$NON-NLS-1$			
+			result.append("=\"").append(value).append('\"'); //$NON-NLS-1$
 		}
 	}
 }

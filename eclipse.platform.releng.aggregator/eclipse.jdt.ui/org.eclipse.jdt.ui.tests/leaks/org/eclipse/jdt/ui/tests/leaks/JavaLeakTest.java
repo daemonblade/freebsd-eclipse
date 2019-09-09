@@ -40,6 +40,7 @@ import org.eclipse.ui.IPerspectiveDescriptor;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
@@ -280,7 +281,7 @@ public class JavaLeakTest extends LeakTestCase {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject, "src");
 
 		IPackageFragment pack2= sourceFolder.createPackageFragment("pack0", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package pack0;\n");
 		buf.append("public class " + typeName + " {\n}\n");
 		return pack2.createCompilationUnit(typeName + ".java", buf.toString(), false, null);
@@ -398,7 +399,7 @@ public class JavaLeakTest extends LeakTestCase {
 	}
 
 	private void doWizardLeakTest(INewWizard wizard) throws Exception {
-		wizard.init(JavaPlugin.getDefault().getWorkbench(), new StructuredSelection(fJProject));
+		wizard.init(PlatformUI.getWorkbench(), new StructuredSelection(fJProject));
 
 		Shell shell= JavaPlugin.getActiveWorkbenchShell();
 		WizardDialog dialog= new WizardDialog(shell, wizard);

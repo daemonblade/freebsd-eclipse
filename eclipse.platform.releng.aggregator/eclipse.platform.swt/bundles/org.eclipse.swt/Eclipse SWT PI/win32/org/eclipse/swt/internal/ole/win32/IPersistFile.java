@@ -13,26 +13,12 @@
  *******************************************************************************/
 package org.eclipse.swt.internal.ole.win32;
 
-import org.eclipse.swt.internal.win32.*;
-
 public class IPersistFile extends IPersist
 {
-public IPersistFile(long /*int*/ address) {
+public IPersistFile(long address) {
 	super(address);
 }
 public int IsDirty() {
-	return OS.VtblCall(4, address);
-}
-public int Load(long /*int*/ pszFileName, int dwMode) {
-	return OS.VtblCall(5, address, pszFileName, dwMode);
-}
-public int Save(long /*int*/ pszFileName, boolean fRemember) {
-	return COM.VtblCall(6, address, pszFileName, fRemember);
-}
-public int SaveCompleted(long /*int*/ pszFileName) {
-	return OS.VtblCall(7, address, pszFileName);
-}
-public int GetCurFile(long /*int*/ [] ppszFileName){
-	return OS.VtblCall(8, address, ppszFileName);
+	return COM.VtblCall(4, address);
 }
 }

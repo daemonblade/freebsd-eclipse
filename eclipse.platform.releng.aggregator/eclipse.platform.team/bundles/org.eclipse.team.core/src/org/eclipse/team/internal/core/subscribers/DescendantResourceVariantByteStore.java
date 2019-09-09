@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.core.subscribers;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -155,11 +156,8 @@ public abstract class DescendantResourceVariantByteStore extends ResourceVariant
 		IResource[] remoteMembers = getRemoteStore().members(resource);
 		IResource[] baseMembers = getBaseStore().members(resource);
 		Set<IResource> members = new HashSet<>();
-		for (int i = 0; i < remoteMembers.length; i++) {
-			members.add(remoteMembers[i]);
-		}
-		for (int i = 0; i < baseMembers.length; i++) {
-			IResource member = baseMembers[i];
+		Collections.addAll(members, remoteMembers);
+		for (IResource member : baseMembers) {
 			// Add the base only if the remote does not know about it
 			// (i.e. hasn't marked it as deleted
 			if (!isVariantKnown(member)) {

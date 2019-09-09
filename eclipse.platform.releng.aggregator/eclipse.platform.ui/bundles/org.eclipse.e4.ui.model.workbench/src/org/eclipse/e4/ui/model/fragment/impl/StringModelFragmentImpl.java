@@ -217,8 +217,9 @@ public class StringModelFragmentImpl extends ModelFragmentImpl implements MStrin
 			return getParentElementId();
 		case FragmentPackageImpl.STRING_MODEL_FRAGMENT__POSITION_IN_LIST:
 			return getPositionInList();
+		default:
+			return super.eGet(featureID, resolve, coreType);
 		}
-		return super.eGet(featureID, resolve, coreType);
 	}
 
 	/**
@@ -238,8 +239,10 @@ public class StringModelFragmentImpl extends ModelFragmentImpl implements MStrin
 		case FragmentPackageImpl.STRING_MODEL_FRAGMENT__POSITION_IN_LIST:
 			setPositionInList((String) newValue);
 			return;
+		default:
+			super.eSet(featureID, newValue);
+			return;
 		}
-		super.eSet(featureID, newValue);
 	}
 
 	/**
@@ -259,8 +262,10 @@ public class StringModelFragmentImpl extends ModelFragmentImpl implements MStrin
 		case FragmentPackageImpl.STRING_MODEL_FRAGMENT__POSITION_IN_LIST:
 			setPositionInList(POSITION_IN_LIST_EDEFAULT);
 			return;
+		default:
+			super.eUnset(featureID);
+			return;
 		}
-		super.eUnset(featureID);
 	}
 
 	/**
@@ -279,8 +284,9 @@ public class StringModelFragmentImpl extends ModelFragmentImpl implements MStrin
 		case FragmentPackageImpl.STRING_MODEL_FRAGMENT__POSITION_IN_LIST:
 			return POSITION_IN_LIST_EDEFAULT == null ? positionInList != null
 					: !POSITION_IN_LIST_EDEFAULT.equals(positionInList);
+		default:
+			return super.eIsSet(featureID);
 		}
-		return super.eIsSet(featureID);
 	}
 
 	/**
@@ -306,7 +312,7 @@ public class StringModelFragmentImpl extends ModelFragmentImpl implements MStrin
 
 	@Override
 	public List<MApplicationElement> merge(MApplication application) {
-		List<MApplicationElement> ret = new ArrayList<MApplicationElement>();
+		List<MApplicationElement> ret = new ArrayList<>();
 
 		String idsOrXPath = getParentElementId();
 		if (idsOrXPath.startsWith("xpath:")) {
@@ -328,7 +334,7 @@ public class StringModelFragmentImpl extends ModelFragmentImpl implements MStrin
 				if (feature != null) {
 					List<MApplicationElement> elements;
 					if (parentIds.length > 1) {
-						elements = new ArrayList<MApplicationElement>();
+						elements = new ArrayList<>();
 						for (MApplicationElement element : getElements()) {
 							elements.add((MApplicationElement) EcoreUtil.copy((EObject) element));
 						}
@@ -347,7 +353,7 @@ public class StringModelFragmentImpl extends ModelFragmentImpl implements MStrin
 		XPathContext xpathContext = f.newContext((EObject) application);
 		Iterator<Object> i = xpathContext.iterate(xPath);
 
-		List<MApplicationElement> targetElements = new ArrayList<MApplicationElement>();
+		List<MApplicationElement> targetElements = new ArrayList<>();
 		try {
 			while (i.hasNext()) {
 				Object obj = i.next();
@@ -364,7 +370,7 @@ public class StringModelFragmentImpl extends ModelFragmentImpl implements MStrin
 			EStructuralFeature feature = ((EObject) targetElement).eClass().getEStructuralFeature(getFeaturename());
 			if (feature != null) {
 				List<MApplicationElement> elements;
-				elements = new ArrayList<MApplicationElement>();
+				elements = new ArrayList<>();
 				for (MApplicationElement element : getElements()) {
 					elements.add((MApplicationElement) EcoreUtil.copy((EObject) element));
 				}

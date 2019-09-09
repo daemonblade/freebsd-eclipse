@@ -66,8 +66,7 @@ public class SignatureBlockProcessor implements SignedContentConstants {
 
 		// done processing now create a SingedContent to return
 		SignerInfo[] allSigners = signerInfos.toArray(new SignerInfo[signerInfos.size()]);
-		for (Iterator<Map.Entry<String, Object>> iResults = contentMDResults.entrySet().iterator(); iResults.hasNext();) {
-			Map.Entry<String, Object> entry = iResults.next();
+		for (Map.Entry<String, Object> entry : contentMDResults.entrySet()) {
 			@SuppressWarnings("unchecked")
 			List<Object>[] value = (List<Object>[]) entry.getValue();
 			SignerInfo[] entrySigners = value[0].toArray(new SignerInfo[value[0].size()]);
@@ -455,14 +454,14 @@ public class SignatureBlockProcessor implements SignedContentConstants {
 	private static String stripContinuations(String entry) {
 		if (entry.indexOf("\n ") < 0 && entry.indexOf("\r ") < 0) //$NON-NLS-1$//$NON-NLS-2$
 			return entry;
-		StringBuffer buffer = new StringBuffer(entry);
+		StringBuilder buffer = new StringBuilder(entry);
 		removeAll(buffer, "\r\n "); //$NON-NLS-1$
 		removeAll(buffer, "\n "); //$NON-NLS-1$
 		removeAll(buffer, "\r "); //$NON-NLS-1$
 		return buffer.toString();
 	}
 
-	private static StringBuffer removeAll(StringBuffer buffer, String toRemove) {
+	private static StringBuilder removeAll(StringBuilder buffer, String toRemove) {
 		int index = buffer.indexOf(toRemove);
 		int length = toRemove.length();
 		while (index > 0) {

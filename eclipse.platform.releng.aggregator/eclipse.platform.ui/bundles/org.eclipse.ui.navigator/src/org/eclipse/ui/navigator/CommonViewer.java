@@ -218,7 +218,7 @@ public class CommonViewer extends TreeViewer {
 
 		Object[] changed = event.getElements();
 		if (changed != null) {
-			List<Object> others = new ArrayList<Object>();
+			List<Object> others = new ArrayList<>();
 			for (Object changedElement : changed) {
 				if (changedElement == null)
 					continue;
@@ -289,7 +289,7 @@ public class CommonViewer extends TreeViewer {
 	}
 
 	@Override
-	public void add(Object parentElement, Object[] childElements) {
+	public void add(Object parentElement, Object... childElements) {
 		NavigatorPipelineService pipeDream = (NavigatorPipelineService) contentService
 				.getPipelineService();
 
@@ -314,7 +314,7 @@ public class CommonViewer extends TreeViewer {
 	 * @see org.eclipse.jface.viewers.AbstractTreeViewer#remove(java.lang.Object[])
 	 */
 	@Override
-	public void remove(Object[] elements) {
+	public void remove(Object... elements) {
 		NavigatorPipelineService pipeDream = (NavigatorPipelineService) contentService
 				.getPipelineService();
 
@@ -521,7 +521,7 @@ public class CommonViewer extends TreeViewer {
 
 	@Override
 	public String toString() {
-		return contentService.toString() + " Viewer"; //$NON-NLS-1$
+		return contentService + " Viewer"; //$NON-NLS-1$
 	}
 
 	@Override

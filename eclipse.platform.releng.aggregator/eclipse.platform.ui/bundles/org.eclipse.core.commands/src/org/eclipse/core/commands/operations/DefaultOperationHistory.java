@@ -16,6 +16,7 @@
 package org.eclipse.core.commands.operations;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -126,7 +127,7 @@ public final class DefaultOperationHistory implements IOperationHistory {
 	/**
 	 * a map of undo limits per context
 	 */
-	private Map<IUndoContext, Integer> limits = Collections.synchronizedMap(new HashMap<IUndoContext, Integer>());
+	private Map<IUndoContext, Integer> limits = Collections.synchronizedMap(new HashMap<>());
 
 	/**
 	 * the list of {@link IOperationHistoryListener}s
@@ -136,12 +137,12 @@ public final class DefaultOperationHistory implements IOperationHistory {
 	/**
 	 * the list of operations available for redo, LIFO
 	 */
-	private List<IUndoableOperation> redoList = Collections.synchronizedList(new ArrayList<IUndoableOperation>());
+	private List<IUndoableOperation> redoList = Collections.synchronizedList(new ArrayList<>());
 
 	/**
 	 * the list of operations available for undo, LIFO
 	 */
-	private List<IUndoableOperation> undoList = Collections.synchronizedList(new ArrayList<IUndoableOperation>());
+	private List<IUndoableOperation> undoList = Collections.synchronizedList(new ArrayList<>());
 
 	/**
 	 * a lock that is used to synchronize access between the undo and redo
@@ -1058,9 +1059,7 @@ public final class DefaultOperationHistory implements IOperationHistory {
 				ArrayList<IUndoContext> allContexts = new ArrayList<>(replacements.length);
 				for (IUndoableOperation replacement : replacements) {
 					IUndoContext[] opContexts = replacement.getContexts();
-					for (IUndoContext opContext : opContexts) {
-						allContexts.add(opContext);
-					}
+					allContexts.addAll(Arrays.asList(opContexts));
 					undoList.add(index, replacement);
 					// notify listeners after the lock on the history is
 					// released
@@ -1094,9 +1093,7 @@ public final class DefaultOperationHistory implements IOperationHistory {
 			// notify listeners after we release the lock on redoList
 			for (IUndoableOperation replacement : replacements) {
 				IUndoContext[] opContexts = replacement.getContexts();
-				for (IUndoContext opContext : opContexts) {
-					allContexts.add(opContext);
-				}
+				allContexts.addAll(Arrays.asList(opContexts));
 				redoList.add(index, replacement);
 				// notify listeners after we release the lock on redoList
 			}

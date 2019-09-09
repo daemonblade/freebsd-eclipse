@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2005, 2017 IBM Corporation and others.
+ *  Copyright (c) 2005, 2019 IBM Corporation and others.
  *
  *  This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License 2.0
@@ -16,9 +16,9 @@ package org.eclipse.pde.internal.core.builders;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 import java.util.StringTokenizer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -166,7 +166,7 @@ public class SchemaErrorReporter extends XMLErrorReporter {
 				StringTokenizer text = new StringTokenizer(textNode.getData(), "<>", true); //$NON-NLS-1$
 
 				int lineNumber = getLine(element);
-				Stack<StackEntry> stack = new Stack<>();
+				ArrayDeque<StackEntry> stack = new ArrayDeque<>();
 				boolean errorReported = false;
 				while (text.hasMoreTokens()) {
 					if (errorReported) {
@@ -217,7 +217,7 @@ public class SchemaErrorReporter extends XMLErrorReporter {
 										errorReported = true;
 									}
 								} else {
-									String shortTag = getTagName(tagName);
+									String shortTag = tagName.trim().isEmpty() ? tagName : getTagName(tagName);
 									if (!forbiddenEndTag(shortTag)) {
 										stack.push(new StackEntry(shortTag, lineNumber));
 									}

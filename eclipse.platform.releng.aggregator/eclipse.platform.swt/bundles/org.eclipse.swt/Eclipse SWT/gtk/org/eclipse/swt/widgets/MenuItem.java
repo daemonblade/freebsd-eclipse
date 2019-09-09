@@ -264,6 +264,16 @@ void createHandle (int index) {
 			if (handle == 0) error (SWT.ERROR_NO_HANDLES);
 			break;
 		case SWT.RADIO:
+			// NOTE: This test tries to derive version of Ubuntu, not GTK
+			if (GTK.GTK_VERSION <= OS.VERSION (3, 10, 8)) {
+				/*
+				 * Bug 549376 in Ubuntu < 14.10 with UBUNTU_MENUPROXY,
+				 * Ubuntu's Unity causes a crash when label of radio
+				 * button is empty. The workaround is to initialize
+				 * the label with a space.
+				 */
+				buffer = new byte [] { ' ', 0 };
+			}
 			/*
 			* Feature in GTK.  In GTK, radio button must always be part of
 			* a radio button group.  In a GTK radio group, one button is always
@@ -277,7 +287,6 @@ void createHandle (int index) {
 			*/
 			groupHandle = GTK.gtk_radio_menu_item_new (0);
 			if (groupHandle == 0) error (SWT.ERROR_NO_HANDLES);
-			OS.g_object_ref (groupHandle);
 			OS.g_object_ref_sink (groupHandle);
 			long group = GTK.gtk_radio_menu_item_get_group (groupHandle);
 			handle = GTK.gtk_radio_menu_item_new (group);
@@ -954,13 +963,13 @@ public void setMenu (Menu menu) {
 
 @Override
 void setOrientation (boolean create) {
-    super.setOrientation (create);
-    if ((parent.style & SWT.RIGHT_TO_LEFT) != 0 || !create) {
-    	int dir = (parent.style & SWT.RIGHT_TO_LEFT) != 0 ? GTK.GTK_TEXT_DIR_RTL : GTK.GTK_TEXT_DIR_LTR;
-        GTK.gtk_widget_set_direction (handle, dir);
-        GTK.gtk_container_forall (handle, display.setDirectionProc, dir);
-        if (menu != null) menu._setOrientation (parent.style & (SWT.RIGHT_TO_LEFT | SWT.LEFT_TO_RIGHT));
-    }
+	super.setOrientation (create);
+	if ((parent.style & SWT.RIGHT_TO_LEFT) != 0 || !create) {
+		int dir = (parent.style & SWT.RIGHT_TO_LEFT) != 0 ? GTK.GTK_TEXT_DIR_RTL : GTK.GTK_TEXT_DIR_LTR;
+		GTK.gtk_widget_set_direction (handle, dir);
+		GTK.gtk_container_forall (handle, display.setDirectionProc, dir);
+		if (menu != null) menu._setOrientation (parent.style & (SWT.RIGHT_TO_LEFT | SWT.LEFT_TO_RIGHT));
+	}
 }
 
 boolean setRadioSelection (boolean value) {

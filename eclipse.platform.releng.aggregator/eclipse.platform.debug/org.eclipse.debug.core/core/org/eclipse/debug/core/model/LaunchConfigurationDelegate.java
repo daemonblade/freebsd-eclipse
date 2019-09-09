@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corporation and others.
+ * Copyright (c) 2004, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,6 +15,7 @@
 package org.eclipse.debug.core.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -34,7 +35,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
-import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IBreakpointManager;
 import org.eclipse.debug.core.ILaunch;
@@ -116,21 +116,12 @@ public abstract class LaunchConfigurationDelegate implements ILaunchConfiguratio
 
 	@Override
 	public boolean buildForLaunch(ILaunchConfiguration configuration, String mode, IProgressMonitor monitor) throws CoreException {
-		if (monitor != null) {
-			monitor.beginTask("", 1); //$NON-NLS-1$
+		IProject[] projects = getBuildOrder(configuration, mode);
+		if (projects == null) {
+			return true;
 		}
-		try {
-			IProject[] projects = getBuildOrder(configuration, mode);
-			if (projects == null) {
-				return true;
-			}
-			buildProjects(projects, new SubProgressMonitor(monitor, 1));
-			return false;
-		} finally {
-			if (monitor != null) {
-				monitor.done();
-			}
-		}
+		buildProjects(projects, SubMonitor.convert(monitor, 1));
+		return false;
 	}
 
 	/**
@@ -209,9 +200,9 @@ public abstract class LaunchConfigurationDelegate implements ILaunchConfiguratio
 		}
 		if (mode.equals(ILaunchManager.RUN_MODE) && configuration.supportsMode(ILaunchManager.DEBUG_MODE)) {
 			IBreakpoint[] breakpoints= getBreakpoints(configuration);
-            if (breakpoints == null) {
-                return true;
-            }
+			if (breakpoints == null) {
+				return true;
+			}
 			for (int i = 0; i < breakpoints.length; i++) {
 				if (breakpoints[i].isEnabled()) {
 					IStatusHandler prompter = DebugPlugin.getDefault().getStatusHandler(promptStatus);
@@ -262,22 +253,22 @@ public abstract class LaunchConfigurationDelegate implements ILaunchConfiguratio
 		}
 	}
 
-    /**
-     * Returns the breakpoint collection that is relevant for this launch delegate.
-     * By default this is all the breakpoints registered with the Debug breakpoint manager.
-     *
-     * @param configuration the configuration to get associated breakpoints for
-     * @since 3.1
-     * @return the breakpoints that are relevant for this launch delegate
-     */
-    protected IBreakpoint[] getBreakpoints(ILaunchConfiguration configuration) {
-        IBreakpointManager breakpointManager = DebugPlugin.getDefault().getBreakpointManager();
-        if (!breakpointManager.isEnabled()) {
-            // no need to check breakpoints individually.
-            return null;
-        }
-        return breakpointManager.getBreakpoints();
-    }
+	/**
+	 * Returns the breakpoint collection that is relevant for this launch delegate.
+	 * By default this is all the breakpoints registered with the Debug breakpoint manager.
+	 *
+	 * @param configuration the configuration to get associated breakpoints for
+	 * @since 3.1
+	 * @return the breakpoints that are relevant for this launch delegate
+	 */
+	protected IBreakpoint[] getBreakpoints(ILaunchConfiguration configuration) {
+		IBreakpointManager breakpointManager = DebugPlugin.getDefault().getBreakpointManager();
+		if (!breakpointManager.isEnabled()) {
+			// no need to check breakpoints individually.
+			return null;
+		}
+		return breakpointManager.getBreakpoints();
+	}
 
 	/**
 	 * Returns an array of projects in their suggested build order
@@ -337,9 +328,7 @@ public abstract class LaunchConfigurationDelegate implements ILaunchConfiguratio
 			List<IProject> orderedProjects = new ArrayList<>(projects.length);
 			//Projects may not be in the build order but should be built if selected
 			List<IProject> unorderedProjects = new ArrayList<>(projects.length);
-			for(int i = 0; i < projects.length; ++i) {
-				unorderedProjects.add(projects[i]);
-			}
+			Collections.addAll(unorderedProjects, projects);
 
 			for (int i = 0; i < orderedNames.length; i++) {
 				String projectName = orderedNames[i];

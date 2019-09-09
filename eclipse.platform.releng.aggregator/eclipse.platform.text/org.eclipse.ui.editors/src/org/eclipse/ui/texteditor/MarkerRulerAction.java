@@ -350,9 +350,9 @@ public class MarkerRulerAction extends ResourceAction implements IUpdate {
 			try {
 				IMarker[] allMarkers= resource.findMarkers(fMarkerType, true, IResource.DEPTH_ZERO);
 				if (allMarkers != null) {
-					for (int i= 0; i < allMarkers.length; i++) {
-						if (includesRulerLine(model.getMarkerPosition(allMarkers[i]), document)) {
-							markers.add(allMarkers[i]);
+					for (IMarker allMarker : allMarkers) {
+						if (includesRulerLine(model.getMarkerPosition(allMarker), document)) {
+							markers.add(allMarker);
 						}
 					}
 				}
@@ -409,7 +409,7 @@ public class MarkerRulerAction extends ResourceAction implements IUpdate {
 		IInputValidator inputValidator= new IInputValidator() {
 			@Override
 			public String isValid(String newText) {
-				return (newText == null || newText.trim().length() == 0) ? " " : null; //$NON-NLS-1$
+				return (newText == null || newText.trim().isEmpty()) ? " " : null; //$NON-NLS-1$
 			}
 		};
 		AddBookmarkDialog dialog= new AddBookmarkDialog(fTextEditor.getSite().getShell(), title, message, proposal, inputValidator, addButtonText);
@@ -422,7 +422,7 @@ public class MarkerRulerAction extends ResourceAction implements IUpdate {
 			return false;
 
 		label= label.trim();
-		if (label.length() == 0)
+		if (label.isEmpty())
 			return false;
 
 		MarkerUtilities.setMessage(attributes, label);

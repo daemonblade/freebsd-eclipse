@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -87,10 +87,10 @@ void createWidget () {
 	}
 }
 
-long /*int*/ defaultFont () {
-	long /*int*/ hwnd = parent.handle;
-	long /*int*/ hwndIME = OS.ImmGetDefaultIMEWnd (hwnd);
-	long /*int*/ hFont = 0;
+long defaultFont () {
+	long hwnd = parent.handle;
+	long hwndIME = OS.ImmGetDefaultIMEWnd (hwnd);
+	long hFont = 0;
 	if (hwndIME != 0) {
 		hFont = OS.SendMessage (hwndIME, OS.WM_GETFONT, 0, 0);
 	}
@@ -144,7 +144,7 @@ Rectangle getBoundsInPixels () {
 public Font getFont () {
 	checkWidget();
 	if (font == null) {
-		long /*int*/ hFont = defaultFont ();
+		long hFont = defaultFont ();
 		return Font.win32_new (display, hFont);
 	}
 	return font;
@@ -293,8 +293,8 @@ void resizeIME () {
 	if (!OS.IsDBLocale) return;
 	POINT ptCurrentPos = new POINT ();
 	if (!OS.GetCaretPos (ptCurrentPos)) return;
-	long /*int*/ hwnd = parent.handle;
-	long /*int*/ hIMC = OS.ImmGetContext (hwnd);
+	long hwnd = parent.handle;
+	long hIMC = OS.ImmGetContext (hwnd);
 	IME ime = parent.getIME ();
 	if (ime != null && ime.isInlineEnabled ()) {
 		Point size = getSizeInPixels ();
@@ -323,7 +323,10 @@ void resizeIME () {
 @Override
 void releaseParent () {
 	super.releaseParent ();
-	if (this == parent.getCaret ()) parent.setCaret (null);
+	if (parent != null && this == parent.caret) {
+		if (!parent.isDisposed()) parent.setCaret (null);
+		else parent.caret = null;
+	}
 }
 
 @Override
@@ -337,9 +340,9 @@ void releaseWidget () {
 
 void resize () {
 	resized = false;
-	long /*int*/ hwnd = parent.handle;
+	long hwnd = parent.handle;
 	OS.DestroyCaret ();
-	long /*int*/ hBitmap = image != null ? image.handle : 0;
+	long hBitmap = image != null ? image.handle : 0;
 	int width = this.width;
 	if (image == null && width == 0) {
 		int [] buffer = new int [1];
@@ -356,8 +359,8 @@ void resize () {
 void restoreIMEFont () {
 	if (!OS.IsDBLocale) return;
 	if (oldFont == null) return;
-	long /*int*/ hwnd = parent.handle;
-	long /*int*/ hIMC = OS.ImmGetContext (hwnd);
+	long hwnd = parent.handle;
+	long hIMC = OS.ImmGetContext (hwnd);
 	OS.ImmSetCompositionFont (hIMC, oldFont);
 	OS.ImmReleaseContext (hwnd, hIMC);
 	oldFont = null;
@@ -424,8 +427,8 @@ void setBoundsInPixels (Rectangle rect) {
 }
 
 void setFocus () {
-	long /*int*/ hwnd = parent.handle;
-	long /*int*/ hBitmap = 0;
+	long hwnd = parent.handle;
+	long hBitmap = 0;
 	if (image != null) hBitmap = image.handle;
 	int width = this.width;
 	if (image == null && width == 0) {
@@ -490,11 +493,11 @@ public void setImage (Image image) {
 
 void setIMEFont () {
 	if (!OS.IsDBLocale) return;
-	long /*int*/ hFont = 0;
+	long hFont = 0;
 	if (font != null) hFont = font.handle;
 	if (hFont == 0) hFont = defaultFont ();
-	long /*int*/ hwnd = parent.handle;
-	long /*int*/ hIMC = OS.ImmGetContext (hwnd);
+	long hwnd = parent.handle;
+	long hIMC = OS.ImmGetContext (hwnd);
 	/* Save the current IME font */
 	if (oldFont == null) {
 		oldFont = new LOGFONT ();
@@ -615,7 +618,7 @@ public void setVisible (boolean visible) {
 	checkWidget();
 	if (visible == isVisible) return;
 	isVisible = visible;
-	long /*int*/ hwnd = parent.handle;
+	long hwnd = parent.handle;
 	if (OS.GetFocus () != hwnd) return;
 	if (!isVisible) {
 		OS.HideCaret (hwnd);

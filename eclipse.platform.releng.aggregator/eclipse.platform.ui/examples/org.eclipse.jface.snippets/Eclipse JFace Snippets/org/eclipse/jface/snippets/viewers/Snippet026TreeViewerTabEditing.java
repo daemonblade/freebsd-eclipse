@@ -44,7 +44,7 @@ import org.eclipse.swt.widgets.Shell;
 /**
  * A simple TreeViewer to demonstrate usage
  *
- * @author Tom Schindl <tom.schindl@bestsolution.at>
+ * @author Tom Schindl &lt;tom.schindl@bestsolution.at&gt;
  *
  */
 public class Snippet026TreeViewerTabEditing {
@@ -107,7 +107,7 @@ public class Snippet026TreeViewerTabEditing {
 
 			@Override
 			public String getText(Object element) {
-				return prefix + element.toString();
+				return prefix + element;
 			}
 
 		};
@@ -221,7 +221,7 @@ public class Snippet026TreeViewerTabEditing {
 		public String toString() {
 			String rv = "Item ";
 			if (parent != null) {
-				rv = parent.toString() + ".";
+				rv = parent + ".";
 			}
 			rv += counter;
 

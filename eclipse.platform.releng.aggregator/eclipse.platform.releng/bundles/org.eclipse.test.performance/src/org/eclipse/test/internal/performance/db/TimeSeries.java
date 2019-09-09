@@ -1,12 +1,15 @@
 /*******************************************************************************
-.
-. This program and the accompanying materials are made
- * available under the terms of the Eclipse Public License 2.0 which accompanies this distribution, and is available at
+ * Copyright (c) 2004, 2006 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Contributors: IBM Corporation - initial API and implementation
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
 package org.eclipse.test.internal.performance.db;
@@ -27,7 +30,7 @@ public class TimeSeries {
 
     /**
      * Returns length of series.
-     * 
+     *
      * @return length of series
      */
     public int getLength() {
@@ -36,7 +39,7 @@ public class TimeSeries {
 
     /**
      * Returns value at given index.
-     * 
+     *
      * @param ix
      * @return value at given index
      */
@@ -46,7 +49,7 @@ public class TimeSeries {
 
     /**
      * Returns std dev at given index.
-     * 
+     *
      * @param ix
      * @return std dev at given index
      */
@@ -56,7 +59,7 @@ public class TimeSeries {
 
     /**
      * Returns label at given index.
-     * 
+     *
      * @param ix
      * @return label at given index
      */
@@ -66,7 +69,7 @@ public class TimeSeries {
 
     /**
      * Returns the sample size at the given index.
-     * 
+     *
      * @param ix
      * @return the sample size at the given index
      */

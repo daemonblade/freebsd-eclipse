@@ -178,7 +178,7 @@ public abstract class NLS {
 			bufLen += argZero.length() - 3;
 		if (argOne != null)
 			bufLen += argOne.length() - 3;
-		StringBuffer buffer = new StringBuffer(bufLen < 0 ? 0 : bufLen);
+		StringBuilder buffer = new StringBuilder(bufLen < 0 ? 0 : bufLen);
 		for (int i = 0; i < length; i++) {
 			char c = message.charAt(i);
 			switch (c) {
@@ -237,7 +237,7 @@ public abstract class NLS {
 						break;
 					}
 					// otherwise write out the chars inside the quotes
-					buffer.append(message.substring(nextIndex, index));
+					buffer.append(message, nextIndex, index);
 					i = index;
 					break;
 				default :
@@ -327,16 +327,16 @@ public abstract class NLS {
 		// the MessagesProperties.put method will mark assigned fields
 		// to prevent them from being assigned twice
 		final String[] variants = buildVariants(bundleName);
-		for (int i = 0; i < variants.length; i++) {
+		for (String variant : variants) {
 			// loader==null if we're launched off the Java boot classpath
-			final InputStream input = loader == null ? ClassLoader.getSystemResourceAsStream(variants[i]) : loader.getResourceAsStream(variants[i]);
+			final InputStream input = loader == null ? ClassLoader.getSystemResourceAsStream(variant) : loader.getResourceAsStream(variant);
 			if (input == null)
 				continue;
 			try {
 				final MessagesProperties properties = new MessagesProperties(fields, bundleName, isAccessible);
 				properties.load(input);
 			} catch (IOException e) {
-				log(SEVERITY_ERROR, "Error loading " + variants[i], e); //$NON-NLS-1$
+				log(SEVERITY_ERROR, "Error loading " + variant, e); //$NON-NLS-1$
 			} finally {
 				if (input != null)
 					try {

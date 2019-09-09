@@ -31,17 +31,18 @@ import org.eclipse.swt.widgets.*;
 public class Snippet257 {
 
 	static String string1 = "A drag source is the provider of data in a Drag and Drop data transfer as well as "+
-                           "the originator of the Drag and Drop operation. The data provided by the drag source "+
-                           "may be transferred to another location in the same widget, to a different widget "+
-                           "within the same application, or to a different application altogether. For example, "+
-                           "you can drag text from your application and drop it on an email application, or you "+
-                           "could drag an item in a tree and drop it below a different node in the same tree.";
+							"the originator of the Drag and Drop operation. The data provided by the drag source "+
+							"may be transferred to another location in the same widget, to a different widget "+
+							"within the same application, or to a different application altogether. For example, "+
+							"you can drag text from your application and drop it on an email application, or you "+
+							"could drag an item in a tree and drop it below a different node in the same tree.";
 
 	static String DRAG_START_DATA = "DRAG_START_DATA";
 
 public static void main (String [] args) {
 	final Display display = new Display ();
 	Shell shell = new Shell (display);
+	shell.setText("Snippet 257");
 	shell.setLayout(new FillLayout());
 	shell.setSize(100, 300);
 	int style = SWT.MULTI | SWT.WRAP | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER;

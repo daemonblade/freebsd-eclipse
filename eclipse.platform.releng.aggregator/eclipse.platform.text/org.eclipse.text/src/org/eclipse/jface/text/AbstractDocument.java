@@ -452,7 +452,7 @@ public abstract class AbstractDocument implements IDocument, IDocumentExtension,
 	 * @since 3.4
 	 */
 	protected int computeIndexInPositionList(List<? extends Position> positions, int offset, boolean orderedByOffset) {
-		if (positions.size() == 0)
+		if (positions.isEmpty())
 			return 0;
 
 		int left= 0;
@@ -682,7 +682,7 @@ public abstract class AbstractDocument implements IDocument, IDocumentExtension,
 			}
 		}
 
-		if (fPositions.size() > 0)
+		if (!fPositions.isEmpty())
 			updatePositions(event);
 	}
 
@@ -1117,7 +1117,7 @@ public abstract class AbstractDocument implements IDocument, IDocumentExtension,
 
 	@Override
 	public void replace(int pos, int length, String text) throws BadLocationException {
-		if (length == 0 && (text == null || text.length() == 0))
+		if (length == 0 && (text == null || text.isEmpty()))
 			replace(pos, length, text, getModificationStamp());
 		else
 			replace(pos, length, text, getNextModificationStamp());
@@ -1406,7 +1406,7 @@ public abstract class AbstractDocument implements IDocument, IDocumentExtension,
 		if (partitioner == null) {
 			if (fDocumentPartitioners != null) {
 				fDocumentPartitioners.remove(partitioning);
-				if (fDocumentPartitioners.size() == 0)
+				if (fDocumentPartitioners.isEmpty())
 					fDocumentPartitioners= null;
 			}
 		} else {
@@ -1431,7 +1431,7 @@ public abstract class AbstractDocument implements IDocument, IDocumentExtension,
 	 * @since 3.1
 	 */
 	protected void fireRewriteSessionChanged(DocumentRewriteSessionEvent event) {
-		if (fDocumentRewriteSessionListeners.size() > 0) {
+		if (!fDocumentRewriteSessionListeners.isEmpty()) {
 			List<IDocumentRewriteSessionListener> list= new ArrayList<>(fDocumentRewriteSessionListeners);
 			Iterator<IDocumentRewriteSessionListener> e= list.iterator();
 			while (e.hasNext()) {

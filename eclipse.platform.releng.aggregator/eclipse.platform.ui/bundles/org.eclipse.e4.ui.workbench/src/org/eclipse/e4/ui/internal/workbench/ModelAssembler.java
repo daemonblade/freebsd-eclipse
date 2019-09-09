@@ -202,9 +202,7 @@ public class ModelAssembler {
 
 	private void addAllBucketFragmentWrapper(Bucket bucket, List<ModelFragmentWrapper> fragmentList,
 			Set<String> checkedElementIds) {
-		for (ModelFragmentWrapper wrapper : bucket.wrapper) {
-			fragmentList.add(wrapper);
-		}
+		fragmentList.addAll(bucket.wrapper);
 		checkedElementIds.addAll(bucket.containedElementIds);
 		for (Bucket child : bucket.dependencies) {
 			addAllBucketFragmentWrapper(child, fragmentList, checkedElementIds);
@@ -250,7 +248,7 @@ public class ModelAssembler {
 		if (severity == Diagnostic.ERROR) {
 			logger.error(
 					"Fragment from \"{0}\" of \"{1}\" could not be validated and was not merged: " //$NON-NLS-1$
-							+ fragment.toString(), contributorURI, contributorName);
+							+ fragment, contributorURI, contributorName);
 		}
 
 		List<MApplicationElement> merged = processModelFragment(fragment, contributorURI, checkExist);
@@ -295,7 +293,7 @@ public class ModelAssembler {
 		try {
 			resource = resourceSet.getResource(uri, true);
 		} catch (RuntimeException e) {
-			logger.warn(e, "Unable to read model extension from \"" + uri.toString() + "\" of \"" + bundleName + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			logger.warn(e, "Unable to read model extension from \"" + uri + "\" of \"" + bundleName + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			return null;
 		}
 

@@ -56,7 +56,7 @@ public class BrowserPart extends AbstractFormPart implements IHelpPart {
 	private final static String QUERY = "BrowserPartQuery:"; //$NON-NLS-1$
 	private final static String HIGHLIGHT_ON = "highlight-on"; //$NON-NLS-1$
 	private final static String HELP_VIEW_SCALE = "help_view_scale"; //$NON-NLS-1$
-    private final static String EMPTY_PAGE = "<html><head></head><body></body></html>"; //$NON-NLS-1$
+	private final static String EMPTY_PAGE = "<html><head></head><body></body></html>"; //$NON-NLS-1$
 
 	private ReusableHelpPart parent;
 
@@ -116,7 +116,7 @@ public class BrowserPart extends AbstractFormPart implements IHelpPart {
 			@Override
 			public void changed(LocationEvent event) {
 				String url = event.location;
-				boolean isResult = url.indexOf("resultof")!=-1; //$NON-NLS-1$
+				boolean isResult = url.contains("resultof"); //$NON-NLS-1$
 				BrowserPart.this.parent.browserChanged(url);
 				BrowserPart.this.url = url;
 				updateSyncTocAction();
@@ -160,7 +160,7 @@ public class BrowserPart extends AbstractFormPart implements IHelpPart {
 				}
 				lastProgress = -1;
 				if (fontScalePercentage != 100) {
-				    rescale();
+					rescale();
 				}
 				String value = executeQuery("document.title"); //$NON-NLS-1$
 				BrowserPart.this.title = value != null ? value : "N/A"; //$NON-NLS-1$
@@ -172,7 +172,7 @@ public class BrowserPart extends AbstractFormPart implements IHelpPart {
 			IStatusLineManager statusLine = BrowserPart.this.parent.getStatusLineManager();
 			if (statusLine != null)
 				statusLine.setMessage(event.text);
-			if (event.text.indexOf("://") != -1) //$NON-NLS-1$
+			if (event.text.contains("://")) //$NON-NLS-1$
 				statusURL = event.text;
 		});
 		browser.addOpenWindowListener(event -> {
@@ -253,7 +253,7 @@ public class BrowserPart extends AbstractFormPart implements IHelpPart {
 				IScopeContext instanceScope = InstanceScope.INSTANCE;
 				IEclipsePreferences prefs = instanceScope.getNode(HelpBasePlugin.PLUGIN_ID);
 				prefs.putBoolean(HIGHLIGHT_ON, highlightAction.isChecked());
-				if (browser.getUrl().indexOf("resultof")!=-1) browser.execute("setHighlight(" +highlightAction.isChecked()+");"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				if (browser.getUrl().contains("resultof")) browser.execute("setHighlight(" +highlightAction.isChecked()+");"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			}
 		};
 		highlightAction.setChecked(highlight);
@@ -286,7 +286,7 @@ public class BrowserPart extends AbstractFormPart implements IHelpPart {
 			fontScalePercentage = Platform.getPreferencesService().getInt(HelpBasePlugin.PLUGIN_ID,
 					HELP_VIEW_SCALE, 100, null);
 			if (menuManager != null) {
-			    addMenuActions(menuManager);
+				addMenuActions(menuManager);
 			}
 		}
 	}
@@ -401,8 +401,8 @@ public class BrowserPart extends AbstractFormPart implements IHelpPart {
 	}
 
 	private boolean redirectLink(final String url) {
-		if (url.indexOf("/topic/") != -1) { //$NON-NLS-1$
-			if (url.indexOf("noframes") == -1) { //$NON-NLS-1$
+		if (url.contains("/topic/")) { //$NON-NLS-1$
+			if (!url.contains("noframes")) { //$NON-NLS-1$
 				return true;
 			}
 		} else if (url.indexOf("livehelp/?pluginID=")>0) { //$NON-NLS-1$
@@ -462,8 +462,8 @@ public class BrowserPart extends AbstractFormPart implements IHelpPart {
 
 	private void enableButtons() {
 		if (magnifyAction != null) {
-		    magnifyAction.setEnabled(fontScalePercentage < SCALE_MAX);
-	        reduceAction.setEnabled(fontScalePercentage > SCALE_MIN);
+			magnifyAction.setEnabled(fontScalePercentage < SCALE_MAX);
+			reduceAction.setEnabled(fontScalePercentage > SCALE_MIN);
 		}
 	}
 

@@ -13,14 +13,12 @@
  *******************************************************************************/
 package org.eclipse.swt.internal.ole.win32;
 
-import org.eclipse.swt.internal.win32.*;
-
 public class IOleDocument extends IUnknown
 {
-public IOleDocument(long /*int*/ address) {
+public IOleDocument(long address) {
 	super(address);
 }
-public int CreateView(long /*int*/ pIPSite,long /*int*/ pstm, int dwReserved, long /*int*/[] ppView) {
-	return OS.VtblCall(3, address, pIPSite, pstm, dwReserved, ppView);
+public int CreateView(long pIPSite,long pstm, int dwReserved, long[] ppView) {
+	return COM.VtblCall(3, address, pIPSite, pstm, dwReserved, ppView);
 }
 }

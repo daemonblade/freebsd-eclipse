@@ -345,7 +345,7 @@ public class TargetDefinitionContentPage extends TargetDefinitionPage {
 		fNLCombo = SWTFactory.createCombo(group, SWT.SINGLE | SWT.BORDER, 1, fNLChoices.toArray(new String[fNLChoices.size()]));
 		fNLCombo.addModifyListener(e -> {
 			String value = fNLCombo.getText();
-			int index = value.indexOf("-"); //$NON-NLS-1$
+			int index = value.indexOf('-'); //$NON-NLS-1$
 			if (index > 0)
 				value = value.substring(0, index);
 			getTargetDefinition().setNL(getModelValue(value));
@@ -389,9 +389,7 @@ public class TargetDefinitionContentPage extends TargetDefinitionPage {
 
 		fOSChoices = new TreeSet<>();
 		String[] os = Platform.knownOSValues();
-		for (String osValue : os) {
-			fOSChoices.add(osValue);
-		}
+		Collections.addAll(fOSChoices, os);
 		String pref = node.get(ICoreConstants.OS_EXTRA, EMPTY_STRING);
 		if (!EMPTY_STRING.equals(pref)) {
 			addExtraChoices(fOSChoices, pref);
@@ -399,9 +397,7 @@ public class TargetDefinitionContentPage extends TargetDefinitionPage {
 
 		fWSChoices = new TreeSet<>();
 		String[] ws = Platform.knownWSValues();
-		for (String wsValue : ws) {
-			fWSChoices.add(wsValue);
-		}
+		Collections.addAll(fWSChoices, ws);
 		pref = node.get(ICoreConstants.WS_EXTRA, EMPTY_STRING);
 		if (!EMPTY_STRING.equals(pref)) {
 			addExtraChoices(fWSChoices, pref);
@@ -409,9 +405,7 @@ public class TargetDefinitionContentPage extends TargetDefinitionPage {
 
 		fArchChoices = new TreeSet<>();
 		String[] arch = Platform.knownOSArchValues();
-		for (String archValue : arch) {
-			fArchChoices.add(archValue);
-		}
+		Collections.addAll(fArchChoices, arch);
 		pref = node.get(ICoreConstants.ARCH_EXTRA, EMPTY_STRING);
 		if (!EMPTY_STRING.equals(pref)) {
 			addExtraChoices(fArchChoices, pref);
@@ -419,9 +413,7 @@ public class TargetDefinitionContentPage extends TargetDefinitionPage {
 
 		fNLChoices = new TreeSet<>();
 		String[] nl = LocaleUtil.getLocales();
-		for (String localeValue : nl) {
-			fNLChoices.add(localeValue);
-		}
+		Collections.addAll(fNLChoices, nl);
 		pref = node.get(ICoreConstants.NL_EXTRA, EMPTY_STRING);
 		if (!EMPTY_STRING.equals(pref)) {
 			addExtraChoices(fNLChoices, pref);

@@ -130,8 +130,7 @@ public class ModeWizard extends ResizableWizard {
 		final ArrayList<ModeChange> changes = new ArrayList<>();
 		final HashSet<IResource> visited = new HashSet<>();
 		
-		for (int i = 0; i < resources.length; i++) {
-			final IResource currentResource = resources[i];
+		for (IResource currentResource : resources) {
 			try {
 				currentResource.accept((IResourceVisitor) resource -> {
 					try {
@@ -165,7 +164,7 @@ public class ModeWizard extends ResizableWizard {
 		try {
 			final List<IStatus> messages = new ArrayList<>();
 			final List changes= fPage.getChanges();
-			if (changes.size() == 0)
+			if (changes.isEmpty())
 				return true;
 			
 			final String comment = fPage.getComment(getShell());

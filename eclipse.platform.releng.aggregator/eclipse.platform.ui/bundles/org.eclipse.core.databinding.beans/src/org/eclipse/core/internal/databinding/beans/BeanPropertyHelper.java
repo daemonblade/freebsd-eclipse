@@ -24,6 +24,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.databinding.observable.value.IObservableValue;
@@ -155,7 +156,7 @@ public class BeanPropertyHelper {
 			}
 		} else {
 			try {
-				List<PropertyDescriptor> pds = new ArrayList<PropertyDescriptor>();
+				List<PropertyDescriptor> pds = new ArrayList<>();
 				getInterfacePropertyDescriptors(pds, beanClass);
 				if (pds.size() > 0) {
 					for (PropertyDescriptor descriptor : pds.toArray(new PropertyDescriptor[pds.size()])) {
@@ -188,9 +189,7 @@ public class BeanPropertyHelper {
 			throws IntrospectionException {
 		BeanInfo beanInfo = Introspector.getBeanInfo(iface);
 		PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
-		for (PropertyDescriptor pd : pds) {
-			propertyDescriptors.add(pd);
-		}
+		propertyDescriptors.addAll(Arrays.asList(pds));
 		Class<?>[] subIntfs = iface.getInterfaces();
 		for (Class<?> subIntf : subIntfs) {
 			getInterfacePropertyDescriptors(propertyDescriptors, subIntf);

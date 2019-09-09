@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Block;
@@ -53,6 +54,18 @@ public class ASTRewritingSwitchExpressionsTest extends ASTRewritingTest {
 		return createSuite(ASTRewritingSwitchExpressionsTest.class);
 	}
 
+ 	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		if (this.apiLevel == AST.JLS12 ) {
+			this.project1.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+			this.project1.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+			this.project1.setOption(JavaCore.COMPILER_COMPLIANCE, JavaCore.VERSION_12);
+			this.project1.setOption(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_12);
+			this.project1.setOption(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, JavaCore.VERSION_12);
+		}
+	}
+	 	
 	@SuppressWarnings("rawtypes")
 	public void testSwitchExpressions_since_12() throws Exception {
 		IPackageFragment pack1= this.sourceFolder.createPackageFragment("test1", false, null);
@@ -287,9 +300,7 @@ public class ASTRewritingSwitchExpressionsTest extends ASTRewritingTest {
 		buf.append(" 				int z = 100;\n");
 		buf.append(" 				break z;\n");
 		buf.append("			}\n");
-		buf.append("			case 100, 200 -> {\n");
-		buf.append("    break 2048;\n");
-		buf.append("}\n");
+		buf.append("			case 100, 200 -> {break 2048;}\n");
 		buf.append("            default -> {\n");
 		buf.append("				break 12;\n");
 		buf.append("			}\n");

@@ -132,8 +132,7 @@ class LogEntryCache implements ILogEntryListener {
 	 * Return null if the revision wasn't found.
 	 */
 	ICVSRemoteFile findRevison(ILogEntry[] allLogs, String predecessorRevision) throws TeamException {
-		for (int i = 0; i < allLogs.length; i++) {
-			ILogEntry entry = allLogs[i];
+		for (ILogEntry entry : allLogs) {
 			ICVSRemoteFile file = entry.getRemoteFile();
 			if (file.getRevision().equals(predecessorRevision)) {
 				return file;
@@ -148,7 +147,7 @@ class LogEntryCache implements ILogEntryListener {
 	String getPredecessorRevision(String revision) {
 		int digits[] = Util.convertToDigits(revision);
 		digits[digits.length - 1]--;
-		StringBuffer buffer = new StringBuffer(revision.length());
+		StringBuilder buffer = new StringBuilder(revision.length());
 		for (int i = 0; i < digits.length; i++) {
 			buffer.append(Integer.toString(digits[i]));
 			if (i < digits.length - 1) {
@@ -177,7 +176,7 @@ class LogEntryCache implements ILogEntryListener {
 		if (length % 2 == 1) {
 			length--;
 		}
-		StringBuffer buffer = new StringBuffer(revision.length());
+		StringBuilder buffer = new StringBuilder(revision.length());
 		for (int i = 0; i < length; i++) {
 			buffer.append(Integer.toString(digits[i]));
 			if (i < length - 1) {

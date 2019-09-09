@@ -243,14 +243,26 @@ void createHandle () {
 		NSWindow window = parent.view.window();
 		window.setToolbar(nsToolbar);
 		nsToolbar.setVisible(true);
+
 		NSArray views = window.contentView().superview().subviews();
-		for (int i = 0; i < views.count(); i++) {
+		int i = 0;
+		while (i < views.count()) {
 			id id = views.objectAtIndex(i);
-			if (new NSObject(id).className().getString().equals("NSToolbarView")) {
+			String className = new NSObject(id).className().getString();
+			if (className.equals("NSToolbarView")) {
 				view = new NSView(id);
 				OS.object_setClass(view.id, OS.objc_getClass("SWTToolbarView"));
 				view.retain();
 				break;
+			}
+			if (className.equals("NSTitlebarContainerView")) {
+				views = new NSView(id).subviews();
+				i = 0;
+			} else if (className.equals("NSTitlebarView")) {
+				views = new NSView(id).subviews();
+				i = 0;
+			} else {
+				i++;
 			}
 		}
 		style &= ~SWT.SMOOTH;
@@ -278,13 +290,13 @@ void createItem (ToolItem item, int index) {
 		System.arraycopy (items, 0, newItems, 0, items.length);
 		items = newItems;
 	}
-    item.createWidget();
+	item.createWidget();
 	System.arraycopy (items, index, items, index + 1, itemCount++ - index);
 	items [index] = item;
 	if (nsToolbar != null) {
-        nsToolbar.insertItemWithItemIdentifier(item.getItemID(), index);
+		nsToolbar.insertItemWithItemIdentifier(item.getItemID(), index);
 	} else {
-        view.addSubview(item.view);
+		view.addSubview(item.view);
 	}
 	relayout ();
 }
@@ -671,11 +683,11 @@ void releaseChildren (boolean destroy) {
 
 @Override
 void releaseHandle () {
-    super.releaseHandle ();
+	super.releaseHandle ();
 
-    if (nsToolbar != null) {
-        nsToolbar.release();
-        nsToolbar = null;
+	if (nsToolbar != null) {
+		nsToolbar.release();
+		nsToolbar = null;
 	}
 
 	if (accessibilityAttributes != null) accessibilityAttributes.release();
@@ -768,8 +780,8 @@ public void setRedraw (boolean redraw) {
 
 @Override
 public void setVisible(boolean visible) {
-    if (nsToolbar != null) nsToolbar.setVisible(visible);
-    super.setVisible(visible);
+	if (nsToolbar != null) nsToolbar.setVisible(visible);
+	super.setVisible(visible);
 }
 
 @Override

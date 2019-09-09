@@ -783,16 +783,12 @@ public class WorkbenchPage implements IWorkbenchPage {
 			if (part != null) {
 				IActionSetDescriptor[] partActionSets = WorkbenchPlugin.getDefault().getActionSetRegistry()
 						.getActionSetsFor(part.getSite().getId());
-				for (IActionSetDescriptor partActionSetDescriptor : partActionSets) {
-					newActionSets.add(partActionSetDescriptor);
-				}
+				newActionSets.addAll(Arrays.asList(partActionSets));
 			}
 			if (editor != null && editor != part) {
 				IActionSetDescriptor[] editorActionSets = WorkbenchPlugin.getDefault().getActionSetRegistry()
 						.getActionSetsFor(editor.getSite().getId());
-				for (IActionSetDescriptor editorActionSetDescriptor : editorActionSets) {
-					newActionSets.add(editorActionSetDescriptor);
-				}
+				newActionSets.addAll(Arrays.asList(editorActionSets));
 			}
 			return newActionSets;
 		}
@@ -2436,8 +2432,7 @@ public class WorkbenchPage implements IWorkbenchPage {
 		if (perspectiveRegistry == null) {
 			return null;
 		}
-		IPerspectiveDescriptor desc = perspectiveRegistry.findPerspectiveWithId(id);
-		return desc;
+		return perspectiveRegistry.findPerspectiveWithId(id);
 	}
 
 	@Override
@@ -3089,14 +3084,15 @@ public class WorkbenchPage implements IWorkbenchPage {
 	 *
 	 * @param input       the input to open the editor with
 	 * @param editorID    the id of the editor to open
-	 * @param activate    <tt>true</tt> if the editor should be activated,
-	 *                    <tt>false</tt> otherwise
+	 * @param activate    <code>true</code> if the editor should be activated,
+	 *                    <code>false</code> otherwise
 	 * @param matchFlags  a bit mask consisting of zero or more of the MATCH_*
 	 *                    constants OR-ed together
 	 * @param editorState the previously saved state of the editor as a memento,
-	 *                    this may be <tt>null</tt>
-	 * @param notify      <tt>true</tt> if the perspective should fire off events
-	 *                    about the editors being opened, <tt>false</tt> otherwise
+	 *                    this may be <code>null</code>
+	 * @param notify      <code>true</code> if the perspective should fire off
+	 *                    events about the editors being opened, <code>false</code>
+	 *                    otherwise
 	 * @return the opened editor
 	 * @exception PartInitException if the editor could not be created or
 	 *                              initialized
@@ -3601,9 +3597,7 @@ public class WorkbenchPage implements IWorkbenchPage {
 		}
 		// saveAll below expects a mutable list
 		List<IWorkbenchPart> dirtyParts = new ArrayList<>(parts.length);
-		for (IWorkbenchPart part : parts) {
-			dirtyParts.add(part);
-		}
+		dirtyParts.addAll(Arrays.asList(parts));
 
 		// If confirmation is required ..
 		return saveAll(dirtyParts, confirm, closing, addNonPartSources, legacyWindow, legacyWindow);
@@ -3810,9 +3804,7 @@ public class WorkbenchPage implements IWorkbenchPage {
 				}
 			}
 		}
-		for (IWorkbenchPart part : closingPartsWithSameModel) {
-			pagePartsWithSameModels.remove(part);
-		}
+		pagePartsWithSameModels.removeAll(closingPartsWithSameModel);
 		return pagePartsWithSameModels.isEmpty();
 	}
 
@@ -5290,10 +5282,10 @@ public class WorkbenchPage implements IWorkbenchPage {
 	 *
 	 * @param fileEditorInput  the input that the editor should open
 	 * @param editorDescriptor the descriptor of the editor to open
-	 * @param activate         <tt>true</tt> if the editor should be activated,
-	 *                         <tt>false</tt> otherwise
+	 * @param activate         <code>true</code> if the editor should be activated,
+	 *                         <code>false</code> otherwise
 	 * @param editorState      the previously saved state of the editor as a
-	 *                         memento, this may be <tt>null</tt>
+	 *                         memento, this may be <code>null</code>
 	 * @return the opened editor
 	 * @exception PartInitException if the editor could not be created or
 	 *                              initialized

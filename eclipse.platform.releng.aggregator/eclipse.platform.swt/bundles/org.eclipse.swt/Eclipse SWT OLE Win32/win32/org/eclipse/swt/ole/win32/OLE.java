@@ -246,7 +246,7 @@ public class OLE extends SWT {
 	public static final short FUNCFLAG_FREQUESTEDIT = 0x8;
 	public static final short FUNCFLAG_FDISPLAYBIND = 0x10;
 	public static final short FUNCFLAG_FDEFAULTBIND = 0x20;
-  	public static final short FUNCFLAG_FHIDDEN = 0x40;
+	public static final short FUNCFLAG_FHIDDEN = 0x40;
 	public static final short FUNCFLAG_FUSESGETLASTERROR = 0x80;
 	public static final short FUNCFLAG_FDEFAULTCOLLELEM = 0x100;
 	public static final short FUNCFLAG_FUIDEFAULT = 0x200;
@@ -393,7 +393,7 @@ public static String findProgramID (String extension) {
 	return ""; //$NON-NLS-1$
 }
 static String getKeyValue (TCHAR key) {
-	long /*int*/ [] phkResult = new long /*int*/ [1];
+	long [] phkResult = new long [1];
 	if (OS.RegOpenKeyEx (OS.HKEY_CLASSES_ROOT, key, 0, OS.KEY_READ, phkResult) != 0) {
 		return null;
 	}
@@ -416,7 +416,7 @@ static String getKeyValue (TCHAR key) {
 	return result;
 }
 private static boolean getKeyExists (TCHAR key) {
-	long /*int*/ [] phkResult = new long /*int*/ [1];
+	long [] phkResult = new long [1];
 	if (OS.RegOpenKeyEx (OS.HKEY_CLASSES_ROOT, key, 0, OS.KEY_READ, phkResult) != 0) {
 		return false;
 	}

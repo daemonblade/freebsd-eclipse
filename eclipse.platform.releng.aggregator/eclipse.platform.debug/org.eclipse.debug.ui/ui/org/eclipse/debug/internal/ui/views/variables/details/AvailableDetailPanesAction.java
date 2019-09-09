@@ -107,14 +107,14 @@ public class AvailableDetailPanesAction extends Action implements IMenuCreator {
 		fMenu= new Menu(parent);
 		int i = 0;
 		for (String currentID : fAvailableIDs) {
-			StringBuffer name = new StringBuffer();
+			StringBuilder name = new StringBuilder();
 			//add the numerical accelerator
-            i++;
+			i++;
 			if (i < 9) {
-                name.append('&');
-                name.append(i);
-                name.append(' ');
-            }
+				name.append('&');
+				name.append(i);
+				name.append(' ');
+			}
 
 			String typeName = DetailPaneManager.getDefault().getNameFromID(currentID);
 			if (typeName != null && typeName.length() > 0){

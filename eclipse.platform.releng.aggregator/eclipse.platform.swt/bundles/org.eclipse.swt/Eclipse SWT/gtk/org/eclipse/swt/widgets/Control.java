@@ -120,6 +120,21 @@ public abstract class Control extends Widget implements Drawable {
 	static boolean mouseDown;
 	boolean dragBegun;
 
+	/**
+	 * Flag to check the scale factor upon the first drawing of this Control.
+	 * This is done by checking the scale factor of the Cairo surface in gtk_draw().
+	 *
+	 * Doing so provides an accurate scale factor, and will determine if this Control
+	 * needs to be scaled manually by SWT. See bug 507020.
+	 */
+	boolean checkScaleFactor = true;
+
+	/**
+	 * True if GTK has autoscaled this Control, meaning SWT does not need to do any
+	 * manual scaling. See bug 507020.
+	 */
+	boolean autoScale = true;
+
 Control () {
 }
 
@@ -1549,6 +1564,12 @@ boolean isActive () {
 	return getShell ().getModalShell () == null && display.getModalDialog () == null;
 }
 
+@Override
+public boolean isAutoScalable () {
+	return autoScale;
+}
+
+
 /*
  * Answers a boolean indicating whether a Label that precedes the receiver in
  * a layout should be read by screen readers as the recevier's label.
@@ -2710,7 +2731,7 @@ boolean dragDetect (int x, int y, boolean filter, boolean dragOnTimeout, boolean
 	 *  See Bug 503431.
 	 */
 	if (!OS.isX11()) { // Wayland
-  		double [] offsetX = new double[1];
+		double [] offsetX = new double[1];
 		double [] offsetY = new double [1];
 		double [] startX = new double[1];
 		double [] startY = new double [1];
@@ -3872,6 +3893,19 @@ void cairoClipRegion (long cairo) {
 
 @Override
 long gtk_draw (long widget, long cairo) {
+	if (checkScaleFactor) {
+		long surface = Cairo.cairo_get_target(cairo);
+		if (surface != 0) {
+			double [] sx = new double [1];
+			double [] sy = new double [1];
+			Cairo.cairo_surface_get_device_scale(surface, sx, sy);
+			long display = GDK.gdk_display_get_default();
+			long monitor = GDK.gdk_display_get_monitor_at_point(display, 0, 0);
+			int scale = GDK.gdk_monitor_get_scale_factor(monitor);
+			autoScale = !(scale == Math.round(sx[0]));
+			checkScaleFactor = false;
+		}
+	}
 	if ((state & OBSCURED) != 0) return 0;
 	GdkRectangle rect = new GdkRectangle ();
 	GDK.gdk_cairo_get_clip_rectangle (cairo, rect);
@@ -4679,7 +4713,7 @@ void releaseWidget () {
  * should be raised or lowered
  */
 void restackWindow (long window, long sibling, boolean above) {
-   	GDK.gdk_window_restack (window, sibling, above);
+	GDK.gdk_window_restack (window, sibling, above);
 }
 
 /**
@@ -4690,7 +4724,7 @@ void restackWindow (long window, long sibling, boolean above) {
  * should be raised or lowered
  */
 void restackSurface (long surface, long sibling, boolean above) {
-   	GDK.gdk_surface_restack (surface, sibling, above);
+	GDK.gdk_surface_restack (surface, sibling, above);
 }
 
 boolean sendDragEvent (int button, int stateMask, int x, int y, boolean isStateMask) {
@@ -4738,7 +4772,7 @@ void sendFocusEvent (int type) {
 }
 
  boolean sendGestureEvent (int stateMask, int detail, int x, int y, double delta) {
-	 if (containedInRegion(x, y)) return false;
+	if (containedInRegion(x, y)) return false;
 	switch (detail) {
 	case SWT.GESTURE_ROTATE: {
 		return sendGestureEvent(stateMask, detail, x, y, delta, 0, 0, 0);
@@ -5032,23 +5066,23 @@ private void _setBackground (Color color) {
 
 void setBackgroundGdkRGBA (long context, long handle, GdkRGBA rgba) {
 	GdkRGBA selectedBackground = display.getSystemColor(SWT.COLOR_LIST_SELECTION).handle;
-    if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-    	// Form background string
-        String name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? display.gtk_widget_class_get_css_name(handle)
-        		: display.gtk_widget_get_name(handle);
-        String css = name + " {background-color: " + display.gtk_rgba_to_css_string(rgba) + ";}\n"
-                + name + ":selected" + " {background-color: " + display.gtk_rgba_to_css_string(selectedBackground) + ";}";
+	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
+		// Form background string
+		String name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? display.gtk_widget_class_get_css_name(handle)
+				: display.gtk_widget_get_name(handle);
+		String css = name + " {background-color: " + display.gtk_rgba_to_css_string(rgba) + ";}\n"
+				+ name + ":selected" + " {background-color: " + display.gtk_rgba_to_css_string(selectedBackground) + ";}";
 
-        // Cache background
-        cssBackground = css;
+		// Cache background
+		cssBackground = css;
 
-        // Apply background color and any cached foreground color
-        String finalCss = display.gtk_css_create_css_color_string (cssBackground, cssForeground, SWT.BACKGROUND);
-        gtk_css_provider_load_from_css (context, finalCss);
-    } else {
-        GTK.gtk_widget_override_background_color (handle, GTK.GTK_STATE_FLAG_NORMAL, rgba);
-        GTK.gtk_widget_override_background_color(handle, GTK.GTK_STATE_FLAG_SELECTED, selectedBackground);
-    }
+		// Apply background color and any cached foreground color
+		String finalCss = display.gtk_css_create_css_color_string (cssBackground, cssForeground, SWT.BACKGROUND);
+		gtk_css_provider_load_from_css (context, finalCss);
+	} else {
+		GTK.gtk_widget_override_background_color (handle, GTK.GTK_STATE_FLAG_NORMAL, rgba);
+		GTK.gtk_widget_override_background_color(handle, GTK.GTK_STATE_FLAG_SELECTED, selectedBackground);
+	}
 }
 
 void setBackgroundGradientGdkRGBA (long context, long handle, GdkRGBA rgba) {
@@ -5504,7 +5538,7 @@ void setForegroundGdkRGBA (long handle, GdkRGBA rgba) {
 		// Form foreground string
 		String color = display.gtk_rgba_to_css_string(toSet);
 		String name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? display.gtk_widget_class_get_css_name(handle)
-	    		: display.gtk_widget_get_name(handle);
+				: display.gtk_widget_get_name(handle);
 		GdkRGBA selectedForeground = display.COLOR_LIST_SELECTION_TEXT_RGBA;
 		String selection = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) &&
 				!name.contains("treeview") ? " selection" : ":selected";
@@ -5578,7 +5612,7 @@ boolean mustBeVisibleOnInitBounds() {
  * TODO currently phase is set to BUBBLE = 2. Look into using groups perhaps.
  */
 private void setDragGesture () {
-        if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
+		if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
 			dragGesture = GTK.gtk_gesture_drag_new (handle);
 			GTK.gtk_event_controller_set_propagation_phase (dragGesture,
 			        2);
@@ -5586,7 +5620,7 @@ private void setDragGesture () {
 			OS.g_signal_connect(dragGesture, OS.begin, gestureBegin.getAddress(), this.handle);
 			OS.g_signal_connect(dragGesture, OS.end, gestureEnd.getAddress(), this.handle);
 			return;
-        }
+		}
 }
 
 //private void setPanGesture () {
@@ -5594,7 +5628,7 @@ private void setDragGesture () {
 //}
 
 private void setRotateGesture () {
-    if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
+	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
 		rotateGesture = GTK.gtk_gesture_rotate_new(handle);
 		GTK.gtk_event_controller_set_propagation_phase (rotateGesture,
 		        2);
@@ -5602,11 +5636,11 @@ private void setRotateGesture () {
 		OS.g_signal_connect(rotateGesture, OS.begin, gestureBegin.getAddress(), this.handle);
 		OS.g_signal_connect(rotateGesture, OS.end, gestureEnd.getAddress(), this.handle);
 		return;
-    }
+	}
 }
 
 private void setZoomGesture () {
-        if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
+		if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
 			zoomGesture = GTK.gtk_gesture_zoom_new(handle);
 			GTK.gtk_event_controller_set_propagation_phase (zoomGesture,
 			        2);
@@ -5614,7 +5648,7 @@ private void setZoomGesture () {
 			OS.g_signal_connect(zoomGesture, OS.begin, gestureBegin.getAddress(), this.handle);
 			OS.g_signal_connect(zoomGesture, OS.end, gestureEnd.getAddress(), this.handle);
 			return;
-        }
+		}
 }
 
 static Control getControl(long handle) {
@@ -6115,7 +6149,7 @@ public void setVisible (boolean visible) {
 }
 
 void setZOrder (Control sibling, boolean above, boolean fixRelations) {
-	 setZOrder (sibling, above, fixRelations, true);
+	setZOrder (sibling, above, fixRelations, true);
 }
 
 void setZOrder (Control sibling, boolean above, boolean fixRelations, boolean fixChildren) {
@@ -6180,7 +6214,7 @@ void setZOrder (Control sibling, boolean above, boolean fixRelations, boolean fi
 				if (redrawSurface != 0 && siblingSurface == 0) stack_mode = false;
 				restackSurface (surface, siblingS, stack_mode);
 				if (enableSurface != 0) {
-					 restackSurface (enableSurface, surface, true);
+					restackSurface (enableSurface, surface, true);
 				}
 			}
 		}
@@ -6211,7 +6245,7 @@ void setZOrder (Control sibling, boolean above, boolean fixRelations, boolean fi
 				if (redrawWindow != 0 && siblingWindow == 0) stack_mode = false;
 				restackWindow (window, siblingW, stack_mode);
 				if (enableWindow != 0) {
-					 restackWindow (enableWindow, window, true);
+					restackWindow (enableWindow, window, true);
 				}
 			}
 		}
@@ -6280,8 +6314,6 @@ boolean showMenu (int x, int y, int detail) {
 	if (isDisposed ()) return false;
 	if (event.doit) {
 		if (menu != null && !menu.isDisposed ()) {
-			boolean hooksKeys = hooks (SWT.KeyDown) || hooks (SWT.KeyUp);
-			menu.createIMMenu (hooksKeys ? imHandle() : 0);
 			Rectangle rect = DPIUtil.autoScaleUp (event.getBounds ());
 			if (rect.x != x || rect.y != y) {
 				menu.setLocationInPixels (rect.x, rect.y);
@@ -6313,13 +6345,13 @@ void sort (int [] items) {
 	for (int gap=length/2; gap>0; gap/=2) {
 		for (int i=gap; i<length; i++) {
 			for (int j=i-gap; j>=0; j-=gap) {
-		   		if (items [j] <= items [j + gap]) {
+				if (items [j] <= items [j + gap]) {
 					int swap = items [j];
 					items [j] = items [j + gap];
 					items [j + gap] = swap;
-		   		}
-	    	}
-	    }
+				}
+			}
+		}
 	}
 }
 

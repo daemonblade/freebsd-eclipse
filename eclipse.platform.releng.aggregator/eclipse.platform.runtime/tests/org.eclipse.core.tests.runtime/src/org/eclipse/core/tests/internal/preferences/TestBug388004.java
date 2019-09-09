@@ -39,16 +39,14 @@ public class TestBug388004 extends TestCase {
 		try {
 			// create plugin_customization.ini file
 			File file = new File(FILE_NAME);
-			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-			writer.write("org.eclipse.core.tests.runtime/dummy_node/key=value");
-			writer.close();
+			try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+				writer.write("org.eclipse.core.tests.runtime/dummy_node/key=value");
+			}
 
 			// add pluginCustomization argument
 			Setup setup = suite.getSetup();
 			setup.setEclipseArgument("pluginCustomization", file.toString());
-		} catch (IOException e) {
-			// ignore, the test will fail for us
-		} catch (SetupException e) {
+		} catch (IOException | SetupException e) {
 			// ignore, the test will fail for us
 		}
 		suite.addTest(new TestBug388004("testBug"));

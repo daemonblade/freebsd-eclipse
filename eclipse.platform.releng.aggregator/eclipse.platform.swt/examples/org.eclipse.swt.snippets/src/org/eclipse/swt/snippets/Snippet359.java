@@ -17,26 +17,24 @@ package org.eclipse.swt.snippets;
  * For a list of all SWT example snippets see
  * http://www.eclipse.org/swt/snippets/
  */
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.KeyListener;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.widgets.Combo;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.*;
+import org.eclipse.swt.events.*;
+import org.eclipse.swt.layout.*;
+import org.eclipse.swt.widgets.*;
 
 public class Snippet359 {
 	public static void main(String[] args) {
 		Display display = new Display();
 		Shell shell = new Shell(display);
+		shell.setText("Snippet 359");
 		shell.setLayout(new FillLayout());
 		final Combo combo = new Combo(shell, SWT.DROP_DOWN);
 		combo.addKeyListener(new KeyListener() {
 			@Override
 			public void keyReleased(KeyEvent e) {
-			   if (e.keyCode == SWT.CR) {
-				   combo.add(combo.getText());
-			   }
+				if (e.keyCode == SWT.CR) {
+					combo.add(combo.getText());
+				}
 			}
 			@Override
 			public void keyPressed(KeyEvent e) {
@@ -44,11 +42,11 @@ public class Snippet359 {
 				System.out.println("caret location: " + combo.getCaretLocation());
 			}
 		});
-	  shell.pack();
-	  shell.open ();
-	  while (!shell.isDisposed()) {
-	   if (!display.readAndDispatch ()) display.sleep ();
-	  }
-	  display.dispose ();
+		shell.pack();
+		shell.open ();
+		while (!shell.isDisposed()) {
+			if (!display.readAndDispatch ()) display.sleep ();
+		}
+		display.dispose ();
 	}
 }

@@ -13,13 +13,25 @@
  *******************************************************************************/
 package org.eclipse.osgi.internal.debug;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import org.eclipse.osgi.internal.framework.EquinoxConfiguration;
 import org.eclipse.osgi.internal.location.LocationHelper;
-import org.eclipse.osgi.service.debug.*;
-import org.osgi.framework.*;
+import org.eclipse.osgi.service.debug.DebugOptions;
+import org.eclipse.osgi.service.debug.DebugOptionsListener;
+import org.eclipse.osgi.service.debug.DebugTrace;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
@@ -256,7 +268,7 @@ public class FrameworkDebugOptions implements DebugOptions, ServiceTrackerCustom
 	}
 
 	private String getSymbolicName(String option) {
-		int firstSlashIndex = option.indexOf("/"); //$NON-NLS-1$
+		int firstSlashIndex = option.indexOf('/');
 		if (firstSlashIndex > 0)
 			return option.substring(0, firstSlashIndex);
 		return null;
@@ -268,8 +280,7 @@ public class FrameworkDebugOptions implements DebugOptions, ServiceTrackerCustom
 		if (ops == null)
 			throw new IllegalArgumentException("The options must not be null."); //$NON-NLS-1$
 		Properties newOptions = new Properties();
-		for (Iterator<Map.Entry<String, String>> entries = ops.entrySet().iterator(); entries.hasNext();) {
-			Map.Entry<String, String> entry = entries.next();
+		for (Map.Entry<String, String> entry : ops.entrySet()) {
 			if (!(entry.getKey() instanceof String) || !(entry.getValue() instanceof String))
 				throw new IllegalArgumentException("Option keys and values must be of type String: " + entry.getKey() + "=" + entry.getValue()); //$NON-NLS-1$ //$NON-NLS-2$
 			newOptions.put(entry.getKey(), entry.getValue().trim());
@@ -293,8 +304,7 @@ public class FrameworkDebugOptions implements DebugOptions, ServiceTrackerCustom
 				}
 			}
 			// now check for changes to existing values
-			for (Iterator<Map.Entry<Object, Object>> newEntries = newOptions.entrySet().iterator(); newEntries.hasNext();) {
-				Map.Entry<Object, Object> entry = newEntries.next();
+			for (Map.Entry<Object, Object> entry : newOptions.entrySet()) {
 				String existingValue = (String) options.get(entry.getKey());
 				if (!entry.getValue().equals(existingValue)) {
 					String symbolicName = getSymbolicName((String) entry.getKey());
@@ -478,16 +488,16 @@ public class FrameworkDebugOptions implements DebugOptions, ServiceTrackerCustom
 		}
 		if (listenerRefs == null)
 			return;
-		for (int i = 0; i < listenerRefs.length; i++) {
-			DebugOptionsListener service = (DebugOptionsListener) bc.getService(listenerRefs[i]);
+		for (ServiceReference<?> listenerRef : listenerRefs) {
+			DebugOptionsListener service = (DebugOptionsListener) bc.getService(listenerRef);
 			if (service == null)
 				continue;
 			try {
 				service.optionsChanged(this);
-			} catch (Throwable t) {
+			}catch (Throwable t) {
 				// TODO consider logging
 			} finally {
-				bc.ungetService(listenerRefs[i]);
+				bc.ungetService(listenerRef);
 			}
 		}
 	}

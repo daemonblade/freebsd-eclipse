@@ -145,8 +145,7 @@ public class ScreenshotTest {
 		Shell[] shells= display.getShells();
 		if (shells.length > 0) {
 			out.println("Shells: ");
-			for (int i= 0; i < shells.length; i++) {
-				Shell shell= shells[i];
+			for (Shell shell : shells) {
 				out.print(display.getActiveShell() == shell ? "  active, " : "  inactive, ");
 				out.print((shell.isVisible() ? "visible: " : "invisible: ") + shell);
 				out.println(" @ " + shell.getBounds().toString());
@@ -186,7 +185,7 @@ public class ScreenshotTest {
 	}
 
 	public static boolean isRunByGerritHudsonJob() {
-		return System.getProperty("user.dir").indexOf("eclipse.platform.text-Gerrit") != -1;
+		return System.getProperty("user.dir").contains("eclipse.platform.text-Gerrit");
 	}
 
 	private static void runEventQueue() {

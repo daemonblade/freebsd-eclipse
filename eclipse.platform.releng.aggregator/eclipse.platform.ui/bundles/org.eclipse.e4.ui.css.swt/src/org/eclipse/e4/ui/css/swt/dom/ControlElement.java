@@ -29,7 +29,6 @@ import org.eclipse.swt.events.MouseTrackAdapter;
 import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
@@ -137,8 +136,7 @@ public class ControlElement extends WidgetElement {
 		Control control = getControl();
 		Composite parent = control.getParent();
 		if (parent != null) {
-			Element element = getElement(parent);
-			return element;
+			return getElement(parent);
 		}
 		return null;
 	}

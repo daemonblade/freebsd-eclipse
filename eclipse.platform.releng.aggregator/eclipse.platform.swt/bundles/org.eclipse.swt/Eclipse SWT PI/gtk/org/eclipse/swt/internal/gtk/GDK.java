@@ -553,6 +553,18 @@ public class GDK extends OS {
 	/**
 	 * @param window cast=(GdkWindow *)
 	 */
+	public static final native boolean _gdk_window_ensure_native(long window);
+	public static final boolean gdk_window_ensure_native(long window) {
+		lock.lock();
+		try {
+			return _gdk_window_ensure_native(window);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/**
+	 * @param window cast=(GdkWindow *)
+	 */
 	public static final native int _gdk_window_get_state(long window);
 	/** [GTK3 only, if-def'd in os.h] */
 	public static final int gdk_window_get_state(long window) {
@@ -649,13 +661,13 @@ public class GDK extends OS {
 	 */
 	public static final native void _gdk_cairo_set_source_pixbuf(long cairo, long pixbuf, double pixbuf_x, double pixbuf_y);
 	public static final void gdk_cairo_set_source_pixbuf(long cairo, long pixbuf, double pixbuf_x, double pixbuf_y) {
-	        lock.lock();
-	        try {
-	                _gdk_cairo_set_source_pixbuf(cairo,pixbuf,pixbuf_x,pixbuf_y);
-	        }
-	        finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+					_gdk_cairo_set_source_pixbuf(cairo,pixbuf,pixbuf_x,pixbuf_y);
+			}
+			finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @param cairo cast=(cairo_t *)
@@ -666,13 +678,13 @@ public class GDK extends OS {
 	public static final native void _gdk_cairo_set_source_window(long cairo, long window, int x, int y);
 	/** [GTK3 only, if-def'd in os.h] */
 	public static final void gdk_cairo_set_source_window(long cairo, long window, int x, int y) {
-	        lock.lock();
-	        try {
-	                _gdk_cairo_set_source_window(cairo, window, x, y);
-	        }
-	        finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+					_gdk_cairo_set_source_window(cairo, window, x, y);
+			}
+			finally {
+					lock.unlock();
+			}
 	}
 	/** @param display cast=(GdkDisplay *)
 	 *  @param cursor_type cast=(GdkCursorType)
@@ -1411,9 +1423,9 @@ public class GDK extends OS {
 		lock.lock();
 		try {
 			return _gdk_keymap_get_entries_for_keyval(keymap, keyval, keys, n_keys);
-	 	} finally {
-	 		lock.unlock();
-	 	}
+		} finally {
+			lock.unlock();
+		}
 	}
 	public static final native long _gdk_keyval_to_lower(long keyval);
 	public static final long gdk_keyval_to_lower(long keyval) {
@@ -1459,6 +1471,72 @@ public class GDK extends OS {
 			lock.unlock();
 		}
 	}
+	/** @param animation cast=(GdkPixbufAnimation *) */
+	public static final native boolean _gdk_pixbuf_animation_is_static_image(long animation);
+	public static final boolean gdk_pixbuf_animation_is_static_image(long animation) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_animation_is_static_image(animation);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/** @param iter cast=(GdkPixbufAnimationIter *) */
+	public static final native int _gdk_pixbuf_animation_iter_get_delay_time(long iter);
+	public static final int gdk_pixbuf_animation_iter_get_delay_time(long iter) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_animation_iter_get_delay_time(iter);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/** @param iter cast=(GdkPixbufAnimationIter *) */
+	public static final native long _gdk_pixbuf_animation_iter_get_pixbuf(long iter);
+	public static final long gdk_pixbuf_animation_iter_get_pixbuf(long iter) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_animation_iter_get_pixbuf(iter);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/**
+	 * @param iter cast=(GdkPixbufAnimationIter *)
+	 * @param current_time cast=(const GTimeVal *)
+	 */
+	public static final native boolean _gdk_pixbuf_animation_iter_advance(long iter, long current_time);
+	public static final boolean gdk_pixbuf_animation_iter_advance(long iter, long current_time) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_animation_iter_advance(iter, current_time);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/**
+	 * @param animation cast=(GdkPixbufAnimation *)
+	 * @param start_time cast=(const GTimeVal *)
+	 */
+	public static final native long _gdk_pixbuf_animation_get_iter(long animation, long start_time);
+	public static final long gdk_pixbuf_animation_get_iter(long animation, long start_time) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_animation_get_iter(animation, start_time);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/** @param animation cast=(GdkPixbufAnimation *) */
+	public static final native long _gdk_pixbuf_animation_get_static_image(long animation);
+	public static final long gdk_pixbuf_animation_get_static_image(long animation) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_animation_get_static_image(animation);
+		} finally {
+			lock.unlock();
+		}
+	}
 	/**
 	 * @param src_pixbuf cast=(GdkPixbuf *)
 	 * @param dest_pixbuf cast=(GdkPixbuf *)
@@ -1478,6 +1556,19 @@ public class GDK extends OS {
 		lock.lock();
 		try {
 			return _gdk_pixbuf_get_has_alpha(pixbuf);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/**
+	 * @param window cast=(GdkWindow *)
+	 */
+	public static final native long _gdk_pixbuf_get_from_window(long window, int x, int y, int width, int height);
+	/** [GTK3 only, if-def'd in os.h] */
+	public static final long gdk_pixbuf_get_from_window(long window, int x, int y, int width, int height) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_get_from_window(window, x, y, width, height);
 		} finally {
 			lock.unlock();
 		}
@@ -1518,6 +1609,92 @@ public class GDK extends OS {
 		lock.lock();
 		try {
 			return _gdk_pixbuf_get_width(pixbuf);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/** @param pixbuf cast=(const GdkPixbuf *) */
+	public static final native long _gdk_pixbuf_get_byte_length(long pixbuf);
+	public static final long gdk_pixbuf_get_byte_length(long pixbuf) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_get_byte_length(pixbuf);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/** @param pixbuf cast=(const GdkPixbuf *) */
+	public static final native int _gdk_pixbuf_get_n_channels(long pixbuf);
+	public static final int gdk_pixbuf_get_n_channels(long pixbuf) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_get_n_channels(pixbuf);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/** @param pixbuf cast=(const GdkPixbuf *) */
+	public static final native int _gdk_pixbuf_get_bits_per_sample(long pixbuf);
+	public static final int gdk_pixbuf_get_bits_per_sample(long pixbuf) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_get_bits_per_sample(pixbuf);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/** @param pixbuf cast=(const GdkPixbuf *) */
+	public static final native long _gdk_pixbuf_copy(long pixbuf);
+	public static final long gdk_pixbuf_copy(long pixbuf) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_copy(pixbuf);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/** @param loader cast=(GdkPixbufLoader *) */
+	public static final native long _gdk_pixbuf_loader_get_format(long loader);
+	public static final long gdk_pixbuf_loader_get_format(long loader) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_loader_get_format(loader);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/** @param format cast=(GdkPixbufFormat *) */
+	public static final native long _gdk_pixbuf_format_get_name(long format);
+	public static final long gdk_pixbuf_format_get_name(long format) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_format_get_name(format);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/** @param loader cast=(GdkPixbufLoader *) */
+	public static final native long _gdk_pixbuf_loader_get_animation(long loader);
+	public static final long gdk_pixbuf_loader_get_animation(long loader) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_loader_get_animation(loader);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/**
+	 * @param data cast=(const guchar *)
+	 * @param colorspace cast=(GdkColorspace)
+	 * @param has_alpha cast=(gboolean)
+	 * @param destroy_fn cast=(GdkPixbufDestroyNotify)
+	 * @param destroy_fn_data cast=(gpointer)
+	 */
+	public static final native long _gdk_pixbuf_new_from_data(long data, int colorspace, boolean has_alpha, int bits_per_sample, int width, int height, int rowstride, long destroy_fn, long destroy_fn_data);
+	public static final long gdk_pixbuf_new_from_data(long data, int colorspace, boolean has_alpha, int bits_per_sample, int width, int height, int rowstride, long destroy_fn, long destroy_fn_data) {
+		lock.lock();
+		try {
+			return _gdk_pixbuf_new_from_data(data, colorspace, has_alpha, bits_per_sample, width, height, rowstride, destroy_fn, destroy_fn_data);
 		} finally {
 			lock.unlock();
 		}

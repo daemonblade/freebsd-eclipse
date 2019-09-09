@@ -146,7 +146,7 @@ public class BundleLauncherHelper {
 				}
 			}
 
-			HashMap<IPluginModelBase, String> additionalPlugins = getAdditionalPlugins(configuration, true);
+			Map<IPluginModelBase, AdditionalPluginData> additionalPlugins = getAdditionalPlugins(configuration, true);
 			launchPlugins.addAll(additionalPlugins.keySet());
 
 			// Get any plug-ins required by the application/product set on the config
@@ -198,7 +198,9 @@ public class BundleLauncherHelper {
 
 			// Create the start levels for the selected plugins and add them to the map
 			for (IPluginModelBase model : pluginSet) {
-				addBundleToMap(map, model, "default:default"); //$NON-NLS-1$
+				AdditionalPluginData additionalPluginData = additionalPlugins.get(model);
+				String startLevels = (additionalPluginData != null) ? additionalPluginData.startLevels() : "default:default"; //$NON-NLS-1$
+				addBundleToMap(map, model, startLevels);
 			}
 			return map;
 		}
@@ -573,19 +575,6 @@ public class BundleLauncherHelper {
 			wc.doSave();
 	}
 
-	public static String writeAdditionalPluginsEntry(IPluginModelBase model, String pluginResolution, boolean checked) {
-		IPluginBase base = model.getPluginBase();
-		String id = base.getId();
-		StringBuilder buffer = new StringBuilder(id);
-		buffer.append(':');
-		buffer.append(base.getVersion());
-		buffer.append(':');
-		buffer.append(pluginResolution);
-		buffer.append(':');
-		buffer.append(checked);
-		return buffer.toString();
-	}
-
 	/**
 	 * Returns a map of IPluginModelBase to their associated String resolution setting. Reads the
 	 * additional plug-ins attribute of the given launch config and returns a map of plug-in models
@@ -600,8 +589,8 @@ public class BundleLauncherHelper {
 	 * @return map of IPluginModelBase to String resolution setting
 	 * @throws CoreException if there is a problem reading the launch config
 	 */
-	public static HashMap<IPluginModelBase, String> getAdditionalPlugins(ILaunchConfiguration config, boolean onlyEnabled) throws CoreException {
-		HashMap<IPluginModelBase, String> resolvedAdditionalPlugins = new HashMap<>();
+	public static Map<IPluginModelBase, AdditionalPluginData> getAdditionalPlugins(ILaunchConfiguration config, boolean onlyEnabled) throws CoreException {
+		HashMap<IPluginModelBase, AdditionalPluginData> resolvedAdditionalPlugins = new HashMap<>();
 		Set<String> userAddedPlugins = config.getAttribute(IPDELauncherConstants.ADDITIONAL_PLUGINS, (Set<String>) null);
 		String defaultPluginResolution = config.getAttribute(IPDELauncherConstants.FEATURE_PLUGIN_RESOLUTION, IPDELauncherConstants.LOCATION_WORKSPACE);
 		if (userAddedPlugins != null) {
@@ -613,18 +602,40 @@ public class BundleLauncherHelper {
 					String version = pluginData[1];
 					String pluginResolution = pluginData[2];
 					ModelEntry pluginModelEntry = PluginRegistry.findEntry(id);
+					
 					if (pluginModelEntry != null) {
 						if (IPDELauncherConstants.LOCATION_DEFAULT.equalsIgnoreCase(pluginResolution)) {
 							pluginResolution = defaultPluginResolution;
 						}
 						IPluginModelBase model = findModel(pluginModelEntry, version, pluginResolution);
 						if (model != null) {
-							resolvedAdditionalPlugins.put(model, pluginData[2]);
+							String startLevel = (pluginData.length >= 6) ? pluginData[4] : null;
+							String autoStart = (pluginData.length >= 6) ? pluginData[5] : null;
+							AdditionalPluginData additionalPluginData = new AdditionalPluginData(pluginData[2], checked, startLevel, autoStart);
+							resolvedAdditionalPlugins.put(model, additionalPluginData);
 						}
 					}
 				}
 			}
 		}
 		return resolvedAdditionalPlugins;
+	}
+
+	public static class AdditionalPluginData {
+		public final String fResolution;
+		public final boolean fEnabled;
+		public final String fStartLevel;
+		public final String fAutoStart;
+
+		public AdditionalPluginData(String resolution, boolean enabled, String startLevel, String autoStart) {
+			fResolution = resolution;
+			fEnabled = enabled;
+			fStartLevel = (startLevel == null || startLevel.isEmpty()) ? "default" : startLevel; //$NON-NLS-1$
+			fAutoStart = (autoStart == null || autoStart.isEmpty()) ? "default" : autoStart; //$NON-NLS-1$
+		}
+
+		String startLevels() {
+			return fStartLevel + ':' + fAutoStart;
+		}
 	}
 }

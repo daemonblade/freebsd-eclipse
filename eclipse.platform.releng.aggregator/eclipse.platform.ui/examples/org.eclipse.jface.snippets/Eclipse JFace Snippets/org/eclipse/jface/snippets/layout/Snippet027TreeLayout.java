@@ -41,7 +41,7 @@ import org.eclipse.swt.widgets.TreeColumn;
 /**
  * A simple TreeViewer to demonstrate usage
  *
- * @author Tom Schindl <tom.schindl@bestsolution.at>
+ * @author Tom Schindl &lt;tom.schindl@bestsolution.at&gt;
  *
  */
 public class Snippet027TreeLayout {
@@ -99,7 +99,7 @@ public class Snippet027TreeLayout {
 		public String toString() {
 			String rv = "Item ";
 			if (parent != null) {
-				rv = parent.toString() + ".";
+				rv = parent + ".";
 			}
 
 			rv += counter;
@@ -119,7 +119,7 @@ public class Snippet027TreeLayout {
 
 		@Override
 		public String getColumnText(Object element, int columnIndex) {
-			return "Column " + columnIndex + " => " + element.toString();
+			return "Column " + columnIndex + " => " + element;
 		}
 
 		@Override

@@ -46,6 +46,7 @@ public class LaunchConfigurationsMessages extends NLS {
 	public static String CommonTab_19;
 	public static String CommonTab_2;
 	public static String CommonTab_20;
+	public static String CommonTab_21;
 	public static String CommonTab_3;
 	public static String CommonTab_4;
 	public static String CommonTab_5;
@@ -68,6 +69,7 @@ public class LaunchConfigurationsMessages extends NLS {
 	public static String CompileErrorPromptStatusHandler_0;
 	public static String CompileErrorPromptStatusHandler_1;
 	public static String CompileErrorPromptStatusHandler_2;
+
 	public static String EnvironmentTab_22;
 
 	public static String EnvironmentTab_7;
@@ -173,12 +175,14 @@ public class LaunchConfigurationsMessages extends NLS {
 	public static String EnvironmentTab_Variable_1;
 	public static String EnvironmentTab_Value_2;
 	public static String EnvironmentTab_Environment_variables_to_set__3;
-	public static String EnvironmentTab_New_4;
 	public static String EnvironmentTab_Edit_5;
 	public static String EnvironmentTab_Remove_6;
+
+	public static String EnvironmentTab_Remove_All;
 	public static String EnvironmentTab_Environment_7;
 	public static String EnvironmentTab_8;
 	public static String EnvironmentTab_9;
+
 	public static String EnvironmentTab_11;
 	public static String EnvironmentTab_12;
 	public static String EnvironmentTab_13;
@@ -187,6 +191,11 @@ public class LaunchConfigurationsMessages extends NLS {
 	public static String EnvironmentTab_18;
 	public static String EnvironmentTab_19;
 	public static String EnvironmentTab_20;
+
+	public static String EnvironmentTab_Add_4;
+
+
+
 	public static String EnvironmentTab_AttributeLabel_AppendEnvironmentVariables;
 	public static String EnvironmentTab_AttributeLabel_EnvironmentVariables;
 	public static String EnvironmentTab_Copy;

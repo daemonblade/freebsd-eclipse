@@ -185,9 +185,7 @@ public class CachedCheckboxTreeViewer extends ContainerCheckedTreeViewer {
 			}
 
 			if (contentProvider == null) {
-				for (Object visibleObject : visible) {
-					checkState.add(visibleObject);
-				}
+				Collections.addAll(checkState, visible);
 			} else {
 				Set<Object> toCheck = new HashSet<>();
 				for (Object visibleObject : visible) {
@@ -227,7 +225,7 @@ public class CachedCheckboxTreeViewer extends ContainerCheckedTreeViewer {
 	}
 
 	@Override
-	public void remove(Object[] elementsOrTreePaths) {
+	public void remove(Object... elementsOrTreePaths) {
 		for (Object elementOrTreePath : elementsOrTreePaths) {
 			updateCheckState(elementOrTreePath, false);
 		}

@@ -167,6 +167,7 @@ import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.flow.FlowInfo;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
+import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.impl.ReferenceContext;
 import org.eclipse.jdt.internal.compiler.impl.StringConstant;
 import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
@@ -434,6 +435,7 @@ public static int getIrritant(int problemID) {
 		case IProblem.NonNullSpecdFieldComparisonYieldsFalse:
 		case IProblem.RedundantNullCheckAgainstNonNullType:
 		case IProblem.RedundantNullCheckOnField:
+		case IProblem.RedundantNullCheckOnConstNonNullField:
 		case IProblem.FieldComparisonYieldsFalse:
 			return CompilerOptions.RedundantNullCheck;
 
@@ -1599,7 +1601,7 @@ public int computeSeverity(int problemID){
 		case IProblem.VarargsConflict :
 			return ProblemSeverities.Warning;
  		case IProblem.TypeCollidesWithPackage :
-			return ProblemSeverities.Warning;
+			return ProblemSeverities.Error;
 
 		/*
 		 * Javadoc tags resolved references errors
@@ -6055,6 +6057,11 @@ public boolean expressionNonNullComparison(Expression expr, boolean checkForNull
 			char[][] nonNullName = this.options.nonNullAnnotationName;
 			arguments = new String[] { new String(field.name), 
 									   new String(nonNullName[nonNullName.length-1]) };
+		} else if (field.constant() != Constant.NotAConstant) {
+			problemId = IProblem.RedundantNullCheckOnConstNonNullField;
+			char[][] nonNullName = this.options.nonNullAnnotationName;
+			arguments = new String[] { new String(field.name), 
+									   new String(nonNullName[nonNullName.length-1]) };
 		} else {
 			// signaling redundancy based on syntactic analysis:
 			problemId = checkForNull
@@ -7757,7 +7764,8 @@ private int retrieveClosingAngleBracketPosition(int start) {
 	char[] contents = compilationUnit.getContents();
 	if (contents.length == 0) return start;
 	if (this.positionScanner == null) {
-		this.positionScanner = new Scanner(false, false, false, this.options.sourceLevel, this.options.complianceLevel, null, null, false);
+		this.positionScanner = new Scanner(false, false, false, this.options.sourceLevel, this.options.complianceLevel, null, null, false,
+				this.options.enablePreviewFeatures);
 		this.positionScanner.returnOnlyGreater = true;
 	}
 	this.positionScanner.setSource(contents);
@@ -7796,7 +7804,8 @@ private int retrieveEndingPositionAfterOpeningParenthesis(int sourceStart, int s
 	char[] contents = compilationUnit.getContents();
 	if (contents.length == 0) return sourceEnd;
 	if (this.positionScanner == null) {
-		this.positionScanner = new Scanner(false, false, false, this.options.sourceLevel, this.options.complianceLevel, null, null, false);
+		this.positionScanner = new Scanner(false, false, false, this.options.sourceLevel, this.options.complianceLevel, null, null, false,
+				this.options.enablePreviewFeatures);
 	}
 	this.positionScanner.setSource(contents);
 	this.positionScanner.resetTo(sourceStart, sourceEnd);
@@ -7825,7 +7834,8 @@ private int retrieveStartingPositionAfterOpeningParenthesis(int sourceStart, int
 	char[] contents = compilationUnit.getContents();
 	if (contents.length == 0) return sourceStart;
 	if (this.positionScanner == null) {
-		this.positionScanner = new Scanner(false, false, false, this.options.sourceLevel, this.options.complianceLevel, null, null, false);
+		this.positionScanner = new Scanner(false, false, false, this.options.sourceLevel, this.options.complianceLevel, null, null, false,
+				this.options.enablePreviewFeatures);
 	}
 	this.positionScanner.setSource(contents);
 	this.positionScanner.resetTo(sourceStart, sourceEnd);
@@ -10951,12 +10961,12 @@ public void invalidOpensStatement(OpensStatement statement, ModuleDeclaration mo
 		statement.declarationSourceStart, statement.declarationSourceEnd);
 }
 public void invalidPackageReference(int problem, PackageVisibilityStatement ref) {
-	invalidPackageReference(problem, ref, ProblemSeverities.Error);
-}
-public void invalidPackageReference(int problem, PackageVisibilityStatement ref, int severity) {
-	this.handle(problem, NoArgument, 0, new String[] { CharOperation.charToString(ref.pkgName) }, severity,
-		ref.pkgRef.sourceStart, ref.pkgRef.sourceEnd, this.referenceContext,
-		this.referenceContext == null ? null : this.referenceContext.compilationResult());
+	this.handle(problem,
+			NoArgument,
+			new String[] { CharOperation.charToString(ref.pkgName) },
+			ref.computeSeverity(problem),
+			ref.pkgRef.sourceStart,
+			ref.pkgRef.sourceEnd);
 }
 public void duplicateModuleReference(int problem, ModuleReference ref) {
 	this.handle(problem, 
@@ -11052,6 +11062,8 @@ public void autoModuleWithUnstableName(ModuleReference moduleReference) {
 			moduleReference.sourceEnd);
 }
 public void switchExpressionIncompatibleResultExpressions(SwitchExpression expression) {
+	if (!this.options.enablePreviewFeatures)
+		return;
 	TypeBinding type = expression.resultExpressions.get(0).resolvedType;
 	this.handle(
 		IProblem.SwitchExpressionsIncompatibleResultExpressionTypes,
@@ -11061,6 +11073,8 @@ public void switchExpressionIncompatibleResultExpressions(SwitchExpression expre
 		expression.sourceEnd);
 }
 public void switchExpressionEmptySwitchBlock(SwitchExpression expression) {
+	if (!this.options.enablePreviewFeatures)
+		return;
 	this.handle(
 		IProblem.SwitchExpressionsEmptySwitchBlock,
 		NoArgument,
@@ -11069,6 +11083,8 @@ public void switchExpressionEmptySwitchBlock(SwitchExpression expression) {
 		expression.sourceEnd);
 }
 public void switchExpressionNoResultExpressions(SwitchExpression expression) {
+	if (!this.options.enablePreviewFeatures)
+		return;
 	this.handle(
 		IProblem.SwitchExpressionsNoResultExpression,
 		NoArgument,
@@ -11077,6 +11093,8 @@ public void switchExpressionNoResultExpressions(SwitchExpression expression) {
 		expression.sourceEnd);
 }
 public void switchExpressionSwitchLabeledBlockCompletesNormally(Block block) {
+	if (!this.options.enablePreviewFeatures)
+		return;
 	this.handle(
 		IProblem.SwitchExpressionSwitchLabeledBlockCompletesNormally,
 		NoArgument,
@@ -11085,6 +11103,8 @@ public void switchExpressionSwitchLabeledBlockCompletesNormally(Block block) {
 		block.sourceEnd);
 }
 public void switchExpressionLastStatementCompletesNormally(Statement stmt) {
+	if (!this.options.enablePreviewFeatures)
+		return;
 	this.handle(
 		IProblem.SwitchExpressionSwitchLabeledBlockCompletesNormally,
 		NoArgument,
@@ -11093,6 +11113,8 @@ public void switchExpressionLastStatementCompletesNormally(Statement stmt) {
 		stmt.sourceEnd);
 }
 public void switchExpressionIllegalLastStatement(Statement stmt) {
+	if (!this.options.enablePreviewFeatures)
+		return;
 	this.handle(
 		IProblem.SwitchExpressionIllegalLastStatement,
 		NoArgument,
@@ -11101,6 +11123,8 @@ public void switchExpressionIllegalLastStatement(Statement stmt) {
 		stmt.sourceEnd);
 }
 public void switchExpressionTrailingSwitchLabels(Statement stmt) {
+	if (!this.options.enablePreviewFeatures)
+		return;
 	this.handle(
 		IProblem.SwitchExpressionTrailingSwitchLabels,
 		NoArgument,
@@ -11109,6 +11133,8 @@ public void switchExpressionTrailingSwitchLabels(Statement stmt) {
 		stmt.sourceEnd);
 }
 public void switchExpressionMixedCase(ASTNode statement) {
+	if (!this.options.enablePreviewFeatures)
+		return;
 	this.handle(
 		IProblem.switchMixedCase,
 		NoArgument,
@@ -11117,6 +11143,8 @@ public void switchExpressionMixedCase(ASTNode statement) {
 		statement.sourceEnd);
 }
 public void switchExpressionBreakMissingValue(ASTNode statement) {
+	if (!this.options.enablePreviewFeatures)
+		return;
 	this.handle(
 		IProblem.SwitchExpressionBreakMissingValue,
 		NoArgument,

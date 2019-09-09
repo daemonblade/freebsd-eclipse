@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2017 BestSolution.at and others.
+ * Copyright (c) 2010, 2019 BestSolution.at and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -130,11 +130,22 @@ public class StringModelFragment extends AbstractComponentEditor<MStringModelFra
 	@Override
 	public String getLabel(Object element) {
 
-		if (selectedContainer == null) {
-			return Messages.StringModelFragment_Label;
+		MStringModelFragment modelFragment;
+		if (element instanceof MStringModelFragment) {
+			modelFragment = (MStringModelFragment) element;
 		} else {
-			return Messages.StringModelFragment_LabelFor + selectedContainer.getName();
+			modelFragment = getStringModelFragment();
 		}
+
+		EClass container = findContainerType(modelFragment);
+		String result;
+		if (container == null) {
+			result = Messages.StringModelFragment_Label;
+		} else {
+			result = Messages.StringModelFragment_LabelFor + container.getName();
+		}
+
+		return result;
 	}
 
 	@Override
@@ -204,7 +215,6 @@ public class StringModelFragment extends AbstractComponentEditor<MStringModelFra
 	 * Element ID. It can be known thanks to the dialog or must be computed from the
 	 * ID value
 	 *
-	 * @return
 	 */
 	public static EClass findContainerType(MStringModelFragment modelFragment) {
 		// we get the StringModelFragment. If not initialized, no search...

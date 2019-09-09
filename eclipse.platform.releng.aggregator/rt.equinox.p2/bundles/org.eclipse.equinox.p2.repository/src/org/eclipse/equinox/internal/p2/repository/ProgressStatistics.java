@@ -7,7 +7,7 @@
  *  https://www.eclipse.org/legal/epl-2.0/
  *
  *  SPDX-License-Identifier: EPL-2.0
- * 
+ *
  *  Contributors:
  * 	Cloudsmith Inc - initial API and implementation
  * 	IBM Corporation - ongoing development
@@ -50,7 +50,7 @@ public class ProgressStatistics {
 
 	private void publishEvent(DownloadProgressEvent event) {
 		if (m_agent != null) {
-			IProvisioningEventBus eventBus = (IProvisioningEventBus) m_agent.getService(IProvisioningEventBus.SERVICE_NAME);
+			IProvisioningEventBus eventBus = m_agent.getService(IProvisioningEventBus.class);
 			if (eventBus != null) {
 				eventBus.publishEvent(event);
 			}
@@ -86,7 +86,7 @@ public class ProgressStatistics {
 		m_current = 0;
 		m_lastReportTime = 0;
 		m_reportInterval = DEFAULT_REPORT_INTERVAL;
-		m_recentSpeedMap = new TreeMap<Long, Long>();
+		m_recentSpeedMap = new TreeMap<>();
 		m_recentSpeedMapKey = 0L;
 		m_uri = uri;
 		m_agent = agent;

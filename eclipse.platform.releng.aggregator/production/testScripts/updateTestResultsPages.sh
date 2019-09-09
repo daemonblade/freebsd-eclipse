@@ -235,7 +235,7 @@ then
 
   echo " = = Now run performance.ui app = ="
   devworkspace="${fromDir}/workspace-updatePerfResults"
-  eclipse_perf_dbloc_value=${eclipse_perf_dbloc_value:-//172.25.25.57:1527}
+  eclipse_perf_dbloc_value=${eclipse_perf_dbloc_value:-/shared/eclipse}
   vmargs="-Xmx1G -Declipse.perf.dbloc=${eclipse_perf_dbloc_value}"
   postingDirectory=$fromDir
   perfOutput=$postingDirectory/performance
@@ -314,7 +314,7 @@ then
   RAW_DATE_START=$( date -u +%s )
 
   # TODO: avoid this hard coding of baseline value
-  baselineCode="R-4.11-201903070500"
+  baselineCode="R-4.12-201906051800"
   # to get time stamp, first remove initial IMN:
   baselineForBuildSuffix=${buildId/[IMN]/}
   #Then remove final '-' in build id
@@ -337,7 +337,7 @@ then
   echo "   siteDir:      $siteDir" #>>${PERF_OUTFILE}
   echo "   fromDir:      $fromDir" #>>${PERF_OUTFILE}
   echo "   devworkspace: $devworkspace" #>>${PERF_OUTFILE}
-  echo "   vmArgs:       $vmArgs" #>>${PERF_OUTFILE}
+  echo "   vmargs:       $vmargs" #>>${PERF_OUTFILE}
   echo "   devJRE:       $devJRE" #>>${PERF_OUTFILE}
   echo "   BUILDFILESTR: $BUILDFILESTR" #>> ${PERF_OUTFILE}
   echo "   JOB_NAME:     $JOB_NAME" #>> ${PERF_OUTFILE}
@@ -345,6 +345,14 @@ then
   echo "   XVFB_RUN_ARGS $XVFB_RUN_ARGS" #>> ${PERF_OUTFILE}
   echo "   current_prefix ${current_prefix}" #>> ${PERF_OUTFILE}
   echo #>> ${PERF_OUTFILE}
+
+  ${ECLIPSE_EXE} --launcher.suppressErrors -nosplash -consolelog -debug -data $devworkspace -application org.eclipse.test.performance.ui.importPerformanceData $perfOutput/*-perf-samples.dat -vm ${devJRE} -vmargs ${vmargs}
+  RC=$?
+  if [[ $RC != 0 ]]
+  then
+    echo "ERROR: eclipse returned non-zero return code from invoking performance data import, exiting with RC: $RC."
+    exit $RC
+  fi
 
   ${XVFB_RUN} ${XVFB_RUN_ARGS} ${ECLIPSE_EXE} --launcher.suppressErrors  -nosplash -consolelog -debug -data $devworkspace -application org.eclipse.test.performance.ui.resultGenerator -baseline ${baselineForCurrent} -current ${buildId} -jvm 8.0 -config linux.gtk.x86_64 -config.properties "linux.gtk.x86_64,SUSE Linux Enterprise Server 12 (x86_64)" -output $perfOutput -dataDir ${dataDir} ${current_prefix} -print -vm ${devJRE}  -vmargs ${vmargs}  #>> ${PERF_OUTFILE}
   RC=$?

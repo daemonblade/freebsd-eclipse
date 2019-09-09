@@ -13,19 +13,17 @@
  *******************************************************************************/
 package org.eclipse.swt.internal.ole.win32;
 
-import org.eclipse.swt.internal.win32.*;
-
 public class IPersistStreamInit extends IPersist
 {
-public IPersistStreamInit(long /*int*/ address) {
+public IPersistStreamInit(long address) {
 	super(address);
 }
 
-public int Load(long /*int*/ pStm) {
-	return OS.VtblCall(5, address, pStm);
+public int Load(long pStm) {
+	return COM.VtblCall(5, address, pStm);
 }
 
 public int InitNew() {
-	return OS.VtblCall(8, address);
+	return COM.VtblCall(8, address);
 }
 }

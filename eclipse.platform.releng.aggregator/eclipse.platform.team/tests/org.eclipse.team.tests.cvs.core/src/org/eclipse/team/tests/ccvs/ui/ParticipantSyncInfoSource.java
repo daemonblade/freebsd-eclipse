@@ -56,11 +56,11 @@ public class ParticipantSyncInfoSource extends SyncInfoSource {
 		return converter;
 	}
 	
+	@Override
 	public void tearDown() {
 		ISynchronizeParticipantReference[] participants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
-		for (int i = 0; i < participants.length; i++) {
+		for (ISynchronizeParticipantReference ref : participants) {
 			try {
-				ISynchronizeParticipantReference ref = participants[i];
 				if(ref.getParticipant().getId().equals(CVSMergeSubscriber.ID)) {
 					TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] {ref.getParticipant()});
 				}
@@ -94,6 +94,7 @@ public class ParticipantSyncInfoSource extends SyncInfoSource {
 		// Default is to do nothing. Subclasses may override
 	}
 	
+	@Override
 	public void refresh(Subscriber subscriber, IResource[] resources)
 			throws TeamException {
 		super.refresh(subscriber, resources);

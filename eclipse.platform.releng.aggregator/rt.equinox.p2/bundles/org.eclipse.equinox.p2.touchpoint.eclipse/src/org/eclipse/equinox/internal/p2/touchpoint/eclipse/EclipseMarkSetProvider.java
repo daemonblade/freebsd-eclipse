@@ -38,8 +38,9 @@ public class EclipseMarkSetProvider extends MarkSetProvider {
 
 	private Collection<IArtifactKey> artifactKeyList = null;
 
+	@Override
 	public MarkSet[] getMarkSets(IProvisioningAgent agent, IProfile inProfile) {
-		artifactKeyList = new HashSet<IArtifactKey>();
+		artifactKeyList = new HashSet<>();
 		IArtifactRepository repositoryToGC = Util.getBundlePoolRepository(agent, inProfile);
 		if (repositoryToGC == null)
 			return new MarkSet[0];
@@ -49,27 +50,30 @@ public class EclipseMarkSetProvider extends MarkSetProvider {
 			addRunningBundles(repositoryToGC);
 			addRunningFeatures(inProfile, repositoryToGC);
 		}
-		return new MarkSet[] {new MarkSet(artifactKeyList.toArray(new IArtifactKey[artifactKeyList.size()]), repositoryToGC)};
+		return new MarkSet[] {
+				new MarkSet(artifactKeyList.toArray(new IArtifactKey[artifactKeyList.size()]), repositoryToGC) };
 	}
 
 	private void addRunningFeatures(IProfile profile, IArtifactRepository repositoryToGC) {
 		try {
-			List<Feature> allFeatures = getAllFeatures(Configuration.load(new File(Util.getConfigurationFolder(profile), "org.eclipse.update/platform.xml"), null)); //$NON-NLS-1$
+			List<Feature> allFeatures = getAllFeatures(Configuration
+					.load(new File(Util.getConfigurationFolder(profile), "org.eclipse.update/platform.xml"), null)); //$NON-NLS-1$
 			for (Feature f : allFeatures) {
-				IArtifactKey match = searchArtifact(f.getId(), Version.create(f.getVersion()), ARTIFACT_CLASSIFIER_FEATURE, repositoryToGC);
+				IArtifactKey match = searchArtifact(f.getId(), Version.create(f.getVersion()),
+						ARTIFACT_CLASSIFIER_FEATURE, repositoryToGC);
 				if (match != null)
 					artifactKeyList.add(match);
 			}
 		} catch (ProvisionException e) {
-			//Ignore the exception
+			// Ignore the exception
 		}
 	}
 
-	private List<Feature> getAllFeatures(Configuration cfg) {
+	private static List<Feature> getAllFeatures(Configuration cfg) {
 		if (cfg == null)
 			return Collections.emptyList();
 		List<Site> sites = cfg.getSites();
-		ArrayList<Feature> result = new ArrayList<Feature>();
+		ArrayList<Feature> result = new ArrayList<>();
 		for (Site object : sites) {
 			Feature[] features = object.getFeatures();
 			for (int i = 0; i < features.length; i++) {
@@ -79,8 +83,8 @@ public class EclipseMarkSetProvider extends MarkSetProvider {
 		return result;
 	}
 
-	private IProfile getCurrentProfile(IProvisioningAgent agent) {
-		IProfileRegistry pr = (IProfileRegistry) agent.getService(IProfileRegistry.SERVICE_NAME);
+	private static IProfile getCurrentProfile(IProvisioningAgent agent) {
+		IProfileRegistry pr = agent.getService(IProfileRegistry.class);
 		if (pr == null)
 			return null;
 		return pr.getProfile(IProfileRegistry.SELF);
@@ -96,6 +100,7 @@ public class EclipseMarkSetProvider extends MarkSetProvider {
 		}
 	}
 
+	@Override
 	public IArtifactRepository getRepository(IProvisioningAgent agent, IProfile aProfile) {
 		return Util.getBundlePoolRepository(agent, aProfile);
 	}
@@ -104,24 +109,30 @@ public class EclipseMarkSetProvider extends MarkSetProvider {
 		artifactKeyList.addAll(findCorrespondinArtifacts(new WhatIsRunning().getBundlesBeingRun(), repo));
 	}
 
-	private IArtifactKey searchArtifact(String searchedId, Version searchedVersion, String classifier, IArtifactRepository repo) {
-		//This is somewhat cheating since normally we should get the artifact key from the IUs that were representing the running system (e.g. we could get that info from the rollback repo)
-		VersionRange range = searchedVersion != null ? new VersionRange(searchedVersion, true, searchedVersion, true) : null;
+	private static IArtifactKey searchArtifact(String searchedId, Version searchedVersion, String classifier,
+			IArtifactRepository repo) {
+		// This is somewhat cheating since normally we should get the artifact key from
+		// the IUs that were representing the running system (e.g. we could get that
+		// info from the rollback repo)
+		VersionRange range = searchedVersion != null ? new VersionRange(searchedVersion, true, searchedVersion, true)
+				: null;
 		ArtifactKeyQuery query = new ArtifactKeyQuery(classifier, searchedId, range);
-		//TODO short-circuit the query when we find one?
+		// TODO short-circuit the query when we find one?
 		IQueryResult<IArtifactKey> keys = repo.query(query, null);
 		if (!keys.isEmpty())
 			return keys.iterator().next();
 		return null;
 	}
 
-	//Find for each bundle info a corresponding artifact in repo 
-	private List<IArtifactKey> findCorrespondinArtifacts(BundleInfo[] bis, IArtifactRepository repo) {
-		ArrayList<IArtifactKey> toRetain = new ArrayList<IArtifactKey>();
+	// Find for each bundle info a corresponding artifact in repo
+	private static List<IArtifactKey> findCorrespondinArtifacts(BundleInfo[] bis, IArtifactRepository repo) {
+		ArrayList<IArtifactKey> toRetain = new ArrayList<>();
 		for (int i = 0; i < bis.length; i++) {
 			// if version is "0.0.0", we will use null to find all versions, see bug 305710
-			Version version = BundleInfo.EMPTY_VERSION.equals(bis[i].getVersion()) ? null : Version.create(bis[i].getVersion());
-			IArtifactKey match = searchArtifact(bis[i].getSymbolicName(), version, ARTIFACT_CLASSIFIER_OSGI_BUNDLE, repo);
+			Version version = BundleInfo.EMPTY_VERSION.equals(bis[i].getVersion()) ? null
+					: Version.create(bis[i].getVersion());
+			IArtifactKey match = searchArtifact(bis[i].getSymbolicName(), version, ARTIFACT_CLASSIFIER_OSGI_BUNDLE,
+					repo);
 			if (match != null)
 				toRetain.add(match);
 		}

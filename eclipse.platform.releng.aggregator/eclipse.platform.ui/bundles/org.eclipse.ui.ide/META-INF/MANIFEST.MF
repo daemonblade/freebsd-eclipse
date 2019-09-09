@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %Plugin.name
 Bundle-SymbolicName: org.eclipse.ui.ide; singleton:=true
-Bundle-Version: 3.15.200.qualifier
+Bundle-Version: 3.16.0.qualifier
 Bundle-ClassPath: .
 Bundle-Activator: org.eclipse.ui.internal.ide.IDEWorkbenchPlugin
 Bundle-ActivationPolicy: lazy
@@ -53,7 +53,7 @@ Require-Bundle: org.eclipse.core.resources;bundle-version="[3.7.0,4.0.0)";resolu
  org.eclipse.help;bundle-version="[3.2.0,4.0.0)",
  org.eclipse.swt;bundle-version="[3.107.0,4.0.0)",
  org.eclipse.ui;bundle-version="[3.106.0,4.0.0)",
- org.eclipse.ui.workbench;bundle-version="[3.7.0,4.0.0)",
+ org.eclipse.ui.workbench;bundle-version="[3.115.100,4.0.0)",
  org.eclipse.ui.views;bundle-version="[3.2.0,4.0.0)";resolution:=optional,
  org.eclipse.jface.text;bundle-version="[3.2.0,4.0.0)",
  org.eclipse.ui.forms;bundle-version="[3.3.0,4.0.0)";resolution:=optional,
@@ -70,6 +70,7 @@ Require-Bundle: org.eclipse.core.resources;bundle-version="[3.7.0,4.0.0)";resolu
  org.eclipse.osgi.services;bundle-version="3.5.0",
  org.eclipse.ui.navigator;bundle-version="3.7.400"
 Import-Package: javax.annotation,
+ javax.inject,
  com.ibm.icu.text
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Automatic-Module-Name: org.eclipse.ui.ide

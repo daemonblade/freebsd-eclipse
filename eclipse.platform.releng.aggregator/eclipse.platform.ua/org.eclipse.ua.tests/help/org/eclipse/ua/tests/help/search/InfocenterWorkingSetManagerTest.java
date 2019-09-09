@@ -39,7 +39,7 @@ public class InfocenterWorkingSetManagerTest {
 	@Test
 	public void testIWSMWithToc() throws IOException {
 		InfocenterWorkingSetManager mgr = new InfocenterWorkingSetManager
-		    (new MockServletRequest(), new MockServletResponse(), "en");
+			(new MockServletRequest(), new MockServletResponse(), "en");
 		WorkingSet wset = new WorkingSet("test");
 		AdaptableToc toc = mgr.getAdaptableToc("/org.eclipse.ua.tests/data/help/toc/root.xml");
 		assertNotNull(toc);
@@ -50,7 +50,7 @@ public class InfocenterWorkingSetManagerTest {
 		AdaptableHelpResource[] resources = readWsets[0].getElements();
 		assertEquals(1, resources.length);
 		assertTrue(resources[0].equals(toc));
-	};
+	}
 
 	@Test
 	public void testSaveRestoreIWSMWithToc() throws IOException {
@@ -72,7 +72,7 @@ public class InfocenterWorkingSetManagerTest {
 		assertTrue(resources[0].equals(toc));
 		checkCookies(resp);
 		checkCookies(resp2);
-	};
+	}
 
 	@Test
 	public void testIWSMWithOneTopic() throws IOException {
@@ -90,9 +90,9 @@ public class InfocenterWorkingSetManagerTest {
 		assertEquals(1, resources.length);
 		Set<AdaptableTopic> topics = new HashSet<>();
 		topics.add(topic1);
-        assertTrue(topics.contains(resources[0]));
+		assertTrue(topics.contains(resources[0]));
 		checkCookies(resp);
-	};
+	}
 
 	@Test
 	public void testIWSMWithTwoTopics() throws IOException {
@@ -113,10 +113,10 @@ public class InfocenterWorkingSetManagerTest {
 		Set<AdaptableTopic> topics = new HashSet<>();
 		topics.add(topic1);
 		topics.add(topic3);
-        assertTrue(topics.contains(resources[0]));
-        assertTrue(topics.contains(resources[1]));
+		assertTrue(topics.contains(resources[0]));
+		assertTrue(topics.contains(resources[1]));
 		checkCookies(resp);
-	};
+	}
 
 	@Test
 	public void testIWSMWithThreeTopics() throws IOException {
@@ -141,11 +141,11 @@ public class InfocenterWorkingSetManagerTest {
 		topics.add(topic1);
 		topics.add(topic3);
 		topics.add(topic5);
-        assertTrue(topics.contains(resources[0]));
-        assertTrue(topics.contains(resources[1]));
-        assertTrue(topics.contains(resources[2]));
+		assertTrue(topics.contains(resources[0]));
+		assertTrue(topics.contains(resources[1]));
+		assertTrue(topics.contains(resources[2]));
 		checkCookies(resp);
-	};
+	}
 
 	@Test
 	public void testSaveRestoreIWSMWithOneTopic() throws IOException {
@@ -169,10 +169,10 @@ public class InfocenterWorkingSetManagerTest {
 		assertEquals(1, resources.length);
 		Set<AdaptableTopic> topics = new HashSet<>();
 		topics.add(topic1);
-        assertTrue(topics.contains(resources[0]));
+		assertTrue(topics.contains(resources[0]));
 		checkCookies(resp);
 		checkCookies(resp2);
-	};
+	}
 
 	@Test
 	public void testSaveRestoreIWSMWithTwoTopics() throws IOException {
@@ -198,11 +198,11 @@ public class InfocenterWorkingSetManagerTest {
 		Set<AdaptableTopic> topics = new HashSet<>();
 		topics.add(topic1);
 		topics.add(topic3);
-        assertTrue(topics.contains(resources[0]));
-        assertTrue(topics.contains(resources[1]));
+		assertTrue(topics.contains(resources[0]));
+		assertTrue(topics.contains(resources[1]));
 		checkCookies(resp);
 		checkCookies(resp2);
-	};
+	}
 
 	@Test
 	public void testSaveRestoreIWSMWithThreeTopics() throws IOException {
@@ -231,12 +231,12 @@ public class InfocenterWorkingSetManagerTest {
 		topics.add(topic1);
 		topics.add(topic3);
 		topics.add(topic5);
-        assertTrue(topics.contains(resources[0]));
-        assertTrue(topics.contains(resources[1]));
-        assertTrue(topics.contains(resources[2]));
+		assertTrue(topics.contains(resources[0]));
+		assertTrue(topics.contains(resources[1]));
+		assertTrue(topics.contains(resources[2]));
 		checkCookies(resp);
 		checkCookies(resp2);
-	};
+	}
 
 	@Test
 	public void testIWSMWithMultipleWsets() throws IOException {
@@ -262,7 +262,7 @@ public class InfocenterWorkingSetManagerTest {
 		assertEquals(1, resourcesT4.length);
 		assertEquals(topic3, resourcesT4[0]);
 		checkCookies(resp);
-	};
+	}
 
 	/**
 	 * Verify that adding a second topic in the same toc only adds 4 more bytes to the cookie size
@@ -287,10 +287,10 @@ public class InfocenterWorkingSetManagerTest {
 
 		int length1 = cookieLength(resp1.getCookies());
 		int length2 = cookieLength(resp2.getCookies());
-        assertEquals(length1 + 4, length2);
+		assertEquals(length1 + 4, length2);
 		checkCookies(resp1);
 		checkCookies(resp2);
-	};
+	}
 
 	private int cookieLength(Cookie[] cookies) {
 		int total = 0;
@@ -331,7 +331,7 @@ public class InfocenterWorkingSetManagerTest {
 		assertEquals(topic3, resourcesT4[0]);
 		checkCookies(resp);
 		checkCookies(resp2);
-	};
+	}
 
 	@Test
 	public void testIWSMWithCriteria() throws IOException {
@@ -351,7 +351,7 @@ public class InfocenterWorkingSetManagerTest {
 		CriterionResource[] readResources = readWsets[0].getCriteria();
 		assertEquals(1, readResources.length);
 		checkCookies(resp);
-	};
+	}
 
 	@Test
 	public void testSaveRestoreIWSMWithMCriteria() throws IOException {
@@ -378,7 +378,7 @@ public class InfocenterWorkingSetManagerTest {
 		assertEquals(1, readResources.length);
 		checkCookies(resp);
 		checkCookies(resp2);
-	};
+	}
 
 	@Test
 	public void testIWSMWithMultipleCriteria() throws IOException {
@@ -400,7 +400,7 @@ public class InfocenterWorkingSetManagerTest {
 		CriterionResource[] readResources = readWsets[0].getCriteria();
 		checkResourceWithTwoChildren(readResources);
 		checkCookies(resp);
-	};
+	}
 
 	@Test
 	public void testSaveRestoreIWSMWithMultipleCriteria() throws IOException {
@@ -414,7 +414,7 @@ public class InfocenterWorkingSetManagerTest {
 		CriterionResource[] criteria = createResourceWithTwoCriteria();
 		wset.setCriteria(criteria);
 		mgr.addWorkingSet(wset);
-        MockServletRequest req2 = new MockServletRequest();
+		MockServletRequest req2 = new MockServletRequest();
 		MockServletResponse resp2 = new MockServletResponse();
 		req2.setCookies(resp.getCookies());
 		InfocenterWorkingSetManager mgr2 = new InfocenterWorkingSetManager(req2, resp2, "en");
@@ -456,13 +456,13 @@ public class InfocenterWorkingSetManagerTest {
 		criteria[1].addCriterionValue("linux");
 		criteria[1].addCriterionValue("MacOS");
 		return criteria;
-	};
+	}
 
 	private void checkCookies(MockServletResponse resp) {
 		String illegalChars = resp.getIllegalCharatersFound();
 		if (illegalChars.equals("") || illegalChars.equals("<")) {
 			return;
-	    }
+		}
 		fail("Cookie contains these illegal characters " + illegalChars + '"');
 	}
 

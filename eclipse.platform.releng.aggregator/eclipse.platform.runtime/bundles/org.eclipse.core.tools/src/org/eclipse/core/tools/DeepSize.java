@@ -106,9 +106,7 @@ public class DeepSize {
 	Set<String> getDefaultIgnoreTypeNames() {
 		Set<String> ignored = new HashSet<>();
 		String[] ignore = {"org.eclipse.core.runtime.Plugin", "java.lang.ClassLoader", "org.eclipse.team.internal.ccvs.core.CVSTeamProvider", "org.eclipse.core.internal.events.BuilderPersistentInfo", "org.eclipse.core.internal.resources.Workspace", "org.eclipse.core.internal.events.EventStats", "java.net.URL"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-6$
-		for (String element : ignore) {
-			ignored.add(element);
-		}
+		Collections.addAll(ignored, ignore);
 		return ignored;
 	}
 
@@ -138,8 +136,9 @@ public class DeepSize {
 	 */
 	public void printSizeReport() {
 		System.out.println("*** Begin DeepSize report ***"); //$NON-NLS-1$
-		for (Object clazz : sizes.keySet()) {
-			int size = sizes.get(clazz).intValue();
+		for (java.util.Map.Entry<Object, Integer> entry : sizes.entrySet()) {
+			Object clazz = entry.getKey();
+			int size = entry.getValue().intValue();
 			System.out.println('\t' + clazz.getClass().getName() + " size: " + size); //$NON-NLS-1$
 			System.out.println("Total size of all objects: " + getSize()); //$NON-NLS-1$
 		}

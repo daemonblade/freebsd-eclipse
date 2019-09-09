@@ -16,6 +16,7 @@ package org.eclipse.debug.internal.ui.actions.breakpoints;
 
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -117,10 +118,8 @@ public class RemoveBreakpointAction extends AbstractSelectionActionDelegate {
 							}
 						}
 						if(deleteAll) {
-						    IBreakpoint[] breakpoints = bpc.getBreakpoints();
-						    for (int i = 0; i < breakpoints.length; i++) {
-                                breakpointsToDelete.add(breakpoints[i]);
-                            }
+							IBreakpoint[] breakpoints = bpc.getBreakpoints();
+							Collections.addAll(breakpointsToDelete, breakpoints);
 						}
 					}
 				}
@@ -130,22 +129,22 @@ public class RemoveBreakpointAction extends AbstractSelectionActionDelegate {
 					((BreakpointsView)getView()).preserveSelection(getSelection());
 				}
 				new Job(ActionMessages.RemoveBreakpointAction_2) {
-                    @Override
+					@Override
 					protected IStatus run(IProgressMonitor pmonitor) {
-                        try {
+						try {
 							Shell shell= getView() != null ? getView().getSite().getShell() : null;
 							DebugUITools.deleteBreakpoints(breakpoints, shell, pmonitor);
 
-                            for (int i = 0; i < sets.length; i++) {
-                            	PlatformUI.getWorkbench().getWorkingSetManager().removeWorkingSet(sets[i]);
+							for (int i = 0; i < sets.length; i++) {
+								PlatformUI.getWorkbench().getWorkingSetManager().removeWorkingSet(sets[i]);
 							}
-                            return Status.OK_STATUS;
-                        } catch (CoreException e) {
-                            DebugUIPlugin.log(e);
-                        }
-                        return Status.CANCEL_STATUS;
-                    }
-                }.schedule();
+							return Status.OK_STATUS;
+						} catch (CoreException e) {
+							DebugUIPlugin.log(e);
+						}
+						return Status.CANCEL_STATUS;
+					}
+				}.schedule();
 			}
 		};
 		try {

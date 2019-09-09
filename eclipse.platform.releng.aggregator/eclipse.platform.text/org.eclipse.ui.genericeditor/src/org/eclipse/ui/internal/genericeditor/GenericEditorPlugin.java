@@ -47,6 +47,7 @@ public class GenericEditorPlugin extends AbstractUIPlugin {
 	private PresentationReconcilerRegistry presentationReconcilierRegistry;
 	private AutoEditStrategyRegistry autoEditStrategyRegistry;
 	private CharacterPairMatcherRegistry characterPairMatcherRegistry;
+	private IconsRegistry editorImagesRegistry;
 
 	private IPropertyChangeListener themeListener;
 
@@ -150,5 +151,15 @@ public class GenericEditorPlugin extends AbstractUIPlugin {
 			this.characterPairMatcherRegistry = new CharacterPairMatcherRegistry();
 		}
 		return this.characterPairMatcherRegistry;
+	}
+
+	/**
+	 * @return the registry allowing to access contributed images
+	 */
+	public synchronized IconsRegistry getContentTypeImagesRegistry() {
+		if (this.editorImagesRegistry == null) {
+			this.editorImagesRegistry = new IconsRegistry();
+		}
+		return this.editorImagesRegistry;
 	}
 }

@@ -15,24 +15,23 @@ package org.eclipse.swt.internal.webkit;
 
 
 import org.eclipse.swt.internal.ole.win32.*;
-import org.eclipse.swt.internal.win32.*;
 
 public class IWebURLProtectionSpace extends IUnknown {
 
-public IWebURLProtectionSpace(long /*int*/ address) {
+public IWebURLProtectionSpace(long address) {
 	super(address);
 }
 
-public int host (long /*int*/[] result) {
-	return OS.VtblCall (4, getAddress (), result);
+public int host (long[] result) {
+	return COM.VtblCall (4, getAddress (), result);
 }
 
 public int port (int[] result) {
-	return OS.VtblCall (8, getAddress (), result);
+	return COM.VtblCall (8, getAddress (), result);
 }
 
-public int realm (long /*int*/[] result) {
-	return OS.VtblCall (11, getAddress (), result);
+public int realm (long[] result) {
+	return COM.VtblCall (11, getAddress (), result);
 }
 
 }

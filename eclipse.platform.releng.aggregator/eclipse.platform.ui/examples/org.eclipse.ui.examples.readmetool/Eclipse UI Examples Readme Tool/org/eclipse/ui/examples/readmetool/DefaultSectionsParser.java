@@ -62,9 +62,7 @@ public class DefaultSectionsParser implements IReadmeFileParser {
 				read = in.read(buf);
 			}
 			return out.toString();
-		} catch (CoreException e) {
-			// do nothing
-		} catch (IOException e) {
+		} catch (CoreException | IOException e) {
 			// do nothing
 		}
 		return ""; //$NON-NLS-1$
@@ -127,8 +125,7 @@ public class DefaultSectionsParser implements IReadmeFileParser {
 			lastme.setNumberOfLines(lineno - lastlineno - 1);
 		}
 		MarkElement[] results = new MarkElement[topLevel.size()];
-		results = topLevel.toArray(results);
-		return results;
+		return topLevel.toArray(results);
 	}
 
 	/**

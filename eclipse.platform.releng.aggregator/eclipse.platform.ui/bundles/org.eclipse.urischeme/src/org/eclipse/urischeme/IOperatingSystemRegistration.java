@@ -33,8 +33,6 @@ public interface IOperatingSystemRegistration {
 	 * @return an instance of IOperatingSystemRegistration
 	 */
 	static IOperatingSystemRegistration getInstance() {
-		if (Platform.OS_FREEBSD.equals(Platform.getOS()))
-			return new RegistrationLinux();
 		if (Platform.OS_MACOSX.equals(Platform.getOS())) {
 			return new RegistrationMacOsX();
 		} else if (Platform.OS_LINUX.equals(Platform.getOS())) {

@@ -11,7 +11,7 @@
 	<parent>
 		<groupId>org.eclipse</groupId>
 		<artifactId>org.eclipse.equinox.p2.tests-parent</artifactId>
-		<version>4.12.0-SNAPSHOT</version>
+		<version>4.13.0-SNAPSHOT</version>
 		<relativePath>../../org.eclipse.equinox.p2.releng/org.eclipse.equinox.p2.tests-parent</relativePath>
 	</parent>
 
@@ -39,7 +39,7 @@
 						</goals>
 						<configuration>
 							<formats>
-								<freebsd>tar.gz</freebsd>
+								<linux>tar.gz</linux>
 							</formats>
 						</configuration>
 					</execution>

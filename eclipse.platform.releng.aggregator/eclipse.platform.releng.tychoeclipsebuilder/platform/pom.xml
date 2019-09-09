@@ -19,7 +19,7 @@
   <parent>
     <groupId>eclipse.platform.releng.tychoeclipsebuilder</groupId>
     <artifactId>eclipse.platform.releng.tychoeclipsebuilder</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
   </parent>
 
   <!--
@@ -30,7 +30,7 @@
        This value shows up, for example, in the splash screen. See bug 423677.
     -->
   <artifactId>org.eclipse.platform.ide</artifactId>
-  <version>4.12.0-SNAPSHOT</version>
+  <version>4.13.0-SNAPSHOT</version>
   <packaging>eclipse-repository</packaging>
 
   <properties>
@@ -79,7 +79,7 @@
             <configuration>
               <formats>
                 <win32>zip</win32>
-                <freebsd>tar.gz</freebsd>
+                <linux>tar.gz</linux>
                 <macosx>tar.gz</macosx>
               </formats>
             </configuration>
@@ -119,6 +119,8 @@
                 <configuration>
                   <timeoutMillis>300000</timeoutMillis> <!-- 5 min -->
                   <continueOnFail>${macSigner.forceContinue}</continueOnFail> 
+                  <entitlements>${project.basedir}/../entitlement/platform.entitlement</entitlements>
+                  <signerUrl>http://172.30.206.146:8282/macosx-signing-service/1.0.1-SNAPSHOT</signerUrl>
                 </configuration>
               </execution>
             </executions>

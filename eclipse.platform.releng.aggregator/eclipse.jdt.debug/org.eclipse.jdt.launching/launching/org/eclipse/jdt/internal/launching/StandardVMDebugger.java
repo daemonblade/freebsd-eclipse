@@ -303,7 +303,9 @@ public class StandardVMDebugger extends StandardVMRunner {
 	 */
 	@Override
 	public void run(VMRunnerConfiguration config, ILaunch launch, IProgressMonitor monitor) throws CoreException {
-
+		if (monitor == null) {
+			monitor = new NullProgressMonitor();
+		}
 		CommandDetails cmdDetails = getCommandLine(config, launch, monitor);
 		// check for cancellation
 		if (monitor.isCanceled() || cmdDetails == null) {
@@ -331,7 +333,7 @@ public class StandardVMDebugger extends StandardVMRunner {
 
 				connector.startListening(map);
 
-				p = exec(cmdLine, cmdDetails.getWorkingDir(), cmdDetails.getEnvp());
+				p = exec(cmdLine, cmdDetails.getWorkingDir(), cmdDetails.getEnvp(), config.isMergeOutput());
 				if (p == null) {
 					return;
 				}

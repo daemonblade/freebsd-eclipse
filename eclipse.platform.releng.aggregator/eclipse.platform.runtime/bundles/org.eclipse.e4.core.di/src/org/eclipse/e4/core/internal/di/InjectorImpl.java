@@ -223,9 +223,7 @@ public class InjectorImpl implements IInjector {
 					}
 				}
 			}
-		} catch (NoClassDefFoundError e) {
-			throw new InjectionException(e);
-		} catch (NoSuchMethodError e) {
+		} catch (NoClassDefFoundError | NoSuchMethodError e) {
 			throw new InjectionException(e);
 		}
 	}
@@ -236,7 +234,7 @@ public class InjectorImpl implements IInjector {
 				null, true, /* initial */ true, /* track */ false);
 		if (result == IInjector.NOT_A_VALUE) {
 			if (object != null && qualifier != null) {
-				throw new InjectionException("Unable to find matching method to invoke. Searching for the annotation \"" + qualifier.toString() + "\" on an instance of \"" + object.getClass().getSimpleName() + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				throw new InjectionException("Unable to find matching method to invoke. Searching for the annotation \"" + qualifier + "\" on an instance of \"" + object.getClass().getSimpleName() + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			}
 			throw new InjectionException("Unable to find matching method to invoke. One of the arguments was null."); //$NON-NLS-1$
 		}
@@ -382,8 +380,7 @@ public class InjectorImpl implements IInjector {
 			Constructor<?>[] constructors = getDeclaredConstructors(clazz);
 			// Sort the constructors by descending number of constructor arguments
 			ArrayList<Constructor<?>> sortedConstructors = new ArrayList<>(constructors.length);
-			for (Constructor<?> constructor : constructors)
-				sortedConstructors.add(constructor);
+			sortedConstructors.addAll(Arrays.asList(constructors));
 			Collections.sort(sortedConstructors, (c1, c2) -> {
 				int l1 = c1.getParameterTypes().length;
 				int l2 = c2.getParameterTypes().length;

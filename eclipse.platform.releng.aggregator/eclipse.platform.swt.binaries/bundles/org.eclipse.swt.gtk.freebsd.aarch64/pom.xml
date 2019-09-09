@@ -20,12 +20,12 @@
     <relativePath>../binaries-parent/</relativePath>
   </parent>
   <groupId>org.eclipse.swt</groupId>
-  <artifactId>org.eclipse.swt.gtk.freebsd.aarch64</artifactId>
+  <artifactId>org.eclipse.swt.gtk.linux.aarch64</artifactId>
   <version>3.109.0-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 
   <properties>
-    <os>freebsd</os>
+    <os>linux</os>
     <ws>gtk</ws>
     <arch>aarch64</arch>
     <buildid>${buildId}</buildid>
@@ -61,7 +61,7 @@
         <property>
           <!-- This has to be hardcoded. Profiles are not allowed to use pom defined properties :-( -->
           <name>native</name>
-          <value>gtk.freebsd.aarch64</value>
+          <value>gtk.linux.aarch64</value>
         </property>
       </activation>
       <build>

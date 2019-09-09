@@ -607,7 +607,7 @@ public class SearchField {
 	}
 
 	/**
-	 * Notifies <code>org.eclipse.swt.accessibility.Accessible<code> object that
+	 * Notifies <code>org.eclipse.swt.accessibility.Accessible</code> object that
 	 * selected item has been changed.
 	 */
 	private void notifyAccessibleTextChanged() {
@@ -763,9 +763,8 @@ public class SearchField {
 	 * elements, so we return here only already resolved, non null elements
 	 */
 	private List<QuickAccessElement> getLoadedPreviousPicks() {
-		List<QuickAccessElement> previousPicks = previousPicksList.stream().filter(Objects::nonNull)
+		return previousPicksList.stream().filter(Objects::nonNull)
 				.collect(Collectors.toList());
-		return previousPicks;
 	}
 
 	private IDialogSettings getDialogSettings() {

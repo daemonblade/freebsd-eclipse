@@ -84,7 +84,7 @@ public class TableRenderingLine extends PlatformObject {
 	{
 		if (fStrRep == null)
 		{
-			StringBuffer buffer = new StringBuffer();
+			StringBuilder buffer = new StringBuilder();
 			fStrRep = RenderingsUtil.convertByteArrayToHexString(getByteArray());
 			fStrRep = fStrRep.toUpperCase();
 
@@ -295,7 +295,7 @@ public class TableRenderingLine extends PlatformObject {
 	@Override
 	public String toString()
 	{
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append(getAddress());
 
 		buf.append(": "); //$NON-NLS-1$

@@ -106,7 +106,7 @@ public class PointSelectionPage extends BaseWizardSelectionPage {
 		private String wMatch = "*"; //$NON-NLS-1$
 
 		protected void setMatchText(String match) {
-			if (match.indexOf("*") != 0 & match.indexOf("?") != 0 & match.indexOf(".") != 0) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			if (match.indexOf('*') != 0 & match.indexOf('?') != 0 & match.indexOf('.') != 0) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				match = "*" + match; //$NON-NLS-1$
 			}
 			wMatch = match + "*"; //$NON-NLS-1$
@@ -158,13 +158,11 @@ public class PointSelectionPage extends BaseWizardSelectionPage {
 				String id = plugin.getPluginBase().getId();
 				if (id.equals(fModel.getPluginBase().getId()))
 					continue;
-				for (IPluginExtensionPoint point : points)
-					extPoints.add(point);
+				Collections.addAll(extPoints, points);
 			}
 
 			IPluginExtensionPoint[] points = fModel.getPluginBase().getExtensionPoints();
-			for (IPluginExtensionPoint point : points)
-				extPoints.add(point);
+			Collections.addAll(extPoints, points);
 
 			return extPoints.toArray();
 		}

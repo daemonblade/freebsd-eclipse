@@ -180,7 +180,6 @@ import org.eclipse.ui.internal.e4.compatibility.SelectionService;
 import org.eclipse.ui.internal.handlers.ActionCommandMappingService;
 import org.eclipse.ui.internal.handlers.IActionCommandMappingService;
 import org.eclipse.ui.internal.handlers.LegacyHandlerService;
-import org.eclipse.ui.internal.menus.ActionSet;
 import org.eclipse.ui.internal.menus.IActionSetsListener;
 import org.eclipse.ui.internal.menus.LegacyActionPersistence;
 import org.eclipse.ui.internal.menus.MenuHelper;
@@ -221,7 +220,6 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 
 	public static final String TRIM_CONTRIBUTION_URI = "bundleclass://org.eclipse.ui.workbench/org.eclipse.ui.internal.StandardTrim"; //$NON-NLS-1$
 
-	private static final String MAIN_TOOLBAR_ID = ActionSet.MAIN_TOOLBAR;
 	private static final String COMMAND_ID_TOGGLE_COOLBAR = "org.eclipse.ui.ToggleCoolbarAction"; //$NON-NLS-1$
 
 	public static final String ACTION_SET_CMD_PREFIX = "AS::"; //$NON-NLS-1$
@@ -368,12 +366,12 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 	 *
 	 * <p>
 	 * Element IDs which belong to QuickAccess:
+	 * </p>
 	 * <ul>
 	 * <li><code>Spacer Glue</code></li>
 	 * <li><code>SearchField</code></li>
 	 * <li><code>Search-PS Glue</code></li>
 	 * </ul>
-	 * </p>
 	 */
 	private static final List<String> QUICK_ACCESS_ELEMENT_IDS = Collections
 			.unmodifiableList(Arrays.asList("Spacer Glue", "SearchField", "Search-PS Glue")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -742,7 +740,11 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 						removeSaveOnCloseNotNeededParts(saveableParts);
 					}
 					if (saveableParts.isEmpty()) {
-						return super.saveParts(dirtyParts, confirm);
+						if (nonCompatibilityParts.isEmpty()) {
+							// nothing to save
+							return true;
+						}
+						return super.saveParts(nonCompatibilityParts, confirm);
 					} else if (!nonCompatibilityParts.isEmpty()) {
 						return saveMixedParts(nonCompatibilityParts, saveableParts, confirm, addNonPartSources);
 					}
@@ -823,7 +825,9 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 			Shell shell = (Shell) model.getWidget();
 			if (model.getMainMenu() == null) {
 				mainMenu = modelService.createModelElement(MMenu.class);
-				mainMenu.setElementId(ActionSet.MAIN_MENU);
+				mainMenu.setElementId(IWorkbenchConstants.MAIN_MENU_ID);
+				mainMenu.getPersistedState().put(org.eclipse.e4.ui.workbench.IWorkbench.PERSIST_STATE,
+						Boolean.FALSE.toString());
 
 				renderer = (MenuManagerRenderer) rendererFactory.getRenderer(mainMenu, null);
 				renderer.linkModelToManager(mainMenu, menuManager);
@@ -1408,7 +1412,7 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 	public MTrimBar getTopTrim() {
 		List<MTrimBar> trimBars = model.getTrimBars();
 		for (MTrimBar bar : trimBars) {
-			if (MAIN_TOOLBAR_ID.equals(bar.getElementId())) {
+			if (IWorkbenchConstants.MAIN_TOOLBAR_ID.equals(bar.getElementId())) {
 				return bar;
 			}
 		}
@@ -3084,7 +3088,7 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 		}
 	}
 
-	MenuManager menuManager = new MenuManager("MenuBar", ActionSet.MAIN_MENU); //$NON-NLS-1$
+	MenuManager menuManager = new MenuManager("MenuBar", IWorkbenchConstants.MAIN_MENU_ID); //$NON-NLS-1$
 
 	public MenuManager getMenuManager() {
 		return menuManager;

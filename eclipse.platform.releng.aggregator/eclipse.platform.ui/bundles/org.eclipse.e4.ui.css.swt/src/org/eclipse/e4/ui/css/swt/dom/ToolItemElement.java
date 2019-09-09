@@ -20,7 +20,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
@@ -41,8 +40,7 @@ public class ToolItemElement extends ItemElement {
 		ToolItem item = getToolItem();
 		ToolBar parent = item.getParent();
 		if (parent != null) {
-			Element element = getElement(parent);
-			return element;
+			return getElement(parent);
 		}
 		return null;
 	}

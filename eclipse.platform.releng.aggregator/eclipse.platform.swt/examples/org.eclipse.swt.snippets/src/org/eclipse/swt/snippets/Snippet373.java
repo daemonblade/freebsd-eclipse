@@ -76,6 +76,7 @@ public class Snippet373 {
 		final Image eclipseCTab2 = new Image(display, filenameProvider);
 
 		Shell shell = new Shell(display);
+		shell.setText("Snippet 373");
 		shell.setImage(eclipse);
 		shell.setText("DynamicDPI @ " + DPIUtil.getDeviceZoom());
 		shell.setLayout(new RowLayout(SWT.VERTICAL));
@@ -198,7 +199,7 @@ public class Snippet373 {
 		button2.setText("Refresh-Both Monitors : Zoom");
 		Text text2 = new Text(shell, SWT.BORDER);
 		Monitor[] monitors = display.getMonitors();
-		StringBuffer text2String = new StringBuffer();
+		StringBuilder text2String = new StringBuilder();
 		for (int i = 0; i < monitors.length; i++) {
 			text2String.append(monitors[i].getZoom() + (i < (monitors.length - 1) ? " - " : ""));
 		}
@@ -207,7 +208,7 @@ public class Snippet373 {
 			@Override
 			public void mouseDown(MouseEvent e) {
 				Monitor[] monitors = display.getMonitors();
-				StringBuffer text2String = new StringBuffer();
+				StringBuilder text2String = new StringBuilder();
 				for (int i = 0; i < monitors.length; i++) {
 					text2String.append(monitors[i].getZoom() + (i < (monitors.length - 1) ? " - " : ""));
 				}

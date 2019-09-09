@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -42,7 +42,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.SubProgressMonitor;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.IJobManager;
@@ -205,18 +205,18 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 	 */
 	private LaunchingResourceManager fContextLaunchingManager = null;
 
-    /**
-     * Image descriptor registry used for images with common overlays.
-     *
-     * @since 3.1
-     */
-    private ImageDescriptorRegistry fImageDescriptorRegistry;
+	/**
+	 * Image descriptor registry used for images with common overlays.
+	 *
+	 * @since 3.1
+	 */
+	private ImageDescriptorRegistry fImageDescriptorRegistry;
 
-    /**
-     * A set of <code>ISaveParticipant</code>s that want to contribute to saving via this plugin
-     *
-     * @since 3.3
-     */
+	/**
+	 * A set of <code>ISaveParticipant</code>s that want to contribute to saving via this plugin
+	 *
+	 * @since 3.3
+	 */
 	private Set<ISaveParticipant> fSaveParticipants = new HashSet<>();
 
 	/**
@@ -226,31 +226,31 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 	 */
 	private IPropertyChangeListener fThemeListener;
 
-    /**
-     * Dummy launch node representing a launch that is waiting
-     * for a build to finish before proceeding. This node exists
-     * to provide immediate feedback to the user in the Debug view and
-     * allows termination, which equates to cancellation of the launch.
-     */
+	/**
+	 * Dummy launch node representing a launch that is waiting
+	 * for a build to finish before proceeding. This node exists
+	 * to provide immediate feedback to the user in the Debug view and
+	 * allows termination, which equates to cancellation of the launch.
+	 */
 	public static class PendingLaunch extends Launch {
-        private Job fJob;
-        public PendingLaunch(ILaunchConfiguration launchConfiguration, String mode, Job job) {
-            super(launchConfiguration, mode, null);
-            fJob= job;
-        }
+		private Job fJob;
+		public PendingLaunch(ILaunchConfiguration launchConfiguration, String mode, Job job) {
+			super(launchConfiguration, mode, null);
+			fJob= job;
+		}
 
-        // Allow the user to terminate the dummy launch as a means to
-        // cancel the launch while waiting for a build to finish.
-        @Override
+		// Allow the user to terminate the dummy launch as a means to
+		// cancel the launch while waiting for a build to finish.
+		@Override
 		public boolean canTerminate() {
-            return true;
-        }
+			return true;
+		}
 
-        @Override
+		@Override
 		public void terminate() throws DebugException {
-            fJob.cancel();
-        }
-    }
+			fJob.cancel();
+		}
+	}
 
 	/**
 	 * Constructs the debug UI plug-in
@@ -424,11 +424,11 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 	@Override
 	public void stop(BundleContext context) throws Exception {
 		try {
-            if (fProcessConsoleManager != null) {
-                fProcessConsoleManager.shutdown();
-            }
+			if (fProcessConsoleManager != null) {
+				fProcessConsoleManager.shutdown();
+			}
 
-            BreakpointOrganizerManager.getDefault().shutdown();
+			BreakpointOrganizerManager.getDefault().shutdown();
 
 			if (fPerspectiveManager != null) {
 				fPerspectiveManager.shutdown();
@@ -446,15 +446,15 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 				fgPresentation.dispose();
 			}
 
-            if (fImageDescriptorRegistry != null) {
-                fImageDescriptorRegistry.dispose();
-            }
+			if (fImageDescriptorRegistry != null) {
+				fImageDescriptorRegistry.dispose();
+			}
 
-            if (fgDefaultLabelProvider != null) {
-            	fgDefaultLabelProvider.dispose();
-            }
+			if (fgDefaultLabelProvider != null) {
+				fgDefaultLabelProvider.dispose();
+			}
 
-            SourceLookupFacility.shutdown();
+			SourceLookupFacility.shutdown();
 
 			DebugElementHelper.dispose();
 
@@ -557,8 +557,8 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 			launchManager.addLaunchListener(this);
 		}
 
-        // start the breakpoint organizer manager
-        BreakpointOrganizerManager.getDefault();
+		// start the breakpoint organizer manager
+		BreakpointOrganizerManager.getDefault();
 
 		getLaunchConfigurationManager().startup();
 
@@ -683,94 +683,94 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 	}
 
 	/**
-     * Open the launch configuration dialog on the specified launch
-     * configuration. The dialog displays the tabs for a single configuration
-     * only (a tree of launch configuration is not displayed)
-     * <p>
-     * If a status is specified, a status handler is consulted to handle the
-     * status. The status handler is passed the instance of the launch
-     * configuration dialog that is opened. This gives the status handler an
-     * opportunity to perform error handling/initialization as required.
-     * </p>
-     * @param shell the parent shell for the launch configuration dialog
-     * @param configuration the configuration to display
-     * @param groupIdentifier group identifier of the launch group the launch configuration
-     * belongs to
-     * @param status the status to display, or <code>null</code> if none
-     * @param showCancel if the cancel button should be shown in the particular instance of the dialog
-     * @return the return code from opening the launch configuration dialog -
-     *  one  of <code>Window.OK</code> or <code>Window.CANCEL</code>
-     *
-     * @since 3.3
-     *
-     */
-    public static int openLaunchConfigurationEditDialog(Shell shell, ILaunchConfiguration configuration, String groupIdentifier, IStatus status, boolean showCancel) {
-    	LaunchGroupExtension group = DebugUIPlugin.getDefault().getLaunchConfigurationManager().getLaunchGroup(groupIdentifier);
-    	if (group != null) {
-    		LaunchConfigurationEditDialog dialog = new LaunchConfigurationEditDialog(shell, configuration, group, showCancel);
-    		dialog.setInitialStatus(status);
-    		return dialog.open();
-    	}
-    	return Window.CANCEL;
-    }
+	 * Open the launch configuration dialog on the specified launch
+	 * configuration. The dialog displays the tabs for a single configuration
+	 * only (a tree of launch configuration is not displayed)
+	 * <p>
+	 * If a status is specified, a status handler is consulted to handle the
+	 * status. The status handler is passed the instance of the launch
+	 * configuration dialog that is opened. This gives the status handler an
+	 * opportunity to perform error handling/initialization as required.
+	 * </p>
+	 * @param shell the parent shell for the launch configuration dialog
+	 * @param configuration the configuration to display
+	 * @param groupIdentifier group identifier of the launch group the launch configuration
+	 * belongs to
+	 * @param status the status to display, or <code>null</code> if none
+	 * @param showCancel if the cancel button should be shown in the particular instance of the dialog
+	 * @return the return code from opening the launch configuration dialog -
+	 *  one  of <code>Window.OK</code> or <code>Window.CANCEL</code>
+	 *
+	 * @since 3.3
+	 *
+	 */
+	public static int openLaunchConfigurationEditDialog(Shell shell, ILaunchConfiguration configuration, String groupIdentifier, IStatus status, boolean showCancel) {
+		LaunchGroupExtension group = DebugUIPlugin.getDefault().getLaunchConfigurationManager().getLaunchGroup(groupIdentifier);
+		if (group != null) {
+			LaunchConfigurationEditDialog dialog = new LaunchConfigurationEditDialog(shell, configuration, group, showCancel);
+			dialog.setInitialStatus(status);
+			return dialog.open();
+		}
+		return Window.CANCEL;
+	}
 
-    /**
-     * Open the launch configuration dialog on the specified launch
-     * configuration. The dialog displays the tabs for a single configuration
-     * only (a tree of launch configuration is not displayed)
-     * <p>
-     * If a status is specified, a status handler is consulted to handle the
-     * status. The status handler is passed the instance of the launch
-     * configuration dialog that is opened. This gives the status handler an
-     * opportunity to perform error handling/initialization as required.
-     * </p>
-     * @param shell the parent shell for the launch configuration dialog
-     * @param configuration the configuration to display
-     * @param groupIdentifier group identifier of the launch group the launch configuration
-     * belongs to
-     * @param reservednames a set of launch configuration names that cannot be used when creating or renaming
-     * the specified launch configuration
-     * @param status the status to display, or <code>null</code> if none
-     * @param setDefaults whether to set default values in the configuration
-     * @return the return code from opening the launch configuration dialog -
-     *  one  of <code>Window.OK</code> or <code>Window.CANCEL</code>
-     *
-     * @since 3.3
-     *
-     */
+	/**
+	 * Open the launch configuration dialog on the specified launch
+	 * configuration. The dialog displays the tabs for a single configuration
+	 * only (a tree of launch configuration is not displayed)
+	 * <p>
+	 * If a status is specified, a status handler is consulted to handle the
+	 * status. The status handler is passed the instance of the launch
+	 * configuration dialog that is opened. This gives the status handler an
+	 * opportunity to perform error handling/initialization as required.
+	 * </p>
+	 * @param shell the parent shell for the launch configuration dialog
+	 * @param configuration the configuration to display
+	 * @param groupIdentifier group identifier of the launch group the launch configuration
+	 * belongs to
+	 * @param reservednames a set of launch configuration names that cannot be used when creating or renaming
+	 * the specified launch configuration
+	 * @param status the status to display, or <code>null</code> if none
+	 * @param setDefaults whether to set default values in the configuration
+	 * @return the return code from opening the launch configuration dialog -
+	 *  one  of <code>Window.OK</code> or <code>Window.CANCEL</code>
+	 *
+	 * @since 3.3
+	 *
+	 */
 	public static int openLaunchConfigurationPropertiesDialog(Shell shell, ILaunchConfiguration configuration, String groupIdentifier, Set<String> reservednames, IStatus status, boolean setDefaults) {
-    	LaunchGroupExtension group = DebugUIPlugin.getDefault().getLaunchConfigurationManager().getLaunchGroup(groupIdentifier);
-    	if (group != null) {
-    		LaunchConfigurationPropertiesDialog dialog = new LaunchConfigurationPropertiesDialog(shell, configuration, group, reservednames);
-    		dialog.setInitialStatus(status);
-    		dialog.setDefaultsOnOpen(setDefaults);
-    		return dialog.open();
-    	}
-    	return Window.CANCEL;
-    }
+		LaunchGroupExtension group = DebugUIPlugin.getDefault().getLaunchConfigurationManager().getLaunchGroup(groupIdentifier);
+		if (group != null) {
+			LaunchConfigurationPropertiesDialog dialog = new LaunchConfigurationPropertiesDialog(shell, configuration, group, reservednames);
+			dialog.setInitialStatus(status);
+			dialog.setDefaultsOnOpen(setDefaults);
+			return dialog.open();
+		}
+		return Window.CANCEL;
+	}
 
-    /**
-     * Opens the {@link LaunchConfigurationsDialog} on the given selection for the given group. A status
-     * can be provided or <code>null</code> and the dialog can initialize the given {@link ILaunchConfiguration}
-     * to its defaults when opening as well - as long as the specified configuration is an {@link ILaunchConfigurationWorkingCopy}.
-     * @param shell the shell to open the dialog on
-     * @param selection the non-null selection to show when the dialog opens
-     * @param groupIdentifier the identifier of the launch group to open the dialog on
-     * @param setDefaults if the default values should be set on the opened configuration - if there is one
-     * @return the return code from the dialog.open() call
-     * @since 3.6
-     */
-    public static int openLaunchConfigurationsDialog(Shell shell, IStructuredSelection selection, String groupIdentifier, boolean setDefaults) {
-    	LaunchGroupExtension group = DebugUIPlugin.getDefault().getLaunchConfigurationManager().getLaunchGroup(groupIdentifier);
-    	if (group != null) {
+	/**
+	 * Opens the {@link LaunchConfigurationsDialog} on the given selection for the given group. A status
+	 * can be provided or <code>null</code> and the dialog can initialize the given {@link ILaunchConfiguration}
+	 * to its defaults when opening as well - as long as the specified configuration is an {@link ILaunchConfigurationWorkingCopy}.
+	 * @param shell the shell to open the dialog on
+	 * @param selection the non-null selection to show when the dialog opens
+	 * @param groupIdentifier the identifier of the launch group to open the dialog on
+	 * @param setDefaults if the default values should be set on the opened configuration - if there is one
+	 * @return the return code from the dialog.open() call
+	 * @since 3.6
+	 */
+	public static int openLaunchConfigurationsDialog(Shell shell, IStructuredSelection selection, String groupIdentifier, boolean setDefaults) {
+		LaunchGroupExtension group = DebugUIPlugin.getDefault().getLaunchConfigurationManager().getLaunchGroup(groupIdentifier);
+		if (group != null) {
 			LaunchConfigurationsDialog dialog = new LaunchConfigurationsDialog(shell, group);
 			dialog.setOpenMode(LaunchConfigurationsDialog.LAUNCH_CONFIGURATION_DIALOG_OPEN_ON_SELECTION);
 			dialog.setInitialSelection(selection);
 			dialog.setDefaultsOnOpen(setDefaults);
 			return dialog.open();
-    	}
-    	return Window.CANCEL;
-    }
+		}
+		return Window.CANCEL;
+	}
 
 	/**
 	 * Save all dirty editors in the workbench.
@@ -953,38 +953,38 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 	}
 
 	public static boolean DEBUG_TEST_PRESENTATION_ID(IPresentationContext context) {
-	    if (context == null) {
-	        return true;
-	    }
-	    return DEBUG_PRESENTATION_ID == null || DEBUG_PRESENTATION_ID.equals(context.getId());
+		if (context == null) {
+			return true;
+		}
+		return DEBUG_PRESENTATION_ID == null || DEBUG_PRESENTATION_ID.equals(context.getId());
 	}
 
 	/**
-     * Return the ILaunch associated with a model element, or null if there is
-     * no such association.
-     *
-     * @param element the model element
-     * @return the ILaunch associated with the element, or null.
-     * @since 3.6
-     */
-    public static ILaunch getLaunch(Object element) {
-    	// support for custom models
-        ILaunch launch= (ILaunch)DebugPlugin.getAdapter(element, ILaunch.class);
-        if (launch == null) {
-        	// support for standard debug model
-            if (element instanceof IDebugElement) {
-                launch= ((IDebugElement)element).getLaunch();
-            } else if (element instanceof ILaunch) {
-                launch= ((ILaunch)element);
-            } else if (element instanceof IProcess) {
-                launch= ((IProcess)element).getLaunch();
-            }
-        }
-        return launch;
-    }
+	 * Return the ILaunch associated with a model element, or null if there is
+	 * no such association.
+	 *
+	 * @param element the model element
+	 * @return the ILaunch associated with the element, or null.
+	 * @since 3.6
+	 */
+	public static ILaunch getLaunch(Object element) {
+		// support for custom models
+		ILaunch launch= (ILaunch)DebugPlugin.getAdapter(element, ILaunch.class);
+		if (launch == null) {
+			// support for standard debug model
+			if (element instanceof IDebugElement) {
+				launch= ((IDebugElement)element).getLaunch();
+			} else if (element instanceof ILaunch) {
+				launch= ((ILaunch)element);
+			} else if (element instanceof IProcess) {
+				launch= ((IProcess)element).getLaunch();
+			}
+		}
+		return launch;
+	}
 
 
-    /**
+	/**
 	 * Save dirty editors before launching, according to preferences.
 	 *
 	 * @return whether to proceed with launch
@@ -1014,18 +1014,7 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 	public static ILaunch buildAndLaunch(ILaunchConfiguration configuration, String mode, IProgressMonitor monitor) throws CoreException {
 		boolean buildBeforeLaunch = getDefault().getPreferenceStore().getBoolean(IDebugUIConstants.PREF_BUILD_BEFORE_LAUNCH);
 
-		monitor.beginTask(IInternalDebugCoreConstants.EMPTY_STRING, 1);
-		try
-		{
-			return configuration.launch(
-					mode,
-					new SubProgressMonitor(monitor, 1),
-					buildBeforeLaunch);
-		}
-		finally
-		{
-			monitor.done();
-		}
+		return configuration.launch(mode, SubMonitor.convert(monitor, 1), buildBeforeLaunch);
 	}
 
 	/**
@@ -1067,26 +1056,25 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 		}
 
 		if (wait) {
-			IWorkbench workbench = DebugUIPlugin.getDefault().getWorkbench();
+			IWorkbench workbench = PlatformUI.getWorkbench();
 			IProgressService progressService = workbench.getProgressService();
 			final IRunnableWithProgress runnable = monitor -> {
 				/*
 				 * Setup progress monitor - Waiting for jobs to finish (2) -
 				 * Build & launch (98)
 				 */
-				monitor.beginTask(MessageFormat.format(DebugUIMessages.DebugUIPlugin_25, new Object[] {
-						configuration.getName() }), 100);
-
+				final SubMonitor subMonitor = SubMonitor.convert(monitor, MessageFormat
+						.format(DebugUIMessages.DebugUIPlugin_25, new Object[] { configuration.getName() }), 100);
 				try {
-					jobManager.join(ResourcesPlugin.FAMILY_MANUAL_BUILD, new SubProgressMonitor(monitor, 1));
-					jobManager.join(ResourcesPlugin.FAMILY_AUTO_BUILD, new SubProgressMonitor(monitor, 1));
+					jobManager.join(ResourcesPlugin.FAMILY_MANUAL_BUILD, subMonitor.split(1));
+					jobManager.join(ResourcesPlugin.FAMILY_AUTO_BUILD, subMonitor.split(1));
 				} catch (InterruptedException e1) {
-					/* continue */}
+					/* continue */
+				}
 				if (!monitor.isCanceled()) {
 					try {
-						buildAndLaunch(configuration, mode, new SubProgressMonitor(monitor, 98));
-					}
-					catch (CoreException e2) {
+						buildAndLaunch(configuration, mode, subMonitor.split(98));
+					} catch (CoreException e2) {
 						throw new InvocationTargetException(e2);
 					}
 				}
@@ -1103,10 +1091,10 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 				/*
 				 * Setup progress monitor - Build & launch (1)
 				 */
-				monitor.beginTask(MessageFormat.format(DebugUIMessages.DebugUIPlugin_25, new Object[] {
-						configuration.getName() }), 1);
+				final SubMonitor subMonitor = SubMonitor.convert(monitor, MessageFormat
+						.format(DebugUIMessages.DebugUIPlugin_25, new Object[] { configuration.getName() }), 1);
 				try {
-					buildAndLaunch(configuration, mode, new SubProgressMonitor(monitor, 1));
+					buildAndLaunch(configuration, mode, subMonitor);
 				} catch (CoreException e) {
 					throw new InvocationTargetException(e);
 				}
@@ -1190,48 +1178,46 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 				/* Setup progress monitor
 				 * - Waiting for jobs to finish (2)
 				 * - Build & launch (98) */
-				monitor.beginTask(DebugUIMessages.DebugUITools_3, 100);
+				final SubMonitor subMonitor = SubMonitor.convert(monitor, DebugUIMessages.DebugUITools_3, 100);
 				try {
 					if(waitInJob) {
-						StringBuffer buffer = new StringBuffer(configuration.getName());
+						StringBuilder buffer = new StringBuilder(configuration.getName());
 						buffer.append(DebugUIMessages.DebugUIPlugin_0);
 						ILaunchConfigurationWorkingCopy workingCopy = configuration.copy(buffer.toString());
 						workingCopy.setAttribute(ATTR_LAUNCHING_CONFIG_HANDLE, configuration.getMemento());
 						final ILaunch pendingLaunch = new PendingLaunch(workingCopy, mode, this);
 						DebugPlugin.getDefault().getLaunchManager().addLaunch(pendingLaunch);
-                        IJobChangeListener listener= new IJobChangeListener() {
-                            @Override
+						IJobChangeListener listener= new IJobChangeListener() {
+							@Override
 							public void sleeping(IJobChangeEvent event) {}
-                            @Override
+							@Override
 							public void scheduled(IJobChangeEvent event) {}
-                            @Override
+							@Override
 							public void running(IJobChangeEvent event) {}
-                            @Override
+							@Override
 							public void awake(IJobChangeEvent event) {}
-                            @Override
+							@Override
 							public void aboutToRun(IJobChangeEvent event) {}
-                            @Override
+							@Override
 							public void done(IJobChangeEvent event) {
-                                DebugPlugin dp = DebugPlugin.getDefault();
-                                if (dp != null) {
-                                	dp.getLaunchManager().removeLaunch(pendingLaunch);
-                                }
-                                removeJobChangeListener(this);
-                            }
-                        };
-                        addJobChangeListener(listener);
+								DebugPlugin dp = DebugPlugin.getDefault();
+								if (dp != null) {
+									dp.getLaunchManager().removeLaunch(pendingLaunch);
+								}
+								removeJobChangeListener(this);
+							}
+						};
+						addJobChangeListener(listener);
 						try {
-							jobManager.join(ResourcesPlugin.FAMILY_MANUAL_BUILD, new SubProgressMonitor(monitor, 1));
-							jobManager.join(ResourcesPlugin.FAMILY_AUTO_BUILD, new SubProgressMonitor(monitor, 1));
+							jobManager.join(ResourcesPlugin.FAMILY_MANUAL_BUILD, subMonitor.split(1));
+							jobManager.join(ResourcesPlugin.FAMILY_AUTO_BUILD, subMonitor.split(1));
 						}
 						catch (InterruptedException e) {/*just continue.*/}
-                        DebugPlugin.getDefault().getLaunchManager().removeLaunch(pendingLaunch);
+						DebugPlugin.getDefault().getLaunchManager().removeLaunch(pendingLaunch);
 					}
-					else {
-						monitor.worked(2); /* don't wait for jobs to finish */
-					}
+					subMonitor.setWorkRemaining(98);
 					if (!monitor.isCanceled()) {
-						buildAndLaunch(configuration, mode, new SubProgressMonitor(monitor, 98));
+						buildAndLaunch(configuration, mode, subMonitor.split(98));
 					}
 				} catch (CoreException e) {
 					final IStatus status = e.getStatus();
@@ -1254,7 +1240,7 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 			}
 		};
 
-		IWorkbench workbench = DebugUIPlugin.getDefault().getWorkbench();
+		IWorkbench workbench = PlatformUI.getWorkbench();
 		IProgressService progressService = workbench.getProgressService();
 
 		job.setPriority(Job.INTERACTIVE);
@@ -1273,28 +1259,28 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 	 *
 	 * @return label without accelerators
 	 */
-    public static String removeAccelerators(String label) {
-        String title = label;
-        if (title != null) {
-            // strip out any '&' (accelerators)
-            int index = title.indexOf('&');
-            if (index == 0) {
-                title = title.substring(1);
-            } else if (index > 0) {
-                //DBCS languages use "(&X)" format
-                if (title.charAt(index - 1) == '(' && title.length() >= index + 3 && title.charAt(index + 2) == ')') {
-                    String first = title.substring(0, index - 1);
-                    String last = title.substring(index + 3);
-                    title = first + last;
-                } else if (index < (title.length() - 1)) {
-                    String first = title.substring(0, index);
-                    String last = title.substring(index + 1);
-                    title = first + last;
-                }
-            }
-        }
-        return title;
-    }
+	public static String removeAccelerators(String label) {
+		String title = label;
+		if (title != null) {
+			// strip out any '&' (accelerators)
+			int index = title.indexOf('&');
+			if (index == 0) {
+				title = title.substring(1);
+			} else if (index > 0) {
+				//DBCS languages use "(&X)" format
+				if (title.charAt(index - 1) == '(' && title.length() >= index + 3 && title.charAt(index + 2) == ')') {
+					String first = title.substring(0, index - 1);
+					String last = title.substring(index + 3);
+					title = first + last;
+				} else if (index < (title.length() - 1)) {
+					String first = title.substring(0, index);
+					String last = title.substring(index + 1);
+					title = first + last;
+				}
+			}
+		}
+		return title;
+	}
 
 	/**
 	 * Returns the label with any DBCS accelerator moved to the end of the string.
@@ -1303,52 +1289,52 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 	 *
 	 * @return label with moved accelerator
 	 */
-    public static String adjustDBCSAccelerator(String label) {
-        String title = label;
-        if (title != null) {
-            // strip out any '&' (accelerators)
-            int index = title.indexOf('&');
-            if (index > 0) {
-                //DBCS languages use "(&X)" format
-                if (title.charAt(index - 1) == '(' && title.length() >= index + 3 && title.charAt(index + 2) == ')') {
-                    String first = title.substring(0, index - 1);
-                    String accel = title.substring(index - 1, index + 3);
-                    String last = title.substring(index + 3);
-                    title = first + last;
-                    if (title.endsWith("...")) { //$NON-NLS-1$
-                    	title = title.substring(0, title.length() - 3);
-                    	title = title + accel + "..."; //$NON-NLS-1$
-                    } else {
-                    	title = title + accel;
-                    }
-                }
-            }
-        }
-        return title;
-    }
+	public static String adjustDBCSAccelerator(String label) {
+		String title = label;
+		if (title != null) {
+			// strip out any '&' (accelerators)
+			int index = title.indexOf('&');
+			if (index > 0) {
+				//DBCS languages use "(&X)" format
+				if (title.charAt(index - 1) == '(' && title.length() >= index + 3 && title.charAt(index + 2) == ')') {
+					String first = title.substring(0, index - 1);
+					String accel = title.substring(index - 1, index + 3);
+					String last = title.substring(index + 3);
+					title = first + last;
+					if (title.endsWith("...")) { //$NON-NLS-1$
+						title = title.substring(0, title.length() - 3);
+						title = title + accel + "..."; //$NON-NLS-1$
+					} else {
+						title = title + accel;
+					}
+				}
+			}
+		}
+		return title;
+	}
 
-    /**
-     * Returns the image descriptor registry used for this plug-in.
-     * @return the singleton {@link ImageDescriptorRegistry}
-     *
-     * @since 3.1
-     */
-    public static ImageDescriptorRegistry getImageDescriptorRegistry() {
-        if (getDefault().fImageDescriptorRegistry == null) {
-            getDefault().fImageDescriptorRegistry = new ImageDescriptorRegistry();
-        }
-        return getDefault().fImageDescriptorRegistry;
-    }
+	/**
+	 * Returns the image descriptor registry used for this plug-in.
+	 * @return the singleton {@link ImageDescriptorRegistry}
+	 *
+	 * @since 3.1
+	 */
+	public static ImageDescriptorRegistry getImageDescriptorRegistry() {
+		if (getDefault().fImageDescriptorRegistry == null) {
+			getDefault().fImageDescriptorRegistry = new ImageDescriptorRegistry();
+		}
+		return getDefault().fImageDescriptorRegistry;
+	}
 
-    /**
-     * Returns an image descriptor for the icon referenced by the given attribute
-     * and configuration element, or <code>null</code> if none.
-     *
-     * @param element the configuration element
-     * @param attr the name of the attribute
-     * @return image descriptor or <code>null</code>
-     */
-    public static ImageDescriptor getImageDescriptor(IConfigurationElement element, String attr) {
+	/**
+	 * Returns an image descriptor for the icon referenced by the given attribute
+	 * and configuration element, or <code>null</code> if none.
+	 *
+	 * @param element the configuration element
+	 * @param attr the name of the attribute
+	 * @return image descriptor or <code>null</code>
+	 */
+	public static ImageDescriptor getImageDescriptor(IConfigurationElement element, String attr) {
 		Bundle bundle = Platform.getBundle(element.getContributor().getName());
 		String iconPath = element.getAttribute(attr);
 		if (iconPath != null) {
@@ -1367,18 +1353,18 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 			}
 		}
 		return null;
-    }
+	}
 
-    /**
-     * Returns an image descriptor for the icon referenced by the given path
-     * and contributor name, or <code>null</code> if none.
-     *
-     * @param name the name of the contributor
-     * @param path the path of the icon (from the configuration element)
-     * @return image descriptor or <code>null</code>
-     * @since 3.3
-     */
-    public static ImageDescriptor getImageDescriptor(String name, String path) {
+	/**
+	 * Returns an image descriptor for the icon referenced by the given path
+	 * and contributor name, or <code>null</code> if none.
+	 *
+	 * @param name the name of the contributor
+	 * @param path the path of the icon (from the configuration element)
+	 * @return image descriptor or <code>null</code>
+	 * @since 3.3
+	 */
+	public static ImageDescriptor getImageDescriptor(String name, String path) {
 		Bundle bundle = Platform.getBundle(name);
 		if (path != null) {
 			URL iconURL = FileLocator.find(bundle , new Path(path), null);
@@ -1387,9 +1373,9 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 			}
 		}
 		return null;
-    }
+	}
 
-    /**
+	/**
 	 * Performs extra filtering for launch configurations based on the preferences set on the
 	 * Launch Configurations page
 	 * @param config the config to filter
@@ -1409,7 +1395,7 @@ public class DebugUIPlugin extends AbstractUIPlugin implements ILaunchListener, 
 				ret &= new LaunchConfigurationTypeFilter().select(null, null, config.getType());
 			}
 			catch(CoreException e) {
-			    DebugUIPlugin.log(e);
+				DebugUIPlugin.log(e);
 			}
 		}
 		return ret;

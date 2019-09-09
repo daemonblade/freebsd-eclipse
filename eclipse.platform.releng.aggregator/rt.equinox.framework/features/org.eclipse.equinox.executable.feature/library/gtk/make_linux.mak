@@ -91,11 +91,10 @@ GTK_LIBS = \
  -DGTK3_LIB="\"libgtk-3.so.0\"" -DGDK3_LIB="\"libgdk-3.so.0\"" \
  -DPIXBUF_LIB="\"libgdk_pixbuf-2.0.so.0\"" -DGOBJ_LIB="\"libgobject-2.0.so.0\"" \
  -DGIO_LIB="\"libgio-2.0.so.0\"" -DGLIB_LIB="\"libglib-2.0.so.0\""
-port_prefix=`pkg-config --variable=prefix gtk+-3.0`
-LFLAGS = ${M_ARCH} -shared -fpic
-CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -Wall\
+LFLAGS = ${M_ARCH} -shared -fpic -Wl,--export-dynamic 
+CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -s -Wall\
 	-fpic \
-	-DFREEBSD \
+	-DLINUX \
 	-DDEFAULT_OS="\"$(DEFAULT_OS)\"" \
 	-DDEFAULT_OS_ARCH="\"$(DEFAULT_OS_ARCH)\"" \
 	-DDEFAULT_WS="\"$(DEFAULT_WS)\"" \
@@ -103,8 +102,7 @@ CFLAGS = ${M_CFLAGS} ${M_ARCH} -g -Wall\
 	$(GTK_LIBS) \
 	-I. \
 	-I.. \
-	-I$(port_prefix)/include \
-	-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/freebsd \
+	-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux \
 	`pkg-config --cflags gtk+-3.0`
 
 all: $(EXEC) $(DLL)
@@ -142,11 +140,11 @@ eclipseNix.o: ../eclipseNix.c
 
 $(EXEC): $(MAIN_OBJS) $(COMMON_OBJS)
 	$(info Linking and generating: $(EXEC))
-	$(CC) ${M_ARCH} -s -o $(EXEC) $(MAIN_OBJS) $(COMMON_OBJS) $(LIBS)
+	$(CC) ${M_ARCH} -o $(EXEC) $(MAIN_OBJS) $(COMMON_OBJS) $(LIBS)
 
 $(DLL): $(DLL_OBJS) $(COMMON_OBJS)
 	$(info Linking and generating: $(DLL))
-	$(CC) $(LFLAGS) -s -o $(DLL) $(DLL_OBJS) $(COMMON_OBJS) $(LIBS)
+	$(CC) $(LFLAGS) -o $(DLL) $(DLL_OBJS) $(COMMON_OBJS) $(LIBS)
 
 install: all
 	cp $(EXEC) $(OUTPUT_DIR)

@@ -94,9 +94,7 @@ public abstract class DynamicTestCase extends UITestCase implements
 			assertTrue("Expected ADDED event did not arrive in time", hasAddedEventPropagated());
 			try {
 				LeakTests.checkRef(queue, addedDelta);
-			} catch (IllegalArgumentException e1) {
-				e1.printStackTrace();
-			} catch (InterruptedException e1) {
+			} catch (IllegalArgumentException | InterruptedException e1) {
 				e1.printStackTrace();
 			}
 			processEvents();
@@ -159,8 +157,6 @@ public abstract class DynamicTestCase extends UITestCase implements
 		if (className == null) {
 			return;
 		}
-
-		setName("testClass() for " + getClass().getName());
 
 		Bundle bundle = getBundle();
 
@@ -241,9 +237,7 @@ public abstract class DynamicTestCase extends UITestCase implements
 				assertTrue("Expected REMOVED event did not arrive in time", hasRemovedEventPropagated());
 				try {
 					LeakTests.checkRef(queue, removedDelta);
-				} catch (IllegalArgumentException e1) {
-					e1.printStackTrace();
-				} catch (InterruptedException e1) {
+				} catch (IllegalArgumentException | InterruptedException e1) {
 					e1.printStackTrace();
 				}
 			} catch (BundleException e) {

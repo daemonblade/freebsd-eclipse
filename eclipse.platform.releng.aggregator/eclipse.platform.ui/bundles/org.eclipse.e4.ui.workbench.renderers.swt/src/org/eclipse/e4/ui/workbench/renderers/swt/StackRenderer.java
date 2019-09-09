@@ -191,6 +191,8 @@ public class StackRenderer extends LazyStackRenderer implements IPreferenceChang
 
 	private TabStateHandler tabStateHandler;
 
+	private boolean imageChanged;
+
 	List<CTabItem> getItemsToSet(MPart part) {
 		List<CTabItem> itemsToSet = new ArrayList<>();
 
@@ -249,7 +251,9 @@ public class StackRenderer extends LazyStackRenderer implements IPreferenceChang
 		List<CTabItem> itemsToSet = getItemsToSet(part);
 		for (CTabItem item : itemsToSet) {
 			if (key.equals(IPresentationEngine.OVERRIDE_ICON_IMAGE_KEY)) {
+				this.imageChanged = true;
 				item.setImage(getImage(part));
+				this.imageChanged = false;
 			} else if (key.equals(IPresentationEngine.OVERRIDE_TITLE_TOOL_TIP_KEY)) {
 				String newTip = getToolTip(part);
 				item.setToolTipText(getToolTip(newTip));
@@ -679,8 +683,7 @@ public class StackRenderer extends LazyStackRenderer implements IPreferenceChang
 
 	private boolean getMRUValueFromPreferences() {
 		boolean initialMRUValue = preferences.getBoolean(MRU_KEY_DEFAULT, MRU_DEFAULT);
-		boolean actualValue = preferences.getBoolean(MRU_KEY, initialMRUValue);
-		return actualValue;
+		return preferences.getBoolean(MRU_KEY, initialMRUValue);
 	}
 
 	private void updateMRUValue(CTabFolder tabFolder) {
@@ -1084,7 +1087,7 @@ public class StackRenderer extends LazyStackRenderer implements IPreferenceChang
 
 				// If the user middle clicks on a tab, close it
 				if (item != null && e.button == 2) {
-					closePart(item, false);
+					closePart(item);
 				}
 
 				// If the user clicks on the tab or empty stack space, call
@@ -1118,7 +1121,7 @@ public class StackRenderer extends LazyStackRenderer implements IPreferenceChang
 		CTabFolder2Adapter closeListener = new CTabFolder2Adapter() {
 			@Override
 			public void close(CTabFolderEvent event) {
-				event.doit = closePart(event.item, true);
+				event.doit = closePart(event.item);
 			}
 
 			@Override
@@ -1244,16 +1247,12 @@ public class StackRenderer extends LazyStackRenderer implements IPreferenceChang
 	 *
 	 * @param widget
 	 *            the part that owns this widget
-	 * @param check
-	 *            <tt>true</tt> if the part should be checked to see if it has
-	 *            been defined as being not closeable for users, <tt>false</tt>
-	 *            if this check should not be performed
 	 * @return <tt>true</tt> if the part was closed, <tt>false</tt> otherwise
 	 */
-	private boolean closePart(Widget widget, boolean check) {
+	private boolean closePart(Widget widget) {
 		MUIElement uiElement = (MUIElement) widget.getData(AbstractPartRenderer.OWNING_ME);
 		MPart part = (MPart) ((uiElement instanceof MPart) ? uiElement : ((MPlaceholder) uiElement).getRef());
-		if (!check && !isClosable(part)) {
+		if (!isClosable(part)) {
 			return false;
 		}
 
@@ -1817,5 +1816,10 @@ public class StackRenderer extends LazyStackRenderer implements IPreferenceChang
 		if (updatedFont != null) {
 			cti.setFont(updatedFont);
 		}
+	}
+
+	@Override
+	protected boolean imageChanged() {
+		return this.imageChanged;
 	}
 }

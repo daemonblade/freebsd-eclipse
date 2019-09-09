@@ -17,26 +17,26 @@ import org.eclipse.swt.internal.win32.*;
 
 public class IOleObject extends IUnknown
 {
-public IOleObject(long /*int*/ address) {
+public IOleObject(long address) {
 	super(address);
 }
-public int Advise(long /*int*/ pAdvSink, int[] pdwConnection) {
-	return OS.VtblCall(19, address, pAdvSink, pdwConnection);
+public int Advise(long pAdvSink, int[] pdwConnection) {
+	return COM.VtblCall(19, address, pAdvSink, pdwConnection);
 }
 public int Close(int dwSaveOption) {
-	return OS.VtblCall(6, address, dwSaveOption);
+	return COM.VtblCall(6, address, dwSaveOption);
 }
-public int DoVerb(int iVerb, MSG lpmsg, long /*int*/ pActiveSite, int lindex, long /*int*/ hwndParent, RECT lprcPosRect) {
+public int DoVerb(int iVerb, MSG lpmsg, long pActiveSite, int lindex, long hwndParent, RECT lprcPosRect) {
 	return COM.VtblCall(11, address, iVerb, lpmsg, pActiveSite, lindex, hwndParent, lprcPosRect);
 }
-public int GetClientSite(long /*int*/[] ppvClientSite) {
-	return OS.VtblCall(4, address, ppvClientSite);
+public int GetClientSite(long[] ppvClientSite) {
+	return COM.VtblCall(4, address, ppvClientSite);
 }
 public int GetExtent(int dwDrawAspect, SIZE pSizel) {
 	return COM.VtblCall(18, address, dwDrawAspect, pSizel);
 }
-public int SetClientSite(long /*int*/ pClientSite) {
-	return OS.VtblCall(3, address, pClientSite);
+public int SetClientSite(long pClientSite) {
+	return COM.VtblCall(3, address, pClientSite);
 }
 public int SetExtent(int dwDrawAspect, SIZE pSizel) {
 	return COM.VtblCall(17, address, dwDrawAspect, pSizel);
@@ -61,9 +61,9 @@ public int SetHostNames(String szContainerApp, String szContainerObj) {
 	return COM.VtblCall(5, address, buffer1, buffer2);
 }
 public int Unadvise(int token) {
-	return OS.VtblCall(20, address, token);
+	return COM.VtblCall(20, address, token);
 }
 public int Update() {
-	return OS.VtblCall(13, address);
+	return COM.VtblCall(13, address);
 }
 }

@@ -15,12 +15,10 @@ package org.eclipse.debug.internal.ui;
 
 
 import org.eclipse.core.runtime.IAdapterFactory;
-
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.internal.ui.breakpoints.provisional.IBreakpointContainer;
 import org.eclipse.debug.internal.ui.views.breakpoints.BreakpointContainerWorkbenchAdapter;
 import org.eclipse.debug.internal.ui.views.breakpoints.BreakpointPersistableElementAdapter;
-
 import org.eclipse.ui.IPersistableElement;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.eclipse.ui.model.IWorkbenchAdapter2;
@@ -39,21 +37,21 @@ public class DebugUIAdapterFactory implements IAdapterFactory {
 
 		if (adapterType == IPersistableElement.class) {
 			if (obj instanceof IBreakpoint) {
-			    return (T) new BreakpointPersistableElementAdapter((IBreakpoint)obj);
-            }
+				return (T) new BreakpointPersistableElementAdapter((IBreakpoint)obj);
+			}
 		}
 
-        if (adapterType == IWorkbenchAdapter.class) {
-            if (obj instanceof IBreakpointContainer) {
-                return (T) new BreakpointContainerWorkbenchAdapter();
-            }
-        }
+		if (adapterType == IWorkbenchAdapter.class) {
+			if (obj instanceof IBreakpointContainer) {
+				return (T) new BreakpointContainerWorkbenchAdapter();
+			}
+		}
 
-        if (adapterType == IWorkbenchAdapter2.class) {
-            if (obj instanceof IBreakpointContainer) {
-                return (T) new BreakpointContainerWorkbenchAdapter();
-            }
-        }
+		if (adapterType == IWorkbenchAdapter2.class) {
+			if (obj instanceof IBreakpointContainer) {
+				return (T) new BreakpointContainerWorkbenchAdapter();
+			}
+		}
 
 		return null;
 	}

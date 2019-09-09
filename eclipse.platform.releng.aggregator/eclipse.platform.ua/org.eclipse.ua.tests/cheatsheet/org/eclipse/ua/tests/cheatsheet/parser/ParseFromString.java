@@ -35,16 +35,16 @@ public class ParseFromString {
 
 	private static final String VALID_CONTENT =
 		"<?xml version=\"1.0\" encoding=\"UTF-8\" ?> "
-	    + "<cheatsheet title=\"Title\">"
+		+ "<cheatsheet title=\"Title\">"
 		+ "<intro><description>Simple test</description></intro>"
 		+ "<item title=\"Item\">"
 		+ "<description>description</description>"
-	    + "</item></cheatsheet>";
+		+ "</item></cheatsheet>";
 
 	// INVALID_CONTENT has no items
 	private static final String INVALID_CONTENT =
 		"<?xml version=\"1.0\" encoding=\"UTF-8\" ?> "
-	    + "<cheatsheet title=\"Title\">"
+		+ "<cheatsheet title=\"Title\">"
 		+ "<intro><description>Simple test</description></intro>"
 		+ "</cheatsheet>";
 
@@ -73,7 +73,7 @@ public class ParseFromString {
 	@Test
 	public void testUrlParserInput() {
 		URL testURL = ResourceFinder.findFile(UserAssistanceTestPlugin.getDefault(),
-			       "data/cheatsheet/valid/HelloWorld.xml");
+					"data/cheatsheet/valid/HelloWorld.xml");
 		ParserInput input = new ParserInput(testURL, UserAssistanceTestPlugin.getPluginId(), null);
 		assertNull(input.getXml());
 		assertTrue(testURL.equals(input.getUrl()));
@@ -95,6 +95,6 @@ public class ParseFromString {
 		ICheatSheet cheatSheet = parser.parse(input, CheatSheetParser.SIMPLE_ONLY);
 		assertNull(cheatSheet);
 		assertEquals(Status.ERROR, parser.getStatus().getSeverity());
-		assertTrue(parser.getStatus().getMessage().indexOf("must contain at least one <item>") >= 0);
+		assertTrue(parser.getStatus().getMessage().contains("must contain at least one <item>"));
 	}
 }

@@ -39,6 +39,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.condpermadmin.ConditionalPermissionAdmin;
@@ -133,18 +134,18 @@ public class Activator implements BundleActivator {
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
-				    try {
-				    	gogoSession.put("SCOPE", "equinox:*");
-				    	gogoSession.put("prompt", "osgi> ");
-				        gogoSession.execute("gosh --login --noshutdown");
-				    }
-				    catch (Exception e) {
-				        e.printStackTrace();
-				    }
-				    finally {
-				        gogoSession.close();
-				        equinoxSession.close();
-				    }
+					try {
+						gogoSession.put("SCOPE", "equinox:*");
+						gogoSession.put("prompt", "osgi> ");
+						gogoSession.execute("gosh --login --noshutdown");
+					}
+					catch (Exception e) {
+						e.printStackTrace();
+					}
+					finally {
+						gogoSession.close();
+						equinoxSession.close();
+					}
 				}
 			}, "Equinox Console Session").start();
 			return null;
@@ -184,7 +185,12 @@ public class Activator implements BundleActivator {
 
 				if (commandMethods.length > 0) {
 					List<ServiceRegistration<?>> registrations = new ArrayList<>();
-					registrations.add(context.registerService(Object.class, new CommandProviderAdapter(command, commandMethods), getAttributes(commandMethods)));
+					Dictionary<String, Object> attributes = getAttributes(commandMethods);
+					Object serviceRanking = reference.getProperty(Constants.SERVICE_RANKING);
+					if (serviceRanking != null) {
+					    attributes.put(Constants.SERVICE_RANKING, serviceRanking);
+					}
+					registrations.add(context.registerService(Object.class, new CommandProviderAdapter(command, commandMethods), attributes));
 					return registrations;
 				} else {
 					context.ungetService(reference);
@@ -311,7 +317,7 @@ public class Activator implements BundleActivator {
 		dict.put("osgi.command.scope", "equinox");
 		String[] methodNames = new String[commandMethods.length];
 		for (int i = 0; i < commandMethods.length; i++) {
-			String methodName = "" + commandMethods[i].getName().substring(1);
+			String methodName = commandMethods[i].getName().substring(1);
 			methodNames[i] = methodName;
 		}
 

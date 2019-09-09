@@ -15,20 +15,19 @@ package org.eclipse.swt.internal.webkit;
 
 
 import org.eclipse.swt.internal.ole.win32.*;
-import org.eclipse.swt.internal.win32.*;
 
 public class IWebURLResponse extends IUnknown {
 
-public IWebURLResponse (long /*int*/ address) {
+public IWebURLResponse (long address) {
 	super (address);
 }
 
 public int expectedContentLength (long[] result) {
-	return OS.VtblCall (3, getAddress (), result);
+	return COM.VtblCall (3, getAddress (), result);
 }
 
-public int URL (long /*int*/[] result) {
-	return OS.VtblCall (8, getAddress (), result);
+public int URL (long[] result) {
+	return COM.VtblCall (8, getAddress (), result);
 }
 
 }

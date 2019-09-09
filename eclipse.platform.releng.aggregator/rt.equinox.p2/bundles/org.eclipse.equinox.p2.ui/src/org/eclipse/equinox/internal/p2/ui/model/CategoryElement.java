@@ -21,9 +21,8 @@ import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.metadata.IRequirement;
 
 /**
- * Element wrapper class for IU's that represent categories of
- * available IU's
- * 
+ * Element wrapper class for IU's that represent categories of available IU's
+ *
  * @since 3.4
  */
 public class CategoryElement extends RemoteQueriedElement implements IIUElement {
@@ -37,11 +36,6 @@ public class CategoryElement extends RemoteQueriedElement implements IIUElement 
 		ius.add(iu);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.equinox.internal.provisional.p2.ui.model.ProvElement#getImageID(java.lang.Object)
-	 */
 	@Override
 	protected String getImageId(Object obj) {
 		return ProvUIImages.IMG_CATEGORY;
@@ -139,9 +133,6 @@ public class CategoryElement extends RemoteQueriedElement implements IIUElement 
 		return cache;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.equinox.internal.p2.ui.model.IIUElement#shouldShowChildren()
-	 */
 	@Override
 	public boolean shouldShowChildren() {
 		return true;
@@ -176,7 +167,7 @@ public class CategoryElement extends RemoteQueriedElement implements IIUElement 
 		IInstallableUnit iu = getIU();
 		if (iu == null)
 			return "NULL"; //$NON-NLS-1$
-		StringBuffer result = new StringBuffer();
+		StringBuilder result = new StringBuilder();
 		result.append("Category Element - "); //$NON-NLS-1$
 		result.append(getMergeKey(iu));
 		result.append(" (merging IUs: "); //$NON-NLS-1$

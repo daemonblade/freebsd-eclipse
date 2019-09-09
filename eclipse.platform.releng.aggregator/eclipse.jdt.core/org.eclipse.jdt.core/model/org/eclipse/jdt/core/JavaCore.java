@@ -3063,8 +3063,8 @@ public final class JavaCore extends Plugin {
 	 * @category OptionValue
 	 */
 	public static final String VERSION_CLDC_1_1 = "cldc1.1"; //$NON-NLS-1$
-	private static List<String> allVersions = Arrays.asList(VERSION_CLDC_1_1, VERSION_1_1, VERSION_1_2, VERSION_1_3, VERSION_1_4, VERSION_1_5,
-			VERSION_1_6, VERSION_1_7, VERSION_1_8, VERSION_9, VERSION_10, VERSION_11, VERSION_12);
+	private static List<String> allVersions = Collections.unmodifiableList(Arrays.asList(VERSION_CLDC_1_1, VERSION_1_1, VERSION_1_2, VERSION_1_3, VERSION_1_4, VERSION_1_5,
+			VERSION_1_6, VERSION_1_7, VERSION_1_8, VERSION_9, VERSION_10, VERSION_11, VERSION_12));
 
 	/**
 	 * Returns all {@link JavaCore}{@code #VERSION_*} levels in the order of their 
@@ -3821,11 +3821,7 @@ public final class JavaCore extends Plugin {
 					verbose_variable_value_after_initialization(variableName, variablePath);
 				manager.variablesWithInitializer.add(variableName);
 				ok = true;
-			} catch (RuntimeException e) {
-				if (JavaModelManager.CP_RESOLVE_VERBOSE || JavaModelManager.CP_RESOLVE_VERBOSE_FAILURE)
-					e.printStackTrace();
-				throw e;
-			} catch (Error e) {
+			} catch (RuntimeException | Error e) {
 				if (JavaModelManager.CP_RESOLVE_VERBOSE || JavaModelManager.CP_RESOLVE_VERBOSE_FAILURE)
 					e.printStackTrace();
 				throw e;

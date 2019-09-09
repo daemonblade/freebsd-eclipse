@@ -113,7 +113,7 @@ class LinkedModeManager {
 				return null;
 			}
 
-		if (mgrs.size() == 0)
+		if (mgrs.isEmpty())
 			mgr= new LinkedModeManager();
 
 		for (IDocument document : documents)
@@ -211,7 +211,7 @@ class LinkedModeManager {
 			}
 		} finally {
 			// if we remove any, make sure the new one got inserted
-			Assert.isTrue(fEnvironments.size() > 0);
+			Assert.isTrue(!fEnvironments.isEmpty());
 		}
 	}
 

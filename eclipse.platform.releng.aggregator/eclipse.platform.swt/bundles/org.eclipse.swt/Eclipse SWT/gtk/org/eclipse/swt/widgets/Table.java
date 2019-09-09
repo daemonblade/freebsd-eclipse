@@ -83,6 +83,8 @@ public class Table extends Composite {
 	TableColumn sortColumn;
 	ImageList imageList, headerImageList;
 	boolean firstCustomDraw;
+	/** True iff computeSize has never been called on this Table */
+	boolean firstCompute = true;
 	int drawState, drawFlags;
 	GdkRGBA background, foreground, drawForegroundRGBA;
 	Color headerBackground, headerForeground;
@@ -493,6 +495,18 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 	checkWidget ();
 	if (wHint != SWT.DEFAULT && wHint < 0) wHint = 0;
 	if (hHint != SWT.DEFAULT && hHint < 0) hHint = 0;
+	/*
+	 * Set all the TableColumn buttons visible otherwise
+	 * gtk_widget_get_preferred_size() will not take their size
+	 * into account.
+	 */
+	if (firstCompute) {
+		for (int x = 0; x < columns.length; x++) {
+			TableColumn column = columns[x];
+			if (column != null) GTK.gtk_widget_set_visible(column.buttonHandle, true);
+		}
+		firstCompute = false;
+	}
 	Point size = computeNativeSize (handle, wHint, hHint, changed);
 	/*
 	 * In GTK 3, computeNativeSize(..) sometimes just returns the header
@@ -510,16 +524,21 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 	if (wHint == SWT.DEFAULT && size.x == 0 && columnCount == 0) {
 		size.x = maxWidth;
 	}
-	/*
-	 * In case the table doesn't contain any elements,
-	 * getItemCount returns 0 and size.y will be 0
-	 * so need to assign default height. The same applies
-	 * for size.x.
-	 */
-	if (size.y == 0 && hHint == SWT.DEFAULT) size.y = DEFAULT_HEIGHT;
-	if (size.x == 0 && wHint == SWT.DEFAULT) size.x = DEFAULT_WIDTH;
 	Rectangle trim = computeTrimInPixels (0, 0, size.x, size.y);
 	size.x = trim.width;
+	/*
+	 * Feature in GTK: sometimes GtkScrolledWindow's with no scrollbars
+	 * won't automatically adjust their size. This happens when a Table
+	 * has a header, and the initial computed height was the height of
+	 * the of the header.
+	 *
+	 *  The fix is to increment the height by 1 in order to force a size
+	 *  update for the parent GtkScrollWindow, otherwise the headers
+	 *  will not be shown. This only happens once, see bug 546490.
+	 */
+	if (size.y == this.headerHeight && this.headerVisible && (style & SWT.NO_SCROLL) != 0) {
+		trim.height = trim.height + 1;
+	}
 	size.y = trim.height;
 	return size;
 }
@@ -728,8 +747,8 @@ void createItem (TableColumn column, int index) {
 	/*
 	 * Feature in GTK. The tree view does not resize immediately if a table
 	 * column is created when the table is not visible. If the width of the
- 	 * new column is queried, GTK returns an incorrect value. The fix is to
- 	 * ensure that the columns are resized before any queries.
+	 * new column is queried, GTK returns an incorrect value. The fix is to
+	 * ensure that the columns are resized before any queries.
 	 */
 	if(!isVisible ()) {
 		forceResize();
@@ -1958,7 +1977,7 @@ long getTextRenderer (long column) {
 	long textRenderer = 0;
 	while (list != 0) {
 		long renderer = OS.g_list_data (list);
-		 if (GTK.GTK_IS_CELL_RENDERER_TEXT (renderer)) {
+		if (GTK.GTK_IS_CELL_RENDERER_TEXT (renderer)) {
 			textRenderer = renderer;
 			break;
 		}
@@ -2226,8 +2245,8 @@ long gtk_button_release_event (long widget, long event) {
 			if ((eventState[0] & (GDK.GDK_CONTROL_MASK|GDK.GDK_SHIFT_MASK)) == 0) {
 				GTK.gtk_tree_view_set_cursor(handle, path[0], 0,  false);
 			}
-			 // Check to see if there has been a new tree item selected when holding Control in Path.
-			 // If not, deselect the item.
+			// Check to see if there has been a new tree item selected when holding Control in Path.
+			// If not, deselect the item.
 			if ((eventState[0] & GDK.GDK_CONTROL_MASK) != 0 && selectionCountOnRelease == selectionCountOnPress) {
 				GTK.gtk_tree_selection_unselect_path (selection,path[0]);
 			}
@@ -2535,7 +2554,7 @@ void propagateDraw (long container, long cairo) {
 	 * "noChildDrawing" widgets might still be partially drawn.
 	 */
 	super.propagateDraw(container, cairo);
-	if (headerVisible && noChildDrawing != null && wasScrolled) {
+	if (headerVisible && noChildDrawing && wasScrolled) {
 		for (TableColumn column : columns) {
 			if (column != null) {
 				GTK.gtk_widget_queue_draw(column.buttonHandle);
@@ -3398,7 +3417,7 @@ void setBackgroundGdkRGBA (long context, long handle, GdkRGBA rgba) {
 	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
 		String name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? "treeview" : "GtkTreeView";
 		String css = name + " {background-color: " + display.gtk_rgba_to_css_string(background) + ";}\n"
-                + name + ":selected {background-color: " + display.gtk_rgba_to_css_string(selectedBackground) + ";}";
+				+ name + ":selected {background-color: " + display.gtk_rgba_to_css_string(selectedBackground) + ";}";
 
 		// Cache background color
 		cssBackground = css;
@@ -4175,15 +4194,12 @@ long windowProc (long handle, long arg0, long user_data) {
 			 */
 			if (hasChildren) {
 				/*
-				 * If headers are visible, set noChildDrawing to their
-				 * dimensions -- this will prevent any child widgets from drawing
+				 * If headers are visible, set noChildDrawing to true
+				 * this will prevent any child widgets from drawing
 				 * over the header buttons. See bug 535978.
 				 */
 				if (headerVisible) {
-					GdkRectangle rect = new GdkRectangle ();
-					GDK.gdk_cairo_get_clip_rectangle (arg0, rect);
-					// -1's is for the 1px of padding between the fixedHandle and handle
-					noChildDrawing = new Rectangle(0, 0, rect.width - 1, this.headerHeight - 1);
+					noChildDrawing = true;
 				}
 				propagateDraw(handle, arg0);
 			}

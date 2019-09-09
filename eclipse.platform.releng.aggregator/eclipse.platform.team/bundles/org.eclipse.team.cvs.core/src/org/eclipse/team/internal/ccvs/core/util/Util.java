@@ -368,8 +368,8 @@ public class Util {
 			return tag;
 		}
 		
-		for (int i = 0; i < members.length; i++) {
-			if (members[i].getType() == IResource.FILE) {
+		for (IResource member : members) {
+			if (member.getType() == IResource.FILE) {
 				return tag;
 			}
 		}
@@ -554,7 +554,7 @@ public class Util {
 	 * Flatten the text in the multiline comment
 	 */
 	public static String flattenText(String string) {
-		StringBuffer buffer = new StringBuffer(string.length() + 20);
+		StringBuilder buffer = new StringBuilder(string.length() + 20);
 		boolean skipAdjacentLineSeparator = true;
 		for (int i = 0; i < string.length(); i++) {
 			char c = string.charAt(i);

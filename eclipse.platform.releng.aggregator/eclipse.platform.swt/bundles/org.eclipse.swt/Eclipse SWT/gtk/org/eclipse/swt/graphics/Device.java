@@ -446,12 +446,12 @@ public FontData[] getFontList (String faceName, boolean scalable) {
 			match = faceName.equalsIgnoreCase(name);
 		}
 		if (match) {
-		    OS.pango_font_family_list_faces(family[0], faces, n_faces);
-		    for (int j=0; j<n_faces[0]; j++) {
-		        C.memmove(face, faces[0] + j * C.PTR_SIZEOF, C.PTR_SIZEOF);
-		        long fontDesc = OS.pango_font_face_describe(face[0]);
-		        Font font = Font.gtk_new(this, fontDesc);
-		        FontData data = font.getFontData()[0];
+			OS.pango_font_family_list_faces(family[0], faces, n_faces);
+			for (int j=0; j<n_faces[0]; j++) {
+				C.memmove(face, faces[0] + j * C.PTR_SIZEOF, C.PTR_SIZEOF);
+				long fontDesc = OS.pango_font_face_describe(face[0]);
+				Font font = Font.gtk_new(this, fontDesc);
+				FontData data = font.getFontData()[0];
 				if (nFds == fds.length) {
 					FontData[] newFds = new FontData[fds.length + n_families[0]];
 					System.arraycopy(fds, 0, newFds, 0, nFds);
@@ -459,9 +459,9 @@ public FontData[] getFontList (String faceName, boolean scalable) {
 				}
 				fds[nFds++] = data;
 				OS.pango_font_description_free(fontDesc);
-		    }
-		    OS.g_free(faces[0]);
-		    if (faceName != null) break;
+			}
+			OS.g_free(faces[0]);
+			if (faceName != null) break;
 		}
 	}
 	OS.g_free(families[0]);
@@ -670,7 +670,7 @@ protected void init () {
 			surface = GDK.gdk_window_create_similar_surface(gdkResource, Cairo.CAIRO_CONTENT_COLOR, 10, 10);
 		}
 		Cairo.cairo_surface_get_device_scale(surface, sx, sy);
-		DPIUtil.setUseCairoAutoScale((sx[0]*100) == scaleFactor);
+		DPIUtil.setUseCairoAutoScale((sx[0]*100) == scaleFactor || OS.isGNOME);
 	}
 
 	/* Initialize the system font slot */
@@ -743,8 +743,8 @@ private void overrideThemeValues () {
 	// Load functional CSS fixes. Such as keyboard functionality for some widgets.
 	combinedCSS.append(load.apply(
 		GTK.GTK_VERSION < OS.VERSION(3, 20, 0) ?
-				"/org/eclipse/swt/internal/gtk/swt_functional_gtk_pre320.css" :
-				"/org/eclipse/swt/internal/gtk/swt_functional_gtk_320.css"
+				"/org/eclipse/swt/internal/gtk/swt_functional_gtk_pre_3_20.css" :
+				"/org/eclipse/swt/internal/gtk/swt_functional_gtk_3_20.css"
 			, true));
 
 	// By default, load CSS theme fixes to overcome things such as excessive padding that breaks SWT otherwise.
@@ -756,11 +756,14 @@ private void overrideThemeValues () {
 	// - These fixes should not contain any color information, otherwise it might break a light/dark variant of the theme.
 	//   Color fixes should be put either into the theme itself or via swt user api.
 	if (System.getProperty("org.eclipse.swt.internal.gtk.noThemingFixes") == null) {
-		combinedCSS.append(load.apply(
-				GTK.GTK_VERSION < OS.VERSION(3, 20, 0) ?
-						"/org/eclipse/swt/internal/gtk/swt_theming_fixes_gtk_pre320.css" :
-						"/org/eclipse/swt/internal/gtk/swt_theming_fixes_gtk_320.css"
-					, true));
+		if (GTK.GTK_VERSION >= OS.VERSION(3, 20, 0)) {
+			combinedCSS.append(load.apply("/org/eclipse/swt/internal/gtk/swt_theming_fixes_gtk_3_20.css", true));
+			if (GTK.GTK_VERSION >= OS.VERSION(3, 24, 5)) {
+				combinedCSS.append(load.apply("/org/eclipse/swt/internal/gtk/swt_theming_fixes_gtk_3_24_5.css", true));
+			}
+		} else {
+			combinedCSS.append(load.apply("/org/eclipse/swt/internal/gtk/swt_theming_fixes_gtk_pre_3_20.css", true));
+		}
 	}
 
 	// Load CSS from user-defined CSS file.

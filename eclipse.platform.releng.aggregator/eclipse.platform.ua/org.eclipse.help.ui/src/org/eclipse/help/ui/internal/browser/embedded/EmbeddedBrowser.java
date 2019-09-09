@@ -130,8 +130,8 @@ public class EmbeddedBrowser {
 		h = Platform.getPreferencesService().getInt(HelpUIPlugin.PLUGIN_ID, BROWSER_HEIGTH, 0, null);
 		if (w == 0 || h == 0) {
 			// first launch, use default size
-			w = 1024;
-			h = 768;
+			w = 1600;
+			h = 900;
 			x = shell.getLocation().x;
 			y = shell.getLocation().y;
 		}
@@ -392,7 +392,7 @@ public class EmbeddedBrowser {
 	private static String getWindowTitle() {
 		if (Platform.getPreferencesService().getBoolean(HelpUIPlugin.PLUGIN_ID, "windowTitlePrefix", false, null)) { //$NON-NLS-1$
 			return NLS.bind(Messages.browserTitle, BaseHelpSystem
-            .getProductName());
+			.getProductName());
 		}
 		return BaseHelpSystem.getProductName();
 	}

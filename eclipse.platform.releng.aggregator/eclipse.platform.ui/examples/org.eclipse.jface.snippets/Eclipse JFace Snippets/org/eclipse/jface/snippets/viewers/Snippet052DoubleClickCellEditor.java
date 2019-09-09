@@ -41,7 +41,7 @@ import org.eclipse.swt.widgets.Shell;
 /**
  * Shows how to setup a Viewer to start cell editing on double click
  *
- * @author Tom Schindl <tom.schindl@bestsolution.at>
+ * @author Tom Schindl &lt;tom.schindl@bestsolution.at&gt;
  *
  */
 public class Snippet052DoubleClickCellEditor {
@@ -156,7 +156,7 @@ public class Snippet052DoubleClickCellEditor {
 
 		@Override
 		protected Object getValue(Object element) {
-			return "Column " + property + " => " + element.toString();
+			return "Column " + property + " => " + element;
 		}
 
 		@Override

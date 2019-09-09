@@ -181,7 +181,7 @@ public class AddNewDependenciesOperation extends WorkspaceModifyOperation {
 			int index = (value != null) ? value.indexOf(';') : -1;
 			String projectBundleId = (index > 0) ? value.substring(0, index) : value;
 			List<ExportPackageDescription> result = new LinkedList<>();
-			Stack<BaseDescription> stack = new Stack<>();
+			ArrayDeque<BaseDescription> stack = new ArrayDeque<>();
 			stack.add(desc);
 			while (!stack.isEmpty()) {
 				BundleDescription bdesc = (BundleDescription) stack.pop();
@@ -447,14 +447,13 @@ public class AddNewDependenciesOperation extends WorkspaceModifyOperation {
 					added.add(pluginId);
 					if (entry != null && entry.contains(pluginId))
 						entry.removeToken(pluginId);
-				} catch (BundleException e) {
-				} catch (CoreException e) {
+				} catch (BundleException | CoreException e) {
 				}
 		}
 	}
 
 	protected final void minimizeBundles(Collection<String> pluginIds) {
-		Stack<String> stack = new Stack<>();
+		ArrayDeque<String> stack = new ArrayDeque<>();
 		Iterator<String> it = pluginIds.iterator();
 		while (it.hasNext())
 			stack.push(it.next().toString());

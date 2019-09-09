@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -272,11 +272,7 @@ public class DialogSettings implements IDialogSettings {
 				root = document.getFirstChild();
 			}
 			load(document, (Element) root);
-		} catch (ParserConfigurationException e) {
-			// ignore
-		} catch (IOException e) {
-			// ignore
-		} catch (SAXException e) {
+		} catch (ParserConfigurationException | IOException | SAXException e) {
 			// ignore
 		}
 	}
@@ -333,7 +329,11 @@ public class DialogSettings implements IDialogSettings {
 
 	@Override
 	public void put(String key, String[] value) {
-		arrayItems.put(key, value);
+		if (value == null) {
+			arrayItems.remove(key);
+		} else {
+			arrayItems.put(key, value);
+		}
 	}
 
 	@Override
@@ -358,7 +358,11 @@ public class DialogSettings implements IDialogSettings {
 
 	@Override
 	public void put(String key, String value) {
-		items.put(key, value);
+		if (value == null) {
+			items.remove(key);
+		} else {
+			items.put(key, value);
+		}
 	}
 
 	@Override

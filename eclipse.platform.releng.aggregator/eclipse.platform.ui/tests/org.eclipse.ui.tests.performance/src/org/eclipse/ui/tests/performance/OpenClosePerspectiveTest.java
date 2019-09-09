@@ -116,7 +116,7 @@ public class OpenClosePerspectiveTest extends BasicPerformanceTest {
 		Command command = commandService
 				.getCommand("org.eclipse.ui.window.closePerspective");
 
-		HashMap<String, String> parameters = new HashMap<String, String>();
+		HashMap<String, String> parameters = new HashMap<>();
 		parameters.put(IWorkbenchCommandConstants.WINDOW_CLOSE_PERSPECTIVE_PARM_ID,
 				persp.getId());
 
@@ -127,10 +127,7 @@ public class OpenClosePerspectiveTest extends BasicPerformanceTest {
 				.getService(IHandlerService.class);
 		try {
 			handlerService.executeCommand(pCommand, null);
-		} catch (ExecutionException e1) {
-		} catch (NotDefinedException e1) {
-		} catch (NotEnabledException e1) {
-		} catch (NotHandledException e1) {
+		} catch (ExecutionException | NotDefinedException | NotEnabledException | NotHandledException e1) {
 		}
 
 	}

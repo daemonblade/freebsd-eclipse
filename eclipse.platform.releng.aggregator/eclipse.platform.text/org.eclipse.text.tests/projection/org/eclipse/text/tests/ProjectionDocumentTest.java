@@ -352,7 +352,7 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.replace(85, 90, "~");
 		buffer.replace(65, 70, "~");
 		buffer.replace(45, 50, "~");
@@ -498,7 +498,7 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.insert(40, '~');
 		assertSlaveContents(buffer.toString());
 	}
@@ -515,7 +515,7 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.deleteCharAt(40);
 		assertSlaveContents(buffer.toString());
 	}
@@ -532,7 +532,7 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.replace(40, 41, "~");
 		assertSlaveContents(buffer.toString());
 	}
@@ -559,7 +559,7 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.deleteCharAt(59);
 		assertSlaveContents(buffer.toString());
 	}
@@ -577,7 +577,7 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.replace(59, 60, "~");
 		assertSlaveContents(buffer.toString());
 	}
@@ -707,7 +707,7 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.delete(30, 40);
 		assertSlaveContents(buffer.toString());
 	}
@@ -734,7 +734,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.replace(30, 40, "~~~~~");
 		assertSlaveContents(buffer.toString());
 	}
@@ -751,7 +751,7 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.delete(40, 50);
 		assertSlaveContents(buffer.toString());
 	}
@@ -778,7 +778,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.replace(40, 50, "~~~~~");
 		assertSlaveContents(buffer.toString());
 	}
@@ -866,7 +866,7 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 		assertSlaveContents("~~~~~");
-		StringBuffer buffer= new StringBuffer(getOriginalMasterContents());
+		StringBuilder buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.replace(20, 160, "~~~~~");
 		assertMasterContents(buffer.toString());
 	}
@@ -886,7 +886,7 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.replace(90, 95, "~");
 		buffer.replace(70, 75, "~");
 		buffer.replace(50, 55, "~");
@@ -894,7 +894,7 @@ public class ProjectionDocumentTest {
 		buffer.replace(10, 15, "~");
 		assertSlaveContents(buffer.toString());
 
-		buffer= new StringBuffer(getOriginalMasterContents());
+		buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.replace(170, 175, "~");
 		buffer.replace(130, 135, "~");
 		buffer.replace(90, 95, "~");
@@ -919,7 +919,7 @@ public class ProjectionDocumentTest {
 		}
 
 		assertSlaveContents("~~~~~");
-		StringBuffer buffer= new StringBuffer(getOriginalMasterContents());
+		StringBuilder buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.replace(160, 180, "~");
 		buffer.replace(120, 140, "~");
 		buffer.replace(80, 100, "~");
@@ -940,11 +940,11 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.insert(20, '~');
 		assertSlaveContents(buffer.toString());
 
-		buffer= new StringBuffer(getOriginalMasterContents());
+		buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.insert(40, '~');
 		assertMasterContents(buffer.toString());
 	}
@@ -961,11 +961,11 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.deleteCharAt(20);
 		assertSlaveContents(buffer.toString());
 
-		buffer= new StringBuffer(getOriginalMasterContents());
+		buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.deleteCharAt(40);
 		assertMasterContents(buffer.toString());
 	}
@@ -982,11 +982,11 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.replace(20, 21, "~");
 		assertSlaveContents(buffer.toString());
 
-		buffer= new StringBuffer(getOriginalMasterContents());
+		buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.replace(40, 41, "~");
 		assertMasterContents(buffer.toString());
 	}
@@ -1012,11 +1012,11 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.deleteCharAt(39);
 		assertSlaveContents(buffer.toString());
 
-		buffer= new StringBuffer(getOriginalMasterContents());
+		buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.deleteCharAt(59);
 		assertMasterContents(buffer.toString());
 	}
@@ -1033,11 +1033,11 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.replace(39, 40, "~");
 		assertSlaveContents(buffer.toString());
 
-		buffer= new StringBuffer(getOriginalMasterContents());
+		buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.replace(59, 60, "~");
 		assertMasterContents(buffer.toString());
 	}
@@ -1057,11 +1057,11 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(originalSlaveContent);
+		StringBuilder buffer= new StringBuilder(originalSlaveContent);
 		buffer.insert(80, "~");
 		assertSlaveContents(buffer.toString());
 
-		buffer= new StringBuffer(getOriginalMasterContents());
+		buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.insert(180, "~");
 		assertMasterContents(buffer.toString());
 	}
@@ -1087,11 +1087,11 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.delete(30, 50);
 		assertSlaveContents(buffer.toString());
 
-		buffer= new StringBuffer(getOriginalMasterContents());
+		buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.delete(50, 90);
 		assertMasterContents(buffer.toString());
 	}
@@ -1117,11 +1117,11 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.replace(30, 50, "~~~~~");
 		assertSlaveContents(buffer.toString());
 
-		buffer= new StringBuffer(getOriginalMasterContents());
+		buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.replace(50, 90, "~~~~~");
 		assertMasterContents(buffer.toString());
 	}
@@ -1138,11 +1138,11 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.delete(20, 40);
 		assertSlaveContents(buffer.toString());
 
-		buffer= new StringBuffer(getOriginalMasterContents());
+		buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.delete(40, 60);
 		assertMasterContents(buffer.toString());
 
@@ -1176,7 +1176,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		String addition= getOriginalMasterContents().substring(60, 70);
 		buffer.insert(40, addition);
 		assertSlaveContents(buffer.toString());
@@ -1203,7 +1203,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		String addition= getOriginalMasterContents().substring(70, 80);
 		buffer.insert(40, addition);
 		assertSlaveContents(buffer.toString());
@@ -1231,7 +1231,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		String addition= getOriginalMasterContents().substring(65, 75);
 		buffer.insert(40, addition);
 		assertSlaveContents(buffer.toString());
@@ -1257,7 +1257,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		String addition= getOriginalMasterContents().substring(60, 80);
 		buffer.insert(40, addition);
 		assertSlaveContents(buffer.toString());
@@ -1284,7 +1284,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		String addition= getOriginalMasterContents().substring(70, 80);
 		buffer.insert(40, addition);
 		assertSlaveContents(buffer.toString());
@@ -1311,7 +1311,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		String addition= getOriginalMasterContents().substring(60, 70);
 		buffer.insert(40, addition);
 		assertSlaveContents(buffer.toString());
@@ -1337,7 +1337,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		String addition= getOriginalMasterContents().substring(60, 80);
 		buffer.insert(40, addition);
 		assertSlaveContents(buffer.toString());
@@ -1364,7 +1364,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		String addition= getOriginalMasterContents().substring(100, 110);
 		buffer.insert(60, addition);
 		addition= getOriginalMasterContents().substring(70, 80);
@@ -1393,7 +1393,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.delete(20, 30);
 		assertSlaveContents(buffer.toString());
 	}
@@ -1419,7 +1419,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.delete(30, 40);
 		assertSlaveContents(buffer.toString());
 	}
@@ -1446,7 +1446,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.delete(45, 55);
 		assertSlaveContents(buffer.toString());
 	}
@@ -1471,7 +1471,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.delete(20, 40);
 		assertSlaveContents(buffer.toString());
 	}
@@ -1497,7 +1497,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.delete(30, 40);
 		assertSlaveContents(buffer.toString());
 	}
@@ -1523,7 +1523,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.delete(40, 50);
 		assertSlaveContents(buffer.toString());
 	}
@@ -1548,7 +1548,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.delete(40, 60);
 		assertSlaveContents(buffer.toString());
 	}
@@ -1574,7 +1574,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getProjectionASlaveContents());
+		StringBuilder buffer= new StringBuilder(getProjectionASlaveContents());
 		buffer.delete(30, 50);
 		assertSlaveContents(buffer.toString());
 	}
@@ -1597,7 +1597,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getOriginalMasterContents());
+		StringBuilder buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.delete(50, 90);
 		assertSlaveContents(buffer.toString());
 	}
@@ -1621,7 +1621,7 @@ public class ProjectionDocumentTest {
 		};
 		assertFragmentation(expected);
 
-		StringBuffer buffer= new StringBuffer(getOriginalMasterContents());
+		StringBuilder buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.delete(80, 180);
 		assertSlaveContents(buffer.toString());
 	}
@@ -1630,8 +1630,8 @@ public class ProjectionDocumentTest {
 		assertSame(expected.getDocument(), received.getDocument());
 		Assert.assertEquals(expected.getOffset(), received.getOffset());
 		Assert.assertEquals(expected.getLength(), received.getLength());
-		if (expected.getText() == null || expected.getText().length() == 0)
-			assertTrue(received.getText() == null || received.getText().length() == 0);
+		if (expected.getText() == null || expected.getText().isEmpty())
+			assertTrue(received.getText() == null || received.getText().isEmpty());
 		else
 			Assert.assertEquals(expected.getText(), received.getText());
 	}
@@ -1666,7 +1666,7 @@ public class ProjectionDocumentTest {
 		DocumentEvent[] actual= new DocumentEvent[receivedEvents.size()];
 		receivedEvents.toArray(actual);
 
-		StringBuffer buffer= new StringBuffer(getOriginalMasterContents());
+		StringBuilder buffer= new StringBuilder(getOriginalMasterContents());
 		DocumentEvent[] expected= new DocumentEvent[] {
 			new DocumentEvent(fSlaveDocument, 0, 0, buffer.substring(0, 20)),
 			new DocumentEvent(fSlaveDocument, 20, 0, buffer.substring(40, 60)),
@@ -2012,7 +2012,7 @@ public class ProjectionDocumentTest {
 			assertTrue(false);
 		}
 		assertSlaveContents("");
-		StringBuffer buffer= new StringBuffer(getOriginalMasterContents());
+		StringBuilder buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.delete(20, 160);
 		assertMasterContents(buffer.toString());
 
@@ -2046,7 +2046,7 @@ public class ProjectionDocumentTest {
 		assertFragmentation(expected);
 
 		assertSlaveContents("~~~~~");
-		StringBuffer buffer= new StringBuffer(getOriginalMasterContents());
+		StringBuilder buffer= new StringBuilder(getOriginalMasterContents());
 		buffer.replace(20, 160, "~~~~~");
 		assertMasterContents(buffer.toString());
 	}

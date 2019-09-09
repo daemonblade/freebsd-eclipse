@@ -16,6 +16,7 @@ package org.eclipse.debug.internal.ui.launchConfigurations;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -161,16 +162,14 @@ public class LaunchConfigurationTabGroupWrapper implements ILaunchConfigurationT
 					TabCollector collector = new TabCollector(Arrays.asList(fGroup.getTabs()), Arrays.asList(ext));
 					while(collector.hasNext()) {
 						ILaunchConfigurationTab next = collector.next();
-					    if (next != null) {
-					        fTabs.add(next);
-					    }
+						if (next != null) {
+							fTabs.add(next);
+						}
 					}
 				}
 				else {
 					ILaunchConfigurationTab[] tabs = fGroup.getTabs();
-					for(int i = 0; i < tabs.length; i++) {
-						fTabs.add(tabs[i]);
-					}
+					Collections.addAll(fTabs, tabs);
 				}
 			}
 			catch (CoreException ce) {DebugUIPlugin.log(ce);}

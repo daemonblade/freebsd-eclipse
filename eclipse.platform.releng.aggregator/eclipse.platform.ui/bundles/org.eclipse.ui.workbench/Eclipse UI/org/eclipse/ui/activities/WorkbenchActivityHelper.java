@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import org.eclipse.ui.IPluginContribution;
 import org.eclipse.ui.PlatformUI;
@@ -53,9 +52,8 @@ public final class WorkbenchActivityHelper {
 	 */
 	public static IIdentifier getIdentifier(IPluginContribution contribution) {
 		IWorkbenchActivitySupport workbenchActivitySupport = PlatformUI.getWorkbench().getActivitySupport();
-		IIdentifier identifier = workbenchActivitySupport.getActivityManager()
+		return workbenchActivitySupport.getActivityManager()
 				.getIdentifier(createUnifiedId(contribution));
-		return identifier;
 	}
 
 	/**
@@ -541,8 +539,7 @@ public final class WorkbenchActivityHelper {
 	 * @since 3.4
 	 */
 	public static <T> Collection<T> restrictCollection(Collection<T> toBeFiltered, Collection<T> result) {
-		for (Iterator<T> iterator = toBeFiltered.iterator(); iterator.hasNext();) {
-			T item = iterator.next();
+		for (T item : toBeFiltered) {
 			if (!restrictUseOf(item)) {
 				result.add(item);
 			}
@@ -562,9 +559,9 @@ public final class WorkbenchActivityHelper {
 	 */
 	public static Object[] restrictArray(Object[] array) {
 		ArrayList<Object> list = new ArrayList<>(array.length);
-		for (int i = 0; i < array.length; i++) {
-			if (!restrictUseOf(array[i])) {
-				list.add(array[i]);
+		for (Object e : array) {
+			if (!restrictUseOf(e)) {
+				list.add(e);
 			}
 		}
 		return list.toArray((Object[]) Array.newInstance(array.getClass().getComponentType(), list.size()));
@@ -582,8 +579,7 @@ public final class WorkbenchActivityHelper {
 	 * @since 3.4
 	 */
 	public static <T> Collection<T> filterCollection(Collection<T> toBeFiltered, Collection<T> result) {
-		for (Iterator<T> iterator = toBeFiltered.iterator(); iterator.hasNext();) {
-			T item = iterator.next();
+		for (T item : toBeFiltered) {
 			if (!filterItem(item)) {
 				result.add(item);
 			}
@@ -603,9 +599,9 @@ public final class WorkbenchActivityHelper {
 	 */
 	public static Object[] filterArray(Object[] array) {
 		ArrayList<Object> list = new ArrayList<>(array.length);
-		for (int i = 0; i < array.length; i++) {
-			if (!filterItem(array[i])) {
-				list.add(array[i]);
+		for (Object e : array) {
+			if (!filterItem(e)) {
+				list.add(e);
 			}
 		}
 		return list.toArray((Object[]) Array.newInstance(array.getClass().getComponentType(), list.size()));

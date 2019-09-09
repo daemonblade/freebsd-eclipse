@@ -15,28 +15,27 @@ package org.eclipse.swt.internal.webkit;
 
 
 import org.eclipse.swt.internal.ole.win32.*;
-import org.eclipse.swt.internal.win32.*;
 
 public class IWebURLRequest extends IUnknown {
 
-public IWebURLRequest (long /*int*/ address) {
+public IWebURLRequest (long address) {
 	super (address);
 }
 
-//public int HTTPBody (long /*int*/[] result) {
+//public int HTTPBody (long[] result) {
 //	return COM.VtblCall (6, getAddress (), result);
 //}
 
-public int HTTPMethod (long /*int*/[] result) {
-	return OS.VtblCall (8, getAddress (), result);
+public int HTTPMethod (long[] result) {
+	return COM.VtblCall (8, getAddress (), result);
 }
 
-public int URL (long /*int*/[] result) {
-	return OS.VtblCall (13, getAddress (), result);
+public int URL (long[] result) {
+	return COM.VtblCall (13, getAddress (), result);
 }
 
-public int mutableCopy (long /*int*/[] result) {
-	return OS.VtblCall (16, getAddress (), result);
+public int mutableCopy (long[] result) {
+	return COM.VtblCall (16, getAddress (), result);
 }
 
 }

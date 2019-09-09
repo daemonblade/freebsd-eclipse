@@ -35,6 +35,8 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.e4.ui.dialogs.filteredtree.FilteredTree;
+import org.eclipse.e4.ui.dialogs.filteredtree.PatternFilter;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -53,8 +55,6 @@ import org.eclipse.swt.program.Program;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.*;
 import org.eclipse.ui.actions.ActionFactory;
-import org.eclipse.ui.dialogs.FilteredTree;
-import org.eclipse.ui.dialogs.PatternFilter;
 import org.eclipse.ui.part.ViewPart;
 import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
@@ -538,7 +538,7 @@ public class LogView extends ViewPart implements ILogListener {
 			}
 		};
 		filter.setIncludeLeadingWildcard(true);
-		fFilteredTree = new FilteredTree(parent, SWT.FULL_SELECTION, filter, true);
+		fFilteredTree = new FilteredTree(parent, SWT.FULL_SELECTION, filter);
 		// need to give filter Textbox some space from the border
 		if (fFilteredTree.getFilterControl() != null) {
 			Composite filterComposite = fFilteredTree.getFilterControl().getParent(); // FilteredTree new look lays filter Text on additional composite
@@ -704,8 +704,7 @@ public class LogView extends ViewPart implements ILogListener {
 		ProgressMonitorDialog pmd = new ProgressMonitorDialog(getViewSite().getShell());
 		try {
 			pmd.run(true, true, op);
-		} catch (InvocationTargetException e) { // do nothing
-		} catch (InterruptedException e) { // do nothing
+		} catch (InvocationTargetException | InterruptedException e) { // do nothing
 		} finally {
 			fReadLogAction.setText(Messages.LogView_readLog_reload);
 			fReadLogAction.setToolTipText(Messages.LogView_readLog_reload);
@@ -733,7 +732,7 @@ public class LogView extends ViewPart implements ILogListener {
 
 			BufferedReader in = null;
 			try (BufferedWriter out = new BufferedWriter(
-					new OutputStreamWriter(new FileOutputStream(outputFile), StandardCharsets.UTF_8));) {
+					new OutputStreamWriter(new FileOutputStream(outputFile), StandardCharsets.UTF_8))) {
 				// $NON-NLS-1$
 				if (exportWholeLog) {
 					in = new BufferedReader(
@@ -820,8 +819,7 @@ public class LogView extends ViewPart implements ILogListener {
 		ProgressMonitorDialog pmd = new ProgressMonitorDialog(getViewSite().getShell());
 		try {
 			pmd.run(true, true, op);
-		} catch (InvocationTargetException e) { // do nothing
-		} catch (InterruptedException e) { // do nothing
+		} catch (InvocationTargetException | InterruptedException e) { // do nothing
 		} finally {
 			fReadLogAction.setText(Messages.LogView_readLog_restore);
 			fReadLogAction.setToolTipText(Messages.LogView_readLog_restore);

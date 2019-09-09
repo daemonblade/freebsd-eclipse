@@ -17,7 +17,6 @@ package org.eclipse.swt.examples.fileviewer;
 import static org.eclipse.swt.events.SelectionListener.widgetSelectedAdapter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -73,7 +72,7 @@ import org.eclipse.swt.widgets.TreeItem;
  * File Viewer example
  */
 public class FileViewer {
- 	private static ResourceBundle resourceBundle = ResourceBundle.getBundle("examples_fileviewer");
+	private static ResourceBundle resourceBundle = ResourceBundle.getBundle("examples_fileviewer");
 
 	private final static String DRIVE_A = "a:" + File.separator;
 	private final static String DRIVE_B = "b:" + File.separator;
@@ -1269,7 +1268,7 @@ public class FileViewer {
 		 * On JDK 1.1.7 and beyond...
 		 * -- PORTABILITY ISSUES HERE --
 		 */
-		if (System.getProperty ("os.name").indexOf ("Windows") != -1) {
+		if (System.getProperty ("os.name").contains ("Windows")) {
 			List<File> list = new ArrayList<>();
 			list.add(new File(DRIVE_A));
 			list.add(new File(DRIVE_B));
@@ -1365,8 +1364,6 @@ public class FileViewer {
 						FileWriter out = new FileWriter(newFile);){
 					int count;
 					while ((count = in.read()) != -1) out.write(count);
-				} catch (FileNotFoundException e) {
-					return false;
 				} catch (IOException e) {
 					return false;
 				}
@@ -1428,11 +1425,11 @@ public class FileViewer {
 			for (int i = end; i > start; --i) {
 				for (int j = end; j > start; --j)  {
 					if (compareFiles(files[j - 1], files[j]) > 0) {
-					    final File temp = files[j];
-					    files[j] = files[j-1];
-					    files[j-1] = temp;
+						final File temp = files[j];
+						files[j] = files[j-1];
+						files[j-1] = temp;
 					}
-			    }
+				}
 			}
 			return;
 		}

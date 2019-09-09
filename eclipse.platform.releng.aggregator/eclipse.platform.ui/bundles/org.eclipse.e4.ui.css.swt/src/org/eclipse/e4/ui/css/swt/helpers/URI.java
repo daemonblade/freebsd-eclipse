@@ -58,7 +58,7 @@ import java.util.StringTokenizer;
  * class's functionality is for handling such URIs, which can be identified
  * via {@link #isHierarchical isHierarchical}.
  *
- * <p><a name="device_explanation">
+ * <p id="device_explanation">
  * The primary enhancement beyond the RFC description is an optional
  * device component.  Instead of treating the device as just another segment
  * in the path, it can be stored as a separate component (almost a
@@ -79,7 +79,7 @@ import java.util.StringTokenizer;
  * can be used, in which a non-null <code>device</code> parameter can be
  * specified.
  *
- * <p><a name="archive_explanation">
+ * <p id="archive_explanation">
  * The other enhancement provides support for the almost-hierarchical
  * form used for files within archives, such as the JAR scheme, defined
  * for the Java Platform in the documentation for {@link
@@ -124,7 +124,7 @@ import java.util.StringTokenizer;
  * makes no attempt to encode characters 0xA0 and above.  Characters in the
  * range 0x80-0x9F are still escaped.  In this respect, EMF's notion of a URI
  * is actually more like an IRI (Internationalized Resource Identifier), for
- * which an RFC is now in <href="http://www.w3.org/International/iri-edit/draft-duerst-iri-09.txt">draft
+ * which an RFC is now in <a href="http://www.w3.org/International/iri-edit/draft-duerst-iri-09.txt">draft
  * form</a>.
  *
  * <p>Finally, note the difference between a <code>null</code> parameter to
@@ -180,7 +180,7 @@ public final class URI
 
 		public synchronized void put(String key, URI value)
 		{
-			super.put(key, new WeakReference<URI>(value));
+			super.put(key, new WeakReference<>(value));
 			if (++count > limit)
 			{
 				cleanGCedValues();
@@ -285,7 +285,7 @@ public final class URI
 	// Static initializer for archiveSchemes.
 	static
 	{
-		Set<String> set = new HashSet<String>();
+		Set<String> set = new HashSet<>();
 		String propertyValue = System.getProperty("org.eclipse.emf.common.util.URI.archiveSchemes");
 
 		if (propertyValue == null)
@@ -767,7 +767,7 @@ public final class URI
 
 		if (segmentsRemain(uri, i))
 		{
-			List<String> segmentList = new ArrayList<String>();
+			List<String> segmentList = new ArrayList<>();
 
 			while (segmentsRemain(uri, i))
 			{
@@ -838,7 +838,7 @@ public final class URI
 	 * Static factory method based on parsing a {@link java.io.File} path
 	 * string.  The <code>pathName</code> is converted into an appropriate
 	 * form, as follows: platform specific path separators are converted to
-	 * <code>/<code>; the path is encoded; and a "file" scheme and, if missing,
+	 * <code>/</code>; the path is encoded; and a "file" scheme and, if missing,
 	 * a leading <code>/</code>, are added to an absolute path.  The result
 	 * is then parsed using {@link #createURI(String) createURI}.
 	 *
@@ -865,8 +865,7 @@ public final class URI
 		uri = encode(uri, PATH_CHAR_HI, PATH_CHAR_LO, false);
 		if (file.isAbsolute())
 		{
-			URI result = createURI((uri.charAt(0) == SEGMENT_SEPARATOR ? "file:" : "file:/") + uri);
-			return result;
+			return createURI((uri.charAt(0) == SEGMENT_SEPARATOR ? "file:" : "file:/") + uri);
 		}
 		else
 		{
@@ -1004,8 +1003,7 @@ public final class URI
 		{
 			pathName = encode(pathName, PATH_CHAR_HI, PATH_CHAR_LO, false);
 		}
-		URI result = createURI((pathName.charAt(0) == SEGMENT_SEPARATOR ? unrootedBase : rootedBase) + pathName);
-		return result;
+		return createURI((pathName.charAt(0) == SEGMENT_SEPARATOR ? unrootedBase : rootedBase) + pathName);
 	}
 
 	// Private constructor for use of static factory methods.
@@ -1435,7 +1433,7 @@ public final class URI
 	 * relative path; <code>false</code> otherwise.
 	 *
 	 * <p>Note that <code>!hasEmpty()</code> does <em>not</em> imply that this
-	 * URI has any path segments; however, <code>hasRelativePath &&
+	 * URI has any path segments; however, <code>hasRelativePath &amp;&amp;
 	 * !hasEmptyPath()</code> does.
 	 */
 	public boolean hasEmptyPath()
@@ -1747,8 +1745,8 @@ public final class URI
 	 * Provides fast, indexed access to individual segments in the path
 	 * segment array.
 	 *
-	 * @exception java.lang.IndexOutOfBoundsException if <code>i < 0</code> or
-	 * <code>i >= segmentCount()</code>.
+	 * @exception java.lang.IndexOutOfBoundsException if <code>i &lt; 0</code> or
+	 * <code>i &gt;= segmentCount()</code>.
 	 */
 	public String segment(int i)
 	{

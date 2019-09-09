@@ -847,8 +847,7 @@ public class TestHarnessImpl extends ApplicationElementImpl implements
 	 */
 	public NotificationChain basicSetParent(
 			MElementContainer<MUIElement> newParent, NotificationChain msgs) {
-		msgs = eBasicSetContainer((InternalEObject)newParent, MTestPackage.TEST_HARNESS__PARENT, msgs);
-		return msgs;
+		return eBasicSetContainer((InternalEObject)newParent, MTestPackage.TEST_HARNESS__PARENT, msgs);
 	}
 
 	/**
@@ -859,7 +858,7 @@ public class TestHarnessImpl extends ApplicationElementImpl implements
 	public void setParent(MElementContainer<MUIElement> newParent) {
 		if (newParent != eInternalContainer() || (eContainerFeatureID() != MTestPackage.TEST_HARNESS__PARENT && newParent != null)) {
 			if (EcoreUtil.isAncestor(this, (EObject)newParent))
-				throw new IllegalArgumentException("Recursive containment not allowed for " + toString());
+				throw new IllegalArgumentException("Recursive containment not allowed for " + this);
 			NotificationChain msgs = null;
 			if (eInternalContainer() != null)
 				msgs = eBasicRemoveFromContainer(msgs);

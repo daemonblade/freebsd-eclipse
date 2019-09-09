@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,7 @@
  *     IBM Corporation - initial API and implementation
  *     Sebastian Davids - bug 128526, bug 128529
  *     Lars Vogel <Lars.Vogel@gmail.com> - Bug 440381
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - Bug 548578
  *******************************************************************************/
 package org.eclipse.e4.ui.workbench.swt.internal.copy;
 
@@ -19,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.eclipse.e4.core.contexts.IEclipseContext;
+import org.eclipse.e4.ui.dialogs.filteredtree.FilteredTree;
+import org.eclipse.e4.ui.dialogs.filteredtree.PatternFilter;
 import org.eclipse.e4.ui.internal.workbench.swt.WorkbenchSWTActivator;
 import org.eclipse.e4.ui.model.LocalizationHelper;
 import org.eclipse.e4.ui.model.application.MApplication;
@@ -188,6 +191,7 @@ public class ShowViewDialog extends Dialog implements
 	 */
 	private void createFilteredTreeViewer(Composite parent) {
 		PatternFilter filter = new ViewPatternFilter(context);
+		filter.setIncludeLeadingWildcard(true);
 		int styleBits = SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER;
 		filteredTree = new FilteredTree(parent, styleBits, filter);
 		filteredTree.setBackground(parent.getDisplay().getSystemColor(
@@ -302,7 +306,7 @@ public class ShowViewDialog extends Dialog implements
 			return;
 
 		if (expandedCategoryIds.length > 0)
-			filteredTree.getViewer().setExpandedElements(expandedCategoryIds);
+			filteredTree.getViewer().setExpandedElements((Object[]) expandedCategoryIds);
 
 		String selectedPartId = settings.get(STORE_SELECTED_VIEW_ID);
 		if (selectedPartId != null) {

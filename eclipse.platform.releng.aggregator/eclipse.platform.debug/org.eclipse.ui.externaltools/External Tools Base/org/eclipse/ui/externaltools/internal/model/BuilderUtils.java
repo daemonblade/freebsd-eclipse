@@ -147,7 +147,7 @@ public class BuilderUtils {
 	 */
 	public static ILaunchConfiguration duplicateConfiguration(IProject project, ILaunchConfiguration config) throws CoreException {
 		Map<String, Object> attributes = config.getAttributes();
-		String newName= new StringBuffer(config.getName()).append(ExternalToolsModelMessages.BuilderUtils_7).toString();
+		String newName= new StringBuilder(config.getName()).append(ExternalToolsModelMessages.BuilderUtils_7).toString();
 		newName= DebugPlugin.getDefault().getLaunchManager().generateLaunchConfigurationName(newName);
 		ILaunchConfigurationType newType= getConfigurationDuplicationType(config);
 		ILaunchConfigurationWorkingCopy newWorkingCopy= newType.newInstance(getBuilderFolder(project, true), newName);
@@ -175,14 +175,14 @@ public class BuilderUtils {
 		return BuilderCoreUtils.migrateBuilderConfiguration(project, workingCopy);
 	}
 
-    /**
-     * Converts the build types string into an array of
-     * build kinds.
-     *
-     * @param buildTypes the string of built types to convert
-     * @return the array of build kinds.
-     */
-    public static int[] buildTypesToArray(String buildTypes) {
-    	return BuilderCoreUtils.buildTypesToArray(buildTypes);
-    }
+	/**
+	 * Converts the build types string into an array of
+	 * build kinds.
+	 *
+	 * @param buildTypes the string of built types to convert
+	 * @return the array of build kinds.
+	 */
+	public static int[] buildTypesToArray(String buildTypes) {
+		return BuilderCoreUtils.buildTypesToArray(buildTypes);
+	}
 }

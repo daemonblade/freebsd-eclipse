@@ -14,6 +14,7 @@
 package org.eclipse.jface.action;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -327,9 +328,7 @@ public class CoolBarManager extends ContributionManager implements ICoolBarManag
 			if (wraps[0] != 0) {
 				adjustedWrapIndices = new int[wraps.length + 1];
 				adjustedWrapIndices[0] = 0;
-				for (int i = 0; i < wraps.length; i++) {
-					adjustedWrapIndices[i + 1] = wraps[i];
-				}
+				System.arraycopy(wraps, 0, adjustedWrapIndices, 1, wraps.length);
 			} else {
 				adjustedWrapIndices = wraps;
 			}
@@ -376,9 +375,7 @@ public class CoolBarManager extends ContributionManager implements ICoolBarManag
 	private ArrayList<IContributionItem> getItemList() {
 		IContributionItem[] cbItems = getItems();
 		ArrayList<IContributionItem> list = new ArrayList<>(cbItems.length);
-		for (IContributionItem cbItem : cbItems) {
-			list.add(cbItem);
-		}
+		list.addAll(Arrays.asList(cbItems));
 		return list;
 	}
 
@@ -399,12 +396,11 @@ public class CoolBarManager extends ContributionManager implements ICoolBarManag
 	private int getNumRows(IContributionItem[] items) {
 		int numRows = 1;
 		boolean separatorFound = false;
-		for (int i = 0; i < items.length; i++) {
-			if (items[i].isSeparator()) {
+		for (IContributionItem item : items) {
+			if (item.isSeparator()) {
 				separatorFound = true;
 			}
-			if ((separatorFound) && (isChildVisible(items[i])) && (!items[i].isGroupMarker())
-					&& (!items[i].isSeparator())) {
+			if ((separatorFound) && (isChildVisible(item)) && (!item.isGroupMarker()) && (!item.isSeparator())) {
 				numRows++;
 				separatorFound = false;
 			}
@@ -922,9 +918,9 @@ public class CoolBarManager extends ContributionManager implements ICoolBarManag
 			CoolItem[] items = coolBar.getItems();
 			if (items != null) {
 				ArrayList<Control> children = new ArrayList<>(items.length);
-				for (int i = 0; i < items.length; i++) {
-					if ((items[i].getControl() != null) && (!items[i].getControl().isDisposed())) {
-						children.add(items[i].getControl());
+				for (CoolItem item : items) {
+					if ((item.getControl() != null) && (!item.getControl().isDisposed())) {
+						children.add(item.getControl());
 					}
 				}
 				// Convert array

@@ -16,6 +16,7 @@ package org.eclipse.pde.internal.core;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
@@ -111,7 +112,6 @@ public class MinimalState {
 			MultiStatus status = new MultiStatus(PDECore.PLUGIN_ID, 0, NLS.bind(UtilMessages.ErrorReadingManifest, bundleLocation.toString()), null);
 			status.add(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, e.getMessage()));
 			throw new CoreException(status);
-		} catch (NumberFormatException e) {
 		} catch (IllegalArgumentException e) {
 		}
 		return null;
@@ -156,9 +156,7 @@ public class MinimalState {
 		List<BundleDescription> bundles = new ArrayList<>();
 		for (String symbolicName : symbolicNames) {
 			BundleDescription[] descriptions = fState.getBundles(symbolicName);
-			for (BundleDescription description : descriptions) {
-				bundles.add(description);
-			}
+			Collections.addAll(bundles, descriptions);
 		}
 		return fState.resolve(bundles.toArray(new BundleDescription[bundles.size()]));
 	}

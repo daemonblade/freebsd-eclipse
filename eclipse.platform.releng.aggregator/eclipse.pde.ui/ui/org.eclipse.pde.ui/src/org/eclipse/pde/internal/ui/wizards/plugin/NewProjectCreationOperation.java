@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,6 +14,7 @@
  *     Gary Duprex <Gary.Duprex@aspectstools.com> - bug 179213
  *     Benjamin Cabe <benjamin.cabe@anyware-tech.com> - bug 247553
  *     Johannes Ahlers <Johannes.Ahlers@gmx.de> - bug 477677
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - Bug 489181
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.wizards.plugin;
 
@@ -41,6 +42,7 @@ import org.eclipse.pde.internal.ui.PDEPlugin;
 import org.eclipse.pde.internal.ui.PDEUIMessages;
 import org.eclipse.pde.internal.ui.wizards.IProjectProvider;
 import org.eclipse.pde.ui.*;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.*;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.eclipse.ui.ide.IDE;
@@ -349,15 +351,11 @@ public class NewProjectCreationOperation extends WorkspaceModifyOperation {
 		TreeSet<String> set = new TreeSet<>();
 		if (fGenerator != null) {
 			String[] packages = fGenerator.getImportPackages();
-			for (String pkg : packages) {
-				set.add(pkg);
-			}
+			Collections.addAll(set, packages);
 		}
 		if (fContentWizard instanceof IBundleContentWizard) {
 			String[] packages = ((IBundleContentWizard) fContentWizard).getImportPackages();
-			for (String pkg : packages) {
-				set.add(pkg);
-			}
+			Collections.addAll(set, packages);
 		}
 		return set;
 	}
@@ -407,9 +405,7 @@ public class NewProjectCreationOperation extends WorkspaceModifyOperation {
 		ArrayList<IPluginReference> result = new ArrayList<>();
 		if (fGenerator != null) {
 			IPluginReference[] refs = fGenerator.getDependencies();
-			for (IPluginReference ref : refs) {
-				result.add(ref);
-			}
+			Collections.addAll(result, refs);
 		}
 
 		if (fContentWizard != null) {
@@ -466,11 +462,12 @@ public class NewProjectCreationOperation extends WorkspaceModifyOperation {
 	 * @param file file to open the editor on
 	 */
 	private void openFile(final IFile file) {
-		PDEPlugin.getDefault().getWorkbench().getDisplay().asyncExec(() -> {
+		Display.getDefault().asyncExec(() -> {
 			final IWorkbenchWindow ww = PDEPlugin.getActiveWorkbenchWindow();
 			final IWorkbenchPage page = ww.getActivePage();
-			if (page == null)
+			if (page == null) {
 				return;
+			}
 			IWorkbenchPart focusPart = page.getActivePart();
 			if (focusPart instanceof ISetSelectionTarget) {
 				ISelection selection = new StructuredSelection(file);
@@ -523,7 +520,7 @@ public class NewProjectCreationOperation extends WorkspaceModifyOperation {
 			String value = iter.next().toString();
 			buffer.append(value);
 
-			if (value.indexOf(";version=") == -1 && (version != null) && (values.size() == 1)) { //$NON-NLS-1$
+			if (!value.contains(";version=") && (version != null) && (values.size() == 1)) { //$NON-NLS-1$
 				buffer.append(";version=\"").append(version).append("\""); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}

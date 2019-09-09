@@ -16,7 +16,7 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
@@ -85,12 +85,11 @@
       <activation>
         <os>
           <family>unix</family>
+          <name>Linux</name>
 	</os>
       </activation>
 	  <modules>
-		<!-- disabled
 	    <module>tests/org.eclipse.swt.tests.gtk</module>
-		  -->
 	  </modules>
     </profile>
     <profile>
@@ -119,9 +118,7 @@
     <module>examples/org.eclipse.swt.examples.ole.win32</module>
     <module>examples/org.eclipse.swt.examples.views</module>
     <module>tests/org.eclipse.swt.tests.fragments.feature</module>
-	<!-- disabled
     <module>tests/org.eclipse.swt.tests</module>
-	  -->
     <module>features/org.eclipse.swt.tools.feature</module>
   </modules>
 </project>

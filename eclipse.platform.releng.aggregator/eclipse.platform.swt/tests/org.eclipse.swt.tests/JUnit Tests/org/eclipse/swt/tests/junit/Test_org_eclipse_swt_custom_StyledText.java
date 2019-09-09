@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -22,8 +22,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -32,6 +34,7 @@ import org.eclipse.swt.custom.BidiSegmentListener;
 import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.custom.ExtendedModifyListener;
 import org.eclipse.swt.custom.LineBackgroundListener;
+import org.eclipse.swt.custom.LineStyleEvent;
 import org.eclipse.swt.custom.LineStyleListener;
 import org.eclipse.swt.custom.MovementEvent;
 import org.eclipse.swt.custom.MovementListener;
@@ -696,28 +699,28 @@ public void test_computeSizeIIZ() {
 
 @Test
 public void test_computeSizeAlignment(){
-    shell.setLayout(new GridLayout());
-    StyledText singleText = new StyledText(shell, SWT.SINGLE);
-    shell.layout(true);
-    Point beforeAlignment = singleText.computeSize(100, SWT.DEFAULT);
-    //Should not change the computed size
-    singleText.setAlignment(SWT.RIGHT);
-    Point afterAlignment = singleText.computeSize(100, SWT.DEFAULT);
-    assertEquals(beforeAlignment, afterAlignment);
-    singleText.dispose();
+	shell.setLayout(new GridLayout());
+	StyledText singleText = new StyledText(shell, SWT.SINGLE);
+	shell.layout(true);
+	Point beforeAlignment = singleText.computeSize(100, SWT.DEFAULT);
+	//Should not change the computed size
+	singleText.setAlignment(SWT.RIGHT);
+	Point afterAlignment = singleText.computeSize(100, SWT.DEFAULT);
+	assertEquals(beforeAlignment, afterAlignment);
+	singleText.dispose();
 }
 @Test
 public void test_marginsCorrect(){
-    shell.setLayout(new GridLayout());
-    StyledText singleText = new StyledText(shell, SWT.SINGLE);
-    int leftMargin = 10;
-    singleText.setLeftMargin(leftMargin);
-    shell.layout(true);
-    singleText.setAlignment(SWT.RIGHT);
-    assertEquals(leftMargin, singleText.getLeftMargin());
-    singleText.setLeftMargin(leftMargin);
-    assertEquals(leftMargin, singleText.getLeftMargin());
-    singleText.dispose();
+	shell.setLayout(new GridLayout());
+	StyledText singleText = new StyledText(shell, SWT.SINGLE);
+	int leftMargin = 10;
+	singleText.setLeftMargin(leftMargin);
+	shell.layout(true);
+	singleText.setAlignment(SWT.RIGHT);
+	assertEquals(leftMargin, singleText.getLeftMargin());
+	singleText.setLeftMargin(leftMargin);
+	assertEquals(leftMargin, singleText.getLeftMargin());
+	singleText.dispose();
 }
 @Test
 public void test_copy() {
@@ -1888,8 +1891,8 @@ public void test_getStyleRanges() {
 	text.setStyleRange(getStyle(14,23,RED,null));
 	text.setStyleRange(getStyle(38,6,BLUE,null));
 	text.setStyleRange(getStyle(45,5,BLUE,null));
- 	text.replaceTextRange(14, 23, "\t/*Line 1\n\t * Line 2\n\t */");
- 	String newText = text.getTextRange(0, text.getCharCount());
+	text.replaceTextRange(14, 23, "\t/*Line 1\n\t * Line 2\n\t */");
+	String newText = text.getTextRange(0, text.getCharCount());
 	assertTrue(":1:", newText.equals("package test;\n\t/*Line 1\n\t * Line 2\n\t */\npublic class SimpleClass {\n}"));
 	StyleRange[] styles = text.getStyleRanges();
 	assertTrue(":1:", styles.length == 3);
@@ -1949,6 +1952,21 @@ public void test_getStyleRangesII() {
 	assertTrue(":4a:", styles.length == 1);
 	assertTrue(":4a:", styles[0].equals(getStyle(8,2,RED,null)));
 
+}
+@Test
+public void test_getStyleRanges_Bug549110() {
+	text.setText("abc\tdef\n123\t");
+	StyleRange tabStyle = new StyleRange();
+	tabStyle.start = 3;
+	tabStyle.length = 1;
+	tabStyle.metrics = new GlyphMetrics(0, 0, 50);
+	text.setStyleRange(tabStyle);
+	tabStyle = new StyleRange();
+	tabStyle.start = 11;
+	tabStyle.length = 1;
+	tabStyle.metrics = new GlyphMetrics(0, 0, 100);
+	text.setStyleRange(tabStyle);
+	text.selectAll();
 }
 @Test
 public void test_getTabs() {
@@ -3402,6 +3420,64 @@ public void test_setDoubleClickEnabledZ(){
 	assertFalse(":c:", text.getDoubleClickEnabled());
 	text.setDoubleClickEnabled(true);
 	assertTrue(":d:", text.getDoubleClickEnabled());
+}
+
+@Test
+public void test_setEnabled(){
+	// Get colors
+	Color disabledBg = text.getDisplay().getSystemColor(SWT.COLOR_TEXT_DISABLED_BACKGROUND);
+	Color disabledFg = text.getDisplay().getSystemColor(SWT.COLOR_WIDGET_DISABLED_FOREGROUND);
+	Color enabledBg = text.getDisplay().getSystemColor(SWT.COLOR_LIST_BACKGROUND);
+	Color enabledFg = text.getDisplay().getSystemColor(SWT.COLOR_LIST_FOREGROUND);
+
+	// Test basic enabled/disabled functionality twice
+	text.setEnabled(false);
+	assertEquals(disabledBg, text.getBackground());
+	assertEquals(disabledFg, text.getForeground());
+	text.setEnabled(true);
+	assertEquals(enabledBg, text.getBackground());
+	assertEquals(enabledFg, text.getForeground());
+	text.setEnabled(false);
+	assertEquals(disabledBg, text.getBackground());
+	assertEquals(disabledFg, text.getForeground());
+	text.setEnabled(true);
+	assertEquals(enabledBg, text.getBackground());
+	assertEquals(enabledFg, text.getForeground());
+
+	// Test color preservation
+	text.setBackground(getColor(BLUE));
+	text.setForeground(getColor(RED));
+	text.setEnabled(false);
+	assertEquals(getColor(BLUE), text.getBackground());
+	assertEquals(getColor(RED), text.getForeground());
+	text.setEnabled(true);
+	assertEquals(getColor(BLUE), text.getBackground());
+	assertEquals(getColor(RED), text.getForeground());
+
+	// Test color reset
+	text.setBackground(null);
+	text.setForeground(null);
+	assertEquals(enabledBg, text.getBackground());
+	assertEquals(enabledFg, text.getForeground());
+	text.setEnabled(false);
+	text.setBackground(null);
+	text.setForeground(null);
+	assertEquals(disabledBg, text.getBackground());
+	assertEquals(disabledFg, text.getForeground());
+	text.setBackground(getColor(GREEN));
+	text.setForeground(getColor(CYAN));
+	assertEquals(getColor(GREEN), text.getBackground());
+	assertEquals(getColor(CYAN), text.getForeground());
+	text.setBackground(null);
+	text.setForeground(null);
+	assertEquals(disabledBg, text.getBackground());
+	assertEquals(disabledFg, text.getForeground());
+
+	// Dispose colors
+	disabledBg.dispose();
+	disabledFg.dispose();
+	enabledBg.dispose();
+	enabledFg.dispose();
 }
 
 @Test
@@ -5245,6 +5321,105 @@ public void test_setStyleRanges_render() throws InterruptedException {
 	assertTrue(hasPixel(text, text.getDisplay().getSystemColor(SWT.COLOR_RED)));
 }
 
+/**
+ * Test LineStyleListener which provides styles but no ranges.
+ */
+@Test
+public void test_lineStyleListener_styles_render() throws InterruptedException {
+	Assume.assumeFalse("Bug 536588 prevents test to work on Mac", SwtTestUtil.isCocoa);
+	final ArrayList<StyleRange> styles = new ArrayList<>();
+	styles.add(getStyle(0, 2, null, GREEN));
+	styles.add(getStyle(4, 1, null, GREEN));
+	styles.add(getStyle(7, 7, null, GREEN));
+	styles.add(getStyle(17, 13, null, GREEN));
+	final LineStyleListener listener = (LineStyleEvent event) -> {
+		event.styles = styles.toArray(new StyleRange[0]);
+	};
+	testLineStyleListener("0123456789\n123456789\n123456789", listener, () -> hasPixel(text, getColor(GREEN)));
+
+	// Bug 549110: test styling from LineStyleListener which include tab character with metrics
+	final StyleRange tabStyle = new StyleRange();
+	tabStyle.start = 15;
+	tabStyle.length = 1;
+	tabStyle.metrics = new GlyphMetrics(0, 0, 100);
+	styles.add(tabStyle);
+	testLineStyleListener("0123456789\n1234\t6789\n123456789", listener, () -> hasPixel(text, getColor(GREEN)));
+}
+
+/**
+ * Test LineStyleListener which provides styles and ranges.
+ */
+@Test
+public void test_lineStyleListener_stylesAndRanges_render() throws InterruptedException {
+	Assume.assumeFalse("Bug 536588 prevents test to work on Mac", SwtTestUtil.isCocoa);
+	LineStyleListener listener = (LineStyleEvent event) -> {
+		final StyleRange style = getStyle(0, 0, null, GREEN);
+		event.styles =  new StyleRange[] { style, style, style, style };
+		event.ranges = new int[] {0,2, 4,1, 7,7, 17,13};
+	};
+	testLineStyleListener("0123456789\n123456789\n123456789", listener, () -> hasPixel(text, getColor(GREEN)));
+
+	// Bug 549110: test styling from LineStyleListener which include tab character with metrics
+	listener = (LineStyleEvent event) -> {
+		final StyleRange style = getStyle(0, 0, null, GREEN);
+		final StyleRange tabStyle = new StyleRange();
+		tabStyle.start = 15;
+		tabStyle.length = 1;
+		tabStyle.metrics = new GlyphMetrics(0, 0, 100);
+		event.styles =  new StyleRange[] { style, style, style, tabStyle, style };
+		event.ranges = new int[] {0,2, 4,1, 7,7, 15,1, 17,13};
+	};
+	testLineStyleListener("0123456789\n1234\t6789\n123456789", listener, () -> hasPixel(text, getColor(GREEN)));
+}
+
+/**
+ * Test LineStyleListener which provides invalid styles with invalid start or length.
+ */
+@Test
+public void test_lineStyleListener_invalidStyles_render() throws InterruptedException {
+	Assume.assumeFalse("Bug 536588 prevents test to work on Mac", SwtTestUtil.isCocoa);
+	LineStyleListener listener = (LineStyleEvent event) -> {
+		event.styles = new StyleRange[] {
+			getStyle(-10, 4, null, GREEN),
+			getStyle(-5, 10, null, GREEN),
+			getStyle(12, 10, null, GREEN),
+			getStyle(40, 8, null, GREEN),
+		};
+	};
+	testLineStyleListener("0123456789\n123456789", listener, () -> hasPixel(text, getColor(GREEN)));
+
+	// Bug 549110: test styling from LineStyleListener which include tab character with metrics
+	final StyleRange tabStyle = new StyleRange();
+	listener = (LineStyleEvent event) -> {
+		event.styles = new StyleRange[] { tabStyle };
+	};
+	// The following tests do not need a condition to wait and test since they should trigger/test
+	// for exceptions and the getTextBounds fail due to bug 547532.
+	tabStyle.start = 0; tabStyle.length = 1; tabStyle.metrics = new GlyphMetrics(0, 0, 25);
+	testLineStyleListener("\t", listener, () -> true /*text.getTextBounds(0, 0).width == 25*/);
+	tabStyle.start = -2; tabStyle.length = 3; tabStyle.metrics = new GlyphMetrics(0, 0, 40);
+	testLineStyleListener("\t", listener, () -> true /*text.getTextBounds(0, 0).width == 40*/);
+	tabStyle.start = 0; tabStyle.length = 3; tabStyle.metrics = new GlyphMetrics(0, 0, 70);
+	testLineStyleListener("\t", listener, () -> true /*text.getTextBounds(0, 0).width == 70*/);
+	tabStyle.start = -2; tabStyle.length = 10; tabStyle.metrics = new GlyphMetrics(0, 0, 100);
+	testLineStyleListener("\t", listener, () -> true /*text.getTextBounds(0, 0).width == 100*/);
+}
+
+private void testLineStyleListener(String content, LineStyleListener listener, BooleanSupplier evaluation) throws InterruptedException {
+	try {
+		text.setText("");
+		text.addLineStyleListener(listener);
+		shell.setVisible(true);
+		text.setText(content);
+		text.setMargins(0, 0, 0, 0);
+		text.pack();
+		processEvents(1000, evaluation);
+		assertTrue("Text not styled correctly.", evaluation.getAsBoolean());
+	} finally {
+		text.removeLineStyleListener(listener);
+	}
+}
+
 private boolean hasPixel(StyledText text, Color expectedColor) {
 	GC gc = new GC(text);
 	final Image image = new Image(text.getDisplay(), text.getSize().x, text.getSize().y);
@@ -5345,20 +5520,94 @@ protected void rtfCopy() {
 
 @Test
 public void test_consistency_Modify() {
-    consistencyEvent('a', 0, 0, 0, ConsistencyUtility.KEY_PRESS);
+	consistencyEvent('a', 0, 0, 0, ConsistencyUtility.KEY_PRESS);
 }
 
 @Override
 @Test
 public void test_consistency_MenuDetect () {
-    consistencyEvent(10, 10, 3, ConsistencyUtility.ESCAPE_MENU, ConsistencyUtility.MOUSE_CLICK);
+	consistencyEvent(10, 10, 3, ConsistencyUtility.ESCAPE_MENU, ConsistencyUtility.MOUSE_CLICK);
 }
 
 @Override
 @Test
 public void test_consistency_DragDetect () {
-    consistencyEvent(30, 10, 50, 0, ConsistencyUtility.MOUSE_DRAG);
+	consistencyEvent(30, 10, 50, 0, ConsistencyUtility.MOUSE_DRAG);
+}
+
+/**
+ * This tests if a tab character styled with custom metrics affects other styled parts.
+ * <p>
+ * Such a problem was once caused with bug 547532 and discovered along bug 549110.
+ * </p>
+ */
+@Test
+public void test_GlyphMetricsOnTab_Bug549110() throws InterruptedException {
+	Assume.assumeFalse("Bug 536588 prevents test to work on Mac", SwtTestUtil.isCocoa);
+	shell.setVisible(true);
+	text.setText("ab\tcde");
+	text.setMargins(0, 0, 0, 0);
+	text.pack();
+	processEvents(1000,
+			() -> hasPixel(text, text.getBackground())
+					&& !hasPixel(text, getColor(RED))
+					&& !hasPixel(text, getColor(BLUE)));
+	assertTrue(hasPixel(text, text.getBackground()));
+	assertFalse(hasPixel(text, getColor(RED)));
+	assertFalse(hasPixel(text, getColor(BLUE)));
+
+	final StyleRange styleR = getStyle(0, 1, null, RED);
+	final StyleRange styleB = getStyle(4, 1, null, BLUE);
+	final StyleRange tabStyle = new StyleRange();
+	tabStyle.start = 2;
+	tabStyle.length = 1;
+	tabStyle.metrics = new GlyphMetrics(0, 0, 100);
+	text.replaceStyleRanges(0, text.getText().length(), new StyleRange[] { styleR, tabStyle, styleB });
+	text.pack();
+	processEvents(1000, () -> hasPixel(text, getColor(RED)) && hasPixel(text, getColor(BLUE)));
+	assertTrue("Wrong style before tab", hasPixel(text, getColor(RED)));
+	assertTrue("Wrong style after tab", hasPixel(text, getColor(BLUE)));
+}
+
+@Test
+public void test_GlyphMetricsOnTab() {
+	text.setTabs(4);
+	text.setText("\tabcdefghijkl");
+	Rectangle boundsWithoutGlyphMetrics = text.getTextBounds(0, text.getText().length() - 1);
+	int tabWidthWithoutGlyphMetrics = text.getTextBounds(0, 0).width;
+	StyleRange range = new StyleRange(0, 1, null, null);
+	range.metrics = new GlyphMetrics(0, 0, 100);
+	text.setStyleRange(range);
+	int tabWidthWithGlyphMetrics = text.getTextBounds(0, 0).width;
+	assertEquals(range.metrics.width, tabWidthWithGlyphMetrics);
+	Rectangle boundsWithGlyphMetrics = text.getTextBounds(0, text.getText().length() - 1);
+	assertEquals("Style should change text bounds", boundsWithoutGlyphMetrics.width - tabWidthWithoutGlyphMetrics + tabWidthWithGlyphMetrics, boundsWithGlyphMetrics.width);
+}
+
+/**
+ * Test for:
+ * Bug 550017 - [StyledText] Disabling StyledText moves insertion position to 0
+ */
+@Test
+public void test_InsertWhenDisabled() {
+	String str = "some test text";
+	text.setText(str);
+	String selected = "test";
+	int selectionStart = str.indexOf(selected);
+	int selectionEnd = selectionStart + selected.length();
+	text.setSelection(selectionStart, selectionEnd);
+	assertEquals(selectionEnd, text.getCaretOffset());
+	assertEquals(selected, text.getSelectionText());
+
+	text.setEnabled(false);
+
+	assertEquals(selected, text.getSelectionText());
+	assertEquals(selectionEnd, text.getCaretOffset());
+
+	text.insert("[inserted]");
+	String actualText = text.getText();
+	String expectedText = "some [inserted] text";
+	assertEquals("Wrong insert in disabled StyledText", expectedText, actualText);
 }
 
 }
-

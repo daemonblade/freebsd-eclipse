@@ -1,12 +1,15 @@
 /*******************************************************************************
-.
-. This program and the accompanying materials are made
- * available under the terms of the Eclipse Public License 2.0 which accompanies this distribution, and is available at
+ * Copyright (c) 2003, 2005 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Contributors: IBM Corporation - initial API and implementation
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
 package org.eclipse.test.internal.performance;
@@ -34,7 +37,7 @@ class PerformanceMonitorMac extends PerformanceMonitor {
     /**
      * Answer true if the native library for this class has been successfully loaded. If the load has not been attempted yet, try to
      * load it.
-     * 
+     *
      * @return returns true if native library has been successfullz loaded
      */
     public static boolean isLoaded() {
@@ -53,7 +56,7 @@ class PerformanceMonitorMac extends PerformanceMonitor {
 
     /**
      * Write out operating system counters for Mac OS X.
-     * 
+     *
      * @param scalars
      *            where to collect the data
      */

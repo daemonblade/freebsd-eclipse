@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -123,6 +123,7 @@ public class CommonTab extends AbstractLaunchConfigurationTab {
 	private static final String BAD_CONTAINER = "bad_container_name"; //$NON-NLS-1$
 
 	// Local/shared UI widgets
+	private Composite fIoComposit;
 	private Button fLocalRadioButton;
 	private Button fSharedRadioButton;
 	private Text fSharedLocationText;
@@ -137,6 +138,7 @@ public class CommonTab extends AbstractLaunchConfigurationTab {
     private Text fFileText;
     private Button fVariables;
     private Button fAppend;
+	private Button fMergeOutput;
     private Button fWorkspaceBrowse;
 
 	private Button fInputFileCheckButton;
@@ -268,6 +270,7 @@ public class CommonTab extends AbstractLaunchConfigurationTab {
         Group group = SWTFactory.createGroup(parent, LaunchConfigurationsMessages.CommonTab_4, 5, 2, GridData.FILL_HORIZONTAL);
 		createInputCaptureComponent(group);
 		Composite comp = SWTFactory.createComposite(group, group.getFont(), 5, 5, GridData.FILL_BOTH, 0, 0);
+		fIoComposit = comp;
 		fFileOutput = createCheckButton(comp, LaunchConfigurationsMessages.CommonTab_6);
         fFileOutput.setLayoutData(new GridData(SWT.BEGINNING, SWT.NORMAL, false, false));
         fFileOutput.addSelectionListener(new SelectionAdapter() {
@@ -339,7 +342,7 @@ public class CommonTab extends AbstractLaunchConfigurationTab {
         fAppend = createCheckButton(comp, LaunchConfigurationsMessages.CommonTab_11);
 
 		GridData gd = new GridData(SWT.LEFT, SWT.TOP, true, false);
-        gd.horizontalSpan = 4;
+		gd.horizontalSpan = 5;
         fAppend.setLayoutData(gd);
 		fAppend.addSelectionListener(new SelectionAdapter() {
 		    @Override
@@ -715,6 +718,8 @@ public class CommonTab extends AbstractLaunchConfigurationTab {
 		String stdinFromFile = null;
         String outputFile = null;
         boolean append = false;
+		boolean mergeOutput = false;
+		boolean supportsMergeOutput = false;
 
         try {
             outputToConsole = configuration.getAttribute(IDebugUIConstants.ATTR_CAPTURE_IN_CONSOLE, true);
@@ -722,11 +727,30 @@ public class CommonTab extends AbstractLaunchConfigurationTab {
 
             outputFile = configuration.getAttribute(IDebugUIConstants.ATTR_CAPTURE_IN_FILE, (String)null);
             append = configuration.getAttribute(IDebugUIConstants.ATTR_APPEND_TO_FILE, false);
+			mergeOutput = configuration.getAttribute(DebugPlugin.ATTR_MERGE_OUTPUT, false);
+			supportsMergeOutput = configuration.getType().supportsOutputMerging();
         } catch (CoreException e) {
         }
 
 		fConsoleOutput.setSelection(outputToConsole);
         fAppend.setSelection(append);
+		if (supportsMergeOutput) {
+			fMergeOutput = createCheckButton(fIoComposit, LaunchConfigurationsMessages.CommonTab_21);
+			GridData gd = new GridData(SWT.LEFT, SWT.TOP, true, false);
+			gd.horizontalSpan = 5;
+			fMergeOutput.setLayoutData(gd);
+			fMergeOutput.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					updateLaunchConfigurationDialog();
+				}
+			});
+			fMergeOutput.setSelection(mergeOutput);
+		}
+		else if (fMergeOutput != null) {
+			fMergeOutput.dispose();
+			fMergeOutput = null;
+		}
         boolean haveOutputFile= outputFile != null;
         if (haveOutputFile) {
             fFileText.setText(outputFile);
@@ -1030,6 +1054,13 @@ public class CommonTab extends AbstractLaunchConfigurationTab {
 		    }
 		} else {
 		    configuration.setAttribute(IDebugUIConstants.ATTR_CAPTURE_IN_FILE, (String)null);
+		}
+		if (fMergeOutput != null) {
+			if (fMergeOutput.getSelection()) {
+				configuration.setAttribute(DebugPlugin.ATTR_MERGE_OUTPUT, true);
+			} else {
+				configuration.setAttribute(DebugPlugin.ATTR_MERGE_OUTPUT, (String) null);
+			}
 		}
 
 		if (!captureOutput) {

@@ -248,7 +248,7 @@ public class AggregateWorkingSet extends AbstractWorkingSet implements IAggregat
 			throw new IllegalStateException();
 		}
 		IMemento[] workingSetReferences = workingSetMemento.getChildren(IWorkbenchConstants.TAG_WORKING_SET);
-		ArrayList list = new ArrayList(workingSetReferences.length);
+		ArrayList<IWorkingSet> list = new ArrayList<>(workingSetReferences.length);
 
 		for (IMemento memento : workingSetReferences) {
 			String setId = memento.getID();
@@ -257,7 +257,7 @@ public class AggregateWorkingSet extends AbstractWorkingSet implements IAggregat
 				list.add(set);
 			}
 		}
-		internalSetComponents((IWorkingSet[]) list.toArray(new IWorkingSet[list.size()]));
+		internalSetComponents(list.toArray(new IWorkingSet[list.size()]));
 		constructElements(false);
 	}
 
@@ -277,8 +277,7 @@ public class AggregateWorkingSet extends AbstractWorkingSet implements IAggregat
 
 	@Override
 	public int hashCode() {
-		int hashCode = getName().hashCode() & java.util.Arrays.hashCode(getComponentsInternal());
-		return hashCode;
+		return getName().hashCode() & java.util.Arrays.hashCode(getComponentsInternal());
 	}
 
 	@Override
@@ -287,8 +286,8 @@ public class AggregateWorkingSet extends AbstractWorkingSet implements IAggregat
 		if (localComponents == null || localComponents.length == 0) {
 			return false;
 		}
-		for (int i = 0; i < localComponents.length; i++) {
-			if (!localComponents[i].isSelfUpdating()) {
+		for (IWorkingSet localComponent : localComponents) {
+			if (!localComponent.isSelfUpdating()) {
 				return false;
 			}
 		}

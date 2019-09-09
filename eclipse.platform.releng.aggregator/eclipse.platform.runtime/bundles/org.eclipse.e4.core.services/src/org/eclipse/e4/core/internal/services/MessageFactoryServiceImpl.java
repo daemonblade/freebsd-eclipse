@@ -106,14 +106,7 @@ public class MessageFactoryServiceImpl implements IMessageFactoryService {
 		if (System.getSecurityManager() == null) {
 			instance = createInstance(locale, messages, annotation, provider);
 		} else {
-			instance = AccessController.doPrivileged(new PrivilegedAction<M>() {
-
-				@Override
-				public M run() {
-					return createInstance(locale, messages, annotation, provider);
-				}
-
-			});
+			instance = AccessController.doPrivileged((PrivilegedAction<M>) () -> createInstance(locale, messages, annotation, provider));
 		}
 
 		if (cache != null) {
@@ -170,10 +163,10 @@ public class MessageFactoryServiceImpl implements IMessageFactoryService {
 
 		ResourceBundle resourceBundle = null;
 		if (annotation != null) {
-			if (annotation.contributionURI().length() > 0) {
+			if (!annotation.contributionURI().isEmpty()) {
 				resourceBundle = ResourceBundleHelper.getResourceBundleForUri(
 						annotation.contributionURI(), locale, rbProvider);
-			} else if (annotation.contributorURI().length() > 0) {
+			} else if (!annotation.contributorURI().isEmpty()) {
 				Logger log = this.logger;
 				if (log != null) {
 					log.warn(
@@ -217,14 +210,12 @@ public class MessageFactoryServiceImpl implements IMessageFactoryService {
 			instance = messages.newInstance();
 			Field[] fields = messages.getDeclaredFields();
 
-			for (int i = 0; i < fields.length; i++) {
-				if (!fields[i].isAccessible()) {
-					fields[i].setAccessible(true);
+			for (Field field : fields) {
+				if (!field.isAccessible()) {
+					field.setAccessible(true);
 				}
-
-				if (fields[i].getType().isAssignableFrom(String.class)) {
-					fields[i].set(instance,
-							provider.translate(fields[i].getName()));
+				if (field.getType().isAssignableFrom(String.class)) {
+					field.set(instance, provider.translate(field.getName()));
 				}
 			}
 		} catch (InstantiationException e) {

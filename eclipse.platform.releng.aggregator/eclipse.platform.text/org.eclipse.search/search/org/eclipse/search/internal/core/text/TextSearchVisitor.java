@@ -210,7 +210,7 @@ public class TextSearchVisitor {
 		public IStatus processFile(IFile file, IProgressMonitor monitor) {
 			// A natural cleanup after the change to use JobGroups is accepted would be to move these
 			// methods to the TextSearchJob class.
-			Matcher matcher= fSearchPattern.pattern().length() == 0 ? null : fSearchPattern.matcher(""); //$NON-NLS-1$
+			Matcher matcher= fSearchPattern.pattern().isEmpty() ? null : fSearchPattern.matcher(""); //$NON-NLS-1$
 
 			try {
 				if (!fCollector.acceptFile(file) || matcher == null) {
@@ -377,7 +377,7 @@ public class TextSearchVisitor {
 		};
 
 		try {
-			String taskName= fSearchPattern.pattern().length() == 0
+			String taskName= fSearchPattern.pattern().isEmpty()
 					? SearchMessages.TextSearchVisitor_filesearch_task_label
 					: Messages.format(SearchMessages.TextSearchVisitor_textsearch_task_label, fSearchPattern.pattern());
 			fProgressMonitor.beginTask(taskName, fNumberOfFilesToScan);
@@ -449,7 +449,7 @@ public class TextSearchVisitor {
 	 */
 	private Map<IFile, IDocument> evalNonFileBufferDocuments() {
 		Map<IFile, IDocument> result= new HashMap<>();
-		IWorkbench workbench= SearchPlugin.getDefault().getWorkbench();
+		IWorkbench workbench = PlatformUI.getWorkbench();
 		IWorkbenchWindow[] windows= workbench.getWorkbenchWindows();
 		for (IWorkbenchWindow window : windows) {
 			IWorkbenchPage[] pages= window.getPages();

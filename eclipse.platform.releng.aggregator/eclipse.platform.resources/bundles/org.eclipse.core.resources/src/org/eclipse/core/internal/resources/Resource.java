@@ -485,9 +485,11 @@ public abstract class Resource extends PlatformObject implements IResource, ICor
 		if (rule instanceof MultiRule) {
 			MultiRule multi = (MultiRule) rule;
 			ISchedulingRule[] children = multi.getChildren();
-			for (int i = 0; i < children.length; i++)
-				if (!contains(children[i]))
+			for (ISchedulingRule c : children) {
+				if (!contains(c)) {
 					return false;
+				}
+			}
 			return true;
 		}
 		if (!(rule instanceof IResource))
@@ -993,7 +995,7 @@ public abstract class Resource extends PlatformObject implements IResource, ICor
 	 */
 	private String findVariant(String target, String[] list) {
 		for (String element : list) {
-			if (target.toUpperCase().equals(element.toUpperCase()))
+			if (target.equalsIgnoreCase(element))
 				return element;
 		}
 		return null;

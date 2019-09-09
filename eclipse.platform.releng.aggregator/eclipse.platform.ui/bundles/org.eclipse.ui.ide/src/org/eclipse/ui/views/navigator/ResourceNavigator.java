@@ -104,6 +104,13 @@ import org.eclipse.ui.views.framelist.TreeFrame;
 /**
  * Implements the Resource Navigator view.
  *
+ * @noextend This class is not intended to be subclassed by clients.
+ * @noinstantiate This class is not intended to be instantiated by clients.
+ * @noreference This class is not intended to be referenced by clients.
+ *
+ *              Planned to be deleted, please see Bug
+ *              https://bugs.eclipse.org/bugs/show_bug.cgi?id=549953
+ *
  * @deprecated as of 3.5, use the Common Navigator Framework classes instead
  */
 @Deprecated
@@ -324,7 +331,7 @@ public class ResourceNavigator extends ViewPart implements ISetSelectionTarget, 
 
 		getSite().setSelectionProvider(viewer);
 		getSite().getPage().addPartListener(partListener);
-		IWorkingSetManager workingSetManager = getPlugin().getWorkbench().getWorkingSetManager();
+		IWorkingSetManager workingSetManager =  PlatformUI.getWorkbench().getWorkingSetManager();
 		workingSetManager.addPropertyChangeListener(propertyChangeListener);
 
 		if (memento != null) {
@@ -395,7 +402,7 @@ public class ResourceNavigator extends ViewPart implements ISetSelectionTarget, 
 	 */
 	protected void initLabelProvider(TreeViewer viewer) {
 		viewer.setLabelProvider(new DecoratingLabelProvider(new WorkbenchLabelProvider(),
-				getPlugin().getWorkbench().getDecoratorManager().getLabelDecorator()));
+				PlatformUI.getWorkbench().getDecoratorManager().getLabelDecorator()));
 	}
 
 	/**
@@ -502,7 +509,7 @@ public class ResourceNavigator extends ViewPart implements ISetSelectionTarget, 
 	public void dispose() {
 		getSite().getPage().removePartListener(partListener);
 
-		IWorkingSetManager workingSetManager = getPlugin().getWorkbench().getWorkingSetManager();
+		IWorkingSetManager workingSetManager = PlatformUI.getWorkbench().getWorkingSetManager();
 		workingSetManager.removePropertyChangeListener(propertyChangeListener);
 
 		if (collapseAllHandler != null) {
@@ -922,7 +929,7 @@ public class ResourceNavigator extends ViewPart implements ISetSelectionTarget, 
 		IWorkingSet workingSet = null;
 
 		if (workingSetName != null && workingSetName.isEmpty() == false) {
-			IWorkingSetManager workingSetManager = getPlugin().getWorkbench().getWorkingSetManager();
+			IWorkingSetManager workingSetManager = PlatformUI.getWorkbench().getWorkingSetManager();
 			workingSet = workingSetManager.getWorkingSet(workingSetName);
 		} else if (PlatformUI.getPreferenceStore()
 				.getBoolean(IWorkbenchPreferenceConstants.USE_WINDOW_WORKING_SET_BY_DEFAULT)) {

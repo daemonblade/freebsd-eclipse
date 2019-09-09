@@ -14,6 +14,7 @@
 package org.eclipse.team.internal.ui.mapping;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,13 +60,9 @@ public abstract class ResourceModelProviderOperation extends SynchronizationOper
 	 */
 	private IDiff[] getFileDeltas(Object[] pathOrElements) {
 		Set<IDiff> result = new HashSet<>();
-		for (int i = 0; i < pathOrElements.length; i++) {
-			Object pathOrElement = pathOrElements[i];
+		for (Object pathOrElement : pathOrElements) {
 			IDiff[] diffs = getFileDeltas(pathOrElement);
-			for (int j = 0; j < diffs.length; j++) {
-				IDiff node = diffs[j];
-				result.add(node);
-			}
+			Collections.addAll(result, diffs);
 		}
 		return result.toArray(new IDiff[result.size()]);
 	}
@@ -78,8 +75,7 @@ public abstract class ResourceModelProviderOperation extends SynchronizationOper
 			final IResourceDiffTree diffTree = context.getDiffTree();
 			IDiff[] diffs = diffTree.getDiffs(traversals);
 			// Now filter the by the mode of the configuration
-			for (int i = 0; i < diffs.length; i++) {
-				IDiff node = diffs[i];
+			for (IDiff node : diffs) {
 				if (isVisible(node) && getDiffFilter().select(node))
 					result.add(node);
 			}
@@ -155,8 +151,7 @@ public abstract class ResourceModelProviderOperation extends SynchronizationOper
 	@Override
 	public boolean shouldRun() {
 		Object[] elements = getElements();
-		for (int i = 0; i < elements.length; i++) {
-			Object object = elements[i];
+		for (Object object : elements) {
 			if (Utils.getResourceMapping(internalGetElement(object)) != null) {
 				return true;
 			}

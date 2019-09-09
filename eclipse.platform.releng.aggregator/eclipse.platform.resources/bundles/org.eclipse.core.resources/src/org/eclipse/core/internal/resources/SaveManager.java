@@ -62,7 +62,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 		}
 	}
 
-	protected static final String ROOT_SEQUENCE_NUMBER_KEY = Path.ROOT.toString() + LocalMetaArea.F_TREE;
+	protected static final String ROOT_SEQUENCE_NUMBER_KEY = Path.ROOT + LocalMetaArea.F_TREE;
 	protected static final String CLEAR_DELTA_PREFIX = "clearDelta_"; //$NON-NLS-1$
 	protected static final String DELTA_EXPIRATION_PREFIX = "deltaExpiration_"; //$NON-NLS-1$
 	protected static final int DONE_SAVING = 3;
@@ -843,12 +843,8 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 			if (!target.exists())
 				return;
 		}
-		try {
-			try (
-				SafeChunkyInputStream input = new SafeChunkyInputStream(target);
-			) {
-				masterTable.load(input);
-			}
+		try (SafeChunkyInputStream input = new SafeChunkyInputStream(target)) {
+			masterTable.load(input);
 		} catch (IOException e) {
 			String message = Messages.resources_exMasterTable;
 			throw new ResourceException(IResourceStatus.INTERNAL_ERROR, null, message, e);
@@ -1038,12 +1034,8 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 			savedStates = Collections.synchronizedMap(new HashMap<String, SavedState>(10));
 			return;
 		}
-		try {
-			try (
-				DataInputStream input = new DataInputStream(new SafeFileInputStream(treeLocation.toOSString(), tempLocation.toOSString(), TREE_BUFFER_SIZE));
-			) {
-				WorkspaceTreeReader.getReader(workspace, input.readInt()).readTree(input, monitor);
-			}
+		try (DataInputStream input = new DataInputStream(new SafeFileInputStream(treeLocation.toOSString(), tempLocation.toOSString(), TREE_BUFFER_SIZE))) {
+			WorkspaceTreeReader.getReader(workspace, input.readInt()).readTree(input, monitor);
 		} catch (IOException e) {
 			String msg = NLS.bind(Messages.resources_readMeta, treeLocation.toOSString());
 			throw new ResourceException(IResourceStatus.FAILED_READ_METADATA, treeLocation, msg, e);
@@ -1549,7 +1541,8 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 					parent = parent.getParent();
 				}
 				if (parent == null) {
-					IStatus status = new Status(IStatus.WARNING, ResourcesPlugin.PI_RESOURCES, IResourceStatus.INTERNAL_ERROR, "null parent found while collapsing trees", null); //$NON-NLS-1$
+					Exception e = new NullPointerException("null parent found while collapsing trees"); //$NON-NLS-1$
+					IStatus status = new Status(IStatus.WARNING, ResourcesPlugin.PI_RESOURCES, IResourceStatus.INTERNAL_ERROR, e.getMessage(), e);
 					Policy.log(status);
 					return null;
 				}

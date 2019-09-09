@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.core.subscribers;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -64,14 +65,8 @@ public class BatchingChangeSetManager extends ChangeSetManager {
 				changed.put(changeSet, allAffectedResources);
 			} else {
 				Set<IPath> allPaths = new HashSet<>();
-				for (int i = 0; i < paths.length; i++) {
-					IPath path = paths[i];
-					allPaths.add(path);
-				}
-				for (int i = 0; i < allAffectedResources.length; i++) {
-					IPath path = allAffectedResources[i];
-					allPaths.add(path);
-				}
+				Collections.addAll(allPaths, paths);
+				Collections.addAll(allPaths, allAffectedResources);
 				changed.put(changeSet, allPaths.toArray(new IPath[allPaths.size()]));
 			}
 		}
@@ -130,8 +125,8 @@ public class BatchingChangeSetManager extends ChangeSetManager {
 		final CollectorChangeEvent event = changes;
 		changes = new CollectorChangeEvent(this);
 		Object[] listeners = getListeners();
-		for (int i = 0; i < listeners.length; i++) {
-			final IChangeSetChangeListener listener = (IChangeSetChangeListener)listeners[i];
+		for (Object l : listeners) {
+			final IChangeSetChangeListener listener = (IChangeSetChangeListener) l;
 			if (listener instanceof IChangeSetCollectorChangeListener) {
 				final IChangeSetCollectorChangeListener csccl = (IChangeSetCollectorChangeListener) listener;
 				SafeRunner.run(new ISafeRunnable() {

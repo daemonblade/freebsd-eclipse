@@ -17,7 +17,6 @@ package org.eclipse.e4.ui.css.core.util.impl.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.e4.ui.css.core.util.resources.IResourceLocator;
@@ -39,8 +38,6 @@ public class OSGiResourceLocator implements IResourceLocator {
 		try {
 			URL resolvedURL = FileLocator.resolve(new URL(uri));
 			return resolvedURL.toString();
-		} catch (MalformedURLException e) {
-
 		} catch (IOException e) {
 
 		}

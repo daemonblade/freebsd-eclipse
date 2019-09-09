@@ -102,7 +102,7 @@ public class SessionTestRunner {
 		}
 
 		private String parseTestId(String message) {
-			if (message.length() == 0 || message.charAt(0) != '%') {
+			if (message.isEmpty() || message.charAt(0) != '%') {
 				return null;
 			}
 			int firstComma = message.indexOf(',');
@@ -327,7 +327,7 @@ public class SessionTestRunner {
 				// explicitly end test since process crashed before test could finish
 				result.endTest(test);
 			} else {
-				result.addError(test, new Exception("Test did not run: " + test.toString()));
+				result.addError(test, new Exception("Test did not run: " + test));
 			}
 		} else if (crashTest) {
 			result.addError(test, new Exception("Should have caused crash"));

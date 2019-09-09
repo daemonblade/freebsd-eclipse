@@ -326,15 +326,13 @@ public class LegacyHandlerService implements IHandlerService {
 	@Override
 	public ExecutionEvent createExecutionEvent(Command command, Event event) {
 		EvaluationContext legacy = new EvaluationContext(evalContext, evalContext.getDefaultVariable());
-		ExecutionEvent e = new ExecutionEvent(command, Collections.EMPTY_MAP, event, legacy);
-		return e;
+		return new ExecutionEvent(command, Collections.EMPTY_MAP, event, legacy);
 	}
 
 	@Override
 	public ExecutionEvent createExecutionEvent(ParameterizedCommand command, Event event) {
 		EvaluationContext legacy = new EvaluationContext(evalContext, evalContext.getDefaultVariable());
-		ExecutionEvent e = new ExecutionEvent(command.getCommand(), command.getParameterMap(), event, legacy);
-		return e;
+		return new ExecutionEvent(command.getCommand(), command.getParameterMap(), event, legacy);
 	}
 
 	@Override
@@ -349,14 +347,13 @@ public class LegacyHandlerService implements IHandlerService {
 
 	@Override
 	public void deactivateHandlers(Collection activations) {
-		Object[] array = activations.toArray();
 		// set all activations to not be participating first so that they ignore
 		// the upcoming context change events
-		for (int i = 0; i < array.length; i++) {
-			((HandlerActivation) array[i]).participating = false;
+		for (Object activation : activations) {
+			((HandlerActivation) activation).participating = false;
 		}
 
-		for (Object element : array) {
+		for (Object element : activations) {
 			deactivateHandler((IHandlerActivation) element);
 		}
 	}
@@ -491,9 +488,7 @@ public class LegacyHandlerService implements IHandlerService {
 		if (vars != null) {
 			try {
 				return (Map<?, ?>) vars.get(ctx);
-			} catch (IllegalArgumentException e) {
-
-			} catch (IllegalAccessException e) {
+			} catch (IllegalArgumentException | IllegalAccessException e) {
 
 			}
 		}
@@ -507,9 +502,7 @@ public class LegacyHandlerService implements IHandlerService {
 			try {
 				contextFVariables = EvaluationContext.class.getField("fVariables"); //$NON-NLS-1$
 				contextFVariables.setAccessible(true);
-			} catch (SecurityException e) {
-
-			} catch (NoSuchFieldException e) {
+			} catch (SecurityException | NoSuchFieldException e) {
 
 			}
 		}

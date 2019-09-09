@@ -19,6 +19,7 @@ package org.eclipse.debug.internal.ui.groups;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -134,12 +135,12 @@ public class GroupLaunchConfigurationTabGroup extends AbstractLaunchConfiguratio
 				}
 
 				try {
-	                String key = el.data.getType().getIdentifier();
-	                return DebugPluginImages.getImage(key);
-                } catch (CoreException e) {
-                	Image errorImage = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJS_ERROR_TSK);
+					String key = el.data.getType().getIdentifier();
+					return DebugPluginImages.getImage(key);
+				} catch (CoreException e) {
+					Image errorImage = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJS_ERROR_TSK);
 					return errorImage;
-                }
+				}
 			}
 			return null;
 		}
@@ -398,7 +399,7 @@ public class GroupLaunchConfigurationTabGroup extends AbstractLaunchConfiguratio
 						return -1;
 					}
 					GroupLaunchElement el = ((GroupLaunchElement) sel
-					        .getFirstElement());
+							.getFirstElement());
 					return input.indexOf(el);
 				}
 
@@ -444,8 +445,8 @@ public class GroupLaunchConfigurationTabGroup extends AbstractLaunchConfiguratio
 
 				protected boolean isDownEnabled() {
 					final int index = getSingleSelectionIndex();
-	                return (index >= 0) && (index != input.size() - 1);
-                }
+					return (index >= 0) && (index != input.size() - 1);
+				}
 
 				protected boolean isUpEnabled(){
 					return getSingleSelectionIndex() > 0;
@@ -642,9 +643,7 @@ public class GroupLaunchConfigurationTabGroup extends AbstractLaunchConfiguratio
 		}
 		modes = new LinkedHashMap<>();
 		modes.put(GroupLaunchElement.MODE_INHERIT, new InheritModeGroup());
-		Set<ILaunchGroup> sortedGroups = new TreeSet<>((a, b) -> {
-			return a.getLabel().compareTo(b.getLabel());
-		});
+		Set<ILaunchGroup> sortedGroups = new TreeSet<>(Comparator.comparing(ILaunchGroup::getLabel));
 		LaunchConfigurationManager mgr = DebugUIPlugin.getDefault().getLaunchConfigurationManager();
 		sortedGroups.addAll(Arrays.asList(mgr.getLaunchGroups()));
 		for (ILaunchGroup launchGroup : sortedGroups) {

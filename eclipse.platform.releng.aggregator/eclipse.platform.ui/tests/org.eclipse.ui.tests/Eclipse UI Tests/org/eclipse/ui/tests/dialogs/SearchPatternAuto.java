@@ -51,7 +51,7 @@ public class SearchPatternAuto extends TestCase {
 	 */
 	private static void generateRescourcesTestCases(char startChar, char endChar, int lenght, String resource){
 		for (char ch = startChar; ch <= endChar; ch++) {
-			String res = resource + String.valueOf(ch);
+			String res = resource + ch;
 			if (lenght == res.length()) {
 				resources.add(res);
 			} else if ((res.trim().length() % 2) == 0) {
@@ -73,7 +73,7 @@ public class SearchPatternAuto extends TestCase {
 
 	/**
 	 * Tests exact match functionality. If we camelCase rule is enable, Pattern should starts with lowerCase character.
-	 * Result for "abcdefgh<" pattern should be similar to regexp pattern "abcdefgh" with case insensitive.
+	 * Result for "abcdefgh&lt;" pattern should be similar to regexp pattern "abcdefgh" with case insensitive.
 	 */
 	public void testExactMatch2() {
 		Pattern pattern = Pattern.compile("abcdefgh", Pattern.CASE_INSENSITIVE);
@@ -132,7 +132,7 @@ public class SearchPatternAuto extends TestCase {
 	/**
 	 * Tests camelCase match functionality.
 	 * Every string starts with upperCase characters should be recognize as camelCase pattern match rule.
-	 * Result for "AbCdE<" SearchPattern should be similar to regexp pattern "Ab[^A-Z]*Cd[^A-Z]*E[^A-Z]*"
+	 * Result for "AbCdE&lt;" SearchPattern should be similar to regexp pattern "Ab[^A-Z]*Cd[^A-Z]*E[^A-Z]*"
 	 */
 	public void testCamelCaseMatch3() {
 		Pattern pattern = Pattern.compile("Ab[^A-Z]*Cd[^A-Z]*E[^A-Z]*");

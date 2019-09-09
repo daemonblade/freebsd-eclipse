@@ -15,6 +15,8 @@
 package org.eclipse.swt.internal.gtk;
 
 
+import java.util.*;
+
 import org.eclipse.swt.internal.*;
 
 // Common type translation table:
@@ -58,8 +60,8 @@ public class OS extends C {
 
 		/* Initialize the OS flags and locale constants */
 		String osName = System.getProperty ("os.name");
-		boolean isLinux = osName.equals ("Linux") || osName.equals ("FreeBSD");
-		boolean isWin32 = false;
+		boolean isLinux = false, isWin32 = false;
+		if (osName.equals ("Linux")) isLinux = true;
 		if (osName.startsWith("Windows")) isWin32 = true;
 		IsLinux = isLinux;  IsWin32 = isWin32;
 
@@ -713,12 +715,16 @@ public class OS extends C {
 	 * A string containing the theme name supplied via the GTK_THEME
 	 * environment variable. Otherwise this will contain an empty string.
 	 */
-	public static final String GTK_THEME_NAME;
+	public static final String GTK_THEME_SET_NAME;
 	/**
-	 * True if GTK_THEME_SET is true, and if the dark variant was
-	 * specified via the GTK_THEME environment variable.
+	 * True iff overlay scrolling has been disabled via GTK_OVERLAY_SCROLLING=0.
+	 * See bug 546248.
 	 */
-	public static final boolean GTK_THEME_DARK;
+	public static final boolean GTK_OVERLAY_SCROLLING_DISABLED;
+	/**
+	 * True if SWT is running on the GNOME desktop environment.
+	 */
+	public static final boolean isGNOME;
 
 	/* Feature in Gtk: with the switch to GtkMenuItems from GtkImageMenuItems
 	* in Gtk3 came a small Gtk shortfall: a small amount of padding on the left hand
@@ -761,16 +767,28 @@ public class OS extends C {
 		String gtkThemeCheck = getEnvironmentalVariable(gtkThemeProperty);
 		boolean gtkThemeSet = false;
 		String gtkThemeName = "";
-		boolean gtkThemeDark = false;
 		if (gtkThemeCheck != null && !gtkThemeCheck.isEmpty()) {
 			gtkThemeSet = true;
-			gtkThemeDark = gtkThemeCheck.contains(":dark") ? true : false;
-			String [] themeNameSplit = gtkThemeCheck.split(":");
-			gtkThemeName = themeNameSplit[0];
+			gtkThemeName = gtkThemeCheck;
 		}
 		GTK_THEME_SET = gtkThemeSet;
-		GTK_THEME_NAME = gtkThemeName;
-		GTK_THEME_DARK = gtkThemeDark;
+		GTK_THEME_SET_NAME = gtkThemeName;
+
+		String scrollingProperty = "GTK_OVERLAY_SCROLLING";
+		String scrollingCheck = getEnvironmentalVariable(scrollingProperty);
+		boolean scrollingDisabled = false;
+		if (scrollingCheck != null && scrollingCheck.equals("0")) {
+			scrollingDisabled = true;
+		}
+		GTK_OVERLAY_SCROLLING_DISABLED = scrollingDisabled;
+
+		Map<String, String> env = System.getenv();
+		String desktopEnvironment = env.get("XDG_CURRENT_DESKTOP");
+		boolean gnomeDetected = false;
+		if (desktopEnvironment != null) {
+			gnomeDetected = desktopEnvironment.contains("GNOME");
+		}
+		isGNOME = gnomeDetected;
 
 		System.setProperty("org.eclipse.swt.internal.gtk.version",
 				(GTK.GTK_VERSION >>> 16) + "." + (GTK.GTK_VERSION >>> 8 & 0xFF) + "." + (GTK.GTK_VERSION & 0xFF));
@@ -1496,7 +1514,7 @@ public static final native void _g_signal_remove_emission_hook(int signal_id, lo
 public static final void g_signal_remove_emission_hook(int signal_id, long hook_id) {
 	lock.lock();
 	try {
-		 _g_signal_remove_emission_hook (signal_id, hook_id);
+		_g_signal_remove_emission_hook (signal_id, hook_id);
 	} finally {
 		lock.unlock();
 	}
@@ -1717,6 +1735,29 @@ public static final long g_getenv(byte [] variable) {
 	lock.lock();
 	try {
 		return _g_getenv(variable);
+	} finally {
+		lock.unlock();
+	}
+}
+/** @param result cast=(GTimeVal *)*/
+public static final native void _g_get_current_time(long result);
+public static final void g_get_current_time(long result) {
+	lock.lock();
+	try {
+		_g_get_current_time(result);
+	} finally {
+		lock.unlock();
+	}
+}
+/**
+ * @param result cast=(GTimeVal *)
+ * @param microseconds cast=(glong)
+ */
+public static final native void _g_time_val_add(long result, long microseconds);
+public static final void g_time_val_add(long result, long microseconds) {
+	lock.lock();
+	try {
+		_g_time_val_add(result, microseconds);
 	} finally {
 		lock.unlock();
 	}
@@ -1994,6 +2035,20 @@ public static final void g_object_get(long object, byte[] first_property_name, i
  */
 public static final native void _g_object_get(long object, byte[] first_property_name, long[] value, long terminator);
 public static final void g_object_get(long object, byte[] first_property_name, long[] value, long terminator) {
+	lock.lock();
+	try {
+		_g_object_get(object, first_property_name, value, terminator);
+	} finally {
+		lock.unlock();
+	}
+}
+/**
+ * @param object cast=(GObject *)
+ * @param first_property_name cast=(const gchar *),flags=no_out
+ * @param terminator cast=(const gchar *),flags=sentinel
+ */
+public static final native void _g_object_get(long object, byte[] first_property_name, boolean[] value, long terminator);
+public static final void g_object_get(long object, byte[] first_property_name, boolean[] value, long terminator) {
 	lock.lock();
 	try {
 		_g_object_get(object, first_property_name, value, terminator);
@@ -4167,12 +4222,12 @@ public static final native long _g_dbus_proxy_new_for_bus_sync (int bus_type, in
 		long cancellable, long [] error);
 public static final long g_dbus_proxy_new_for_bus_sync (int bus_type, int flags, long info, byte [] name, byte [] object_path, byte [] interface_name,
 		long cancellable, long [] error) {
-  lock.lock();
-  try {
-    return _g_dbus_proxy_new_for_bus_sync (bus_type, flags, info, name, object_path, interface_name, cancellable, error);
-  } finally {
-    lock.unlock();
-  }
+	lock.lock();
+	try {
+		return _g_dbus_proxy_new_for_bus_sync (bus_type, flags, info, name, object_path, interface_name, cancellable, error);
+	} finally {
+		lock.unlock();
+	}
 }
 
 /**
@@ -4236,12 +4291,12 @@ public static final long g_dbus_proxy_call_finish (long proxy, long res, long []
 public static final native long _g_dbus_node_info_new_for_xml (byte[] xml_data, long [] error);
 /** @category gdbus */
 public static final long g_dbus_node_info_new_for_xml (byte[] xml_data, long [] error) {
-  lock.lock();
-  try {
-    return _g_dbus_node_info_new_for_xml (xml_data, error);
-  } finally {
-    lock.unlock();
-  }
+	lock.lock();
+	try {
+		return _g_dbus_node_info_new_for_xml (xml_data, error);
+	} finally {
+		lock.unlock();
+	}
 }
 
 /**

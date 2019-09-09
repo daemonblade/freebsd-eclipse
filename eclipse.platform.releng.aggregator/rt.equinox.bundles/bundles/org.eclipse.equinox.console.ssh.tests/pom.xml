@@ -14,11 +14,12 @@
   <parent>
     <artifactId>tests-pom</artifactId>
     <groupId>org.eclipse.equinox.bundles</groupId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <relativePath>../../tests-pom/</relativePath>
   </parent>
   <properties>
     <skipTests>true</skipTests>
+    <skipAPIAnalysis>true</skipAPIAnalysis>
   </properties>
   <groupId>org.eclipse.equinox</groupId>
   <artifactId>org.eclipse.equinox.console.ssh.tests</artifactId>

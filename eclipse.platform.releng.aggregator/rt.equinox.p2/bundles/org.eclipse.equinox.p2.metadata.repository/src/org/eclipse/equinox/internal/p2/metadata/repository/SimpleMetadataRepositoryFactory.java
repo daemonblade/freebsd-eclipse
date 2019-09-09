@@ -7,7 +7,7 @@
  *  https://www.eclipse.org/legal/epl-2.0/
  *
  *  SPDX-License-Identifier: EPL-2.0
- * 
+ *
  *  Contributors:
  *     IBM Corporation - initial API and implementation
  *     Sonatype Inc - ongoing development
@@ -60,10 +60,10 @@ public class SimpleMetadataRepositoryFactory extends MetadataRepositoryFactory {
 			if (localFile.exists())
 				return localFile;
 			String msg = NLS.bind(Messages.io_failedRead, location);
-			throw new ProvisionException(new Status(IStatus.ERROR, Activator.ID, ProvisionException.REPOSITORY_NOT_FOUND, msg, null));
+			throw new ProvisionException(new Status(IStatus.ERROR, Constants.ID, ProvisionException.REPOSITORY_NOT_FOUND, msg, null));
 		}
 		// file is not local, create a cache of the repository metadata
-		CacheManager cache = (CacheManager) getAgent().getService(CacheManager.SERVICE_NAME);
+		CacheManager cache = getAgent().getService(CacheManager.class);
 		if (cache == null)
 			throw new IllegalArgumentException("Cache manager service not available"); //$NON-NLS-1$
 		localFile = cache.createCache(location, URLMetadataRepository.CONTENT_FILENAME, monitor);
@@ -71,7 +71,7 @@ public class SimpleMetadataRepositoryFactory extends MetadataRepositoryFactory {
 			// there is no remote file in either form - this should not really happen as
 			// createCache should bail out with exception if something is wrong. This is an internal
 			// error.
-			throw new ProvisionException(new Status(IStatus.ERROR, Activator.ID, ProvisionException.REPOSITORY_NOT_FOUND, Messages.repoMan_internalError, null));
+			throw new ProvisionException(new Status(IStatus.ERROR, Constants.ID, ProvisionException.REPOSITORY_NOT_FOUND, Messages.repoMan_internalError, null));
 		}
 		return localFile;
 	}
@@ -114,7 +114,7 @@ public class SimpleMetadataRepositoryFactory extends MetadataRepositoryFactory {
 					((URLMetadataRepository) result).initializeAfterLoad(location);
 				if (Tracing.DEBUG_METADATA_PARSING) {
 					time += System.currentTimeMillis();
-					Tracing.debug(debugMsg + "time (ms): " + time); //$NON-NLS-1$ 
+					Tracing.debug(debugMsg + "time (ms): " + time); //$NON-NLS-1$
 				}
 				return result;
 			} finally {
@@ -123,10 +123,10 @@ public class SimpleMetadataRepositoryFactory extends MetadataRepositoryFactory {
 			}
 		} catch (FileNotFoundException e) {
 			String msg = NLS.bind(Messages.io_failedRead, location);
-			throw new ProvisionException(new Status(IStatus.ERROR, Activator.ID, ProvisionException.REPOSITORY_NOT_FOUND, msg, e));
+			throw new ProvisionException(new Status(IStatus.ERROR, Constants.ID, ProvisionException.REPOSITORY_NOT_FOUND, msg, e));
 		} catch (IOException e) {
 			String msg = NLS.bind(Messages.io_failedRead, location);
-			throw new ProvisionException(new Status(IStatus.ERROR, Activator.ID, ProvisionException.REPOSITORY_FAILED_READ, msg, e));
+			throw new ProvisionException(new Status(IStatus.ERROR, Constants.ID, ProvisionException.REPOSITORY_FAILED_READ, msg, e));
 		} finally {
 			if (monitor != null)
 				monitor.done();

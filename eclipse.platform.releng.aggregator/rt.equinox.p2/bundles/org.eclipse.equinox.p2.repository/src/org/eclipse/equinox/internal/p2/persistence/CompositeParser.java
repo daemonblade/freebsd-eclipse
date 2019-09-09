@@ -43,7 +43,7 @@ public class CompositeParser extends XMLParser implements XMLConstants {
 		public ChildrenHandler(AbstractHandler parentHandler, Attributes attributes) {
 			super(parentHandler, CHILDREN_ELEMENT);
 			String size = parseOptionalAttribute(attributes, COLLECTION_SIZE_ATTRIBUTE);
-			children = (size != null ? new ArrayList<URI>(Integer.parseInt(size)) : new ArrayList<URI>(4));
+			children = (size != null ? new ArrayList<>(Integer.parseInt(size)) : new ArrayList<>(4));
 		}
 
 		public URI[] getChildren() {
@@ -136,20 +136,26 @@ public class CompositeParser extends XMLParser implements XMLConstants {
 
 		@Override
 		public void startElement(String name, Attributes attributes) {
-			if (PROPERTIES_ELEMENT.equals(name)) {
-				if (propertiesHandler == null) {
-					propertiesHandler = new PropertiesHandler(this, attributes);
-				} else {
-					duplicateElement(this, name, attributes);
-				}
-			} else if (CHILDREN_ELEMENT.equals(name)) {
-				if (childrenHandler == null) {
-					childrenHandler = new ChildrenHandler(this, attributes);
-				} else {
-					duplicateElement(this, name, attributes);
-				}
-			} else {
+			if (name==null) {
 				invalidElement(name, attributes);
+			} else switch (name) {
+				case PROPERTIES_ELEMENT:
+					if (propertiesHandler == null) {
+						propertiesHandler = new PropertiesHandler(this, attributes);
+					} else {
+						duplicateElement(this, name, attributes);
+					}
+					break;
+				case CHILDREN_ELEMENT:
+					if (childrenHandler == null) {
+						childrenHandler = new ChildrenHandler(this, attributes);
+					} else {
+						duplicateElement(this, name, attributes);
+					}
+					break;
+				default:
+					invalidElement(name, attributes);
+					break;
 			}
 		}
 

@@ -384,7 +384,7 @@ public abstract class AbstractSourceLookupDirector implements ISourceLookupDirec
 
 	@Override
 	public void initializeFromMemento(String memento) throws CoreException {
-	    doInitializeFromMemento(memento, true);
+		doInitializeFromMemento(memento, true);
 	}
 
 	/**
@@ -398,9 +398,9 @@ public abstract class AbstractSourceLookupDirector implements ISourceLookupDirec
 	 * @since 3.1
 	 */
 	protected void doInitializeFromMemento(String memento, boolean dispose) throws CoreException {
-	    if (dispose) {
-	        dispose();
-	    }
+		if (dispose) {
+			dispose();
+		}
 		Element rootElement = DebugPlugin.parseDocument(memento);
 		if (!rootElement.getNodeName().equalsIgnoreCase(DIRECTOR_ROOT_NODE)) {
 			abort(SourceLookupMessages.AbstractSourceLookupDirector_14, null);
@@ -534,7 +534,7 @@ public abstract class AbstractSourceLookupDirector implements ISourceLookupDirec
 	 * @return true if it is already in the list, false if it is a new object
 	 */
 	private boolean checkDuplicate(Object sourceToAdd, List<Object> sources) {
-		if(sources.size() == 0) {
+		if(sources.isEmpty()) {
 			return false;
 		}
 		for (Object obj : sources) {
@@ -547,7 +547,7 @@ public abstract class AbstractSourceLookupDirector implements ISourceLookupDirec
 
 	@Override
 	public void initializeFromMemento(String memento, ILaunchConfiguration configuration) throws CoreException {
-	    dispose();
+		dispose();
 		setLaunchConfiguration(configuration);
 		doInitializeFromMemento(memento, false);
 	}

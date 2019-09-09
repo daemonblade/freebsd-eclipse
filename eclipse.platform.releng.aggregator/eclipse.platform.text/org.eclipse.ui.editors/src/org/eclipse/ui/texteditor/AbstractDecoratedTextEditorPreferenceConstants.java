@@ -198,12 +198,34 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	public final static String EDITOR_LINE_NUMBER_RULER= "lineNumberRuler"; //$NON-NLS-1$
 
 	/**
-	 * A named preference that holds the color used to render line numbers inside the line number ruler
-	 * (value <code>"lineNumberColor"</code>).
+	 * A named preference that controls if the caret offset is shown in the status line.
+	 * <p>
+	 * The preference value is of type <code>Boolean</code>.
+	 * </p>
+	 * 
+	 * @since 3.12
+	 */
+	public final static String EDITOR_SHOW_CARET_OFFSET= AbstractTextEditor.PREFERENCE_SHOW_CARET_OFFSET;
+
+	/**
+	 * A named preference that controls if the selection size (number of selected characters) is
+	 * shown in the status line.
+	 * <p>
+	 * The preference value is of type <code>Boolean</code>.
+	 * </p>
+	 * 
+	 * @since 3.12
+	 */
+	public final static String EDITOR_SHOW_SELECTION_SIZE= AbstractTextEditor.PREFERENCE_SHOW_SELECTION_SIZE;
+
+	/**
+	 * A named preference that holds the color used to render line numbers inside the line number
+	 * ruler (value <code>"lineNumberColor"</code>).
 	 * <p>
 	 * The preference value is of type <code>String</code>. A RGB color value encoded as a string
 	 * using class <code>PreferenceConverter</code>.
 	 * </p>
+	 * 
 	 * @see org.eclipse.jface.resource.StringConverter
 	 * @see PreferenceConverter
 	 * @see #EDITOR_LINE_NUMBER_RULER
@@ -693,6 +715,9 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 
 		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_LINE_NUMBER_RULER, false);
 
+		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_CARET_OFFSET, true);
+		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_SELECTION_SIZE, true);
+
 		if (!store.getBoolean(USE_QUICK_DIFF_PREFERENCE_PAGE)) {
 			store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.QUICK_DIFF_ALWAYS_ON, true);
 			store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.QUICK_DIFF_CHARACTER_MODE, false);
@@ -723,13 +748,13 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_HYPERLINK_KEY_MODIFIER_MASK, SWT.MOD1);
 
 		HyperlinkDetectorDescriptor[] descriptors= EditorsUI.getHyperlinkDetectorRegistry().getHyperlinkDetectorDescriptors();
-		for (int i= 0; i < descriptors.length; i++) {
-			int stateMask= computeStateMask(descriptors[i].getModifierKeys());
+		for (HyperlinkDetectorDescriptor descriptor : descriptors) {
+			int stateMask = computeStateMask(descriptor.getModifierKeys());
 			if (stateMask == SWT.SHIFT) {
-				EditorsPlugin.logErrorMessage("The '" + descriptors[i].getId() + "' hyperlink detector specifies 'Shift' as modifier. This is not allowed and hence replaced with the default modifier."); //$NON-NLS-1$ //$NON-NLS-2$
+				EditorsPlugin.logErrorMessage("The '" + descriptor.getId() + "' hyperlink detector specifies 'Shift' as modifier. This is not allowed and hence replaced with the default modifier."); //$NON-NLS-1$ //$NON-NLS-2$
 				stateMask= -1;
 			}
-			store.setDefault(descriptors[i].getId() + HyperlinkDetectorDescriptor.STATE_MASK_POSTFIX, stateMask);
+			store.setDefault(descriptor.getId() + HyperlinkDetectorDescriptor.STATE_MASK_POSTFIX, stateMask);
 		}
 
 		boolean isInstalled= EditorsUI.getSpellingService().getSpellingEngineDescriptors().length > 0;
@@ -782,7 +807,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 		if (modifiers == null)
 			return -1;
 
-		if (modifiers.length() == 0)
+		if (modifiers.isEmpty())
 			return SWT.NONE;
 
 		int stateMask= 0;

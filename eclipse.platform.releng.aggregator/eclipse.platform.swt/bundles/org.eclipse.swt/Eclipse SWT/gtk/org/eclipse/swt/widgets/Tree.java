@@ -89,6 +89,10 @@ public class Tree extends Composite {
 	TreeItem currentItem;
 	ImageList imageList, headerImageList;
 	boolean firstCustomDraw;
+	/** True iff a draw event has never been processed by this Tree */
+	boolean firstDraw = true;
+	/** True iff computeSize has never been called on this Tree */
+	boolean firstCompute = true;
 	boolean modelChanged;
 	boolean expandAll;
 	int drawState, drawFlags;
@@ -600,9 +604,20 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 	checkWidget ();
 	if (wHint != SWT.DEFAULT && wHint < 0) wHint = 0;
 	if (hHint != SWT.DEFAULT && hHint < 0) hHint = 0;
+	/*
+	 * Set all the TreeColumn buttons visible otherwise
+	 * gtk_widget_get_preferred_size() will not take their size
+	 * into account.
+	 */
+	if (firstCompute) {
+		for (int x = 0; x < columns.length; x++) {
+			TreeColumn column = columns[x];
+			if (column != null) GTK.gtk_widget_set_visible(column.buttonHandle, true);
+		}
+		firstCompute = false;
+	}
 	GTK.gtk_widget_realize(handle);
 	Point size = computeNativeSize (handle, wHint, hHint, changed);
-	if (size.x == 0 && wHint == SWT.DEFAULT) size.x = DEFAULT_WIDTH;
 
 	/*
 	 * In GTK 3, computeNativeSize(..) sometimes just returns the header
@@ -616,14 +631,21 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 		size.y = getItemCount() * getItemHeightInPixels() + getHeaderHeight();
 	}
 
-	/*
-	 * In case the table doesn't contain any elements,
-	 * getItemCount returns 0 and size.y will be 0
-	 * so need to assign default height
-	 */
-	if (size.y == 0 && hHint == SWT.DEFAULT) size.y = DEFAULT_HEIGHT;
 	Rectangle trim = computeTrimInPixels (0, 0, size.x, size.y);
 	size.x = trim.width;
+	/*
+	 * Feature in GTK: sometimes GtkScrolledWindow's with no scrollbars
+	 * won't automatically adjust their size. This happens when a Tree
+	 * has a header, and the initial computed height was the height of
+	 * the of the header.
+	 *
+	 *  The fix is to increment the height by 1 in order to force a size
+	 *  update for the parent GtkScrollWindow, otherwise the headers
+	 *  will not be shown. This only happens once, see bug 546490.
+	 */
+	if (size.y == this.headerHeight && this.headerVisible && (style & SWT.NO_SCROLL) != 0) {
+		trim.height = trim.height + 1;
+	}
 	size.y = trim.height;
 	return size;
 }
@@ -890,21 +912,39 @@ void createItem (TreeColumn column, int index) {
 	}
 }
 
+// For fast bulk insert, see comments for TreeItem#TreeItem(TreeItem,int,int)
 void createItem (TreeItem item, long parentIter, int index) {
-	int count = GTK.gtk_tree_model_iter_n_children (modelHandle, parentIter);
-	if (index == -1) index = count;
-	if (!(0 <= index && index <= count)) error (SWT.ERROR_INVALID_RANGE);
-	item.handle = OS.g_malloc (GTK.GtkTreeIter_sizeof ());
-	if (item.handle == 0) error(SWT.ERROR_NO_HANDLES);
 	/*
-	* Feature in GTK.  It is much faster to append to a tree store
-	* than to insert at the end using gtk_tree_store_insert().
-	*/
-	if (index == count) {
+	 * Try to achieve maximum possible performance in bulk insert scenarios.
+	 * Even a single call to 'gtk_tree_model_iter_n_children' already
+	 * reduces performance 3x, so try to avoid any unneeded API calls.
+	 */
+	if (index == 0) {
+		item.handle = OS.g_malloc (GTK.GtkTreeIter_sizeof ());
+		if (item.handle == 0) error(SWT.ERROR_NO_HANDLES);
+		GTK.gtk_tree_store_prepend (modelHandle, item.handle, parentIter);
+	} else if (index == -1) {
+		item.handle = OS.g_malloc (GTK.GtkTreeIter_sizeof ());
+		if (item.handle == 0) error(SWT.ERROR_NO_HANDLES);
 		GTK.gtk_tree_store_append (modelHandle, item.handle, parentIter);
 	} else {
-		GTK.gtk_tree_store_insert (modelHandle, item.handle, parentIter, index);
+		int count = GTK.gtk_tree_model_iter_n_children (modelHandle, parentIter);
+		if (!(0 <= index && index <= count)) error (SWT.ERROR_INVALID_RANGE);
+
+		item.handle = OS.g_malloc (GTK.GtkTreeIter_sizeof ());
+		if (item.handle == 0) error(SWT.ERROR_NO_HANDLES);
+
+		/*
+		 * Feature in GTK.  It is much faster to append to a tree store
+		 * than to insert at the end using gtk_tree_store_insert().
+		 */
+		if (index == count) {
+			GTK.gtk_tree_store_append (modelHandle, item.handle, parentIter);
+		} else {
+			GTK.gtk_tree_store_insert (modelHandle, item.handle, parentIter, index);
+		}
 	}
+
 	int id = getId (item.handle, false);
 	items [id] = item;
 	modelChanged = true;
@@ -2060,7 +2100,7 @@ TreeItem _getCachedTopItem() {
 		long iter = OS.g_malloc (GTK.GtkTreeIter_sizeof ());
 		long data = OS.g_list_data (list);
 		if (GTK.gtk_tree_model_get_iter (modelHandle, iter, data)) {
-			 treeSelection = _getItem (iter);
+			treeSelection = _getItem (iter);
 		}
 		OS.g_free (iter);
 		GTK.gtk_tree_path_free (data);
@@ -2306,8 +2346,8 @@ long gtk_button_release_event (long widget, long event) {
 			if ((eventState[0] & (GDK.GDK_CONTROL_MASK|GDK.GDK_SHIFT_MASK)) == 0) {
 				GTK.gtk_tree_view_set_cursor(handle, path[0], 0,  false);
 			}
-			 // Check to see if there has been a new tree item selected when holding Control in Path.
-			 // If not, deselect the item.
+			// Check to see if there has been a new tree item selected when holding Control in Path.
+			// If not, deselect the item.
 			if ((eventState[0] & GDK.GDK_CONTROL_MASK) != 0 && selectionCountOnRelease == selectionCountOnPress) {
 				GTK.gtk_tree_selection_unselect_path (selection,path[0]);
 			}
@@ -2374,6 +2414,16 @@ void drawInheritedBackground (long cairo) {
 long gtk_draw (long widget, long cairo) {
 	boolean haveBoundsChanged = boundsChangedSinceLastDraw;
 	boundsChangedSinceLastDraw = false;
+	/*
+	 * Feature in GTK: a drawing model change in GTK3.20 means that headers are not drawn
+	 * if the Tree has no items. In such cases, the fix is to ensure that the Tree's GdkWindow
+	 * is a native one. Only X11 is affected by this issue, see bug 541427 for more info.
+	 */
+	if (firstDraw && OS.isX11() && getItemCount() == 0 && GTK.GTK_VERSION >= OS.VERSION(3, 20, 0)) {
+		long binWindow = GTK.gtk_tree_view_get_bin_window(handle);
+		GDK.gdk_window_ensure_native(binWindow);
+	}
+	firstDraw = false;
 	if ((state & OBSCURED) != 0) return 0;
 	/*
 	 * Bug 537960: JFace tree viewers miss a repaint when resized by a SashForm
@@ -2723,7 +2773,7 @@ void propagateDraw (long container, long cairo) {
 	 * "noChildDrawing" widgets might still be partially drawn.
 	 */
 	super.propagateDraw(container, cairo);
-	if (headerVisible && noChildDrawing != null && wasScrolled) {
+	if (headerVisible && noChildDrawing && wasScrolled) {
 		for (TreeColumn column : columns) {
 			if (column != null) {
 				GTK.gtk_widget_queue_draw(column.buttonHandle);
@@ -3485,7 +3535,7 @@ void setBackgroundGdkRGBA (long context, long handle, GdkRGBA rgba) {
 	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
 		String name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? "treeview" : "GtkTreeView";
 		String css = name + " {background-color: " + display.gtk_rgba_to_css_string(background) + ";}\n"
-                + name + ":selected {background-color: " + display.gtk_rgba_to_css_string(selectedBackground) + ";}";
+				+ name + ":selected {background-color: " + display.gtk_rgba_to_css_string(selectedBackground) + ";}";
 
 		// Cache background color
 		cssBackground = css;
@@ -4149,15 +4199,12 @@ long windowProc (long handle, long arg0, long user_data) {
 			 */
 			if (hasChildren) {
 				/*
-				 * If headers are visible, set noChildDrawing to their
-				 * dimensions -- this will prevent any child widgets from drawing
+				 * If headers are visible, set noChildDrawing to true
+				 * this will prevent any child widgets from drawing
 				 * over the header buttons. See bug 535978.
 				 */
 				if (headerVisible) {
-					GdkRectangle rect = new GdkRectangle ();
-					GDK.gdk_cairo_get_clip_rectangle (arg0, rect);
-					// -1's is for the 1px of padding between the fixedHandle and handle
-					noChildDrawing = new Rectangle(0, 0, rect.width - 1, this.headerHeight - 1);
+					noChildDrawing = true;
 				}
 				propagateDraw(handle, arg0);
 			}

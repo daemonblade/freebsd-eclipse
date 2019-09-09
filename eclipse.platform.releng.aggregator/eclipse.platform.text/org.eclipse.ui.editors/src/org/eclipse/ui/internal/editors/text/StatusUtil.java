@@ -51,8 +51,7 @@ public class StatusUtil {
 	 */
 	public static IStatus getMostSevere(IStatus[] status) {
 		IStatus max= null;
-		for (int i= 0; i < status.length; i++) {
-			IStatus curr= status[i];
+		for (IStatus curr : status) {
 			if (curr.matches(IStatus.ERROR)) {
 				return curr;
 			}
@@ -85,7 +84,7 @@ public class StatusUtil {
 				page.setErrorMessage(null);
 				break;
 			default:
-				if (message.length() == 0) {
+				if (message.isEmpty()) {
 					message= null;
 				}
 				page.setMessage(null);

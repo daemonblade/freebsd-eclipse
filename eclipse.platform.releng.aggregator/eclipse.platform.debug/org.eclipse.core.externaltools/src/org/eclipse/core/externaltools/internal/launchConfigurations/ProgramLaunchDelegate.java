@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -77,21 +77,10 @@ public class ProgramLaunchDelegate extends LaunchConfigurationDelegate {
 			return;
 		}
 
-		// resolve arguments
-		String[] arguments = ExternalToolsCoreUtil.getArguments(configuration);
+		String[] cmdLine = buildCommandLine(configuration, location);
 
 		if (monitor.isCanceled()) {
 			return;
-		}
-
-		int cmdLineLength = 1;
-		if (arguments != null) {
-			cmdLineLength += arguments.length;
-		}
-		String[] cmdLine = new String[cmdLineLength];
-		cmdLine[0] = location.toOSString();
-		if (arguments != null) {
-			System.arraycopy(arguments, 0, cmdLine, 1, arguments.length);
 		}
 
 		File workingDir = null;
@@ -110,7 +99,8 @@ public class ProgramLaunchDelegate extends LaunchConfigurationDelegate {
 			return;
 		}
 
-		Process p = DebugPlugin.exec(cmdLine, workingDir, envp);
+		boolean mergeOutput = configuration.getAttribute(DebugPlugin.ATTR_MERGE_OUTPUT, false);
+		Process p = DebugPlugin.exec(cmdLine, workingDir, envp, mergeOutput);
 		IProcess process = null;
 
 		// add process type to process attributes
@@ -166,6 +156,22 @@ public class ProgramLaunchDelegate extends LaunchConfigurationDelegate {
 			// refresh resources
 			RefreshUtil.refreshResources(configuration, monitor);
 		}
+	}
+
+	private String[] buildCommandLine(ILaunchConfiguration configuration, IPath location) throws CoreException {
+		// resolve arguments
+		String[] arguments = ExternalToolsCoreUtil.getArguments(configuration);
+
+		int cmdLineLength = 1;
+		if (arguments != null) {
+			cmdLineLength += arguments.length;
+		}
+		String[] cmdLine = new String[cmdLineLength];
+		cmdLine[0] = location.toOSString();
+		if (arguments != null) {
+			System.arraycopy(arguments, 0, cmdLine, 1, arguments.length);
+		}
+		return cmdLine;
 	}
 
 	private String generateCommandLine(String[] commandLine) {
@@ -225,4 +231,11 @@ public class ProgramLaunchDelegate extends LaunchConfigurationDelegate {
 		return super.saveBeforeLaunch(configuration, mode, monitor);
 	}
 
+	@Override
+	public String showCommandLine(ILaunchConfiguration configuration, String mode, ILaunch launch, IProgressMonitor monitor) throws CoreException {
+		IPath location = ExternalToolsCoreUtil.getLocation(configuration);
+		String[] cmd = buildCommandLine(configuration, location);
+		String cmdLine = generateCommandLine(cmd);
+		return cmdLine;
+	}
 }

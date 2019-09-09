@@ -26,11 +26,13 @@ package org.eclipse.ui.texteditor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.osgi.framework.Bundle;
 
@@ -119,6 +121,7 @@ import org.eclipse.jface.viewers.StructuredSelection;
 
 import org.eclipse.jface.text.AbstractInformationControlManager;
 import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.BlockTextSelection;
 import org.eclipse.jface.text.DefaultLineTracker;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
@@ -2227,6 +2230,26 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 	 */
 	public static final String PREFERENCE_WORD_WRAP_ENABLED= "wordwrap.enabled"; //$NON-NLS-1$
 
+	/**
+	 * A named preference to control the initial caret offset visibility on the status line.
+	 * <p>
+	 * Value is of type <code>Boolean</code>.
+	 * </p>
+	 *
+	 * @since 3.13
+	 */
+	public static final String PREFERENCE_SHOW_CARET_OFFSET = "showCaretOffset"; //$NON-NLS-1$
+
+	/**
+	 * A named preference to control the selection visibility on the status line.
+	 * <p>
+	 * Value is of type <code>Boolean</code>.
+	 * </p>
+	 *
+	 * @since 3.13
+	 */
+	public static final String PREFERENCE_SHOW_SELECTION_SIZE = "showSelectionSize"; //$NON-NLS-1$
+
 	/** Menu id for the editor context menu. */
 	public static final String DEFAULT_EDITOR_CONTEXT_MENU_ID= "#EditorContext"; //$NON-NLS-1$
 	/** Menu id for the ruler context menu. */
@@ -2324,8 +2347,10 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 	private final PositionLabelValue fLineLabel= new PositionLabelValue();
 	/** The position label value of the current column. */
 	private final PositionLabelValue fColumnLabel= new PositionLabelValue();
+	/** The position label value of the current offset. */
+	private final PositionLabelValue fOffsetLabel = new PositionLabelValue();
 	/** The arguments for the position label pattern. */
-	private final Object[] fPositionLabelPatternArguments= new Object[] { fLineLabel, fColumnLabel };
+	private final Object[] fPositionLabelPatternArguments = new Object[] { fLineLabel, fColumnLabel, fOffsetLabel };
 	/**
 	 * The column support of this editor.
 	 * @since 3.3
@@ -2976,7 +3001,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 
 				private void triggerAction(String actionID, MouseEvent e) {
 					// ActionId can be prefixed with modifiers
-					StringBuffer newActionId = new StringBuffer(""); //$NON-NLS-1$
+					StringBuilder newActionId = new StringBuilder(""); //$NON-NLS-1$
 					if ((e.stateMask & SWT.MOD1) > 0) {
 						newActionId.append("M1+"); //$NON-NLS-1$
 					}
@@ -6310,14 +6335,12 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 
 		StyledText widget= fSourceViewer.getTextWidget();
 		widget.setRedraw(false);
-		{
-			adjustHighlightRange(revealStart, revealLength);
-			fSourceViewer.revealRange(revealStart, revealLength);
+		adjustHighlightRange(revealStart, revealLength);
+		fSourceViewer.revealRange(revealStart, revealLength);
 
-			fSourceViewer.setSelectedRange(selectionStart, selectionLength);
+		fSourceViewer.setSelectedRange(selectionStart, selectionLength);
 
-			markInNavigationHistory();
-		}
+		markInNavigationHistory();
 		widget.setRedraw(true);
 	}
 
@@ -6708,7 +6731,6 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		StyledText styledText= fSourceViewer.getTextWidget();
 		int caret= widgetOffset2ModelOffset(fSourceViewer, styledText.getCaretOffset());
 		IDocument document= fSourceViewer.getDocument();
-
 		if (document == null)
 			return fErrorLabel;
 
@@ -6727,8 +6749,32 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 
 			fLineLabel.fValue= line + 1;
 			fColumnLabel.fValue= column + 1;
-			return NLSUtility.format(fPositionLabelPattern, fPositionLabelPatternArguments);
-
+			boolean showSelection = getPreferenceStore().getBoolean(PREFERENCE_SHOW_SELECTION_SIZE);
+			boolean showOffset = getPreferenceStore().getBoolean(PREFERENCE_SHOW_CARET_OFFSET);
+			Point selectedRange = fSourceViewer.getSelectedRange();
+			int selectionLength = selectedRange != null ? selectedRange.y : 0;
+			fOffsetLabel.fValue = selectionLength == 0 ? caret : selectionLength;
+			showSelection = showSelection && selectionLength > 0;
+			if (!showSelection) {
+				if (!showOffset) {
+					// shows line : column
+					return NLSUtility.format(fPositionLabelPattern, fPositionLabelPatternArguments);
+				}
+				// shows line : column : offset
+				return NLSUtility.format(EditorMessages.Editor_statusline_position_pattern_offset,
+						fPositionLabelPatternArguments);
+			}
+			// To show *right* selection, we first need to know if we are in the
+			// block selection mode or not
+			if (isBlockSelectionModeSupported() && isBlockSelectionModeEnabled()) {
+				BlockTextSelection block = (BlockTextSelection) fSourceViewer.getSelectionProvider().getSelection();
+				AtomicInteger sum = new AtomicInteger();
+				Arrays.asList(block.getRegions()).forEach(r -> sum.addAndGet(r.getLength()));
+				fOffsetLabel.fValue = sum.intValue();
+			}
+			// shows line : column [selection size]
+			return NLSUtility.format(EditorMessages.Editor_statusline_position_pattern_selection,
+					fPositionLabelPatternArguments);
 		} catch (BadLocationException x) {
 			return fErrorLabel;
 		}
@@ -7132,12 +7178,31 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 
 		@Override
 		public void doSave(IProgressMonitor monitor) throws CoreException {
-			fTextEditor.doSave(monitor);
+			try {
+				fTextEditor.doSave(monitor);
+			} catch (NullPointerException e) {
+				// This should not happen. Code added to handle the below bug.
+				// https://bugs.eclipse.org/bugs/show_bug.cgi?id=550336
+				Bundle bundle = Platform.getBundle(PlatformUI.PLUGIN_ID);
+				ILog log = Platform.getLog(bundle);
+				Status status = new Status(IStatus.ERROR, TextEditorPlugin.PLUGIN_ID, null, e);
+				log.log(status);
+			}
 		}
 
 		@Override
 		public boolean isDirty() {
-			return fTextEditor.isDirty();
+			try {
+				return fTextEditor.isDirty();
+			} catch (NullPointerException e) {
+				// This should not happen. Code added to handle the below bug.
+				// https://bugs.eclipse.org/bugs/show_bug.cgi?id=550336
+				Bundle bundle = Platform.getBundle(PlatformUI.PLUGIN_ID);
+				ILog log = Platform.getLog(bundle);
+				Status status = new Status(IStatus.ERROR, TextEditorPlugin.PLUGIN_ID, null, e);
+				log.log(status);
+				return false;
+			}
 		}
 
 		/*

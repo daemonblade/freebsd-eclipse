@@ -18,7 +18,6 @@ package org.eclipse.ui.part;
 import static org.eclipse.swt.events.SelectionListener.widgetSelectedAdapter;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -141,9 +140,9 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 	 * here, in addition to using get/setData on the items, because dispose() needs
 	 * to access them, but widgetry has already been disposed at that point.
 	 */
-	private ArrayList nestedEditors = new ArrayList(3);
+	private ArrayList<IEditorPart> nestedEditors = new ArrayList<>(3);
 
-	private List pageSites = new ArrayList(3);
+	private List<IServiceLocator> pageSites = new ArrayList<>(3);
 
 	private IServiceLocator pageContainerSite;
 
@@ -479,11 +478,13 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 	 */
 	@Override
 	public void dispose() {
-		deactivateSite(true, false);
+		if (getSite() != null) {
+			deactivateSite(true, false);
+		}
 
 		pageChangeListeners.clear();
 		for (int i = 0; i < nestedEditors.size(); ++i) {
-			IEditorPart editor = (IEditorPart) nestedEditors.get(i);
+			IEditorPart editor = nestedEditors.get(i);
 			disposePart(editor);
 		}
 		nestedEditors.clear();
@@ -492,7 +493,7 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 			pageContainerSite = null;
 		}
 		for (int i = 0; i < pageSites.size(); i++) {
-			IServiceLocator sl = (IServiceLocator) pageSites.get(i);
+			IServiceLocator sl = pageSites.get(i);
 			if (sl instanceof IDisposable) {
 				((IDisposable) sl).dispose();
 			}
@@ -768,8 +769,7 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 	@Override
 	public boolean isDirty() {
 		// use nestedEditors to avoid SWT requests; see bug 12996
-		for (Iterator i = nestedEditors.iterator(); i.hasNext();) {
-			IEditorPart editor = (IEditorPart) i.next();
+		for (IEditorPart editor : nestedEditors) {
 			if (editor.isDirty()) {
 				return true;
 			}
@@ -1136,7 +1136,7 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 	 * @since 3.3
 	 */
 	public final IEditorPart[] findEditors(IEditorInput input) {
-		List result = new ArrayList();
+		List<IEditorPart> result = new ArrayList<>();
 		int count = getPageCount();
 		for (int i = 0; i < count; i++) {
 			IEditorPart editor = getEditor(i);
@@ -1144,7 +1144,7 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 				result.add(editor);
 			}
 		}
-		return (IEditorPart[]) result.toArray(new IEditorPart[result.size()]);
+		return result.toArray(new IEditorPart[result.size()]);
 	}
 
 	/**

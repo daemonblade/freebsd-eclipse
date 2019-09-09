@@ -196,9 +196,9 @@ public class CVSTeamProvider extends RepositoryProvider {
 	 */
 	private String[] getValidArguments(IResource[] resources, LocalOption[] options) throws CVSException {
 		List arguments = new ArrayList(resources.length);
-		for (int i=0;i<resources.length;i++) {
-			checkIsChild(resources[i]);
-			IPath cvsPath = resources[i].getFullPath().removeFirstSegments(1);
+		for (IResource resource : resources) {
+			checkIsChild(resource);
+			IPath cvsPath = resource.getFullPath().removeFirstSegments(1);
 			if (cvsPath.segmentCount() == 0) {
 				arguments.add(Session.CURRENT_LOCAL_FOLDER);
 			} else {
@@ -357,7 +357,7 @@ public class CVSTeamProvider extends RepositoryProvider {
 					// commit files that changed from binary to text
 					// NOTE: The files are committed as text with conversions even if the
 					//       resource sync info still says "binary".
-					if (filesToCommitAsText.size() != 0) {
+					if (!filesToCommitAsText.isEmpty()) {
 						Session session1 = new Session(workspaceRoot.getRemoteLocation(), workspaceRoot.getLocalRoot(), true /* output to console */);
 						session1.open(Policy.subMonitorFor(monitor1, 1), true /* open for modification */);
 						try {

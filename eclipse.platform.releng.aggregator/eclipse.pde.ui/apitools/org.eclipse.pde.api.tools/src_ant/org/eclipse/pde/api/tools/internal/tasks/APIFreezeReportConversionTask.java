@@ -343,9 +343,7 @@ public class APIFreezeReportConversionTask extends Task {
 	private void dumpEntries(Map<String, List<Entry>> entries, Map<String, List<String>> resolverErrors, StringBuilder buffer) {
 		dumpHeader(buffer);
 		List<Map.Entry<String, List<Entry>>> allEntries = new ArrayList<>();
-		for (Map.Entry<String, List<Entry>> entry : entries.entrySet()) {
-			allEntries.add(entry);
-		}
+		allEntries.addAll(entries.entrySet());
 		Collections.sort(allEntries, (o1, o2) -> {
 			return o1.getKey().compareTo(o2.getKey());
 		});
@@ -487,9 +485,7 @@ public class APIFreezeReportConversionTask extends Task {
 		SAXParser parser = null;
 		try {
 			parser = factory.newSAXParser();
-		} catch (ParserConfigurationException e) {
-			e.printStackTrace();
-		} catch (SAXException e) {
+		} catch (ParserConfigurationException | SAXException e) {
 			e.printStackTrace();
 		}
 		if (parser == null) {

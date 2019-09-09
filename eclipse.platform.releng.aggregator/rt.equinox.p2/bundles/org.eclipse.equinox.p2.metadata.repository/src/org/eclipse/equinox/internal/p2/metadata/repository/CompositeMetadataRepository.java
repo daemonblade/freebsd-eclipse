@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     EclipseSource - ongoing development
@@ -34,6 +34,7 @@ import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
 import org.eclipse.equinox.p2.repository.metadata.spi.AbstractMetadataRepository;
 import org.eclipse.osgi.util.NLS;
+import org.osgi.framework.FrameworkUtil;
 
 public class CompositeMetadataRepository extends AbstractMetadataRepository implements ICompositeRepository<IInstallableUnit>, IIndexProvider<IInstallableUnit> {
 
@@ -41,7 +42,9 @@ public class CompositeMetadataRepository extends AbstractMetadataRepository impl
 	static final public String PI_REPOSITORY_TYPE = "compositeMetadataRepository"; //$NON-NLS-1$
 	static final public String PROP_ATOMIC_LOADING = "p2.atomic.composite.loading"; //$NON-NLS-1$
 
-	static final public boolean ATOMIC_LOADING_DEFAULT = Boolean.parseBoolean(Activator.getContext().getProperty("eclipse.p2.atomic.composite.loading.default")); //$NON-NLS-1$
+	static final public boolean ATOMIC_LOADING_DEFAULT = Boolean
+			.parseBoolean(FrameworkUtil.getBundle(CompositeMetadataRepository.class).getBundleContext()
+					.getProperty("eclipse.p2.atomic.composite.loading.default")); //$NON-NLS-1$
 
 	static final private Integer REPOSITORY_VERSION = 1;
 	static final public String XML_EXTENSION = ".xml"; //$NON-NLS-1$
@@ -62,11 +65,11 @@ public class CompositeMetadataRepository extends AbstractMetadataRepository impl
 	public static CompositeMetadataRepository createMemoryComposite(IProvisioningAgent agent) {
 		if (agent == null)
 			return null;
-		IMetadataRepositoryManager repoManager = (IMetadataRepositoryManager) agent.getService(IMetadataRepositoryManager.SERVICE_NAME);
+		IMetadataRepositoryManager repoManager = agent.getService(IMetadataRepositoryManager.class);
 		if (repoManager == null)
 			return null;
 		try {
-			//create a unique opaque URI 
+			//create a unique opaque URI
 			long time = System.currentTimeMillis();
 			URI repositoryURI = new URI("memory:" + String.valueOf(time)); //$NON-NLS-1$
 			while (repoManager.contains(repositoryURI))
@@ -184,7 +187,7 @@ public class CompositeMetadataRepository extends AbstractMetadataRepository impl
 			if (propagateException) {
 				removeFromRepoManager(repositoriesToBeRemovedOnFailure);
 				String msg = NLS.bind(Messages.io_failedRead, getLocation());
-				throw new ProvisionException(new Status(IStatus.ERROR, Activator.ID, ProvisionException.REPOSITORY_FAILED_READ, msg, e));
+				throw new ProvisionException(new Status(IStatus.ERROR, Constants.ID, ProvisionException.REPOSITORY_FAILED_READ, msg, e));
 			}
 		}
 	}
@@ -312,7 +315,7 @@ public class CompositeMetadataRepository extends AbstractMetadataRepository impl
 			super.setProperty(IRepository.PROP_TIMESTAMP, Long.toString(System.currentTimeMillis()));
 			new CompositeRepositoryIO().write(toState(), output, PI_REPOSITORY_TYPE);
 		} catch (IOException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.ID, ProvisionException.REPOSITORY_FAILED_WRITE, NLS.bind(Messages.io_failedWrite, getLocation()), e));
+			LogHelper.log(new Status(IStatus.ERROR, Constants.ID, ProvisionException.REPOSITORY_FAILED_WRITE, NLS.bind(Messages.io_failedWrite, getLocation()), e));
 		}
 	}
 

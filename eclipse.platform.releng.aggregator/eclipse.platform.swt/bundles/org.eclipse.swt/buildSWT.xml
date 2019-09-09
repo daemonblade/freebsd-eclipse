@@ -63,11 +63,11 @@
 		</antcall>
 		<antcall target="check_fragment_libraries">
 			<param name="library_count" value="8"/>
-			<param name="fragment" value="org.eclipse.swt.gtk.freebsd.powerpc64"/>
+			<param name="fragment" value="org.eclipse.swt.gtk.linux.ppc64le"/>
 		</antcall>
 		<antcall target="check_fragment_libraries">
 			<param name="library_count" value="8"/>
-			<param name="fragment" value="org.eclipse.swt.gtk.freebsd.amd64"/>
+			<param name="fragment" value="org.eclipse.swt.gtk.linux.x86_64"/>
 		</antcall>
 		<antcall target="check_fragment_libraries">
 			<param name="library_count" value="4"/>
@@ -80,12 +80,12 @@
 		<property name="checkdir" value="~/build/check_libraries"/>
 		<property name="library_count" value="23"/>
 		<property name="fragment" value=""/>
-		<fileset id="match" dir="${repo.bin}/bundles/${fragment}" includes="**/org.eclipse.swt.gtk.freebsd.powerpc64/**, **/org.eclipse.swt.gtk.freebsd.amd64/**, **/org.eclipse.swt.win32.win32.x86_64/**, **/org.eclipse.swt.cocoa.macosx.*/**">
+		<fileset id="match" dir="${repo.bin}/bundles/${fragment}" includes="**/org.eclipse.swt.gtk.linux.ppc64le/**, **/org.eclipse.swt.gtk.linux.x86_64/**, **/org.eclipse.swt.win32.win32.x86_64/**, **/org.eclipse.swt.cocoa.macosx.*/**">
 			<filename regex="[0-9][0-9][0-9][0-9]."/>
 			<filename regex="${swt_version}."/>
 			<exclude name="**/.git/**"/>
 		</fileset>
-		<fileset id="not_match" dir="${repo.bin}/bundles/${fragment}" includes="**/org.eclipse.swt.gtk.freebsd.powerpc64/**, **/org.eclipse.swt.gtk.freebsd.amd64/**, **/org.eclipse.swt.win32.win32.x86_64/**, **/org.eclipse.swt.cocoa.macosx.*/**">
+		<fileset id="not_match" dir="${repo.bin}/bundles/${fragment}" includes="**/org.eclipse.swt.gtk.linux.ppc64le/**, **/org.eclipse.swt.gtk.linux.x86_64/**, **/org.eclipse.swt.win32.win32.x86_64/**, **/org.eclipse.swt.cocoa.macosx.*/**">
 			<filename regex="[0-9][0-9][0-9][0-9]."/>
 			<filename regex="${swt_version}." negate="true"/>
 			<exclude name="**/.git/**"/>
@@ -115,13 +115,13 @@
 			trust="true"
 			outputproperty="m_linux_x86_64_output"
 			command="hostname"/>
-		<sshexec host="${m_linux_powerpc64}"
+		<sshexec host="${m_linux_ppc64le}"
 			port="2256"
 			username="swtbuild"
 			keyfile="${keyfile}"
 			failonerror="false"
 			trust="true"
-			outputproperty="m_linux_powerpc64_output"
+			outputproperty="m_linux_ppc64le_output"
 			command="hostname"/>
 		<sshexec host="${m_mac}"
 			username="swtbuild"
@@ -139,10 +139,10 @@
 				<matches pattern="x${m_linux_x86_64_output}*" string="x${m_linux_x86_64}"/>
 			</and>
 		</condition>
-		<condition property="m_linux_powerpc64_test" value="${success_msg}" else="${fail_msg}">
+		<condition property="m_linux_ppc64le_test" value="${success_msg}" else="${fail_msg}">
 			<and>
-				<length string="${m_linux_powerpc64_output}" when="greater" length="0"/>
-				<matches pattern="x${m_linux_powerpc64_output}*" string="x${m_linux_powerpc64}"/>
+				<length string="${m_linux_ppc64le_output}" when="greater" length="0"/>
+				<matches pattern="x${m_linux_ppc64le_output}*" string="x${m_linux_ppc64le}"/>
 			</and>
 		</condition>
 		<condition property="m_mac_test" value="${success_msg}" else="${fail_msg}">

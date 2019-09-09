@@ -7,7 +7,7 @@
  *  https://www.eclipse.org/legal/epl-2.0/
  *
  *  SPDX-License-Identifier: EPL-2.0
- * 
+ *
  *  Contributors:
  *     IBM Corporation - initial API and implementation
  *     Prashant Deva - Bug 194674 [prov] Provide write access to metadata repository
@@ -96,9 +96,6 @@ public class LocalMetadataRepository extends AbstractMetadataRepository implemen
 		save();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.equinox.p2.repository.metadata.spi.AbstractMetadataRepository#addInstallableUnits(java.util.Collection)
-	 */
 	@Override
 	public synchronized void addInstallableUnits(Collection<IInstallableUnit> installableUnits) {
 		if (installableUnits == null || installableUnits.isEmpty())
@@ -177,7 +174,7 @@ public class LocalMetadataRepository extends AbstractMetadataRepository implemen
 	 * Broadcast discovery events for all repositories referenced by this repository.
 	 */
 	public void publishRepositoryReferences() {
-		IProvisioningEventBus bus = (IProvisioningEventBus) getProvisioningAgent().getService(IProvisioningEventBus.SERVICE_NAME);
+		IProvisioningEventBus bus = getProvisioningAgent().getService(IProvisioningEventBus.class);
 		if (bus == null)
 			return;
 
@@ -285,7 +282,7 @@ public class LocalMetadataRepository extends AbstractMetadataRepository implemen
 			super.setProperty(IRepository.PROP_TIMESTAMP, Long.toString(System.currentTimeMillis()), new NullProgressMonitor());
 			new MetadataRepositoryIO(getProvisioningAgent()).write(this, output);
 		} catch (IOException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.ID, ProvisionException.REPOSITORY_FAILED_WRITE, "Error saving metadata repository: " + getLocation(), e)); //$NON-NLS-1$
+			LogHelper.log(new Status(IStatus.ERROR, Constants.ID, ProvisionException.REPOSITORY_FAILED_WRITE, "Error saving metadata repository: " + getLocation(), e)); //$NON-NLS-1$
 		}
 	}
 
@@ -300,7 +297,8 @@ public class LocalMetadataRepository extends AbstractMetadataRepository implemen
 				save();
 			}
 			//force repository manager to reload this repository because it caches properties
-			MetadataRepositoryManager manager = (MetadataRepositoryManager) getProvisioningAgent().getService(IMetadataRepositoryManager.SERVICE_NAME);
+			MetadataRepositoryManager manager = (MetadataRepositoryManager) getProvisioningAgent()
+					.getService(IMetadataRepositoryManager.class);
 			if (manager.removeRepository(getLocation()))
 				manager.addRepository(this);
 			return oldValue;
@@ -318,18 +316,18 @@ public class LocalMetadataRepository extends AbstractMetadataRepository implemen
 				disableSave = true;
 				runnable.run(monitor);
 			} catch (OperationCanceledException oce) {
-				return new Status(IStatus.CANCEL, Activator.ID, oce.getMessage(), oce);
+				return new Status(IStatus.CANCEL, Constants.ID, oce.getMessage(), oce);
 			} catch (Throwable e) {
-				result = new Status(IStatus.ERROR, Activator.ID, e.getMessage(), e);
+				result = new Status(IStatus.ERROR, Constants.ID, e.getMessage(), e);
 			} finally {
 				disableSave = false;
 				try {
 					save();
 				} catch (Exception e) {
 					if (result != null)
-						result = new MultiStatus(Activator.ID, IStatus.ERROR, new IStatus[] {result}, e.getMessage(), e);
+						result = new MultiStatus(Constants.ID, IStatus.ERROR, new IStatus[] {result}, e.getMessage(), e);
 					else
-						result = new Status(IStatus.ERROR, Activator.ID, e.getMessage(), e);
+						result = new Status(IStatus.ERROR, Constants.ID, e.getMessage(), e);
 				}
 			}
 		}

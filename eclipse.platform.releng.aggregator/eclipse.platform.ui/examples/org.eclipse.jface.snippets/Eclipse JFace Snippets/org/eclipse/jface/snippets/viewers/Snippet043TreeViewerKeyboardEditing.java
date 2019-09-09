@@ -47,7 +47,7 @@ import org.eclipse.swt.widgets.Shell;
  * Demonstrates how to use keyboard-editing support in a TreeViewer with no
  * column
  *
- * @author Tom Schindl <tom.schindl@bestsolution.at>
+ * @author Tom Schindl &lt;tom.schindl@bestsolution.at&gt;
  *
  */
 public class Snippet043TreeViewerKeyboardEditing {
@@ -194,7 +194,7 @@ public class Snippet043TreeViewerKeyboardEditing {
 		public String toString() {
 			String rv = "Item ";
 			if (parent != null) {
-				rv = parent.toString() + ".";
+				rv = parent + ".";
 			}
 			rv += counter;
 

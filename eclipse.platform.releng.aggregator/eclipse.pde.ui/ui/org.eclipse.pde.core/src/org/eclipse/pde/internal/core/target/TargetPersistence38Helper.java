@@ -15,10 +15,10 @@ package org.eclipse.pde.internal.core.target;
 
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
@@ -136,9 +136,7 @@ public class TargetPersistence38Helper {
 						definition.setIncluded(included.toArray(new NameVersionDescriptor[included.size()]));
 					} else {
 						List<NameVersionDescriptor> allIncluded = new ArrayList<>();
-						for (NameVersionDescriptor nameVersionDescriptor : previousIncluded) {
-							allIncluded.add(nameVersionDescriptor);
-						}
+						Collections.addAll(allIncluded, previousIncluded);
 						allIncluded.addAll(included);
 						definition.setIncluded(allIncluded.toArray(new NameVersionDescriptor[included.size()]));
 					}
@@ -252,11 +250,7 @@ public class TargetPersistence38Helper {
 				transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes"); //$NON-NLS-1$
 				transformer.transform(new DOMSource(location), result);
 				container = locFactory.getTargetLocation(type, result.getWriter().toString());
-			} catch (TransformerConfigurationException e) {
-				throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, Messages.TargetDefinitionPersistenceHelper_0, e));
-			} catch (TransformerException e) {
-				throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, Messages.TargetDefinitionPersistenceHelper_0, e));
-			} catch (TransformerFactoryConfigurationError e) {
+			} catch (TransformerException | TransformerFactoryConfigurationError e) {
 				throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, Messages.TargetDefinitionPersistenceHelper_0, e));
 			}
 		}

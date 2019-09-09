@@ -1,35 +1,38 @@
 /*******************************************************************************
-.
-. This program and the accompanying materials are made
- * available under the terms of the Eclipse Public License 2.0 which accompanies this distribution, and is available at
+ * Copyright (c) 2000, 2005 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Contributors: IBM Corporation - initial API and implementation
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
 package org.eclipse.test.performance;
 
 /**
  * A <code>PerformanceMeter</code> is used for doing repeated measurements of an arbitrary operation.
- * 
+ *
  * The kind of measurement and the retrieval of the results remain internal to the implementation. Measurements can include time,
  * CPU cycle and memory consumption.
- * 
+ *
  * A <code>PerformanceMeter</code> is created using the method {@link Performance#createPerformanceMeter(String)}. An operation is
  * measured by calling {@link PerformanceMeter#start()} before and {@link PerformanceMeter#stop()} after that operation. The
  * measurement can be repeated, for example, to let the VM warm up and to allow for statistical analysis afterwards.
- * 
+ *
  * After measurements are done and before an analysis of the results can be made {@link PerformanceMeter#commit()} has to be called.
  * This allows for example to prepare the measurements for analysis or persist them.
  * {@link Performance#assertPerformance(PerformanceMeter)} provides a default analysis of the measurements. After the
  * <code>PerformanceMeter</code> is no longer used {@link PerformanceMeter#dispose()} must be called.
- * 
+ *
  * Example usage in a test case:
- * 
+ *
  * <pre>
- * 
+ *
  * public void testOpenEditor() {
  *     Performance perf = Performance.getDefault();
  *     PerformanceMeter performanceMeter = perf.createPerformanceMeter(perf.getDefaultScenarioId(this));
@@ -48,7 +51,7 @@ package org.eclipse.test.performance;
  *     }
  * }
  * </pre>
- * 
+ *
  * This class is not intended to be subclassed by clients.
  */
 public abstract class PerformanceMeter {

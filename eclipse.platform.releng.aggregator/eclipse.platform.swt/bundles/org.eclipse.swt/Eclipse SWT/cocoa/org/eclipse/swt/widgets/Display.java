@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -763,7 +763,7 @@ static String convertToLf(String text) {
 	/* The string is formatted with CR/LF.
 	 * Create a new string with the LF line delimiter. */
 	i = 0;
-	StringBuffer result = new StringBuffer ();
+	StringBuilder result = new StringBuilder ();
 	while (i < length) {
 		int j = text.indexOf (Cr, i);
 		if (j == -1) j = length;
@@ -1547,7 +1547,7 @@ public int getDismissalAlignment () {
  */
 public int getDoubleClickTime () {
 	checkDevice ();
-	return OS.GetDblTime () * 1000 / 60;
+	return (int)(NSEvent.doubleClickInterval() * 1000);
 }
 
 /**
@@ -1650,6 +1650,29 @@ public Point [] getIconSizes () {
 	return new Point [] {
 		new Point (16, 16), new Point (32, 32),
 		new Point (64, 64), new Point (128, 128)};
+}
+
+/**
+ * Returns <code>true</code> if the current OS theme has a dark appearance, else
+ * returns <code>false</code>.
+ * <p>
+ * Note: This operation is a hint and is not supported on platforms that do not
+ * have this concept.
+ * </p>
+ * <p>
+ * Note: Windows 10 onwards users can separately configure the theme for OS and
+ * Application level and this can be read from the Windows registry. Since the
+ * application needs to honor the application level theme, this API reads the
+ * Application level theme setting.
+ * </p>
+ *
+ * @return <code>true</code> if the current OS theme has a dark appearance, else
+ *         returns <code>false</code>.
+ *
+ * @since 3.112
+ */
+public static boolean isSystemDarkTheme () {
+	return OS.isSystemDarkAppearance();
 }
 
 int getLastEventTime () {
@@ -1899,7 +1922,10 @@ double [] getWidgetColorRGB (int id) {
 		case SWT.COLOR_WIDGET_FOREGROUND: color = NSColor.controlTextColor(); break;
 		case SWT.COLOR_WIDGET_BORDER: color = NSColor.blackColor (); break;
 		case SWT.COLOR_LIST_FOREGROUND: color = NSColor.textColor(); break;
+
+		case SWT.COLOR_TEXT_DISABLED_BACKGROUND:
 		case SWT.COLOR_LIST_BACKGROUND: color = NSColor.textBackgroundColor(); break;
+
 		case SWT.COLOR_LIST_SELECTION_TEXT: color = NSColor.selectedTextColor(); break;
 		case SWT.COLOR_LIST_SELECTION: color = NSColor.selectedTextBackgroundColor(); break;
 		case SWT.COLOR_LINK_FOREGROUND:
@@ -1909,7 +1935,13 @@ double [] getWidgetColorRGB (int id) {
 			color = new NSColor(dict.valueForKey(OS.NSForegroundColorAttributeName));
 			textView.release ();
 			break;
-
+		case SWT.COLOR_WIDGET_DISABLED_FOREGROUND:
+			if (OS.VERSION >= OS.VERSION (10, 14, 0)) {
+				color = NSColor.secondarySelectedControlColor();
+			} else {
+				color = NSColor.disabledControlTextColor();
+			}
+			break;
 	}
 	return getNSColorRGB (color);
 }
@@ -2680,6 +2712,15 @@ void initClasses () {
 	createMenuSubclass(OS.class_NSMenu, "SWTMenu", false);
 	createMenuItemSubclass(OS.class_NSMenuItem, "SWTMenuItem", false);
 
+	className = "SWTOpenSavePanelDelegate";
+	cls = OS.objc_allocateClassPair(OS.class_NSObject, className, 0);
+	OS.class_addIvar(cls, SWT_OBJECT, size, (byte)align, types);
+	OS.class_addMethod(cls, OS.sel_sendSelection_, dialogProc3, "@:@");
+	OS.class_addMethod(cls, OS.sel_panel_shouldEnableURL_, dialogProc4, "@:@@");
+	OS.class_addMethod(cls, OS.sel_panel_userEnteredFilename_confirmed_, dialogProc5, "@:@@");
+
+	OS.objc_registerClassPair(cls);
+
 	className = "SWTOutlineView";
 	cls = OS.objc_allocateClassPair(OS.class_NSOutlineView, className, 0);
 	OS.class_addIvar(cls, SWT_OBJECT, size, (byte)align, types);
@@ -2726,7 +2767,6 @@ void initClasses () {
 	OS.class_addMethod(cls, OS.sel_changeFont_, dialogProc3, "@:@");
 	OS.class_addMethod(cls, OS.sel_validModesForFontPanel_, dialogProc3, "@:@");
 	OS.class_addMethod(cls, OS.sel_sendSelection_, dialogProc3, "@:@");
-	OS.class_addMethod(cls, OS.sel_panel_shouldShowFilename_, dialogProc4, "@:@@");
 	OS.class_addMethod(cls, OS.sel_panelDidEnd_returnCode_contextInfo_, dialogProc5, "@:@i@");
 	OS.objc_registerClassPair(cls);
 
@@ -3067,7 +3107,7 @@ void initColors (boolean ignoreColorChange) {
 }
 
 void initColors () {
-	colors = new double [SWT.COLOR_LINK_FOREGROUND + 1][];
+	colors = new double [SWT.COLOR_WIDGET_DISABLED_FOREGROUND + 1][];
 	colors[SWT.COLOR_INFO_FOREGROUND] = getWidgetColorRGB(SWT.COLOR_INFO_FOREGROUND);
 	colors[SWT.COLOR_INFO_BACKGROUND] = getWidgetColorRGB(SWT.COLOR_INFO_BACKGROUND);
 	colors[SWT.COLOR_TITLE_FOREGROUND] = getWidgetColorRGB(SWT.COLOR_TITLE_FOREGROUND);
@@ -3088,6 +3128,8 @@ void initColors () {
 	colors[SWT.COLOR_LIST_SELECTION_TEXT] = getWidgetColorRGB(SWT.COLOR_LIST_SELECTION_TEXT);
 	colors[SWT.COLOR_LIST_SELECTION] = getWidgetColorRGB(SWT.COLOR_LIST_SELECTION);
 	colors[SWT.COLOR_LINK_FOREGROUND] = getWidgetColorRGB(SWT.COLOR_LINK_FOREGROUND);
+	colors[SWT.COLOR_TEXT_DISABLED_BACKGROUND] = getWidgetColorRGB(SWT.COLOR_TEXT_DISABLED_BACKGROUND);
+	colors[SWT.COLOR_WIDGET_DISABLED_FOREGROUND] = getWidgetColorRGB(SWT.COLOR_WIDGET_DISABLED_FOREGROUND);
 
 	alternateSelectedControlColor = getNSColorRGB(NSColor.alternateSelectedControlColor());
 	alternateSelectedControlTextColor = getNSColorRGB(NSColor.alternateSelectedControlTextColor());
@@ -3352,35 +3394,35 @@ public boolean post(Event event) {
 					mouseCursorPosition.y = event.y;
 					eventRef = OS.CGEventCreateMouseEvent(eventSource, OS.kCGEventMouseMoved, mouseCursorPosition, 0);
 				} else {
-	 				NSPoint nsCursorPosition = NSEvent.mouseLocation();
-	 				NSRect primaryFrame = getPrimaryFrame();
-	 				mouseCursorPosition.x = nsCursorPosition.x;
-	 				mouseCursorPosition.y = (int) (primaryFrame.height - nsCursorPosition.y);
-	 				int eventType = 0;
-	 				// SWT buttons are 1-based: 1,2,3,4,5; CG buttons are 0 based: 0,2,1,3,4
-	 				int cgButton;
-	 				switch (event.button) {
-	 				case 1:
-	 					eventType = (event.type == SWT.MouseDown ? OS.kCGEventLeftMouseDown : OS.kCGEventLeftMouseUp);
-	 					cgButton = 0;
-	 					break;
-	 				case 2:
-	 					eventType = (event.type == SWT.MouseDown ? OS.kCGEventOtherMouseDown : OS.kCGEventOtherMouseUp);
-	 					cgButton = 2;
-	 					break;
-	 				case 3:
-	 					eventType = (event.type == SWT.MouseDown ? OS.kCGEventRightMouseDown : OS.kCGEventRightMouseUp);
-	 					cgButton = 1;
-	 					break;
-	 				default:
-	 					eventType = (event.type == SWT.MouseDown ? OS.kCGEventOtherMouseDown : OS.kCGEventOtherMouseUp);
-	 					cgButton = event.button - 1;
-	 					break;
-	 				}
+					NSPoint nsCursorPosition = NSEvent.mouseLocation();
+					NSRect primaryFrame = getPrimaryFrame();
+					mouseCursorPosition.x = nsCursorPosition.x;
+					mouseCursorPosition.y = (int) (primaryFrame.height - nsCursorPosition.y);
+					int eventType = 0;
+					// SWT buttons are 1-based: 1,2,3,4,5; CG buttons are 0 based: 0,2,1,3,4
+					int cgButton;
+					switch (event.button) {
+					case 1:
+						eventType = (event.type == SWT.MouseDown ? OS.kCGEventLeftMouseDown : OS.kCGEventLeftMouseUp);
+						cgButton = 0;
+						break;
+					case 2:
+						eventType = (event.type == SWT.MouseDown ? OS.kCGEventOtherMouseDown : OS.kCGEventOtherMouseUp);
+						cgButton = 2;
+						break;
+					case 3:
+						eventType = (event.type == SWT.MouseDown ? OS.kCGEventRightMouseDown : OS.kCGEventRightMouseUp);
+						cgButton = 1;
+						break;
+					default:
+						eventType = (event.type == SWT.MouseDown ? OS.kCGEventOtherMouseDown : OS.kCGEventOtherMouseUp);
+						cgButton = event.button - 1;
+						break;
+					}
 
-	 				if (cgButton >= 0) {
-	 					eventRef = OS.CGEventCreateMouseEvent(eventSource, eventType, mouseCursorPosition, cgButton);
-	 				}
+					if (cgButton >= 0) {
+						eventRef = OS.CGEventCreateMouseEvent(eventSource, eventType, mouseCursorPosition, cgButton);
+					}
 				}
 				break;
 			}
@@ -5724,10 +5766,10 @@ static long dialogProc(long id, long sel, long arg0, long arg1) {
 	long [] jniRef = new long [1];
 	OS.object_getInstanceVariable(id, SWT_OBJECT, jniRef);
 	if (jniRef[0] == 0) return 0;
-	if (sel == OS.sel_panel_shouldShowFilename_) {
+	if (sel == OS.sel_panel_shouldEnableURL_) {
 		FileDialog dialog = (FileDialog)OS.JNIGetObject(jniRef[0]);
 		if (dialog == null) return 0;
-		return dialog.panel_shouldShowFilename(id, sel, arg0, arg1);
+		return dialog.panel_shouldEnableURL(id, sel, arg0, arg1);
 	}
 	if (sel == OS.sel_setColor_forAttribute_) {
 		FontDialog dialog = (FontDialog)OS.JNIGetObject(jniRef[0]);
@@ -5746,6 +5788,11 @@ static long dialogProc(long id, long sel, long arg0, long arg1, long arg2) {
 		MessageBox dialog = (MessageBox)OS.JNIGetObject(jniRef[0]);
 		if (dialog == null) return 0;
 		dialog.panelDidEnd_returnCode_contextInfo(id, sel, arg0, arg1, arg2);
+	}
+	if (sel == OS.sel_panel_userEnteredFilename_confirmed_) {
+		FileDialog dialog = (FileDialog)OS.JNIGetObject(jniRef[0]);
+		if (dialog == null) return 0;
+		return dialog.panel_userEnteredFilename_confirmed(id, sel, arg0, arg1, arg2);
 	}
 	return 0;
 }

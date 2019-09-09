@@ -81,7 +81,7 @@ public class PrintTableRenderingAction extends Action
 
 		//for all items in the table
 		for (int i=0; i < itemList.length; i++) {
-			StringBuffer tableContents = new StringBuffer();
+			StringBuilder tableContents = new StringBuilder();
 			//print all columns for this row
 			for (int j=0; j < numColumns; j++) {
 				String columnText = labelProvider.getColumnText(itemList[i].getData(), j);
@@ -108,7 +108,7 @@ public class PrintTableRenderingAction extends Action
 
 	private int printColumnLabels(GC printGC, int lineNum)
 	{
-		StringBuffer tableContents = new StringBuffer();
+		StringBuilder tableContents = new StringBuilder();
 		int numColumns = ((Table)fViewer.getControl()).getColumnCount();
 		TableColumn columns[] = ((Table)fViewer.getControl()).getColumns();
 
@@ -148,7 +148,7 @@ public class PrintTableRenderingAction extends Action
 		//get the column headers
 		for (int k=0; k < numColumns; k++) {
 
-			StringBuffer columnLabel = new StringBuffer(columns[k].getText());
+			StringBuilder columnLabel = new StringBuilder(columns[k].getText());
 			int numBytes = 0;
 
 			if (k > 0)

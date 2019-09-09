@@ -95,8 +95,7 @@ public class CVSOutputConsole extends MessageConsole implements IConsoleListener
 	public class MyLifecycle implements org.eclipse.ui.console.IConsoleListener {
 		@Override
 		public void consolesAdded(IConsole[] consoles) {
-			for (int i = 0; i < consoles.length; i++) {
-				IConsole console = consoles[i];
+			for (IConsole console : consoles) {
 				if (console == CVSOutputConsole.this) {
 					init();
 				}
@@ -105,8 +104,7 @@ public class CVSOutputConsole extends MessageConsole implements IConsoleListener
 		}
 		@Override
 		public void consolesRemoved(IConsole[] consoles) {
-			for (int i = 0; i < consoles.length; i++) {
-				IConsole console = consoles[i];
+			for (IConsole console : consoles) {
 				if (console == CVSOutputConsole.this) {
 					ConsolePlugin.getDefault().getConsoleManager().removeConsoleListener(this);
 					dispose();
@@ -191,8 +189,7 @@ public class CVSOutputConsole extends MessageConsole implements IConsoleListener
 		synchronized(document) {
 			visible = true;
 			ConsoleDocument.ConsoleLine[] lines = document.getLines();
-			for (int i = 0; i < lines.length; i++) {
-				ConsoleDocument.ConsoleLine line = lines[i];
+			for (ConsoleDocument.ConsoleLine line : lines) {
 				appendLine(line.type, line.line);
 			}
 			document.clear();
@@ -328,13 +325,13 @@ public class CVSOutputConsole extends MessageConsole implements IConsoleListener
 		
 		// Include child status
 		IStatus[] children = status.getChildren();
-		for (int i = 0; i < children.length; i++) {
-			outputStatus(children[i], true, nestingLevel);
+		for (IStatus c : children) {
+			outputStatus(c, true, nestingLevel);
 		}
 	}
 	
 	private void outputStatusMessage(IStatus status, int nesting) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		for (int i = 0; i < nesting; i++) {
 			buffer.append(NESTING);
 		}

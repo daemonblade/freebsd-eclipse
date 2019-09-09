@@ -27,11 +27,13 @@ import org.eclipse.jface.text.contentassist.IContextInformation;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.IBinding;
-import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
+import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 
 import org.eclipse.jdt.internal.corext.refactoring.typeconstraints.ASTCreator;
 
@@ -45,7 +47,8 @@ import org.eclipse.jdt.ui.text.java.JavaContentAssistInvocationContext;
 import org.eclipse.jdt.internal.ui.text.Chain;
 import org.eclipse.jdt.internal.ui.text.ChainElement;
 import org.eclipse.jdt.internal.ui.text.ChainFinder;
-import org.eclipse.jdt.internal.ui.text.TypeBindingAnalyzer;
+import org.eclipse.jdt.internal.ui.text.ChainType;
+import org.eclipse.jdt.internal.ui.text.ChainElementAnalyzer;
 import org.eclipse.jdt.internal.ui.text.template.contentassist.TemplateProposal;
 
 public class ChainCompletionProposalComputer implements IJavaCompletionProposalComputer {
@@ -74,9 +77,6 @@ public class ChainCompletionProposalComputer implements IJavaCompletionProposalC
 		if (!shouldPerformCompletionOnExpectedType()) {
 			return Collections.emptyList();
 		}
-		if (!findEntrypoints()) {
-			return Collections.emptyList();
-		}
 		return executeCallChainSearch();
 	}
 
@@ -101,49 +101,45 @@ public class ChainCompletionProposalComputer implements IJavaCompletionProposalC
 	}
 
 	private boolean shouldPerformCompletionOnExpectedType() {
-		AST ast= ASTCreator.createAST(ctx.getCompilationUnit(), null).getAST();
-		ITypeBinding binding= ast.resolveWellKnownType(TypeBindingAnalyzer.getExpectedFullyQualifiedTypeName(ctx.getCoreContext()));
-		return binding != null || TypeBindingAnalyzer.getExpectedType(ctx.getProject(), ctx.getCoreContext()) != null;
+		AST ast;
+		CompilationUnit cuNode= SharedASTProviderCore.getAST(ctx.getCompilationUnit(), SharedASTProviderCore.WAIT_NO, null);
+		if (cuNode != null) {
+			ast= cuNode.getAST();
+		} else {
+			ast= ASTCreator.createAST(ctx.getCompilationUnit(), null).getAST();
+		}
+		return ast.resolveWellKnownType(ChainElementAnalyzer.getExpectedFullyQualifiedTypeName(ctx.getCoreContext())) != null
+				|| ChainElementAnalyzer.getExpectedType(ctx.getProject(), ctx.getCoreContext()) != null;
 	}
 
 	private boolean findEntrypoints() {
-		excludedTypes= JavaManipulation.getPreference(PreferenceConstants.PREF_CHAIN_IGNORED_TYPES, ctx.getProject()).split("\\|"); //$NON-NLS-1$
-		for (int i= 0; i < excludedTypes.length; ++i) {
-			excludedTypes[i]= "L" + excludedTypes[i].replace('.', '/'); //$NON-NLS-1$
-		}
-
 		entrypoints= new LinkedList<>();
-		List<IJavaElement> elements= new LinkedList<>();
 		for (IJavaCompletionProposal prop : collector.getJavaCompletionProposals()) {
 			if (prop instanceof AbstractJavaCompletionProposal) {
 				AbstractJavaCompletionProposal aprop= (AbstractJavaCompletionProposal) prop;
-				IJavaElement element= aprop.getJavaElement();
-				if (element != null) {
-					elements.add(element);
+				IJavaElement e= aprop.getJavaElement();
+				if (e != null) {
+					if (matchesExpectedPrefix(e) && !ChainFinder.isFromExcludedType(Arrays.asList(excludedTypes), e)) {
+						entrypoints.add(new ChainElement(e, false));
+					}
 				} else {
 					IJavaElement[] visibleElements= ctx.getCoreContext().getVisibleElements(null);
 					for (IJavaElement ve : visibleElements) {
-						if (ve.getElementName().equals(aprop.getReplacementString())) {
-							elements.add(ve);
+						if (ve.getElementName().equals(aprop.getReplacementString()) && matchesExpectedPrefix(ve)
+								&& !ChainFinder.isFromExcludedType(Arrays.asList(excludedTypes), ve)) {
+							entrypoints.add(new ChainElement(ve, false));
 						}
 					}
 				}
 			}
 		}
 
-		IBinding[] bindings= TypeBindingAnalyzer.resolveBindingsForTypes(ctx.getCompilationUnit(), elements.toArray(new IJavaElement[0]));
-		for (IBinding b : bindings) {
-			if (b != null && matchesExpectedPrefix(b) && !ChainFinder.isFromExcludedType(Arrays.asList(excludedTypes), b)) {
-				entrypoints.add(new ChainElement(b, false));
-			}
-		}
-
 		return !entrypoints.isEmpty();
 	}
 
-	private boolean matchesExpectedPrefix(final IBinding binding) {
+	private boolean matchesExpectedPrefix(final IJavaElement element) {
 		String prefix= String.valueOf(ctx.getCoreContext().getToken());
-		return String.valueOf(binding.getName()).startsWith(prefix);
+		return String.valueOf(element.getElementName()).startsWith(prefix);
 	}
 
 	private List<ICompletionProposal> executeCallChainSearch() {
@@ -151,11 +147,22 @@ public class ChainCompletionProposalComputer implements IJavaCompletionProposalC
 		final int minDepth= Integer.parseInt(JavaManipulation.getPreference(PreferenceConstants.PREF_MIN_CHAIN_LENGTH, ctx.getProject()));
 		final int maxDepth= Integer.parseInt(JavaManipulation.getPreference(PreferenceConstants.PREF_MAX_CHAIN_LENGTH, ctx.getProject()));
 
-		final List<ITypeBinding> expectedTypes= TypeBindingAnalyzer.resolveBindingsForExpectedTypes(ctx.getProject(), ctx.getCompilationUnit(), ctx.getCoreContext());
-		final ChainFinder finder= new ChainFinder(expectedTypes, Arrays.asList(excludedTypes), invocationSite);
+		excludedTypes= JavaManipulation.getPreference(PreferenceConstants.PREF_CHAIN_IGNORED_TYPES, ctx.getProject()).split("\\|"); //$NON-NLS-1$
+		for (int i= 0; i < excludedTypes.length; ++i) {
+			excludedTypes[i]= "L" + excludedTypes[i].replace('.', '/'); //$NON-NLS-1$
+		}
+
+		final IType invocationType= ((IMember) invocationSite).getCompilationUnit().findPrimaryType();
+
+		final List<ChainType> expectedTypes= ChainElementAnalyzer.resolveBindingsForExpectedTypes(ctx.getProject(), ctx.getCoreContext());
+		final ChainFinder finder= new ChainFinder(expectedTypes, Arrays.asList(excludedTypes), invocationType);
 		try {
 			ExecutorService executor= Executors.newSingleThreadExecutor();
-			Future<?> future= executor.submit(() -> finder.startChainSearch(entrypoints, maxChains, minDepth, maxDepth));
+			Future<?> future= executor.submit(() -> {
+				if (findEntrypoints()) {
+					finder.startChainSearch(entrypoints, maxChains, minDepth, maxDepth);
+				}
+			});
 			long timeout= Long.parseLong(JavaManipulation.getPreference(PreferenceConstants.PREF_CHAIN_TIMEOUT, ctx.getProject()));
 			future.get(timeout, TimeUnit.SECONDS);
 		} catch (final Exception e) {

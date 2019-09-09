@@ -15,13 +15,18 @@
   <parent>
     <artifactId>eclipse.platform.ui</artifactId>
     <groupId>eclipse.platform.ui</groupId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.ui</groupId>
   <artifactId>org.eclipse.ui.cocoa</artifactId>
   <version>1.2.200-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
+
+  <properties>
+    <skipAPIAnalysis>true</skipAPIAnalysis>
+  </properties>
+
   <build>
     <plugins>
       <!-- tycho is not able to automatically determine os/ws/arch of this bundle -->

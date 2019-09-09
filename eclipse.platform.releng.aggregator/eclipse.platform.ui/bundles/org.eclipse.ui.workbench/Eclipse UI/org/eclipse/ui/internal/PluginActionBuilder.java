@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,6 +11,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Remy Chi Jian Suen <remy.suen@gmail.com> - Bug 43573 [Contributions] Support icon in <menu>
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - Bug 548799
  *******************************************************************************/
 package org.eclipse.ui.internal;
 
@@ -26,11 +27,11 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.resource.ResourceLocator;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants;
 import org.eclipse.ui.internal.registry.RegistryReader;
-import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 /**
  * This class contains shared functionality for reading action contributions
@@ -43,7 +44,7 @@ public abstract class PluginActionBuilder extends RegistryReader {
 
 	protected BasicContribution currentContribution;
 
-	protected ArrayList cache;
+	protected ArrayList<Object> cache;
 
 	/**
 	 * The default constructor.
@@ -141,7 +142,7 @@ public abstract class PluginActionBuilder extends RegistryReader {
 			currentContribution = createContribution();
 			readElementChildren(element);
 			if (cache == null) {
-				cache = new ArrayList(4);
+				cache = new ArrayList<>(4);
 			}
 			cache.add(currentContribution);
 			currentContribution = null;
@@ -168,9 +169,9 @@ public abstract class PluginActionBuilder extends RegistryReader {
 	 * element.
 	 */
 	protected static class BasicContribution {
-		protected ArrayList menus;
+		protected ArrayList<IConfigurationElement> menus;
 
-		protected ArrayList actions;
+		protected ArrayList<ActionDescriptor> actions;
 
 		/**
 		 * Add a menu.
@@ -179,7 +180,7 @@ public abstract class PluginActionBuilder extends RegistryReader {
 		 */
 		public void addMenu(IConfigurationElement element) {
 			if (menus == null) {
-				menus = new ArrayList(1);
+				menus = new ArrayList<>(1);
 			}
 			menus.add(element);
 		}
@@ -191,7 +192,7 @@ public abstract class PluginActionBuilder extends RegistryReader {
 		 */
 		public void addAction(ActionDescriptor desc) {
 			if (actions == null) {
-				actions = new ArrayList(3);
+				actions = new ArrayList<>(3);
 			}
 			actions.add(desc);
 		}
@@ -201,7 +202,7 @@ public abstract class PluginActionBuilder extends RegistryReader {
 		 * managers.
 		 *
 		 * The elements added are filtered based on activity enablement.
-		 * 
+		 *
 		 * @param menu                the menu to contribute to
 		 * @param menuAppendIfMissing whether to append missing groups to menus
 		 * @param toolbar             the toolbar to contribute to
@@ -211,14 +212,14 @@ public abstract class PluginActionBuilder extends RegistryReader {
 				boolean toolAppendIfMissing) {
 			if (menus != null && menu != null) {
 				for (int i = 0; i < menus.size(); i++) {
-					IConfigurationElement menuElement = (IConfigurationElement) menus.get(i);
+					IConfigurationElement menuElement = menus.get(i);
 					contributeMenu(menuElement, menu, menuAppendIfMissing);
 				}
 			}
 
 			if (actions != null) {
 				for (int i = 0; i < actions.size(); i++) {
-					ActionDescriptor ad = (ActionDescriptor) actions.get(i);
+					ActionDescriptor ad = actions.get(i);
 					if (menu != null) {
 						contributeMenuAction(ad, menu, menuAppendIfMissing);
 					}
@@ -244,7 +245,7 @@ public abstract class PluginActionBuilder extends RegistryReader {
 			ImageDescriptor image = null;
 			if (icon != null) {
 				String extendingPluginId = menuElement.getDeclaringExtension().getContributor().getName();
-				image = AbstractUIPlugin.imageDescriptorFromPlugin(extendingPluginId, icon);
+				image = ResourceLocator.imageDescriptorFromBundle(extendingPluginId, icon).orElse(null);
 			}
 			if (label == null) {
 				WorkbenchPlugin.log("Plugin \'" //$NON-NLS-1$
@@ -495,7 +496,7 @@ public abstract class PluginActionBuilder extends RegistryReader {
 		protected void disposeActions() {
 			if (actions != null) {
 				for (int i = 0; i < actions.size(); i++) {
-					PluginAction proxy = ((ActionDescriptor) actions.get(i)).getAction();
+					PluginAction proxy = actions.get(i).getAction();
 					proxy.dispose();
 				}
 				actions = null;

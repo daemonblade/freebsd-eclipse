@@ -328,7 +328,7 @@ public class CVSSyncInfo extends SyncInfo {
 	public String toString() {
 		IResourceVariant base = getBase();
 		IResourceVariant remote = getRemote();
-		StringBuffer result = new StringBuffer(super.toString());
+		StringBuilder result = new StringBuilder(super.toString());
 		result.append("Local: "); //$NON-NLS-1$
 		result.append(getLocal().toString());
 		result.append(" Base: "); //$NON-NLS-1$
@@ -369,10 +369,10 @@ public class CVSSyncInfo extends SyncInfo {
 		if (entries == null || entries.length == 0)
 			return null;
 		
-		for (int i = 0; i < entries.length; i++) {
+		for (ILogEntry entry : entries) {
 			try {
-				if (localRevision.equals(entries[i].getRemoteFile().getRevision())) {
-					return entries[i].getAuthor();
+				if (localRevision.equals(entry.getRemoteFile().getRevision())) {
+					return entry.getAuthor();
 				}
 			} catch (TeamException e) {
 				CVSProviderPlugin.log(e);

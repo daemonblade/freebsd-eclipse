@@ -15,9 +15,11 @@
  *******************************************************************************/
 package org.eclipse.ui.internal.monitoring;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IStartup;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.monitoring.preferences.MonitoringPreferenceListener;
 import org.eclipse.ui.monitoring.PreferenceConstants;
 
@@ -34,7 +36,7 @@ public class MonitoringStartup implements IStartup {
 		}
 
 		IPreferenceStore preferences = MonitoringPlugin.getDefault().getPreferenceStore();
-		if (preferences.getBoolean(PreferenceConstants.MONITORING_ENABLED)) {
+		if (preferences.getBoolean(PreferenceConstants.MONITORING_ENABLED) && !Platform.inDevelopmentMode()) {
 			monitoringThread = createAndStartMonitorThread();
 		}
 
@@ -56,7 +58,7 @@ public class MonitoringStartup implements IStartup {
 		}
 
 		final EventLoopMonitorThread thread = temporaryThread;
-		final Display display = MonitoringPlugin.getDefault().getWorkbench().getDisplay();
+		final Display display = PlatformUI.getWorkbench().getDisplay();
 		// Final setup and start asynchronously on the display thread.
 		display.asyncExec(() -> {
 			// If we're still running when display gets disposed, shutdown the thread.

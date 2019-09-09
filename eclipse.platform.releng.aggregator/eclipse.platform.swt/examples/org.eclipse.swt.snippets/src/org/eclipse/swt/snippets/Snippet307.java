@@ -31,6 +31,7 @@ public class Snippet307 {
 public static void main (String [] args) {
 	Display display = new Display ();
 	Shell shell = new Shell (display);
+	shell.setText("Snippet 307");
 	shell.setLayout (new FillLayout ());
 	shell.setBounds (10,10,300,200);
 
@@ -80,12 +81,12 @@ static class CustomFunction extends BrowserFunction {
 			}
 		}
 		Object returnValue = new Object[] {
-			new Short ((short)3),
-			new Boolean (true),
+			Short.valueOf ((short)3),
+			true,
 			null,
-			new Object[] {"a string", new Boolean (false)},
+			new Object[] {"a string", false},
 			"hi",
-			new Float (2.0f / 3.0f),
+			Float.valueOf (2.0f / 3.0f),
 		};
 		//int z = 3 / 0; // uncomment to cause a java error instead
 		return returnValue;

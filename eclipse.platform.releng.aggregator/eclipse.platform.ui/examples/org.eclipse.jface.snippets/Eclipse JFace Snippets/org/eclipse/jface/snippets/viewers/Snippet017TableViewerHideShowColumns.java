@@ -57,7 +57,7 @@ public class Snippet017TableViewerHideShowColumns {
 				column.getDisplay().syncExec(() -> column.setWidth(index));
 			}
 		}
-	};
+	}
 
 	private class ExpandThread extends Thread {
 		private int width = 0;
@@ -101,7 +101,7 @@ public class Snippet017TableViewerHideShowColumns {
 
 		@Override
 		public String getColumnText(Object element, int columnIndex) {
-			return "Column " + columnIndex + " => " + element.toString();
+			return "Column " + columnIndex + " => " + element;
 		}
 	}
 

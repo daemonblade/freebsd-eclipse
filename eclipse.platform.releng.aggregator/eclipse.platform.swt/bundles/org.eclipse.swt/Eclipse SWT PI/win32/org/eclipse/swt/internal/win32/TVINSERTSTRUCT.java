@@ -15,30 +15,30 @@ package org.eclipse.swt.internal.win32;
 
 public class TVINSERTSTRUCT {
 	/** @field cast=(HTREEITEM) */
-	public long /*int*/ hParent;
+	public long hParent;
 	/** @field cast=(HTREEITEM) */
-	public long /*int*/ hInsertAfter;
+	public long hInsertAfter;
 //	public TVITEMEX item;
 	/** @field accessor=item.mask */
 	public int mask;
 	/** @field accessor=item.hItem,cast=(HTREEITEM) */
-	public long /*int*/ hItem;
+	public long hItem;
 	/** @field accessor=item.state */
 	public int state;
 	/** @field accessor=item.stateMask */
 	public int stateMask;
 	/** @field accessor=item.pszText,cast=(LPTSTR) */
-	public long /*int*/ pszText;
-  	/** @field accessor=item.cchTextMax */
+	public long pszText;
+	/** @field accessor=item.cchTextMax */
 	public int cchTextMax;
-  	/** @field accessor=item.iImage */
+	/** @field accessor=item.iImage */
 	public int iImage;
-  	/** @field accessor=item.iSelectedImage */
+	/** @field accessor=item.iSelectedImage */
 	public int iSelectedImage;
 	/** @field accessor=item.cChildren */
 	public int cChildren;
 	/** @field accessor=item.lParam */
-	public long /*int*/ lParam;
+	public long lParam;
 	/** @field accessor=itemex.iIntegral */
 	public int iIntegral;
 	public static final int sizeof = OS.TVINSERTSTRUCT_sizeof ();

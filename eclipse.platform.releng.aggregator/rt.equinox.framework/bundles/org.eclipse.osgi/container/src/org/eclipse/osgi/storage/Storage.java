@@ -57,7 +57,6 @@ import org.eclipse.osgi.container.ModuleContainerAdaptor;
 import org.eclipse.osgi.container.ModuleDatabase;
 import org.eclipse.osgi.container.ModuleRevision;
 import org.eclipse.osgi.container.ModuleRevisionBuilder;
-import org.eclipse.osgi.container.ModuleRevisionBuilder.GenericInfo;
 import org.eclipse.osgi.container.ModuleWire;
 import org.eclipse.osgi.container.ModuleWiring;
 import org.eclipse.osgi.container.builders.OSGiManifestBuilderFactory;
@@ -134,8 +133,9 @@ public class Storage {
 
 	}
 
-	public static final int VERSION = 4;
+	public static final int VERSION = 5;
 	private static final int MR_JAR_VERSION = 4;
+	private static final int CACHED_SYSTEM_CAPS_VERION = 5;
 	private static final int LOWEST_VERSION_SUPPORTED = 3;
 	public static final String BUNDLE_DATA_DIR = "data"; //$NON-NLS-1$
 	public static final String BUNDLE_FILE_NAME = "bundleFile"; //$NON-NLS-1$
@@ -172,9 +172,10 @@ public class Storage {
 	private final String javaSpecVersion;
 
 	public static Storage createStorage(EquinoxContainer container) throws IOException, BundleException {
-		Storage storage = new Storage(container);
+		String[] cachedInfo = new String[3];
+		Storage storage = new Storage(container, cachedInfo);
 		// Do some operations that need to happen on the fully constructed Storage before returning it
-		storage.checkSystemBundle();
+		storage.checkSystemBundle(cachedInfo);
 		storage.refreshStaleBundles();
 		storage.installExtensions();
 		// TODO hack to make sure all bundles are in UNINSTALLED state before system bundle init is called
@@ -182,7 +183,7 @@ public class Storage {
 		return storage;
 	}
 
-	private Storage(EquinoxContainer container) throws IOException {
+	private Storage(EquinoxContainer container, String[] cachedInfo) throws IOException {
 		// default to Java 7 since that is our min
 		Version javaVersion = Version.valueOf("1.7"); //$NON-NLS-1$
 		// set the profile and EE based off of the java.specification.version
@@ -242,7 +243,7 @@ public class Storage {
 		try {
 			Map<Long, Generation> generations;
 			try {
-				generations = loadGenerations(data);
+				generations = loadGenerations(data, cachedInfo);
 			} catch (IllegalArgumentException e) {
 				equinoxContainer.getLogServices().log(EquinoxContainer.NAME, FrameworkLogEntry.WARNING, "The persistent format for the framework data has changed.  The framework will be reinitialized: " + e.getMessage(), null); //$NON-NLS-1$
 				generations = new HashMap<>(0);
@@ -280,6 +281,10 @@ public class Storage {
 
 	public Version getRuntimeVersion() {
 		return runtimeVersion;
+	}
+
+	public MRUBundleFileList getMRUBundleFileList() {
+		return mruList;
 	}
 
 	private int getBundleFileLimit(EquinoxConfiguration configuration) {
@@ -370,7 +375,7 @@ public class Storage {
 		return false;
 	}
 
-	private void checkSystemBundle() {
+	private void checkSystemBundle(String[] cachedInfo) {
 		Module systemModule = moduleContainer.getModule(0);
 		Generation newGeneration = null;
 		try {
@@ -381,7 +386,13 @@ public class Storage {
 				File contentFile = getSystemContent();
 				newGeneration.setContent(contentFile, false);
 
-				ModuleRevisionBuilder builder = getBuilder(newGeneration);
+				// First we must make sure the VM profile has been loaded
+				loadVMProfile(newGeneration);
+				// dealing with system bundle find the extra capabilities and exports
+				String extraCapabilities = getSystemExtraCapabilities();
+				String extraExports = getSystemExtraPackages();
+
+				ModuleRevisionBuilder builder = getBuilder(newGeneration, extraCapabilities, extraExports);
 				systemModule = moduleContainer.install(null, Constants.SYSTEM_BUNDLE_LOCATION, builder, newGeneration);
 				moduleContainer.resolve(Collections.singletonList(systemModule), false);
 			} else {
@@ -391,11 +402,16 @@ public class Storage {
 					throw new IllegalStateException("No current revision for system bundle."); //$NON-NLS-1$
 				}
 				try {
-					ModuleRevisionBuilder newBuilder = getBuilder(currentGeneration);
-					if (needUpdate(currentRevision, newBuilder)) {
+					// First we must make sure the VM profile has been loaded
+					loadVMProfile(currentGeneration);
+					// dealing with system bundle find the extra capabilities and exports
+					String extraCapabilities = getSystemExtraCapabilities();
+					String extraExports = getSystemExtraPackages();
+					File contentFile = currentGeneration.getContent();
+					if (systemNeedsUpdate(contentFile, currentRevision, currentGeneration, extraCapabilities, extraExports, cachedInfo)) {
 						newGeneration = currentGeneration.getBundleInfo().createGeneration();
-						File contentFile = getSystemContent();
 						newGeneration.setContent(contentFile, false);
+						ModuleRevisionBuilder newBuilder = getBuilder(newGeneration, extraCapabilities, extraExports);
 						moduleContainer.update(systemModule, newBuilder, newGeneration);
 						moduleContainer.refresh(Collections.singleton(systemModule));
 					} else {
@@ -414,16 +430,15 @@ public class Storage {
 			for (ModuleCapability nativeEnvironment : nativeEnvironments) {
 				nativeEnvironment.setTransientAttrs(configMap);
 			}
-			Requirement osgiPackageReq = ModuleContainer.createRequirement(PackageNamespace.PACKAGE_NAMESPACE, Collections.singletonMap(Namespace.REQUIREMENT_FILTER_DIRECTIVE, "(" + PackageNamespace.PACKAGE_NAMESPACE + "=org.osgi.framework)"), Collections.<String, String> emptyMap()); //$NON-NLS-1$ //$NON-NLS-2$
-			Collection<BundleCapability> osgiPackages = moduleContainer.getFrameworkWiring().findProviders(osgiPackageReq);
-			for (BundleCapability packageCapability : osgiPackages) {
-				if (packageCapability.getRevision().getBundle().getBundleId() == 0) {
-					Version v = (Version) packageCapability.getAttributes().get(PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
-					if (v != null) {
-						this.equinoxContainer.getConfiguration().setConfiguration(Constants.FRAMEWORK_VERSION, v.toString());
-						break;
-					}
-				}
+			Version frameworkVersion = null;
+			if (newGeneration != null) {
+				frameworkVersion = findFrameworkVersion();
+			} else {
+				String sVersion = cachedInfo[0];
+				frameworkVersion = sVersion == null ? findFrameworkVersion() : Version.parseVersion(sVersion);
+			}
+			if (frameworkVersion != null) {
+				this.equinoxContainer.getConfiguration().setConfiguration(Constants.FRAMEWORK_VERSION, frameworkVersion.toString());
 			}
 		} catch (Exception e) {
 			if (e instanceof RuntimeException) {
@@ -435,6 +450,20 @@ public class Storage {
 				newGeneration.getBundleInfo().unlockGeneration(newGeneration);
 			}
 		}
+	}
+
+	private Version findFrameworkVersion() {
+		Requirement osgiPackageReq = ModuleContainer.createRequirement(PackageNamespace.PACKAGE_NAMESPACE, Collections.singletonMap(Namespace.REQUIREMENT_FILTER_DIRECTIVE, "(" + PackageNamespace.PACKAGE_NAMESPACE + "=org.osgi.framework)"), Collections.<String, String> emptyMap()); //$NON-NLS-1$ //$NON-NLS-2$
+		Collection<BundleCapability> osgiPackages = moduleContainer.getFrameworkWiring().findProviders(osgiPackageReq);
+		for (BundleCapability packageCapability : osgiPackages) {
+			if (packageCapability.getRevision().getBundle().getBundleId() == 0) {
+				Version v = (Version) packageCapability.getAttributes().get(PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
+				if (v != null) {
+					return v;
+				}
+			}
+		}
+		return null;
 	}
 
 	private Collection<Module> refreshMRJarBundles() throws BundleException {
@@ -477,38 +506,25 @@ public class Storage {
 		adaptor.shutdownExecutors();
 	}
 
-	private boolean needUpdate(ModuleRevision currentRevision, ModuleRevisionBuilder newBuilder) {
-		if (!currentRevision.getVersion().equals(newBuilder.getVersion())) {
+	private boolean systemNeedsUpdate(File systemContent, ModuleRevision currentRevision, Generation existing, String extraCapabilities, String extraExports, String[] cachedInfo) throws BundleException {
+		if (!extraCapabilities.equals(cachedInfo[1])) {
 			return true;
 		}
-
-		// Always do the advanced check for bug 432485 to make sure we have a consistent system bundle
-		List<ModuleCapability> currentCapabilities = currentRevision.getModuleCapabilities(null);
-		List<GenericInfo> newCapabilities = newBuilder.getCapabilities();
-		if (currentCapabilities.size() != newCapabilities.size()) {
+		if (!extraExports.equals(cachedInfo[2])) {
 			return true;
 		}
-
-		int size = currentCapabilities.size();
-		for (int i = 0; i < size; i++) {
-			if (!equivilant(currentCapabilities.get(i), newCapabilities.get(i))) {
+		if (systemContent == null) {
+			// only do a version check in this case
+			ModuleRevisionBuilder newBuilder = getBuilder(existing, extraCapabilities, extraExports);
+			if (!currentRevision.getVersion().equals(newBuilder.getVersion())) {
 				return true;
 			}
 		}
-		return false;
-	}
+		if (existing.isDirectory()) {
+			systemContent = new File(systemContent, "META-INF/MANIFEST.MF"); //$NON-NLS-1$
+		}
+		return existing.getLastModified() != secureAction.lastModified(systemContent);
 
-	private boolean equivilant(ModuleCapability moduleCapability, GenericInfo genericInfo) {
-		if (!moduleCapability.getNamespace().equals(genericInfo.getNamespace())) {
-			return false;
-		}
-		if (!moduleCapability.getAttributes().equals(genericInfo.getAttributes())) {
-			return false;
-		}
-		if (!moduleCapability.getDirectives().equals(genericInfo.getDirectives())) {
-			return false;
-		}
-		return true;
 	}
 
 	private void cleanOSGiStorage(Location location, File root) {
@@ -550,6 +566,14 @@ public class Storage {
 	}
 
 	public URLConnection getContentConnection(Module module, String bundleLocation, final InputStream in) throws IOException {
+		List<StorageHookFactory<?, ?, ?>> storageHooks = getConfiguration().getHookRegistry().getStorageHookFactories();
+		for (StorageHookFactory<?, ?, ?> storageHook : storageHooks) {
+			URLConnection hookContent = storageHook.handleContentConnection(module, bundleLocation, in);
+			if (hookContent != null) {
+				return hookContent;
+			}
+		}
+
 		if (in != null) {
 			return new URLConnection(null) {
 				/**
@@ -739,6 +763,10 @@ public class Storage {
 	}
 
 	public ModuleRevisionBuilder getBuilder(Generation generation) throws BundleException {
+		return getBuilder(generation, null, null);
+	}
+
+	public ModuleRevisionBuilder getBuilder(Generation generation, String extraCapabilities, String extraExports) throws BundleException {
 		Dictionary<String, String> headers = generation.getHeaders();
 		Map<String, String> mapHeaders;
 		if (headers instanceof Map) {
@@ -765,11 +793,7 @@ public class Storage {
 			}
 			return builder;
 		}
-		// First we must make sure the VM profile has been loaded
-		loadVMProfile(generation);
-		// dealing with system bundle find the extra capabilities and exports
-		String extraCapabilities = getSystemExtraCapabilities();
-		String extraExports = getSystemExtraPackages();
+
 		return OSGiManifestBuilderFactory.createBuilder(mapHeaders, Constants.SYSTEM_BUNDLE_SYMBOLICNAME, extraExports, extraCapabilities);
 	}
 
@@ -913,7 +937,7 @@ public class Storage {
 			if (t instanceof BundleException) {
 				throw (BundleException) t;
 			}
-			throw new BundleException("Error occurred installing a bundle.", t); //$NON-NLS-1$
+			throw new BundleException("Error occurred updating a bundle.", t); //$NON-NLS-1$
 		} finally {
 			bundleInfo.unlockGeneration(newGen);
 		}
@@ -1088,15 +1112,16 @@ public class Storage {
 			commandProp = getConfiguration().getConfiguration(Constants.FRAMEWORK_EXECPERMISSION);
 		if (commandProp == null)
 			return;
-		String[] temp = ManifestElement.getArrayFromList(commandProp, " "); //$NON-NLS-1$
-		List<String> command = new ArrayList<>(temp.length + 1);
+		String[] commandComponents = ManifestElement.getArrayFromList(commandProp, " "); //$NON-NLS-1$
+		List<String> command = new ArrayList<>(commandComponents.length + 1);
 		boolean foundFullPath = false;
-		for (int i = 0; i < temp.length; i++) {
-			if ("[fullpath]".equals(temp[i]) || "${abspath}".equals(temp[i])) { //$NON-NLS-1$ //$NON-NLS-2$
+		for (String commandComponent : commandComponents) {
+			if ("[fullpath]".equals(commandComponent) || "${abspath}".equals(commandComponent)) { //$NON-NLS-1$ //$NON-NLS-2$
 				command.add(file.getAbsolutePath());
 				foundFullPath = true;
-			} else
-				command.add(temp[i]);
+			} else {
+				command.add(commandComponent);
+			}
 		}
 		if (!foundFullPath)
 			command.add(file.getAbsolutePath());
@@ -1295,6 +1320,12 @@ public class Storage {
 
 		out.writeUTF(runtimeVersion.toString());
 
+		Version curFrameworkVersion = findFrameworkVersion();
+		out.writeUTF(curFrameworkVersion == null ? Version.emptyVersion.toString() : curFrameworkVersion.toString());
+
+		saveLongString(out, getSystemExtraCapabilities());
+		saveLongString(out, getSystemExtraPackages());
+
 		out.writeInt(cachedHeaderKeys.size());
 		for (String headerKey : cachedHeaderKeys) {
 			out.writeUTF(headerKey);
@@ -1340,6 +1371,24 @@ public class Storage {
 		saveStorageHookData(out, generations);
 	}
 
+	private void saveLongString(DataOutputStream out, String value) throws IOException {
+		if (value == null) {
+			out.writeInt(0);
+		} else {
+			// don't use out.writeUTF because it has a hard string limit
+			byte[] data = value.getBytes("UTF-8"); //$NON-NLS-1$
+			out.writeInt(data.length);
+			out.write(data);
+		}
+	}
+
+	private String readLongString(DataInputStream in) throws IOException {
+		int length = in.readInt();
+		byte[] data = new byte[length];
+		in.readFully(data);
+		return new String(data, "UTF-8"); //$NON-NLS-1$
+	}
+
 	private void saveStorageHookData(DataOutputStream out, List<Generation> generations) throws IOException {
 		List<StorageHookFactory<?, ?, ?>> factories = getConfiguration().getHookRegistry().getStorageHookFactories();
 		out.writeInt(factories.size());
@@ -1368,7 +1417,7 @@ public class Storage {
 		}
 	}
 
-	private Map<Long, Generation> loadGenerations(DataInputStream in) throws IOException {
+	private Map<Long, Generation> loadGenerations(DataInputStream in, String[] cachedInfo) throws IOException {
 		if (in == null) {
 			return new HashMap<>(0);
 		}
@@ -1380,6 +1429,11 @@ public class Storage {
 		if (savedRuntimeVersion == null || !savedRuntimeVersion.equals(runtimeVersion)) {
 			refreshMRBundles.set(true);
 		}
+
+		cachedInfo[0] = (version >= CACHED_SYSTEM_CAPS_VERION) ? in.readUTF() : null;
+		cachedInfo[1] = (version >= CACHED_SYSTEM_CAPS_VERION) ? readLongString(in) : null;
+		cachedInfo[2] = (version >= CACHED_SYSTEM_CAPS_VERION) ? readLongString(in) : null;
+
 		int numCachedHeaders = in.readInt();
 		List<String> storedCachedHeaderKeys = new ArrayList<>(numCachedHeaders);
 		for (int i = 0; i < numCachedHeaders; i++) {
@@ -1473,8 +1527,10 @@ public class Storage {
 								continue; // ignore system bundle
 							}
 							StorageHook<Object, Object> hook = factory.createStorageHookAndValidateFactoryClass(generation);
-							hook.load(loadContext, temp);
-							getHooks(hookMap, generation).add(hook);
+							if (hook != null) {
+								hook.load(loadContext, temp);
+								getHooks(hookMap, generation).add(hook);
+							}
 						}
 					} else {
 						// recover by reinitializing the hook
@@ -1483,8 +1539,10 @@ public class Storage {
 								continue; // ignore system bundle
 							}
 							StorageHook<Object, Object> hook = factory.createStorageHookAndValidateFactoryClass(generation);
-							hook.initialize(generation.getHeaders());
-							getHooks(hookMap, generation).add(hook);
+							if (hook != null) {
+								hook.initialize(generation.getHeaders());
+								getHooks(hookMap, generation).add(hook);
+							}
 						}
 					}
 				} catch (BundleException e) {
@@ -1504,11 +1562,13 @@ public class Storage {
 					continue; // ignore system bundle
 				}
 				StorageHook<Object, Object> hook = next.createStorageHookAndValidateFactoryClass(generation);
-				try {
-					hook.initialize(generation.getHeaders());
-					getHooks(hookMap, generation).add(hook);
-				} catch (BundleException e) {
-					throw new IOException(e);
+				if (hook != null) {
+					try {
+						hook.initialize(generation.getHeaders());
+						getHooks(hookMap, generation).add(hook);
+					} catch (BundleException e) {
+						throw new IOException(e);
+					}
 				}
 			}
 		}
@@ -1959,7 +2019,7 @@ public class Storage {
 	}
 
 	public static String sanitizeFilterInput(String filePattern) throws InvalidSyntaxException {
-		StringBuffer buffer = null;
+		StringBuilder buffer = null;
 		boolean foundEscape = false;
 		for (int i = 0; i < filePattern.length(); i++) {
 			char c = filePattern.charAt(i);
@@ -1974,7 +2034,7 @@ public class Storage {
 				case ')' :
 					if (!foundEscape) {
 						if (buffer == null) {
-							buffer = new StringBuffer(filePattern.length() + 16);
+							buffer = new StringBuilder(filePattern.length() + 16);
 							buffer.append(filePattern.substring(0, i));
 						}
 						// must escape with '\'

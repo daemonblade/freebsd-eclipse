@@ -15,11 +15,11 @@
   <parent>
     <artifactId>eclipse.platform.ua</artifactId>
     <groupId>eclipse.platform.ua</groupId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
   </parent>
   <groupId>org.eclipse.ui</groupId>
   <artifactId>org.eclipse.ui.cheatsheets</artifactId>
-  <version>3.5.400-SNAPSHOT</version>
+  <version>3.5.500-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 
   <properties>

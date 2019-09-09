@@ -19,12 +19,15 @@ package org.eclipse.ui.internal.genericeditor;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.source.ICharacterPairMatcher;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.IVerticalRuler;
 import org.eclipse.jface.text.source.projection.ProjectionSupport;
 import org.eclipse.jface.text.source.projection.ProjectionViewer;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.editors.text.EditorsUI;
@@ -41,6 +44,7 @@ import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 public class ExtensionBasedTextEditor extends TextEditor {
 
 	private static final String CONTEXT_ID = "org.eclipse.ui.genericeditor.genericEditorContext"; //$NON-NLS-1$
+	public static final String GENERIC_EDITOR_ID = "org.eclipse.ui.genericeditor.GenericEditor"; //$NON-NLS-1$
 
 	private static final String MATCHING_BRACKETS = GenericEditorPreferenceConstants.EDITOR_MATCHING_BRACKETS;
 	private static final String MATCHING_BRACKETS_COLOR = GenericEditorPreferenceConstants.EDITOR_MATCHING_BRACKETS_COLOR;
@@ -48,6 +52,8 @@ public class ExtensionBasedTextEditor extends TextEditor {
 	private static final String ENCLOSING_BRACKETS = GenericEditorPreferenceConstants.EDITOR_ENCLOSING_BRACKETS;
 
 	private ExtensionBasedTextViewerConfiguration configuration;
+	private Image contentTypeImage;
+	private ImageDescriptor contentTypeImageDescripter;
 
 	/**
 	 * 
@@ -85,6 +91,7 @@ public class ExtensionBasedTextEditor extends TextEditor {
 
 		new ProjectionSupport(viewer, getAnnotationAccess(), getSharedColors()).install();
 		viewer.doOperation(ProjectionViewer.TOGGLE);
+		computeImage();
 	}
 
 	@Override protected void initializeEditor() {
@@ -108,5 +115,35 @@ public class ExtensionBasedTextEditor extends TextEditor {
 			support.setCharacterPairMatcher(matcher);
 			support.setMatchingCharacterPainterPreferenceKeys(MATCHING_BRACKETS, MATCHING_BRACKETS_COLOR, HIGHLIGHT_BRACKET_AT_CARET_LOCATION, ENCLOSING_BRACKETS);
 		}
+	}
+
+	@Override
+	public Image getTitleImage() {
+		return this.contentTypeImage != null ? this.contentTypeImage : super.getTitleImage();
+	}
+
+	private void computeImage() {
+		contentTypeImageDescripter = GenericEditorPlugin.getDefault().getContentTypeImagesRegistry()
+				.getImageDescriptor(getContentTypes());
+		if (contentTypeImageDescripter != null) {
+			this.contentTypeImage = contentTypeImageDescripter.createImage();
+		}
+	}
+
+	private IContentType[] getContentTypes() {
+		ISourceViewer sourceViewer = getSourceViewer();
+		if (sourceViewer != null) {
+			return configuration.getContentTypes(sourceViewer).toArray(new IContentType[] {});
+		}
+		return new IContentType[] {};
+	}
+
+	@Override
+	public void dispose() {
+		if (this.contentTypeImage != null) {
+			this.contentTypeImage.dispose();
+			this.contentTypeImage = null;
+		}
+		super.dispose();
 	}
 }

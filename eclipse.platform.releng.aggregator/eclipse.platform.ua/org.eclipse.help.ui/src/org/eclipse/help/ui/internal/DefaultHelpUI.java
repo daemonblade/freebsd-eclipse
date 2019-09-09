@@ -14,7 +14,9 @@
  **************************************************************************************************/
 package org.eclipse.help.ui.internal;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLEncoder;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.help.IContext;
@@ -195,12 +197,15 @@ public class DefaultHelpUI extends AbstractHelpUI {
 			IWorkbenchPage page = window.getActivePage();
 			if (page != null) {
 				boolean searchFromBrowser = Platform.getPreferencesService().getBoolean
-				    (HelpBasePlugin.PLUGIN_ID, IHelpBaseConstants.P_KEY_SEARCH_FROM_BROWSER, false, null);
+					(HelpBasePlugin.PLUGIN_ID, IHelpBaseConstants.P_KEY_SEARCH_FROM_BROWSER, false, null);
 				if (searchFromBrowser) {
 					String parameters = "tab=search"; //$NON-NLS-1$
 					if (expression != null) {
-						parameters += '&';
-						parameters += expression;
+						try {
+							parameters += "&searchWord=" + URLEncoder.encode(expression, "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
+						} catch (UnsupportedEncodingException e) {
+							// Should not happen: UTF-8 is a required encoding for every Java version
+						}
 					}
 					BaseHelpSystem.getHelpDisplay().displayHelpResource(parameters, false);
 				} else {
@@ -234,9 +239,9 @@ public class DefaultHelpUI extends AbstractHelpUI {
 
 	public static void showIndex() {
 		HelpView helpView = getHelpView();
-        if (helpView != null) {
-		    helpView.showIndex();
-        }
+		if (helpView != null) {
+			helpView.showIndex();
+		}
 	}
 
 	private static HelpView getHelpView() {
@@ -305,9 +310,9 @@ public class DefaultHelpUI extends AbstractHelpUI {
 		if (context == null)
 			return;
 		boolean winfopop = Platform.getPreferencesService().getBoolean
-		        (HelpBasePlugin.PLUGIN_ID, IHelpBaseConstants.P_KEY_WINDOW_INFOPOP, false, null);
+				(HelpBasePlugin.PLUGIN_ID, IHelpBaseConstants.P_KEY_WINDOW_INFOPOP, false, null);
 		boolean dinfopop = Platform.getPreferencesService().getBoolean
-		        (HelpBasePlugin.PLUGIN_ID, IHelpBaseConstants.P_KEY_DIALOG_INFOPOP, false, null)  || FontUtils.isFontTooLargeForTray();
+				(HelpBasePlugin.PLUGIN_ID, IHelpBaseConstants.P_KEY_DIALOG_INFOPOP, false, null)  || FontUtils.isFontTooLargeForTray();
 
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		Shell activeShell = getActiveShell();
@@ -328,7 +333,7 @@ public class DefaultHelpUI extends AbstractHelpUI {
 					IHelpResource[] topics = context.getRelatedTopics();
 					boolean isSingleChoiceWithoutDescription = contextText == null && topics.length == 1;
 					String openMode = Platform.getPreferencesService().getString
-					    (HelpBasePlugin.PLUGIN_ID, IHelpBaseConstants.P_KEY_HELP_VIEW_OPEN_MODE, IHelpBaseConstants.P_IN_PLACE, null);
+						(HelpBasePlugin.PLUGIN_ID, IHelpBaseConstants.P_KEY_HELP_VIEW_OPEN_MODE, IHelpBaseConstants.P_IN_PLACE, null);
 					if (isSingleChoiceWithoutDescription && IHelpBaseConstants.P_IN_EDITOR.equals(openMode)) {
 						showInWorkbenchBrowser(topics[0].getHref(), true);
 					} else if (isSingleChoiceWithoutDescription && IHelpBaseConstants.P_IN_BROWSER.equals(openMode)) {

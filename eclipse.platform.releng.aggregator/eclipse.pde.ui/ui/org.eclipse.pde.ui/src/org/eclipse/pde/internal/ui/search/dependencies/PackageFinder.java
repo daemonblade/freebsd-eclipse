@@ -211,7 +211,7 @@ public class PackageFinder {
 	private static void addClassFilesFromResource(IResource res, List<IClassFile> classFiles) {
 		if (res == null)
 			return;
-		Stack<IResource> stack = new Stack<>();
+		ArrayDeque<IResource> stack = new ArrayDeque<>();
 		if (res instanceof IContainer) {
 			stack.push(res);
 			while (!stack.isEmpty()) {
@@ -236,8 +236,7 @@ public class PackageFinder {
 						if (child instanceof IPackageFragment) {
 							IPackageFragment frag = (IPackageFragment) child;
 							IClassFile[] files = frag.getClassFiles();
-							for (IClassFile file : files)
-								classFiles.add(file);
+							Collections.addAll(classFiles, files);
 						}
 					}
 				} catch (JavaModelException e) {

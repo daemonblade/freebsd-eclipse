@@ -45,7 +45,7 @@ public class CompositeMetadataRepositoryFactory extends MetadataRepositoryFactor
 
 	private IMetadataRepositoryManager getManager() {
 		if (getAgent() != null)
-			return (IMetadataRepositoryManager) getAgent().getService(IMetadataRepositoryManager.SERVICE_NAME);
+			return getAgent().getService(IMetadataRepositoryManager.class);
 		return null;
 	}
 
@@ -68,17 +68,17 @@ public class CompositeMetadataRepositoryFactory extends MetadataRepositoryFactor
 			if (localFile.exists())
 				return localFile;
 			String msg = NLS.bind(Messages.io_failedRead, location);
-			throw new ProvisionException(new Status(IStatus.ERROR, Activator.ID, ProvisionException.REPOSITORY_NOT_FOUND, msg, null));
+			throw new ProvisionException(new Status(IStatus.ERROR, Constants.ID, ProvisionException.REPOSITORY_NOT_FOUND, msg, null));
 		}
 		//file is not local, create a cache of the repository metadata
-		CacheManager cache = (CacheManager) getAgent().getService(CacheManager.SERVICE_NAME);
+		CacheManager cache = getAgent().getService(CacheManager.class);
 		if (cache == null)
 			throw new IllegalArgumentException("Cache manager service not available"); //$NON-NLS-1$
 		localFile = cache.createCache(location, CONTENT_FILENAME, monitor);
 		if (localFile == null) {
 			//there is no remote file in either form
 			String msg = NLS.bind(Messages.io_failedRead, location);
-			throw new ProvisionException(new Status(IStatus.ERROR, Activator.ID, ProvisionException.REPOSITORY_NOT_FOUND, msg, null));
+			throw new ProvisionException(new Status(IStatus.ERROR, Constants.ID, ProvisionException.REPOSITORY_NOT_FOUND, msg, null));
 		}
 		return localFile;
 	}
@@ -124,7 +124,7 @@ public class CompositeMetadataRepositoryFactory extends MetadataRepositoryFactor
 				CompositeMetadataRepository result = new CompositeMetadataRepository(getManager(), resultState, sub.newChild(200));
 				if (Tracing.DEBUG_METADATA_PARSING) {
 					time += System.currentTimeMillis();
-					Tracing.debug(debugMsg + "time (ms): " + time); //$NON-NLS-1$ 
+					Tracing.debug(debugMsg + "time (ms): " + time); //$NON-NLS-1$
 				}
 				return result;
 			} finally {
@@ -133,10 +133,10 @@ public class CompositeMetadataRepositoryFactory extends MetadataRepositoryFactor
 			}
 		} catch (FileNotFoundException e) {
 			String msg = NLS.bind(Messages.io_failedRead, location);
-			throw new ProvisionException(new Status(IStatus.ERROR, Activator.ID, ProvisionException.REPOSITORY_NOT_FOUND, msg, e));
+			throw new ProvisionException(new Status(IStatus.ERROR, Constants.ID, ProvisionException.REPOSITORY_NOT_FOUND, msg, e));
 		} catch (IOException e) {
 			String msg = NLS.bind(Messages.io_failedRead, location);
-			throw new ProvisionException(new Status(IStatus.ERROR, Activator.ID, ProvisionException.REPOSITORY_FAILED_READ, msg, e));
+			throw new ProvisionException(new Status(IStatus.ERROR, Constants.ID, ProvisionException.REPOSITORY_FAILED_READ, msg, e));
 		} finally {
 			if (monitor != null)
 				monitor.done();

@@ -19,7 +19,7 @@
   <parent>
     <groupId>eclipse.platform.releng.tychoeclipsebuilder</groupId>
     <artifactId>eclipse.platform.releng.tychoeclipsebuilder</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>org.eclipse.rt.osgistarterkit.product</artifactId>
@@ -43,9 +43,9 @@
           <resolver>p2</resolver>
           <environments>
             <environment>
-              <os>freebsd</os>
+              <os>linux</os>
               <ws>gtk</ws>
-              <arch>amd64</arch>
+              <arch>x86_64</arch>
             </environment>
             <environment>
               <os>win32</os>
@@ -91,7 +91,7 @@
             <configuration>
               <formats>
                 <win32>zip</win32>
-                <freebsd>tar.gz</freebsd>
+                <linux>tar.gz</linux>
                 <macosx>tar.gz</macosx>
               </formats>
             </configuration>
@@ -138,7 +138,9 @@
                     <fileName>Rt.app</fileName>
                   </fileNames>
                   <timeoutMillis>300000</timeoutMillis> <!-- 5 min -->
-                  <continueOnFail>${macSigner.forceContinue}</continueOnFail> 
+                  <continueOnFail>${macSigner.forceContinue}</continueOnFail>
+                  <entitlements>${project.basedir}/../entitlement/equinox.entitlement</entitlements> 
+                  <signerUrl>http://172.30.206.146:8282/macosx-signing-service/1.0.1-SNAPSHOT</signerUrl>
                 </configuration>
               </execution>
             </executions>

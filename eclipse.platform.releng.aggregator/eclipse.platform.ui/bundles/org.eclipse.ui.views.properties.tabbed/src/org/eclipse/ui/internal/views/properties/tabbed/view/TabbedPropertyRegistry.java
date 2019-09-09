@@ -283,9 +283,8 @@ public class TabbedPropertyRegistry {
 					selection);
 		}
 
-		ITabDescriptor[] result = filterTabDescriptors(allDescriptors, part,
+		return filterTabDescriptors(allDescriptors, part,
 				selection);
-		return result;
 	}
 
 	/**
@@ -454,9 +453,7 @@ public class TabbedPropertyRegistry {
 					return 0;
 				}
 			});
-			for (int j = 0; j < categoryList.size(); j++) {
-				sorted.add(categoryList.get(j));
-			}
+			sorted.addAll(categoryList);
 			categoryIndex = endOfCategory;
 		}
 		return sorted;

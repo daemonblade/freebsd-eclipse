@@ -30,7 +30,6 @@ import org.eclipse.core.commands.ParameterizedCommand;
 import org.eclipse.core.commands.SerializationException;
 import org.eclipse.core.commands.common.NotDefinedException;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.ua.tests.plugin.UserAssistanceTestPlugin;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
@@ -56,8 +55,8 @@ public class TestCommandExecution {
 	private static final String COMMAND_ID =
 		"org.eclipse.ui.cheatsheets.tests.command1"; //$NON-NLS-1$
 	private static final String SERIALIZED_COMMAND = COMMAND_ID + '('
-	    + PARAM1_ID + '=' + PARAM1_VALUE + ','
-	    + PARAM2_ID + '=' + PARAM2_VALUE + ')';
+		+ PARAM1_ID + '=' + PARAM1_VALUE + ','
+		+ PARAM2_ID + '=' + PARAM2_VALUE + ')';
 	private static final String RETURN_STORE = "retData";
 	private static final String PARENT_RETURN_STORE = "parent.retData";
 
@@ -73,7 +72,7 @@ public class TestCommandExecution {
 	}
 
 	private ICommandService getService() {
-		IWorkbench wb =UserAssistanceTestPlugin.getDefault().getWorkbench(); //.getCommandSupport();
+		IWorkbench wb = PlatformUI.getWorkbench();
 		Object serviceObject = wb.getAdapter(ICommandService.class);
 		if (serviceObject != null) {
 			ICommandService service = (ICommandService)serviceObject;
@@ -86,10 +85,10 @@ public class TestCommandExecution {
 		IWorkbench wb =	PlatformUI.getWorkbench();
 		if (wb != null) {
 			Object serviceObject = wb.getAdapter(IHandlerService.class);
-		    if (serviceObject != null) {
-			    IHandlerService service = (IHandlerService)serviceObject;
-			    return service;
-		    }
+			if (serviceObject != null) {
+				IHandlerService service = (IHandlerService)serviceObject;
+				return service;
+			}
 		}
 		return null;
 	}

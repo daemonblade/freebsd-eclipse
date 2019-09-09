@@ -149,6 +149,7 @@ public class GTK extends OS {
 	public static final int GTK_STATE_FLAG_INCONSISTENT = 1 << 4;
 	public static final int GTK_STATE_FLAG_FOCUSED = 1 << 5;
 	public static final int GTK_STATE_FLAG_BACKDROP  = 1 << 6;
+	public static final int GTK_STATE_FLAG_LINK = 1 << 9;
 	public static final int GTK_TEXT_DIR_LTR = 1;
 	public static final int GTK_TEXT_DIR_NONE = 0 ;
 	public static final int GTK_TEXT_DIR_RTL = 2;
@@ -205,6 +206,7 @@ public class GTK extends OS {
 	public static final byte[] gtk_menu_bar_accel = OS.ascii("gtk-menu-bar-accel");
 	public static final byte[] gtk_menu_images = OS.ascii("gtk-menu-images");
 	public static final byte[] gtk_theme_name = OS.ascii("gtk-theme-name");
+	public static final byte[] gtk_im_module = OS.ascii("gtk-im-module");
 
 
 	/** Misc **/
@@ -1349,7 +1351,7 @@ public class GTK extends OS {
 	public static final void  gtk_color_chooser_set_use_alpha (long chooser, boolean use_alpha) {
 		lock.lock();
 		try {
-			 _gtk_color_chooser_set_use_alpha (chooser, use_alpha);
+			_gtk_color_chooser_set_use_alpha (chooser, use_alpha);
 		} finally {
 			lock.unlock();
 		}
@@ -1361,7 +1363,7 @@ public class GTK extends OS {
 	public static final boolean  gtk_color_chooser_get_use_alpha (long chooser) {
 		lock.lock();
 		try {
-			 return _gtk_color_chooser_get_use_alpha (chooser);
+			return _gtk_color_chooser_get_use_alpha (chooser);
 		} finally {
 			lock.unlock();
 		}
@@ -1374,7 +1376,7 @@ public class GTK extends OS {
 	public static final void  gtk_color_chooser_get_rgba(long chooser, GdkRGBA color) {
 		lock.lock();
 		try {
-			 _gtk_color_chooser_get_rgba(chooser, color);
+			_gtk_color_chooser_get_rgba(chooser, color);
 		} finally {
 			lock.unlock();
 		}
@@ -1387,7 +1389,7 @@ public class GTK extends OS {
 	public static final void  gtk_color_chooser_set_rgba(long chooser, GdkRGBA color) {
 		lock.lock();
 		try {
-			 _gtk_color_chooser_set_rgba(chooser, color);
+			_gtk_color_chooser_set_rgba(chooser, color);
 		} finally {
 			lock.unlock();
 		}
@@ -2504,42 +2506,42 @@ public class GTK extends OS {
 	public static final native long _gtk_gesture_multi_press_new();
 	/** [GTK4 only, if-def'd in os.h] */
 	public static final long gtk_gesture_multi_press_new() {
-	        lock.lock();
-	        try {
-	        	return _gtk_gesture_multi_press_new();
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+				return _gtk_gesture_multi_press_new();
+			} finally {
+					lock.unlock();
+			}
 	}
 	public static final native long _gtk_event_controller_key_new();
 	/** [GTK4 only, if-def'd in os.h] */
 	public static final long gtk_event_controller_key_new() {
-	        lock.lock();
-	        try {
-	        	return _gtk_event_controller_key_new();
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+				return _gtk_event_controller_key_new();
+			} finally {
+					lock.unlock();
+			}
 	}
 	public static final native long _gtk_event_controller_motion_new();
 	/** [GTK4 only, if-def'd in os.h] */
 	public static final long gtk_event_controller_motion_new() {
-	        lock.lock();
-	        try {
-	        	return _gtk_event_controller_motion_new();
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+				return _gtk_event_controller_motion_new();
+			} finally {
+					lock.unlock();
+			}
 	}
 	public static final native long _gtk_event_controller_scroll_new(int flag);
 	/** [GTK4 only, if-def'd in os.h] */
 	public static final long gtk_event_controller_scroll_new(int flag) {
-	        lock.lock();
-	        try {
-	        	return _gtk_event_controller_scroll_new(flag);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+				return _gtk_event_controller_scroll_new(flag);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @param widget cast=(GtkWidget *)
@@ -2548,24 +2550,24 @@ public class GTK extends OS {
 	public static final native void _gtk_widget_add_controller(long widget, long controller);
 	/** [GTK4 only, if-def'd in os.h] */
 	public static final void gtk_widget_add_controller(long widget, long controller) {
-	        lock.lock();
-	        try {
-	        	_gtk_widget_add_controller(widget, controller);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+				_gtk_widget_add_controller(widget, controller);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @method flags=dynamic
 	 */
 	public static final native void _gtk_event_controller_set_propagation_phase(long controller, int phase);
 	public static final void gtk_event_controller_set_propagation_phase(long controller, int phase) {
-	        lock.lock();
-	        try {
-	                _gtk_event_controller_set_propagation_phase(controller, phase);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+					_gtk_event_controller_set_propagation_phase(controller, phase);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @method flags=dynamic
@@ -2588,24 +2590,24 @@ public class GTK extends OS {
 	 */
 	public static final native void _gtk_event_controller_handle_event(long gesture, long event);
 	public static final void gtk_event_controller_handle_event(long gesture, long event) {
-	        lock.lock();
-	        try {
-	                _gtk_event_controller_handle_event(gesture, event);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+					_gtk_event_controller_handle_event(gesture, event);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @method flags=dynamic
 	 */
 	public static final native long _gtk_event_controller_get_widget(long controller);
 	public static final long gtk_event_controller_get_widget(long controller) {
-	        lock.lock();
-	        try {
-	        		return _gtk_event_controller_get_widget(controller);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+					return _gtk_event_controller_get_widget(controller);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @param filter cast=(GtkFileFilter *)
@@ -2682,12 +2684,12 @@ public class GTK extends OS {
 	 */
 	public static final native long _gtk_gesture_drag_new(long widget);
 	public static final long gtk_gesture_drag_new(long widget) {
-	        lock.lock();
-	        try {
-	                return _gtk_gesture_drag_new(widget);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+					return _gtk_gesture_drag_new(widget);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @method flags=dynamic
@@ -2742,12 +2744,12 @@ public class GTK extends OS {
 	 */
 	public static final native void _gtk_gesture_group (long group_gesture, long gesture);
 	public static final void gtk_gesture_group (long group_gesture, long gesture) {
-	        lock.lock();
-	        try {
-	                 _gtk_gesture_group(group_gesture, gesture);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+					_gtk_gesture_group(group_gesture, gesture);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @method flags=dynamic
@@ -2756,7 +2758,7 @@ public class GTK extends OS {
 	public static final void gtk_gesture_pan_set_orientation(long orientation) {
 		lock.lock();
 		try {
-			 _gtk_gesture_pan_set_orientation(orientation);
+			_gtk_gesture_pan_set_orientation(orientation);
 		} finally {
 			lock.unlock();
 		}
@@ -2790,12 +2792,12 @@ public class GTK extends OS {
 	 */
 	public static final native void _gtk_gesture_single_set_button(long gesture, int button);
 	public static final void gtk_gesture_single_set_button(long gesture, int button) {
-	        lock.lock();
-	        try {
-	                 _gtk_gesture_single_set_button(gesture, button);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+					_gtk_gesture_single_set_button(gesture, button);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @method flags=dynamic
@@ -2826,12 +2828,12 @@ public class GTK extends OS {
 	 */
 	public static final native void _gtk_gesture_drag_get_offset(long gesture, double[] x, double[] y);
 	public static final void gtk_gesture_drag_get_offset(long gesture, double[] x, double[] y) {
-	        lock.lock();
-	        try {
-	                _gtk_gesture_drag_get_offset(gesture, x, y);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+					_gtk_gesture_drag_get_offset(gesture, x, y);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @method flags=dynamic
@@ -2852,36 +2854,36 @@ public class GTK extends OS {
 
 	public static final native long _gtk_gesture_rotate_new(long widget);
 	public static final long gtk_gesture_rotate_new(long widget) {
-	        lock.lock();
-	        try {
-	                return _gtk_gesture_rotate_new(widget);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+					return _gtk_gesture_rotate_new(widget);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @method flags=dynamic
 	 */
 	public static final native long _gtk_gesture_zoom_new(long widget);
 	public static final long gtk_gesture_zoom_new(long widget) {
-	        lock.lock();
-	        try {
-	                return _gtk_gesture_zoom_new(widget);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+					return _gtk_gesture_zoom_new(widget);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @method flags=dynamic
 	 */
 	public static final native double _gtk_gesture_zoom_get_scale_delta (long gesture);
 	public static final double gtk_gesture_zoom_get_scale_delta (long gesture) {
-	        lock.lock();
-	        try {
-	                return _gtk_gesture_zoom_get_scale_delta(gesture);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+					return _gtk_gesture_zoom_get_scale_delta(gesture);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @method flags=dynamic
@@ -3030,7 +3032,7 @@ public class GTK extends OS {
 	public static final void gtk_widget_set_margin_start (long widget, int margin) {
 		lock.lock();
 		try {
-			 _gtk_widget_set_margin_start(widget, margin);
+			_gtk_widget_set_margin_start(widget, margin);
 		} finally {
 			lock.unlock();
 		}
@@ -3044,7 +3046,7 @@ public class GTK extends OS {
 	public static final void gtk_widget_set_margin_end (long widget, int margin) {
 		lock.lock();
 		try {
-			 _gtk_widget_set_margin_end(widget, margin);
+			_gtk_widget_set_margin_end(widget, margin);
 		} finally {
 			lock.unlock();
 		}
@@ -3058,7 +3060,7 @@ public class GTK extends OS {
 	public static final void gtk_widget_set_margin_top (long widget, int margin) {
 		lock.lock();
 		try {
-			 _gtk_widget_set_margin_top(widget, margin);
+			_gtk_widget_set_margin_top(widget, margin);
 		} finally {
 			lock.unlock();
 		}
@@ -3072,7 +3074,7 @@ public class GTK extends OS {
 	public static final void gtk_widget_set_margin_bottom (long widget, int margin) {
 		lock.lock();
 		try {
-			 _gtk_widget_set_margin_bottom(widget, margin);
+			_gtk_widget_set_margin_bottom(widget, margin);
 		} finally {
 			lock.unlock();
 		}
@@ -3551,20 +3553,6 @@ public class GTK extends OS {
 		lock.lock();
 		try {
 			_gtk_im_context_set_cursor_location(context, area);
-		} finally {
-			lock.unlock();
-		}
-	}
-	/**
-	 * @method flags=dynamic
-	 * @param context cast=(GtkIMMulticontext *)
-	 * @param menushell cast=(GtkMenuShell *)
-	 */
-	public static final native void _gtk_im_multicontext_append_menuitems (long context, long menushell);
-	public static final void gtk_im_multicontext_append_menuitems (long context, long menushell) {
-		lock.lock();
-		try {
-			_gtk_im_multicontext_append_menuitems(context, menushell);
 		} finally {
 			lock.unlock();
 		}
@@ -5493,12 +5481,12 @@ public class GTK extends OS {
 	 */
 	public static final native void _gtk_range_get_slider_range(long range, int[] slider_start, int[] slider_end);
 	public static final void gtk_range_get_slider_range(long range, int[] slider_start, int[] slider_end) {
-	        lock.lock();
-	        try {
-	        	_gtk_range_get_slider_range(range, slider_start, slider_end);
-	        } finally {
-	                lock.unlock();
-	        }
+			lock.lock();
+			try {
+				_gtk_range_get_slider_range(range, slider_start, slider_end);
+			} finally {
+					lock.unlock();
+			}
 	}
 	/**
 	 * @param scale cast=(GtkScale *)
@@ -5929,7 +5917,7 @@ public class GTK extends OS {
 	public static final long gtk_snapshot_append_cairo(long snapshot, long rect) {
 		lock.lock();
 		try {
-			 return _gtk_snapshot_append_cairo(snapshot, rect);
+			return _gtk_snapshot_append_cairo(snapshot, rect);
 		} finally {
 			lock.unlock();
 		}
@@ -7016,6 +7004,19 @@ public class GTK extends OS {
 	}
 	/**
 	 * @param item cast=(GtkToolItem *)
+	 * @param homogeneous cast=(gboolean)
+	 */
+	public static final native void _gtk_tool_item_set_homogeneous(long item, boolean homogeneous);
+	public static final void gtk_tool_item_set_homogeneous(long item, boolean homogeneous) {
+		lock.lock();
+		try {
+			_gtk_tool_item_set_homogeneous(item, homogeneous);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/**
+	 * @param item cast=(GtkToolItem *)
 	 * @param menu_id cast=(const gchar *)
 	 * @param widget cast=(GtkWidget *)
 	 */
@@ -7268,7 +7269,7 @@ public class GTK extends OS {
 	public static final long gtk_tree_path_compare(long a, long b) {
 		lock.lock();
 		try {
-			 return _gtk_tree_path_compare(a, b);
+			return _gtk_tree_path_compare(a, b);
 		} finally {
 			lock.unlock();
 		}
@@ -7557,6 +7558,20 @@ public class GTK extends OS {
 		lock.lock();
 		try {
 			return _gtk_tree_store_newv(numColumns, types);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/**
+	 * @param store cast=(GtkTreeStore *)
+	 * @param iter cast=(GtkTreeIter *)
+	 * @param parent cast=(GtkTreeIter *)
+	 */
+	public static final native void _gtk_tree_store_prepend(long store, long iter, long parent);
+	public static final void gtk_tree_store_prepend(long store, long iter, long parent) {
+		lock.lock();
+		try {
+			_gtk_tree_store_prepend(store, iter, parent);
 		} finally {
 			lock.unlock();
 		}
@@ -8789,12 +8804,12 @@ public class GTK extends OS {
 	/** @param widget cast=(GtkWidget *) */
 	public static final native boolean _gtk_widget_has_focus(long widget);
 	public static final boolean gtk_widget_has_focus(long widget) {
-	       lock.lock();
-	       try {
-	               return _gtk_widget_has_focus(widget);
-	       } finally {
-	               lock.unlock();
-	       }
+		lock.lock();
+		try {
+				return _gtk_widget_has_focus(widget);
+		} finally {
+				lock.unlock();
+		}
 	}
 	/** @param widget cast=(GtkWidget *) */
 	public static final native void _gtk_widget_hide(long widget);

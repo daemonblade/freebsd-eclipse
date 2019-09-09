@@ -1043,10 +1043,10 @@ public class LinkedResourceTest extends ResourceTest {
 	public void testIsLinked() {
 		//initially nothing is linked
 		IResource[] toTest = new IResource[] {closedProject, existingFileInExistingProject, existingFolderInExistingFolder, existingFolderInExistingProject, existingProject, nonExistingFileInExistingFolder, nonExistingFileInExistingProject, nonExistingFileInOtherExistingProject, nonExistingFolderInExistingFolder, nonExistingFolderInExistingProject, nonExistingFolderInNonExistingFolder, nonExistingFolderInNonExistingProject, nonExistingFolderInOtherExistingProject, nonExistingProject, otherExistingProject};
-		for (int i = 0; i < toTest.length; i++) {
-			assertTrue("1.0 " + toTest[i], !toTest[i].isLinked());
-			assertTrue("1.1 " + toTest[i], !toTest[i].isLinked(IResource.NONE));
-			assertTrue("1.2 " + toTest[i], !toTest[i].isLinked(IResource.CHECK_ANCESTORS));
+		for (IResource t : toTest) {
+			assertTrue("1.0 " + t, !t.isLinked());
+			assertTrue("1.1 " + t, !t.isLinked(IResource.NONE));
+			assertTrue("1.2 " + t, !t.isLinked(IResource.CHECK_ANCESTORS));
 		}
 		// create a link
 		IFolder link = nonExistingFolderInExistingProject;
@@ -1074,10 +1074,10 @@ public class LinkedResourceTest extends ResourceTest {
 	public void testsetLinkLocation() {
 		// initially nothing is linked
 		IResource[] toTest = new IResource[] {closedProject, existingFileInExistingProject, existingFolderInExistingFolder, existingFolderInExistingProject, existingProject, nonExistingFileInExistingFolder, nonExistingFileInExistingProject, nonExistingFileInOtherExistingProject, nonExistingFolderInExistingFolder, nonExistingFolderInExistingProject, nonExistingFolderInNonExistingFolder, nonExistingFolderInNonExistingProject, nonExistingFolderInOtherExistingProject, nonExistingProject, otherExistingProject};
-		for (int i = 0; i < toTest.length; i++) {
-			assertTrue("1.0 " + toTest[i], !toTest[i].isLinked());
-			assertTrue("1.1 " + toTest[i], !toTest[i].isLinked(IResource.NONE));
-			assertTrue("1.2 " + toTest[i], !toTest[i].isLinked(IResource.CHECK_ANCESTORS));
+		for (IResource toTest1 : toTest) {
+			assertTrue("1.0 " + toTest1, !toTest1.isLinked());
+			assertTrue("1.1 " + toTest1, !toTest1.isLinked(IResource.NONE));
+			assertTrue("1.2 " + toTest1, !toTest1.isLinked(IResource.CHECK_ANCESTORS));
 		}
 		// create a link
 		IFolder link = nonExistingFolderInExistingProject;
@@ -1156,10 +1156,10 @@ public class LinkedResourceTest extends ResourceTest {
 	public void testsetLinkLocationPath() {
 		//initially nothing is linked
 		IResource[] toTest = new IResource[] {closedProject, existingFileInExistingProject, existingFolderInExistingFolder, existingFolderInExistingProject, existingProject, nonExistingFileInExistingFolder, nonExistingFileInExistingProject, nonExistingFileInOtherExistingProject, nonExistingFolderInExistingFolder, nonExistingFolderInExistingProject, nonExistingFolderInNonExistingFolder, nonExistingFolderInNonExistingProject, nonExistingFolderInOtherExistingProject, nonExistingProject, otherExistingProject};
-		for (int i = 0; i < toTest.length; i++) {
-			assertTrue("1.0 " + toTest[i], !toTest[i].isLinked());
-			assertTrue("1.1 " + toTest[i], !toTest[i].isLinked(IResource.NONE));
-			assertTrue("1.2 " + toTest[i], !toTest[i].isLinked(IResource.CHECK_ANCESTORS));
+		for (IResource toTest1 : toTest) {
+			assertTrue("1.0 " + toTest1, !toTest1.isLinked());
+			assertTrue("1.1 " + toTest1, !toTest1.isLinked(IResource.NONE));
+			assertTrue("1.2 " + toTest1, !toTest1.isLinked(IResource.CHECK_ANCESTORS));
 		}
 		//create a link
 		IFolder link = nonExistingFolderInExistingProject;
@@ -1876,7 +1876,7 @@ public class LinkedResourceTest extends ResourceTest {
 
 			// there should be an entry in .project for the linked file
 			String string = readStringInFileSystem(existingProject.getFile(".project"));
-			assertTrue("3.0", string.indexOf(linkedFile.getProjectRelativePath().toString()) != -1);
+			assertTrue("3.0", string.contains(linkedFile.getProjectRelativePath().toString()));
 
 			// move the folder
 			try {

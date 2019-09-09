@@ -27,7 +27,7 @@ public class ProductExtensionBranding implements IBranding {
 	String name = null;
 	String id = null;
 	String description = null;
-	HashMap properties;
+	HashMap<String, String> properties;
 	Bundle definingBundle = null;
 
 	public ProductExtensionBranding(String id, IConfigurationElement element) {
@@ -42,9 +42,8 @@ public class ProductExtensionBranding implements IBranding {
 
 	private void loadProperties(IConfigurationElement element) {
 		IConfigurationElement[] children = element.getChildren();
-		properties = new HashMap(children.length);
-		for (int i = 0; i < children.length; i++) {
-			IConfigurationElement child = children[i];
+		properties = new HashMap<>(children.length);
+		for (IConfigurationElement child : children) {
 			String key = child.getAttribute(ATTR_NAME);
 			String value = child.getAttribute(ATTR_VALUE);
 			if (key != null && value != null)
@@ -80,7 +79,7 @@ public class ProductExtensionBranding implements IBranding {
 
 	@Override
 	public String getProperty(String key) {
-		return (String) properties.get(key);
+		return properties.get(key);
 	}
 
 	@Override

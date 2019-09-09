@@ -43,31 +43,31 @@ public final class LegacyResourceSupport {
 	 * Cached value of
 	 * <code>Class.forName("org.eclipse.core.resources.IResource")</code>;
 	 * <code>null</code> if not initialized or not present.
-	 * 
+	 *
 	 * @since 3.0
 	 */
-	private static Class iresourceClass = null;
+	private static Class<?> iresourceClass = null;
 
 	/**
 	 * Cached value of
 	 * <code>Class.forName("org.eclipse.core.resources.IFile")</code>;
 	 * <code>null</code> if not initialized or not present.
-	 * 
+	 *
 	 * @since 3.1
 	 */
-	private static Class ifileClass;
+	private static Class<?> ifileClass;
 
 	/**
 	 * Cached value of
 	 * <code>Class.forName("org.eclipse.ui.IContributorResourceAdapter")</code>;
 	 * <code>null</code> if not initialized or not present.
-	 * 
+	 *
 	 * @since 3.0
 	 */
-	private static Class icontributorResourceAdapterClass = null;
+	private static Class<?> icontributorResourceAdapterClass = null;
 
 	/**
-	 * Cached value of </code>
+	 * Cached value of <code>
 	 * org.eclipse.ui.IContributorResourceAdapter.getAdaptedResource(IAdaptable)
 	 * </code> <code>null</code> if not initialized or not present.
 	 *
@@ -76,7 +76,7 @@ public final class LegacyResourceSupport {
 	private static Method getAdaptedResourceMethod = null;
 
 	/**
-	 * Cached value of </code>
+	 * Cached value of <code>
 	 * org.eclipse.ui.IContributorResourceAdapter2.getAdaptedResourceMapping(IAdaptable)
 	 * </code> <code>null</code> if not initialized or not present.
 	 *
@@ -88,19 +88,19 @@ public final class LegacyResourceSupport {
 	 * Cached value of
 	 * <code>Class.forName("org.eclipse.ui.ide.IContributorResourceAdapter2")</code>;
 	 * <code>null</code> if not initialized or not present.
-	 * 
+	 *
 	 * @since 3.1
 	 */
-	private static Class icontributorResourceAdapter2Class = null;
+	private static Class<?> icontributorResourceAdapter2Class = null;
 
 	/**
 	 * Cached value of
 	 * <code>Class.forName("org.eclipse.ui.internal.ide.DefaultContributorResourceAdapter")</code>;
 	 * <code>null</code> if not initialized or not present.
-	 * 
+	 *
 	 * @since 3.0
 	 */
-	private static Class defaultContributorResourceAdapterClass = null;
+	private static Class<?> defaultContributorResourceAdapterClass = null;
 
 	/**
 	 * Cached value for reflective result of
@@ -115,10 +115,10 @@ public final class LegacyResourceSupport {
 	 * Cached value of
 	 * <code>Class.forName("org.eclipse.core.resources.mapping.ResourceMappingr")</code>;
 	 * <code>null</code> if not initialized or not present.
-	 * 
+	 *
 	 * @since 3.0
 	 */
-	private static Class resourceMappingClass = null;
+	private static Class<?> resourceMappingClass = null;
 
 	/**
 	 * Indicates whether the IDE plug-in (which supplies the resource contribution
@@ -137,12 +137,12 @@ public final class LegacyResourceSupport {
 	 * @return <code>IFile.class</code> or <code>null</code> if class not available
 	 * @since 3.1
 	 */
-	public static Class getFileClass() {
+	public static Class<?> getFileClass() {
 		if (ifileClass != null) {
 			// tried before and succeeded
 			return ifileClass;
 		}
-		Class c = loadClass("org.eclipse.core.resources", "org.eclipse.core.resources.IFile"); //$NON-NLS-1$ //$NON-NLS-2$
+		Class<?> c = loadClass("org.eclipse.core.resources", "org.eclipse.core.resources.IFile"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (c != null) {
 			// The class was found so record it
 			ifileClass = c;
@@ -162,12 +162,12 @@ public final class LegacyResourceSupport {
 	 *         available
 	 * @since 3.0
 	 */
-	public static Class getResourceClass() {
+	public static Class<?> getResourceClass() {
 		if (iresourceClass != null) {
 			// tried before and succeeded
 			return iresourceClass;
 		}
-		Class c = loadClass("org.eclipse.core.resources", "org.eclipse.core.resources.IResource"); //$NON-NLS-1$ //$NON-NLS-2$
+		Class<?> c = loadClass("org.eclipse.core.resources", "org.eclipse.core.resources.IResource"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (c != null) {
 			// The class was found so record it
 			iresourceClass = c;
@@ -187,12 +187,12 @@ public final class LegacyResourceSupport {
 	 *         available
 	 * @since 3.1
 	 */
-	public static Class getResourceMappingClass() {
+	public static Class<?> getResourceMappingClass() {
 		if (resourceMappingClass != null) {
 			// tried before and succeeded
 			return resourceMappingClass;
 		}
-		Class c = loadClass("org.eclipse.core.resources", "org.eclipse.core.resources.mapping.ResourceMapping"); //$NON-NLS-1$ //$NON-NLS-2$
+		Class<?> c = loadClass("org.eclipse.core.resources", "org.eclipse.core.resources.mapping.ResourceMapping"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (c != null) {
 			// The class was found so record it
 			resourceMappingClass = c;
@@ -212,12 +212,12 @@ public final class LegacyResourceSupport {
 	 *         if class not available
 	 * @since 3.0
 	 */
-	public static Class getIContributorResourceAdapterClass() {
+	public static Class<?> getIContributorResourceAdapterClass() {
 		if (icontributorResourceAdapterClass != null) {
 			// tried before and succeeded
 			return icontributorResourceAdapterClass;
 		}
-		Class c = loadClass("org.eclipse.ui.ide", "org.eclipse.ui.IContributorResourceAdapter"); //$NON-NLS-1$ //$NON-NLS-2$
+		Class<?> c = loadClass("org.eclipse.ui.ide", "org.eclipse.ui.IContributorResourceAdapter"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (c != null) {
 			// The class was found so record it
 			icontributorResourceAdapterClass = c;
@@ -237,12 +237,12 @@ public final class LegacyResourceSupport {
 	 *         if class not available
 	 * @since 3.1
 	 */
-	public static Class getIContributorResourceAdapter2Class() {
+	public static Class<?> getIContributorResourceAdapter2Class() {
 		if (icontributorResourceAdapter2Class != null) {
 			// tried before and succeeded
 			return icontributorResourceAdapter2Class;
 		}
-		Class c = loadClass("org.eclipse.ui.ide", "org.eclipse.ui.ide.IContributorResourceAdapter2"); //$NON-NLS-1$ //$NON-NLS-2$
+		Class<?> c = loadClass("org.eclipse.ui.ide", "org.eclipse.ui.ide.IContributorResourceAdapter2"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (c != null) {
 			// The class was found so record it
 			icontributorResourceAdapter2Class = c;
@@ -250,7 +250,7 @@ public final class LegacyResourceSupport {
 		return c;
 	}
 
-	private static Class loadClass(String bundleName, String className) {
+	private static Class<?> loadClass(String bundleName, String className) {
 		if (!resourceAdapterPossible) {
 			// tried before and failed
 			return null;
@@ -291,12 +291,12 @@ public final class LegacyResourceSupport {
 	 *         <code>null</code> if class not available
 	 * @since 3.0
 	 */
-	public static Class getDefaultContributorResourceAdapterClass() {
+	public static Class<?> getDefaultContributorResourceAdapterClass() {
 		if (defaultContributorResourceAdapterClass != null) {
 			// tried before and succeeded
 			return defaultContributorResourceAdapterClass;
 		}
-		Class c = loadClass("org.eclipse.ui.ide", "org.eclipse.ui.internal.ide.DefaultContributorResourceAdapter"); //$NON-NLS-1$ //$NON-NLS-2$
+		Class<?> c = loadClass("org.eclipse.ui.ide", "org.eclipse.ui.internal.ide.DefaultContributorResourceAdapter"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (c != null) {
 			// The class was found so record it
 			defaultContributorResourceAdapterClass = c;
@@ -312,21 +312,13 @@ public final class LegacyResourceSupport {
 		// reflective equivalent of
 		// resourceAdapter = DefaultContributorResourceAdapter.getDefault();
 
-		Class c = LegacyResourceSupport.getDefaultContributorResourceAdapterClass();
+		Class<?> c = LegacyResourceSupport.getDefaultContributorResourceAdapterClass();
 		if (c != null) {
 			try {
 				Method m = c.getDeclaredMethod("getDefault");//$NON-NLS-1$
 				defaultContributorResourceAdapter = m.invoke(null);
 				return defaultContributorResourceAdapter;
-			} catch (SecurityException e) {
-				// shouldn't happen - but play it safe
-			} catch (NoSuchMethodException e) {
-				// shouldn't happen - but play it safe
-			} catch (IllegalArgumentException e) {
-				// shouldn't happen - but play it safe
-			} catch (IllegalAccessException e) {
-				// shouldn't happen - but play it safe
-			} catch (InvocationTargetException e) {
+			} catch (SecurityException | NoSuchMethodException | IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
 				// shouldn't happen - but play it safe
 			}
 
@@ -339,7 +331,7 @@ public final class LegacyResourceSupport {
 	/**
 	 * Returns <code>true</code> if the provided type name is an
 	 * <code>IResource</code>, and <code>false</code> otherwise.
-	 * 
+	 *
 	 * @param objectClassName
 	 * @return <code>true</code> if the provided type name is an
 	 *         <code>IResource</code>, and <code>false</code> otherwise.
@@ -359,7 +351,7 @@ public final class LegacyResourceSupport {
 	 * Returns <code>true</code> if the provided type name is an
 	 * <code>"org.eclipse.core.resources.mapping.ResourceMapping"</code>, and
 	 * <code>false</code> otherwise.
-	 * 
+	 *
 	 * @param objectClassName
 	 * @return <code>true</code> if the provided type name is an
 	 *         <code>"org.eclipse.core.resources.mapping.ResourceMapping"</code>,
@@ -377,16 +369,16 @@ public final class LegacyResourceSupport {
 	 *
 	 * @since 3.1
 	 */
-	private static boolean isInstanceOf(Class clazz, String type) {
+	private static boolean isInstanceOf(Class<?> clazz, String type) {
 		if (clazz.getName().equals(type)) {
 			return true;
 		}
-		Class superClass = clazz.getSuperclass();
+		Class<?> superClass = clazz.getSuperclass();
 		if (superClass != null && isInstanceOf(superClass, type)) {
 			return true;
 		}
-		Class[] interfaces = clazz.getInterfaces();
-		for (Class currentInterface : interfaces) {
+		Class<?>[] interfaces = clazz.getInterfaces();
+		for (Class<?> currentInterface : interfaces) {
 			if (isInstanceOf(currentInterface, type)) {
 				return true;
 			}
@@ -407,7 +399,7 @@ public final class LegacyResourceSupport {
 	 * @since 3.1
 	 */
 	public static Object getAdaptedContributorResource(Object object) {
-		Class resourceClass = LegacyResourceSupport.getResourceClass();
+		Class<?> resourceClass = LegacyResourceSupport.getResourceClass();
 		if (resourceClass == null) {
 			return null;
 		}
@@ -416,7 +408,7 @@ public final class LegacyResourceSupport {
 		}
 		if (object instanceof IAdaptable) {
 			IAdaptable adaptable = (IAdaptable) object;
-			Class contributorResourceAdapterClass = LegacyResourceSupport.getIContributorResourceAdapterClass();
+			Class<?> contributorResourceAdapterClass = LegacyResourceSupport.getIContributorResourceAdapterClass();
 			if (contributorResourceAdapterClass == null) {
 				return adaptable.getAdapter(resourceClass);
 			}
@@ -435,11 +427,7 @@ public final class LegacyResourceSupport {
 			if (m != null) {
 				try {
 					return m.invoke(resourceAdapter, adaptable);
-				} catch (IllegalArgumentException e) {
-					// shouldn't happen - but play it safe
-				} catch (IllegalAccessException e) {
-					// shouldn't happen - but play it safe
-				} catch (InvocationTargetException e) {
+				} catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
 					// shouldn't happen - but play it safe
 				}
 			}
@@ -453,14 +441,12 @@ public final class LegacyResourceSupport {
 			return getAdaptedResourceMethod;
 		}
 
-		Class c = getIContributorResourceAdapterClass();
+		Class<?> c = getIContributorResourceAdapterClass();
 		if (c != null) {
 			try {
 				getAdaptedResourceMethod = c.getDeclaredMethod("getAdaptedResource", new Class[] { IAdaptable.class }); //$NON-NLS-1$
 				return getAdaptedResourceMethod;
-			} catch (SecurityException e) {
-				// shouldn't happen - but play it safe
-			} catch (NoSuchMethodException e) {
+			} catch (SecurityException | NoSuchMethodException e) {
 				// shouldn't happen - but play it safe
 			}
 
@@ -474,15 +460,13 @@ public final class LegacyResourceSupport {
 			return getAdaptedResourceMappingMethod;
 		}
 
-		Class c = getIContributorResourceAdapter2Class();
+		Class<?> c = getIContributorResourceAdapter2Class();
 		if (c != null) {
 			try {
 				getAdaptedResourceMappingMethod = c.getDeclaredMethod("getAdaptedResourceMapping", //$NON-NLS-1$
-						new Class[] { IAdaptable.class });
+						new Class<?>[] { IAdaptable.class });
 				return getAdaptedResourceMappingMethod;
-			} catch (SecurityException e) {
-				// do nothing - play it safe
-			} catch (NoSuchMethodException e) {
+			} catch (SecurityException | NoSuchMethodException e) {
 				// do nothing - play it safe
 			}
 
@@ -504,7 +488,7 @@ public final class LegacyResourceSupport {
 	 * @since 3.1
 	 */
 	public static Object getAdaptedContributorResourceMapping(Object object) {
-		Class resourceMappingClass = LegacyResourceSupport.getResourceMappingClass();
+		Class<?> resourceMappingClass = LegacyResourceSupport.getResourceMappingClass();
 		if (resourceMappingClass == null) {
 			return null;
 		}
@@ -513,11 +497,11 @@ public final class LegacyResourceSupport {
 		}
 		if (object instanceof IAdaptable) {
 			IAdaptable adaptable = (IAdaptable) object;
-			Class contributorResourceAdapterClass = LegacyResourceSupport.getIContributorResourceAdapterClass();
+			Class<?> contributorResourceAdapterClass = LegacyResourceSupport.getIContributorResourceAdapterClass();
 			if (contributorResourceAdapterClass == null) {
 				return adaptable.getAdapter(resourceMappingClass);
 			}
-			Class contributorResourceAdapter2Class = LegacyResourceSupport.getIContributorResourceAdapter2Class();
+			Class<?> contributorResourceAdapter2Class = LegacyResourceSupport.getIContributorResourceAdapter2Class();
 			if (contributorResourceAdapter2Class == null) {
 				return adaptable.getAdapter(resourceMappingClass);
 			}
@@ -547,11 +531,7 @@ public final class LegacyResourceSupport {
 					if (result != null) {
 						return result;
 					}
-				} catch (IllegalArgumentException e) {
-					// shouldn't happen - but play it safe
-				} catch (IllegalAccessException e) {
-					// shouldn't happen - but play it safe
-				} catch (InvocationTargetException e) {
+				} catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
 					// shouldn't happen - but play it safe
 				}
 
@@ -583,7 +563,7 @@ public final class LegacyResourceSupport {
 	 * <p>
 	 * The returned selection will only contain elements successfully adapted.
 	 * </p>
-	 * 
+	 *
 	 * @param selection   the selection to adapt
 	 * @param objectClass the class name to adapt the selection to
 	 * @return an adapted selection
@@ -591,8 +571,8 @@ public final class LegacyResourceSupport {
 	 * @since 3.1
 	 */
 	public static IStructuredSelection adaptSelection(IStructuredSelection selection, String objectClass) {
-		List newSelection = new ArrayList(10);
-		for (Iterator it = selection.iterator(); it.hasNext();) {
+		List<Object> newSelection = new ArrayList<>(10);
+		for (Iterator<?> it = selection.iterator(); it.hasNext();) {
 			Object element = it.next();
 			Object adaptedElement = getAdapter(element, objectClass);
 			if (adaptedElement != null) {
@@ -611,7 +591,7 @@ public final class LegacyResourceSupport {
 	 * The returned selection will be of the same size as the original, and elements
 	 * that could not be adapted are added to the returned selection as is.
 	 * </p>
-	 * 
+	 *
 	 * @param element     the element to adapt
 	 * @param objectClass the class name to adapt the selection to
 	 * @return an adapted element or <code>null</code> if the element could not be
@@ -660,7 +640,7 @@ public final class LegacyResourceSupport {
 	 * @since 3.1
 	 */
 	public static Object getAdaptedResource(Object element) {
-		Class resourceClass = LegacyResourceSupport.getResourceClass();
+		Class<?> resourceClass = LegacyResourceSupport.getResourceClass();
 		Object adaptedValue = null;
 		if (resourceClass != null) {
 			if (resourceClass.isInstance(element)) {
@@ -687,7 +667,7 @@ public final class LegacyResourceSupport {
 	 * @since 3.1
 	 */
 	public static Object getAdaptedResourceMapping(Object element) {
-		Class resourceMappingClass = LegacyResourceSupport.getResourceMappingClass();
+		Class<?> resourceMappingClass = LegacyResourceSupport.getResourceMappingClass();
 		Object adaptedValue = null;
 		if (resourceMappingClass != null) {
 			if (resourceMappingClass.isInstance(element)) {

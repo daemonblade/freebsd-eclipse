@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.team.internal.core.mapping;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -65,10 +66,7 @@ public class ScopeManagerEventHandler extends BackgroundEventHandler {
 			throws CoreException {
 		if (event instanceof ResourceMappingEvent) {
 			ResourceMappingEvent rme = (ResourceMappingEvent) event;
-			for (int i = 0; i < rme.mappings.length; i++) {
-				ResourceMapping mapping = rme.mappings[i];
-				toRefresh.add(mapping);
-			}
+			Collections.addAll(toRefresh, rme.mappings);
 		}
 
 	}

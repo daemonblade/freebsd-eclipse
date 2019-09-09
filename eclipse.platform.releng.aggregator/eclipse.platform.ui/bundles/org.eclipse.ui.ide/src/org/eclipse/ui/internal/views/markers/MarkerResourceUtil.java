@@ -248,22 +248,16 @@ class MarkerResourceUtil {
 		}
 		case MarkerFieldFilterGroup.ON_SELECTED_ONLY:
 		case MarkerFieldFilterGroup.ON_SELECTED_AND_CHILDREN: {
-			for (IResource selectedResource : selectedResources) {
-				resourceSet.add(selectedResource);
-			}
+			resourceSet.addAll(Arrays.asList(selectedResources));
 			break;
 		}
 		case MarkerFieldFilterGroup.ON_ANY_IN_SAME_CONTAINER: {
-			for (IResource resource : getProjects(selectedResources)) {
-				resourceSet.add(resource);
-			}
+			java.util.Collections.addAll(resourceSet, getProjects(selectedResources));
 			break;
 		}
 		case MarkerFieldFilterGroup.ON_WORKING_SET: {
 			group.refresh();
-			for (IResource resource : group.getResourcesInWorkingSet()) {
-				resourceSet.add(resource);
-			}
+			resourceSet.addAll(Arrays.asList(group.getResourcesInWorkingSet()));
 			break;
 		}
 		}
@@ -299,9 +293,7 @@ class MarkerResourceUtil {
 			if (element instanceof IResource) {
 				projects.add(((IResource) element).getProject());
 			} else {
-				for (IProject mappingProject : ((ResourceMapping) element).getProjects()) {
-					projects.add(mappingProject);
-				}
+				java.util.Collections.addAll(projects, ((ResourceMapping) element).getProjects());
 			}
 		}
 		return projects;
@@ -319,9 +311,7 @@ class MarkerResourceUtil {
 					ResourceMappingContext.LOCAL_CONTEXT,
 					new NullProgressMonitor());
 			for (ResourceTraversal traversal : traversals) {
-				for (IResource resource : traversal.getResources()) {
-					resourceCollection.add(resource);
-				}
+				java.util.Collections.addAll(resourceCollection, traversal.getResources());
 			}
 		} catch (CoreException e) {
 			Policy.handle(e);
@@ -388,9 +378,7 @@ class MarkerResourceUtil {
 		for (String typeId : typeIds) {
 			MarkerType type = typesModel.getType(typeId);
 			set.add(type);
-			for (MarkerType sub : type.getAllSubTypes()) {
-				set.add(sub);
-			}
+			set.addAll(Arrays.asList(type.getAllSubTypes()));
 		}
 		return set;
 	}

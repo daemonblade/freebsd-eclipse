@@ -347,10 +347,11 @@ public void append (String string) {
 
 @Override
 boolean becomeFirstResponder (long id, long sel) {
-	receivingFocus = true;
-	boolean result = super.becomeFirstResponder (id, sel);
-	receivingFocus = false;
-	return result;
+	if ((style & SWT.SINGLE) != 0) {
+		if ((state & DISABLED) != 0) return false;
+		return true;
+	}
+	return super.becomeFirstResponder (id, sel);
 }
 
 static int checkStyle (int style) {
@@ -720,7 +721,7 @@ void drawInteriorWithFrame_inView (long id, long sel, NSRect cellFrame, long vie
 
 	if (image != null && !image.isDisposed()) {
 		NSGraphicsContext context = NSGraphicsContext.currentContext();
- 	 	control.fillBackground (view, context, cellFrame, -1);
+		control.fillBackground (view, context, cellFrame, -1);
 	} else if ((style & SWT.SEARCH) != 0) {
 		// If no background image is set, call custom paint code for search field
 		drawInteriorWithFrame_inView_searchfield(id, sel, cellFrame, viewid);
@@ -820,6 +821,15 @@ Cursor findCursor () {
 	return (cursor != null) ? cursor : display.getSystemCursor (SWT.CURSOR_IBEAM);
 }
 
+@Override
+boolean forceFocus(NSView focusView) {
+	receivingFocus = true;
+	boolean result = super.forceFocus(focusView);
+	if (((style & SWT.SINGLE) != 0)) ((NSTextField) view).selectText(null);
+	receivingFocus = false;
+	return result;
+}
+
 /**
  * Returns the line number of the caret.
  * <p>
@@ -836,7 +846,7 @@ Cursor findCursor () {
 public int getCaretLineNumber () {
 	checkWidget ();
 	if ((style & SWT.SINGLE) != 0) return 0;
-    return (getTopPixel () + getCaretLocation ().y) / getLineHeight ();
+	return (getTopPixel () + getCaretLocation ().y) / getLineHeight ();
 }
 
 @Override
@@ -936,7 +946,7 @@ public int getCharCount () {
  */
 public boolean getDoubleClickEnabled () {
 	checkWidget ();
-    return doubleClick;
+	return doubleClick;
 }
 
 /**
@@ -1375,7 +1385,7 @@ public char[] getTextChars () {
  */
 public int getTextLimit () {
 	checkWidget ();
-    return textLimit;
+	return textLimit;
 }
 
 /**
@@ -1395,7 +1405,7 @@ public int getTextLimit () {
 public int getTopIndex () {
 	checkWidget ();
 	if ((style & SWT.SINGLE) != 0) return 0;
-    return getTopPixel () / getLineHeight ();
+	return getTopPixel () / getLineHeight ();
 }
 
 /**
@@ -2380,7 +2390,7 @@ boolean shouldChangeTextInRange_replacementString(long id, long sel, long affect
 	}
 	if ((style & SWT.SINGLE) != 0) {
 		if (text != newText || echoCharacter != '\0') {
-			 //handle backspace and delete
+			//handle backspace and delete
 			if (range.length == 1) {
 				NSText editor = new NSText(id);
 				editor.setSelectedRange (range);

@@ -31,7 +31,7 @@ public class AppCommands implements CommandProvider {
 	private final static String TAB = "\t"; //$NON-NLS-1$
 
 	// holds the mappings from command name to command arguments and command description
-	private Map commandsHelp = null;
+	private Map<String, String[]> commandsHelp = null;
 
 	private static AppCommands instance;
 	private BundleContext context;
@@ -107,17 +107,17 @@ public class AppCommands implements CommandProvider {
 
 		if (commandName != null) {
 			if (commandsHelp.containsKey(commandName)) {
-				addCommand(commandName, (String[]) commandsHelp.get(commandName), sb);
+				addCommand(commandName, commandsHelp.get(commandName), sb);
 			}
 			return sb.toString();
 		}
 
 		addHeader(Messages.console_help_app_commands_header, sb);
-		Iterator i = commandsHelp.entrySet().iterator();
+		Iterator<Entry<String, String[]>> i = commandsHelp.entrySet().iterator();
 		while (i.hasNext()) {
-			Entry entry = (Entry) i.next();
-			String command = (String) entry.getKey();
-			String[] attributes = (String[]) entry.getValue();
+			Entry<String, String[]> entry = i.next();
+			String command = entry.getKey();
+			String[] attributes = entry.getValue();
 			addCommand(command, attributes, sb);
 		}
 
@@ -125,7 +125,7 @@ public class AppCommands implements CommandProvider {
 	}
 
 	private void initializeCommandsHelp() {
-		commandsHelp = new LinkedHashMap();
+		commandsHelp = new LinkedHashMap<>();
 		commandsHelp.put("activeApps", new String[] {Messages.console_help_activeapps_description}); //$NON-NLS-1$
 		commandsHelp.put("apps", new String[] {Messages.console_help_apps_description}); //$NON-NLS-1$
 		commandsHelp.put("lockApp", new String[] {Messages.console_help_arguments, Messages.console_help_lockapp_description}); //$NON-NLS-1$
@@ -173,11 +173,12 @@ public class AppCommands implements CommandProvider {
 		}
 	}
 
-	private Dictionary getServiceProps(ServiceReference ref) {
+	private Dictionary<String, Object> getServiceProps(ServiceReference ref) {
 		String[] keys = ref.getPropertyKeys();
-		Hashtable props = new Hashtable(keys.length);
-		for (int i = 0; i < keys.length; i++)
-			props.put(keys[i], ref.getProperty(keys[i]));
+		Hashtable<String, Object> props = new Hashtable<>(keys.length);
+		for (String key : keys) {
+			props.put(key, ref.getProperty(key));
+		}
 		return props;
 	}
 
@@ -187,8 +188,8 @@ public class AppCommands implements CommandProvider {
 			intp.println("No applications found."); //$NON-NLS-1$
 			return;
 		}
-		for (int i = 0; i < apps.length; i++) {
-			String application = (String) apps[i].getProperty(ApplicationDescriptor.APPLICATION_PID);
+		for (ServiceReference app : apps) {
+			String application = (String) app.getProperty(ApplicationDescriptor.APPLICATION_PID);
 			intp.print(application);
 
 			if (getApplication(applicationHandles.getServiceReferences(), application, ApplicationHandle.APPLICATION_DESCRIPTOR, true) != null)
@@ -196,14 +197,14 @@ public class AppCommands implements CommandProvider {
 
 			if (getApplication(scheduledApplications.getServiceReferences(), application, ScheduledApplication.APPLICATION_PID, true) != null)
 				intp.print(" [scheduled]"); //$NON-NLS-1$ 
-
-			if (!launchableApp.match(getServiceProps(apps[i])))
+			if (!launchableApp.match(getServiceProps(app))) {
 				intp.print(" [not launchable]"); //$NON-NLS-1$ 
-			else
+			} else {
 				intp.print(" [launchable]"); //$NON-NLS-1$ 
-
-			if (lockedApp.match(getServiceProps(apps[i])))
+			}
+			if (lockedApp.match(getServiceProps(app))) {
 				intp.print(" [locked]"); //$NON-NLS-1$ 
+			}
 			intp.println();
 		}
 	}
@@ -214,10 +215,10 @@ public class AppCommands implements CommandProvider {
 			intp.println("No active applications found"); //$NON-NLS-1$
 			return;
 		}
-		for (int i = 0; i < active.length; i++) {
-			intp.print(active[i].getProperty(ApplicationHandle.APPLICATION_PID));
+		for (ServiceReference r : active) {
+			intp.print(r.getProperty(ApplicationHandle.APPLICATION_PID));
 			intp.print(" ["); //$NON-NLS-1$
-			intp.print(activeApp.match(getServiceProps(active[i])) ? "running" : "stopping"); //$NON-NLS-1$ //$NON-NLS-2$
+			intp.print(activeApp.match(getServiceProps(r)) ? "running" : "stopping"); //$NON-NLS-1$ //$NON-NLS-2$
 			intp.println("]"); //$NON-NLS-1$
 		}
 	}
@@ -228,16 +229,17 @@ public class AppCommands implements CommandProvider {
 
 		ServiceReference result = null;
 		boolean ambigous = false;
-		for (int i = 0; i < apps.length; i++) {
-			String id = (String) apps[i].getProperty(idKey);
-			if (targetId.equals(id))
-				return apps[i]; // always return a perfect match
+		for (ServiceReference app : apps) {
+			String id = (String) app.getProperty(idKey);
+			if (targetId.equals(id)) {
+				return app; // always return a perfect match
+			}
 			if (perfectMatch)
 				continue;
-			if (id.indexOf(targetId) >= 0) {
+			if (id.contains(targetId)) {
 				if (result != null)
 					ambigous = true;
-				result = apps[i];
+				result = app;
 			}
 		}
 		return ambigous ? null : result;
@@ -249,16 +251,16 @@ public class AppCommands implements CommandProvider {
 		if (application == null)
 			intp.println("\"" + appId + "\" does not exist or is ambigous."); //$NON-NLS-1$ //$NON-NLS-2$
 		else {
-			ArrayList argList = new ArrayList();
+			ArrayList<String> argList = new ArrayList<>();
 			String arg = null;
 			while ((arg = intp.nextArgument()) != null)
 				argList.add(arg);
 			String[] args = argList.size() == 0 ? null : (String[]) argList.toArray(new String[argList.size()]);
 			try {
-				HashMap launchArgs = new HashMap(1);
+				HashMap<String, Object> launchArgs = new HashMap<>(1);
 				if (args != null)
 					launchArgs.put(IApplicationContext.APPLICATION_ARGS, args);
-				ApplicationDescriptor appDesc = ((ApplicationDescriptor) context.getService(application));
+				ApplicationDescriptor appDesc = (context.<ApplicationDescriptor> getService(application));
 				ApplicationHandle handle = appDesc.launch(launchArgs);
 				intp.println("Launched application instance: " + handle.getInstanceId()); //$NON-NLS-1$
 			} finally {

@@ -50,7 +50,7 @@ public class Category implements IWorkbenchAdapter, IPluginContribution, IAdapta
 
 	private String[] parentPath;
 
-	private ArrayList elements;
+	private ArrayList<Object> elements;
 
 	private IConfigurationElement configurationElement;
 
@@ -80,9 +80,9 @@ public class Category implements IWorkbenchAdapter, IPluginContribution, IAdapta
 	 * Creates an instance of <code>Category</code> using the information from the
 	 * specified configuration element.
 	 *
-	 * @param configElement the <code>IConfigurationElement<code> containing the ID,
-	 *                      label, and optional parent category path.
-	 * @throws WorkbenchException if the ID or label is <code>null</code
+	 * @param configElement the <code>IConfigurationElement</code> containing the
+	 *                      ID, label, and optional parent category path.
+	 * @throws WorkbenchException if the ID or label is <code>null</code>
 	 */
 	public Category(IConfigurationElement configElement) throws WorkbenchException {
 		id = configElement.getAttribute(IWorkbenchRegistryConstants.ATT_ID);
@@ -100,7 +100,7 @@ public class Category implements IWorkbenchAdapter, IPluginContribution, IAdapta
 	 */
 	public void addElement(Object element) {
 		if (elements == null) {
-			elements = new ArrayList(5);
+			elements = new ArrayList<>(5);
 		}
 		elements.add(element);
 	}
@@ -133,7 +133,7 @@ public class Category implements IWorkbenchAdapter, IPluginContribution, IAdapta
 
 	/**
 	 * Return the id for this category.
-	 * 
+	 *
 	 * @return the id
 	 */
 	public String getId() {
@@ -201,7 +201,7 @@ public class Category implements IWorkbenchAdapter, IPluginContribution, IAdapta
 	 *
 	 * @return the elements
 	 */
-	public ArrayList getElements() {
+	public ArrayList<Object> getElements() {
 		return elements;
 	}
 

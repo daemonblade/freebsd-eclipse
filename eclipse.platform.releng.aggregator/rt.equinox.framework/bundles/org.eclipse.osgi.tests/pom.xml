@@ -14,12 +14,12 @@
   <parent>
     <artifactId>rt.equinox.framework</artifactId>
     <groupId>org.eclipse.equinox.framework</groupId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.osgi</groupId>
   <artifactId>org.eclipse.osgi.tests</artifactId>
-  <version>3.13.500-SNAPSHOT</version>
+  <version>3.15.0-SNAPSHOT</version>
   <packaging>eclipse-test-plugin</packaging>
 
   <properties>
@@ -27,6 +27,7 @@
     <code.ignoredWarnings>${tests.ignoredWarnings}</code.ignoredWarnings>
     <testSuite>${project.artifactId}</testSuite>
     <testClass>org.eclipse.osgi.tests.AutomatedTests</testClass>
+    <skipAPIAnalysis>true</skipAPIAnalysis>
   </properties>
 
   <build>

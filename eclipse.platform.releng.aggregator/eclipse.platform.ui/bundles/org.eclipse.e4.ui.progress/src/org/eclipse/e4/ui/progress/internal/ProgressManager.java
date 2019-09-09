@@ -17,7 +17,6 @@
  *******************************************************************************/
 package org.eclipse.e4.ui.progress.internal;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -86,7 +85,7 @@ public class ProgressManager extends ProgressProvider {
 			.synchronizedMap(new HashMap<Job, JobMonitor>());
 
 	final private Map<Object, Collection<IJobBusyListener>> familyListeners = Collections
-			.synchronizedMap(new HashMap<Object, Collection<IJobBusyListener>>());
+			.synchronizedMap(new HashMap<>());
 
 	//	list of IJobProgressManagerListener
 	private ListenerList<IJobProgressManagerListener> listeners = new ListenerList<>();
@@ -787,11 +786,7 @@ public class ProgressManager extends ProgressProvider {
 	 */
 	ImageData[] getImageData(URL fileSystemPath, ImageLoader loader) {
 		try (InputStream stream = fileSystemPath.openStream()) {
-			ImageData[] result = loader.load(stream);
-			return result;
-		} catch (FileNotFoundException exception) {
-			ProgressManagerUtil.logException(exception);
-			return null;
+			return loader.load(stream);
 		} catch (IOException exception) {
 			ProgressManagerUtil.logException(exception);
 			return null;
@@ -850,7 +845,6 @@ public class ProgressManager extends ProgressProvider {
 	 * @param job
 	 * @return Collection of IJobBusyListener
 	 */
-	@SuppressWarnings("unchecked")
 	private Collection<IJobBusyListener> busyListenersForJob(Job job) {
 		if (job.isSystem()) {
 			return Collections.emptyList();

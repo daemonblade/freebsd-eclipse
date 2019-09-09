@@ -151,7 +151,12 @@ public abstract class Module implements BundleReference, BundleStartLevel, Compa
 		/**
 		 * The module has been set to use its activation policy.
 		 */
-		USE_ACTIVATION_POLICY
+		USE_ACTIVATION_POLICY,
+		/**
+		 * The module has been set for parallel activation from start-level
+		 * @since 3.15
+		 */
+		PARALLEL_ACTIVATION
 	}
 
 	/**
@@ -480,7 +485,7 @@ public abstract class Module implements BundleReference, BundleStartLevel, Compa
 			publishEvent(event);
 			// only print bundleTime information if we actually fired an event for this bundle
 			if (container.DEBUG_BUNDLE_START_TIME) {
-				Debug.println(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime) + "ms for total start time of " + this); //$NON-NLS-1$
+				Debug.println(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime) + " ms for total start time event " + event + " - " + this); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 
@@ -693,8 +698,34 @@ public abstract class Module implements BundleReference, BundleStartLevel, Compa
 	private void persistStopOptions(StopOptions... options) {
 		if (StopOptions.TRANSIENT.isContained(options))
 			return;
-		settings.clear();
+		settings.remove(Settings.USE_ACTIVATION_POLICY);
+		settings.remove(Settings.AUTO_START);
 		revisions.getContainer().moduleDatabase.persistSettings(settings, this);
+	}
+
+	/**
+	 * Set if this module should be activated in parallel with other modules that have
+	 * the same {@link #getStartLevel() start level}.
+	 * @param parallelActivation true if the module should be started in parallel; false otherwise
+	 * @since 3.15
+	 */
+	public void setParallelActivation(boolean parallelActivation) {
+		if (parallelActivation) {
+			settings.add(Settings.PARALLEL_ACTIVATION);
+		} else {
+			settings.remove(Settings.PARALLEL_ACTIVATION);
+		}
+		revisions.getContainer().moduleDatabase.persistSettings(settings, this);
+	}
+
+	/**
+	 * Returns if this module should be activated in parallel with other modules that have
+	 * the same {@link #getStartLevel() start level}.
+	 * @return true if the module should be started in parallel; false otherwise
+	 * @since 3.15
+	 */
+	public boolean isParallelActivated() {
+		return settings.contains(Settings.PARALLEL_ACTIVATION);
 	}
 
 	/**

@@ -17,6 +17,7 @@ package org.eclipse.core.internal.net.proxy.win32.winhttp;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -77,15 +78,13 @@ public class StaticProxyConfig {
 		} else {
 			IProxyData[] data = getUniversalProxiesData();
 			if (uri.getScheme() != null) {
-				for (int i = 0; i < data.length; i++) {
-					if (uri.getScheme().equalsIgnoreCase(data[i].getType())) {
-						proxies.add(data[i]);
+				for (IProxyData d : data) {
+					if (uri.getScheme().equalsIgnoreCase(d.getType())) {
+						proxies.add(d);
 					}
 				}
 			} else {
-				for (int i = 0; i < data.length; i++) {
-					proxies.add(data[i]);
-				}
+				Collections.addAll(proxies, data);
 			}
 		}
 	}
@@ -106,7 +105,7 @@ public class StaticProxyConfig {
 	}
 
 	private IProxyData[] getUniversalProxiesData() {
-		if (universalProxies.size() == 0) {
+		if (universalProxies.isEmpty()) {
 			return new IProxyData[0];
 		}
 		IProxyData[] data = new IProxyData[KNOWN_TYPES.length];

@@ -15,20 +15,19 @@ package org.eclipse.swt.internal.webkit;
 
 
 import org.eclipse.swt.internal.ole.win32.*;
-import org.eclipse.swt.internal.win32.*;
 
 public class IWebMutableURLRequestPrivate extends IUnknown {
 
-public IWebMutableURLRequestPrivate (long /*int*/ address) {
+public IWebMutableURLRequestPrivate (long address) {
 	super (address);
 }
 
-//public int setClientCertificate (long /*int*/ cert) {
+//public int setClientCertificate (long cert) {
 //return COM.VtblCall (3, getAddress (), cert);
 //}
 
 public int cfRequest () {
-	return OS.VtblCall (4, getAddress ());
+	return COM.VtblCall (4, getAddress ());
 }
 
 }

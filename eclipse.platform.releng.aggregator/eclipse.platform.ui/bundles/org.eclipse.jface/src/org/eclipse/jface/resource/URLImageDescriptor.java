@@ -203,8 +203,7 @@ class URLImageDescriptor extends ImageDescriptor {
 				if (url.getQuery() != null) {
 					file += '?' + url.getQuery();
 				}
-				URL xUrl = new URL(url.getProtocol(), url.getHost(), url.getPort(), file);
-				return xUrl;
+				return new URL(url.getProtocol(), url.getHost(), url.getPort(), file);
 			} catch (MalformedURLException e) {
 				Policy.getLog().log(new Status(IStatus.ERROR, Policy.JFACE, e.getLocalizedMessage(), e));
 			}
@@ -262,9 +261,7 @@ class URLImageDescriptor extends ImageDescriptor {
 				if (!InternalPolicy.DEBUG_LOAD_URL_IMAGE_DESCRIPTOR_DIRECTLY) {
 					try {
 						return new Image(device, new URLImageFileNameProvider(url));
-					} catch (SWTException exception) {
-						// If we fail fall back to the slower input stream method.
-					} catch (IllegalArgumentException exception) {
+					} catch (SWTException | IllegalArgumentException exception) {
 						// If we fail fall back to the slower input stream method.
 					}
 				}

@@ -29,8 +29,8 @@ import java.util.WeakHashMap;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.SafeRunner;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
+import org.eclipse.jface.resource.ResourceLocator;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.internal.navigator.NavigatorPlugin;
 import org.eclipse.ui.internal.navigator.NavigatorSafeRunnable;
@@ -38,7 +38,6 @@ import org.eclipse.ui.internal.navigator.Policy;
 import org.eclipse.ui.internal.navigator.VisibilityAssistant;
 import org.eclipse.ui.navigator.INavigatorContentDescriptor;
 import org.eclipse.ui.navigator.OverridePolicy;
-import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 /**
  * @since 3.2
@@ -156,7 +155,7 @@ public class NavigatorContentDescriptorManager {
 			Map<VisibilityAssistant, EvaluationCache> cachedEvaluations,
 			VisibilityAssistant aVisibilityAssistant, boolean considerOverrides, boolean possibleChild) {
 		EvaluationCache cache = getEvaluationCache(cachedEvaluations, aVisibilityAssistant);
-		Set<NavigatorContentDescriptor> descriptors = new TreeSet<NavigatorContentDescriptor>(ExtensionSequenceNumberComparator.INSTANCE);
+		Set<NavigatorContentDescriptor> descriptors = new TreeSet<>(ExtensionSequenceNumberComparator.INSTANCE);
 
 		NavigatorContentDescriptor[] cachedDescriptors = null;
 		if ((cachedDescriptors = cache.getDescriptors(anElement, considerOverrides)) != null) {
@@ -218,7 +217,7 @@ public class NavigatorContentDescriptorManager {
 
 				boolean isOverridden;
 
-				Set<NavigatorContentDescriptor> overridingDescriptors = new TreeSet<NavigatorContentDescriptor>(ExtensionSequenceNumberComparator.INSTANCE);
+				Set<NavigatorContentDescriptor> overridingDescriptors = new TreeSet<>(ExtensionSequenceNumberComparator.INSTANCE);
 				isOverridden = addDescriptorsConsideringOverrides(anElement, descriptor.getOverriddingExtensions(),
 						aVisibilityAssistant, overridingDescriptors, possibleChild);
 
@@ -282,17 +281,16 @@ public class NavigatorContentDescriptorManager {
 			if (iconPath != null) {
 				String prefix = contentDescriptor.getId() == null ? "" : contentDescriptor.getId(); //$NON-NLS-1$
 				String iconKey = prefix + "::" + iconPath; //$NON-NLS-1$
-				image = getImageRegistry().get(iconKey);
+				ImageRegistry registry = getImageRegistry();
+				image = registry.get(iconKey);
 				if (image == null || image.isDisposed()) {
-					ImageDescriptor imageDescriptor = AbstractUIPlugin
-							.imageDescriptorFromPlugin(contentDescriptor
-							.getContribution().getPluginId(), iconPath);
-					if (imageDescriptor != null) {
-						image = imageDescriptor.createImage();
-						if (image != null) {
-							getImageRegistry().put(iconKey, image);
+					String pluginId = contentDescriptor.getContribution().getPluginId();
+					ResourceLocator.imageDescriptorFromBundle(pluginId, iconPath).ifPresent(d -> {
+						Image created = d.createImage();
+						if (created != null) {
+							registry.put(iconKey, created);
 						}
-					}
+					});
 				}
 			}
 		}
@@ -424,10 +422,8 @@ public class NavigatorContentDescriptorManager {
 	private void computeSequenceNumbers() {
 		NavigatorContentDescriptor[] descs = getAllContentDescriptors();
 
-		LinkedList<NavigatorContentDescriptor> list = new LinkedList<NavigatorContentDescriptor>();
-		for (NavigatorContentDescriptor desc : descs) {
-			list.add(desc);
-		}
+		LinkedList<NavigatorContentDescriptor> list = new LinkedList<>();
+		list.addAll(Arrays.asList(descs));
 
 		boolean changed = true;
 		while (changed) {

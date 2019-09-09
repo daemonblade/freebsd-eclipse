@@ -59,7 +59,7 @@ public class XZedSimpleArtifactRepositoryFactory extends ArtifactRepositoryFacto
 			throw new ProvisionException(new Status(IStatus.ERROR, Activator.ID, ProvisionException.REPOSITORY_NOT_FOUND, msg, null));
 		}
 		// file is not local, create a cache of the repository metadata
-		CacheManager cache = (CacheManager) getAgent().getService(CacheManager.SERVICE_NAME);
+		CacheManager cache = getAgent().getService(CacheManager.class);
 		if (cache == null)
 			throw new IllegalArgumentException("Cache manager service not available"); //$NON-NLS-1$
 		localFile = cache.createCacheFromFile(URIUtil.append(location, REPOSITORY_FILENAME), monitor);
@@ -72,8 +72,10 @@ public class XZedSimpleArtifactRepositoryFactory extends ArtifactRepositoryFacto
 		return localFile;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.equinox.p2.repository.metadata.spi.MetadataRepositoryFactory#load(java.net.URL, org.eclipse.core.runtime.IProgressMonitor)
+	/*
+	 * @see
+	 * org.eclipse.equinox.p2.repository.metadata.spi.MetadataRepositoryFactory#load
+	 * (java.net.URL, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public IArtifactRepository load(URI location, int flags, IProgressMonitor monitor, boolean acquireLock) throws ProvisionException {
 		long time = 0;
@@ -96,7 +98,7 @@ public class XZedSimpleArtifactRepositoryFactory extends ArtifactRepositoryFacto
 				result.initializeAfterLoad(location);
 				if (Tracing.DEBUG_METADATA_PARSING) {
 					time += System.currentTimeMillis();
-					Tracing.debug(debugMsg + "time (ms): " + time); //$NON-NLS-1$ 
+					Tracing.debug(debugMsg + "time (ms): " + time); //$NON-NLS-1$
 				}
 				return result;
 			} finally {

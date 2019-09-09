@@ -56,7 +56,7 @@ public class NavigatorFilterService implements INavigatorFilterService {
 	private final Set enforcedViewerFilters = new HashSet();
 
 	/* A set of active filter String ids */
-	private final Set<String> activeFilters = new HashSet<String>();
+	private final Set<String> activeFilters = new HashSet<>();
 
 	/**
 	 * @param aContentService
@@ -256,7 +256,7 @@ public class NavigatorFilterService implements INavigatorFilterService {
 			// explicitly
 			if (!visibleFilterDescriptor.isVisibleInUi()) {
 				if (nonUiVisible == null)
-					nonUiVisible = new ArrayList<String>();
+					nonUiVisible = new ArrayList<>();
 				nonUiVisible.add(visibleFilterDescriptor.getId());
 			}
 		}
@@ -264,8 +264,7 @@ public class NavigatorFilterService implements INavigatorFilterService {
 		/* If so, update */
 		if (updateFilterActivation) {
 			if (nonUiVisible != null) {
-				for (String filterIdToActivate : filterIdsToActivate)
-					nonUiVisible.add(filterIdToActivate);
+				nonUiVisible.addAll(Arrays.asList(filterIdsToActivate));
 				filterIdsToActivate = nonUiVisible.toArray(new String[]{});
 			}
 

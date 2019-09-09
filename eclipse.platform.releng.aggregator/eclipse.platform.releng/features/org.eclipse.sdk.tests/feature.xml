@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.sdk.tests"
       label="%featureName"
-      version="4.12.0.qualifier"
+      version="4.13.0.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -253,6 +253,12 @@
 
    <plugin
          id="org.eclipse.search.tests"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.text.quicksearch.tests"
          download-size="0"
          install-size="0"
          version="0.0.0"/>
@@ -533,6 +539,18 @@
 
    <plugin
          id="org.eclipse.equinox.common.tests"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"/>
+         
+	<plugin
+         id="org.eclipse.jface.tests"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.pde.junit.runtime.tests"
          download-size="0"
          install-size="0"
          version="0.0.0"/>

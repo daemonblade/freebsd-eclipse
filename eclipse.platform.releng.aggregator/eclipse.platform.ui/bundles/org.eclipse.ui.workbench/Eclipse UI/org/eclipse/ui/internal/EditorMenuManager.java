@@ -15,7 +15,6 @@ package org.eclipse.ui.internal;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionItem;
@@ -30,7 +29,7 @@ import org.eclipse.ui.actions.RetargetAction;
  * an editor so that they always appear after the action sets.
  */
 public class EditorMenuManager extends SubMenuManager {
-	private ArrayList wrappers;
+	private ArrayList<EditorMenuManager> wrappers;
 
 	private boolean enabledAllowed = true;
 
@@ -47,7 +46,7 @@ public class EditorMenuManager extends SubMenuManager {
 			// update the wrapped menus
 			if (wrappers != null) {
 				for (int i = 0; i < wrappers.size(); i++) {
-					EditorMenuManager manager = (EditorMenuManager) wrappers.get(i);
+					EditorMenuManager manager = wrappers.get(i);
 					manager.setEnabledAllowed(enabledAllowed);
 				}
 			}
@@ -184,7 +183,7 @@ public class EditorMenuManager extends SubMenuManager {
 	@Override
 	protected SubMenuManager wrapMenu(IMenuManager menu) {
 		if (wrappers == null) {
-			wrappers = new ArrayList();
+			wrappers = new ArrayList<>();
 		}
 		EditorMenuManager manager = new EditorMenuManager(menu);
 		wrappers.add(manager);
@@ -192,25 +191,24 @@ public class EditorMenuManager extends SubMenuManager {
 	}
 
 	protected IAction[] getAllContributedActions() {
-		HashSet set = new HashSet();
+		HashSet<IAction> set = new HashSet<>();
 		getAllContributedActions(set);
-		return (IAction[]) set.toArray(new IAction[set.size()]);
+		return set.toArray(new IAction[set.size()]);
 	}
 
-	protected void getAllContributedActions(HashSet set) {
+	protected void getAllContributedActions(HashSet<IAction> set) {
 		for (IContributionItem item : super.getItems()) {
 			getAllContributedActions(set, item);
 		}
 		if (wrappers == null) {
 			return;
 		}
-		for (Iterator iter = wrappers.iterator(); iter.hasNext();) {
-			EditorMenuManager element = (EditorMenuManager) iter.next();
+		for (EditorMenuManager element : wrappers) {
 			element.getAllContributedActions(set);
 		}
 	}
 
-	protected void getAllContributedActions(HashSet set, IContributionItem item) {
+	protected void getAllContributedActions(HashSet<IAction> set, IContributionItem item) {
 		if (item instanceof MenuManager) {
 			for (IContributionItem subItem : ((MenuManager) item).getItems()) {
 				getAllContributedActions(set, subItem);

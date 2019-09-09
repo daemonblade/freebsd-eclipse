@@ -165,8 +165,7 @@ class FileImageDescriptor extends ImageDescriptor {
 				tail = ".png"; //$NON-NLS-1$
 			}
 			String x = zoom == 150 ? "@1.5x" : "@2x"; //$NON-NLS-1$ //$NON-NLS-2$
-			String file = lead + x + tail;
-			return file;
+			return lead + x + tail;
 		}
 		return null;
 	}
@@ -195,9 +194,7 @@ class FileImageDescriptor extends ImageDescriptor {
 		if (InternalPolicy.DEBUG_LOAD_URL_IMAGE_DESCRIPTOR_2x) {
 			try {
 				return new Image(device, new ImageProvider());
-			} catch (SWTException exception) {
-				// If we fail, fall back to the old 1x implementation.
-			} catch (IllegalArgumentException exception) {
+			} catch (SWTException | IllegalArgumentException exception) {
 				// If we fail, fall back to the old 1x implementation.
 			}
 		}

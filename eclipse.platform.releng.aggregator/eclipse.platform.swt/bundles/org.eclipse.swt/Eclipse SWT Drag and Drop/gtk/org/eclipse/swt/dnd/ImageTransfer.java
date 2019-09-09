@@ -27,8 +27,8 @@ import org.eclipse.swt.widgets.*;
  * <p>An example of a java <code>ImageData</code> is shown below:</p>
  *
  * <pre><code>
- *     Image image = new Image(display, "C:\temp\img1.gif");
- *	   ImageData imgData = image.getImageData();
+ *     Image image = new Image(display, "C:\\temp\\img1.gif");
+ *     ImageData imgData = image.getImageData();
  * </code></pre>
  *
  * @see Transfer
@@ -91,7 +91,7 @@ public void javaToNative(Object object, TransferData transferData) {
 	ImageData imgData = (ImageData)object;
 	if (imgData == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 	Image image = new Image(Display.getCurrent(), imgData);
- 	long pixbuf = ImageList.createPixbuf(image);
+	long pixbuf = ImageList.createPixbuf(image);
 	if (pixbuf != 0) {
 		String typeStr = "";
 		if (transferData.type ==  JPEG_ID) typeStr = "jpeg";

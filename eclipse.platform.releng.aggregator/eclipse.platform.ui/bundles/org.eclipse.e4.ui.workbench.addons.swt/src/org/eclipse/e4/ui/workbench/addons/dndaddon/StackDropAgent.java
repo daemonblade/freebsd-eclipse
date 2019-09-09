@@ -103,8 +103,7 @@ public class StackDropAgent extends DropAgent {
 		Rectangle ctfBounds = theCTF.getBounds();
 		ctfBounds.height = theCTF.getTabHeight();
 
-		Rectangle displayBounds = Display.getCurrent().map(theCTF.getParent(), null, ctfBounds);
-		return displayBounds;
+		return Display.getCurrent().map(theCTF.getParent(), null, ctfBounds);
 	}
 
 	/**
@@ -116,7 +115,7 @@ public class StackDropAgent extends DropAgent {
 	 */
 	private static List<CTabItem> getVisibleItems(CTabFolder dropCTF) {
 		return Stream.of(dropCTF.getItems())
-			.filter(i -> i.isShowing())
+			.filter(CTabItem::isShowing)
 			.collect(Collectors.toList());
 	}
 

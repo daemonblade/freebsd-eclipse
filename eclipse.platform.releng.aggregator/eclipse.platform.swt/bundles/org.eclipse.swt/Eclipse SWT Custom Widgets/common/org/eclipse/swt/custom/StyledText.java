@@ -137,6 +137,14 @@ public class StyledText extends Canvas {
 	Map<Integer, Integer> keyActionMap = new HashMap<>();
 	Color background = null;			// workaround for bug 4791
 	Color foreground = null;			//
+	/** True if a non-default background color is set */
+	boolean customBackground;
+	/** True if a non-default foreground color is set */
+	boolean customForeground;
+	/** False iff the widget is disabled */
+	boolean enabled = true;
+	/** True iff the widget is in the midst of being enabled or disabled */
+	boolean insideSetEnableCall;
 	Clipboard clipboard;
 	int clickCount;
 	int autoScrollDirection = SWT.NULL;	// the direction of autoscrolling (up, down, right, left)
@@ -2890,7 +2898,7 @@ int doMouseWordSelect(int x, int newCaretOffset, int line) {
 	// base double click. Always do this here (and don't rely on doAutoScroll)
 	// because auto scroll only does not cover all possible mouse selections
 	// (e.g., mouse x < 0 && mouse y > caret line y)
- 	if (newCaretOffset < selectionAnchor && selectionAnchor == selection.x) {
+	if (newCaretOffset < selectionAnchor && selectionAnchor == selection.x) {
 		selectionAnchor = doubleClickSelection.y;
 	} else if (newCaretOffset > selectionAnchor && selectionAnchor == selection.y) {
 		selectionAnchor = doubleClickSelection.x;
@@ -5407,7 +5415,7 @@ int getVisualLineIndex(TextLayout layout, int offsetInLine) {
 		int caretY = caret.getLocation().y - getLinePixel(getCaretLine());
 		if (lineY > caretY) lineIndex--;
 		caretAlignment = OFFSET_LEADING;
- 	}
+	}
 	return lineIndex;
 }
 int getCaretDirection() {
@@ -6062,8 +6070,8 @@ void handleKey(Event event) {
 		// -ignore anything below SPACE except for line delimiter keys and tab.
 		// -ignore DEL
 		if (!ignore && event.character > 31 && event.character != SWT.DEL ||
-		    event.character == SWT.CR || event.character == SWT.LF ||
-		    event.character == TAB) {
+			event.character == SWT.CR || event.character == SWT.LF ||
+			event.character == TAB) {
 			doContent(event.character);
 			update();
 		}
@@ -6872,28 +6880,28 @@ void initializeAccessible() {
 		public void replaceText(AccessibleEditableTextEvent e) {
 			StyledText st = StyledText.this;
 			st.replaceTextRange(e.start, e.end - e.start, e.string);
-            e.result = ACC.OK;
+			e.result = ACC.OK;
 		}
 		@Override
 		public void pasteText(AccessibleEditableTextEvent e) {
 			StyledText st = StyledText.this;
 			st.setSelection(e.start);
-            st.paste();
-            e.result = ACC.OK;
+			st.paste();
+			e.result = ACC.OK;
 		}
 		@Override
 		public void cutText(AccessibleEditableTextEvent e) {
 			StyledText st = StyledText.this;
 			st.setSelection(e.start, e.end);
-            st.cut();
-            e.result = ACC.OK;
+			st.cut();
+			e.result = ACC.OK;
 		}
 		@Override
 		public void copyText(AccessibleEditableTextEvent e) {
 			StyledText st = StyledText.this;
 			st.setSelection(e.start, e.end);
-            st.copy();
-            e.result = ACC.OK;
+			st.copy();
+			e.result = ACC.OK;
 		}
 	};
 	acc.addAccessibleEditableTextListener(accEditableTextListener);
@@ -7059,7 +7067,7 @@ String stripMnemonic (String string) {
 		}
 		index++;
 	} while (index < length);
- 	return string;
+	return string;
 }
 /*
  * Return the lowercase of the first non-'&' character following
@@ -7076,7 +7084,7 @@ char _findMnemonic (String string) {
 		if (string.charAt (index) != '&') return Character.toLowerCase (string.charAt (index));
 		index++;
 	} while (index < length);
- 	return '\0';
+	return '\0';
 }
 /**
  * Executes the action.
@@ -7996,8 +8004,8 @@ public void removeWordMovementListener(MovementListener listener) {
 public void replaceStyleRanges(int start, int length, StyleRange[] ranges) {
 	checkWidget();
 	if (isListening(ST.LineGetStyle)) return;
- 	if (ranges == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
- 	setStyleRanges(start, length, null, ranges, false);
+	if (ranges == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	setStyleRanges(start, length, null, ranges, false);
 }
 /**
  * Replaces the given text range with new text.
@@ -8490,6 +8498,19 @@ public void setAlwaysShowScrollBars(boolean show) {
 @Override
 public void setBackground(Color color) {
 	checkWidget();
+	boolean backgroundDisabled = false;
+	if (!this.enabled && color == null) {
+		if (background != null) {
+			Color disabledBg = getDisplay().getSystemColor(SWT.COLOR_TEXT_DISABLED_BACKGROUND);
+			if (background.equals(disabledBg)) {
+				return;
+			} else {
+				color = new Color (getDisplay(), disabledBg.getRGBA());
+				backgroundDisabled = true;
+			}
+		}
+	}
+	customBackground = color != null && !this.insideSetEnableCall && !backgroundDisabled;
 	background = color;
 	super.setBackground(color);
 	resetCache(0, content.getLineCount());
@@ -8934,6 +8955,21 @@ public void setEditable(boolean editable) {
 	checkWidget();
 	this.editable = editable;
 }
+@Override
+public void setEnabled (boolean enabled) {
+	super.setEnabled(enabled);
+	Display display = getDisplay();
+	this.enabled = enabled;
+	this.insideSetEnableCall = true;
+	if (enabled) {
+		if (!customBackground) setBackground(display.getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+		if (!customForeground) setForeground(display.getSystemColor(SWT.COLOR_LIST_FOREGROUND));
+	} else {
+		if (!customBackground) setBackground(display.getSystemColor(SWT.COLOR_TEXT_DISABLED_BACKGROUND));
+		if (!customForeground) setForeground(display.getSystemColor(SWT.COLOR_WIDGET_DISABLED_FOREGROUND));
+	}
+	this.insideSetEnableCall = false;
+}
 /**
  * Sets a new font to render text with.
  * <p>
@@ -8972,8 +9008,21 @@ public void setFont(Font font) {
 @Override
 public void setForeground(Color color) {
 	checkWidget();
+	boolean foregroundDisabled = false;
+	if (!this.enabled && color == null) {
+		if (foreground != null) {
+			Color disabledFg = getDisplay().getSystemColor(SWT.COLOR_WIDGET_DISABLED_FOREGROUND);
+			if (foreground.equals(disabledFg)) {
+				return;
+			} else {
+				color = new Color (getDisplay(), disabledFg.getRGBA());
+				foregroundDisabled = true;
+			}
+		}
+	}
+	customForeground = color != null && !this.insideSetEnableCall && !foregroundDisabled;
 	foreground = color;
-	super.setForeground(getForeground());
+	super.setForeground(color);
 	resetCache(0, content.getLineCount());
 	setCaretLocation();
 	super.redraw();
@@ -9142,20 +9191,20 @@ public void setKeyBinding(int key, int action) {
 		if (action == SWT.NULL) {
 			keyActionMap.remove(newKey);
 		} else {
-		 	keyActionMap.put(newKey, action);
+			keyActionMap.put(newKey, action);
 		}
 		ch = Character.toLowerCase(keyChar);
 		newKey = ch | modifierValue;
 		if (action == SWT.NULL) {
 			keyActionMap.remove(newKey);
 		} else {
-		 	keyActionMap.put(newKey, action);
+			keyActionMap.put(newKey, action);
 		}
 	} else {
 		if (action == SWT.NULL) {
 			keyActionMap.remove(key);
 		} else {
-		 	keyActionMap.put(key, action);
+			keyActionMap.put(key, action);
 		}
 	}
 }
@@ -10410,7 +10459,7 @@ private int endRangeOffset(int[] ranges, int styleIndex) {
 public void setStyleRanges(StyleRange[] ranges) {
 	checkWidget();
 	if (isListening(ST.LineGetStyle)) return;
- 	if (ranges == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	if (ranges == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 	setStyleRanges(0, 0, null, ranges, true);
 }
 /**

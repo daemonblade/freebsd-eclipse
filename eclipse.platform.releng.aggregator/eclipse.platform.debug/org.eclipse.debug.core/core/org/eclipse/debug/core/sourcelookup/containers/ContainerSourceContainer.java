@@ -16,6 +16,7 @@ package org.eclipse.debug.core.sourcelookup.containers;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.filesystem.EFS;
@@ -103,20 +104,18 @@ public abstract class ContainerSourceContainer extends CompositeSourceContainer 
 				}
 				// bug 295828 root file may be null for an invalid linked resource
 				if (fRootFile != null) {
-	                // See bug 98090 - we need to handle relative path names
-    				IFileStore target = fRootFile.getFileStore(new Path(name));
-    				if (target.fetchInfo().exists()) {
-    					// We no longer have to account for bug 95832, and URIs take care
-    					// of canonical paths (fix to bug 95679 was removed).
-    					IFile[] files = fRoot.findFilesForLocationURI(target.toURI());
-    					if (isFindDuplicates() && files.length > 1) {
-    						for (int i = 0; i < files.length; i++) {
-    							sources.add(files[i]);
-    						}
-    					} else if (files.length > 0) {
-    						sources.add(files[0]);
-    					}
-    				}
+					// See bug 98090 - we need to handle relative path names
+					IFileStore target = fRootFile.getFileStore(new Path(name));
+					if (target.fetchInfo().exists()) {
+						// We no longer have to account for bug 95832, and URIs take care
+						// of canonical paths (fix to bug 95679 was removed).
+						IFile[] files = fRoot.findFilesForLocationURI(target.toURI());
+						if (isFindDuplicates() && files.length > 1) {
+							Collections.addAll(sources, files);
+						} else if (files.length > 0) {
+							sources.add(files[0]);
+						}
+					}
 				}
 			}
 		}
@@ -130,9 +129,7 @@ public abstract class ContainerSourceContainer extends CompositeSourceContainer 
 					continue;
 				}
 				if (isFindDuplicates()) {
-					for(int j=0; j < objects.length; j++) {
-						sources.add(objects[j]);
-					}
+					Collections.addAll(sources, objects);
 				} else {
 					sources.add(objects[0]);
 					break;

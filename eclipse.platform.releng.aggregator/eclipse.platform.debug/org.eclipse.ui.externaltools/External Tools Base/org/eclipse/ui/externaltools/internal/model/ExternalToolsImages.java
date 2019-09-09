@@ -110,7 +110,7 @@ public class ExternalToolsImages {
 	 *		This may mean the same package directory as the package holding this class.
 	 *		The images are declared using this.getClass() to ensure they are looked up via
 	 *		this plugin class.
-     *	@see org.eclipse.jface.resource.ImageRegistry
+	 *	@see org.eclipse.jface.resource.ImageRegistry
 	 */
 	public static ImageRegistry initializeImageRegistry() {
 		imageRegistry= new ImageRegistry(ExternalToolsPlugin.getStandardDisplay());
@@ -176,7 +176,7 @@ public class ExternalToolsImages {
 			throw new MalformedURLException();
 		}
 
-		StringBuffer buffer= new StringBuffer(prefix);
+		StringBuilder buffer= new StringBuilder(prefix);
 		buffer.append('/');
 		buffer.append(name);
 		return new URL(ICON_BASE_URL, buffer.toString());

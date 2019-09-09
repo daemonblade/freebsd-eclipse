@@ -15,6 +15,7 @@ package org.eclipse.ui.internal.editors.text;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -345,8 +346,7 @@ class SelectResourcesBlock implements ICheckStateListener, ISelectionChangedList
 		}
 
 		Object[] treeChildren= treeContentProvider.getChildren(treeElement);
-		for (int i= 0; i < treeChildren.length; i++) {
-			Object child= treeChildren[i];
+		for (Object child : treeChildren) {
 			if (addAll)
 				findAllSelectedListElements(child, fullLabel, true, filter);
 			else { //Only continue for those with checked state
@@ -417,9 +417,7 @@ class SelectResourcesBlock implements ICheckStateListener, ISelectionChangedList
 
 			@Override
 			public void filterElements(Object[] elements) throws InterruptedException {
-				for (int i= 0; i < elements.length; i++) {
-					returnValue.add(elements[i]);
-				}
+				Collections.addAll(returnValue, elements);
 			}
 		};
 
@@ -550,7 +548,7 @@ class SelectResourcesBlock implements ICheckStateListener, ISelectionChangedList
 		}
 
 		//Update the list with the selections if there are any
-		if (checkedListItems.size() > 0)
+		if (!checkedListItems.isEmpty())
 			checkedStateStore.put(currentTreeSelection, checkedListItems);
 		if (updatingFromSelection)
 			grayUpdateHierarchy(currentTreeSelection);
@@ -698,9 +696,7 @@ class SelectResourcesBlock implements ICheckStateListener, ISelectionChangedList
 
 		Object[] listItems= listContentProvider.getElements(treeElement);
 		List<Object> listItemsChecked= new ArrayList<>();
-		for (int i= 0; i < listItems.length; ++i) {
-			listItemsChecked.add(listItems[i]);
-		}
+		Collections.addAll(listItemsChecked, listItems);
 
 		checkedStateStore.put(treeElement, listItemsChecked);
 	}

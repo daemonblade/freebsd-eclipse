@@ -15,28 +15,27 @@ package org.eclipse.swt.internal.webkit;
 
 
 import org.eclipse.swt.internal.ole.win32.*;
-import org.eclipse.swt.internal.win32.*;
 
 public class IWebURLCredential extends IUnknown {
 
-public IWebURLCredential (long /*int*/ address) {
+public IWebURLCredential (long address) {
 	super (address);
 }
 
 public int hasPassword (int[] result) {
-	return OS.VtblCall (3, getAddress (), result);
+	return COM.VtblCall (3, getAddress (), result);
 }
 
-public int initWithUser (long /*int*/ user, long /*int*/ password, long /*int*/ persistence) {
-	return OS.VtblCall (4, getAddress (), user, password, persistence);
+public int initWithUser (long user, long password, long persistence) {
+	return COM.VtblCall (4, getAddress (), user, password, persistence);
 }
 
-public int password (long /*int*/[] password) {
-	return OS.VtblCall (5, getAddress (), password);
+public int password (long[] password) {
+	return COM.VtblCall (5, getAddress (), password);
 }
 
-public int user (long /*int*/[] result) {
-	return OS.VtblCall (7, getAddress (), result);
+public int user (long[] result) {
+	return COM.VtblCall (7, getAddress (), result);
 }
 
 }

@@ -78,7 +78,6 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 	// this internally to be Solaris.
 	private static final String INTERNAL_OS_SUNOS = "SunOS"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_LINUX = "Linux"; //$NON-NLS-1$
-	private static final String INTERNAL_OS_FREEBSD = "FreeBSD"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_MACOSX = "Mac OS"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_AIX = "AIX"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_HPUX = "HP-UX"; //$NON-NLS-1$
@@ -86,6 +85,7 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 	private static final String INTERNAL_OS_OS400 = "OS/400"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_OS390 = "OS/390"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_ZOS = "z/OS"; //$NON-NLS-1$
+	private static final String INTERNAL_OS_FREEBSD = "FreeBSD"; //$NON-NLS-1$
 	// While we recognize the i386 architecture, we change
 	// this internally to be x86.
 	private static final String INTERNAL_ARCH_I386 = "i386"; //$NON-NLS-1$
@@ -228,6 +228,7 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 	public static final String PROP_RESOLVER_THREAD_COUNT = "equinox.resolver.thead.count"; //$NON-NLS-1$
 	public static final String PROP_EQUINOX_RESOLVER_THREAD_COUNT = "equinox.resolver.thread.count"; //$NON-NLS-1$
 	public static final String PROP_EQUINOX_START_LEVEL_THREAD_COUNT = "equinox.start.level.thread.count"; //$NON-NLS-1$
+	public static final String PROP_EQUINOX_START_LEVEL_RESTRICT_PARALLEL = "equinox.start.level.restrict.parallel"; //$NON-NLS-1$
 	public static final String PROP_RESOLVER_REVISION_BATCH_SIZE = "equinox.resolver.revision.batch.size"; //$NON-NLS-1$
 	public static final String PROP_RESOLVER_BATCH_TIMEOUT = "equinox.resolver.batch.timeout"; //$NON-NLS-1$
 
@@ -391,7 +392,7 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 		}
 
 		public String substituteVars(String path, boolean preserveDelimiters) {
-			StringBuffer buf = new StringBuffer(path.length());
+			StringBuilder buf = new StringBuilder(path.length());
 			StringTokenizer st = new StringTokenizer(path, VARIABLE_DELIM_STRING, true);
 			boolean varStarted = false; // indicates we are processing a var subtitute
 			String var = null; // the current var key
@@ -747,7 +748,9 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 		// setup default values for known OSes if nothing was specified
 		if (osName.equals(Constants.OS_WIN32))
 			return Constants.WS_WIN32;
-		if (osName.equals(Constants.OS_LINUX) || osName.equals(Constants.OS_FREEBSD))
+		if (osName.equals(Constants.OS_LINUX))
+			return Constants.WS_GTK;
+		if (osName.equals(Constants.OS_FREEBSD))
 			return Constants.WS_GTK;
 		if (osName.equals(Constants.OS_MACOSX))
 			return Constants.WS_COCOA;
@@ -770,8 +773,6 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 		// EXCEPTION: All mappings of SunOS convert to Solaris
 		if (osName.equalsIgnoreCase(INTERNAL_OS_SUNOS))
 			return Constants.OS_SOLARIS;
-		if (osName.equalsIgnoreCase(INTERNAL_OS_FREEBSD))
-			return Constants.OS_FREEBSD;
 		if (osName.equalsIgnoreCase(INTERNAL_OS_LINUX))
 			return Constants.OS_LINUX;
 		if (osName.equalsIgnoreCase(INTERNAL_OS_QNX))
@@ -786,6 +787,8 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 			return Constants.OS_OS390;
 		if (osName.equalsIgnoreCase(INTERNAL_OS_ZOS))
 			return Constants.OS_ZOS;
+		if (osName.equalsIgnoreCase(INTERNAL_OS_FREEBSD))
+			return Constants.OS_FREEBSD;
 		// os.name on Mac OS can be either Mac OS or Mac OS X
 		if (osName.regionMatches(true, 0, INTERNAL_OS_MACOSX, 0, INTERNAL_OS_MACOSX.length()))
 			return Constants.OS_MACOSX;
@@ -1109,7 +1112,7 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 			return Integer.parseInt(value);
 		} catch (NumberFormatException e) {
 			// try up to the first non-number char
-			StringBuffer sb = new StringBuffer(value.length());
+			StringBuilder sb = new StringBuilder(value.length());
 			char[] chars = value.toCharArray();
 			for (int i = 0; i < chars.length; i++) {
 				if (!Character.isDigit(chars[i]))

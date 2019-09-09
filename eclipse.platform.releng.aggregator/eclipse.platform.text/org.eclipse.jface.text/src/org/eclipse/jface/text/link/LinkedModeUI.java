@@ -677,7 +677,7 @@ public class LinkedModeUI {
 		Assert.isNotNull(model);
 		Assert.isNotNull(targets);
 		Assert.isTrue(targets.length > 0);
-		Assert.isTrue(model.getTabStopSequence().size() > 0);
+		Assert.isTrue(!model.getTabStopSequence().isEmpty());
 
 		fModel= model;
 		fTargets= targets;
@@ -1126,15 +1126,13 @@ public class LinkedModeUI {
 			viewer.removeTextInputListener(fCloser);
 		}
 
-		for (int i= 0; i < fTargets.length; i++) {
-
-			if (fTargets[i].fAnnotationModel != null) {
-				fTargets[i].fAnnotationModel.removeAllAnnotations();
-				fTargets[i].fAnnotationModel.disconnect(fTargets[i].getViewer().getDocument());
-				fTargets[i].fAnnotationModel= null;
+		for (LinkedModeUITarget fTarget : fTargets) {
+			if (fTarget.fAnnotationModel != null) {
+				fTarget.fAnnotationModel.removeAllAnnotations();
+				fTarget.fAnnotationModel.disconnect(fTarget.getViewer().getDocument());
+				fTarget.fAnnotationModel = null;
 			}
-
-			uninstallAnnotationModel(fTargets[i]);
+			uninstallAnnotationModel(fTarget);
 		}
 
 

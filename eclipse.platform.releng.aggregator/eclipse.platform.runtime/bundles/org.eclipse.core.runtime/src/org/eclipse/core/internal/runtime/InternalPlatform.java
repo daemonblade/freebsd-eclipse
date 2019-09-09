@@ -15,8 +15,7 @@
  *******************************************************************************/
 package org.eclipse.core.internal.runtime;
 
-import java.io.*;
-import java.net.MalformedURLException;
+import java.io.File;
 import java.net.URL;
 import java.util.*;
 import org.eclipse.core.internal.preferences.exchange.ILegacyPreferences;
@@ -63,11 +62,9 @@ public final class InternalPlatform {
 	//XXX This is not synchronized
 	private Map<Bundle,Log> logs = new HashMap<>(5);
 
-	private static final String[] OS_LIST = { Platform.OS_FREEBSD, Platform.OS_LINUX, Platform.OS_MACOSX, Platform.OS_WIN32 };
+	private static final String[] OS_LIST = { Platform.OS_LINUX, Platform.OS_MACOSX, Platform.OS_WIN32 };
 	private String password = ""; //$NON-NLS-1$
 	private static final String PASSWORD = "-password"; //$NON-NLS-1$
-
-	private static final String PLUGIN_PATH = ".plugin-path"; //$NON-NLS-1$
 
 	public static final String PROP_APPLICATION = "eclipse.application"; //$NON-NLS-1$
 	public static final String PROP_ARCH = "osgi.arch"; //$NON-NLS-1$
@@ -226,6 +223,9 @@ public final class InternalPlatform {
 	}
 
 	public Bundle[] getBundles(String symbolicName, String versionRange) {
+		if (Constants.SYSTEM_BUNDLE_SYMBOLICNAME.equals(symbolicName)) {
+			symbolicName = context.getBundle(Constants.SYSTEM_BUNDLE_LOCATION).getSymbolicName();
+		}
 		Map<String, String> directives = Collections.singletonMap(Namespace.REQUIREMENT_FILTER_DIRECTIVE,
 				getRequirementFilter(symbolicName, versionRange));
 		Collection<BundleCapability> matchingBundleCapabilities = fwkWiring.findProviders(ModuleContainer
@@ -366,15 +366,6 @@ public final class InternalPlatform {
 		return result;
 	}
 
-	/**
-	 * Returns the object which defines the location and organization
-	 * of the platform's meta area.
-	 */
-	public DataArea getMetaArea() {
-		// TODO: deprecate?
-		return MetaDataKeeper.getMetaArea();
-	}
-
 	public String getNL() {
 		return getBundleContext().getProperty(PROP_NL);
 	}
@@ -414,52 +405,6 @@ public final class InternalPlatform {
 		return platformTracker == null ? null : platformTracker.getService();
 	}
 
-	//TODO I guess it is now time to get rid of that
-	/*
-	 * This method is retained for R1.0 compatibility because it is defined as API.
-	 * Its function matches the API description (returns <code>null</code> when
-	 * argument URL is <code>null</code> or cannot be read).
-	 */
-	public URL[] getPluginPath(URL pluginPathLocation /*R1.0 compatibility*/
-	) {
-		InputStream input = null;
-		// first try and see if the given plugin path location exists.
-		if (pluginPathLocation == null)
-			return null;
-		try {
-			input = pluginPathLocation.openStream();
-		} catch (IOException e) {
-			//fall through
-		}
-
-		// if the given path was null or did not exist, look for a plugin path
-		// definition in the install location.
-		if (input == null)
-			try {
-				URL url = new URL("platform:/base/" + PLUGIN_PATH); //$NON-NLS-1$
-				input = url.openStream();
-			} catch (MalformedURLException e) {
-				//fall through
-			} catch (IOException e) {
-				//fall through
-			}
-
-		// nothing was found at the supplied location or in the install location
-		if (input == null)
-			return null;
-		// if we found a plugin path definition somewhere so read it and close the location.
-		URL[] result = null;
-		try {
-			try {
-				result = readPluginPath(input);
-			} finally {
-				input.close();
-			}
-		} catch (IOException e) {
-			//let it return null on failure to read
-		}
-		return result;
-	}
 
 	public IPreferencesService getPreferencesService() {
 		return preferencesTracker == null ? null : (IPreferencesService) preferencesTracker.getService();
@@ -542,7 +487,7 @@ public final class InternalPlatform {
 
 	public IPath getStateLocation(Bundle bundle, boolean create) throws IllegalStateException {
 		assertInitialized();
-		IPath result = getMetaArea().getStateLocation(bundle);
+		IPath result = MetaDataKeeper.getMetaArea().getStateLocation(bundle);
 		if (create)
 			result.toFile().mkdirs();
 		return result;
@@ -662,30 +607,6 @@ public final class InternalPlatform {
 		}
 	}
 
-	private URL[] readPluginPath(InputStream input) {
-		Properties ini = new Properties();
-		try {
-			ini.load(input);
-		} catch (IOException e) {
-			return null;
-		}
-		List<URL>result = new ArrayList<>(5);
-		for (Enumeration<?> groups = ini.propertyNames(); groups.hasMoreElements();) {
-			String group = (String) groups.nextElement();
-			for (StringTokenizer entries = new StringTokenizer(ini.getProperty(group), ";"); entries.hasMoreElements();) { //$NON-NLS-1$
-				String entry = (String) entries.nextElement();
-				if (!entry.equals("")) //$NON-NLS-1$
-					try {
-						result.add(new URL(entry));
-					} catch (MalformedURLException e) {
-						//intentionally ignore bad URLs
-						System.err.println("Ignoring plugin: " + entry); //$NON-NLS-1$
-					}
-			}
-		}
-		return result.toArray(new URL[result.size()]);
-	}
-
 	/**
 	 * @see Platform#removeLogListener(ILogListener)
 	 */
@@ -715,7 +636,6 @@ public final class InternalPlatform {
 		processCommandLine(getEnvironmentInfoService().getNonFrameworkArgs());
 		initializeDebugFlags();
 		initialized = true;
-		getMetaArea();
 		initializeAuthorizationHandler();
 		startServices();
 

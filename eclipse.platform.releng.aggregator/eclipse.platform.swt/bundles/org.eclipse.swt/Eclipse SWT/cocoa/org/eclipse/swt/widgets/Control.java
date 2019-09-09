@@ -1257,7 +1257,7 @@ boolean drawGripper (GC gc, int x, int y, int width, int height, boolean vertica
 }
 
 boolean drawsBackground() {
-    return true;
+	return true;
 }
 
 @Override
@@ -1387,8 +1387,8 @@ void fixFocus (Control focusControl) {
 	shell.setSavedFocus (focusControl);
 	NSWindow window = view.window();
 	if (!window.makeFirstResponder(null)) {
-	    // Force first responder to resign.
-	    window.endEditingFor(null);
+		// Force first responder to resign.
+		window.endEditingFor(null);
 	}
 }
 
@@ -1627,7 +1627,7 @@ public Image getBackgroundImage () {
  */
 public int getBorderWidth () {
 	checkWidget();
-    return 0;
+	return 0;
 }
 
 /**
@@ -3538,10 +3538,10 @@ Touch touchStateFromNSTouch(NSTouch touch) {
 	display.touchCounter++;
 	boolean primary = false;
 	NSPoint normalizedPos = touch.normalizedPosition();
-    double normalizedX = normalizedPos.x;
-    double normalizedY = 1 - normalizedPos.y;
-    if (display.currentTouches().count() == 1) display.primaryIdentifier = identity;
-    if (display.primaryIdentifier == identity) primary = true;
+	double normalizedX = normalizedPos.x;
+	double normalizedY = 1 - normalizedPos.y;
+	if (display.currentTouches().count() == 1) display.primaryIdentifier = identity;
+	if (display.primaryIdentifier == identity) primary = true;
 	NSSize deviceSize = touch.deviceSize();
 	int deviceX = (int) (normalizedX * deviceSize.width);
 	int deviceY = (int) (normalizedY * deviceSize.height);
@@ -4538,13 +4538,13 @@ void sort (int [] items) {
 	for (int gap=length/2; gap>0; gap/=2) {
 		for (int i=gap; i<length; i++) {
 			for (int j=i-gap; j>=0; j-=gap) {
-		   		if (items [j] <= items [j + gap]) {
+				if (items [j] <= items [j + gap]) {
 					int swap = items [j];
 					items [j] = items [j + gap];
 					items [j + gap] = swap;
-		   		}
-	    	}
-	    }
+				}
+			}
+		}
 	}
 }
 
@@ -4588,7 +4588,7 @@ String tooltipText () {
  */
 public Point toControl (int x, int y) {
 	checkWidget();
-    return display.map (null, this, x, y);
+	return display.map (null, this, x, y);
 }
 
 /**
@@ -4614,7 +4614,7 @@ public Point toControl (int x, int y) {
 public Point toControl (Point point) {
 	checkWidget();
 	if (point == null) error (SWT.ERROR_NULL_ARGUMENT);
-    return toControl (point.x, point.y);
+	return toControl (point.x, point.y);
 }
 
 /**
@@ -5147,26 +5147,33 @@ public void update () {
 	update (false);
 }
 
-void update (boolean all) {
-	if(NSGraphicsContext.currentContext() == null) {
-		/*
-		 * If linked against macOS 10.14 SDK, or when native dark mode support is
-		 * enabled via Info.plist, views are displayed using Core Animation and drawing
-		 * is only possible, when cocoa invokes drawRect of a dirty view (which it does
-		 * by a run loop observer invoked during calls of
-		 * NSApplication#nextEventMatchingMask, only after more than approx. 10ms have
-		 * passed since the last redraw).
-		 */
-		return;
+boolean update (boolean all) {
+	if (NSGraphicsContext.currentContext() == null) {
+		if (!view.lockFocusIfCanDraw()) {
+			return false;
+		}
+		boolean contextAvailableAfterLockFocus = NSGraphicsContext.currentContext() != null;
+		view.unlockFocus();
+		if (!contextAvailableAfterLockFocus) {
+			/*
+			 * If linked against macOS 10.14 SDK, or when native dark mode support is
+			 * enabled via Info.plist, views are displayed using Core Animation and drawing
+			 * is only possible, when cocoa invokes drawRect of a dirty view (which it does
+			 * by a run loop observer invoked during calls of
+			 * NSApplication#nextEventMatchingMask, only after more than approx. 10ms have
+			 * passed since the last redraw).
+			 */
+			return false;
+		}
  	}
 //	checkWidget();
 	NSArray isPainting = display.isPainting;
-	if (isPainting.containsObject(view)) return;
+	if (isPainting.containsObject(view)) return false;
 	for (int i = 0, length = (int)isPainting.count(); i < length; i++) {
 		NSView view = new NSView(isPainting.objectAtIndex(i));
-		if (view.isDescendantOf(this.view)) return;
+		if (view.isDescendantOf(this.view)) return false;
 	}
-	if (isResizing()) return;
+	if (isResizing()) return false;
 	Shell shell = getShell();
 	NSWindow window = shell.deferFlushing && shell.scrolling ? view.window() : null;
 	try {
@@ -5182,6 +5189,7 @@ void update (boolean all) {
 			window.release();
 		}
 	}
+	return true;
 }
 
 void updateBackgroundColor () {

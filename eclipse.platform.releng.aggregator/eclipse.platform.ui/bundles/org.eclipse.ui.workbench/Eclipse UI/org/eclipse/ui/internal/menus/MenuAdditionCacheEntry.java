@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2016 IBM Corporation and others.
+ * Copyright (c) 2006, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -44,14 +44,16 @@ import org.eclipse.e4.ui.model.application.ui.menu.MToolControl;
 import org.eclipse.e4.ui.model.application.ui.menu.MTrimContribution;
 import org.eclipse.e4.ui.model.application.ui.menu.impl.MenuFactoryImpl;
 import org.eclipse.e4.ui.services.help.EHelpService;
+import org.eclipse.e4.ui.workbench.IWorkbench;
 import org.eclipse.e4.ui.workbench.renderers.swt.MenuManagerRenderer;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.activities.IActivityManager;
 import org.eclipse.ui.activities.IIdentifier;
 import org.eclipse.ui.activities.IIdentifierListener;
+import org.eclipse.ui.activities.IWorkbenchActivitySupport;
 import org.eclipse.ui.activities.IdentifierEvent;
 import org.eclipse.ui.commands.ICommandImageService;
+import org.eclipse.ui.internal.IWorkbenchConstants;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants;
 import org.eclipse.ui.internal.services.ServiceLocator;
@@ -59,8 +61,6 @@ import org.eclipse.ui.menus.CommandContributionItem;
 
 public class MenuAdditionCacheEntry {
 	private static final String AFTER_ADDITIONS = "after=additions"; //$NON-NLS-1$
-
-	static final String MAIN_TOOLBAR = ActionSet.MAIN_TOOLBAR;
 
 	static final String TRIM_COMMAND1 = "org.eclipse.ui.trim.command1"; //$NON-NLS-1$
 
@@ -81,7 +81,8 @@ public class MenuAdditionCacheEntry {
 	 */
 	static boolean isInWorkbenchTrim(MenuLocationURI location) {
 		final String path = location.getPath();
-		return MAIN_TOOLBAR.equals(path) || TRIM_COMMAND1.equals(path) || TRIM_COMMAND2.equals(path)
+		return IWorkbenchConstants.MAIN_TOOLBAR_ID.equals(path) || TRIM_COMMAND1.equals(path)
+				|| TRIM_COMMAND2.equals(path)
 				|| TRIM_VERTICAL1.equals(path) || TRIM_VERTICAL2.equals(path) || TRIM_STATUS.equals(path);
 	}
 
@@ -103,17 +104,14 @@ public class MenuAdditionCacheEntry {
 		this.location = new MenuLocationURI(attribute);
 		this.namespaceIdentifier = namespaceIdentifier;
 
-		IWorkbench workbench = application.getContext().get(IWorkbench.class);
-		activityManager = workbench.getActivitySupport().getActivityManager();
+		IWorkbenchActivitySupport activitySupport = application.getContext().get(IWorkbenchActivitySupport.class);
+		activityManager = activitySupport.getActivityManager();
 	}
 
 	private boolean inToolbar() {
 		return location.getScheme().startsWith("toolbar"); //$NON-NLS-1$
 	}
 
-	/**
-	 * @return <code>true</code> if this is a toolbar contribution
-	 */
 	public void mergeIntoModel(ArrayList<MMenuContribution> menuContributions,
 			ArrayList<MToolBarContribution> toolBarContributions, ArrayList<MTrimContribution> trimContributions) {
 		boolean hasAdditions = false;
@@ -141,6 +139,7 @@ public class MenuAdditionCacheEntry {
 			return;
 		}
 		MMenuContribution menuContribution = MenuFactoryImpl.eINSTANCE.createMenuContribution();
+		menuContribution.getPersistedState().put(IWorkbench.PERSIST_STATE, Boolean.FALSE.toString());
 		String idContrib = MenuHelper.getId(configElement);
 		if (idContrib != null && idContrib.length() > 0) {
 			menuContribution.setElementId(idContrib);
@@ -184,6 +183,7 @@ public class MenuAdditionCacheEntry {
 		}
 		for (IConfigurationElement menu : menus) {
 			MMenuContribution menuContribution = MenuFactoryImpl.eINSTANCE.createMenuContribution();
+			menuContribution.getPersistedState().put(IWorkbench.PERSIST_STATE, Boolean.FALSE.toString());
 			String idContrib = MenuHelper.getId(menu);
 			if (idContrib != null && idContrib.length() > 0) {
 				menuContribution.setElementId(idContrib);
@@ -222,9 +222,8 @@ public class MenuAdditionCacheEntry {
 					public Object compute(IEclipseContext context, String contextKey) {
 						ServiceLocator sl = new ServiceLocator();
 						sl.setContext(context);
-						DynamicMenuContributionItem item = new DynamicMenuContributionItem(MenuHelper.getId(child), sl,
+						return new DynamicMenuContributionItem(MenuHelper.getId(child), sl,
 								child);
-						return item;
 					}
 				};
 
@@ -243,6 +242,7 @@ public class MenuAdditionCacheEntry {
 	 */
 	private MMenuElement createMenuCommandAddition(IConfigurationElement commandAddition) {
 		MHandledMenuItem item = MenuFactoryImpl.eINSTANCE.createHandledMenuItem();
+		item.getPersistedState().put(IWorkbench.PERSIST_STATE, Boolean.FALSE.toString());
 		item.setElementId(MenuHelper.getId(commandAddition));
 		String commandId = MenuHelper.getCommandId(commandAddition);
 		MCommand commandById = ContributionsAnalyzer.getCommandById(application, commandId);
@@ -315,6 +315,7 @@ public class MenuAdditionCacheEntry {
 	private MMenuElement createMenuSeparatorAddition(final IConfigurationElement sepAddition) {
 		String name = MenuHelper.getName(sepAddition);
 		MMenuElement element = MenuFactoryImpl.eINSTANCE.createMenuSeparator();
+		element.getPersistedState().put(IWorkbench.PERSIST_STATE, Boolean.FALSE.toString());
 		element.setElementId(name);
 		if (!MenuHelper.isSeparatorVisible(sepAddition)) {
 			element.setVisible(false);
@@ -349,7 +350,7 @@ public class MenuAdditionCacheEntry {
 	private void processTrimLocation(MTrimContribution contribution) {
 		String query = location.getQuery();
 		if (TRIM_COMMAND2.equals(location.getPath())) {
-			contribution.setParentId(MAIN_TOOLBAR);
+			contribution.setParentId(IWorkbenchConstants.MAIN_TOOLBAR_ID);
 			if (isUndefined(query)) {
 				query = "endof"; //$NON-NLS-1$
 			}
@@ -370,6 +371,7 @@ public class MenuAdditionCacheEntry {
 			return;
 		}
 		MTrimContribution trimContribution = MenuFactoryImpl.eINSTANCE.createTrimContribution();
+		trimContribution.getPersistedState().put(IWorkbench.PERSIST_STATE, Boolean.FALSE.toString());
 		String idContrib = MenuHelper.getId(configElement);
 		if (idContrib != null && idContrib.length() > 0) {
 			trimContribution.setElementId(idContrib);
@@ -380,6 +382,7 @@ public class MenuAdditionCacheEntry {
 		trimContribution.getTags().add("scheme:" + location.getScheme()); //$NON-NLS-1$
 		for (IConfigurationElement toolbar : toolbars) {
 			MToolBar item = MenuFactoryImpl.eINSTANCE.createToolBar();
+			item.getPersistedState().put(IWorkbench.PERSIST_STATE, Boolean.FALSE.toString());
 			item.setElementId(MenuHelper.getId(toolbar));
 			item.getTransientData().put("Name", MenuHelper.getLabel(toolbar)); //$NON-NLS-1$
 			processToolbarChildren(toolBarContributions, toolbar, item.getElementId(), AFTER_ADDITIONS, false);
@@ -395,6 +398,7 @@ public class MenuAdditionCacheEntry {
 	private void processToolbarChildren(ArrayList<MToolBarContribution> contributions, IConfigurationElement toolbar,
 			String parentId, String position, boolean hasAdditions) {
 		MToolBarContribution toolBarContribution = MenuFactoryImpl.eINSTANCE.createToolBarContribution();
+		toolBarContribution.getPersistedState().put(IWorkbench.PERSIST_STATE, Boolean.FALSE.toString());
 		String idContrib = MenuHelper.getId(toolbar);
 		if (idContrib != null && idContrib.length() > 0) {
 			toolBarContribution.setElementId(idContrib);
@@ -421,9 +425,8 @@ public class MenuAdditionCacheEntry {
 					public Object compute(IEclipseContext context, String contextKey) {
 						ServiceLocator sl = new ServiceLocator();
 						sl.setContext(context);
-						DynamicToolBarContributionItem dynamicItem = new DynamicToolBarContributionItem(
+						return new DynamicToolBarContributionItem(
 								MenuHelper.getId(child), sl, child);
-						return dynamicItem;
 					}
 				};
 
@@ -443,6 +446,7 @@ public class MenuAdditionCacheEntry {
 	private MToolBarElement createToolDynamicAddition(IConfigurationElement element) {
 		String id = MenuHelper.getId(element);
 		MToolControl control = RenderedElementUtil.createRenderedToolBarElement();
+		control.getPersistedState().put(IWorkbench.PERSIST_STATE, Boolean.FALSE.toString());
 		control.setElementId(id);
 		control.setContributionURI(CompatibilityWorkbenchWindowControlContribution.CONTROL_CONTRIBUTION_URI);
 		ControlContributionRegistry.add(id, element);
@@ -454,6 +458,7 @@ public class MenuAdditionCacheEntry {
 	private MToolBarElement createToolControlAddition(IConfigurationElement element) {
 		String id = MenuHelper.getId(element);
 		MToolControl control = MenuFactoryImpl.eINSTANCE.createToolControl();
+		control.getPersistedState().put(IWorkbench.PERSIST_STATE, Boolean.FALSE.toString());
 		control.setElementId(id);
 		control.setContributionURI(CompatibilityWorkbenchWindowControlContribution.CONTROL_CONTRIBUTION_URI);
 		ControlContributionRegistry.add(id, element);
@@ -465,6 +470,7 @@ public class MenuAdditionCacheEntry {
 	private MToolBarElement createToolBarSeparatorAddition(final IConfigurationElement sepAddition) {
 		String name = MenuHelper.getName(sepAddition);
 		MToolBarElement element = MenuFactoryImpl.eINSTANCE.createToolBarSeparator();
+		element.getPersistedState().put(IWorkbench.PERSIST_STATE, Boolean.FALSE.toString());
 		element.setElementId(name);
 		if (!MenuHelper.isSeparatorVisible(sepAddition)) {
 			element.setToBeRendered(false);
@@ -476,6 +482,7 @@ public class MenuAdditionCacheEntry {
 
 	private MToolBarElement createToolBarCommandAddition(final IConfigurationElement commandAddition) {
 		MHandledToolItem item = MenuFactoryImpl.eINSTANCE.createHandledToolItem();
+		item.getPersistedState().put(IWorkbench.PERSIST_STATE, Boolean.FALSE.toString());
 		item.setElementId(MenuHelper.getId(commandAddition));
 		String commandId = MenuHelper.getCommandId(commandAddition);
 		MCommand commandById = ContributionsAnalyzer.getCommandById(application, commandId);

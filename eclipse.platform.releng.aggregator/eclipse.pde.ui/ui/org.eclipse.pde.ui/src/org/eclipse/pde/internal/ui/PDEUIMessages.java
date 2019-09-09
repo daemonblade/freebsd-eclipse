@@ -1712,6 +1712,20 @@ public class PDEUIMessages extends NLS {
 	public static String DependencyAnalysisSection_plugin_editable;
 	public static String DependencyAnalysisSection_plugin_notEditable;
 
+	public static String FeaturesView_CollapseAllAction_description;
+	public static String FeaturesView_CollapseAllAction_tooltip;
+	public static String FeaturesView_FeatureAndPluginCopyAction_label;
+	public static String FeaturesView_FilterFeatureChildAction_description;
+	public static String FeaturesView_FilterFeatureChildAction_tooltip;
+	public static String FeaturesView_ShowCalleesContentProviderAction_description;
+	public static String FeaturesView_ShowCalleesContentProviderAction_tooltip;
+	public static String FeaturesView_ShowCallersContentProviderAction_description;
+	public static String FeaturesView_ShowCallersContentProviderAction_tooltip;
+	public static String FeaturesView_ShowPluginsAction_description;
+	public static String FeaturesView_ShowPluginsAction_tooltip;
+	public static String FeaturesView_OpenAction_label;
+	public static String FeaturesView_searchPlaceholder;
+
 	public static String HistoryAction_description;
 	public static String HistoryAction_tooltip;
 	public static String HistoryDropDownAction_tooltip;
@@ -3242,6 +3256,7 @@ public class PDEUIMessages extends NLS {
 	public static String PDEJavaHelper_msgContentAssistAvailableWithKeyBinding;
 
 	public static String AddExportPackageResolution_Label;
+	public static String AddExportPackageInternalDirectiveResolution_Label;
 	public static String AddBundleClassPathResolution_add;
 
 	public static String AddBundleManifestVersionResolution_description;

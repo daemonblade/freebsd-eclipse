@@ -49,7 +49,7 @@ import org.eclipse.swt.widgets.Shell;
  * Demonstrate how to work-around 3.3.1 limitation when it comes to TAB-Traversal and
  * checkbox editors. 3.4 will hopefully provide provide an out-of-the-box fix see bug 198502
  *
- * @author Tom Schindl <tom.schindl@bestsolution.at>
+ * @author Tom Schindl &lt;tom.schindl@bestsolution.at&gt;
  *
  */
 public class Snippet048TreeViewerTabWithCheckboxFor3_3 {
@@ -86,7 +86,7 @@ public class Snippet048TreeViewerTabWithCheckboxFor3_3 {
 
 			@Override
 			public String getText(Object element) {
-				return "Column 1 => " + element.toString();
+				return "Column 1 => " + element;
 			}
 
 		});
@@ -122,7 +122,7 @@ public class Snippet048TreeViewerTabWithCheckboxFor3_3 {
 
 			@Override
 			public String getText(Object element) {
-				return "Column 2 => " + element.toString();
+				return "Column 2 => " + element;
 			}
 
 		});
@@ -199,19 +199,7 @@ public class Snippet048TreeViewerTabWithCheckboxFor3_3 {
 						Method m = ColumnViewerEditor.class.getDeclaredMethod("processTraverseEvent", new Class[] {int.class,ViewerRow.class,TraverseEvent.class});
 						m.setAccessible(true);
 						m.invoke(editor, Integer.valueOf(cell.getColumnIndex()), cell.getViewerRow(), e);
-					} catch (SecurityException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (NoSuchMethodException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (IllegalArgumentException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (IllegalAccessException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (InvocationTargetException e1) {
+					} catch (SecurityException | NoSuchMethodException | IllegalArgumentException | IllegalAccessException | InvocationTargetException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
@@ -307,7 +295,7 @@ public class Snippet048TreeViewerTabWithCheckboxFor3_3 {
 		public String toString() {
 			String rv = "Item ";
 			if (parent != null) {
-				rv = parent.toString() + ".";
+				rv = parent + ".";
 			}
 			rv += counter;
 

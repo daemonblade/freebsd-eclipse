@@ -15,16 +15,15 @@ package org.eclipse.swt.internal.webkit;
 
 
 import org.eclipse.swt.internal.ole.win32.*;
-import org.eclipse.swt.internal.win32.*;
 
 public class IWebCookieManager extends IUnknown {
 
-public IWebCookieManager (long /*int*/ address) {
+public IWebCookieManager (long address) {
 	super (address);
 }
 
-public int cookieStorage (long /*int*/[] storage) {
-	return OS.VtblCall (3, getAddress (), storage);
+public int cookieStorage (long[] storage) {
+	return COM.VtblCall (3, getAddress (), storage);
 }
 
 }

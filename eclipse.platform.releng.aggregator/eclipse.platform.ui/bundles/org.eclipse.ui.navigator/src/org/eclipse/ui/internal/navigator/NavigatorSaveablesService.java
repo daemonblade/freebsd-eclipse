@@ -435,11 +435,13 @@ public class NavigatorSaveablesService implements INavigatorSaveablesService, Vi
 	private SaveablesProvider[] getSaveablesProviders() {
 		// TODO optimize this
 		if (saveablesProviders == null) {
-			inactivePluginsWithSaveablesProviders = new HashMap<String, List>();
-			saveablesProviderMap = new TreeMap<NavigatorContentDescriptor, SaveablesProvider>(ExtensionSequenceNumberComparator.INSTANCE);
+			if (isDisposed())
+				return null;
+			inactivePluginsWithSaveablesProviders = new HashMap<>();
+			saveablesProviderMap = new TreeMap<>(ExtensionSequenceNumberComparator.INSTANCE);
 			INavigatorContentDescriptor[] descriptors = contentService
 					.getActiveDescriptorsWithSaveables();
-			List<SaveablesProvider> result = new ArrayList<SaveablesProvider>();
+			List<SaveablesProvider> result = new ArrayList<>();
 			for (INavigatorContentDescriptor iDescriptor : descriptors) {
 				NavigatorContentDescriptor descriptor = (NavigatorContentDescriptor) iDescriptor;
 				String pluginId = descriptor
@@ -448,7 +450,7 @@ public class NavigatorSaveablesService implements INavigatorSaveablesService, Vi
 					List<NavigatorContentDescriptor> inactiveDescriptors = inactivePluginsWithSaveablesProviders
 							.get(pluginId);
 					if (inactiveDescriptors == null) {
-						inactiveDescriptors = new ArrayList<NavigatorContentDescriptor>();
+						inactiveDescriptors = new ArrayList<>();
 						inactivePluginsWithSaveablesProviders.put(pluginId,
 								inactiveDescriptors);
 					}
@@ -538,7 +540,7 @@ public class NavigatorSaveablesService implements INavigatorSaveablesService, Vi
 	 * @param startedBundleId
 	 */
 	private void updateSaveablesProviders(String startedBundleId) {
-		List<SaveablesProvider> result = new ArrayList<SaveablesProvider>(Arrays.asList(saveablesProviders));
+		List<SaveablesProvider> result = new ArrayList<>(Arrays.asList(saveablesProviders));
 		List descriptors = inactivePluginsWithSaveablesProviders
 				.get(startedBundleId);
 		for (Iterator it = descriptors.iterator(); it.hasNext();) {
@@ -582,4 +584,8 @@ public class NavigatorSaveablesService implements INavigatorSaveablesService, Vi
 		}
 	}
 
+	@Override
+	public boolean hasSaveablesProvider() {
+		return !isDisposed() && getSaveablesProviders() != null && getSaveablesProviders().length > 0;
+	}
 }

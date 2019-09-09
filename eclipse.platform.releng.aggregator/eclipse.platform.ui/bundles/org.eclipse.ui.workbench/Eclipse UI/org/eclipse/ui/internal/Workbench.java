@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,6 +20,7 @@
  *     Mickael Istria (Red Hat Inc.) - Bug 469918
  *     Patrik Suzzi <psuzzi@gmail.com> - Bug 487297
  *     Daniel Kruegler <daniel.kruegler@gmail.com> - Bug 520926
+ *     Christian Georgi (SAP SE) - Bug 540440
  *******************************************************************************/
 
 package org.eclipse.ui.internal;
@@ -84,6 +85,7 @@ import org.eclipse.e4.core.contexts.IEclipseContext;
 import org.eclipse.e4.core.di.InjectionException;
 import org.eclipse.e4.core.services.events.IEventBroker;
 import org.eclipse.e4.ui.internal.workbench.E4Workbench;
+import org.eclipse.e4.ui.internal.workbench.E4XMIResource;
 import org.eclipse.e4.ui.internal.workbench.renderers.swt.IUpdateService;
 import org.eclipse.e4.ui.internal.workbench.swt.E4Application;
 import org.eclipse.e4.ui.internal.workbench.swt.IEventLoopAdvisor;
@@ -98,13 +100,8 @@ import org.eclipse.e4.ui.model.application.commands.impl.CommandsFactoryImpl;
 import org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptor;
 import org.eclipse.e4.ui.model.application.ui.MElementContainer;
 import org.eclipse.e4.ui.model.application.ui.basic.MPart;
-import org.eclipse.e4.ui.model.application.ui.basic.MTrimBar;
-import org.eclipse.e4.ui.model.application.ui.basic.MTrimElement;
-import org.eclipse.e4.ui.model.application.ui.basic.MTrimmedWindow;
 import org.eclipse.e4.ui.model.application.ui.basic.MWindow;
 import org.eclipse.e4.ui.model.application.ui.basic.impl.BasicFactoryImpl;
-import org.eclipse.e4.ui.model.application.ui.menu.MMenu;
-import org.eclipse.e4.ui.model.application.ui.menu.MToolBar;
 import org.eclipse.e4.ui.model.application.ui.menu.MTrimContribution;
 import org.eclipse.e4.ui.services.EContextService;
 import org.eclipse.e4.ui.workbench.IModelResourceHandler;
@@ -214,6 +211,7 @@ import org.eclipse.ui.internal.help.WorkbenchHelpSystem;
 import org.eclipse.ui.internal.intro.IIntroRegistry;
 import org.eclipse.ui.internal.intro.IntroDescriptor;
 import org.eclipse.ui.internal.keys.BindingService;
+import org.eclipse.ui.internal.keys.show.ShowKeysListener;
 import org.eclipse.ui.internal.menus.FocusControlSourceProvider;
 import org.eclipse.ui.internal.menus.WorkbenchMenuService;
 import org.eclipse.ui.internal.misc.Policy;
@@ -293,7 +291,7 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 	private static final String PROP_VM = "eclipse.vm"; //$NON-NLS-1$
 	private static final String PROP_VMARGS = "eclipse.vmargs"; //$NON-NLS-1$
 	private static final String PROP_COMMANDS = "eclipse.commands"; //$NON-NLS-1$
-	private static final String PROP_EXIT_CODE = "eclipse.exitcode"; //$NON-NLS-1$
+	public static final String PROP_EXIT_CODE = "eclipse.exitcode"; //$NON-NLS-1$
 	private static final String CMD_DATA = "-data"; //$NON-NLS-1$
 	private static final String CMD_VMARGS = "-vmargs"; //$NON-NLS-1$
 
@@ -633,8 +631,6 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 						WorkbenchPlugin.getDefault().removeBundleListener(bundleListener);
 					}
 					e4Workbench.createAndRunUI(e4Workbench.getApplication());
-					IMenuService wms = e4Workbench.getContext().get(IMenuService.class);
-					wms.dispose();
 				}
 				if (returnCode[0] != PlatformUI.RETURN_UNSTARTABLE) {
 					setSearchContribution(appModel, false);
@@ -1266,10 +1262,12 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				final Resource res = handler.createResourceWithApp(appCopy);
-				cleanUpCopy(appCopy, e4Context);
+				cleanUpCopy(appCopy);
 				try {
 					if (!detectWorkbenchCorruption((MApplication) res.getContents().get(0))) {
-						res.save(null);
+						Map<String, Object> options = new HashMap<>();
+						options.put(E4XMIResource.OPTION_FILTER_PERSIST_STATE, Boolean.TRUE);
+						res.save(options);
 					}
 				} catch (IOException e) {
 					// Just auto-save, we don't really care
@@ -1291,45 +1289,10 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 		cleanAndSaveJob.schedule();
 	}
 
-	private static void cleanUpCopy(MApplication appCopy, IEclipseContext context) {
+	private static void cleanUpCopy(MApplication appCopy) {
 		// clean up all trim bars that come from trim bar contributions
 		// the trim elements that need to be removed are stored in the trimBar.
 		setSearchContribution(appCopy, false);
-		EModelService modelService = context.get(EModelService.class);
-		List<MWindow> windows = modelService.findElements(appCopy, null, MWindow.class);
-		for (MWindow window : windows) {
-			if (window instanceof MTrimmedWindow) {
-				MTrimmedWindow trimmedWindow = (MTrimmedWindow) window;
-				// clean up the main menu to avoid duplicate menu items
-				window.setMainMenu(null);
-				// clean up trim bars created through contributions
-				// to avoid duplicate toolbars
-				for (MTrimBar trimBar : trimmedWindow.getTrimBars()) {
-					cleanUpTrimBar(trimBar);
-				}
-			}
-		}
-		appCopy.getMenuContributions().clear();
-		appCopy.getToolBarContributions().clear();
-		appCopy.getTrimContributions().clear();
-
-		List<MPart> parts = modelService.findElements(appCopy, null, MPart.class);
-		for (MPart part : parts) {
-			for (MMenu menu : part.getMenus()) {
-				menu.getChildren().clear();
-			}
-			MToolBar tb = part.getToolbar();
-			if (tb != null) {
-				tb.getChildren().clear();
-			}
-		}
-	}
-
-	private static void cleanUpTrimBar(MTrimBar element) {
-		for (MTrimElement child : element.getPendingCleanup()) {
-			element.getChildren().remove(child);
-		}
-		element.getPendingCleanup().clear();
 	}
 
 	@Override
@@ -1691,6 +1654,14 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 			}
 		});
 
+		// hook shortcut visualizer
+		StartupThreading.runWithoutExceptions(new StartupRunnable() {
+			@Override
+			public void runWithException() {
+				new ShowKeysListener(Workbench.this, PrefUtil.getInternalPreferenceStore());
+			}
+		});
+
 		// attempt to restore a previous workbench state
 		try {
 			UIStats.start(UIStats.RESTORE_WORKBENCH, "Workbench"); //$NON-NLS-1$
@@ -1977,14 +1948,18 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 		for (MPartDescriptor desc : currentDescriptors) {
 			// do we have a matching descriptor?
 			if (desc.getElementId().equals(CompatibilityEditor.MODEL_ELEMENT_ID)) {
+				// In older versions of the workbench, REMOVE_ON_HIDE_TAG was not set on the
+				// descriptor. For migration, ensure that it is set on any model, Bug 527689.
+				desc.getTags().add(EPartService.REMOVE_ON_HIDE_TAG);
 				found = true;
 				break;
 			}
 		}
 		if (!found) {
-			MPartDescriptor descriptor = org.eclipse.e4.ui.model.application.descriptor.basic.impl.BasicFactoryImpl.eINSTANCE
-					.createPartDescriptor();
+			EModelService modelService = e4Context.get(EModelService.class);
+			MPartDescriptor descriptor = modelService.createModelElement(MPartDescriptor.class);
 			descriptor.getTags().add("Editor"); //$NON-NLS-1$
+			descriptor.getTags().add(EPartService.REMOVE_ON_HIDE_TAG);
 			descriptor.setCloseable(true);
 			descriptor.setAllowMultiple(true);
 			descriptor.setElementId(CompatibilityEditor.MODEL_ELEMENT_ID);
@@ -2209,6 +2184,7 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 			WorkbenchPlugin.log("Defining a binding table: " + id); //$NON-NLS-1$
 		}
 		MBindingTable bt = CommandsFactoryImpl.eINSTANCE.createBindingTable();
+		bt.setElementId(id);
 		bt.setBindingContext(getBindingContext(id));
 		bindingTables.add(bt);
 	}
@@ -2220,7 +2196,7 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 	 */
 	private boolean contains(List<MBindingTable> bindingTables, String id) {
 		for (MBindingTable bt : bindingTables) {
-			if (id.equals(bt.getBindingContext().getElementId())) {
+			if (id.equals(bt.getElementId())) {
 				return true;
 			}
 		}
@@ -2354,11 +2330,11 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 			public void runWithException() {
 				// this currently instantiates all players ... sigh
 				sourceProviderService.readRegistry();
-				ISourceProvider[] sp = sourceProviderService.getSourceProviders();
-				for (int i = 0; i < sp.length; i++) {
-					evaluationService.addSourceProvider(sp[i]);
-					if (!(sp[i] instanceof ActiveContextSourceProvider)) {
-						contextService.addSourceProvider(sp[i]);
+				ISourceProvider[] sourceproviders = sourceProviderService.getSourceProviders();
+				for (ISourceProvider sp : sourceproviders) {
+					evaluationService.addSourceProvider(sp);
+					if (!(sp instanceof ActiveContextSourceProvider)) {
+						contextService.addSourceProvider(sp);
 					}
 				}
 			}
@@ -2434,11 +2410,7 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 			try {
 				handlerService.executeCommand(commandId, event);
 				event.doit = false;
-			} catch (NotDefinedException e1) {
-				// regular condition; do nothing
-			} catch (NotEnabledException e2) {
-				// regular condition; do nothing
-			} catch (NotHandledException e3) {
+			} catch (NotDefinedException | NotEnabledException | NotHandledException e3) {
 				// regular condition; do nothing
 			} catch (ExecutionException ex) {
 				StatusUtil.handleStatus(ex, StatusManager.SHOW | StatusManager.LOG);
@@ -2574,16 +2546,12 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 	 * Create and return a string with command line options for eclipse.exe that
 	 * will launch a new workbench that is the same as the currently running one,
 	 * but using the argument directory as its workspace.
-	 * <p>
-	 * Note that this method has been copied from
-	 * OpenWorkspaceAction.buildCommandLine(String workspace)
-	 * </p>
 	 *
 	 * @param workspace the directory to use as the new workspace
 	 * @return a string of command line options or <code>null</code> if 'eclipse.vm'
 	 *         is not set
 	 */
-	private String buildCommandLine(String workspace) {
+	private static String buildCommandLine(String workspace) {
 		String property = System.getProperty(PROP_VM);
 		if (property == null) {
 			if (!Platform.inDevelopmentMode()) {
@@ -2644,6 +2612,30 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 		}
 
 		return result.toString();
+	}
+
+	/**
+	 * Sets the arguments required to restart the workbench using the specified path
+	 * as the workspace location.
+	 *
+	 * @param workspacePath the new workspace location
+	 * @return {@link IApplication#EXIT_OK} or {@link IApplication#EXIT_RELAUNCH}
+	 */
+	public static Object setRestartArguments(String workspacePath) {
+		String property = System.getProperty(Workbench.PROP_VM);
+		if (property == null) {
+			MessageDialog.openError(null, WorkbenchMessages.Workbench_problemsRestartErrorTitle,
+					NLS.bind(WorkbenchMessages.Workbench_problemsRestartErrorMessage, Workbench.PROP_VM));
+			return IApplication.EXIT_OK;
+		}
+		String command_line = Workbench.buildCommandLine(workspacePath);
+		if (command_line == null) {
+			return IApplication.EXIT_OK;
+		}
+
+		System.setProperty(Workbench.PROP_EXIT_CODE, IApplication.EXIT_RELAUNCH.toString());
+		System.setProperty(IApplicationContext.EXIT_DATA_PROPERTY, command_line);
+		return IApplication.EXIT_RELAUNCH;
 	}
 
 	/**
@@ -3097,8 +3089,7 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 	 * @return the id of the preference page, or <code>null</code> if none
 	 */
 	public String getMainPreferencePageId() {
-		String id = getAdvisor().getMainPreferencePageId();
-		return id;
+		return getAdvisor().getMainPreferencePageId();
 	}
 
 	@Override
@@ -3259,7 +3250,7 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 			// if the plugin is not in the set of disabled plugins,
 			// then
 			// execute the code to start it
-			if (disabledPlugins.indexOf(extension.getContributor().getName()) == -1) {
+			if (!disabledPlugins.contains(extension.getContributor().getName())) {
 				SafeRunner.run(new EarlyStartupRunnable(extension));
 			}
 		}

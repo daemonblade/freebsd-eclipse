@@ -122,8 +122,7 @@ public class UiFactoryImpl extends EFactoryImpl implements MUiFactory {
 	 */
 	@Override
 	public MCoreExpression createCoreExpression() {
-		CoreExpressionImpl coreExpression = new CoreExpressionImpl();
-		return coreExpression;
+		return new CoreExpressionImpl();
 	}
 
 	/**
@@ -133,8 +132,7 @@ public class UiFactoryImpl extends EFactoryImpl implements MUiFactory {
 	 */
 	@Override
 	public MImperativeExpression createImperativeExpression() {
-		ImperativeExpressionImpl imperativeExpression = new ImperativeExpressionImpl();
-		return imperativeExpression;
+		return new ImperativeExpressionImpl();
 	}
 
 	/**
@@ -168,17 +166,6 @@ public class UiFactoryImpl extends EFactoryImpl implements MUiFactory {
 	 */
 	public UiPackageImpl getUiPackage() {
 		return (UiPackageImpl) getEPackage();
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @deprecated
-	 * @generated
-	 */
-	@Deprecated
-	public static UiPackageImpl getPackage() {
-		return UiPackageImpl.eINSTANCE;
 	}
 
 } //UiFactoryImpl

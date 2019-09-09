@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2018 IBM Corporation and others.
+ * Copyright (c) 2007, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - Bug 489181
  *******************************************************************************/
 package org.eclipse.pde.api.tools.ui.internal;
 
@@ -31,6 +32,7 @@ import org.eclipse.pde.api.tools.internal.provisional.ISession;
 import org.eclipse.pde.api.tools.internal.provisional.ISessionListener;
 import org.eclipse.pde.api.tools.ui.internal.views.APIToolingView;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
@@ -240,7 +242,7 @@ public class ApiUIPlugin extends AbstractUIPlugin {
 	private ISessionListener sessionListener = new ISessionListener() {
 		@Override
 		public void sessionAdded(ISession addedSession) {
-			getWorkbench().getDisplay().asyncExec(() -> showAPIToolingView());
+			Display.getDefault().asyncExec(() -> showAPIToolingView());
 		}
 
 		@Override
@@ -278,41 +280,41 @@ public class ApiUIPlugin extends AbstractUIPlugin {
 	@Override
 	protected void initializeImageRegistry(ImageRegistry reg) {
 		// model objects
-		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_API_COMPONENT, OBJECT + "api_tools.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_API_SYSTEM_LIBRARY, OBJECT + "library_obj.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_API_SEARCH, OBJECT + "extract_references.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_BUNDLE, OBJECT + "plugin_obj.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_FRAGMENT, OBJECT + "frgmt_obj.gif"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_API_COMPONENT, OBJECT + "api_tools.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_API_SYSTEM_LIBRARY, OBJECT + "library_obj.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_API_SEARCH, OBJECT + "extract_references.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_BUNDLE, OBJECT + "plugin_obj.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_FRAGMENT, OBJECT + "frgmt_obj.png"); //$NON-NLS-1$
 		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_ECLIPSE_PROFILE, OBJECT + "eclipse16.png"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_BUNDLE_VERSION, OBJECT + "bundleversion.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_CHANGE_CORRECTION, OBJECT + "correction_change.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_SETUP_APITOOLS, OBJECT + "category_menu.gif"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_BUNDLE_VERSION, OBJECT + "bundleversion.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_OBJ_CHANGE_CORRECTION, OBJECT + "correction_change.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_SETUP_APITOOLS, OBJECT + "category_menu.png"); //$NON-NLS-1$
 
 		// overlays
-		declareRegistryImage(reg, IApiToolsConstants.IMG_OVR_ERROR, OVR + "error_ovr.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_OVR_WARNING, OVR + "warning_ovr.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_OVR_SUCCESS, OVR + "success_ovr.gif"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_OVR_ERROR, OVR + "error_ovr.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_OVR_WARNING, OVR + "warning_ovr.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_OVR_SUCCESS, OVR + "success_ovr.png"); //$NON-NLS-1$
 		// wizards
 		declareRegistryImage(reg, IApiToolsConstants.IMG_WIZBAN_PROFILE, WIZBAN + "profile_wiz.png"); //$NON-NLS-1$
 		declareRegistryImage(reg, IApiToolsConstants.IMG_WIZBAN_COMPARE_TO_BASELINE, WIZBAN + "compare_wiz.png"); //$NON-NLS-1$
 		// enabled images
-		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_FILTER, ELCL + "filter_ps.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_REMOVE, ELCL + "remove_exc.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_OPEN_PAGE, ELCL + "open_page.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_HELP_PAGE, ELCL + "help.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_COMPARE_APIS, ELCL + "compare_apis.gif"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_FILTER, ELCL + "filter_ps.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_REMOVE, ELCL + "remove_exc.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_OPEN_PAGE, ELCL + "open_page.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_HELP_PAGE, ELCL + "help.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_COMPARE_APIS, ELCL + "compare_apis.png"); //$NON-NLS-1$
 		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_CONFIG_SEV, ELCL + "configure_problem_severity.png"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_COMPARE_APIS_DISABLED, DLCL + "compare_apis.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_EXPORT, ELCL + "export.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_NEXT_NAV, ELCL + "next_nav.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_PREV_NAV, ELCL + "prev_nav.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_EXPANDALL, ELCL + "expandall.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_TEXT_EDIT, ELCL + "text_edit.gif"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_COMPARE_APIS_DISABLED, DLCL + "compare_apis.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_EXPORT, ELCL + "export.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_NEXT_NAV, ELCL + "next_nav.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_PREV_NAV, ELCL + "prev_nav.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_EXPANDALL, ELCL + "expandall.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_ELCL_TEXT_EDIT, ELCL + "text_edit.png"); //$NON-NLS-1$
 		// disabled images
-		declareRegistryImage(reg, IApiToolsConstants.IMG_DLCL_EXPORT, DLCL + "export.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_DLCL_NEXT_NAV, DLCL + "next_nav.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_DLCL_PREV_NAV, DLCL + "prev_nav.gif"); //$NON-NLS-1$
-		declareRegistryImage(reg, IApiToolsConstants.IMG_DLCL_EXPANDALL, DLCL + "expandall.gif"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_DLCL_EXPORT, DLCL + "export.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_DLCL_NEXT_NAV, DLCL + "next_nav.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_DLCL_PREV_NAV, DLCL + "prev_nav.png"); //$NON-NLS-1$
+		declareRegistryImage(reg, IApiToolsConstants.IMG_DLCL_EXPANDALL, DLCL + "expandall.png"); //$NON-NLS-1$
 	}
 
 	void showAPIToolingView() {
@@ -324,7 +326,7 @@ public class ApiUIPlugin extends AbstractUIPlugin {
 	}
 
 	private void showView(String id) {
-		IWorkbenchWindow window = getWorkbench().getActiveWorkbenchWindow();
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		if (window == null) {
 			return;
 		}

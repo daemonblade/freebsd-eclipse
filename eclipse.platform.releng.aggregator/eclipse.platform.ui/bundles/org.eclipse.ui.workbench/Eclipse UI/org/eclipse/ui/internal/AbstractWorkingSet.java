@@ -16,6 +16,7 @@
 package org.eclipse.ui.internal;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IAdaptable;
@@ -39,7 +40,7 @@ public abstract class AbstractWorkingSet implements IAdaptable, IWorkingSet, Clo
 
 	private String name;
 
-	protected ArrayList elements;
+	protected ArrayList<IAdaptable> elements;
 
 	private IWorkingSetManager manager;
 
@@ -69,7 +70,7 @@ public abstract class AbstractWorkingSet implements IAdaptable, IWorkingSet, Clo
 		this.name = name;
 		this.label = label;
 		labelBoundToName = Objects.equals(name, label);
-		uniqueId = Long.toString(System.currentTimeMillis()) + "_" + counter++; //$NON-NLS-1$
+		uniqueId = System.currentTimeMillis() + "_" + counter++; //$NON-NLS-1$
 	}
 
 	/**
@@ -139,21 +140,19 @@ public abstract class AbstractWorkingSet implements IAdaptable, IWorkingSet, Clo
 	/**
 	 * Create a copy of the elements to store in the receiver.
 	 *
-	 * @param elements the elements to store a copy of in the receiver.
+	 * @param newElements the elements to store a copy of in the receiver.
 	 */
 	protected void internalSetElements(IAdaptable[] newElements) {
 		Assert.isNotNull(newElements, "Working set elements array must not be null"); //$NON-NLS-1$
 
-		elements = new ArrayList(newElements.length);
-		for (IAdaptable newElement : newElements) {
-			elements.add(newElement);
-		}
+		elements = new ArrayList<>(newElements.length);
+		elements.addAll(Arrays.asList(newElements));
 	}
 
 	@Override
 	public IAdaptable[] getElements() {
-		ArrayList list = getElementsArray();
-		return (IAdaptable[]) list.toArray(new IAdaptable[list.size()]);
+		ArrayList<IAdaptable> list = getElementsArray();
+		return list.toArray(new IAdaptable[list.size()]);
 	}
 
 	/**
@@ -162,7 +161,7 @@ public abstract class AbstractWorkingSet implements IAdaptable, IWorkingSet, Clo
 	 *
 	 * @return the elements array list
 	 */
-	protected ArrayList getElementsArray() {
+	protected ArrayList<IAdaptable> getElementsArray() {
 		if (elements == null) {
 			restoreWorkingSet();
 			workingSetMemento = null;

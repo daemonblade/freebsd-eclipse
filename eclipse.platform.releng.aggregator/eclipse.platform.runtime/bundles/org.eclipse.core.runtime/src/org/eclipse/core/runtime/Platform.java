@@ -30,6 +30,7 @@ import org.eclipse.osgi.service.debug.DebugOptions;
 import org.eclipse.osgi.service.environment.EnvironmentInfo;
 import org.eclipse.osgi.service.resolver.PlatformAdmin;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * The central class of the Eclipse Platform Runtime. This class cannot
@@ -206,8 +207,6 @@ public final class Platform {
 	 * @since 3.0
 	 */
 	public static final String OS_LINUX = "linux";//$NON-NLS-1$
-
-	public static final String OS_FREEBSD = "freebsd";//$NON-NLS-1$
 
 	/**
 	 * Constant string (value "aix") indicating the platform is running on an
@@ -752,7 +751,7 @@ public final class Platform {
 	 * @return the path of the log file on disk.
 	 */
 	public static IPath getLogFileLocation() {
-		return InternalPlatform.getDefault().getMetaArea().getLogLocation();
+		return MetaDataKeeper.getMetaArea().getLogLocation();
 	}
 
 	/**
@@ -1026,17 +1025,30 @@ public final class Platform {
 	}
 
 	/**
+	 * Returns the log for the bundle of the given class. If no such log exists, one
+	 * is created.
+	 *
+	 * @param clazz the class in a bundle whose log is returned
+	 * @return the log for the bundle to which the bundle belongs
+	 *
+	 * @since 3.16
+	 */
+	public static ILog getLog(Class<?> clazz) {
+		Bundle bundle = FrameworkUtil.getBundle(clazz);
+		return InternalPlatform.getDefault().getLog(bundle);
+	}
+
+	/**
 	 * Returns the given bundle's resource bundle for the current locale.
 	 * <p>
-	 * This resource bundle is typically stored as the plugin.properties file
-	 * in the plug-in itself, and contains any translatable strings used in the
-	 * plug-in manifest file (plugin.xml).
+	 * This resource bundle is typically stored as the plugin.properties file in the
+	 * plug-in itself, and contains any translatable strings used in the plug-in
+	 * manifest file (plugin.xml).
 	 * </p>
 	 * <p>
-	 * 	This mechanism is intended only for
-	 * externalizing strings found in the plug-in manifest file. Using this
-	 * method for externalizing strings in your code may result in degraded
-	 * memory performance.
+	 * This mechanism is intended only for externalizing strings found in the
+	 * plug-in manifest file. Using this method for externalizing strings in your
+	 * code may result in degraded memory performance.
 	 * </p>
 	 *
 	 * @param bundle the bundle whose resource bundle is being queried

@@ -81,13 +81,11 @@ class ImportStructureVisitor implements ICVSResourceVisitor {
 		
 		wrapMatcher = new FileNameMatcher();
 		
-		for (int i = 0; i < wrappers.length; i++) {
-			
-			if (wrappers[i].indexOf(KEYWORD_OPTION) == -1) {
+		for (String wrapper : wrappers) {
+			if (!wrapper.contains(KEYWORD_OPTION)) {
 				continue;
 			}
-			
-			StringTokenizer st = new StringTokenizer(wrappers[i]);
+			StringTokenizer st = new StringTokenizer(wrapper);
 			String pattern = st.nextToken();
 			String option = st.nextToken();
 			// get rid of the quotes

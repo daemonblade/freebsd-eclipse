@@ -205,9 +205,9 @@ public class UrlUtil {
 		}
 
 		if (new WebappPreferences().isRestrictTopicParameter()) {
-		    if (path.indexOf(":/") >= 0) {  //$NON-NLS-1$
-			    return false;
-		    }
+			if (path.contains(":/")) {  //$NON-NLS-1$
+				return false;
+			}
 		}
 		return true;
 	}
@@ -261,14 +261,14 @@ public class UrlUtil {
 	}
 
 	public static boolean isBot(HttpServletRequest request) {
-        String agent = request.getHeader("User-Agent"); //$NON-NLS-1$
-        if (agent==null)
-		    return false;
-        agent=agent.toLowerCase(Locale.ENGLISH);
+		String agent = request.getHeader("User-Agent"); //$NON-NLS-1$
+		if (agent==null)
+			return false;
+		agent=agent.toLowerCase(Locale.ENGLISH);
 		// sample substring Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)
-		return agent.indexOf("bot") >= 0 || agent.indexOf("crawl") >= 0//$NON-NLS-1$ //$NON-NLS-2$
-                || request.getParameter("bot") != null;//$NON-NLS-1$
-    }
+		return agent.contains("bot") || agent.contains("crawl")//$NON-NLS-1$ //$NON-NLS-2$
+				|| request.getParameter("bot") != null;//$NON-NLS-1$
+	}
 
 	public static boolean isGecko(HttpServletRequest request) {
 		String agent = request.getHeader("User-Agent"); //$NON-NLS-1$
@@ -277,13 +277,13 @@ public class UrlUtil {
 
 	public static boolean isGecko(String agent) {
 		if (agent==null)
-		    return false;
+			return false;
 		agent=agent.toLowerCase(Locale.ENGLISH);
 		// sample substring Gecko/20020508
-		if (agent.indexOf("like gecko") >= 0) { //$NON-NLS-1$
+		if (agent.contains("like gecko")) { //$NON-NLS-1$
 			return false;
 		}
-		return agent.indexOf("gecko") >= 0; //$NON-NLS-1$
+		return agent.contains("gecko"); //$NON-NLS-1$
 	}
 
 	public static boolean isIE(HttpServletRequest request) {
@@ -293,7 +293,7 @@ public class UrlUtil {
 
 	public static boolean isIE(String agent) {
 		if (agent==null)
-		    return false;
+			return false;
 		agent=agent.toLowerCase(Locale.ENGLISH);
 
 		// When accessing with Bobby identified Bobby return 5.5 to allow
@@ -303,7 +303,7 @@ public class UrlUtil {
 		}
 		//
 
-		return (agent.indexOf("msie") >= 0); //$NON-NLS-1$
+		return (agent.contains("msie")); //$NON-NLS-1$
 	}
 
 	public static String getIEVersion(HttpServletRequest request) {
@@ -313,7 +313,7 @@ public class UrlUtil {
 
 	public static String getIEVersion(String agent) {
 		if (agent==null)
-		    return "0"; //$NON-NLS-1$
+			return "0"; //$NON-NLS-1$
 
 		agent=agent.toLowerCase(Locale.ENGLISH);
 		// When accessing with Bobby identified Bobby return 5.5 to allow
@@ -339,9 +339,9 @@ public class UrlUtil {
 
 	public static boolean isKonqueror(String agent) {
 		if (agent==null)
-		    return false;
+			return false;
 		agent=agent.toLowerCase(Locale.ENGLISH);
-		return agent.indexOf("konqueror") >= 0; //$NON-NLS-1$
+		return agent.contains("konqueror"); //$NON-NLS-1$
 	}
 
 	/**
@@ -357,9 +357,9 @@ public class UrlUtil {
 
 	public static boolean isMozilla(String agent) {
 		if (agent==null)
-		    return false;
+			return false;
 		agent=agent.toLowerCase(Locale.ENGLISH);
-		return agent.indexOf("mozilla/5") >= 0; //$NON-NLS-1$
+		return agent.contains("mozilla/5"); //$NON-NLS-1$
 	}
 
 	public static String getMozillaVersion(HttpServletRequest request) {
@@ -369,9 +369,9 @@ public class UrlUtil {
 
 	public static String getMozillaVersion(String agent) {
 		if (agent==null)
-		    return "0"; //$NON-NLS-1$
+			return "0"; //$NON-NLS-1$
 		agent=agent.toLowerCase(Locale.ENGLISH);
-		if (agent.indexOf("mozilla/5") < 0) //$NON-NLS-1$
+		if (!agent.contains("mozilla/5")) //$NON-NLS-1$
 			return "0"; //$NON-NLS-1$
 		int start = agent.indexOf("rv:") + "rv:".length(); //$NON-NLS-1$ //$NON-NLS-2$
 		if (start < "rv:".length() || start >= agent.length()) //$NON-NLS-1$
@@ -389,14 +389,14 @@ public class UrlUtil {
 
 	public static boolean isOpera(String agent) {
 		if (agent==null)
-		    return false;
+			return false;
 		agent=agent.toLowerCase(Locale.ENGLISH);
-		return agent.indexOf("opera") >= 0; //$NON-NLS-1$
+		return agent.contains("opera"); //$NON-NLS-1$
 	}
 
 	public static String getOperaVersion(String agent) {
 		if (agent==null)
-		    return "0"; //$NON-NLS-1$
+			return "0"; //$NON-NLS-1$
 		agent=agent.toLowerCase(Locale.ENGLISH);
 		final String OperaPrefix = "opera/"; //$NON-NLS-1$
 		int start = agent.indexOf(OperaPrefix) + OperaPrefix.length();
@@ -415,9 +415,9 @@ public class UrlUtil {
 
 	public static boolean isSafari(String agent) {
 		if (agent==null)
-		    return false;
+			return false;
 		agent=agent.toLowerCase(Locale.ENGLISH);
-		return agent.indexOf("safari/") >= 0; //$NON-NLS-1$
+		return agent.contains("safari/"); //$NON-NLS-1$
 	}
 
 	public static String getSafariVersion(HttpServletRequest request) {
@@ -428,7 +428,7 @@ public class UrlUtil {
 	public static String getSafariVersion(String agent) {
 		String version = "0"; //$NON-NLS-1$
 		if (agent==null)
-		    return version;
+			return version;
 		agent=agent.toLowerCase(Locale.ENGLISH);
 		Matcher m = safariPattern.matcher(agent);
 		boolean matched = m.find();
@@ -580,12 +580,12 @@ public class UrlUtil {
 			// check if locale was passed earlier in this session
 			Cookie[] cookies = request.getCookies();
 			if (cookies != null) {
-        			for (Cookie cookie : cookies) {
-        				if ("lang".equals(cookie.getName())) { //$NON-NLS-1$
-        					forcedLocale = cookie.getValue();
-        					break;
-        				}
-        			}
+					for (Cookie cookie : cookies) {
+						if ("lang".equals(cookie.getName())) { //$NON-NLS-1$
+							forcedLocale = cookie.getValue();
+							break;
+						}
+					}
 			}
 		}
 
@@ -651,7 +651,7 @@ public class UrlUtil {
 		// if no locales from command line, get them from preferences
 		if (infocenterLocales.isEmpty()) {
 			String preferredLocales = Platform.getPreferencesService().getString
-			    (HelpBasePlugin.PLUGIN_ID, ("locales"), "", null); //$NON-NLS-1$ //$NON-NLS-2$
+				(HelpBasePlugin.PLUGIN_ID, ("locales"), "", null); //$NON-NLS-1$ //$NON-NLS-2$
 			StringTokenizer tokenizer = new StringTokenizer(preferredLocales,
 					" ,\t"); //$NON-NLS-1$
 			while (tokenizer.hasMoreTokens()) {
@@ -705,20 +705,18 @@ public class UrlUtil {
 		if (BaseHelpSystem.getMode() != BaseHelpSystem.MODE_INFOCENTER) {
 			return ProductPreferences.isRTL();
 		}
-		{
-			if (infocenterDirection == INFOCENTER_DIRECTION_RTL) {
-				return true;
-			} else if (infocenterDirection == INFOCENTER_DIRECTION_LTR) {
-				return false;
-			}
-			String locale = getLocale(request, response);
-			if (locale.startsWith("ar") || locale.startsWith("fa") //$NON-NLS-1$ //$NON-NLS-2$
-					|| locale.startsWith("he") || locale.startsWith("iw") //$NON-NLS-1$ //$NON-NLS-2$
-					| locale.startsWith("ur")) { //$NON-NLS-1$
-				return true;
-			}
+		if (infocenterDirection == INFOCENTER_DIRECTION_RTL) {
+			return true;
+		} else if (infocenterDirection == INFOCENTER_DIRECTION_LTR) {
 			return false;
 		}
+		String locale = getLocale(request, response);
+		if (locale.startsWith("ar") || locale.startsWith("fa") //$NON-NLS-1$ //$NON-NLS-2$
+				|| locale.startsWith("he") || locale.startsWith("iw") //$NON-NLS-1$ //$NON-NLS-2$
+				| locale.startsWith("ur")) { //$NON-NLS-1$
+			return true;
+		}
+		return false;
 	}
 
 	// Return true if the URI is of the form /<context>/nav/*
@@ -730,7 +728,7 @@ public class UrlUtil {
 
 	// Create a relative path based on the current URL
 	public static String getRelativePath(HttpServletRequest req, String filePath) {
-		StringBuffer result = new StringBuffer(""); //$NON-NLS-1$
+		StringBuilder result = new StringBuilder(""); //$NON-NLS-1$
 		String reqPath = req.getPathInfo();
 		if (reqPath != null) {
 			for (int i; 0 <= (i = reqPath.indexOf('/', 1));) {

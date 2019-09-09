@@ -18,7 +18,6 @@ package org.eclipse.ui.internal;
 
 import com.ibm.icu.text.MessageFormat;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -51,7 +50,6 @@ import org.eclipse.ui.IEditorRegistry;
 import org.eclipse.ui.IElementFactory;
 import org.eclipse.ui.IPerspectiveRegistry;
 import org.eclipse.ui.ISharedImages;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkingSetManager;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.decorators.DecoratorManager;
@@ -91,7 +89,7 @@ import org.osgi.util.tracker.ServiceTracker;
 
 /**
  * This class represents the TOP of the workbench UI world A plugin class is
- * effectively an application wrapper for a plugin & its classes. This class
+ * effectively an application wrapper for a plugin &amp; its classes. This class
  * should be thought of as the workbench UI's application class.
  *
  * This class is responsible for tracking various registries font, preference,
@@ -466,7 +464,7 @@ public class WorkbenchPlugin extends AbstractUIPlugin {
 	}
 
 	/**
-	 * Answer the element factory for an id, or <code>null</code. if not found.
+	 * Answer the element factory for an id, or <code>null</code>. if not found.
 	 *
 	 * @param targetID
 	 * @return IElementFactory
@@ -610,17 +608,6 @@ public class WorkbenchPlugin extends AbstractUIPlugin {
 	}
 
 	/**
-	 * Answer the workbench.
-	 *
-	 * @deprecated Use <code>PlatformUI.getWorkbench()</code> instead.
-	 */
-	@Deprecated
-	@Override
-	public IWorkbench getWorkbench() {
-		return PlatformUI.getWorkbench();
-	}
-
-	/**
 	 * Set default preference values. This method must be called whenever the
 	 * preference store is initially loaded because the default values are not
 	 * stored in the preference store.
@@ -687,7 +674,7 @@ public class WorkbenchPlugin extends AbstractUIPlugin {
 			errorCode = ce.getStatus().getCode();
 		}
 
-		return new Status(IStatus.ERROR, pluginId, errorCode, message, StatusUtil.getCause(t));
+		return new Status(IStatus.ERROR, pluginId, errorCode, message, t);
 	}
 
 	/**
@@ -1210,23 +1197,7 @@ public class WorkbenchPlugin extends AbstractUIPlugin {
 			return null;
 		}
 
-		// look for the 32 bit internal_new shell method
-		try {
-			Method method = Shell.class.getMethod("internal_new", Display.class, int.class); //$NON-NLS-1$
-			// we're on a 32 bit platform so invoke it with splash
-			// handle as an int
-			splashShell = (Shell) method.invoke(null, display, Integer.valueOf(splashHandle));
-		} catch (NoSuchMethodException e) {
-			// look for the 64 bit internal_new shell method
-			try {
-				Method method = Shell.class.getMethod("internal_new", Display.class, long.class); //$NON-NLS-1$
-
-				// we're on a 64 bit platform so invoke it with a long
-				splashShell = (Shell) method.invoke(null, display, Long.valueOf(splashHandle));
-			} catch (NoSuchMethodException e2) {
-				// cant find either method - don't do anything.
-			}
-		}
+		splashShell = Shell.internal_new(display, Long.parseLong(splashHandle));
 
 		display.setData(DATA_SPLASH_SHELL, splashShell);
 		return splashShell;
@@ -1337,7 +1308,8 @@ public class WorkbenchPlugin extends AbstractUIPlugin {
 					preferenceManager = new WorkbenchPreferenceManager(PREFERENCE_PAGE_CATEGORY_SEPARATOR);
 
 					// Get the pages from the registry
-					PreferencePageRegistryReader registryReader = new PreferencePageRegistryReader(getWorkbench());
+					PreferencePageRegistryReader registryReader = new PreferencePageRegistryReader(
+							PlatformUI.getWorkbench());
 					registryReader.loadFromRegistry(Platform.getExtensionRegistry());
 					preferenceManager.addPages(registryReader.getTopLevelNodes());
 

@@ -10,19 +10,21 @@
 	<parent>
 		<groupId>org.eclipse</groupId>
 		<artifactId>org.eclipse.equinox.p2.tests-parent</artifactId>
-		<version>4.12.0-SNAPSHOT</version>
+		<version>4.13.0-SNAPSHOT</version>
 		<relativePath>../../org.eclipse.equinox.p2.releng/org.eclipse.equinox.p2.tests-parent</relativePath>
 	</parent>
 
 	<groupId>org.eclipse.equinox</groupId>
 	<artifactId>org.eclipse.equinox.p2.tests</artifactId>
-	<version>1.7.600-SNAPSHOT</version>
+	<version>1.7.700-SNAPSHOT</version>
 	<packaging>eclipse-test-plugin</packaging>
 
 	<properties>
 		<testSuite>${project.artifactId}</testSuite>
 		<testClass>org.eclipse.equinox.p2.tests.AutomatedTests</testClass>
-		<dropinsProduct>org.eclipse.equinox.p2.reconciler-freebsd.gtk.amd64.tar.gz</dropinsProduct>
+		<!-- despite best inentions I was not able to add automatiz detection here -->
+		<!-- Linux is default because Hudson runs those tests on Linux -->
+		<dropinsProduct>org.eclipse.equinox.p2.reconciler-linux.gtk.x86_64.tar.gz</dropinsProduct>
 	</properties>
 
 	<build>

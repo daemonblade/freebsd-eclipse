@@ -306,11 +306,7 @@ public abstract class OperationHistoryActionHandler extends Action
 			} else {
 				reportException(t);
 			}
-		} catch (InterruptedException e) {
-			// Operation was cancelled and acknowledged by runnable with this
-			// exception.
-			// Do nothing.
-		} catch (OperationCanceledException e) {
+		} catch (InterruptedException | OperationCanceledException e) {
 			// the operation was cancelled. Do nothing.
 		} finally {
 			progressDialog = null;
@@ -445,16 +441,12 @@ public abstract class OperationHistoryActionHandler extends Action
 	 * Report the specified exception to the log and to the user.
 	 */
 	final void reportException(Throwable t) {
-		// get any nested exceptions
-		Throwable nestedException = StatusUtil.getCause(t);
-		Throwable exception = (nestedException == null) ? t : nestedException;
-
 		// Messages
-		String exceptionMessage = exception.getMessage();
+		String exceptionMessage = t.getMessage();
 		if (exceptionMessage == null) {
 			exceptionMessage = WorkbenchMessages.WorkbenchWindow_exceptionMessage;
 		}
-		IStatus status = StatusUtil.newStatus(WorkbenchPlugin.PI_WORKBENCH, exceptionMessage, exception);
+		IStatus status = StatusUtil.newStatus(WorkbenchPlugin.PI_WORKBENCH, exceptionMessage, t);
 
 		// Log and show the problem
 		WorkbenchPlugin.log(exceptionMessage, status);

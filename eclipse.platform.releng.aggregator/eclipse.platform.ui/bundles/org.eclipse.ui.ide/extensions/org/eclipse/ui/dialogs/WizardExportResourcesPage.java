@@ -15,6 +15,7 @@
 package org.eclipse.ui.dialogs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -40,11 +41,11 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.ide.dialogs.ResourceTreeAndListGroup;
 import org.eclipse.ui.internal.ide.DialogUtil;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
-import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
@@ -477,9 +478,7 @@ public abstract class WizardExportResourcesPage extends WizardDataTransferPage {
 
 		if (newSelectedTypes != null) { // ie.- did not press Cancel
 			this.selectedTypes = new ArrayList(newSelectedTypes.length);
-			for (Object newSelectedType : newSelectedTypes) {
-				this.selectedTypes.add(newSelectedType);
-			}
+			this.selectedTypes.addAll(Arrays.asList(newSelectedTypes));
 			setupSelectionsBasedOnSelectedTypes();
 		}
 
@@ -653,7 +652,7 @@ public abstract class WizardExportResourcesPage extends WizardDataTransferPage {
 	 * @return boolean if the save was successful.
 	 */
 	protected boolean saveDirtyEditors() {
-		return IDEWorkbenchPlugin.getDefault().getWorkbench().saveAllEditors(true);
+		return PlatformUI.getWorkbench().saveAllEditors(true);
 	}
 
 	/**

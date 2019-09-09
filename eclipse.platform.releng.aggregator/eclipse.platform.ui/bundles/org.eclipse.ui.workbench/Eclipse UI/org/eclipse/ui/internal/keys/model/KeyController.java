@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -159,9 +160,7 @@ public class KeyController {
 		Set<Binding> bindings = new HashSet<>();
 		EBindingService eBindingService = locator.getService(EBindingService.class);
 		bindings.addAll(eBindingService.getActiveBindings());
-		for (Binding binding : bindingService.getBindings()) {
-			bindings.add(binding);
-		}
+		bindings.addAll(Arrays.asList(bindingService.getBindings()));
 
 		bindingManager.setBindings(bindings.toArray(new Binding[0]));
 
@@ -329,7 +328,7 @@ public class KeyController {
 							: selectedElement.getId();
 					final KeyBinding binding = new KeyBinding(keySequence, keyBinding.getParameterizedCommand(),
 							activeSchemeId, activeContextId, null, null, null, Binding.USER);
-					Map bindingToElement = bindingModel.getBindingToElement();
+					Map<KeyBinding, BindingElement> bindingToElement = bindingModel.getBindingToElement();
 					bindingToElement.remove(keyBinding);
 					if (keyBinding.getType() == Binding.USER) {
 						fBindingManager.removeBinding(keyBinding);

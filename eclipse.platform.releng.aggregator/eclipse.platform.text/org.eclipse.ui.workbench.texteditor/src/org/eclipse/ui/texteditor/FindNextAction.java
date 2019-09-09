@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2010 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,12 +10,14 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Pierre-Yves B., pyvesdev@gmail.com - Bug 121634: [find/replace] status bar must show the string being searched when "String Not Found"
  *******************************************************************************/
 
 package org.eclipse.ui.texteditor;
 
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.regex.PatternSyntaxException;
@@ -34,6 +36,7 @@ import org.eclipse.jface.text.TextUtilities;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.internal.texteditor.NLSUtility;
 import org.eclipse.ui.internal.texteditor.TextEditorPlugin;
 
 
@@ -132,9 +135,9 @@ public class FindNextAction extends ResourceAction implements IUpdate {
 	private String getFindString() {
 		String fullSelection= fTarget.getSelectionText();
 		String firstLine= getFirstLine(fullSelection);
-		if ((firstLine.length() == 0 || fRegExSearch && fullSelection.equals(fSelection)) && !fFindHistory.isEmpty())
+		if ((firstLine.isEmpty() || fRegExSearch && fullSelection.equals(fSelection)) && !fFindHistory.isEmpty())
 			return fFindHistory.get(0);
-		else if (fRegExSearch && fullSelection.length() > 0)
+		else if (fRegExSearch && !fullSelection.isEmpty())
 			return FindReplaceDocumentAdapter.escapeForRegExPattern(fullSelection);
 		else
 			return firstLine;
@@ -164,7 +167,8 @@ public class FindNextAction extends ResourceAction implements IUpdate {
 		if (manager == null)
 			return;
 
-		manager.setMessage(EditorMessages.FindNext_Status_noMatch_label);
+		String msg= NLSUtility.format(EditorMessages.FindNext_Status_noMatch_label, fFindString);
+		manager.setMessage(msg);
 	}
 
 	/**
@@ -208,7 +212,7 @@ public class FindNextAction extends ResourceAction implements IUpdate {
 	 * @since 3.2
 	 */
 	private boolean isWord(String str) {
-		if (str == null || str.length() == 0)
+		if (str == null || str.isEmpty())
 			return false;
 
 		for (int i= 0; i < str.length(); i++) {
@@ -357,8 +361,7 @@ public class FindNextAction extends ResourceAction implements IUpdate {
 		String[] findHistory= s.getArray("findhistory"); //$NON-NLS-1$
 		if (findHistory != null) {
 			fFindHistory.clear();
-			for (int i= 0; i < findHistory.length; i++)
-				fFindHistory.add(findHistory[i]);
+			Collections.addAll(fFindHistory, findHistory);
 		}
 	}
 
@@ -394,7 +397,7 @@ public class FindNextAction extends ResourceAction implements IUpdate {
 	 * @return the first line of the selection
 	 */
 	private String getFirstLine(String selection) {
-		if (selection.length() > 0) {
+		if (!selection.isEmpty()) {
 			int[] info= TextUtilities.indexOf(TextUtilities.DELIMITERS, selection, 0);
 			if (info[0] > 0)
 				return selection.substring(0, info[0]);

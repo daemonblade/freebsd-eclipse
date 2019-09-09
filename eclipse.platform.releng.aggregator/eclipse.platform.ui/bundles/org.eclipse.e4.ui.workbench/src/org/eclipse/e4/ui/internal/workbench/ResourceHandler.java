@@ -25,6 +25,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -210,8 +211,11 @@ public class ResourceHandler implements IModelResourceHandler {
 
 	@Override
 	public void save() throws IOException {
-		if (saveAndRestore)
-			resource.save(null);
+		if (saveAndRestore) {
+			Map<String, Object> options = new HashMap<>();
+			options.put(E4XMIResource.OPTION_FILTER_PERSIST_STATE, Boolean.TRUE);
+			resource.save(options);
+		}
 	}
 
 	/**
@@ -237,8 +241,7 @@ public class ResourceHandler implements IModelResourceHandler {
 	}
 
 	private File getWorkbenchSaveLocation() {
-		File workbenchData = new File(getBaseLocation(), "workbench.xmi"); //$NON-NLS-1$
-		return workbenchData;
+		return new File(getBaseLocation(), "workbench.xmi"); //$NON-NLS-1$
 	}
 
 	private File getBaseLocation() {
@@ -250,8 +253,7 @@ public class ResourceHandler implements IModelResourceHandler {
 		}
 		baseLocation = new File(baseLocation, ".metadata"); //$NON-NLS-1$
 		baseLocation = new File(baseLocation, ".plugins"); //$NON-NLS-1$
-		baseLocation = new File(baseLocation, "org.eclipse.e4.workbench"); //$NON-NLS-1$
-		return baseLocation;
+		return new File(baseLocation, "org.eclipse.e4.workbench"); //$NON-NLS-1$
 	}
 
 	// Ensures that even models with error are loaded!
@@ -261,7 +263,7 @@ public class ResourceHandler implements IModelResourceHandler {
 			resource = getResource(uri);
 		} catch (Exception e) {
 			// TODO We could use diagnostics for better analyzing the error
-			logger.error(e, "Unable to load resource " + uri.toString()); //$NON-NLS-1$
+			logger.error(e, "Unable to load resource " + uri); //$NON-NLS-1$
 			return null;
 		}
 

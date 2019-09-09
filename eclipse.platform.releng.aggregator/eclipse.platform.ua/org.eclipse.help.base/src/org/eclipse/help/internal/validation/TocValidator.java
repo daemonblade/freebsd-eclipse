@@ -54,7 +54,7 @@ public class TocValidator {
 	}
 
 	public static abstract class Filter {
-	     abstract public boolean isIncluded(String href);
+		abstract public boolean isIncluded(String href);
 	}
 
 	public static class PassThroughFilter extends Filter {
@@ -101,7 +101,7 @@ public class TocValidator {
 		String path;
 		if (href.startsWith("/")) { //$NON-NLS-1$
 			href = href.substring(1);
-			int index = href.indexOf("/"); //$NON-NLS-1$
+			int index = href.indexOf('/');
 			if (index == -1)
 				throw new IOException("Invalid parameters supplied to the validate method."); //$NON-NLS-1$
 			plugin = href.substring(0, index);

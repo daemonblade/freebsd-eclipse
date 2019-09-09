@@ -118,7 +118,7 @@ public class MergeWizardPage extends CVSWizardPage {
 				super.refresh(background);
 				updateStartTag(startTagField.getText());
 				updateEndTag(endTagField.getText());
-			};
+			}
 		};
 		tagRefreshArea.setRunnableContext(getContainer());
 		tagRefreshArea.createArea(composite); 
@@ -205,8 +205,7 @@ public class MergeWizardPage extends CVSWizardPage {
 		} else {
 			tags = tagSource.getTags(new int[] { CVSTag.VERSION, CVSTag.BRANCH, CVSTag.DATE });
 		}
-		for (int i = 0; i < tags.length; i++) {
-			CVSTag tag = tags[i];
+		for (CVSTag tag : tags) {
 			if (tag.getName().equals(text)) {
 				return tag;
 			}
@@ -250,9 +249,8 @@ public class MergeWizardPage extends CVSWizardPage {
 	
 	private CVSTag findCommonBaseTag(CVSTag tag) {
 		CVSTag[] tags = tagSource.getTags(CVSTag.VERSION);
-		for (int i = 0; i < tags.length; i++) {
-			CVSTag potentialMatch = tags[i];
-			if (potentialMatch.getName().indexOf(tag.getName()) != -1) {
+		for (CVSTag potentialMatch : tags) {
+			if (potentialMatch.getName().contains(tag.getName())) {
 				return potentialMatch;
 			}
 		}

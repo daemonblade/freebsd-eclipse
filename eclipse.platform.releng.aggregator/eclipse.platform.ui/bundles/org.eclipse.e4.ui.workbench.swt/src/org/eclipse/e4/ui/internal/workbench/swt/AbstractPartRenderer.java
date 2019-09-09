@@ -142,8 +142,6 @@ public abstract class AbstractPartRenderer {
 			return -1;
 		}
 
-		int val = -1;
-		val = Integer.parseInt(overrideStr);
-		return val;
+		return Integer.parseInt(overrideStr);
 	}
 }

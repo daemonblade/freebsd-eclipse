@@ -36,8 +36,8 @@ public class Add extends Command {
 		// Check that all the arguments can give you an
 		// repo that you will need while traversing the
 		// file-structure
-		for (int i = 0; i < resources.length; i++) {
-			Assert.isNotNull(resources[i].getRemoteLocation(session.getLocalRoot()));
+		for (ICVSResource resource : resources) {
+			Assert.isNotNull(resource.getRemoteLocation(session.getLocalRoot()));
 		}
 		
 		// Get a vistor and use it on every resource we should
@@ -59,9 +59,9 @@ public class Add extends Command {
 			return status;
 		}
 				
-		for (int i = 0; i < resources.length; i++) {
-			if (resources[i].isFolder()) {
-				ICVSFolder mFolder = (ICVSFolder) resources[i];
+		for (ICVSResource resource : resources) {
+			if (resource.isFolder()) {
+				ICVSFolder mFolder = (ICVSFolder) resource;
 				FolderSyncInfo info = mFolder.getParent().getFolderSyncInfo();
 				if (info == null) {
 					status = mergeStatus(status, new CVSStatus(IStatus.ERROR, NLS.bind(CVSMessages.Add_invalidParent, new String[] { mFolder.getRelativePath(session.getLocalRoot()) }))); 
@@ -85,9 +85,9 @@ public class Add extends Command {
 				
 				String serverMessage = getServerMessage(line, location);
 				if (serverMessage != null) {
-					if (serverMessage.indexOf("cvs commit") != -1 && serverMessage.indexOf("add") != -1 && serverMessage.indexOf("permanently") != -1) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					if (serverMessage.contains("cvs commit") && serverMessage.contains("add") && serverMessage.contains("permanently")) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 						return OK;
-					if (serverMessage.startsWith("scheduling file") && serverMessage.indexOf("for addition") != -1) //$NON-NLS-1$ //$NON-NLS-2$
+					if (serverMessage.startsWith("scheduling file") && serverMessage.contains("for addition")) //$NON-NLS-1$ //$NON-NLS-2$
 						return OK;
 				}
 				return super.errorLine(line, location, commandRoot, monitor);

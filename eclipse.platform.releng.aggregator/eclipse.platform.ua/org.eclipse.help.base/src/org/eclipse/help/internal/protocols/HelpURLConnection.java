@@ -87,7 +87,7 @@ public class HelpURLConnection extends URLConnection {
 
 	public HelpURLConnection(URL url, boolean localOnly) {
 		super(url);
-        this.localOnly = localOnly;
+		this.localOnly = localOnly;
 		String urlFile = url.getFile();
 
 		// Strip off everything before and including the PLUGINS_ROOT
@@ -98,7 +98,7 @@ public class HelpURLConnection extends URLConnection {
 		if (urlFile.startsWith("/")) //$NON-NLS-1$
 			urlFile = urlFile.substring(1);
 
-		int indx = urlFile.indexOf("?"); //$NON-NLS-1$
+		int indx = urlFile.indexOf('?');
 		if (indx != -1) {
 			query = urlFile.substring(indx + 1);
 			urlFile = urlFile.substring(0, indx);
@@ -126,7 +126,7 @@ public class HelpURLConnection extends URLConnection {
 			throw new IOException("Resource not found."); //$NON-NLS-1$
 		}
 
-		if (getFile() == null || "".equals(getFile()) || getFile().indexOf("..\\") >= 0) { //$NON-NLS-1$ //$NON-NLS-2$
+		if (getFile() == null || "".equals(getFile()) || getFile().contains("..\\")) { //$NON-NLS-1$ //$NON-NLS-2$
 			throw new IOException("Resource not found."); //$NON-NLS-1$
 		}
 
@@ -136,16 +136,16 @@ public class HelpURLConnection extends URLConnection {
 		if (plugin != null && (helpOption==PreferenceFileHandler.LOCAL_HELP_ONLY || helpOption==PreferenceFileHandler.LOCAL_HELP_PRIORITY)) {
 			in = getLocalHelp(plugin);
 		}
-        if (in == null && (helpOption==PreferenceFileHandler.LOCAL_HELP_PRIORITY || helpOption==PreferenceFileHandler.REMOTE_HELP_PRIORITY)) {
+		if (in == null && (helpOption==PreferenceFileHandler.LOCAL_HELP_PRIORITY || helpOption==PreferenceFileHandler.REMOTE_HELP_PRIORITY)) {
 
-        	in = openFromRemoteServer(getHref(), getLocale());
-        	if( in != null ){
-        		in = new RemoteHelpInputStream(in);
-        	}
-        	if(in==null && plugin!=null && helpOption==PreferenceFileHandler.REMOTE_HELP_PRIORITY)
-        	{
-        		in = getLocalHelp(plugin);
-        	}
+			in = openFromRemoteServer(getHref(), getLocale());
+			if( in != null ){
+				in = new RemoteHelpInputStream(in);
+			}
+			if(in==null && plugin!=null && helpOption==PreferenceFileHandler.REMOTE_HELP_PRIORITY)
+			{
+				in = getLocalHelp(plugin);
+			}
 		}
 		if (in == null) {
 			throw new IOException("Resource not found."); //$NON-NLS-1$
@@ -179,7 +179,7 @@ public class HelpURLConnection extends URLConnection {
 		StringTokenizer stok = new StringTokenizer(query, "&"); //$NON-NLS-1$
 		while (stok.hasMoreTokens()) {
 			String aQuery = stok.nextToken();
-			int equalsPosition = aQuery.indexOf("="); //$NON-NLS-1$
+			int equalsPosition = aQuery.indexOf('=');
 			if (equalsPosition > -1) { // well formed name/value pair
 				String arg = aQuery.substring(0, equalsPosition);
 				String val = aQuery.substring(equalsPosition + 1);
@@ -294,11 +294,11 @@ public class HelpURLConnection extends URLConnection {
 	protected String getFile() {
 		if (file == null) {
 			// Strip the plugin id
-			int start = pluginAndFile.indexOf("/") + 1; //$NON-NLS-1$
+			int start = pluginAndFile.indexOf('/') + 1;
 			// Strip query string or anchor bookmark
-			int end = pluginAndFile.indexOf("?"); //$NON-NLS-1$
+			int end = pluginAndFile.indexOf('?');
 			if (end == -1)
-				end = pluginAndFile.indexOf("#"); //$NON-NLS-1$
+				end = pluginAndFile.indexOf('#');
 			if (end == -1)
 				end = pluginAndFile.length();
 			file = pluginAndFile.substring(start, end);
@@ -405,7 +405,7 @@ public class HelpURLConnection extends URLConnection {
 			if (remoteURL == null) {
 				in = tryOpeningAllServers(pathSuffix);
 			} else {
-			    in = openRemoteStream(remoteURL, pathSuffix);
+				in = openRemoteStream(remoteURL, pathSuffix);
 			}
 
 			return in;

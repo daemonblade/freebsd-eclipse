@@ -178,9 +178,9 @@ class HyperlinkDetectorsConfigurationBlock implements IPreferenceConfigurationBl
 	private OverlayPreferenceStore.OverlayKey[] createOverlayStoreKeys() {
 		ArrayList<OverlayKey> overlayKeys= new ArrayList<>();
 
-		for (int i= 0; i < fHyperlinkDetectorDescriptors.length; i++) {
-			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, fHyperlinkDetectorDescriptors[i].getId()));
-			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, fHyperlinkDetectorDescriptors[i].getId() + HyperlinkDetectorDescriptor.STATE_MASK_POSTFIX));
+		for (HyperlinkDetectorDescriptor fHyperlinkDetectorDescriptor : fHyperlinkDetectorDescriptors) {
+			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, fHyperlinkDetectorDescriptor.getId()));
+			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, fHyperlinkDetectorDescriptor.getId() + HyperlinkDetectorDescriptor.STATE_MASK_POSTFIX));
 		}
 
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_HYPERLINK_KEY_MODIFIER));
@@ -432,9 +432,11 @@ class HyperlinkDetectorsConfigurationBlock implements IPreferenceConfigurationBl
 
 	private Object[] getCheckedItems() {
 		List<ListItem> result= new ArrayList<>();
-		for (int i= 0; i < fListModel.length; i++)
-			if (!fStore.getBoolean(fListModel[i].id))
-				result.add(fListModel[i]);
+		for (ListItem i : fListModel) {
+			if (!fStore.getBoolean(i.id)) {
+				result.add(i);
+			}
+		}
 		return result.toArray();
 	}
 
@@ -498,8 +500,7 @@ class HyperlinkDetectorsConfigurationBlock implements IPreferenceConfigurationBl
 
 	private ListItem[] createListModel() {
 		ArrayList<ListItem> listModelItems= new ArrayList<>();
-		for (int i= 0; i < fHyperlinkDetectorDescriptors.length; i++) {
-			HyperlinkDetectorDescriptor desc= fHyperlinkDetectorDescriptors[i];
+		for (HyperlinkDetectorDescriptor desc : fHyperlinkDetectorDescriptors) {
 			HyperlinkDetectorTargetDescriptor target= desc.getTarget();
 
 			int stateMask= fStore.getInt(desc.getId() + HyperlinkDetectorDescriptor.STATE_MASK_POSTFIX);
@@ -589,7 +590,7 @@ class HyperlinkDetectorsConfigurationBlock implements IPreferenceConfigurationBl
 		if (modifiers == null)
 			return -1;
 
-		if (modifiers.length() == 0)
+		if (modifiers.isEmpty())
 			return SWT.NONE;
 
 		int stateMask= 0;
@@ -662,7 +663,7 @@ class HyperlinkDetectorsConfigurationBlock implements IPreferenceConfigurationBl
 		if (modifierString == null)
 			modifierString= ""; //$NON-NLS-1$
 		String newModifierString= Action.findModifierString(modifier);
-		if (modifierString.length() == 0)
+		if (modifierString.isEmpty())
 			return newModifierString;
 		return NLSUtility.format(TextEditorMessages.HyperlinkKeyModifier_concatModifierStrings, new String[] {modifierString, newModifierString});
 	}
@@ -688,7 +689,7 @@ class HyperlinkDetectorsConfigurationBlock implements IPreferenceConfigurationBl
 				fPreferencePage.setErrorMessage(null);
 				break;
 			default:
-				if (message.length() == 0) {
+				if (message.isEmpty()) {
 					message= null;
 				}
 				fPreferencePage.setMessage(null);

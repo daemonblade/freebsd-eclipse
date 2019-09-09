@@ -390,7 +390,7 @@ public class ContentProposalAdapter {
 					// and filter the proposals.
 					if (Character.isDefined(key)) {
 						if (filterStyle == FILTER_CUMULATIVE) {
-							filterText = filterText + String.valueOf(key);
+							filterText = filterText + key;
 						} else if (filterStyle == FILTER_CHARACTER) {
 							filterText = String.valueOf(key);
 						}
@@ -713,8 +713,6 @@ public class ContentProposalAdapter {
 				item.setText(getString(current));
 				item.setImage(getImage(current));
 				item.setData(current);
-			} else {
-				// this should not happen, but does on win32
 			}
 		}
 
@@ -1998,9 +1996,8 @@ public class ContentProposalAdapter {
 		}
 		String contents = getControlContentAdapter().getControlContents(
 				getControl());
-		IContentProposal[] proposals = proposalProvider.getProposals(contents,
+		return proposalProvider.getProposals(contents,
 				position);
-		return proposals;
 	}
 
 	/**

@@ -110,15 +110,15 @@ public class MarkerInformationControl extends AbstractInformationControl impleme
 				markerImage.setImage(getImage(marker));
 			}
 			Label markerLabel = new Label(markerLine, SWT.NONE);
-			markerLabel.setText(marker.getAttribute(IMarker.MESSAGE, "missing message")); //$NON-NLS-1$
+			String markerText = marker.getAttribute(IMarker.MESSAGE, "missing message"); //$NON-NLS-1$
+			markerText = markerText.replace("&", "&&"); // Disable mnemonics //$NON-NLS-1$ //$NON-NLS-2$
+			markerLabel.setText(markerText);
 			for (IMarkerResolution resolution : resolutions) {
 				Composite resolutionComposite = new Composite(markerComposite, SWT.NONE);
 				GridData layoutData = new GridData();
 				layoutData.horizontalIndent = 10;
 				resolutionComposite.setLayoutData(layoutData);
-				RowLayout resolutionRowLayout = new RowLayout();
-				resolutionRowLayout.marginBottom = 0;
-				resolutionComposite.setLayout(resolutionRowLayout);
+				resolutionComposite.setLayout(new RowLayout());
 				Label resolutionImage = new Label(resolutionComposite, SWT.NONE);
 				// TODO: try to retrieve icon from QuickFix command
 				Image resolutionPic = null;
@@ -130,7 +130,8 @@ public class MarkerInformationControl extends AbstractInformationControl impleme
 				}
 				resolutionImage.setImage(resolutionPic);
 				Link resolutionLink = new Link(resolutionComposite, SWT.NONE);
-				resolutionLink.setText("<A>" + resolution.getLabel() + "</a>"); //$NON-NLS-1$ //$NON-NLS-2$
+				String resolutionText = resolution.getLabel().replace("&", "&&"); // Disable mnemonics //$NON-NLS-1$ //$NON-NLS-2$
+				resolutionLink.setText("<A>" + resolutionText + "</a>"); //$NON-NLS-1$ //$NON-NLS-2$
 				resolutionLink.addSelectionListener(new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {

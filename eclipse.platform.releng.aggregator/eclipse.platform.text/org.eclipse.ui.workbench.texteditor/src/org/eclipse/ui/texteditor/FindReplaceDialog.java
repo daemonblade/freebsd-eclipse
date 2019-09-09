@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,10 +11,12 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     SAP SE, christian.georgi@sap.com - Bug 487357: Make find dialog content scrollable
+ *     Pierre-Yves B., pyvesdev@gmail.com - Bug 121634: [find/replace] status bar must show the string being searched when "String Not Found"
  *******************************************************************************/
 package org.eclipse.ui.texteditor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -975,7 +977,8 @@ class FindReplaceDialog extends Dialog {
 		int index= findIndex(findString, findReplacePosition, forwardSearch, caseSensitive, wrapSearch, wholeWord, regExSearch, beep);
 
 		if (index == -1) {
-			statusMessage(EditorMessages.FindReplace_Status_noMatch_label);
+			String msg= NLSUtility.format(EditorMessages.FindReplace_Status_noMatchWithValue_label, findString);
+			statusMessage(false, EditorMessages.FindReplace_Status_noMatch_label, msg);
 			return false;
 		}
 
@@ -1044,7 +1047,7 @@ class FindReplaceDialog extends Dialog {
 	 * @return the first line of the selection
 	 */
 	private String getFirstLine(String selection) {
-		if (selection.length() > 0) {
+		if (!selection.isEmpty()) {
 			int[] info= TextUtilities.indexOf(TextUtilities.DELIMITERS, selection, 0);
 			if (info[0] > 0)
 				return selection.substring(0, info[0]);
@@ -1130,7 +1133,7 @@ class FindReplaceDialog extends Dialog {
 			String fullSelection= fTarget.getSelectionText();
 			boolean isRegEx= isRegExSearchAvailableAndChecked();
 			fFindField.removeModifyListener(fFindModifyListener);
-			if (fullSelection.length() > 0) {
+			if (!fullSelection.isEmpty()) {
 				String firstLine= getFirstLine(fullSelection);
 				String pattern= isRegEx ? FindReplaceDocumentAdapter.escapeForRegExPattern(fullSelection) : firstLine;
 				fFindField.setText(pattern);
@@ -1143,7 +1146,7 @@ class FindReplaceDialog extends Dialog {
 				}
 			} else {
 				if ("".equals(fFindField.getText())) { //$NON-NLS-1$
-					if (fFindHistory.size() > 0)
+					if (!fFindHistory.isEmpty())
 						fFindField.setText(fFindHistory.get(0));
 					else
 						fFindField.setText(""); //$NON-NLS-1$
@@ -1315,10 +1318,11 @@ class FindReplaceDialog extends Dialog {
 	 * Sets the given status message in the status line.
 	 *
 	 * @param error <code>true</code> if it is an error
-	 * @param message the error message
+	 * @param dialogMessage the message to display in the dialog's status line
+	 * @param editorMessage the message to display in the editor's status line
 	 */
-	private void statusMessage(boolean error, String message) {
-		fStatusLabel.setText(message);
+	private void statusMessage(boolean error, String dialogMessage, String editorMessage) {
+		fStatusLabel.setText(dialogMessage);
 
 		if (error)
 			fStatusLabel.setForeground(JFaceColors.getErrorText(fStatusLabel.getDisplay()));
@@ -1327,7 +1331,7 @@ class FindReplaceDialog extends Dialog {
 
 		IEditorStatusLine statusLine= getStatusLineManager();
 		if (statusLine != null)
-			statusLine.setMessage(error, message, null);
+			statusLine.setMessage(error, editorMessage, null);
 
 		if (error)
 			getShell().getDisplay().beep();
@@ -1338,7 +1342,7 @@ class FindReplaceDialog extends Dialog {
 	 * @param message the message
 	 */
 	private void statusError(String message) {
-		statusMessage(true, message);
+		statusMessage(true, message, message);
 	}
 
 	/**
@@ -1346,7 +1350,7 @@ class FindReplaceDialog extends Dialog {
 	 * @param message the message
 	 */
 	private void statusMessage(String message) {
-		statusMessage(false, message);
+		statusMessage(false, message, message);
 	}
 
 	/**
@@ -1360,7 +1364,7 @@ class FindReplaceDialog extends Dialog {
 		final String replaceString= getReplaceString();
 		final String findString= getFindString();
 
-		if (findString != null && findString.length() > 0) {
+		if (findString != null && !findString.isEmpty()) {
 
 			class ReplaceAllRunnable implements Runnable {
 				public int numberOfOccurrences;
@@ -1384,7 +1388,8 @@ class FindReplaceDialog extends Dialog {
 						statusMessage(msg);
 					}
 				} else {
-					statusMessage(EditorMessages.FindReplace_Status_noMatch_label);
+					String msg= NLSUtility.format(EditorMessages.FindReplace_Status_noMatchWithValue_label, findString);
+					statusMessage(false, EditorMessages.FindReplace_Status_noMatch_label, msg);
 				}
 			} catch (PatternSyntaxException ex) {
 				statusError(ex.getLocalizedMessage());
@@ -1477,7 +1482,7 @@ class FindReplaceDialog extends Dialog {
 		String findString= getFindString();
 		boolean somethingFound= false;
 
-		if (findString != null && findString.length() > 0) {
+		if (findString != null && !findString.isEmpty()) {
 
 			try {
 					somethingFound= findNext(findString, forwardSearch, isCaseSensitiveSearch(), isWrapSearch(), isWholeWordSearch(), isIncrementalSearch() && !isRegExSearchAvailableAndChecked(), isRegExSearchAvailableAndChecked(), beep);
@@ -1604,11 +1609,11 @@ class FindReplaceDialog extends Dialog {
 
 			boolean selection= false;
 			if (fTarget != null)
-				selection= fTarget.getSelectionText().length() > 0;
+				selection= !fTarget.getSelectionText().isEmpty();
 
 			boolean enable= fTarget != null && (fActiveShell == fParentShell || fActiveShell == getShell());
 			String str= getFindString();
-			boolean findString= str != null && str.length() > 0;
+			boolean findString= str != null && !str.isEmpty();
 
 			fWholeWordCheckBox.setEnabled(isWord(str) && !isRegExSearchAvailableAndChecked());
 
@@ -1627,7 +1632,7 @@ class FindReplaceDialog extends Dialog {
 	 * @since 3.0
 	 */
 	private boolean isWord(String str) {
-		if (str == null || str.length() == 0)
+		if (str == null || str.isEmpty())
 			return false;
 
 		for (int i= 0; i < str.length(); i++) {
@@ -1828,16 +1833,14 @@ class FindReplaceDialog extends Dialog {
 		if (findHistory != null) {
 			List<String> history= getFindHistory();
 			history.clear();
-			for (int i= 0; i < findHistory.length; i++)
-				history.add(findHistory[i]);
+			Collections.addAll(history, findHistory);
 		}
 
 		String[] replaceHistory= s.getArray("replacehistory"); //$NON-NLS-1$
 		if (replaceHistory != null) {
 			List<String> history= getReplaceHistory();
 			history.clear();
-			for (int i= 0; i < replaceHistory.length; i++)
-				history.add(replaceHistory[i]);
+			Collections.addAll(history, replaceHistory);
 		}
 	}
 
@@ -1855,13 +1858,13 @@ class FindReplaceDialog extends Dialog {
 
 		List<String> history= getFindHistory();
 		String findString= getFindString();
-		if (findString.length() > 0)
+		if (!findString.isEmpty())
 			history.add(0, findString);
 		writeHistory(history, s, "findhistory"); //$NON-NLS-1$
 
 		history= getReplaceHistory();
 		String replaceString= getReplaceString();
-		if (replaceString.length() > 0)
+		if (!replaceString.isEmpty())
 			history.add(0, replaceString);
 		writeHistory(history, s, "replacehistory"); //$NON-NLS-1$
 	}

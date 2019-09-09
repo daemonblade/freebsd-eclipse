@@ -36,7 +36,7 @@ echo -e "\tbuildIdToTest: ${BUILD_ID}"
 # TODO: we could have a "previous_release" sort of variable that 
 # would be defined in parent pom or build_eclipse_org.shsource so that
 # we do not need to change this source. 
-buildIdToCompare="4.11/R-4.11-201903070500"
+buildIdToCompare="4.12/R-4.12-201906051800"
 
 build_type=${buildIdToTest:0:1}
 echo -e "\tbuild_type: ${build_type}"
@@ -66,22 +66,22 @@ function latestSimpleRepo
 
 if [[ ${build_type} == "I" ]]
 then
-  update_dir_segment="4.12-I-builds"
-  buildIdToCompare="4.11/R-4.11-201903070500"
-  echo -e "\tlatest_R_build: R-4.11-201903070500"
+  update_dir_segment="4.13-I-builds"
+  buildIdToCompare="4.12/R-4.12-201906051800"
+  echo -e "\tlatest_R_build: R-4.12-201906051800"
 elif [[ ${build_type} == "Y" ]]
 then
-  update_dir_segment="4.12-Y-builds"
+  update_dir_segment="4.13-Y-builds"
   # Note: we use same value for Y-builds as for I-builds, since conceptually
   # they are the same, except that Y-builds use some code from BETA_JAVA12 branch.
-  latest_I_build=$(latestSimpleRepo "${repo_root}/4.12-I-builds" "I20*")
+  latest_I_build=$(latestSimpleRepo "${repo_root}/4.13-I-builds" "I20*")
   RC=$?
   if [[ $RC != 0 ]]
   then
     exit $RC
   fi
   echo -e "\tlatest_I_build: $latest_I_build"
-  buildIdToCompare="4.12-I-builds/${latest_I_build}"
+  buildIdToCompare="4.13-I-builds/${latest_I_build}"
 else
   echo -e "\nERROR: Unhandled build type: ${build_type} so update_dir_segment undefined: $update_dir_segment"
   echo -e "\n\tand repo reports not produced."

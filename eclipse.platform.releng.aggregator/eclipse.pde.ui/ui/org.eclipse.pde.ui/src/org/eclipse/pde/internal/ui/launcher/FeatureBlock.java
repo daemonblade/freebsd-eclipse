@@ -13,8 +13,12 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.launcher;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.*;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.function.Function;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
@@ -29,6 +33,7 @@ import org.eclipse.pde.internal.core.*;
 import org.eclipse.pde.internal.core.ifeature.*;
 import org.eclipse.pde.internal.launching.PDELaunchingPlugin;
 import org.eclipse.pde.internal.launching.launcher.BundleLauncherHelper;
+import org.eclipse.pde.internal.launching.launcher.BundleLauncherHelper.AdditionalPluginData;
 import org.eclipse.pde.internal.launching.launcher.LaunchValidationOperation;
 import org.eclipse.pde.internal.ui.*;
 import org.eclipse.pde.internal.ui.dialogs.FeatureSelectionDialog;
@@ -275,7 +280,8 @@ public class FeatureBlock {
 				Object[] models = dialog.getResult();
 				ArrayList<PluginLaunchModel> modelList = new ArrayList<>(models.length);
 				for (Object model : models) {
-					PluginLaunchModel pluginLaunchModel = new PluginLaunchModel((IPluginModelBase) model, IPDELauncherConstants.LOCATION_DEFAULT);
+					PluginLaunchModel pluginLaunchModel = new PluginLaunchModel((IPluginModelBase) model,
+							DEFAULT_PLUGIN_DATA, fTab::updateLaunchConfigurationDialog);
 					modelList.add(pluginLaunchModel);
 				}
 
@@ -618,13 +624,21 @@ public class FeatureBlock {
 		}
 	}
 
-	class PluginLaunchModel {
-		private IPluginModelBase fPluginModelBase;
+	static class PluginLaunchModel
+			implements StartLevelEditingSupport.IHasStartLevel, AutoStartEditingSupport.IHasAutoStart {
+		private final Runnable fPropertyChangedListener;
+		private final IPluginModelBase fPluginModelBase;
 		private String fPluginResolution;
+		private String fStartLevel;
+		private String fAutoStart;
 
-		public PluginLaunchModel(IPluginModelBase pluginModelBase, String pluginResolution) {
+		public PluginLaunchModel(IPluginModelBase pluginModelBase, AdditionalPluginData data,
+				Runnable propertyChangedListener) {
 			fPluginModelBase = pluginModelBase;
-			fPluginResolution = pluginResolution;
+			fPropertyChangedListener = propertyChangedListener;
+			fPluginResolution = data.fResolution;
+			fStartLevel = data.fStartLevel;
+			fAutoStart = data.fAutoStart;
 		}
 
 		public IPluginModelBase getPluginModelBase() {
@@ -639,12 +653,50 @@ public class FeatureBlock {
 			fPluginResolution = pluginResolution;
 		}
 
+		@Override
+		public String getStartLevel() {
+			return fStartLevel;
+		}
+
+		@Override
+		public void setStartLevel(String startLevel) {
+			requireNonNull(startLevel, "startLevel"); //$NON-NLS-1$
+			if (!Objects.equals(fStartLevel, startLevel)) {
+				fStartLevel = startLevel;
+				if (fPropertyChangedListener != null) {
+					fPropertyChangedListener.run();
+				}
+			}
+		}
+
+		@Override
+		public String getAutoStart() {
+			return fAutoStart;
+		}
+
+		@Override
+		public void setAutoStart(String autoStart) {
+			requireNonNull(autoStart, "autoStart"); //$NON-NLS-1$
+			if (!Objects.equals(fAutoStart, autoStart)) {
+				fAutoStart = autoStart;
+				if (fPropertyChangedListener != null) {
+					fPropertyChangedListener.run();
+				}
+			}
+		}
+
 		public String getPluginModelId() {
 			return fPluginModelBase.getPluginBase().getId();
 		}
 
 		public String getPluginModelVersion() {
 			return fPluginModelBase.getPluginBase().getVersion();
+		}
+
+		public String buildEntry(boolean isChecked) {
+			IPluginBase base = fPluginModelBase.getPluginBase();
+			return String.join(":", base.getId(), base.getVersion(), fPluginResolution, String.valueOf(isChecked), //$NON-NLS-1$
+					fStartLevel, fAutoStart);
 		}
 
 	}
@@ -738,9 +790,14 @@ public class FeatureBlock {
 
 	private static final int COLUMN_FEATURE_NAME = 0;
 	private static final int COLUMN_PLUGIN_RESOLUTION = 1;
+	private static final int COLUMN_START_LEVEL = 2;
+	private static final int COLUMN_AUTO_START = 3;
 
 	private static final String COLUMN_ID = "columnID"; //$NON-NLS-1$
 	private static final String PROPERTY_RESOLUTION = "resolution"; //$NON-NLS-1$
+
+	static final AdditionalPluginData DEFAULT_PLUGIN_DATA = new AdditionalPluginData(
+			IPDELauncherConstants.LOCATION_DEFAULT, true, null, null);
 
 	private Button fAddRequiredFeaturesButton;
 	private Button fDefaultsButton;
@@ -901,8 +958,21 @@ public class FeatureBlock {
 		column2.addSelectionListener(fListener);
 		column2.setData(COLUMN_ID, Integer.valueOf(COLUMN_PLUGIN_RESOLUTION));
 
-		fTree.getTree().setHeaderVisible(true);
 		fTree.setLabelProvider(new FeatureTreeLabelProvider());
+
+		TreeViewerColumn startLevelColumn = new TreeViewerColumn(fTree, SWT.CENTER, COLUMN_START_LEVEL);
+		startLevelColumn.getColumn().setText(PDEUIMessages.EquinoxPluginBlock_levelColumn);
+		startLevelColumn.getColumn().setWidth(100);
+		startLevelColumn.setEditingSupport(new StartLevelEditingSupport(fTree));
+		startLevelColumn.setLabelProvider(additionPluginLabelProvider(PluginLaunchModel::getStartLevel));
+
+		TreeViewerColumn autoStartColumn = new TreeViewerColumn(fTree, SWT.CENTER, COLUMN_AUTO_START);
+		autoStartColumn.getColumn().setText(PDEUIMessages.EquinoxPluginBlock_autoColumn);
+		autoStartColumn.getColumn().setWidth(100);
+		autoStartColumn.setEditingSupport(new AutoStartEditingSupport(fTree));
+		autoStartColumn.setLabelProvider(additionPluginLabelProvider(PluginLaunchModel::getAutoStart));
+
+		fTree.getTree().setHeaderVisible(true);
 		fTree.setContentProvider(new PluginContentProvider());
 		fTree.addCheckStateListener(event -> {
 			updateCounter();
@@ -914,15 +984,6 @@ public class FeatureBlock {
 		fTree.setCellEditors(new CellEditor[] {null, cellEditor});
 		fTree.setColumnProperties(new String[] {null, PROPERTY_RESOLUTION});
 		fTree.setCellModifier(new LocationCellModifier());
-		fTree.addDoubleClickListener(event -> {
-			ISelection selection = event.getSelection();
-			if (selection == null || !(selection instanceof IStructuredSelection)) {
-				return;
-			}
-			Object element = ((IStructuredSelection) selection).getFirstElement();
-			fTree.setChecked(element, !fTree.getChecked(element));
-			fTab.updateLaunchConfigurationDialog();
-		});
 		fTree.addSelectionChangedListener(event -> {
 			IStructuredSelection selection = (IStructuredSelection) fTree.getSelection();
 			boolean allPlugins = true;
@@ -934,6 +995,8 @@ public class FeatureBlock {
 			}
 			fRemovePluginButton.setEnabled(allPlugins);
 		});
+		fTree.addCheckStateListener(e -> fTree.update(e.getElement(), null));
+		
 		fTree.getTree().addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent e) {
@@ -964,6 +1027,20 @@ public class FeatureBlock {
 				}
 			}
 		});
+	}
+
+	private CellLabelProvider additionPluginLabelProvider(Function<PluginLaunchModel, String> labelProvider) {
+		return new CellLabelProvider() {
+			@Override
+			public void update(ViewerCell cell) {
+				Object element = cell.getElement();
+				if ((element instanceof PluginLaunchModel) && fTree.isCheckedLeafElement(element)) {
+					cell.setText(labelProvider.apply((PluginLaunchModel) element));
+				} else {
+					cell.setText(null);
+				}
+			}
+		};
 	}
 
 	private void createButtonContainer(Composite parent, int vOffset) {
@@ -1096,8 +1173,7 @@ public class FeatureBlock {
 				featuresEntry.add(buffer.toString());
 			} else if (model instanceof PluginLaunchModel) {
 				PluginLaunchModel pluginLaunchModel = (PluginLaunchModel) model;
-				String entry = BundleLauncherHelper.writeAdditionalPluginsEntry(pluginLaunchModel.getPluginModelBase(), pluginLaunchModel.getPluginResolution(), true);
-				pluginsEntry.add(entry);
+				pluginsEntry.add(pluginLaunchModel.buildEntry(true));
 				checkPluginLaunchModels.add(pluginLaunchModel);
 			}
 		}
@@ -1105,8 +1181,7 @@ public class FeatureBlock {
 		for (PluginLaunchModel uncheckedPluginLaunchModel : fAdditionalPlugins) {
 			if (checkPluginLaunchModels.contains(uncheckedPluginLaunchModel))
 				continue;
-			String entry = BundleLauncherHelper.writeAdditionalPluginsEntry(uncheckedPluginLaunchModel.getPluginModelBase(), uncheckedPluginLaunchModel.getPluginResolution(), false);
-			pluginsEntry.add(entry);
+			pluginsEntry.add(uncheckedPluginLaunchModel.buildEntry(false));
 		}
 		config.setAttribute(IPDELauncherConstants.SELECTED_FEATURES, featuresEntry);
 		config.setAttribute(IPDELauncherConstants.ADDITIONAL_PLUGINS, pluginsEntry);
@@ -1186,13 +1261,15 @@ public class FeatureBlock {
 		try {
 			fAdditionalPlugins = new ArrayList<>();
 			List<PluginLaunchModel> checkedAdditionalPlugins = new ArrayList<>();
-			HashMap<?, ?> allAdditionalMap = BundleLauncherHelper.getAdditionalPlugins(config, false);
-			HashMap<?, ?> checkedAdditionalMap = BundleLauncherHelper.getAdditionalPlugins(config, true);
-			for (Object name : allAdditionalMap.keySet()) {
-				IPluginModelBase model = (IPluginModelBase) name;
-				PluginLaunchModel launchModel = new PluginLaunchModel(model, (String) allAdditionalMap.get(model));
+			Map<IPluginModelBase, AdditionalPluginData> additionalMap = BundleLauncherHelper
+					.getAdditionalPlugins(config, false);
+			for (Entry<IPluginModelBase, AdditionalPluginData> additionalEntry : additionalMap.entrySet()) {
+				AdditionalPluginData data = additionalEntry.getValue();
+				PluginLaunchModel launchModel = new PluginLaunchModel(additionalEntry.getKey(), data,
+						fTab::updateLaunchConfigurationDialog);
 				fAdditionalPlugins.add(launchModel);
-				if (checkedAdditionalMap.containsKey(model)) {
+
+				if (data.fEnabled) {
 					checkedAdditionalPlugins.add(launchModel);
 				}
 			}

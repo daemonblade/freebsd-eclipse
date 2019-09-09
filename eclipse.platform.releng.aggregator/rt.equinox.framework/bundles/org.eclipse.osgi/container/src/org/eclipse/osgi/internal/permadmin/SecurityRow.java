@@ -162,7 +162,7 @@ public final class SecurityRow implements ConditionalPermissionInfo {
 		return result;
 	}
 
-	private static void escapeString(String str, StringBuffer output) {
+	private static void escapeString(String str, StringBuilder output) {
 		int len = str.length();
 		for (int i = 0; i < len; i++) {
 			char c = str.charAt(i);
@@ -186,7 +186,7 @@ public final class SecurityRow implements ConditionalPermissionInfo {
 	}
 
 	private static String unescapeString(String str) {
-		StringBuffer output = new StringBuffer(str.length());
+		StringBuilder output = new StringBuilder(str.length());
 		int end = str.length();
 		for (int i = 0; i < end; i++) {
 			char c = str.charAt(i);
@@ -427,28 +427,32 @@ public final class SecurityRow implements ConditionalPermissionInfo {
 
 	static int getHashCode(String name, ConditionInfo[] conds, PermissionInfo[] perms, String decision) {
 		int h = 31 * 17 + decision.hashCode();
-		for (int i = 0; i < conds.length; i++)
-			h = 31 * h + conds[i].hashCode();
-		for (int i = 0; i < perms.length; i++)
-			h = 31 * h + perms[i].hashCode();
+		for (ConditionInfo cond : conds) {
+			h = 31 * h + cond.hashCode();
+		}
+		for (PermissionInfo perm : perms) {
+			h = 31 * h + perm.hashCode();
+		}
 		if (name != null)
 			h = 31 * h + name.hashCode();
 		return h;
 	}
 
 	static String getEncoded(String name, ConditionInfo[] conditionInfos, PermissionInfo[] permissionInfos, boolean deny) {
-		StringBuffer result = new StringBuffer();
+		StringBuilder result = new StringBuilder();
 		if (deny)
 			result.append(ConditionalPermissionInfo.DENY);
 		else
 			result.append(ConditionalPermissionInfo.ALLOW);
 		result.append(" { "); //$NON-NLS-1$
 		if (conditionInfos != null)
-			for (int i = 0; i < conditionInfos.length; i++)
-				result.append(conditionInfos[i].getEncoded()).append(' ');
+			for (ConditionInfo conditionInfo : conditionInfos) {
+				result.append(conditionInfo.getEncoded()).append(' ');
+			}
 		if (permissionInfos != null)
-			for (int i = 0; i < permissionInfos.length; i++)
-				result.append(permissionInfos[i].getEncoded()).append(' ');
+			for (PermissionInfo permissionInfo : permissionInfos) {
+				result.append(permissionInfo.getEncoded()).append(' ');
+			}
 		result.append('}');
 		if (name != null) {
 			result.append(" \""); //$NON-NLS-1$

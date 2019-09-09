@@ -15,6 +15,7 @@ package org.eclipse.compare;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -466,8 +467,7 @@ public class EditionSelectionDialog extends ResizableDialog {
 			if (sco != null) {
 				Object[] children= sco.getChildren();
 				if (children != null)
-					for (int i= 0; i < children.length; i++)
-						current.add(children[i]);
+					Collections.addAll(current, children);
 			}
 
 			final IStructureCreator sc= structureCreator;
@@ -489,8 +489,8 @@ public class EditionSelectionDialog extends ResizableDialog {
 						if (sco2 != null) {
 							Object[] children= sco2.getChildren();
 							if (children != null) {
-								for (int i2= 0; i2 < children.length; i2++) {
-									ITypedElement child= (ITypedElement) children[i2];
+								for (Object c : children) {
+									ITypedElement child = (ITypedElement) c;
 									if (!current.contains(child))
 										sendPair(new Pair(sc, edition, child));
 								}
@@ -637,11 +637,11 @@ public class EditionSelectionDialog extends ResizableDialog {
 	}
 
 	private boolean hasDoubleQuotes(String string) {
-		return string.indexOf("''") != -1; //$NON-NLS-1$
+		return string.contains("''"); //$NON-NLS-1$
 	}
 
 	private boolean hasVariable(String string) {
-		return string.indexOf("{0}") != -1; //$NON-NLS-1$
+		return string.contains("{0}"); //$NON-NLS-1$
 	}
 
 	/**

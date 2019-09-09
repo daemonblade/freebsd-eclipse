@@ -325,16 +325,16 @@ public class LaunchConfigurationManager implements ILaunchListener, ISavePartici
 	 * @param newLaunch the newly added launch to leave in the view
 	 */
 	protected void removeTerminatedLaunches(ILaunch newLaunch) {
-	    if (DebugUIPlugin.getDefault().getPreferenceStore().getBoolean(IDebugUIConstants.PREF_AUTO_REMOVE_OLD_LAUNCHES)) {
-	        ILaunchManager lManager= DebugPlugin.getDefault().getLaunchManager();
-	        Object[] launches= lManager.getLaunches();
-	        for (int i= 0; i < launches.length; i++) {
-	            ILaunch launch= (ILaunch)launches[i];
-	            if (launch != newLaunch && launch.isTerminated()) {
-	                lManager.removeLaunch(launch);
-	            }
-	        }
-	    }
+		if (DebugUIPlugin.getDefault().getPreferenceStore().getBoolean(IDebugUIConstants.PREF_AUTO_REMOVE_OLD_LAUNCHES)) {
+			ILaunchManager lManager= DebugPlugin.getDefault().getLaunchManager();
+			Object[] launches= lManager.getLaunches();
+			for (int i= 0; i < launches.length; i++) {
+				ILaunch launch= (ILaunch)launches[i];
+				if (launch != newLaunch && launch.isTerminated()) {
+					lManager.removeLaunch(launch);
+				}
+			}
+		}
 	}
 
 	/**
@@ -778,9 +778,7 @@ public class LaunchConfigurationManager implements ILaunchListener, ISavePartici
 				}
 				//copy into collection for hashcode matching
 				HashSet<String> typeset = new HashSet<>(ctypes.length);
-				for(int i = 0; i < ctypes.length; i++) {
-					typeset.add(ctypes[i]);
-				}
+				Collections.addAll(typeset, ctypes);
 				ILaunchConfiguration[] configurations = filterConfigs(getLaunchManager().getLaunchConfigurations());
 				ILaunchConfiguration configuration = null;
 				IResource[] resrcs = null;
@@ -1126,7 +1124,7 @@ public class LaunchConfigurationManager implements ILaunchListener, ISavePartici
 	 * @since 3.4.0
 	 */
 	public ILaunchGroup getLaunchGroup(ILaunchConfigurationType type, Set<String> modeset) {
-		StringBuffer buff = new StringBuffer();
+		StringBuilder buff = new StringBuilder();
 		for (Iterator<String> iter = modeset.iterator(); iter.hasNext();) {
 			buff.append(iter.next());
 			if (iter.hasNext()) {

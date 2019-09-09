@@ -220,8 +220,7 @@ public class OrganizeManifest implements IOrganizeManifestsSettings {
 				ArrayList<String> usedkeys = new ArrayList<>();
 				findTranslatedStrings(project, modelBase, bundle, usedkeys);
 
-				for (int i = 0; i < usedkeys.size(); i++)
-					allKeys.remove(usedkeys.get(i));
+				allKeys.removeAll(usedkeys);
 
 				if (allKeys.isEmpty())
 					return;
@@ -240,7 +239,7 @@ public class OrganizeManifest implements IOrganizeManifestsSettings {
 					// allKeys must NOT have any duplicates
 					for (int j = 0; j < allKeys.size(); j++) {
 						String akey = '%' + allKeys.get(j) + '%';
-						if (entry.indexOf(akey) != -1)
+						if (entry.contains(akey))
 							allKeys.remove(allKeys.get(j--));
 						if (allKeys.isEmpty())
 							return;

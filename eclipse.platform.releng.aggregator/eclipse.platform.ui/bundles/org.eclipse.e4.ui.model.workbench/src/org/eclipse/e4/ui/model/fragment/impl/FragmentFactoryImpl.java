@@ -92,8 +92,7 @@ public class FragmentFactoryImpl extends EFactoryImpl implements MFragmentFactor
 	 */
 	@Override
 	public MModelFragments createModelFragments() {
-		ModelFragmentsImpl modelFragments = new ModelFragmentsImpl();
-		return modelFragments;
+		return new ModelFragmentsImpl();
 	}
 
 	/**
@@ -104,8 +103,7 @@ public class FragmentFactoryImpl extends EFactoryImpl implements MFragmentFactor
 	 */
 	@Override
 	public MStringModelFragment createStringModelFragment() {
-		StringModelFragmentImpl stringModelFragment = new StringModelFragmentImpl();
-		return stringModelFragment;
+		return new StringModelFragmentImpl();
 	}
 
 	/**
@@ -115,17 +113,6 @@ public class FragmentFactoryImpl extends EFactoryImpl implements MFragmentFactor
 	 */
 	public FragmentPackageImpl getFragmentPackage() {
 		return (FragmentPackageImpl) getEPackage();
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @deprecated
-	 * @generated
-	 */
-	@Deprecated
-	public static FragmentPackageImpl getPackage() {
-		return FragmentPackageImpl.eINSTANCE;
 	}
 
 } //FragmentFactoryImpl

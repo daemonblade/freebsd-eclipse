@@ -58,7 +58,7 @@ public class ValueComputation extends Computation {
 		if (cachedValue != NotAValue)
 			return cachedValue;
 		if (this.computing)
-			throw new RuntimeException("Cycle while computing value " + this.toString()); //$NON-NLS-1$
+			throw new RuntimeException("Cycle while computing value " + this); //$NON-NLS-1$
 
 		originatingContext.pushComputation(this);
 		computing = true;
@@ -84,8 +84,7 @@ public class ValueComputation extends Computation {
 		int result = 1;
 		result = prime * result + Objects.hashCode(function);
 		result = prime * result + Objects.hashCode(name);
-		result = prime * result + Objects.hashCode(originatingContext);
-		return result;
+		return prime * result + Objects.hashCode(originatingContext);
 	}
 
 	@Override

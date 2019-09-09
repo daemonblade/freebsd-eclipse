@@ -11,13 +11,17 @@
   <parent>
     <artifactId>eclipse.platform.resources</artifactId>
     <groupId>eclipse.platform.resources</groupId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.core</groupId>
   <artifactId>org.eclipse.core.resources.win32.x86_64</artifactId>
-  <version>3.5.300-SNAPSHOT</version>
+  <version>3.5.400-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
+
+  <properties>
+    <skipAPIAnalysis>true</skipAPIAnalysis>
+  </properties>
 
   <build>
     <plugins>

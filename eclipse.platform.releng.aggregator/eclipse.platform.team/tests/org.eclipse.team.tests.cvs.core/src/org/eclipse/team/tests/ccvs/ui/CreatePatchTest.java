@@ -81,11 +81,13 @@ public class CreatePatchTest extends EclipseTest {
 		return suite(CreatePatchTest.class);
 	}
 
+	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		testProject = createProject("ApplyPatchTest", new String[] {});
 	}
 
+	@Override
 	protected void tearDown() throws Exception {
 		super.tearDown();
 		testProject.delete(true, null);
@@ -216,7 +218,7 @@ public class CreatePatchTest extends EclipseTest {
 		BufferedReader reader = new BufferedReader(
 				new InputStreamReader(stream));
 		String line = null;
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		try {
 			while ((line = reader.readLine()) != null) {
 				boolean ignore = false;
@@ -301,6 +303,7 @@ public class CreatePatchTest extends EclipseTest {
 							asInputStream("server_response_with_error.txt")));
 
 
+			@Override
 			public String readLine() throws CVSException {
 				try {
 					return serverResp.readLine();
@@ -310,6 +313,7 @@ public class CreatePatchTest extends EclipseTest {
 				}
 			}
 
+			@Override
 			public void close() {
 				try {
 					super.close();
@@ -343,8 +347,8 @@ public class CreatePatchTest extends EclipseTest {
 					children.length > 0);
 			
 			boolean errorLineOccurred = false;
-			for (int i = 0; i < children.length; i++) {
-				if (children[i].getCode() == CVSStatus.ERROR_LINE) {
+			for (IStatus child : children) {
+				if (child.getCode() == CVSStatus.ERROR_LINE) {
 					errorLineOccurred = true;
 					break;
 				}

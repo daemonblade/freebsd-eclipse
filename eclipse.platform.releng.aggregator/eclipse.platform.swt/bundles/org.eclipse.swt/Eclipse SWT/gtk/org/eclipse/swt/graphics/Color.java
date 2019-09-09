@@ -230,9 +230,11 @@ public boolean equals(Object object) {
 	Color color = (Color)object;
 	GdkRGBA gdkRGBA = color.handle;
 	if (handle == gdkRGBA) return true;
-	return device == color.device && Double.compare(handle.red, gdkRGBA.red) == 0 &&
-			Double.compare(handle.green, gdkRGBA.green) == 0 && Double.compare(handle.blue, gdkRGBA.blue) == 0 &&
-			Double.compare(handle.alpha, gdkRGBA.alpha) == 0;
+	if (this.getRed() != color.getRed()) return false;
+	if (this.getGreen() != color.getGreen()) return false;
+	if (this.getBlue() != color.getBlue()) return false;
+	if (this.getAlpha() != color.getAlpha()) return false;
+	return device == color.device;
 }
 
 /**
@@ -261,7 +263,12 @@ public int getAlpha() {
  */
 public int getBlue() {
 	if (isDisposed()) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
-	return (int) (handle.blue * 255) & 0xFF;
+	/*
+	 * Conversion formula comes from Cairo's _cairo_color_double_to_short()
+	 * and color_to_pixel() functions. See bug 549181 and 549101 for more info.
+	 */
+	int b = (((int)(handle.blue * 65535.0 + 0.5)) >> 8);
+	return Math.min(b, 255);
 }
 
 /**
@@ -275,7 +282,12 @@ public int getBlue() {
  */
 public int getGreen() {
 	if (isDisposed()) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
-	return (int) (handle.green * 255) & 0xFF;
+	/*
+	 * Conversion formula comes from Cairo's _cairo_color_double_to_short()
+	 * and color_to_pixel() functions. See bug 549181 and 549101 for more info.
+	 */
+	int g = (((int)(handle.green * 65535.0 + 0.5)) >> 8);
+	return Math.min(g, 255);
 }
 
 /**
@@ -289,7 +301,12 @@ public int getGreen() {
  */
 public int getRed() {
 	if (isDisposed()) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
-	return (int) (handle.red * 255) & 0xFF;
+	/*
+	 * Conversion formula comes from Cairo's _cairo_color_double_to_short()
+	 * and color_to_pixel() functions. See bug 549181 and 549101 for more info.
+	 */
+	int r = (((int)(handle.red * 65535.0 + 0.5)) >> 8);
+	return Math.min(r, 255);
 }
 
 /**
@@ -305,8 +322,7 @@ public int getRed() {
 @Override
 public int hashCode() {
 	if (isDisposed()) return 0;
-	return Double.hashCode(handle.red) ^ Double.hashCode(handle.green) ^ Double.hashCode(handle.blue)
-			^ Double.hashCode(handle.alpha);
+	return (((this.getAlpha() * 31) + this.getGreen()) * 31 + this.getBlue()) * 31 + this.getRed();
 }
 
 /**

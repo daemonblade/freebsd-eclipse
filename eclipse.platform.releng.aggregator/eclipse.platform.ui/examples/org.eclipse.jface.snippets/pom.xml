@@ -14,7 +14,7 @@
   <parent>
     <artifactId>eclipse.platform.ui</artifactId>
     <groupId>eclipse.platform.ui</groupId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.jface</groupId>
@@ -24,6 +24,7 @@
 
   <properties>
     <code.ignoredWarnings>-warn:-deprecation,raw,unchecked</code.ignoredWarnings>
+    <skipAPIAnalysis>true</skipAPIAnalysis> <!-- Not in baseline -->
   </properties>	
 
 </project>

@@ -67,7 +67,7 @@ public final class BasicWorkingSetElementAdapter implements IWorkingSetElementAd
 
 	private Type[] preferredTypes = new Type[0];
 
-	private ServiceTracker packageTracker;
+	private ServiceTracker<?, ?> packageTracker;
 
 	/**
 	 * When invoked this method will iterate over all classes specified as
@@ -91,14 +91,14 @@ public final class BasicWorkingSetElementAdapter implements IWorkingSetElementAd
 	 */
 	@Override
 	public IAdaptable[] adaptElements(IWorkingSet ws, IAdaptable[] elements) {
-		List adaptedElements = new ArrayList();
+		List<IAdaptable> adaptedElements = new ArrayList<>();
 		for (IAdaptable element : elements) {
 			IAdaptable adaptable = adapt(element);
 			if (adaptable != null)
 				adaptedElements.add(adaptable);
 		}
 
-		return (IAdaptable[]) adaptedElements.toArray(new IAdaptable[adaptedElements.size()]);
+		return adaptedElements.toArray(new IAdaptable[adaptedElements.size()]);
 	}
 
 	/**
@@ -128,8 +128,8 @@ public final class BasicWorkingSetElementAdapter implements IWorkingSetElementAd
 	 */
 	private IAdaptable adapt(Type type, IAdaptable adaptable) {
 		IAdapterManager adapterManager = Platform.getAdapterManager();
-		Class[] directClasses = adapterManager.computeClassOrder(adaptable.getClass());
-		for (Class clazz : directClasses) {
+		Class<?>[] directClasses = adapterManager.computeClassOrder(adaptable.getClass());
+		for (Class<?> clazz : directClasses) {
 			if (clazz.getName().equals(type.className))
 				return adaptable;
 		}
@@ -180,20 +180,20 @@ public final class BasicWorkingSetElementAdapter implements IWorkingSetElementAd
 	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) {
 
 		if (data instanceof String) {
-			List preferredTypes = new ArrayList(0);
+			List<Type> preferredTypes = new ArrayList<>(0);
 			for (StringTokenizer toker = new StringTokenizer((String) data, ","); toker.hasMoreTokens();) {//$NON-NLS-1$
 				String classNameAndOptions = toker.nextToken();
 				Type record = new Type();
 				parseOptions(classNameAndOptions, record);
 				preferredTypes.add(record);
 			}
-			this.preferredTypes = (Type[]) preferredTypes.toArray(new Type[preferredTypes.size()]);
+			this.preferredTypes = preferredTypes.toArray(new Type[preferredTypes.size()]);
 		}
 	}
 
 	/**
 	 * Parse classname/option strings in the form:<br/>
-	 * <code>some.package.Class[:option1=value1][:option2=value2]...
+	 * <code>some.package.Class[:option1=value1][:option2=value2]...</code>
 	 *
 	 * @param classNameAndOptions the class name and possibly options to parse
 	 * @param record              the record to fill
@@ -224,7 +224,7 @@ public final class BasicWorkingSetElementAdapter implements IWorkingSetElementAd
 	 */
 	private PackageAdmin getPackageAdmin() {
 		if (packageTracker == null) {
-			packageTracker = new ServiceTracker(WorkbenchPlugin.getDefault().getBundleContext(),
+			packageTracker = new ServiceTracker<>(WorkbenchPlugin.getDefault().getBundleContext(),
 					PackageAdmin.class.getName(), null);
 			packageTracker.open();
 		}

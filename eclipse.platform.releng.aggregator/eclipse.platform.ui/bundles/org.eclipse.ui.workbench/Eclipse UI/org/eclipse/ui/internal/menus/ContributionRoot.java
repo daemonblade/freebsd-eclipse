@@ -35,13 +35,13 @@ import org.eclipse.ui.menus.IMenuService;
  */
 final class ContributionRoot implements IContributionRoot {
 
-	private List topLevelItems = new ArrayList();
+	private List<IContributionItem> topLevelItems = new ArrayList<>();
 	private Map<IContributionItem, Expression> itemsToExpressions = new HashMap<>();
-	Set restriction;
+	Set<?> restriction;
 	private ContributionManager mgr;
 	private AbstractContributionFactory factory;
 
-	public ContributionRoot(IMenuService menuService, Set restriction, ContributionManager mgr,
+	public ContributionRoot(IMenuService menuService, Set<?> restriction, ContributionManager mgr,
 			AbstractContributionFactory factory) {
 		this.restriction = restriction;
 		this.mgr = mgr;
@@ -69,15 +69,15 @@ final class ContributionRoot implements IContributionRoot {
 	 */
 	String createIdentifierId(IContributionItem item) {
 		String namespace = factory.getNamespace();
-		String identifierID = namespace != null ? namespace + '/' + item.getId() : null; // create the activity
+		
 																							// identifier ID. If
 																							// this factory doesn't have
 																							// a namespace
 																							// it will be null.
-		return identifierID;
+		return namespace != null ? namespace + '/' + item.getId() : null;
 	}
 
-	public List getItems() {
+	public List<IContributionItem> getItems() {
 		return topLevelItems;
 	}
 

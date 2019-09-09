@@ -345,6 +345,17 @@ public final class IOConsoleTestUtil {
 	}
 
 	/**
+	 * Set caret to offset relative to start of current line.
+	 *
+	 * @param offset relative offset to line start
+	 * @return this {@link IOConsoleTestUtil} to chain methods
+	 */
+	public IOConsoleTestUtil setCaretLineRelative(int offset) {
+		moveCaretToLineStart().moveCaret(offset);
+		return this;
+	}
+
+	/**
 	 * Move caret by given amount forth or back.
 	 *
 	 * @param amount steps to set caret forth (positive value) or back (negative
@@ -548,34 +559,32 @@ public final class IOConsoleTestUtil {
 				lastPartition = partition;
 			}
 		}
-		{
-			int pos = offset;
-			int end = offset + length;
-			ITypedRegion lastPartition = null;
-			String partitionType = expectedType;
-			while (pos < end) {
-				final ITypedRegion partition = getPartitioner().getPartition(pos);
-				if (partition == null) {
-					TestCase.assertTrue("Did not expect 'null' partition.", allowGaps);
-					pos++;
-					continue;
-				}
-				TestCase.assertNotSame("Got same partition again.", lastPartition, partition);
-				TestCase.assertFalse("Did not expected and cannot handle empty partition.", partition.getLength() == 0);
-				TestCase.assertTrue("Got not the requested partition.", partition.getOffset() <= pos && partition.getOffset() + partition.getLength() > pos);
-				TestCase.assertTrue("Not a valid partition type.", validPartionTypes.contains(partition.getType()));
-				lastPartition = partition;
-				if (partitionType != null && !partitionType.equals(partition.getType())) {
-					TestCase.assertTrue("Wrong partition type.", allowMixedTypes);
-					pos += partition.getLength();
-					end += partition.getLength();
-					continue;
-				}
-				if (partitionType == null && !allowMixedTypes) {
-					partitionType = partition.getType();
-				}
-				pos = partition.getOffset() + partition.getLength();
+		int pos = offset;
+		int end = offset + length;
+		ITypedRegion lastPartition = null;
+		String partitionType = expectedType;
+		while (pos < end) {
+			final ITypedRegion partition = getPartitioner().getPartition(pos);
+			if (partition == null) {
+				TestCase.assertTrue("Did not expect 'null' partition.", allowGaps);
+				pos++;
+				continue;
 			}
+			TestCase.assertNotSame("Got same partition again.", lastPartition, partition);
+			TestCase.assertFalse("Did not expected and cannot handle empty partition.", partition.getLength() == 0);
+			TestCase.assertTrue("Got not the requested partition.", partition.getOffset() <= pos && partition.getOffset() + partition.getLength() > pos);
+			TestCase.assertTrue("Not a valid partition type.", validPartionTypes.contains(partition.getType()));
+			lastPartition = partition;
+			if (partitionType != null && !partitionType.equals(partition.getType())) {
+				TestCase.assertTrue("Wrong partition type.", allowMixedTypes);
+				pos += partition.getLength();
+				end += partition.getLength();
+				continue;
+			}
+			if (partitionType == null && !allowMixedTypes) {
+				partitionType = partition.getType();
+			}
+			pos = partition.getOffset() + partition.getLength();
 		}
 		return this;
 	}

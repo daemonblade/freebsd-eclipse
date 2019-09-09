@@ -980,7 +980,7 @@ public class ProgressManager extends ProgressProvider implements IProgressServic
 
 	@Override
 	public void registerIconForFamily(ImageDescriptor icon, Object family) {
-		String key = IMAGE_KEY + String.valueOf(imageKeyTable.size());
+		String key = IMAGE_KEY + imageKeyTable.size();
 		imageKeyTable.put(family, key);
 		ImageRegistry registry = JFaceResources.getImageRegistry();
 
@@ -1013,9 +1013,9 @@ public class ProgressManager extends ProgressProvider implements IProgressServic
 		IWorkbench workbench = PlatformUI.getWorkbench();
 		Shell[] shells = workbench.getDisplay().getShells();
 		if (active) {
-			for (int i = 0; i < shells.length; i++) {
-				if (!shells[i].isDisposed()) {
-					shells[i].setEnabled(active);
+			for (Shell shell : shells) {
+				if (!shell.isDisposed()) {
+					shell.setEnabled(active);
 				}
 			}
 		} else {
@@ -1080,11 +1080,7 @@ public class ProgressManager extends ProgressProvider implements IProgressServic
 			try {
 				manager.beginRule(rule, getEventLoopMonitor());
 				context.run(false, false, runnable);
-			} catch (InvocationTargetException e) {
-				status = new Status(IStatus.ERROR, PlatformUI.PLUGIN_ID, e.getMessage(), e);
-			} catch (InterruptedException e) {
-				status = new Status(IStatus.ERROR, PlatformUI.PLUGIN_ID, e.getMessage(), e);
-			} catch (OperationCanceledException e) {
+			} catch (InvocationTargetException | InterruptedException | OperationCanceledException e) {
 				status = new Status(IStatus.ERROR, PlatformUI.PLUGIN_ID, e.getMessage(), e);
 			} finally {
 				manager.endRule(rule);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2015 IBM Corporation and others.
+ * Copyright (c) 2004, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,7 @@
  *     Chris Longfield <clongfield@internap.com> - Fix for Bug 70856
  *     Tom Schindl - fix for bug 157309
  *     Brad Reynolds - bug 141435
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - Bug 548314
  *******************************************************************************/
 
 package org.eclipse.jface.viewers;
@@ -39,7 +40,7 @@ public abstract class AbstractListViewer extends StructuredViewer {
 	/**
 	 * A list of viewer elements (element type: <code>Object</code>).
 	 */
-	private java.util.List listMap = new ArrayList();
+	private List<Object> listMap = new ArrayList<>();
 
 	/**
 	 * Adds the given string to the underlying widget at the given index
@@ -132,7 +133,7 @@ public abstract class AbstractListViewer extends StructuredViewer {
 	 *
 	 * @param elements the elements to add
 	 */
-	public void add(Object[] elements) {
+	public void add(Object... elements) {
 		assertElementsNotNull(elements);
 		Object[] filtered = filter(elements);
 		ILabelProvider labelProvider = (ILabelProvider) getLabelProvider();
@@ -265,10 +266,11 @@ public abstract class AbstractListViewer extends StructuredViewer {
 		return super.getLabelProvider();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	protected List getSelectionFromWidget() {
 		int[] ixs = listGetSelectionIndices();
-		ArrayList list = new ArrayList(ixs.length);
+		List<Object> list = new ArrayList<>(ixs.length);
 		for (int ix : ixs) {
 			Object e = getElementAt(ix);
 			if (e != null) {
@@ -340,7 +342,7 @@ public abstract class AbstractListViewer extends StructuredViewer {
 				listMap.clear();
 			}
 			unmapAllElements();
-			List selection = getSelectionFromWidget();
+			List<?> selection = getSelectionFromWidget();
 
 			int topIndex = -1;
 			if (selection == null || selection.isEmpty()) {
@@ -434,7 +436,7 @@ public abstract class AbstractListViewer extends StructuredViewer {
 	 *
 	 * @param elements the elements to remove
 	 */
-	public void remove(final Object[] elements) {
+	public void remove(final Object... elements) {
 		assertElementsNotNull(elements);
 		if (elements.length == 0) {
 			return;
@@ -474,7 +476,7 @@ public abstract class AbstractListViewer extends StructuredViewer {
 	}
 
 	@Override
-	protected void setSelectionToWidget(List in, boolean reveal) {
+	protected void setSelectionToWidget(@SuppressWarnings("rawtypes") List in, boolean reveal) {
 		if (in == null || in.isEmpty()) { // clear selection
 			listDeselectAll();
 		} else {

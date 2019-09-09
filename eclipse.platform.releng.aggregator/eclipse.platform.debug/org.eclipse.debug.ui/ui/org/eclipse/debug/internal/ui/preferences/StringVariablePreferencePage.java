@@ -320,14 +320,15 @@ public class StringVariablePreferencePage extends PreferencePage implements IWor
 								IDialogConstants.NO_LABEL,
 								IDialogConstants.CANCEL_LABEL }, 0);
 						int overWrite= dialog.open();
-						if (overWrite == 0) {
+						switch (overWrite) {
+						case 0:
 							currentVariable.setValue(value);
 							currentVariable.setDescription(description);
 							variableTable.update(currentVariable, null);
 							return true;
-						} else if(overWrite == 1){
+						case 1:
 							return false;
-						} else {
+						default:
 							return true;  // Cancel was pressed, return true so operation is ended
 						}
 					}
@@ -372,7 +373,7 @@ public class StringVariablePreferencePage extends PreferencePage implements IWor
 	private void handleRemoveButtonPressed() {
 		IStructuredSelection selection = variableTable.getStructuredSelection();
 		List<VariableWrapper> variablesToRemove = selection.toList();
-		StringBuffer contributedVariablesToRemove= new StringBuffer();
+		StringBuilder contributedVariablesToRemove= new StringBuilder();
 		Iterator<VariableWrapper> iter = variablesToRemove.iterator();
 		while (iter.hasNext()) {
 			VariableWrapper variable = iter.next();
@@ -444,7 +445,7 @@ public class StringVariablePreferencePage extends PreferencePage implements IWor
 	}
 
 	public void saveColumnWidths() {
-		StringBuffer widthPreference = new StringBuffer();
+		StringBuilder widthPreference = new StringBuilder();
 		for (int i = 0; i < variableTable.getTable().getColumnCount(); i++) {
 			widthPreference.append(variableTable.getTable().getColumn(i).getWidth());
 			widthPreference.append(',');
@@ -467,7 +468,7 @@ public class StringVariablePreferencePage extends PreferencePage implements IWor
 			} catch (NumberFormatException e){
 				DebugUIPlugin.log(new Throwable("Problem loading persisted column sizes for StringVariablePreferencesPage",e)); //$NON-NLS-1$
 			}
-        }
+		}
 		return true;
 	}
 
@@ -674,12 +675,13 @@ public class StringVariablePreferencePage extends PreferencePage implements IWor
 				VariableWrapper variable= (VariableWrapper) element;
 				switch (columnIndex) {
 					case 0 :
-						StringBuffer name = new StringBuffer();
+						StringBuilder name = new StringBuilder();
 						name.append(variable.getName());
 						if (variable.isReadOnly()){
 							name.append(DebugPreferencesMessages.StringVariablePreferencePage_26);
 						}
 						return name.toString();
+
 					case 1:
 						String value= variable.getValue();
 						if (value == null) {
@@ -695,12 +697,12 @@ public class StringVariablePreferencePage extends PreferencePage implements IWor
 					case 3:
 						String contribution = IInternalDebugCoreConstants.EMPTY_STRING;
 						if (variable.isContributed()) {
-                            String pluginId = getVariableManager().getContributingPluginId(variable.getUnderlyingVariable());
-                            if (pluginId != null) {
-                                contribution = pluginId;
-                            } else {
-                                contribution = DebugPreferencesMessages.SimpleLaunchVariablePreferencePage_23;
-                            }
+							String pluginId = getVariableManager().getContributingPluginId(variable.getUnderlyingVariable());
+							if (pluginId != null) {
+								contribution = pluginId;
+							} else {
+								contribution = DebugPreferencesMessages.SimpleLaunchVariablePreferencePage_23;
+							}
 						}
 						return contribution;
 					default:

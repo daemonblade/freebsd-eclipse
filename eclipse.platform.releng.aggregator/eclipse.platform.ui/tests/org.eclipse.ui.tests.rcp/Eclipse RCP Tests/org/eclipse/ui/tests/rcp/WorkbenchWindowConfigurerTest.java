@@ -186,14 +186,14 @@ public class WorkbenchWindowConfigurerTest {
 	// tests to ensure that all WorkbenchAdvisor API is called from the UI thread.
 	@Test
 	public void testThreading() {
-		final ArrayList<String> results = new ArrayList<String>();
+		final ArrayList<String> results = new ArrayList<>();
 
 		WorkbenchAdvisor advisor = new RCPTestWorkbenchAdvisor(1) {
 
 			@Override
 			public WorkbenchWindowAdvisor createWorkbenchWindowAdvisor(
 					IWorkbenchWindowConfigurer configurer) {
-				WorkbenchWindowAdvisor advisor = new WorkbenchWindowAdvisor(configurer) {
+				return new WorkbenchWindowAdvisor(configurer) {
 
 					private void ensureThread() {
 						if (Display.getCurrent() != null) {
@@ -211,7 +211,7 @@ public class WorkbenchWindowConfigurerTest {
 							IActionBarConfigurer configurer) {
 						ensureThread();
 
-						ActionBarAdvisor advisor = new ActionBarAdvisor(configurer) {
+						return new ActionBarAdvisor(configurer) {
 
 							@Override
 							public void dispose() {
@@ -297,7 +297,6 @@ public class WorkbenchWindowConfigurerTest {
 								ensureThread();
 								return super.saveState(memento);
 							}};
-						return advisor;
 					}
 
 					@Override
@@ -381,7 +380,6 @@ public class WorkbenchWindowConfigurerTest {
 					}
 
 				};
-				return advisor;
 			}
 		};
 

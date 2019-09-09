@@ -18,13 +18,14 @@ package org.eclipse.ui.internal.dialogs;
 import static org.eclipse.swt.events.SelectionListener.widgetSelectedAdapter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.widgets.WidgetFactory;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
@@ -87,9 +88,7 @@ public abstract class AbstractWorkingSetDialog extends SelectionDialog implement
 		super(parentShell);
 		if (workingSetIds != null) {
 			this.workingSetIds = new HashSet<>();
-			for (String workingSetId : workingSetIds) {
-				this.workingSetIds.add(workingSetId);
-			}
+			this.workingSetIds.addAll(Arrays.asList(workingSetIds));
 		}
 		this.canEdit = canEdit;
 	}
@@ -109,14 +108,12 @@ public abstract class AbstractWorkingSetDialog extends SelectionDialog implement
 	 * @param composite Composite to add the buttons to
 	 */
 	protected void addModifyButtons(Composite composite) {
-		Composite buttonComposite = new Composite(composite, SWT.RIGHT);
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = layout.marginWidth = 0;
 		layout.verticalSpacing = convertVerticalDLUsToPixels(IDialogConstants.VERTICAL_SPACING);
-		buttonComposite.setLayout(layout);
 		GridData data = new GridData(GridData.VERTICAL_ALIGN_BEGINNING | GridData.GRAB_VERTICAL);
-		buttonComposite.setLayoutData(data);
-
+		Composite buttonComposite = WidgetFactory.composite(SWT.RIGHT).layout(layout).layoutData(data)
+				.create(composite);
 		newButton = createButton(buttonComposite, ID_NEW, WorkbenchMessages.WorkingSetSelectionDialog_newButton_label,
 				false);
 		newButton.addSelectionListener(widgetSelectedAdapter(e -> createWorkingSet()));
@@ -144,13 +141,12 @@ public abstract class AbstractWorkingSetDialog extends SelectionDialog implement
 	 * @param composite Composite to add the buttons to
 	 */
 	protected void addSelectionButtons(Composite composite) {
-		Composite buttonComposite = new Composite(composite, SWT.NONE);
 		GridLayout layout = new GridLayout(2, false);
 		layout.marginHeight = layout.marginWidth = 0;
 		layout.horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
-		buttonComposite.setLayout(layout);
-		GridData data = new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING);
-		buttonComposite.setLayoutData(data);
+
+		Composite buttonComposite = WidgetFactory.composite(SWT.NONE).layout(layout)
+				.layoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING)).create(composite);
 
 		selectAllButton = createButton(buttonComposite, ID_SELECTALL, WorkbenchMessages.SelectionDialog_selectLabel,
 				false);
@@ -371,9 +367,7 @@ public abstract class AbstractWorkingSetDialog extends SelectionDialog implement
 	 */
 	protected void removeSelectedWorkingSets(List<IWorkingSet> selection) {
 		IWorkingSetManager manager = WorkbenchPlugin.getDefault().getWorkingSetManager();
-		Iterator iter = selection.iterator();
-		while (iter.hasNext()) {
-			IWorkingSet workingSet = (IWorkingSet) iter.next();
+		for (IWorkingSet workingSet : selection) {
 			if (getAddedWorkingSets().contains(workingSet)) {
 				getAddedWorkingSets().remove(workingSet);
 			} else {

@@ -159,7 +159,7 @@ public class WordMergeViewer extends AbstractMergeViewer implements IFlushable, 
 			String dPath;
 			String ePath;
 			
-			if (relPath.indexOf("/") >= 0) { //$NON-NLS-1$
+			if (relPath.contains("/")) { //$NON-NLS-1$
 				String path= relPath.substring(1);
 				dPath= 'd' + path;
 				ePath= 'e' + path;
@@ -438,8 +438,8 @@ public class WordMergeViewer extends AbstractMergeViewer implements IFlushable, 
 	private void firePropertyChange(String property, Object oldValue, Object newValue) {
 		Object[] allListeners = listeners.getListeners();
 		final PropertyChangeEvent event = new PropertyChangeEvent(this, property, oldValue, newValue);
-		for (int i = 0; i < allListeners.length; i++) {
-			final IPropertyChangeListener listener = (IPropertyChangeListener)allListeners[i];
+		for (Object allListener : allListeners) {
+			final IPropertyChangeListener listener = (IPropertyChangeListener) allListener;
 			SafeRunner.run(new SafeRunnable() {
 				public void run() throws Exception {
 					listener.propertyChange(event);

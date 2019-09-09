@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -48,7 +48,6 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
-import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
@@ -291,8 +290,8 @@ public class LaunchConfiguration extends PlatformObject implements ILaunchConfig
 			if (object instanceof LaunchConfiguration) {
 				LaunchConfiguration otherConfig = (LaunchConfiguration) object;
 				return getName().equals(otherConfig.getName())
-				 	 && getType().equals(otherConfig.getType())
-				 	 && equalOrNull(getContainer(), otherConfig.getContainer())
+					 && getType().equals(otherConfig.getType())
+					 && equalOrNull(getContainer(), otherConfig.getContainer())
 					 && getInfo().equals(otherConfig.getInfo());
 			}
 			return false;
@@ -538,7 +537,7 @@ public class LaunchConfiguration extends PlatformObject implements ILaunchConfig
 	@Override
 	public IResource[] getMappedResources() throws CoreException {
 		List<String> paths = getAttribute(ATTR_MAPPED_RESOURCE_PATHS, (List<String>) null);
-		if (paths == null || paths.size() == 0) {
+		if (paths == null || paths.isEmpty()) {
 			return null;
 		}
 		List<String> types = getAttribute(ATTR_MAPPED_RESOURCE_TYPES, (List<String>) null);
@@ -717,68 +716,75 @@ public class LaunchConfiguration extends PlatformObject implements ILaunchConfig
 
 	@Override
 	public ILaunch launch(String mode, IProgressMonitor monitor, boolean build) throws CoreException {
-	    return launch(mode, monitor, build, true);
+		return launch(mode, monitor, build, true);
 	}
 
-    @Override
+	@Override
 	public ILaunch launch(String mode, IProgressMonitor monitor, boolean build, boolean register) throws CoreException {
-    	/* Setup progress monitor
-    	 * - Prepare delegate (0)
-    	 * - Pre-launch check (1)
-    	 * - [Build before launch (7)]					if build
-    	 * - [Incremental build before launch (3)]		if build
-    	 * - Final launch validation (1)
-    	 * - Initialize source locator (1)
-    	 * - Launch delegate (10) */
-		SubMonitor lmonitor = SubMonitor.convert(monitor, DebugCoreMessages.LaunchConfiguration_9, build ? 23 : 13);
-    	try {
+		/* Setup progress monitor
+		 * - Prepare delegate (0)
+		 * - Pre-launch check (1)
+		 * - [Build before launch (7)]					if build
+		 * - [Incremental build before launch (3)]		if build
+		 * - Final launch validation (1)
+		 * - Initialize source locator (1)
+		 * - Launch delegate (10) */
+		SubMonitor lmonitor = SubMonitor.convert(monitor, DebugCoreMessages.LaunchConfiguration_9, 23);
+		try {
 			// bug 28245 - force the delegate to load in case it is interested in launch notifications
 			Set<String> modes = getModes();
-	    	modes.add(mode);
-	    	ILaunchDelegate[] delegates = getType().getDelegates(modes);
-	    	ILaunchConfigurationDelegate delegate = null;
-	    	if (delegates.length == 1) {
-	    		delegate = delegates[0].getDelegate();
-	    	} else if (delegates.length == 0) {
-	    		IStatusHandler handler = DebugPlugin.getDefault().getStatusHandler(promptStatus);
-	    		if (handler != null) {
-	    			handler.handleStatus(delegateNotAvailable, new Object[] {this, mode});
-	    		}
-	    		IStatus status = new Status(IStatus.CANCEL, DebugPlugin.getUniqueIdentifier(), DebugPlugin.ERROR, DebugCoreMessages.LaunchConfiguration_11, null);
-	    		throw new CoreException(status);
-	    	} else {
-	    		ILaunchDelegate del = getPreferredDelegate(modes);
-	    		if(del == null) {
-	    			del = getType().getPreferredDelegate(modes);
-	    		}
-	    		if(del == null) {
-	    			IStatusHandler handler = DebugPlugin.getDefault().getStatusHandler(promptStatus);
-	    			IStatus status = null;
-	    			if (handler != null) {
-	    				status = (IStatus) handler.handleStatus(duplicateDelegates, new Object[] {this, mode});
-	    			}
-					if(status != null && status.isOK()) {
-						del = getPreferredDelegate(modes);
-						if(del == null) {
-							del = getType().getPreferredDelegate(modes);
+			modes.add(mode);
+			ILaunchDelegate[] delegates = getType().getDelegates(modes);
+			ILaunchConfigurationDelegate delegate = null;
+			switch (delegates.length) {
+				case 1:
+					delegate = delegates[0].getDelegate();
+					break;
+				case 0:
+				{
+					IStatusHandler handler = DebugPlugin.getDefault().getStatusHandler(promptStatus);
+					if (handler != null) {
+						handler.handleStatus(delegateNotAvailable, new Object[] {this, mode});
+					}
+					IStatus status = new Status(IStatus.CANCEL, DebugPlugin.getUniqueIdentifier(), DebugPlugin.ERROR, DebugCoreMessages.LaunchConfiguration_11, null);
+					throw new CoreException(status);
+				}
+				default:
+				{
+					ILaunchDelegate del = getPreferredDelegate(modes);
+					if(del == null) {
+						del = getType().getPreferredDelegate(modes);
+					}	
+					if(del == null) {
+						IStatusHandler handler = DebugPlugin.getDefault().getStatusHandler(promptStatus);
+						IStatus status = null;
+						if (handler != null) {
+							status = (IStatus) handler.handleStatus(duplicateDelegates, new Object[] {this, mode});
 						}
-						if(del != null) {
-							delegate = del.getDelegate();
+						if(status != null && status.isOK()) {
+							del = getPreferredDelegate(modes);
+							if(del == null) {
+								del = getType().getPreferredDelegate(modes);
+							}
+							if(del != null) {
+								delegate = del.getDelegate();
+							}
+							else {
+								status = new Status(IStatus.CANCEL, DebugPlugin.getUniqueIdentifier(), DebugPlugin.ERROR, DebugCoreMessages.LaunchConfiguration_13, null);
+								throw new CoreException(status);
+							}
 						}
 						else {
 							status = new Status(IStatus.CANCEL, DebugPlugin.getUniqueIdentifier(), DebugPlugin.ERROR, DebugCoreMessages.LaunchConfiguration_13, null);
-				    		throw new CoreException(status);
+							throw new CoreException(status);
 						}
 					}
 					else {
-						status = new Status(IStatus.CANCEL, DebugPlugin.getUniqueIdentifier(), DebugPlugin.ERROR, DebugCoreMessages.LaunchConfiguration_13, null);
-			    		throw new CoreException(status);
+						delegate = del.getDelegate();
 					}
-	    		}
-	    		else {
-	    			delegate = del.getDelegate();
-	    		}
-	    	}
+					break;
+				}
+			}
 
 			ILaunchConfigurationDelegate2 delegate2 = null;
 			if (delegate instanceof ILaunchConfigurationDelegate2) {
@@ -802,9 +808,9 @@ public class LaunchConfiguration extends PlatformObject implements ILaunchConfig
 			launch.setAttribute(DebugPlugin.ATTR_LAUNCH_TIMESTAMP, Long.toString(System.currentTimeMillis()));
 			boolean captureOutput = getAttribute(DebugPlugin.ATTR_CAPTURE_OUTPUT, true);
 			if(!captureOutput) {
-			    launch.setAttribute(DebugPlugin.ATTR_CAPTURE_OUTPUT, "false"); //$NON-NLS-1$
+				launch.setAttribute(DebugPlugin.ATTR_CAPTURE_OUTPUT, "false"); //$NON-NLS-1$
 			} else {
-			    launch.setAttribute(DebugPlugin.ATTR_CAPTURE_OUTPUT, null);
+				launch.setAttribute(DebugPlugin.ATTR_CAPTURE_OUTPUT, null);
 			}
 			launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, getLaunchManager().getEncoding(this));
 			if (register) {
@@ -814,42 +820,34 @@ public class LaunchConfiguration extends PlatformObject implements ILaunchConfig
 			lmonitor.subTask(DebugCoreMessages.LaunchConfiguration_8);
 
 			if (delegate2 != null) {
-				if (!(delegate2.preLaunchCheck(this, mode, new SubProgressMonitor(lmonitor, 1)))) {
+				if (!(delegate2.preLaunchCheck(this, mode, lmonitor.split(1)))) {
 					getLaunchManager().removeLaunch(launch);
 					return launch;
 				}
 			}
-			else {
-				lmonitor.worked(1); /* No pre-launch-check */
-			}
+			lmonitor.setWorkRemaining(22);
 		// perform pre-launch build
 			if (build) {
-				IProgressMonitor buildMonitor = new SubProgressMonitor(lmonitor, 10, SubProgressMonitor.PREPEND_MAIN_LABEL_TO_SUBTASK);
-				buildMonitor.beginTask(DebugCoreMessages.LaunchConfiguration_7, 10);
-				buildMonitor.subTask(DebugCoreMessages.LaunchConfiguration_6);
+				lmonitor.subTask(DebugCoreMessages.LaunchConfiguration_7 + DebugCoreMessages.LaunchConfiguration_6);
 				boolean tempbuild = build;
 				if (delegate2 != null) {
-					tempbuild = delegate2.buildForLaunch(this, mode, new SubProgressMonitor(buildMonitor, 7));
+					tempbuild = delegate2.buildForLaunch(this, mode, lmonitor.split(7));
 				}
 				if (tempbuild) {
-					buildMonitor.subTask(DebugCoreMessages.LaunchConfiguration_5);
-					ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, new SubProgressMonitor(buildMonitor, 3));
-				}
-				else {
-					buildMonitor.worked(3); /* No incremental build required */
+					lmonitor.subTask(DebugCoreMessages.LaunchConfiguration_7 + DebugCoreMessages.LaunchConfiguration_5);
+					ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, lmonitor.split(3));
 				}
 			}
+			lmonitor.setWorkRemaining(12);
 		// final validation
 			lmonitor.subTask(DebugCoreMessages.LaunchConfiguration_4);
 			if (delegate2 != null) {
-				if (!(delegate2.finalLaunchCheck(this, mode, new SubProgressMonitor(lmonitor, 1)))) {
+				if (!(delegate2.finalLaunchCheck(this, mode, lmonitor.split(1)))) {
 					getLaunchManager().removeLaunch(launch);
 					return launch;
 				}
 			}
-			else {
-				lmonitor.worked(1); /* No validation */
-			}
+			lmonitor.setWorkRemaining(11);
 
 			try {
 				//initialize the source locator
@@ -859,7 +857,7 @@ public class LaunchConfiguration extends PlatformObject implements ILaunchConfig
 
 				/* Launch the delegate */
 				lmonitor.subTask(DebugCoreMessages.LaunchConfiguration_2);
-				delegate.launch(this, mode, launch, new SubProgressMonitor(lmonitor, 10));
+				delegate.launch(this, mode, launch, lmonitor.split(10));
 			} catch (CoreException e) {
 				// if there was an exception, and the launch is empty, remove it
 				if (!launch.hasChildren()) {
@@ -877,13 +875,13 @@ public class LaunchConfiguration extends PlatformObject implements ILaunchConfig
 				getLaunchManager().removeLaunch(launch);
 			}
 			return launch;
-    	}
-    	finally {
+		}
+		finally {
 			lmonitor.done();
-    	}
-    }
+		}
+	}
 
-    @Override
+	@Override
 	public void migrate() throws CoreException {
 		((LaunchConfigurationType)getType()).migrate(this);
 	}

@@ -27,17 +27,17 @@ public class Library {
 	/**
 	 * SWT Major version number (must be >= 0)
 	 */
-    static int MAJOR_VERSION = 4;
+	static int MAJOR_VERSION = 4;
 
 	/**
 	 * SWT Minor version number (must be in the range 0..999)
 	 */
-    static int MINOR_VERSION = 926;
+	static int MINOR_VERSION = 928;
 
 	/**
 	 * SWT revision number (must be >= 0)
 	 */
-	static int REVISION = 21;
+	static int REVISION = 15;
 
 	/**
 	 * The JAVA and SWT versions
@@ -69,12 +69,12 @@ static {
 static String arch() {
 	String osArch = System.getProperty("os.arch"); //$NON-NLS-1$
 	if (osArch.equals ("i386") || osArch.equals ("i686")) return "x86"; //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
+	if (osArch.equals ("amd64")) return "x86_64"; //$NON-NLS-1$ $NON-NLS-2$
 	return osArch;
 }
 
 static String os() {
 	String osName = System.getProperty("os.name"); //$NON-NLS-1$
-	if (osName.equals ("FreeBSD")) return "freebsd"; //$NON-NLS-1$ $NON-NLS-2$
 	if (osName.equals ("Linux")) return "linux"; //$NON-NLS-1$ $NON-NLS-2$
 	if (osName.equals ("Mac OS X")) return "macosx"; //$NON-NLS-1$ $NON-NLS-2$
 	if (osName.startsWith ("Win")) return "win32"; //$NON-NLS-1$ $NON-NLS-2$
@@ -168,14 +168,14 @@ static boolean extract (String extractToFilePath, String mappedName) {
 		tempFile = File.createTempFile (file.getName(), ".tmp", file.getParentFile()); //$NON-NLS-1$
 	} catch (Throwable e) {
 		return false;
-	}
+				}
 
 	// Extract resource
 	String resourceName = "/" + mappedName; //$NON-NLS-1$
 	if (!extractResource (resourceName, tempFile)) {
 		tempFile.delete();
 		return false;
-	}
+			}
 
 	// Make it executable
 	chmod ("755", tempFile.getPath()); //$NON-NLS-1$
@@ -226,7 +226,7 @@ static boolean isLoadable () {
 
 static boolean load (String libName, StringBuilder message) {
 	try {
-		if (libName.indexOf (SEPARATOR) != -1) {
+		if (libName.contains (SEPARATOR)) {
 			System.load (libName);
 		} else {
 			System.loadLibrary (libName);
@@ -459,7 +459,7 @@ public static File findResource(String subDir, String resourceName, boolean mapR
 			// Create temp directory if it doesn't exist
 			File tempDir = new File (USER_HOME, SWT_LIB_DIR + maybeSubDirPathWithPrefix);
 			if ((!tempDir.exists () || tempDir.isDirectory ())) {
-				 tempDir.mkdirs ();
+				tempDir.mkdirs ();
 			}
 
 			if (extract(file.getPath(), maybeSubDirPath + finalResourceName)) {

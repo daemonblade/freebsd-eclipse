@@ -15,7 +15,6 @@
 package org.eclipse.ui.internal.expressions;
 
 import java.util.Collection;
-
 import org.eclipse.core.expressions.EvaluationResult;
 import org.eclipse.core.expressions.Expression;
 import org.eclipse.core.expressions.ExpressionInfo;
@@ -93,8 +92,7 @@ public final class LegacyViewerContributionExpression extends WorkbenchWindowExp
 	protected int computeHashCode() {
 		int hashCode = HASH_INITIAL * HASH_FACTOR + hashCode(getWindow());
 		hashCode = hashCode * HASH_FACTOR + hashCode(expression);
-		hashCode = hashCode * HASH_FACTOR + hashCode(targetId);
-		return hashCode;
+		return hashCode * HASH_FACTOR + hashCode(targetId);
 	}
 
 	@Override
@@ -125,8 +123,8 @@ public final class LegacyViewerContributionExpression extends WorkbenchWindowExp
 
 				return expression.evaluate(context);
 			}
-		} else if (value instanceof Collection) {
-			final Collection menuIds = (Collection) value;
+		} else if (value instanceof Collection<?>) {
+			final Collection<?> menuIds = (Collection<?>) value;
 			if (menuIds.contains(targetId)) {
 				if (expression == null) {
 					return EvaluationResult.TRUE;

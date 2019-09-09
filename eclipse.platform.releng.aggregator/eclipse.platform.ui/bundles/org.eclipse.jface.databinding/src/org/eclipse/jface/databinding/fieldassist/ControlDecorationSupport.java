@@ -384,7 +384,7 @@ public class ControlDecorationSupport {
 		this.targets = targetsToBeDecorated;
 		Assert.isTrue(!this.targets.isDisposed());
 
-		this.targetDecorations = new ArrayList<TargetDecoration>();
+		this.targetDecorations = new ArrayList<>();
 
 		validationStatus.addDisposeListener(disposeListener);
 		validationStatus.addValueChangeListener(statusChangeListener);
@@ -453,9 +453,7 @@ public class ControlDecorationSupport {
 
 	private static IObservableList<IObservable> getObservableList(IObservable[] observables) {
 		IObservableList<IObservable> observableList = new WritableList<>();
-		for (IObservable observable : observables) {
-			observableList.add(observable);
-		}
+		java.util.Collections.addAll(observableList, observables);
 
 		return observableList;
 	}

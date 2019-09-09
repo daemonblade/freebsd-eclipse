@@ -37,7 +37,7 @@ import org.eclipse.swt.widgets.TableColumn;
 /**
  * Example how to update a viewer from a long running task
  *
- * @author Tom Schindl <tom.schindl@bestsolution.at>
+ * @author Tom Schindl &lt;tom.schindl@bestsolution.at&gt;
  *
  */
 public class Snippet046UpdateViewerFromBackgroundThread {
@@ -71,7 +71,7 @@ public class Snippet046UpdateViewerFromBackgroundThread {
 
 		@Override
 		public String getColumnText(Object element, int columnIndex) {
-			return "Column " + columnIndex + " => " + element.toString();
+			return "Column " + columnIndex + " => " + element;
 		}
 
 	}

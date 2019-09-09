@@ -146,6 +146,10 @@ import org.eclipse.ui.wizards.IWizardDescriptor;
  */
 public class CustomizePerspectiveDialog extends TrayDialog {
 
+	/**
+	 * Flag showing that we have initialized all legacy action sets for given window
+	 */
+	private static final String ALL_SETS_INITIALIZED = "ALL_SETS_INITIALIZED"; //$NON-NLS-1$
 	private static final String TOOLBAR_ICON = "$nl$/icons/full/obj16/toolbar.png"; //$NON-NLS-1$
 	private static final String SUBMENU_ICON = "$nl$/icons/full/obj16/submenu.png"; //$NON-NLS-1$
 	private static final String MENU_ICON = "$nl$/icons/full/obj16/menu.png"; //$NON-NLS-1$
@@ -230,7 +234,7 @@ public class CustomizePerspectiveDialog extends TrayDialog {
 	private IEclipseContext context;
 
 	/**
-	 * Represents a menu item or a tool bar item.
+	 * Represents a menu item or a toolbar item.
 	 *
 	 * @since 3.5
 	 */
@@ -442,7 +446,7 @@ public class CustomizePerspectiveDialog extends TrayDialog {
 	/**
 	 * Represents an action set, under which ContributionItems exist. There is no
 	 * inherent hierarchy in action sets - they exist independent of one another,
-	 * simply contribution menu items and tool bar items.
+	 * simply contribution menu items and toolbar items.
 	 *
 	 * @since 3.5
 	 */
@@ -554,7 +558,7 @@ public class CustomizePerspectiveDialog extends TrayDialog {
 		gd.heightHint = convertVerticalDLUsToPixels(TAB_HEIGHT_IN_DLUS);
 		tabFolder.setLayoutData(gd);
 
-		// Tool Bar Item Hiding Page
+		// Toolbar Item Hiding Page
 		TabItem tab = new TabItem(tabFolder, SWT.NONE);
 		tab.setText(WorkbenchMessages.HideToolBarItems_toolBarItemsTab);
 		tab.setControl(createToolBarVisibilityPage(tabFolder));
@@ -848,6 +852,7 @@ public class CustomizePerspectiveDialog extends TrayDialog {
 		actionSetToolbarViewer = new TreeViewer(toolbarGroup);
 		actionSetToolbarViewer.setAutoExpandLevel(AbstractTreeViewer.ALL_LEVELS);
 		actionSetToolbarViewer.getControl().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		actionSetToolbarViewer.setUseHashlookup(true);
 		actionSetToolbarViewer.setContentProvider(TreeManager.getTreeContentProvider());
 		actionSetToolbarViewer.setLabelProvider(new GrayOutUnavailableLabelProvider(null));
 		actionSetToolbarViewer.addFilter(setFilter);
@@ -1281,7 +1286,7 @@ public class CustomizePerspectiveDialog extends TrayDialog {
 
 	/**
 	 * @param item
-	 * @return true iff the item will show up in a menu or tool bar structure - i.e.
+	 * @return true iff the item will show up in a menu or toolbar structure - i.e.
 	 *         it is available, or has a child which is available thus must be
 	 *         displayed in order to display the child
 	 */
@@ -1329,10 +1334,22 @@ public class CustomizePerspectiveDialog extends TrayDialog {
 	}
 
 	private void initializeActionSetInput() {
-		// Just get the action sets at this point. Do not load the action set
-		// until it is actually selected in the dialog.
+		// Just get the action sets at this point.
 		ActionSetRegistry reg = WorkbenchPlugin.getDefault().getActionSetRegistry();
 		IActionSetDescriptor[] sets = reg.getActionSets();
+
+		// Populate all legacy actionsets into the model, see bug 549898
+		// Note: all (also invisible) actions sets will be loaded here and
+		// respective actions will be created. This is not good ("invisible"
+		// actions will live from this moment on till shutdown) and we need
+		// a better solution.
+		Object initDone = context.get(ALL_SETS_INITIALIZED);
+		if (initDone == null) {
+			context.set(ALL_SETS_INITIALIZED, Boolean.TRUE);
+			window.getActionPresentation().setActionSets(sets);
+			window.updateActionSets();
+		}
+
 		IActionSetDescriptor[] actionSetDescriptors = ((WorkbenchPage) window.getActivePage()).getActionSets();
 		List<IActionSetDescriptor> initiallyAvailableActionSets = Arrays.asList(actionSetDescriptors);
 
@@ -1532,20 +1549,8 @@ public class CustomizePerspectiveDialog extends TrayDialog {
 		engine.createGui(customizeActionBars.mainMenu, customizeActionBars.windowModel.getWidget(),
 				customizeActionBars.windowModel.getContext());
 
-		MTrimBar topTrim = customizeActionBars.coolBarManager.getTopTrim();
-		topTrim.setToBeRendered(true);
-
-		// Get the menu from the action bars
-		engine.createGui(topTrim, customizeActionBars.windowModel.getWidget(),
-				customizeActionBars.windowModel.getContext());
-
-		// Ensure the menu is completely built by updating the menu manager.
-		// (This method call requires a menu already be created)
-		customizeActionBars.menuManager.updateAll(true);
-		customizeActionBars.coolBarManager.update(true);
-
 		shortcuts = new Category(""); //$NON-NLS-1$
-		toolBarItems = createTrimBarEntries(topTrim);
+		toolBarItems = createTrimBarEntries(window.getTopTrim());
 		menuItems = createMenuStructure(customizeActionBars.mainMenu);
 	}
 
@@ -1960,7 +1965,6 @@ public class CustomizePerspectiveDialog extends TrayDialog {
 			MToolBar toolBar = (MToolBar) trimElement;
 			ToolBarManager manager = toolbarMngrRenderer.getManager(toolBar);
 			if (manager != null) {
-				toolbarMngrRenderer.reconcileManagerToModel(manager, toolBar);
 				IContributionItem contributionItem = (IContributionItem) toolBar.getTransientData()
 						.get(CoolBarToTrimManager.OBJECT);
 				String text = getToolbarLabel(toolBar);

@@ -48,9 +48,8 @@ public class Diff extends Command {
 			if (status.getCode() == CVSStatus.SERVER_ERROR) {
 				if (status.isMultiStatus()) {
 					IStatus[] children = status.getChildren();
-					for (int i = 0; i < children.length; i++) {
-						IStatus child = children[i];
-						if (child.getMessage().indexOf("[diff aborted]") != -1) { //$NON-NLS-1$
+					for (IStatus child : children) {
+						if (child.getMessage().contains("[diff aborted]")) { //$NON-NLS-1$
 							throw new CVSServerException(status);
 						}
 					}

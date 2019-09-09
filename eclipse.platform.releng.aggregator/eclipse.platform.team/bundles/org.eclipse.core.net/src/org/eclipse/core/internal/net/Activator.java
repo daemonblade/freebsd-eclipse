@@ -130,12 +130,12 @@ public class Activator implements BundleActivator {
 
 		if (status.isMultiStatus()) {
 			IStatus[] children = status.getChildren();
-			for (int i = 0; i < children.length; i++) {
-				childlist.add(getLog(children[i]));
+			for (IStatus child : children) {
+				childlist.add(getLog(child));
 			}
 		}
 
-		FrameworkLogEntry[] children = childlist.size() == 0 ? null
+		FrameworkLogEntry[] children = childlist.isEmpty() ? null
 				: childlist.toArray(new FrameworkLogEntry[childlist.size()]);
 
 		return new FrameworkLogEntry(status.getPlugin(), status.getSeverity(),

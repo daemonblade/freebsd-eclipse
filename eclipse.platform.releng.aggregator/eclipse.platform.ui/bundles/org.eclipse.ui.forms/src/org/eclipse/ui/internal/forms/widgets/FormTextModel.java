@@ -125,8 +125,7 @@ public class FormTextModel {
 			taggedText = taggedText.replaceAll("&lt;", "&#060;"); //$NON-NLS-1$//$NON-NLS-2$
 			taggedText = taggedText.replaceAll("&gt;", "&#062;"); //$NON-NLS-1$//$NON-NLS-2$
 			taggedText = taggedText.replaceAll("&amp;", "&#038;"); //$NON-NLS-1$//$NON-NLS-2$
-			taggedText = taggedText.replaceAll("&([^#])", "&#038;$1"); //$NON-NLS-1$//$NON-NLS-2$
-			return taggedText;
+			return taggedText.replaceAll("&([^#])", "&#038;$1"); //$NON-NLS-1$//$NON-NLS-2$
 		} catch (Exception e) {
 			return pTaggedText;
 		}
@@ -145,9 +144,7 @@ public class FormTextModel {
 			InputSource source = new InputSource(is);
 			Document doc = parser.parse(source);
 			processDocument(doc, expandURLs);
-		} catch (ParserConfigurationException e) {
-			SWT.error(SWT.ERROR_INVALID_ARGUMENT, e, " " + e.getMessage()); //$NON-NLS-1$
-		} catch (SAXException e) {
+		} catch (ParserConfigurationException | SAXException e) {
 			SWT.error(SWT.ERROR_INVALID_ARGUMENT, e, " " + e.getMessage()); //$NON-NLS-1$
 		} catch (IOException e) {
 			SWT.error(SWT.ERROR_IO, e);

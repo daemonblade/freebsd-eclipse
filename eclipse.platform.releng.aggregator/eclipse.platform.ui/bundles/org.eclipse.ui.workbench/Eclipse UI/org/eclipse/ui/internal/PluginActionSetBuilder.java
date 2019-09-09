@@ -15,6 +15,7 @@ package org.eclipse.ui.internal;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.dynamichelpers.IExtensionTracker;
 import org.eclipse.jface.action.AbstractGroupMarker;
@@ -43,7 +44,7 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 
 	private IWorkbenchWindow window;
 
-	private ArrayList adjunctContributions = new ArrayList(0);
+	private ArrayList<ActionSetContribution> adjunctContributions = new ArrayList<>(0);
 
 	/**
 	 * Used by the workbench window extension handler to unhook action sets from
@@ -98,10 +99,10 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 			}
 		}
 		for (int i = 0; i < adjunctContributions.size(); i++) {
-			ActionSetContribution contribution = (ActionSetContribution) adjunctContributions.get(i);
+			ActionSetContribution contribution = adjunctContributions.get(i);
 			ActionSetActionBars bars = actionSet.getBars();
 			for (int j = 0; j < contribution.adjunctActions.size(); j++) {
-				ActionDescriptor adjunctAction = (ActionDescriptor) contribution.adjunctActions.get(j);
+				ActionDescriptor adjunctAction = contribution.adjunctActions.get(j);
 				contribution.contributeAdjunctCoolbarAction(adjunctAction, bars);
 			}
 		}
@@ -201,7 +202,7 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 
 	/**
 	 */
-	/* package */static void processActionSets(ArrayList pluginActionSets, WorkbenchWindow window) {
+	/* package */static void processActionSets(List<PluginActionSet> pluginActionSets, WorkbenchWindow window) {
 		// Process the action sets in two passes. On the first pass the
 		// pluginActionSetBuilder
 		// will process base contributions and cache adjunct contributions. On the
@@ -209,7 +210,7 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 		// pass the adjunct contributions will be processed.
 		PluginActionSetBuilder[] builders = new PluginActionSetBuilder[pluginActionSets.size()];
 		for (int i = 0; i < pluginActionSets.size(); i++) {
-			PluginActionSet set = (PluginActionSet) pluginActionSets.get(i);
+			PluginActionSet set = pluginActionSets.get(i);
 			PluginActionSetBuilder builder = new PluginActionSetBuilder();
 			builder.readActionExtensions(set, window);
 			builders[i] = builder;
@@ -224,10 +225,10 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 	protected void processAdjunctContributions() {
 		// Contribute the adjunct contributions.
 		for (int i = 0; i < adjunctContributions.size(); i++) {
-			ActionSetContribution contribution = (ActionSetContribution) adjunctContributions.get(i);
+			ActionSetContribution contribution = adjunctContributions.get(i);
 			ActionSetActionBars bars = actionSet.getBars();
 			for (int j = 0; j < contribution.adjunctActions.size(); j++) {
-				ActionDescriptor adjunctAction = (ActionDescriptor) contribution.adjunctActions.get(j);
+				ActionDescriptor adjunctAction = contribution.adjunctActions.get(j);
 				contribution.contributeAdjunctCoolbarAction(adjunctAction, bars);
 			}
 		}
@@ -291,7 +292,7 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 
 		private WorkbenchWindow window;
 
-		protected ArrayList adjunctActions = new ArrayList(0);
+		protected ArrayList<ActionDescriptor> adjunctActions = new ArrayList<>(0);
 
 		/**
 		 * Create a new instance of <code>ActionSetContribution</code>.
@@ -335,14 +336,14 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 			IToolBarManager toolBarMgr = bars.getToolBarManager();
 			if (menus != null && menuMgr != null) {
 				for (int i = 0; i < menus.size(); i++) {
-					IConfigurationElement menuElement = (IConfigurationElement) menus.get(i);
+					IConfigurationElement menuElement = menus.get(i);
 					contributeMenu(menuElement, menuMgr, menuAppendIfMissing);
 				}
 			}
 
 			if (actions != null) {
 				for (int i = 0; i < actions.size(); i++) {
-					ActionDescriptor ad = (ActionDescriptor) actions.get(i);
+					ActionDescriptor ad = actions.get(i);
 					if (menuMgr != null) {
 						contributeMenuAction(ad, menuMgr, menuAppendIfMissing);
 					}
@@ -591,7 +592,7 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 		// for dynamic UI
 		private void revokeActionSetFromMenu(IMenuManager menuMgr, String actionsetId) {
 			IContributionItem[] items = menuMgr.getItems();
-			ArrayList itemsToRemove = new ArrayList();
+			ArrayList<IContributionItem> itemsToRemove = new ArrayList<>();
 			String id;
 			for (IContributionItem item : items) {
 				if (item instanceof IMenuManager) {
@@ -613,9 +614,9 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 					}
 				}
 			}
-			Iterator iter = itemsToRemove.iterator();
+			Iterator<IContributionItem> iter = itemsToRemove.iterator();
 			while (iter.hasNext()) {
-				IContributionItem item = (IContributionItem) iter.next();
+				IContributionItem item = iter.next();
 				menuMgr.remove(item);
 			}
 			menuMgr.update(true);
@@ -624,7 +625,7 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 		// for dynamic UI
 		private void revokeActionSetFromCoolbar(ICoolBarManager coolbarMgr, String actionsetId) {
 			IContributionItem[] items = coolbarMgr.getItems();
-			ArrayList itemsToRemove = new ArrayList();
+			ArrayList<IContributionItem> itemsToRemove = new ArrayList<>();
 			String id;
 			for (IContributionItem item : items) {
 				id = item.getId();
@@ -646,9 +647,9 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 					}
 				}
 			}
-			Iterator iter = itemsToRemove.iterator();
+			Iterator<IContributionItem> iter = itemsToRemove.iterator();
 			while (iter.hasNext()) {
-				coolbarMgr.remove((IContributionItem) iter.next());
+				coolbarMgr.remove(iter.next());
 			}
 			coolbarMgr.update(true);
 		}
@@ -656,7 +657,7 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 		// for dynamic UI
 		private void revokeActionSetFromToolbar(IToolBarManager toolbarMgr, String actionsetId) {
 			IContributionItem[] items = toolbarMgr.getItems();
-			ArrayList itemsToRemove = new ArrayList();
+			ArrayList<IContributionItem> itemsToRemove = new ArrayList<>();
 			String id;
 			for (IContributionItem item : items) {
 				id = item.getId();
@@ -681,9 +682,9 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 					}
 				}
 			}
-			Iterator iter = itemsToRemove.iterator();
+			Iterator<IContributionItem> iter = itemsToRemove.iterator();
 			while (iter.hasNext()) {
-				toolbarMgr.remove((IContributionItem) iter.next());
+				toolbarMgr.remove(iter.next());
 			}
 			toolbarMgr.update(true);
 		}
@@ -709,7 +710,7 @@ public class PluginActionSetBuilder extends PluginActionBuilder {
 				contribution.revokeContribution((WorkbenchWindow) window, actionSet.getBars(), id);
 				if (contribution.isAdjunctContributor()) {
 					for (int j = 0; j < contribution.adjunctActions.size(); j++) {
-						ActionDescriptor adjunctAction = (ActionDescriptor) contribution.adjunctActions.get(j);
+						ActionDescriptor adjunctAction = contribution.adjunctActions.get(j);
 						contribution.revokeAdjunctCoolbarAction(adjunctAction, actionSet.getBars());
 					}
 				}

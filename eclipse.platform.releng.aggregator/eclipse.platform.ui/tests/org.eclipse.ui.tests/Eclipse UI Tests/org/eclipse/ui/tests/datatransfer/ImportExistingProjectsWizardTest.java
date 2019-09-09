@@ -156,9 +156,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 									new NullProgressMonitor());
 						}
 					});
-		} catch (InvocationTargetException e) {
-			fail(e.getLocalizedMessage());
-		} catch (InterruptedException e) {
+		} catch (InvocationTargetException | InterruptedException e) {
 			fail(e.getLocalizedMessage());
 		}
 	}
@@ -333,9 +331,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 			verifyProjectInWorkspace(true, workspaceProjects[0], FILE_LIST,
 					true);
 
-		} catch (IOException e) {
-			fail(e.toString());
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 			fail(e.toString());
 		}
 
@@ -391,9 +387,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 			verifyProjectInWorkspace(true, workspaceProjects[0],
 					ARCHIVE_FILE_EMPTY_FOLDER_LIST, false);
 
-		} catch (IOException e) {
-			fail(e.toString());
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 			fail(e.toString());
 		}
 	}
@@ -448,9 +442,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 			verifyProjectInWorkspace(true, workspaceProjects[0], FILE_LIST,
 					true);
 
-		} catch (IOException e) {
-			fail(e.toString());
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 			fail(e.toString());
 		}
 
@@ -507,9 +499,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 			verifyProjectInWorkspace(true, workspaceProjects[0],
 					ARCHIVE_FILE_EMPTY_FOLDER_LIST, false);
 
-		} catch (IOException e) {
-			fail(e.toString());
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 			fail(e.toString());
 		}
 
@@ -561,9 +551,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 			verifyProjectInWorkspace(false, workspaceProjects[0], FILE_LIST,
 					true);
 
-		} catch (IOException e) {
-			fail(e.toString());
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 			fail(e.toString());
 		}
 	}
@@ -618,9 +606,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 			verifyProjectInWorkspace(true, workspaceProjects[0], FILE_LIST,
 					true);
 
-		} catch (IOException e) {
-			fail(e.toString());
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 			fail(e.toString());
 		}
 	}
@@ -724,9 +710,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 			verifyProjectInWorkspace(true, workspaceProjects[0], FILE_LIST,
 					true);
 
-		} catch (IOException e) {
-			fail(e.toString());
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 			fail(e.toString());
 		}
 	}
@@ -835,9 +819,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 			verifyProjectInWorkspace(true, workspaceProjects2[0], FILE_LIST,
 					true);
 
-		} catch (IOException e) {
-			fail(e.toString());
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 			fail(e.toString());
 		}
 
@@ -909,9 +891,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 			verifyProjectInWorkspace(false, workspaceProjects[0], FILE_LIST, true);
 			verifyProjectInWorkspace(false, workspaceProjects[1], FILE_LIST, true);
 			verifyProjectInWorkspace(false, workspaceProjects[2], FILE_LIST, true);
-		} catch (IOException e) {
-			fail(e.toString());
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 			fail(e.toString());
 		}
 	}
@@ -946,9 +926,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 			selectedProjects = wpip.getProjectRecords();
 			assertEquals(0, selectedProjects.length);
 
-		} catch (IOException e) {
-			fail(e.toString());
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 			fail(e.toString());
 		}
 
@@ -1011,9 +989,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 						true);
 			}
 
-		} catch (IOException e) {
-			fail(e.toString());
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 			fail(e.toString());
 		}
 	}
@@ -1057,7 +1033,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 			}
 		}
 		assertTrue("Files expected but not in workspace for project \"" + project.getName() + "\": "
-				+ filesNotImported.toString(), filesNotImported.length() == 0);
+				+ filesNotImported, filesNotImported.length() == 0);
 	}
 
 	/**
@@ -1245,8 +1221,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 	private ProjectRecord[] getProjectsFromArchive(WizardProjectsImportPage newWizard, URL projectsArchive) {
 		newWizard.getProjectFromDirectoryRadio().setSelection(false);
 		newWizard.updateProjectsList(projectsArchive.getPath());
-		ProjectRecord[] projectRecords = newWizard.getProjectRecords();
-		return projectRecords;
+		return newWizard.getProjectRecords();
 	}
 
 	private List<String> getValidProjects(ProjectRecord[] projectRecords) {
@@ -1289,8 +1264,7 @@ public class ImportExistingProjectsWizardTest extends UITestCase {
 
 		dialog.getShell().setSize(Math.max(100, dialog.getShell().getSize().x),
 				100);
-		WizardProjectsImportPage wpip = (WizardProjectsImportPage) wizard
+		return (WizardProjectsImportPage) wizard
 				.getPage("wizardExternalProjectsPage");
-		return wpip;
 	}
 }

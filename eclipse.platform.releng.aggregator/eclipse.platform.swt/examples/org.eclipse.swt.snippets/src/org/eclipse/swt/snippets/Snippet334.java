@@ -42,6 +42,7 @@ public class Snippet334 {
 public static void main(String[] arg) {
 		display = new Display();
 		shell = new Shell(display);
+		shell.setText("Snippet 334");
 		shell.setLayout(new GridLayout(2, false));
 		Label label = new Label(shell, SWT.NONE);
 		label.setText("Test:");
@@ -155,7 +156,7 @@ public static void main(String[] arg) {
 							if (index != -1) index++;
 						}
 						e.count = e.count < 0 ? Math.max(e.count, -lineCount) : Math.min(e.count, lineCount);
-				 		index = 0;
+						index = 0;
 						int lastIndex = 0;
 						String[] lines = new String[lineCount];
 						for (int i = 0; i < lines.length; i++) {

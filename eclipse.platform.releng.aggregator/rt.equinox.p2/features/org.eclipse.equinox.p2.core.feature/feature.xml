@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.equinox.p2.core.feature"
       label="%featureName"
-      version="1.6.200.qualifier"
+      version="1.6.300.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -184,9 +184,9 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.equinox.security.freebsd.amd64"
-         os="freebsd"
-         arch="amd64"
+         id="org.eclipse.equinox.security.linux.x86_64"
+         os="linux"
+         arch="x86_64"
          download-size="0"
          install-size="0"
          version="0.0.0"

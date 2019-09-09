@@ -147,8 +147,7 @@ public class SearchablePluginsManager implements IFileAdapterFactory, IPluginMod
 					}
 				}
 			}
-		} catch (IOException e) {
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 		}
 		return set;
 	}
@@ -217,7 +216,7 @@ public class SearchablePluginsManager implements IFileAdapterFactory, IPluginMod
 			Map<String, IClasspathEntry> map = new TreeMap<>();
 			for (int i = 0; i < result.size(); i++) {
 				IClasspathEntry entry = result.get(i);
-				String key = entry.getPath().lastSegment().toString();
+				String key = entry.getPath().lastSegment();
 				while (map.containsKey(key)) {
 					key += i;
 				}
@@ -433,9 +432,7 @@ public class SearchablePluginsManager implements IFileAdapterFactory, IPluginMod
 						file.create(inStream, true, new NullProgressMonitor());
 					}
 				}
-			} catch (IOException e) {
-				PDECore.log(e);
-			} catch (CoreException e) {
+			} catch (IOException | CoreException e) {
 				PDECore.log(e);
 			}
 		}

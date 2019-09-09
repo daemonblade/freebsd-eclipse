@@ -89,8 +89,7 @@ class CopyToClipboardAction extends SelectionListenerAction {
 		if (structuredSelection instanceof TreeSelection) {
 			TreeSelection ts = (TreeSelection) structuredSelection;
 			TreePath[] paths = ts.getPaths();
-			for (int j = 0; j < paths.length; j++) {
-				TreePath path = paths[j];
+			for (TreePath path : paths) {
 				String text = getTextFor(path);
 				if (text != null && text.length() > 0) {
 					if (i > 0)
@@ -215,7 +214,7 @@ class CopyToClipboardAction extends SelectionListenerAction {
 		// contribution/ on them.
 		List selectedResources = getSelectedResources();
 		List selectedNonResources = getSelectedNonResources();
-		if (selectedResources.size() > 0 && selectedNonResources.size() == 0) {
+		if (selectedResources.size() > 0 && selectedNonResources.isEmpty()) {
 			boolean projSelected = selectionIsOfType(IResource.PROJECT);
 			boolean fileFoldersSelected = selectionIsOfType(IResource.FILE | IResource.FOLDER);
 			if (!projSelected && !fileFoldersSelected)
@@ -237,7 +236,7 @@ class CopyToClipboardAction extends SelectionListenerAction {
 					return false;
 			}
 			return true;
-		} else if (selectedNonResources.size() > 0 && selectedResources.size() == 0) {
+		} else if (selectedNonResources.size() > 0 && selectedResources.isEmpty()) {
 			return true;
 		}
 		return false;

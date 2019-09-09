@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.jface.text;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -188,7 +189,7 @@ public class TextUtilities {
 	 */
 	public static DocumentEvent mergeUnprocessedDocumentEvents(IDocument unprocessedDocument, List<? extends DocumentEvent> documentEvents) throws BadLocationException {
 
-		if (documentEvents.size() == 0)
+		if (documentEvents.isEmpty())
 			return null;
 
 		final Iterator<? extends DocumentEvent> iterator= documentEvents.iterator();
@@ -253,7 +254,7 @@ public class TextUtilities {
 	 */
 	public static DocumentEvent mergeProcessedDocumentEvents(List<? extends DocumentEvent> documentEvents) throws BadLocationException {
 
-		if (documentEvents.size() == 0)
+		if (documentEvents.isEmpty())
 			return null;
 
 		final ListIterator<? extends DocumentEvent> iterator= documentEvents.listIterator(documentEvents.size());
@@ -459,8 +460,7 @@ public class TextUtilities {
 						IDocumentPartitionerExtension2 extension2= (IDocumentPartitionerExtension2) p;
 						String[] c= extension2.getManagingPositionCategories();
 						if (c != null) {
-							for (String element : c)
-								categories.add(element);
+							Collections.addAll(categories, c);
 						}
 					}
 				}

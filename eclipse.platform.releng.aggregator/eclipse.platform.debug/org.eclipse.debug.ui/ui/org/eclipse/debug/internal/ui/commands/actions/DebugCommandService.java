@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2013 IBM Corporation and others.
+ * Copyright (c) 2006, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -65,11 +65,16 @@ public class DebugCommandService implements IDebugContextListener {
 	 * @param window the window
 	 * @return service
 	 */
-	public synchronized static DebugCommandService getService(IWorkbenchWindow window) {
+	public static DebugCommandService getService(IWorkbenchWindow window) {
 		DebugCommandService service = fgServices.get(window);
 		if (service == null) {
-			service = new DebugCommandService(window);
-			fgServices.put(window, service);
+			synchronized (fgServices) {
+				service = fgServices.get(window);
+				if (service == null) {
+					service = new DebugCommandService(window);
+					fgServices.put(window, service);
+				}
+			}
 		}
 		return service;
 	}
@@ -247,9 +252,9 @@ public class DebugCommandService implements IDebugContextListener {
 	 */
 	private Map<IDebugCommandHandler, List<Object>> collate(Object[] elements, Class<?> handlerType) {
 		Map<IDebugCommandHandler, List<Object>> map = new HashMap<>();
- 		for (int i = 0; i < elements.length; i++) {
- 			Object element = elements[i];
- 			IDebugCommandHandler handler = getHandler(element, handlerType);
+		for (int i = 0; i < elements.length; i++) {
+			Object element = elements[i];
+			IDebugCommandHandler handler = getHandler(element, handlerType);
 			if (handler == null) {
 				return null;
 			} else {

@@ -68,7 +68,7 @@ public class FileSystemResourceManager implements ICoreConstants, IManager, Pref
 		// First, try the canonical version of the inputLocation.
 		// If the inputLocation is different from the canonical version, it will be tried second
 		ArrayList<IPath> results = allPathsForLocationNonCanonical(canonicalLocation);
-		if (results.size() == 0 && canonicalLocation != inputLocation) {
+		if (results.isEmpty() && canonicalLocation != inputLocation) {
 			results = allPathsForLocationNonCanonical(inputLocation);
 		}
 		return results;
@@ -711,9 +711,10 @@ public class FileSystemResourceManager implements ICoreConstants, IManager, Pref
 				//check sync on child projects.
 				depth = depth == IResource.DEPTH_ONE ? IResource.DEPTH_ZERO : depth;
 				IProject[] projects = ((IWorkspaceRoot) target).getProjects(IContainer.INCLUDE_HIDDEN);
-				for (int i = 0; i < projects.length; i++) {
-					if (!isSynchronized(projects[i], depth))
+				for (IProject project : projects) {
+					if (!isSynchronized(project, depth)) {
 						return false;
+					}
 				}
 				return true;
 			case IResource.PROJECT :

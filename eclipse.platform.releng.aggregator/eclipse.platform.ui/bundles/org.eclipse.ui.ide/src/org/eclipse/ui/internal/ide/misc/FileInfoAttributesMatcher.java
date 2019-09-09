@@ -134,8 +134,8 @@ public class FileInfoAttributesMatcher extends AbstractFileInfoMatcher {
 		return VERSION_IMPLEMENTATION + DELIMITER +
 				argument.key + DELIMITER +
 				argument.operator + DELIMITER +
-				Boolean.toString(argument.caseSensitive) + DELIMITER +
-				Boolean.toString(argument.regularExpression) + DELIMITER +
+				argument.caseSensitive + DELIMITER +
+				argument.regularExpression + DELIMITER +
 				argument.pattern;
 
 	}
@@ -355,9 +355,7 @@ public class FileInfoAttributesMatcher extends AbstractFileInfoMatcher {
 		try {
 			if ((arguments instanceof String) && ((String) arguments).length() > 0)
 				matcher = new MatcherCache((String) arguments);
-		} catch (PatternSyntaxException e) {
-			throw new CoreException(new Status(IStatus.ERROR, PlatformUI.PLUGIN_ID, Platform.PLUGIN_ERROR, e.getMessage(), e));
-		} catch (NumberFormatException e) {
+		} catch (PatternSyntaxException | NumberFormatException e) {
 			throw new CoreException(new Status(IStatus.ERROR, PlatformUI.PLUGIN_ID, Platform.PLUGIN_ERROR, e.getMessage(), e));
 		}
 	}

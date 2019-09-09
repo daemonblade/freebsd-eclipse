@@ -224,8 +224,8 @@ public class ContextHelpDialog {
 		}
 		if (styledText == null && context.getText() != null) {
 			styledText = context.getText();
-		    styledText= styledText.replaceAll("<b>","<@#\\$b>"); //$NON-NLS-1$ //$NON-NLS-2$
-		    styledText= styledText.replaceAll("</b>", "</@#\\$b>"); //$NON-NLS-1$ //$NON-NLS-2$
+			styledText= styledText.replaceAll("<b>","<@#\\$b>"); //$NON-NLS-1$ //$NON-NLS-2$
+			styledText= styledText.replaceAll("</b>", "</@#\\$b>"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		if (styledText == null) { // no description found in context objects.
 			styledText = Messages.ContextHelpPart_noDescription;
@@ -332,7 +332,7 @@ public class ContextHelpDialog {
 		}
 
 		// create dynamic help link if current context allows dynamic help
-		IWorkbenchWindow wbWindow = HelpUIPlugin.getDefault().getWorkbench().getActiveWorkbenchWindow();
+		IWorkbenchWindow wbWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		if (DefaultHelpUI.isActiveShell(parentShell, wbWindow) || HelpTray.isAppropriateFor(parentShell)) {
 			// Create separator.
 			label = new Label(composite, SWT.SEPARATOR | SWT.HORIZONTAL);

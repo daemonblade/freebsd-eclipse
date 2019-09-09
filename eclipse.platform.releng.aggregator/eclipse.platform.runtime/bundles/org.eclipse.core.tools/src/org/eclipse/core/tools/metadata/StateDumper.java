@@ -20,7 +20,8 @@ import org.eclipse.osgi.service.resolver.*;
 public class StateDumper extends AbstractDumper {
 
 	@Override
-	protected void dumpContents(PushbackInputStream input, StringBuilder contents) throws IOException, Exception, DumpException {
+	protected void dumpContents(PushbackInputStream input, StringBuilder contents)
+			throws IOException, Exception, DumpException {
 		PlatformAdmin admin = Platform.getPlatformAdmin();
 		// use the deprecated API to support running against a 3.0 Eclipse
 		State state = admin.getFactory().readState(new DataInputStream(input));
@@ -62,7 +63,7 @@ public class StateDumper extends AbstractDumper {
 		contents.append(" - Version: "); //$NON-NLS-1$
 		contents.append(required.getVersionRange());
 		contents.append(" ("); //$NON-NLS-1$
-		contents.append(required.isResolved() ? ("actual: " + required.getSupplier().getVersion().toString()) : "unresolved"); //$NON-NLS-1$ //$NON-NLS-2$
+		contents.append(required.isResolved() ? ("actual: " + required.getSupplier().getVersion()) : "unresolved"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (required.isOptional())
 			contents.append(", optional"); //$NON-NLS-1$
 		contents.append(')');
@@ -75,7 +76,7 @@ public class StateDumper extends AbstractDumper {
 		contents.append(" - Version: "); //$NON-NLS-1$
 		contents.append(host.getVersionRange());
 		contents.append(" ("); //$NON-NLS-1$
-		contents.append(host.isResolved() ? ("actual: " + host.getSupplier().getVersion().toString()) : "unresolved"); //$NON-NLS-1$ //$NON-NLS-2$
+		contents.append(host.isResolved() ? ("actual: " + host.getSupplier().getVersion()) : "unresolved"); //$NON-NLS-1$ //$NON-NLS-2$
 		contents.append(')');
 		contents.append('\n');
 	}

@@ -66,14 +66,14 @@ public class EvaluationCacheTest extends NavigatorTestBase {
 	}
 
 	private void doNotSameInstEqual(boolean toComputeOverrides) {
-		java.util.List<String> key = new ArrayList<String>(2);
+		java.util.List<String> key = new ArrayList<>(2);
 		key.add("Hi");
 		key.add("There");
 		NavigatorContentDescriptor[] value = new NavigatorContentDescriptor[0];
 		// Should find it under the original key.
 		cache.setDescriptors(key, value, toComputeOverrides);
 		// Equal thing but different instance should still be equal.
-		java.util.List key2 = new ArrayList<String>(key);
+		java.util.List key2 = new ArrayList<>(key);
 		// Should also find it under this new, equal key.
 		Assert.assertSame(value, cache.getDescriptors(key2, toComputeOverrides));
 		// The other "half" of the cache should not have this for either key.

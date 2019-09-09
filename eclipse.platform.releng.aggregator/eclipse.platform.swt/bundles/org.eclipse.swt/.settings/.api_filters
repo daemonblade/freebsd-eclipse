@@ -248,6 +248,28 @@
             </message_arguments>
         </filter>
     </resource>
+    <resource path="Eclipse SWT/cocoa/org/eclipse/swt/widgets/Display.java" type="org.eclipse.swt.widgets.Display">
+        <filter comment="Bug 548502 - API tools error on Mac. No new restriction has been added to Display.java, but API tools error is shown due to bug in PDE" id="336744520">
+            <message_arguments>
+                <message_argument value="@noextend"/>
+                <message_argument value="org.eclipse.swt.widgets.Display"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="Eclipse SWT/common/org/eclipse/swt/SWT.java" type="org.eclipse.swt.SWT">
+        <filter id="336658481">
+            <message_arguments>
+                <message_argument value="org.eclipse.swt.SWT"/>
+                <message_argument value="COLOR_TEXT_DISABLED_BACKGROUND"/>
+            </message_arguments>
+        </filter>
+        <filter id="336658481">
+            <message_arguments>
+                <message_argument value="org.eclipse.swt.SWT"/>
+                <message_argument value="COLOR_WIDGET_DISABLED_FOREGROUND"/>
+            </message_arguments>
+        </filter>
+    </resource>
     <resource path="Eclipse SWT/common/org/eclipse/swt/events/ArmListener.java" type="org.eclipse.swt.events.ArmListener">
         <filter id="576720909">
             <message_arguments>
@@ -461,38 +483,6 @@
                 <message_argument value="SWTEventListener"/>
                 <message_argument value="TypedListener"/>
                 <message_argument value="getEventListener()"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="META-INF/MANIFEST.MF">
-        <filter comment="Planned deletion via Bug 475833 " id="926941240">
-            <message_arguments>
-                <message_argument value="3.111.0"/>
-                <message_argument value="3.110.0"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="META-INF/MANIFEST.MF" type="org.eclipse.swt.custom.TableTree">
-        <filter comment="Planned deletion via Bug 475833 " id="305324134">
-            <message_arguments>
-                <message_argument value="org.eclipse.swt.custom.TableTree"/>
-                <message_argument value="org.eclipse.swt_3.111.0"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="META-INF/MANIFEST.MF" type="org.eclipse.swt.custom.TableTreeEditor">
-        <filter comment="Planned deletion via Bug 475833 " id="305324134">
-            <message_arguments>
-                <message_argument value="org.eclipse.swt.custom.TableTreeEditor"/>
-                <message_argument value="org.eclipse.swt_3.111.0"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="META-INF/MANIFEST.MF" type="org.eclipse.swt.custom.TableTreeItem">
-        <filter comment="Planned deletion via Bug 475833 " id="305324134">
-            <message_arguments>
-                <message_argument value="org.eclipse.swt.custom.TableTreeItem"/>
-                <message_argument value="org.eclipse.swt_3.111.0"/>
             </message_arguments>
         </filter>
     </resource>

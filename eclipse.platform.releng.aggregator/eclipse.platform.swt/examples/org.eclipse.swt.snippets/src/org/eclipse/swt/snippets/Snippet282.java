@@ -32,17 +32,18 @@ public class Snippet282 {
 		final Display display = new Display();
 		final Clipboard clipboard = new Clipboard(display);
 		final Shell shell = new Shell(display, SWT.SHELL_TRIM);
+		shell.setText("Snippet 282");
 		shell.setLayout(new GridLayout());
 		shell.setText("Clipboard ImageTransfer");
 
-	    final Button imageButton = new Button(shell, SWT.NONE );
-	    GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
-	    gd.minimumHeight = 400;
-	    gd.minimumWidth = 600;
-	    imageButton.setLayoutData(gd);
+		final Button imageButton = new Button(shell, SWT.NONE );
+		GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+		gd.minimumHeight = 400;
+		gd.minimumWidth = 600;
+		imageButton.setLayoutData(gd);
 
-	    final Text imageText = new Text(shell, SWT.BORDER);
-	    imageText.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));
+		final Text imageText = new Text(shell, SWT.BORDER);
+		imageText.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));
 
 		Composite buttons = new Composite(shell, SWT.NONE);
 		buttons.setLayout(new GridLayout(4, true));

@@ -184,7 +184,7 @@ public class SimplePropertyObservableSet<S, E> extends AbstractObservableSet<E>
 		getterCalled();
 		return new Iterator<E>() {
 			int expectedModCount = modCount;
-			Set<E> set = new HashSet<E>(getSet());
+			Set<E> set = new HashSet<>(getSet());
 			Iterator<E> iterator = set.iterator();
 			E last = null;
 
@@ -253,7 +253,7 @@ public class SimplePropertyObservableSet<S, E> extends AbstractObservableSet<E>
 		if (set.containsAll(c))
 			return false;
 
-		Set<E> additions = new HashSet<E>(c);
+		Set<E> additions = new HashSet<>(c);
 		additions.removeAll(set);
 
 		if (additions.isEmpty())
@@ -276,7 +276,7 @@ public class SimplePropertyObservableSet<S, E> extends AbstractObservableSet<E>
 		if (set.isEmpty())
 			return false;
 
-		Set<Object> removals = new HashSet<Object>(c);
+		Set<Object> removals = new HashSet<>(c);
 		removals.retainAll(set);
 		@SuppressWarnings("unchecked")
 		// because we have removed everything that is not an E
@@ -304,7 +304,7 @@ public class SimplePropertyObservableSet<S, E> extends AbstractObservableSet<E>
 			return true;
 		}
 
-		Set<E> removals = new HashSet<E>(set);
+		Set<E> removals = new HashSet<>(set);
 		removals.removeAll(c);
 
 		if (removals.isEmpty())
@@ -331,7 +331,7 @@ public class SimplePropertyObservableSet<S, E> extends AbstractObservableSet<E>
 	private void notifyIfChanged(SetDiff<E> diff) {
 		if (hasListeners()) {
 			Set<E> oldSet = cachedSet;
-			Set<E> newSet = cachedSet = new HashSet<E>(getSet());
+			Set<E> newSet = cachedSet = new HashSet<>(getSet());
 			if (diff == null)
 				diff = Diffs.computeSetDiff(oldSet, newSet);
 			if (!diff.isEmpty() || stale) {

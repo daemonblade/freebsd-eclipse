@@ -89,7 +89,7 @@ public class ExportBreakpointsOperation implements IRunnableWithProgress {
 	public void run(IProgressMonitor monitor) throws InvocationTargetException {
 		SubMonitor localmonitor = SubMonitor.convert(monitor, ImportExportMessages.ExportOperation_0, fBreakpoints.length);
 		XMLMemento memento = XMLMemento.createWriteRoot(IImportExportConstants.IE_NODE_BREAKPOINTS);
-		try (Writer writer = fWriter;) {
+		try (Writer writer = fWriter) {
 			for (int i = 0; i < fBreakpoints.length; i++) {
 				if (localmonitor.isCanceled()) {
 					return;
@@ -168,7 +168,7 @@ public class ExportBreakpointsOperation implements IRunnableWithProgress {
 	 */
 	private String getWorkingSetsAttribute(IBreakpoint breakpoint) {
 		IWorkingSetManager mgr = PlatformUI.getWorkbench().getWorkingSetManager();
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		IWorkingSet[] sets = mgr.getWorkingSets();
 		for (int i = 0; i < sets.length; i++) {
 			if(IDebugUIConstants.BREAKPOINT_WORKINGSET_ID.equals(sets[i].getId()) &&

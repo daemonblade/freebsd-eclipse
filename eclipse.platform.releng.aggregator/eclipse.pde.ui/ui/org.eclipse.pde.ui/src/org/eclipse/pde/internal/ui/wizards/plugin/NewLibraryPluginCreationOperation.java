@@ -172,8 +172,7 @@ public class NewLibraryPluginCreationOperation extends NewProjectCreationOperati
 			javaProject.setRawClasspath(classpath.toArray(new IClasspathEntry[classpath.size()]),
 					subMonitor.split(1));
 //			ClasspathComputer.setClasspath(javaProject.getProject(), model);
-		} catch (IOException e) {
-		} catch (CoreException e) {
+		} catch (IOException | CoreException e) {
 		}
 	}
 
@@ -527,7 +526,7 @@ public class NewLibraryPluginCreationOperation extends NewProjectCreationOperati
 				protected void addProjectPackages(IBundle bundle, Set<String> ignorePkgs) {
 					if (!unzip)
 						super.addProjectPackages(bundle, ignorePkgs);
-					Stack<IResource> stack = new Stack<>();
+					ArrayDeque<IResource> stack = new ArrayDeque<>();
 					stack.push(fProject);
 					try {
 						while (!stack.isEmpty()) {
@@ -547,8 +546,7 @@ public class NewLibraryPluginCreationOperation extends NewProjectCreationOperati
 
 				}
 			}.run(monitor);
-		} catch (InvocationTargetException e) {
-		} catch (InterruptedException e) {
+		} catch (InvocationTargetException | InterruptedException e) {
 		}
 	}
 

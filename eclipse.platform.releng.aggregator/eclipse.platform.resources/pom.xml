@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
@@ -52,8 +52,8 @@
 
   <modules>
     <module>bundles/org.eclipse.core.filesystem</module>
-    <module>bundles/org.eclipse.core.filesystem.freebsd.powerpc64</module>
-    <module>bundles/org.eclipse.core.filesystem.freebsd.amd64</module>
+    <module>bundles/org.eclipse.core.filesystem.linux.ppc64le</module>
+    <module>bundles/org.eclipse.core.filesystem.linux.x86_64</module>
     <module>bundles/org.eclipse.core.filesystem.macosx</module>
     <module>bundles/org.eclipse.core.filesystem.win32.x86_64</module>
 

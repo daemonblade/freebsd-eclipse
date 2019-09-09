@@ -36,7 +36,7 @@ public class ExtraFilters implements IFilter {
 
 	public ExtraFilters() {
 		if (filters == null) {
-		    readFilters();
+			readFilters();
 		}
 	}
 
@@ -81,9 +81,7 @@ public class ExtraFilters implements IFilter {
 	 */
 	public static void setFilters(PrioritizedFilter[] newFilters) {
 		filters = new ArrayList<>();
-		for (PrioritizedFilter newFilter : newFilters) {
-			filters.add(newFilter);
-		}
+		Collections.addAll(filters, newFilters);
 		sortFilters();
 	}
 

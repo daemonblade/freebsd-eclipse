@@ -17,7 +17,7 @@ import java.io.*;
 import java.util.*;
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.internal.preferences.TestHelper;
-import org.eclipse.core.internal.runtime.InternalPlatform;
+import org.eclipse.core.internal.runtime.MetaDataKeeper;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.preferences.*;
@@ -860,11 +860,11 @@ public class EclipsePreferencesTest extends RuntimeTest {
 		}
 
 		// remove children and check
-		for (int i = 0; i < nodes.length; i++) {
+		for (Preferences n : nodes) {
 			try {
-				nodes[i].removeNode();
-				assertTrue("5.1", !parent.nodeExists(nodes[i].name()));
-				assertTrue("5.2", !nodes[i].nodeExists(""));
+				n.removeNode();
+				assertTrue("5.1", !parent.nodeExists(n.name()));
+				assertTrue("5.2", !n.nodeExists(""));
 			} catch (BackingStoreException e) {
 				fail("5.99", e);
 			}
@@ -1092,7 +1092,7 @@ public class EclipsePreferencesTest extends RuntimeTest {
 
 		// ensure the values have been flushed to disk
 		// first indication is the new file exists on disk.
-		IPath newFile = InternalPlatform.getDefault().getMetaArea().getStateLocation(Platform.PI_RUNTIME);
+		IPath newFile = MetaDataKeeper.getMetaArea().getStateLocation(Platform.PI_RUNTIME);
 		newFile = newFile.append(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME).append(pluginID).addFileExtension(EclipsePreferences.PREFS_FILE_EXTENSION);
 		assertTrue("4.0", newFile.toFile().exists());
 		// then check to see if the value is in the file

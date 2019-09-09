@@ -182,16 +182,14 @@ public class WidgetMethodHandler extends AbstractHandler implements IExecutableE
 			final Object keyboardFocusManager = keyboardFocusManagerGetCurrentKeyboardFocusManagerMethod
 					.invoke(keyboardFocusManagerClass);
 			final Method keyboardFocusManagerGetFocusOwner = keyboardFocusManagerClass.getMethod("getFocusOwner"); //$NON-NLS-1$
-			final Object focusComponent = keyboardFocusManagerGetFocusOwner.invoke(keyboardFocusManager);
-			return focusComponent;
+			return keyboardFocusManagerGetFocusOwner.invoke(keyboardFocusManager);
 		}
 		// Use JRE 1.3 API
 		final Class focusManagerClass = Class.forName("javax.swing.FocusManager"); //$NON-NLS-1$
 		final Method focusManagerGetCurrentManagerMethod = focusManagerClass.getMethod("getCurrentManager"); //$NON-NLS-1$
 		final Object focusManager = focusManagerGetCurrentManagerMethod.invoke(focusManagerClass);
 		final Method focusManagerGetFocusOwner = focusManagerClass.getMethod("getFocusOwner"); //$NON-NLS-1$
-		final Object focusComponent = focusManagerGetFocusOwner.invoke(focusManager);
-		return focusComponent;
+		return focusManagerGetFocusOwner.invoke(focusManager);
 
 	}
 
@@ -244,13 +242,7 @@ public class WidgetMethodHandler extends AbstractHandler implements IExecutableE
 			} catch (final ClassNotFoundException e) {
 				// There is no Swing support, so do nothing.
 
-			} catch (final NoSuchMethodException e) {
-				// The API has changed, which seems amazingly unlikely.
-				throw new Error("Something is seriously wrong here"); //$NON-NLS-1$
-			} catch (IllegalAccessException e) {
-				// The API has changed, which seems amazingly unlikely.
-				throw new Error("Something is seriously wrong here"); //$NON-NLS-1$
-			} catch (InvocationTargetException e) {
+			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
 				// The API has changed, which seems amazingly unlikely.
 				throw new Error("Something is seriously wrong here"); //$NON-NLS-1$
 			}

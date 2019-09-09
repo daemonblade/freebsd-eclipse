@@ -36,13 +36,13 @@ public class RegistryCSSElementProvider implements IElementProvider {
 	private static final String DEPRECATED_ELEMENT_PROVIDER_EXTPOINT = "org.eclipse.e4.u.css.core.elementProvider";
 	private static final String ELEMENT_PROVIDER_EXTPOINT = "org.eclipse.e4.ui.css.core.elementProvider";
 
-	final private IExtensionRegistry registry;;
+	final private IExtensionRegistry registry;
 
 	private String[] extpts = { ELEMENT_PROVIDER_EXTPOINT,
 			DEPRECATED_ELEMENT_PROVIDER_EXTPOINT };
 
 	private Map<Class<?>, IElementProvider> providerCache = Collections
-			.synchronizedMap(new WeakHashMap<Class<?>, IElementProvider>());
+			.synchronizedMap(new WeakHashMap<>());
 
 	public RegistryCSSElementProvider(IExtensionRegistry registry) {
 		// FIXME: add a registry listener to refresh caches; but would need to

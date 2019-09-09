@@ -221,7 +221,7 @@ public class LaunchConfigurationWorkingCopy extends LaunchConfiguration implemen
 				}
 			}
 			if (useRunnable) {
-					IWorkspaceRunnable wr = pm -> doSave0(pm);
+					IWorkspaceRunnable wr = this::doSave0;
 				ResourcesPlugin.getWorkspace().run(wr, null, 0, lmonitor.newChild(1));
 			} else {
 				//file is persisted in the metadata not the workspace
@@ -310,14 +310,8 @@ public class LaunchConfigurationWorkingCopy extends LaunchConfiguration implemen
 						added = true;
 						updateMonitor(lmonitor, 1);
 					}
-					BufferedOutputStream stream = null;
-					try {
-						stream = new BufferedOutputStream(file.openOutputStream(EFS.NONE, null));
+					try (BufferedOutputStream stream = new BufferedOutputStream(file.openOutputStream(EFS.NONE, null))) {
 						stream.write(xml.getBytes(StandardCharsets.UTF_8));
-					} finally {
-						if(stream != null) {
-							stream.close();
-						}
 					}
 					//notify file saved
 					updateMonitor(lmonitor, 1);

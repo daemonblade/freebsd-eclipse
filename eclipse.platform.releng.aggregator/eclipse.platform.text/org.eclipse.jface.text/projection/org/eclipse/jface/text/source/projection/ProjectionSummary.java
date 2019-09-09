@@ -127,7 +127,7 @@ class ProjectionSummary {
 		synchronized (fLock) {
 			if (fConfiguredAnnotationTypes != null) {
 				fConfiguredAnnotationTypes.remove(annotationType);
-				if (fConfiguredAnnotationTypes.size() == 0)
+				if (fConfiguredAnnotationTypes.isEmpty())
 					fConfiguredAnnotationTypes= null;
 			}
 		}
@@ -186,7 +186,7 @@ class ProjectionSummary {
 				return;
 		}
 
-		if (bags != null && bags.size() > 0) {
+		if (bags != null && !bags.isEmpty()) {
 			Annotation[] deletions= new Annotation[bags.size()];
 			bags.toArray(deletions);
 			if (!isCanceled(monitor))
@@ -220,7 +220,7 @@ class ProjectionSummary {
 				return;
 		}
 
-		if (additions.size() > 0) {
+		if (!additions.isEmpty()) {
 			if (visualAnnotationModel instanceof IAnnotationModelExtension) {
 				IAnnotationModelExtension extension= (IAnnotationModelExtension)visualAnnotationModel;
 				if (!isCanceled(monitor))
@@ -290,8 +290,7 @@ class ProjectionSummary {
 	}
 
 	private boolean includes(IRegion[] regions, Position position) {
-		for (int i= 0; i < regions.length; i++) {
-			IRegion region= regions[i];
+		for (IRegion region : regions) {
 			if (position != null && !position.isDeleted()
 					&& region.getOffset() <= position.getOffset() &&  position.getOffset() + position.getLength() <= region.getOffset() + region.getLength())
 				return true;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -18,6 +18,7 @@
  *     Axel Richard <axel.richard@obeo.fr> - Bug 486644
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 146205
  *     Patrik Suzzi <psuzzi@itemis.com> - Bug 529885
+ *     Christian Georgi (SAP SE) - Bug 540440
  *******************************************************************************/
 package org.eclipse.ui.internal;
 
@@ -56,8 +57,8 @@ public class WorkbenchPreferenceInitializer extends AbstractPreferenceInitialize
 		node.putBoolean(IPreferenceConstants.EDITORLIST_PULLDOWN_ACTIVE, false);
 		node.putBoolean(IPreferenceConstants.EDITORLIST_DISPLAY_FULL_NAME, false);
 		node.putBoolean(IPreferenceConstants.STICKY_CYCLE, false);
-		node.putBoolean(IPreferenceConstants.REUSE_EDITORS_BOOLEAN, false);
-		node.putInt(IPreferenceConstants.REUSE_EDITORS, 8);
+		node.putBoolean(IPreferenceConstants.REUSE_EDITORS_BOOLEAN, true);
+		node.putInt(IPreferenceConstants.REUSE_EDITORS, 99);
 		node.putBoolean(IPreferenceConstants.OPEN_ON_SINGLE_CLICK, false);
 		node.putBoolean(IPreferenceConstants.SELECT_ON_HOVER, false);
 		node.putBoolean(IPreferenceConstants.OPEN_AFTER_DELAY, false);
@@ -118,6 +119,10 @@ public class WorkbenchPreferenceInitializer extends AbstractPreferenceInitialize
 
 		// Progress view
 		node.putInt(IPreferenceConstants.MAX_PROGRESS_ENTRIES, 20);
+
+		// Visualized command keys
+		node.putBoolean(IPreferenceConstants.SHOW_KEYS_ENABLED, false);
+		node.putInt(IPreferenceConstants.SHOW_KEYS_TIME_TO_CLOSE, 3000);
 
 		IEclipsePreferences rootNode = (IEclipsePreferences) Platform.getPreferencesService().getRootNode()
 				.node(InstanceScope.SCOPE);

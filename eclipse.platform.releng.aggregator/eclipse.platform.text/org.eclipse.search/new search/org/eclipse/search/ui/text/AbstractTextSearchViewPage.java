@@ -15,6 +15,7 @@
 package org.eclipse.search.ui.text;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -1099,9 +1100,10 @@ public abstract class AbstractTextSearchViewPage extends Page implements ISearch
 
 		int count= 0;
 		Match[] matches= result.getMatches(element);
-		for (int i= 0; i < matches.length; i++) {
-			if (!matches[i].isFiltered())
+		for (Match match : matches) {
+			if (!match.isFiltered()) {
 				count++;
+			}
 		}
 		return count;
 	}
@@ -1244,7 +1246,7 @@ public abstract class AbstractTextSearchViewPage extends Page implements ISearch
 	}
 
 	private synchronized boolean hasMoreUpdates() {
-		return fBatchedClearAll || fBatchedUpdates.size() > 0;
+		return fBatchedClearAll || !fBatchedUpdates.isEmpty();
 	}
 
 	private boolean isQueryRunning() {
@@ -1351,18 +1353,14 @@ public abstract class AbstractTextSearchViewPage extends Page implements ISearch
 	private void collectAllMatches(HashSet<Match> set, Object[] elements) {
 		for (Object element : elements) {
 			Match[] matches = getDisplayedMatches(element);
-			for (Match match : matches) {
-				set.add(match);
-			}
+			Collections.addAll(set, matches);
 		}
 	}
 
 	private void collectAllMatchesBelow(AbstractTextSearchResult result, Set<Match> set, ITreeContentProvider cp, Object[] elements) {
 		for (Object element : elements) {
 			Match[] matches = getDisplayedMatches(element);
-			for (Match match : matches) {
-				set.add(match);
-			}
+			Collections.addAll(set, matches);
 			Object[] children = cp.getChildren(element);
 			collectAllMatchesBelow(result, set, cp, children);
 		}

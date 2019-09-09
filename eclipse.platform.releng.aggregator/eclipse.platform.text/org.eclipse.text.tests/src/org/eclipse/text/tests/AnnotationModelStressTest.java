@@ -1234,7 +1234,7 @@ public class AnnotationModelStressTest {
 	@After
 	public void tearDown() throws Exception {
 		fAnnotationModel.disconnect(fDocument);
-		
+
 		fDocument= null;
 		fAnnotationModel= null;
 		fInnerModel1= null;
@@ -1348,7 +1348,7 @@ public class AnnotationModelStressTest {
 
 		return result;
 	}
-	
+
 	@Test
 	public void testStressTestPlainOld() throws Exception {
 		ArrayList<AnnotationData> added= new ArrayList<>();
@@ -1374,12 +1374,12 @@ public class AnnotationModelStressTest {
 			i++;
 		}
 
-		while (added.size() > 0) {
+		while (!added.isEmpty()) {
 			assertRemove(added);
 			assertExist(added);
 		}
 	}
-	
+
 	@Test
 	public void testStressTestPlainNew() throws Exception {
 		ArrayList<AnnotationData> added= new ArrayList<>();
@@ -1405,12 +1405,12 @@ public class AnnotationModelStressTest {
 			i++;
 		}
 
-		while (added.size() > 0) {
+		while (!added.isEmpty()) {
 			assertRemove(added);
 			assertExistNew(added);
 		}
 	}
-	
+
 	@Test
 	public void testStressTestMoveOld() throws Exception {
 		ArrayList<AnnotationData> added= new ArrayList<>();
@@ -1440,12 +1440,12 @@ public class AnnotationModelStressTest {
 			i++;
 		}
 
-		while (added.size() > 0) {
+		while (!added.isEmpty()) {
 			assertRemove(added);
 			assertExist(added);
 		}
 	}
-	
+
 	@Test
 	public void testStressTestMoveNew() throws Exception {
 		ArrayList<AnnotationData> added= new ArrayList<>();
@@ -1475,7 +1475,7 @@ public class AnnotationModelStressTest {
 			i++;
 		}
 
-		while (added.size() > 0) {
+		while (!added.isEmpty()) {
 			assertRemove(added);
 			assertExist(added);
 		}

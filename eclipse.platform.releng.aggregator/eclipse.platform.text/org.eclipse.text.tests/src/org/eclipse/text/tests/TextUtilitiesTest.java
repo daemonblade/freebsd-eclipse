@@ -13,7 +13,8 @@
  *******************************************************************************/
 package org.eclipse.text.tests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -139,7 +140,7 @@ public class TextUtilitiesTest {
 
 	/**
 	 * Constructor for UtilitiesTest.
-	 * 
+	 *
 	 * @param name the name
 	 */
 	private static DocumentEvent createRandomEvent(IDocument document, int maxLength, char character) {
@@ -151,13 +152,13 @@ public class TextUtilitiesTest {
 		int length= Math.max(index0, index1) - offset;
 
 		int stringLength=  (int) (Math.random() * 10);
-		StringBuffer buffer= new StringBuffer(stringLength);
+		StringBuilder buffer= new StringBuilder(stringLength);
 		for (int i= 0; i < stringLength; ++i)
 			buffer.append(character);
 
 		return new DocumentEvent(document, offset, length, buffer.toString());
 	}
-	
+
 	@Test
 	public void testMergeEvents1() {
 		IDocument reference= new Document();
@@ -175,7 +176,7 @@ public class TextUtilitiesTest {
 			Assert.fail("bad location exception");
 		}
 	}
-	
+
 	@Test
 	public void testMergeEvents() {
 		IDocument reference= new Document();
@@ -228,7 +229,7 @@ public class TextUtilitiesTest {
 			Assert.fail("bad location exception");
 		}
 	}
-	
+
 	@Test
 	public void testMergeEvents2() {
 		IDocument reference= new Document();
@@ -278,7 +279,7 @@ public class TextUtilitiesTest {
 	private static void check(IDocument reference, IDocument testee) {
 		Assert.assertEquals(reference.get(), testee.get());
 	}
-	
+
 	@Test
 	public void testIndexOf() {
 		int[] result;

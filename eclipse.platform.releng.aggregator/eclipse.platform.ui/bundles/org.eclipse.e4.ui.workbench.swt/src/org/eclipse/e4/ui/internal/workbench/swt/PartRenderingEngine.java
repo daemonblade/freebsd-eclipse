@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2018 IBM Corporation and others.
+ * Copyright (c) 2008, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -33,7 +33,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.ISafeRunnable;
+import org.eclipse.core.runtime.InvalidRegistryObjectException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.preferences.DefaultScope;
@@ -101,8 +104,6 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipse.ui.testing.TestableObject;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventHandler;
 import org.osgi.service.log.LogService;
@@ -437,24 +438,10 @@ public class PartRenderingEngine implements IPresentationEngine {
 				} else {
 					elementCtrl.moveAbove(null);
 				}
+				elementCtrl.requestLayout();
 				break;
 			} else if (kid.getWidget() instanceof Control && kid.isVisible()) {
 				prevCtrl = (Control) kid.getWidget();
-			}
-		}
-
-		Object widget = parent.getWidget();
-		if (widget instanceof Composite) {
-			Composite composite = (Composite) widget;
-			if (composite.getShell() == elementCtrl.getShell()) {
-				Composite temp = elementCtrl.getParent();
-				while (temp != composite) {
-					if (temp == null) {
-						return;
-					}
-					temp = temp.getParent();
-				}
-				composite.layout(true, true);
 			}
 		}
 	}
@@ -1179,9 +1166,7 @@ public class PartRenderingEngine implements IPresentationEngine {
 						}
 					} catch (ThreadDeath th) {
 						throw th;
-					} catch (Exception ex) {
-						handle(ex, advisor);
-					} catch (Error err) {
+					} catch (Exception | Error err) {
 						handle(err, advisor);
 					}
 				}
@@ -1354,7 +1339,7 @@ public class PartRenderingEngine implements IPresentationEngine {
 			WidgetElement.setEngine(display, cssEngine);
 			if (cssResourcesURI != null) {
 				cssEngine.getResourcesLocatorManager().registerResourceLocator(
-						new OSGiResourceLocator(cssResourcesURI.toString()));
+						new OSGiResourceLocator(cssResourcesURI));
 			}
 			// FIXME: is this needed?
 			display.setData("org.eclipse.e4.ui.css.context", appContext); //$NON-NLS-1$
@@ -1463,7 +1448,7 @@ public class PartRenderingEngine implements IPresentationEngine {
 		}
 
 		protected void resetOverriddenPreferences() {
-			for (IEclipsePreferences preferences : getPreferences()) {
+			for (IEclipsePreferences preferences : getThemeRelatedPreferences()) {
 				resetOverriddenPreferences(preferences);
 			}
 		}
@@ -1483,13 +1468,28 @@ public class PartRenderingEngine implements IPresentationEngine {
 			return EclipsePreferencesHelper.getOverriddenPropertyNames(preferences);
 		}
 
-		protected Set<IEclipsePreferences> getPreferences() {
+		protected Set<IEclipsePreferences> getThemeRelatedPreferences() {
 			if (prefs == null) {
 				prefs = new HashSet<>();
-				BundleContext context = WorkbenchSWTActivator.getDefault().getContext();
-				for (Bundle bundle : context.getBundles()) {
-					if (bundle.getSymbolicName() != null) {
-						prefs.add(InstanceScope.INSTANCE.getNode(bundle.getSymbolicName()));
+				final IExtensionRegistry registry = Platform.getExtensionRegistry();
+				Set<String> bundleIDs = new HashSet<>();
+				String[] themeRelatedExtensionPoints = { "org.eclipse.e4.ui.css.swt.theme", "org.eclipse.ui.themes" };
+				for (String extensionPoint : themeRelatedExtensionPoints) {
+					IConfigurationElement[] elements = registry.getConfigurationElementsFor(extensionPoint);
+					for (IConfigurationElement element : elements) {
+						try {
+							String nameSpace = element.getNamespaceIdentifier();
+							if (nameSpace != null) {
+								bundleIDs.add(nameSpace);
+							}
+						} catch (InvalidRegistryObjectException e) {
+							Activator.log(LogService.LOG_ERROR, e.getMessage(), e);
+						}
+					}
+				}
+				for (String bundleId : bundleIDs) {
+					if (bundleId != null) {
+						prefs.add(InstanceScope.INSTANCE.getNode(bundleId));
 					}
 				}
 			}
@@ -1498,7 +1498,7 @@ public class PartRenderingEngine implements IPresentationEngine {
 
 		private void overridePreferences(IThemeEngine themeEngine) {
 			if (themeEngine != null) {
-				for (IEclipsePreferences preferences : getPreferences()) {
+				for (IEclipsePreferences preferences : getThemeRelatedPreferences()) {
 					themeEngine.applyStyles(preferences, false);
 				}
 			}

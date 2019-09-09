@@ -27,7 +27,7 @@ String getFieldValue(JNIField field) {
 		int equalsIndex = classSource.indexOf("=", index);
 		if (classSource.substring(index + name.length(), equalsIndex).trim().length() == 0) {
 			int semiIndex = classSource.indexOf(";", equalsIndex);
- 			return classSource.substring(equalsIndex + 1, semiIndex).trim();
+			return classSource.substring(equalsIndex + 1, semiIndex).trim();
 		}
 	}
 }
@@ -53,7 +53,7 @@ public void generate(JNIField[] fields) {
 public void generate(JNIField field) {
 	String name = field.getName();
 	for (String str : files.values()) {
-		if (str.indexOf(name) != -1) {
+		if (str.contains(name)) {
 			int modifiers = field.getModifiers();
 			String modifiersStr = Modifier.toString(modifiers);
 			output("\t");

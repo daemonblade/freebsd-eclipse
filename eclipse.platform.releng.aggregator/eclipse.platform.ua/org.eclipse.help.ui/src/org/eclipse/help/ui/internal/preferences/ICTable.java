@@ -16,6 +16,7 @@ package org.eclipse.help.ui.internal.preferences;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.help.ui.internal.Messages;
@@ -95,29 +96,29 @@ public class ICTable {
 
 
 		ColumnLayoutData[] fTableColumnLayouts= {
-		        new ColumnWeightData(85),
-		        new ColumnWeightData(165),
-		        new ColumnWeightData(60)
+				new ColumnWeightData(85),
+				new ColumnWeightData(165),
+				new ColumnWeightData(60)
 		};
 
 		TableColumn column;
 
 		tableLayout.addColumnData(fTableColumnLayouts[0]);
-	    column = new TableColumn(table, SWT.NONE, 0);
-	    column.setResizable(fTableColumnLayouts[0].resizable);
-	    column.setText(NAME_COLUMN);
+		column = new TableColumn(table, SWT.NONE, 0);
+		column.setResizable(fTableColumnLayouts[0].resizable);
+		column.setText(NAME_COLUMN);
 
-	    tableLayout.addColumnData(fTableColumnLayouts[1]);
-	    column = new TableColumn(table, SWT.NONE, 1);
-	    column.setResizable(fTableColumnLayouts[1].resizable);
-	    column.setText(LOCATION_COLUMN);
+		tableLayout.addColumnData(fTableColumnLayouts[1]);
+		column = new TableColumn(table, SWT.NONE, 1);
+		column.setResizable(fTableColumnLayouts[1].resizable);
+		column.setText(LOCATION_COLUMN);
 
-	    tableLayout.addColumnData(fTableColumnLayouts[2]);
-	    column = new TableColumn(table, SWT.NONE, 2);
-	    column.setResizable(fTableColumnLayouts[2].resizable);
-	    column.setText(STATUS_COLUMN);
+		tableLayout.addColumnData(fTableColumnLayouts[2]);
+		column = new TableColumn(table, SWT.NONE, 2);
+		column.setResizable(fTableColumnLayouts[2].resizable);
+		column.setText(STATUS_COLUMN);
 
-	    return table;
+		return table;
 	}
 
 	/**
@@ -224,8 +225,7 @@ public class ICTable {
 		ICContentProvider p = (ICContentProvider)viewer.getContentProvider();
 		IC objs[] = p.getElements(null);
 		List<IC> content = new ArrayList<>();
-		for (int o=0;o<objs.length;o++)
-			content.add(objs[o]);
+		Collections.addAll(content, objs);
 		return content;
 	}
 

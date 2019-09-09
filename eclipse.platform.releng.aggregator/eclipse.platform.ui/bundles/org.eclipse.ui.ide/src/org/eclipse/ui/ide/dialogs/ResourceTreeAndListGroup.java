@@ -14,6 +14,7 @@
 package org.eclipse.ui.ide.dialogs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -581,9 +582,7 @@ public class ResourceTreeAndListGroup extends EventManager {
 			@Override
 			public void filterElements(Object[] elements,
 					IProgressMonitor monitor) {
-				for (Object element : elements) {
-					returnValue.add(element);
-				}
+				returnValue.addAll(Arrays.asList(elements));
 			}
 		};
 
@@ -615,9 +614,7 @@ public class ResourceTreeAndListGroup extends EventManager {
 			@Override
 			public void filterElements(Object[] elements,
 					IProgressMonitor monitor) {
-				for (Object element : elements) {
-					returnValue.add(element);
-				}
+				returnValue.addAll(Arrays.asList(elements));
 			}
 		};
 
@@ -906,10 +903,7 @@ public class ResourceTreeAndListGroup extends EventManager {
 	 * @param treeElement the element being updated
 	 */
 	private void setListForWhiteSelection(Object treeElement) {
-		List listItemsChecked = new ArrayList();
-		for (Object listItem : listContentProvider.getElements(treeElement)) {
-			listItemsChecked.add(listItem);
-		}
+		List listItemsChecked = new ArrayList(Arrays.asList(listContentProvider.getElements(treeElement)));
 		checkedStateStore.put(treeElement, listItemsChecked);
 	}
 

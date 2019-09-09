@@ -249,7 +249,7 @@ public abstract class AbstractWorkingSetManager extends EventManager
 
 	@Override
 	public IWorkingSet[] getWorkingSets() {
-		SortedSet<IWorkingSet> visibleSubset = new TreeSet<IWorkingSet>(WorkingSetComparator.getInstance());
+		SortedSet<IWorkingSet> visibleSubset = new TreeSet<>(WorkingSetComparator.getInstance());
 		for (IWorkingSet workingSet : workingSets) {
 			if (workingSet.isVisible()) {
 				visibleSubset.add(workingSet);
@@ -528,12 +528,8 @@ public abstract class AbstractWorkingSetManager extends EventManager
 	 * @param memento the persistence store
 	 */
 	protected void saveMruList(IMemento memento) {
-		Iterator iterator = recentWorkingSets.iterator();
-
-		while (iterator.hasNext()) {
-			IWorkingSet workingSet = (IWorkingSet) iterator.next();
+		for (IWorkingSet workingSet : recentWorkingSets) {
 			IMemento mruMemento = memento.createChild(IWorkbenchConstants.TAG_MRU_LIST);
-
 			mruMemento.putString(IWorkbenchConstants.TAG_NAME, workingSet.getName());
 		}
 	}
@@ -683,10 +679,10 @@ public abstract class AbstractWorkingSetManager extends EventManager
 	}
 
 	private static List<WorkingSetDescriptor> getUniqueDescriptors(String symbolicName) {
-		final List<WorkingSetDescriptor> descriptors = WorkbenchPlugin.getDefault().getWorkingSetRegistry()
-				.getUpdaterDescriptorsForNamespace(symbolicName);
+		
 		// Note: WorkingSetRegistry never contains descriptors with same id
-		return descriptors;
+		return WorkbenchPlugin.getDefault().getWorkingSetRegistry()
+				.getUpdaterDescriptorsForNamespace(symbolicName);
 	}
 
 	private List<IWorkingSet> getWorkingSetsForId(String id) {

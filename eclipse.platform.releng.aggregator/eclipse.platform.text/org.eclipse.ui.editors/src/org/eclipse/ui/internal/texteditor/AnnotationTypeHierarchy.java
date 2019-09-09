@@ -73,7 +73,7 @@ public final class AnnotationTypeHierarchy {
 	}
 
 	private void append(List<String> list, String string) {
-		if (string == null || string.trim().length() == 0)
+		if (string == null || string.trim().isEmpty())
 			return;
 
 		if (!list.contains(string))
@@ -92,15 +92,13 @@ public final class AnnotationTypeHierarchy {
 		IExtensionPoint extensionPoint= Platform.getExtensionRegistry().getExtensionPoint(EditorsUI.PLUGIN_ID, "annotationTypes"); //$NON-NLS-1$
 		if (extensionPoint != null) {
 			IConfigurationElement[] elements= extensionPoint.getConfigurationElements();
-			for (int i= 0; i < elements.length; i++) {
-				IConfigurationElement element= elements[i];
-
+			for (IConfigurationElement element : elements) {
 				String name= element.getAttribute("name");  //$NON-NLS-1$
-				if (name == null || name.trim().length() == 0)
+				if (name == null || name.trim().isEmpty())
 					continue;
 
 				String parent= element.getAttribute("super");  //$NON-NLS-1$
-				if (parent == null || parent.trim().length() == 0)
+				if (parent == null || parent.trim().isEmpty())
 					parent= ""; //$NON-NLS-1$
 
 				allTypes.put(name, parent);

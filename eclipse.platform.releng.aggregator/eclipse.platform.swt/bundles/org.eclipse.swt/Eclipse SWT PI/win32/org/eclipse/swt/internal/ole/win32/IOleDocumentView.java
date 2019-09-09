@@ -18,19 +18,19 @@ import org.eclipse.swt.internal.win32.*;
 
 public class IOleDocumentView extends IUnknown
 {
-public IOleDocumentView(long /*int*/ address) {
+public IOleDocumentView(long address) {
 	super(address);
 }
-public int SetInPlaceSite(long /*int*/ pIPSite) {
-	return OS.VtblCall(3, address, pIPSite);
+public int SetInPlaceSite(long pIPSite) {
+	return COM.VtblCall(3, address, pIPSite);
 }
 public int SetRect(RECT prcView) {
 	return COM.VtblCall(6, address, prcView);
 }
 public int Show(int fShow) {
-	return OS.VtblCall(9, address, fShow);
+	return COM.VtblCall(9, address, fShow);
 }
 public int UIActivate(int fUIActivate) {
-	return OS.VtblCall(10, address, fUIActivate);
+	return COM.VtblCall(10, address, fUIActivate);
 }
 }

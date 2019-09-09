@@ -698,6 +698,7 @@ void createItem (TreeColumn column, int index) {
 	}
 }
 
+// For fast bulk insert, see comments for TreeItem#TreeItem(TreeItem,int,int)
 void createItem (TreeItem item, TreeItem parentItem, int index) {
 	int count;
 	TreeItem [] items;
@@ -2133,7 +2134,7 @@ void mouseDownSuper(long id, long sel, long theEvent) {
 			NSRect checkRect = cell.imageRectForBounds(widget.frameOfCellAtColumn(column, row));
 			if (OS.NSPointInRect(pt, checkRect)) {
 				check = preventSelect = true;
-		    }
+			}
 		}
 	}
 	if (!check && row != -1 && (nsEvent.modifierFlags() & OS.NSDeviceIndependentModifierFlagsMask) == 0 && nsEvent.clickCount() == 1) {

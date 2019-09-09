@@ -109,7 +109,8 @@ class ASTConverter {
 			sourceLevel /*sourceLevel*/,
 			null /*taskTags*/,
 			null/*taskPriorities*/,
-			true/*taskCaseSensitive*/);
+			true/*taskCaseSensitive*/,
+			JavaCore.ENABLED.equals(options.get(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES)));
 		this.monitor = monitor;
 		this.insideComments = JavaCore.ENABLED.equals(options.get(JavaCore.COMPILER_DOC_COMMENT_SUPPORT));
 	}
@@ -1286,7 +1287,7 @@ class ASTConverter {
 
 	public BreakStatement convert(org.eclipse.jdt.internal.compiler.ast.BreakStatement statement)  {
 		BreakStatement breakStatement = new BreakStatement(this.ast);
-		if (this.ast.apiLevel >= AST.JLS12_INTERNAL) {
+		if (this.ast.apiLevel == AST.JLS12_INTERNAL && this.ast.isPreviewEnabled()) {
 			breakStatement.setImplicit(statement.isImplicit);
 			if (statement.isImplicit) {
 				breakStatement.setSourceRange(statement.sourceEnd -1, 0);
@@ -1303,7 +1304,7 @@ class ASTConverter {
 			retrieveIdentifierAndSetPositions(statement.sourceStart, statement.sourceEnd, name);
 			breakStatement.setLabel(name);
 		}
-		else if (statement.expression != null && this.ast.apiLevel >= AST.JLS12_INTERNAL) {
+		else if (statement.expression != null && this.ast.apiLevel == AST.JLS12_INTERNAL && this.ast.isPreviewEnabled()) {
 			final Expression expression= convert(statement.expression);
 			breakStatement.setExpression(expression);
 			int sourceEnd = statement.sourceEnd;
@@ -1318,7 +1319,7 @@ class ASTConverter {
 
 	public SwitchCase convert(org.eclipse.jdt.internal.compiler.ast.CaseStatement statement) {
 		SwitchCase switchCase = new SwitchCase(this.ast);
-		if (this.ast.apiLevel >= AST.JLS12_INTERNAL) {
+		if (this.ast.apiLevel == AST.JLS12_INTERNAL && this.ast.isPreviewEnabled()) {
 			org.eclipse.jdt.internal.compiler.ast.Expression[] expressions = statement.constantExpressions;
 			if (expressions == null || expressions.length == 0) {
 				switchCase.expressions().clear();
@@ -1335,7 +1336,7 @@ class ASTConverter {
 				internalSetExpression(switchCase, convert(constantExpression));
 			}
 		}
-		if (this.ast.apiLevel >= AST.JLS12_INTERNAL) {
+		if (this.ast.apiLevel == AST.JLS12_INTERNAL && this.ast.isPreviewEnabled()) {
 			switchCase.setSwitchLabeledRule(statement.isExpr);
 		}
 		switchCase.setSourceRange(statement.sourceStart, statement.sourceEnd - statement.sourceStart + 1);
@@ -2879,7 +2880,7 @@ class ASTConverter {
 	}
 
 	public Expression convert(org.eclipse.jdt.internal.compiler.ast.SwitchExpression expression) {
-		if (this.ast.apiLevel < AST.JLS12_INTERNAL) {
+		if (this.ast.apiLevel < AST.JLS12_INTERNAL || !this.ast.isPreviewEnabled()) {
 			return createFakeNullLiteral(expression);		
 		}
 		SwitchExpression switchExpression = new SwitchExpression(this.ast);

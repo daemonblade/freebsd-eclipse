@@ -14,11 +14,14 @@
 package org.eclipse.ui.dialogs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.TrayDialog;
+import org.eclipse.jface.widgets.LabelFactory;
+import org.eclipse.jface.widgets.WidgetFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
@@ -93,12 +96,11 @@ public abstract class SelectionDialog extends TrayDialog {
 	 * @return the message label
 	 */
 	protected Label createMessageArea(Composite composite) {
-		Label label = new Label(composite, SWT.NONE);
+		LabelFactory factory = WidgetFactory.label(SWT.NONE).font(composite.getFont());
 		if (message != null) {
-			label.setText(message);
+			factory.text(message);
 		}
-		label.setFont(composite.getFont());
-		return label;
+		return factory.create(composite);
 	}
 
 	/**
@@ -160,9 +162,7 @@ public abstract class SelectionDialog extends TrayDialog {
 	 */
 	public void setInitialSelections(Object... selectedElements) {
 		initialSelections = new ArrayList(selectedElements.length);
-		for (Object selectedElement : selectedElements) {
-			initialSelections.add(selectedElement);
-		}
+		initialSelections.addAll(Arrays.asList(selectedElements));
 	}
 
 	/**

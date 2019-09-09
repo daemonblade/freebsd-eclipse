@@ -25,6 +25,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -428,9 +429,7 @@ public class BundleComponent extends Component {
 			comp = (IApiComponent) container.getAncestor(IApiElement.COMPONENT);
 			if (comp != null && comp.getSymbolicName().equals(getSymbolicName())) {
 				String[] packageNames = container.getPackageNames();
-				for (String packageName : packageNames) {
-					names.add(packageName);
-				}
+				Collections.addAll(names, packageNames);
 			}
 		}
 		return names;
@@ -1067,9 +1066,7 @@ public class BundleComponent extends Component {
 		SAXParser saxParser = null;
 		try {
 			saxParser = factory.newSAXParser();
-		} catch (ParserConfigurationException e) {
-			// ignore
-		} catch (SAXException e) {
+		} catch (ParserConfigurationException | SAXException e) {
 			// ignore
 		}
 
@@ -1083,9 +1080,7 @@ public class BundleComponent extends Component {
 			SourceDefaultHandler defaultHandler = new SourceDefaultHandler();
 			saxParser.parse(inputSource, defaultHandler);
 			return defaultHandler.isSource();
-		} catch (SAXException e) {
-			// ignore
-		} catch (IOException e) {
+		} catch (SAXException | IOException e) {
 			// ignore
 		}
 		return false;

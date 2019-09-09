@@ -155,8 +155,7 @@ public class RemoteLogOperation extends RepositoryLocationOperation {
 		 * Return null if the revision wasn't found.
 		 */
 		private ICVSRemoteFile findRevison(ILogEntry[] allLogs, String predecessorRevision) throws TeamException {
-			for (int i = 0; i < allLogs.length; i++) {
-				ILogEntry entry = allLogs[i];
+			for (ILogEntry entry : allLogs) {
 				ICVSRemoteFile file = entry.getRemoteFile();
 				if (file.getRevision().equals(predecessorRevision)) {
 					return file;
@@ -170,7 +169,7 @@ public class RemoteLogOperation extends RepositoryLocationOperation {
 		private String getPredecessorRevision(String revision) {
 			int digits[] = Util.convertToDigits(revision);
 			digits[digits.length -1]--;
-			StringBuffer buffer = new StringBuffer(revision.length());
+			StringBuilder buffer = new StringBuilder(revision.length());
 			for (int i = 0; i < digits.length; i++) {
 				buffer.append(Integer.toString(digits[i]));
 				if (i < digits.length - 1) {
@@ -199,7 +198,7 @@ public class RemoteLogOperation extends RepositoryLocationOperation {
 			if (length % 2 == 1) {
 				length--;
 			}
-			StringBuffer buffer = new StringBuffer(revision.length());
+			StringBuilder buffer = new StringBuilder(revision.length());
 			for (int i = 0; i < length; i++) {
 				buffer.append(Integer.toString(digits[i]));
 				if (i < length - 1) {
@@ -251,8 +250,7 @@ public class RemoteLogOperation extends RepositoryLocationOperation {
 			// Optimize the cases were we are only fetching the history for a single revision. If it is
 			// already cached, don't fetch it again.
 			ArrayList<ICVSRemoteResource> unCachedRemotes = new ArrayList<>();
-			for (int i = 0; i < remoteResources.length; i++) {
-				ICVSRemoteResource r = remoteResources[i];
+			for (ICVSRemoteResource r : remoteResources) {
 				if(entryCache.getLogEntry(r) == null) {
 					unCachedRemotes.add(r);
 				}

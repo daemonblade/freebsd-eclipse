@@ -33,6 +33,7 @@ public class Snippet283 {
 		Display display = new Display();
 		Image image = new Image (display, Snippet283.class.getResourceAsStream("eclipse.png"));
 		Shell shell = new Shell(display);
+		shell.setText("Snippet 283");
 		shell.setLayout(new FillLayout());
 		final Table table = new Table(shell, SWT.FULL_SELECTION);
 		for (int i = 0; i < 8; i++) {
@@ -67,8 +68,8 @@ public class Snippet283 {
 		table.addListener(SWT.EraseItem, event -> {
 			event.detail &= ~SWT.FOREGROUND;
 			String osName = System.getProperty("os.name");
-			if (osName != null && osName.indexOf ("Windows") != -1) {
-				if (osName.indexOf ("Vista") != -1 || osName.indexOf ("unknown") != -1) {
+			if (osName != null && osName.contains ("Windows")) {
+				if (osName.contains ("Vista") || osName.contains ("unknown")) {
 					return;
 				}
 			}

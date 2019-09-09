@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corporation and others.
+ * Copyright (c) 2005, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,6 +14,7 @@
  *     Brock Janiczak <brockj@tpg.com.au> - bug 191545
  *     Jacek Pospychala <jacek.pospychala@pl.ibm.com> - bug 221998
  *     Steven Spungin <steven@spungin.tv> - Bug 408727
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - Bug 500495
  *******************************************************************************/
 package org.eclipse.pde.internal.core.builders;
 
@@ -692,10 +693,22 @@ public class BuildErrorReporter extends ErrorReporter implements IBuildPropertie
 			if (nodeProduct != null) {
 				Node attValue = (Node) xpath.evaluate("property[@name='applicationXMI']/@value", nodeProduct, XPathConstants.NODE); //$NON-NLS-1$
 				if (attValue != null) {
-					if (attValue.getNodeValue().isEmpty()) {
-						//Error: no URL defined but should already be reported.
+					String nodeValue = attValue.getNodeValue();
+					if (nodeValue.isEmpty()) {
+						// Error: no URL defined but should already be reported.
 					} else {
-						validateBinIncludes(binIncludes, attValue.getNodeValue());
+						String platform = "platform:/plugin/"; //$NON-NLS-1$
+						if (nodeValue.startsWith(platform)) {
+							IPluginModelBase model = PluginRegistry.findModel(fProject);
+							if (model != null) {
+								String prefix = platform + model.getPluginBase().getId() + '/';
+								if (nodeValue.startsWith(prefix)) {
+									validateBinIncludes(binIncludes, nodeValue.substring(prefix.length()));
+								}
+							}
+						} else {
+							validateBinIncludes(binIncludes, nodeValue);
+						}
 					}
 				} else {
 					if (fProject.exists(new Path("Application.e4xmi"))) { //$NON-NLS-1$
@@ -758,7 +771,7 @@ public class BuildErrorReporter extends ErrorReporter implements IBuildPropertie
 						path = path.substring(sep + 1);
 						if (resource == null) {
 							IPath result = PDECore.getDefault().getModelManager().getExternalModelManager()
-									.getNestedLibrary(model, path.toString());
+									.getNestedLibrary(model, path);
 							if (result == null) {
 								exists = false;
 							}
@@ -982,8 +995,10 @@ public class BuildErrorReporter extends ErrorReporter implements IBuildPropertie
 			String errorMessage = null;
 			if (sourceFolderList.contains(res.getFullPath())) {
 				errorMessage = PDECoreMessages.BuildErrorReporter_srcIncludesSourceFolder;
-			} else if (token.startsWith(".") || reservedTokens.contains(res.getName().toString().toLowerCase())) { //$NON-NLS-1$
-				errorMessage = NLS.bind(PDECoreMessages.BuildErrorReporter_srcIncludesSourceFolder1, res.getName());
+			} else if (token.startsWith(".") || reservedTokens.contains(res.getName().toLowerCase())) { //$NON-NLS-1$
+				if (!res.getName().toLowerCase().equals(".settings")) {//$NON-NLS-1$
+					errorMessage = NLS.bind(PDECoreMessages.BuildErrorReporter_srcIncludesSourceFolder1, res.getName());
+				}
 			}
 
 			if (errorMessage != null) {
@@ -1000,7 +1015,7 @@ public class BuildErrorReporter extends ErrorReporter implements IBuildPropertie
 		String[] tokens = includes.getTokens();
 		for (String tokenBasic : tokens) {
 			String token = tokenBasic.trim();
-			if (token.indexOf("*") != -1) { //$NON-NLS-1$
+			if (token.contains("*")) { //$NON-NLS-1$
 				// skip entries with wildcards
 				continue;
 			}
@@ -1041,7 +1056,7 @@ public class BuildErrorReporter extends ErrorReporter implements IBuildPropertie
 
 	private boolean startsWithAntVariable(String token) {
 		int varStart = token.indexOf("${"); //$NON-NLS-1$
-		return varStart != -1 && varStart < token.indexOf("}"); //$NON-NLS-1$
+		return varStart != -1 && varStart < token.indexOf('}');
 	}
 
 	private void validateDependencyManagement(IBuildEntry bundleList) {

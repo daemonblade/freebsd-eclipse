@@ -290,8 +290,7 @@ public class ProgressManagerUtil {
 			}
 		}
 
-		s = clipToLength(textValue, ellipsisString, pivot, currentLength);
-		return s;
+		return clipToLength(textValue, ellipsisString, pivot, currentLength);
 	}
 
 	private static String clipToLength(String textValue, String ellipsisString, int pivot, int newLength) {
@@ -306,7 +305,6 @@ public class ProgressManagerUtil {
 		if (charsToClip >= length) {
 			return ""; //$NON-NLS-1$
 		}
-		String s;
 		int start = pivot - charsToClip / 2;
 		int end = pivot + (charsToClip + 1) / 2;
 
@@ -326,8 +324,7 @@ public class ProgressManagerUtil {
 		} else {
 			s2 = ""; //$NON-NLS-1$
 		}
-		s = s1 + ellipsisString + s2;
-		return s;
+		return s1 + ellipsisString + s2;
 	}
 
 	/**
@@ -492,9 +489,7 @@ public class ProgressManagerUtil {
 			if (splashShell != null && splashShell.isVisible()) {
 				return splashShell;
 			}
-		} catch (IllegalAccessException e) {
-			// Use non-modal shell
-		} catch (InvocationTargetException e) {
+		} catch (IllegalAccessException | InvocationTargetException e) {
 			// Use non-modal shell
 		}
 

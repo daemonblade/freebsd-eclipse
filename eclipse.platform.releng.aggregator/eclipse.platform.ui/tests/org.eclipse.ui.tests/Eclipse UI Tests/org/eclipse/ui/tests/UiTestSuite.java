@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016, 2017, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -22,6 +22,7 @@ import org.eclipse.ui.tests.activities.ActivitiesTestSuite;
 import org.eclipse.ui.tests.adaptable.AdaptableTestSuite;
 import org.eclipse.ui.tests.api.ApiTestSuite;
 import org.eclipse.ui.tests.api.StartupTest;
+import org.eclipse.ui.tests.commands.CommandsTestSuite;
 import org.eclipse.ui.tests.concurrency.ConcurrencyTestSuite;
 import org.eclipse.ui.tests.contexts.ContextsTestSuite;
 import org.eclipse.ui.tests.datatransfer.DataTransferTestSuite;
@@ -74,6 +75,7 @@ import org.junit.runners.Suite;
 	PropertySheetTestSuite.class,
 	AdaptableTestSuite.class,
 	MultiPageEditorTestSuite.class,
+	CommandsTestSuite.class,
 	ContextsTestSuite.class,
 	ConcurrencyTestSuite.class,
 	FilteredTreeTests.class,
@@ -91,8 +93,7 @@ public class UiTestSuite {
 
 	// Not enabled tests:
 	// ZoomTestSuite.class,
-	// DynamicPluginsTestSuite.class,
-	// CommandsTestSuite.class,
+	// DynamicPluginsTestSuite.class, // FIXME See Bug 405296
 	// DragTestSuite.class,
 	// IntroTestSuite.class,
 	// MultiEditorTestSuite.class,

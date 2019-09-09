@@ -24,7 +24,7 @@ import org.eclipse.core.databinding.validation.IValidator;
 
 /**
  * A BindSpec that will automatically grab validators from an object's
- * properties, if a get&lt;PropertyName>Validator method is defined. Makes it
+ * properties, if a get&lt;PropertyName&gt;Validator method is defined. Makes it
  * easy to associate validators with the properties that they are responsible
  * for validating.
  *
@@ -71,8 +71,7 @@ public class CustomBeanUpdateValueStrategy<S, D> extends UpdateValueStrategy<S, 
 	}
 
 	private String upperCaseFirstLetter(String name) {
-		String result = name.substring(0, 1).toUpperCase() + name.substring(1);
-		return result;
+		return name.substring(0, 1).toUpperCase() + name.substring(1);
 	}
 
 	@Override

@@ -200,7 +200,7 @@ public class PDEAuxiliaryState {
 
 			Iterator<String> iter = fPluginInfos.keySet().iterator();
 			while (iter.hasNext()) {
-				String key = iter.next().toString();
+				String key = iter.next();
 				Element element = doc.createElement(ELEMENT_BUNDLE);
 				element.setAttribute(ATTR_BUNDLE_ID, key);
 				PluginInfo info = fPluginInfos.get(key);
@@ -268,11 +268,7 @@ public class PDEAuxiliaryState {
 					}
 				}
 				return true;
-			} catch (org.xml.sax.SAXException e) {
-				PDECore.log(e);
-			} catch (IOException e) {
-				PDECore.log(e);
-			} catch (ParserConfigurationException e) {
+			} catch (org.xml.sax.SAXException | IOException | ParserConfigurationException e) {
 				PDECore.log(e);
 			}
 		}
@@ -356,9 +352,7 @@ public class PDEAuxiliaryState {
 				root.appendChild(element);
 			}
 			XMLPrintHandler.writeFile(doc, new File(destination, CACHE_EXTENSION));
-		} catch (ParserConfigurationException e) {
-		} catch (FactoryConfigurationError e) {
-		} catch (IOException e) {
+		} catch (ParserConfigurationException | FactoryConfigurationError | IOException e) {
 		}
 	}
 

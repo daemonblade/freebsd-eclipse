@@ -199,12 +199,14 @@ public class Display extends Device {
 			this.parent = parent;
 		}
 
+		@Override
 		public boolean isReadyToExit() {
 			Event event = new Event ();
 			parent.sendEvent(SWT.Close, event);
 			return event.doit;
 		}
 
+		@Override
 		public void stop() {
 			parent.dispose();
 		}
@@ -319,6 +321,7 @@ public class Display extends Device {
 	GdkRGBA COLOR_INFO_BACKGROUND_RGBA, COLOR_INFO_FOREGROUND_RGBA, COLOR_LINK_FOREGROUND_RGBA;
 	GdkRGBA COLOR_TITLE_FOREGROUND_RGBA, COLOR_TITLE_BACKGROUND_RGBA, COLOR_TITLE_BACKGROUND_GRADIENT_RGBA;
 	GdkRGBA COLOR_TITLE_INACTIVE_FOREGROUND_RGBA, COLOR_TITLE_INACTIVE_BACKGROUND_RGBA, COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT_RGBA;
+	GdkRGBA COLOR_WIDGET_DISABLED_FOREGROUND_RGBA, COLOR_TEXT_DISABLED_BACKGROUND_RGBA;
 
 	/* Initialize color list */
 	ArrayList<String> colorList;
@@ -326,6 +329,12 @@ public class Display extends Device {
 	/* Placeholder color ints since SWT system colors is missing them */
 	final int SWT_COLOR_LIST_SELECTION_TEXT_INACTIVE = 38;
 	final int SWT_COLOR_LIST_SELECTION_INACTIVE = 39;
+
+	/* Theme related */
+	/** The name of the current theme, including the theme named by GTK_THEME. */
+	static String themeName;
+	/** True if the current theme is dark. This includes the theme set in GTK_THEME. */
+	static boolean themeDark;
 
 	/* Popup Menus */
 	Menu [] popups;
@@ -885,7 +894,7 @@ public void asyncExec (Runnable runnable) {
 		if (isDisposed ()) error (SWT.ERROR_DEVICE_DISPOSED);
 		synchronized (idleLock) {
 			if (idleNeeded && idleHandle == 0) {
-	 			//NOTE: calling unlocked function in OS
+				//NOTE: calling unlocked function in OS
 				idleHandle = OS._g_idle_add (idleProc, 0);
 			}
 		}
@@ -1047,27 +1056,63 @@ protected void create (DeviceData data) {
 /**
  * Check if the XIM module is present and generates a warning for potential graphical issues
  * if GTK_IM_MODULE=xim is detected. See Bug 517671.
+ *
+ * Additionally, this method enforces IBus as the input method for SWT-GTK on GNOME.
+ * This is because GNOME forces IBus by default, so any discrepancy can cause crashes on newer
+ * versions of GTK3.
  */
-void checkXimModule () {
+void checkIMModule () {
 	Map<String, String> env = System.getenv();
 	String module = env.get("GTK_IM_MODULE");
 	if (module != null && module.equals("xim")) {
 		System.err.println("***WARNING: Detected: GTK_IM_MODULE=xim. This input method is unsupported and can cause graphical issues.");
 		System.err.println("***WARNING: Unset GTK_IM_MODULE or set GTK_IM_MODULE=ibus if flicking is experienced. ");
 	}
+	// Enforce ibus as the input module on GNOME
+	if (OS.isGNOME) {
+		long settings = GTK.gtk_settings_get_default ();
+		byte[] ibus = Converter.wcsToMbcs ("ibus", true);
+		if (settings != 0) OS.g_object_set (settings, GTK.gtk_im_module, ibus, 0);
+	}
+}
+
+/**
+ * Sets the org.eclipse.swt.internal.gtk.theme value with the current
+ * GTK theme name. Checks if the current theme SWT is running with
+ * is dark or not. This includes checking the GTK_THEME environment
+ * variable, the theme name, and GSettings.
+ *
+ * @param themeName the full name of the current theme SWT is running with
+ * @return true if the current theme is dark
+ */
+boolean checkAndSetThemeDetails (String themeName) {
+	if (themeName.endsWith("-dark") || themeName.endsWith(":dark")) {
+		System.setProperty("org.eclipse.swt.internal.gtk.theme", themeName);
+		return true;
+	}
+	long settings = GTK.gtk_settings_get_default ();
+	boolean [] darkThemePreferred = new boolean [1];
+	OS.g_object_get(settings, GTK.gtk_application_prefer_dark_theme, darkThemePreferred, 0);
+	if (darkThemePreferred[0]) {
+		/*
+		 * When 'gtk-application-prefer-dark-theme' is set to true, GTK uses the 'dark'
+		 * variant of the theme specified in the system settings -- see 'get_theme_name'
+		 * in the GtkSettings source code for more context.
+		 */
+		System.setProperty("org.eclipse.swt.internal.gtk.theme", themeName.concat(":dark"));
+	} else {
+		System.setProperty("org.eclipse.swt.internal.gtk.theme", themeName);
+	}
+	return darkThemePreferred[0];
 }
 
 void createDisplay (DeviceData data) {
 	boolean init = GTK.GTK4 ? GTK.gtk_init_check () : GTK.gtk_init_check (new long [] {0}, null);
 	if (!init) SWT.error (SWT.ERROR_NO_HANDLES, null, " [gtk_init_check() failed]"); //$NON-NLS-1$
-	checkXimModule();
+	checkIMModule();
 	//set GTK+ Theme name as property for introspection purposes
-	if (OS.GTK_THEME_SET) {
-		String themeName = OS.GTK_THEME_NAME + (OS.GTK_THEME_DARK ? ":dark" : "");
-		System.setProperty("org.eclipse.swt.internal.gtk.theme", themeName);
-	} else {
-		System.setProperty("org.eclipse.swt.internal.gtk.theme", OS.getThemeName());
-	}
+	themeName = OS.GTK_THEME_SET ? OS.GTK_THEME_SET_NAME : OS.getThemeName();
+	themeDark = checkAndSetThemeDetails(themeName);
 	if (OS.isX11()) {
 		xDisplay = GTK.GTK4 ? 0 : GDK.gdk_x11_get_default_xdisplay();
 	}
@@ -1633,39 +1678,34 @@ Rectangle getBoundsInPixels () {
 	checkDevice ();
 	int monitorCount;
 	Rectangle bounds = new Rectangle(0, 0, 0, 0);
+	int maxWidth = 0, maxHeight = 0;
 	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
 		long display = GDK.gdk_display_get_default ();
 		monitorCount = GDK.gdk_display_get_n_monitors (display);
 		if (monitorCount > 0) {
-			GdkRectangle dest = new GdkRectangle ();
 			for (int i = 0; i < monitorCount; i++) {
 				long monitor = GDK.gdk_display_get_monitor(display, i);
+				GdkRectangle dest = new GdkRectangle ();
 				GDK.gdk_monitor_get_geometry (monitor, dest);
-				if (i == 0) {
-					bounds.width = dest.width;
-					bounds.height = dest.height;
-				} else {
-					bounds.width += dest.x;
-					bounds.height += dest.y;
-				}
+				if ((dest.x + dest.width) > maxWidth) maxWidth = dest.x + dest.width;
+				if ((dest.y + dest.height) > maxHeight) maxHeight = dest.y + dest.height;
 			}
+			bounds.width = maxWidth;
+			bounds.height = maxHeight;
 			return bounds;
 		}
 	} else {
 		long screen = GDK.gdk_screen_get_default();
 		monitorCount = GDK.gdk_screen_get_n_monitors(screen);
 		if (monitorCount > 0) {
-			GdkRectangle dest = new GdkRectangle ();
 			for (int i = 0; i < monitorCount; i++) {
+				GdkRectangle dest = new GdkRectangle ();
 				GDK.gdk_screen_get_monitor_geometry (screen, i, dest);
-				if (i == 0) {
-					bounds.width = dest.width;
-					bounds.height = dest.height;
-				} else {
-					bounds.width += dest.x;
-					bounds.height += dest.y;
-				}
+				if ((dest.x + dest.width) > maxWidth) maxWidth = dest.x + dest.width;
+				if ((dest.y + dest.height) > maxHeight) maxHeight = dest.y + dest.height;
 			}
+			bounds.width = maxWidth;
+			bounds.height = maxHeight;
 			return bounds;
 		}
 	}
@@ -1985,214 +2025,6 @@ String gtk_css_create_css_color_string (String background, String foreground, in
 		default:
 			return "";
 	}
-}
-
-/**
- * This method fetches GTK theme values/properties. This is accomplished
- * by determining the name of the current system theme loaded, giving that
- * name to GTK, and then parsing values from the returned theme contents.
- *
- * The idea here is that SWT variables that have corresponding GTK theme
- * elements can be fetched easily by supplying the SWT variable as an
- * parameter to this method.
- *
- * @param swt an Integer corresponding to the SWT color
- * @param cssOutput the gtk theme represented as css string.
- *
- * @return a String representation of the color parsed or "parsed" if the color was assigned
- * directly
- */
-String gtk_css_default_theme_values (int swt, String cssOutput) {
-
-	// Parse the theme values based on the corresponding SWT value
-	// i.e. theme_selected_bg_color in GTK is SWT.COLOR_LIST_SELECTION in SWT
-	int tSelected;
-	int selected;
-	/*
-	 * These strings are the GTK named colors we are looking for. Once they are
-	 * found they are sent to a parser which finds the actual values.
-	 */
-	String color = "";
-	switch (swt) {
-		case SWT.COLOR_LINK_FOREGROUND:
-			return gtk_css_default_theme_values_irregular(swt, cssOutput);
-		case SWT.COLOR_LIST_BACKGROUND:
-			tSelected = cssOutput.indexOf ("@define-color theme_base_color");
-			selected = cssOutput.indexOf ("@define-color base_color");
-			if (tSelected != -1) {
-				color =  simple_color_parser(cssOutput, "@define-color theme_base_color", tSelected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			} else if (selected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color base_color", selected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			}
-			break;
-		case SWT.COLOR_LIST_FOREGROUND:
-			tSelected = cssOutput.indexOf ("@define-color theme_text_color");
-			selected = cssOutput.indexOf ("@define-color text_color");
-			if (tSelected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color theme_text_color", tSelected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			} else if (selected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color text_color", selected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			}
-			break;
-		case SWT.COLOR_LIST_SELECTION:
-			tSelected = cssOutput.indexOf ("@define-color theme_selected_bg_color");
-			selected = cssOutput.indexOf ("@define-color selected_bg_color");
-			if (tSelected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color theme_selected_bg_color", tSelected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			} else if (selected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color selected_bg_color", selected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			}
-			break;
-		case SWT_COLOR_LIST_SELECTION_INACTIVE:
-			tSelected = cssOutput.indexOf ("@define-color theme_unfocused_selected_bg_color");
-			if (tSelected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color theme_unfocused_selected_bg_color", tSelected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			}
-			break;
-		case SWT.COLOR_LIST_SELECTION_TEXT:
-			tSelected = cssOutput.indexOf ("@define-color theme_selected_fg_color");
-			selected = cssOutput.indexOf ("@define-color selected_fg_color");
-			if (tSelected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color theme_selected_fg_color", tSelected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			} else if (selected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color selected_fg_color", selected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			}
-			break;
-		case SWT_COLOR_LIST_SELECTION_TEXT_INACTIVE:
-			tSelected = cssOutput.indexOf ("@define-color theme_unfocused_selected_fg_color");
-			if (tSelected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color theme_unfocused_selected_fg_color", tSelected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			}
-			break;
-		case SWT.COLOR_TITLE_INACTIVE_FOREGROUND:
-			tSelected = cssOutput.indexOf ("@define-color insensitive_fg_color");
-			if (tSelected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color insensitive_fg_color", tSelected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			}
-			break;
-		case SWT.COLOR_TITLE_INACTIVE_BACKGROUND:
-			tSelected = cssOutput.indexOf ("@define-color insensitive_bg_color");
-			if (tSelected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color insensitive_bg_color", tSelected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			}
-			break;
-		case SWT.COLOR_WIDGET_BACKGROUND:
-			tSelected = cssOutput.indexOf ("@define-color theme_bg_color");
-			selected = cssOutput.indexOf ("@define-color bg_color");
-			if (tSelected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color theme_bg_color", tSelected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			} else if (selected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color bg_color", selected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			}
-			break;
-		case SWT.COLOR_WIDGET_FOREGROUND:
-			tSelected = cssOutput.indexOf ("@define-color theme_fg_color");
-			selected = cssOutput.indexOf ("@define-color fg_color");
-			if (tSelected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color theme_fg_color", tSelected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			} else if (selected != -1) {
-				color = simple_color_parser(cssOutput, "@define-color fg_color", selected);
-				if (!color.isEmpty()) {
-					break;
-				}
-			}
-			break;
-		default:
-			return "";
-	}
-	return color;
-}
-
-/**
- * Certain colors don't match up nicely to a "@define-color" tag in certain GTK themes.
- * For example Adwaita is one of the few themes that does not use a "@define-color"
- * tag for tooltip colors. It is therefore necessary to parse a tooltip CSS class.
- *
- * Since this varies from theme to theme, we first check if a "@define-color" tag
- * exists, if it is: parse it. If not, check for the tooltip class definition.
- *
- * @param swt an Integer corresponding to the SWT color
- * @param cssOutput a String representation of the currently loaded CSS theme
- * currently loaded CSS theme
- *
- * @return a String representation of the color parsed or "parsed" if the color was assigned
- * directly
- */
-String gtk_css_default_theme_values_irregular(int swt, String cssOutput) {
-	int tSelected, selected, classDef;
-	String color = "";
-	switch (swt) {
-		case SWT.COLOR_LINK_FOREGROUND:
-			selected = cssOutput.indexOf("@define-color link_color");
-			tSelected = cssOutput.indexOf("@define-color theme_link_color");
-			classDef = cssOutput.indexOf ("*:link {");
-			// On Ubuntu and somenon-Adwaita themes, the link color is sometimes set to the
-			// same as COLOR_LIST_SELECTION.
-			int selectedBg = cssOutput.indexOf("@define-color link_color @selected_bg_color");
-			if (selected != -1 || tSelected != -1) {
-				if (selected != -1) {
-					color = simple_color_parser(cssOutput, "@define-color link_color", selected);
-				} else if (tSelected != -1) {
-					color = simple_color_parser(cssOutput, "@define-color theme_link_color", tSelected);
-				}
-				if (!color.isEmpty()) {
-					break;
-				}
-			} else if (selectedBg != -1) {
-				COLOR_LINK_FOREGROUND_RGBA = COLOR_LIST_SELECTION_RGBA;
-				return "parsed";
-			} else if (classDef != -1) {
-				COLOR_LINK_FOREGROUND_RGBA = gtk_css_parse_foreground(cssOutput, "*:link {");
-				return "parsed";
-			}
-			break;
-	}
-	return color;
 }
 
 /**
@@ -2622,6 +2454,29 @@ public Point [] getIconSizes () {
 	return new Point [] {new Point (16, 16), new Point (32, 32)};
 }
 
+/**
+ * Returns <code>true</code> if the current OS theme has a dark appearance, else
+ * returns <code>false</code>.
+ * <p>
+ * Note: This operation is a hint and is not supported on platforms that do not
+ * have this concept.
+ * </p>
+ * <p>
+ * Note: Windows 10 onwards users can separately configure the theme for OS and
+ * Application level and this can be read from the Windows registry. Since the
+ * application needs to honor the application level theme, this API reads the
+ * Application level theme setting.
+ * </p>
+ *
+ * @return <code>true</code> if the current OS theme has a dark appearance, else
+ *         returns <code>false</code>.
+ *
+ * @since 3.112
+ */
+public static boolean isSystemDarkTheme () {
+	return themeDark;
+}
+
 int getLastEventTime () {
 	return lastEventTime;
 }
@@ -2947,6 +2802,8 @@ public Color getSystemColor (int id) {
 	case SWT.COLOR_LIST_BACKGROUND: 					gdkRGBA = copyRGBA(COLOR_LIST_BACKGROUND_RGBA); break;
 	case SWT.COLOR_LIST_SELECTION: 						gdkRGBA = copyRGBA(COLOR_LIST_SELECTION_RGBA); break;
 	case SWT.COLOR_LIST_SELECTION_TEXT: 				gdkRGBA = copyRGBA(COLOR_LIST_SELECTION_TEXT_RGBA); break;
+	case SWT.COLOR_WIDGET_DISABLED_FOREGROUND:			gdkRGBA = copyRGBA(COLOR_WIDGET_DISABLED_FOREGROUND_RGBA); break;
+	case SWT.COLOR_TEXT_DISABLED_BACKGROUND:			gdkRGBA = copyRGBA(COLOR_TEXT_DISABLED_BACKGROUND_RGBA); break;
 	default:
 		return super.getSystemColor (id);
 	}
@@ -3225,49 +3082,18 @@ void initializeSystemColors () {
 	COLOR_WIDGET_DARK_SHADOW_RGBA.alpha = 1.0;
 
 	// Initialize and create a list of X11 named colors
-	initializeColorList();
-
-	/*
-	 * Feature in GTK: previously SWT fetched system colors using
-	 * GtkStyleContext machinery. This machinery is largely deprecated
-	 * and will all together stop functioning eventually. Instead, we
-	 * can parse the GTK system theme and use the values stored there to
-	 * generate SWT's system colors.
-	 *
-	 * The functionality works for GTK3.14 and above as follows:
-	 *
-	 * 1) load and parse the system theme
-	 * 2) check to see if the value needed exists in the theme
-	 * 3a) if the value exists, parse it and convert it to a GdkColor object
-	 * 3b) if the value doesn't exist, use the old GtkStyleContext machinery
-	 *     to fetch and return it as a GdkColor object
-	 *
-	 * Some colors have multiple different theme values that correspond to
-	 * them, while some colors only have one potential match. Therefore
-	 * some colors will have better theme coverage than others.
-	 */
-	/*
-	 * Find current GTK theme: either use the system theme,
-	 * or one provided using the GTK_THEME environment variable.
-	 * See bug 534007.
-	 */
-	byte [] buffer = OS.GTK_THEME_SET ? Converter.wcsToMbcs (OS.GTK_THEME_NAME, true) : OS.getThemeNameBytes();
-	// Load the dark variant if specified
-	byte [] darkBuffer = OS.GTK_THEME_DARK ? darkBuffer = Converter.wcsToMbcs ("dark", true) : null;
-
-	// Fetch the actual theme in char/string format
-	long themeProvider = GTK.gtk_css_provider_get_named(buffer, darkBuffer);
-
-	String cssOutput = gtk_css_provider_to_string(themeProvider);
+	initializeNamedColorList();
 
 	// Load Widget colors first, because 'COLOR_WIDGET_BACKGROUND_RGBA'
 	// can be used as substitute for other missing colors.
-	initializeSystemColorsWidget(cssOutput);
+	long shellContext = GTK.gtk_widget_get_style_context(shellHandle);
+	initializeSystemColorsWidget(shellContext);
 
-	initializeSystemColorsList(cssOutput);
-	initializeSystemColorsTitle(cssOutput);
-	initializeSystemColorsLink(cssOutput);
+	initializeSystemColorsList(shellContext);
+	initializeSystemColorsTitle(shellContext);
+	initializeSystemColorsLink();
 	initializeSystemColorsTooltip();
+	initializeSystemColorsDisabled();
 
 	COLOR_TITLE_FOREGROUND_RGBA = COLOR_LIST_SELECTION_TEXT_RGBA;
 	COLOR_TITLE_BACKGROUND_RGBA = COLOR_LIST_SELECTION_RGBA;
@@ -3275,169 +3101,75 @@ void initializeSystemColors () {
 	COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT_RGBA = toGdkRGBA (COLOR_TITLE_INACTIVE_BACKGROUND_RGBA, 1.3);
 }
 
-void initializeSystemColorsWidget(String cssOutput) {
-	long context = GTK.gtk_widget_get_style_context (shellHandle);
-	GdkRGBA rgba = new GdkRGBA();
+void initializeSystemColorsWidget(long shellContext) {
+	COLOR_WIDGET_FOREGROUND_RGBA = styleContextGetColor (shellContext, GTK.GTK_STATE_FLAG_NORMAL);
+	COLOR_WIDGET_BACKGROUND_RGBA = styleContextEstimateBackgroundColor(shellContext, GTK.GTK_STATE_FLAG_NORMAL);
 
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-		String colorWidgetForeground = gtk_css_default_theme_values(SWT.COLOR_WIDGET_FOREGROUND, cssOutput);
-		if (!colorWidgetForeground.isEmpty()) {
-			COLOR_WIDGET_FOREGROUND_RGBA = gtk_css_property_to_rgba (colorWidgetForeground);
-		} else {
-			COLOR_WIDGET_FOREGROUND_RGBA = styleContextGetColor (context, GTK.GTK_STATE_FLAG_NORMAL);
-		}
-	} else {
-		COLOR_WIDGET_FOREGROUND_RGBA = styleContextGetColor (context, GTK.GTK_STATE_FLAG_NORMAL);
-	}
-
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-		String colorWidgetBackground = gtk_css_default_theme_values(SWT.COLOR_WIDGET_BACKGROUND, cssOutput);
-		if (!colorWidgetBackground.isEmpty()) {
-			COLOR_WIDGET_BACKGROUND_RGBA = gtk_css_property_to_rgba (colorWidgetBackground);
-		} else {
-			GTK.gtk_style_context_get_background_color (context, GTK.GTK_STATE_FLAG_NORMAL, rgba);
-			COLOR_WIDGET_BACKGROUND_RGBA = copyRGBA (rgba);
-		}
-	} else {
-		GTK.gtk_style_context_get_background_color (context, GTK.GTK_STATE_FLAG_NORMAL, rgba);
-		COLOR_WIDGET_BACKGROUND_RGBA = copyRGBA (rgba);
-	}
 	COLOR_WIDGET_LIGHT_SHADOW_RGBA = COLOR_WIDGET_BACKGROUND_RGBA;
 	COLOR_WIDGET_NORMAL_SHADOW_RGBA = toGdkRGBA (COLOR_WIDGET_BACKGROUND_RGBA, 0.7);
 	COLOR_WIDGET_HIGHLIGHT_SHADOW_RGBA = toGdkRGBA (COLOR_WIDGET_BACKGROUND_RGBA, 1.3);
 }
 
-void initializeSystemColorsList(String cssOutput) {
-	long context = GTK.gtk_widget_get_style_context (shellHandle);
-	GdkRGBA rgba = new GdkRGBA();
-
+void initializeSystemColorsList(long shellContext) {
 	// Apply temporary styles
-	GTK.gtk_style_context_save (context);
-	GTK.gtk_style_context_add_class(context, GTK.GTK_STYLE_CLASS_VIEW);
-	GTK.gtk_style_context_add_class(context, GTK.GTK_STYLE_CLASS_CELL);
-	GTK.gtk_style_context_invalidate(context);
+	GTK.gtk_style_context_save (shellContext);
+	GTK.gtk_style_context_add_class(shellContext, GTK.GTK_STYLE_CLASS_VIEW);
+	GTK.gtk_style_context_add_class(shellContext, GTK.GTK_STYLE_CLASS_CELL);
+	GTK.gtk_style_context_invalidate(shellContext);
 
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-		String colorListForeground = gtk_css_default_theme_values(SWT.COLOR_LIST_FOREGROUND, cssOutput);
-		if (!colorListForeground.isEmpty()) {
-			COLOR_LIST_FOREGROUND_RGBA = gtk_css_property_to_rgba (colorListForeground);
-		} else {
-			COLOR_LIST_FOREGROUND_RGBA = styleContextGetColor (context, GTK.GTK_STATE_FLAG_NORMAL);
-		}
-	} else {
-		COLOR_LIST_FOREGROUND_RGBA = styleContextGetColor (context, GTK.GTK_STATE_FLAG_NORMAL);
-	}
+	COLOR_LIST_FOREGROUND_RGBA = styleContextGetColor (shellContext, GTK.GTK_STATE_FLAG_NORMAL);
+	COLOR_LIST_BACKGROUND_RGBA = styleContextEstimateBackgroundColor(shellContext, GTK.GTK_STATE_FLAG_NORMAL);
 
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-		String colorListBackground = gtk_css_default_theme_values(SWT.COLOR_LIST_BACKGROUND, cssOutput);
-		if (!colorListBackground.isEmpty()) {
-			COLOR_LIST_BACKGROUND_RGBA = gtk_css_property_to_rgba (colorListBackground);
-		} else {
-			GTK.gtk_style_context_get_background_color (context, GTK.GTK_STATE_FLAG_NORMAL, rgba);
-			COLOR_LIST_BACKGROUND_RGBA = copyRGBA(rgba);
-		}
-	} else {
-		GTK.gtk_style_context_get_background_color (context, GTK.GTK_STATE_FLAG_NORMAL, rgba);
-		COLOR_LIST_BACKGROUND_RGBA = copyRGBA(rgba);
-	}
+	/*
+	 * Some themes define different selection colors based on whether or not the window is focused,
+	 * or in the background. For this reason we use the SELECTED and FOCUSED flag for default selection
+	 * colors, and the SELECTED and BACKDROP flags for inactive/unfocused selection colors.
+	 *
+	 * These colors will be the same for themes that do not define different selection colors based on focus.
+	 */
+	COLOR_LIST_SELECTION_TEXT_RGBA = styleContextGetColor (shellContext, GTK.GTK_STATE_FLAG_SELECTED | GTK.GTK_STATE_FLAG_FOCUSED);
+	COLOR_LIST_SELECTION_RGBA = styleContextEstimateBackgroundColor(shellContext, GTK.GTK_STATE_FLAG_SELECTED | GTK.GTK_STATE_FLAG_FOCUSED);
 
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-		String colorListSelectionText = gtk_css_default_theme_values(SWT.COLOR_LIST_SELECTION_TEXT, cssOutput);
-		if (!colorListSelectionText.isEmpty()) {
-			COLOR_LIST_SELECTION_TEXT_RGBA = gtk_css_property_to_rgba (colorListSelectionText);
-		} else {
-			COLOR_LIST_SELECTION_TEXT_RGBA = styleContextGetColor (context, GTK.GTK_STATE_FLAG_SELECTED);
-		}
-	} else {
-		COLOR_LIST_SELECTION_TEXT_RGBA = styleContextGetColor (context, GTK.GTK_STATE_FLAG_SELECTED);
-	}
-
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-		String colorListSelection = gtk_css_default_theme_values(SWT.COLOR_LIST_SELECTION, cssOutput);
-		if (!colorListSelection.isEmpty()) {
-			COLOR_LIST_SELECTION_RGBA = gtk_css_property_to_rgba (colorListSelection);
-		} else {
-			GTK.gtk_style_context_get_background_color (context, GTK.GTK_STATE_FLAG_SELECTED, rgba);
-			COLOR_LIST_SELECTION_RGBA = copyRGBA (rgba);
-		}
-	} else {
-		GTK.gtk_style_context_get_background_color (context, GTK.GTK_STATE_FLAG_SELECTED, rgba);
-		COLOR_LIST_SELECTION_RGBA = copyRGBA (rgba);
-	}
-
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-		String colorListSelectionTextInactive = gtk_css_default_theme_values(SWT_COLOR_LIST_SELECTION_TEXT_INACTIVE, cssOutput);
-		if (!colorListSelectionTextInactive.isEmpty()) {
-			COLOR_LIST_SELECTION_TEXT_INACTIVE_RGBA = gtk_css_property_to_rgba (colorListSelectionTextInactive);
-		} else {
-			COLOR_LIST_SELECTION_TEXT_INACTIVE_RGBA = styleContextGetColor (context, GTK.GTK_STATE_FLAG_ACTIVE);
-		}
-	} else {
-		COLOR_LIST_SELECTION_TEXT_INACTIVE_RGBA = styleContextGetColor (context, GTK.GTK_STATE_FLAG_ACTIVE);
-	}
-
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-		String colorListSelectionInactive = gtk_css_default_theme_values(SWT_COLOR_LIST_SELECTION_INACTIVE, cssOutput);
-		if (!colorListSelectionInactive.isEmpty()) {
-			COLOR_LIST_SELECTION_INACTIVE_RGBA = gtk_css_property_to_rgba (colorListSelectionInactive);
-		} else {
-			GTK.gtk_style_context_get_background_color (context, GTK.GTK_STATE_FLAG_ACTIVE, rgba);
-			COLOR_LIST_SELECTION_INACTIVE_RGBA = copyRGBA (rgba);
-		}
-	} else {
-		GTK.gtk_style_context_get_background_color (context, GTK.GTK_STATE_FLAG_ACTIVE, rgba);
-		COLOR_LIST_SELECTION_INACTIVE_RGBA = copyRGBA (rgba);
-	}
+	COLOR_LIST_SELECTION_TEXT_INACTIVE_RGBA = styleContextGetColor (shellContext, GTK.GTK_STATE_FLAG_SELECTED | GTK.GTK_STATE_FLAG_BACKDROP);
+	COLOR_LIST_SELECTION_INACTIVE_RGBA = styleContextEstimateBackgroundColor(shellContext, GTK.GTK_STATE_FLAG_SELECTED | GTK.GTK_STATE_FLAG_BACKDROP);
 
 	// Revert temporary styles
-	GTK.gtk_style_context_restore (context);
+	GTK.gtk_style_context_restore (shellContext);
 }
 
-void initializeSystemColorsTitle(String cssOutput) {
-	long context = GTK.gtk_widget_get_style_context (shellHandle);
-	GdkRGBA rgba = new GdkRGBA();
+void initializeSystemColorsTitle(long shellContext) {
+	long customLabel = OS.g_object_new(GTK.gtk_label_get_type(), 0);
+	OS.g_object_ref_sink(customLabel);
 
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-		String colorTitleInactiveForeground = gtk_css_default_theme_values(SWT.COLOR_TITLE_INACTIVE_FOREGROUND, cssOutput);
-		if (!colorTitleInactiveForeground.isEmpty()) {
-			COLOR_TITLE_INACTIVE_FOREGROUND_RGBA = gtk_css_property_to_rgba (colorTitleInactiveForeground);
-		} else {
-			COLOR_TITLE_INACTIVE_FOREGROUND_RGBA = styleContextGetColor (context, GTK.GTK_STATE_FLAG_INSENSITIVE);
-		}
-	} else {
-		COLOR_TITLE_INACTIVE_FOREGROUND_RGBA = styleContextGetColor (context, GTK.GTK_STATE_FLAG_INSENSITIVE);
-	}
+	// Just use temporary label; this is easier then finding the original label
+	long styleContextLabel = GTK.gtk_widget_get_style_context(customLabel);
+	COLOR_TITLE_INACTIVE_FOREGROUND_RGBA = styleContextGetColor (styleContextLabel, GTK.GTK_STATE_FLAG_INSENSITIVE);
+	// Most Labels inherit background colors of their parent, so use the shell's BG color here
+	COLOR_TITLE_INACTIVE_BACKGROUND_RGBA = styleContextEstimateBackgroundColor(shellContext, GTK.GTK_STATE_FLAG_INSENSITIVE);
 
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-		String colorTitleInactiveBackground = gtk_css_default_theme_values(SWT.COLOR_TITLE_INACTIVE_BACKGROUND, cssOutput);
-		if (!colorTitleInactiveBackground.isEmpty()) {
-			COLOR_TITLE_INACTIVE_BACKGROUND_RGBA = gtk_css_property_to_rgba (colorTitleInactiveBackground);
-		} else {
-			GTK.gtk_style_context_get_background_color (context, GTK.GTK_STATE_FLAG_INSENSITIVE, rgba);
-			COLOR_TITLE_INACTIVE_BACKGROUND_RGBA = copyRGBA (rgba);
-		}
-	} else {
-		GTK.gtk_style_context_get_background_color (context, GTK.GTK_STATE_FLAG_INSENSITIVE, rgba);
-		COLOR_TITLE_INACTIVE_BACKGROUND_RGBA = copyRGBA (rgba);
-	}
+	OS.g_object_unref(customLabel);
 }
 
-private void initializeSystemColorsLink(String cssOutput) {
-	// NOTE: If COLOR_LINK_FOREGROUND cannot be found from the GTK CSS theme then there is no reliable
-	// way to find it on GTK3 using GtkStyleContext machinery. Use COLOR_LIST_SELECTION instead
-	// as they are often the same.
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-		String colorLinkForeground = gtk_css_default_theme_values(SWT.COLOR_LINK_FOREGROUND, cssOutput);
-		if (!colorLinkForeground.isEmpty()) {
-			if (colorLinkForeground != "parsed") {
-				COLOR_LINK_FOREGROUND_RGBA = gtk_css_property_to_rgba (colorLinkForeground);
-			}
-		} else {
-			COLOR_LINK_FOREGROUND_RGBA = COLOR_LIST_SELECTION_RGBA;
-		}
-	} else {
-		COLOR_LINK_FOREGROUND_RGBA = COLOR_LIST_SELECTION_RGBA;
-	}
+private void initializeSystemColorsLink() {
+	/*
+	 * Note: GTK has two types of link at least:
+	 *
+	 * 1) GtkLabel with HTML-like markup
+	 * 2) GtkLinkButton
+	 *
+	 * The 'HighContrast' theme has different colors for these.
+	 * GtkLabel is easier to work with, and obtained color matches color in previous SWT versions.
+	 */
+
+	// The 'Clearlooks-Phenix' theme sets 'color:' for 'window {' css node, so a stand-alone label is not enough
+	long window = GTK.gtk_window_new (GTK.GTK_WINDOW_TOPLEVEL);
+	long label = GTK.gtk_label_new(null);
+	GTK.gtk_container_add (window, label);
+
+	long styleContextLink = GTK.gtk_widget_get_style_context (label);
+	COLOR_LINK_FOREGROUND_RGBA = styleContextGetColor (styleContextLink, GTK.GTK_STATE_FLAG_LINK);
+
+	GTK.gtk_widget_destroy (window);
 }
 
 void initializeSystemColorsTooltip() {
@@ -3456,6 +3188,17 @@ void initializeSystemColorsTooltip() {
 	// Cleanup
 	// customLabel is owned by tooltip and will be destroyed automatically
 	OS.g_object_unref(tooltip);
+}
+
+void initializeSystemColorsDisabled() {
+	long entry = GTK.gtk_entry_new ();
+	OS.g_object_ref_sink(entry);
+	long context = GTK.gtk_widget_get_style_context (entry);
+
+	COLOR_WIDGET_DISABLED_FOREGROUND_RGBA = styleContextGetColor (context, GTK.GTK_STATE_FLAG_INSENSITIVE);
+	COLOR_TEXT_DISABLED_BACKGROUND_RGBA = styleContextEstimateBackgroundColor (context, GTK.GTK_STATE_FLAG_INSENSITIVE);
+
+	OS.g_object_unref(entry);
 }
 
 GdkRGBA styleContextGetColor(long context, int flag) {
@@ -3883,7 +3626,7 @@ void initializeCallbacks () {
 	if (idleProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 }
 
-void initializeColorList() {
+void initializeNamedColorList() {
 	colorList = new ArrayList<>();
 	colorList.add("black");
 	colorList.add("darkred");
@@ -4866,7 +4609,8 @@ void releaseDisplay () {
 	COLOR_LIST_SELECTION_INACTIVE_RGBA = COLOR_LIST_SELECTION_TEXT_INACTIVE_RGBA =
 	COLOR_WIDGET_FOREGROUND_RGBA = COLOR_TITLE_FOREGROUND_RGBA = COLOR_TITLE_BACKGROUND_RGBA = COLOR_TITLE_BACKGROUND_GRADIENT_RGBA =
 	COLOR_TITLE_INACTIVE_FOREGROUND_RGBA = COLOR_TITLE_INACTIVE_BACKGROUND_RGBA = COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT_RGBA =
-	COLOR_INFO_BACKGROUND_RGBA = COLOR_INFO_FOREGROUND_RGBA = COLOR_LINK_FOREGROUND_RGBA = null;
+	COLOR_INFO_BACKGROUND_RGBA = COLOR_INFO_FOREGROUND_RGBA = COLOR_LINK_FOREGROUND_RGBA = COLOR_WIDGET_DISABLED_FOREGROUND_RGBA =
+	COLOR_TEXT_DISABLED_BACKGROUND_RGBA = null;
 
 	/* Dispose the event callback */
 	GDK.gdk_event_handler_set (0, 0, 0);
@@ -5936,40 +5680,6 @@ long shellMapProc (long handle, long arg0, long user_data) {
 	Widget widget = getWidget (handle);
 	if (widget == null) return 0;
 	return widget.shellMapProc (handle, arg0, user_data);
-}
-
-String simple_color_parser (String output, String value, int index) {
-	/*
-	 * This method takes a color value (rgb(...), #rgb, an X11 color, etc.)
-	 * and makes sure it's input we can handle. We can handle rgb/rgba values,
-	 * X11 colors, or colors in the format #rgb or #rrggbb.
-	 *
-	 * We cannot handle shade/gradient functions or references to other colors.
-	 * Because of this we strip out values that start with "@" and check
-	 * non rgb values against X11 named colors.
-	 *
-	 * I.e.: the following would be invalid input:
-	 *
-	 * shade(@bg_color, 0,7)
-	 * or
-	 * define-color error_bg_color @bg_color
-	 */
-	if (output != null && value != null) {
-		int position;
-		position = index + value.length() + 1;
-		String color = output.substring(position);
-		// Check for rgb color case
-		if (color.startsWith("#") || color.startsWith("rgb")) {
-			return color;
-		} else if (!color.startsWith("@")) {
-			// Check for an X11 color
-			String [] cut = color.split(";");
-			if (colorList.contains(cut[0])) {
-				return color;
-			}
-		}
-	}
-	return "";
 }
 
 long signalProc (long gobject, long arg1, long user_data) {

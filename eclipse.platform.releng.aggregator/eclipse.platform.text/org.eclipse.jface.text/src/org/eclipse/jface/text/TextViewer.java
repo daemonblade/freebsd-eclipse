@@ -2491,7 +2491,7 @@ public class TextViewer extends Viewer implements
 
 		if (fPostSelectionChangedListeners != null)  {
 			fPostSelectionChangedListeners.remove(listener);
-			if (fPostSelectionChangedListeners.size() == 0)
+			if (fPostSelectionChangedListeners.isEmpty())
 				fPostSelectionChangedListeners= null;
 		}
 	}
@@ -2661,7 +2661,7 @@ public class TextViewer extends Viewer implements
 
 		if (fTextListeners != null) {
 			fTextListeners.remove(listener);
-			if (fTextListeners.size() == 0)
+			if (fTextListeners.isEmpty())
 				fTextListeners= null;
 		}
 	}
@@ -2709,7 +2709,7 @@ public class TextViewer extends Viewer implements
 
 		if (fTextInputListeners != null) {
 			fTextInputListeners.remove(listener);
-			if (fTextInputListeners.size() == 0)
+			if (fTextInputListeners.isEmpty())
 				fTextInputListeners= null;
 		}
 	}
@@ -4315,7 +4315,7 @@ public class TextViewer extends Viewer implements
 					if (ignoreWhitespace) {
 						String s= d.get(line.getOffset(), found[0]);
 						s= s.trim();
-						if (s.length() == 0)
+						if (s.isEmpty())
 							index= line.getOffset() + found[0];
 					} else if (found[0] == 0)
 						index= line.getOffset();
@@ -5446,7 +5446,7 @@ public class TextViewer extends Viewer implements
 
 		if (fTextPresentationListeners != null) {
 			fTextPresentationListeners.remove(listener);
-			if (fTextPresentationListeners.size() == 0)
+			if (fTextPresentationListeners.isEmpty())
 				fTextPresentationListeners= null;
 		}
 	}

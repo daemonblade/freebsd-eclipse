@@ -76,7 +76,7 @@ public final class CommonDragAdapter extends DragSourceAdapter {
 		super();
 		contentService = aContentService;
 		provider = aProvider;
-		assistantsToUse = new ArrayList<CommonDragAdapterAssistant>();
+		assistantsToUse = new ArrayList<>();
 	}
 
 	/**
@@ -107,9 +107,8 @@ public final class CommonDragAdapter extends DragSourceAdapter {
 			}
 		}
 
-		Transfer[] transfers = supportedTypes
+		return supportedTypes
 				.toArray(new Transfer[supportedTypes.size()]);
-		return transfers;
 	}
 
 	@Override

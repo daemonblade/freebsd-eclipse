@@ -104,9 +104,7 @@ public class SourceLocationManager implements ICoreConstants {
 					URI encodedUri = URIUtil.toURI(result.toFile().toURL());
 					URI jarUri = URIUtil.toJarURI(encodedUri, filePath);
 					return new URL(URIUtil.toUnencodedString(jarUri));
-				} catch (MalformedURLException e) {
-					PDECore.log(e);
-				} catch (URISyntaxException e) {
+				} catch (MalformedURLException | URISyntaxException e) {
 					PDECore.log(e);
 				}
 			}
@@ -262,7 +260,7 @@ public class SourceLocationManager implements ICoreConstants {
 			String version = pluginBase.getVersion();
 			if (version != null) {
 				Version vid = new Version(version);
-				pluginDir += "_" + vid.toString(); //$NON-NLS-1$
+				pluginDir += "_" + vid; //$NON-NLS-1$
 			}
 			IPath path = new Path(pluginDir);
 			return sourceFilePath == null ? path : path.append(sourceFilePath);

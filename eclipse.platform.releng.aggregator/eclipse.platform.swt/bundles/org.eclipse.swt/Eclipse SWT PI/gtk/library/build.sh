@@ -72,7 +72,7 @@ echo -e "${RED}*** ${@}${NC}"
 
 cd `dirname $0`
 
-MAKE_TYPE=gmake
+MAKE_TYPE=make
 
 export CFLAGS='-O -Wall -fPIC'
 
@@ -86,14 +86,21 @@ case $OS in
 		MAKEFILE=make_win32.mak
 		;;
 	*)
-		SWT_OS=`uname -s | tr '[:upper:]' '[:lower:]'`
+		SWT_OS=`uname -s | tr -s '[:upper:]' '[:lower:]'`
 		MAKEFILE=make_linux.mak
 		;;
 esac
 
 # Determine which CPU type we are building for
 if [ "${MODEL}" = "" ]; then
+	if uname -i > /dev/null 2>&1; then
+		MODEL=`uname -i`
+		if [ ${MODEL} = 'unknown' ]; then
+		  MODEL=`uname -m`
+		fi
+	else
 		MODEL=`uname -m`
+	fi
 fi
 case $MODEL in
 	"x86_64")
@@ -104,11 +111,6 @@ case $MODEL in
 		SWT_ARCH=x86
 		AWT_ARCH=i386
 		;;
-	"powerpc" | "powerpc64")
-		SWT_ARCH=ppc64
-		AWT_ARCH=ppc64
-		MODEL=`uname -p`
-		;;
 	*)
 		SWT_ARCH=$MODEL
 		AWT_ARCH=$MODEL
@@ -116,13 +118,6 @@ case $MODEL in
 esac
 
 case $SWT_OS.$SWT_ARCH in
-	"freebsd.ppc64")
-		if [ "${JAVA_HOME}" = "" ]; then
-			DYNAMIC_JAVA_HOME=`readlink -f /usr/local/bin/java | sed "s:jre/::" | sed "s:bin/java::"`
-			JAVA_HOME = $DYNAMIC_JAVA_HOME
-			export JAVA_HOME
-		fi
-		;;
 	"linux.x86")
 		if [ "${CC}" = "" ]; then
 			export CC=gcc
@@ -199,7 +194,7 @@ esac
 
 
 # For 64-bit CPUs, we have a switch
-if [ ${MODEL} = 'amd64' -o ${MODEL} = 'ia64' -o ${MODEL} = 's390x' -o ${MODEL} = 'ppc64le' -o ${MODEL} = 'aarch64' -o ${MODEL} = 'powerpc64' ]; then
+if [ ${MODEL} = 'x86_64' -o ${MODEL} = 'ia64' -o ${MODEL} = 's390x' -o ${MODEL} = 'ppc64le' -o ${MODEL} = 'aarch64' ]; then
 	SWT_PTR_CFLAGS=-DJNI64
 	if [ -d /lib64 ]; then
 		XLIB64=-L/usr/X11R6/lib64
@@ -210,11 +205,6 @@ if [ ${MODEL} = 'amd64' -o ${MODEL} = 'ia64' -o ${MODEL} = 's390x' -o ${MODEL} =
 		XLIB64="${XLIB64} -L/usr/lib64"
 		SWT_LFLAGS=-m64
 		export SWT_LFLAGS
-	fi
-	if [ ${SWT_OS} = "freebsd" ]
-	then
-		SWT_PTR_CFLAGS="${SWT_PTR_CFLAGS} -m64"
-		export SWT_LFLAGS=-m64
 	fi
 	export SWT_PTR_CFLAGS
 fi

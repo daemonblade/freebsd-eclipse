@@ -76,7 +76,7 @@ public class ProgressServiceImpl implements IProgressService {
 
 	@Override
 	public void registerIconForFamily(ImageDescriptor icon, Object family) {
-		String key = IMAGE_KEY + String.valueOf(imageKeyTable.size());
+		String key = IMAGE_KEY + imageKeyTable.size();
 		imageKeyTable.put(family, key);
 		ImageRegistry registry = JFaceResources.getImageRegistry();
 
@@ -209,13 +209,7 @@ public class ProgressServiceImpl implements IProgressService {
 			try {
 				manager.beginRule(rule, getEventLoopMonitor());
 				context.run(false, false, runnable);
-			} catch (InvocationTargetException e) {
-				status = new Status(IStatus.ERROR, IProgressConstants.PLUGIN_ID, e
-						.getMessage(), e);
-			} catch (InterruptedException e) {
-				status = new Status(IStatus.ERROR, IProgressConstants.PLUGIN_ID, e
-						.getMessage(), e);
-			} catch (OperationCanceledException e) {
+			} catch (InvocationTargetException | InterruptedException | OperationCanceledException e) {
 				status = new Status(IStatus.ERROR, IProgressConstants.PLUGIN_ID, e
 						.getMessage(), e);
 			} finally {

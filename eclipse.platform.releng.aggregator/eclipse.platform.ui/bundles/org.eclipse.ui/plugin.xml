@@ -503,72 +503,6 @@
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="M2+M3+?"/>
             
-      <!-- Content assist key binding for the Japanese language to prevent conflict with IME on Motif -->
-      <key
-            locale="ja"
-            platform="motif"
-   	        contextId="org.eclipse.ui.contexts.dialogAndWindow"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="CTRL+SPACE"/>
-      <key
-            locale="ja"
-            platform="motif"
-            commandId="org.eclipse.ui.edit.text.contentAssist.proposals"
-            contextId="org.eclipse.ui.contexts.dialogAndWindow"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="M3+/"/>
-      <key
-            locale="ja"
-            platform="motif"
-   	        contextId="org.eclipse.ui.contexts.dialogAndWindow"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="CTRL+M2+SPACE"/>
-      <key
-            locale="ja"
-            platform="motif"
-            commandId="org.eclipse.ui.edit.text.contentAssist.contextInformation"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="M3+?"/>
-      <key
-            locale="ja"
-            platform="motif"
-            commandId="org.eclipse.ui.edit.text.contentAssist.contextInformation"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="M2+M3+?"/>
-
-      <!-- Content assist key binding for the Korean language to prevent conflict with IME on Motif -->
-      <key
-            locale="ko"
-            platform="motif"
-   	        contextId="org.eclipse.ui.contexts.dialogAndWindow"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="CTRL+SPACE"/>
-      <key
-            locale="ko"
-            platform="motif"
-            commandId="org.eclipse.ui.edit.text.contentAssist.proposals"
-            contextId="org.eclipse.ui.contexts.dialogAndWindow"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="M3+/"/>
-      <key
-            locale="ko"
-            platform="motif"
-   	        contextId="org.eclipse.ui.contexts.dialogAndWindow"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="CTRL+M2+SPACE"/>
-      <key
-            locale="ko"
-            platform="motif"
-            commandId="org.eclipse.ui.edit.text.contentAssist.contextInformation"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="M3+?"/>
-      <key
-            locale="ko"
-            platform="motif"
-            commandId="org.eclipse.ui.edit.text.contentAssist.contextInformation"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="M2+M3+?"/>
-      
       <key
             commandId="org.eclipse.ui.file.close"
             sequence="CTRL+X K"
@@ -1497,6 +1431,12 @@
             id="org.eclipse.ui.activeContextInfo"
             name="%activeContextInfo.name">
       </command>
+      <command
+            categoryId="org.eclipse.ui.category.window"
+            description="%command.showKeysToggle.description"
+            id="org.eclipse.ui.toggleShowKeys"
+            name="%command.showKeysToggle.name">
+      </command>
    </extension>
    
    <extension
@@ -1761,10 +1701,6 @@
          <description>
             %Color.activeTabTextDesc
          </description>
-         <colorValue
-               ws="motif"
-               value="COLOR_TITLE_INACTIVE_FOREGROUND">
-         </colorValue>
          <colorFactory
                class="org.eclipse.ui.internal.themes.LightColorFactory"
                plugin="org.eclipse.ui">
@@ -1783,10 +1719,6 @@
          <description>
             %Color.activeTabBGEndDesc
          </description>
-         <colorValue
-               ws="motif"
-               value="COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT">
-         </colorValue>
          <colorFactory
                class="org.eclipse.ui.internal.themes.LightColorFactory"
                plugin="org.eclipse.ui">
@@ -1805,10 +1737,6 @@
          <description>
             %Color.activeTabBGStartDesc
          </description>
-         <colorValue
-               ws="motif"
-               value="COLOR_TITLE_INACTIVE_BACKGROUND">
-         </colorValue>
          <colorFactory
                class="org.eclipse.ui.internal.themes.LightColorFactory"
                plugin="org.eclipse.ui">
@@ -2048,6 +1976,24 @@
       		name="org.eclipse.ui.workbench.ACTIVE_TAB_HIGHLIGHT" value="false">
 		 </data>
       </theme>
+      <colorDefinition
+            categoryId="org.eclipse.ui.workbenchMisc"
+            id="org.eclipse.ui.showkeys.foregroundColor"
+            label="%Color.showKeysForeground"
+            value="COLOR_WHITE">
+         <description>
+            %Color.showKeysForegroundDesc
+         </description>
+      </colorDefinition>
+      <colorDefinition
+            categoryId="org.eclipse.ui.workbenchMisc"
+            id="org.eclipse.ui.showkeys.backgroundColor"
+            label="%Color.showKeysBackground"
+            value="66,66,66">
+         <description>
+            %Color.showKeysBackgroundDesc
+         </description>
+      </colorDefinition>
    </extension>
    <extension
          point="org.eclipse.core.runtime.preferences">

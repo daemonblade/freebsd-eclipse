@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.equinox.executable"
       label="%featureName"
-      version="3.8.400.qualifier"
+      version="3.8.500.qualifier"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
 
@@ -32,20 +32,20 @@
          fragment="true"/>
 
    <plugin
-         id="org.eclipse.equinox.launcher.gtk.freebsd.powerpc64"
-         os="freebsd"
+         id="org.eclipse.equinox.launcher.gtk.linux.ppc64le"
+         os="linux"
          ws="gtk"
-         arch="powerpc64"
+         arch="ppc64le"
          download-size="0"
          install-size="0"
          version="0.0.0"
          fragment="true"/>
 
    <plugin
-         id="org.eclipse.equinox.launcher.gtk.freebsd.amd64"
-         os="freebsd"
+         id="org.eclipse.equinox.launcher.gtk.linux.x86_64"
+         os="linux"
          ws="gtk"
-         arch="amd64"
+         arch="x86_64"
          download-size="0"
          install-size="0"
          version="0.0.0"

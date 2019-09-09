@@ -39,7 +39,7 @@ public class ImageUtil {
 		NSBitmapImageRep rep;
 		NSImage imgHandle= image.handle;
 		rep = (NSBitmapImageRep)new NSBitmapImageRep().alloc();
-		rep = rep.initWithBitmapDataPlanes(0, (int) targetSize.width, (int) targetSize.height, 8, 3, false, false, OS.NSDeviceRGBColorSpace, OS.NSAlphaFirstBitmapFormat | OS.NSAlphaNonpremultipliedBitmapFormat, (int) targetSize.width * 4, 32);
+		rep = rep.initWithBitmapDataPlanes(0, (int) targetSize.width, (int) targetSize.height, 8, 4, true, false, OS.NSDeviceRGBColorSpace, OS.NSAlphaFirstBitmapFormat, (int) targetSize.width * 4, 32);
 		C.memset(rep.bitmapData(), 0xFF, (int) targetSize.width * (int)targetSize.height * 4);
 		NSGraphicsContext context = NSGraphicsContext.graphicsContextWithBitmapImageRep(rep);
 		NSGraphicsContext.static_saveGraphicsState();
@@ -53,6 +53,7 @@ public class ImageUtil {
 		sourceRect.height = 0;
 		imgHandle.drawInRect(target, sourceRect, OS.NSCompositeCopy, 1);
 		NSGraphicsContext.static_restoreGraphicsState();
+		rep.autorelease();
 		return rep;
 	}
 }

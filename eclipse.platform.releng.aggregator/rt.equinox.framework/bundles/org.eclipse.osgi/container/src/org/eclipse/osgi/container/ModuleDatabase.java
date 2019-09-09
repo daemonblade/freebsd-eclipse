@@ -957,7 +957,7 @@ public class ModuleDatabase {
 	}
 
 	private static class Persistence {
-		private static final int VERSION = 2;
+		private static final int VERSION = 3;
 		private static final byte NULL = 0;
 		private static final byte OBJECT = 1;
 		private static final byte INDEX = 2;
@@ -1019,9 +1019,7 @@ public class ModuleDatabase {
 			Map<ModuleRevision, ModuleWiring> wirings = moduleDatabase.wirings;
 			for (ModuleWiring wiring : wirings.values()) {
 				Collection<String> substituted = wiring.getSubstitutedNames();
-				for (String pkgName : substituted) {
-					allStrings.add(pkgName);
-				}
+				allStrings.addAll(substituted);
 			}
 
 			// Now persist all the Strings
@@ -1165,8 +1163,9 @@ public class ModuleDatabase {
 				}
 			}
 			int numModules = in.readInt();
+			ModuleRevisionBuilder builder = new ModuleRevisionBuilder();
 			for (int i = 0; i < numModules; i++) {
-				readModule(moduleDatabase, in, objectTable, version);
+				readModule(builder, moduleDatabase, in, objectTable, version);
 			}
 
 			moduleDatabase.revisionsTimeStamp.set(revisionsTimeStamp);
@@ -1245,8 +1244,8 @@ public class ModuleDatabase {
 			out.writeLong(module.getLastModified());
 		}
 
-		private static void readModule(ModuleDatabase moduleDatabase, DataInputStream in, List<Object> objectTable, int version) throws IOException {
-			ModuleRevisionBuilder builder = new ModuleRevisionBuilder();
+		private static void readModule(ModuleRevisionBuilder builder, ModuleDatabase moduleDatabase, DataInputStream in, List<Object> objectTable, int version) throws IOException {
+			builder.clear();
 			int moduleIndex = in.readInt();
 			String location = readString(in, objectTable);
 			long id = in.readLong();

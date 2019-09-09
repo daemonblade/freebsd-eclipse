@@ -122,14 +122,8 @@ public class ConfigurationSessionTestSuite extends SessionTestSuite {
 		}
 		// save the properties
 		File configINI = configurationPath.append("config.ini").toFile();
-		OutputStream out = null;
-		try {
-			out = new BufferedOutputStream(new FileOutputStream(configINI));
+		try (OutputStream out = new BufferedOutputStream(new FileOutputStream(configINI))) {
 			contents.store(out, null);
-		} finally {
-			if (out != null) {
-				out.close();
-			}
 		}
 	}
 
@@ -149,7 +143,7 @@ public class ConfigurationSessionTestSuite extends SessionTestSuite {
 	private List<String> getURLs(String id) {
 		List<String> result = new ArrayList<>();
 		String suffix = "";
-		int atIndex = id.indexOf("@");
+		int atIndex = id.indexOf('@');
 		if (atIndex >= 0) {
 			suffix = id.substring(atIndex);
 			id = id.substring(0, atIndex);
@@ -279,8 +273,7 @@ public class ConfigurationSessionTestSuite extends SessionTestSuite {
 			// only works if configuration is file: based
 			throw new IllegalStateException();
 		}
-		File configurationDir = new File(configurationURL.getFile());
-		return configurationDir;
+		return new File(configurationURL.getFile());
 	}
 
 }

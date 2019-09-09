@@ -15,11 +15,11 @@
   <parent>
     <artifactId>eclipse.platform.ui.tests</artifactId>
     <groupId>eclipse.platform.ui</groupId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
   </parent>
   <groupId>org.eclipse.ui</groupId>
   <artifactId>org.eclipse.ui.tests</artifactId>
-  <version>3.14.400-SNAPSHOT</version>
+  <version>3.14.500-SNAPSHOT</version>
   <packaging>eclipse-test-plugin</packaging>
 
   <properties>
@@ -54,17 +54,6 @@
 					</dependency>
 	  			</dependencies>
 			</configuration>
-			<executions>
-				<execution>
-					<id>jface-tests</id>
-					<phase>integration-test</phase>
-					<goals><goal>test</goal></goals>
-					<configuration>
-						<testClass>org.eclipse.jface.tests.AllTests</testClass>
-						<useUIHarness>false</useUIHarness>
-					</configuration>
-				</execution>
-			</executions>
   		</plugin>
   	</plugins>
   </build>

@@ -63,7 +63,7 @@ import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.window.Window;
 
-import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ISelectionStatusValidator;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.model.WorkbenchContentProvider;
@@ -244,8 +244,7 @@ public class BuildPathsBlock {
         item.setData(fSourceContainerPage);
         item.setControl(fSourceContainerPage.getControl(folder));
 
-		IWorkbench workbench= JavaPlugin.getDefault().getWorkbench();
-		Image projectImage= workbench.getSharedImages().getImage(IDE.SharedImages.IMG_OBJ_PROJECT);
+		Image projectImage= PlatformUI.getWorkbench().getSharedImages().getImage(IDE.SharedImages.IMG_OBJ_PROJECT);
 
 		fProjectsPage= new ProjectsWorkbookPage(fClassPathList, fPageContainer);
 		item= new TabItem(folder, SWT.NONE);
@@ -395,6 +394,9 @@ public class BuildPathsBlock {
 	}
 
 	protected void doUpdateUI() {
+		if (fModulesPage.needReInit()) {
+			init(fCurrJProject, null, null); // extent of system modules was changed, re-init fClassPathList
+		}
 		fBuildPathDialogField.refresh();
 		fClassPathList.refresh();
 		boolean is9OrHigherAfter= JavaModelUtil.is9OrHigher(fCurrJProject);
@@ -632,7 +634,7 @@ public class BuildPathsBlock {
 					entryMissing= currElement;
 				}
 			}
-			if (entryDeprecated == null & currElement.isDeprecated()) {
+			if (entryDeprecated == null && currElement.isDeprecated()) {
 				entryDeprecated= currElement;
 			}
 		}

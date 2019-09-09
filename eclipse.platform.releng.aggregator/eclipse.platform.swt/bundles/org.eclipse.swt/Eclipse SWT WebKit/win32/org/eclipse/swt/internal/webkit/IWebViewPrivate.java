@@ -15,24 +15,23 @@ package org.eclipse.swt.internal.webkit;
 
 
 import org.eclipse.swt.internal.ole.win32.*;
-import org.eclipse.swt.internal.win32.*;
 
 public class IWebViewPrivate extends IUnknown {
 
-public IWebViewPrivate (long /*int*/ address) {
+public IWebViewPrivate (long address) {
 	super (address);
 }
 
-public int viewWindow (long /*int*/[] window) {
-	return OS.VtblCall (5, getAddress (), window);
+public int viewWindow (long[] window) {
+	return COM.VtblCall (5, getAddress (), window);
 }
 
 public int setInitialFocus (int forwardEnabled) {
-	return OS.VtblCall (28, getAddress (), forwardEnabled);
+	return COM.VtblCall (28, getAddress (), forwardEnabled);
 }
 
 public int shouldClose (int[] result) {
-	return OS.VtblCall (33, getAddress (), result);
+	return COM.VtblCall (33, getAddress (), result);
 }
 
 }

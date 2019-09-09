@@ -101,18 +101,16 @@ ATK_OBJECTS = swt.o atk.o atk_structs.o atk_custom.o atk_stats.o
 WEBKIT_OBJECTS = swt.o webkitgtk.o webkitgtk_structs.o webkitgtk_stats.o webkitgtk_custom.o
 GLX_OBJECTS = swt.o glx.o glx_structs.o glx_stats.o
 
-port_prefix=`pkg-config --variable=prefix gtk+-3.0`
 CFLAGS := $(CFLAGS) \
 		-DSWT_VERSION=$(SWT_VERSION) \
 		$(NATIVE_STATS) \
 		$(SWT_DEBUG) \
 		$(SWT_WEBKIT_DEBUG) \
-		-DFREEBSD -DGTK \
-		-I$(port_prefix)/include \
+		-DLINUX -DGTK \
 		-I$(JAVA_HOME)/include \
-		-I$(JAVA_HOME)/include/freebsd \
+		-I$(JAVA_HOME)/include/linux \
 		${SWT_PTR_CFLAGS}
-LFLAGS = -shared -fPIC -m64 ${SWT_LFLAGS} -L$(port_prefix)/lib
+LFLAGS = -shared -fPIC ${SWT_LFLAGS}
 
 ifndef NO_STRIP
 	# -s = Remove all symbol table and relocation information from the executable.
@@ -255,6 +253,10 @@ install: all
 	cp $(ALL_SWT_LIBS) $(OUTPUT_DIR)
 ifeq ($(BUILD_WEBKIT2EXTENSION),yes)
 	@# Copy webextension into it's own folder, but create folder first.
+	@# CAREFULLY delete '.so' files inside webextension*. Then carefully remove the directories. 'rm -rf' seemed too risky of an approach.
+	@-[ "$$(ls -d $(OUTPUT_DIR)/$(WEBEXTENSION_BASE_DIR)*/*.so)" ] && rm -v `ls -d $(OUTPUT_DIR)/$(WEBEXTENSION_BASE_DIR)*/*.so`
+	@-[ "$$(ls -d $(OUTPUT_DIR)/$(WEBEXTENSION_BASE_DIR)*)" ] && rmdir -v `ls -d $(OUTPUT_DIR)/$(WEBEXTENSION_BASE_DIR)*`
+
 	@# Copying webextension is not critical for build to succeed, thus we use '-'. SWT can still function without a webextension.
 	@-[ -d $(OUTPUT_DIR)/$(WEBEXTENSION_DIR) ] || mkdir -v $(OUTPUT_DIR)/$(WEBEXTENSION_DIR)  # If folder does not exist, make it.
 	-cp $(WEBKIT_EXTENSION_LIB) $(OUTPUT_DIR)/$(WEBEXTENSION_DIR)/

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -718,10 +718,10 @@ public class SWT {
 	 * should be opened.
 	 * </p>
 	 *
-     * @see org.eclipse.swt.widgets.Display#addListener
-     * @see org.eclipse.swt.widgets.Event
-     *
-     * @since 3.6
+	 * @see org.eclipse.swt.widgets.Display#addListener
+	 * @see org.eclipse.swt.widgets.Event
+	 *
+	 * @since 3.6
 	 */
 	public static final int OpenDocument = 46;
 
@@ -733,10 +733,10 @@ public class SWT {
 	 * on a touch-based input source.
 	 * </p>
 	 *
-     * @see org.eclipse.swt.widgets.Display#addListener
-     * @see org.eclipse.swt.widgets.Event
-     *
-     * @since 3.7
+	 * @see org.eclipse.swt.widgets.Display#addListener
+	 * @see org.eclipse.swt.widgets.Event
+	 *
+	 * @since 3.7
 	 */
 	public static final int Touch = 47;
 
@@ -747,14 +747,14 @@ public class SWT {
 	 * This event is sent when a gesture has been performed.
 	 * </p>
 	 *
-     * @see org.eclipse.swt.widgets.Display#addListener
-     * @see org.eclipse.swt.widgets.Event
-     * @see SWT#GESTURE_MAGNIFY
-     * @see SWT#GESTURE_PAN
-     * @see SWT#GESTURE_ROTATE
-     * @see SWT#GESTURE_SWIPE
-     *
-     * @since 3.7
+	 * @see org.eclipse.swt.widgets.Display#addListener
+	 * @see org.eclipse.swt.widgets.Event
+	 * @see SWT#GESTURE_MAGNIFY
+	 * @see SWT#GESTURE_PAN
+	 * @see SWT#GESTURE_ROTATE
+	 * @see SWT#GESTURE_SWIPE
+	 *
+	 * @since 3.7
 	 */
 	public static final int Gesture = 48;
 
@@ -771,8 +771,8 @@ public class SWT {
 	 *
 	 * @see org.eclipse.swt.widgets.Text#addSegmentListener
 	 * @see org.eclipse.swt.events.SegmentEvent
-     *
-     * @since 3.8
+	 *
+	 * @since 3.8
 	 */
 	public static final int Segments = 49;
 
@@ -1271,16 +1271,16 @@ public class SWT {
 	 */
 	public static final int SEPARATOR = 1 << 1;
 
-    /**
-     * Constant representing a flexible space separator in a ToolBar.
+	/**
+	 * Constant representing a flexible space separator in a ToolBar.
 	 * <p><b>Used By:</b></p>
 	 * <ul>
 	 * <li><code>ToolItem.setWidth()</code></li>
 	 * </ul>
 	 *
 	 * @since 3.7
-     */
-    public static final int SEPARATOR_FILL = -2;
+	 */
+	public static final int SEPARATOR_FILL = -2;
 
 	/**
 	 * Style constant for toggle button behavior (value is 1&lt;&lt;1).
@@ -2536,7 +2536,7 @@ public class SWT {
 	 * any modifier is pressed and will continue to work as new modifier
 	 * masks are added.
 	 *
- 	 * <code>(stateMask &amp; SWT.MODIFIER_MASK) != 0</code>.
+	 * <code>(stateMask &amp; SWT.MODIFIER_MASK) != 0</code>.
 	 *
 	 * @since 2.1
 	 */
@@ -2586,7 +2586,7 @@ public class SWT {
 	 * any button is pressed and will continue to work as new button
 	 * masks are added.
 	 *
- 	 * <code>(stateMask &amp; SWT.BUTTON_MASK) != 0</code>.
+	 * <code>(stateMask &amp; SWT.BUTTON_MASK) != 0</code>.
 	 *
 	 * @since 2.1
 	 */
@@ -3131,7 +3131,6 @@ public class SWT {
 	 * The style constant for "search" icon. This style constant is
 	 * used with <code>Text</code> in combination with <code>SWT.SEARCH
 	 * </code> (value is 1&lt;&lt;9).
-	 * <br>Note that this is a <em>HINT</em>.
 	 *
 	 * <p><b>Used By:</b></p>
 	 * <ul>
@@ -3149,7 +3148,6 @@ public class SWT {
 	 * The style constant for "cancel" icon. This style constant is
 	 * used with <code>Text</code> in combination with <code>SWT.SEARCH
 	 * </code> (value is 1&lt;&lt;8).
-	 * <br>Note that this is a <em>HINT</em>.
 	 *
 	 * <p><b>Used By:</b></p>
 	 * <ul>
@@ -3478,6 +3476,20 @@ public class SWT {
 	 * @since 3.104
 	 */
 	public static final int COLOR_TRANSPARENT = 37;
+
+	/**
+	 * System color used to paint disabled text background areas (value is 38).
+	 *
+	 * @since 3.112
+	 */
+	public static final int COLOR_TEXT_DISABLED_BACKGROUND = 38;
+
+	/**
+	 * System color used to paint disabled foreground areas (value is 39).
+	 *
+	 * @since 3.112
+	 */
+	public static final int COLOR_WIDGET_DISABLED_FOREGROUND = 39;
 
 	/**
 	 * Draw constant indicating whether the drawing operation

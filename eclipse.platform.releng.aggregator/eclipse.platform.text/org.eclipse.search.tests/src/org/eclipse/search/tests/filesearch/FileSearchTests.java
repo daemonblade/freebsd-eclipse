@@ -311,13 +311,11 @@ public class FileSearchTests {
 			engine.search(scope, collector, searchPattern, null);
 			assertEquals("Number of whole-word results", 10, collector.getNumberOfResults());
 		}
-		{
-			// regexp, whole word = false: match all lines
-			Pattern searchPattern= PatternConstructor.createPattern("h[eio]ll", true, true, false, false);
-			collector.reset();
-			engine.search(scope, collector, searchPattern, null);
-			assertEquals("Number of partial-word results", 22, collector.getNumberOfResults());
-		}
+		// regexp, whole word = false: match all lines
+		Pattern searchPattern= PatternConstructor.createPattern("h[eio]ll", true, true, false, false);
+		collector.reset();
+		engine.search(scope, collector, searchPattern, null);
+		assertEquals("Number of partial-word results", 22, collector.getNumberOfResults());
 	}
 
 	@Test
@@ -437,13 +435,11 @@ public class FileSearchTests {
 			engine.search(scope, collector, searchPattern, null);
 			assertEquals(1, collector.getNumberOfResults());
 		}
-		{
-			// visit non-derived in folder3
-			TextSearchScope scope= TextSearchScope.newSearchScope(new IResource[] { folder3 }, fileNamePattern, false);
-			collector.reset();
-			engine.search(scope, collector, searchPattern, null);
-			assertEquals(0, collector.getNumberOfResults());
-		}
+		// visit non-derived in folder3
+		TextSearchScope scope= TextSearchScope.newSearchScope(new IResource[] { folder3 }, fileNamePattern, false);
+		collector.reset();
+		engine.search(scope, collector, searchPattern, null);
+		assertEquals(0, collector.getNumberOfResults());
 	}
 
 	@Test
@@ -516,8 +512,7 @@ public class FileSearchTests {
 
 	private void assertMatches(TestResult[] results, int expectedCount, IFile file, String fileContent, String string) {
 		int k= 0;
-		for (int i= 0; i < results.length; i++) {
-			TestResult curr= results[i];
+		for (TestResult curr : results) {
 			if (file.equals(curr.resource)) {
 				k++;
 				assertEquals("Wrong positions", string, fileContent.substring(curr.offset, curr.offset + curr.length));

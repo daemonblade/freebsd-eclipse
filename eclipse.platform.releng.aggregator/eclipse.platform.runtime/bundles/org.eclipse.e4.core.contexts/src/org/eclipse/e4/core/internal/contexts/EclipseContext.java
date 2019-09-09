@@ -132,7 +132,7 @@ public class EclipseContext implements IEclipseContext {
 	public Set<EclipseContext> getChildren() {
 		Set<EclipseContext> result;
 		synchronized (children) {
-			if (children.size() == 0)
+			if (children.isEmpty())
 				return noChildren;
 			result = new HashSet<>(children.size());
 			for (Iterator<WeakReference<EclipseContext>> i = children.iterator(); i.hasNext();) {
@@ -301,7 +301,7 @@ public class EclipseContext implements IEclipseContext {
 			computation.handleInvalid(event, scheduled);
 		}
 		Set<Computation> namedComputations = weakListeners.getListeners(name);
-		if (namedComputations != null && namedComputations.size() > 0) {
+		if (namedComputations != null && !namedComputations.isEmpty()) {
 			if (event == null) {
 				event = new ContextChangeEvent(this, eventType, null, name, oldValue);
 			}
@@ -404,7 +404,7 @@ public class EclipseContext implements IEclipseContext {
 		boolean containsKey = localValues.containsKey(name);
 		if (containsKey) {
 			if (!checkModifiable(name)) {
-				String tmp = "Variable " + name + " is not modifiable in the context " + toString(); //$NON-NLS-1$ //$NON-NLS-2$
+				String tmp = "Variable " + name + " is not modifiable in the context " + this; //$NON-NLS-1$ //$NON-NLS-2$
 				throw new IllegalArgumentException(tmp);
 			}
 			Object oldValue = localValues.put(name, value);

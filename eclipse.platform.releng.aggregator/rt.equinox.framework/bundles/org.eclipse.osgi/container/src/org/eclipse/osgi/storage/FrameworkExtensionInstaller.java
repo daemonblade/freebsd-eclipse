@@ -23,6 +23,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import org.eclipse.osgi.container.Module;
 import org.eclipse.osgi.container.ModuleCapability;
@@ -123,14 +124,15 @@ public class FrameworkExtensionInstaller {
 			if (files == null) {
 				return;
 			}
-			for (int i = 0; i < files.length; i++) {
-				if (files[i] == null)
-					continue;
+			for (File file : files) {
+				if (file == null) {
+					continue; 
+				}
 				try {
-					callAddURLMethod(StorageUtil.encodeFileURL(files[i]));
-				} catch (InvocationTargetException | MalformedURLException e) {
+					callAddURLMethod(StorageUtil.encodeFileURL(file));
+				}catch (InvocationTargetException | MalformedURLException e) {
 					throw new BundleException("Error adding extension content.", e); //$NON-NLS-1$
-				} 
+				}
 			}
 		}
 
@@ -167,9 +169,7 @@ public class FrameworkExtensionInstaller {
 			// must create a copy because paths could be unmodifiable
 			paths = new ArrayList<>(paths);
 			String[] devPaths = configuration.getDevClassPath(revision.getSymbolicName());
-			for (String devPath : devPaths) {
-				paths.add(devPath);
-			}
+			Collections.addAll(paths, devPaths);
 		}
 		List<File> results = new ArrayList<>(paths.size());
 		for (String path : paths) {

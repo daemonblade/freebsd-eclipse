@@ -113,7 +113,7 @@ public class PlatformTest extends RuntimeTest {
 	}
 
 	public void testRunnable() {
-		final Vector<Throwable> exceptions = new Vector<>();
+		final List<Throwable> exceptions = new ArrayList<>();
 
 		final List<IStatus> collected = new ArrayList<>();
 
@@ -130,7 +130,7 @@ public class PlatformTest extends RuntimeTest {
 		ISafeRunnable runnable = new ISafeRunnable() {
 			@Override
 			public void handleException(Throwable t) {
-				exceptions.addElement(t);
+				exceptions.add(t);
 			}
 
 			@Override
@@ -144,7 +144,7 @@ public class PlatformTest extends RuntimeTest {
 		Platform.removeLogListener(logListener);
 
 		assertEquals("1.0", exceptions.size(), 1);
-		assertEquals("1.1", exception, exceptions.firstElement());
+		assertEquals("1.1", exception, exceptions.get(0));
 
 		// ensures the status object produced has the right plug-in id (bug 83614)
 		assertEquals("2.0", collected.size(), 1);
@@ -291,6 +291,16 @@ public class PlatformTest extends RuntimeTest {
 
 		result = Platform.getBundles(getName(), "[1.1.0,2.0.0)");
 		assertNull("no match => null result", result);
+	}
+
+	public void testGetSystemBundle() {
+		Bundle expectedSystem = RuntimeTestsPlugin.getContext().getBundle(Constants.SYSTEM_BUNDLE_LOCATION);
+		Bundle actualSystem = Platform.getBundle(Constants.SYSTEM_BUNDLE_SYMBOLICNAME);
+		assertEquals("Wrong system bundle.", expectedSystem, actualSystem);
+
+		Bundle[] actualSystems = Platform.getBundles(Constants.SYSTEM_BUNDLE_SYMBOLICNAME, null);
+		assertEquals("Wrong number of system bundles.", 1, actualSystems.length);
+		assertEquals("Wrong system bundle.", expectedSystem, actualSystems[0]);
 	}
 
 	/**

@@ -119,7 +119,7 @@ public class CodeMiningManager implements Runnable {
 	@Override
 	public void run() {
 		if (fViewer == null || fInlinedAnnotationSupport == null || fCodeMiningProviders == null
-				|| fCodeMiningProviders.size() == 0 || fViewer.getAnnotationModel() == null) {
+				|| fCodeMiningProviders.isEmpty() || fViewer.getAnnotationModel() == null) {
 			return;
 		}
 		// Cancel the last progress monitor to cancel last resolve and render of code
@@ -250,7 +250,7 @@ public class CodeMiningManager implements Runnable {
 
 			Position pos= new Position(g.getKey().offset, g.getKey().length);
 			List<ICodeMining> minings= g.getValue();
-			boolean inLineHeader= minings.size() > 0 ? (minings.get(0) instanceof LineHeaderCodeMining) : true;
+			boolean inLineHeader= !minings.isEmpty() ? (minings.get(0) instanceof LineHeaderCodeMining) : true;
 			// Try to find existing annotation
 			AbstractInlinedAnnotation ann= fInlinedAnnotationSupport.findExistingAnnotation(pos);
 			if (ann == null) {

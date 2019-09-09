@@ -919,7 +919,7 @@ long fontHandle () {
 
 private long dateTimeHandle () {
 	if (isCalendar () && calendarHandle != 0) {
-		 return calendarHandle;
+		return calendarHandle;
 	} else if ((isDate () || isTime ())) {
 		if (GTK.GTK4) {
 			if (spinButtonHandle != 0) return spinButtonHandle;
@@ -1238,7 +1238,6 @@ void handleFocus (int type) {
 			shell.addListener (SWT.Deactivate, popupListener);
 			Display display = getDisplay ();
 			display.removeFilter (SWT.FocusIn, popupFilter);
-			display.addFilter (SWT.FocusIn, popupFilter);
 			Event e = new Event ();
 			notifyListeners (SWT.FocusIn, e);
 			break;
@@ -1251,7 +1250,6 @@ void handleFocus (int type) {
 			Shell shell = getShell ();
 			shell.removeListener (SWT.Deactivate, popupListener);
 			Display display = getDisplay ();
-			display.removeFilter (SWT.FocusIn, popupFilter);
 			display.removeFilter (SWT.MouseDown, mouseEventListener);
 			Event e = new Event ();
 			notifyListeners (SWT.FocusOut, e);
@@ -1348,6 +1346,7 @@ void selectField(FieldPosition fieldPosition) {
 			setSelection(s, end);
 		}
 	});
+	sendSelectionEvent(SWT.Selection);
 }
 
 void sendSelectionEvent () {
@@ -1394,21 +1393,21 @@ void setBackgroundGdkRGBA (long context, long handle, GdkRGBA rgba) {
 	// We need to override here because DateTime widgets use "background" instead of
 	// "background-color" as their CSS property.
 	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
-    	// Form background string
-        String name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? display.gtk_widget_class_get_css_name(handle)
-        		: display.gtk_widget_get_name(handle);
-        String css = name + " {background: " + display.gtk_rgba_to_css_string (rgba) + ";}\n" +
-        		name + ":selected" + " {background: " + display.gtk_rgba_to_css_string(display.COLOR_LIST_SELECTION_RGBA) + ";}";
+		// Form background string
+		String name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? display.gtk_widget_class_get_css_name(handle)
+				: display.gtk_widget_get_name(handle);
+		String css = name + " {background: " + display.gtk_rgba_to_css_string (rgba) + ";}\n" +
+				name + ":selected" + " {background: " + display.gtk_rgba_to_css_string(display.COLOR_LIST_SELECTION_RGBA) + ";}";
 
-        // Cache background
-        cssBackground = css;
+		// Cache background
+		cssBackground = css;
 
-        // Apply background color and any cached foreground color
-        String finalCss = display.gtk_css_create_css_color_string (cssBackground, cssForeground, SWT.BACKGROUND);
-        gtk_css_provider_load_from_css (context, finalCss);
-    } else {
-    	super.setBackgroundGdkRGBA(context, handle, rgba);
-    }
+		// Apply background color and any cached foreground color
+		String finalCss = display.gtk_css_create_css_color_string (cssBackground, cssForeground, SWT.BACKGROUND);
+		gtk_css_provider_load_from_css (context, finalCss);
+	} else {
+		super.setBackgroundGdkRGBA(context, handle, rgba);
+	}
 }
 
 @Override
@@ -1763,9 +1762,9 @@ boolean onNumberKeyInput(int key) {
 		return false;
 	}
 	int fieldName = getCalendarField(currentField);
-	StringBuffer prefix = new StringBuffer();
-	StringBuffer current = new StringBuffer();
-	StringBuffer suffix = new StringBuffer();
+	StringBuilder prefix = new StringBuilder();
+	StringBuilder current = new StringBuilder();
+	StringBuilder suffix = new StringBuilder();
 
 	AttributedCharacterIterator iterator = dateFormat.formatToCharacterIterator(calendar.getTime());
 	char c = iterator.first();
@@ -1817,7 +1816,7 @@ boolean onNumberKeyInput(int key) {
 		}
 		typeBufferPos++;
 	}
-	StringBuffer newText = new StringBuffer(prefix);
+	StringBuilder newText = new StringBuilder(prefix);
 	newText.append(typeBuffer);
 	newText.append(suffix);
 	setText(newText.toString());

@@ -15,36 +15,35 @@ package org.eclipse.swt.internal.webkit;
 
 
 import org.eclipse.swt.internal.ole.win32.*;
-import org.eclipse.swt.internal.win32.*;
 
 public class IWebPreferences extends IUnknown {
 
-public IWebPreferences (long /*int*/ address) {
+public IWebPreferences (long address) {
 	super (address);
 }
 
-public int initWithIdentifier (long /*int*/ identifier, long /*int*/[] preferences) {
+public int initWithIdentifier (long identifier, long[] preferences) {
 	return COM.VtblCall (4, getAddress (), identifier, preferences);
 }
 
 public int setJavaEnabled (int enabled) {
-	return OS.VtblCall (33, getAddress (), enabled);
+	return COM.VtblCall (33, getAddress (), enabled);
 }
 
 public int setJavaScriptEnabled (int enabled) {
-	return OS.VtblCall (35, getAddress (), enabled);
+	return COM.VtblCall (35, getAddress (), enabled);
 }
 
 public int setJavaScriptCanOpenWindowsAutomatically (int enabled) {
-	return OS.VtblCall (37, getAddress (), enabled);
+	return COM.VtblCall (37, getAddress (), enabled);
 }
 
 public int setTabsToLinks (int enabled) {
-	return OS.VtblCall (52, getAddress (), enabled);
+	return COM.VtblCall (52, getAddress (), enabled);
 }
 
 public int setFontSmoothing (int smoothingType) {
-	return OS.VtblCall (63, getAddress (), smoothingType);
+	return COM.VtblCall (63, getAddress (), smoothingType);
 }
 
 }

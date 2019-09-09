@@ -15,13 +15,13 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.12.0-SNAPSHOT</version>
+    <version>4.13.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
   <groupId>org.eclipse.equinox.framework</groupId>
   <artifactId>rt.equinox.framework</artifactId>
-  <version>4.12.0-SNAPSHOT</version>
+  <version>4.13.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -54,27 +54,27 @@
       </repositories>
     </profile>
     <profile>
-      <id>build-native-launchers-gtk.freebsd.armv7</id>
+      <id>build-native-launchers-gtk.linux.arm</id>
       <activation>
 	<property>
 	  <name>native</name>
-	  <value>gtk.freebsd.armv7</value>
+	  <value>gtk.linux.arm</value>
         </property>
       </activation>
       <modules>
-	<module>bundles/org.eclipse.equinox.launcher.gtk.freebsd.armv7</module>
+	<module>bundles/org.eclipse.equinox.launcher.gtk.linux.arm</module>
       </modules>
     </profile>
     <profile>
-      <id>build-native-launchers-gtk.freebsd.aarch64</id>
+      <id>build-native-launchers-gtk.linux.aarch64</id>
       <activation>
 	<property>
 	  <name>native</name>
-	  <value>gtk.freebsd.aarch64</value>
+	  <value>gtk.linux.aarch64</value>
         </property>
       </activation>
       <modules>
-	<module>bundles/org.eclipse.equinox.launcher.gtk.freebsd.aarch64</module>
+	<module>bundles/org.eclipse.equinox.launcher.gtk.linux.aarch64</module>
       </modules>
     </profile>
   </profiles>
@@ -88,8 +88,8 @@
     
     <module>bundles/org.eclipse.equinox.launcher</module>
     <module>bundles/org.eclipse.equinox.launcher.cocoa.macosx.x86_64</module>
-    <module>bundles/org.eclipse.equinox.launcher.gtk.freebsd.powerpc64</module>
-    <module>bundles/org.eclipse.equinox.launcher.gtk.freebsd.amd64</module>
+    <module>bundles/org.eclipse.equinox.launcher.gtk.linux.ppc64le</module>
+    <module>bundles/org.eclipse.equinox.launcher.gtk.linux.x86_64</module>
     <module>bundles/org.eclipse.equinox.launcher.win32.win32.x86_64</module>
 
     <module>bundles/org.eclipse.osgi.tests</module>
