@@ -704,7 +704,7 @@ public final class Utils implements IPDEBuildConstants, IBuildPropertiesConstant
 			arguments.add("-sf"); //$NON-NLS-1$
 			arguments.add(links[i]);
 			arguments.add(links[i + 1]);
-			script.printExecTask("ln", dir, arguments, "Linux"); //$NON-NLS-1$ //$NON-NLS-2$
+			script.printExecTask("ln", dir, arguments, "Linux,FreeBSD"); //$NON-NLS-1$ //$NON-NLS-2$
 			arguments.clear();
 		}
 	}
