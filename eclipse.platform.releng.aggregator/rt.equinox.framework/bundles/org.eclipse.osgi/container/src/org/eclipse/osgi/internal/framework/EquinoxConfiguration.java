@@ -78,7 +78,6 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 	// this internally to be Solaris.
 	private static final String INTERNAL_OS_SUNOS = "SunOS"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_LINUX = "Linux"; //$NON-NLS-1$
-	private static final String INTERNAL_OS_FREEBSD = "FreeBSD"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_MACOSX = "Mac OS"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_AIX = "AIX"; //$NON-NLS-1$
 	private static final String INTERNAL_OS_HPUX = "HP-UX"; //$NON-NLS-1$
@@ -774,8 +773,6 @@ public class EquinoxConfiguration implements EnvironmentInfo {
 		// EXCEPTION: All mappings of SunOS convert to Solaris
 		if (osName.equalsIgnoreCase(INTERNAL_OS_SUNOS))
 			return Constants.OS_SOLARIS;
-		if (osName.equalsIgnoreCase(INTERNAL_OS_FREEBSD))
-			return Constants.OS_FREEBSD;
 		if (osName.equalsIgnoreCase(INTERNAL_OS_LINUX))
 			return Constants.OS_LINUX;
 		if (osName.equalsIgnoreCase(INTERNAL_OS_QNX))
