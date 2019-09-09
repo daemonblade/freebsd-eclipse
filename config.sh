@@ -37,7 +37,6 @@ PATCHED_DIRS="
 	eclipse.pde.build
 	eclipse.pde.ui
 	eclipse.platform.releng
-	eclipse.platform.releng.prereqs.sdk
 	eclipse.platform.releng.tychoeclipsebuilder
 	eclipse.platform.resources
 	eclipse.platform.runtime
