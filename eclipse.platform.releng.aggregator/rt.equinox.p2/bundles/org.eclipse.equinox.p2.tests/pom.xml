@@ -22,9 +22,7 @@
 	<properties>
 		<testSuite>${project.artifactId}</testSuite>
 		<testClass>org.eclipse.equinox.p2.tests.AutomatedTests</testClass>
-		<!-- despite best inentions I was not able to add automatiz detection here -->
-		<!-- Linux is default because Hudson runs those tests on Linux -->
-		<dropinsProduct>org.eclipse.equinox.p2.reconciler-linux.gtk.x86_64.tar.gz</dropinsProduct>
+		<dropinsProduct>org.eclipse.equinox.p2.reconciler-freebsd.gtk.amd64.tar.gz</dropinsProduct>
 	</properties>
 
 	<build>
