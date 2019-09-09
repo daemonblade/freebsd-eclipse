@@ -37,9 +37,9 @@
           <resolver>p2</resolver>
           <environments>
             <environment>
-              <os>linux</os>
+              <os>freebsd</os>
               <ws>gtk</ws>
-              <arch>x86_64</arch>
+              <arch>amd64</arch>
             </environment>
           </environments>
         </configuration>
