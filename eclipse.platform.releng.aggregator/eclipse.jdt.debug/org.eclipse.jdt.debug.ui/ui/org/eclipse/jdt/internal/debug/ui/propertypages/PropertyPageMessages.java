@@ -23,6 +23,11 @@ public class PropertyPageMessages extends NLS {
 	public static String ExceptionBreakpointEditor_2;
 	public static String ExceptionBreakpointEditor_3;
 
+	public static String ExceptionBreakpointEditor_recurrence_label;
+	public static String ExceptionBreakpointEditor_recurrence_always;
+	public static String ExceptionBreakpointEditor_recurrence_onlyOnce;
+	public static String ExceptionBreakpointEditor_recurrence_unconfigured;
+
 	public static String ExceptionFilterEditor_5;
 	public static String ExceptionFilterEditor_6;
 	public static String ExceptionFilterEditor_7;
@@ -79,7 +84,6 @@ public class PropertyPageMessages extends NLS {
 
 	public static String JavaVariableDetailsPane_choosePreviousExpression;
 	public static String JavaVariableDetailsPane_description;
-	public static String JavaVariableDetailsPane_historySeparator;
 	public static String JavaVariableDetailsPane_name;
 	public static String JavaVariableDetailsPane_settings;
 

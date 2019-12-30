@@ -35,7 +35,9 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
 
@@ -524,9 +526,6 @@ public final class JavaRuntime {
 			File location = install.getInstallLocation();
 			if (location != null) {
 				if (location.exists()) {
-					if (LaunchingPlugin.isVMLogging()) {
-						LaunchingPlugin.log(LaunchingMessages.VMLogging_3 + install.getInstallLocation());
-					}
 					return install;
 				}
 			}
@@ -540,11 +539,7 @@ public final class JavaRuntime {
 			fgVMTypes = null;
 			initializeVMs();
 		}
-		install = getVMFromCompositeId(getDefaultVMId());
-		if (LaunchingPlugin.isVMLogging()) {
-			LaunchingPlugin.log(LaunchingMessages.VMLogging_3 + install.getInstallLocation());
-		}
-		return install;
+		return getVMFromCompositeId(getDefaultVMId());
 	}
 
 	/**
@@ -1237,7 +1232,8 @@ public final class JavaRuntime {
 					if (project == null || !p.isOpen() || !project.exists()) {
 						return new IRuntimeClasspathEntry[0];
 					}
-					IRuntimeClasspathEntry[] entries = resolveOutputLocations(project, entry.getClasspathProperty(), excludeTestCode);
+					IClasspathAttribute[] attributes = entry.getClasspathEntry().getExtraAttributes();
+					IRuntimeClasspathEntry[] entries = resolveOutputLocations(project, entry.getClasspathProperty(), attributes, excludeTestCode);
 					if (entries != null) {
 						return entries;
 					}
@@ -1341,7 +1337,8 @@ public final class JavaRuntime {
 					}
 				}
 				// now resolve the archive (recursively)
-				IClasspathEntry archEntry = JavaCore.newLibraryEntry(archPath, srcPath, srcRootPath, entry.getClasspathEntry().isExported());
+				IClasspathEntry cpEntry = entry.getClasspathEntry();
+				IClasspathEntry archEntry = JavaCore.newLibraryEntry(archPath, srcPath, srcRootPath, null, cpEntry.getExtraAttributes(), cpEntry.isExported());
 				IRuntimeClasspathEntry runtimeArchEntry = newRuntimeClasspathEntry(archEntry);
 				runtimeArchEntry.setClasspathProperty(entry.getClasspathProperty());
 				if (configuration == null) {
@@ -1361,6 +1358,8 @@ public final class JavaRuntime {
 	 *            the {@link IJavaProject} to resolve the output locations for
 	 * @param classpathProperty
 	 *            the type of classpath entries to create
+	 * @param attributes
+	 *            extra attributes of the original classpath entry
 	 * @param excludeTestCode
 	 *            if true, output folders corresponding to test sources are excluded
 	 *
@@ -1368,7 +1367,7 @@ public final class JavaRuntime {
 	 * @throws CoreException
 	 *             if output resolution encounters a problem
 	 */
-	private static IRuntimeClasspathEntry[] resolveOutputLocations(IJavaProject project, int classpathProperty, boolean excludeTestCode) throws CoreException {
+	private static IRuntimeClasspathEntry[] resolveOutputLocations(IJavaProject project, int classpathProperty, IClasspathAttribute[] attributes, boolean excludeTestCode) throws CoreException {
 		List<IPath> nonDefault = new ArrayList<>();
 		boolean defaultUsedByNonTest = false;
 		if (project.exists() && project.getProject().isOpen()) {
@@ -1389,7 +1388,7 @@ public final class JavaRuntime {
 				}
 			}
 		}
-		boolean isModular = project.getModuleDescription() != null;
+		boolean isModular = project.getOwnModuleDescription() != null;
 		if (nonDefault.isEmpty() && !isModular && !excludeTestCode) {
 			// return here only if non-modular, because patch-module might be needed otherwise
 			return null;
@@ -1403,7 +1402,7 @@ public final class JavaRuntime {
 		}
 		IRuntimeClasspathEntry[] locations = new IRuntimeClasspathEntry[nonDefault.size()];
 		for (int i = 0; i < locations.length; i++) {
-			IClasspathEntry newEntry = JavaCore.newLibraryEntry(nonDefault.get(i), null, null);
+			IClasspathEntry newEntry = JavaCore.newLibraryEntry(nonDefault.get(i), null, null, null, attributes, false);
 			locations[i] = new RuntimeClasspathEntry(newEntry);
 			if (isModular && !containsModuleInfo(locations[i])) {
 				locations[i].setClasspathProperty(IRuntimeClasspathEntry.PATCH_MODULE);
@@ -1478,7 +1477,8 @@ public final class JavaRuntime {
 					IProject p = (IProject)resource;
 					IJavaProject jp = JavaCore.create(p);
 					if (jp != null && p.isOpen() && jp.exists()) {
-						IRuntimeClasspathEntry[] entries = resolveOutputLocations(jp, entry.getClasspathProperty(), excludeTestCode);
+						IClasspathAttribute[] attributes = entry.getClasspathEntry().getExtraAttributes();
+						IRuntimeClasspathEntry[] entries = resolveOutputLocations(jp, entry.getClasspathProperty(), attributes, excludeTestCode);
 						if (entries != null) {
 							return entries;
 						}
@@ -3303,6 +3303,9 @@ public final class JavaRuntime {
 	 * @param vm the backing {@link IVMInstall}
 	 */
 	private static void updateCompliance(IVMInstall vm) {
+		if (LaunchingPlugin.isVMLogging()) {
+			LaunchingPlugin.log("Compliance needs an update."); //$NON-NLS-1$
+		}
         if (vm instanceof IVMInstall2) {
             String javaVersion = ((IVMInstall2)vm).getJavaVersion();
             if (javaVersion != null) {
@@ -3327,8 +3330,11 @@ public final class JavaRuntime {
 				} else if (javaVersion.startsWith(JavaCore.VERSION_12)
 						&& (javaVersion.length() == JavaCore.VERSION_12.length() || javaVersion.charAt(JavaCore.VERSION_12.length()) == '.')) {
 					compliance = JavaCore.VERSION_12;
+				} else if (javaVersion.startsWith(JavaCore.VERSION_13)
+						&& (javaVersion.length() == JavaCore.VERSION_13.length() || javaVersion.charAt(JavaCore.VERSION_13.length()) == '.')) {
+					compliance = JavaCore.VERSION_13;
 				} else {
-					compliance = JavaCore.VERSION_12; // use latest by default
+					compliance = JavaCore.VERSION_13; // use latest by default
 				}
 
             	Hashtable<String, String> options= JavaCore.getOptions();
@@ -3347,9 +3353,15 @@ public final class JavaRuntime {
 				}
             	// only update the compliance settings if they are default settings, otherwise the
             	// settings have already been modified by a tool or user
+				if (LaunchingPlugin.isVMLogging()) {
+					LaunchingPlugin.log("Compliance to be updated is: " + compliance); //$NON-NLS-1$
+				}
             	if (isDefault) {
-            		JavaCore.setComplianceOptions(compliance, options);
-            		JavaCore.setOptions(options);
+					JavaCore.setComplianceOptions(compliance, options);
+					JavaCore.setOptions(options);
+					if (LaunchingPlugin.isVMLogging()) {
+						LaunchingPlugin.log("Compliance Options are updated."); //$NON-NLS-1$
+					}
             	}
 
             }
@@ -3421,8 +3433,10 @@ public final class JavaRuntime {
 	 * <li>{@link IClasspathAttribute#ADD_EXPORTS}</li>
 	 * <li>{@link IClasspathAttribute#ADD_READS}</li>
 	 * <li>{@link IClasspathAttribute#LIMIT_MODULES}</li>
-	 * <li>{@link IClasspathAttribute#PATCH_MODULE}</li>
 	 * </ul>
+	 * {@link IClasspathAttribute#PATCH_MODULE} is not handled here, but in
+	 * {@link AbstractJavaLaunchConfigurationDelegate#getModuleCLIOptions(ILaunchConfiguration)}, which then collates all options referring to the
+	 * same module.
 	 *
 	 * @since 3.10
 	 */
@@ -3457,7 +3471,7 @@ public final class JavaRuntime {
 			}
 		}
 		catch (CoreException e) {
-			e.printStackTrace();
+			LaunchingPlugin.log(e);
 		}
 		return cliOptionString.toString().trim();
 	}
@@ -3504,22 +3518,8 @@ public final class JavaRuntime {
 						}
 						break;
 					}
-					case IClasspathAttribute.PATCH_MODULE: {
-						String patchModules = classpathAttribute.getValue();
-						for (String patchModule : patchModules.split("::")) { //$NON-NLS-1$
-							int equalsIdx = patchModule.indexOf('=');
-							if (equalsIdx != -1) {
-								if (equalsIdx < patchModule.length() - 1) { // otherwise malformed?
-									String locations = patchModule.substring(equalsIdx + 1);
-									String moduleString = patchModule.substring(0, equalsIdx + 1);
-									buf.append(OPTION_START).append(optName).append(BLANK).append(moduleString).append(toAbsolutePathsString(locations)).append(BLANK);
-								}
-							} else {
-								buf.append(patchModule); // old format not specifying a location
-							}
-						}
-						break;
-					}
+					// case IClasspathAttribute.PATCH_MODULE: handled in
+					// org.eclipse.jdt.launching.AbstractJavaLaunchConfigurationDelegate.getModuleCLIOptions(ILaunchConfiguration)
 					case IClasspathAttribute.LIMIT_MODULES:
 						addLimitModules(buf, project, systemLibrary, classpathAttribute.getValue());
 						break;
@@ -3528,44 +3528,6 @@ public final class JavaRuntime {
 		}
 		return buf.toString().trim();
 	}
-
-	private static String toAbsolutePathsString(String fPaths) {
-		String[] paths = fPaths.split(File.pathSeparator);
-		String[] absPaths = new String[paths.length];
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		for (int i = 0; i < paths.length; i++) {
-			IResource resource = root.findMember(new Path(paths[i]));
-			try {
-				absPaths[i] = toAbsolutePath(resource, root);
-			} catch (JavaModelException e) {
-				// JavaPlugin.log(e);
-			}
-			if (absPaths[i] == null) {
-				absPaths[i] = paths[i];
-			}
-		}
-		String allPaths = String.join(File.pathSeparator, absPaths);
-		return allPaths;
-	}
-
-	private static String toAbsolutePath(IResource resource, IWorkspaceRoot root) throws JavaModelException {
-		if (resource instanceof IProject) {
-				// other projects: use the default output locations:
-				return absPath(root, JavaCore.create((IProject) resource).getOutputLocation());
-		} else if (resource != null) {
-			IProject proj = resource.getProject();
-			if (proj != null) {
-				return absPath(root, JavaCore.create(proj).getOutputLocation());
-			}
-			// non-source location as-is:
-			return resource.getLocation().toString();
-		}
-		return null;
-	}
-
-	private static String absPath(IWorkspaceRoot root, IPath path) {
-		return root.findMember(path).getLocation().toString();
-	}
 	private static void addLimitModules(StringBuilder buf, IJavaProject prj, IClasspathEntry systemLibrary, String value) throws JavaModelException {
 		String[] modules = value.split(COMMA);
 		boolean isUnnamed = prj.getModuleDescription() == null;
@@ -3573,23 +3535,82 @@ public final class JavaRuntime {
 			Set<String> selected = new HashSet<>(Arrays.asList(modules));
 			List<IPackageFragmentRoot> allSystemRoots = Arrays.asList(prj.findUnfilteredPackageFragmentRoots(systemLibrary));
 			Set<String> defaultModules = getDefaultModules(allSystemRoots);
-			Set<String> limit = new HashSet<>(defaultModules);
-			if (limit.retainAll(selected)) { // limit = selected ∩ default -- only add the option, if limit ⊂ default
+			Set<String> limit = new HashSet<>(defaultModules); // contains some redundancy, but is no full closure
+
+			// selected contains the minimal representation, now compute the transitive closure for comparison with semi-closed defaultModules:
+			Map<String, IModuleDescription> allModules = allSystemRoots.stream() //
+					.map(r -> r.getModuleDescription()) //
+					.filter(Objects::nonNull) //
+					.collect(Collectors.toMap(IModuleDescription::getElementName, module -> module));
+			Set<String> selectedClosure = closure(selected, new HashSet<>(), allModules);
+
+			if (limit.retainAll(selectedClosure)) { // limit = selected ∩ default -- only add the option, if limit ⊂ default
 				if (limit.isEmpty()) {
 					throw new IllegalArgumentException("Cannot hide all modules, at least java.base is required"); //$NON-NLS-1$
 				}
-				buf.append(LIMIT_MODULES).append(joinedSortedList(limit)).append(BLANK);
+				buf.append(LIMIT_MODULES).append(joinedSortedList(reduceNames(limit, allModules.values()))).append(BLANK);
 			}
 
-			Set<String> add = new HashSet<>(selected);
-			add.removeAll(defaultModules);
-			if (!add.isEmpty()) { // add = selected \ default
-				buf.append(ADD_MODULES).append(joinedSortedList(add)).append(BLANK);
+			selectedClosure.removeAll(defaultModules);
+			if (!selectedClosure.isEmpty()) { // add = selected \ default
+				buf.append(ADD_MODULES).append(joinedSortedList(selectedClosure)).append(BLANK);
 			}
 		} else {
 			Arrays.sort(modules);
 			buf.append(LIMIT_MODULES).append(String.join(COMMA, modules)).append(BLANK);
 		}
+	}
+
+	private static Set<String> closure(Collection<String> moduleNames, Set<String> collected, Map<String, IModuleDescription> allModules) {
+		for (String name : moduleNames) {
+			if (collected.add(name)) {
+				IModuleDescription module = allModules.get(name);
+				if (module != null) {
+					try {
+						closure(Arrays.asList(module.getRequiredModuleNames()), collected, allModules);
+					} catch (JavaModelException e) {
+						LaunchingPlugin.log(e);
+					}
+				}
+			}
+		}
+		return collected;
+	}
+
+	private static Collection<String> reduceNames(Collection<String> names, Collection<IModuleDescription> allModules) {
+		// build a reverse dependency tree:
+		Map<String, List<String>> moduleRequiredByModules = new HashMap<>();
+		for (IModuleDescription module : allModules) {
+			if (!names.contains(module.getElementName())) {
+				continue;
+			}
+			try {
+				for (String required : module.getRequiredModuleNames()) {
+					List<String> dominators = moduleRequiredByModules.get(required);
+					if (dominators == null) {
+						moduleRequiredByModules.put(required, dominators = new ArrayList<>());
+					}
+					dominators.add(module.getElementName());
+				}
+			} catch (CoreException e) {
+				LaunchingPlugin.log(e);
+				return names; // unreduced
+			}
+		}
+		// use the tree to find and eliminate redundancy:
+		List<String> reduced = new ArrayList<>();
+		outer: for (String name : names) {
+			List<String> dominators = moduleRequiredByModules.get(name);
+			if (dominators != null) {
+				for (String dominator : dominators) {
+					if (names.contains(dominator)) {
+						continue outer;
+					}
+				}
+			}
+			reduced.add(name);
+		}
+		return reduced;
 	}
 
 	private static Set<String> getDefaultModules(List<IPackageFragmentRoot> allSystemRoots) throws JavaModelException {

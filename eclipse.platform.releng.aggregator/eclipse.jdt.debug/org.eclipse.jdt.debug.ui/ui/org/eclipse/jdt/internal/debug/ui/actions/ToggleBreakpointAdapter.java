@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -103,6 +103,7 @@ import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.text.source.IVerticalRulerInfo;
+import org.eclipse.jface.text.templates.DocumentTemplateContext;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateContextType;
 import org.eclipse.jface.text.templates.TemplateException;
@@ -1616,16 +1617,16 @@ public class ToggleBreakpointAdapter implements IToggleBreakpointsTargetExtensio
 			IRegion line = document.getLineInformation(textSelection.getStartLine() + 1);
 			Point selectedRange = viewer.getSelectedRange();
 			viewer.setSelectedRange(selectedRange.x, 0);
-			statementEngine.complete(viewer, line.getOffset(), cunit);
+			statementEngine.complete(viewer, selectedRange, line.getOffset(), cunit);
 			viewer.setSelectedRange(selectedRange.x, selectedRange.y);
 			TemplateProposal[] templateProposals = statementEngine.getResults();
 			for (TemplateProposal templateProposal : templateProposals) {
 				Template template = templateProposal.getTemplate();
 				if (template.getName().equals("systrace")) { //$NON-NLS-1$
 					CompilationUnitContextType cuContextType = (CompilationUnitContextType) JavaPlugin.getDefault().getTemplateContextRegistry().getContextType(template.getContextTypeId());
-					CompilationUnitContext context = cuContextType.createContext(document, line.getOffset(), 0, cunit);
+					DocumentTemplateContext context = cuContextType.createContext(document, line.getOffset(), 0, cunit);
 					context.setVariable("selection", EMPTY_STRING); //$NON-NLS-1$
-					context.setForceEvaluation(true);
+					((CompilationUnitContext) context).setForceEvaluation(true);
 					templateBuffer.set(context.evaluate(template).getString());
 					return;
 				}

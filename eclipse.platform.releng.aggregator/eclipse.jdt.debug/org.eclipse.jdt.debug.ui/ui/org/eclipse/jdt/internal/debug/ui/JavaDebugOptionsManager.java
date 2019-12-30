@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -38,6 +38,8 @@ import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
@@ -55,6 +57,7 @@ import org.eclipse.jdt.debug.core.IJavaBreakpoint;
 import org.eclipse.jdt.debug.core.IJavaBreakpointListener;
 import org.eclipse.jdt.debug.core.IJavaDebugTarget;
 import org.eclipse.jdt.debug.core.IJavaExceptionBreakpoint;
+import org.eclipse.jdt.debug.core.IJavaExceptionBreakpoint.SuspendOnRecurrenceStrategy;
 import org.eclipse.jdt.debug.core.IJavaLineBreakpoint;
 import org.eclipse.jdt.debug.core.IJavaMethodBreakpoint;
 import org.eclipse.jdt.debug.core.IJavaMethodEntryBreakpoint;
@@ -64,13 +67,17 @@ import org.eclipse.jdt.debug.core.IJavaType;
 import org.eclipse.jdt.debug.core.IJavaWatchpoint;
 import org.eclipse.jdt.debug.core.JDIDebugModel;
 import org.eclipse.jdt.debug.ui.IJavaDebugUIConstants;
+import org.eclipse.jdt.internal.debug.core.JDIDebugPlugin;
 import org.eclipse.jdt.internal.debug.core.breakpoints.JavaExceptionBreakpoint;
 import org.eclipse.jdt.internal.debug.core.logicalstructures.IJavaStructuresListener;
 import org.eclipse.jdt.internal.debug.core.logicalstructures.JavaLogicalStructures;
+import org.eclipse.jdt.internal.debug.core.model.JDIThread;
 import org.eclipse.jdt.internal.debug.ui.actions.JavaBreakpointPropertiesAction;
 import org.eclipse.jdt.internal.debug.ui.breakpoints.SuspendOnCompilationErrorListener;
 import org.eclipse.jdt.internal.debug.ui.breakpoints.SuspendOnUncaughtExceptionListener;
 import org.eclipse.jdt.internal.debug.ui.snippeteditor.ScrapbookLauncher;
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -78,6 +85,14 @@ import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
@@ -567,7 +582,110 @@ public class JavaDebugOptionsManager implements IDebugEventSetListener, IPropert
 	 */
 	@Override
 	public int breakpointHit(IJavaThread thread, IJavaBreakpoint breakpoint) {
+		if (thread instanceof JDIThread && breakpoint instanceof IJavaExceptionBreakpoint) {
+			if (shouldSkipSubsequentOccurrence((JDIThread) thread, (IJavaExceptionBreakpoint) breakpoint)) {
+				return DONT_SUSPEND;
+			}
+		}
 		return DONT_CARE;
+	}
+
+	/**
+	 * Figure out whether suspending on an exceptionBreakpoint should be skipped due to the user's choice regarding
+	 * {@link IJavaExceptionBreakpoint#setSuspendOnRecurrenceStrategy(int)}.
+	 * <p>
+	 * If the current hit is indeed recurrence of an already-seen exception instance, and if the user has not yet made a choice for this breakpoint,
+	 * then a question dialog will be opened to request the user's choice.
+	 * </p>
+	 *
+	 * @param thread
+	 *            the thread where an exception occurred
+	 * @param exceptionBreakpoint
+	 *            the exceptionBreakpoint that just fired
+	 * @return {@code true} if the current breakpoint hit should be skipped.
+	 */
+	public boolean shouldSkipSubsequentOccurrence(JDIThread thread, IJavaExceptionBreakpoint exceptionBreakpoint) {
+		if (exceptionBreakpoint == fSuspendOnExceptionBreakpoint) {
+			// this breakpoint doesn't have the recurrence property, wait until we are called from SuspendOnUncaughtExceptionListener itself
+			return false;
+		}
+		SuspendOnRecurrenceStrategy skip = thread.shouldSkipExceptionRecurrence(exceptionBreakpoint);
+		if (skip == null) {
+			return false; // not a recurrence
+		}
+		if (skip == SuspendOnRecurrenceStrategy.RECURRENCE_UNCONFIGURED) {
+			skip = new AskRecurrenceDialog(JDIDebugUIPlugin.getShell()).getAnswer();
+		}
+		switch (skip) {
+			case SKIP_RECURRENCES:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	private static final class AskRecurrenceDialog extends MessageDialog {
+
+		private boolean fRememberChoice;
+		private SuspendOnRecurrenceStrategy fStrategy;
+
+		private AskRecurrenceDialog(Shell parentShell) {
+			super(parentShell, DebugUIMessages.JavaDebugOptionsManager_exceptionRecurrence_dialogTitle, null, //
+					DebugUIMessages.JavaDebugOptionsManager_exceptionRecurrence_dialogMessage,
+					MessageDialog.QUESTION, 0, //
+					DebugUIMessages.JavaDebugOptionsManager_skip_buttonLabel, //
+					DebugUIMessages.JavaDebugOptionsManager_suspend_buttonLabel);
+			parentShell.getDisplay().syncExec(() -> open());
+		}
+
+		@Override
+		protected Control createCustomArea(Composite parent) {
+			Composite panel = new Composite(parent, SWT.NONE);
+			panel.setFont(parent.getFont());
+
+			GridLayout layout = new GridLayout(1, false);
+			layout.marginWidth = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_MARGIN);
+			panel.setLayout(layout);
+
+			GridData data = new GridData(GridData.FILL_BOTH);
+			data.verticalAlignment = GridData.END;
+			panel.setLayoutData(data);
+
+			Button button = new Button(panel, SWT.CHECK);
+			button.setText(DebugUIMessages.JavaDebugOptionsManager_exceptionRecurrence_remember_decision);
+			button.setSelection(false);
+			button.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					fRememberChoice = !fRememberChoice;
+				}
+			});
+			return panel;
+		}
+
+		@Override
+		public int open() {
+			int ret = super.open();
+			switch (ret) {
+				case 0:
+					fStrategy = SuspendOnRecurrenceStrategy.SKIP_RECURRENCES;
+					break;
+				case 1:
+					fStrategy = SuspendOnRecurrenceStrategy.SUSPEND_ALWAYS;
+					break;
+			}
+			if (fRememberChoice) {
+				IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(JDIDebugPlugin.getUniqueIdentifier());
+				if (prefs != null) {
+					prefs.put(JDIDebugModel.PREF_SUSPEND_ON_RECURRENCE_STRATEGY, fStrategy.name());
+				}
+			}
+			return ret;
+		}
+
+		public SuspendOnRecurrenceStrategy getAnswer() {
+			return fStrategy;
+		}
 	}
 
 	/**
