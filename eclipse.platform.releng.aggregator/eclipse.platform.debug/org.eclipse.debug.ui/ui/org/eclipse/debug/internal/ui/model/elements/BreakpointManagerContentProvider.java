@@ -127,12 +127,7 @@ public class BreakpointManagerContentProvider extends ElementContentProvider
 			}
 		};
 
-		private IDebugContextListener fDebugContextListener = new IDebugContextListener() {
-			@Override
-			public void debugContextChanged(DebugContextEvent event) {
-				InputData.this.debugContextChanged(event);
-			}
-		};
+		private IDebugContextListener fDebugContextListener = InputData.this::debugContextChanged;
 
 		/**
 		 * Constructor
@@ -799,7 +794,7 @@ public class BreakpointManagerContentProvider extends ElementContentProvider
 	/**
 	 * A map of input to info data cache
 	 */
-	final private Map<DefaultBreakpointsViewInput, InputData> fInputToData = Collections.synchronizedMap(new InputDataMap<DefaultBreakpointsViewInput, InputData>());
+	final private Map<DefaultBreakpointsViewInput, InputData> fInputToData = Collections.synchronizedMap(new InputDataMap<>());
 
 	/**
 	 * Flag indicating whether the content provider is currently a breakpoints listener.

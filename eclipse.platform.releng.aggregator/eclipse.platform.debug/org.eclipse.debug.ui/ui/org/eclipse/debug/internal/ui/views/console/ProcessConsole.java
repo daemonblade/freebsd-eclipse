@@ -11,6 +11,7 @@
  *  Contributors:
  *     IBM Corporation - initial API and implementation
  *     Paul Pazderski  - Bug 545769: fixed rare UTF-8 character corruption bug
+ *     Paul Pazderski  - Bug 552015: console finished signaled to late if input is connected to file
  *******************************************************************************/
 package org.eclipse.debug.internal.ui.views.console;
 
@@ -104,6 +105,16 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 
 	private IConsoleColorProvider fColorProvider;
 
+	/**
+	 * The input stream which can supply user input in console to the system process
+	 * stdin.
+	 */
+	private IOConsoleInputStream fUserInput;
+	/**
+	 * The stream connected to the system processe's stdin. May be the
+	 * <i>fUserInput</i> stream to supply user input or a FileInputStream to supply
+	 * input from a file.
+	 */
 	private volatile InputStream fInput;
 
 	private FileOutputStream fFileOutputStream;
@@ -111,17 +122,21 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 	private boolean fAllocateConsole = true;
 	private String fStdInFile = null;
 
-	private boolean fStreamsClosed = false;
+	private volatile boolean fStreamsClosed = false;
 
 	/**
-	 * Proxy to a console document
+	 * Create process console with default encoding.
+	 *
+	 * @param process	   the process to associate with this console
+	 * @param colorProvider the colour provider for this console
 	 */
 	public ProcessConsole(IProcess process, IConsoleColorProvider colorProvider) {
 		this(process, colorProvider, null);
 	}
 
 	/**
-	 * Constructor
+	 * Create process console.
+	 *
 	 * @param process the process to associate with this console
 	 * @param colorProvider the colour provider for this console
 	 * @param encoding the desired encoding for this console
@@ -129,6 +144,7 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 	public ProcessConsole(IProcess process, IConsoleColorProvider colorProvider, String encoding) {
 		super(IInternalDebugCoreConstants.EMPTY_STRING, IDebugUIConstants.ID_PROCESS_CONSOLE_TYPE, null, encoding, true);
 		fProcess = process;
+		fUserInput = getInputStream();
 
 		ILaunchConfiguration configuration = process.getLaunch().getLaunchConfiguration();
 		String file = null;
@@ -360,6 +376,10 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 			setFont(JFaceResources.getFont(IDebugUIConstants.PREF_CONSOLE_FONT));
 		} else if (property.equals(IDebugPreferenceConstants.CONSOLE_BAKGROUND_COLOR)) {
 			setBackground(DebugUIPlugin.getPreferenceColor(IDebugPreferenceConstants.CONSOLE_BAKGROUND_COLOR));
+		} else if (property.equals(IDebugPreferenceConstants.CONSOLE_INTERPRET_CONTROL_CHARACTERS)) {
+			setHandleControlCharacters(store.getBoolean(IDebugPreferenceConstants.CONSOLE_INTERPRET_CONTROL_CHARACTERS));
+		} else if (property.equals(IDebugPreferenceConstants.CONSOLE_INTERPRET_CR_AS_CONTROL_CHARACTER)) {
+			setCarriageReturnAsControlCharacter(store.getBoolean(IDebugPreferenceConstants.CONSOLE_INTERPRET_CR_AS_CONTROL_CHARACTER));
 		}
 	}
 
@@ -421,7 +441,13 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 			fInput.close();
 		} catch (IOException e) {
 		}
-		fStreamsClosed  = true;
+		if (fInput != fUserInput) {
+			try {
+				fUserInput.close();
+			} catch (IOException e) {
+			}
+		}
+		fStreamsClosed = true;
 	}
 
 	/**
@@ -434,6 +460,7 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 		}
 		fFileOutputStream = null;
 		fInput = null;
+		fUserInput = null;
 	}
 
 	/**
@@ -461,6 +488,9 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 			int lowWater = store.getInt(IDebugPreferenceConstants.CONSOLE_LOW_WATER_MARK);
 			setWaterMarks(lowWater, highWater);
 		}
+
+		setHandleControlCharacters(store.getBoolean(IDebugPreferenceConstants.CONSOLE_INTERPRET_CONTROL_CHARACTERS));
+		setCarriageReturnAsControlCharacter(store.getBoolean(IDebugPreferenceConstants.CONSOLE_INTERPRET_CR_AS_CONTROL_CHARACTER));
 
 		DebugUIPlugin.getStandardDisplay().asyncExec(() -> {
 			setFont(JFaceResources.getFont(IDebugUIConstants.PREF_CONSOLE_FONT));
@@ -743,7 +773,7 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 
 		@Override
 		protected IStatus run(IProgressMonitor monitor) {
-			if (fInput == null) {
+			if (fInput == null || fStreamsClosed) {
 				return monitor.isCanceled() ? Status.CANCEL_STATUS : Status.OK_STATUS;
 			}
 			Charset encoding = getCharset();
@@ -754,7 +784,7 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 				char[] cbuf = new char[1024];
 				int charRead = 0;
 				while (charRead >= 0 && !monitor.isCanceled()) {
-					if (fInput == null) {
+					if (fInput == null || fStreamsClosed) {
 						break;
 					}
 					if (fInput != readingStream) {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
 <!--
-     Copyright (c) 2005, 2018 IBM Corporation and others.
+     Copyright (c) 2005, 2019 IBM Corporation and others.
 
      This program and the accompanying materials
      are made available under the terms of the Eclipse Public License 2.0
@@ -316,7 +316,8 @@
                menubarPath="org.eclipse.ui.run/emptyStepGroup"
                toolbarPath="org.eclipse.debug.ui.main.toolbar/renderGroup"
                style="toggle"
-               state="false">
+               state="false"
+               initialEnabled="true">
          </action>
          <action
                id="org.eclipse.debug.ui.actions.DropToFrame"
@@ -325,7 +326,8 @@
                icon="$nl$/icons/full/elcl16/drop_to_frame.png"
                helpContextId="org.eclipse.debug.ui.drop_to_frame_action_context"
                label="%DropToFrame.label"
-               toolbarPath="org.eclipse.debug.ui.main.toolbar/renderGroup">
+               toolbarPath="org.eclipse.debug.ui.main.toolbar/renderGroup"
+               initialEnabled="false">
          </action>
          <action
                id="org.eclipse.debug.ui.actions.RunToLine"
@@ -336,7 +338,8 @@
                icon="$nl$/icons/full/elcl16/runtoline_co.png"
                label="%RunToLine.label"
                menubarPath="org.eclipse.ui.run/emptyStepGroup"
-               toolbarPath="org.eclipse.debug.ui.main.toolbar/emptyStepGroup">
+               toolbarPath="org.eclipse.debug.ui.main.toolbar/emptyStepGroup"
+               initialEnabled="false">
          </action>                  
          <action
                id="org.eclipse.debug.ui.actions.StepReturn"
@@ -348,7 +351,8 @@
                helpContextId="step_return_action_context"
                label="%StepReturnAction.label"
                menubarPath="org.eclipse.ui.run/stepReturnGroup"
-               toolbarPath="org.eclipse.debug.ui.main.toolbar/stepReturnGroup">
+               toolbarPath="org.eclipse.debug.ui.main.toolbar/stepReturnGroup"
+               initialEnabled="false">
          </action>
          <action
                id="org.eclipse.debug.ui.actions.StepOver"
@@ -360,7 +364,8 @@
                helpContextId="step_over_action_context"
                label="%StepOverAction.label"
                menubarPath="org.eclipse.ui.run/stepOverGroup"
-               toolbarPath="org.eclipse.debug.ui.main.toolbar/stepOverGroup">
+               toolbarPath="org.eclipse.debug.ui.main.toolbar/stepOverGroup"
+               initialEnabled="false">
          </action>
          <action
                id="org.eclipse.debug.ui.actions.StepInto"
@@ -372,7 +377,8 @@
                helpContextId="step_into_action_context"
                label="%StepIntoAction.label"
                menubarPath="org.eclipse.ui.run/stepIntoGroup"
-               toolbarPath="org.eclipse.debug.ui.main.toolbar/stepIntoGroup">               
+               toolbarPath="org.eclipse.debug.ui.main.toolbar/stepIntoGroup"
+               initialEnabled="false">               
          </action>
          <action
                id="org.eclipse.debug.ui.actions.toolbar.Disconnect"
@@ -384,7 +390,8 @@
                helpContextId="disconnect_action_context"
                label="%Disconnect.label"
                menubarPath="org.eclipse.ui.run/stepGroup"
-               toolbarPath="org.eclipse.debug.ui.main.toolbar/threadGroup">
+               toolbarPath="org.eclipse.debug.ui.main.toolbar/threadGroup"
+               initialEnabled="false">
          </action>
          <action
                id="org.eclipse.debug.ui.actions.Terminate"
@@ -396,7 +403,8 @@
                helpContextId="terminate_action_context"
                label="%TerminateAction.label"
                menubarPath="org.eclipse.ui.run/stepGroup"
-               toolbarPath="org.eclipse.debug.ui.main.toolbar/threadGroup">
+               toolbarPath="org.eclipse.debug.ui.main.toolbar/threadGroup"
+               initialEnabled="false">
          </action>
          <action
                id="org.eclipse.debug.ui.actions.Suspend"
@@ -408,7 +416,8 @@
                helpContextId="suspend_action_context"
                label="%SuspendAction.label"
                menubarPath="org.eclipse.ui.run/stepGroup"
-               toolbarPath="org.eclipse.debug.ui.main.toolbar/threadGroup">
+               toolbarPath="org.eclipse.debug.ui.main.toolbar/threadGroup"
+               initialEnabled="false">
          </action>
          <action
                id="org.eclipse.debug.ui.actions.Resume"
@@ -420,7 +429,8 @@
                helpContextId="resume_action_context"
                label="%ResumeAction.label"
                menubarPath="org.eclipse.ui.run/stepGroup"
-               toolbarPath="org.eclipse.debug.ui.main.toolbar/threadGroup">
+               toolbarPath="org.eclipse.debug.ui.main.toolbar/threadGroup"
+               initialEnabled="false">
          </action>
       </actionSet>
       <actionSet
@@ -775,6 +785,17 @@
                helpContextId="remove_all_terminated_action_context"
                label="%RemoveAllTerminatedAction.label"
                tooltip="%RemoveAllTerminatedAction.tooltip">
+         </action>
+         <action
+               id="org.eclipse.debug.ui.debugview.toolbar.collapseAll"
+               toolbarPath="threadGroup"
+               hoverIcon="$nl$/icons/full/elcl16/collapseall.png"
+               class="org.eclipse.debug.internal.ui.actions.LaunchCollapseAllAction"
+               disabledIcon="$nl$/icons/full/dlcl16/collapseall.png"
+               icon="$nl$/icons/full/elcl16/collapseall.png"
+               helpContextId="collapse_all_action_context"
+               label="%CollapseAllAction.label"
+               tooltip="%CollapseAllAction.tooltip">
          </action>
       </viewContribution>
      

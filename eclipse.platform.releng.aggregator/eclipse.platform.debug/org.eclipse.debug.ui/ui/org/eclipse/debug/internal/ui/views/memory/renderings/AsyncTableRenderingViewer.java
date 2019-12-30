@@ -614,9 +614,7 @@ public class AsyncTableRenderingViewer extends AsyncVirtualContentTableViewer {
 		int colNum = -1;
 		int numCol = getColumnProperties().length;
 
-		for (int j=0; j<tableItems.length; j++)
-		{
-			TableItem item = tableItems[j];
+		for (TableItem item : tableItems) {
 			if (item.getData() != null)
 			{
 				for (int i=0; i<numCol; i++)
@@ -1029,9 +1027,13 @@ public class AsyncTableRenderingViewer extends AsyncVirtualContentTableViewer {
 
 	@Override
 	protected void updateComplete(IStatusMonitor monitor) {
+		if (fTableCursor.isDisposed()) {
+			return;
+		}
+
 		super.updateComplete(monitor);
 
-		if (!hasPendingUpdates() && !fTableCursor.isDisposed())
+		if (!hasPendingUpdates())
 		{
 			attemptSetKeySelection();
 			fTableCursor.redraw();

@@ -11,6 +11,7 @@
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *     IBM Corporation - bug fixing
+ *     Umair Sair (Mentor Graphics) - Bug 550220
  *******************************************************************************/
 package org.eclipse.debug.internal.ui.viewers.model;
 
@@ -82,13 +83,6 @@ class ViewerStateTracker {
 	static final int STATE_SAVE_SEQUENCE_COMPLETE = 5;
 	static final int STATE_RESTORE_SEQUENCE_BEGINS = 6;
 	static final int STATE_RESTORE_SEQUENCE_COMPLETE = 7;
-
-	/**
-	 * Dummy marker element used in the state delta. The marker indicates that a
-	 * given element in the pending state delta has been removed. It replaces
-	 * the original element so that it may optionally be garbage collected.
-	 */
-	private final static String ELEMENT_REMOVED = "ELEMENT_REMOVED"; //$NON-NLS-1$
 
 	/**
 	 * Collector of memento encoding requests.
@@ -1035,7 +1029,7 @@ class ViewerStateTracker {
 
 				if (flags != IModelDelta.NO_CHANGE) {
 					IModelDelta parentDelta = delta.getParentDelta();
-					// Remove the delta if :
+					// Do not visit children if :
 					// - The parent delta has no more flags on it (the content flag is removed as well),
 					// which means that parent element's children have been completely exposed.
 					// - There are no more pending updates for the element.
@@ -1045,7 +1039,6 @@ class ViewerStateTracker {
 						if ( !fContentProvider.areElementUpdatesPending(deltaPath) &&
 							 (!(delta.getElement() instanceof IMemento) || !areMementoUpdatesPending(delta)) )
 						{
-							removeDelta(delta);
 							return false;
 						}
 					}
@@ -1069,20 +1062,6 @@ class ViewerStateTracker {
 					}
 				}
 				return false;
-			}
-
-			private void removeDelta(IModelDelta delta) {
-				if (DebugUIPlugin.DEBUG_STATE_SAVE_RESTORE && DebugUIPlugin.DEBUG_TEST_PRESENTATION_ID(fContentProvider.getPresentationContext())) {
-					DebugUIPlugin.trace("\tRESTORE REMOVED: " + delta.getElement()); //$NON-NLS-1$
-				}
-
-				delta.accept((_visitorDelta, depth) -> {
-					ModelDelta visitorDelta = (ModelDelta) _visitorDelta;
-					visitorDelta.setElement(ELEMENT_REMOVED);
-					visitorDelta.setFlags(IModelDelta.NO_CHANGE);
-					return true;
-				});
-
 			}
 		}
 
@@ -1149,8 +1128,8 @@ class ViewerStateTracker {
 			} else {
 				TreePath[] currentPaths = currentSelection.getPaths();
 				boolean pathInSelection = false;
-				for (int i = 0; i < currentPaths.length; i++) {
-					if (currentPaths[i].equals(treePath)) {
+				for (TreePath currentPath : currentPaths) {
+					if (currentPath.equals(treePath)) {
 						pathInSelection = true;
 						break;
 					}
@@ -1173,9 +1152,7 @@ class ViewerStateTracker {
 			// A child delta has the reveal flag, do not set the
 			// top element yet.
 			boolean setTopItem = true;
-			IModelDelta[] childDeltas = delta.getChildDeltas();
-			for (int i = 0; i < childDeltas.length; i++) {
-				IModelDelta childDelta = childDeltas[i];
+			for (IModelDelta childDelta : delta.getChildDeltas()) {
 				int modelIndex = childDelta.getIndex();
 				if (modelIndex >= 0 && (childDelta.getFlags() & IModelDelta.REVEAL) != 0) {
 					setTopItem = false;
@@ -1198,9 +1175,7 @@ class ViewerStateTracker {
 		if (knowsChildCount) {
 			int childCount = viewer.getChildCount(treePath);
 			if (childCount >= 0) {
-				ModelDelta[] childDeltas = (ModelDelta[])delta.getChildDeltas();
-				for (int i = 0; i < childDeltas.length; i++) {
-					ModelDelta childDelta = childDeltas[i];
+				for (ModelDelta childDelta : (ModelDelta[])delta.getChildDeltas()) {
 					int modelIndex = childDelta.getIndex();
 					if (modelIndex >= 0 && (childDelta.getFlags() & IModelDelta.REVEAL) != 0) {
 						if (modelIndex < childCount) {

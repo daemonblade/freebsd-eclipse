@@ -30,7 +30,6 @@ import org.eclipse.debug.internal.ui.DebugUIPlugin;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.debug.ui.memory.AbstractMemoryRenderingBindingsProvider;
-import org.eclipse.debug.ui.memory.IMemoryRenderingBindingsListener;
 import org.eclipse.debug.ui.memory.IMemoryRenderingBindingsProvider;
 import org.eclipse.debug.ui.memory.IMemoryRenderingManager;
 import org.eclipse.debug.ui.memory.IMemoryRenderingType;
@@ -86,8 +85,8 @@ class RenderingBindings extends AbstractMemoryRenderingBindingsProvider implemen
 			IMemoryRenderingManager manager = getManager();
 			if (ids != null) {
 				String[] strings = ids.split(","); //$NON-NLS-1$
-				for (int i = 0; i < strings.length; i++) {
-					String id = strings[i].trim();
+				for (String s : strings) {
+					String id = s.trim();
 					IMemoryRenderingType type = manager.getRenderingType(id);
 					if (type != null) {
 						list.add(type);
@@ -96,8 +95,8 @@ class RenderingBindings extends AbstractMemoryRenderingBindingsProvider implemen
 			}
 			// remove any default bindings, in case of duplicate specification
 			IMemoryRenderingType[] defaultBindings = getDefaultBindings();
-			for (int i = 0; i < defaultBindings.length; i++) {
-				list.remove(defaultBindings[i]);
+			for (IMemoryRenderingType defaultBinding : defaultBindings) {
+				list.remove(defaultBinding);
 			}
 			fRenderingTypes = list.toArray(new IMemoryRenderingType[list.size()]);
 		}
@@ -116,8 +115,8 @@ class RenderingBindings extends AbstractMemoryRenderingBindingsProvider implemen
 			IMemoryRenderingManager manager = getManager();
 			if (ids != null) {
 				String[] strings = ids.split(","); //$NON-NLS-1$
-				for (int i = 0; i < strings.length; i++) {
-					String id = strings[i].trim();
+				for (String s : strings) {
+					String id = s.trim();
 					IMemoryRenderingType type = manager.getRenderingType(id);
 					if (type != null) {
 						list.add(type);
@@ -164,12 +163,7 @@ class RenderingBindings extends AbstractMemoryRenderingBindingsProvider implemen
 				}
 
 				if (fProvider != null) {
-					fProvider.addListener(new IMemoryRenderingBindingsListener() {
-						@Override
-						public void memoryRenderingBindingsChanged() {
-							fireBindingsChanged();
-						}
-					});
+					fProvider.addListener(this::fireBindingsChanged);
 				}
 			}
 		}

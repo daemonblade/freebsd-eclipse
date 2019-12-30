@@ -13,6 +13,9 @@
  *     Paul Pazderski  - Contributions for:
  *                          Bug 547064: use binary search for getPartition
  *                          Bug 548356: fixed user input handling
+ *                          Bug 550618: getStyleRanges produced invalid overlapping styles
+ *                          Bug 550621: Implementation of IConsoleDocumentPartitionerExtension
+ *                          Bug 76936:  Support interpretation of \b and \r in console output
  *******************************************************************************/
 package org.eclipse.ui.internal.console;
 
@@ -22,6 +25,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -34,13 +40,15 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentPartitionerExtension;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITypedRegion;
+import org.eclipse.jface.text.MultiStringMatcher;
+import org.eclipse.jface.text.MultiStringMatcher.Match;
 import org.eclipse.jface.text.Region;
-import org.eclipse.jface.text.TextUtilities;
 import org.eclipse.jface.text.TypedRegion;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsoleDocumentPartitioner;
+import org.eclipse.ui.console.IConsoleDocumentPartitionerExtension;
 import org.eclipse.ui.console.IOConsole;
 import org.eclipse.ui.console.IOConsoleInputStream;
 import org.eclipse.ui.console.IOConsoleOutputStream;
@@ -52,7 +60,27 @@ import org.eclipse.ui.progress.WorkbenchJob;
  *
  * @since 3.1
  */
-public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocumentPartitionerExtension {
+public class IOConsolePartitioner
+		implements IConsoleDocumentPartitioner, IConsoleDocumentPartitionerExtension, IDocumentPartitionerExtension {
+	/**
+	 * Enumeration used to distinct sources of document updates. (especially to
+	 * distinct updates triggered by this partitioner from other document changes)
+	 */
+	private enum DocUpdateType {
+		/**
+		 * Default if reason for document change is not known. Document change is
+		 * interpreted as user input.
+		 */
+		INPUT,
+		/**
+		 * Document update was triggered from this partitioner by appending content
+		 * received from output streams.
+		 */
+		OUTPUT,
+		/** Document update was triggered from this partitioner's {@link TrimJob}. */
+		TRIM,
+	}
+
 	/**
 	 * If true validate partitioning after changes and do other additional
 	 * assertions. Useful for developing/debugging.
@@ -64,7 +92,17 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 	 */
 	private static final Comparator<IRegion> CMP_REGION_BY_OFFSET = Comparator.comparing(IRegion::getOffset);
 
-	private PendingPartition consoleClosedPartition;
+	/**
+	 * Pattern used to find supported ASCII control characters <b>except</b>
+	 * carriage return.
+	 */
+	private static final String CONTROL_CHARACTERS_PATTERN_STR = "(?:\b+)"; //$NON-NLS-1$
+	/**
+	 * Pattern used to find supported ASCII control characters <b>including</b>
+	 * carriage return.
+	 */
+	private static final String CONTROL_CHARACTERS_WITH_CR_PATTERN_STR = "(?:\b+|\r+(?!\n))"; //$NON-NLS-1$
+
 	/** The connected {@link IDocument} this partitioner manages. */
 	private IDocument document;
 	/**
@@ -72,56 +110,79 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 	 * {@link IRegion#getOffset()} and not contain <code>null</code> or 0-length
 	 * elements. (see also {@link #checkPartitions()})
 	 */
-	private ArrayList<IOConsolePartition> partitions;
+	private final ArrayList<IOConsolePartition> partitions = new ArrayList<>();
 	/** Blocks of data that have not yet been appended to the document. */
-	private ArrayList<PendingPartition> pendingPartitions;
-	/**
-	 * A list of PendingPartitions to be appended by the updateJob
-	 */
-	private ArrayList<PendingPartition> updatePartitions;
-	/**
-	 * Job that appends pending partitions to the document.
-	 */
-	private QueueProcessingJob queueJob;
+	private final ArrayList<PendingPartition> pendingPartitions = new ArrayList<>();
+	/** Total length of pending partitions content. */
+	private int pendingSize;
+	/** Job that appends pending partitions to the document. */
+	private final QueueProcessingJob queueJob = new QueueProcessingJob();
 	/** Job that trims console content if it exceeds {@link #highWaterMark}. */
-	private TrimJob trimJob = new TrimJob();
-	/** The input stream attached to this document. */
-	private IOConsoleInputStream inputStream;
+	private final TrimJob trimJob = new TrimJob();
 	/**
-	 * Flag to indicate that the updateJob is updating the document.
+	 * Reason for document update. Set before changing document inside this
+	 * partitioner to prevent that change is interpreted as user input.
+	 * <p>
+	 * Automatically reset to {@link DocUpdateType#INPUT} after every document
+	 * change.
+	 * </p>
 	 */
-	private boolean updateInProgress;
+	private DocUpdateType updateType = DocUpdateType.INPUT;
+	private IRegion changedRegion;
 	/**
 	 * A list of partitions containing input from the console, that have not been
 	 * appended to the input stream yet. No guarantees on element order.
 	 */
 	private ArrayList<IOConsolePartition> inputPartitions;
 	/**
-	 * offset used by updateJob
+	 * A matcher to search for legal line delimiters in new input. Never
+	 * <code>null</code> but match nothing if no document connected.
 	 */
-	private int firstOffset;
-	/** An array of legal line delimiters. */
-	private String[] lld;
+	private MultiStringMatcher legalLineDelimiterMatcher;
+	/**
+	 * The high mark for console content trimming. If console content exceeds this
+	 * length trimming is scheduled. Trimming is disabled if value is negative.
+	 */
 	private int highWaterMark = -1;
+	/**
+	 * The low mark for console content trimming. If trim is performed approximate
+	 * this many characters are remain in console.
+	 */
 	private int lowWaterMark = -1;
-	private boolean connected = false;
 
 	/** The partitioned {@link IOConsole}. */
 	private IOConsole console;
 
+	/** Set after console signaled that all streams are closed. */
+	private volatile boolean streamsClosed;
 	/**
-	 * Lock for appending to and removing from the document - used
-	 * to synchronize addition of new text/partitions in the update
-	 * job and handling buffer overflow/clearing of the console.
+	 * Active pattern to search for supported control characters. If
+	 * <code>null</code> control characters are treated as any other characters.
 	 */
-	private Object overflowLock = new Object();
+	private Pattern controlCharacterPattern = null;
+	/**
+	 * Whether <code>\r</code> is interpreted as control characters
+	 * (<code>true</code>) or not in console output. If <code>false</code> they are
+	 * probably handled as newline.
+	 */
+	private boolean carriageReturnAsControlCharacter = true;
+	/**
+	 * Offset where next output is written to console.
+	 */
+	private int outputOffset = 0;
 
-
-	private int fBuffer;
-
-	public IOConsolePartitioner(IOConsoleInputStream inputStream, IOConsole console) {
-		this.inputStream = inputStream;
-		this.console = console;
+	/**
+	 * Create new partitioner for an {@link IOConsole}.
+	 * <p>
+	 * The partitioner must be explicit {@link #connect(IDocument) connected} with
+	 * the consoles {@link IDocument}.
+	 * </p>
+	 *
+	 * @param console the partitioned console. Not <code>null</code>.
+	 */
+	public IOConsolePartitioner(IOConsole console) {
+		this.console = Objects.requireNonNull(console);
+		queueJob.setRule(console.getSchedulingRule());
 		trimJob.setRule(console.getSchedulingRule());
 	}
 
@@ -136,27 +197,63 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 
 	@Override
 	public void connect(IDocument doc) {
-		document = doc;
-		document.setDocumentPartitioner(this);
-		lld = document.getLegalLineDelimiters();
-		partitions = new ArrayList<>();
-		pendingPartitions = new ArrayList<>();
-		inputPartitions = new ArrayList<>();
-		queueJob = new QueueProcessingJob();
-		queueJob.setSystem(true);
-		queueJob.setPriority(Job.INTERACTIVE);
-		queueJob.setRule(console.getSchedulingRule());
-		connected = true;
+		if (doc == document) {
+			return;
+		}
+		disconnect();
+		if (doc != null) {
+			synchronized (partitions) {
+				inputPartitions = new ArrayList<>();
+				document = doc;
+				legalLineDelimiterMatcher = MultiStringMatcher.create(document.getLegalLineDelimiters());
+			}
+		}
 	}
 
+	@Override
+	public void disconnect() {
+		synchronized (pendingPartitions) {
+			pendingPartitions.clear();
+			pendingSize = 0;
+			pendingPartitions.notifyAll();
+		}
+		synchronized (partitions) {
+			trimJob.cancel();
+			queueJob.cancel();
+			legalLineDelimiterMatcher = null;
+			document = null;
+			inputPartitions = null;
+			partitions.clear();
+		}
+	}
+
+	/**
+	 * Get high water mark.
+	 *
+	 * @return the trim if exceeded mark
+	 * @see IOConsole#getHighWaterMark()
+	 */
 	public int getHighWaterMark() {
 		return highWaterMark;
 	}
 
+	/**
+	 * Get low water mark.
+	 *
+	 * @return the trim to this length mark
+	 * @see IOConsole#getLowWaterMark()
+	 */
 	public int getLowWaterMark() {
 		return lowWaterMark;
 	}
 
+	/**
+	 * Set low and high water marks.
+	 *
+	 * @param low  the trim to this length mark
+	 * @param high the trim if exceeded mark
+	 * @see IOConsole#setWaterMarks(int, int)
+	 */
 	public void setWaterMarks(int low, int high) {
 		lowWaterMark = low;
 		highWaterMark = high;
@@ -167,22 +264,30 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 	 * Notification from the console that all of its streams have been closed.
 	 */
 	public void streamsClosed() {
-		consoleClosedPartition = new PendingPartition(null, null);
-		synchronized (pendingPartitions) {
-			pendingPartitions.add(consoleClosedPartition);
+		if (streamsClosed) {
+			log(IStatus.ERROR, "Streams are already closed."); //$NON-NLS-1$
+			return;
 		}
-		queueJob.schedule(); //ensure that all pending partitions are processed.
+		streamsClosed = true;
+		checkFinished();
 	}
 
-	@Override
-	public void disconnect() {
-		synchronized (overflowLock) {
-			document = null;
-			partitions.clear();
-			connected = false;
-			try {
-				inputStream.close();
-			} catch (IOException e) {
+	/**
+	 * Check if partitioner is finished and does not expect any new data appended to
+	 * document.
+	 */
+	private void checkFinished() {
+		if (streamsClosed) {
+			// do not expect new data since all streams are closed
+			// check if pending data is queued
+			final boolean morePending;
+			synchronized (pendingPartitions) {
+				morePending = !pendingPartitions.isEmpty();
+			}
+			if (morePending) {
+				queueJob.schedule();
+			} else {
+				console.partitionerFinished();
 			}
 		}
 	}
@@ -220,6 +325,21 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 	 * @return the partitioning of the requested range (never <code>null</code>)
 	 */
 	private IOConsolePartition[] computeIOPartitioning(int offset, int length) {
+		return computePartitioning(offset, length, true, true);
+	}
+
+	/**
+	 * Get partitioning for a given range with possibility to filter partitions by
+	 * their read-only property.
+	 *
+	 * @param offset          the offset of the range of interest
+	 * @param length          the length of the range of interest
+	 * @param includeWritable if false writable partitions are skipped
+	 * @param includeReadOnly if false read-only partitions are skipped
+	 * @return the partitioning of the requested range (never <code>null</code>)
+	 */
+	private IOConsolePartition[] computePartitioning(int offset, int length, boolean includeWritable,
+			boolean includeReadOnly) {
 		final List<IOConsolePartition> result = new ArrayList<>();
 		synchronized (partitions) {
 			int index = findPartitionCandidate(offset);
@@ -233,7 +353,9 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 				if (partition.getOffset() >= end) {
 					break;
 				}
-				result.add(partition);
+				if ((includeWritable && !partition.isReadOnly()) || (includeReadOnly && partition.isReadOnly())) {
+					result.add(partition);
+				}
 			}
 		}
 		return result.toArray(new IOConsolePartition[0]);
@@ -295,15 +417,17 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 
 	/**
 	 * Enforces the buffer size.
+	 * <p>
 	 * When the number of lines in the document exceeds the high water mark, the
-	 * beginning of the document is trimmed until the number of lines equals the
-	 * low water mark.
+	 * beginning of the document is trimmed until the number of lines equals the low
+	 * water mark.
+	 * </p>
 	 */
 	private void checkBufferSize() {
 		if (document != null && highWaterMark > 0) {
 			int length = document.getLength();
 			if (length > highWaterMark) {
-				if (trimJob.getState() == Job.NONE) { //if the job isn't already running
+				if (trimJob.getState() == Job.NONE) { // if the job isn't already running
 					trimJob.setOffset(length - lowWaterMark);
 					trimJob.schedule();
 				}
@@ -312,57 +436,57 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 	}
 
 	/**
-	 * Clears the console
+	 * Clears the console content.
 	 */
 	public void clearBuffer() {
-		synchronized (overflowLock) {
-			trimJob.setOffset(-1);
-			trimJob.schedule();
-		}
+		trimJob.setOffset(-1);
+		trimJob.schedule();
 	}
 
 	@Override
 	public IRegion documentChanged2(DocumentEvent event) {
-		if (document == null) {
-			return null; //another thread disconnected the partitioner
-		}
-		if (document.getLength() == 0) { // document cleared
-			synchronized (partitions) {
-				partitions.clear();
-				inputPartitions.clear();
+		try {
+			if (document != event.getDocument()) {
+				log(IStatus.WARNING, "IOConsolePartitioner is connected to wrong document."); //$NON-NLS-1$
+				return null;
 			}
-			return new Region(0, 0);
-		}
+			if (document.getLength() == 0) { // document cleared
+				synchronized (partitions) {
+					partitions.clear();
+					inputPartitions.clear();
+					outputOffset = 0;
+				}
+				return new Region(0, 0);
+			}
 
-		if (updateInProgress) {
-			synchronized(partitions) {
-				if (updatePartitions != null) {
-					IOConsolePartition lastPartition = getPartitionByIndex(partitions.size() - 1);
-					for (PendingPartition pp : updatePartitions) {
-						if (pp == consoleClosedPartition) {
-							continue;
+			synchronized (partitions) {
+				switch (updateType) {
+				case INPUT:
+					if (event.getOffset() <= outputOffset) { // move output offset if necessary
+						outputOffset -= Math.min(event.getLength(), outputOffset - event.getOffset());
+						if (event.getText() != null) {
+							outputOffset += event.getText().length();
 						}
-
-						int ppLen = pp.text.length();
-						if (lastPartition != null && lastPartition.getOutputStream() == pp.stream) {
-							int len = lastPartition.getLength();
-							lastPartition.setLength(len + ppLen);
-						} else {
-							IOConsolePartition partition = new IOConsolePartition(firstOffset, pp.stream);
-							partition.setLength(ppLen);
-							lastPartition = partition;
-							partitions.add(partition);
-						}
-						firstOffset += ppLen;
 					}
+					return applyUserInput(event);
+
+				// update and trim jobs are triggered by this partitioner and all partitioning
+				// changes are applied separately
+				case OUTPUT:
+					return changedRegion;
+				case TRIM:
+					return null; // trim does not change partition types
+
+				default:
+					log(IStatus.ERROR, "Invalid enum value " + updateType); //$NON-NLS-1$
+					return null;
 				}
 			}
-		} else {
-			synchronized (partitions) {
-				return applyUserInput(event);
-			}
+		} finally {
+			// always reset type since all change events not triggered by this partitioner
+			// are interpreted as user input
+			updateType = DocUpdateType.INPUT;
 		}
-		return new Region(event.fOffset, event.fText.length());
 	}
 
 	/**
@@ -379,10 +503,14 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 	 * @return the region of the document in which the partition type changed or
 	 *         <code>null</code>
 	 */
+	// Required for a false 'resource not closed' warning on inputStream.
+	// This input stream must not be closed by this method.
+	@SuppressWarnings("resource")
 	private IRegion applyUserInput(DocumentEvent event) {
 		final int eventTextLength = event.getText() != null ? event.getText().length() : 0;
 		final int offset = event.getOffset();
 		final int amountDeleted = event.getLength();
+		final IOConsoleInputStream inputStream = console.getInputStream(); // do not close this stream
 
 		if (amountDeleted == 0 && eventTextLength == 0) {
 			// event did not changed document
@@ -422,9 +550,9 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 			// process event text in parts split on line delimiters
 			int textOffset = 0;
 			while (textOffset < eventTextLength) {
-				final int[] result = TextUtilities.indexOf(lld, event.getText(), textOffset);
-				final boolean foundNewline = result[1] >= 0;
-				final int newTextOffset = foundNewline ? result[0] + lld[result[1]].length() : eventTextLength;
+				final Match nextNewline = legalLineDelimiterMatcher.indexOf(event.getText(), textOffset);
+				final int newTextOffset = nextNewline != null ? nextNewline.getOffset() + nextNewline.getText().length()
+						: eventTextLength;
 				final int inputLength = newTextOffset - textOffset;
 
 				if (inputPartition == null || inputPartition.isReadOnly()) {
@@ -443,7 +571,7 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 
 				inputPartition.setLength(inputPartition.getLength() + inputLength);
 
-				if (foundNewline) {
+				if (nextNewline != null) {
 					inputPartitions.sort(CMP_REGION_BY_OFFSET);
 					final StringBuilder inputLine = new StringBuilder();
 					for (IOConsolePartition p : inputPartitions) {
@@ -459,7 +587,9 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 					if (ASSERT) {
 						Assert.isTrue(inputLine.length() > 0);
 					}
-					inputStream.appendData(inputLine.toString());
+					if (inputStream != null) {
+						inputStream.appendData(inputLine.toString());
+					}
 				}
 				Assert.isTrue(newTextOffset > textOffset); // can prevent infinity loop
 				textOffset = newTextOffset;
@@ -533,10 +663,6 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 		return newPartition;
 	}
 
-	private void setUpdateInProgress(boolean b) {
-		updateInProgress = b;
-	}
-
 	/**
 	 * A stream has been appended, add to pendingPartions list and schedule
 	 * updateJob. updateJob is scheduled with a slight delay, this allows the
@@ -551,31 +677,34 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 		if (document == null) {
 			throw new IOException("Document is closed"); //$NON-NLS-1$
 		}
-		synchronized(pendingPartitions) {
-			PendingPartition last = pendingPartitions.size() > 0 ? pendingPartitions.get(pendingPartitions.size()-1) : null;
-			if (last != null && last.stream == stream) {
-				last.append(s);
+		if (s == null) {
+			return;
+		}
+		synchronized (pendingPartitions) {
+			final PendingPartition lastPending = pendingPartitions.size() > 0
+					? pendingPartitions.get(pendingPartitions.size() - 1)
+					: null;
+			if (lastPending != null && lastPending.stream == stream) {
+				lastPending.append(s);
 			} else {
 				pendingPartitions.add(new PendingPartition(stream, s));
-				if (fBuffer > 1000) {
-					queueJob.schedule();
-				} else {
-					queueJob.schedule(50);
-				}
 			}
 
-			if (fBuffer > 160000) {
-				if(Display.getCurrent() == null){
+			if (pendingSize > 1000) {
+				queueJob.schedule();
+			} else {
+				queueJob.schedule(50);
+			}
+
+			if (pendingSize > 160000) {
+				if (Display.getCurrent() == null) {
 					try {
 						pendingPartitions.wait();
 					} catch (InterruptedException e) {
 					}
 				} else {
-					/*
-					 * if we are in UI thread we cannot lock it, so process
-					 * queued output.
-					 */
-					processQueue();
+					// if we are in UI thread we cannot lock it, so process queued output.
+					processPendingPartitions();
 				}
 			}
 		}
@@ -590,30 +719,30 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 
 		PendingPartition(IOConsoleOutputStream stream, String text) {
 			this.stream = stream;
-			if (text != null) {
-				append(text);
-			}
+			append(text);
 		}
 
 		void append(String moreText) {
 			text.append(moreText);
-			fBuffer += moreText.length();
+			pendingSize += moreText.length();
 		}
 	}
 
 	/**
-	 * Updates the document. Will append everything that is available before
-	 * finishing.
+	 * Updates the document and partitioning structure. Will append everything
+	 * received from output streams that is available before finishing.
 	 */
 	private class QueueProcessingJob extends UIJob {
 
 		QueueProcessingJob() {
 			super("IOConsole Updater"); //$NON-NLS-1$
+			setSystem(true);
+			setPriority(Job.INTERACTIVE);
 		}
 
 		@Override
 		public IStatus runInUIThread(IProgressMonitor monitor) {
-			processQueue();
+			processPendingPartitions();
 			if (ASSERT) {
 				checkPartitions();
 			}
@@ -621,74 +750,364 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 		}
 
 		/*
-		 * Job will process as much as it can each time it's run, but it gets
-		 * scheduled everytime a PendingPartition is added to the list, meaning
-		 * that this job could get scheduled unnecessarily in cases of heavy output.
-		 * Note however, that schedule() will only reschedule a running/scheduled Job
-		 * once even if it's called many times.
+		 * Job will process as much as it can each time it's run, but it gets scheduled
+		 * everytime a PendingPartition is added to the list, meaning that this job
+		 * could get scheduled unnecessarily in cases of heavy output. Note however,
+		 * that schedule() will only reschedule a running/scheduled Job once even if
+		 * it's called many times.
 		 */
 		@Override
 		public boolean shouldRun() {
-			boolean shouldRun = connected && pendingPartitions != null && pendingPartitions.size() > 0;
-			return shouldRun;
+			synchronized (pendingPartitions) {
+				final boolean shouldRun = pendingPartitions.size() > 0;
+				return shouldRun;
+			}
 		}
-	}
-
-	void processQueue() {
-		synchronized (overflowLock) {
-			ArrayList<PendingPartition> pendingCopy = new ArrayList<>();
-			StringBuilder buffer = null;
-			boolean consoleClosed = false;
-			synchronized(pendingPartitions) {
-				pendingCopy.addAll(pendingPartitions);
-				pendingPartitions.clear();
-				fBuffer = 0;
-				pendingPartitions.notifyAll();
-			}
-			// determine buffer size
-			int size = 0;
-			for (PendingPartition pp : pendingCopy) {
-				if (pp != consoleClosedPartition) {
-					size+= pp.text.length();
-				}
-			}
-			buffer = new StringBuilder(size);
-			for (PendingPartition pp : pendingCopy) {
-				if (pp != consoleClosedPartition) {
-					buffer.append(pp.text);
-				} else {
-					consoleClosed = true;
-				}
-			}
-			if (connected) {
-				setUpdateInProgress(true);
-				updatePartitions = pendingCopy;
-				firstOffset = document.getLength();
-				try {
-					if (buffer != null) {
-						document.replace(firstOffset, 0, buffer.toString());
-					}
-				} catch (BadLocationException e) {
-				}
-				updatePartitions = null;
-				setUpdateInProgress(false);
-			}
-			if (consoleClosed) {
-				console.partitionerFinished();
-			}
-			checkBufferSize();
-		}
-
 	}
 
 	/**
-	 * Job to trim the console document, runs in the  UI thread.
+	 * Process {@link #pendingPartitions}, append their content to document and
+	 * update partitioning.
+	 */
+	private void processPendingPartitions() {
+		final List<PendingPartition> pendingCopy;
+		final int size;
+		synchronized (pendingPartitions) {
+			pendingCopy = new ArrayList<>(pendingPartitions);
+			size = pendingSize;
+			pendingPartitions.clear();
+			pendingSize = 0;
+			pendingPartitions.notifyAll();
+		}
+		synchronized (partitions) {
+			if (isHandleControlCharacters()) {
+				applyStreamOutput(pendingCopy, size);
+			} else {
+				// Old implementation of output appending. The control character aware variant
+				// {@link #applyStreamOutput(List, int)} should do exactly the same if control
+				// character processing is disabled but since there is not so much time for
+				// testing in current development cycle the old implementation is used to
+				// process output when control character interpretation is disabled.
+				// TODO remove in next development cycle
+				final StringBuilder addedContent = new StringBuilder(size);
+				IOConsolePartition lastPartition = getPartitionByIndex(partitions.size() - 1);
+				int nextOffset = document.getLength();
+				for (PendingPartition pendingPartition : pendingCopy) {
+					if (lastPartition == null || lastPartition.getOutputStream() != pendingPartition.stream) {
+						lastPartition = new IOConsolePartition(nextOffset, pendingPartition.stream);
+						partitions.add(lastPartition);
+					}
+					final int pendingLength = pendingPartition.text.length();
+					lastPartition.setLength(lastPartition.getLength() + pendingLength);
+					nextOffset += pendingLength;
+					addedContent.append(pendingPartition.text);
+				}
+				try {
+					updateType = DocUpdateType.OUTPUT;
+					document.replace(document.getLength(), 0, addedContent.toString());
+					outputOffset += addedContent.length();
+				} catch (BadLocationException e) {
+					log(e);
+				}
+			}
+		}
+		checkFinished();
+		checkBufferSize();
+	}
+
+	/**
+	 * Apply content collected in pending partitions to document and update
+	 * partitioning structure.
+	 * <p>
+	 * This method is also responsible to interpret control characters if enabled
+	 * (see {@link #isHandleControlCharacters()}).
+	 * </p>
+	 *
+	 * @param pendingCopy the pending partitions to process
+	 * @param sizeHint    a hint for expected content length to initialize buffer
+	 *                    size. Does not have to be exact as long as it is not
+	 *                    negative.
+	 */
+	private void applyStreamOutput(List<PendingPartition> pendingCopy, int sizeHint) {
+		// local reference to get consistent parsing without blocking pattern changes
+		final Pattern controlPattern = controlCharacterPattern;
+		// Variables to collect required data to reduce number of document updates. The
+		// partitioning must be updated in smaller iterations as the actual document
+		// content. E.g. pending partitions are distinct on source output stream
+		// resulting in multiple partitions but if all the content is appended to the
+		// document there is only one update required to add the actual content.
+		int nextWriteOffset = outputOffset;
+		final StringBuilder content = new StringBuilder(sizeHint);
+		int replaceLength = 0;
+		// the partition which contains the current output offset
+		IOConsolePartition atOutputPartition = null;
+		// the index of atOutputPartition in the partitions list
+		int atOutputPartitionIndex = -1;
+
+		for (PendingPartition pending : pendingCopy) {
+			// create matcher to find control characters in pending content (if enabled)
+			final Matcher controlCharacterMatcher = controlPattern != null ? controlPattern.matcher(pending.text)
+					: null;
+
+			for (int textOffset = 0; textOffset < pending.text.length();) {
+				// Process pending content in chunks.
+				// Processing is primary split on control characters since there interpretation
+				// is easier if all content changes before are already applied.
+				// Additional processing splits may result while overwriting existing output and
+				// overwrite overlaps partitions.
+				final boolean foundControlCharacter;
+				final int partEnd;
+				if (controlCharacterMatcher != null && controlCharacterMatcher.find()) {
+					if (ASSERT) {
+						// check used pattern. Assert it matches only sequences of same characters.
+						final String match = controlCharacterMatcher.group();
+						Assert.isTrue(match.length() > 0);
+						final char matchedChar = match.charAt(0);
+						for (char c : match.toCharArray()) {
+							Assert.isTrue(c == matchedChar);
+						}
+					}
+					partEnd = controlCharacterMatcher.start();
+					foundControlCharacter = true;
+				} else {
+					partEnd = pending.text.length();
+					foundControlCharacter = false;
+				}
+
+				while (textOffset < partEnd) {
+					// Process content part. This part never contains control characters.
+					// Processing may require multiple iterations if we overwrite existing content
+					// which consists of distinct partitions.
+
+					if (outputOffset >= document.getLength()) {
+						// content is appended to document end (the easy case)
+						if (atOutputPartition == null) {
+							// get the last existing partition to try to expand it
+							atOutputPartitionIndex = partitions.size() - 1;
+							atOutputPartition = getPartitionByIndex(atOutputPartitionIndex);
+							if (ASSERT) {
+								Assert.isTrue(atOutputPartitionIndex == findPartitionCandidate(outputOffset - 1));
+							}
+						}
+						if (atOutputPartition == null || atOutputPartition.getOutputStream() != pending.stream) {
+							// no partitions yet or last partition is incompatible to reuse -> add new one
+							atOutputPartition = new IOConsolePartition(outputOffset, pending.stream);
+							partitions.add(atOutputPartition);
+							atOutputPartitionIndex = partitions.size() - 1;
+						}
+						final int appendedLength = partEnd - textOffset;
+						content.append(pending.text, textOffset, partEnd);
+						atOutputPartition.setLength(atOutputPartition.getLength() + appendedLength);
+						outputOffset += appendedLength;
+						textOffset = partEnd;
+					} else {
+						// content overwrites existing console content (the tricky case)
+						if (atOutputPartition == null) {
+							// find partition where output will overwrite or create one if unpartitioned
+							atOutputPartitionIndex = findPartitionCandidate(outputOffset);
+							atOutputPartition = getPartitionByIndex(atOutputPartitionIndex);
+							if (atOutputPartition == null) {
+								atOutputPartition = new IOConsolePartition(outputOffset, pending.stream);
+								atOutputPartitionIndex++;
+								partitions.add(atOutputPartitionIndex, atOutputPartition);
+							}
+						}
+
+						// we do not overwrite input partitions at the moment so they need to be skipped
+						if (isInputPartition(atOutputPartition)) {
+							outputOffset = atOutputPartition.getOffset() + atOutputPartition.getLength();
+							atOutputPartitionIndex++;
+							atOutputPartition = getPartitionByIndex(atOutputPartitionIndex);
+
+							// apply document changes collected until now
+							applyOutputToDocument(content.toString(), nextWriteOffset, replaceLength);
+							content.setLength(0);
+							replaceLength = 0;
+							nextWriteOffset = outputOffset;
+							continue; // to check if next selected partition is also input or appending now
+						}
+
+						// limit chunks to overwrite only one existing partition at a time
+						final int chunkLength = Math.min(partEnd - textOffset,
+								atOutputPartition.getLength() - (outputOffset - atOutputPartition.getOffset()));
+						Assert.isTrue(chunkLength > 0); // do not remove since it can prevent an infinity loop
+
+						if (atOutputPartition.getOutputStream() != pending.stream) {
+							// new output is from other stream then overwritten output
+
+							// Note: this implementation ignores the possibility to reuse the partition
+							// where the overwrite chunk ends and expand it towards replace begin since this
+							// makes things code much more complex. In some cases this may leads to
+							// consecutive partitions which could be merged to one partition. Merging is not
+							// implemented at the moment.
+
+							// in this part outputPartition is used to partition the new content
+							// and atOutputPartition points to the partition whose content is overwritten
+							// i.e. the new partition grows and the old one must shrink
+							IOConsolePartition outputPartition = null;
+							if (atOutputPartition.getOffset() == outputOffset) {
+								// try to expand the partition before our output offset
+								outputPartition = getPartitionByIndex(atOutputPartitionIndex - 1);
+							} else {
+								// overwrite starts inside existing incompatible partition
+								atOutputPartition = splitPartition(outputOffset);
+								atOutputPartitionIndex++;
+							}
+							if (outputPartition == null || outputPartition.getOutputStream() != pending.stream) {
+								outputPartition = new IOConsolePartition(outputOffset, pending.stream);
+								partitions.add(atOutputPartitionIndex, outputPartition);
+								atOutputPartitionIndex++;
+							}
+
+							// update partitioning of the overwritten chunk
+							outputPartition.setLength(outputPartition.getLength() + chunkLength);
+							atOutputPartition.setOffset(atOutputPartition.getOffset() + chunkLength);
+							atOutputPartition.setLength(atOutputPartition.getLength() - chunkLength);
+
+							if (atOutputPartition.getLength() == 0) {
+								// overwritten partition is now empty and must be be removed
+								partitions.remove(atOutputPartitionIndex);
+								atOutputPartition = getPartitionByIndex(atOutputPartitionIndex);
+							}
+						}
+						content.append(pending.text, textOffset, textOffset + chunkLength);
+						replaceLength += chunkLength;
+						textOffset += chunkLength;
+						outputOffset += chunkLength;
+						if (atOutputPartition != null
+								&& outputOffset == atOutputPartition.getOffset() + atOutputPartition.getLength()) {
+							atOutputPartitionIndex++;
+							atOutputPartition = getPartitionByIndex(atOutputPartitionIndex);
+						}
+					}
+				}
+				// finished processing of regular content before control characters
+				// now interpret control characters if any
+				if (controlCharacterMatcher != null && foundControlCharacter) {
+					// at first update console document since it is easier to interpret control
+					// characters on an up-to-date document and partitioning
+					applyOutputToDocument(content.toString(), nextWriteOffset, replaceLength);
+					content.setLength(0);
+					replaceLength = 0;
+
+					final String controlCharacterMatch = controlCharacterMatcher.group();
+					final char controlCharacter = controlCharacterMatch.charAt(0);
+					switch (controlCharacter) {
+					case '\b':
+						// move virtual output cursor one step back for each \b
+						// but stop at current line start and skip any input partitions
+						final int outputLineStartOffset = findOutputLineStartOffset(outputOffset);
+						int backStepCount = controlCharacterMatch.length();
+						if (partitions.size() == 0) {
+							outputOffset = 0;
+							break;
+						}
+						if (atOutputPartition == null) {
+							atOutputPartitionIndex = partitions.size() - 1;
+							atOutputPartition = getPartitionByIndex(atOutputPartitionIndex);
+						}
+						while (backStepCount > 0 && outputOffset > outputLineStartOffset) {
+							if (atOutputPartition != null && isInputPartition(atOutputPartition)) {
+								do {
+									outputOffset = atOutputPartition.getOffset() - 1;
+									atOutputPartitionIndex--;
+									atOutputPartition = getPartitionByIndex(atOutputPartitionIndex);
+								} while (atOutputPartition != null && isInputPartition(atOutputPartition));
+								backStepCount--;
+							}
+							if (atOutputPartition == null) {
+								outputOffset = 0;
+								break;
+							}
+							final int backSteps = Math.min(outputOffset - atOutputPartition.getOffset(), backStepCount);
+							outputOffset -= backSteps;
+							backStepCount -= backSteps;
+							atOutputPartitionIndex--;
+							atOutputPartition = getPartitionByIndex(atOutputPartitionIndex);
+						}
+						outputOffset = Math.max(outputOffset, outputLineStartOffset);
+						break;
+
+					case '\r':
+						// move virtual output cursor to start of output line
+						outputOffset = findOutputLineStartOffset(outputOffset);
+						atOutputPartitionIndex = -1;
+						atOutputPartition = null;
+						break;
+
+					default:
+						// should never happen as long as the used regex pattern is valid
+						log(IStatus.ERROR, "No implementation to handle control character 0x" //$NON-NLS-1$
+								+ Integer.toHexString(controlCharacter));
+						break;
+					}
+					nextWriteOffset = outputOffset;
+					textOffset = controlCharacterMatcher.end();
+				}
+			}
+		}
+		applyOutputToDocument(content.toString(), nextWriteOffset, replaceLength);
+	}
+
+	/**
+	 * Find offset of line start from given output offset. This method ignores line
+	 * breaks partitioned as input. I.e. it looks at the document as if it only
+	 * consist of the output parts.
+	 *
+	 * @param outOffset offset where output should be written
+	 * @return the start offset of line where output should be written
+	 */
+	private int findOutputLineStartOffset(int outOffset) {
+		int outputLineStartOffset = 0;
+		try {
+			for (int lineIndex = document.getLineOfOffset(outOffset); lineIndex >= 0; lineIndex--) {
+				outputLineStartOffset = document.getLineOffset(lineIndex);
+				final IOConsolePartition lineBreakPartition = getIOPartition(outputLineStartOffset - 1);
+				if (lineBreakPartition == null || !isInputPartition(lineBreakPartition)) {
+					break;
+				}
+			}
+		} catch (BadLocationException e) {
+			log(e);
+			outputLineStartOffset = 0;
+		}
+		if (ASSERT) {
+			Assert.isTrue(outputLineStartOffset <= outOffset);
+		}
+		return outputLineStartOffset;
+	}
+
+	/**
+	 * Apply content from output streams to document. It expects the partitioning
+	 * has or will update partitioning to reflect the change since it prevents this
+	 * partitioner's {@link #documentChanged2(DocumentEvent)} method from changing
+	 * partitioning.
+	 *
+	 * @param content       collected content from output streams
+	 * @param offset        offset where content is inserted
+	 * @param replaceLength length of overwritten old output
+	 */
+	private void applyOutputToDocument(String content, int offset, int replaceLength) {
+		if (content.length() > 0 || replaceLength > 0) {
+			if (ASSERT) {
+				Assert.isTrue(replaceLength <= content.length());
+			}
+			try {
+				updateType = DocUpdateType.OUTPUT;
+				document.replace(offset, replaceLength, content);
+			} catch (BadLocationException e) {
+				log(e);
+			}
+		}
+	}
+
+	/**
+	 * Job to trim the console document, runs in the UI thread.
 	 */
 	private class TrimJob extends WorkbenchJob {
 
 		/**
-		 * trims output up to the line containing the given offset,
-		 * or all output if -1.
+		 * Trims output up to the line containing the given offset, or all output if -1.
 		 */
 		private int truncateOffset;
 
@@ -711,34 +1130,31 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 
 		@Override
 		public IStatus runInUIThread(IProgressMonitor monitor) {
-			if (document == null) {
-				return Status.OK_STATUS;
-			}
+			synchronized (partitions) {
+				if (document == null) {
+					return Status.OK_STATUS;
+				}
 
-			int length = document.getLength();
-			if (truncateOffset < length) {
-				synchronized (overflowLock) {
+				int length = document.getLength();
+				if (truncateOffset < length) {
 					try {
 						if (truncateOffset < 0) {
 							// clear
-							setUpdateInProgress(true);
+							updateType = DocUpdateType.TRIM;
 							document.set(""); //$NON-NLS-1$
-							setUpdateInProgress(false);
 						} else {
 							// overflow
 							int cutoffLine = document.getLineOfOffset(truncateOffset);
 							int cutOffset = document.getLineOffset(cutoffLine);
 
-
 							// set the new length of the first partition
 							IOConsolePartition partition = (IOConsolePartition) getPartition(cutOffset);
 							partition.setLength(partition.getOffset() + partition.getLength() - cutOffset);
 
-							setUpdateInProgress(true);
+							updateType = DocUpdateType.TRIM;
 							document.replace(0, cutOffset, ""); //$NON-NLS-1$
-							setUpdateInProgress(false);
 
-							//remove partitions and reset Partition offsets
+							// remove partitions and reset Partition offsets
 							int index = partitions.indexOf(partition);
 							for (int i = 0; i < index; i++) {
 								partitions.remove(0);
@@ -749,6 +1165,10 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 								p.setOffset(offset);
 								offset += p.getLength();
 							}
+
+							// fix output offset
+							int removedLength = cutOffset;
+							outputOffset = Math.max(outputOffset - removedLength, 0);
 						}
 						if (ASSERT) {
 							checkPartitions();
@@ -764,22 +1184,173 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 	@Override
 	public boolean isReadOnly(int offset) {
 		final IOConsolePartition partition = getIOPartition(offset);
-		return partition != null ? partition.isReadOnly() : false;
+		return partition != null ? partition.isReadOnly() : true;
 	}
 
 	@Override
 	public StyleRange[] getStyleRanges(int offset, int length) {
-		if (!connected) {
-			return new StyleRange[0];
-		}
-		IOConsolePartition[] computedPartitions = computeIOPartitioning(offset, length);
-		StyleRange[] styles = new StyleRange[computedPartitions.length];
+		final IOConsolePartition[] computedPartitions = computeIOPartitioning(offset, length);
+		final StyleRange[] styles = new StyleRange[computedPartitions.length];
 		for (int i = 0; i < computedPartitions.length; i++) {
-			int rangeStart = Math.max(computedPartitions[i].getOffset(), offset);
+			int rangeStart = computedPartitions[i].getOffset();
 			int rangeLength = computedPartitions[i].getLength();
+
+			// snap partitions to requested range
+			final int underflow = offset - rangeStart;
+			if (underflow > 0) {
+				rangeStart += underflow;
+				rangeLength -= underflow;
+			}
+			final int overflow = (rangeStart + rangeLength) - (offset + length);
+			if (overflow > 0) {
+				rangeLength -= overflow;
+			}
+
 			styles[i] = computedPartitions[i].getStyleRange(rangeStart, rangeLength);
 		}
 		return styles;
+	}
+
+	@Override
+	public ITypedRegion[] computeReadOnlyPartitions() {
+		if (document == null) {
+			return new IOConsolePartition[0];
+		}
+		return computeReadOnlyPartitions(0, document.getLength());
+	}
+
+	@Override
+	public ITypedRegion[] computeReadOnlyPartitions(int offset, int length) {
+		return computePartitioning(offset, length, false, true);
+	}
+
+	@Override
+	public ITypedRegion[] computeWritablePartitions() {
+		if (document == null) {
+			return new IOConsolePartition[0];
+		}
+		return computeWritablePartitions(0, document.getLength());
+	}
+
+	@Override
+	public ITypedRegion[] computeWritablePartitions(int offset, int length) {
+		return computePartitioning(offset, length, true, false);
+	}
+
+	@Override
+	public boolean isReadOnly(int offset, int length) {
+		final ITypedRegion[] readOnlyRegions = computeReadOnlyPartitions(offset, length);
+		int o = offset;
+		int end = offset + length;
+		for (ITypedRegion readOnlyRegion : readOnlyRegions) {
+			if (o < readOnlyRegion.getOffset()) {
+				return false;
+			}
+			o += readOnlyRegion.getLength();
+			if (o >= end) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean containsReadOnly(int offset, int length) {
+		return computeReadOnlyPartitions(offset, length).length > 0;
+	}
+
+	@Override
+	public int getPreviousOffsetByState(int offset, boolean searchWritable) {
+		synchronized (partitions) {
+			int partitionIndex = findPartitionCandidate(offset);
+			for (; partitionIndex >= 0; partitionIndex--) {
+				final IOConsolePartition partition = partitions.get(partitionIndex);
+				if (partition.isReadOnly() != searchWritable) {
+					return Math.min(partition.getOffset() + partition.getLength() - 1, offset);
+				}
+			}
+		}
+		return -1;
+	}
+
+	@Override
+	public int getNextOffsetByState(int offset, boolean searchWritable) {
+		synchronized (partitions) {
+			int partitionIndex = findPartitionCandidate(offset);
+			if (partitionIndex >= 0) {
+				for (; partitionIndex < partitions.size(); partitionIndex++) {
+					final IOConsolePartition partition = partitions.get(partitionIndex);
+					if (partition.isReadOnly() != searchWritable) {
+						return Math.max(partition.getOffset(), offset);
+					}
+				}
+			}
+		}
+		return document != null ? document.getLength() : 0;
+	}
+
+	/**
+	 * Check if console currently interprets ASCII control characters.
+	 *
+	 * @return <code>true</code> if console interprets ASCII control characters
+	 * @since 3.9
+	 */
+	public boolean isHandleControlCharacters() {
+		return controlCharacterPattern != null;
+	}
+
+	/**
+	 * Enable or disable interpretation of ASCII control characters like backspace
+	 * (<code>\b</code>).
+	 *
+	 * @param handleControlCharacters interpret control characters if
+	 *                                <code>true</code>
+	 * @since 3.9
+	 */
+	public void setHandleControlCharacters(boolean handleControlCharacters) {
+		if (handleControlCharacters) {
+			controlCharacterPattern = Pattern
+					.compile(carriageReturnAsControlCharacter ? CONTROL_CHARACTERS_WITH_CR_PATTERN_STR
+							: CONTROL_CHARACTERS_PATTERN_STR);
+		} else {
+			controlCharacterPattern = null;
+		}
+	}
+
+	/**
+	 * Check if carriage returns (<code>\r</code>) are interpreted as control
+	 * characters. They are also not interpreted if general control character
+	 * handling is disabled.
+	 *
+	 * @return if <code>true</code> carriage returns are interpreted as control
+	 *         characters.
+	 * @see #isHandleControlCharacters()
+	 * @since 3.9
+	 */
+	public boolean isCarriageReturnAsControlCharacter() {
+		return carriageReturnAsControlCharacter;
+	}
+
+	/**
+	 * If control characters are interpreted by this console carriage returns
+	 * (<code>\r</code>) are either ignored (<code>false</code>) and usually handled
+	 * as line break by connected console document or if <code>true</code>
+	 * interpreted with there control character meaning.
+	 * <p>
+	 * Note: this option has no effect if control character interpretation is
+	 * disabled in general.
+	 * </p>
+	 *
+	 * @param carriageReturnAsControlCharacter set <code>false</code> to exclude
+	 *                                         carriage return from control
+	 *                                         character interpretation
+	 * @see #setHandleControlCharacters(boolean)
+	 * @since 3.9
+	 */
+	public void setCarriageReturnAsControlCharacter(boolean carriageReturnAsControlCharacter) {
+		this.carriageReturnAsControlCharacter = carriageReturnAsControlCharacter;
+		// reset to update control character pattern
+		setHandleControlCharacters(isHandleControlCharacters());
 	}
 
 	/**
@@ -806,27 +1377,33 @@ public class IOConsolePartitioner implements IConsoleDocumentPartitioner, IDocum
 		ConsolePlugin.log(t);
 	}
 
+	private static void log(int status, String msg) {
+		ConsolePlugin.log(new Status(status, ConsolePlugin.getUniqueIdentifier(), msg));
+	}
+
 	/**
 	 * For debug purpose. Check if whole document is partitioned, partitions are
 	 * ordered by offset, every partition has length greater 0 and all writable
 	 * input partitions are listed in {@link #inputPartitions}.
 	 */
 	private void checkPartitions() {
-		if (!connected) {
+		if (document == null) {
 			return;
 		}
-		final List<IOConsolePartition> knownInputPartitions = new ArrayList<>(inputPartitions);
-		int offset = 0;
-		for (IOConsolePartition partition : partitions) {
-			Assert.isTrue(offset == partition.getOffset());
-			Assert.isTrue(partition.getLength() > 0);
-			offset += partition.getLength();
+		synchronized (partitions) {
+			final List<IOConsolePartition> knownInputPartitions = new ArrayList<>(inputPartitions);
+			int offset = 0;
+			for (IOConsolePartition partition : partitions) {
+				Assert.isTrue(offset == partition.getOffset());
+				Assert.isTrue(partition.getLength() > 0);
+				offset += partition.getLength();
 
-			if (isInputPartition(partition) && !partition.isReadOnly()) {
-				Assert.isTrue(knownInputPartitions.remove(partition));
+				if (isInputPartition(partition) && !partition.isReadOnly()) {
+					Assert.isTrue(knownInputPartitions.remove(partition));
+				}
 			}
+			Assert.isTrue(offset == document.getLength());
+			Assert.isTrue(knownInputPartitions.isEmpty());
 		}
-		Assert.isTrue(offset == document.getLength());
-		Assert.isTrue(knownInputPartitions.isEmpty());
 	}
 }
