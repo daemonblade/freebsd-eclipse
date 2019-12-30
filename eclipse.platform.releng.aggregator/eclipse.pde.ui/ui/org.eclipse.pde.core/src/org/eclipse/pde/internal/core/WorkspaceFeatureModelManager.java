@@ -13,19 +13,17 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core;
 
-import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceDelta;
-import org.eclipse.pde.core.IModel;
 import org.eclipse.pde.core.IModelProviderEvent;
 import org.eclipse.pde.internal.core.feature.WorkspaceFeatureModel;
 import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
 import org.eclipse.pde.internal.core.project.PDEProject;
 
-public class WorkspaceFeatureModelManager extends WorkspaceModelManager {
+public class WorkspaceFeatureModelManager extends WorkspaceModelManager<IFeatureModel> {
 
 	@Override
 	protected boolean isInterestingProject(IProject project) {
@@ -36,16 +34,20 @@ public class WorkspaceFeatureModelManager extends WorkspaceModelManager {
 	protected void createModel(IProject project, boolean notify) {
 		IFile featureXml = PDEProject.getFeatureXml(project);
 		if (featureXml.exists()) {
-			IModel model = new WorkspaceFeatureModel(featureXml);
+			IFeatureModel model = new WorkspaceFeatureModel(featureXml);
 			loadModel(model, false);
-			if (fModels == null) {
-				fModels = new LinkedHashMap<>();
-			}
-			fModels.put(project, model);
+			getModelsMap().put(project, model);
 			if (notify) {
 				addChange(model, IModelProviderEvent.MODELS_ADDED);
 			}
 		}
+	}
+
+	@Override
+	protected IFeatureModel removeModel(IProject project) {
+		IFeatureModel model = getModelsMap().remove(project);
+		addChange(model, IModelProviderEvent.MODELS_REMOVED);
+		return model;
 	}
 
 	@Override
@@ -54,14 +56,14 @@ public class WorkspaceFeatureModelManager extends WorkspaceModelManager {
 		IProject project = file.getProject();
 		IFile featureXml = PDEProject.getFeatureXml(project);
 		if (file.equals(featureXml)) {
-			Object model = getModel(project);
+			IFeatureModel model = getModel(project);
 			int kind = delta.getKind();
 			if (kind == IResourceDelta.REMOVED && model != null) {
 				removeModel(project);
 			} else if (kind == IResourceDelta.ADDED || model == null) {
 				createModel(file.getProject(), true);
 			} else if (kind == IResourceDelta.CHANGED && (IResourceDelta.CONTENT & delta.getFlags()) != 0) {
-				loadModel((IFeatureModel) model, true);
+				loadModel(model, true);
 				addChange(model, IModelProviderEvent.MODELS_CHANGED);
 			}
 		}
@@ -81,15 +83,11 @@ public class WorkspaceFeatureModelManager extends WorkspaceModelManager {
 
 	protected IFeatureModel[] getFeatureModels() {
 		initialize();
-		return fModels.values().toArray(new IFeatureModel[fModels.size()]);
-	}
-
-	protected IFeatureModel getFeatureModel(IProject project) {
-		return (IFeatureModel) getModel(project);
+		return getModelsMap().values().toArray(new IFeatureModel[getModelsMap().size()]);
 	}
 
 	public void removeModel(IFeatureModel iFeatureModel) {
-		for (Entry<IProject, IModel> entry : fModels.entrySet()) {
+		for (Entry<IProject, IFeatureModel> entry : getModelsMap().entrySet()) {
 			if (entry.getValue() == iFeatureModel) {
 				this.removeModel(entry.getKey());
 				break;

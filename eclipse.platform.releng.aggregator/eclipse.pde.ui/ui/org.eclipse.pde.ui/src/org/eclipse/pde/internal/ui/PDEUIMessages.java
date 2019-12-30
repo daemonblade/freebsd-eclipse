@@ -1386,7 +1386,6 @@ public class PDEUIMessages extends NLS {
 	public static String BaseFeatureSpecPage_patchGroup_title;
 	public static String BaseFeatureSpecPage_featurePropertiesGroup_title;
 	public static String BaseFeatureSpecPage_browse;
-	public static String BaseExtensionPoint_sections_copyright;
 	public static String BaseExportWizard_confirmReplace_title;
 	public static String BaseExtensionPoint_generating;
 	public static String GeneralInfoSection_IdWarning;
@@ -1723,7 +1722,10 @@ public class PDEUIMessages extends NLS {
 	public static String FeaturesView_ShowCallersContentProviderAction_tooltip;
 	public static String FeaturesView_ShowPluginsAction_description;
 	public static String FeaturesView_ShowPluginsAction_tooltip;
+	public static String FeaturesView_ShowProductsAction_description;
+	public static String FeaturesView_ShowProductsAction_tooltip;
 	public static String FeaturesView_OpenAction_label;
+	public static String FeaturesView_loadingDescription;
 	public static String FeaturesView_searchPlaceholder;
 
 	public static String HistoryAction_description;
@@ -1833,6 +1835,8 @@ public class PDEUIMessages extends NLS {
 	public static String compilers_s_create_docs;
 	public static String compilers_s_doc_folder;
 	public static String compilers_s_open_tags;
+	public static String compilers_p_exec_env_too_low;
+
 	public static String compilers_p_exported_pkgs;
 
 	public static String compilers_f_unresolved_plugins;

@@ -19,17 +19,16 @@ import java.util.function.Consumer;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.pde.core.plugin.IPluginModelBase;
-import org.eclipse.pde.internal.core.FeatureModelManager;
 import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
+import org.eclipse.pde.internal.core.iproduct.IProductModel;
 import org.eclipse.pde.internal.ui.PDELabelProvider;
 import org.eclipse.pde.internal.ui.PDEUIMessages;
 import org.eclipse.pde.internal.ui.editor.feature.FeatureEditor;
 import org.eclipse.pde.internal.ui.editor.plugin.ManifestEditor;
 import org.eclipse.pde.internal.ui.views.dependencies.OpenPluginDependenciesAction;
 import org.eclipse.pde.internal.ui.views.features.action.*;
-import org.eclipse.pde.internal.ui.views.features.support.*;
-import org.eclipse.pde.internal.ui.views.features.viewer.FeatureElementComparer;
-import org.eclipse.pde.internal.ui.views.features.viewer.RootElementsFilteredTree;
+import org.eclipse.pde.internal.ui.views.features.support.FeaturesViewInput;
+import org.eclipse.pde.internal.ui.views.features.viewer.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.widgets.Composite;
@@ -49,13 +48,15 @@ public class FeaturesView extends ViewPart {
 		}
 	};
 
-	private final Collection<ViewerFilterAction> fViewerFilterActions = new ArrayList<>();
-
 	private final Collection<ViewerFilter> fViewerFilters = new ArrayList<>();
 
 	private PatternFilter fPatternFilter;
 
-	private Action fShowPluginsAction;
+	private ViewerFilterAction fFilterFeatureChildAction;
+
+	private ViewerFilterAction fShowPluginsAction;
+
+	private ViewerFilterAction fShowProductsAction;
 
 	private TreeViewer fViewer;
 
@@ -63,27 +64,24 @@ public class FeaturesView extends ViewPart {
 
 	private Action fCopyAction;
 
-	private FeatureIndex fFeatureIndex;
+	private FeaturesViewInput fInput;
 
 	@Override
 	public void createPartControl(Composite parent) {
-		FeatureModelManager featureModelManager = FeatureSupport.getManager();
-		FeatureInput input = new FeatureInput(featureModelManager);
-		fFeatureIndex = new FeatureIndex(featureModelManager);
+		fInput = new FeaturesViewInput();
 
 		FilteredTree filteredTree = createFilteredTree(parent);
 		fViewer = filteredTree.getViewer();
 		fPatternFilter = filteredTree.getPatternFilter();
-		fViewerFilters.add(fPatternFilter);
 
 		fClipboard = new Clipboard(parent.getDisplay());
-		fCopyAction = new FeatureAndPluginCopyAction(fViewer, fClipboard);
+		fCopyAction = new FeatureAndPluginCopyAction(fViewer, fClipboard, fInput);
 
 		registerGlobalActions();
-		contributeToActionBar(featureModelManager);
+		contributeToActionBar();
 		hookContextMenu();
 
-		initialiseViewer(input);
+		initializeViewer();
 	}
 
 	@Override
@@ -94,7 +92,7 @@ public class FeaturesView extends ViewPart {
 	@Override
 	public void dispose() {
 		super.dispose();
-		fFeatureIndex.dispose();
+		fInput.dispose();
 		fClipboard.dispose();
 	}
 
@@ -106,6 +104,7 @@ public class FeaturesView extends ViewPart {
 		patternFilter.setIncludeLeadingWildcard(true);
 
 		TreeViewer viewer = filteredTree.getViewer();
+		viewer.setExpandPreCheckFilters(true);
 		viewer.setComparer(new FeatureElementComparer());
 		viewer.setLabelProvider(new PDELabelProvider());
 
@@ -119,13 +118,27 @@ public class FeaturesView extends ViewPart {
 		return filteredTree;
 	}
 
-	private void initialiseViewer(FeatureInput input) {
+	private void initializeViewer() {
 		resetViewerFilters();
-		fViewer.setInput(input);
+		fViewer.setComparator(new FeatureViewerComparator(fInput));
+		fViewer.setInput(new DeferredFeaturesViewInput(fInput));
 	}
 
 	private void resetViewerFilters() {
+		fViewerFilters.clear();
+
+		fViewerFilters.add(fPatternFilter);
+		addViewerFilter(fViewerFilters, fFilterFeatureChildAction);
+		addViewerFilter(fViewerFilters, fShowPluginsAction);
+		addViewerFilter(fViewerFilters, fShowProductsAction);
+
 		fViewer.setFilters(fViewerFilters.toArray(new ViewerFilter[fViewerFilters.size()]));
+	}
+
+	private void addViewerFilter(Collection<ViewerFilter> viewerFilters, ViewerFilterAction viewerFilterAction) {
+		if (viewerFilterAction.isEnabled() && !viewerFilterAction.isChecked()) {
+			viewerFilters.add(viewerFilterAction.getViewerFilter());
+		}
 	}
 
 	public void toggle(ViewerFilter filter) {
@@ -141,29 +154,20 @@ public class FeaturesView extends ViewPart {
 		return fViewerFilters.contains(filter);
 	}
 
-	private void setContentProvider(ViewerComparator viewerComparator, IContentProvider contentProvider,
-			boolean supportsFilters, boolean supportsPlugins) {
-		fViewer.setComparator(viewerComparator);
+	private void setContentProvider(IContentProvider contentProvider, boolean supportsFeatureChildFilter,
+			boolean supportsPlugins, boolean supportsProducts) {
 		fViewer.setContentProvider(contentProvider);
 
-		setViewerFilterActionsEnabled(supportsFilters);
+		fFilterFeatureChildAction.setEnabled(supportsFeatureChildFilter);
 		fShowPluginsAction.setEnabled(supportsPlugins);
+		fShowProductsAction.setEnabled(supportsProducts);
 
-		if (supportsFilters) {
-			resetViewerFilters();
-		} else {
-			fViewer.setFilters(new ViewerFilter[] { fPatternFilter });
-		}
+		resetViewerFilters();
 	}
 
-	private void setViewerFilterActionsEnabled(boolean supportsFilters) {
-		for (ViewerFilterAction viewerFilterAction : fViewerFilterActions) {
-			viewerFilterAction.setEnabled(supportsFilters);
-		}
-	}
-
-	public void configureContent(Consumer<FeatureInput> configurator) {
-		configurator.accept((FeatureInput) fViewer.getInput());
+	public void configureContent(Consumer<FeaturesViewInput> configurator) {
+		DeferredFeaturesViewInput deferredInput = (DeferredFeaturesViewInput) fViewer.getInput();
+		configurator.accept(deferredInput.getFeaturesViewInput());
 		fViewer.refresh();
 	}
 
@@ -172,31 +176,32 @@ public class FeaturesView extends ViewPart {
 		actionBars.setGlobalActionHandler(ActionFactory.COPY.getId(), fCopyAction);
 	}
 
-	private void contributeToActionBar(FeatureModelManager featureModelManager) {
+	private void contributeToActionBar() {
 		IActionBars actionBars = getViewSite().getActionBars();
 		IToolBarManager toolBarManager = actionBars.getToolBarManager();
 
 		toolBarManager.add(new CollapseAllAction(fViewer));
 		toolBarManager.add(new Separator());
 
-		ContentProviderAction calleesAction = new ShowCalleesContentProviderAction(this, featureModelManager);
+		ContentProviderAction calleesAction = new ShowCalleesContentProviderAction(this, fInput);
 		calleesAction.setChecked(true);
 		toolBarManager.add(calleesAction);
 
-		ContentProviderAction callersAction = new ShowCallersContentProviderAction(this, featureModelManager,
-				fFeatureIndex);
+		ContentProviderAction callersAction = new ShowCallersContentProviderAction(this, fInput);
 		toolBarManager.add(callersAction);
 		toolBarManager.add(new Separator());
 
-		ViewerFilterAction filterFeatureChildAction = new FilterFeatureChildAction(this, fFeatureIndex);
-		toolBarManager.add(filterFeatureChildAction);
+		fFilterFeatureChildAction = new FilterFeatureChildAction(this);
+		fFilterFeatureChildAction.setChecked(true);
+		toolBarManager.add(fFilterFeatureChildAction);
 
-		fShowPluginsAction = new ShowPluginsAction(this);
+		fShowPluginsAction = new ShowPluginsAction(this, fInput);
 		toolBarManager.add(fShowPluginsAction);
+		fShowProductsAction = new ShowProductsAction(this, fInput);
+		toolBarManager.add(fShowProductsAction);
 
 		setContentProvider(calleesAction);
 		setContentProvider(callersAction);
-		registerFilterAction(filterFeatureChildAction);
 
 		actionBars.updateActionBars();
 	}
@@ -222,33 +227,30 @@ public class FeaturesView extends ViewPart {
 		manager.add(fCopyAction);
 	}
 
-	private void registerFilterAction(ViewerFilterAction filterAction) {
-		fViewerFilterActions.add(filterAction);
-		if (!filterAction.isChecked()) {
-			fViewerFilters.add(filterAction.getViewerFilter());
-		}
-	}
-
 	public void setContentProvider(ContentProviderAction contentProviderAction) {
 		if (contentProviderAction.isChecked()) {
-			setContentProvider(contentProviderAction.createViewerComparator(),
-					contentProviderAction.createContentProvider(), contentProviderAction.isSupportsFilters(),
-					contentProviderAction.isSupportsPlugins());
+			setContentProvider(contentProviderAction.createContentProvider(), contentProviderAction.isSupportsFeatureChildFilter(),
+					contentProviderAction.isSupportsPlugins(), contentProviderAction.isSupportsProducts());
 		}
 	}
 
 	private void handleOpen() {
 		for (Object selection : getViewerSelection()) {
-			IFeatureModel featureModel = FeatureSupport.toFeatureModel(selection);
+			IFeatureModel featureModel = fInput.getFeatureSupport().toFeatureModel(selection);
 			if (featureModel != null) {
 				FeatureEditor.openFeatureEditor(featureModel);
 				continue;
 			}
 
-			IPluginModelBase pluginModel = PluginSupport.toPluginModel(selection);
+			IPluginModelBase pluginModel = fInput.getPluginSupport().toPluginModel(selection);
 			if (pluginModel != null) {
 				ManifestEditor.openPluginEditor(pluginModel);
 				continue;
+			}
+
+			IProductModel productModel = fInput.getProductSupport().toProductModel(selection);
+			if (productModel != null) {
+				fInput.getProductSupport().openProductEditor(productModel);
 			}
 		}
 	}
@@ -258,7 +260,7 @@ public class FeaturesView extends ViewPart {
 	}
 
 	private IPluginModelBase getSelectedPluginModel() {
-		return PluginSupport.toSinglePluginModel(fViewer.getStructuredSelection());
+		return fInput.getPluginSupport().toSinglePluginModel(fViewer.getStructuredSelection());
 	}
 
 }

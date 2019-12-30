@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2015 IBM Corporation and others.
+ * Copyright (c) 2006, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -240,7 +240,7 @@ public class EclipseLaunchShortcut extends AbstractLaunchShortcut {
 				wc.setAttribute(IPDELauncherConstants.USE_PRODUCT, true);
 				wc.setAttribute(IPDELauncherConstants.PRODUCT, product);
 			}
-			wc.setAttribute(IPDELauncherConstants.AUTOMATIC_ADD, false);
+			wc.setAttribute(IPDELauncherConstants.AUTOMATIC_ADD, true);
 		} else {
 			String defaultProduct = TargetPlatform.getDefaultProduct();
 			if (defaultProduct != null) {
@@ -284,8 +284,8 @@ public class EclipseLaunchShortcut extends AbstractLaunchShortcut {
 	}
 
 	private void initializePluginsList(ILaunchConfigurationWorkingCopy wc) {
-		StringBuilder wsplugins = new StringBuilder();
-		StringBuilder explugins = new StringBuilder();
+		Set<String> wsplugins = new HashSet<>();
+		Set<String> explugins = new HashSet<>();
 		Set<?> plugins = DependencyManager.getSelfAndDependencies(fModel, null);
 		Iterator<?> iter = plugins.iterator();
 		while (iter.hasNext()) {
@@ -299,15 +299,15 @@ public class EclipseLaunchShortcut extends AbstractLaunchShortcut {
 				appendPlugin(wsplugins, model);
 			}
 		}
-		wc.setAttribute(IPDELauncherConstants.SELECTED_WORKSPACE_PLUGINS, wsplugins.toString());
-		wc.setAttribute(IPDELauncherConstants.SELECTED_TARGET_PLUGINS, explugins.toString());
+		wc.setAttribute(IPDELauncherConstants.SELECTED_WORKSPACE_BUNDLES, wsplugins);
+		wc.setAttribute(IPDELauncherConstants.SELECTED_TARGET_BUNDLES, explugins);
 	}
 
-	private void appendPlugin(StringBuilder buffer, IPluginModelBase model) {
-		if (buffer.length() > 0)
-			buffer.append(',');
-		buffer.append(model.getPluginBase().getId());
-		buffer.append(BundleLauncherHelper.VERSION_SEPARATOR);
-		buffer.append(model.getPluginBase().getVersion());
+	private void appendPlugin(Set<String> plugins, IPluginModelBase model) {
+		final StringBuilder builder = new StringBuilder();
+		builder.append(model.getPluginBase().getId());
+		builder.append(BundleLauncherHelper.VERSION_SEPARATOR);
+		builder.append(model.getPluginBase().getVersion());
+		plugins.add(builder.toString());
 	}
 }

@@ -14,19 +14,16 @@
 package org.eclipse.pde.internal.ui.views.features.action;
 
 import org.eclipse.jface.viewers.IContentProvider;
-import org.eclipse.jface.viewers.ViewerComparator;
-import org.eclipse.pde.internal.core.FeatureModelManager;
 import org.eclipse.pde.internal.ui.PDEPluginImages;
 import org.eclipse.pde.internal.ui.PDEUIMessages;
 import org.eclipse.pde.internal.ui.views.features.FeaturesView;
+import org.eclipse.pde.internal.ui.views.features.support.FeaturesViewInput;
 import org.eclipse.pde.internal.ui.views.features.viewer.FeatureTreeCalleesContentProvider;
-import org.eclipse.pde.internal.ui.views.features.viewer.FeatureViewerComparator;
 
 public class ShowCalleesContentProviderAction extends ContentProviderAction {
 
-	public ShowCalleesContentProviderAction(FeaturesView featuresView,
-			FeatureModelManager featureModelManager) {
-		super(featuresView, featureModelManager);
+	public ShowCalleesContentProviderAction(FeaturesView featuresView, FeaturesViewInput featuresViewInput) {
+		super(featuresView, featuresViewInput);
 
 		setDescription(PDEUIMessages.FeaturesView_ShowCalleesContentProviderAction_description);
 		setToolTipText(PDEUIMessages.FeaturesView_ShowCalleesContentProviderAction_tooltip);
@@ -34,22 +31,22 @@ public class ShowCalleesContentProviderAction extends ContentProviderAction {
 	}
 
 	@Override
-	public ViewerComparator createViewerComparator() {
-		return new FeatureViewerComparator();
-	}
-
-	@Override
 	public IContentProvider createContentProvider() {
-		return new FeatureTreeCalleesContentProvider(fFeatureModelManager);
+		return new FeatureTreeCalleesContentProvider(fFeaturesViewInput);
 	}
 
 	@Override
-	public boolean isSupportsFilters() {
+	public boolean isSupportsFeatureChildFilter() {
 		return true;
 	}
 
 	@Override
 	public boolean isSupportsPlugins() {
+		return true;
+	}
+
+	@Override
+	public boolean isSupportsProducts() {
 		return true;
 	}
 

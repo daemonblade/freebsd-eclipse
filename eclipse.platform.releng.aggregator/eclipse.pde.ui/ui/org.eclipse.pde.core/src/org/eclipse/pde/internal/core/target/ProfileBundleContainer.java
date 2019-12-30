@@ -13,14 +13,20 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
+import static java.util.Arrays.stream;
+import static java.util.stream.Stream.concat;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -125,6 +131,16 @@ public class ProfileBundleContainer extends AbstractBundleContainer {
 
 		BundleInfo[] infos = P2Utils.readBundles(home, configUrl);
 		if (infos == null) {
+			if (configUrl != null) {
+				try {
+					TargetBundle[] osgiBundles = readBundleInfosFromConfigIni(configUrl.toURI());
+					if (osgiBundles != null && osgiBundles.length > 0) {
+						return osgiBundles;
+					}
+				} catch (URISyntaxException ex) {
+					throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, ex.getMessage(), ex));
+				}
+			}
 			TargetBundle[] platformXML = resolvePlatformXML(definition, home, monitor);
 			if (platformXML != null) {
 				return platformXML;
@@ -140,35 +156,59 @@ public class ProfileBundleContainer extends AbstractBundleContainer {
 		if (source == null) {
 			source = new BundleInfo[0];
 		}
-		List<TargetBundle> all = new ArrayList<>();
 		SubMonitor localMonitor = SubMonitor.convert(monitor, Messages.DirectoryBundleContainer_0, infos.length + source.length);
-		// Add executable bundles
-		for (BundleInfo info : infos) {
-			if (monitor.isCanceled()) {
-				return new TargetBundle[0];
-			}
+
+		return concat(stream(infos), stream(source)).parallel().map(info -> {
 			URI location = info.getLocation();
 			try {
-				all.add(new TargetBundle(URIUtil.toFile(location)));
+				if (monitor.isCanceled()) {
+					return null;
+				}
+				return new TargetBundle(URIUtil.toFile(location));
 			} catch (CoreException e) {
-				all.add(new InvalidTargetBundle(new BundleInfo(location), e.getStatus()));
+				return new InvalidTargetBundle(new BundleInfo(location), e.getStatus());
+			} finally {
+				localMonitor.split(1);
 			}
-			localMonitor.split(1);
+		}).filter(Objects::nonNull).toArray(TargetBundle[]::new);
+	}
+
+	private TargetBundle[] readBundleInfosFromConfigIni(URI configArea) {
+		File configIni = new File(configArea);
+		configIni = new File(configIni, CONFIG_INI);
+		if (!configIni.isFile()) {
+			return null;
 		}
-		// Add source bundles
-		for (BundleInfo element : source) {
-			if (monitor.isCanceled()) {
-				return new TargetBundle[0];
-			}
-			URI location = element.getLocation();
-			try {
-				all.add(new TargetBundle(URIUtil.toFile(location)));
-			} catch (CoreException e) {
-				all.add(new InvalidTargetBundle(new BundleInfo(location), e.getStatus()));
-			}
-			localMonitor.split(1);
+		Properties configProps = new Properties();
+		try (FileInputStream fis = new FileInputStream(configIni)) {
+			configProps.load(fis);
+		} catch (IOException e) {
+			PDECore.log(e);
+			return null;
 		}
-		return all.toArray(new TargetBundle[all.size()]);
+		String osgiBundles = configProps.getProperty("osgi.bundles"); //$NON-NLS-1$
+		if (osgiBundles == null || osgiBundles.isEmpty()) {
+			return null;
+		}
+		String osgiFramework = configProps.getProperty("osgi.framework"); //$NON-NLS-1$
+		if (osgiFramework != null && !osgiFramework.isEmpty()) {
+			osgiBundles = osgiFramework + ',' + osgiBundles;
+		}
+		return Arrays.stream(osgiBundles.split(",")) //$NON-NLS-1$
+				.map(entry -> entry.split("@")[0]) //$NON-NLS-1$
+				.map(location -> location.startsWith("reference:") ? location.substring("reference:".length()) //$NON-NLS-1$ //$NON-NLS-2$
+						: location)
+				.map(URI::create) //
+				.filter(URI::isAbsolute) //
+				.map(File::new) //
+				.map(file -> {
+					try {
+						return new TargetBundle(file);
+					} catch (CoreException e) {
+						return new InvalidTargetBundle(new BundleInfo(file.toURI()), e.getStatus());
+					}
+				}).filter(Objects::nonNull) //
+				.toArray(TargetBundle[]::new);
 	}
 
 	@Override

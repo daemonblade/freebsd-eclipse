@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.ListIterator;
 import java.util.Map;
 import org.eclipse.core.resources.IContainer;
@@ -61,7 +60,7 @@ import org.eclipse.pde.internal.core.project.PDEProject;
 import org.eclipse.pde.internal.core.schema.SchemaDescriptor;
 import org.osgi.framework.Constants;
 
-public class WorkspacePluginModelManager extends WorkspaceModelManager {
+public class WorkspacePluginModelManager extends WorkspaceModelManager<IPluginModelBase> {
 
 	@SuppressWarnings("deprecation")
 	private static final Collection<String> RELEVANT_HEADERS = Collections
@@ -151,10 +150,7 @@ public class WorkspacePluginModelManager extends WorkspaceModelManager {
 		}
 
 		if (model != null) {
-			if (fModels == null) {
-				fModels = new LinkedHashMap<>();
-			}
-			fModels.put(project, model);
+			getModelsMap().put(project, model);
 			if (notify) {
 				addChange(model, IModelProviderEvent.MODELS_ADDED);
 			}
@@ -175,13 +171,13 @@ public class WorkspacePluginModelManager extends WorkspaceModelManager {
 			// change in build.properties should trigger a Classpath Update
 			// we therefore fire a notification
 			//TODO this is inefficient.  we could do better.
-			Object model = getModel(project);
+			IPluginModelBase model = getModel(project);
 			if (model != null) {
 				addChange(model, IModelProviderEvent.MODELS_CHANGED);
 			}
 		} else if (file.equals(PDEProject.getLocalizationFile(project))) {
 			// reset bundle resource if localization file has changed.
-			IPluginModelBase model = getPluginModel(project);
+			IPluginModelBase model = getModel(project);
 			if (model != null) {
 				((AbstractNLModel) model).resetNLResourceHelper();
 			}
@@ -285,7 +281,7 @@ public class WorkspacePluginModelManager extends WorkspaceModelManager {
 	 */
 	private void handleExtensionFileDelta(IFile file, IResourceDelta delta) {
 		int kind = delta.getKind();
-		IPluginModelBase model = (IPluginModelBase) getModel(file.getProject());
+		IPluginModelBase model = getModel(file.getProject());
 		if (kind == IResourceDelta.REMOVED) {
 			if (model instanceof IBundlePluginModelBase) {
 				((IBundlePluginModelBase) model).setExtensionsModel(null);
@@ -339,7 +335,7 @@ public class WorkspacePluginModelManager extends WorkspaceModelManager {
 	private void handleBundleManifestDelta(IFile file, IResourceDelta delta) {
 		int kind = delta.getKind();
 		IProject project = file.getProject();
-		Object model = getModel(project);
+		IPluginModelBase model = getModel(project);
 		if (kind == IResourceDelta.REMOVED && model != null) {
 			removeModel(project);
 			// switch to legacy plugin structure, if applicable
@@ -405,18 +401,20 @@ public class WorkspacePluginModelManager extends WorkspaceModelManager {
 	 * if the given project is a plug-in project
 	 */
 	@Override
-	protected Object removeModel(IProject project) {
-		Object model = super.removeModel(project);
+	protected IPluginModelBase removeModel(IProject project) {
+		IPluginModelBase model = getModelsMap().remove(project);
+		addChange(model, IModelProviderEvent.MODELS_REMOVED);
+
 		if (model != null && PDEProject.getOptionsFile(project).exists()) {
 			PDECore.getDefault().getTracingOptionsManager().reset();
 		}
-		if (model instanceof IPluginModelBase) {
+		if (model != null) {
 			// PluginModelManager will remove IPluginModelBase form ModelEntry before triggering IModelChangedEvent
 			// Therefore, if we want to track a removed model we need to create an entry for it in the ExtensionDeltaEvent
 			//			String id = ((IPluginModelBase)model).getPluginBase().getId();
 			//			ModelEntry entry = PluginRegistry.findEntry(id);
 			//			if (entry.getWorkspaceModels().length + entry.getExternalModels().length < 2)
-			addExtensionChange((IPluginModelBase) model, IModelProviderEvent.MODELS_REMOVED);
+			addExtensionChange(model, IModelProviderEvent.MODELS_REMOVED);
 		}
 		return model;
 	}
@@ -431,8 +429,9 @@ public class WorkspacePluginModelManager extends WorkspaceModelManager {
 	 * @return a plug-in model associated with the given project or <code>null</code>
 	 * if no such valid model exists
 	 */
-	protected IPluginModelBase getPluginModel(IProject project) {
-		return (IPluginModelBase) getModel(project);
+	@Override
+	protected IPluginModelBase getModel(IProject project) {
+		return super.getModel(project);
 	}
 
 	/**
@@ -442,7 +441,7 @@ public class WorkspacePluginModelManager extends WorkspaceModelManager {
 	 */
 	protected IPluginModelBase[] getPluginModels() {
 		initialize();
-		return fModels.values().toArray(new IPluginModelBase[fModels.size()]);
+		return getModelsMap().values().toArray(new IPluginModelBase[getModelsMap().size()]);
 	}
 
 	/**
@@ -495,29 +494,6 @@ public class WorkspacePluginModelManager extends WorkspaceModelManager {
 			return true;
 		}
 		return false;
-	}
-
-	/**
-	 * This method is called when workspace models are read and initialized
-	 * from the cache.  No need to read the workspace plug-ins from scratch.
-	 *
-	 * @param models  the workspace plug-in models
-	 */
-	protected void setModels(IPluginModelBase[] models) {
-		fModels = Collections.synchronizedMap(new LinkedHashMap<IProject, IModel>());
-		for (IPluginModelBase model : models) {
-			IProject project = model.getUnderlyingResource().getProject();
-			fModels.put(project, model);
-		}
-		IProject[] projects = PDECore.getWorkspace().getRoot().getProjects();
-		for (int i = 0; i < projects.length; i++) {
-			// if any projects contained Manifest files and were not included in the PDEState,
-			// we should create models for them now
-			if (!fModels.containsKey(projects[i]) && isInterestingProject(projects[i])) {
-				createModel(projects[i], false);
-			}
-		}
-		addListeners();
 	}
 
 	/**

@@ -15,23 +15,20 @@ package org.eclipse.pde.internal.ui.views.features.action;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.IContentProvider;
-import org.eclipse.jface.viewers.ViewerComparator;
-import org.eclipse.pde.internal.core.FeatureModelManager;
 import org.eclipse.pde.internal.ui.views.features.FeaturesView;
+import org.eclipse.pde.internal.ui.views.features.support.FeaturesViewInput;
 
 public abstract class ContentProviderAction extends Action {
 
 	private final FeaturesView fFeaturesView;
 
-	protected final FeatureModelManager fFeatureModelManager;
+	protected final FeaturesViewInput fFeaturesViewInput;
 
-	public ContentProviderAction(FeaturesView featuresView, FeatureModelManager featureModelManager) {
+	public ContentProviderAction(FeaturesView featuresView, FeaturesViewInput featuresViewInput) {
 		super(null, AS_RADIO_BUTTON);
 		fFeaturesView = featuresView;
-		fFeatureModelManager = featureModelManager;
+		fFeaturesViewInput = featuresViewInput;
 	}
-
-	public abstract ViewerComparator createViewerComparator();
 
 	public abstract IContentProvider createContentProvider();
 
@@ -40,8 +37,10 @@ public abstract class ContentProviderAction extends Action {
 		fFeaturesView.setContentProvider(this);
 	}
 
-	public abstract boolean isSupportsFilters();
+	public abstract boolean isSupportsFeatureChildFilter();
 
 	public abstract boolean isSupportsPlugins();
+
+	public abstract boolean isSupportsProducts();
 
 }

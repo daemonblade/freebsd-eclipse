@@ -16,25 +16,25 @@ package org.eclipse.pde.internal.ui.views.features.viewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
-import org.eclipse.pde.internal.ui.views.features.support.FeatureIndex;
-import org.eclipse.pde.internal.ui.views.features.support.FeatureInput;
 
 public class FeatureChildViewerFilter extends ViewerFilter {
 
-	private final FeatureIndex fFeatureIndex;
-
-	public FeatureChildViewerFilter(FeatureIndex featureIndex) {
-		fFeatureIndex = featureIndex;
-	}
-
 	@Override
 	public boolean select(Viewer viewer, Object parentElement, Object element) {
-		if (parentElement instanceof FeatureInput && element instanceof IFeatureModel) {
+		if (parentElement instanceof DeferredFeaturesViewInput && element instanceof IFeatureModel) {
+			DeferredFeaturesViewInput input = (DeferredFeaturesViewInput) parentElement;
 			IFeatureModel featureModel = (IFeatureModel) element;
-			String featureId = featureModel.getFeature().getId();
-			boolean includedInFeature = !fFeatureIndex.getIncludingFeatures(featureId).isEmpty();
+			boolean showProducts = input.getFeaturesViewInput().isIncludeProducts();
 
-			return !includedInFeature;
+			String featureId = featureModel.getFeature().getId();
+			boolean includedInFeature = !input.getFeaturesViewInput().getIncludingFeatures(featureId).isEmpty();
+			boolean includedInProduct = !input.getFeaturesViewInput().getIncludingProducts(featureId).isEmpty();
+
+			if (includedInFeature) {
+				return false;
+			} else if (showProducts && includedInProduct) {
+				return false;
+			}
 		}
 
 		return true;

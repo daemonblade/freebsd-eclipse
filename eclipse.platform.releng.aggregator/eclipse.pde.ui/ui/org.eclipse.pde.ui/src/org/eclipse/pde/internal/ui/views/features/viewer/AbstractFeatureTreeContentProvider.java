@@ -13,31 +13,50 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.views.features.viewer;
 
-import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.pde.internal.core.*;
-import org.eclipse.pde.internal.ui.views.features.support.FeatureInput;
+import org.eclipse.pde.internal.ui.views.features.model.IProductModelListener;
+import org.eclipse.pde.internal.ui.views.features.model.ProductModelManager;
+import org.eclipse.pde.internal.ui.views.features.support.FeaturesViewInput;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.ui.progress.DeferredTreeContentManager;
 
 public abstract class AbstractFeatureTreeContentProvider
-		implements ITreeContentProvider, IFeatureModelListener {
+		implements ITreeContentProvider, IFeatureModelListener, IProductModelListener {
 
 	protected final FeatureModelManager fFeatureModelManager;
 
-	protected FeatureInput fInput;
+	protected final ProductModelManager fProductModelManager;
 
-	private Viewer fViewer;
+	protected DeferredFeaturesViewInput fInput;
 
-	public AbstractFeatureTreeContentProvider(FeatureModelManager featureModelManager) {
-		fFeatureModelManager = featureModelManager;
+	protected DeferredTreeContentManager fDeferredTreeContentManager;
+
+	private TreeViewer fViewer;
+
+	public AbstractFeatureTreeContentProvider(FeaturesViewInput featuresViewInput) {
+		fFeatureModelManager = featuresViewInput.getFeatureSupport().getManager();
 		fFeatureModelManager.addFeatureModelListener(this);
+		fProductModelManager = featuresViewInput.getProductSupport().getManager();
+		fProductModelManager.addProductModelListener(this);
 	}
 
 	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-		fViewer = viewer;
+		fViewer = (TreeViewer) viewer;
+		fDeferredTreeContentManager = new DeferredTreeContentManager(fViewer);
+		fDeferredTreeContentManager.addUpdateCompleteListener(new JobChangeAdapter() {
+			@Override
+			public void done(IJobChangeEvent event) {
+				resetViewerScrollPosition();
+			}
+		});
 
-		if (newInput instanceof FeatureInput) {
-			fInput = (FeatureInput) newInput;
+		if (newInput instanceof DeferredFeaturesViewInput) {
+			fInput = (DeferredFeaturesViewInput) newInput;
 		}
 	}
 
@@ -52,8 +71,20 @@ public abstract class AbstractFeatureTreeContentProvider
 	}
 
 	@Override
+	public Object[] getElements(Object inputElement) {
+		if (inputElement instanceof DeferredFeaturesViewInput) {
+			DeferredFeaturesViewInput deferredFeaturesViewInput = (DeferredFeaturesViewInput) inputElement;
+			return deferredFeaturesViewInput.isInitialized() ? deferredFeaturesViewInput.getChildren(inputElement)
+					: fDeferredTreeContentManager.getChildren(inputElement);
+		}
+
+		return new Object[0];
+	}
+
+	@Override
 	public void dispose() {
 		fFeatureModelManager.removeFeatureModelListener(this);
+		fProductModelManager.removeProductModelListener(this);
 	}
 
 	@Override
@@ -61,14 +92,33 @@ public abstract class AbstractFeatureTreeContentProvider
 		refreshViewer();
 	}
 
+	@Override
+	public void modelsChanged() {
+		refreshViewer();
+	}
+
 	private void refreshViewer() {
-		if (fViewer.getControl().isDisposed()) {
+		runViewerTask(fViewer::refresh);
+	}
+
+	private void resetViewerScrollPosition() {
+		runViewerTask(() -> {
+			Tree tree = fViewer.getTree();
+			if (tree.getItemCount() > 0) {
+				TreeItem firstItem = tree.getItem(0);
+				tree.setTopItem(firstItem);
+			}
+		});
+	}
+
+	private void runViewerTask(Runnable viewerTask) {
+		if (fViewer.getTree().isDisposed()) {
 			return;
 		}
 
-		fViewer.getControl().getDisplay().asyncExec(() -> {
-			if (!fViewer.getControl().isDisposed()) {
-				fViewer.refresh();
+		fViewer.getTree().getDisplay().asyncExec(() -> {
+			if (!fViewer.getTree().isDisposed()) {
+				viewerTask.run();
 			}
 		});
 	}

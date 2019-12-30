@@ -15,38 +15,37 @@ package org.eclipse.pde.internal.ui.views.features.viewer;
 
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.pde.internal.core.ifeature.*;
+import org.eclipse.pde.internal.core.iproduct.*;
 import org.eclipse.pde.internal.ui.views.features.support.FeatureSupport;
+import org.eclipse.pde.internal.ui.views.features.support.FeaturesViewInput;
 
 public class FeatureViewerComparator extends ViewerComparator {
 
+	private final FeatureSupport fFeatureSupport;
+
+	public FeatureViewerComparator(FeaturesViewInput featuresViewInput) {
+		fFeatureSupport = featuresViewInput.getFeatureSupport();
+	}
+
 	@Override
 	public int category(Object element) {
-		if (element instanceof IFeatureChild) {
-			element = FeatureSupport.toFeatureModel(element);
+		if (element instanceof IFeatureChild || element instanceof IProductFeature) {
+			element = fFeatureSupport.toFeatureModel(element);
 			if (element == null) {
-				return 4;
-			}
-		}
-
-		if (element instanceof IFeatureModel) {
-			IFeatureModel featureModel = (IFeatureModel) element;
-			boolean editable = featureModel.isEditable();
-			boolean hasChildren = featureModel.getFeature().getIncludedFeatures().length > 0;
-
-			if (hasChildren && editable) {
-				return 0;
-			} else if (hasChildren) {
-				return 1;
-			} else if (editable) {
-				return 2;
-			} else {
 				return 3;
 			}
-		} else if (element instanceof IFeaturePlugin) {
-			return 5;
 		}
 
-		return 6;
+		if (element instanceof IProductModel) {
+			return 0;
+		} else if (element instanceof IFeatureModel) {
+			IFeatureModel featureModel = (IFeatureModel) element;
+			return (featureModel.isEditable() ? 1 : 2);
+		} else if (element instanceof IFeaturePlugin || element instanceof IProductPlugin) {
+			return 4;
+		}
+
+		return 5;
 	}
 
 }

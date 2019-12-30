@@ -14,22 +14,16 @@
 package org.eclipse.pde.internal.ui.views.features.action;
 
 import org.eclipse.jface.viewers.IContentProvider;
-import org.eclipse.jface.viewers.ViewerComparator;
-import org.eclipse.pde.internal.core.FeatureModelManager;
 import org.eclipse.pde.internal.ui.PDEPluginImages;
 import org.eclipse.pde.internal.ui.PDEUIMessages;
 import org.eclipse.pde.internal.ui.views.features.FeaturesView;
-import org.eclipse.pde.internal.ui.views.features.support.FeatureIndex;
+import org.eclipse.pde.internal.ui.views.features.support.FeaturesViewInput;
 import org.eclipse.pde.internal.ui.views.features.viewer.FeatureTreeCallersContentProvider;
 
 public class ShowCallersContentProviderAction extends ContentProviderAction {
 
-	private final FeatureIndex fFeatureIndex;
-
-	public ShowCallersContentProviderAction(FeaturesView featuresView,
-			FeatureModelManager featureModelManager, FeatureIndex featureIndex) {
-		super(featuresView, featureModelManager);
-		fFeatureIndex = featureIndex;
+	public ShowCallersContentProviderAction(FeaturesView featuresView, FeaturesViewInput fFeaturesViewInput) {
+		super(featuresView, fFeaturesViewInput);
 
 		setDescription(PDEUIMessages.FeaturesView_ShowCallersContentProviderAction_description);
 		setToolTipText(PDEUIMessages.FeaturesView_ShowCallersContentProviderAction_tooltip);
@@ -37,23 +31,23 @@ public class ShowCallersContentProviderAction extends ContentProviderAction {
 	}
 
 	@Override
-	public ViewerComparator createViewerComparator() {
-		return new ViewerComparator();
-	}
-
-	@Override
 	public IContentProvider createContentProvider() {
-		return new FeatureTreeCallersContentProvider(fFeatureModelManager, fFeatureIndex);
+		return new FeatureTreeCallersContentProvider(fFeaturesViewInput);
 	}
 
 	@Override
-	public boolean isSupportsFilters() {
+	public boolean isSupportsFeatureChildFilter() {
 		return false;
 	}
 
 	@Override
 	public boolean isSupportsPlugins() {
 		return false;
+	}
+
+	@Override
+	public boolean isSupportsProducts() {
+		return true;
 	}
 
 }

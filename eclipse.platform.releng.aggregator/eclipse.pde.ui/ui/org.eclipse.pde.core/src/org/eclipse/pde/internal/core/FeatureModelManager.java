@@ -79,6 +79,10 @@ public class FeatureModelManager {
 		}
 	}
 
+	public boolean isInitialized() {
+		return (fActiveModels != null && !fReloadExternalNeeded);
+	}
+
 	private synchronized void init() {
 		if (fActiveModels != null) {
 			if (fReloadExternalNeeded) {
@@ -160,7 +164,7 @@ public class FeatureModelManager {
 
 	public IFeatureModel getFeatureModel(IProject project) {
 		init();
-		return fWorkspaceManager.getFeatureModel(project);
+		return fWorkspaceManager.getModel(project);
 	}
 
 	/**

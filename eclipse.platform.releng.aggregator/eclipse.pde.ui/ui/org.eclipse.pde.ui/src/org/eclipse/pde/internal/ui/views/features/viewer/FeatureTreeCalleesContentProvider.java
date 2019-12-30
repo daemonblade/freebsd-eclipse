@@ -14,27 +14,35 @@
 package org.eclipse.pde.internal.ui.views.features.viewer;
 
 import java.util.*;
-import org.eclipse.pde.internal.core.FeatureModelManager;
 import org.eclipse.pde.internal.core.ifeature.IFeatureChild;
 import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
-import org.eclipse.pde.internal.ui.views.features.support.FeatureInput;
+import org.eclipse.pde.internal.core.iproduct.IProductFeature;
+import org.eclipse.pde.internal.core.iproduct.IProductModel;
+import org.eclipse.pde.internal.ui.views.features.support.FeaturesViewInput;
 
 public class FeatureTreeCalleesContentProvider extends AbstractFeatureTreeContentProvider {
 
-	public FeatureTreeCalleesContentProvider(FeatureModelManager featureModelManager) {
-		super(featureModelManager);
+	public FeatureTreeCalleesContentProvider(FeaturesViewInput featuresViewInput) {
+		super(featuresViewInput);
 	}
 
 	@Override
 	public Object[] getChildren(Object parentElement) {
-		if (parentElement instanceof IFeatureModel) {
+		if (parentElement instanceof IProductModel) {
+			IProductModel productModel = (IProductModel) parentElement;
+
+			Object[] features = productModel.getProduct().getFeatures();
+			Object[] plugins = productModel.getProduct().getPlugins();
+
+			List<Object> all = new ArrayList<>(features.length + plugins.length);
+			all.addAll(Arrays.asList(features));
+			all.addAll(Arrays.asList(plugins));
+
+			return all.toArray();
+		} else if (parentElement instanceof IFeatureModel) {
 			IFeatureModel featureModel = (IFeatureModel) parentElement;
+
 			Object[] features = featureModel.getFeature().getIncludedFeatures();
-
-			if (!fInput.isIncludePlugins()) {
-				return features;
-			}
-
 			Object[] plugins = featureModel.getFeature().getPlugins();
 
 			List<Object> all = new ArrayList<>(features.length + plugins.length);
@@ -46,17 +54,10 @@ public class FeatureTreeCalleesContentProvider extends AbstractFeatureTreeConten
 			IFeatureChild featureChild = (IFeatureChild) parentElement;
 			IFeatureModel featureModel = fFeatureModelManager.findFeatureModel(featureChild.getId());
 			return getChildren(featureModel);
-		}
-
-		return new Object[0];
-	}
-
-	@Override
-	public Object[] getElements(Object inputElement) {
-		if (inputElement instanceof FeatureInput) {
-			FeatureInput input = (FeatureInput) inputElement;
-			FeatureModelManager featureModelManager = input.getFeatureModelManager();
-			return featureModelManager.getWorkspaceModels();
+		} else if (parentElement instanceof IProductFeature) {
+			IProductFeature productFeature = (IProductFeature) parentElement;
+			IFeatureModel featureModel = fFeatureModelManager.findFeatureModel(productFeature.getId());
+			return getChildren(featureModel);
 		}
 
 		return new Object[0];
