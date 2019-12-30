@@ -8201,6 +8201,71 @@ public void test245() {
 		JavacTestOptions.Excuse.EclipseWarningConfiguredAsError);
 }
 //https://bugs.eclipse.org/bugs/show_bug.cgi?id=210213 - variation
+public void test245_ignored() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_ReportUnusedWarningToken, CompilerOptions.ERROR);
+	options.put(CompilerOptions.OPTION_ReportUncheckedTypeOperation, CompilerOptions.IGNORE);
+	options.put(CompilerOptions.OPTION_ReportRawTypeReference, CompilerOptions.IGNORE);
+	options.put(CompilerOptions.OPTION_ReportUnnecessaryTypeCheck, CompilerOptions.WARNING);
+	options.put(CompilerOptions.OPTION_ReportSuppressWarningNotFullyAnalysed, CompilerOptions.IGNORE);
+	enableAllWarningsForIrritants(options, IrritantSet.UNUSED);
+	this.runNegativeTest(
+		true,
+		new String[] {
+				"X.java",
+				"public class X {\n" +
+				"	\n" +
+				"	@SuppressWarnings({\"unchecked\",\"unused\"})\n" +
+				"	void foo() {\n" +
+				"		\n" +
+				"	}\n" +
+				"}	\n",
+		},
+		null, options,
+		"----------\n" + 
+		"1. ERROR in X.java (at line 3)\n" + 
+		"	@SuppressWarnings({\"unchecked\",\"unused\"})\n" + 
+		"	                               ^^^^^^^^\n" + 
+		"Unnecessary @SuppressWarnings(\"unused\")\n" + 
+		"----------\n",
+		JavacTestOptions.Excuse.EclipseWarningConfiguredAsError);
+}
+//https://bugs.eclipse.org/bugs/show_bug.cgi?id=210213 - variation
+public void test245_error() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_ReportUnusedWarningToken, CompilerOptions.ERROR);
+	options.put(CompilerOptions.OPTION_ReportUncheckedTypeOperation, CompilerOptions.IGNORE);
+	options.put(CompilerOptions.OPTION_ReportRawTypeReference, CompilerOptions.IGNORE);
+	options.put(CompilerOptions.OPTION_ReportUnnecessaryTypeCheck, CompilerOptions.WARNING);
+	options.put(CompilerOptions.OPTION_ReportSuppressWarningNotFullyAnalysed, CompilerOptions.ERROR);
+	enableAllWarningsForIrritants(options, IrritantSet.UNUSED);
+	this.runNegativeTest(
+		true,
+		new String[] {
+				"X.java",
+				"public class X {\n" +
+				"	\n" +
+				"	@SuppressWarnings({\"unchecked\",\"unused\"})\n" +
+				"	void foo() {\n" +
+				"		\n" +
+				"	}\n" +
+				"}	\n",
+		},
+		null, options,
+		"----------\n" + 
+		"1. ERROR in X.java (at line 3)\n" + 
+		"	@SuppressWarnings({\"unchecked\",\"unused\"})\n" + 
+		"	                   ^^^^^^^^^^^\n" + 
+		"At least one of the problems in category \'unchecked\' is not analysed due to a compiler option being ignored\n" + 
+		"----------\n" + 
+		"2. ERROR in X.java (at line 3)\n" + 
+		"	@SuppressWarnings({\"unchecked\",\"unused\"})\n" + 
+		"	                               ^^^^^^^^\n" + 
+		"Unnecessary @SuppressWarnings(\"unused\")\n" + 
+		"----------\n",
+		JavacTestOptions.Excuse.EclipseWarningConfiguredAsError);
+}
+//https://bugs.eclipse.org/bugs/show_bug.cgi?id=210213 - variation
 public void test246() {
 	Map options = getCompilerOptions();
 	options.put(CompilerOptions.OPTION_ReportUnusedWarningToken, CompilerOptions.ERROR);
@@ -12202,5 +12267,44 @@ public void testBug546084c() throws Exception {
 			"}\n",
 		};
 	runner.runConformTest();
+}
+public void testBug490698_comment16() {
+	runConformTest(
+		new String[]  {
+			"foo/bar/AnnotationError.java",
+			"package foo.bar;\n" + 
+			"\n" + 
+			"import static java.lang.annotation.ElementType.FIELD;\n" + 
+			"import static java.lang.annotation.RetentionPolicy.RUNTIME;\n" + 
+			"\n" + 
+			"import java.lang.annotation.Retention;\n" + 
+			"import java.lang.annotation.Target;\n" + 
+			"import java.util.function.Predicate;\n" + 
+			"\n" + 
+			"public class AnnotationError<T> {\n" + 
+			"\n" + 
+			"	public enum P {\n" + 
+			"		AAA\n" + 
+			"	}\n" + 
+			"\n" + 
+			"	@Target(FIELD)\n" + 
+			"	@Retention(RUNTIME)\n" + 
+			"	public @interface A {\n" + 
+			"		P value();\n" + 
+			"	}\n" + 
+			"\n" + 
+			"	@Target(FIELD)\n" + 
+			"	@Retention(RUNTIME)\n" + 
+			"	public @interface FF {\n" + 
+			"	}\n" + 
+			"\n" + 
+			"	public static class Bool extends AnnotationError<Boolean> {\n" + 
+			"	}\n" + 
+			"\n" + 
+			"	@A(P.AAA)\n" + 
+			"	@FF\n" + 
+			"	public static final AnnotationError.Bool FOO = new AnnotationError.Bool();\n" + 
+			"}\n"
+		});
 }
 }

@@ -1654,6 +1654,28 @@ public final class JavaCore extends Plugin {
 	 */
 	public static final String COMPILER_PB_UNSTABLE_AUTO_MODULE_NAME = PLUGIN_ID + ".compiler.problem.unstableAutoModuleName"; //$NON-NLS-1$
 
+	/**
+	 * Compiler option ID: Reporting when a {@code @SuppressWarnings} annotation might be unused, but exact information is not available.
+	 * <p>
+	 * This issue occurs when a suppress warnings token (like, e.g., {@code "unused"}) represents a group of problems,
+	 * and some of the problems in that group are currently disabled (configured as "ignore").
+	 * In this situation the compiler may not know if none of the problems in that group could be found within the
+	 * annotated code section.
+	 * <p>
+	 * When enabled, the compiler will issue an error, warning or info when a {@code @SuppressWarnings} annotation
+	 * was not observed to be necessary, but analysis of the suppressed group of problems was incomplete.
+	 *  
+	 * <dl>
+	 * <dt>Option id:</dt><dd><code>"org.eclipse.jdt.core.compiler.problem.suppressWarningsNotFullyAnalysed"</code></dd>
+	 * <dt>Possible values:</dt>
+	 * <dd><code>{ "error", "warning", "info", "ignore" }</code></dd>
+	 * <dt>Default:</dt><dd><code>"info"</code></dd>
+	 * </dl>
+	 * 
+	 * @since 3.20
+	 * @category CompilerOptionID
+	 */
+	public static final String COMPILER_PB_SUPPRESS_WARNINGS_NOT_FULLY_ANALYSED = PLUGIN_ID + ".compiler.problem.suppressWarningsNotFullyAnalysed"; //$NON-NLS-1$
 	
 	/**
 	 * Compiler option ID: Annotation-based Null Analysis.
@@ -3059,12 +3081,18 @@ public final class JavaCore extends Plugin {
 	public static final String VERSION_12 = "12"; //$NON-NLS-1$
 	/**
 	 * Configurable option value: {@value}.
+	 * @since 3.20
+	 * @category OptionValue
+	 */
+	public static final String VERSION_13 = "13"; //$NON-NLS-1$
+	/**
+	 * Configurable option value: {@value}.
 	 * @since 3.4
 	 * @category OptionValue
 	 */
 	public static final String VERSION_CLDC_1_1 = "cldc1.1"; //$NON-NLS-1$
 	private static List<String> allVersions = Collections.unmodifiableList(Arrays.asList(VERSION_CLDC_1_1, VERSION_1_1, VERSION_1_2, VERSION_1_3, VERSION_1_4, VERSION_1_5,
-			VERSION_1_6, VERSION_1_7, VERSION_1_8, VERSION_9, VERSION_10, VERSION_11, VERSION_12));
+			VERSION_1_6, VERSION_1_7, VERSION_1_8, VERSION_9, VERSION_10, VERSION_11, VERSION_12, VERSION_13));
 
 	/**
 	 * Returns all {@link JavaCore}{@code #VERSION_*} levels in the order of their 

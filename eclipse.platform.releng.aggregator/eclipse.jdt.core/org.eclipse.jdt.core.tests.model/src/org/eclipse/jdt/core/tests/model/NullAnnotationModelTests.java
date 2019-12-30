@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 GK Software AG and others.
+ * Copyright (c) 2011, 2019 GK Software AG and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -19,8 +19,10 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 import java.io.ByteArrayInputStream;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Test;
 
@@ -43,13 +45,19 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IAnnotationBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.tests.util.Util;
 import org.osgi.framework.Bundle;
 
@@ -298,7 +306,7 @@ public class NullAnnotationModelTests extends ReconcilerTests {
 					"Buildpath problem: the type invalid, which is configured as a null annotation type, cannot be resolved\n" +
 					"----------\n");
 
-			ASTParser parser = ASTParser.newParser(AST_INTERNAL_JLS11);
+			ASTParser parser = ASTParser.newParser(AST_INTERNAL_LATEST);
 			parser.setProject(p);
 			parser.setResolveBindings(true);
 			parser.setSource(unit);
@@ -361,7 +369,7 @@ public class NullAnnotationModelTests extends ReconcilerTests {
 			assertEquals("Should have no markers", 0, markers.length);
 
 			// Challenge CompilationUnitResolver:
-			ASTParser parser = ASTParser.newParser(AST_INTERNAL_JLS11);
+			ASTParser parser = ASTParser.newParser(AST_INTERNAL_LATEST);
 			parser.setProject(p);
 			parser.setResolveBindings(true);
 			parser.setSource(unit);
@@ -432,7 +440,7 @@ public class NullAnnotationModelTests extends ReconcilerTests {
 			assertEquals("Unexpected marker path", "/P/p1/C1.java", markers[0].getResource().getFullPath().toString());
 
 			// Challenge CompilationUnitResolver:
-			ASTParser parser = ASTParser.newParser(AST_INTERNAL_JLS11);
+			ASTParser parser = ASTParser.newParser(AST_INTERNAL_LATEST);
 			parser.setProject(p);
 			parser.setResolveBindings(true);
 			parser.setSource(unit);
@@ -485,7 +493,7 @@ public class NullAnnotationModelTests extends ReconcilerTests {
 			final ICompilationUnit unit = getCompilationUnit("/P/p1/C1.java").getWorkingCopy(this.wcOwner, null);
 			assertNoProblem(c1SourceString.toCharArray(), unit);
 
-			ASTParser parser = ASTParser.newParser(AST_INTERNAL_JLS11);
+			ASTParser parser = ASTParser.newParser(AST_INTERNAL_LATEST);
 			parser.setProject(p);
 			parser.setResolveBindings(true);
 			parser.setSource(unit);
@@ -1060,5 +1068,30 @@ public class NullAnnotationModelTests extends ReconcilerTests {
     	} finally {
     		deleteProject(project);
     	}
+	}
+	
+	// was: NPE in SourceTypeBinding.getAnnotationTagBits
+	@SuppressWarnings("deprecation")
+	public void testBug551426() throws CoreException, Exception {
+		ASTParser astParser = ASTParser.newParser(AST.JLS8);
+		Map<String, String> options = new HashMap<>();
+		astParser.setResolveBindings(true);
+		astParser.setEnvironment(new String[] {}, new String[] {}, new String[] {}, true);
+		options.put(JavaCore.COMPILER_SOURCE, "1.8");
+		options.put(JavaCore.COMPILER_COMPLIANCE, "1.8");
+		astParser.setCompilerOptions(options);
+		astParser.setUnitName("C.java");
+		String source = 
+				"class C {\n" + 
+				"  public static final Object f = new Object() {};\n" +
+				"}\n";
+		astParser.setSource(source.toCharArray());
+		CompilationUnit astNode = (CompilationUnit) astParser.createAST(null);
+		AbstractTypeDeclaration typeDeclaration = (AbstractTypeDeclaration) astNode.types().get(0);
+		FieldDeclaration fieldDeclaration = (FieldDeclaration) typeDeclaration.bodyDeclarations().get(0);
+		VariableDeclarationFragment fragment = (VariableDeclarationFragment) fieldDeclaration.fragments().get(0);
+		ITypeBinding typeBinding = fragment.getInitializer().resolveTypeBinding();
+		IAnnotationBinding[] annotations = typeBinding.getAnnotations();
+		assertEquals(0, annotations.length);
 	}
 }

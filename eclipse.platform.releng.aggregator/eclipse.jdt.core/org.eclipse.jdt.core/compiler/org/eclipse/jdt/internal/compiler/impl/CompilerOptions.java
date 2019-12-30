@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -205,6 +205,8 @@ public class CompilerOptions {
 	public static final String OPTION_EnablePreviews = "org.eclipse.jdt.core.compiler.problem.enablePreviewFeatures"; //$NON-NLS-1$
 	public static final String OPTION_ReportPreviewFeatures = "org.eclipse.jdt.core.compiler.problem.reportPreviewFeatures"; //$NON-NLS-1$
 
+	public static final String OPTION_ReportSuppressWarningNotFullyAnalysed = "org.eclipse.jdt.core.compiler.problem.suppressWarningsNotFullyAnalysed";  //$NON-NLS-1$
+
 	// Internally used option to allow debug framework compile evaluation snippets in context of modules, see bug 543604
 	public static final String OPTION_JdtDebugCompileMode = "org.eclipse.jdt.internal.debug.compile.mode"; //$NON-NLS-1$
 
@@ -229,6 +231,7 @@ public class CompilerOptions {
 	public static final String VERSION_10 = "10"; //$NON-NLS-1$
 	public static final String VERSION_11 = "11"; //$NON-NLS-1$
 	public static final String VERSION_12 = "12"; //$NON-NLS-1$
+	public static final String VERSION_13 = "13"; //$NON-NLS-1$
 	/*
 	 * Note: Whenever a new version is added, make sure getLatestVersion()
 	 * is updated with it.
@@ -343,6 +346,7 @@ public class CompilerOptions {
 	public static final int APILeak = IrritantSet.GROUP2 | ASTNode.Bit25;
 	public static final int UnstableAutoModuleName = IrritantSet.GROUP2 | ASTNode.Bit26;
 	public static final int PreviewFeatureUsed = IrritantSet.GROUP2 | ASTNode.Bit27;
+	public static final int SuppressWarningsNotAnalysed = IrritantSet.GROUP2 | ASTNode.Bit28;
 
 
 	// Severity level for handlers
@@ -597,7 +601,7 @@ public class CompilerOptions {
 	 * Return the latest Java language version supported by the Eclipse compiler
 	 */
 	public static String getLatestVersion() {
-		return VERSION_12;
+		return VERSION_13;
 	}
 	/**
 	 * Return the most specific option key controlling this irritant. Note that in some case, some irritant is controlled by
@@ -777,6 +781,8 @@ public class CompilerOptions {
 				return OPTION_ReportUnstableAutoModuleName;
 			case PreviewFeatureUsed:
 				return OPTION_ReportPreviewFeatures;
+			case SuppressWarningsNotAnalysed:
+				return OPTION_ReportSuppressWarningNotFullyAnalysed;
 		}
 		return null;
 	}
@@ -1017,7 +1023,8 @@ public class CompilerOptions {
 			OPTION_ReportUnlikelyCollectionMethodArgumentType,
 			OPTION_ReportUnlikelyEqualsArgumentType,
 			OPTION_ReportAPILeak,
-			OPTION_ReportPreviewFeatures
+			OPTION_ReportPreviewFeatures,
+			OPTION_ReportSuppressWarningNotFullyAnalysed
 		};
 		return result;
 	}
@@ -1066,18 +1073,18 @@ public class CompilerOptions {
 				return "dep-ann"; //$NON-NLS-1$
 			case RawTypeReference :
 				return "rawtypes"; //$NON-NLS-1$
-			case UnusedLabel :
-			case UnusedTypeArguments :
+			case DeadCode :
 			case RedundantSuperinterface :
-			case UnusedLocalVariable :
-			case UnusedArgument :
+			case RedundantSpecificationOfTypeArguments :
+			case UnusedDeclaredThrownException :
 			case UnusedExceptionParameter :
 			case UnusedImport :
-			case UnusedPrivateMember :
-			case UnusedDeclaredThrownException :
-			case DeadCode :
+			case UnusedLabel :
+			case UnusedLocalVariable :
 			case UnusedObjectAllocation :
-			case RedundantSpecificationOfTypeArguments :
+			case UnusedArgument : 		// OPTION_ReportUnusedParameter
+			case UnusedPrivateMember :
+			case UnusedTypeArguments : 	// OPTION_ReportUnusedTypeArgumentsForMethodInvocation
 			case UnusedTypeParameter:
 				return "unused"; //$NON-NLS-1$
 			case DiscouragedReference :
@@ -1372,6 +1379,7 @@ public class CompilerOptions {
 		optionsMap.put(OPTION_ReportUnstableAutoModuleName, getSeverityString(UnstableAutoModuleName));
 		optionsMap.put(OPTION_EnablePreviews, this.enablePreviewFeatures ? ENABLED : DISABLED);
 		optionsMap.put(OPTION_ReportPreviewFeatures, getSeverityString(PreviewFeatureUsed));
+		optionsMap.put(OPTION_ReportSuppressWarningNotFullyAnalysed, getSeverityString(SuppressWarningsNotAnalysed));
 		return optionsMap;
 	}
 
@@ -2095,6 +2103,8 @@ public class CompilerOptions {
 		}
 		if ((optionValue = optionsMap.get(OPTION_ReportPreviewFeatures)) != null) 
 			updateSeverity(PreviewFeatureUsed, optionValue);
+		if ((optionValue = optionsMap.get(OPTION_ReportSuppressWarningNotFullyAnalysed)) != null) 
+			updateSeverity(SuppressWarningsNotAnalysed, optionValue);
 
 		if ((optionValue = optionsMap.get(OPTION_JdtDebugCompileMode)) != null) {
 			if (ENABLED.equals(optionValue)) {
@@ -2243,6 +2253,7 @@ public class CompilerOptions {
 		buf.append("\n\t- unlikely argument types for equals(): ").append(getSeverityString(UnlikelyEqualsArgumentType)); //$NON-NLS-1$
 		buf.append("\n\t- API leak: ").append(getSeverityString(APILeak)); //$NON-NLS-1$
 		buf.append("\n\t- unstable auto module name: ").append(getSeverityString(UnstableAutoModuleName)); //$NON-NLS-1$
+		buf.append("\n\t- SuppressWarnings not fully analysed: ").append(getSeverityString(SuppressWarningsNotAnalysed)); //$NON-NLS-1$
 		return buf.toString();
 	}
 	

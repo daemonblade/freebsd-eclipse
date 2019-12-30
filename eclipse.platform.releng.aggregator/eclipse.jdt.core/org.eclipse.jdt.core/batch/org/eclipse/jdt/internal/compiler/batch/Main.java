@@ -2195,6 +2195,16 @@ public void configure(String[] argv) {
 					mode = DEFAULT;
 					continue;
 				}
+				if (currentArg.equals("-13") || currentArg.equals("-13.0")) { //$NON-NLS-1$ //$NON-NLS-2$
+					if (didSpecifyCompliance) {
+						throw new IllegalArgumentException(
+							this.bind("configure.duplicateCompliance", currentArg)); //$NON-NLS-1$
+					}
+					didSpecifyCompliance = true;
+					this.options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_13);
+					mode = DEFAULT;
+					continue;
+				}
 				if (currentArg.equals("-d")) { //$NON-NLS-1$
 					if (this.destinationPath != null) {
 						StringBuffer errorMessage = new StringBuffer();
@@ -2753,6 +2763,8 @@ public void configure(String[] argv) {
 					this.options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_11);
 				} else if (currentArg.equals("12") || currentArg.equals("12.0")) { //$NON-NLS-1$//$NON-NLS-2$
 					this.options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_12);
+				} else if (currentArg.equals("13") || currentArg.equals("13.0")) { //$NON-NLS-1$//$NON-NLS-2$
+					this.options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_13);
 				}
 				else if (currentArg.equals("jsr14")) { //$NON-NLS-1$
 					this.options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_JSR14);
@@ -2792,7 +2804,7 @@ public void configure(String[] argv) {
 				mode = DEFAULT;
 				continue;
 			case INSIDE_RELEASE:
-				// If release is < 9, the following are diasllowed:
+				// If release is < 9, the following are disallowed:
 				// bootclasspath, -Xbootclasspath, -Xbootclasspath/a:, -Xbootclasspath/p:, 
 				// -endorseddirs, -Djava.endorsed.dirs, -extdirs, -Djava.ext.dirs
 
@@ -2844,6 +2856,8 @@ public void configure(String[] argv) {
 					this.options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_11);
 				} else if (currentArg.equals("12") ||  currentArg.equals("12.0")) { //$NON-NLS-1$//$NON-NLS-2$
 					this.options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_12);
+				} else if (currentArg.equals("13") ||  currentArg.equals("13.0")) { //$NON-NLS-1$//$NON-NLS-2$
+					this.options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_13);
 				} else {
 					throw new IllegalArgumentException(this.bind("configure.source", currentArg)); //$NON-NLS-1$
 				}
@@ -4505,14 +4519,18 @@ private void handleErrorOrWarningToken(String token, boolean isEnabling, int sev
 				setSeverity(CompilerOptions.OPTION_ReportUnqualifiedFieldAccess, severity, isEnabling);
 				return;
 			} else if (token.equals("unused")) { //$NON-NLS-1$
-				setSeverity(CompilerOptions.OPTION_ReportUnusedLocal, severity, isEnabling);
-				setSeverity(CompilerOptions.OPTION_ReportUnusedParameter, severity, isEnabling);
-				setSeverity(CompilerOptions.OPTION_ReportUnusedImport, severity, isEnabling);
-				setSeverity(CompilerOptions.OPTION_ReportUnusedPrivateMember, severity, isEnabling);
-				setSeverity(CompilerOptions.OPTION_ReportUnusedDeclaredThrownException, severity, isEnabling);
-				setSeverity(CompilerOptions.OPTION_ReportUnusedLabel, severity, isEnabling);
-				setSeverity(CompilerOptions.OPTION_ReportUnusedTypeArgumentsForMethodInvocation, severity, isEnabling);
+				setSeverity(CompilerOptions.OPTION_ReportDeadCode, severity, isEnabling);
+				setSeverity(CompilerOptions.OPTION_ReportRedundantSuperinterface, severity, isEnabling);
 				setSeverity(CompilerOptions.OPTION_ReportRedundantSpecificationOfTypeArguments, severity, isEnabling);
+				setSeverity(CompilerOptions.OPTION_ReportUnusedDeclaredThrownException, severity, isEnabling);
+				setSeverity(CompilerOptions.OPTION_ReportUnusedExceptionParameter, severity, isEnabling);
+				setSeverity(CompilerOptions.OPTION_ReportUnusedImport, severity, isEnabling);
+				setSeverity(CompilerOptions.OPTION_ReportUnusedLabel, severity, isEnabling);
+				setSeverity(CompilerOptions.OPTION_ReportUnusedLocal, severity, isEnabling);
+				setSeverity(CompilerOptions.OPTION_ReportUnusedObjectAllocation, severity,isEnabling);
+				setSeverity(CompilerOptions.OPTION_ReportUnusedParameter, severity, isEnabling);
+				setSeverity(CompilerOptions.OPTION_ReportUnusedPrivateMember, severity, isEnabling);
+				setSeverity(CompilerOptions.OPTION_ReportUnusedTypeArgumentsForMethodInvocation, severity, isEnabling);
 				setSeverity(CompilerOptions.OPTION_ReportUnusedTypeParameter, severity,isEnabling);
 				return;
 			} else if (token.equals("unusedParam")) { //$NON-NLS-1$

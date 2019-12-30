@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13019,6 +13019,39 @@ public void testBug413193c() {
 		"	ONE, TWO, THREE;\n" + 
 		"	public int foo() {\n" + 
 		"		return 0;\n" + 
+		"	}\n" + 
+		"}");
+}
+/**
+ * https://bugs.eclipse.org/551189 - Consistent ArrayIndexOutOfBounds when saving an incorrect Java file when code clean-up is enabled
+ */
+public void testBug551189() {
+	formatSource(
+		"public class AAA {\n" + 
+		"\n" + 
+		"import java.awt.*;\n" + 
+		"\n" + 
+		"public class BBB {\n" + 
+		"    int a;\n" + 
+		"\n" + 
+		"}}");
+}
+/**
+ * https://bugs.eclipse.org/220713 - [formatter] Formatting of array initializers in method calls
+ */
+public void testBug220713() {
+	this.formatterPrefs.alignment_for_arguments_in_method_invocation = Alignment.M_NEXT_PER_LINE_SPLIT | Alignment.M_INDENT_ON_COLUMN | Alignment.M_FORCE;
+	this.formatterPrefs.alignment_for_expressions_in_array_initializer = Alignment.M_NEXT_SHIFTED_SPLIT | Alignment.M_INDENT_ON_COLUMN | Alignment.M_FORCE;
+	this.formatterPrefs.insert_new_line_before_closing_brace_in_array_initializer = true;
+	formatSource(
+		"public class A {\n" + 
+		"	void f() {\n" + 
+		"		methodWithArrays(	new Object[] {\n" + 
+		"											null,\n" + 
+		"							},\n" + 
+		"							new Object[] {\n" + 
+		"											null,\n" + 
+		"							});\n" + 
 		"	}\n" + 
 		"}");
 }

@@ -12,6 +12,7 @@
  *     Mateusz Matela <mateusz.matela@gmail.com> - [formatter] Formatter does not format Java code correctly, especially when max line width is set - https://bugs.eclipse.org/303519
  *     Mateusz Matela <mateusz.matela@gmail.com> - [formatter] IndexOutOfBoundsException in TokenManager - https://bugs.eclipse.org/462945
  *     Mateusz Matela <mateusz.matela@gmail.com> - [formatter] follow up bug for comments - https://bugs.eclipse.org/458208
+ *     IBM Corporation - DOM AST changes for JEP 354
  *******************************************************************************/
 package org.eclipse.jdt.internal.formatter;
 
@@ -22,6 +23,7 @@ import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameC
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameLBRACE;
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameRBRACE;
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameSEMICOLON;
+import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameTextBlock;
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameelse;
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNamefinally;
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNamewhile;
@@ -69,13 +71,18 @@ import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.SwitchCase;
 import org.eclipse.jdt.core.dom.SwitchExpression;
 import org.eclipse.jdt.core.dom.SwitchStatement;
+import org.eclipse.jdt.core.dom.TextBlock;
 import org.eclipse.jdt.core.dom.ThrowStatement;
 import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
+import org.eclipse.jdt.core.dom.YieldStatement;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions.Alignment;
+import org.eclipse.jdt.internal.formatter.Token.WrapMode;
+import org.eclipse.jdt.internal.formatter.Token.WrapPolicy;
 
 public class LineBreaksPreparator extends ASTVisitor {
 	final private TokenManager tm;
@@ -364,7 +371,8 @@ public class LineBreaksPreparator extends ASTVisitor {
 						this.tm.get(nonBreakStatementEnd + 1).indent();
 						this.tm.firstTokenIn(statement, -1).unindent();
 					}
-				} else if (!(statement instanceof BreakStatement || statement instanceof Block)) {
+				} else if (!(statement instanceof BreakStatement || statement instanceof YieldStatement
+						|| statement instanceof Block)) {
 					indent(statement);
 				}
 				nonBreakStatementEnd = isBreaking ? -1 : this.tm.lastIndexIn(statement, -1);
@@ -377,7 +385,7 @@ public class LineBreaksPreparator extends ASTVisitor {
 		}
 		if (this.options.indent_breaks_compare_to_cases) {
 			for (Statement statement : statements) {
-				if (statement instanceof BreakStatement)
+				if (statement instanceof BreakStatement || statement instanceof YieldStatement)
 					indent(statement);
 			}
 		}
@@ -403,7 +411,7 @@ public class LineBreaksPreparator extends ASTVisitor {
 	private boolean isSwitchBreakingStatement(Statement statement) {
 		return statement instanceof BreakStatement || statement instanceof ReturnStatement
 				|| statement instanceof ContinueStatement || statement instanceof ThrowStatement
-				|| statement instanceof Block;
+				|| statement instanceof YieldStatement || statement instanceof Block;
 	}
 
 	@Override
@@ -646,6 +654,56 @@ public class LineBreaksPreparator extends ASTVisitor {
 		}
 
 		this.declarationModifierVisited = false;
+		return true;
+	}
+
+	@Override
+	public boolean visit(TextBlock node) {
+		int indentOption = this.options.text_block_indentation;
+		if (indentOption == Alignment.M_INDENT_PRESERVE)
+			return true;
+		Token block = this.tm.firstTokenIn(node, TokenNameTextBlock);
+		ArrayList<Token> lines = new ArrayList<>();
+		lines.add(new Token(block.originalStart, block.originalStart + 2, 0)); // first line; """
+		int incidentalWhitespace = Integer.MAX_VALUE;
+		int blankLines = -1; // will go to 0 on line break after first line
+		int i = block.originalStart + 3;
+		while (i <= block.originalEnd) {
+			int lineStart = i;
+			int firstNonBlank = -1;
+			int lastNonBlank = -1;
+			while (i <= block.originalEnd) {
+				char c = this.tm.charAt(i++);
+				if (c == '\r' || c == '\n') {
+					char c2 = this.tm.charAt(i);
+					if ((c2 == '\r' || c2 == '\n') && c2 != c)
+						i++;
+					break;
+				}
+				if (c != ' ' && c != '\t') {
+					if (firstNonBlank == -1)
+						firstNonBlank = i - 1;
+					lastNonBlank = i - 1;
+				}
+			}
+			if (firstNonBlank != -1) {
+				Token line = new Token(lineStart, lastNonBlank, 0);
+				line.putLineBreaksBefore(blankLines + 1);
+				blankLines = 0;
+				lines.add(line);
+				incidentalWhitespace = Math.min(incidentalWhitespace, firstNonBlank - lineStart);
+			} else {
+				blankLines++;
+			}
+		}
+		WrapPolicy wrapPolicy = new WrapPolicy(WrapMode.DISABLED, 0, -1, 0, 0, 1, false, false);
+		for (i = 1; i < lines.size(); i++) {
+			Token t = lines.get(i);
+			Token line = new Token(t, t.originalStart + incidentalWhitespace, t.originalEnd, TokenNameTextBlock);
+			line.setWrapPolicy(wrapPolicy);
+			lines.set(i, line);
+		}
+		block.setInternalStructure(lines);
 		return true;
 	}
 

@@ -14850,7 +14850,7 @@ public void testBug541011g() throws JavaModelException {
  * https://bugs.eclipse.org/543818 - [12] Formatter Support for Switch Expressions
  */
 public void testBug543818a() throws JavaModelException {
-	setComplianceLevel(CompilerOptions.VERSION_12);
+	setComplianceLevel(CompilerOptions.VERSION_13);
 	this.formatterPrefs.insert_space_before_comma_in_switch_case_expressions = true;
 	this.formatterPrefs.insert_space_before_colon_in_case = true;
 	this.formatterPrefs.indent_switchstatements_compare_to_switch = true;
@@ -14861,7 +14861,7 @@ public void testBug543818a() throws JavaModelException {
  * https://bugs.eclipse.org/543818 - [12] Formatter Support for Switch Expressions
  */
 public void testBug543818b() throws JavaModelException {
-	setComplianceLevel(CompilerOptions.VERSION_12);
+	setComplianceLevel(CompilerOptions.VERSION_13);
 	this.formatterPrefs.insert_space_after_comma_in_switch_case_expressions = false;
 	this.formatterPrefs.insert_space_before_closing_paren_in_switch = true;
 	this.formatterPrefs.indent_switchstatements_compare_to_cases = false;
@@ -14872,7 +14872,7 @@ public void testBug543818b() throws JavaModelException {
  * https://bugs.eclipse.org/543818 - [12] Formatter Support for Switch Expressions
  */
 public void testBug543818c() throws JavaModelException {
-	setComplianceLevel(CompilerOptions.VERSION_12);
+	setComplianceLevel(CompilerOptions.VERSION_13);
 	this.formatterPrefs.insert_space_before_arrow_in_switch_case = false;
 	this.formatterPrefs.insert_space_before_opening_paren_in_switch = false;
 	this.formatterPrefs.indent_breaks_compare_to_cases = false;
@@ -14883,7 +14883,7 @@ public void testBug543818c() throws JavaModelException {
  * https://bugs.eclipse.org/543818 - [12] Formatter Support for Switch Expressions
  */
 public void testBug543818d() throws JavaModelException {
-	setComplianceLevel(CompilerOptions.VERSION_12);
+	setComplianceLevel(CompilerOptions.VERSION_13);
 	this.formatterPrefs.insert_space_after_arrow_in_switch_case = false;
 	this.formatterPrefs.insert_space_after_opening_paren_in_switch = true;
 	this.formatterPrefs.insert_space_before_opening_brace_in_block = false;
@@ -14895,7 +14895,7 @@ public void testBug543818d() throws JavaModelException {
  * https://bugs.eclipse.org/543818 - [12] Formatter Support for Switch Expressions
  */
 public void testBug543818e() throws JavaModelException {
-	setComplianceLevel(CompilerOptions.VERSION_12);
+	setComplianceLevel(CompilerOptions.VERSION_13);
 	this.formatterPrefs.insert_space_before_arrow_in_switch_default = false;
 	this.formatterPrefs.insert_space_before_colon_in_default = true;
 	this.formatterPrefs.parenthesis_positions_in_switch_statement = DefaultCodeFormatterConstants.SEPARATE_LINES;
@@ -14906,7 +14906,7 @@ public void testBug543818e() throws JavaModelException {
  * https://bugs.eclipse.org/543818 - [12] Formatter Support for Switch Expressions
  */
 public void testBug543818f() throws JavaModelException {
-	setComplianceLevel(CompilerOptions.VERSION_12);
+	setComplianceLevel(CompilerOptions.VERSION_13);
 	this.formatterPrefs.insert_space_after_arrow_in_switch_default = false;
 	this.formatterPrefs.insert_space_before_opening_brace_in_switch = false;
 	this.formatterPrefs.insert_space_before_opening_brace_in_block = false;
@@ -14917,7 +14917,7 @@ public void testBug543818f() throws JavaModelException {
  * https://bugs.eclipse.org/543818 - [12] Formatter Support for Switch Expressions
  */
 public void testBug543818g() throws JavaModelException {
-	setComplianceLevel(CompilerOptions.VERSION_12);
+	setComplianceLevel(CompilerOptions.VERSION_13);
 	String input = getCompilationUnit("Formatter", "", "test543818", "in.java").getSource();
 	formatSource(input, getCompilationUnit("Formatter", "", "test543818", "G_out.java").getSource());
 }
@@ -15230,7 +15230,7 @@ public void testBug421492d() throws JavaModelException {
  * https://bugs.eclipse.org/390720 - [formatter] Add setting for blank line between case blocks (after break) for switch statement
  */
 public void testBug390720a() throws JavaModelException {
-	setComplianceLevel(CompilerOptions.VERSION_12);
+	setComplianceLevel(CompilerOptions.VERSION_13);
 	this.formatterPrefs.blank_lines_between_statement_groups_in_switch = 2;
 	formatSourceInWorkspace("test390720", "in.java", "A_out.java");
 }
@@ -15238,8 +15238,262 @@ public void testBug390720a() throws JavaModelException {
  * https://bugs.eclipse.org/390720 - [formatter] Add setting for blank line between case blocks (after break) for switch statement
  */
 public void testBug390720b() throws JavaModelException {
-	setComplianceLevel(CompilerOptions.VERSION_12);
+	setComplianceLevel(CompilerOptions.VERSION_13);
 	this.formatterPrefs.blank_lines_between_statement_groups_in_switch = ~0;
 	formatSourceInWorkspace("test390720", "in.java", "B_out.java");
+}
+/**
+ * https://bugs.eclipse.org/549436 - [13] Formatter support for JEP 355 Text Block
+ */
+public void testBug549436a() throws JavaModelException {
+	setComplianceLevel(CompilerOptions.VERSION_13);
+	setPageWidth80();
+	this.formatterPrefs.tab_char = DefaultCodeFormatterOptions.SPACE;
+	this.formatterPrefs.use_tabs_only_for_leading_indentations = false;
+	this.formatterPrefs.indent_empty_lines = false;
+	this.formatterPrefs.text_block_indentation = Alignment.M_INDENT_PRESERVE;
+	this.formatterPrefs.continuation_indentation = 2;
+	formatSourceInWorkspace("test549436", "in.java", "A_out.java");
+}
+/**
+ * https://bugs.eclipse.org/549436 - [13] Formatter support for JEP 355 Text Block
+ */
+public void testBug549436b() throws JavaModelException {
+	setComplianceLevel(CompilerOptions.VERSION_13);
+	setPageWidth80();
+	this.formatterPrefs.tab_char = DefaultCodeFormatterOptions.SPACE;
+	this.formatterPrefs.use_tabs_only_for_leading_indentations = false;
+	this.formatterPrefs.indent_empty_lines = false;
+	this.formatterPrefs.text_block_indentation = Alignment.M_INDENT_BY_ONE;
+	this.formatterPrefs.continuation_indentation = 2;
+	formatSourceInWorkspace("test549436", "in.java", "B_out.java");
+}
+/**
+ * https://bugs.eclipse.org/549436 - [13] Formatter support for JEP 355 Text Block
+ */
+public void testBug549436c() throws JavaModelException {
+	setComplianceLevel(CompilerOptions.VERSION_13);
+	setPageWidth80();
+	this.formatterPrefs.tab_char = DefaultCodeFormatterOptions.SPACE;
+	this.formatterPrefs.use_tabs_only_for_leading_indentations = false;
+	this.formatterPrefs.indent_empty_lines = false;
+	this.formatterPrefs.text_block_indentation = Alignment.M_INDENT_DEFAULT;
+	this.formatterPrefs.continuation_indentation = 2;
+	formatSourceInWorkspace("test549436", "in.java", "C_out.java");
+}
+/**
+ * https://bugs.eclipse.org/549436 - [13] Formatter support for JEP 355 Text Block
+ */
+public void testBug549436d() throws JavaModelException {
+	setComplianceLevel(CompilerOptions.VERSION_13);
+	setPageWidth80();
+	this.formatterPrefs.tab_char = DefaultCodeFormatterOptions.SPACE;
+	this.formatterPrefs.use_tabs_only_for_leading_indentations = false;
+	this.formatterPrefs.indent_empty_lines = false;
+	this.formatterPrefs.text_block_indentation = Alignment.M_INDENT_DEFAULT;
+	this.formatterPrefs.continuation_indentation = 3;
+	formatSourceInWorkspace("test549436", "in.java", "D_out.java");
+}
+/**
+ * https://bugs.eclipse.org/549436 - [13] Formatter support for JEP 355 Text Block
+ */
+public void testBug549436e() throws JavaModelException {
+	setComplianceLevel(CompilerOptions.VERSION_13);
+	setPageWidth80();
+	this.formatterPrefs.tab_char = DefaultCodeFormatterOptions.SPACE;
+	this.formatterPrefs.use_tabs_only_for_leading_indentations = false;
+	this.formatterPrefs.indent_empty_lines = false;
+	this.formatterPrefs.text_block_indentation = Alignment.M_INDENT_ON_COLUMN;
+	this.formatterPrefs.continuation_indentation = 2;
+	formatSourceInWorkspace("test549436", "in.java", "E_out.java");
+}
+/**
+ * https://bugs.eclipse.org/549436 - [13] Formatter support for JEP 355 Text Block
+ */
+public void testBug549436f() throws JavaModelException {
+	setComplianceLevel(CompilerOptions.VERSION_13);
+	setPageWidth80();
+	this.formatterPrefs.tab_char = DefaultCodeFormatterOptions.TAB;
+	this.formatterPrefs.use_tabs_only_for_leading_indentations = false;
+	this.formatterPrefs.indent_empty_lines = false;
+	this.formatterPrefs.text_block_indentation = Alignment.M_INDENT_BY_ONE;
+	this.formatterPrefs.continuation_indentation = 2;
+	formatSourceInWorkspace("test549436", "in.java", "F_out.java");
+}
+/**
+ * https://bugs.eclipse.org/549436 - [13] Formatter support for JEP 355 Text Block
+ */
+public void testBug549436g() throws JavaModelException {
+	setComplianceLevel(CompilerOptions.VERSION_13);
+	setPageWidth80();
+	this.formatterPrefs.tab_char = DefaultCodeFormatterOptions.TAB;
+	this.formatterPrefs.use_tabs_only_for_leading_indentations = false;
+	this.formatterPrefs.indent_empty_lines = true;
+	this.formatterPrefs.text_block_indentation = Alignment.M_INDENT_DEFAULT;
+	this.formatterPrefs.continuation_indentation = 2;
+	formatSourceInWorkspace("test549436", "in.java", "G_out.java");
+}
+/**
+ * https://bugs.eclipse.org/549436 - [13] Formatter support for JEP 355 Text Block
+ */
+public void testBug549436h() throws JavaModelException {
+	setComplianceLevel(CompilerOptions.VERSION_13);
+	setPageWidth80();
+	this.formatterPrefs.tab_char = DefaultCodeFormatterOptions.TAB;
+	this.formatterPrefs.use_tabs_only_for_leading_indentations = true;
+	this.formatterPrefs.indent_empty_lines = false;
+	this.formatterPrefs.text_block_indentation = Alignment.M_INDENT_DEFAULT;
+	this.formatterPrefs.continuation_indentation = 3;
+	formatSourceInWorkspace("test549436", "in.java", "H_out.java");
+}
+/**
+ * https://bugs.eclipse.org/549436 - [13] Formatter support for JEP 355 Text Block
+ */
+public void testBug549436i() throws JavaModelException {
+	setComplianceLevel(CompilerOptions.VERSION_13);
+	setPageWidth80();
+	this.formatterPrefs.tab_char = DefaultCodeFormatterOptions.TAB;
+	this.formatterPrefs.use_tabs_only_for_leading_indentations = true;
+	this.formatterPrefs.indent_empty_lines = true;
+	this.formatterPrefs.text_block_indentation = Alignment.M_INDENT_ON_COLUMN;
+	this.formatterPrefs.continuation_indentation = 2;
+	formatSourceInWorkspace("test549436", "in.java", "I_out.java");
+}
+/**
+ * https://bugs.eclipse.org/549436 - [13] Formatter support for JEP 355 Text Block
+ */
+public void testBug549436j() throws JavaModelException {
+	setComplianceLevel(CompilerOptions.VERSION_13);
+	setPageWidth80();
+	this.formatterPrefs.tab_char = DefaultCodeFormatterOptions.MIXED;
+	this.formatterPrefs.use_tabs_only_for_leading_indentations = false;
+	this.formatterPrefs.indent_empty_lines = false;
+	this.formatterPrefs.text_block_indentation = Alignment.M_INDENT_ON_COLUMN;
+	this.formatterPrefs.continuation_indentation = 2;
+	formatSourceInWorkspace("test549436", "in.java", "J_out.java");
+}
+/**
+ * https://bugs.eclipse.org/549436 - [13] Formatter support for JEP 355 Text Block
+ */
+public void testBug549436k() throws JavaModelException {
+	setComplianceLevel(CompilerOptions.VERSION_13);
+	setPageWidth80();
+	this.formatterPrefs.tab_char = DefaultCodeFormatterOptions.TAB;
+	this.formatterPrefs.use_tabs_only_for_leading_indentations = false;
+	this.formatterPrefs.indent_empty_lines = false;
+	this.formatterPrefs.text_block_indentation = Alignment.M_INDENT_ON_COLUMN;
+	this.formatterPrefs.continuation_indentation = 2;
+	formatSourceInWorkspace("test549436", "in.java", "K_out.java");
+}
+/**
+ * https://bugs.eclipse.org/54627 - [formatter] Blank lines between Javadoc tags
+ */
+public void testBug54627a() throws JavaModelException {
+	this.formatterPrefs.comment_insert_empty_line_between_different_tags = true;
+	String input =
+		"public class Test {\n" + 
+		"	/**\n" + 
+		"	 * Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.\n" + 
+		"	 * @param a Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n" + 
+		"	 * @param b Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.\n" + 
+		"	 * @param c Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n" + 
+		"	 * @throws IOException Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.\n" + 
+		"	 * @throws SQLException Totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.\n" + 
+		"	 * @return Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.\n" + 
+		"	 */\n" + 
+		"	public String f(int a, int b, int c) throws IOException, SQLException {\n" + 
+		"		return \"\";\n" + 
+		"	}\n" + 
+		"}";
+	formatSource(input,
+		"public class Test {\n" + 
+		"	/**\n" + 
+		"	 * Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod\n" + 
+		"	 * tempor incididunt ut labore et dolore magna aliqua. Neque porro quisquam est,\n" + 
+		"	 * qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia\n" + 
+		"	 * non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam\n" + 
+		"	 * quaerat voluptatem.\n" + 
+		"	 * \n" + 
+		"	 * @param a Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris\n" + 
+		"	 *          nisi ut aliquip ex ea commodo consequat.\n" + 
+		"	 * @param b Duis aute irure dolor in reprehenderit in voluptate velit esse\n" + 
+		"	 *          cillum dolore eu fugiat nulla pariatur.\n" + 
+		"	 * @param c Excepteur sint occaecat cupidatat non proident, sunt in culpa qui\n" + 
+		"	 *          officia deserunt mollit anim id est laborum.\n" + 
+		"	 * \n" + 
+		"	 * @throws IOException  Sed ut perspiciatis unde omnis iste natus error sit\n" + 
+		"	 *                      voluptatem accusantium doloremque laudantium.\n" + 
+		"	 * @throws SQLException Totam rem aperiam, eaque ipsa quae ab illo inventore\n" + 
+		"	 *                      veritatis et quasi architecto beatae vitae dicta sunt\n" + 
+		"	 *                      explicabo.\n" + 
+		"	 * \n" + 
+		"	 * @return Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut\n" + 
+		"	 *         fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem\n" + 
+		"	 *         sequi nesciunt.\n" + 
+		"	 */\n" + 
+		"	public String f(int a, int b, int c) throws IOException, SQLException {\n" + 
+		"		return \"\";\n" + 
+		"	}\n" + 
+		"}");
+}
+/**
+ * https://bugs.eclipse.org/54627 - [formatter] Blank lines between Javadoc tags
+ */
+public void testBug54627b() throws JavaModelException {
+	this.formatterPrefs.comment_insert_empty_line_between_different_tags = true;
+	String input =
+		"public class Test {\n" + 
+		"	\n" + 
+		"	/**\n" + 
+		"	 * Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.\n" + 
+		"	 * @param a Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n" + 
+		"	 * @param b Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.\n" + 
+		"	 * @return Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.\n" + 
+		"	 * @@org.example.transaction.interceptor.RuleBasedTransactionAttribute()\n" + 
+		"	 * @@org.example.transaction.interceptor.RollbackRuleAttribute(Exception.class)\n" + 
+		"	 * @@org.example.transaction.interceptor.NoRollbackRuleAttribute(\"ServletException\")\n" + 
+		"	 */\n" + 
+		"	public String f(int a, int b, int c) {\n" + 
+		"		return \"\";\n" + 
+		"	}\n" + 
+		"}";
+	formatSource(input,
+		"public class Test {\n" + 
+		"\n" + 
+		"	/**\n" + 
+		"	 * Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod\n" + 
+		"	 * tempor incididunt ut labore et dolore magna aliqua. Neque porro quisquam est,\n" + 
+		"	 * qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia\n" + 
+		"	 * non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam\n" + 
+		"	 * quaerat voluptatem.\n" + 
+		"	 * \n" + 
+		"	 * @param a Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris\n" + 
+		"	 *          nisi ut aliquip ex ea commodo consequat.\n" + 
+		"	 * @param b Duis aute irure dolor in reprehenderit in voluptate velit esse\n" + 
+		"	 *          cillum dolore eu fugiat nulla pariatur.\n" + 
+		"	 * \n" + 
+		"	 * @return Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut\n" + 
+		"	 *         fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem\n" + 
+		"	 *         sequi nesciunt.\n" + 
+		"	 * \n" + 
+		"	 * @@org.example.transaction.interceptor.RuleBasedTransactionAttribute()\n" + 
+		"	 * @@org.example.transaction.interceptor.RollbackRuleAttribute(Exception.class)\n" + 
+		"	 * @@org.example.transaction.interceptor.NoRollbackRuleAttribute(\"ServletException\")\n" + 
+		"	 */\n" + 
+		"	public String f(int a, int b, int c) {\n" + 
+		"		return \"\";\n" + 
+		"	}\n" + 
+		"}");
+}
+/**
+ * https://bugs.eclipse.org/547261 - [formatter] Separate option for space after not (!) operator 
+ */
+public void testBug547261() throws JavaModelException {
+	this.formatterPrefs.insert_space_after_not_operator = true;
+	String input = "class C {boolean b=!a&&!(c||d)&&(f!=-5);}";
+	formatSource(input,
+		"class C {\n" + 
+		"	boolean b = ! a && ! (c || d) && (f != -5);\n" + 
+		"}");
 }
 }

@@ -436,6 +436,7 @@ public static int getIrritant(int problemID) {
 		case IProblem.RedundantNullCheckAgainstNonNullType:
 		case IProblem.RedundantNullCheckOnField:
 		case IProblem.RedundantNullCheckOnConstNonNullField:
+		case IProblem.ConstNonNullFieldComparisonYieldsFalse:
 		case IProblem.FieldComparisonYieldsFalse:
 			return CompilerOptions.RedundantNullCheck;
 
@@ -545,6 +546,14 @@ public static int getIrritant(int problemID) {
 		case IProblem.JavadocInvalidThrowsClassName:
 		case IProblem.JavadocDuplicateThrowsClassName:
 		case IProblem.JavadocMissingThrowsClassName:
+		case IProblem.JavadocDuplicateProvidesTag:
+		case IProblem.JavadocDuplicateUsesTag:
+		case IProblem.JavadocInvalidUsesClass:
+		case IProblem.JavadocInvalidUsesClassName:
+		case IProblem.JavadocInvalidProvidesClass:
+		case IProblem.JavadocInvalidProvidesClassName:
+		case IProblem.JavadocMissingProvidesClassName:
+		case IProblem.JavadocMissingUsesClassName:
 		case IProblem.JavadocMissingSeeReference:
 		case IProblem.JavadocInvalidValueReference:
 		case IProblem.JavadocUndefinedField:
@@ -588,8 +597,10 @@ public static int getIrritant(int problemID) {
 			return CompilerOptions.InvalidJavadoc;
 
 		case IProblem.JavadocMissingParamTag:
+		case IProblem.JavadocMissingProvidesTag:
 		case IProblem.JavadocMissingReturnTag:
 		case IProblem.JavadocMissingThrowsTag:
+		case IProblem.JavadocMissingUsesTag:
 			return CompilerOptions.MissingJavadocTags;
 
 		case IProblem.JavadocMissing:
@@ -667,6 +678,9 @@ public static int getIrritant(int problemID) {
 			return CompilerOptions.UnstableAutoModuleName;
 		case IProblem.PreviewFeatureUsed:
 			return CompilerOptions.PreviewFeatureUsed;
+
+		case IProblem.ProblemNotAnalysed:
+			return CompilerOptions.SuppressWarningsNotAnalysed;
 }
 	return 0;
 }
@@ -814,6 +828,8 @@ public static int getProblemCategory(int severity, int problemID) {
 				return CategorizedProblem.CAT_MODULE;
 			if ((problemID & IProblem.Compliance) != 0)
 				return CategorizedProblem.CAT_COMPLIANCE;
+			if ((problemID & IProblem.PreviewRelated) != 0)
+				return CategorizedProblem.CAT_PREVIEW_RELATED;
 	}
 	return CategorizedProblem.CAT_INTERNAL;
 }
@@ -829,6 +845,16 @@ public void abortDueToInternalError(String errorMessage, ASTNode location) {
 		ProblemSeverities.Error | ProblemSeverities.Abort | ProblemSeverities.Fatal,
 		location == null ? 0 : location.sourceStart,
 		location == null ? 0 : location.sourceEnd);
+}
+public void abortDueToPreviewEnablingNotAllowed(String sourceLevel, String expectedSourceLevel) {
+	String[] args = new String[] {sourceLevel, expectedSourceLevel};
+	this.handle(
+			IProblem.PreviewFeaturesNotAllowed,
+			args,
+			args,
+			ProblemSeverities.Error | ProblemSeverities.Abort | ProblemSeverities.Fatal,
+			0,
+			0);
 }
 public void abstractMethodCannotBeOverridden(SourceTypeBinding type, MethodBinding concreteMethod) {
 
@@ -1599,7 +1625,10 @@ public int computeSeverity(int problemID){
 
 	switch (problemID) {
 		case IProblem.VarargsConflict :
-			return ProblemSeverities.Warning;
+ 		case IProblem.SwitchExpressionsYieldUnqualifiedMethodWarning:
+ 		case IProblem.SwitchExpressionsYieldRestrictedGeneralWarning:
+ 		case IProblem.SwitchExpressionsYieldTypeDeclarationWarning:
+ 			return ProblemSeverities.Warning;
  		case IProblem.TypeCollidesWithPackage :
 			return ProblemSeverities.Error;
 
@@ -1688,8 +1717,6 @@ public int computeSeverity(int problemID){
 			return ProblemSeverities.Warning;
 		case IProblem.IllegalUseOfUnderscoreAsAnIdentifier:
 			return this.underScoreIsError ? ProblemSeverities.Error : ProblemSeverities.Warning;
-		case IProblem.ProblemNotAnalysed:
-			return ProblemSeverities.Info; // Not configurable
 	}
 	int irritant = getIrritant(problemID);
 	if (irritant != 0) {
@@ -5091,6 +5118,9 @@ private boolean isKeyword(int token) {
 		case TerminalTokens.TokenNamevolatile:
 		case TerminalTokens.TokenNamewhile:
 			return true;
+		case TerminalTokens.TokenNameRestrictedIdentifierYield:
+			// making explicit - yield not a (restricted) keyword but restricted identifier.
+			//$FALL-THROUGH$
 		default:
 			return false;
 	}
@@ -5199,6 +5229,9 @@ public void javadocDuplicatedParamTag(char[] token, int sourceStart, int sourceE
 			sourceEnd);
 	}
 }
+public void javadocDuplicatedProvidesTag(int sourceStart, int sourceEnd){
+	this.handle(IProblem.JavadocDuplicateProvidesTag, NoArgument, NoArgument, sourceStart, sourceEnd);
+}
 public void javadocDuplicatedReturnTag(int sourceStart, int sourceEnd){
 	this.handle(IProblem.JavadocDuplicateReturnTag, NoArgument, NoArgument, sourceStart, sourceEnd);
 }
@@ -5224,6 +5257,11 @@ public void javadocDuplicatedThrowsClassName(TypeReference typeReference, int mo
 			typeReference.sourceStart,
 			typeReference.sourceEnd);
 	}
+}
+public void javadocDuplicatedUsesTag(
+		
+		int sourceStart, int sourceEnd){
+	this.handle(IProblem.JavadocDuplicateUsesTag, NoArgument, NoArgument, sourceStart, sourceEnd);
 }
 public void javadocEmptyReturnTag(int sourceStart, int sourceEnd, int modifiers) {
 	int severity = computeSeverity(IProblem.JavadocEmptyReturnTag);
@@ -5672,6 +5710,24 @@ public void javadocInvalidParamTagName(int sourceStart, int sourceEnd) {
 public void javadocInvalidParamTypeParameter(int sourceStart, int sourceEnd) {
 	this.handle(IProblem.JavadocInvalidParamTagTypeParameter, NoArgument, NoArgument, sourceStart, sourceEnd);
 }
+public void javadocInvalidProvidesClass(int sourceStart, int sourceEnd) {
+	this.handle(IProblem.JavadocInvalidProvidesClass, NoArgument, NoArgument, sourceStart, sourceEnd);
+}
+
+public void javadocInvalidProvidesClassName(TypeReference typeReference, int modifiers) {
+	int severity = computeSeverity(IProblem.JavadocInvalidProvidesClassName);
+	if (severity == ProblemSeverities.Ignore) return;
+	if (javadocVisibility(this.options.reportInvalidJavadocTagsVisibility, modifiers)) {
+		String[] arguments = new String[] {String.valueOf(typeReference.resolvedType.sourceName())};
+		this.handle(
+			IProblem.JavadocInvalidProvidesClassName,
+			arguments,
+			arguments,
+			severity,
+			typeReference.sourceStart,
+			typeReference.sourceEnd);
+	}
+}
 public void javadocInvalidReference(int sourceStart, int sourceEnd) {
 	this.handle(IProblem.JavadocInvalidSeeReference, NoArgument, NoArgument, sourceStart, sourceEnd);
 }
@@ -5750,6 +5806,24 @@ public void javadocInvalidType(ASTNode location, TypeBinding type, int modifiers
 			location.sourceEnd);
 	}
 }
+public void javadocInvalidUsesClass(int sourceStart, int sourceEnd) {
+	this.handle(IProblem.JavadocInvalidUsesClass, NoArgument, NoArgument, sourceStart, sourceEnd);
+}
+
+public void javadocInvalidUsesClassName(TypeReference typeReference, int modifiers) {
+	int severity = computeSeverity(IProblem.JavadocInvalidUsesClassName);
+	if (severity == ProblemSeverities.Ignore) return;
+	if (javadocVisibility(this.options.reportInvalidJavadocTagsVisibility, modifiers)) {
+		String[] arguments = new String[] {String.valueOf(typeReference.resolvedType.sourceName())};
+		this.handle(
+			IProblem.JavadocInvalidUsesClassName,
+			arguments,
+			arguments,
+			severity,
+			typeReference.sourceStart,
+			typeReference.sourceEnd);
+	}
+}
 public void javadocInvalidValueReference(int sourceStart, int sourceEnd, int modifiers) {
 	if (javadocVisibility(this.options.reportInvalidJavadocTagsVisibility, modifiers))
 		this.handle(IProblem.JavadocInvalidValueReference, NoArgument, NoArgument, sourceStart, sourceEnd);
@@ -5778,6 +5852,20 @@ public void javadocMissing(int sourceStart, int sourceEnd, int severity, int mod
 				sourceStart,
 				sourceEnd);
 		}
+	}
+}
+public void javadocModuleMissing(int sourceStart, int sourceEnd, int severity){
+	if (severity == ProblemSeverities.Ignore) return;
+	boolean report = this.options.getSeverity(CompilerOptions.MissingJavadocComments) != ProblemSeverities.Ignore;
+	if (report) {
+			String[] arguments = new String[] { "module" }; //$NON-NLS-1$
+			this.handle(
+				IProblem.JavadocMissing,
+				arguments,
+				arguments,
+				severity,
+				sourceStart,
+				sourceEnd);
 	}
 }
 public void javadocMissingHashCharacter(int sourceStart, int sourceEnd, String ref){
@@ -5810,6 +5898,26 @@ public void javadocMissingParamTag(char[] name, int sourceStart, int sourceEnd, 
 		String[] arguments = new String[] { String.valueOf(name) };
 		this.handle(
 			IProblem.JavadocMissingParamTag,
+			arguments,
+			arguments,
+			severity,
+			sourceStart,
+			sourceEnd);
+	}
+}
+public void javadocMissingProvidesClassName(int sourceStart, int sourceEnd, int modifiers){
+	if (javadocVisibility(this.options.reportInvalidJavadocTagsVisibility, modifiers)) {
+		this.handle(IProblem.JavadocMissingProvidesClassName, NoArgument, NoArgument, sourceStart, sourceEnd);
+	}
+}
+public void javadocMissingProvidesTag(TypeReference typeRef, int sourceStart, int sourceEnd, int modifiers){
+	int severity = computeSeverity(IProblem.JavadocMissingProvidesTag);
+	if (severity == ProblemSeverities.Ignore) return;
+	boolean report = this.options.getSeverity(CompilerOptions.MissingJavadocTags) != ProblemSeverities.Ignore;
+	if (report) {
+		String[] arguments = new String[] { String.valueOf(typeRef.resolvedType.sourceName()) };
+		this.handle(
+			IProblem.JavadocMissingProvidesTag,
 			arguments,
 			arguments,
 			severity,
@@ -5865,6 +5973,27 @@ public void javadocMissingThrowsTag(TypeReference typeRef, int modifiers){
 			severity,
 			typeRef.sourceStart,
 			typeRef.sourceEnd);
+	}
+}
+public void javadocMissingUsesClassName(int sourceStart, int sourceEnd, int modifiers){
+	if (javadocVisibility(this.options.reportInvalidJavadocTagsVisibility, modifiers)) {
+		this.handle(IProblem.JavadocMissingUsesClassName, NoArgument, NoArgument, sourceStart, sourceEnd);
+	}
+}
+
+public void javadocMissingUsesTag(TypeReference typeRef, int sourceStart, int sourceEnd, int modifiers){
+	int severity = computeSeverity(IProblem.JavadocMissingUsesTag);
+	if (severity == ProblemSeverities.Ignore) return;
+	boolean report = this.options.getSeverity(CompilerOptions.MissingJavadocTags) != ProblemSeverities.Ignore;
+	if (report) {
+		String[] arguments = new String[] { String.valueOf(typeRef.resolvedType.sourceName()) };
+		this.handle(
+			IProblem.JavadocMissingUsesTag,
+			arguments,
+			arguments,
+			severity,
+			sourceStart,
+			sourceEnd);
 	}
 }
 public void javadocUndeclaredParamTagName(char[] token, int sourceStart, int sourceEnd, int modifiers) {
@@ -6058,7 +6187,7 @@ public boolean expressionNonNullComparison(Expression expr, boolean checkForNull
 			arguments = new String[] { new String(field.name), 
 									   new String(nonNullName[nonNullName.length-1]) };
 		} else if (field.constant() != Constant.NotAConstant) {
-			problemId = IProblem.RedundantNullCheckOnConstNonNullField;
+			problemId = checkForNull ? IProblem.ConstNonNullFieldComparisonYieldsFalse : IProblem.RedundantNullCheckOnConstNonNullField; 
 			char[][] nonNullName = this.options.nonNullAnnotationName;
 			arguments = new String[] { new String(field.name), 
 									   new String(nonNullName[nonNullName.length-1]) };
@@ -6511,7 +6640,7 @@ public void missingEnumConstantCase(SwitchExpression switchExpression, FieldBind
 }
 private void missingSwitchExpressionEnumConstantCase(CaseStatement defaultCase, FieldBinding enumConstant, ASTNode expression) {
 	this.handle(
-			IProblem.SwitchExpressionMissingEnumConstantCase,
+			IProblem.SwitchExpressionsYieldMissingEnumConstantCase,
 			new String[] {new String(enumConstant.declaringClass.readableName()), new String(enumConstant.name) },
 			new String[] {new String(enumConstant.declaringClass.shortReadableName()), new String(enumConstant.name) },
 			expression.sourceStart,
@@ -6536,7 +6665,7 @@ public void missingDefaultCase(SwitchStatement switchStatement, boolean isEnumSw
 	} else {
 		this.handle(
 				switchStatement instanceof SwitchExpression ?
-						IProblem.SwitchExpressionMissingDefaultCase : IProblem.MissingDefaultCase,
+						IProblem.SwitchExpressionsYieldMissingDefaultCase : IProblem.MissingDefaultCase,
 				NoArgument,
 				NoArgument,
 				switchStatement.expression.sourceStart,
@@ -7904,6 +8033,8 @@ public void scannerError(Parser parser, String errorTokenName) {
 		flag = IProblem.InvalidFloat;
 	else if (errorTokenName.equals(Scanner.UNTERMINATED_STRING))
 		flag = IProblem.UnterminatedString;
+	else if (errorTokenName.equals(Scanner.UNTERMINATED_TEXT_BLOCK))
+		flag = IProblem.UnterminatedTextBlock;
 	else if (errorTokenName.equals(Scanner.UNTERMINATED_COMMENT))
 		flag = IProblem.UnterminatedComment;
 	else if (errorTokenName.equals(Scanner.INVALID_CHAR_IN_STRING))
@@ -8129,6 +8260,8 @@ private String replaceIfSynthetic(String token) {
 		return "."; //$NON-NLS-1$
 	if (token.equals("BeginLambda")) //$NON-NLS-1$
 		return "("; //$NON-NLS-1$
+	if (token.equals("RestrictedIdentifierYield")) //$NON-NLS-1$
+		return "yield"; //$NON-NLS-1$
 	return token;
 }
 public void task(String tag, String message, String priority, int start, int end){
@@ -10968,6 +11101,14 @@ public void invalidPackageReference(int problem, PackageVisibilityStatement ref)
 			ref.pkgRef.sourceStart,
 			ref.pkgRef.sourceEnd);
 }
+public void exportingForeignPackage(PackageVisibilityStatement ref, ModuleBinding enclosingModule) {
+	String[] arguments = new String[] { CharOperation.charToString(ref.pkgName), CharOperation.charToString(enclosingModule.moduleName) };
+	this.handle(IProblem.ExportingForeignPackage,
+			arguments,
+			arguments,
+			ref.pkgRef.sourceStart,
+			ref.pkgRef.sourceEnd);
+}
 public void duplicateModuleReference(int problem, ModuleReference ref) {
 	this.handle(problem, 
 		NoArgument, new String[] { CharOperation.charToString(ref.moduleName) },
@@ -11066,7 +11207,7 @@ public void switchExpressionIncompatibleResultExpressions(SwitchExpression expre
 		return;
 	TypeBinding type = expression.resultExpressions.get(0).resolvedType;
 	this.handle(
-		IProblem.SwitchExpressionsIncompatibleResultExpressionTypes,
+		IProblem.SwitchExpressionsYieldIncompatibleResultExpressionTypes,
 		new String[] {new String(type.readableName())},
 		new String[] {new String(type.shortReadableName())},
 		expression.sourceStart,
@@ -11076,7 +11217,7 @@ public void switchExpressionEmptySwitchBlock(SwitchExpression expression) {
 	if (!this.options.enablePreviewFeatures)
 		return;
 	this.handle(
-		IProblem.SwitchExpressionsEmptySwitchBlock,
+		IProblem.SwitchExpressionsYieldEmptySwitchBlock,
 		NoArgument,
 		NoArgument,
 		expression.sourceStart,
@@ -11086,7 +11227,7 @@ public void switchExpressionNoResultExpressions(SwitchExpression expression) {
 	if (!this.options.enablePreviewFeatures)
 		return;
 	this.handle(
-		IProblem.SwitchExpressionsNoResultExpression,
+		IProblem.SwitchExpressionsYieldNoResultExpression,
 		NoArgument,
 		NoArgument,
 		expression.sourceStart,
@@ -11096,7 +11237,7 @@ public void switchExpressionSwitchLabeledBlockCompletesNormally(Block block) {
 	if (!this.options.enablePreviewFeatures)
 		return;
 	this.handle(
-		IProblem.SwitchExpressionSwitchLabeledBlockCompletesNormally,
+		IProblem.SwitchExpressionaYieldSwitchLabeledBlockCompletesNormally,
 		NoArgument,
 		NoArgument,
 		block.sourceStart,
@@ -11106,7 +11247,7 @@ public void switchExpressionLastStatementCompletesNormally(Statement stmt) {
 	if (!this.options.enablePreviewFeatures)
 		return;
 	this.handle(
-		IProblem.SwitchExpressionSwitchLabeledBlockCompletesNormally,
+		IProblem.SwitchExpressionaYieldSwitchLabeledBlockCompletesNormally,
 		NoArgument,
 		NoArgument,
 		stmt.sourceStart,
@@ -11116,7 +11257,7 @@ public void switchExpressionIllegalLastStatement(Statement stmt) {
 	if (!this.options.enablePreviewFeatures)
 		return;
 	this.handle(
-		IProblem.SwitchExpressionIllegalLastStatement,
+		IProblem.SwitchExpressionsYieldIllegalLastStatement,
 		NoArgument,
 		NoArgument,
 		stmt.sourceStart,
@@ -11126,7 +11267,7 @@ public void switchExpressionTrailingSwitchLabels(Statement stmt) {
 	if (!this.options.enablePreviewFeatures)
 		return;
 	this.handle(
-		IProblem.SwitchExpressionTrailingSwitchLabels,
+		IProblem.SwitchExpressionsYieldTrailingSwitchLabels,
 		NoArgument,
 		NoArgument,
 		stmt.sourceStart,
@@ -11136,17 +11277,83 @@ public void switchExpressionMixedCase(ASTNode statement) {
 	if (!this.options.enablePreviewFeatures)
 		return;
 	this.handle(
-		IProblem.switchMixedCase,
+		IProblem.SwitchPreviewMixedCase,
 		NoArgument,
 		NoArgument,
 		statement.sourceStart,
 		statement.sourceEnd);
 }
-public void switchExpressionBreakMissingValue(ASTNode statement) {
+public void switchExpressionBreakNotAllowed(ASTNode statement) {
 	if (!this.options.enablePreviewFeatures)
 		return;
 	this.handle(
-		IProblem.SwitchExpressionBreakMissingValue,
+		IProblem.SwitchExpressionsYieldBreakNotAllowed,
+		NoArgument,
+		NoArgument,
+		statement.sourceStart,
+		statement.sourceEnd);
+}
+public void switchExpressionsYieldUnqualifiedMethodWarning(ASTNode statement) {
+	this.handle(
+		IProblem.SwitchExpressionsYieldUnqualifiedMethodWarning,
+		NoArgument,
+		NoArgument,
+		statement.sourceStart,
+		statement.sourceEnd);
+}
+public void switchExpressionsYieldUnqualifiedMethodError(ASTNode statement) {
+	if (!this.options.enablePreviewFeatures)
+		return;
+	this.handle(
+		IProblem.SwitchExpressionsYieldUnqualifiedMethodError,
+		NoArgument,
+		NoArgument,
+		statement.sourceStart,
+		statement.sourceEnd);
+}
+public void switchExpressionsYieldOutsideSwitchExpression(ASTNode statement) {
+	if (!this.options.enablePreviewFeatures)
+		return;
+	this.handle(
+		IProblem.SwitchExpressionsYieldOutsideSwitchExpression,
+		NoArgument,
+		NoArgument,
+		statement.sourceStart,
+		statement.sourceEnd);
+}
+public void switchExpressionsYieldRestrictedGeneralWarning(ASTNode statement) {
+	if (!this.options.enablePreviewFeatures)
+		return;
+	this.handle(
+		IProblem.SwitchExpressionsYieldRestrictedGeneralWarning,
+		NoArgument,
+		NoArgument,
+		statement.sourceStart,
+		statement.sourceEnd);
+}
+public void switchExpressionsYieldIllegalStatement(ASTNode statement) {
+	if (!this.options.enablePreviewFeatures)
+		return;
+	this.handle(
+		IProblem.SwitchExpressionsYieldIllegalStatement,
+		NoArgument,
+		NoArgument,
+		statement.sourceStart,
+		statement.sourceEnd);
+}
+public void switchExpressionsYieldTypeDeclarationWarning(ASTNode statement) {
+	this.handle(
+		IProblem.SwitchExpressionsYieldTypeDeclarationWarning,
+		NoArgument,
+		NoArgument,
+		statement.sourceStart,
+		statement.sourceEnd);
+}
+public void switchExpressionsYieldTypeDeclarationError(ASTNode statement) {
+	if (!this.options.enablePreviewFeatures)
+		return;
+	this.handle(
+		IProblem.SwitchExpressionsYieldTypeDeclarationError,
 		NoArgument,
 		NoArgument,
 		statement.sourceStart,
