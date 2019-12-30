@@ -427,9 +427,7 @@ public class CodeTemplateBlock extends OptionsConfigurationBlock {
 
 	protected TemplatePersistenceData[] getTemplateOfCategory(boolean isComment) {
 		ArrayList<TemplatePersistenceData> res=  new ArrayList<>();
-		TemplatePersistenceData[] templates= fTemplateStore.getTemplateData();
-		for (int i= 0; i < templates.length; i++) {
-			TemplatePersistenceData curr= templates[i];
+		for (TemplatePersistenceData curr : fTemplateStore.getTemplateData()) {
 			if (isComment == curr.getTemplate().getName().endsWith(CodeTemplateContextType.COMMENT_SUFFIX)) {
 				res.add(curr);
 			}
@@ -457,14 +455,21 @@ public class CodeTemplateBlock extends OptionsConfigurationBlock {
 	}
 
 	protected void doButtonPressed(int buttonIndex, List<Object> selected) {
-		if (buttonIndex == IDX_EDIT) {
+		switch (buttonIndex) {
+		case IDX_EDIT:
 			edit((TemplatePersistenceData) selected.get(0));
-		} else if (buttonIndex == IDX_EXPORT) {
+			break;
+		case IDX_EXPORT:
 			export(selected);
-		} else if (buttonIndex == IDX_EXPORTALL) {
+			break;
+		case IDX_EXPORTALL:
 			exportAll();
-		} else if (buttonIndex == IDX_IMPORT) {
+			break;
+		case IDX_IMPORT:
 			import_();
+			break;
+		default:
+			break;
 		}
 	}
 
@@ -494,9 +499,8 @@ public class CodeTemplateBlock extends OptionsConfigurationBlock {
 			if (file.exists()) {
 				InputStream input= new BufferedInputStream(new FileInputStream(file));
 				try {
-					TemplatePersistenceData[] datas= reader.read(input, null);
-					for (int i= 0; i < datas.length; i++) {
-						updateTemplate(datas[i]);
+					for (TemplatePersistenceData data : reader.read(input, null)) {
+						updateTemplate(data);
 					}
 				} finally {
 					try {
@@ -518,11 +522,10 @@ public class CodeTemplateBlock extends OptionsConfigurationBlock {
 	}
 
 	private void updateTemplate(TemplatePersistenceData data) {
-		TemplatePersistenceData[] datas= fTemplateStore.getTemplateData();
-		for (int i= 0; i < datas.length; i++) {
-			String id= datas[i].getId();
+		for (TemplatePersistenceData d : fTemplateStore.getTemplateData()) {
+			String id= d.getId();
 			if (id != null && id.equals(data.getId())) {
-				datas[i].setTemplate(data.getTemplate());
+				d.setTemplate(data.getTemplate());
 				break;
 			}
 		}
@@ -617,9 +620,8 @@ public class CodeTemplateBlock extends OptionsConfigurationBlock {
 			return false;
 
 		if (fProject != null) {
-			TemplatePersistenceData[] templateData= fTemplateStore.getTemplateData();
-			for (int i= 0; i < templateData.length; i++) {
-				fTemplateStore.setProjectSpecific(templateData[i].getId(), enabled);
+			for (TemplatePersistenceData td : fTemplateStore.getTemplateData()) {
+				fTemplateStore.setProjectSpecific(td.getId(), enabled);
 			}
 		}
 		try {

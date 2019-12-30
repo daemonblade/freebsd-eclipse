@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- *
+ * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -605,6 +605,41 @@ public class EditorUtility {
 	}
 
 	/**
+	 * Returns the Java project for a given text editor or <code>null</code> if no corresponding
+	 * Java project exists.
+	 * 
+	 * @param editor the text editor
+	 *
+	 * @return the corresponding Java project
+	 *
+	 * @since 3.19
+	 */
+	public static IJavaProject getJavaProject(ITextEditor editor) {
+		if (editor == null)
+			return null;
+
+		IJavaElement element= null;
+		IEditorInput input= editor.getEditorInput();
+		IDocumentProvider provider= editor.getDocumentProvider();
+		if (provider instanceof ICompilationUnitDocumentProvider) {
+			ICompilationUnitDocumentProvider cudp= (ICompilationUnitDocumentProvider) provider;
+			element= cudp.getWorkingCopy(input);
+		} else if (input instanceof IClassFileEditorInput) {
+			IClassFileEditorInput cfei= (IClassFileEditorInput) input;
+			element= cfei.getClassFile();
+		}
+
+		if (element == null) {
+			if (input != null) {
+				return EditorUtility.getJavaProject(input);
+			}
+			return null;
+		}
+
+		return element.getJavaProject();
+	}
+
+	/**
 	 * Returns an array of all editors that have an unsaved content. If the identical content is
 	 * presented in more than one editor, only one of those editor parts is part of the result.
 	 * @param skipNonResourceEditors if <code>true</code>, editors whose inputs do not adapt to {@link IResource}
@@ -617,13 +652,9 @@ public class EditorUtility {
 		Set<IEditorInput> inputs= new HashSet<>();
 		List<IEditorPart> result= new ArrayList<>(0);
 		IWorkbench workbench= PlatformUI.getWorkbench();
-		IWorkbenchWindow[] windows= workbench.getWorkbenchWindows();
-		for (int i= 0; i < windows.length; i++) {
-			IWorkbenchPage[] pages= windows[i].getPages();
-			for (int x= 0; x < pages.length; x++) {
-				IEditorPart[] editors= pages[x].getDirtyEditors();
-				for (int z= 0; z < editors.length; z++) {
-					IEditorPart ep= editors[z];
+		for (IWorkbenchWindow window : workbench.getWorkbenchWindows()) {
+			for (IWorkbenchPage page : window.getPages()) {
+				for (IEditorPart ep : page.getDirtyEditors()) {
 					IEditorInput input= ep.getEditorInput();
 					if (inputs.add(input)) {
 						if (!skipNonResourceEditors || isResourceEditorInput(input)) {
@@ -639,8 +670,8 @@ public class EditorUtility {
 	private static boolean isResourceEditorInput(IEditorInput input) {
 		if (input instanceof MultiEditorInput) {
 			IEditorInput[] inputs= ((MultiEditorInput) input).getInput();
-			for (int i= 0; i < inputs.length; i++) {
-				if (inputs[i].getAdapter(IResource.class) != null) {
+			for (IEditorInput i : inputs) {
+				if (i.getAdapter(IResource.class) != null) {
 					return true;
 				}
 			}
@@ -679,13 +710,9 @@ public class EditorUtility {
 		Set<IEditorInput> inputs= new HashSet<>();
 		List<IEditorPart> result= new ArrayList<>(0);
 		IWorkbench workbench= PlatformUI.getWorkbench();
-		IWorkbenchWindow[] windows= workbench.getWorkbenchWindows();
-		for (int i= 0; i < windows.length; i++) {
-			IWorkbenchPage[] pages= windows[i].getPages();
-			for (int x= 0; x < pages.length; x++) {
-				IEditorPart[] editors= pages[x].getDirtyEditors();
-				for (int z= 0; z < editors.length; z++) {
-					IEditorPart ep= editors[z];
+		for (IWorkbenchWindow window : workbench.getWorkbenchWindows()) {
+			for (IWorkbenchPage page : window.getPages()) {
+				for (IEditorPart ep : page.getDirtyEditors()) {
 					IEditorInput input= ep.getEditorInput();
 					if (!mustSaveDirtyEditor(ep, input, saveUnknownEditors))
 						continue;
@@ -814,8 +841,7 @@ public class EditorUtility {
 					//     forAll r1,r2 element differences: r1.rightStart()<r2.rightStart() -> r1.rightEnd()<r2.rightStart
 
 					ArrayList<IRegion> regions= new ArrayList<>();
-					for (int i= 0; i < differences.length; i++) {
-						RangeDifference curr= differences[i];
+					for (RangeDifference curr : differences) {
 						if (curr.kind() == RangeDifference.CHANGE && curr.rightLength() > 0) {
 							int startLine= curr.rightStart();
 							int endLine= curr.rightEnd() - 1;

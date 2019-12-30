@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -206,6 +206,11 @@ public class SemanticHighlightings {
 	 * A named preference part that controls the highlighting of 'var' keywords.
 	 */
 	public static final String VAR_KEYWORD= SemanticHighlightingsCore.VAR_KEYWORD;
+
+	/**
+	 * A named preference part that controls the highlighting of 'yield' keywords.
+	 */
+	public static final String YIELD_KEYWORD= SemanticHighlightingsCore.YIELD_KEYWORD;
 
 	/**
 	 * Semantic highlightings
@@ -1968,6 +1973,47 @@ public class SemanticHighlightings {
 	}
 
 	/**
+	 * Semantic highlighting for 'yield' keyword.
+	 */
+	static final class YieldKeywordHighlighting extends SemanticHighlighting {
+
+		@Override
+		public String getPreferenceKey() {
+			return YIELD_KEYWORD;
+		}
+
+		@Override
+		public RGB getDefaultDefaultTextColor() {
+			return new RGB(127, 0, 85);
+		}
+
+		@Override
+		public boolean isBoldByDefault() {
+			return true;
+		}
+
+		@Override
+		public boolean isItalicByDefault() {
+			return false;
+		}
+
+		@Override
+		public boolean isEnabledByDefault() {
+			return true;
+		}
+
+		@Override
+		public String getDisplayName() {
+			return PreferencesMessages.JavaEditorPreferencePage_yieldKeyword;
+		}
+
+		@Override
+		public boolean consumes(SemanticToken token) {
+			return false;
+		}
+	}
+
+	/**
 	 * A named preference that controls the given semantic highlighting's color.
 	 *
 	 * @param semanticHighlighting the semantic highlighting
@@ -2059,6 +2105,7 @@ public class SemanticHighlightings {
 				new InterfaceHighlighting(),
 				new NumberHighlighting(),
 				new VarKeywordHighlighting(),
+				new YieldKeywordHighlighting(),
 			};
 		return fgSemanticHighlightings;
 	}
@@ -2096,8 +2143,8 @@ public class SemanticHighlightings {
 	public static boolean affectsEnablement(IPreferenceStore store, PropertyChangeEvent event) {
 		String relevantKey= null;
 		SemanticHighlighting[] highlightings= getSemanticHighlightings();
-		for (int i= 0; i < highlightings.length; i++) {
-			if (event.getProperty().equals(getEnabledPreferenceKey(highlightings[i]))) {
+		for (SemanticHighlighting highlighting : highlightings) {
+			if (event.getProperty().equals(getEnabledPreferenceKey(highlighting))) {
 				relevantKey= event.getProperty();
 				break;
 			}
@@ -2105,8 +2152,8 @@ public class SemanticHighlightings {
 		if (relevantKey == null)
 			return false;
 
-		for (int i= 0; i < highlightings.length; i++) {
-			String key= getEnabledPreferenceKey(highlightings[i]);
+		for (SemanticHighlighting highlighting : highlightings) {
+			String key= getEnabledPreferenceKey(highlighting);
 			if (key.equals(relevantKey))
 				continue;
 			if (store.getBoolean(key))
@@ -2128,8 +2175,8 @@ public class SemanticHighlightings {
 	public static boolean isEnabled(IPreferenceStore store) {
 		SemanticHighlighting[] highlightings= getSemanticHighlightings();
 		boolean enable= false;
-		for (int i= 0; i < highlightings.length; i++) {
-			String enabledKey= getEnabledPreferenceKey(highlightings[i]);
+		for (SemanticHighlighting highlighting : highlightings) {
+			String enabledKey= getEnabledPreferenceKey(highlighting);
 			if (store.getBoolean(enabledKey)) {
 				enable= true;
 				break;

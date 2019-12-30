@@ -411,15 +411,13 @@ public class Strings {
 	public static String[] removeTrailingEmptyLines(String[] sourceLines) {
 		int lastNonEmpty= findLastNonEmptyLineIndex(sourceLines);
 		String[] result= new String[lastNonEmpty + 1];
-		for (int i= 0; i < result.length; i++) {
-			result[i]= sourceLines[i];
-		}
+		System.arraycopy(sourceLines, 0, result, 0, result.length);
 		return result;
 	}
 
 	private static int findLastNonEmptyLineIndex(String[] sourceLines) {
 		for (int i= sourceLines.length - 1; i >= 0; i--) {
-			if (! sourceLines[i].trim().equals(""))//$NON-NLS-1$
+			if (! sourceLines[i].trim().isEmpty())
 				return i;
 		}
 		return -1;

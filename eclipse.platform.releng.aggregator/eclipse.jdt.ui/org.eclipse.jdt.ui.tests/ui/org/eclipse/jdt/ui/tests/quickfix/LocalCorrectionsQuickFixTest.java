@@ -1084,6 +1084,7 @@ public class LocalCorrectionsQuickFixTest extends QuickFixTest {
 		buf.append("        try {\n");
 		buf.append("            goo().substring(2);\n");
 		buf.append("        } catch (IOException e) {\n");
+		buf.append("        } catch (ParseException e) {\n");
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
@@ -1852,6 +1853,7 @@ public class LocalCorrectionsQuickFixTest extends QuickFixTest {
 		buf.append("    public void m1() throws IOException {\n");
 		buf.append("        try {\n");
 		buf.append("            m2();\n");
+		buf.append("        } catch (IOException e) {\n");
 		buf.append("        } catch (ParseException e) {\n");
 		buf.append("        } catch (MyException e) {\n");
 		buf.append("        }\n");
@@ -2853,6 +2855,36 @@ public class LocalCorrectionsQuickFixTest extends QuickFixTest {
 		String expected2= buf.toString();
 
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
+	}
+
+	public void testUnimplementedEnumConstructor() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("p", false, null);
+		StringBuffer buf= new StringBuffer();
+		buf.append("package p;\n");
+		buf.append("public enum E {\n");
+		buf.append("    E(1, \"E\");\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		CompilationUnit astRoot= getASTRoot(cu);
+		ArrayList<IJavaCompletionProposal> proposals= collectCorrections(cu, astRoot);
+
+		assertCorrectLabels(proposals);
+		assertNumberOfProposals(proposals, 2);
+
+		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(1);
+		String preview= getPreviewContent(proposal);
+
+		buf= new StringBuffer();
+		buf.append("package p;\n");
+		buf.append("public enum E {\n");
+		buf.append("    E(1, \"E\");\n");
+		buf.append("\n");
+		buf.append("    E(int i, String string) {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		assertEqualString(preview, buf.toString());
 	}
 
 	public void testUnimplementedMethodsInEnum() throws Exception {

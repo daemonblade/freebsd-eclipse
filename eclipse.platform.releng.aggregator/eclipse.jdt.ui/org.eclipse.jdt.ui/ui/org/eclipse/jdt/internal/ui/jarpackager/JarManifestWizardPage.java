@@ -480,9 +480,10 @@ class JarManifestWizardPage extends WizardPage implements IJarPackageWizardPage 
 				// null
 			}
 		}
-		for (int i= 0; i < fMainTypes.length; i++) {
-			if (fMainTypes[i].getFullyQualifiedName().equals(name))
-			 return fMainTypes[i];
+		for (IType mainType : fMainTypes) {
+			if (mainType.getFullyQualifiedName().equals(name)) {
+				return mainType;
+			}
 		}
 		return null;
 	}
@@ -567,23 +568,33 @@ class JarManifestWizardPage extends WizardPage implements IJarPackageWizardPage 
 		if (fJarPackage.isJarSealed()) {
 			fSealPackagesLabel.setText(""); //$NON-NLS-1$
 			int i= fJarPackage.getPackagesToUnseal().length;
-			if (i == 0)
+			switch (i) {
+			case 0:
 				fSealJarLabel.setText(JarPackagerMessages.JarManifestWizardPage_jarSealed);
-			else if (i == 1)
+				break;
+			case 1:
 				fSealJarLabel.setText(JarPackagerMessages.JarManifestWizardPage_jarSealedExceptOne);
-			else
+				break;
+			default:
 				fSealJarLabel.setText(Messages.format(JarPackagerMessages.JarManifestWizardPage_jarSealedExceptSome, Integer.valueOf(i)));
+				break;
+			}
 
 		}
 		else {
 			fSealJarLabel.setText(""); //$NON-NLS-1$
 			int i= fJarPackage.getPackagesToSeal().length;
-			if (i == 0)
+			switch (i) {
+			case 0:
 				fSealPackagesLabel.setText(JarPackagerMessages.JarManifestWizardPage_nothingSealed);
-			else if (i == 1)
+				break;
+			case 1:
 				fSealPackagesLabel.setText(JarPackagerMessages.JarManifestWizardPage_onePackageSealed);
-			else
+				break;
+			default:
 				fSealPackagesLabel.setText(Messages.format(JarPackagerMessages.JarManifestWizardPage_somePackagesSealed, Integer.valueOf(i)));
+				break;
+			}
 		}
 	}
 	/*
@@ -933,8 +944,8 @@ class JarManifestWizardPage extends WizardPage implements IJarPackageWizardPage 
 			@Override
 			public IStatus validate(Object[] selection) {
 				StatusInfo res= new StatusInfo();
-				for (int i= 0; i < selection.length; i++) {
-					if (!(selection[i] instanceof IPackageFragment)) {
+				for (Object s : selection) {
+					if (!(s instanceof IPackageFragment)) {
 						res.setError(JarPackagerMessages.JarManifestWizardPage_error_mustContainPackages);
 						return res;
 					}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -33,6 +33,11 @@ public class JavaContextType extends AbstractJavaContextType {
 	public static final String ID_ALL= "java"; //$NON-NLS-1$
 
 	/**
+	 * The context type id for templates working on empty Java source files
+	 */
+	public static final String ID_EMPTY= "java-empty"; //$NON-NLS-1$
+
+	/**
 	 * The context type id for templates working on member locations
 	 */
 	public static final String ID_MEMBERS= "java-members"; //$NON-NLS-1$
@@ -48,9 +53,9 @@ public class JavaContextType extends AbstractJavaContextType {
 	public static final String ID_MODULE= "module"; //$NON-NLS-1$
 
 	@Override
-	protected void initializeContext(JavaContext context) {
+	protected void initializeContext(IJavaContext context) {
 		// Separate 'module' context type from 'java' context type
-		if (getId().equals(ID_MODULE)) {
+		if (getId().equals(ID_MODULE) || getId().equals(ID_EMPTY)) {
 			return;
 		}
 		if (!getId().equals(JavaContextType.ID_ALL)) { // a specific context must also allow the templates that work everywhere

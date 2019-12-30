@@ -739,7 +739,7 @@ public class TypeHierarchyViewPart extends ViewPart implements ITypeHierarchyVie
 			return (T) new IShowInTargetList() {
 				@Override
 				public String[] getShowInTargetIds() {
-					return new String[] { JavaUI.ID_PACKAGES, JavaPlugin.ID_RES_NAV  };
+					return new String[] { JavaUI.ID_PACKAGES};
 				}
 
 			};
@@ -1014,9 +1014,7 @@ public class TypeHierarchyViewPart extends ViewPart implements ITypeHierarchyVie
 		// selection provider
 		int nHierarchyViewers= fAllViewers.length;
 		StructuredViewer[] trackedViewers= new StructuredViewer[nHierarchyViewers + 1];
-		for (int i= 0; i < nHierarchyViewers; i++) {
-			trackedViewers[i]= fAllViewers[i];
-		}
+		System.arraycopy(fAllViewers, 0, trackedViewers, 0, nHierarchyViewers);
 		trackedViewers[nHierarchyViewers]= fMethodsViewer;
 		fSelectionProviderMediator= new SelectionProviderMediator(trackedViewers, getCurrentViewer());
 		IStatusLineManager slManager= getViewSite().getActionBars().getStatusLineManager();

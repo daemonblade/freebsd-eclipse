@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2011 Dakshinamurthy Karra, IBM Corporation and others.
+ * Copyright (c) 2007, 2019 Dakshinamurthy Karra, IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -173,9 +173,8 @@ public class JavaTemplatesPage extends AbstractTemplatesPage {
 	 */
 	@Override
 	protected boolean isValidTemplate(IDocument document, Template template, int offset, int length) {
-		String[] contextIds= getContextTypeIds(document, offset);
-		for (int i= 0; i < contextIds.length; i++) {
-			if (contextIds[i].equals(template.getContextTypeId())) {
+		for (String contextId : getContextTypeIds(document, offset)) {
+			if (contextId.equals(template.getContextTypeId())) {
 				DocumentTemplateContext context= getContext(document, template, offset, length);
 				return context.canEvaluate(template) || isTemplateAllowed(context, template);
 			}
@@ -349,6 +348,9 @@ public class JavaTemplatesPage extends AbstractTemplatesPage {
 			IJavaElement elem= EditorUtility.getEditorInputJavaElement(fJavaEditor, true);
 			if (elem != null && JavaModelUtil.MODULE_INFO_JAVA.equals(elem.getElementName())) {
 				ids= new String[] { JavaContextType.ID_MODULE };
+			}
+			if (document.get().trim().length() == 0) {
+				ids= new String[] { JavaContextType.ID_EMPTY };
 			}
 			return ids;
 		} catch (BadLocationException e) {

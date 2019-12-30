@@ -79,8 +79,8 @@ public class JavaCorrectionProcessor implements org.eclipse.jface.text.quickassi
 		IConfigurationElement[] elements= Platform.getExtensionRegistry().getConfigurationElementsFor(JavaUI.ID_PLUGIN, contributionId);
 		ArrayList<ContributedProcessorDescriptor> res= new ArrayList<>(elements.length);
 
-		for (int i= 0; i < elements.length; i++) {
-			ContributedProcessorDescriptor desc= new ContributedProcessorDescriptor(elements[i], testMarkerTypes);
+		for (IConfigurationElement element : elements) {
+			ContributedProcessorDescriptor desc= new ContributedProcessorDescriptor(element, testMarkerTypes);
 			IStatus status= desc.checkSyntax();
 			if (status.isOK()) {
 				res.add(desc);
@@ -106,11 +106,10 @@ public class JavaCorrectionProcessor implements org.eclipse.jface.text.quickassi
 	}
 
 	public static boolean hasCorrections(ICompilationUnit cu, int problemId, String markerType) {
-		ContributedProcessorDescriptor[] processors= getCorrectionProcessors();
 		SafeHasCorrections collector= new SafeHasCorrections(cu, problemId);
-		for (int i= 0; i < processors.length; i++) {
-			if (processors[i].canHandleMarkerType(markerType)) {
-				collector.process(processors[i]);
+		for (ContributedProcessorDescriptor processor : getCorrectionProcessors()) {
+			if (processor.canHandleMarkerType(markerType)) {
+				collector.process(processor);
 				if (collector.hasCorrections()) {
 					return true;
 				}
@@ -150,11 +149,10 @@ public class JavaCorrectionProcessor implements org.eclipse.jface.text.quickassi
 	}
 
 	public static boolean hasAssists(IInvocationContext context) {
-		ContributedProcessorDescriptor[] processors= getAssistProcessors();
 		SafeHasAssist collector= new SafeHasAssist(context);
 
-		for (int i= 0; i < processors.length; i++) {
-			collector.process(processors[i]);
+		for (ContributedProcessorDescriptor processor :  getAssistProcessors()) {
+			collector.process(processor);
 			if (collector.hasAssists()) {
 				return true;
 			}
@@ -267,8 +265,7 @@ public class JavaCorrectionProcessor implements org.eclipse.jface.text.quickassi
 		ArrayList<ProblemLocation> problems= new ArrayList<>();
 
 		// collect problem locations and corrections from marker annotations
-		for (int i= 0; i < annotations.length; i++) {
-			Annotation curr= annotations[i];
+		for (Annotation curr : annotations) {
 			ProblemLocation problemLocation= null;
 			if (curr instanceof IJavaAnnotation) {
 				problemLocation= getProblemLocation((IJavaAnnotation) curr, model);
@@ -320,8 +317,8 @@ public class JavaCorrectionProcessor implements org.eclipse.jface.text.quickassi
 		IMarker marker= annotation.getMarker();
 		IMarkerResolution[] res= IDE.getMarkerHelpRegistry().getResolutions(marker);
 		if (res.length > 0) {
-			for (int i= 0; i < res.length; i++) {
-				proposals.add(new MarkerResolutionProposal(res[i], marker));
+			for (IMarkerResolution re : res) {
+				proposals.add(new MarkerResolutionProposal(re, marker));
 			}
 		}
 	}
@@ -331,8 +328,8 @@ public class JavaCorrectionProcessor implements org.eclipse.jface.text.quickassi
 		private ContributedProcessorDescriptor fDescriptor;
 
 		public void process(ContributedProcessorDescriptor[] desc) {
-			for (int i= 0; i < desc.length; i++) {
-				fDescriptor= desc[i];
+			for (ContributedProcessorDescriptor d : desc) {
+				fDescriptor= d;
 				SafeRunner.run(this);
 			}
 		}
@@ -386,9 +383,7 @@ public class JavaCorrectionProcessor implements org.eclipse.jface.text.quickassi
 			if (curr != null) {
 				IJavaCompletionProposal[] res= curr.getCorrections(fContext, fLocations);
 				if (res != null) {
-					for (int k= 0; k < res.length; k++) {
-						fProposals.add(res[k]);
-					}
+					fProposals.addAll(Arrays.asList(res));
 				}
 			}
 		}
@@ -411,9 +406,7 @@ public class JavaCorrectionProcessor implements org.eclipse.jface.text.quickassi
 			if (curr != null) {
 				IJavaCompletionProposal[] res= curr.getAssists(fContext, fLocations);
 				if (res != null) {
-					for (int k= 0; k < res.length; k++) {
-						fProposals.add(res[k]);
-					}
+					fProposals.addAll(Arrays.asList(res));
 				}
 			}
 		}
@@ -467,10 +460,8 @@ public class JavaCorrectionProcessor implements org.eclipse.jface.text.quickassi
 
 
 	public static IStatus collectCorrections(IInvocationContext context, IProblemLocation[] locations, Collection<IJavaCompletionProposal> proposals) {
-		ContributedProcessorDescriptor[] processors= getCorrectionProcessors();
 		SafeCorrectionCollector collector= new SafeCorrectionCollector(context, proposals);
-		for (int i= 0; i < processors.length; i++) {
-			ContributedProcessorDescriptor curr= processors[i];
+		for (ContributedProcessorDescriptor curr : getCorrectionProcessors()) {
 			IProblemLocation[] handled= getHandledProblems(locations, curr);
 			if (handled != null) {
 				collector.setProblemLocations(handled);

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.ibm.icu.text.Collator;
+import java.util.Arrays;
 
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.graphics.Image;
@@ -82,9 +83,10 @@ public class CategoryFilterActionGroup extends ActionGroup {
 					if (categories.length == 0)
 						return !fFilterUncategorizedMembers;
 
-					for (int i= 0; i < categories.length; i++) {
-						if (!fFilteredCategories.contains(categories[i]))
+					for (String category : categories) {
+						if (!fFilteredCategories.contains(category)) {
 							return true;
+						}
 					}
 					return false;
 				} catch (JavaModelException e) {
@@ -131,8 +133,7 @@ public class CategoryFilterActionGroup extends ActionGroup {
 			fCategoryList.setViewerComparator(new ViewerComparator());
 			fCategoryList.setLabelText(ActionMessages.CategoryFilterActionGroup_SelectCategoriesDescription);
 			fCategoryList.checkAll(true);
-			for (Iterator<String> iter= selectedCategories.iterator(); iter.hasNext();) {
-				String selected= iter.next();
+			for (String selected : selectedCategories) {
 				fCategoryList.setChecked(selected, false);
 			}
 			if (categories.size() == 0) {
@@ -297,9 +298,7 @@ public class CategoryFilterActionGroup extends ActionGroup {
 		String string= store.getString(getPreferenceKey());
 		if (string != null && string.length() > 0) {
 			String[] categories= string.split(";"); //$NON-NLS-1$
-			for (int i= 0; i < categories.length; i++) {
-				fFilteredCategories.add(categories[i]);
-			}
+			fFilteredCategories.addAll(Arrays.asList(categories));
 		}
 		string= store.getString(getPreferenceKey()+".LRU"); //$NON-NLS-1$
 		if (string != null && string.length() > 0) {
@@ -368,8 +367,7 @@ public class CategoryFilterActionGroup extends ActionGroup {
 	private void updateMenu(IMenuManager manager) {
 		IContributionItem[] items= manager.getItems();
 		if (items != null) {
-			for (int i= 0; i < items.length; i++) {
-				IContributionItem item= items[i];
+			for (IContributionItem item : items) {
 				if (item != null && item.getId() != null && item.getId().equals(FILTER_CATEGORY_ACTION_ID)) {
 					IContributionItem removed= manager.remove(item);
 					if (removed != null) {
@@ -386,8 +384,7 @@ public class CategoryFilterActionGroup extends ActionGroup {
 			manager.appendToGroup(CATEGORY_MENU_GROUP_NAME, new FilterUncategorizedMembersAction());
 
 		int count= 0;
-		for (Iterator<String> iter= menuEntries.iterator(); iter.hasNext();) {
-			String category= iter.next();
+		for (String category : menuEntries) {
 			manager.appendToGroup(CATEGORY_MENU_GROUP_NAME, new CategoryFilterAction(category, count + 1));
 			count++;
 		}
@@ -402,8 +399,7 @@ public class CategoryFilterActionGroup extends ActionGroup {
 				@Override
 				public boolean accept(String[] cats) {
 					if (cats.length > 0) {
-						for (int j= 0; j < cats.length; j++) {
-							String category= cats[j];
+						for (String category : cats) {
 							categories.add(category);
 							if (fLRUList.containsKey(category)) {
 								foundLRUCategories.add(category);
@@ -417,8 +413,7 @@ public class CategoryFilterActionGroup extends ActionGroup {
 			});
 		}
 		int count= 0;
-		for (Iterator<String> iter= foundLRUCategories.iterator(); iter.hasNext();) {
-			String element= iter.next();
+		for (String element : foundLRUCategories) {
 			result.add(element);
 			count++;
 		}
@@ -463,9 +458,10 @@ public class CategoryFilterActionGroup extends ActionGroup {
 	}
 
 	private boolean processChildren(IJavaElement[] children, IResultCollector collector) {
-		for (int i= 0; i < children.length; i++) {
-			if (collectCategories(children[i], collector))
+		for (IJavaElement child : children) {
+			if (collectCategories(child, collector)) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -487,13 +483,11 @@ public class CategoryFilterActionGroup extends ActionGroup {
 
 	private void showCategorySelectionDialog(IJavaElement[] input) {
 		final HashSet<String> categories= new HashSet<>();
-		for (int i= 0; i < input.length; i++) {
-			collectCategories(input[i], new IResultCollector() {
+		for (IJavaElement i : input) {
+			collectCategories(i, new IResultCollector() {
 				@Override
 				public boolean accept(String[] cats) {
-					for (int j= 0; j < cats.length; j++) {
-						categories.add(cats[j]);
-					}
+					categories.addAll(Arrays.asList(cats));
 					return false;
 				}
 			});
@@ -501,8 +495,7 @@ public class CategoryFilterActionGroup extends ActionGroup {
 		CategoryFilterSelectionDialog dialog= new CategoryFilterSelectionDialog(fViewer.getControl().getShell(), new ArrayList<>(categories), new ArrayList<>(fFilteredCategories));
 		if (dialog.open() == Window.OK) {
 			Object[] selected= dialog.getResult();
-			for (Iterator<String> iter= categories.iterator(); iter.hasNext();) {
-				String category= iter.next();
+			for (String category : categories) {
 				if (contains(selected, category)) {
 					if (fFilteredCategories.remove(category))
 						fLRUList.put(category, category);
@@ -517,9 +510,10 @@ public class CategoryFilterActionGroup extends ActionGroup {
 	}
 
 	private boolean contains(Object[] selected, String category) {
-		for (int i= 0; i < selected.length; i++) {
-			if (selected[i].equals(category))
+		for (Object s : selected) {
+			if (s.equals(category)) {
 				return true;
+			}
 		}
 		return false;
 	}

@@ -48,7 +48,6 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
@@ -225,13 +224,15 @@ public class Checks {
 	}
 
 	public static boolean startsWithLowerCase(String s){
-		if (s == null)
+		if (null == s)
 			return false;
-		else if ("".equals(s)) //$NON-NLS-1$
+		else switch (s) {
+		case "": //$NON-NLS-1$
 			return false;
-		else
+		default:
 			//workaround for JDK bug (see 26529)
 			return s.charAt(0) == Character.toLowerCase(s.charAt(0));
+		}
 	}
 
 	public static boolean resourceExists(IPath resourcePath){
@@ -387,8 +388,7 @@ public class Checks {
 	public static boolean isEnumCase(ASTNode node) {
 		if (node instanceof SwitchCase) {
 			final SwitchCase caze= (SwitchCase) node;
-			AST ast= node.getAST();
-			if (ast.apiLevel() >= AST.JLS12 && ast.isPreviewEnabled()) {
+			if (node.getAST().isPreviewEnabled()) {
 				List<Expression> expressions= caze.expressions();
 				boolean isEnumConst= true;
 				for (Expression expression : expressions) {

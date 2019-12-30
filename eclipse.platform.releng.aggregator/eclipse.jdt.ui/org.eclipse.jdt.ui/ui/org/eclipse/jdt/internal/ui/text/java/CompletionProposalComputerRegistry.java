@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -31,7 +31,9 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Link;
+import org.eclipse.swt.widgets.Shell;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -141,14 +143,16 @@ public final class CompletionProposalComputerRegistry {
 	 * @since 3.4
 	 */
 	boolean hasUninstalledComputers(String partition, List<CompletionProposalCategory> included) {
-		if (fHasUninstalledComputers)
+		if (fHasUninstalledComputers) {
 			return true;
+		}
 
 		if (fIsFirstTimeCheckForUninstalledComputers) {
 			if ((IJavaPartitions.JAVA_DOC.equals(partition) || IDocument.DEFAULT_CONTENT_TYPE.equals(partition)) && included.size() == 1 && !getProposalCategories().isEmpty()) {
 				CompletionProposalCategory firstCategory= included.get(0);
-				if (firstCategory != null) // paranoia check
+				if (firstCategory != null) {
 					return "org.eclipse.jdt.ui.swtProposalCategory".equals(firstCategory.getId()); //$NON-NLS-1$
+				}
 			}
 		}
 
@@ -275,13 +279,10 @@ public final class CompletionProposalComputerRegistry {
 		List<CompletionProposalComputerDescriptor> all= new ArrayList<>();
 
 		List<CompletionProposalCategory> categories= getCategories(elements);
-		for (Iterator<IConfigurationElement> iter= elements.iterator(); iter.hasNext();) {
-			IConfigurationElement element= iter.next();
+		for (IConfigurationElement element : elements) {
 			try {
 				CompletionProposalComputerDescriptor desc= new CompletionProposalComputerDescriptor(element, this, categories);
-				Set<String> partitions= desc.getPartitions();
-				for (Iterator<String> it= partitions.iterator(); it.hasNext();) {
-					String partition= it.next();
+				for (String partition : desc.getPartitions()) {
 					List<CompletionProposalComputerDescriptor> list= map.get(partition);
 					if (list == null) {
 						list= new ArrayList<>();
@@ -313,8 +314,7 @@ public final class CompletionProposalComputerRegistry {
 			Set<String> partitions= map.keySet();
 			fDescriptorsByPartition.keySet().retainAll(partitions);
 			fPublicDescriptorsByPartition.keySet().retainAll(partitions);
-			for (Iterator<String> it= partitions.iterator(); it.hasNext();) {
-				String partition= it.next();
+			for (String partition : partitions) {
 				List<CompletionProposalComputerDescriptor> old= fDescriptorsByPartition.get(partition);
 				List<CompletionProposalComputerDescriptor> current= map.get(partition);
 				if (old != null) {
@@ -336,8 +336,9 @@ public final class CompletionProposalComputerRegistry {
 		String preference= store.getString(PreferenceConstants.CODEASSIST_EXCLUDED_CATEGORIES);
 		Set<String> disabled= new HashSet<>();
 		StringTokenizer tok= new StringTokenizer(preference, "\0");  //$NON-NLS-1$
-		while (tok.hasMoreTokens())
+		while (tok.hasMoreTokens()) {
 			disabled.add(tok.nextToken());
+		}
 		Map<String, Integer> ordered= new HashMap<>();
 		preference= store.getString(PreferenceConstants.CODEASSIST_CATEGORY_ORDER);
 		tok= new StringTokenizer(preference, "\0"); //$NON-NLS-1$
@@ -351,7 +352,7 @@ public final class CompletionProposalComputerRegistry {
 		CompletionProposalCategory allProposals= null;
 		CompletionProposalCategory typeProposals= null;
 		CompletionProposalCategory allButTypeProposals= null;
-		
+
 		List<CompletionProposalCategory> categories= new ArrayList<>();
 		for (Iterator<IConfigurationElement> iter= elements.iterator(); iter.hasNext();) {
 			IConfigurationElement element= iter.next();
@@ -366,19 +367,29 @@ public final class CompletionProposalComputerRegistry {
 					if (rank != null) {
 						int r= rank.intValue();
 						boolean separate= r < 0xffff;
-						if (!separate)
+						if (!separate) {
 							r= r - 0xffff;
+						}
 						category.setSeparateCommand(separate);
 						category.setSortOrder(r);
 					}
-					
+
 					String id= category.getId();
-					if ("org.eclipse.jdt.ui.javaAllProposalCategory".equals(id)) //$NON-NLS-1$
+					if (null != id) {
+						switch (id) {
+					case "org.eclipse.jdt.ui.javaAllProposalCategory": //$NON-NLS-1$
 						allProposals= category;
-					else if ("org.eclipse.jdt.ui.javaTypeProposalCategory".equals(id)) //$NON-NLS-1$
+						break;
+					case "org.eclipse.jdt.ui.javaTypeProposalCategory": //$NON-NLS-1$
 						typeProposals= category;
-					else if ("org.eclipse.jdt.ui.javaNoTypeProposalCategory".equals(id)) //$NON-NLS-1$
+						break;
+					case "org.eclipse.jdt.ui.javaNoTypeProposalCategory": //$NON-NLS-1$
 						allButTypeProposals= category;
+						break;
+					default:
+						break;
+					}
+					}
 				}
 			} catch (InvalidRegistryObjectException x) {
 				/*
@@ -401,8 +412,9 @@ public final class CompletionProposalComputerRegistry {
 	private void preventDuplicateCategories(IPreferenceStore store, Set<String> disabled, CompletionProposalCategory allProposals, CompletionProposalCategory typeProposals,
 			CompletionProposalCategory allButTypeProposals) {
 		boolean adjusted= false;
-		if (allProposals == null || !allProposals.isIncluded())
+		if (allProposals == null || !allProposals.isIncluded()) {
 			return;
+		}
 
 		if (allButTypeProposals != null && allButTypeProposals.isIncluded()) {
 			allButTypeProposals.setIncluded(false);
@@ -441,31 +453,37 @@ public final class CompletionProposalComputerRegistry {
 
 		final String avoidHint;
 		final String culpritName= culprit == null ? null : culprit.getName();
-		if (affectedPlugins.isEmpty())
+		if (affectedPlugins.isEmpty()) {
 			avoidHint= Messages.format(JavaTextMessages.CompletionProposalComputerRegistry_messageAvoidanceHint, new Object[] {culpritName, category.getDisplayName()});
-		else
+		} else {
 			avoidHint= Messages.format(JavaTextMessages.CompletionProposalComputerRegistry_messageAvoidanceHintWithWarning, new Object[] {culpritName, category.getDisplayName(), toString(affectedPlugins)});
+		}
 
 		String message= status.getMessage();
         // inlined from MessageDialog.openError
-        MessageDialog dialog = new MessageDialog(JavaPlugin.getActiveWorkbenchShell(), title, null /* default image */, message, MessageDialog.ERROR, new String[] { IDialogConstants.OK_LABEL }, 0) {
-        	@Override
-			protected Control createCustomArea(Composite parent) {
-        		Link link= new Link(parent, SWT.NONE);
-        		link.setText(avoidHint);
-        		link.addSelectionListener(new SelectionAdapter() {
-        			@Override
-					public void widgetSelected(SelectionEvent e) {
-        				PreferencesUtil.createPreferenceDialogOn(getShell(), "org.eclipse.jdt.ui.preferences.CodeAssistPreferenceAdvanced", null, null).open(); //$NON-NLS-1$
-        			}
-        		});
-        		GridData gridData= new GridData(SWT.FILL, SWT.BEGINNING, true, false);
-        		gridData.widthHint= this.getMinimumMessageWidth();
-				link.setLayoutData(gridData);
-        		return link;
-        	}
-        };
-        dialog.open();
+		Display display = Display.getDefault();
+		Shell shell = JavaPlugin.getActiveWorkbenchShell();
+		if (shell != null) {
+			display = shell.getDisplay();
+		}
+		display.asyncExec(() ->
+	        new MessageDialog(JavaPlugin.getActiveWorkbenchShell(), title, null /* default image */, message, MessageDialog.ERROR, new String[] { IDialogConstants.OK_LABEL }, 0) {
+	        	@Override
+				protected Control createCustomArea(Composite parent) {
+	        		Link link= new Link(parent, SWT.NONE);
+	        		link.setText(avoidHint);
+	        		link.addSelectionListener(new SelectionAdapter() {
+	        			@Override
+						public void widgetSelected(SelectionEvent e) {
+	        				PreferencesUtil.createPreferenceDialogOn(getShell(), "org.eclipse.jdt.ui.preferences.CodeAssistPreferenceAdvanced", null, null).open(); //$NON-NLS-1$
+	        			}
+	        		});
+	        		GridData gridData= new GridData(SWT.FILL, SWT.BEGINNING, true, false);
+	        		gridData.widthHint= this.getMinimumMessageWidth();
+					link.setLayoutData(gridData);
+	        		return link;
+	        	}
+	        }.open());
 	}
 
 	/**
@@ -477,15 +495,15 @@ public final class CompletionProposalComputerRegistry {
 	 */
 	private Set<String> getAffectedContributors(CompletionProposalCategory category, IContributor culprit) {
 	    Set<String> affectedPlugins= new HashSet<>();
-        for (Iterator<CompletionProposalComputerDescriptor> it= getProposalComputerDescriptors().iterator(); it.hasNext();) {
-	        CompletionProposalComputerDescriptor desc= it.next();
-	        CompletionProposalCategory cat= desc.getCategory();
-	        if (cat.equals(category)) {
-	        	IContributor contributor= desc.getContributor();
-	        	if (contributor != null && !culprit.equals(contributor))
-	        		affectedPlugins.add(contributor.getName());
-	        }
-        }
+		for (CompletionProposalComputerDescriptor desc : getProposalComputerDescriptors()) {
+			CompletionProposalCategory cat= desc.getCategory();
+			if (cat.equals(category)) {
+				IContributor contributor= desc.getContributor();
+				if (contributor != null && !culprit.equals(contributor)) {
+					affectedPlugins.add(contributor.getName());
+				}
+			}
+		}
 	    return affectedPlugins;
     }
 
@@ -500,5 +518,12 @@ public final class CompletionProposalComputerRegistry {
 		String title= JavaTextMessages.CompletionProposalComputerRegistry_error_dialog_title;
 		String message= status.getMessage();
 		MessageDialog.openError(JavaPlugin.getActiveWorkbenchShell(), title, message);
+	}
+
+	/**
+	 * @return whether any of the computers require the UI Thread. See {@link CompletionProposalComputerDescriptor#requiresUIThread()}.
+	 */
+	public boolean computingCompletionRequiresUIThread() {
+		return fDescriptors.stream().anyMatch(CompletionProposalComputerDescriptor::requiresUIThread);
 	}
 }

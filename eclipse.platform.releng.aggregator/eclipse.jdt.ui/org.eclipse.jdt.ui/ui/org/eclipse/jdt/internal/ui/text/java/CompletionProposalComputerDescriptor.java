@@ -16,7 +16,6 @@ package org.eclipse.jdt.internal.ui.text.java;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -69,6 +68,8 @@ final class CompletionProposalComputerDescriptor {
 	private static final String NEEDS_SORTING_AFTER_FILTERING= "needsSortingAfterFiltering"; //$NON-NLS-1$
 	/** The extension schema name of the partition child elements. */
 	private static final String PARTITION= "partition"; //$NON-NLS-1$
+	/** The extension schema name of the requiresUIThread attribute. */
+	private static final String REQUIRES_UI_THREAD= "requiresUIThread"; //$NON-NLS-1$
 	/** Set of Java partition types. */
 	private static final Set<String> PARTITION_SET;
 	/** The name of the performance event used to trace extensions. */
@@ -137,15 +138,21 @@ final class CompletionProposalComputerDescriptor {
 	 * @since 3.4
 	 */
 	boolean fTriedLoadingComputer= false;
-	
+
 	/**
 	 * Tells whether this proposal engine provides dynamic content that needs to be sorted after its
 	 * proposal have been filtered. Filtering happens, e.g., when a user continues typing with an
 	 * open completion window.
-	 * 
+	 *
 	 * @since 3.8
 	 */
 	private boolean fNeedsSortingAfterFiltering;
+
+	/**
+	 * Tells whether the contributed processor requires to run in UI Thread
+	 * @since 3.16
+	 */
+	private final boolean fRequiresUIThread;
 
 
 	/**
@@ -178,8 +185,8 @@ final class CompletionProposalComputerDescriptor {
 		if (children.length == 0) {
 			fPartitions= PARTITION_SET; // add to all partition types if no partition is configured
 		} else {
-			for (int i= 0; i < children.length; i++) {
-				String type= children[i].getAttribute(TYPE);
+			for (IConfigurationElement child : children) {
+				String type= child.getAttribute(TYPE);
 				checkNotNull(type, TYPE);
 				partitions.add(type);
 			}
@@ -195,12 +202,14 @@ final class CompletionProposalComputerDescriptor {
 		fClass= element.getAttribute(CLASS);
 		checkNotNull(fClass, CLASS);
 
+		// Not Boolean.parse() to ensure fRequiresUIThread is true if attribute is not set/null
+		fRequiresUIThread = !Boolean.FALSE.toString().equals(element.getAttribute(REQUIRES_UI_THREAD));
+
 		String categoryId= element.getAttribute(CATEGORY_ID);
 		if (categoryId == null)
 			categoryId= DEFAULT_CATEGORY_ID;
 		CompletionProposalCategory category= null;
-		for (Iterator<CompletionProposalCategory> it= categories.iterator(); it.hasNext();) {
-			CompletionProposalCategory cat= it.next();
+		for (CompletionProposalCategory cat : categories) {
 			if (cat.getId().equals(categoryId)) {
 				category= cat;
 				break;
@@ -584,11 +593,21 @@ final class CompletionProposalComputerDescriptor {
 
 	/**
 	 * Returns the <code>needsSortingAfterFiltering</code> flag of the described extension.
-	 * 
+	 *
 	 * @return the needsSortingAfterFiltering flag of the described extension
 	 * @since 3.8
 	 */
 	public boolean isSortingAfterFilteringNeeded() {
 		return fNeedsSortingAfterFiltering;
+	}
+
+	/**
+	 * Returns the <code>requiresUIThread</code> flag of the described extension.
+	 *
+	 * @return the requiresUIThread flag of the described extension
+	 * @since 3.16
+	 */
+	public boolean requiresUIThread() {
+		return this.fRequiresUIThread;
 	}
 }

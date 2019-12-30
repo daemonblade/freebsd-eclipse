@@ -76,6 +76,7 @@ final class FormatterMessages extends NLS {
 	public static String FormatterModifyDialog_braces_val_next_line_on_wrap;
 	public static String FormatterModifyDialog_braces_val_same_line;
 	public static String FormatterModifyDialog_comments_pref_blank_line_before_javadoc_tags;
+	public static String FormatterModifyDialog_comments_pref_blank_line_beftween_different_tags;
 	public static String FormatterModifyDialog_comments_pref_enable_block;
 	public static String FormatterModifyDialog_comments_pref_enable_javadoc;
 	public static String FormatterModifyDialog_comments_pref_enable_line;
@@ -124,6 +125,7 @@ final class FormatterMessages extends NLS {
 	public static String FormatterModifyDialog_indentation_pref_indent_statements_within_switch_body;
 	public static String FormatterModifyDialog_indentation_pref_tab_policy;
 	public static String FormatterModifyDialog_indentation_pref_tab_size;
+	public static String FormatterModifyDialog_indentation_pref_text_block_indentation;
 	public static String FormatterModifyDialog_indentation_pref_use_tabs_only_for_leading_indentations;
 	public static String FormatterModifyDialog_indentation_tab_policy_MIXED;
 	public static String FormatterModifyDialog_indentation_tab_policy_SPACE;
@@ -131,6 +133,8 @@ final class FormatterMessages extends NLS {
 	public static String FormatterModifyDialog_indentation_tree_align_items_in_columns;
 	public static String FormatterModifyDialog_indentation_tree_indentation;
 	public static String FormatterModifyDialog_indentation_tree_indented_elements;
+	public static String FormatterModifyDialog_indentation_val_indentation_default;
+	public static String FormatterModifyDialog_indentation_val_indentation_preserve;
 	public static String FormatterModifyDialog_lineWrap_indentation_policy_label;
 	public static String FormatterModifyDialog_lineWrap_pref_additive_operators;
 	public static String FormatterModifyDialog_lineWrap_pref_annotations_arguments;
@@ -304,6 +308,7 @@ final class FormatterMessages extends NLS {
 	public static String FormatterModifyDialog_whiteSpace_pref_after_comma_init;
 	public static String FormatterModifyDialog_whiteSpace_pref_after_comma_localvars;
 	public static String FormatterModifyDialog_whiteSpace_pref_after_ellipsis;
+	public static String FormatterModifyDialog_whiteSpace_pref_after_not_operator;
 	public static String FormatterModifyDialog_whiteSpace_pref_after_opening_angle_bracket;
 	public static String FormatterModifyDialog_whiteSpace_pref_after_opening_brace;
 	public static String FormatterModifyDialog_whiteSpace_pref_after_opening_bracket;

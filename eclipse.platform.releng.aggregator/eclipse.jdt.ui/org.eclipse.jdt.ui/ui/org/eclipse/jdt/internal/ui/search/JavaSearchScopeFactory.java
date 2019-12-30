@@ -110,8 +110,7 @@ public class JavaSearchScopeFactory {
 			return EMPTY_SCOPE;
 
 		Set<IJavaElement> javaElements= new HashSet<>(workingSets.length * 10);
-		for (int i= 0; i < workingSets.length; i++) {
-			IWorkingSet workingSet= workingSets[i];
+		for (IWorkingSet workingSet : workingSets) {
 			if (workingSet.isEmpty() && workingSet.isAggregateWorkingSet()) {
 				return createWorkspaceScope(includeMask);
 			}
@@ -160,8 +159,8 @@ public class JavaSearchScopeFactory {
 	public IJavaSearchScope createJavaProjectSearchScope(String[] projectNames, int includeMask) {
 		ArrayList<IJavaElement> res= new ArrayList<>();
 		IWorkspaceRoot root= ResourcesPlugin.getWorkspace().getRoot();
-		for (int i= 0; i < projectNames.length; i++) {
-			IJavaProject project= JavaCore.create(root.getProject(projectNames[i]));
+		for (String projectName : projectNames) {
+			IJavaProject project= JavaCore.create(root.getProject(projectName));
 			if (project.exists()) {
 				res.add(project);
 			}
@@ -206,15 +205,25 @@ public class JavaSearchScopeFactory {
 		}
 		boolean includeJRE= (includeMask & JRE) != 0;
 		String scopeDescription;
-		if (projectNames.length == 1) {
-			String label= includeJRE ? SearchMessages.EnclosingProjectScope : SearchMessages.EnclosingProjectScopeNoJRE;
-			scopeDescription= Messages.format(label, org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels.getJavaElementName(projectNames[0]));
-		} else if (projectNames.length == 2) {
-			String label= includeJRE ? SearchMessages.EnclosingProjectsScope2 : SearchMessages.EnclosingProjectsScope2NoJRE;
-			scopeDescription= Messages.format(label, new String[] { org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels.getJavaElementName(projectNames[0]), org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels.getJavaElementName(projectNames[1])});
-		} else {
-			String label= includeJRE ? SearchMessages.EnclosingProjectsScope : SearchMessages.EnclosingProjectsScopeNoJRE;
-			scopeDescription= Messages.format(label, new String[] { org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels.getJavaElementName(projectNames[0]), org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels.getJavaElementName(projectNames[1])});
+		switch (projectNames.length) {
+		case 1:
+			{
+				String label= includeJRE ? SearchMessages.EnclosingProjectScope : SearchMessages.EnclosingProjectScopeNoJRE;
+				scopeDescription= Messages.format(label, org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels.getJavaElementName(projectNames[0]));
+				break;
+			}
+		case 2:
+			{
+				String label= includeJRE ? SearchMessages.EnclosingProjectsScope2 : SearchMessages.EnclosingProjectsScope2NoJRE;
+				scopeDescription= Messages.format(label, new String[] { org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels.getJavaElementName(projectNames[0]), org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels.getJavaElementName(projectNames[1])});
+				break;
+			}
+		default:
+			{
+				String label= includeJRE ? SearchMessages.EnclosingProjectsScope : SearchMessages.EnclosingProjectsScopeNoJRE;
+				scopeDescription= Messages.format(label, new String[] { org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels.getJavaElementName(projectNames[0]), org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels.getJavaElementName(projectNames[1])});
+				break;
+			}
 		}
 		return scopeDescription;
 	}
@@ -252,15 +261,25 @@ public class JavaSearchScopeFactory {
 			return SearchMessages.JavaSearchScopeFactory_undefined_selection;
 		}
 		String scopeDescription;
-		if (javaElements.length == 1) {
-			String label= includeJRE ? SearchMessages.SingleSelectionScope : SearchMessages.SingleSelectionScopeNoJRE;
-			scopeDescription= Messages.format(label, JavaElementLabels.getElementLabel(javaElements[0], JavaElementLabels.ALL_DEFAULT));
-		} else if (javaElements.length == 2) {
-			String label= includeJRE ? SearchMessages.DoubleSelectionScope : SearchMessages.DoubleSelectionScopeNoJRE;
-			scopeDescription= Messages.format(label, new String[] { JavaElementLabels.getElementLabel(javaElements[0], JavaElementLabels.ALL_DEFAULT), JavaElementLabels.getElementLabel(javaElements[1], JavaElementLabels.ALL_DEFAULT)});
-		}  else {
-			String label= includeJRE ? SearchMessages.SelectionScope : SearchMessages.SelectionScopeNoJRE;
-			scopeDescription= Messages.format(label, new String[] { JavaElementLabels.getElementLabel(javaElements[0], JavaElementLabels.ALL_DEFAULT), JavaElementLabels.getElementLabel(javaElements[1], JavaElementLabels.ALL_DEFAULT)});
+		switch (javaElements.length) {
+		case 1:
+			{
+				String label= includeJRE ? SearchMessages.SingleSelectionScope : SearchMessages.SingleSelectionScopeNoJRE;
+				scopeDescription= Messages.format(label, JavaElementLabels.getElementLabel(javaElements[0], JavaElementLabels.ALL_DEFAULT));
+				break;
+			}
+		case 2:
+			{
+				String label= includeJRE ? SearchMessages.DoubleSelectionScope : SearchMessages.DoubleSelectionScopeNoJRE;
+				scopeDescription= Messages.format(label, new String[] { JavaElementLabels.getElementLabel(javaElements[0], JavaElementLabels.ALL_DEFAULT), JavaElementLabels.getElementLabel(javaElements[1], JavaElementLabels.ALL_DEFAULT)});
+				break;
+			}
+		default:
+			{
+				String label= includeJRE ? SearchMessages.SelectionScope : SearchMessages.SelectionScopeNoJRE;
+				scopeDescription= Messages.format(label, new String[] { JavaElementLabels.getElementLabel(javaElements[0], JavaElementLabels.ALL_DEFAULT), JavaElementLabels.getElementLabel(javaElements[1], JavaElementLabels.ALL_DEFAULT)});
+				break;
+			}
 		}
 		return scopeDescription;
 	}
@@ -287,10 +306,9 @@ public class JavaSearchScopeFactory {
 	}
 
 	public IProject[] getProjects(IJavaSearchScope scope) {
-		IPath[] paths= scope.enclosingProjectsAndJars();
 		HashSet<IResource> temp= new HashSet<>();
-		for (int i= 0; i < paths.length; i++) {
-			IResource resource= ResourcesPlugin.getWorkspace().getRoot().findMember(paths[i]);
+		for (IPath path : scope.enclosingProjectsAndJars()) {
+			IResource resource= ResourcesPlugin.getWorkspace().getRoot().findMember(path);
 			if (resource != null && resource.getType() == IResource.PROJECT)
 				temp.add(resource);
 		}
@@ -310,8 +328,7 @@ public class JavaSearchScopeFactory {
 			return new IJavaElement[0];
 
 		Set<IJavaElement> result= new HashSet<>(elements.length);
-		for (int i= 0; i < elements.length; i++) {
-			Object selectedElement= elements[i];
+		for (Object selectedElement : elements) {
 			if (selectedElement instanceof IJavaElement) {
 				addJavaElements(result, (IJavaElement) selectedElement);
 			} else if (selectedElement instanceof IResource) {
@@ -326,7 +343,6 @@ public class JavaSearchScopeFactory {
 				if (resource != null)
 					addJavaElements(result, resource);
 			}
-
 		}
 		return result.toArray(new IJavaElement[result.size()]);
 	}
@@ -353,8 +369,9 @@ public class JavaSearchScopeFactory {
 	}
 
 	private void addJavaElements(Set<IJavaElement> javaElements, IResource[] resources) {
-		for (int i= 0; i < resources.length; i++)
-			addJavaElements(javaElements, resources[i]);
+		for (IResource resource : resources) {
+			addJavaElements(javaElements, resource);
+		}
 	}
 
 	private void addJavaElements(Set<IJavaElement> javaElements, IResource resource) {
@@ -393,14 +410,13 @@ public class JavaSearchScopeFactory {
 			return;
 		}
 
-		IAdaptable[] elements= workingSet.getElements();
-		for (int i= 0; i < elements.length; i++) {
-			IJavaElement javaElement=elements[i].getAdapter(IJavaElement.class);
+		for (IAdaptable element : workingSet.getElements()) {
+			IJavaElement javaElement= element.getAdapter(IJavaElement.class);
 			if (javaElement != null) {
 				addJavaElements(javaElements, javaElement);
 				continue;
 			}
-			IResource resource= elements[i].getAdapter(IResource.class);
+			IResource resource= element.getAdapter(IResource.class);
 			if (resource != null) {
 				addJavaElements(javaElements, resource);
 			}
@@ -410,9 +426,9 @@ public class JavaSearchScopeFactory {
 	}
 
 	private void addJavaElements(Set<IJavaElement> javaElements, LogicalPackage selectedElement) {
-		IPackageFragment[] packages= selectedElement.getFragments();
-		for (int i= 0; i < packages.length; i++)
-			addJavaElements(javaElements, packages[i]);
+		for (IPackageFragment p : selectedElement.getFragments()) {
+			addJavaElements(javaElements, p);
+		}
 	}
 
 	public IJavaSearchScope createWorkspaceScope(boolean includeJRE) {

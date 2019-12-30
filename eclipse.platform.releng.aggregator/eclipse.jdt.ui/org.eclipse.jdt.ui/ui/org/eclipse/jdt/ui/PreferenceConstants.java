@@ -4105,8 +4105,8 @@ public class PreferenceConstants {
 		store.setDefault(PreferenceConstants.CODEASSIST_FILL_ARGUMENT_NAMES, true);
 		store.setDefault(PreferenceConstants.CODEASSIST_GUESS_METHOD_ARGUMENTS, false);
 		store.setDefault(PreferenceConstants.CODEASSIST_PREFIX_COMPLETION, false);
-		store.setDefault(PreferenceConstants.CODEASSIST_EXCLUDED_CATEGORIES, "org.eclipse.jdt.ui.textProposalCategory\0org.eclipse.jdt.ui.javaTypeProposalCategory\0org.eclipse.jdt.ui.javaNoTypeProposalCategory\0org.eclipse.jdt.ui.javaChainProposalCategory\0"); //$NON-NLS-1$
-		store.setDefault(PreferenceConstants.CODEASSIST_CATEGORY_ORDER, "org.eclipse.jdt.ui.javaChainProposalCategory:65546\0org.eclipse.jdt.ui.spellingProposalCategory:65545\0org.eclipse.jdt.ui.javaTypeProposalCategory:65540\0org.eclipse.jdt.ui.javaNoTypeProposalCategory:65539\0org.eclipse.jdt.ui.textProposalCategory:65541\0org.eclipse.jdt.ui.javaAllProposalCategory:65542\0org.eclipse.jdt.ui.templateProposalCategory:2\0org.eclipse.jdt.ui.swtProposalCategory:3\0"); //$NON-NLS-1$
+		store.setDefault(PreferenceConstants.CODEASSIST_EXCLUDED_CATEGORIES, "org.eclipse.jdt.ui.textProposalCategory\0org.eclipse.jdt.ui.javaTypeProposalCategory\0org.eclipse.jdt.ui.javaNoTypeProposalCategory\0org.eclipse.jdt.ui.javaChainProposalCategory\0org.eclipse.jdt.ui.javaPostfixProposalCategory\0"); //$NON-NLS-1$
+		store.setDefault(PreferenceConstants.CODEASSIST_CATEGORY_ORDER, "org.eclipse.jdt.ui.javaPostfixProposalCategory:65547\0org.eclipse.jdt.ui.javaChainProposalCategory:65546\0org.eclipse.jdt.ui.spellingProposalCategory:65545\0org.eclipse.jdt.ui.javaTypeProposalCategory:65540\0org.eclipse.jdt.ui.javaNoTypeProposalCategory:65539\0org.eclipse.jdt.ui.textProposalCategory:65541\0org.eclipse.jdt.ui.javaAllProposalCategory:65542\0org.eclipse.jdt.ui.templateProposalCategory:2\0org.eclipse.jdt.ui.swtProposalCategory:3\0"); //$NON-NLS-1$
 		store.setDefault(PreferenceConstants.CODEASSIST_LRU_HISTORY, ""); //$NON-NLS-1$
 		store.setDefault(PreferenceConstants.CODEASSIST_SORTER, "org.eclipse.jdt.ui.RelevanceSorter"); //$NON-NLS-1$
 		store.setDefault(PreferenceConstants.CODEASSIST_FAVORITE_STATIC_MEMBERS, ""); //$NON-NLS-1$
@@ -4274,14 +4274,14 @@ public class PreferenceConstants {
 		}
 
 		// Code minings preferences
-		store.setDefault(PreferenceConstants.EDITOR_CODEMINING_ENABLED, false);
+		store.setDefault(PreferenceConstants.EDITOR_CODEMINING_ENABLED, true);
 		store.setDefault(EDITOR_JAVA_CODEMINING_SHOW_CODEMINING_AT_LEAST_ONE,
 				true);
-		store.setDefault(EDITOR_JAVA_CODEMINING_SHOW_REFERENCES, true);
-		store.setDefault(EDITOR_JAVA_CODEMINING_SHOW_REFERENCES_ON_TYPES, true);
-		store.setDefault(EDITOR_JAVA_CODEMINING_SHOW_REFERENCES_ON_FIELDS, true);
-		store.setDefault(EDITOR_JAVA_CODEMINING_SHOW_REFERENCES_ON_METHODS, true);
-		store.setDefault(EDITOR_JAVA_CODEMINING_SHOW_IMPLEMENTATIONS, true);
+		store.setDefault(EDITOR_JAVA_CODEMINING_SHOW_REFERENCES, false);
+		store.setDefault(EDITOR_JAVA_CODEMINING_SHOW_REFERENCES_ON_TYPES, false);
+		store.setDefault(EDITOR_JAVA_CODEMINING_SHOW_REFERENCES_ON_FIELDS, false);
+		store.setDefault(EDITOR_JAVA_CODEMINING_SHOW_REFERENCES_ON_METHODS, false);
+		store.setDefault(EDITOR_JAVA_CODEMINING_SHOW_IMPLEMENTATIONS, false);
 		store.setDefault(EDITOR_JAVA_CODEMINING_SHOW_PARAMETER_NAMES, false);
 	}
 

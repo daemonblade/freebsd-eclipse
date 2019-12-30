@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.ltk.internal.ui.refactoring;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 
 import org.eclipse.swt.SWT;
@@ -114,8 +115,9 @@ public class RefactoringLocationControl extends Composite {
 			String[] locations= settings.getArray(fKey);
 			if (locations == null || locations.length == 0)
 				return;
-			for (int index= 0; index < locations.length; index++)
-				fCombo.add(locations[index]);
+			for (String location : locations) {
+				fCombo.add(location);
+			}
 			fCombo.select(0);
 		}
 	}
@@ -128,8 +130,7 @@ public class RefactoringLocationControl extends Composite {
 		if (settings != null) {
 			final LinkedList<String> locations= new LinkedList<>();
 			final String[] items= fCombo.getItems();
-			for (int index= 0; index < items.length; index++)
-				locations.add(items[index]);
+			locations.addAll(Arrays.asList(items));
 			final String text= fCombo.getText().trim();
 			if (!"".equals(text)) { //$NON-NLS-1$
 				locations.remove(text);

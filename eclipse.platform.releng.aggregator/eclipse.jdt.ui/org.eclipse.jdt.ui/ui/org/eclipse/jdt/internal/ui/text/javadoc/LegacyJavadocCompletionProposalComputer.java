@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,10 +15,9 @@ package org.eclipse.jdt.internal.ui.text.javadoc;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import org.eclipse.swt.graphics.Point;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -26,6 +25,7 @@ import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 
+import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.contentassist.ICompletionProposal;
 import org.eclipse.jface.text.contentassist.IContextInformation;
 
@@ -90,15 +90,11 @@ public class LegacyJavadocCompletionProposalComputer implements IJavaCompletionP
 
 			ArrayList<IContextInformation> result= new ArrayList<>();
 
-			IJavadocCompletionProcessor[] processors= getContributedProcessors();
 			String error= null;
-			for (int i= 0; i < processors.length; i++) {
-				IJavadocCompletionProcessor curr= processors[i];
+			for (IJavadocCompletionProcessor curr : getContributedProcessors()) {
 				IContextInformation[] contextInfos= curr.computeContextInformation(cu, offset);
 				if (contextInfos != null) {
-					for (int k= 0; k < contextInfos.length; k++) {
-						result.add(contextInfos[k]);
-					}
+					result.addAll(Arrays.asList(contextInfos));
 				} else if (error == null) {
 					error= curr.getErrorMessage();
 				}
@@ -120,22 +116,18 @@ public class LegacyJavadocCompletionProposalComputer implements IJavaCompletionP
 			ICompilationUnit cu= javaContext.getCompilationUnit();
 			int offset= javaContext.getInvocationOffset();
 			int length= javaContext.getSelectionLength();
-			Point selection= javaContext.getViewer().getSelectedRange();
-			if (selection.y > 0) {
-				offset= selection.x;
-				length= selection.y;
+			ITextSelection selection= javaContext.getTextSelection();
+			if (selection != null && selection.getLength() > 0) {
+				offset= selection.getOffset();
+				length= selection.getLength();
 			}
 
 			ArrayList<ICompletionProposal> result= new ArrayList<>();
 
-			IJavadocCompletionProcessor[] processors= getContributedProcessors();
-			for (int i= 0; i < processors.length; i++) {
-				IJavadocCompletionProcessor curr= processors[i];
+			for (IJavadocCompletionProcessor curr : getContributedProcessors()) {
 				IJavaCompletionProposal[] proposals= curr.computeCompletionProposals(cu, offset, length, javaContext.getFlags());
 				if (proposals != null) {
-					for (int k= 0; k < proposals.length; k++) {
-						result.add(proposals[k]);
-					}
+					result.addAll(Arrays.asList(proposals));
 				}
 			}
 			return result;

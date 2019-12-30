@@ -222,7 +222,7 @@ public class PropertiesFileEditor extends TextEditor {
 			return (T) new IShowInTargetList() {
 				@Override
 				public String[] getShowInTargetIds() {
-					return new String[] { JavaUI.ID_PACKAGES, JavaPlugin.ID_RES_NAV };
+					return new String[] { JavaUI.ID_PACKAGES };
 				}
 
 			};
@@ -330,9 +330,9 @@ public class PropertiesFileEditor extends TextEditor {
 			return null;
 
 		ICompilationUnit[] compilationUnits= ((IPackageFragment) javaElement).getCompilationUnits();
-		for (int i= 0; i < compilationUnits.length; i++) {
-			if (evaluateCU(compilationUnits[i], fFile)) {
-				return compilationUnits[i].getTypes()[0];
+		for (ICompilationUnit compilationUnit : compilationUnits) {
+			if (evaluateCU(compilationUnit, fFile)) {
+				return compilationUnit.getTypes()[0];
 			}
 			if (pm != null && pm.isCanceled()) {
 				return null;

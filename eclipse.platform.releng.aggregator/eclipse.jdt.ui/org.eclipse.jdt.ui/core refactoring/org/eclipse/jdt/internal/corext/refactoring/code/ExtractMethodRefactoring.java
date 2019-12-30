@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -135,7 +135,7 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 
 import org.eclipse.jdt.ui.JavaElementLabels;
 
-import org.eclipse.jdt.internal.ui.text.correction.ModifierCorrectionSubProcessor;
+import org.eclipse.jdt.internal.ui.text.correction.ModifierCorrectionSubProcessorCore;
 import org.eclipse.jdt.internal.ui.viewsupport.BindingLabelProvider;
 
 /**
@@ -523,7 +523,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 				LinkedProposalPositionGroup nameGroup= fLinkedProposalModel.getPositionGroup(KEY_NAME, true);
 				nameGroup.addPosition(fRewriter.track(mm.getName()), false);
 
-				ModifierCorrectionSubProcessor.installLinkedVisibilityProposals(fLinkedProposalModel, fRewriter, mm.modifiers(), false);
+				ModifierCorrectionSubProcessorCore.installLinkedVisibilityProposals(fLinkedProposalModel, fRewriter, mm.modifiers(), false);
 			}
 
 			TextEditGroup insertDesc= new TextEditGroup(Messages.format(RefactoringCoreMessages.ExtractMethodRefactoring_add_method, BasicElementLabels.getJavaElementName(fMethodName)));
@@ -574,7 +574,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 					}
 					fOpenLoopLabels.add(identifier);
 				}
-				
+
 				@Override
 				public boolean visit(ForStatement node) {
 					registerLoopLabel(node);
@@ -817,7 +817,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 						} else if (originalReturnTypeBinding != null && duplicateReturnTypeBinding != null) {
 							if (!originalReturnTypeBinding.equals(duplicateReturnTypeBinding)) {
 								if (duplicateReturnTypeBinding.equals(startNode.getAST().resolveWellKnownType("void"))) { //$NON-NLS-1$
-									// extracted snippet returns non-void and duplicate snippet returns void => OK 
+									// extracted snippet returns non-void and duplicate snippet returns void => OK
 									validDuplicates.add(duplicate);
 								}
 							} else {
@@ -840,7 +840,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 										} else {
 											matches= matchesLocationInEnclosingBodyDecl(originalEnclosingBodyDeclaration, duplicateEnclosingBodyDeclaration, originalReturnNode, duplicateReturnNode);
 										}
-										
+
 										if (matches) {
 											validDuplicates.add(duplicate);
 										}
@@ -1016,13 +1016,6 @@ public class ExtractMethodRefactoring extends Refactoring {
 			call= fAST.newExpressionStatement((Expression)call);
 		}
 		result.add(call);
-
-		// We have a void return statement. The code looks like
-		// extracted();
-		// return;
-		if (returnKind == ExtractMethodAnalyzer.RETURN_STATEMENT_VOID && !fAnalyzer.isLastStatementSelected()) {
-			result.add(fAST.newReturnStatement());
-		}
 		return result.toArray(new ASTNode[result.size()]);
 	}
 
@@ -1067,7 +1060,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 			}
 		}
 	}
-	
+
 	private boolean forceStatic(){
 		if(!fReplaceDuplicates){
 			return false;
@@ -1145,7 +1138,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 		result.modifiers().addAll(ASTNodeFactory.newModifiers(fAST, modifiers));
 		result.setReturnType2((Type)ASTNode.copySubtree(fAST, fAnalyzer.getReturnType()));
 		result.setName(fAST.newSimpleName(fMethodName));
-		
+
 		ImportRewriteContext context= new ContextSensitiveImportRewriteContext(enclosingBodyDeclaration, fImportRewriter);
 
 		List<SingleVariableDeclaration> parameters= result.parameters();
@@ -1262,16 +1255,25 @@ public class ExtractMethodRefactoring extends Refactoring {
 			}
 			fRewriter.replace(selectedNodes[0].getParent() instanceof ParenthesizedExpression ? selectedNodes[0].getParent() : selectedNodes[0], replacementNode, substitute);
 		} else {
+			boolean isReturnVoid= selectedNodes[selectedNodes.length - 1] instanceof ReturnStatement &&
+					fAnalyzer.getReturnTypeBinding().equals(fAST.resolveWellKnownType("void")); //$NON-NLS-1$
 			if (selectedNodes.length == 1) {
-				statements.insertLast(fRewriter.createMoveTarget(selectedNodes[0]), substitute);
+				if (!isReturnVoid) {
+					statements.insertLast(fRewriter.createMoveTarget(selectedNodes[0]), substitute);
+				}
 				fRewriter.replace(selectedNodes[0], replacementNode, substitute);
-			} else {
+			} else if (selectedNodes.length > 1) {
+				if (isReturnVoid) {
+					fRewriter.remove(selectedNodes[selectedNodes.length - 1], substitute);
+				}
 				ListRewrite source= fRewriter.getListRewrite(
-					selectedNodes[0].getParent(),
-					(ChildListPropertyDescriptor)selectedNodes[0].getLocationInParent());
+						selectedNodes[0].getParent(),
+						(ChildListPropertyDescriptor) selectedNodes[0].getLocationInParent());
+				// if last statement is a void return statement then we skip it
+				int index= isReturnVoid ? selectedNodes.length - 2 : selectedNodes.length - 1;
 				ASTNode toMove= source.createMoveTarget(
-					selectedNodes[0], selectedNodes[selectedNodes.length - 1],
-					replacementNode, substitute);
+						selectedNodes[0], selectedNodes[index],
+						replacementNode, substitute);
 				statements.insertLast(toMove, substitute);
 			}
 			IVariableBinding returnValue= fAnalyzer.getReturnValue();

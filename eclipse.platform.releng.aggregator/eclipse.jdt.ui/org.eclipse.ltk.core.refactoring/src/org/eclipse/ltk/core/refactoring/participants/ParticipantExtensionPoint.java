@@ -120,10 +120,7 @@ public class ParticipantExtensionPoint {
 					} else {
 						status.merge(filterStatus);
 					}
-				} catch (CoreException e) {
-					logMalfunctioningParticipant(status, descriptor, e);
-					iter.remove();
-				} catch (RuntimeException e) {
+				} catch (CoreException | RuntimeException e) {
 					logMalfunctioningParticipant(status, descriptor, e);
 					iter.remove();
 				}
@@ -144,8 +141,8 @@ public class ParticipantExtensionPoint {
 		IExtensionRegistry registry= Platform.getExtensionRegistry();
 		IConfigurationElement[] ces= registry.getConfigurationElementsFor(fPluginId, fParticipantID);
 		fParticipants= new ArrayList<>(ces.length);
-		for (int i= 0; i < ces.length; i++) {
-			ParticipantDescriptor descriptor= new ParticipantDescriptor(ces[i]);
+		for (IConfigurationElement ce : ces) {
+			ParticipantDescriptor descriptor= new ParticipantDescriptor(ce);
 			IStatus status= descriptor.checkSyntax();
 			switch (status.getSeverity()) {
 				case IStatus.ERROR:

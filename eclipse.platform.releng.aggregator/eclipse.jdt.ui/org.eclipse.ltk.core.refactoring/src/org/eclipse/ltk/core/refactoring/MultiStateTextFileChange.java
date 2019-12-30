@@ -127,16 +127,18 @@ public class MultiStateTextFileChange extends TextEditBasedChange {
 			super(change, group);
 
 			final TextEdit[] edits= group.getTextEdits();
-			for (int index= 0; index < edits.length; index++)
-				cacheEdit(edits[index]);
+			for (TextEdit edit : edits) {
+				cacheEdit(edit);
+			}
 		}
 
 		private final void cacheEdit(final TextEdit edit) {
 			fEdits.add(edit);
 
 			final TextEdit[] edits= edit.getChildren();
-			for (int index= 0; index < edits.length; index++)
-				cacheEdit(edits[index]);
+			for (TextEdit e : edits) {
+				cacheEdit(e);
+			}
 		}
 
 		private final boolean containsEdit(final TextEdit edit) {
@@ -311,11 +313,9 @@ public class MultiStateTextFileChange extends TextEditBasedChange {
 		final TextEditBasedChangeGroup[] groups= change.getChangeGroups();
 		final List<TextEditBasedChangeGroup> list= new ArrayList<>(groups.length);
 
-		for (int index= 0; index < groups.length; index++) {
-
-			final TextEditBasedChangeGroup group= new ComposableBufferChangeGroup(this, groups[index].getTextEditGroup());
+		for (TextEditBasedChangeGroup g : groups) {
+			final TextEditBasedChangeGroup group= new ComposableBufferChangeGroup(this, g.getTextEditGroup());
 			list.add(group);
-
 			addChangeGroup(group);
 		}
 		result.setGroups(list);
@@ -579,9 +579,7 @@ public class MultiStateTextFileChange extends TextEditBasedChange {
 					try {
 
 						final Position[] positions= event.getDocument().getPositions(COMPOSABLE_POSITION_CATEGORY);
-						for (int index= 0; index < positions.length; index++) {
-
-							final Position position= positions[index];
+						for (Position position : positions) {
 							if (position.isDeleted())
 								continue;
 
@@ -657,7 +655,7 @@ public class MultiStateTextFileChange extends TextEditBasedChange {
 						ComposableEditPosition position= new ComposableEditPosition();
 						if (cachedGroups.contains(edit.getGroup())) {
 
-							if (text == null || text.equals("")) { //$NON-NLS-1$
+							if (text == null || text.isEmpty()) {
 								position.offset= offset;
 								if (length != 0) {
 									// Undo is a delete, create final insert
@@ -709,9 +707,8 @@ public class MultiStateTextFileChange extends TextEditBasedChange {
 					document.addPositionUpdater(markerUpdater);
 					document.addPosition(MARKER_POSITION_CATEGORY, range);
 
-					for (int index= 0; index < positions.length; index++) {
-						final ComposableEditPosition position= (ComposableEditPosition) positions[index];
-
+					for (Position p : positions) {
+						final ComposableEditPosition position= (ComposableEditPosition) p;
 						document.replace(position.offset, position.length, position.getText() != null ? position.getText() : ""); //$NON-NLS-1$
 					}
 
@@ -739,9 +736,7 @@ public class MultiStateTextFileChange extends TextEditBasedChange {
 
 			return getContent(document, new Region(range.offset, range.length), expand, surround);
 
-		} catch (MalformedTreeException exception) {
-			RefactoringCorePlugin.log(exception);
-		} catch (BadLocationException exception) {
+		} catch (MalformedTreeException | BadLocationException exception) {
 			RefactoringCorePlugin.log(exception);
 		}
 		return getPreviewDocument(monitor).get();

@@ -252,7 +252,7 @@ public final class ExtractSupertypeProcessor extends PullUpRefactoringProcessor 
 	 * @return the destination type
 	 */
 	public IType computeExtractedType(final String name) {
-		if (name != null && !name.equals("")) {//$NON-NLS-1$
+		if (name != null && !name.isEmpty()) {
 			final IType declaring= getDeclaringType();
 			try {
 				final ICompilationUnit[] units= declaring.getPackageFragment().getCompilationUnits(fOwner);
@@ -513,6 +513,8 @@ public final class ExtractSupertypeProcessor extends PullUpRefactoringProcessor 
 				final ITypeBinding superBinding= binding.getSuperclass();
 				if (superBinding != null)
 					fTypeBindings.add(superBinding);
+				ITypeBinding[] typeParameters= binding.getTypeParameters();
+				Collections.addAll(fTypeBindings, typeParameters);
 				final ITypeBinding[] bindings= binding.getInterfaces();
 				Collections.addAll(fTypeBindings, bindings);
 			}
@@ -524,7 +526,7 @@ public final class ExtractSupertypeProcessor extends PullUpRefactoringProcessor 
 			source= createTypeTemplate(extractedWorkingCopy, "", fileComment, "", buffer.toString()); //$NON-NLS-1$ //$NON-NLS-2$
 			if (source == null) {
 				if (!declaring.getPackageFragment().isDefaultPackage()) {
-					if (imports.length() > 0)
+					if (imports != null && imports.length() > 0)
 						buffer.insert(0, imports);
 					buffer.insert(0, "package " + declaring.getPackageFragment().getElementName() + ";"); //$NON-NLS-1$//$NON-NLS-2$
 				}

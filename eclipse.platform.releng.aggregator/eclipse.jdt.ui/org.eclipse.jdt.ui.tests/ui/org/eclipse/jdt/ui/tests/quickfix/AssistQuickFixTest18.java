@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corporation and others.
+ * Copyright (c) 2013, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -41,6 +41,7 @@ import org.eclipse.jdt.internal.corext.fix.FixMessages;
 import org.eclipse.jdt.ui.PreferenceConstants;
 import org.eclipse.jdt.ui.tests.core.Java18ProjectTestSetup;
 import org.eclipse.jdt.ui.text.java.IJavaCompletionProposal;
+import org.eclipse.jdt.ui.text.java.correction.CUCorrectionProposal;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.text.correction.AssistContext;
@@ -4500,6 +4501,72 @@ public class AssistQuickFixTest18 extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1 });
 	}
 
+	public void testConvertLambdaToMethodReference5() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf1= new StringBuilder();
+		buf1.append("package test1;\n");
+		buf1.append("public interface I {\n");
+		buf1.append("    public default void i1() {\n");
+		buf1.append("    }\n");
+		buf1.append("    void i2();\n");
+		buf1.append("    \n");
+		buf1.append("    class E5 implements I {\n");
+		buf1.append("        Thread o1 = new Thread(() ->/*[1]*/ i1());\n");
+		buf1.append("        Thread o2 = new Thread(() ->/*[2]*/ i2());\n");
+		buf1.append("        public void i2() {\n");
+		buf1.append("        }\n");
+		buf1.append("    }\n");
+		buf1.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("I.java", buf1.toString(), false, null);
+
+
+		int offset= buf1.toString().indexOf("->/*[1]*/");
+		AssistContext context= getCorrectionContext(cu, offset, 0);
+		assertNoErrors(context);
+		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
+		assertNumberOfProposals(proposals, 3);
+		assertCorrectLabels(proposals);
+		StringBuffer buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("public interface I {\n");
+		buf.append("    public default void i1() {\n");
+		buf.append("    }\n");
+		buf.append("    void i2();\n");
+		buf.append("    \n");
+		buf.append("    class E5 implements I {\n");
+		buf.append("        Thread o1 = new Thread(this::i1);\n");
+		buf.append("        Thread o2 = new Thread(() ->/*[2]*/ i2());\n");
+		buf.append("        public void i2() {\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		String expected1= buf.toString();
+		assertExpectedExistInProposals(proposals, new String[] { expected1 });
+
+		offset= buf1.toString().indexOf("->/*[2]*/");
+		context= getCorrectionContext(cu, offset, 0);
+		assertNoErrors(context);
+		proposals= collectAssists(context, false);
+		assertNumberOfProposals(proposals, 3);
+		assertCorrectLabels(proposals);
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("public interface I {\n");
+		buf.append("    public default void i1() {\n");
+		buf.append("    }\n");
+		buf.append("    void i2();\n");
+		buf.append("    \n");
+		buf.append("    class E5 implements I {\n");
+		buf.append("        Thread o1 = new Thread(() ->/*[1]*/ i1());\n");
+		buf.append("        Thread o2 = new Thread(this::i2);\n");
+		buf.append("        public void i2() {\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		expected1= buf.toString();
+		assertExpectedExistInProposals(proposals, new String[] { expected1 });
+	}
+
 	public void testFixParenthesesInLambdaExpressionAdd() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf1= new StringBuilder();
@@ -5321,4 +5388,101 @@ public class AssistQuickFixTest18 extends QuickFixTest {
 			NullTestUtils.disableAnnotationBasedNullAnalysis(fSourceFolder);
 		}
 	}
+
+	public void testSurroundWithTryWithResource() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("p", false, null);
+		StringBuffer bufOrg= new StringBuffer();
+		bufOrg.append("package p;\n");
+		bufOrg.append("\n");
+		bufOrg.append("import java.io.IOException;\n");
+		bufOrg.append("import java.io.InputStream;\n");
+		bufOrg.append("import java.net.Socket;\n");
+		bufOrg.append("\n");
+		bufOrg.append("public class E {\n");
+		bufOrg.append("    public void foo() throws IOException {\n");
+		bufOrg.append("        /*1*/Socket s = new Socket(), s2 = new Socket();\n");
+		bufOrg.append("        /*2*/InputStream is = s.getInputStream();\n");
+		bufOrg.append("        /*3*/int i = 0;\n");
+		bufOrg.append("        System.out.println(s.getInetAddress().toString());\n");
+		bufOrg.append("        System.out.println(is.markSupported());/*0*/\n");
+		bufOrg.append("    }\n");
+		bufOrg.append("}\n");
+		bufOrg.append("\n");
+
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", bufOrg.toString(), false, null);
+		String strEnd= "/*0*/";
+
+		String str1= "/*1*/";
+		AssistContext context= getCorrectionContext(cu, bufOrg.toString().indexOf(str1), bufOrg.toString().indexOf(strEnd) - bufOrg.toString().indexOf(str1));
+		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
+
+		assertNumberOfProposals(proposals, 4);
+		assertCorrectLabels(proposals);
+
+		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
+		String preview1= getPreviewContent(proposal);
+
+		StringBuffer buf= new StringBuffer();
+		buf.append("package p;\n");
+		buf.append("\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("import java.io.InputStream;\n");
+		buf.append("import java.net.Socket;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() throws IOException {\n");
+		buf.append("        try (/*1*/Socket s = new Socket();\n");
+		buf.append("                Socket s2 = new Socket();\n");
+		buf.append("                /*2*/InputStream is = s.getInputStream()) {\n");
+		buf.append("            /*3*/int i = 0;\n");
+		buf.append("            System.out.println(s.getInetAddress().toString());\n");
+		buf.append("            System.out.println(is.markSupported());/*0*/\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		buf.append("\n");
+		String expected1= buf.toString();
+
+		assertEqualStringsIgnoreOrder(new String[] { preview1 }, new String[] { expected1 });
+
+		str1= "/*2*/";
+		context= getCorrectionContext(cu, bufOrg.toString().indexOf(str1), bufOrg.toString().indexOf(strEnd) - bufOrg.toString().indexOf(str1));
+		proposals= collectAssists(context, false);
+
+		assertNumberOfProposals(proposals, 4);
+		assertCorrectLabels(proposals);
+
+		proposal= (CUCorrectionProposal) proposals.get(0);
+		String preview2= getPreviewContent(proposal);
+
+		buf= new StringBuffer();
+		buf.append("package p;\n");
+		buf.append("\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("import java.io.InputStream;\n");
+		buf.append("import java.net.Socket;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() throws IOException {\n");
+		buf.append("        /*1*/Socket s = new Socket(), s2 = new Socket();\n");
+		buf.append("        try (/*2*/InputStream is = s.getInputStream()) {\n");
+		buf.append("            /*3*/int i = 0;\n");
+		buf.append("            System.out.println(s.getInetAddress().toString());\n");
+		buf.append("            System.out.println(is.markSupported());/*0*/\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		buf.append("\n");
+		String expected2= buf.toString();
+
+		assertEqualStringsIgnoreOrder(new String[] { preview2 }, new String[] { expected2 });
+
+		str1= "/*3*/";
+		context= getCorrectionContext(cu, bufOrg.toString().indexOf(str1), bufOrg.toString().indexOf(strEnd) - bufOrg.toString().indexOf(str1));
+		proposals= collectAssists(context, false);
+
+		assertNumberOfProposals(proposals, 3);
+		assertCorrectLabels(proposals);
+	}
+
 }

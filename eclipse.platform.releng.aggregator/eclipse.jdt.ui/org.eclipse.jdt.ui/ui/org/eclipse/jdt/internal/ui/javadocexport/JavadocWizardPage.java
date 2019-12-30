@@ -102,7 +102,7 @@ public abstract class JavadocWizardPage extends NewElementWizardPage {
 		dialog.setText(title);
 		dialog.setFilterExtensions(extensions);
 		String dirName= text.getText();
-		if (!dirName.equals("")) { //$NON-NLS-1$
+		if (!dirName.isEmpty()) {
 			File path= new File(dirName);
 			if (path.exists())
 				dialog.setFilterPath(dirName);
@@ -139,11 +139,11 @@ public abstract class JavadocWizardPage extends NewElementWizardPage {
 
 		@Override
 		public void widgetSelected(SelectionEvent e) {
-			for (int i= 0; i < fEnable.length; i++) {
-				fEnable[i].setEnabled(true);
+			for (Control en : fEnable) {
+				en.setEnabled(true);
 			}
-			for (int i= 0; i < fDisable.length; i++) {
-				fDisable[i].setEnabled(false);
+			for (Control di : fDisable) {
+				di.setEnabled(false);
 			}
 			validate();
 		}
@@ -163,8 +163,7 @@ public abstract class JavadocWizardPage extends NewElementWizardPage {
 		@Override
 		public void widgetSelected(SelectionEvent e) {
 
-			for (int i= 0; i < controls.length; i++) {
-				Control control= controls[i];
+			for (Control control : controls) {
 				control.setEnabled(!control.getEnabled());
 			}
 			validate();

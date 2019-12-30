@@ -396,29 +396,32 @@ public final class StubUtility2Core {
 			if (bodyStatement != null) {
 				StringBuilder placeHolder= new StringBuilder();
 				if (snippetStringSupport) {
-					placeHolder.append("${0"); //$NON-NLS-1$
-					if (!bodyStatement.isEmpty()) {
-						placeHolder.append(":"); //$NON-NLS-1$
-					}
 					final String ESCAPE_DOLLAR= "\\\\\\$"; //$NON-NLS-1$
 					final String DOLLAR= "\\$"; //$NON-NLS-1$
-
 					bodyStatement= bodyStatement.replaceAll(DOLLAR, ESCAPE_DOLLAR);
 				}
 				String bodyContent= CodeGeneration.getMethodBodyContent(unit, type, binding.getName(), false, bodyStatement, delimiter);
-				if (bodyContent != null) {
-					placeHolder.append(bodyContent);
-				}
+
 				if (snippetStringSupport) {
+					placeHolder.append("${0"); //$NON-NLS-1$
+					if (bodyContent != null) {
+						placeHolder.append(":"); //$NON-NLS-1$
+						placeHolder.append(bodyContent);
+					}
 					placeHolder.append("}"); //$NON-NLS-1$
+				} else {
+					if (bodyContent != null) {
+						placeHolder.append(bodyContent);
+					}
 				}
+
 				if (bodyContent != null || snippetStringSupport) {
 					ReturnStatement todoNode= (ReturnStatement) rewrite.createStringPlaceholder(placeHolder.toString(), ASTNode.RETURN_STATEMENT);
 					body.statements().add(todoNode);
 				}
 			}
 		}
-		
+
 		if (settings != null && settings.createComments) {
 			String string= CodeGeneration.getMethodComment(unit, type, decl, binding, delimiter);
 			if (string != null) {
@@ -683,8 +686,7 @@ public final class StubUtility2Core {
 		final List<DelegateEntry> tuples= new ArrayList<>();
 		final List<IMethodBinding> declared= new ArrayList<>();
 		IMethodBinding[] typeMethods= binding.getDeclaredMethods();
-		for (int index= 0; index < typeMethods.length; index++)
-			declared.add(typeMethods[index]);
+		declared.addAll(Arrays.asList(typeMethods));
 		IVariableBinding[] typeFields= binding.getDeclaredFields();
 		for (int index= 0; index < typeFields.length; index++) {
 			IVariableBinding fieldBinding= typeFields[index];

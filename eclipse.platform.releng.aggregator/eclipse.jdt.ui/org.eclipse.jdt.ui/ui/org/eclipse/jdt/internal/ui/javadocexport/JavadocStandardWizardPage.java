@@ -20,7 +20,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.swt.SWT;
@@ -148,7 +147,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 		SWTUtil.setAccessibilityText(fTitleText, JavadocExportMessages.JavadocStandardWizardPage_titlebutton_description);
 
 		String text= fStore.getTitle();
-		if (!text.equals("")) { //$NON-NLS-1$
+		if (!text.isEmpty()) {
 			fTitleText.setText(text);
 			fTitleButton.setSelection(true);
 		} else
@@ -205,7 +204,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 		SWTUtil.setButtonDimensionHint(fStyleSheetBrowseButton);
 
 		String str= fStore.getStyleSheet();
-		if (str.equals("")) { //$NON-NLS-1$
+		if (str.isEmpty()) {
 			//default
 			fStyleSheetText.setEnabled(false);
 			fStyleSheetBrowseButton.setEnabled(false);
@@ -271,11 +270,8 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 		String hrefs[]= fStore.getHRefs();
 		if (hrefs.length > 0) {
 			HashSet<String> set= new HashSet<>();
-			for (int i= 0; i < hrefs.length; i++) {
-				set.add(hrefs[i]);
-			}
-			for (int i = 0; i < referencesClasses.length; i++) {
-				JavadocLinkRef curr= referencesClasses[i];
+			set.addAll(Arrays.asList(hrefs));
+			for (JavadocLinkRef curr : referencesClasses) {
 				URL url= curr.getURL();
 				if (url != null && set.contains(url.toExternalForm())) {
 					checkedElements.add(curr);
@@ -294,8 +290,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 	 */
 	private JavadocLinkRef[] getReferencedElements(IJavaProject[] checkedProjects) {
 		HashSet<JavadocLinkRef> result= new HashSet<>();
-		for (int i= 0; i < checkedProjects.length; i++) {
-			IJavaProject project= checkedProjects[i];
+		for (IJavaProject project : checkedProjects) {
 			try {
 				collectReferencedElements(project, result);
 			} catch (CoreException e) {
@@ -307,15 +302,11 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 	}
 
 	private void collectReferencedElements(IJavaProject project, HashSet<JavadocLinkRef> result) throws CoreException {
-		IRuntimeClasspathEntry[] unresolved = JavaRuntime.computeUnresolvedRuntimeClasspath(project);
-		for (int i= 0; i < unresolved.length; i++) {
-			IRuntimeClasspathEntry curr= unresolved[i];
+		for (IRuntimeClasspathEntry curr : JavaRuntime.computeUnresolvedRuntimeClasspath(project)) {
 			if (curr.getType() == IRuntimeClasspathEntry.PROJECT) {
 				result.add(new JavadocLinkRef(JavaCore.create((IProject) curr.getResource())));
 			} else {
-				IRuntimeClasspathEntry[] entries= JavaRuntime.resolveRuntimeClasspathEntry(curr, project);
-				for (int k = 0; k < entries.length; k++) {
-					IRuntimeClasspathEntry entry= entries[k];
+				for (IRuntimeClasspathEntry entry : JavaRuntime.resolveRuntimeClasspathEntry(curr, project)) {
 					if (entry.getType() == IRuntimeClasspathEntry.PROJECT) {
 						result.add(new JavadocLinkRef(JavaCore.create((IProject) entry.getResource())));
 					} else if (entry.getType() == IRuntimeClasspathEntry.ARCHIVE) {
@@ -384,9 +375,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 		else
 			fStore.setTitle(""); //$NON-NLS-1$
 
-		Object[] buttons= fButtonsList.toArray();
-		for (int i= 0; i < buttons.length; i++) {
-			FlaggedButton button= (FlaggedButton) buttons[i];
+		for (FlaggedButton button : fButtonsList) {
 			if (button.getButton().getEnabled())
 				fStore.setBoolean(button.getFlag(), !(button.getButton().getSelection() ^ button.show()));
 			else
@@ -403,9 +392,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 
 	private String[] getHRefs() {
 		HashSet<String> res= new HashSet<>();
-		List<JavadocLinkRef> checked= fListDialogField.getCheckedElements();
-		for (Iterator<JavadocLinkRef> iterator= checked.iterator(); iterator.hasNext();) {
-			JavadocLinkRef element= iterator.next();
+		for (JavadocLinkRef element : fListDialogField.getCheckedElements()) {
 			URL url= element.getURL();
 			if (url != null) {
 				res.add(url.toExternalForm());

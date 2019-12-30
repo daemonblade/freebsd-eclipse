@@ -302,8 +302,9 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.ServiceImplDefaultConstructorNotPublic:
 			case IProblem.PreviewFeatureDisabled:
 			case IProblem.PreviewFeatureNotSupported:
-			case IProblem.SwitchExpressionMissingEnumConstantCase:
-			case IProblem.SwitchExpressionMissingDefaultCase:
+			case IProblem.SwitchExpressionsYieldMissingEnumConstantCase:
+			case IProblem.SwitchExpressionsYieldMissingDefaultCase:
+			case IProblem.PreviewFeaturesNotAllowed:
 			case IProblem.UninitializedBlankFinalField:
 				return true;
 			default:
@@ -336,8 +337,7 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 
 		HashSet<Integer> handledProblems= new HashSet<>(locations.length);
 		ArrayList<ICommandAccess> resultingCollections= new ArrayList<>();
-		for (int i= 0; i < locations.length; i++) {
-			IProblemLocation curr= locations[i];
+		for (IProblemLocation curr : locations) {
 			Integer id= Integer.valueOf(curr.getProblemId());
 			if (handledProblems.add(id)) {
 				process(context, curr, resultingCollections);
@@ -732,11 +732,11 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 				break;
 			case IProblem.MissingEnumConstantCase:
 			case IProblem.MissingEnumDefaultCase:
-			case IProblem.SwitchExpressionMissingEnumConstantCase:
+			case IProblem.SwitchExpressionsYieldMissingEnumConstantCase:
 				LocalCorrectionsSubProcessor.getMissingEnumConstantCaseProposals(context, problem, proposals);
 				break;
 			case IProblem.MissingDefaultCase:
-			case IProblem.SwitchExpressionMissingDefaultCase:
+			case IProblem.SwitchExpressionsYieldMissingDefaultCase:
 				LocalCorrectionsSubProcessor.addMissingDefaultCaseProposal(context, problem, proposals);
 				break;
 			case IProblem.MissingEnumConstantCaseDespiteDefault:
@@ -857,6 +857,7 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 				PreviewFeaturesSubProcessor.getOpenCompliancePageToEnablePreviewFeaturesProposal(context, proposals);
 				break;
 			case IProblem.PreviewFeatureNotSupported:
+			case IProblem.PreviewFeaturesNotAllowed:
 				PreviewFeaturesSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals);
 				break;
 			default:

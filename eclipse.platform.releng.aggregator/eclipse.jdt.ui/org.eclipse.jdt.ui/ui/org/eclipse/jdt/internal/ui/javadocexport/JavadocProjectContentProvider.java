@@ -14,6 +14,7 @@
 package org.eclipse.jdt.internal.ui.javadocexport;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -104,15 +105,11 @@ public class JavadocProjectContentProvider implements ITreeContentProvider {
 	private Object[] getPackageFragmentRoots(IJavaProject project) throws JavaModelException {
 		ArrayList<Object> result= new ArrayList<>();
 
-		IPackageFragmentRoot[] roots= project.getPackageFragmentRoots();
-		for (int i= 0; i < roots.length; i++) {
-			IPackageFragmentRoot root= roots[i];
+		for (IPackageFragmentRoot root : project.getPackageFragmentRoots()) {
 			if (root.getKind() == IPackageFragmentRoot.K_SOURCE) {
 				if (root.getPath().equals(root.getJavaProject().getPath())) {
 					Object[] packageFragments= getPackageFragments(root);
-					for (int k= 0; k < packageFragments.length; k++) {
-						result.add(packageFragments[k]);
-					}
+					result.addAll(Arrays.asList(packageFragments));
 				} else {
 					result.add(root);
 				}
@@ -124,10 +121,10 @@ public class JavadocProjectContentProvider implements ITreeContentProvider {
 	private Object[] getPackageFragments(IPackageFragmentRoot root) throws JavaModelException {
 		ArrayList<IJavaElement> packageFragments= new ArrayList<>();
 
-		IJavaElement[] children= root.getChildren();
-		for (int i= 0; i < children.length; i++) {
-			if (((IPackageFragment) children[i]).containsJavaResources())
-				packageFragments.add(children[i]);
+		for (IJavaElement child : root.getChildren()) {
+			if (((IPackageFragment) child).containsJavaResources()) {
+				packageFragments.add(child);
+			}
 		}
 		return packageFragments.toArray();
 	}

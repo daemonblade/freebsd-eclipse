@@ -3709,1298 +3709,6 @@ public class CleanUpTest extends CleanUpTestCase {
 		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
 	}
 
-	public void testJava50ForLoop01() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.ArrayList;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        List<E1> list= new ArrayList<E1>();\n");
-		buf.append("        for (Iterator<E1> iter = list.iterator(); iter.hasNext();) {\n");
-		buf.append("            E1 e = iter.next();\n");
-		buf.append("            System.out.println(e);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.ArrayList;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        List<E1> list= new ArrayList<E1>();\n");
-		buf.append("        for (E1 e : list) {\n");
-		buf.append("            System.out.println(e);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop02() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.ArrayList;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        List<E1> list1= new ArrayList<E1>();\n");
-		buf.append("        List<E1> list2= new ArrayList<E1>();\n");
-		buf.append("        for (Iterator<E1> iter = list1.iterator(); iter.hasNext();) {\n");
-		buf.append("            E1 e1 = iter.next();\n");
-		buf.append("            for (Iterator iterator = list2.iterator(); iterator.hasNext();) {\n");
-		buf.append("                E1 e2 = (E1) iterator.next();\n");
-		buf.append("                System.out.println(e2);\n");
-		buf.append("            }\n");
-		buf.append("            System.out.println(e1);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.ArrayList;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        List<E1> list1= new ArrayList<E1>();\n");
-		buf.append("        List<E1> list2= new ArrayList<E1>();\n");
-		buf.append("        for (E1 e1 : list1) {\n");
-		buf.append("            for (Object element : list2) {\n");
-		buf.append("                E1 e2 = (E1) element;\n");
-		buf.append("                System.out.println(e2);\n");
-		buf.append("            }\n");
-		buf.append("            System.out.println(e1);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop03() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        int[] array={1,2,3,4};\n");
-		buf.append("        for (int i=0;i<array.length;i++) {\n");
-		buf.append("            String[] strs={\"1\",\"2\"};\n");
-		buf.append("            for (int j = 0; j < strs.length; j++) {\n");
-		buf.append("                System.out.println(array[i]+strs[j]);\n");
-		buf.append("            }\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        int[] array={1,2,3,4};\n");
-		buf.append("        for (int element : array) {\n");
-		buf.append("            String[] strs={\"1\",\"2\"};\n");
-		buf.append("            for (String str : strs) {\n");
-		buf.append("                System.out.println(element+str);\n");
-		buf.append("            }\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop04() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        int[] array= new int[10];\n");
-		buf.append("        for (int i = 0; i < array.length; i++) {\n");
-		buf.append("            for (int j = 0; j < array.length; j++) {\n");
-		buf.append("                for (int k = 0; k < array.length; k++) {\n");
-		buf.append("                }\n");
-		buf.append("                for (int k = 0; k < array.length; k++) {\n");
-		buf.append("                }\n");
-		buf.append("            }\n");
-		buf.append("            for (int j = 0; j < array.length; j++) {\n");
-		buf.append("            }\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        int[] array= new int[10];\n");
-		buf.append("        for (int element : array) {\n");
-		buf.append("            for (int element2 : array) {\n");
-		buf.append("                for (int element3 : array) {\n");
-		buf.append("                }\n");
-		buf.append("                for (int element3 : array) {\n");
-		buf.append("                }\n");
-		buf.append("            }\n");
-		buf.append("            for (int element2 : array) {\n");
-		buf.append("            }\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop05() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        int[] array= null;\n");
-		buf.append("        for (int i = 0; --i < array.length;) {}\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		assertRefactoringHasNoChange(new ICompilationUnit[] {cu1});
-	}
-
-	public void testJava50ForLoop06() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        int a= 0;\n");
-		buf.append("        for (a=0;a>0;a++) {}\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		assertRefactoringHasNoChange(new ICompilationUnit[] {cu1});
-	}
-
-	public void testJava50ForLoop07() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        int a= 0;\n");
-		buf.append("        for (a=0;;a++) {}\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		assertRefactoringHasNoChange(new ICompilationUnit[] {cu1});
-	}
-
-	public void testJava50ForLoop08() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        int[] array= null;\n");
-		buf.append("        int a= 0;\n");
-		buf.append("        for (;a<array.length;a++) {}\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		assertRefactoringHasNoChange(new ICompilationUnit[] {cu1});
-	}
-
-	public void testJava50ForLoop09() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        int[] array= null;\n");
-		buf.append("        for (int i = 0; i < array.length; i++) {\n");
-		buf.append("            final int element= array[i];\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        int[] array= null;\n");
-		buf.append("        for (final int element : array) {\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop10() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        int[] array= null;\n");
-		buf.append("        int i;\n");
-		buf.append("        for (i = 0; i < array.length; i++) {}\n");
-		buf.append("        System.out.println(i);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		assertRefactoringHasNoChange(new ICompilationUnit[] {cu1});
-	}
-
-	public void testJava50ForLoop11() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    private class E1Sub {\n");
-		buf.append("        public int[] array;\n");
-		buf.append("    }\n");
-		buf.append("    private E1Sub e1sub;\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        for (int i = 0; i < this.e1sub.array.length; i++) {\n");
-		buf.append("            System.out.println(this.e1sub.array[i]);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    private class E1Sub {\n");
-		buf.append("        public int[] array;\n");
-		buf.append("    }\n");
-		buf.append("    private E1Sub e1sub;\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        for (int element : this.e1sub.array) {\n");
-		buf.append("            System.out.println(element);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop12() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public int[] array;\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        for (int i = 0; i < this.array.length; i++) {\n");
-		buf.append("            System.out.println(this.array[i]);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public int[] array;\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        for (int element : this.array) {\n");
-		buf.append("            System.out.println(element);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop13() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public int[] array1, array2;\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        for (int i = array1.length - array2.length; i < 1; i++) {\n");
-		buf.append("            System.out.println(1);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		assertRefactoringHasNoChange(new ICompilationUnit[] {cu1});
-	}
-
-	public void testJava50ForLoop14() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import test2.E3;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        E2 e2= new E2();\n");
-		buf.append("        e2.foo();\n");
-		buf.append("        E3 e3= new E3();\n");
-		buf.append("        for (int i = 0; i < e3.array.length;i++) {\n");
-		buf.append("            System.out.println(e3.array[i]);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E2 {\n");
-		buf.append("    public void foo() {};\n");
-		buf.append("}\n");
-		pack1.createCompilationUnit("E2.java", buf.toString(), false, null);
-
-		IPackageFragment pack2= fSourceFolder.createPackageFragment("test2", false, null);
-		buf= new StringBuffer();
-		buf.append("package test2;\n");
-		buf.append("public class E2 {}\n");
-		pack2.createCompilationUnit("E2.java", buf.toString(), false, null);
-
-		buf= new StringBuffer();
-		buf.append("package test2;\n");
-		buf.append("public class E3 {\n");
-		buf.append("    public E2[] array;\n");
-		buf.append("}\n");
-		pack2.createCompilationUnit("E3.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import test2.E3;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        E2 e2= new E2();\n");
-		buf.append("        e2.foo();\n");
-		buf.append("        E3 e3= new E3();\n");
-		buf.append("        for (test2.E2 element : e3.array) {\n");
-		buf.append("            System.out.println(element);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop15() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class ForeachTest {\n");
-		buf.append("    void foo(Object list) {\n");
-		buf.append("        for (Iterator<String> iter= ((List<String>) list).iterator(); iter.hasNext(); ) {\n");
-		buf.append("            String element = iter.next();\n");
-		buf.append("            System.out.println(element);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class ForeachTest {\n");
-		buf.append("    void foo(Object list) {\n");
-		buf.append("        for (String element : ((List<String>) list)) {\n");
-		buf.append("            System.out.println(element);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoopBug548002() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class ForeachTest {\n");
-		buf.append("    void foo(List list) {\n");
-		buf.append("        for (int i= 0; i < list.size(); ++i);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class ForeachTest {\n");
-		buf.append("    void foo(List list) {\n");
-		buf.append("        for (Object element : list);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoopBug550334() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class ForeachTest {\n");
-		buf.append("    void foo(List list) {\n");
-		buf.append("        String[] a= new String[]{\"a\", \"b\", \"c\"});\n");
-		buf.append("        for (int i= 0; i < list.size(); ++i) {\n");
-		buf.append("            list.get(i).append(a[i]);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class ForeachTest {\n");
-		buf.append("    void foo(List list) {\n");
-		buf.append("        String[] a= new String[]{\"a\", \"b\", \"c\"});\n");
-		buf.append("        for (int i= 0; i < list.size(); ++i) {\n");
-		buf.append("            list.get(i).append(a[i]);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoopBug550672() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("import java.util.ArrayList;\n");
-		buf.append("public class ForeachTest {\n");
-		buf.append("    void foo(List list) {\n");
-        buf.append("        List<File> a = new ArrayList<>();\n");
-        buf.append("        List<File> b = new ArrayList<>();\n");
-        buf.append("        for (int i = 0; i < a.size(); i++) {\n");
-        buf.append("            System.out.print(a.get(i) + \" \" + b.get(i));\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("import java.util.ArrayList;\n");
-		buf.append("public class ForeachTest {\n");
-		buf.append("    void foo(List list) {\n");
-        buf.append("        List<File> a = new ArrayList<>();\n");
-        buf.append("        List<File> b = new ArrayList<>();\n");
-        buf.append("        for (int i = 0; i < a.size(); i++) {\n");
-        buf.append("            System.out.print(a.get(i) + \" \" + b.get(i));\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testBug550726() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.io.File;\n");
-		buf.append("import java.util.ArrayList;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class A {\n");
-		buf.append("    public static void main(String[] args) {\n");
-		buf.append("        List<File> a = new ArrayList<>();\n");
-		buf.append("        for (int i = 0; i < a.size(); i++) {\n");
-		buf.append("            System.out.print(a);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.io.File;\n");
-		buf.append("import java.util.ArrayList;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class A {\n");
-		buf.append("    public static void main(String[] args) {\n");
-		buf.append("        List<File> a = new ArrayList<>();\n");
-		buf.append("        for (File element : a) {\n");
-		buf.append("            System.out.print(a);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-		
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoopBug154939() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo(List<Integer> list) {\n");
-		buf.append("       for (Iterator<Integer> iter = list.iterator(); iter.hasNext() && false;) {\n");
-		buf.append("            Integer id = iter.next();\n");
-		buf.append("       } \n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		assertRefactoringHasNoChange(new ICompilationUnit[] {cu1});
-	}
-
-	public void testJava50ForLoop160218() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void bar(List<Number> x) {\n");
-		buf.append("        if (true) {\n");
-		buf.append("            for (Iterator<Number> i = x.iterator(); i.hasNext();)\n");
-		buf.append("                System.out.println(i.next());\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_NEVER);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void bar(List<Number> x) {\n");
-		buf.append("        if (true)\n");
-		buf.append("            for (Number number : x)\n");
-		buf.append("                System.out.println(number);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop159449() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo(Object[] objs) {\n");
-		buf.append("        if (objs != null)\n");
-		buf.append("            for (int i = 0; i < objs.length; i++) {\n");
-		buf.append("                System.out.println(objs[i]);\n");
-		buf.append("            }\n");
-		buf.append("    }\n");
-		buf.append("    public void bar(List<Object> objs) {\n");
-		buf.append("        if (objs != null)\n");
-		buf.append("            for (Iterator<Object> i = objs.iterator(); i.hasNext();) {\n");
-		buf.append("                System.out.println(i.next());\n");
-		buf.append("            }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo(Object[] objs) {\n");
-		buf.append("        if (objs != null) {\n");
-		buf.append("            for (Object obj : objs) {\n");
-		buf.append("                System.out.println(obj);\n");
-		buf.append("            }\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("    public void bar(List<Object> objs) {\n");
-		buf.append("        if (objs != null) {\n");
-		buf.append("            for (Object object : objs) {\n");
-		buf.append("                System.out.println(object);\n");
-		buf.append("            }\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop160283_1() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x) {\n");
-		buf.append("        for (int i = 0; i < x.length; i++) {\n");
-		buf.append("            System.out.println(x[i]);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("    void bar(List<Object> x) {\n");
-		buf.append("        for (Iterator<Object> i = x.iterator(); i.hasNext();) {\n");
-		buf.append("            System.out.println(i.next());\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_NEVER);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x) {\n");
-		buf.append("        for (Object element : x)\n");
-		buf.append("            System.out.println(element);\n");
-		buf.append("    }\n");
-		buf.append("    void bar(List<Object> x) {\n");
-		buf.append("        for (Object object : x)\n");
-		buf.append("            System.out.println(object);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop160283_2() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x) {\n");
-		buf.append("        for (int i = 0; i < x.length; i++)\n");
-		buf.append("            System.out.println(x[i]);\n");
-		buf.append("    }\n");
-		buf.append("    void bar(List<Object> x) {\n");
-		buf.append("        for (Iterator<Object> i = x.iterator(); i.hasNext();)\n");
-		buf.append("            System.out.println(i.next());\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x) {\n");
-		buf.append("        for (Object element : x) {\n");
-		buf.append("            System.out.println(element);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("    void bar(List<Object> x) {\n");
-		buf.append("        for (Object object : x) {\n");
-		buf.append("            System.out.println(object);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop160312() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x, Object[] y) {\n");
-		buf.append("        for (int i = 0; i < y.length; i++)\n");
-		buf.append("            for (int j = 0; j < x.length; j++)\n");
-		buf.append("                System.out.println(x[j]);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x, Object[] y) {\n");
-		buf.append("        for (Object element : y) {\n");
-		buf.append("            for (Object element2 : x) {\n");
-		buf.append("                System.out.println(element2);\n");
-		buf.append("            }\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop160270() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(List<Object> y) {\n");
-		buf.append("        for (Iterator<Object> it = y.iterator(); it.hasNext();) {\n");
-		buf.append("            System.out.println(it.next());\n");
-		buf.append("        }\n");
-		buf.append("        \n");
-		buf.append("        int j= 0;\n");
-		buf.append("        for (Iterator<Object> it = y.iterator(); it.hasNext(); j++) {\n");
-		buf.append("            System.out.println(it.next());\n");
-		buf.append("        }\n");
-		buf.append("        \n");
-		buf.append("        for (Iterator<Object> it = y.iterator(); it.hasNext(); bar()) {\n");
-		buf.append("            System.out.println(it.next());\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("\n");
-		buf.append("    private void bar() {}\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(List<Object> y) {\n");
-		buf.append("        for (Object object : y) {\n");
-		buf.append("            System.out.println(object);\n");
-		buf.append("        }\n");
-		buf.append("        \n");
-		buf.append("        int j= 0;\n");
-		buf.append("        for (Iterator<Object> it = y.iterator(); it.hasNext(); j++) {\n");
-		buf.append("            System.out.println(it.next());\n");
-		buf.append("        }\n");
-		buf.append("        \n");
-		buf.append("        for (Iterator<Object> it = y.iterator(); it.hasNext(); bar()) {\n");
-		buf.append("            System.out.println(it.next());\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("\n");
-		buf.append("    private void bar() {}\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop163122_1() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x, Object[] y) {\n");
-		buf.append("        for (int i = 0; i < y.length; i++)\n");
-		buf.append("            for (int j = 0; j < x.length; j++)\n");
-		buf.append("                System.out.println(y[i]);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x, Object[] y) {\n");
-		buf.append("        for (Object element : y) {\n");
-		buf.append("            for (Object element2 : x) {\n");
-		buf.append("                System.out.println(element);\n");
-		buf.append("            }\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop163122_2() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x, Object[] y) {\n");
-		buf.append("        for (int i = 0; i < y.length; i++)\n");
-		buf.append("            for (int j = 0; j < x.length; j++)\n");
-		buf.append("                System.out.println(y[i]);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x, Object[] y) {\n");
-		buf.append("        for (Object element : y)\n");
-		buf.append("            for (Object element2 : x)\n");
-		buf.append("                System.out.println(element);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop163122_3() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x, Object[] y) {\n");
-		buf.append("        for (int i = 0; i < y.length; i++)\n");
-		buf.append("            for (int j = 0; j < x.length; j++)\n");
-		buf.append("                System.out.println(x[i]);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x, Object[] y) {\n");
-		buf.append("        for (int i = 0; i < y.length; i++) {\n");
-		buf.append("            for (Object element : x) {\n");
-		buf.append("                System.out.println(x[i]);\n");
-		buf.append("            }\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop163122_4() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x, Object[] y) {\n");
-		buf.append("        for (int i = 0; i < y.length; i++)\n");
-		buf.append("            for (int j = 0; j < x.length; j++)\n");
-		buf.append("                System.out.println(x[i]);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x, Object[] y) {\n");
-		buf.append("        for (int i = 0; i < y.length; i++)\n");
-		buf.append("            for (Object element : x)\n");
-		buf.append("                System.out.println(x[i]);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop163122_5() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x, Object[] y) {\n");
-		buf.append("        for (int i = 0; i < y.length; i++)\n");
-		buf.append("            for (int j = 0; j < x.length; j++)\n");
-		buf.append("                System.out.println(x[j]);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    void foo(Object[] x, Object[] y) {\n");
-		buf.append("        for (Object element : y) {\n");
-		buf.append("            for (Object element2 : x) {\n");
-		buf.append("                System.out.println(element2);\n");
-		buf.append("            }\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop110599() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void a(int[] i, List<String> l) {\n");
-		buf.append("        //Comment\n");
-		buf.append("        for (int j = 0; j < i.length; j++) {\n");
-		buf.append("            System.out.println(i[j]);\n");
-		buf.append("        }\n");
-		buf.append("        //Comment\n");
-		buf.append("        for (Iterator<String> iterator = l.iterator(); iterator.hasNext();) {\n");
-		buf.append("            String str = iterator.next();\n");
-		buf.append("            System.out.println(str);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void a(int[] i, List<String> l) {\n");
-		buf.append("        //Comment\n");
-		buf.append("        for (int element : i) {\n");
-		buf.append("            System.out.println(element);\n");
-		buf.append("        }\n");
-		buf.append("        //Comment\n");
-		buf.append("        for (String str : l) {\n");
-		buf.append("            System.out.println(str);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testJava50ForLoop269595() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void a(int[] array) {\n");
-		buf.append("        for (int i = 0; i < array.length; i++) {\n");
-		buf.append("            final int value = array[i];\n");
-		buf.append("            System.out.println(value);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-		enable(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL);
-		enable(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL_LOCAL_VARIABLES);
-		enable(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL_PARAMETERS);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void a(final int[] array) {\n");
-		buf.append("        for (final int value : array) {\n");
-		buf.append("            System.out.println(value);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	public void testJava50ForLoop264421() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo(String[] src) {\n");
-		buf.append("        for (int i = 0; i < src.length; i++) {\n");
-		buf.append("            String path = src[i];\n");
-		buf.append("            String output = path;\n");
-		buf.append("            if (output.length() == 1) {\n");
-		buf.append("                output = output + \"-XXX\";\n");
-		buf.append("            }\n");
-		buf.append("            System.err.println(\"path=\"+ path + \",output=\"+output);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo(String[] src) {\n");
-		buf.append("        for (String path : src) {\n");
-		buf.append("            String output = path;\n");
-		buf.append("            if (output.length() == 1) {\n");
-		buf.append("                output = output + \"-XXX\";\n");
-		buf.append("            }\n");
-		buf.append("            System.err.println(\"path=\"+ path + \",output=\"+output);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	public void testJava50ForLoop274199() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public static void main(String[] args) {\n");
-		buf.append("        for (int i = 0; i < args.length; i++) {\n");
-		buf.append("            String output = args[i];\n");
-		buf.append("            if (output.length() == 1) {\n");
-		buf.append("                output = output + \"-XXX\";\n");
-		buf.append("            }\n");
-		buf.append("\n");
-		buf.append("            String s = \"path=\" + args[i] + \",output=\" + output;\n");
-		buf.append("        }\n");
-		buf.append("        \n");
-		buf.append("        for (int i = 0; i < args.length; i++) {\n");
-		buf.append("            String output = args[i];\n");
-		buf.append("            String output1 = output;\n");
-		buf.append("            if (output1.length() == 1) {\n");
-		buf.append("                output1 = output1 + \"-XXX\";\n");
-		buf.append("            }\n");
-		buf.append("\n");
-		buf.append("            String s = \"path=\" + args[i] + \",output=\" + output1;\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public static void main(String[] args) {\n");
-		buf.append("        for (String arg : args) {\n");
-		buf.append("            String output = arg;\n");
-		buf.append("            if (output.length() == 1) {\n");
-		buf.append("                output = output + \"-XXX\";\n");
-		buf.append("            }\n");
-		buf.append("\n");
-		buf.append("            String s = \"path=\" + arg + \",output=\" + output;\n");
-		buf.append("        }\n");
-		buf.append("        \n");
-		buf.append("        for (String output : args) {\n");
-		buf.append("            String output1 = output;\n");
-		buf.append("            if (output1.length() == 1) {\n");
-		buf.append("                output1 = output1 + \"-XXX\";\n");
-		buf.append("            }\n");
-		buf.append("\n");
-		buf.append("            String s = \"path=\" + output + \",output=\" + output1;\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	public void testJava50ForLoop349782() throws Exception {
-		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=349782
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public int[] array;\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        for (int i = 0; i < this.array.length; ++i) {\n");
-		buf.append("            System.out.println(this.array[i]);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public int[] array;\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        for (int element : this.array) {\n");
-		buf.append("            System.out.println(element);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	public void testJava50ForLoop344674() throws Exception {
-		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=344674
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public int[] array;\n");
-		buf.append("    public void foo(Object obj) {\n");
-		buf.append("        for (int i = 0; i < ((E1) obj).array.length; i++) {\n");
-		buf.append("            System.out.println(((E1) obj).array[i]);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public int[] array;\n");
-		buf.append("    public void foo(Object obj) {\n");
-		buf.append("        for (int element : ((E1) obj).array) {\n");
-		buf.append("            System.out.println(element);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		String expected1= buf.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	public void testJava50ForLoop374264() throws Exception {
-		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=374264
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf= new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E1 {\n");
-		buf.append("    public void foo(List<String> list) {\n");
-		buf.append("        for (Iterator<String> iterator = list.iterator(); iterator.hasNext();) {\n");
-		buf.append("            removeSecond(iterator);\n");
-		buf.append("        }\n");
-		buf.append("        System.out.println(list);\n");
-		buf.append("    }\n");
-		buf.append("    private static void removeSecond(Iterator<String> iterator) {\n");
-		buf.append("        if (\"second\".equals(iterator.next())) {\n");
-		buf.append("            iterator.remove();\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", buf.toString(), false, null);
-
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-
-		assertRefactoringHasNoChange(new ICompilationUnit[] {cu1});
-	}
-
 	public void testCombination01() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -5526,6 +4234,466 @@ public class CleanUpTest extends CleanUpTestCase {
 		} finally {
 			JavaProjectHelper.set15CompilerOptions(fJProject1);
 		}
+	}
+
+	public void testPushDownNegationReplaceDoubleNegation() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public void replaceDoubleNegation(boolean b) {\n" //
+				+ "        boolean b1 = !!b;\n" //
+				+ "        boolean b2 = !Boolean.TRUE;\n" //
+				+ "        boolean b3 = !Boolean.FALSE;\n" //
+				+ "        boolean b4 = !true;\n" //
+				+ "        boolean b5 = !false;\n" //
+				+ "        boolean b6 = !!!!b;\n" //
+				+ "        boolean b7 = !!!!!Boolean.TRUE;\n" //
+				+ "        boolean b8 = !!!!!!!Boolean.FALSE;\n" //
+				+ "        boolean b9 = !!!!!!!!!true;\n" //
+				+ "        boolean b10 = !!!false;\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public void replaceDoubleNegation(boolean b) {\n" //
+				+ "        boolean b1 = b;\n" //
+				+ "        boolean b2 = false;\n" //
+				+ "        boolean b3 = true;\n" //
+				+ "        boolean b4 = false;\n" //
+				+ "        boolean b5 = true;\n" //
+				+ "        boolean b6 = b;\n" //
+				+ "        boolean b7 = false;\n" //
+				+ "        boolean b8 = true;\n" //
+				+ "        boolean b9 = false;\n" //
+				+ "        boolean b10 = true;\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceDoubleNegationWithParentheses() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceDoubleNegationWithParentheses(boolean b) {\n" //
+				+ "        return !!!(!(b /* another refactoring removes the parentheses */));\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceDoubleNegationWithParentheses(boolean b) {\n" //
+				+ "        return (b /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationWithInfixAndOperator() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationWithInfixAndOperator(boolean b1, boolean b2, boolean b3) {\n" //
+				+ "        return !(b1 && b2 && b3); // another refactoring removes the parentheses\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationWithInfixAndOperator(boolean b1, boolean b2, boolean b3) {\n" //
+				+ "        return (!b1 || !b2 || !b3); // another refactoring removes the parentheses\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationWithInfixOrOperator() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationWithInfixOrOperator(boolean b1, boolean b2, boolean b3) {\n" //
+				+ "        return !(b1 || b2 || b3); // another refactoring removes the parentheses\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationWithInfixOrOperator(boolean b1, boolean b2, boolean b3) {\n" //
+				+ "        return (!b1 && !b2 && !b3); // another refactoring removes the parentheses\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationWithEqualOperator() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationWithEqualOperator(boolean b1, boolean b2) {\n" //
+				+ "        return !(b1 == b2); // another refactoring removes the parentheses\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationWithEqualOperator(boolean b1, boolean b2) {\n" //
+				+ "        return (b1 != b2); // another refactoring removes the parentheses\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationWithNotEqualOperator() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationWithNotEqualOperator(boolean b1, boolean b2) {\n" //
+				+ "        return !(b1 != b2); // another refactoring removes the parentheses\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationWithNotEqualOperator(boolean b1, boolean b2) {\n" //
+				+ "        return (b1 == b2); // another refactoring removes the parentheses\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationRevertInnerExpressions() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationRevertInnerExpressions(boolean b1, boolean b2) {\n" //
+				+ "        return !(!b1 && !b2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationRevertInnerExpressions(boolean b1, boolean b2) {\n" //
+				+ "        return (b1 || b2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationLeaveParentheses() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationLeaveParentheses(boolean b1, boolean b2) {\n" //
+				+ "        return !(!(b1 && b2 /* another refactoring removes the parentheses */));\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationLeaveParentheses(boolean b1, boolean b2) {\n" //
+				+ "        return (b1 && b2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationRemoveParentheses() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationRemoveParentheses(boolean b1, boolean b2) {\n" //
+				+ "        return !((!b1) && (!b2));\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationRemoveParentheses(boolean b1, boolean b2) {\n" //
+				+ "        return (b1 || b2);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegateNonBooleanExprs() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegateNonBooleanExprs(Object o) {\n" //
+				+ "        return !(o != null /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegateNonBooleanExprs(Object o) {\n" //
+				+ "        return (o == null /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegateNonBooleanPrimitiveExprs() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegateNonBooleanPrimitiveExprs(Boolean b) {\n" //
+				+ "        return !(b != null /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegateNonBooleanPrimitiveExprs(Boolean b) {\n" //
+				+ "        return (b == null /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationAndLessOperator() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationAndLessOperator(int i1, int i2) {\n" //
+				+ "        return !(i1 < i2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationAndLessOperator(int i1, int i2) {\n" //
+				+ "        return (i1 >= i2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationAndLessEqualOperator() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationAndLessEqualOperator(int i1, int i2) {\n" //
+				+ "        return !(i1 <= i2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationAndLessEqualOperator(int i1, int i2) {\n" //
+				+ "        return (i1 > i2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationAndGreaterOperator() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationAndGreaterOperator(int i1, int i2) {\n" //
+				+ "        return !(i1 > i2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationAndGreaterOperator(int i1, int i2) {\n" //
+				+ "        return (i1 <= i2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationAndGreaterEqualOperator() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationAndGreaterEqualOperator(int i1, int i2) {\n" //
+				+ "        return !(i1 >= i2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationAndGreaterEqualOperator(int i1, int i2) {\n" //
+				+ "        return (i1 < i2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationAndEqualOperator() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationAndEqualOperator(int i1, int i2) {\n" //
+				+ "        return !(i1 == i2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationAndEqualOperator(int i1, int i2) {\n" //
+				+ "        return (i1 != i2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	public void testPushDownNegationReplaceNegationAndNotEqualOperator() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationAndNotEqualOperator(int i1, int i2) {\n" //
+				+ "        return !(i1 != i2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.PUSH_DOWN_NEGATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public boolean replaceNegationAndNotEqualOperator(int i1, int i2) {\n" //
+				+ "        return (i1 == i2 /* another refactoring removes the parentheses */);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
 	}
 
 	public void testSerialVersionBug139381() throws Exception {
@@ -6076,871 +5244,6 @@ public class CleanUpTest extends CleanUpTestCase {
 		String expected1= buf.toString();
 
 		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testAutoboxing() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static void bar() {\n");
-		bld.append("        Character c = Character.valueOf('*');\n");
-		bld.append("        Byte by = Byte.valueOf((byte) 0);\n");
-		bld.append("        Boolean bo = Boolean.valueOf(true);\n");
-		bld.append("        Integer i = Integer.valueOf(42);\n");
-		bld.append("        Long l1 = Long.valueOf(42L);\n");
-		bld.append("        Long l2 = Long.valueOf(42);\n");
-		bld.append("        Short s = Short.valueOf((short) 42);\n");
-		bld.append("        Float f = Float.valueOf(42.42F);\n");
-		bld.append("        Double d = Double.valueOf(42.42);\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_AUTOBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static void bar() {\n");
-		bld.append("        Character c = '*';\n");
-		bld.append("        Byte by = (byte) 0;\n");
-		bld.append("        Boolean bo = true;\n");
-		bld.append("        Integer i = 42;\n");
-		bld.append("        Long l1 = 42L;\n");
-		bld.append("        Long l2 = (long) 42;\n");
-		bld.append("        Short s = (short) 42;\n");
-		bld.append("        Float f = 42.42F;\n");
-		bld.append("        Double d = 42.42;\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testAutoboxingSpecialCases() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static void removeUnnecessaryValueOfCallsInPrimitiveDeclaration() {\n");
-		bld.append("        char c = Character.valueOf('*');\n");
-		bld.append("        byte by = Byte.valueOf((byte) 0);\n");
-		bld.append("        boolean bo = Boolean.valueOf(true);\n");
-		bld.append("        int i = Integer.valueOf(42);\n");
-		bld.append("        long l1 = Long.valueOf(42L);\n");
-		bld.append("        long l2 = Long.valueOf(42);\n");
-		bld.append("        short s = Short.valueOf((short) 42);\n");
-		bld.append("        float f = Float.valueOf(42.42F);\n");
-		bld.append("        double d = Double.valueOf(42.42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static void doNotUseAutoboxingWithObjectDeclaration() {\n");
-		bld.append("        Object c = Character.valueOf('*');\n");
-		bld.append("        Object by = Byte.valueOf((byte) 0);\n");
-		bld.append("        Object bo = Boolean.valueOf(true);\n");
-		bld.append("        Object i = Integer.valueOf(42);\n");
-		bld.append("        Object l1 = Long.valueOf(42L);\n");
-		bld.append("        Object l2 = Long.valueOf(42);\n");
-		bld.append("        Object s = Short.valueOf((short) 42);\n");
-		bld.append("        Object f = Float.valueOf(42.42F);\n");
-		bld.append("        Object d = Double.valueOf(42.42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static void directlyReturnWrapperParameter(Character c, Byte by, Boolean bo, Integer i, Long l, Short s,\n");
-		bld.append("            Float f, Double d) {\n");
-		bld.append("        Object myObject = null;\n");
-		bld.append("\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        myObject = Character.valueOf(c);\n");
-		bld.append("        myObject = Byte.valueOf(by);\n");
-		bld.append("        myObject = Boolean.valueOf(bo);\n");
-		bld.append("        myObject = Integer.valueOf(i);\n");
-		bld.append("        myObject = Long.valueOf(l);\n");
-		bld.append("        myObject = Short.valueOf(s);\n");
-		bld.append("        myObject = Float.valueOf(f);\n");
-		bld.append("        myObject = Double.valueOf(d);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static void useAutoboxingOnAssignment() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        Character c;\n");
-		bld.append("        c = Character.valueOf('*');\n");
-		bld.append("        Byte by;\n");
-		bld.append("        by = Byte.valueOf((byte) 0);\n");
-		bld.append("        Boolean bo1;\n");
-		bld.append("        bo1 = Boolean.valueOf(true);\n");
-		bld.append("        Integer i;\n");
-		bld.append("        i = Integer.valueOf(42);\n");
-		bld.append("        Long l1;\n");
-		bld.append("        l1 = Long.valueOf(42L);\n");
-		bld.append("        Long l2;\n");
-		bld.append("        l2 = Long.valueOf(42);\n");
-		bld.append("        Short s;\n");
-		bld.append("        s = Short.valueOf((short) 42);\n");
-		bld.append("        Float f;\n");
-		bld.append("        f = Float.valueOf(42.42F);\n");
-		bld.append("        Double d;\n");
-		bld.append("        d = Double.valueOf(42.42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static void removeUnnecessaryValueOfCallsInPrimitiveAssignment() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        char c;\n");
-		bld.append("        c = Character.valueOf('*');\n");
-		bld.append("        byte by;\n");
-		bld.append("        by = Byte.valueOf((byte) 0);\n");
-		bld.append("        boolean bo1;\n");
-		bld.append("        bo1 = Boolean.valueOf(true);\n");
-		bld.append("        int i;\n");
-		bld.append("        i = Integer.valueOf(42);\n");
-		bld.append("        long l1;\n");
-		bld.append("        l1 = Long.valueOf(42L);\n");
-		bld.append("        long l2;\n");
-		bld.append("        l2 = Long.valueOf(42);\n");
-		bld.append("        short s;\n");
-		bld.append("        s = Short.valueOf((short) 42);\n");
-		bld.append("        float f;\n");
-		bld.append("        f = Float.valueOf(42.42F);\n");
-		bld.append("        double d;\n");
-		bld.append("        d = Double.valueOf(42.42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static void doNotUseAutoboxingWithObjectAssignment() {\n");
-		bld.append("        Object c;\n");
-		bld.append("        c = Character.valueOf('*');\n");
-		bld.append("        Object by;\n");
-		bld.append("        by = Byte.valueOf((byte) 0);\n");
-		bld.append("        Object bo1;\n");
-		bld.append("        bo1 = Boolean.valueOf(true);\n");
-		bld.append("        Object i;\n");
-		bld.append("        i = Integer.valueOf(42);\n");
-		bld.append("        Object l1;\n");
-		bld.append("        l1 = Long.valueOf(42L);\n");
-		bld.append("        Object l2;\n");
-		bld.append("        l2 = Long.valueOf(42);\n");
-		bld.append("        Object s;\n");
-		bld.append("        s = Short.valueOf((short) 42);\n");
-		bld.append("        Object f;\n");
-		bld.append("        f = Float.valueOf(42.42F);\n");
-		bld.append("        Object d;\n");
-		bld.append("        d = Double.valueOf(42.42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Character removeUnnecessaryValueOfCallsInCharacterWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Character.valueOf('*');\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Byte removeUnnecessaryValueOfCallsInByteWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Byte.valueOf((byte) 0);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Boolean removeUnnecessaryValueOfCallsInBooleanWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Boolean.valueOf(true);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Integer removeUnnecessaryValueOfCallsInIntegerWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Integer.valueOf(42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Long removeUnnecessaryValueOfCallsInLongWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Long.valueOf(42L);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Short removeUnnecessaryValueOfCallsInShortWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Short.valueOf((short) 42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Float removeUnnecessaryValueOfCallsInFloatWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Float.valueOf(42.42F);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Double removeUnnecessaryValueOfCallsInDoubleWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Double.valueOf(42.42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static char removeUnnecessaryValueOfCallsInCharacterPrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Character.valueOf('*');\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static byte removeUnnecessaryValueOfCallsInBytePrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Byte.valueOf((byte) 0);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static boolean removeUnnecessaryValueOfCallsInBooleanPrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Boolean.valueOf(true);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static int removeUnnecessaryValueOfCallsInIntegerPrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Integer.valueOf(42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static long removeUnnecessaryValueOfCallsInLongPrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Long.valueOf(42L);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static short removeUnnecessaryValueOfCallsInShortPrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Short.valueOf((short) 42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static float removeUnnecessaryValueOfCallsInFloatPrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Float.valueOf(42.42F);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static double removeUnnecessaryValueOfCallsInDoublePrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return Double.valueOf(42.42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Object doNotUseAutoboxingReturningObject() {\n");
-		bld.append("        return Character.valueOf('a');\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_AUTOBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static void removeUnnecessaryValueOfCallsInPrimitiveDeclaration() {\n");
-		bld.append("        char c = '*';\n");
-		bld.append("        byte by = (byte) 0;\n");
-		bld.append("        boolean bo = true;\n");
-		bld.append("        int i = 42;\n");
-		bld.append("        long l1 = 42L;\n");
-		bld.append("        long l2 = 42;\n");
-		bld.append("        short s = (short) 42;\n");
-		bld.append("        float f = 42.42F;\n");
-		bld.append("        double d = 42.42;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static void doNotUseAutoboxingWithObjectDeclaration() {\n");
-		bld.append("        Object c = Character.valueOf('*');\n");
-		bld.append("        Object by = Byte.valueOf((byte) 0);\n");
-		bld.append("        Object bo = Boolean.valueOf(true);\n");
-		bld.append("        Object i = Integer.valueOf(42);\n");
-		bld.append("        Object l1 = Long.valueOf(42L);\n");
-		bld.append("        Object l2 = Long.valueOf(42);\n");
-		bld.append("        Object s = Short.valueOf((short) 42);\n");
-		bld.append("        Object f = Float.valueOf(42.42F);\n");
-		bld.append("        Object d = Double.valueOf(42.42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static void directlyReturnWrapperParameter(Character c, Byte by, Boolean bo, Integer i, Long l, Short s,\n");
-		bld.append("            Float f, Double d) {\n");
-		bld.append("        Object myObject = null;\n");
-		bld.append("\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        myObject = c;\n");
-		bld.append("        myObject = by;\n");
-		bld.append("        myObject = bo;\n");
-		bld.append("        myObject = i;\n");
-		bld.append("        myObject = l;\n");
-		bld.append("        myObject = s;\n");
-		bld.append("        myObject = f;\n");
-		bld.append("        myObject = d;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static void useAutoboxingOnAssignment() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        Character c;\n");
-		bld.append("        c = '*';\n");
-		bld.append("        Byte by;\n");
-		bld.append("        by = (byte) 0;\n");
-		bld.append("        Boolean bo1;\n");
-		bld.append("        bo1 = true;\n");
-		bld.append("        Integer i;\n");
-		bld.append("        i = 42;\n");
-		bld.append("        Long l1;\n");
-		bld.append("        l1 = 42L;\n");
-		bld.append("        Long l2;\n");
-		bld.append("        l2 = (long) 42;\n");
-		bld.append("        Short s;\n");
-		bld.append("        s = (short) 42;\n");
-		bld.append("        Float f;\n");
-		bld.append("        f = 42.42F;\n");
-		bld.append("        Double d;\n");
-		bld.append("        d = 42.42;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static void removeUnnecessaryValueOfCallsInPrimitiveAssignment() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        char c;\n");
-		bld.append("        c = '*';\n");
-		bld.append("        byte by;\n");
-		bld.append("        by = (byte) 0;\n");
-		bld.append("        boolean bo1;\n");
-		bld.append("        bo1 = true;\n");
-		bld.append("        int i;\n");
-		bld.append("        i = 42;\n");
-		bld.append("        long l1;\n");
-		bld.append("        l1 = 42L;\n");
-		bld.append("        long l2;\n");
-		bld.append("        l2 = 42;\n");
-		bld.append("        short s;\n");
-		bld.append("        s = (short) 42;\n");
-		bld.append("        float f;\n");
-		bld.append("        f = 42.42F;\n");
-		bld.append("        double d;\n");
-		bld.append("        d = 42.42;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static void doNotUseAutoboxingWithObjectAssignment() {\n");
-		bld.append("        Object c;\n");
-		bld.append("        c = Character.valueOf('*');\n");
-		bld.append("        Object by;\n");
-		bld.append("        by = Byte.valueOf((byte) 0);\n");
-		bld.append("        Object bo1;\n");
-		bld.append("        bo1 = Boolean.valueOf(true);\n");
-		bld.append("        Object i;\n");
-		bld.append("        i = Integer.valueOf(42);\n");
-		bld.append("        Object l1;\n");
-		bld.append("        l1 = Long.valueOf(42L);\n");
-		bld.append("        Object l2;\n");
-		bld.append("        l2 = Long.valueOf(42);\n");
-		bld.append("        Object s;\n");
-		bld.append("        s = Short.valueOf((short) 42);\n");
-		bld.append("        Object f;\n");
-		bld.append("        f = Float.valueOf(42.42F);\n");
-		bld.append("        Object d;\n");
-		bld.append("        d = Double.valueOf(42.42);\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Character removeUnnecessaryValueOfCallsInCharacterWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return '*';\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Byte removeUnnecessaryValueOfCallsInByteWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return (byte) 0;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Boolean removeUnnecessaryValueOfCallsInBooleanWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return true;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Integer removeUnnecessaryValueOfCallsInIntegerWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return 42;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Long removeUnnecessaryValueOfCallsInLongWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return 42L;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Short removeUnnecessaryValueOfCallsInShortWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return (short) 42;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Float removeUnnecessaryValueOfCallsInFloatWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return 42.42F;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Double removeUnnecessaryValueOfCallsInDoubleWrapper() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return 42.42;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static char removeUnnecessaryValueOfCallsInCharacterPrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return '*';\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static byte removeUnnecessaryValueOfCallsInBytePrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return (byte) 0;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static boolean removeUnnecessaryValueOfCallsInBooleanPrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return true;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static int removeUnnecessaryValueOfCallsInIntegerPrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return 42;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static long removeUnnecessaryValueOfCallsInLongPrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return 42L;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static short removeUnnecessaryValueOfCallsInShortPrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return (short) 42;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static float removeUnnecessaryValueOfCallsInFloatPrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return 42.42F;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static double removeUnnecessaryValueOfCallsInDoublePrimitive() {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return 42.42;\n");
-		bld.append("    }\n");
-		bld.append("\n");
-		bld.append("    public static Object doNotUseAutoboxingReturningObject() {\n");
-		bld.append("        return Character.valueOf('a');\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testUseUnboxingOnPrimitiveDeclaration() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static void useUnboxingOnPrimitiveDeclaration(Character cObject, Byte byObject, Boolean boObject,\n");
-		bld.append("            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        char c = cObject.charValue();\n");
-		bld.append("        byte by = byObject.byteValue();\n");
-		bld.append("        boolean bo = boObject.booleanValue();\n");
-		bld.append("        int i = iObject.intValue();\n");
-		bld.append("        short s = sObject.shortValue();\n");
-		bld.append("        long l = lObject.longValue();\n");
-		bld.append("        float f = fObject.floatValue();\n");
-		bld.append("        double d = dObject.doubleValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static void useUnboxingOnPrimitiveDeclaration(Character cObject, Byte byObject, Boolean boObject,\n");
-		bld.append("            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        char c = cObject;\n");
-		bld.append("        byte by = byObject;\n");
-		bld.append("        boolean bo = boObject;\n");
-		bld.append("        int i = iObject;\n");
-		bld.append("        short s = sObject;\n");
-		bld.append("        long l = lObject;\n");
-		bld.append("        float f = fObject;\n");
-		bld.append("        double d = dObject;\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	public void testDoNotUseUnboxingOnNarrowingType() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E1 {\n");
-		bld.append("    public static void doNotUseUnboxingOnNarrowingType(Character cObject, Byte byObject,\n");
-		bld.append("            Integer iObject, Short sObject, Float fObject) {\n");
-		bld.append("        int c = cObject.charValue();\n");
-		bld.append("        int by = byObject.byteValue();\n");
-		bld.append("        long i = iObject.intValue();\n");
-		bld.append("        int s = sObject.shortValue();\n");
-		bld.append("        double f = fObject.floatValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
-	}
-
-	public void testDoNotUseUnboxingWhenTypesDontMatch() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E1 {\n");
-		bld.append("    public static void doNotUseUnboxingWhenTypesDontMatch(Byte byObject,\n");
-		bld.append("            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n");
-		bld.append("        short by = byObject.shortValue();\n");
-		bld.append("        short i = iObject.shortValue();\n");
-		bld.append("        byte s = sObject.byteValue();\n");
-		bld.append("        short l = lObject.shortValue();\n");
-		bld.append("        short f = fObject.shortValue();\n");
-		bld.append("        short d = dObject.shortValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
-	}
-
-	public void testUnboxing2() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static void reuseWrapper(Character cObject, Byte byObject, Boolean boObject,\n");
-		bld.append("            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        Character c = cObject.charValue();\n");
-		bld.append("        Byte by = byObject.byteValue();\n");
-		bld.append("        Boolean bo = boObject.booleanValue();\n");
-		bld.append("        Integer i = iObject.intValue();\n");
-		bld.append("        Short s = sObject.shortValue();\n");
-		bld.append("        Long l = lObject.longValue();\n");
-		bld.append("        Float f = fObject.floatValue();\n");
-		bld.append("        Double d = dObject.doubleValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static void reuseWrapper(Character cObject, Byte byObject, Boolean boObject,\n");
-		bld.append("            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        Character c = cObject;\n");
-		bld.append("        Byte by = byObject;\n");
-		bld.append("        Boolean bo = boObject;\n");
-		bld.append("        Integer i = iObject;\n");
-		bld.append("        Short s = sObject;\n");
-		bld.append("        Long l = lObject;\n");
-		bld.append("        Float f = fObject;\n");
-		bld.append("        Double d = dObject;\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testUnboxing3() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static void useUnboxingOnPrimitiveAssignment(Character cObject, Byte byObject, Boolean boObject,\n");
-		bld.append("            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        char c;\n");
-		bld.append("        c = cObject.charValue();\n");
-		bld.append("        byte by;\n");
-		bld.append("        by = byObject.byteValue();\n");
-		bld.append("        boolean bo;\n");
-		bld.append("        bo = boObject.booleanValue();\n");
-		bld.append("        int i;\n");
-		bld.append("        i = iObject.intValue();\n");
-		bld.append("        short s;\n");
-		bld.append("        s = sObject.shortValue();\n");
-		bld.append("        long l;\n");
-		bld.append("        l = lObject.longValue();\n");
-		bld.append("        float f;\n");
-		bld.append("        f = fObject.floatValue();\n");
-		bld.append("        double d;\n");
-		bld.append("        d = dObject.doubleValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static void useUnboxingOnPrimitiveAssignment(Character cObject, Byte byObject, Boolean boObject,\n");
-		bld.append("            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        char c;\n");
-		bld.append("        c = cObject;\n");
-		bld.append("        byte by;\n");
-		bld.append("        by = byObject;\n");
-		bld.append("        boolean bo;\n");
-		bld.append("        bo = boObject;\n");
-		bld.append("        int i;\n");
-		bld.append("        i = iObject;\n");
-		bld.append("        short s;\n");
-		bld.append("        s = sObject;\n");
-		bld.append("        long l;\n");
-		bld.append("        l = lObject;\n");
-		bld.append("        float f;\n");
-		bld.append("        f = fObject;\n");
-		bld.append("        double d;\n");
-		bld.append("        d = dObject;\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testUnboxing4() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static char useUnboxingOnPrimitiveReturn(Character cObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return cObject.charValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static char useUnboxingOnPrimitiveReturn(Character cObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return cObject;\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testUnboxing5() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static byte useUnboxingOnPrimitiveReturn(Byte byObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return byObject.byteValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static byte useUnboxingOnPrimitiveReturn(Byte byObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return byObject;\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testUnboxing6() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static boolean useUnboxingOnPrimitiveReturn(Boolean boObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return boObject.booleanValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static boolean useUnboxingOnPrimitiveReturn(Boolean boObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return boObject;\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testUnboxing7() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static int useUnboxingOnPrimitiveReturn(Integer iObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return iObject.intValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static int useUnboxingOnPrimitiveReturn(Integer iObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return iObject;\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testUnboxing8() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static short useUnboxingOnPrimitiveReturn(Short sObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return sObject.shortValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static short useUnboxingOnPrimitiveReturn(Short sObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return sObject;\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testUnboxing9() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static long useUnboxingOnPrimitiveReturn(Long lObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return lObject.longValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static long useUnboxingOnPrimitiveReturn(Long lObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return lObject;\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testUnboxing10() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static float useUnboxingOnPrimitiveReturn(Float fObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return fObject.floatValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static float useUnboxingOnPrimitiveReturn(Float fObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return fObject;\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testUnboxing11() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static double useUnboxingOnPrimitiveReturn(Double dObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return dObject.doubleValue();\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static double useUnboxingOnPrimitiveReturn(Double dObject) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return dObject;\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
-	}
-
-	public void testUnboxingInArrayAccess() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static String useUnboxingOnArrayAccess(String[] strings, Integer i) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return strings[i.intValue()];\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", bld.toString(), false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		bld= new StringBuilder();
-		bld.append("package test1;\n");
-		bld.append("public class E {\n");
-		bld.append("    public static String useUnboxingOnArrayAccess(String[] strings, Integer i) {\n");
-		bld.append("        // Keep this comment\n");
-		bld.append("        return strings[i];\n");
-		bld.append("    }\n");
-		bld.append("}\n");
-		String expected1= bld.toString();
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
 	}
 
 	public void testAddParentheses01() throws Exception {
@@ -10187,8 +8490,19 @@ public class CleanUpTest extends CleanUpTestCase {
 		// Bug#538459 'public' modified must not be removed from static method in nested enum
 		String expected4 = buf.toString().replace("static enum", "enum");
 
+		// Bug#551038: final keyword must not be removed from method with varargs
+		buf= new StringBuffer();
+		buf.append("package test;\n");
+		buf.append("public final class SafeVarargsExample {\n");
+		buf.append("  @SafeVarargs\n");
+		buf.append("  public final void errorRemoveRedundantModifiers(final String... input) {\n");
+		buf.append("  }\n");
+		buf.append("}\n");
+		String expected5 = buf.toString();
+		ICompilationUnit cu5= pack1.createCompilationUnit("SafeVarargsExample.java", buf.toString(), false, null);
+
 		enable(CleanUpConstants.REMOVE_REDUNDANT_MODIFIERS);
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1, cu2, cu3, cu4 }, new String[] { expected1, expected2, expected3, expected4 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1, cu2, cu3, cu4, cu5 }, new String[] { expected1, expected2, expected3, expected4, expected5 });
 
 	}
 
@@ -10286,5 +8600,4 @@ public class CleanUpTest extends CleanUpTestCase {
 
 		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
 	}
-
 }

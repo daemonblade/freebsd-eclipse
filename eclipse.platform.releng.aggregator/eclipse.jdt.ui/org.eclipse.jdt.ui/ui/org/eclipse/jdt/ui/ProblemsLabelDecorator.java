@@ -260,9 +260,7 @@ public class ProblemsLabelDecorator implements ILabelDecorator, ILightweightLabe
 
 	private boolean isIgnoringOptionalProblems(IClasspathEntry entry) {
 		if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
-			IClasspathAttribute[] extraAttributes= entry.getExtraAttributes();
-			for (int i= 0; i < extraAttributes.length; i++) {
-				IClasspathAttribute attrib= extraAttributes[i];
+			for (IClasspathAttribute attrib : entry.getExtraAttributes()) {
 				if (IClasspathAttribute.IGNORE_OPTIONAL_PROBLEMS.equals(attrib.getName())) {
 					return "true".equals(attrib.getValue()); //$NON-NLS-1$
 				}
@@ -505,14 +503,21 @@ public class ProblemsLabelDecorator implements ILabelDecorator, ILightweightLabe
 	@Override
 	public void decorate(Object element, IDecoration decoration) {
 		int adornmentFlags= computeAdornmentFlags(element);
-		if (adornmentFlags == ERRORTICK_ERROR) {
+		switch (adornmentFlags) {
+		case ERRORTICK_ERROR:
 			decoration.addOverlay(JavaPluginImages.DESC_OVR_ERROR);
-		} else if (adornmentFlags == ERRORTICK_BUILDPATH_ERROR) {
+			break;
+		case ERRORTICK_BUILDPATH_ERROR:
 			decoration.addOverlay(JavaPluginImages.DESC_OVR_BUILDPATH_ERROR);
-		} else if (adornmentFlags == ERRORTICK_WARNING) {
+			break;
+		case ERRORTICK_WARNING:
 			decoration.addOverlay(JavaPluginImages.DESC_OVR_WARNING);
-		} else if (adornmentFlags == ERRORTICK_INFO) {
+			break;
+		case ERRORTICK_INFO:
 			decoration.addOverlay(JavaPluginImages.DESC_OVR_INFO);
+			break;
+		default:
+			break;
 		}
 	}
 

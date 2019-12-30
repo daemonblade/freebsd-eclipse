@@ -182,8 +182,7 @@ public class NewJavaProjectPreferencePage extends PreferencePage implements IWor
 
 	public static String encodeJRELibrary(String desc, IClasspathEntry[] cpentries) {
 		StringBuilder buf= new StringBuilder();
-		for (int i= 0; i < cpentries.length; i++) {
-			IClasspathEntry entry= cpentries[i];
+		for (IClasspathEntry entry : cpentries) {
 			buf.append(encode(desc));
 			buf.append(' ');
 			buf.append(entry.getEntryKind());
@@ -211,13 +210,16 @@ public class NewJavaProjectPreferencePage extends PreferencePage implements IWor
 	}
 
 	private static IPath decodePath(String str) {
-		if ("#".equals(str)) { //$NON-NLS-1$
+		if (str != null)switch (str) {
+		case "#": //$NON-NLS-1$
 			return null;
-		} else if ("&".equals(str)) { //$NON-NLS-1$
+		case "&": //$NON-NLS-1$
 			return Path.EMPTY;
-		} else {
-			return Path.fromPortableString(decode(str));
+		default:
+			// intentionally fall through
+			  break;
 		}
+		return Path.fromPortableString(decode(str));
 	}
 
 

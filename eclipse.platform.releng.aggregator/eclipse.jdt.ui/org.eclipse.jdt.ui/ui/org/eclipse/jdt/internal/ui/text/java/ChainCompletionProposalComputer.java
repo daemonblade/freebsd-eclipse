@@ -120,14 +120,20 @@ public class ChainCompletionProposalComputer implements IJavaCompletionProposalC
 				IJavaElement e= aprop.getJavaElement();
 				if (e != null) {
 					if (matchesExpectedPrefix(e) && !ChainFinder.isFromExcludedType(Arrays.asList(excludedTypes), e)) {
-						entrypoints.add(new ChainElement(e, false));
+						ChainElement ce= new ChainElement(e, false);
+						if (ce.getElementType() != null) {
+							entrypoints.add(ce);
+						}
 					}
 				} else {
 					IJavaElement[] visibleElements= ctx.getCoreContext().getVisibleElements(null);
 					for (IJavaElement ve : visibleElements) {
 						if (ve.getElementName().equals(aprop.getReplacementString()) && matchesExpectedPrefix(ve)
 								&& !ChainFinder.isFromExcludedType(Arrays.asList(excludedTypes), ve)) {
-							entrypoints.add(new ChainElement(ve, false));
+							ChainElement ce= new ChainElement(ve, false);
+							if (ce.getElementType() != null) {
+								entrypoints.add(ce);
+							}
 						}
 					}
 				}
@@ -156,8 +162,8 @@ public class ChainCompletionProposalComputer implements IJavaCompletionProposalC
 
 		final List<ChainType> expectedTypes= ChainElementAnalyzer.resolveBindingsForExpectedTypes(ctx.getProject(), ctx.getCoreContext());
 		final ChainFinder finder= new ChainFinder(expectedTypes, Arrays.asList(excludedTypes), invocationType);
+		final ExecutorService executor= Executors.newSingleThreadExecutor();
 		try {
-			ExecutorService executor= Executors.newSingleThreadExecutor();
 			Future<?> future= executor.submit(() -> {
 				if (findEntrypoints()) {
 					finder.startChainSearch(entrypoints, maxChains, minDepth, maxDepth);
@@ -166,6 +172,7 @@ public class ChainCompletionProposalComputer implements IJavaCompletionProposalC
 			long timeout= Long.parseLong(JavaManipulation.getPreference(PreferenceConstants.PREF_CHAIN_TIMEOUT, ctx.getProject()));
 			future.get(timeout, TimeUnit.SECONDS);
 		} catch (final Exception e) {
+			executor.shutdownNow();
 			setError("Timeout during call chain computation."); //$NON-NLS-1$
 		}
 		return buildCompletionProposals(finder.getChains());

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -78,7 +78,7 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
 import org.eclipse.jdt.internal.ui.javaeditor.saveparticipant.AbstractSaveParticipantPreferenceConfiguration;
 import org.eclipse.jdt.internal.ui.text.correction.CorrectionMessages;
-import org.eclipse.jdt.internal.ui.text.correction.ModifierCorrectionSubProcessor;
+import org.eclipse.jdt.internal.ui.text.correction.ModifierCorrectionSubProcessorCore;
 
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
@@ -174,8 +174,8 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 		createImportRewrite((CompilationUnit) nodeToAssign.getRoot());
 
 		String[] varNames= suggestLocalVariableNames(fTypeBinding, expression);
-		for (int i= 0; i < varNames.length; i++) {
-			addLinkedPositionProposal(KEY_NAME, varNames[i], null);
+		for (String varName : varNames) {
+			addLinkedPositionProposal(KEY_NAME, varName, null);
 		}
 
 		VariableDeclarationFragment newDeclFrag= ast.newVariableDeclarationFragment();
@@ -325,9 +325,8 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 		addLinkedPosition(rewrite.track(accessName), true, KEY_NAME + index);
 		IVariableBinding variableBinding= newDeclFrag.resolveBinding();
 		if (variableBinding != null) {
-			SimpleName[] linkedNodes= LinkedNodeFinder.findByBinding(nodeToAssign.getRoot(), variableBinding);
-			for (int i= 0; i < linkedNodes.length; i++) {
-				addLinkedPosition(rewrite.track(linkedNodes[i]), false, KEY_NAME + index);
+			for (SimpleName linkedNode : LinkedNodeFinder.findByBinding(nodeToAssign.getRoot(), variableBinding)) {
+				addLinkedPosition(rewrite.track(linkedNode), false, KEY_NAME + index);
 			}
 		}
 		setEndPosition(rewrite.track(selectionNode));
@@ -354,8 +353,8 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 		List<BodyDeclaration> decls= ASTNodes.getBodyDeclarations(newTypeDecl);
 		AST ast= newTypeDecl.getAST();
 		String[] varNames= suggestFieldNames(typeBinding, expression, modifiers, nodeToAssign);
-		for (int i= 0; i < varNames.length; i++) {
-			addLinkedPositionProposal(KEY_NAME + index, varNames[i], null);
+		for (String varName : varNames) {
+			addLinkedPositionProposal(KEY_NAME + index, varName, null);
 		}
 		String varName= varNames[0];
 
@@ -368,7 +367,7 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 		newDecl.setType(type);
 		newDecl.modifiers().addAll(ASTNodeFactory.newModifiers(ast, modifiers));
 
-		ModifierCorrectionSubProcessor.installLinkedVisibilityProposals(getLinkedProposalModel(), rewrite, newDecl.modifiers(), false, ModifierCorrectionSubProcessor.KEY_MODIFIER + index);
+		ModifierCorrectionSubProcessorCore.installLinkedVisibilityProposals(getLinkedProposalModel(), rewrite, newDecl.modifiers(), false, ModifierCorrectionSubProcessorCore.KEY_MODIFIER + index);
 
 		int insertIndex= findFieldInsertIndex(decls, nodeToAssign.getStartPosition()) + index;
 		rewrite.getListRewrite(newTypeDecl, property).insertAt(newDecl, insertIndex, null);
@@ -377,9 +376,8 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 	}
 
 	private Type evaluateType(AST ast, ASTNode nodeToAssign, ITypeBinding typeBinding, String groupID, TypeLocation location) {
-		ITypeBinding[] proposals= ASTResolving.getRelaxingTypes(ast, typeBinding);
-		for (int i= 0; i < proposals.length; i++) {
-			addLinkedPositionProposal(groupID, proposals[i]);
+		for (ITypeBinding proposal : ASTResolving.getRelaxingTypes(ast, typeBinding)) {
+			addLinkedPositionProposal(groupID, proposal);
 		}
 		ImportRewrite importRewrite= getImportRewrite();
 		CompilationUnit cuNode= (CompilationUnit) nodeToAssign.getRoot();

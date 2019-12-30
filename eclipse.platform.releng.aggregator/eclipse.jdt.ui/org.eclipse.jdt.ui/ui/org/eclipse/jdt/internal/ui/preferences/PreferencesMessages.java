@@ -146,6 +146,7 @@ public final class PreferencesMessages extends NLS {
 	public static String JavaEditorPreferencePage_returnKeyword;
 	public static String JavaEditorPreferencePage_keywords;
 	public static String JavaEditorPreferencePage_varKeyword;
+	public static String JavaEditorPreferencePage_yieldKeyword;
 	public static String JavaEditorPreferencePage_strings;
 	public static String JavaEditorPreferencePage_others;
 	public static String JavaEditorPreferencePage_operators;
@@ -833,6 +834,7 @@ public final class PreferencesMessages extends NLS {
 	public static String ComplianceConfigurationBlock_version10;
 	public static String ComplianceConfigurationBlock_version_11;
 	public static String ComplianceConfigurationBlock_version_12;
+	public static String ComplianceConfigurationBlock_version_13;
 	public static String ComplianceConfigurationBlock_versionCLDC11;
 	public static String ComplianceConfigurationBlock_src_greater_compliance;
 	public static String ComplianceConfigurationBlock_classfile_greater_compliance;
@@ -851,6 +853,7 @@ public final class PreferencesMessages extends NLS {
 	public static String ProblemSeveritiesConfigurationBlock_pb_potentially_missing_static_on_method_label;
 	public static String ProblemSeveritiesConfigurationBlock_pb_fall_through_case;
 	public static String ProblemSeveritiesConfigurationBlock_unused_suppresswarnings_token;
+	public static String ProblemSeveritiesConfigurationBlock_suppresswarnings_not_fully_analysed;
 	public static String CodeAssistConfigurationBlock_hideDeprecated_label;
 
 	public static String CodeAssistStaticMembersConfigurationBlock_description;

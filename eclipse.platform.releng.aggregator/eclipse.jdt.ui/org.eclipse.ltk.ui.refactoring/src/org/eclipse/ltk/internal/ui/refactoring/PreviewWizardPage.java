@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -251,8 +251,8 @@ public class PreviewWizardPage extends RefactoringWizardPage implements IPreview
 			fMenu= new Menu(parent);
 			if (fFilterActions.length != 0) {
 				new ActionContributionItem(fShowAllAction).fill(fMenu, -1);
-				for (int i= 0; i < fFilterActions.length; i++) {
-					new ActionContributionItem(fFilterActions[i]).fill(fMenu, -1);
+				for (FilterAction fFilterAction : fFilterActions) {
+					new ActionContributionItem(fFilterAction).fill(fMenu, -1);
 				}
 				new MenuItem(fMenu, SWT.SEPARATOR);
 			}
@@ -477,6 +477,13 @@ public class PreviewWizardPage extends RefactoringWizardPage implements IPreview
 		fTreeViewer.addSelectionChangedListener(createSelectionChangedListener());
 		fTreeViewer.addCheckStateListener(createCheckStateListener());
 		fTreeViewerPane.setContent(fTreeViewer.getControl());
+		fTreeViewer.getControl().getAccessible().addAccessibleListener(new AccessibleAdapter() {
+			@Override
+			public void getName(AccessibleEvent e) {
+				super.getName(e);
+				e.result= fTreeViewerPane.getText() + (e.result != null ? (" " + e.result) : ""); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+		});
 		setHideDerived(fDerivedFilterActive);
 		setTreeViewerInput();
 		updateTreeViewerPaneTitle();
@@ -663,13 +670,14 @@ public class PreviewWizardPage extends RefactoringWizardPage implements IPreview
 	}
 
 	private boolean hasChanges(CompositeChange change) {
-		final Change[] children= change.getChildren();
-		for (int index= 0; index < children.length; index++) {
-			if (children[index] instanceof CompositeChange) {
-				if (hasChanges((CompositeChange) children[index]))
+		for (Change child : change.getChildren()) {
+			if (child instanceof CompositeChange) {
+				if (hasChanges((CompositeChange) child)) {
 					return true;
-			} else
+				}
+			} else {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -684,14 +692,12 @@ public class PreviewWizardPage extends RefactoringWizardPage implements IPreview
 
 	private void collectGroupCategories(Set<GroupCategory> result, Change change) {
 		if (change instanceof TextEditBasedChange) {
-			TextEditBasedChangeGroup[] groups= ((TextEditBasedChange)change).getChangeGroups();
-			for (int i= 0; i < groups.length; i++) {
-				result.addAll(groups[i].getGroupCategorySet().asList());
+			for (TextEditBasedChangeGroup group : ((TextEditBasedChange)change).getChangeGroups()) {
+				result.addAll(group.getGroupCategorySet().asList());
 			}
 		} else if (change instanceof CompositeChange) {
-			Change[] children= ((CompositeChange)change).getChildren();
-			for (int i= 0; i < children.length; i++) {
-				collectGroupCategories(result, children[i]);
+			for (Change child : ((CompositeChange)change).getChildren()) {
+				collectGroupCategories(result, child);
 			}
 		}
 	}

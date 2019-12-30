@@ -93,6 +93,7 @@ import org.eclipse.jdt.internal.corext.callhierarchy.MethodWrapperDynamic;
 import org.eclipse.jdt.internal.corext.fix.CleanUpRegistry;
 import org.eclipse.jdt.internal.corext.template.java.AbstractJavaContextType;
 import org.eclipse.jdt.internal.corext.template.java.JavaContextType;
+import org.eclipse.jdt.internal.corext.template.java.JavaPostfixContextType;
 import org.eclipse.jdt.internal.corext.template.java.SWTContextType;
 import org.eclipse.jdt.internal.corext.util.OpenTypeHistory;
 import org.eclipse.jdt.internal.corext.util.QualifiedTypeNameHistory;
@@ -139,6 +140,7 @@ public class JavaPlugin extends AbstractUIPlugin implements DebugOptionsListener
 	 * The view id for the workbench's Resource Navigator standard component.
 	 * @since 3.6
 	 */
+	@Deprecated
 	public static final String ID_RES_NAV= IPageLayout.ID_RES_NAV;
 
 	/**
@@ -755,12 +757,16 @@ public class JavaPlugin extends AbstractUIPlugin implements DebugOptionsListener
 			registerJavaContext(registry, JavaContextType.ID_MEMBERS, all_contextType);
 			registerJavaContext(registry, JavaContextType.ID_STATEMENTS, all_contextType);
 			registerJavaContext(registry, JavaContextType.ID_MODULE, all_contextType);
+			registerJavaContext(registry, JavaContextType.ID_EMPTY, all_contextType);
 
 			registerJavaContext(registry, SWTContextType.ID_ALL, all_contextType);
 			all_contextType= registry.getContextType(SWTContextType.ID_ALL);
 
 			registerJavaContext(registry, SWTContextType.ID_MEMBERS, all_contextType);
 			registerJavaContext(registry, SWTContextType.ID_STATEMENTS, all_contextType);
+
+			registerJavaContext(registry, JavaPostfixContextType.ID_ALL, all_contextType);
+			all_contextType= registry.getContextType(JavaPostfixContextType.ID_ALL);
 
 			fContextTypeRegistry= registry;
 		}

@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.SubProgressMonitor;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
@@ -119,29 +120,24 @@ public class OpenProjectAction extends SelectionDispatchAction implements IResou
 	}
 
 	private int evaluateSelection(IStructuredSelection selection, List<Object> allClosedProjects) {
-		Object[] array= selection.toArray();
 		int selectionStatus = 0;
-		for (int i= 0; i < array.length; i++) {
-			Object curr= array[i];
+		for (Object curr : selection.toArray()) {
 			if (isClosedProject(curr)) {
 				if (allClosedProjects != null)
 					allClosedProjects.add(curr);
 				selectionStatus |= CLOSED_PROJECTS_SELECTED;
 			} else {
 				if (curr instanceof IWorkingSet) {
-					IAdaptable[] elements= ((IWorkingSet) curr).getElements();
-					for (int k= 0; k < elements.length; k++) {
-						Object elem= elements[k];
-						if (isClosedProject(elem)) {
+					for (IAdaptable element : ((IWorkingSet) curr).getElements()) {
+						if (isClosedProject(element)) {
 							if (allClosedProjects != null)
-								allClosedProjects.add(elem);
+								allClosedProjects.add(element);
 							selectionStatus |= CLOSED_PROJECTS_SELECTED;
 						}
 					}
 				}
 				selectionStatus |= OTHER_ELEMENTS_SELECTED;
 			}
-
 		}
 		return selectionStatus;
 	}
@@ -197,10 +193,10 @@ public class OpenProjectAction extends SelectionDispatchAction implements IResou
 			public void run(IProgressMonitor monitor) throws CoreException {
 				monitor.beginTask("", projects.length); //$NON-NLS-1$
 				MultiStatus errorStatus= null;
-				for (int i = 0; i < projects.length; i++) {
-					IProject project= (IProject)projects[i];
+				for (Object p : projects) {
+					IProject project= (IProject) p;
 					try {
-						project.open(new SubProgressMonitor(monitor, 1));
+						project.open(IResource.BACKGROUND_REFRESH, new SubProgressMonitor(monitor, 1));
 					} catch (CoreException e) {
 						if (errorStatus == null)
 							errorStatus = new MultiStatus(JavaPlugin.getPluginId(), IStatus.ERROR, ActionMessages.OpenProjectAction_error_message, null);
@@ -215,10 +211,8 @@ public class OpenProjectAction extends SelectionDispatchAction implements IResou
 	}
 
 	private Object[] getClosedProjectsInWorkspace() {
-		IProject[] projects= ResourcesPlugin.getWorkspace().getRoot().getProjects();
 		List<IProject> result= new ArrayList<>(5);
-		for (int i = 0; i < projects.length; i++) {
-			IProject project= projects[i];
+		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
 			if (!project.isOpen())
 				result.add(project);
 		}
@@ -226,10 +220,10 @@ public class OpenProjectAction extends SelectionDispatchAction implements IResou
 	}
 
 	private boolean hasClosedProjectsInWorkspace() {
-		IProject[] projects= ResourcesPlugin.getWorkspace().getRoot().getProjects();
-		for (int i = 0; i < projects.length; i++) {
-			if (!projects[i].isOpen())
+		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
+			if (!project.isOpen()) {
 				return true;
+			}
 		}
 		return false;
 	}

@@ -882,10 +882,11 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 		return null;
 	}
 
-	private RefactoringStatus checkIfFieldDeclaredIn(final IField iField, final IType type) {
+	private RefactoringStatus checkIfFieldDeclaredIn(final IField iField, final IType type) throws JavaModelException {
 		final IField fieldInType= type.getField(iField.getElementName());
-		if (!fieldInType.exists())
+		if (!fieldInType.exists() || !iField.getTypeSignature().equals(fieldInType.getTypeSignature())) {
 			return null;
+		}
 		final String[] keys= { JavaElementLabels.getTextLabel(fieldInType, JavaElementLabels.ALL_FULLY_QUALIFIED), JavaElementLabels.getTextLabel(type, JavaElementLabels.ALL_FULLY_QUALIFIED)};
 		final String msg= Messages.format(RefactoringCoreMessages.PullUpRefactoring_Field_declared_in_class, keys);
 		final RefactoringStatusContext context= JavaStatusContext.create(fieldInType);
@@ -1660,8 +1661,9 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 			} else if (member instanceof IField) {
 				final IField field= (IField) member;
 				final IField found= initial.getField(field.getElementName());
-				if (found.exists())
+				if (found.exists() && field.getTypeSignature().equals(found.getTypeSignature())) {
 					addMatchingMember(result, field, found);
+				}
 			} else if (member instanceof IType) {
 				final IType type= (IType) member;
 				final IType found= initial.getType(type.getElementName());
@@ -1679,7 +1681,14 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 			final IMember[] typesToDelete= getMembers(fMembersToMove, IJavaElement.TYPE);
 			final IMember[] matchingElements= getMatchingElements(monitor, false);
 			final IMember[] matchingFields= getMembers(matchingElements, IJavaElement.FIELD);
-			return JavaElementUtil.merge(JavaElementUtil.merge(matchingFields, typesToDelete), fDeletedMethods);
+
+			List<IMember> toDelete= new ArrayList<>();
+			IMember[] all= JavaElementUtil.merge(matchingFields, typesToDelete);
+
+			toDelete.addAll(Arrays.asList(fMembersToMove));
+			toDelete.retainAll(Arrays.asList(all));
+
+			return JavaElementUtil.merge(toDelete.toArray(new IMember[0]), fDeletedMethods);
 		} finally {
 			monitor.done();
 		}

@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -214,8 +215,8 @@ public class JavadocOptionsManager {
 	 */
 	private IJavaProject getSingleProjectFromInitialSelection() {
 		IJavaProject res= null;
-		for (int i= 0; i < fInitialElements.length; i++) {
-			IJavaProject curr= fInitialElements[i].getJavaProject();
+		for (IJavaElement initialElement : fInitialElements) {
+			IJavaProject curr= initialElement.getJavaProject();
 			if (res == null) {
 				res= curr;
 			} else if (!res.equals(curr)) {
@@ -419,11 +420,9 @@ public class JavadocOptionsManager {
 		String extraOptions= element.getAttribute(EXTRAOPTIONS);
 		if (extraOptions.length() > 0) {
 			ExecutionArguments tokens= new ExecutionArguments("", extraOptions); //$NON-NLS-1$
-			String[] args= tokens.getProgramArgumentsArray();
-
+			
 			boolean vmarg= false;
-			for (int i= 0; i < args.length; i++) {
-				String curr= args[i];
+			for (String curr : tokens.getProgramArgumentsArray()) {
 				if (curr.length() > 0 && curr.charAt(0) == '-') {
 					// an command
 					vmarg=(curr.length() > 1 && curr.charAt(1) == 'J');
@@ -486,16 +485,12 @@ public class JavadocOptionsManager {
 
 		ArrayList<IContainer> res= new ArrayList<>();
 
-		String[] strings= sourcePaths.split(File.pathSeparator);
-		for (int i= 0; i < strings.length; i++) {
-			IPath path= makeAbsolutePathFromRelative(new Path(strings[i].trim()));
+		for (String string : sourcePaths.split(File.pathSeparator)) {
+			IPath path= makeAbsolutePathFromRelative(new Path(string.trim()));
 			if (path != null) {
 				IContainer[] containers= root.findContainersForLocationURI(URIUtil.toURI(path.makeAbsolute()));
-				for (int k= 0; k < containers.length; k++) {
-					res.add(containers[k]);
-				}
+				res.addAll(Arrays.asList(containers));
 			}
-
 		}
 		return res.toArray(new IContainer[res.size()]);
 	}
@@ -511,8 +506,7 @@ public class JavadocOptionsManager {
 			StringTokenizer tokenizer= new StringTokenizer(packagenames, ","); //$NON-NLS-1$
 			while (tokenizer.hasMoreTokens()) {
 				IPath relPackagePath= new Path(tokenizer.nextToken().trim().replace('.', '/'));
-				for (int i= 0; i < containers.length; i++) {
-					IContainer curr= containers[i];
+				for (IContainer curr : containers) {
 					IResource resource= curr.findMember(relPackagePath);
 					if (resource != null) {
 						IJavaElement javaElem= JavaCore.create(resource);
@@ -536,9 +530,8 @@ public class JavadocOptionsManager {
 					IPath path= makeAbsolutePathFromRelative(new Path(name));
 					//if unable to create an absolute path to the resource skip it
 					if (path != null) {
-						IFile[] files= root.findFilesForLocationURI(URIUtil.toURI(path.makeAbsolute()));
-						for (int i= 0; i < files.length; i++) {
-							IJavaElement el= JavaCore.createCompilationUnitFrom(files[i]);
+						for (IFile file : root.findFilesForLocationURI(URIUtil.toURI(path.makeAbsolute()))) {
+							IJavaElement el= JavaCore.createCompilationUnitFrom(file);
 							if (el != null) {
 								res.add(el);
 							}
@@ -633,26 +626,28 @@ public class JavadocOptionsManager {
 
 	public boolean getBoolean(String flag) {
 
-		if (flag.equals(AUTHOR))
+		switch (flag) {
+		case AUTHOR:
 			return fAuthor;
-		else if (flag.equals(VERSION))
+		case VERSION:
 			return fVersion;
-		else if (flag.equals(USE))
+		case USE:
 			return fUse;
-		else if (flag.equals(NODEPRECATED))
+		case NODEPRECATED:
 			return fNodeprecated;
-		else if (flag.equals(NODEPRECATEDLIST))
+		case NODEPRECATEDLIST:
 			return fNoDeprecatedlist;
-		else if (flag.equals(NOINDEX))
+		case NOINDEX:
 			return fNoindex;
-		else if (flag.equals(NOTREE))
+		case NOTREE:
 			return fNotree;
-		else if (flag.equals(SPLITINDEX))
+		case SPLITINDEX:
 			return fSplitindex;
-		else if (flag.equals(NONAVBAR))
+		case NONAVBAR:
 			return fNonavbar;
-		else
+		default:
 			return false;
+		}
 	}
 
 	private boolean loadBoolean(String value) {
@@ -762,9 +757,9 @@ public class JavadocOptionsManager {
 				toolArgs.add(fStylesheet);
 			}
 
-			for (int i= 0; i < fHRefs.length; i++) {
+			for (String fHRef : fHRefs) {
 				toolArgs.add("-link"); //$NON-NLS-1$
-				toolArgs.add(fHRefs[i]);
+				toolArgs.add(fHRef);
 			}
 
 		} //end standard options
@@ -774,9 +769,7 @@ public class JavadocOptionsManager {
 		if (fAdditionalParams.length() + fVMParams.length() != 0) {
 			ExecutionArguments tokens= new ExecutionArguments(fVMParams, fAdditionalParams);
 			String[] vmArgsArray= tokens.getVMArgumentsArray();
-			for (int i= 0; i < vmArgsArray.length; i++) {
-				vmArgs.add(vmArgsArray[i]);
-			}
+			vmArgs.addAll(Arrays.asList(vmArgsArray));
 			String[] argsArray= tokens.getProgramArgumentsArray();
 			for (int i= 0; i < argsArray.length; i++) {
 				String arg= argsArray[i];
@@ -793,8 +786,7 @@ public class JavadocOptionsManager {
 			toolArgs.add(fOverview);
 		}
 
-		for (int i= 0; i < fSelectedElements.length; i++) {
-			IJavaElement curr= fSelectedElements[i];
+		for (IJavaElement curr : fSelectedElements) {
 			if (curr instanceof IPackageFragment) {
 				toolArgs.add(curr.getElementName());
 			} else if (curr instanceof ICompilationUnit) {
@@ -1012,24 +1004,37 @@ public class JavadocOptionsManager {
 
 	public void setBoolean(String flag, boolean value) {
 
-		if (flag.equals(AUTHOR))
+		switch (flag) {
+		case AUTHOR:
 			fAuthor= value;
-		else if (flag.equals(USE))
+			break;
+		case USE:
 			fUse= value;
-		else if (flag.equals(VERSION))
+			break;
+		case VERSION:
 			fVersion= value;
-		else if (flag.equals(NODEPRECATED))
+			break;
+		case NODEPRECATED:
 			fNodeprecated= value;
-		else if (flag.equals(NODEPRECATEDLIST))
+			break;
+		case NODEPRECATEDLIST:
 			fNoDeprecatedlist= value;
-		else if (flag.equals(NOINDEX))
+			break;
+		case NOINDEX:
 			fNoindex= value;
-		else if (flag.equals(NOTREE))
+			break;
+		case NOTREE:
 			fNotree= value;
-		else if (flag.equals(SPLITINDEX))
+			break;
+		case SPLITINDEX:
 			fSplitindex= value;
-		else if (flag.equals(NONAVBAR))
+			break;
+		case NONAVBAR:
 			fNonavbar= value;
+			break;
+		default:
+			break;
+		}
 	}
 
 	public void setSource(String source) {
@@ -1103,10 +1108,9 @@ public class JavadocOptionsManager {
 			return false;
 		}
 
-		IJavaElement[] elements= root.getChildren();
-		for (int i= 0; i < elements.length; i++) {
-			if (elements[i] instanceof IPackageFragment) {
-				IPackageFragment fragment= (IPackageFragment) elements[i];
+		for (IJavaElement element : root.getChildren()) {
+			if (element instanceof IPackageFragment) {
+				IPackageFragment fragment= (IPackageFragment) element;
 				if (containsCompilationUnits(fragment)) {
 					return true;
 				}
@@ -1156,12 +1160,9 @@ public class JavadocOptionsManager {
 			}
 		}
 
-		IVMInstallType[] jreTypes= JavaRuntime.getVMInstallTypes();
-		for (int i= 0; i < jreTypes.length; i++) {
-			IVMInstallType jreType= jreTypes[i];
-			IVMInstall[] installs= jreType.getVMInstalls();
-			for (int k= 0; k < installs.length; k++) {
-				File res= getCommand(installs[k]);
+		for (IVMInstallType jreType : JavaRuntime.getVMInstallTypes()) {
+			for (IVMInstall i : jreType.getVMInstalls()) {
+				File res= getCommand(i);
 				if (res != null) {
 					return res;
 				}

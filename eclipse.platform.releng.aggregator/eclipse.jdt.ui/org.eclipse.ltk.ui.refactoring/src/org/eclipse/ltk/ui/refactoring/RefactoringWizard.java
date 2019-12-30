@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -455,9 +455,7 @@ public abstract class RefactoringWizard extends Wizard {
 		if (fDefaultPageTitle == null)
 			return;
 
-		IWizardPage[] pages= getPages();
-		for (int i= 0; i < pages.length; i++) {
-			IWizardPage page= pages[i];
+		for (IWizardPage page : getPages()) {
 			if (page.getTitle() == null)
 				page.setTitle(fDefaultPageTitle);
 		}
@@ -547,9 +545,7 @@ public abstract class RefactoringWizard extends Wizard {
 		try {
 			PlatformUI.getWorkbench().getProgressService().busyCursorWhile(
 				new WorkbenchRunnableAdapter(op, ResourcesPlugin.getWorkspace().getRoot()));
-		} catch (InterruptedException e) {
-			exception= e;
-		} catch (InvocationTargetException e) {
+		} catch (InterruptedException | InvocationTargetException e) {
 			exception= e;
 		}
 		RefactoringStatus status= null;
@@ -619,7 +615,8 @@ public abstract class RefactoringWizard extends Wizard {
 	 */
 	public final Change internalCreateChange(InternalAPI api, CreateChangeOperation operation, boolean updateStatus) {
 		Assert.isNotNull(api);
-		return createChange(operation, updateStatus, getContainer());
+		IRunnableContext context= getContainer() != null ? getContainer() : fRunnableContext;
+		return createChange(operation, updateStatus, context);
 	}
 
 	/**
@@ -662,7 +659,7 @@ public abstract class RefactoringWizard extends Wizard {
 	private Change createChange(CreateChangeOperation operation, boolean updateStatus, IRunnableContext context){
 		InvocationTargetException exception= null;
 		try {
-			context.run(true, fIsChangeCreationCancelable, new WorkbenchRunnableAdapter(
+			context.run((context != PlatformUI.getWorkbench().getActiveWorkbenchWindow()), fIsChangeCreationCancelable, new WorkbenchRunnableAdapter(
 				operation, ResourcesPlugin.getWorkspace().getRoot()));
 		} catch (InterruptedException e) {
 			setConditionCheckingStatus(null);

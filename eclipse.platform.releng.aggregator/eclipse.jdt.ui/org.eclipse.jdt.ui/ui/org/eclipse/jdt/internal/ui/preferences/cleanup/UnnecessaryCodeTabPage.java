@@ -23,12 +23,14 @@ import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 
 import org.eclipse.jdt.internal.ui.fix.AbstractCleanUp;
 import org.eclipse.jdt.internal.ui.fix.AutoboxingCleanUp;
+import org.eclipse.jdt.internal.ui.fix.PushDownNegationCleanUp;
+import org.eclipse.jdt.internal.ui.fix.RedundantModifiersCleanUp;
+import org.eclipse.jdt.internal.ui.fix.RedundantSemicolonsCleanUp;
 import org.eclipse.jdt.internal.ui.fix.StringCleanUp;
 import org.eclipse.jdt.internal.ui.fix.TypeParametersCleanUp;
 import org.eclipse.jdt.internal.ui.fix.UnboxingCleanUp;
+import org.eclipse.jdt.internal.ui.fix.UnnecessaryArrayCreationCleanUp;
 import org.eclipse.jdt.internal.ui.fix.UnnecessaryCodeCleanUp;
-import org.eclipse.jdt.internal.ui.fix.RedundantModifiersCleanUp;
-import org.eclipse.jdt.internal.ui.fix.RedundantSemicolonsCleanUp;
 import org.eclipse.jdt.internal.ui.fix.UnusedCodeCleanUp;
 
 public final class UnnecessaryCodeTabPage extends AbstractCleanUpTabPage {
@@ -48,8 +50,10 @@ public final class UnnecessaryCodeTabPage extends AbstractCleanUpTabPage {
 				new TypeParametersCleanUp(values),
 				new AutoboxingCleanUp(values),
 				new UnboxingCleanUp(values),
+				new PushDownNegationCleanUp(values),
 				new RedundantModifiersCleanUp(values),
-				new RedundantSemicolonsCleanUp(values)
+				new RedundantSemicolonsCleanUp(values),
+				new UnnecessaryArrayCreationCleanUp(values)
 		};
 	}
 
@@ -89,11 +93,18 @@ public final class UnnecessaryCodeTabPage extends AbstractCleanUpTabPage {
 		CheckboxPreference unboxing= createCheckboxPref(unnecessaryGroup, numColumns, CleanUpMessages.UnnecessaryCodeTabPage_CheckboxName_Unboxing, CleanUpConstants.USE_UNBOXING, CleanUpModifyDialog.FALSE_TRUE);
 		registerPreference(unboxing);
 
+		CheckboxPreference pushDownNegation= createCheckboxPref(unnecessaryGroup, numColumns, CleanUpMessages.UnnecessaryCodeTabPage_CheckboxName_PushDownNegation, CleanUpConstants.PUSH_DOWN_NEGATION,
+				CleanUpModifyDialog.FALSE_TRUE);
+		registerPreference(pushDownNegation);
+
 		CheckboxPreference modifiers= createCheckboxPref(unnecessaryGroup, numColumns, CleanUpMessages.UnnecessaryCodeTabPage_CheckboxName_RedundantModifiers, CleanUpConstants.REMOVE_REDUNDANT_MODIFIERS, CleanUpModifyDialog.FALSE_TRUE);
 		registerPreference(modifiers);
 
 		CheckboxPreference semicolons= createCheckboxPref(unnecessaryGroup, numColumns, CleanUpMessages.UnnecessaryCodeTabPage_CheckboxName_RedundantSemicolons, CleanUpConstants.REMOVE_REDUNDANT_SEMICOLONS, CleanUpModifyDialog.FALSE_TRUE);
 		registerPreference(semicolons);
+
+		CheckboxPreference arrayCreation= createCheckboxPref(unnecessaryGroup, numColumns, CleanUpMessages.UnnecessaryCodeTabPage_CheckboxName_UnnecessaryVarargsArrayCreation, CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION, CleanUpModifyDialog.FALSE_TRUE);
+		registerPreference(arrayCreation);
     }
 
 }

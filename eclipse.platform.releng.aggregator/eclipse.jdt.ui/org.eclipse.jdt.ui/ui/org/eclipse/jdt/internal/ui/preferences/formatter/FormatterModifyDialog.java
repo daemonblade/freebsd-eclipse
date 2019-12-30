@@ -733,6 +733,17 @@ public class FormatterModifyDialog extends ModifyDialog {
 	private void createIndentationTree() {
 		final Section globalSection= fTree.addSection(null, FormatterMessages.FormatterModifyDialog_indentation_tree_indentation, "section-indentation"); //$NON-NLS-1$
 		createGeneralIndentationPrefs(globalSection);
+		fTree.addComboPref(globalSection, FormatterMessages.FormatterModifyDialog_indentation_pref_text_block_indentation, DefaultCodeFormatterConstants.FORMATTER_TEXT_BLOCK_INDENTATION,
+				new String[] {
+						String.valueOf(DefaultCodeFormatterConstants.INDENT_PRESERVE),
+						String.valueOf(DefaultCodeFormatterConstants.INDENT_BY_ONE),
+						String.valueOf(DefaultCodeFormatterConstants.INDENT_DEFAULT),
+						String.valueOf(DefaultCodeFormatterConstants.INDENT_ON_COLUMN) },
+				new String[] {
+						FormatterMessages.FormatterModifyDialog_indentation_val_indentation_preserve,
+						FormatterMessages.FormatterModifyDialog_lineWrap_val_indentation_by_one,
+						FormatterMessages.FormatterModifyDialog_indentation_val_indentation_default,
+						FormatterMessages.FormatterModifyDialog_lineWrap_val_indentation_on_column });
 		fTree.addGap(globalSection);
 
 		fTree.builder(FormatterMessages.FormatterModifyDialog_indentation_tree_indented_elements, null, s -> CheckboxPreference.addModifyAll(s, fImages))
@@ -1169,7 +1180,9 @@ public class FormatterModifyDialog extends ModifyDialog {
 								.pref(FormatterMessages.FormatterModifyDialog_whiteSpace_pref_before_prefix_operators, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_PREFIX_OPERATOR)
 								.pref(FormatterMessages.FormatterModifyDialog_whiteSpace_pref_after_prefix_operators, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_PREFIX_OPERATOR)
 								.pref(FormatterMessages.FormatterModifyDialog_whiteSpace_pref_before_unary_operators, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_UNARY_OPERATOR)
-								.pref(FormatterMessages.FormatterModifyDialog_whiteSpace_pref_after_unary_operators, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_UNARY_OPERATOR))
+								.pref(FormatterMessages.FormatterModifyDialog_whiteSpace_pref_after_unary_operators, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_UNARY_OPERATOR, pref -> {
+									fTree.addCheckbox(pref, FormatterMessages.FormatterModifyDialog_whiteSpace_pref_after_not_operator, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_NOT_OPERATOR, CheckboxPreference.DO_NOT_INSERT_INSERT);
+								}))
 						.node(fTree.builder(FormatterMessages.FormatterModifyDialog_whiteSpace_tree_binary_operators, "-binaryoperators", modAll) //$NON-NLS-1$
 								.pref(FormatterMessages.FormatterModifyDialog_whiteSpace_pref_before_multiplicative_operator, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_MULTIPLICATIVE_OPERATOR)
 								.pref(FormatterMessages.FormatterModifyDialog_whiteSpace_pref_after_multiplicative_operator, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_MULTIPLICATIVE_OPERATOR)
@@ -1522,6 +1535,7 @@ public class FormatterModifyDialog extends ModifyDialog {
 						.pref(FormatterMessages.FormatterModifyDialog_comments_pref_format_html, DefaultCodeFormatterConstants.FORMATTER_COMMENT_FORMAT_HTML)
 						.pref(FormatterMessages.FormatterModifyDialog_comments_pref_format_code_snippets, DefaultCodeFormatterConstants.FORMATTER_COMMENT_FORMAT_SOURCE)
 						.pref(FormatterMessages.FormatterModifyDialog_comments_pref_blank_line_before_javadoc_tags, DefaultCodeFormatterConstants.FORMATTER_COMMENT_INSERT_EMPTY_LINE_BEFORE_ROOT_TAGS)
+						.pref(FormatterMessages.FormatterModifyDialog_comments_pref_blank_line_beftween_different_tags, DefaultCodeFormatterConstants.FORMATTER_COMMENT_INSERT_EMPTY_LINE_BETWEEN_DIFFERENT_TAGS)
 						.node(createJavadocAlignOptions())
 						.gap()
 						.pref(FormatterMessages.FormatterModifyDialog_comments_pref_new_lines_at_javadoc_boundaries, DefaultCodeFormatterConstants.FORMATTER_COMMENT_NEW_LINES_AT_JAVADOC_BOUNDARIES)
@@ -1536,6 +1550,7 @@ public class FormatterModifyDialog extends ModifyDialog {
 						case DefaultCodeFormatterConstants.FORMATTER_JOIN_LINES_IN_COMMENTS:
 							return fTree.addCheckbox(parent, label, key, CheckboxPreference.TRUE_FALSE);
 						case DefaultCodeFormatterConstants.FORMATTER_COMMENT_INSERT_EMPTY_LINE_BEFORE_ROOT_TAGS:
+						case DefaultCodeFormatterConstants.FORMATTER_COMMENT_INSERT_EMPTY_LINE_BETWEEN_DIFFERENT_TAGS:
 							return fTree.addCheckbox(parent, label, key, CheckboxPreference.DO_NOT_INSERT_INSERT);
 						default:
 							return fTree.addCheckbox(parent, label, key, CheckboxPreference.FALSE_TRUE);

@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.refactoring;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -98,9 +99,7 @@ public class UseSupertypeWizard extends RefactoringWizard{
 					result.add(superclass);
 				}
 				IType[] superInterface= fHierarchy.getSuperInterfaces(type);
-				for (int i=0; i < superInterface.length; i++){
-					result.add(superInterface[i]);
-				}
+				result.addAll(Arrays.asList(superInterface));
 				try {
 					if (type.isInterface()) {
 						IType found= type.getJavaProject().findType("java.lang.Object"); //$NON-NLS-1$
@@ -343,15 +342,22 @@ public class UseSupertypeWizard extends RefactoringWizard{
 				if  (! fFileCount.containsKey(element))
 					return superText;
 				int count= fFileCount.get(element).intValue();
-				if (count == 0){
+				switch (count) {
+				case 0:
+				{
 					String[] keys= {superText};
 					return Messages.format(RefactoringMessages.UseSupertypeInputPage_no_possible_updates, keys);
-				} else if (count == 1){
+				}
+				case 1:
+				{
 					String [] keys= {superText};
 					return Messages.format(RefactoringMessages.UseSupertypeInputPage_updates_possible_in_file, keys);
-				}	else {
+				}
+				default:
+				{
 					String[] keys= {superText, String.valueOf(count)};
 					return Messages.format(RefactoringMessages.UseSupertypeInputPage_updates_possible_in_files, keys);
+				}
 				}
 			}
 		}

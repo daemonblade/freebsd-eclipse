@@ -42,6 +42,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.core.IWorkingCopy;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
@@ -373,11 +374,9 @@ public final class JavaUI {
 			consideredRoots= Arrays.asList(roots);
 		} else {
 			consideredRoots= new ArrayList<>(roots.length);
-			for (int i= 0; i < roots.length; i++) {
-				IPackageFragmentRoot root= roots[i];
+			for (IPackageFragmentRoot root : roots) {
 				if (root.getKind() != IPackageFragmentRoot.K_BINARY)
 					consideredRoots.add(root);
-
 			}
 		}
 
@@ -615,25 +614,35 @@ public final class JavaUI {
 	public static SelectionDialog createTypeDialog(Shell parent, IRunnableContext context, IJavaSearchScope scope, int style,
 			boolean multipleSelection, String filter, TypeSelectionExtension extension) throws JavaModelException {
 		int elementKinds= 0;
-		if (style == IJavaElementSearchConstants.CONSIDER_ALL_TYPES) {
+		switch (style) {
+		case IJavaElementSearchConstants.CONSIDER_ALL_TYPES:
 			elementKinds= IJavaSearchConstants.TYPE;
-		} else if (style == IJavaElementSearchConstants.CONSIDER_INTERFACES) {
+			break;
+		case IJavaElementSearchConstants.CONSIDER_INTERFACES:
 			elementKinds= IJavaSearchConstants.INTERFACE;
-		} else if (style == IJavaElementSearchConstants.CONSIDER_CLASSES) {
+			break;
+		case IJavaElementSearchConstants.CONSIDER_CLASSES:
 			elementKinds= IJavaSearchConstants.CLASS;
-		} else if (style == IJavaElementSearchConstants.CONSIDER_ANNOTATION_TYPES) {
+			break;
+		case IJavaElementSearchConstants.CONSIDER_ANNOTATION_TYPES:
 			elementKinds= IJavaSearchConstants.ANNOTATION_TYPE;
-		} else if (style == IJavaElementSearchConstants.CONSIDER_ENUMS) {
+			break;
+		case IJavaElementSearchConstants.CONSIDER_ENUMS:
 			elementKinds= IJavaSearchConstants.ENUM;
-		} else if (style == IJavaElementSearchConstants.CONSIDER_CLASSES_AND_INTERFACES) {
+			break;
+		case IJavaElementSearchConstants.CONSIDER_CLASSES_AND_INTERFACES:
 			elementKinds= IJavaSearchConstants.CLASS_AND_INTERFACE;
-		} else if (style == IJavaElementSearchConstants.CONSIDER_CLASSES_AND_ENUMS) {
+			break;
+		case IJavaElementSearchConstants.CONSIDER_CLASSES_AND_ENUMS:
 			elementKinds= IJavaSearchConstants.CLASS_AND_ENUM;
-		} else if (style == DEPRECATED_CONSIDER_TYPES) {
+			break;
+		case DEPRECATED_CONSIDER_TYPES:
 			elementKinds= IJavaSearchConstants.CLASS_AND_INTERFACE;
-		} else if (style == IJavaElementSearchConstants.CONSIDER_INTERFACES_AND_ANNOTATIONS) {
+			break;
+		case IJavaElementSearchConstants.CONSIDER_INTERFACES_AND_ANNOTATIONS:
 			elementKinds= IJavaSearchConstants.INTERFACE_AND_ANNOTATION;
-		} else {
+			break;
+		default:
 			throw new IllegalArgumentException("Invalid style constant."); //$NON-NLS-1$
 		}
 		FilteredTypesSelectionDialog dialog= new FilteredTypesSelectionDialog(parent, multipleSelection,
@@ -854,8 +863,7 @@ public final class JavaUI {
 	public static org.eclipse.jdt.core.IWorkingCopy[] getSharedWorkingCopiesOnClasspath() {
 		org.eclipse.jdt.core.IWorkingCopy[] wcs= getSharedWorkingCopies();
 		List<org.eclipse.jdt.core.IWorkingCopy> result= new ArrayList<>(wcs.length);
-		for (int i = 0; i < wcs.length; i++) {
-			org.eclipse.jdt.core.IWorkingCopy wc= wcs[i];
+		for (IWorkingCopy wc : wcs) {
 			if (wc instanceof IJavaElement) {
 				IJavaElement je= (IJavaElement)wc;
 				if (je.getJavaProject().isOnClasspath(je)) {

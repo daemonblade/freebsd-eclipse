@@ -105,12 +105,16 @@ public abstract class CleanUpAction extends SelectionDispatchAction {
 	@Override
 	public void run(IStructuredSelection selection) {
 		ICompilationUnit[] cus= getCompilationUnits(selection);
-		if (cus.length == 0) {
+		switch (cus.length) {
+		case 0:
 			MessageDialog.openInformation(getShell(), getActionName(), ActionMessages.CleanUpAction_EmptySelection_description);
-		} else if (cus.length == 1) {
+			break;
+		case 1:
 			run(cus[0]);
-		} else {
+			break;
+		default:
 			runOnMultiple(cus);
+			break;
 		}
 	}
 
@@ -126,10 +130,10 @@ public abstract class CleanUpAction extends SelectionDispatchAction {
 
 	private boolean isEnabled(IStructuredSelection selection) {
 		Object[] selected= selection.toArray();
-		for (int i= 0; i < selected.length; i++) {
+		for (Object s : selected) {
 			try {
-				if (selected[i] instanceof IJavaElement) {
-					IJavaElement elem= (IJavaElement)selected[i];
+				if (s instanceof IJavaElement) {
+					IJavaElement elem= (IJavaElement) s;
 					if (elem.exists()) {
 						switch (elem.getElementType()) {
 							case IJavaElement.TYPE:
@@ -147,13 +151,13 @@ public abstract class CleanUpAction extends SelectionDispatchAction {
 								return true;
 						}
 					}
-				} else if (selected[i] instanceof LogicalPackage) {
+				} else if (s instanceof LogicalPackage) {
 					return true;
-				} else if (selected[i] instanceof IWorkingSet) {
-					IWorkingSet workingSet= (IWorkingSet) selected[i];
+				} else if (s instanceof IWorkingSet) {
+					IWorkingSet workingSet= (IWorkingSet) s;
 					return IWorkingSetIDs.JAVA.equals(workingSet.getId());
 				}
-			} catch (JavaModelException e) {
+			}catch (JavaModelException e) {
 				if (!e.isDoesNotExist()) {
 					JavaPlugin.log(e);
 				}
@@ -192,9 +196,7 @@ public abstract class CleanUpAction extends SelectionDispatchAction {
 			return;
 
 		MultiStatus status= new MultiStatus(JavaUI.ID_PLUGIN, IStatus.OK, ActionMessages.CleanUpAction_MultiStateErrorTitle, null);
-		for (int i= 0; i < cus.length; i++) {
-			ICompilationUnit cu= cus[i];
-
+		for (ICompilationUnit cu : cus) {
 			if (!ActionUtil.isOnBuildPath(cu)) {
 				String cuLocation= BasicElementLabels.getPathLabel(cu.getPath(), false);
 				String message= Messages.format(ActionMessages.CleanUpAction_CUNotOnBuildpathMessage, cuLocation);
@@ -224,8 +226,7 @@ public abstract class CleanUpAction extends SelectionDispatchAction {
 	public ICompilationUnit[] getCompilationUnits(IStructuredSelection selection) {
 		HashSet<IJavaElement> result= new HashSet<>();
 		Object[] selected= selection.toArray();
-		for (int i= 0; i < selected.length; i++) {
-			Object element= selected[i];
+		for (Object element : selected) {
 			collectCompilationUnits(element, result);
 		}
 		return result.toArray(new ICompilationUnit[result.size()]);
@@ -256,16 +257,15 @@ public abstract class CleanUpAction extends SelectionDispatchAction {
 							break;
 						case IJavaElement.JAVA_PROJECT:
 							IPackageFragmentRoot[] roots= ((IJavaProject)elem).getPackageFragmentRoots();
-							for (int k= 0; k < roots.length; k++) {
-								collectCompilationUnits(roots[k], result);
+							for (IPackageFragmentRoot root : roots) {
+								collectCompilationUnits(root, result);
 							}
 							break;
 					}
 				}
 			} else if (element instanceof LogicalPackage) {
 				IPackageFragment[] packageFragments= ((LogicalPackage)element).getFragments();
-				for (int k= 0; k < packageFragments.length; k++) {
-					IPackageFragment pack= packageFragments[k];
+				for (IPackageFragment pack : packageFragments) {
 					if (pack.exists()) {
 						collectCompilationUnits(pack, result);
 					}
@@ -273,8 +273,8 @@ public abstract class CleanUpAction extends SelectionDispatchAction {
 			} else if (element instanceof IWorkingSet) {
 				IWorkingSet workingSet= (IWorkingSet) element;
 				IAdaptable[] elements= workingSet.getElements();
-				for (int j= 0; j < elements.length; j++) {
-					collectCompilationUnits(elements[j], result);
+				for (IAdaptable e : elements) {
+					collectCompilationUnits(e, result);
 				}
 			}
 		} catch (JavaModelException e) {
@@ -290,8 +290,8 @@ public abstract class CleanUpAction extends SelectionDispatchAction {
 	private void collectCompilationUnits(IPackageFragmentRoot root, Collection<IJavaElement> result) throws JavaModelException {
 		if (root.getKind() == IPackageFragmentRoot.K_SOURCE) {
 			IJavaElement[] children= root.getChildren();
-			for (int i= 0; i < children.length; i++) {
-				collectCompilationUnits((IPackageFragment)children[i], result);
+			for (IJavaElement child : children) {
+				collectCompilationUnits((IPackageFragment) child, result);
 			}
 		}
 	}

@@ -48,6 +48,11 @@ class INDENTATION {
 class Example {
 	int[] myArray = { 1, 2, 3, 4, 5, 6 };
 	String stringWithTabs = "1	2	3	4";
+	String textBlock = """
+first line
+
+second line
+""";
 
 	void foo(int a, int b, int c, int d, int e, int f) {
 		switch (a) {
@@ -486,7 +491,7 @@ int a = -4 + -9;
 int b = a++ / --number;
 b = (a++) / (--number) + (-9);
 String d = "a = " + a;
-if (a == b && a > c)
+if (a == b && a > c && !condition)
 	c += (a >> 5) & 0xFF;
 //--PREVIEW--END--section-whitespace-expressions-assignments
 //--PREVIEW--END--section-whitespace-expressions-unaryoperators

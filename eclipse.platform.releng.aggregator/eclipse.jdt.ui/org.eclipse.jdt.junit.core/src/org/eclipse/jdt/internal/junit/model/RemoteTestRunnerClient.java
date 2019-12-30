@@ -350,10 +350,11 @@ public class RemoteTestRunnerClient {
 		StringBuilder buf= new StringBuilder(128);
 		int ch;
 		while ((ch= in.read()) != -1) {
-			if (ch == '\n') {
+			switch (ch) {
+			case '\n':
 				fLastLineDelimiter= "\n"; //$NON-NLS-1$
 				return buf.toString();
-			} else if (ch == '\r') {
+			case '\r':
 				ch= in.read();
 				if (ch == '\n') {
 					fLastLineDelimiter= "\r\n"; //$NON-NLS-1$
@@ -362,8 +363,9 @@ public class RemoteTestRunnerClient {
 					fLastLineDelimiter= "\r"; //$NON-NLS-1$
 				}
 				return buf.toString();
-			} else {
+			default:
 				buf.append((char) ch);
+				break;
 			}
 		}
 		fLastLineDelimiter= null;
@@ -456,22 +458,20 @@ public class RemoteTestRunnerClient {
 	}
 
 	private void notifyTestReran(final String testId, final String className, final String testName, final int statusCode, final String trace) {
-		for (int i= 0; i < fListeners.length; i++) {
-			final ITestRunListener2 listener= fListeners[i];
+		for (ITestRunListener2 listener : fListeners) {
 			SafeRunner.run(new ListenerSafeRunnable() {
 				@Override
 				public void run() {
 					listener.testReran(testId,
-								className, testName, statusCode, trace,
-								nullifyEmpty(fExpectedResult), nullifyEmpty(fActualResult));
+						className, testName, statusCode, trace,
+						nullifyEmpty(fExpectedResult), nullifyEmpty(fActualResult));
 				}
 			});
 		}
 	}
 
 	private void notifyTestTreeEntry(final String treeEntry) {
-		for (int i= 0; i < fListeners.length; i++) {
-			ITestRunListener2 listener= fListeners[i];
+		for (ITestRunListener2 listener : fListeners) {
 			if (!hasTestId())
 				listener.testTreeEntry(fakeTestId(treeEntry));
 			else
@@ -489,8 +489,7 @@ public class RemoteTestRunnerClient {
 	private void notifyTestRunStopped(final long elapsedTime) {
 		if (JUnitCorePlugin.isStopped())
 			return;
-		for (int i= 0; i < fListeners.length; i++) {
-			final ITestRunListener2 listener= fListeners[i];
+		for (ITestRunListener2 listener : fListeners) {
 			SafeRunner.run(new ListenerSafeRunnable() {
 				@Override
 				public void run() {
@@ -503,8 +502,7 @@ public class RemoteTestRunnerClient {
 	private void testRunEnded(final long elapsedTime) {
 		if (JUnitCorePlugin.isStopped())
 			return;
-		for (int i= 0; i < fListeners.length; i++) {
-			final ITestRunListener2 listener= fListeners[i];
+		for (ITestRunListener2 listener : fListeners) {
 			SafeRunner.run(new ListenerSafeRunnable() {
 				@Override
 				public void run() {
@@ -517,8 +515,7 @@ public class RemoteTestRunnerClient {
 	private void notifyTestEnded(final String test) {
 		if (JUnitCorePlugin.isStopped())
 			return;
-		for (int i= 0; i < fListeners.length; i++) {
-			final ITestRunListener2 listener= fListeners[i];
+		for (ITestRunListener2 listener : fListeners) {
 			SafeRunner.run(new ListenerSafeRunnable() {
 				@Override
 				public void run() {
@@ -532,8 +529,7 @@ public class RemoteTestRunnerClient {
 	private void notifyTestStarted(final String test) {
 		if (JUnitCorePlugin.isStopped())
 			return;
-		for (int i= 0; i < fListeners.length; i++) {
-			final ITestRunListener2 listener= fListeners[i];
+		for (ITestRunListener2 listener : fListeners) {
 			SafeRunner.run(new ListenerSafeRunnable() {
 				@Override
 				public void run() {
@@ -547,8 +543,7 @@ public class RemoteTestRunnerClient {
 	private void notifyTestRunStarted(final int count) {
 		if (JUnitCorePlugin.isStopped())
 			return;
-		for (int i= 0; i < fListeners.length; i++) {
-			final ITestRunListener2 listener= fListeners[i];
+		for (ITestRunListener2 listener : fListeners) {
 			SafeRunner.run(new ListenerSafeRunnable() {
 				@Override
 				public void run() {
@@ -561,13 +556,12 @@ public class RemoteTestRunnerClient {
 	private void notifyTestFailed() {
 		if (JUnitCorePlugin.isStopped())
 			return;
-		for (int i= 0; i < fListeners.length; i++) {
-			final ITestRunListener2 listener= fListeners[i];
+		for (ITestRunListener2 listener : fListeners) {
 			SafeRunner.run(new ListenerSafeRunnable() {
 				@Override
 				public void run() {
-			        listener.testFailed(fFailureKind, fFailedTestId,
-			        		fFailedTest, fFailedTrace.toString(), nullifyEmpty(fExpectedResult), nullifyEmpty(fActualResult));
+					listener.testFailed(fFailureKind, fFailedTestId,
+						fFailedTest, fFailedTrace.toString(), nullifyEmpty(fExpectedResult), nullifyEmpty(fActualResult));
 				}
 			});
 		}
@@ -602,8 +596,7 @@ public class RemoteTestRunnerClient {
 		// fix for 77771 RemoteTestRunnerClient doing work after junit shutdown [JUnit]
 		if (JUnitCorePlugin.isStopped())
 			return;
-		for (int i= 0; i < fListeners.length; i++) {
-			final ITestRunListener2 listener= fListeners[i];
+		for (ITestRunListener2 listener : fListeners) {
 			SafeRunner.run(new ListenerSafeRunnable() {
 				@Override
 				public void run() {

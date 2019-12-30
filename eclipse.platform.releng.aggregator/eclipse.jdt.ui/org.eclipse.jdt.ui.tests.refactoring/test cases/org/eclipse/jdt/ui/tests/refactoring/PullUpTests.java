@@ -216,6 +216,26 @@ public class PullUpTests extends RefactoringTest {
 		assertEqualLines(expected, actual);
 	}
 
+	private void fieldHelper1b(String[] fieldNames, int targetClassIndex) throws Exception{
+		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
+		IType typeC= getType(cu, "C");
+		IField[] fields= getFields(typeC, fieldNames);
+
+		PullUpRefactoringProcessor processor= createRefactoringProcessor(fields);
+		Refactoring ref= processor.getRefactoring();
+
+		assertTrue("activation", ref.checkInitialConditions(new NullProgressMonitor()).isOK());
+		setTargetClass(processor, targetClassIndex);
+
+		RefactoringStatus checkInputResult= ref.checkFinalConditions(new NullProgressMonitor());
+		assertTrue("precondition was supposed to pass", !checkInputResult.hasError());
+		performChange(ref, false);
+
+		String expected= getFileContents(getOutputTestFileName("A"));
+		String actual= cu.getSource();
+		assertEqualLines(expected, actual);
+	}
+
 	private void fieldHelper2(String[] fieldNames, int targetClassIndex) throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType type= getType(cu, "B");
@@ -1103,6 +1123,34 @@ public class PullUpTests extends RefactoringTest {
 				signaturesOfMethodsToDeclareAbstract, new String[0], true, true, 0);
 	}
 
+	public void test55() throws Exception {
+		// test for bug 355327
+		ICompilationUnit cuA= createCUfromTestFile(getPackageP(), "A");
+		ICompilationUnit cuB= createCUfromTestFile(getPackageP(), "B");
+		ICompilationUnit cuC= createCUfromTestFile(getPackageP(), "C");
+
+		IType typeA= getType(cuA, "A");
+		IType typeB= getType(cuB, "B");
+		String[] fieldNames= new String[] { "k" };
+		IField[] fields= getFields(typeB, fieldNames);
+
+		PullUpRefactoringProcessor processor= createRefactoringProcessor(fields);
+		Refactoring ref= processor.getRefactoring();
+		assertTrue("activation", ref.checkInitialConditions(new NullProgressMonitor()).isOK());
+
+		setTargetClass(processor, 0);
+		processor.setDestinationType(typeA);
+		processor.setMembersToMove(fields);
+
+		assertTrue("final", ref.checkFinalConditions(new NullProgressMonitor()).isOK());
+
+		performChange(ref, false);
+
+		assertEqualLines("A", getFileContents(getOutputTestFileName("A")), cuA.getSource());
+		assertEqualLines("B", getFileContents(getOutputTestFileName("B")), cuB.getSource());
+		assertEqualLines("C", getFileContents(getOutputTestFileName("C")), cuC.getSource());
+	}
+
 	public void testFail0() throws Exception{
 //		printTestDisabledMessage("6538: searchDeclarationsOf* incorrect");
 		helper2(new String[]{"m"}, new String[][]{new String[0]}, true, false, 0);
@@ -1419,11 +1467,11 @@ public class PullUpTests extends RefactoringTest {
 		fieldHelper1(new String[]{"i"}, 0);
 	}
 
-	public void testFieldFail0() throws Exception{
-		fieldHelper2(new String[]{"x"}, 0);
+	public void testField1() throws Exception{
+		fieldHelper1b(new String[]{"x"}, 1);
 	}
 
-	public void testFieldFail1() throws Exception{
+	public void testFieldFail0() throws Exception{
 		fieldHelper2(new String[]{"x"}, 0);
 	}
 
