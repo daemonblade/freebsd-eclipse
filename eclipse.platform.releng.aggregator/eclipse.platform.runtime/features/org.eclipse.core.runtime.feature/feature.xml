@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.core.runtime.feature"
       label="%featureName"
-      version="1.2.600.qualifier"
+      version="1.2.700.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -53,6 +53,13 @@
 
    <plugin
          id="org.eclipse.core.expressions"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.core.jobs"
          download-size="0"
          install-size="0"
          version="0.0.0"

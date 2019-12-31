@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,7 @@
  *     IBM Corporation - initial API and implementation
  *     Julian Chen - fix for bug #92572, jclRM
  *     Benjamin Cabe <benjamin.cabe@anyware-tech.com> - fix for bug 265532
+ *     Christoph Läubrich - remove InternalPlatform.getDefault().log (bug 55083)
  *******************************************************************************/
 package org.eclipse.core.internal.runtime;
 
@@ -578,16 +579,6 @@ public final class InternalPlatform {
 		return WS_LIST;
 	}
 
-	/**
-	 * Notifies all listeners of the platform log.  This includes the console log, if
-	 * used, and the platform log file.  All Plugin log messages get funnelled
-	 * through here as well.
-	 */
-	public void log(final IStatus status) {
-		// TODO: deprecate?
-		RuntimeLog.log(status);
-	}
-
 	private void processCommandLine(String[] args) {
 		if (args == null || args.length == 0)
 			return;
@@ -638,21 +629,11 @@ public final class InternalPlatform {
 		initialized = true;
 		initializeAuthorizationHandler();
 		startServices();
-
-		// See if need to activate rest of the runtime plugins. Plugins are "gently" activated by touching
-		// a class from the corresponding plugin(s).
-		boolean shouldActivate = !"false".equalsIgnoreCase(context.getProperty(PROP_ACTIVATE_PLUGINS)); //$NON-NLS-1$
-		if (shouldActivate) {
-			// activate Preferences plugin by creating a class from it:
-			new org.eclipse.core.runtime.preferences.DefaultScope();
-			// activate Jobs plugin by creating a class from it:
-			org.eclipse.core.runtime.jobs.Job.getJobManager();
-		}
 	}
 
 	/**
 	 * Shutdown runtime pieces in this order:
-	 * Content[auto shutdown] -> Preferences[auto shutdown] -> Registry -> Jobs
+	 * Content[auto shutdown] -&gt; Preferences[auto shutdown] -&gt; Registry -&gt; Jobs.
 	 * The "auto" shutdown takes place before this code is executed
 	 */
 	public void stop(BundleContext bundleContext) {
@@ -741,9 +722,9 @@ public final class InternalPlatform {
 	private void startServices() {
 		// The check for getProduct() is relatively expensive (about 3% of the headless startup),
 		// so we don't want to enforce it here.
-		customPreferencesService = context.registerService(IProductPreferencesService.class, new ProductPreferencesService(), new Hashtable<String,String>());
+		customPreferencesService = context.registerService(IProductPreferencesService.class, new ProductPreferencesService(), new Hashtable<>());
 
-		legacyPreferencesService = context.registerService(ILegacyPreferences.class, new InitLegacyPreferences(), new Hashtable<String, String>());
+		legacyPreferencesService = context.registerService(ILegacyPreferences.class, new InitLegacyPreferences(), new Hashtable<>());
 	}
 
 	private void stopServices() {
