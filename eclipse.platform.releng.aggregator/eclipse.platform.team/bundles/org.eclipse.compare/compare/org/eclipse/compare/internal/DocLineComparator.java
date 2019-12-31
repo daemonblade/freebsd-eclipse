@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -43,7 +43,7 @@ public class DocLineComparator implements ITokenComparator {
 	/**
 	 * Creates a <code>DocLineComparator</code> for the given document range.
 	 * ignoreWhiteSpace controls whether comparing lines (in method
-	 * <code>rangesEqual<code>) should ignore whitespace.
+	 * <code>rangesEqual</code>) should ignore whitespace.
 	 *
 	 * @param document the document from which the lines are taken
 	 * @param region if non-<code>null</code> only lines within this range are taken
@@ -57,7 +57,7 @@ public class DocLineComparator implements ITokenComparator {
 	/**
 	 * Creates a <code>DocLineComparator</code> for the given document range.
 	 * ignoreWhiteSpace controls whether comparing lines (in method
-	 * <code>rangesEqual<code>) should ignore whitespace. Compare filters may be used
+	 * <code>rangesEqual</code>) should ignore whitespace. Compare filters may be used
 	 * to affect the detection of line differences.
 	 *
 	 * @param document
@@ -175,11 +175,11 @@ public class DocLineComparator implements ITokenComparator {
 
 			int tlen= getTokenLength(thisIndex);
 			int olen= other.getTokenLength(otherIndex);
-			if (fCompareFilters != null && fCompareFilters.length > 0) {
-				String[] linesToCompare = extract(thisIndex, otherIndex, other, true);
-				return linesToCompare[0].equals(linesToCompare[1]);
-			} else if (tlen == olen) {
+			if (tlen == olen) {
 				String[] linesToCompare = extract(thisIndex, otherIndex, other, false);
+				return linesToCompare[0].equals(linesToCompare[1]);
+			} else if (fCompareFilters != null && fCompareFilters.length > 0) {
+				String[] linesToCompare = extract(thisIndex, otherIndex, other, true);
 				return linesToCompare[0].equals(linesToCompare[1]);
 			}
 		}

@@ -2,15 +2,15 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.eclipse.compare; singleton:=true
-Bundle-Version: 3.7.700.qualifier
+Bundle-Version: 3.7.800.qualifier
 Bundle-Activator: org.eclipse.compare.internal.CompareUIPlugin
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
 Export-Package: org.eclipse.compare,
  org.eclipse.compare.contentmergeviewer,
- org.eclipse.compare.internal;x-internal:=true,
+ org.eclipse.compare.internal;x-friends:="org.eclipse.team.ui",
  org.eclipse.compare.internal.merge;x-internal:=true,
- org.eclipse.compare.internal.patch;x-internal:=true,
+ org.eclipse.compare.internal.patch;x-friends:="org.eclipse.team.ui",
  org.eclipse.compare.patch,
  org.eclipse.compare.structuremergeviewer
 Require-Bundle: org.eclipse.ui;bundle-version="[3.5.0,4.0.0)",

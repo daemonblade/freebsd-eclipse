@@ -152,7 +152,7 @@ public class ProjectSetImporter {
 
 				//try working sets
 				IMemento[] sets = xmlMemento.getChildren("workingSets"); //$NON-NLS-1$
-				IWorkingSetManager wsManager = TeamUIPlugin.getPlugin().getWorkbench().getWorkingSetManager();
+				IWorkingSetManager wsManager = PlatformUI.getWorkbench().getWorkingSetManager();
 				boolean replaceAll = false;
 				boolean mergeAll = false;
 				boolean skipAll = false;
@@ -235,16 +235,10 @@ public class ProjectSetImporter {
 
 	private static XMLMemento stringToXMLMemento(String stringContents)
 			throws InvocationTargetException {
-		StringReader reader = null;
-		try {
-			reader = new StringReader(stringContents);
+		try (StringReader reader = new StringReader(stringContents)) {
 			return XMLMemento.createReadRoot(reader);
 		} catch (WorkbenchException e) {
 			throw new InvocationTargetException(e);
-		} finally {
-			if (reader != null) {
-				reader.close();
-			}
 		}
 	}
 

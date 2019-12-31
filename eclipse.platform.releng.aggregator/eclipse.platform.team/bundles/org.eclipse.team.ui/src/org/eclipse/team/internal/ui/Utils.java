@@ -311,7 +311,7 @@ public class Utils {
 			if (!shell.isDisposed())
 				return shell;
 		}
-		IWorkbench workbench = TeamUIPlugin.getPlugin().getWorkbench();
+		IWorkbench workbench = PlatformUI.getWorkbench();
 		if (workbench != null) {
 			IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
 			if (window != null) {
@@ -844,7 +844,7 @@ public class Utils {
 		int subStrLen = (maxWidth - ellipsis.length()) / 2;
 		int addtl = (maxWidth - ellipsis.length()) % 2;
 
-		StringBuilder sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder(maxWidth);
 		sb.append(textValue.substring(0, subStrLen));
 		sb.append(ellipsis);
 		sb.append(textValue.substring(length - subStrLen - addtl));

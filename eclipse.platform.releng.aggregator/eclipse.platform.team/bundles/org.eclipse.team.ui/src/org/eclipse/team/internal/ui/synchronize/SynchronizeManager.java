@@ -76,25 +76,31 @@ import org.eclipse.ui.XMLMemento;
  * of dynamic participants, and the re-creation of persisted participants.
  * <p>
  * A participant is defined in a plugin manifest and can have several properties:
- * - static: means that they always exist and don't have to be added to the manager
- * - dynamic: will be added to the manager at some later time
+ * <ul>
+ * <li>static: means that they always exist and don't have to be added to the manager
+ * <li>dynamic: will be added to the manager at some later time
+ * </ul>
  *
  * Part (title, id, icon, composite) - described in plugin.xml (IPartInstance)
- * Can have multiple parts of the same type at runtime -> (IPart)
- *   - must acquire a part (IPartInstance.createPart())
- *   - must released to part when done (IPartInstance.releasePart())
+ * Can have multiple parts of the same type at runtime -&gt; (IPart)
+ * <ul>
+ *   <li>must acquire a part (IPartInstance.createPart())
+ *   <li>must released to part when done (IPartInstance.releasePart())
+ * </ul>
  * Some parts can added dynamically to the registry and events are fired to listeners. Listeners can create the newly added part via
  * the #createPart() method.
  * Parts can be persisted/restored with some state
  *
  *
- *
+ * <p>
  * Lifecycle:
- * 	startup -> registry read and stored in a participant instance
- *     createParticipant(id) ->
- * 	releaseParticipant(IParticipantDescriptor) ->
- *     getParticipantRegistry -> return IParticipantDescriptors that describe the participants
- * 	shutdown -> persist all settings
+ * </p><p>
+ * 	startup -&gt; registry read and stored in a participant instance
+ *     createParticipant(id) -&gt;
+ * 	releaseParticipant(IParticipantDescriptor) -&gt;
+ *     getParticipantRegistry -&gt; return IParticipantDescriptors that describe the participants
+ * 	shutdown -&gt; persist all settings
+ * </p>
  *
  * @see ISynchronizeView
  * @see ISynchronizeParticipant
@@ -118,7 +124,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 
 	/**
 	 * Contains a table of the state saved between sessions for a participant. The set is keyed
-	 * as such {String key -> ISynchronizeParticipantReference}.
+	 * as such {String key -&gt; ISynchronizeParticipantReference}.
 	 */
 	private Map<String, ISynchronizeParticipantReference> participantReferences = Collections.synchronizedMap(new HashMap<>(10));
 
@@ -459,7 +465,7 @@ public class SynchronizeManager implements ISynchronizeManager {
 
 	@Override
 	public ISynchronizeView showSynchronizeViewInActivePage() {
-		IWorkbench workbench = TeamUIPlugin.getPlugin().getWorkbench();
+		IWorkbench workbench = PlatformUI.getWorkbench();
 		IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
 
 		boolean switchPerspectives = promptForPerspectiveSwitch();
@@ -641,11 +647,8 @@ public class SynchronizeManager implements ISynchronizeManager {
 			ref.save(participantData);
 		}
 		try {
-			Writer writer = new BufferedWriter(new FileWriter(getStateFile()));
-			try {
+			try (Writer writer = new BufferedWriter(new FileWriter(getStateFile()))) {
 				xmlMemento.save(writer);
-			} finally {
-				writer.close();
 			}
 		} catch (IOException e) {
 			TeamUIPlugin.log(new Status(IStatus.ERROR, TeamUIPlugin.ID, 1, TeamUIMessages.SynchronizeManager_10, e));

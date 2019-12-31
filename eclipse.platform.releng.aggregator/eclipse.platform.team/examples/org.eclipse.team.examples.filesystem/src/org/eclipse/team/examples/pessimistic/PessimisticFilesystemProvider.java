@@ -68,7 +68,7 @@ public class PessimisticFilesystemProvider extends RepositoryProvider  {
 	private FileModificationValidator validator;
 	/**
 	 * The cache of resources that are currently controlled.
-	 * The cache is a map of parent resource -> set of controlled children.
+	 * The cache is a map of parent resource -&amp; set of controlled children.
 	 */
 	Map<IContainer, Set<IResource>> fControlledResources;
 
@@ -602,12 +602,9 @@ public class PessimisticFilesystemProvider extends RepositoryProvider  {
 
 	public static String getFileContents(IFile file) throws IOException, CoreException {
 		StringBuilder buf = new StringBuilder();
-		Reader reader = new InputStreamReader(new BufferedInputStream(file.getContents()));
-		try {
+		try (Reader reader = new InputStreamReader(new BufferedInputStream(file.getContents()))) {
 			int c;
 			while ((c = reader.read()) != -1) buf.append((char)c);
-		} finally {
-			reader.close();
 		}
 		return buf.toString();
 	}
