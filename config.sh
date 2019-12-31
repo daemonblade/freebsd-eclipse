@@ -43,6 +43,7 @@ PATCHED_DIRS="
 	eclipse.platform.swt
 	eclipse.platform.swt.binaries
 	eclipse.platform.team
+	eclipse.platform.text
 	eclipse.platform.ua
 	eclipse.platform.ui
 	rt.equinox.bundles
