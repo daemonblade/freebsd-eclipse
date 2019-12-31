@@ -227,6 +227,7 @@
             <keywordReference id="org.eclipse.ui.editors.tabWidth"/>
             <keywordReference id="org.eclipse.ui.editors.lineNumber"/>
             <keywordReference id="org.eclipse.ui.editors.printMargin"/>
+            <keywordReference id="org.eclipse.ui.editors.annotationCodeMining"/>
       </page>
       <page
             name="%PreferencePages.Annotations"
@@ -286,6 +287,9 @@
       <keyword
             label="%preferenceKeywords.printMargin"
             id="org.eclipse.ui.editors.printMargin"/>
+      <keyword
+            label="%preferenceKeywords.annotationCodeMining"
+            id="org.eclipse.ui.editors.annotationCodeMining"/>
       <keyword
             label="%preferenceKeywords.annotations"
             id="org.eclipse.ui.editors.annotations"/>
@@ -1063,4 +1067,24 @@
 
    </extension>
 
+   <extension
+         point="org.eclipse.ui.workbench.texteditor.codeMiningProviders">
+      <codeMiningProvider
+            class="org.eclipse.ui.internal.editors.text.codemining.annotation.AnnotationCodeMiningProvider"
+            id="org.eclipse.ui.internal.editors.annotationCodeMiningProvider">
+         <enabledWhen>
+            <with
+                  variable="editorInput">
+               <adapt
+                     type="org.eclipse.core.resources.IFile">
+                  <test
+                        property="org.eclipse.core.resources.contentTypeId"
+                        value="org.eclipse.core.runtime.text"
+                        args="kindOf">
+                  </test>
+               </adapt>
+            </with>
+         </enabledWhen>
+      </codeMiningProvider>
+   </extension>
 </plugin>

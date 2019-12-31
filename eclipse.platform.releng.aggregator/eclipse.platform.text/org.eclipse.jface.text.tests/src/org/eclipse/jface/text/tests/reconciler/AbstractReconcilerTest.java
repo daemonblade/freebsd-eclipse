@@ -45,11 +45,10 @@ import org.eclipse.jface.text.tests.TestTextViewer;
  * Reconciler tests. Uses barrier synchronization and a call log to assert
  * correct order of reconciling events.
  *
- * TODO test reconciler arguments (delay > 0 etc.)
- * TODO incremental reconciler tests
- *
  * @since 3.1
  */
+// TODO test reconciler arguments (delay > 0 etc.)
+// TODO incremental reconciler tests
 public class AbstractReconcilerTest {
 
 	/**
@@ -148,7 +147,7 @@ public class AbstractReconcilerTest {
 	@Before
 	public void setUp() {
 		fBarrier= new Barrier();
-		fCallLog= Collections.synchronizedList(new ArrayList<String>());
+		fCallLog= Collections.synchronizedList(new ArrayList<>());
 		fReconciler= new AbstractReconciler() {
 					@Override
 					protected void initialProcess() {
@@ -179,7 +178,7 @@ public class AbstractReconcilerTest {
 				};
 		fReconciler.setIsIncrementalReconciler(false);
 		fReconciler.setDelay(50); // make tests run faster
-		
+
 		fProgressMonitor= new NullProgressMonitor();
 		fReconciler.setProgressMonitor(fProgressMonitor);
 
@@ -222,7 +221,7 @@ public class AbstractReconcilerTest {
 		assertFalse(isActive());
 		assertFalse(isDirty());
 	}
-	
+
 	@Test
 	public void testDirtyingWhenClean() throws BadLocationException, InterruptedException {
 		installDocument();

@@ -39,7 +39,7 @@ public class QuickTextSearcher {
 	 * Keeps track of currently found matches. Items are added as they are found and may also
 	 * be removed when the query changed and they become invalid.
 	 */
-	private Set<LineItem> matches = new HashSet<LineItem>(2000);
+	private Set<LineItem> matches = new HashSet<>(2000);
 
 	/**
 	 * Scheduling rule used by Jobs that work on the matches collection.
@@ -243,6 +243,8 @@ public class QuickTextSearcher {
 				if (!query.isTrivial()) {
 					walker.init(); //Reinitialize the walker work queue to its starting state
 					walker.resume(); //Allow walker to resume when we release the scheduling rule.
+				} else {
+					walker.stop();
 				}
 			}
 		}
@@ -306,7 +308,7 @@ public class QuickTextSearcher {
 		//Walker can be null if job was canceled because dialog closed. But stuff like
 		//the job that shows 'Searching ...' doesn't instantly stop and may still
 		//be asking the incremental update job whether its done.
-		return walker!=null && walker.isDone();
+		return /*(incrementalUpdate != null && incrementalUpdate.getState() != Job.NONE) ||*/ (walker!=null && walker.isDone());
 	}
 
 	public void requestMoreResults() {

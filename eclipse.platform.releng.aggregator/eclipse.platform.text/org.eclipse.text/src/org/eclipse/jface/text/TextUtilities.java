@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,10 +21,12 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.core.runtime.Assert;
 
+import org.eclipse.jface.text.AbstractLineTracker.DelimiterInfo;
 
 /**
  * A collection of text functions.
@@ -39,6 +41,7 @@ public class TextUtilities {
 	/**
 	 * Default line delimiters used by the text functions of this class.
 	 */
+	// Note: nextDelimiter implementation is sensitive to element order
 	public final static String[] DELIMITERS= new String[] { "\n", "\r", "\r\n" }; //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$
 
 	/**
@@ -60,61 +63,63 @@ public class TextUtilities {
 	 * @return the line delimiter
 	 */
 	public static String determineLineDelimiter(String text, String hint) {
-		try {
-			int[] info= indexOf(DELIMITERS, text, 0);
-			return DELIMITERS[info[1]];
-		} catch (ArrayIndexOutOfBoundsException x) {
-		}
-		return hint;
+		String delimiter = nextDelimiter(text, 0).delimiter;
+		return delimiter != null ? delimiter : hint;
 	}
 
 	/**
-	 * Returns the starting position and the index of the first matching search string
-	 * in the given text that is greater than the given offset. If more than one search
-	 * string matches with the same starting position then the longest one is returned.
+	 * Returns the starting position and the index of the first matching search string in the given
+	 * text that is greater than the given offset. If more than one search string matches with the
+	 * same starting position then the longest one is returned.
 	 *
 	 * @param searchStrings the strings to search for
 	 * @param text the text to be searched
 	 * @param offset the offset at which to start the search
-	 * @return an <code>int[]</code> with two elements where the first is the starting offset, the second the index of the found
-	 * 		search string in the given <code>searchStrings</code> array, returns <code>[-1, -1]</code> if no match exists
+	 * @return an <code>int[]</code> with two elements where the first is the starting offset, the
+	 *         second the index of the found search string in the given <code>searchStrings</code>
+	 *         array, returns <code>[-1, -1]</code> if no match exists
+	 * @deprecated use {@link MultiStringMatcher#indexOf(CharSequence, int, String...)} instead.
+	 *             Notable differences:
+	 *             <ul>
+	 *             <li>new matcher indexOf does not allow negative offsets (old matcher treated them
+	 *             as <code>0</code>)</li>
+	 *             <li>new matcher indexOf will tolerate <code>null</code> and empty search strings
+	 *             (old accepted empty but throw on <code>null</code>)</li>
+	 *             <li>new matcher indexOf will <b>not</b> match empty string (old matched empty if
+	 *             nothing else matched)</li>
+	 *             </ul>
+	 *             For the common case of searching the next default {@link #DELIMITERS delimiter}
+	 *             use the optimized {@link #nextDelimiter(CharSequence, int)} method instead.
 	 */
+	@Deprecated
 	public static int[] indexOf(String[] searchStrings, String text, int offset) {
-
-		int[] result= { -1, -1 };
-		int zeroIndex= -1;
-
-		for (int i= 0; i < searchStrings.length; i++) {
-
-			int length= searchStrings[i].length();
-
-			if (length == 0) {
-				zeroIndex= i;
-				continue;
+		// For compatibility this will throw a NullPointerException like the old implementation
+		// (instead of an IllegalArgumentException what would be the result from MultiStringMatcher.indexOf)
+		// and mimic the strange result for empty search string match from the old method.
+		Objects.requireNonNull(searchStrings);
+		for (String searchString : searchStrings) {
+			Objects.requireNonNull(searchString);
+		}
+		if (offset < 0) {
+			offset = 0; // for compatibility with old implementation
+		}
+		final MultiStringMatcher.Match match= MultiStringMatcher.indexOf(text, offset, searchStrings);
+		if (match != null) {
+			for (int i= 0; i < searchStrings.length; i++) {
+				if (match.getText().equals(searchStrings[i])) {
+					return new int[] { match.getOffset(), i };
+				}
 			}
-
-			int index= text.indexOf(searchStrings[i], offset);
-			if (index >= 0) {
-
-				if (result[0] == -1) {
-					result[0]= index;
-					result[1]= i;
-				} else if (index < result[0]) {
-					result[0]= index;
-					result[1]= i;
-				} else if (index == result[0] && length > searchStrings[result[1]].length()) {
-					result[0]= index;
-					result[1]= i;
+		} else {
+			// no match must check for empty search strings and mimic old return value
+			// search reversed because we want the last empty search string
+			for (int i= searchStrings.length - 1; i >= 0; i--) {
+				if (searchStrings[i].length() == 0) {
+					return new int[] { 0, i };
 				}
 			}
 		}
-
-		if (zeroIndex > -1 && result[0] == -1) {
-			result[0]= 0;
-			result[1]= zeroIndex;
-		}
-
-		return result;
+		return new int[] { -1, -1 };
 	}
 
 	/**
@@ -495,6 +500,7 @@ public class TextUtilities {
 		try {
 			lineDelimiter= document.getLineDelimiter(0);
 		} catch (BadLocationException x) {
+			// usually impossible for the first line
 		}
 
 		if (lineDelimiter != null)
@@ -575,5 +581,48 @@ public class TextUtilities {
 			return copy;
 		}
 		return null;
+	}
+
+	/**
+	 * Search for the first standard line delimiter in text starting at given offset. Standard line
+	 * delimiters are those defined in {@link #DELIMITERS}. This is a faster variant of the equal
+	 *
+	 * <pre>
+	 * MultiStringMatcher.indexOf(TextUtilities.DELIMITERS, text, offset)
+	 * </pre>
+	 *
+	 * @param text the text to be searched. Not <code>null</code>.
+	 * @param offset the offset in text at which to start the search
+	 * @return a {@link DelimiterInfo}. If no delimiter was found
+	 *         {@link DelimiterInfo#delimiterIndex} is <code>-1</code> and
+	 *         {@link DelimiterInfo#delimiter} is <code>null</code>.
+	 * @since 3.10
+	 */
+	public static DelimiterInfo nextDelimiter(CharSequence text, int offset) {
+		final DelimiterInfo info= new DelimiterInfo();
+		char ch;
+		final int length= text.length();
+		for (int i= offset; i < length; i++) {
+			ch= text.charAt(i);
+			if (ch == '\r') {
+				info.delimiterIndex= i;
+				if (i + 1 < length && text.charAt(i + 1) == '\n') {
+					info.delimiter= DELIMITERS[2];
+					break;
+				}
+				info.delimiter= DELIMITERS[1];
+				break;
+			} else if (ch == '\n') {
+				info.delimiterIndex= i;
+				info.delimiter= DELIMITERS[0];
+				break;
+			}
+		}
+		if (info.delimiter == null) {
+			info.delimiterIndex= -1;
+		} else {
+			info.delimiterLength= info.delimiter.length();
+		}
+		return info;
 	}
 }

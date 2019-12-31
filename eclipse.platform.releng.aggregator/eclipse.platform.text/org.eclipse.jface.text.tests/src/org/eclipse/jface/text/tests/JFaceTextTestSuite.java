@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,6 +20,9 @@ import org.junit.runners.Suite.SuiteClasses;
 import org.eclipse.jface.text.tests.codemining.CodeMiningProjectionViewerTest;
 import org.eclipse.jface.text.tests.codemining.CodeMiningTest;
 import org.eclipse.jface.text.tests.contentassist.AsyncContentAssistTest;
+import org.eclipse.jface.text.tests.contentassist.ContextInformationPresenterTest;
+import org.eclipse.jface.text.tests.contentassist.ContextInformationTest;
+import org.eclipse.jface.text.tests.contentassist.FilteringAsyncContentAssistTests;
 import org.eclipse.jface.text.tests.reconciler.AbstractReconcilerTest;
 import org.eclipse.jface.text.tests.rules.DefaultPartitionerTest;
 import org.eclipse.jface.text.tests.rules.DefaultPartitionerZeroLengthTest;
@@ -49,6 +52,9 @@ import org.eclipse.jface.text.tests.templates.persistence.TemplatePersistenceDat
 		DefaultPairMatcherTest.class,
 		DefaultPairMatcherTest2.class,
 		AsyncContentAssistTest.class,
+		FilteringAsyncContentAssistTests.class,
+		ContextInformationTest.class,
+		ContextInformationPresenterTest.class,
 
 		AbstractReconcilerTest.class,
 
@@ -62,7 +68,9 @@ import org.eclipse.jface.text.tests.templates.persistence.TemplatePersistenceDat
 		LineContentBoundsDrawingTest.class,
 		AnnotationOnTabTest.class,
 		CodeMiningTest.class,
-		CodeMiningProjectionViewerTest.class
+		CodeMiningProjectionViewerTest.class,
+
+		TabsToSpacesConverterTest.class,
 })
 public class JFaceTextTestSuite {
 	// see @SuiteClasses

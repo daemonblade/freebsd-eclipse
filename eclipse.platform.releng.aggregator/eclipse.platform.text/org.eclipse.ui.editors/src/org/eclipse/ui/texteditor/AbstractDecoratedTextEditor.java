@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -121,6 +121,7 @@ import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
+import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IURIEditorInput;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchCommandConstants;
@@ -151,6 +152,7 @@ import org.eclipse.ui.keys.IBindingService;
 import org.eclipse.ui.operations.NonLocalUndoUserApprover;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.IShowInSource;
+import org.eclipse.ui.part.IShowInTargetList;
 import org.eclipse.ui.part.ShowInContext;
 import org.eclipse.ui.views.markers.MarkerViewUtil;
 
@@ -224,7 +226,7 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 
 	/**
 	 * Preference key that controls whether to use saturated colors in the overview ruler.
-	 * 
+	 *
 	 * @since 3.8
 	 */
 	private static final String USE_SATURATED_COLORS_IN_OVERVIEW_RULER= AbstractDecoratedTextEditorPreferenceConstants.USE_SATURATED_COLORS_IN_OVERVIEW_RULER;
@@ -312,7 +314,7 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 	 * @since 3.6
 	 */
 	private boolean fIsComingFromGotoMarker= false;
-	
+
 	/**
 	 * Tells whether editing the current derived editor input is allowed.
 	 * @since 3.3
@@ -340,7 +342,7 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 
 	/**
 	 * Creates a new text editor.
-	 * 
+	 *
 	 * @see #initializeEditor()
 	 * @see #initializeKeyBindingScopes()
 	 */
@@ -653,7 +655,7 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 
 	/**
 	 * Checks if the preference to use saturated colors is enabled for the overview ruler.
-	 * 
+	 *
 	 * @return <code>true</code> if the saturated colors preference is enabled, <code>false</code>
 	 *         otherwise
 	 * @since 3.8
@@ -854,7 +856,8 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 				return;
 			}
 
-			if (AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SPACES_FOR_TABS.equals(property)) {
+			if (AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SPACES_FOR_TABS.equals(property)
+					|| AbstractDecoratedTextEditorPreferenceConstants.EDITOR_DELETE_SPACES_AS_TABS.equals(property)) {
 				if (isTabsToSpacesConversionEnabled())
 					installTabsToSpacesConverter();
 				else
@@ -959,7 +962,7 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 		if (fSourceViewerDecorationSupport == null) {
 			fSourceViewerDecorationSupport= new SourceViewerDecorationSupport(viewer, getOverviewRuler(), getAnnotationAccess(), getSharedColors());
 			configureSourceViewerDecorationSupport(fSourceViewerDecorationSupport);
-			
+
 			// Fix for overridden print margin column, see https://bugs.eclipse.org/468307
 			if (!getPreferenceStore().getBoolean(PRINT_MARGIN_ALLOW_OVERRIDE))
 				fSourceViewerDecorationSupport.setMarginPainterPreferenceKeys(PRINT_MARGIN, PRINT_MARGIN_COLOR, PRINT_MARGIN_COLUMN);
@@ -1265,7 +1268,7 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 		// Override print action to provide additional options
 		if (getAction(ITextEditorActionConstants.PRINT).isEnabled() && getSourceViewer() instanceof ITextViewerExtension8)
 			createPrintAction();
-		
+
 		action= new ResourceAction(TextEditorMessages.getBundleForConstructedKeys(), "Editor.ShowChangeRulerInformation.", IAction.AS_PUSH_BUTTON) { //$NON-NLS-1$
 			@Override
 			public void run() {
@@ -1288,27 +1291,27 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 	/**
 	 * Opens a sticky change ruler hover for the caret line. Does nothing if no change hover is
 	 * available.
-	 * 
+	 *
 	 * @since 3.5
 	 */
 	private void showChangeRulerInformation() {
 		IVerticalRuler ruler= getVerticalRuler();
 		if (!(ruler instanceof CompositeRuler) || fLineColumn == null)
 			return;
-		
+
 		CompositeRuler compositeRuler= (CompositeRuler)ruler;
 
 		// fake a mouse move (some hovers rely on this to determine the hovered line):
 		int x= fLineColumn.getControl().getLocation().x;
-		
+
 		ISourceViewer sourceViewer= getSourceViewer();
 		StyledText textWidget= sourceViewer.getTextWidget();
 		int caretOffset= textWidget.getCaretOffset();
 		int caretLine= textWidget.getLineAtOffset(caretOffset);
 		int y= textWidget.getLinePixel(caretLine);
-		
+
 		compositeRuler.setLocationOfLastMouseButtonActivity(x, y);
-		
+
 		IAnnotationHover hover= fLineColumn.getHover();
 		showFocusedRulerHover(hover, sourceViewer, caretOffset);
 	}
@@ -1316,39 +1319,39 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 	/**
 	 * Opens a sticky annotation ruler hover for the caret line. Does nothing if no annotation hover
 	 * is available.
-	 * 
+	 *
 	 * @since 3.6
 	 */
 	private void showRulerAnnotationInformation() {
 		ISourceViewer sourceViewer= getSourceViewer();
 		IAnnotationHover hover= getSourceViewerConfiguration().getAnnotationHover(sourceViewer);
 		int caretOffset= sourceViewer.getTextWidget().getCaretOffset();
-		
+
 		showFocusedRulerHover(hover, sourceViewer, caretOffset);
 	}
 
 	/**
 	 * Shows a focused hover at the specified offset.
 	 * Does nothing if <code>hover</code> is <code>null</code> or cannot be shown.
-	 * 
+	 *
 	 * @param hover the hover to be shown, can be <code>null</code>
 	 * @param sourceViewer the source viewer
 	 * @param caretOffset the caret offset
-	 * 
+	 *
 	 * @since 3.6
 	 */
 	private void showFocusedRulerHover(IAnnotationHover hover, ISourceViewer sourceViewer, int caretOffset) {
 		if (hover == null)
 			return;
-		
+
 		int modelCaretOffset= widgetOffset2ModelOffset(sourceViewer, caretOffset);
 		if (modelCaretOffset == -1)
 			return;
-		
+
 		IDocument document= sourceViewer.getDocument();
 		if (document == null)
 			return;
-		
+
 		try {
 			int line= document.getLineOfOffset(modelCaretOffset);
 			if (fInformationPresenter == null) {
@@ -1426,6 +1429,9 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 
 		if (MarkerAnnotationPreferences.class.equals(adapter))
 			return (T) EditorsPlugin.getDefault().getMarkerAnnotationPreferences();
+
+		if (IShowInTargetList.class.equals(adapter))
+			return (T) getShowInTargetList();
 
 		return super.getAdapter(adapter);
 
@@ -1633,7 +1639,7 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 	 * Overrides the default behavior by showing a more advanced error dialog in case of encoding
 	 * problems.
 	 * </p>
-	 * 
+	 *
 	 * @param title the dialog title
 	 * @param message the message to display
 	 * @param exception the exception to handle
@@ -1651,7 +1657,7 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 		final int saveAsUTF8ButtonId= IDialogConstants.OK_ID + IDialogConstants.CANCEL_ID + 1;
 		final int selectUnmappableCharButtonId= saveAsUTF8ButtonId + 1;
 		final Charset charset= getCharset();
-		
+
 		ErrorDialog errorDialog= new ErrorDialog(getSite().getShell(), title, message, status, IStatus.ERROR) {
 
 			@Override
@@ -1715,7 +1721,7 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 
 	/**
 	 * Returns the charset of the current editor input.
-	 * 
+	 *
 	 * @return the charset of the current editor input or <code>null</code> if it fails
 	 * @since 3.6
 	 */
@@ -2017,7 +2023,7 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 
 	/**
 	 * Selects and reveals the given offset and length in the given editor part.
-	 * 
+	 *
 	 * @param editor the editor part
 	 * @param offset the offset
 	 * @param length the length
@@ -2088,12 +2094,35 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 	}
 
 	/**
+	 * Creates and returns the list of target part IDs for the Show In menu
+	 *
+	 * @return the 'Show In' target part IDs
+	 * @since 3.13
+	 */
+	protected String[] createShowInTargetList() {
+		return new String[] { IPageLayout.ID_MINIMAP_VIEW };
+	}
+
+	/**
+	 * Returns the Show In target list
+	 *
+	 * @return the IShowInTargetList adapter, or <code>null</code> if no targets are listed
+	 */
+	private IShowInTargetList getShowInTargetList() {
+		final String[] targetList= createShowInTargetList();
+		if (targetList != null && targetList.length > 0) {
+			return () -> targetList;
+		}
+		return null;
+	}
+
+	/**
 	 * Returns the preference page ids of the preference pages to be shown when executing the
 	 * preferences action from the editor context menu. The first page will be selected.
 	 * <p>
 	 * Subclasses may extend or replace.
 	 * </p>
-	 * 
+	 *
 	 * @return the preference page ids to show, may be empty
 	 * @since 3.1
 	 */
@@ -2117,7 +2146,7 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 	 * <p>
 	 * Subclasses may extend or replace.
 	 * </p>
-	 * 
+	 *
 	 * @return the preference page ids to show, may be empty
 	 * @since 3.1
 	 */
@@ -2135,7 +2164,7 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 	 * <p>
 	 * Subclasses may extend or replace.
 	 * </p>
-	 * 
+	 *
 	 * @return the preference page ids to show, may be empty
 	 * @since 3.4
 	 */
@@ -2231,5 +2260,13 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 	@Override
 	protected boolean isTabsToSpacesConversionEnabled() {
 		return getPreferenceStore() != null && getPreferenceStore().getBoolean(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SPACES_FOR_TABS);
+	}
+
+	/**
+	 * @since 3.13
+	 */
+	@Override
+	protected boolean isSpacesAsTabsDeletionEnabled() {
+		return getPreferenceStore() != null && getPreferenceStore().getBoolean(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_DELETE_SPACES_AS_TABS);
 	}
 }

@@ -86,8 +86,6 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.FontMetrics;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -197,7 +195,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		public IStatus runInUIThread(IProgressMonitor mon) {
 			if (!mon.isCanceled() && progressLabel!=null && !progressLabel.isDisposed()) {
 				if (searcher==null || !searcher.isActive()) {
-					progressLabel.setText(""); //$NON-NLS-1$
+					progressLabel.setText(EMPTY_STRING);
 				} else {
 					progressLabel.setText(NLS.bind(Messages.QuickSearchDialog_searching, currentFileInfo(searcher.getCurrentFile(), animate)));
 					animate = (animate+1)%4;
@@ -233,7 +231,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 				cell.setText(text.getString());
 				cell.setStyleRanges(text.getStyleRanges());
 			} else {
-				cell.setText(""); //$NON-NLS-1$
+				cell.setText(EMPTY_STRING);
 				cell.setStyleRanges(null);
 			}
 			cell.setImage(getBlankImage());
@@ -271,7 +269,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 				};
 				cell.setStyleRanges(styleRanges);
 			} else {
-				cell.setText(""); //$NON-NLS-1$
+				cell.setText(EMPTY_STRING);
 				cell.setStyleRanges(null);
 			}
 			cell.setImage(getBlankImage());
@@ -420,10 +418,10 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 			if (initialPatternText==null) {
 				String lastSearch = settings.get(DIALOG_LAST_QUERY);
 				if (lastSearch==null) {
-					lastSearch = ""; //$NON-NLS-1$
+					lastSearch = EMPTY_STRING;
 				}
 				pattern.setText(lastSearch);
-				pattern.setSelection(0, lastSearch.length());
+				pattern.selectAll();
 			}
 			if (settings.get(DIALOG_PATH_FILTER)!=null) {
 				String filter = settings.get(DIALOG_PATH_FILTER);
@@ -905,7 +903,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 			pattern.setSelection(0, 0);
 			break;
 		case FULL_SELECTION:
-			pattern.setSelection(0, initialPatternText.length());
+			pattern.selectAll();
 			break;
 		}
 
@@ -938,7 +936,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 	}
 
 	private void createDetailsArea(Composite parent) {
-		details = new StyledText(parent, SWT.MULTI+SWT.READ_ONLY+SWT.BORDER+SWT.H_SCROLL);
+		details = new StyledText(parent, SWT.MULTI+SWT.READ_ONLY+SWT.BORDER+SWT.H_SCROLL+SWT.V_SCROLL);
 		details.setFont(JFaceResources.getFont(TEXT_FONT));
 
 		list.addSelectionChangedListener(new ISelectionChangedListener() {
@@ -963,9 +961,10 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 			}
 			IStructuredSelection sel = (IStructuredSelection) list.getSelection();
 			if (sel==null || sel.isEmpty()) {
-				details.setText(""); //$NON-NLS-1$
+				details.setText(EMPTY_STRING);
 			} else {
 				//Not empty selection
+				final int context = 100; // number of lines before and after match to include in preview
 				int numLines = computeLines();
 				if (numLines > 0) {
 					LineItem item = (LineItem) sel.getFirstElement();
@@ -973,10 +972,11 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 					if (document!=null) {
 						try {
 							int line = item.getLineNumber()-1; //in document lines are 0 based. In search 1 based.
-							int start = document.getLineOffset(Math.max(line-(numLines-1)/2, 0));
+							int contextStartLine = Math.max(line-(numLines-1)/2 - context, 0);
+							int start = document.getLineOffset(contextStartLine);
 							int end = document.getLength();
 							try {
-								IRegion lineInfo = document.getLineInformation(line + numLines/2);
+								IRegion lineInfo = document.getLineInformation(line + numLines/2 + context);
 								end = lineInfo.getOffset() + lineInfo.getLength();
 							} catch (BadLocationException e) {
 								//Presumably line number is past the end of document.
@@ -986,7 +986,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 							StyledString styledString = highlightMatches(document.get(start, end-start));
 							details.setText(styledString.getString());
 							details.setStyleRanges(styledString.getStyleRanges());
-
+							details.setTopIndex(Math.max(line - contextStartLine - numLines/2, 0));
 							return;
 						} catch (BadLocationException e) {
 						}
@@ -994,25 +994,18 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 				}
 			}
 			//empty selection or some error:
-			details.setText(""); //$NON-NLS-1$
+			details.setText(EMPTY_STRING);
 		}
 	}
 
 	/**
-	 * Computes how much lines of text can be displayed in the details section based on
-	 * its current height and font metrics.
+	 * Computes how many lines of text can be displayed in the details section.
 	 */
 	private int computeLines() {
 		if (details!=null && !details.isDisposed()) {
-			GC gc = new GC(details);
-			try {
-				FontMetrics fm = gc.getFontMetrics();
-				int itemH = fm.getHeight();
-				int areaH = details.getClientArea().height;
-				return (areaH+itemH-1) / itemH;
-			} finally {
-				gc.dispose();
-			}
+			int lineHeight = details.getLineHeight();
+			int areaHeight = details.getClientArea().height;
+			return (areaHeight + lineHeight - 1) / lineHeight;
 		}
 		return 0;
 	}

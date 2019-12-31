@@ -6753,8 +6753,8 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			boolean showOffset = getPreferenceStore().getBoolean(PREFERENCE_SHOW_CARET_OFFSET);
 			Point selectedRange = fSourceViewer.getSelectedRange();
 			int selectionLength = selectedRange != null ? selectedRange.y : 0;
-			fOffsetLabel.fValue = selectionLength == 0 ? caret : selectionLength;
 			showSelection = showSelection && selectionLength > 0;
+			fOffsetLabel.fValue = showSelection ? selectionLength : caret;
 			if (!showSelection) {
 				if (!showOffset) {
 					// shows line : column
@@ -7274,6 +7274,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			TabsToSpacesConverter tabToSpacesConverter= new TabsToSpacesConverter();
 			tabToSpacesConverter.setLineTracker(new DefaultLineTracker());
 			tabToSpacesConverter.setNumberOfSpacesPerTab(tabWidth);
+			tabToSpacesConverter.setDeleteSpacesAsTab(isSpacesAsTabsDeletionEnabled());
 			((ITextViewerExtension7)fSourceViewer).setTabsToSpacesConverter(tabToSpacesConverter);
 			updateIndentPrefixes();
 		}
@@ -7304,6 +7305,22 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 	 * @since 3.3
 	 */
 	protected boolean isTabsToSpacesConversionEnabled() {
+		return false;
+	}
+
+	/**
+	 * Tells whether delete and backspace keys should remove multiple spaces as
+	 * if they were a tab. Only relevant when
+	 * {@link #isTabsToSpacesConversionEnabled()} returns true.
+	 *
+	 * <p>
+	 * Subclasses may override this method.
+	 * </p>
+	 *
+	 * @return <code>true</code> if spaces should be removed as tabs
+	 * @since 3.14
+	 */
+	protected boolean isSpacesAsTabsDeletionEnabled() {
 		return false;
 	}
 

@@ -25,6 +25,7 @@
    <extension-point id="foldingReconcilers" name="%ExtPoint.foldingReconcilers" schema="schema/foldingReconcilers.exsd"/>
    <extension-point id="characterPairMatchers" name="%ExtPoint.characterPairMatchers" schema="schema/characterPairMatchers.exsd"/>
    <extension-point id="icons" name="%ExtPoint.iconProviders" schema="schema/icons.exsd"/>
+   <extension-point id="quickAssistProcessors" name="%ExtPoint.quickAssistProcessors" schema="schema/quickAssistProcessors.exsd"/>
    <extension
          point="org.eclipse.ui.editors">
       <editor
@@ -229,5 +230,12 @@
       <editorAssociationOverride
             class="org.eclipse.ui.internal.genericeditor.GenericEditorWithIconAssociationOverride"
             id="org.eclipse.ui.internal.genericeditor.GenericEditorAssociationOverride"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.genericeditor.reconcilers">
+      <reconciler
+            class="org.eclipse.jface.text.codemining.CodeMiningReconciler"
+            contentType="org.eclipse.core.runtime.text">
+      </reconciler>
    </extension>
 </plugin>

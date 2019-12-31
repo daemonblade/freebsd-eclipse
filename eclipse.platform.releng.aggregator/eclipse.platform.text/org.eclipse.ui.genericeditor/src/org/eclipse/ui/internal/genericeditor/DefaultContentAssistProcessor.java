@@ -53,13 +53,13 @@ public class DefaultContentAssistProcessor implements IContentAssistProcessor {
 		String[] tokens = text.split(NON_ALPHANUMERIC_REGEXP);
 
 		//remove duplicates
-		Set<String> tokenSet = new HashSet<String>(Arrays.asList(tokens));
+		Set<String> tokenSet = new HashSet<>(Arrays.asList(tokens));
 
 		//wordStartIndex is the index of the last non-alphanumeric before 'offset' in text 'text'
 		int wordStartIndex = findStartingPoint(text, offset);
 		String prefix = text.substring(wordStartIndex, offset);
 
-		List<ICompletionProposal> proposals = new ArrayList<ICompletionProposal>();
+		List<ICompletionProposal> proposals = new ArrayList<>();
 		for (String token : tokenSet) {
 			if ((token==null)||(token.length()<2)) {
 				continue;

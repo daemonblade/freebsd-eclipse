@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -91,6 +91,19 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	public final static String EDITOR_SPACES_FOR_TABS= "spacesForTabs"; //$NON-NLS-1$
 
 	/**
+	 * A named preference that specifies if the editor removes multiple spaces on delete/backspace
+	 * key as if they were tabs. Only relevant when {@link #EDITOR_SPACES_FOR_TABS} preference is
+	 * set to <code>true</code>.
+	 * <p>
+	 * Value is of type <code>Boolean</code>. If <code>true</code>, the editor removes multiple
+	 * spaces.
+	 * </p>
+	 *
+	 * @since 3.13
+	 */
+	public final static String EDITOR_DELETE_SPACES_AS_TABS= "removeSpacesAsTabs"; //$NON-NLS-1$
+
+	/**
 	 * A named preference that holds the size of the editor's undo history.
 	 * <p>
 	 * Value is of type <code>int</code>: 0 or positive int value specifying the size of
@@ -136,7 +149,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * The preference value is of type <code>boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @noreference This field is not intended to be referenced by clients.
 	 */
 	public final static String EDITOR_PRINT_MARGIN_ALLOW_OVERRIDE= "printMarginAllowOverride"; //$NON-NLS-1$
@@ -202,7 +215,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * The preference value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.12
 	 */
 	public final static String EDITOR_SHOW_CARET_OFFSET= AbstractTextEditor.PREFERENCE_SHOW_CARET_OFFSET;
@@ -213,7 +226,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * The preference value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.12
 	 */
 	public final static String EDITOR_SHOW_SELECTION_SIZE= AbstractTextEditor.PREFERENCE_SHOW_SELECTION_SIZE;
@@ -225,7 +238,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * The preference value is of type <code>String</code>. A RGB color value encoded as a string
 	 * using class <code>PreferenceConverter</code>.
 	 * </p>
-	 * 
+	 *
 	 * @see org.eclipse.jface.resource.StringConverter
 	 * @see PreferenceConverter
 	 * @see #EDITOR_LINE_NUMBER_RULER
@@ -298,7 +311,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>. If <code>true</code>, saturated colors are used
 	 * </p>
-	 * 
+	 *
 	 * @since 3.8
 	 * @see org.eclipse.jface.text.source.IOverviewRulerExtension#setUseSaturatedColors(boolean)
 	 */
@@ -399,7 +412,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * The preference value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.5
 	 */
 	public final static String EDITOR_HYPERLINK_COLOR_SYSTEM_DEFAULT= DefaultHyperlinkPresenter.HYPERLINK_COLOR_SYSTEM_DEFAULT;
@@ -445,7 +458,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * The following preferences can be used for fine-grained configuration when enabled.
 	 * </p>
@@ -463,7 +476,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <li>{@link #EDITOR_SHOW_LINE_FEED}</li>
 	 * <li>{@link #EDITOR_WHITESPACE_CHARACTER_ALPHA_VALUE}</li>
 	 * </ul>
-	 * 
+	 *
 	 * @since 3.3
 	 */
 	public static final String EDITOR_SHOW_WHITESPACE_CHARACTERS= AbstractTextEditor.PREFERENCE_SHOW_WHITESPACE_CHARACTERS;
@@ -474,7 +487,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 */
 	public static final String EDITOR_SHOW_LEADING_SPACES= AbstractTextEditor.PREFERENCE_SHOW_LEADING_SPACES;
@@ -485,7 +498,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 */
 	public static final String EDITOR_SHOW_ENCLOSED_SPACES= AbstractTextEditor.PREFERENCE_SHOW_ENCLOSED_SPACES;
@@ -496,7 +509,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 */
 	public static final String EDITOR_SHOW_TRAILING_SPACES= AbstractTextEditor.PREFERENCE_SHOW_TRAILING_SPACES;
@@ -508,7 +521,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 */
 	public static final String EDITOR_SHOW_LEADING_IDEOGRAPHIC_SPACES= AbstractTextEditor.PREFERENCE_SHOW_LEADING_IDEOGRAPHIC_SPACES;
@@ -520,7 +533,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 */
 	public static final String EDITOR_SHOW_ENCLOSED_IDEOGRAPHIC_SPACES= AbstractTextEditor.PREFERENCE_SHOW_ENCLOSED_IDEOGRAPHIC_SPACES;
@@ -532,7 +545,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 */
 	public static final String EDITOR_SHOW_TRAILING_IDEOGRAPHIC_SPACES= AbstractTextEditor.PREFERENCE_SHOW_TRAILING_IDEOGRAPHIC_SPACES;
@@ -543,7 +556,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 */
 	public static final String EDITOR_SHOW_LEADING_TABS= AbstractTextEditor.PREFERENCE_SHOW_LEADING_TABS;
@@ -554,7 +567,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 */
 	public static final String EDITOR_SHOW_ENCLOSED_TABS= AbstractTextEditor.PREFERENCE_SHOW_ENCLOSED_TABS;
@@ -565,7 +578,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 */
 	public static final String EDITOR_SHOW_TRAILING_TABS= AbstractTextEditor.PREFERENCE_SHOW_TRAILING_TABS;
@@ -576,7 +589,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 */
 	public static final String EDITOR_SHOW_CARRIAGE_RETURN= AbstractTextEditor.PREFERENCE_SHOW_CARRIAGE_RETURN;
@@ -587,7 +600,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 */
 	public static final String EDITOR_SHOW_LINE_FEED= AbstractTextEditor.PREFERENCE_SHOW_LINE_FEED;
@@ -598,7 +611,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 	 * <p>
 	 * Value is of type <code>Integer</code>.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 */
 	public static final String EDITOR_WHITESPACE_CHARACTER_ALPHA_VALUE= AbstractTextEditor.PREFERENCE_WHITESPACE_CHARACTER_ALPHA_VALUE;
@@ -706,6 +719,7 @@ public class AbstractDecoratedTextEditorPreferenceConstants {
 
 		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TAB_WIDTH, 4);
 		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SPACES_FOR_TABS, false);
+		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_DELETE_SPACES_AS_TABS, false);
 
 		store.setDefault(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_UNDO_HISTORY_SIZE, 200);
 

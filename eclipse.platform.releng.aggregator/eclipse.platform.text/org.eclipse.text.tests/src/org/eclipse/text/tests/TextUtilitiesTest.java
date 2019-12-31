@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,6 +15,7 @@ package org.eclipse.text.tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -23,6 +24,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.eclipse.jface.text.AbstractLineTracker.DelimiterInfo;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.DocumentEvent;
@@ -44,7 +46,7 @@ public class TextUtilitiesTest {
 
 		private final class DocumentListener implements IDocumentListener {
 			@Override
-			public void documentAboutToBeChanged(DocumentEvent event) {}
+			public void documentAboutToBeChanged(DocumentEvent event) { /* not used */ }
 			@Override
 			public void documentChanged(DocumentEvent event) {
 				fEvents.add(event);
@@ -94,7 +96,7 @@ public class TextUtilitiesTest {
 
 		private final class DocumentListener implements IDocumentListener {
 			@Override
-			public void documentAboutToBeChanged(DocumentEvent event) {}
+			public void documentAboutToBeChanged(DocumentEvent event) { /* not used */ }
 			@Override
 			public void documentChanged(DocumentEvent event) {
 				event= new DocumentEvent(event.getDocument(), event.getOffset(), event.getLength(), event.getText());
@@ -138,11 +140,6 @@ public class TextUtilitiesTest {
 	}
 
 
-	/**
-	 * Constructor for UtilitiesTest.
-	 *
-	 * @param name the name
-	 */
 	private static DocumentEvent createRandomEvent(IDocument document, int maxLength, char character) {
 
 		int index0= (int) (Math.random() * (maxLength + 1));
@@ -281,15 +278,114 @@ public class TextUtilitiesTest {
 	}
 
 	@Test
+	@SuppressWarnings("deprecation")
 	public void testIndexOf() {
 		int[] result;
-		result= TextUtilities.indexOf(new String[] {"a", "ab", "abc"}, "xxxxxxxxxx", 0);
+		result = TextUtilities.indexOf(new String[0], "xxxxxxxxxx", 0);
 		assertEquals(-1, result[0]);
 		assertEquals(-1, result[1]);
 
-		result= TextUtilities.indexOf(new String[] {"a", "ab", "abc"}, "foobarabcd", 0);
+		result = TextUtilities.indexOf(new String[] { "a", "ab", "abc" }, "xxxxxxxxxx", 0);
+		assertEquals(-1, result[0]);
+		assertEquals(-1, result[1]);
+
+		result = TextUtilities.indexOf(new String[] { "a", "ab", "abc" }, "foobarabcd", 0);
 		assertEquals(4, result[0]);
 		assertEquals(0, result[1]);
+
+		result = TextUtilities.indexOf(new String[] { "ab", "ab" }, "foobarabcd", 0);
+		assertEquals(6, result[0]);
+		assertEquals(0, result[1]);
+
+		result = TextUtilities.indexOf(new String[] { "", "ab", "abc" }, "foobarabcd", 0);
+		assertEquals(6, result[0]);
+		assertEquals(2, result[1]);
+
+		result = TextUtilities.indexOf(new String[] { "arac", "", "fuu" }, "foobarabcd", 0);
+		assertEquals(0, result[0]);
+		assertEquals(1, result[1]);
+
+		result = TextUtilities.indexOf(new String[] { "", "" }, "foobarabcd", 0);
+		assertEquals(0, result[0]);
+		assertEquals(1, result[1]);
+
+		result = TextUtilities.indexOf(new String[] { "" }, "foobarabcd", 5);
+		// looks strange that searching from offset 5 returns match offset 0 but that is
+		// how it was implemented
+		assertEquals(0, result[0]);
+		assertEquals(0, result[1]);
+
+		result = TextUtilities.indexOf(new String[] { "abc" }, "foobarabcd", -5);
+		assertEquals(6, result[0]);
+		assertEquals(0, result[1]);
+
+		result = TextUtilities.indexOf(new String[] { "abc" }, "foobarabcd", 20);
+		assertEquals(-1, result[0]);
+		assertEquals(-1, result[1]);
+
+		try {
+			TextUtilities.indexOf(null, "foobarabcd", 0);
+			fail("Exception not thrown");
+		} catch (NullPointerException ex) {
+			// expected
+		}
+
+		try {
+			TextUtilities.indexOf(new String[] { "abc", null }, "foobarabcd", 0);
+			fail("Exception not thrown");
+		} catch (NullPointerException ex) {
+			// expected
+		}
+
+		try {
+			TextUtilities.indexOf(new String[] { "abc" }, null, 0);
+			fail("Exception not thrown");
+		} catch (NullPointerException ex) {
+			// expected
+		}
 	}
 
+	@Test
+	public void testNextDelimiter() {
+		DelimiterInfo result;
+		result = TextUtilities.nextDelimiter("abc\ndef", 0);
+		assertEquals(3, result.delimiterIndex);
+		assertEquals("\n", result.delimiter);
+
+		result = TextUtilities.nextDelimiter("abc\ndef", 5);
+		assertEquals(-1, result.delimiterIndex);
+		assertEquals(null, result.delimiter);
+
+		result = TextUtilities.nextDelimiter("abc\rdef\n123", 0);
+		assertEquals(3, result.delimiterIndex);
+		assertEquals("\r", result.delimiter);
+
+		result = TextUtilities.nextDelimiter("abc+\r\ndef\n123", 0);
+		assertEquals(4, result.delimiterIndex);
+		assertEquals("\r\n", result.delimiter);
+
+		result = TextUtilities.nextDelimiter("abc~>\r\r\ndef\n123", 0);
+		assertEquals(5, result.delimiterIndex);
+		assertEquals("\r", result.delimiter);
+
+		result = TextUtilities.nextDelimiter("\nabc~>\r\r\ndef\n123", 0);
+		assertEquals(0, result.delimiterIndex);
+		assertEquals("\n", result.delimiter);
+
+		result = TextUtilities.nextDelimiter("abc~>123\r\n", 0);
+		assertEquals(8, result.delimiterIndex);
+		assertEquals("\r\n", result.delimiter);
+
+		result = TextUtilities.nextDelimiter("abc~>\r\r\ndef\n123", 9);
+		assertEquals(11, result.delimiterIndex);
+		assertEquals("\n", result.delimiter);
+
+		result = TextUtilities.nextDelimiter("", 0);
+		assertEquals(-1, result.delimiterIndex);
+		assertEquals(null, result.delimiter);
+
+		result = TextUtilities.nextDelimiter("abc123", 0);
+		assertEquals(-1, result.delimiterIndex);
+		assertEquals(null, result.delimiter);
+	}
 }

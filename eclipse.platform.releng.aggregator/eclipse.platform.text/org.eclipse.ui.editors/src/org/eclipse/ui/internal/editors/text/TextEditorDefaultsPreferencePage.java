@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -74,6 +74,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 import org.eclipse.ui.internal.editors.text.OverlayPreferenceStore.OverlayKey;
 import org.eclipse.ui.internal.editors.text.TextEditorDefaultsPreferencePage.EnumeratedDomain.EnumValue;
+import org.eclipse.ui.internal.editors.text.codemining.annotation.AnnotationCodeMiningPreferenceConstants;
 
 import org.eclipse.ui.texteditor.AbstractDecoratedTextEditorPreferenceConstants;
 import org.eclipse.ui.texteditor.AbstractTextEditor;
@@ -577,7 +578,7 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 
 		/**
 		 * Sets or clears the error message. If not <code>null</code>, the OK button is disabled.
-		 * 
+		 *
 		 * @param errorMessage the error message, or <code>null</code> to clear
 		 * @since 3.0
 		 */
@@ -732,6 +733,7 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TAB_WIDTH));
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractTextEditor.PREFERENCE_WORD_WRAP_ENABLED));
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SPACES_FOR_TABS));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_DELETE_SPACES_AS_TABS));
 
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLOR));
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_COLUMN));
@@ -769,6 +771,9 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TEXT_DRAG_AND_DROP_ENABLED));
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_TEXT_HOVER_AFFORDANCE));
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_HOVER_ENRICH_MODE));
+
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, AnnotationCodeMiningPreferenceConstants.SHOW_ANNOTATION_CODE_MINING_LEVEL));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, AnnotationCodeMiningPreferenceConstants.SHOW_ANNOTATION_CODE_MINING_MAX));
 
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_LEADING_SPACES));
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_ENCLOSED_SPACES));
@@ -854,8 +859,12 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 
 		label= TextEditorMessages.TextEditorPreferencePage_convertTabsToSpaces;
 		Preference spacesForTabs= new Preference(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SPACES_FOR_TABS, label, null);
-		addCheckBox(appearanceComposite, spacesForTabs, new BooleanDomain(), 0);
+		final Button spacesForTabsButton= addCheckBox(appearanceComposite, spacesForTabs, new BooleanDomain(), 0);
 
+		label= TextEditorMessages.TextEditorDefaultsPreferencePage_deleteSpacesAsTabs;
+		Preference deleteSpacesAsTabs= new Preference(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_DELETE_SPACES_AS_TABS, label, null);
+		final Button deleteSpacesAsTabsButton= addCheckBox(appearanceComposite, deleteSpacesAsTabs, new BooleanDomain(), 0);
+		createDependency(spacesForTabsButton, spacesForTabs, new Control[] { deleteSpacesAsTabsButton });
 
 		label= TextEditorMessages.TextEditorPreferencePage_highlightCurrentLine;
 		Preference highlightCurrentLine= new Preference(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_CURRENT_LINE, label, null);
@@ -871,7 +880,7 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 		final IntegerDomain printMarginDomain= new IntegerDomain(20, 200);
 		final Control[] printMarginControls= addTextField(appearanceComposite, printMarginColumn, printMarginDomain, 15, 20);
 		createDependency(showPrintMarginButton, showPrintMargin, printMarginControls);
-		
+
 		label= TextEditorMessages.TextEditorPreferencePage_printMarginAllowOverride;
 		Preference printMarginAllowOverride= new Preference(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_PRINT_MARGIN_ALLOW_OVERRIDE, label, null);
 		final Button showPrintMarginAllowOverride= addCheckBox(appearanceComposite, printMarginAllowOverride, new BooleanDomain(), 0);
@@ -935,6 +944,39 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 		label= TextEditorMessages.TextEditorDefaultsPreferencePage_smartHomeEnd;
 		Preference smartHomeEnd= new Preference(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SMART_HOME_END, label, null);
 		addCheckBox(appearanceComposite, smartHomeEnd, new BooleanDomain(), 0);
+
+		label= TextEditorMessages.TextEditorDefaultsPreferencePage_codeMinings_show;
+		String description= TextEditorMessages.TextEditorDefaultsPreferencePage_codeMinings_description;
+		Preference showCodeMinings= new Preference(AnnotationCodeMiningPreferenceConstants.SHOW_ANNOTATION_CODE_MINING_LEVEL, label, description);
+		EnumeratedDomain codeMiningsDomain= new EnumeratedDomain();
+		codeMiningsDomain.addValue(new EnumValue(AnnotationCodeMiningPreferenceConstants.SHOW_ANNOTATION_CODE_MINING_LEVEL__NONE, TextEditorMessages.TextEditorDefaultsPreferencePage_codeMinings_none));
+		codeMiningsDomain.addValue(new EnumValue(AnnotationCodeMiningPreferenceConstants.SHOW_ANNOTATION_CODE_MINING_LEVEL__ERROR, TextEditorMessages.TextEditorDefaultsPreferencePage_codeMinings_error));
+		codeMiningsDomain.addValue(new EnumValue(AnnotationCodeMiningPreferenceConstants.SHOW_ANNOTATION_CODE_MINING_LEVEL__ERROR_WARNING,
+				TextEditorMessages.TextEditorDefaultsPreferencePage_codeMinings_ErrorWarnings));
+		codeMiningsDomain.addValue(new EnumValue(AnnotationCodeMiningPreferenceConstants.SHOW_ANNOTATION_CODE_MINING_LEVEL__ERROR_WARNING_INFO,
+				TextEditorMessages.TextEditorDefaultsPreferencePage_codeMinings_ErrorWarningsInfo));
+		final Control[] showCodeMiningsControls= addCombo(appearanceComposite, showCodeMinings, codeMiningsDomain, 0);
+
+		label= TextEditorMessages.TextEditorDefaultsPreferencePage_codeMinings_max;
+		description= TextEditorMessages.TextEditorDefaultsPreferencePage_codeMinings_max_description;
+		Preference maxCodeMinings= new Preference(AnnotationCodeMiningPreferenceConstants.SHOW_ANNOTATION_CODE_MINING_MAX, label, description);
+		IntegerDomain maxCodeMiningsDomain= new IntegerDomain(0, 99999);
+		Control[] maxCodeMiningsControls= addTextField(appearanceComposite, maxCodeMinings, maxCodeMiningsDomain, 15, 20);
+
+		final SelectionListener codeMiningsListener= new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				final int showCodeMiningsSetting= fOverlayStore.getInt(showCodeMinings.getKey());
+				boolean enabled= showCodeMiningsSetting != AnnotationCodeMiningPreferenceConstants.SHOW_ANNOTATION_CODE_MINING_LEVEL__NONE;
+				for (Control control : maxCodeMiningsControls) {
+					control.setEnabled(enabled);
+				}
+			}
+		};
+
+		((Combo) showCodeMiningsControls[1]).addSelectionListener(codeMiningsListener);
+		fMasterSlaveListeners.add(codeMiningsListener);
+
 
 		addFiller(appearanceComposite, 2);
 
@@ -1049,7 +1091,7 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 				int dimensions= 10;
 				Image image= new Image(tableComposite.getParent().getDisplay(), dimensions, dimensions);
 				GC gc= new GC(image);
-				// Draw color preview 
+				// Draw color preview
 				gc.setBackground(color);
 				gc.fillRectangle(0, 0, dimensions, dimensions);
 				// Draw outline around color preview
@@ -1418,7 +1460,7 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 
 	/**
 	 * Returns the currently selected item in the Appearance Color Options Table.
-	 * 
+	 *
 	 * @return {@link ColorEntry} the ColorEntry representing the currently selected item in the
 	 *         table
 	 */
