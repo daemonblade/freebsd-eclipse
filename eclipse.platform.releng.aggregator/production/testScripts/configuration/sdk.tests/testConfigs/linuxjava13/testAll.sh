@@ -31,7 +31,7 @@ fi
 echo "PWD: $PWD"
 # in production tests, should already be set by runTests2.xml, so
 # we set to an old version here, to make obvious if not.
-export jvm=${jvm:-/shared/common/jdk-1.6.x86_64/jre/bin/java}
+export jvm=${jvm:-/shared/common//common/java/openjdk/jdk-13/bin/java}
 
 # production machine is x86_64, but some local setups may be 32 bit and will need to provide
 # this value in localBuildProperties.shsource. (

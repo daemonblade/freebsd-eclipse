@@ -3,12 +3,12 @@ rt.equinox.bundles: master
 rt.equinox.framework: master
 rt.equinox.p2: master
 eclipse.jdt.core.binaries: master
-eclipse.jdt.core: BETA_JAVA13
-eclipse.jdt.debug: BETA_JAVA13
+eclipse.jdt.core: BETA_JAVA14
+eclipse.jdt.debug: BETA_JAVA14
 eclipse.jdt: master
-eclipse.jdt.ui: BETA_JAVA13
-eclipse.pde.build: BETA_JAVA13
-eclipse.pde.ui: BETA_JAVA13
+eclipse.jdt.ui: BETA_JAVA14
+eclipse.pde.build: BETA_JAVA14
+eclipse.pde.ui: BETA_JAVA14
 eclipse.platform.debug: master
 eclipse.platform.resources: master
 eclipse.platform: master

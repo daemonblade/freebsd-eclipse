@@ -219,8 +219,7 @@ then
   echo
   echo " = = First, installing derby"
   # make sure derby.core is installed in basebuilder
-  perfrepoLocation=http://build.eclipse.org/eclipse/buildtools/
-  #perfrepoLocation=file:///shared/eclipse/buildtools
+  perfrepoLocation=https://download.eclipse.org/eclipse/updates/buildtools/
   derby=org.apache.derby.core.feature.feature.group
   echo "   perfrepoLocation:   $perfrepoLocation"
   echo "   derby:              $derby"
@@ -314,7 +313,8 @@ then
   RAW_DATE_START=$( date -u +%s )
 
   # TODO: avoid this hard coding of baseline value
-  baselineCode="R-4.12-201906051800"
+  # NOTE: value must start with a letter match baselinePerfVersion in testScripts/configuration/streamSpecific.properties
+  baselineCode="R-4.13-201909161045"
   # to get time stamp, first remove initial IMN:
   baselineForBuildSuffix=${buildId/[IMN]/}
   #Then remove final '-' in build id

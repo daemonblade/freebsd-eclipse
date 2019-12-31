@@ -21,7 +21,7 @@ source localBuildProperties.shsource 2>/dev/null
 export BUILD_HOME=${BUILD_HOME:-/shared/eclipse/builds}
 
 export BRANCH=${BRANCH:-master}
-export STREAM=${STREAM:-4.13.0}
+export STREAM=${STREAM:-4.14.0}
 export BUILD_TYPE=${BUILD_TYPE:-I}
 
 # If not set be caller, make sure its an empty string
@@ -73,7 +73,7 @@ export TMP_DIR=${TMP_DIR:-${BUILD_ROOT}/tmp}
 mkdir -p ${TMP_DIR}
 
 # these could be machine specific
-export JAVA_HOME=${JAVA_HOME:-/shared/common/jdk1.8.0_x64-latest}
+export JAVA_HOME=${JAVA_HOME:-/shared/common/java/openjdk/jdk-11_x64-latest/}
 # required for when ant is used. Unclear how maven's "antrun" finds its version of Ant,
 # built in? Or system path?
 # But, without the ANT_OPTS, we do get messages about "to get repeatable builds, to ignore sysclasspath"
@@ -96,7 +96,7 @@ export PATH=$JAVA_HOME/bin:$MAVEN_PATH:$ANT_HOME/bin:$PATH
 
 # Only used to start antrunner for tests.
 # TODO: avoid this hard coding
-BASEBUILDER_TAG=4.12
+BASEBUILDER_TAG=4.13
 
 B_GIT_EMAIL=genie.releng@eclipse.org
 B_GIT_NAME="Releng HIPP"
