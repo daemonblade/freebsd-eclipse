@@ -90,7 +90,7 @@ rename_arch ()
 		touch ${GTK_EXE}/freebsd/${ARCH}/eclipse
 	done
 	# Clean up binaries
-	find . -name '*.so' -delete
+	#find . -name '*.so' -delete
 )
 
 # Make a baseline copy
