@@ -2,12 +2,12 @@
 # $FreeBSD$
 
 PORTNAME=	eclipse
-PORTVERSION=	4.13
+PORTVERSION=	4.14
 CATEGORIES=	java devel
 
 # Update to git-tag on git.eclipse.org
-ECLIPSE_TAG=	R4_13
-ECLIPSE_TSTAMP=	20190908-2345
+ECLIPSE_TAG=	R4_14
+ECLIPSE_TSTAMP=	20191220-0429
 
 ECLIPSE_SUFX=	${ECLIPSE_TAG}.tar.xz
 ECLIPSE_MODULES=jdt/eclipse.jdt \
@@ -45,7 +45,7 @@ DISTFILES+=	${M:C/.*\///}-${ECLIPSE_SUFX}:${M:C/[\.\/]//g}
 DIST_SUBDIR=	${PORTNAME}
 
 MAINTAINER=	jonc@chen.org.nz
-COMMENT=	Eclipse IDE 2019-09
+COMMENT=	Eclipse IDE 2019-12
 
 LICENSE=	EPL
 
@@ -73,10 +73,10 @@ DESKTOP_ENTRIES="Eclipse" \
 
 SUB_FILES=	${PORTNAME}
 
-LOCAL_P2=	-Declipserun-repo=file://${WRKDIR}/${GH_PROJECT}-${PORTVERSION}/${PORTVERSION}
+#LOCAL_P2=	file://${WRKDIR}/${GH_PROJECT}-${PORTVERSION}/${PORTVERSION}
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME}
 MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
-MAVEN_ECLIPSE=	-Dnative=gtk.freebsd.${ARCH} -Dcomparator.repo=${LOCAL_P2} ${LOCAL_P2}/ -DforceContextQualifier=v${ECLIPSE_TSTAMP}
+MAVEN_ECLIPSE=	-Dnative=gtk.freebsd.${ARCH} -DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
 ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
 
