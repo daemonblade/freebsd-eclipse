@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 Raymond Augé and others.
+ * Copyright (c) 2016, 2019 Raymond Augé and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,10 +15,10 @@ package org.eclipse.equinox.http.servlet.tests.util;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,7 +29,7 @@ public class DispatchResultServlet extends HttpServlet {
 	@Override
 	protected void service(
 		HttpServletRequest request, HttpServletResponse response)
-		throws ServletException, IOException {
+		throws IOException {
 
 		StringWriter writer = new StringWriter();
 
@@ -71,7 +71,7 @@ public class DispatchResultServlet extends HttpServlet {
 			response.getWriter().write(writer.toString());
 		}
 		catch (IllegalStateException ise) {
-			response.getOutputStream().write(writer.toString().getBytes("UTF8"));
+			response.getOutputStream().write(writer.toString().getBytes(StandardCharsets.UTF_8));
 		}
 
 	}
