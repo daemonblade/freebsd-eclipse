@@ -132,7 +132,7 @@ public class ConfigurationWriter implements ConfigurationConstants {
 	private static String toString(Object[] list) {
 		if (list == null || list.length == 0)
 			return null;
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		for (int i = 0; i < list.length; i++) {
 			buffer.append(list[i].toString());
 			if (i + 1 < list.length)
@@ -147,8 +147,7 @@ public class ConfigurationWriter implements ConfigurationConstants {
 	private static void write(XMLWriter writer, Feature[] features) {
 		if (features == null || features.length == 0)
 			return;
-		for (int i = 0; i < features.length; i++) {
-			Feature feature = features[i];
+		for (Feature feature : features) {
 			Map<String, String> args = new HashMap<>();
 			String value = feature.getId();
 			if (value != null)

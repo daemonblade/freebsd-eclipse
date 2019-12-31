@@ -331,8 +331,9 @@ public abstract class MetadataParser extends XMLParser implements XMLConstants {
 					// TODO: create an error
 				}
 				ITouchpointData[] touchpointData = (touchpointDataHandler == null ? new ITouchpointData[0] : touchpointDataHandler.getTouchpointData());
-				for (int i = 0; i < touchpointData.length; i++)
-					currentUnit.addTouchpointData(touchpointData[i]);
+				for (ITouchpointData touchpointData1 : touchpointData) {
+					currentUnit.addTouchpointData(touchpointData1);
+				}
 				if (updateDescriptorHandler != null)
 					currentUnit.setUpdateDescriptor(updateDescriptorHandler.getUpdateDescriptor());
 				units.add(currentUnit);
@@ -812,7 +813,7 @@ public abstract class MetadataParser extends XMLParser implements XMLConstants {
 		private String removeWhiteSpace(String s) {
 			if (s == null)
 				return ""; //$NON-NLS-1$
-			StringBuffer builder = new StringBuffer();
+			StringBuilder builder = new StringBuilder();
 			for (int i = 0; i < s.length(); i++) {
 				if (s.charAt(i) != ' ')
 					builder.append(s.charAt(i));
@@ -889,7 +890,7 @@ public abstract class MetadataParser extends XMLParser implements XMLConstants {
 		private String removeWhiteSpace(String s) {
 			if (s == null)
 				return ""; //$NON-NLS-1$
-			StringBuffer builder = new StringBuffer();
+			StringBuilder builder = new StringBuilder();
 			for (int i = 0; i < s.length(); i++) {
 				if (s.charAt(i) != ' ')
 					builder.append(s.charAt(i));

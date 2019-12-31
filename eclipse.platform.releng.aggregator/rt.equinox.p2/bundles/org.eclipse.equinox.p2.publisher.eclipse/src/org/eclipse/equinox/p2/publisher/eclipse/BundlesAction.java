@@ -525,7 +525,7 @@ public class BundlesAction extends AbstractPublisherAction {
 	private static String toManifestString(Map<String, String> p) {
 		if (p == null)
 			return null;
-		StringBuffer result = new StringBuffer();
+		StringBuilder result = new StringBuilder();
 		// See https://bugs.eclipse.org/329386. We are trying to reduce the size of the manifest data in
 		// the eclipse touchpoint. We've removed the code that requires it but in order for old clients
 		// to still be able to use recent repositories, we're going to keep around the manifest properties
@@ -831,8 +831,7 @@ public class BundlesAction extends AbstractPublisherAction {
 	private void expandLocations(File[] list, ArrayList<File> result) {
 		if (list == null)
 			return;
-		for (int i = 0; i < list.length; i++) {
-			File location = list[i];
+		for (File location : list) {
 			if (location.isDirectory()) {
 				// if the location is itself a bundle, just add it.  Otherwise r down
 				if (new File(location, JarFile.MANIFEST_NAME).exists())
@@ -969,16 +968,16 @@ public class BundlesAction extends AbstractPublisherAction {
 		if (bundleLocations == null)
 			return new BundleDescription[0];
 		List<BundleDescription> result = new ArrayList<>(bundleLocations.length);
-		for (int i = 0; i < bundleLocations.length; i++) {
+		for (File bundleLocation : bundleLocations) {
 			if (monitor.isCanceled())
 				throw new OperationCanceledException();
 			BundleDescription description = null;
 			try {
-				description = createBundleDescription(bundleLocations[i]);
+				description = createBundleDescription(bundleLocation);
 			} catch (IOException e) {
-				addPublishingErrorToFinalStatus(e, bundleLocations[i]);
+				addPublishingErrorToFinalStatus(e, bundleLocation);
 			} catch (BundleException e) {
-				addPublishingErrorToFinalStatus(e, bundleLocations[i]);
+				addPublishingErrorToFinalStatus(e, bundleLocation);
 			}
 			if (description != null) {
 				result.add(description);

@@ -46,11 +46,11 @@ public abstract class AbstractSimpleConfiguratorTest extends AbstractProvisionin
 
 	//Assert that all files are in the bundles
 	protected void assertJarsInstalled(File[] jars, Bundle[] bundles) {
-		for (int i = 0; i < jars.length; i++) {
+		for (File jar : jars) {
 			boolean found = false;
-			String jarName = getManifestEntry(jars[i], Constants.BUNDLE_SYMBOLICNAME);
-			for (int j = 0; j < bundles.length; j++) {
-				String bundleName = bundles[j].getSymbolicName();
+			String jarName = getManifestEntry(jar, Constants.BUNDLE_SYMBOLICNAME);
+			for (Bundle bundle : bundles) {
+				String bundleName = bundle.getSymbolicName();
 				if (bundleName.equalsIgnoreCase(jarName))
 					found = true;
 			}
@@ -97,7 +97,7 @@ public abstract class AbstractSimpleConfiguratorTest extends AbstractProvisionin
 			frameworkProperties.put("osgi.framework", null);
 			frameworkProperties.put("osgi.install.area", installarea.toURL().toExternalForm());
 			frameworkProperties.put("osgi.configuration.area", configarea.toURL().toExternalForm());
-			StringBuffer osgiBundles = new StringBuffer();
+			StringBuilder osgiBundles = new StringBuilder();
 			for (int i = 0; additionalBundle != null && i < additionalBundle.length; i++) {
 				osgiBundles.append("reference:").append(additionalBundle[i].toURL().toExternalForm()).append(",");
 			}
@@ -122,8 +122,7 @@ public abstract class AbstractSimpleConfiguratorTest extends AbstractProvisionin
 
 		try (BufferedWriter bundlesTxtOut = new BufferedWriter(new FileWriter(bundlesTxt))) {
 
-			for (int i = 0; i < jars.length; i++) {
-				File bundleJar = jars[i];
+			for (File bundleJar : jars) {
 				bundlesTxtOut.write(getBundlesTxtEntry(bundleJar) + "\n");
 			}
 			bundlesTxtOut.write(getBundlesTxtEntry(getLocation("org.eclipse.equinox.simpleconfigurator")) + "\n");
