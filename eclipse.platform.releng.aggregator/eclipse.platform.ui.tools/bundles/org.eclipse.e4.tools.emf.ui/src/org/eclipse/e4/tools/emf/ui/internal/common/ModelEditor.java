@@ -56,6 +56,7 @@ import org.eclipse.e4.core.di.annotations.Execute;
 import org.eclipse.e4.core.di.annotations.Optional;
 import org.eclipse.e4.core.di.extensions.Preference;
 import org.eclipse.e4.core.services.contributions.IContributionFactory;
+import org.eclipse.e4.core.services.log.Logger;
 import org.eclipse.e4.core.services.nls.Translation;
 import org.eclipse.e4.core.services.translation.TranslationService;
 import org.eclipse.e4.tools.emf.ui.common.AbstractElementEditorContribution;
@@ -124,6 +125,7 @@ import org.eclipse.e4.tools.emf.ui.internal.common.component.virtual.VApplicatio
 import org.eclipse.e4.tools.emf.ui.internal.common.component.virtual.VApplicationWindowEditor;
 import org.eclipse.e4.tools.emf.ui.internal.common.component.virtual.VBindingTableEditor;
 import org.eclipse.e4.tools.emf.ui.internal.common.component.virtual.VCommandEditor;
+import org.eclipse.e4.tools.emf.ui.internal.common.component.virtual.VControlsEditor;
 import org.eclipse.e4.tools.emf.ui.internal.common.component.virtual.VHandlerEditor;
 import org.eclipse.e4.tools.emf.ui.internal.common.component.virtual.VItemParametersEditor;
 import org.eclipse.e4.tools.emf.ui.internal.common.component.virtual.VMenuContributionsEditor;
@@ -251,6 +253,7 @@ public class ModelEditor implements IGotoObject {
 
 	public static final String VIRTUAL_PART_MENU = "org.eclipse.e4.tools.emf.ui.VIRTUAL_PART_MENU"; //$NON-NLS-1$
 	public static final String VIRTUAL_HANDLER = "org.eclipse.e4.tools.emf.ui.VIRTUAL_HANDLER"; //$NON-NLS-1$
+	public static final String VIRTUAL_CONTROLS = "org.eclipse.e4.tools.emf.ui.VIRTUAL_CONTROLS"; //$NON-NLS-1$
 	public static final String VIRTUAL_BINDING_TABLE = "org.eclipse.e4.tools.emf.ui.VIRTUAL_BINDING_TABLE"; //$NON-NLS-1$
 	public static final String VIRTUAL_COMMAND = "org.eclipse.e4.tools.emf.ui.VIRTUAL_COMMAND"; //$NON-NLS-1$
 	public static final String VIRTUAL_APPLICATION_WINDOWS = "org.eclipse.e4.tools.emf.ui.VIRTUAL_APPLICATION_WINDOWS"; //$NON-NLS-1$
@@ -279,6 +282,7 @@ public class ModelEditor implements IGotoObject {
 	public static final int TAB_FORM = 0;
 	public static final int TAB_XMI = 1;
 	public static final int TAB_LIST = 2;
+
 
 	/**
 	 * A map with key = eClass name or virtual key, value is an
@@ -346,6 +350,9 @@ public class ModelEditor implements IGotoObject {
 	@Inject
 	@Optional
 	MPart currentPart;
+
+	@Inject
+	private Logger logger;
 
 	private final ObservablesManager obsManager;
 
@@ -810,9 +817,8 @@ public class ModelEditor implements IGotoObject {
 								}
 
 								support.openEditor(viewer.getControl().getShell(), s.getFirstElement(), ctx);
-							} catch (final CoreException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
+							} catch (CoreException e) {
+								logger.warn(e);
 							}
 						}
 					});
@@ -983,8 +989,7 @@ public class ModelEditor implements IGotoObject {
 			try {
 				contributionCreator.add((IContributionClassCreator) el.createExecutableExtension("class")); //$NON-NLS-1$
 			} catch (final CoreException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.warn(e);
 			}
 		}
 	}
@@ -1010,8 +1015,7 @@ public class ModelEditor implements IGotoObject {
 			try {
 				editorFeatures.add((IEditorFeature) el.createExecutableExtension("class")); //$NON-NLS-1$
 			} catch (final CoreException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.warn(e);
 			}
 		}
 	}
@@ -1140,6 +1144,7 @@ public class ModelEditor implements IGotoObject {
 	private void registerVirtualEditors() {
 		registerEditor(VIRTUAL_PART_MENU, VPartMenuEditor.class);
 		registerEditor(VIRTUAL_HANDLER, VHandlerEditor.class);
+		registerEditor(VIRTUAL_CONTROLS, VControlsEditor.class);
 		registerEditor(VIRTUAL_BINDING_TABLE, VBindingTableEditor.class);
 		registerEditor(VIRTUAL_COMMAND, VCommandEditor.class);
 		registerEditor(VIRTUAL_APPLICATION_WINDOWS, VApplicationWindowEditor.class);
@@ -1308,12 +1313,12 @@ public class ModelEditor implements IGotoObject {
 	}
 
 	@Inject
-	public void setNotVisibleColor(@Preference(ModelEditorPreferences.NOT_VISIBLE_COLOR) String color) {
+	public void setNotVisibleColor(@Preference(ModelEditorPreferences.NOT_VISIBLE_COLOR) String prefColorText) {
 		final RGB current = JFaceResources.getColorRegistry().getRGB(ComponentLabelProvider.NOT_VISIBLE_KEY);
+		RGB prefColor = StringConverter.asRGB(prefColorText, new RGB(200, 200, 200));
 
-		if (current == null || !current.equals(color)) {
-			JFaceResources.getColorRegistry().put(ComponentLabelProvider.NOT_VISIBLE_KEY,
-					StringConverter.asRGB(color, new RGB(200, 200, 200)));
+		if (current == null || !current.equals(prefColor)) {
+			JFaceResources.getColorRegistry().put(ComponentLabelProvider.NOT_VISIBLE_KEY, prefColor);
 		}
 
 		if (viewer != null) {
@@ -1323,12 +1328,12 @@ public class ModelEditor implements IGotoObject {
 	}
 
 	@Inject
-	public void setNotRenderedColor(@Preference(ModelEditorPreferences.NOT_RENDERED_COLOR) String color) {
+	public void setNotRenderedColor(@Preference(ModelEditorPreferences.NOT_RENDERED_COLOR) String prefColorText) {
+		RGB prefColor = StringConverter.asRGB(prefColorText, new RGB(200, 200, 200));
 		final RGB current = JFaceResources.getColorRegistry().getRGB(ComponentLabelProvider.NOT_RENDERED_KEY);
 
-		if (current == null || !current.equals(color)) {
-			JFaceResources.getColorRegistry().put(ComponentLabelProvider.NOT_RENDERED_KEY,
-					StringConverter.asRGB(color, new RGB(200, 200, 200)));
+		if (current == null || !current.equals(prefColor)) {
+			JFaceResources.getColorRegistry().put(ComponentLabelProvider.NOT_RENDERED_KEY, prefColor);
 		}
 
 		if (viewer != null) {
@@ -1339,13 +1344,13 @@ public class ModelEditor implements IGotoObject {
 
 	@Inject
 	public void setNotVisibleRenderedColor(
-			@Preference(ModelEditorPreferences.NOT_VISIBLE_AND_RENDERED_COLOR) String color) {
+			@Preference(ModelEditorPreferences.NOT_VISIBLE_AND_RENDERED_COLOR) String prefColorText) {
+		RGB prefColor = StringConverter.asRGB(prefColorText, new RGB(200, 200, 200));
 		final RGB current = JFaceResources.getColorRegistry()
 				.getRGB(ComponentLabelProvider.NOT_VISIBLE_AND_RENDERED_KEY);
 
-		if (current == null || !current.equals(color)) {
-			JFaceResources.getColorRegistry().put(ComponentLabelProvider.NOT_VISIBLE_AND_RENDERED_KEY,
-					StringConverter.asRGB(color, new RGB(200, 200, 200)));
+		if (current == null || !current.equals(prefColor)) {
+			JFaceResources.getColorRegistry().put(ComponentLabelProvider.NOT_VISIBLE_AND_RENDERED_KEY, prefColor);
 		}
 
 		if (viewer != null) {
@@ -1966,7 +1971,7 @@ public class ModelEditor implements IGotoObject {
 		 * @param destFeature the target feature in the model where data must be dropped
 		 * @param parent      the destination parent
 		 * @param index       the index in the parent list
-		 * @see bug #429684
+		 * @see bug 429684
 		 * @return the compound command
 		 */
 		private Command createRemoveAddCommand(Object data, EStructuralFeature destFeature, EObject parent, int index) {
@@ -2115,7 +2120,8 @@ public class ModelEditor implements IGotoObject {
 
 	// This will ensure the provider has created the tree node (so we can reveal
 	// it).
-	private Object getFirstMatchingItem(EObject target, ObservableListTreeContentProvider<?> provider, Object[] items) {
+	private static Object getFirstMatchingItem(EObject target, ObservableListTreeContentProvider<?> provider,
+			Object[] items) {
 		for (int i = 0; i < items.length; i++) {
 			if (items[i] == target) {
 				return items[i];
