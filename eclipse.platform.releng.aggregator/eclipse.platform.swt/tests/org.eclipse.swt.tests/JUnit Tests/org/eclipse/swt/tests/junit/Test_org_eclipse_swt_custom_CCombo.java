@@ -30,6 +30,8 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Text;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -194,6 +196,8 @@ public void test_setEnabledZ() {
 @Test
 public void test_setFocus() {
 	assertTrue(!ccombo.setFocus());
+	shell.open();
+	shell.setVisible(true);
 	boolean exceptionThrown = false;
 	try{
 		ccombo.setEnabled(false);
@@ -207,8 +211,20 @@ public void test_setFocus() {
 		assertFalse("Expect false wehn not visible and not enabled", ccombo.setFocus());
 		ccombo.setEnabled(true);
 		ccombo.setVisible(true);
+		processEvents(0, null);
 		if(ccombo.isFocusControl())
 			assertTrue("Set focus error", ccombo.setFocus());
+
+		if (!SwtTestUtil.isCocoa) {
+			ccombo.setEnabled(true);
+			ccombo.setVisible(true);
+			ccombo.setFocus();
+			processEvents(0, null);
+			assertTrue(ccombo.isFocusControl());
+			Control focusControl = ccombo.getDisplay().getFocusControl();
+			assertTrue(focusControl instanceof Text);
+			assertEquals(ccombo, focusControl.getParent());
+		}
 	}
 	catch (Exception e) {
 		exceptionThrown = true;
@@ -1028,5 +1044,25 @@ public void test_setTextLjava_lang_String() {
 		ccombo.setText(cases[i]);
 		assertTrue(":c:" + i, ccombo.getText().equals(cases[i]));
 	}
+}
+
+@Test
+public void test_setAlignment() {
+	assertEquals(":a:", SWT.LEAD, ccombo.getAlignment());
+
+	ccombo.setText("Trail");
+	ccombo.setAlignment(SWT.TRAIL);
+	assertEquals(":b:", SWT.TRAIL, ccombo.getAlignment());
+	assertEquals(":b:", "Trail", ccombo.getText());
+
+	ccombo.add("Center");
+	ccombo.select(ccombo.getItemCount() - 1);
+	ccombo.setAlignment(SWT.CENTER);
+	assertEquals(":c:", SWT.CENTER, ccombo.getAlignment());
+	assertEquals(":c:", "Center", ccombo.getText());
+
+	ccombo.setAlignment(SWT.LEFT);
+	assertEquals(":d:", SWT.LEFT, ccombo.getAlignment());
+	assertEquals(":d:", "Center", ccombo.getText());
 }
 }

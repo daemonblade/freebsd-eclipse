@@ -922,26 +922,6 @@ JNIEXPORT void JNICALL GDK_NATIVE(_1gdk_1drag_1status)
 }
 #endif
 
-#ifndef NO__1gdk_1drawing_1context_1get_1cairo_1context
-JNIEXPORT jlong JNICALL GDK_NATIVE(_1gdk_1drawing_1context_1get_1cairo_1context)
-	(JNIEnv *env, jclass that, jlong arg0)
-{
-	jlong rc = 0;
-	GDK_NATIVE_ENTER(env, that, _1gdk_1drawing_1context_1get_1cairo_1context_FUNC);
-/*
-	rc = (jlong)gdk_drawing_context_get_cairo_context((GdkDrawingContext *)arg0);
-*/
-	{
-		GDK_LOAD_FUNCTION(fp, gdk_drawing_context_get_cairo_context)
-		if (fp) {
-			rc = (jlong)((jlong (CALLING_CONVENTION*)(GdkDrawingContext *))fp)((GdkDrawingContext *)arg0);
-		}
-	}
-	GDK_NATIVE_EXIT(env, that, _1gdk_1drawing_1context_1get_1cairo_1context_FUNC);
-	return rc;
-}
-#endif
-
 #ifndef NO__1gdk_1event_1copy
 JNIEXPORT jlong JNICALL GDK_NATIVE(_1gdk_1event_1copy)
 	(JNIEnv *env, jclass that, jlong arg0)
@@ -2759,26 +2739,6 @@ JNIEXPORT jint JNICALL GDK_NATIVE(_1gdk_1visual_1get_1depth)
 }
 #endif
 
-#ifndef NO__1gdk_1window_1begin_1draw_1frame
-JNIEXPORT jlong JNICALL GDK_NATIVE(_1gdk_1window_1begin_1draw_1frame)
-	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
-{
-	jlong rc = 0;
-	GDK_NATIVE_ENTER(env, that, _1gdk_1window_1begin_1draw_1frame_FUNC);
-/*
-	rc = (jlong)gdk_window_begin_draw_frame((GdkWindow *)arg0, (cairo_region_t *)arg1);
-*/
-	{
-		GDK_LOAD_FUNCTION(fp, gdk_window_begin_draw_frame)
-		if (fp) {
-			rc = (jlong)((jlong (CALLING_CONVENTION*)(GdkWindow *, cairo_region_t *))fp)((GdkWindow *)arg0, (cairo_region_t *)arg1);
-		}
-	}
-	GDK_NATIVE_EXIT(env, that, _1gdk_1window_1begin_1draw_1frame_FUNC);
-	return rc;
-}
-#endif
-
 #ifndef NO__1gdk_1window_1create_1similar_1surface
 JNIEXPORT jlong JNICALL GDK_NATIVE(_1gdk_1window_1create_1similar_1surface)
 	(JNIEnv *env, jclass that, jlong arg0, jint arg1, jint arg2, jint arg3)
@@ -2798,38 +2758,6 @@ JNIEXPORT void JNICALL GDK_NATIVE(_1gdk_1window_1destroy)
 	GDK_NATIVE_ENTER(env, that, _1gdk_1window_1destroy_FUNC);
 	gdk_window_destroy((GdkWindow *)arg0);
 	GDK_NATIVE_EXIT(env, that, _1gdk_1window_1destroy_FUNC);
-}
-#endif
-
-#ifndef NO__1gdk_1window_1end_1draw_1frame
-JNIEXPORT jlong JNICALL GDK_NATIVE(_1gdk_1window_1end_1draw_1frame)
-	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
-{
-	jlong rc = 0;
-	GDK_NATIVE_ENTER(env, that, _1gdk_1window_1end_1draw_1frame_FUNC);
-/*
-	rc = (jlong)gdk_window_end_draw_frame((GdkWindow *)arg0, (GdkDrawingContext *)arg1);
-*/
-	{
-		GDK_LOAD_FUNCTION(fp, gdk_window_end_draw_frame)
-		if (fp) {
-			rc = (jlong)((jlong (CALLING_CONVENTION*)(GdkWindow *, GdkDrawingContext *))fp)((GdkWindow *)arg0, (GdkDrawingContext *)arg1);
-		}
-	}
-	GDK_NATIVE_EXIT(env, that, _1gdk_1window_1end_1draw_1frame_FUNC);
-	return rc;
-}
-#endif
-
-#ifndef NO__1gdk_1window_1ensure_1native
-JNIEXPORT jboolean JNICALL GDK_NATIVE(_1gdk_1window_1ensure_1native)
-	(JNIEnv *env, jclass that, jlong arg0)
-{
-	jboolean rc = 0;
-	GDK_NATIVE_ENTER(env, that, _1gdk_1window_1ensure_1native_FUNC);
-	rc = (jboolean)gdk_window_ensure_native((GdkWindow *)arg0);
-	GDK_NATIVE_EXIT(env, that, _1gdk_1window_1ensure_1native_FUNC);
-	return rc;
 }
 #endif
 
@@ -8409,6 +8337,16 @@ JNIEXPORT void JNICALL GTK_NATIVE(_1gtk_1print_1unix_1dialog_1set_1embed_1page_1
 }
 #endif
 
+#ifndef NO__1gtk_1print_1unix_1dialog_1set_1has_1selection
+JNIEXPORT void JNICALL GTK_NATIVE(_1gtk_1print_1unix_1dialog_1set_1has_1selection)
+	(JNIEnv *env, jclass that, jlong arg0, jboolean arg1)
+{
+	GTK_NATIVE_ENTER(env, that, _1gtk_1print_1unix_1dialog_1set_1has_1selection_FUNC);
+	gtk_print_unix_dialog_set_has_selection((GtkPrintUnixDialog *)arg0, arg1);
+	GTK_NATIVE_EXIT(env, that, _1gtk_1print_1unix_1dialog_1set_1has_1selection_FUNC);
+}
+#endif
+
 #ifndef NO__1gtk_1print_1unix_1dialog_1set_1manual_1capabilities
 JNIEXPORT void JNICALL GTK_NATIVE(_1gtk_1print_1unix_1dialog_1set_1manual_1capabilities)
 	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
@@ -8436,6 +8374,16 @@ JNIEXPORT void JNICALL GTK_NATIVE(_1gtk_1print_1unix_1dialog_1set_1settings)
 	GTK_NATIVE_ENTER(env, that, _1gtk_1print_1unix_1dialog_1set_1settings_FUNC);
 	gtk_print_unix_dialog_set_settings((GtkPrintUnixDialog *)arg0, (GtkPrintSettings *)arg1);
 	GTK_NATIVE_EXIT(env, that, _1gtk_1print_1unix_1dialog_1set_1settings_FUNC);
+}
+#endif
+
+#ifndef NO__1gtk_1print_1unix_1dialog_1set_1support_1selection
+JNIEXPORT void JNICALL GTK_NATIVE(_1gtk_1print_1unix_1dialog_1set_1support_1selection)
+	(JNIEnv *env, jclass that, jlong arg0, jboolean arg1)
+{
+	GTK_NATIVE_ENTER(env, that, _1gtk_1print_1unix_1dialog_1set_1support_1selection_FUNC);
+	gtk_print_unix_dialog_set_support_selection((GtkPrintUnixDialog *)arg0, arg1);
+	GTK_NATIVE_EXIT(env, that, _1gtk_1print_1unix_1dialog_1set_1support_1selection_FUNC);
 }
 #endif
 
@@ -12347,6 +12295,18 @@ JNIEXPORT jboolean JNICALL GTK_NATIVE(_1gtk_1widget_1get_1realized)
 	GTK_NATIVE_ENTER(env, that, _1gtk_1widget_1get_1realized_FUNC);
 	rc = (jboolean)gtk_widget_get_realized((GtkWidget *)arg0);
 	GTK_NATIVE_EXIT(env, that, _1gtk_1widget_1get_1realized_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO__1gtk_1widget_1get_1scale_1factor
+JNIEXPORT jint JNICALL GTK_NATIVE(_1gtk_1widget_1get_1scale_1factor)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jint rc = 0;
+	GTK_NATIVE_ENTER(env, that, _1gtk_1widget_1get_1scale_1factor_FUNC);
+	rc = (jint)gtk_widget_get_scale_factor((GtkWidget *)arg0);
+	GTK_NATIVE_EXIT(env, that, _1gtk_1widget_1get_1scale_1factor_FUNC);
 	return rc;
 }
 #endif

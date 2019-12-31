@@ -2671,16 +2671,11 @@ void init(Drawable drawable, GCData data, long gdkGC) {
 void initCairo() {
 	long cairo = data.cairo;
 	if (cairo != 0) return;
-	if (GTK.GTK_VERSION >= 	OS.VERSION(3, 22, 0)) {
-		long surface;
-		if (GTK.GTK4) {
-			surface = Cairo.cairo_image_surface_create(Cairo.CAIRO_FORMAT_A8, data.width, data.height);
-		} else {
-			surface = GDK.gdk_window_create_similar_surface(data.drawable, Cairo.CAIRO_CONTENT_COLOR_ALPHA, data.width, data.height);
-		}
+	if (GTK.GTK4) {
+		long surface = Cairo.cairo_image_surface_create(Cairo.CAIRO_FORMAT_A8, data.width, data.height);
 		data.cairo = cairo = Cairo.cairo_create(surface);
 	} else {
-		data.cairo = cairo = GDK.gdk_cairo_create(data.drawable);
+		data.cairo = cairo = Cairo.cairo_create(data.drawable);
 	}
 	if (cairo == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 	data.disposeCairo = true;
@@ -3842,21 +3837,13 @@ public void setTransform(Transform transform) {
  * and the destination, and if the argument is <code>false</code>,
  * puts the receiver in a drawing mode where the destination color
  * is replaced with the source color value.
- * <p>
- * Note that this mode in fundamentally unsupportable on certain
- * platforms. Clients that want their
- * code to run on all platforms need to avoid this method.
- * </p>
  *
  * @param xor if <code>true</code>, then <em>xor</em> mode is used, otherwise <em>source copy</em> mode is used
  *
  * @exception SWTException <ul>
  *    <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
  * </ul>
- *
- * @deprecated this functionality is not supported on some platforms
  */
-@Deprecated
 public void setXORMode(boolean xor) {
 	if (handle == 0) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
 	Cairo.cairo_set_operator(handle, xor ? Cairo.CAIRO_OPERATOR_DIFFERENCE : Cairo.CAIRO_OPERATOR_OVER);

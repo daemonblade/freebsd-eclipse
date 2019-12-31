@@ -48,6 +48,7 @@ public class Link extends Control {
 	int linkForeground = -1;
 	String [] ids;
 	char [] mnemonics;
+	int nextFocusItem = -1;
 	static final long LinkProc;
 	static final TCHAR LinkClass = new TCHAR (0, OS.WC_LINK, true);
 	static {
@@ -275,6 +276,7 @@ boolean mnemonicHit (char key) {
 	char uckey = Character.toUpperCase (key);
 	for (int i = 0; i < mnemonics.length; i++) {
 		if (uckey == mnemonics[i]) {
+			nextFocusItem = i;
 			return setFocus () && setFocusItem (i);
 		}
 	}
@@ -447,23 +449,36 @@ public void removeSelectionListener (SelectionListener listener) {
 }
 
 boolean setFocusItem (int index) {
-	int bits = OS.GetWindowLong (handle, OS.GWL_STYLE);
+	int bits = 0;
+	if (index > 0) {
+		bits = OS.GetWindowLong (handle, OS.GWL_STYLE);
+	}
 	LITEM item = new LITEM ();
 	item.mask = OS.LIF_ITEMINDEX | OS.LIF_STATE;
 	item.stateMask = OS.LIS_FOCUSED;
-	while (item.iLink < ids.length) {
-		if (item.iLink != index) OS.SendMessage (handle, OS.LM_SETITEM, 0, item);
-		item.iLink++;
+	int activeIndex = getFocusItem ();
+	if (activeIndex == index) return true;
+	if (activeIndex >= 0) {
+		/* Feature in Windows. Unfocus any element unfocus all elements.
+		 * For example if item 2 is focused and we set unfocus (state = 0)
+		 * for item 0 Windows will remove the focus state for item 2
+		 * (getFocusItem() == -1) but fail to remove the focus border around
+		 * the link. The fix is to only unfocus the element which has focus.
+		 */
+		item.iLink = activeIndex;
+		OS.SendMessage (handle, OS.LM_SETITEM, 0, item);
 	}
 	item.iLink = index;
 	item.state = OS.LIS_FOCUSED;
 	long result = OS.SendMessage (handle, OS.LM_SETITEM, 0, item);
 
+	if (index > 0) {
 	/* Feature in Windows. For some reason, setting the focus to
 	 * any item but first causes the control to clear the WS_TABSTOP
 	 * bit. The fix is always to reset the bit.
 	 */
 	OS.SetWindowLong (handle, OS.GWL_STYLE, bits);
+	}
 	return result != 0;
 }
 
@@ -588,7 +603,7 @@ LRESULT WM_CHAR (long wParam, long lParam) {
 	LRESULT result = super.WM_CHAR (wParam, lParam);
 	if (result != null) return result;
 	switch ((int)wParam) {
-		case ' ':
+		case SWT.SPACE:
 		case SWT.CR:
 		case SWT.TAB:
 			/*
@@ -639,10 +654,8 @@ LRESULT WM_KEYDOWN (long wParam, long lParam) {
 
 @Override
 LRESULT WM_KILLFOCUS (long wParam, long lParam) {
-	int focusItem = getFocusItem();
-	LRESULT result = super.WM_KILLFOCUS(wParam, lParam);
-	if (focusItem != -1) setFocusItem(focusItem);
-	return result;
+	nextFocusItem = getFocusItem();
+	return super.WM_KILLFOCUS(wParam, lParam);
 }
 
 @Override
@@ -677,8 +690,12 @@ LRESULT WM_SETFOCUS (long wParam, long lParam) {
 	*/
 	if (ids.length > 1) {
 		if (OS.GetKeyState (OS.VK_TAB) < 0) {
-			boolean shift = OS.GetKeyState (OS.VK_SHIFT) < 0;
-			setFocusItem(shift ? ids.length - 1 : 0);
+			if (OS.GetKeyState (OS.VK_SHIFT) < 0) {
+				// reverse tab; focus on last item
+				setFocusItem(ids.length - 1);
+			}
+		} else if (nextFocusItem > 0) {
+			setFocusItem(nextFocusItem);
 		}
 	}
 	return super.WM_SETFOCUS (wParam, lParam);

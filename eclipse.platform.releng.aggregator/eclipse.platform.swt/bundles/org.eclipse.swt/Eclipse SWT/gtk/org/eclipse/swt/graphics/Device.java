@@ -473,21 +473,10 @@ public FontData[] getFontList (String faceName, boolean scalable) {
 }
 
 Point getScreenDPI () {
-	int dpi = 96; //default value
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
-		long display = GDK.gdk_display_get_default();
-		long pMonitor = GDK.gdk_display_get_primary_monitor(display);
-		if (pMonitor == 0) {
-			pMonitor = GDK.gdk_display_get_monitor(display, 0);
-		}
-		int widthMM = GDK.gdk_monitor_get_width_mm(pMonitor);
-		if (widthMM == 0) return new Point (dpi, dpi);
-		int scaleFactor = GDK.gdk_monitor_get_scale_factor(pMonitor);
-		GdkRectangle monitorGeometry = new GdkRectangle ();
-		GDK.gdk_monitor_get_geometry(pMonitor, monitorGeometry);
-		dpi = Compatibility.round (254 * monitorGeometry.width * scaleFactor, widthMM * 10);
-	}
-	return new Point (dpi, dpi);
+	long screen = GDK.gdk_screen_get_default();
+	int dpi = (int) GDK.gdk_screen_get_resolution(screen);
+	Point ptDPI = dpi == -1 ? new Point (96, 96) : new Point (dpi, dpi);
+	return ptDPI;
 }
 
 /**

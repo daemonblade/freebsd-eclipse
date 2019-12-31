@@ -128,24 +128,26 @@ public class Display extends Device {
 	int [] max_priority = new int [1], timeout = new int [1];
 	Callback eventCallback;
 	long eventProc, windowProc2, windowProc3, windowProc4, windowProc5, windowProc6;
-	long snapshotDrawProc;
+	long snapshotDrawProc, changeValueProc;
 	long keyPressReleaseProc, focusProc, enterMotionScrollProc, leaveProc;
 	long gesturePressReleaseProc;
-	long notifyStateProc;
+	long notifyProc;
 	Callback windowCallback2, windowCallback3, windowCallback4, windowCallback5, windowCallback6;
-	Callback snapshotDraw;
+	Callback snapshotDraw, changeValue;
 	Callback keyPressReleaseCallback, focusCallback, enterMotionScrollCallback, leaveCallback;
 	Callback gesturePressReleaseCallback;
-	Callback notifyStateCallback;
+	Callback notifyCallback;
 	EventTable eventTable, filterTable;
 	static String APP_NAME = "SWT"; //$NON-NLS-1$
 	static String APP_VERSION = ""; //$NON-NLS-1$
 	static final String DISPATCH_EVENT_KEY = "org.eclipse.swt.internal.gtk.dispatchEvent"; //$NON-NLS-1$
 	static final String ADD_WIDGET_KEY = "org.eclipse.swt.internal.addWidget"; //$NON-NLS-1$
+	static final String EXTERNAL_EVENT_LOOP_KEY = "org.eclipse.swt.internal.gtk.externalEventLoop"; //$NON-NLS-1$
 	long [] closures, closuresProc;
 	int [] closuresCount;
 	int [] signalIds;
 	long shellMapProcClosure;
+	boolean externalEventLoop; // events are dispatched outside SWT, e.g. when system dialog is open
 
 	/* Widget Table */
 	int [] indexTable;
@@ -153,6 +155,7 @@ public class Display extends Device {
 	long lastHandle;
 	Widget lastWidget;
 	Widget [] widgetTable;
+	Shell firstShell;
 	final static int GROW_SIZE = 1024;
 	static final int SWT_OBJECT_INDEX;
 	static final int SWT_OBJECT_INDEX1;
@@ -322,6 +325,7 @@ public class Display extends Device {
 	GdkRGBA COLOR_TITLE_FOREGROUND_RGBA, COLOR_TITLE_BACKGROUND_RGBA, COLOR_TITLE_BACKGROUND_GRADIENT_RGBA;
 	GdkRGBA COLOR_TITLE_INACTIVE_FOREGROUND_RGBA, COLOR_TITLE_INACTIVE_BACKGROUND_RGBA, COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT_RGBA;
 	GdkRGBA COLOR_WIDGET_DISABLED_FOREGROUND_RGBA, COLOR_TEXT_DISABLED_BACKGROUND_RGBA;
+	GdkRGBA COLOR_TOGGLE_BUTTON_FOREGROUND_RGBA;
 
 	/* Initialize color list */
 	ArrayList<String> colorList;
@@ -335,6 +339,8 @@ public class Display extends Device {
 	static String themeName;
 	/** True if the current theme is dark. This includes the theme set in GTK_THEME. */
 	static boolean themeDark;
+
+	private final static Pattern colorPattern = Pattern.compile("[^-]color: (rgba?\\((?:\\d+(?:,\\s?)?){3,4}\\))");
 
 	/* Popup Menus */
 	Menu [] popups;
@@ -2116,8 +2122,6 @@ String gtk_css_provider_to_string (long provider) {
  */
 GdkRGBA gtk_css_parse_foreground (String css, String precise) {
 	if (css.isEmpty()) return COLOR_WIDGET_FOREGROUND_RGBA;
-	String shortOutput;
-	int startIndex;
 	GdkRGBA rgba = new GdkRGBA ();
 	String searched = "";
 	/*
@@ -2146,16 +2150,10 @@ GdkRGBA gtk_css_parse_foreground (String css, String precise) {
 	 * properties and filter out things like background-color, border-color,
 	 * etc.
 	 */
-	String pattern = "[^-]color: rgba?\\((\\d+(,\\s?)?){3,4}\\)";
-	Pattern r = Pattern.compile(pattern);
-	Matcher m = r.matcher(searched);
+	Matcher m = colorPattern.matcher(searched);
 	if (m.find()) {
-		String match = m.group(0);
-		if (match.contains("color:")) {
-			startIndex = match.indexOf("color:");
-			shortOutput = match.substring(startIndex + 7);
-			rgba = gtk_css_property_to_rgba(shortOutput);
-		}
+		String shortOutput = m.group(1);
+		rgba = gtk_css_property_to_rgba(shortOutput);
 	} else {
 		return COLOR_WIDGET_FOREGROUND_RGBA;
 	}
@@ -3093,6 +3091,7 @@ void initializeSystemColors () {
 	initializeSystemColorsTitle(shellContext);
 	initializeSystemColorsLink();
 	initializeSystemColorsTooltip();
+	initializeSystemColorsToggleButton();
 	initializeSystemColorsDisabled();
 
 	COLOR_TITLE_FOREGROUND_RGBA = COLOR_LIST_SELECTION_TEXT_RGBA;
@@ -3190,15 +3189,35 @@ void initializeSystemColorsTooltip() {
 	OS.g_object_unref(tooltip);
 }
 
+void initializeSystemColorsToggleButton() {
+	// GtkCheckButton and GtkRadioButton use the same colors
+	long button = GTK.gtk_check_button_new();
+	OS.g_object_ref_sink(button);
+
+	long styleContextButton = GTK.gtk_widget_get_style_context(button);
+	COLOR_TOGGLE_BUTTON_FOREGROUND_RGBA = styleContextGetColor(styleContextButton, GTK.GTK_STATE_FLAG_NORMAL);
+
+	OS.g_object_unref(button);
+}
+
 void initializeSystemColorsDisabled() {
+	/*
+	 * 'Yaru' theme on Ubuntu 18.10 defines background color for
+	 * 'entry:backdrop:disabled' as 'transparent', so parent window's color
+	 * will be used. However, SWT doesn't quite expect transparent colors.
+	 * The workaround is to use a temporary window as parent. GTK will blend
+	 * colors and return non-transparent result.
+	 */
+	long window = GTK.gtk_window_new (GTK.GTK_WINDOW_TOPLEVEL);
 	long entry = GTK.gtk_entry_new ();
-	OS.g_object_ref_sink(entry);
+	GTK.gtk_container_add (window, entry);
+
 	long context = GTK.gtk_widget_get_style_context (entry);
 
 	COLOR_WIDGET_DISABLED_FOREGROUND_RGBA = styleContextGetColor (context, GTK.GTK_STATE_FLAG_INSENSITIVE);
 	COLOR_TEXT_DISABLED_BACKGROUND_RGBA = styleContextEstimateBackgroundColor (context, GTK.GTK_STATE_FLAG_INSENSITIVE);
 
-	OS.g_object_unref(entry);
+	GTK.gtk_widget_destroy (window);
 }
 
 GdkRGBA styleContextGetColor(long context, int flag) {
@@ -3443,14 +3462,15 @@ void initializeCallbacks () {
 		if (leaveProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 		closuresProc [Widget.LEAVE] = leaveProc;
-
-		notifyStateCallback = new Callback(this, "notifyStateProc", long.class, new Type[] {
-				long.class, long.class, long.class}); //$NON-NLS-1$
-		notifyStateProc = notifyStateCallback.getAddress();
-		if (notifyStateProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
-
-		closuresProc [Widget.NOTIFY_STATE] = notifyStateProc;
 	}
+
+	notifyCallback = new Callback(this, "notifyProc", long.class, new Type[] {
+			long.class, long.class, long.class}); //$NON-NLS-1$
+	notifyProc = notifyCallback.getAddress();
+	if (notifyProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
+
+	closuresProc [Widget.NOTIFY_STATE] = notifyProc;
+	closuresProc [Widget.DPI_CHANGED] = notifyProc;
 
 	closuresProc [Widget.ACTIVATE] = windowProc2;
 	closuresProc [Widget.ACTIVATE_INVERSE] = windowProc2;
@@ -3546,7 +3566,15 @@ void initializeCallbacks () {
 	windowProc5 = windowCallback5.getAddress ();
 	if (windowProc5 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
-	closuresProc [Widget.CHANGE_VALUE] = windowProc5;
+	/*
+	 * The "change-value" signal has a double parameter, so this
+	 * needs to be handled separately. See bug
+	 */
+	changeValue = new Callback (this, "changeValue", boolean.class, new Type [] {long.class, int.class, double.class, long.class}); //$NON-NLS-1$
+	changeValueProc = changeValue.getAddress ();
+	if (changeValueProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
+	closuresProc [Widget.CHANGE_VALUE] = changeValueProc;
+
 	closuresProc [Widget.EXPAND_COLLAPSE_CURSOR_ROW] = windowProc5;
 	closuresProc [Widget.INSERT_TEXT] = windowProc5;
 	closuresProc [Widget.TEXT_BUFFER_INSERT_TEXT] = windowProc5;
@@ -3796,12 +3824,7 @@ public long internal_new_GC (GCData data) {
 		gc = Cairo.cairo_create(surface);
 	} else {
 		root = GDK.gdk_get_default_root_window();
-		if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
-			long surface = GDK.gdk_window_create_similar_surface(root, Cairo.CAIRO_CONTENT_COLOR_ALPHA, data.width, data.height);
-			gc = Cairo.cairo_create(surface);
-		} else {
-			gc = GDK.gdk_cairo_create(root);
-		}
+		gc = GDK.gdk_cairo_create(root);
 	}
 	if (gc == 0) error (SWT.ERROR_NO_HANDLES);
 	//TODO how gdk_gc_set_subwindow is done in cairo?
@@ -4491,20 +4514,40 @@ void releaseDisplay () {
 	}
 	windowProc2 = windowProc3 = windowProc4 = windowProc5 = windowProc6 = 0;
 
+	if (changeValue != null) {
+		changeValue.dispose(); changeValue = null;
+	}
+	changeValueProc = 0;
+
 	if (GTK.GTK4) {
 		keyPressReleaseCallback.dispose();
+		keyPressReleaseCallback = null;
 		keyPressReleaseProc = 0;
+
 		focusCallback.dispose();
+		focusCallback = null;
 		focusProc = 0;
+
 		enterMotionScrollCallback.dispose();
+		enterMotionScrollCallback = null;
 		enterMotionScrollProc = 0;
+
 		leaveCallback.dispose();
+		leaveCallback = null;
 		leaveProc = 0;
+
 		gesturePressReleaseCallback.dispose();
+		gesturePressReleaseCallback = null;
 		gesturePressReleaseProc = 0;
-		notifyStateCallback.dispose();
-		notifyStateProc = 0;
+
+		snapshotDraw.dispose();
+		snapshotDraw = null;
+		snapshotDrawProc = 0;
 	}
+
+	notifyCallback.dispose();
+	notifyCallback = null;
+	notifyProc = 0;
 
 	/* Dispose checkIfEvent callback */
 	checkIfEventCallback.dispose(); checkIfEventCallback = null;
@@ -4611,6 +4654,7 @@ void releaseDisplay () {
 	COLOR_TITLE_INACTIVE_FOREGROUND_RGBA = COLOR_TITLE_INACTIVE_BACKGROUND_RGBA = COLOR_TITLE_INACTIVE_BACKGROUND_GRADIENT_RGBA =
 	COLOR_INFO_BACKGROUND_RGBA = COLOR_INFO_FOREGROUND_RGBA = COLOR_LINK_FOREGROUND_RGBA = COLOR_WIDGET_DISABLED_FOREGROUND_RGBA =
 	COLOR_TEXT_DISABLED_BACKGROUND_RGBA = null;
+	COLOR_TOGGLE_BUTTON_FOREGROUND_RGBA = null;
 
 	/* Dispose the event callback */
 	GDK.gdk_event_handler_set (0, 0, 0);
@@ -4826,6 +4870,15 @@ String debugInfoForIndex(long index) {
 	}
 	s += dumpWidgetTableInfo();
 	return s;
+}
+
+void dpiChanged() {
+	this.scaleFactor = getDeviceZoom ();
+	DPIUtil.setDeviceZoom (scaleFactor);
+	Shell[] shells = getShells();
+	for (int i = 0; i < shells.length; i++) {
+		shells[i].layout(true, true);
+	}
 }
 
 String dumpWidgetTableInfo() {
@@ -5135,6 +5188,11 @@ public void setData (String key, Object value) {
 	}
 	if (key.equals (REMOVE_IDLE_PROC_KEY)) {
 		removeIdleProc ();
+		return;
+	}
+	if (key.equals (EXTERNAL_EVENT_LOOP_KEY)) {
+		Boolean data = (Boolean) value;
+		externalEventLoop = data != null && data.booleanValue ();
 		return;
 	}
 
@@ -5824,10 +5882,27 @@ long leaveProc (long controller, long user_data) {
 	return widget.leaveProc(handle, user_data);
 }
 
-long notifyStateProc (long gdk_handle, long param_spec, long user_data) {
-	Widget widget = getWidget (user_data);
-	if (widget == null) return 0;
-	return widget.notifyStateProc(gdk_handle, user_data);
+long notifyProc (long object, long param_spec, long user_data) {
+	Widget widget = getWidget (object);
+	if (widget == null) {
+		widget = getWidget (user_data);
+		if (widget == null) {
+			return 0;
+		} else {
+			/*
+			 * There is a corner case where the connected handle is actually
+			 * a GdkSurface.
+			 */
+			return widget.notifyProc(object, param_spec, Widget.NOTIFY_STATE);
+		}
+	}
+	return widget.notifyProc(object, param_spec, user_data);
+}
+
+boolean changeValue (long handle, int scroll, double value, long user_data) {
+	Widget widget = getWidget (handle);
+	if (widget == null) return false;
+	return widget.gtk_change_value(handle, scroll, value, user_data);
 }
 
 long windowProc (long handle, long user_data) {

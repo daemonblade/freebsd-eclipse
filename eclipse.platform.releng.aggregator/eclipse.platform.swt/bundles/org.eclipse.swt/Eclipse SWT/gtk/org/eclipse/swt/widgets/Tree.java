@@ -89,8 +89,6 @@ public class Tree extends Composite {
 	TreeItem currentItem;
 	ImageList imageList, headerImageList;
 	boolean firstCustomDraw;
-	/** True iff a draw event has never been processed by this Tree */
-	boolean firstDraw = true;
 	/** True iff computeSize has never been called on this Tree */
 	boolean firstCompute = true;
 	boolean modelChanged;
@@ -341,15 +339,6 @@ boolean checkData (TreeItem item) {
 		if (isDisposed ()) return false;
 		OS.g_signal_handlers_unblock_matched (modelHandle, mask, signal_id, 0, 0, 0, handle);
 		if (item.isDisposed ()) return false;
-	}
-	/*
-	 * A commit in GTK3.18 caused bug 531048 due to internal changes in GtkStyleContext
-	 * invalidation. The fix is to invalidate the GtkStyleContext manually when changing
-	 * SWT.VIRTUAL Table content. Without it, the internal caching mechanism causes
-	 * the wrong cells to be rendered.
-	 */
-	if (!GTK.GTK4 && GTK.GTK_VERSION >= OS.VERSION(3, 18, 0)) {
-		GTK.gtk_style_context_invalidate(GTK.gtk_widget_get_style_context(handle));
 	}
 	return true;
 }
@@ -2414,16 +2403,6 @@ void drawInheritedBackground (long cairo) {
 long gtk_draw (long widget, long cairo) {
 	boolean haveBoundsChanged = boundsChangedSinceLastDraw;
 	boundsChangedSinceLastDraw = false;
-	/*
-	 * Feature in GTK: a drawing model change in GTK3.20 means that headers are not drawn
-	 * if the Tree has no items. In such cases, the fix is to ensure that the Tree's GdkWindow
-	 * is a native one. Only X11 is affected by this issue, see bug 541427 for more info.
-	 */
-	if (firstDraw && OS.isX11() && getItemCount() == 0 && GTK.GTK_VERSION >= OS.VERSION(3, 20, 0)) {
-		long binWindow = GTK.gtk_tree_view_get_bin_window(handle);
-		GDK.gdk_window_ensure_native(binWindow);
-	}
-	firstDraw = false;
 	if ((state & OBSCURED) != 0) return 0;
 	/*
 	 * Bug 537960: JFace tree viewers miss a repaint when resized by a SashForm
@@ -4120,22 +4099,7 @@ void showItem (long path, boolean scroll) {
 		GTK.gtk_tree_path_free (tempPath);
 	}
 	if (scroll) {
-		GdkRectangle cellRect = new GdkRectangle ();
-		GTK.gtk_widget_realize (handle);
-		GTK.gtk_tree_view_get_cell_area (handle, path, 0, cellRect);
-		boolean isHidden = cellRect.y == 0 && cellRect.height == 0;
-		int [] tx = new int [1], ty = new int [1];
-		GTK.gtk_tree_view_convert_bin_window_to_tree_coords(handle, cellRect.x, cellRect.y, tx, ty);
-		if (!isHidden) {
-			GdkRectangle visibleRect = new GdkRectangle ();
-			GTK.gtk_tree_view_get_visible_rect (handle, visibleRect);
-			if (ty [0] < visibleRect.y || ty [0] + cellRect.height > visibleRect.y + visibleRect.height) {
-				isHidden = true;
-			}
-		}
-		if (isHidden) {
-			GTK.gtk_tree_view_scroll_to_cell (handle, path, 0, depth != 1, 0.5f, 0.0f);
-		}
+		GTK.gtk_tree_view_scroll_to_cell (handle, path, 0, depth != 1, 0.5f, 0.0f);
 	}
 }
 

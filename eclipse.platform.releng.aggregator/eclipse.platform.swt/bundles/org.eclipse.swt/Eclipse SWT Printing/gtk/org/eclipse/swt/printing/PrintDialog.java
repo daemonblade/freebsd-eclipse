@@ -299,8 +299,8 @@ public PrinterData open() {
 	}
 	handle = GTK.gtk_print_unix_dialog_new(titleBytes, topHandle);
 
-	//TODO: Not currently implemented. May need new API. For now, disable 'Current' in the dialog. (see gtk bug 344519)
-	GTK.gtk_print_unix_dialog_set_current_page(handle, -1);
+	GTK.gtk_print_unix_dialog_set_support_selection(handle, true);
+	GTK.gtk_print_unix_dialog_set_has_selection(handle, true);
 
 	GTK.gtk_print_unix_dialog_set_manual_capabilities(handle,
 		GTK.GTK_PRINT_CAPABILITY_COLLATE | GTK.GTK_PRINT_CAPABILITY_COPIES | GTK.GTK_PRINT_CAPABILITY_PAGE_SET);
@@ -339,10 +339,6 @@ public PrinterData open() {
 			pageRange[0] = printerData.startPage - 1;
 			pageRange[1] = printerData.endPage - 1;
 			GTK.gtk_print_settings_set_page_ranges(settings, pageRange, 1);
-			break;
-		case PrinterData.SELECTION:
-			//TODO: Not correctly implemented. May need new API. For now, set to ALL. (see gtk bug 344519)
-			GTK.gtk_print_settings_set_print_pages(settings, GTK.GTK_PRINT_PAGES_ALL);
 			break;
 	}
 	if ((printerData.printToFile || Printer.GTK_FILE_BACKEND.equals(printerData.driver)) && printerData.fileName != null) {
@@ -395,6 +391,8 @@ public PrinterData open() {
 		oldModal = display.getData (GET_MODAL_DIALOG);
 		display.setData (SET_MODAL_DIALOG, this);
 	}
+	String key = "org.eclipse.swt.internal.gtk.externalEventLoop"; //$NON-NLS-1$
+	display.setData (key, Boolean.TRUE);
 	display.sendPreExternalEventDispatchEvent ();
 	int response = GTK.gtk_dialog_run (handle);
 	/*
@@ -404,6 +402,7 @@ public PrinterData open() {
 	* thread leaves the GTK lock acquired by the function above.
 	*/
 	if (!GTK.GTK4) GDK.gdk_threads_leave();
+	display.setData (key, Boolean.FALSE);
 	display.sendPostExternalEventDispatchEvent ();
 	if (GTK.gtk_window_get_modal (handle)) {
 		display.setData (SET_MODAL_DIALOG, oldModal);
@@ -440,9 +439,11 @@ public PrinterData open() {
 					data.endPage = max == 0 ? 1 : max;
 					break;
 				case GTK.GTK_PRINT_PAGES_CURRENT:
-					//TODO: Disabled in dialog (see above). This code will not run. (see gtk bug 344519)
 					data.scope = PrinterData.SELECTION;
 					data.startPage = data.endPage = GTK.gtk_print_unix_dialog_get_current_page(handle);
+					break;
+				case GTK.GTK_PRINT_PAGES_SELECTION:
+					data.scope = PrinterData.SELECTION;
 					break;
 			}
 

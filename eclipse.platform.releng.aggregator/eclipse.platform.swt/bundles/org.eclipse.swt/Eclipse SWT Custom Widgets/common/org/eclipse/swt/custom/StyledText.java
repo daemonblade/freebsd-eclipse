@@ -131,6 +131,8 @@ public class StyledText extends Canvas {
 	boolean editable = true;
 	boolean wordWrap = false;			// text is wrapped automatically
 	boolean visualWrap = false;		// process line breaks inside logical lines (inserted by BidiSegmentEvent)
+	boolean hasStyleWithVariableHeight = false;
+	boolean hasVerticalIndent = false;
 	boolean doubleClickEnabled = true;	// see getDoubleClickEnabled
 	boolean overwrite = false;			// insert/overwrite edit mode
 	int textLimit = -1;					// limits the number of characters the user can type in the widget. Unlimited by default.
@@ -163,7 +165,6 @@ public class StyledText extends Canvas {
 	int caretWidth = 0;
 	Caret defaultCaret = null;
 	boolean updateCaretDirection = true;
-	boolean fixedLineHeight;
 	boolean dragDetect = true;
 	IME ime;
 	Cursor cursor;
@@ -231,7 +232,7 @@ public class StyledText extends Canvas {
 	 * Creates an instance of <code>Printing</code>.
 	 * Copies the widget content and rendering data that needs
 	 * to be requested from listeners.
-	 * </p>
+	 *
 	 * @param parent StyledText widget to print.
 	 * @param printer printer device to print on.
 	 * @param printOptions print options
@@ -262,7 +263,7 @@ public class StyledText extends Canvas {
 	}
 	/**
 	 * Caches all line data that needs to be requested from a listener.
-	 * </p>
+	 *
 	 * @param printerContent <code>StyledTextContent</code> to request
 	 * 	line data for.
 	 */
@@ -377,7 +378,7 @@ public class StyledText extends Canvas {
 	}
 	/**
 	 * Copies the text of the specified <code>StyledTextContent</code>.
-	 * </p>
+	 *
 	 * @param original the <code>StyledTextContent</code> to copy.
 	 */
 	StyledTextContent copyContent(StyledTextContent original) {
@@ -1038,7 +1039,7 @@ public class StyledText extends Canvas {
 	 * partial lines, specify the start and length of the desired segment
 	 * during object creation.
 	 * <p>
-	 * </b>NOTE:</b> <code>toString()</code> is guaranteed to return a valid string only after close()
+	 * <b>NOTE:</b> <code>toString()</code> is guaranteed to return a valid string only after close()
 	 * has been called.
 	 * </p>
 	 */
@@ -1112,7 +1113,7 @@ public class StyledText extends Canvas {
 	/**
 	 * Inserts the given string to the data at the specified offset.
 	 * <p>
-	 * Do nothing if "offset" is < 0 or > getCharCount()
+	 * Do nothing if "offset" is &lt; 0 or &gt; getCharCount()
 	 * </p>
 	 *
 	 * @param string text to insert
@@ -1220,7 +1221,6 @@ public StyledText(Composite parent, int style) {
 	super.setForeground(getForeground());
 	super.setDragDetect(false);
 	Display display = getDisplay();
-	fixedLineHeight = true;
 	if ((style & SWT.READ_ONLY) != 0) {
 		setEditable(false);
 	}
@@ -3350,7 +3350,7 @@ void doSelectionLineUp() {
  * relative to the top line remains the same. The exception is the end
  * of the text where a full page scroll is not possible. In this case
  * the caret is moved after the last character.
- * <p></p>
+ * </p><p>
  * Adjusts the selection according to the caret change. This can either add
  * to or subtract from the old selection, depending on the previous selection
  * direction.
@@ -4563,7 +4563,7 @@ int getOffsetAtPoint(int x, int y, int lineIndex, int[] alignment) {
 			offsetInLine += trailing[0];
 			if (alignment != null) {
 				int trailingLevel = layout.getLevel(offsetInLine) & 0x1;
-				if ((level ^ trailingLevel) != 0) {
+				if (level != trailingLevel) {
 					alignment[0] = PREVIOUS_OFFSET_TRAILING;
 				} else {
 					alignment[0] = OFFSET_LEADING;
@@ -4929,7 +4929,6 @@ StyledTextEvent getBidiSegments(int lineOffset, String line) {
 		for (int i= 0; i < segmentsChars.length; i++) {
 			if (segmentsChars[i] == '\n' || segmentsChars[i] == '\r') {
 				visualWrap = true;
-				setVariableLineHeight();
 				break;
 			}
 		}
@@ -6062,10 +6061,10 @@ void handleKey(Event event) {
 			// insert a character in the text in this instance). Don't
 			// ignore CTRL+ALT combinations since that is the Alt Gr
 			// key on some keyboards.  See bug 20953.
-			ignore = (event.stateMask ^ SWT.ALT) == 0 ||
-					(event.stateMask ^ SWT.CTRL) == 0 ||
-					(event.stateMask ^ (SWT.ALT | SWT.SHIFT)) == 0 ||
-					(event.stateMask ^ (SWT.CTRL | SWT.SHIFT)) == 0;
+			ignore = event.stateMask == SWT.ALT ||
+					event.stateMask == SWT.CTRL ||
+					event.stateMask == (SWT.ALT | SWT.SHIFT) ||
+					event.stateMask == (SWT.CTRL | SWT.SHIFT);
 		}
 		// -ignore anything below SPACE except for line delimiter keys and tab.
 		// -ignore DEL
@@ -7325,7 +7324,7 @@ boolean isBidiCaret() {
 	return BidiUtil.isBidiPlatform();
 }
 boolean isFixedLineHeight() {
-	return fixedLineHeight;
+	return !isWordWrap() && lineSpacing == 0 && renderer.lineSpacingProvider == null && !hasStyleWithVariableHeight && !hasVerticalIndent;
 }
 /**
  * Returns whether the given offset is inside a multi byte line delimiter.
@@ -8145,8 +8144,8 @@ public void scroll(int destX, int destY, int x, int y, int width, int height, bo
 /**
  * Scrolls the widget horizontally.
  *
- * @param pixels number of SWT logical points to scroll, > 0 = scroll left,
- * 	< 0 scroll right
+ * @param pixels number of SWT logical points to scroll, &gt; 0 = scroll left,
+ * 	&lt; 0 scroll right
  * @param adjustScrollBar
  * 	true= the scroll thumb will be moved to reflect the new scroll offset.
  * 	false = the scroll thumb will not be moved
@@ -8856,7 +8855,7 @@ void setCaretOffset(int offset, int alignment) {
  * @param start start index of the text
  * @param length length of text to place in clipboard
  *
- * @exception SWTError, see Clipboard.setContents
+ * @exception SWTError
  * @see org.eclipse.swt.dnd.Clipboard#setContents
  */
 void setClipboardContent(int start, int length, int clipboardType) throws SWTError {
@@ -8956,19 +8955,23 @@ public void setEditable(boolean editable) {
 	this.editable = editable;
 }
 @Override
-public void setEnabled (boolean enabled) {
+public void setEnabled(boolean enabled) {
 	super.setEnabled(enabled);
 	Display display = getDisplay();
 	this.enabled = enabled;
 	this.insideSetEnableCall = true;
-	if (enabled) {
-		if (!customBackground) setBackground(display.getSystemColor(SWT.COLOR_LIST_BACKGROUND));
-		if (!customForeground) setForeground(display.getSystemColor(SWT.COLOR_LIST_FOREGROUND));
-	} else {
-		if (!customBackground) setBackground(display.getSystemColor(SWT.COLOR_TEXT_DISABLED_BACKGROUND));
-		if (!customForeground) setForeground(display.getSystemColor(SWT.COLOR_WIDGET_DISABLED_FOREGROUND));
+	try {
+		if (enabled) {
+			if (!customBackground) setBackground(display.getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+			if (!customForeground) setForeground(display.getSystemColor(SWT.COLOR_LIST_FOREGROUND));
+		} else {
+			if (!customBackground) setBackground(display.getSystemColor(SWT.COLOR_TEXT_DISABLED_BACKGROUND));
+			if (!customForeground) setForeground(display.getSystemColor(SWT.COLOR_WIDGET_DISABLED_FOREGROUND));
+		}
 	}
-	this.insideSetEnableCall = false;
+	finally {
+		this.insideSetEnableCall = false;
+	}
 }
 /**
  * Sets a new font to render text with.
@@ -9371,11 +9374,6 @@ public void setLineBullet(int startLine, int lineCount, Bullet bullet) {
 		setCaretLocation();
 	}
 }
-void setVariableLineHeight () {
-	if (!fixedLineHeight) return;
-	fixedLineHeight = false;
-	renderer.calculateIdle();
-}
 /**
  * Returns true if StyledText is in word wrap mode and false otherwise.
  *
@@ -9477,12 +9475,12 @@ public void setLineVerticalIndent(int lineIndex, int verticalLineIndent) {
 	if (verticalLineIndent == renderer.getLineVerticalIndent(lineIndex)) {
 			return;
 	}
-	setVariableLineHeight();
 	int oldBottom = getLinePixel(lineIndex + 1);
 	if (oldBottom <= getClientArea().height) {
 		verticalScrollOffset = -1;
 	}
 	renderer.setLineVerticalIndent(lineIndex, verticalLineIndent);
+	hasVerticalIndent = verticalLineIndent != 0 || renderer.hasVerticalIndent();
 	resetCache(lineIndex, 1);
 	int newBottom = getLinePixel(lineIndex + 1);
 	redrawLines(lineIndex, 1, oldBottom != newBottom);
@@ -9557,7 +9555,6 @@ public void setLineSpacing(int lineSpacing) {
 	checkWidget();
 	if (this.lineSpacing == lineSpacing || lineSpacing < 0) return;
 	this.lineSpacing = lineSpacing;
-	setVariableLineHeight();
 	resetCache(0, content.getLineCount());
 	setCaretLocation();
 	super.redraw();
@@ -9576,6 +9573,7 @@ public void setLineSpacing(int lineSpacing) {
  */
 public void setLineSpacingProvider(StyledTextLineSpacingProvider lineSpacingProvider) {
 	checkWidget();
+	boolean wasFixedLineHeight = isFixedLineHeight();
 	if (renderer.getLineSpacingProvider() == null && lineSpacingProvider == null
 			|| (renderer.getLineSpacingProvider() != null
 					&& renderer.getLineSpacingProvider().equals(lineSpacingProvider)))
@@ -9583,17 +9581,16 @@ public void setLineSpacingProvider(StyledTextLineSpacingProvider lineSpacingProv
 	renderer.setLineSpacingProvider(lineSpacingProvider);
 	// reset lines cache if needed
 	if (lineSpacingProvider == null) {
-		if (!isFixedLineHeight()) {
+		if (!wasFixedLineHeight) {
 			resetCache(0, content.getLineCount());
 		}
 	} else {
-		if (isFixedLineHeight()) {
+		if (wasFixedLineHeight) {
 			int firstLine = -1;
 			for (int i = 0; i < content.getLineCount(); i++) {
 				Integer lineSpacing = lineSpacingProvider.getLineSpacing(i);
 				if (lineSpacing != null && lineSpacing > 0) {
 					// there is a custom line spacing, set StyledText as variable line height mode
-					setVariableLineHeight();
 					// reset only the line size
 					renderer.reset(i, 1);
 					if (firstLine == -1) {
@@ -10011,9 +10008,9 @@ public void setSelection(int start, int end) {
  * the selection into view.
  * </p>
  *
- * @param start offset of the first selected character, start >= 0 must be true.
- * @param length number of characters to select, 0 <= start + length
- * 	<= getCharCount() must be true.
+ * @param start offset of the first selected character, start &gt;= 0 must be true.
+ * @param length number of characters to select, 0 &lt;= start + length
+ * 	&lt;= getCharCount() must be true.
  * 	A negative length places the caret at the selection start.
  * @param sendEvent a Selection event is sent when set to true and when
  * 	the selection is reset.
@@ -10226,10 +10223,15 @@ public void setStyleRanges(int[] ranges, StyleRange[] styles) {
 	}
 }
 void setStyleRanges(int start, int length, int[] ranges, StyleRange[] styles, boolean reset) {
+	int charCount = content.getCharCount();
+	if (reset) {
+		start = 0;
+		length = charCount;
+	}
 	int[] formerRanges = getRanges(start, length);
 	StyleRange[] formerStyles = getStyleRanges(start, length);
-	int charCount = content.getCharCount();
 	int end = start + length;
+	final boolean wasFixedLineHeight = isFixedLineHeight();
 	if (start > end || start < 0) {
 		SWT.error(SWT.ERROR_INVALID_RANGE);
 	}
@@ -10241,7 +10243,6 @@ void setStyleRanges(int start, int length, int[] ranges, StyleRange[] styles, bo
 			if (ranges.length != styles.length << 1) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 		}
 		int lastOffset = 0;
-		boolean variableHeight = false;
 		for (int i = 0; i < styles.length; i ++) {
 			if (styles[i] == null) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 			int rangeStart, rangeLength;
@@ -10255,10 +10256,9 @@ void setStyleRanges(int start, int length, int[] ranges, StyleRange[] styles, bo
 			if (rangeLength < 0) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 			if (!(0 <= rangeStart && rangeStart + rangeLength <= charCount)) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 			if (lastOffset > rangeStart) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
-			variableHeight |= styles[i].isVariableHeight();
+			hasStyleWithVariableHeight |= styles[i].isVariableHeight();
 			lastOffset = rangeStart + rangeLength;
 		}
-		if (variableHeight) setVariableLineHeight();
 	}
 	int rangeStart = start, rangeEnd = end;
 	if (styles != null && styles.length > 0) {
@@ -10270,6 +10270,8 @@ void setStyleRanges(int start, int length, int[] ranges, StyleRange[] styles, bo
 			rangeEnd = styles[styles.length - 1].start + styles[styles.length - 1].length;
 		}
 	}
+
+	// This needs to happen before new styles are applied
 	int expectedBottom = 0;
 	if (!isFixedLineHeight() && !reset) {
 		int lineEnd = content.getLineAtOffset(Math.max(end, rangeEnd));
@@ -10286,6 +10288,13 @@ void setStyleRanges(int start, int length, int[] ranges, StyleRange[] styles, bo
 	}
 	if (styles != null && styles.length > 0) {
 		renderer.setStyleRanges(ranges, styles);
+	}
+
+	// re-evaluate variable height with all styles (including new ones)
+	hasStyleWithVariableHeight = false;
+	for (StyleRange style : getStyleRanges(false)) {
+		hasStyleWithVariableHeight = style.isVariableHeight();
+		if (hasStyleWithVariableHeight) break;
 	}
 
 	SortedSet<Integer> modifiedLines = computeModifiedLines(formerRanges, formerStyles, ranges, styles);
@@ -10306,7 +10315,7 @@ void setStyleRanges(int start, int length, int[] ranges, StyleRange[] styles, bo
 			if (partialTopIndex <= lineEnd && lineEnd <= partialBottomIndex) {
 				bottom = getLinePixel(lineEnd + 1);
 			}
-			if (!isFixedLineHeight() && bottom != expectedBottom) {
+			if (!(wasFixedLineHeight && isFixedLineHeight()) && bottom != expectedBottom) {
 				bottom = clientAreaHeight;
 			}
 			super.redraw(0, top, clientAreaWidth, bottom - top, false);
@@ -10322,7 +10331,7 @@ void setStyleRanges(int start, int length, int[] ranges, StyleRange[] styles, bo
  *
  * @param referenceRanges former ranges, sorted by order and without overlapping, typically returned {@link #getRanges(int, int)}
  * @param referenceStyles
- * @param newRanges former ranges, sorted by order and without overlappingz
+ * @param newRanges former ranges, sorted by order and without overlapping
  * @param newStyles
  * @return
  */
@@ -10365,9 +10374,9 @@ private SortedSet<Integer> computeModifiedLines(int[] referenceRanges, StyleRang
 		StyleRange referenceStyleAtCurrentOffset = defaultStyle;
 		if (isInRange(referenceRanges, referenceRangeIndex, currentOffset)) { // has styling
 			referenceStyleAtCurrentOffset = referenceStyles[referenceRangeIndex];
-			nextMilestoneOffset =  Math.min(nextMilestoneOffset, endRangeOffset(referenceRanges, referenceRangeIndex));
-		} else if (referenceRangeIndex + 1 < referenceStyles.length) { // no range, default styling
-			nextMilestoneOffset = referenceRanges[2 * (referenceRangeIndex + 1)]; // beginning of next range
+			nextMilestoneOffset =  endRangeOffset(referenceRanges, referenceRangeIndex);
+		} else if (referenceRangeIndex < referenceStyles.length) { // no range, default styling
+			nextMilestoneOffset = referenceRanges[2 * referenceRangeIndex]; // beginning of next range
 		}
 
 		while (newRangeIndex < newStyles.length && endRangeOffset(newRanges, newRangeIndex) <= currentOffset) {
@@ -10377,8 +10386,8 @@ private SortedSet<Integer> computeModifiedLines(int[] referenceRanges, StyleRang
 		if (isInRange(newRanges, newRangeIndex, currentOffset)) {
 			newStyleAtCurrentOffset = newStyles[newRangeIndex];
 			nextMilestoneOffset = Math.min(nextMilestoneOffset, endRangeOffset(newRanges, newRangeIndex));
-		} else if (newRangeIndex + 1 < newStyles.length) {
-			nextMilestoneOffset = newRanges[2 * (newRangeIndex + 1)];
+		} else if (newRangeIndex < newStyles.length) {
+			nextMilestoneOffset = Math.min(nextMilestoneOffset, newRanges[2 * newRangeIndex]);
 		}
 
 		if (!referenceStyleAtCurrentOffset.similarTo(newStyleAtCurrentOffset)) {
@@ -10494,7 +10503,7 @@ public void setTabs(int tabs) {
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
  * </ul>
  * @exception IllegalArgumentException <ul>
- *    <li>ERROR_INVALID_ARGUMENT - if a tab stop is negavite or less than the previous stop in the list</li>
+ *    <li>ERROR_INVALID_ARGUMENT - if a tab stop is negative or less than the previous stop in the list</li>
  * </ul>
  *
  * @see StyledText#getTabStops()
@@ -10735,7 +10744,6 @@ public void setWordWrap(boolean wrap) {
 	if (wordWrap == wrap) return;
 	if (wordWrap && blockSelection) setBlockSelection(false);
 	wordWrap = wrap;
-	setVariableLineHeight();
 	resetCache(0, content.getLineCount());
 	horizontalScrollOffset = 0;
 	ScrollBar horizontalBar = getHorizontalBar();

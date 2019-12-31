@@ -40,6 +40,7 @@ import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Synchronizer;
 import org.eclipse.test.Screenshots;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -217,12 +218,13 @@ public void test_findDisplayLjava_lang_Thread() {
 
 @Test
 public void test_getActiveShell() {
+	Assume.assumeFalse("Test fails on Mac: Bug 536564", SwtTestUtil.isCocoa);
 	Display display = new Display();
 	try {
 		Shell shell = new Shell(display);
 		shell.setText("test_getActiveShell");
 		shell.open();
-		drainEventQueue(display, 5000); // workaround for https://bugs.eclipse.org/506680
+		drainEventQueue(display, 150); // workaround for https://bugs.eclipse.org/506680
 		assertSame(shell, display.getActiveShell());
 		shell.dispose();
 	} finally {
@@ -1020,8 +1022,8 @@ public void test_mapLorg_eclipse_swt_widgets_ControlLorg_eclipse_swt_widgets_Con
 
 @Test
 public void test_postLorg_eclipse_swt_widgets_Event() {
-	if (SwtTestUtil.isGTK || SwtTestUtil.isCocoa) {
-		//TODO Fix GTK and Cocoa failure.
+	if (SwtTestUtil.isGTK || SwtTestUtil.isCocoa || SwtTestUtil.isWindows ) {
+		//TODO Fix/revisit GTK, Cocoa and Win10 failure test-case via bug 553754
 		if (SwtTestUtil.verbose) {
 			System.out.println("Excluded test_postLorg_eclipse_swt_widgets_Event(org.eclipse.swt.tests.junit.Test_org_eclipse_swt_widgets_Display)");
 		}

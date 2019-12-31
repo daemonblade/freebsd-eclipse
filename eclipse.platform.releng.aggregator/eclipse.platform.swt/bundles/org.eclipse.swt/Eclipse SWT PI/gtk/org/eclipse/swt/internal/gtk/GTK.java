@@ -87,6 +87,7 @@ public class GTK extends OS {
 	public static final int GTK_PRINT_PAGES_ALL = 0;
 	public static final int GTK_PRINT_PAGES_CURRENT = 1;
 	public static final int GTK_PRINT_PAGES_RANGES = 2;
+	public static final int GTK_PRINT_PAGES_SELECTION = 3;
 	public static final int GTK_PRINT_DUPLEX_SIMPLEX = 0;
 	public static final int GTK_PRINT_DUPLEX_HORIZONTAL = 1;
 	public static final int GTK_PRINT_DUPLEX_VERTICAL = 2;
@@ -508,6 +509,19 @@ public class GTK extends OS {
 		lock.lock();
 		try {
 			return _gtk_widget_get_screen(widget);
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	/**
+	 * @param widget cast=(GtkWidget *)
+	 */
+	public static final native int _gtk_widget_get_scale_factor(long widget);
+	public static final int gtk_widget_get_scale_factor(long widget) {
+		lock.lock();
+		try {
+			return _gtk_widget_get_scale_factor(widget);
 		} finally {
 			lock.unlock();
 		}
@@ -5335,6 +5349,30 @@ public class GTK extends OS {
 		lock.lock();
 		try {
 			_gtk_print_unix_dialog_set_manual_capabilities(dialog, capabilities);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/**
+	 * @param dialog cast=(GtkPrintUnixDialog *)
+	 */
+	public static final native void _gtk_print_unix_dialog_set_support_selection(long dialog, boolean support_selection);
+	public static final void gtk_print_unix_dialog_set_support_selection(long dialog, boolean support_selection) {
+		lock.lock();
+		try {
+			_gtk_print_unix_dialog_set_support_selection(dialog, support_selection);
+		} finally {
+			lock.unlock();
+		}
+	}
+	/**
+	 * @param dialog cast=(GtkPrintUnixDialog *)
+	 */
+	public static final native void _gtk_print_unix_dialog_set_has_selection(long dialog, boolean has_selection);
+	public static final void gtk_print_unix_dialog_set_has_selection(long dialog, boolean has_selection) {
+		lock.lock();
+		try {
+			_gtk_print_unix_dialog_set_has_selection(dialog, has_selection);
 		} finally {
 			lock.unlock();
 		}

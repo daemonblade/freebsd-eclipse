@@ -71,7 +71,6 @@ public abstract class Control extends Widget implements Drawable {
 	Region region;
 	Font font;
 	int drawCount, foreground, background, backgroundAlpha = 255;
-	long hPrevIMC;
 
 /**
  * Prevents uninitialized instances from being created outside the package.
@@ -725,7 +724,7 @@ void createHandle () {
 	}
 	if (OS.IsDBLocale && hwndParent != 0) {
 		long hIMC = OS.ImmGetContext (hwndParent);
-		hPrevIMC = OS.ImmAssociateContext (handle, hIMC);
+		OS.ImmAssociateContext (handle, hIMC);
 		OS.ImmReleaseContext (hwndParent, hIMC);
 	}
 
@@ -2542,8 +2541,7 @@ void releaseParent () {
 void releaseWidget () {
 	super.releaseWidget ();
 	if (OS.IsDBLocale) {
-		OS.ImmAssociateContext (handle, hPrevIMC);
-		hPrevIMC = 0;
+		OS.ImmAssociateContext (handle, 0);
 	}
 	if (toolTipText != null) {
 		setToolTipText (getShell (), null);
@@ -4816,6 +4814,10 @@ long windowProc (long hwnd, int msg, long wParam, long lParam) {
 		case OS.WM_NCPAINT:				result = WM_NCPAINT (wParam, lParam); break;
 		case OS.WM_NOTIFY:				result = WM_NOTIFY (wParam, lParam); break;
 		case OS.WM_PAINT:				result = WM_PAINT (wParam, lParam); break;
+		case OS.WM_ENTERMENULOOP:		result = WM_ENTERMENULOOP (wParam, lParam); break;
+		case OS.WM_EXITMENULOOP:		result = WM_EXITMENULOOP (wParam, lParam); break;
+		case OS.WM_ENTERSIZEMOVE:		result = WM_ENTERSIZEMOVE (wParam, lParam); break;
+		case OS.WM_EXITSIZEMOVE:		result = WM_EXITSIZEMOVE (wParam, lParam); break;
 		case OS.WM_PARENTNOTIFY:		result = WM_PARENTNOTIFY (wParam, lParam); break;
 		case OS.WM_PASTE:				result = WM_PASTE (wParam, lParam); break;
 		case OS.WM_PRINT:				result = WM_PRINT (wParam, lParam); break;
@@ -4967,6 +4969,16 @@ LRESULT WM_ENTERIDLE (long wParam, long lParam) {
 	return null;
 }
 
+LRESULT WM_ENTERMENULOOP (long wParam, long lParam) {
+	display.externalEventLoop = true;
+	return null;
+}
+
+LRESULT WM_ENTERSIZEMOVE (long wParam, long lParam) {
+	display.externalEventLoop = true;
+	return null;
+}
+
 LRESULT WM_ERASEBKGND (long wParam, long lParam) {
 	if ((state & DRAW_BACKGROUND) != 0) {
 		if (findImageControl () != null) return LRESULT.ONE;
@@ -4976,6 +4988,16 @@ LRESULT WM_ERASEBKGND (long wParam, long lParam) {
 			if (findThemeControl () != null) return LRESULT.ONE;
 		}
 	}
+	return null;
+}
+
+LRESULT WM_EXITMENULOOP (long wParam, long lParam) {
+	display.externalEventLoop = false;
+	return null;
+}
+
+LRESULT WM_EXITSIZEMOVE (long wParam, long lParam) {
+	display.externalEventLoop = false;
 	return null;
 }
 

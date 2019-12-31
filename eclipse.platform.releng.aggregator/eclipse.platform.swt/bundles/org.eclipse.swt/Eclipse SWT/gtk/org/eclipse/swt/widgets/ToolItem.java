@@ -50,6 +50,7 @@ public class ToolItem extends Item {
 	boolean drawHotImage;
 	/** True iff map has been hooked for this ToolItem. See bug 546914. */
 	boolean mapHooked;
+	boolean enabled = true;
 
 /**
  * Constructs a new instance of this class given its parent
@@ -242,12 +243,6 @@ void createHandle (int index) {
 	if ((parent.state & FONT) != 0) {
 		setFontDescription (parent.getFontDescription());
 	}
-	/*
-	 * Feature in GTK. GtkToolButton class uses this property to
-	 * determine whether to show or hide its label when the toolbar
-	 * style is GTK_TOOLBAR_BOTH_HORIZ (or SWT.RIGHT).
-	 */
-	if ((parent.style & SWT.RIGHT) != 0) GTK.gtk_tool_item_set_is_important (handle, true);
 	if ((style & SWT.SEPARATOR) == 0) GTK.gtk_tool_button_set_use_underline (handle, true);
 	/*
 	 * Set the "homogeneous" property to false, otherwise all ToolItems will be as large as
@@ -395,6 +390,22 @@ public boolean getEnabled () {
 public Image getHotImage () {
 	checkWidget();
 	return hotImage;
+}
+
+/**
+ * Returns the receiver's enabled image if it has one, or null
+ * if it does not.
+ *
+ * @return the receiver's enabled image
+ *
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ */
+@Override
+public Image getImage () {
+	return this.image;
 }
 
 /**
@@ -688,12 +699,14 @@ long gtk_event_after (long widget, long gdkEvent) {
 long gtk_focus_in_event (long widget, long event) {
 	parent.hasChildFocus = true;
 	parent.currentFocusItem = this;
+	parent.sendFocusEvent(SWT.FocusIn);
 	return 0;
 }
 
 @Override
 long gtk_focus_out_event (long widget, long event) {
 	parent.hasChildFocus = false;
+	parent.sendFocusEvent(SWT.FocusOut);
 	return 0;
 }
 
@@ -986,6 +999,11 @@ public void setDisabledImage (Image image) {
 	checkWidget();
 	if ((style & SWT.SEPARATOR) != 0) return;
 	disabledImage = image;
+	if (image != null) {
+		if (!enabled) {
+			_setImage(image);
+		}
+	}
 }
 
 /**
@@ -1007,7 +1025,10 @@ public void setDisabledImage (Image image) {
 public void setEnabled (boolean enabled) {
 	checkWidget();
 	long topHandle = topHandle ();
-	if (GTK.gtk_widget_get_sensitive (topHandle) == enabled) return;
+	if (this.enabled == enabled) return;
+	this.enabled = enabled;
+	if (!enabled && disabledImage != null) _setImage (disabledImage);
+	if (enabled && this.image != null) _setImage (this.image);
 	GTK.gtk_widget_set_sensitive (topHandle, enabled);
 }
 
@@ -1108,6 +1129,14 @@ public void setImage (Image image) {
 	checkWidget();
 	if ((style & SWT.SEPARATOR) != 0) return;
 	super.setImage (image);
+	if (!enabled && disabledImage != image) {
+		return;
+	}
+	_setImage(image);
+}
+
+void _setImage (Image image) {
+	if ((style & SWT.SEPARATOR) != 0) return;
 	if (image != null) {
 		ImageList imageList = parent.imageList;
 		if (imageList == null) imageList = parent.imageList = new ImageList ();
@@ -1219,6 +1248,13 @@ public void setText (String string) {
 	byte [] buffer = Converter.wcsToMbcs (chars, true);
 	GTK.gtk_label_set_text_with_mnemonic (labelHandle, buffer);
 	/*
+	 * Only set important if this ToolItem actually has text.
+	 * See bug 543895.
+	 */
+	if ((parent.style & SWT.RIGHT) != 0) {
+		GTK.gtk_tool_item_set_is_important (handle, !string.isEmpty());
+	}
+	/*
 	* If Text/Image of a tool-item changes, then it is
 	* required to reset the proxy menu. Otherwise, the
 	* old menuItem appears in the overflow menu.
@@ -1323,5 +1359,15 @@ void showWidget (int index) {
 	if (labelHandle != 0) GTK.gtk_widget_show (labelHandle);
 	if (imageHandle != 0) GTK.gtk_widget_show (imageHandle);
 	GTK.gtk_toolbar_insert(parent.handle, handle, index);
+}
+
+@Override
+String getNameText() {
+	String nameText = super.getNameText();
+	Object data = getData();
+	if(data != null) {
+		return "text: '" + nameText + "', data: " + data;
+	}
+	return nameText;
 }
 }

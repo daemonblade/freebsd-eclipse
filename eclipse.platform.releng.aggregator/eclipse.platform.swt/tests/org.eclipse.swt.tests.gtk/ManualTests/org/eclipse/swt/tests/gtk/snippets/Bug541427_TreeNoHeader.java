@@ -11,32 +11,68 @@
  *
  * Contributors:
  *     Matthew Khouzam - initial API and implementation
+ *     Syntevo         - more tests
  *******************************************************************************/
 package org.eclipse.swt.tests.gtk.snippets;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 
 public class Bug541427_TreeNoHeader {
 	public static void main(String[] args) {
-		// useless setup
+		// boilerplate
 		Display display = new Display();
 		Shell shell = new Shell(display);
-		shell.setSize(new Point(300, 200));
+		shell.setLayout(new RowLayout(SWT.HORIZONTAL));
 
-		final Tree tree = new Tree(shell, SWT.NO_SCROLL);
-		tree.setHeaderVisible(true);
-		tree.setBounds(0, 0, 300, tree.getHeaderHeight());
-		TreeColumn col1 = new TreeColumn(tree, SWT.NONE);
-		col1.setText("Hi Mom!");
-		col1.setWidth(200);
-		TreeColumn col2 = new TreeColumn(tree, SWT.NONE);
-		col2.setText("Hi Dad!");
-		col2.setWidth(200);
+		for (int iTests = 0; iTests < (1 << 2); iTests++)
+		{
+			final boolean USE_NO_SCROLL    = (iTests & (1 << 0)) != 0;
+			final boolean PACK_BEFORE_SIZE = (iTests & (1 << 1)) != 0;
+
+			Composite testComposite = new Composite(shell, 0);
+			testComposite.setLayout(new RowLayout(SWT.VERTICAL));
+
+			for (int iHeightDiff = -5; iHeightDiff <= 5; iHeightDiff++)
+			{
+				Group group = new Group(testComposite, 0);
+				group.setText(String.format(
+						"%+d   %c%c",
+						iHeightDiff,
+						USE_NO_SCROLL    ? 'N' : '_',
+						PACK_BEFORE_SIZE ? 'P' : '_'
+				));
+
+				final Tree tree = new Tree(group, USE_NO_SCROLL ? SWT.NO_SCROLL : 0);
+				tree.setHeaderVisible(true);
+
+				// Remember header height before creating columns.
+				// It returns 0 after a column is created, is that another bug?
+				int treeH = tree.getHeaderHeight() + iHeightDiff;
+
+				// some columns. 1 is already enough to demonstrate
+				for (int iColumn = 0; iColumn < 3; iColumn++)
+				{
+					TreeColumn column = new TreeColumn(tree, SWT.NONE);
+					column.setText("Column");
+					column.setWidth(70);
+				}
+
+				if (PACK_BEFORE_SIZE)
+					tree.pack();
+
+				tree.setBounds(0, 0, 220, treeH);
+			}
+		}
+
+		// boilerplate
+		shell.pack();
 		shell.open();
 		while (!shell.isDisposed()) {
 			if (!display.readAndDispatch())
