@@ -107,7 +107,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	protected long persistSyncInfo = 0l;
 
 	/**
-	 * In-memory representation of plugins saved state. Maps String (plugin id)-> SavedState.
+	 * In-memory representation of plugins saved state. Maps String (plugin id)-&gt; SavedState.
 	 * This map is accessed from API that is not synchronized, so it requires
 	 * independent synchronization. This is accomplished using a synchronized
 	 * wrapper map.
@@ -115,7 +115,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	protected Map<String, SavedState> savedStates;
 
 	/**
-	 * Ids of plugins that participate on a workspace save. Maps String (plugin id)-> ISaveParticipant.
+	 * Ids of plugins that participate on a workspace save. Maps String (plugin id)-&gt; ISaveParticipant.
 	 * This map is accessed from API that is not synchronized, so it requires
 	 * independent synchronization. This is accomplished using a synchronized
 	 * wrapper map.
@@ -140,7 +140,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 		this.snapshotJob = new DelayedSnapshotJob(this);
 		snapshotRequested = false;
 		snapshotRequestor = null;
-		saveParticipants = Collections.synchronizedMap(new HashMap<String, ISaveParticipant>(10));
+		saveParticipants = Collections.synchronizedMap(new HashMap<>(10));
 	}
 
 	public ISavedState addParticipant(String pluginId, ISaveParticipant participant) throws CoreException {
@@ -173,16 +173,15 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	}
 
 	protected void broadcastLifecycle(final int lifecycle, Map<String, SaveContext> contexts, final MultiStatus warnings, IProgressMonitor monitor) {
-		monitor = Policy.monitorFor(monitor);
+		SubMonitor subMonitor = SubMonitor.convert(monitor, contexts.size());
 		try {
-			monitor.beginTask("", contexts.size()); //$NON-NLS-1$
 			for (final Iterator<Map.Entry<String, SaveContext>> it = contexts.entrySet().iterator(); it.hasNext();) {
 				Map.Entry<String, SaveContext> entry = it.next();
 				String pluginId = entry.getKey();
 				final ISaveParticipant participant = saveParticipants.get(pluginId);
-				//save participants can be removed concurrently
+				// save participants can be removed concurrently
 				if (participant == null) {
-					monitor.worked(1);
+					subMonitor.worked(1);
 					continue;
 				}
 				final SaveContext context = entry.getValue();
@@ -192,7 +191,8 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 					@Override
 					public void handleException(Throwable e) {
 						String message = Messages.resources_saveProblem;
-						IStatus status = new Status(IStatus.WARNING, ResourcesPlugin.PI_RESOURCES, IResourceStatus.INTERNAL_ERROR, message, e);
+						IStatus status = new Status(IStatus.WARNING, ResourcesPlugin.PI_RESOURCES,
+								IResourceStatus.INTERNAL_ERROR, message, e);
 						warnings.add(status);
 
 						/* Remove entry for defective plug-in from this save operation */
@@ -205,10 +205,10 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 					}
 				};
 				SafeRunner.run(code);
-				monitor.worked(1);
+				subMonitor.worked(1);
 			}
 		} finally {
-			monitor.done();
+			subMonitor.done();
 		}
 	}
 
@@ -353,7 +353,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	/**
 	 * Returns a table mapping having the plug-in id as the key and the old tree
 	 * as the value.
-	 * This table is based on the union of the current savedStates</code>
+	 * This table is based on the union of the current <code>savedStates</code>
 	 * and the given table of contexts.  The specified tree is used as the tree for
 	 * any newly created saved states.  This method is used to compute the set of
 	 * saved states to be written out.
@@ -740,7 +740,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	/**
 	 * Restores the contents of this project.  Throw
 	 * an exception if the project could not be restored.
-	 * @return <code><code>true</code> if the project data was restored successfully,
+	 * @return <code>true</code> if the project data was restored successfully,
 	 * and <code>false</code> if non-critical problems occurred while restoring.
 	 * @exception CoreException if the project could not be restored.
 	 */
@@ -773,7 +773,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	 * Restores the contents of this project from a refresh snapshot, if possible.
 	 * Throws an exception if the snapshot is found but an error occurs when reading
 	 * the file.
-	 * @return <code><code>true</code> if the project data was restored successfully,
+	 * @return <code>true</code> if the project data was restored successfully,
 	 * and <code>false</code> if the refresh snapshot was not found or could not be opened.
 	 * @exception CoreException if an error occurred reading the snapshot file.
 	 */
@@ -1031,7 +1031,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 		IPath treeLocation = workspace.getMetaArea().getTreeLocationFor(workspace.getRoot(), false);
 		IPath tempLocation = workspace.getMetaArea().getBackupLocationFor(treeLocation);
 		if (!treeLocation.toFile().exists() && !tempLocation.toFile().exists()) {
-			savedStates = Collections.synchronizedMap(new HashMap<String, SavedState>(10));
+			savedStates = Collections.synchronizedMap(new HashMap<>(10));
 			return;
 		}
 		try (DataInputStream input = new DataInputStream(new SafeFileInputStream(treeLocation.toOSString(), tempLocation.toOSString(), TREE_BUFFER_SIZE))) {
@@ -1126,7 +1126,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 		private boolean ignoreCancel;
 
 		public InternalMonitorWrapper(IProgressMonitor monitor) {
-			super(Policy.monitorFor(monitor));
+			super(SubMonitor.convert(monitor));
 		}
 
 		public void ignoreCancelState(boolean ignore) {
@@ -1415,7 +1415,7 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 		int state = snapshotJob.getState();
 		if (state == Job.WAITING || state == Job.SLEEPING)
 			// we cannot pass null to Job#run
-			snapshotJob.run(Policy.monitorFor(monitor));
+			snapshotJob.run(SubMonitor.convert(monitor));
 		// cancel the snapshot job
 		snapshotJob.cancel();
 	}
@@ -1458,11 +1458,10 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	 */
 	protected void snapTree(ElementTree tree, IProgressMonitor monitor) throws CoreException {
 		long start = System.currentTimeMillis();
-		monitor = Policy.monitorFor(monitor);
 		String message;
+		SubMonitor subMonitor = SubMonitor.convert(monitor, Policy.totalWork);
 		try {
-			monitor.beginTask("", Policy.totalWork); //$NON-NLS-1$
-			//the tree must be immutable
+			// the tree must be immutable
 			tree.immutable();
 			// don't need to snapshot if there are no changes
 			if (tree == lastSnap)
@@ -1473,12 +1472,11 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 			java.io.File localFile = snapPath.toFile();
 			try {
 				SafeChunkyOutputStream safeStream = new SafeChunkyOutputStream(localFile);
-				try (
-					DataOutputStream out = new DataOutputStream(safeStream);
-				) {
+				try (DataOutputStream out = new DataOutputStream(safeStream);) {
 					out.writeInt(ICoreConstants.WORKSPACE_TREE_VERSION_2);
-					writeWorkspaceFields(out, monitor);
-					writer.writeDelta(tree, lastSnap, Path.ROOT, ElementTreeWriter.D_INFINITE, out, ResourceComparator.getSaveComparator());
+					writeWorkspaceFields(out, subMonitor);
+					writer.writeDelta(tree, lastSnap, Path.ROOT, ElementTreeWriter.D_INFINITE, out,
+							ResourceComparator.getSaveComparator());
 					safeStream.succeed();
 					out.close();
 				}
@@ -1487,11 +1485,11 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 				throw new ResourceException(IResourceStatus.FAILED_WRITE_METADATA, Path.ROOT, message, e);
 			}
 			lastSnap = tree;
+			if (Policy.DEBUG_SAVE_TREE)
+				Policy.debug("Snapshot Workspace Tree: " + (System.currentTimeMillis() - start) + "ms"); //$NON-NLS-1$ //$NON-NLS-2$
 		} finally {
-			monitor.done();
+			subMonitor.done();
 		}
-		if (Policy.DEBUG_SAVE_TREE)
-			Policy.debug("Snapshot Workspace Tree: " + (System.currentTimeMillis() - start) + "ms"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	/**
@@ -1860,23 +1858,18 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	 *       UTF - interesting project name
 	 */
 	private void writeBuilderPersistentInfo(DataOutputStream output, List<BuilderPersistentInfo> builders, IProgressMonitor monitor) throws IOException {
-		monitor = Policy.monitorFor(monitor);
-		try {
-			// write the number of builders we are saving
-			int numBuilders = builders.size();
-			output.writeInt(numBuilders);
-			for (int i = 0; i < numBuilders; i++) {
-				BuilderPersistentInfo info = builders.get(i);
-				output.writeUTF(info.getProjectName());
-				output.writeUTF(info.getBuilderName());
-				// write interesting projects
-				IProject[] interestingProjects = info.getInterestingProjects();
-				output.writeInt(interestingProjects.length);
-				for (IProject interestingProject : interestingProjects)
-					output.writeUTF(interestingProject.getName());
-			}
-		} finally {
-			monitor.done();
+		// write the number of builders we are saving
+		int numBuilders = builders.size();
+		output.writeInt(numBuilders);
+		for (int i = 0; i < numBuilders; i++) {
+			BuilderPersistentInfo info = builders.get(i);
+			output.writeUTF(info.getProjectName());
+			output.writeUTF(info.getBuilderName());
+			// write interesting projects
+			IProject[] interestingProjects = info.getInterestingProjects();
+			output.writeInt(interestingProjects.length);
+			for (IProject interestingProject : interestingProjects)
+				output.writeUTF(interestingProject.getName());
 		}
 	}
 
@@ -1954,72 +1947,72 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	 *
 	 * @see WorkspaceTreeReader_2
 	 */
-	protected void writeTree(Map<String, ElementTree> statesToSave, DataOutputStream output, IProgressMonitor monitor) throws IOException, CoreException {
-		monitor = Policy.monitorFor(monitor);
+	protected void writeTree(Map<String, ElementTree> statesToSave, DataOutputStream output, IProgressMonitor monitor)
+			throws IOException, CoreException {
+		SubMonitor subMonitor = SubMonitor.convert(monitor, 10);
+		boolean wasImmutable = false;
 		try {
-			monitor.beginTask("", Policy.totalWork); //$NON-NLS-1$
-			boolean wasImmutable = false;
-			try {
-				// Create an array of trees to save. Ensure that the current one is in the list
-				ElementTree current = workspace.getElementTree();
-				wasImmutable = current.isImmutable();
-				current.immutable();
-				ArrayList<ElementTree> trees = new ArrayList<>(statesToSave.size() * 2); // pick a number
-				monitor.worked(Policy.totalWork * 10 / 100);
+			// Create an array of trees to save. Ensure that the current one is in the list
+			ElementTree current = workspace.getElementTree();
+			wasImmutable = current.isImmutable();
+			current.immutable();
+			ArrayList<ElementTree> trees = new ArrayList<>(statesToSave.size() * 2); // pick a number
+			subMonitor.worked(1);
 
-				// write out the workspace fields
-				writeWorkspaceFields(output, Policy.subMonitorFor(monitor, Policy.opWork * 20 / 100));
+			// write out the workspace fields
+			writeWorkspaceFields(output, subMonitor.newChild(2));
 
-				// save plugin info
-				output.writeInt(statesToSave.size()); // write the number of plugins we are saving
-				for (Map.Entry<String, ElementTree> entry : statesToSave.entrySet()) {
-					String pluginId = entry.getKey();
-					output.writeUTF(pluginId);
-					trees.add(entry.getValue()); // tree
-					updateDeltaExpiration(pluginId);
-				}
-				monitor.worked(Policy.totalWork * 10 / 100);
-
-				// Get the the builder info and configuration names, and add all the associated workspace trees in the correct order
-				IProject[] projects = workspace.getRoot().getProjects(IContainer.INCLUDE_HIDDEN);
-				List<BuilderPersistentInfo> builderInfos = new ArrayList<>(projects.length * 2);
-				List<String> configNames = new ArrayList<>(projects.length);
-				List<ElementTree> additionalTrees = new ArrayList<>(projects.length * 2);
-				List<BuilderPersistentInfo> additionalBuilderInfos = new ArrayList<>(projects.length * 2);
-				List<String> additionalConfigNames = new ArrayList<>(projects.length);
-				for (IProject project : projects)
-					getTreesToSave(project, trees, builderInfos, configNames, additionalTrees, additionalBuilderInfos, additionalConfigNames);
-
-				// Save the version 2 builders info
-				writeBuilderPersistentInfo(output, builderInfos, Policy.subMonitorFor(monitor, Policy.totalWork * 10 / 100));
-
-				// Builder infos of non-active configurations are persisted after the active
-				// configuration's builder infos. So, their trees have to follow the same order.
-				trees.addAll(additionalTrees);
-
-				// add the current tree in the list as the last tree in the chain
-				trees.add(current);
-
-				/* save the forest! */
-				ElementTreeWriter writer = new ElementTreeWriter(this);
-				ElementTree[] treesToSave = trees.toArray(new ElementTree[trees.size()]);
-				writer.writeDeltaChain(treesToSave, Path.ROOT, ElementTreeWriter.D_INFINITE, output, ResourceComparator.getSaveComparator());
-				monitor.worked(Policy.totalWork * 40 / 100);
-
-				// Since 3.7: Save the additional builders info
-				writeBuilderPersistentInfo(output, additionalBuilderInfos, Policy.subMonitorFor(monitor, Policy.totalWork * 10 / 100));
-
-				// Save the configuration names for the builders in the order they were saved
-				for (String string : configNames)
-					output.writeUTF(string);
-				for (String string : additionalConfigNames)
-					output.writeUTF(string);
-			} finally {
-				if (!wasImmutable)
-					workspace.newWorkingTree();
+			// save plugin info
+			output.writeInt(statesToSave.size()); // write the number of plugins we are saving
+			for (Map.Entry<String, ElementTree> entry : statesToSave.entrySet()) {
+				String pluginId = entry.getKey();
+				output.writeUTF(pluginId);
+				trees.add(entry.getValue()); // tree
+				updateDeltaExpiration(pluginId);
 			}
+			subMonitor.worked(1);
+
+			// Get the the builder info and configuration names, and add all the associated
+			// workspace trees in the correct order
+			IProject[] projects = workspace.getRoot().getProjects(IContainer.INCLUDE_HIDDEN);
+			List<BuilderPersistentInfo> builderInfos = new ArrayList<>(projects.length * 2);
+			List<String> configNames = new ArrayList<>(projects.length);
+			List<ElementTree> additionalTrees = new ArrayList<>(projects.length * 2);
+			List<BuilderPersistentInfo> additionalBuilderInfos = new ArrayList<>(projects.length * 2);
+			List<String> additionalConfigNames = new ArrayList<>(projects.length);
+			for (IProject project : projects)
+				getTreesToSave(project, trees, builderInfos, configNames, additionalTrees, additionalBuilderInfos,
+						additionalConfigNames);
+
+			// Save the version 2 builders info
+			writeBuilderPersistentInfo(output, builderInfos, subMonitor.newChild(1));
+
+			// Builder infos of non-active configurations are persisted after the active
+			// configuration's builder infos. So, their trees have to follow the same order.
+			trees.addAll(additionalTrees);
+
+			// add the current tree in the list as the last tree in the chain
+			trees.add(current);
+
+			/* save the forest! */
+			ElementTreeWriter writer = new ElementTreeWriter(this);
+			ElementTree[] treesToSave = trees.toArray(new ElementTree[trees.size()]);
+			writer.writeDeltaChain(treesToSave, Path.ROOT, ElementTreeWriter.D_INFINITE, output,
+					ResourceComparator.getSaveComparator());
+			subMonitor.worked(4);
+
+			// Since 3.7: Save the additional builders info
+			writeBuilderPersistentInfo(output, additionalBuilderInfos, subMonitor.newChild(1));
+
+			// Save the configuration names for the builders in the order they were saved
+			for (String string : configNames)
+				output.writeUTF(string);
+			for (String string : additionalConfigNames)
+				output.writeUTF(string);
 		} finally {
-			monitor.done();
+			subMonitor.done();
+			if (!wasImmutable)
+				workspace.newWorkingTree();
 		}
 	}
 
@@ -2040,57 +2033,59 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	 * @throws IOException if anything went wrong during save.
 	 * @see WorkspaceTreeReader_2
 	 */
-	protected void writeTree(Project project, DataOutputStream output, IProgressMonitor monitor) throws IOException, CoreException {
-		monitor = Policy.monitorFor(monitor);
+	protected void writeTree(Project project, DataOutputStream output, IProgressMonitor monitor)
+			throws IOException, CoreException {
+		SubMonitor subMonitor = SubMonitor.convert(monitor, 10);
+		boolean wasImmutable = false;
 		try {
-			monitor.beginTask("", Policy.totalWork); //$NON-NLS-1$
-			boolean wasImmutable = false;
-			try {
-				// Create an array of trees to save and ensure that the current one is immutable before we add other trees
-				ElementTree current = workspace.getElementTree();
-				wasImmutable = current.isImmutable();
-				current.immutable();
-				List<ElementTree> trees = new ArrayList<>(2);
-				monitor.worked(Policy.totalWork * 10 / 100);
+			// Create an array of trees to save and ensure that the current one is immutable
+			// before we add other trees
+			ElementTree current = workspace.getElementTree();
+			wasImmutable = current.isImmutable();
+			current.immutable();
+			List<ElementTree> trees = new ArrayList<>(2);
+			subMonitor.worked(1);
 
-				// Get the the builder info and configuration names, and add all the associated workspace trees in the correct order
-				List<String> configNames = new ArrayList<>(5);
-				List<BuilderPersistentInfo> builderInfos = new ArrayList<>(5);
-				List<String> additionalConfigNames = new ArrayList<>(5);
-				List<BuilderPersistentInfo> additionalBuilderInfos = new ArrayList<>(5);
-				List<ElementTree> additionalTrees = new ArrayList<>(5);
-				getTreesToSave(project, trees, builderInfos, configNames, additionalTrees, additionalBuilderInfos, additionalConfigNames);
+			// Get the the builder info and configuration names, and add all the associated
+			// workspace trees in the correct order
+			List<String> configNames = new ArrayList<>(5);
+			List<BuilderPersistentInfo> builderInfos = new ArrayList<>(5);
+			List<String> additionalConfigNames = new ArrayList<>(5);
+			List<BuilderPersistentInfo> additionalBuilderInfos = new ArrayList<>(5);
+			List<ElementTree> additionalTrees = new ArrayList<>(5);
+			getTreesToSave(project, trees, builderInfos, configNames, additionalTrees, additionalBuilderInfos,
+					additionalConfigNames);
 
-				// Save the version 2 builders info
-				writeBuilderPersistentInfo(output, builderInfos, Policy.subMonitorFor(monitor, Policy.totalWork * 20 / 100));
+			// Save the version 2 builders info
+			writeBuilderPersistentInfo(output, builderInfos, subMonitor.newChild(2));
 
-				// Builder infos of non-active configurations are persisted after the active
-				// configuration's builder infos. So, their trees have to follow the same order.
-				trees.addAll(additionalTrees);
+			// Builder infos of non-active configurations are persisted after the active
+			// configuration's builder infos. So, their trees have to follow the same order.
+			trees.addAll(additionalTrees);
 
-				// Add the current tree in the list as the last tree in the chain
-				trees.add(current);
+			// Add the current tree in the list as the last tree in the chain
+			trees.add(current);
 
-				// Save the trees
-				ElementTreeWriter writer = new ElementTreeWriter(this);
-				ElementTree[] treesToSave = trees.toArray(new ElementTree[trees.size()]);
-				writer.writeDeltaChain(treesToSave, project.getFullPath(), ElementTreeWriter.D_INFINITE, output, ResourceComparator.getSaveComparator());
-				monitor.worked(Policy.totalWork * 50 / 100);
+			// Save the trees
+			ElementTreeWriter writer = new ElementTreeWriter(this);
+			ElementTree[] treesToSave = trees.toArray(new ElementTree[trees.size()]);
+			writer.writeDeltaChain(treesToSave, project.getFullPath(), ElementTreeWriter.D_INFINITE, output,
+					ResourceComparator.getSaveComparator());
+			subMonitor.worked(5);
 
-				// Since 3.7: Save the builders info and get the workspace trees associated with those builders
-				writeBuilderPersistentInfo(output, additionalBuilderInfos, Policy.subMonitorFor(monitor, Policy.totalWork * 20 / 100));
+			// Since 3.7: Save the builders info and get the workspace trees associated with
+			// those builders
+			writeBuilderPersistentInfo(output, additionalBuilderInfos, subMonitor.newChild(2));
 
-				// Save configuration names for the builders in the order they were saved
-				for (String string : configNames)
-					output.writeUTF(string);
-				for (String string : additionalConfigNames)
-					output.writeUTF(string);
-			} finally {
-				if (!wasImmutable)
-					workspace.newWorkingTree();
-			}
+			// Save configuration names for the builders in the order they were saved
+			for (String string : configNames)
+				output.writeUTF(string);
+			for (String string : additionalConfigNames)
+				output.writeUTF(string);
 		} finally {
-			monitor.done();
+			subMonitor.done();
+			if (!wasImmutable)
+				workspace.newWorkingTree();
 		}
 	}
 
@@ -2115,18 +2110,13 @@ public class SaveManager implements IElementInfoFlattener, IManager, IStringPool
 	}
 
 	protected void writeWorkspaceFields(DataOutputStream output, IProgressMonitor monitor) throws IOException {
-		monitor = Policy.monitorFor(monitor);
-		try {
-			// save the next node id
-			output.writeLong(workspace.nextNodeId);
-			// save the modification stamp (no longer used)
-			output.writeLong(0L);
-			// save the marker id counter
-			output.writeLong(workspace.nextMarkerId);
-			// save the registered sync partners in the synchronizer
-			((Synchronizer) workspace.getSynchronizer()).savePartners(output);
-		} finally {
-			monitor.done();
-		}
+		// save the next node id
+		output.writeLong(workspace.nextNodeId);
+		// save the modification stamp (no longer used)
+		output.writeLong(0L);
+		// save the marker id counter
+		output.writeLong(workspace.nextMarkerId);
+		// save the registered sync partners in the synchronizer
+		((Synchronizer) workspace.getSynchronizer()).savePartners(output);
 	}
 }

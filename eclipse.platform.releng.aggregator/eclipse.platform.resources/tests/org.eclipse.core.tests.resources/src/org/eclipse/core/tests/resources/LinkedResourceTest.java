@@ -1213,9 +1213,7 @@ public class LinkedResourceTest extends ResourceTest {
 			ensureExistsInWorkspace(top, true);
 			linkedFolder.createLink(folderStore.toURI(), IResource.NONE, getMonitor());
 			linkedFile.createLink(fileStore.toURI(), IResource.NONE, getMonitor());
-		} catch (CoreException e) {
-			fail("4.99", e);
-		} catch (IOException e) {
+		} catch (CoreException | IOException e) {
 			fail("4.99", e);
 		}
 
@@ -1995,7 +1993,7 @@ public class LinkedResourceTest extends ResourceTest {
 	}
 
 	/**
-	 * Create a project with a linked resource at depth > 2, and refresh it.
+	 * Create a project with a linked resource at depth &gt; 2, and refresh it.
 	 */
 	public void testRefreshDeepLink() {
 		IFolder link = nonExistingFolderInExistingFolder;

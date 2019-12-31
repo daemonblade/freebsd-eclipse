@@ -40,14 +40,13 @@ public class PathVariableManager implements IPathVariableManager, IManager {
 	 * Constructor for the class.
 	 */
 	public PathVariableManager() {
-		this.listeners = Collections.synchronizedSet(new HashSet<IPathVariableChangeListener>());
-		this.projectListeners = Collections.synchronizedMap(new HashMap<IProject, Collection<IPathVariableChangeListener>>());
+		this.listeners = Collections.synchronizedSet(new HashSet<>());
+		this.projectListeners = Collections.synchronizedMap(new HashMap<>());
 		this.preferences = ResourcesPlugin.getPlugin().getPluginPreferences();
 	}
 
 	/**
-	 * @see org.eclipse.core.resources.
-	 * IPathVariableManager#addChangeListener(IPathVariableChangeListener)
+	 * @see org.eclipse.core.resources.IPathVariableManager#addChangeListener(IPathVariableChangeListener)
 	 */
 	@Override
 	public void addChangeListener(IPathVariableChangeListener listener) {
@@ -57,7 +56,7 @@ public class PathVariableManager implements IPathVariableManager, IManager {
 	synchronized public void addChangeListener(IPathVariableChangeListener listener, IProject project) {
 		Collection<IPathVariableChangeListener> list = projectListeners.get(project);
 		if (list == null) {
-			list = Collections.synchronizedSet(new HashSet<IPathVariableChangeListener>());
+			list = Collections.synchronizedSet(new HashSet<>());
 			projectListeners.put(project, list);
 		}
 		list.add(listener);
@@ -187,8 +186,7 @@ public class PathVariableManager implements IPathVariableManager, IManager {
 	}
 
 	/**
-	 * @see org.eclipse.core.resources.
-	 * IPathVariableManager#removeChangeListener(IPathVariableChangeListener)
+	 * @see org.eclipse.core.resources.IPathVariableManager#removeChangeListener(IPathVariableChangeListener)
 	 */
 	@Override
 	public void removeChangeListener(IPathVariableChangeListener listener) {

@@ -157,9 +157,7 @@ public class MarkerTest extends ResourceTest {
 		try {
 			IMarker[] temp = getWorkspace().getRoot().findMarkers(null, true, IResource.DEPTH_INFINITE);
 			assertEquals("0.1", numMarkers, temp.length);
-			for (int i = 0; i < temp.length; i++) {
-				markers[i] = temp[i];
-			}
+			System.arraycopy(temp, 0, markers, 0, temp.length);
 		} catch (CoreException e) {
 			fail("0.2", e);
 		}
@@ -737,7 +735,7 @@ public class MarkerTest extends ResourceTest {
 			file = project.getFile("foo.txt");
 			file.create(getRandomContents(), true, null);
 			IMarker marker = file.createMarker(IMarker.PROBLEM);
-			marker.setAttributes(new HashMap<String, String>());
+			marker.setAttributes(new HashMap<>());
 			marker.setAttribute(IMarker.SEVERITY, testValue);
 			Object value = marker.getAttribute(IMarker.SEVERITY);
 			assertEquals("1.0." + file.getFullPath(), value, testValue);
@@ -1473,17 +1471,11 @@ public class MarkerTest extends ResourceTest {
 		try {
 			newMarkers = createMarkers(resources, IMarker.PROBLEM);
 			expected = new IMarker[newMarkers.length * 3];
-			for (int i = 0; i < newMarkers.length; i++) {
-				expected[i] = newMarkers[i];
-			}
+			System.arraycopy(newMarkers, 0, expected, 0, newMarkers.length);
 			newMarkers = createMarkers(resources, IMarker.BOOKMARK);
-			for (int i = 0; i < newMarkers.length; i++) {
-				expected[i + newMarkers.length] = newMarkers[i];
-			}
+			System.arraycopy(newMarkers, 0, expected, newMarkers.length, newMarkers.length);
 			newMarkers = createMarkers(resources, IMarker.TASK);
-			for (int i = 0; i < newMarkers.length; i++) {
-				expected[i + (newMarkers.length * 2)] = newMarkers[i];
-			}
+			System.arraycopy(newMarkers, 0, expected, newMarkers.length * 2, newMarkers.length);
 		} catch (CoreException e) {
 			fail("1.0", e);
 		}
