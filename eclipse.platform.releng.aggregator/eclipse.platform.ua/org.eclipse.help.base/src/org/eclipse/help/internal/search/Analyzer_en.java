@@ -28,7 +28,7 @@ import org.apache.lucene.analysis.en.PorterStemFilter;
 
 /**
  * Lucene Analyzer for English.
- * LowerCaseAndDigitsTokenizer->StopFilter->PorterStemFilter
+ * LowerCaseAndDigitsTokenizer-&gt;StopFilter-&gt;PorterStemFilter
  */
 public final class Analyzer_en extends Analyzer {
 	/**
@@ -57,8 +57,8 @@ public final class Analyzer_en extends Analyzer {
 	private Set<String> getStopWords() {
 		if ( stopWords == null ) {
 			stopWords = new HashSet<>();
-			for (int i = 0; i < STOP_WORDS.length; i++) {
-				stopWords.add(STOP_WORDS[i]);
+			for (String element : STOP_WORDS) {
+				stopWords.add(element);
 			}
 		}
 		return stopWords;

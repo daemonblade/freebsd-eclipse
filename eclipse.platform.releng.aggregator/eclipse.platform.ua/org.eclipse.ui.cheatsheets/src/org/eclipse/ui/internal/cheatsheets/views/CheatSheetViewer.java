@@ -341,6 +341,7 @@ public class CheatSheetViewer implements ICheatSheetViewer, IMenuContributor {
 		return false;
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private boolean loadState() {
 		try {
 			Properties props = stateManager.getProperties();
@@ -370,8 +371,8 @@ public class CheatSheetViewer implements ICheatSheetViewer, IMenuContributor {
 			Hashtable<String, String> skippedSubItems = (Hashtable<String, String>) props
 					.get(IParserTags.SUBITEMSKIPPED);
 
-			ArrayList completedSubItemsItemList = new ArrayList();
-			ArrayList skippedSubItemsItemList = new ArrayList();
+			ArrayList completedSubItemsItemList = new ArrayList<>();
+			ArrayList skippedSubItemsItemList = new ArrayList<>();
 
 			Enumeration e = completedSubItems.keys();
 			while (e.hasMoreElements())
@@ -611,6 +612,7 @@ public class CheatSheetViewer implements ICheatSheetViewer, IMenuContributor {
 	 * </p>
 	 * <p>
 	 * For implementors this is a multi-step process:
+	 * </p>
 	 * <ol>
 	 *   <li>Create one or more controls within the parent.</li>
 	 *   <li>Set the parent layout as needed.</li>
@@ -619,7 +621,6 @@ public class CheatSheetViewer implements ICheatSheetViewer, IMenuContributor {
 	 *   <li>Register a selection provider with the <code>ISelectionService</code>
 	 *     (optional). </li>
 	 * </ol>
-	 * </p>
 	 *
 	 * @param parent the parent control
 	 */

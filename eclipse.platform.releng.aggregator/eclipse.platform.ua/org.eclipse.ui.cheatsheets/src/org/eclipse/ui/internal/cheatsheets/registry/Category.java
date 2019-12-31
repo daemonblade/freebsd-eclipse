@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -49,7 +49,7 @@ public class Category implements IWorkbenchAdapter, IPluginContribution,
 
 	private String[] parentPath;
 
-	private ArrayList elements;
+	private ArrayList<Object> elements;
 
 	private IConfigurationElement configurationElement;
 
@@ -83,9 +83,9 @@ public class Category implements IWorkbenchAdapter, IPluginContribution,
 	 * the specified configuration element.
 	 *
 	 * @param configElement
-	 *            the <code>IConfigurationElement<code> containing
+	 *            the <code>IConfigurationElement</code> containing
 	 * 		the ID, label, and optional parent category path.
-	 * @throws WorkbenchException if the ID or label is <code>null</code
+	 * @throws WorkbenchException if the ID or label is <code>null</code>
 	 */
 	public Category(IConfigurationElement configElement)
 			throws WorkbenchException {
@@ -104,7 +104,7 @@ public class Category implements IWorkbenchAdapter, IPluginContribution,
 	 */
 	public void addElement(Object element) {
 		if (elements == null)
-			elements = new ArrayList(5);
+			elements = new ArrayList<>(5);
 		elements.add(element);
 	}
 
@@ -201,7 +201,7 @@ public class Category implements IWorkbenchAdapter, IPluginContribution,
 	 *
 	 * @return the elements
 	 */
-	public ArrayList getElements() {
+	public ArrayList<Object> getElements() {
 		return elements;
 	}
 

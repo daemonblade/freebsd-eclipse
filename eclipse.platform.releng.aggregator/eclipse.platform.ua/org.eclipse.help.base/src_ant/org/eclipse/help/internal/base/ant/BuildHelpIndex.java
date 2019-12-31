@@ -72,12 +72,11 @@ public class BuildHelpIndex extends Task {
 
 	private void printStatus(CoreException e) {
 		IStatus status = e.getStatus();
-		System.out.println(e.getMessage());
+		System.err.println(e.getMessage());
 		if (status.isMultiStatus()) {
 			IStatus [] children = status.getChildren();
-			for (int i=0; i<children.length; i++) {
-				IStatus child = children[i];
-				System.out.println("    "+child.getMessage()); //$NON-NLS-1$
+			for (IStatus child : children) {
+				System.err.println("    " + child.getMessage()); //$NON-NLS-1$
 			}
 		}
 	}
