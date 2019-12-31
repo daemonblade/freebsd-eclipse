@@ -223,8 +223,6 @@ public class AntView extends ViewPart implements IResourceChangeListener, IShowI
 	/**
 	 * Adds actions to the context menu
 	 * 
-	 * @param viewer
-	 *            the viewer who's menu we're configuring
 	 * @param menu
 	 *            The menu to contribute to
 	 */
@@ -394,7 +392,7 @@ public class AntView extends ViewPart implements IResourceChangeListener, IShowI
 	private String getStatusLineText(AntElementNode node) {
 		if (node instanceof AntProjectNode) {
 			AntProjectNode project = (AntProjectNode) node;
-			StringBuffer message = new StringBuffer(project.getBuildFileName());
+			StringBuilder message = new StringBuilder(project.getBuildFileName());
 			String description = project.getDescription();
 			if (description != null && description.length() > 0) {
 				message.append(": "); //$NON-NLS-1$
@@ -403,7 +401,7 @@ public class AntView extends ViewPart implements IResourceChangeListener, IShowI
 			return message.toString();
 		} else if (node instanceof AntTargetNode) {
 			AntTargetNode target = (AntTargetNode) node;
-			StringBuffer message = new StringBuffer();
+			StringBuilder message = new StringBuilder();
 			Enumeration<String> depends = target.getTarget().getDependencies();
 			if (depends.hasMoreElements()) {
 				message.append(AntViewMessages.AntView_3);
@@ -576,8 +574,8 @@ public class AntView extends ViewPart implements IResourceChangeListener, IShowI
 	}
 
 	/**
-	 * Saves the state of the viewer into the dialog settings. Works around the issues of {@link #saveState()} not being called when a view is closed
-	 * while the workbench is still running
+	 * Saves the state of the viewer into the dialog settings. Works around the issues of {@link #saveState(IMemento))} not being called when a view
+	 * is closed while the workbench is still running
 	 * 
 	 * @since 3.5.500
 	 */

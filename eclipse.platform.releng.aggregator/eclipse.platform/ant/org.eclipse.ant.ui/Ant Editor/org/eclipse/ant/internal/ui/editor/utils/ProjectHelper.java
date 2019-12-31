@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -43,6 +43,7 @@ import org.apache.tools.ant.util.FileUtils;
 import org.apache.tools.ant.util.JAXPUtils;
 import org.eclipse.ant.internal.core.IAntCoreConstants;
 import org.eclipse.ant.internal.ui.model.IAntModel;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.text.BadLocationException;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -59,7 +60,7 @@ import org.xml.sax.ext.LexicalHandler;
 public class ProjectHelper extends ProjectHelper2 {
 
 	/**
-	 * helper for path -> URI and URI -> path conversions.
+	 * helper for path -&gt; URI and URI -&gt; path conversions.
 	 */
 	private static FileUtils fu = null;
 
@@ -90,6 +91,11 @@ public class ProjectHelper extends ProjectHelper2 {
 	private static LexicalHandler lexicalHandler = new LexHandler();
 
 	private static XMLReader fgXMLReader = null;
+	/*
+	 * Required to remember the project names (in case they are required for target-prefixing). The build file(s) are parsed anyway and hence the
+	 * project name is added to this map when it gets parsed.
+	 */
+	private static Map<String, String> parsedProjectNames = null;
 
 	public static class ElementHandler extends ProjectHelper2.ElementHandler {
 
@@ -100,7 +106,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartChild(java.lang.String, java.lang.String, java.lang.String,
 		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
 		 */
@@ -111,7 +117,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartElement(java.lang.String, java.lang.String, java.lang.String,
 		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
 		 */
@@ -139,7 +145,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onEndElement(java.lang.String, java.lang.String,
 		 * org.apache.tools.ant.helper.AntXMLContext)
 		 */
@@ -242,7 +248,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#characters(char[], int, int, org.apache.tools.ant.helper.AntXMLContext)
 		 */
 		@Override
@@ -269,7 +275,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartChild(java.lang.String, java.lang.String, java.lang.String,
 		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
 		 */
@@ -289,11 +295,62 @@ public class ProjectHelper extends ProjectHelper2 {
 		}
 	}
 
+	/**
+	 * Gets the associated project name by the absolute build-file path
+	 *
+	 * @param buildFile
+	 *            The file
+	 * @return The project name
+	 */
+	public static String getProjectNameOfBuildFile(IFile buildFile) {
+		return parsedProjectNames.get(getBuildFileKey(buildFile));
+	}
+
+	/**
+	 * Builds the hash-map's build-file key
+	 *
+	 * @param buildFile
+	 *            The build file
+	 * @return The key as string
+	 */
+	private static String getBuildFileKey(IFile buildFile) {
+		return buildFile.getLocation().toFile().getAbsolutePath();
+	}
+
+	/**
+	 * Adds a parsed project-name to the property-holder (and initializes the collection if necessary)
+	 *
+	 * @param key
+	 *            The key (file-path).
+	 * @param projectName
+	 *            The projectname to add.
+	 */
+	public static void storeParsedProjectName(String key, String projectName) {
+		// init if required
+		if (parsedProjectNames == null) {
+			parsedProjectNames = new HashMap<>();
+		}
+		parsedProjectNames.put(key, projectName);
+	}
+
+	/**
+	 * Clear the parsed project-holder to avoid potential memory leaks.
+	 */
+	public static void clearAdditionalPropertyHolders() {
+		/*
+		 * Currently only this "property-holder" is used. Extend if necessary.
+		 */
+		if (parsedProjectNames != null) {
+			parsedProjectNames.clear();
+			parsedProjectNames = null;
+		}
+	}
+
 	public static class ProjectHandler extends ProjectHelper2.ProjectHandler {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartChild(java.lang.String, java.lang.String, java.lang.String,
 		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
 		 */
@@ -308,7 +365,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onEndElement(java.lang.String, java.lang.String,
 		 * org.apache.tools.ant.helper.AntXMLContext)
 		 */
@@ -323,7 +380,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartElement(java.lang.String, java.lang.String, java.lang.String,
 		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
 		 */
@@ -331,6 +388,13 @@ public class ProjectHelper extends ProjectHelper2 {
 		public void onStartElement(String uri, String tag, String qname, Attributes attrs, AntXMLContext context) {
 			try {
 				super.onStartElement(uri, tag, qname, attrs, context);
+				// add project-name to property holder (if no aliases are used, the project name is required for target prefixing)
+				String currentProjectName = context.getCurrentProjectName();
+				// just an additional check if the name is non-empty
+				if (this.isCurrentProjectNameValid(currentProjectName)) {
+					String buildFilePath = context.getBuildFile().getAbsolutePath();
+					storeParsedProjectName(buildFilePath, currentProjectName);
+				}
 			}
 			catch (SAXParseException e) {
 				getAntModel().error(e);
@@ -349,9 +413,20 @@ public class ProjectHelper extends ProjectHelper2 {
 			}
 		}
 
+		/**
+		 * Checks if the parsed value is a valid project name (i.e. is non-empty: It doesn't make sense to store empty project-names)
+		 *
+		 * @param currentProjectName
+		 *            The current project name
+		 * @return If the given project name is valid or not.
+		 */
+		private boolean isCurrentProjectNameValid(String currentProjectName) {
+			return currentProjectName != null && !currentProjectName.equals(""); //$NON-NLS-1$
+		}
+
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#characters(char[], int, int, org.apache.tools.ant.helper.AntXMLContext)
 		 */
 		@Override
@@ -371,7 +446,7 @@ public class ProjectHelper extends ProjectHelper2 {
 	public static class TargetHandler extends ProjectHelper2.TargetHandler {
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartChild(java.lang.String, java.lang.String, java.lang.String,
 		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
 		 */
@@ -382,7 +457,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartElement(java.lang.String, java.lang.String, java.lang.String,
 		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
 		 */
@@ -411,7 +486,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onEndElement(java.lang.String, java.lang.String,
 		 * org.apache.tools.ant.helper.AntXMLContext)
 		 */
@@ -424,7 +499,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#characters(char[], int, int, org.apache.tools.ant.helper.AntXMLContext)
 		 */
 		@Override
@@ -449,7 +524,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.xml.sax.ErrorHandler#error(org.xml.sax.SAXParseException)
 		 */
 		@Override
@@ -459,7 +534,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.xml.sax.ErrorHandler#fatalError(org.xml.sax.SAXParseException)
 		 */
 		@Override
@@ -469,7 +544,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.xml.sax.ErrorHandler#warning(org.xml.sax.SAXParseException)
 		 */
 		@Override
@@ -479,7 +554,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.xml.sax.EntityResolver#resolveEntity(java.lang.String, java.lang.String)
 		 */
 		@Override
@@ -499,7 +574,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.xml.sax.ContentHandler#startPrefixMapping(java.lang.String, java.lang.String)
 		 */
 		@Override
@@ -532,7 +607,7 @@ public class ProjectHelper extends ProjectHelper2 {
 	private static class LexHandler implements LexicalHandler {
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.xml.sax.ext.LexicalHandler#endCDATA()
 		 */
 		@Override
@@ -542,7 +617,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.xml.sax.ext.LexicalHandler#endDTD()
 		 */
 		@Override
@@ -556,7 +631,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.xml.sax.ext.LexicalHandler#startCDATA()
 		 */
 		@Override
@@ -566,7 +641,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.xml.sax.ext.LexicalHandler#comment(char[], int, int)
 		 */
 		@Override
@@ -582,7 +657,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.xml.sax.ext.LexicalHandler#endEntity(java.lang.String)
 		 */
 		@Override
@@ -592,7 +667,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.xml.sax.ext.LexicalHandler#startEntity(java.lang.String)
 		 */
 		@Override
@@ -607,7 +682,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see org.xml.sax.ext.LexicalHandler#startDTD(java.lang.String, java.lang.String, java.lang.String)
 		 */
 		@Override
@@ -629,7 +704,7 @@ public class ProjectHelper extends ProjectHelper2 {
 	 * <p>
 	 * This constructor is only to be used by the {@link ProjectHelperRepository} when loading instances of registered helpers.
 	 * </p>
-	 * 
+	 *
 	 * @since 3.7
 	 * @noreference This constructor is not intended to be referenced by clients.
 	 */
@@ -638,7 +713,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 	/**
 	 * Parses the project file, configuring the project as it goes.
-	 * 
+	 *
 	 * @param project
 	 *            the current project
 	 * @param source
@@ -736,7 +811,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 	/**
 	 * Sets the buildfile that is about to be parsed or <code>null</code> if parsing has completed.
-	 * 
+	 *
 	 * @param file
 	 *            The buildfile about to be parsed
 	 */
@@ -748,7 +823,7 @@ public class ProjectHelper extends ProjectHelper2 {
 	/*
 	 * (non-Javadoc) We override this method from ProjectHelper2 as we do not want to execute the implicit target or any other target for that matter
 	 * as it could hang Eclipse. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=50795 for more details.
-	 * 
+	 *
 	 * @see org.apache.tools.ant.ProjectHelper#parse(org.apache.tools.ant.Project, java.lang.Object)
 	 */
 	@Override
@@ -820,7 +895,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 	/**
 	 * Returns a newly created SAX 2 XMLReader, which is namespace aware
-	 * 
+	 *
 	 * @return a SAX 2 XMLReader.
 	 * @since Ant 1.6 from org.apache.tools.ant.util.JAXPUtils
 	 */
@@ -838,9 +913,9 @@ public class ProjectHelper extends ProjectHelper2 {
 
 	/**
 	 * Returns the parser factory to use to create namespace aware parsers.
-	 * 
+	 *
 	 * @return a SAXParserFactory to use which supports manufacture of namespace aware parsers
-	 * 
+	 *
 	 * @since Ant 1.6 from org.apache.tools.ant.util.JAXPUtils
 	 */
 	private SAXParserFactory getNSParserFactory() throws BuildException {
@@ -853,7 +928,7 @@ public class ProjectHelper extends ProjectHelper2 {
 
 	/**
 	 * @return a new SAXParser instance as helper for getParser and getXMLReader.
-	 * 
+	 *
 	 * @since Ant 1.5 from org.apache.tools.ant.util.JAXPUtils
 	 */
 	private SAXParser newSAXParser(SAXParserFactory factory) {

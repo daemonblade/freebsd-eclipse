@@ -885,10 +885,10 @@ public class AntEditorCompletionProcessor extends TemplateCompletionProcessor im
 	/**
 	 * Returns all possible values for the specified attribute of the specified task.
 	 * 
-	 * @param aTaskName
+	 * @param taskName
 	 *            the name of the task that the specified attribute belongs to.
 	 * 
-	 * @param anAttributeName
+	 * @param attributeName
 	 *            the name of the attribute for that the value shall be completed
 	 * 
 	 * @param prefix
@@ -1025,7 +1025,7 @@ public class AntEditorCompletionProcessor extends TemplateCompletionProcessor im
 			if (prefix.length() == 0 || propertyName.toLowerCase().startsWith(prefix)) {
 				String additionalPropertyInfo = (String) properties.get(propertyName);
 
-				StringBuffer replacementString = new StringBuffer();
+				StringBuilder replacementString = new StringBuilder();
 				if (appendBraces) {
 					replacementString.append("${"); //$NON-NLS-1$
 				}
@@ -1203,7 +1203,7 @@ public class AntEditorCompletionProcessor extends TemplateCompletionProcessor im
 		ICompletionProposal proposal = null;
 		if (openElementName != null) {
 			if (prefix.length() == 0 || openElementName.toLowerCase().startsWith(prefix)) {
-				StringBuffer replaceString = new StringBuffer();
+				StringBuilder replaceString = new StringBuilder();
 				if (!closingMode) {
 					if (previousChar != '/') {
 						if (previousChar != '<') {
@@ -1214,7 +1214,7 @@ public class AntEditorCompletionProcessor extends TemplateCompletionProcessor im
 				}
 				replaceString.append(openElementName);
 				replaceString.append('>');
-				StringBuffer displayString = new StringBuffer("</"); //$NON-NLS-1$
+				StringBuilder displayString = new StringBuilder("</"); //$NON-NLS-1$
 				displayString.append(openElementName);
 				displayString.append('>');
 				proposal = new AntCompletionProposal(replaceString.toString(), cursorPosition - prefix.length(), prefix.length(), replaceString.length(), null, displayString.toString(), AntEditorMessages.getString("AntEditorCompletionProcessor.39"), AntCompletionProposal.TAG_CLOSING_PROPOSAL); //$NON-NLS-1$
@@ -1469,7 +1469,7 @@ public class AntEditorCompletionProcessor extends TemplateCompletionProcessor im
 	 * 
 	 * @param aDocumentStringToPrefix
 	 *            the String that contains the whole string of the currently edited file from the beginning up to the prefix for code completion.
-	 *            Example: '<project default="name"><property '.
+	 *            Example: {@literal '<project default="name"><property '}.
 	 * 
 	 * @return the extracted task string or <code>null</code> if no string could be extracted.
 	 */

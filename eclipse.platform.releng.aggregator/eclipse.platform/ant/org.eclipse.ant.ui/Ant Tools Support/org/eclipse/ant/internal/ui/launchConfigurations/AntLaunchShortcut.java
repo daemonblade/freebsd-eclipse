@@ -64,7 +64,7 @@ import org.eclipse.ui.externaltools.internal.launchConfigurations.ExternalToolsU
 import com.ibm.icu.text.MessageFormat;
 
 /**
- * This class provides the Run/Debug As -> Ant Build launch shortcut.
+ * This class provides the Run/Debug As -&gt; Ant Build launch shortcut.
  * 
  */
 public class AntLaunchShortcut implements ILaunchShortcut2 {
@@ -247,7 +247,7 @@ public class AntLaunchShortcut implements ILaunchShortcut2 {
 	 * @return a unique name for the copy
 	 */
 	public static String getNewLaunchConfigurationName(IPath filePath, String projectName, String targetAttribute) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		if (projectName != null) {
 			buffer.append(projectName);
 			buffer.append(' ');

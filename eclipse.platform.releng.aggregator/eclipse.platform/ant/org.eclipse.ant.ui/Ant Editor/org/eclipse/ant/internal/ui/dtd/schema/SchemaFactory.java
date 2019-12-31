@@ -99,7 +99,7 @@ public class SchemaFactory implements DeclHandler {
 	/**
 	 * Strips the surrounding parentheses from <code>aString</code>.
 	 * <P>
-	 * i.e.: (true|false) -> true|false
+	 * i.e.: {@code (true|false) -> true|false }
 	 */
 	private String stripSurroundingParentheses(String aString) {
 		if (aString.startsWith("(")) { //$NON-NLS-1$
@@ -246,7 +246,7 @@ public class SchemaFactory implements DeclHandler {
 		checkLen();
 		if (fBuf[fPos] == '(')
 			return scanExpr();
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		while (fBuf[fPos] != '|' && fBuf[fPos] != ',' && fBuf[fPos] != ')' && fBuf[fPos] != '*' && fBuf[fPos] != '+' && fBuf[fPos] != '?') {
 			sb.append(fBuf[fPos++]);
 			checkLen();

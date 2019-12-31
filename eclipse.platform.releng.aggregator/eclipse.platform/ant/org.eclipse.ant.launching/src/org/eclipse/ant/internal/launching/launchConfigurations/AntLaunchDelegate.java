@@ -573,7 +573,7 @@ public class AntLaunchDelegate extends LaunchConfigurationDelegate {
 
 		// set the ANT_HOME environment variable
 		if (antHome != null) {
-			Map<String, String> vars = copy.getAttribute(ILaunchManager.ATTR_ENVIRONMENT_VARIABLES, new HashMap<String, String>(1));
+			Map<String, String> vars = copy.getAttribute(ILaunchManager.ATTR_ENVIRONMENT_VARIABLES, new HashMap<>(1));
 			vars.put("ANT_HOME", antHome); //$NON-NLS-1$
 			copy.setAttribute(ILaunchManager.ATTR_ENVIRONMENT_VARIABLES, vars);
 		}
@@ -690,7 +690,7 @@ public class AntLaunchDelegate extends LaunchConfigurationDelegate {
 	}
 
 	private String stripUnescapedQuotes(String javaLibPath) {
-		StringBuffer buf = new StringBuffer(javaLibPath.length());
+		StringBuilder buf = new StringBuilder(javaLibPath.length());
 		for (int i = 0; i < javaLibPath.length(); i++) {
 			char c = javaLibPath.charAt(i);
 			switch (c) {
