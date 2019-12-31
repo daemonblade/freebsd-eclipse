@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 Stefan Xenos and others.
+ * Copyright (c) 2016, 2019 Stefan Xenos and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,12 +15,10 @@ package org.eclipse.ui.tests.performance;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.test.performance.Dimension;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -67,8 +65,6 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	private volatile boolean isDone;
 	private Display display;
 
-	private boolean oldRunInBackgroundSetting;
-
 	/**
 	 * Create a new instance of the receiver.
 	 *
@@ -80,24 +76,15 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 
 	@Override
 	protected void doSetUp() throws Exception {
-		oldRunInBackgroundSetting = WorkbenchPlugin.getDefault().getPreferenceStore()
-				.getBoolean(IPreferenceConstants.RUN_IN_BACKGROUND);
 		this.display = Display.getCurrent();
 		super.doSetUp();
-	}
-
-	@Override
-	protected void doTearDown() throws Exception {
-		boolean newRunInBackgroundSetting = oldRunInBackgroundSetting;
-		setRunInBackground(newRunInBackgroundSetting);
-		super.doTearDown();
 	}
 
 	/**
 	 * @param newRunInBackgroundSetting
 	 */
 	private void setRunInBackground(boolean newRunInBackgroundSetting) {
-		WorkbenchPlugin.getDefault().getPreferenceStore().setValue(IPreferenceConstants.RUN_IN_BACKGROUND,
+		setPreference(WorkbenchPlugin.getDefault().getPreferenceStore(), IPreferenceConstants.RUN_IN_BACKGROUND,
 				newRunInBackgroundSetting);
 	}
 
@@ -453,19 +440,16 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 		IWorkbenchWindow window = openTestWindow();
 		runAsyncTest(() -> {
 			try {
-				new ProgressMonitorDialog(window.getShell()).run(true, true, new IRunnableWithProgress() {
-					@Override
-					public void run(IProgressMonitor monitor) {
-						monitor.beginTask("Test Job", ITERATIONS);
-						int i = 0;
-						long result = 0;
-						while (i < ITERATIONS) {
-							result += i;
-							i++;
-						}
-
-						endAsyncTest(result);
+				new ProgressMonitorDialog(window.getShell()).run(true, true, monitor -> {
+					monitor.beginTask("Test Job", ITERATIONS);
+					int i = 0;
+					long result = 0;
+					while (i < ITERATIONS) {
+						result += i;
+						i++;
 					}
+
+					endAsyncTest(result);
 				});
 			} catch (InvocationTargetException | InterruptedException e) {
 				throw new RuntimeException(e);
@@ -480,20 +464,17 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 		IWorkbenchWindow window = openTestWindow();
 		runAsyncTest(() -> {
 			try {
-				new ProgressMonitorDialog(window.getShell()).run(true, true, new IRunnableWithProgress() {
-					@Override
-					public void run(IProgressMonitor monitor) {
-						monitor.beginTask("Test Job", ITERATIONS);
-						int i = 0;
-						long result = 0;
-						while (i < ITERATIONS) {
-							monitor.worked(1);
-							result += i;
-							i++;
-						}
-
-						endAsyncTest(result);
+				new ProgressMonitorDialog(window.getShell()).run(true, true, monitor -> {
+					monitor.beginTask("Test Job", ITERATIONS);
+					int i = 0;
+					long result = 0;
+					while (i < ITERATIONS) {
+						monitor.worked(1);
+						result += i;
+						i++;
 					}
+
+					endAsyncTest(result);
 				});
 			} catch (InvocationTargetException | InterruptedException e) {
 				throw new RuntimeException(e);
@@ -508,22 +489,19 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 		IWorkbenchWindow window = openTestWindow();
 		runAsyncTest(() -> {
 			try {
-				new ProgressMonitorDialog(window.getShell()).run(true, true, new IRunnableWithProgress() {
-					@Override
-					public void run(IProgressMonitor monitor) {
-						monitor.beginTask("Test Job", ITERATIONS);
-						int i = 0;
-						long result = 0;
-						while (i < ITERATIONS) {
-							if (monitor.isCanceled()) {
-								throw new OperationCanceledException();
-							}
-							result += i;
-							i++;
+				new ProgressMonitorDialog(window.getShell()).run(true, true, monitor -> {
+					monitor.beginTask("Test Job", ITERATIONS);
+					int i = 0;
+					long result = 0;
+					while (i < ITERATIONS) {
+						if (monitor.isCanceled()) {
+							throw new OperationCanceledException();
 						}
-
-						endAsyncTest(result);
+						result += i;
+						i++;
 					}
+
+					endAsyncTest(result);
 				});
 			} catch (InvocationTargetException | InterruptedException e) {
 				throw new RuntimeException(e);
@@ -538,20 +516,17 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 		IWorkbenchWindow window = openTestWindow();
 		runAsyncTest(() -> {
 			try {
-				new ProgressMonitorDialog(window.getShell()).run(true, true, new IRunnableWithProgress() {
-					@Override
-					public void run(IProgressMonitor monitor) {
-						monitor.beginTask("Test Job", ITERATIONS);
-						int i = 0;
-						long result = 0;
-						while (i < ITERATIONS) {
-							monitor.setTaskName(Integer.toString(i));
-							result += i;
-							i++;
-						}
-
-						endAsyncTest(result);
+				new ProgressMonitorDialog(window.getShell()).run(true, true, monitor -> {
+					monitor.beginTask("Test Job", ITERATIONS);
+					int i = 0;
+					long result = 0;
+					while (i < ITERATIONS) {
+						monitor.setTaskName(Integer.toString(i));
+						result += i;
+						i++;
 					}
+
+					endAsyncTest(result);
 				});
 			} catch (InvocationTargetException | InterruptedException e) {
 				throw new RuntimeException(e);
@@ -566,20 +541,17 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 		IWorkbenchWindow window = openTestWindow();
 		runAsyncTest(() -> {
 			try {
-				new ProgressMonitorDialog(window.getShell()).run(true, true, new IRunnableWithProgress() {
-					@Override
-					public void run(IProgressMonitor monitor) {
-						monitor.beginTask("Test Job", ITERATIONS);
-						int i = 0;
-						long result = 0;
-						while (i < ITERATIONS) {
-							monitor.subTask(Integer.toString(i));
-							result += i;
-							i++;
-						}
-
-						endAsyncTest(result);
+				new ProgressMonitorDialog(window.getShell()).run(true, true, monitor -> {
+					monitor.beginTask("Test Job", ITERATIONS);
+					int i = 0;
+					long result = 0;
+					while (i < ITERATIONS) {
+						monitor.subTask(Integer.toString(i));
+						result += i;
+						i++;
 					}
+
+					endAsyncTest(result);
 				});
 			} catch (InvocationTargetException | InterruptedException e) {
 				throw new RuntimeException(e);

@@ -23,14 +23,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Tree;
 
 /**
- * <p>
- * <strong>EXPERIMENTAL</strong>. This class has been added as part of a work in
- * progress. There is no guarantee that this API will work or that it will
- * remain the same. Feel free to use it and give feedback via <a href=
- * "https://bugs.eclipse.org/bugs/buglist.cgi?component=UI&product=Platform">Bugzilla</a>,
- * but be aware that it might change.
- * </p>
- *
  * This class provides a convenient shorthand for creating and initializing
  * {@link Tree}. This offers several benefits over creating Tree normal way:
  *
@@ -57,14 +49,22 @@ import org.eclipse.swt.widgets.Tree;
  * 		.onExpand(e -&gt; treeExpanded(e)) //
  * 		.create(parent);
  * </pre>
+ *
  * <p>
  * The above example creates a tree, sets some properties, registers a
  * SelectionListener and a TreeListener for expansion and finally creates the
  * tree in "parent".
  * </p>
  *
+ * <p>
+ * Note that this class does not extend {@link AbstractCompositeFactory} even
+ * though Tree extends Composite. This is because Tree is not supposed to be
+ * used like a Composite.
+ * </p>
+ *
+ * @since 3.18
  */
-public class TreeFactory extends AbstractCompositeFactory<TreeFactory, Tree> {
+public final class TreeFactory extends AbstractControlFactory<TreeFactory, Tree> {
 
 	private TreeFactory(int style) {
 		super(TreeFactory.class, (parent) -> new Tree(parent, style));
@@ -82,10 +82,14 @@ public class TreeFactory extends AbstractCompositeFactory<TreeFactory, Tree> {
 	}
 
 	/**
-	 * Sets the lines visibility.
+	 * Marks the receiver's lines as visible if the argument is true, and marks it
+	 * invisible otherwise. Note that some platforms draw grid lines while others
+	 * may draw alternating row colors.
 	 *
-	 * @param visible
+	 * @param visible the visibility state
 	 * @return this
+	 *
+	 * @see Tree#setLinesVisible(boolean)
 	 */
 	public TreeFactory linesVisible(boolean visible) {
 		this.addProperty(w -> w.setLinesVisible(visible));
@@ -93,10 +97,13 @@ public class TreeFactory extends AbstractCompositeFactory<TreeFactory, Tree> {
 	}
 
 	/**
-	 * Sets the header visibility.
+	 * Marks the receiver's header as visible if the argument is true, and marks it
+	 * invisible otherwise.
 	 *
-	 * @param visible
+	 * @param visible the visibility state
 	 * @return this
+	 *
+	 * @see Tree#setHeaderVisible(boolean)
 	 */
 	public TreeFactory headerVisible(boolean visible) {
 		this.addProperty(w -> w.setHeaderVisible(visible));
@@ -104,10 +111,12 @@ public class TreeFactory extends AbstractCompositeFactory<TreeFactory, Tree> {
 	}
 
 	/**
-	 * Sets the item count of the table.
+	 * Sets the number of root-level items contained in the receiver.
 	 *
-	 * @param count
+	 * @param count the number of items
 	 * @return this
+	 *
+	 * @see Tree#setItemCount(int)
 	 */
 	public TreeFactory itemCount(int count) {
 		this.addProperty(w -> w.setItemCount(count));
@@ -116,11 +125,14 @@ public class TreeFactory extends AbstractCompositeFactory<TreeFactory, Tree> {
 
 	/**
 	 * Creates a {@link SelectionListener} and registers it for the widgetSelected
-	 * event. If event is raised it calls the given consumer. The
-	 * {@link SelectionEvent} is passed to the consumer.
+	 * event. If the receiver is selected by the user the given consumer is invoked.
+	 * The {@link SelectionEvent} is passed to the consumer.
 	 *
-	 * @param consumer
+	 * @param consumer the consumer whose accept method is called
 	 * @return this
+	 *
+	 * @see Tree#addSelectionListener(SelectionListener)
+	 * @see SelectionListener#widgetSelectedAdapter(Consumer)
 	 */
 	public TreeFactory onSelect(Consumer<SelectionEvent> consumer) {
 		addProperty(c -> c.addSelectionListener(SelectionListener.widgetSelectedAdapter(consumer)));
@@ -129,11 +141,14 @@ public class TreeFactory extends AbstractCompositeFactory<TreeFactory, Tree> {
 
 	/**
 	 * Creates a {@link TreeListener} and registers it for the collapsed event. If
-	 * event is raised it calls the given consumer. The {@link TreeEvent} is passed
-	 * to the consumer.
+	 * the receiver is collapsed by the user the given consumer is invoked. The
+	 * {@link TreeEvent} is passed to the consumer.
 	 *
-	 * @param consumer
+	 * @param consumer the consumer whose accept method is called
 	 * @return this
+	 *
+	 * @see Tree#addTreeListener(TreeListener)
+	 * @see SelectionListener#widgetSelectedAdapter(Consumer)
 	 */
 	public TreeFactory onCollapse(Consumer<TreeEvent> consumer) {
 		addProperty(c -> c.addTreeListener(TreeListener.treeCollapsedAdapter(consumer)));
@@ -142,15 +157,17 @@ public class TreeFactory extends AbstractCompositeFactory<TreeFactory, Tree> {
 
 	/**
 	 * Creates a {@link TreeListener} and registers it for the expanded event. If
-	 * event is raised it calls the given consumer. The {@link TreeEvent} is passed
-	 * to the consumer.
+	 * the receiver is expanded by the user the given consumer is invoked. The
+	 * {@link TreeEvent} is passed to the consumer.
 	 *
-	 * @param consumer
+	 * @param consumer the consumer whose accept method is called
 	 * @return this
+	 *
+	 * @see Tree#addTreeListener(TreeListener)
+	 * @see SelectionListener#widgetSelectedAdapter(Consumer)
 	 */
 	public TreeFactory onExpand(Consumer<TreeEvent> consumer) {
 		addProperty(c -> c.addTreeListener(TreeListener.treeExpandedAdapter(consumer)));
 		return this;
 	}
-
 }

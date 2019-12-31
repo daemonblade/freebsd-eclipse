@@ -19,26 +19,34 @@ package org.eclipse.ui.internal.quickaccess;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.eclipse.core.runtime.Adapters;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.bindings.TriggerSequence;
-import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.TableColumnLayout;
 import org.eclipse.jface.resource.FontDescriptor;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.LocalResourceManager;
 import org.eclipse.jface.util.Util;
@@ -63,6 +71,7 @@ import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
@@ -71,10 +80,9 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbenchPreferenceConstants;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.internal.IWorkbenchGraphicConstants;
-import org.eclipse.ui.internal.WorkbenchImages;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.keys.IBindingService;
+import org.eclipse.ui.progress.UIJob;
 import org.eclipse.ui.quickaccess.QuickAccessElement;
 import org.eclipse.ui.themes.ColorUtil;
 
@@ -90,18 +98,12 @@ public abstract class QuickAccessContents {
 	 * have a shell, we are just using a hard coded command id.
 	 */
 	private static final String QUICK_ACCESS_COMMAND_ID = "org.eclipse.ui.window.quickAccess"; //$NON-NLS-1$
-	private static final int INITIAL_COUNT_PER_PROVIDER = 5;
-	private static final int MAX_COUNT_TOTAL = 20;
-	/** Minumum length to suggest the user to search typed text in the Help */
-	private static final int MIN_SEARCH_LENGTH = 3;
 
 	protected Text filterText;
-	private IProgressMonitor monitor;
 
 	private QuickAccessProvider[] providers;
 	private Map<String, QuickAccessProvider> providerMap = new HashMap<>();
 	private Map<QuickAccessElement, QuickAccessProvider> elementsToProviders = new HashMap<>();
-	private Map<QuickAccessElement, QuickAccessMatcher> elementsToMatchers = new HashMap<>();
 
 	protected Table table;
 	protected Label infoLabel;
@@ -119,6 +121,7 @@ public abstract class QuickAccessContents {
 	private boolean showAllMatches = false;
 	protected boolean resized = false;
 	private TriggerSequence keySequence;
+	private Job computeProposalsJob;
 
 	public QuickAccessContents(QuickAccessProvider[] providers) {
 		this.providers = providers;
@@ -140,137 +143,56 @@ public abstract class QuickAccessContents {
 	 * @param filter The filter text to apply to results
 	 *
 	 */
-	public void refresh(String filter) {
-		if (monitor != null) {
-			monitor.setCanceled(true);
-			monitor = null;
+	public void updateProposals(String filter) {
+		if (computeProposalsJob != null) {
+			computeProposalsJob.cancel();
+			computeProposalsJob = null;
 		}
-		if (table != null) {
-			boolean filterTextEmpty = filter.length() == 0;
+		if (table == null || table.isDisposed()) {
+			return;
+		}
+		final Display display = table.getDisplay();
 
-			// extra entry added when the user activates help search
-			// (extensible)
-			List<QuickAccessEntry> extraEntries = new ArrayList<>();
-			if (filter.length() > MIN_SEARCH_LENGTH) {
-				extraEntries.add(makeHelpSearchEntry(filter));
+		// perfect match, to be selected in the table if not null
+		QuickAccessElement perfectMatch = getPerfectMatch(filter);
+
+		String computingMessage = NLS.bind(QuickAccessMessages.QuickaAcessContents_computeMatchingEntries, filter);
+		int maxNumberOfItemsInTable = computeNumberOfItems();
+		AtomicReference<List<QuickAccessEntry>[]> entries = new AtomicReference<>();
+		final Job currentComputeEntriesJob = Job.create(computingMessage, theMonitor -> {
+			entries.set(
+					computeMatchingEntries(filter, perfectMatch, maxNumberOfItemsInTable, theMonitor));
+			return theMonitor.isCanceled() ? Status.CANCEL_STATUS : Status.OK_STATUS;
+		});
+		currentComputeEntriesJob.setPriority(Job.INTERACTIVE);
+		// feedback is delayed in a job as we don't want to show it on every keystroke
+		// but only when user seems to be waiting
+		UIJob computingFeedbackJob = new UIJob(table.getDisplay(), QuickAccessMessages.QuickAccessContents_computeMatchingEntries_displayFeedback_jobName) {
+			@Override
+			public IStatus runInUIThread(IProgressMonitor monitor) {
+				if (currentComputeEntriesJob.getResult() == null && !monitor.isCanceled() && !table.isDisposed()) {
+					showHintText(computingMessage, grayColor);
+					return Status.OK_STATUS;
+				}
+				return Status.CANCEL_STATUS;
 			}
-
-			// perfect match, to be selected in the table if not null
-			QuickAccessElement perfectMatch = getPerfectMatch(filter);
-
-			monitor = new NullProgressMonitor();
-			List<QuickAccessEntry>[] entries = computeMatchingEntries(filter, perfectMatch, extraEntries, monitor);
-			int selectionIndex = refreshTable(perfectMatch, entries, extraEntries);
-
-			if (table.getItemCount() > 0) {
-				table.setSelection(selectionIndex);
-				hideHintText();
-			} else if (filterTextEmpty) {
-				showHintText(QuickAccessMessages.QuickAccess_StartTypingToFindMatches, grayColor);
-			} else {
-				showHintText(QuickAccessMessages.QuickAccessContents_NoMatchingResults, grayColor);
+		};
+		currentComputeEntriesJob.addJobChangeListener(new JobChangeAdapter() {
+			@Override
+			public void done(IJobChangeEvent event) {
+				computingFeedbackJob.cancel();
+				if (computeProposalsJob == currentComputeEntriesJob && event.getResult().isOK()
+						&& !table.isDisposed()) {
+					display.asyncExec(() -> {
+						computingFeedbackJob.cancel();
+						refreshTable(perfectMatch, entries.get(), filter);
+					});
+				}
 			}
-
-			// update info as-you-type
-			updateInfoLabel();
-
-			updateFeedback(filterTextEmpty, showAllMatches);
-		}
-	}
-
-	QuickAccessEntry searchHelpEntry = null;
-	QuickAccessProvider searchHelpProvider = null;
-	QuickAccessHelpSearchElement searchHelpElement = null;
-
-	/**
-	 * Instantiate a new {@link QuickAccessEntry} to search the given text in the
-	 * eclipse help
-	 *
-	 * @param text String to search in the Eclipse Help
-	 *
-	 * @return the {@link QuickAccessEntry} to perform the action
-	 */
-	private QuickAccessEntry makeHelpSearchEntry(String text) {
-		if (searchHelpEntry == null) {
-			searchHelpProvider = new QuickAccessHelpSearchProvider();
-			searchHelpElement = new QuickAccessHelpSearchElement();
-			searchHelpEntry = new QuickAccessEntry(searchHelpElement, searchHelpProvider, new int[][] {},
-					new int[][] {}, QuickAccessEntry.MATCH_PERFECT);
-			searchHelpEntry.firstInCategory = true;
-		}
-		searchHelpElement.searchText = text;
-		return searchHelpEntry;
-	}
-
-	/**
-	 * "Search X in help" element shown at the end of the list.
-	 */
-	static class QuickAccessHelpSearchElement extends QuickAccessElement {
-
-		/** identifier */
-		private static final String SEARCH_IN_HELP_ID = "search.in.help"; //$NON-NLS-1$
-
-		String searchText;
-
-		public QuickAccessHelpSearchElement() {
-		}
-
-		@Override
-		public String getLabel() {
-			return NLS.bind(QuickAccessMessages.QuickAccessContents_SearchInHelpLabel, searchText);
-		}
-
-		@Override
-		public String getId() {
-			return SEARCH_IN_HELP_ID;
-		}
-
-		@Override
-		public void execute() {
-			PlatformUI.getWorkbench().getHelpSystem().search(searchText);
-		}
-
-		@Override
-		public ImageDescriptor getImageDescriptor() {
-			return WorkbenchImages.getImageDescriptor(IWorkbenchGraphicConstants.IMG_ETOOL_HELP_SEARCH);
-		}
-
-	}
-
-	/**
-	 * Provider for the "Search X in help" element. Only used to have a category
-	 * "Help".
-	 */
-	static class QuickAccessHelpSearchProvider extends QuickAccessProvider {
-		@Override
-		public String getName() {
-			return QuickAccessMessages.QuickAccessContents_HelpCategory;
-		}
-
-		@Override
-		public String getId() {
-			return "search.help"; //$NON-NLS-1$
-		}
-
-		@Override
-		public ImageDescriptor getImageDescriptor() {
-			return null;
-		}
-
-		@Override
-		public QuickAccessElement[] getElements() {
-			return null;
-		}
-
-		@Override
-		public QuickAccessElement getElementForId(String id) {
-			return null;
-		}
-
-		@Override
-		protected void doReset() {
-			// empty
-		}
+		});
+		this.computeProposalsJob = currentComputeEntriesJob;
+		currentComputeEntriesJob.schedule();
+		computingFeedbackJob.schedule(200); // delay a bit so if proposals compute fast enough, we don't show feedback
 	}
 
 	/**
@@ -304,7 +226,7 @@ public abstract class QuickAccessContents {
 		if (showAllMatches != showAll) {
 			showAllMatches = showAll;
 			updateInfoLabel();
-			refresh(filterText.getText().toLowerCase());
+			updateProposals(filterText.getText().toLowerCase());
 		}
 	}
 
@@ -352,21 +274,20 @@ public abstract class QuickAccessContents {
 		return showAllMatches;
 	}
 
-	private int refreshTable(QuickAccessElement perfectMatch, List<QuickAccessEntry>[] entries,
-			List<QuickAccessEntry> extraEntries) {
-		// search help extra entry: not from search or previous picks.
-		int nExtraEntries = (extraEntries == null) ? 0 : extraEntries.size();
-		if (table.getItemCount() > (entries.length + nExtraEntries)
-				&& table.getItemCount() - (entries.length + nExtraEntries) > 20) {
+	private void refreshTable(QuickAccessElement perfectMatch, List<QuickAccessEntry>[] entries, String filter) {
+		if (table.isDisposed()) {
+			return;
+		}
+		if (table.getItemCount() > entries.length && table.getItemCount() - entries.length > 20) {
 			table.removeAll();
 		}
 		TableItem[] items = table.getItems();
 		int selectionIndex = -1;
 		int index = 0;
-		for (int i = 0; i < providers.length; i++) {
-			if (entries[i] != null) {
+		for (List<QuickAccessEntry> entriesForCurrentCategory : entries) {
+			if (entriesForCurrentCategory != null) {
 				boolean firstEntry = true;
-				for (Iterator<QuickAccessEntry> it = entries[i].iterator(); it.hasNext();) {
+				for (Iterator<QuickAccessEntry> it = entriesForCurrentCategory.iterator(); it.hasNext();) {
 					QuickAccessEntry entry = it.next();
 					entry.firstInCategory = firstEntry;
 					firstEntry = false;
@@ -393,18 +314,23 @@ public abstract class QuickAccessContents {
 				}
 			}
 		}
-		// add extra entry
-		for (QuickAccessEntry entry : extraEntries) {
-			TableItem item = new TableItem(table, SWT.NONE);
-			item.setData(entry);
-		}
 		if (index < items.length) {
 			table.remove(index, items.length - 1);
 		}
 		if (selectionIndex == -1) {
 			selectionIndex = 0;
 		}
-		return selectionIndex;
+
+		if (table.getItemCount() > 0) {
+			table.setSelection(selectionIndex);
+			hideHintText();
+		} else if (filter.isEmpty()) {
+			showHintText(QuickAccessMessages.QuickAccess_StartTypingToFindMatches, grayColor);
+		} else {
+			showHintText(QuickAccessMessages.QuickAccessContents_NoMatchingResults, grayColor);
+		}
+		updateInfoLabel();
+		updateFeedback(filter.isEmpty(), showAllMatches);
 	}
 
 	int numberOfFilteredResults;
@@ -429,140 +355,211 @@ public abstract class QuickAccessContents {
 	 * @param filter       the string text filter to apply, possibly empty
 	 * @param perfectMatch a quick access element that should be given priority or
 	 *                     <code>null</code>
-	 * @param extraEntries extra entries that will be added to the tabular
-	 *                     visualization after computing matching entries, i.e.
-	 *                     Search in Help
+	 *
 	 * @param aMonitor
 	 * @return the array of lists (one per provider) contains the quick access
 	 *         entries that should be added to the table, possibly empty
 	 */
 	private List<QuickAccessEntry>[] computeMatchingEntries(String filter, QuickAccessElement perfectMatch,
-			List<QuickAccessEntry> extraEntries, IProgressMonitor aMonitor) {
-		// collect matches in an array of lists
-		@SuppressWarnings("unchecked")
-		List<QuickAccessEntry>[] entries = new List[providers.length];
-		// extra entries are limiting the number of items for search results
-		int maxCount = computeNumberOfItems() - extraEntries.size();
-		int[] indexPerProvider = new int[providers.length];
-		int countPerProvider = Math.min(maxCount / 4, INITIAL_COUNT_PER_PROVIDER);
-		int prevPick = 0;
-		int countTotal = 0;
-		boolean perfectMatchAdded = true;
-		if (perfectMatch != null) {
-			// reserve one entry for the perfect match
-			maxCount--;
-			perfectMatchAdded = false;
+			int maxNumberOfItemsInTable, IProgressMonitor aMonitor) {
+		if (aMonitor == null) {
+			aMonitor = new NullProgressMonitor();
 		}
-		boolean done;
+		// check for a category filter, like "Views: "
+		Matcher categoryMatcher = getCategoryPattern().matcher(filter);
 		String category = null;
-		Set<String> prevPickIds = new HashSet<>();
-		do {
-			// will be set to false if we find a provider with remaining
-			// elements
-			done = true;
-			// check for a category filter, like "Views: "
-			Matcher categoryMatcher = getCategoryPattern().matcher(filter);
-			if (categoryMatcher.matches()) {
-				category = categoryMatcher.group(1);
-				filter = category + " " + categoryMatcher.group(2); //$NON-NLS-1$
+		if (categoryMatcher.matches()) {
+			category = categoryMatcher.group(1);
+			filter = category + " " + categoryMatcher.group(2); //$NON-NLS-1$
+		}
+		final String finalFilter = filter;
+
+		// collect matching elements
+		@SuppressWarnings("unchecked")
+		LinkedHashMap<QuickAccessProvider, List<QuickAccessElement>> elementsForProviders = new LinkedHashMap<>(
+				providers.length);
+		for (QuickAccessProvider provider : providers) {
+			if (aMonitor.isCanceled()) {
+				break;
 			}
-			for (int i = 0; i < providers.length && (showAllMatches || countTotal < maxCount); i++) {
-				if (aMonitor.isCanceled()) {
-					break;
-				}
-				if (entries[i] == null) {
-					entries[i] = new ArrayList<>();
-					indexPerProvider[i] = 0;
-				}
-				int count = 0;
-				QuickAccessProvider provider = providers[i];
-				// when category is specified, skip providers except the
-				// specified one and the previous pick provider
-				boolean isPreviousPickProvider = (provider instanceof PreviousPicksProvider);
-				if (category != null && !category.equalsIgnoreCase(provider.getName()) && !isPreviousPickProvider) {
-					continue;
-				}
-				if (filter.length() > 0 || provider.isAlwaysPresent() || showAllMatches) {
-					QuickAccessElement[] sortedElements = provider.getElementsSorted(filter, aMonitor);
-					if (!(provider instanceof PreviousPicksProvider)) {
-						for (QuickAccessElement element : sortedElements) {
-							elementsToProviders.put(element, provider);
-						}
-					}
-
-					// count previous picks and store ids
-					if (isPreviousPickProvider) {
-						prevPick = sortedElements.length;
-						Stream.of(sortedElements).forEach(e -> prevPickIds.add(e.getId()));
-					}
-
-					int j = indexPerProvider[i];
-					// loops on all the elements of a provider
-					while (j < sortedElements.length
-							&& (showAllMatches || (count < countPerProvider && countTotal < maxCount))) {
-						QuickAccessElement element = sortedElements[j];
-
-						// Skip element if already in contained amid previous picks
-						if (!isPreviousPickProvider && prevPickIds.contains(element.getId())) {
-							j++;
-							continue;
-						}
-
-						QuickAccessEntry entry = null;
-						if (filter.length() == 0) {
-							if (i == 0 || showAllMatches) {
-								entry = new QuickAccessEntry(element, provider, new int[0][0], new int[0][0],
-										QuickAccessEntry.MATCH_PERFECT);
-							} else {
-								entry = null;
-							}
-						} else {
-							QuickAccessEntry possibleMatch = getMatcherFor(element).match(filter, provider);
-							if (possibleMatch != null) {
-								entry = possibleMatch;
-							}
-
-						}
-						if (entryEnabled(provider, entry)) {
-							entries[i].add(entry);
-							count++;
-							countTotal++;
-							if (i == 0 && entry.element == perfectMatch) {
-								perfectMatchAdded = true;
-								maxCount = MAX_COUNT_TOTAL;
-							}
-						}
-
-						j++;
-					}
-
-					indexPerProvider[i] = j;
-
-					if (j < sortedElements.length) {
-						done = false;
-					}
-				}
+			boolean isPreviousPickProvider = provider instanceof PreviousPicksProvider;
+			// skip if filter contains a category, and current provider isn't this category
+			if (category != null && !category.equalsIgnoreCase(provider.getName()) && !isPreviousPickProvider) {
+				continue;
 			}
-
-			// from now on, add one element per provider
-			countPerProvider = 1;
-
-		} while ((showAllMatches || countTotal < maxCount) && !done);
-
-		if (!perfectMatchAdded) {
-			QuickAccessEntry entry = getMatcherFor(perfectMatch).match(filter, providers[0]);
-			if (entryEnabled(providers[0], entry)) {
-				if (entries[0] == null) {
-					entries[0] = new ArrayList<>();
-					indexPerProvider[0] = 0;
+			if (!filter.isEmpty() || isPreviousPickProvider || showAllMatches) {
+				AtomicReference<List<QuickAccessElement>> sortedElementRef = new AtomicReference<>();
+				if (provider.requiresUiAccess()) {
+					UIJob job = new UIJob(
+							NLS.bind(QuickAccessMessages.QuickAccessContents_processingProviderInUI,
+									provider.getName())) {
+						@Override
+						public IStatus runInUIThread(IProgressMonitor monitor) {
+							sortedElementRef.set(Arrays.asList(provider.getElementsSorted(finalFilter, monitor)));
+							return Status.OK_STATUS;
+						}
+					};
+					job.setPriority(Job.INTERACTIVE);
+					job.schedule();
+					try {
+						job.join(0, new NullProgressMonitor());
+					} catch (Exception e) {
+						WorkbenchPlugin.log(e);
+					}
+				} else {
+					sortedElementRef.set(Arrays.asList(provider.getElementsSorted(filter, aMonitor)));
 				}
-				entries[0].add(entry);
+				List<QuickAccessElement> sortedElements = sortedElementRef.get();
+				if (sortedElements == null) {
+					sortedElements = Collections.emptyList();
+				}
+				if (!(provider instanceof PreviousPicksProvider)) {
+					for (QuickAccessElement element : sortedElements) {
+						elementsToProviders.put(element, provider);
+					}
+				}
+				if (!filter.isEmpty() && !sortedElements.isEmpty()) {
+					sortedElements = putPrefixMatchFirst(sortedElements, filter);
+				}
+				elementsForProviders.put(provider, new ArrayList<>(sortedElements));
 			}
 		}
 
-		// number of items matching the filtered search
-		numberOfFilteredResults = countTotal - prevPick;
-		return entries;
+		// Sort out the Previous Pick
+		List<String> prevPickIds = new ArrayList<>();
+		for (Entry<QuickAccessProvider, List<QuickAccessElement>> entry : elementsForProviders.entrySet()) {
+			if (entry.getKey() instanceof PreviousPicksProvider) {
+				prevPickIds
+						.addAll(entry.getValue().stream().map(QuickAccessElement::getId).collect(Collectors.toList()));
+			}
+		}
+		for (Entry<QuickAccessProvider, List<QuickAccessElement>> entry : elementsForProviders.entrySet()) {
+			if (!(entry.getKey() instanceof PreviousPicksProvider)) {
+				List<QuickAccessElement> filteredElements = new ArrayList<>(entry.getValue());
+				filteredElements.removeIf(element -> prevPickIds.contains(element.getId()));
+				entry.setValue(filteredElements);
+			}
+		}
+		// remove perfect match (will be added on top later)
+		QuickAccessProvider perfectMatchProvider = null;
+		if (perfectMatch != null) {
+			for (Entry<QuickAccessProvider, List<QuickAccessElement>> entry : elementsForProviders.entrySet()) {
+				if (perfectMatchProvider != null) {
+					List<QuickAccessElement> filteredElements = new ArrayList<>(entry.getValue());
+					if (filteredElements.removeIf(element -> prevPickIds.contains(element.getId()))) {
+						entry.setValue(filteredElements);
+						perfectMatchProvider = entry.getKey();
+					}
+				}
+			}
+		}
+		LinkedHashMap<QuickAccessProvider, List<QuickAccessEntry>> entriesPerProvider = new LinkedHashMap<>(
+				elementsForProviders.size());
+		if (showAllMatches) {
+			// Map elements to entries
+			for (Entry<QuickAccessProvider, List<QuickAccessElement>> elementsPerProvider : elementsForProviders
+					.entrySet()) {
+				QuickAccessProvider provider = elementsPerProvider.getKey();
+				List<QuickAccessEntry> entries = elementsPerProvider.getValue().stream() //
+						.map(QuickAccessMatcher::new) //
+						.map(matcher -> matcher.match(finalFilter, provider)) //
+						.filter(Objects::nonNull) //
+						.collect(Collectors.toList());
+				if (!entries.isEmpty()) {
+					entriesPerProvider.put(provider, entries);
+				}
+			}
+		} else {
+			int numberOfSlotsLeft = perfectMatch != null ? maxNumberOfItemsInTable -1 : maxNumberOfItemsInTable;
+			while (!elementsForProviders.isEmpty() && numberOfSlotsLeft > 0) {
+				int nbEntriesPerProvider = numberOfSlotsLeft / elementsForProviders.size();
+				if (nbEntriesPerProvider > 0) {
+					for (Entry<QuickAccessProvider, List<QuickAccessElement>> elementsPerProvider : elementsForProviders
+							.entrySet()) {
+						QuickAccessProvider provider = elementsPerProvider.getKey();
+						List<QuickAccessElement> elements = elementsPerProvider.getValue();
+						int toPickEntries = nbEntriesPerProvider;
+						while (toPickEntries > 0 && !elements.isEmpty()) {
+							QuickAccessElement element = elements.remove(0);
+							QuickAccessEntry entry = new QuickAccessMatcher(element).match(filter, provider);
+							if (entry != null) {
+								numberOfSlotsLeft--;
+								toPickEntries--;
+								if (!entriesPerProvider.containsKey(provider)) {
+									entriesPerProvider.put(provider, new LinkedList<>());
+								}
+								entriesPerProvider.get(provider).add(entry);
+							}
+						}
+					}
+				} else {
+					for (Entry<QuickAccessProvider, List<QuickAccessElement>> elementsForProvider : elementsForProviders
+							.entrySet()) {
+						if (numberOfSlotsLeft > 0) {
+							QuickAccessProvider provider = elementsForProvider.getKey();
+							List<QuickAccessElement> elements = elementsForProvider.getValue();
+							boolean entryPicked = false;
+							while (!entryPicked && !elements.isEmpty()) {
+								QuickAccessElement element = elements.remove(0);
+								QuickAccessEntry entry = new QuickAccessMatcher(element).match(filter, provider);
+								if (entry != null) {
+									numberOfSlotsLeft--;
+									entryPicked = true;
+									if (!entriesPerProvider.containsKey(provider)) {
+										entriesPerProvider.put(provider, new LinkedList<>());
+									}
+									entriesPerProvider.get(provider).add(entry);
+								}
+							}
+						}
+					}
+				}
+				Set<QuickAccessProvider> exhaustedProviders = new HashSet<>();
+				elementsForProviders.forEach((provider, elements) -> {
+					if (elements.isEmpty()) {
+						exhaustedProviders.add(provider);
+					}
+				});
+				exhaustedProviders.forEach(elementsForProviders::remove);
+			}
+		}
+		//
+		List<List<QuickAccessEntry>> res = new ArrayList<>();
+		if (perfectMatch != null) {
+			res.add(Collections.singletonList(new QuickAccessEntry(perfectMatch,
+					perfectMatchProvider != null ? perfectMatchProvider : providers[0], new int[0][0], new int[0][0],
+					QuickAccessEntry.MATCH_PERFECT)));
+		}
+		res.addAll(entriesPerProvider.values());
+		return (List<QuickAccessEntry>[]) res.toArray(new List<?>[res.size()]);
+	}
+
+	/*
+	 * Consider whether we could directly check the "matchQuality" here, but it
+	 * seems to be a more expensive operation
+	 */
+	private static List<QuickAccessElement> putPrefixMatchFirst(List<QuickAccessElement> elements, String prefix) {
+		List<QuickAccessElement> res = new ArrayList<>(elements);
+		List<Integer> matchingIndexes = new ArrayList<>();
+		for (int i = 0; i < elements.size(); i++) {
+			if (elements.get(i).getLabel().toLowerCase().startsWith(prefix.toLowerCase())) {
+				matchingIndexes.add(Integer.valueOf(i));
+			}
+		}
+		int currentMatchIndex = 0;
+		int currentNonMatchIndex = matchingIndexes.size();
+		for (int i = 0; i < res.size(); i++) {
+			boolean isMatch = !matchingIndexes.isEmpty() && matchingIndexes.iterator().next().intValue() == i;
+			if (isMatch) {
+				matchingIndexes.remove(0);
+				res.set(currentMatchIndex, elements.get(i));
+				currentMatchIndex++;
+			} else {
+				res.set(currentNonMatchIndex, elements.get(i));
+				currentNonMatchIndex++;
+			}
+		}
+		return res;
 	}
 
 	Pattern categoryPattern;
@@ -590,28 +587,6 @@ public abstract class QuickAccessContents {
 		return categoryPattern;
 	}
 
-	/**
-	 * @param provider
-	 * @param entry
-	 * @return <code>true</code> if the entry is enabled
-	 */
-	private boolean entryEnabled(QuickAccessProvider provider, QuickAccessEntry entry) {
-		if (entry == null) {
-			return false;
-		}
-
-		// For a previous pick provider, check that the original provider does
-		// also provide the element
-		if (provider instanceof PreviousPicksProvider) {
-			QuickAccessElement element = entry.element;
-			final QuickAccessProvider originalProvider = getProviderFor(element);
-			QuickAccessElement match = originalProvider.getElementForId(element.getId());
-			return match != null;
-		}
-
-		return true;
-	}
-
 	private void doDispose() {
 		if (textLayout != null && !textLayout.isDisposed()) {
 			textLayout.dispose();
@@ -621,15 +596,6 @@ public abstract class QuickAccessContents {
 			resourceManager.dispose();
 			resourceManager = null;
 		}
-	}
-
-	protected IDialogSettings getDialogSettings() {
-		final IDialogSettings workbenchDialogSettings = WorkbenchPlugin.getDefault().getDialogSettings();
-		IDialogSettings result = workbenchDialogSettings.getSection(getId());
-		if (result == null) {
-			result = workbenchDialogSettings.addNewSection(getId());
-		}
-		return result;
 	}
 
 	protected String getId() {
@@ -710,7 +676,7 @@ public abstract class QuickAccessContents {
 		});
 		filterText.addModifyListener(e -> {
 			String text = ((Text) e.widget).getText().toLowerCase();
-			refresh(text);
+			updateProposals(text);
 		});
 	}
 
@@ -726,15 +692,15 @@ public abstract class QuickAccessContents {
 	}
 
 	/** Hide the hint text */
-	void hideHintText() {
+	private void hideHintText() {
 		if (displayHintText) {
 			setHintTextToDisplay(false);
 		}
 	}
 
 	/** Show the hint text with the given color */
-	void showHintText(String text, Color color) {
-		if (hintText == null) {
+	private void showHintText(String text, Color color) {
+		if (hintText == null || hintText.isDisposed()) {
 			// toolbar hidden
 			return;
 		}
@@ -801,7 +767,7 @@ public abstract class QuickAccessContents {
 						e.display.timerExec(100, () -> {
 							if (table != null && !table.isDisposed() && filterText != null
 									&& !filterText.isDisposed()) {
-								refresh(filterText.getText().toLowerCase());
+								updateProposals(filterText.getText().toLowerCase());
 							}
 							resized = false;
 						});
@@ -924,12 +890,6 @@ public abstract class QuickAccessContents {
 		return infoLabel;
 	}
 
-	public void resetProviders() {
-		for (QuickAccessProvider provider : providers) {
-			provider.reset();
-		}
-	}
-
 	QuickAccessProvider getProvider(String providerId) {
 		if (providers == null || providers.length == 0) {
 			return null;
@@ -945,13 +905,6 @@ public abstract class QuickAccessContents {
 		return elementsToProviders.get(quickAccessElement);
 	}
 
-	private QuickAccessMatcher getMatcherFor(QuickAccessElement element) {
-		if (!elementsToMatchers.containsKey(element)) {
-			elementsToMatchers.put(element, new QuickAccessMatcher(element));
-		}
-		return elementsToMatchers.get(element);
-	}
-
 	void registerProviderFor(QuickAccessElement quickAccessElement, QuickAccessProvider quickAccessProvider) {
 		if (quickAccessElement == null || quickAccessProvider == null) {
 			return;
@@ -959,4 +912,11 @@ public abstract class QuickAccessContents {
 		elementsToProviders.put(quickAccessElement, quickAccessProvider);
 	}
 
+	public Text getFilterText() {
+		return filterText;
+	}
+
+	public Table getTable() {
+		return table;
+	}
 }

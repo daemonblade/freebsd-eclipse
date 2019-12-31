@@ -4631,6 +4631,23 @@
           name="Test Quick Access Computer"
           requiresUIAccess="false">
     </computer>
+    <computer
+          class="org.eclipse.ui.tests.quickaccess.TestIncrementalQuickAccessComputer"
+          name="Test Incremental Quick Access Computer"
+          requiresUIAccess="false">
+    </computer>
+    <computer
+          class="org.eclipse.ui.tests.quickaccess.TestLongRunningQuickAccessComputer"
+          name="Test long running quick access"
+          requiresUIAccess="false">
+    </computer>
  </extension>
-
+ <extension
+       id="datatransfer.ImportTestUtils.test.builder"
+       name="datatransfer.ImportTestUtils.test.builder"
+       point="org.eclipse.core.resources.builders">
+    <builder>
+          <run class="org.eclipse.ui.tests.datatransfer.ImportTestUtils$TestBuilder"/>
+    </builder>
+ </extension>
 </plugin>

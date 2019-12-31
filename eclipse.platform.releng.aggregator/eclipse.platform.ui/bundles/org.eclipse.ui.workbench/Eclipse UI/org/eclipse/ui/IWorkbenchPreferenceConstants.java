@@ -255,8 +255,10 @@ public interface IWorkbenchPreferenceConstants {
 	 * The default value for this preference is: <code>true</code>
 	 * </p>
 	 *
+	 * @deprecated not supported since the 4.x migration
 	 * @since 3.0
 	 */
+	@Deprecated
 	String SHOW_TRADITIONAL_STYLE_TABS = "SHOW_TRADITIONAL_STYLE_TABS"; //$NON-NLS-1$
 
 	/**
@@ -273,6 +275,22 @@ public interface IWorkbenchPreferenceConstants {
 	 * @since 3.0
 	 */
 	String SHOW_TEXT_ON_PERSPECTIVE_BAR = "SHOW_TEXT_ON_PERSPECTIVE_BAR"; //$NON-NLS-1$
+
+	/**
+	 * A named preference for whether the workbench should show text on the find
+	 * actions bar.
+	 *
+	 * Boolean-valued: <code>true</code>, if the application should show text on the
+	 * find action bar, <code>false</code> otherwise.
+	 * <p>
+	 * The default value for this preference is: <code>false</code> (do not show
+	 * text on the find actions bar)
+	 * </p>
+	 *
+	 * @since 3.117
+	 */
+
+	String SHOW_TEXT_ON_QUICK_ACCESS = "SHOW_TEXT_ON_QUICK_ACCESS"; //$NON-NLS-1$
 
 	/**
 	 * A named preference for whether the workbench should show the "open

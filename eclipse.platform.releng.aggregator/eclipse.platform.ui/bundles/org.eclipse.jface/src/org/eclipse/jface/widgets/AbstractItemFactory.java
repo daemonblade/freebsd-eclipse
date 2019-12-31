@@ -25,6 +25,11 @@ import org.eclipse.swt.widgets.Widget;
  * @param <F> factory
  * @param <I> item
  * @param <P> parent
+ *
+ * @noextend this class is not intended to be subclassed by clients.
+ *
+ * @since 3.18
+ *
  */
 public abstract class AbstractItemFactory<F extends AbstractItemFactory<?, ?, ?>, I extends Item, P extends Widget>
 		extends AbstractWidgetFactory<F, I, P> {
@@ -33,15 +38,18 @@ public abstract class AbstractItemFactory<F extends AbstractItemFactory<?, ?, ?>
 	 * @param factoryClass
 	 * @param itemCreator
 	 */
-	protected AbstractItemFactory(Class<F> factoryClass, WidgetSupplier<I, P> itemCreator) {
+	AbstractItemFactory(Class<F> factoryClass, WidgetSupplier<I, P> itemCreator) {
 		super(factoryClass, itemCreator);
 	}
 
 	/**
-	 * Sets the image.
+	 * Sets the receiver's image to the argument, which may be null indicating that
+	 * no image should be displayed.
 	 *
-	 * @param image
+	 * @param image the image to display on the receiver
 	 * @return this
+	 *
+	 * @see Item#setImage(Image)
 	 */
 	public F image(Image image) {
 		addProperty(i -> i.setImage(image));
@@ -49,10 +57,16 @@ public abstract class AbstractItemFactory<F extends AbstractItemFactory<?, ?, ?>
 	}
 
 	/**
-	 * Sets the text.
+	 * Sets the receiver's text.
+	 * <p>
+	 * Note: If control characters like '\n', '\t' etc. are used in the string, then
+	 * the behavior is platform dependent.
+	 * </p>
 	 *
-	 * @param text
+	 * @param text the text
 	 * @return this
+	 *
+	 * @see Item#setText(String)
 	 */
 	public F text(String text) {
 		addProperty(i -> i.setText(text));

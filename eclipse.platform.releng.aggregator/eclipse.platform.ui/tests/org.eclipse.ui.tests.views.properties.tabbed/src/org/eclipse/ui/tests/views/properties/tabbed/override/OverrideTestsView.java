@@ -14,6 +14,7 @@
 package org.eclipse.ui.tests.views.properties.tabbed.override;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -43,7 +44,7 @@ public class OverrideTestsView extends ViewPart implements
 
 	private OverrideTestsContentProvider overrideTestsContentProvider;
 
-	private ArrayList selection = new ArrayList();
+	private List<TableViewer> selection = new ArrayList<>();
 
 	private OverrideTestsSelectionProvider selectionProvider;
 
@@ -66,7 +67,7 @@ public class OverrideTestsView extends ViewPart implements
 	}
 
 	@Override
-	public Object getAdapter(Class adapter) {
+	public <T> T getAdapter(Class<T> adapter) {
 		if (IPropertySheetPage.class.equals(adapter)) {
 			if (TestsPerspective.TESTS_PERSPECTIVE_ID.equals(getSite()
 					.getWorkbenchWindow().getActivePage().getPerspective()
@@ -74,9 +75,9 @@ public class OverrideTestsView extends ViewPart implements
 				if (tabbedPropertySheetPage == null) {
 					tabbedPropertySheetPage = new TabbedPropertySheetPage(this);
 				}
-				return tabbedPropertySheetPage;
+				return adapter.cast(tabbedPropertySheetPage);
 			}
-			return new OverrideTestsTabFolderPropertySheetPage();
+			return adapter.cast(new OverrideTestsTabFolderPropertySheetPage());
 		}
 		return super.getAdapter(adapter);
 	}
@@ -128,7 +129,7 @@ public class OverrideTestsView extends ViewPart implements
 		}
 		Element[] elements = (Element[]) overrideTestsContentProvider.getElements(null);
 		for (Element element : elements) {
-			Class clazz = element.getClass();
+			Class<? extends Element> clazz = element.getClass();
 			if (elementClass == clazz) {
 				StructuredSelection newSelection = new StructuredSelection(element);
 				viewer.setSelection(newSelection);

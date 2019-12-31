@@ -32,9 +32,9 @@ import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.JUnit4;
 
-@RunWith(BlockJUnit4ClassRunner.class)
+@RunWith(JUnit4.class)
 public class DispatcherTest extends UITestCase {
 
 	private KeyBindingDispatcher dispatcher;
@@ -67,7 +67,7 @@ public class DispatcherTest extends UITestCase {
 		IEditorPart part = IDE.openEditor(getWorkbench().getActiveWorkbenchWindow().getActivePage(), file);
 		try {
 			int shellCount = Display.getCurrent().getShells().length;
-			dispatcher.press(Arrays.asList(new KeyStroke[] { KeyStroke.getInstance(SWT.CTRL, 'O') }), null);
+			dispatcher.press(Arrays.asList(KeyStroke.getInstance(SWT.CTRL, 'O')), null);
 			Assert.assertFalse("No handler should have been invoked", CheckInvokedHandler.invoked);
 			Assert.assertEquals("No Shell should have been added", shellCount, Display.getCurrent().getShells().length);
 		} finally {
@@ -86,7 +86,7 @@ public class DispatcherTest extends UITestCase {
 		IEditorPart part = IDE.openEditor(getWorkbench().getActiveWorkbenchWindow().getActivePage(), file);
 		try {
 			int shellCount = Display.getCurrent().getShells().length;
-			dispatcher.press(Arrays.asList(new KeyStroke[] { KeyStroke.getInstance(SWT.CTRL, 'O') }), null);
+			dispatcher.press(Arrays.asList(KeyStroke.getInstance(SWT.CTRL, 'O')), null);
 			Assert.assertTrue("Handler should have been invoked", CheckInvokedHandler.invoked);
 			Assert.assertEquals("No Shell should have been added", shellCount, Display.getCurrent().getShells().length);
 		} finally {

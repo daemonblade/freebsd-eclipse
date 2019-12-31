@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006 IBM Corporation and others.
+ * Copyright (c) 2006, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -41,7 +41,7 @@ import org.eclipse.ui.views.properties.tabbed.TabbedPropertySheetPage;
 
 /**
  * The font section on the button tab.
- * 
+ *
  * @author Anthony Hunter
  */
 public class FontSection
@@ -51,6 +51,7 @@ public class FontSection
 
 	private ButtonElement buttonElement;
 
+	@Override
 	public void setInput(IWorkbenchPart part, ISelection selection) {
 		super.setInput(part, selection);
 		Assert.isTrue(selection instanceof IStructuredSelection);
@@ -59,10 +60,7 @@ public class FontSection
 		this.buttonElement = (ButtonElement) input;
 	}
 
-	/**
-	 * @see org.eclipse.ui.views.properties.tabbed.ITabbedPropertySection#createControls(org.eclipse.swt.widgets.Composite,
-	 *      org.eclipse.ui.views.properties.tabbed.TabbedPropertySheetPage)
-	 */
+	@Override
 	public void createControls(Composite parent,
 			TabbedPropertySheetPage tabbedPropertySheetPage) {
 		super.createControls(parent, tabbedPropertySheetPage);
@@ -85,6 +83,7 @@ public class FontSection
 			"Change...", SWT.PUSH); //$NON-NLS-1$
 		fontButton.addSelectionListener(new SelectionAdapter() {
 
+			@Override
 			public void widgetSelected(SelectionEvent event) {
 				FontDialog ftDialog = new FontDialog(PlatformUI.getWorkbench()
 					.getActiveWorkbenchWindow().getShell());
@@ -129,9 +128,7 @@ public class FontSection
 		fontButton.setLayoutData(data);
 	}
 
-	/*
-	 * @see org.eclipse.ui.views.properties.tabbed.view.ITabbedPropertySection#refresh()
-	 */
+	@Override
 	public void refresh() {
 		FontData fontdata = buttonElement.getControl().getFont().getFontData()[0];
 		fontText.setText(StringConverter.asString(fontdata));

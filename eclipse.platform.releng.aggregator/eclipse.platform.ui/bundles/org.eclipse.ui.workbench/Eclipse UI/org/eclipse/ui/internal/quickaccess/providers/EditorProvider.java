@@ -11,7 +11,6 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-
 package org.eclipse.ui.internal.quickaccess.providers;
 
 import java.util.HashMap;
@@ -32,18 +31,18 @@ import org.eclipse.ui.quickaccess.QuickAccessElement;
  */
 public class EditorProvider extends QuickAccessProvider {
 
-	private Map idToElement;
+	private Map<String, EditorElement> idToElement;
 
 	@Override
-	public QuickAccessElement getElementForId(String id) {
+	public QuickAccessElement findElement(String id, String filterText) {
 		getElements();
-		return (EditorElement) idToElement.get(id);
+		return idToElement.get(id);
 	}
 
 	@Override
 	public QuickAccessElement[] getElements() {
 		if (idToElement == null) {
-			idToElement = new HashMap();
+			idToElement = new HashMap<>();
 			IWorkbenchPage activePage = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 			if (activePage == null) {
 				return new QuickAccessElement[0];
@@ -53,7 +52,7 @@ public class EditorProvider extends QuickAccessProvider {
 				idToElement.put(editorElement.getId(), editorElement);
 			}
 		}
-		return (QuickAccessElement[]) idToElement.values().toArray(new QuickAccessElement[idToElement.values().size()]);
+		return idToElement.values().toArray(new QuickAccessElement[idToElement.values().size()]);
 	}
 
 	@Override

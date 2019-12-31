@@ -26,22 +26,18 @@ public class CSSPropertyUnselectHotTabsColorBackgroundHandler extends AbstractCS
 
 	public static final String UNSELECTED_HOT_TAB_COLOR_BACKGROUND = "swt-unselected-hot-tab-color-background";
 
-	public static final String DEPRECATED_UNSELECTED_HOT_TAB_COLOR_BACKGROUND = "unselected-hot-tab-color-background";
-
 	@Override
 	protected void applyCSSProperty(Control control, String property,
 			CSSValue value, String pseudo, CSSEngine engine) throws Exception {
-		if (UNSELECTED_HOT_TAB_COLOR_BACKGROUND.equals(property)
-				|| DEPRECATED_UNSELECTED_HOT_TAB_COLOR_BACKGROUND.equals(property)) {
-			if (!(control instanceof CTabFolder)) {
-				return;
-			}
-			if (value.getCssValueType() == CSSValue.CSS_PRIMITIVE_VALUE) {
-				Color newColor = (Color) engine.convert(value, Color.class, control.getDisplay());
-				CTabFolderRenderer renderer = ((CTabFolder) control).getRenderer();
-				if (renderer instanceof ICTabRendering) {
-					((ICTabRendering) renderer).setUnselectedHotTabsColorBackground(newColor);
-				}
+		if (!(control instanceof CTabFolder) || value.getCssValueType() != CSSValue.CSS_PRIMITIVE_VALUE) {
+			return;
+		}
+
+		if (UNSELECTED_HOT_TAB_COLOR_BACKGROUND.equals(property)) {
+			Color newColor = (Color) engine.convert(value, Color.class, control.getDisplay());
+			CTabFolderRenderer renderer = ((CTabFolder) control).getRenderer();
+			if (renderer instanceof ICTabRendering) {
+				((ICTabRendering) renderer).setUnselectedHotTabsColorBackground(newColor);
 			}
 		}
 	}

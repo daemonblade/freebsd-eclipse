@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -233,22 +233,22 @@ public abstract class Dialog extends Window {
 	private static final int VERTICAL_DIALOG_UNITS_PER_CHAR = 8;
 
 	/**
-	 * Returns the number of pixels corresponding to the height of the given
-	 * number of characters.
+	 * Returns the number of pixels corresponding to the height of the given number
+	 * of characters.
 	 * <p>
 	 * The required <code>FontMetrics</code> parameter may be created in the
-	 * following way: <code>
-	 * 	GC gc = new GC(control);
-	 *	gc.setFont(control.getFont());
-	 *	fontMetrics = gc.getFontMetrics();
-	 *	gc.dispose();
-	 * </code>
+	 * following way:
 	 * </p>
 	 *
-	 * @param fontMetrics
-	 *            used in performing the conversion
-	 * @param chars
-	 *            the number of characters
+	 * <pre>
+	 * GC gc = new GC(control);
+	 * gc.setFont(control.getFont());
+	 * fontMetrics = gc.getFontMetrics();
+	 * gc.dispose();
+	 * </pre>
+	 *
+	 * @param fontMetrics used in performing the conversion
+	 * @param chars       the number of characters
 	 * @return the number of pixels
 	 * @since 2.0
 	 */
@@ -258,49 +258,49 @@ public abstract class Dialog extends Window {
 	}
 
 	/**
-	 * Returns the number of pixels corresponding to the given number of
-	 * horizontal dialog units.
+	 * Returns the number of pixels corresponding to the given number of horizontal
+	 * dialog units.
 	 * <p>
 	 * The required <code>FontMetrics</code> parameter may be created in the
-	 * following way: <code>
-	 * 	GC gc = new GC(control);
-	 *	gc.setFont(control.getFont());
-	 *	fontMetrics = gc.getFontMetrics();
-	 *	gc.dispose();
-	 * </code>
+	 * following way:
 	 * </p>
 	 *
-	 * @param fontMetrics
-	 *            used in performing the conversion
-	 * @param dlus
-	 *            the number of horizontal dialog units
+	 * <pre>
+	 * GC gc = new GC(control);
+	 * gc.setFont(control.getFont());
+	 * fontMetrics = gc.getFontMetrics();
+	 * gc.dispose();
+	 * </pre>
+	 *
+	 * @param fontMetrics used in performing the conversion
+	 * @param dlus        the number of horizontal dialog units
 	 * @return the number of pixels
 	 * @since 2.0
 	 */
 	public static int convertHorizontalDLUsToPixels(FontMetrics fontMetrics,
 			int dlus) {
 		// round to the nearest pixel
-		return (fontMetrics.getAverageCharWidth() * dlus + HORIZONTAL_DIALOG_UNIT_PER_CHAR / 2)
-				/ HORIZONTAL_DIALOG_UNIT_PER_CHAR;
+		return (int) ((fontMetrics.getAverageCharacterWidth() * dlus + HORIZONTAL_DIALOG_UNIT_PER_CHAR / 2)
+				/ HORIZONTAL_DIALOG_UNIT_PER_CHAR);
 	}
 
 	/**
-	 * Returns the number of pixels corresponding to the given number of
-	 * vertical dialog units.
+	 * Returns the number of pixels corresponding to the given number of vertical
+	 * dialog units.
 	 * <p>
 	 * The required <code>FontMetrics</code> parameter may be created in the
-	 * following way: <code>
-	 * 	GC gc = new GC(control);
-	 *	gc.setFont(control.getFont());
-	 *	fontMetrics = gc.getFontMetrics();
-	 *	gc.dispose();
-	 * </code>
+	 * following way:
 	 * </p>
 	 *
-	 * @param fontMetrics
-	 *            used in performing the conversion
-	 * @param dlus
-	 *            the number of vertical dialog units
+	 * <pre>
+	 * GC gc = new GC(control);
+	 * gc.setFont(control.getFont());
+	 * fontMetrics = gc.getFontMetrics();
+	 * gc.dispose();
+	 * </pre>
+	 *
+	 * @param fontMetrics used in performing the conversion
+	 * @param dlus        the number of vertical dialog units
 	 * @return the number of pixels
 	 * @since 2.0
 	 */
@@ -312,43 +312,43 @@ public abstract class Dialog extends Window {
 	}
 
 	/**
-	 * Returns the number of pixels corresponding to the width of the given
-	 * number of characters.
+	 * Returns the number of pixels corresponding to the width of the given number
+	 * of characters.
 	 * <p>
 	 * The required <code>FontMetrics</code> parameter may be created in the
-	 * following way: <code>
-	 * 	GC gc = new GC(control);
-	 *	gc.setFont(control.getFont());
-	 *	fontMetrics = gc.getFontMetrics();
-	 *	gc.dispose();
-	 * </code>
+	 * following way:
 	 * </p>
 	 *
-	 * @param fontMetrics
-	 *            used in performing the conversion
-	 * @param chars
-	 *            the number of characters
+	 * <pre>
+	 * GC gc = new GC(control);
+	 * gc.setFont(control.getFont());
+	 * fontMetrics = gc.getFontMetrics();
+	 * gc.dispose();
+	 * </pre>
+	 *
+	 * @param fontMetrics used in performing the conversion
+	 * @param chars       the number of characters
 	 * @return the number of pixels
 	 * @since 2.0
 	 */
 	public static int convertWidthInCharsToPixels(FontMetrics fontMetrics,
 			int chars) {
-		return fontMetrics.getAverageCharWidth() * chars;
+		return (int) (fontMetrics.getAverageCharacterWidth() * chars);
 	}
 
 	/**
-	 * Shortens the given text <code>textValue</code> so that its width in
-	 * pixels does not exceed the width of the given control. Overrides
-	 * characters in the center of the original string with an ellipsis ("...")
-	 * if necessary. If a <code>null</code> value is given, <code>null</code>
-	 * is returned.
+	 * Try to shorten the given text <code>textValue</code> so that its width in
+	 * pixels does not exceed the width of the given control. Overrides characters
+	 * in the center of the original string with an ellipsis ("...") if necessary.
+	 * If a <code>null</code> value is given, <code>null</code> is returned.
+	 * <p>
+	 * <b>Note:</b> if the text cannot be shortened because the width of control is
+	 * too low the full original string is returned.
+	 * </p>
 	 *
-	 * @param textValue
-	 *            the original string or <code>null</code>
-	 * @param control
-	 *            the control the string will be displayed on
-	 * @return the string to display, or <code>null</code> if null was passed
-	 *         in
+	 * @param textValue the original string or <code>null</code>
+	 * @param control   the control the string will be displayed on
+	 * @return the string to display, or <code>null</code> if null was passed in
 	 *
 	 * @since 3.0
 	 */
@@ -1286,25 +1286,23 @@ public abstract class Dialog extends Window {
 	}
 
 	/**
-	 * Returns a boolean indicating whether the dialog should be
-	 * considered resizable when the shell style is initially
-	 * set.
+	 * Returns a boolean indicating whether the dialog should be considered
+	 * resizable when the shell style is initially set.
+	 * <p>
+	 * This method is used to ensure that all style bits appropriate for resizable
+	 * dialogs are added to the shell style. Individual dialogs may always set the
+	 * shell style to ensure that a dialog is resizable, but using this method
+	 * ensures that resizable dialogs will be created with the same set of style
+	 * bits.
+	 * </p>
+	 * <p>
+	 * Style bits will never be removed based on the return value of this method.
+	 * For example, if a dialog returns <code>false</code>, but also sets a style
+	 * bit for a SWT.RESIZE border, the style bit will be honored.
+	 * </p>
 	 *
-	 * This method is used to ensure that all style
-	 * bits appropriate for resizable dialogs are added to the
-	 * shell style.  Individual dialogs may always set the shell
-	 * style to ensure that a dialog is resizable, but using this
-	 * method ensures that resizable dialogs will be created with
-	 * the same set of style bits.
-	 *
-	 * Style bits will never be removed based on the return value
-	 * of this method.  For example, if a dialog returns
-	 * <code>false</code>, but also sets a style bit for a
-	 * SWT.RESIZE border, the style bit will be honored.
-	 *
-	 * @return a boolean indicating whether the dialog is
-	 * resizable and should have the default style bits for
-	 * resizable dialogs
+	 * @return a boolean indicating whether the dialog is resizable and should have
+	 *         the default style bits for resizable dialogs
 	 *
 	 * @since 3.4
 	 */

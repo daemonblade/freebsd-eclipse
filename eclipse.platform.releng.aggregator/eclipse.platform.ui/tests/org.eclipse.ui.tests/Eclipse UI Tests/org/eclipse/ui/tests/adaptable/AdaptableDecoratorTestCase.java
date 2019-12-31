@@ -16,8 +16,6 @@ package org.eclipse.ui.tests.adaptable;
 
 import java.io.ByteArrayInputStream;
 
-import junit.framework.TestSuite;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -32,10 +30,14 @@ import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.decorators.DecoratorDefinition;
 import org.eclipse.ui.internal.decorators.DecoratorManager;
 import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * @version 1.0
  */
+@RunWith(JUnit4.class)
 public class AdaptableDecoratorTestCase extends UITestCase implements
 		ILabelProviderListener {
 
@@ -53,22 +55,8 @@ public class AdaptableDecoratorTestCase extends UITestCase implements
 
 	protected IFile testFile;
 
-	public static TestSuite suite() {
-		TestSuite ts = new TestSuite();
-		ts.addTest(new AdaptableDecoratorTestCase("testEnableDecorator"));
-		ts.addTest(new AdaptableDecoratorTestCase("testDisableDecorator"));
-		ts.addTest(new AdaptableDecoratorTestCase("testRefreshFullContributor"));
-		ts.addTest(new AdaptableDecoratorTestCase("testRefreshLightContributor"));
-		return ts;
-	}
-
-	/**
-	 * Constructor for DecoratorTestCase.
-	 *
-	 * @param testName
-	 */
-	public AdaptableDecoratorTestCase(String testName) {
-		super(testName);
+	public AdaptableDecoratorTestCase() {
+		super(AdaptableDecoratorTestCase.class.getSimpleName());
 	}
 
 	@Override
@@ -118,6 +106,7 @@ public class AdaptableDecoratorTestCase extends UITestCase implements
 	/**
 	 * Test enabling the contributor
 	 */
+	@Test
 	public void testEnableDecorator() {
 		getDecoratorManager().updateForEnablementChange();
 		fullDefinition.setEnabled(true);
@@ -129,6 +118,7 @@ public class AdaptableDecoratorTestCase extends UITestCase implements
 	/**
 	 * Test disabling the contributor
 	 */
+	@Test
 	public void testDisableDecorator() {
 		getDecoratorManager().updateForEnablementChange();
 		fullDefinition.setEnabled(false);
@@ -139,6 +129,7 @@ public class AdaptableDecoratorTestCase extends UITestCase implements
 	/**
 	 * Refresh the full decorator.
 	 */
+	@Test
 	public void testRefreshFullContributor() {
 
 		updated = false;
@@ -154,6 +145,7 @@ public class AdaptableDecoratorTestCase extends UITestCase implements
 	/**
 	 * Refresh the full decorator.
 	 */
+	@Test
 	public void testRefreshLightContributor() {
 
 		updated = false;

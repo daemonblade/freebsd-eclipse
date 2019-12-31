@@ -2003,6 +2003,7 @@
          </command>
          <command
                commandId="org.eclipse.ui.ide.configureFilters"
+               icon="platform:/plugin/org.eclipse.ui.ide/icons/full/elcl16/filter_ps.png"
                mnemonic="%command.configureFilters.mnemonic"
                style="push">
          </command>
@@ -2704,6 +2705,14 @@
                relative="org.eclipse.debug.ui.DebugView">
          </view>
       </perspectiveExtension>
+   </extension>
+   <extension
+         point="org.eclipse.ui.quickAccess">
+      <computer
+            class="org.eclipse.ui.internal.ide.dialogs.OpenResourceQuickAccessComputer"
+            name="%quickAccess.resources.name"
+            requiresUIAccess="false">
+      </computer>
    </extension>
 
 </plugin>

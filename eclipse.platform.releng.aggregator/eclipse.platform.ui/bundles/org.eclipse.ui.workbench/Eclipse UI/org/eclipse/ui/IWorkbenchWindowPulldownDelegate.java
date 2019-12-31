@@ -28,6 +28,8 @@ public interface IWorkbenchWindowPulldownDelegate extends IWorkbenchWindowAction
 	 * responsibility of the implementor to properly dispose of any SWT menus
 	 * created by this method.
 	 *
+	 * @param parent the control to set the menu on
+	 *
 	 * @return the menu
 	 */
 	Menu getMenu(Control parent);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2014 Google Inc and others.
+ * Copyright (C) 2014, 2019 Google Inc and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,7 @@
  *	   Marcus Eng (Google)
  *	   Sergey Prigogin (Google)
  *	   Simon Scholz <simon.scholz@vogella.com> - Bug 443391
+ *     Christoph Läubrich - change to new preference store API
  *******************************************************************************/
 package org.eclipse.ui.internal.monitoring;
 
@@ -106,18 +107,18 @@ public class EventLoopMonitorThreadManualTests {
 	 * http://www.ams.org/journals/mcom/1973-27-124/S0025-5718-1973-0327722-7/S0025-5718-1973-0327722-7.pdf
 	 *
 	 * <p>
-	 * At 80ns/call, the sequence will have a period of >23382 years (== (2^63-1) * 80ns)
+	 * At 80ns/call, the sequence will have a period of &gt;23382 years (== (2^63-1) * 80ns)
 	 */
 	protected static final long PN63_GENERATOR_POLY = (3L << 62) | 1;
 
 	@Before
 	public void setUp() {
-		getPreferences().setValue(PreferenceConstants.MONITORING_ENABLED, false);
+		MonitoringPlugin.getPreferenceStore().setValue(PreferenceConstants.MONITORING_ENABLED, false);
 	}
 
 	@After
 	public void tearDown() {
-		getPreferences().setToDefault(PreferenceConstants.MONITORING_ENABLED);
+		MonitoringPlugin.getPreferenceStore().setToDefault(PreferenceConstants.MONITORING_ENABLED);
 	}
 
 	protected static long pn63(long pnSequence) {
@@ -399,18 +400,13 @@ public class EventLoopMonitorThreadManualTests {
 	}
 
 	private void killMonitorThread(final Thread thread, Display display) throws Exception {
-		display.syncExec(new Runnable() {
-			@Override
-			public void run() {
-				shutdownThread(thread);
-			}
-		});
+		display.syncExec(() -> shutdownThread(thread));
 
 		thread.join();
 	}
 
 	protected static EventLoopMonitorThread.Parameters createDefaultParameters() {
-		IPreferenceStore preferences = MonitoringPlugin.getDefault().getPreferenceStore();
+		IPreferenceStore preferences = MonitoringPlugin.getPreferenceStore();
 		EventLoopMonitorThread.Parameters params = new EventLoopMonitorThread.Parameters();
 
 		params.longEventWarningThreshold =
@@ -515,19 +511,11 @@ public class EventLoopMonitorThreadManualTests {
 
 	protected void startMonitoring(final Display display, final Thread monitorThread,
 			CountDownLatch eventsRegistered) throws Exception {
-		display.syncExec(new Runnable() {
-			@Override
-			public void run() {
-				monitorThread.start();
+		display.syncExec(() -> {
+			monitorThread.start();
 
-				// If we're still running when display gets disposed, shutdown the thread.
-				display.disposeExec(new Runnable() {
-					@Override
-					public void run() {
-						shutdownThread(monitorThread);
-					}
-				});
-			}
+			// If we're still running when display gets disposed, shutdown the thread.
+			display.disposeExec(() -> shutdownThread(monitorThread));
 		});
 
 		for (boolean eventsReady = false; !eventsReady;) {
@@ -550,12 +538,7 @@ public class EventLoopMonitorThreadManualTests {
 			System.out.println("Starting calibration...");
 		}
 		final double[] tWork = {0};
-		display.syncExec(new Runnable() {
-			@Override
-			public void run() {
-				tWork[0] = measureAvgTimePerWorkItem();
-			}
-		});
+		display.syncExec(() -> tWork[0] = measureAvgTimePerWorkItem());
 		if (PRINT_TO_CONSOLE) {
 			System.out.println(String.format("Calibration finished. tWorkUnit = %fns", tWork[0]));
 		}
@@ -643,7 +626,4 @@ public class EventLoopMonitorThreadManualTests {
 		return mergedItems.toString();
 	}
 
-	private static IPreferenceStore getPreferences() {
-		return MonitoringPlugin.getDefault().getPreferenceStore();
-	}
 }

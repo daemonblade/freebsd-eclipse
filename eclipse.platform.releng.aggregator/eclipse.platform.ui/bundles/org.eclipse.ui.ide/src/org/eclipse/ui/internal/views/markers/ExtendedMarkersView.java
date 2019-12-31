@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2016 IBM Corporation and others.
+ * Copyright (c) 2007, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -345,8 +345,7 @@ public class ExtendedMarkersView extends ViewPart {
 		viewer.getTree().setLayout(layout);
 		tree.setLinesVisible(true);
 		tree.setHeaderVisible(true);
-		tree.layout(true);
-
+		tree.requestLayout();
 	}
 
 	/**
@@ -406,8 +405,8 @@ public class ExtendedMarkersView extends ViewPart {
 			gc.setFont(tree.getFont());
 			FontMetrics fontMetrics = gc.getFontMetrics();
 			gc.dispose();
-			preferredWidth = Math.max(markerField.getDefaultColumnWidth(tree),
-					fontMetrics.getAverageCharWidth() * 5);
+			preferredWidth = (int) Math.max(markerField.getDefaultColumnWidth(tree),
+					fontMetrics.getAverageCharacterWidth() * 5);
 		}
 		return preferredWidth;
 	}
@@ -1339,7 +1338,7 @@ public class ExtendedMarkersView extends ViewPart {
 	 * Update the direction indicator as column is now the primary column.
 	 *
 	 * @param column
-	 * @field {@link MarkerField}
+	 * @param field
 	 */
 	void updateDirectionIndicator(TreeColumn column, MarkerField field) {
 		viewer.getTree().setSortColumn(column);

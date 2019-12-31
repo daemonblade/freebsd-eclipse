@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2017 SAP SE and others.
  *
- * This
- * program and the accompanying materials are made available under the terms of
- * the Eclipse Public License 2.0 which accompanies this distribution, and is
-t https://www.eclipse.org/legal/epl-2.0/
-t
-t SPDX-License-Identifier: EPL-2.0
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
  *
  *******************************************************************************/
 package org.eclipse.ui.internal.views.properties.tabbed.css;
@@ -31,35 +31,30 @@ public class TabbedPropertyListCssPropertyHandler extends AbstractCSSPropertySWT
 	@Override
 	protected void applyCSSProperty(Control control, String property, CSSValue value, String pseudo, CSSEngine engine)
 			throws Exception {
-		if (!(control instanceof TabbedPropertyList)) {
+		if (!(control instanceof TabbedPropertyList) || property == null
+				|| value.getCssValueType() != CSSValue.CSS_PRIMITIVE_VALUE) {
 			return;
 		}
+
 		TabbedPropertyList list = (TabbedPropertyList) control;
-		if (TAB_BACKGROUND_COLOR.equals(property)) {
-			if ((value.getCssValueType() == CSSValue.CSS_PRIMITIVE_VALUE)) {
-				Color color = CSSSWTColorHelper.getSWTColor(value, control.getDisplay());
-				list.setListBackgroundColor(color);
-			}
-		} else if (TAB_AREA_BACKGROUND_COLOR.equals(property)) {
-			if ((value.getCssValueType() == CSSValue.CSS_PRIMITIVE_VALUE)) {
-				Color color = CSSSWTColorHelper.getSWTColor(value, control.getDisplay());
-				list.setWidgetBackgroundColor(color);
-			}
-		} else if (COLOR.equals(property)) {
-			if ((value.getCssValueType() == CSSValue.CSS_PRIMITIVE_VALUE)) {
-				Color color = CSSSWTColorHelper.getSWTColor(value, control.getDisplay());
-				list.setWidgetForegroundColor(color);
-			}
-		} else if (TAB_NORMAL_SHADOW_COLOR.equals(property)) {
-			if ((value.getCssValueType() == CSSValue.CSS_PRIMITIVE_VALUE)) {
-				Color color = CSSSWTColorHelper.getSWTColor(value, control.getDisplay());
-				list.setWidgetNormalShadowColor(color);
-			}
-		} else if (TAB_DARK_SHADOW_COLOR.equals(property)) {
-			if ((value.getCssValueType() == CSSValue.CSS_PRIMITIVE_VALUE)) {
-				Color color = CSSSWTColorHelper.getSWTColor(value, control.getDisplay());
-				list.setWidgetDarkShadowColor(color);
-			}
+		Color color = CSSSWTColorHelper.getSWTColor(value, control.getDisplay());
+
+		switch (property) {
+		case TAB_BACKGROUND_COLOR:
+			list.setListBackgroundColor(color);
+			break;
+		case TAB_AREA_BACKGROUND_COLOR:
+			list.setWidgetBackgroundColor(color);
+			break;
+		case COLOR:
+			list.setWidgetForegroundColor(color);
+			break;
+		case TAB_NORMAL_SHADOW_COLOR:
+			list.setWidgetNormalShadowColor(color);
+			break;
+		case TAB_DARK_SHADOW_COLOR:
+			list.setWidgetDarkShadowColor(color);
+			break;
 		}
 	}
 

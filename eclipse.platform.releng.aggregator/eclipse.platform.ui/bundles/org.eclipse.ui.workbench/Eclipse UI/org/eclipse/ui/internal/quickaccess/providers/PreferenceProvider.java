@@ -44,7 +44,7 @@ public class PreferenceProvider extends QuickAccessProvider {
 	}
 
 	@Override
-	public QuickAccessElement getElementForId(String id) {
+	public QuickAccessElement findElement(String id, String filterText) {
 		getElements();
 		return idToElement.get(id);
 	}
@@ -89,5 +89,10 @@ public class PreferenceProvider extends QuickAccessProvider {
 	protected void doReset() {
 		cachedElements = null;
 		idToElement.clear();
+	}
+
+	@Override
+	public boolean requiresUiAccess() {
+		return true; // workbenchActivitySupport.getActivityManager() seems to require UI Thread
 	}
 }

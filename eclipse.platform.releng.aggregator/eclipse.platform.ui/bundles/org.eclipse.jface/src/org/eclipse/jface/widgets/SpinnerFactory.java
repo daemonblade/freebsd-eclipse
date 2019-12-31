@@ -23,14 +23,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Spinner;
 
 /**
- * <p>
- * <strong>EXPERIMENTAL</strong>. This class has been added as part of a work in
- * progress. There is no guarantee that this API will work or that it will
- * remain the same. Feel free to use it and give feedback via <a href=
- * "https://bugs.eclipse.org/bugs/buglist.cgi?component=UI&product=Platform">Bugzilla</a>,
- * but be aware that it might change.
- * </p>
- *
  * This class provides a convenient shorthand for creating and initializing
  * {@link Spinner}. This offers several benefits over creating Spinner normal
  * way:
@@ -42,8 +34,15 @@ import org.eclipse.swt.widgets.Spinner;
  * chained</li>
  * </ul>
  *
+ * <p>
+ * Note that this class does not extend {@link AbstractCompositeFactory} even
+ * though Spinner extends Composite. This is because Spinner is not supposed to
+ * be used like a Composite.
+ * </p>
+ *
+ * @since 3.18
  */
-public class SpinnerFactory extends AbstractCompositeFactory<SpinnerFactory, Spinner> {
+public final class SpinnerFactory extends AbstractControlFactory<SpinnerFactory, Spinner> {
 
 	private SpinnerFactory(int style) {
 		super(SpinnerFactory.class, (Composite parent) -> new Spinner(parent, style));
@@ -61,11 +60,14 @@ public class SpinnerFactory extends AbstractCompositeFactory<SpinnerFactory, Spi
 	}
 
 	/**
-	 * Sets minimum and maximum.
+	 * Sets the minimum and maximum value that the receiver will allow.
 	 *
-	 * @param minimum or SWT.DEFAULT
-	 * @param maximum or SWT.DEFAULT
+	 * @param minimum the minimum
+	 * @param maximum the maximum
 	 * @return this
+	 *
+	 * @see Spinner#setMinimum(int)
+	 * @see Spinner#setMaximum(int)
 	 */
 	public SpinnerFactory bounds(int minimum, int maximum) {
 		if (minimum != SWT.DEFAULT) {
@@ -78,11 +80,16 @@ public class SpinnerFactory extends AbstractCompositeFactory<SpinnerFactory, Spi
 	}
 
 	/**
-	 * Sets the increments.
+	 * Sets the amounts (which must be at least one) that the receiver's value will
+	 * be modified by when the up/down arrows or the page up/down keys are pressed
+	 * to the argument.
 	 *
-	 * @param increment     or SWT.DEFAULT
-	 * @param pageIncrement or SWT.DEFAULT
+	 * @param increment     the increment (must be greater than zero)
+	 * @param pageIncrement the page increment (must be greater than zero)
 	 * @return this
+	 *
+	 * @see Spinner#setIncrement(int)
+	 * @see Spinner#setPageIncrement(int)
 	 */
 	public SpinnerFactory increment(int increment, int pageIncrement) {
 		if (increment != SWT.DEFAULT) {
@@ -95,10 +102,13 @@ public class SpinnerFactory extends AbstractCompositeFactory<SpinnerFactory, Spi
 	}
 
 	/**
-	 * Sets the text limit.
+	 * Sets the maximum number of characters that the receiver's text field is
+	 * capable of holding to be the argument.
 	 *
-	 * @param limit
+	 * @param limit the limit
 	 * @return this
+	 *
+	 * @see Spinner#setTextLimit(int)
 	 */
 	public SpinnerFactory limitTo(int limit) {
 		addProperty(s -> s.setTextLimit(limit));
@@ -107,11 +117,14 @@ public class SpinnerFactory extends AbstractCompositeFactory<SpinnerFactory, Spi
 
 	/**
 	 * Creates a {@link SelectionListener} and registers it for the widgetSelected
-	 * event. If event is raised it calls the given consumer. The
-	 * {@link SelectionEvent} is passed to the consumer.
+	 * event. If the receiver is selected by the user the given consumer is invoked.
+	 * The {@link SelectionEvent} is passed to the consumer.
 	 *
-	 * @param consumer
+	 * @param consumer the consumer whose accept method is called
 	 * @return this
+	 *
+	 * @see Spinner#addSelectionListener(SelectionListener)
+	 * @see SelectionListener#widgetSelectedAdapter(Consumer)
 	 */
 	public SpinnerFactory onSelect(Consumer<SelectionEvent> consumer) {
 		SelectionListener listener = SelectionListener.widgetSelectedAdapter(consumer);
@@ -120,11 +133,17 @@ public class SpinnerFactory extends AbstractCompositeFactory<SpinnerFactory, Spi
 	}
 
 	/**
-	 * Adds a ModifyListener. Can be called several times to add more than one
-	 * ModifyListener.
+	 * Adds the listener to the collection of listeners who will be notified when
+	 * the receiver's text is modified, by calling the modifyText method.
+	 * <p>
+	 * Can be called several times to add more than one ModifyListener.
+	 * </p>
 	 *
-	 * @param listener
+	 * @param listener the listener which should be notified
 	 * @return this
+	 *
+	 * @see Spinner#addModifyListener(ModifyListener)
+	 * @see ModifyListener#modifyText(org.eclipse.swt.events.ModifyEvent)
 	 */
 	public SpinnerFactory onModify(ModifyListener listener) {
 		addProperty(s -> s.addModifyListener(listener));

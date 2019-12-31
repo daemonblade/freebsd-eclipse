@@ -70,10 +70,6 @@ public class UIPreferenceInitializer extends AbstractPreferenceInitializer {
 		node.putBoolean(IWorkbenchPreferenceConstants.LINK_NAVIGATOR_TO_EDITOR,
 				false);
 
-		node
-				.putBoolean(
-						IWorkbenchPreferenceConstants.SHOW_TRADITIONAL_STYLE_TABS,
-						true);
 		node.putBoolean(IWorkbenchPreferenceConstants.ENABLE_ANIMATIONS, false);
 		node.putBoolean(IWorkbenchPreferenceConstants.USE_COLORED_LABELS, true);
 		node.put(IWorkbenchPreferenceConstants.DOCK_PERSPECTIVE_BAR,
@@ -81,6 +77,8 @@ public class UIPreferenceInitializer extends AbstractPreferenceInitializer {
 		node.putBoolean(
 				IWorkbenchPreferenceConstants.SHOW_TEXT_ON_PERSPECTIVE_BAR,
 				false);
+		node.putBoolean(
+				IWorkbenchPreferenceConstants.SHOW_TEXT_ON_QUICK_ACCESS, false);
 		node.putBoolean(
 				IWorkbenchPreferenceConstants.SHOW_OTHER_IN_PERSPECTIVE_MENU,
 				true);

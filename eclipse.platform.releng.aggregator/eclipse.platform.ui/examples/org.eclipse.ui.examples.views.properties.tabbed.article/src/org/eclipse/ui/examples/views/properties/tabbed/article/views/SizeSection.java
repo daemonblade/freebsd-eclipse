@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006 IBM Corporation and others.
+ * Copyright (c) 2006, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -18,7 +18,6 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.custom.CLabel;
-import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
@@ -32,7 +31,7 @@ import org.eclipse.ui.views.properties.tabbed.TabbedPropertySheetPage;
 
 /**
  * The size section on the button tab.
- * 
+ *
  * @author Anthony Hunter
  */
 public class SizeSection
@@ -44,19 +43,17 @@ public class SizeSection
 
 	private ButtonElement buttonElement;
 
-	private ModifyListener listener = new ModifyListener() {
-
-		public void modifyText(ModifyEvent arg0) {
-			ButtonElementProperties properties = (ButtonElementProperties) Adapters.adapt(buttonElement, IPropertySource.class);
-			SizePropertySource sizePropertySource = (SizePropertySource) properties
-					.getPropertyValue(ButtonElementProperties.PROPERTY_SIZE);
-			sizePropertySource.setPropertyValue(SizePropertySource.ID_HEIGHT,
-				heightText.getText());
-			sizePropertySource.setPropertyValue(SizePropertySource.ID_WIDTH,
-				widthText.getText());
-		}
+	private ModifyListener listener = arg0 -> {
+		ButtonElementProperties properties = (ButtonElementProperties) Adapters.adapt(buttonElement, IPropertySource.class);
+		SizePropertySource sizePropertySource = (SizePropertySource) properties
+				.getPropertyValue(ButtonElementProperties.PROPERTY_SIZE);
+		sizePropertySource.setPropertyValue(SizePropertySource.ID_HEIGHT,
+			heightText.getText());
+		sizePropertySource.setPropertyValue(SizePropertySource.ID_WIDTH,
+			widthText.getText());
 	};
 
+	@Override
 	public void setInput(IWorkbenchPart part, ISelection selection) {
 		super.setInput(part, selection);
 		Assert.isTrue(selection instanceof IStructuredSelection);
@@ -65,10 +62,7 @@ public class SizeSection
 		this.buttonElement = (ButtonElement) input;
 	}
 
-	/**
-	 * @see org.eclipse.ui.views.properties.tabbed.ITabbedPropertySection#createControls(org.eclipse.swt.widgets.Composite,
-	 *      org.eclipse.ui.views.properties.tabbed.TabbedPropertySheetPage)
-	 */
+	@Override
 	public void createControls(Composite parent,
 			TabbedPropertySheetPage tabbedPropertySheetPage) {
 		super.createControls(parent, tabbedPropertySheetPage);
@@ -115,9 +109,7 @@ public class SizeSection
 		widthText.addModifyListener(listener);
 	}
 
-	/*
-	 * @see org.eclipse.ui.views.properties.tabbed.view.ITabbedPropertySection#refresh()
-	 */
+	@Override
 	public void refresh() {
 		heightText.removeModifyListener(listener);
 		widthText.removeModifyListener(listener);

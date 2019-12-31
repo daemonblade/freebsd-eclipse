@@ -24,6 +24,10 @@ import org.eclipse.swt.widgets.Layout;
  * @param <F> factory
  * @param <C> control
  *
+ * @noextend this class is not intended to be subclassed by clients.
+ *
+ * @since 3.18
+ *
  */
 public abstract class AbstractCompositeFactory<F extends AbstractCompositeFactory<?, ?>, C extends Composite>
 		extends AbstractControlFactory<F, C> {
@@ -32,15 +36,18 @@ public abstract class AbstractCompositeFactory<F extends AbstractCompositeFactor
 	 * @param factoryClass
 	 * @param controlCreator
 	 */
-	protected AbstractCompositeFactory(Class<F> factoryClass, WidgetSupplier<C, Composite> controlCreator) {
+	AbstractCompositeFactory(Class<F> factoryClass, WidgetSupplier<C, Composite> controlCreator) {
 		super(factoryClass, controlCreator);
 	}
 
 	/**
-	 * Sets the layout.
+	 * Sets the layout which is associated with the receiver to be the argument
+	 * which may be null.
 	 *
-	 * @param layout
+	 * @param layout the receiver's layout or null
 	 * @return this
+	 *
+	 * @see Composite#setLayout(Layout)
 	 */
 	public F layout(Layout layout) {
 		addProperty(control -> control.setLayout(layout));

@@ -1,6 +1,5 @@
 Manifest-Version: 1.0
 Bundle-ActivationPolicy: lazy
-Bundle-Activator: org.eclipse.ui.internal.monitoring.MonitoringPlugin
 Bundle-ClassPath: .
 Bundle-Localization: plugin
 Bundle-ManifestVersion: 2
@@ -8,7 +7,7 @@ Bundle-Name: %Bundle-Name
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-SymbolicName: org.eclipse.ui.monitoring;singleton:=true
 Bundle-Vendor: %Bundle-Vendor
-Bundle-Version: 1.1.500.qualifier
+Bundle-Version: 1.1.600.qualifier
 Export-Package: org.eclipse.ui.internal.monitoring;x-internal:=true,
  org.eclipse.ui.internal.monitoring.preferences;x-internal:=true,
  org.eclipse.ui.monitoring;x-internal:=true

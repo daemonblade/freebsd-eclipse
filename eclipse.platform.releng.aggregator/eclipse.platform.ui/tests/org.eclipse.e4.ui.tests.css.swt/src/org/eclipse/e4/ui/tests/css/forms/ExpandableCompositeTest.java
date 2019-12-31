@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2017 vogella GmbH and others.
  *
- * This
- * program and the accompanying materials are made available under the terms of
- * the Eclipse Public License 2.0 which accompanies this distribution, and is
-t https://www.eclipse.org/legal/epl-2.0/
-t
-t SPDX-License-Identifier: EPL-2.0
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
  *    Lars Vogel <Lars.Vogel@vogella.com> - initial API and implementation
@@ -24,6 +24,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.forms.widgets.ExpandableComposite;
+import org.eclipse.ui.forms.widgets.ToggleHyperlink;
 import org.junit.Test;
 
 public class ExpandableCompositeTest extends CSSSWTTestCase {
@@ -50,27 +51,38 @@ public class ExpandableCompositeTest extends CSSSWTTestCase {
 		engine.applyStyles(shell, true);
 
 		shell.pack();
+
 		return test;
 	}
 
 	@Test
 	public void testExpandableCompositeColor() {
 		ExpandableComposite compositeToTest = createTestExpandableComposite(
-				"ExpandableComposite { swt-titlebar-color: #FF0000; }");
+				"ExpandableComposite { swt-titlebar-color: #FF0000; tb-toggle-color: #FF0000; tb-toggle-hover-color: #00FF00}");
 		assertNotNull(compositeToTest.getTitleBarForeground());
 		assertEquals(RED, compositeToTest.getTitleBarForeground().getRGB());
+
+		ToggleHyperlink toggle = (ToggleHyperlink) compositeToTest.getChildren()[0];
+		assertNotNull(toggle.getDecorationColor());
+		assertEquals(RED, toggle.getDecorationColor().getRGB());
+		assertNotNull(toggle.getHoverDecorationColor());
+		assertEquals(GREEN, toggle.getHoverDecorationColor().getRGB());
 	}
 
 	@Test
 	public void testExpandableComposite_foregroundColorGetsReset_foregroundCollorIsNull() throws Exception {
 		ExpandableComposite compositeToTest = createTestExpandableComposite(
-				"ExpandableComposite { swt-titlebar-color: #FF0000; }");
+				"ExpandableComposite { swt-titlebar-color: #FF0000; tb-toggle-color: #FF0000; tb-toggle-hover-color: #00FF00}");
 		assertNotNull(compositeToTest.getTitleBarForeground());
 		assertEquals(RED, compositeToTest.getTitleBarForeground().getRGB());
 
 		engine.reset();
 
 		assertNull(compositeToTest.getTitleBarForeground());
+
+		ToggleHyperlink toggle = (ToggleHyperlink) compositeToTest.getChildren()[0];
+		assertNull(toggle.getDecorationColor());
+		assertNull(toggle.getHoverDecorationColor());
 	}
 
 }

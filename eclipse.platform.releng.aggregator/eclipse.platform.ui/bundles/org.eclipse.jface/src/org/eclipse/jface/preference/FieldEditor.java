@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -202,7 +202,7 @@ public abstract class FieldEditor {
 	protected int convertHorizontalDLUsToPixels(Control control, int dlus) {
 		GC gc = new GC(control);
 		gc.setFont(control.getFont());
-		int averageWidth = gc.getFontMetrics().getAverageCharWidth();
+		int averageWidth = (int) gc.getFontMetrics().getAverageCharacterWidth();
 		gc.dispose();
 
 		double horizontalDialogUnitSize = averageWidth * 0.25;
@@ -492,7 +492,7 @@ public abstract class FieldEditor {
 	 * the preference store.
 	 */
 	public void load() {
-		if (preferenceStore != null) {
+		if (getPreferenceStore() != null) {
 			isDefaultPresented = false;
 			doLoad();
 			refreshValidState();
@@ -504,7 +504,7 @@ public abstract class FieldEditor {
 	 * from the preference store.
 	 */
 	public void loadDefault() {
-		if (preferenceStore != null) {
+		if (getPreferenceStore() != null) {
 			isDefaultPresented = true;
 			doLoadDefault();
 			refreshValidState();
@@ -571,7 +571,7 @@ public abstract class FieldEditor {
 	 * <p>
 	 * For example:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * 	...
 	 *  editor.setPreferenceName("font");
@@ -669,12 +669,13 @@ public abstract class FieldEditor {
 	 * Stores this field editor's value back into the preference store.
 	 */
 	public void store() {
-		if (preferenceStore == null) {
+		IPreferenceStore store = getPreferenceStore();
+		if (store == null) {
 			return;
 		}
 
 		if (isDefaultPresented) {
-			preferenceStore.setToDefault(preferenceName);
+			store.setToDefault(preferenceName);
 		} else {
 			doStore();
 		}

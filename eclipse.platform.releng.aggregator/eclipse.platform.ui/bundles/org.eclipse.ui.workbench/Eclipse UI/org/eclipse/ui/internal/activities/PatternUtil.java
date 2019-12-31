@@ -26,7 +26,7 @@ public class PatternUtil {
 	/**
 	 * Quotes a string pattern as non-regular expression string. That means: no
 	 * regular expression instructions in the given string won't be taken into
-	 * account.<br/>
+	 * account.<br>
 	 * Example:
 	 * <pre>
 	 *     String searchString = "xy[^a]";
@@ -34,7 +34,7 @@ public class PatternUtil {
 	 *            .matches();
 	 * </pre>
 	 * will return <code>true</code>.
-	 * 
+	 *
 	 * @param pattern pattern to quote
 	 * @return the quoted pattern
 	 */

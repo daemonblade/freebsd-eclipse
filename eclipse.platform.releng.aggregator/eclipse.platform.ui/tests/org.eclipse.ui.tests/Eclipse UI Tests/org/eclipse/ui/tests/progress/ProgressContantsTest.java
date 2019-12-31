@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2015 IBM Corporation and others.
+ * Copyright (c) 2009, 2017 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,10 +15,15 @@
 
 package org.eclipse.ui.tests.progress;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.eclipse.core.commands.Category;
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.IParameter;
 import org.eclipse.core.commands.ParameterizedCommand;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.e4.core.commands.ECommandService;
@@ -31,6 +36,7 @@ import org.eclipse.ui.internal.progress.JobInfo;
 import org.eclipse.ui.internal.progress.ProgressInfoItem;
 import org.eclipse.ui.progress.IProgressConstants;
 import org.eclipse.ui.progress.IProgressConstants2;
+import org.eclipse.ui.tests.TestPlugin;
 
 /**
  * @since 3.6
@@ -39,10 +45,25 @@ import org.eclipse.ui.progress.IProgressConstants2;
 public class ProgressContantsTest extends ProgressTestCase {
 
 	/**
-	 *
-	 * @param testName
-	 *
+	 * Like {@link DummyJob} but implements {@link Job#belongsTo(Object)} so that
+	 * each instance belongs to each other.
 	 */
+	private static class DummyFamilyJob extends DummyJob {
+
+		public DummyFamilyJob(String name, IStatus status) {
+			super(name, status);
+		}
+
+		@Override
+		public boolean belongsTo(Object family) {
+			if (family == null) {
+				return false;
+			}
+			Class<?> clazz = family instanceof Class ? (Class<?>) family : family.getClass();
+			return DummyFamilyJob.class.equals(clazz);
+		}
+	}
+
 	public ProgressContantsTest(String testName) {
 		super(testName);
 	}
@@ -66,16 +87,13 @@ public class ProgressContantsTest extends ProgressTestCase {
 		CommandHandler handler = new CommandHandler();
 		IHandlerActivation record = service.activateHandler(commandId, handler);
 
-		waitForJobs(100, 1000);
 		okJob.join();
 		processEvents();
 
-		ProgressInfoItem item = findProgressInfoItem(okJob);
-		if (item == null) {
+		ProgressInfoItem item;
+		int n = 5;
+		while ((item = findProgressInfoItem(okJob)) == null && n-- > 0) {
 			waitForJobs(100, 1000);
-			okJob.join();
-			processEvents();
-			item = findProgressInfoItem(okJob);
 		}
 		assertNotNull(item);
 		item.executeTrigger();
@@ -102,11 +120,8 @@ public class ProgressContantsTest extends ProgressTestCase {
 		okJob.setProperty(IProgressConstants.KEEP_PROPERTY, Boolean.TRUE);
 		okJob.schedule();
 
-		ProgressInfoItem item = null;
-		while ((item = findProgressInfoItem(okJob)) == null) {
-			// wait for the job to show up in the progress view
-			processEvents();
-		}
+		processEventsUntil(() -> findProgressInfoItem(okJob) != null, 3000);
+		ProgressInfoItem item = findProgressInfoItem(okJob);
 
 		assertNotNull(item);
 		assertFalse(item.isTriggerEnabled());
@@ -135,45 +150,126 @@ public class ProgressContantsTest extends ProgressTestCase {
 		return null;
 	}
 
-	// Commented out due to https://bugs.eclipse.org/bugs/show_bug.cgi?id=288358
+	public void testKeepProperty() throws Exception {
+		openProgressView();
 
-//	public void testKeepProperty() throws Exception {
-//
-//		openProgressView();
-//
-//		DummyJob okJob = new DummyJob("OK Job", Status.OK_STATUS);
-//		okJob.setProperty(IProgressConstants.KEEP_PROPERTY, Boolean.TRUE);
-//		okJob.schedule();
-//
-//		DummyJob warningJob = new DummyJob("Warning Job", new Status(IStatus.WARNING, TestPlugin.PLUGIN_ID, "Warning message"));
-//		warningJob.setProperty(IProgressConstants.KEEP_PROPERTY, Boolean.TRUE);
-//		warningJob.schedule();
-//
-//		processEvents();
-//
-//		okJob.join();
-//		warningJob.join();
-//
-//		processEvents();
-//
-//		boolean okJobFound = false;
-//		boolean warningJobFound = false;
-//
-//		ProgressInfoItem[] progressInfoItems = progressView.getViewer().getProgressInfoItems();
-//		for (int i = 0; i < progressInfoItems.length; i++) {
-//			JobInfo[] jobInfos = progressInfoItems[i].getJobInfos();
-//			for (int j = 0; j < jobInfos.length; j++) {
-//				Job job = jobInfos[j].getJob();
-//				if (job.equals(okJob)) {
-//					okJobFound = true;
-//				}
-//				if (job.equals(warningJob)) {
-//					warningJobFound = true;
-//				}
-//			}
-//		}
-//
-//		assertTrue(okJobFound);
-//		assertTrue(warningJobFound);
-//	}
+		DummyJob okJob = new DummyJob("OK Job", Status.OK_STATUS);
+		okJob.setProperty(IProgressConstants.KEEP_PROPERTY, Boolean.TRUE);
+		okJob.schedule();
+
+		DummyJob warningJob = new DummyJob("Warning Job",
+				new Status(IStatus.WARNING, TestPlugin.PLUGIN_ID, "Warning message"));
+		warningJob.setProperty(IProgressConstants.KEEP_PROPERTY, Boolean.TRUE);
+		warningJob.schedule();
+
+		processEvents();
+
+		okJob.join();
+		warningJob.join();
+
+		processEventsUntil(() -> findProgressInfoItem(okJob) != null && findProgressInfoItem(warningJob) != null, 3000);
+
+		boolean okJobFound = false;
+		boolean warningJobFound = false;
+
+		ProgressInfoItem[] progressInfoItems = progressView.getViewer().getProgressInfoItems();
+		for (ProgressInfoItem progressInfoItem : progressInfoItems) {
+			JobInfo[] jobInfos = progressInfoItem.getJobInfos();
+			for (JobInfo jobInfo : jobInfos) {
+				Job job = jobInfo.getJob();
+				if (job.equals(okJob)) {
+					okJobFound = true;
+				}
+				if (job.equals(warningJob)) {
+					warningJobFound = true;
+				}
+			}
+		}
+
+		assertTrue(okJobFound);
+		assertTrue(warningJobFound);
+	}
+
+	public void testKeepOneProperty() throws Exception {
+		openProgressView();
+
+		List<DummyJob> jobs = new ArrayList<>();
+		for (int i = 0; i < 3; i++) {
+			DummyFamilyJob job = new DummyFamilyJob("OK Job " + i, Status.OK_STATUS);
+			job.setProperty(IProgressConstants.KEEPONE_PROPERTY, Boolean.TRUE);
+			jobs.add(job);
+		}
+		for (Job job : jobs) {
+			job.schedule();
+		}
+		joinJobs(jobs, 10, TimeUnit.SECONDS);
+		{
+			// It is rather hard to find the perfect time to check the test result. The UI
+			// updates are throttled so the kept job is not immediate available after the
+			// job ends. A fixed wait time might be to short or unnecessary slow down the
+			// test. Waiting for the end condition with timeout may produce false positive
+			// results. It could be that we test in a moment there's only one kept element
+			// and the test succeeds but UI has more pending updates and might add more kept
+			// jobs which should be a test failure.
+			// Solution is to add an unique job after the 'keep one' jobs are finished and
+			// wait for it's appearance. The UI updates are ordered enough to be sure that
+			// kept job processing is finished when this error job appears.
+			DummyJob errorJob = new DummyJob("Last Job", new Status(IStatus.ERROR, TestPlugin.PLUGIN_ID, "error"));
+			errorJob.schedule();
+			processEventsUntil(() -> findProgressInfoItem(errorJob) != null, 3000);
+		}
+
+		assertEquals("Only one finished job should be kept in view", 1,
+				countBelongingProgressItems(DummyFamilyJob.class));
+		for (Job job : jobs) {
+			assertTrue(job.getResult().isOK());
+		}
+
+		// This variant is optimized to test a ConcurrentModificationException or NPE.
+		// It tries to stop multiple jobs with KEEPONE_PROPERTY at the same time.
+		jobs.clear();
+		progressView.getViewer().setMaxDisplayed(100);
+		for (int i = 0; i < 20; i++) {
+			DummyFamilyJob job = new DummyFamilyJob("OK Job " + i, Status.OK_STATUS);
+			job.setProperty(IProgressConstants.KEEPONE_PROPERTY, Boolean.TRUE);
+			job.shouldFinish = false;
+			jobs.add(job);
+			job.schedule();
+		}
+		// ensure all jobs are started before ending all at the same time
+		processEventsUntil(null, 500);
+		for (DummyJob job : jobs) {
+			job.shouldFinish = true;
+		}
+		joinJobs(jobs, 10, TimeUnit.SECONDS);
+		{
+			DummyJob errorJob = new DummyJob("Last Job", new Status(IStatus.ERROR, TestPlugin.PLUGIN_ID, "error"));
+			errorJob.schedule();
+			processEventsUntil(() -> findProgressInfoItem(errorJob) != null, 3000);
+		}
+
+		assertEquals("Only one finished job should be kept in view", 1,
+				countBelongingProgressItems(DummyFamilyJob.class));
+		for (Job job : jobs) {
+			assertTrue(job.getResult().isOK());
+		}
+	}
+
+	/**
+	 * Count the number of items in progress view whose represented job
+	 * {@link Job#belongsTo(Object) belongs} to the given family.
+	 */
+	private int countBelongingProgressItems(Object family) {
+		int count = 0;
+		ProgressInfoItem[] progressInfoItems = progressView.getViewer().getProgressInfoItems();
+		for (ProgressInfoItem progressInfoItem : progressInfoItems) {
+			JobInfo[] jobInfos = progressInfoItem.getJobInfos();
+			for (JobInfo jobInfo : jobInfos) {
+				if (jobInfo.getJob().belongsTo(family)) {
+					count++;
+				}
+			}
+		}
+		return count;
+	}
 }

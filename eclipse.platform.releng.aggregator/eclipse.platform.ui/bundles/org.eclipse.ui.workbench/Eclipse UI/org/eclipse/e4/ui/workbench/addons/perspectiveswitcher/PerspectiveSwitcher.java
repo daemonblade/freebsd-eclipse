@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2016 IBM Corporation and others.
+ * Copyright (c) 2010, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -18,6 +18,7 @@
 
 package org.eclipse.e4.ui.workbench.addons.perspectiveswitcher;
 
+import static org.eclipse.swt.events.MenuListener.menuHiddenAdapter;
 import static org.eclipse.swt.events.SelectionListener.widgetSelectedAdapter;
 
 import java.io.IOException;
@@ -56,20 +57,14 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.accessibility.AccessibleAdapter;
 import org.eclipse.swt.accessibility.AccessibleEvent;
-import org.eclipse.swt.events.MenuEvent;
-import org.eclipse.swt.events.MenuListener;
+import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
-import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.graphics.Region;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -98,12 +93,19 @@ import org.eclipse.ui.internal.util.PrefUtil;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.osgi.service.event.Event;
 
+/**
+ * Class to handle perspective switching in the UI.
+ */
 public class PerspectiveSwitcher {
+
 	/**
-	 *
+	 * The ID of the perspective switcher
 	 */
 	public static final String PERSPECTIVE_SWITCHER_ID = "org.eclipse.e4.ui.PerspectiveSwitcher"; //$NON-NLS-1$
 
+	/**
+	 * The event {@link IEventBroker}.
+	 */
 	@Inject
 	protected IEventBroker eventBroker;
 
@@ -126,10 +128,7 @@ public class PerspectiveSwitcher {
 	private ToolBar perspSwitcherToolbar;
 
 	private Composite comp;
-	private Image backgroundImage;
 	private Image perspectiveImage;
-
-	Color borderColor, curveColor;
 	Control toolParent;
 	IPropertyChangeListener propertyChangeListener;
 
@@ -167,41 +166,41 @@ public class PerspectiveSwitcher {
 	@Inject
 	@Optional
 	void handleToBeRenderedEvent(@UIEventTopic(UIEvents.UIElement.TOPIC_TOBERENDERED) Event event) {
-	
+
 		Object changedObj = event.getProperty(UIEvents.EventTags.ELEMENT);
 		if (!(changedObj instanceof MPerspective) || (ignoreEvent(changedObj))) {
 			return;
 		}
-	
+
 		MPerspective persp = (MPerspective) event.getProperty(UIEvents.EventTags.ELEMENT);
-	
+
 		if (!persp.getParent().isToBeRendered())
 			return;
-	
+
 		if (persp.isToBeRendered()) {
 			addPerspectiveItem(persp);
 		} else {
 			removePerspectiveItem(persp);
 		}
-	
+
 	}
 
 	@Inject
 	@Optional
 	void handleLabelEvent(@UIEventTopic(UIEvents.UILabel.TOPIC_ALL) Event event) {
-	
+
 		Object changedObj = event.getProperty(UIEvents.EventTags.ELEMENT);
 		if (!(changedObj instanceof MPerspective) || (ignoreEvent(changedObj))) {
 			return;
 		}
-	
+
 		MPerspective perspective = (MPerspective) changedObj;
-	
+
 		if (!perspective.isToBeRendered())
 		{
 			return;
 		}
-	
+
 		for (ToolItem ti : perspSwitcherToolbar.getItems()) {
 			if (ti.getData() == perspective) {
 				String attName = (String) event.getProperty(UIEvents.EventTags.ATTNAME);
@@ -209,7 +208,7 @@ public class PerspectiveSwitcher {
 				updateToolItem(ti, attName, newValue);
 			}
 		}
-	
+
 		// update the size
 		fixSize();
 	}
@@ -262,12 +261,12 @@ public class PerspectiveSwitcher {
 		}
 		comp = new Composite(parent, SWT.NONE);
 		RowLayout layout = new RowLayout(SWT.HORIZONTAL);
-		layout.marginLeft = layout.marginRight = 8;
-		layout.marginBottom = 4;
-		layout.marginTop = 6;
+		layout.marginLeft = 0;
+		layout.marginRight = 4;
+		layout.marginBottom = 0;
+		layout.marginTop = 0;
 		comp.setLayout(layout);
 		perspSwitcherToolbar = new ToolBar(comp, SWT.FLAT | SWT.WRAP | SWT.RIGHT + orientation);
-		comp.addPaintListener(e -> paint(e));
 		toolParent = ((Control) toolControl.getParent().getWidget());
 
 		comp.addDisposeListener(e -> dispose());
@@ -307,20 +306,10 @@ public class PerspectiveSwitcher {
 		boolean showOpenOnPerspectiveBar = PrefUtil.getAPIPreferenceStore()
 				.getBoolean(IWorkbenchPreferenceConstants.SHOW_OPEN_ON_PERSPECTIVE_BAR);
 		if (showOpenOnPerspectiveBar) {
-			final ToolItem openPerspectiveItem = new ToolItem(perspSwitcherToolbar, SWT.PUSH);
+			ToolItem openPerspectiveItem = new ToolItem(perspSwitcherToolbar, SWT.PUSH);
 			openPerspectiveItem.setImage(getOpenPerspectiveImage());
 			openPerspectiveItem.setToolTipText(WorkbenchMessages.OpenPerspectiveDialogAction_tooltip);
-			openPerspectiveItem.addSelectionListener(new SelectionListener() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					selectPerspective();
-				}
-
-				@Override
-				public void widgetDefaultSelected(SelectionEvent e) {
-					selectPerspective();
-				}
-			});
+			openPerspectiveItem.addSelectionListener(widgetSelectedAdapter(e -> selectPerspective()));
 			new ToolItem(perspSwitcherToolbar, SWT.SEPARATOR);
 		}
 
@@ -360,9 +349,21 @@ public class PerspectiveSwitcher {
 		return false;
 	}
 
+	/**
+	 *
+	 */
 	protected Point downPos = null;
+	/**
+	 *
+	 */
 	protected ToolItem dragItem = null;
+	/**
+	 *
+	 */
 	protected boolean dragging = false;
+	/**
+	 *
+	 */
 	protected Shell dragShell = null;
 
 	private void track(MouseEvent e) {
@@ -528,17 +529,13 @@ public class PerspectiveSwitcher {
 
 		psItem.setSelection(persp == persp.getParent().getSelectedElement());
 
-		psItem.addSelectionListener(new SelectionListener() {
+		psItem.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				MPerspective persp = (MPerspective) e.widget.getData();
-				persp.getParent().setSelectedElement(persp);
-			}
-
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				MPerspective persp = (MPerspective) e.widget.getData();
-				persp.getParent().setSelectedElement(persp);
+				BusyIndicator.showWhile(null, () -> {
+					MPerspective persp = (MPerspective) e.widget.getData();
+					persp.getParent().setSelectedElement(persp);
+				});
 			}
 		});
 
@@ -584,26 +581,13 @@ public class PerspectiveSwitcher {
 		}
 
 		new MenuItem(menu, SWT.SEPARATOR);
-		// addDockOnSubMenu(menu);
 		addShowTextItem(menu);
 
 		Rectangle bounds = item.getBounds();
 		Point point = perspSwitcherToolbar.toDisplay(bounds.x, bounds.y + bounds.height);
 		menu.setLocation(point.x, point.y);
 		menu.setVisible(true);
-		menu.addMenuListener(new MenuListener() {
-
-			@Override
-			public void menuHidden(MenuEvent e) {
-				perspSwitcherToolbar.getDisplay().asyncExec(() -> menu.dispose());
-			}
-
-			@Override
-			public void menuShown(MenuEvent e) {
-				// Nothing to do
-			}
-
-		});
+		menu.addMenuListener(menuHiddenAdapter(e -> perspSwitcherToolbar.getDisplay().asyncExec(menu::dispose)));
 	}
 
 	private void addCloseItem(final Menu menu) {
@@ -758,6 +742,10 @@ public class PerspectiveSwitcher {
 		fixSize();
 	}
 
+	/**
+	 * @param persp the perspective
+	 * @return the tool item
+	 */
 	protected ToolItem getItemFor(MPerspective persp) {
 		if (perspSwitcherToolbar == null)
 			return null;
@@ -770,109 +758,9 @@ public class PerspectiveSwitcher {
 		return null;
 	}
 
-	void paint(PaintEvent e) {
-		GC gc = e.gc;
-		Point size = comp.getSize();
-		if (curveColor == null || curveColor.isDisposed()) {
-			curveColor = e.display.getSystemColor(SWT.COLOR_GRAY);
-		}
-		int h = size.y;
-		int[] simpleCurve = new int[] { 0, h - 1, 1, h - 1, 2, h - 2, 2, 1, 3, 0 };
-		// draw border
-		gc.setForeground(curveColor);
-		gc.setAdvanced(true);
-		if (gc.getAdvanced()) {
-			gc.setAntialias(SWT.ON);
-		}
-		gc.drawPolyline(simpleCurve);
-
-		Rectangle bounds = ((Control) e.widget).getBounds();
-		bounds.x = bounds.y = 0;
-		Region r = new Region();
-		r.add(bounds);
-		int[] simpleCurveClose = new int[simpleCurve.length + 4];
-		System.arraycopy(simpleCurve, 0, simpleCurveClose, 0, simpleCurve.length);
-		int index = simpleCurve.length;
-		simpleCurveClose[index++] = bounds.width;
-		simpleCurveClose[index++] = 0;
-		simpleCurveClose[index++] = bounds.width;
-		simpleCurveClose[index++] = bounds.height;
-		r.subtract(simpleCurveClose);
-		Region clipping = new Region();
-		gc.getClipping(clipping);
-		r.intersect(clipping);
-		gc.setClipping(r);
-		Image b = toolParent.getBackgroundImage();
-		if (b != null && !b.isDisposed())
-			gc.drawImage(b, 0, 0);
-
-		r.dispose();
-		clipping.dispose();
-	}
-
-	void resize() {
-		Point size = comp.getSize();
-		Image oldBackgroundImage = backgroundImage;
-		backgroundImage = new Image(comp.getDisplay(), size.x, size.y);
-		GC gc = new GC(backgroundImage);
-		comp.getParent().drawBackground(gc, 0, 0, size.x, size.y, 0, 0);
-		Color background = comp.getBackground();
-		Color border = comp.getDisplay().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
-		RGB backgroundRGB = background.getRGB();
-		// TODO naive and hard coded, doesn't deal with high contrast, etc.
-		Color gradientTop = new Color(comp.getDisplay(), backgroundRGB.red + 12, backgroundRGB.green + 10,
-				backgroundRGB.blue + 10);
-		int h = size.y;
-		int curveStart = 0;
-		int curve_width = 5;
-
-		int[] curve = new int[] { 0, h, 1, h, 2, h - 1, 3, h - 2, 3, 2, 4, 1, 5, 0, };
-		int[] line1 = new int[curve.length + 4];
-		int index = 0;
-		int x = curveStart;
-		line1[index++] = x + 1;
-		line1[index++] = h;
-		for (int i = 0; i < curve.length / 2; i++) {
-			line1[index++] = x + curve[2 * i];
-			line1[index++] = curve[2 * i + 1];
-		}
-		line1[index++] = x + curve_width;
-		line1[index++] = 0;
-
-		int[] line2 = new int[line1.length];
-		index = 0;
-		for (int i = 0; i < line1.length / 2; i++) {
-			line2[index] = line1[index++] - 1;
-			line2[index] = line1[index++];
-		}
-
-		// custom gradient
-		gc.setForeground(gradientTop);
-		gc.setBackground(background);
-		gc.drawLine(4, 0, size.x, 0);
-		gc.drawLine(3, 1, size.x, 1);
-		gc.fillGradientRectangle(2, 2, size.x - 2, size.y - 3, true);
-		gc.setForeground(background);
-		gc.drawLine(2, size.y - 1, size.x, size.y - 1);
-		gradientTop.dispose();
-
-		gc.setForeground(border);
-		gc.drawPolyline(line2);
-		gc.dispose();
-		comp.setBackgroundImage(backgroundImage);
-		if (oldBackgroundImage != null)
-			oldBackgroundImage.dispose();
-
-	}
 
 	void dispose() {
 		cleanUp();
-
-		if (backgroundImage != null) {
-			comp.setBackgroundImage(null);
-			backgroundImage.dispose();
-			backgroundImage = null;
-		}
 	}
 
 	void disposeTBImages() {
@@ -884,11 +772,6 @@ public class PerspectiveSwitcher {
 				image.dispose();
 			}
 		}
-	}
-
-	public void setKeylineColor(Color borderColor, Color curveColor) {
-		this.borderColor = borderColor;
-		this.curveColor = curveColor;
 	}
 
 	private void updateToolItem(ToolItem ti, String attName, Object newValue) {

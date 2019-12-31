@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Björn Michael <b.michael@gmx.de> - bug 129722 [JFace]
  *******************************************************************************/
 package org.eclipse.jface.preference;
 
@@ -151,18 +152,17 @@ public class RadioGroupFieldEditor extends FieldEditor {
 	}
 
 	/**
-	 * Checks whether given <code>String[][]</code> is of "type"
-	 * <code>String[][2]</code>.
+	 * Checks whether given <code>String[][]</code> contains sub arrays with minimum size 2
 	 * @param table
 	 *
 	 * @return <code>true</code> if it is ok, and <code>false</code> otherwise
 	 */
-	private boolean checkArray(String[][] table) {
+	private static boolean checkArray(String[][] table) {
 		if (table == null) {
 			return false;
 		}
 		for (String[] array : table) {
-			if (array == null || array.length != 2) {
+			if (array == null || array.length < 2) {
 				return false;
 			}
 		}
@@ -207,6 +207,16 @@ public class RadioGroupFieldEditor extends FieldEditor {
 		}
 
 		getPreferenceStore().setValue(getPreferenceName(), value);
+	}
+
+	/**
+	 * Returns this field editor's current selected value.
+	 *
+	 * @return current selected value
+	 * @since 3.18
+	 */
+	public String getSelectionValue() {
+		return value;
 	}
 
 	@Override

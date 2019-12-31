@@ -21,14 +21,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 
 /**
- * <p>
- * <strong>EXPERIMENTAL</strong>. This class has been added as part of a work in
- * progress. There is no guarantee that this API will work or that it will
- * remain the same. Feel free to use it and give feedback via <a href=
- * "https://bugs.eclipse.org/bugs/buglist.cgi?component=UI&product=Platform">Bugzilla</a>,
- * but be aware that it might change.
- * </p>
- *
  * This class provides a convenient shorthand for creating and initializing
  * {@link Table}. This offers several benefits over creating Table normal way:
  *
@@ -50,13 +42,21 @@ import org.eclipse.swt.widgets.Table;
  * 		.onSelect(e -&gt; tableClicked(e)) //
  * 		.create(parent);
  * </pre>
+ *
  * <p>
  * The above example creates a table, sets some properties, registers a
  * SelectionListener and finally creates the table in "parent".
  * </p>
  *
+ * <p>
+ * Note that this class does not extend {@link AbstractCompositeFactory} even
+ * though Table extends Composite. This is because Table is not supposed to be
+ * used like a Composite.
+ * </p>
+ *
+ * @since 3.18
  */
-public class TableFactory extends AbstractCompositeFactory<TableFactory, Table> {
+public final class TableFactory extends AbstractControlFactory<TableFactory, Table> {
 
 	private TableFactory(int style) {
 		super(TableFactory.class, (parent) -> new Table(parent, style));
@@ -75,11 +75,14 @@ public class TableFactory extends AbstractCompositeFactory<TableFactory, Table> 
 
 	/**
 	 * Creates a {@link SelectionListener} and registers it for the widgetSelected
-	 * event. If event is raised it calls the given consumer. The
-	 * {@link SelectionEvent} is passed to the consumer.
+	 * event. If the receiver is selected by the user the given consumer is invoked.
+	 * The {@link SelectionEvent} is passed to the consumer.
 	 *
-	 * @param consumer
+	 * @param consumer the consumer whose accept method is called
 	 * @return this
+	 *
+	 * @see Table#addSelectionListener(SelectionListener)
+	 * @see SelectionListener#widgetSelectedAdapter(Consumer)
 	 */
 	public TableFactory onSelect(Consumer<SelectionEvent> consumer) {
 		addProperty(c -> c.addSelectionListener(SelectionListener.widgetSelectedAdapter(consumer)));
@@ -87,10 +90,13 @@ public class TableFactory extends AbstractCompositeFactory<TableFactory, Table> 
 	}
 
 	/**
-	 * Sets the header visibility.
+	 * Marks the receiver's header as visible if the argument is true, and marks it
+	 * invisible otherwise.
 	 *
-	 * @param visible
+	 * @param visible the visibility state
 	 * @return this
+	 *
+	 * @see Table#setHeaderVisible(boolean)
 	 */
 	public TableFactory headerVisible(boolean visible) {
 		addProperty((t) -> t.setHeaderVisible(visible));
@@ -98,10 +104,14 @@ public class TableFactory extends AbstractCompositeFactory<TableFactory, Table> 
 	}
 
 	/**
-	 * Sets the lines visibility.
+	 * Marks the receiver's lines as visible if the argument is true, and marks it
+	 * invisible otherwise. Note that some platforms draw grid lines while others
+	 * may draw alternating row colors.
 	 *
-	 * @param visible
+	 * @param visible the visibility state
 	 * @return this
+	 *
+	 * @see Table#setLinesVisible(boolean)
 	 */
 	public TableFactory linesVisible(boolean visible) {
 		addProperty((t) -> t.setLinesVisible(visible));
@@ -109,14 +119,15 @@ public class TableFactory extends AbstractCompositeFactory<TableFactory, Table> 
 	}
 
 	/**
-	 * Sets the item count of the table.
+	 * Sets the number of items contained in the receiver.
 	 *
-	 * @param count
+	 * @param count the number of items
 	 * @return this
+	 *
+	 * @see Table#setItemCount(int)
 	 */
 	public TableFactory itemCount(int count) {
 		addProperty((t) -> t.setItemCount(count));
 		return this;
 	}
-
 }

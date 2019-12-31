@@ -14,11 +14,8 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.api;
 
-import junit.framework.TestSuite;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorRegistry;
 import org.eclipse.ui.IPageLayout;
@@ -37,19 +34,16 @@ import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.tests.harness.util.FileUtil;
 import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.eclipse.ui.views.IStickyViewDescriptor;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * @since 3.0
  */
+@RunWith(JUnit4.class)
 public class StickyViewTest extends UITestCase {
-
-	/**
-	 * Allow tests to run just in this class.
-	 * @return the TestSuite to run.
-	 */
-	public static TestSuite suite() {
-		return new TestSuite(StickyViewTest.class);
-	}
 
 	private IWorkbenchWindow window;
 
@@ -58,22 +52,26 @@ public class StickyViewTest extends UITestCase {
 	/**
 	 * @param testName
 	 */
-	public StickyViewTest(String testName) {
-		super(testName);
+	public StickyViewTest() {
+		super(StickyViewTest.class.getSimpleName());
 	}
 
+	@Test
 	public void testStackPlacementRight() {
 		testStackPlacement("Right");
 	}
 
+	@Test
 	public void testStackPlacementLeft() {
 		testStackPlacement("Left");
 	}
 
+	@Test
 	public void testStackPlacementTop() {
 		testStackPlacement("Top");
 	}
 
+	@Test
 	public void testStackPlacementBottom() {
 		testStackPlacement("Bottom");
 	}
@@ -105,6 +103,7 @@ public class StickyViewTest extends UITestCase {
 	/**
 	 * Tests to ensure that all views in a stack with a known sticky view are also sticky.
 	 */
+	@Test
 	public void testStackContents() {
 		try {
 			IViewPart part1 = page
@@ -125,6 +124,8 @@ public class StickyViewTest extends UITestCase {
 	 * Tests whether the moveable flag is being picked up and honoured
 	 * from the XML.
 	 */
+	@Test
+	@Ignore
 	public void XXXtestClosableFlag() {
 		//explicit closeable = true
 		testCloseable("org.eclipse.ui.tests.api.StickyViewRight1", true);
@@ -134,6 +135,8 @@ public class StickyViewTest extends UITestCase {
 		testCloseable("org.eclipse.ui.tests.api.StickyViewLeft1", true);
 	}
 
+	@Test
+	@Ignore
 	public void XXXtestMoveableFlag() {
 		//explicit closeable = true
 		testMoveable("org.eclipse.ui.tests.api.StickyViewRight1", true);
@@ -202,6 +205,7 @@ public class StickyViewTest extends UITestCase {
 	/**
 	 * Sticky views should remain after perspective reset.
 	 */
+	@Test
 	public void testPerspectiveReset() {
 		try {
 			page.showView("org.eclipse.ui.tests.api.StickyViewRight1");
@@ -216,6 +220,7 @@ public class StickyViewTest extends UITestCase {
 	/**
 	 * Tests that a sticky view is opened in successive perspectives.
 	 */
+	@Test
 	public void testPerspectiveOpen() {
 		try {
 			page.showView("org.eclipse.ui.tests.api.StickyViewRight1");
@@ -236,6 +241,7 @@ public class StickyViewTest extends UITestCase {
 	 * @throws Throwable on error
 	 * @since 3.2
 	 */
+	@Test
 	public void testPerspectiveCloseStandaloneView() throws Throwable {
 		page.setPerspective(WorkbenchPlugin.getDefault()
 				.getPerspectiveRegistry().findPerspectiveWithId(
@@ -290,12 +296,12 @@ public class StickyViewTest extends UITestCase {
 	 * @throws Throwable on an error
 	 * @since 3.2
 	 */
+	@Test
+	@Ignore
 	public void XXXtestPerspectiveViewToolBarVisible() throws Throwable {
 		// These tests are hard-wired to the pre-3.3 zoom behaviour
 		// Run them anyway to ensure that we preserve the 3.0 mechanism
-		IPreferenceStore apiStore = PrefUtil.getAPIPreferenceStore();
-		boolean oldMinMaxState = apiStore.getBoolean(IWorkbenchPreferenceConstants.ENABLE_NEW_MIN_MAX);
-		apiStore.setValue(IWorkbenchPreferenceConstants.ENABLE_NEW_MIN_MAX, false);
+		setPreference(PrefUtil.getAPIPreferenceStore(), IWorkbenchPreferenceConstants.ENABLE_NEW_MIN_MAX, false);
 
 		IPerspectiveDescriptor perspective = WorkbenchPlugin.getDefault()
 				.getPerspectiveRegistry().findPerspectiveWithId(
@@ -376,9 +382,6 @@ public class StickyViewTest extends UITestCase {
 			}
 			page.closePerspective(perspective, false, false);
 			page.closePerspective(secondPerspective, false, false);
-
-			// Restore the min/max state to it's correct value
-			apiStore.setValue(IWorkbenchPreferenceConstants.ENABLE_NEW_MIN_MAX, oldMinMaxState);
 		}
 	}
 

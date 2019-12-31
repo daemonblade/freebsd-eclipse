@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -21,7 +21,7 @@ import org.eclipse.ui.views.properties.TextPropertyDescriptor;
 
 /**
  * Property source for the size properties.
- * 
+ *
  * @author Anthony Hunter
  */
 public class SizePropertySource
@@ -52,7 +52,7 @@ public class SizePropertySource
 
 	/**
 	 * The constructor for SizePropertySource.
-	 * 
+	 *
 	 * @param m_element
 	 *            the button element.
 	 * @param point
@@ -65,7 +65,7 @@ public class SizePropertySource
 
 	/**
 	 * Fire a property change event.
-	 * 
+	 *
 	 * @param propName
 	 *            the name of the property change.
 	 */
@@ -79,14 +79,17 @@ public class SizePropertySource
 		ctl.setSize(point);
 	}
 
+	@Override
 	public Object getEditableValue() {
 		return this;
 	}
 
+	@Override
 	public IPropertyDescriptor[] getPropertyDescriptors() {
 		return descriptors;
 	}
 
+	@Override
 	public Object getPropertyValue(Object propName) {
 		if (ID_WIDTH.equals(propName)) {
 			return new String(Integer.valueOf(point.x).toString());
@@ -99,26 +102,26 @@ public class SizePropertySource
 
 	/**
 	 * Retrieve the value of the size property.
-	 * 
+	 *
 	 * @return the value of the size property.
 	 */
 	public Point getValue() {
 		return new Point(point.x, point.y);
 	}
 
-	/**
-	 * @see org.eclipse.ui.views.properties.IPropertySource#isPropertySet(Object)
-	 */
+	@Override
 	public boolean isPropertySet(Object propName) {
 		if (ID_WIDTH.equals(propName) || ID_HEIGHT.equals(propName))
 			return true;
 		return false;
 	}
 
+	@Override
 	public void resetPropertyValue(Object propName) {
 		//
 	}
 
+	@Override
 	public void setPropertyValue(Object propName, Object value) {
 		int newInt;
 		try {

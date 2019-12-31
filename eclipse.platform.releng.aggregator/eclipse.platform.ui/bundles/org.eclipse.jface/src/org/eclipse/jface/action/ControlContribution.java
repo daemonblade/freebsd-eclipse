@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Christoph Läubrich - Bug 551587
  *******************************************************************************/
 package org.eclipse.jface.action;
 
@@ -32,6 +33,8 @@ import org.eclipse.swt.widgets.ToolItem;
  * </p>
  */
 public abstract class ControlContribution extends ContributionItem {
+	private ToolItem ti;
+
 	/**
 	 * Creates a control contribution item with the given id.
 	 *
@@ -107,9 +110,38 @@ public abstract class ControlContribution extends ContributionItem {
 					"createControl(Composite) of " + getClass() //$NON-NLS-1$
 							+ " returned null, cannot fill toolbar")); //$NON-NLS-1$
 		} else {
-			ToolItem ti = new ToolItem(parent, SWT.SEPARATOR, index);
+			ti = new ToolItem(parent, SWT.SEPARATOR, index);
 			ti.setControl(control);
 			ti.setWidth(computeWidth(control));
+			ti.setData(this);
 		}
+	}
+
+	@Override
+	public void setVisible(boolean visible) {
+		super.setVisible(visible);
+		IContributionManager parent = getParent();
+		if (parent instanceof SubToolBarManager) {
+			SubToolBarManager subManager = (SubToolBarManager) parent;
+			IContributionItem item = subManager.getParent().find(getId());
+			if (item instanceof SubContributionItem) {
+				item.setVisible(visible);
+			}
+		}
+	}
+
+	@Override
+	public void update() {
+		if (ti != null && !ti.isDisposed()) {
+			Control control = ti.getControl();
+			if (control != null && !control.isDisposed()) {
+				ti.setWidth(computeWidth(control));
+			}
+		}
+	}
+
+	@Override
+	public void update(String id) {
+		update();
 	}
 }

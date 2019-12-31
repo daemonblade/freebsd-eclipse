@@ -17,6 +17,7 @@ package org.eclipse.ui.internal.dialogs;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -144,7 +145,7 @@ public class PropertyPageContributorManager extends ObjectContributorManager {
 
 	/**
 	 * Build the list of nodes to be sorted.
-	 * 
+	 *
 	 * @param nodes
 	 * @return List of CategorizedPageNode
 	 */
@@ -176,7 +177,7 @@ public class PropertyPageContributorManager extends ObjectContributorManager {
 	/**
 	 * Ideally, shared instance should not be used and manager should be located in
 	 * the workbench class.
-	 * 
+	 *
 	 * @return PropertyPageContributorManager
 	 */
 	public static PropertyPageContributorManager getManager() {
@@ -204,7 +205,7 @@ public class PropertyPageContributorManager extends ObjectContributorManager {
 
 	/**
 	 * Return the contributors for element filters on the enablement.
-	 * 
+	 *
 	 * @param element
 	 * @return Collection of PropertyPageContribution
 	 */
@@ -230,23 +231,31 @@ public class PropertyPageContributorManager extends ObjectContributorManager {
 	 * @since 3.7
 	 */
 	public Collection getApplicableContributors(IStructuredSelection selection) {
-		Iterator it = selection.iterator();
-		Collection result = null;
-		while (it.hasNext()) {
-			Object element = it.next();
-			Collection collection = getApplicableContributors(element);
-			if (result == null)
-				result = new LinkedHashSet(collection);
-			else
+		boolean isMultiSelection = selection.size() > 1;
+		Iterator<Object> selIter = selection.iterator();
+		Collection<RegistryPageContributor> result = null;
+		while (selIter.hasNext()) {
+			Object selectionElement = selIter.next();
+			Collection<RegistryPageContributor> collection = getApplicableContributors(selectionElement);
+			if (isMultiSelection) {
+				// Most pages are not available for multi selection.
+				// We can abort early in most cases by checking this during each iteration.
+				Iterator<RegistryPageContributor> resIter = collection.iterator();
+				while (resIter.hasNext()) {
+					RegistryPageContributor contrib = resIter.next();
+					if (!contrib.supportsMultipleSelection()) {
+						resIter.remove();
+					}
+				}
+			}
+			if (result == null) {
+				result = new LinkedHashSet<>(collection);
+			} else {
 				result.retainAll(collection);
-		}
-		if (result != null && !result.isEmpty() && selection.size() > 1) {
-			// only add contributors which can handle multi selection
-			it = result.iterator();
-			while (it.hasNext()) {
-				RegistryPageContributor contrib = (RegistryPageContributor) it.next();
-				if (!contrib.supportsMultipleSelection())
-					it.remove();
+			}
+			// With each iteration the result can only shrink. We can stop if already empty.
+			if (result.isEmpty()) {
+				return Collections.emptyList();
 			}
 		}
 		return result;

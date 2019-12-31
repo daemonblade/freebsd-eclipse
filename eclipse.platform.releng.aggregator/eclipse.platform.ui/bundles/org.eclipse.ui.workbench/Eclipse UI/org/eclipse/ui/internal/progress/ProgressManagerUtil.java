@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2017 IBM Corporation and others.
+ * Copyright (c) 2003, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -185,7 +185,7 @@ public class ProgressManagerUtil {
 	}
 
 	private static String clipToSize(GC gc, String textValue, String ellipsisString, int maxWidth) {
-		int averageCharWidth = gc.getFontMetrics().getAverageCharWidth();
+		int averageCharWidth = (int) gc.getFontMetrics().getAverageCharacterWidth();
 		int length = textValue.length();
 
 		int secondWord = findSecondWhitespace(textValue, gc, maxWidth);
@@ -374,7 +374,7 @@ public class ProgressManagerUtil {
 	 * If there are any modal shells open reschedule openJob to wait until they are
 	 * closed. Return true if it rescheduled, false if there is nothing blocking it.
 	 *
-	 * @param openJob
+	 * @param openJob the job to reschedule (with delay) when modal dialog is open
 	 * @return boolean. true if the job was rescheduled due to modal dialogs.
 	 */
 	public static boolean rescheduleIfModalShellOpen(Job openJob) {

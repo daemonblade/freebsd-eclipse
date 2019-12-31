@@ -40,8 +40,7 @@ public class CSSPropertyTextSWTHandler extends AbstractCSSPropertyTextHandler {
 			CSSValue value, String pseudo, CSSEngine engine) throws Exception {
 		Widget widget = SWTElementHelpers.getWidget(element);
 		if (widget != null) {
-			super.applyCSSProperty(widget, property, value, pseudo, engine);
-			return true;
+			return super.applyCSSProperty(widget, property, value, pseudo, engine);
 		}
 		return false;
 
@@ -61,23 +60,21 @@ public class CSSPropertyTextSWTHandler extends AbstractCSSPropertyTextHandler {
 	public void applyCSSPropertyColor(Object element, CSSValue value,
 			String pseudo, CSSEngine engine) throws Exception {
 		Widget widget = (Widget) element;
-		if (value.getCssValueType() == CSSValue.CSS_PRIMITIVE_VALUE) {
-			Color newColor = (Color) engine.convert(value, Color.class, widget
-					.getDisplay());
-			if (newColor != null && newColor.isDisposed()) {
-				return;
-			}
+		Color newColor = (Color) engine.convert(value, Color.class, widget.getDisplay());
 
-			if (widget instanceof CTabItem) {
-				CTabFolder folder = ((CTabItem) widget).getParent();
-				if ("selected".equals(pseudo)) {
-					CSSSWTColorHelper.setSelectionForeground(folder, newColor);
-				} else {
-					CSSSWTColorHelper.setForeground(folder, newColor);
-				}
-			} else if (widget instanceof Control) {
-				CSSSWTColorHelper.setForeground((Control) widget, newColor);
+		if (newColor != null && newColor.isDisposed() || value.getCssValueType() != CSSValue.CSS_PRIMITIVE_VALUE) {
+			return;
+		}
+
+		if (widget instanceof CTabItem) {
+			CTabFolder folder = ((CTabItem) widget).getParent();
+			if ("selected".equals(pseudo)) {
+				CSSSWTColorHelper.setSelectionForeground(folder, newColor);
+			} else {
+				CSSSWTColorHelper.setForeground(folder, newColor);
 			}
+		} else if (widget instanceof Control) {
+			CSSSWTColorHelper.setForeground((Control) widget, newColor);
 		}
 	}
 

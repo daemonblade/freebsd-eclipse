@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corporation and others.
+ * Copyright (c) 2004, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -250,6 +250,11 @@ public interface IWorkbenchRegistryConstants {
 	 * the menus extension point.
 	 */
 	String ATT_IMAGE_STYLE = "imageStyle"; //$NON-NLS-1$
+
+	/**
+	 * Action attribute. Value <code>initialEnabled</code>.
+	 */
+	String ATT_INITIAL_ENABLED = "initialEnabled"; //$NON-NLS-1$
 
 	/**
 	 * Is-editable attribute. Value <code>isEditable</code>.
@@ -1199,7 +1204,7 @@ public interface IWorkbenchRegistryConstants {
 	/**
 	 * The name of the element describing splash handlers. Value
 	 * <code>splashHandler</code>.
-	 * 
+	 *
 	 * @since 3.3
 	 */
 	String TAG_SPLASH_HANDLER = "splashHandler"; //$NON-NLS-1$
@@ -1207,7 +1212,7 @@ public interface IWorkbenchRegistryConstants {
 	/**
 	 * The name of the element describing splash handler product bindings. Value
 	 * <code>splashHandlerProductBinding</code>.
-	 * 
+	 *
 	 * @since 3.3
 	 */
 	String TAG_SPLASH_HANDLER_PRODUCT_BINDING = "splashHandlerProductBinding"; //$NON-NLS-1$

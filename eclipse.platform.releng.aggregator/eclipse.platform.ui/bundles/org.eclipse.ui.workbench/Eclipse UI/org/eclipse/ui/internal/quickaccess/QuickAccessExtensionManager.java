@@ -121,11 +121,6 @@ public class QuickAccessExtensionManager {
 		}
 
 		@Override
-		public boolean isAlwaysPresent() {
-			return false;
-		}
-
-		@Override
 		public QuickAccessElement[] getElementsSorted(String filter, IProgressMonitor monitor) {
 			if (canDelegate()) {
 				if (computer.needsRefresh()) {
@@ -163,9 +158,12 @@ public class QuickAccessExtensionManager {
 		}
 
 		@Override
-		public QuickAccessElement getElementForId(String id) {
-			getElementsSorted(null, new NullProgressMonitor()); // initialize content
-			return super.getElementForId(id);
+		public QuickAccessElement findElement(String id, String filterText) {
+			QuickAccessElement[] elementsSorted = getElementsSorted(filterText, new NullProgressMonitor());
+			return Arrays.stream(elementsSorted)
+					.filter(element -> element.getId().equals(id))
+					.findAny()
+					.orElse(null);
 		}
 
 	}

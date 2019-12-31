@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006 IBM Corporation and others.
+ * Copyright (c) 2006, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -19,7 +19,6 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
-import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
@@ -33,7 +32,7 @@ import org.eclipse.ui.views.properties.tabbed.TabbedPropertySheetPage;
 
 /**
  * The Label section on the Button tab.
- * 
+ *
  * @author Anthony Hunter
  */
 public class LabelSection
@@ -43,14 +42,12 @@ public class LabelSection
 
 	private ButtonElement buttonElement;
 
-	private ModifyListener listener = new ModifyListener() {
-
-		public void modifyText(ModifyEvent arg0) {
-			ButtonElementProperties properties = (ButtonElementProperties) Adapters.adapt(buttonElement, IPropertySource.class);
-			properties.setPropertyValue(ButtonElementProperties.PROPERTY_TEXT, labelText.getText());
-		}
+	private ModifyListener listener = arg0 -> {
+		ButtonElementProperties properties = (ButtonElementProperties) Adapters.adapt(buttonElement, IPropertySource.class);
+		properties.setPropertyValue(ButtonElementProperties.PROPERTY_TEXT, labelText.getText());
 	};
 
+	@Override
 	public void setInput(IWorkbenchPart part, ISelection selection) {
 		super.setInput(part, selection);
 		Assert.isTrue(selection instanceof IStructuredSelection);
@@ -59,6 +56,7 @@ public class LabelSection
 		this.buttonElement = (ButtonElement) input;
 	}
 
+	@Override
 	public void createControls(Composite parent,
 			TabbedPropertySheetPage aTabbedPropertySheetPage) {
 		super.createControls(parent, aTabbedPropertySheetPage);
@@ -84,6 +82,7 @@ public class LabelSection
 		labelLabel.setLayoutData(data);
 	}
 
+	@Override
 	public void refresh() {
 		labelText.removeModifyListener(listener);
 		ButtonElementProperties properties = (ButtonElementProperties) Adapters.adapt(buttonElement, IPropertySource.class);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corporation and others.
+ * Copyright (c) 2004, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,17 +21,20 @@ import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 
 /**
  * @since 3.0
  */
+@RunWith(JUnit4.class)
 public class RawIViewPartTest extends UITestCase {
-	/**
-	 * @param testName
-	 */
-	public RawIViewPartTest(String testName) {
-		super(testName);
+
+	public RawIViewPartTest() {
+		super(RawIViewPartTest.class.getSimpleName());
 	}
 
 	IWorkbenchWindow window;
@@ -48,20 +51,17 @@ public class RawIViewPartTest extends UITestCase {
 
 	boolean contentChangeEvent = false;
 
-	private IPropertyListener propertyListener = new IPropertyListener() {
-		@Override
-		public void propertyChanged(Object source, int propId) {
-			switch (propId) {
-			case IWorkbenchPartConstants.PROP_TITLE:
-				titleChangeEvent = true;
-				break;
-			case IWorkbenchPartConstants.PROP_PART_NAME:
-				nameChangeEvent = true;
-				break;
-			case IWorkbenchPartConstants.PROP_CONTENT_DESCRIPTION:
-				contentChangeEvent = true;
-				break;
-			}
+	private IPropertyListener propertyListener = (source, propId) -> {
+		switch (propId) {
+		case IWorkbenchPartConstants.PROP_TITLE:
+			titleChangeEvent = true;
+			break;
+		case IWorkbenchPartConstants.PROP_PART_NAME:
+			nameChangeEvent = true;
+			break;
+		case IWorkbenchPartConstants.PROP_CONTENT_DESCRIPTION:
+			contentChangeEvent = true;
+			break;
 		}
 	};
 
@@ -130,11 +130,14 @@ public class RawIViewPartTest extends UITestCase {
 		}
 	}
 
+	@Test
 	public void testDefaults() throws Throwable {
 		verifySettings("SomeTitle", "RawIViewPart", "SomeTitle");
 		verifyEvents(false, false, false);
 	}
 
+	@Test
+	@Ignore
 	public void XXXtestCustomTitle() throws Throwable {
 		view.setTitle("CustomTitle");
 		verifySettings("CustomTitle", "RawIViewPart", "CustomTitle");
@@ -145,6 +148,8 @@ public class RawIViewPartTest extends UITestCase {
 	 * Ensures that the content description is empty when the title is the same
 	 * as the default part name
 	 */
+	@Test
+	@Ignore
 	public void XXXtestEmptyContentDescription() throws Throwable {
 		view.setTitle("RawIViewPart");
 		verifySettings("RawIViewPart", "RawIViewPart", "");

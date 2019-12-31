@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -21,7 +21,7 @@ import org.eclipse.ui.views.properties.IPropertySource;
 
 /**
  * This class represents a Button Element in the Sample View
- * 
+ *
  * TIP: By implementing the <code>IWorkbenchAdapter</code> interface, we can
  * easily add objects of this type to viewers and parts in the workbench. When a
  * viewer contains <code>IWorkbenchAdapter</code>, the generic
@@ -38,7 +38,7 @@ public class ButtonElement
 
 	/**
 	 * Creates a new ButtonElement.
-	 * 
+	 *
 	 * @param initBtn
 	 *            the control of this element
 	 * @param heading
@@ -49,50 +49,40 @@ public class ButtonElement
 		this.ctl = initBtn;
 	}
 
-	/*
-	 * (non-Javadoc) Method declared on IAdaptable
-	 */
-	public Object getAdapter(Class adapter) {
+	@Override
+	public <T> T getAdapter(Class<T> adapter) {
 		if (adapter == IWorkbenchAdapter.class)
-			return this;
+			return adapter.cast(this);
 		if (adapter == IPropertySource.class)
-			return new ButtonElementProperties(this);
+			return adapter.cast(new ButtonElementProperties(this));
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc) Method declared on IWorkbenchAdapter
-	 */
+	@Override
 	public ImageDescriptor getImageDescriptor(Object object) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc) Method declared on IWorkbenchAdapter
-	 */
+	@Override
 	public String getLabel(Object o) {
 		return headingName;
 	}
 
-	/*
-	 * (non-Javadoc) Method declared on IWorkbenchAdapter
-	 */
+	@Override
 	public Object getParent(Object o) {
 		return null;
 	}
 
 	/**
 	 * Retrieve the control for this element.
-	 * 
+	 *
 	 * @return the control for this element.
 	 */
 	public Button getControl() {
 		return ctl;
 	}
 
-	/**
-	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getChildren(Object)
-	 */
+	@Override
 	public Object[] getChildren(Object o) {
 		return null;
 	}

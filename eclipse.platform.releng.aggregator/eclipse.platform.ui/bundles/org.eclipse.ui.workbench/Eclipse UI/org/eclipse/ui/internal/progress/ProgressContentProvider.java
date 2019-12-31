@@ -23,7 +23,7 @@ import org.eclipse.jface.viewers.Viewer;
 public abstract class ProgressContentProvider implements IProgressUpdateCollector, IStructuredContentProvider {
 
 	/**
-	 * Return whether or not we check the preferences or overide.
+	 * Return whether or not we check the preferences or override.
 	 */
 	private boolean canShowDebug = false;
 
@@ -37,7 +37,7 @@ public abstract class ProgressContentProvider implements IProgressUpdateCollecto
 	/**
 	 * Create a new instance of the receiver with a flag to indicate if there will
 	 * be debug info shown or not.
-	 * 
+	 *
 	 * @param debug If true debug information will be shown if the debug flag in the
 	 *              ProgressManager is true.
 	 */
@@ -58,8 +58,8 @@ public abstract class ProgressContentProvider implements IProgressUpdateCollecto
 
 	/**
 	 * Return whether or not we are debugging. Check the system settings unless we
-	 * are overiding them.
-	 * 
+	 * are overriding them.
+	 *
 	 * @return boolean <code>true</code> if debug (system) jobs are being shown.
 	 */
 	public boolean debug() {

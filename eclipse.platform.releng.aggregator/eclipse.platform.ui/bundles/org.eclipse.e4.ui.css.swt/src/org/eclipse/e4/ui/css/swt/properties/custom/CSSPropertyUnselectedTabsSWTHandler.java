@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corporation and others.
+ * Copyright (c) 2010, 2019 IBM Corporation and others.
  *
- * This
- * program and the accompanying materials are made available under the terms of
- * the Eclipse Public License 2.0 which accompanies this distribution, and is
-t https://www.eclipse.org/legal/epl-2.0/
-t
-t SPDX-License-Identifier: EPL-2.0
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors: IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -20,8 +20,6 @@ import org.eclipse.e4.ui.internal.css.swt.ICTabRendering;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabFolderRenderer;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -30,8 +28,6 @@ import org.w3c.dom.css.CSSValue;
 
 public class CSSPropertyUnselectedTabsSWTHandler extends AbstractCSSPropertySWTHandler {
 	private static final String UNSELECTED_TABS_COLOR_PROP = "swt-unselected-tabs-color";
-
-	private static final String DEPRECATED_UNSELECTED_TABS_COLOR_PROP = "unselected-tabs-color";
 
 	private static final String RESIZE_LISTENER = "CSSPropertyUnselectedTabsSWTHandler.resizeListener";
 
@@ -84,8 +80,7 @@ public class CSSPropertyUnselectedTabsSWTHandler extends AbstractCSSPropertySWTH
 	}
 
 	private boolean isUnselectedTabsColorProp(String property) {
-		return UNSELECTED_TABS_COLOR_PROP.equals(property)
-				|| DEPRECATED_UNSELECTED_TABS_COLOR_PROP.equals(property);
+		return UNSELECTED_TABS_COLOR_PROP.equals(property);
 	}
 
 	// TODO: It needs to be refactored when the Bug 33276 gets fixed
@@ -105,12 +100,7 @@ public class CSSPropertyUnselectedTabsSWTHandler extends AbstractCSSPropertySWTH
 
 		folder.addListener(SWT.Resize, resizeListener);
 		folder.setData(RESIZE_LISTENER, resizeListener);
-		folder.addDisposeListener(new DisposeListener() {
-			@Override
-			public void widgetDisposed(DisposeEvent e) {
-				e.widget.removeListener(SWT.Resize, resizeListener);
-			}
-		});
+		folder.addDisposeListener(e -> e.widget.removeListener(SWT.Resize, resizeListener));
 	}
 
 	private void removeResizeEventListener(CTabFolder folder) {

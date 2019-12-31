@@ -15,7 +15,6 @@ package org.eclipse.e4.ui.progress.internal;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -29,6 +28,7 @@ import org.eclipse.e4.ui.progress.internal.FinishedJobs.KeptJobsListener;
  * The ProgressViewerContentProvider is the content provider progress viewers.
  */
 public class ProgressViewerContentProvider extends ProgressContentProvider {
+	/** Viewer to show content. */
 	protected AbstractProgressViewer progressViewer;
 
 	private KeptJobsListener keptJobListener;
@@ -40,14 +40,14 @@ public class ProgressViewerContentProvider extends ProgressContentProvider {
 	/**
 	 * Create a new instance of the receiver.
 	 *
-	 * @param structured
-	 *            The Viewer we are providing content for
-	 * @param debug
-	 *            If true debug information will be shown if the debug flag in
-	 *            the ProgressManager is true.
-	 * @param showFinished
-	 *            A boolean that indicates whether or not the finished jobs
-	 *            should be shown.
+	 * @param structured      The Viewer we are providing content for
+	 * @param finishedJobs    The singleton to store finished jobs which should kept
+	 * @param viewUpdater     The singleton to perform viewer updates
+	 * @param progressManager helper to manage progress
+	 * @param debug           If true debug information will be shown if the debug
+	 *                        flag in the ProgressManager is true.
+	 * @param showFinished    A boolean that indicates whether or not the finished
+	 *                        jobs should be shown.
 	 */
 	public ProgressViewerContentProvider(AbstractProgressViewer structured,
 			FinishedJobs finishedJobs, ProgressViewUpdater viewUpdater,
@@ -138,18 +138,15 @@ public class ProgressViewerContentProvider extends ProgressContentProvider {
 		if (!showFinished)
 			return elements;
 
-		Set<JobTreeElement> kept = finishedJobs.getKeptAsSet();
+		JobTreeElement[] kept = finishedJobs.getKeptElements();
 
-		if (kept.isEmpty())
+		if (kept.length == 0)
 			return elements;
 
 		Set<Object> all = new HashSet<>();
 
 		all.addAll(Arrays.asList(elements));
-
-		Iterator<JobTreeElement> keptIterator = kept.iterator();
-		while (keptIterator.hasNext()) {
-			JobTreeElement next = keptIterator.next();
+		for (JobTreeElement next : kept) {
 			if (next.getParent() != null && all.contains(next.getParent()))
 				continue;
 			all.add(next);

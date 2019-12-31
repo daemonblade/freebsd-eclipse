@@ -21,6 +21,7 @@
  *     Patrik Suzzi <psuzzi@gmail.com> - Bug 487297
  *     Daniel Kruegler <daniel.kruegler@gmail.com> - Bug 520926
  *     Christian Georgi (SAP SE) - Bug 540440
+ *     Paul Pazderski <paul-eclipse@ppazderski.de> - Bug 550950
  *******************************************************************************/
 
 package org.eclipse.ui.internal;
@@ -265,6 +266,7 @@ import org.eclipse.ui.wizards.IWizardRegistry;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleEvent;
 import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.SynchronousBundleListener;
 import org.osgi.util.tracker.ServiceTracker;
@@ -587,6 +589,31 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 				// create the workbench instance
 				Workbench workbench = new Workbench(display, advisor, appModel, context);
 
+				Dictionary<String, Object> properties = new Hashtable<>();
+				properties.put(Constants.SERVICE_RANKING, Integer.valueOf(Integer.MAX_VALUE - 1));
+				ServiceRegistration<?> registration[] = new ServiceRegistration[1];
+				StartupMonitor startupMonitor = new StartupMonitor() {
+					@Override
+					public void applicationRunning() {
+						registration[0].unregister(); // unregister ourself
+						// fire part visibility events now that we're up
+						for (IWorkbenchWindow window : workbench.getWorkbenchWindows()) {
+							IWorkbenchPage page = window.getActivePage();
+							if (page != null) {
+								((WorkbenchPage) page).fireInitialPartVisibilityEvents();
+							}
+						}
+					}
+					@Override
+					public void update() {
+						// do nothing - we come into the picture far too late
+						// for this to be relevant
+					}
+				};
+				registration[0] = FrameworkUtil.getBundle(WorkbenchPlugin.class).getBundleContext()
+						.registerService(StartupMonitor.class.getName(), startupMonitor,
+						properties);
+
 				// listener for updating the splash screen
 				SynchronousBundleListener bundleListener = null;
 				createSplash = WorkbenchPlugin.isSplashHandleSpecified();
@@ -796,10 +823,10 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 						splashShell.setBackgroundImage(background);
 				}
 
-				Dictionary properties = new Hashtable();
+				Dictionary<String, Object> properties = new Hashtable<>();
 				properties.put(Constants.SERVICE_RANKING, Integer.valueOf(Integer.MAX_VALUE));
 				BundleContext context = WorkbenchPlugin.getDefault().getBundleContext();
-				final ServiceRegistration registration[] = new ServiceRegistration[1];
+				final ServiceRegistration<?> registration[] = new ServiceRegistration[1];
 				StartupMonitor startupMonitor = new StartupMonitor() {
 
 					@Override
@@ -810,14 +837,6 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 						if (splash != null)
 							splash.dispose();
 						WorkbenchPlugin.unsetSplashShell(display);
-
-						// fire part visibility events now that we're up
-						for (IWorkbenchWindow window : getWorkbenchWindows()) {
-							IWorkbenchPage page = window.getActivePage();
-							if (page != null) {
-								((WorkbenchPage) page).fireInitialPartVisibilityEvents();
-							}
-						}
 					}
 
 					@Override
@@ -2184,7 +2203,6 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 			WorkbenchPlugin.log("Defining a binding table: " + id); //$NON-NLS-1$
 		}
 		MBindingTable bt = CommandsFactoryImpl.eINSTANCE.createBindingTable();
-		bt.setElementId(id);
 		bt.setBindingContext(getBindingContext(id));
 		bindingTables.add(bt);
 	}
@@ -2196,7 +2214,7 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 	 */
 	private boolean contains(List<MBindingTable> bindingTables, String id) {
 		for (MBindingTable bt : bindingTables) {
-			if (id.equals(bt.getElementId())) {
+			if (id.equals(bt.getBindingContext().getElementId())) {
 				return true;
 			}
 		}
@@ -2917,6 +2935,26 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 	public IWorkbenchPage showPerspective(String perspectiveId, IWorkbenchWindow targetWindow, IAdaptable input)
 			throws WorkbenchException {
 		Assert.isNotNull(perspectiveId);
+		final Object[] ret = new Object[1];
+		BusyIndicator.showWhile(null, () -> {
+			try {
+				ret[0] = busyShowPerspective(perspectiveId, targetWindow, input);
+			} catch (WorkbenchException e) {
+				ret[0] = e;
+			}
+		});
+		if (ret[0] instanceof IWorkbenchPage) {
+			return (IWorkbenchPage) ret[0];
+		} else if (ret[0] instanceof WorkbenchException) {
+			throw ((WorkbenchException) ret[0]);
+		} else {
+			throw new WorkbenchException(WorkbenchMessages.WorkbenchPage_AbnormalWorkbenchCondition);
+		}
+	}
+
+	private IWorkbenchPage busyShowPerspective(String perspectiveId, IWorkbenchWindow targetWindow, IAdaptable input)
+			throws WorkbenchException {
+		Assert.isNotNull(perspectiveId);
 		IPerspectiveDescriptor targetPerspective = getPerspectiveRegistry().findPerspectiveWithId(perspectiveId);
 		if (targetPerspective == null) {
 			throw new WorkbenchException(
@@ -2961,11 +2999,11 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 	 */
 	private void shutdown() {
 		// shutdown application-specific portions first
+		StatusManager statusManager = StatusManager.getManager();
 		try {
 			advisor.postShutdown();
 		} catch (Exception ex) {
-			StatusManager.getManager()
-					.handle(StatusUtil.newStatus(WorkbenchPlugin.PI_WORKBENCH, "Exceptions during shutdown", ex)); //$NON-NLS-1$
+			statusManager.handle(StatusUtil.newStatus(WorkbenchPlugin.PI_WORKBENCH, "Exceptions during shutdown", ex)); //$NON-NLS-1$
 		}
 
 		// notify regular workbench clients of shutdown, and clear the list when done
@@ -3009,6 +3047,7 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 		if (tracker != null) {
 			tracker.close();
 		}
+		statusManager.unregister();
 	}
 
 	/**

@@ -23,16 +23,16 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPreferenceConstants;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.Ignore;
+import org.junit.internal.runners.JUnit38ClassRunner;
+import org.junit.runner.RunWith;
 
 /**
  * @since 3.6
  */
+@RunWith(JUnit38ClassRunner.class)
+@Ignore
 public class StickyViewManagerTest extends UITestCase {
-
-	/**
-	 * The original behaviour of sticky views.
-	 */
-	private boolean originalPreference;
 
 	public StickyViewManagerTest(String testName) {
 		super(testName);
@@ -40,24 +40,9 @@ public class StickyViewManagerTest extends UITestCase {
 
 	@Override
 	protected void doSetUp() throws Exception {
-		// preserve the original behaviour
-		originalPreference = PlatformUI.getPreferenceStore().getBoolean(
-				IWorkbenchPreferenceConstants.ENABLE_32_STICKY_CLOSE_BEHAVIOR);
-		// this test tests the new behaviour
-		PlatformUI.getPreferenceStore().setValue(
-				IWorkbenchPreferenceConstants.ENABLE_32_STICKY_CLOSE_BEHAVIOR,
+		setPreference(PlatformUI.getPreferenceStore(), IWorkbenchPreferenceConstants.ENABLE_32_STICKY_CLOSE_BEHAVIOR,
 				false);
 		super.doSetUp();
-	}
-
-	@Override
-	protected void doTearDown() throws Exception {
-		super.doTearDown();
-		// revert to the original behaviour to ensure future tests are not
-		// indirectly tampered by our settings
-		PlatformUI.getPreferenceStore().setValue(
-				IWorkbenchPreferenceConstants.ENABLE_32_STICKY_CLOSE_BEHAVIOR,
-				originalPreference);
 	}
 
 	/**

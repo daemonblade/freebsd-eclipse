@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006 IBM Corporation and others.
+ * Copyright (c) 2006, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -22,7 +22,7 @@ import org.eclipse.ui.PlatformUI;
 
 /**
  * a new Font dialog cell editor.
- * 
+ *
  * @author Anthony Hunter
  */
 public class FontDialogCellEditor
@@ -32,7 +32,7 @@ public class FontDialogCellEditor
 	 * Creates a new Font dialog cell editor parented under the given control.
 	 * The cell editor value is <code>null</code> initially, and has no
 	 * validator.
-	 * 
+	 *
 	 * @param parent
 	 *            the parent control
 	 */
@@ -40,9 +40,7 @@ public class FontDialogCellEditor
 		super(parent);
 	}
 
-	/**
-	 * @see org.eclipse.jface.viewers.DialogCellEditor#openDialogBox(Control)
-	 */
+	@Override
 	protected Object openDialogBox(Control cellEditorWindow) {
 		FontDialog ftDialog = new FontDialog(PlatformUI.getWorkbench()
 			.getActiveWorkbenchWindow().getShell());

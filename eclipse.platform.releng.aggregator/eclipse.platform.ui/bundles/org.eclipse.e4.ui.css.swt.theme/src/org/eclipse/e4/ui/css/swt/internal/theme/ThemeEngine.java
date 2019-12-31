@@ -113,6 +113,8 @@ public class ThemeEngine implements IThemeEngine {
 		File[] modifiedFiles = modDir.listFiles();
 		String currentOS = Platform.getOS();
 		String currentWS = Platform.getWS();
+		boolean e4_dark_mac_found = false;
+
 		for (IExtension e : extPoint.getExtensions()) {
 			for (IConfigurationElement ce : e.getConfigurationElements()) {
 				if (ce.getName().equals("theme")) {
@@ -121,18 +123,27 @@ public class ThemeEngine implements IThemeEngine {
 						String os = ce.getAttribute("os");
 						String version = ce.getAttribute("os_version");
 
-						if (version == null) {
-							version ="";
-						} else {
-							// For e4 dark theme on Mac, register the theme with matching OS version only
-							if (E4_DARK_THEME_ID.equals(id) && Platform.OS_MACOSX.equals(currentOS) && os != null
-									&& os.equals(currentOS)) {
-								if (!isOsVersionMatch(version)) {
-									continue;
-								} else {
-									version = "";
-								}
+						/*
+						 * Code to support e4 dark theme on Mac 10.13 and older. For e4 dark theme on
+						 * Mac, register the theme with matching OS version if specified.
+						 */
+						if (E4_DARK_THEME_ID.equals(id) && Platform.OS_MACOSX.equals(currentOS) && os != null
+								&& os.equals(currentOS)) {
+							// If e4 dark theme on Mac was already registered, don't try to match or
+							// register again.
+							if (e4_dark_mac_found) {
+								continue;
 							}
+							if (version != null && !isOsVersionMatch(version)) {
+								continue;
+							} else {
+								e4_dark_mac_found = true;
+								version = "";
+							}
+						}
+
+						if (version == null) {
+							version = "";
 						}
 
 						final String themeBaseId = id + version;
@@ -591,9 +602,13 @@ public class ThemeEngine implements IThemeEngine {
 
 		// For Mac & GTK, if the system has Dark appearance set and Eclipse is using the
 		// default settings, then start Eclipse in Dark theme.
+
+		// Check that there is a dark theme present
+		boolean hasDarkTheme = getThemes().stream().anyMatch(t -> t.getId().startsWith(E4_DARK_THEME_ID));
+
 		String os = Platform.getOS();
 		String themeToRestore = (Platform.OS_LINUX.equals(os) || Platform.OS_MACOSX.equals(os))
-				&& Display.isSystemDarkTheme() ? E4_DARK_THEME_ID : alternateTheme;
+				&& Display.isSystemDarkTheme() && hasDarkTheme ? E4_DARK_THEME_ID : alternateTheme;
 		if (themeToRestore != null && flag) {
 			setTheme(themeToRestore, false);
 		}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -18,6 +18,8 @@
  *  Lars Vogel <Lars.Vogel@gmail.com> - Bug 440810
  *  Patrik Suzzi <psuzzi@gmail.com> - Bug 485133
  *  Lucas Bullen <lbullen@redhat.com> - Bug 525974, 531332
+ *  Emmanuel Chebbi <emmanuel.chebbi@outlook.fr> - Bug 214491
+ *     - [Dialogs] FilteredItemsSelectionDialog should respect setInitialSelections()
  *******************************************************************************/
 package org.eclipse.ui.dialogs;
 
@@ -56,7 +58,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.LegacyActionTools;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.eclipse.jface.text.contentassist.BoldStylerProvider;
+import org.eclipse.jface.viewers.BoldStylerProvider;
 import org.eclipse.jface.viewers.ContentViewer;
 import org.eclipse.jface.viewers.DelegatingStyledCellLabelProvider.IStyledLabelProvider;
 import org.eclipse.jface.viewers.IColorProvider;
@@ -228,6 +230,11 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 	private IHandlerActivation showViewHandler;
 
 	private IStyledStringHighlighter styledStringHighlighter;
+
+	/**
+	 * Used to set initial selection in {@link #refresh()}.
+	 */
+	private boolean isShownForTheFirstTime = true;
 
 	/**
 	 * Creates a new instance of the class.
@@ -857,13 +864,17 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 	public void refresh() {
 		if (tableViewer != null && !tableViewer.getTable().isDisposed()) {
 
-			List<?> lastRefreshSelection = ((StructuredSelection) tableViewer.getSelection()).toList();
+			List<Object> lastRefreshSelection = ((StructuredSelection) tableViewer.getSelection()).toList();
 			tableViewer.getTable().deselectAll();
 
 			tableViewer.setItemCount(contentProvider.getNumberOfElements());
 			tableViewer.refresh();
 
 			if (tableViewer.getTable().getItemCount() > 0) {
+				if (isShownForTheFirstTime) {
+					isShownForTheFirstTime = false;
+					lastRefreshSelection = prepareInitialSelection(lastRefreshSelection);
+				}
 				// preserve previous selection
 				if (refreshWithLastSelection && lastRefreshSelection != null && lastRefreshSelection.size() > 0) {
 					tableViewer.setSelection(new StructuredSelection(lastRefreshSelection));
@@ -882,9 +893,32 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 	}
 
 	/**
-	 * Updates the progress label.
+	 * Gets the elements that should be selected when the dialog opens.
+	 * <p>
+	 * Sets the <code>refreshWithLastSelection</code> to true if needed to make sure
+	 * that the initial selection is properly set.
 	 *
-	 * @deprecated
+	 * @param currentSelection the elements selected by default.
+	 *
+	 * @return the initial selection specified by the user or the currentSelection
+	 *         if no initial selection has been set.
+	 */
+	private List<Object> prepareInitialSelection(List<Object> currentSelection) {
+		boolean hasNoInitialSelection = getInitialElementSelections().isEmpty();
+		if (hasNoInitialSelection) {
+			return currentSelection;
+		}
+		refreshWithLastSelection = true;
+		if (!multi) {
+			// if multi selection is disabled then only the first item is selected
+			Object firstSelectedItem = getInitialElementSelections().get(0);
+			return Collections.singletonList(firstSelectedItem);
+		}
+		return getInitialElementSelections();
+	}
+
+	/**
+	 * Updates the progress label.
 	 */
 	@Deprecated
 	public void updateProgressLabel() {
@@ -1098,7 +1132,7 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 	 * @param progressMonitor must be used to report search progress. The state of
 	 *                        this progress monitor reflects the state of the
 	 *                        filtering process.
-	 * @throws CoreException
+	 * @throws CoreException Something went wrong.
 	 */
 	protected abstract void fillContentProvider(AbstractContentProvider contentProvider, ItemsFilter itemsFilter,
 			IProgressMonitor progressMonitor) throws CoreException;
@@ -1893,7 +1927,7 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 		 * Filters items.
 		 *
 		 * @param monitor for monitoring progress
-		 * @throws CoreException
+		 * @throws CoreException Something went wrong.
 		 */
 		protected void filterContent(GranualProgressMonitor monitor) throws CoreException {
 
@@ -2100,6 +2134,9 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 	 */
 	protected abstract class ItemsFilter {
 
+		/**
+		 * The {@link SearchPattern}.
+		 */
 		protected SearchPattern patternMatcher;
 
 		/**
@@ -2241,7 +2278,7 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 		/**
 		 * Matches an item against filter conditions.
 		 *
-		 * @param item
+		 * @param item the item to match
 		 * @return <code>true</code> if item matches against filter conditions,
 		 *         <code>false</code> otherwise
 		 */
@@ -2251,7 +2288,7 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 		 * Checks consistency of an item. Item is inconsistent if was changed or
 		 * removed.
 		 *
-		 * @param item
+		 * @param item the item to check.
 		 * @return <code>true</code> if item is consistent, <code>false</code> if item
 		 *         is inconsistent
 		 */
@@ -2300,7 +2337,7 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 		 * Raw result of the searching (unsorted, unfiltered).
 		 * <p>
 		 * Standard object flow:
-		 * <code>items -> lastSortedItems -> lastFilteredItems</code>
+		 * {@code items -> lastSortedItems -> lastFilteredItems}
 		 */
 		private Set<Object> items;
 
@@ -2318,7 +2355,7 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 		 * Result of the last filtering.
 		 * <p>
 		 * Standard object flow:
-		 * <code>items -> lastSortedItems -> lastFilteredItems</code>
+		 * {@code items -> lastSortedItems -> lastFilteredItems}
 		 */
 		private List<Object> lastFilteredItems;
 
@@ -2326,7 +2363,7 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 		 * Result of the last sorting.
 		 * <p>
 		 * Standard object flow:
-		 * <code>items -> lastSortedItems -> lastFilteredItems</code>
+		 * {@code items -> lastSortedItems -> lastFilteredItems}
 		 */
 		private List<Object> lastSortedItems;
 
@@ -2386,8 +2423,8 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 		/**
 		 * Adds filtered item.
 		 *
-		 * @param item
-		 * @param itemsFilter
+		 * @param item        the item to add.
+		 * @param itemsFilter the filter to match
 		 */
 		@Override
 		public void add(Object item, ItemsFilter itemsFilter) {
@@ -2405,7 +2442,7 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 		/**
 		 * Add all history items to <code>contentProvider</code>.
 		 *
-		 * @param itemsFilter
+		 * @param itemsFilter the filter to match
 		 */
 		public void addHistoryItems(ItemsFilter itemsFilter) {
 			if (this.selectionHistory != null) {
@@ -2475,7 +2512,7 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 		}
 
 		/**
-		 * @param item
+		 * @param item the item to check
 		 * @return <code>true</code> if given item is part of the history
 		 */
 		public boolean isHistoryElement(Object item) {
@@ -2552,7 +2589,7 @@ public abstract class FilteredItemsSelectionDialog extends SelectionStatusDialog
 		/**
 		 * Remember result of filtering.
 		 *
-		 * @param itemsFilter
+		 * @param itemsFilter the filter
 		 */
 		public void rememberResult(ItemsFilter itemsFilter) {
 			List<Object> itemsList = Collections.synchronizedList(Arrays.asList(getSortedItems()));

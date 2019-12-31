@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006 IBM Corporation and others.
+ * Copyright (c) 2006, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -24,7 +24,7 @@ import org.eclipse.ui.views.properties.TextPropertyDescriptor;
 
 /**
  * The property source provider for a button element.
- * 
+ *
  * @author Anthony Hunter
  */
 public class ButtonElementProperties
@@ -93,7 +93,7 @@ public class ButtonElementProperties
 
 	/**
 	 * Creates a new ButtonElementProperties.
-	 * 
+	 *
 	 * @param element
 	 *            the element whose properties this instance represents
 	 */
@@ -103,16 +103,12 @@ public class ButtonElementProperties
 		initProperties();
 	}
 
-	/**
-	 * @see org.eclipse.ui.views.properties.IPropertySource#getEditableValue()
-	 */
+	@Override
 	public Object getEditableValue() {
 		return this;
 	}
 
-	/**
-	 * @see org.eclipse.ui.views.properties.IPropertySource#getPropertyDescriptors()
-	 */
+	@Override
 	public IPropertyDescriptor[] getPropertyDescriptors() {
 		// Create the property vector.
 		IPropertyDescriptor[] propertyDescriptors = new IPropertyDescriptor[PropertiesTable.length];
@@ -132,9 +128,7 @@ public class ButtonElementProperties
 
 	}
 
-	/**
-	 * @see org.eclipse.ui.views.properties.IPropertySource#getPropertyValue(Object)
-	 */
+	@Override
 	public Object getPropertyValue(Object name) {
 		if (name.equals(PROPERTY_FONT))
 			return strFont;
@@ -146,24 +140,17 @@ public class ButtonElementProperties
 		return null;
 	}
 
-	/**
-	 * @see org.eclipse.ui.views.properties.IPropertySource#isPropertySet(Object)
-	 */
+	@Override
 	public boolean isPropertySet(Object id) {
 		return false;
 	}
 
-	/**
-	 * @see org.eclipse.ui.views.properties.IPropertySource#resetPropertyValue(Object)
-	 */
+	@Override
 	public void resetPropertyValue(Object id) {
 		//
 	}
 
-	/**
-	 * @see org.eclipse.ui.views.properties.IPropertySource#setPropertyValue(Object,
-	 *      Object)
-	 */
+	@Override
 	public void setPropertyValue(Object name, Object value) {
 		firePropertyChanged((String) name, value);
 
@@ -184,7 +171,7 @@ public class ButtonElementProperties
 
 	/**
 	 * Returns the mocha element.
-	 * 
+	 *
 	 * @return MochaElement
 	 */
 	public ButtonElement getButtonElement() {
