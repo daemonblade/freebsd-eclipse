@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2018 IBM Corporation and others.
+ * Copyright (c) 2012, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *      Christoph Laeubrich - Bug 527175 - Storage#getSystemContent() should first make the file absolute 
  *******************************************************************************/
 package org.eclipse.osgi.storage;
 
@@ -357,7 +358,7 @@ public class Storage {
 			try {
 				hook.validate();
 			} catch (IllegalStateException e) {
-				// TODO Logging?
+				equinoxContainer.getLogServices().log(EquinoxContainer.NAME, FrameworkLogEntry.WARNING, "Error validating installed bundle.", e); //$NON-NLS-1$
 				return true;
 			}
 		}
@@ -516,9 +517,7 @@ public class Storage {
 		if (systemContent == null) {
 			// only do a version check in this case
 			ModuleRevisionBuilder newBuilder = getBuilder(existing, extraCapabilities, extraExports);
-			if (!currentRevision.getVersion().equals(newBuilder.getVersion())) {
-				return true;
-			}
+			return !currentRevision.getVersion().equals(newBuilder.getVersion());
 		}
 		if (existing.isDirectory()) {
 			systemContent = new File(systemContent, "META-INF/MANIFEST.MF"); //$NON-NLS-1$
@@ -754,7 +753,9 @@ public class Storage {
 			@SuppressWarnings("unchecked")
 			StorageHookFactory<Object, Object, StorageHook<Object, Object>> next = (StorageHookFactory<Object, Object, StorageHook<Object, Object>>) iFactories.next();
 			StorageHook<Object, Object> hook = next.createStorageHookAndValidateFactoryClass(generation);
-			hooks.add(hook);
+			if (hook != null) {
+				hooks.add(hook);
+			}
 		}
 		generation.setStorageHooks(Collections.unmodifiableList(hooks), true);
 		for (StorageHook<?, ?> hook : hooks) {
@@ -1407,7 +1408,9 @@ public class Storage {
 					}
 					@SuppressWarnings({"rawtypes", "unchecked"})
 					StorageHook<Object, Object> hook = generation.getStorageHook((Class) factory.getClass());
-					hook.save(saveContext, temp);
+					if (hook != null) {
+						hook.save(saveContext, temp);
+					}
 				}
 			} finally {
 				temp.close();
@@ -1593,7 +1596,7 @@ public class Storage {
 			return null;
 		}
 		// TODO assumes the location is a file URL
-		File result = new File(frameworkValue.substring(5));
+		File result = new File(frameworkValue.substring(5)).getAbsoluteFile();
 		if (!result.exists()) {
 			throw new IllegalStateException("Configured framework location does not exist: " + result.getAbsolutePath()); //$NON-NLS-1$
 		}

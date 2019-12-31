@@ -400,11 +400,8 @@ public class Main {
 			return arch;
 		}
 		String name = System.getProperty("os.arch");//$NON-NLS-1$
-		// Map i386 architecture to x86
-		if (name.equalsIgnoreCase(Constants.INTERNAL_ARCH_I386))
-			return Constants.ARCH_X86;
 		// Map amd64 architecture to x86_64
-		else if (name.equalsIgnoreCase(Constants.INTERNAL_AMD64))
+		if (name.equalsIgnoreCase(Constants.INTERNAL_AMD64))
 			return Constants.ARCH_X86_64;
 
 		return name;
@@ -565,7 +562,7 @@ public class Main {
 
 		if (protectBase && (System.getProperty(PROP_SHARED_CONFIG_AREA) == null)) {
 			System.err.println("This application is configured to run in a cascaded mode only."); //$NON-NLS-1$
-			System.setProperty(PROP_EXITCODE, Integer.toString(14)); //$NON-NLS-1$
+			System.setProperty(PROP_EXITCODE, Integer.toString(14));
 			return;
 		}
 		// need to ensure that getInstallLocation is called at least once to initialize the value.
@@ -969,17 +966,17 @@ public class Main {
 	 * @param base the base location
 	 * @exception MalformedURLException if a problem occurs computing the class path
 	 */
-	protected URL[] getBootPath(String base) throws IOException {
+	private URL[] getBootPath(String base) throws IOException {
 		URL url = null;
 		if (base != null) {
 			url = buildURL(base, true);
 		} else {
 			// search in the root location
 			url = getInstallLocation();
-			String path = new File(url.getFile(), "plugins").toString(); //$NON-NLS-1$
-			path = searchFor(framework, path);
+			String pluginsLocation = new File(url.getFile(), "plugins").toString(); //$NON-NLS-1$
+			String path = searchFor(framework, pluginsLocation);
 			if (path == null)
-				throw new RuntimeException("Could not find framework"); //$NON-NLS-1$
+				throw new FileNotFoundException(String.format("Could not find framework under %s", pluginsLocation)); //$NON-NLS-1$
 			if (url.getProtocol().equals("file")) //$NON-NLS-1$
 				url = new File(path).toURL();
 			else
@@ -993,9 +990,9 @@ public class Main {
 		URL[] result = getDevPath(url);
 		if (debug) {
 			System.out.println("Framework classpath:"); //$NON-NLS-1$
-		    for (URL devPath : result) {
-			System.out.println("    " + devPath.toExternalForm()); //$NON-NLS-1$
-		    }
+			for (URL devPath : result) {
+				System.out.println("    " + devPath.toExternalForm()); //$NON-NLS-1$
+			}
 		}
 		return result;
 	}
@@ -2007,7 +2004,7 @@ public class Main {
 				path = new String(chars);
 			}
 		if (path.toLowerCase().endsWith(".jar")) //$NON-NLS-1$
-			path = path.substring(0, path.lastIndexOf('/') + 1); //$NON-NLS-1$
+			path = path.substring(0, path.lastIndexOf('/') + 1);
 		if (path.toLowerCase().endsWith("/plugins/")) //$NON-NLS-1$ 
 			path = path.substring(0, path.length() - "/plugins/".length()); //$NON-NLS-1$
 		try {
