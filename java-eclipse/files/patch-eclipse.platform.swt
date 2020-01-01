@@ -10,6 +10,18 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/.classpath_gtk eclipse.pla
  		</attributes>
  	</classpathentry>
  	<classpathentry kind="src" path="Eclipse SWT PI/cairo"/>
+diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT/win32/org/eclipse/swt/widgets/Widget.java eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT/win32/org/eclipse/swt/widgets/Widget.java
+--- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT/win32/org/eclipse/swt/widgets/Widget.java	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT/win32/org/eclipse/swt/widgets/Widget.java	0000-00-00 00:00:00.000000000 +0000
+@@ -10,7 +10,7 @@
+  *
+  * Contributors:
+  *     IBM Corporation - initial API and implementation
+- *     Pierre-Yves B., pyvesdev@gmail.com - Bug 219750: [styled text] Typing ~~ inserts é~~
++ *     Pierre-Yves B., pyvesdev@gmail.com - Bug 219750
+  *******************************************************************************/
+ package org.eclipse.swt.widgets;
+ 
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java
 --- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT PI/common/org/eclipse/swt/internal/Library.java	0000-00-00 00:00:00.000000000 +0000

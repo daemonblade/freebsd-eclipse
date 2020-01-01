@@ -10,7 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
- *     Pierre-Yves B., pyvesdev@gmail.com - Bug 219750: [styled text] Typing ~~ inserts é~~
+ *     Pierre-Yves B., pyvesdev@gmail.com - Bug 219750
  *******************************************************************************/
 package org.eclipse.swt.widgets;
 
