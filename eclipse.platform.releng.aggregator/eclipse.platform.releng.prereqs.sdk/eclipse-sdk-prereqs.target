@@ -45,13 +45,13 @@
       <unit id="org.apache.felix.gogo.runtime.source" version="1.1.0.v20180713-1646"/>
       <unit id="org.apache.felix.gogo.shell" version="1.1.0.v20180713-1646"/>
       <unit id="org.apache.felix.gogo.shell.source" version="1.1.0.v20180713-1646"/>
-      <unit id="org.apache.felix.scr" version="2.1.14.v20190123-1619"/>
-      <unit id="org.apache.felix.scr.source" version="2.1.14.v20190123-1619"/>
+      <unit id="org.apache.felix.scr" version="2.1.16.v20200110-1820"/>
+      <unit id="org.apache.felix.scr.source" version="2.1.16.v20200110-1820"/>
       <unit id="org.apache.jasper.glassfish" version="2.2.2.v201501141630"/>
       <unit id="org.apache.jasper.glassfish.source" version="2.2.2.v201501141630"/>
 
-      <unit id="org.junit" version="4.12.0.v201504281640"/>
-      <unit id="org.junit.source" version="4.12.0.v201504281640"/>
+      <unit id="org.junit" version="4.13.0.v20200204-1500"/>
+      <unit id="org.junit.source" version="4.13.0.v20200204-1500"/>
       <unit id="org.objectweb.asm" version="7.2.0.v20191010-1910"/>
       <unit id="org.objectweb.asm.source" version="7.2.0.v20191010-1910"/>
       <unit id="org.objectweb.asm.tree" version="7.2.0.v20191010-1910"/>
@@ -72,10 +72,8 @@
       <unit id="org.w3c.dom.svg.source" version="1.1.0.v201011041433"/>
 
       <!-- specific (additional) to equinox sdk -->
-      <unit id="org.apache.mina.core" version="2.0.7.v201401071602"/>
-      <unit id="org.apache.mina.core.source" version="2.0.7.v201401071602"/>
-      <unit id="org.apache.sshd.core" version="2.0.0.v20181102-1323"/>
-      <unit id="org.apache.sshd.core.source" version="2.0.0.v20181102-1323"/>
+      <unit id="org.apache.sshd.osgi" version="2.2.0.v20190425-2127"/>
+      <unit id="org.apache.sshd.osgi.source" version="2.2.0.v20190425-2127"/>
       <unit id="org.slf4j.api" version="1.7.2.v20121108-1250"/>
       <unit id="org.slf4j.api.source" version="1.7.2.v20121108-1250"/>
 
@@ -104,43 +102,43 @@
       <unit id="org.apache.commons.io.source" version="2.6.0.v20190123-2029" />
 	
       
-      <unit id="org.apache.lucene.core" version="8.0.0.v20190404-1858"/>
-      <unit id="org.apache.lucene.analyzers-smartcn" version="8.0.0.v20190404-1858"/>
-      <unit id="org.apache.lucene.analyzers-common" version="8.0.0.v20190404-1858"/>
-      <unit id="org.apache.lucene.core.source" version="8.0.0.v20190404-1858"/>
-      <unit id="org.apache.lucene.analyzers-smartcn.source" version="8.0.0.v20190404-1858"/>
-      <unit id="org.apache.lucene.analyzers-common.source" version="8.0.0.v20190404-1858"/>
+      <unit id="org.apache.lucene.core" version="8.4.1.v20200122-1459"/>
+      <unit id="org.apache.lucene.analyzers-smartcn" version="8.4.1.v20200122-1459"/>
+      <unit id="org.apache.lucene.analyzers-common" version="8.4.1.v20200122-1459"/>
+      <unit id="org.apache.lucene.core.source" version="8.4.1.v20200122-1459"/>
+      <unit id="org.apache.lucene.analyzers-smartcn.source" version="8.4.1.v20200122-1459"/>
+      <unit id="org.apache.lucene.analyzers-common.source" version="8.4.1.v20200122-1459"/>
       
       <!-- JUnit 5-->
-      <unit id="org.junit.jupiter.api" version="5.5.1.v20190826-0900"/>
-      <unit id="org.junit.jupiter.api.source" version="5.5.1.v20190826-0900"/>
+      <unit id="org.junit.jupiter.api" version="5.6.0.v20200203-2009"/>
+      <unit id="org.junit.jupiter.api.source" version="5.6.0.v20200203-2009"/>
 
-      <unit id="org.junit.jupiter.engine" version="5.5.1.v20190826-0900"/>
-      <unit id="org.junit.jupiter.engine.source" version="5.5.1.v20190826-0900"/>
+      <unit id="org.junit.jupiter.engine" version="5.6.0.v20200203-2009"/>
+      <unit id="org.junit.jupiter.engine.source" version="5.6.0.v20200203-2009"/>
 
-      <unit id="org.junit.jupiter.migrationsupport" version="5.5.1.v20190826-0900"/>
-      <unit id="org.junit.jupiter.migrationsupport.source" version="5.5.1.v20190826-0900"/>
+      <unit id="org.junit.jupiter.migrationsupport" version="5.6.0.v20200203-2009"/>
+      <unit id="org.junit.jupiter.migrationsupport.source" version="5.6.0.v20200203-2009"/>
 
-      <unit id="org.junit.jupiter.params" version="5.5.1.v20190826-0900"/>
-      <unit id="org.junit.jupiter.params.source" version="5.5.1.v20190826-0900"/>
+      <unit id="org.junit.jupiter.params" version="5.6.0.v20200203-2009"/>
+      <unit id="org.junit.jupiter.params.source" version="5.6.0.v20200203-2009"/>
 
-      <unit id="org.junit.platform.commons" version="1.5.1.v20190826-0900"/>
-      <unit id="org.junit.platform.commons.source" version="1.5.1.v20190826-0900"/>
+      <unit id="org.junit.platform.commons" version="1.6.0.v20200203-2009"/>
+      <unit id="org.junit.platform.commons.source" version="1.6.0.v20200203-2009"/>
 
-      <unit id="org.junit.platform.engine" version="1.5.1.v20190826-0900"/>
-      <unit id="org.junit.platform.engine.source" version="1.5.1.v20190826-0900"/>
+      <unit id="org.junit.platform.engine" version="1.6.0.v20200203-2009"/>
+      <unit id="org.junit.platform.engine.source" version="1.6.0.v20200203-2009"/>
 
-      <unit id="org.junit.platform.launcher" version="1.5.1.v20190826-0900"/>
-      <unit id="org.junit.platform.launcher.source" version="1.5.1.v20190826-0900"/>
+      <unit id="org.junit.platform.launcher" version="1.6.0.v20200203-2009"/>
+      <unit id="org.junit.platform.launcher.source" version="1.6.0.v20200203-2009"/>
 
-      <unit id="org.junit.platform.runner" version="1.5.1.v20190826-0900"/>
-      <unit id="org.junit.platform.runner.source" version="1.5.1.v20190826-0900"/>
+      <unit id="org.junit.platform.runner" version="1.6.0.v20200203-2009"/>
+      <unit id="org.junit.platform.runner.source" version="1.6.0.v20200203-2009"/>
 
-      <unit id="org.junit.platform.suite.api" version="1.5.1.v20190826-0900"/>
-      <unit id="org.junit.platform.suite.api.source" version="1.5.1.v20190826-0900"/>
+      <unit id="org.junit.platform.suite.api" version="1.6.0.v20200203-2009"/>
+      <unit id="org.junit.platform.suite.api.source" version="1.6.0.v20200203-2009"/>
 
-      <unit id="org.junit.vintage.engine" version="5.5.1.v20190826-0900"/>
-      <unit id="org.junit.vintage.engine.source" version="5.5.1.v20190826-0900"/>
+      <unit id="org.junit.vintage.engine" version="5.6.0.v20200203-2009"/>
+      <unit id="org.junit.vintage.engine.source" version="5.6.0.v20200203-2009"/>
 
       <unit id="org.opentest4j" version="1.2.0.v20190826-0900"/>
       <unit id="org.opentest4j.source" version="1.2.0.v20190826-0900"/>
@@ -153,53 +151,53 @@
       <unit id="com.google.gson.source" version="2.8.2.v20180104-1110"/>
       <unit id="org.jsoup" version="1.7.2.v201411291515"/>
 
-      <repository location="https://download.eclipse.org/tools/orbit/downloads/drops/R20191126223242/repository"/>
+      <repository location="https://download.eclipse.org/tools/orbit/downloads/drops/R20200224183213/repository"/>
     </location>
 
     <location includeAllPlatforms="true" includeMode="slicer" type="InstallableUnit">
        <!-- Check version in "<EMF>/features" directory -->
-      <unit id="org.eclipse.emf.common.feature.group" version="2.17.0.v20190920-0401"/>
-      <unit id="org.eclipse.emf.common.source.feature.group" version="2.17.0.v20190920-0401"/>
-      <unit id="org.eclipse.emf.ecore.feature.group" version="2.20.0.v20190920-0401"/>
-      <unit id="org.eclipse.emf.ecore.source.feature.group" version="2.20.0.v20190920-0401"/>
+      <unit id="org.eclipse.emf.common.feature.group" version="2.18.0.v20191225-1014"/>
+      <unit id="org.eclipse.emf.common.source.feature.group" version="2.18.0.v20191225-1014"/>
+      <unit id="org.eclipse.emf.ecore.feature.group" version="2.21.0.v20200127-1342"/>
+      <unit id="org.eclipse.emf.ecore.source.feature.group" version="2.21.0.v20200127-1342"/>
        <!-- For org.eclipse.ui.tools -->
        <!-- Check version in "<EMF>/plugins" directory -->
       <unit id="org.eclipse.emf.edit" version="2.16.0.v20190920-0401"/>
       <unit id="org.eclipse.emf.databinding" version="1.5.0.v20180706-1146"/>
       <unit id="org.eclipse.emf.databinding.edit" version="1.6.0.v20190323-1031"/>
-      <repository location="http://download.eclipse.org/modeling/emf/emf/builds/release/2.20"/>
+      <repository location="https://download.eclipse.org/modeling/emf/emf/builds/release/2.21"/>
     </location>
 
     <location includeAllPlatforms="true" includeMode="slicer" type="InstallableUnit">
-      <unit id="org.eclipse.jetty.continuation" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.continuation.source" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.http" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.http.source" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.io" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.io.source" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.security" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.security.source" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.server" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.server.source" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.servlet" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.servlet.source" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.util" version="9.4.24.v20191120"/>
-      <unit id="org.eclipse.jetty.util.source" version="9.4.24.v20191120"/>
-      <repository location="https://download.eclipse.org/jetty/updates/jetty-bundles-9.x/9.4.24.v20191120/" />
+      <unit id="org.eclipse.jetty.continuation" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.continuation.source" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.http" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.http.source" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.io" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.io.source" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.security" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.security.source" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.server" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.server.source" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.servlet" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.servlet.source" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.util" version="9.4.27.v20200227"/>
+      <unit id="org.eclipse.jetty.util.source" version="9.4.27.v20200227"/>
+      <repository location="https://download.eclipse.org/jetty/updates/jetty-bundles-9.x/9.4.27.v20200227/" />
     </location>
 
     <location includeAllPlatforms="true" includeMode="slicer" type="InstallableUnit">
-      <unit id="org.eclipse.ecf.core.feature.feature.group" version="1.5.400.v20191023-2007"/>
+      <unit id="org.eclipse.ecf.core.feature.feature.group" version="1.5.500.v20200217-1548"/>
       <unit id="org.eclipse.ecf.core.ssl.feature.feature.group" version="1.1.300.v20191023-2007"/>
-      <unit id="org.eclipse.ecf.filetransfer.feature.feature.group" version="3.14.600.v20191023-2007"/>
-      <unit id="org.eclipse.ecf.filetransfer.httpclient45.feature.feature.group" version="1.0.100.v20191024-1546"/>
+      <unit id="org.eclipse.ecf.filetransfer.feature.feature.group" version="3.14.700.v20200217-0016"/>
+      <unit id="org.eclipse.ecf.filetransfer.httpclient45.feature.feature.group" version="1.0.300.v20200217-0016"/>
       <unit id="org.eclipse.ecf.filetransfer.ssl.feature.feature.group" version="1.1.200.v20191024-1546"/>
-      <unit id="org.eclipse.ecf.core.feature.source.feature.group" version="1.5.400.v20191023-2007"/>
+      <unit id="org.eclipse.ecf.core.feature.source.feature.group" version="1.5.500.v20200217-1548"/>
       <unit id="org.eclipse.ecf.core.ssl.feature.source.feature.group" version="1.1.300.v20191023-2007"/>
-      <unit id="org.eclipse.ecf.filetransfer.feature.source.feature.group" version="3.14.600.v20191023-2007"/>
-      <unit id="org.eclipse.ecf.filetransfer.httpclient45.feature.source.feature.group" version="1.0.100.v20191024-1546"/>
+      <unit id="org.eclipse.ecf.filetransfer.feature.source.feature.group" version="3.14.700.v20200217-0016"/>
+      <unit id="org.eclipse.ecf.filetransfer.httpclient45.feature.source.feature.group" version="1.0.300.v20200217-0016"/>
       <unit id="org.eclipse.ecf.filetransfer.ssl.feature.source.feature.group" version="1.1.200.v20191024-1546"/>
-      <repository location="https://download.eclipse.org/rt/ecf/3.14.6/site.p2/"/>
+      <repository location="https://download.eclipse.org/rt/ecf/3.14.7/site.p2/"/>
     </location>
 
     <location includeAllPlatforms="true" includeMode="slicer" type="InstallableUnit">
@@ -208,35 +206,36 @@
     </location>
 
     <location includeAllPlatforms="true" includeMode="slicer" type="InstallableUnit">
-      <unit id="org.eclipse.egit.core" version="5.5.0.201909110433-r"/>
-      <unit id="org.eclipse.jgit" version="5.5.0.201909110433-r"/>
-	  <unit id="org.eclipse.jgit.ssh.apache" version="5.5.0.201909110433-r"/>
+      <unit id="org.eclipse.egit.core" version="5.6.0.201912101111-r"/>
+      <unit id="org.eclipse.jgit" version="5.6.0.201912101111-r"/>
+      <unit id="org.eclipse.jgit.http.apache" version="5.6.0.201912101111-r"/>
+	  <unit id="org.eclipse.jgit.ssh.apache" version="5.6.0.201912101111-r"/>
 	  <unit id="net.i2p.crypto.eddsa" version="0.3.0.v20181102-1323"/>
       <unit id="org.apache.sshd.sftp" version="2.2.0.v20190425-2127"/>
       <unit id="org.apache.sshd.osgi" version="2.2.0.v20190425-2127"/>
       <unit id="javaewah" version="1.1.6.v20160919-1400"/>
-      <unit id="org.bouncycastle.bcprov" version="1.61.0.v20190602-1335"/>
-      <unit id="org.bouncycastle.bcpg" version="1.61.0.v20190602-1335"/>
-      <repository location="https://download.eclipse.org/egit/updates-5.5"/>
+      <unit id="org.bouncycastle.bcprov" version="1.64.0.v20191109-0815"/>
+      <unit id="org.bouncycastle.bcpg" version="1.64.0.v20191109-0815"/>
+      <repository location="https://download.eclipse.org/egit/updates-5.6"/>
     </location>
 
     <location includeAllPlatforms="true" includeMode="slicer" type="InstallableUnit">
-      <repository location="https://download.eclipse.org/reddeer/releases/2.7.0/"/>
-      <unit id="org.eclipse.reddeer.workbench" version="2.7.0.v20190911-1936"/>
-      <unit id="org.eclipse.reddeer.jface" version="2.7.0.v20190911-1936"/>
-      <unit id="org.eclipse.reddeer.swt" version="2.7.0.v20190911-1936"/>
-      <unit id="org.eclipse.reddeer.uiforms" version="2.7.0.v20190911-1936"/>
-      <unit id="org.eclipse.reddeer.eclipse" version="2.7.0.v20190911-1936"/>
-      <unit id="org.eclipse.reddeer.core" version="2.7.0.v20190911-1936"/>
-      <unit id="org.eclipse.reddeer.common" version="2.7.0.v20190911-1936"/>
-      <unit id="org.eclipse.reddeer.junit" version="2.7.0.v20190911-1936"/>
-      <unit id="org.eclipse.reddeer.junit.extension" version="2.7.0.v20190911-1936"/>
-      <unit id="org.eclipse.reddeer.workbench.core" version="2.7.0.v20190911-1936"/>
-      <unit id="org.eclipse.reddeer.direct" version="2.7.0.v20190911-1936"/>
+      <repository location="https://download.eclipse.org/reddeer/releases/2.8.0/"/>
+      <unit id="org.eclipse.reddeer.workbench" version="2.8.0.v20191211-1503"/>
+      <unit id="org.eclipse.reddeer.jface" version="2.8.0.v20191211-1503"/>
+      <unit id="org.eclipse.reddeer.swt" version="2.8.0.v20191211-1503"/>
+      <unit id="org.eclipse.reddeer.uiforms" version="2.8.0.v20191211-1503"/>
+      <unit id="org.eclipse.reddeer.eclipse" version="2.8.0.v20191211-1503"/>
+      <unit id="org.eclipse.reddeer.core" version="2.8.0.v20191211-1503"/>
+      <unit id="org.eclipse.reddeer.common" version="2.8.0.v20191211-1503"/>
+      <unit id="org.eclipse.reddeer.junit" version="2.8.0.v20191211-1503"/>
+      <unit id="org.eclipse.reddeer.junit.extension" version="2.8.0.v20191211-1503"/>
+      <unit id="org.eclipse.reddeer.workbench.core" version="2.8.0.v20191211-1503"/>
+      <unit id="org.eclipse.reddeer.direct" version="2.8.0.v20191211-1503"/>
       <unit id="org.apache.commons.lang" version="2.6.0.v201404270220" />
-      <unit id="com.fasterxml.jackson.core.jackson-annotations" version="2.9.2.v20180207-1730"/>
-      <unit id="com.fasterxml.jackson.core.jackson-core" version="2.9.2.v20180207-1730"/>
-      <unit id="com.fasterxml.jackson.core.jackson-databind" version="2.9.2.v20180207-1730"/>
+      <unit id="com.fasterxml.jackson.core.jackson-annotations" version="2.9.9.v20190906-1522"/>
+      <unit id="com.fasterxml.jackson.core.jackson-core" version="2.9.9.v20190906-1522"/>
+      <unit id="com.fasterxml.jackson.core.jackson-databind" version="2.9.93.v20190906-1522"/>
       <unit id="org.json" version="1.0.0.v201011060100"/>
       <unit id="org.yaml.snakeyaml" version="1.14.0.v201604211500"/>
     </location>
