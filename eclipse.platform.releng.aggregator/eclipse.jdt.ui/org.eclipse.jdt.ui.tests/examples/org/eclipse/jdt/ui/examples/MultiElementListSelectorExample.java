@@ -73,7 +73,7 @@ public class MultiElementListSelectorExample {
 				elements[i][k]= "elem-" + i + "-" + k;
 			}
 		}
-		
+
 		Display display= new Display();
 		MultiElementListSelectionDialog d= new MultiElementListSelectionDialog(new Shell(display), elementRenderer);
 		d.setTitle("Title");
@@ -86,8 +86,9 @@ public class MultiElementListSelectorExample {
 
 		Object[] res= d.getResult();
 		if (res != null) {
-			for (int i= 0; i < res.length; i++)
-				System.out.println(res[i]);
+			for (Object obj : res) {
+				System.out.println(obj);
+			}
 		}
 	}
 }

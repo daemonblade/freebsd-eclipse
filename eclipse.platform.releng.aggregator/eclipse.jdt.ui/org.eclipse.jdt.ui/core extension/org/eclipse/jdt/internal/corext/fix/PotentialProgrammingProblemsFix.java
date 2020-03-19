@@ -72,7 +72,7 @@ public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOpera
 			boolean calculatedId,
 			boolean defaultId,
 			boolean randomId) throws CoreException {
-		
+
 		return PotentialProgrammingProblemsFixCore.checkPreConditions(project, compilationUnits, monitor, calculatedId, defaultId, randomId);
     }
 
@@ -109,7 +109,7 @@ public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOpera
 					}
 				}
 			}
-			if (declarationNodes.size() == 0)
+			if (declarationNodes.isEmpty())
 				return null;
 
 			for (Iterator<ASTNode> iter= declarationNodes.iterator(); iter.hasNext();) {

@@ -112,7 +112,7 @@ import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 /**
  * Implementations for {@link CodeGeneration} APIs, and other helper methods
  * to create source code stubs based on {@link IJavaElement}s.
- * 
+ *
  * See StubUtility2
  * See JDTUIHelperClasses
  */
@@ -379,7 +379,7 @@ public class StubUtility {
 
 	/**
 	 * Don't use this method directly, use CodeGeneration.
-	 * 
+	 *
 	 * @param templateID the template id of the type body to get. Valid id's are
 	 *            {@link CodeTemplateContextType#CLASSBODY_ID},
 	 *            {@link CodeTemplateContextType#INTERFACEBODY_ID},
@@ -487,8 +487,8 @@ public class StubUtility {
 		int nLines= doc.getNumberOfLines();
 		MultiTextEdit edit= new MultiTextEdit();
 		HashSet<Integer> removedLines= new HashSet<>();
-		for (int i= 0; i < variables.length; i++) {
-			TemplateVariable position= findVariable(buffer, variables[i]); // look if Javadoc tags have to be added
+		for (String variable : variables) {
+			TemplateVariable position= findVariable(buffer, variable); // look if Javadoc tags have to be added
 			if (position == null || position.getLength() > 0) {
 				continue;
 			}
@@ -811,9 +811,7 @@ public class StubUtility {
 
 
 	private static TemplateVariable findVariable(TemplateBuffer buffer, String variable) {
-		TemplateVariable[] positions= buffer.getVariables();
-		for (int i= 0; i < positions.length; i++) {
-			TemplateVariable curr= positions[i];
+		for (TemplateVariable curr : buffer.getVariables()) {
 			if (variable.equals(curr.getType())) {
 				return curr;
 			}
@@ -830,17 +828,17 @@ public class StubUtility {
 		String lineStart= textBuffer.get(region.getOffset(), offset - region.getOffset());
 
 		StringBuilder buf= new StringBuilder();
-		for (int i= 0; i < typeParameterNames.length; i++) {
+		for (String typeParameterName : typeParameterNames) {
 			if (buf.length() > 0) {
 				buf.append(lineDelimiter).append(lineStart);
 			}
-			buf.append("@param <").append(typeParameterNames[i]).append('>'); //$NON-NLS-1$
+			buf.append("@param <").append(typeParameterName).append('>'); //$NON-NLS-1$
 		}
-		for (int i= 0; i < paramNames.length; i++) {
+		for (String paramName : paramNames) {
 			if (buf.length() > 0) {
 				buf.append(lineDelimiter).append(lineStart);
 			}
-			buf.append("@param ").append(paramNames[i]); //$NON-NLS-1$
+			buf.append("@param ").append(paramName); //$NON-NLS-1$
 		}
 		if (returnType != null && !returnType.equals("void")) { //$NON-NLS-1$
 			if (buf.length() > 0) {
@@ -849,11 +847,11 @@ public class StubUtility {
 			buf.append("@return"); //$NON-NLS-1$
 		}
 		if (exceptionNames != null) {
-			for (int i= 0; i < exceptionNames.length; i++) {
+			for (String exceptionName : exceptionNames) {
 				if (buf.length() > 0) {
 					buf.append(lineDelimiter).append(lineStart);
 				}
-				buf.append("@throws ").append(exceptionNames[i]); //$NON-NLS-1$
+				buf.append("@throws ").append(exceptionName); //$NON-NLS-1$
 			}
 		}
 		if (isDeprecated) {
@@ -887,7 +885,7 @@ public class StubUtility {
 
 	/**
 	 * Returns the line delimiter which is used in the specified project.
-	 * 
+	 *
 	 * @param project the java project, or <code>null</code>
 	 * @return the used line delimiter
 	 */
@@ -941,7 +939,7 @@ public class StubUtility {
 
 	/**
 	 * Evaluates the indentation used by a Java element. (in tabulators)
-	 * 
+	 *
 	 * @param elem the element to get the indent of
 	 * @return return the indent unit
 	 * @throws JavaModelException thrown if the element could not be accessed
@@ -971,7 +969,7 @@ public class StubUtility {
 
 	/**
 	 * Returns the element after the give element.
-	 * 
+	 *
 	 * @param member a Java element
 	 * @return the next sibling of the given element or <code>null</code>
 	 * @throws JavaModelException thrown if the element could not be accessed
@@ -1111,7 +1109,7 @@ public class StubUtility {
 	/**
 	 * Returns variable name suggestions for the given base name. This is a layer over the JDT.Core
 	 * NamingConventions API to fix its shortcomings. JDT UI code should only use this API.
-	 * 
+	 *
 	 * @param variableKind specifies what type the variable is: {@link NamingConventions#VK_LOCAL},
 	 *            {@link NamingConventions#VK_PARAMETER}, {@link NamingConventions#VK_STATIC_FIELD},
 	 *            {@link NamingConventions#VK_INSTANCE_FIELD}, or
@@ -1124,7 +1122,7 @@ public class StubUtility {
 	 *            are excluded
 	 * @param evaluateDefault if set, the result is guaranteed to contain at least one result. If
 	 *            not, the result can be an empty array.
-	 * 
+	 *
 	 * @return the name suggestions sorted by relevance (best proposal first). If
 	 *         <code>evaluateDefault</code> is set to true, the returned array is never empty. If
 	 *         <code>evaluateDefault</code> is set to false, an empty array is returned if there is
@@ -1190,8 +1188,7 @@ public class StubUtility {
 			}
 		}
 		if (name != null) {
-			for (int i= 0; i < KNOWN_METHOD_NAME_PREFIXES.length; i++) {
-				String curr= KNOWN_METHOD_NAME_PREFIXES[i];
+			for (String curr : KNOWN_METHOD_NAME_PREFIXES) {
 				if (name.startsWith(curr)) {
 					if (name.equals(curr)) {
 						return null; // don't suggest 'get' as variable name
@@ -1359,8 +1356,7 @@ public class StubUtility {
 						String[] namesArray= EMPTY;
 						ArrayList<String> newNames= new ArrayList<>(paramNames.length);
 						// Ensure that the code generation preferences are respected
-						for (int i= 0; i < paramNames.length; i++) {
-							String curr= paramNames[i];
+						for (String curr : paramNames) {
 							String baseName= NamingConventions.getBaseName(NamingConventions.VK_PARAMETER, curr, method.getJavaProject());
 							if (!curr.equals(baseName)) {
 								// make the existing name the favorite
@@ -1383,7 +1379,7 @@ public class StubUtility {
 		}
 		return names;
 	}
-	
+
 	public static String getBaseName(IField field) throws JavaModelException {
 		return NamingConventions.getBaseName(getFieldKind(field.getFlags()), field.getElementName(), field.getJavaProject());
 	}
@@ -1394,7 +1390,7 @@ public class StubUtility {
 
 	/**
 	 * Returns the kind of the given binding.
-	 * 
+	 *
 	 * @param binding variable binding
 	 * @return one of the <code>NamingConventions.VK_*</code> constants
 	 * @since 3.5
@@ -1531,7 +1527,7 @@ public class StubUtility {
 
 	/**
 	 * Only to be used by tests
-	 * 
+	 *
 	 * @param templateId the template id
 	 * @param pattern the new pattern
 	 * @param project not used

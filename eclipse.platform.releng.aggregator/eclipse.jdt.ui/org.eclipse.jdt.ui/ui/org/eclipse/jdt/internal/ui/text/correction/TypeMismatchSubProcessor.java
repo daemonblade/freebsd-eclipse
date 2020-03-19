@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -77,6 +77,7 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.ImplementInterfaceP
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrectionProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.TypeChangeCorrectionProposal;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.OptionalCorrectionProposal;
 
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
@@ -149,8 +150,31 @@ public class TypeMismatchSubProcessor {
 				currBinding= methodBinding.getReturnType();
 			}
 		}
-		
+
 		if (!(nodeToCast instanceof ArrayInitializer)) {
+			String castTypeName= castTypeBinding.getErasure().getQualifiedName();
+			if (castTypeName.equals("java.util.Optional") && ast.apiLevel() >= AST.JLS8) { //$NON-NLS-1$
+				ITypeBinding nodeToCastTypeBinding= nodeToCast.resolveTypeBinding();
+				String label0= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_changetooptionalempty_description, nodeToCast.toString());
+				proposals.add(new OptionalCorrectionProposal(label0, cu, nodeToCast, IProposalRelevance.CREATE_EMPTY_OPTIONAL, OptionalCorrectionProposal.OPTIONAL_EMPTY));
+				ITypeBinding[] typeArguments= castTypeBinding.getTypeArguments();
+				boolean wrapAll= false;
+				for (ITypeBinding typeArgument : typeArguments) {
+					if (typeArgument.isCastCompatible(nodeToCastTypeBinding)) {
+						wrapAll= true;
+						break;
+					}
+				}
+				if (wrapAll) {
+					String label1= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_changetooptionalof_description, nodeToCast.toString());
+					proposals.add(new OptionalCorrectionProposal(label1, cu, nodeToCast, IProposalRelevance.CREATE_OPTIONAL, OptionalCorrectionProposal.OPTIONAL_OF));
+					if (!nodeToCastTypeBinding.isPrimitive()) {
+						String label2= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_changetooptionalofnullable_description, nodeToCast.toString());
+						proposals.add(new OptionalCorrectionProposal(label2, cu, nodeToCast, IProposalRelevance.CREATE_OPTIONAL_OF_NULLABLE, OptionalCorrectionProposal.OPTIONAL_OF_NULLABLE));
+					}
+				}
+			}
+
 			ITypeBinding castFixType= null;
 			if (currBinding == null || castTypeBinding.isCastCompatible(currBinding) || nodeToCast instanceof CastExpression) {
 				castFixType= castTypeBinding;
@@ -401,7 +425,7 @@ public class TypeMismatchSubProcessor {
 					undeclaredExceptions.add(methodExceptions[i]);
 				}
 			}
-			if (undeclaredExceptions.size() == 0) {
+			if (undeclaredExceptions.isEmpty()) {
 				return;
 			}
 			String label= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_removeexceptions_description, BasicElementLabels.getJavaElementName(methodDeclBinding.getName()));
@@ -486,12 +510,12 @@ public class TypeMismatchSubProcessor {
 				int relevance= StubUtility.hasLocalVariableName(cu.getJavaProject(), name) ? 10 : 7;
 				String label= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_create_loop_variable_description, BasicElementLabels.getJavaElementName(name));
 				Image image= JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_LOCAL);
-				
+
 				proposals.add(new NewVariableCorrectionProposal(label, cu, NewVariableCorrectionProposal.LOCAL, simpleName, null, relevance, image));
 				return;
 			}
 		}
-		
+
 		String label= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_incompatible_for_each_type_description, new String[] { BasicElementLabels.getJavaElementName(parameter.getName().getIdentifier()), BindingLabelProvider.getBindingLabel(expectedBinding, BindingLabelProvider.DEFAULT_TEXTFLAGS) });
 		Image image= JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
 		ASTRewrite rewrite= ASTRewrite.create(ast);

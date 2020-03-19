@@ -238,10 +238,10 @@ public abstract class TextChange extends TextEditBasedChange {
 			document= acquireDocument(new SubProgressMonitor(pm, 1));
 
 			UndoEdit undo= performEdits(document);
-			
+
 			commit(document, new SubProgressMonitor(pm, 1));
 			return createUndoChange(undo);
-			
+
 		} catch (BadLocationException e) {
 			throw Changes.asCoreException(e);
 		} catch (MalformedTreeException e) {
@@ -255,7 +255,7 @@ public abstract class TextChange extends TextEditBasedChange {
 	/**
 	 * Executes the text edits on the given document.
 	 * Subclasses that override this method should call <code>super.performEdits(document)</code>.
-	 * 
+	 *
 	 * @param document the document
 	 * @return an object representing the undo of the executed edits
 	 * @exception MalformedTreeException is thrown if the edit tree isn't
@@ -273,18 +273,18 @@ public abstract class TextChange extends TextEditBasedChange {
 				session= ((IDocumentExtension4)document).startRewriteSession(
 					DocumentRewriteSessionType.UNRESTRICTED);
 			}
-	
+
 			LinkedModeModel.closeAllModels(document);
 			TextEditProcessor processor= createTextEditProcessor(document, TextEdit.CREATE_UNDO, false);
 			return processor.performEdits();
-			
+
 		} finally {
 			if (session != null) {
 				((IDocumentExtension4)document).stopRewriteSession(session);
 			}
 		}
 	}
-	
+
 	//---- Method to access the current content of the text change ---------
 
 	/**
@@ -597,7 +597,7 @@ public abstract class TextChange extends TextEditBasedChange {
 			for (TextEditBasedChangeGroup change : changes) {
 				edits.addAll(Arrays.asList(change.getTextEditGroup().getTextEdits()));
 			}
-			if (edits.size() == 0)
+			if (edits.isEmpty())
 				return null;
 			return TextEdit.getCoverage(edits.toArray(new TextEdit[edits.size()]));
 		}
@@ -618,7 +618,7 @@ public abstract class TextChange extends TextEditBasedChange {
 						result.add(copy);
 				}
 			}
-			if (result.size() == 0)
+			if (result.isEmpty())
 				return null;
 			return TextEdit.getCoverage(result.toArray(new TextEdit[result.size()]));
 		}

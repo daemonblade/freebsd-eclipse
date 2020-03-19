@@ -109,7 +109,7 @@ public abstract class BuildPathBasePage {
 					return false;
 				default:
 					throw new IllegalStateException(Messages.format(NewWizardMessages.BuildPathBasePage_unexpectedAnswer_error, String.valueOf(answer)));
-			}			
+			}
 		}
 		ModuleDialog dialog= new ModuleDialog(shell, selElement, selectedJavaElements, this);
 		int res= dialog.open();
@@ -160,8 +160,7 @@ public abstract class BuildPathBasePage {
 			if (value instanceof ModuleEncapsulationDetail[]) {
 				ModuleEncapsulationDetail[] existingDetails= (ModuleEncapsulationDetail[]) value;
 				int count= 0;
-				for (int j= 0; j < existingDetails.length; j++) {
-					ModuleEncapsulationDetail aDetail= existingDetails[j];
+				for (ModuleEncapsulationDetail aDetail : existingDetails) {
 					if (aDetail != detail)
 						existingDetails[count++]= aDetail;
 				}
@@ -222,15 +221,14 @@ public abstract class BuildPathBasePage {
 	}
 
 	public static void fixNestingConflicts(CPListElement[] newEntries, CPListElement[] existing, Set<CPListElement> modifiedSourceEntries) {
-		for (int i= 0; i < newEntries.length; i++) {
-			addExclusionPatterns(newEntries[i], existing, modifiedSourceEntries);
+		for (CPListElement newEntry : newEntries) {
+			addExclusionPatterns(newEntry, existing, modifiedSourceEntries);
 		}
 	}
 
 	private static void addExclusionPatterns(CPListElement newEntry, CPListElement[] existing, Set<CPListElement> modifiedEntries) {
 		IPath entryPath= newEntry.getPath();
-		for (int i= 0; i < existing.length; i++) {
-			CPListElement curr= existing[i];
+		for (CPListElement curr : existing) {
 			if (curr.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
 				IPath currPath= curr.getPath();
 				if (!currPath.equals(entryPath)) {
@@ -262,7 +260,7 @@ public abstract class BuildPathBasePage {
 	}
 
 	protected boolean containsOnlyTopLevelEntries(List<?> selElements) {
-		if (selElements.size() == 0) {
+		if (selElements.isEmpty()) {
 			return true;
 		}
 		for (int i= 0; i < selElements.size(); i++) {
@@ -283,7 +281,7 @@ public abstract class BuildPathBasePage {
 	public abstract Control getControl(Composite parent);
 
 	public abstract void setFocus();
-	
+
 
 	protected boolean getRootExpansionState(TreeListDialogField<CPListElement> list, boolean isClassPathRoot) {
 		for (CPListElement cpListElement : list.getElements()) {

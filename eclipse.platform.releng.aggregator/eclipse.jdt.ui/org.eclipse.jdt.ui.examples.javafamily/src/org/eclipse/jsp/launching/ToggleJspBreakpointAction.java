@@ -37,18 +37,16 @@ import org.eclipse.debug.core.model.IBreakpoint;
  * ToggleJspBreakpointAction
  */
 public class ToggleJspBreakpointAction extends Action {
-	
+
 	private ITextEditor fEditor;
 	private IVerticalRulerInfo fRulerInfo;
-	
+
 	@Override
 	public void run() {
 		IBreakpointManager manager = DebugPlugin.getDefault().getBreakpointManager();
-		IBreakpoint[] breakpoints = manager.getBreakpoints();
 		IResource resource = getResource();
 		int lineNumber = fRulerInfo.getLineOfLastMouseButtonActivity() + 1;
-		for (int i = 0; i < breakpoints.length; i++) {
-			IBreakpoint bp = breakpoints[i];
+		for (IBreakpoint bp : manager.getBreakpoints()) {
 			if (bp instanceof IJavaStratumLineBreakpoint) {
 				IJavaStratumLineBreakpoint breakpoint = (IJavaStratumLineBreakpoint)bp;
 				if (breakpoint.getMarker().getResource().equals(resource)) {
@@ -66,7 +64,7 @@ public class ToggleJspBreakpointAction extends Action {
 		}
 		createBreakpoint();
 	}
-	
+
 	protected void createBreakpoint() {
 		IResource resource = getResource();
 		int lineNumber = fRulerInfo.getLineOfLastMouseButtonActivity() + 1;

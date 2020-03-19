@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -385,7 +385,7 @@ public class ConvertAnonymousToNestedTests extends RefactoringTest {
 	public void testGenerics7() throws Exception{ // test for bug 124978
 		helper1(6, 18, 6, 18, true, true, "Inner", Modifier.PRIVATE);
 	}
-	
+
     public void test31() throws Exception{ // for bug 181054
     	helper1(10, 24, 10, 30, true, false, "Inner1Extension", Modifier.PRIVATE);
     }
@@ -393,16 +393,20 @@ public class ConvertAnonymousToNestedTests extends RefactoringTest {
     public void test32() throws Exception{ // for bug 158028
     	helper1(10, 30, 10, 36, true, false, "Inner1Extension", Modifier.PRIVATE);
     }
-    
+
 	public void test33() throws Exception { // for bug 124978
 		helper1(9, 21, 12, 7, true, true, "AImpl", Modifier.PRIVATE);
 	}
-    
+
 	public void test34() throws Exception { // for bug 159917
 		helper1(16, 27, 22, 9, false, false, "Nested", Modifier.PRIVATE);
     }
 
 	public void test35() throws Exception { // for bug 159917
 		helper1(16, 26, 22, 9, false, false, "Nested", Modifier.PRIVATE);
+    }
+
+	public void test36() throws Exception { // https://bugs.eclipse.org/bugs/show_bug.cgi?id=487016
+		helper1(10, 11, 10, 23, true, false, "Bar", Modifier.PRIVATE);
     }
 }

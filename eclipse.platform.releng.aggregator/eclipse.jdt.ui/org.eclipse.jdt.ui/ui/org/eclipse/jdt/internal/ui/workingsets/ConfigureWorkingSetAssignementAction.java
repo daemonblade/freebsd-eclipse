@@ -258,14 +258,14 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 
 		/**
 		 * Section ID for the WorkingSetModelAwareSelectionDialog class.
-		 * 
+		 *
 		 * @since 3.5
 		 */
 		private static final String DIALOG_SETTINGS_SECTION= "WorkingSetModelAwareSelectionDialog"; //$NON-NLS-1$
 
 		/**
 		 * Key associated with the 'Show Only PE Visible Working Sets' check box.
-		 * 
+		 *
 		 * @since 3.5
 		 */
 		private static final String SETTINGS_SHOW_VISIBLE_ONLY= "ShowVisibleOnly"; //$NON-NLS-1$
@@ -331,7 +331,7 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 
 		/**
 		 * {@inheritDoc}
-		 * 
+		 *
 		 * @since 3.5
 		 */
 		@Override
@@ -488,8 +488,8 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 
 		protected void addNewWorkingSet(IWorkingSet workingSet) {
 			int checkCount= 0;
-			for (int i= 0; i < fElements.length; i++) {
-				IAdaptable adapted= adapt(workingSet, fElements[i]);
+			for (IAdaptable element : fElements) {
+				IAdaptable adapted= adapt(workingSet, element);
 				if (adapted != null && contains(workingSet, adapted)) {
 					checkCount++;
 				}
@@ -544,7 +544,7 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 						isSortingEnabled= dialog.isSortingEnabled();
 						fWorkingSetModel.setWorkingSets(dialog.getAllWorkingSets(), isSortingEnabled, dialog.getSelection());
 					}
-					
+
 					recalculateCheckedState(dialog.getNewlyAddedWorkingSets());
 				}
 			});
@@ -563,9 +563,9 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 
 		private void recalculateCheckedState(List<IWorkingSet> addedWorkingSets) {
 			Set<IWorkingSet> checkedWorkingSets= new HashSet<>();
-			GrayedCheckedModelElement[] elements= fModel.getChecked();
-			for (int i= 0; i < elements.length; i++)
-				checkedWorkingSets.add(elements[i].getWorkingSet());
+			for (GrayedCheckedModelElement element : fModel.getChecked()) {
+				checkedWorkingSets.add(element.getWorkingSet());
+			}
 
 			if (addedWorkingSets != null)
 				checkedWorkingSets.addAll(addedWorkingSets);
@@ -618,9 +618,7 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 		if (selection.isEmpty())
 			return false;
 
-		List<?> list= selection.toList();
-		for (Iterator<?> iterator= list.iterator(); iterator.hasNext();) {
-			Object object= iterator.next();
+		for (Object object : selection.toList()) {
 			if (!(object instanceof IResource) && !(object instanceof IJavaElement))
 				return false;
 		}
@@ -631,9 +629,7 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 	private IAdaptable[] getSelectedElements(IStructuredSelection selection) {
 		ArrayList<Object> result= new ArrayList<>();
 
-		List<?> list= selection.toList();
-		for (Iterator<?> iterator= list.iterator(); iterator.hasNext();) {
-			Object object= iterator.next();
+		for (Object object : selection.toList()) {
 			if (object instanceof IResource || object instanceof IJavaElement) {
 				result.add(object);
 			}
@@ -671,11 +667,11 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 
 		for (int i= 0; i < workingSets.length; i++) {
 			IWorkingSet workingSet= workingSets[i];
-			
+
 			int checkCount= 0;
-			for (int j= 0; j < elements.length; j++) {
+			for (IAdaptable element : elements) {
 				if (checkedWorkingSets == null) {
-					IAdaptable adapted= adapt(workingSet, elements[j]);
+					IAdaptable adapted= adapt(workingSet, element);
 					if (adapted != null && contains(workingSet, adapted))
 						checkCount++;
 				} else {
@@ -693,26 +689,22 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 	private void updateWorkingSets(IWorkingSet[] newWorkingSets, IWorkingSet[] grayedWorkingSets, IAdaptable[] elements) {
 		HashSet<IWorkingSet> selectedSets= new HashSet<>(Arrays.asList(newWorkingSets));
 		HashSet<IWorkingSet> grayedSets= new HashSet<>(Arrays.asList(grayedWorkingSets));
-		IWorkingSet[] workingSets= getAllWorkingSets();
 
-		for (int i= 0; i < workingSets.length; i++) {
-			IWorkingSet workingSet= workingSets[i];
+		for (IWorkingSet workingSet : getAllWorkingSets()) {
 			if (isValidWorkingSet(workingSet) && !selectedSets.contains(workingSet) && !grayedSets.contains(workingSet)) {
-				for (int j= 0; j < elements.length; j++) {
-					IAdaptable adapted= adapt(workingSet, elements[j]);
+				for (IAdaptable element : elements) {
+					IAdaptable adapted= adapt(workingSet, element);
 					if (adapted != null && contains(workingSet, adapted)) {
 						remove(workingSet, adapted);
 					}
 				}
 			}
 		}
-
-		for (int i= 0; i < newWorkingSets.length; i++) {
-			IWorkingSet set= newWorkingSets[i];
+		for (IWorkingSet set : newWorkingSets) {
 			if (isValidWorkingSet(set) && !grayedSets.contains(set)) {
 				boolean checkForYetHiddenWorkingSet= false;
-				for (int j= 0; j < elements.length; j++) {
-					IAdaptable adapted= adapt(set, elements[j]);
+				for (IAdaptable element : elements) {
+					IAdaptable adapted= adapt(set, element);
 					if (adapted != null && !contains(set, adapted)) {
 						add(set, adapted);
 						checkForYetHiddenWorkingSet= true;
@@ -732,7 +724,7 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 
 	/**
 	 * Adds the given working set to the set of currently active working sets.
-	 * 
+	 *
 	 * @param workingSet working set to be activated
 	 * @since 3.5
 	 */
@@ -750,7 +742,7 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 
 	/**
 	 * Returns an array of currently active WorkingSets.
-	 * 
+	 *
 	 * @return array of active working sets or <code>null</code> if none
 	 * @since 3.5
 	 */
@@ -784,9 +776,10 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 		if (!set.isEditable())
 			return false;
 
-		for (int i= 0; i < VALID_WORKING_SET_IDS.length; i++) {
-			if (VALID_WORKING_SET_IDS[i].equals(set.getId()))
+		for (String v : VALID_WORKING_SET_IDS) {
+			if (v.equals(set.getId())) {
 				return true;
+			}
 		}
 
 		return false;
@@ -803,10 +796,10 @@ public final class ConfigureWorkingSetAssignementAction extends SelectionDispatc
 	}
 
 	private static boolean contains(IWorkingSet set, IAdaptable adaptedElement) {
-		IAdaptable[] elements= set.getElements();
-		for (int i= 0; i < elements.length; i++) {
-			if (elements[i].equals(adaptedElement))
+		for (IAdaptable element : set.getElements()) {
+			if (element.equals(adaptedElement)) {
 				return true;
+			}
 		}
 
 		return false;

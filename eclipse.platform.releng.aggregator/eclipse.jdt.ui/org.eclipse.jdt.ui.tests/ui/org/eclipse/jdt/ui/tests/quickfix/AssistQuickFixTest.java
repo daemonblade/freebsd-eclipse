@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -25,6 +25,13 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
 
@@ -46,7 +53,7 @@ import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.fix.FixMessages;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
-import org.eclipse.jdt.ui.tests.core.ProjectTestSetup;
+import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
 import org.eclipse.jdt.ui.text.java.IJavaCompletionProposal;
 import org.eclipse.jdt.ui.text.java.correction.CUCorrectionProposal;
 
@@ -59,32 +66,19 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAss
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedNamesAssistProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RenameRefactoringProposal;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
+@RunWith(JUnit4.class)
 public class AssistQuickFixTest extends QuickFixTest {
 
-	private static final Class<AssistQuickFixTest> THIS= AssistQuickFixTest.class;
+	@Rule
+    public ProjectTestSetup projectsetup = new ProjectTestSetup();
 
 	private static final String CHANGE_MODIFIER_TO_FINAL= FixMessages.VariableDeclarationFix_changeModifierOfUnknownToFinal_description;
 
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
-	public AssistQuickFixTest(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		return setUpTest(new TestSuite(THIS));
-	}
-
-	public static Test setUpTest(Test test) {
-		return new ProjectTestSetup(test);
-	}
-
-	@Override
-	protected void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		Hashtable<String, String> options= TestOptions.getDefaultOptions();
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.SPACE);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, "4");
@@ -109,11 +103,12 @@ public class AssistQuickFixTest extends QuickFixTest {
 	}
 
 
-	@Override
-	protected void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		JavaProjectHelper.clear(fJProject1, ProjectTestSetup.getDefaultClasspath());
 	}
 
+	@Test
 	public void testAssignToLocal() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -162,6 +157,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testAssignToLocal2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -223,6 +219,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignToLocal3() throws Exception {
 		// test prefixes and this qualification
 
@@ -287,6 +284,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignToLocal4() throws Exception {
 		// test name conflict
 
@@ -344,6 +342,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignToLocal5() throws Exception {
 		// test prefixes and this qualification on static method
 
@@ -409,6 +408,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignToLocal6() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -456,6 +456,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignToLocal7() throws Exception {
 		// test name conflict: name used later
 
@@ -522,6 +523,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignToLocal8() throws Exception {
 		// assign to local of field access
 
@@ -548,7 +550,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 		ArrayList<String> previews= new ArrayList<>();
 		ArrayList<String> expecteds= new ArrayList<>();
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
@@ -586,7 +588,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		addPreviewAndExpected(proposals, buf, expecteds, previews);
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
@@ -599,7 +601,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		addPreviewAndExpected(proposals, buf, expecteds, previews);
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
@@ -612,10 +614,11 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		addPreviewAndExpected(proposals, buf, expecteds, previews);
-		
+
 		assertEqualStringsIgnoreOrder(previews, expecteds);
 	}
-	
+
+	@Test
 	public void testAssignToLocal9() throws Exception {
 		// assign to local of field access
 
@@ -677,6 +680,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testAssignToLocal10() throws Exception {
 		// assign to local with recovered statement
 
@@ -733,6 +737,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignToLocal11() throws Exception {
 		// assign to statement in if body with no brackets
 
@@ -793,6 +798,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignToLocal12() throws Exception {
 		// assign to recovered statement in if body with no brackets
 
@@ -859,6 +865,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignToLocal13() throws Exception {
 		// assign to local in context that requires fully qualified type, https://bugs.eclipse.org/bugs/show_bug.cgi?id=239735
 
@@ -880,7 +887,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertCorrectLabels(proposals);
 
 		String[] expecteds= new String[5];
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class Timer {\n");
@@ -900,7 +907,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		expecteds[1]= buf.toString();
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class Timer {\n");
@@ -934,6 +941,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 	}
 
 	// bug 217984
+	@Test
 	public void testAssignToLocal14() throws Exception {
 			IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 			StringBuffer buf= new StringBuffer();
@@ -949,13 +957,13 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			ICompilationUnit cu= pack1.createCompilationUnit("Gen.java", buf.toString(), false, null);
-	
+
 			String str= "g.get(0);";
 			AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(str) + str.length(), 0);
 			List<IJavaCompletionProposal> proposals= collectAssists(context, false);
 			assertNumberOfProposals(proposals, 5);
 			assertCorrectLabels(proposals);
-	
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("import java.util.ArrayList;\n");
@@ -969,7 +977,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			String expected1= buf.toString();
-	
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("import java.util.ArrayList;\n");
@@ -985,12 +993,13 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			String expected2= buf.toString();
-	
+
 			assertExpectedExistInProposals(proposals, new String[] { expected1, expected2 });
-	
+
 		}
 
 	// bug 217984
+	@Test
 	public void testAssignToLocal15() throws Exception {
 			IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 			StringBuffer buf= new StringBuffer();
@@ -1006,13 +1015,13 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			ICompilationUnit cu= pack1.createCompilationUnit("Gen.java", buf.toString(), false, null);
-	
+
 			String str= "ge.get(0)";
 			AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(str) + str.length(), 0);
 			List<IJavaCompletionProposal> proposals= collectAssists(context, false);
 			assertNumberOfProposals(proposals, 7);
 			assertCorrectLabels(proposals);
-	
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("import java.util.ArrayList;\n");
@@ -1026,7 +1035,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			String expected1= buf.toString();
-	
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("import java.util.ArrayList;\n");
@@ -1042,11 +1051,12 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			String expected2= buf.toString();
-	
+
 			assertExpectedExistInProposals(proposals, new String[] { expected1, expected2 });
 		}
 
 	// bug 217984
+	@Test
 	public void testAssignToLocal16() throws Exception {
 			IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 			StringBuffer buf= new StringBuffer();
@@ -1063,13 +1073,13 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			ICompilationUnit cu= pack1.createCompilationUnit("Gen.java", buf.toString(), false, null);
-	
+
 			String str= "gs.get(0)";
 			AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(str) + str.length(), 0);
 			List<IJavaCompletionProposal> proposals= collectAssists(context, false);
 			assertNumberOfProposals(proposals, 7);
 			assertCorrectLabels(proposals);
-	
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("import java.util.ArrayList;\n");
@@ -1084,7 +1094,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			String expected1= buf.toString();
-	
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("import java.util.ArrayList;\n");
@@ -1101,11 +1111,12 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			String expected2= buf.toString();
-	
+
 			assertExpectedExistInProposals(proposals, new String[] { expected1, expected2 });
 		}
 
 	// bug 506799
+	@Test
 	public void testAssignToLocal17() throws Exception {
 			IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 			StringBuffer buf= new StringBuffer();
@@ -1122,13 +1133,13 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			ICompilationUnit cu= pack1.createCompilationUnit("Snippet.java", buf.toString(), false, null);
-	
+
 			String str= "workItemType.getEnumConstants();";
 			AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(str) + str.length(), 0);
 			List<IJavaCompletionProposal> proposals= collectAssists(context, false);
 			assertNumberOfProposals(proposals, 4);
 			assertCorrectLabels(proposals);
-	
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("\n");
@@ -1143,7 +1154,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			String expected1= buf.toString();
-	
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("\n");
@@ -1160,10 +1171,56 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			String expected2= buf.toString();
-	
-			assertExpectedExistInProposals(proposals, new String[] { expected1, expected2 });
-		}
 
+			assertExpectedExistInProposals(proposals, new String[] { expected1, expected2 });
+	}
+
+	public void testAssignToLocal18() throws Exception { // https://bugs.eclipse.org/bugs/show_bug.cgi?id=287377
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("p", false, null);
+		StringBuffer buf= new StringBuffer();
+		buf.append("package p;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("\n");
+		buf.append("    private E other;\n");
+		buf.append("    boolean b;\n");
+		buf.append("\n");
+		buf.append("    public void foo(boolean newB) {\n");
+		buf.append("        /*1*/other.b = newB;\n");
+		buf.append("        other.other.b = newB;\n");
+		buf.append("        other.other.other.b = newB;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		String str= "/*1*/other";
+		AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(str) + str.length(), 0);
+		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
+		assertNumberOfProposals(proposals, 3);
+		assertCorrectLabels(proposals);
+
+		buf= new StringBuffer();
+		buf.append("package p;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("\n");
+		buf.append("    private E other;\n");
+		buf.append("    boolean b;\n");
+		buf.append("\n");
+		buf.append("    public void foo(boolean newB) {\n");
+		buf.append("        /*1*/E other2 = other;\n");
+		buf.append("        other2.b = newB;\n");
+		buf.append("        other2.other.b = newB;\n");
+		buf.append("        other2.other.other.b = newB;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		String expected1= buf.toString();
+
+		assertExpectedExistInProposals(proposals, new String[] { expected1 });
+	}
+
+	@Test
 	public void testAssignParamToField() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1196,6 +1253,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1 });
 	}
 
+	@Test
 	public void testAssignParamToField2() throws Exception {
 		Preferences corePrefs= JavaPlugin.getJavaCorePluginPreferences();
 		corePrefs.setValue(JavaCore.CODEASSIST_FIELD_PREFIXES, "f");
@@ -1236,6 +1294,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1 });
 	}
 
+	@Test
 	public void testAssignParamToField3() throws Exception {
 		Preferences corePrefs= JavaPlugin.getJavaCorePluginPreferences();
 		corePrefs.setValue(JavaCore.CODEASSIST_STATIC_FIELD_PREFIXES, "fg");
@@ -1281,6 +1340,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1 });
 	}
 
+	@Test
 	public void testAssignParamToField4() throws Exception {
 		IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
 		store.setValue(PreferenceConstants.CODEGEN_KEYWORD_THIS, true);
@@ -1338,6 +1398,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignParamToField5() throws Exception {
 		IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
 		store.setValue(PreferenceConstants.CODEGEN_KEYWORD_THIS, true);
@@ -1395,6 +1456,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignParamToField6() throws Exception {
 		IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
 		store.setValue(PreferenceConstants.CODEGEN_KEYWORD_THIS, true);
@@ -1455,6 +1517,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignAllParamsToFields1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1508,6 +1571,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignAllParamsToFields2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1561,6 +1625,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testAssignParamToFieldInGeneric() throws Exception {
 		Preferences corePrefs= JavaPlugin.getJavaCorePluginPreferences();
 		corePrefs.setValue(JavaCore.CODEASSIST_FIELD_PREFIXES, "f");
@@ -1601,6 +1666,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1 });
 	}
 
+	@Test
 	public void testAssignToLocal2CursorAtEnd() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1659,6 +1725,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testExtractToLocalVariable1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1744,6 +1811,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2, ex3, ex4, ex5 });
 	}
 
+	@Test
 	public void testExtractToLocalVariable2() throws Exception {
 		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=276467
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -1808,6 +1876,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2, ex3 });
 	}
 
+	@Test
 	public void testExtractToLocalVariable3() throws Exception {
 		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=276467
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -1876,6 +1945,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2, ex3 });
 	}
 
+	@Test
 	public void testExtractToLocalVariable4() throws Exception {
 		//bug 457547
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
@@ -1934,6 +2004,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2, ex3 });
 	}
 
+	@Test
 	public void testExtractToMethod1() throws Exception {
 		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=41302
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2020,6 +2091,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2, ex3, ex4, ex5 });
 	}
 
+	@Test
 	public void testExtractToMethod2() throws Exception {
 		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=41302
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2074,6 +2146,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2, ex3 });
 	}
 
+	@Test
 	public void testExtractToMethod3() throws Exception {
 		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=41302
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2128,6 +2201,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2, ex3 });
 	}
 
+	@Test
 	public void testExtractToMethod4() throws Exception {
 		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=41302
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2208,6 +2282,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2, ex3, ex4 });
 	}
 
+	@Test
 	public void testReplaceCatchClauseWithThrowsWithFinally() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2268,6 +2343,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testReplaceSingleCatchClauseWithThrows() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2338,6 +2414,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testUnwrapForLoop() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2385,6 +2462,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testUnwrapDoStatement() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2423,6 +2501,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testUnwrapWhileLoop2Statements() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2459,6 +2538,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testUnwrapIfStatement() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2555,6 +2635,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2, preview3, preview4 }, new String[] { expected1, expected2, expected3, expected4 });
 	}
 
+	@Test
 	public void testUnwrapTryStatement() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2597,6 +2678,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testUnwrapAnonymous() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2633,6 +2715,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testUnwrapBlock() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -2672,6 +2755,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 	}
 
 
+	@Test
 	public void testUnwrapMethodInvocation() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2733,6 +2817,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4 });
 	}
 
+	@Test
 	public void testSplitDeclaration1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2765,6 +2850,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testSplitDeclaration2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2799,6 +2885,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testSplitDeclaration3() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2849,6 +2936,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2, ex3 });
 	}
 
+	@Test
 	public void testSplitDeclaration4() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2881,6 +2969,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testSplitDeclaration5() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2913,6 +3002,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testSplitDeclaration6() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2945,6 +3035,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testSplitDeclaration7() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2977,6 +3068,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testJoinDeclaration1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -3023,6 +3115,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 	}
 
 
+	@Test
 	public void testJoinDeclaration2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -3092,6 +3185,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4 });
 	}
 
+	@Test
 	public void testJoinDeclaration3() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -3150,6 +3244,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2, ex3 });
 	}
 
+	@Test
 	public void testJoinDeclaration4() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -3168,14 +3263,14 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		
+
 		String str= "message;";
 		AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(str), 0);
 		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
-		
+
 		assertNumberOfProposals(proposals, 2);
 		assertCorrectLabels(proposals);
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
@@ -3210,10 +3305,11 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		String ex2= buf.toString();
-		
+
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2 });
 	}
-	
+
+	@Test
 	public void testJoinDeclaration5() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -3232,14 +3328,14 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		
+
 		String str= "message =";
 		AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(str), 0);
 		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
-		
+
 		assertNumberOfProposals(proposals, 4);
 		assertCorrectLabels(proposals);
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
@@ -3311,12 +3407,236 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		String ex4= buf.toString();
-		
+
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2, ex3, ex4 });
 	}
-	
+
+	public void testJoinDeclaration6() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        String var;\n");
+		buf.append("        if (x == 1)\n");
+		buf.append("           var = \"abc\";\n");
+		buf.append("        else\n");
+		buf.append("           var = \"\";\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		String str= "var";
+		AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(str), 0);
+		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
+
+		assertNumberOfProposals(proposals, 2);
+		assertCorrectLabels(proposals);
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        String var = x == 1 ? \"abc\" : \"\";\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		String ex1= buf.toString();
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    private String var;\n");
+		buf.append("\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        if (x == 1)\n");
+		buf.append("           var = \"abc\";\n");
+		buf.append("        else\n");
+		buf.append("           var = \"\";\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		String ex2= buf.toString();
+
+		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2 });
+	}
+
+	public void testJoinDeclaration7() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        String var;\n");
+		buf.append("        if (x == 1)\n");
+		buf.append("           var = \"abc\";\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		String str= "var";
+		AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(str), 0);
+		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
+
+		assertNumberOfProposals(proposals, 1);
+		assertCorrectLabels(proposals);
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    private String var;\n");
+		buf.append("\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        if (x == 1)\n");
+		buf.append("           var = \"abc\";\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		String ex1= buf.toString();
+
+		assertExpectedExistInProposals(proposals, new String[] { ex1 });
+	}
+
+	public void testJoinDeclaration8() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        String var;\n");
+		buf.append("        if (x == 1) {\n");
+		buf.append("           var = \"abc\";\n");
+		buf.append("        } else {\n");
+		buf.append("           var = \"def\";\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		String str= "var";
+		AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(str), 0);
+		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
+
+		assertNumberOfProposals(proposals, 2);
+		assertCorrectLabels(proposals);
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        String var = x == 1 ? \"abc\" : \"def\";\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		String ex1= buf.toString();
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    private String var;\n");
+		buf.append("\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        if (x == 1) {\n");
+		buf.append("           var = \"abc\";\n");
+		buf.append("        } else {\n");
+		buf.append("           var = \"def\";\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		String ex2= buf.toString();
+
+		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2 });
+	}
+
+	public void testJoinDeclaration9() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        String var;\n");
+		buf.append("        if (x == 1) {\n");
+		buf.append("           var = \"abc\";\n");
+		buf.append("        } else {\n");
+		buf.append("           var = \"def\";\n");
+		buf.append("           foo(3);\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		String str= "var";
+		AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(str), 0);
+		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
+
+		assertNumberOfProposals(proposals, 1);
+		assertCorrectLabels(proposals);
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    private String var;\n");
+		buf.append("\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        if (x == 1) {\n");
+		buf.append("           var = \"abc\";\n");
+		buf.append("        } else {\n");
+		buf.append("           var = \"def\";\n");
+		buf.append("           foo(3);\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		String ex1= buf.toString();
+
+		assertExpectedExistInProposals(proposals, new String[] { ex1 });
+	}
+
+	public void testJoinDeclaration10() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        String var;\n");
+		buf.append("        switch (x) {\n");
+		buf.append("        case 1:\n");
+		buf.append("           var = \"abc\";\n");
+		buf.append("           break;\n");
+		buf.append("        default:\n");
+		buf.append("           var = \"def\";\n");
+		buf.append("           break;\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		String str= "var";
+		AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(str), 0);
+		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
+
+		assertNumberOfProposals(proposals, 1);
+		assertCorrectLabels(proposals);
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    private String var;\n");
+		buf.append("\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        switch (x) {\n");
+		buf.append("        case 1:\n");
+		buf.append("           var = \"abc\";\n");
+		buf.append("           break;\n");
+		buf.append("        default:\n");
+		buf.append("           var = \"def\";\n");
+		buf.append("           break;\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		String ex1= buf.toString();
+
+		assertExpectedExistInProposals(proposals, new String[] { ex1 });
+	}
+
 	private static final Class<?>[] FILTER_EQ= { LinkedNamesAssistProposal.class, RenameRefactoringProposal.class, AssignToVariableAssistProposal.class, NewJUnitTestCaseProposal.class };
 
+	@Test
 	public void testInvertEquals1() throws Exception {
         IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
         StringBuffer buf= new StringBuffer();
@@ -4423,6 +4743,7 @@ public class AssistQuickFixTest extends QuickFixTest {
         assertEqualString(preview, buf.toString());
     }
 
+	@Test
 	public void testInvertEquals24() throws Exception {
 		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=385389
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -4483,6 +4804,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testAddTypeToArrayInitializer() throws Exception {
 
 			IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -4504,7 +4826,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 			ArrayList<String> previews= new ArrayList<>();
 			ArrayList<String> expecteds= new ArrayList<>();
-			
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("public class E {\n");
@@ -4513,7 +4835,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			addPreviewAndExpected(proposals, buf, expecteds, previews);
-			
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("public class E {\n");
@@ -4524,10 +4846,11 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			addPreviewAndExpected(proposals, buf, expecteds, previews);
-			
+
 			assertEqualStringsIgnoreOrder(previews, expecteds);
 		}
 
+	@Test
 	public void testCreateInSuper() throws Exception {
 
 			IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -4598,8 +4921,8 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 		}
 
+	@Test
 	public void testCreateInSuperInGeneric() throws Exception {
-
 			IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 			StringBuffer buf= new StringBuffer();
 			buf.append("package test1;\n");
@@ -4618,6 +4941,12 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("import java.io.IOException;\n");
 			buf.append("import java.util.Vector;\n");
 			buf.append("public class E extends A<String> implements IB<String> {\n");
+			buf.append("	/**\n");
+			buf.append("	 * Always return NULL\n");
+			buf.append("	 * @param count\n");
+			buf.append("	 * @return NULL\n");
+			buf.append("	 * @throws IOException\n");
+			buf.append("	 */\n");
 			buf.append("    public Vector<String> foo(int count) throws IOException {\n");
 			buf.append("        return null;\n");
 			buf.append("    }\n");
@@ -4642,6 +4971,12 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("\n");
 			buf.append("public interface IB<T> {\n");
 			buf.append("\n");
+			buf.append("    /**\n");
+			buf.append("     * Always return NULL\n");
+			buf.append("     * @param count\n");
+			buf.append("     * @return NULL\n");
+			buf.append("     * @throws IOException\n");
+			buf.append("     */\n");
 			buf.append("    Vector<String> foo(int count) throws IOException;\n");
 			buf.append("}\n");
 			String expected1= buf.toString();
@@ -4657,6 +4992,12 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("\n");
 			buf.append("public class A<T> {\n");
 			buf.append("\n");
+			buf.append("    /**\n");
+			buf.append("     * Always return NULL\n");
+			buf.append("     * @param count\n");
+			buf.append("     * @return NULL\n");
+			buf.append("     * @throws IOException\n");
+			buf.append("     */\n");
 			buf.append("    public Vector<String> foo(int count) throws IOException {\n");
 			buf.append("        //TODO\n");
 			buf.append("        return null;\n");
@@ -4665,9 +5006,9 @@ public class AssistQuickFixTest extends QuickFixTest {
 			String expected2= buf.toString();
 
 			assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
-
 		}
 
+	@Test
 	public void testChangeIfStatementToBlock() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -4734,6 +5075,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4 });
 	}
 
+	@Test
 	public void testChangeElseStatementToBlock() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -4785,6 +5127,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2});
 	}
 
+	@Test
 	public void testChangeIfWithElseStatementToBlock() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -4836,6 +5179,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2});
 	}
 
+	@Test
 	public void testChangeIfAndElseStatementToBlock1() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -4898,6 +5242,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2, expected3});
 	}
 
+	@Test
 	public void testChangeIfAndElseStatementToBlock2() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -4961,6 +5306,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2, expected3});
 	}
 
+	@Test
 	public void testChangeIfAndElseIfStatementToBlock() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5042,6 +5388,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2, expected3});
 	}
 
+	@Test
 	public void testChangeIfAndElseIfStatementWithBlockToBlock() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5123,6 +5470,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2, expected3});
 	}
 
+	@Test
 	public void testRemoveIfBlock01() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5189,6 +5537,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4 });
 	}
 
+	@Test
 	public void testRemoveIfBlock02() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5265,6 +5614,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2, expected3, expected4});
 	}
 
+	@Test
 	public void testRemoveIfBlock03() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5328,6 +5678,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2, expected3});
 	}
 
+	@Test
 	public void testRemoveIfBlock04() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5375,7 +5726,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		String expected2= buf.toString();
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
@@ -5387,7 +5738,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		String expected3= buf.toString();
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
@@ -5396,11 +5747,12 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		String expected4= buf.toString();
-		
+
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2, expected3, expected4});
 	}
 
 
+	@Test
 	public void testRemoveIfBlockBug128843() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5487,6 +5839,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2, expected3, expected4});
 	}
 
+	@Test
 	public void testRemoveIfBlockBug138628() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5527,6 +5880,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1});
 	}
 
+	@Test
 	public void testRemoveIfBlockBug149990_1() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5571,6 +5925,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1});
 	}
 
+	@Test
 	public void testRemoveIfBlockBug139675() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5649,6 +6004,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2, expected3});
 	}
 
+	@Test
 	public void testRemoveIfBlockBug149990_2() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5695,6 +6051,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testRemoveWhileBlock01() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5737,6 +6094,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2});
 	}
 
+	@Test
 	public void testRemoveForBlock01() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5779,6 +6137,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2});
 	}
 
+	@Test
 	public void testRemoveDoBlock01() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5821,6 +6180,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {expected1, expected2});
 	}
 
+	@Test
 	public void testMakeFinal01() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -5856,6 +6216,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testMakeFinal02() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -5881,6 +6242,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1 });
 	}
 
+	@Test
 	public void testMakeFinal03() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -5918,6 +6280,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1 });
 	}
 
+	@Test
 	public void testMakeFinal04() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -5952,6 +6315,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {buf.toString()});
 	}
 
+	@Test
 	public void testMakeFinal05() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -5983,6 +6347,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {buf.toString()});
 	}
 
+	@Test
 	public void testMakeFinal06() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -6007,6 +6372,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { null }); // Wrap in buf.append() (to clipboard)
 	}
 
+	@Test
 	public void testMakeFinal07() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -6031,6 +6397,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, CHANGE_MODIFIER_TO_FINAL);
 	}
 
+	@Test
 	public void testMakeFinal08() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -6057,6 +6424,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { null }); // Wrap in buf.append() (to clipboard)
 	}
 
+	@Test
 	public void testMakeFinal09() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -6083,6 +6451,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { null }); // Wrap in buf.append() (to clipboard)
 	}
 
+	@Test
 	public void testMakeFinal10() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -6109,6 +6478,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { null }); // Wrap in buf.append() (to clipboard)
 	}
 
+	@Test
 	public void testMakeFinal11() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -6133,6 +6503,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { null }); // Wrap in buf.append() (to clipboard)
 	}
 
+	@Test
 	public void testMakeFinal12() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6169,6 +6540,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {buf.toString()});
 	}
 
+	@Test
 	public void testMakeFinal13() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6221,6 +6593,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2 });
 	}
 
+	@Test
 	public void testMakeFinal14() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6272,6 +6645,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { ex1, ex2 });
 	}
 
+	@Test
 	public void testMakeFinal15() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6321,6 +6695,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testMakeFinal16() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -6342,6 +6717,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, CHANGE_MODIFIER_TO_FINAL);
 	}
 
+	@Test
 	public void testMakeFinal17() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6353,14 +6729,14 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-	
+
 		int offset= buf.toString().indexOf("i=");
 		AssistContext context= getCorrectionContext(cu, offset, 1);
 		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
 
 		assertNumberOfProposals(proposals, 1);
 		assertProposalDoesNotExist(proposals, CHANGE_MODIFIER_TO_FINAL);
-		
+
 		buf= new StringBuffer();
 		buf.append("package test;\n");
 		buf.append("public class E {\n");
@@ -6378,6 +6754,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { buf.toString() });
 	}
 
+	@Test
 	public void testMakeFinal18() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -6398,6 +6775,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, CHANGE_MODIFIER_TO_FINAL);
 	}
 
+	@Test
 	public void testMakeFinal19() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -6419,6 +6797,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, CHANGE_MODIFIER_TO_FINAL);
 	}
 
+	@Test
 	public void testMakeFinalBug148373() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6445,6 +6824,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("}\n");
 		assertExpectedExistInProposals(proposals, new String[] {buf.toString()});
 	}
+	@Test
 	public void testConvertAnonymousToNested1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6487,6 +6867,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {buf.toString()});
 	}
 
+	@Test
 	public void testConvertAnonymousToNested2() throws Exception {
 		Preferences corePrefs= JavaPlugin.getJavaCorePluginPreferences();
 		corePrefs.setValue(JavaCore.CODEASSIST_FIELD_PREFIXES, "f");
@@ -6546,6 +6927,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] {buf.toString()});
 	}
 
+	@Test
 	public void testConvertToStringBuffer1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6638,6 +7020,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4, expected5, expected6, expected7 });
 	}
 
+	@Test
 	public void testConvertToStringBufferStringAndVar() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6724,6 +7107,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4, expected5 });
 	}
 
+	@Test
 	public void testConvertToStringBufferNoFixWithoutString() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6774,6 +7158,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testConvertToStringBufferNoFixWithoutString2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6837,6 +7222,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4 });
 	}
 
+	@Test
 	public void testConvertToStringBufferNoFixOutsideMethod() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6872,6 +7258,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1 });
 	}
 
+	@Test
 	public void testConvertToStringBufferDupVarName() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -6948,6 +7335,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4 });
 	}
 
+	@Test
 	public void testConvertToStringBufferInIfStatement() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -7052,6 +7440,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4, expected5, expected6, expected7 });
 	}
 
+	@Test
 	public void testConvertToStringBufferAsParamter() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -7142,6 +7531,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4, expected5, expected6, expected7 });
 	}
 
+	@Test
 	public void testConvertToStringBufferJava14() throws Exception {
 
 		Map<String, String> oldOptions= fJProject1.getOptions(false);
@@ -7242,6 +7632,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		}
 	}
 
+	@Test
 	public void testConvertToStringBufferExisting1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -7362,7 +7753,8 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4, expected5, expected6, expected7, expected8, expected9 });
 	}
-	
+
+	@Test
 	public void testConvertToStringBufferExisting2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -7374,13 +7766,13 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
-		
+
 		AssistContext context= getCorrectionContext(cu, buf.toString().indexOf("\" + 5"), 0);
 		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
-		
+
 		assertNumberOfProposals(proposals, 9);
 		assertCorrectLabels(proposals);
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class A {\n");
@@ -7392,7 +7784,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		String expected1= buf.toString();
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class A {\n");
@@ -7484,7 +7876,8 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4, expected5, expected6, expected7, expected8, expected9 });
 	}
-	
+
+	@Test
 	public void testConvertToMessageFormat14() throws Exception {
 
 		Map<String, String> oldOptions= fJProject1.getOptions(false);
@@ -7591,6 +7984,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		}
 	}
 
+	@Test
 	public void testConvertToMessageFormatStringConcat() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -7685,6 +8079,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4, expected5, expected6, expected7 });
 	}
 
+	@Test
 	public void testConvertToMessageFormatStringBoxing14() throws Exception {
 		Map<String, String> oldOptions= fJProject1.getOptions(false);
 		Map<String, String> newOptions= new HashMap<>(oldOptions);
@@ -7779,6 +8174,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		}
 	}
 
+	@Test
 	public void testConvertToMessageFormatStringBoxing15() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -7873,6 +8269,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4, expected5, expected6, expected7 });
 	}
 
+	@Test
 	public void testConvertToMessageFormat15() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -7969,6 +8366,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4, expected5, expected6, expected7 });
 	}
 
+	@Test
 	public void testConvertToMessageFormatApostrophe() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -8064,7 +8462,8 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4, expected5, expected6, expected7 });
 	}
-	
+
+	@Test
 	public void testConvertToMessageFormatExtendedOperands() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -8075,13 +8474,13 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
-		
+
 		AssistContext context= getCorrectionContext(cu, buf.toString().indexOf(" + "), 0);
 		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
-		
+
 		assertNumberOfProposals(proposals, 8);
 		assertCorrectLabels(proposals);
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("\n");
@@ -8093,7 +8492,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		String expected1= buf.toString();
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class A {\n");
@@ -8111,7 +8510,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		String expected2= buf.toString();
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class A {\n");
@@ -8172,7 +8571,8 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 		assertExpectedExistInProposals(proposals, new String[] { expected1, expected2, expected3, expected4, expected5, expected6, expected7, expected8 });
 	}
-	
+
+	@Test
 	public void testMissingEnumConstantsInCase1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("p", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -8256,6 +8656,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testMissingEnumConstantsInCase2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("p", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -8345,6 +8746,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testMissingEnumConstantsInCase3() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("p", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -8419,6 +8821,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testMissingEnumConstantsInCase4() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("p", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -8473,6 +8876,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testMissingEnumConstantsInCase5() throws Exception {
 		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=372840
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("p", false, null);
@@ -8549,6 +8953,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testConvertEnhancedForArray01() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -8602,7 +9007,8 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 		assertExpectedExistInProposals(proposals, expected);
 	}
-	
+
+	@Test
 	public void testConvertEnhancedForArray02() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -8662,7 +9068,8 @@ public class AssistQuickFixTest extends QuickFixTest {
 
 		assertExpectedExistInProposals(proposals, expected);
 	}
-	
+
+	@Test
 	public void testConvertEnhancedForList01() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -8724,7 +9131,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		expected[1]= buf.toString();
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Arrays;\n");
@@ -8757,6 +9164,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testConvertEnhancedForCollection01() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -8773,13 +9181,13 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-	
+
 		AssistContext context= getCorrectionContext(cu, buf.toString().indexOf("for"), 0);
 		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
-	
+
 		assertNumberOfProposals(proposals, 3);
 		assertCorrectLabels(proposals);
-	
+
 		String[] expected= new String[3];
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
@@ -8825,10 +9233,11 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		expected[2]= buf.toString();
-	
+
 		assertExpectedExistInProposals(proposals, expected);
 	}
-	
+
+	@Test
 	public void testGenerateForSimple() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -8887,6 +9296,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		}
 	}
 
+	@Test
 	public void testGenerateForWithSemicolon() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -8945,6 +9355,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		}
 	}
 
+	@Test
 	public void testGenerateForMethodInvocation() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9003,6 +9414,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		}
 	}
 
+	@Test
 	public void testGenerateForComplexParametrization() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9061,7 +9473,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("private class MySecondOwnIterable extends MyFirstOwnIterable<Integer, String>{}");
 			buf.append("}\n");
 			expected[1]= buf.toString();
-			
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("import java.util.LinkedList;\n");
@@ -9082,7 +9494,8 @@ public class AssistQuickFixTest extends QuickFixTest {
 			fJProject1.setOptions(saveOptions);
 		}
 	}
-	
+
+	@Test
 	public void testGenerateForGenerics() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9142,7 +9555,8 @@ public class AssistQuickFixTest extends QuickFixTest {
 			fJProject1.setOptions(saveOptions);
 		}
 	}
-	
+
+	@Test
 	public void testGenerateForComplexGenerics() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9209,7 +9623,8 @@ public class AssistQuickFixTest extends QuickFixTest {
 			fJProject1.setOptions(saveOptions);
 		}
 	}
-	
+
+	@Test
 	public void testGenerateForUpperboundWildcard() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9285,6 +9700,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		}
 	}
 
+	@Test
 	public void testGenerateForLowerboundWildcard() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9360,6 +9776,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		}
 	}
 
+	@Test
 	public void testGenerateForComplexInnerLowerboundWildcard() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9430,6 +9847,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		}
 	}
 
+	@Test
 	public void testGenerateForMissingParametrization() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9487,6 +9905,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		}
 	}
 
+	@Test
 	public void testGenerateForLowVersion() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9537,6 +9956,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		}
 	}
 
+	@Test
 	public void testGenerateForArray() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9556,10 +9976,10 @@ public class AssistQuickFixTest extends QuickFixTest {
 			String selection= "array";
 			AssistContext context= getCorrectionContext(cu, buf.toString().lastIndexOf(selection) + selection.length(), 0);
 			List<IJavaCompletionProposal> proposals= collectAssists(context, false);
-	
+
 			assertNumberOfProposals(proposals, 6);
 			assertCorrectLabels(proposals);
-	
+
 			String[] expected= new String[2];
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
@@ -9572,7 +9992,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			expected[0]= buf.toString();
-	
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("public class E {\n");
@@ -9583,13 +10003,14 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			expected[1]= buf.toString();
-	
+
 			assertExpectedExistInProposals(proposals, expected);
 		} finally {
 			fJProject1.setOptions(saveOptions);
 		}
 	}
 
+	@Test
 	public void testGenerateForMultiDimensionalArray() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9636,13 +10057,14 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			expected[1]= buf.toString();
-	
+
 			assertExpectedExistInProposals(proposals, expected);
 		} finally {
 			fJProject1.setOptions(saveOptions);
 		}
 	}
 
+	@Test
 	public void testGenerateForNameClash() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9654,7 +10076,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-	
+
 		Map<String, String> saveOptions= fJProject1.getOptions(false);
 		Map<String, String> newOptions= new HashMap<>(saveOptions);
 		newOptions.put(DefaultCodeFormatterConstants.FORMATTER_PUT_EMPTY_STATEMENT_ON_NEW_LINE, "true");
@@ -9663,10 +10085,10 @@ public class AssistQuickFixTest extends QuickFixTest {
 			String selection= "nums";
 			AssistContext context= getCorrectionContext(cu, buf.toString().lastIndexOf(selection) + selection.length(), 0);
 			List<IJavaCompletionProposal> proposals= collectAssists(context, false);
-	
+
 			assertNumberOfProposals(proposals, 7);
 			assertCorrectLabels(proposals);
-	
+
 			String[] expected= new String[2];
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
@@ -9680,7 +10102,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			expected[0]= buf.toString();
-	
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("public class E {\n");
@@ -9692,13 +10114,14 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			expected[1]= buf.toString();
-	
+
 			assertExpectedExistInProposals(proposals, expected);
 		} finally {
 			fJProject1.setOptions(saveOptions);
 		}
 	}
 
+	@Test
 	public void testGenerateForImportsAndFormat1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9723,7 +10146,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf2.append("        return java.util.Collections.emptySet();\n");
 		buf2.append("    }\n");
 		buf2.append("}");
-		
+
 		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
 		pack1.createCompilationUnit("B.java", buf2.toString(), false, null);
 
@@ -9733,14 +10156,14 @@ public class AssistQuickFixTest extends QuickFixTest {
 		newOptions.put(DefaultCodeFormatterConstants.FORMATTER_PUT_EMPTY_STATEMENT_ON_NEW_LINE, "true");
 		try {
 			fJProject1.setOptions(newOptions);
-		
+
 			String selection= "B.get( /*important: empty*/ );";
 			AssistContext context= getCorrectionContext(cu, buf.toString().lastIndexOf(selection) + selection.length(), 0);
 			List<IJavaCompletionProposal> proposals= collectAssists(context, false);
-	
+
 			assertNumberOfProposals(proposals, 5);
 			assertCorrectLabels(proposals);
-	
+
 			String[] expected= new String[3];
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
@@ -9756,7 +10179,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			expected[0]= buf.toString();
-	
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("\n");
@@ -9773,7 +10196,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			expected[1]= buf.toString();
-			
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("\n");
@@ -9789,13 +10212,14 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			expected[2]= buf.toString();
-	
+
 			assertExpectedExistInProposals(proposals, expected);
 		} finally {
 			fJProject1.setOptions(saveOptions);
 		}
 	}
-	
+
+	@Test
 	public void testGenerateForImportsAndFormat2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9821,7 +10245,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf2.append("        return java.util.Collections.emptySet();\n");
 		buf2.append("    }\n");
 		buf2.append("}");
-		
+
 		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
 		pack1.createCompilationUnit("B.java", buf2.toString(), false, null);
 
@@ -9831,14 +10255,14 @@ public class AssistQuickFixTest extends QuickFixTest {
 		newOptions.put(DefaultCodeFormatterConstants.FORMATTER_PUT_EMPTY_STATEMENT_ON_NEW_LINE, "true");
 		try {
 			fJProject1.setOptions(newOptions);
-		
+
 			String selection= "B.raw(1+ 2);";
 			AssistContext context= getCorrectionContext(cu, buf.toString().lastIndexOf(selection) + selection.length(), 0);
 			List<IJavaCompletionProposal> proposals= collectAssists(context, false);
-	
+
 			assertNumberOfProposals(proposals, 4);
 			assertCorrectLabels(proposals);
-	
+
 			String[] expected= new String[2];
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
@@ -9852,7 +10276,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			expected[0]= buf.toString();
-	
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("public class A {\n");
@@ -9867,13 +10291,14 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			expected[1]= buf.toString();
-	
+
 			assertExpectedExistInProposals(proposals, expected);
 		} finally {
 			fJProject1.setOptions(saveOptions);
 		}
 	}
-	
+
+	@Test
 	public void testGenerateForImportsArray() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9893,7 +10318,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		buf2.append("        return new Date[1];\n");
 		buf2.append("    }\n");
 		buf2.append("}");
-		
+
 		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
 		pack1.createCompilationUnit("B.java", buf2.toString(), false, null);
 
@@ -9903,14 +10328,14 @@ public class AssistQuickFixTest extends QuickFixTest {
 		newOptions.put(DefaultCodeFormatterConstants.FORMATTER_PUT_EMPTY_STATEMENT_ON_NEW_LINE, "true");
 		try {
 			fJProject1.setOptions(newOptions);
-		
+
 			String selection= "B.get();";
 			AssistContext context= getCorrectionContext(cu, buf.toString().lastIndexOf(selection) + selection.length(), 0);
 			List<IJavaCompletionProposal> proposals= collectAssists(context, false);
-	
+
 			assertNumberOfProposals(proposals, 4);
 			assertCorrectLabels(proposals);
-	
+
 			String[] expected= new String[1];
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
@@ -9923,12 +10348,13 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			expected[0]= buf.toString();
-	
+
 			assertExpectedExistInProposals(proposals, expected);
 		} finally {
 			fJProject1.setOptions(saveOptions);
 		}
 	}
+	@Test
 	public void testGenerateForQualified() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9982,12 +10408,13 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 
-			
+
 			assertProposalPreviewEquals(buf.toString(), "Create 'for' loop using Iterator", proposals);
 		} finally {
 			fJProject1.setOptions(saveOptions);
 		}
 	}
+	@Test
 	public void testGenerateForThis() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -10041,13 +10468,14 @@ public class AssistQuickFixTest extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 
-			
+
 			assertProposalPreviewEquals(buf.toString(), "Create 'for' loop using Iterator", proposals);
 		} finally {
 			fJProject1.setOptions(saveOptions);
 		}
 	}
 
+	@Test
 	public void testConvertQualifiedNameToStaticImport() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -10105,6 +10533,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, "Convert to static import (replace all occurrences)");
 	}
 
+	@Test
 	public void testConvertMethodInvocationWithTypeToStaticImport() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -10169,6 +10598,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, "Convert to static import (replace all occurrences)");
 	}
 
+	@Test
 	public void testConvertConstantToStaticImport() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -10218,6 +10648,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, "Convert to static import (replace all occurrences)");
 	}
 
+	@Test
 	public void testConvertToStaticImportDoesNotAddImportWhenInScope() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -10255,6 +10686,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, "Convert to static import (replace all occurrences)");
 	}
 
+	@Test
 	public void testConvertToStaticImportDoesRemoveUnusedImport() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -10313,6 +10745,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, "Convert to static import (replace all occurrences)");
 	}
 
+	@Test
 	public void testConvertToStaticImportDoesntRemoveImportWhenReferencedByDifferentReferenceType() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -10413,6 +10846,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, "Convert to static import (replace all occurrences)");
 	}
 
+	@Test
 	public void testConvertToStaticImportDoesntRemoveImportWhenReferencedBySameReferenceType() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -10532,6 +10966,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, "Convert to static import (replace all occurrences)");
 	}
 
+	@Test
 	public void testCanConvertToStaticImportWhenClassContainsMethodInvocationWithoutExpression() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -10600,6 +11035,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, "Convert to static import (replace all occurrences)");
 	}
 
+	@Test
 	public void testDoesntRemoveImportWithReferenceFromClassInstanceCreation() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -10666,6 +11102,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalPreviewEquals(expectation.toString(), "Convert to static import (replace all occurrences)", proposals);
 	}
 
+	@Test
 	public void testDoesntOfferConvertToStaticImportForImportDeclarations() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -10711,6 +11148,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, "Convert to static import (replace all occurrences)");
 	}
 
+	@Test
 	public void testCreateJUnitTestCase() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -10728,6 +11166,7 @@ public class AssistQuickFixTest extends QuickFixTest {
 		assertProposalExists(proposals, Messages.format(CorrectionMessages.QuickAssistProcessor_create_new_junit_test_case, "E.java"));
 	}
 
+	@Test
 	public void testAssignParameterInnerStatic() throws Exception {
 		// assign parameter to field inside inner static nested class, https://bugs.eclipse.org/bugs/show_bug.cgi?id=539476
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);

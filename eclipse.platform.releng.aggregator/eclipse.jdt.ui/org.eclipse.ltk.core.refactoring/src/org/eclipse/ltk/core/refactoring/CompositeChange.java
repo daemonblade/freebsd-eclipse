@@ -338,7 +338,7 @@ public class CompositeChange extends Change {
 				undos.add(partUndoChange);
 			}
 		}
-		if (undos.size() == 0) {
+		if (undos.isEmpty()) {
 			fUndoUntilException= null;
 			return;
 		}
@@ -435,7 +435,7 @@ public class CompositeChange extends Change {
 	 * <p>
 	 * This method is not intended to be overridden or extended.
 	 * </p>
-	 * 
+	 *
 	 * @return the undo object containing all undo changes of those children that got successfully
 	 *         executed while performing this change, or <code>null</code> if all changes were
 	 *         executed successfully or if there's nothing to undo.
@@ -462,7 +462,7 @@ public class CompositeChange extends Change {
 
 	@Override
 	public Object[] getAffectedObjects() {
-		if (fChanges.size() == 0)
+		if (fChanges.isEmpty())
 			return new Object[0];
 		List<Object> result= new ArrayList<>();
 		for (Change change : fChanges) {

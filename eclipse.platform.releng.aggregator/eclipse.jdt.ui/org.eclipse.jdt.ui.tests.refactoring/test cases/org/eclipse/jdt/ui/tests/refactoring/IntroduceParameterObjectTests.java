@@ -187,9 +187,7 @@ public class IntroduceParameterObjectTests extends RefactoringTest {
 		assertNotNull(type);
 		assertTrue(type.exists());
 		IMethod fooMethod= null;
-		IMethod[] methods= type.getMethods();
-		for (int i= 0; i < methods.length; i++) {
-			IMethod method= methods[i];
+		for (IMethod method : type.getMethods()) {
 			if ("foo".equals(method.getElementName())) {
 				fooMethod= method;
 			}
@@ -312,13 +310,13 @@ public class IntroduceParameterObjectTests extends RefactoringTest {
 		fDescriptor.setParameters(parameters);
 		runRefactoring(false, true);
 	}
-	
+
 	public void testSubclassInCU() throws Exception {
 		// test for https://bugs.eclipse.org/bugs/show_bug.cgi?id=259095
 		fDescriptor.setMethod(setupMethod());
 		fDescriptor.setTopLevel(true);
 		fDescriptor.setClassName("FooParameter");
-		
+
 		runRefactoring(false, true);
 	}
 
@@ -414,14 +412,14 @@ public class IntroduceParameterObjectTests extends RefactoringTest {
 		fDescriptor.setParameters(parameters);
 		runRefactoring(false, true);
 	}
-	
+
 	public void testMethodTypeParamArgs() throws Exception {
 		fDescriptor.setMethod(setupMethod());
 		fDescriptor.setTopLevel(false);
 		fDescriptor.setClassName("FooParameter");
 		runRefactoring(false, true);
 	}
-	
+
 	public void testMethodTypeParamArgsTopLevel() throws Exception {
 		fDescriptor.setMethod(setupMethod());
 		fDescriptor.setTopLevel(true);

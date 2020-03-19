@@ -43,7 +43,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 /**
  * Create an ANT script for a runnable JAR wit libraries in a sub-folder. The script is generated
  * based on the classpath of the selected launch-configuration.
- * 
+ *
  * @since 3.5
  */
 public class UnpackJarAntExporter extends FatJarAntExporter {
@@ -54,9 +54,7 @@ public class UnpackJarAntExporter extends FatJarAntExporter {
 
 	@Override
 	protected void buildANTScript(IPath antScriptLocation, String projectName, IPath absJarfile, String mainClass, SourceInfo[] sourceInfos) throws IOException {
-		OutputStream outputStream= null;
-		try {
-			outputStream= new FileOutputStream(antScriptLocation.toFile());
+		try (OutputStream outputStream = new FileOutputStream(antScriptLocation.toFile())) {
 			String absJarname= absJarfile.toString();
 			String subfolder= absJarfile.removeFileExtension().lastSegment() + "_lib"; //$NON-NLS-1$
 			String absSubfolder= absJarfile.removeLastSegments(1).append(subfolder).toString();
@@ -159,10 +157,6 @@ public class UnpackJarAntExporter extends FatJarAntExporter {
 				transformer.transform(source, result);
 			} catch (TransformerException e) {
 				throw new IOException(FatJarPackagerMessages.FatJarPackageAntScript_error_couldNotTransformToXML);
-			}
-		} finally {
-			if (outputStream != null) {
-				outputStream.close();
 			}
 		}
 	}

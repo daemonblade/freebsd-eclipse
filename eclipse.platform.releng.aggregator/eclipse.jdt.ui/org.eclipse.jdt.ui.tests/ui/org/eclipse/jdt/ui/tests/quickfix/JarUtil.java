@@ -169,7 +169,7 @@ private static class Requestor implements ICompilerRequestor {
 	public String outputPath;
 	public String problemLog = "";
 	private ClassFileFilter classFileFilter= null;
-	
+
 	public Requestor(ClassFileFilter classFileFilter) {
 		if (classFileFilter != null) {
 			this.classFileFilter = classFileFilter;
@@ -223,7 +223,7 @@ public static void compile(String[] pathsAndContents, Map<String, String> option
         } else {
         	classpath = classLibs;
         }
-        
+
         INameEnvironment nameEnvironment = new FileSystem(classpath, new String[] {}, null);
         IErrorHandlingPolicy errorHandlingPolicy =
             new IErrorHandlingPolicy() {
@@ -258,11 +258,8 @@ public static void compile(String[] pathsAndContents, Map<String, String> option
 	        System.err.print(requestor.problemLog); // problem log empty if no problems
 }
 public static void createFile(String path, String contents) throws IOException {
-    FileOutputStream output = new FileOutputStream(path);
-    try {
+    try (FileOutputStream output = new FileOutputStream(path)) {
         output.write(contents.getBytes());
-    } finally {
-        output.close();
     }
 }
 public static void createJar(String[] pathsAndContents, String[] extraPathsAndContents, Map<String, String> options, ClassFileFilter classFileFilter, String[] classpath, String jarPath) throws IOException {

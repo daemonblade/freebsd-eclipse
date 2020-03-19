@@ -88,7 +88,7 @@ public class ModuleAddExportsBlock {
 	private Control fSWTWidget;
 
 	private final ModuleAddExpose fInitialValue;
-	
+
 	private IJavaElement[] fSourceJavaElements;
 	private Collection<String> fPossibleTargetModules;
 
@@ -121,7 +121,7 @@ public class ModuleAddExportsBlock {
 		fTargetModules= new StringDialogField();
 		fTargetModules.setDialogFieldListener(adapter);
 		fTargetModules.setLabelText(NewWizardMessages.AddExportsBlock_targetModules_label);
-		
+
 		fExposeKindButtons= new SelectionButtonDialogFieldGroup(SWT.RADIO, EXPORTS_OPENS_LABELS, 2);
 		fExposeKindButtons.setSelection(IDX_EXPORTS, initialValue instanceof ModuleAddExport);
 		fExposeKindButtons.setSelection(IDX_OPENS, initialValue instanceof ModuleAddOpens);
@@ -145,9 +145,9 @@ public class ModuleAddExportsBlock {
 	private Set<String> moduleNames() {
 		Set<String> moduleNames= new HashSet<>();
 		if (fSourceJavaElements != null) {
-			for (int i= 0; i < fSourceJavaElements.length; i++) {
-				if (fSourceJavaElements[i] instanceof IPackageFragmentRoot) {
-					IModuleDescription module= ((IPackageFragmentRoot) fSourceJavaElements[i]).getModuleDescription();
+			for (IJavaElement element : fSourceJavaElements) {
+				if (element instanceof IPackageFragmentRoot) {
+					IModuleDescription module= ((IPackageFragmentRoot) element).getModuleDescription();
 					if (module != null) {
 						moduleNames.add(module.getElementName());
 					}
@@ -201,7 +201,7 @@ public class ModuleAddExportsBlock {
 
 	/**
 	 * Gets the add-export value entered by the user
-	 * @return the add-export value, or an empty string if any of the fields was left empty. 
+	 * @return the add-export value, or an empty string if any of the fields was left empty.
 	 */
 	public String getValue() {
 		String sourceModule= getSourceModuleText();
@@ -286,7 +286,7 @@ public class ModuleAddExportsBlock {
 		}
 
 		DialogField.createEmptySpace(composite, 2);
-		
+
 		fExposeKindButtons.doFillIntoGrid(composite, 2);
 
 		Dialog.applyDialogFont(composite);
@@ -323,9 +323,10 @@ public class ModuleAddExportsBlock {
 					assert fSourceJavaElements.length == 1;
 					IPackageFragmentRoot[] packageFragmentRoots= ((IJavaProject) fSourceJavaElements[0]).getPackageFragmentRoots();
 					int count= 0;
-					for (int i= 0; i < packageFragmentRoots.length; i++) {
-						if (packageFragmentRoots[i].getKind() == IPackageFragmentRoot.K_SOURCE) // only the project's own sources
-							packageFragmentRoots[count++]= packageFragmentRoots[i];
+					for (IPackageFragmentRoot packageFragmentRoot : packageFragmentRoots) {
+						if (packageFragmentRoot.getKind() == IPackageFragmentRoot.K_SOURCE) {
+							packageFragmentRoots[count++]= packageFragmentRoot;
+						}
 					}
 					if (count < packageFragmentRoots.length)
 						packageFragmentRoots= Arrays.copyOf(packageFragmentRoots, count);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2019 IBM Corporation and others.
+ * Copyright (c) 2013, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -17,6 +17,12 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
 
@@ -39,39 +45,26 @@ import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
-import org.eclipse.jdt.ui.tests.core.Java18ProjectTestSetup;
+import org.eclipse.jdt.ui.tests.core.rules.Java18ProjectTestSetup;
+import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
 import org.eclipse.jdt.ui.text.java.IJavaCompletionProposal;
 import org.eclipse.jdt.ui.text.java.correction.CUCorrectionProposal;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.text.correction.AssistContext;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
-
+@RunWith(JUnit4.class)
 public class QuickFixTest18 extends QuickFixTest {
 
-	private static final Class<QuickFixTest18> THIS= QuickFixTest18.class;
+	@Rule
+    public ProjectTestSetup projectsetup = new Java18ProjectTestSetup();
 
 	private IJavaProject fJProject1;
 
 	private IPackageFragmentRoot fSourceFolder;
 
-	public QuickFixTest18(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		return new Java18ProjectTestSetup(new TestSuite(THIS));
-	}
-
-	public static Test setUpTest(Test test) {
-		return new Java18ProjectTestSetup(test);
-	}
-
-	@Override
-	protected void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		Hashtable<String, String> options= TestOptions.getDefaultOptions();
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.SPACE);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, "4");
@@ -92,11 +85,12 @@ public class QuickFixTest18 extends QuickFixTest {
 	}
 
 
-	@Override
-	protected void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		JavaProjectHelper.clear(fJProject1, Java18ProjectTestSetup.getDefaultClasspath());
 	}
 
+	@Test
 	public void testUnimplementedMethods1() throws Exception {
 		IPackageFragment pack2= fSourceFolder.createPackageFragment("test2", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -154,6 +148,7 @@ public class QuickFixTest18 extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testUnimplementedMethods2() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -205,6 +200,7 @@ public class QuickFixTest18 extends QuickFixTest {
 
 
 	// bug 420116 : test for annotated varargs and return type
+	@Test
 	public void testUnimplementedMethods3() throws Exception {
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java18ProjectTestSetup.getJdtAnnotations20Path()));
 
@@ -291,6 +287,7 @@ public class QuickFixTest18 extends QuickFixTest {
 	}
 
 	// bug 420116 : test for annotated varargs and return type
+	@Test
 	public void testUnimplementedMethods4() throws Exception {
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java18ProjectTestSetup.getJdtAnnotations20Path()));
 
@@ -364,6 +361,7 @@ public class QuickFixTest18 extends QuickFixTest {
 	}
 
 	// bug 420116 : test for user defined annotation in varargs
+	@Test
 	public void testUnimplementedMethods5() throws Exception {
 		IPackageFragment pack2= fSourceFolder.createPackageFragment("test2", false, null);
 
@@ -435,6 +433,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testUnimplementedMethods6() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -500,6 +499,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testLambdaReturnType1() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -548,6 +548,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { getPreviewContent(proposal) }, new String[] { buf.toString() });
 	}
 
+	@Test
 	public void testLambdaReturnType2() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -594,6 +595,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { getPreviewContent(proposal) }, new String[] { buf.toString() });
 	}
 
+	@Test
 	public void testLambdaReturnType3() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -643,6 +645,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { getPreviewContent(proposal) }, new String[] { buf.toString() });
 	}
 
+	@Test
 	public void testLambdaReturnType4() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -688,6 +691,7 @@ public class QuickFixTest18 extends QuickFixTest {
 	}
 
 	// bug 424172
+	@Test
 	public void testImportTypeInMethodReference() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test.one", false, null);
@@ -743,6 +747,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { getPreviewContent(proposal) }, new String[] { buf.toString() });
 	}
 
+	@Test
 	public void testLambdaReturnType5() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -791,6 +796,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { getPreviewContent(proposal) }, new String[] { buf.toString() });
 	}
 
+	@Test
 	public void testChangeModifierToStatic1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -912,6 +918,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { getPreviewContent(proposal) }, new String[] { buf.toString() });
 	}
 
+	@Test
 	public void testChangeModifierToStatic2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -942,6 +949,7 @@ public class QuickFixTest18 extends QuickFixTest {
 	}
 
 	// bug 410170
+	@Test
 	public void testInvalidInterfaceMethodModifier1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -972,6 +980,7 @@ public class QuickFixTest18 extends QuickFixTest {
 	}
 
 	//  bug 410170
+	@Test
 	public void testInvalidInterfaceMethodModifier2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1002,6 +1011,7 @@ public class QuickFixTest18 extends QuickFixTest {
 	}
 
 	// bug 414084
+	@Test
 	public void testAbstractInterfaceMethodWithBody1() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -1059,6 +1069,7 @@ public class QuickFixTest18 extends QuickFixTest {
 	}
 
 	// bug 414084
+	@Test
 	public void testAbstractInterfaceMethodWithBody2() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -1115,6 +1126,7 @@ public class QuickFixTest18 extends QuickFixTest {
 	}
 
 	// bug 434173
+	@Test
 	public void testAbstractInterfaceMethodWithBody3() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -1150,6 +1162,7 @@ public class QuickFixTest18 extends QuickFixTest {
 	}
 
 	// bug 424616
+	@Test
 	public void testInferredExceptionType() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -1207,6 +1220,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { getPreviewContent(proposal) }, new String[] { buf.toString() });
 	}
 
+	@Test
 	public void testAddNonNull1() throws Exception {
 		Hashtable<String, String> options= JavaCore.getOptions();
 		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
@@ -1253,6 +1267,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testAddNonNull2() throws Exception {
 		Hashtable<String, String> options= JavaCore.getOptions();
 		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
@@ -1301,6 +1316,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 	// remove redundant NonNullByDefault _caused_ by NonNullByDefault on field
+	@Test
 	public void testRemoveRedundantNonNullByDefault1() throws Exception {
 		Hashtable<String, String> options= JavaCore.getOptions();
 		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
@@ -1350,6 +1366,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 	// remove redundant NonNullByDefault _caused_ by NonNullByDefault on local
+	@Test
 	public void testRemoveRedundantNonNullByDefault2() throws Exception {
 		Hashtable<String, String> options= JavaCore.getOptions();
 		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
@@ -1403,6 +1420,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 	// remove redundant NonNullByDefault on field
+	@Test
 	public void testRemoveRedundantNonNullByDefault3() throws Exception {
 		Hashtable<String, String> options= JavaCore.getOptions();
 		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
@@ -1444,6 +1462,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 	// remove redundant NonNullByDefault on local
+	@Test
 	public void testRemoveRedundantNonNullByDefault4() throws Exception {
 		Hashtable<String, String> options= JavaCore.getOptions();
 		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
@@ -1497,8 +1516,9 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("}\n");
 		assertEqualString(preview, buf.toString());
 	}
-	
+
 	// remove redundant @NonNull on field type
+	@Test
 	public void testRemoveRedundantNonNull() throws Exception {
 		Hashtable<String, String> options= JavaCore.getOptions();
 		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
@@ -1533,12 +1553,13 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualString(preview, buf.toString());
 	}
 
+	@Test
 	public void testBug514580_avoidRedundantNonNullInChangeMethodSignatureFix() throws Exception {
 		Hashtable<String, String> options= JavaCore.getOptions();
 		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java18ProjectTestSetup.getJdtAnnotations20Path()));
-		
+
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 
 		StringBuffer buf;
@@ -1602,7 +1623,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("		i2.h(n1, n2);\n");
 		buf.append("	}\n");
 		buf.append("}");
-		assertProposalPreviewEquals(buf.toString(), "Change method 'g(Number, Number)' to 'g(Boolean, Boolean)'", proposals1);		
+		assertProposalPreviewEquals(buf.toString(), "Change method 'g(Number, Number)' to 'g(Boolean, Boolean)'", proposals1);
 
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
@@ -1627,14 +1648,15 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("		i2.h(n1, n2);\n");
 		buf.append("	}\n");
 		buf.append("}");
-		assertProposalPreviewEquals(buf.toString(), "Change method 'h(Number, Number)' to 'h(Boolean, Boolean)'", proposals2);		
+		assertProposalPreviewEquals(buf.toString(), "Change method 'h(Number, Number)' to 'h(Boolean, Boolean)'", proposals2);
 	}
+	@Test
 	public void testBug514580_avoidRedundantNonNullInTypeChange_field() throws Exception {
 		Hashtable<String, String> options= JavaCore.getOptions();
 		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java18ProjectTestSetup.getJdtAnnotations20Path()));
-		
+
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 
 		StringBuffer buf;
@@ -1724,7 +1746,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("\n");
 		buf.append("	}\n");
 		buf.append("}");
-		assertProposalPreviewEquals(buf.toString(), "Change type of 'f1' to 'String'", proposals1);		
+		assertProposalPreviewEquals(buf.toString(), "Change type of 'f1' to 'String'", proposals1);
 
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
@@ -1799,7 +1821,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("\n");
 		buf.append("	}\n");
 		buf.append("}");
-		assertProposalPreviewEquals(buf.toString(), "Change return type of 'g(..)' to 'Map<? extends Number, Integer>[]'", proposals1);		
+		assertProposalPreviewEquals(buf.toString(), "Change return type of 'g(..)' to 'Map<? extends Number, Integer>[]'", proposals1);
 
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
@@ -1836,14 +1858,15 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("\n");
 		buf.append("	}\n");
 		buf.append("}");
-		assertProposalPreviewEquals(buf.toString(), "Change return type of 'g(..)' to 'Map<? extends Number, Integer>[]'", proposals2);		
+		assertProposalPreviewEquals(buf.toString(), "Change return type of 'g(..)' to 'Map<? extends Number, Integer>[]'", proposals2);
 	}
+	@Test
 	public void testBug514580_avoidRedundantNonNullInTypeChange_local() throws Exception {
 		Hashtable<String, String> options= JavaCore.getOptions();
 		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java18ProjectTestSetup.getJdtAnnotations20Path()));
-		
+
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 
 		StringBuffer buf;
@@ -1931,7 +1954,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("	}\n");
 		buf.append("}\n");
 		buf.append("");
-		assertProposalPreviewEquals(buf.toString(), "Change type of 'l1' to 'String'", proposals1);		
+		assertProposalPreviewEquals(buf.toString(), "Change type of 'l1' to 'String'", proposals1);
 
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
@@ -1968,7 +1991,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("	}\n");
 		buf.append("}\n");
 		buf.append("");
-		assertProposalPreviewEquals(buf.toString(), "Change type of 'l2' to 'String'", proposals2);		
+		assertProposalPreviewEquals(buf.toString(), "Change type of 'l2' to 'String'", proposals2);
 
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
@@ -2004,7 +2027,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("	}\n");
 		buf.append("}\n");
 		buf.append("");
-		assertProposalPreviewEquals(buf.toString(), "Change return type of 'h(..)' to 'Map<? extends Number, Integer>[]'", proposals1);		
+		assertProposalPreviewEquals(buf.toString(), "Change return type of 'h(..)' to 'Map<? extends Number, Integer>[]'", proposals1);
 
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
@@ -2040,10 +2063,11 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("	}\n");
 		buf.append("}\n");
 		buf.append("");
-		assertProposalPreviewEquals(buf.toString(), "Change return type of 'h(..)' to 'Map<? extends Number, Integer>[]'", proposals2);		
+		assertProposalPreviewEquals(buf.toString(), "Change return type of 'h(..)' to 'Map<? extends Number, Integer>[]'", proposals2);
 	}
 
 	// bug 420116 : create parameter quickfix should be offered
+	@Test
 	public void testBug496103_createParam() throws Exception {
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java18ProjectTestSetup.getJdtAnnotations20Path()));
 

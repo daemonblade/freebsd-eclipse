@@ -136,7 +136,7 @@ class NLSSearchResultRequestor extends SearchRequestor {
 		if (javaElement instanceof ISourceReference) {
 			String source= ((ISourceReference) javaElement).getSource();
 			if (source != null) {
-				if (source.indexOf("NLS.initializeMessages") != -1) //$NON-NLS-1$
+				if (source.contains("NLS.initializeMessages")) //$NON-NLS-1$
 					return;
 			}
 		}
@@ -230,7 +230,7 @@ class NLSSearchResultRequestor extends SearchRequestor {
 	 * Finds the key defined by the given match. The assumption is that the key is the only argument
 	 * and it is a string literal i.e. quoted ("...") or a string constant i.e. 'static final
 	 * String' defined in the same class.
-	 * 
+	 *
 	 * @param keyPositionResult reference parameter: will be filled with the position of the found
 	 *            key
 	 * @param enclosingElement enclosing java element
@@ -289,7 +289,7 @@ class NLSSearchResultRequestor extends SearchRequestor {
 				}
 				if (token != ITerminalSymbols.TokenNameRPAREN)
 					return null;
-				
+
 				if (nextToken == ITerminalSymbols.TokenNameStringLiteral) {
 					keyPositionResult.setOffset(tokenStart + 1);
 					keyPositionResult.setLength(tokenEnd - tokenStart - 1);
@@ -298,13 +298,13 @@ class NLSSearchResultRequestor extends SearchRequestor {
 					keyPositionResult.setOffset(tokenStart);
 					keyPositionResult.setLength(tokenEnd - tokenStart + 1);
 					IType parentClass= (IType)enclosingElement.getAncestor(IJavaElement.TYPE);
-					IField[] fields= parentClass.getFields();
 					String identifier= source.substring(tokenStart, tokenEnd + 1);
-					for (int i= 0; i < fields.length; i++) {
-						if (fields[i].getElementName().equals(identifier)) {
-							if (!Signature.getSignatureSimpleName(fields[i].getTypeSignature()).equals("String")) //$NON-NLS-1$
+					for (IField field : parentClass.getFields()) {
+						if (field.getElementName().equals(identifier)) {
+							if (!Signature.getSignatureSimpleName(field.getTypeSignature()).equals("String")) { //$NON-NLS-1$
 								return null;
-							Object obj= fields[i].getConstant();
+							}
+							Object obj= field.getConstant();
 							return obj instanceof String ? ((String)obj).substring(1, ((String)obj).length() - 1) : NO_KEY;
 						}
 					}
@@ -435,7 +435,7 @@ class NLSSearchResultRequestor extends SearchRequestor {
 	}
 
 	private void reportDuplicateKeys(Set<Object> duplicateKeys) {
-		if (duplicateKeys.size() == 0)
+		if (duplicateKeys.isEmpty())
 			return;
 
 		FileEntry groupElement= new FileEntry(fPropertiesFile, NLSSearchMessages.NLSSearchResultCollector_duplicateKeys);

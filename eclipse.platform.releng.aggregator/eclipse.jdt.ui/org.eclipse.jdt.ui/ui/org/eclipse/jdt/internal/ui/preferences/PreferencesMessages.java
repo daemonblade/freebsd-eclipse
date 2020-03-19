@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -65,6 +65,8 @@ public final class PreferencesMessages extends NLS {
 	public static String CodeAssistAdvancedConfigurationBlock_parameterNameFromAttachedJavadoc_timeout_emptyInput;
 	public static String CodeAssistAdvancedConfigurationBlock_parameterNameFromAttachedJavadoc_timeout_invalidInput;
 	public static String CodeAssistAdvancedConfigurationBlock_parameterNameFromAttachedJavadoc_timeout_invalidRange;
+	public static String CodeAssistAdvancedConfigurationBlock_nonUIThread;
+	public static String CodeAssistAdvancedConfigurationBlock_nonUIThread_computersRequiringUIThread;
 	public static String ImportOrganizePreferencePage_title;
 	public static String ImportOrganizeConfigurationBlock_order_label;
 	public static String ImportOrganizeConfigurationBlock_other_static;
@@ -827,6 +829,7 @@ public final class PreferencesMessages extends NLS {
 	public static String JavaBasePreferencePage_do_not_hide_dialog_message;
 	public static String CodeAssistConfigurationBlock_matchCamelCase_label;
 	public static String CodeAssistConfigurationBlock_matchSubstring_label;
+	public static String CodeAssistConfigurationBlock_matchSubword_label;
 	public static String ComplianceConfigurationBlock_version16;
 	public static String ComplianceConfigurationBlock_version17;
 	public static String ComplianceConfigurationBlock_version18;
@@ -845,6 +848,7 @@ public final class PreferencesMessages extends NLS {
 	public static String ProblemSeveritiesConfigurationBlock_pb_null_reference;
 	public static String ProblemSeveritiesConfigurationBlock_pb_null_spec_violation;
 	public static String ProblemSeveritiesConfigurationBlock_pb_null_unchecked_conversion;
+	public static String ProblemSeveritiesConfigurationBlock_pb_null_annotated_type_argument_to_unannotated;
 	public static String ProblemSeveritiesConfigurationBlock_pb_pessimistic_analysis_for_free_type_variables;
 	public static String ProblemSeveritiesConfigurationBlock_pb_nonnull_typevar_maybe_legacy;
 	public static String ProblemSeveritiesConfigurationBlock_pb_potential_null_reference;

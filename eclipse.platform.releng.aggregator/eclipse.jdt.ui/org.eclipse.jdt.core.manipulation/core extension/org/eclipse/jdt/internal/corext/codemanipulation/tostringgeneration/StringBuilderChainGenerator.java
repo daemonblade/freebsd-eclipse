@@ -33,7 +33,7 @@ import org.eclipse.jdt.core.dom.InfixExpression.Operator;
  * </p>
  * <p>
  * Generated methods look like this:
- * 
+ *
  * <pre>
  * public String toString() {
  * 	StringBuilder builder= new StringBuilder();
@@ -41,9 +41,9 @@ import org.eclipse.jdt.core.dom.InfixExpression.Operator;
  * 	return builder.toString();
  * }
  * </pre>
- * 
+ *
  * </p>
- * 
+ *
  * @since 3.5
  */
 public class StringBuilderChainGenerator extends StringBuilderGenerator {
@@ -101,9 +101,8 @@ public class StringBuilderChainGenerator extends StringBuilderGenerator {
 		ifStatement.setExpression(createInfixExpression(createMemberAccessExpression(member, true, true), Operator.NOT_EQUALS, fAst.newNullLiteral()));
 		Block thenBlock= fAst.newBlock();
 		flushTemporaryExpression();
-		String[] arrayString= getContext().getTemplateParser().getBody();
-		for (int i= 0; i < arrayString.length; i++) {
-			addElement(processElement(arrayString[i], member), thenBlock);
+		for (String s : getContext().getTemplateParser().getBody()) {
+			addElement(processElement(s, member), thenBlock);
 		}
 		if (addSeparator)
 			addElement(getContext().getTemplateParser().getSeparator(), thenBlock);

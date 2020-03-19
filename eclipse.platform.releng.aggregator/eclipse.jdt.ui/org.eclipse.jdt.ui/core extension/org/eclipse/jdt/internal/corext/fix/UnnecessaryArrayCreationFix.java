@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.IStatus;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayCreation;
+import org.eclipse.jdt.core.dom.ArrayInitializer;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
@@ -51,7 +52,10 @@ public class UnnecessaryArrayCreationFix extends CompilationUnitRewriteOperation
 				if (parent instanceof MethodInvocation) {
 					MethodInvocation m= (MethodInvocation)parent;
 					List arguments= m.arguments();
-					if (arguments.size() > 0 && arguments.get(arguments.size() - 1) == node) {
+					ArrayInitializer initializer= node.getInitializer();
+					if (arguments.size() > 0 && arguments.get(arguments.size() - 1) == node
+							&& node.getType().getDimensions() == 1
+							&& initializer != null && initializer.expressions() != null) {
 						IMethodBinding binding= m.resolveMethodBinding();
 						if (binding != null && binding.isVarargs() && binding.getParameterTypes().length == arguments.size()) {
 							fResult.add(new UnwrapNewArrayOperation(node, m));
@@ -60,7 +64,10 @@ public class UnnecessaryArrayCreationFix extends CompilationUnitRewriteOperation
 				} else if (parent instanceof SuperMethodInvocation) {
 					SuperMethodInvocation m= (SuperMethodInvocation)parent;
 					List arguments= m.arguments();
-					if (arguments.size() > 0 && arguments.get(arguments.size() - 1) == node) {
+					ArrayInitializer initializer= node.getInitializer();
+					if (arguments.size() > 0 && arguments.get(arguments.size() - 1) == node
+							&& node.getType().getDimensions() == 1
+							&& initializer != null && initializer.expressions() != null) {
 						IMethodBinding binding= m.resolveMethodBinding();
 						if (binding != null && binding.isVarargs() && binding.getParameterTypes().length == arguments.size()) {
 							fResult.add(new UnwrapNewArrayOperation(node, m));

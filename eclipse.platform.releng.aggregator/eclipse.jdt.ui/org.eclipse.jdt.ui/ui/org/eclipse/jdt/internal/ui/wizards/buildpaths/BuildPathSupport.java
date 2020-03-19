@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -15,7 +15,6 @@ package org.eclipse.jdt.internal.ui.wizards.buildpaths;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -58,7 +57,7 @@ public class BuildPathSupport {
 
 	public static final String JRE_PREF_PAGE_ID= "org.eclipse.jdt.debug.ui.preferences.VMPreferencePage"; //$NON-NLS-1$
 	public static final String EE_PREF_PAGE_ID= "org.eclipse.jdt.debug.ui.jreProfiles"; //$NON-NLS-1$
-	
+
 	/* see also ComplianceConfigurationBlock#PREFS_COMPLIANCE */
 	private static final String[] PREFS_COMPLIANCE= new String[] {
 			JavaCore.COMPILER_PB_ASSERT_IDENTIFIER, JavaCore.COMPILER_PB_ENUM_IDENTIFIER,
@@ -101,13 +100,9 @@ public class BuildPathSupport {
 		IJavaProject currProject= elem.getJavaProject(); // can be null
 		try {
 			IJavaModel jmodel= JavaCore.create(ResourcesPlugin.getWorkspace().getRoot());
-			IJavaProject[] jprojects= jmodel.getJavaProjects();
-			for (int i= 0; i < jprojects.length; i++) {
-				IJavaProject curr= jprojects[i];
+			for (IJavaProject curr : jmodel.getJavaProjects()) {
 				if (!curr.equals(currProject)) {
-					IClasspathEntry[] entries= curr.getRawClasspath();
-					for (int k= 0; k < entries.length; k++) {
-						IClasspathEntry entry= entries[k];
+					for (IClasspathEntry entry : curr.getRawClasspath()) {
 						if (entry.getEntryKind() == elem.getEntryKind()
 							&& entry.getPath().equals(elem.getPath())) {
 							IPath attachPath= entry.getSourceAttachmentPath();
@@ -137,17 +132,11 @@ public class BuildPathSupport {
 		try {
 			// try if the jar itself contains the source
 			IJavaModel jmodel= JavaCore.create(ResourcesPlugin.getWorkspace().getRoot());
-			IJavaProject[] jprojects= jmodel.getJavaProjects();
-			for (int i= 0; i < jprojects.length; i++) {
-				IJavaProject curr= jprojects[i];
+			for (IJavaProject curr : jmodel.getJavaProjects()) {
 				if (!curr.equals(currProject)) {
-					IClasspathEntry[] entries= curr.getRawClasspath();
-					for (int k= 0; k < entries.length; k++) {
-						IClasspathEntry entry= entries[k];
+					for (IClasspathEntry entry : curr.getRawClasspath()) {
 						if (entry.getEntryKind() == elem.getEntryKind() && entry.getPath().equals(elem.getPath())) {
-							IClasspathAttribute[] attributes= entry.getExtraAttributes();
-							for (int n= 0; n < attributes.length; n++) {
-								IClasspathAttribute attrib= attributes[n];
+							for (IClasspathAttribute attrib : entry.getExtraAttributes()) {
 								if (IClasspathAttribute.JAVADOC_LOCATION_ATTRIBUTE_NAME.equals(attrib.getName())) {
 									return attrib.getValue();
 								}
@@ -239,8 +228,7 @@ public class BuildPathSupport {
 		}
 		CPListElement currElem= CPListElement.createFromExisting(currEntry, jproject);
 		CPListElement newElem= CPListElement.createFromExisting(updatedEntry, jproject);
-		for (int i= 0; i < updatedAttributes.length; i++) {
-			String attrib= updatedAttributes[i];
+		for (String attrib : updatedAttributes) {
 			currElem.setAttribute(attrib, newElem.getAttribute(attrib));
 		}
 		return currElem.getClasspathEntry();
@@ -336,25 +324,24 @@ public class BuildPathSupport {
 			newReferencedEntries.add(newReferencedEntry);
 		}
 		IClasspathEntry[] newReferencedClasspath= newReferencedEntries.toArray(new IClasspathEntry[newReferencedEntries.size()]);
-		
+
 		jproject.setRawClasspath(jproject.getRawClasspath(), newReferencedClasspath, jproject.getOutputLocation(), monitor);
 	}
-	
+
 	/**
 	 * Sets the default compiler compliance options iff <code>modifiedClassPathEntries</code>
 	 * contains a classpath container entry that is modified or new and that points to an execution
 	 * environment. Does nothing if the EE or the options could not be resolved.
-	 * 
+	 *
 	 * @param javaProject the Java project
 	 * @param modifiedClassPathEntries a list of {@link CPListElement}
-	 * 
+	 *
 	 * @see #getEEOptions(IExecutionEnvironment)
-	 * 
+	 *
 	 * @since 3.5
 	 */
 	public static void setEEComplianceOptions(IJavaProject javaProject, List<CPListElement> modifiedClassPathEntries) {
-		for (Iterator<CPListElement> iter= modifiedClassPathEntries.iterator(); iter.hasNext();) {
-			CPListElement entry= iter.next();
+		for (CPListElement entry : modifiedClassPathEntries) {
 			if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
 				IPath path= entry.getPath();
 				if (! path.equals(entry.getOrginalPath())) {
@@ -371,13 +358,13 @@ public class BuildPathSupport {
 	/**
 	 * Sets the default compiler compliance options based on the given execution environment.
 	 * Does nothing if the EE or the options could not be resolved.
-	 * 
+	 *
 	 * @param javaProject the Java project
 	 * @param eeID the execution environment ID
 	 * @param newProjectCompliance compliance to set for a new project, can be <code>null</code>
-	 * 
+	 *
 	 * @see #getEEOptions(IExecutionEnvironment)
-	 * 
+	 *
 	 * @since 3.5
 	 */
 	public static void setEEComplianceOptions(IJavaProject javaProject, String eeID, String newProjectCompliance) {
@@ -386,24 +373,23 @@ public class BuildPathSupport {
 			Map<String, String> options= javaProject.getOptions(false);
 			Map<String, String> eeOptions= getEEOptions(ee);
 			if (eeOptions != null) {
-				for (int i= 0; i < PREFS_COMPLIANCE.length; i++) {
-					String option= PREFS_COMPLIANCE[i];
+				for (String option : PREFS_COMPLIANCE) {
 					String val= eeOptions.get(option);
 					if (val != null) {
 						options.put(option, val);
 					}
 				}
-				
+
 				if (newProjectCompliance != null) {
 					JavaModelUtil.setDefaultClassfileOptions(options, newProjectCompliance); // complete compliance options
 				}
-				
+
 				String option= JavaCore.COMPILER_CODEGEN_INLINE_JSR_BYTECODE;
 				String inlineJSR= eeOptions.get(option);
 				if (inlineJSR != null) {
 					options.put(option, inlineJSR);
 				}
-				
+
 				javaProject.setOptions(options);
 			}
 		}
@@ -422,7 +408,7 @@ public class BuildPathSupport {
 	 * <li>{@link JavaCore#COMPILER_PB_ENABLE_PREVIEW_FEATURES} for compliance levels 11 and greater</li>
 	 * <li>{@link JavaCore#COMPILER_PB_REPORT_PREVIEW_FEATURES} for compliance levels 11 and greater</li>
 	 * </ul>
-	 * 
+	 *
 	 * @param ee the EE, can be <code>null</code>
 	 * @return the options, or <code>null</code> if none
 	 * @since 3.5
@@ -433,11 +419,11 @@ public class BuildPathSupport {
 		Map<String, String> eeOptions= ee.getComplianceOptions();
 		if (eeOptions == null)
 			return null;
-		
+
 		Object complianceOption= eeOptions.get(JavaCore.COMPILER_COMPLIANCE);
 		if (!(complianceOption instanceof String))
 			return null;
-	
+
 		// eeOptions can miss some options, make sure they are complete:
 		HashMap<String, String> options= new HashMap<>();
 		JavaModelUtil.setComplianceOptions(options, (String)complianceOption);

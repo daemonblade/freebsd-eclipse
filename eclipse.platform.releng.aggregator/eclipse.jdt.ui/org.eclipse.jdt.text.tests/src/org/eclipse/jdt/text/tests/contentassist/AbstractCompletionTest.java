@@ -262,7 +262,7 @@ public class AbstractCompletionTest extends TestCase {
 	 * Creates a CU with a class containing <code>before</code>, then runs code assist and applies
 	 * the first proposal whose display name matches <code>selector</code> and asserts that the
 	 * method's body now has the content of <code>expected</code>.
-	 * 
+	 *
 	 * @param before the contents of the class body line before code completion is run
 	 * @param expected the expected contents of the class body
 	 * @param selector the prefix to match a proposal with
@@ -280,7 +280,7 @@ public class AbstractCompletionTest extends TestCase {
 	/**
 	 * Creates a CU with a class containing <code>before</code>, then runs code assist and asserts
 	 * that there is no proposal.
-	 * 
+	 *
 	 * @param before the contents of the class body line before code completion is run
 	 * @param selector the prefix to match a proposal with
 	 * @throws CoreException if asserting the proposal failed
@@ -498,14 +498,13 @@ public class AbstractCompletionTest extends TestCase {
 	}
 
 	private ICompletionProposal findNamedProposal(String prefix, IRegion selection) {
-		ICompletionProposal[] proposals= collectProposals(selection);
-
 		ICompletionProposal found= null;
-		for (int i= 0; i < proposals.length; i++) {
-			String displayString= proposals[i].getDisplayString();
+		for (ICompletionProposal proposal : collectProposals(selection)) {
+			String displayString= proposal.getDisplayString();
 			if (displayString.startsWith(prefix)) {
-				if (found == null || displayString.equals(prefix))
-					found= proposals[i];
+				if (found == null || displayString.equals(prefix)) {
+					found= proposal;
+				}
 			}
 		}
 		return found;
@@ -550,7 +549,7 @@ public class AbstractCompletionTest extends TestCase {
 	 * Invokes {@link Thread#sleep(long)} if {@link #waitBeforeCompleting(boolean)} was set to
 	 * <code>true</code> or camel case completions are enabled. For some reasons, inner types and
 	 * camel case matches don't show up otherwise.
-	 * 
+	 *
 	 * @since 3.2
 	 */
 	private void waitBeforeCoreCompletion() {

@@ -37,12 +37,11 @@ public class VariableDeclarationFix extends CompilationUnitRewriteOperationsFix 
 		if (selectedNodes.length == 1) {
 			selectedNodes[0].accept(visitor);
 		} else {
-			for (int i= 0; i < selectedNodes.length; i++) {
-				ASTNode selectedNode= selectedNodes[i];
+			for (ASTNode selectedNode : selectedNodes) {
 				selectedNode.accept(visitor);
 			}
 		}
-		if (ops.size() == 0)
+		if (ops.isEmpty())
 			return null;
 
 		CompilationUnitRewriteOperationsFixCore.CompilationUnitRewriteOperation[] result= ops.toArray(new CompilationUnitRewriteOperationsFixCore.CompilationUnitRewriteOperation[ops.size()]);

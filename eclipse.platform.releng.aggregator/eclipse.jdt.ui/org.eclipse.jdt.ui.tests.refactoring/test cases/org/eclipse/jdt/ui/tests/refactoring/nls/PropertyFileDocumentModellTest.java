@@ -49,8 +49,7 @@ public class PropertyFileDocumentModellTest extends TestCase {
 	private static void insert(IDocument document, KeyValuePair[] pairs) throws CoreException {
 		PropertyFileDocumentModel model= new PropertyFileDocumentModel(document);
 
-		for (int i= 0; i < pairs.length; i++) {
-			KeyValuePair pair= pairs[i];
+		for (KeyValuePair pair : pairs) {
 			pair.setValue(PropertyFileDocumentModel.escape(pair.getValue(), true) + model.getLineDelimiter());
 			pair.setKey(PropertyFileDocumentModel.escape(pair.getKey(), false));
 		}
@@ -289,13 +288,13 @@ public class PropertyFileDocumentModellTest extends TestCase {
 	public void testRemovingOfKey2() throws Exception {
 		Document props= new Document("org.eclipse.1=value1\n" + " org.eclipse.2           =  value2   \n" + "org.eclipse.3=value3\n");
 		PropertyFileDocumentModel modell= new PropertyFileDocumentModel(props);
-		
+
 		DeleteEdit deleteEdit= modell.remove("org.eclipse.2");
 		deleteEdit.apply(props);
-		
+
 		assertEquals("org.eclipse.1=value1\n" + "org.eclipse.3=value3\n", props.get());
 	}
-	
+
 	public void testRemovingOfLastKey() throws Exception {
 		Document props= new Document("org.eclipse.1=value1\n" + "org.eclipse.2=value2\n" + "org.eclipse.3=value3\n");
 		PropertyFileDocumentModel modell= new PropertyFileDocumentModel(props);

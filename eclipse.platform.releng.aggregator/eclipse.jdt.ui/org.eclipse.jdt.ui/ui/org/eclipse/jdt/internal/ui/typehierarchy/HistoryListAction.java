@@ -110,7 +110,7 @@ public class HistoryListAction extends Action {
 				public Image getImage(Object element) {
 					IJavaElement[] elem= (IJavaElement[])element;
 					return super.getImage(elem[0]);
-					
+
 				}
 			};
 
@@ -182,7 +182,7 @@ public class HistoryListAction extends Action {
 			} else {
 				fResult= selected.get(0);
 			}
-			fHistoryList.enableButton(0, fHistoryList.getSize() > selected.size() && selected.size() != 0);
+			fHistoryList.enableButton(0, fHistoryList.getSize() > selected.size() && !selected.isEmpty());
 			fHistoryStatus= status;
 			updateStatus(status);
 		}
@@ -193,7 +193,7 @@ public class HistoryListAction extends Action {
 
 		/**
 		 * Gets the remaining elements in the list.
-		 * 
+		 *
 		 * @return the remaining elements in the list
 		 * @since 3.7
 		 */

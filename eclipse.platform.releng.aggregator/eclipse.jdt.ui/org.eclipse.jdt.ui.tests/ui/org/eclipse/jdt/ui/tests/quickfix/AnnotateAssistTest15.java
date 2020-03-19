@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 GK Software AG and others.
+ * Copyright (c) 2015, 2020 GK Software AG and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,8 +13,18 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.quickfix;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.util.List;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 
@@ -39,48 +49,38 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 
 import org.eclipse.jdt.ui.JavaUI;
-import org.eclipse.jdt.ui.tests.core.ProjectTestSetup;
+import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
 import org.eclipse.jdt.ui.tests.quickfix.JarUtil.ClassFileFilter;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor;
 import org.eclipse.jdt.internal.ui.javaeditor.JavaSourceViewer;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
+@RunWith(JUnit4.class)
 public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 
+	@Rule
+    public ProjectTestSetup projectsetup = new ProjectTestSetup();
+
 	protected static final String ANNOTATION_PATH= "annots";
-	
+
 	protected static final Class<?> THIS= AnnotateAssistTest15.class;
-	
-	public static Test suite() {
-		return setUpTest(new TestSuite(THIS));
-	}
 
-	public static Test setUpTest(Test test) {
-		return new ProjectTestSetup(test);
-	}
-	
-	public AnnotateAssistTest15(String name) {
-		super(name);
-	}
-
-	@Override
-	protected void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		fJProject1= ProjectTestSetup.getProject();
 		fJProject1.getProject().getFolder(ANNOTATION_PATH).create(true, true, null);
 		fJProject1.setOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
 	}
-	
+
 	// === Tests ===
 
 	/*
 	 * Assert that the "Annotate" command can be invoked on a ClassFileEditor
 	 */
+	@Test
 	public void testAnnotateReturn() throws Exception {
-		
+
 		String MY_MAP_PATH= "pack/age/MyMap";
 		String[] pathAndContents= new String[] {
 					MY_MAP_PATH+".java",
@@ -118,7 +118,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 				Thread.sleep(200);
 			ICompletionProposal proposal= proposalBox[0];
 			assertNotNull("should have a proposal", proposal);
-			
+
 			viewer.getQuickAssistAssistant().uninstall();
 			JavaProjectHelper.emptyDisplayLoop();
 
@@ -132,7 +132,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 
 			IDocument document= javaEditor.getDocumentProvider().getDocument(javaEditor.getEditorInput());
 			proposal.apply(document);
-			
+
 			IFile annotationFile= fJProject1.getProject().getFile(new Path(ANNOTATION_PATH).append("pack/age/MyMap.eea"));
 			assertTrue("Annotation file should have been created", annotationFile.exists());
 
@@ -151,8 +151,9 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 	 * Assert two proposals ("@NonNull" and "@Nullable") on a simple return type (type variable).
 	 * Apply the second proposal and check the effect.
 	 */
+	@Test
 	public void testAnnotateReturn2() throws Exception {
-		
+
 		String MY_MAP_PATH= "pack/age/MyMap";
 		String[] pathAndContents= new String[] {
 					MY_MAP_PATH+".java",
@@ -169,10 +170,10 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 			int offset= pathAndContents[1].indexOf("V get");
 
 			List<ICompletionProposal> list= collectAnnotateProposals(javaEditor, offset);
-			
+
 			assertCorrectLabels(list);
 			assertNumberOfProposals(list, 2);
-			
+
 			ICompletionProposal proposal= findProposalByName("Annotate as '@NonNull V'", list);
 			String expectedInfo=
 					"<dl><dt>get</dt>" +
@@ -191,7 +192,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 
 			IDocument document= javaEditor.getDocumentProvider().getDocument(javaEditor.getEditorInput());
 			proposal.apply(document);
-			
+
 			IFile annotationFile= fJProject1.getProject().getFile(new Path(ANNOTATION_PATH).append(MY_MAP_PATH+".eea"));
 			assertTrue("Annotation file should have been created", annotationFile.exists());
 
@@ -210,8 +211,9 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 	 * Assert two proposals ("@NonNull" and "Remove") if annotation file already says "@Nullable".
 	 * Apply the second proposal and check the effect.
 	 */
+	@Test
 	public void testAnnotateRemove() throws Exception {
-		
+
 		String MY_MAP_PATH= "pack/age/MyMap";
 
 		String[] pathAndContents= new String[] {
@@ -231,17 +233,17 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 				" (TK;)T0V;\n";
 		ensureExists(annotationFile.getParent());
 		annotationFile.create(new ByteArrayInputStream(initialContent.getBytes("UTF-8")), 0, null);
-		
+
 		JavaEditor javaEditor= (JavaEditor) JavaUI.openInEditor(type);
 
 		try {
 			int offset= pathAndContents[1].indexOf("V get");
 
 			List<ICompletionProposal> list= collectAnnotateProposals(javaEditor, offset);
-			
+
 			assertCorrectLabels(list);
 			assertNumberOfProposals(list, 2);
-			
+
 			ICompletionProposal proposal= findProposalByName("Annotate as '@NonNull V'", list);
 			String expectedInfo=
 					"<dl><dt>get</dt>" +
@@ -260,7 +262,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 
 			IDocument document= javaEditor.getDocumentProvider().getDocument(javaEditor.getEditorInput());
 			proposal.apply(document);
-			
+
 			assertTrue("Annotation file should still exist", annotationFile.exists());
 
 			String expectedContent=
@@ -273,15 +275,16 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 			JavaPlugin.getActivePage().closeAllEditors(false);
 		}
 	}
-	
+
 
 	/*
 	 * Assert two proposals ("@NonNull" and "@Nullable") on an (outer) array type (in parameter position).
 	 * The method already has a 2-line entry (i.e., not yet annotated).
 	 * Apply the second proposal and check the effect.
 	 */
+	@Test
 	public void testAnnotateParameter_Array1() throws Exception {
-		
+
 		String X_PATH= "pack/age/X";
 		String[] pathAndContents= new String[] {
 					X_PATH+".java",
@@ -292,7 +295,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 					"}\n"
 				};
 		addLibrary(fJProject1, "lib.jar", "lib.zip", pathAndContents, ANNOTATION_PATH, JavaCore.VERSION_1_8, null);
-		
+
 		IFile annotationFile= fJProject1.getProject().getFile(new Path(ANNOTATION_PATH).append(X_PATH+".eea"));
 		String initialContent=
 				"class pack/age/X\n" +
@@ -308,10 +311,10 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 			int offset= pathAndContents[1].indexOf("[][] ints");
 
 			List<ICompletionProposal> list= collectAnnotateProposals(javaEditor, offset);
-			
+
 			assertCorrectLabels(list);
 			assertNumberOfProposals(list, 2);
-			
+
 			ICompletionProposal proposal= findProposalByName("Annotate as 'int @NonNull [][]'", list);
 			String expectedInfo=
 					"<dl><dt>test</dt>" +
@@ -330,7 +333,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 
 			IDocument document= javaEditor.getDocumentProvider().getDocument(javaEditor.getEditorInput());
 			proposal.apply(document);
-			
+
 			annotationFile= fJProject1.getProject().getFile(new Path(ANNOTATION_PATH).append(X_PATH+".eea"));
 			assertTrue("Annotation file should have been created", annotationFile.exists());
 
@@ -348,11 +351,12 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 	/*
 	 * Assert two proposals ("@NonNull" and "@Nullable") on the array representing the varargs ellipsis
 	 * Apply the second proposal and check the effect.
-	 * 
+	 *
 	 * Cf. {@link AnnotateAssistTest15#testAnnotateParameter_Array1()}
 	 */
+	@Test
 	public void testAnnotateParameter_Varargs1() throws Exception {
-		
+
 		String X_PATH= "pack/age/X";
 		String[] pathAndContents= new String[] {
 					X_PATH+".java",
@@ -363,7 +367,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 					"}\n"
 				};
 		addLibrary(fJProject1, "lib.jar", "lib.zip", pathAndContents, ANNOTATION_PATH, JavaCore.VERSION_1_5, null);
-		
+
 		IFile annotationFile= fJProject1.getProject().getFile(new Path(ANNOTATION_PATH).append(X_PATH+".eea"));
 		String initialContent=
 				"class pack/age/X\n" +
@@ -379,10 +383,10 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 			int offset= pathAndContents[1].indexOf("...");
 
 			List<ICompletionProposal> list= collectAnnotateProposals(javaEditor, offset);
-			
+
 			assertCorrectLabels(list);
 			assertNumberOfProposals(list, 2);
-			
+
 			ICompletionProposal proposal= findProposalByName("Annotate as 'int @NonNull ...'", list);
 			String expectedInfo=
 					"<dl><dt>test</dt>" +
@@ -401,7 +405,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 
 			IDocument document= javaEditor.getDocumentProvider().getDocument(javaEditor.getEditorInput());
 			proposal.apply(document);
-			
+
 			annotationFile= fJProject1.getProject().getFile(new Path(ANNOTATION_PATH).append(X_PATH+".eea"));
 			assertTrue("Annotation file should have been created", annotationFile.exists());
 
@@ -420,8 +424,9 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 	 * Assert two proposals ("@NonNull" and "@Nullable") on a parameter of a constructor.
 	 * Apply the second proposal and check the effect.
 	 */
+	@Test
 	public void testAnnotateConstructorParameter() throws Exception {
-		
+
 		String X_PATH= "pack/age/X";
 		String[] pathAndContents= new String[] {
 					X_PATH+".java",
@@ -432,7 +437,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 					"}\n"
 				};
 		addLibrary(fJProject1, "lib.jar", "lib.zip", pathAndContents, ANNOTATION_PATH, JavaCore.VERSION_1_5, null);
-		
+
 		IFile annotationFile= fJProject1.getProject().getFile(new Path(ANNOTATION_PATH).append(X_PATH+".eea"));
 		String initialContent=
 				"class pack/age/X\n" +
@@ -448,10 +453,10 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 			int offset= pathAndContents[1].indexOf("String");
 
 			List<ICompletionProposal> list= collectAnnotateProposals(javaEditor, offset);
-			
+
 			assertCorrectLabels(list);
 			assertNumberOfProposals(list, 2);
-			
+
 			ICompletionProposal proposal= findProposalByName("Annotate as '@NonNull String'", list);
 			String expectedInfo=
 					"<dl><dt>&lt;init&gt;</dt>" +
@@ -470,7 +475,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 
 			IDocument document= javaEditor.getDocumentProvider().getDocument(javaEditor.getEditorInput());
 			proposal.apply(document);
-			
+
 			annotationFile= fJProject1.getProject().getFile(new Path(ANNOTATION_PATH).append(X_PATH+".eea"));
 			assertTrue("Annotation file should have been created", annotationFile.exists());
 
@@ -489,8 +494,9 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 	 * Assert two proposals ("@NonNull" and "@Nullable") on a simple field type (type variable).
 	 * Apply the second proposal and check the effect.
 	 */
+	@Test
 	public void testAnnotateField1() throws Exception {
-		
+
 		String NODE_PATH= "pack/age/Node";
 		String[] pathAndContents= new String[] {
 					NODE_PATH+".java",
@@ -507,10 +513,10 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 			int offset= pathAndContents[1].indexOf("V value");
 
 			List<ICompletionProposal> list= collectAnnotateProposals(javaEditor, offset);
-			
+
 			assertCorrectLabels(list);
 			assertNumberOfProposals(list, 2);
-			
+
 			ICompletionProposal proposal= findProposalByName("Annotate as '@NonNull V'", list);
 			String expectedInfo=
 					"<dl><dt>value</dt>" +
@@ -529,7 +535,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 
 			IDocument document= javaEditor.getDocumentProvider().getDocument(javaEditor.getEditorInput());
 			proposal.apply(document);
-			
+
 			IFile annotationFile= fJProject1.getProject().getFile(new Path(ANNOTATION_PATH).append(NODE_PATH+".eea"));
 			assertTrue("Annotation file should have been created", annotationFile.exists());
 
@@ -548,8 +554,9 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 	 * Assert two proposals ("@NonNull" and "@Nullable") on a parameterized field type.
 	 * Apply the second proposal and check the effect.
 	 */
+	@Test
 	public void testAnnotateField2() throws Exception {
-		
+
 		String NODE_PATH= "pack/age/Node";
 		String[] pathAndContents= new String[] {
 					NODE_PATH+".java",
@@ -566,10 +573,10 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 			int offset= pathAndContents[1].indexOf("Node<String> next");
 
 			List<ICompletionProposal> list= collectAnnotateProposals(javaEditor, offset);
-			
+
 			assertCorrectLabels(list);
 			assertNumberOfProposals(list, 2);
-			
+
 			ICompletionProposal proposal= findProposalByName("Annotate as '@NonNull Node'", list);
 			String expectedInfo=
 					"<dl><dt>next</dt>" +
@@ -588,7 +595,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 
 			IDocument document= javaEditor.getDocumentProvider().getDocument(javaEditor.getEditorInput());
 			proposal.apply(document);
-			
+
 			IFile annotationFile= fJProject1.getProject().getFile(new Path(ANNOTATION_PATH).append(NODE_PATH+".eea"));
 			assertTrue("Annotation file should have been created", annotationFile.exists());
 
@@ -603,6 +610,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 		}
 	}
 
+	@Test
 	public void testBug466232() throws Exception {
 		final String MISSINGPATH= "pack/age/Missing";
 		String CLASS2_PATH= "pack/age/Class2";
@@ -621,7 +629,7 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 					"    }\n" +
 					"}\n"
 				};
-		
+
 		addLibrary(fJProject1, "lib.jar", "lib.zip", pathAndContents, ANNOTATION_PATH, JavaCore.VERSION_1_5, new ClassFileFilter() {
 			@Override
 			public boolean include(CompilationResult unitResult) {
@@ -652,9 +660,9 @@ public class AnnotateAssistTest15 extends AbstractAnnotateAssistTests {
 			log.log(new Status(IStatus.INFO, JavaUI.ID_PLUGIN, "Expecting an error message to be logged after this."));
 			log.addLogListener(logListener);
 			List<ICompletionProposal> list= collectAnnotateProposals(javaEditor, offset);
-			
+
 			assertEquals("Expected number of proposals", 0, list.size());
-			
+
 			assertNotNull("Expected status", resultingStatus[0]);
 		} finally {
 			if (logListener != null) {

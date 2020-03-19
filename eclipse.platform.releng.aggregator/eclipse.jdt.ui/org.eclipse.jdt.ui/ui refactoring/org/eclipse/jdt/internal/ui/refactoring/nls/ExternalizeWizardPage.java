@@ -62,6 +62,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.FontRegistry;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ColumnLayoutData;
 import org.eclipse.jface.viewers.ColumnPixelData;
@@ -70,7 +71,6 @@ import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.IFontProvider;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -633,8 +633,7 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 			choices= loadAccessorDescriptions();
 		}
 
-		for (int i= 0; i < choices.length; i++) {
-			AccessorDescription curr= choices[i];
+		for (AccessorDescription curr : choices) {
 			if (!curr.equals(configured)) {
 				currChoices.add(curr);
 				currLabels.add(curr.getLabel());
@@ -703,9 +702,9 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 		Properties props= new Properties();
 		try {
 			if (propertyFile.exists()) {
-				InputStream is= propertyFile.getContents();
-				props.load(is);
-				is.close();
+				try (InputStream is= propertyFile.getContents()) {
+					props.load(is);
+				}
 			}
 		} catch (Exception e) {
 			// sorry no property
@@ -752,18 +751,7 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 		fTableViewer.setColumnProperties(PROPERTIES);
 		fTableViewer.setCellModifier(new CellModifier());
 
-		fTableViewer.setContentProvider(new IStructuredContentProvider() {
-			@Override
-			public Object[] getElements(Object inputElement) {
-				return fSubstitutions;
-			}
-			@Override
-			public void dispose() {
-			}
-			@Override
-			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-			}
-		});
+		fTableViewer.setContentProvider(ArrayContentProvider.getInstance());
 		fTableViewer.addFilter(new ViewerFilter() {
 			@Override
 			public boolean select(Viewer viewer, Object parentElement, Object element) {
@@ -777,7 +765,7 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 
 
 		fTableViewer.setLabelProvider(new NLSSubstitutionLabelProvider());
-		fTableViewer.setInput(new Object());
+		fTableViewer.setInput(fSubstitutions);
 
 		fTableViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			@Override
@@ -788,8 +776,7 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 	}
 
 	private void createDefaultExternalization(NLSSubstitution[] substitutions) {
-		for (int i= 0; i < substitutions.length; i++) {
-			NLSSubstitution substitution= substitutions[i];
+		for (NLSSubstitution substitution : substitutions) {
 			if (substitution.getState() == NLSSubstitution.INTERNALIZED) {
 				substitution.setState(NLSSubstitution.EXTERNALIZED);
 				substitution.generateKey(substitutions, getProperties(fNLSRefactoring.getPropertyFileHandle()));
@@ -900,9 +887,10 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 	}
 
 	private void checkInvalidKeys(RefactoringStatus status) {
-		for (int i= 0; i < fSubstitutions.length; i++) {
-			if (!isKeyValid(fSubstitutions[i], status))
+		for (NLSSubstitution substitution : fSubstitutions) {
+			if (!isKeyValid(substitution, status)) {
 				return;
+			}
 		}
 	}
 
@@ -948,8 +936,7 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 	}
 
 	private void checkDuplicateKeys(RefactoringStatus status) {
-		for (int i= 0; i < fSubstitutions.length; i++) {
-			NLSSubstitution substitution= fSubstitutions[i];
+		for (NLSSubstitution substitution : fSubstitutions) {
 			if (conflictingKeys(substitution)) {
 				status.addFatalError(NLSUIMessages.ExternalizeWizardPage_warning_conflicting);
 				return;
@@ -958,8 +945,7 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 	}
 
 	private void checkMissingKeys(RefactoringStatus status) {
-		for (int i= 0; i < fSubstitutions.length; i++) {
-			NLSSubstitution substitution= fSubstitutions[i];
+		for (NLSSubstitution substitution : fSubstitutions) {
 			if ((substitution.getValue() == null) && (substitution.getKey() != null)) {
 				status.addWarning(NLSUIMessages.ExternalizeWizardPage_warning_keymissing);
 				return;
@@ -1018,12 +1004,11 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 	}
 
 	private boolean hasNewOrMissingSubstitutions() {
-		for (int i= 0; i < fSubstitutions.length; i++) {
-			NLSSubstitution curr= fSubstitutions[i];
-			if (curr.getInitialState() == NLSSubstitution.INTERNALIZED) {
+		for (NLSSubstitution substitution : fSubstitutions) {
+			if (substitution.getInitialState() == NLSSubstitution.INTERNALIZED) {
 				return true;
 			}
-			if (curr.getInitialState() == NLSSubstitution.EXTERNALIZED && curr.getInitialValue() == null) {
+			if (substitution.getInitialState() == NLSSubstitution.EXTERNALIZED && substitution.getInitialValue() == null) {
 				return true;
 			}
 		}

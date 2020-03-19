@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corporation and others.
+ * Copyright (c) 2005, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,8 +13,19 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.quickfix;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Hashtable;
 import java.util.List;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
@@ -31,7 +42,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
-import org.eclipse.jdt.ui.tests.core.ProjectTestSetup;
+import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
 import org.eclipse.jdt.ui.text.java.IJavaCompletionProposal;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
@@ -39,20 +50,13 @@ import org.eclipse.jdt.internal.ui.text.correction.AssistContext;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposal;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.Test;
 
+@RunWith(JUnit4.class)
 public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 
-	private static final Class<ConvertIterableLoopQuickFixTest> THIS= ConvertIterableLoopQuickFixTest.class;
-
-	public static Test suite() {
-		return setUpTest(new TestSuite(THIS));
-	}
-
-	public static Test setUpTest(Test test) {
-		return new ProjectTestSetup(test);
-	}
+	@Rule
+    public ProjectTestSetup projectsetup = new ProjectTestSetup();
 
 	private FixCorrectionProposal fConvertLoopProposal;
 
@@ -60,15 +64,11 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 
 	private IPackageFragmentRoot fSourceFolder;
 
-	public ConvertIterableLoopQuickFixTest(String name) {
-		super(name);
-	}
-
 	private List<IJavaCompletionProposal> fetchConvertingProposal(StringBuffer buf, ICompilationUnit cu) throws Exception {
 		int offset= buf.toString().indexOf("for");
 		return fetchConvertingProposal(cu, offset);
 	}
-	
+
 	private List<IJavaCompletionProposal> fetchConvertingProposal(ICompilationUnit cu, int offset) throws Exception {
 		AssistContext context= getCorrectionContext(cu, offset, 0);
 		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
@@ -76,8 +76,8 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		return proposals;
 	}
 
-	@Override
-	protected void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		Hashtable<String, String> options= TestOptions.getDefaultOptions();
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.SPACE);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, "4");
@@ -92,14 +92,15 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		fConvertLoopProposal= null;
 	}
 
-	@Override
-	protected void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		JavaProjectHelper.clear(fProject, ProjectTestSetup.getDefaultClasspath());
 		fConvertLoopProposal= null;
 		fProject= null;
 		fSourceFolder= null;
 	}
 
+	@Test
 	public void testSimplestSmokeCase() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -139,6 +140,96 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Ignore
+	@Test
+	public void testKeepComment() throws Exception {
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
+		StringBuffer buf= new StringBuffer();
+		buf.append("package test;\r\n");
+		buf.append("import java.util.Collection;\r\n");
+		buf.append("import java.util.Iterator;\r\n");
+		buf.append("public class A {\r\n");
+		buf.append("	Collection<String> c;\r\n");
+		buf.append("	public A() {\r\n");
+		buf.append("		for (final Iterator<String> iterator= c.iterator(); iterator.hasNext();) {\r\n");
+		buf.append("			// Comment line\r\n");
+		buf.append("			String test= iterator.next();\r\n");
+		buf.append("			System.out.println(test);\r\n");
+		buf.append("		}\r\n");buf.append("	}\r\n");
+		buf.append("}");
+		ICompilationUnit unit= pack.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(buf, unit);
+
+		assertNotNull(fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+
+		String preview= getPreviewContent(fConvertLoopProposal);
+
+		buf= new StringBuffer();
+		buf.append("package test;\r\n");
+		buf.append("import java.util.Collection;\r\n");
+		buf.append("public class A {\r\n");
+		buf.append("	Collection<String> c;\r\n");
+		buf.append("	public A() {\r\n");
+		buf.append("		for (String test : c) {\r\n");
+		buf.append("			// Comment line\r\n");
+		buf.append("			System.out.println(test);\r\n");
+		buf.append("		}\r\n");
+		buf.append("	}\r\n");
+		buf.append("}");
+		String expected= buf.toString();
+		assertEqualString(preview, expected);
+	}
+
+	/**
+	 * quickfix creates strange indentation because of the return in the start statement
+	 * see https://bugs.eclipse.org/bugs/show_bug.cgi?id=553635
+	 * @throws Exception
+	 */
+	@Ignore("Bug 553635")
+	@Test
+	public void testIndentation() throws Exception {
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
+		StringBuffer buf= new StringBuffer();
+		buf.append("package test;\r\n");
+		buf.append("import java.util.Collection;\r\n");
+		buf.append("import java.util.Iterator;\r\n");
+		buf.append("public class A {\r\n");
+		buf.append("	Collection<String> c;\r\n");
+		buf.append("	public A() {\r\n");
+		buf.append("		for (final Iterator<String> iterator= c.\r\niterator(); iterator.hasNext();) {\r\n");
+		buf.append("			String test= iterator.next();\r\n");
+		buf.append("			System.out.println(test);\r\n");
+		buf.append("		}\r\n");buf.append("	}\r\n");
+		buf.append("}");
+		ICompilationUnit unit= pack.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(buf, unit);
+
+		assertNotNull(fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+
+		String preview= getPreviewContent(fConvertLoopProposal);
+
+		buf= new StringBuffer();
+		buf.append("package test;\r\n");
+		buf.append("import java.util.Collection;\r\n");
+		buf.append("public class A {\r\n");
+		buf.append("	Collection<String> c;\r\n");
+		buf.append("	public A() {\r\n");
+		buf.append("		for (String test : c) {\r\n");
+		buf.append("			System.out.println(test);\r\n");
+		buf.append("		}\r\n");
+		buf.append("	}\r\n");
+		buf.append("}");
+		String expected= buf.toString();
+		assertEqualString(preview, expected);
+	}
+
+	@Test
 	public void testEnumeration() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -179,6 +270,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testSplitAssignment() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -220,6 +312,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testIndirectUsage() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -263,6 +356,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testMethodCall1() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -311,6 +405,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testMethodCall2() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -359,6 +454,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testNested() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -404,6 +500,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testMethodCall3() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -439,6 +536,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testNoAssignment() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -483,6 +581,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testOutsideAssignment1() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -509,6 +608,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertCorrectLabels(proposals);
 	}
 
+	@Test
 	public void testOutsideAssignment2() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -535,6 +635,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertCorrectLabels(proposals);
 	}
 
+	@Test
 	public void testWildcard1() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("a", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -570,6 +671,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testWildcard2() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("a", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -605,6 +707,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testBug129508_1() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -626,6 +729,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertCorrectLabels(proposals);
 	}
 
+	@Test
 	public void testBug129508_2() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -647,6 +751,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertCorrectLabels(proposals);
 	}
 
+	@Test
 	public void testBug129508_3() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -668,6 +773,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertCorrectLabels(proposals);
 	}
 
+	@Test
 	public void testBug129508_4() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -689,6 +795,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertCorrectLabels(proposals);
 	}
 
+	@Test
 	public void testBug110599() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("a", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -729,6 +836,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testBug176595() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -750,6 +858,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertNull(fConvertLoopProposal);
 	}
 
+	@Test
 	public void testBug176502() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -789,6 +898,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testBug203693() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -833,6 +943,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testBug194639() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -872,6 +983,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testWrongIteratorMethod() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -925,6 +1037,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testWrongIteratorMethod_bug411588() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -991,6 +1104,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testCorrectIteratorMethod() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1044,6 +1158,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void test487429() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1092,7 +1207,8 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		String expected= buf.toString();
 		assertEqualString(preview, expected);
 	}
-	
+
+	@Test
 	public void testBug510758_1() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -1118,7 +1234,8 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertNull(fConvertLoopProposal);
 		assertCorrectLabels(proposals);
 	}
-	
+
+	@Test
 	public void testBug510758_2() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1141,7 +1258,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		offset= buf.indexOf("for", offset+1);
 		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(unit, offset);
 		assertNotNull(fConvertLoopProposal);
-		
+
 		String preview= getPreviewContent(fConvertLoopProposal);
 
 		buf= new StringBuffer();
@@ -1159,7 +1276,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 
 		String expected= buf.toString();
 		assertEqualString(preview, expected);
-		
+
 		assertCorrectLabels(proposals);
 	}
 }

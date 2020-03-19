@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Andre Soereng <andreis@fast.no> - [syntax highlighting] highlight numbers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=63573
@@ -920,7 +920,7 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 
 	private String loadPreviewContentFromFile(String filename) {
 		String line;
-		String separator= System.getProperty("line.separator"); //$NON-NLS-1$
+		String separator= System.lineSeparator();
 		StringBuilder buffer= new StringBuilder(512);
 		BufferedReader reader= null;
 		try {

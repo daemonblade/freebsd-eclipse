@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -301,7 +301,7 @@ public class JavadocConfigurationBlock {
 				IPath jarPath= new Path(jarPathUri.getSchemeSpecificPart());
 				URI insidePathUri= new URI(insidePathStr);
 				String insidePath= insidePathUri.getSchemeSpecificPart();
-				
+
 				fArchivePathField.setText(insidePath);
 				if (isWorkspaceArchive) {
 					fArchiveField.setText(jarPath.makeRelative().toString());
@@ -360,9 +360,7 @@ public class JavadocConfigurationBlock {
 				} else {
 					MessageDialog.openWarning(fShell, fTitle, fUnable);
 				}
-			} catch (MalformedURLException e) {
-				MessageDialog.openWarning(fShell, fTitle, fUnable);
-			} catch (URISyntaxException e) {
+			} catch (MalformedURLException | URISyntaxException e) {
 				MessageDialog.openWarning(fShell, fTitle, fUnable);
 			}
 
@@ -405,7 +403,7 @@ public class JavadocConfigurationBlock {
 				suc= checkURLConnection(elementlistURL);
 				foundElementList= true;
 			}
-			
+
 			suc= suc && checkURLConnection(indexURL);
 			if (suc) {
 				showConfirmValidationDialog(indexURL, foundElementList);
@@ -436,16 +434,11 @@ public class JavadocConfigurationBlock {
 				connection.connect();
 				res= ((HttpURLConnection) connection).getResponseCode();
 			}
-			InputStream is= null;
-			try {
-				is= connection.getInputStream();
+			try (InputStream is = connection.getInputStream()) {
 				byte[] buffer= new byte[256];
 				while (is.read(buffer) != -1) {
 					// just read
 				}
-			} finally {
-				if (is != null)
-					is.close();
 			}
 		} catch (IllegalArgumentException e) {
 			return false; // workaround for bug 91072
@@ -792,14 +785,14 @@ public class JavadocConfigurationBlock {
 			} else {
 				baseUri= new File(jarLoc).toURI();
 			}
-			
+
 			if (innerPath.length() == 0 || innerPath.charAt(0) != '/') {
 				innerPath= '/' + innerPath;
 			}
 			String encodedInnerPath= new URI(null, null, innerPath, null, null).getRawSchemeSpecificPart();
-			
+
 			return new URI("jar:" + encodeExclamationMarks(baseUri.toString()) + '!' + encodeExclamationMarks(encodedInnerPath)).toURL(); //$NON-NLS-1$
-			
+
 		} catch (URISyntaxException e) {
 			throw new MalformedURLException(e.getMessage());
 		}
@@ -932,6 +925,7 @@ public class JavadocConfigurationBlock {
 			}
 		}
 
+		@SuppressWarnings("resource")
 		@Override
 		public String getText(Object element) {
 			if (element == fProvider.getRoot()) {

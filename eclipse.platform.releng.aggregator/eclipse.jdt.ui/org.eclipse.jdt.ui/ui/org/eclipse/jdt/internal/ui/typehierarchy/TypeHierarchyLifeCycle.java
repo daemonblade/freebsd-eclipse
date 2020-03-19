@@ -79,7 +79,7 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 
 	/**
 	 * Indicates whether the refresh job was canceled explicitly.
-	 * 
+	 *
 	 * @since 3.6
 	 */
 	private boolean fRefreshJobCanceledExplicitly= true;
@@ -109,7 +109,7 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 
 	/**
 	 * Returns the array of input elements.
-	 * 
+	 *
 	 * @return the input elements, or <code>null</code>
 	 */
 	public IJavaElement[] getInputElements() {
@@ -163,7 +163,7 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 
 	/**
 	 * Refreshes the type hierarchy for the java elements if they exist.
-	 * 
+	 *
 	 * @param elements the java elements for which the type hierarchy is computed
 	 * @param context the runnable context
 	 * @throws InterruptedException thrown from the <code>OperationCanceledException</code> when the monitor is canceled
@@ -189,8 +189,8 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 			freeHierarchy();
 			return;
 		}
-		for (int i= 0; i < elements.length; i++) {
-			if (elements[i] == null || !elements[i].exists()) {
+		for (IJavaElement element : elements) {
+			if (element == null || !element.exists()) {
 				freeHierarchy();
 				return;
 			}
@@ -251,9 +251,9 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 
 	/**
 	 * Returns <code>true</code> if the refresh job is running, <code>false</code> otherwise.
-	 * 
+	 *
 	 * @return <code>true</code> if the refresh job is running, <code>false</code> otherwise
-	 * 
+	 *
 	 * @since 3.6
 	 */
 	public boolean isRefreshJobRunning() {
@@ -263,12 +263,12 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 	/**
 	 * Refreshes the hierarchy in the background and updates the hierarchy viewer asynchronously in
 	 * the UI thread.
-	 * 
+	 *
 	 * @param elements the java elements on which the hierarchy is computed
 	 * @param pm the progress monitor
 	 * @throws JavaModelException if the java element does not exist or if an exception occurs while
 	 *             accessing its corresponding resource.
-	 * 
+	 *
 	 * @since 3.6
 	 */
 	protected void doHierarchyRefreshBackground(final IJavaElement[] elements, final IProgressMonitor pm) throws JavaModelException {
@@ -305,17 +305,16 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 			}
 		} else {
 			IRegion region= JavaCore.newRegion();
-			for (int i= 0; i < elements.length; i++) {
-				if (elements[i].getElementType() == IJavaElement.JAVA_PROJECT) {
+			for (IJavaElement element : elements) {
+				if (element.getElementType() == IJavaElement.JAVA_PROJECT) {
 					// for projects only add the contained source folders
-					IPackageFragmentRoot[] roots= ((IJavaProject)elements[i]).getPackageFragmentRoots();
-					for (int j= 0; j < roots.length; j++) {
-						if (!roots[j].isExternal()) {
-							region.add(roots[j]);
+					for (IPackageFragmentRoot root : ((IJavaProject) element).getPackageFragmentRoots()) {
+						if (!root.isExternal()) {
+							region.add(root);
 						}
 					}
 				} else {
-					region.add(elements[i]);
+					region.add(element);
 				}
 			}
 			return JavaCore.newTypeHierarchy(region, null, pm);
@@ -401,9 +400,8 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 				if (delta.getKind() == IJavaElementDelta.CHANGED && isPossibleStructuralChange(delta.getFlags())) {
 					try {
 						if (cu.exists()) {
-							IType[] types= cu.getAllTypes();
-							for (int i= 0; i < types.length; i++) {
-								processTypeDelta(types[i], changedTypes);
+							for (IType type : cu.getAllTypes()) {
+								processTypeDelta(type, changedTypes);
 							}
 						}
 					} catch (JavaModelException e) {
@@ -436,9 +434,8 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 	}
 
 	private void processChildrenDelta(IJavaElementDelta delta, ArrayList<IType> changedTypes) {
-		IJavaElementDelta[] children= delta.getAffectedChildren();
-		for (int i= 0; i < children.length; i++) {
-			processDelta(children[i], changedTypes); // recursive
+		for (IJavaElementDelta child : delta.getAffectedChildren()) {
+			processDelta(child, changedTypes); // recursive
 		}
 	}
 

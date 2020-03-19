@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,10 +15,19 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.quickfix;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.JavaTestPlugin;
@@ -37,43 +46,29 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 
 import org.eclipse.jdt.ui.JavaElementLabels;
-import org.eclipse.jdt.ui.tests.core.ProjectTestSetup;
+import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
-
+@RunWith(JUnit4.class)
 public class CleanUpStressTest extends CleanUpTestCase {
 
-	private static final Class<CleanUpStressTest> THIS= CleanUpStressTest.class;
+	@Rule
+    public ProjectTestSetup projectsetup = new ProjectTestSetup();
 
 	private static final String SRC_CONTAINER= "src";
 
 	protected static IPackageFragmentRoot fJunitSrcRoot;
 
 	@Override
-	protected void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		super.setUp();
 
 		File junitSrcArchive= JavaTestPlugin.getDefault().getFileInPlugin(JavaProjectHelper.JUNIT_SRC_381);
 		fJunitSrcRoot= JavaProjectHelper.addSourceContainerWithImport(fJProject1, SRC_CONTAINER, junitSrcArchive, JavaProjectHelper.JUNIT_SRC_ENCODING);
 	}
 
-	public CleanUpStressTest(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		return setUpTest(new TestSuite(THIS));
-	}
-
-	public static Test setUpTest(Test test) {
-		return new ProjectTestSetup(test);
-	}
-
 	private void addAllCUs(IJavaElement[] children, List<IJavaElement> result) throws JavaModelException {
-		for (int i= 0; i < children.length; i++) {
-			IJavaElement element= children[i];
+		for (IJavaElement element : children) {
 			if (element instanceof ICompilationUnit) {
 				result.add(element);
 			} else if (element instanceof IPackageFragmentRoot) {
@@ -5248,6 +5243,7 @@ public class CleanUpStressTest extends CleanUpTestCase {
         fExpectedChangesAllTests.put("junit.samples.money.Money.java", buf.toString());
     }
 
+	@Test
 	public void testAllCleanUps() throws Exception {
 		List<IJavaElement> cus= new ArrayList<>();
 		addAllCUs(fJProject1.getChildren(), cus);
@@ -5301,7 +5297,7 @@ public class CleanUpStressTest extends CleanUpTestCase {
 
 		enable(CleanUpConstants.SORT_MEMBERS);
 		enable(CleanUpConstants.SORT_MEMBERS_ALL);
-		
+
 		enable(CleanUpConstants.REMOVE_REDUNDANT_MODIFIERS);
 		enable(CleanUpConstants.REMOVE_REDUNDANT_SEMICOLONS);
 
@@ -5310,17 +5306,15 @@ public class CleanUpStressTest extends CleanUpTestCase {
 
 
 //		generateTable(units);
-
-		for (int i= 0; i < units.length; i++) {
-	        ICompilationUnit cu= units[i];
+		for (ICompilationUnit cu : units) {
 			String previewContent= getNormalizedContent(new Document(cu.getBuffer().getContents()));
-	       	String compilationUnitName= getCompilationUnitName(cu);
+			String compilationUnitName= getCompilationUnitName(cu);
 
-	       	String expected= fExpectedChangesAllTests.get(compilationUnitName);
+			String expected= fExpectedChangesAllTests.get(compilationUnitName);
 
-	       	assertTrue("No expected value in table for " + compilationUnitName, expected != null);
-	       	assertEquals("Content not as expected for " + compilationUnitName, expected, previewContent);
-        }
+			assertTrue("No expected value in table for " + compilationUnitName, expected != null);
+			assertEquals("Content not as expected for " + compilationUnitName, expected, previewContent);
+		}
 	}
 
 	private static String getCompilationUnitName(ICompilationUnit cu) {

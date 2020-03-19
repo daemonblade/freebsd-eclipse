@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -284,7 +284,7 @@ public final class ActionMessages extends NLS {
 	public static String OrganizeImportsAction_error_title;
 	public static String OrganizeImportsAction_error_message;
 	public static String OrganizeImportsAction_single_error_parse;
-	
+
 	/**
 	 * DO NOT REMOVE, used in a product, see https://bugs.eclipse.org/296836 .
 	 * @deprecated As of 3.6, replaced by {@link #OrganizeImportsAction_summary_added_singular} and {@link #OrganizeImportsAction_summary_added_plural}
@@ -387,6 +387,7 @@ public final class ActionMessages extends NLS {
 	public static String SurroundWithTemplateMenuAction_NoneApplicable;
 	public static String SurroundWithTemplateMenuAction_SurroundWithTemplateSubMenuName;
 	public static String SurroundWithTemplateMenuAction_SurroundWithTryCatchActionName;
+	public static String SurroundWithTemplateMenuAction_SurroundWithTryWithResourcesActionName;
 	public static String SurroundWithTemplateMenuAction_SurroundWithTryMultiCatchActionName;
 
 	public static String ToggleLinkingAction_label;

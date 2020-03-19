@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -133,7 +133,7 @@ public class ASTFlattener extends GenericVisitor {
 			this.fBuffer.append('>');
 		}
 	}
-	
+
 	void printTypeAnnotations(AnnotatableType node) {
 		if (node.getAST().apiLevel() >= JLS8) {
 			printAnnotationsList(node.annotations());
@@ -141,8 +141,7 @@ public class ASTFlattener extends GenericVisitor {
 	}
 
 	void printAnnotationsList(List<? extends Annotation> annotations) {
-		for (Iterator<? extends Annotation> it = annotations.iterator(); it.hasNext(); ) {
-			Annotation annotation = it.next();
+		for (Annotation annotation : annotations) {
 			annotation.accept(this);
 			this.fBuffer.append(' ');
 		}
@@ -530,7 +529,7 @@ public class ASTFlattener extends GenericVisitor {
 		this.fBuffer.append(";");//$NON-NLS-1$
 		return false;
 	}
-	
+
 	/*
 	 * @see ASTVisitor#visit(CreationReference)
 	 */
@@ -795,7 +794,7 @@ public class ASTFlattener extends GenericVisitor {
 		this.fBuffer.append(' ');
 		node.getRightOperand().accept(this);
 		final List<Expression>extendedOperands = node.extendedOperands();
-		if (extendedOperands.size() != 0) {
+		if (!extendedOperands.isEmpty()) {
 			this.fBuffer.append(' ');
 			for (Iterator<Expression> it = extendedOperands.iterator(); it.hasNext(); ) {
 				this.fBuffer.append(node.getOperator().toString()).append(' ');
@@ -1583,7 +1582,7 @@ public class ASTFlattener extends GenericVisitor {
 		visitSwitchNode(node);
 		return false;
 	}
-	
+
 	@Override
 	public boolean visit(SwitchExpression node) {
 		visitSwitchNode(node);

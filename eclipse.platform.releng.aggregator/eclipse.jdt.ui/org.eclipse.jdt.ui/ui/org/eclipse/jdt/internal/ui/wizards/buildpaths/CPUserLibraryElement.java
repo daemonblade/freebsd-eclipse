@@ -82,7 +82,7 @@ public class CPUserLibraryElement {
 	/**
 	 * Creates a new user library element with the given name and children and sets itself as the
 	 * parent container to each given child element.
-	 * 
+	 *
 	 * @param name the name of the library element
 	 * @param isSystemLibrary <code>true</code> if the library is a system library,
 	 *            <code>false</code> otherwise
@@ -92,9 +92,9 @@ public class CPUserLibraryElement {
 		fName= name;
 		fChildren= new ArrayList<>();
 		if (children != null) {
-			for (int i= 0; i < children.length; i++) {
-				children[i].setParentContainer(this);
-				fChildren.add(children[i]);
+			for (CPListElement child : children) {
+				child.setParentContainer(this);
+				fChildren.add(child);
 			}
 		}
 		fIsSystemLibrary= isSystemLibrary;

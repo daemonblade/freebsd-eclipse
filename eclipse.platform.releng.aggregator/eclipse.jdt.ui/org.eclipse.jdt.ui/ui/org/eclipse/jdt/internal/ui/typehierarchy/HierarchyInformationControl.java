@@ -95,8 +95,8 @@ public class HierarchyInformationControl extends AbstractInformationControl {
 					if (sequences == null)
 						return;
 
-					for (int i= 0; i < sequences.length; i++) {
-						if (sequences[i].equals(keySequence)) {
+					for (TriggerSequence sequence : sequences) {
+						if (sequence.equals(keySequence)) {
 							e.doit= false;
 							toggleHierarchy();
 							return;
@@ -189,7 +189,7 @@ public class HierarchyInformationControl extends AbstractInformationControl {
 		if (filterType.equals(typeToFindIn)) {
 			return filterMethod;
 		}
-		
+
 		ITypeHierarchy hierarchy= fLifeCycle.getHierarchy();
 
 		boolean filterOverrides= JavaModelUtil.isSuperType(hierarchy, typeToFindIn, filterType);

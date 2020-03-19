@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,6 +14,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.quickfix;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,12 +28,10 @@ import java.util.stream.Collectors;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.StringAsserts;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 
 import org.eclipse.core.resources.IFile;
-
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
@@ -56,7 +58,6 @@ import org.eclipse.jdt.internal.corext.fix.LinkedProposalModel;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroup;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroup.Proposal;
 
-import org.eclipse.jdt.ui.tests.core.ProjectTestSetup;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.ui.text.java.IJavaCompletionProposal;
 import org.eclipse.jdt.ui.text.java.IProblemLocation;
@@ -73,73 +74,65 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedNamesAssistPr
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewCUUsingWizardProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RenameRefactoringProposal;
 import org.eclipse.jdt.internal.ui.text.template.contentassist.SurroundWithTemplateProposal;
-
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
 /**
  */
-public class QuickFixTest extends TestCase {
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+	QuickFixTest9.class,
+	QuickFixTest18.class,
+	QuickFixTest13.class,
+	SerialVersionQuickFixTest.class,
+	UtilitiesTest.class,
+	UnresolvedTypesQuickFixTest.class,
+	UnresolvedVariablesQuickFixTest.class,
+	UnresolvedMethodsQuickFixTest.class,
+	UnresolvedMethodsQuickFixTest18.class,
+	ReturnTypeQuickFixTest.class,
+	LocalCorrectionsQuickFixTest.class,
+	LocalCorrectionsQuickFixTest17.class,
+	LocalCorrectionsQuickFixTest18.class,
+	TypeMismatchQuickFixTests.class,
+	ReorgQuickFixTest.class,
+	ModifierCorrectionsQuickFixTest.class,
+	ModifierCorrectionsQuickFixTest17.class,
+	ModifierCorrectionsQuickFixTest9.class,
+	GetterSetterQuickFixTest.class,
+	AssistQuickFixTest.class,
+	AssistQuickFixTest17.class,
+	AssistQuickFixTest18.class,
+	AssistQuickFixTest12.class,
+	ChangeNonStaticToStaticTest.class,
+	MarkerResolutionTest.class,
+	JavadocQuickFixTest.class,
+	JavadocQuickFixTest9.class,
+	ConvertForLoopQuickFixTest.class,
+	ConvertIterableLoopQuickFixTest.class,
+	AdvancedQuickAssistTest.class,
+	AdvancedQuickAssistTest17.class,
+	AdvancedQuickAssistTest18.class,
+	CleanUpTestCase.class,
+	QuickFixEnablementTest.class,
+	SurroundWithTemplateTest.class,
+	TypeParameterMismatchTest.class,
+	PropertiesFileQuickAssistTest.class,
+	NullAnnotationsQuickFixTest.class,
+	NullAnnotationsQuickFixTest18.class,
+	NullAnnotationsQuickFixTest18Mix.class,
+	AnnotateAssistTest15.class,
+	AnnotateAssistTest18.class,
+	TypeAnnotationQuickFixTest.class
+})
 
-	public static Test suite() {
-		TestSuite suite= new TestSuite(QuickFixTest.class.getName());
-		suite.addTest(QuickFixTest9.suite());
-		suite.addTest(QuickFixTest18.suite());
-		suite.addTest(QuickFixTest13.suite());
-		suite.addTest(SerialVersionQuickFixTest.suite());
-		suite.addTest(UtilitiesTest.suite());
-		suite.addTest(UnresolvedTypesQuickFixTest.suite());
-		suite.addTest(UnresolvedVariablesQuickFixTest.suite());
-		suite.addTest(UnresolvedMethodsQuickFixTest.suite());
-		suite.addTest(UnresolvedMethodsQuickFixTest18.suite());
-		suite.addTest(ReturnTypeQuickFixTest.suite());
-		suite.addTest(LocalCorrectionsQuickFixTest.suite());
-		suite.addTest(LocalCorrectionsQuickFixTest17.suite());
-		suite.addTest(LocalCorrectionsQuickFixTest18.suite());
-		suite.addTest(TypeMismatchQuickFixTests.suite());
-		suite.addTest(ReorgQuickFixTest.suite());
-		suite.addTest(ModifierCorrectionsQuickFixTest.suite());
-		suite.addTest(ModifierCorrectionsQuickFixTest17.suite());
-		suite.addTest(ModifierCorrectionsQuickFixTest9.suite());
-		suite.addTest(GetterSetterQuickFixTest.suite());
-		suite.addTest(AssistQuickFixTest.suite());
-		suite.addTest(AssistQuickFixTest17.suite());
-		suite.addTest(AssistQuickFixTest18.suite());
-		suite.addTest(AssistQuickFixTest12.suite());
-		suite.addTest(ChangeNonStaticToStaticTest.suite());
-		suite.addTest(MarkerResolutionTest.suite());
-		suite.addTest(JavadocQuickFixTest.suite());
-		suite.addTest(ConvertForLoopQuickFixTest.suite());
-		suite.addTest(ConvertIterableLoopQuickFixTest.suite());
-		suite.addTest(AdvancedQuickAssistTest.suite());
-		suite.addTest(AdvancedQuickAssistTest17.suite());
-		suite.addTest(AdvancedQuickAssistTest18.suite());
-		suite.addTest(CleanUpTestCase.suite());
-		suite.addTest(QuickFixEnablementTest.suite());
-		suite.addTest(SurroundWithTemplateTest.suite());
-		suite.addTest(TypeParameterMismatchTest.suite());
-		suite.addTest(PropertiesFileQuickAssistTest.suite());
-		suite.addTest(NullAnnotationsQuickFixTest.suite());
-		suite.addTest(NullAnnotationsQuickFixTest18.suite());
-		suite.addTest(NullAnnotationsQuickFixTest18Mix.suite());
-		suite.addTest(AnnotateAssistTest15.suite());
-		suite.addTest(AnnotateAssistTest18.suite());
-		suite.addTest(TypeAnnotationQuickFixTest.suite());
-
-		return new ProjectTestSetup(suite);
-	}
-
-
-	public QuickFixTest(String name) {
-		super(name);
-	}
+public class QuickFixTest {
 
 	public static void assertCorrectLabels(List<? extends ICompletionProposal> proposals) {
 		for (int i= 0; i < proposals.size(); i++) {
 			ICompletionProposal proposal= proposals.get(i);
 			String name= proposal.getDisplayString();
-			if (name == null || name.length() == 0 || name.charAt(0) == '!' || name.indexOf("{0}") != -1 || name.indexOf("{1}") != -1) {
+			if (name == null || name.length() == 0 || name.charAt(0) == '!' || name.contains("{0}") || name.contains("{1}")) {
 				assertTrue("wrong proposal label: " + name, false);
 			}
 			if (proposal.getImage() == null) {
@@ -214,19 +207,17 @@ public class QuickFixTest extends TestCase {
 	}
 
 	public static MethodDeclaration findMethodDeclaration(TypeDeclaration typeDecl, String methodName) {
-		MethodDeclaration[] methods= typeDecl.getMethods();
-		for (int i= 0; i < methods.length; i++) {
-			if (methodName.equals(methods[i].getName().getIdentifier())) {
-				return methods[i];
+		for (MethodDeclaration method : typeDecl.getMethods()) {
+			if (methodName.equals(method.getName().getIdentifier())) {
+				return method;
 			}
 		}
 		return null;
 	}
 
 	public static VariableDeclarationFragment findFieldDeclaration(TypeDeclaration typeDecl, String fieldName) {
-		FieldDeclaration[] fields= typeDecl.getFields();
-		for (int i= 0; i < fields.length; i++) {
-			List<VariableDeclarationFragment> list= fields[i].fragments();
+		for (FieldDeclaration field : typeDecl.getFields()) {
+			List<VariableDeclarationFragment> list= field.fragments();
 			for (int k= 0; k < list.size(); k++) {
 				VariableDeclarationFragment fragment= list.get(k);
 				if (fieldName.equals(fragment.getName().getIdentifier())) {
@@ -286,7 +277,7 @@ public class QuickFixTest extends TestCase {
 	protected static final ArrayList<ICompletionProposal> collectAllCorrections(ICompilationUnit cu, CompilationUnit astRoot, int nProblems) throws CoreException {
 		IProblem[] problems= astRoot.getProblems();
 		assertNumberOfProblems(nProblems, problems);
-		
+
 		ArrayList<ICompletionProposal> corrections= new ArrayList<>();
 		for (int i= 0; i < nProblems; i++) {
 			corrections.addAll(collectCorrections(cu, problems[i], null));
@@ -299,9 +290,9 @@ public class QuickFixTest extends TestCase {
 		if (problems.length != nProblems) {
 			StringBuilder buf= new StringBuilder("Wrong number of problems, is: ");
 			buf.append(problems.length).append(", expected: ").append(nProblems).append('\n');
-			for (int i= 0; i < problems.length; i++) {
-				buf.append(problems[i]);
-				buf.append('[').append(problems[i].getSourceStart()).append(" ,").append(problems[i].getSourceEnd()).append(']');
+			for (IProblem problem : problems) {
+				buf.append(problem);
+				buf.append('[').append(problem.getSourceStart()).append(" ,").append(problem.getSourceEnd()).append(']');
 				buf.append('\n');
 			}
 			assertTrue(buf.toString(), false);
@@ -378,9 +369,7 @@ public class QuickFixTest extends TestCase {
 	public static void assertStatusOk(IStatus status) throws CoreException {
 		if (!status.isOK()) {
 			if (status.getException() == null) {  // find a status with an exception
-				IStatus[] children= status.getChildren();
-				for (int i= 0; i < children.length; i++) {
-					IStatus child= children[i];
+				for (IStatus child : status.getChildren()) {
 					if (child.getException() != null) {
 						throw new CoreException(child);
 					}
@@ -411,8 +400,8 @@ public class QuickFixTest extends TestCase {
 	}
 
 	private static boolean isFiltered(Object curr, Class<?>[] filteredTypes) {
-		for (int k = 0; k < filteredTypes.length; k++) {
-			if (filteredTypes[k].isInstance(curr)) {
+		for (Class<?> filteredType : filteredTypes) {
+			if (filteredType.isInstance(curr)) {
 				return true;
 			}
 		}
@@ -459,7 +448,7 @@ public class QuickFixTest extends TestCase {
 		}
 		return previewContent;
 	}
-	
+
 	private static String getSEFPreviewContent(SelfEncapsulateFieldProposal sefp) throws CoreException {
 		ICompilationUnit compilationUnit= sefp.getField().getCompilationUnit();
 		TextFileChange change= sefp.getChange((IFile) compilationUnit.getResource());
@@ -568,10 +557,9 @@ public class QuickFixTest extends TestCase {
 	}
 
 	protected static void assertNoErrors(IInvocationContext context) {
-		IProblem[] problems= context.getASTRoot().getProblems();
-		for (int i= 0; i < problems.length; i++) {
-			if (problems[i].isError()) {
-				assertTrue("source has error: " + problems[i].getMessage(), false);
+		for (IProblem problem : context.getASTRoot().getProblems()) {
+			if (problem.isError()) {
+				assertTrue("source has error: " + problem.getMessage(), false);
 			}
 		}
 	}

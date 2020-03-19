@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -86,6 +86,7 @@ import org.eclipse.jdt.internal.ui.text.java.FillArgumentNamesCompletionProposal
 import org.eclipse.jdt.internal.ui.text.java.JavaCompletionProcessor;
 import org.eclipse.jdt.internal.ui.text.java.JavaCompletionProposalComputer;
 import org.eclipse.jdt.internal.ui.text.java.JavaNoTypeCompletionProposalComputer;
+import org.eclipse.jdt.internal.ui.text.java.JavaTypeCompletionProposalComputer;
 
 import junit.extensions.TestSetup;
 import junit.framework.Test;
@@ -138,13 +139,13 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		System.out.print("file contents: |");
 		File file= cu.getResource().getLocation().toFile();
 		try {
-			BufferedReader reader= new BufferedReader(new FileReader(file));
-			String line;
-			while ((line= reader.readLine()) != null) {
-				System.out.println(line);
+			try (BufferedReader reader= new BufferedReader(new FileReader(file))) {
+				String line;
+				while ((line= reader.readLine()) != null) {
+					System.out.println(line);
+				}
+				System.out.println("|");
 			}
-			System.out.println("|");
-			reader.close();
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
 		} catch (IOException e1) {
@@ -183,6 +184,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		store.setValue(PreferenceConstants.CODEGEN_ADD_COMMENTS, true);
 		store.setValue(PreferenceConstants.CODEASSIST_GUESS_METHOD_ARGUMENTS, false);
 		store.setValue(PreferenceConstants.CODEASSIST_SHOW_VISIBLE_PROPOSALS, false);
+		store.setValue(PreferenceConstants.CODEASSIST_INSERT_COMPLETION, true);
 
 		StubUtility.setCodeTemplate(CodeTemplateContextType.OVERRIDECOMMENT_ID, "/* (non-Javadoc)\n * ${see_to_overridden}\n */", null);
 		StubUtility.setCodeTemplate(CodeTemplateContextType.DELEGATECOMMENT_ID, "/* (non-Javadoc)\n * ${see_to_target}\n */", null);
@@ -213,12 +215,9 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 	}
 
 	public static void closeAllEditors() {
-		IWorkbenchWindow[] windows= PlatformUI.getWorkbench().getWorkbenchWindows();
-		for (IWorkbenchWindow window : windows) {
-			IWorkbenchPage[] pages= window.getPages();
-			for (IWorkbenchPage page : pages) {
-				IEditorReference[] editorReferences= page.getEditorReferences();
-				for (IEditorReference editorReference : editorReferences) {
+		for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
+			for (IWorkbenchPage page : window.getPages()) {
+				for (IEditorReference editorReference : page.getEditorReferences()) {
 					closeEditor(editorReference.getEditor(false));
 				}
 			}
@@ -994,13 +993,11 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 			codeComplete(cu, offset, collector);
 
-			IJavaCompletionProposal[] proposals= collector.getJavaCompletionProposals();
-
 			IJavaCompletionProposal proposal= null;
 
-			for (IJavaCompletionProposal proposal2 : proposals) {
-				if (proposal2.getDisplayString().startsWith("MyClass")) {
-					proposal= proposal2;
+			for (IJavaCompletionProposal p : collector.getJavaCompletionProposals()) {
+				if (p.getDisplayString().startsWith("MyClass")) {
+					proposal= p;
 				}
 			}
 			assertNotNull("no proposal for MyClass()", proposal);
@@ -1059,12 +1056,10 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		codeComplete(cu, offset, collector);
 
-		IJavaCompletionProposal[] proposals= collector.getJavaCompletionProposals();
-
 		IJavaCompletionProposal proposal= null;
-		for (IJavaCompletionProposal proposal2 : proposals) {
-			if (proposal2.getDisplayString().startsWith("Natural")) {
-				proposal= proposal2;
+		for (IJavaCompletionProposal p : collector.getJavaCompletionProposals()) {
+			if (p.getDisplayString().startsWith("Natural")) {
+				proposal= p;
 			}
 		}
 		assertNotNull("no proposal for enum Natural()", proposal);
@@ -1130,13 +1125,11 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 			codeComplete(cu, offset, collector);
 
-			IJavaCompletionProposal[] proposals= collector.getJavaCompletionProposals();
-
 			IJavaCompletionProposal proposal= null;
 
-			for (IJavaCompletionProposal proposal2 : proposals) {
-				if (proposal2.getDisplayString().startsWith("getWriter")) {
-					proposal= proposal2;
+			for (IJavaCompletionProposal p : collector.getJavaCompletionProposals()) {
+				if (p.getDisplayString().startsWith("getWriter")) {
+					proposal= p;
 				}
 			}
 			assertNotNull("no proposal for getWriter()", proposal);
@@ -1192,12 +1185,11 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 			codeComplete(cu, offset, collector);
 
-			IJavaCompletionProposal[] proposals= collector.getJavaCompletionProposals();
 			IJavaCompletionProposal proposal= null;
 
-			for (IJavaCompletionProposal proposal2 : proposals) {
-				if (proposal2.getDisplayString().startsWith("foo")) {
-					proposal= proposal2;
+			for (IJavaCompletionProposal p : collector.getJavaCompletionProposals()) {
+				if (p.getDisplayString().startsWith("foo")) {
+					proposal= p;
 				}
 			}
 			assertNotNull("no proposal for foo()", proposal);
@@ -1398,12 +1390,11 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		codeComplete(cu, offset, collector);
 
-		IJavaCompletionProposal[] proposals= collector.getJavaCompletionProposals();
 		IJavaCompletionProposal proposal= null;
 
-		for (IJavaCompletionProposal proposal2 : proposals) {
-			if (proposal2.getDisplayString().startsWith("foo")) {
-				proposal= proposal2;
+		for (IJavaCompletionProposal p : collector.getJavaCompletionProposals()) {
+			if (p.getDisplayString().startsWith("foo")) {
+				proposal= p;
 			}
 		}
 		assertNotNull("no proposal for foomethod()", proposal);
@@ -2034,11 +2025,8 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		codeComplete(cu, offset, collector);
 
-		IJavaCompletionProposal[] proposals= collector.getJavaCompletionProposals();
-
 		IJavaCompletionProposal toStringProposal= null;
-
-		for (IJavaCompletionProposal proposal : proposals) {
+		for (IJavaCompletionProposal proposal : collector.getJavaCompletionProposals()) {
 			if (proposal.getDisplayString().startsWith("foo")) {
 				toStringProposal= proposal;
 			}
@@ -2094,11 +2082,8 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		codeComplete(cu, offset, collector);
 
-		IJavaCompletionProposal[] proposals= collector.getJavaCompletionProposals();
-
 		IJavaCompletionProposal toStringProposal= null;
-
-		for (IJavaCompletionProposal proposal : proposals) {
+		for (IJavaCompletionProposal proposal : collector.getJavaCompletionProposals()) {
 			if (proposal.getDisplayString().startsWith("foo")) {
 				toStringProposal= proposal;
 			}
@@ -2155,13 +2140,11 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 			codeComplete(cu, offset, collector);
 
-			IJavaCompletionProposal[] proposals= collector.getJavaCompletionProposals();
-
 			IJavaCompletionProposal proposal= null;
 
-			for (IJavaCompletionProposal proposal2 : proposals) {
-				if (proposal2.getDisplayString().startsWith("setWriter")) {
-					proposal= proposal2;
+			for (IJavaCompletionProposal p : collector.getJavaCompletionProposals()) {
+				if (p.getDisplayString().startsWith("setWriter")) {
+					proposal= p;
 				}
 			}
 			assertNotNull("no proposal for setWriter()", proposal);
@@ -2342,6 +2325,127 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 			part.getSite().getPage().closeAllEditors(false);
 
 		}
+	}
+
+	/*
+	 * Ensure no extra ';' is inserted
+	 */
+	public void testImport() throws Exception {
+		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
+
+		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
+		StringBuffer buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.util.ArrayL; // here\n");
+		buf.append("public class A {\n");
+		buf.append("}\n");
+		String contents= buf.toString();
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", contents, false, null);
+
+		String str= "; // here";
+		int offset= contents.indexOf(str);
+
+		IEditorPart part= JavaUI.openInEditor(cu);
+		ISourceViewer viewer= ((JavaEditor) part).getViewer();
+		JavaContentAssistInvocationContext context= new JavaContentAssistInvocationContext(viewer, offset, part);
+		JavaCompletionProposalComputer computer= new JavaTypeCompletionProposalComputer();
+
+		// make sure we get an import rewrite context
+		SharedASTProviderCore.getAST(cu, SharedASTProviderCore.WAIT_YES, null);
+
+		List<ICompletionProposal> proposals= computer.computeCompletionProposals(context, null);
+		assertEquals("Expecting 1 proposal", 1, proposals.size());
+
+		IDocument doc= JavaUI.getDocumentProvider().getDocument(part.getEditorInput());
+		proposals.get(0).apply(doc);
+
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.util.ArrayList; // here\n");
+		buf.append("public class A {\n");
+		buf.append("}\n");
+		assertEquals(buf.toString(), doc.get());
+	}
+
+	/*
+	 * Ensure no extra ';' is inserted, whereas a selected text part is correctly replaced
+	 */
+	public void testImportReplacingSelection() throws Exception {
+		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
+
+		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
+		StringBuffer buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.util.ArrayLWrong;\n");
+		buf.append("public class A {\n");
+		buf.append("}\n");
+		String contents= buf.toString();
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", contents, false, null);
+
+		IEditorPart part= JavaUI.openInEditor(cu);
+		String str= "Wrong";
+
+		int offset= contents.indexOf(str);
+
+		CompletionProposalCollector collector= createCollector(cu, offset);
+		collector.setAllowsRequiredProposals(CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF, true);
+		collector.setReplacementLength("Wrong".length());
+
+		codeComplete(cu, offset, collector);
+		IJavaCompletionProposal[] proposals= collector.getJavaCompletionProposals();
+
+		assertEquals("expect 1 proposal", 1, proposals.length);
+
+		IDocument doc= JavaUI.getDocumentProvider().getDocument(part.getEditorInput());
+		proposals[0].apply(doc);
+
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.util.ArrayList;\n");
+		buf.append("public class A {\n");
+		buf.append("}\n");
+		assertEquals(buf.toString(), doc.get());
+	}
+
+	/*
+	 * Ensure no extra ';' is inserted, whereas remain text is replaced as per the preference option
+	 */
+	public void testImportReplacing() throws Exception {
+		getJDTUIPrefs().setValue(PreferenceConstants.CODEASSIST_INSERT_COMPLETION, false);
+
+		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
+
+		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
+		StringBuffer buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.util.ArrayLWrong;\n");
+		buf.append("public class A {\n");
+		buf.append("}\n");
+		String contents= buf.toString();
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", contents, false, null);
+
+		IEditorPart part= JavaUI.openInEditor(cu);
+		String str= "Wrong";
+
+		int offset= contents.indexOf(str);
+
+		CompletionProposalCollector collector= createCollector(cu, offset);
+		collector.setAllowsRequiredProposals(CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF, true);
+
+		codeComplete(cu, offset, collector);
+		IJavaCompletionProposal[] proposals= collector.getJavaCompletionProposals();
+
+		assertEquals("expect 1 proposal", 1, proposals.length);
+
+		IDocument doc= JavaUI.getDocumentProvider().getDocument(part.getEditorInput());
+		proposals[0].apply(doc);
+
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.util.ArrayList;\n");
+		buf.append("public class A {\n");
+		buf.append("}\n");
+		assertEquals(buf.toString(), doc.get());
 	}
 
 	public void testConstructorCompletion_Bug336451() throws Exception {

@@ -42,8 +42,8 @@ public class RefactoringHistorySerializationTests extends TestCase {
 
 	private static void compareReadHistory(RefactoringDescriptor[] descriptors, int flags, String xml, boolean ioException) throws CoreException {
 		List<RefactoringDescriptorProxyAdapter> list= new ArrayList<>();
-		for (int index= 0; index < descriptors.length; index++) {
-			list.add(new RefactoringDescriptorProxyAdapter(descriptors[index]));
+		for (RefactoringDescriptor descriptor : descriptors) {
+			list.add(new RefactoringDescriptorProxyAdapter(descriptor));
 		}
 		try {
 			ByteArrayInputStream stream= null;
@@ -111,7 +111,7 @@ public class RefactoringHistorySerializationTests extends TestCase {
 	}
 
 	private static String convertLineDelimiters(String xml) {
-		String delimiter= System.getProperty("line.separator");
+		String delimiter= System.lineSeparator();
 		assertNotNull("Could not determine line separator.", delimiter);
 		if (!"\n".equals(delimiter))
 			xml= concatenate(convertIntoLines(xml), delimiter);

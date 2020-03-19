@@ -63,8 +63,7 @@ public class ParticipantTesting {
 
 	public static String[] createHandles(Object[] elements) {
 		List<String> result= new ArrayList<>();
-		for (int i= 0; i < elements.length; i++) {
-			Object element= elements[i];
+		for (Object element : elements) {
 			if (element instanceof IJavaElement) {
 				result.add(((IJavaElement)element).getHandleIdentifier());
 			} else if (element instanceof IResource) {
@@ -147,7 +146,7 @@ public class ParticipantTesting {
 
 	public static void testSimilarElements(List<String> similarList, List<String> similarNewNameList, List<String> similarNewHandleList) {
 		Assert.assertEquals(similarList.size(), similarNewNameList.size());
-		if (similarList.size() == 0) {
+		if (similarList.isEmpty()) {
 			TestRenameParticipantShared.testNumberOfSimilarElements(0);
 		} else {
 			TestRenameParticipantShared.testSimilarElements(similarList, similarNewNameList, similarNewHandleList);
@@ -156,8 +155,7 @@ public class ParticipantTesting {
 	}
 
 	private static void testElementsShared(String[] expected, List<String> actual) {
-		for (int i= 0; i < expected.length; i++) {
-			String handle= expected[i];
+		for (String handle : expected) {
 			Assert.assertTrue("Expected handle not found: " + handle, actual.contains(handle));
 		}
 		testNumberOfElements(expected.length, actual);

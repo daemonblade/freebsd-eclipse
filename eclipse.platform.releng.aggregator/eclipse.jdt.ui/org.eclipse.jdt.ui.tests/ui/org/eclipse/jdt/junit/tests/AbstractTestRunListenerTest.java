@@ -17,6 +17,7 @@ import java.util.ArrayList;
 
 import junit.framework.TestCase;
 
+import org.eclipse.jdt.junit.JUnitCore;
 import org.eclipse.jdt.junit.launcher.JUnitLaunchShortcut;
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.util.DisplayHelper;
@@ -24,7 +25,6 @@ import org.eclipse.jdt.testplugin.util.DisplayHelper;
 import org.eclipse.swt.widgets.Display;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Path;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
@@ -44,6 +44,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 
 import org.eclipse.jdt.internal.junit.launcher.JUnitLaunchConfigurationConstants;
@@ -90,7 +91,7 @@ public class AbstractTestRunListenerTest extends TestCase {
 		fProject= JavaProjectHelper.createJavaProject("TestRunListenerTest", "bin");
 		// have to set up an 1.3 project to avoid requiring a 5.0 VM
 		JavaProjectHelper.addRTJar13(fProject);
-		JavaProjectHelper.addVariableEntry(fProject, new Path("JUNIT_HOME/junit.jar"), null, null);
+		JavaProjectHelper.addToClasspath(fProject, JavaCore.newContainerEntry(JUnitCore.JUNIT4_CONTAINER_PATH));
 	}
 
 	@Override
@@ -116,7 +117,7 @@ public class AbstractTestRunListenerTest extends TestCase {
 	protected void launchJUnit(IJavaElement aTest, String testKindID) throws CoreException {
 		launchJUnit(aTest, testKindID, (String)null);
 	}
-	
+
 	protected void launchJUnit(IJavaElement aTest, String testKindID, String testName) throws CoreException {
 		ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, null);
 		IMarker[] markers= aTest.getJavaProject().getProject().findMarkers(null, true, IResource.DEPTH_INFINITE);
@@ -131,29 +132,33 @@ public class AbstractTestRunListenerTest extends TestCase {
 		ILaunchesListener2 launchesListener= new ILaunchesListener2() {
 			@Override
 			public void launchesTerminated(ILaunch[] launches) {
-				for (int i= 0; i < launches.length; i++) {
-					if (isJUnitLaunch(launches[i]))
+				for (ILaunch launch : launches) {
+					if (isJUnitLaunch(launch)) {
 						fLaunchHasTerminated= true;
-					logLaunch("terminated", launches[i]);
+					}
+					logLaunch("terminated", launch);
 				}
 			}
 			@Override
 			public void launchesRemoved(ILaunch[] launches) {
-				for (int i= 0; i < launches.length; i++) {
-					if (isJUnitLaunch(launches[i]))
+				for (ILaunch launch : launches) {
+					if (isJUnitLaunch(launch)) {
 						fLaunchHasTerminated= true;
-					logLaunch("removed   ", launches[i]);
+					}
+					logLaunch("removed   ", launch);
 				}
 			}
 			@Override
 			public void launchesAdded(ILaunch[] launches) {
-				for (int i= 0; i < launches.length; i++)
-					logLaunch("added     ", launches[i]);
+				for (ILaunch launch : launches) {
+					logLaunch("added     ", launch);
+				}
 			}
 			@Override
 			public void launchesChanged(ILaunch[] launches) {
-				for (int i= 0; i < launches.length; i++)
-					logLaunch("changed   ", launches[i]);
+				for (ILaunch launch : launches) {
+					logLaunch("changed   ", launch);
+				}
 			}
 			private void logLaunch(String action, ILaunch launch) {
 				StringBuffer buf= new StringBuffer();
@@ -196,11 +201,11 @@ public class AbstractTestRunListenerTest extends TestCase {
 	protected String[] launchJUnit(IJavaElement aTest, final TestRunLog log) throws CoreException {
 		return launchJUnit(aTest, null, log);
 	}
-	
+
 	protected String[] launchJUnit(IJavaElement aTest, String testKindID, final TestRunLog log) throws CoreException {
 		return launchJUnit(aTest, testKindID, null, log);
 	}
-	
+
 	protected String[] launchJUnit(IJavaElement aTest, String testKindID, String testName, final TestRunLog log) throws CoreException {
 		launchJUnit(aTest, testKindID, testName);
 
@@ -230,12 +235,12 @@ public class AbstractTestRunListenerTest extends TestCase {
 
 	public static void assertEqualLog(final String[] expectedSequence, String[] logMessages) {
 		StringBuilder actual= new StringBuilder();
-		for (int i= 0; i < logMessages.length; i++) {
-			actual.append(logMessages[i]).append('\n');
+		for (String logMessage : logMessages) {
+			actual.append(logMessage).append('\n');
 		}
 		StringBuilder expected= new StringBuilder();
-		for (int i= 0; i < expectedSequence.length; i++) {
-			expected.append(expectedSequence[i]).append('\n');
+		for (String sequence : expectedSequence) {
+			expected.append(sequence).append('\n');
 		}
 		assertEquals(expected.toString(), actual.toString());
 	}

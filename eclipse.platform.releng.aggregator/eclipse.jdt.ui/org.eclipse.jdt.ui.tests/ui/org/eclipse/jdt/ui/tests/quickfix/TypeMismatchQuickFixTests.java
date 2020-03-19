@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,11 +16,19 @@
 package org.eclipse.jdt.ui.tests.quickfix;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
@@ -46,7 +54,7 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
 import org.eclipse.jdt.ui.JavaElementLabels;
 import org.eclipse.jdt.ui.PreferenceConstants;
-import org.eclipse.jdt.ui.tests.core.ProjectTestSetup;
+import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
 import org.eclipse.jdt.ui.text.java.IJavaCompletionProposal;
 import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposal;
 import org.eclipse.jdt.ui.text.java.correction.CUCorrectionProposal;
@@ -55,31 +63,17 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.TypeChangeCorrectionProposal;
 import org.eclipse.jdt.internal.ui.viewsupport.BindingLabelProvider;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
+@RunWith(JUnit4.class)
 public class TypeMismatchQuickFixTests extends QuickFixTest {
 
-	private static final Class<TypeMismatchQuickFixTests> THIS= TypeMismatchQuickFixTests.class;
+	@Rule
+    public ProjectTestSetup projectsetup = new ProjectTestSetup();
 
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
-
-	public TypeMismatchQuickFixTests(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		return setUpTest(new TestSuite(THIS));
-	}
-
-	public static Test setUpTest(Test test) {
-		return new ProjectTestSetup(test);
-	}
-
-	@Override
-	protected void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		Hashtable<String, String> options= TestOptions.getDefaultOptions();
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.SPACE);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, "4");
@@ -102,12 +96,13 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 	}
 
 
-	@Override
-	protected void tearDown() throws Exception {
-		JavaProjectHelper.clear(fJProject1, ProjectTestSetup.getDefaultClasspath());
+	@After
+	public void tearDown() throws Exception {
+		JavaProjectHelper.clear(fJProject1,ProjectTestSetup.getDefaultClasspath());
 	}
 
 
+	@Test
 	public void testTypeMismatchInVarDecl() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -163,6 +158,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2, preview3 }, new String[] { expected1, expected2, expected3 });
 	}
 
+	@Test
 	public void testTypeMismatchInVarDecl2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -235,6 +231,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testTypeMismatchInVarDecl3() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -265,6 +262,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1 }, new String[] { expected1 });
 	}
 
+	@Test
 	public void testTypeMismatchInVarDecl4() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -338,6 +336,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 	}
 
 
+	@Test
 	public void testTypeMismatchForInterface1() throws Exception {
 
 		IPackageFragment pack0= fSourceFolder.createPackageFragment("test0", false, null);
@@ -432,6 +431,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testTypeMismatchForInterface2() throws Exception {
 		IPackageFragment pack0= fSourceFolder.createPackageFragment("test0", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -541,6 +541,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2, preview3, preview4, preview5 }, new String[] { expected1, expected2, expected3, expected4, expected5 });
 	}
 
+	@Test
 	public void testTypeMismatchForInterfaceInGeneric() throws Exception {
 
 		IPackageFragment pack0= fSourceFolder.createPackageFragment("test0", false, null);
@@ -635,6 +636,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testTypeMismatchForInterfaceInGeneric2() throws Exception {
 
 		IPackageFragment pack0= fSourceFolder.createPackageFragment("test0", false, null);
@@ -717,6 +719,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testTypeMismatchForParameterizedType() throws Exception {
 		Map<String, String> options= fJProject1.getOptions(false);
 		try {
@@ -724,7 +727,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 			tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
 			tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
 			fJProject1.setOptions(tempOptions);
-		
+
 			IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 			StringBuffer buf= new StringBuffer();
 			buf.append("package test1;\n");
@@ -735,14 +738,14 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		
+
 			CompilationUnit astRoot= getASTRoot(cu);
 			ArrayList<IJavaCompletionProposal> proposals= collectCorrections(cu, astRoot);
 			assertCorrectLabels(proposals);
 			assertNumberOfProposals(proposals, 6);
-		
+
 			String[] expected= new String[2];
-		
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("import java.util.*;\n");
@@ -762,16 +765,17 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			expected[0]= buf.toString();
-			
+
 			assertExpectedExistInProposals(proposals, expected);
-			
-			
-			
+
+
+
 		} finally {
 			fJProject1.setOptions(options);
 		}
 	}
 
+	@Test
 	public void testTypeMismatchForParameterizedType2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -783,14 +787,14 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		
+
 		CompilationUnit astRoot= getASTRoot(cu);
 		ArrayList<IJavaCompletionProposal> proposals= collectCorrections(cu, astRoot);
 		assertNumberOfProposals(proposals, 1);
-		
+
 		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
 		String preview1= getPreviewContent(proposal);
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("import java.util.*;\n");
@@ -800,9 +804,9 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		String expected1= buf.toString();
-		
+
 		assertEqualStringsIgnoreOrder(new String[] { preview1 }, new String[] { expected1 });
-		
+
 		Accessor accessor= new Accessor(proposal, TypeChangeCorrectionProposal.class);
 		ITypeBinding[] typeProposals= (ITypeBinding[]) accessor.get("fTypeProposals");
 		String[] typeNames= new String[typeProposals.length];
@@ -823,7 +827,8 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		};
 		assertArrayEquals(expectedNames, typeNames);
 	}
-	
+
+	@Test
 	public void testTypeMismatchInFieldDecl() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -861,6 +866,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testTypeMismatchInFieldDeclNoImport() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -873,15 +879,15 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		
+
 		CompilationUnit astRoot= getASTRoot(cu);
 		ArrayList<IJavaCompletionProposal> proposals= collectCorrections(cu, astRoot);
 		assertNumberOfProposals(proposals, 1);
 		assertCorrectLabels(proposals);
-		
+
 		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
 		String preview1= getPreviewContent(proposal);
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
@@ -892,10 +898,11 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		String expected1= buf.toString();
-		
+
 		assertEqualString(preview1, expected1);
 	}
-	
+
+	@Test
 	public void testTypeMismatchInAssignment() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -946,6 +953,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testTypeMismatchInAssignment2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -997,6 +1005,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 
 	}
 
+	@Test
 	public void testTypeMismatchInAssignment3() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1050,6 +1059,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testTypeMismatchInAssignment4() throws Exception {
 		// test for https://bugs.eclipse.org/bugs/show_bug.cgi?id=540927
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -1091,6 +1101,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualString(preview1, expected1);
 	}
 
+	@Test
 	public void testTypeMismatchInExpression() throws Exception {
 
 		IPackageFragment pack0= fSourceFolder.createPackageFragment("test0", false, null);
@@ -1161,6 +1172,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2, preview3 }, new String[] { expected1, expected2, expected3 });
 	}
 
+	@Test
 	public void testCastOnCastExpression() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1211,6 +1223,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 	}
 
 
+	@Test
 	public void testMismatchingReturnType1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1263,6 +1276,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testMismatchingReturnType2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1316,6 +1330,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testMismatchingReturnTypeOnGeneric() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1368,6 +1383,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testMismatchingReturnTypeOnGeneric2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1408,9 +1424,10 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1 }, new String[] { expected1 });
 	}
 
+	@Test
 	public void testMismatchingReturnTypeOnGenericMethod() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		
+
 		StringBuffer buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("import java.lang.annotation.Annotation;\n");
@@ -1424,15 +1441,15 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		
+
 		CompilationUnit astRoot= getASTRoot(cu);
 		ArrayList<IJavaCompletionProposal> proposals= collectCorrections(cu, astRoot);
 		assertNumberOfProposals(proposals, 1);
 		assertCorrectLabels(proposals);
-		
+
 		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
 		String preview1= getPreviewContent(proposal);
-		
+
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("import java.lang.annotation.Annotation;\n");
@@ -1446,10 +1463,11 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		String expected1= buf.toString();
-		
+
 		assertEqualStringsIgnoreOrder(new String[] { preview1 }, new String[] { expected1 });
 	}
 
+	@Test
 	public void testMismatchingReturnTypeOnGenericMethod14() throws Exception {
 		Map<String, String> options= fJProject1.getOptions(false);
 		try {
@@ -1457,7 +1475,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 			JavaModelUtil.setComplianceOptions(options14, JavaCore.VERSION_1_4);
 			fJProject1.setOptions(options14);
 			IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-			
+
 			StringBuffer buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("import java.lang.reflect.AccessibleObject;\n");
@@ -1470,15 +1488,15 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-			
+
 			CompilationUnit astRoot= getASTRoot(cu);
 			ArrayList<IJavaCompletionProposal> proposals= collectCorrections(cu, astRoot);
 			assertNumberOfProposals(proposals, 1);
 			assertCorrectLabels(proposals);
-			
+
 			CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
 			String preview1= getPreviewContent(proposal);
-			
+
 			buf= new StringBuffer();
 			buf.append("package test1;\n");
 			buf.append("import java.lang.annotation.Annotation;\n");
@@ -1492,13 +1510,14 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 			buf.append("    }\n");
 			buf.append("}\n");
 			String expected1= buf.toString();
-			
+
 			assertEqualStringsIgnoreOrder(new String[] { preview1 }, new String[] { expected1 });
 		} finally {
 			fJProject1.setOptions(options);
 		}
 	}
-	
+
+	@Test
 	public void testMismatchingReturnTypeParameterized() throws Exception {
 		// test for https://bugs.eclipse.org/bugs/show_bug.cgi?id=165913
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -1540,6 +1559,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1 }, new String[] { expected1 });
 	}
 
+	@Test
 	public void testMismatchingReturnTypeOnWildcardExtends() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1586,6 +1606,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testMismatchingReturnTypeOnWildcardSuper() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1632,6 +1653,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testMismatchingExceptions1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1685,6 +1707,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testMismatchingExceptions2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1744,6 +1767,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testMismatchingExceptions3() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1831,6 +1855,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
 
+	@Test
 	public void testMismatchingExceptionsOnGeneric() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1883,7 +1908,8 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 	}
-	
+
+	@Test
 	public void testMismatchingExceptionsOnBinaryParent() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1913,6 +1939,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
+	@Test
 	public void testTypeMismatchInAnnotationValues1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1949,6 +1976,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testTypeMismatchInAnnotationValues2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -1988,6 +2016,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testTypeMismatchInSingleMemberAnnotation() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2024,6 +2053,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testTypeMismatchWithEnumConstant() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2057,6 +2087,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 	}
 
 
+	@Test
 	public void testTypeMismatchWithArrayLength() throws Exception {
 		// test for bug 126488
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
@@ -2097,6 +2128,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testTypeMismatchWithTypeInSamePackage() throws Exception {
 		// test for bug 198586
 		IPackageFragment pack2= fSourceFolder.createPackageFragment("test2", false, null);
@@ -2145,6 +2177,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testTypeMismatchInForEachProposalsList() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2184,7 +2217,8 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 
 		assertExpectedExistInProposals(proposals, expected);
 	}
-	
+
+	@Test
 	public void testTypeMismatchInForEachProposalsListExtends() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2200,13 +2234,13 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		
+
 		CompilationUnit astRoot= getASTRoot(cu);
 		ArrayList<IJavaCompletionProposal> proposals= collectCorrections(cu, astRoot);
-		
+
 		assertCorrectLabels(proposals);
 		assertNumberOfProposals(proposals, 1);
-		
+
 		String[] expected= new String[1];
 		buf= new StringBuffer();
 		buf.append("package pack;\n");
@@ -2221,10 +2255,11 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		expected[0]= buf.toString();
-		
+
 		assertExpectedExistInProposals(proposals, expected);
 	}
-	
+
+	@Test
 	public void testTypeMismatchInForEachProposalsListSuper() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2240,13 +2275,13 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		
+
 		CompilationUnit astRoot= getASTRoot(cu);
 		ArrayList<IJavaCompletionProposal> proposals= collectCorrections(cu, astRoot);
-		
+
 		assertCorrectLabels(proposals);
 		assertNumberOfProposals(proposals, 1);
-		
+
 		String[] expected= new String[1];
 		buf= new StringBuffer();
 		buf.append("package pack;\n");
@@ -2261,10 +2296,11 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		expected[0]= buf.toString();
-		
+
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testTypeMismatchInForEachProposalsArrays() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2305,6 +2341,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
+	@Test
 	public void testTypeMismatchInForEachMissingType() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2317,13 +2354,13 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		
+
 		CompilationUnit astRoot= getASTRoot(cu);
 		ArrayList<IJavaCompletionProposal> proposals= collectCorrections(cu, astRoot, 3, 2);
-		
+
 		assertCorrectLabels(proposals);
 		assertNumberOfProposals(proposals, 1);
-		
+
 		String[] expected= new String[1];
 		buf= new StringBuffer();
 		buf.append("package pack;\n");
@@ -2335,10 +2372,11 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		expected[0]= buf.toString();
-		
+
 		assertExpectedExistInProposals(proposals, expected);
 	}
-	
+
+	@Test
 	public void testNullCheck() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2387,7 +2425,8 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, expected);
 	}
 
-	
+
+	@Test
 	public void testTypeMismatchObjectAndPrimitiveType() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2410,7 +2449,7 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 
 		ICompletionProposal proposal= proposals.get(0);
 		assertTrue(proposal.getDisplayString().indexOf("Integer") != -1);
-		
+
 		String[] expected= new String[3];
 		buf= new StringBuffer();
 		buf.append("package pack;\n");
@@ -2450,7 +2489,8 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 
 		assertExpectedExistInProposals(proposals, expected);
 	}
-	
+
+	@Test
 	public void testTypeMismatchPrimitiveTypes() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -2472,13 +2512,13 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 
 		ICompletionProposal proposal= proposals.get(0);
 		assertTrue(proposal.getDisplayString().indexOf("Integer") == -1);
-		
+
 		ICompletionProposal proposal2= proposals.get(1);
 		assertTrue(proposal2.getDisplayString().indexOf("Integer") == -1);
-		
+
 		ICompletionProposal proposal3= proposals.get(2);
 		assertTrue(proposal3.getDisplayString().indexOf("Integer") == -1);
-		
+
 		String[] expected= new String[3];
 		buf= new StringBuffer();
 		buf.append("package pack;\n");
@@ -2515,5 +2555,5 @@ public class TypeMismatchQuickFixTests extends QuickFixTest {
 
 		assertExpectedExistInProposals(proposals, expected);
 	}
-	
+
 }

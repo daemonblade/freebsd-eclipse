@@ -254,7 +254,7 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		buf.append("}");
 		checkContentOfCu("manipulated class", //$NON-NLS-1$
 				cu, buf.toString());
-		
+
 		buf=new StringBuffer();
 		buf.append("test0=helloworld\n");
 		checkContentOfFile("properties", fHelper.getFile("/TestSetupProject/src2/p/test.properties"), buf.toString()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -773,12 +773,9 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 	}
 
 	private void checkContentOfFile(String message, IFile file, String content) throws Exception {
-		InputStream in= file.getContents();
-		try {
+		try (InputStream in= file.getContents()) {
 			String realContent= copyToString(in);
 			RefactoringTest.assertEqualLines(message, content, realContent);
-		} finally {
-			in.close();
 		}
 	}
 

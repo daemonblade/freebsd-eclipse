@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -506,9 +506,7 @@ public class ASTResolving {
 
 		// test if selector is a object method
 		ITypeBinding binding= searchRoot.getAST().resolveWellKnownType("java.lang.Object"); //$NON-NLS-1$
-		IMethodBinding[] objectMethods= binding.getDeclaredMethods();
-		for (int i= 0; i < objectMethods.length; i++) {
-			IMethodBinding meth= objectMethods[i];
+		for (IMethodBinding meth : binding.getDeclaredMethods()) {
 			if (meth.getName().equals(selector) && meth.getParameterTypes().length == nArgs) {
 				return new ITypeBinding[] { binding };
 			}
@@ -534,9 +532,7 @@ public class ASTResolving {
 					return true;
 				}
 
-				IMethodBinding[] methods= node.getDeclaredMethods();
-				for (int i= 0; i < methods.length; i++) {
-					IMethodBinding meth= methods[i];
+				for (IMethodBinding meth : node.getDeclaredMethods()) {
 					if (meth.getName().equals(selector) && meth.getParameterTypes().length == nArgs) {
 						result.add(node);
 					}
@@ -669,7 +665,7 @@ public class ASTResolving {
 	/**
 	 * The node's enclosing method declaration or <code>null</code> if
 	 * the node is not inside a method and is not a method declaration itself.
-	 * 
+	 *
 	 * @param node a node
 	 * @return the enclosing method declaration or <code>null</code>
 	 */
@@ -688,11 +684,11 @@ public class ASTResolving {
 	/**
 	 * Returns the lambda expression node which encloses the given <code>node</code>, or
 	 * <code>null</code> if none.
-	 * 
+	 *
 	 * @param node the node
 	 * @return the enclosing lambda expression node for the given <code>node</code>, or
 	 *         <code>null</code> if none
-	 * 
+	 *
 	 * @since 3.10
 	 */
 	public static LambdaExpression findEnclosingLambdaExpression(ASTNode node) {
@@ -719,7 +715,7 @@ public class ASTResolving {
 	 * </p>
 	 * @param node the node
 	 * @param nodeType the node type constant from {@link ASTNode}
-	 * @return the closest ancestor of <code>node</code> (including <code>node</code> itself) 
+	 * @return the closest ancestor of <code>node</code> (including <code>node</code> itself)
 	 *         whose type is <code>nodeType</code>, or <code>null</code> if none
 	 */
 	public static ASTNode findAncestor(ASTNode node, int nodeType) {
@@ -873,12 +869,12 @@ public class ASTResolving {
 		} else if (type.isPrimitive()) {
 			Code code= PrimitiveType.toCode(type.getName());
 			boolean found= false;
-			for (int i= 0; i < CODE_ORDER.length; i++) {
+			for (Code order : CODE_ORDER) {
 				if (found) {
-					String typeName= CODE_ORDER[i].toString();
+					String typeName= order.toString();
 					res.add(ast.resolveWellKnownType(typeName));
 				}
-				if (code == CODE_ORDER[i]) {
+				if (code == order) {
 					found= true;
 				}
 			}
@@ -889,9 +885,7 @@ public class ASTResolving {
 	}
 
 	private static void collectRelaxingTypes(Collection<ITypeBinding> res, ITypeBinding type) {
-		ITypeBinding[] interfaces= type.getInterfaces();
-		for (int i= 0; i < interfaces.length; i++) {
-			ITypeBinding curr= interfaces[i];
+		for (ITypeBinding curr : type.getInterfaces()) {
 			if (!res.contains(curr)) {
 				res.add(curr);
 			}
@@ -953,18 +947,16 @@ public class ASTResolving {
 			return isVariableDefinedInContext(context, type);
 		}
 		if (type.isGenericType()) {
-			ITypeBinding[] typeParameters= type.getTypeParameters();
-			for (int i= 0; i < typeParameters.length; i++) {
-				if (!isUseableTypeInContext(typeParameters[i], context, noWildcards)) {
+			for (ITypeBinding typeParameter : type.getTypeParameters()) {
+				if (!isUseableTypeInContext(typeParameter, context, noWildcards)) {
 					return false;
 				}
 			}
 			return true;
 		}
 		if (type.isParameterizedType()) {
-			ITypeBinding[] typeArguments= type.getTypeArguments();
-			for (int i= 0; i < typeArguments.length; i++) {
-				if (!isUseableTypeInContext(typeArguments[i], context, noWildcards)) {
+			for (ITypeBinding typeArgument : type.getTypeArguments()) {
+				if (!isUseableTypeInContext(typeArgument, context, noWildcards)) {
 					return false;
 				}
 			}
@@ -993,7 +985,7 @@ public class ASTResolving {
 	 *     if false, the type of an expression x (R r= x)
 	 * @param ast the current AST
 	 * @return the normalized binding or null when only the 'null' binding
-	 * 
+	 *
 	 * @see Bindings#normalizeForDeclarationUse(ITypeBinding, AST)
 	 */
 	public static ITypeBinding normalizeWildcardType(ITypeBinding wildcardType, boolean isBindingToAssign, AST ast) {

@@ -186,8 +186,7 @@ public class RenameTypeTests extends RefactoringTest {
 		IJavaElement[] similarElements= rtp.getSimilarElements();
 		if (similarElements == null)
 			return;
-		for (int i= 0; i < similarElements.length; i++) {
-			IJavaElement element= similarElements[i];
+		for (IJavaElement element : similarElements) {
 			if (! (element instanceof ILocalVariable)) {
 				IJavaElement newElement= mapper.getRefactoredJavaElement(element);
 				assertTrue(newElement.exists());
@@ -782,11 +781,11 @@ public class RenameTypeTests extends RefactoringTest {
 		// https://bugs.eclipse.org/356677
 		IPackageFragment packageP1= getRoot().createPackageFragment("p1", true, null);
 		IPackageFragment packageP2= getRoot().createPackageFragment("p2", true, null);
-		
+
 		IType classA= getClassFromTestFile(packageP1, "A");
 		getClassFromTestFile(packageP1, "B");
 		getClassFromTestFile(packageP2, "C");
-		
+
 		RefactoringStatus result= performRefactoring(createRefactoringDescriptor(classA, "C"));
 		assertNotNull("precondition was supposed to fail", result);
 	}
@@ -1157,11 +1156,11 @@ public class RenameTypeTests extends RefactoringTest {
 		// https://bugs.eclipse.org/356677
 		IPackageFragment packageP1= getRoot().createPackageFragment("p1", true, null);
 		IPackageFragment packageP2= getRoot().createPackageFragment("p2", true, null);
-		
+
 		IType classA= getClassFromTestFile(packageP1, "A");
 		IType classB= getClassFromTestFile(packageP1, "B");
 		IType classC= getClassFromTestFile(packageP2, "C");
-		
+
 		RefactoringStatus result= performRefactoring(createRefactoringDescriptor(classA, "C"));
 		assertEquals("was supposed to pass", null, result);
 
@@ -1169,7 +1168,7 @@ public class RenameTypeTests extends RefactoringTest {
 		assertEqualLines("invalid renaming in B", getFileContents(getOutputTestFileName("B")), classB.getCompilationUnit().getSource());
 		assertEqualLines("invalid renaming in C", getFileContents(getOutputTestFileName("C")), classC.getCompilationUnit().getSource());
 	}
-	
+
 	public void test66() throws Exception {
 		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=365380
 		helperWithTextual("B", "A", "B", "B", true, true);
@@ -1647,8 +1646,8 @@ public class RenameTypeTests extends RefactoringTest {
 		IPackageFragment newPackage= (IPackageFragment)rtp.getRefactoredJavaElement(oldPackage);
 		assertEquals(oldPackage, newPackage);
 
-		for (int i= 0; i < someClassMembers.length; i++) {
-			IMember member= (IMember) someClassMembers[i];
+		for (IJavaElement someClassMember : someClassMembers) {
+			IMember member= (IMember) someClassMember;
 			IJavaElement refactoredMember= rtp.getRefactoredJavaElement(member);
 			if (member instanceof IMethod && member.getElementName().equals(type.getElementName()))
 				continue; // constructor

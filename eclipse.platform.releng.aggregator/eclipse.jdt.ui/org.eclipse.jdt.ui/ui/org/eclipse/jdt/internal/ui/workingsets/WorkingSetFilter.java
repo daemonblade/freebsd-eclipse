@@ -105,7 +105,7 @@ public class WorkingSetFilter extends JavaViewerFilter {
 					IProject project= ((IJavaProject) fJavaElement).getProject();
 					if (!project.isAccessible()) {
 						// If our project is closed, return true only if the "other" is the same project
-						// to keep closed projects in the working sets 
+						// to keep closed projects in the working sets
 						if (other instanceof IJavaProject) {
 							IProject otherProject= ((IJavaProject) other).getProject();
 							return project.equals(otherProject);
@@ -138,7 +138,7 @@ public class WorkingSetFilter extends JavaViewerFilter {
 		/**
 		 * Check whether the given parent is an ancestor of the given element
 		 * or the same as the element.
-		 * 
+		 *
 		 * @param elem the element
 		 * @param parent the anchestor
 		 * @return <code>true</code> if it is an ancestor
@@ -234,17 +234,16 @@ public class WorkingSetFilter extends JavaViewerFilter {
 	public boolean isEnclosing(IAdaptable a) {
 		WorkingSetCompareEntry curr= new WorkingSetCompareEntry(a);
 		if (fCachedCompareEntries != null) {
-			for (int i= 0; i < fCachedCompareEntries.length; i++) {
-				if (fCachedCompareEntries[i].contains(curr)) {
+			for (WorkingSetCompareEntry entry : fCachedCompareEntries) {
+				if (entry.contains(curr)) {
 					return  true;
 				}
 			}
 			return false;
 		}
 		if (fWorkingSet != null) {
-			IAdaptable[] elements= fWorkingSet.getElements();
-			for (int i= 0; i < elements.length; i++) {
-				if (new WorkingSetCompareEntry(elements[i]).contains(curr)) {
+			for (IAdaptable element : fWorkingSet.getElements()) {
+				if (new WorkingSetCompareEntry(element).contains(curr)) {
 					return true;
 				}
 			}
@@ -254,9 +253,8 @@ public class WorkingSetFilter extends JavaViewerFilter {
 
 	private boolean isEnclosing(PackageFragmentRootContainer container) {
 		// check whether the containing package fragment roots are enclosed
-		IAdaptable[] roots= container.getChildren();
-		for (int i= 0; i < roots.length; i++) {
-			if (isEnclosing(roots[i])) {
+		for (IAdaptable root : container.getChildren()) {
+			if (isEnclosing(root)) {
 				return true;
 			}
 		}

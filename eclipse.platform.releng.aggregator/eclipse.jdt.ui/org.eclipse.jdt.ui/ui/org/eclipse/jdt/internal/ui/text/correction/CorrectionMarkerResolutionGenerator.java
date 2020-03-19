@@ -144,7 +144,7 @@ public class CorrectionMarkerResolutionGenerator implements IMarkerResolutionGen
 			try {
 				MultiFixTarget[] problems= getCleanUpTargets(markers);
 
-				if (fProposal instanceof CreatePackageInfoWithDefaultNullnessProposal) {					
+				if (fProposal instanceof CreatePackageInfoWithDefaultNullnessProposal) {
 					((CreatePackageInfoWithDefaultNullnessProposal) fProposal).resolve(problems, monitor);
 					return;
 				}
@@ -225,7 +225,7 @@ public class CorrectionMarkerResolutionGenerator implements IMarkerResolutionGen
 					if (createPackageInfoWithDefaultNullnessProposal.fProblemId == id)
 						result.add(marker);
 				}
-				if (result.size() == 0)
+				if (result.isEmpty())
 					return NO_MARKERS;
 
 				return result.toArray(new IMarker[result.size()]);
@@ -264,7 +264,7 @@ public class CorrectionMarkerResolutionGenerator implements IMarkerResolutionGen
 				}
 			}
 
-			if (result.size() == 0)
+			if (result.isEmpty())
 				return NO_MARKERS;
 
 			return result.toArray(new IMarker[result.size()]);

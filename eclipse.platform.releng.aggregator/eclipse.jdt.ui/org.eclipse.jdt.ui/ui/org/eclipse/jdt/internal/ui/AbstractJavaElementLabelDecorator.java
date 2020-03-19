@@ -37,7 +37,7 @@ public abstract class AbstractJavaElementLabelDecorator implements ILightweightL
 		public void elementChanged(ElementChangedEvent event) {
 			List<IJavaElement> changed= new ArrayList<>();
 			processDelta(event.getDelta(), changed);
-			if (changed.size() == 0)
+			if (changed.isEmpty())
 				return;
 
 			fireChange(changed.toArray(new IJavaElement[changed.size()]));
@@ -93,7 +93,7 @@ public abstract class AbstractJavaElementLabelDecorator implements ILightweightL
 			fChangeListener= null;
 		}
 	}
-	
+
 	private void fireChange(IJavaElement[] elements) {
 		if (fListeners != null && !fListeners.isEmpty()) {
 			LabelProviderChangedEvent event= new LabelProviderChangedEvent(this, elements);
@@ -109,9 +109,8 @@ public abstract class AbstractJavaElementLabelDecorator implements ILightweightL
 	protected abstract void processDelta(IJavaElementDelta delta, List<IJavaElement> result);
 
 	protected boolean processChildrenDelta(IJavaElementDelta delta, List<IJavaElement> result) {
-		IJavaElementDelta[] children= delta.getAffectedChildren();
-		for (int i= 0; i < children.length; i++) {
-			processDelta(children[i], result);
+		for (IJavaElementDelta child : delta.getAffectedChildren()) {
+			processDelta(child, result);
 		}
 		return false;
 	}

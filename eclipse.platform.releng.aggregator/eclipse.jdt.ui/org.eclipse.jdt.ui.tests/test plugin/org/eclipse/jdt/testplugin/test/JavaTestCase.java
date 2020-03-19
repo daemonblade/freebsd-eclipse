@@ -45,7 +45,7 @@ public class JavaTestCase extends TestCase {
 
 	/**
 	 * Creates a new test Java project.
-	 * 
+	 *
 	 * @throws Exception in case of any problem
 	 */
 	@Override
@@ -63,7 +63,7 @@ public class JavaTestCase extends TestCase {
 
 	/**
 	 * Removes the test java project.
-	 * 
+	 *
 	 * @throws Exception in case of any problem
 	 */
 	@Override
@@ -84,8 +84,8 @@ public class JavaTestCase extends TestCase {
 
 		System.out.println("methods of A");
 		IMethod[] methods= type.getMethods();
-		for (int i= 0; i < methods.length; i++) {
-			System.out.println(methods[i].getElementName());
+		for (IMethod method : methods) {
+			System.out.println(method.getElementName());
 		}
 		assertTrue("Should contain 2 methods", methods.length == 2);
 	}

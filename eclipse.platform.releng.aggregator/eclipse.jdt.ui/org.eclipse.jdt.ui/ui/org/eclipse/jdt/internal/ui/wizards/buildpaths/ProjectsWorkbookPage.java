@@ -15,7 +15,6 @@ package org.eclipse.jdt.internal.ui.wizards.buildpaths;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.swt.SWT;
@@ -76,7 +75,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 	private final TreeListDialogField<CPListElement> fProjectsList;
 
 	private final IWorkbenchPreferenceContainer fPageContainer;
-	
+
 	private boolean dragDropEnabled;
 	private Object draggedItemsProject;
 	private boolean fromModularProject;
@@ -125,7 +124,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 			if(JavaModelUtil.is9OrHigher(fCurrJProject)) {
 				updateProjectsListWithRootNode();
 				return;
-			}	
+			}
 			// add the projects-cpentries that are already on the class path
 			List<CPListElement> cpelements= fClassPathList.getElements();
 
@@ -139,7 +138,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 			}
 			fProjectsList.setElements(checkedProjects);
 	}
-	
+
 	boolean hasRootNodes(){
 		if (fProjectsList == null)
 			return false;
@@ -171,7 +170,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 		}
 		checkedProjects.add(rootModulepath);
 		checkedProjects.add(rootClasspath);
-		
+
 		fProjectsList.setTreeExpansionLevel(2);
 		fProjectsList.setElements(checkedProjects);
 		fProjectsList.enableButton(IDX_ADDPROJECT, false);
@@ -179,7 +178,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 			enableDragDropSupport();
 		}
 	}
-	
+
 	private void enableDragDropSupport() {
 		dragDropEnabled= true;
 		int ops= DND.DROP_MOVE;
@@ -291,15 +290,13 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 
 	private void updateClasspathList() {
 		List<CPListElement> projelements= fProjectsList.getElements();
-		
+
 		 List<CPListElement> flattenedProjElements = new ArrayList<>();
 		 for ( int i =0; i < projelements.size(); i++ ) {
 		 	CPListElement ele = projelements.get(i);
 		 	// if root node, collect the CPList elements
 		 	if(ele.isRootNodeForPath()) {
-		 		ArrayList<Object> children= ((RootCPListElement)ele).getChildren();
-		 		for (Iterator<?> iterator= children.iterator(); iterator.hasNext();) {
-		 			Object object=  iterator.next();
+		 		for (Object object : ((RootCPListElement)ele).getChildren()) {
 		 			if(object instanceof CPListElement) {
 		 				flattenedProjElements.add((CPListElement) object);
 		 			}
@@ -426,7 +423,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 				List<Object> selectedElements= fProjectsList.getSelectedElements();
 				List<CPListElement> elements= fProjectsList.getElements();
 				// if nothing selected, do nothing
-				if(selectedElements.size()==0)
+				if(selectedElements.isEmpty())
 					return;
 				boolean isClassRootExpanded= getRootExpansionState(fProjectsList, true);
 				boolean isModuleRootExpanded= getRootExpansionState(fProjectsList, false);
@@ -443,12 +440,12 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 							Object attribute= cpListElement.getAttribute(IClasspathAttribute.MODULE);
 							if(attribute == null) {
 								cpListElement.setAttribute(IClasspathAttribute.MODULE, new ModuleEncapsulationDetail[0]);
-								
+
 							}
 						}
 						isModuleRootExpanded= true;
 					}
-					((RootCPListElement)selectedElements.get(i)).addCPListElement(elementsToAdd);					
+					((RootCPListElement)selectedElements.get(i)).addCPListElement(elementsToAdd);
 				}
 				fProjectsList.setElements(elements);
 				fProjectsList.refresh();
@@ -456,7 +453,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 				setRootExpansionState(fProjectsList, isClassRootExpanded, true);
 				setRootExpansionState(fProjectsList, isModuleRootExpanded, false);
 			}
-			
+
 			if (index == IDX_ADDPROJECT && !hasRootNodes()) {
 				fProjectsList.refresh();
 			}
@@ -496,17 +493,17 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 				}
 				fProjectsList.getTreeViewer().remove(selElements.toArray());
 				fProjectsList.dialogFieldChanged();
-				
+
 			}
 			else {
 				fProjectsList.removeElements(selElements);
 			}
-		
+
 		}
 	}
 
 	private boolean canRemove(List<?> selElements) {
-		if (selElements.size() == 0) {
+		if (selElements.isEmpty()) {
 			return false;
 		}
 
@@ -607,7 +604,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 			}
 			if(key.equals(CPListElement.TEST) || key.equals(CPListElement.WITHOUT_TEST_CODE)) {
 				fProjectsList.refresh(elem.getParent());
-			} else { 
+			} else {
 				fProjectsList.refresh(elem);
 			}
 			fClassPathList.dialogFieldChanged(); // validate
@@ -677,19 +674,14 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 		selectable.addAll(Arrays.asList(fCurrJProject.getJavaModel().getJavaProjects()));
 		selectable.remove(fCurrJProject);
 
-		List<CPListElement> elements= fProjectsList.getElements();
-		for (int i= 0; i < elements.size(); i++) {
-			CPListElement curr= elements.get(i);
+		for (CPListElement curr : fProjectsList.getElements()) {
 			if (curr.isRootNodeForPath()) {
-				ArrayList<Object> children= ((RootCPListElement)curr).getChildren();
-				for (Iterator<?> iterator= children.iterator(); iterator.hasNext();) {
-					Object object=  iterator.next();
+				for (Object object : ((RootCPListElement)curr).getChildren()) {
 					if(object instanceof CPListElement) {
 						CPListElement cpe = (CPListElement)object;
 						IJavaProject proj= (IJavaProject) JavaCore.create(cpe.getResource());
 						selectable.remove(proj);
 					}
-					
 				}
 			}
 			IJavaProject proj= (IJavaProject) JavaCore.create(curr.getResource());

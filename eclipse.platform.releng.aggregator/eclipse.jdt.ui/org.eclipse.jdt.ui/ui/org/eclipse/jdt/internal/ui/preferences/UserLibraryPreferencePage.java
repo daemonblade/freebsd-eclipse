@@ -631,9 +631,7 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 				DOMSource source = new DOMSource(document);
 				StreamResult result = new StreamResult(stream);
 				transformer.transform(source, result);
-			} catch (ParserConfigurationException e) {
-				throw new IOException(e.getMessage());
-			} catch (TransformerException e) {
+			} catch (ParserConfigurationException | TransformerException e) {
 				throw new IOException(e.getMessage());
 			} finally {
 				try {
@@ -654,9 +652,7 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 				DocumentBuilder parser = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 				parser.setErrorHandler(new DefaultHandler());
 				cpElement = parser.parse(new InputSource(stream)).getDocumentElement();
-			} catch (SAXException e) {
-				throw new IOException(PreferencesMessages.UserLibraryPreferencePage_LoadSaveDialog_load_badformat);
-			} catch (ParserConfigurationException e) {
+			} catch (SAXException | ParserConfigurationException e) {
 				throw new IOException(PreferencesMessages.UserLibraryPreferencePage_LoadSaveDialog_load_badformat);
 			} finally {
 				stream.close();
@@ -1027,7 +1023,7 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 					elem.setValue(result.getValue());
 					if(key.equals(CPListElement.TEST) || key.equals(CPListElement.WITHOUT_TEST_CODE)) {
 						fLibraryList.refresh(elem.getParent());
-					} else { 
+					} else {
 						fLibraryList.refresh(elem);
 					}
 					fLibraryList.refresh(parentContainer);
@@ -1209,20 +1205,20 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 	private void doAdd(List<Object> list) {
 		if (canAdd(list)) {
 			CPUserLibraryElement parentLibrary = getSingleSelectedLibrary(list);
-			
+
 			IPath selection= getWorkbenchWindowSelection();
-			
+
 			IPath selectedPaths[] = BuildPathDialogAccess.chooseJAREntries(this.getShell(), selection, new IPath[0]);
-			
+
 			if (selectedPaths != null) {
 				List<CPListElement> elements = new ArrayList<>();
 				for (IPath selectedPath : selectedPaths) {
 					CPListElement cpElement = new CPListElement(parentLibrary, fDummyProject, IClasspathEntry.CPE_LIBRARY, selectedPath, null);
 					cpElement.setAttribute(CPListElement.SOURCEATTACHMENT, BuildPathSupport.guessSourceAttachment(cpElement));
 					cpElement.setAttribute(CPListElement.JAVADOC, BuildPathSupport.guessJavadocLocation(cpElement));
-					
+
 					elements.add(cpElement);
-					
+
 					parentLibrary.add(cpElement);
 				}
 				fLibraryList.refresh(parentLibrary);
@@ -1255,7 +1251,7 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 						}
 					}
 				}
-				
+
 			}
 		}
 		return null;
@@ -1321,7 +1317,7 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 	}
 
 	private boolean canRemove(List<Object> list) {
-		if (list.size() == 0) {
+		if (list.isEmpty()) {
 			return false;
 		}
 		for (int i= 0; i < list.size(); i++) {
@@ -1425,15 +1421,15 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 		}
 		return false;
 	}
-	
+
 	private CPListElement[] openJarFileDialog(CPListElement existing, Object parent) {
 		if (existing == null) {
 			return doOpenExternalJarFileDialog(existing, parent);
 		}
-		
+
 		IWorkspaceRoot root= ResourcesPlugin.getWorkspace().getRoot();
 		IPath path = existing.getPath();
-		
+
 		if (root.exists(path)) {
 			return doOpenInternalJarFileDialog(existing, parent);
 		}
@@ -1443,21 +1439,21 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 	private CPListElement[] doOpenInternalJarFileDialog(CPListElement existing, Object parent) {
 		IPath path = existing.getPath();
 		IPath selectedPaths[] = BuildPathDialogAccess.chooseJAREntries(this.getShell(), path, new IPath[0]);
-		
+
 		if (selectedPaths != null) {
 			List<CPListElement> elements = new ArrayList<>();
 			for (IPath selectedPath : selectedPaths) {
 				CPListElement cpElement = new CPListElement(parent, fDummyProject, IClasspathEntry.CPE_LIBRARY, selectedPath, null);
 				cpElement.setAttribute(CPListElement.SOURCEATTACHMENT, BuildPathSupport.guessSourceAttachment(cpElement));
 				cpElement.setAttribute(CPListElement.JAVADOC, BuildPathSupport.guessJavadocLocation(cpElement));
-				
+
 				elements.add(cpElement);
 			}
 			return elements.toArray(new CPListElement[0]);
 		}
 		return null;
 	}
-	
+
 	private CPListElement[] doOpenExternalJarFileDialog(CPListElement existing, Object parent) {
 		String lastUsedPath;
 		if (existing != null) {

@@ -248,7 +248,7 @@ public class RippleMethodFinder2 {
 			if (alienType.isInterface())
 				hasAlienInterfaces= true;
 		}
-		if (alienTypes.size() == 0) //no nasty marriage scenarios without types to marry with...
+		if (alienTypes.isEmpty()) //no nasty marriage scenarios without types to marry with...
 			return toArray(relatedMethods);
 		if (! hasRelatedInterfaces && ! hasAlienInterfaces) //no nasty marriage scenarios without interfaces...
 			return toArray(relatedMethods);
@@ -290,10 +290,8 @@ public class RippleMethodFinder2 {
 				IType alienType= iter.next();
 				IMethod alienMethod= fTypeToMethod.get(alienType);
 				ITypeHierarchy hierarchy= hierarchy(pm, owner, alienType);
-				IType[] allSubtypes= hierarchy.getAllSubtypes(alienType);
 
-				for (int i= 0; i < allSubtypes.length; i++) {
-					IType subtype= allSubtypes[i];
+				for (IType subtype : hierarchy.getAllSubtypes(alienType)) {
 					if (relatedSubTypes.contains(subtype)) {
 						if (JavaModelUtil.isVisibleInHierarchy(alienMethod, subtype.getPackageFragment())) {
 							marriedAlienTypeReps.add(fUnionFind.find(alienType));
@@ -304,7 +302,7 @@ public class RippleMethodFinder2 {
 				}
 			}
 
-			if (marriedAlienTypeReps.size() == 0)
+			if (marriedAlienTypeReps.isEmpty())
 				return toArray(relatedMethods);
 
 			for (Iterator<IType> iter= marriedAlienTypeReps.iterator(); iter.hasNext();) {
@@ -490,9 +488,7 @@ public class RippleMethodFinder2 {
 	}
 
 	private void uniteWithSupertypes(IType anchor, IType type) throws JavaModelException {
-		IType[] supertypes= fHierarchy.getSupertypes(type);
-		for (int i= 0; i < supertypes.length; i++) {
-			IType supertype= supertypes[i];
+		for (IType supertype : fHierarchy.getSupertypes(type)) {
 			IType superRep= fUnionFind.find(supertype);
 			if (superRep == null) {
 				//Type doesn't declare method, but maybe supertypes?

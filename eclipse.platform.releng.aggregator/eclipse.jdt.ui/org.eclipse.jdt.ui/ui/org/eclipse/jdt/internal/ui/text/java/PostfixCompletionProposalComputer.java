@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Nicolaj Hoess.
+ * Copyright (c) 2019, 2020 Nicolaj Hoess and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -28,6 +28,8 @@ import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -36,13 +38,14 @@ import org.eclipse.jdt.core.dom.BooleanLiteral;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
-import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.InfixExpression;
+import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.StringLiteral;
+import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.template.java.JavaPostfixContextType;
@@ -52,6 +55,7 @@ import org.eclipse.jdt.ui.text.java.CompletionProposalCollector;
 import org.eclipse.jdt.ui.text.java.JavaContentAssistInvocationContext;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
+import org.eclipse.jdt.internal.ui.text.CompletionTimeoutProgressMonitor;
 import org.eclipse.jdt.internal.ui.text.template.contentassist.PostfixTemplateEngine;
 import org.eclipse.jdt.internal.ui.text.template.contentassist.TemplateEngine;
 
@@ -124,7 +128,7 @@ public class PostfixCompletionProposalComputer extends AbstractTemplateCompletio
 			collector.setInvocationContext(context);
 			collector.setRequireExtendedContext(true);
 			try {
-				cu.codeComplete(context.getInvocationOffset(), collector);
+				cu.codeComplete(context.getInvocationOffset(), collector, new CompletionTimeoutProgressMonitor());
 			} catch (JavaModelException e) {
 				// continue
 			}
@@ -137,31 +141,37 @@ public class PostfixCompletionProposalComputer extends AbstractTemplateCompletio
 			return;
 		}
 
+		int tokenLength= context.getToken() != null ? context.getToken().length : 0;
+		int invOffset= context.getOffset() - tokenLength - 1;
+
 		ICompilationUnit cu= (ICompilationUnit) enclosingElement.getAncestor(IJavaElement.COMPILATION_UNIT);
-		ASTParser parser= createParser(cu);
-		IBinding[] res;
-		try {
-			res= parser.createBindings(new IJavaElement[] { enclosingElement }, null);
-		} catch (Exception e) {
-			return;
+		CompilationUnit cuRoot= SharedASTProviderCore.getAST(cu, SharedASTProviderCore.WAIT_NO, null);
+		if (cuRoot == null) {
+			cuRoot= (CompilationUnit) createPartialParser(cu, invOffset).createAST(null);
 		}
 
-		if (res.length > 0 && res[0] != null) {
-			parser= createParser(cu);
-			CompilationUnit cuRoot= (CompilationUnit) parser.createAST(null);
-			ASTNode completionNode= cuRoot.findDeclaringNode(res[0].getKey());
+		if (enclosingElement instanceof IMember) {
+			ISourceRange sr;
+			try {
+				sr= ((IMember) enclosingElement).getSourceRange();
+				if (sr == null) {
+					return;
+				}
+			} catch (JavaModelException e) {
+				return;
+			}
+
+			ASTNode completionNode= NodeFinder.perform(cuRoot, sr);
 			if (completionNode == null) {
 				return;
 			}
 
 			ASTNode[] bestNode= new ASTNode[] { completionNode };
-			int tokenLength= context.getToken() != null ? context.getToken().length : 0;
-			int invOffset= context.getOffset() - tokenLength - 1;
 			completionNode.accept(new ASTVisitor() {
 				@Override
 				public boolean visit(StringLiteral node) {
 					int start= node.getStartPosition();
-					if (invOffset > start && start > bestNode[0].getStartPosition()) {
+					if (invOffset > start && start >= bestNode[0].getStartPosition()) {
 						bestNode[0]= node;
 					}
 					return true;
@@ -170,7 +180,7 @@ public class PostfixCompletionProposalComputer extends AbstractTemplateCompletio
 				@Override
 				public boolean visit(ExpressionStatement node) {
 					int start= node.getStartPosition();
-					if (invOffset > start && start > bestNode[0].getStartPosition()) {
+					if (invOffset > start && start >= bestNode[0].getStartPosition()) {
 						bestNode[0]= node;
 					}
 					return true;
@@ -179,7 +189,7 @@ public class PostfixCompletionProposalComputer extends AbstractTemplateCompletio
 				@Override
 				public boolean visit(SimpleName node) {
 					int start= node.getStartPosition();
-					if (invOffset > start && start > bestNode[0].getStartPosition()) {
+					if (invOffset > start && start >= bestNode[0].getStartPosition()) {
 						bestNode[0]= node;
 					}
 					return true;
@@ -188,7 +198,7 @@ public class PostfixCompletionProposalComputer extends AbstractTemplateCompletio
 				@Override
 				public boolean visit(QualifiedName node) {
 					int start= node.getStartPosition();
-					if (invOffset > start && start > bestNode[0].getStartPosition()) {
+					if (invOffset > start && start >= bestNode[0].getStartPosition()) {
 						bestNode[0]= node;
 					}
 					return true;
@@ -197,7 +207,7 @@ public class PostfixCompletionProposalComputer extends AbstractTemplateCompletio
 				@Override
 				public boolean visit(BooleanLiteral node) {
 					int start= node.getStartPosition();
-					if (invOffset > start && start > bestNode[0].getStartPosition()) {
+					if (invOffset > start && start >= bestNode[0].getStartPosition()) {
 						bestNode[0]= node;
 					}
 					return true;
@@ -262,11 +272,12 @@ public class PostfixCompletionProposalComputer extends AbstractTemplateCompletio
 		}
 	}
 
-	private static ASTParser createParser(ICompilationUnit cu) {
+	private static ASTParser createPartialParser(ICompilationUnit cu, int position) {
 		ASTParser parser= ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		parser.setProject(cu.getJavaProject());
 		parser.setSource(cu);
+		parser.setFocalPosition(position);
 		parser.setResolveBindings(true);
 		parser.setBindingsRecovery(true);
 		parser.setStatementsRecovery(true);

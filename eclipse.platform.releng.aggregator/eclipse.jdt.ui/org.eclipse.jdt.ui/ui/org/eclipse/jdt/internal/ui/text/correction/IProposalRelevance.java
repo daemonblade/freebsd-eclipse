@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corporation and others.
+ * Copyright (c) 2012, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -18,7 +18,7 @@ package org.eclipse.jdt.internal.ui.text.correction;
 
 /**
  * Interface defining relevance values for quick fixes/assists.
- * 
+ *
  * @see org.eclipse.jdt.ui.text.java.IJavaCompletionProposal#getRelevance()
  * @since 3.9
  */
@@ -30,7 +30,7 @@ public interface IProposalRelevance {
 	public static final int CREATE_NON_STATIC_ACCESS_USING_DECLARING_TYPE= 12;
 	public static final int CREATE_INDIRECT_ACCESS_TO_STATIC= 12;
 	public static final int CREATE_NON_STATIC_ACCESS_USING_INSTANCE_TYPE= 11;
-	
+
 	public static final int REMOVE_UNUSED_CAST= 10;
 	public static final int ADD_UNIMPLEMENTED_METHODS= 10;
 	public static final int UNUSED_MEMBER= 10;
@@ -54,6 +54,8 @@ public interface IProposalRelevance {
 	public static final int MISSING_SERIAL_VERSION_DEFAULT= 9;
 	public static final int CREATE_CONSTANT_PREFIX_OR_SUFFIX_MATCH= 9;
 	public static final int CREATE_FIELD_PREFIX_OR_SUFFIX_MATCH= 9;
+	public static final int CREATE_OPTIONAL= 9;
+	public static final int CREATE_OPTIONAL_OF_NULLABLE= 9;
 
 	public static final int ADD_ABSTRACT_MODIFIER= 8;
 	public static final int ADD_STATIC_MODIFIER= 8;
@@ -76,7 +78,8 @@ public interface IProposalRelevance {
 	public static final int CHANGE_VARIABLE= 8;
 	public static final int CHANGE_RETURN_TYPE= 8;
 	public static final int CREATE_PARAMETER_PREFIX_OR_SUFFIX_MATCH= 8;
-	
+	public static final int CREATE_EMPTY_OPTIONAL= 8;
+
 	public static final int CHANGE_OVERRIDDEN_MODIFIER_2= 7;
 	public static final int ADD_EXCEPTIONS= 7;
 	public static final int CHANGE_METHOD_SIGNATURE= 7;
@@ -97,7 +100,7 @@ public interface IProposalRelevance {
 	public static final int RETURN_ALLOCATED_OBJECT_MATCH= 7;
 	public static final int CREATE_LOCAL= 7;
 	public static final int CHANGE_WORKSPACE_COMPLIANCE= 7;
-	
+
 	public static final int REMOVE_SEMICOLON= 6;
 	public static final int CREATE_METHOD_IN_SUPER= 6;
 	public static final int QUALIFY_LHS= 6;
@@ -275,6 +278,7 @@ public interface IProposalRelevance {
 	public static final int ADD_JAVADOC_FIELD= 1;
 	public static final int ADD_JAVADOC_TYPE= 1;
 	public static final int ADD_JAVADOC_METHOD= 1;
+	public static final int ADD_JAVADOC_MODULE= 1;
 	public static final int EXTRACT_METHOD_ERROR= 1;
 	public static final int EXTRACT_CONSTANT_ERROR= 1;
 	public static final int LINKED_NAMES_ASSIST_ERROR= 1;

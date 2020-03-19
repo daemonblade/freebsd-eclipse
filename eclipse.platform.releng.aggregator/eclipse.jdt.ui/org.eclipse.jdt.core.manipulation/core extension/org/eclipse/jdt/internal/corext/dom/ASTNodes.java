@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -18,12 +18,16 @@
  *       https://bugs.eclipse.org/bugs/show_bug.cgi?id=51540).
  *     Stephan Herrmann - Configuration for
  *		 Bug 463360 - [override method][null] generating method override should not create redundant null annotations
+ *     Fabrice TIERCELIN - Methods to identify a signature
+ *     Pierre-Yves B. (pyvesdev@gmail.com) - contributed fix for
+ *       Bug 434747 - [inline] Inlining a local variable leads to ambiguity with overloaded methods
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.dom;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,9 +59,9 @@ import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
+import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.ArrayInitializer;
-import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Block;
@@ -81,10 +85,10 @@ import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ForStatement;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IExtendedModifier;
-import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MemberValuePair;
@@ -125,6 +129,8 @@ import org.eclipse.jdt.core.formatter.IndentManipulation;
 import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
+import org.eclipse.jdt.internal.corext.refactoring.typeconstraints.types.TType;
+import org.eclipse.jdt.internal.corext.refactoring.typeconstraints.types.TypeEnvironment;
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
@@ -414,6 +420,24 @@ public class ASTNodes {
 
 	public static boolean isStatic(BodyDeclaration declaration) {
 		return Modifier.isStatic(declaration.getModifiers());
+	}
+
+	/**
+	 * True if the method is static, false if it is not or null if it is unknown.
+	 *
+	 * @param method The method
+	 * @return True if the method is static, false if it is not or null if it is unknown.
+	 */
+	public static Boolean isStatic(final MethodInvocation method) {
+		Expression calledType= method.getExpression();
+
+		if (method.resolveMethodBinding() != null) {
+			return (method.resolveMethodBinding().getModifiers() & Modifier.STATIC) != 0;
+		} else if ((calledType instanceof Name) && ((Name) calledType).resolveBinding().getKind() == IBinding.TYPE) {
+			return Boolean.TRUE;
+		}
+
+		return null;
 	}
 
 	public static List<BodyDeclaration> getBodyDeclarations(ASTNode node) {
@@ -836,6 +860,11 @@ public class ASTNodes {
 		} else if (! TypeRules.canAssign(initializerType, referenceType)) {
 			if (!Bindings.containsTypeVariables(referenceType))
 				return referenceType;
+
+		} else if (!initializerType.isEqualTo(referenceType)) {
+			if (isTargetAmbiguous(reference, initializerType)) {
+				return referenceType;
+			}
 		}
 
 		return null;
@@ -855,6 +884,71 @@ public class ASTNodes {
 	 * @since 3.10
 	 */
 	public static boolean isTargetAmbiguous(Expression expression, boolean expressionIsExplicitlyTyped) {
+		ParentSummary targetSummary= getParentSummary(expression);
+		if (targetSummary == null) {
+			return false;
+		}
+
+		if (targetSummary.methodBinding != null) {
+			ITypeBinding invocationTargetType= getInvocationType(expression.getParent(), targetSummary.methodBinding, targetSummary.invocationQualifier);
+			if (invocationTargetType != null) {
+				TypeBindingVisitor visitor= new FunctionalInterfaceAmbiguousMethodAnalyzer(invocationTargetType, targetSummary.methodBinding, targetSummary.argumentIndex,
+						targetSummary.argumentCount, expressionIsExplicitlyTyped);
+				return !(visitor.visit(invocationTargetType) && Bindings.visitHierarchy(invocationTargetType, visitor));
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Checks whether overloaded methods can result in an ambiguous method call or a semantic change
+	 * when the <code>expression</code> argument is inlined.
+	 *
+	 * @param expression the method argument, which is a functional interface instance
+	 * @param initializerType the initializer type of the variable to inline
+	 * @return <code>true</code> if overloaded methods can result in an ambiguous method call or a
+	 *         semantic change, <code>false</code> otherwise
+	 *
+	 * @since 3.19
+	 */
+	public static boolean isTargetAmbiguous(Expression expression, ITypeBinding initializerType) {
+		ParentSummary parentSummary= getParentSummary(expression);
+		if (parentSummary == null) {
+			return false;
+		}
+
+		IMethodBinding methodBinding= parentSummary.methodBinding;
+		if (methodBinding != null) {
+			ITypeBinding[] parameterTypes= methodBinding.getParameterTypes();
+			int argumentIndex= parentSummary.argumentIndex;
+			if (methodBinding.isVarargs() && argumentIndex >= parameterTypes.length - 1) {
+				argumentIndex= parameterTypes.length - 1;
+				initializerType= initializerType.createArrayType(1);
+			}
+			parameterTypes[argumentIndex]= initializerType;
+
+			ITypeBinding invocationType= getInvocationType(expression.getParent(), methodBinding, parentSummary.invocationQualifier);
+			if (invocationType != null) {
+				TypeEnvironment typeEnvironment= new TypeEnvironment();
+				TypeBindingVisitor visitor= new AmbiguousMethodAnalyzer(typeEnvironment, methodBinding, typeEnvironment.create(parameterTypes));
+				if (!visitor.visit(invocationType)) {
+					return true;
+				} else if (invocationType.isInterface()) {
+					return !Bindings.visitInterfaces(invocationType, visitor);
+				} else if (Modifier.isAbstract(invocationType.getModifiers())) {
+					return !Bindings.visitHierarchy(invocationType, visitor);
+				} else {
+					// it is not needed to visit interfaces if receiver is a concrete class
+					return !Bindings.visitSuperclasses(invocationType, visitor);
+				}
+			}
+		}
+
+		return true;
+	}
+
+	private static ParentSummary getParentSummary(Expression expression) {
 		StructuralPropertyDescriptor locationInParent= expression.getLocationInParent();
 
 		while (locationInParent == ParenthesizedExpression.EXPRESSION_PROPERTY
@@ -902,19 +996,28 @@ public class ASTNodes {
 			argumentIndex= enumConstantDecl.arguments().indexOf(expression);
 			argumentCount= enumConstantDecl.arguments().size();
 		} else {
-			return false;
+			return null;
 		}
 
-		if (methodBinding != null) {
-			ITypeBinding invocationTargetType;
-			invocationTargetType= getInvocationType(parent, methodBinding, invocationQualifier);
-			if (invocationTargetType != null) {
-				TypeBindingVisitor visitor= new AmbiguousTargetMethodAnalyzer(invocationTargetType, methodBinding, argumentIndex, argumentCount, expressionIsExplicitlyTyped);
-				return !(visitor.visit(invocationTargetType) && Bindings.visitHierarchy(invocationTargetType, visitor));
-			}
-		}
+		return new ParentSummary(methodBinding, argumentIndex, argumentCount, invocationQualifier);
+	}
 
-		return true;
+	private static class ParentSummary {
+
+		private final IMethodBinding methodBinding;
+
+		private final int argumentIndex;
+
+		private final int argumentCount;
+
+		private final Expression invocationQualifier;
+
+		ParentSummary(IMethodBinding methodBinding, int argumentIndex, int argumentCount, Expression invocationQualifier) {
+			this.methodBinding= methodBinding;
+			this.argumentIndex= argumentIndex;
+			this.argumentCount= argumentCount;
+			this.invocationQualifier= invocationQualifier;
+		}
 	}
 
 	/**
@@ -958,7 +1061,56 @@ public class ASTNodes {
 		return invocationType;
 	}
 
-	private static class AmbiguousTargetMethodAnalyzer implements TypeBindingVisitor {
+	private static class AmbiguousMethodAnalyzer implements TypeBindingVisitor {
+		private TypeEnvironment fTypeEnvironment;
+		private TType[] fTypes;
+		private IMethodBinding fOriginal;
+
+		public AmbiguousMethodAnalyzer(TypeEnvironment typeEnvironment, IMethodBinding original, TType[] types) {
+			fTypeEnvironment= typeEnvironment;
+			fOriginal= original;
+			fTypes= types;
+		}
+
+		@Override
+		public boolean visit(ITypeBinding node) {
+			IMethodBinding[] methods= node.getDeclaredMethods();
+			for (int i= 0; i < methods.length; i++) {
+				IMethodBinding candidate= methods[i];
+				if (candidate == fOriginal) {
+					continue;
+				}
+				if (fOriginal.getName().equals(candidate.getName())) {
+					if (canImplicitlyCall(candidate)) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+
+		/**
+		 * Returns <code>true</code> if the method can be called without explicit casts; otherwise
+		 * <code>false</code>.
+		 *
+		 * @param candidate the method to test
+		 * @return <code>true</code> if the method can be called without explicit casts
+		 */
+		private boolean canImplicitlyCall(IMethodBinding candidate) {
+			ITypeBinding[] parameters= candidate.getParameterTypes();
+			if (parameters.length != fTypes.length) {
+				return false;
+			}
+			for (int i= 0; i < parameters.length; i++) {
+				if (!fTypes[i].canAssignTo(fTypeEnvironment.create(parameters[i]))) {
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
+	private static class FunctionalInterfaceAmbiguousMethodAnalyzer implements TypeBindingVisitor {
 		private ITypeBinding fDeclaringType;
 		private IMethodBinding fOriginalMethod;
 		private int fArgIndex;
@@ -974,7 +1126,7 @@ public class ASTNodes {
 		 * @param expressionIsExplicitlyTyped <code>true</code> iff the intended replacement for <code>expression</code>
 		 *         is an explicitly typed lambda expression (JLS8 15.27.1)
 		 */
-		public AmbiguousTargetMethodAnalyzer(ITypeBinding declaringType, IMethodBinding originalMethod, int argumentIndex, int argumentCount, boolean expressionIsExplicitlyTyped) {
+		public FunctionalInterfaceAmbiguousMethodAnalyzer(ITypeBinding declaringType, IMethodBinding originalMethod, int argumentIndex, int argumentCount, boolean expressionIsExplicitlyTyped) {
 			fDeclaringType= declaringType;
 			fOriginalMethod= originalMethod;
 			fArgIndex= argumentIndex;
@@ -984,9 +1136,7 @@ public class ASTNodes {
 
 		@Override
 		public boolean visit(ITypeBinding type) {
-			IMethodBinding[] methods= type.getDeclaredMethods();
-			for (int i= 0; i < methods.length; i++) {
-				IMethodBinding candidate= methods[i];
+			for (IMethodBinding candidate : type.getDeclaredMethods()) {
 				if (candidate.getMethodDeclaration() == fOriginalMethod.getMethodDeclaration()) {
 					continue;
 				}
@@ -1261,8 +1411,7 @@ public class ASTNodes {
 	}
 
 	public static ASTNode findParent(ASTNode node, StructuralPropertyDescriptor[][] pathes) {
-		for (int p= 0; p < pathes.length; p++) {
-			StructuralPropertyDescriptor[] path= pathes[p];
+		for (StructuralPropertyDescriptor[] path : pathes) {
 			ASTNode current= node;
 			int d= path.length - 1;
 			for (; d >= 0 && current != null; d--) {
@@ -1302,6 +1451,35 @@ public class ASTNodes {
 		}
 		return current;
 	}
+
+    /**
+     * Returns the same node after removing any parentheses around it.
+     *
+     * @param node the node around which parentheses must be removed
+     * @return the same node after removing any parentheses around it. If there are
+     *         no parentheses around it then the exact same node is returned
+     */
+    public static ASTNode getUnparenthesedExpression(ASTNode node) {
+        if (node instanceof Expression) {
+            return getUnparenthesedExpression((Expression) node);
+        }
+        return node;
+    }
+
+    /**
+     * Returns the same expression after removing any parentheses around it.
+     *
+     * @param expression the expression around which parentheses must be removed
+     * @return the same expression after removing any parentheses around it If there
+     *         are no parentheses around it then the exact same expression is
+     *         returned
+     */
+    public static Expression getUnparenthesedExpression(Expression expression) {
+		if (expression != null && expression.getNodeType() == ASTNode.PARENTHESIZED_EXPRESSION) {
+            return getUnparenthesedExpression(((ParenthesizedExpression) expression).getExpression());
+        }
+        return expression;
+    }
 
 	/**
 	 * Returns <code>true</code> iff <code>parent</code> is a true ancestor of <code>node</code>
@@ -1407,8 +1585,7 @@ public class ASTNodes {
 			return problems;
 		final int iterations= computeIterations(scope);
 		List<IProblem> result= new ArrayList<>(5);
-		for (int i= 0; i < problems.length; i++) {
-			IProblem problem= problems[i];
+		for (IProblem problem : problems) {
 			boolean consider= false;
 			if ((severity & PROBLEMS) == PROBLEMS)
 				consider= true;
@@ -1445,8 +1622,7 @@ public class ASTNodes {
 			return messages;
 		final int iterations= computeIterations(flags);
 		List<Message> result= new ArrayList<>(5);
-		for (int i= 0; i < messages.length; i++) {
-			Message message= messages[i];
+		for (Message message : messages) {
 			ASTNode temp= node;
 			int count= iterations;
 			do {
@@ -1595,35 +1771,285 @@ public class ASTNodes {
      * @return true if the provided method invocation matches the provided method
      *         signature, false otherwise
      */
-	public static boolean usesGivenSignature(MethodInvocation node, String typeQualifiedName, String methodName,
-            String... parameterTypesQualifiedNames) {
-		if (node == null
-				|| node.resolveMethodBinding() == null
-				|| !node.resolveMethodBinding().getDeclaringClass().getQualifiedName().equals(typeQualifiedName)
-				|| !node.getName().getIdentifier().equals(methodName)) {
+	public static boolean usesGivenSignature(final MethodInvocation node, final String typeQualifiedName, final String methodName,
+			final String... parameterTypesQualifiedNames) {
+		return node != null
+				&& usesGivenSignature(node.resolveMethodBinding(), typeQualifiedName, methodName, parameterTypesQualifiedNames);
+	}
+
+	/**
+	 * Returns whether the provided method binding has the provided method signature. The method
+	 * signature is compared against the erasure of the invoked method.
+	 *
+	 * @param methodBinding the method binding to compare
+	 * @param typeQualifiedName the qualified name of the type declaring the method
+	 * @param methodName the method name
+	 * @param parameterTypesQualifiedNames the qualified names of the parameter types
+	 * @return true if the provided method invocation matches the provided method signature, false
+	 *         otherwise
+	 */
+	public static boolean usesGivenSignature(final IMethodBinding methodBinding, final String typeQualifiedName, final String methodName,
+			final String... parameterTypesQualifiedNames) {
+		// Let's do the fast checks first
+		if (methodBinding == null || !methodName.equals(methodBinding.getName())
+				|| methodBinding.getParameterTypes().length != parameterTypesQualifiedNames.length) {
 			return false;
 		}
 
-		if (node.arguments() == null && parameterTypesQualifiedNames == null) {
+		// OK more heavy checks now
+		ITypeBinding declaringClass= methodBinding.getDeclaringClass();
+		ITypeBinding implementedType= findImplementedType(declaringClass, typeQualifiedName);
+
+		if (parameterTypesMatch(implementedType, methodBinding, parameterTypesQualifiedNames)) {
 			return true;
 		}
 
-		if (node.arguments() == null || parameterTypesQualifiedNames == null) {
+		// A lot more heavy checks
+		IMethodBinding overriddenMethod= findOverridenMethod(declaringClass, typeQualifiedName, methodName,
+				parameterTypesQualifiedNames);
+
+		if (overriddenMethod != null && methodBinding.overrides(overriddenMethod)) {
 			return true;
 		}
 
-		if (node.arguments().size() == parameterTypesQualifiedNames.length) {
-			return true;
+		IMethodBinding methodDeclaration= methodBinding.getMethodDeclaration();
+		return methodDeclaration != null && methodDeclaration != methodBinding
+				&& usesGivenSignature(methodDeclaration, typeQualifiedName, methodName, parameterTypesQualifiedNames);
+	}
+
+	private static boolean parameterTypesMatch(final ITypeBinding implementedType, final IMethodBinding methodBinding,
+			final String[] parameterTypesQualifiedNames) {
+		if (implementedType != null && !implementedType.isRawType()) {
+			ITypeBinding erasure= implementedType.getErasure();
+
+			if (erasure.isGenericType() || erasure.isParameterizedType()) {
+				return parameterizedTypesMatch(implementedType, erasure, methodBinding);
+			}
 		}
 
-		for (int i= 0; i < parameterTypesQualifiedNames.length; i++) {
-			if (((Type) node.typeArguments().get(i)).resolveBinding() == null
-					|| ((Type) node.typeArguments().get(i)).resolveBinding().getQualifiedName() != parameterTypesQualifiedNames[i]) {
+		return implementedType != null && concreteTypesMatch(methodBinding.getParameterTypes(), parameterTypesQualifiedNames);
+	}
+
+	private static IMethodBinding findOverridenMethod(final ITypeBinding typeBinding, final String typeQualifiedName,
+			final String methodName, final String[] parameterTypesQualifiedNames) {
+		// Superclass
+		ITypeBinding superclassBinding= typeBinding.getSuperclass();
+
+		if (superclassBinding != null) {
+			superclassBinding= superclassBinding.getErasure();
+
+			if (typeQualifiedName.equals(superclassBinding.getErasure().getQualifiedName())) {
+				// Found the type
+				return findOverridenMethod(methodName, parameterTypesQualifiedNames,
+						superclassBinding.getDeclaredMethods());
+			}
+
+			IMethodBinding overridenMethod= findOverridenMethod(superclassBinding, typeQualifiedName, methodName,
+					parameterTypesQualifiedNames);
+
+			if (overridenMethod != null) {
+				return overridenMethod;
+			}
+		}
+
+		// Interfaces
+		for (ITypeBinding itfBinding : typeBinding.getInterfaces()) {
+			itfBinding= itfBinding.getErasure();
+
+			if (typeQualifiedName.equals(itfBinding.getQualifiedName())) {
+				// Found the type
+				return findOverridenMethod(methodName, parameterTypesQualifiedNames, itfBinding.getDeclaredMethods());
+			}
+
+			IMethodBinding overridenMethod= findOverridenMethod(itfBinding, typeQualifiedName, methodName,
+					parameterTypesQualifiedNames);
+
+			if (overridenMethod != null) {
+				return overridenMethod;
+			}
+		}
+
+		return null;
+	}
+
+	private static IMethodBinding findOverridenMethod(final String methodName, final String[] parameterTypesQualifiedNames,
+			final IMethodBinding[] declaredMethods) {
+		for (IMethodBinding methodBinding : declaredMethods) {
+			IMethodBinding methodDecl= methodBinding.getMethodDeclaration();
+
+			if (methodBinding.getName().equals(methodName) && methodDecl != null
+					&& concreteTypesMatch(methodDecl.getParameterTypes(), parameterTypesQualifiedNames)) {
+				return methodBinding;
+			}
+		}
+
+		return null;
+	}
+
+	private static boolean concreteTypesMatch(final ITypeBinding[] typeBindings, final String... typesQualifiedNames) {
+		if (typeBindings.length != typesQualifiedNames.length) {
+			return false;
+		}
+
+		for (int i= 0; i < typesQualifiedNames.length; i++) {
+			if (!typesQualifiedNames[i].equals(typeBindings[i].getQualifiedName())
+					&& !typesQualifiedNames[i].equals(Bindings.getBoxedTypeName(typeBindings[i].getQualifiedName()))
+					&& !typesQualifiedNames[i].equals(Bindings.getUnboxedTypeName(typeBindings[i].getQualifiedName()))) {
 				return false;
 			}
 		}
 
 		return true;
+	}
+
+	private static boolean parameterizedTypesMatch(final ITypeBinding clazz, final ITypeBinding clazzErasure,
+			IMethodBinding methodBinding) {
+		if (clazz.isParameterizedType() && !clazz.equals(clazzErasure)) {
+			Map<ITypeBinding, ITypeBinding> genericToConcreteTypeParamsFromClass= getGenericToConcreteTypeParamsMap(
+					clazz, clazzErasure);
+
+			for (IMethodBinding declaredMethod : clazzErasure.getDeclaredMethods()) {
+				if (declaredMethod.getName().equals(methodBinding.getName())) {
+					Map<ITypeBinding, ITypeBinding> genericToConcreteTypeParams= getGenericToConcreteTypeParamsMap(
+							methodBinding, declaredMethod);
+					genericToConcreteTypeParams.putAll(genericToConcreteTypeParamsFromClass);
+
+					if (parameterizedTypesMatch(genericToConcreteTypeParams, methodBinding, declaredMethod)) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	private static Map<ITypeBinding, ITypeBinding> getGenericToConcreteTypeParamsMap(final IMethodBinding method,
+			final IMethodBinding methodErasure) {
+		return getGenericToConcreteTypeParamsMap(method.getTypeArguments(), methodErasure.getTypeParameters());
+	}
+
+	private static Map<ITypeBinding, ITypeBinding> getGenericToConcreteTypeParamsMap(final ITypeBinding clazz,
+			final ITypeBinding clazzErasure) {
+		return getGenericToConcreteTypeParamsMap(clazz.getTypeArguments(), clazzErasure.getTypeParameters());
+	}
+
+	private static Map<ITypeBinding, ITypeBinding> getGenericToConcreteTypeParamsMap(final ITypeBinding[] typeParams,
+			final ITypeBinding[] genericTypeParams) {
+		final Map<ITypeBinding, ITypeBinding> results= new HashMap<>();
+		for (int i= 0; i < genericTypeParams.length && i < typeParams.length; i++) {
+			results.put(genericTypeParams[i], typeParams[i]);
+		}
+		return results;
+	}
+
+	private static boolean parameterizedTypesMatch(final Map<ITypeBinding, ITypeBinding> genericToConcreteTypeParams,
+			final IMethodBinding parameterizedMethod, final IMethodBinding genericMethod) {
+		ITypeBinding[] paramTypes= parameterizedMethod.getParameterTypes();
+		ITypeBinding[] genericParamTypes= genericMethod.getParameterTypes();
+
+		if (paramTypes.length != genericParamTypes.length) {
+			return false;
+		}
+
+		for (int i= 0; i < genericParamTypes.length; i++) {
+			ITypeBinding genericParamType= genericParamTypes[i];
+			ITypeBinding concreteParamType= null;
+
+			if (genericParamType.isArray()) {
+				ITypeBinding concreteElementType= genericToConcreteTypeParams.get(genericParamType.getElementType());
+
+				if (concreteElementType != null) {
+					concreteParamType= concreteElementType.createArrayType(genericParamType.getDimensions());
+				}
+			} else {
+				concreteParamType= genericToConcreteTypeParams.get(genericParamType);
+			}
+
+			if (concreteParamType == null) {
+				concreteParamType= genericParamType;
+			}
+
+			final ITypeBinding erasure1= paramTypes[i].getErasure();
+			final String erasureName1;
+			if (erasure1.isPrimitive()) {
+				erasureName1= Bindings.getBoxedTypeName(erasure1.getQualifiedName());
+			} else {
+				erasureName1= erasure1.getQualifiedName();
+			}
+
+			final ITypeBinding erasure2= concreteParamType.getErasure();
+			final String erasureName2;
+			if (erasure2.isPrimitive()) {
+				erasureName2= Bindings.getBoxedTypeName(erasure2.getQualifiedName());
+			} else {
+				erasureName2= erasure2.getQualifiedName();
+			}
+
+			if (!erasureName1.equals(erasureName2)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Returns the type binding for the provided qualified type name if it can be found in the type
+	 * hierarchy of the provided type binding.
+	 *
+	 * @param typeBinding the type binding to analyze
+	 * @param qualifiedTypeName the qualified type name to find
+	 * @return the type binding for the provided qualified type name if it can be found in the type
+	 *         hierarchy of the provided type binding, or {@code null} otherwise
+	 */
+	private static ITypeBinding findImplementedType(final ITypeBinding typeBinding, final String qualifiedTypeName) {
+		if (typeBinding == null) {
+			return null;
+		}
+
+		ITypeBinding typeErasure= typeBinding.getErasure();
+
+		if (qualifiedTypeName.equals(typeBinding.getQualifiedName())
+				|| qualifiedTypeName.equals(typeErasure.getQualifiedName())) {
+			return typeBinding;
+		}
+
+		return findImplementedType2(typeBinding, qualifiedTypeName);
+	}
+
+	private static ITypeBinding findImplementedType2(final ITypeBinding typeBinding, final String qualifiedTypeName) {
+		final ITypeBinding superclass= typeBinding.getSuperclass();
+
+		if (superclass != null) {
+			String superClassQualifiedName= superclass.getErasure().getQualifiedName();
+
+			if (qualifiedTypeName.equals(superClassQualifiedName)) {
+				return superclass;
+			}
+
+			ITypeBinding implementedType= findImplementedType2(superclass, qualifiedTypeName);
+
+			if (implementedType != null) {
+				return implementedType;
+			}
+		}
+
+		for (ITypeBinding itfBinding : typeBinding.getInterfaces()) {
+			String itfQualifiedName= itfBinding.getErasure().getQualifiedName();
+
+			if (qualifiedTypeName.equals(itfQualifiedName)) {
+				return itfBinding;
+			}
+
+			ITypeBinding implementedType= findImplementedType2(itfBinding, qualifiedTypeName);
+
+			if (implementedType != null) {
+				return implementedType;
+			}
+		}
+
+		return null;
 	}
 
 	public static Modifier findModifierNode(int flag, List<IExtendedModifier> modifiers) {

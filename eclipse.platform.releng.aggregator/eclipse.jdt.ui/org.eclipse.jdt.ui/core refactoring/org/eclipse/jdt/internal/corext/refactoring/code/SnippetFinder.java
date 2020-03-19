@@ -60,7 +60,7 @@ import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 			fNodes.add(node);
 		}
 		public boolean hasCorrectNesting(ASTNode node) {
-			if (fNodes.size() == 0)
+			if (fNodes.isEmpty())
 				return true;
 			ASTNode parent= node.getParent();
 			if(fNodes.get(0).getParent() != parent)
@@ -88,12 +88,12 @@ import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 		public boolean isEmpty() {
 			return fNodes.isEmpty() && fLocalMappings.isEmpty();
 		}
-		
+
 		/**
 		 * Tests whether the node to be replaced is invalid.
-		 * 
+		 *
 		 * @return true if the node is invalid, false otherwise
-		 * 
+		 *
 		 */
 		public boolean isInvalidNode() {
 			ASTNode first= fNodes.get(0);
@@ -105,12 +105,12 @@ import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 				return true;
 			return false;
 		}
-		
+
 		public MethodDeclaration getEnclosingMethod() {
 			ASTNode first= fNodes.get(0);
 			return (MethodDeclaration)ASTNodes.getParent(first, ASTNode.METHOD_DECLARATION);
 		}
-		
+
 		public boolean isNodeInStaticContext(){
 			ASTNode first= fNodes.get(0);
 			return ASTResolving.isInStaticContext(first);
@@ -281,9 +281,10 @@ import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 	}
 
 	private boolean isSnippetNode(ASTNode node) {
-		for (int i= 0; i < fSnippet.length; i++) {
-			if (node == fSnippet[i])
+		for (ASTNode a : fSnippet) {
+			if (node == a) {
 				return true;
+			}
 		}
 		return false;
 	}

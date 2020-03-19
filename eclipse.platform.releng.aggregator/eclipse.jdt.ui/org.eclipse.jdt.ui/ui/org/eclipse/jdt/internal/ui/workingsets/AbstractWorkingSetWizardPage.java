@@ -37,10 +37,10 @@ import org.eclipse.core.resources.IResource;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
@@ -54,6 +54,7 @@ import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.IWorkingSetManager;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.IWorkingSetPage;
+
 
 /**
  * A tree viewer on the left is used to show the workspace content, a table viewer on the
@@ -330,9 +331,8 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 		addAllButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				TreeItem[] items= fTree.getTree().getItems();
-				for (int i= 0; i < items.length; i++) {
-					fSelectedElements.add(items[i].getData());
+				for (TreeItem item : fTree.getTree().getItems()) {
+					fSelectedElements.add(item.getData());
 				}
 				fTable.refresh();
 				fTree.refresh();
@@ -381,8 +381,8 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 		fTable.remove(selectedElements);
 		try {
 			fTree.getTree().setRedraw(false);
-			for (int i= 0; i < selectedElements.length; i++) {
-				fTree.refresh(fTreeContentProvider.getParent(selectedElements[i]), true);
+			for (Object selectedElement : selectedElements) {
+				fTree.refresh(fTreeContentProvider.getParent(selectedElement), true);
 			}
 		} finally {
 			fTree.getTree().setRedraw(true);
@@ -406,22 +406,8 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 
 		configureTable(fTable);
 
-		fTable.setContentProvider(new IStructuredContentProvider() {
-
-			@Override
-			public Object[] getElements(Object inputElement) {
-				return fSelectedElements.toArray();
-			}
-
-			@Override
-			public void dispose() {
-			}
-
-			@Override
-			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-			}
-
-		});
+		fTable.setContentProvider(ArrayContentProvider.getInstance());
+		fTable.setInput(fSelectedElements);
 	}
 
 	/*
@@ -461,22 +447,21 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 			fWorkingSet.setId(getPageId());
 		} else {
 			// Add inaccessible resources
-			IAdaptable[] oldItems= fWorkingSet.getElements();
 			HashSet<IProject> closedProjectsToRetain= new HashSet<>(elements.size());
 			HashSet<IProject> closedProjectsToRemove= new HashSet<>(elements.size());
-			for (int i= 0; i < oldItems.length; i++) {
+			for (IAdaptable oldItem : fWorkingSet.getElements()) {
 				IResource oldResource= null;
-				if (oldItems[i] instanceof IResource) {
-					oldResource= (IResource) oldItems[i];
+				if (oldItem instanceof IResource) {
+					oldResource= (IResource) oldItem;
 				} else {
-					oldResource= oldItems[i].getAdapter(IResource.class);
+					oldResource= oldItem.getAdapter(IResource.class);
 				}
 				if (oldResource != null && oldResource.isAccessible() == false) {
 					IProject project= oldResource.getProject();
 					if (oldResource.equals(project)) {
 						closedProjectsToRetain.add(project);
-					} else	if (elements.contains(project)) {
-						elements.add(oldItems[i]);
+					} else if (elements.contains(project)) {
+						elements.add(oldItem);
 						closedProjectsToRemove.add(project);
 					}
 				}
@@ -508,9 +493,8 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 		fFirstCheck= false;
 
 		if (errorMessage == null && (fWorkingSet == null || newText.equals(fWorkingSet.getName()) == false)) {
-			IWorkingSet[] workingSets= PlatformUI.getWorkbench().getWorkingSetManager().getWorkingSets();
-			for (int i= 0; i < workingSets.length; i++) {
-				if (newText.equals(workingSets[i].getName())) {
+			for (IWorkingSet workingSet : PlatformUI.getWorkbench().getWorkingSetManager().getWorkingSets()) {
+				if (newText.equals(workingSet.getName())) {
 					errorMessage= WorkingSetMessages.JavaWorkingSetPage_warning_workingSetExists;
 				}
 			}

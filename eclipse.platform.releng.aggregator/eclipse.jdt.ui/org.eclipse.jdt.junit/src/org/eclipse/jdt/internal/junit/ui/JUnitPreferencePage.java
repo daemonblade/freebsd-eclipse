@@ -216,7 +216,7 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 		@Override
 		public Image getColumnImage(Object object, int column) {
 			String name= ((Filter) object).getName();
-			if (name.indexOf(".*") != - 1 || name.equals(JUnitMessages.JUnitMainTab_label_defaultpackage)) {  //$NON-NLS-1$
+			if (name.contains(".*") || name.equals(JUnitMessages.JUnitMainTab_label_defaultpackage)) {  //$NON-NLS-1$
 				//package
 				return IMG_PKG;
 			} else if ("".equals(name)) { //$NON-NLS-1$
@@ -260,7 +260,7 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 		protected void populateFilters(List<String> activeList, List<String> inactiveList) {
 			fFilters= new ArrayList<>(activeList.size() + inactiveList.size());
 			populateList(activeList, true);
-			if (inactiveList.size() != 0)
+			if (!inactiveList.isEmpty())
 				populateList(inactiveList, false);
 		}
 
@@ -374,7 +374,7 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 		SWTUtil.setButtonDimensionHint(fShowInAllViewsCheckBox);
 		setShowInAllViewsCheckBoxSelection(JUnitUIPreferencesConstants.getShowInAllViews());
 	}
-	
+
 	/**
 	 * Programatic access to enable assertions checkbox
 	 * @return boolean indicating check box selected or not
@@ -390,11 +390,11 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 	public boolean getShowInAllViewsCheckBoxSelection() {
 		return fShowInAllViewsCheckBox.getSelection();
 	}
-	
+
 	public void setShowInAllViewsCheckBoxSelection(boolean selected) {
 		fShowInAllViewsCheckBox.setSelection(selected);
 	}
-	
+
 	/*
 	 * Create a group to contain the step filter related widgets
 	 */

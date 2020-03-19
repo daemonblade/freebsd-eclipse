@@ -180,16 +180,18 @@ public class InvocationCountPerformanceMeter extends InternalPerformanceMeter {
 		 * Enables all breakpoint request.
 		 */
 		private void enableBreakpoints() {
-			for (int i= 0; i < fBreakpointRequests.length; i++)
-				fBreakpointRequests[i].enable();
+			for (BreakpointRequest breakpointRequest : fBreakpointRequests) {
+				breakpointRequest.enable();
+			}
 		}
 
 		/**
 		 * Disables all breakpoint request.
 		 */
 		private void disableBreakpoints() {
-			for (int i= 0; i < fBreakpointRequests.length; i++)
-				fBreakpointRequests[i].disable();
+			for (BreakpointRequest breakpointRequest : fBreakpointRequests) {
+				breakpointRequest.disable();
+			}
 		}
 
 		/**
@@ -266,9 +268,9 @@ public class InvocationCountPerformanceMeter extends InternalPerformanceMeter {
 		public void print(Object key1) {
 			System.out.println(key1.toString() + ":"); //$NON-NLS-1$
 			Map<Object, Integer> results= fResultsMap.get(key1);
-			for (Iterator<Object> iter= results.keySet().iterator(); iter.hasNext();) {
-				Object key2= iter.next();
-				System.out.println("\t" + key2 + ": " + results.get(key2).intValue()); //$NON-NLS-1$ //$NON-NLS-2$
+			for (Map.Entry<Object, Integer> entry : results.entrySet()) {
+				Object key = entry.getKey();
+				System.out.println("\t" + key + ": " + entry.getValue().intValue()); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 	}
@@ -381,10 +383,12 @@ public class InvocationCountPerformanceMeter extends InternalPerformanceMeter {
 			attach(localhost, PORT);
 
 			List<BreakpointRequest> requests= new ArrayList<>();
-			for (int i= 0; i < fMethods.length; i++)
-				requests.add(createBreakpointRequest(fMethods[i]));
-			for (int i= 0; i < fConstructors.length; i++)
-				requests.add(createBreakpointRequest(fConstructors[i]));
+			for (java.lang.reflect.Method method : fMethods) {
+				requests.add(createBreakpointRequest(method));
+			}
+			for (Constructor<?> constructor : fConstructors) {
+				requests.add(createBreakpointRequest(constructor));
+			}
 			fBreakpointRequests= requests.toArray(new BreakpointRequest[requests.size()]);
 
 			fEventReader= new EventReader(fVM.eventQueue());
@@ -537,7 +541,7 @@ public class InvocationCountPerformanceMeter extends InternalPerformanceMeter {
 	 * Returns the JNI-style signature of the given method. See
 	 * http://download.oracle.com/javase/6/docs
 	 * /jdk/api/jpda/jdi/com/sun/jdi/doc-files/signature.html
-	 * 
+	 *
 	 * @param method the method
 	 * @return the JNI style signature
 	 */
@@ -549,7 +553,7 @@ public class InvocationCountPerformanceMeter extends InternalPerformanceMeter {
 	 * Returns the JNI-style signature of the given constructor. See
 	 * http://download.oracle.com/javase
 	 * /6/docs/jdk/api/jpda/jdi/com/sun/jdi/doc-files/signature.html
-	 * 
+	 *
 	 * @param constructor the constructor
 	 * @return the JNI style signature
 	 */
@@ -561,7 +565,7 @@ public class InvocationCountPerformanceMeter extends InternalPerformanceMeter {
 	 * Returns the JNI-style signature of the given parameter types. See
 	 * http://download.oracle.com/javase
 	 * /6/docs/jdk/api/jpda/jdi/com/sun/jdi/doc-files/signature.html
-	 * 
+	 *
 	 * @param paramTypes the parameter types
 	 * @return the JNI style signature
 	 */
@@ -578,7 +582,7 @@ public class InvocationCountPerformanceMeter extends InternalPerformanceMeter {
 	 * Returns the JNI-style signature of the given class. See
 	 * http://download.oracle.com/javase/6/docs
 	 * /jdk/api/jpda/jdi/com/sun/jdi/doc-files/signature.html
-	 * 
+	 *
 	 * @param clazz the class
 	 * @return the JNI style signature
 	 */
