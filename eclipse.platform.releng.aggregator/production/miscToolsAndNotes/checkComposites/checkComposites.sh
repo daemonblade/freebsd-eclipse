@@ -17,24 +17,24 @@
 # atomic composite repositories are valid. 
 
 # can be retrieved, on Hudson, with 
-# wget --no-verbose --no-cache  -O checkComposites.sh http://${GIT_HOST}/c/platform/eclipse.platform.releng.aggregator.git/plain/production/miscToolsAndNotes/checkComposites/checkComposites.sh;
+# wget --no-verbose --no-cache  -O checkComposites.sh https://${GIT_HOST}/c/platform/eclipse.platform.releng.aggregator.git/plain/production/miscToolsAndNotes/checkComposites/checkComposites.sh;
 # and typically set chmod +x checkComposites.sh
 # and then executed in "bash script" build step.
 
 baseEclipseAccessDir=/home/data/httpd/download.eclipse.org
-baseEclipseDirSegment=eclipse/downloads/drops4/R-4.13-201909161045
-baseEclipse=eclipse-platform-4.13-linux-gtk-x86_64.tar.gz
+baseEclipseDirSegment=eclipse/downloads/drops4/R-4.14-201912100610
+baseEclipse=eclipse-platform-4.14-linux-gtk-x86_64.tar.gz
 repoFileAccess=file:///home/data/httpd/download.eclipse.org/
-repoHttpAccess=http://download.eclipse.org
+repoHttpAccess=https://download.eclipse.org
 repoAccess=${repoFileAccess}
 # TODO: reduce this list soon
 repoList="\
-/eclipse/updates/4.13/ \
 /eclipse/updates/4.14/ \
-/eclipse/updates/4.14-I-builds/ \
-/eclipse/updates/4.14milestones/ \
-/eclipse/updates/4.13-Y-builds/ \
-/eclipse/updates/4.13-P-builds/ \
+/eclipse/updates/4.15/ \
+/eclipse/updates/4.15-I-builds/ \
+/eclipse/updates/4.15milestones/ \
+/eclipse/updates/4.15-Y-builds/ \
+/eclipse/updates/4.15-P-builds/ \
 "
 
 

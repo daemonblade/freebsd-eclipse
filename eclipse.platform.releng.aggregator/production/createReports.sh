@@ -37,7 +37,7 @@ echo -e "\tbuildIdToTest: ${BUILD_ID}"
 # TODO: we could have a "previous_release" sort of variable that 
 # would be defined in parent pom or build_eclipse_org.shsource so that
 # we do not need to change this source. 
-buildIdToCompare="4.13/R-4.13-201909161045"
+buildIdToCompare="4.14/R-4.14-201912100610"
 
 build_type=${buildIdToTest:0:1}
 echo -e "\tbuild_type: ${build_type}"
@@ -67,22 +67,22 @@ function latestSimpleRepo
 
 if [[ ${build_type} == "I" ]]
 then
-  update_dir_segment="4.14-I-builds"
-  buildIdToCompare="4.13/R-4.13-201909161045"
-  echo -e "\tlatest_R_build: R-4.13-201909161045"
+  update_dir_segment="4.15-I-builds"
+  buildIdToCompare="4.14/R-4.14-201912100610"
+  echo -e "\tlatest_R_build: R-4.14-201912100610"
 elif [[ ${build_type} == "Y" ]]
 then
-  update_dir_segment="4.14-Y-builds"
+  update_dir_segment="4.15-Y-builds"
   # Note: we use same value for Y-builds as for I-builds, since conceptually
   # they are the same, except that Y-builds use some code from BETA_JAVA12 branch.
-  latest_I_build=$(latestSimpleRepo "${repo_root}/4.14-I-builds" "I20*")
+  latest_I_build=$(latestSimpleRepo "${repo_root}/4.15-I-builds" "I20*")
   RC=$?
   if [[ $RC != 0 ]]
   then
     exit $RC
   fi
   echo -e "\tlatest_I_build: $latest_I_build"
-  buildIdToCompare="4.14-I-builds/${latest_I_build}"
+  buildIdToCompare="4.15-I-builds/${latest_I_build}"
 else
   echo -e "\nERROR: Unhandled build type: ${build_type} so update_dir_segment undefined: $update_dir_segment"
   echo -e "\n\tand repo reports not produced."
@@ -108,7 +108,7 @@ then
   mkdir -p ${output_dir}
 
   # This analyzersBuildId can (currently) be found by "drilling down" at 
-  # http://download.eclipse.org/cbi/updates/analyzers/4.10/
+  # https://download.eclipse.org/cbi/updates/analyzers/4.10/
   # analyzersBuildId=I20161201-1633
   # We use analyzer from hipp this way we have one less version to track
   tar_name=org.eclipse.cbi.p2repo.analyzers.product-linux.gtk.x86_64.tar.gz

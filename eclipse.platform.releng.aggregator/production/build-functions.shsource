@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #*******************************************************************************
-# Copyright (c) 2019 IBM Corporation and others.
+# Copyright (c) 2019, 2020 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -624,7 +624,7 @@ fn-pom-version-updater ()
   report=${TMP_DIR}/pom_${BUILD_ID}.txt
   pushd "$REPO_DIR"
     mvn ${MAVEN_SETTINGS} $MARGS  ${ALT_POM_FILE} \
-      org.eclipse.tycho:tycho-versions-plugin:1.5.1:update-pom \
+      org.eclipse.tycho:tycho-versions-plugin:1.6.0:update-pom \
       -Dmaven.repo.local=$LOCAL_REPO -Djava.io.tmpdir=${MAVEN_TMP_DIR}\
       -DaggregatorBuild=true \
       -DbuildTimestamp="${TIMESTAMP}" -DbuildType="${BUILD_TYPE}" -DbuildId="${BUILD_ID}" -Declipse-p2-repo.url="NOT_FOR_PRODUCTION_USE"
@@ -660,7 +660,7 @@ fn-gather-repo ()
   BUILD_DIR="$1"; shift
   if [[ -n "${PATCH_BUILD}" ]]
   then
-    PATCH_BUILD_GENERIC=java13patch
+    PATCH_BUILD_GENERIC=java14patch
     TARGET_PATH=eclipse.platform.releng.tychoeclipsebuilder/${PATCH_BUILD}/eclipse.releng.repository.${PATCH_BUILD_GENERIC}/target/repository
     REPO_DIR_REPOSITORY=$REPO_DIR/${TARGET_PATH}
   else
@@ -681,10 +681,10 @@ fn-gather-repo ()
 fn-notarize-macbuild ()
 {
 	set -x
-	BUILD_DIR="$1"; shift
+	BUILD_DIR_TEMP="$1"; shift
 	DMG="$1"; shift
 	
-	pushd $BUILD_DIR
+	pushd $BUILD_DIR_TEMP
 		
 	PRIMARY_BUNDLE_ID="$(echo ${DMG} | sed  's/-macosx-cocoa-x86_64.dmg//g')"
 	
@@ -1181,17 +1181,17 @@ fn-summarize-apitooling ()
   # Make sure FREEZE_PARAMS is defined, but empty space, if not using freeze reports.
   #FREEZE_PARAMS=" "
   # When no "freeze" in effect for a release comment these out. Uncomment after M6, changing to appropriate versions.
-  FREEZE_PARAMS="-DfreezeBaseURL=http://${DOWNLOAD_HOST}/eclipse/downloads/drops4/S-4.14RC1-201911271800/eclipse-SDK-4.14RC1-win32-x86_64.zip \
-    -DfreezeName=Eclipse-SDK-4.14RC1 \
-    -DfreezeFilename=eclipse-SDK-4.14RC1-win32-x86_64.zip "
+  FREEZE_PARAMS="-DfreezeBaseURL=https://${DOWNLOAD_HOST}/eclipse/downloads/drops4/S-4.15RC1-202002261800/eclipse-SDK-4.15RC1-win32-x86_64.zip \
+    -DfreezeName=Eclipse-SDK-4.15RC1 \
+    -DfreezeFilename=eclipse-SDK-4.15RC1-win32-x86_64.zip "
   # this API_PREV_REF_LABEL variable should be changed any time the version used
   # by previousBaseURL changes. Its purpose is just to localize changes to this one
   # place, and not have to make further, hard-coded changes to php files.
   # Similar for freeze label.
   # NOTE: the *reference* for API changes should be the "previous release", even if it is a "service release".
-  API_PREV_REF_LABEL=4.13
+  API_PREV_REF_LABEL=4.14
   fn-write-property API_PREV_REF_LABEL
-  API_FREEZE_REF_LABEL=4.14RC1
+  API_FREEZE_REF_LABEL=4.15RC1
   #API_FREEZE_REF_LABEL=" "
   fn-write-property API_FREEZE_REF_LABEL
   java -Djava.io.tmpdir=$TMP_DIR -jar "$BASEBUILDER_LAUNCHER" \
@@ -1203,9 +1203,9 @@ fn-summarize-apitooling ()
     -DbuildId="$BUILD_ID" \
     -DbuildLabel="$BUILD_ID" \
     -DbuildWorkingArea="${BUILD_HOME}/4${BUILD_TYPE}/gitCache/eclipse.platform.releng.aggregator" \
-    -DpreviousBaseURL=https://${DOWNLOAD_HOST}/eclipse/downloads/drops4/R-4.13-201909161045/eclipse-SDK-4.13-win32-x86_64.zip \
-    -DpreviousBaselineName=Eclipse-SDK-4.13 \
-    -DpreviousBaselineFilename=eclipse-SDK-4.13-win32-x86_64.zip \
+    -DpreviousBaseURL=https://${DOWNLOAD_HOST}/eclipse/downloads/drops4/R-4.14-201912100610/eclipse-SDK-4.14-win32-x86_64.zip \
+    -DpreviousBaselineName=Eclipse-SDK-4.14 \
+    -DpreviousBaselineFilename=eclipse-SDK-4.14-win32-x86_64.zip \
     -Djava.io.tmpdir=$TMP_DIR \
     ${FREEZE_PARAMS} \
     apiToolsReports

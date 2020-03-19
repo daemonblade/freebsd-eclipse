@@ -39,8 +39,8 @@ ECLIPSE_BUILD_DIR="${AGGR_DIR}/eclipse.platform.releng.tychoeclipsebuilder"
 
 declare -a PLATFORMS=( \
 cocoa.macosx.x86_64 \
-gtk.freebsd.powerpc64 \
-gtk.freebsd.amd64 \
+gtk.linux.ppc64le \
+gtk.linux.x86_64 \
 win32.win32.x86_64 \
 )
 NPLATFORMS=${#PLATFORMS[@]}

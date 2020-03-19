@@ -184,7 +184,7 @@ fi
 # and build types, (e.g. M vs. I). For N builds, we still use "I".
 # 5/31013. We no longer do the post build comparator, but leaving it, just
 # in case we want an occasionally double check ... but, should never be routine.
-#comparatorRepository=http://download.eclipse.org/eclipse/updates/4.4-I-builds
+#comparatorRepository=https://download.eclipse.org/eclipse/updates/4.4-I-builds
 comparatorRepository=NOT_CURRENTLY_USED
 
 GET_AGGREGATOR_BUILD_LOG="${logsDirectory}/mb010_get-aggregator_output.txt"
@@ -354,7 +354,7 @@ else
     then
       AGGRCOMMIT=$( git rev-parse HEAD )
       echo "eclipse.platform.releng.aggregator TAGGED: ${BUILD_ID}"  >> ${buildDirectory}/directory.txt
-      echo "       http://git.eclipse.org/c/platform/eclipse.platform.releng.aggregator.git/commit/?id=${AGGRCOMMIT}"  >> ${buildDirectory}/directory.txt
+      echo "       https://git.eclipse.org/c/platform/eclipse.platform.releng.aggregator.git/commit/?id=${AGGRCOMMIT}"  >> ${buildDirectory}/directory.txt
     fi
   
     if [[ ! -e "$STREAMS_PATH/repositories_${PATCH_OR_BRANCH_LABEL}.txt" ]]
