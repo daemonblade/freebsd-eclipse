@@ -83,6 +83,7 @@
 ;${eclipse.platform.ui.bundles}/org.eclipse.e4.ui.css.swt.theme/src
 ;${eclipse.platform.ui.bundles}/org.eclipse.e4.ui.di/src
 ;${eclipse.platform.ui.bundles}/org.eclipse.e4.ui.dialogs/src
+;${eclipse.platform.ui.bundles}/org.eclipse.e4.ui.ide/src
 ;${eclipse.platform.ui.bundles}/org.eclipse.e4.ui.model.workbench/src
 ;${eclipse.platform.ui.bundles}/org.eclipse.e4.ui.services/src
 ;${eclipse.platform.ui.bundles}/org.eclipse.e4.ui.widgets/src
@@ -182,7 +183,7 @@
 -splitIndex
 -windowtitle "Eclipse Platform API Specification"
 -doctitle "Eclipse Platform API Specification"
--header "<span style='font-size:small'><b>Eclipse Platform</b><br>2019-12 (4.14)</span>"
+-header "<span style='font-size:small'><b>Eclipse Platform</b><br>2020-03 (4.15)</span>"
 -bottom "<br><span style='font-size:small;float:right'>Copyright (c) 2000, 2019 Eclipse Contributors and others. All rights reserved.</span><span style='font-size:small'><a href='{@docRoot}/../misc/api-usage-rules.html'>Guidelines for using Eclipse APIs.</a></span>"
 -link https://docs.oracle.com/en/java/javase/11/docs/api
 -link https://osgi.org/javadoc/osgi.core/7.0.0/
@@ -198,7 +199,8 @@
 -tag 'generated:X:"EMF generated tag"'
 -tag 'ordered:X:"EMF generated tag"'
 -tag 'Immutable:t'
--Xdoclint:reference,html
+-tag 'implNote:a:<em>Implementation Note:</em>'
+-Xdoclint:reference,html,syntax
 -Xmaxwarns 10000
 -Xmaxerrs 10000
 
