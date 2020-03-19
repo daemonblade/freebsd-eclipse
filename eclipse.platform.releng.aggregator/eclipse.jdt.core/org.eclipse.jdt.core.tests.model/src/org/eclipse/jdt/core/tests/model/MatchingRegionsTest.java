@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -1542,5 +1542,51 @@ public void test0329() {
 	assertEquals("Unexpected regions length", 2, regions.length);
 	assertEquals("Unexpected matching regions", "chec[k]Background", printRegions(name, regions));
 }
-
+public void testSubword1() {
+	String name = "LinkedHashMap";
+	int[] regions = SearchPattern.getMatchingRegions("linkedmap",  name, SearchPattern.R_SUBWORD_MATCH);
+	assertEquals("Unexpected regions length", 4, regions.length);
+	assertEquals("Unexpected matching regions", "[Linked]Hash[Map]", printRegions(name, regions));
+}
+public void testSubword2() {
+	String name = "addEnlistListener";
+	int[] regions = SearchPattern.getMatchingRegions("addlist",  name, SearchPattern.R_SUBWORD_MATCH);
+	assertEquals("Unexpected regions length", 4, regions.length);
+	assertEquals("Unexpected matching regions", "[add]Enlist[List]ener", printRegions(name, regions));
+}
+public void testSubword_backtrack() {
+	String name = "addListListener";
+	int[] regions = SearchPattern.getMatchingRegions("addlisten", name, SearchPattern.R_SUBWORD_MATCH);
+	assertEquals("Unexpected matching regions", "[add]List[Listen]er", printRegions(name, regions));
+}
+public void testSubword_backtrackAndFail() {
+	String name = "addListString";
+	int[] regions = SearchPattern.getMatchingRegions("addlisten", name, SearchPattern.R_SUBWORD_MATCH);
+	assertEquals("Unexpected matching regions", null, printRegions(name, regions));
+}
+public void testSubword_backtrackTwice() {
+	String name = "addListListenListener";
+	int[] regions = SearchPattern.getMatchingRegions("addlistener", name, SearchPattern.R_SUBWORD_MATCH);
+	assertEquals("Unexpected matching regions", "[add]ListListen[Listener]", printRegions(name, regions));
+}
+public void testSubword_backtrackWithin() {
+	String name = "addListListenerWordTest";
+	int[] regions = SearchPattern.getMatchingRegions("addlistentest", name, SearchPattern.R_SUBWORD_MATCH);
+	assertEquals("Unexpected matching regions", "[add]List[Listen]erWord[Test]", printRegions(name, regions));
+}
+public void testSubword_backtrackWithinAndFail() {
+	String name = "addListListenerWordTest";
+	int[] regions = SearchPattern.getMatchingRegions("addlistentestnotfound", name, SearchPattern.R_SUBWORD_MATCH);
+	assertEquals("Unexpected matching regions", null, printRegions(name, regions));
+}
+public void testSubword_backtrackStart() {
+	String name = "listListener";
+	int[] regions = SearchPattern.getMatchingRegions("listener", name, SearchPattern.R_SUBWORD_MATCH);
+	assertEquals("Unexpected matching regions", "list[Listener]", printRegions(name, regions));
+}
+public void testSubword_backtrackStartAndFail() {
+	String name = "listString";
+	int[] regions = SearchPattern.getMatchingRegions("listener", name, SearchPattern.R_SUBWORD_MATCH);
+	assertEquals("Unexpected matching regions", null, printRegions(name, regions));
+}
 }

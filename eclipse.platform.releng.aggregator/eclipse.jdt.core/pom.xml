@@ -15,13 +15,13 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.14.0-SNAPSHOT</version>
+    <version>4.15.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
   <groupId>eclipse.jdt.core</groupId>
   <artifactId>eclipse.jdt.core</artifactId>
-  <version>4.14.0-SNAPSHOT</version>
+  <version>4.15.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -56,6 +56,7 @@
     <module>org.eclipse.jdt.annotation_v1</module>
     <module>org.eclipse.jdt.compiler.tool</module>
     <module>org.eclipse.jdt.core</module>
+    <module>org.eclipse.jdt.core.formatterapp</module>
     <module>org.eclipse.jdt.compiler.tool.tests</module>
     <module>org.eclipse.jdt.core.tests.builder</module>
     <module>org.eclipse.jdt.core.tests.compiler</module>

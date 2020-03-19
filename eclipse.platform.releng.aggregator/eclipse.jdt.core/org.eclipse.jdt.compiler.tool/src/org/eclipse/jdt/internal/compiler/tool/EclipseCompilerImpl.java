@@ -103,15 +103,15 @@ public class EclipseCompilerImpl extends Main {
 			return false;
 		} catch (RuntimeException e) { // internal compiler failure
 			this.diagnosticListener.report(new ExceptionDiagnostic(e));
-			e.printStackTrace();
 			this.logger.logException(e);
 			return false;
 		} finally {
 			cleanup();
 		}
-		if (this.globalErrorsCount == 0)
-			return true;
-		return false;
+		if (this.failOnWarning && this.globalWarningsCount > 0) {
+			return false;
+		}
+		return this.globalErrorsCount == 0;
 	}
 
 	private void cleanup() {
@@ -753,7 +753,11 @@ public class EclipseCompilerImpl extends Main {
 					@Override
 					public JavaFileObject getSource() {
 						if (problem instanceof DefaultProblem) {
-							File f = new File(new String(((DefaultProblem) problem).getOriginatingFileName()));
+							char[] originatingName = ((DefaultProblem) problem).getOriginatingFileName();
+							if (originatingName == null) {
+								return null;
+							}
+							File f = new File(new String(originatingName));
 							if (f.exists()) {
 								Charset charset = (EclipseCompilerImpl.this.fileManager instanceof EclipseFileManager) ?
 														((EclipseFileManager) EclipseCompilerImpl.this.fileManager).charset : Charset.defaultCharset();

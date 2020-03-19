@@ -1071,6 +1071,11 @@ public void removeTrackingVar(FakedTrackingVariable trackingVariable) {
 public void pruneWrapperTrackingVar(FakedTrackingVariable trackingVariable) {
 	this.trackingVariables.remove(trackingVariable);
 }
+
+public boolean hasResourceTrackers() {
+	return this.trackingVariables != null && !this.trackingVariables.isEmpty();
+}
+
 /**
  * At the end of a block check the closing-status of all tracked closeables that are declared in this block.
  * Also invoked when entering unreachable code.
@@ -1167,8 +1172,19 @@ public void correlateTrackingVarsIfElse(FlowInfo thenFlowInfo, FlowInfo elseFlow
 		int trackVarCount = this.trackingVariables.size();
 		for (int i=0; i<trackVarCount; i++) {
 			FakedTrackingVariable trackingVar = (FakedTrackingVariable) this.trackingVariables.get(i);
-			if (trackingVar.originalBinding == null)
+			if (trackingVar.originalBinding == null) {
+				// avoid problem weakened to 'potential' if unassigned resource exists only in one branch:
+				boolean hasNullInfoInThen = thenFlowInfo.hasNullInfoFor(trackingVar.binding);
+				boolean hasNullInfoInElse = elseFlowInfo.hasNullInfoFor(trackingVar.binding);
+				if (hasNullInfoInThen && !hasNullInfoInElse) {
+					int nullStatus = thenFlowInfo.nullStatus(trackingVar.binding);
+					elseFlowInfo.markNullStatus(trackingVar.binding, nullStatus);
+				} else if (!hasNullInfoInThen && hasNullInfoInElse) {
+					int nullStatus = elseFlowInfo.nullStatus(trackingVar.binding);
+					thenFlowInfo.markNullStatus(trackingVar.binding, nullStatus);					
+				}
 				continue;
+			}
 			if (   thenFlowInfo.isDefinitelyNonNull(trackingVar.binding)			// closed in then branch
 				&& elseFlowInfo.isDefinitelyNull(trackingVar.originalBinding))		// null in else branch
 			{

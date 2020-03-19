@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -51,6 +51,7 @@ import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
@@ -1503,10 +1504,10 @@ public final class CompletionEngine
 						} else if ((modifiers & ClassFileConstants.AccStatic) == 0) {
 							continue next;
 						} else {
-							completionName = CharOperation.concat(completionName, new char[] { ';' });
+							completionName = appendUnlessNextToken(completionName, new char[] { ';' }, TerminalTokens.TokenNameSEMICOLON);
 						}
 					} else {
-						completionName = CharOperation.concat(completionName, new char[] { ';' });
+						completionName = appendUnlessNextToken(completionName, new char[] {';'}, TerminalTokens.TokenNameSEMICOLON);
 					}
 	
 					int relevance = computeBaseRelevance();
@@ -1665,6 +1666,18 @@ public final class CompletionEngine
 		}
 	}
 	
+	private char[] appendUnlessNextToken(char[] completionName, char[] suffix, int nextToken) {
+		this.parser.scanner.resetTo(this.endPosition, Integer.MAX_VALUE);
+		try {
+			if (this.parser.scanner.getNextToken() != nextToken) {
+				return CharOperation.concat(completionName, suffix);
+			}
+		} catch (InvalidInputException e) {
+			// ignore
+		}
+		return completionName;
+	}
+
 	public void acceptUnresolvedName(char[] name) {
 		int relevance = computeBaseRelevance();
 		relevance += computeRelevanceForResolution(false);
@@ -1862,6 +1875,8 @@ public final class CompletionEngine
 			}
 		} else if (astNode instanceof CompletionOnKeyword3 && ((CompletionOnKeyword3) astNode).afterTryOrCatch()) {
 				context.setTokenLocation(CompletionContext.TL_STATEMENT_START);
+		} else if (astNode instanceof CompletionOnImportReference) {
+			context.setTokenLocation(CompletionContext.TL_IN_IMPORT);
 		} else {
 			ReferenceContext referenceContext = scope.referenceContext();
 			if (referenceContext instanceof AbstractMethodDeclaration) {
@@ -2183,7 +2198,7 @@ public final class CompletionEngine
 							this.lookupEnvironment.buildTypeBindings(parsedUnit, null /*no access restriction*/);
 							if ((this.unitScope = parsedUnit.scope) != null) {
 								contextAccepted = true;
-								buildContext(importReference, null, parsedUnit, null, null);
+								buildContext(importReference, null, parsedUnit, null, this.unitScope);
 
 								long positions = importReference.sourcePositions[importReference.tokens.length - 1];
 								setSourceAndTokenRange((int) (positions >>> 32), (int) positions);
@@ -4585,6 +4600,8 @@ public final class CompletionEngine
 				return R_CAMEL_CASE;
 		} else if (this.options.substringMatch && CharOperation.substringMatch(token, proposalName)) {
 			return R_SUBSTRING;
+		} else if (this.options.subwordMatch && CharOperation.subWordMatch(token, proposalName)) {
+			return R_SUBWORD;
 		}
 		return 0;
 	}
@@ -4667,7 +4684,7 @@ public final class CompletionEngine
 			}	
 			for (int i = 0; i <= this.expectedTypesPtr; i++) {
 				if((this.expectedTypesFilter & SUBTYPE) != 0
-						&& proposalType.isCompatibleWith(this.expectedTypes[i])) {
+						&& (proposalType.erasure().isCompatibleWith(this.expectedTypes[i].erasure()))) {
 
 					if(CharOperation.equals(this.expectedTypes[i].qualifiedPackageName(), proposalType.qualifiedPackageName()) &&
 							CharOperation.equals(this.expectedTypes[i].qualifiedSourceName(), proposalType.qualifiedSourceName())) {
@@ -12919,7 +12936,8 @@ public final class CompletionEngine
 	private boolean isFailedMatch(char[] token, char[] name) {
 		if ((this.options.substringMatch && CharOperation.substringMatch(token, name))
 				|| (this.options.camelCaseMatch && CharOperation.camelCaseMatch(token, name))
-				|| CharOperation.prefixEquals(token, name, false)) {
+				|| CharOperation.prefixEquals(token, name, false)
+				|| (this.options.subwordMatch && CharOperation.subWordMatch(token, name))) {
 			return false;
 		}
 
@@ -13311,12 +13329,14 @@ public final class CompletionEngine
 			typeCompletion = simpleTypeName;
 		}
 
+		ReferenceBinding typeBinding = this.lookupEnvironment.getType(CharOperation.splitOn('.', fullyQualifiedName));
+
 		int relevance = computeBaseRelevance();
 		relevance += computeRelevanceForResolution();
 		relevance += computeRelevanceForInterestingProposal();
 		relevance += computeRelevanceForRestrictions(accessibility);
 		relevance += computeRelevanceForCaseMatching(this.completionToken, simpleTypeName);
-		relevance += computeRelevanceForExpectingType(packageName, simpleTypeName);
+		relevance += computeRelevanceForExpectingType(typeBinding);
 		relevance += computeRelevanceForQualification(isQualified);
 		relevance += computeRelevanceForConstructor();
 

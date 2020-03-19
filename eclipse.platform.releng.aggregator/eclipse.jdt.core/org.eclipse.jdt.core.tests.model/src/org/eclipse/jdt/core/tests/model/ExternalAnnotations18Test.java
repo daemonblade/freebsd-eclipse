@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2017 GK Software AG, and others.
+ * Copyright (c) 2014, 2020 GK Software AG, and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     Stephan Herrmann - initial API and implementation
+ *     Pierre-Yves B. <pyvesdev@gmail.com> - Contributions for bug 559618 - No compiler warning for import from same package
  *******************************************************************************/
 package org.eclipse.jdt.core.tests.model;
 
@@ -2101,7 +2102,6 @@ public class ExternalAnnotations18Test extends ModifyingResourceTests {
 				"\n" + 
 				"import libs.Lib1;\n" + 
 				"import libs.Lib2;\n" + 
-				"import tests.Lib3;\n" + 
 				"\n" + 
 				"public class Test1 {\n" + 
 				"	@NonNull String test1(Lib1<@NonNull String> lib) {\n" + 
@@ -2119,7 +2119,7 @@ public class ExternalAnnotations18Test extends ModifyingResourceTests {
 		assertProblems(reconciled.getProblems(), new String[] {
 				"Pb(980) Unsafe interpretation of method return type as '@NonNull' based on the receiver type 'Lib1<@NonNull String>'. Type 'Lib1<T>' doesn't seem to be designed with null type annotations in mind",
 				"Pb(980) Unsafe interpretation of method return type as '@NonNull' based on the receiver type 'Lib2<@NonNull String>'. Type 'Lib2<T>' doesn't seem to be designed with null type annotations in mind",
-		}, new int[] { 10, 13 }, new int[] { ProblemSeverities.Warning, ProblemSeverities.Info } );
+		}, new int[] { 9, 12 }, new int[] { ProblemSeverities.Warning, ProblemSeverities.Info } );
 	}
 
 	public void testBug490343() throws Exception {
@@ -2359,7 +2359,7 @@ public class ExternalAnnotations18Test extends ModifyingResourceTests {
 		}
 	}
 
-		@SuppressWarnings("deprecation")
+	@SuppressWarnings("deprecation")
 	public void testBug508955() throws CoreException, IOException {
 		myCreateJavaProject("TestLibs");
 		addLibraryWithExternalAnnotations(this.project, "lib1.jar", "annots",
@@ -2623,5 +2623,41 @@ public class ExternalAnnotations18Test extends ModifyingResourceTests {
 				true, new NullProgressMonitor()).getWorkingCopy(new NullProgressMonitor());
 		CompilationUnit reconciled = cu.reconcile(getJSL9(), true, null, new NullProgressMonitor());
 		assertNoProblems(reconciled.getProblems());
+	}
+
+	@SuppressWarnings("deprecation")
+	public void testBug482242() throws CoreException, IOException {
+		try {
+			String projectName = "Bug482242";
+			setupJavaProject(projectName, true, true);
+			this .project.setOption(JavaCore.COMPILER_PB_ANNOTATED_TYPE_ARGUMENT_TO_UNANNOTATED, JavaCore.WARNING);
+			addEeaToVariableEntry("JCL18_FULL", "/"+projectName+"/annots");
+			IPackageFragment fragment = this.project.getPackageFragmentRoots()[0].createPackageFragment("test1", true, null);
+			ICompilationUnit unit = fragment.getCompilationUnit("Test.java").getWorkingCopy(new NullProgressMonitor());
+			CompilationUnit reconciled = unit.reconcile(AST.JLS8, true, null, new NullProgressMonitor());
+			IProblem[] problems = reconciled.getProblems();
+			assertProblems(problems, 
+					new String[] {
+						"Pb(983) Unsafe null type conversion (type annotations): The value of type 'Collector<@NonNull String,capture#of ?,Set<@NonNull String>>' " +
+						"is made accessible using the less-annotated type 'Collector<? super String,Object,Set<@NonNull String>>'",
+					},
+					new int[] {11},
+					new int[] { ProblemSeverities.Warning });
+			
+			this.project.getProject().build(IncrementalProjectBuilder.FULL_BUILD, null);
+			IMarker[] markers = this.project.getProject().findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_INFINITE);
+			sortMarkers(markers);
+			assertMarkers("Markers after full build", 
+					"Unsafe null type conversion (type annotations): The value of type 'Collector<@NonNull String,capture#of ?,Set<@NonNull String>>' is made accessible using the less-annotated type 'Collector<? super String,Object,Set<@NonNull String>>'",
+					markers);
+			int[] severities = new int[] { IMarker.SEVERITY_WARNING };
+			for (int i = 0; i < markers.length; i++) {
+				IMarker marker = markers[i];
+				assertEquals("severity of "+marker.getAttribute(IMarker.MESSAGE),
+						severities[i], marker.getAttribute(IMarker.SEVERITY));
+			}
+		} finally {
+			deleteProject("Bug500024");
+		}
 	}
 }

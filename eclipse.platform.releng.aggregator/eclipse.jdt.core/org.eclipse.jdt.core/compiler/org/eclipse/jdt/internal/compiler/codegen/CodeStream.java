@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -3426,6 +3426,10 @@ public static TypeBinding getConstantPoolDeclaringClass(Scope currentScope, Meth
 						&& (options.complianceLevel >= ClassFileConstants.JDK1_4 || !(isImplicitThisReceiver && codegenBinding.isStatic()))
 						&& codegenBinding.declaringClass.id != TypeIds.T_JavaLangObject) // no change for Object methods
 					|| !codegenBinding.declaringClass.canBeSeenBy(currentScope)) {
+				TypeBinding erasedReceiverType = actualReceiverType.erasure();
+				if (erasedReceiverType.isIntersectionType18()) {
+					actualReceiverType = erasedReceiverType; // need to peel the intersecting types below
+				}
 				if (actualReceiverType.isIntersectionType18()) {
 					TypeBinding[] intersectingTypes = ((IntersectionTypeBinding18)actualReceiverType).getIntersectingTypes();
 					for(int i = 0; i < intersectingTypes.length; i++) {
@@ -3435,7 +3439,7 @@ public static TypeBinding getConstantPoolDeclaringClass(Scope currentScope, Meth
 						}
 					}
 				} else {
-					constantPoolDeclaringClass = actualReceiverType.erasure();
+					constantPoolDeclaringClass = erasedReceiverType;
 				}
 			}
 		}				
@@ -6059,12 +6063,12 @@ public void multianewarray(
 	this.bCodeStream[this.classFileOffset++] = (byte) dimensions;
 }
 
-// We didn't call it new, because there is a conflit with the new keyword
+// We didn't call it new, because there is a conflict with the new keyword
 public void new_(TypeBinding typeBinding) {
 	this.new_(null, typeBinding);
 }
 
-// We didn't call it new, because there is a conflit with the new keyword
+// We didn't call it new, because there is a conflict with the new keyword
 public void new_(TypeReference typeReference, TypeBinding typeBinding) {
 	this.countLabels = 0;
 	this.stackDepth++;

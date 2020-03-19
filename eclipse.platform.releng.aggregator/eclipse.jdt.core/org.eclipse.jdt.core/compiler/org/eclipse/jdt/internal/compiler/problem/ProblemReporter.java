@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -478,6 +478,7 @@ public static int getIrritant(int problemID) {
 			return CompilerOptions.NonNullTypeVariableFromLegacyInvocation;
 
 		case IProblem.ParameterLackingNonNullAnnotation:
+		case IProblem.InheritedParameterLackingNonNullAnnotation:
 			return CompilerOptions.NonnullParameterAnnotationDropped;
 
 		case IProblem.RequiredNonNullButProvidedPotentialNull:
@@ -489,6 +490,9 @@ public static int getIrritant(int problemID) {
 		case IProblem.ReferenceExpressionReturnNullRedefUnchecked:
 		case IProblem.UnsafeNullnessCast:
 			return CompilerOptions.NullUncheckedConversion;
+		case IProblem.AnnotatedTypeArgumentToUnannotated:
+		case IProblem.AnnotatedTypeArgumentToUnannotatedSuperHint:
+			return CompilerOptions.AnnotatedTypeArgumentToUnannotated;
 		case IProblem.RedundantNullAnnotation:
 		case IProblem.RedundantNullDefaultAnnotation:
 		case IProblem.RedundantNullDefaultAnnotationModule:
@@ -799,6 +803,7 @@ public static int getProblemCategory(int severity, int problemID) {
 			case CompilerOptions.NullUncheckedConversion :
 			case CompilerOptions.MissingNonNullByDefaultAnnotation:
 			case CompilerOptions.NonnullParameterAnnotationDropped:
+			case CompilerOptions.AnnotatedTypeArgumentToUnannotated:
 				return CategorizedProblem.CAT_POTENTIAL_PROGRAMMING_PROBLEM;
 			case CompilerOptions.RedundantNullAnnotation :
 				return CategorizedProblem.CAT_UNNECESSARY_CODE;
@@ -812,6 +817,7 @@ public static int getProblemCategory(int severity, int problemID) {
 		case IProblem.IsClassPathCorrect :
 		case IProblem.CorruptedSignature :
 		case IProblem.UndefinedModuleAddReads :
+		case IProblem.MissingNullAnnotationImplicitlyUsed :
 			return CategorizedProblem.CAT_BUILDPATH;
 		case IProblem.ProblemNotAnalysed :
 			return CategorizedProblem.CAT_UNNECESSARY_CODE;
@@ -5032,7 +5038,7 @@ public void illegalTypeAnnotationsInStaticMemberAccess(Annotation first, Annotat
 			first.sourceStart,
 			last.sourceEnd);
 }
-public void isClassPathCorrect(char[][] wellKnownTypeName, CompilationUnitDeclaration compUnitDecl, Object location) {
+public void isClassPathCorrect(char[][] wellKnownTypeName, CompilationUnitDeclaration compUnitDecl, Object location, boolean implicitAnnotationUse) {
 	// ProblemReporter is not designed to be reentrant. Just in case, we discovered a build path problem while we are already 
 	// in the midst of reporting some other problem, save and restore reference context thereby mimicking a stack.
 	// See https://bugs.eclipse.org/bugs/show_bug.cgi?id=442755.
@@ -5053,7 +5059,7 @@ public void isClassPathCorrect(char[][] wellKnownTypeName, CompilationUnitDeclar
 	}
 	try {
 		this.handle(
-				IProblem.IsClassPathCorrect,
+				implicitAnnotationUse ? IProblem.MissingNullAnnotationImplicitlyUsed : IProblem.IsClassPathCorrect,
 				arguments,
 				arguments,
 				start,
@@ -9887,7 +9893,8 @@ public void redundantSpecificationOfTypeArguments(ASTNode location, TypeBinding[
 }
 public void potentiallyUnclosedCloseable(FakedTrackingVariable trackVar, ASTNode location) {
 	String[] args = { trackVar.nameForReporting(location, this.referenceContext) };
-	if (location == null) {
+	if (location == null || trackVar.acquisition != null) {
+		// if acquisition is set, the problem is not location specific
 		this.handle(
 			IProblem.PotentiallyUnclosedCloseable,
 			args,
@@ -10087,20 +10094,26 @@ public void parameterLackingNullableAnnotation(Argument argument, ReferenceBindi
 		argument.type.sourceEnd);
 }
 public void parameterLackingNonnullAnnotation(Argument argument, ReferenceBinding declaringClass, char[][] inheritedAnnotationName) {
-	int sourceStart = 0, sourceEnd = 0;
-	if (argument != null) {
-		sourceStart = argument.type.sourceStart;
-		sourceEnd = argument.type.sourceEnd;
-	} else if (this.referenceContext instanceof TypeDeclaration) {
-		sourceStart = ((TypeDeclaration) this.referenceContext).sourceStart;
-		sourceEnd =   ((TypeDeclaration) this.referenceContext).sourceEnd;
-	}
 	this.handle(
 		IProblem.ParameterLackingNonNullAnnotation, 
 		new String[] { new String(declaringClass.readableName()), CharOperation.toString(inheritedAnnotationName)},
 		new String[] { new String(declaringClass.shortReadableName()), new String(inheritedAnnotationName[inheritedAnnotationName.length-1])},
-		sourceStart,
-		sourceEnd);
+		argument.type.sourceStart,
+		argument.type.sourceEnd);
+}
+public void inheritedParameterLackingNonnullAnnotation(MethodBinding currentMethod, int paramRank, ReferenceBinding specificationType,
+		ASTNode location, char[][] annotationName) {
+	this.handle(IProblem.InheritedParameterLackingNonNullAnnotation,
+		new String[] {
+			String.valueOf(paramRank), new String(currentMethod.readableName()),
+			new String(specificationType.readableName()), CharOperation.toString(annotationName)
+		},
+		new String[] {
+			String.valueOf(paramRank), new String(currentMethod.shortReadableName()),
+			new String(specificationType.shortReadableName()), new String(annotationName[annotationName.length-1])
+		},
+		location.sourceStart, location.sourceEnd
+		);
 }
 public void illegalParameterRedefinition(Argument argument, ReferenceBinding declaringClass, TypeBinding inheritedParameter) {
 	int sourceStart = argument.type.sourceStart;
@@ -10258,8 +10271,14 @@ public void expressionPotentialNullReference(ASTNode location) {
 public void cannotImplementIncompatibleNullness(ReferenceContext context, MethodBinding currentMethod, MethodBinding inheritedMethod, boolean showReturn) {
 	int sourceStart = 0, sourceEnd = 0;
 	if (context instanceof TypeDeclaration) {
-		sourceStart = ((TypeDeclaration) context).sourceStart;
-		sourceEnd =   ((TypeDeclaration) context).sourceEnd;
+		TypeDeclaration type = (TypeDeclaration) context;
+		if (type.superclass != null) {
+			sourceStart = type.superclass.sourceStart;
+			sourceEnd =   type.superclass.sourceEnd;
+		} else {
+			sourceStart = type.sourceStart;
+			sourceEnd =   type.sourceEnd;
+		}
 	}
 	String[] problemArguments = {
 			showReturn 
@@ -10577,24 +10596,35 @@ public void arrayReferencePotentialNullReference(ArrayReference arrayReference) 
 public void nullityMismatchingTypeAnnotation(Expression expression, TypeBinding providedType, TypeBinding requiredType, NullAnnotationMatching status) 
 {
 	if (providedType == requiredType) return; //$IDENTITY-COMPARISON$
+
 	// try to improve nonnull vs. null:
 	if (providedType.id == TypeIds.T_null || status.nullStatus == FlowInfo.NULL) {
 		nullityMismatchIsNull(expression, requiredType);
 		return;
 	}
-	// try to improve nonnull vs. nullable:
-	if (status.isPotentiallyNullMismatch()
-			&& (requiredType.tagBits & TagBits.AnnotationNonNull) != 0 
-			&& (providedType.tagBits & TagBits.AnnotationNullable) == 0)
-	{
-		if(this.options.pessimisticNullAnalysisForFreeTypeVariablesEnabled && providedType.isTypeVariable() && !providedType.hasNullTypeAnnotations()) {
-			nullityMismatchIsFreeTypeVariable(providedType, expression.sourceStart, expression.sourceEnd);
+	if ((requiredType.tagBits & TagBits.AnnotationNonNull) != 0) { // some problems need a closer look to report the best possible message:
+		// try to improve nonnull vs. nullable:
+		if (status.isPotentiallyNullMismatch()
+				&& (providedType.tagBits & TagBits.AnnotationNullable) == 0)
+		{
+			if(this.options.pessimisticNullAnalysisForFreeTypeVariablesEnabled && providedType.isTypeVariable() && !providedType.hasNullTypeAnnotations()) {
+				nullityMismatchIsFreeTypeVariable(providedType, expression.sourceStart, expression.sourceEnd);
+				return;
+			}
+
+			nullityMismatchPotentiallyNull(expression, requiredType, this.options.nonNullAnnotationName);
 			return;
 		}
-
-		nullityMismatchPotentiallyNull(expression, requiredType, this.options.nonNullAnnotationName);
-		return;
+		VariableBinding var = expression.localVariableBinding();
+		if (var == null && expression instanceof Reference) {
+			var = ((Reference)expression).lastFieldBinding();
+		}
+		if(var != null && var.type.isFreeTypeVariable()) {
+			nullityMismatchVariableIsFreeTypeVariable(var, expression);
+			return;
+		}
 	}
+
 	String[] arguments;
 	String[] shortArguments;
 		
@@ -10602,17 +10632,21 @@ public void nullityMismatchingTypeAnnotation(Expression expression, TypeBinding 
 	String superHint = null;
 	String superHintShort = null;
 	if (status.superTypeHint != null && requiredType.isParameterizedType()) {
-		problemId = (status.isUnchecked()
-			? IProblem.NullityUncheckedTypeAnnotationDetailSuperHint
-			: IProblem.NullityMismatchingTypeAnnotationSuperHint);
+		problemId = (status.isAnnotatedToUnannotated()
+					? IProblem.AnnotatedTypeArgumentToUnannotatedSuperHint
+					: (status.isUnchecked()
+						? IProblem.NullityUncheckedTypeAnnotationDetailSuperHint
+						: IProblem.NullityMismatchingTypeAnnotationSuperHint));
 		superHint = status.superTypeHintName(this.options, false);
 		superHintShort = status.superTypeHintName(this.options, true);
 	} else {
-		problemId = (status.isUnchecked()
-			? IProblem.NullityUncheckedTypeAnnotationDetail
-			: (requiredType.isTypeVariable() && !requiredType.hasNullTypeAnnotations())
-				? IProblem.NullityMismatchAgainstFreeTypeVariable
-				: IProblem.NullityMismatchingTypeAnnotation);
+		problemId = (status.isAnnotatedToUnannotated()
+					? IProblem.AnnotatedTypeArgumentToUnannotated
+					: (status.isUnchecked()
+						? IProblem.NullityUncheckedTypeAnnotationDetail
+						: (requiredType.isTypeVariable() && !requiredType.hasNullTypeAnnotations())
+							? IProblem.NullityMismatchAgainstFreeTypeVariable
+							: IProblem.NullityMismatchingTypeAnnotation));
 		if (problemId == IProblem.NullityMismatchAgainstFreeTypeVariable) {
 			arguments      = new String[] { null, null, new String(requiredType.sourceName()) }; // don't show bounds here
 			shortArguments = new String[] { null, null, new String(requiredType.sourceName()) };
