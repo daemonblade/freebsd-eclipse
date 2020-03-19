@@ -2,11 +2,11 @@
  * Copyright (c) 2000, 2011 IBM Corporation and others.
  *
  * This program and the accompanying materials
- * are made available under the terms of
- * the Eclipse Public License 2.0 which accompanies this distribution, and is
-t https://www.eclipse.org/legal/epl-2.0/
-t
-t SPDX-License-Identifier: EPL-2.0
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
  * IBM - Initial API and implementation
@@ -29,6 +29,7 @@ public class InstructionsEvaluationMessages extends NLS {
 	public static String AssignmentOperator_operator_1;
 	public static String Cast_ClassCastException__Cannot_cast__0__as__1___1;
 	public static String Cast_cast_3;
+	public static String Run_Remote_1;
 	public static String ConditionalJump_conditional_jump_1;
 	public static String Constructor_constructor__1;
 	public static String LocalVariableCreation_create_local_variable__0___1___1;

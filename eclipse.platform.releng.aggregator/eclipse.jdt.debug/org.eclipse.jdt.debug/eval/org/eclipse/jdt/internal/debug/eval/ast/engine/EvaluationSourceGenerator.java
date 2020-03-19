@@ -14,7 +14,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.debug.eval.ast.engine;
 
-import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
@@ -215,6 +214,8 @@ public class EvaluationSourceGenerator {
 						token = scanner.getNextToken();
 						if (token == ITerminalSymbols.TokenNameEOF) {
 							return true;
+						} else if (token == ITerminalSymbols.TokenNameEQUAL) {
+							return false;
 						}
 					}
 					count = 3;
@@ -313,8 +314,7 @@ public class EvaluationSourceGenerator {
 	 */
 	public static Map<String, String> getCompilerOptions(IJavaProject project) {
 		Map<String, String> options = project.getOptions(true);
-		for (Iterator<String> iter = options.keySet().iterator(); iter.hasNext();) {
-			String key = iter.next();
+		for (String key : options.keySet()) {
 			String value = options.get(key);
 			if (JavaCore.ERROR.equals(value) || JavaCore.WARNING.equals(value) || JavaCore.INFO.equals(value)) {
 				options.put(key, JavaCore.IGNORE);
