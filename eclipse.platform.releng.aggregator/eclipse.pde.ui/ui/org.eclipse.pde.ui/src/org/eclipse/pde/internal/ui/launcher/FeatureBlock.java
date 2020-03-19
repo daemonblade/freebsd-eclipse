@@ -996,7 +996,7 @@ public class FeatureBlock {
 			fRemovePluginButton.setEnabled(allPlugins);
 		});
 		fTree.addCheckStateListener(e -> fTree.update(e.getElement(), null));
-		
+
 		fTree.getTree().addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent e) {
@@ -1209,7 +1209,7 @@ public class FeatureBlock {
 	private void updateCounter() {
 		if (fCounter != null) {
 			int checked = fTree.getCheckedLeafCount();
-			int total = fFeatureModels.values().size() + fAdditionalPlugins.size();
+			int total = fFeatureModels.size() + fAdditionalPlugins.size();
 			fCounter.setText(NLS.bind(PDEUIMessages.AbstractPluginBlock_counter, Integer.valueOf(checked), Integer.valueOf(total)));
 		}
 	}

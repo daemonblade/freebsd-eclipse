@@ -259,6 +259,7 @@ public class RegistryBrowser extends ViewPart {
 		fTreeViewer.setLabelProvider(fLabelProvider);
 		fTreeViewer.setUseHashlookup(true);
 		fTreeViewer.setComparator(new ViewerComparator() {
+			@SuppressWarnings({ "rawtypes", "unchecked" })
 			@Override
 			public int compare(Viewer viewer, Object e1, Object e2) {
 				// let Comparables compare themselves
@@ -291,7 +292,7 @@ public class RegistryBrowser extends ViewPart {
 		getViewSite().setSelectionProvider(fTreeViewer);
 
 		MenuManager popupMenuManager = new MenuManager();
-		IMenuListener listener = mng -> fillContextMenu(mng);
+		IMenuListener listener = this::fillContextMenu;
 		popupMenuManager.setRemoveAllWhenShown(true);
 		popupMenuManager.addMenuListener(listener);
 		Menu menu = popupMenuManager.createContextMenu(tree);
