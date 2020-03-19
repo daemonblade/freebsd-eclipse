@@ -11,7 +11,7 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 # Contributors:
-#     Kit Lo - initial API and implementation
+#     Sravan Lakkimsetti - initial API and implementation
 #*******************************************************************************
 set -e
 
@@ -23,24 +23,13 @@ fi
 source $CJE_ROOT/scripts/common-functions.shsource
 source $1
 
-if [[ -z "${WORKSPACE}" ]]
+pushd $CJE_ROOT/$DROP_DIR/
+if [[ $COMPARATOR_ERRORS == "true" ]]
 then
-	MVN_ARGS=""
-else
-	MVN_ARGS="-Pbree-libs -Peclipse-sign"
+	touch ${BUILD_ID}/buildUnstable
+	echo "<p>This build has been marked unstable due to <a href='https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_ID}/buildlogs/comparatorlogs/buildtimeComparatorUnanticipated.log.txt'>unanticipated comparator errors</a></p>">> ${BUILD_ID}/buildUnstable
 fi
-
-cd $CJE_ROOT/gitCache/eclipse.platform.releng.aggregator
-mvn clean verify -DskipTests=true ${MVN_ARGS} \
-  -Dtycho.debug.artifactcomparator \
-  -Dtycho.localArtifacts=ignore \
-  -Dcbi.jarsigner.continueOnFail=true \
-  -Djgit.dirtyWorkingTree=error \
-  -Dmaven.repo.local=$LOCAL_REPO \
-  -Djava.io.tmpdir=$CJE_ROOT/$TMP_DIR \
-  -DaggregatorBuild=true \
-  -DbuildTimestamp=$TIMESTAMP \
-  -DbuildType=$BUILD_TYPE \
-  -DbuildId=$BUILD_ID \
-  -Declipse-p2-repo.url=NOT_FOR_PRODUCTION_USE \
-  ${JAVA_DOC_TOOL}
+epDownloadDir=/home/data/httpd/download.eclipse.org/eclipse
+dropsPath=${epDownloadDir}/downloads/drops4
+scp -r ${BUILD_ID} genie.releng@projects-storage.eclipse.org:${dropsPath}/.
+popd

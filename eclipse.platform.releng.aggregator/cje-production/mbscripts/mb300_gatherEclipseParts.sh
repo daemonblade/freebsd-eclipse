@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #*******************************************************************************
-# Copyright (c) 2019 IBM Corporation and others.
+# Copyright (c) 2019, 2020 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,7 @@
 # Contributors:
 #     Kit Lo - initial API and implementation
 #*******************************************************************************
+set -e
 
 if [ $# -ne 1 ]; then
   echo USAGE: $0 env_file
@@ -35,7 +36,7 @@ echo $PATCH_BUILD
 if [ -z $PATCH_BUILD ]; then
   REPO_DIR=$PLATFORM_REPO_DIR
 else
-  PATCH_BUILD_GENERIC=java13patch
+  PATCH_BUILD_GENERIC=java14patch
   REPO_DIR=$ECLIPSE_BUILDER_DIR/$PATCH_BUILD/eclipse.releng.repository.$PATCH_BUILD_GENERIC/target/repository
 fi
   
@@ -56,6 +57,7 @@ if [ -z $PATCH_BUILD ]; then
     cp org.eclipse.sdk.ide-macosx.cocoa.x86_64.dmg $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-SDK-$BUILD_ID-macosx-cocoa-x86_64.dmg
     cp org.eclipse.sdk.ide-win32.win32.x86_64.zip $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-SDK-$BUILD_ID-win32-x86_64.zip
     popd
+    fn-notarize-macbuild "$CJE_ROOT/$DROP_DIR/$BUILD_ID" eclipse-SDK-${BUILD_ID}-macosx-cocoa-x86_64.dmg
   fi
 
   # gather platform
@@ -68,6 +70,7 @@ if [ -z $PATCH_BUILD ]; then
     cp org.eclipse.platform.ide-macosx.cocoa.x86_64.dmg $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-platform-$BUILD_ID-macosx-cocoa-x86_64.dmg
     cp org.eclipse.platform.ide-win32.win32.x86_64.zip $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-platform-$BUILD_ID-win32-x86_64.zip
     popd
+    fn-notarize-macbuild "$CJE_ROOT/$DROP_DIR/$BUILD_ID" eclipse-platform-${BUILD_ID}-macosx-cocoa-x86_64.dmg
   fi
 
   # gather platform sources
@@ -241,3 +244,24 @@ java -jar $LAUNCHER_JAR \
   -v \
   publish
 popd
+
+comparatorLogMinimumSize=350
+comparatorLog=$CJE_ROOT/$DROP_DIR/$BUILD_ID/buildlogs/comparatorlogs/buildtimeComparatorUnanticipated.log.txt
+
+logSize=0
+if [[ -e ${comparatorLog} ]]
+then
+  logSize=$(stat -c '%s' ${comparatorLog} )
+  echo -e "DEBUG: comparatorLog found at\n\t${comparatorLog}\n\tWith size of $logSize bytes"
+else
+  echo -e "DEBUG: comparatorLog was surprisingly not found at:\n\t${comparatorLog}"
+fi
+
+if [[ $logSize -gt  ${comparatorLogMinimumSize} ]]
+then
+  echo -e "DEBUG: found logsize greater an minimum. preparing message using ${link}"
+  fn-write-property COMPARATOR_ERRORS "true"
+else
+  echo -e "DEBUG: comparator logSize of $logSize was not greater than comparatorLogMinimumSize of ${comparatorLogMinimumSize}"
+fi
+

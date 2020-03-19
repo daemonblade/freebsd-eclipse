@@ -13,6 +13,7 @@
 # Contributors:
 #     Kit Lo - initial API and implementation
 #*******************************************************************************
+set -e
 
 if [ $# -ne 1 ]; then
   echo USAGE: $0 env_file
@@ -25,7 +26,7 @@ source $1
 pushd $CJE_ROOT/$TMP_DIR
 if [[ -z "${WORKSPACE}" ]]
 then
-	wget --recursive --no-parent --no-verbose http://$BUILD_TO_COMPARE_SITE/$PREVIOUS_RELEASE_VER/$PREVIOUS_RELEASE_ID &
+	wget --recursive --no-parent --no-verbose https://$BUILD_TO_COMPARE_SITE/$PREVIOUS_RELEASE_VER/$PREVIOUS_RELEASE_ID &
 else
 	mkdir -p $CJE_ROOT/$TMP_DIR/$BUILD_TO_COMPARE_SITE/$PREVIOUS_RELEASE_VER
 	epDownloadDir=/home/data/httpd/download.eclipse.org/eclipse

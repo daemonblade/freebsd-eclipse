@@ -17,21 +17,21 @@
 # atomic composite repositories are valid. 
 
 # can be retrieved, on Hudson, with 
-# wget --no-verbose --no-cache  -O checkComposites.sh http://${GIT_HOST}/c/platform/eclipse.platform.releng.aggregator.git/plain/production/miscToolsAndNotes/checkComposites/checkComposites.sh;
+# wget --no-verbose --no-cache  -O checkComposites.sh https://${GIT_HOST}/c/platform/eclipse.platform.releng.aggregator.git/plain/production/miscToolsAndNotes/checkComposites/checkComposites.sh;
 # and typically set chmod +x checkComposites.sh
 # and then executed in "bash script" build step.
 
 dropsPath=/home/data/httpd/download.eclipse.org/eclipse/downloads/drops4
-repoHttpAccess=http://download.eclipse.org
+repoHttpAccess=https://download.eclipse.org
 repoAccess=${repoHttpAccess}
 # TODO: reduce this list soon
 repoList="\
-/eclipse/updates/4.13/ \
 /eclipse/updates/4.14/ \
-/eclipse/updates/4.14-I-builds/ \
-/eclipse/updates/4.14milestones/ \
-/eclipse/updates/4.13-Y-builds/ \
-/eclipse/updates/4.13-P-builds/ \
+/eclipse/updates/4.15/ \
+/eclipse/updates/4.15-I-builds/ \
+/eclipse/updates/4.15milestones/ \
+/eclipse/updates/4.15-Y-builds/ \
+/eclipse/updates/4.15-P-builds/ \
 "
 
 

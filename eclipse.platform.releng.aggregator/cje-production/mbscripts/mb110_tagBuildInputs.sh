@@ -22,8 +22,8 @@ fi
 source $CJE_ROOT/scripts/common-functions.shsource
 source $1
 
-reportDate=$(date +%s)
-reportTimestamp=$(date +%Y%m%d-%H%M --date='@'$reportDate)
+reportDate=$(TZ="America/New_York" date +%s)
+reportTimestamp=$(TZ="America/New_York" date +%Y%m%d-%H%M --date='@'$reportDate)
 gitLogFile=$CJE_ROOT/$DROP_DIR/$BUILD_ID/gitLog.html
 mkdir -p $CJE_ROOT/$DROP_DIR/$BUILD_ID
 
@@ -33,12 +33,16 @@ lastTag=$(git describe --tags --match "${BUILD_TYPE}*" --abbrev=0)
 pushd $CJE_ROOT/$AGG_DIR
 
 # git tagging
-# disable git push for now
-#git submodule foreach "if grep \"^\${name}:\" ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt > /dev/null; then git tag $BUILD_ID; git push --verbose origin $BUILD_ID; else echo Skipping \$name; fi || :"
-git submodule foreach "if grep \"^\${name}:\" ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt > /dev/null; then git tag $BUILD_ID; else echo Skipping \$name; fi || :"
+git commit -m "Build input for build $BUILD_ID"
+if [[ $? -eq 0 ]]
+then
+	git push origin HEAD
+fi
+
+git submodule foreach "if grep \"^\${name}:\" ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt > /dev/null; then git tag $BUILD_ID; git push --verbose origin $BUILD_ID; else echo Skipping \$name; fi || :"
+#git submodule foreach "if grep \"^\${name}:\" ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt > /dev/null; then git tag $BUILD_ID;  else echo Skipping \$name; fi || :"
 git tag $BUILD_ID
-# disable git push for now
-#git push --verbose origin $BUILD_ID
+git push --verbose origin $BUILD_ID
 
 # git logging
 if [[ -n "$lastTag" ]]; then

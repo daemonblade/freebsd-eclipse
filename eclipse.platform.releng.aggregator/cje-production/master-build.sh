@@ -16,6 +16,9 @@
 export CJE_ROOT=${CJE_ROOT:-`pwd`}
 source $CJE_ROOT/scripts/common-functions.shsource
 
+unset JAVA_TOOL_OPTIONS 
+unset _JAVA_OPTIONS
+
 chmod +x mbscripts/*
 
 logDir=$CJE_ROOT/buildlogs
@@ -25,6 +28,9 @@ pushd mbscripts
 for i in $(ls | sort)
 do
   fn-run-command ./$i $CJE_ROOT/buildproperties.shsource 2>&1 | tee $logDir/$i.log
+  if [ $? != 0 ];then
+  	fn-write-property BUILD_FAILED "${BUILD_FAILED} \n$$CJE_ROOT/$DROP_DIR/$BUILD_ID/buildlogs/$i.log"
+  fi
 done
 popd
 
