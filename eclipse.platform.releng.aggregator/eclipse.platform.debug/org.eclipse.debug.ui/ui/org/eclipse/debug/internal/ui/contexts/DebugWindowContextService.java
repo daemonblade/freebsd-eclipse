@@ -18,7 +18,6 @@ package org.eclipse.debug.internal.ui.contexts;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -251,17 +250,17 @@ public class DebugWindowContextService implements IDebugContextService, IPartLis
 				}
 			}
 
-			outer: for (Iterator<String> itr = fListenersByPartId.keySet().iterator(); itr.hasNext();) {
-				String listenerPartId = itr.next();
-				for (int i = 0; i < fProviders.size(); i++) {
-					String providerPartId = getCombinedPartId(fProviders.get(i).getPart());
+			outer: for (Map.Entry<String, ListenerList<IDebugContextListener>> entry : fListenersByPartId.entrySet()) {
+				String listenerPartId = entry.getKey();
+				for (IDebugContextProvider provider : fProviders) {
+					String providerPartId = getCombinedPartId(provider.getPart());
 					if ((listenerPartId == null && providerPartId == null) ||
 						(listenerPartId != null && listenerPartId.equals(providerPartId)))
 					{
 						continue outer;
 					}
 				}
-				ListenerList<IDebugContextListener> listenersForPart = fListenersByPartId.get(listenerPartId);
+				ListenerList<IDebugContextListener> listenersForPart = entry.getValue();
 				if (listenersForPart != null) {
 					for (IDebugContextListener iDebugContextListener : listenersForPart) {
 						// no effect if listener already present
@@ -285,15 +284,15 @@ public class DebugWindowContextService implements IDebugContextService, IPartLis
 				retVal = new ListenerList<>();
 			}
 
-			outer: for (Iterator<String> itr = fPostListenersByPartId.keySet().iterator(); itr.hasNext();) {
-				String listenerPartId = itr.next();
-				for (int i = 0; i < fProviders.size(); i++) {
-					String providerPartId = getCombinedPartId(fProviders.get(i).getPart());
+			outer: for (Map.Entry<String, ListenerList<IDebugContextListener>> entry : fPostListenersByPartId.entrySet()) {
+				String listenerPartId = entry.getKey();
+				for (IDebugContextProvider provider : fProviders) {
+					String providerPartId = getCombinedPartId(provider.getPart());
 					if ((listenerPartId == null && providerPartId == null) || (listenerPartId != null && listenerPartId.equals(providerPartId))) {
 						continue outer;
 					}
 				}
-				ListenerList<IDebugContextListener> listenersForPart = fPostListenersByPartId.get(listenerPartId);
+				ListenerList<IDebugContextListener> listenersForPart = entry.getValue();
 				if (listenersForPart != null) {
 					for (IDebugContextListener iDebugContextListener : listenersForPart) {
 						// no effect if listener already present

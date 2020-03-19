@@ -130,8 +130,8 @@ public class ProgramLaunchDelegate extends LaunchConfigurationDelegate {
 					IExternalToolConstants.ERR_INTERNAL_ERROR,
 					ExternalToolsProgramMessages.ProgramLaunchDelegate_4, null));
 		}
-		process.setAttribute(IProcess.ATTR_CMDLINE,
-				generateCommandLine(cmdLine));
+		process.setAttribute(IProcess.ATTR_CMDLINE, generateCommandLine(cmdLine));
+		process.setAttribute(DebugPlugin.ATTR_LAUNCH_TIMESTAMP, Long.toString(System.currentTimeMillis()));
 
 		if (configuration.getAttribute(ATTR_LAUNCH_IN_BACKGROUND, true)) {
 			// refresh resources after process finishes
@@ -181,11 +181,9 @@ public class ProgramLaunchDelegate extends LaunchConfigurationDelegate {
 		StringBuilder buf = new StringBuilder();
 		for (String c : commandLine) {
 			buf.append(' ');
-			char[] characters = c.toCharArray();
 			StringBuilder command = new StringBuilder();
 			boolean containsSpace = false;
-			for (int j = 0; j < characters.length; j++) {
-				char character = characters[j];
+			for (char character : c.toCharArray()) {
 				if (character == '\"') {
 					command.append('\\');
 				} else if (character == ' ') {

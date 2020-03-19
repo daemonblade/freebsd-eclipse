@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,9 +14,13 @@
 package org.eclipse.debug.core.model;
 
 
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.PlatformObject;
@@ -216,7 +220,11 @@ public class RuntimeProcess extends PlatformObject implements IProcess {
 				} catch (IllegalThreadStateException ie) {
 				}
 				try {
-					Thread.sleep(TIME_TO_WAIT_FOR_THREAD_DEATH);
+					if (process != null) {
+						process.waitFor(TIME_TO_WAIT_FOR_THREAD_DEATH, TimeUnit.MILLISECONDS);
+					} else {
+						Thread.sleep(TIME_TO_WAIT_FOR_THREAD_DEATH);
+					}
 				} catch (InterruptedException e) {
 				}
 				attempts++;
@@ -236,6 +244,8 @@ public class RuntimeProcess extends PlatformObject implements IProcess {
 	 * has terminated.
 	 */
 	protected void terminated() {
+		setAttribute(DebugPlugin.ATTR_TERMINATE_TIMESTAMP, Long.toString(System.currentTimeMillis()));
+
 		if (fStreamsProxy instanceof StreamsProxy) {
 			((StreamsProxy)fStreamsProxy).close();
 		}
@@ -281,7 +291,15 @@ public class RuntimeProcess extends PlatformObject implements IProcess {
 			return new NullStreamsProxy(getSystemProcess());
 		}
 		String encoding = getLaunch().getAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING);
-		return new StreamsProxy(getSystemProcess(), encoding);
+		Charset charset = null;
+		if (encoding != null) {
+			try {
+				charset = Charset.forName(encoding);
+			} catch (UnsupportedCharsetException | IllegalCharsetNameException e) {
+				DebugPlugin.log(e);
+			}
+		}
+		return new StreamsProxy(getSystemProcess(), charset);
 	}
 
 	/**

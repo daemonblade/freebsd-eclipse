@@ -63,7 +63,6 @@ import org.eclipse.jface.viewers.IBaseLabelProvider;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -88,8 +87,6 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
@@ -314,12 +311,7 @@ public class EnvironmentTab extends AbstractLaunchConfigurationTab {
 		environmentTable.setContentProvider(new EnvironmentVariableContentProvider());
 		environmentTable.setLabelProvider(new EnvironmentVariableLabelProvider());
 		environmentTable.setColumnProperties(new String[] { P_VARIABLE, P_VALUE });
-		environmentTable.addSelectionChangedListener(new ISelectionChangedListener() {
-			@Override
-			public void selectionChanged(SelectionChangedEvent event) {
-				handleTableSelectionChanged(event);
-			}
-		});
+		environmentTable.addSelectionChangedListener(this::handleTableSelectionChanged);
 
 		// Setup right-click context menu
 		Menu menuTable = new Menu(table);
@@ -367,29 +359,23 @@ public class EnvironmentTab extends AbstractLaunchConfigurationTab {
 			}
 		});
 
-		environmentTable.addSelectionChangedListener(new ISelectionChangedListener() {
-			@Override
-			public void selectionChanged(SelectionChangedEvent event) {
-				IStructuredSelection selection = environmentTable.getStructuredSelection();
-				if (selection.size() == 1) {
-					miRemove.setText(LaunchConfigurationsMessages.EnvironmentTab_Remove_6);
-				} else if (selection.size() > 1) {
-					miRemove.setText(LaunchConfigurationsMessages.EnvironmentTab_Remove_All);
-				}
+		environmentTable.addSelectionChangedListener(event -> {
+			IStructuredSelection selection = environmentTable.getStructuredSelection();
+			if (selection.size() == 1) {
+				miRemove.setText(LaunchConfigurationsMessages.EnvironmentTab_Remove_6);
+			} else if (selection.size() > 1) {
+				miRemove.setText(LaunchConfigurationsMessages.EnvironmentTab_Remove_All);
 			}
 		});
 
 		// Disable certain context menu item's if no table item is selected
-		table.addListener(SWT.MenuDetect, new Listener() {
-			@Override
-			public void handleEvent(Event event) {
-				if (table.getSelectionCount() <= 0) {
-					miRemove.setEnabled(false);
-					miCopy.setEnabled(false);
-				} else {
-					miRemove.setEnabled(true);
-					miCopy.setEnabled(true);
-				}
+		table.addListener(SWT.MenuDetect, event -> {
+			if (table.getSelectionCount() <= 0) {
+				miRemove.setEnabled(false);
+				miCopy.setEnabled(false);
+			} else {
+				miRemove.setEnabled(true);
+				miCopy.setEnabled(true);
 			}
 		});
 
@@ -412,12 +398,8 @@ public class EnvironmentTab extends AbstractLaunchConfigurationTab {
 
 		// Setup environment variable name column
 		final TableViewerColumn tcv1 = new TableViewerColumn(environmentTable, SWT.NONE, 0);
-		tcv1.setLabelProvider(new ColumnLabelProvider() {
-			@Override
-			public String getText(Object element) {
-				return ((EnvironmentVariable) element).getName();
-			}
-		});
+		tcv1.setLabelProvider(
+				ColumnLabelProvider.createTextProvider(element -> ((EnvironmentVariable) element).getName()));
 
 		TableColumn tc1 = tcv1.getColumn();
 		tc1.setText(envTableColumnHeaders[0]);
@@ -438,12 +420,8 @@ public class EnvironmentTab extends AbstractLaunchConfigurationTab {
 
 		// Setup environment variable value column
 		final TableViewerColumn tcv2 = new TableViewerColumn(environmentTable, SWT.NONE, 1);
-		tcv2.setLabelProvider(new ColumnLabelProvider() {
-			@Override
-			public String getText(Object element) {
-				return ((EnvironmentVariable) element).getValue();
-			}
-		});
+		tcv2.setLabelProvider(
+				ColumnLabelProvider.createTextProvider(element -> ((EnvironmentVariable) element).getValue()));
 
 		TableColumn tc2 = tcv2.getColumn();
 		tc2.setText(envTableColumnHeaders[1]);
@@ -579,9 +557,8 @@ public class EnvironmentTab extends AbstractLaunchConfigurationTab {
 	 * @return whether the new name should be used or not
 	 */
 	private boolean canRenameVariable(String newVariableName) {
-		TableItem[] items = environmentTable.getTable().getItems();
-		for (int i = 0; i < items.length; i++) {
-			EnvironmentVariable existingVariable = (EnvironmentVariable) items[i].getData();
+		for (TableItem item : environmentTable.getTable().getItems()) {
+			EnvironmentVariable existingVariable = (EnvironmentVariable) item.getData();
 			if (existingVariable.getName().equals(newVariableName)) {
 
 				boolean overWrite = MessageDialog.openQuestion(getShell(),
@@ -735,7 +712,7 @@ public class EnvironmentTab extends AbstractLaunchConfigurationTab {
 		MultipleInputDialog dialog = new MultipleInputDialog(getShell(),
 				LaunchConfigurationsMessages.EnvironmentTab_11);
 		dialog.addTextField(NAME_LABEL, originalName, false);
-		if (value != null && value.contains(System.getProperty("line.separator"))) { //$NON-NLS-1$
+		if (value != null && value.contains(System.lineSeparator())) {
 			dialog.addMultilinedVariablesField(VALUE_LABEL, value, true);
 		} else {
 			dialog.addVariablesField(VALUE_LABEL, value, true);
@@ -1037,13 +1014,10 @@ public class EnvironmentTab extends AbstractLaunchConfigurationTab {
 				public Object[] getElements(Object inputElement) {
 					EnvironmentVariable[] elements = null;
 					if (inputElement instanceof HashMap) {
-						Comparator<Object> comparator = new Comparator<Object>() {
-							@Override
-							public int compare(Object o1, Object o2) {
-								String s1 = (String) o1;
-								String s2 = (String) o2;
-								return s1.compareTo(s2);
-							}
+						Comparator<Object> comparator = (o1, o2) -> {
+							String s1 = (String) o1;
+							String s2 = (String) o2;
+							return s1.compareTo(s2);
 						};
 						TreeMap<Object, Object> envVars = new TreeMap<>(comparator);
 						envVars.putAll((Map<?, ?>) inputElement);

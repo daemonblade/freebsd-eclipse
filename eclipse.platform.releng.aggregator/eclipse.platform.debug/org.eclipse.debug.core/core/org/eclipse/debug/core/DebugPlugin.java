@@ -277,6 +277,14 @@ public class DebugPlugin extends Plugin {
 	public static final String ATTR_LAUNCH_TIMESTAMP = PI_DEBUG_CORE + ".launch.timestamp";  //$NON-NLS-1$
 
 	/**
+	 * The launch attribute that stores the time stamp of when a launch configuration was
+	 * launched. Value is {@link Long#toString(long)} of {@link System#currentTimeMillis()}.
+	 *
+	 * @since 3.15
+	 */
+	public static final String ATTR_TERMINATE_TIMESTAMP = PI_DEBUG_CORE + ".terminate.timestamp"; //$NON-NLS-1$
+
+	/**
 	 * This launch attribute designates the encoding to be used by the console
 	 * associated with the launch.
 	 * <p>
@@ -1601,8 +1609,7 @@ public class DebugPlugin extends Plugin {
 
 			boolean containsSpace = false;
 			char[] characters = arguments[i].toCharArray();
-			for (int j = 0; j < characters.length; j++) {
-				char ch = characters[j];
+			for (char ch : characters) {
 				if (ch == ' ' || ch == '\t') {
 					containsSpace = true;
 					buf.append('"');

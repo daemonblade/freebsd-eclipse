@@ -19,7 +19,6 @@ package org.eclipse.debug.internal.core.groups;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -321,9 +320,9 @@ public class GroupLaunchConfigurationDelegate extends LaunchConfigurationDelegat
 	public static List<GroupLaunchElement> createLaunchElements(ILaunchConfiguration configuration) {
 		List<GroupLaunchElement> result = new ArrayList<>();
 		try {
-			Map<?, ?> attrs = configuration.getAttributes();
-			for (Iterator<?> iterator = attrs.keySet().iterator(); iterator.hasNext();) {
-				String attr = (String) iterator.next();
+			Map<String, Object> attrs = configuration.getAttributes();
+			for (Map.Entry<String, Object> entry : attrs.entrySet()) {
+				String attr = entry.getKey();
 				try {
 					if (attr.startsWith(MULTI_LAUNCH_CONSTANTS_PREFIX)) {
 						String prop = attr.substring(MULTI_LAUNCH_CONSTANTS_PREFIX.length() + 1);
@@ -334,7 +333,7 @@ public class GroupLaunchConfigurationDelegate extends LaunchConfigurationDelegat
 						if (name.equals(NAME_PROP)) {
 							GroupLaunchElement el = new GroupLaunchElement();
 							el.index = index;
-							el.name = (String) attrs.get(attr);
+							el.name = (String) entry.getValue();
 
 							Object actionParam = null;
 							String actionStr = (String) attrs.get(getProp(index, ACTION_PROP));
@@ -406,9 +405,7 @@ public class GroupLaunchConfigurationDelegate extends LaunchConfigurationDelegat
 
 	public static void removeLaunchElements(ILaunchConfigurationWorkingCopy configuration) {
 		try {
-			Map<?, ?> attrs = configuration.getAttributes();
-			for (Iterator<?> iterator = attrs.keySet().iterator(); iterator.hasNext();) {
-				String attr = (String) iterator.next();
+			for (String attr : configuration.getAttributes().keySet()) {
 				try {
 					if (attr.startsWith(MULTI_LAUNCH_CONSTANTS_PREFIX)) {
 						configuration.removeAttribute(attr);

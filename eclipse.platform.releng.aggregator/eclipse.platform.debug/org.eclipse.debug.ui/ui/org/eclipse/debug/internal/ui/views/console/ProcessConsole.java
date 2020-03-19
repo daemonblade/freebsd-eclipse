@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2000, 2019 IBM Corporation and others.
+ *  Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  *  This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,7 @@
  *     IBM Corporation - initial API and implementation
  *     Paul Pazderski  - Bug 545769: fixed rare UTF-8 character corruption bug
  *     Paul Pazderski  - Bug 552015: console finished signaled to late if input is connected to file
+ *     Paul Pazderski  - Bug 251642: add termination time in console label
  *******************************************************************************/
 package org.eclipse.debug.internal.ui.views.console;
 
@@ -24,7 +25,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
@@ -89,6 +95,7 @@ import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.progress.UIJob;
 
+import com.ibm.icu.text.DateFormat;
 import com.ibm.icu.text.MessageFormat;
 
 
@@ -301,7 +308,56 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 						buffer.append(type);
 						buffer.append("] "); //$NON-NLS-1$
 					}
-					buffer.append(process.getLabel());
+
+					Date launchTime = parseTimestamp(process.getAttribute(DebugPlugin.ATTR_LAUNCH_TIMESTAMP));
+					Date terminateTime = parseTimestamp(process.getAttribute(DebugPlugin.ATTR_TERMINATE_TIMESTAMP));
+
+					String procLabel = process.getLabel();
+					if (launchTime != null) {
+						// FIXME workaround to remove start time from process label added from jdt for
+						// java launches
+						int idx = procLabel.lastIndexOf('(');
+						if (idx >= 0) {
+							int end = procLabel.lastIndexOf(')');
+							if (end > idx) {
+								String jdtTime = procLabel.substring(idx + 1, end);
+								try {
+									DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM).parse(jdtTime);
+									procLabel = procLabel.substring(0, idx);
+								} catch (ParseException pe) {
+									// not a date. Label just contains parentheses
+								}
+							}
+						}
+					}
+
+					DateFormat dateTimeFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
+					if (launchTime != null && terminateTime != null) {
+						String launchTimeStr = dateTimeFormat.format(launchTime);
+						// Check if process started and terminated at same day. If so only print the
+						// time part of termination time and omit the date part.
+						LocalDateTime launchDate = LocalDateTime.ofInstant(launchTime.toInstant(),
+								ZoneId.systemDefault());
+						LocalDateTime terminateDate = LocalDateTime.ofInstant(terminateTime.toInstant(),
+								ZoneId.systemDefault());
+						LocalDateTime launchDay = launchDate.truncatedTo(ChronoUnit.DAYS);
+						LocalDateTime terminateDay = terminateDate.truncatedTo(ChronoUnit.DAYS);
+						String terminateTimeStr;
+						if (launchDay.equals(terminateDay)) {
+							terminateTimeStr = DateFormat.getTimeInstance(DateFormat.MEDIUM).format(terminateTime);
+						} else {
+							terminateTimeStr = dateTimeFormat.format(terminateTime);
+						}
+
+						buffer.append(MessageFormat.format(ConsoleMessages.ProcessConsole_commandLabel_withStartEnd,
+								procLabel, launchTimeStr, terminateTimeStr));
+					} else if (launchTime != null) {
+						buffer.append(MessageFormat.format(ConsoleMessages.ProcessConsole_commandLabel_withStart,
+								procLabel, dateTimeFormat.format(launchTime)));
+					} else if (terminateTime != null) {
+						buffer.append(MessageFormat.format(ConsoleMessages.ProcessConsole_commandLabel_withEnd,
+								procLabel, dateTimeFormat.format(terminateTime)));
+					}
 					label = buffer.toString();
 				}
 			}
@@ -311,6 +367,26 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 			return MessageFormat.format(ConsoleMessages.ProcessConsole_0, new Object[] { label });
 		}
 		return label;
+	}
+
+	/**
+	 * Get Date from (possibly invalid) timestamp.
+	 *
+	 * @param timestamp a timestamp as returned from
+	 *                  {@link System#currentTimeMillis()} or <code>null</code>
+	 * @return Date object for this timestamp or <code>null</code> if timestamp is
+	 *         invalid
+	 */
+	private static Date parseTimestamp(String timestamp) {
+		if (timestamp == null) {
+			return null;
+		}
+		try {
+			long lTimestamp = Long.parseLong(timestamp);
+			return new Date(lTimestamp);
+		} catch (NumberFormatException ex) {
+			return null;
+		}
 	}
 
 	/**
@@ -505,8 +581,7 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 	 */
 	@Override
 	public void handleDebugEvents(DebugEvent[] events) {
-		for (int i = 0; i < events.length; i++) {
-			DebugEvent event = events[i];
+		for (DebugEvent event : events) {
 			if (event.getSource().equals(getProcess())) {
 
 				if (event.getKind() == DebugEvent.TERMINATE) {
@@ -631,7 +706,11 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 	}
 
 	/**
-	 * This class listens to a specified IO stream
+	 * This class listens to a specified stream monitor to get notified on output
+	 * from the process connected to console.
+	 * <p>
+	 * Received output will be redirected to given {@link IOConsoleOutputStream} to
+	 * get it shown in console and to {@link #fFileOutputStream} if set.
 	 */
 	private class StreamListener implements IStreamListener {
 
@@ -641,9 +720,8 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 
 		private String fStreamId;
 
-		private boolean fFlushed = false;
-
-		private boolean fListenerRemoved = false;
+		/** Flag to remember if stream was already closed. */
+		private boolean fStreamClosed = false;
 
 		public StreamListener(String streamIdentifier, IStreamMonitor monitor, IOConsoleOutputStream stream) {
 			this.fStreamId = streamIdentifier;
@@ -651,58 +729,49 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 			this.fStream = stream;
 			fStreamMonitor.addListener(this);
 			//fix to bug 121454. Ensure that output to fast processes is processed.
-			streamAppended(null, monitor);
+			flushAndDisableBuffer(monitor);
+		}
+
+		/**
+		 * Process existing content in monitor and flush and disable buffering if it is
+		 * a {@link IFlushableStreamMonitor}.
+		 *
+		 * @param monitor the monitor which might have buffered content
+		 */
+		private void flushAndDisableBuffer(IStreamMonitor monitor) {
+			String contents;
+			synchronized (monitor) {
+				contents = monitor.getContents();
+				if (monitor instanceof IFlushableStreamMonitor) {
+					IFlushableStreamMonitor m = (IFlushableStreamMonitor) monitor;
+					m.flushContents();
+					m.setBuffered(false);
+				}
+			}
+			streamAppended(contents, monitor);
 		}
 
 		@Override
 		public void streamAppended(String text, IStreamMonitor monitor) {
-			String encoding = getEncoding();
-			if (fFlushed) {
-				try {
-					if (fStream != null) {
-						if (encoding == null) {
-							fStream.write(text);
+			if (text == null || text.length() == 0) {
+				return;
+			}
+			try {
+				if (fStream != null) {
+					fStream.write(text);
+				}
+				if (fFileOutputStream != null) {
+					Charset charset = getCharset();
+					synchronized (fFileOutputStream) {
+						if (charset == null) {
+							fFileOutputStream.write(text.getBytes());
 						} else {
-							fStream.write(text.getBytes(encoding));
+							fFileOutputStream.write(text.getBytes(charset));
 						}
-					}
-					if (fFileOutputStream != null) {
-						synchronized (fFileOutputStream) {
-							if (encoding == null) {
-								fFileOutputStream.write(text.getBytes());
-							} else {
-								fFileOutputStream.write(text.getBytes(encoding));
-							}
-						}
-					}
-				} catch (IOException e) {
-					DebugUIPlugin.log(e);
-				}
-			} else {
-				String contents = null;
-				synchronized (fStreamMonitor) {
-					fFlushed = true;
-					contents = fStreamMonitor.getContents();
-					if (fStreamMonitor instanceof IFlushableStreamMonitor) {
-						IFlushableStreamMonitor m = (IFlushableStreamMonitor) fStreamMonitor;
-						m.flushContents();
-						m.setBuffered(false);
 					}
 				}
-				try {
-					if (contents != null && contents.length() > 0) {
-						if (fStream != null) {
-							fStream.write(contents);
-						}
-						if (fFileOutputStream != null) {
-							synchronized (fFileOutputStream) {
-								fFileOutputStream.write(contents.getBytes());
-							}
-						}
-					}
-				} catch (IOException e) {
-					DebugUIPlugin.log(e);
-				}
+			} catch (IOException e) {
+				DebugUIPlugin.log(e);
 			}
 		}
 
@@ -712,22 +781,20 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 			}
 			synchronized (fStreamMonitor) {
 				fStreamMonitor.removeListener(this);
-				if (!fFlushed) {
-					String contents = fStreamMonitor.getContents();
-					streamAppended(contents, fStreamMonitor);
-				}
-				fListenerRemoved = true;
+				fStreamClosed = true;
+
 				try {
 					if (fStream != null) {
 						fStream.close();
 					}
 				} catch (IOException e) {
+					DebugUIPlugin.log(e);
 				}
 			}
 		}
 
 		public void dispose() {
-			if (!fListenerRemoved) {
+			if (!fStreamClosed) {
 				closeStream();
 			}
 			fStream = null;

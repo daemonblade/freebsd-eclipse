@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Paul Pazderski and others.
+ * Copyright (c) 2019, 2020 Paul Pazderski and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,11 @@
  *     Paul Pazderski - initial API and implementation
  *******************************************************************************/
 package org.eclipse.debug.tests.console;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -28,8 +33,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.core.runtime.ILogListener;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.tests.AbstractDebugTest;
 import org.eclipse.debug.tests.TestUtil;
 import org.eclipse.debug.tests.TestsPlugin;
@@ -48,6 +56,9 @@ import org.eclipse.ui.console.IConsoleDocumentPartitionerExtension;
 import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.console.IOConsole;
 import org.eclipse.ui.console.IOConsoleOutputStream;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests the {@link IOConsole}. Especially the partitioner and viewer parts.
@@ -76,16 +87,9 @@ public class IOConsoleTests extends AbstractDebugTest {
 		}
 	};
 
-	public IOConsoleTests() {
-		super(IOConsoleTests.class.getSimpleName());
-	}
-
-	public IOConsoleTests(String name) {
-		super(name);
-	}
-
 	@Override
-	protected void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		super.setUp();
 
 		// create or activate console view
@@ -108,7 +112,8 @@ public class IOConsoleTests extends AbstractDebugTest {
 	}
 
 	@Override
-	protected void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		Platform.removeLogListener(errorLogListener);
 		super.tearDown();
 
@@ -131,12 +136,12 @@ public class IOConsoleTests extends AbstractDebugTest {
 		});
 		final IConsoleManager consoleManager = ConsolePlugin.getDefault().getConsoleManager();
 		consoleManager.addConsoles(new IConsole[] { console });
-		TestUtil.waitForJobs(getName(), 25, 10000);
+		TestUtil.waitForJobs(name.getMethodName(), 25, 10000);
 		consoleManager.showConsoleView(console);
 		@SuppressWarnings("restriction")
 		final org.eclipse.ui.internal.console.IOConsolePage page = (org.eclipse.ui.internal.console.IOConsolePage) consoleView.getCurrentPage();
 		final StyledText textPanel = (StyledText) page.getControl();
-		return new IOConsoleTestUtil(console, textPanel, getName());
+		return new IOConsoleTestUtil(console, textPanel, name.getMethodName());
 	}
 
 	/**
@@ -158,24 +163,23 @@ public class IOConsoleTests extends AbstractDebugTest {
 		}
 
 		c.closeOutputStream();
-		if (c.getConsole().getInputStream() != null) {
-			c.getConsole().getInputStream().close();
-		}
 
-		if (expectedInputLines.length > 0) {
-			assertNotNull(c.getConsole().getInputStream());
-			assertTrue("InputStream is empty.", c.getConsole().getInputStream().available() > 0);
+		try (InputStream consoleIn = c.getConsole().getInputStream()) {
+			if (expectedInputLines.length > 0) {
+				assertNotNull(consoleIn);
+				assertTrue("InputStream is empty.", consoleIn.available() > 0);
 
-			final List<String> inputLines = new ArrayList<>();
-			try (BufferedReader reader = new BufferedReader(new InputStreamReader(c.getConsole().getInputStream(), c.getConsole().getCharset()))) {
-				String line;
-				while (reader.ready() && (line = reader.readLine()) != null) {
-					inputLines.add(line);
+				final List<String> inputLines = new ArrayList<>();
+				try (BufferedReader reader = new BufferedReader(new InputStreamReader(consoleIn, c.getConsole().getCharset()))) {
+					String line;
+					while (reader.ready() && (line = reader.readLine()) != null) {
+						inputLines.add(line);
+					}
 				}
-			}
-			assertEquals("Input contains to many/few lines.", expectedInputLines.length, inputLines.size());
-			for (int i = 0; i < expectedInputLines.length; i++) {
-				assertEquals("Content of input line " + i + " not as expected.", expectedInputLines[i], inputLines.get(i));
+				assertEquals("Input contains to many/few lines.", expectedInputLines.length, inputLines.size());
+				for (int i = 0; i < expectedInputLines.length; i++) {
+					assertEquals("Content of input line " + i + " not as expected.", expectedInputLines[i], inputLines.get(i));
+				}
 			}
 		}
 		c.waitForScheduledJobs();
@@ -188,12 +192,13 @@ public class IOConsoleTests extends AbstractDebugTest {
 	/**
 	 * Test console clear.
 	 */
+	@Test
 	public void testConsoleClear() throws Exception {
 		final IOConsoleTestUtil c = getTestUtil("Test clear");
 
 		c.writeAndVerify("Hello World!");
 		c.getDocument().replace(0, c.getContentLength(), "");
-		c.waitForScheduledJobs();
+		c.flush();
 		c.verifyContent("").verifyPartitions();
 
 		c.writeAndVerify("New console content.");
@@ -208,6 +213,23 @@ public class IOConsoleTests extends AbstractDebugTest {
 		c.clear().insertTypingAndVerify("I").write("O").verifyContent("IO").verifyPartitions();
 		c.insert("\r\n").clear();
 
+		c.insertTypingAndVerify("some user input").selectAll().backspace();
+		c.verifyContent("").verifyPartitions();
+
+		// test (almost) simultaneous write and clear
+		c.writeFast("to be removed").clear().verifyPartitions();
+		// Do not use clear() from test util here. Test requires an immediate
+		// write after clear. The util's clear() method blocks until console is
+		// actually cleared.
+		c.getConsole().clearConsole();
+		c.writeAndVerify("do not remove this").verifyPartitions().clear();
+		final String longString = String.join("", Collections.nCopies(1000, "012345678\n"));
+		c.getConsole().clearConsole();
+		c.writeAndVerify(longString).verifyPartitions().clear();
+		final String veryLongString = String.join("", Collections.nCopies(20000, "abcdefghi\n"));
+		c.getConsole().clearConsole();
+		c.writeAndVerify(veryLongString).verifyPartitions().clear();
+
 		closeConsole(c, "i", "I");
 	}
 
@@ -215,6 +237,7 @@ public class IOConsoleTests extends AbstractDebugTest {
 	 * Test multiple writes, i.e. {@link IOConsole} receives content from
 	 * connected {@link IOConsoleOutputStream}.
 	 */
+	@Test
 	public void testWrites() throws Exception {
 		final IOConsoleTestUtil c = getTestUtil("Test writes");
 		final String[] strings = new String[] {
@@ -235,6 +258,7 @@ public class IOConsoleTests extends AbstractDebugTest {
 	 * Test {@link IOConsole} input stream, i.e. simulate user typing or pasting
 	 * input in console.
 	 */
+	@Test
 	public void testUserInput() throws Exception {
 		final IOConsoleTestUtil c = getTestUtil("Test input");
 		final List<String> expectedInput = new ArrayList<>();
@@ -271,22 +295,27 @@ public class IOConsoleTests extends AbstractDebugTest {
 	/**
 	 * Test {@link IOConsole} with file as input source.
 	 */
+	@Test
 	public void testInputFile() throws Exception {
 		final IOConsoleTestUtil c = getTestUtil("Test input file");
 		// open default output stream to match usual behavior where two output
 		// streams are open and to prevent premature console closing
-		c.getDefaultOutputStream();
-		try (InputStream in = new ByteArrayInputStream(new byte[0])) {
-			c.getConsole().getInputStream().close();
-			c.getConsole().setInputStream(in);
+		try (IOConsoleOutputStream defaultOutputStream = c.getDefaultOutputStream()) {
+			try (InputStream in = new ByteArrayInputStream(new byte[0])) {
+				try (InputStream defaultIn = c.getConsole().getInputStream()) {
+					// just close input stream
+				}
+				c.getConsole().setInputStream(in);
+			}
+			closeConsole(c);
 		}
-		closeConsole(c);
 		assertEquals("Test triggered errors in IOConsole.", 0, loggedErrors.get());
 	}
 
 	/**
 	 * Test mixes of outputs and user inputs in various variants.
 	 */
+	@Test
 	public void testMixedWriteAndInput() throws Exception {
 		final IOConsoleTestUtil c = getTestUtil("Test input output mix");
 		final List<String> expectedInput = new ArrayList<>();
@@ -384,6 +413,7 @@ public class IOConsoleTests extends AbstractDebugTest {
 	/**
 	 * Test enabling/disabling control character interpretation.
 	 */
+	@Test
 	public void testControlCharacterSettings() throws Exception {
 		final IOConsoleTestUtil c = getTestUtil("Test options");
 
@@ -412,6 +442,7 @@ public class IOConsoleTests extends AbstractDebugTest {
 	/**
 	 * Test handling of <code>\b</code>.
 	 */
+	@Test
 	public void testBackspaceControlCharacter() throws Exception {
 		final IOConsoleTestUtil c = getTestUtil("Test \\b");
 		c.getConsole().setCarriageReturnAsControlCharacter(false);
@@ -493,6 +524,7 @@ public class IOConsoleTests extends AbstractDebugTest {
 	/**
 	 * Test handling of <code>\r</code>.
 	 */
+	@Test
 	public void testCarriageReturnControlCharacter() throws Exception {
 		final IOConsoleTestUtil c = getTestUtil("Test \\r");
 		c.getConsole().setCarriageReturnAsControlCharacter(true);
@@ -536,8 +568,53 @@ public class IOConsoleTests extends AbstractDebugTest {
 	}
 
 	/**
+	 * Test handling of <code>\f</code>.
+	 */
+	@Test
+	public void testFormFeedControlCharacter() throws Exception {
+		final IOConsoleTestUtil c = getTestUtil("Test \\f");
+		c.getConsole().setHandleControlCharacters(true);
+		try (IOConsoleOutputStream err = c.getConsole().newOutputStream()) {
+			c.write("\f");
+			assertEquals("Wrong number of lines.", 2, c.getDocument().getNumberOfLines());
+			c.verifyContentByLine("", 0).verifyContentByLine("", 1);
+			c.writeAndVerify("output").writeFast("\f").write("more");
+			c.verifyContentByLine("output", 1);
+			c.verifyContentByLine("      more", 2);
+			c.clear();
+			c.writeFast("\f\f").writeFast("\f", err).write("\fend").verifyPartitions(2);
+			assertEquals("Wrong number of lines.", 5, c.getDocument().getNumberOfLines());
+			c.verifyContentByLine("end", 4);
+			c.clear();
+			c.write("1st\f2nd\f3rd").verifyPartitions();
+			c.verifyContentByLine("1st", 0);
+			c.verifyContentByLine("   2nd", 1);
+			c.verifyContentByLine("      3rd", 2);
+
+			// test form feed mixed with backspaces
+			c.clear();
+			c.write("first\f\b\bsecond");
+			c.verifyContentByLine("first", 0);
+			c.verifyContentByLine("   second", 1);
+			c.clear();
+			c.writeFast("><\b").writeFast("\f", err).write("abc").verifyPartitions(2);
+			c.verifyContentByLine("><", 0);
+			c.verifyContentByLine(" abc", 1);
+
+			// test with input partitions. At the moment input is
+			// considered for the indentation
+			c.clear();
+			c.writeAndVerify("foo").insertTyping("input").writeFast("bar").write("\f.", err).verifyPartitions(2);
+			c.verifyContentByLine("fooinputbar", 0);
+			c.verifyContentByLine("           .", 1);
+		}
+		closeConsole(c);
+	}
+
+	/**
 	 * Test larger number of partitions with pseudo random console content.
 	 */
+	@Test
 	public void testManyPartitions() throws IOException {
 		final IOConsoleTestUtil c = getTestUtil("Test many partitions");
 		final List<String> expectedInput = new ArrayList<>();
@@ -579,28 +656,32 @@ public class IOConsoleTests extends AbstractDebugTest {
 	/**
 	 * Test console trimming.
 	 */
+	@Test
 	public void testTrim() throws Exception {
 		final IOConsoleTestUtil c = getTestUtil("Test trim");
-		try (IOConsoleOutputStream otherOut = c.getConsole().newOutputStream()) {
-			c.writeFast("first\n");
-			for (int i = 0; i < 20; i++) {
-				c.writeFast("0123456789\n", (i & 1) == 0 ? c.getDefaultOutputStream() : otherOut);
-			}
-			c.write("last\n");
-			c.verifyContentByLine("first", 0).verifyContentByLine("last", -2);
-			assertTrue("Document not filled.", c.getDocument().getNumberOfLines() > 15);
+		try (IOConsoleOutputStream defaultOut = c.getDefaultOutputStream()) {
+			try (IOConsoleOutputStream otherOut = c.getConsole().newOutputStream()) {
+				c.writeFast("first\n");
+				for (int i = 0; i < 20; i++) {
+					c.writeFast("0123456789\n", (i & 1) == 0 ? defaultOut : otherOut);
+				}
+				c.write("last\n");
+				c.verifyContentByLine("first", 0).verifyContentByLine("last", -2);
+				assertTrue("Document not filled.", c.getDocument().getNumberOfLines() > 15);
 
-			c.getConsole().setWaterMarks(50, 100);
-			c.waitForScheduledJobs();
-			c.verifyContentByOffset("0123456789", 0);
-			assertTrue("Document not trimmed.", c.getDocument().getNumberOfLines() < 15);
+				c.getConsole().setWaterMarks(50, 100);
+				c.waitForScheduledJobs();
+				c.verifyContentByOffset("0123456789", 0);
+				assertTrue("Document not trimmed.", c.getDocument().getNumberOfLines() < 15);
+			}
+			closeConsole(c);
 		}
-		closeConsole(c);
 	}
 
 	/**
 	 * Some extra tests for IOConsolePartitioner.
 	 */
+	@Test
 	public void testIOPartitioner() throws Exception {
 		final IOConsoleTestUtil c = getTestUtil("Test partitioner");
 
@@ -627,6 +708,7 @@ public class IOConsoleTests extends AbstractDebugTest {
 	/**
 	 * Tests for the {@link IConsoleDocumentPartitioner} interface.
 	 */
+	@Test
 	public void testIConsoleDocumentPartitioner() throws Exception {
 		final IOConsoleTestUtil c = getTestUtil("Test IConsoleDocumentPartitioner");
 		try (IOConsoleOutputStream otherOut = c.getConsole().newOutputStream()) {
@@ -743,6 +825,68 @@ public class IOConsoleTests extends AbstractDebugTest {
 		c.verifyPartitions();
 		closeConsole(c, "#");
 		assertEquals("Test triggered errors in IOConsole.", 0, loggedErrors.get());
+	}
+
+	/**
+	 * Regression test for deadlock in stream processing.
+	 */
+	@Test
+	public void testBug421303_StreamProcessingDeadlock() throws Exception {
+		// Test situation is that UI thread and another thread both write a
+		// large amount of output into same IOConsoleOutputStream at same time
+		// where the non-UI thread is writing first.
+		// Test includes a watchdog thread which will break the deadlock (if
+		// happened) so the test can end in a reasonable amount of time.
+		final IOConsoleTestUtil c = getTestUtil("Test Bug 421303 Stream processing deadlock");
+		final String veryLongString = String.join("", Collections.nCopies(20000, "0123456789"));
+		final Exception[] jobException = new Exception[1];
+		final AtomicBoolean deadlocked = new AtomicBoolean(false);
+		Job job = new Job("Async out") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				synchronized (c) {
+					c.notifyAll();
+				}
+				try {
+					c.writeFast(veryLongString);
+				} catch (IOException e) {
+					jobException[0] = e;
+				}
+				return Status.OK_STATUS;
+			}
+		};
+		Thread watchdog = new Thread(() -> {
+			try {
+				Thread.sleep(testTimeout);
+				synchronized (c) {
+					c.notifyAll();
+				}
+				if (job.getThread() != null && job.getThread().isAlive()) {
+					deadlocked.set(true);
+					job.getThread().interrupt();
+				}
+			} catch (InterruptedException e) {
+			}
+		}, "Watchdog");
+		watchdog.setDaemon(true);
+		watchdog.start();
+
+		synchronized (c) {
+			job.schedule();
+			c.wait();
+		}
+		// ensure other thread is writing first
+		Thread.yield();
+		Thread.sleep(50);
+		c.writeFast(veryLongString);
+
+		watchdog.interrupt();
+		watchdog.join(1000);
+		if (jobException[0] != null) {
+			throw jobException[0];
+		}
+		assertFalse("Deadlock in stream processing.", deadlocked.get());
+		closeConsole(c);
 	}
 
 	/**
