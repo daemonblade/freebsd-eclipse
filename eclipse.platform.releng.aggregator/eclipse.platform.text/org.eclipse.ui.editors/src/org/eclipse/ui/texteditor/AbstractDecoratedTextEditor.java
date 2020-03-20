@@ -21,7 +21,6 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Iterator;
-import java.util.List;
 
 import com.ibm.icu.text.BreakIterator;
 import com.ibm.icu.text.MessageFormat;
@@ -511,16 +510,13 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 	@Override
 	protected IMenuListener createContextMenuListener() {
 		final IMenuListener superListener= super.createContextMenuListener();
-		return new IMenuListener() {
-			@Override
-			public void menuAboutToShow(IMenuManager menu) {
-				if (!getOverviewRulerContextMenuId().equals(menu.getId())) {
-					superListener.menuAboutToShow(menu);
-					return;
-				}
-				setFocus();
-				overviewRulerContextMenuAboutToShow(menu);
+		return menu -> {
+			if (!getOverviewRulerContextMenuId().equals(menu.getId())) {
+				superListener.menuAboutToShow(menu);
+				return;
 			}
+			setFocus();
+			overviewRulerContextMenuAboutToShow(menu);
 		};
 	}
 
@@ -1410,15 +1406,12 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 			return (T) getAnnotationAccess();
 
 		if (adapter == IShowInSource.class) {
-			return (T) new IShowInSource() {
-				@Override
-				public ShowInContext getShowInContext() {
-					ISelection selection= null;
-					ISelectionProvider selectionProvider= getSelectionProvider();
-					if (selectionProvider != null)
-						selection= selectionProvider.getSelection();
-					return new ShowInContext(getEditorInput(), selection);
-				}
+			return (T) (IShowInSource) () -> {
+				ISelection selection= null;
+				ISelectionProvider selectionProvider= getSelectionProvider();
+				if (selectionProvider != null)
+					selection= selectionProvider.getSelection();
+				return new ShowInContext(getEditorInput(), selection);
 			};
 		}
 
@@ -1935,13 +1928,11 @@ public abstract class AbstractDecoratedTextEditor extends StatusTextEditor {
 		final IColumnSupport support= getAdapter(IColumnSupport.class);
 		IPreferenceStore store= EditorsUI.getPreferenceStore();
 		final RulerColumnPreferenceAdapter adapter= new RulerColumnPreferenceAdapter(store, AbstractTextEditor.PREFERENCE_RULER_CONTRIBUTIONS);
-		List<RulerColumnDescriptor> descriptors= RulerColumnRegistry.getDefault().getColumnDescriptors();
-		for (Iterator<RulerColumnDescriptor> t= descriptors.iterator(); t.hasNext();) {
-			final RulerColumnDescriptor descriptor= t.next();
+		for (RulerColumnDescriptor descriptor : RulerColumnRegistry.getDefault().getColumnDescriptors()) {
 			if (!descriptor.isIncludedInMenu() || !support.isColumnSupported(descriptor))
 				continue;
 			final boolean isVisible= support.isColumnVisible(descriptor);
-			IAction action= new Action(MessageFormat.format(TextEditorMessages.AbstractDecoratedTextEditor_show_ruler_label, new Object[] {descriptor.getName()}), IAction.AS_CHECK_BOX) {
+			IAction action= new Action(MessageFormat.format(TextEditorMessages.AbstractDecoratedTextEditor_show_ruler_label, descriptor.getName()), IAction.AS_CHECK_BOX) {
 				@Override
 				public void run() {
 					if (descriptor.isGlobal())

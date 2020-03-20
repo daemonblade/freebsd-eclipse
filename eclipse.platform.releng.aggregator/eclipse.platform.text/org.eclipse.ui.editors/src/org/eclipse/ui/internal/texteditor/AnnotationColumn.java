@@ -23,7 +23,6 @@ import org.eclipse.core.runtime.Assert;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.AnnotationRulerColumn;
@@ -117,8 +116,7 @@ public class AnnotationColumn extends AbstractContributedRulerColumn implements 
 		if (store != null && fDelegate instanceof AnnotationRulerColumn) {
 			final AnnotationRulerColumn column= (AnnotationRulerColumn) fDelegate;
 			// initial set up
-			for (Iterator<AnnotationPreference> iter2= fAnnotationPreferences.getAnnotationPreferences().iterator(); iter2.hasNext();) {
-				AnnotationPreference preference= iter2.next();
+			for (AnnotationPreference preference : fAnnotationPreferences.getAnnotationPreferences()) {
 				String key= preference.getVerticalRulerPreferenceKey();
 				boolean showAnnotation= true;
 				if (key != null && store.contains(key))
@@ -129,19 +127,16 @@ public class AnnotationColumn extends AbstractContributedRulerColumn implements 
 			column.addAnnotationType(Annotation.TYPE_UNKNOWN);
 
 			// link to preference store
-			fPropertyListener= new IPropertyChangeListener() {
-				@Override
-				public void propertyChange(PropertyChangeEvent event) {
-					String property= event.getProperty();
-					AnnotationPreference annotationPreference= getVerticalRulerAnnotationPreference(property);
-					if (annotationPreference != null && property.equals(annotationPreference.getVerticalRulerPreferenceKey())) {
-						Object type= annotationPreference.getAnnotationType();
-						if (getPreferenceStore().getBoolean(property))
-							column.addAnnotationType(type);
-						else
-							column.removeAnnotationType(type);
-						column.redraw();
-					}
+			fPropertyListener= event -> {
+				String property= event.getProperty();
+				AnnotationPreference annotationPreference= getVerticalRulerAnnotationPreference(property);
+				if (annotationPreference != null && property.equals(annotationPreference.getVerticalRulerPreferenceKey())) {
+					Object type= annotationPreference.getAnnotationType();
+					if (getPreferenceStore().getBoolean(property))
+						column.addAnnotationType(type);
+					else
+						column.removeAnnotationType(type);
+					column.redraw();
 				}
 			};
 			store.addPropertyChangeListener(fPropertyListener);

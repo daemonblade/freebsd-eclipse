@@ -19,16 +19,15 @@
 	<parent>
 		<artifactId>tests-pom</artifactId>
 		<groupId>eclipse.platform.text</groupId>
-		<version>4.14.0-SNAPSHOT</version>
+		<version>4.15.0-SNAPSHOT</version>
 		<relativePath>../tests-pom/</relativePath>
 	</parent>
 	<groupId>org.eclipse.text</groupId>
 	<artifactId>org.eclipse.text.quicksearch.tests</artifactId>
-	<version>1.0.100-SNAPSHOT</version>
+	<version>1.0.200-SNAPSHOT</version>
 	<packaging>eclipse-test-plugin</packaging>
 	<properties>
 		<testSuite>${project.artifactId}</testSuite>
 		<testClass>org.eclipse.text.quicksearch.tests.*Test</testClass>
-		<skipAPIAnalysis>true</skipAPIAnalysis> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=548518#c41 -->
 	</properties>
 </project>

@@ -14,7 +14,6 @@
 package org.eclipse.ui.internal.texteditor;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -29,12 +28,7 @@ public final class PropertyEventDispatcher {
 	private final Map<Object, Object> fHandlerMap= new HashMap<>();
 	private final Map<Object, Object> fReverseMap= new HashMap<>();
 	private final IPreferenceStore fStore;
-	private final IPropertyChangeListener fListener= new IPropertyChangeListener() {
-		@Override
-		public void propertyChange(PropertyChangeEvent event) {
-			firePropertyChange(event);
-		}
-	};
+	private final IPropertyChangeListener fListener= this::firePropertyChange;
 	public PropertyEventDispatcher(IPreferenceStore store) {
 		Assert.isLegal(store != null);
 		fStore= store;
@@ -45,13 +39,15 @@ public final class PropertyEventDispatcher {
 		fReverseMap.clear();
 		fHandlerMap.clear();
 	}
+
+	@SuppressWarnings("unchecked")
 	private void firePropertyChange(PropertyChangeEvent event) {
 		Object value= fHandlerMap.get(event.getProperty());
 		if (value instanceof IPropertyChangeListener)
 			((IPropertyChangeListener) value).propertyChange(event);
 		else if (value instanceof Set)
-			for (@SuppressWarnings("unchecked") Iterator<IPropertyChangeListener> it= ((Set<IPropertyChangeListener>) value).iterator(); it.hasNext(); )
-				it.next().propertyChange(event);
+			for (IPropertyChangeListener iPropertyChangeListener : ((Set<IPropertyChangeListener>) value))
+				iPropertyChangeListener.propertyChange(event);
 	}
 	public void addPropertyChangeListener(String property, IPropertyChangeListener listener) {
 		Assert.isLegal(property != null);
@@ -88,6 +84,8 @@ public final class PropertyEventDispatcher {
 			map.remove(key);
 		}
 	}
+
+	@SuppressWarnings("unchecked")
 	public void removePropertyChangeListener(IPropertyChangeListener listener) {
 		Object value= fReverseMap.get(listener);
 		if (value == null)
@@ -97,8 +95,8 @@ public final class PropertyEventDispatcher {
 			multiMapRemove(fHandlerMap, value, listener);
 		} else if (value instanceof Set) {
 			fReverseMap.remove(listener);
-			for (@SuppressWarnings("unchecked") Iterator<Object> it= ((Set<Object>) value).iterator(); it.hasNext();)
-				multiMapRemove(fHandlerMap, it.next(), listener);
+			for (Object object : ((Set<Object>) value))
+				multiMapRemove(fHandlerMap, object, listener);
 		}
 
 		if (fReverseMap.isEmpty())

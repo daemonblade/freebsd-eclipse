@@ -60,7 +60,7 @@ public class ConvertLineDelimitersAction extends FileBufferOperationAction {
 
 	protected ConvertLineDelimitersAction(String lineDelimiter, String label) {
 		super(new ConvertLineDelimitersOperation(lineDelimiter));
-		setText(constructLabel(label, lineDelimiter, System.getProperty("line.separator"))); //$NON-NLS-1$
+		setText(constructLabel(label, lineDelimiter, System.lineSeparator()));
 		fLabel= Action.removeMnemonics(label);
 	}
 
@@ -90,12 +90,7 @@ public class ConvertLineDelimitersAction extends FileBufferOperationAction {
 			return filterUnacceptableFiles(files);
 		}
 
-		final IFilter filter= new IFilter() {
-			@Override
-			public boolean accept(IResource resource) {
-				return resource != null && isAcceptableLocation(resource.getFullPath());
-			}
-		};
+		final IFilter filter= resource -> resource != null && isAcceptableLocation(resource.getFullPath());
 
 		SelectResourcesDialog dialog= new SelectResourcesDialog(getShell(), getDialogTitle(), TextEditorMessages.ConvertLineDelimitersAction_dialog_description, filter) {
 			@Override

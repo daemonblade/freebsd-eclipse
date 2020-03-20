@@ -972,7 +972,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 				 * http://dev.eclipse.org/bugs/show_bug.cgi?id=11731
 				 * Will be removed when SWT has solved the problem.
 				 */
-				window.getShell().getDisplay().asyncExec(() -> handleActivation());
+				window.getShell().getDisplay().asyncExec(this::handleActivation);
 			}
 		}
 
@@ -3520,7 +3520,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		// Install drag source
 		final ISelectionProvider selectionProvider= viewer.getSelectionProvider();
 		final DragSource source= new DragSource(st, DND.DROP_COPY | DND.DROP_MOVE);
-		source.setTransfer(new Transfer[] {TextTransfer.getInstance()});
+		source.setTransfer(TextTransfer.getInstance());
 		source.addDragListener(new DragSourceAdapter() {
 			String fSelectedText;
 			Point fSelection;
@@ -4753,8 +4753,8 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			msg= NLSUtility.format(EditorMessages.Editor_error_activated_outofsync_message, inputName);
 
 			if (MessageDialog.open(MessageDialog.QUESTION, shell, title, msg, SWT.NONE,
-					new String[] { EditorMessages.Editor_error_replace_button_label,
-							EditorMessages.Editor_error_dontreplace_button_label }) == 0) {
+					EditorMessages.Editor_error_replace_button_label,
+					EditorMessages.Editor_error_dontreplace_button_label) == 0) {
 
 				try {
 					if (provider instanceof IDocumentProviderExtension) {

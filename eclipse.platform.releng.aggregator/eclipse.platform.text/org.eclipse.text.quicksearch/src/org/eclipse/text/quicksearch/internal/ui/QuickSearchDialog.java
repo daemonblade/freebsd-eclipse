@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -38,7 +38,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.LegacyActionTools;
 import org.eclipse.jface.action.MenuManager;
@@ -49,13 +48,9 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
-import org.eclipse.jface.viewers.DoubleClickEvent;
-import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ILazyContentProvider;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
 import org.eclipse.jface.viewers.StyledString;
@@ -75,16 +70,12 @@ import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.TraverseEvent;
-import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
@@ -405,6 +396,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 	 *
 	 * @see org.eclipse.jface.window.Window#create()
 	 */
+	@Override
 	public void create() {
 		super.create();
 		pattern.setFocus();
@@ -448,7 +440,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 				String[] _weights = settings.getArray(DIALOG_SASH_WEIGHTS);
 				int[] weights = new int[_weights.length];
 				for (int i = 0; i < weights.length; i++) {
-					weights[i] = Integer.valueOf(_weights[i]);
+					weights[i] = Integer.parseInt(_weights[i]);
 				}
 				sashForm.setWeights(weights);
 			}
@@ -471,6 +463,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 			}
 		}
 
+		@Override
 		public void run() {
 			//setChecked(!isChecked());
 		}
@@ -492,6 +485,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 			}
 		}
 
+		@Override
 		public void run() {
 			//setChecked(!isChecked());
 			refreshHeaderLabel();
@@ -505,12 +499,13 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 	 *
 	 * @see org.eclipse.jface.window.Window#close()
 	 */
+	@Override
 	public boolean close() {
 		this.progressJob.cancel();
 		this.progressJob = null;
 //		this.refreshProgressMessageJob.cancel();
 		if (showViewHandler != null) {
-			IHandlerService service = (IHandlerService) PlatformUI
+			IHandlerService service = PlatformUI
 					.getWorkbench().getService(IHandlerService.class);
 			service.deactivateHandler(showViewHandler);
 			showViewHandler.getHandler().dispose();
@@ -577,12 +572,10 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		header.setLayout(layout);
 
 		headerLabel = new Label(header, SWT.NONE);
-		headerLabel.addTraverseListener(new TraverseListener() {
-			public void keyTraversed(TraverseEvent e) {
-				if (e.detail == SWT.TRAVERSE_MNEMONIC && e.doit) {
-					e.detail = SWT.TRAVERSE_NONE;
-					pattern.setFocus();
-				}
+		headerLabel.addTraverseListener(e -> {
+			if (e.detail == SWT.TRAVERSE_MNEMONIC && e.doit) {
+				e.detail = SWT.TRAVERSE_NONE;
+				pattern.setFocus();
 			}
 		});
 
@@ -598,8 +591,6 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 
 	private void refreshHeaderLabel() {
 		String msg = toggleCaseSensitiveAction.isChecked() ? Messages.QuickSearchDialog_caseSensitive_label : Messages.QuickSearchDialog_caseInsensitive_label;
-		msg += ' ';
-		msg += Messages.QuickSearchDialog_patternHint;
 		headerLabel.setText(msg);
 	}
 
@@ -622,12 +613,10 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		listLabel
 				.setText(WorkbenchMessages.FilteredItemsSelectionDialog_listLabel);
 
-		listLabel.addTraverseListener(new TraverseListener() {
-			public void keyTraversed(TraverseEvent e) {
-				if (e.detail == SWT.TRAVERSE_MNEMONIC && e.doit) {
-					e.detail = SWT.TRAVERSE_NONE;
-					list.getTable().setFocus();
-				}
+		listLabel.addTraverseListener(e -> {
+			if (e.detail == SWT.TRAVERSE_MNEMONIC && e.doit) {
+				e.detail = SWT.TRAVERSE_NONE;
+				list.getTable().setFocus();
 			}
 		});
 
@@ -652,6 +641,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		toolBar.setLayoutData(data);
 
 		toolBar.addMouseListener(new MouseAdapter() {
+			@Override
 			public void mouseDown(MouseEvent e) {
 				showViewMenu();
 			}
@@ -662,6 +652,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		toolItem
 				.setToolTipText(WorkbenchMessages.FilteredItemsSelectionDialog_menu);
 		toolItem.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(SelectionEvent e) {
 				showViewMenu();
 			}
@@ -671,9 +662,10 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 
 		fillViewMenu(menuManager);
 
-		IHandlerService service = (IHandlerService) PlatformUI.getWorkbench()
+		IHandlerService service = PlatformUI.getWorkbench()
 				.getService(IHandlerService.class);
 		IHandler handler = new AbstractHandler() {
+			@Override
 			public Object execute(ExecutionEvent event) {
 				showViewMenu();
 				return null;
@@ -722,11 +714,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 
 		contextMenuManager = new MenuManager();
 		contextMenuManager.setRemoveAllWhenShown(true);
-		contextMenuManager.addMenuListener(new IMenuListener() {
-			public void menuAboutToShow(IMenuManager manager) {
-				fillContextMenu(manager);
-			}
-		});
+		contextMenuManager.addMenuListener(this::fillContextMenu);
 
 		final Table table = list.getTable();
 		Menu menu= contextMenuManager.createContextMenu(table);
@@ -742,11 +730,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 	protected Control createDialogArea(Composite parent) {
 		Composite dialogArea = (Composite) super.createDialogArea(parent);
 
-		dialogArea.addDisposeListener(new DisposeListener() {
-			public void widgetDisposed(DisposeEvent e) {
-				QuickSearchDialog.this.dispose();
-			}
-		});
+		dialogArea.addDisposeListener(e -> QuickSearchDialog.this.dispose());
 
 		Composite content = createNestedComposite(dialogArea, 1, false);
 		GridData gd = new GridData(GridData.FILL_BOTH);
@@ -758,6 +742,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(inputRow);
 		pattern = new Text(inputRow, SWT.SINGLE | SWT.BORDER | SWT.SEARCH | SWT.ICON_CANCEL);
 		pattern.getAccessible().addAccessibleListener(new AccessibleAdapter() {
+			@Override
 			public void getName(AccessibleEvent e) {
 				e.result = LegacyActionTools.removeMnemonics(headerLabel
 						.getText());
@@ -787,6 +772,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		list.getTable().setLinesVisible(true);
 		list.getTable().getAccessible().addAccessibleListener(
 				new AccessibleAdapter() {
+					@Override
 					public void getName(AccessibleEvent e) {
 						if (e.childID == ACC.CHILDID_SELF) {
 							e.result = LegacyActionTools
@@ -832,6 +818,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		});
 
 		pattern.addKeyListener(new KeyAdapter() {
+			@Override
 			public void keyPressed(KeyEvent e) {
 				if (e.keyCode == SWT.ARROW_DOWN) {
 					if (list.getTable().getItemCount() > 0) {
@@ -844,21 +831,16 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 			}
 		});
 
-		list.addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {
-				StructuredSelection selection = (StructuredSelection) event
-						.getSelection();
-				handleSelected(selection);
-			}
+		list.addSelectionChangedListener(event -> {
+			StructuredSelection selection = (StructuredSelection) event
+					.getSelection();
+			handleSelected(selection);
 		});
 
-		list.addDoubleClickListener(new IDoubleClickListener() {
-			public void doubleClick(DoubleClickEvent event) {
-				handleDoubleClick();
-			}
-		});
+		list.addDoubleClickListener(event -> handleDoubleClick());
 
 		list.getTable().addKeyListener(new KeyAdapter() {
+			@Override
 			public void keyPressed(KeyEvent e) {
 
 				if (e.keyCode == SWT.ARROW_UP && (e.stateMask & SWT.SHIFT) == 0
@@ -939,11 +921,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		details = new StyledText(parent, SWT.MULTI+SWT.READ_ONLY+SWT.BORDER+SWT.H_SCROLL+SWT.V_SCROLL);
 		details.setFont(JFaceResources.getFont(TEXT_FONT));
 
-		list.addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {
-				refreshDetails();
-			}
-		});
+		list.addSelectionChangedListener(event -> refreshDetails());
 		details.addControlListener(new ControlAdapter() {
 			@Override
 			public void controlResized(ControlEvent e) {
@@ -1085,6 +1063,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 	 *
 	 * @see org.eclipse.jface.window.Dialog#getDialogBoundsSettings()
 	 */
+	@Override
 	protected IDialogSettings getDialogBoundsSettings() {
 		IDialogSettings settings = getDialogSettings();
 		IDialogSettings section = settings.getSection(DIALOG_BOUNDS_SETTINGS);
@@ -1146,6 +1125,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 	 *
 	 * @see org.eclipse.ui.dialogs.SelectionStatusDialog#computeResult()
 	 */
+	@Override
 	protected void computeResult() {
 		List objectsToReturn = ((StructuredSelection) list.getSelection())
 				.toList();
@@ -1410,6 +1390,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		 *
 		 * @see org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java.lang.Object)
 		 */
+		@Override
 		public Object[] getElements(Object inputElement) {
 			return items.toArray();
 		}
@@ -1423,6 +1404,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		 *
 		 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
 		 */
+		@Override
 		public void dispose() {
 		}
 
@@ -1432,6 +1414,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer,
 		 *     java.lang.Object, java.lang.Object)
 		 */
+		@Override
 		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		}
 
@@ -1440,6 +1423,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		 *
 		 * @see org.eclipse.jface.viewers.ILazyContentProvider#updateElement(int)
 		 */
+		@Override
 		public void updateElement(int index) {
 
 			QuickSearchDialog.this.list.replace((items
