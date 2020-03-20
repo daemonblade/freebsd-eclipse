@@ -85,7 +85,7 @@ var loadingMessage = "<%=UrlUtil.JavaScriptEncode(ServletResources.getString("Lo
 	</tr>
 <%}%>
 	<tr>
-		<td width="100%"><input type="text" id="typein"></td>
+		<td width="100%"><input type="text" id="typein" aria-label="Find word"></td>
 	<%if (prefs.isIndexButton()) {%>
 		<td><input type="button" id="button" value="<%=ServletResources.getString("IndexTypeinButton", request)%>" onclick="this.blur();showIndex()"></td>
 	<%}%>
@@ -93,8 +93,8 @@ var loadingMessage = "<%=UrlUtil.JavaScriptEncode(ServletResources.getString("Lo
 </table>
 <div id = "indexList">
 
-<DIV class = "group" id = "wai_application">
-    <DIV class = "root" id = "tree_root">
+<DIV class = "group" id = "wai_application" aria-label = "Index search results">
+    <DIV class = "root" aria-label = "Search results" id = "tree_root">
     </DIV>
 </DIV>
 </div>
@@ -102,10 +102,10 @@ var loadingMessage = "<%=UrlUtil.JavaScriptEncode(ServletResources.getString("Lo
     <table id="innerNavigation" cellspacing=0 cellpadding=0 border=0 style="background:transparent;">
 		<tr>
 			<td id = "td_previous">				
-                <a id = "previous" class = "enabled" onclick="this.blur();loadPreviousPage()"><%=ServletResources.getString("IndexPrevious", request)%></a> 
+                <a role = "link" id = "previous" class = "enabled" onclick="this.blur();loadPreviousPage()"><%=ServletResources.getString("IndexPrevious", request)%></a> 
 			</td>
 			<td id = "td_next">
-				<a id = "next" class = "enabled" onclick="this.blur();loadNextPage()"><%=ServletResources.getString("IndexNext", request)%></a> 
+				<a role = "link" id = "next" class = "enabled" onclick="this.blur();loadNextPage()"><%=ServletResources.getString("IndexNext", request)%></a> 
 			</td>
   	 </table>
 </div>

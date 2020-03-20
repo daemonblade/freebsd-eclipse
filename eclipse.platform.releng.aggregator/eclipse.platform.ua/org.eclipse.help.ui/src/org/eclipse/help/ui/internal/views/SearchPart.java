@@ -421,23 +421,19 @@ public class SearchPart extends AbstractFormPart implements IHelpPart, IHelpUICo
 			EngineDescriptor desc = descriptors[i];
 			loadEngine(desc, container, toolkit);
 		}
-		engineObserver = new Observer() {
-
-			@Override
-			public void update(Observable o, Object arg) {
-				EngineDescriptorManager.DescriptorEvent event = (EngineDescriptorManager.DescriptorEvent) arg;
-				int kind = event.getKind();
-				EngineDescriptor desc = event.getDescriptor();
-				if (kind == IHelpUIConstants.ADD) {
-					advancedLink.dispose();
-					loadEngine(desc, container, toolkit);
-					createAdvancedLink(container, toolkit);
-					parent.reflow();
-				} else if (kind == IHelpUIConstants.REMOVE) {
-					removeEngine(desc);
-				} else {
-					updateEngine(desc);
-				}
+		engineObserver = (o, arg) -> {
+			EngineDescriptorManager.DescriptorEvent event = (EngineDescriptorManager.DescriptorEvent) arg;
+			int kind = event.getKind();
+			EngineDescriptor desc = event.getDescriptor();
+			if (kind == IHelpUIConstants.ADD) {
+				advancedLink.dispose();
+				loadEngine(desc, container, toolkit);
+				createAdvancedLink(container, toolkit);
+				parent.reflow();
+			} else if (kind == IHelpUIConstants.REMOVE) {
+				removeEngine(desc);
+			} else {
+				updateEngine(desc);
 			}
 		};
 
@@ -640,7 +636,7 @@ public class SearchPart extends AbstractFormPart implements IHelpPart, IHelpUICo
 				eds.add(ed);
 			}
 		}
-		if (entries.size() == 0)
+		if (entries.isEmpty())
 			return;
 		FederatedSearchEntry[] array = entries.toArray(new FederatedSearchEntry[entries.size()]);
 		if (scopeSection.isExpanded()) {

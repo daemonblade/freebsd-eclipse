@@ -47,7 +47,7 @@ public class ContentDetectorTest {
 	@Test
 	public void testContributorSaveNoNames() {
 		ContentDetectHelper helper = new ContentDetectHelper();
-		helper.saveContributors(new HashSet<String>());
+		helper.saveContributors(new HashSet<>());
 		assertTrue(helper.getContributors().size() == 0);
 	}
 
@@ -93,7 +93,7 @@ public class ContentDetectorTest {
 		ContentDetector detector = new ContentDetector();
 		assertFalse(detector.isNewContentAvailable());
 		Set<?> newContent = ContentDetector.getNewContributors();
-		assertTrue(newContent == null || newContent.size() == 0);
+		assertTrue(newContent == null || newContent.isEmpty());
 		String firstContribution = helper.getContributors().iterator().next();
 		assertFalse(ContentDetector.isNew(firstContribution));
 	}

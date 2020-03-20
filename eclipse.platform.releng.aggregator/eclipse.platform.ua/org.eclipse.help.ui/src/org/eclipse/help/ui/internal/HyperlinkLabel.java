@@ -40,7 +40,6 @@ import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.TypedListener;
 
 /**
@@ -68,7 +67,7 @@ public class HyperlinkLabel extends Canvas {
 
 		this.label = new Label(this, style);
 
-		addPaintListener(e -> paint(e));
+		addPaintListener(this::paint);
 
 		addKeyListener(new KeyAdapter() {
 
@@ -203,12 +202,6 @@ public class HyperlinkLabel extends Canvas {
 	public void addPaintListener(PaintListener l) {
 		super.addPaintListener(l);
 		label.addPaintListener(l);
-	}
-
-	@Override
-	public void addListener(int e, Listener l) {
-		super.addListener(e, l);
-		//label.addListener(e, l);
 	}
 
 	@Override

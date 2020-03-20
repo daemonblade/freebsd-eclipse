@@ -146,8 +146,8 @@ if (requestData.isIE()){
     }
 %>
 
-  <DIV class = "group" id = "wai_application">
-    <DIV class = "root" id = "tree_root">
+  <DIV class = "group" id = "wai_application" aria-label = "Table of contents container">
+    <DIV class = "root" aria-label = "Table of contents" id = "tree_root">
     </DIV>
   </DIV>
 </body>
