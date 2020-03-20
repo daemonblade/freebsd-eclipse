@@ -112,7 +112,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 
 	public void testEnableSecurityManager01() {
 		File config = OSGiTestsActivator.getContext().getDataFile("testEnableSecurityManager01"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SECURITY, Constants.FRAMEWORK_SECURITY_OSGI);
 		Equinox equinox = new Equinox(configuration);
@@ -148,7 +148,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 	public void testEnableSecurityManager02() throws BundleException {
 		// create/start/stop/start/stop test
 		File config = OSGiTestsActivator.getContext().getDataFile("testEnableSecurityManager02"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SECURITY, Constants.FRAMEWORK_SECURITY_OSGI);
 		Equinox equinox = new Equinox(configuration);
@@ -199,7 +199,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 
 	public void testEnableSecurityManager03() throws BundleException {
 		File config = OSGiTestsActivator.getContext().getDataFile("testEnableSecurityManager03"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SECURITY, Constants.FRAMEWORK_SECURITY_OSGI);
 		Equinox equinox = new Equinox(configuration);
@@ -215,7 +215,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 
 		BundleContext systemContext = equinox.getBundleContext();
 		assertNotNull("System context is null", systemContext); //$NON-NLS-1$
-		// try installing a bundle to tests bug 
+		// try installing a bundle to tests bug
 		String locationSecurityA = installer.getBundleLocation("security.a"); //$NON-NLS-1$
 		// set the security for the bundle
 		ConditionalPermissionAdmin ca = (ConditionalPermissionAdmin) systemContext.getService(systemContext.getServiceReference(ConditionalPermissionAdmin.class.getName()));
@@ -268,7 +268,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 
 	public void testEnableSecurityManager04() throws BundleException {
 		File config = OSGiTestsActivator.getContext().getDataFile("testEnableSecurityManager04"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SECURITY, Constants.FRAMEWORK_SECURITY_OSGI);
 		Equinox equinox = new Equinox(configuration);
@@ -284,7 +284,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 
 		BundleContext systemContext = equinox.getBundleContext();
 		assertNotNull("System context is null", systemContext); //$NON-NLS-1$
-		// try installing a bundle to tests bug 
+		// try installing a bundle to tests bug
 		String locationLinkA = installer.getBundleLocation("test.link.a"); //$NON-NLS-1$
 		String locationLinkAClient = installer.getBundleLocation("test.link.a.client"); //$NON-NLS-1$
 
@@ -338,7 +338,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 
 	public void testEnableSecurityManager05() throws BundleException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SECURITY, Constants.FRAMEWORK_SECURITY_OSGI);
 		Equinox equinox = new Equinox(configuration);
@@ -354,7 +354,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 
 		BundleContext systemContext = equinox.getBundleContext();
 		assertNotNull("System context is null", systemContext); //$NON-NLS-1$
-		// try installing a bundle to tests bug 
+		// try installing a bundle to tests bug
 		String locationLinkA = installer.getBundleLocation("test.link.a"); //$NON-NLS-1$
 		String locationLinkAClient = installer.getBundleLocation("test.link.a.client"); //$NON-NLS-1$
 
@@ -388,7 +388,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 	public void testLocalization01() throws BundleException {
 		// create/start/stop/start/stop test
 		File config = OSGiTestsActivator.getContext().getDataFile("testLocalization01"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SECURITY, Constants.FRAMEWORK_SECURITY_OSGI);
 		Equinox equinox = new Equinox(configuration);
@@ -445,7 +445,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 
 	public void testBug254600() {
 		File config = OSGiTestsActivator.getContext().getDataFile("testBug254600"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SECURITY, Constants.FRAMEWORK_SECURITY_OSGI);
 		Equinox equinox = new Equinox(configuration);
@@ -532,7 +532,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 
 	public void testBug287750() {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SECURITY, Constants.FRAMEWORK_SECURITY_OSGI);
 		Equinox equinox = new Equinox(configuration);
@@ -591,7 +591,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 
 	public void testBug367614() {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SECURITY, Constants.FRAMEWORK_SECURITY_OSGI);
 		Equinox equinox = new Equinox(configuration);
@@ -678,7 +678,7 @@ public class SecurityManagerTests extends AbstractBundleTests {
 
 	public void testDynamicImportWithSecurity() throws BundleException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SECURITY, Constants.FRAMEWORK_SECURITY_OSGI);
 		Equinox equinox = new Equinox(configuration);

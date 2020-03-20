@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2018 IBM Corporation and others.
+ * Copyright (c) 2008, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -68,6 +68,7 @@ import junit.framework.TestSuite;
 import org.eclipse.core.runtime.adaptor.EclipseStarter;
 import org.eclipse.equinox.log.ExtendedLogReaderService;
 import org.eclipse.equinox.log.ExtendedLogService;
+import org.eclipse.equinox.log.test.TestListener;
 import org.eclipse.equinox.log.test.TestListener2;
 import org.eclipse.osgi.container.Module;
 import org.eclipse.osgi.framework.util.FilePath;
@@ -116,6 +117,7 @@ import org.osgi.resource.Requirement;
 import org.osgi.service.log.LogEntry;
 import org.osgi.service.log.LogLevel;
 import org.osgi.service.log.LogReaderService;
+import org.osgi.service.log.LogService;
 import org.osgi.service.packageadmin.ExportedPackage;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.service.startlevel.StartLevel;
@@ -131,7 +133,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle01() {
 		// simple test to create an embedded framework
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle01"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		try {
@@ -172,7 +174,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle02() {
 		// create/start/stop/start/stop test
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle02"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 
@@ -217,7 +219,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle03() {
 		// create/stop/ test
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle03"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		try {
@@ -249,7 +251,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle04() {
 		// create/start/stop/start/stop test
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle04"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		try {
@@ -298,7 +300,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle05_1() {
 		// create/install/start/stop test
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle05_1"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		try {
@@ -348,7 +350,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle05_2() {
 		// create/install/start/stop/start/stop test
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle05_2"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		try {
@@ -428,7 +430,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle06() {
 		// create multiple instances test
 		File config1 = OSGiTestsActivator.getContext().getDataFile("testSystemBundle06_1"); //$NON-NLS-1$
-		Map<String, Object> configuration1 = new HashMap<String, Object>();
+		Map<String, Object> configuration1 = new HashMap<>();
 		configuration1.put(Constants.FRAMEWORK_STORAGE, config1.getAbsolutePath());
 		Equinox equinox1 = new Equinox(configuration1);
 		try {
@@ -440,7 +442,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong state for SystemBundle", Bundle.STARTING, equinox1.getState()); //$NON-NLS-1$
 
 		File config2 = OSGiTestsActivator.getContext().getDataFile("testSystemBundle06_2"); //$NON-NLS-1$
-		Map<String, Object> configuration2 = new HashMap<String, Object>();
+		Map<String, Object> configuration2 = new HashMap<>();
 		configuration2.put(Constants.FRAMEWORK_STORAGE, config2.getAbsolutePath());
 		Equinox equinox2 = new Equinox(configuration2);
 		try {
@@ -503,7 +505,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle07() {
 		// test init twice
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle07_01"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		try {
@@ -560,7 +562,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle08() {
 		// create/start/stop/start/stop test
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle08_1"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		try {
@@ -583,7 +585,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong state for SystemBundle", Bundle.RESOLVED, equinox.getState()); //$NON-NLS-1$
 
 		config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle08_2"); //$NON-NLS-1$
-		configuration = new HashMap<String, Object>();
+		configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		equinox = new Equinox(configuration);
 		try {
@@ -622,7 +624,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle09() {
 		// test FrameworkUtil.createFilter
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle09"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		try {
@@ -659,7 +661,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle10() {
 		// create/start/update/stop test
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle10"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		final Equinox equinox = new Equinox(configuration);
 		try {
@@ -725,7 +727,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle11() {
 		// test extra packages property
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle11"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, "test.pkg1, test.pkg2"); //$NON-NLS-1$
 		Equinox equinox = new Equinox(configuration);
@@ -765,7 +767,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle12() {
 		// Test stop FrameworkEvent
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle12"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 
@@ -803,7 +805,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle13() {
 		// create/install/start/stop clean test
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle13"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		try {
@@ -850,7 +852,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong state for SystemBundle", Bundle.RESOLVED, equinox.getState()); //$NON-NLS-1$
 
 		// initialize the framework again to the same configuration
-		configuration = new HashMap<String, Object>();
+		configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		equinox = new Equinox(configuration);
 		try {
@@ -876,7 +878,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong state for SystemBundle", Bundle.RESOLVED, equinox.getState()); //$NON-NLS-1$
 
 		// initialize the framework again to the same configuration but use clean option
-		configuration = new HashMap<String, Object>();
+		configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
 		equinox = new Equinox(configuration);
@@ -905,7 +907,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle14() {
 		// Test startlevel property
 		File config = OSGiTestsActivator.getContext().getDataFile("testSystemBundle14"); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_BEGINNING_STARTLEVEL, "10"); //$NON-NLS-1$
 		Equinox equinox = new Equinox(configuration);
@@ -940,7 +942,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle16() {
 		// test parent boot
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_BUNDLE_PARENT, Constants.FRAMEWORK_BUNDLE_PARENT_BOOT);
 		checkParentClassLoader(configuration);
@@ -949,7 +951,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle17() {
 		// test parent app
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_BUNDLE_PARENT, Constants.FRAMEWORK_BUNDLE_PARENT_APP);
 		checkParentClassLoader(configuration);
@@ -958,7 +960,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle18() {
 		// test parent ext
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_BUNDLE_PARENT, Constants.FRAMEWORK_BUNDLE_PARENT_EXT);
 		checkParentClassLoader(configuration);
@@ -967,7 +969,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundle19() {
 		// test parent framework
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_BUNDLE_PARENT, Constants.FRAMEWORK_BUNDLE_PARENT_FRAMEWORK);
 		checkParentClassLoader(configuration);
@@ -1025,7 +1027,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 
 		// configure equinox for javaSE 8
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put("osgi.java.profile", javaSE8Profile.toExternalForm()); //$NON-NLS-1$
 
@@ -1035,7 +1037,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		// install a bundle that requires java 8
 		BundleContext systemContext = equinox.getBundleContext();
 		assertNotNull("System context is null", systemContext); //$NON-NLS-1$
-		Map<String, String> testHeaders = new HashMap<String, String>();
+		Map<String, String> testHeaders = new HashMap<>();
 		testHeaders.put(Constants.BUNDLE_MANIFESTVERSION, "2");
 		testHeaders.put(Constants.BUNDLE_SYMBOLICNAME, getName());
 		testHeaders.put(Constants.BUNDLE_REQUIREDEXECUTIONENVIRONMENT, "JavaSE-1.8");
@@ -1106,7 +1108,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	private void doMRUBundleFileList(int limit) {
 		// create/start/stop/start/stop test
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put("osgi.bundlefile.limit", Integer.toString(limit)); //$NON-NLS-1$//$NON-NLS-2$
 
@@ -1136,7 +1138,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		for (File testBundle : testBundles) {
 			try {
 				systemContext.installBundle("reference:file:///" + testBundle.getAbsolutePath()); //$NON-NLS-1$
-			}catch (BundleException e) {
+			} catch (BundleException e) {
 				fail("Unexpected install error", e); //$NON-NLS-1$
 			}
 		}
@@ -1223,7 +1225,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 				assertNotNull("No manifest for: " + bundle, bundle.getEntry("/META-INF/MANIFEST.MF"));
 			}
 		} catch (Throwable t) {
-			// An exception used to get thrown here when we tried to close 
+			// An exception used to get thrown here when we tried to close
 			// the least used bundle file
 			fail("Failed to get bundle entries", t);
 		}
@@ -1232,7 +1234,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testURLExternalFormat01() {
 		// create multiple instances test
 		File config1 = OSGiTestsActivator.getContext().getDataFile("testURLExternalFormat01_1"); //$NON-NLS-1$
-		Map<String, Object> configuration1 = new HashMap<String, Object>();
+		Map<String, Object> configuration1 = new HashMap<>();
 		configuration1.put(Constants.FRAMEWORK_STORAGE, config1.getAbsolutePath());
 		Equinox equinox1 = new Equinox(configuration1);
 		try {
@@ -1244,7 +1246,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong state for SystemBundle", Bundle.STARTING, equinox1.getState()); //$NON-NLS-1$
 
 		File config2 = OSGiTestsActivator.getContext().getDataFile("testURLExternalFormat01_2"); //$NON-NLS-1$
-		Map<String, Object> configuration2 = new HashMap<String, Object>();
+		Map<String, Object> configuration2 = new HashMap<>();
 		configuration2.put(Constants.FRAMEWORK_STORAGE, config2.getAbsolutePath());
 		Equinox equinox2 = new Equinox(configuration2);
 		try {
@@ -1338,7 +1340,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testURLMultiplexing01() throws BundleException {
 		// create multiple instances of Equinox to test
 		File config1 = OSGiTestsActivator.getContext().getDataFile(getName() + "_1");
-		Map<String, Object> configuration1 = new HashMap<String, Object>();
+		Map<String, Object> configuration1 = new HashMap<>();
 		configuration1.put(Constants.FRAMEWORK_STORAGE, config1.getAbsolutePath());
 		Equinox equinox1 = new Equinox(configuration1);
 		try {
@@ -1350,7 +1352,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong state for SystemBundle", Bundle.ACTIVE, equinox1.getState()); //$NON-NLS-1$
 
 		File config2 = OSGiTestsActivator.getContext().getDataFile(getName() + "_2"); //$NON-NLS-1$
-		Map<String, Object> configuration2 = new HashMap<String, Object>();
+		Map<String, Object> configuration2 = new HashMap<>();
 		configuration2.put(Constants.FRAMEWORK_STORAGE, config2.getAbsolutePath());
 		Equinox equinox2 = new Equinox(configuration2);
 		try {
@@ -1530,7 +1532,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testBug304213() {
 		// test installing bundle with empty manifest
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 
 		Equinox equinox = new Equinox(configuration);
@@ -1591,7 +1593,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 				bundle.getHeaders(); //$NON-NLS-1$
 			}
 		} catch (Throwable t) {
-			// An exception used to get thrown here when we tried to close 
+			// An exception used to get thrown here when we tried to close
 			// the least used bundle file
 			fail("Failed to get bundle entries", t);
 		}
@@ -1615,7 +1617,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 
 		try {
 			File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-			Map<String, Object> configuration = new HashMap<String, Object>();
+			Map<String, Object> configuration = new HashMap<>();
 			configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 			configuration.put("osgi.dev", "../devCP");
 			Equinox equinox = new Equinox(configuration);
@@ -1655,7 +1657,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testBug352275() {
 		// simple test to create an embedded framework
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, "");
 		Equinox equinox = new Equinox(configuration);
@@ -1694,7 +1696,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 
 	public void testWeavingPersistence() {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		try {
@@ -1817,7 +1819,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		List packages1 = wiring1.getRequiredWires(BundleRevision.PACKAGE_NAMESPACE);
 		List packages2 = wiring2.getRequiredWires(BundleRevision.PACKAGE_NAMESPACE);
 
-		// could make this a more complete check, but with the bug the dynamic wires 
+		// could make this a more complete check, but with the bug the dynamic wires
 		// are missing altogether because we fail to save the resolver state cache.
 		assertEquals("Wrong number of wires for wiring1", 1, packages1.size());
 		assertEquals("Wrong number of wires for wiring2", 1, packages2.size());
@@ -1837,7 +1839,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	private void doTestBug351519Refresh(Boolean refreshDuplicates) {
 		// Create a framework with equinox.refresh.duplicate.bsn=false configuration
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		if (refreshDuplicates != null) {
 			configuration.put("equinox.refresh.duplicate.bsn", refreshDuplicates.toString());
@@ -1922,7 +1924,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testBug375784() {
 		// Create a framework with osgi.context.bootdelegation=true configuration
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put("osgi.context.bootdelegation", "true");
 		Equinox equinox = new Equinox(configuration);
@@ -1959,7 +1961,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testBug258209_1() throws BundleException {
 		// create a framework to test thread context class loaders
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 
 		ClassLoader current = Thread.currentThread().getContextClassLoader();
@@ -2038,7 +2040,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 
 	public void testBug413879() {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		try {
@@ -2127,7 +2129,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 
 	public void testBug414070() throws BundleException, InstantiationException, IllegalAccessException, ClassNotFoundException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		equinox.init();
@@ -2164,7 +2166,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		assertEquals("C is not active.", Bundle.ACTIVE, chainTestC.getState());
 		assertEquals("D is not active.", Bundle.ACTIVE, chainTestD.getState());
 		// record STOPPING order
-		final List<Bundle> stoppingOrder = new ArrayList<Bundle>();
+		final List<Bundle> stoppingOrder = new ArrayList<>();
 		systemContext.addBundleListener(new SynchronousBundleListener() {
 			@Override
 			public void bundleChanged(BundleEvent event) {
@@ -2187,7 +2189,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 
 	public void testBug412228() throws BundleException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		equinox.init();
@@ -2223,7 +2225,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		configIni.store(new FileOutputStream(new File(config, "config.ini")), "Test config.ini");
 		// Only provide substitution for the first prop
 		System.setProperty("test.prop1", "PASSED");
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		equinox.init();
@@ -2248,7 +2250,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		assertNull("SecurityManager must be null to test.", sm);
 		try {
 			File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-			Map<String, Object> configuration = new HashMap<String, Object>();
+			Map<String, Object> configuration = new HashMap<>();
 			configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 			Equinox equinox = new Equinox(configuration);
 			try {
@@ -2296,7 +2298,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testNullConfigurationValue() throws BundleException {
 		System.setProperty(nullTest, "system");
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(nullTest, null);
 		Equinox equinox = new Equinox(configuration);
@@ -2314,7 +2316,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		try {
 			System.setProperty(Constants.FRAMEWORK_PROCESSOR, "hyperflux");
 			File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-			Map<String, Object> configuration = new HashMap<String, Object>();
+			Map<String, Object> configuration = new HashMap<>();
 			configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 			configuration.put(Constants.FRAMEWORK_PROCESSOR, null);
 			Equinox equinox = new Equinox(configuration);
@@ -2360,7 +2362,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 				EclipseStarter.PROP_LOGFILE //
 		);
 		Properties systemProperties = (Properties) System.getProperties().clone();
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		for (Object key : systemProperties.keySet()) {
 			configuration.put((String) key, null);
 		}
@@ -2386,7 +2388,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testNullConfigurationValueSystemProperties() throws BundleException {
 		System.setProperty(nullTest, "system");
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put("osgi.framework.useSystemProperties", "true");
 		configuration.put(nullTest, null);
@@ -2409,7 +2411,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 
 	public void testBackedBySystemReplaceSystemProperties() throws BundleException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put("osgi.framework.useSystemProperties", "true");
 		Equinox equinox = new Equinox(configuration);
@@ -2444,7 +2446,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 
 	public void testLocalConfigReplaceSystemProperties() throws BundleException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		equinox.start();
@@ -2481,7 +2483,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 
 	public void testSystemNLFragment() throws BundleException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put("osgi.nl", "zh");
 		Equinox equinox = new Equinox(configuration);
@@ -2516,7 +2518,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		String originalCheckConfiguration = System.clearProperty(EquinoxConfiguration.PROP_CHECK_CONFIGURATION);
 		try {
 			File config = OSGiTestsActivator.getContext().getDataFile(getName());
-			Map<String, Object> configuration = new HashMap<String, Object>();
+			Map<String, Object> configuration = new HashMap<>();
 			configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 			configuration.put("osgi.dev", "true");
 			Equinox equinox = new Equinox(configuration);
@@ -2533,7 +2535,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 
 	public void testProvideOSGiEEandNative() throws BundleException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put("osgi.equinox.allow.restricted.provides", "true");
 
@@ -2582,7 +2584,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		// note that the embedded case the default for this setting is false
 		configIni.setProperty(compatBootDelegate, "true");
 		configIni.store(new FileWriter(new File(config, "config.ini")), null);
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		equinox.start();
@@ -2632,7 +2634,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testSystemBundleListener() throws BundleException, InterruptedException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
 		config.mkdirs();
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		equinox.start();
@@ -2669,7 +2671,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testContextBootDelegation() throws BundleException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
 		config.mkdirs();
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 
@@ -2688,7 +2690,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testExtraSystemBundleHeaders() throws BundleException, InterruptedException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
 		config.mkdirs();
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SYSTEMCAPABILITIES, "osgi.ee; osgi.ee=JavaSE; version:Version=1.7, something.system");
 		configuration.put(Constants.FRAMEWORK_SYSTEMPACKAGES, "something.system");
@@ -2823,7 +2825,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		System.setProperty("java.specification.version", javaSpecVersion);
 		// create/stop/ test
 		File config = OSGiTestsActivator.getContext().getDataFile(getName() + javaSpecVersion);
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		try {
@@ -2929,7 +2931,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testBug405919() throws Exception {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
 		config.mkdirs();
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put("osgi.framework", "boo");
 		// Initialize and start a framework specifying an invalid osgi.framework configuration value.
@@ -2988,7 +2990,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testInitialBundleUpdate() throws IOException {
 		// test installing bundle with empty manifest
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 
 		Equinox equinox = new Equinox(configuration);
@@ -3047,7 +3049,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testDaemonActiveThread() throws BundleException, InterruptedException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
 		config.mkdirs();
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 
 		// test setting to anything other than 'normal'
@@ -3080,7 +3082,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 	public void testLazyTriggerOnLoadError() throws InterruptedException, BundleException {
 		// create/start/stop/start/stop test
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(EquinoxConfiguration.PROP_COMPATIBILITY_START_LAZY_ON_FAIL_CLASSLOAD, "true");
 		Equinox equinox = new Equinox(configuration);
@@ -3146,7 +3148,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		configIni.setProperty("test.config", getName());
 		configIni.store(new FileOutputStream(new File(config, "config.ini")), "Test config.ini");
 
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		Equinox equinox = new Equinox(configuration);
 		equinox.init();
@@ -3279,13 +3281,13 @@ public class SystemBundleTests extends AbstractBundleTests {
 		}
 	}
 
-	public static void doLoggingOnMultipleListeners(Equinox equinox) throws InterruptedException {
+	static void doLoggingOnMultipleListeners(Equinox equinox) throws InterruptedException {
 		int listenersSize = 100;
 		int logSize = 10000;
 		BundleContext bc = equinox.getBundleContext();
 		ExtendedLogReaderService logReader = bc.getService(bc.getServiceReference(ExtendedLogReaderService.class));
 		ExtendedLogService log = bc.getService(bc.getServiceReference(ExtendedLogService.class));
-		ArrayList<TestListener2> listeners = new ArrayList<TestListener2>();
+		ArrayList<TestListener2> listeners = new ArrayList<>();
 		CountDownLatch latch = new CountDownLatch(logSize * listenersSize);
 
 		for (int i = 0; i < listenersSize; i++) {
@@ -3309,6 +3311,46 @@ public class SystemBundleTests extends AbstractBundleTests {
 
 		for (int i = 1; i < listenersSize; i++) {
 			assertTrue(listeners.get(i).getLogs().equals(listeners.get(0).getLogs()));
+		}
+	}
+
+	public void testCaptureLogEntryLocation() throws BundleException, InterruptedException {
+		doTestCaptureLogEntryLocation(true);
+		doTestCaptureLogEntryLocation(false);
+	}
+
+	private void doTestCaptureLogEntryLocation(boolean captureLocation) throws BundleException, InterruptedException {
+		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
+		Map configuration = new HashMap();
+		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
+		if (!captureLocation) {
+			// the default is true; only set for false
+			configuration.put(EquinoxConfiguration.PROP_LOG_CAPTURE_ENTRY_LOCATION, Boolean.toString(captureLocation));
+		}
+		Equinox equinox = new Equinox(configuration);
+		try {
+			equinox.start();
+
+			BundleContext bc = equinox.getBundleContext();
+			LogReaderService logReader = bc.getService(bc.getServiceReference(LogReaderService.class));
+			LogService logService = bc.getService(bc.getServiceReference(LogService.class));
+
+			TestListener listener = new TestListener(Constants.SYSTEM_BUNDLE_LOCATION);
+			logReader.addLogListener(listener);
+
+			final String testMsg = "TEST MESSAGE";
+			logService.getLogger(this.getClass()).error(testMsg);
+
+			LogEntry logEntry = listener.getEntryX();
+			assertEquals("Wrong message.", testMsg, logEntry.getMessage());
+			if (captureLocation) {
+				assertNotNull("No location found.", logEntry.getLocation());
+			} else {
+				assertNull("Found location.", logEntry.getLocation());
+			}
+		} finally {
+			equinox.stop();
+			equinox.waitForStop(1000);
 		}
 	}
 
@@ -3345,7 +3387,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		FrameworkFactory factory = sLoader.iterator().next();
 
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, String> configuration = new HashMap<String, String>();
+		Map<String, String> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(EquinoxConfiguration.PROP_FRAMEWORK, relativeURL.toExternalForm());
 
@@ -3436,7 +3478,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 			assertEquals("Did not finish start level setting.", 0, waitForStartLevel.getCount());
 			assertEquals("Did not install all the expected bundles.", numBundles, testBundles.size());
 
-			List<Bundle> expectedStartOrder = new ArrayList<Bundle>();
+			List<Bundle> expectedStartOrder = new ArrayList<>();
 			for (int i = 0; i < numBundles / 4; i++) {
 				expectedStartOrder.add(testBundles.get(i));
 			}
@@ -3492,7 +3534,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 			};
 			equinox.getBundleContext().addBundleListener(shutdownListener);
 
-			List<Bundle> expectedStopOrder = new ArrayList<Bundle>(expectedStartOrder);
+			List<Bundle> expectedStopOrder = new ArrayList<>(expectedStartOrder);
 			Collections.reverse(expectedStopOrder);
 			Collections.reverse(expectedStopOrder.subList(numBundles / 4, 3 * (numBundles / 4)));
 			expectedStopOrder = new ArrayList(expectedStopOrder.subList(0, 3 * (numBundles / 4)));
@@ -3765,7 +3807,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 
 	public void testBundleIDLock() {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(EquinoxConfiguration.PROP_FILE_LIMIT, "10");
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 
@@ -3796,7 +3838,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		}
 
 		ExecutorService executor = Executors.newFixedThreadPool(50);
-		final List<Throwable> errors = new CopyOnWriteArrayList<Throwable>();
+		final List<Throwable> errors = new CopyOnWriteArrayList<>();
 		try {
 			for (final File testBundleFile : testBundles) {
 				executor.execute(new Runnable() {
@@ -3854,7 +3896,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		debugProps.store(debugOut, "Equinox Debug Options");
 		debugOut.close();
 
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(EquinoxConfiguration.PROP_FILE_LIMIT, "10");
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		//configuration.put(EquinoxConfiguration.PROP_DEBUG, debugOptions.getAbsolutePath());
@@ -3922,7 +3964,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
 		config.mkdirs();
 
-		Map<String, String> bundleHeaders = new HashMap<String, String>();
+		Map<String, String> bundleHeaders = new HashMap<>();
 		bundleHeaders.put(Constants.BUNDLE_MANIFESTVERSION, "2");
 		bundleHeaders.put(Constants.BUNDLE_SYMBOLICNAME, getName());
 		Map<String, String> bundleEntries = new LinkedHashMap<>();
@@ -3934,7 +3976,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		bundleEntries.put("dirA/dirC/fileC", "fileC");
 		File testBundleFile = SystemBundleTests.createBundle(config, getName(), bundleHeaders, bundleEntries);
 
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 
 		final Equinox equinox = new Equinox(configuration);
@@ -3952,7 +3994,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		final Bundle testBundle = systemContext.installBundle("file:///" + testBundleFile.getAbsolutePath());
 		testBundle.start();
 
-		final List<FrameworkEvent> errorsAndWarnings = new CopyOnWriteArrayList<FrameworkEvent>();
+		final List<FrameworkEvent> errorsAndWarnings = new CopyOnWriteArrayList<>();
 		FrameworkListener fwkListener = new FrameworkListener() {
 			@Override
 			public void frameworkEvent(FrameworkEvent event) {
@@ -4078,7 +4120,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 			equinox.init();
 			BundleContext bc = equinox.getBundleContext();
 
-			Map<String, String> h2 = new HashMap<String, String>();
+			Map<String, String> h2 = new HashMap<>();
 			h2.put(Constants.BUNDLE_MANIFESTVERSION, "2");
 			h2.put(Constants.BUNDLE_SYMBOLICNAME, getName() + ".dynamicimporter");
 			h2.put(Constants.DYNAMICIMPORT_PACKAGE, "some.system.*; version=1.0");
@@ -4086,7 +4128,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 			Bundle b2 = bc.installBundle("reference:file:///" + f2.getAbsolutePath()); //$NON-NLS-1$
 			b2.getResource("does/not/exist.txt");
 
-			Map<String, String> h1 = new HashMap<String, String>();
+			Map<String, String> h1 = new HashMap<>();
 			h1.put(Constants.BUNDLE_MANIFESTVERSION, "2");
 			h1.put(Constants.BUNDLE_SYMBOLICNAME, getName() + ".exporter");
 			h1.put(Constants.EXPORT_PACKAGE, "some.system.pkg; version=1.0");
@@ -4116,11 +4158,56 @@ public class SystemBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	public void testDynamicImportPrivatePackage() throws IOException {
+		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
+		Map configuration = new HashMap();
+		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
+		Equinox equinox = null;
+		try {
+			equinox = new Equinox(configuration);
+			equinox.start();
+			BundleContext bc = equinox.getBundleContext();
+
+			Bundle importer = bc.installBundle(installer.getBundleLocation("test.dynamic.privateimport"));
+			importer.start();
+
+			Map<String, String> exporter = new HashMap<>();
+			exporter.put(Constants.BUNDLE_MANIFESTVERSION, "2");
+			exporter.put(Constants.BUNDLE_SYMBOLICNAME, getName() + ".exporter");
+			exporter.put(Constants.EXPORT_PACKAGE, "test.dynamic.privateimport");
+			File f1 = SystemBundleTests.createBundle(config, getName() + ".exporter", exporter);
+			Bundle exporterBundle = bc.installBundle("reference:file:///" + f1.getAbsolutePath()); //$NON-NLS-1$
+			exporterBundle.start();
+
+			try {
+				importer.loadClass("test.dynamic.privateimport.DoesNotExist");
+			} catch (ClassNotFoundException e) {
+				// expected
+			}
+
+			importer.stop();
+			importer.start();
+		} catch (BundleException e) {
+			fail("Unexpected BundleException", e);
+		} finally {
+			try {
+				if (equinox != null) {
+					equinox.stop();
+					equinox.waitForStop(1000);
+				}
+			} catch (BundleException e) {
+				fail("Failed to stop framework.", e);
+			} catch (InterruptedException e) {
+				fail("Failed to stop framework.", e);
+			}
+		}
+	}
+
 	// Note this is more of a performance test.  It has a timeout that will cause it to
 	// fail if it takes too long.
 	public void testMassiveParallelInstallStart() {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
-		Map<String, Object> configuration = new HashMap<String, Object>();
+		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 
 		final Equinox equinox = new Equinox(configuration);

@@ -29,6 +29,8 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
 import org.osgi.framework.launch.Framework;
+import org.osgi.framework.namespace.BundleNamespace;
+import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRevision;
 import org.osgi.resource.Capability;
 import org.osgi.service.packageadmin.PackageAdmin;
@@ -44,6 +46,7 @@ public class StorageHookTests extends AbstractFrameworkHookTests {
 	private static final String HOOK_CONFIGURATOR_FIELD_VALIDATE_CALLED = "validateCalled";
 	private static final String HOOK_CONFIGURATOR_FIELD_DELETING_CALLED = "deletingGenerationCalled";
 	private static final String HOOK_CONFIGURATOR_FIELD_ADAPT_MANIFEST = "adaptManifest";
+	private static final String HOOK_CONFIGURATOR_FIELD_ADAPT_CAPABILITY_ATTRIBUTE = "adaptCapabilityAttribute";
 	private static final String HOOK_CONFIGURATOR_FIELD_REPLACE_BUILDER = "replaceModuleBuilder";
 	private static final String HOOK_CONFIGURATOR_FIELD_HANDLE_CONTENT = "handleContentConnection";
 	private static final String HOOK_CONFIGURATOR_FIELD_NULL_STORAGE_HOOK = "returnNullStorageHook";
@@ -53,7 +56,7 @@ public class StorageHookTests extends AbstractFrameworkHookTests {
 	private String location;
 
 	/*
-	 * Bundles must be discarded if a storage hook throws an 
+	 * Bundles must be discarded if a storage hook throws an
 	 * IllegalStateException during validation.
 	 */
 	public void testBundleDiscardedWhenClasspathStorageHookInvalidates() throws Exception {
@@ -223,6 +226,15 @@ public class StorageHookTests extends AbstractFrameworkHookTests {
 		assertEquals("Wrong BSN.", "replace", b.getSymbolicName());
 		testCaps = b.adapt(BundleRevision.class).getCapabilities("replace");
 		assertEquals("Wrong number of capabilities.", 1, testCaps.size());
+
+		setFactoryClassReplaceBuilder(false);
+		setFactoryClassAdaptCapabilityAttribute(true);
+		b.uninstall();
+		installBundle();
+		b = framework.getBundleContext().getBundle(location);
+		BundleCapability bundleCap = b.adapt(BundleRevision.class).getDeclaredCapabilities(BundleNamespace.BUNDLE_NAMESPACE).iterator().next();
+		assertEquals("Wrong attribute value", "testAttribute", bundleCap.getAttributes().get("matching.attribute"));
+		assertEquals("Wrong attribute value", "testDirective", bundleCap.getDirectives().get("matching.directive"));
 	}
 
 	@SuppressWarnings("deprecation")
@@ -305,7 +317,7 @@ public class StorageHookTests extends AbstractFrameworkHookTests {
 		classLoader.addURL(new URL(loc));
 		location = bundleInstaller.getBundleLocation(TEST_BUNDLE);
 		File file = OSGiTestsActivator.getContext().getDataFile(getName());
-		configuration = new HashMap<String, String>();
+		configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, file.getAbsolutePath());
 		configuration.put(HookRegistry.PROP_HOOK_CONFIGURATORS_INCLUDE, HOOK_CONFIGURATOR_CLASS);
 		framework = createFramework(configuration);
@@ -388,6 +400,11 @@ public class StorageHookTests extends AbstractFrameworkHookTests {
 	private void setFactoryClassAdaptManifest(boolean value) throws Exception {
 		Class<?> clazz = classLoader.loadClass(HOOK_CONFIGURATOR_CLASS);
 		clazz.getField(HOOK_CONFIGURATOR_FIELD_ADAPT_MANIFEST).set(null, value);
+	}
+
+	private void setFactoryClassAdaptCapabilityAttribute(boolean value) throws Exception {
+		Class<?> clazz = classLoader.loadClass(HOOK_CONFIGURATOR_CLASS);
+		clazz.getField(HOOK_CONFIGURATOR_FIELD_ADAPT_CAPABILITY_ATTRIBUTE).set(null, value);
 	}
 
 	private void setFactoryClassReplaceBuilder(boolean value) throws Exception {

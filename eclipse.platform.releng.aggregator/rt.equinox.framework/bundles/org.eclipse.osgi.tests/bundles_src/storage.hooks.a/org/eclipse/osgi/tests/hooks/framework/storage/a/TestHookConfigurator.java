@@ -31,6 +31,7 @@ import java.util.jar.Manifest;
 import org.eclipse.osgi.container.Module;
 import org.eclipse.osgi.container.ModuleContainerAdaptor.ModuleEvent;
 import org.eclipse.osgi.container.ModuleRevisionBuilder;
+import org.eclipse.osgi.container.ModuleRevisionBuilder.GenericInfo;
 import org.eclipse.osgi.internal.hookregistry.ActivatorHookFactory;
 import org.eclipse.osgi.internal.hookregistry.HookConfigurator;
 import org.eclipse.osgi.internal.hookregistry.HookRegistry;
@@ -99,11 +100,19 @@ public class TestHookConfigurator implements HookConfigurator {
 					// try setting the ID to something which is checked during the test
 					builder.setId(5678);
 					Map<String, String> dirs = Collections.emptyMap();
-					Map<String, Object> attrs = new HashMap<String, Object>();
+					Map<String, Object> attrs = new HashMap<>();
 					attrs.put("test.file.path", getGeneration().getContent().getPath() + " - " + adaptCount.getAndIncrement());
 					attrs.put("test.operation", operation.toString());
 					attrs.put("test.origin", origin.getLocation());
 					builder.addCapability("test.file.path", dirs, attrs);
+				}
+				if (TestHookConfigurator.adaptCapabilityAttribute) {
+					for (GenericInfo c : builder.getCapabilities()) {
+						if (BundleNamespace.BUNDLE_NAMESPACE.equals(c.getNamespace())) {
+							c.getAttributes().put("matching.attribute", "testAttribute");
+							c.getDirectives().put("matching.directive", "testDirective");
+						}
+					}
 				}
 				return builder;
 			}
@@ -163,6 +172,7 @@ public class TestHookConfigurator implements HookConfigurator {
 	public static volatile boolean validateCalled;
 	public static volatile boolean deletingGenerationCalled;
 	public static volatile boolean adaptManifest;
+	public static volatile boolean adaptCapabilityAttribute;
 	public static volatile boolean replaceModuleBuilder;
 	public static volatile boolean handleContentConnection;
 	public static volatile boolean returnNullStorageHook;

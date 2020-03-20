@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -15,7 +15,6 @@ package org.eclipse.osgi.tests.container;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -43,7 +42,7 @@ public abstract class AbstractTest {
 
 	@Before
 	public void setUp() {
-		serviceRegistrations = new HashSet<ServiceRegistration<?>>();
+		serviceRegistrations = new HashSet<>();
 	}
 
 	@After
@@ -58,15 +57,15 @@ public abstract class AbstractTest {
 	}
 
 	protected DummyContainerAdaptor createDummyAdaptor() {
-		return new DummyContainerAdaptor(new DummyCollisionHook(false), Collections.<String, String> emptyMap());
+		return new DummyContainerAdaptor(new DummyCollisionHook(false), null);
 	}
 
 	protected DummyContainerAdaptor createDummyAdaptor(ResolverHook hook) {
-		return new DummyContainerAdaptor(new DummyCollisionHook(false), Collections.<String, String> emptyMap(), new DummyResolverHookFactory(hook));
+		return new DummyContainerAdaptor(new DummyCollisionHook(false), null, new DummyResolverHookFactory(hook));
 	}
 
 	protected DummyContainerAdaptor createDummyAdaptor(DebugOptions debugOptions) {
-		return new DummyContainerAdaptor(new DummyCollisionHook(false), Collections.<String, String> emptyMap(), new DummyResolverHookFactory(), debugOptions);
+		return new DummyContainerAdaptor(new DummyCollisionHook(false), null, new DummyResolverHookFactory(), debugOptions);
 	}
 
 	protected Bundle getBundle() {

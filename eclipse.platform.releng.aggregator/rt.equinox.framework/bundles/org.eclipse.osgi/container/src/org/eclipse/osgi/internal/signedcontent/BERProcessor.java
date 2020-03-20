@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2014 IBM Corporation and others.
+ * Copyright (c) 2006, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -15,6 +15,7 @@
 package org.eclipse.osgi.internal.signedcontent;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.SignatureException;
 
 /**
@@ -82,11 +83,11 @@ public class BERProcessor {
 	/**
 	 * Constructs a BERProcessor to operate on the passed buffer. The first structure in the
 	 * buffer will be processed before this method returns.
-	 * 
+	 *
 	 * @param buffer the buffer containing the BER structures.
 	 * @param offset the offset into <code>buffer</code> to the start of the first structure.
 	 * @param len the length of the BER structure.
-	 * @throws SignatureException 
+	 * @throws SignatureException
 	 */
 	public BERProcessor(byte buffer[], int offset, int len) throws SignatureException {
 		this.buffer = buffer;
@@ -97,7 +98,7 @@ public class BERProcessor {
 
 	/**
 	 * Parse the structure found at the current <code>offset</code> into <code>buffer</code>.
-	 * Most methods, constructor, and stepinto, will call this method automatically. If 
+	 * Most methods, constructor, and stepinto, will call this method automatically. If
 	 * <code>offset</code> is modified outside of those methods, this method will need to
 	 * be invoked.
 	 */
@@ -196,7 +197,7 @@ public class BERProcessor {
 
 	/**
 	 * Returns a BERProcessor for the content of the current structure.
-	 * @throws SignatureException 
+	 * @throws SignatureException
 	 */
 	public BERProcessor stepInto() throws SignatureException {
 		return new BERProcessor(buffer, contentOffset, contentLength);
@@ -220,7 +221,7 @@ public class BERProcessor {
 	 * @return the content from the current structure as a String.
 	 */
 	public String getString() {
-		return new String(buffer, contentOffset, contentLength, SignedContentConstants.UTF8);
+		return new String(buffer, contentOffset, contentLength, StandardCharsets.UTF_8);
 	}
 
 	/**

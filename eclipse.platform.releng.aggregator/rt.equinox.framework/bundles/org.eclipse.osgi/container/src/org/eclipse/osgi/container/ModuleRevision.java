@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -15,6 +15,7 @@ package org.eclipse.osgi.container;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -60,9 +61,25 @@ public final class ModuleRevision implements BundleRevision {
 			return Collections.emptyList();
 		List<ModuleCapability> result = new ArrayList<>(capabilityInfos.size());
 		for (GenericInfo info : capabilityInfos) {
-			result.add(new ModuleCapability(info.namespace, info.directives, info.attributes, this));
+			if (info.mutable) {
+				result.add(new ModuleCapability(info.namespace, copyUnmodifiableMap(info.directives), copyUnmodifiableMap(info.attributes), this));
+			} else {
+				result.add(new ModuleCapability(info.namespace, info.directives, info.attributes, this));
+			}
 		}
 		return result;
+	}
+
+	private static <K, V> Map<K, V> copyUnmodifiableMap(Map<K, V> map) {
+		int size = map.size();
+		if (size == 0) {
+			return Collections.emptyMap();
+		}
+		if (size == 1) {
+			Map.Entry<K, V> entry = map.entrySet().iterator().next();
+			return Collections.singletonMap(entry.getKey(), entry.getValue());
+		}
+		return Collections.unmodifiableMap(new HashMap<>(map));
 	}
 
 	private List<ModuleRequirement> createRequirements(List<GenericInfo> requirementInfos) {
@@ -102,8 +119,8 @@ public final class ModuleRevision implements BundleRevision {
 
 	/**
 	 * Returns the capabilities declared by this revision
-	 * @param namespace The namespace of the declared capabilities to return or 
-	 * {@code null} to return the declared capabilities from all namespaces. 
+	 * @param namespace The namespace of the declared capabilities to return or
+	 * {@code null} to return the declared capabilities from all namespaces.
 	 * @return An unmodifiable list containing the declared capabilities.
 	 */
 	public List<ModuleCapability> getModuleCapabilities(String namespace) {
@@ -120,8 +137,8 @@ public final class ModuleRevision implements BundleRevision {
 
 	/**
 	 * Returns the requirements declared by this revision
-	 * @param namespace The namespace of the declared requirements to return or 
-	 * {@code null} to return the declared requirements from all namespaces. 
+	 * @param namespace The namespace of the declared requirements to return or
+	 * {@code null} to return the declared requirements from all namespaces.
 	 * @return An unmodifiable list containing the declared requirements.
 	 */
 	public List<ModuleRequirement> getModuleRequirements(String namespace) {

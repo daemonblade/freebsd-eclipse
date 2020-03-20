@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2014 IBM Corporation and others.
+ * Copyright (c) 2006, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which accompanies this distribution,
@@ -7,13 +7,11 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors: IBM Corporation - initial API and implementation
  ******************************************************************************/
 
 package org.eclipse.osgi.internal.signedcontent;
-
-import java.nio.charset.Charset;
 
 public interface SignedContentConstants {
 
@@ -34,7 +32,6 @@ public interface SignedContentConstants {
 	public static final String META_INF = "META-INF/"; //$NON-NLS-1$
 	public static final String META_INF_MANIFEST_MF = "META-INF/MANIFEST.MF"; //$NON-NLS-1$
 	public static final String[] EMPTY_STRING = new String[0];
-	public static final Charset UTF8 = Charset.forName("UTF-8"); //$NON-NLS-1$
 
 	//
 	// following are variables and methods to cache the entries related data

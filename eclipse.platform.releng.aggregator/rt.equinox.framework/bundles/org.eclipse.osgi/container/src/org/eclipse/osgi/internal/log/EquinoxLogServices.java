@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2017 IBM Corporation and others.
+ * Copyright (c) 2006, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -101,7 +101,8 @@ public class EquinoxLogServices {
 			//ignore and use LogLevel.WARN
 		}
 
-		logServiceManager = new LogServiceManager(logHistoryMax, defaultLevel, logWriter, perfWriter);
+		boolean captureLogEntryLocation = "true".equals(environmentInfo.getConfiguration(EquinoxConfiguration.PROP_LOG_CAPTURE_ENTRY_LOCATION, "true")); //$NON-NLS-1$ //$NON-NLS-2$
+		logServiceManager = new LogServiceManager(logHistoryMax, defaultLevel, captureLogEntryLocation, logWriter, perfWriter);
 		eclipseLogFactory = new EquinoxLogFactory(logWriter, logServiceManager);
 		rootFrameworkLog = eclipseLogFactory.createFrameworkLog(null, logWriter);
 
@@ -113,7 +114,7 @@ public class EquinoxLogServices {
 	private ServiceRegistration<?> perfLogReg;
 
 	/**
-	 * @throws BundleException  
+	 * @throws BundleException
 	 */
 	public void start(BundleContext context) throws BundleException {
 		logServiceManager.start(context);
@@ -122,7 +123,7 @@ public class EquinoxLogServices {
 	}
 
 	/**
-	 * @throws BundleException  
+	 * @throws BundleException
 	 */
 	public void stop(BundleContext context) throws BundleException {
 		frameworkLogReg.unregister();

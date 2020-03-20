@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -53,7 +53,7 @@ public class OSGiCapabilityTest extends AbstractStateTest {
 	private Dictionary loadManifest(String manifest) {
 		URL url = getContext().getBundle().getEntry(MANIFEST_ROOT + manifest);
 		try {
-			CaseInsensitiveDictionaryMap<String, String> headers = new CaseInsensitiveDictionaryMap<String, String>();
+			CaseInsensitiveDictionaryMap<String, String> headers = new CaseInsensitiveDictionaryMap<>();
 			ManifestElement.parseBundleManifest(url.openStream(), headers);
 			return headers.asUnmodifiableDictionary();
 		} catch (IOException e) {

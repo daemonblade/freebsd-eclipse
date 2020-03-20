@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -107,7 +107,7 @@ public class StreamManagerTests extends OSGiTest {
 	/**
 	 * This tests that FM will keep a backup version of a reliableFile and that
 	 * corrupting the reliableFile will recover the previous contents.
-	 * 
+	 *
 	 */
 	public void testReliableFile() {
 		String fileName = "testReliableFile.txt";
@@ -207,13 +207,14 @@ public class StreamManagerTests extends OSGiTest {
 			System.setProperty("osgi.useReliableFiles", "true"); // force reliable files
 			manager1 = new StorageManager(base, null);
 			manager1.open(true);
-			ManagedOutputStream fmos = manager1.getOutputStream(fileName);
-			assertNotNull(fmos);
-			DataOutputStream bufferedOut = new DataOutputStream(new BufferedOutputStream(fmos));
-			// 200 K of integers (200 * 1024 / 4)
-			for (int i = 0; i < (200 * 1024 / 4); i++)
-				bufferedOut.writeInt(i);
-			bufferedOut.close();
+			try (ManagedOutputStream fmos = manager1.getOutputStream(fileName)) {
+				assertNotNull(fmos);
+				try (DataOutputStream bufferedOut = new DataOutputStream(new BufferedOutputStream(fmos))) {
+					// 200 K of integers (200 * 1024 / 4)
+					for (int i = 0; i < (200 * 1024 / 4); i++)
+						bufferedOut.writeInt(i);
+				}
+			}
 			manager1.close();
 			manager1 = null;
 
@@ -221,11 +222,13 @@ public class StreamManagerTests extends OSGiTest {
 			System.setProperty("osgi.useReliableFiles", "true"); // force reliable files
 			manager2 = new StorageManager(base, null);
 			manager2.open(true);
-			InputStream is = manager2.getInputStream(fileName);
-			assertNotNull(is);
-			DataInputStream bufferedIn = new DataInputStream(new BufferedInputStream(is));
-			for (int i = 0; i < (200 * 1024 / 4); i++)
-				assertEquals("Wrong content found", i, bufferedIn.readInt());
+			try (InputStream is = manager2.getInputStream(fileName)) {
+				assertNotNull(is);
+				try (DataInputStream bufferedIn = new DataInputStream(new BufferedInputStream(is))) {
+					for (int i = 0; i < (200 * 1024 / 4); i++)
+						assertEquals("Wrong content found", i, bufferedIn.readInt());
+				}
+			}
 			manager2.close();
 			manager2 = null;
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2016 IBM Corporation and others.
+ * Copyright (c) 2007, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which accompanies this distribution,
@@ -7,17 +7,28 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors: IBM Corporation - initial API and implementation
  ******************************************************************************/
 package org.eclipse.osgi.internal.signedcontent;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.*;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import org.eclipse.osgi.framework.log.FrameworkLogEntry;
 import org.eclipse.osgi.signedcontent.SignerInfo;
 import org.eclipse.osgi.storage.bundlefile.BundleEntry;
@@ -92,7 +103,7 @@ public class SignatureBlockProcessor implements SignedContentConstants {
 		be = bf.getEntry(signer.substring(0, dotIndex) + DOT_SF);
 		byte sfBytes[] = readIntoArray(be);
 
-		// Step 1, verify the .SF file is signed by the private key that corresponds to the public key 
+		// Step 1, verify the .SF file is signed by the private key that corresponds to the public key
 		// in the .RSA/.DSA file
 		String baseFile = bf.getBaseFile() != null ? bf.getBaseFile().toString() : null;
 		PKCS7Processor processor = new PKCS7Processor(pkcs7Bytes, 0, pkcs7Bytes.length, signer, baseFile);
@@ -127,11 +138,11 @@ public class SignatureBlockProcessor implements SignedContentConstants {
 
 	/**
 	 * Verify the digest listed in each entry in the .SF file with corresponding section in the manifest
-	 * @throws SignatureException 
+	 * @throws SignatureException
 	 */
 	private void verifyManifestAndSignatureFile(byte[] manifestBytes, byte[] sfBytes) throws SignatureException {
 
-		String sf = new String(sfBytes, SignedContentConstants.UTF8);
+		String sf = new String(sfBytes, StandardCharsets.UTF_8);
 		sf = stripContinuations(sf);
 
 		// check if there -Digest-Manfiest: header in the file
@@ -152,7 +163,7 @@ public class SignatureBlockProcessor implements SignedContentConstants {
 					manifestDigest = calculateDigest(getMessageDigest(digestName), manifestBytes);
 				off += digestManifestSearchLen;
 
-				// find out the index of first '\n' after the -Digest-Manifest: 
+				// find out the index of first '\n' after the -Digest-Manifest:
 				int nIndex = sf.indexOf('\n', off);
 				String digestValue = sf.substring(off, nIndex - 1);
 
@@ -168,7 +179,7 @@ public class SignatureBlockProcessor implements SignedContentConstants {
 
 	private void populateMDResults(byte mfBuf[], SignerInfo signerInfo) {
 		// need to make a string from the MF file data bytes
-		String mfStr = new String(mfBuf, SignedContentConstants.UTF8);
+		String mfStr = new String(mfBuf, StandardCharsets.UTF_8);
 
 		// start parsing each entry in the MF String
 		int entryStartOffset = mfStr.indexOf(MF_ENTRY_NEWLN_NAME);
@@ -310,7 +321,7 @@ public class SignatureBlockProcessor implements SignedContentConstants {
 	 * Returns the Base64 encoded digest of the passed set of bytes.
 	 */
 	private static String calculateDigest(MessageDigest digest, byte[] bytes) {
-		return new String(Base64.encode(digest.digest(bytes)), SignedContentConstants.UTF8);
+		return new String(Base64.encode(digest.digest(bytes)), StandardCharsets.UTF_8);
 	}
 
 	synchronized MessageDigest getMessageDigest(String algorithm) {
@@ -323,15 +334,15 @@ public class SignatureBlockProcessor implements SignedContentConstants {
 	}
 
 	/**
-	 * Read the .SF file abd assuming that same digest algorithm will be used through out the whole 
-	 * .SF file.  That digest algorithm name in the last entry will be returned. 
-	 * 
-	 * @param SFBuf			a .SF file in bytes 
+	 * Read the .SF file abd assuming that same digest algorithm will be used through out the whole
+	 * .SF file.  That digest algorithm name in the last entry will be returned.
+	 *
+	 * @param SFBuf			a .SF file in bytes
 	 * @return				the digest algorithm name used in the .SF file
 	 */
 	private static String getDigAlgFromSF(byte SFBuf[]) {
 		// need to make a string from the MF file data bytes
-		String mfStr = new String(SFBuf, SignedContentConstants.UTF8);
+		String mfStr = new String(SFBuf, StandardCharsets.UTF_8);
 		String entryStr = null;
 
 		// start parsing each entry in the MF String
@@ -367,16 +378,16 @@ public class SignatureBlockProcessor implements SignedContentConstants {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param manifestEntry contains a single MF file entry of the format
 	 * 				   "Name: foo"
 	 * 				   "MD5-Digest: [base64 encoded MD5 digest data]"
 	 * 				   "SHA1-Digest: [base64 encoded SHA1 digest dat]"
-	 * 
+	 *
 	 * @param	desireDigestAlg	a string representing the desire digest value to be returned if there are
 	 * 							multiple digest lines.
 	 * 							If this value is null, return whatever digest value is in the entry.
-	 * 
+	 *
 	 * @return this function returns a digest line based on the desire digest algorithm value
 	 * 		   (since only MD5 and SHA1 are recognized here),
 	 * 		   or a 'null' will be returned if none of the digest algorithms
@@ -434,8 +445,8 @@ public class SignatureBlockProcessor implements SignedContentConstants {
 
 	/**
 	 * Return the Message Digest name
-	 * 
-	 * @param digLine		the message digest line is in the following format.  That is in the 
+	 *
+	 * @param digLine		the message digest line is in the following format.  That is in the
 	 * 						following format:
 	 * 								DIGEST_NAME-digest: digest value
 	 * @return				a string representing a message digest.

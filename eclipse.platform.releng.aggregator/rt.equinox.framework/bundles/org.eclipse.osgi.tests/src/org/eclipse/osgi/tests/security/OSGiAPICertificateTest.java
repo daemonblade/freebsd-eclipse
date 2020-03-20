@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -16,8 +16,12 @@ package org.eclipse.osgi.tests.security;
 import java.util.ArrayList;
 import java.util.Collection;
 import junit.framework.TestSuite;
-import org.osgi.framework.*;
-import org.osgi.service.condpermadmin.*;
+import org.osgi.framework.AdminPermission;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleException;
+import org.osgi.service.condpermadmin.BundleSignerCondition;
+import org.osgi.service.condpermadmin.Condition;
+import org.osgi.service.condpermadmin.ConditionInfo;
 
 public class OSGiAPICertificateTest extends BaseSecurityTest {
 	private static String dn1 = "CN=CA1 LeafA, O=CA1, L=Boston, ST=Massachusetts, C=US"; //$NON-NLS-1$
@@ -57,7 +61,7 @@ public class OSGiAPICertificateTest extends BaseSecurityTest {
 	private static ConditionInfo info09True = new ConditionInfo(BundleSignerCondition.class.getName(), new String[] {dnChain07True});
 	private static ConditionInfo info10True = new ConditionInfo(BundleSignerCondition.class.getName(), new String[] {dnChain08True});
 
-	private Collection<Bundle> installedBundles = new ArrayList<Bundle>();
+	private Collection<Bundle> installedBundles = new ArrayList<>();
 
 	public static TestSuite suite() {
 		return new TestSuite(OSGiAPICertificateTest.class);
@@ -271,7 +275,7 @@ public class OSGiAPICertificateTest extends BaseSecurityTest {
 	}
 
 	public void testAdminPermission03() {
-		// test trusted cert with exact match pattern + ! operation 
+		// test trusted cert with exact match pattern + ! operation
 		try {
 			getTrustEngine().addTrustAnchor(getTestCertificate("ca1_leafa"), "ca1_leafa"); //$NON-NLS-1$ //$NON-NLS-2$
 			Bundle testBundle = installBundle(getTestJarPath("signed")); //$NON-NLS-1$
