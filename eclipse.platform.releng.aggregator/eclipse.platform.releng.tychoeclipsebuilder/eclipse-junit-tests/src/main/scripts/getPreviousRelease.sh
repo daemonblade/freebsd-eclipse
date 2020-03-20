@@ -7,9 +7,9 @@
 
 
 mkdir -p workarea/${buildId}/eclipse-testing
-cp /home/files/buildzips/oxygen/R/R-4.13-201909161045/eclipse-platform-4.13-freebsd-gtk-amd64.tar.gz ./workarea/${buildId}/eclipse-testing/platformLocation/
+cp /home/files/buildzips/oxygen/R/R-4.14-201912100610/eclipse-platform-4.14-freebsd-gtk-amd64.tar.gz ./workarea/${buildId}/eclipse-testing/platformLocation/
 
-cp /home/files/buildzips/oxygen/R/R-4.13-201909161045/eclipse-SDK-4.13-freebsd-gtk-amd64.tar.gz ./workarea/${buildId}/eclipse-testing/
+cp /home/files/buildzips/oxygen/R/R-4.14-201912100610/eclipse-SDK-4.14-freebsd-gtk-amd64.tar.gz ./workarea/${buildId}/eclipse-testing/
 
 cp eclipse-junit-tests-${buildId}.zip workarea/${buildId}/eclipse-testing/
 

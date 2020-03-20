@@ -96,14 +96,14 @@
     <!-- for I or M build (which is the unusual case) the build directory and label are the same -->
     <property
       name="eclipseBaseDir"
-      value="S-4.14RC1-201911271800" />
+      value="R-4.14-201912100610" />
     <property
       name="eclispeBaseLabel"
-      value="4.14RC1" />
+      value="4.14" />
 
     <property
       name="platformURL"
-      value="http://${basedownloadHost}/eclipse/downloads/drops4/${eclipseBaseDir}" />
+      value="https://${basedownloadHost}/eclipse/downloads/drops4/${eclipseBaseDir}" />
     <!--
       We used to use binary platform, since smaller, but moved to SDK, to be able to use API Tools.
       But then moved back to Platform, after having some cases where we need to pick up new fixes from
@@ -119,7 +119,7 @@
     -->
     <property
       name="eclipserun-repo"
-      value="http://download.eclipse.org/eclipse/updates/4.14-I-builds/" />
+      value="https://download.eclipse.org/eclipse/updates/4.15-I-builds/" />
     <echo message="eclipserun-repo: ${eclipserun-repo}" />
 
     <property
