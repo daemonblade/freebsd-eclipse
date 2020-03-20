@@ -19,7 +19,7 @@ FreeBSD's /usr/ports/java/eclipse.
 * devel/gmake
 * devel/maven
 * devel/pkgconf
-* java/openjdk8
+* java/openjdk11
 * security/libsecret
 * www/webkit2-gtk3
 * x11-toolkits/gtk30
@@ -58,7 +58,9 @@ When a usable executable has been generated the java/eclipse port can be
 updated:
 
 1. `bin/generate-patches`
-1. Update [maven-repo project](https://github.com/daemonblade/maven-repo)
+1. Update the
+[eclipse-maven-repo](https://github.com/daemonblade/eclipse-maven-repo)
+project with the contents of **maven-repo.${TAG}**.
 1. Update **java-eclipse** Makefile, distinfo, etc
 1. Verify port build and installation
 1. Submit port
@@ -72,10 +74,8 @@ changing the following lines of text:
 * `linux.x86_64` => `freebsd.amd64`
 * `linux.ppc64le` => `freebsd.powerpc64`
 
-Some modules have been disabled as they involve updates to a
-maven repository. Some tests have been disabled as they won't
-compile.
-* org.eclipse.swt.tests
+The following modules have been disabled as they involve maven repository
+updates or are uncompilable tests.
 * tests/org.eclipse.swt.tests.gtk
 * eclipse-junit-tests
 * eclipse.platform.repository
