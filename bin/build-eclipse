@@ -4,7 +4,7 @@
 # Attempt eclipse build
 #
 ARCH=$(uname -p)
-export JAVA_HOME="/usr/local/openjdk8" MAVEN_OPTS="-Xmx1024m"
+export JAVA_HOME="/usr/local/openjdk11" MAVEN_OPTS="-Xmx1024m"
 
 if [ ! -x bin/$(basename $0) ]
 then
