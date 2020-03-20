@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -21,6 +21,7 @@ public class Policy {
 	public static boolean DEBUG = false;
 
 	static final DebugOptionsListener DEBUG_OPTIONS_LISTENER = new DebugOptionsListener() {
+		@Override
 		public void optionsChanged(DebugOptions options) {
 			DEBUG = options.getBooleanOption(CVSSSH2Plugin.ID + "/debug", false); //$NON-NLS-1$
 		}

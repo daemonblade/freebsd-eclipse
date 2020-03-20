@@ -92,7 +92,7 @@ public class SynchronizationScopeManager extends PlatformObject implements ISync
 	 * @param context the resource mapping context
 	 * @param monitor a progress monitor
 	 * @return the resource mappings
-	 * @throws CoreException
+	 * @throws CoreException if an error occurs
 	 */
 	public static ResourceMapping[] getMappingsFromProviders(ResourceTraversal[] traversals,
 			ResourceMappingContext context,
@@ -175,7 +175,7 @@ public class SynchronizationScopeManager extends PlatformObject implements ISync
 	@Override
 	public void initialize(
 			IProgressMonitor monitor) throws CoreException {
-		ResourcesPlugin.getWorkspace().run((IWorkspaceRunnable) monitor1 -> internalPrepareContext(monitor1),
+		ResourcesPlugin.getWorkspace().run((IWorkspaceRunnable) this::internalPrepareContext,
 				getSchedulingRule(), IResource.NONE, monitor);
 	}
 

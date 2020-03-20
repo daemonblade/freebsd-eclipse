@@ -83,7 +83,7 @@ import org.eclipse.team.internal.core.TeamPlugin;
  * repository provider with a project by invoking
  * <code>RepositoryProvider.map()</code>.
  * </p>
- * 
+ *
  * @see RepositoryProvider#map(IProject, String)
  *
  * @since 2.0
@@ -271,7 +271,7 @@ public abstract class RepositoryProvider implements IProjectNature, IAdaptable {
 	}
 	/**
 	 * Disassociates project with the repository provider its currently mapped to.
-	 * @param project
+	 * @param project project to unmap
 	 * @throws TeamException The project isn't associated with any repository provider.
 	 */
 	public static void unmap(IProject project) throws TeamException {

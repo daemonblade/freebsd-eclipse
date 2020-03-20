@@ -13,36 +13,24 @@
  *******************************************************************************/
 package org.eclipse.compare.tests;
 
+import static org.junit.Assert.assertNull;
+
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import junit.framework.TestCase;
-
 import org.eclipse.compare.ICompareFilter;
 import org.eclipse.compare.ISharedDocumentAdapter;
-import org.eclipse.compare.structuremergeviewer.DocumentRangeNode;
-import org.eclipse.compare.structuremergeviewer.IStructureComparator;
-import org.eclipse.compare.structuremergeviewer.StructureCreator;
+import org.eclipse.compare.structuremergeviewer.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.text.BadLocationException;
-import org.eclipse.jface.text.Document;
-import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.IRegion;
-import org.eclipse.jface.text.Region;
+import org.eclipse.jface.text.*;
 import org.junit.Assert;
+import org.junit.Test;
 
-public class StructureCreatorTest extends TestCase {
+public class StructureCreatorTest {
 
-	public StructureCreatorTest() {
-		super();
-	}
-
-	public StructureCreatorTest(String name) {
-		super(name);
-	}
-
+@Test
 	public void testIgnoreWhitespace() {
 		IDocument[] docs = new IDocument[15];
 		docs[0] = new Document();
@@ -81,11 +69,13 @@ public class StructureCreatorTest extends TestCase {
 		filters[0] = null;
 		filters[1] = new ICompareFilter[] { new ICompareFilter() {
 
+			@Override
 			public void setInput(Object input, Object ancestor, Object left,
 					Object right) {
 				// EMPTY
 			}
 
+			@Override
 			public IRegion[] getFilteredRegions(HashMap lineComparison) {
 				String line = lineComparison.get(ICompareFilter.THIS_LINE)
 						.toString();
@@ -95,10 +85,12 @@ public class StructureCreatorTest extends TestCase {
 				return null;
 			}
 
+			@Override
 			public boolean isEnabledInitially() {
 				return false;
 			}
 
+			@Override
 			public boolean canCacheFilteredRegions() {
 				return true; // cache-able
 			}
@@ -106,11 +98,13 @@ public class StructureCreatorTest extends TestCase {
 
 		filters[2] = new ICompareFilter[] { new ICompareFilter() {
 
+			@Override
 			public void setInput(Object input, Object ancestor, Object left,
 					Object right) {
 				// EMPTY
 			}
 
+			@Override
 			public IRegion[] getFilteredRegions(HashMap lineComparison) {
 				String line = lineComparison.get(ICompareFilter.THIS_LINE)
 						.toString();
@@ -120,10 +114,12 @@ public class StructureCreatorTest extends TestCase {
 				return null;
 			}
 
+			@Override
 			public boolean isEnabledInitially() {
 				return false;
 			}
 
+			@Override
 			public boolean canCacheFilteredRegions() {
 				return false; // not cache-able
 			}
@@ -133,10 +129,12 @@ public class StructureCreatorTest extends TestCase {
 			private Pattern whitespace = Pattern.compile("\\s+");
 			private Matcher matcher = null;
 
+			@Override
 			public String getName() {
 				return "NAME";
 			}
 
+			@Override
 			public String getContents(Object node, boolean ignoreWhitespace) {
 				DocumentRangeNode drn = (DocumentRangeNode) node;
 				String retval = null;
@@ -156,6 +154,7 @@ public class StructureCreatorTest extends TestCase {
 				return retval;
 			}
 
+			@Override
 			protected IStructureComparator createStructureComparator(
 					Object element, IDocument document,
 					ISharedDocumentAdapter sharedDocumentAdapter,

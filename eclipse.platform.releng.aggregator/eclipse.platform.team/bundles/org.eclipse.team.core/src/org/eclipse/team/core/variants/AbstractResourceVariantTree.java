@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +59,7 @@ public abstract class AbstractResourceVariantTree implements IResourceVariantTre
 	 * <code>IResource.DEPTH_ONE</code>, or <code>IResource.DEPTH_INFINITE</code>)
 	 * @param monitor a progress monitor
 	 * @return the array of resources whose corresponding variants have changed
-	 * @throws TeamException
+	 * @throws TeamException if an error occurs
 	 */
 	@Override
 	public IResource[] refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException {
@@ -88,7 +87,7 @@ public abstract class AbstractResourceVariantTree implements IResourceVariantTre
 	 * <code>IResource.DEPTH_ONE</code>, or <code>IResource.DEPTH_INFINITE</code>)
 	 * @param monitor a progress monitor
 	 * @return the resource's whose variants have changed
-	 * @throws TeamException
+	 * @throws TeamException if an error occurs
 	 */
 	protected IResource[] refresh(IResource resource, int depth, IProgressMonitor monitor) throws TeamException {
 		IResource[] changedResources = null;
@@ -122,7 +121,7 @@ public abstract class AbstractResourceVariantTree implements IResourceVariantTre
 	 * <code>IResource.DEPTH_ONE</code>, or <code>IResource.DEPTH_INFINITE</code>)
 	 * @param monitor a progress monitor
 	 * @return the resource's whose variants have changed
-	 * @throws TeamException
+	 * @throws TeamException if an error occurs
 	 */
 	protected IResource[] collectChanges(IResource local, IResourceVariant remote, int depth, IProgressMonitor monitor) throws TeamException {
 		List<IResource> changedResources = new ArrayList<>();
@@ -176,7 +175,7 @@ public abstract class AbstractResourceVariantTree implements IResourceVariantTre
 	 * @param local the local resource
 	 * @param remote the newly fetched resource variant
 	 * @return <code>true</code> if the resource variant changed
-	 * @throws TeamException
+	 * @throws TeamException if an error occurs
 	 */
 	protected abstract boolean setVariant(IResource local, IResourceVariant remote) throws TeamException;
 
@@ -187,15 +186,14 @@ public abstract class AbstractResourceVariantTree implements IResourceVariantTre
 		}
 		if (depth == IResource.DEPTH_ZERO) return;
 		Map<IResource, IResourceVariant> children = mergedMembers(local, remote, monitor);
-		for (Iterator<IResource> it = children.keySet().iterator(); it.hasNext();) {
-			IResource localChild = it.next();
+		for (IResource localChild : children.keySet()) {
 			IResourceVariant remoteChild = children.get(localChild);
 			collectChanges(localChild, remoteChild, changedResources,
 					depth == IResource.DEPTH_INFINITE ? IResource.DEPTH_INFINITE : IResource.DEPTH_ZERO,
 					monitor);
 		}
 
-		IResource[] cleared = collectedMembers(local, children.keySet().toArray(new IResource[children.keySet().size()]));
+		IResource[] cleared = collectedMembers(local, children.keySet().toArray(new IResource[children.size()]));
 		changedResources.addAll(Arrays.asList(cleared));
 		monitor.worked(1);
 	}
@@ -243,10 +241,10 @@ public abstract class AbstractResourceVariantTree implements IResourceVariantTre
 
 				IResource localChild =
 						localSet != null ? (IResource) localSet.get(keyChildName) : null;
-				
+
 				IResourceVariant remoteChild =
 						remoteSet != null ? (IResourceVariant) remoteSet.get(keyChildName) : null;
-				
+
 				if (localChild == null) {
 					// there has to be a remote resource available if we got this far
 					Assert.isTrue(remoteChild != null);

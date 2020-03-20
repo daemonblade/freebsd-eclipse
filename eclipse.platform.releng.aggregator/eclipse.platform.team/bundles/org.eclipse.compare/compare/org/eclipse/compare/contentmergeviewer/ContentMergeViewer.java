@@ -359,8 +359,7 @@ public abstract class ContentMergeViewer extends ContentViewer
 
 	private ILabelProviderListener labelChangeListener = event -> {
 		Object[] elements = event.getElements();
-		for (int i = 0; i < elements.length; i++) {
-			Object object = elements[i];
+		for (Object object : elements) {
 			if (object == getInput())
 				updateHeader();
 		}
@@ -388,11 +387,11 @@ public abstract class ContentMergeViewer extends ContentViewer
 		fAncestorVisible= Utilities.getBoolean(cc, ICompareUIConstants.PROP_ANCESTOR_VISIBLE, fAncestorVisible);
 		fConfirmSave= Utilities.getBoolean(cc, CompareEditor.CONFIRM_SAVE_PROPERTY, fConfirmSave);
 
-		fCompareInputChangeListener = (input) -> { if (input == getInput()) handleCompareInputChange(); };
+		fCompareInputChangeListener = input -> { if (input == getInput()) handleCompareInputChange(); };
 
 		// Make sure the compare configuration is not null
 		fCompareConfiguration = cc != null ? cc : new CompareConfiguration();
-		fPropertyChangeListener = event -> handlePropertyChangeEvent(event);
+		fPropertyChangeListener = this::handlePropertyChangeEvent;
 		fCompareConfiguration.addPropertyChangeListener(fPropertyChangeListener);
 		fPreferenceChangeListener = event -> {
 			if (event.getProperty().equals(ComparePreferencePage.SWAPPED)) {
@@ -1210,7 +1209,7 @@ public abstract class ContentMergeViewer extends ContentViewer
 	 * Note: this method is for internal use only. Clients should not call this method.
 	 *
 	 * @param monitor a progress monitor
-	 * @throws CoreException
+	 * @throws CoreException not thrown anymore
 	 * @deprecated use {@link IFlushable#flush(IProgressMonitor)}.
 	 */
 	@Deprecated

@@ -20,6 +20,7 @@
  *     Robin Stocker (robin@nibor.org) - Bug 398594: [Edit] Enable center arrow buttons when editable and for both sides
  *     Robin Stocker (robin@nibor.org) - Bug 399960: [Edit] Make merge arrow buttons easier to hit
  *     John Hendrikx (hjohn@xs4all.nl) - Bug 541401 - [regression] Vertical scrollbar thumb size is wrong in compare view
+ *     Stefan Dirix (sdirix@eclipsesource.com) - Bug 473847: Minimum E4 Compatibility of Compare
  *******************************************************************************/
 package org.eclipse.compare.contentmergeviewer;
 
@@ -1375,7 +1376,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable {
 
 		@Override
 		public Point getSelection() {
-			return Optional.ofNullable(getTarget()).map(target -> target.getSelection())
+			return Optional.ofNullable(getTarget()).map(IFindReplaceTarget::getSelection)
 					.orElse(new Point(-1, -1));
 		}
 
@@ -1520,7 +1521,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable {
 	public TextMergeViewer(Composite parent, int style, CompareConfiguration configuration) {
 		super(style, ResourceBundle.getBundle(BUNDLE_NAME), configuration);
 
-		operationHistoryListener = event -> TextMergeViewer.this.historyNotification(event);
+		operationHistoryListener = TextMergeViewer.this::historyNotification;
 		OperationHistoryFactory.getOperationHistory()
 				.addOperationHistoryListener(operationHistoryListener);
 
@@ -1610,7 +1611,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable {
 
 		fIsMac= Util.isMac();
 
-		fPreferenceChangeListener= event -> TextMergeViewer.this.handlePropertyChangeEvent(event);
+		fPreferenceChangeListener= TextMergeViewer.this::handlePropertyChangeEvent;
 
 		fPreferenceStore= createChainedPreferenceStore();
 		if (fPreferenceStore != null) {
@@ -1991,8 +1992,8 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable {
 		disposeCompareFilterActions(false);
 
 		if (fSourceViewerDecorationSupport != null) {
-			for (Iterator<SourceViewerDecorationSupport> iterator = fSourceViewerDecorationSupport.iterator(); iterator.hasNext();) {
-				iterator.next().dispose();
+			for (SourceViewerDecorationSupport sourceViewerDecorationSupport : fSourceViewerDecorationSupport) {
+				sourceViewerDecorationSupport.dispose();
 			}
 			fSourceViewerDecorationSupport = null;
 		}
@@ -2036,7 +2037,9 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable {
 	 */
 	@Override
 	protected void createControls(Composite composite) {
-		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, ICompareContextIds.TEXT_MERGE_VIEW);
+		if (PlatformUI.isWorkbenchRunning()) {
+			PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, ICompareContextIds.TEXT_MERGE_VIEW);
+		}
 
 		// 1st row
 		if (fMarginWidth > 0) {
@@ -3920,8 +3923,8 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable {
 			List<ChangeCompareFilterPropertyAction> currentFilterActions = (List<ChangeCompareFilterPropertyAction>) current;
 			for (CompareFilterDescriptor compareFilterDescriptor : compareFilterDescriptors) {
 				boolean match = false;
-				for (int j = 0; j < currentFilterActions.size(); j++) {
-					if (compareFilterDescriptor.getFilterId().equals(currentFilterActions.get(j).getFilterId())) {
+				for (ChangeCompareFilterPropertyAction currentFilterAction : currentFilterActions) {
+					if (compareFilterDescriptor.getFilterId().equals(currentFilterAction.getFilterId())) {
 						match = true;
 						break;
 					}
@@ -3965,8 +3968,8 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable {
 					fCompareFilterActions);
 			getCompareConfiguration().setProperty(ChangeCompareFilterPropertyAction.COMPARE_FILTERS_INITIALIZING, null);
 		} else {
-			for (int i = 0; i < fCompareFilterActions.size(); i++) {
-				fCompareFilterActions.get(i).setInput(input, ancestor, left, right);
+			for (ChangeCompareFilterPropertyAction action : fCompareFilterActions) {
+				action.setInput(input, ancestor, left, right);
 			}
 		}
 	}
@@ -4570,7 +4573,7 @@ public class TextMergeViewer extends ContentMergeViewer implements IAdaptable {
 		if (rgb == null)
 			return null;
 		if (fColors == null)
-			fColors= new HashMap<RGB, Color>(20);
+			fColors= new HashMap<>(20);
 		Color c= fColors.get(rgb);
 		if (c == null) {
 			c= new Color(display, rgb);

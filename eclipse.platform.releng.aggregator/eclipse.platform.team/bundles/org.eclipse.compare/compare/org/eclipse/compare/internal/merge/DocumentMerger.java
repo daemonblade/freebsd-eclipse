@@ -48,8 +48,6 @@ import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.TextUtilities;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.progress.IProgressService;
 
 /**
  * A document merger manages the differences between two documents
@@ -574,11 +572,10 @@ public class DocumentMerger {
 			}
 			monitor.done();
 		};
-		IProgressService progressService= PlatformUI.getWorkbench().getProgressService();
 
 		RangeDifference[] e= null;
 		try {
-			progressService.run(true, true, runnable);
+			Utilities.executeRunnable(runnable);
 			e= (RangeDifference[]) result[0];
 		} catch (InvocationTargetException ex) {
 			throw new CoreException(new Status(IStatus.ERROR, CompareUIPlugin.PLUGIN_ID, 0, CompareMessages.DocumentMerger_3, ex.getTargetException()));
@@ -1293,8 +1290,7 @@ public class DocumentMerger {
 	private Diff findNext(char contributor, List<Diff> v, int start, int end, boolean deep) {
 		if (v == null)
 			return null;
-		for (int i= 0; i < v.size(); i++) {
-			Diff diff= v.get(i);
+		for (Diff diff : v) {
 			Position p= diff.getPosition(contributor);
 			if (p != null) {
 				int startOffset= p.getOffset();

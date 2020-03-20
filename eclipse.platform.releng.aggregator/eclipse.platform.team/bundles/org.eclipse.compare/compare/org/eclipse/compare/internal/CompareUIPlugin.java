@@ -12,6 +12,7 @@
  *     IBM Corporation - initial API and implementation
  *     Carsten Pfeiffer <carsten.pfeiffer@gebit.de> - CompareUIPlugin.getCommonType() returns null if left or right side is not available - https://bugs.eclipse.org/311843
  *     Stefan Xenos <sxenos@gmail.com> (Google) - bug 448968 - Add diagnostic logging
+ *     Stefan Dirix <sdirix@eclipsesource.com> - bug 473847: Minimum E4 Compatibility of Compare
  *******************************************************************************/
 package org.eclipse.compare.internal;
 
@@ -237,13 +238,13 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 	private static CompareUIPlugin fgComparePlugin;
 
 	/** Maps type to icons */
-	private static Map<String, Image> fgImages= new Hashtable<String, Image>(10);
+	private static Map<String, Image> fgImages= new Hashtable<>(10);
 	/** Maps type to ImageDescriptors */
-	private static Map<String, ImageDescriptor> fgImageDescriptors= new Hashtable<String, ImageDescriptor>(10);
+	private static Map<String, ImageDescriptor> fgImageDescriptors= new Hashtable<>(10);
 	/** Maps ImageDescriptors to Images */
-	private static Map<ImageDescriptor, Image> fgImages2= new Hashtable<ImageDescriptor, Image>(10);
+	private static Map<ImageDescriptor, Image> fgImages2= new Hashtable<>(10);
 
-	private static List<Image> fgDisposeOnShutdownImages= new ArrayList<Image>();
+	private static List<Image> fgDisposeOnShutdownImages= new ArrayList<>();
 
 	private ResourceBundle fResourceBundle;
 
@@ -475,17 +476,23 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 	}
 
 	/**
-	 * Returns the SWT Shell of the active workbench window or <code>null</code> if
+	 * If the workbench is running returns the SWT Shell of the active workbench window or <code>null</code> if
 	 * no workbench window is active.
 	 *
-	 * @return the SWT Shell of the active workbench window, or <code>null</code> if
-	 * 	no workbench window is active
+	 * If the workbench is not running, returns the shell of the default display.
+	 *
+	 * @return If the workbench is running, returns the SWT Shell of the active workbench window, or <code>null</code> if
+	 * 	no workbench window is active. Otherwise returns the shell of the default display.
 	 */
 	public static Shell getShell() {
-		IWorkbenchWindow window = getActiveWorkbenchWindow();
-		if (window == null)
-			return null;
-		return window.getShell();
+		if(PlatformUI.isWorkbenchRunning()){
+			IWorkbenchWindow window = getActiveWorkbenchWindow();
+			if (window == null)
+				return null;
+			return window.getShell();
+		}
+
+		return Display.getDefault().getActiveShell();
 	}
 
 	/**
@@ -606,10 +613,12 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 	public boolean compareResultOK(CompareEditorInput input, IRunnableContext context) {
 		final Shell shell= getShell();
 		try {
-			// run operation in separate thread and make it cancelable
-			if (context == null)
-				context = PlatformUI.getWorkbench().getProgressService();
-			context.run(true, true, input);
+			// run operation in context if possible
+			if (context != null) {
+				context.run(true, true, input);
+			} else {
+				Utilities.executeRunnable(input);
+			}
 
 			String message= input.getMessage();
 			if (message != null) {
@@ -1377,13 +1386,16 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 	}
 
 	private void internalOpenDialog(final CompareEditorInput input) {
-		Runnable runnable = () -> {
-			CompareDialog dialog = new CompareDialog(PlatformUI
-					.getWorkbench().getModalDialogShellProvider()
-					.getShell(), input);
+		syncExec(() -> {
+			Shell shell;
+			if (PlatformUI.isWorkbenchRunning()) {
+				shell = PlatformUI.getWorkbench().getModalDialogShellProvider().getShell();
+			} else {
+				shell = Display.getDefault().getActiveShell();
+			}
+			CompareDialog dialog = new CompareDialog(shell, input);
 			dialog.open();
-		};
-		syncExec(runnable);
+		});
 	}
 
 	private void syncExec(Runnable runnable) {
@@ -1408,8 +1420,8 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 	 * @return an array of all dirty editor parts.
 	 */
 	public static IEditorPart[] getDirtyEditors() {
-		Set<IEditorInput> inputs= new HashSet<IEditorInput>();
-		List<IEditorPart> result= new ArrayList<IEditorPart>(0);
+		Set<IEditorInput> inputs= new HashSet<>();
+		List<IEditorPart> result= new ArrayList<>(0);
 		IWorkbench workbench = PlatformUI.getWorkbench();
 		IWorkbenchWindow[] windows= workbench.getWorkbenchWindows();
 		for (IWorkbenchWindow window : windows) {

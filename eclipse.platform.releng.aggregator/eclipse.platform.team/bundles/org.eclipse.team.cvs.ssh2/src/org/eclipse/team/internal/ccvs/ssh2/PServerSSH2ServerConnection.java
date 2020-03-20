@@ -37,17 +37,21 @@ public class PServerSSH2ServerConnection implements IServerConnection {
 		this.password = password;
 	}
 
+	@Override
 	public void close() throws IOException {
 		psc.close();
 	}
 
+	@Override
 	public InputStream getInputStream() {
 		return psc.getInputStream();
 	}
+	@Override
 	public OutputStream getOutputStream() {
 		return psc.getOutputStream();
 	}
 
+	@Override
 	public void open(IProgressMonitor monitor) throws IOException, CVSAuthenticationException {
 		monitor.subTask("PServerSSH2ServerConnection.open"); //$NON-NLS-1$
 		monitor.worked(1);
@@ -114,7 +118,7 @@ public class PServerSSH2ServerConnection implements IServerConnection {
 			} catch (JSchException ee) {
 				retry--;
 				if(retry<0){
-					throw new CVSAuthenticationException(CVSSSH2Messages.CVSSSH2ServerConnection_3, CVSAuthenticationException.NO_RETRY, location); 
+					throw new CVSAuthenticationException(CVSSSH2Messages.CVSSSH2ServerConnection_3, CVSAuthenticationException.NO_RETRY, location);
 				}
 				if(session != null && session.isConnected()){
 					session.disconnect();
@@ -125,7 +129,7 @@ public class PServerSSH2ServerConnection implements IServerConnection {
 		}
 		// password for location will be over-written in JSchSession ;-<
 		((CVSRepositoryLocation)location).setPassword(password);
-		
+
 		// CVSROOT=":pserver:localhost:"+lport+""cvs_root
 		try {
 			// If user does not give a password, it must be null.
