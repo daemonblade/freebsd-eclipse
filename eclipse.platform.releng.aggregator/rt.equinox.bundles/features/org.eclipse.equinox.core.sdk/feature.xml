@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.equinox.core.sdk"
       label="%featureName"
-      version="3.19.100.qualifier"
+      version="3.19.200.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -380,28 +380,14 @@
          unpack="false"/>
 
    <plugin
-         id="org.apache.mina.core"
+         id="org.apache.sshd.osgi"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.apache.mina.core.source"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.sshd.core"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.sshd.core.source"
+         id="org.apache.sshd.osgi.source"
          download-size="0"
          install-size="0"
          version="0.0.0"

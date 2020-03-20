@@ -319,7 +319,7 @@ public class Path implements IPath, Cloneable {
 	@Override
 	public IPath append(String tail) {
 		//optimize addition of a single segment
-		if (tail.indexOf(SEPARATOR) == -1 && tail.indexOf('\\') == -1 && tail.indexOf(DEVICE_SEPARATOR) == -1) { //$NON-NLS-1$
+		if (tail.indexOf(SEPARATOR) == -1 && tail.indexOf('\\') == -1 && tail.indexOf(DEVICE_SEPARATOR) == -1) {
 			int tailLength = tail.length();
 			if (tailLength < 3) {
 				//some special cases
@@ -351,8 +351,7 @@ public class Path implements IPath, Cloneable {
 	 */
 	private boolean canonicalize() {
 		//look for segments that need canonicalizing
-		for (int i = 0, max = segments.length; i < max; i++) {
-			String segment = segments[i];
+		for (String segment : segments) {
 			if (segment.charAt(0) == '.' && (segment.equals("..") || segment.equals("."))) { //$NON-NLS-1$ //$NON-NLS-2$
 				//path needs to be canonicalized
 				collapseParentReferences();

@@ -13,10 +13,18 @@
  *******************************************************************************/
 package org.eclipse.equinox.common.tests.registry;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
-import junit.framework.TestCase;
+
 import org.eclipse.core.runtime.RegistryFactory;
 import org.eclipse.core.tests.harness.BundleTestingHelper;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -26,29 +34,21 @@ import org.osgi.framework.FrameworkUtil;
  * Tests "new" registry event listener.
  * @since 3.4
  */
-public class RegistryListenerTest extends TestCase {
+public class RegistryListenerTest {
 
 	final private static int MAX_TIME_PER_BUNDLE = 10000; // maximum time to wait for bundle event in milliseconds
 
-	private BundleContext fBundleContext;
-	
-	public RegistryListenerTest() {
-		super();
-	}
+	private static BundleContext fBundleContext;
 
-	public RegistryListenerTest(String name) {
-		super(name);
-	}
-	
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		fBundleContext = FrameworkUtil.getBundle(getClass()).getBundleContext();
+	@BeforeClass
+	public static void setUp() throws Exception {
+		fBundleContext = FrameworkUtil.getBundle(RegistryListenerTest.class).getBundleContext();
 	}
 
 	/**
 	 * Producer and consumer bundles are installed and removed in a "normal" order
 	 */
+	@Test
 	public void testRegularOrder() throws IOException, BundleException {
 		Bundle bundle01 = null;
 		Bundle bundle02 = null;
@@ -66,11 +66,11 @@ public class RegistryListenerTest extends TestCase {
 			assertTrue(listener.isAdded());
 
 			assertNotNull(extPointIDs);
-			assertTrue(extPointIDs.length == 1);
+			assertEquals(1, extPointIDs.length);
 			assertTrue("bundle01.xp1".equals(extPointIDs[0]));
 
 			assertNotNull(extensionsReceived);
-			assertTrue(extensionsReceived.length == 1);
+			assertEquals(1, extensionsReceived.length);
 			assertTrue("bundle02.ext1".equals(extensionsReceived[0]));
 
 			listener.reset();
@@ -86,11 +86,11 @@ public class RegistryListenerTest extends TestCase {
 			assertTrue(listener.isRemoved());
 
 			assertNotNull(extPointIDs);
-			assertTrue(extPointIDs.length == 1);
+			assertEquals(1, extPointIDs.length);
 			assertTrue("bundle01.xp1".equals(extPointIDs[0]));
 
 			assertNotNull(extensionsReceived);
-			assertTrue(extensionsReceived.length == 1);
+			assertEquals(1, extensionsReceived.length);
 			assertTrue("bundle02.ext1".equals(extensionsReceived[0]));
 
 		} finally {
@@ -107,6 +107,7 @@ public class RegistryListenerTest extends TestCase {
 	/**
 	 * Producer and consumer bundles are installed and removed in an inverse order
 	 */
+	@Test
 	public void testInverseOrder() throws IOException, BundleException {
 		Bundle bundle01 = null;
 		Bundle bundle02 = null;
@@ -124,11 +125,11 @@ public class RegistryListenerTest extends TestCase {
 			assertTrue(listener.isAdded());
 
 			assertNotNull(extPointIDs);
-			assertTrue(extPointIDs.length == 1);
+			assertEquals(1, extPointIDs.length);
 			assertTrue("bundle01.xp1".equals(extPointIDs[0]));
 
 			assertNotNull(extensionsReceived);
-			assertTrue(extensionsReceived.length == 1);
+			assertEquals(1, extensionsReceived.length);
 			assertTrue("bundle02.ext1".equals(extensionsReceived[0]));
 
 			listener.reset();
@@ -144,11 +145,11 @@ public class RegistryListenerTest extends TestCase {
 			assertTrue(listener.isRemoved());
 
 			assertNotNull(extPointIDs);
-			assertTrue(extPointIDs.length == 1);
+			assertEquals(1, extPointIDs.length);
 			assertTrue("bundle01.xp1".equals(extPointIDs[0]));
 
 			assertNotNull(extensionsReceived);
-			assertTrue(extensionsReceived.length == 1);
+			assertEquals(1, extensionsReceived.length);
 			assertTrue("bundle02.ext1".equals(extensionsReceived[0]));
 
 		} finally {
@@ -166,6 +167,7 @@ public class RegistryListenerTest extends TestCase {
 	 * Tests modifications to multiple extensions and extension points
 	 * Three listeners are tested: global; on xp1 (two extensions); on xp2 (no extensions)
 	 */
+	@Test
 	public void testMultiplePoints() throws IOException, BundleException {
 		Bundle bundle = null;
 		WaitingRegistryListener listenerGlobal = new WaitingRegistryListener();
@@ -184,21 +186,21 @@ public class RegistryListenerTest extends TestCase {
 			String[] extPointIDs = listenerGlobal.extPointsReceived(MAX_TIME_PER_BUNDLE);
 			String[] extensionsReceived = listenerGlobal.extensionsReceived(MAX_TIME_PER_BUNDLE);
 			assertTrue(listenerGlobal.isAdded());
-			checkIDs(extPointIDs, new String[] {"bundleMultiple.xp1", "bundleMultiple.xp2"});
-			checkIDs(extensionsReceived, new String[] {"bundleMultiple.ext11", "bundleMultiple.ext12"});
+			assertArrayEquals(extPointIDs, new String[] { "bundleMultiple.xp1", "bundleMultiple.xp2" });
+			assertArrayEquals(extensionsReceived, new String[] { "bundleMultiple.ext11", "bundleMultiple.ext12" });
 
 			// test additions on listener on extension point with extensions
 			String[] extPointIDs1 = listener1.extPointsReceived(20000);
 			String[] extensionsReceived1 = listener1.extensionsReceived(20000);
 			assertTrue(listener1.isAdded());
-			checkIDs(extPointIDs1, new String[] {"bundleMultiple.xp1"});
-			checkIDs(extensionsReceived1, new String[] {"bundleMultiple.ext11", "bundleMultiple.ext12"});
+			assertArrayEquals(extPointIDs1, new String[] { "bundleMultiple.xp1" });
+			assertArrayEquals(extensionsReceived1, new String[] { "bundleMultiple.ext11", "bundleMultiple.ext12" });
 
 			// test additions on listener on extension point with no extensions
 			String[] extPointIDs2 = listener2.extPointsReceived(MAX_TIME_PER_BUNDLE);
 			String[] extensionsReceived2 = listener2.extensionsReceived(50);
 			assertTrue(listener2.isAdded());
-			checkIDs(extPointIDs2, new String[] {"bundleMultiple.xp2"});
+			assertArrayEquals(extPointIDs2, new String[] { "bundleMultiple.xp2" });
 			assertNull(extensionsReceived2);
 
 			// removal
@@ -213,21 +215,21 @@ public class RegistryListenerTest extends TestCase {
 			extPointIDs = listenerGlobal.extPointsReceived(MAX_TIME_PER_BUNDLE);
 			extensionsReceived = listenerGlobal.extensionsReceived(MAX_TIME_PER_BUNDLE);
 			assertTrue(listenerGlobal.isRemoved());
-			checkIDs(extPointIDs, new String[] {"bundleMultiple.xp1", "bundleMultiple.xp2"});
-			checkIDs(extensionsReceived, new String[] {"bundleMultiple.ext11", "bundleMultiple.ext12"});
+			assertArrayEquals(extPointIDs, new String[] { "bundleMultiple.xp1", "bundleMultiple.xp2" });
+			assertArrayEquals(extensionsReceived, new String[] { "bundleMultiple.ext11", "bundleMultiple.ext12" });
 
 			// test removals on listener on extension point with extensions
 			extPointIDs1 = listener1.extPointsReceived(MAX_TIME_PER_BUNDLE);
 			extensionsReceived1 = listener1.extensionsReceived(MAX_TIME_PER_BUNDLE);
 			assertTrue(listener1.isRemoved());
-			checkIDs(extPointIDs1, new String[] {"bundleMultiple.xp1"});
-			checkIDs(extensionsReceived1, new String[] {"bundleMultiple.ext11", "bundleMultiple.ext12"});
+			assertArrayEquals(extPointIDs1, new String[] { "bundleMultiple.xp1" });
+			assertArrayEquals(extensionsReceived1, new String[] { "bundleMultiple.ext11", "bundleMultiple.ext12" });
 
 			// test removals on listener on extension point with no extensions
 			extPointIDs2 = listener2.extPointsReceived(MAX_TIME_PER_BUNDLE);
 			extensionsReceived2 = listener2.extensionsReceived(50);
 			assertTrue(listener2.isRemoved());
-			checkIDs(extPointIDs2, new String[] {"bundleMultiple.xp2"});
+			assertArrayEquals(extPointIDs2, new String[] { "bundleMultiple.xp2" });
 			assertNull(extensionsReceived2);
 
 		} finally {
@@ -243,6 +245,7 @@ public class RegistryListenerTest extends TestCase {
 	/**
 	 * Tests listener registered multiple times: once on xp1, once on xp2
 	 */
+	@Test
 	public void testMultipleRegistrations() throws IOException, BundleException {
 		Bundle bundle = null;
 		WaitingRegistryListener listener = new WaitingRegistryListener();
@@ -257,14 +260,14 @@ public class RegistryListenerTest extends TestCase {
 			// 1st registration: extension point; extension		=> 2 callbacks
 			// 2nd registration should be ignored: extension	=> 0 callbacks
 			// total: 2 callbacks
-			assertTrue(listener.waitFor(2, MAX_TIME_PER_BUNDLE) == 2);
+			assertEquals(2, listener.waitFor(2, MAX_TIME_PER_BUNDLE));
 
 			// test additions on listener on extension point with extensions
 			String[] extPointIDs = listener.extPointsReceived(50);
 			String[] extensionsReceived = listener.extensionsReceived(50);
 			assertTrue(listener.isAdded());
-			checkIDs(extPointIDs, new String[] {"bundleMultiple.xp1"});
-			checkIDs(extensionsReceived, new String[] {"bundleMultiple.ext11", "bundleMultiple.ext12"});
+			assertArrayEquals(extPointIDs, new String[] { "bundleMultiple.xp1" });
+			assertArrayEquals(extensionsReceived, new String[] { "bundleMultiple.ext11", "bundleMultiple.ext12" });
 
 			// removal: unregistering listener once should remove both registrations
 			listener.reset();
@@ -274,7 +277,7 @@ public class RegistryListenerTest extends TestCase {
 			BundleTestingHelper.refreshPackages(fBundleContext, testBundles);
 
 			// test removals on listener on extension point with extensions
-			assertTrue(listener.waitFor(3, 200) == 0);
+			assertEquals(0, listener.waitFor(3, 200));
 			extPointIDs = listener.extPointsReceived(50);
 			extensionsReceived = listener.extensionsReceived(50);
 			assertNull(extPointIDs);
@@ -288,20 +291,4 @@ public class RegistryListenerTest extends TestCase {
 		}
 	}
 
-	// For simplicity, this method does not expect duplicate IDs in either array
-	private void checkIDs(String[] receivedIDs, String[] expectedIDs) {
-		assertNotNull(receivedIDs);
-		assertNotNull(expectedIDs);
-		assertTrue(receivedIDs.length == expectedIDs.length);
-		for (String expected : expectedIDs) {
-			boolean found = false;
-			for (String receivedID : receivedIDs) {
-				if (expected.equals(receivedID)) {
-					found = true;
-					break;
-				}
-			}
-			assertTrue(found);
-		}
-	}
 }
