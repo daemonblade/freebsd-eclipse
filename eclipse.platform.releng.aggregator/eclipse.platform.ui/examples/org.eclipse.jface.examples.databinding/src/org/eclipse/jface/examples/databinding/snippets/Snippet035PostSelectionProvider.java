@@ -44,19 +44,19 @@ import org.eclipse.swt.widgets.Shell;
  */
 public class Snippet035PostSelectionProvider {
 
-	private DataBindingContext dbc;
+	private DataBindingContext bindingContext;
 
 	private ListViewer listViewer;
 
 	public static void main(String[] args) {
-		Display display = new Display();
+		final Display display = new Display();
 
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
 			Shell shell = new Snippet035PostSelectionProvider().createShell();
-			Display display1 = Display.getCurrent();
+
 			while (!shell.isDisposed()) {
-				if (!display1.readAndDispatch()) {
-					display1.sleep();
+				if (!display.readAndDispatch()) {
+					display.sleep();
 				}
 			}
 		});
@@ -68,7 +68,7 @@ public class Snippet035PostSelectionProvider {
 		shell.setText("Post Selections");
 		shell.setLayout(new GridLayout(1, false));
 
-		dbc = new DataBindingContext();
+		bindingContext = new DataBindingContext();
 
 		createTableSection(shell);
 		createFieldSection(shell);
@@ -83,14 +83,12 @@ public class Snippet035PostSelectionProvider {
 		Group section = createSectionGroup(parent, 1);
 
 		listViewer = new ListViewer(section, SWT.SINGLE | SWT.BORDER);
-		GridDataFactory.fillDefaults().grab(true, true).hint(250, 250).applyTo(
-				listViewer.getList());
+		GridDataFactory.fillDefaults().grab(true, true).hint(250, 250).applyTo(listViewer.getList());
 
 		listViewer.setContentProvider(new ArrayContentProvider());
 		listViewer.setLabelProvider(new LabelProvider());
 
-		String[] names = new String[] { "John Doe", "Steve Northover",
-				"Grant Gayed", "Veronika Irvine", "Mike Wilson",
+		String[] names = new String[] { "John Doe", "Steve Northover", "Grant Gayed", "Veronika Irvine", "Mike Wilson",
 				"Christophe Cornu", "Lynne Kues", "Silenio Quarti" };
 
 		listViewer.setInput(names);
@@ -99,23 +97,23 @@ public class Snippet035PostSelectionProvider {
 	private void createFieldSection(Composite parent) {
 		final Group section = createSectionGroup(parent, 2);
 
-		// normal selection
+		// Normal selection
 		Label selectionLabel = createLabelField(section, "Selection:");
 		IViewerObservableValue<String> selectionObservable = ViewerProperties.singleSelection(String.class)
 				.observe(listViewer);
-		dbc.bindValue(WidgetProperties.text().observe(selectionLabel), selectionObservable);
+		bindingContext.bindValue(WidgetProperties.text().observe(selectionLabel), selectionObservable);
 
-		// post selection
+		// Post selection
 		Label postSelectionLabel = createLabelField(section, "Post selection:");
 		IViewerObservableValue<String> postSelectionObservable = ViewerProperties.singlePostSelection(String.class)
 				.observe(listViewer);
-		dbc.bindValue(WidgetProperties.text().observe(postSelectionLabel), postSelectionObservable);
+		bindingContext.bindValue(WidgetProperties.text().observe(postSelectionLabel), postSelectionObservable);
 	}
 
 	private Group createSectionGroup(Composite parent, int numColumns) {
 		Group section = new Group(parent, SWT.SHADOW_ETCHED_IN);
-		GridLayoutFactory.fillDefaults().numColumns(numColumns).equalWidth(
-				false).margins(5, 5).spacing(15, 5).applyTo(section);
+		GridLayoutFactory.fillDefaults().numColumns(numColumns).equalWidth(false).margins(5, 5).spacing(15, 5)
+				.applyTo(section);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(section);
 		return section;
 	}

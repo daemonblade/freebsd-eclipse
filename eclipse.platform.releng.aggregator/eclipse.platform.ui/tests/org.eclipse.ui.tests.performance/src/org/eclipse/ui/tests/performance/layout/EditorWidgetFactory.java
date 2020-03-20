@@ -13,13 +13,12 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.performance.layout;
 
-import junit.framework.Assert;
+import static org.junit.Assert.assertNotNull;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.e4.ui.model.application.ui.basic.MPart;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorPart;
@@ -32,6 +31,7 @@ import org.eclipse.ui.internal.EditorSite;
 import org.eclipse.ui.tests.harness.util.EmptyPerspective;
 import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.eclipse.ui.tests.performance.UIPerformanceTestSetup;
+
 
 /**
  * @since 3.1
@@ -65,12 +65,12 @@ public class EditorWidgetFactory extends TestWidgetFactory {
 	}
 
 	@Override
-	public void init() throws CoreException, WorkbenchException {
+	public void init() throws WorkbenchException {
 
 		// Open an editor in a new window.
 		window = PlatformUI.getWorkbench().openWorkbenchWindow(EmptyPerspective.PERSP_ID, UITestCase.getPageInput());
 		IWorkbenchPage activePage = window.getActivePage();
-		Assert.assertNotNull(activePage);
+		assertNotNull(activePage);
 
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IProject testProject = workspace.getRoot().getProject(UIPerformanceTestSetup.PROJECT_NAME);
@@ -85,14 +85,13 @@ public class EditorWidgetFactory extends TestWidgetFactory {
 	}
 
 	@Override
-	public Composite getControl() throws CoreException, WorkbenchException {
+	public Composite getControl() {
 		return ctrl;
 	}
 
 	@Override
-	public void done() throws CoreException, WorkbenchException {
+	public void done() {
 		window.close();
-		super.done();
 	}
 
 }

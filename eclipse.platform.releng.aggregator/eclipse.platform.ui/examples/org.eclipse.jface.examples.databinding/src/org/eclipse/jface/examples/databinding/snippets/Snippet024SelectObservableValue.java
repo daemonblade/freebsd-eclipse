@@ -35,45 +35,33 @@ import org.eclipse.swt.widgets.Shell;
 
 /**
  * Demonstrate usage of SelectObservableValue
- *
- * @since 3.2
  */
 public class Snippet024SelectObservableValue {
-	protected Shell shell;
-
 	public static void main(String[] args) {
 		final Display display = Display.getDefault();
+
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			try {
-				Snippet024SelectObservableValue window = new Snippet024SelectObservableValue();
-				window.open();
-			} catch (Exception e) {
-				e.printStackTrace();
+			Shell shell = createShell();
+
+			while (!shell.isDisposed()) {
+				if (!display.readAndDispatch()) {
+					display.sleep();
+				}
 			}
 		});
+
+		display.dispose();
 	}
 
-	public void open() {
-		final Display display = Display.getDefault();
-		createContents();
-		shell.open();
-		shell.layout();
-		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch())
-				display.sleep();
-		}
-	}
-
-	protected void createContents() {
-		shell = new Shell();
+	private static Shell createShell() {
+		Shell shell = new Shell();
 		shell.setSize(400, 300);
 		shell.setLayout(new GridLayout(2, true));
 		shell.setText("Snippet024SelectObservableValue");
 
 		final ListViewer listViewer = new ListViewer(shell, SWT.BORDER);
 		listViewer.setContentProvider(new ArrayContentProvider());
-		listViewer.getList().setLayoutData(
-				new GridData(SWT.FILL, SWT.FILL, true, true));
+		listViewer.getList().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
 		final Group group = new Group(shell, SWT.NONE);
 		group.setText("Radio Group");
@@ -93,8 +81,12 @@ public class Snippet024SelectObservableValue {
 			radioGroup.addOption(color, WidgetProperties.buttonSelection().observe(button));
 		}
 
-		DataBindingContext dbc = new DataBindingContext();
-		dbc.bindValue(radioGroup, listViewerSelection);
+		DataBindingContext bindingContext = new DataBindingContext();
+		bindingContext.bindValue(radioGroup, listViewerSelection);
+
+		shell.open();
+		shell.layout();
+		return shell;
 	}
 
 	public static class Color {
@@ -118,8 +110,7 @@ public class Snippet024SelectObservableValue {
 		}
 
 		public static Color[] values() {
-			return new Color[] { RED, ORANGE, YELLOW, GREEN, BLUE, INDIGO,
-					VIOLET };
+			return new Color[] { RED, ORANGE, YELLOW, GREEN, BLUE, INDIGO, VIOLET };
 		}
 	}
 }

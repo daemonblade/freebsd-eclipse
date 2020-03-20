@@ -17,8 +17,10 @@ package org.eclipse.e4.ui.tests.workbench;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import org.eclipse.core.commands.ParameterizedCommand;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.e4.core.commands.CommandServiceAddon;
 import org.eclipse.e4.core.commands.ECommandService;
 import org.eclipse.e4.core.commands.EHandlerService;
@@ -154,6 +156,8 @@ public class HandlerActivationTest {
 
 	@Test
 	public void testHandlerInWindowOnly() {
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		TestHandler testHandler = createTestHandlerInHandlerContainer(window);
 		executeCommand();
 		assertTrue(testHandler.isExecuted());
@@ -161,6 +165,8 @@ public class HandlerActivationTest {
 
 	@Test
 	public void testHandlerInActivePerspectiveOnly() {
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		TestHandler testHandler = createTestHandlerInHandlerContainer(perspectiveA);
 		executeCommand();
 		assertTrue(testHandler.isExecuted());
@@ -168,6 +174,8 @@ public class HandlerActivationTest {
 
 	@Test
 	public void testHandlerInActivePartOnly() {
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		TestHandler testHandler = createTestHandlerInHandlerContainer(partA1);
 		executeCommand();
 		assertTrue(testHandler.isExecuted());
@@ -189,6 +197,8 @@ public class HandlerActivationTest {
 
 	@Test
 	public void testHandlerInActivePartAndPerspective() {
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		TestHandler testHandler = createTestHandlerInHandlerContainer(partA1);
 		TestHandler testHandler2 = createTestHandlerInHandlerContainer(perspectiveA);
 		executeCommand();
@@ -198,6 +208,8 @@ public class HandlerActivationTest {
 
 	@Test
 	public void testHandlerInActivePartAndWindow() {
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		TestHandler testHandler = createTestHandlerInHandlerContainer(partA1);
 		TestHandler testHandler2 = createTestHandlerInHandlerContainer(window);
 		executeCommand();
@@ -207,6 +219,8 @@ public class HandlerActivationTest {
 
 	@Test
 	public void testHandlerInActivePerspectiveAndWindow() {
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		TestHandler testHandler = createTestHandlerInHandlerContainer(perspectiveA);
 		TestHandler testHandler2 = createTestHandlerInHandlerContainer(window);
 		executeCommand();
@@ -216,6 +230,8 @@ public class HandlerActivationTest {
 
 	@Test
 	public void testHandlerInActivePartAndPerspectiveAndWindow() {
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		TestHandler testHandler = createTestHandlerInHandlerContainer(partA1);
 		TestHandler testHandler2 = createTestHandlerInHandlerContainer(perspectiveA);
 		TestHandler testHandler3 = createTestHandlerInHandlerContainer(window);
@@ -227,6 +243,8 @@ public class HandlerActivationTest {
 
 	@Test
 	public void testHandlerSwitchToInactivePart() {
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		TestHandler testHandler = createTestHandlerInHandlerContainer(partA2);
 		executeCommand();
 		assertFalse(testHandler.isExecuted());
@@ -237,6 +255,8 @@ public class HandlerActivationTest {
 
 	@Test
 	public void testHandlerSwitchToInactivePerspective() {
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		TestHandler testHandlerA = createTestHandlerInHandlerContainer(perspectiveA);
 		TestHandler testHandlerB = createTestHandlerInHandlerContainer(perspectiveB);
 		partService.switchPerspective(perspectiveB);
@@ -247,6 +267,8 @@ public class HandlerActivationTest {
 
 	@Test
 	public void testHandlerSwitchToInactivePartInOtherPerspectiveWithPerspectiveHandlers() {
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		TestHandler testHandlerA = createTestHandlerInHandlerContainer(perspectiveA);
 		TestHandler testHandlerB = createTestHandlerInHandlerContainer(perspectiveB);
 		partService.switchPerspective(perspectiveB);
@@ -258,6 +280,8 @@ public class HandlerActivationTest {
 
 	@Test
 	public void testHandlerSwitchToInactivePartInOtherPerspectiveWithPartHandlers() {
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		TestHandler testHandlerA = createTestHandlerInHandlerContainer(partA1);
 		TestHandler testHandlerB = createTestHandlerInHandlerContainer(partB1);
 		partService.switchPerspective(perspectiveB);

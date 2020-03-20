@@ -29,19 +29,20 @@ import org.eclipse.ui.internal.progress.ProgressInfoItem;
 import org.eclipse.ui.internal.progress.TaskInfo;
 import org.eclipse.ui.progress.IProgressConstants;
 import org.eclipse.ui.tests.TestPlugin;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * @since 3.6
  * @author Prakash G.R.
  *
  */
+@RunWith(JUnit4.class)
 public class ProgressViewTests extends ProgressTestCase {
 
-	/**
-	 * @param testName
-	 */
-	public ProgressViewTests(String testName) {
-		super(testName);
+	public ProgressViewTests() {
+		super(ProgressViewTests.class.getSimpleName());
 	}
 
 	@Override
@@ -57,6 +58,7 @@ public class ProgressViewTests extends ProgressTestCase {
 	}
 
 
+	@Test
 	public void testClearTaskInfo() throws Exception {
 		// test for
 		openProgressView();
@@ -75,6 +77,7 @@ public class ProgressViewTests extends ProgressTestCase {
 		assertEquals(1, count2);
 	}
 
+	@Test
 	public void testNoUpdatesIfHidden() throws Exception {
 		// test for
 		openProgressView();
@@ -116,6 +119,7 @@ public class ProgressViewTests extends ProgressTestCase {
 		assertEquals(0, count2);
 	}
 
+	@Test
 	public void testItemOrder() throws Exception {
 		openProgressView();
 		ArrayList<DummyJob> jobsToSchedule = new ArrayList<>();
@@ -124,19 +128,18 @@ public class ProgressViewTests extends ProgressTestCase {
 		DummyJob userJob = new DummyJob("1. User Job", Status.OK_STATUS);
 		userJob.setUser(true);
 		jobsToSchedule.add(userJob);
-		// XXX: might be confusing but at the moment low priority jobs are sorted first
-		DummyJob lowPrioJob = new DummyJob("2. Low Priority Job", Status.OK_STATUS);
-		lowPrioJob.setPriority(Job.DECORATE);
-		jobsToSchedule.add(lowPrioJob);
+		DummyJob highPrioJob = new DummyJob("2. High Priority Job", Status.OK_STATUS);
+		highPrioJob.setPriority(Job.INTERACTIVE);
+		jobsToSchedule.add(highPrioJob);
 		DummyJob job1 = new DummyJob("3. Usual job 1", Status.OK_STATUS);
 		jobsToSchedule.add(job1);
 		DummyJob job2 = new DummyJob("4. Usual job 2", Status.OK_STATUS);
 		jobsToSchedule.add(job2);
 		DummyJob job3 = new DummyJob("5. Usual job 3", Status.OK_STATUS);
 		jobsToSchedule.add(job3);
-		DummyJob highPrioJob = new DummyJob("6. High Priority Job", Status.OK_STATUS);
-		highPrioJob.setPriority(Job.INTERACTIVE);
-		jobsToSchedule.add(highPrioJob);
+		DummyJob lowPrioJob = new DummyJob("6. Low Priority Job", Status.OK_STATUS);
+		lowPrioJob.setPriority(Job.DECORATE);
+		jobsToSchedule.add(lowPrioJob);
 
 		allJobs.addAll(jobsToSchedule);
 //		TODO Disabled due to other progress viewer bugs.

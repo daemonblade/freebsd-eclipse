@@ -19,8 +19,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.eclipse.core.databinding.observable.Diffs;
 import org.eclipse.core.databinding.observable.IObservable;
+import org.eclipse.core.databinding.observable.ObservableTracker;
 import org.eclipse.core.databinding.observable.Observables;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.databinding.observable.value.AbstractObservableValue;
@@ -44,14 +49,14 @@ import junit.framework.TestSuite;
 public class DelayedObservableValueTest extends AbstractDefaultRealmTestCase {
 	private Object oldValue;
 	private Object newValue;
-	private ObservableValueStub target;
-	private IObservableValue delayed;
+	private ObservableValueStub<Object> target;
+	private IObservableValue<Object> delayed;
 
 	@Override
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		target = new ObservableValueStub(Realm.getDefault());
+		target = new ObservableValueStub<>(Realm.getDefault());
 		oldValue = new Object();
 		newValue = new Object();
 		target.setValue(oldValue);
@@ -112,6 +117,49 @@ public class DelayedObservableValueTest extends AbstractDefaultRealmTestCase {
 		assertEquals(newValue, delayed.getValue());
 	}
 
+	/**
+	 * Bug 558650. Staleness state should be updated before the staleness event is
+	 * fired.
+	 */
+	@Test
+	public void testStaleListener() {
+		AtomicInteger nrEvents = new AtomicInteger();
+
+		delayed.addStaleListener(e -> {
+			nrEvents.incrementAndGet();
+			// Staleness state should be updated before firing event
+			assertTrue(delayed.isStale());
+		});
+
+		target.setValue(newValue);
+
+		assertTrue(delayed.isStale());
+		assertEquals(1, nrEvents.get());
+
+		delayed.getValue();
+		assertFalse(delayed.isStale());
+
+		// There is no non-stale event so nrEvents is not incremented
+		assertEquals(1, nrEvents.get());
+	}
+
+	/**
+	 * Bug 525894. The target observable should not be captured by
+	 * {@link ObservableTracker}. That results in that the value change is observed
+	 * without the delay.
+	 */
+	@Test
+	public void testInnerObservableNotTracked() {
+		// Make the target dirty
+		target.setValue("test");
+
+		List<IObservable> tracked = Arrays.asList(ObservableTracker.runAndMonitor(() -> {
+			delayed.getValue();
+		}, null, null));
+
+		assertFalse(tracked.contains(target));
+	}
+
 	@Test
 	public void testSetValue_CachesGetValueFromTarget() {
 		Object overrideValue = target.overrideValue = new Object();
@@ -127,10 +175,8 @@ public class DelayedObservableValueTest extends AbstractDefaultRealmTestCase {
 
 	@Test
 	public void testSetValue_FiresValueChangeEvent() {
-		ValueChangeEventTracker targetTracker = ValueChangeEventTracker
-				.observe(target);
-		ValueChangeEventTracker delayedTracker = ValueChangeEventTracker
-				.observe(delayed);
+		ValueChangeEventTracker<?> targetTracker = ValueChangeEventTracker.observe(target);
+		ValueChangeEventTracker<?> delayedTracker = ValueChangeEventTracker.observe(delayed);
 
 		delayed.setValue(newValue);
 
@@ -177,8 +223,7 @@ public class DelayedObservableValueTest extends AbstractDefaultRealmTestCase {
 	}
 
 	private void assertFiresPendingValueChange(Runnable runnable) {
-		ValueChangeEventTracker tracker = ValueChangeEventTracker
-				.observe(delayed);
+		ValueChangeEventTracker<?> tracker = ValueChangeEventTracker.observe(delayed);
 
 		target.setValue(newValue);
 		assertTrue(delayed.isStale());
@@ -192,24 +237,24 @@ public class DelayedObservableValueTest extends AbstractDefaultRealmTestCase {
 		assertEquals(newValue, tracker.event.diff.getNewValue());
 	}
 
-	static class ObservableValueStub extends AbstractObservableValue {
-		private Object value;
+	static class ObservableValueStub<T> extends AbstractObservableValue<T> {
+		private T value;
 		private boolean stale;
 
-		Object overrideValue;
+		T overrideValue;
 
 		public ObservableValueStub(Realm realm) {
 			super(realm);
 		}
 
 		@Override
-		protected Object doGetValue() {
+		protected T doGetValue() {
 			return value;
 		}
 
 		@Override
-		protected void doSetValue(Object value) {
-			Object oldValue = this.value;
+		protected void doSetValue(T value) {
+			T oldValue = this.value;
 			if (overrideValue != null)
 				value = overrideValue;
 			this.value = value;
@@ -240,24 +285,24 @@ public class DelayedObservableValueTest extends AbstractDefaultRealmTestCase {
 
 	static class Delegate extends AbstractObservableValueContractDelegate {
 		@Override
-		public IObservableValue createObservableValue(Realm realm) {
-			return Observables.observeDelayedValue(0, new ObservableValueStub(
-					realm));
+		public IObservableValue<?> createObservableValue(Realm realm) {
+			return Observables.observeDelayedValue(0, new ObservableValueStub<>(realm));
 		}
 
 		@Override
-		public Object getValueType(IObservableValue observable) {
+		public Object getValueType(IObservableValue<?> observable) {
 			return Object.class;
 		}
 
 		@Override
 		public void change(IObservable observable) {
-			IObservableValue observableValue = (IObservableValue) observable;
+			@SuppressWarnings("unchecked")
+			IObservableValue<Object> observableValue = (IObservableValue<Object>) observable;
 			observableValue.setValue(createValue(observableValue));
 		}
 
 		@Override
-		public Object createValue(IObservableValue observable) {
+		public Object createValue(IObservableValue<?> observable) {
 			return new Object();
 		}
 	}

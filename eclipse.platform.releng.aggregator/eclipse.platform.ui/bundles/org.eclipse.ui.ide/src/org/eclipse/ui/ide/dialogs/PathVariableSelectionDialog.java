@@ -49,7 +49,7 @@ import org.eclipse.ui.internal.ide.dialogs.PathVariablesGroup;
  * <p>
  * Example:
  * </p>
- * 
+ *
  * <pre>
  * PathVariableSelectionDialog dialog = new PathVariableSelectionDialog(getShell(), IResource.FOLDER);
  * dialog.open();
@@ -228,7 +228,7 @@ public final class PathVariableSelectionDialog extends SelectionDialog {
 	/**
 	 * Sets the resource for which the path variable is being edited.
 	 *
-	 * @param resource
+	 * @param resource the resource
 	 * @since 3.6
 	 */
 	public void setResource(IResource resource) {

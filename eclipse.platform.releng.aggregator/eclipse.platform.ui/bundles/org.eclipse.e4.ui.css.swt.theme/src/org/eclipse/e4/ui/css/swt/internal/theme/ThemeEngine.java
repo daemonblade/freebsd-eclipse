@@ -91,8 +91,7 @@ public class ThemeEngine implements IThemeEngine {
 		this.display = display;
 
 		IExtensionRegistry registry = RegistryFactory.getRegistry();
-		IExtensionPoint extPoint = registry
-				.getExtensionPoint("org.eclipse.e4.ui.css.swt.theme");
+		IExtensionPoint extPoint = registry.getExtensionPoint(THEME_PLUGIN_ID);
 
 		//load any modified style sheets
 		Location configLocation = org.eclipse.core.runtime.Platform.getConfigurationLocation();
@@ -549,7 +548,7 @@ public class ThemeEngine implements IThemeEngine {
 	@Override
 	public void applyStyles(Object widget, boolean applyStylesToChildNodes) {
 		for (CSSEngine engine : cssEngines) {
-			Object element = engine.getElement(widget);
+			Element element = engine.getElement(widget);
 			if (element != null) {
 				engine.applyStyles(element, applyStylesToChildNodes);
 			}

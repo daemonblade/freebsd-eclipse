@@ -193,7 +193,7 @@ public class SmartImportWizard extends Wizard implements IImportWizard {
 	@Override
 	public void init(IWorkbench workbench, IStructuredSelection selection) {
 		if (selection != null) {
-			for (Object item : selection.toList()) {
+			for (Object item : selection) {
 				File asFile = toFile(item);
 				if (asFile != null && this.initialSelection == null) {
 					this.initialSelection = asFile;
@@ -267,14 +267,6 @@ public class SmartImportWizard extends Wizard implements IImportWizard {
 		boolean runInBackground = WorkbenchPlugin.getDefault().getPreferenceStore()
 				.getBoolean(IPreferenceConstants.RUN_IN_BACKGROUND);
 		job.setProperty(IProgressConstants.PROPERTY_IN_DIALOG, runInBackground);
-		if (!runInBackground) {
-			if (projectRootPage.isDetectNestedProject() || projectRootPage.isConfigureProjects()) {
-				SmartImportJobReportDialog dialog = new SmartImportJobReportDialog(null);
-				dialog.setBlockOnOpen(false);
-				getContainer().getShell().setEnabled(false);
-				dialog.show(job, getShell());
-			}
-		}
 		job.schedule();
 		return true;
 	}

@@ -16,70 +16,84 @@ package org.eclipse.jface.examples.databinding.snippets;
 
 import java.util.Date;
 
+import org.eclipse.core.databinding.observable.ObservableTracker;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.databinding.observable.list.WritableList;
+import org.eclipse.core.databinding.observable.sideeffect.ISideEffect;
+import org.eclipse.core.databinding.observable.value.IObservableValue;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
-import org.eclipse.jface.internal.databinding.provisional.swt.MenuUpdater;
+import org.eclipse.jface.databinding.swt.typed.WidgetProperties;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
-/**
- */
 public class Snippet005MenuUpdater {
 	public static void main(String[] args) {
 		final Display display = new Display();
+
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			Shell shell = new Shell(display);
+			Shell shell = createShell();
 
-			final WritableList<String> menuItemStrings = new WritableList<>();
-			display.asyncExec(new Runnable() {
-				@Override
-				public void run() {
-					System.out.println("adding item");
-					menuItemStrings.add(new Date().toString());
-					display.timerExec(5000, this);
-				}
-			});
-
-			Menu bar = new Menu(shell, SWT.BAR);
-			shell.setMenuBar(bar);
-			MenuItem fileItem = new MenuItem(bar, SWT.CASCADE);
-			fileItem.setText("&Test Menu");
-			final Menu submenu = new Menu(shell, SWT.DROP_DOWN);
-			fileItem.setMenu(submenu);
-			new MenuUpdater(submenu) {
-				@Override
-				protected void updateMenu() {
-					System.out.println("updating menu");
-					MenuItem[] items = submenu.getItems();
-					int itemIndex = 0;
-					for (String s : menuItemStrings) {
-						MenuItem item;
-						if (itemIndex < items.length) {
-							item = items[itemIndex++];
-						} else {
-							item = new MenuItem(submenu, SWT.NONE);
-						}
-						item.setText(s);
-					}
-					while (itemIndex < items.length) {
-						items[itemIndex++].dispose();
-					}
-				}
-			};
-
-			shell.open();
-
-			// The SWT event loop
 			while (!shell.isDisposed()) {
 				if (!display.readAndDispatch()) {
 					display.sleep();
 				}
 			}
 		});
+
 		display.dispose();
 	}
+
+	private static Shell createShell() {
+		Shell shell = new Shell();
+
+		final WritableList<String> menuItemStrings = new WritableList<>();
+		shell.getDisplay().asyncExec(new Runnable() {
+			@Override
+			public void run() {
+				System.out.println("adding item");
+				menuItemStrings.add(new Date().toString());
+				shell.getDisplay().timerExec(5000, this);
+			}
+		});
+
+		Menu bar = new Menu(shell, SWT.BAR);
+		shell.setMenuBar(bar);
+		MenuItem fileItem = new MenuItem(bar, SWT.CASCADE);
+		fileItem.setText("&Test Menu");
+		final Menu submenu = new Menu(shell, SWT.DROP_DOWN);
+		fileItem.setMenu(submenu);
+
+		IObservableValue<Boolean> visible = WidgetProperties.visible().observe(submenu);
+
+		ISideEffect.create(() -> {
+			ObservableTracker.getterCalled(menuItemStrings);
+			if (!visible.getValue()) {
+				return;
+			}
+
+			System.out.println("updating menu");
+			MenuItem[] items = submenu.getItems();
+			int itemIndex = 0;
+
+			for (String s : menuItemStrings) {
+				MenuItem item;
+				if (itemIndex < items.length) {
+					item = items[itemIndex++];
+				} else {
+					item = new MenuItem(submenu, SWT.NONE);
+				}
+				item.setText(s);
+			}
+			while (itemIndex < items.length) {
+				items[itemIndex++].dispose();
+			}
+		});
+
+		shell.open();
+		return shell;
+	}
+
 }

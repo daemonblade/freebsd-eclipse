@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2015 IBM Corporation and others.
+ * Copyright (c) 2005, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,6 +11,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Jan-Ove Weichel <ovi.weichel@gmail.com> - Bug 441573
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - ongoing support
  *******************************************************************************/
 package org.eclipse.ui.internal.views.markers;
 
@@ -21,6 +22,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -30,16 +32,21 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IMarkerResolution;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
+import org.eclipse.ui.internal.IWorkbenchHelpContextIds;
+import org.eclipse.ui.internal.ide.StatusUtil;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
+import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.ui.views.markers.MarkerViewHandler;
 import org.eclipse.ui.views.markers.WorkbenchMarkerResolution;
 import org.eclipse.ui.views.markers.internal.MarkerMessages;
@@ -142,7 +149,12 @@ public class QuickFixHandler extends MarkerViewHandler {
 			String description = NLS.bind(
 					MarkerMessages.MarkerResolutionDialog_Description,
 					markerDescription);
-			Wizard wizard = new QuickFixWizard(description, selectedMarkers, resolutionsMap, view.getSite());
+			Consumer<StructuredViewer> showMarkers = v -> new ShowMarkers(v, view.getSite());
+			Consumer<Control> bindHelp = c -> PlatformUI.getWorkbench().getHelpSystem().setHelp(c,
+					IWorkbenchHelpContextIds.PROBLEMS_VIEW);
+			Consumer<Throwable> reporter = t -> StatusManager.getManager().handle(StatusUtil.newError(t));
+			Wizard wizard = new QuickFixWizard(description, selectedMarkers, resolutionsMap, showMarkers, bindHelp,
+					reporter);
 			wizard.setWindowTitle(MarkerMessages.resolveMarkerAction_dialogTitle);
 			WizardDialog dialog = new QuickFixWizardDialog(view.getSite().getShell(), wizard);
 			dialog.open();

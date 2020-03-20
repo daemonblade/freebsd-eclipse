@@ -34,6 +34,8 @@ import org.eclipse.core.databinding.observable.Diffs;
  *            type of the values in the map
  *
  * @since 1.2
+ * @implNote If methods are added to the interface which this class implements
+ *           then implementations of those methods must be added to this class.
  */
 public class DecoratingObservableMap<K, V> extends DecoratingObservable
 		implements IObservableMap<K, V> {
@@ -42,12 +44,11 @@ public class DecoratingObservableMap<K, V> extends DecoratingObservable
 	private IMapChangeListener<K, V> mapChangeListener;
 
 	/**
-	 * Constructs a DecoratingObservableMap which decorates the given
-	 * observable.
+	 * Constructs a DecoratingObservableMap which decorates the given observable.
 	 *
-	 * @param decorated
-	 *            the observable map being decorated
-	 * @param disposeDecoratedOnDispose
+	 * @param decorated                 the observable map being decorated
+	 * @param disposeDecoratedOnDispose whether the decorated observable should be
+	 *                                  disposed when the decorator is disposed
 	 */
 	public DecoratingObservableMap(IObservableMap<K, V> decorated,
 			boolean disposeDecoratedOnDispose) {
@@ -90,7 +91,7 @@ public class DecoratingObservableMap<K, V> extends DecoratingObservable
 	@Override
 	protected void firstListenerAdded() {
 		if (mapChangeListener == null) {
-			mapChangeListener = event -> DecoratingObservableMap.this.handleMapChange(event);
+			mapChangeListener = DecoratingObservableMap.this::handleMapChange;
 		}
 		decorated.addMapChangeListener(mapChangeListener);
 		super.firstListenerAdded();

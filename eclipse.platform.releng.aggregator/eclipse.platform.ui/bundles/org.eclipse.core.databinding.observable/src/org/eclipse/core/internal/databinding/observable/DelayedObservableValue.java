@@ -123,10 +123,19 @@ public class DelayedObservableValue<T> extends AbstractObservableValue<T>
 			fireStale();
 	}
 
+	private T internalGetValue() {
+		ObservableTracker.setIgnore(true);
+		try {
+			return observable.getValue();
+		} finally {
+			ObservableTracker.setIgnore(false);
+		}
+	}
+
 	@Override
 	protected T doGetValue() {
 		if (dirty) {
-			cachedValue = observable.getValue();
+			cachedValue = internalGetValue();
 			dirty = false;
 
 			if (updater != null && !updater.running) {
@@ -151,7 +160,7 @@ public class DelayedObservableValue<T> extends AbstractObservableValue<T>
 			observable.setValue(value);
 			// Bug 215297 - target observable could veto or override value
 			// passed to setValue(). Make sure we cache whatever is set.
-			cachedValue = observable.getValue();
+			cachedValue = internalGetValue();
 
 			if (!Objects.equals(oldValue, cachedValue))
 				fireValueChange(Diffs.createValueDiff(oldValue, cachedValue));
@@ -188,12 +197,14 @@ public class DelayedObservableValue<T> extends AbstractObservableValue<T>
 	}
 
 	private void makeDirty() {
+		// Schedule updater before firing event
+		cancelScheduledUpdate(); // if any
+		scheduleUpdate();
+
 		if (!dirty) {
 			dirty = true;
 			fireStale();
 		}
-		cancelScheduledUpdate(); // if any
-		scheduleUpdate();
 	}
 
 	private void cancelScheduledUpdate() {

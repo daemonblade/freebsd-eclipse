@@ -36,46 +36,27 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-/**
- * @since 3.2
- *
- */
 public class Snippet029TreeViewerMultiListProperty {
-	protected Shell shell;
 	private TreeViewer viewer;
 
-	/**
-	 * Launch the application
-	 *
-	 * @param args
-	 */
 	public static void main(String[] args) {
-		try {
-			Snippet029TreeViewerMultiListProperty window = new Snippet029TreeViewerMultiListProperty();
-			window.open();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Open the window
-	 */
-	public void open() {
 		final Display display = Display.getDefault();
+
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			createContents();
-			shell.open();
-			shell.layout();
+			Shell shell = new Snippet029TreeViewerMultiListProperty().createShell();
+
 			while (!shell.isDisposed()) {
-				if (!display.readAndDispatch())
+				if (!display.readAndDispatch()) {
 					display.sleep();
+				}
 			}
 		});
+
+		display.dispose();
 	}
 
-	protected void createContents() {
-		shell = new Shell();
+	protected Shell createShell() {
+		Shell shell = new Shell();
 		shell.setSize(509, 375);
 		shell.setText("Snippet029TreeViewerMultiListProperty.java");
 		final GridLayout gridLayout = new GridLayout();
@@ -86,12 +67,15 @@ public class Snippet029TreeViewerMultiListProperty {
 		viewer = new TreeViewer(shell, SWT.FULL_SELECTION | SWT.MULTI | SWT.BORDER);
 
 		bindUI();
+
+		shell.open();
+		shell.layout();
+		return shell;
 	}
 
-	// Minimal JavaBeans support
+	/** Helper class for implementing JavaBeans support. */
 	public static abstract class AbstractModelObject {
-		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(
-				this);
+		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
 		public void addPropertyChangeListener(PropertyChangeListener listener) {
 			propertyChangeSupport.addPropertyChangeListener(listener);
@@ -136,8 +120,7 @@ public class Snippet029TreeViewerMultiListProperty {
 		}
 
 		public void setCatalogs(List<Catalog> catalogs) {
-			firePropertyChange("catalogs", this.catalogs,
-					this.catalogs = catalogs);
+			firePropertyChange("catalogs", this.catalogs, this.catalogs = catalogs);
 		}
 
 		public List<CatalogItem> getItems() {
@@ -199,8 +182,8 @@ public class Snippet029TreeViewerMultiListProperty {
 		IListProperty<AbstractModelObject, AbstractModelObject> childrenProperty = new MultiListProperty<>(
 				BeanProperties.list("catalogs"), BeanProperties.list("items"));
 
-		ObservableListTreeContentProvider<AbstractModelObject> contentProvider =
-				new ObservableListTreeContentProvider<>(childrenProperty.listFactory(), null);
+		ObservableListTreeContentProvider<AbstractModelObject> contentProvider = new ObservableListTreeContentProvider<>(
+				childrenProperty.listFactory(), null);
 		viewer.setContentProvider(contentProvider);
 
 		ObservableMapLabelProvider labelProvider = new ObservableMapLabelProvider(
@@ -210,10 +193,12 @@ public class Snippet029TreeViewerMultiListProperty {
 
 			@Override
 			public Image getImage(Object element) {
-				if (element instanceof Catalog)
+				if (element instanceof Catalog) {
 					return catalogImage;
-				if (element instanceof CatalogItem)
+				}
+				if (element instanceof CatalogItem) {
 					return catalogItemImage;
+				}
 				return super.getImage(element);
 			}
 

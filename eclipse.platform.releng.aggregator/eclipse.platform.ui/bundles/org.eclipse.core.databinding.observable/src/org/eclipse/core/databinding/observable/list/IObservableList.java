@@ -31,10 +31,17 @@ import org.eclipse.core.databinding.observable.IObservableCollection;
  *            the type of elements in this collection
  *
  * @noimplement This interface is not intended to be implemented by clients.
- *              Clients should instead subclass one of the framework classes
- *              that implement this interface. Note that direct implementers of
- *              this interface outside of the framework will be broken in future
- *              releases when methods are added to this interface.
+ *              Clients should instead subclass one of the classes that
+ *              implement this interface.
+ *              <p>
+ *              Authors of extensions to the databinding framework may extend
+ *              this interface and indirectly implement it, but if doing so must
+ *              also extend one of the framework classes. (Use an API problem
+ *              filter to suppress the resulting warning.)
+ *              <p>
+ *              Direct implementers of this interface outside of the framework
+ *              will be broken in future releases when methods are added to this
+ *              interface.
  *
  * @see AbstractObservableList
  * @see ObservableList
@@ -46,16 +53,16 @@ public interface IObservableList<E> extends List<E>, IObservableCollection<E> {
 	/**
 	 * Adds the given list change listener to the list of list change listeners.
 	 *
-	 * @param listener
+	 * @param listener the change listener to add; not <code>null</code>
 	 */
 	void addListChangeListener(IListChangeListener<? super E> listener);
 
 	/**
 	 * Removes the given list change listener from the list of list change
-	 * listeners. Has no effect if the given listener is not registered as a
-	 * list change listener.
+	 * listeners. Has no effect if the given listener is not registered as a list
+	 * change listener.
 	 *
-	 * @param listener
+	 * @param listener the change listener to remove; not <code>null</code>
 	 */
 	void removeListChangeListener(IListChangeListener<? super E> listener);
 

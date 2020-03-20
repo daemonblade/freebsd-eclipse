@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.core.databinding.DataBindingContext;
+import org.eclipse.core.databinding.beans.IBeanValueProperty;
 import org.eclipse.core.databinding.beans.typed.BeanProperties;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.databinding.observable.list.IObservableList;
@@ -45,17 +46,15 @@ import org.eclipse.swt.widgets.Shell;
 /**
  * Shows how to bind a Combo so that when update its items, the selection is
  * retained if at all possible.
- *
- * @since 3.2
  */
 public class Snippet002UpdateComboRetainSelection {
 	public static void main(String[] args) {
 		final Display display = new Display();
+
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
 			ViewModel viewModel = new ViewModel();
 			Shell shell = new View(viewModel).createShell();
 
-			// The SWT event loop
 			while (!shell.isDisposed()) {
 				if (!display.readAndDispatch()) {
 					display.sleep();
@@ -65,10 +64,11 @@ public class Snippet002UpdateComboRetainSelection {
 			// Print the results
 			System.out.println(viewModel.getText());
 		});
+
 		display.dispose();
 	}
 
-	// Minimal JavaBeans support
+	/** Helper class for implementing JavaBeans support. */
 	public static abstract class AbstractModelObject {
 		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -93,7 +93,7 @@ public class Snippet002UpdateComboRetainSelection {
 		}
 	}
 
-	// The View's model--the root of our Model graph for this particular GUI.
+	/** The View's model--the root of our Model graph for this particular GUI. */
 	public static class ViewModel extends AbstractModelObject {
 		private String text = "beef";
 
@@ -126,11 +126,11 @@ public class Snippet002UpdateComboRetainSelection {
 		}
 	}
 
-	// The GUI view
+	/** The GUI view. */
 	static class View {
 		private ViewModel viewModel;
 		/**
-		 * used to make a new choices array unique
+		 * This field is used to make a new choices array unique.
 		 */
 		static int count;
 
@@ -140,7 +140,7 @@ public class Snippet002UpdateComboRetainSelection {
 
 		public Shell createShell() {
 			// Build a UI
-			Shell shell = new Shell(Display.getCurrent());
+			Shell shell = new Shell();
 			shell.setLayout(new GridLayout(1, false));
 
 			Combo combo = new Combo(shell, SWT.BORDER | SWT.READ_ONLY);
@@ -165,29 +165,26 @@ public class Snippet002UpdateComboRetainSelection {
 			// Print value out first
 			System.out.println(viewModel.getText());
 
-			DataBindingContext dbc = new DataBindingContext();
+			DataBindingContext bindingContext = new DataBindingContext();
 
 			// This demonstrates a problem with Java generics:
-			// It is hard to produce a class object with type List<String>.
-			@SuppressWarnings("unchecked")
-			IObservableList<String> list = MasterDetailObservables.detailList(
-					BeanProperties.value(ViewModel.class, "choices",
-							(Class<List<String>>) (Object) List.class).observe(viewModel),
-					getListDetailFactory(),
-					String.class);
-			dbc.bindList(WidgetProperties.items().observe(combo), list);
-			dbc.bindValue(
-					WidgetProperties.text().observe(combo),
+			// It is hard to produce a class object with type List<String>
+			IBeanValueProperty<ViewModel, List<String>> choices = BeanProperties
+					.value(ViewModel.class, "choices", (Class<List<String>>) (Object) List.class);
+
+			IObservableList<String> list = MasterDetailObservables.detailList(choices.observe(viewModel),
+					createListDetailFactory(), String.class);
+			bindingContext.bindList(WidgetProperties.items().observe(combo), list);
+			bindingContext.bindValue(WidgetProperties.text().observe(combo),
 					BeanProperties.value(ViewModel.class, "text").observe(viewModel));
 
-			// Open and return the Shell
 			shell.pack();
 			shell.open();
 			return shell;
 		}
 	}
 
-	private static IObservableFactory<Collection<String>, IObservableList<String>> getListDetailFactory() {
+	private static IObservableFactory<Collection<String>, IObservableList<String>> createListDetailFactory() {
 		return target -> {
 			WritableList<String> list = WritableList.withElementType(String.class);
 			list.addAll(target);

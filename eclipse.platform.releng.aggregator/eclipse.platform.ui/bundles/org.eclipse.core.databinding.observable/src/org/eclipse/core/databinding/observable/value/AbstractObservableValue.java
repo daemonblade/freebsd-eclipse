@@ -33,7 +33,8 @@ import org.eclipse.core.databinding.observable.Realm;
  * @param <T>
  *            the type of value being observed
  * @since 1.0
- *
+ * @implNote If methods are added to the interface which this class implements
+ *           then implementations of those methods must be added to this class.
  */
 abstract public class AbstractObservableValue<T> extends AbstractObservable
 		implements IObservableValue<T> {
@@ -45,7 +46,7 @@ abstract public class AbstractObservableValue<T> extends AbstractObservable
 	}
 
 	/**
-	 * @param realm
+	 * @param realm the realm to use; not <code>null</code>
 	 */
 	public AbstractObservableValue(Realm realm) {
 		super(realm);
@@ -73,7 +74,7 @@ abstract public class AbstractObservableValue<T> extends AbstractObservable
 	 * Template method for setting the value of the observable. By default the
 	 * method throws an {@link UnsupportedOperationException}.
 	 *
-	 * @param value
+	 * @param value the value to set
 	 */
 	protected void doSetValue(T value) {
 		throw new UnsupportedOperationException();

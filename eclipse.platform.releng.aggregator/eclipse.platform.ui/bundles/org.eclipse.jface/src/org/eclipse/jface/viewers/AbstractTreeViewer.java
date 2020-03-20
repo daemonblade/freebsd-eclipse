@@ -722,8 +722,8 @@ public abstract class AbstractTreeViewer extends ColumnViewer {
 	}
 
 	/**
-	 * Collapses all nodes of the viewer's tree, starting with the root. This
-	 * method is equivalent to <code>collapseToLevel(ALL_LEVELS)</code>.
+	 * Collapses all nodes of the viewer's tree, starting with the root. This method
+	 * is equivalent to <code>collapseToLevel(ALL_LEVELS)</code>.
 	 */
 	public void collapseAll() {
 		Object root = getRoot();
@@ -733,20 +733,28 @@ public abstract class AbstractTreeViewer extends ColumnViewer {
 	}
 
 	/**
-	 * Collapses the subtree rooted at the given element or tree path to the
-	 * given level.
+	 * Collapses the subtree rooted at the given element or tree path to the given
+	 * level.
+	 * <p>
+	 * Note that the default implementation of this method does turn redraw off via
+	 * this operation via a call to <code>setRedraw</code>
+	 * </p>
 	 *
-	 * @param elementOrTreePath
-	 *            the element or tree path
-	 * @param level
-	 *            non-negative level, or <code>ALL_LEVELS</code> to collapse
-	 *            all levels of the tree
+	 * @param elementOrTreePath the element or tree path
+	 * @param level             non-negative level, or <code>ALL_LEVELS</code> to
+	 *                          collapse all levels of the tree
 	 */
 	public void collapseToLevel(Object elementOrTreePath, int level) {
 		Assert.isNotNull(elementOrTreePath);
-		Widget w = internalGetWidgetToSelect(elementOrTreePath);
-		if (w != null) {
-			internalCollapseToLevel(w, level);
+		Control control = getControl();
+		try {
+			control.setRedraw(false);
+			Widget w = internalGetWidgetToSelect(elementOrTreePath);
+			if (w != null) {
+				internalCollapseToLevel(w, level);
+			}
+		} finally {
+			control.setRedraw(true);
 		}
 	}
 
@@ -1033,7 +1041,7 @@ public abstract class AbstractTreeViewer extends ColumnViewer {
 	 * method is equivalent to <code>expandToLevel(ALL_LEVELS)</code>.
 	 */
 	public void expandAll() {
-		expandToLevel(ALL_LEVELS, false);
+		expandToLevel(ALL_LEVELS, true);
 	}
 
 	/**
@@ -1057,18 +1065,18 @@ public abstract class AbstractTreeViewer extends ColumnViewer {
 	 *            levels of the tree
 	 */
 	public void expandToLevel(int level) {
-		expandToLevel(level, false);
+		expandToLevel(level, true);
 	}
 
 	/**
 	 * Expands the root of the viewer's tree to the given level.
 	 *
-	 * @param level
-	 *            non-negative level, or <code>ALL_LEVELS</code> to expand all
-	 *            levels of the tree
-	 * @param disableRedraw
-	 *            <code>true</code> when drawing operations should be disabled
-	 *            during expansion.
+	 * @param level         non-negative level, or <code>ALL_LEVELS</code> to expand
+	 *                      all levels of the tree
+	 * @param disableRedraw <code>true</code> when drawing operations should be
+	 *                      disabled during expansion. <code>true</code> when
+	 *                      drawing operations should be enabled during expansion.
+	 *                      Prefer using true as this results in a faster UI
 	 * @since 3.14
 	 */
 	public void expandToLevel(int level, boolean disableRedraw) {
@@ -1089,7 +1097,7 @@ public abstract class AbstractTreeViewer extends ColumnViewer {
 	 *            levels of the tree
 	 */
 	public void expandToLevel(Object elementOrTreePath, int level) {
-		expandToLevel(elementOrTreePath, level, false);
+		expandToLevel(elementOrTreePath, level, true);
 	}
 
 	/**
@@ -1097,14 +1105,14 @@ public abstract class AbstractTreeViewer extends ColumnViewer {
 	 * element becomes visible in this viewer's tree control, and then expands the
 	 * subtree rooted at the given element to the given level.
 	 *
-	 * @param elementOrTreePath
-	 *            the element
-	 * @param level
-	 *            non-negative level, or <code>ALL_LEVELS</code> to expand all
-	 *            levels of the tree
-	 * @param disableRedraw
-	 *            <code>true</code> when drawing operations should be disabled
-	 *            during expansion.
+	 * @param elementOrTreePath the element
+	 * @param level             non-negative level, or <code>ALL_LEVELS</code> to
+	 *                          expand all levels of the tree
+	 * @param disableRedraw     <code>true</code> when drawing operations should be
+	 *                          disabled during expansion. <code>false</code> when
+	 *                          drawing operations should be enabled during
+	 *                          expansion. Prefer true as this results in a faster
+	 *                          UI.
 	 * @since 3.14
 	 */
 	public void expandToLevel(Object elementOrTreePath, int level, boolean disableRedraw) {
@@ -1590,10 +1598,6 @@ public abstract class AbstractTreeViewer extends ColumnViewer {
 	/**
 	 * Recursively collapses the subtree rooted at the given widget to the given
 	 * level.
-	 * <p>
-	 * Note that the default implementation of this method does not call
-	 * <code>setRedraw</code>.
-	 * </p>
 	 *
 	 * @param widget the widget
 	 * @param level  non-negative level, or <code>ALL_LEVELS</code> to collapse all
@@ -1717,13 +1721,12 @@ public abstract class AbstractTreeViewer extends ColumnViewer {
 	}
 
 	/**
-	 * This method takes a tree path or an element. If the argument is not a
-	 * tree path, returns the parent of the given element or <code>null</code>
-	 * if the parent is not known. If the argument is a tree path with more than
-	 * one segment, returns its parent tree path, otherwise returns
-	 * <code>null</code>.
+	 * This method takes a tree path or an element. If the argument is not a tree
+	 * path, returns the parent of the given element or <code>null</code> if the
+	 * parent is not known. If the argument is a tree path with more than one
+	 * segment, returns its parent tree path, otherwise returns <code>null</code>.
 	 *
-	 * @param elementOrTreePath
+	 * @param elementOrTreePath the element or path to find parent for
 	 * @return the parent element, or parent path, or <code>null</code>
 	 *
 	 * @since 3.2
@@ -2850,8 +2853,8 @@ public abstract class AbstractTreeViewer extends ColumnViewer {
 	 * Not to be called by clients. Return the items to be refreshed as part of
 	 * an update. elementChildren are the new elements.
 	 *
-	 * @param widget
-	 * @param elementChildren
+	 * @param widget widget to get children for
+	 * @param elementChildren unused
 	 * @since 3.4
 	 * @return Item[]
 	 *
@@ -2941,7 +2944,8 @@ public abstract class AbstractTreeViewer extends ColumnViewer {
 
 	/**
 	 * Returns the tree path for the given item.
-	 * @param item
+	 *
+	 * @param item item to get path for
 	 * @return {@link TreePath}
 	 *
 	 * @since 3.2

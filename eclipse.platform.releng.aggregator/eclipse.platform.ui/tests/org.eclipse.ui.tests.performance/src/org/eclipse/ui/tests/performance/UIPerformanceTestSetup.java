@@ -16,9 +16,6 @@ package org.eclipse.ui.tests.performance;
 
 import java.io.ByteArrayInputStream;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
@@ -29,6 +26,9 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
+import junit.extensions.TestSetup;
+import junit.framework.Test;
+
 public class UIPerformanceTestSetup extends TestSetup {
 
 	public static final String PERSPECTIVE1= "org.eclipse.ui.tests.performancePerspective1";
@@ -37,6 +37,7 @@ public class UIPerformanceTestSetup extends TestSetup {
 	public static final String PROJECT_NAME = "Performance Project";
 
 	private static final String INTRO_VIEW= "org.eclipse.ui.internal.introview";
+	public static final String[] EDITOR_FILE_EXTENSIONS = { "perf_basic", "perf_outline", "java" };
 
 	private IProject testProject;
 
@@ -44,9 +45,6 @@ public class UIPerformanceTestSetup extends TestSetup {
 		super(test);
 	}
 
-	/*
-	 * @see junit.extensions.TestSetup#setUp()
-	 */
 	@Override
 	protected void setUp() throws Exception {
 		IWorkbench workbench= PlatformUI.getWorkbench();
@@ -66,26 +64,6 @@ public class UIPerformanceTestSetup extends TestSetup {
 		}
 	}
 
-	/*
-	 * @see junit.extensions.TestSetup#tearDown()
-	 */
-	@Override
-	protected void tearDown() throws Exception {
-		// do nothing, the set up workspace will be used by the open editor tests
-
-		/*
-		 * ensure the workbench state gets saved when running with the Automated Testing Framework
-				 * TODO: remove when https://bugs.eclipse.org/bugs/show_bug.cgi?id=71362 is fixed
-				 */
-		StackTraceElement[] elements=  new Throwable().getStackTrace();
-		for (StackTraceElement element : elements) {
-			if (element.getClassName().equals("org.eclipse.test.EclipseTestRunner")) {
-				PlatformUI.getWorkbench().close();
-				break;
-			}
-		}
-	}
-
 	private void setUpProject() throws CoreException {
 
 		// Create a java project.
@@ -93,15 +71,8 @@ public class UIPerformanceTestSetup extends TestSetup {
 		testProject = workspace.getRoot().getProject(PROJECT_NAME);
 		testProject.create(null);
 		testProject.open(null);
-		/*IProjectDescription projectDescription = testProject.getDescription();
-		String[] natureIds = { "org.eclipse.jdt.core.javanature" };
-		projectDescription.setNatureIds(natureIds);*/
-		/*ICommand buildCommand = new BuildCommand();
-		buildCommand.setBuilderName("org.eclipse.jdt.core.javabuilder");
-		projectDescription.setBuildSpec(new ICommand[] { buildCommand });
-		testProject.setDescription(projectDescription, null);*/
 
-		for (String EDITOR_FILE_EXTENSION : EditorPerformanceSuite.EDITOR_FILE_EXTENSIONS) {
+		for (String EDITOR_FILE_EXTENSION : EDITOR_FILE_EXTENSIONS) {
 			createFiles(EDITOR_FILE_EXTENSION);
 		}
 	}

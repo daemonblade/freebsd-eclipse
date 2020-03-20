@@ -23,7 +23,8 @@ package org.eclipse.core.databinding.conversion;
  *            type of the converted value
  *
  * @since 1.0
- *
+ * @implNote If methods are added to the interface which this class implements
+ *           then implementations of those methods must be added to this class.
  */
 public abstract class Converter<F, T> implements IConverter<F, T> {
 
@@ -31,8 +32,8 @@ public abstract class Converter<F, T> implements IConverter<F, T> {
 	private Object toType;
 
 	/**
-	 * @param fromType
-	 * @param toType
+	 * @param fromType type of source values
+	 * @param toType   type of converted values
 	 */
 	public Converter(Object fromType, Object toType) {
 		this.fromType = fromType;

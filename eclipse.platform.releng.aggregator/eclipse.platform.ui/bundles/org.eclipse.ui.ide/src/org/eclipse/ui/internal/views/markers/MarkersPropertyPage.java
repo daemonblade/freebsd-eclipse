@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2016 IBM Corporation and others.
+ * Copyright (c) 2007, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,6 +11,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Mickael Istria (Red Hat Inc.) - Bug 486901
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - ongoing support
  *******************************************************************************/
 package org.eclipse.ui.internal.views.markers;
 
@@ -25,6 +26,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Adapters;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.e4.ui.internal.workspace.markers.Translation;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
@@ -58,6 +60,7 @@ import org.eclipse.ui.views.markers.internal.Util;
  */
 public class MarkersPropertyPage extends PropertyPage {
 
+	private final Translation translation = new Translation();
 	private Text descriptionText;
 	private IMarker marker;
 
@@ -172,7 +175,7 @@ public class MarkersPropertyPage extends PropertyPage {
 		gridData.widthHint = gridData.heightHint = 0;
 		gridData.grabExcessHorizontalSpace = true;
 		descriptionText.setLayoutData(gridData);
-		descriptionText.setText(Util.getProperty(IMarker.MESSAGE, marker));
+		descriptionText.setText(translation.message(marker).orElse("")); //$NON-NLS-1$
 		descriptionText.setEditable(Util.isEditable(marker));
 
 		copyButton = new Button(textContainer, SWT.PUSH);
@@ -301,7 +304,7 @@ public class MarkersPropertyPage extends PropertyPage {
 		if (line.length() == 0) {
 			String location = Util.getProperty(IMarker.LOCATION, marker);
 			if (location.length() == 0) {
-				locationText.setText(MarkerSupportInternalUtilities.EMPTY_STRING);
+				locationText.setText(MarkerItemDefaults.LOCATION_DEFAULT);
 			} else {
 				locationText.setText(location);
 			}
@@ -330,7 +333,7 @@ public class MarkersPropertyPage extends PropertyPage {
 		Label resourceLabel = new Label(parent, SWT.NONE);
 		resourceLabel.setText(MarkerMessages.propertiesDialog_resource_text);
 		Text resourceText = createReadOnlyText(parent);
-		resourceText.setText(Util.getResourceName(marker));
+		translation.name(marker).ifPresent(n -> resourceText.setText(n));
 	}
 
 	@Override
@@ -378,7 +381,7 @@ public class MarkersPropertyPage extends PropertyPage {
 				.bind(MarkerMessages.qualifiedMarkerCommand_title,
 						new Object[] {
 								MarkerMessages.DialogMarkerProperties_Modify,
-								Util.getResourceName(marker) }), true);
+								translation.name(marker).orElse("") }), true); //$NON-NLS-1$
 
 		try {
 			PlatformUI.getWorkbench().getOperationSupport()

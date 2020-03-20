@@ -328,7 +328,7 @@ public class KeyController {
 							: selectedElement.getId();
 					final KeyBinding binding = new KeyBinding(keySequence, keyBinding.getParameterizedCommand(),
 							activeSchemeId, activeContextId, null, null, null, Binding.USER);
-					Map<KeyBinding, BindingElement> bindingToElement = bindingModel.getBindingToElement();
+					Map<Binding, BindingElement> bindingToElement = bindingModel.getBindingToElement();
 					bindingToElement.remove(keyBinding);
 					if (keyBinding.getType() == Binding.USER) {
 						fBindingManager.removeBinding(keyBinding);
@@ -470,7 +470,7 @@ public class KeyController {
 						buffer.append(ESCAPED_QUOTE + be.getTrigger().format() + ESCAPED_QUOTE + DELIMITER);
 						buffer.append(ESCAPED_QUOTE + be.getContext().getName() + ESCAPED_QUOTE + DELIMITER);
 						buffer.append(ESCAPED_QUOTE + be.getId() + ESCAPED_QUOTE);
-						buffer.append(System.getProperty("line.separator")); //$NON-NLS-1$
+						buffer.append(System.lineSeparator());
 						fileWriter.write(buffer.toString());
 					}
 

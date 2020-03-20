@@ -14,6 +14,7 @@
 package org.eclipse.ui.tests.dialogs;
 
 import static java.util.Arrays.asList;
+import static org.junit.Assume.assumeFalse;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -31,6 +32,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
@@ -39,6 +41,9 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.FilteredResourcesSelectionDialog;
 import org.eclipse.ui.tests.harness.util.DisplayHelper;
 import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests that FilteredResourcesSelectionDialog selects its initial selection
@@ -46,6 +51,7 @@ import org.eclipse.ui.tests.harness.util.UITestCase;
  *
  * @since 3.14
  */
+@RunWith(JUnit4.class)
 public class ResourceInitialSelectionTest extends UITestCase {
 
 	/** The names of the files created within the test project. */
@@ -63,11 +69,9 @@ public class ResourceInitialSelectionTest extends UITestCase {
 
 	/**
 	 * Constructs a new instance of <code>ResourceItemInitialSelectionTest</code>.
-	 *
-	 * @param name The name of the test to be run.
 	 */
-	public ResourceInitialSelectionTest(String name) {
-		super(name);
+	public ResourceInitialSelectionTest() {
+		super(ResourceInitialSelectionTest.class.getSimpleName());
 	}
 
 	@Override
@@ -80,6 +84,7 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	/**
 	 * Test that a resource is selected by default even without initial selection.
 	 */
+	@Test
 	public void testSingleSelectionAndNoInitialSelectionWithInitialPattern() {
 		boolean hasMultiSelection = false;
 		dialog = createDialog(hasMultiSelection);
@@ -96,6 +101,7 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	/**
 	 * Test that a specific resource can be selected by default.
 	 */
+	@Test
 	public void testSingleSelectionAndOneInitialSelectionWithInitialPattern() {
 		boolean hasMultiSelection = false;
 		dialog = createDialog(hasMultiSelection);
@@ -114,6 +120,7 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	 * Test that no resource is selected by default when the specified one does not
 	 * exist.
 	 */
+	@Test
 	public void testSingleSelectionAndOneInitialNonExistingSelectionWithInitialPattern() {
 		boolean hasMultiSelection = false;
 		dialog = createDialog(hasMultiSelection);
@@ -131,6 +138,7 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	/**
 	 * Test that no resource is selected by default when no initial pattern is set.
 	 */
+	@Test
 	public void testSingleSelectionAndOneInitialSelectionWithoutInitialPattern() {
 		boolean hasMultiSelection = false;
 		dialog = createDialog(hasMultiSelection);
@@ -148,6 +156,7 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	 * Test that no resource is selected by default when the initial pattern does
 	 * not match.
 	 */
+	@Test
 	public void testSingleSelectionAndOneFilteredSelection() {
 		boolean hasMultiSelection = false;
 		dialog = createDialog(hasMultiSelection);
@@ -166,6 +175,7 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	 * Test that only the first specified resource is selected when multi selection
 	 * is disabled.
 	 */
+	@Test
 	public void testSingleSelectionAndTwoInitialSelectionsWithInitialPattern() {
 		boolean hasMultiSelection = false;
 		dialog = createDialog(hasMultiSelection);
@@ -184,6 +194,7 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	 * Test that one resource is selected by default multi selection is enabled but
 	 * no initial selection is specified.
 	 */
+	@Test
 	public void testMultiSelectionAndNoInitialSelectionWithInitialPattern() {
 		boolean hasMultiSelection = true;
 		dialog = createDialog(hasMultiSelection);
@@ -201,6 +212,7 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	 * Test that a specified resource can be selected by default when multi
 	 * selection is enabled.
 	 */
+	@Test
 	public void testMultiSelectionAndOneInitialSelectionWithInitialPattern() {
 		boolean hasMultiSelection = true;
 		dialog = createDialog(hasMultiSelection);
@@ -218,6 +230,7 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	/**
 	 * Test that no resource is selected by default when no initial pattern is set.
 	 */
+	@Test
 	public void testMultiSelectionAndOneInitialSelectionWithoutInitialPattern() {
 		boolean hasMultiSelection = true;
 		dialog = createDialog(hasMultiSelection);
@@ -235,6 +248,7 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	 * Test that no item is selected by default when non existing items are
 	 * specified.
 	 */
+	@Test
 	public void testMultiSelectionAndTwoInitialNonExistingSelectionWithInitialPattern() {
 		boolean hasMultiSelection = true;
 		dialog = createDialog(hasMultiSelection);
@@ -253,6 +267,7 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	 * Test that only existing items are selected by default when some of the
 	 * specified initial selections do not exist.
 	 */
+	@Test
 	public void testMultiSelectionAndSomeInitialNonExistingSelectionWithInitialPattern() {
 		boolean hasMultiSelection = true;
 		dialog = createDialog(hasMultiSelection);
@@ -272,7 +287,10 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	/**
 	 * Test that several specified resources can be selected by default.
 	 */
+	@Test
 	public void testMultiSelectionAndTwoInitialSelectionsWithInitialPattern() {
+		assumeFalse("Test fails on Windows: Bug 559353", Platform.OS_WIN32.equals(Platform.getOS()));
+
 		boolean hasMultiSelection = true;
 		List<IFile> initialSelection = asList(FILES.get("foo.txt"), FILES.get("bar.txt"));
 
@@ -293,7 +311,10 @@ public class ResourceInitialSelectionTest extends UITestCase {
 	 * Test that several specified resources can be selected by default but are
 	 * ignored if the initial pattern does not match.
 	 */
+	@Test
 	public void testMultiSelectionAndTwoInitialFilteredSelections() {
+		assumeFalse("Test fails on Windows: Bug 559353", Platform.OS_WIN32.equals(Platform.getOS()));
+
 		boolean hasMultiSelection = true;
 
 		dialog = createDialog(hasMultiSelection);

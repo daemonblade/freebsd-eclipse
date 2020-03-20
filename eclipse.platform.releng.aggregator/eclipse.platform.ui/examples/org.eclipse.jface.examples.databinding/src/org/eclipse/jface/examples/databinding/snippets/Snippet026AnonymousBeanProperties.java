@@ -37,8 +37,8 @@ import org.eclipse.core.databinding.property.set.ISetProperty;
 import org.eclipse.core.databinding.property.set.SimpleSetProperty;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.databinding.swt.typed.WidgetProperties;
-import org.eclipse.jface.databinding.viewers.typed.ViewerProperties;
 import org.eclipse.jface.databinding.viewers.ViewerSupport;
+import org.eclipse.jface.databinding.viewers.typed.ViewerProperties;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -53,61 +53,52 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 
-/**
- * @since 3.2
- *
- */
 public class Snippet026AnonymousBeanProperties {
 	private ComboViewer statusViewer;
 	private Combo combo;
 	private Text nameText;
 	private TreeViewer contactViewer;
-
-	public static void main(String[] args) {
-		Display display = new Display();
-		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			try {
-				Snippet026AnonymousBeanProperties window = new Snippet026AnonymousBeanProperties();
-				window.open();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		});
-	}
-
 	private ApplicationModel model;
-	private Shell shell;
 	private Tree tree;
 
-	// Minimal JavaBeans support
+	public static void main(String[] args) {
+		final Display display = new Display();
+
+		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
+			Shell shell = new Snippet026AnonymousBeanProperties().createShell();
+
+			while (!shell.isDisposed()) {
+				if (!display.readAndDispatch()) {
+					display.sleep();
+				}
+			}
+		});
+
+		display.dispose();
+	}
+
+	/** Helper class for implementing JavaBeans support. */
 	public static abstract class AbstractModelObject {
-		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(
-				this);
+		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
 		public void addPropertyChangeListener(PropertyChangeListener listener) {
 			propertyChangeSupport.addPropertyChangeListener(listener);
 		}
 
-		public void addPropertyChangeListener(String propertyName,
-				PropertyChangeListener listener) {
-			propertyChangeSupport.addPropertyChangeListener(propertyName,
-					listener);
+		public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+			propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
 		}
 
 		public void removePropertyChangeListener(PropertyChangeListener listener) {
 			propertyChangeSupport.removePropertyChangeListener(listener);
 		}
 
-		public void removePropertyChangeListener(String propertyName,
-				PropertyChangeListener listener) {
-			propertyChangeSupport.removePropertyChangeListener(propertyName,
-					listener);
+		public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+			propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
 		}
 
-		protected void firePropertyChange(String propertyName, Object oldValue,
-				Object newValue) {
-			propertyChangeSupport.firePropertyChange(propertyName, oldValue,
-					newValue);
+		protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+			propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
 		}
 	}
 
@@ -116,13 +107,7 @@ public class Snippet026AnonymousBeanProperties {
 		private Set<Contact> contacts = new TreeSet<>();
 
 		ContactGroup(String name) {
-			this.name = checkNull(name);
-		}
-
-		private String checkNull(String string) {
-			if (string == null)
-				throw new NullPointerException();
-			return string;
+			this.name = name;
 		}
 
 		public String getName() {
@@ -130,7 +115,7 @@ public class Snippet026AnonymousBeanProperties {
 		}
 
 		public void setName(String name) {
-			firePropertyChange("name", this.name, this.name = checkNull(name));
+			firePropertyChange("name", this.name, this.name = name);
 		}
 
 		public Set<Contact> getContacts() {
@@ -161,15 +146,9 @@ public class Snippet026AnonymousBeanProperties {
 		private String name;
 		private String status;
 
-		private String checkNull(String string) {
-			if (string == null)
-				throw new NullPointerException();
-			return string;
-		}
-
 		public Contact(String name, String status) {
-			this.name = checkNull(name);
-			this.status = checkNull(status);
+			this.name = name;
+			this.status = status;
 		}
 
 		public String getName() {
@@ -177,7 +156,7 @@ public class Snippet026AnonymousBeanProperties {
 		}
 
 		public void setName(String name) {
-			firePropertyChange("name", this.name, this.name = checkNull(name));
+			firePropertyChange("name", this.name, this.name = name);
 		}
 
 		public String getStatus() {
@@ -185,15 +164,15 @@ public class Snippet026AnonymousBeanProperties {
 		}
 
 		public void setStatus(String status) {
-			firePropertyChange("status", this.status,
-					this.status = checkNull(status));
+			firePropertyChange("status", this.status, this.status = status);
 		}
 
 		@Override
 		public int compareTo(Contact that) {
 			int result = this.name.compareTo(that.name);
-			if (result == 0)
+			if (result == 0) {
 				result = this.status.compareTo(that.status);
+			}
 			return result;
 		}
 	}
@@ -215,9 +194,9 @@ public class Snippet026AnonymousBeanProperties {
 
 	/**
 	 * Set property for the "contacts" property of a ContactGroup. Since
-	 * ContactGroup does not have a setContacts() method we have to write our
-	 * own property to apply set changes incrementally through the addContact
-	 * and removeContact methods.
+	 * ContactGroup does not have a setContacts() method we have to write our own
+	 * property to apply set changes incrementally through the addContact and
+	 * removeContact methods.
 	 */
 	public static class ContactGroupContactsProperty extends SimpleSetProperty<ContactGroup, Contact> {
 		@Override
@@ -227,8 +206,9 @@ public class Snippet026AnonymousBeanProperties {
 
 		@Override
 		protected Set<Contact> doGetSet(ContactGroup source) {
-			if (source == null)
+			if (source == null) {
 				return Collections.emptySet();
+			}
 			return source.getContacts();
 		}
 
@@ -276,26 +256,8 @@ public class Snippet026AnonymousBeanProperties {
 		}
 	}
 
-	public void open() {
-		model = createDefaultModel();
+	private static final String[] STATUSES = new String[] { "Online", "Idle", "Busy", "Offline" };
 
-		final Display display = Display.getDefault();
-		createContents();
-		bindUI();
-		shell.open();
-		shell.layout();
-		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch())
-				display.sleep();
-		}
-	}
-
-	private static final String[] statuses = new String[] { "Online", "Idle",
-			"Busy", "Offline" };
-
-	/**
-	 * @return
-	 */
 	private ApplicationModel createDefaultModel() {
 		ContactGroup swtGroup = new ContactGroup("SWT");
 		swtGroup.addContact(new Contact("Steve Northover", "Busy"));
@@ -322,8 +284,10 @@ public class Snippet026AnonymousBeanProperties {
 	/**
 	 * Create contents of the window
 	 */
-	protected void createContents() {
-		shell = new Shell();
+	protected Shell createShell() {
+		model = createDefaultModel();
+
+		Shell shell = new Shell();
 		shell.setSize(379, 393);
 		shell.setText("Snippet026AnonymousBeanProperties");
 		final GridLayout gridLayout = new GridLayout();
@@ -347,8 +311,7 @@ public class Snippet026AnonymousBeanProperties {
 		nameLabel.setText("Name");
 
 		nameText = new Text(shell, SWT.BORDER);
-		final GridData gd_nameText = new GridData(SWT.FILL, SWT.CENTER, true,
-				false);
+		final GridData gd_nameText = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		nameText.setLayoutData(gd_nameText);
 
 		final Label statusLabel = new Label(shell, SWT.NONE);
@@ -358,22 +321,29 @@ public class Snippet026AnonymousBeanProperties {
 		statusViewer = new ComboViewer(shell, SWT.READ_ONLY);
 		combo = statusViewer.getCombo();
 		combo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+		bindUI();
+
+		shell.open();
+		shell.layout();
+		return shell;
 	}
 
 	private void bindUI() {
 		ISetProperty<Object, Object> treeChildrenProperty = new DelegatingSetProperty<Object, Object>() {
-			ISetProperty<ApplicationModel, ContactGroup> modelGroups = BeanProperties.set(
-					ApplicationModel.class, "groups", ContactGroup.class);
-			ISetProperty<ContactGroup, Contact> groupContacts = BeanProperties.set(ContactGroup.class,
-					"contacts", Contact.class);
+			ISetProperty<ApplicationModel, ContactGroup> modelGroups = BeanProperties.set(ApplicationModel.class,
+					"groups", ContactGroup.class);
+			ISetProperty<ContactGroup, Contact> groupContacts = BeanProperties.set(ContactGroup.class, "contacts",
+					Contact.class);
 
-			@SuppressWarnings("unchecked")
 			@Override
 			protected ISetProperty<Object, Object> doGetDelegate(Object source) {
-				if (source instanceof ApplicationModel)
+				if (source instanceof ApplicationModel) {
 					return (ISetProperty<Object, Object>) (Object) modelGroups;
-				if (source instanceof ContactGroup)
+				}
+				if (source instanceof ContactGroup) {
 					return (ISetProperty<Object, Object>) (Object) groupContacts;
+				}
 				return null;
 			}
 		};
@@ -384,18 +354,18 @@ public class Snippet026AnonymousBeanProperties {
 
 		final IObservableValue<Object> selection = ViewerProperties.singleSelection().observe(contactViewer);
 
-		DataBindingContext dbc = new DataBindingContext();
+		DataBindingContext bindingContext = new DataBindingContext();
 
-		dbc.bindValue(WidgetProperties.text(SWT.Modify).observe(nameText),
+		bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(nameText),
 				BeanProperties.value("name").observeDetail(selection));
 
 		statusViewer.setContentProvider(new ArrayContentProvider());
-		statusViewer.setInput(statuses);
+		statusViewer.setInput(STATUSES);
 
-		dbc.bindValue(ViewerProperties.singleSelection().observe(statusViewer),
+		bindingContext.bindValue(ViewerProperties.singleSelection().observe(statusViewer),
 				BeanProperties.value("status").observeDetail(selection));
 
-		dbc.bindValue(WidgetProperties.enabled().observe(statusViewer.getControl()),
+		bindingContext.bindValue(WidgetProperties.enabled().observe(statusViewer.getControl()),
 				ComputedValue.create(() -> selection.getValue() instanceof Contact));
 	}
 }

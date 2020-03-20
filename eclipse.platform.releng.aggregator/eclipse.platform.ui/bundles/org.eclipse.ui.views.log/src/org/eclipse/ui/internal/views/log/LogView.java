@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.jobs.Job;
@@ -176,8 +177,8 @@ public class LogView extends ViewPart implements LogListener {
 	 * Constructor
 	 */
 	public LogView() {
-		elements = new ArrayList<>();
-		groups = new HashMap<>();
+		elements = new CopyOnWriteArrayList<>();
+		groups = new ConcurrentHashMap<>();
 		batchedEntries = new ArrayList<>();
 		fInputFile = Platform.getLogFileLocation().toFile();
 	}
@@ -212,7 +213,6 @@ public class LogView extends ViewPart implements LogListener {
 		composite.setLayout(layout);
 		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-		readLogFile();
 		createViewer(composite);
 		getSite().setSelectionProvider(fFilteredTree.getViewer());
 		createActions();
@@ -223,6 +223,9 @@ public class LogView extends ViewPart implements LogListener {
 		makeHoverShell();
 
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(fFilteredTree, IHelpContextIds.LOG_VIEW);
+
+		readLogFile();
+
 		getSite().getWorkbenchWindow().addPerspectiveListener(new IPerspectiveListener2() {
 
 			@Override
@@ -588,6 +591,7 @@ public class LogView extends ViewPart implements LogListener {
 			fPropertiesAction.run();
 		});
 		fFilteredTree.getViewer().setInput(this);
+		fFilteredTree.setEnabled(false); // enable when log was read
 		addMouseListeners();
 		addDragSource();
 	}
@@ -673,7 +677,9 @@ public class LogView extends ViewPart implements LogListener {
 		writeSettings();
 		this.logReaderServiceTracker.close();
 
-		fClipboard.dispose();
+		if (fClipboard != null) {
+			fClipboard.dispose();
+		}
 		if (fTextShell != null)
 			fTextShell.dispose();
 		fLabelProvider.disconnect(this);
@@ -815,16 +821,14 @@ public class LogView extends ViewPart implements LogListener {
 	public void fillContextMenu(IMenuManager manager) { // nothing
 	}
 
-	public synchronized AbstractEntry[] getElements() {
+	public AbstractEntry[] getElements() {
 		return elements.toArray(new AbstractEntry[elements.size()]);
 	}
 
 	protected void handleClear() {
 		BusyIndicator.showWhile(fTree.getDisplay(), () -> {
-			synchronized (this) {
-				elements.clear();
-				groups.clear();
-			}
+			elements.clear();
+			groups.clear();
 			if (currentSession != null) {
 				currentSession.removeAllChildren();
 			}
@@ -857,24 +861,61 @@ public class LogView extends ViewPart implements LogListener {
 	 * Reads the chosen backing log file
 	 */
 	void readLogFile() {
-		synchronized (this) {
-			elements.clear();
-			groups.clear();
-		}
+		setContentDescription(Messages.LogView_readLog_loading);
+		fetchLogEntries().thenAccept(this::updateLogViewer);
+	}
 
-		List<LogEntry> result = new ArrayList<>();
-		LogSession lastLogSession = LogReader.parseLogFile(this.fInputFile, getLogMaxTailSize(), result, this.fMemento);
-		if (lastLogSession != null && (lastLogSession.getDate() == null || isEclipseStartTime(lastLogSession.getDate()))) {
-			currentSession = lastLogSession;
-		} else {
-			currentSession = null;
-		}
+	private CompletableFuture<List<LogEntry>> fetchLogEntries() {
+		return CompletableFuture.supplyAsync(() -> {
+			List<LogEntry> result = new ArrayList<>();
+			LogSession lastLogSession = LogReader.parseLogFile(this.fInputFile, getLogMaxTailSize(), result,
+					this.fMemento);
+			if (lastLogSession != null
+					&& (lastLogSession.getDate() == null || isEclipseStartTime(lastLogSession.getDate()))) {
+				currentSession = lastLogSession;
+			} else {
+				currentSession = null;
+			}
+			return result;
+		});
+	}
 
-		group(result);
+	private void updateLogViewer(List<LogEntry> entries) {
+		elements.clear();
+		groups.clear();
+		group(entries);
 		limitEntriesCount();
+		setContentDescription(getTitleSummary());
 
-		getSite().getShell().getDisplay().asyncExec(() -> setContentDescription(getTitleSummary()));
+		getDisplay().asyncExec(() -> {
+			if (!isDisposed()) {
+				fFilteredTree.getViewer().refresh();
+				fFilteredTree.setEnabled(true);
+			}
+		});
+	}
 
+	private Display getDisplay() {
+		return PlatformUI.getWorkbench().getDisplay();
+	}
+
+	@Override
+	protected void setContentDescription(String description) {
+		Runnable uiTask = () -> {
+			if (!isDisposed()) {
+				super.setContentDescription(description);
+			}
+		};
+		if (Display.getCurrent() == null) {
+			// We might be called from non UI thread
+			getDisplay().asyncExec(uiTask);
+		} else {
+			uiTask.run();
+		}
+	}
+
+	private boolean isDisposed() {
+		return fFilteredTree == null || fFilteredTree.isDisposed();
 	}
 
 	private boolean isEclipseStartTime(Date date) {
@@ -930,7 +971,7 @@ public class LogView extends ViewPart implements LogListener {
 	 * Limits the number of entries according to the max entries limit set in
 	 * memento.
 	 */
-	private synchronized void limitEntriesCount() {
+	private void limitEntriesCount() {
 		int limit = Integer.MAX_VALUE;
 		if (fMemento.getString(LogView.P_USE_LIMIT).equals("true")) {//$NON-NLS-1$
 			limit = fMemento.getInteger(LogView.P_LOG_LIMIT).intValue();
@@ -941,31 +982,27 @@ public class LogView extends ViewPart implements LogListener {
 		if (entriesCount <= limit) {
 			return;
 		}
-		Comparator<LogEntry> dateComparator = (o1, o2) -> {
-			Date l1 = o1.getDate();
-			Date l2 = o2.getDate();
-			if ((l1 != null) && (l2 != null)) {
-				return l1.before(l2) ? -1 : 1;
-			} else if ((l1 == null) && (l2 == null)) {
-				return 0;
-			} else
-				return (l1 == null) ? -1 : 1;
-		};
+		Comparator<AbstractEntry> dateComparator = Comparator.comparing(
+				entry -> entry instanceof LogEntry ? ((LogEntry) entry).getDate() : null,
+				Comparator.nullsLast((d1, d2) -> d1.before(d2) ? -1 : 1));
 
-		if (fMemento.getInteger(P_GROUP_BY).intValue() == GROUP_BY_NONE) {
-			elements.subList(0, elements.size() - limit).clear();
-		} else {
-			List copy = new ArrayList(entriesCount);
-		    for (AbstractEntry group : elements) {
-			copy.addAll(Arrays.asList(group.getChildren(group)));
-		    }
+		synchronized (elements) {
+			if (fMemento.getInteger(P_GROUP_BY).intValue() == GROUP_BY_NONE) {
+				elements.subList(0, elements.size() - limit).clear();
+			} else {
+				List<AbstractEntry> copy = new ArrayList<>(entriesCount);
+				for (AbstractEntry group : elements) {
+					List<AbstractEntry> children = Arrays.asList(group.getChildren(group));
+					copy.addAll(children);
+				}
 
-			Collections.sort(copy, dateComparator);
-			List toRemove = copy.subList(0, copy.size() - limit);
+				Collections.sort(copy, dateComparator);
+				List<AbstractEntry> toRemove = copy.subList(0, copy.size() - limit);
 
-		    for (AbstractEntry group : elements) {
-			group.removeChildren(toRemove);
-		    }
+				for (AbstractEntry group : elements) {
+					group.removeChildren(toRemove);
+				}
+			}
 		}
 
 	}

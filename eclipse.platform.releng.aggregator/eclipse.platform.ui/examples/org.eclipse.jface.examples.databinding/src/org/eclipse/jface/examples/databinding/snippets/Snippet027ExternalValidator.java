@@ -43,9 +43,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
 /**
- * This snippet demonstrates how to integrate an external validator
- *
- * @since 3.5
+ * This snippet demonstrates how to integrate an external validator.
  */
 public class Snippet027ExternalValidator extends WizardPage {
 
@@ -55,35 +53,40 @@ public class Snippet027ExternalValidator extends WizardPage {
 
 	private Contact contact;
 
-	// Minimal JavaBeans support
+	public static void main(String[] args) {
+		final Display display = new Display();
+
+		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
+			IWizard wizard = new ExternalValidationWizard();
+			WizardDialog dialog = new WizardDialog(null, wizard);
+			dialog.open();
+		});
+
+		display.dispose();
+	}
+
+	/** Helper class for implementing JavaBeans support. */
 	public static abstract class AbstractModelObject {
-		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(
-				this);
+		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
 		public void addPropertyChangeListener(PropertyChangeListener listener) {
 			propertyChangeSupport.addPropertyChangeListener(listener);
 		}
 
-		public void addPropertyChangeListener(String propertyName,
-				PropertyChangeListener listener) {
-			propertyChangeSupport.addPropertyChangeListener(propertyName,
-					listener);
+		public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+			propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
 		}
 
 		public void removePropertyChangeListener(PropertyChangeListener listener) {
 			propertyChangeSupport.removePropertyChangeListener(listener);
 		}
 
-		public void removePropertyChangeListener(String propertyName,
-				PropertyChangeListener listener) {
-			propertyChangeSupport.removePropertyChangeListener(propertyName,
-					listener);
+		public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+			propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
 		}
 
-		protected void firePropertyChange(String propertyName, Object oldValue,
-				Object newValue) {
-			propertyChangeSupport.firePropertyChange(propertyName, oldValue,
-					newValue);
+		protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+			propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
 		}
 	}
 
@@ -130,16 +133,14 @@ public class Snippet027ExternalValidator extends WizardPage {
 
 		public IStatus validate() {
 			if (name.indexOf(' ') == -1) {
-				return ValidationStatus
-						.error("Please enter both first and last name separated by a space.");
+				return ValidationStatus.error("Please enter both first and last name separated by a space.");
 			}
 			if (email.indexOf('@') == -1) {
-				return ValidationStatus
-				.error("Please enter a valid email address containing '@'.");
+				return ValidationStatus.error("Please enter a valid email address containing '@'.");
 			}
 			if (!phoneNumber.startsWith("+")) {
 				return ValidationStatus
-				.error("Please enter the phone number in international format starting with '+'.");
+						.error("Please enter the phone number in international format starting with '+'.");
 			}
 			return Status.OK_STATUS;
 		}
@@ -147,7 +148,7 @@ public class Snippet027ExternalValidator extends WizardPage {
 	}
 
 	/**
-	 * Create the wizard
+	 * Create the wizard.
 	 */
 	public Snippet027ExternalValidator() {
 		super("snippet024");
@@ -156,9 +157,7 @@ public class Snippet027ExternalValidator extends WizardPage {
 	}
 
 	/**
-	 * Create contents of the wizard
-	 *
-	 * @param parent
+	 * Create contents of the wizard.
 	 */
 	@Override
 	public void createControl(Composite parent) {
@@ -187,35 +186,34 @@ public class Snippet027ExternalValidator extends WizardPage {
 		phoneNumberValue = new Text(container, SWT.BORDER);
 		phoneNumberValue.setLayoutData(gd);
 
-		contact = new Contact("BorisBokowski", "boris.at.somecompany.com",
-				"1-123-456-7890");
+		contact = new Contact("BorisBokowski", "boris.at.somecompany.com", "1-123-456-7890");
 
 		bindUI();
 	}
 
 	private void bindUI() {
-		DataBindingContext dbc = new DataBindingContext();
+		DataBindingContext bindingContext = new DataBindingContext();
 
 		final IObservableValue<String> name = BeanProperties.value(Contact.class, "name", String.class)
 				.observe(contact);
 
-		dbc.bindValue(WidgetProperties.text(SWT.Modify).observe(nameValue), name, null, null);
+		bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(nameValue), name, null, null);
 
 		final IObservableValue<String> email = BeanProperties.value(Contact.class, "email", String.class)
 				.observe(contact);
 
-		dbc.bindValue(WidgetProperties.text(SWT.Modify).observe(emailValue), email, null, null);
+		bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(emailValue), email, null, null);
 
 		final IObservableValue<String> phone = BeanProperties.value(Contact.class, "phoneNumber", String.class)
 				.observe(contact);
 
-		dbc.bindValue(WidgetProperties.text(SWT.Modify).observe(phoneNumberValue), phone, null, null);
+		bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(phoneNumberValue), phone, null, null);
 
 		MultiValidator validator = new MultiValidator() {
 			@Override
 			protected IStatus validate() {
 
-				// Everything accessed here will trigger re-validation.
+				// Everything accessed here will trigger re-validation
 				name.getValue();
 				email.getValue();
 				phone.getValue();
@@ -225,9 +223,9 @@ public class Snippet027ExternalValidator extends WizardPage {
 				return contact.validate();
 			}
 		};
-		dbc.addValidationStatusProvider(validator);
+		bindingContext.addValidationStatusProvider(validator);
 
-		WizardPageSupport.create(this, dbc);
+		WizardPageSupport.create(this, bindingContext);
 	}
 
 	static class ExternalValidationWizard extends Wizard {
@@ -245,25 +243,5 @@ public class Snippet027ExternalValidator extends WizardPage {
 		public boolean performFinish() {
 			return true;
 		}
-	}
-
-	public static void main(String[] args) {
-		Display display = new Display();
-
-		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			IWizard wizard = new ExternalValidationWizard();
-			WizardDialog dialog = new WizardDialog(null, wizard);
-			dialog.open();
-
-			// The SWT event loop
-			Display display1 = Display.getCurrent();
-			while (dialog.getShell() != null && !dialog.getShell().isDisposed()) {
-				if (!display1.readAndDispatch()) {
-					display1.sleep();
-				}
-			}
-		});
-
-		display.dispose();
 	}
 }

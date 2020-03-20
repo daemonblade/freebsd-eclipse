@@ -18,7 +18,9 @@ package org.eclipse.core.databinding.property;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.databinding.observable.list.IObservableList;
@@ -32,6 +34,7 @@ import org.eclipse.core.databinding.property.value.IValueProperty;
 import org.eclipse.core.internal.databinding.property.list.SelfListProperty;
 import org.eclipse.core.internal.databinding.property.map.SelfMapProperty;
 import org.eclipse.core.internal.databinding.property.set.SelfSetProperty;
+import org.eclipse.core.internal.databinding.property.value.ConvertedValueProperty;
 import org.eclipse.core.internal.databinding.property.value.ObservableValueProperty;
 import org.eclipse.core.internal.databinding.property.value.SelfValueProperty;
 
@@ -47,7 +50,10 @@ public class Properties {
 	 * each property in the given array.
 	 *
 	 * @param domainSet
+	 *            the set of elements whose properties will be observed
 	 * @param properties
+	 *            array of value properties to observe on each element in the
+	 *            domain map's {@link Map#values() values} collection
 	 * @return an array of observable maps where each map observes the
 	 *         corresponding value property of the given domain set
 	 */
@@ -165,5 +171,36 @@ public class Properties {
 	 */
 	public static <T> IValueProperty<IObservableValue<T>, T> observableValue(Object valueType) {
 		return new ObservableValueProperty<>(valueType);
+	}
+
+	/**
+	 * Returns an {@link IValueProperty} whose value results from applying the given
+	 * conversion function on the source object of the value property. Setting a
+	 * value on the property is not supported.
+	 *
+	 * @param valueType value type of the property (after conversion); null if
+	 *                  untyped
+	 * @param converter converter to apply to the source object of the value
+	 *                  property; not null
+	 * @return new instance of a value property, whose value is the result of
+	 *         applying the given converter to the source object
+	 * @since 1.8
+	 */
+	public static <S, T> IValueProperty<S, T> convertedValue(Object valueType,
+			Function<? super S, ? extends T> converter) {
+		Objects.requireNonNull(converter);
+		return new ConvertedValueProperty<>(valueType, converter);
+	}
+
+	/**
+	 * Returns an untyped {@link IValueProperty}. Equivalent to
+	 * {@code convertedValue(null, converter)}.
+	 *
+	 * @param converter see {@link #convertedValue(Object, Function)}
+	 * @return see {@link #convertedValue(Object, Function)}
+	 * @since 1.8
+	 */
+	public static <S, T> IValueProperty<S, T> convertedValue(Function<? super S, ? extends T> converter) {
+		return convertedValue(null, converter);
 	}
 }

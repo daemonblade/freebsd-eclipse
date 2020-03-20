@@ -22,9 +22,11 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import java.util.function.Consumer;
 import javax.inject.Inject;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.e4.core.contexts.ContextInjectionFactory;
 import org.eclipse.e4.core.contexts.IEclipseContext;
 import org.eclipse.e4.core.services.statusreporter.StatusReporter;
@@ -986,6 +988,8 @@ public class PartRenderingEngineTests {
 	public void testBug324839() throws Exception {
 		// if (checkMacBug466636())
 		// return;
+
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
 
 		MWindow window = ems.createModelElement(MWindow.class);
 		application.getChildren().add(window);
@@ -1978,6 +1982,8 @@ public class PartRenderingEngineTests {
 	public void testBug326175_False() {
 		// if (checkMacBug466636())
 		// return;
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		testBug326175(false);
 	}
 
@@ -2980,6 +2986,8 @@ public class PartRenderingEngineTests {
 
 	@Test
 	public void testBug372226() {
+		assumeFalse("Test fails on Mac: Bug 537639", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		MWindow window = ems.createModelElement(MWindow.class);
 
 		application.getChildren().add(window);

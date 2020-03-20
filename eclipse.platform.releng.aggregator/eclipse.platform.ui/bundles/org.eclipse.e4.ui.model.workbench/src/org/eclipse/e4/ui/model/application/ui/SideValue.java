@@ -276,5 +276,5 @@ public enum SideValue implements InternalSideValue {
  * @generated
  */
 interface InternalSideValue extends org.eclipse.emf.common.util.Enumerator {
-	// Empty 
+	// Empty
 }

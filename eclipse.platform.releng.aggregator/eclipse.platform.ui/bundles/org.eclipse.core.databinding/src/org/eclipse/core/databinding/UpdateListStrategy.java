@@ -16,6 +16,8 @@
 
 package org.eclipse.core.databinding;
 
+import java.util.Objects;
+
 import org.eclipse.core.databinding.conversion.IConverter;
 import org.eclipse.core.databinding.observable.list.IObservableList;
 import org.eclipse.core.runtime.IStatus;
@@ -136,8 +138,8 @@ public class UpdateListStrategy<S, D> extends UpdateStrategy<S, D> {
 
 	/**
 	 *
-	 * @param source
-	 * @param destination
+	 * @param source      source observable, to be used for its type
+	 * @param destination destination observable, to be used for its type
 	 */
 	@SuppressWarnings("unchecked")
 	protected void fillDefaults(IObservableList<? extends S> source, IObservableList<? super D> destination) {
@@ -174,7 +176,7 @@ public class UpdateListStrategy<S, D> extends UpdateStrategy<S, D> {
 	 * If the converter throws any exceptions they are reported as validation
 	 * errors, using the exception message.
 	 *
-	 * @param converter
+	 * @param converter the new converter
 	 * @return the receiver, to enable method call chaining
 	 */
 	public UpdateListStrategy<S, D> setConverter(IConverter<? super S, ? extends D> converter) {
@@ -186,9 +188,9 @@ public class UpdateListStrategy<S, D> extends UpdateStrategy<S, D> {
 	 * Adds the given element at the given index to the given observable list.
 	 * Clients may extend but must call the super implementation.
 	 *
-	 * @param observableList
-	 * @param element
-	 * @param index
+	 * @param observableList the list to add to
+	 * @param element        element to add
+	 * @param index          insertion index
 	 * @return a status
 	 */
 	protected IStatus doAdd(IObservableList<? super D> observableList, D element, int index) {
@@ -204,8 +206,8 @@ public class UpdateListStrategy<S, D> extends UpdateStrategy<S, D> {
 	 * Removes the element at the given index from the given observable list.
 	 * Clients may extend but must call the super implementation.
 	 *
-	 * @param observableList
-	 * @param index
+	 * @param observableList the list to remove from
+	 * @param index          element index to remove
 	 * @return a status
 	 */
 	protected IStatus doRemove(IObservableList<? super D> observableList, int index) {
@@ -248,12 +250,12 @@ public class UpdateListStrategy<S, D> extends UpdateStrategy<S, D> {
 	}
 
 	/**
-	 * Moves the element in the observable list located at the given old index
-	 * to the given new index.
+	 * Moves the element in the observable list located at the given old index to
+	 * the given new index.
 	 *
-	 * @param observableList
-	 * @param oldIndex
-	 * @param newIndex
+	 * @param observableList the list to manipulate
+	 * @param oldIndex       current element index
+	 * @param newIndex       new element index
 	 * @return a status
 	 * @since 1.2
 	 */
@@ -270,9 +272,9 @@ public class UpdateListStrategy<S, D> extends UpdateStrategy<S, D> {
 	 * Replaces the element in the observable list located at the given index to
 	 * with the given element.
 	 *
-	 * @param observableList
-	 * @param index
-	 * @param element
+	 * @param observableList the list to manipulate
+	 * @param index          index of the existing element
+	 * @param element        new element for the given index
 	 * @return a status
 	 * @since 1.2
 	 */
@@ -283,5 +285,29 @@ public class UpdateListStrategy<S, D> extends UpdateStrategy<S, D> {
 			return logErrorWhileSettingValue(ex);
 		}
 		return Status.OK_STATUS;
+	}
+
+	/**
+	 * Convenience method that creates an {@link UpdateValueStrategy} with the given
+	 * converter. It uses {@link #POLICY_UPDATE}.
+	 *
+	 * @param converter the converter
+	 * @return the update strategy
+	 * @since 1.8
+	 */
+	public static <S, D> UpdateListStrategy<S, D> create(IConverter<S, D> converter) {
+		Objects.requireNonNull(converter);
+		return new UpdateListStrategy<S, D>().setConverter(converter);
+	}
+
+	/**
+	 * Convenience method that creates an update strategy that never updates its
+	 * observables, using {@link #POLICY_NEVER} and no defaults.
+	 *
+	 * @return the update strategy
+	 * @since 1.8
+	 */
+	public static <S, D> UpdateListStrategy<S, D> never() {
+		return new UpdateListStrategy<>(false, POLICY_NEVER);
 	}
 }

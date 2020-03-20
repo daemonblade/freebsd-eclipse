@@ -15,6 +15,7 @@
  *******************************************************************************/
 package org.eclipse.ui.internal.dialogs;
 
+import static org.eclipse.jface.viewers.LabelProvider.createTextImageProvider;
 import static org.eclipse.swt.events.SelectionListener.widgetSelectedAdapter;
 
 import java.nio.charset.Charset;
@@ -356,21 +357,16 @@ public class ContentTypesPreferencePage extends PreferencePage implements IWorkb
 			}
 			return new Object[0];
 		});
-		editorAssociationsViewer.setLabelProvider(new LabelProvider() {
-			@Override
-			public String getText(Object element) {
-				return ((IEditorDescriptor) element).getLabel();
-			}
+		editorAssociationsViewer.setLabelProvider(
+				createTextImageProvider(element -> ((IEditorDescriptor) element).getLabel(),
+						element -> {
+							Image res = ((IEditorDescriptor) element).getImageDescriptor().createImage();
+							if (res != null) {
+								disposableEditorIcons.add(res);
+							}
+							return res;
+						}));
 
-			@Override
-			public Image getImage(Object element) {
-				Image res = ((IEditorDescriptor) element).getImageDescriptor().createImage();
-				if (res != null) {
-					disposableEditorIcons.add(res);
-				}
-				return res;
-			}
-		});
 		Composite buttonsComposite = new Composite(composite, SWT.NONE);
 		buttonsComposite.setLayout(new GridLayout(1, false));
 		buttonsComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, false));
@@ -480,6 +476,7 @@ public class ContentTypesPreferencePage extends PreferencePage implements IWorkb
 
 	}
 
+	@SuppressWarnings("unchecked")
 	private void createFileAssociations(final Composite parent) {
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout(2, false));
@@ -506,8 +503,7 @@ public class ContentTypesPreferencePage extends PreferencePage implements IWorkb
 				return;
 			}
 			boolean enabled = true;
-			List<Spec> elements = selection.toList();
-			for (Spec spec : elements) {
+			for (Spec spec : (Iterable<Spec>) selection) {
 				if (spec.isPredefined) {
 					enabled = false;
 				}

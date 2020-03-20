@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2016 vogella GmbH and others.
  *
- * This program
- * and the accompanying materials are made available under the terms of the
- * Eclipse Public License 2.0 which accompanies this distribution, and is
-t https://www.eclipse.org/legal/epl-2.0/
-t
-t SPDX-License-Identifier: EPL-2.0
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors: Simon Scholz <simon.scholz@vogella.com> - initial API and
  * implementation
@@ -19,7 +19,6 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import org.eclipse.e4.core.contexts.IEclipseContext;
 import org.eclipse.e4.core.di.annotations.Optional;
-import org.eclipse.e4.core.di.extensions.EventTopic;
 import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.e4.ui.model.application.ui.MElementContainer;
 import org.eclipse.e4.ui.model.application.ui.MUIElement;
@@ -39,12 +38,11 @@ import org.osgi.service.event.Event;
  * The {@link PartOnTopManager} is used to calculate the parts, which are on
  * top. This means all parts that can be directly seen by a user in the UI.
  */
-@SuppressWarnings("restriction")
 public class PartOnTopManager {
 
 	@Inject
 	private EModelService modelService;
-	
+
 	/**
 	 * @param context
 	 */
@@ -85,7 +83,7 @@ public class PartOnTopManager {
 	@Inject
 	@Optional
 	public void subscribeTopicSelectedElement(
-			@EventTopic(UIEvents.ElementContainer.TOPIC_SELECTEDELEMENT) Event event) {
+			@UIEventTopic(UIEvents.ElementContainer.TOPIC_SELECTEDELEMENT) Event event) {
 
 		Object element = event.getProperty(UIEvents.EventTags.ELEMENT);
 		Object oldValue = event.getProperty(UIEvents.EventTags.OLD_VALUE);

@@ -63,10 +63,10 @@ public class SetBinding<M, T> extends Binding {
 
 
 	/**
-	 * @param target
-	 * @param model
-	 * @param modelToTargetStrategy
-	 * @param targetToModelStrategy
+	 * @param target                the target side set
+	 * @param model                 the model side set
+	 * @param modelToTargetStrategy strategy to copy model to target elements
+	 * @param targetToModelStrategy strategy to copy target to model elements
 	 */
 	public SetBinding(IObservableSet<T> target, IObservableSet<M> model,
 			UpdateSetStrategy<? super T, ? extends M> targetToModelStrategy,
@@ -97,7 +97,7 @@ public class SetBinding<M, T> extends Binding {
 	@Override
 	protected void postInit() {
 		if (modelToTarget.getUpdatePolicy() == UpdateSetStrategy.POLICY_UPDATE) {
-			model.getRealm().exec(() -> {
+			execAfterDisposalCheck(model, () -> {
 				model.addSetChangeListener(modelChangeListener);
 				updateModelToTarget();
 			});
@@ -106,7 +106,7 @@ public class SetBinding<M, T> extends Binding {
 		}
 
 		if (targetToModel.getUpdatePolicy() == UpdateSetStrategy.POLICY_UPDATE) {
-			target.getRealm().exec(() -> {
+			execAfterDisposalCheck(target, () -> {
 				target.addSetChangeListener(targetChangeListener);
 				if (modelToTarget.getUpdatePolicy() == UpdateSetStrategy.POLICY_NEVER) {
 					// we have to sync from target to model, if the other
@@ -123,7 +123,7 @@ public class SetBinding<M, T> extends Binding {
 
 	@Override
 	public void updateModelToTarget() {
-		model.getRealm().exec(() -> {
+		execAfterDisposalCheck(model, () -> {
 			SetDiff<M> diff = Diffs.computeSetDiff(Collections.emptySet(), model);
 			doUpdate(model, target, diff, modelToTarget, true, true);
 		});
@@ -131,7 +131,7 @@ public class SetBinding<M, T> extends Binding {
 
 	@Override
 	public void updateTargetToModel() {
-		target.getRealm().exec(() -> {
+		execAfterDisposalCheck(target, () -> {
 			SetDiff<T> diff = Diffs.computeSetDiff(Collections.emptySet(), target);
 			doUpdate(target, model, diff, targetToModel, true, true);
 		});
@@ -171,7 +171,7 @@ public class SetBinding<M, T> extends Binding {
 			diff.getAdditions();
 			diff.getRemovals();
 		}
-		destination.getRealm().exec(() -> {
+		execAfterDisposalCheck(destination, () -> {
 			if (destination == target) {
 				updatingTarget = true;
 			} else {

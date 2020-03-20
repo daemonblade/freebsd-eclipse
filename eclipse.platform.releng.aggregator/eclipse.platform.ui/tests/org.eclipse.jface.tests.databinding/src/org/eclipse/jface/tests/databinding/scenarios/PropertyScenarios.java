@@ -244,7 +244,7 @@ public class PropertyScenarios extends ScenariosTestCase {
 
 		getDbc().bindValue(SWTObservables.observeText(text, SWT.Modify),
 				BeansObservables.observeValue(adventure, "name"),
-				new UpdateValueStrategy().setConverter(converter2), new UpdateValueStrategy().setConverter(converter1));
+				UpdateValueStrategy.create(converter2), UpdateValueStrategy.create(converter1));
 
 		// spinEventLoop(1);
 		assertEquals("Uppercase", text.getText());
@@ -315,7 +315,7 @@ public class PropertyScenarios extends ScenariosTestCase {
 		IValidator validator = value -> {
 			String stringValue = (String) value;
 			try {
-				double doubleValue = new Double(stringValue).doubleValue();
+				double doubleValue = Double.parseDouble(stringValue);
 				if (doubleValue < 0.0) {
 					return ValidationStatus.error(cannotBeNegativeMessage);
 				}
@@ -596,7 +596,8 @@ new UpdateValueStrategy().setConverter(toDouble).setAfterGetValidator(validator)
 		Binding b = getDbc().bindValue(SWTObservables.observeText(text, SWT.Modify), BeansObservables.observeValue(account, "expiryDate"));
 		Text errorText = new Text(getComposite(), SWT.NONE);
 
-		getDbc().bindValue(SWTObservables.observeText(errorText, SWT.Modify), b.getValidationStatus(), new UpdateValueStrategy(false, UpdateValueStrategy.POLICY_NEVER), null);
+		getDbc().bindValue(SWTObservables.observeText(errorText, SWT.Modify), b.getValidationStatus(),
+				UpdateValueStrategy.never(), null);
 		assertTrue(b.getValidationStatus().getValue().isOK());
 		enterText(text, "foo");
 		assertFalse(b.getValidationStatus().getValue().isOK());

@@ -31,6 +31,8 @@ import org.eclipse.core.databinding.observable.Diffs;
  *            the list element type
  *
  * @since 1.2
+ * @implNote If methods are added to the interface which this class implements
+ *           then implementations of those methods must be added to this class.
  */
 public class DecoratingObservableList<E> extends
 		DecoratingObservableCollection<E> implements IObservableList<E> {
@@ -40,12 +42,11 @@ public class DecoratingObservableList<E> extends
 	private IListChangeListener<E> listChangeListener;
 
 	/**
-	 * Constructs a DecoratingObservableList which decorates the given
-	 * observable.
+	 * Constructs a DecoratingObservableList which decorates the given observable.
 	 *
-	 * @param decorated
-	 *            the observable list being decorated
-	 * @param disposeDecoratedOnDispose
+	 * @param decorated                 the observable list being decorated
+	 * @param disposeDecoratedOnDispose whether the decorated observable should be
+	 *                                  disposed when the decorator is disposed
 	 */
 	public DecoratingObservableList(IObservableList<E> decorated,
 			boolean disposeDecoratedOnDispose) {
@@ -80,7 +81,7 @@ public class DecoratingObservableList<E> extends
 	@Override
 	protected void firstListenerAdded() {
 		if (listChangeListener == null) {
-			listChangeListener = event -> DecoratingObservableList.this.handleListChange(event);
+			listChangeListener = DecoratingObservableList.this::handleListChange;
 		}
 		decorated.addListChangeListener(listChangeListener);
 		super.firstListenerAdded();

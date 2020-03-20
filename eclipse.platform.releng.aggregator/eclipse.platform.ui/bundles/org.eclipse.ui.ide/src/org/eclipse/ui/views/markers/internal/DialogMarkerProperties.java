@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,6 +11,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Sebastian Davids <sdavids@gmx.de> - bug 77332 - [Markers] Add task dialog improvements
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - ongoing support
  *******************************************************************************/
 
 package org.eclipse.ui.views.markers.internal;
@@ -25,6 +26,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.e4.ui.internal.workspace.markers.Translation;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -57,6 +59,11 @@ import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 public class DialogMarkerProperties extends TrayDialog {
 
 	private static final String DIALOG_SETTINGS_SECTION = "DialogMarkerPropertiesDialogSettings"; //$NON-NLS-1$
+
+	/**
+	 * The marker adapter to represent the marker
+	 */
+	private final Translation translation = new Translation();
 
 	/**
 	 * The marker being shown, or <code>null</code> for a new marker
@@ -408,12 +415,12 @@ public class DialogMarkerProperties extends TrayDialog {
 			updateDialogForNewMarker();
 			return;
 		}
-		descriptionText.setText(Util.getProperty(IMarker.MESSAGE, marker));
+		descriptionText.setText(translation.message(marker).orElse("")); //$NON-NLS-1$
 		if (creationTime != null) {
 			creationTime.setText(Util.getCreationTime(marker));
 		}
 		if (resourceText != null) {
-			resourceText.setText(Util.getResourceName(marker));
+			resourceText.setText(translation.name(marker).orElse("")); //$NON-NLS-1$
 		}
 		if (folderText != null) {
 			folderText.setText(Util.getContainerName(marker));

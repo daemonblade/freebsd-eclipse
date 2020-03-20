@@ -21,12 +21,14 @@ import org.eclipse.core.runtime.AssertionFailedException;
 
 /**
  * @since 1.0
+ * @implNote If methods are added to the interface which this class implements
+ *           then implementations of those methods must be added to this class.
  */
 public abstract class AbstractObservable extends ChangeManager implements IObservable {
 	private boolean disposed = false;
 
 	/**
-	 * @param realm
+	 * @param realm the realm to use; not <code>null</code>
 	 */
 	public AbstractObservable(Realm realm) {
 		super(realm);

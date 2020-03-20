@@ -94,7 +94,7 @@ public final class CommonDragAdapter extends DragSourceAdapter {
 		CommonDragAdapterAssistant[] assistants = contentService
 				.getDnDService().getCommonDragAssistants();
 
-		Set<Transfer> supportedTypes = new LinkedHashSet<Transfer>();
+		Set<Transfer> supportedTypes = new LinkedHashSet<>();
 		supportedTypes.add(PluginTransfer.getInstance());
 		supportedTypes.add(LocalSelectionTransfer.getTransfer());
 		Transfer[] transferTypes = null;
@@ -201,8 +201,7 @@ public final class CommonDragAdapter extends DragSourceAdapter {
 						.println("CommonDragAdapter.dragSetData looking for assistants"); //$NON-NLS-1$
 			}
 
-			for (int i = 0, len = assistantsToUse.size(); i < len; i++) {
-				final CommonDragAdapterAssistant assistant = assistantsToUse.get(i);
+			for (final CommonDragAdapterAssistant assistant : assistantsToUse) {
 				if (Policy.DEBUG_DND) {
 					System.out
 							.println("CommonDragAdapter.dragSetData assistant: " + assistant); //$NON-NLS-1$

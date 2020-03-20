@@ -16,7 +16,6 @@ package org.eclipse.ui;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import org.eclipse.core.runtime.Adapters;
@@ -299,8 +298,7 @@ public final class SelectionEnabler {
 		if (classes.isEmpty()) {
 			return true;
 		}
-		for (int i = 0; i < classes.size(); i++) {
-			SelectionClass sc = classes.get(i);
+		for (SelectionClass sc : classes) {
 			if (verifyClass(sel, sc.className)) {
 				return true;
 			}
@@ -328,8 +326,7 @@ public final class SelectionEnabler {
 		if (classes.isEmpty()) {
 			return true;
 		}
-		for (Iterator<?> elements = ssel.iterator(); elements.hasNext();) {
-			Object obj = elements.next();
+		for (Object obj : ssel) {
 			if (obj instanceof IAdaptable) {
 				IAdaptable element = (IAdaptable) obj;
 				if (verifyElement(element) == false) {
@@ -407,23 +404,30 @@ public final class SelectionEnabler {
 		if (enablesFor == null) {
 			enablesFor = "*"; //$NON-NLS-1$
 		}
-		if (enablesFor.equals("*")) { //$NON-NLS-1$
+		switch (enablesFor) {
+		case "*": //$NON-NLS-1$
 			mode = ANY_NUMBER;
-		} else if (enablesFor.equals("?")) { //$NON-NLS-1$
+			break;
+		case "?": //$NON-NLS-1$
 			mode = NONE_OR_ONE;
-		} else if (enablesFor.equals("!")) { //$NON-NLS-1$
+			break;
+		case "!": //$NON-NLS-1$
 			mode = NONE;
-		} else if (enablesFor.equals("+")) { //$NON-NLS-1$
+			break;
+		case "+": //$NON-NLS-1$
 			mode = ONE_OR_MORE;
-		} else if (enablesFor.equals("multiple") //$NON-NLS-1$
-				|| enablesFor.equals("2+")) { //$NON-NLS-1$
+			break;
+		case "multiple": //$NON-NLS-1$
+		case "2+": //$NON-NLS-1$
 			mode = MULTIPLE;
-		} else {
+			break;
+		default:
 			try {
 				mode = Integer.parseInt(enablesFor);
 			} catch (NumberFormatException e) {
 				mode = UNKNOWN;
 			}
+			break;
 		}
 
 		// Get enablement block.
@@ -488,8 +492,7 @@ public final class SelectionEnabler {
 		if (classes.isEmpty()) {
 			return true;
 		}
-		for (int i = 0; i < classes.size(); i++) {
-			SelectionClass sc = classes.get(i);
+		for (SelectionClass sc : classes) {
 			if (verifyClass(element, sc.className) == false) {
 				continue;
 			}

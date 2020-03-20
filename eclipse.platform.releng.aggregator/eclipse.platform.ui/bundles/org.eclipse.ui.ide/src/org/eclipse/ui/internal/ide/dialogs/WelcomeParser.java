@@ -239,8 +239,7 @@ public class WelcomeParser extends DefaultHandler {
 		protected WelcomeItem constructWelcomeItem() {
 			if (isFormatWrapped()) {
 				// replace all line delimiters with a space
-				for (int i = 0; i < wrapRanges.size(); i++) {
-					int[] range = wrapRanges.get(i);
+				for (int[] range : wrapRanges) {
 					int start = range[0];
 					int length = range[1];
 					for (int j = start; j < start + length; j++) {
@@ -275,22 +274,35 @@ public class WelcomeParser extends DefaultHandler {
 		public void startElement(String namespaceURI, String localName,
 				String qName, Attributes atts) throws SAXException {
 			textStart = offset;
-			if (localName.equals(TAG_BOLD)) {
-				BoldHandler h = new BoldHandler();
-				h.setParent(ItemHandler.this);
-				parser.getXMLReader().setContentHandler(h);
-			} else if (localName.equals(TAG_ACTION)) {
-				ActionHandler h = new ActionHandler(atts
-						.getValue(ATT_PLUGIN_ID), atts.getValue(ATT_CLASS));
-				h.setParent(ItemHandler.this);
-				parser.getXMLReader().setContentHandler(h);
-			} else if (localName.equals(TAG_PARAGRAPH)) {
+			switch (localName) {
+			case TAG_BOLD:
+				{
+					BoldHandler h = new BoldHandler();
+					h.setParent(ItemHandler.this);
+					parser.getXMLReader().setContentHandler(h);
+					break;
+				}
+			case TAG_ACTION:
+				{
+					ActionHandler h = new ActionHandler(atts
+							.getValue(ATT_PLUGIN_ID), atts.getValue(ATT_CLASS));
+					h.setParent(ItemHandler.this);
+					parser.getXMLReader().setContentHandler(h);
+					break;
+				}
+			case TAG_PARAGRAPH:
 				wrapStart = textStart;
-			} else if (localName.equals(TAG_TOPIC)) {
-				TopicHandler h = new TopicHandler(atts.getValue(ATT_ID), atts
-						.getValue(ATT_HREF));
-				h.setParent(ItemHandler.this);
-				parser.getXMLReader().setContentHandler(h);
+				break;
+			case TAG_TOPIC:
+				{
+					TopicHandler h = new TopicHandler(atts.getValue(ATT_ID), atts
+							.getValue(ATT_HREF));
+					h.setParent(ItemHandler.this);
+					parser.getXMLReader().setContentHandler(h);
+					break;
+				}
+			default:
+				break;
 			}
 		}
 

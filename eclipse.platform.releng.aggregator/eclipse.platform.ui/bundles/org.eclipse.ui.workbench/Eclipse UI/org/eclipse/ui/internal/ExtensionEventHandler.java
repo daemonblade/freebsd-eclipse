@@ -86,13 +86,17 @@ class ExtensionEventHandler implements IRegistryChangeListener {
 					}
 				} else {
 					if (extensionDelta.getKind() == IExtensionDelta.REMOVED) {
-						if (id.equals(IWorkbenchRegistryConstants.PL_ACTION_SET_PART_ASSOCIATIONS)) {
+						switch (id) {
+						case IWorkbenchRegistryConstants.PL_ACTION_SET_PART_ASSOCIATIONS:
 							revokeList.add(0, extensionDelta);
 							numActionSetPartAssoc++;
-						} else if (id.equals(IWorkbenchRegistryConstants.PL_PERSPECTIVES)) {
+							break;
+						case IWorkbenchRegistryConstants.PL_PERSPECTIVES:
 							revokeList.add(numActionSetPartAssoc, extensionDelta);
-						} else {
+							break;
+						default:
 							revokeList.add(extensionDelta);
+							break;
 						}
 					}
 				}
@@ -186,8 +190,8 @@ class ExtensionEventHandler implements IRegistryChangeListener {
 		final StringBuilder message = new StringBuilder(
 				ExtensionEventHandlerMessages.ExtensionEventHandler_following_changes);
 
-		for (Iterator i = changeList.iterator(); i.hasNext();) {
-			message.append(i.next());
+		for (Object element : changeList) {
+			message.append(element);
 		}
 
 		message.append(ExtensionEventHandlerMessages.ExtensionEventHandler_need_to_reset);

@@ -27,6 +27,8 @@ import org.eclipse.core.databinding.observable.Diffs;
  *            the type of the elements in this set
  *
  * @since 1.2
+ * @implNote If methods are added to the interface which this class implements
+ *           then implementations of those methods must be added to this class.
  */
 public class DecoratingObservableSet<E> extends
 		DecoratingObservableCollection<E> implements IObservableSet<E> {
@@ -36,12 +38,11 @@ public class DecoratingObservableSet<E> extends
 	private ISetChangeListener<E> setChangeListener;
 
 	/**
-	 * Constructs a DecoratingObservableSet which decorates the given
-	 * observable.
+	 * Constructs a DecoratingObservableSet which decorates the given observable.
 	 *
-	 * @param decorated
-	 *            the observable set being decorated
-	 * @param disposeDecoratedOnDispose
+	 * @param decorated                 the observable set being decorated
+	 * @param disposeDecoratedOnDispose whether the decorated observable should be
+	 *                                  disposed when the decorator is disposed
 	 */
 	public DecoratingObservableSet(IObservableSet<E> decorated,
 			boolean disposeDecoratedOnDispose) {
@@ -82,7 +83,7 @@ public class DecoratingObservableSet<E> extends
 	@Override
 	protected void firstListenerAdded() {
 		if (setChangeListener == null) {
-			setChangeListener = event -> DecoratingObservableSet.this.handleSetChange(event);
+			setChangeListener = DecoratingObservableSet.this::handleSetChange;
 		}
 		decorated.addSetChangeListener(setChangeListener);
 		super.firstListenerAdded();

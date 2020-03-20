@@ -16,13 +16,12 @@ package org.eclipse.jface.tests.performance;
 
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.ViewerSorter;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Widget;
-import org.eclipse.ui.tests.performance.TestRunnable;
 
 /**
  * The TableViewerRefreshTest is a test for refreshing the TableViewer.
@@ -78,14 +77,11 @@ public class TableViewerRefreshTest extends ViewerTest {
 	public void testRefresh() throws Throwable {
 		openBrowser();
 
-		exercise(new TestRunnable() {
-			@Override
-			public void run() {
-				startMeasuring();
-				viewer.refresh();
-				processEvents();
-				stopMeasuring();
-			}
+		exercise(() -> {
+			startMeasuring();
+			viewer.refresh();
+			processEvents();
+			stopMeasuring();
 		}, MIN_ITERATIONS, slowGTKIterations(),
 				JFacePerformanceSuite.MAX_TIME);
 
@@ -100,16 +96,13 @@ public class TableViewerRefreshTest extends ViewerTest {
 	 */
 	public void testRefreshSorted() throws Throwable {
 		openBrowser();
-		viewer.setSorter(new ViewerSorter());
+		viewer.setComparator(new ViewerComparator());
 
-		exercise(new TestRunnable() {
-			@Override
-			public void run() {
-				startMeasuring();
-				viewer.refresh();
-				processEvents();
-				stopMeasuring();
-			}
+		exercise(() -> {
+			startMeasuring();
+			viewer.refresh();
+			processEvents();
+			stopMeasuring();
 		}, MIN_ITERATIONS, slowGTKIterations(),
 				JFacePerformanceSuite.MAX_TIME);
 
@@ -124,20 +117,17 @@ public class TableViewerRefreshTest extends ViewerTest {
 	 */
 	public void testRefreshPreSorted() throws Throwable {
 		openBrowser();
-		final ViewerSorter sorter = new ViewerSorter();
-		viewer.setSorter(sorter);
+		final ViewerComparator sorter = new ViewerComparator();
+		viewer.setComparator(sorter);
 
-		exercise(new TestRunnable() {
-			@Override
-			public void run() {
-				contentProvider.refreshElements();
-				startMeasuring();
-				contentProvider.cloneElements();
-				contentProvider.preSortElements(viewer, sorter);
-				viewer.refresh();
-				processEvents();
-				stopMeasuring();
-			}
+		exercise(() -> {
+			contentProvider.refreshElements();
+			startMeasuring();
+			contentProvider.cloneElements();
+			contentProvider.preSortElements(viewer, sorter);
+			viewer.refresh();
+			processEvents();
+			stopMeasuring();
 		}, MIN_ITERATIONS, ITERATIONS,
 				JFacePerformanceSuite.MAX_TIME);
 
@@ -153,23 +143,20 @@ public class TableViewerRefreshTest extends ViewerTest {
 	public void testUpdate() throws Throwable {
 		openBrowser();
 
-		exercise(new TestRunnable() {
-			@Override
-			public void run() {
+		exercise(() -> {
 
-				TableItem[] items = viewer.getTable().getItems();
-				startMeasuring();
-				for (int j = 0; j < items.length; j++) {
-					TableItem item = items[j];
-					Object element = RefreshTestContentProvider.allElements[j];
+			TableItem[] items = viewer.getTable().getItems();
+			startMeasuring();
+			for (int j = 0; j < items.length; j++) {
+				TableItem item = items[j];
+				Object element = RefreshTestContentProvider.allElements[j];
 
-					viewer.testUpdateItem(item, element);
-
-				}
-				processEvents();
-				stopMeasuring();
+				viewer.testUpdateItem(item, element);
 
 			}
+			processEvents();
+			stopMeasuring();
+
 		}, MIN_ITERATIONS, slowGTKIterations(),
 				JFacePerformanceSuite.MAX_TIME);
 

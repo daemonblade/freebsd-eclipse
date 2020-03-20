@@ -92,9 +92,7 @@
     background-color: #505f70;
     color: #9ac9d8;
 }
-.MPart FormHeading {
-    background: #505f70;
-}
+
 .MPart FormHeading,
 .MPart FormHeading > TitleRegion {
     swt-background-mode: none;
@@ -128,10 +126,6 @@
 #org-eclipse-e4-ui-compatibility-editor CTabItem {
     color: #EEEEEE;
     font-weight: normal;
-}
-#org-eclipse-e4-ui-compatibility-editor CTabItem:selected {
-    background-color: #262626;
-    font-weight: bold;
 }
 
 #org-eclipse-e4-ui-compatibility-editor LayoutCanvas {

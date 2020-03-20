@@ -14,7 +14,6 @@
 package org.eclipse.ui.views.navigator;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.resources.IMarker;
@@ -40,7 +39,7 @@ import org.eclipse.ui.part.ISetSelectionTarget;
  * directly, otherwise if it is an <code>IMarker</code> it uses the marker's
  * resource, otherwise if it is an <code>IAdaptable</code>, it tries to get the
  * <code>IResource.class</code> adapter.
- * 
+ *
  * @noextend This class is not intended to be subclassed by clients.
  * @noinstantiate This class is not intended to be instantiated by clients.
  * @noreference This class is not intended to be referenced by clients.
@@ -75,8 +74,7 @@ public class ShowInNavigatorAction extends SelectionProviderAction {
 	 */
 	List<IResource> getResources(IStructuredSelection selection) {
 		List<IResource> v = new ArrayList<>();
-		for (Iterator<?> i = selection.iterator(); i.hasNext();) {
-			Object o = i.next();
+		for (Object o : selection) {
 
 			IResource resource = Adapters.adapt(o, IResource.class);
 			if (resource != null) {

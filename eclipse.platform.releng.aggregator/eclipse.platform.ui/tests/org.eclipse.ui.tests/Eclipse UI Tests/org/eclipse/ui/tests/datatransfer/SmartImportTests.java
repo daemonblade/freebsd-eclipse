@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2019 Red Hat Inc. and others
+ * Copyright (c) 2016, 2020 Red Hat Inc. and others
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,6 +14,8 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.datatransfer;
 
+import java.io.CharArrayReader;
+import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -23,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.eclipse.core.resources.IFile;
@@ -32,11 +35,16 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.util.Util;
 import org.eclipse.jface.viewers.CheckboxTreeViewer;
 import org.eclipse.jface.wizard.ProgressMonitorPart;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -55,17 +63,18 @@ import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.wizards.datatransfer.SmartImportRootWizardPage;
 import org.eclipse.ui.internal.wizards.datatransfer.SmartImportWizard;
+import org.eclipse.ui.tests.TestPlugin;
 import org.eclipse.ui.tests.datatransfer.contributions.ImportMeProjectConfigurator;
 import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.JUnit4;
 
 /**
  * @since 3.12
  *
  */
-@RunWith(BlockJUnit4ClassRunner.class)
+@RunWith(JUnit4.class)
 public class SmartImportTests extends UITestCase {
 
 	private WizardDialog dialog;
@@ -94,7 +103,7 @@ public class SmartImportTests extends UITestCase {
 	private void clearAll() throws CoreException, IOException {
 		processEvents();
 		boolean closed = true;
-		if (dialog != null && !dialog.getShell().isDisposed()) {
+		if (dialog != null && dialog.getShell() != null && !dialog.getShell().isDisposed()) {
 			closed = dialog.close();
 		}
 		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
@@ -329,8 +338,21 @@ public class SmartImportTests extends UITestCase {
 
 	@Test
 	public void testCancelWizardCancelsJob() {
+		// Use the (probably) largest root as import source so that the importer is
+		// running long enough that we can cancel it.
+		// First version of this test used File.listRoots()[0] but while usually sorted
+		// it is not guaranteed. Additional the first root might not what you expect.
+		// The Windows test machine returns A:\ as first root which is not suitable for
+		// this test.
+		File importRoot = new File(Util.isWindows() ? "C:\\" : "/");
+		if (!importRoot.isDirectory()) {
+			importRoot = File.listRoots()[0];
+		}
+		TestPlugin.getDefault().getLog().log(new Status(IStatus.INFO, TestPlugin.PLUGIN_ID,
+				"Testing job cancel with root: " + importRoot.getAbsolutePath()));
+
 		SmartImportWizard wizard = new SmartImportWizard();
-		wizard.setInitialImportSource(File.listRoots()[0]);
+		wizard.setInitialImportSource(importRoot);
 		this.dialog = new WizardDialog(getWorkbench().getActiveWorkbenchWindow().getShell(), wizard);
 		dialog.setBlockOnOpen(false);
 		dialog.open();
@@ -438,6 +460,45 @@ public class SmartImportTests extends UITestCase {
 			directoryToImport.delete();
 			workingSetManager.removeWorkingSet(workingSet);
 			workingSetManager.removeWorkingSet(workingSet2);
+		}
+	}
+
+	/**
+	 * Bug 559600 - [SmartImport] Label provider throws exception if results contain
+	 * filesystem root
+	 */
+	@Test
+	public void testBug559600() throws Exception {
+		AtomicInteger errors = new AtomicInteger();
+		ILogListener errorListener = new ILogListener() {
+			@Override
+			public void logging(IStatus status, String plugin) {
+				if (status.getSeverity() == IStatus.ERROR) {
+					errors.incrementAndGet();
+				}
+			}
+		};
+
+		CharArrayWriter existingDialogSettings = new CharArrayWriter();
+		SmartImportWizard wizard = new SmartImportWizard();
+		try {
+			Platform.addLogListener(errorListener);
+			wizard.getDialogSettings().save(existingDialogSettings);
+			wizard.setInitialImportSource(File.listRoots()[0]);
+			wizard.getDialogSettings().put("SmartImportRootWizardPage.STORE_HIDE_ALREADY_OPEN", true);
+			wizard.getDialogSettings().put("SmartImportRootWizardPage.STORE_NESTED_PROJECTS", false);
+			this.dialog = new WizardDialog(getWorkbench().getActiveWorkbenchWindow().getShell(), wizard);
+			dialog.setBlockOnOpen(false);
+			dialog.open();
+			SmartImportRootWizardPage page = (SmartImportRootWizardPage) dialog.getCurrentPage();
+			ProgressMonitorPart wizardProgressMonitor = page.getWizardProgressMonitor();
+			processEventsUntil(() -> !wizardProgressMonitor.isVisible(), 10000);
+			assertEquals("Label provider (or something else) produced error", 0, errors.get());
+			assertFalse("Searching projects should be done within 10 seconds", wizardProgressMonitor.isVisible());
+		} finally {
+			dialog.close();
+			Platform.removeLogListener(errorListener);
+			wizard.getDialogSettings().load(new CharArrayReader(existingDialogSettings.toCharArray()));
 		}
 	}
 

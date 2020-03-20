@@ -42,26 +42,38 @@ import org.eclipse.swt.widgets.Text;
  */
 public class Snippet011ValidateMultipleBindingsSnippet {
 	public static void main(String[] args) {
-		Realm.runWithDefault(DisplayRealm.getRealm(Display.getDefault()),
-				() -> Snippet011ValidateMultipleBindingsSnippet.run());
+		final Display display = new Display();
+
+		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
+			Shell shell = createShell();
+
+			while (!shell.isDisposed()) {
+				if (!display.readAndDispatch()) {
+					display.sleep();
+				}
+			}
+			display.dispose();
+		});
+
+		display.dispose();
 	}
 
-	private static void run() {
+	private static Shell createShell() {
 		Shell shell = new Shell();
 
 		View view = new View(shell);
 		final Model model = new Model();
 
-		DataBindingContext dbc = new DataBindingContext();
-		dbc.bindValue(
-				WidgetProperties.text(SWT.Modify).observe(view.text1), model.value1,
+		DataBindingContext bindingContext = new DataBindingContext();
+		bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(view.text1), model.value1,
 				new UpdateValueStrategy<String, String>()
-						.setAfterConvertValidator(new CrossFieldValidator(model.value2)), null);
+						.setAfterConvertValidator(new CrossFieldValidator(model.value2)),
+				null);
 
-		dbc.bindValue(
-				WidgetProperties.text(SWT.Modify).observe(view.text2), model.value2,
+		bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(view.text2), model.value2,
 				new UpdateValueStrategy<String, String>()
-					.setAfterConvertValidator(new CrossFieldValidator(model.value1)), null);
+						.setAfterConvertValidator(new CrossFieldValidator(model.value1)),
+				null);
 
 		// DEBUG - print to show value change
 		model.value1.addValueChangeListener(event -> System.out.println("Value 1: " + model.value1.getValue()));
@@ -71,27 +83,12 @@ public class Snippet011ValidateMultipleBindingsSnippet {
 
 		shell.pack();
 		shell.open();
-		Display display = shell.getDisplay();
-		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch())
-				display.sleep();
-		}
-		display.dispose();
+		return shell;
 	}
 
-	/**
-	 * @since 3.2
-	 *
-	 */
 	private static final class CrossFieldValidator implements IValidator<String> {
-		/**
-		 *
-		 */
 		private final IObservableValue<String> other;
 
-		/**
-		 * @param model
-		 */
 		private CrossFieldValidator(IObservableValue<String> other) {
 			this.other = other;
 		}

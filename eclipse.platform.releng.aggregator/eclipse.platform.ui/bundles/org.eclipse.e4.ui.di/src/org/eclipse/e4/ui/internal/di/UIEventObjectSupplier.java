@@ -38,8 +38,8 @@ public class UIEventObjectSupplier extends EventObjectSupplier {
 
 	class UIEventHandler implements EventHandler {
 
-		final protected IRequestor requestor;
-		final private String topic;
+		protected final IRequestor requestor;
+		private final String topic;
 
 		public UIEventHandler(String topic, IRequestor requestor) {
 			this.topic = topic;
@@ -61,7 +61,7 @@ public class UIEventObjectSupplier extends EventObjectSupplier {
 					logger.log(Level.WARNING, "No realm found to process UI event " + event);
 				return;
 			} else {
-				uiSync.syncExec(() -> requestor.execute());
+				uiSync.syncExec(requestor::execute);
 			}
 		}
 	}

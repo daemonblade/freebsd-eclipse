@@ -24,8 +24,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.core.databinding.DataBindingContext;
-import org.eclipse.core.databinding.beans.typed.BeanProperties;
 import org.eclipse.core.databinding.beans.IBeanValueProperty;
+import org.eclipse.core.databinding.beans.typed.BeanProperties;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.databinding.observable.list.WritableList;
 import org.eclipse.core.databinding.observable.map.IObservableMap;
@@ -58,20 +58,21 @@ public class Snippet032TableViewerColumnEditing {
 
 	public static void main(String[] args) {
 		final Display display = new Display();
-		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			ViewModel viewModel = new ViewModel();
-			Shell shell = new View(viewModel).createShell();
 
-			// The SWT event loop
+		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
+			Shell shell = new View(new ViewModel()).createShell();
+
 			while (!shell.isDisposed()) {
 				if (!display.readAndDispatch()) {
 					display.sleep();
 				}
 			}
 		});
+
+		display.dispose();
 	}
 
-	// Minimal JavaBeans support
+	/** Helper class for implementing JavaBeans support. */
 	public static abstract class AbstractModelObject {
 		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -96,9 +97,13 @@ public class Snippet032TableViewerColumnEditing {
 		}
 	}
 
-	// The data model class. This is normally a persistent class of some sort.
+	/**
+	 * The data model class.
+	 * <p>
+	 * This example implements full JavaBeans bound properties so that changes to
+	 * instances of this class will automatically be propagated to the UI.
+	 */
 	static class Person extends AbstractModelObject {
-		// A property...
 		String name;
 		String firstName;
 
@@ -124,12 +129,9 @@ public class Snippet032TableViewerColumnEditing {
 		}
 	}
 
-	// The View's model--the root of our Model graph for this particular GUI.
-	//
-	// Typically each View class has a corresponding ViewModel class.
-	// The ViewModel is responsible for getting the objects to edit from the
-	// data access tier. Since this snippet doesn't have any persistent objects
-	// ro retrieve, this ViewModel just instantiates a model object to edit.
+	/**
+	 * The View's model--the root of our Model graph for this particular GUI.
+	 */
 	static class ViewModel {
 		// The model to bind
 		private List<Person> people = new LinkedList<>();
@@ -150,7 +152,7 @@ public class Snippet032TableViewerColumnEditing {
 		}
 	}
 
-	// The GUI view
+	/** The GUI view. */
 	static class View {
 		private ViewModel viewModel;
 		private Table committers;
@@ -173,8 +175,7 @@ public class Snippet032TableViewerColumnEditing {
 			layoutData.horizontalSpan = 2;
 			committers.setLayoutData(layoutData);
 
-			GridData fieldLayoutData = new GridData(SWT.FILL, SWT.BEGINNING,
-					true, false);
+			GridData fieldLayoutData = new GridData(SWT.FILL, SWT.BEGINNING, true, false);
 			selectedCommitterName = new Label(shell, SWT.NONE);
 			selectedCommitterName.setLayoutData(fieldLayoutData);
 
@@ -184,14 +185,12 @@ public class Snippet032TableViewerColumnEditing {
 			DataBindingContext bindingContext = new DataBindingContext();
 			bindGUI(bindingContext);
 
-			// Open and return the Shell
 			shell.setSize(250, 300);
 			shell.open();
 			return shell;
 		}
 
 		protected void bindGUI(DataBindingContext bindingContext) {
-			// Since we're using a JFace Viewer, we do first wrap our Table...
 			TableViewer peopleViewer = new TableViewer(committers);
 
 			TableViewerColumn columnName = new TableViewerColumn(peopleViewer, SWT.NONE);
@@ -210,12 +209,11 @@ public class Snippet032TableViewerColumnEditing {
 			IValueProperty<CellEditor, String> cellEditorControlText = CellEditorProperties.control()
 					.value(WidgetProperties.text(SWT.Modify));
 
-			columnName.setEditingSupport(ObservableValueEditingSupport.create(
-					peopleViewer, bindingContext, new TextCellEditor(committers), cellEditorControlText, propName));
+			columnName.setEditingSupport(ObservableValueEditingSupport.create(peopleViewer, bindingContext,
+					new TextCellEditor(committers), cellEditorControlText, propName));
 
-			columnFirstName.setEditingSupport(ObservableValueEditingSupport
-					.create(peopleViewer, bindingContext, new TextCellEditor(committers), cellEditorControlText,
-							propFirstname));
+			columnFirstName.setEditingSupport(ObservableValueEditingSupport.create(peopleViewer, bindingContext,
+					new TextCellEditor(committers), cellEditorControlText, propFirstname));
 
 			ObservableListContentProvider<Person> contentProvider = new ObservableListContentProvider<>();
 			peopleViewer.setContentProvider(contentProvider);
@@ -229,14 +227,12 @@ public class Snippet032TableViewerColumnEditing {
 
 			peopleViewer.setInput(new WritableList<>(viewModel.getPeople(), Person.class));
 
-			// bind selectedCommitter labels to the name and firstname of the
-			// current selection
+			// Bind selectedCommitter labels to the name and firstname of the current
+			// selection
 			IObservableValue<Person> selection = ViewerProperties.singleSelection(Person.class).observe(peopleViewer);
-			bindingContext.bindValue(
-					WidgetProperties.text().observe(selectedCommitterName),
+			bindingContext.bindValue(WidgetProperties.text().observe(selectedCommitterName),
 					BeanProperties.value(Person.class, "name", String.class).observeDetail(selection));
-			bindingContext.bindValue(
-					WidgetProperties.text().observe(selectedCommitterFirstName),
+			bindingContext.bindValue(WidgetProperties.text().observe(selectedCommitterFirstName),
 					BeanProperties.value(Person.class, "firstName", String.class).observeDetail(selection));
 		}
 	}

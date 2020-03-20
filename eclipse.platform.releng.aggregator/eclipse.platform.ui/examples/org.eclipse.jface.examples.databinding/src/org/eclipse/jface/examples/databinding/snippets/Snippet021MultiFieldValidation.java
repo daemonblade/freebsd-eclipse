@@ -52,10 +52,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Text;
 
-/**
- * @since 3.2
- *
- */
 public class Snippet021MultiFieldValidation extends WizardPage {
 
 	private List list_1;
@@ -71,8 +67,20 @@ public class Snippet021MultiFieldValidation extends WizardPage {
 	private ListViewer addendsTarget;
 	private ListViewer addendsModelValue;
 
+	public static void main(String[] args) {
+		final Display display = new Display();
+
+		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
+			IWizard wizard = new MultiFieldValidationWizard();
+			WizardDialog dialog = new WizardDialog(null, wizard);
+			dialog.open();
+		});
+
+		display.dispose();
+	}
+
 	/**
-	 * Create the wizard
+	 * Create the wizard.
 	 */
 	public Snippet021MultiFieldValidation() {
 		super("snippet021");
@@ -81,9 +89,7 @@ public class Snippet021MultiFieldValidation extends WizardPage {
 	}
 
 	/**
-	 * Create contents of the wizard
-	 *
-	 * @param parent
+	 * Create contents of the wizard.
 	 */
 	@Override
 	public void createControl(Composite parent) {
@@ -91,12 +97,11 @@ public class Snippet021MultiFieldValidation extends WizardPage {
 		final GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = 2;
 		container.setLayout(gridLayout);
-		//
+
 		setControl(container);
 
 		final Group bothEvenOrGroup = new Group(container, SWT.NONE);
-		bothEvenOrGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
-				false));
+		bothEvenOrGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 		bothEvenOrGroup.setText("Numbers must be both even or both odd");
 		final GridLayout gridLayout_1 = new GridLayout();
 		gridLayout_1.numColumns = 3;
@@ -113,31 +118,26 @@ public class Snippet021MultiFieldValidation extends WizardPage {
 		field1Label.setText("Field 1");
 
 		field1Target = new Text(bothEvenOrGroup, SWT.BORDER);
-		final GridData gd_field1Target = new GridData(SWT.FILL, SWT.CENTER,
-				true, false);
+		final GridData gd_field1Target = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		field1Target.setLayoutData(gd_field1Target);
 
 		field1ModelValue = new Text(bothEvenOrGroup, SWT.READ_ONLY | SWT.BORDER);
-		final GridData gd_field1ModelValue = new GridData(SWT.FILL, SWT.CENTER,
-				true, false);
+		final GridData gd_field1ModelValue = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		field1ModelValue.setLayoutData(gd_field1ModelValue);
 
 		final Label field2Label = new Label(bothEvenOrGroup, SWT.NONE);
 		field2Label.setText("Field 2");
 
 		field2Target = new Text(bothEvenOrGroup, SWT.BORDER);
-		final GridData gd_field2Target = new GridData(SWT.FILL, SWT.CENTER,
-				true, false);
+		final GridData gd_field2Target = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		field2Target.setLayoutData(gd_field2Target);
 
 		field2ModelValue = new Text(bothEvenOrGroup, SWT.READ_ONLY | SWT.BORDER);
-		final GridData gd_field2ModelValue = new GridData(SWT.FILL, SWT.CENTER,
-				true, false);
+		final GridData gd_field2ModelValue = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		field2ModelValue.setLayoutData(gd_field2ModelValue);
 
 		final Group sumOfAllGroup = new Group(container, SWT.NONE);
-		sumOfAllGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
-				true));
+		sumOfAllGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true));
 		sumOfAllGroup.setText("Addends must add up to sum");
 		final GridLayout gridLayout_2 = new GridLayout();
 		gridLayout_2.numColumns = 3;
@@ -154,13 +154,11 @@ public class Snippet021MultiFieldValidation extends WizardPage {
 		expectedSumLabel.setText("Sum");
 
 		sumTarget = new Text(sumOfAllGroup, SWT.BORDER);
-		final GridData gd_sumTarget = new GridData(SWT.FILL, SWT.CENTER, true,
-				false);
+		final GridData gd_sumTarget = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		sumTarget.setLayoutData(gd_sumTarget);
 
 		sumModelValue = new Text(sumOfAllGroup, SWT.READ_ONLY | SWT.BORDER);
-		final GridData gd_sumModelValue = new GridData(SWT.FILL, SWT.CENTER,
-				true, false);
+		final GridData gd_sumModelValue = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		sumModelValue.setLayoutData(gd_sumModelValue);
 
 		final Label addendsLabel = new Label(sumOfAllGroup, SWT.NONE);
@@ -168,12 +166,9 @@ public class Snippet021MultiFieldValidation extends WizardPage {
 
 		addendsTarget = new ListViewer(sumOfAllGroup, SWT.V_SCROLL | SWT.BORDER);
 		list_1 = addendsTarget.getList();
-		list_1
-				.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true, 1,
-						2));
+		list_1.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true, 1, 2));
 
-		addendsModelValue = new ListViewer(sumOfAllGroup, SWT.V_SCROLL
-				| SWT.BORDER);
+		addendsModelValue = new ListViewer(sumOfAllGroup, SWT.V_SCROLL | SWT.BORDER);
 		list = addendsModelValue.getList();
 		list.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true, 1, 2));
 
@@ -185,73 +180,73 @@ public class Snippet021MultiFieldValidation extends WizardPage {
 		composite.setLayout(gridLayout_3);
 
 		addAddendButton = new Button(composite, SWT.NONE);
-		addAddendButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false,
-				false));
+		addAddendButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 		addAddendButton.setText("Add");
 
 		removeAddendButton = new Button(composite, SWT.NONE);
-		removeAddendButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
-				false, false));
+		removeAddendButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 		removeAddendButton.setText("Remove");
 
 		bindUI();
 	}
 
 	private void bindUI() {
-		DataBindingContext dbc = new DataBindingContext();
+		DataBindingContext bindingContext = new DataBindingContext();
 
-		bindEvensAndOddsGroup(dbc);
-		bindSumAndAddendsGroup(dbc);
+		bindEvensAndOddsGroup(bindingContext);
+		bindSumAndAddendsGroup(bindingContext);
 
-		WizardPageSupport.create(this, dbc);
+		WizardPageSupport.create(this, bindingContext);
 	}
 
-	private void bindEvensAndOddsGroup(DataBindingContext dbc) {
+	private void bindEvensAndOddsGroup(DataBindingContext bindingContext) {
 		IObservableValue<String> targetField1 = WidgetProperties.text(SWT.Modify).observe(field1Target);
-		final IObservableValue<Integer> middleField1 = new WritableValue<>(Integer.valueOf(0), Integer.TYPE);
-		dbc.bindValue(targetField1, middleField1);
+		final IObservableValue<Integer> middleField1 = new WritableValue<>(0, int.class);
+		bindingContext.bindValue(targetField1, middleField1);
 
 		IObservableValue<String> targetField2 = WidgetProperties.text(SWT.Modify).observe(field2Target);
-		final IObservableValue<Integer> middleField2 = new WritableValue<>(Integer.valueOf(0), Integer.TYPE);
-		dbc.bindValue(targetField2, middleField2);
+		final IObservableValue<Integer> middleField2 = new WritableValue<>(0, int.class);
+		bindingContext.bindValue(targetField2, middleField2);
 
 		MultiValidator validator = new MultiValidator() {
 			@Override
 			protected IStatus validate() {
 				Integer field1 = middleField1.getValue();
 				Integer field2 = middleField2.getValue();
-				if (Math.abs(field1.intValue()) % 2 != Math.abs(field2.intValue()) % 2)
+				if (field1 == null || field2 == null) {
+					return ValidationStatus.error("The fields must all be non-empty");
+				}
+
+				if (Math.abs(field1) % 2 != Math.abs(field2) % 2) {
 					return ValidationStatus.error("Fields 1 and 2 must be both even or both odd");
+				}
 				return null;
 			}
 		};
-		dbc.addValidationStatusProvider(validator);
+		bindingContext.addValidationStatusProvider(validator);
 
-		IObservableValue<Integer> modelField1 = new WritableValue<>(Integer.valueOf(1), Integer.TYPE);
-		IObservableValue<Integer> modelField2 = new WritableValue<>(Integer.valueOf(4), Integer.TYPE);
-		dbc.bindValue(validator.observeValidatedValue(middleField1), modelField1);
-		dbc.bindValue(validator.observeValidatedValue(middleField2), modelField2);
+		IObservableValue<Integer> modelField1 = new WritableValue<>(1, int.class);
+		IObservableValue<Integer> modelField2 = new WritableValue<>(4, int.class);
+		bindingContext.bindValue(validator.observeValidatedValue(middleField1), modelField1);
+		bindingContext.bindValue(validator.observeValidatedValue(middleField2), modelField2);
 
-		dbc.bindValue(WidgetProperties.text(SWT.Modify).observe(field1ModelValue),
-				modelField1);
-		dbc.bindValue(WidgetProperties.text(SWT.Modify).observe(field2ModelValue),
-				modelField2);
+		bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(field1ModelValue), modelField1);
+		bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(field2ModelValue), modelField2);
 	}
 
-	private void bindSumAndAddendsGroup(DataBindingContext dbc) {
+	private void bindSumAndAddendsGroup(DataBindingContext bindingContext) {
 		IObservableValue<String> targetSum = WidgetProperties.text(SWT.Modify).observe(sumTarget);
-		final IObservableValue<Integer> middleSum = new WritableValue<>(0, Integer.TYPE);
-		dbc.bindValue(targetSum, middleSum);
+		final IObservableValue<Integer> middleSum = new WritableValue<>(0, int.class);
+		bindingContext.bindValue(targetSum, middleSum);
 
-		final IObservableList<Integer> targetAddends = new WritableList<>(new ArrayList<>(), Integer.TYPE);
+		final IObservableList<Integer> targetAddends = new WritableList<>(new ArrayList<>(), int.class);
 		addendsTarget.setContentProvider(new ObservableListContentProvider<>());
 		addendsTarget.setInput(targetAddends);
 
 		addAddendButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				InputDialog dialog = new InputDialog(getShell(),
-						"Input addend", "Enter an integer addend", "0",
+				InputDialog dialog = new InputDialog(getShell(), "Input addend", "Enter an integer addend", "0",
 						newText -> {
 							try {
 								Integer.valueOf(newText);
@@ -270,15 +265,16 @@ public class Snippet021MultiFieldValidation extends WizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				IStructuredSelection selection = addendsTarget.getStructuredSelection();
-				if (!selection.isEmpty())
+				if (!selection.isEmpty()) {
 					targetAddends.remove(selection.getFirstElement());
+				}
 			}
 		});
 
-		IObservableValue<Integer> modelSum = new WritableValue<>(Integer.valueOf(5), Integer.TYPE);
-		dbc.bindValue(WidgetProperties.text(SWT.Modify).observe(sumModelValue), modelSum);
+		IObservableValue<Integer> modelSum = new WritableValue<>(5, int.class);
+		bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(sumModelValue), modelSum);
 
-		IObservableList<Integer> modelAddends = new WritableList<>(new ArrayList<>(), Integer.TYPE);
+		IObservableList<Integer> modelAddends = new WritableList<>(new ArrayList<>(), int.class);
 
 		MultiValidator validator = new MultiValidator() {
 			@Override
@@ -288,19 +284,19 @@ public class Snippet021MultiFieldValidation extends WizardPage {
 				for (int i : targetAddends) {
 					actualSum += i;
 				}
-				if (sum != actualSum)
-					return ValidationStatus.error("Sum of addends is "
-							+ actualSum + ", expecting " + sum);
+				if (sum != actualSum) {
+					return ValidationStatus.error("Sum of addends is " + actualSum + ", expecting " + sum);
+				}
 				return ValidationStatus.ok();
 			}
 		};
-		dbc.addValidationStatusProvider(validator);
+		bindingContext.addValidationStatusProvider(validator);
 
 		addendsModelValue.setContentProvider(new ObservableListContentProvider<>());
 		addendsModelValue.setInput(modelAddends);
 
-		dbc.bindValue(validator.observeValidatedValue(middleSum), modelSum);
-		dbc.bindList(validator.observeValidatedList(targetAddends), modelAddends);
+		bindingContext.bindValue(validator.observeValidatedValue(middleSum), modelSum);
+		bindingContext.bindList(validator.observeValidatedList(targetAddends), modelAddends);
 	}
 
 	static class MultiFieldValidationWizard extends Wizard {
@@ -318,25 +314,5 @@ public class Snippet021MultiFieldValidation extends WizardPage {
 		public boolean performFinish() {
 			return true;
 		}
-	}
-
-	public static void main(String[] args) {
-		Display display = new Display();
-
-		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			IWizard wizard = new MultiFieldValidationWizard();
-			WizardDialog dialog = new WizardDialog(null, wizard);
-			dialog.open();
-
-			// The SWT event loop
-			Display display1 = Display.getCurrent();
-			while (dialog.getShell() != null && !dialog.getShell().isDisposed()) {
-				if (!display1.readAndDispatch()) {
-					display1.sleep();
-				}
-			}
-		});
-
-		display.dispose();
 	}
 }

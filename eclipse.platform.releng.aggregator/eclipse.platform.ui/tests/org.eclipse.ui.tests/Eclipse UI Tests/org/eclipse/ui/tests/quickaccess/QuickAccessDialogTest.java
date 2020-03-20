@@ -46,11 +46,15 @@ import org.eclipse.ui.internal.quickaccess.QuickAccessDialog;
 import org.eclipse.ui.internal.quickaccess.QuickAccessMessages;
 import org.eclipse.ui.tests.harness.util.DisplayHelper;
 import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests the quick access UI
  * @since 3.4
  */
+@RunWith(JUnit4.class)
 public class QuickAccessDialogTest extends UITestCase {
 
 	private static final int TIMEOUT = 3000;
@@ -61,11 +65,8 @@ public class QuickAccessDialogTest extends UITestCase {
 	private IDialogSettings dialogSettings;
 	private IWorkbenchWindow activeWorkbenchWindow;
 
-	/**
-	 * @param testName
-	 */
-	public QuickAccessDialogTest(String testName) {
-		super(testName);
+	public QuickAccessDialogTest() {
+		super(QuickAccessDialogTest.class.getSimpleName());
 	}
 
 	@Override
@@ -73,7 +74,7 @@ public class QuickAccessDialogTest extends UITestCase {
 		super.doSetUp();
 		Arrays.stream(Display.getDefault().getShells()).filter(isQuickAccessShell).forEach(Shell::close);
 		dialogSettings = new DialogSettings("QuickAccessDialogTest" + System.currentTimeMillis());
-		activeWorkbenchWindow = getWorkbench().getActiveWorkbenchWindow();
+		activeWorkbenchWindow = openTestWindow();
 		QuickAccessDialog warmupDialog = new QuickAccessDialog(activeWorkbenchWindow, null);
 		warmupDialog.open();
 		warmupDialog.close();
@@ -88,12 +89,14 @@ public class QuickAccessDialogTest extends UITestCase {
 	protected void doTearDown() throws Exception {
 		Arrays.stream(Display.getDefault().getShells()).filter(isQuickAccessShell)
 				.forEach(Shell::close);
+		super.doTearDown();
 	}
 
 	/**
 	 * Tests that the shell opens when the command is activated
 	 * @throws Exception
 	 */
+	@Test
 	public void testOpenByCommand() throws Exception {
 		IHandlerService handlerService = getWorkbench().getActiveWorkbenchWindow()
 				.getService(IHandlerService.class);
@@ -109,6 +112,7 @@ public class QuickAccessDialogTest extends UITestCase {
 	/**
 	 * Test that changing the filter text works correctly
 	 */
+	@Test
 	public void testTextFilter(){
 		QuickAccessDialog dialog = new QuickAccessDialog(activeWorkbenchWindow, null) {
 			@Override
@@ -138,6 +142,7 @@ public class QuickAccessDialogTest extends UITestCase {
 		assertTrue("Too many quick access items for size of table", newCount < MAXIMUM_NUMBER_OF_ELEMENTS);
 	}
 
+	@Test
 	public void testContributedElement() {
 		QuickAccessDialog dialog = new QuickAccessDialog(activeWorkbenchWindow, null) {
 			@Override
@@ -157,7 +162,8 @@ public class QuickAccessDialogTest extends UITestCase {
 		);
 	}
 
-	public void testLongRunningComputerDoesntFreezeUI() throws InterruptedException {
+	@Test
+	public void testLongRunningComputerDoesntFreezeUI() {
 		QuickAccessDialog dialog = new QuickAccessDialog(activeWorkbenchWindow, null) {
 			@Override
 			protected IDialogSettings getDialogSettings() {
@@ -203,6 +209,7 @@ public class QuickAccessDialogTest extends UITestCase {
 	 * Tests that activating the handler again toggles the show all setting and that the setting changes the results
 	 * Also tests that closing and reopening the shell resets show all
 	 */
+	@Test
 	public void testShowAll() throws Exception {
 		// Open the shell
 		QuickAccessDialog dialog = new QuickAccessDialog(activeWorkbenchWindow, null) {
@@ -259,6 +266,7 @@ public class QuickAccessDialogTest extends UITestCase {
 				newTable.getItemCount() < allCount);
 	}
 
+	@Test
 	public void testPreviousChoicesAvailable() {
 		// add one selection to history
 		QuickAccessDialog dialog = new QuickAccessDialog(activeWorkbenchWindow, null) {
@@ -272,20 +280,20 @@ public class QuickAccessDialogTest extends UITestCase {
 		Table firstTable = dialog.getQuickAccessContents().getTable();
 		String quickAccessElementText = "Project Explorer";
 		text.setText(quickAccessElementText);
-		assertTrue("Missing entry", DisplayHelper.waitForCondition(firstTable.getDisplay(), TIMEOUT, () ->
-			dialogContains(dialog, quickAccessElementText)
-		));
-		// it seems like the 1st proposal isn't really "Project Explorer" on "official"
-		// tests?
-		System.out.println("Quick Access entries after querying '" + quickAccessElementText + '\'');
-		System.out.println(getAllEntries(firstTable).stream().map(s -> "* " + s).collect(Collectors.joining("\n")));
-		String selectedProposal = firstTable.getItem(0).getText(1);
+		assertTrue("Missing entry", DisplayHelper.waitForCondition(firstTable.getDisplay(),
+				TIMEOUT,
+				() -> dialogContains(dialog, quickAccessElementText)));
 		firstTable.select(0);
 		activateCurrentElement(dialog);
 		assertNotEquals(0, dialogSettings.getArray("orderedElements").length);
+		processEventsUntil(
+				() -> activeWorkbenchWindow.getActivePage() != null
+						&& activeWorkbenchWindow.getActivePage().getActivePart() != null
+						&& quickAccessElementText
+								.equalsIgnoreCase(activeWorkbenchWindow.getActivePage().getActivePart().getTitle()),
+				TIMEOUT);
 		// then try in a new SearchField
-		QuickAccessDialog secondDialog = new QuickAccessDialog(activeWorkbenchWindow,
-				null) {
+		QuickAccessDialog secondDialog = new QuickAccessDialog(activeWorkbenchWindow, null) {
 			@Override
 			protected IDialogSettings getDialogSettings() {
 				return dialogSettings;
@@ -294,7 +302,7 @@ public class QuickAccessDialogTest extends UITestCase {
 		secondDialog.open();
 		assertTrue("Missing entry in previous pick",
 				DisplayHelper.waitForCondition(secondDialog.getShell().getDisplay(), TIMEOUT,
-						() -> dialogContains(secondDialog, selectedProposal)));
+						() -> dialogContains(secondDialog, quickAccessElementText)));
 	}
 
 	private void activateCurrentElement(QuickAccessDialog dialog) {
@@ -305,6 +313,7 @@ public class QuickAccessDialogTest extends UITestCase {
 		processEventsUntil(() -> enterPressed.widget.isDisposed(), 500);
 	}
 
+	@Test
 	public void testPreviousChoicesAvailableForExtension() {
 		// add one selection to history
 		QuickAccessDialog dialog = new QuickAccessDialog(activeWorkbenchWindow, null) {
@@ -336,6 +345,7 @@ public class QuickAccessDialogTest extends UITestCase {
 								.anyMatch(TestQuickAccessComputer::isContributedItem)));
 	}
 
+	@Test
 	public void testPreviousChoicesAvailableForIncrementalExtension() {
 		QuickAccessDialog dialog = new QuickAccessDialog(activeWorkbenchWindow, null) {
 			@Override
@@ -370,6 +380,7 @@ public class QuickAccessDialogTest extends UITestCase {
 				));
 	}
 
+	@Test
 	public void testPrefixMatchHavePriority() {
 		QuickAccessDialog dialog = new QuickAccessDialog(activeWorkbenchWindow, null) {
 			@Override
@@ -386,6 +397,7 @@ public class QuickAccessDialogTest extends UITestCase {
 		assertTrue("Non-prefix match first", table.getItem(0).getText(1).toLowerCase().startsWith("p"));
 	}
 
+	@Test
 	public void testCommandEnableContext() throws Exception {
 		ICommandService commandService = PlatformUI.getWorkbench().getService(ICommandService.class);
 		Command command = commandService.getCommand("org.eclipse.ui.window.splitEditor");

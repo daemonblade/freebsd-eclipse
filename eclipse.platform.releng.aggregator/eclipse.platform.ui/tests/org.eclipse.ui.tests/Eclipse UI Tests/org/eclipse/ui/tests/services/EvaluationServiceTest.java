@@ -64,14 +64,14 @@ import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.JUnit4;
 import org.junit.runners.MethodSorters;
 
 /**
  * @since 3.3
  *
  */
-@RunWith(BlockJUnit4ClassRunner.class)
+@RunWith(JUnit4.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class EvaluationServiceTest extends UITestCase {
 	/**
@@ -80,9 +80,6 @@ public class EvaluationServiceTest extends UITestCase {
 	private static final String CHECK_HANDLER_ID = "org.eclipse.ui.tests.services.checkHandler";
 	private static final String CONTEXT_ID1 = "org.eclipse.ui.command.contexts.evaluationService1";
 
-	/**
-	 * @param testName
-	 */
 	public EvaluationServiceTest() {
 		super(EvaluationServiceTest.class.getName());
 	}
@@ -306,29 +303,21 @@ public class EvaluationServiceTest extends UITestCase {
 		final boolean[] propertyChanged = new boolean[1];
 		final boolean[] propertyShouldChange = new boolean[1];
 
-		IPropertyChangeListener propertyChangeListener = new IPropertyChangeListener() {
-
-			@Override
-			public void propertyChange(PropertyChangeEvent event) {
-				if (event.getProperty().equals("foo")) {
-					propertyChanged[0] = true;
-				}
-
+		IPropertyChangeListener propertyChangeListener = event -> {
+			if (event.getProperty().equals("foo")) {
+				propertyChanged[0] = true;
 			}
+
 		};
 		IEvaluationReference ref = evaluationService.addEvaluationListener(
 				expression, propertyChangeListener, "foo");
 		((WorkbenchWindow)window).getMenuRestrictions().add(ref);
 
-		IPropertyChangeListener propertyShouldChangeListener = new IPropertyChangeListener() {
-
-			@Override
-			public void propertyChange(PropertyChangeEvent event) {
-				if (event.getProperty().equals("foo")) {
-					propertyShouldChange[0] = true;
-				}
-
+		IPropertyChangeListener propertyShouldChangeListener = event -> {
+			if (event.getProperty().equals("foo")) {
+				propertyShouldChange[0] = true;
 			}
+
 		};
 		evaluationService.addEvaluationListener(expression,
 				propertyShouldChangeListener, "foo");
@@ -473,29 +462,35 @@ public class EvaluationServiceTest extends UITestCase {
 		Collection<IHandlerActivation> activations = null;
 		// fill in a set of activations
 		String hsClassName = hs.getClass().getName();
-		if (hsClassName.equals("org.eclipse.ui.internal.handlers.HandlerService")) {
-			Field hpField = hs.getClass().getDeclaredField("handlerPersistence");
-			hpField.setAccessible(true);
-
-			HandlerPersistence hp = (HandlerPersistence) hpField.get(hs);
-
-			Field activationsField = hp.getClass().getDeclaredField("handlerActivations");
-			activationsField.setAccessible(true);
-			activations = (Collection<IHandlerActivation>) activationsField.get(hp);
-			assertNotNull(activations);
-		} else if (hsClassName.equals("org.eclipse.ui.internal.handlers.LegacyHandlerService")) {
-			Field hsField = hs.getClass().getDeclaredField("LEGACY_H_ID");
-			String LEGACY_H_ID = (String) hsField.get(null);
-			Field hpField = hs.getClass().getDeclaredField("eclipseContext");
-			hpField.setAccessible(true);
-			Object eclipseContext = hpField.get(hs);
-			assertNotNull(eclipseContext);
-			Method getMethod = eclipseContext.getClass().getDeclaredMethod("get", String.class);
-			activations = (Collection<IHandlerActivation>) getMethod.invoke(eclipseContext,
-					LEGACY_H_ID + CHECK_HANDLER_ID);
-			assertNotNull(activations);
-		} else {
+		switch (hsClassName) {
+		case "org.eclipse.ui.internal.handlers.HandlerService":
+			{
+				Field hpField = hs.getClass().getDeclaredField("handlerPersistence");
+				hpField.setAccessible(true);
+				HandlerPersistence hp = (HandlerPersistence) hpField.get(hs);
+				Field activationsField = hp.getClass().getDeclaredField("handlerActivations");
+				activationsField.setAccessible(true);
+				activations = (Collection<IHandlerActivation>) activationsField.get(hp);
+				assertNotNull(activations);
+				break;
+			}
+		case "org.eclipse.ui.internal.handlers.LegacyHandlerService":
+			{
+				Field hsField = hs.getClass().getDeclaredField("LEGACY_H_ID");
+				String LEGACY_H_ID = (String) hsField.get(null);
+				Field hpField = hs.getClass().getDeclaredField("eclipseContext");
+				hpField.setAccessible(true);
+				Object eclipseContext = hpField.get(hs);
+				assertNotNull(eclipseContext);
+				Method getMethod = eclipseContext.getClass().getDeclaredMethod("get", String.class);
+				activations = (Collection<IHandlerActivation>) getMethod.invoke(eclipseContext,
+						LEGACY_H_ID + CHECK_HANDLER_ID);
+				assertNotNull(activations);
+				break;
+			}
+		default:
 			fail("Incorrect handler service: " + hsClassName);
+			break;
 		}
 
 		IHandlerActivation activation = null;
@@ -635,26 +630,23 @@ public class EvaluationServiceTest extends UITestCase {
 		processEvents();
 
 		final ArrayList<PartSelection> selection = new ArrayList<>();
-		IPropertyChangeListener listener = new IPropertyChangeListener() {
-			@Override
-			public void propertyChange(PropertyChangeEvent event) {
-				IEvaluationContext state = service.getCurrentState();
-				try {
-					ISelection sel = null;
-					IWorkbenchPart part = null;
-					Object o = state
-							.getVariable(ISources.ACTIVE_CURRENT_SELECTION_NAME);
-					if (o instanceof ISelection) {
-						sel = (ISelection) o;
-					}
-					o = state.getVariable(ISources.ACTIVE_PART_NAME);
-					if (o instanceof IWorkbenchPart) {
-						part = (IWorkbenchPart) o;
-					}
-					selection.add(new PartSelection(sel, part));
-				} catch (Exception e) {
-					e.printStackTrace();
+		IPropertyChangeListener listener = event -> {
+			IEvaluationContext state = service.getCurrentState();
+			try {
+				ISelection sel = null;
+				IWorkbenchPart part = null;
+				Object o = state
+						.getVariable(ISources.ACTIVE_CURRENT_SELECTION_NAME);
+				if (o instanceof ISelection) {
+					sel = (ISelection) o;
 				}
+				o = state.getVariable(ISources.ACTIVE_PART_NAME);
+				if (o instanceof IWorkbenchPart) {
+					part = (IWorkbenchPart) o;
+				}
+				selection.add(new PartSelection(sel, part));
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		};
 

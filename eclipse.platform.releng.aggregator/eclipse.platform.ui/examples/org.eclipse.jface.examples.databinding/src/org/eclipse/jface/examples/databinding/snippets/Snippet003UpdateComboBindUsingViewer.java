@@ -27,8 +27,8 @@ import org.eclipse.core.databinding.beans.typed.BeanProperties;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.databinding.property.Properties;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
-import org.eclipse.jface.databinding.viewers.typed.ViewerProperties;
 import org.eclipse.jface.databinding.viewers.ViewerSupport;
+import org.eclipse.jface.databinding.viewers.typed.ViewerProperties;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -42,17 +42,15 @@ import org.eclipse.swt.widgets.Shell;
 /**
  * Shows how to bind a Combo so that when update its items, the selection is
  * retained if at all possible.
- *
- * @since 3.2
  */
 public class Snippet003UpdateComboBindUsingViewer {
 	public static void main(String[] args) {
 		final Display display = new Display();
+
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
 			ViewModel viewModel = new ViewModel();
 			Shell shell = new View(viewModel).createShell();
 
-			// The SWT event loop
 			while (!shell.isDisposed()) {
 				if (!display.readAndDispatch()) {
 					display.sleep();
@@ -61,10 +59,11 @@ public class Snippet003UpdateComboBindUsingViewer {
 			// Print the results
 			System.out.println(viewModel.getText());
 		});
+
 		display.dispose();
 	}
 
-	// Minimal JavaBeans support
+	/** Helper class for implementing JavaBeans support. */
 	public static abstract class AbstractModelObject {
 		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -89,7 +88,7 @@ public class Snippet003UpdateComboBindUsingViewer {
 		}
 	}
 
-	// The View's model--the root of our Model graph for this particular GUI.
+	/** The View's model--the root of our Model graph for this particular GUI. */
 	public static class ViewModel extends AbstractModelObject {
 		private String text = "beef";
 
@@ -121,7 +120,7 @@ public class Snippet003UpdateComboBindUsingViewer {
 		}
 	}
 
-	// The GUI view
+	/** The GUI view. */
 	static class View {
 		private ViewModel viewModel;
 
@@ -131,7 +130,7 @@ public class Snippet003UpdateComboBindUsingViewer {
 
 		public Shell createShell() {
 			// Build a UI
-			Shell shell = new Shell(Display.getCurrent());
+			Shell shell = new Shell();
 			shell.setLayout(new RowLayout(SWT.VERTICAL));
 
 			Combo combo = new Combo(shell, SWT.BORDER | SWT.READ_ONLY);
@@ -154,15 +153,13 @@ public class Snippet003UpdateComboBindUsingViewer {
 			// Print value out first
 			System.out.println(viewModel.getText());
 
-			DataBindingContext dbc = new DataBindingContext();
-			ViewerSupport.bind(viewer,
-					BeanProperties.list(ViewModel.class, "choices", String.class).observe(viewModel),
+			DataBindingContext bindingContext = new DataBindingContext();
+			ViewerSupport.bind(viewer, BeanProperties.list(ViewModel.class, "choices", String.class).observe(viewModel),
 					Properties.selfValue(String.class));
 
-			dbc.bindValue(ViewerProperties.singleSelection().observe(viewer),
+			bindingContext.bindValue(ViewerProperties.singleSelection().observe(viewer),
 					BeanProperties.value(ViewModel.class, "text").observe(viewModel));
 
-			// Open and return the Shell
 			shell.pack();
 			shell.open();
 			return shell;

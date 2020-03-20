@@ -101,7 +101,7 @@ public class WorkbenchPreferenceInitializer extends AbstractPreferenceInitialize
 
 		// Heap status preferences is stored in different node
 		IEclipsePreferences heapNode = context.getNode("org.eclipse.ui"); //$NON-NLS-1$
-		heapNode.putBoolean(IWorkbenchPreferenceConstants.SHOW_MEMORY_MONITOR, true);
+		heapNode.putBoolean(IWorkbenchPreferenceConstants.SHOW_MEMORY_MONITOR, false);
 		node.putInt(IHeapStatusConstants.PREF_UPDATE_INTERVAL, 500);
 		node.putBoolean(IHeapStatusConstants.PREF_SHOW_MAX, false);
 		node.putBoolean(IPreferenceConstants.OVERRIDE_PRESENTATION, false);
@@ -122,6 +122,9 @@ public class WorkbenchPreferenceInitializer extends AbstractPreferenceInitialize
 		// Visualized command keys
 		node.putBoolean(IPreferenceConstants.SHOW_KEYS_ENABLED, false);
 		node.putInt(IPreferenceConstants.SHOW_KEYS_TIME_TO_CLOSE, 3000);
+
+		node.put(IWorkbenchPreferenceConstants.RESOURCE_RENAME_MODE,
+				IWorkbenchPreferenceConstants.RESOURCE_RENAME_MODE_INLINE);
 
 		IEclipsePreferences rootNode = (IEclipsePreferences) Platform.getPreferencesService().getRootNode()
 				.node(InstanceScope.SCOPE);

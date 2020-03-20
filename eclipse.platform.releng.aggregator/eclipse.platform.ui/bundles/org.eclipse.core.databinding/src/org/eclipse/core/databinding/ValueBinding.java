@@ -59,10 +59,10 @@ class ValueBinding<M, T> extends Binding {
 	};
 
 	/**
-	 * @param targetObservableValue
-	 * @param modelObservableValue
-	 * @param targetToModel
-	 * @param modelToTarget
+	 * @param targetObservableValue the target side value
+	 * @param modelObservableValue  the model side value
+	 * @param targetToModel         strategy to copy model to target element
+	 * @param modelToTarget         strategy to copy target to model element
 	 */
 	public ValueBinding(IObservableValue<T> targetObservableValue, IObservableValue<M> modelObservableValue,
 			UpdateValueStrategy<? super T, ? extends M> targetToModel,
@@ -163,7 +163,7 @@ class ValueBinding<M, T> extends Binding {
 			return;
 		}
 
-		source.getRealm().exec(() -> {
+		execAfterDisposalCheck(source, () -> {
 			boolean destinationRealmReached = false;
 			final MultiStatus multiStatus = BindingStatus.ok();
 			try {
@@ -199,7 +199,7 @@ class ValueBinding<M, T> extends Binding {
 
 				// Set value
 				destinationRealmReached = true;
-				destination.getRealm().exec(() -> {
+				execAfterDisposalCheck(destination, () -> {
 					if (destination == target) {
 						updatingTarget = true;
 					} else {

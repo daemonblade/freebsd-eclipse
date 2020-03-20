@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2015 Matthew Hall and others.
+ * Copyright (c) 2008, 2020 Matthew Hall and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -22,14 +22,14 @@ import org.eclipse.swt.widgets.Control;
  * @since 3.3
  *
  */
-public class ControlVisibleProperty<S extends Control> extends WidgetBooleanValueProperty<S> {
+public class ControlVisibleProperty<S extends Control> extends VisibleProperty<S> {
 	@Override
-	boolean doGetBooleanValue(S source) {
+	protected boolean doGetVisibleValue(S source) {
 		return source.getVisible();
 	}
 
 	@Override
-	void doSetBooleanValue(S source, boolean value) {
+	protected void doSetBooleanValue(S source, boolean value) {
 		source.setVisible(value);
 	}
 

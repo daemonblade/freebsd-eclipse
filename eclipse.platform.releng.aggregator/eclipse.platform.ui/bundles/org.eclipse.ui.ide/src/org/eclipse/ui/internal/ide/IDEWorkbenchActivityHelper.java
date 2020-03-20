@@ -16,7 +16,6 @@ package org.eclipse.ui.internal.ide;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -219,17 +218,15 @@ public class IDEWorkbenchActivityHelper {
 	 */
 	private void processProjects(Set<IProject> projectsToUpdate) {
 		boolean needsUpdate = false;
-		for (Iterator<IProject> i = projectsToUpdate.iterator(); i.hasNext();) {
+		for (IProject project : projectsToUpdate) {
 			try {
-				IProject project = i.next();
 				String[] ids = project.getDescription().getNatureIds();
 				if (ids.length == 0) {
 					continue;
 				}
 
 				synchronized (lock) {
-					needsUpdate = fPendingNatureUpdates.addAll(Arrays
-							.asList(ids)) | needsUpdate;
+					needsUpdate = fPendingNatureUpdates.addAll(Arrays.asList(ids)) || needsUpdate;
 				}
 
 			} catch (CoreException e) {

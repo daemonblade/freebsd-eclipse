@@ -33,9 +33,16 @@ import org.eclipse.core.databinding.observable.IObservable;
  *
  * @noimplement This interface is not intended to be implemented by clients.
  *              Clients should instead subclass one of the classes that
- *              implement this interface. Note that direct implementers of this
- *              interface outside of the framework will be broken in future
- *              releases when methods are added to this interface.
+ *              implement this interface.
+ *              <p>
+ *              Authors of extensions to the databinding framework may extend
+ *              this interface and indirectly implement it, but if doing so must
+ *              also extend one of the framework classes. (Use an API problem
+ *              filter to suppress the resulting warning.)
+ *              <p>
+ *              Direct implementers of this interface outside of the framework
+ *              will be broken in future releases when methods are added to this
+ *              interface.
  *
  * @see AbstractObservableMap
  * @see ObservableMap
@@ -66,12 +73,12 @@ public interface IObservableMap<K, V> extends Map<K, V>, IObservable {
 	Object getValueType();
 
 	/**
-	 * @param listener
+	 * @param listener the change listener to add; not <code>null</code>
 	 */
 	void addMapChangeListener(IMapChangeListener<? super K, ? super V> listener);
 
 	/**
-	 * @param listener
+	 * @param listener the change listener to remove; not <code>null</code>
 	 */
 	void removeMapChangeListener(IMapChangeListener<? super K, ? super V> listener);
 

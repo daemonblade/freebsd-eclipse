@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009 IBM Corporation and others.
+ * Copyright (c) 2009, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,30 +14,45 @@
 
 package org.eclipse.ui.tests.internal;
 
+import static org.junit.Assume.assumeFalse;
+
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.dnd.URLTransfer;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * @since 3.5
  *
  */
+@RunWith(JUnit4.class)
 public class TextHandlerTest extends UITestCase {
 
-	public TextHandlerTest(String testName) {
-		super(testName);
+	public TextHandlerTest() {
+		super(TextHandlerTest.class.getSimpleName());
 	}
 
+	@Test
 	public void testEditableText() throws Exception {
+		assumeFalse("Test fails on Mac: Bug 544675", Platform.OS_MACOSX.equals(Platform.getOS()));
+
 		IWorkbenchWindow window = openTestWindow();
 		TextControlView view = (TextControlView) window.getActivePage()
 				.showView(TextControlView.ID);
 		view.editableText.setFocus();
 		Clipboard clipboard = new Clipboard(window.getWorkbench().getDisplay());
 		try {
+			// Clipboard clearContents will only clear own content. If clipboard contains
+			// content from another application when test starts it will be cleared and test
+			// can fail. Fix is to set anything and then clear it.
+			clipboard.setContents(new Object[] { "https://www.eclipse.org" },
+					new Transfer[] { URLTransfer.getInstance() });
 			clipboard.clearContents();
 			processEvents();
 			view.updateEnabledState();
@@ -98,6 +113,7 @@ public class TextHandlerTest extends UITestCase {
 		}
 	}
 
+	@Test
 	public void testNonEditableText() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		TextControlView view = (TextControlView) window.getActivePage()

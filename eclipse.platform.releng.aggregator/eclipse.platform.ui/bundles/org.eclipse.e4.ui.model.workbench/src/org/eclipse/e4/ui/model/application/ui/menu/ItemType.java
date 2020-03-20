@@ -252,5 +252,5 @@ public enum ItemType implements InternalItemType {
  * @generated
  */
 interface InternalItemType extends org.eclipse.emf.common.util.Enumerator {
-	// Empty 
+	// Empty
 }

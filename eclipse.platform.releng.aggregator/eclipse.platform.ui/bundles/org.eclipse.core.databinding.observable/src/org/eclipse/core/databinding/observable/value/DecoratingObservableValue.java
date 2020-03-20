@@ -27,6 +27,8 @@ import org.eclipse.core.databinding.observable.Diffs;
  *            the type of value being observed
  *
  * @since 1.2
+ * @implNote If methods are added to the interface which this class implements
+ *           then implementations of those methods must be added to this class.
  */
 public class DecoratingObservableValue<T> extends DecoratingObservable
 		implements IObservableValue<T> {
@@ -41,6 +43,8 @@ public class DecoratingObservableValue<T> extends DecoratingObservable
 	 * @param decorated
 	 *            the observable value being decorated
 	 * @param disposeDecoratedOnDispose
+	 *            whether the decorated observable should be disposed when the
+	 *            decorator is disposed
 	 */
 	public DecoratingObservableValue(IObservableValue<T> decorated,
 			boolean disposeDecoratedOnDispose) {
@@ -73,7 +77,7 @@ public class DecoratingObservableValue<T> extends DecoratingObservable
 	@Override
 	protected void firstListenerAdded() {
 		if (valueChangeListener == null) {
-			valueChangeListener = event -> DecoratingObservableValue.this.handleValueChange(event);
+			valueChangeListener = DecoratingObservableValue.this::handleValueChange;
 		}
 		decorated.addValueChangeListener(valueChangeListener);
 		super.firstListenerAdded();

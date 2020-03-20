@@ -18,7 +18,6 @@ package org.eclipse.jface.examples.databinding.snippets;
 import org.eclipse.core.databinding.DataBindingContext;
 import org.eclipse.core.databinding.beans.typed.PojoProperties;
 import org.eclipse.core.databinding.observable.Realm;
-import org.eclipse.core.databinding.observable.value.IObservableValue;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.databinding.swt.typed.WidgetProperties;
 import org.eclipse.jface.databinding.viewers.typed.ViewerProperties;
@@ -33,16 +32,15 @@ import org.eclipse.swt.widgets.Text;
 public class Snippet034ComboViewerAndEnum {
 
 	public static void main(String[] args) {
-		Display display = new Display();
-		final Person model = new Person("Pat", Gender.Unknown);
+		final Display display = new Display();
+		final Person model = new Person("Pat", Gender.UNKNOWN);
 
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			final Shell shell = new View(model).createShell();
-			// The SWT event loop
-			Display display1 = Display.getCurrent();
+			Shell shell = new View(model).createShell();
+
 			while (!shell.isDisposed()) {
-				if (!display1.readAndDispatch()) {
-					display1.sleep();
+				if (!display.readAndDispatch()) {
+					display.sleep();
 				}
 			}
 		});
@@ -51,19 +49,30 @@ public class Snippet034ComboViewerAndEnum {
 		System.out.println("person.getGender() = " + model.getGender());
 	}
 
-	static enum Gender {
-		Male, Female, Unknown;
+	enum Gender {
+		MALE("Male"), FEMALE("Female"), UNKNOWN("Unknown"), OTHER("Other");
+
+		private String displayName;
+
+		private Gender(String displayName) {
+			this.displayName = displayName;
+		}
+
+		@Override
+		public String toString() {
+			return displayName;
+		}
 	}
 
-	// The data model class. This is normally a persistent class of some sort.
-	//
-	// In this example, we only push changes from the GUI to the model, so we
-	// don't worry about implementing JavaBeans bound properties. If we need
-	// our GUI to automatically reflect changes in the Person object, the
-	// Person object would need to implement the JavaBeans property change
-	// listener methods.
+	/**
+	 * The data model class.
+	 * <p>
+	 * In this example, we only push changes from the GUI to the model, so we don't
+	 * worry about implementing JavaBeans bound properties. If we need our GUI to
+	 * automatically reflect changes in the Person object, the Person object would
+	 * need to implement the JavaBeans property change listener methods.
+	 */
 	static class Person {
-		// A property...
 		String name;
 		Gender gender;
 
@@ -89,7 +98,7 @@ public class Snippet034ComboViewerAndEnum {
 		}
 	}
 
-	// The GUI view
+	/** The GUI view. */
 	static class View {
 		private Person viewModel;
 		private Text name;
@@ -121,15 +130,14 @@ public class Snippet034ComboViewerAndEnum {
 			// Bind the fields
 			DataBindingContext bindingContext = new DataBindingContext();
 
-			IObservableValue<String> nameObservable = WidgetProperties.text(SWT.Modify).observe(name);
-			bindingContext.bindValue(nameObservable, PojoProperties.value(Person.class, "name").observe(viewModel));
+			bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(name),
+					PojoProperties.value(Person.class, "name").observe(viewModel));
 
 			// The second key to binding a combo to an Enum is to use a
 			// selection observable from the ComboViewer:
-			IObservableValue<Gender> genderObservable = ViewerProperties.singleSelection(Gender.class).observe(gender);
-			bindingContext.bindValue(genderObservable, PojoProperties.value(Person.class, "gender").observe(viewModel));
+			bindingContext.bindValue(ViewerProperties.singleSelection(Gender.class).observe(gender),
+					PojoProperties.value(Person.class, "gender").observe(viewModel));
 
-			// Open and return the Shell
 			shell.pack();
 			shell.open();
 			return shell;

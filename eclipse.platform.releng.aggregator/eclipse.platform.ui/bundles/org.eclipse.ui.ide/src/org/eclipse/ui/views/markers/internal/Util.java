@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,12 +10,12 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Alexander Fedorov <alexander.fedorov@arsysop.ru> - ongoing support
  *******************************************************************************/
 
 package org.eclipse.ui.views.markers.internal;
 
 import java.util.Date;
-import java.util.Iterator;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
@@ -151,34 +151,6 @@ public final class Util {
 			sb.append(path.segment(i));
 		}
 		return sb.toString();
-	}
-
-	/**
-	 * Get the name of the element. If the marker has the
-	 * MarkerViewUtil#NAME_ATTRIBUTE set use that. Otherwise use the name of the
-	 * resource.
-	 *
-	 * @param marker
-	 * @return String
-	 */
-	public static String getResourceName(IMarker marker) {
-
-		if (!marker.exists()) {
-			return Util.EMPTY_STRING;
-		}
-
-		try {
-			Object nameAttribute = marker
-					.getAttribute(MarkerViewUtil.NAME_ATTRIBUTE);
-
-			if (nameAttribute != null) {
-				return nameAttribute.toString();
-			}
-		} catch (CoreException exception) {
-			Policy.handle(exception);
-		}
-
-		return marker.getResource().getName();
 	}
 
 	/**
@@ -327,9 +299,8 @@ public final class Util {
 	 */
 	public static boolean allConcreteSelection(IStructuredSelection selection) {
 		if (selection != null && selection.size() > 0) {
-			Iterator<?> nodes = selection.iterator();
-			while (nodes.hasNext()) {
-				if (((MarkerNode) nodes.next()).isConcrete()) {
+			for (Object node : selection) {
+				if (((MarkerNode) node).isConcrete()) {
 					continue;
 				}
 				return false;

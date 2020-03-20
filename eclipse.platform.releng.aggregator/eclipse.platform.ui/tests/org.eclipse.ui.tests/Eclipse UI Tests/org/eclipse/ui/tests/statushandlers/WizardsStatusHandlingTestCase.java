@@ -13,6 +13,9 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.statushandlers;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import org.eclipse.core.internal.registry.RegistryMessages;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -34,15 +37,15 @@ import org.eclipse.ui.statushandlers.StatusAdapter;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.ui.tests.harness.util.DialogCheck;
 import org.eclipse.ui.tests.harness.util.UITestCase;
-
-import junit.framework.TestCase;
+import org.junit.After;
+import org.junit.Test;
 
 /**
  * Tests whether the errors in wizards are handled properly
  *
  * @since 3.3
  */
-public class WizardsStatusHandlingTestCase extends TestCase {
+public class WizardsStatusHandlingTestCase {
 
 	private static int SEVERITY = IStatus.ERROR;
 
@@ -66,13 +69,8 @@ public class WizardsStatusHandlingTestCase extends TestCase {
 
 	private static String FAULTY_WIZARD_NAME = "FaultyExportWizard";
 
-	public WizardsStatusHandlingTestCase(String name) {
-		super(name);
-	}
-
-	@Override
-	protected void tearDown() throws Exception {
-		super.tearDown();
+	@After
+	public void tearDown() throws Exception {
 		TestStatusHandler.uninstall();
 	}
 
@@ -102,40 +100,44 @@ public class WizardsStatusHandlingTestCase extends TestCase {
 		return dialog;
 	}
 
+	@Test
 	public void testWizardWithNoDefaultContructor() throws Exception {
 		UITestCase.processEvents();
 
 		final CustomWizardDialog dialog = exportWizard();
-		dialog.setBlockOnOpen(false);
-		dialog.open();
+		try {
+			dialog.setBlockOnOpen(false);
+			dialog.open();
 
-		UITestCase.processEvents();
+			UITestCase.processEvents();
 
-		// selecting FaultyExportWizard
-		IWizardPage currenPage = dialog.getCurrentPage();
-		Composite control = (Composite) currenPage.getControl();
-		Control[] widgets = control.getChildren();
+			// selecting FaultyExportWizard
+			IWizardPage currenPage = dialog.getCurrentPage();
+			Composite control = (Composite) currenPage.getControl();
+			Control[] widgets = control.getChildren();
 
-		Table table = (Table) widgets[1];
+			Table table = (Table) widgets[1];
 
-		for (int i = 0; i < table.getItemCount(); i++) {
-			if (table.getItem(i).getText().equals(FAULTY_WIZARD_NAME)) {
-				table.select(i);
-				table.notifyListeners(SWT.Selection, new Event());
-				UITestCase.processEvents();
-				break;
+			for (int i = 0; i < table.getItemCount(); i++) {
+				if (table.getItem(i).getText().equals(FAULTY_WIZARD_NAME)) {
+					table.select(i);
+					table.notifyListeners(SWT.Selection, new Event());
+					UITestCase.processEvents();
+					break;
+				}
 			}
+
+			// pressing "Next"
+			TestStatusHandler.install();
+
+			dialog.nextPressed2();
+
+			UITestCase.processEvents();
+			assertStatusAdapter(TestStatusHandler.getLastHandledStatusAdapter());
+			assertEquals(TestStatusHandler.getLastHandledStyle(), StatusManager.SHOW);
+		} finally {
+			dialog.close();
 		}
-
-		// pressing "Next"
-		TestStatusHandler.install();
-
-		dialog.nextPressed2();
-
-		UITestCase.processEvents();
-		assertStatusAdapter(TestStatusHandler.getLastHandledStatusAdapter());
-		assertEquals(TestStatusHandler.getLastHandledStyle(),
-				StatusManager.SHOW);
 	}
 
 	/**

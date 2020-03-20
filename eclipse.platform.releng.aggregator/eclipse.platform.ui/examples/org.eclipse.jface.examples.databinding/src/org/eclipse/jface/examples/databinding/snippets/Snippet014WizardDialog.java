@@ -47,13 +47,22 @@ import org.eclipse.swt.widgets.Text;
  */
 public class Snippet014WizardDialog {
 
+	public static void main(String[] args) {
+		final Display display = new Display();
+
+		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
+			IWizard wizard = new SampleWizard();
+			WizardDialog dialog = new WizardDialog(null, wizard);
+			dialog.open();
+		});
+	}
+
 	static class FirstWizardPage extends WizardPage {
 		private final class SingleDigitValidator implements IValidator<Integer> {
 			@Override
 			public IStatus validate(Integer value) {
 				if (value == null) {
-					return ValidationStatus
-							.info("Please enter a value.");
+					return ValidationStatus.info("Please enter a value.");
 				}
 				if (value < 0 || value > 9) {
 					return ValidationStatus.error("Value must be between 0 and 9.");
@@ -63,50 +72,45 @@ public class Snippet014WizardDialog {
 		}
 
 		protected FirstWizardPage() {
-			super("First", "First Page", ImageDescriptor
-					.createFromImage(new Image(Display.getDefault(), 16, 16)));
+			super("First", "First Page", ImageDescriptor.createFromImage(new Image(Display.getDefault(), 16, 16)));
 		}
 
 		@Override
 		public void createControl(Composite parent) {
-			DataBindingContext dbc = new DataBindingContext();
-			WizardPageSupport.create(this, dbc);
+			DataBindingContext bindingContext = new DataBindingContext();
+			WizardPageSupport.create(this, bindingContext);
 			Composite composite = new Composite(parent, SWT.NONE);
 			Label label = new Label(composite, SWT.NONE);
 			label.setText("Enter a number between 0 and 9:");
 			Text text = new Text(composite, SWT.BORDER);
 
-			dbc.bindValue(WidgetProperties.text(SWT.Modify).observe(text),
+			bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(text),
 					((SampleWizard) getWizard()).getModel().intValue,
-					new UpdateValueStrategy<String, Integer>()
-						.setAfterConvertValidator(new SingleDigitValidator()), null);
+					new UpdateValueStrategy<String, Integer>().setAfterConvertValidator(new SingleDigitValidator()),
+					null);
 
-			GridLayoutFactory.swtDefaults().numColumns(2).generateLayout(
-					composite);
+			GridLayoutFactory.swtDefaults().numColumns(2).generateLayout(composite);
 			setControl(composite);
 		}
 	}
 
 	static class SecondWizardPage extends WizardPage {
 		protected SecondWizardPage() {
-			super("Second", "Second Page", ImageDescriptor
-					.createFromImage(new Image(Display.getDefault(), 16, 16)));
+			super("Second", "Second Page", ImageDescriptor.createFromImage(new Image(Display.getDefault(), 16, 16)));
 		}
 
 		@Override
 		public void createControl(Composite parent) {
-			DataBindingContext dbc = new DataBindingContext();
-			WizardPageSupport.create(this, dbc);
+			DataBindingContext bindingContext = new DataBindingContext();
+			WizardPageSupport.create(this, bindingContext);
 			Composite composite = new Composite(parent, SWT.NONE);
 			Label label = new Label(composite, SWT.NONE);
 			label.setText("Enter a date:");
 			Text text = new Text(composite, SWT.BORDER);
 
-			dbc.bindValue(WidgetProperties.text().observe(text),
-							((SampleWizard) getWizard()).getModel().dateValue);
+			bindingContext.bindValue(WidgetProperties.text().observe(text), ((SampleWizard) getWizard()).getModel().dateValue);
 
-			GridLayoutFactory.swtDefaults().numColumns(2).generateLayout(
-					composite);
+			GridLayoutFactory.swtDefaults().numColumns(2).generateLayout(composite);
 			setControl(composite);
 		}
 	}
@@ -141,25 +145,4 @@ public class Snippet014WizardDialog {
 		}
 
 	}
-
-	public static void main(String[] args) {
-		Display display = new Display();
-
-		// note that the "runWithDefault" will be done for you if you are using
-		// the
-		// Workbench as opposed to just JFace/SWT.
-		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			IWizard wizard = new SampleWizard();
-			WizardDialog dialog = new WizardDialog(null, wizard);
-			dialog.open();
-			// The SWT event loop
-			Display display1 = Display.getCurrent();
-			while (dialog.getShell() != null && !dialog.getShell().isDisposed()) {
-				if (!display1.readAndDispatch()) {
-					display1.sleep();
-				}
-			}
-		});
-	}
-
 }

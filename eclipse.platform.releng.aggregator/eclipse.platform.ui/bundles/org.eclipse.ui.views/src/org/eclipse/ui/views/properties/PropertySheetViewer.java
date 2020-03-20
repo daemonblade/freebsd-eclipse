@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -924,12 +923,9 @@ class PropertySheetViewer extends Viewer {
 	 */
 	public void resetProperties() {
 		// Determine the selection
-		IStructuredSelection selection = (IStructuredSelection) getSelection();
-
 		// Iterate over entries and reset them
-		Iterator<IPropertySheetEntry> itr = selection.iterator();
-		while (itr.hasNext()) {
-			itr.next().resetPropertyValue();
+		for (Object element : (IStructuredSelection) getSelection()) {
+			((IPropertySheetEntry) element).resetPropertyValue();
 		}
 	}
 
@@ -1107,8 +1103,7 @@ class PropertySheetViewer extends Viewer {
 		}
 		boolean addMisc = false;
 
-		for (int i = 0; i < childEntries.size(); i++) {
-			IPropertySheetEntry childEntry = childEntries.get(i);
+		for (IPropertySheetEntry childEntry : childEntries) {
 			String categoryName = childEntry.getCategory();
 			if (categoryName == null) {
 				misc.addEntry(childEntry);
@@ -1136,9 +1131,7 @@ class PropertySheetViewer extends Viewer {
 		// (with misc added at the end, if needed) before passing to the sorter.
 		ArrayList<PropertySheetCategory> categoryList = new ArrayList<>();
 		Set<String> seen = new HashSet<>(childEntries.size());
-		for (int i = 0; i < childEntries.size(); i++) {
-			IPropertySheetEntry childEntry = childEntries
-					.get(i);
+		for (IPropertySheetEntry childEntry : childEntries) {
 			String categoryName = childEntry.getCategory();
 			if (categoryName != null && !seen.contains(categoryName)) {
 				seen.add(categoryName);

@@ -287,9 +287,7 @@ public class PreferenceDialog extends TrayDialog implements IPreferencePageConta
 		SafeRunnable runnable = new SafeRunnable(){
 			@Override
 			public void run() throws Exception {
-				List<IPreferenceNode> nodes = preferenceManager.getElements(PreferenceManager.PRE_ORDER);
-				for (int i = 0; i < nodes.size(); i++) {
-					IPreferenceNode node = nodes.get(i);
+				for (IPreferenceNode node : preferenceManager.getElements(PreferenceManager.PRE_ORDER)) {
 					node.disposeResources();
 				}
 
@@ -424,11 +422,11 @@ public class PreferenceDialog extends TrayDialog implements IPreferencePageConta
 	}
 
 	/**
-	 * Create the sash with right control on the right. Note
-	 * that this method assumes GridData for the layout data
-	 * of the rightControl.
-	 * @param composite
-	 * @param rightControl
+	 * Create the sash with right control on the right. Note that this method
+	 * assumes GridData for the layout data of the rightControl.
+	 *
+	 * @param composite    the parent composite
+	 * @param rightControl control for the right part of the created sash
 	 * @return Sash
 	 *
 	 * @since 3.1
@@ -477,7 +475,7 @@ public class PreferenceDialog extends TrayDialog implements IPreferencePageConta
 	/**
 	 * Creates the inner page container.
 	 *
-	 * @param parent
+	 * @param parent the parent composite
 	 * @return Composite
 	 */
 	protected Composite createPageContainer(Composite parent) {
@@ -631,7 +629,8 @@ public class PreferenceDialog extends TrayDialog implements IPreferencePageConta
 
 	/**
 	 * Add the listeners to the tree viewer.
-	 * @param viewer
+	 *
+	 * @param viewer viewer to add listeners to
 	 *
 	 * @since 3.1
 	 */
@@ -1272,7 +1271,8 @@ public class PreferenceDialog extends TrayDialog implements IPreferencePageConta
 
 	/**
 	 * Create the page for the node.
-	 * @param node
+	 *
+	 * @param node the node to create page for
 	 *
 	 * @since 3.1
 	 */
@@ -1282,7 +1282,8 @@ public class PreferenceDialog extends TrayDialog implements IPreferencePageConta
 
 	/**
 	 * Get the page for the node.
-	 * @param node
+	 *
+	 * @param node the node to get page for
 	 * @return IPreferencePage
 	 *
 	 * @since 3.1
@@ -1380,7 +1381,8 @@ public class PreferenceDialog extends TrayDialog implements IPreferencePageConta
 
 	/**
 	 * Sets the current page.
-	 * @param currentPage
+	 *
+	 * @param currentPage page to set
 	 *
 	 * @since 3.1
 	 */
@@ -1390,7 +1392,8 @@ public class PreferenceDialog extends TrayDialog implements IPreferencePageConta
 
 	/**
 	 * Set the treeViewer.
-	 * @param treeViewer
+	 *
+	 * @param treeViewer viewer to set
 	 *
 	 * @since 3.1
 	 */

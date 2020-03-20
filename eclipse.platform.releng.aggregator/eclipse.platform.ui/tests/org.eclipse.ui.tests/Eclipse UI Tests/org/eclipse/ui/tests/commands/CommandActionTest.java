@@ -25,11 +25,15 @@ import org.eclipse.ui.handlers.IHandlerActivation;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.internal.actions.CommandAction;
 import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * @since 3.3
  *
  */
+@RunWith(JUnit4.class)
 public class CommandActionTest extends UITestCase {
 	// you can find these commands in org.eclipse.ui.tests/plugin.xml
 	private static final String PREFIX = "tests.commands.CCT.";
@@ -92,13 +96,12 @@ public class CommandActionTest extends UITestCase {
 		}
 	}
 
-	/**
-	 * @param testName
-	 */
-	public CommandActionTest(String testName) {
-		super(testName);
+
+	public CommandActionTest() {
+		super(CommandActionTest.class.getSimpleName());
 	}
 
+	@Test
 	public void testCommandId() throws Exception {
 
 		// create a command action for CMD1_ID, which takes no parameters.
@@ -109,6 +112,7 @@ public class CommandActionTest extends UITestCase {
 		assertEquals(1, cmd1Handler.count);
 	}
 
+	@Test
 	public void testParameterizedCommand() throws Exception {
 
 		// create a command action for CMD2_id which takes parameters.
@@ -122,7 +126,7 @@ public class CommandActionTest extends UITestCase {
 		map.put("host", "true");
 
 		CommandAction action2 = new CommandAction(PlatformUI.getWorkbench(),
-				CMD2_ID, map);//$NON-NLS-1$
+				CMD2_ID, map);
 		action2.run();
 		assertEquals(1, cmd2Handler.count);
 		assertNotNull(cmd2Handler.paramValue1);
@@ -134,7 +138,7 @@ public class CommandActionTest extends UITestCase {
 		map.put("protocol", "false"); //$NON-NLS-1$ //$NON-NLS-2$
 		map.put("host", "false");
 
-		action2 = new CommandAction(PlatformUI.getWorkbench(), CMD2_ID, map);//$NON-NLS-1$
+		action2 = new CommandAction(PlatformUI.getWorkbench(), CMD2_ID, map);
 		action2.run();
 		assertEquals(2, cmd2Handler.count);
 		assertNotNull(cmd2Handler.paramValue1);

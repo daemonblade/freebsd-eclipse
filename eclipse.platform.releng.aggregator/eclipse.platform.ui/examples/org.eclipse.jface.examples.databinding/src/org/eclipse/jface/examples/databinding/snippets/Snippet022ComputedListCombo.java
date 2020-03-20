@@ -38,36 +38,25 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
 
-/**
- * @since 3.2
- *
- */
 public class Snippet022ComputedListCombo {
 	private static WritableList<Thing> model;
 
 	public static void main(String[] args) {
-		Display display = new Display();
-		final Shell shell = new Shell(display);
-		shell.setLayout(new GridLayout(1, false));
+		final Display display = new Display();
 
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			Snippet022ComputedListCombo snippet = new Snippet022ComputedListCombo();
-			snippet.createModel();
-			snippet.createControls(shell);
+			Shell shell = new Snippet022ComputedListCombo().createShell();
+
+			while (!shell.isDisposed()) {
+				if (!display.readAndDispatch()) {
+					display.sleep();
+				}
+			}
 		});
 
-		shell.pack();
-		shell.open();
-		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch())
-				display.sleep();
-		}
 		display.dispose();
 	}
 
-	/**
-	 *
-	 */
 	protected void createModel() {
 		model = new WritableList<>();
 		model.add(new Thing("Alice", true, false));
@@ -80,10 +69,12 @@ public class Snippet022ComputedListCombo {
 		model.add(new Thing("Nail", false, false));
 	}
 
-	/**
-	 * @param shell
-	 */
-	protected void createControls(Shell shell) {
+	protected Shell createShell() {
+		createModel();
+
+		Shell shell = new Shell();
+		shell.setLayout(new GridLayout(1, false));
+
 		Composite composite = new Composite(shell, SWT.NONE);
 		Group group = new Group(composite, SWT.NONE);
 		group.setText("Filter");
@@ -97,16 +88,19 @@ public class Snippet022ComputedListCombo {
 		GridDataFactory.defaultsFor(combo).align(SWT.BEGINNING, SWT.BEGINNING).applyTo(combo);
 		ComboViewer viewer = new ComboViewer(combo);
 		viewer.setContentProvider(new ObservableListContentProvider<>());
+
 		// We should really have an out-of-the box filtered list...
 		IObservableList<Thing> filteredList = new ComputedList<Thing>() {
 			@Override
 			protected List<Thing> calculate() {
 				List<Thing> result = new ArrayList<>();
 				for (Thing thing : model) {
-					if (femaleObservable.getValue() && !thing.female)
+					if (femaleObservable.getValue() && !thing.female) {
 						continue;
-					if (maleObservable.getValue() && !thing.male)
+					}
+					if (maleObservable.getValue() && !thing.male) {
 						continue;
+					}
 					result.add(thing);
 				}
 				return result;
@@ -115,6 +109,11 @@ public class Snippet022ComputedListCombo {
 		viewer.setInput(filteredList);
 		GridLayoutFactory.swtDefaults().applyTo(group);
 		GridLayoutFactory.swtDefaults().applyTo(composite);
+
+		shell.pack();
+		shell.open();
+
+		return shell;
 	}
 
 	static class Thing {

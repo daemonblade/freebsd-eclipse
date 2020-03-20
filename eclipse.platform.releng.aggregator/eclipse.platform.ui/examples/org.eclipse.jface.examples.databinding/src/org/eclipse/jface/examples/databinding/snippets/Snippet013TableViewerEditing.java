@@ -31,8 +31,8 @@ import org.eclipse.core.databinding.observable.value.IObservableValue;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.databinding.swt.typed.WidgetProperties;
 import org.eclipse.jface.databinding.viewers.ObservableValueEditingSupport;
-import org.eclipse.jface.databinding.viewers.typed.ViewerProperties;
 import org.eclipse.jface.databinding.viewers.ViewerSupport;
+import org.eclipse.jface.databinding.viewers.typed.ViewerProperties;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ColumnViewer;
 import org.eclipse.jface.viewers.TableViewer;
@@ -54,10 +54,8 @@ public class Snippet013TableViewerEditing {
 	public static void main(String[] args) {
 		final Display display = new Display();
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			ViewModel viewModel = new ViewModel();
-			Shell shell = new View(viewModel).createShell();
+			Shell shell = new View(new ViewModel()).createShell();
 
-			// The SWT event loop
 			while (!shell.isDisposed()) {
 				if (!display.readAndDispatch()) {
 					display.sleep();
@@ -66,7 +64,7 @@ public class Snippet013TableViewerEditing {
 		});
 	}
 
-	// Minimal JavaBeans support
+	/** Helper class for implementing JavaBeans support. */
 	public static abstract class AbstractModelObject {
 		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -91,9 +89,13 @@ public class Snippet013TableViewerEditing {
 		}
 	}
 
-	// The data model class. This is normally a persistent class of some sort.
+	/**
+	 * The data model class.
+	 * <p>
+	 * This example implements full JavaBeans bound properties so that changes to
+	 * instances of this class will automatically be propagated to the UI.
+	 */
 	static class Person extends AbstractModelObject {
-		// A property...
 		String name = "John Smith";
 
 		public Person(String name) {
@@ -111,12 +113,9 @@ public class Snippet013TableViewerEditing {
 		}
 	}
 
-	// The View's model--the root of our Model graph for this particular GUI.
-	//
-	// Typically each View class has a corresponding ViewModel class.
-	// The ViewModel is responsible for getting the objects to edit from the
-	// data access tier. Since this snippet doesn't have any persistent objects
-	// ro retrieve, this ViewModel just instantiates a model object to edit.
+	/**
+	 * The View's model--the root of our Model graph for this particular GUI.
+	 */
 	static class ViewModel {
 		// The model to bind
 		private List<Person> people = new LinkedList<>();
@@ -134,6 +133,7 @@ public class Snippet013TableViewerEditing {
 			people.add(new Person("Lars Vogel"));
 			people.add(new Person("Simon Scholz"));
 			people.add(new Person("Stefan Xenos"));
+			people.add(new Person("Jens Lideström"));
 		}
 
 		public List<Person> getPeople() {
@@ -145,19 +145,13 @@ public class Snippet013TableViewerEditing {
 	 * Editing support that uses JFace Data Binding to control the editing
 	 * lifecycle. The standard EditingSupport get/setValue(...) lifecycle is not
 	 * used.
-	 *
-	 * @since 3.3
 	 */
 	private static class InlineEditingSupport extends ObservableValueEditingSupport<Person, String, String> {
 
 		private CellEditor cellEditor;
 
-		/**
-		 * @param viewer
-		 * @param dbc
-		 */
-		public InlineEditingSupport(ColumnViewer viewer, DataBindingContext dbc) {
-			super(viewer, dbc);
+		public InlineEditingSupport(ColumnViewer viewer, DataBindingContext bindingContext) {
+			super(viewer, bindingContext);
 			cellEditor = new TextCellEditor((Composite) viewer.getControl());
 		}
 
@@ -177,7 +171,7 @@ public class Snippet013TableViewerEditing {
 		}
 	}
 
-	// The GUI view
+	/** The GUI view. */
 	static class View {
 		private ViewModel viewModel;
 		private Table committers;
@@ -196,22 +190,18 @@ public class Snippet013TableViewerEditing {
 			committers.setLinesVisible(true);
 
 			selectedCommitter = new Label(shell, SWT.NONE);
-			// Set up data binding. In an RCP application, the threading
-			// Realm
-			// will be set for you automatically by the Workbench. In an SWT
-			// application, you can do this once, wrapping your binding
-			// method call.
+			// Set up data binding. In an RCP application, the threading Realm will be set
+			// for you automatically by the Workbench. In an SWT application, you can do
+			// this once, wrapping your binding method call.
 			DataBindingContext bindingContext = new DataBindingContext();
 			bindGUI(bindingContext);
 
-			// Open and return the Shell
 			shell.setSize(400, 600);
 			shell.open();
 			return shell;
 		}
 
 		protected void bindGUI(DataBindingContext bindingContext) {
-			// Since we're using a JFace Viewer, we do first wrap our Table...
 			TableViewer peopleViewer = new TableViewer(committers);
 			TableViewerColumn column = new TableViewerColumn(peopleViewer, SWT.NONE);
 			column.setEditingSupport(new InlineEditingSupport(peopleViewer, bindingContext));
@@ -221,11 +211,10 @@ public class Snippet013TableViewerEditing {
 			ViewerSupport.bind(peopleViewer, new WritableList<>(viewModel.getPeople(), Person.class),
 					BeanProperties.value(Person.class, "name"));
 
-			// bind selectedCommitter label to the name of the current selection
+			// Bind selectedCommitter label to the name of the current selection
 			IObservableValue<Person> selection = ViewerProperties.singleSelection(Person.class).observe(peopleViewer);
 			bindingContext.bindValue(WidgetProperties.text().observe(selectedCommitter),
-					BeanProperties.value(Person.class, "name", String.class)
-					.observeDetail(selection));
+					BeanProperties.value(Person.class, "name", String.class).observeDetail(selection));
 		}
 	}
 

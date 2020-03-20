@@ -26,11 +26,15 @@ import org.eclipse.ui.dialogs.FilteredResourcesSelectionDialog;
 import org.eclipse.ui.tests.harness.util.DisplayHelper;
 import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class ResourceSelectionFilteringDialogTest extends UITestCase {
 
-	public ResourceSelectionFilteringDialogTest(String testName) {
-		super(testName);
+	public ResourceSelectionFilteringDialogTest() {
+		super(ResourceSelectionFilteringDialogTest.class.getSimpleName());
 	}
 
 	private static SeeThroughFilteredResourcesSelectionDialog createDialog() {
@@ -52,6 +56,7 @@ public class ResourceSelectionFilteringDialogTest extends UITestCase {
 		project.open(null);
 	}
 
+	@Test
 	public void testMatch() throws CoreException {
 		File folder = new File(project.getLocation().toFile(), "a/b/c");
 		folder.mkdirs();
@@ -59,12 +64,16 @@ public class ResourceSelectionFilteringDialogTest extends UITestCase {
 		IFile file = project.getFile("a/b/c/f");
 		file.create(new ByteArrayInputStream(new byte[0]), true, null);
 		SeeThroughFilteredResourcesSelectionDialog dialog = createDialog();
-		dialog.setInitialPattern("c/f");
-		dialog.open();
-		dialog.refresh();
-		Assert.assertTrue(DisplayHelper.waitForCondition(dialog.getShell().getDisplay(), 3000, () ->
-			dialog.getSelectedItems().getFirstElement().equals(file)
-		));
+		try {
+			dialog.setInitialPattern("c/f");
+			dialog.open();
+			dialog.refresh();
+			Assert.assertTrue(DisplayHelper.waitForCondition(dialog.getShell().getDisplay(), 3000,
+					() -> file.equals(dialog.getSelectedItems().getFirstElement())
+			));
+		} finally {
+			dialog.close();
+		}
 	}
 
 	@Override

@@ -180,9 +180,7 @@ public class ModifyWorkingSetDelegate extends AbstractWorkingSetPulldownDelegate
 
 	@Override
 	public void fillMenu(Menu menu) {
-		List menuItems = getItems();
-		for (int i = 0; i < menuItems.size(); i++) {
-			Object object = menuItems.get(i);
+		for (Object object : getItems()) {
 			if (object instanceof IAction) {
 				ActionContributionItem item = new ActionContributionItem((IAction) object);
 				item.fill(menu, -1);
@@ -286,9 +284,7 @@ public class ModifyWorkingSetDelegate extends AbstractWorkingSetPulldownDelegate
 	}
 
 	private void fillMenu(IMenuManager menu) {
-		List menuItems = getItems();
-		for (int i = 0; i < menuItems.size(); i++) {
-			Object object = menuItems.get(i);
+		for (Object object : getItems()) {
 			if (object instanceof IAction) {
 				menu.add((IAction) object);
 			} else {
@@ -302,13 +298,11 @@ public class ModifyWorkingSetDelegate extends AbstractWorkingSetPulldownDelegate
 	public void selectionChanged(IAction actionProxy, ISelection selection) {
 		super.selectionChanged(actionProxy, selection);
 		if (selection instanceof IStructuredSelection) {
-			Object[] selectedElements = ((IStructuredSelection) getSelection()).toArray();
 			// ensure every item is of type IAdaptable and is NOT an IWorkingSet (minimal
 			// fix for 157799)
 			boolean minimallyOkay = true;
-			for (Object selectedElement : selectedElements) {
-				Object object = selectedElement;
-				if (!(object instanceof IAdaptable) || object instanceof IWorkingSet) {
+			for (Object selectedElement : (IStructuredSelection) getSelection()) {
+				if (!(selectedElement instanceof IAdaptable) || selectedElement instanceof IWorkingSet) {
 					minimallyOkay = false;
 					break;
 				}

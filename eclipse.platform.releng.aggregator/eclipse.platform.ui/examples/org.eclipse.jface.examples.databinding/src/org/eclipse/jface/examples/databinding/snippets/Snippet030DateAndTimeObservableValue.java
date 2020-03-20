@@ -35,50 +35,31 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-/**
- * @since 3.2
- *
- */
 public class Snippet030DateAndTimeObservableValue {
-	protected Shell shell;
 	private Text modelText;
 	private DateTime date;
 	private DateTime calendar;
 	private DateTime time;
 	private Button syncTime;
 
-	/**
-	 * Launch the application
-	 *
-	 * @param args
-	 */
 	public static void main(String[] args) {
-		try {
-			Snippet030DateAndTimeObservableValue window = new Snippet030DateAndTimeObservableValue();
-			window.open();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Open the window
-	 */
-	public void open() {
 		final Display display = Display.getDefault();
+
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			createContents();
-			shell.pack();
-			shell.open();
+			Shell shell = new Snippet030DateAndTimeObservableValue().createShell();
+
 			while (!shell.isDisposed()) {
-				if (!display.readAndDispatch())
+				if (!display.readAndDispatch()) {
 					display.sleep();
+				}
 			}
 		});
+
+		display.dispose();
 	}
 
-	protected void createContents() {
-		shell = new Shell();
+	private Shell createShell() {
+		Shell shell = new Shell();
 		GridLayout layout = new GridLayout();
 		layout.numColumns = 3;
 		shell.setLayout(layout);
@@ -87,18 +68,15 @@ public class Snippet030DateAndTimeObservableValue {
 		new Label(shell, SWT.NONE).setText("Model date + time");
 		modelText = new Text(shell, SWT.BORDER);
 		modelText.setEditable(false);
-		modelText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false,
-				2, 1));
+		modelText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 
 		new Label(shell, SWT.NONE).setText("Target date (SWT.DATE)");
 		date = new DateTime(shell, SWT.DATE | SWT.BORDER);
-		date.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 2,
-				1));
+		date.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1));
 
 		new Label(shell, SWT.NONE).setText("Target date (SWT.CALENDAR)");
 		calendar = new DateTime(shell, SWT.CALENDAR);
-		calendar.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false,
-				2, 1));
+		calendar.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1));
 
 		new Label(shell, SWT.NONE).setText("Target time");
 		time = new DateTime(shell, SWT.TIME | SWT.BORDER);
@@ -108,22 +86,28 @@ public class Snippet030DateAndTimeObservableValue {
 		syncTime.setText("Sync with system time");
 
 		bindUI();
+
+		shell.pack();
+		shell.open();
+
+		return shell;
 	}
 
 	private void bindUI() {
-		DataBindingContext dbc = new DataBindingContext();
+		DataBindingContext bindingContext = new DataBindingContext();
 
 		IObservableValue<Date> model = WritableValue.withValueType(Date.class);
 		model.setValue(new Date());
 
-		dbc.bindValue(WidgetProperties.text().observe(modelText), model);
+		bindingContext.bindValue(WidgetProperties.text().observe(modelText), model);
 
 		final IObservableValue<Date> timeSelection = WidgetProperties.dateTimeSelection().observe(time);
 
-		dbc.bindValue(new DateAndTimeObservableValue(WidgetProperties.dateTimeSelection().observe(date),
-				timeSelection), model);
-		dbc.bindValue(new DateAndTimeObservableValue(
-				WidgetProperties.dateTimeSelection().observe(calendar), timeSelection), model);
+		bindingContext.bindValue(new DateAndTimeObservableValue(WidgetProperties.dateTimeSelection().observe(date), timeSelection),
+				model);
+		bindingContext.bindValue(
+				new DateAndTimeObservableValue(WidgetProperties.dateTimeSelection().observe(calendar), timeSelection),
+				model);
 
 		syncTime.addListener(SWT.Selection, new Listener() {
 			Runnable runnable = new Runnable() {

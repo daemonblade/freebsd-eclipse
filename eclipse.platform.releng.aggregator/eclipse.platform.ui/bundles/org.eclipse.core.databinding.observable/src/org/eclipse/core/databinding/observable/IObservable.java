@@ -24,10 +24,16 @@ package org.eclipse.core.databinding.observable;
  * </p>
  *
  * @noimplement This interface is not intended to be implemented by clients.
- *              Clients should instead subclass one of the classes in the
- *              framework that implement this interface. Note that direct
- *              implementers of this interface outside of the framework will be
- *              broken in future releases when methods are added to this
+ *              Clients should instead subclass one of the classes that
+ *              implement this interface.
+ *              <p>
+ *              Authors of extensions to the databinding framework may extend
+ *              this interface and indirectly implement it, but if doing so must
+ *              also extend one of the framework classes. (Use an API problem
+ *              filter to suppress the resulting warning.)
+ *              <p>
+ *              Direct implementers of this interface outside of the framework
+ *              will be broken in future releases when methods are added to this
  *              interface.
  *
  * @since 1.0
@@ -53,28 +59,28 @@ public interface IObservable {
 	/**
 	 * Adds the given change listener to the list of change listeners. Change
 	 * listeners are notified about changes of the state of this observable in a
-	 * generic way, without specifying the change that happened. To get the
-	 * changed state, a change listener needs to query for the current state of
-	 * this observable.
+	 * generic way, without specifying the change that happened. To get the changed
+	 * state, a change listener needs to query for the current state of this
+	 * observable.
 	 *
-	 * @param listener
+	 * @param listener the listener to add; not <code>null</code>
 	 */
 	public void addChangeListener(IChangeListener listener);
 
 	/**
-	 * Removes the given change listener from the list of change listeners. Has
-	 * no effect if the given listener is not registered as a change listener.
+	 * Removes the given change listener from the list of change listeners. Has no
+	 * effect if the given listener is not registered as a change listener.
 	 *
-	 * @param listener
+	 * @param listener the listener to remove; not <code>null</code>
 	 */
 	public void removeChangeListener(IChangeListener listener);
 
 	/**
-	 * Adds the given stale listener to the list of stale listeners. Stale
-	 * listeners are notified when an observable object becomes stale, not when
-	 * is becomes non-stale.
+	 * Adds the given stale listener to the list of stale listeners. Stale listeners
+	 * are notified when an observable object becomes stale, not when is becomes
+	 * non-stale.
 	 *
-	 * @param listener
+	 * @param listener the listener to add; not <code>null</code>
 	 *
 	 * @see #isStale()
 	 */
@@ -84,7 +90,7 @@ public interface IObservable {
 	 * Removes the given stale listener from the list of stale listeners. Has no
 	 * effect if the given listener is not registered as a stale listener.
 	 *
-	 * @param listener
+	 * @param listener the listener to remove; not <code>null</code>
 	 */
 	public void removeStaleListener(IStaleListener listener);
 

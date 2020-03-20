@@ -13,9 +13,8 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.performance.layout;
 
-import junit.framework.Assert;
+import static org.junit.Assert.assertNotNull;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.e4.ui.model.application.ui.basic.MPart;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
@@ -30,6 +29,7 @@ import org.eclipse.ui.tests.harness.util.EmptyPerspective;
 import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.eclipse.ui.tests.performance.BasicPerformanceTest;
 
+
 /**
  * @since 3.1
  */
@@ -41,7 +41,7 @@ public class ViewWidgetFactory extends TestWidgetFactory {
 
 	public ViewWidgetFactory(String viewId) {
 		this.viewId = viewId;
-		Assert.assertNotNull(viewId);
+		assertNotNull(viewId);
 	}
 
 	@Override
@@ -56,11 +56,11 @@ public class ViewWidgetFactory extends TestWidgetFactory {
 	}
 
 	@Override
-	public void init() throws CoreException, WorkbenchException {
+	public void init() throws WorkbenchException {
 		// open the view in a new window
 		window = PlatformUI.getWorkbench().openWorkbenchWindow(EmptyPerspective.PERSP_ID, UITestCase.getPageInput());
 		IWorkbenchPage page = window.getActivePage();
-		Assert.assertNotNull(page);
+		assertNotNull(page);
 
 		IViewPart part = page.showView(viewId, null, IWorkbenchPage.VIEW_ACTIVATE);
 
@@ -79,14 +79,13 @@ public class ViewWidgetFactory extends TestWidgetFactory {
 	}
 
 	@Override
-	public Composite getControl() throws CoreException, WorkbenchException {
+	public Composite getControl() {
 		return (Composite)ctrl;
 	}
 
 	@Override
-	public void done() throws CoreException, WorkbenchException {
+	public void done() {
 		window.close();
-		super.done();
 	}
 
 }

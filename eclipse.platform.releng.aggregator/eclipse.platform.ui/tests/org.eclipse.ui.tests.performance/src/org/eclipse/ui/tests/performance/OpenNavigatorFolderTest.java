@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import junit.framework.Assert;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -33,6 +33,7 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.views.navigator.ResourceNavigator;
 import org.osgi.framework.Bundle;
+
 
 /**
  * This class/test was originally written for WTP bug 106158, and adapted to a
@@ -66,65 +67,37 @@ public class OpenNavigatorFolderTest extends PerformanceTestCase {
 		IProject project = createProject("testViewAndContentTypeProject");
 		Bundle bundle = Platform.getBundle("org.eclipse.ui.tests.performance");
 		URL url = bundle.getEntry("data/testContentType.zip");
-		ZipInputStream zis = null;
-		try {
-			zis = new ZipInputStream(url.openStream());
+		try (ZipInputStream zis = new ZipInputStream(url.openStream())) {
 			ZipEntry entry = zis.getNextEntry();
 			while (entry != null) {
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				try {
+				byte[] content = new byte[0];
+				try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 					byte[] b = new byte[2048];
 					int read = zis.read(b);
 					while (read != -1) {
 						baos.write(b, 0, read);
 						read = zis.read(b);
 					}
+					content = baos.toByteArray();
 				}
 				catch (IOException e) {
-					Assert.fail(e.getMessage());
-				}
-				finally {
-					try {
-						baos.close();
-					}
-					catch (IOException e) {
-						Assert.fail(e.getMessage());
-					}
+					fail(e.getMessage());
 				}
 				IFile file = project.getFile(entry.getName());
-				ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-				try {
+				try (ByteArrayInputStream bais = new ByteArrayInputStream(content)) {
 					if (!file.exists())
 						file.create(bais, true, new NullProgressMonitor());
 					else
 						file.setContents(bais, true, false, new NullProgressMonitor());
 				}
 				catch (CoreException e) {
-					Assert.fail(e.getMessage());
-				}
-				finally {
-					try {
-						bais.close();
-					}
-					catch (IOException e) {
-						Assert.fail(e.getMessage());
-					}
+					fail(e.getMessage());
 				}
 				entry = zis.getNextEntry();
 			}
 		}
 		catch (IOException e) {
-			Assert.fail(e.getMessage());
-		}
-		finally {
-			try {
-				if (zis != null) {
-					zis.close();
-				}
-			}
-			catch (IOException e) {
-				Assert.fail(e.getMessage());
-			}
+			fail(e.getMessage());
 		}
 		startMeasuring();
 		IWorkbenchPage activePage = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
@@ -133,14 +106,14 @@ public class OpenNavigatorFolderTest extends PerformanceTestCase {
 			view = activePage.showView("org.eclipse.ui.views.ResourceNavigator");
 		}
 		catch (PartInitException e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 		ResourceNavigator navigatorView = null;
 		try {
 			navigatorView = (ResourceNavigator) view;
 		}
 		catch (ClassCastException e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 		navigatorView.getTreeViewer().expandAll();
 		stopMeasuring();
@@ -156,7 +129,7 @@ public class OpenNavigatorFolderTest extends PerformanceTestCase {
 				project.open(new NullProgressMonitor());
 			}
 			catch (CoreException e) {
-				Assert.fail(e.getMessage());
+				fail(e.getMessage());
 			}
 		}
 		return project;

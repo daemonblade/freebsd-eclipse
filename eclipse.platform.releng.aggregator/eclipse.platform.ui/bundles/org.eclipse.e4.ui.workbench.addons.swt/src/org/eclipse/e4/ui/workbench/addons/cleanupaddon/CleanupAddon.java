@@ -47,6 +47,9 @@ import org.eclipse.swt.widgets.Shell;
 import org.osgi.service.event.Event;
 
 public class CleanupAddon {
+
+	private static final String DISABLE_CLEANUP_ADDON = "DisableCleanupAddon";
+
 	@Inject
 	IEventBroker eventBroker;
 
@@ -59,6 +62,11 @@ public class CleanupAddon {
 	@Inject
 	@Optional
 	private void subscribeTopicChildren(@UIEventTopic(UIEvents.ElementContainer.TOPIC_CHILDREN) Event event) {
+
+		// Disable the addon if the tag is set on the application
+		if (app.getTags().contains(DISABLE_CLEANUP_ADDON)) {
+			return;
+		}
 
 		Display display = Display.getCurrent();
 		Assert.isNotNull(display);
@@ -167,6 +175,12 @@ public class CleanupAddon {
 	@Optional
 	private void subscribeVisibilityChanged(
 			@UIEventTopic(UIEvents.UIElement.TOPIC_VISIBLE) Event event) {
+
+		// Disable the addon if the tag is set on the application
+		if (app.getTags().contains(DISABLE_CLEANUP_ADDON)) {
+			return;
+		}
+
 		MUIElement changedObj = (MUIElement) event.getProperty(UIEvents.EventTags.ELEMENT);
 		if (changedObj instanceof MTrimBar || ((Object) changedObj.getParent()) instanceof MToolBar) {
 			return;
@@ -240,7 +254,7 @@ public class CleanupAddon {
 					}
 				}
 			} else {
-				Shell limbo = (Shell) app.getContext().get("limbo");
+				Shell limbo = (Shell) app.getContext().get("limbo"); //$NON-NLS-1$
 
 				// Reparent the control to 'limbo'
 				Composite curParent = ctrl.getParent();
@@ -282,6 +296,12 @@ public class CleanupAddon {
 	@Optional
 	private void subscribeRenderingChanged(
 			@UIEventTopic(UIEvents.UIElement.TOPIC_TOBERENDERED) Event event) {
+
+		// Disable the addon if the tag is set on the application
+		if (app.getTags().contains(DISABLE_CLEANUP_ADDON)) {
+			return;
+		}
+
 			MUIElement changedObj = (MUIElement) event.getProperty(UIEvents.EventTags.ELEMENT);
 			MElementContainer<MUIElement> container = null;
 			if (changedObj.getCurSharedRef() != null) {

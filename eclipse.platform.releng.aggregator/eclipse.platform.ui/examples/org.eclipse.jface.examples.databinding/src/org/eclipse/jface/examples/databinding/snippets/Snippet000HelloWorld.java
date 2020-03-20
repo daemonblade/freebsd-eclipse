@@ -42,30 +42,31 @@ import org.eclipse.swt.widgets.Text;
  */
 public class Snippet000HelloWorld {
 	public static void main(String[] args) {
-		Display display = new Display();
-		final ViewModel viewModel = new ViewModel();
+		final Display display = new Display();
 
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			final Shell shell = new View(viewModel).createShell();
-			// The SWT event loop
-			Display display1 = Display.getCurrent();
+			ViewModel viewModel = new ViewModel();
+			Shell shell = new View(viewModel).createShell();
+
 			while (!shell.isDisposed()) {
-				if (!display1.readAndDispatch()) {
-					display1.sleep();
+				if (!display.readAndDispatch()) {
+					display.sleep();
 				}
 			}
 		});
+
+		display.dispose();
 	}
 
-	// The data model class. This is normally a persistent class of some sort.
-	//
-	// In this example, we only push changes from the GUI to the model, so we
-	// don't worry about implementing JavaBeans bound properties. If we need
-	// our GUI to automatically reflect changes in the Person object, the
-	// Person object would need to implement the JavaBeans property change
-	// listener methods.
+	/**
+	 * The data model class.
+	 * <p>
+	 * In this example, we only push changes from the GUI to the model, so we don't
+	 * worry about implementing JavaBeans bound properties. If we need our GUI to
+	 * automatically reflect changes in the Person object, the Person object would
+	 * need to implement the JavaBeans property change listener methods.
+	 */
 	static class Person {
-		// A property...
 		String name = "HelloWorld";
 
 		public String getName() {
@@ -82,12 +83,9 @@ public class Snippet000HelloWorld {
 		}
 	}
 
-	// The View's model--the root of our Model graph for this particular GUI.
-	//
-	// Typically each View class has a corresponding ViewModel class.
-	// The ViewModel is responsible for getting the objects to edit from the
-	// DAO. Since this snippet doesn't have any persistent objects to
-	// retrieve, this ViewModel just instantiates a model object to edit.
+	/**
+	 * The View's model--the root of our Model graph for this particular GUI.
+	 */
 	static class ViewModel {
 		// The model to bind
 		private Person person = new Person();
@@ -97,7 +95,7 @@ public class Snippet000HelloWorld {
 		}
 	}
 
-	// The GUI view
+	/** The GUI view. */
 	static class View {
 		private ViewModel viewModel;
 		private Text textName;
@@ -108,8 +106,7 @@ public class Snippet000HelloWorld {
 		}
 
 		public Shell createShell() {
-			Display display = Display.getDefault();
-			Shell shell = new Shell(display);
+			Shell shell = new Shell();
 			shell.setLayout(new GridLayout(1, false));
 			textName = new Text(shell, SWT.BORDER);
 			Button button = new Button(shell, SWT.PUSH);
@@ -120,11 +117,9 @@ public class Snippet000HelloWorld {
 			DataBindingContext bindingContext = new DataBindingContext();
 			person = viewModel.getPerson();
 
-			bindingContext.bindValue(
-					WidgetProperties.text(SWT.Modify).observe(textName),
+			bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(textName),
 					PojoProperties.value("name").observe(person));
 
-			// Open and return the Shell
 			shell.pack();
 			shell.open();
 			return shell;

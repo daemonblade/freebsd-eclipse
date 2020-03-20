@@ -37,7 +37,7 @@ IEclipsePreferences#org-eclipse-ui-editors:org-eclipse-ui-themes { /* pseudo att
 		'hyperlinkColor=102,175,249'
 		'hyperlinkColor.SystemDefault=false'
 		'infoIndicationColor=86,194,170'
-		'lineNumberColor=101,123,131'
+		'lineNumberColor=119,145,154'
 		'linked.slave.color=66,156,255'
 		'matchingTagIndicationColor=72,72,72'
 		'occurrenceIndicationColor=27,98,145'
@@ -69,5 +69,7 @@ IEclipsePreferences#org-eclipse-ui-workbench:org-eclipse-ui-themes { /* pseudo a
 		'RESOLVED_COLOR=108,210,17'
 		'org.eclipse.search.ui.match.highlight=206,92,0'
 		'org.eclipse.ui.editors.rangeIndicatorColor=27,118,153'
+		'org.eclipse.jface.REVISION_NEWEST_COLOR=75,44,3'
+		'org.eclipse.jface.REVISION_OLDEST_COLOR=154,113,61'
 }
 

@@ -38,12 +38,13 @@ public class Messages extends NLS {
 	public static String LogView_import;
 	public static String LogView_import_tooltip;
 	public static String LogView_filter;
+	public static String LogView_readLog_loading;
 	public static String LogView_readLog_reload;
 	public static String LogView_readLog_restore;
 	public static String LogView_readLog_restore_tooltip;
 	public static String LogView_show_filter_text;
 	public static String LogView_show_filter_initialText;
-	
+
 	public static String LogView_SessionStarted;
 	public static String LogView_severity_error;
 	public static String LogView_severity_warning;

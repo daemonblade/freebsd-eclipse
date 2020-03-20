@@ -22,7 +22,7 @@ import org.eclipse.ui.internal.views.navigator.ResourceNavigatorMessages;
 
 /**
  * This is the action group for the sort and filter actions.
- * 
+ *
  * @noextend This class is not intended to be subclassed by clients.
  * @noinstantiate This class is not intended to be instantiated by clients.
  * @noreference This class is not intended to be referenced by clients.
@@ -43,7 +43,7 @@ public class SortAndFilterActionGroup extends ResourceNavigatorActionGroup {
 	/**
 	 * Constructor.
 	 *
-	 * @param navigator
+	 * @param navigator the resource navigator
 	 */
 	public SortAndFilterActionGroup(IResourceNavigator navigator) {
 		super(navigator);

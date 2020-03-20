@@ -18,7 +18,6 @@ import java.util.Collection;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.test.performance.Dimension;
-import org.eclipse.ui.tests.performance.TestRunnable;
 
 public class FastTreeTest extends TreeAddTest {
 
@@ -32,8 +31,7 @@ public class FastTreeTest extends TreeAddTest {
 	}
 
 	/**
-	 * @throws CoreException
-	 *             Test addition to the tree one element at a time.
+	 * Test addition to the tree one element at a time.
 	 */
 	public void testAddTenTenTimes() throws CoreException {
 
@@ -42,8 +40,7 @@ public class FastTreeTest extends TreeAddTest {
 
 
 	/**
-	 * @throws CoreException
-	 *             Test addition to the tree one element at a time.
+	 * Test addition to the tree one element at a time.
 	 */
 	public void testAddFiftyTenTimes() throws CoreException {
 
@@ -51,12 +48,10 @@ public class FastTreeTest extends TreeAddTest {
 	}
 
 	/**
-	 * @throws CoreException
-	 *             Test addition to the tree one element at a time.
+	 * Test addition to the tree one element at a time.
 	 */
 	public void testAddHundredTenTimes() throws CoreException {
-
-		tagIfNecessary("JFace - Add 10000 items 100 at a time TreeViewer 10 times",
+		tagAsSummary("JFace - Add 10000 items 100 at a time TreeViewer 10 times",
 				Dimension.ELAPSED_PROCESS);
 
 		doTestAdd(100, TEST_COUNT, false);
@@ -74,38 +69,34 @@ public class FastTreeTest extends TreeAddTest {
 
 		openBrowser();
 
-		exercise(new TestRunnable() {
-			@Override
-			public void run() {
+		exercise(() -> {
 
-				TestTreeElement input = new TestTreeElement(0, null);
-				viewer.setInput(input);
-				input.createChildren(total);
-				if (preSort)
-					viewer.getSorter().sort(viewer, input.children);
-				Collection<Object> batches = new ArrayList<>();
-				int blocks = input.children.length / increment;
-				for (int j = 0; j < blocks; j = j + increment) {
-					Object[] batch = new Object[increment];
-					System.arraycopy(input.children, j * increment, batch, 0,
-							increment);
-					batches.add(batch);
-				}
-				processEvents();
-				Object[] batchArray = batches.toArray();
-				startMeasuring();
-				for (int i = 0; i < 10; i++) {
-					viewer.remove((Object[]) input.children);
-					for (Object batch : batchArray) {
-						viewer.add(input, (Object[]) batch);
-						processEvents();
-					}
-				}
-
-
-				stopMeasuring();
-
+			TestTreeElement input = new TestTreeElement(0, null);
+			viewer.setInput(input);
+			input.createChildren(total);
+			if (preSort)
+				viewer.getSorter().sort(viewer, input.children);
+			Collection<Object> batches = new ArrayList<>();
+			int blocks = input.children.length / increment;
+			for (int j = 0; j < blocks; j = j + increment) {
+				Object[] batch1 = new Object[increment];
+				System.arraycopy(input.children, j * increment, batch1, 0, increment);
+				batches.add(batch1);
 			}
+			processEvents();
+			Object[] batchArray = batches.toArray();
+			startMeasuring();
+			for (int i = 0; i < 10; i++) {
+				viewer.remove((Object[]) input.children);
+				for (Object batch2 : batchArray) {
+					viewer.add(input, (Object[]) batch2);
+					processEvents();
+				}
+			}
+
+
+			stopMeasuring();
+
 		}, MIN_ITERATIONS, ITERATIONS, JFacePerformanceSuite.MAX_TIME);
 
 		commitMeasurements();

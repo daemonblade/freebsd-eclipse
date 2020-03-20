@@ -26,8 +26,8 @@ import org.eclipse.core.databinding.observable.list.WritableList;
 import org.eclipse.core.databinding.observable.value.IObservableValue;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.databinding.swt.typed.WidgetProperties;
-import org.eclipse.jface.databinding.viewers.typed.ViewerProperties;
 import org.eclipse.jface.databinding.viewers.ViewerSupport;
+import org.eclipse.jface.databinding.viewers.typed.ViewerProperties;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.ComboViewer;
@@ -50,60 +50,53 @@ public class Snippet025TableViewerWithPropertyDerivedColumns {
 	public static void main(String[] args) {
 		final Display display = new Display();
 
-		// Set up data binding. In an RCP application, the threading Realm
-		// will be set for you automatically by the Workbench. In an SWT
-		// application, you can do this once, wrapping your binding
-		// method call.
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			ViewModel viewModel = new ViewModel();
-			Shell shell = new View(viewModel).createShell();
+			Shell shell = new View(new ViewModel()).createShell();
 
-			// The SWT event loop
 			while (!shell.isDisposed()) {
 				if (!display.readAndDispatch()) {
 					display.sleep();
 				}
 			}
 		});
+
+		display.dispose();
 	}
 
-	// Minimal JavaBeans support
+	/** Helper class for implementing JavaBeans support. */
 	public static abstract class AbstractModelObject {
-		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(
-				this);
+		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
 		public void addPropertyChangeListener(PropertyChangeListener listener) {
 			propertyChangeSupport.addPropertyChangeListener(listener);
 		}
 
-		public void addPropertyChangeListener(String propertyName,
-				PropertyChangeListener listener) {
-			propertyChangeSupport.addPropertyChangeListener(propertyName,
-					listener);
+		public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+			propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
 		}
 
 		public void removePropertyChangeListener(PropertyChangeListener listener) {
 			propertyChangeSupport.removePropertyChangeListener(listener);
 		}
 
-		public void removePropertyChangeListener(String propertyName,
-				PropertyChangeListener listener) {
-			propertyChangeSupport.removePropertyChangeListener(propertyName,
-					listener);
+		public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+			propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
 		}
 
-		protected void firePropertyChange(String propertyName, Object oldValue,
-				Object newValue) {
-			propertyChangeSupport.firePropertyChange(propertyName, oldValue,
-					newValue);
+		protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+			propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
 		}
 	}
 
 	private static Person UNKNOWN = new Person("unknown", null, null);
 
-	// The data model class. This is normally a persistent class of some sort.
+	/**
+	 * The data model class.
+	 * <p>
+	 * This example implements full JavaBeans bound properties so that changes to
+	 * instances of this class will automatically be propagated to the UI.
+	 */
 	static class Person extends AbstractModelObject {
-		// A property...
 		String name = "Donald Duck";
 		Person mother;
 		Person father;
@@ -139,12 +132,9 @@ public class Snippet025TableViewerWithPropertyDerivedColumns {
 		}
 	}
 
-	// The View's model--the root of our Model graph for this particular GUI.
-	//
-	// Typically each View class has a corresponding ViewModel class.
-	// The ViewModel is responsible for getting the objects to edit from the
-	// data access tier. Since this snippet doesn't have any persistent objects
-	// ro retrieve, this ViewModel just instantiates a model object to edit.
+	/**
+	 * The View's model--the root of our Model graph for this particular GUI.
+	 */
 	static class ViewModel {
 		// The model to bind
 		private IObservableList<Person> people = new WritableList<>();
@@ -171,7 +161,7 @@ public class Snippet025TableViewerWithPropertyDerivedColumns {
 		}
 	}
 
-	// The GUI view
+	/** The GUI view. */
 	static class View {
 		private ViewModel viewModel;
 		private Table duckFamily;
@@ -189,8 +179,7 @@ public class Snippet025TableViewerWithPropertyDerivedColumns {
 			Shell shell = new Shell(display);
 			duckFamily = new Table(shell, SWT.BORDER | SWT.FULL_SELECTION);
 			duckFamily.setHeaderVisible(true);
-			GridDataFactory.defaultsFor(duckFamily).span(2, 1).applyTo(
-					duckFamily);
+			GridDataFactory.defaultsFor(duckFamily).span(2, 1).applyTo(duckFamily);
 			createColumn("Name");
 			createColumn("Mother");
 			createColumn("Father");
@@ -215,7 +204,6 @@ public class Snippet025TableViewerWithPropertyDerivedColumns {
 			bindGUI(bindingContext);
 
 			GridLayoutFactory.swtDefaults().numColumns(2).applyTo(shell);
-			// Open and return the Shell
 			shell.setSize(800, 300);
 			shell.open();
 			return shell;
@@ -225,47 +213,41 @@ public class Snippet025TableViewerWithPropertyDerivedColumns {
 			final TableColumn column = new TableColumn(duckFamily, SWT.NONE);
 			column.setText(string);
 			column.pack();
-			if (column.getWidth() < 100)
+			if (column.getWidth() < 100) {
 				column.setWidth(100);
+			}
 		}
 
-		protected void bindGUI(DataBindingContext dbc) {
-			// Since we're using a JFace Viewer, we do first wrap our Table...
+		protected void bindGUI(DataBindingContext bindingContext) {
 			TableViewer peopleViewer = new TableViewer(duckFamily);
 			peopleViewer.addFilter(new ViewerFilter() {
 				@Override
-				public boolean select(Viewer viewer, Object parentElement,
-						Object element) {
+				public boolean select(Viewer viewer, Object parentElement, Object element) {
 					return element != UNKNOWN;
 				}
 			});
 
 			ViewerSupport.bind(peopleViewer, viewModel.getPeople(),
-					BeanProperties.values(Person.class, new String[] { "name",
-							"mother.name", "father.name", "mother.mother.name",
-							"mother.father.name", "father.mother.name",
-							"father.father.name" }));
+					BeanProperties.values(Person.class, "name", "mother.name", "father.name", "mother.mother.name",
+							"mother.father.name", "father.mother.name", "father.father.name"));
 
 			IObservableValue<Person> masterSelection = ViewerProperties.singleSelection(Person.class)
 					.observe(peopleViewer);
 
-			dbc.bindValue(WidgetProperties.text(SWT.Modify).observe(nameText),
+			bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(nameText),
 					BeanProperties.value(Person.class, "name").observeDetail(masterSelection));
 
 			ComboViewer mothercomboViewer = new ComboViewer(motherCombo);
-			ViewerSupport.bind(mothercomboViewer, viewModel.getPeople(),
-					BeanProperties.value(Person.class, "name"));
+			ViewerSupport.bind(mothercomboViewer, viewModel.getPeople(), BeanProperties.value(Person.class, "name"));
 
-			dbc.bindValue(ViewerProperties.singleSelection().observe(mothercomboViewer),
+			bindingContext.bindValue(ViewerProperties.singleSelection().observe(mothercomboViewer),
 					BeanProperties.value(Person.class, "mother").observeDetail(masterSelection));
 
 			ComboViewer fatherComboViewer = new ComboViewer(fatherCombo);
-			ViewerSupport.bind(fatherComboViewer, viewModel.getPeople(),
-					BeanProperties.value(Person.class, "name"));
+			ViewerSupport.bind(fatherComboViewer, viewModel.getPeople(), BeanProperties.value(Person.class, "name"));
 
-			dbc.bindValue(ViewerProperties.singleSelection().observe(
-					fatherComboViewer), BeanProperties.value(Person.class,
-					"father").observeDetail(masterSelection));
+			bindingContext.bindValue(ViewerProperties.singleSelection().observe(fatherComboViewer),
+					BeanProperties.value(Person.class, "father").observeDetail(masterSelection));
 		}
 	}
 }

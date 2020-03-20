@@ -69,7 +69,6 @@ import org.eclipse.e4.ui.workbench.Selector;
 import org.eclipse.e4.ui.workbench.UIEvents;
 import org.eclipse.e4.ui.workbench.UIEvents.ElementContainer;
 import org.eclipse.e4.ui.workbench.UIEvents.EventTags;
-import org.eclipse.e4.ui.workbench.modeling.EModelService;
 import org.eclipse.emf.common.util.ECollections;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.jface.action.AbstractGroupMarker;
@@ -87,7 +86,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.ToolBar;
-import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Widget;
 import org.osgi.service.event.Event;
 
@@ -125,9 +123,6 @@ public class ToolBarManagerRenderer extends SWTPartRenderer {
 	private MApplication application;
 
 	@Inject
-	EModelService modelService;
-
-	@Inject
 	@Optional
 	private void subscribeTopicUpdateItems(@UIEventTopic(UIEvents.UILabel.TOPIC_ALL) Event event) {
 		// Ensure that this event is for a MToolBarElement
@@ -155,65 +150,72 @@ public class ToolBarManagerRenderer extends SWTPartRenderer {
 
 	@Inject
 	@Optional
-	private void subscribeTopicUpdateToBeRendered(@UIEventTopic(UIEvents.UIElement.TOPIC_ALL) Event event) {
+	private void subscribeUIElementTopicToBeRendered(@UIEventTopic(UIEvents.UIElement.TOPIC_TOBERENDERED) Event event) {
 		// Ensure that this event is for a MToolBarElement
 		if (!(event.getProperty(UIEvents.EventTags.ELEMENT) instanceof MToolBarElement)) {
 			return;
 		}
 
 		MToolBarElement itemModel = (MToolBarElement) event.getProperty(UIEvents.EventTags.ELEMENT);
-		String attName = (String) event.getProperty(UIEvents.EventTags.ATTNAME);
-		if (UIEvents.UIElement.TOBERENDERED.equals(attName)) {
-			Object obj = itemModel.getParent();
-			if (!(obj instanceof MToolBar)) {
-				return;
-			}
-			ToolBarManager parent = getManager((MToolBar) obj);
-			if (itemModel.isToBeRendered()) {
-				if (parent != null) {
-					modelProcessSwitch(parent, itemModel);
-					updateWidget(parent);
-				}
-			} else {
-				removeElement(parent, itemModel);
-				if (parent != null) {
-					updateWidget(parent);
-				}
-			}
-		} else if (UIEvents.UIElement.VISIBLE.equals(attName)) {
-			IContributionItem ici = getContribution(itemModel);
-			if (ici == null) {
-				return;
-			}
-
-			ToolBarManager parent = null;
-			if (ici instanceof MenuManager) {
-				parent = (ToolBarManager) ((MenuManager) ici).getParent();
-			} else if (ici instanceof ContributionItem) {
-				parent = (ToolBarManager) ((ContributionItem) ici).getParent();
-			}
-
-			if (parent == null) {
-				ici.setVisible(itemModel.isVisible());
-				return;
-			}
-
-			IContributionManagerOverrides ov = parent.getOverrides();
-			// partial fix for bug 383569: only change state if there are no
-			// extra override mechanics controlling element visibility
-			if (ov == null) {
-				ici.setVisible(itemModel.isVisible());
-			} else {
-				Boolean visible = ov.getVisible(ici);
-				if (visible == null) {
-					// same as above: only change state if there are no extra
-					// override mechanics controlling element visibility
-					ici.setVisible(itemModel.isVisible());
-				}
-			}
-
-			updateWidget(parent);
+		Object obj = itemModel.getParent();
+		if (!(obj instanceof MToolBar)) {
+			return;
 		}
+		ToolBarManager parent = getManager((MToolBar) obj);
+		if (itemModel.isToBeRendered()) {
+			if (parent != null) {
+				modelProcessSwitch(parent, itemModel);
+				updateWidget(parent);
+			}
+		} else {
+			removeElement(parent, itemModel);
+			if (parent != null) {
+				updateWidget(parent);
+			}
+		}
+	}
+
+	@Inject
+	@Optional
+	private void subscribeUIElementTopicVisible(@UIEventTopic(UIEvents.UIElement.TOPIC_VISIBLE) Event event) {
+		// Ensure that this event is for a MToolBarElement
+		if (!(event.getProperty(UIEvents.EventTags.ELEMENT) instanceof MToolBarElement)) {
+			return;
+		}
+
+		MToolBarElement itemModel = (MToolBarElement) event.getProperty(UIEvents.EventTags.ELEMENT);
+		IContributionItem ici = getContribution(itemModel);
+		if (ici == null) {
+			return;
+		}
+
+		ToolBarManager parent = null;
+		if (ici instanceof MenuManager) {
+			parent = (ToolBarManager) ((MenuManager) ici).getParent();
+		} else if (ici instanceof ContributionItem) {
+			parent = (ToolBarManager) ((ContributionItem) ici).getParent();
+		}
+
+		if (parent == null) {
+			ici.setVisible(itemModel.isVisible());
+			return;
+		}
+
+		IContributionManagerOverrides ov = parent.getOverrides();
+		// partial fix for bug 383569: only change state if there are no
+		// extra override mechanics controlling element visibility
+		if (ov == null) {
+			ici.setVisible(itemModel.isVisible());
+		} else {
+			Boolean visible = ov.getVisible(ici);
+			if (visible == null) {
+				// same as above: only change state if there are no extra
+				// override mechanics controlling element visibility
+				ici.setVisible(itemModel.isVisible());
+			}
+		}
+
+		updateWidget(parent);
 	}
 
 	@Inject
@@ -380,7 +382,7 @@ public class ToolBarManagerRenderer extends SWTPartRenderer {
 	}
 
 	@PreDestroy
-	void preDestroy() {
+	public void preDestroy() {
 		if (Policy.DEBUG_RENDERER) {
 			logger.debug("\nTBMR:dispose: modelToManager size = {0}, managerToModel size = {1}", //$NON-NLS-1$
 					modelToManager.size(), managerToModel.size());
@@ -592,7 +594,7 @@ public class ToolBarManagerRenderer extends SWTPartRenderer {
 		}
 	}
 
-	int getOrientation(final MUIElement element) {
+	private int getOrientation(final MUIElement element) {
 		MUIElement theParent = element.getParent();
 		if (theParent instanceof MTrimBar) {
 			MTrimBar trimContainer = (MTrimBar) theParent;
@@ -636,19 +638,6 @@ public class ToolBarManagerRenderer extends SWTPartRenderer {
 		if (toolbar != null && !toolbar.isDisposed()) {
 			toolbar.requestLayout();
 		}
-	}
-
-	boolean hasOnlySeparators(ToolBar toolbar) {
-		ToolItem[] children = toolbar.getItems();
-		for (ToolItem toolItem : children) {
-			if ((toolItem.getStyle() & SWT.SEPARATOR) == 0) {
-				return false;
-			} else if (toolItem.getControl() != null
-					&& toolItem.getControl().getData(OWNING_ME) instanceof MToolControl) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	@Override
@@ -705,8 +694,10 @@ public class ToolBarManagerRenderer extends SWTPartRenderer {
 		return null;
 	}
 
-	private void modelProcessSwitch(ToolBarManager parentManager,
-			MToolBarElement childME) {
+	private void modelProcessSwitch(ToolBarManager parentManager, MToolBarElement childME) {
+		if (!childME.isToBeRendered()) {
+			return;
+		}
 		if (OpaqueElementUtil.isOpaqueToolItem(childME)) {
 			MToolItem itemModel = (MToolItem) childME;
 			processOpaqueItem(parentManager, itemModel);
@@ -788,7 +779,7 @@ public class ToolBarManagerRenderer extends SWTPartRenderer {
 		linkModelToContribution(itemModel, ci);
 	}
 
-	void processOpaqueItem(ToolBarManager parentManager, MToolItem itemModel) {
+	private void processOpaqueItem(ToolBarManager parentManager, MToolItem itemModel) {
 		IContributionItem ici = getContribution(itemModel);
 		if (ici != null) {
 			return;
@@ -1013,7 +1004,7 @@ public class ToolBarManagerRenderer extends SWTPartRenderer {
 		return super.getContext(el);
 	}
 
-	ToolItemUpdater getUpdater() {
+	/* package */ ToolItemUpdater getUpdater() {
 		return enablementUpdater;
 	}
 

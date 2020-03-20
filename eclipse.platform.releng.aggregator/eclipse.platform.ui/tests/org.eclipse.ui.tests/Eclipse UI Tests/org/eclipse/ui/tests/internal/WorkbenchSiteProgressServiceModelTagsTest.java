@@ -26,6 +26,9 @@ import org.eclipse.ui.internal.PartSite;
 import org.eclipse.ui.internal.progress.WorkbenchSiteProgressService;
 import org.eclipse.ui.tests.api.workbenchpart.EmptyView;
 import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventHandler;
 
@@ -33,6 +36,7 @@ import org.osgi.service.event.EventHandler;
  * @since 3.5
  *
  */
+@RunWith(JUnit4.class)
 public class WorkbenchSiteProgressServiceModelTagsTest extends UITestCase {
 	private IWorkbenchWindow window;
 
@@ -50,8 +54,8 @@ public class WorkbenchSiteProgressServiceModelTagsTest extends UITestCase {
 
 	private WorkbenchSiteProgressServiceTestable progressService;
 
-	public WorkbenchSiteProgressServiceModelTagsTest(String testName) {
-		super(testName);
+	public WorkbenchSiteProgressServiceModelTagsTest() {
+		super(WorkbenchSiteProgressServiceModelTagsTest.class.getSimpleName());
 	}
 
 	@Override
@@ -69,13 +73,7 @@ public class WorkbenchSiteProgressServiceModelTagsTest extends UITestCase {
 		IEclipseContext context = ModelUtils.getContainingContext(site.getModel());
 		assertNotNull(context);
 
-		eventHandler = new EventHandler() {
-			@Override
-			public void handleEvent(Event event) {
-				receivedEvent = event;
-
-			}
-		};
+		eventHandler = event -> receivedEvent = event;
 
 		eventBroker = context.get(IEventBroker.class);
 		eventBroker.subscribe(UIEvents.ApplicationElement.TOPIC_TAGS, eventHandler);
@@ -90,6 +88,7 @@ public class WorkbenchSiteProgressServiceModelTagsTest extends UITestCase {
 		super.doTearDown();
 	}
 
+	@Test
 	public void testShowBusyWhenCurrentlyIdle() throws Exception {
 		site.getModel().getTags().remove(CSSConstants.CSS_BUSY_CLASS); /* state idle */
 
@@ -99,6 +98,7 @@ public class WorkbenchSiteProgressServiceModelTagsTest extends UITestCase {
 		assertAddBusyTagEvent(receivedEvent);
 	}
 
+	@Test
 	public void testShowBusyWhenCurrentlyBusy() throws Exception {
 		site.getModel().getTags().add(CSSConstants.CSS_BUSY_CLASS); /* state busy */
 
@@ -108,6 +108,7 @@ public class WorkbenchSiteProgressServiceModelTagsTest extends UITestCase {
 		assertRemoveBusyTagEvent(receivedEvent);
 	}
 
+	@Test
 	public void testWarnOfContentChange() throws Exception {
 		progressService.warnOfContentChange();
 

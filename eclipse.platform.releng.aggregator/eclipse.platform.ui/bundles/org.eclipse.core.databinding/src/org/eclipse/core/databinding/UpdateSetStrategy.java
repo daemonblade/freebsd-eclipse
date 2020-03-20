@@ -16,6 +16,8 @@
 
 package org.eclipse.core.databinding;
 
+import java.util.Objects;
+
 import org.eclipse.core.databinding.conversion.IConverter;
 import org.eclipse.core.databinding.observable.set.IObservableSet;
 import org.eclipse.core.runtime.IStatus;
@@ -136,8 +138,8 @@ public class UpdateSetStrategy<S, D> extends UpdateStrategy<S, D> {
 
 	/**
 	 *
-	 * @param source
-	 * @param destination
+	 * @param source      source observable, to be used for its type
+	 * @param destination destination observable, to be used for its type
 	 */
 	@SuppressWarnings("unchecked")
 	protected void fillDefaults(IObservableSet<? extends S> source, IObservableSet<? super D> destination) {
@@ -174,7 +176,7 @@ public class UpdateSetStrategy<S, D> extends UpdateStrategy<S, D> {
 	 * If the converter throws any exceptions they are reported as validation
 	 * errors, using the exception message.
 	 *
-	 * @param converter
+	 * @param converter the new converter
 	 * @return the receiver, to enable method call chaining
 	 */
 	public UpdateSetStrategy<S, D> setConverter(IConverter<S, D> converter) {
@@ -186,8 +188,8 @@ public class UpdateSetStrategy<S, D> extends UpdateStrategy<S, D> {
 	 * Adds the given element at the given index to the given observable list.
 	 * Clients may extend but must call the super implementation.
 	 *
-	 * @param observableSet
-	 * @param element
+	 * @param observableSet the set to add to
+	 * @param element       element to add
 	 * @return a status
 	 */
 	protected IStatus doAdd(IObservableSet<? super D> observableSet, D element) {
@@ -203,8 +205,8 @@ public class UpdateSetStrategy<S, D> extends UpdateStrategy<S, D> {
 	 * Removes the element at the given index from the given observable list.
 	 * Clients may extend but must call the super implementation.
 	 *
-	 * @param observableSet
-	 * @param element
+	 * @param observableSet the set to remove from
+	 * @param element       the element to remove
 	 * @return a status
 	 */
 	protected IStatus doRemove(IObservableSet<? super D> observableSet, D element) {
@@ -214,5 +216,30 @@ public class UpdateSetStrategy<S, D> extends UpdateStrategy<S, D> {
 			return logErrorWhileSettingValue(ex);
 		}
 		return Status.OK_STATUS;
+	}
+
+
+	/**
+	 * Convenience method that creates an {@link UpdateValueStrategy} with the given
+	 * converter. It uses {@link #POLICY_UPDATE}.
+	 *
+	 * @param converter the converter
+	 * @return the update strategy
+	 * @since 1.8
+	 */
+	public static <S, D> UpdateSetStrategy<S, D> create(IConverter<S, D> converter) {
+		Objects.requireNonNull(converter);
+		return new UpdateSetStrategy<S, D>().setConverter(converter);
+	}
+
+	/**
+	 * Convenience method that creates an update strategy that never updates its
+	 * observables, using {@link #POLICY_NEVER} and no defaults.
+	 *
+	 * @return the update strategy
+	 * @since 1.8
+	 */
+	public static <S, D> UpdateSetStrategy<S, D> never() {
+		return new UpdateSetStrategy<>(false, POLICY_NEVER);
 	}
 }

@@ -28,8 +28,8 @@ import org.eclipse.core.databinding.observable.value.IObservableValue;
 import org.eclipse.core.databinding.observable.value.WritableValue;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.databinding.swt.typed.WidgetProperties;
-import org.eclipse.jface.databinding.viewers.typed.ViewerProperties;
 import org.eclipse.jface.databinding.viewers.ViewerSupport;
+import org.eclipse.jface.databinding.viewers.typed.ViewerProperties;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -52,7 +52,6 @@ public class Snippet019TreeViewerWithListFactory {
 
 	private Button pasteButton;
 	private Button copyButton;
-	private Shell shell;
 	private Button addChildBeanButton;
 	private Button removeBeanButton;
 	private TreeViewer beanViewer;
@@ -64,41 +63,28 @@ public class Snippet019TreeViewerWithListFactory {
 	private IObservableValue<Bean> clipboard;
 
 	/**
-	 * Launch the application
-	 *
-	 * @param args
+	 * Launch the application.
 	 */
 	public static void main(String[] args) {
-		Display display = Display.getDefault();
+		final Display display = new Display();
 		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
-			try {
-				Snippet019TreeViewerWithListFactory window = new Snippet019TreeViewerWithListFactory();
-				window.open();
-			} catch (Exception e) {
-				e.printStackTrace();
+			Shell shell = new Snippet019TreeViewerWithListFactory().createShell();
+
+			while (!shell.isDisposed()) {
+				if (!display.readAndDispatch()) {
+					display.sleep();
+				}
 			}
 		});
+
+		display.dispose();
 	}
 
 	/**
-	 * Open the window
+	 * Create contents of the window.
 	 */
-	public void open() {
-		final Display display = Display.getDefault();
-		createContents();
-		shell.open();
-		shell.layout();
-		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch())
-				display.sleep();
-		}
-	}
-
-	/**
-	 * Create contents of the window
-	 */
-	protected void createContents() {
-		shell = new Shell();
+	private Shell createShell() {
+		Shell shell = new Shell();
 		final GridLayout gridLayout_1 = new GridLayout();
 		gridLayout_1.numColumns = 2;
 		shell.setLayout(gridLayout_1);
@@ -113,9 +99,7 @@ public class Snippet019TreeViewerWithListFactory {
 		rowLayout.marginBottom = 0;
 		rowLayout.pack = false;
 		group.setLayout(rowLayout);
-		group
-				.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false,
-						2, 1));
+		group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false, 2, 1));
 
 		final Button addRootButton = new Button(group, SWT.NONE);
 		addRootButton.addSelectionListener(new SelectionAdapter() {
@@ -187,11 +171,13 @@ public class Snippet019TreeViewerWithListFactory {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				Bean copy = clipboard.getValue();
-				if (copy == null)
+				if (copy == null) {
 					return;
+				}
 				Bean parent = getSelectedBean();
-				if (parent == null)
+				if (parent == null) {
 					parent = input;
+				}
 
 				List<Bean> list = new ArrayList<>(parent.getList());
 				list.add(copy);
@@ -222,12 +208,16 @@ public class Snippet019TreeViewerWithListFactory {
 		itemNameLabel.setText("Item Name");
 
 		beanText = new Text(shell, SWT.BORDER);
-		final GridData gd_beanValue = new GridData(SWT.FILL, SWT.CENTER, true,
-				false);
+		final GridData gd_beanValue = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		beanText.setLayoutData(gd_beanValue);
 		m_bindingContext = initDataBindings();
-		//
+
 		initExtraBindings(m_bindingContext);
+
+		shell.open();
+		shell.layout();
+
+		return shell;
 	}
 
 	private static Bean createBean(String name) {
@@ -250,21 +240,22 @@ public class Snippet019TreeViewerWithListFactory {
 
 	private Bean getSelectedBean() {
 		IStructuredSelection selection = beanViewer.getStructuredSelection();
-		if (selection.isEmpty())
+		if (selection.isEmpty()) {
 			return null;
+		}
 		return (Bean) selection.getFirstElement();
 	}
 
-	private void initExtraBindings(DataBindingContext dbc) {
+	private void initExtraBindings(DataBindingContext bindingContext) {
 		final IObservableValue<Bean> beanViewerSelection = ViewerProperties.singleSelection(Bean.class)
 				.observe(beanViewer);
 		IObservableValue<Boolean> beanSelected = ComputedValue.create(() -> beanViewerSelection.getValue() != null);
-		dbc.bindValue(WidgetProperties.enabled().observe(addChildBeanButton), beanSelected);
-		dbc.bindValue(WidgetProperties.enabled().observe(removeBeanButton), beanSelected);
+		bindingContext.bindValue(WidgetProperties.enabled().observe(addChildBeanButton), beanSelected);
+		bindingContext.bindValue(WidgetProperties.enabled().observe(removeBeanButton), beanSelected);
 
 		clipboard = new WritableValue<>();
-		dbc.bindValue(WidgetProperties.enabled().observe(copyButton), beanSelected);
-		dbc.bindValue(WidgetProperties.enabled().observe(pasteButton),
+		bindingContext.bindValue(WidgetProperties.enabled().observe(copyButton), beanSelected);
+		bindingContext.bindValue(WidgetProperties.enabled().observe(pasteButton),
 				ComputedValue.create(() -> clipboard.getValue() != null));
 
 		ViewerSupport.bind(beanViewer, input, BeanProperties.list("list", Bean.class),
@@ -272,8 +263,7 @@ public class Snippet019TreeViewerWithListFactory {
 	}
 
 	static class Bean {
-		/* package */PropertyChangeSupport changeSupport = new PropertyChangeSupport(
-				this);
+		/* package */PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 		private String text;
 		private List<Bean> list;
 
@@ -299,14 +289,16 @@ public class Snippet019TreeViewerWithListFactory {
 		}
 
 		public List<Bean> getList() {
-			if (list == null)
+			if (list == null) {
 				return null;
+			}
 			return new ArrayList<>(list);
 		}
 
 		public void setList(List<Bean> list) {
-			if (list != null)
+			if (list != null) {
 				list = new ArrayList<>(list);
+			}
 			changeSupport.firePropertyChange("list", this.list, this.list = list);
 		}
 

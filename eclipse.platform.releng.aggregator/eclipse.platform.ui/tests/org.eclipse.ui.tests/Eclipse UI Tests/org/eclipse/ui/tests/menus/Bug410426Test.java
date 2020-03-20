@@ -25,18 +25,23 @@ import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.menus.IMenuService;
 import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.osgi.service.log.LogListener;
 import org.osgi.service.log.LogService;
 
 /**
  * @author Maxime Porhel
  */
+@RunWith(JUnit4.class)
 public class Bug410426Test extends UITestCase {
 
-	public Bug410426Test(String testName) {
-		super(testName);
+	public Bug410426Test() {
+		super(Bug410426Test.class.getSimpleName());
 	}
 
+	@Test
 	public void testToolbarContributionFromFactoryVisibility() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		IMenuService menus = window.getService(IMenuService.class);
@@ -61,21 +66,21 @@ public class Bug410426Test extends UITestCase {
 			ToolBar toolBar = manager.createControl(window.getShell());
 			manager.update(true);
 			ToolItem[] toolItems = toolBar.getItems();
-			assertEquals("Only four tool items should be created as there are four visible contributions on the six contributions:", 4, toolItems.length); //$NON-NLS-N$
+			assertEquals("Only four tool items should be created as there are four visible contributions on the six contributions:", 4, toolItems.length);
 		} finally {
 			menus.releaseContributions(manager);
 		}
 	}
 
 	private void populateTestToolbar(IMenuService menus, ToolBarManager manager) {
-		menus.populateContributionManager(manager, "toolbar:org.eclipse.ui.tests.toolbarContributionFromFactoryVisibilityTest"); //$NON-NLS-N$
+		menus.populateContributionManager(manager, "toolbar:org.eclipse.ui.tests.toolbarContributionFromFactoryVisibilityTest");
 	}
 
 	private void checkItem(String id, IContributionItem[] items, boolean expectedVisibility) {
 		IContributionItem item = getItemWithId(id, items);
 
 		assertNotNull(item);
-		assertEquals("The contribution item with id '" + id + "' has not the expected vibility:", expectedVisibility, item.isVisible()); //$NON-NLS-N$
+		assertEquals("The contribution item with id '" + id + "' has not the expected vibility:", expectedVisibility, item.isVisible());
 	}
 
 	private IContributionItem getItemWithId(String id, IContributionItem[] items) {
@@ -87,6 +92,7 @@ public class Bug410426Test extends UITestCase {
 		return null;
 	}
 
+	@Test
 	public void testNoClassCastExceptionForMenuManagerToolbarContribution() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		IMenuService menus = window.getService(IMenuService.class);
@@ -110,7 +116,7 @@ public class Bug410426Test extends UITestCase {
 		try {
 			populateTestToolbar(menus, manager);
 
-			assertTrue("We should not get these 'MenuManager cannot be cast to org.eclipse.jface.action.ContributionItem' ClassCastException.", cces.isEmpty()); //$NON-NLS-N$
+			assertTrue("We should not get these 'MenuManager cannot be cast to org.eclipse.jface.action.ContributionItem' ClassCastException.", cces.isEmpty());
 
 			// check the contributions count.
 			IContributionItem[] items = manager.getItems();

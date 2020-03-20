@@ -27,12 +27,16 @@ import org.eclipse.ui.commands.IWorkbenchCommandSupport;
 import org.eclipse.ui.commands.NotHandledException;
 import org.eclipse.ui.internal.Workbench;
 import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * A test for whether the select all handler will send a selection event.
  *
  * @since 3.1
  */
+@RunWith(JUnit4.class)
 public final class Bug74982Test extends UITestCase {
 
 	/**
@@ -40,14 +44,21 @@ public final class Bug74982Test extends UITestCase {
 	 */
 	private boolean selectionEventFired = false;
 
+	private Shell dialog;
+
 	/**
 	 * Constructs a new instance of <code>Bug74982Test</code>.
-	 *
-	 * @param name
-	 *            The name of the test
 	 */
-	public Bug74982Test(final String name) {
-		super(name);
+	public Bug74982Test() {
+		super(Bug74982Test.class.getSimpleName());
+	}
+
+	@Override
+	protected void doTearDown() throws Exception {
+		super.doTearDown();
+		if (dialog != null) {
+			dialog.dispose();
+		}
 	}
 
 	/**
@@ -63,11 +74,11 @@ public final class Bug74982Test extends UITestCase {
 	 *             <code>WorkbenchCommandSupport</code> class is broken in
 	 *             some way.
 	 */
+	@Test
 	public final void testSelectAllHandlerSendsSelectionEvent()
 			throws ExecutionException, NotHandledException {
 		// Create a dialog with a text widget.
-		final Shell dialog = new Shell(fWorkbench.getActiveWorkbenchWindow()
-				.getShell());
+		dialog = new Shell(fWorkbench.getActiveWorkbenchWindow().getShell());
 		dialog.setLayout(new GridLayout());
 		final Text text = new Text(dialog, SWT.SINGLE);
 		text.setText("Mooooooooooooooooooooooooooooo");

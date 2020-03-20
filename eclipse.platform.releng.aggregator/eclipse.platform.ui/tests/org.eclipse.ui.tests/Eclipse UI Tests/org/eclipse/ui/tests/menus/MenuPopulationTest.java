@@ -16,7 +16,6 @@ package org.eclipse.ui.tests.menus;
 
 import java.lang.reflect.Field;
 
-import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.e4.ui.model.application.ui.basic.MPart;
@@ -56,11 +55,16 @@ import org.eclipse.ui.services.IServiceLocator;
 import org.eclipse.ui.tests.api.workbenchpart.EmptyView;
 import org.eclipse.ui.tests.api.workbenchpart.MenuContributionHarness;
 import org.eclipse.ui.views.markers.internal.MarkerSupportRegistry;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * @since 3.3
  *
  */
+@RunWith(JUnit4.class)
 public class MenuPopulationTest extends MenuTestCase {
 	private static final String ICONS_ANYTHING_GIF = "/anything.gif";
 	private static final String ICONS_BINARY_GIF = "/binary_co.gif";
@@ -80,13 +84,11 @@ public class MenuPopulationTest extends MenuTestCase {
 	private static final String MENU_LOCATION = "menu:local.menu.test";
 	private Field iconField;
 
-	/**
-	 * @param testName
-	 */
-	public MenuPopulationTest(String testName) {
-		super(testName);
+	public MenuPopulationTest() {
+		super(MenuPopulationTest.class.getSimpleName());
 	}
 
+	@Test
 	public void testMenuServicePopupContribution() throws Exception {
 
 		PopupMenuExtender popupMenuExtender = null;
@@ -94,14 +96,7 @@ public class MenuPopulationTest extends MenuTestCase {
 
 			window.getActivePage().showView(IPageLayout.ID_PROBLEM_VIEW);
 
-			processEventsUntil(new Condition() {
-
-				@Override
-				public boolean compute() {
-					return window.getActivePage().getActivePart() != null;
-				}
-
-			}, 10000);
+			processEventsUntil(() -> window.getActivePage().getActivePart() != null, 10000);
 
 
 			IWorkbenchPart problemsView = window.getActivePage().getActivePart();
@@ -134,7 +129,8 @@ public class MenuPopulationTest extends MenuTestCase {
 		}
 	}
 
-	// @Ignore("See Bugs 411765 and 452203")
+	@Test
+	@Ignore("See Bugs 411765 and 452203")
 	public void XXXtestMenuServiceContribution() {
 		IMenuService ms = PlatformUI.getWorkbench().getService(IMenuService.class);
 		AbstractContributionFactory factory = new AbstractContributionFactory("menu:org.eclipse.ui.main.menu?after=file", "205747") {
@@ -165,15 +161,11 @@ public class MenuPopulationTest extends MenuTestCase {
 	 */
 	private boolean[] addLogger() {
 		final boolean []errorLogged = new boolean[] {false};
-		Platform.addLogListener(new ILogListener() {
-
-			@Override
-			public void logging(IStatus status, String plugin) {
-				if("org.eclipse.ui.workbench".equals(status.getPlugin())
-						&& status.getSeverity() == IStatus.ERROR
-						&& status.getException() instanceof IndexOutOfBoundsException) {
-					errorLogged[0] = true;
-				}
+		Platform.addLogListener((status, plugin) -> {
+			if("org.eclipse.ui.workbench".equals(status.getPlugin())
+					&& status.getSeverity() == IStatus.ERROR
+					&& status.getException() instanceof IndexOutOfBoundsException) {
+				errorLogged[0] = true;
 			}
 		});
 		return errorLogged;
@@ -198,6 +190,7 @@ public class MenuPopulationTest extends MenuTestCase {
 	}
 
 
+	@Test
 	public void test_1_1_RelationshipInMenuManagerRenderer_Bug552361() throws Exception {
 
 		PopupMenuExtender popupMenuExtender1 = null;
@@ -206,12 +199,7 @@ public class MenuPopulationTest extends MenuTestCase {
 
 			window.getActivePage().showView(IPageLayout.ID_PROBLEM_VIEW);
 
-			processEventsUntil(new Condition() {
-				@Override
-				public boolean compute() {
-					return window.getActivePage().getActivePart() != null;
-				}
-			}, 10000);
+			processEventsUntil(() -> window.getActivePage().getActivePart() != null, 10000);
 
 			IWorkbenchPart problemsView = window.getActivePage().getActivePart();
 			assertNotNull(problemsView);
@@ -253,6 +241,7 @@ public class MenuPopulationTest extends MenuTestCase {
 		}
 	}
 
+	@Test
 	public void testViewPopulation() throws Exception {
 		MenuManager manager = new MenuManager(null, TEST_CONTRIBUTIONS_CACHE_ID);
 		menuService.populateContributionManager(manager, "menu:"
@@ -292,6 +281,7 @@ public class MenuPopulationTest extends MenuTestCase {
 		manager.dispose();
 	}
 
+	@Test
 	public void testMenuIcons() throws Exception {
 
 		MenuManager manager = new MenuManager(null, TEST_CONTRIBUTIONS_CACHE_ID);
@@ -332,6 +322,7 @@ public class MenuPopulationTest extends MenuTestCase {
 		manager.dispose();
 	}
 
+	@Test
 	public void testToolBarItems() throws Exception {
 		ToolBarManager manager = new ToolBarManager();
 		menuService.populateContributionManager(manager, "toolbar:"
@@ -387,6 +378,7 @@ public class MenuPopulationTest extends MenuTestCase {
 		}
 	}
 
+	@Test
 	public void testFactoryAddition() throws Exception {
 		MyFactory factory = new MyFactory();
 		MenuManager manager = new MenuManager(null);
@@ -405,6 +397,7 @@ public class MenuPopulationTest extends MenuTestCase {
 		}
 	}
 
+	@Test
 	public void testFactoryRemove() throws Exception {
 		MyFactory factory = new MyFactory();
 		MenuManager manager = new MenuManager(null);
@@ -423,7 +416,8 @@ public class MenuPopulationTest extends MenuTestCase {
 		}
 	}
 
-	// @Ignore("See Bugs 411765 and 452203")
+	@Test
+	@Ignore("See Bugs 411765 and 452203")
 	public void XXXtestDynamicFactoryAddition() throws Exception {
 		MyFactory factory = new MyFactory();
 
@@ -445,7 +439,8 @@ public class MenuPopulationTest extends MenuTestCase {
 		}
 	}
 
-	// @Ignore("See Bugs 411765 and 452203")
+	@Test
+	@Ignore("See Bugs 411765 and 452203")
 	public void XXXtestDynamicFactoryRemove() throws Exception {
 		MyFactory factory = new MyFactory();
 		MenuManager manager = new MenuManager(null);
@@ -468,7 +463,8 @@ public class MenuPopulationTest extends MenuTestCase {
 		}
 	}
 
-	// @Ignore("See Bugs 411765 and 452203")
+	@Test
+	@Ignore("See Bugs 411765 and 452203")
 	public void XXXtestFactoryScopePopulation() throws Exception {
 		AbstractContributionFactory factory = new AbstractContributionFactory(
 				"menu:the.population.menu?after=additions",
@@ -500,12 +496,14 @@ public class MenuPopulationTest extends MenuTestCase {
 		assertEquals(0, testManager.getSize());
 	}
 
+	@Test
 	public void testAfterQueryInvalid() throws Exception {
 		MenuManager manager = new MenuManager();
 		menuService.populateContributionManager(manager, "menu:after.menu");
 		assertEquals(0, manager.getSize());
 	}
 
+	@Test
 	public void testAfterQueryOneGroup() throws Exception {
 		MenuManager manager = new MenuManager();
 		manager.add(new GroupMarker("after.one"));
@@ -515,6 +513,7 @@ public class MenuPopulationTest extends MenuTestCase {
 		assertEquals("after.insert", manager.getItems()[1].getId());
 	}
 
+	@Test
 	public void testAfterQueryTwoGroups() throws Exception {
 		MenuManager manager = new MenuManager();
 		manager.add(new GroupMarker("after.one"));
@@ -525,12 +524,14 @@ public class MenuPopulationTest extends MenuTestCase {
 		assertEquals("after.insert", manager.getItems()[1].getId());
 	}
 
+	@Test
 	public void testBeforeQueryInvalid() throws Exception {
 		MenuManager manager = new MenuManager();
 		menuService.populateContributionManager(manager, "menu:before.menu");
 		assertEquals(0, manager.getSize());
 	}
 
+	@Test
 	public void testBeforeQueryOneGroup() throws Exception {
 		MenuManager manager = new MenuManager();
 		manager.add(new GroupMarker("before.one"));
@@ -540,6 +541,7 @@ public class MenuPopulationTest extends MenuTestCase {
 		assertEquals("before.insert", manager.getItems()[0].getId());
 	}
 
+	@Test
 	public void testBeforeQueryTwoGroups() throws Exception {
 		MenuManager manager = new MenuManager();
 		manager.add(new GroupMarker("before.one"));
@@ -550,6 +552,7 @@ public class MenuPopulationTest extends MenuTestCase {
 		assertEquals("before.insert", manager.getItems()[0].getId());
 	}
 
+	@Test
 	public void testBeforeQueryTwoGroups2() throws Exception {
 		MenuManager manager = new MenuManager();
 		manager.add(new GroupMarker("before.two"));
@@ -560,12 +563,14 @@ public class MenuPopulationTest extends MenuTestCase {
 		assertEquals("before.insert", manager.getItems()[1].getId());
 	}
 
+	@Test
 	public void testEndofQueryInvalid() throws Exception {
 		MenuManager manager = new MenuManager();
 		menuService.populateContributionManager(manager, "menu:endof.menu");
 		assertEquals(0, manager.getSize());
 	}
 
+	@Test
 	public void testEndofQueryOneGroup() throws Exception {
 		MenuManager manager = new MenuManager();
 		manager.add(new GroupMarker("endof.one"));
@@ -575,6 +580,7 @@ public class MenuPopulationTest extends MenuTestCase {
 		assertEquals("endof.insert", manager.getItems()[1].getId());
 	}
 
+	@Test
 	public void testEndofQueryTwoGroups() throws Exception {
 		MenuManager manager = new MenuManager();
 		manager.add(new GroupMarker("endof.one"));
@@ -585,6 +591,7 @@ public class MenuPopulationTest extends MenuTestCase {
 		assertEquals("endof.insert", manager.getItems()[1].getId());
 	}
 
+	@Test
 	public void testEndofQueryTwoGroups2() throws Exception {
 		MenuManager manager = new MenuManager();
 		manager.add(new GroupMarker("endof.one"));
@@ -596,6 +603,7 @@ public class MenuPopulationTest extends MenuTestCase {
 		assertEquals("endof.insert", manager.getItems()[2].getId());
 	}
 
+	@Test
 	public void testEndofQueryTwoGroups3() throws Exception {
 		MenuManager manager = new MenuManager();
 		manager.add(new GroupMarker("endof.two"));
@@ -606,6 +614,7 @@ public class MenuPopulationTest extends MenuTestCase {
 		assertEquals("endof.insert", manager.getItems()[2].getId());
 	}
 
+	@Test
 	public void testEndofQueryTwoGroups4() throws Exception {
 		MenuManager manager = new MenuManager();
 		manager.add(new GroupMarker("endof.two"));
@@ -670,7 +679,8 @@ public class MenuPopulationTest extends MenuTestCase {
 		super.doTearDown();
 	}
 
-	// @Ignore("See Bug 544515")
+	@Test
+	@Ignore("See Bug 544515")
 	public void XXXtestPrivatePopup() throws Exception {
 
 			PopupMenuExtender popupMenuExtender = null;
@@ -680,14 +690,7 @@ public class MenuPopulationTest extends MenuTestCase {
 
 			window.getActivePage().showView(EmptyView.ID);
 
-				processEventsUntil(new Condition() {
-
-					@Override
-					public boolean compute() {
-						return window.getActivePage().getActivePart() != null;
-					}
-
-				}, 10000);
+				processEventsUntil(() -> window.getActivePage().getActivePart() != null, 10000);
 
 				IWorkbenchPart activePart = window.getActivePage().getActivePart();
 				assertNotNull(activePart);

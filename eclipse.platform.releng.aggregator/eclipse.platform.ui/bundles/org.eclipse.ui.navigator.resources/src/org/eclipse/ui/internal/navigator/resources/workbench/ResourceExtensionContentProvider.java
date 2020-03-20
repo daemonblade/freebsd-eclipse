@@ -100,8 +100,8 @@ public class ResourceExtensionContentProvider extends WorkbenchContentProvider {
 			return;
 		}
 
-		final Collection<Runnable> runnables = new ArrayList<Runnable>();
-		final SortedSet<IResource> resourcesToRefresh = new TreeSet<IResource>(new Comparator<IResource>() {
+		final Collection<Runnable> runnables = new ArrayList<>();
+		final SortedSet<IResource> resourcesToRefresh = new TreeSet<>(new Comparator<IResource>() {
 			private PathComparator pathComparator = new PathComparator();
 			@Override
 			public int compare(IResource arg0, IResource arg1) {

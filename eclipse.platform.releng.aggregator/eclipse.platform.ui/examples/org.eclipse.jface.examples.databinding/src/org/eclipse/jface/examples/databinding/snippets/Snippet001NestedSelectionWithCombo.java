@@ -45,71 +45,67 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 /**
- * Demonstrates nested selection.<br>
- * At the first level, user may select a person.<br>
- * At the second level, user may select a city to associate with the selected<br>
- * person or edit the person's name.
+ * Demonstrates nested selection.
+ * <p>
+ * At the first level, user may select a person. At the second level, user may
+ * select a city to associate with the selected person or edit the person's
+ * name.
  */
 public class Snippet001NestedSelectionWithCombo {
 	public static void main(String[] args) {
-		ViewModel viewModel = new ViewModel();
-		Shell shell = new View(viewModel).createShell();
+		final Display display = new Display();
 
-		// The SWT event loop
-		Display display = Display.getCurrent();
-		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch()) {
-				display.sleep();
+		Realm.runWithDefault(DisplayRealm.getRealm(display), () -> {
+			Shell shell = new View().createShell();
+
+			while (!shell.isDisposed()) {
+				if (!display.readAndDispatch()) {
+					display.sleep();
+				}
 			}
-		}
+		});
+
+		display.dispose();
 	}
 
-	// Minimal JavaBeans support
+	/** Helper class for implementing JavaBeans support. */
 	public static abstract class AbstractModelObject {
-		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(
-				this);
+		private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
 		public void addPropertyChangeListener(PropertyChangeListener listener) {
 			propertyChangeSupport.addPropertyChangeListener(listener);
 		}
 
-		public void addPropertyChangeListener(String propertyName,
-				PropertyChangeListener listener) {
-			propertyChangeSupport.addPropertyChangeListener(propertyName,
-					listener);
+		public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+			propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
 		}
 
 		public void removePropertyChangeListener(PropertyChangeListener listener) {
 			propertyChangeSupport.removePropertyChangeListener(listener);
 		}
 
-		public void removePropertyChangeListener(String propertyName,
-				PropertyChangeListener listener) {
-			propertyChangeSupport.removePropertyChangeListener(propertyName,
-					listener);
+		public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+			propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
 		}
 
-		protected void firePropertyChange(String propertyName, Object oldValue,
-				Object newValue) {
-			propertyChangeSupport.firePropertyChange(propertyName, oldValue,
-					newValue);
+		protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+			propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
 		}
 	}
 
-	// The data model class. This is normally a persistent class of some sort.
-	//
-	// This example implements full JavaBeans bound properties so that changes
-	// to instances of this class will automatically be propogated to the UI.
+	/**
+	 * The data model class.
+	 * <p>
+	 * This example implements full JavaBeans bound properties so that changes to
+	 * instances of this class will automatically be propagated to the UI.
+	 */
 	public static class Person extends AbstractModelObject {
-		// Constructor
 		public Person(String name, String city) {
 			this.name = name;
 			this.city = city;
 		}
 
-		// Some JavaBean bound properties...
 		String name;
-
 		String city;
 
 		public String getName() {
@@ -133,15 +129,8 @@ public class Snippet001NestedSelectionWithCombo {
 		}
 	}
 
-	// The View's model--the root of our GUI's Model graph
-	//
-	// Typically each View class has a corresponding ViewModel class.
-	// The ViewModel is responsible for getting the objects to edit from the
-	// DAO. Since this snippet doesn't have any persistent objects to
-	// retrieve, this ViewModel just instantiates some objects to edit.
-	//
-	// This ViewModel also implements JavaBean bound properties.
-	static class ViewModel extends AbstractModelObject {
+	/** The GUI view. */
+	static class View {
 		// The model to bind
 		private ArrayList<Person> people = new ArrayList<>();
 		{
@@ -160,27 +149,9 @@ public class Snippet001NestedSelectionWithCombo {
 			cities.add("Lost Mine");
 		}
 
-		public ArrayList<Person> getPeople() {
-			return people;
-		}
-
-		public ArrayList<String> getCities() {
-			return cities;
-		}
-	}
-
-	// The GUI view
-	static class View {
-		private ViewModel viewModel;
-
-		public View(ViewModel viewModel) {
-			this.viewModel = viewModel;
-		}
-
 		public Shell createShell() {
 			// Build a UI
-			Shell shell = new Shell(Display.getCurrent());
-			Realm realm = DisplayRealm.getRealm(shell.getDisplay());
+			Shell shell = new Shell();
 
 			List peopleList = new List(shell, SWT.BORDER);
 			peopleList.setLayoutData(new GridData(SWT.FILL, SWT.END, true, false));
@@ -193,29 +164,27 @@ public class Snippet001NestedSelectionWithCombo {
 
 			ListViewer peopleListViewer = new ListViewer(peopleList);
 			IObservableMap<Person, String> attributeMap = BeanProperties.value(Person.class, "name", String.class)
-					.observeDetail(Observables.staticObservableSet(realm, new HashSet<>(viewModel.getPeople())));
+					.observeDetail(Observables.staticObservableSet(new HashSet<>(people)));
 			peopleListViewer.setLabelProvider(new ObservableMapLabelProvider(attributeMap));
 			peopleListViewer.setContentProvider(new ArrayContentProvider());
-			peopleListViewer.setInput(viewModel.getPeople());
+			peopleListViewer.setInput(people);
 
-			DataBindingContext dbc = new DataBindingContext(realm);
+			DataBindingContext bindingContext = new DataBindingContext();
 			IObservableValue<Person> selectedPerson = ViewerProperties.singleSelection(Person.class)
 					.observe(peopleListViewer);
-			dbc.bindValue(
-					WidgetProperties.text(SWT.Modify).observe(name),
+			bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(name),
 					BeanProperties.value(Person.class, "name", String.class).observeDetail(selectedPerson));
 
 			ComboViewer cityViewer = new ComboViewer(city);
 			cityViewer.setContentProvider(new ArrayContentProvider());
-			cityViewer.setInput(viewModel.getCities());
+			cityViewer.setInput(cities);
 
 			IObservableValue<String> citySelection = ViewerProperties.singleSelection(String.class).observe(cityViewer);
-			dbc.bindValue(citySelection,
+			bindingContext.bindValue(citySelection,
 					BeanProperties.value(Person.class, "city", String.class).observeDetail(selectedPerson));
 
 			GridLayoutFactory.swtDefaults().applyTo(shell);
 
-			// Open and return the Shell
 			shell.pack();
 			shell.open();
 			return shell;

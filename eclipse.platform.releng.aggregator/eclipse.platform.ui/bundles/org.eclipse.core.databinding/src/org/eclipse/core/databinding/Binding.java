@@ -50,13 +50,13 @@ public abstract class Binding extends ValidationStatusProvider {
 	}
 
 	/**
-	 * Initializes this binding with the given context and adds it to the list
-	 * of bindings of the context.
+	 * Initializes this binding with the given context and adds it to the list of
+	 * bindings of the context.
 	 * <p>
 	 * Subclasses may extend, but must call the super implementation.
 	 * </p>
 	 *
-	 * @param context
+	 * @param context the data binding context
 	 */
 	public final void init(DataBindingContext context) {
 		this.context = context;
@@ -181,5 +181,18 @@ public abstract class Binding extends ValidationStatusProvider {
 	@Override
 	public IObservableList<IObservable> getModels() {
 		return Observables.staticObservableList(context.getValidationRealm(), Collections.singletonList(model));
+	}
+
+	/**
+	 * @param observable the observable that is checked for disposal before the
+	 *                   runnable gets executed.
+	 * @param runnable   the Runnable to execute in the observable's realm.
+	 */
+	static final void execAfterDisposalCheck(final IObservable observable, final Runnable runnable) {
+		observable.getRealm().exec(() -> {
+			if (!observable.isDisposed()) {
+				runnable.run();
+			}
+		});
 	}
 }

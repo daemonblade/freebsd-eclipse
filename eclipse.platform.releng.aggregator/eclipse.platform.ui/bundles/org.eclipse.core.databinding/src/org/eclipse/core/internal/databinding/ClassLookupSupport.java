@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -34,12 +33,12 @@ public class ClassLookupSupport {
 	private static HashMap<Class<?>, List<Class<?>>> classSearchOrderLookup;
 
 	/**
-	 * For a given class or interface, return an array containing the given type
-	 * and all its direct and indirect supertypes.
+	 * For a given class or interface, return an array containing the given type and
+	 * all its direct and indirect supertypes.
 	 *
-	 * @param type
-	 * @return an array containing the given type and all its direct and
-	 *         indirect supertypes
+	 * @param type the requested type
+	 * @return an array containing the given type and all its direct and indirect
+	 *         supertypes
 	 */
 	public static Class<?>[] getTypeHierarchyFlattened(Class<?> type) {
 		List<Class<?>> classes = null;
@@ -88,8 +87,8 @@ public class ClassLookupSupport {
 				newInterfaces.add(interfaze);
 			}
 		}
-		for (Iterator<Class<?>> it = newInterfaces.iterator(); it.hasNext();)
-			computeInterfaceOrder(it.next().getInterfaces(), classes, seen);
+		for (Class<?> interfaze : newInterfaces)
+			computeInterfaceOrder(interfaze.getInterfaces(), classes, seen);
 	}
 
 }

@@ -38,7 +38,7 @@ public class NavigatorSorterService implements INavigatorSorterService, Visibili
 	private final NavigatorContentService contentService;
 
 	/* A map of (CommonSorterDescriptor, ViewerSorter)-pairs */
-	private final Map<CommonSorterDescriptor, ViewerSorter> sorters = new HashMap<CommonSorterDescriptor, ViewerSorter>();
+	private final Map<CommonSorterDescriptor, ViewerSorter> sorters = new HashMap<>();
 
 	private INavigatorContentDescriptor[] sortOnlyDescriptors;
 
@@ -55,7 +55,7 @@ public class NavigatorSorterService implements INavigatorSorterService, Visibili
 	}
 
 	private synchronized void computeSortOnlyDescriptors() {
-		List<INavigatorContentDescriptor> sortOnlyList = new ArrayList<INavigatorContentDescriptor>();
+		List<INavigatorContentDescriptor> sortOnlyList = new ArrayList<>();
 		for (INavigatorContentDescriptor descriptor : NavigatorContentDescriptorManager.getInstance()
 				.getSortOnlyContentDescriptors()) {
 			if (contentService.isActive(descriptor.getId())) {
@@ -123,7 +123,7 @@ public class NavigatorSorterService implements INavigatorSorterService, Visibili
 	public Map findAvailableSorters(INavigatorContentDescriptor theSource) {
 
 		CommonSorterDescriptor[] descriptors = CommonSorterDescriptorManager.getInstance().findApplicableSorters(theSource);
-		Map<String, ViewerSorter> sorters = new HashMap<String, ViewerSorter>();
+		Map<String, ViewerSorter> sorters = new HashMap<>();
 
 		int count = 0;
 		for (CommonSorterDescriptor descriptor : descriptors) {

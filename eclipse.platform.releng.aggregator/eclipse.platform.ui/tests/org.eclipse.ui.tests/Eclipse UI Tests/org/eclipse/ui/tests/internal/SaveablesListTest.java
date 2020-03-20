@@ -37,10 +37,14 @@ import org.eclipse.ui.Saveable;
 import org.eclipse.ui.SaveablesLifecycleEvent;
 import org.eclipse.ui.internal.SaveablesList;
 import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * @since 3.5
  */
+@RunWith(JUnit4.class)
 public class SaveablesListTest extends UITestCase {
 
 	static class GoodSaveable extends Saveable {
@@ -177,8 +181,8 @@ public class SaveablesListTest extends UITestCase {
 	private DummyPart part2;
 	private DummyPart part3;
 
-	public SaveablesListTest(String testName) {
-		super(testName);
+	public SaveablesListTest() {
+		super(SaveablesListTest.class.getSimpleName());
 	}
 	@Override
 	protected void doSetUp() throws Exception {
@@ -192,6 +196,7 @@ public class SaveablesListTest extends UITestCase {
 		goodSaveable = new GoodSaveable(source);
 	}
 
+	@Test
 	public void testNotBrokenSaveables() throws Exception {
 		emulateOpenPart(badSaveable, part1);
 		emulateOpenPart(goodSaveable, part2);
@@ -226,6 +231,7 @@ public class SaveablesListTest extends UITestCase {
 		assertAllEmpty();
 	}
 
+	@Test
 	public void testBrokenSaveablesBadClosedFirst() throws Exception {
 		emulateOpenPart(badSaveable, part1);
 		emulateOpenPart(goodSaveable, part2);
@@ -255,6 +261,7 @@ public class SaveablesListTest extends UITestCase {
 		assertAllEmpty();
 	}
 
+	@Test
 	public void testBrokenSaveablesGoodClosedFirst() throws Exception {
 		emulateOpenPart(badSaveable, part1);
 		emulateOpenPart(goodSaveable, part2);
@@ -286,6 +293,7 @@ public class SaveablesListTest extends UITestCase {
 		assertAllEmpty();
 	}
 
+	@Test
 	public void testBrokenSaveablesBadContainedMultipleTimes() throws Exception {
 		emulateOpenPart(badSaveable, part1);
 		emulateOpenPart(goodSaveable, part2);
@@ -339,6 +347,7 @@ public class SaveablesListTest extends UITestCase {
 		assertAllEmpty();
 	}
 
+	@Test
 	public void testGoodSaveablesBadContainedMultipleTimes() throws Exception {
 		emulateOpenPart(badSaveable, part1);
 		emulateOpenPart(goodSaveable, part2);
@@ -416,10 +425,10 @@ public class SaveablesListTest extends UITestCase {
 		}
 
 		assertEquals(partCount, modelMap.size());
-		assertEquals(partCount, modelMap.values().size());
+		assertEquals(partCount, modelMap.size());
 
-		assertEquals(1, modelRefCounts.keySet().size());
-		assertEquals(2, equalKeys.keySet().size());
+		assertEquals(1, modelRefCounts.size());
+		assertEquals(2, equalKeys.size());
 		assertTrue(equalKeys.containsKey(badSaveable));
 		assertTrue(equalKeys.containsKey(goodSaveable));
 		assertSame(equalKeys.get(goodSaveable), equalKeys.get(badSaveable));
@@ -438,10 +447,10 @@ public class SaveablesListTest extends UITestCase {
 		assertEquals(Integer.valueOf(partCount), modelRefCounts.get(two));
 
 		assertEquals(partCount, modelMap.size());
-		assertEquals(partCount, modelMap.values().size());
+		assertEquals(partCount, modelMap.size());
 
-		assertEquals(1, modelRefCounts.keySet().size());
-		assertEquals(1, equalKeys.keySet().size());
+		assertEquals(1, modelRefCounts.size());
+		assertEquals(1, equalKeys.size());
 		assertTrue(equalKeys.containsKey(two));
 
 		assertEquals(partCount, equalSaveables.size());
@@ -456,7 +465,7 @@ public class SaveablesListTest extends UITestCase {
 
 		assertOpenModelCount(0);
 		assertEquals(0, modelMap.size());
-		assertEquals(0, modelMap.values().size());
+		assertEquals(0, modelMap.size());
 
 		assertEquals(0, modelRefCounts.size());
 		assertEquals(0, equalKeys.size());
@@ -475,13 +484,13 @@ public class SaveablesListTest extends UITestCase {
 		assertOpenModelCount(1);
 
 		assertEquals(1, modelMap.size());
-		assertEquals(1, modelMap.values().size());
+		assertEquals(1, modelMap.size());
 
-		assertEquals(1, modelRefCounts.keySet().size());
+		assertEquals(1, modelRefCounts.size());
 		assertSame(one, modelRefCounts.keySet().iterator().next());
 		assertEquals(Integer.valueOf(1), modelRefCounts.get(one));
 
-		assertEquals(1, equalKeys.keySet().size());
+		assertEquals(1, equalKeys.size());
 		assertTrue(equalKeys.containsKey(one));
 
 		assertEquals(1, equalSaveables.size());

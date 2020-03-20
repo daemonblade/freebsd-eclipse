@@ -31,13 +31,13 @@ import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.JUnit4;
 
 /**
  * @since 3.4
  *
  */
-@RunWith(BlockJUnit4ClassRunner.class)
+@RunWith(JUnit4.class)
 public class ContributedServiceTest extends UITestCase {
 
 	public ContributedServiceTest() {
@@ -114,10 +114,7 @@ public class ContributedServiceTest extends UITestCase {
 		IServiceLocatorCreator lc = parent
 				.getService(IServiceLocatorCreator.class);
 		IServiceLocator locator = lc.createServiceLocator(parent, null,
-				new IDisposable() {
-					@Override
-					public void dispose() {
-					}
+				() -> {
 				});
 
 		ILevelService l = locator
@@ -131,10 +128,7 @@ public class ContributedServiceTest extends UITestCase {
 			((IDisposable) locator).dispose();
 		}
 
-		locator = lc.createServiceLocator(parent, null, new IDisposable() {
-			@Override
-			public void dispose() {
-			}
+		locator = lc.createServiceLocator(parent, null, () -> {
 		});
 		l = locator.getService(ILevelService.class);
 		assertNotNull(l);
@@ -145,12 +139,8 @@ public class ContributedServiceTest extends UITestCase {
 			((IDisposable) locator).dispose();
 		}
 
-		locator = lc.createServiceLocator(parent, new TempLevelFactory(8),
-				new IDisposable() {
-					@Override
-					public void dispose() {
-					}
-				});
+		locator = lc.createServiceLocator(parent, new TempLevelFactory(8), () -> {
+		});
 		l = locator.getService(ILevelService.class);
 		assertNotNull(l);
 		assertEquals(8, l.getLevel());
@@ -184,10 +174,7 @@ public class ContributedServiceTest extends UITestCase {
 						}
 						return null;
 					}
-				}, new IDisposable() {
-					@Override
-					public void dispose() {
-					}
+				}, () -> {
 				});
 		IWorkbenchLocationService wls = locator
 				.getService(IWorkbenchLocationService.class);

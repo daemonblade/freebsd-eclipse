@@ -46,6 +46,8 @@ import org.eclipse.core.runtime.AssertionFailedException;
  * @param <V>
  *            type of the values in the map
  * @since 1.0
+ * @implNote If methods are added to the interface which this class implements
+ *           then implementations of those methods must be added to this class.
  */
 public abstract class AbstractObservableMap<K, V> extends AbstractMap<K, V>
 		implements IObservableMap<K, V> {
@@ -96,7 +98,7 @@ public abstract class AbstractObservableMap<K, V> extends AbstractMap<K, V>
 	}
 
 	/**
-	 * @param realm
+	 * @param realm the realm; not <code>null</code>
 	 */
 	public AbstractObservableMap(Realm realm) {
 		Assert.isNotNull(realm, "Realm cannot be null"); //$NON-NLS-1$
@@ -223,7 +225,7 @@ public abstract class AbstractObservableMap<K, V> extends AbstractMap<K, V>
 	/**
 	 * Sets the stale state. Must be invoked from the current realm.
 	 *
-	 * @param stale
+	 * @param stale the new stale state
 	 */
 	public void setStale(boolean stale) {
 		checkRealm();
@@ -252,7 +254,7 @@ public abstract class AbstractObservableMap<K, V> extends AbstractMap<K, V>
 	/**
 	 * Fires map change events. Must be invoked from current realm.
 	 *
-	 * @param diff
+	 * @param diff the change
 	 */
 	protected void fireMapChange(MapDiff<K, V> diff) {
 		checkRealm();

@@ -69,8 +69,8 @@ public class ManagedForm implements IManagedForm {
 	/**
 	 * Creates a managed form that will use the provided toolkit and
 	 *
-	 * @param toolkit
-	 * @param form
+	 * @param toolkit existing toolkit to use
+	 * @param form    form to manage
 	 */
 	public ManagedForm(FormToolkit toolkit, ScrolledForm form) {
 		this.form = form;
@@ -139,8 +139,7 @@ public class ManagedForm implements IManagedForm {
 	public void initialize() {
 		if (initialized)
 			return;
-		for (int i = 0; i < parts.size(); i++) {
-			IFormPart part = parts.get(i);
+		for (IFormPart part : parts) {
 			part.initialize(this);
 		}
 		initialized = true;
@@ -150,8 +149,7 @@ public class ManagedForm implements IManagedForm {
 	 * Disposes all the parts in this form.
 	 */
 	public void dispose() {
-		for (int i = 0; i < parts.size(); i++) {
-			IFormPart part = parts.get(i);
+		for (IFormPart part : parts) {
 			part.dispose();
 		}
 		if (ownsToolkit) {
@@ -178,8 +176,7 @@ public class ManagedForm implements IManagedForm {
 
 	private void doRefresh() {
 		int nrefreshed = 0;
-		for (int i = 0; i < parts.size(); i++) {
-			IFormPart part = parts.get(i);
+		for (IFormPart part : parts) {
 			if (part.isStale()) {
 				part.refresh();
 				nrefreshed++;
@@ -191,8 +188,7 @@ public class ManagedForm implements IManagedForm {
 
 	@Override
 	public void commit(boolean onSave) {
-		for (int i = 0; i < parts.size(); i++) {
-			IFormPart part = parts.get(i);
+		for (IFormPart part : parts) {
 			if (part.isDirty())
 				part.commit(onSave);
 		}
@@ -203,8 +199,7 @@ public class ManagedForm implements IManagedForm {
 		boolean pageResult = false;
 
 		this.input = input;
-		for (int i = 0; i < parts.size(); i++) {
-			IFormPart part = parts.get(i);
+		for (IFormPart part : parts) {
 			boolean result = part.setFormInput(input);
 			if (result)
 				pageResult = true;
@@ -232,8 +227,7 @@ public class ManagedForm implements IManagedForm {
 
 	@Override
 	public boolean isDirty() {
-		for (int i = 0; i < parts.size(); i++) {
-			IFormPart part = parts.get(i);
+		for (IFormPart part : parts) {
 			if (part.isDirty())
 				return true;
 		}
@@ -242,8 +236,7 @@ public class ManagedForm implements IManagedForm {
 
 	@Override
 	public boolean isStale() {
-		for (int i = 0; i < parts.size(); i++) {
-			IFormPart part = parts.get(i);
+		for (IFormPart part : parts) {
 			if (part.isStale())
 				return true;
 		}
