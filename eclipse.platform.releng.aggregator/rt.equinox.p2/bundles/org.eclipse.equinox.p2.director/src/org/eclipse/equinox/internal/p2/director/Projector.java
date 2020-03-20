@@ -9,7 +9,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Contributors: 
+ * Contributors:
  *   IBM Corporation - initial API and implementation
  *   Daniel Le Berre - Fix in the encoding and the optimization function
  *   Alban Browaeys - Optimized string concatenation in bug 251357
@@ -82,7 +82,7 @@ public class Projector {
 	//Non greedy things
 	private Set<IInstallableUnit> nonGreedyIUs; //All the IUs that would satisfy non greedy dependencies
 	private Map<IInstallableUnit, AbstractVariable> nonGreedyVariables = new HashMap<>();
-	private Map<AbstractVariable, List<Object>> nonGreedyProvider = new HashMap<>(); //Keeps track of all the "object" that provide an IU that is non greedly requested  
+	private Map<AbstractVariable, List<Object>> nonGreedyProvider = new HashMap<>(); //Keeps track of all the "object" that provide an IU that is non greedly requested
 
 	private boolean emptyBecauseFiltered;
 	private boolean userDefinedFunction;
@@ -204,7 +204,7 @@ public class Projector {
 			int timeout = DEFAULT_SOLVER_TIMEOUT;
 			String timeoutString = null;
 			try {
-				// allow the user to specify a longer timeout. 
+				// allow the user to specify a longer timeout.
 				// only set the value if it is a positive integer larger than the default.
 				// see https://bugs.eclipse.org/336967
 				timeoutString = DirectorActivator.context.getProperty(PROP_PROJECTOR_TIMEOUT);
@@ -233,14 +233,13 @@ public class Projector {
 			}
 			List<IInstallableUnit> iusToOrder = new ArrayList<>(queryResult.toSet());
 			Collections.sort(iusToOrder);
-			for (Iterator<IInstallableUnit> iusToEncode = iusToOrder.iterator(); iusToEncode.hasNext();) {
+			for (IInstallableUnit iu : iusToOrder) {
 				if (monitor.isCanceled()) {
 					result.merge(Status.CANCEL_STATUS);
 					throw new OperationCanceledException();
 				}
-				IInstallableUnit iuToEncode = iusToEncode.next();
-				if (iuToEncode != entryPointIU) {
-					processIU(iuToEncode, false);
+				if (iu != entryPointIU) {
+					processIU(iu, false);
 				}
 			}
 			createMustHave(entryPointIU, alreadyExistingRoots);
@@ -369,7 +368,7 @@ public class Projector {
 			return;
 
 		IInstallableUnitFragment fragment = (IInstallableUnitFragment) iu;
-		// for each host requirement, find matches and remember them 
+		// for each host requirement, find matches and remember them
 		for (IRequirement req : fragment.getHost()) {
 			List<IInstallableUnit> matches = getApplicableMatches(req);
 			rememberHostMatches((IInstallableUnitFragment) iu, matches);
@@ -488,7 +487,7 @@ public class Projector {
 
 	private Collection<IRequirement> getRequiredCapabilities(IInstallableUnit iu) {
 		boolean isFragment = iu instanceof IInstallableUnitFragment;
-		//Short-circuit for the case of an IInstallableUnit 
+		//Short-circuit for the case of an IInstallableUnit
 		if ((!isFragment) && iu.getMetaRequirements().size() == 0)
 			return iu.getRequirements();
 
@@ -515,8 +514,8 @@ public class Projector {
 		Collection<IRequirement> iuRequirements = getRequiredCapabilities(iu);
 		Map<IRequirement, List<IInstallableUnitPatch>> unchangedRequirements = new HashMap<>(iuRequirements.size());
 		Map<IRequirement, Pending> nonPatchedRequirements = new HashMap<>(iuRequirements.size());
-		for (Iterator<IInstallableUnit> iterator = applicablePatches.iterator(); iterator.hasNext();) {
-			IInstallableUnitPatch patch = (IInstallableUnitPatch) iterator.next();
+		for (IInstallableUnit iup : applicablePatches) {
+			IInstallableUnitPatch patch = (IInstallableUnitPatch) iup;
 			IRequirement[][] reqs = mergeRequirements(iu, patch);
 			if (reqs.length == 0)
 				return;
@@ -826,8 +825,7 @@ public class Projector {
 		IRequirement[] originalRequirements = iuRequirements.toArray(new IRequirement[iuRequirements.size()]);
 		List<IRequirement[]> rrr = new ArrayList<>();
 		boolean found = false;
-		for (int i = 0; i < changes.size(); i++) {
-			IRequirementChange change = changes.get(i);
+		for (IRequirementChange change : changes) {
 			for (int j = 0; j < originalRequirements.length; j++) {
 				if (originalRequirements[j] != null && safeMatch(originalRequirements, change, j)) {
 					found = true;

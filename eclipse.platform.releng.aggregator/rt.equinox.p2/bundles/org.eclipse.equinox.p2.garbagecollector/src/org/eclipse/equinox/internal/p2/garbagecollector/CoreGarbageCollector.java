@@ -25,11 +25,10 @@ import org.eclipse.equinox.p2.repository.artifact.IArtifactRepository;
  * are not mapped to be an IArtifactKey in the MarkSet.
  */
 public class CoreGarbageCollector {
-
 	/**
-	 * When set to true, information will be logged every time an artifact is removed 
+	 * When set to true, information will be logged every time an artifact is removed
 	 */
-	static boolean debugMode = false;
+	private static boolean DEBUG = "true".equalsIgnoreCase(GarbageCollectorHelper.ID + "/debug"); //$NON-NLS-1$ //$NON-NLS-2$
 
 	/**
 	 * Given a list of IArtifactKeys and an IArtifactRepository, removes all artifacts
@@ -39,23 +38,14 @@ public class CoreGarbageCollector {
 		Set<IArtifactKey> set = new HashSet<>(Arrays.asList(markSet));
 		//this query will match all artifact keys that are not in the given set
 		IQuery<IArtifactKey> query = QueryUtil.createQuery(IArtifactKey.class, "unique($0)", set); //$NON-NLS-1$
-		final IQueryResult<IArtifactKey> inactive = aRepository.query(query, null);
 		aRepository.executeBatch(monitor -> {
-			for (Iterator<IArtifactKey> iterator = inactive.iterator(); iterator.hasNext();) {
-				IArtifactKey key = iterator.next();
+			for (IArtifactKey key : aRepository.query(query, null)) {
 				aRepository.removeDescriptor(key, new NullProgressMonitor());
-				if (debugMode) {
+				if (DEBUG) {
 					Tracing.debug("Key removed:" + key); //$NON-NLS-1$
 				}
 			}
 		}, new NullProgressMonitor());
 	}
 
-	/*
-	 * If set to true, debug mode will log information about each artifact deleted by the CoreGarbageCollector
-	 * @param inDebugMode
-	 */
-	public static void setDebugMode(boolean inDebugMode) {
-		debugMode = inDebugMode;
-	}
 }

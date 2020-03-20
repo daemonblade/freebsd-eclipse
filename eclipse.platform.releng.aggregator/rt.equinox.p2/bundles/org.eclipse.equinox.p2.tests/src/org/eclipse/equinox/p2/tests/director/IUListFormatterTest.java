@@ -14,38 +14,49 @@
 package org.eclipse.equinox.p2.tests.director;
 
 import static java.util.Arrays.asList;
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createNiceMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.getCurrentArguments;
+import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertEquals;
 
-import java.util.*;
-import junit.framework.TestCase;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.easymock.IAnswer;
 import org.eclipse.equinox.internal.p2.director.app.IUListFormatter;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.equinox.p2.metadata.Version;
+import org.junit.Test;
 
-public class IUListFormatterTest extends TestCase {
-
+public class IUListFormatterTest {
+	@Test
 	public void testFormat() {
 		IUListFormatter format = new IUListFormatter("${id}=${id},${version},${org.eclipse.equinox.p2.name}");
 		String result = format.format(asList(createIU("iu1", "1.0.0", "name", null)));
 		assertEquals("iu1=iu1,1.0.0,name", result);
 	}
 
+	@Test
 	public void testFormat_MultipleIUs() {
 		IUListFormatter format = new IUListFormatter("${id}=${version},${org.eclipse.equinox.p2.name}");
 		String result = format.format(asList(//
 				createIU("iu1", "1.0.0", "name", null), //
 				createIU("iu2", "2.0.0", "name2", null)//
 		));
-		assertEquals("iu1=1.0.0,name" + System.getProperty("line.separator") + "iu2=2.0.0,name2", result);
+		assertEquals("iu1=1.0.0,name" + System.lineSeparator() + "iu2=2.0.0,name2", result);
 	}
 
+	@Test
 	public void testFormat_UnknownFormatOption() {
 		IUListFormatter format = new IUListFormatter("${id}${UNKNOWN}");
 		String result = format.format(asList(createIU("iu1", "1.0.0", "name", null)));
 		assertEquals("iu1", result);
 	}
 
+	@Test
 	public void testFormat_Malformed() {
 		IUListFormatter format = new IUListFormatter("${id=${version");
 		String result = format.format(asList(createIU("iu1", "1.0.0", "name", null)));

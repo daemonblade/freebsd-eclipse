@@ -7,7 +7,7 @@
  *  https://www.eclipse.org/legal/epl-2.0/
  *
  *  SPDX-License-Identifier: EPL-2.0
- * 
+ *
  *  Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -16,7 +16,6 @@ package org.eclipse.equinox.internal.p2.ui;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Iterator;
 import java.util.Vector;
 import javax.xml.parsers.*;
 import org.eclipse.core.runtime.*;
@@ -37,7 +36,7 @@ import org.xml.sax.SAXException;
 
 /**
  * Utility methods involving compatibility with the Eclipse Update Manager.
- * 
+ *
  * @since 3.4
  *
  */
@@ -134,8 +133,7 @@ public class UpdateManagerCompatibility {
 			writer = new PrintWriter(osw);
 			writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"); //$NON-NLS-1$
 			writer.println("<bookmarks>"); //$NON-NLS-1$
-			for (int i = 0; i < bookmarks.size(); i++) {
-				Object obj = bookmarks.get(i);
+			for (MetadataRepositoryElement obj : bookmarks) {
 				writeObject("   ", obj, writer); //$NON-NLS-1$
 			}
 		} catch (IOException e) {
@@ -166,15 +164,14 @@ public class UpdateManagerCompatibility {
 			MetadataRepositoryElement element = (MetadataRepositoryElement) obj;
 			String sel = element.isEnabled() ? "true" : "false"; //$NON-NLS-1$ //$NON-NLS-2$
 			String name = element.getName();
-			writer.print(indent + "<site url=\"" + URIUtil.toUnencodedString(element.getLocation()) + "\" selected=\"" + sel + "\" name=\"" + getWritableXMLString(name) + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ 
+			writer.print(indent + "<site url=\"" + URIUtil.toUnencodedString(element.getLocation()) + "\" selected=\"" + sel + "\" name=\"" + getWritableXMLString(name) + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 			writer.println("/>"); //$NON-NLS-1$
 		}
 	}
 
 	public static IStatus getInstallHandlerStatus(IProvisioningPlan plan) {
 		IQueryResult<IInstallableUnit> result = plan.getAdditions().query(QueryUtil.createIUAnyQuery(), null);
-		for (Iterator<IInstallableUnit> iterator = result.iterator(); iterator.hasNext();) {
-			IInstallableUnit iu = iterator.next();
+		for (IInstallableUnit iu : result) {
 			if (iu != null && iu.getProperty(ECLIPSE_INSTALL_HANDLER_PROP) != null)
 				return new Status(IStatus.ERROR, ProvUIActivator.PLUGIN_ID, NLS.bind(ProvUIMessages.UpdateManagerCompatibility_ItemRequiresUpdateManager, iu.getId()));
 		}
@@ -213,8 +210,8 @@ public class UpdateManagerCompatibility {
 
 	public static void writeBookmarkFile(String filename, MetadataRepositoryElement[] sites) {
 		Vector<MetadataRepositoryElement> bookmarks = new Vector<>(sites.length);
-		for (int i = 0; i < sites.length; i++)
-			bookmarks.add(sites[i]);
+		for (MetadataRepositoryElement site : sites)
+			bookmarks.add(site);
 		store(filename, bookmarks);
 
 	}
@@ -222,7 +219,7 @@ public class UpdateManagerCompatibility {
 	/**
 	 * Export the specified list of sites to a bookmarks file that
 	 * can be read later.
-	 * 
+	 *
 	 * @param shell the shell used to parent the export dialog
 	 * @param sites the sites to export
 	 */
@@ -242,8 +239,8 @@ public class UpdateManagerCompatibility {
 	}
 
 	/**
-	 * Open the old UpdateManager installer UI using the specified shell. 
-	 * We do not call the UpdateManagerUI class directly because we want to be able to be configured 
+	 * Open the old UpdateManager installer UI using the specified shell.
+	 * We do not call the UpdateManagerUI class directly because we want to be able to be configured
 	 * without requiring those plug-ins.  Instead, we invoke a known command.
 	 */
 	public static void openInstaller() {

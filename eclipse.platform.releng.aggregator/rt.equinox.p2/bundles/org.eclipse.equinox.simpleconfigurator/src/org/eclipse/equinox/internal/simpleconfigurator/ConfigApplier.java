@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2018 IBM Corporation and others.
+ * Copyright (c) 2007, 2020 IBM Corporation and others.
  * All rights reserved.
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which accompanies this distribution,
@@ -7,8 +7,8 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
- * Contributors: 
+ *
+ * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Red Hat, Inc (Krzysztof Daniel) - Bug 421935: Extend simpleconfigurator to
  * read .info files from many locations, Bug 460967
@@ -22,11 +22,11 @@ import java.util.concurrent.CountDownLatch;
 import org.eclipse.equinox.internal.simpleconfigurator.utils.*;
 import org.osgi.framework.*;
 import org.osgi.framework.namespace.*;
+import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.framework.wiring.*;
 import org.osgi.resource.Namespace;
 import org.osgi.resource.Requirement;
 import org.osgi.service.packageadmin.PackageAdmin;
-import org.osgi.service.startlevel.StartLevel;
 
 class ConfigApplier {
 	private static final String LAST_BUNDLES_INFO = "last.bundles.info"; //$NON-NLS-1$
@@ -34,7 +34,6 @@ class ConfigApplier {
 
 	private final BundleContext manipulatingContext;
 	private final PackageAdmin packageAdminService;
-	private final StartLevel startLevelService;
 	private final FrameworkWiring frameworkWiring;
 	private final boolean runningOnEquinox;
 	private final boolean inDevMode;
@@ -53,11 +52,6 @@ class ConfigApplier {
 		if (packageAdminRef == null)
 			throw new IllegalStateException("No PackageAdmin service is available."); //$NON-NLS-1$
 		packageAdminService = manipulatingContext.getService(packageAdminRef);
-
-		ServiceReference<StartLevel> startLevelRef = manipulatingContext.getServiceReference(StartLevel.class);
-		if (startLevelRef == null)
-			throw new IllegalStateException("No StartLevelService service is available."); //$NON-NLS-1$
-		startLevelService = manipulatingContext.getService(startLevelRef);
 
 		frameworkWiring = manipulatingContext.getBundle(Constants.SYSTEM_BUNDLE_LOCATION).adapt(FrameworkWiring.class);
 	}
@@ -245,8 +239,8 @@ class ConfigApplier {
 			List<InputStream> sourceStreams = new ArrayList<>(sourcesLocation.size() + 1);
 			sourceStreams.add(url.openStream());
 			if (Activator.EXTENDED) {
-				for (int i = 0; i < sourcesLocation.size(); i++) {
-					sourceStreams.add(new FileInputStream(sourcesLocation.get(i)));
+				for (File source : sourcesLocation) {
+					sourceStreams.add(new FileInputStream(source));
 				}
 			}
 			SimpleConfiguratorUtils.transferStreams(sourceStreams, destinationStream);
@@ -361,18 +355,23 @@ class ConfigApplier {
 				continue;
 			if (current.getBundleId() == 0)
 				continue;
-			if (packageAdminService.getBundleType(current) == PackageAdmin.BUNDLE_TYPE_FRAGMENT)
+			if (isFragment(current))
 				continue;
 			if (SimpleConfiguratorConstants.TARGET_CONFIGURATOR_NAME.equals(current.getSymbolicName()))
 				continue;
 
 			try {
-				startLevelService.setBundleStartLevel(current, startLevel);
+				current.adapt(BundleStartLevel.class).setStartLevel(startLevel);
 			} catch (IllegalArgumentException ex) {
 				Utils.log(4, null, null, "Failed to set start level of Bundle:" + element, ex); //$NON-NLS-1$
 			}
 		}
 		return toRefresh;
+	}
+
+	private boolean isFragment(Bundle current) {
+		BundleRevision revision = current.adapt(BundleRevision.class);
+		return (revision != null) && ((revision.getTypes() & BundleRevision.TYPE_FRAGMENT) != 0);
 	}
 
 	private void refreshPackages(Bundle[] bundles, BundleContext context) {
@@ -428,7 +427,7 @@ class ConfigApplier {
 			}
 			if (bundle.getState() == Bundle.STARTING && (bundle == callingBundle || bundle == manipulatingContext.getBundle()))
 				continue;
-			if (packageAdminService.getBundleType(bundle) == PackageAdmin.BUNDLE_TYPE_FRAGMENT)
+			if (isFragment(bundle))
 				continue;
 			if (bundle.getBundleId() == 0)
 				continue;
@@ -446,8 +445,8 @@ class ConfigApplier {
 	}
 
 	/**
-	 * Uninstall bundles which are not listed on finalList.  
-	 * 
+	 * Uninstall bundles which are not listed on finalList.
+	 *
 	 * @param finalList bundles list not to be uninstalled.
 	 * @param packageAdmin package admin service.
 	 * @return Collection HashSet of bundles finally installed.

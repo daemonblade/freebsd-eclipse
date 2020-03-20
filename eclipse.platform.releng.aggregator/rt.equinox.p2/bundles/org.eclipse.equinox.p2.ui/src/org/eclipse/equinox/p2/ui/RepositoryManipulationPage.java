@@ -7,7 +7,7 @@
  *  https://www.eclipse.org/legal/epl-2.0/
  *
  *  SPDX-License-Identifier: EPL-2.0
- * 
+ *
  *  Contributors:
  *     IBM Corporation - initial API and implementation
  *     Ericsson AB (Pascal Rapicault) - bug 398539
@@ -52,10 +52,10 @@ import org.eclipse.ui.statushandlers.StatusManager;
 /**
  * Page that allows users to update, add, remove, import, and
  * export repositories.  This page can be hosted inside a preference
- * dialog or inside its own dialog.  
- * 
- * When hosting this page inside a non-preference dialog, some of the 
- * dialog methods will likely have to call page methods.  The following 
+ * dialog or inside its own dialog.
+ *
+ * When hosting this page inside a non-preference dialog, some of the
+ * dialog methods will likely have to call page methods.  The following
  * snippet shows how to host this page inside a TitleAreaDialog.
  * <pre>
  *		TitleAreaDialog dialog = new TitleAreaDialog(shell) {
@@ -83,9 +83,9 @@ import org.eclipse.ui.statushandlers.StatusManager;
  *		};
  *		dialog.open();
  * </pre>
- * 
+ *
  * @noextend This class is not intended to be subclassed by clients.
- * 
+ *
  * @since 2.0
  */
 public class RepositoryManipulationPage extends PreferencePage implements IWorkbenchPreferencePage, ICopyable {
@@ -133,9 +133,9 @@ public class RepositoryManipulationPage extends PreferencePage implements IWorkb
 			if (cachedElements == null) {
 				Object[] children = super.fetchChildren(o, monitor);
 				cachedElements = new Hashtable<>(children.length);
-				for (int i = 0; i < children.length; i++) {
-					if (children[i] instanceof MetadataRepositoryElement) {
-						put((MetadataRepositoryElement) children[i]);
+				for (Object element : children) {
+					if (element instanceof MetadataRepositoryElement) {
+						put((MetadataRepositoryElement) element);
 					}
 				}
 			}
@@ -193,9 +193,9 @@ public class RepositoryManipulationPage extends PreferencePage implements IWorkb
 
 	/**
 	 * Set the provisioning UI that provides the session, policy, and other
-	 * services for the UI.  This method must be called before the contents are 
+	 * services for the UI.  This method must be called before the contents are
 	 * created or it will have no effect.
-	 * 
+	 *
 	 * @param ui the provisioning UI to use for this page.
 	 */
 	public void setProvisioningUI(ProvisioningUI ui) {
@@ -520,9 +520,9 @@ public class RepositoryManipulationPage extends PreferencePage implements IWorkb
 	MetadataRepositoryElement[] getSelectedElements() {
 		Object[] items = repositoryViewer.getStructuredSelection().toArray();
 		ArrayList<Object> list = new ArrayList<>(items.length);
-		for (int i = 0; i < items.length; i++) {
-			if (items[i] instanceof MetadataRepositoryElement)
-				list.add(items[i]);
+		for (Object item : items) {
+			if (item instanceof MetadataRepositoryElement)
+				list.add(item);
 		}
 		return list.toArray(new MetadataRepositoryElement[list.size()]);
 	}
@@ -641,8 +641,8 @@ public class RepositoryManipulationPage extends PreferencePage implements IWorkb
 	}
 
 	boolean includesRepo(URI[] repos, URI repo) {
-		for (int i = 0; i < repos.length; i++)
-			if (repos[i].equals(repo))
+		for (URI repo2 : repos)
+			if (repo2.equals(repo))
 				return true;
 		return false;
 	}

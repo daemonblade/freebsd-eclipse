@@ -24,7 +24,7 @@ import org.eclipse.swt.widgets.Combo;
  * pattern matching the text in a combo to the contents of the combo.
  * If the proposals should include items outside of the combo, then
  * clients can set their own proposal strings.
- * 
+ *
  * @since 3.5
  */
 public class ComboAutoCompleteField {
@@ -57,9 +57,9 @@ public class ComboAutoCompleteField {
 				return new IContentProposal[0];
 			StringMatcher matcher = new StringMatcher("*" + contents + "*", true, false); //$NON-NLS-1$ //$NON-NLS-2$
 			ArrayList<String> matches = new ArrayList<>();
-			for (int i1 = 0; i1 < items.length; i1++)
-				if (matcher.match(items[i1]))
-					matches.add(items[i1]);
+			for (String item : items)
+				if (matcher.match(item))
+					matches.add(item);
 
 			// We don't want to autoactivate if the only proposal exactly matches
 			// what is in the combo.  This prevents the popup from

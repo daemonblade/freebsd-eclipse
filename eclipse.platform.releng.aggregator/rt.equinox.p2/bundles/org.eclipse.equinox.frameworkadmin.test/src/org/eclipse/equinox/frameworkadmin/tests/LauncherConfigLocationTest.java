@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.equinox.frameworkadmin.tests;
 
+import static org.junit.Assert.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -20,14 +22,12 @@ import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.equinox.frameworkadmin.BundleInfo;
 import org.eclipse.equinox.internal.provisional.frameworkadmin.*;
+import org.junit.Test;
 import org.osgi.framework.BundleException;
 
 public class LauncherConfigLocationTest extends AbstractFwkAdminTest {
 
-	public LauncherConfigLocationTest(String name) {
-		super(name);
-	}	
-	
+	@Test
 	public void testCustomLauncherConfig() throws IllegalStateException, FrameworkAdminRuntimeException, IOException, BundleException, URISyntaxException {
 		startSimpleConfiguratorManipulator();
 		FrameworkAdmin fwkAdmin = getEquinoxFrameworkAdmin();
@@ -36,7 +36,7 @@ public class LauncherConfigLocationTest extends AbstractFwkAdminTest {
 		File installFolder = Activator.getContext().getDataFile(LauncherConfigLocationTest.class.getName());
 		if(installFolder.exists())
 			delete(installFolder);
-		
+
 		File configurationFolder = new File(installFolder, "configuration");
 		String launcherName = "foo";
 
@@ -44,18 +44,18 @@ public class LauncherConfigLocationTest extends AbstractFwkAdminTest {
 		assertNotNull("Null launcher data" + launcherData, launcherData);
 		launcherData.setFwConfigLocation(configurationFolder);
 		launcherData.setLauncher(new File(installFolder, launcherName));
-		
+
 		File defaultlaunchConfig = new File(installFolder, launcherName + ".ini");
-		assertEquals(defaultlaunchConfig.exists(), false);
+		assertFalse(defaultlaunchConfig.exists());
 		File launchConfig = new File(installFolder, "mylaunch.ini");
-		assertEquals(launchConfig.exists(), false);
+		assertFalse(launchConfig.exists());
 		launcherData.setLauncherConfigLocation(launchConfig);
 		try {
 			manipulator.load();
 		} catch (IllegalStateException e) {
 			//TODO We ignore the framework JAR location not set exception
 		}
-		
+
 		BundleInfo osgiBi = new BundleInfo("org.eclipse.osgi", "3.3.1", URIUtil.toURI(FileLocator.resolve(Activator.getContext().getBundle().getEntry("dataFile/org.eclipse.osgi.jar"))), 0, true);
 		BundleInfo configuratorBi = new BundleInfo("org.eclipse.equinox.simpleconfigurator", "1.0.0", URIUtil.toURI(FileLocator.resolve(Activator.getContext().getBundle().getEntry("dataFile/org.eclipse.equinox.simpleconfigurator.jar"))), 1, true);
 
@@ -64,7 +64,7 @@ public class LauncherConfigLocationTest extends AbstractFwkAdminTest {
 
 		manipulator.save(false);
 
-		assertEquals(launchConfig.exists(), true);
-		assertEquals(defaultlaunchConfig.exists(), false);
+		assertTrue(launchConfig.exists());
+		assertFalse(defaultlaunchConfig.exists());
 	}
 }

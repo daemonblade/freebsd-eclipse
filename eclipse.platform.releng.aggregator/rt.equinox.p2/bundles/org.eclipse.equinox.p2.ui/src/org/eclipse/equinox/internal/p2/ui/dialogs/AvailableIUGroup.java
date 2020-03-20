@@ -7,7 +7,7 @@
  *  https://www.eclipse.org/legal/epl-2.0/
  *
  *  SPDX-License-Identifier: EPL-2.0
- * 
+ *
  *  Contributors:
  *     IBM Corporation - initial API and implementation
  *     Sonatype, Inc. - ongoing development
@@ -44,7 +44,7 @@ import org.eclipse.ui.PlatformUI;
  * An AvailableIUGroup is a reusable UI component that displays the
  * IU's available for installation.  By default, content from all available
  * repositories is shown.
- * 
+ *
  * @since 3.4
  */
 public class AvailableIUGroup extends StructuredIUGroup {
@@ -88,7 +88,7 @@ public class AvailableIUGroup extends StructuredIUGroup {
 	 * Create a group that represents the available IU's from all available
 	 * repositories.  The default policy controls the visibility flags for
 	 * repositories and IU's.
-	 * 
+	 *
 	 * @param parent the parent composite for the group
 	 */
 	public AvailableIUGroup(ProvisioningUI ui, final Composite parent) {
@@ -104,7 +104,7 @@ public class AvailableIUGroup extends StructuredIUGroup {
 
 	/**
 	 * Create a group that represents the available IU's.
-	 * 
+	 *
 	 * @param ui the policy to use for deciding what should be shown
 	 * @param parent the parent composite for the group
 	 * @param font The font to use for calculating pixel sizes.  This font is
@@ -141,7 +141,7 @@ public class AvailableIUGroup extends StructuredIUGroup {
 
 		// If the user expanded or collapsed anything while we were loading a repo
 		// in the background, we would not want to disrupt their work by making
-		// a newly loaded visible and expanding it.  Setting the load job to null 
+		// a newly loaded visible and expanding it.  Setting the load job to null
 		// will take care of this.
 		availableIUViewer.getTree().addTreeListener(new TreeListener() {
 			@Override
@@ -254,7 +254,7 @@ public class AvailableIUGroup extends StructuredIUGroup {
 
 	/**
 	 * Set a boolean indicating whether a bold font should be used when
-	 * showing filtered items.  This method does not refresh the tree or 
+	 * showing filtered items.  This method does not refresh the tree or
 	 * labels, so that must be done explicitly by the caller.
 	 * @param useBoldFont
 	 */
@@ -296,9 +296,9 @@ public class AvailableIUGroup extends StructuredIUGroup {
 	public Object[] getSelectedIUElements() {
 		Object[] elements = viewer.getStructuredSelection().toArray();
 		ArrayList<Object> list = new ArrayList<>(elements.length);
-		for (int i = 0; i < elements.length; i++)
-			if (ElementUtils.getIU(elements[i]) != null)
-				list.add(elements[i]);
+		for (Object element : elements)
+			if (ElementUtils.getIU(element) != null)
+				list.add(element);
 		return list.toArray();
 	}
 
@@ -315,9 +315,9 @@ public class AvailableIUGroup extends StructuredIUGroup {
 		if (selections.length == 0)
 			return new IInstallableUnit[0];
 		ArrayList<IInstallableUnit> leaves = new ArrayList<>(selections.length);
-		for (int i = 0; i < selections.length; i++) {
-			if (!getCheckboxTreeViewer().getGrayed(selections[i])) {
-				IInstallableUnit iu = ProvUI.getAdapter(selections[i], IInstallableUnit.class);
+		for (Object selection : selections) {
+			if (!getCheckboxTreeViewer().getGrayed(selection)) {
+				IInstallableUnit iu = ProvUI.getAdapter(selection, IInstallableUnit.class);
 				if (iu != null && !ProvUI.isCategory(iu) && !leaves.contains(iu))
 					leaves.add(iu);
 			}
@@ -336,7 +336,7 @@ public class AvailableIUGroup extends StructuredIUGroup {
 	 */
 	void makeRepositoryVisible(final URI location) {
 		// If we are viewing by anything other than site, there is no specific way
-		// to make a repo visible. 
+		// to make a repo visible.
 		if (!(queryContext.getViewType() == IUViewQueryContext.AVAILABLE_VIEW_BY_REPO)) {
 			if (Display.getCurrent() == null)
 				display.asyncExec(() -> updateAvailableViewState());
@@ -391,13 +391,12 @@ public class AvailableIUGroup extends StructuredIUGroup {
 						if (event.getJob() == lastRequestedLoadJob) {
 							final Tree tree = treeViewer.getTree();
 							if (tree != null && !tree.isDisposed()) {
-								TreeItem[] items = tree.getItems();
-								for (int i = 0; i < items.length; i++) {
-									if (items[i].getData() instanceof IRepositoryElement) {
-										URI url = ((IRepositoryElement<?>) items[i].getData()).getLocation();
+								for (TreeItem item : tree.getItems()) {
+									if (item.getData() instanceof IRepositoryElement) {
+										URI url = ((IRepositoryElement<?>) item.getData()).getLocation();
 										if (url.equals(location)) {
-											treeViewer.expandToLevel(items[i].getData(), AbstractTreeViewer.ALL_LEVELS);
-											tree.select(items[i]);
+											treeViewer.expandToLevel(item.getData(), AbstractTreeViewer.ALL_LEVELS);
+											tree.select(item);
 											return;
 										}
 									}

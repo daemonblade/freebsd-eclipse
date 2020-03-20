@@ -1,4 +1,4 @@
-/******************************************************************************* 
+/*******************************************************************************
 * Copyright (c) 2009, 2016 EclipseSource and others.
  *
  * This
@@ -50,7 +50,7 @@ public class IUDetailsGroup {
 	private String lastText;
 
 	/**
-	 * 
+	 *
 	 */
 	public IUDetailsGroup(Composite parent, ISelectionProvider selectionProvider, int widthHint, boolean scrollable) {
 		this.selectionProvider = selectionProvider;
@@ -142,13 +142,10 @@ public class IUDetailsGroup {
 		Link link = new Link(parent, SWT.PUSH);
 		link.setText(text);
 
-		link.addListener(SWT.Selection, new Listener() {
-			@Override
-			public void handleEvent(Event event) {
-				IAction linkAction = getLinkAction(event.widget);
-				if (linkAction != null) {
-					linkAction.runWithEvent(event);
-				}
+		link.addListener(SWT.Selection, event -> {
+			IAction linkAction = getLinkAction(event.widget);
+			if (linkAction != null) {
+				linkAction.runWithEvent(event);
 			}
 		});
 		link.setToolTipText(action.getToolTipText());

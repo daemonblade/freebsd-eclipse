@@ -13,19 +13,19 @@
  *******************************************************************************/
 package org.eclipse.equinox.frameworkadmin.tests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.File;
 import java.io.IOException;
 import org.eclipse.equinox.internal.provisional.frameworkadmin.*;
+import org.junit.Test;
 import org.osgi.framework.BundleException;
 
 public class ReaderTest3 extends AbstractFwkAdminTest {
 	private File installFolder = null;
 	private String launcherName = "eclipse";
 
-	public ReaderTest3(String name) {
-		super(name);
-	}
-
+	@Test
 	public void testConfigContent() throws IllegalStateException, FrameworkAdminRuntimeException, IOException, BundleException {
 		startSimpleConfiguratorManipulator();
 
@@ -41,7 +41,7 @@ public class ReaderTest3 extends AbstractFwkAdminTest {
 		} catch (IllegalStateException e) {
 			//TODO We ignore the framework JAR location not set exception
 		}
-		assertEquals(new File(installFolder, "configuration"), manipulator.getLauncherData().getFwConfigLocation()); 
+		assertEquals(new File(installFolder, "configuration"), manipulator.getLauncherData().getFwConfigLocation());
 		assertEquals("bar", manipulator.getConfigData().getProperty("foo"));
 	}
 }

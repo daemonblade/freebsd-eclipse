@@ -26,6 +26,7 @@ import static org.eclipse.equinox.internal.p2.director.app.Activator.ID;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.security.cert.Certificate;
 import java.util.*;
 import java.util.Map.Entry;
@@ -175,7 +176,7 @@ public class DirectorApplication implements IApplication, ProvisioningListener {
 	private static final String QUERY_SEPARATOR = "Q:"; //$NON-NLS-1$
 	private static final String QUERY_SEPARATOR_SMALL = "q:"; //$NON-NLS-1$
 
-	public static final String LINE_SEPARATOR = System.getProperty("line.separator"); //$NON-NLS-1$
+	public static final String LINE_SEPARATOR = System.lineSeparator();
 
 	private static void getURIs(List<URI> uris, String spec) throws CoreException {
 		if (spec == null)
@@ -1360,24 +1361,6 @@ public class DirectorApplication implements IApplication, ProvisioningListener {
 
 	private static boolean canWrite(File installDir) {
 		installDir.mkdirs(); //Force create the folders because otherwise the call to canWrite fails on Mac
-		if (installDir.canWrite() == false)
-			return false;
-
-		if (!installDir.isDirectory())
-			return false;
-
-		File fileTest = null;
-		try {
-			// we use the .dll suffix to properly test on Vista virtual directories
-			// on Vista you are not allowed to write executable files on virtual directories like "Program Files"
-			fileTest = File.createTempFile("writableArea", ".dll", installDir); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (IOException e) {
-			//If an exception occured while trying to create the file, it means that it is not writable
-			return false;
-		} finally {
-			if (fileTest != null)
-				fileTest.delete();
-		}
-		return true;
+		return installDir.isDirectory() && Files.isWritable(installDir.toPath());
 	}
 }

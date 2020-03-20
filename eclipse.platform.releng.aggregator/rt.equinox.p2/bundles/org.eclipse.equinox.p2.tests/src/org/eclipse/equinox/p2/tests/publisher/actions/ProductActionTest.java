@@ -24,14 +24,13 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.equinox.internal.p2.metadata.IRequiredCapability;
@@ -289,8 +288,8 @@ public class ProductActionTest extends ActionTest {
 		Collection<IRequirement> requiredCapabilities = unit.getRequirements();
 
 		IRequiredCapability capability = null;
-		for (Iterator<IRequirement> iterator = requiredCapabilities.iterator(); iterator.hasNext();) {
-			IRequiredCapability req = (IRequiredCapability) iterator.next();
+		for (IRequirement iRequirement : requiredCapabilities) {
+			IRequiredCapability req = (IRequiredCapability) iRequirement;
 			if (req.getName().equals("org.eclipse.platform.feature.group")) {
 				capability = req;
 				break;

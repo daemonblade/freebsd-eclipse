@@ -7,7 +7,7 @@
  *  https://www.eclipse.org/legal/epl-2.0/
  *
  *  SPDX-License-Identifier: EPL-2.0
- * 
+ *
  *  Contributors:
  *      IBM Corporation - initial API and implementation
  *      Sonatype, Inc. - ongoing development
@@ -158,7 +158,7 @@ public class Slicer {
 	private Collection<IRequirement> getRequirements(IInstallableUnit iu) {
 		boolean isPatch = iu instanceof IInstallableUnitPatch;
 		boolean isFragment = iu instanceof IInstallableUnitFragment;
-		//Short-circuit for the case of an IInstallableUnit 
+		//Short-circuit for the case of an IInstallableUnit
 		if ((!isFragment) && (!isPatch) && iu.getMetaRequirements().size() == 0)
 			return iu.getRequirements();
 
@@ -172,8 +172,8 @@ public class Slicer {
 		if (iu instanceof InstallableUnitPatch) {
 			IInstallableUnitPatch patchIU = (IInstallableUnitPatch) iu;
 			List<IRequirementChange> changes = patchIU.getRequirementsChange();
-			for (int i = 0; i < changes.size(); i++)
-				aggregatedRequirements.add(changes.get(i).newValue());
+			for (IRequirementChange change : changes)
+				aggregatedRequirements.add(change.newValue());
 		}
 
 		if (considerMetaRequirements)
@@ -186,8 +186,7 @@ public class Slicer {
 			return;
 		IQueryResult<IInstallableUnit> matches = possibilites.query(QueryUtil.createMatchQuery(req.getMatches()), null);
 		int validMatches = 0;
-		for (Iterator<IInstallableUnit> iterator = matches.iterator(); iterator.hasNext();) {
-			IInstallableUnit match = iterator.next();
+		for (IInstallableUnit match : matches) {
 			if (!isApplicable(match))
 				continue;
 			validMatches++;

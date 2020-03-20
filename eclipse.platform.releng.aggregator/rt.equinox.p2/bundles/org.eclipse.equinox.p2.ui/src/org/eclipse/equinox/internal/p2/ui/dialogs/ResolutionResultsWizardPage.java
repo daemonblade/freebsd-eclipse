@@ -41,7 +41,7 @@ import org.eclipse.ui.statushandlers.StatusManager;
 /**
  * A wizard page that shows detailed information about a resolved install
  * operation.  It allows drill down into the elements that will be installed.
- * 
+ *
  * @since 3.4
  *
  */
@@ -254,9 +254,9 @@ public abstract class ResolutionResultsWizardPage extends ResolutionStatusPage {
 		if (operation == null || operation.getProvisioningPlan() == null)
 			return;
 		Object[] elements = root.getChildren(root);
-		for (int i = 0; i < elements.length; i++) {
-			if (elements[i] instanceof QueriedElement) {
-				((QueriedElement) elements[i]).setQueryable(getQueryable(operation.getProvisioningPlan()));
+		for (Object element : elements) {
+			if (element instanceof QueriedElement) {
+				((QueriedElement) element).setQueryable(getQueryable(operation.getProvisioningPlan()));
 			}
 		}
 	}
@@ -265,10 +265,10 @@ public abstract class ResolutionResultsWizardPage extends ResolutionStatusPage {
 
 	/**
 	 * Returns the restart policy for this operation.
-	 * 
+	 *
 	 * @return an integer constant describing whether the running profile
-	 * needs to be restarted. 
-	 * 
+	 * needs to be restarted.
+	 *
 	 * @see ProvisioningJob#RESTART_NONE
 	 * @see ProvisioningJob#RESTART_ONLY
 	 * @see ProvisioningJob#RESTART_OR_APPLY

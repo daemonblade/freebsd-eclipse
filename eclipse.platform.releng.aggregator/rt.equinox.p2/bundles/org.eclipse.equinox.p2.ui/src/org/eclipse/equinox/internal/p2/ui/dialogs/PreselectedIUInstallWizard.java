@@ -30,7 +30,7 @@ import org.eclipse.jface.wizard.IWizardPage;
 /**
  * An Install wizard that is invoked when the user has already selected which
  * IUs should be installed and does not need to browse the available software.
- * 
+ *
  * @since 3.5
  */
 public class PreselectedIUInstallWizard extends WizardWithLicenses {
@@ -70,8 +70,8 @@ public class PreselectedIUInstallWizard extends WizardWithLicenses {
 		root = new IUElementListRoot(ui);
 		ArrayList<AvailableIUElement> list = new ArrayList<>(selectedElements.length);
 		ArrayList<AvailableIUElement> selected = new ArrayList<>(selectedElements.length);
-		for (int i = 0; i < selectedElements.length; i++) {
-			IInstallableUnit iu = ElementUtils.getIU(selectedElements[i]);
+		for (Object selectedElement : selectedElements) {
+			IInstallableUnit iu = ElementUtils.getIU(selectedElement);
 			if (iu != null) {
 				AvailableIUElement element = new AvailableIUElement(root, iu, getProfileId(), shouldShowProvisioningPlanChildren());
 				list.add(element);

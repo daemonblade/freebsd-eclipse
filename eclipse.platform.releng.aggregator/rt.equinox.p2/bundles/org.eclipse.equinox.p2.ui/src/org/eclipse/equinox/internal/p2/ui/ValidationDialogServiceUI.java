@@ -7,7 +7,7 @@
  *  https://www.eclipse.org/legal/epl-2.0/
  *
  *  SPDX-License-Identifier: EPL-2.0
- * 
+ *
  *  Contributors:
  *     IBM Corporation - initial API and implementation
  *     Rapicorp, Inc. - add support for information dialog
@@ -133,8 +133,8 @@ public class ValidationDialogServiceUI extends UIServices {
 
 				private IStatus createStatus() {
 					MultiStatus parent = new MultiStatus(ProvUIActivator.PLUGIN_ID, 0, ProvUIMessages.ServiceUI_unsigned_message, null);
-					for (int i = 0; i < unsignedDetail.length; i++) {
-						parent.add(new Status(IStatus.WARNING, ProvUIActivator.PLUGIN_ID, unsignedDetail[i]));
+					for (String element : unsignedDetail) {
+						parent.add(new Status(IStatus.WARNING, ProvUIActivator.PLUGIN_ID, element));
 					}
 					return parent;
 				}
@@ -222,7 +222,7 @@ public class ValidationDialogServiceUI extends UIServices {
 	}
 
 	private boolean isHeadless() {
-		// If there is no UI available and we are still the IServiceUI, 
+		// If there is no UI available and we are still the IServiceUI,
 		// assume that the operation should proceed.  See
 		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=291049
 		return !PlatformUI.isWorkbenchRunning();
