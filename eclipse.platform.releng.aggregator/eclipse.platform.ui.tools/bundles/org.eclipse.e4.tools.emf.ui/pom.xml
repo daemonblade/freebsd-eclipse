@@ -15,13 +15,13 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse.platform.ui.tools</artifactId>
-    <version>4.14.0-SNAPSHOT</version>
+    <version>4.15.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
 
   <groupId>eclipse.platform.ui.tools</groupId>
   <artifactId>org.eclipse.e4.tools.emf.ui</artifactId>
-  <version>4.6.600-SNAPSHOT</version>
+  <version>4.6.700-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 
   <properties>

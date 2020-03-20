@@ -38,7 +38,6 @@ import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.edit.command.SetCommand;
 import org.eclipse.jface.databinding.viewers.ObservableListContentProvider;
-import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.fieldassist.AutoCompleteField;
 import org.eclipse.jface.fieldassist.ComboContentAdapter;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -74,7 +73,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 
-public class FindParentReferenceElementDialog extends TitleAreaDialog {
+public class FindParentReferenceElementDialog extends SaveDialogBoundsSettingsDialog {
 
 	private static final String XPATH_URI = "xpath:/"; //$NON-NLS-1$
 
@@ -113,11 +112,6 @@ public class FindParentReferenceElementDialog extends TitleAreaDialog {
 	}
 
 	@Override
-	protected boolean isResizable() {
-		return true;
-	}
-
-	@Override
 	protected Control createDialogArea(Composite parent) {
 		final Composite comp = (Composite) super.createDialogArea(parent);
 
@@ -144,12 +138,8 @@ public class FindParentReferenceElementDialog extends TitleAreaDialog {
 		final Combo combo = new Combo(parentForCombo, SWT.NONE);
 		eClassViewer = new ComboViewer(combo);
 		combo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		eClassViewer.setLabelProvider(new LabelProvider() {
-			@Override
-			public String getText(Object element) {
-				return ((EClass) element).getName();
-			}
-		});
+		eClassViewer.setLabelProvider(LabelProvider.createTextProvider(element -> ((EClass) element).getName()));
+
 		eClassViewer.setContentProvider(new ArrayContentProvider());
 		final List<EClass> eClassList = getExtendableClasses();
 		eClassViewer.setComparator(new ViewerComparator() {

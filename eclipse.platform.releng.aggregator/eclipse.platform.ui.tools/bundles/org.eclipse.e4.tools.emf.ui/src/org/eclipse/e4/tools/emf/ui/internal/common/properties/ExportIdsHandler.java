@@ -71,7 +71,7 @@ import org.eclipse.swt.widgets.Text;
  * <code>AppModelId.java</code>.
  */
 public class ExportIdsHandler {
-	public static final String DEFAULT_APPMODELID_CLASSNAME = "AppModelId";
+	public static final String DEFAULT_APPMODELID_CLASSNAME = "AppModelId"; //$NON-NLS-1$
 
 	@Execute
 	public void execute(@Named(IServiceConstants.ACTIVE_SHELL) Shell shell, @Translation Messages messages, IModelResource resource, IResourcePool pool, IProject project) {
@@ -284,13 +284,13 @@ public class ExportIdsHandler {
 
 		private String compileFileContent(Object[] els) {
 			StringBuilder b = new StringBuilder();
-			b.append("package " + clazz.packageFragment.getElementName() + ";" + System.getProperty("line.separator")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-			b.append(System.getProperty("line.separator")); //$NON-NLS-1$
-			b.append("public class " + clazz.name + " {" + System.getProperty("line.separator")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			b.append("package " + clazz.packageFragment.getElementName() + ";" + System.lineSeparator()); //$NON-NLS-1$ //$NON-NLS-2$
+			b.append(System.lineSeparator());
+			b.append("public class " + clazz.name + " {" + System.lineSeparator()); //$NON-NLS-1$ //$NON-NLS-2$
 
 			for (Object o : els) {
 				Entry e = (Entry) o;
-				b.append("\tpublic static final String " + e.idFieldKey + " = \"" + e.elementId + "\";" + System.getProperty("line.separator")); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+				b.append("\tpublic static final String " + e.idFieldKey + " = \"" + e.elementId + "\";" + System.lineSeparator()); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
 			}
 
 			b.append("}"); //$NON-NLS-1$
