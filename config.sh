@@ -33,7 +33,6 @@ ECLIPSE_MODULES="
 PATCH_DIR="java-eclipse/files"
 PATCHED_DIRS="
 	eclipse-platform-parent
-	production
 	eclipse.pde.build
 	eclipse.pde.ui
 	eclipse.platform.releng
