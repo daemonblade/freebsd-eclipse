@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corporation and others.
+ * Copyright (c) 2004, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -29,7 +29,7 @@ public abstract class JNIGenerator implements Flags {
 	static final String JNI64 = "JNI64";
 
 public JNIGenerator() {
-	delimiter = System.getProperty("line.separator");
+	delimiter = System.lineSeparator();
 	output = System.out;
 	metaData = new MetaData(new Properties());
 }
@@ -102,7 +102,7 @@ public static String getDelimiter(String fileName) {
 		}
 	} catch (IOException e) {
 	}
-	return System.getProperty("line.separator");
+	return System.lineSeparator();
 }
 
 String fixDelimiter(String str) {
@@ -134,8 +134,7 @@ static String getFunctionName(JNIMethod method, JNIType[] paramTypes) {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append(function);
 		buffer.append("__");
-		for (int i = 0; i < paramTypes.length; i++) {
-			JNIType paramType = paramTypes[i];
+		for (JNIType paramType : paramTypes) {
 			buffer.append(toC(paramType.getTypeSignature(false)));
 		}
 		return buffer.toString();
@@ -220,8 +219,7 @@ public void generate() {
 	generateAutoGenNote();
 	generateIncludes();
 	sort(classes);
-	for (int i = 0; i < classes.length; i++) {
-		JNIClass clazz = classes[i];
+	for (JNIClass clazz : classes) {
 		if (getGenerate(clazz)) generate(clazz);
 		if (progress != null) progress.step();
 	}
@@ -241,8 +239,7 @@ public JNIClass[] getClasses() {
 }
 
 public boolean getCPP() {
-	for (int i = 0; i < classes.length; i++) {
-		JNIClass clazz = classes[i];
+	for (JNIClass clazz : classes) {
 		if (clazz.getFlag(FLAG_CPP)) {
 			return true;
 		}
@@ -275,8 +272,7 @@ public String getOutputName() {
 }
 
 public boolean getM() {
-	for (int i = 0; i < classes.length; i++) {
-		JNIClass clazz = classes[i];
+	for (JNIClass clazz : classes) {
 		if (clazz.getFlag(FLAG_M)) {
 			return true;
 		}

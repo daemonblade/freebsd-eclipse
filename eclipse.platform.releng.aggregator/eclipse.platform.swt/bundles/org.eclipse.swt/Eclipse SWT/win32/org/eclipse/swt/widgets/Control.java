@@ -582,10 +582,6 @@ void checkComposited () {
 	/* Do nothing */
 }
 
-boolean checkHandle (long hwnd) {
-	return hwnd == handle;
-}
-
 void checkMirrored () {
 	if ((style & SWT.RIGHT_TO_LEFT) != 0) {
 		int bits = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
@@ -722,12 +718,6 @@ void createHandle () {
 	if ((bits & OS.WS_CHILD) != 0) {
 		OS.SetWindowLongPtr (handle, OS.GWLP_ID, handle);
 	}
-	if (OS.IsDBLocale && hwndParent != 0) {
-		long hIMC = OS.ImmGetContext (hwndParent);
-		OS.ImmAssociateContext (handle, hIMC);
-		OS.ImmReleaseContext (hwndParent, hIMC);
-	}
-
 }
 
 void checkGesture () {
@@ -1120,16 +1110,6 @@ void forceResize () {
 	for (int i=0; i<lpwp.length; i++) {
 		WINDOWPOS wp = lpwp [i];
 		if (wp != null && wp.hwnd == handle) {
-			/*
-			* This code is intentionally commented.  All widgets that
-			* are created by SWT have WS_CLIPSIBLINGS to ensure that
-			* application code does not draw outside of the control.
-			*/
-//			int count = parent.getChildrenCount ();
-//			if (count > 1) {
-//				int bits = OS.GetWindowLong (handle, OS.GWL_STYLE);
-//				if ((bits & OS.WS_CLIPSIBLINGS) == 0) wp.flags |= OS.SWP_NOCOPYBITS;
-//			}
 			OS.SetWindowPos (wp.hwnd, 0, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
 			lpwp [i] = null;
 			return;
@@ -1280,7 +1260,6 @@ String getClipboardText () {
 			int byteCount = OS.GlobalSize (hMem) / TCHAR.sizeof * TCHAR.sizeof;
 			long ptr = OS.GlobalLock (hMem);
 			if (ptr != 0) {
-				/* Use the character encoding for the default locale */
 				TCHAR buffer = new TCHAR (0, byteCount / TCHAR.sizeof);
 				OS.MoveMemory (buffer, ptr, byteCount);
 				string = buffer.toString (0, buffer.strlen ());
@@ -1973,8 +1952,8 @@ boolean isShowing () {
 boolean isTabGroup () {
 	Control [] tabList = parent._getTabList ();
 	if (tabList != null) {
-		for (int i=0; i<tabList.length; i++) {
-			if (tabList [i] == this) return true;
+		for (Control element : tabList) {
+			if (element == this) return true;
 		}
 	}
 	int bits = OS.GetWindowLong (handle, OS.GWL_STYLE);
@@ -1984,8 +1963,8 @@ boolean isTabGroup () {
 boolean isTabItem () {
 	Control [] tabList = parent._getTabList ();
 	if (tabList != null) {
-		for (int i=0; i<tabList.length; i++) {
-			if (tabList [i] == this) return false;
+		for (Control element : tabList) {
+			if (element == this) return false;
 		}
 	}
 	int bits = OS.GetWindowLong (handle, OS.GWL_STYLE);
@@ -2540,9 +2519,6 @@ void releaseParent () {
 @Override
 void releaseWidget () {
 	super.releaseWidget ();
-	if (OS.IsDBLocale) {
-		OS.ImmAssociateContext (handle, 0);
-	}
 	if (toolTipText != null) {
 		setToolTipText (getShell (), null);
 	}
@@ -4674,9 +4650,6 @@ CREATESTRUCT widgetCreateStruct () {
 int widgetExtStyle () {
 	int bits = 0;
 	if ((style & SWT.BORDER) != 0) bits |= OS.WS_EX_CLIENTEDGE;
-//	if ((style & SWT.BORDER) != 0) {
-//		if ((style & SWT.FLAT) == 0) bits |= OS.WS_EX_CLIENTEDGE;
-//	}
 	bits |= OS.WS_EX_NOINHERITLAYOUT;
 	if ((style & SWT.RIGHT_TO_LEFT) != 0) bits |= OS.WS_EX_LAYOUTRTL;
 	if ((style & SWT.FLIP_TEXT_DIRECTION) != 0) bits |= OS.WS_EX_RTLREADING;
@@ -4690,21 +4663,7 @@ long widgetParent () {
 int widgetStyle () {
 	/* Force clipping of siblings by setting WS_CLIPSIBLINGS */
 	int bits = OS.WS_CHILD | OS.WS_VISIBLE | OS.WS_CLIPSIBLINGS;
-//	if ((style & SWT.BORDER) != 0) {
-//		if ((style & SWT.FLAT) != 0) bits |= OS.WS_BORDER;
-//	}
 	return bits;
-
-	/*
-	* This code is intentionally commented.  When clipping
-	* of both siblings and children is not enforced, it is
-	* possible for application code to draw outside of the
-	* control.
-	*/
-//	int bits = OS.WS_CHILD | OS.WS_VISIBLE;
-//	if ((style & SWT.CLIP_SIBLINGS) != 0) bits |= OS.WS_CLIPSIBLINGS;
-//	if ((style & SWT.CLIP_CHILDREN) != 0) bits |= OS.WS_CLIPCHILDREN;
-//	return bits;
 }
 
 /**
@@ -5535,9 +5494,7 @@ LRESULT WM_SYSCOMMAND (long wParam, long lParam) {
 							char key = (char) lParam;
 							if (key != 0) {
 								key = Character.toUpperCase (key);
-								MenuItem [] items = menu.getItems ();
-								for (int i=0; i<items.length; i++) {
-									MenuItem item = items [i];
+								for (MenuItem item : menu.getItems ()) {
 									String text = item.getText ();
 									char mnemonic = findMnemonic (text);
 									if (text.length () > 0 && mnemonic == 0) {

@@ -916,9 +916,9 @@ public class Accessible {
 		}
 		iaccessible = null;
 		Release();
-		for (int i = 0; i < children.size(); i++) {
-			Accessible child = children.get(i);
-			child.dispose();
+		List<Accessible> list = new ArrayList<>(children);
+		for (Accessible accChild : list) {
+			accChild.dispose();
 		}
 	}
 
@@ -1765,8 +1765,8 @@ public class Accessible {
 				objIAccessibleValue.dispose();
 			objIAccessibleValue = null;
 
-			for (int i = 0; i < relations.length; i++) {
-				if (relations[i] != null) relations[i].Release();
+			for (Relation relation : relations) {
+				if (relation != null) relation.Release();
 			}
 			// TODO: also remove all relations for which 'this' is a target??
 		}
@@ -2122,8 +2122,7 @@ public class Accessible {
 					long[] addr = new long[1];
 					OS.MoveMemory(addr, ppdispChild, C.PTR_SIZEOF);
 					boolean found = false;
-					for (int i = 0; i < children.size(); i++) {
-						Accessible accChild = children.get(i);
+					for (Accessible accChild : children) {
 						if (accChild.item == item) {
 							/*
 							 * MSAA uses a new accessible for the child
@@ -2139,8 +2138,8 @@ public class Accessible {
 					osAccessible.item = item;
 					if (!found) {
 						item.addListener(SWT.Dispose, e -> {
-							for (int i = 0; i < children.size(); i++) {
-								Accessible accChild = children.get(i);
+							List<Accessible> list = new ArrayList<>(children);
+							for (Accessible accChild : list) {
 								if (accChild.item == item) {
 									accChild.dispose();
 								}
@@ -3018,11 +3017,9 @@ public class Accessible {
 		if (similarItemsInGroup == 0 && positionInGroup == 0) {
 			/* Determine position and count for radio buttons. */
 			if (control instanceof Button && ((control.getStyle() & SWT.RADIO) != 0)) {
-				Control [] children = control.getParent().getChildren();
 				positionInGroup = 1;
 				similarItemsInGroup = 1;
-				for (int i = 0; i < children.length; i++) {
-					Control child = children[i];
+				for (Control child : control.getParent().getChildren()) {
 					if (child instanceof Button && ((child.getStyle() & SWT.RADIO) != 0)) {
 						if (child == control) positionInGroup = similarItemsInGroup;
 						else similarItemsInGroup++;
@@ -3213,8 +3210,8 @@ public class Accessible {
 		attributes += "margin-right:" + event.rightMargin + ";";
 		attributes += "margin-bottom:" + event.bottomMargin + ";";
 		if (event.tabStops != null) {
-			for (int i = 0; i < event.tabStops.length; i++) {
-				attributes += "tab-stop:position=" + event.tabStops[i] + ";";
+			for (int tabStop : event.tabStops) {
+				attributes += "tab-stop:position=" + tabStop + ";";
 			}
 		}
 		if (event.justify) attributes += "text-align:justify;";

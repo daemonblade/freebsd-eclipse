@@ -205,14 +205,6 @@ void _addListener (int eventType, Listener listener) {
 			OS.SendMessage (handle, OS.TVM_SETSCROLLTIME, 0, 0);
 			int bits = OS.GetWindowLong (handle, OS.GWL_STYLE);
 			if (eventType == SWT.MeasureItem) {
-				/*
-				* This code is intentionally commented.
-				*/
-//				if (explorerTheme) {
-//					int bits1 = (int)OS.SendMessage (handle, OS.TVM_GETEXTENDEDSTYLE, 0, 0);
-//					bits1 &= ~OS.TVS_EX_AUTOHSCROLL;
-//					OS.SendMessage (handle, OS.TVM_SETEXTENDEDSTYLE, 0, bits1);
-//				}
 				bits |= OS.TVS_NOHSCROLL;
 			}
 			/*
@@ -1667,11 +1659,6 @@ boolean checkData (TreeItem item, int index, boolean redraw) {
 	return true;
 }
 
-@Override
-boolean checkHandle (long hwnd) {
-	return hwnd == handle || (hwndParent != 0 && hwnd == hwndParent) || (hwndHeader != 0 && hwnd == hwndHeader);
-}
-
 boolean checkScroll (long hItem) {
 	/*
 	* Feature in Windows.  If redraw is turned off using WM_SETREDRAW
@@ -1774,8 +1761,7 @@ public void clearAll (boolean all) {
 	if (hItem == 0) return;
 	if (all) {
 		boolean redraw = false;
-		for (int i=0; i<items.length; i++) {
-			TreeItem item = items [i];
+		for (TreeItem item : items) {
 			if (item != null && item != currentItem) {
 				item.clear ();
 				redraw = true;
@@ -1864,10 +1850,6 @@ void createHandle () {
 		OS.SetWindowTheme (handle, Display.EXPLORER, null);
 		int bits = OS.TVS_EX_DOUBLEBUFFER | OS.TVS_EX_RICHTOOLTIP;
 		if (ENABLE_TVS_EX_FADEINOUTEXPANDOS) bits |= OS.TVS_EX_FADEINOUTEXPANDOS;
-		/*
-		* This code is intentionally commented.
-		*/
-//		if ((style & SWT.FULL_SELECTION) == 0) bits |= OS.TVS_EX_AUTOHSCROLL;
 		OS.SendMessage (handle, OS.TVM_SETEXTENDEDSTYLE, 0, bits);
 		/*
 		* Bug in Windows.  When the tree is using the explorer
@@ -1941,8 +1923,7 @@ void createItem (TreeColumn column, int index) {
 		System.arraycopy (columns, 0, newColumns, 0, columns.length);
 		columns = newColumns;
 	}
-	for (int i=0; i<items.length; i++) {
-		TreeItem item = items [i];
+	for (TreeItem item : items) {
 		if (item != null) {
 			String [] strings = item.strings;
 			if (strings != null) {
@@ -2114,14 +2095,6 @@ void createItem (TreeItem item, long hParent, long hInsertAfter, long hItem) {
 		hNewItem = OS.SendMessage (handle, OS.TVM_INSERTITEM, 0, tvInsert);
 		ignoreCustomDraw = false;
 		if (hNewItem == 0) error (SWT.ERROR_ITEM_NOT_ADDED);
-		/*
-		* This code is intentionally commented.
-		*/
-//		if (hParent != 0) {
-//			int bits = OS.GetWindowLong (handle, OS.GWL_STYLE);
-//			bits |= OS.TVS_LINESATROOT;
-//			OS.SetWindowLong (handle, OS.GWL_STYLE, bits);
-//		}
 	} else {
 		TVITEM tvItem = new TVITEM ();
 		tvItem.mask = OS.TVIF_HANDLE | OS.TVIF_PARAM;
@@ -2273,20 +2246,6 @@ void createParent () {
 		null);
 	if (hwndHeader == 0) error (SWT.ERROR_NO_HANDLES);
 	OS.SetWindowLongPtr (hwndHeader, OS.GWLP_ID, hwndHeader);
-	if (OS.IsDBLocale) {
-		long hIMC = OS.ImmGetContext (handle);
-		OS.ImmAssociateContext (hwndParent, hIMC);
-		OS.ImmAssociateContext (hwndHeader, hIMC);
-		OS.ImmReleaseContext (handle, hIMC);
-	}
-	//This code is intentionally commented
-//	if (!OS.IsPPC) {
-//		if ((style & SWT.BORDER) != 0) {
-//			int oldExStyle = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
-//			oldExStyle &= ~OS.WS_EX_CLIENTEDGE;
-//			OS.SetWindowLong (handle, OS.GWL_EXSTYLE, oldExStyle);
-//		}
-//	}
 	long hFont = OS.SendMessage (handle, OS.WM_GETFONT, 0, 0);
 	if (hFont != 0) OS.SendMessage (hwndHeader, OS.WM_SETFONT, hFont, 0);
 	long hwndInsertAfter = OS.GetWindow (handle, OS.GW_HWNDPREV);
@@ -2404,8 +2363,7 @@ public void deselectAll () {
 			long hItem = OS.SendMessage (handle, OS.TVM_GETNEXTITEM, OS.TVGN_ROOT, 0);
 			deselect (hItem, tvItem, 0);
 		} else {
-			for (int i=0; i<items.length; i++) {
-				TreeItem item = items [i];
+			for (TreeItem item : items) {
 				if (item != null) {
 					tvItem.hItem = item.handle;
 					OS.SendMessage (handle, OS.TVM_SETITEM, 0, tvItem);
@@ -2437,8 +2395,7 @@ void destroyItem (TreeColumn column) {
 	}
 	System.arraycopy (columns, index + 1, columns, index, --columnCount - index);
 	columns [columnCount] = null;
-	for (int i=0; i<items.length; i++) {
-		TreeItem item = items [i];
+	for (TreeItem item : items) {
 		if (item != null) {
 			if (columnCount == 0) {
 				item.strings = null;
@@ -2537,9 +2494,9 @@ void destroyItem (TreeColumn column) {
 			newColumns [i - orderIndex] = columns [newOrder [i]];
 			newColumns [i - orderIndex].updateToolTip (newOrder [i]);
 		}
-		for (int i=0; i<newColumns.length; i++) {
-			if (!newColumns [i].isDisposed ()) {
-				newColumns [i].sendEvent (SWT.Move);
+		for (TreeColumn newColumn : newColumns) {
+			if (!newColumn.isDisposed ()) {
+				newColumn.sendEvent (SWT.Move);
 			}
 		}
 	}
@@ -2584,10 +2541,6 @@ void destroyItem (TreeItem item, long hItem) {
 		hParent = OS.SendMessage (handle, OS.TVM_GETNEXTITEM, OS.TVGN_PARENT, hItem);
 		OS.UpdateWindow (handle);
 		OS.DefWindowProc (handle, OS.WM_SETREDRAW, 0, 0);
-		/*
-		* This code is intentionally commented.
-		*/
-//		OS.SendMessage (handle, OS.WM_SETREDRAW, 0, 0);
 	}
 	ignoreDeselect = ignoreSelect = lockSelection = true;
 
@@ -3502,8 +3455,7 @@ public TreeItem [] getSelection () {
 		long hItem = OS.SendMessage (handle, OS.TVM_GETNEXTITEM, OS.TVGN_ROOT, 0);
 		count = getSelection (hItem, tvItem, guess, 0, -1, false, true);
 	} else {
-		for (int i=0; i<items.length; i++) {
-			TreeItem item = items [i];
+		for (TreeItem item : items) {
 			if (item != null) {
 				long hItem = item.handle;
 				int state = (int)OS.SendMessage (handle, OS.TVM_GETITEMSTATE, hItem, OS.TVIS_SELECTED);
@@ -3565,8 +3517,7 @@ public int getSelectionCount () {
 		long hItem = OS.SendMessage (handle, OS.TVM_GETNEXTITEM, OS.TVGN_ROOT, 0);
 		count = getSelection (hItem, null, null, 0, -1, false, true);
 	} else {
-		for (int i=0; i<items.length; i++) {
-			TreeItem item = items [i];
+		for (TreeItem item : items) {
 			if (item != null) {
 				long hItem = item.handle;
 				int state = (int)OS.SendMessage (handle, OS.TVM_GETITEMSTATE, hItem, OS.TVIS_SELECTED);
@@ -3908,8 +3859,7 @@ void releaseHandle () {
 @Override
 void releaseChildren (boolean destroy) {
 	if (items != null) {
-		for (int i=0; i<items.length; i++) {
-			TreeItem item = items [i];
+		for (TreeItem item : items) {
 			if (item != null && !item.isDisposed ()) {
 				item.release (false);
 			}
@@ -3917,8 +3867,7 @@ void releaseChildren (boolean destroy) {
 		items = null;
 	}
 	if (columns != null) {
-		for (int i=0; i<columns.length; i++) {
-			TreeColumn column = columns [i];
+		for (TreeColumn column : columns) {
 			if (column != null && !column.isDisposed ()) {
 				column.release (false);
 			}
@@ -3972,8 +3921,7 @@ public void removeAll () {
 	checkWidget ();
 	hFirstIndexOf = hLastIndexOf = 0;
 	itemCount = -1;
-	for (int i=0; i<items.length; i++) {
-		TreeItem item = items [i];
+	for (TreeItem item : items) {
 		if (item != null && !item.isDisposed ()) {
 			item.release (false);
 		}
@@ -4060,14 +4008,12 @@ public void removeTreeListener(TreeListener listener) {
 @Override
 void reskinChildren (int flags) {
 	if (items != null) {
-		for (int i=0; i<items.length; i++) {
-			TreeItem item = items [i];
+		for (TreeItem item : items) {
 			if (item != null) item.reskinChildren (flags);
 		}
 	}
 	if (columns != null) {
-		for (int i=0; i<columns.length; i++) {
-			TreeColumn column = columns [i];
+		for (TreeColumn column : columns) {
 			if (column != null) column.reskinChildren (flags);
 		}
 	}
@@ -5062,8 +5008,8 @@ public void setSelection (TreeItem [] items) {
 		long hItem = OS.SendMessage (handle, OS.TVM_GETNEXTITEM, OS.TVGN_ROOT, 0);
 		setSelection (hItem, tvItem, items);
 	} else {
-		for (int i=0; i<this.items.length; i++) {
-			item = this.items [i];
+		for (TreeItem item2 : this.items) {
+			item = item2;
 			if (item != null) {
 				int index = 0;
 				while (index < length) {
@@ -5234,9 +5180,6 @@ void showItem (long hItem) {
 			OS.DefWindowProc (handle, OS.WM_SETREDRAW, 0, 0);
 		}
 		OS.SendMessage (handle, OS.TVM_SELECTITEM, OS.TVGN_FIRSTVISIBLE, hItem);
-		/* This code is intentionally commented */
-		//int hParent = OS.SendMessage (handle, OS.TVM_GETNEXTITEM, OS.TVGN_PARENT, hItem);
-		//if (hParent == 0) OS.SendMessage (handle, OS.WM_HSCROLL, OS.SB_TOP, 0);
 		OS.SendMessage (handle, OS.WM_HSCROLL, OS.SB_TOP, 0);
 		if (fixScroll) {
 			OS.DefWindowProc (handle, OS.WM_SETREDRAW, 1, 0);
@@ -5630,8 +5573,7 @@ void updateOrientation () {
 		Point size = imageList.getImageSize ();
 		display.releaseImageList (imageList);
 		imageList = display.getImageList (style & SWT.RIGHT_TO_LEFT, size.x, size.y);
-		for (int i = 0; i < items.length; i++) {
-			TreeItem item = items[i];
+		for (TreeItem item : items) {
 			if (item != null) {
 				Image image = item.image;
 				if (image != null) {
@@ -6727,8 +6669,7 @@ LRESULT WM_LBUTTONDOWN (long wParam, long lParam) {
 					long hItem = OS.SendMessage (handle, OS.TVM_GETNEXTITEM, OS.TVGN_ROOT, 0);
 					deselect (hItem, tvItem, hNewItem);
 				} else {
-					for (int i=0; i<items.length; i++) {
-						TreeItem item = items [i];
+					for (TreeItem item : items) {
 						if (item != null && item.handle != hNewItem) {
 							tvItem.hItem = item.handle;
 							OS.SendMessage (handle, OS.TVM_SETITEM, 0, tvItem);

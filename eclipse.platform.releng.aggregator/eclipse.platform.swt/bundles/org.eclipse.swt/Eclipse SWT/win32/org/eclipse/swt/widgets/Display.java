@@ -414,17 +414,6 @@ public class Display extends Device {
 
 	/* Package Name */
 	static final String PACKAGE_PREFIX = "org.eclipse.swt.widgets."; //$NON-NLS-1$
-	/*
-	* This code is intentionally commented.  In order
-	* to support CLDC, .class cannot be used because
-	* it does not compile on some Java compilers when
-	* they are targeted for CLDC.
-	*/
-//	static {
-//		String name = Display.class.getName ();
-//		int index = name.lastIndexOf ('.');
-//		PACKAGE_PREFIX = name.substring (0, index + 1);
-//	}
 
 	/*
 	* TEMPORARY CODE.  Install the runnable that
@@ -657,9 +646,14 @@ int asciiKey (int key) {
 	if (!OS.GetKeyboardState (keyboard)) return 0;
 
 	/* Translate the key to ASCII or UNICODE using the virtual keyboard */
-	char [] result = new char [1];
-	if (OS.ToUnicode (key, key, keyboard, result, 1, 0) == 1) return result [0];
-	return 0;
+	char [] buffer = new char [1];
+	int len = OS.ToUnicode (key, key, keyboard, buffer, 1, 0);
+
+	/* If the key is a dead key, flush dead key state. */
+	while (len == -1) {
+		len = OS.ToUnicode (key, key, keyboard, buffer, 1, 0);
+	}
+	return (len != 0) ? buffer [0] : 0;
 }
 
 /**
@@ -724,36 +718,16 @@ protected void checkSubclass () {
 @Override
 protected void checkDevice () {
 	if (thread == null) error (SWT.ERROR_WIDGET_DISPOSED);
-	if (thread != Thread.currentThread ()) {
-		/*
-		* Bug in IBM JVM 1.6.  For some reason, under
-		* conditions that are yet to be full understood,
-		* Thread.currentThread() is either returning null
-		* or a different instance from the one that was
-		* saved when the Display was created.  This is
-		* possibly a JIT problem because modifying this
-		* method to print logging information when the
-		* error happens seems to fix the problem.  The
-		* fix is to use operating system calls to verify
-		* that the current thread is not the Display thread.
-		*
-		* NOTE: Despite the fact that Thread.currentThread()
-		* is used in other places, the failure has not been
-		* observed in all places where it is called.
-		*/
-		if (threadId != OS.GetCurrentThreadId ()) {
-			error (SWT.ERROR_THREAD_INVALID_ACCESS);
-		}
-	}
+	if (thread != Thread.currentThread ()) error (SWT.ERROR_THREAD_INVALID_ACCESS);
 	if (isDisposed ()) error (SWT.ERROR_DEVICE_DISPOSED);
 }
 
 static void checkDisplay (Thread thread, boolean multiple) {
 	synchronized (Device.class) {
-		for (int i=0; i<Displays.length; i++) {
-			if (Displays [i] != null) {
+		for (Display display : Displays) {
+			if (display != null) {
 				if (!multiple) SWT.error (SWT.ERROR_NOT_IMPLEMENTED, null, " [multiple displays]"); //$NON-NLS-1$
-				if (Displays [i].thread == thread) SWT.error (SWT.ERROR_THREAD_INVALID_ACCESS);
+				if (display.thread == thread) SWT.error (SWT.ERROR_THREAD_INVALID_ACCESS);
 			}
 		}
 	}
@@ -771,8 +745,8 @@ void clearModal (Shell shell) {
 	System.arraycopy (modalShells, index + 1, modalShells, index, --length - index);
 	modalShells [length] = null;
 	if (index == 0 && modalShells [0] == null) modalShells = null;
-	Shell [] shells = getShells ();
-	for (int i=0; i<shells.length; i++) shells [i].updateModal ();
+	for (Shell activeShell : getShells ())
+		activeShell.updateModal ();
 }
 
 int controlKey (int key) {
@@ -1151,8 +1125,7 @@ public void disposeExec (Runnable runnable) {
 
 void drawMenuBars () {
 	if (bars == null) return;
-	for (int i=0; i<bars.length; i++) {
-		Menu menu = bars [i];
+	for (Menu menu : bars) {
 		if (menu != null && !menu.isDisposed ()) menu.update ();
 	}
 	bars = null;
@@ -1365,8 +1338,7 @@ long foregroundIdleProc (long code, long wParam, long lParam) {
  */
 public static Display findDisplay (Thread thread) {
 	synchronized (Device.class) {
-		for (int i=0; i<Displays.length; i++) {
-			Display display = Displays [i];
+		for (Display display : Displays) {
 			if (display != null && display.thread == thread) {
 				return display;
 			}
@@ -1547,20 +1519,8 @@ Control getControl (long handle) {
 	}
 	int index = (int)OS.GetProp (handle, SWT_OBJECT_INDEX) - 1;
 	if (0 <= index && index < controlTable.length) {
-		Control control = controlTable [index];
-		/*
-		* Because GWL_USERDATA can be used by native widgets that
-		* do not belong to SWT, it is possible that GWL_USERDATA
-		* could return an index that is in the range of the table,
-		* but was not put there by SWT.  Therefore, it is necessary
-		* to check the handle of the control that is in the table
-		* against the handle that provided the GWL_USERDATA.
-		*/
-		if (control != null && control.checkHandle (handle)) {
-			lastGetHwnd = handle;
-			lastGetControl = control;
-			return control;
-		}
+		lastGetHwnd = handle;
+		return lastGetControl = controlTable [index];
 	}
 	return null;
 }
@@ -1848,16 +1808,13 @@ public int getIconDepth () {
 	checkDevice ();
 	if (getDepth () >= 24) return 32;
 
-	/* Use the character encoding for the default locale */
 	TCHAR buffer1 = new TCHAR (0, "Control Panel\\Desktop\\WindowMetrics", true); //$NON-NLS-1$
-
 	long [] phkResult = new long [1];
 	int result = OS.RegOpenKeyEx (OS.HKEY_CURRENT_USER, buffer1, 0, OS.KEY_READ, phkResult);
 	if (result != 0) return 4;
 	int depth = 4;
 	int [] lpcbData = new int [1];
 
-	/* Use the character encoding for the default locale */
 	TCHAR buffer2 = new TCHAR (0, "Shell Icon BPP", true); //$NON-NLS-1$
 	result = OS.RegQueryValueEx (phkResult [0], buffer2, 0, null, (TCHAR) null, lpcbData);
 	if (result == 0) {
@@ -2124,9 +2081,7 @@ public Monitor [] getMonitors () {
 	checkDevice ();
 	monitors = new Monitor [4];
 	Callback callback = new Callback (this, "monitorEnumProc", 4); //$NON-NLS-1$
-	long lpfnEnum = callback.getAddress ();
-	if (lpfnEnum == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
-	OS.EnumDisplayMonitors (0, null, lpfnEnum, 0);
+	OS.EnumDisplayMonitors (0, null, callback.getAddress (), 0);
 	callback.dispose ();
 	Monitor [] result = new Monitor [monitorCount];
 	System.arraycopy (monitors, 0, result, 0, monitorCount);
@@ -2149,7 +2104,6 @@ long getMsgProc (long code, long wParam, long lParam) {
 			null);
 		embeddedCallback = new Callback (this, "embeddedProc", 4); //$NON-NLS-1$
 		embeddedProc = embeddedCallback.getAddress ();
-		if (embeddedProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		OS.SetWindowLongPtr (embeddedHwnd, OS.GWLP_WNDPROC, embeddedProc);
 	}
 	if (code >= 0 && (wParam & OS.PM_REMOVE) != 0) {
@@ -2213,8 +2167,7 @@ public Shell [] getShells () {
 	checkDevice ();
 	int index = 0;
 	Shell [] result = new Shell [16];
-	for (int i = 0; i < controlTable.length; i++) {
-		Control control = controlTable [i];
+	for (Control control : controlTable) {
 		if (control != null && control instanceof Shell) {
 			int j = 0;
 			while (j < index) {
@@ -2666,12 +2619,10 @@ protected void init () {
 	/* Create the callbacks */
 	windowCallback = new Callback (this, "windowProc", 4); //$NON-NLS-1$
 	windowProc = windowCallback.getAddress ();
-	if (windowProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	/* Remember the current thread id */
 	threadId = OS.GetCurrentThreadId ();
 
-	/* Use the character encoding for the default locale */
 	windowClass = new TCHAR (0, WindowName + WindowClassCount, true);
 	windowShadowClass = new TCHAR (0, WindowShadowName + WindowClassCount, true);
 	windowOwnDCClass = new TCHAR (0, WindowOwnDCName + WindowClassCount, true);
@@ -2709,19 +2660,16 @@ protected void init () {
 	OS.SetWindowText(hwndMessage, new TCHAR(0, title, true));
 	messageCallback = new Callback (this, "messageProc", 4); //$NON-NLS-1$
 	messageProc = messageCallback.getAddress ();
-	if (messageProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	OS.SetWindowLongPtr (hwndMessage, OS.GWLP_WNDPROC, messageProc);
 
 	/* Create the filter hook */
 	msgFilterCallback = new Callback (this, "msgFilterProc", 3); //$NON-NLS-1$
 	msgFilterProc = msgFilterCallback.getAddress ();
-	if (msgFilterProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	filterHook = OS.SetWindowsHookEx (OS.WH_MSGFILTER, msgFilterProc, 0, threadId);
 
 	/* Create the idle hook */
 	foregroundIdleCallback = new Callback (this, "foregroundIdleProc", 3); //$NON-NLS-1$
 	foregroundIdleProc = foregroundIdleCallback.getAddress ();
-	if (foregroundIdleProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	idleHook = OS.SetWindowsHookEx (OS.WH_FOREGROUNDIDLE, foregroundIdleProc, 0, threadId);
 
 	/* Register window messages */
@@ -3043,8 +2991,8 @@ long messageProc (long hwnd, long msg, long wParam, long lParam) {
 								if (mapKey != 0) {
 									accentKey = (mapKey & 0x80000000) != 0;
 									if (!accentKey) {
-										for (int i=0; i<ACCENTS.length; i++) {
-											int value = OS.VkKeyScan (ACCENTS [i]);
+										for (short accent : ACCENTS) {
+											int value = OS.VkKeyScan (accent);
 											if (value != -1 && (value & 0xFF) == keyMsg.wParam) {
 												int state = value >> 8;
 												if ((OS.GetKeyState (OS.VK_SHIFT) < 0) == ((state & 0x1) != 0) &&
@@ -3111,9 +3059,7 @@ long messageProc (long hwnd, long msg, long wParam, long lParam) {
 		}
 		case SWT_TRAYICONMSG: {
 			if (tray != null) {
-				TrayItem [] items = tray.items;
-				for (int i=0; i<items.length; i++) {
-					TrayItem item = items [i];
+				for (TrayItem item : tray.items) {
 					if (item != null && item.id == wParam) {
 						return item.messageProc (hwnd, (int)msg, wParam, lParam);
 					}
@@ -3168,13 +3114,6 @@ long messageProc (long hwnd, long msg, long wParam, long lParam) {
 		case OS.WM_ENDSESSION: {
 			if (wParam != 0) {
 				dispose ();
-				/*
-				* When the session is ending, no SWT program can continue
-				* to run.  In order to avoid running code after the display
-				* has been disposed, exit from Java.
-				*/
-				/* This code is intentionally commented */
-//				System.exit (0);
 			}
 			break;
 		}
@@ -3211,9 +3150,7 @@ long messageProc (long hwnd, long msg, long wParam, long lParam) {
 		default: {
 			if ((int)msg == TASKBARCREATED) {
 				if (tray != null) {
-					TrayItem [] items = tray.items;
-					for (int i=0; i<items.length; i++) {
-						TrayItem item = items [i];
+					for (TrayItem item : tray.items) {
 						if (item != null) item.recreate ();
 					}
 				}
@@ -3632,9 +3569,7 @@ static void register (Display display) {
 @Override
 protected void release () {
 	sendEvent (SWT.Dispose, new Event ());
-	Shell [] shells = getShells ();
-	for (int i=0; i<shells.length; i++) {
-		Shell shell = shells [i];
+	for (Shell shell : getShells ()) {
 		if (!shell.isDisposed ()) shell.dispose ();
 	}
 	if (tray != null) tray.dispose ();
@@ -3643,8 +3578,7 @@ protected void release () {
 	taskBar = null;
 	while (readAndDispatch ()) {}
 	if (disposeList != null) {
-		for (int i=0; i<disposeList.length; i++) {
-			Runnable next = disposeList [i];
+		for (Runnable next : disposeList) {
 			if (next != null) {
 				try {
 					next.run ();
@@ -3734,15 +3668,15 @@ void releaseDisplay () {
 	errorImage = infoImage = questionImage = warningIcon = null;
 
 	/* Release the System Cursors */
-	for (int i = 0; i < cursors.length; i++) {
-		if (cursors [i] != null) cursors [i].dispose ();
+	for (Cursor cursor : cursors) {
+		if (cursor != null) cursor.dispose ();
 	}
 	cursors = null;
 
 	/* Release Acquired Resources */
 	if (resources != null) {
-		for (int i=0; i<resources.length; i++) {
-			if (resources [i] != null) resources [i].dispose ();
+		for (Resource resource : resources) {
+			if (resource != null) resource.dispose ();
 		}
 		resources = null;
 	}
@@ -4039,15 +3973,11 @@ void runSettings () {
 	sendEvent (SWT.Settings, null);
 	Font newFont = getSystemFont ();
 	boolean sameFont = oldFont.equals (newFont);
-	Shell [] shells = getShells ();
-	for (int i=0; i<shells.length; i++) {
-		Shell shell = shells [i];
+	for (Shell shell : getShells ()) {
 		if (!shell.isDisposed ()) {
 			if (!sameFont) {
 				shell.updateFont (oldFont, newFont);
 			}
-			/* This code is intentionally commented */
-			//shell.redraw (true);
 			shell.layout (true, true);
 		}
 	}
@@ -4453,10 +4383,11 @@ public static void setAppVersion (String version) {
 	APP_VERSION = version;
 }
 
-void setModalDialog (Dialog modalDailog) {
+void setModalDialog(Dialog modalDailog) {
 	this.modalDialog = modalDailog;
-	Shell [] shells = getShells ();
-	for (int i=0; i<shells.length; i++) shells [i].updateModal ();
+	for (Shell shell : getShells()) {
+		shell.updateModal();
+	}
 }
 
 void setModalShell (Shell shell) {
@@ -4473,8 +4404,9 @@ void setModalShell (Shell shell) {
 		modalShells = newModalShells;
 	}
 	modalShells [index] = shell;
-	Shell [] shells = getShells ();
-	for (int i=0; i<shells.length; i++) shells [i].updateModal ();
+	for (Shell activeShell : getShells ()) {
+		activeShell.updateModal ();
+	}
 }
 
 /**
@@ -4705,8 +4637,8 @@ boolean translateAccelerator (MSG msg, Control control) {
 }
 
 static int translateKey (int key) {
-	for (int i=0; i<KeyTable.length; i++) {
-		if (KeyTable [i] [0] == key) return KeyTable [i] [1];
+	for (int[] element : KeyTable) {
+		if (element [0] == key) return element [1];
 	}
 	return 0;
 }
@@ -4747,8 +4679,8 @@ boolean translateTraversal (MSG msg, Control control) {
 }
 
 static int untranslateKey (int key) {
-	for (int i=0; i<KeyTable.length; i++) {
-		if (KeyTable [i] [1] == key) return KeyTable [i] [0];
+	for (int[] element : KeyTable) {
+		if (element [1] == key) return element [0];
 	}
 	return 0;
 }
@@ -4784,9 +4716,7 @@ public void update() {
 		int flags = OS.PM_REMOVE | OS.PM_NOYIELD;
 		OS.PeekMessage (msg, hwndMessage, SWT_NULL, SWT_NULL, flags);
 	}
-	Shell[] shells = getShells ();
-	for (int i=0; i<shells.length; i++) {
-		Shell shell = shells [i];
+	for (Shell shell : getShells ()) {
 		if (!shell.isDisposed ()) shell.update (true);
 	}
 }

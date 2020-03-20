@@ -182,8 +182,7 @@ void checkGDIP() {
 	if (loadedFonts != null) {
 		fontCollection = Gdip.PrivateFontCollection_new();
 		if (fontCollection == 0) SWT.error(SWT.ERROR_NO_HANDLES);
-		for (int i = 0; i < loadedFonts.length; i++) {
-			String path = loadedFonts[i];
+		for (String path : loadedFonts) {
 			if (path == null) break;
 			int length = path.length();
 			char [] buffer = new char [length + 1];
@@ -488,7 +487,6 @@ public FontData [] getFontList (String faceName, boolean scalable) {
 	/* Create the callback */
 	Callback callback = new Callback (this, "EnumFontFamProc", 4); //$NON-NLS-1$
 	long lpEnumFontFamProc = callback.getAddress ();
-	if (lpEnumFontFamProc == 0) SWT.error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	/* Initialize the instance variables */
 	metrics = new TEXTMETRIC ();
@@ -517,7 +515,6 @@ public FontData [] getFontList (String faceName, boolean scalable) {
 			OS.EnumFontFamilies (hDC, lf.lfFaceName, lpEnumFontFamProc, scalable ? 1 : 0);
 		}
 	} else {
-		/* Use the character encoding for the default locale */
 		TCHAR lpFaceName = new TCHAR (0, faceName, true);
 		OS.EnumFontFamilies (hDC, lpFaceName.chars, lpEnumFontFamProc, scalable ? 1 : 0);
 	}
@@ -553,19 +550,6 @@ String getLastError () {
 	int error = OS.GetLastError();
 	if (error == 0) return ""; //$NON-NLS-1$
 	return " [GetLastError=0x" + Integer.toHexString(error) + "]"; //$NON-NLS-1$ //$NON-NLS-2$
-}
-
-String getLastErrorText () {
-	int error = OS.GetLastError();
-	if (error == 0) return ""; //$NON-NLS-1$
-	long [] buffer = new long [1];
-	int dwFlags = OS.FORMAT_MESSAGE_ALLOCATE_BUFFER | OS.FORMAT_MESSAGE_FROM_SYSTEM | OS.FORMAT_MESSAGE_IGNORE_INSERTS;
-	int length = OS.FormatMessage(dwFlags, 0, error, OS.LANG_USER_DEFAULT, buffer, 0, 0);
-	if (length == 0) return " [GetLastError=0x" + Integer.toHexString(error) + "]"; //$NON-NLS-1$ //$NON-NLS-2$
-	char [] buffer1 = new char [length];
-	OS.MoveMemory(buffer1, buffer[0], length * TCHAR.sizeof);
-	if (buffer[0] != 0) OS.LocalFree(buffer[0]);
-	return new String(buffer1);
 }
 
 /**
@@ -799,8 +783,7 @@ void printErrors () {
 			int objectCount = 0;
 			int colors = 0, cursors = 0, fonts = 0, gcs = 0, images = 0;
 			int paths = 0, patterns = 0, regions = 0, textLayouts = 0, transforms = 0;
-			for (int i=0; i<objects.length; i++) {
-				Object object = objects [i];
+			for (Object object : objects) {
 				if (object != null) {
 					objectCount++;
 					if (object instanceof Color) colors++;
@@ -831,8 +814,8 @@ void printErrors () {
 					string = string.substring (0, string.length () - 2);
 					System.err.println (string);
 				}
-				for (int i=0; i<errors.length; i++) {
-					if (errors [i] != null) errors [i].printStackTrace (System.err);
+				for (Error error : errors) {
+					if (error != null) error.printStackTrace (System.err);
 				}
 			}
 		}

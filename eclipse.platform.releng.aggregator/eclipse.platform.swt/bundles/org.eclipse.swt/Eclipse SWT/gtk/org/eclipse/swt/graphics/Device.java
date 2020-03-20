@@ -592,10 +592,8 @@ protected void init () {
 				if (index == Devices.length) {
 					XErrorCallback = new Callback (clazz, "XErrorProc", 2);
 					XNullErrorProc = XErrorCallback.getAddress ();
-					if (XNullErrorProc == 0) SWT.error (SWT.ERROR_NO_MORE_CALLBACKS);
 					XIOErrorCallback = new Callback (clazz, "XIOErrorProc", 1);
 					XNullIOErrorProc = XIOErrorCallback.getAddress ();
-					if (XNullIOErrorProc == 0) SWT.error (SWT.ERROR_NO_MORE_CALLBACKS);
 					XErrorProc = OS.XSetErrorHandler (XNullErrorProc);
 					XIOErrorProc = OS.XSetIOErrorHandler (XNullIOErrorProc);
 				}
@@ -608,7 +606,6 @@ protected void init () {
 	if (xDisplay != 0) {
 		logCallback = new Callback (this, "logProc", 4);
 		logProc = logCallback.getAddress ();
-		if (logProc == 0) SWT.error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 		/* Set GTK warning and error handlers */
 		if (debug) {
@@ -757,7 +754,7 @@ private void overrideThemeValues () {
 
 	// Load CSS from user-defined CSS file.
 	String additionalCSSPath = System.getProperty("org.eclipse.swt.internal.gtk.cssFile");
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0) && additionalCSSPath != null){
+	if (additionalCSSPath != null){
 		// Warning:
 		// - gtk css syntax changed in 3.20. If you load custom css, it could break things depending on gtk version on system.
 		// - Also, a lot of custom css/themes are buggy and may result in additional console warnings.

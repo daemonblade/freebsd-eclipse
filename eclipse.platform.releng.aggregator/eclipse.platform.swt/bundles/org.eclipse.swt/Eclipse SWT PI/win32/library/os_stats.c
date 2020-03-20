@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -36,7 +36,6 @@ char * OS_nativeFunctionNames[] = {
 	"BITMAP_1sizeof",
 	"BLENDFUNCTION_1sizeof",
 	"BP_1PAINTPARAMS_1sizeof",
-	"BROWSEINFO_1sizeof",
 	"BUTTON_1IMAGELIST_1sizeof",
 	"BeginBufferedPaint",
 	"BeginDeferWindowPos",
@@ -173,7 +172,6 @@ char * OS_nativeFunctionNames[] = {
 	"FLICK_1POINT_1sizeof",
 	"FileTimeToSystemTime",
 	"FillRect",
-	"FormatMessage",
 	"GCP_1RESULTS_1sizeof",
 	"GESTURECONFIG_1sizeof",
 	"GESTUREINFO_1sizeof",
@@ -333,9 +331,6 @@ char * OS_nativeFunctionNames[] = {
 	"ImageList_1Replace",
 	"ImageList_1ReplaceIcon",
 	"ImageList_1SetIconSize",
-	"ImmAssociateContext",
-	"ImmCreateContext",
-	"ImmDestroyContext",
 	"ImmEscape",
 	"ImmGetCompositionFont",
 	"ImmGetCompositionString__JI_3BI",
@@ -600,13 +595,10 @@ char * OS_nativeFunctionNames[] = {
 	"SCRIPT_1STRING_1ANALYSIS_1sizeof",
 	"SCROLLBARINFO_1sizeof",
 	"SCROLLINFO_1sizeof",
-	"SHBrowseForFolder",
 	"SHDRAGIMAGE_1sizeof",
 	"SHELLEXECUTEINFO_1sizeof",
 	"SHFILEINFO_1sizeof",
 	"SHGetFileInfo",
-	"SHGetMalloc",
-	"SHGetPathFromIDList",
 	"SIZE_1sizeof",
 	"STARTUPINFO_1sizeof",
 	"SYSTEMTIME_1sizeof",
@@ -677,7 +669,6 @@ char * OS_nativeFunctionNames[] = {
 	"SetCursorPos",
 	"SetDIBColorTable",
 	"SetDllDirectory",
-	"SetErrorMode",
 	"SetFocus",
 	"SetForegroundWindow",
 	"SetGestureConfig",

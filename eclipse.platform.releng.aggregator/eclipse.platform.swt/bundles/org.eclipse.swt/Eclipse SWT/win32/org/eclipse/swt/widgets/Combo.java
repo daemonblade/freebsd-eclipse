@@ -142,8 +142,6 @@ public class Combo extends Composite {
  */
 public Combo (Composite parent, int style) {
 	super (parent, checkStyle (style));
-	/* This code is intentionally commented */
-	//if ((style & SWT.H_SCROLL) != 0) this.style |= SWT.H_SCROLL;
 	this.style |= SWT.H_SCROLL;
 }
 
@@ -512,11 +510,6 @@ long CBTProc (long nCode, long wParam, long lParam) {
 }
 
 @Override
-boolean checkHandle (long hwnd) {
-	return hwnd == handle || hwnd == OS.GetDlgItem (handle, CBID_EDIT) || hwnd == OS.GetDlgItem (handle, CBID_LIST);
-}
-
-@Override
 protected void checkSubclass () {
 	if (!isValidSubclass ()) error (SWT.ERROR_INVALID_SUBCLASS);
 }
@@ -723,9 +716,7 @@ void createHandle () {
 	} else {
 		int threadId = OS.GetCurrentThreadId ();
 		Callback cbtCallback = new Callback (this, "CBTProc", 3); //$NON-NLS-1$
-		long cbtProc = cbtCallback.getAddress ();
-		if (cbtProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
-		cbtHook = OS.SetWindowsHookEx (OS.WH_CBT, cbtProc, 0, threadId);
+		cbtHook = OS.SetWindowsHookEx (OS.WH_CBT, cbtCallback.getAddress (), 0, threadId);
 		super.createHandle ();
 		if (cbtHook != 0) OS.UnhookWindowsHookEx (cbtHook);
 		cbtHook = 0;
@@ -2111,8 +2102,8 @@ public void setItem (int index, String string) {
 public void setItems (String... items) {
 	checkWidget ();
 	if (items == null) error (SWT.ERROR_NULL_ARGUMENT);
-	for (int i=0; i<items.length; i++) {
-		if (items [i] == null) error (SWT.ERROR_INVALID_ARGUMENT);
+	for (String item : items) {
+		if (item == null) error (SWT.ERROR_INVALID_ARGUMENT);
 	}
 	RECT rect = null;
 	long hDC = 0, oldFont = 0, newFont = 0;
@@ -2126,9 +2117,8 @@ public void setItems (String... items) {
 	}
 	OS.SendMessage (handle, OS.CB_RESETCONTENT, 0, 0);
 	int codePage = getCodePage ();
-	for (int i=0; i<items.length; i++) {
-		String string = items [i];
-		TCHAR buffer = new TCHAR (codePage, string, true);
+	for (String item : items) {
+		TCHAR buffer = new TCHAR (codePage, item, true);
 		int code = (int)OS.SendMessage (handle, OS.CB_ADDSTRING, 0, buffer);
 		if (code == OS.CB_ERR) error (SWT.ERROR_ITEM_NOT_ADDED);
 		if (code == OS.CB_ERRSPACE) error (SWT.ERROR_ITEM_NOT_ADDED);
@@ -2856,18 +2846,6 @@ LRESULT WM_GETDLGCODE (long wParam, long lParam) {
 @Override
 LRESULT WM_KILLFOCUS (long wParam, long lParam) {
 	/*
-	* Bug in Windows.  When a combo box that is read only
-	* is disposed in CBN_KILLFOCUS, Windows segment faults.
-	* The fix is to send focus from WM_KILLFOCUS instead
-	* of CBN_KILLFOCUS.
-	*
-	* NOTE: In version 6 of COMCTL32.DLL, the bug is fixed.
-	*/
-	if ((style & SWT.READ_ONLY) != 0) {
-		return super.WM_KILLFOCUS (wParam, lParam);
-	}
-
-	/*
 	* Return NULL - Focus notification is
 	* done in WM_COMMAND by CBN_KILLFOCUS.
 	*/
@@ -3240,15 +3218,6 @@ LRESULT wmCommandChild (long wParam, long lParam) {
 			updateDropDownHeight ();
 			break;
 		case OS.CBN_KILLFOCUS:
-			/*
-			* Bug in Windows.  When a combo box that is read only
-			* is disposed in CBN_KILLFOCUS, Windows segment faults.
-			* The fix is to send focus from WM_KILLFOCUS instead
-			* of CBN_KILLFOCUS.
-			*
-			* NOTE: In version 6 of COMCTL32.DLL, the bug is fixed.
-			*/
-			if ((style & SWT.READ_ONLY) != 0) break;
 			sendFocusEvent (SWT.FocusOut);
 			if (isDisposed ()) return LRESULT.ZERO;
 			break;

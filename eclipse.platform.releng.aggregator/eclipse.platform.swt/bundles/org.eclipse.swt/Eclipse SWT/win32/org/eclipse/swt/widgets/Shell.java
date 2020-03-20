@@ -123,7 +123,7 @@ import org.eclipse.swt.internal.win32.*;
 public class Shell extends Decorations {
 	Menu activeMenu;
 	ToolTip [] toolTips;
-	long hIMC, hwndMDIClient, lpstrTip, toolTipHandle, balloonTipHandle, menuItemToolTipHandle;
+	long hwndMDIClient, lpstrTip, toolTipHandle, balloonTipHandle, menuItemToolTipHandle;
 	int minWidth = SWT.DEFAULT, minHeight = SWT.DEFAULT;
 	long [] brushes;
 	boolean showWithParent, fullScreen, wasMaximized, modified, center;
@@ -625,10 +625,6 @@ void createHandle () {
 		int flags = OS.SWP_DRAWFRAME | OS.SWP_NOMOVE | OS.SWP_NOSIZE | OS.SWP_NOZORDER | OS.SWP_NOACTIVATE;
 		OS.SetWindowPos (handle, 0, 0, 0, 0, 0, flags);
 	}
-	if (OS.IsDBLocale) {
-		hIMC = OS.ImmCreateContext ();
-		if (hIMC != 0) OS.ImmAssociateContext (handle, hIMC);
-	}
 }
 
 void createMenuItemToolTipHandle() {
@@ -712,36 +708,6 @@ void destroyToolTip (ToolTip toolTip) {
 void destroyWidget () {
 	fixActiveShell ();
 	super.destroyWidget ();
-
-	/*
-	* Destroy context only after the controls that used it were destroyed.
-	* Technically, that shouldn't be necessary, because 'Control.releaseWidget'
-	* clears up association by calling 'OS.ImmAssociateContext (handle, 0)'.
-	* However, there's a bug in Windows 10 (see bug 526758), and this is the workaround.
-	*/
-	if (OS.IsDBLocale) {
-		if (hIMC != 0) OS.ImmDestroyContext (hIMC);
-	}
-}
-
-@Override
-public void dispose () {
-	/*
-	* This code is intentionally commented.  On some
-	* platforms, the owner window is repainted right
-	* away when a dialog window exits.  This behavior
-	* is currently unspecified.
-	*/
-//	/*
-//	* Note:  It is valid to attempt to dispose a widget
-//	* more than once.  If this happens, fail silently.
-//	*/
-//	if (!isValidWidget ()) return;
-//	if (!isValidThread ()) error (SWT.ERROR_THREAD_INVALID_ACCESS);
-//	Display oldDisplay = display;
-	super.dispose ();
-	// widget is disposed at this point
-//	if (oldDisplay != null) oldDisplay.update ();
 }
 
 @Override
@@ -761,16 +727,15 @@ void enableWidget (boolean enabled) {
 @Override
 long findBrush (long value, int lbStyle) {
 	if (lbStyle == OS.BS_SOLID) {
-		for (int i=0; i<SYSTEM_COLORS.length; i++) {
-			if (value == OS.GetSysColor (SYSTEM_COLORS [i])) {
-				return OS.GetSysColorBrush (SYSTEM_COLORS [i]);
+		for (int element : SYSTEM_COLORS) {
+			if (value == OS.GetSysColor (element)) {
+				return OS.GetSysColorBrush (element);
 			}
 		}
 	}
 	if (brushes == null) brushes = new long [BRUSHES_SIZE];
 	LOGBRUSH logBrush = new LOGBRUSH ();
-	for (int i=0; i<brushes.length; i++) {
-		long hBrush = brushes [i];
+	for (long hBrush : brushes) {
 		if (hBrush == 0) break;
 		OS.GetObject (hBrush, LOGBRUSH.sizeof, logBrush);
 		switch (logBrush.lbStyle) {
@@ -1153,8 +1118,8 @@ public Shell [] getShells () {
 	checkWidget ();
 	int count = 0;
 	Shell [] shells = display.getShells ();
-	for (int i=0; i<shells.length; i++) {
-		Control shell = shells [i];
+	for (Shell activeshell : shells) {
+		Control shell = activeshell;
 		do {
 			shell = shell.parent;
 		} while (shell != null && shell != this);
@@ -1162,13 +1127,13 @@ public Shell [] getShells () {
 	}
 	int index = 0;
 	Shell [] result = new Shell [count];
-	for (int i=0; i<shells.length; i++) {
-		Control shell = shells [i];
+	for (Shell activeshell : shells) {
+		Control shell = activeshell;
 		do {
 			shell = shell.parent;
 		} while (shell != null && shell != this);
 		if (shell == this) {
-			result [index++] = shells [i];
+			result [index++] = activeshell;
 		}
 	}
 	return result;
@@ -1325,8 +1290,8 @@ void register () {
 
 void releaseBrushes () {
 	if (brushes != null) {
-		for (int i=0; i<brushes.length; i++) {
-			if (brushes [i] != 0) OS.DeleteObject (brushes [i]);
+		for (long brush : brushes) {
+			if (brush != 0) OS.DeleteObject (brush);
 		}
 	}
 	brushes = null;
@@ -1334,16 +1299,13 @@ void releaseBrushes () {
 
 @Override
 void releaseChildren (boolean destroy) {
-	Shell [] shells = getShells ();
-	for (int i=0; i<shells.length; i++) {
-		Shell shell = shells [i];
+	for (Shell shell : getShells ()) {
 		if (shell != null && !shell.isDisposed ()) {
 			shell.release (false);
 		}
 	}
 	if (toolTips != null) {
-		for (int i=0; i<toolTips.length; i++) {
-			ToolTip toolTip = toolTips [i];
+		for (ToolTip toolTip : toolTips) {
 			if (toolTip != null && !toolTip.isDisposed ()) {
 				toolTip.release (false);
 			}
@@ -1421,14 +1383,11 @@ public void requestLayout () {
 
 @Override
 void reskinChildren (int flags) {
-	Shell [] shells = getShells ();
-	for (int i=0; i<shells.length; i++) {
-		Shell shell = shells [i];
+	for (Shell shell : getShells ()) {
 		if (shell != null) shell.reskin (flags);
 	}
 	if (toolTips != null) {
-		for (int i=0; i<toolTips.length; i++) {
-			ToolTip toolTip = toolTips [i];
+		for (ToolTip toolTip : toolTips) {
 			if (toolTip != null) toolTip.reskin (flags);
 		}
 	}
@@ -1612,6 +1571,9 @@ public void setFullScreen (boolean fullScreen) {
 	}
 	if (fullScreen) wasMaximized = getMaximized ();
 	boolean visible = isVisible ();
+	if (!visible && !wasMaximized) {
+		swFlags = stateFlags;
+	}
 	OS.SetWindowLong (handle, OS.GWL_STYLE, styleFlags);
 	if (wasMaximized) {
 		OS.ShowWindow (handle, OS.SW_HIDE);
@@ -2124,7 +2086,7 @@ long windowProc (long hwnd, int msg, long wParam, long lParam) {
 		return callWindowProc (hwnd, msg, wParam, lParam);
 	}
 	if (hwnd == handle) {
-		if ((int)msg == Display.TASKBARBUTTONCREATED) {
+		if (msg == Display.TASKBARBUTTONCREATED) {
 			if (display.taskBar != null) {
 				for (TaskItem item : display.taskBar.items) {
 					if (item != null && item.shell == this) {
@@ -2162,18 +2124,6 @@ int widgetStyle () {
 
 @Override
 LRESULT WM_ACTIVATE (long wParam, long lParam) {
-	/*
-	* Bug in Windows XP.  When a Shell is deactivated, the
-	* IME composition window does not go away. This causes
-	* repaint issues.  The fix is to commit the composition
-	* string.
-	*/
-	if (OS.LOWORD (wParam) == 0 && OS.IsDBLocale && hIMC != 0) {
-		if (OS.ImmGetOpenStatus (hIMC)) {
-			OS.ImmNotifyIME (hIMC, OS.NI_COMPOSITIONSTR, OS.CPS_COMPLETE, 0);
-		}
-	}
-
 	/* Process WM_ACTIVATE */
 	LRESULT result = super.WM_ACTIVATE (wParam, lParam);
 	if (OS.LOWORD (wParam) == 0) {

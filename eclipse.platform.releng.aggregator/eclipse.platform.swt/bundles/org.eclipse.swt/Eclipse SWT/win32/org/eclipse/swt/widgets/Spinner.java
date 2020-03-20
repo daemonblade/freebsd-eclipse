@@ -134,11 +134,6 @@ static int checkStyle (int style) {
 }
 
 @Override
-boolean checkHandle (long hwnd) {
-	return hwnd == handle || hwnd == hwndText || hwnd == hwndUpDown;
-}
-
-@Override
 protected void checkSubclass () {
 	if (!isValidSubclass ()) error (SWT.ERROR_INVALID_SUBCLASS);
 }
@@ -187,12 +182,6 @@ void createHandle () {
 	int flags = OS.SWP_NOSIZE | OS.SWP_NOMOVE | OS.SWP_NOACTIVATE;
 	OS.SetWindowPos (hwndText, hwndUpDown, 0, 0, 0, 0, flags);
 	OS.SetWindowLongPtr (hwndUpDown, OS.GWLP_ID, hwndUpDown);
-	if (OS.IsDBLocale) {
-		long hIMC = OS.ImmGetContext (handle);
-		OS.ImmAssociateContext (hwndText, hIMC);
-		OS.ImmAssociateContext (hwndUpDown, hIMC);
-		OS.ImmReleaseContext (handle, hIMC);
-	}
 	OS.SendMessage (hwndUpDown, OS.UDM_SETRANGE32, 0, 100);
 	OS.SendMessage (hwndUpDown, OS.UDM_SETPOS32, 0, 0);
 	pageIncrement = 10;

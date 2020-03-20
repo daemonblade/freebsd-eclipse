@@ -899,16 +899,11 @@ void createDisplay (DeviceData data) {
 		Class clazz = getClass();
 		applicationCallback2 = new Callback(clazz, "applicationProc", 2);
 		long proc2 = applicationCallback2.getAddress();
-		if (proc2 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		applicationCallback3 = new Callback(clazz, "applicationProc", 3);
 		long proc3 = applicationCallback3.getAddress();
-		if (proc3 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		applicationCallback4 = new Callback(clazz, "applicationProc", 4);
-		long proc4 = applicationCallback4.getAddress();
-		if (proc4 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		applicationCallback6 = new Callback(clazz, "applicationProc", 6);
 		long proc6 = applicationCallback6.getAddress();
-		if (proc6 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		long superClassID = OS.object_getClass(application.id);
 		if (new NSObject(superClassID).className().getString().equals("NSKVONotifying_NSApplication")) {
 				/*
@@ -935,9 +930,7 @@ void createDisplay (DeviceData data) {
 	className = "SWTApplicationDelegate";
 	if (OS.objc_lookUpClass (className) == 0) {
 		long appProc3 = applicationCallback3.getAddress();
-		if (appProc3 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		long appProc4 = applicationCallback4.getAddress();
-		if (appProc4 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		cls = OS.objc_allocateClassPair(OS.class_NSObject, className, 0);
 		OS.class_addMethod(cls, OS.sel_applicationWillFinishLaunching_, appProc3, "@:@");
 		OS.class_addMethod(cls, OS.sel_terminate_, appProc3, "@:@");
@@ -2009,7 +2002,7 @@ public Cursor getSystemCursor (int id) {
 	return cursors [id];
 }
 
-NSImage getSystemImageForID(int osType) {
+static NSImage getSystemImageForID(int osType) {
 	long iconRef[] = new long [1];
 	OS.GetIconRefFromTypeInfo(OS.kSystemIconsCreator, osType, 0, 0, 0, iconRef);
 	NSImage nsImage = (NSImage)new NSImage().alloc();
@@ -2318,7 +2311,6 @@ protected void init () {
 
 	observerCallback = new Callback (this, "observerProc", 3); //$NON-NLS-1$
 	long observerProc = observerCallback.getAddress ();
-	if (observerProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	int activities = OS.kCFRunLoopBeforeWaiting;
 	runLoopObserver = OS.CFRunLoopObserverCreate (0, activities, true, 0, observerProc, 0);
 	if (runLoopObserver == 0) error (SWT.ERROR_NO_HANDLES);
@@ -2335,7 +2327,6 @@ protected void init () {
 
 	cursorSetCallback = new Callback(this, "cursorSetProc", 2);
 	long cursorSetProc = cursorSetCallback.getAddress();
-	if (cursorSetProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	long method = OS.class_getInstanceMethod(OS.class_NSCursor, OS.sel_set);
 	if (method != 0) oldCursorSetProc = OS.method_setImplementation(method, cursorSetProc);
 
@@ -2395,8 +2386,6 @@ void addEventMethods (long cls, long proc2, long proc3, long drawRectProc, long 
 		OS.class_addMethod(cls, OS.sel_touchesMovedWithEvent_, proc3, "@:@");
 		OS.class_addMethod(cls, OS.sel_touchesEndedWithEvent_, proc3, "@:@");
 		OS.class_addMethod(cls, OS.sel_touchesCancelledWithEvent_, proc3, "@:@");
-		OS.class_addMethod(cls, OS.sel_beginGestureWithEvent_, proc3, "@:@");
-		OS.class_addMethod(cls, OS.sel_endGestureWithEvent_, proc3, "@:@");
 		OS.class_addMethod(cls, OS.sel_swipeWithEvent_, proc3, "@:@");
 		OS.class_addMethod(cls, OS.sel_rotateWithEvent_, proc3, "@:@");
 		OS.class_addMethod(cls, OS.sel_magnifyWithEvent_, proc3, "@:@");
@@ -2506,28 +2495,20 @@ void initClasses () {
 	Class clazz = getClass ();
 	dialogCallback3 = new Callback(clazz, "dialogProc", 3);
 	long dialogProc3 = dialogCallback3.getAddress();
-	if (dialogProc3 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	dialogCallback4 = new Callback(clazz, "dialogProc", 4);
 	long dialogProc4 = dialogCallback4.getAddress();
-	if (dialogProc4 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	dialogCallback5 = new Callback(clazz, "dialogProc", 5);
 	long dialogProc5 = dialogCallback5.getAddress();
-	if (dialogProc5 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	windowCallback3 = new Callback(clazz, "windowProc", 3);
 	long proc3 = windowCallback3.getAddress();
-	if (proc3 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	windowCallback2 = new Callback(clazz, "windowProc", 2);
 	long proc2 = windowCallback2.getAddress();
-	if (proc2 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	windowCallback4 = new Callback(clazz, "windowProc", 4);
 	long proc4 = windowCallback4.getAddress();
-	if (proc4 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	windowCallback5 = new Callback(clazz, "windowProc", 5);
 	long proc5 = windowCallback5.getAddress();
-	if (proc5 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	windowCallback6 = new Callback(clazz, "windowProc", 6);
 	long proc6 = windowCallback6.getAddress();
-	if (proc6 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	long isFlippedProc = OS.isFlipped_CALLBACK();
 	long drawRectProc = OS.CALLBACK_drawRect_(proc3);
@@ -3349,7 +3330,7 @@ public boolean post(Event event) {
 					int maxStringLength = 256;
 					vKey = -1;
 					char [] output = new char [maxStringLength];
-					int [] actualStringLength = new int [1];
+					long [] actualStringLength = new long [1];
 					for (short i = 0 ; i <= 0x7F ; i++) {
 						deadKeyState[0] = 0;
 						OS.UCKeyTranslate (uchrPtr, i, (short)(type == SWT.KeyDown ? OS.kUCKeyActionDown : OS.kUCKeyActionUp), 0, OS.LMGetKbdType(), 0, deadKeyState, maxStringLength, actualStringLength, output);
@@ -5432,30 +5413,6 @@ void applicationWillFinishLaunching (long id, long sel, long notification) {
 	boolean loaded = false;
 
 	/*
-	 * Bug in AWT:  If the AWT starts up first when the VM was started on the first thread it assumes that
-	 * a Carbon-based SWT will be used, so it calls NSApplicationLoad().  This causes the Carbon menu
-	 * manager to create an application menu that isn't accessible via NSMenu.  It is, however, accessible
-	 * via the Carbon menu manager, so find and delete the menu items it added.
-	 *
-	 * Note that this code will continue to work if Apple does change this. GetIndMenuWithCommandID will
-	 * return a non-zero value indicating failure, which we ignore.
-	 */
-	if (isEmbedded) {
-		long outMenu [] = new long [1];
-		short outIndex[] = new short[1];
-		int status = OS.GetIndMenuItemWithCommandID(0, OS.kHICommandHide, 1, outMenu, outIndex);
-		if (status == 0) OS.DeleteMenuItem(outMenu[0], outIndex[0]);
-		status = OS.GetIndMenuItemWithCommandID(0, OS.kHICommandHideOthers, 1, outMenu, outIndex);
-		if (status == 0) OS.DeleteMenuItem(outMenu[0], outIndex[0]);
-		status = OS.GetIndMenuItemWithCommandID(0, OS.kHICommandShowAll, 1, outMenu, outIndex);
-		if (status == 0) OS.DeleteMenuItem(outMenu[0], outIndex[0]);
-		status = OS.GetIndMenuItemWithCommandID(0, OS.kHICommandQuit, 1, outMenu, outIndex);
-		if (status == 0) OS.DeleteMenuItem(outMenu[0], outIndex[0]);
-		status = OS.GetIndMenuItemWithCommandID(0, OS.kHICommandServices, 1, outMenu, outIndex);
-		if (status == 0) OS.DeleteMenuItem(outMenu[0], outIndex[0]);
-	}
-
-	/*
 	 * Get the default locale's language, and then the display name of the language. Some Mac OS X localizations use the
 	 * display name of the language, but many use the ISO two-char abbreviation instead.
 	 */
@@ -6400,14 +6357,6 @@ static long windowProc(long id, long sel, long arg0) {
 		}
 		case sel_touchesCancelledWithEvent_: {
 			widget.touchesCancelledWithEvent(id, sel, arg0);
-			return 0;
-		}
-		case sel_beginGestureWithEvent_: {
-			widget.beginGestureWithEvent(id, sel, arg0);
-			return 0;
-		}
-		case sel_endGestureWithEvent_: {
-			widget.endGestureWithEvent(id, sel, arg0);
 			return 0;
 		}
 		case sel_swipeWithEvent_: {

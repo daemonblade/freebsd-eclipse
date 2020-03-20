@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -362,8 +362,8 @@ void init(int style) {
 		SWT.Activate,
 		SWT.Deactivate
 	};
-	for (int i = 0; i < folderEvents.length; i++) {
-		addListener(folderEvents[i], listener);
+	for (int folderEvent : folderEvents) {
+		addListener(folderEvent, listener);
 	}
 
 	initAccessible();
@@ -548,8 +548,8 @@ Rectangle[] computeControlBounds (Point size, boolean[][] position) {
 	if (leftWidth > 0) leftWidth += SPACING * 2;
 
 	int itemWidth = 0;
-	for (int i = 0; i < items.length; i++) {
-		if (items[i].showing) itemWidth += items[i].width;
+	for (CTabItem item : items) {
+		if (item.showing) itemWidth += item.width;
 	}
 
 	int maxWidth = size.x - borderLeft - leftWidth - borderRight;
@@ -749,11 +749,11 @@ void createItem (CTabItem item, int index) {
 	if (selectedIndex >= index) selectedIndex ++;
 	int[] newPriority = new int[priority.length + 1];
 	int next = 0,  priorityIndex = priority.length;
-	for (int i = 0; i < priority.length; i++) {
-		if (!mru && priority[i] == index) {
+	for (int element : priority) {
+		if (!mru && element == index) {
 			priorityIndex = next++;
 		}
-		newPriority[next++] = priority[i] >= index ? priority[i] + 1 : priority[i];
+		newPriority[next++] = element >= index ? element + 1 : element;
 	}
 	newPriority[priorityIndex] = index;
 	priority = newPriority;
@@ -794,9 +794,9 @@ void destroyItem (CTabItem item) {
 
 	int[] newPriority = new int[priority.length - 1];
 	int next = 0;
-	for (int i = 0; i < priority.length; i++) {
-		if (priority [i] == index) continue;
-		newPriority[next++] = priority[i] > index ? priority[i] - 1 : priority [i];
+	for (int element : priority) {
+		if (element == index) continue;
+		newPriority[next++] = element > index ? element - 1 : element;
 	}
 	priority = newPriority;
 
@@ -927,8 +927,8 @@ public CTabItem getItem (Point pt) {
 	Point size = getSize();
 	Rectangle trim = renderer.computeTrim(CTabFolderRenderer.PART_BORDER, SWT.NONE, 0, 0, 0, 0);
 	if (size.x <= trim.width) return null;
-	for (int i = 0; i < priority.length; i++) {
-		CTabItem item = items[priority[i]];
+	for (int element : priority) {
+		CTabItem item = items[element];
 		Rectangle rect = item.getBounds();
 		if (rect.contains(pt)) return item;
 	}
@@ -1632,8 +1632,8 @@ void onKeyDown (Event event) {
 						e.width = chevronRect.width;
 						e.height = chevronRect.height;
 						e.doit = true;
-						for (int i = 0; i < folderListeners.length; i++) {
-							folderListeners[i].showList(e);
+						for (CTabFolder2Listener folderListener : folderListeners) {
+							folderListener.showList(e);
 						}
 						if (e.doit && !isDisposed()) {
 							showList(chevronRect);
@@ -1716,8 +1716,8 @@ void onDispose(Event event) {
 }
 void onDragDetect(Event event) {
 	boolean consume = false;
-	for (int i = 0; i < items.length; i++) {
-		if (items[i].closeRect.contains(event.x, event.y)) {
+	for (CTabItem item : items) {
+		if (item.closeRect.contains(event.x, event.y)) {
 				consume = true;
 				break;
 		}
@@ -1822,10 +1822,10 @@ void onMouse(Event event) {
 							Control c = display.getCursorControl();
 							boolean reschedule = false;
 							if (c != null) {
-								for (int i = 0; i < controls.length; i++) {
+								for (Control control : controls) {
 									Control temp = c;
 									do {
-										if (temp.equals(controls[i])) {
+										if (temp.equals(control)) {
 											reschedule = true;
 										} else {
 											temp = temp.getParent();
@@ -1856,10 +1856,10 @@ void onMouse(Event event) {
 					}
 				}
 			} else {
-				for (int i=0; i<items.length; i++) {
-					Rectangle bounds = items[i].getBounds();
+				for (CTabItem tabItem : items) {
+					Rectangle bounds = tabItem.getBounds();
 					if (bounds.contains(x, y)){
-						item = items[i];
+						item = tabItem;
 					}
 				}
 			}
@@ -1933,10 +1933,10 @@ void onMouse(Event event) {
 					}
 				}
 			} else {
-				for (int i=0; i<items.length; i++) {
-					Rectangle bounds = items[i].getBounds();
+				for (CTabItem tabItem : items) {
+					Rectangle bounds = tabItem.getBounds();
 					if (bounds.contains(x, y)){
-						item = items[i];
+						item = tabItem;
 					}
 				}
 			}
@@ -1951,12 +1951,10 @@ void onMouse(Event event) {
 					e.time = event.time;
 					e.item = item;
 					e.doit = true;
-					for (int j = 0; j < folderListeners.length; j++) {
-						CTabFolder2Listener listener = folderListeners[j];
+					for (CTabFolder2Listener listener : folderListeners) {
 						listener.close(e);
 					}
-					for (int j = 0; j < tabListeners.length; j++) {
-						CTabFolderListener listener = tabListeners[j];
+					for (CTabFolderListener listener : tabListeners) {
 						listener.itemClosed(e);
 					}
 					if (e.doit) item.dispose();
@@ -2019,8 +2017,8 @@ void onPageTraversal(Event event) {
 					e.width = chevronRect.width;
 					e.height = chevronRect.height;
 					e.doit = true;
-					for (int i = 0; i < folderListeners.length; i++) {
-						folderListeners[i].showList(e);
+					for (CTabFolder2Listener folderListener : folderListeners) {
+						folderListener.showList(e);
 					}
 					if (e.doit && !isDisposed()) {
 						showList(chevronRect);
@@ -2149,22 +2147,22 @@ void onSelection(Event event) {
 		CTabFolderEvent e = new CTabFolderEvent(this);
 		e.widget = CTabFolder.this;
 		e.time = event.time;
-		for (int i = 0; i < folderListeners.length; i++) {
+		for (CTabFolder2Listener folderListener : folderListeners) {
 			if (maximized) {
-				folderListeners[i].restore(e);
+				folderListener.restore(e);
 			} else {
-				folderListeners[i].maximize(e);
+				folderListener.maximize(e);
 			}
 		}
 	} else if (event.widget == minItem) {
 		CTabFolderEvent e = new CTabFolderEvent(this);
 		e.widget = CTabFolder.this;
 		e.time = event.time;
-		for (int i = 0; i < folderListeners.length; i++) {
+		for (CTabFolder2Listener folderListener : folderListeners) {
 			if (minimized) {
-				folderListeners[i].restore(e);
+				folderListener.restore(e);
 			} else {
-				folderListeners[i].minimize(e);
+				folderListener.minimize(e);
 			}
 		}
 	} else if (event.widget == chevronItem) {
@@ -2178,8 +2176,8 @@ void onSelection(Event event) {
 		e.width = chevronRect.width;
 		e.height = chevronRect.height;
 		e.doit = true;
-		for (int i = 0; i < folderListeners.length; i++) {
-			folderListeners[i].showList(e);
+		for (CTabFolder2Listener folderListener : folderListeners) {
+			folderListener.showList(e);
 		}
 		if (e.doit && !isDisposed()) {
 			showList(chevronRect);
@@ -2339,8 +2337,8 @@ public void removeSelectionListener(SelectionListener listener) {
 @Override
 public void reskin(int flags) {
 	super.reskin(flags);
-	for (int i = 0; i < items.length; i++) {
-		items[i].reskin(flags);
+	for (CTabItem item : items) {
+		item.reskin(flags);
 	}
 }
 
@@ -2550,23 +2548,7 @@ void setButtonBounds(GC gc) {
 		minMaxTb = null;
 	}
 	if (showChevron) {
-		int itemCount = items.length;
-		int count;
-		if (single) {
-			count = selectedIndex == -1 ? itemCount : itemCount - 1;
-		} else {
-			int showCount = 0;
-			while (showCount < priority.length && items[priority[showCount]].showing) {
-				showCount++;
-			}
-			count = itemCount - showCount;
-		}
-		if (count != chevronCount) {
-			chevronCount = count;
-			if (chevronImage != null) chevronImage.dispose();
-			chevronImage = createButtonImage(display, CTabFolderRenderer.PART_CHEVRON_BUTTON);
-			chevronItem.setImage(chevronImage);
-		}
+		updateChevronImage(false);
 	}
 
 	boolean[][] overflow = new boolean[1][0];
@@ -2616,6 +2598,50 @@ void setButtonBounds(GC gc) {
 	controlRects = rects;
 	if (changed || hovering) updateBkImages();
 }
+
+/**
+ * Get the number of hidden items or the number which is to be drawn in the
+ * chevon item.
+ * <p>
+ * Note: do not confuse this with {@link #chevronCount} which contains the count
+ * from the last time the cached chevron image was drawn. It can be different
+ * from the value returned by this method.
+ * </p>
+ *
+ * @return the chevron count
+ */
+int getChevronCount() {
+	int itemCount = items.length;
+	int count;
+	if (single) {
+		count = selectedIndex == -1 ? itemCount : itemCount - 1;
+	} else {
+		int showCount = 0;
+		while (showCount < priority.length && items[priority[showCount]].showing) {
+			showCount++;
+		}
+		count = itemCount - showCount;
+	}
+	return count;
+}
+
+/**
+ * Update the cached chevron image.
+ *
+ * @param styleChange <code>true</code> if the update is required for changed
+ *                    appearance of the chevron. In this case the image is not
+ *                    created if it does not already exist and is updated even
+ *                    if the drawn number (chevonCount) has not changed.
+ */
+private void updateChevronImage(boolean styleChange) {
+	if (styleChange && chevronImage == null) return;
+	int newCount = getChevronCount();
+	if (!styleChange && chevronCount == newCount) return;
+	if (chevronImage != null) chevronImage.dispose();
+	chevronImage = createButtonImage(getDisplay(), CTabFolderRenderer.PART_CHEVRON_BUTTON);
+	chevronItem.setImage(chevronImage);
+	chevronCount = newCount;
+}
 @Override
 public boolean setFocus () {
 	checkWidget ();
@@ -2652,11 +2678,20 @@ public void setFont(Font font) {
 	if (font != null && font.equals(getFont())) return;
 	super.setFont(font);
 	oldFont = getFont();
+	// Chevron painting is cached as image and only recreated if number of hidden tabs changed.
+	// To apply the new font the cached image must be recreated with new font.
+	// Redraw request alone would only redraw the cached image with old font.
+	renderer.chevronFont = null; // renderer will pickup and adjust(!) the new font automatically
+	updateChevronImage(true);
 	updateFolder(REDRAW);
 }
 @Override
 public void setForeground (Color color) {
 	super.setForeground(color);
+	// Chevron painting is cached as image and only recreated if number of hidden tabs changed.
+	// To apply the new foreground color the image must be recreated with new foreground color.
+	// redraw() alone would only redraw the cached image with old color.
+	updateChevronImage(true);
 	redraw();
 }
 /**
@@ -2838,8 +2873,8 @@ boolean setItemSize(GC gc) {
 	// First, try the minimum tab size at full compression.
 	int minWidth = 0;
 	int[] minWidths = new int[items.length];
-	for (int i = 0; i < priority.length; i++) {
-		int index = priority[i];
+	for (int element : priority) {
+		int index = element;
 		int state = CTabFolderRenderer.MINIMUM_SIZE;
 		if (index == selectedIndex) state |= SWT.SELECTED;
 		minWidths[index] = renderer.computeSize(index, state, gc, SWT.DEFAULT, SWT.DEFAULT).x;
@@ -3662,14 +3697,12 @@ void showList (Rectangle rect) {
 	if (showMenu == null || showMenu.isDisposed()) {
 		showMenu = new Menu(getShell(), getStyle() & (SWT.LEFT_TO_RIGHT | SWT.RIGHT_TO_LEFT));
 	} else {
-		MenuItem[] items = showMenu.getItems();
-		for (int i = 0; i < items.length; i++) {
-			items[i].dispose();
+		for (MenuItem item : showMenu.getItems()) {
+			item.dispose();
 		}
 	}
 	final String id = "CTabFolder_showList_Index"; //$NON-NLS-1$
-	for (int i = 0; i < items.length; i++) {
-		CTabItem tab = items[i];
+	for (CTabItem tab : items) {
 		if (tab.showing) continue;
 		MenuItem item = new MenuItem(showMenu, SWT.NONE);
 		// Bug 533124 In the case where you have multi line tab text, we force the drop-down menu to have single line entries to ensure consistent behavior across platforms.
@@ -3947,8 +3980,8 @@ void addTabControl(Control control, int flags, int index, boolean update) {
 		SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 	}
 	//check for duplicates
-	for (int i = 0; i < controls.length; i++) {
-		if (controls[i] == control) {
+	for (Control ctrl : controls) {
+		if (ctrl == control) {
 			SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 		}
 	}

@@ -763,18 +763,6 @@ boolean becomeFirstResponder (long id, long sel) {
 	return super.becomeFirstResponder (id, sel);
 }
 
-@Override
-void beginGestureWithEvent (long id, long sel, long event) {
-	if (!gestureEvent(id, event, SWT.GESTURE_BEGIN)) return;
-	super.beginGestureWithEvent(id, sel, event);
-}
-
-@Override
-void endGestureWithEvent (long id, long sel, long event) {
-	if (!gestureEvent(id, event, SWT.GESTURE_END)) return;
-	super.endGestureWithEvent(id, sel, event);
-}
-
 void calculateVisibleRegion (NSView view, long visibleRgn, boolean clipChildren) {
 	long tempRgn = OS.NewRgn ();
 	if (!view.isHiddenOrHasHiddenAncestor() && isDrawing()) {
@@ -1500,15 +1488,18 @@ boolean gestureEvent(long id, long eventPtr, int detail) {
 	event.x = (int) point.x;
 	event.y = (int) point.y;
 	setInputState (event, nsEvent, SWT.Gesture);
-	event.detail = detail;
 
-	if (detail == SWT.GESTURE_BEGIN) {
+	long phase = nsEvent.phase();
+	if (phase == OS.NSEventPhaseBegan) {
+		detail = SWT.GESTURE_BEGIN;
 		display.rotation = 0.0;
 		display.magnification = 1.0;
 		display.gestureActive = true;
-	} else if (detail == SWT.GESTURE_END) {
+	} else if (phase == OS.NSEventPhaseCancelled || phase == OS.NSEventPhaseEnded) {
+		detail = SWT.GESTURE_END;
 		display.gestureActive = false;
 	}
+	event.detail = detail;
 
 	switch (detail) {
 	case SWT.GESTURE_SWIPE:
@@ -1530,8 +1521,8 @@ boolean gestureEvent(long id, long eventPtr, int detail) {
 		if (display.gestureActive) {
 			event.xDirection = (int) nsEvent.deltaX();
 			event.yDirection = (int) nsEvent.deltaY();
-			if (event.xDirection == 0 && event.yDirection == 0) return true;
 		}
+		if (event.xDirection == 0 && event.yDirection == 0) return true;
 		break;
 	}
 
@@ -1908,7 +1899,6 @@ NSBezierPath getPath(Region region) {
 
 NSBezierPath getPath(long region) {
 	Callback callback = new Callback(this, "regionToRects", 4);
-	if (callback.getAddress() == 0) error(SWT.ERROR_NO_MORE_CALLBACKS);
 	NSBezierPath path = NSBezierPath.bezierPath();
 	path.retain();
 	OS.QDRegionToRects(region, OS.kQDParseRegionFromTopLeft, callback.getAddress(), path.id);
@@ -2542,10 +2532,8 @@ void scrollWheel (long id, long sel, long theEvent) {
 	if (id == view.id) {
 		NSEvent nsEvent = new NSEvent(theEvent);
 		if ((hooks(SWT.Gesture) || filters(SWT.Gesture))) {
-			if (nsEvent.deltaY() != 0 || nsEvent.deltaX() != 0) {
-				if (!gestureEvent(id, theEvent, SWT.GESTURE_PAN)) {
-					handled = true;
-				}
+			if (!gestureEvent(id, theEvent, SWT.GESTURE_PAN)) {
+				handled = true;
 			}
 		}
 		if (!handled) {
@@ -2817,14 +2805,18 @@ public boolean print (GC gc) {
 	if (gc == null) error (SWT.ERROR_NULL_ARGUMENT);
 	if (gc.isDisposed ()) error (SWT.ERROR_INVALID_ARGUMENT);
 
-	NSGraphicsContext.static_saveGraphicsState();
-	NSGraphicsContext.setCurrentContext(gc.handle);
-	NSAffineTransform transform = NSAffineTransform.transform ();
-	transform.translateXBy (0, view.bounds().height);
-	transform.scaleXBy (1, -1);
-	transform.concat ();
-	view.displayRectIgnoringOpacity(view.bounds(), gc.handle);
-	NSGraphicsContext.static_restoreGraphicsState();
+	if (OS.VERSION < OS.VERSION(10, 13, 0)) {
+		NSGraphicsContext.static_saveGraphicsState();
+		NSGraphicsContext.setCurrentContext(gc.handle);
+		NSAffineTransform transform = NSAffineTransform.transform ();
+		transform.translateXBy (0, view.bounds().height);
+		transform.scaleXBy (1, -1);
+		transform.concat ();
+		view.displayRectIgnoringOpacity(view.bounds(), gc.handle);
+		NSGraphicsContext.static_restoreGraphicsState();
+	} else {
+		view.displayRectIgnoringOpacity (view.bounds (), gc.handle);
+	}
 	return true;
 }
 

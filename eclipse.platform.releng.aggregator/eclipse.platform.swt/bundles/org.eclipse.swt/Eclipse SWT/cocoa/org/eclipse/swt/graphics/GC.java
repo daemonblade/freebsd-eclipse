@@ -911,7 +911,6 @@ NSAttributedString createString(String string, int flags, boolean draw) {
 NSBezierPath createNSBezierPath (long  cgPath) {
 	Callback callback = new Callback(this, "applierFunc", 2);
 	long  proc = callback.getAddress();
-	if (proc == 0) SWT.error(SWT.ERROR_NO_MORE_CALLBACKS);
 	count = typeCount = 0;
 	element = new CGPathElement();
 	OS.CGPathApply(cgPath, 0, proc);
@@ -1627,6 +1626,10 @@ public void drawRoundRectangle(int x, int y, int width, int height, int arcWidth
  * will be performed. The background of the rectangular area where
  * the string is being drawn will be filled with the receiver's
  * background color.
+ * <br><br>
+ * On Windows, {@link #drawString} and {@link #drawText} are slightly
+ * different, see {@link #drawString(String, int, int, boolean)} for
+ * explanation.
  *
  * @param string the string to be drawn
  * @param x the x coordinate of the top left corner of the rectangular area where the string is to be drawn
@@ -1650,6 +1653,13 @@ public void drawString (String string, int x, int y) {
  * then the background of the rectangular area where the string is being
  * drawn will not be modified, otherwise it will be filled with the
  * receiver's background color.
+ * <br><br>
+ * On Windows, {@link #drawString} and {@link #drawText} are slightly
+ * different:
+ * <ul>
+ *     <li>{@link #drawString} is faster (depends on string size)<br>~7x for 1-char strings<br>~4x for 10-char strings<br>~2x for 100-char strings</li>
+ *     <li>{@link #drawString} doesn't try to find a good fallback font when character doesn't have a glyph in currently selected font</li>
+ * </ul>
  *
  * @param string the string to be drawn
  * @param x the x coordinate of the top left corner of the rectangular area where the string is to be drawn
@@ -1673,6 +1683,10 @@ public void drawString(String string, int x, int y, boolean isTransparent) {
  * are performed. The background of the rectangular area where
  * the text is being drawn will be filled with the receiver's
  * background color.
+ * <br><br>
+ * On Windows, {@link #drawString} and {@link #drawText} are slightly
+ * different, see {@link #drawString(String, int, int, boolean)} for
+ * explanation.
  *
  * @param string the string to be drawn
  * @param x the x coordinate of the top left corner of the rectangular area where the text is to be drawn
@@ -1696,6 +1710,10 @@ public void drawText(String string, int x, int y) {
  * then the background of the rectangular area where the text is being
  * drawn will not be modified, otherwise it will be filled with the
  * receiver's background color.
+ * <br><br>
+ * On Windows, {@link #drawString} and {@link #drawText} are slightly
+ * different, see {@link #drawString(String, int, int, boolean)} for
+ * explanation.
  *
  * @param string the string to be drawn
  * @param x the x coordinate of the top left corner of the rectangular area where the text is to be drawn
@@ -1723,6 +1741,11 @@ public void drawText(String string, int x, int y, boolean isTransparent) {
  * then the background of the rectangular area where the text is being
  * drawn will not be modified, otherwise it will be filled with the
  * receiver's background color.
+ * <br><br>
+ * On Windows, {@link #drawString} and {@link #drawText} are slightly
+ * different, see {@link #drawString(String, int, int, boolean)} for
+ * explanation.
+ *
  * <p>
  * The parameter <code>flags</code> may be a combination of:
  * </p>
@@ -3075,7 +3098,7 @@ void initCGContext(long cgContext) {
 			case SWT.LINE_CUSTOM: dashes = data.lineDashes; break;
 		}
 		if (dashes != null) {
-			float[] lengths = new float[dashes.length];
+			double[] lengths = new double[dashes.length];
 			for (int i = 0; i < lengths.length; i++) {
 				lengths[i] = width == 0 || data.lineStyle == SWT.LINE_CUSTOM ? dashes[i] : dashes[i] * width;
 			}

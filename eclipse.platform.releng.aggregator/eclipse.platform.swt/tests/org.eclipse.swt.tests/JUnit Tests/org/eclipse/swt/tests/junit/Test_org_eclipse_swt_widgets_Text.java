@@ -61,8 +61,8 @@ public void test_ConstructorLorg_eclipse_swt_widgets_CompositeI() {
 
 	int[] cases = {0, SWT.SINGLE, SWT.MULTI, SWT.MULTI | SWT.V_SCROLL, SWT.MULTI | SWT.H_SCROLL, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL,
 					SWT.WRAP};
-	for (int i = 0; i < cases.length; i++)
-		text = new Text(shell, cases[i]);
+	for (int style : cases)
+		text = new Text(shell, style);
 }
 
 @Test
@@ -1168,10 +1168,6 @@ public void test_setForegroundAfterBackground() {
 	text.setForeground(white);
 	assertEquals(text.getForeground(), white);
 	assertEquals(text.getBackground(), gray);
-
-	gray.dispose();
-	white.dispose();
-	defaultForeground.dispose();
 }
 
 @Test

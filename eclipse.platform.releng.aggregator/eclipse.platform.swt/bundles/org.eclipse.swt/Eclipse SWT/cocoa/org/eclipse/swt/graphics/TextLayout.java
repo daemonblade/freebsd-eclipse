@@ -236,12 +236,12 @@ void computeRuns() {
 			font.addTraits(attrStr, range);
 		}
 		Color foreground = style.foreground;
-		if (foreground != null) {
+		if (foreground != null && !foreground.isDisposed()) {
 			NSColor color = NSColor.colorWithDeviceRed(foreground.handle[0], foreground.handle[1], foreground.handle[2], 1);
 			attrStr.addAttribute(OS.NSForegroundColorAttributeName, color, range);
 		}
 		Color background = style.background;
-		if (background != null) {
+		if (background != null && !background.isDisposed()) {
 			NSColor color = NSColor.colorWithDeviceRed(background.handle[0], background.handle[1], background.handle[2], 1);
 			attrStr.addAttribute(OS.NSBackgroundColorAttributeName, color, range);
 		}
@@ -1624,7 +1624,6 @@ void initClasses () {
 
 	textLayoutCallback2 = new Callback(getClass(), "textLayoutProc", 2);
 	long proc2 = textLayoutCallback2.getAddress();
-	if (proc2 == 0) SWT.error(SWT.ERROR_NO_MORE_CALLBACKS);
 	long cellBaselineOffsetProc = OS.CALLBACK_cellBaselineOffset(proc2);
 	long cellSizeProc = OS.CALLBACK_NSTextAttachmentCell_cellSize(proc2);
 

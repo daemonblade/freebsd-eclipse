@@ -1246,10 +1246,6 @@ public void setExpanded (boolean expanded) {
 					OS.UpdateWindow (hwnd);
 					OS.DefWindowProc (hwnd, OS.WM_SETREDRAW, 0, 0);
 				}
-				/*
-				* This code is intentionally commented.
-				*/
-//				OS.SendMessage (hwnd, OS.WM_SETREDRAW, 0, 0);
 			}
 		}
 	}
@@ -1325,10 +1321,6 @@ public void setExpanded (boolean expanded) {
 			if (hwnd != topHandle) {
 				OS.DefWindowProc (hwnd, OS.WM_SETREDRAW, 1, 0);
 			}
-			/*
-			* This code is intentionally commented.
-			*/
-//			OS.SendMessage (hwnd, OS.WM_SETREDRAW, 1, 0);
 			if (fixScroll) {
 				parent.updateScrollBar ();
 				SCROLLINFO info = new SCROLLINFO ();
@@ -1800,6 +1792,14 @@ public void setText (String string) {
 	checkWidget ();
 	if ((parent.style & SWT.VIRTUAL) != 0) return;
 	parent.sort (handle, false);
+}
+
+@Override
+String getNameText () {
+	if ((parent.style & SWT.VIRTUAL) != 0) {
+		if (!cached) return "*virtual*"; //$NON-NLS-1$
+	}
+	return super.getNameText ();
 }
 
 }

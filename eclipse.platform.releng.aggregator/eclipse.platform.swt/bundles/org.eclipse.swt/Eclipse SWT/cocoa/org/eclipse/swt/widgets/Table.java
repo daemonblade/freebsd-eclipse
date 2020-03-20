@@ -84,6 +84,7 @@ public class Table extends Composite {
 
 	/* Used to control drop feedback when FEEDBACK_SCROLL is set/not set */
 	boolean shouldScroll = true;
+	boolean keyDown;
 
 	static int NEXT_ID;
 
@@ -1167,6 +1168,11 @@ void drawInteriorWithFrame_inView (long id, long sel, NSRect rect, long view) {
 		if (!drawExpansion) {
 			gc.setClipping ((int)(cellRect.x - offsetX), (int)(cellRect.y - offsetY), (int)cellRect.width, (int)cellRect.height);
 		}
+		/*
+		 * Client code can modify the item text in the paint listener, so reset the cached width.
+		 */
+		item.width = -1;
+
 		Event event = new Event ();
 		event.item = item;
 		event.gc = gc;
@@ -2016,7 +2022,9 @@ boolean isTransparent() {
 @Override
 void keyDown(long id, long sel, long theEvent) {
 	ignoreSelect = preventSelect = false;
+	keyDown = true;
 	super.keyDown(id, sel, theEvent);
+	keyDown = false;
 }
 
 @Override
@@ -3182,7 +3190,30 @@ public void showColumn (TableColumn column) {
 
 void showIndex (int index) {
 	if (0 <= index && index < itemCount) {
-		((NSTableView)view).scrollRowToVisible(index);
+		NSTableView tableView = (NSTableView)view;
+		if (tableView.headerView () == null) {
+			/**
+			 * On macOS 10.15, scrollRowToVisible doesn't work properly if
+			 * contentView's bounds is not set (i.e, width or height is 0).
+			 * The contentView's bounds is set when the Table's header view is set.
+			 * So don't call this code if Table has a header already.
+			 */
+			NSClipView contentView = scrollView.contentView ();
+			if (contentView != null) {
+				NSRect contentViewBounds = contentView.bounds ();
+				if (contentViewBounds.height == 0 || contentViewBounds.width == 0) {
+					NSView documentView = scrollView.documentView ();
+					if (documentView != null) {
+						NSRect documentViewBounds = documentView.bounds ();
+						NSSize size = new NSSize ();
+						size.width = documentViewBounds.width;
+						size.height = documentViewBounds.height;
+						contentView.setBoundsSize (size);
+					}
+				}
+			}
+		}
+		tableView.scrollRowToVisible(index);
 	}
 }
 
@@ -3460,16 +3491,33 @@ boolean tableView_shouldTrackCell_forTableColumn_row(long id, long sel, long tab
 
 @Override
 void tableView_setObjectValue_forTableColumn_row (long id, long sel, long aTableView, long anObject, long aTableColumn, long rowIndex) {
-	if (checkColumn != null && aTableColumn == checkColumn.id)  {
-		TableItem item = items [(int)rowIndex];
-		item.checked = !item.checked;
-		Event event = new Event ();
-		event.detail = SWT.CHECK;
-		event.item = item;
-		event.index = (int)rowIndex;
-		sendSelectionEvent (SWT.Selection, event, false);
-		item.redraw (-1);
+	if (checkColumn != null && aTableColumn == checkColumn.id) {
+		if (keyDown && (style & SWT.MULTI) != 0) {
+			NSTableView widget = (NSTableView)view;
+			NSIndexSet selection = widget.selectedRowIndexes ();
+			int count = (int)selection.count ();
+			long [] indices = new long [count];
+			selection.getIndexes (indices, count, 0);
+			for (int i = 0; i < indices.length; i++) {
+				int index = (int)indices [i];
+				TableItem item = items [index];
+				toggleCheckedItem (item, index);
+			}
+		} else {
+			TableItem item = items [(int)rowIndex];
+			toggleCheckedItem (item, rowIndex);
+		}
 	}
+}
+
+private void toggleCheckedItem (TableItem item, long rowIndex) {
+	item.checked = !item.checked;
+	Event event = new Event ();
+	event.detail = SWT.CHECK;
+	event.item = item;
+	event.index = (int)rowIndex;
+	sendSelectionEvent (SWT.Selection, event, false);
+	item.redraw (-1);
 }
 
 @Override

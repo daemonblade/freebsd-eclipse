@@ -361,8 +361,7 @@ void drawRectangles (Rectangle [] rects, boolean stippled) {
 	if (hwndOpaque != 0) {
 		RECT rect1 = new RECT();
 		int bandWidth = stippled ? 3 : 1;
-		for (int i = 0; i < rects.length; i++) {
-			Rectangle rect = rects[i];
+		for (Rectangle rect : rects) {
 			rect1.left = rect.x - bandWidth;
 			rect1.top = rect.y - bandWidth;
 			rect1.right = rect.x + rect.width + bandWidth * 2;
@@ -383,8 +382,7 @@ void drawRectangles (Rectangle [] rects, boolean stippled) {
 		hBrush = OS.CreatePatternBrush (hBitmap);
 		oldBrush = OS.SelectObject (hDC, hBrush);
 	}
-	for (int i=0; i<rects.length; i++) {
-		Rectangle rect = rects [i];
+	for (Rectangle rect : rects) {
 		OS.PatBlt (hDC, rect.x, rect.y, rect.width, bandWidth, OS.PATINVERT);
 		OS.PatBlt (hDC, rect.x, rect.y + bandWidth, bandWidth, rect.height - (bandWidth * 2), OS.PATINVERT);
 		OS.PatBlt (hDC, rect.x + rect.width - bandWidth, rect.y + bandWidth, bandWidth, rect.height - (bandWidth * 2), OS.PATINVERT);
@@ -525,7 +523,6 @@ public boolean open () {
 		drawn = false;
 		newProc = new Callback (this, "transparentProc", 4); //$NON-NLS-1$
 		long newProcAddress = newProc.getAddress ();
-		if (newProcAddress == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		oldTransparentProc = OS.GetWindowLongPtr (hwndTransparent, OS.GWLP_WNDPROC);
 		OS.SetWindowLongPtr (hwndTransparent, OS.GWLP_WNDPROC, newProcAddress);
 		oldOpaqueProc = OS.GetWindowLongPtr (hwndOpaque, OS.GWLP_WNDPROC);
@@ -554,7 +551,6 @@ public boolean open () {
 				null);
 			newProc = new Callback (this, "transparentProc", 4); //$NON-NLS-1$
 			long newProcAddress = newProc.getAddress ();
-			if (newProcAddress == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 			oldTransparentProc = OS.GetWindowLongPtr (hwndTransparent, OS.GWLP_WNDPROC);
 			OS.SetWindowLongPtr (hwndTransparent, OS.GWLP_WNDPROC, newProcAddress);
 			OS.ShowWindow (hwndTransparent, OS.SW_SHOWNOACTIVATE);
@@ -745,8 +741,7 @@ void resizeRectangles (int xChange, int yChange) {
 			xChange -= bounds.width;
 			bounds.width = 0;
 			if (proportions.length > 1) {
-				for (int i = 0; i < proportions.length; i++) {
-					Rectangle proportion = proportions [i];
+				for (Rectangle proportion : proportions) {
 					proportion.x = 100 - proportion.x - proportion.width;
 				}
 			}
@@ -759,8 +754,7 @@ void resizeRectangles (int xChange, int yChange) {
 			xChange += bounds.width;
 			bounds.width = 0;
 			if (proportions.length > 1) {
-				for (int i = 0; i < proportions.length; i++) {
-					Rectangle proportion = proportions [i];
+				for (Rectangle proportion : proportions) {
 					proportion.x = 100 - proportion.x - proportion.width;
 				}
 			}
@@ -775,8 +769,7 @@ void resizeRectangles (int xChange, int yChange) {
 			yChange -= bounds.height;
 			bounds.height = 0;
 			if (proportions.length > 1) {
-				for (int i = 0; i < proportions.length; i++) {
-					Rectangle proportion = proportions [i];
+				for (Rectangle proportion : proportions) {
 					proportion.y = 100 - proportion.y - proportion.height;
 				}
 			}
@@ -789,8 +782,7 @@ void resizeRectangles (int xChange, int yChange) {
 			yChange += bounds.height;
 			bounds.height = 0;
 			if (proportions.length > 1) {
-				for (int i = 0; i < proportions.length; i++) {
-					Rectangle proportion = proportions [i];
+				for (Rectangle proportion : proportions) {
 					proportion.y = 100 - proportion.y - proportion.height;
 				}
 			}
@@ -936,10 +928,8 @@ long transparentProc (long hwnd, long msg, long wParam, long lParam) {
 				} else {
 					oldBrush = OS.SelectObject (hDC, OS.GetStockObject(OS.BLACK_BRUSH));
 				}
-				Rectangle[] rects = this.rectangles;
 				RECT rect1 = new RECT ();
-				for (int i=0; i<rects.length; i++) {
-					Rectangle rect = rects [i];
+				for (Rectangle rect : this.rectangles) {
 					rect1.left = rect.x;
 					rect1.top  = rect.y;
 					rect1.right = rect.x + rect.width;

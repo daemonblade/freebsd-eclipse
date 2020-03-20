@@ -349,27 +349,7 @@ protected void checkSubclass () {
 protected void checkWidget () {
 	Display display = this.display;
 	if (display == null) error (SWT.ERROR_WIDGET_DISPOSED);
-	if (display.thread != Thread.currentThread ()) {
-		/*
-		* Bug in IBM JVM 1.6.  For some reason, under
-		* conditions that are yet to be full understood,
-		* Thread.currentThread() is either returning null
-		* or a different instance from the one that was
-		* saved when the Display was created.  This is
-		* possibly a JIT problem because modifying this
-		* method to print logging information when the
-		* error happens seems to fix the problem.  The
-		* fix is to use operating system calls to verify
-		* that the current thread is not the Display thread.
-		*
-		* NOTE: Despite the fact that Thread.currentThread()
-		* is used in other places, the failure has not been
-		* observed in all places where it is called.
-		*/
-		if (display.threadId != OS.GetCurrentThreadId ()) {
-			error (SWT.ERROR_THREAD_INVALID_ACCESS);
-		}
-	}
+	if (display.thread != Thread.currentThread ()) error (SWT.ERROR_THREAD_INVALID_ACCESS);
 	if ((state & DISPOSED) != 0) error (SWT.ERROR_WIDGET_DISPOSED);
 }
 
@@ -1558,7 +1538,6 @@ LRESULT wmKeyDown (long hwnd, long wParam, long lParam) {
 			if ((lParam & 0x40000000) != 0) return null;
 	}
 
-	boolean lastDead = display.lastDead;
 	/* Clear last key and last ascii because a new key has been typed */
 	display.lastAscii = display.lastKey = 0;
 	display.lastVirtual = display.lastNull = display.lastDead = false;
@@ -1598,20 +1577,9 @@ LRESULT wmKeyDown (long hwnd, long wParam, long lParam) {
 	if ((mapKey & 0x80000000) != 0) return null;
 
 	MSG msg = new MSG ();
-	int flags = OS.PM_NOREMOVE | OS.PM_NOYIELD | OS.PM_QS_INPUT | OS.PM_QS_POSTMESSAGE;
+	int flags = OS.PM_NOREMOVE | OS.PM_NOYIELD;
 	if (OS.PeekMessage (msg, hwnd, OS.WM_DEADCHAR, OS.WM_DEADCHAR, flags)) {
 		display.lastDead = true;
-		display.lastVirtual = mapKey == 0;
-		display.lastKey = display.lastVirtual ? (int)wParam : mapKey;
-		return null;
-	}
-
-	/*
-	 * When hitting accent keys twice in a row, PeekMessage only returns
-	 * a WM_DEADCHAR for the first WM_KEYDOWN. Ignore the second
-	 * WM_KEYDOWN and issue the key down event from inside WM_CHAR.
-	 */
-	if (lastDead) {
 		display.lastVirtual = mapKey == 0;
 		display.lastKey = display.lastVirtual ? (int)wParam : mapKey;
 		return null;

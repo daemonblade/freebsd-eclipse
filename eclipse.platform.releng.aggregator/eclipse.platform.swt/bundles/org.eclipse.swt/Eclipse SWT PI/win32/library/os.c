@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -228,18 +228,6 @@ JNIEXPORT jint JNICALL OS_NATIVE(BP_1PAINTPARAMS_1sizeof)
 	OS_NATIVE_ENTER(env, that, BP_1PAINTPARAMS_1sizeof_FUNC);
 	rc = (jint)BP_PAINTPARAMS_sizeof();
 	OS_NATIVE_EXIT(env, that, BP_1PAINTPARAMS_1sizeof_FUNC);
-	return rc;
-}
-#endif
-
-#ifndef NO_BROWSEINFO_1sizeof
-JNIEXPORT jint JNICALL OS_NATIVE(BROWSEINFO_1sizeof)
-	(JNIEnv *env, jclass that)
-{
-	jint rc = 0;
-	OS_NATIVE_ENTER(env, that, BROWSEINFO_1sizeof_FUNC);
-	rc = (jint)BROWSEINFO_sizeof();
-	OS_NATIVE_EXIT(env, that, BROWSEINFO_1sizeof_FUNC);
 	return rc;
 }
 #endif
@@ -2132,22 +2120,6 @@ JNIEXPORT jint JNICALL OS_NATIVE(FillRect)
 	rc = (jint)FillRect((HDC)arg0, lparg1, (HBRUSH)arg2);
 fail:
 	OS_NATIVE_EXIT(env, that, FillRect_FUNC);
-	return rc;
-}
-#endif
-
-#ifndef NO_FormatMessage
-JNIEXPORT jint JNICALL OS_NATIVE(FormatMessage)
-	(JNIEnv *env, jclass that, jint arg0, jlong arg1, jint arg2, jint arg3, jlongArray arg4, jint arg5, jlong arg6)
-{
-	jlong *lparg4=NULL;
-	jint rc = 0;
-	OS_NATIVE_ENTER(env, that, FormatMessage_FUNC);
-	if (arg4) if ((lparg4 = (*env)->GetLongArrayElements(env, arg4, NULL)) == NULL) goto fail;
-	rc = (jint)FormatMessage(arg0, (LPCVOID)arg1, arg2, arg3, (LPWSTR)lparg4, arg5, (va_list*)arg6);
-fail:
-	if (arg4 && lparg4) (*env)->ReleaseLongArrayElements(env, arg4, lparg4, 0);
-	OS_NATIVE_EXIT(env, that, FormatMessage_FUNC);
 	return rc;
 }
 #endif
@@ -4347,42 +4319,6 @@ JNIEXPORT jboolean JNICALL OS_NATIVE(ImageList_1SetIconSize)
 	OS_NATIVE_ENTER(env, that, ImageList_1SetIconSize_FUNC);
 	rc = (jboolean)ImageList_SetIconSize((HIMAGELIST)arg0, arg1, arg2);
 	OS_NATIVE_EXIT(env, that, ImageList_1SetIconSize_FUNC);
-	return rc;
-}
-#endif
-
-#ifndef NO_ImmAssociateContext
-JNIEXPORT jlong JNICALL OS_NATIVE(ImmAssociateContext)
-	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
-{
-	jlong rc = 0;
-	OS_NATIVE_ENTER(env, that, ImmAssociateContext_FUNC);
-	rc = (jlong)ImmAssociateContext((HWND)arg0, (HIMC)arg1);
-	OS_NATIVE_EXIT(env, that, ImmAssociateContext_FUNC);
-	return rc;
-}
-#endif
-
-#ifndef NO_ImmCreateContext
-JNIEXPORT jlong JNICALL OS_NATIVE(ImmCreateContext)
-	(JNIEnv *env, jclass that)
-{
-	jlong rc = 0;
-	OS_NATIVE_ENTER(env, that, ImmCreateContext_FUNC);
-	rc = (jlong)ImmCreateContext();
-	OS_NATIVE_EXIT(env, that, ImmCreateContext_FUNC);
-	return rc;
-}
-#endif
-
-#ifndef NO_ImmDestroyContext
-JNIEXPORT jboolean JNICALL OS_NATIVE(ImmDestroyContext)
-	(JNIEnv *env, jclass that, jlong arg0)
-{
-	jboolean rc = 0;
-	OS_NATIVE_ENTER(env, that, ImmDestroyContext_FUNC);
-	rc = (jboolean)ImmDestroyContext((HIMC)arg0);
-	OS_NATIVE_EXIT(env, that, ImmDestroyContext_FUNC);
 	return rc;
 }
 #endif
@@ -8001,22 +7937,6 @@ JNIEXPORT jint JNICALL OS_NATIVE(SCROLLINFO_1sizeof)
 }
 #endif
 
-#ifndef NO_SHBrowseForFolder
-JNIEXPORT jlong JNICALL OS_NATIVE(SHBrowseForFolder)
-	(JNIEnv *env, jclass that, jobject arg0)
-{
-	BROWSEINFO _arg0, *lparg0=NULL;
-	jlong rc = 0;
-	OS_NATIVE_ENTER(env, that, SHBrowseForFolder_FUNC);
-	if (arg0) if ((lparg0 = getBROWSEINFOFields(env, arg0, &_arg0)) == NULL) goto fail;
-	rc = (jlong)SHBrowseForFolder((LPBROWSEINFOW)lparg0);
-fail:
-	if (arg0 && lparg0) setBROWSEINFOFields(env, arg0, lparg0);
-	OS_NATIVE_EXIT(env, that, SHBrowseForFolder_FUNC);
-	return rc;
-}
-#endif
-
 #ifndef NO_SHDRAGIMAGE_1sizeof
 JNIEXPORT jint JNICALL OS_NATIVE(SHDRAGIMAGE_1sizeof)
 	(JNIEnv *env, jclass that)
@@ -8068,38 +7988,6 @@ fail:
 	if (arg2 && lparg2) setSHFILEINFOFields(env, arg2, lparg2);
 	if (arg0 && lparg0) (*env)->ReleaseCharArrayElements(env, arg0, lparg0, 0);
 	OS_NATIVE_EXIT(env, that, SHGetFileInfo_FUNC);
-	return rc;
-}
-#endif
-
-#ifndef NO_SHGetMalloc
-JNIEXPORT jint JNICALL OS_NATIVE(SHGetMalloc)
-	(JNIEnv *env, jclass that, jlongArray arg0)
-{
-	jlong *lparg0=NULL;
-	jint rc = 0;
-	OS_NATIVE_ENTER(env, that, SHGetMalloc_FUNC);
-	if (arg0) if ((lparg0 = (*env)->GetLongArrayElements(env, arg0, NULL)) == NULL) goto fail;
-	rc = (jint)SHGetMalloc((LPMALLOC *)lparg0);
-fail:
-	if (arg0 && lparg0) (*env)->ReleaseLongArrayElements(env, arg0, lparg0, 0);
-	OS_NATIVE_EXIT(env, that, SHGetMalloc_FUNC);
-	return rc;
-}
-#endif
-
-#ifndef NO_SHGetPathFromIDList
-JNIEXPORT jboolean JNICALL OS_NATIVE(SHGetPathFromIDList)
-	(JNIEnv *env, jclass that, jlong arg0, jcharArray arg1)
-{
-	jchar *lparg1=NULL;
-	jboolean rc = 0;
-	OS_NATIVE_ENTER(env, that, SHGetPathFromIDList_FUNC);
-	if (arg1) if ((lparg1 = (*env)->GetCharArrayElements(env, arg1, NULL)) == NULL) goto fail;
-	rc = (jboolean)SHGetPathFromIDList((LPCITEMIDLIST)arg0, (LPWSTR)lparg1);
-fail:
-	if (arg1 && lparg1) (*env)->ReleaseCharArrayElements(env, arg1, lparg1, 0);
-	OS_NATIVE_EXIT(env, that, SHGetPathFromIDList_FUNC);
 	return rc;
 }
 #endif
@@ -9222,18 +9110,6 @@ JNIEXPORT jboolean JNICALL OS_NATIVE(SetDllDirectory)
 fail:
 	if (arg0 && lparg0) (*env)->ReleaseCharArrayElements(env, arg0, lparg0, 0);
 	OS_NATIVE_EXIT(env, that, SetDllDirectory_FUNC);
-	return rc;
-}
-#endif
-
-#ifndef NO_SetErrorMode
-JNIEXPORT jint JNICALL OS_NATIVE(SetErrorMode)
-	(JNIEnv *env, jclass that, jint arg0)
-{
-	jint rc = 0;
-	OS_NATIVE_ENTER(env, that, SetErrorMode_FUNC);
-	rc = (jint)SetErrorMode(arg0);
-	OS_NATIVE_EXIT(env, that, SetErrorMode_FUNC);
 	return rc;
 }
 #endif

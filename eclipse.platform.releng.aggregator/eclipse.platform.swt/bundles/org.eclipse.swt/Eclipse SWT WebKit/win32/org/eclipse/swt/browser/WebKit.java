@@ -140,11 +140,8 @@ static {
 
 	if (LibraryLoaded) {
 		JSObjectHasPropertyProc = new Callback (WebKit.class, "JSObjectHasPropertyProc", 3); //$NON-NLS-1$
-		if (JSObjectHasPropertyProc.getAddress () == 0) SWT.error (SWT.ERROR_NO_MORE_CALLBACKS);
 		JSObjectGetPropertyProc = new Callback (WebKit.class, "JSObjectGetPropertyProc", 4); //$NON-NLS-1$
-		if (JSObjectGetPropertyProc.getAddress () == 0) SWT.error (SWT.ERROR_NO_MORE_CALLBACKS);
 		JSObjectCallAsFunctionProc = new Callback (WebKit.class, "JSObjectCallAsFunctionProc", 6); //$NON-NLS-1$
-		if (JSObjectCallAsFunctionProc.getAddress () == 0) SWT.error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 		NativeClearSessions = () -> {
 			long[] result = new long[1];
@@ -1205,8 +1202,7 @@ public boolean setUrl (String url, String postData, String[] headers) {
 	}
 	hr = COM.S_OK;	//TODO: once post code is completed, remove this line if not required
 	if (headers != null) {
-		for (int i = 0; i < headers.length; i++) {
-			String current = headers[i];
+		for (String current : headers) {
 			if (current != null) {
 				int index = current.indexOf (':');
 				if (index != -1) {

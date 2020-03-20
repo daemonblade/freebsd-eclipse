@@ -59,7 +59,6 @@ public class Menu extends Widget {
 
 	int x, y;
 	long hBrush;
-	int id0, id1;
 	int foreground = -1, background = -1;
 	Image backgroundImage;
 	boolean hasLocation;
@@ -199,21 +198,6 @@ Menu (Decorations parent, int style, long handle) {
 	super (parent, checkStyle (style));
 	this.parent = parent;
 	this.handle = handle;
-	/*
-	* Bug in IBM JVM 1.3.1.  For some reason, when the checkOrientation() is
-	* called from createWidget(), the JVM issues this error:
-	*
-	* JVM Exception 0x2 (subcode 0x0) occurred in thread "main" (TID:0x9F19D8)
-	*
-	* In addition, on Windows XP, a dialog appears with following error message,
-	* indicating that the problem may be in the JIT:
-	*
-	* AppName: java.exe	 AppVer: 0.0.0.0	 ModName: jitc.dll
-	* ModVer: 0.0.0.0	 Offset: 000b6912
-	*
-	* The fix is to call checkOrientation() from here.
-	*/
-	checkOrientation (parent);
 	createWidget ();
 }
 
@@ -388,21 +372,7 @@ void createItem (MenuItem item, int index) {
 }
 
 void createWidget () {
-	/*
-	* Bug in IBM JVM 1.3.1.  For some reason, when the following code is called
-	* from this method, the JVM issues this error:
-	*
-	* JVM Exception 0x2 (subcode 0x0) occurred in thread "main" (TID:0x9F19D8)
-	*
-	* In addition, on Windows XP, a dialog appears with following error message,
-	* indicating that the problem may be in the JIT:
-	*
-	* AppName: java.exe	 AppVer: 0.0.0.0	 ModName: jitc.dll
-	* ModVer: 0.0.0.0	 Offset: 000b6912
-	*
-	* The fix is to move the code to the caller of this method.
-	*/
-//	checkOrientation (parent);
+	checkOrientation (parent);
 	createHandle ();
 	parent.addMenu (this);
 }
@@ -442,9 +412,8 @@ void fixMenus (Decorations newParent) {
 	if (isDisposed()) {
 		return;
 	}
-	MenuItem [] items = getItems ();
-	for (int i=0; i<items.length; i++) {
-		items [i].fixMenus (newParent);
+	for (MenuItem item : getItems ()) {
+		item.fixMenus (newParent);
 	}
 	parent.removeMenu (this);
 	newParent.addMenu (this);
@@ -811,8 +780,8 @@ public boolean getVisible () {
 	if ((style & SWT.POP_UP) != 0) {
 		Menu [] popups = display.popups;
 		if (popups == null) return false;
-		for (int i=0; i<popups.length; i++) {
-			if (popups [i] == this) return true;
+		for (Menu popup : popups) {
+			if (popup == this) return true;
 		}
 	}
 	Shell shell = getShell ();
@@ -923,9 +892,7 @@ void releaseHandle () {
 
 @Override
 void releaseChildren (boolean destroy) {
-	MenuItem [] items = getItems ();
-	for (int i=0; i<items.length; i++) {
-		MenuItem item = items [i];
+	for (MenuItem item : getItems ()) {
 		if (item != null && !item.isDisposed ()) {
 			item.release (false);
 		}
@@ -1009,9 +976,7 @@ public void removeMenuListener (MenuListener listener) {
 
 @Override
 void reskinChildren (int flags) {
-	MenuItem [] items = getItems ();
-	for (int i=0; i<items.length; i++) {
-		MenuItem item = items [i];
+	for (MenuItem item : getItems ()) {
 		item.reskin (flags);
 	}
 	super.reskinChildren (flags);
@@ -1243,9 +1208,8 @@ void _setOrientation (int orientation) {
 	style &= ~flags;
 	style |= orientation & flags;
 	style &= ~SWT.FLIP_TEXT_DIRECTION;
-	MenuItem [] itms = getItems ();
-	for (int i=0; i<itms.length; i++) {
-		itms [i].setOrientation (orientation);
+	for (MenuItem itm : getItems ()) {
+		itm.setOrientation (orientation);
 	}
 }
 
@@ -1282,9 +1246,7 @@ void update () {
 		return;
 	}
 	boolean hasCheck = false, hasImage = false;
-	MenuItem [] items = getItems ();
-	for (int i=0; i<items.length; i++) {
-		MenuItem item = items [i];
+	for (MenuItem item : getItems ()) {
 		if (item.image != null) {
 			if ((hasImage = true) && hasCheck) break;
 		}

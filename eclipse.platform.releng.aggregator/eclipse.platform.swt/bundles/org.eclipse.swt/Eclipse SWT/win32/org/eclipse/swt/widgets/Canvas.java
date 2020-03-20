@@ -81,17 +81,6 @@ public Canvas (Composite parent, int style) {
 	super (parent, style);
 }
 
-void clearArea (int x, int y, int width, int height) {
-	checkWidget ();
-	if (OS.IsWindowVisible (handle)) {
-		RECT rect = new RECT ();
-		OS.SetRect (rect, x, y, x + width, y + height);
-		long hDC = OS.GetDCEx (handle, 0, OS.DCX_CACHE | OS.DCX_CLIPCHILDREN | OS.DCX_CLIPSIBLINGS);
-		drawBackground (hDC, rect);
-		OS.ReleaseDC (handle, hDC);
-	}
-}
-
 /**
  * Fills the interior of the rectangle specified by the arguments,
  * with the receiver's background.
@@ -253,9 +242,7 @@ void scrollInPixels (int destX, int destY, int x, int y, int width, int height, 
 		OS.ScrollWindowEx (handle, deltaX, deltaY, sourceRect, null, 0, null, flags);
 	}
 	if (all) {
-		Control [] children = _getChildren ();
-		for (int i=0; i<children.length; i++) {
-			Control child = children [i];
+		for (Control child : _getChildren ()) {
 			Rectangle rect = child.getBoundsInPixels ();
 			if (Math.min (x + width, rect.x + rect.width) >= Math.max (x, rect.x) &&
 				Math.min (y + height, rect.y + rect.height) >= Math.max (y, rect.y)) {

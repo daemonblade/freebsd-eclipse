@@ -733,25 +733,7 @@ int resolveTextDirection() {
 }
 
 void selectRadio () {
-	/*
-	* This code is intentionally commented.  When two groups
-	* of radio buttons with the same parent are separated by
-	* another control, the correct behavior should be that
-	* the two groups act independently.  This is consistent
-	* with radio tool and menu items.  The commented code
-	* implements this behavior.
-	*/
-//	int index = 0;
-//	Control [] children = parent._getChildren ();
-//	while (index < children.length && children [index] != this) index++;
-//	int i = index - 1;
-//	while (i >= 0 && children [i].setRadioSelection (false)) --i;
-//	int j = index + 1;
-//	while (j < children.length && children [j].setRadioSelection (false)) j++;
-//	setSelection (true);
-	Control [] children = parent._getChildren ();
-	for (int i=0; i<children.length; i++) {
-		Control child = children [i];
+	for (Control child : parent._getChildren ()) {
 		if (this != child) child.setRadioSelection (false);
 	}
 	setSelection (true);
@@ -906,13 +888,6 @@ public void setImage (Image image) {
 	if (image != null && image.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
 	if ((style & SWT.ARROW) != 0) return;
 	this.image = image;
-	/* This code is intentionally commented */
-//	if (OS.COMCTL32_MAJOR < 6) {
-//		if (image == null || text.length () != 0) {
-//			_setText (text);
-//			return;
-//		}
-//	}
 	_setImage (image);
 }
 
@@ -1052,13 +1027,6 @@ public void setText (String string) {
 	if (string == null) error (SWT.ERROR_NULL_ARGUMENT);
 	if ((style & SWT.ARROW) != 0) return;
 	text = string;
-	/* This code is intentionally commented */
-//	if (OS.COMCTL32_MAJOR < 6) {
-//		if (text.length () == 0 && image != null) {
-//			_setImage (image);
-//			return;
-//		}
-//	}
 	_setText (string);
 }
 

@@ -43,21 +43,7 @@ public class BidiUtil {
 	// switching
 	static Map<LONG, Runnable> languageMap = new HashMap<> ();
 	static Map<LONG, LONG> oldProcMap = new HashMap<> ();
-	/*
-	 * This code is intentionally commented.  In order
-	 * to support CLDC, .class cannot be used because
-	 * it does not compile on some Java compilers when
-	 * they are targeted for CLDC.
-	 */
-	//	static Callback callback = new Callback (BidiUtil.class, "windowProc", 4);
-	static final String CLASS_NAME = "org.eclipse.swt.internal.BidiUtil"; //$NON-NLS-1$
-	static Callback callback;
-	static {
-		try {
-			callback = new Callback (Class.forName (CLASS_NAME), "windowProc", 4); //$NON-NLS-1$
-			if (callback.getAddress () == 0) SWT.error (SWT.ERROR_NO_MORE_CALLBACKS);
-		} catch (ClassNotFoundException e) {}
-	}
+	static Callback callback = new Callback (BidiUtil.class, "windowProc", 4); //$NON-NLS-1$
 
 	// GetCharacterPlacement constants
 	static final int GCP_REORDER = 0x0002;
@@ -77,9 +63,6 @@ public class BidiUtil {
 	static final int LANG_ARABIC = 0x01;
 	static final int LANG_HEBREW = 0x0d;
 	static final int LANG_FARSI = 0x29;
-	// code page identifiers
-	static final String CD_PG_HEBREW = "1255"; //$NON-NLS-1$
-	static final String CD_PG_ARABIC = "1256"; //$NON-NLS-1$
 	// ActivateKeyboard constants
 	static final int HKL_NEXT = 1;
 	static final int HKL_PREV = 0;
@@ -440,23 +423,9 @@ public static boolean isBidiPlatform() {
 	// languages, but only install the Thai keyboard).
 	if (!isKeyboardBidi()) return false;
 
-	Callback callback = null;
-	try {
-		callback = new Callback (Class.forName (CLASS_NAME), "EnumSystemLanguageGroupsProc", 5); //$NON-NLS-1$
-		long lpEnumSystemLanguageGroupsProc = callback.getAddress ();
-		if (lpEnumSystemLanguageGroupsProc == 0) SWT.error(SWT.ERROR_NO_MORE_CALLBACKS);
-		OS.EnumSystemLanguageGroups(lpEnumSystemLanguageGroupsProc, OS.LGRPID_INSTALLED, 0);
-		callback.dispose ();
-	} catch (ClassNotFoundException e) {
-		//callback can only be null at this point
-	}
-	if (isBidiPlatform == 1) return true;
-	// need to look at system code page for NT & 98 platforms since EnumSystemLanguageGroups is
-	// not supported for these platforms
-	String codePage = String.valueOf(OS.GetACP());
-	if (CD_PG_ARABIC.equals(codePage) || CD_PG_HEBREW.equals(codePage)) {
-		isBidiPlatform = 1;
-	}
+	Callback callback = new Callback (BidiUtil.class, "EnumSystemLanguageGroupsProc", 5); //$NON-NLS-1$
+	OS.EnumSystemLanguageGroups(callback.getAddress (), OS.LGRPID_INSTALLED, 0);
+	callback.dispose ();
 	return isBidiPlatform == 1;
 }
 /**
@@ -467,9 +436,8 @@ public static boolean isBidiPlatform() {
  * @return true if bidi is supported, false otherwise.
  */
 public static boolean isKeyboardBidi() {
-	long[] list = getKeyboardLanguageList();
-	for (int i=0; i<list.length; i++) {
-		if (isBidiLang(list[i])) {
+	for (long language : getKeyboardLanguageList()) {
+		if (isBidiLang(language)) {
 			return true;
 		}
 	}
@@ -507,10 +475,6 @@ public static int resolveTextDirection (String text) {
 	int length = text.length();
 	if (length == 0) return SWT.NONE;
 	char[] rtlProbe = {' ', ' ', '1'};
-	/*
-	 * "Wide" version of win32 API can also run even on non-Unicode Windows,
-	 * hence need for OS.IsUnicode check here.
-	 */
 	char[] ltrProbe = {'\u202b', 'a', ' '};
 	char[] numberProbe = {'\u05d0', ' ', ' '};
 	GCP_RESULTS result = new GCP_RESULTS();
@@ -560,10 +524,9 @@ public static int resolveTextDirection (String text) {
 public static void setKeyboardLanguage(int language) {
 	if (language == getKeyboardLanguage()) return;
 	boolean bidi = language == KEYBOARD_BIDI;
-	long[] list = getKeyboardLanguageList();
-	for (int i=0; i<list.length; i++) {
-		if (bidi == isBidiLang(list[i])) {
-			OS.ActivateKeyboardLayout(list[i], 0);
+	for (long element : getKeyboardLanguageList()) {
+		if (bidi == isBidiLang(element)) {
+			OS.ActivateKeyboardLayout(element, 0);
 			return;
 		}
 	}

@@ -21,10 +21,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -92,7 +94,7 @@ final static RGB GREEN = new RGB(0,255,0);
 final static RGB YELLOW = new RGB(255,255,0);
 final static RGB CYAN = new RGB(0,255,255);
 final static RGB PURPLE = new RGB(255,0,255);
-final static String PLATFORM_LINE_DELIMITER = System.getProperty("line.separator");
+final static String PLATFORM_LINE_DELIMITER = System.lineSeparator();
 Map<RGB, Color> colors = new HashMap<>();
 private boolean listenerCalled;
 private boolean listener2Called;
@@ -1770,9 +1772,9 @@ public void test_getSelectionRange() {
 	int invalidRanges [][] = {{-1, 0}, {-1, -1}, {100, 1}, {100, -1}, {12, 1}, {11, 2}, {2, -3}, {50, -1}};
 	int selectionRanges [][] = {{0, 1}, {0, 0}, {2, 3}, {12, 0}, {2, -2}, {5, -1}};
 
-	for (int i = 0; i < invalidRanges.length; i++) {
-		int start = invalidRanges[i][0];
-		int length = invalidRanges[i][1];
+	for (int[] invalidRange : invalidRanges) {
+		int start = invalidRange[0];
+		int length = invalidRange[1];
 
 		try {
 			text.setSelectionRange(start, length);
@@ -1800,9 +1802,9 @@ public void test_getSelectionRange() {
 		assertTrue(":c:" + i, text.getSelectionRange().x == start && text.getSelectionRange().y == length);
 	}
 
-	for (int i = 0; i < invalidRanges.length; i++) {
-		int start = invalidRanges[i][0];
-		int length = invalidRanges[i][1];
+	for (int[] invalidRange : invalidRanges) {
+		int start = invalidRange[0];
+		int length = invalidRange[1];
 
 		try {
 			text.setSelectionRange(start, length);
@@ -2015,9 +2017,9 @@ public void test_getTextII() {
 	int invalidRanges[][] = {{-1, 0}, {0, -1}, {-1, -1}, {100, 1}, {100, -1}, {2, testText.length()}, {5, 2}};
 	int ranges[][] = {{0, 1}, {0, 0}, {2, 5}, {7, 11}};
 
-	for (int i = 0; i < invalidRanges.length; i++) {
-		int start = invalidRanges[i][0];
-		int end = invalidRanges[i][1];
+	for (int[] invalidRange : invalidRanges) {
+		int start = invalidRange[0];
+		int end = invalidRange[1];
 
 		exceptionThrown = false;
 		try {
@@ -2034,9 +2036,9 @@ public void test_getTextII() {
 		int end = ranges[i][1];
 		assertEquals(":b:" + i, testText.substring(start, end + 1), text.getText(start, end));
 	}
-	for (int i = 0; i < invalidRanges.length; i++) {
-		int start = invalidRanges[i][0];
-		int end = invalidRanges[i][1];
+	for (int[] invalidRange : invalidRanges) {
+		int start = invalidRange[0];
+		int end = invalidRange[1];
 
 		exceptionThrown = false;
 		try {
@@ -2059,9 +2061,9 @@ public void test_getTextRangeII() {
 	int invalidRanges[][] = {{-1, 0}, {0, -1}, {-1, -1}, {100, 1}, {100, -1}, {1, testText.length()}, {5, -1}};
 	int ranges[][] = {{0, 1}, {0, 0}, {5, 1}, {7, 5}, {12, 0}};
 
-	for (int i = 0; i < invalidRanges.length; i++) {
-		int start = invalidRanges[i][0];
-		int length = invalidRanges[i][1];
+	for (int[] invalidRange : invalidRanges) {
+		int start = invalidRange[0];
+		int length = invalidRange[1];
 
 		exceptionThrown = false;
 		try {
@@ -2078,9 +2080,9 @@ public void test_getTextRangeII() {
 		int length = ranges[i][1];
 		assertEquals(":b:" + i, testText.substring(start, start + length), text.getTextRange(start, length));
 	}
-	for (int i = 0; i < invalidRanges.length; i++) {
-		int start = invalidRanges[i][0];
-		int length = invalidRanges[i][1];
+	for (int[] invalidRange : invalidRanges) {
+		int start = invalidRange[0];
+		int length = invalidRange[1];
 
 		exceptionThrown = false;
 		try {
@@ -3750,9 +3752,9 @@ public void test_setLineBackgroundIILorg_eclipse_swt_graphics_Color(){
 public void test_setSelectionI() {
 	int[] invalid = {-1, 100, 12};
 
-	for (int i = 0; i < invalid.length; i++) {
+	for (int start : invalid) {
 		try {
-			text.setSelection(invalid[i]);
+			text.setSelection(start);
 		} catch (IllegalArgumentException e) {
 			fail("should not throw exception for out of range");
 		}
@@ -3764,9 +3766,9 @@ public void test_setSelectionI() {
 	text.setSelection(11);
 	assertEquals(11, text.getCaretOffset());
 
-	for (int i = 0; i < invalid.length; i++) {
+	for (int start : invalid) {
 		try {
-			text.setSelection(invalid[i]);
+			text.setSelection(start);
 		}
 		catch (IllegalArgumentException e) {
 			fail("should not throw exception for out of range");
@@ -3779,9 +3781,9 @@ public void test_setSelectionLorg_eclipse_swt_graphics_Point() {
 	Point[] invalidRanges = {new Point(-1, 0), new Point(-1, -1), new Point(100, 1),
 		new Point(100, -1), new Point(11, 12), new Point(10, 12)};
 
-	for (int i = 0; i < invalidRanges.length; i++) {
+	for (Point invalidRange : invalidRanges) {
 		try {
-			text.setSelection(invalidRanges[i]);
+			text.setSelection(invalidRange);
 		}
 		catch (IllegalArgumentException e) {
 			fail("should not throw exception for out of range");
@@ -3792,9 +3794,9 @@ public void test_setSelectionLorg_eclipse_swt_graphics_Point() {
 	text.setSelection(3, 7);
 	assertEquals("3456", text.getSelectionText());
 
-	for (int i = 0; i < invalidRanges.length; i++) {
+	for (Point invalidRange : invalidRanges) {
 		try {
-			text.setSelection(invalidRanges[i]);
+			text.setSelection(invalidRange);
 		}
 		catch (IllegalArgumentException e) {
 			fail("should not throw exception for out of range");
@@ -3806,9 +3808,9 @@ public void test_setSelectionLorg_eclipse_swt_graphics_Point() {
 public void test_setSelectionII(){
 	int[][] invalidRanges = {{-1, 0}, {-1, -1}, {100, 1}, {100, -1}, {11, 12}, {10, 12}, {2, -3}, {50, -1}};
 
-	for (int i = 0; i < invalidRanges.length; i++) {
-		int start = invalidRanges[i][0];
-		int end = invalidRanges[i][1];
+	for (int[] invalidRange : invalidRanges) {
+		int start = invalidRange[0];
+		int end = invalidRange[1];
 
 		try {
 			text.setSelection(start, end);
@@ -3825,9 +3827,9 @@ public void test_setSelectionII(){
 	assertEquals("012", text.getSelectionText());
 	assertEquals(0, text.getCaretOffset());
 
-	for (int i = 0; i < invalidRanges.length; i++) {
-		int start = invalidRanges[i][0];
-		int end = invalidRanges[i][1];
+	for (int[] invalidRange : invalidRanges) {
+		int start = invalidRange[0];
+		int end = invalidRange[1];
 
 		try {
 			text.setSelection(start, end);
@@ -4965,7 +4967,7 @@ public void test_isTextSelected() {
 	// Set block selection
 	StringBuilder buffer = new StringBuilder();
 	for (int i = 0; i < 500; i++) {
-		buffer.append("Sample Test Selection" + System.getProperty("line.separator"));
+		buffer.append("Sample Test Selection" + System.lineSeparator());
 	}
 	text.setText(buffer.toString());
 	text.setSize(100, 10000);
@@ -4974,7 +4976,7 @@ public void test_isTextSelected() {
 	assertTrue(text.isTextSelected());
 
 	// Set block selection on new line
-	text.setText(System.getProperty("line.separator"));
+	text.setText(System.lineSeparator());
 	text.setSize(100, 100);
 	text.setBlockSelection(true);
 	text.setBlockSelectionBounds(0, 0, 100, 100);
@@ -5127,13 +5129,13 @@ public void test_isTextSelectedInBlockSelection() {
 	Point lowerRight = text.getLocationAtOffset(blockSelectionTestTextOneLine().length() * 2 + 6);
 	text.setBlockSelectionBounds(0, 0, lowerRight.x, lowerRight.y + 1);
 	assertTrue(text.isTextSelected());
-	assertEquals("Sample" + System.getProperty("line.separator") + "Sample" + System.getProperty("line.separator")
+	assertEquals("Sample" + System.lineSeparator() + "Sample" + System.lineSeparator()
 			+ "Sample", text.getSelectionText());
 }
 
 @Test
 public void test_isTextSelectedInBlockSelectionForLingleEmptyLine() {
-	text.setText(System.getProperty("line.separator"));
+	text.setText(System.lineSeparator());
 	text.setSize(100, 100);
 	text.setBlockSelection(true);
 	text.setBlockSelectionBounds(0, 0, 100, 100);
@@ -5142,7 +5144,7 @@ public void test_isTextSelectedInBlockSelectionForLingleEmptyLine() {
 
 @Test
 public void test_selectionIsClearedOnCaretMoveWhenInBlockSelection() {
-	text.setText("Test" + System.getProperty("line.separator"));
+	text.setText("Test" + System.lineSeparator());
 	text.setSize(100, 100);
 	text.setBlockSelection(true);
 	text.setBlockSelectionBounds(0, 0, 100, 100);
@@ -5165,7 +5167,7 @@ public void test_setBlockSelectionBounds_updatesNormalSelectionIfNotInBlockMode(
 
 @Test
 public void test_selectionIsMaintainedOnDisableOfBlockSelection() {
-	text.setText("Test" + System.getProperty("line.separator"));
+	text.setText("Test" + System.lineSeparator());
 	text.setSize(100, 100);
 	text.setBlockSelection(true);
 	text.setBlockSelectionBounds(0, 0, 100, 100);
@@ -5177,12 +5179,12 @@ public void test_selectionIsMaintainedOnDisableOfBlockSelection() {
 
 @Test
 public void test_selectAllInBlockSelectionMode() {
-	text.setText("Test" + System.getProperty("line.separator"));
+	text.setText("Test" + System.lineSeparator());
 	text.setSize(100, 100);
 	text.setBlockSelection(true);
 	text.selectAll();
 	assertTrue(text.isTextSelected());
-	assertEquals("Test" + System.getProperty("line.separator"), text.getSelectionText());
+	assertEquals("Test" + System.lineSeparator(), text.getSelectionText());
 }
 
 @Test
@@ -5196,10 +5198,10 @@ public void test_cutTextInBlockSelection() {
 
 	assertTrue(text.getText(),
 			text.getText()
-					.startsWith(" Test Selection" + System.getProperty("line.separator")
-							+ " Test Selection" + System.getProperty("line.separator")
-							+ " Test Selection" + System.getProperty("line.separator")
-							+ "Sample Test Selection" + System.getProperty("line.separator")));
+					.startsWith(" Test Selection" + System.lineSeparator()
+							+ " Test Selection" + System.lineSeparator()
+							+ " Test Selection" + System.lineSeparator()
+							+ "Sample Test Selection" + System.lineSeparator()));
 }
 
 @Test
@@ -5242,8 +5244,8 @@ public void test_cutAndPasteInBlockSelection() {
 
 @Test
 public void test_trippleClickInBlockSelectionSelectsLine() {
-	text.setText("  Sample Test Selection  " + System.getProperty("line.separator") + "  Sample Test Selection  "
-			+ System.getProperty("line.separator"));
+	text.setText("  Sample Test Selection  " + System.lineSeparator() + "  Sample Test Selection  "
+			+ System.lineSeparator());
 	text.setSize(1000, 1000);
 	text.setBlockSelection(true);
 	Point lowerRight = text.getLocationAtOffset(3);
@@ -5265,8 +5267,8 @@ public void test_getSelectionRangesInBlockSelection() {
 	text.setBlockSelection(true);
 	Point lowerRight = text.getLocationAtOffset(blockSelectionTestTextOneLine().length() * 2 + 6);
 	text.setBlockSelectionBounds(0, 0, lowerRight.x, lowerRight.y + 1);
-	assertArrayEquals(new int[] { 0, 6, 21 + System.getProperty("line.separator").length(), 6,
-			42 + System.getProperty("line.separator").length() * 2, 6 }, text.getSelectionRanges());
+	assertArrayEquals(new int[] { 0, 6, 21 + System.lineSeparator().length(), 6,
+			42 + System.lineSeparator().length() * 2, 6 }, text.getSelectionRanges());
 }
 
 @Test
@@ -5277,7 +5279,7 @@ public void test_getSelectionCountInBlockSelection() {
 	Point lowerRight = text
 			.getLocationAtOffset(blockSelectionTestTextOneLine().length() * 2 + 6);
 	text.setBlockSelectionBounds(0, 0, lowerRight.x, lowerRight.y + 1);
-	assertEquals(18 + System.getProperty("line.separator").length() * 2, text.getSelectionCount());
+	assertEquals(18 + System.lineSeparator().length() * 2, text.getSelectionCount());
 }
 
 @Test
@@ -5298,12 +5300,12 @@ public void test_insertInBlockSelection() {
 	text.setBlockSelection(true);
 
 	text.setSelection(6, 6 + blockSelectionTestTextOneLine().length());
-	text.insert("Foo" + System.getProperty("line.separator") + "Foo" + System.getProperty("line.separator"));
+	text.insert("Foo" + System.lineSeparator() + "Foo" + System.lineSeparator());
 
 	assertTrue(text.getText(), text.getText()
-			.startsWith("SampleFoo Test Selection" + System.getProperty("line.separator")
-					+ "SampleFoo Test Selection" + System.getProperty("line.separator") + "Sample Test Selection"
-					+ System.getProperty("line.separator")));
+			.startsWith("SampleFoo Test Selection" + System.lineSeparator()
+					+ "SampleFoo Test Selection" + System.lineSeparator() + "Sample Test Selection"
+					+ System.lineSeparator()));
 }
 
 @Test
@@ -5522,7 +5524,7 @@ private String blockSelectionTestText() {
 }
 
 private String blockSelectionTestTextOneLine() {
-	return "Sample Test Selection" + System.getProperty("line.separator");
+	return "Sample Test Selection" + System.lineSeparator();
 }
 
 /**
@@ -5770,4 +5772,33 @@ public void test_bug551335_lostStyles() throws InterruptedException {
 	assertTrue(testUnstyledText.getAsBoolean());
 }
 
+/**
+ * Test for: Bug 418714 - [Win32] Content copied to clipboard lost after dispose
+ *
+ * More a {@link Clipboard} than a StlyedText test. Depending on platform data
+ * transfered to clipboard is not actually copied until the data is requested
+ * from clipboard. It should be still possible to paste text which was copied
+ * from a now disposed/unavailable StyledText.
+ */
+@Test
+public void test_clipboardCarryover() {
+	assumeFalse("Disabled on Mac because similar clipboard tests are also disabled.", SwtTestUtil.isCocoa);
+
+	String content = "StyledText-" + Math.abs(new Random().nextInt());
+	text.setText(content);
+	text.selectAll();
+	text.copy();
+	text.dispose();
+
+	text = new StyledText(shell, SWT.NONE);
+	setWidget(text);
+	text.paste();
+	assertEquals("Lost clipboard content", content, text.getText());
+	assertEquals("Clipboard content got some unexpected styling", 0, text.getStyleRanges().length);
+
+	Clipboard clipboard = new Clipboard(text.getDisplay());
+	RTFTransfer rtfTranfer = RTFTransfer.getInstance();
+	String clipboardText = (String) clipboard.getContents(rtfTranfer);
+	assertTrue("RTF copy failed", clipboardText.length() > 0);
+}
 }

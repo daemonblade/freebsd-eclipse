@@ -124,13 +124,9 @@ public class DragSource extends Widget {
 	static Callback DragDataDelete;
 	static {
 		DragBegin = new Callback(DragSource.class, "DragBegin", 2); //$NON-NLS-1$
-		if (DragBegin.getAddress() == 0) SWT.error(SWT.ERROR_NO_MORE_CALLBACKS);
 		DragGetData = new Callback(DragSource.class, "DragGetData", 5);	 //$NON-NLS-1$
-		if (DragGetData.getAddress() == 0) SWT.error(SWT.ERROR_NO_MORE_CALLBACKS);
 		DragEnd = new Callback(DragSource.class, "DragEnd", 2); //$NON-NLS-1$
-		if (DragEnd.getAddress() == 0) SWT.error(SWT.ERROR_NO_MORE_CALLBACKS);
 		DragDataDelete = new Callback(DragSource.class, "DragDataDelete", 2); //$NON-NLS-1$
-		if (DragDataDelete.getAddress() == 0) SWT.error(SWT.ERROR_NO_MORE_CALLBACKS);
 	}
 
 /**
@@ -325,7 +321,7 @@ void dragBegin(long widget, long context) {
 	 * When we recieve the signal from GTK of DragBegin, we will
 	 * notify SWT that a drag has occurred.
 	 */
-	if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0) && this.control instanceof Text) {
+	if (this.control instanceof Text) {
 		DNDEvent event = new DNDEvent();
 		Display display = Display.getCurrent();
 		Point loc = display.getCursorLocation();

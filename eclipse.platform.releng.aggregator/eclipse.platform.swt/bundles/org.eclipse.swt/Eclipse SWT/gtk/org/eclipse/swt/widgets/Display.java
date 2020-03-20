@@ -219,6 +219,19 @@ public class Display extends Device {
 	SessionManagerListener sessionManagerListener;
 	Runnable [] disposeList;
 
+	/*
+	 * DBus objects to be freed upong Display release. Only public for use in
+	 * other areas of SWT (i.e. WebKit). See bug 540060.
+	 */
+	/** @noreference */
+	public ArrayList<Long> dBusServers = new ArrayList<>();
+	/** @noreference */
+	public ArrayList<Long> dBusAuthObservers = new ArrayList<>();
+	/** @noreference */
+	public ArrayList<Long> dBusGUIDS = new ArrayList<>();
+	/** @noreference */
+	public ArrayList<Long> dBusConnections = new ArrayList<>();
+
 	/* Deferred Layout list */
 	Composite[] layoutDeferred;
 	int layoutDeferredCount;
@@ -513,7 +526,7 @@ public class Display extends Device {
 
 	/* GTK Version */
 	static final int GTK3_MAJOR = 3;
-	static final int GTK3_MINOR = 10;
+	static final int GTK3_MINOR = 14;
 	static final int GTK3_MICRO = 0;
 
 	/* Display Data */
@@ -901,7 +914,7 @@ public void asyncExec (Runnable runnable) {
 		synchronized (idleLock) {
 			if (idleNeeded && idleHandle == 0) {
 				//NOTE: calling unlocked function in OS
-				idleHandle = OS._g_idle_add (idleProc, 0);
+				idleHandle = OS.g_idle_add (idleProc, 0);
 			}
 		}
 		synchronizer.asyncExec (runnable);
@@ -1137,25 +1150,21 @@ void createDisplay (DeviceData data) {
 	if (rendererClassInitProc == 0) {
 		rendererClassInitCallback = new Callback (getClass (), "rendererClassInitProc", 2); //$NON-NLS-1$
 		rendererClassInitProc = rendererClassInitCallback.getAddress ();
-		if (rendererClassInitProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	}
 	if (GTK.GTK4) {
 		if (rendererSnapshotProc == 0) {
 			rendererSnapshotCallback = new Callback (getClass (), "rendererSnapshotProc", 6); //$NON-NLS-1$
 			rendererSnapshotProc = rendererSnapshotCallback.getAddress ();
-			if (rendererSnapshotProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		}
 	} else {
 		if (rendererRenderProc == 0) {
 			rendererRenderCallback = new Callback (getClass (), "rendererRenderProc", 6); //$NON-NLS-1$
 			rendererRenderProc = rendererRenderCallback.getAddress ();
-			if (rendererRenderProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		}
 	}
 	if (rendererGetPreferredWidthProc == 0) {
 		rendererGetPreferredWidthCallback = new Callback (getClass (), "rendererGetPreferredWidthProc", 4); //$NON-NLS-1$
 		rendererGetPreferredWidthProc = rendererGetPreferredWidthCallback.getAddress ();
-		if (rendererGetPreferredWidthProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	}
 	if (text_renderer_type == 0) {
 		GTypeInfo renderer_info = new GTypeInfo ();
@@ -1203,12 +1212,10 @@ void createDisplay (DeviceData data) {
 	/* Initialize the filter and event callback */
 	eventCallback = new Callback (this, "eventProc", 2); //$NON-NLS-1$
 	eventProc = eventCallback.getAddress ();
-	if (eventProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	GDK.gdk_event_handler_set (eventProc, 0, 0);
 
 	signalCallback = new Callback (this, "signalProc", 3); //$NON-NLS-1$
 	signalProc = signalCallback.getAddress ();
-	if (signalProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	if (!GTK.GTK4) {
 		byte[] atomName = Converter.wcsToMbcs ("SWT_Window_" + APP_NAME, true); //$NON-NLS-1$
@@ -1224,7 +1231,6 @@ void createDisplay (DeviceData data) {
 	latinKeyGroup = findLatinKeyGroup ();
 	keysChangedCallback = new Callback (this, "keysChangedProc", 2); //$NON-NLS-1$
 	keysChangedProc = keysChangedCallback.getAddress ();
-	if (keysChangedProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	long keymap;
 	long display = GDK.gdk_display_get_default();
 	if (GTK.GTK4) {
@@ -1751,13 +1757,11 @@ int getCaretBlinkTime () {
 }
 
 long getClosure (int id) {
-	if (OS.GLIB_VERSION >= OS.VERSION(2, 36, 0) && ++closuresCount [id] >= 255) {
-		if (closures [id] != 0) OS.g_closure_unref (closures [id]);
-		closures [id] = OS.g_cclosure_new (closuresProc [id], id, 0);
-		OS.g_closure_ref (closures [id]);
-		OS.g_closure_sink (closures [id]);
-		closuresCount [id] = 0;
-	}
+	if (closures [id] != 0) OS.g_closure_unref (closures [id]);
+	closures [id] = OS.g_cclosure_new (closuresProc [id], id, 0);
+	OS.g_closure_ref (closures [id]);
+	OS.g_closure_sink (closures [id]);
+	closuresCount [id] = 0;
 	return closures [id];
 }
 
@@ -3410,18 +3414,15 @@ void initializeCallbacks () {
 	if (GTK.GTK4) {
 		snapshotDraw = new Callback (getClass (), "snapshotDrawProc", 2); //$NON-NLS-1$
 		snapshotDrawProc = snapshotDraw.getAddress ();
-		if (snapshotDrawProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	}
 
 	windowCallback2 = new Callback (this, "windowProc", 2); //$NON-NLS-1$
 	windowProc2 = windowCallback2.getAddress ();
-	if (windowProc2 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	if (GTK.GTK4) {
 		keyPressReleaseCallback = new Callback (this, "keyPressReleaseProc", long.class, new Type[] {
 				long.class, int.class, int.class, int.class, long.class}); //$NON-NLS-1$
 		keyPressReleaseProc = keyPressReleaseCallback.getAddress ();
-		if (keyPressReleaseProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 		/*
 		 * Usually GTK4 signals will be connected via g_signal_connect(),
@@ -3434,7 +3435,6 @@ void initializeCallbacks () {
 		focusCallback = new Callback (this, "focusProc", long.class, new Type[] {
 				long.class, long.class}); //$NON-NLS-1$
 		focusProc = focusCallback.getAddress ();
-		if (focusProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 		closuresProc [Widget.FOCUS_IN] = focusProc;
 		closuresProc [Widget.FOCUS_OUT] = focusProc;
@@ -3442,7 +3442,6 @@ void initializeCallbacks () {
 		enterMotionScrollCallback = new Callback (this, "enterMotionScrollProc", long.class, new Type[] {
 				long.class, double.class, double.class, long.class}); //$NON-NLS-1$
 		enterMotionScrollProc = enterMotionScrollCallback.getAddress ();
-		if (enterMotionScrollProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 		closuresProc [Widget.ENTER] = enterMotionScrollProc;
 		closuresProc [Widget.MOTION] = enterMotionScrollProc;
@@ -3451,7 +3450,6 @@ void initializeCallbacks () {
 		gesturePressReleaseCallback = new Callback (this, "gesturePressReleaseProc", long.class, new Type[] {
 				long.class, int.class, double.class, double.class, long.class}); //$NON-NLS-1$
 		gesturePressReleaseProc = gesturePressReleaseCallback.getAddress();
-		if (gesturePressReleaseProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 		closuresProc [Widget.GESTURE_PRESSED] = gesturePressReleaseProc;
 		closuresProc [Widget.GESTURE_RELEASED] = gesturePressReleaseProc;
@@ -3459,7 +3457,6 @@ void initializeCallbacks () {
 		leaveCallback = new Callback (this, "leaveProc", long.class, new Type[] {
 				long.class, long.class}); //$NON-NLS-1$
 		leaveProc = leaveCallback.getAddress ();
-		if (leaveProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 		closuresProc [Widget.LEAVE] = leaveProc;
 	}
@@ -3467,7 +3464,6 @@ void initializeCallbacks () {
 	notifyCallback = new Callback(this, "notifyProc", long.class, new Type[] {
 			long.class, long.class, long.class}); //$NON-NLS-1$
 	notifyProc = notifyCallback.getAddress();
-	if (notifyProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	closuresProc [Widget.NOTIFY_STATE] = notifyProc;
 	closuresProc [Widget.DPI_CHANGED] = notifyProc;
@@ -3507,7 +3503,6 @@ void initializeCallbacks () {
 
 	windowCallback3 = new Callback (this, "windowProc", 3); //$NON-NLS-1$
 	windowProc3 = windowCallback3.getAddress ();
-	if (windowProc3 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	closuresProc [Widget.BUTTON_PRESS_EVENT] = windowProc3;
 	closuresProc [Widget.BUTTON_PRESS_EVENT_INVERSE] = windowProc3;
@@ -3545,7 +3540,6 @@ void initializeCallbacks () {
 
 	windowCallback4 = new Callback (this, "windowProc", 4); //$NON-NLS-1$
 	windowProc4 = windowCallback4.getAddress ();
-	if (windowProc4 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	closuresProc [Widget.DELETE_RANGE] = windowProc4;
 	closuresProc [Widget.DELETE_TEXT] = windowProc4;
@@ -3564,7 +3558,6 @@ void initializeCallbacks () {
 
 	windowCallback5 = new Callback (this, "windowProc", 5); //$NON-NLS-1$
 	windowProc5 = windowCallback5.getAddress ();
-	if (windowProc5 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	/*
 	 * The "change-value" signal has a double parameter, so this
@@ -3572,7 +3565,6 @@ void initializeCallbacks () {
 	 */
 	changeValue = new Callback (this, "changeValue", boolean.class, new Type [] {long.class, int.class, double.class, long.class}); //$NON-NLS-1$
 	changeValueProc = changeValue.getAddress ();
-	if (changeValueProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 	closuresProc [Widget.CHANGE_VALUE] = changeValueProc;
 
 	closuresProc [Widget.EXPAND_COLLAPSE_CURSOR_ROW] = windowProc5;
@@ -3584,7 +3576,6 @@ void initializeCallbacks () {
 	if (signalIds [Widget.POPPED_UP] != 0) {
 		windowCallback6 = new Callback (this, "windowProc", 6); //$NON-NLS-1$
 		windowProc6 = windowCallback6.getAddress ();
-		if (windowProc6 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 		closuresProc [Widget.POPPED_UP] = windowProc6;
 	}
 
@@ -3600,58 +3591,45 @@ void initializeCallbacks () {
 
 	timerCallback = new Callback (this, "timerProc", 1); //$NON-NLS-1$
 	timerProc = timerCallback.getAddress ();
-	if (timerProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	windowTimerCallback = new Callback (this, "windowTimerProc", 1); //$NON-NLS-1$
 	windowTimerProc = windowTimerCallback.getAddress ();
-	if (windowTimerProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	mouseHoverCallback = new Callback (this, "mouseHoverProc", 1); //$NON-NLS-1$
 	mouseHoverProc = mouseHoverCallback.getAddress ();
-	if (mouseHoverProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	caretCallback = new Callback(this, "caretProc", 1); //$NON-NLS-1$
 	caretProc = caretCallback.getAddress();
-	if (caretProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	sizeAllocateCallback = new Callback(this, "sizeAllocateProc", 3); //$NON-NLS-1$
 	sizeAllocateProc = sizeAllocateCallback.getAddress();
-	if (sizeAllocateProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	sizeRequestCallback = new Callback(this, "sizeRequestProc", 3); //$NON-NLS-1$
 	sizeRequestProc = sizeRequestCallback.getAddress();
-	if (sizeRequestProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	shellMapCallback = new Callback(this, "shellMapProc", 3); //$NON-NLS-1$
 	shellMapProc = shellMapCallback.getAddress();
-	if (shellMapProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	shellMapProcClosure = OS.g_cclosure_new (shellMapProc, 0, 0);
 	OS.g_closure_ref (shellMapProcClosure);
 
 	cellDataCallback = new Callback (this, "cellDataProc", 5); //$NON-NLS-1$
 	cellDataProc = cellDataCallback.getAddress ();
-	if (cellDataProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	setDirectionCallback = new Callback (this, "setDirectionProc", 2); //$NON-NLS-1$
 	setDirectionProc = setDirectionCallback.getAddress ();
-	if (setDirectionProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	emissionProcCallback = new Callback (this, "emissionProc", 4); //$NON-NLS-1$
 	emissionProc = emissionProcCallback.getAddress ();
-	if (emissionProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	allChildrenCallback = new Callback (this, "allChildrenProc", 2); //$NON-NLS-1$
 	allChildrenProc = allChildrenCallback.getAddress ();
-	if (allChildrenProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	checkIfEventCallback = new Callback (this, "checkIfEventProc", 3); //$NON-NLS-1$
 	checkIfEventProc = checkIfEventCallback.getAddress ();
-	if (checkIfEventProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 
 	idleCallback = new Callback (this, "idleProc", 1); //$NON-NLS-1$
 	idleProc = idleCallback.getAddress ();
-	if (idleProc == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 }
 
 void initializeNamedColorList() {
@@ -3761,6 +3739,59 @@ void initializeSessionManager() {
 	sessionManagerDBus = new SessionManagerDBus();
 	sessionManagerListener = new SessionManagerListener(this);
 	sessionManagerDBus.addListener(sessionManagerListener);
+}
+
+/**
+ * Some parts of SWT (like WebKit) use GDBus for IPC. Some of these objects
+ * cannot be disposed of in their own classes due to design challenges.
+ * In these instances we release them along with this Display. This ensures
+ * no Browser will be using them at disposal time.
+ */
+void releaseDBusServices() {
+	releaseSessionManager();
+	for (long connection : dBusConnections) {
+		if (OS.g_dbus_connection_is_closed(connection)) continue;
+		long [] error = new long [1];
+		boolean closed = OS.g_dbus_connection_close_sync(connection, 0, error);
+		if (error[0] != 0) {
+			String msg = extractFreeGError(error[0]);
+			System.err.println("SWT Display: error closing connection: " + msg);
+		}
+		if (closed) {
+			// Free this as we added a reference to it
+			OS.g_object_unref(connection);
+		}
+	}
+	for (long server : dBusServers) {
+		OS.g_dbus_server_stop(server);
+		OS.g_object_unref(server);
+	}
+	for (long authObserver : dBusAuthObservers) {
+		OS.g_object_unref(authObserver);
+	}
+	for (long guid : dBusGUIDS) {
+		OS.g_free(guid);
+	}
+	dBusConnections.clear();
+	dBusServers.clear();
+	dBusAuthObservers.clear();
+	dBusGUIDS.clear();
+	dBusServers = dBusAuthObservers = dBusGUIDS = dBusConnections = null;
+}
+
+/**
+ * Helper method to extract GError messages. Only call if the pointer is valid (i.e. non-zero).
+ *
+ * @param errorPtr pointer to the GError
+ * @return a String representing the error message that was set
+ *
+ * @noreference This method is not intended to be referenced by clients.
+ */
+public static String extractFreeGError(long errorPtr) {
+	long errorMessageC = OS.g_error_get_message(errorPtr);
+	String errorMessageStr = Converter.cCharPtrToJavaString(errorMessageC, false);
+	OS.g_error_free(errorPtr);
+	return errorMessageStr;
 }
 
 void releaseSessionManager() {
@@ -4175,167 +4206,155 @@ long mouseHoverProc (long handle) {
  *
  */
 public boolean post (Event event) {
-	/*
-	* Get the operating system lock before synchronizing on the device
-	* lock so that the device lock will not be held should another
-	* thread already be in the operating system.  This avoids deadlock
-	* should the other thread need the device lock.
-	*/
-	Lock lock = Platform.lock;
-	lock.lock();
-	try {
-		synchronized (Device.class) {
-			if (isDisposed ()) error (SWT.ERROR_DEVICE_DISPOSED);
-			if (event == null) error (SWT.ERROR_NULL_ARGUMENT);
+	synchronized (Device.class) {
+		if (isDisposed ()) error (SWT.ERROR_DEVICE_DISPOSED);
+		if (event == null) error (SWT.ERROR_NULL_ARGUMENT);
 
-			int type = event.type;
+		int type = event.type;
 
-			if (type == SWT.MouseMove) {
-				Rectangle loc = DPIUtil.autoScaleUp(event.getBounds());
-				setCursorLocationInPixels(new Point(loc.x, loc.y));
-				return true;
-			}
-
-			long gdkDisplay = GDK.gdk_display_get_default();
-			long gdkSeat = GDK.gdk_display_get_default_seat(gdkDisplay);
-			long gdkKeyboardDevice = GDK.gdk_seat_get_keyboard(gdkSeat);
-			long gdkPointerDevice = GDK.gdk_seat_get_pointer(gdkSeat);
-			long gdkWindow = GDK.gdk_get_default_root_window();
-			long window_list = GDK.gdk_window_get_children(gdkWindow);
-			if (window_list != 0) {
-				long windows = window_list;
-				while (windows != 0) {
-					long curr_window = OS.g_list_data(windows);
-					int state = GDK.gdk_window_get_state(curr_window);
-					if ((state & GDK.GDK_WINDOW_STATE_FOCUSED) != 0) {
-						gdkWindow = curr_window;
-						OS.g_object_ref(gdkWindow);
-						break;
-					}
-					windows = OS.g_list_next(windows);
-				}
-				OS.g_list_free(window_list);
-			}
-			if (gdkWindow == 0) return false;
-			long eventPtr = 0;
-
-			switch (type) {
-				case SWT.KeyDown:
-				case SWT.KeyUp:
-					/* Translate the SWT Event fields to GDK fields
-					 * We need hardware_keycode, GdkModifierType, group to get keyval
-					 * 1) event.character -> hardware_keycode
-					 * 2) event.stateMask -> GdkModifierType(state)
-					 * 3) event.keyCode -> hardware_keycode, GdkModifierType(state) (i.e. SWT.SHIFT)
-					 */
-					int state = type == SWT.KeyDown ? GDK.GDK_KEY_PRESS_MASK : GDK.GDK_KEY_RELEASE_MASK;
-					if (cachedModifierState != 0) {
-						state |= cachedModifierState;
-					}
-					int is_modifier = 1;
-					int modifier = event.stateMask != 0 ? event.stateMask : event.keyCode;
-					switch (modifier) {
-						case SWT.SHIFT: state |= GDK.GDK_SHIFT_MASK; break;
-						case SWT.ALT: state |= GDK.GDK_MOD1_MASK; break;
-						case SWT.CONTROL: state |= GDK.GDK_CONTROL_MASK; break;
-						case SWT.ALT_GR: state |= GDK.GDK_MOD5_MASK; break;
-						default:
-							is_modifier = cachedModifierState == 0 ? 0 : 1;
-					}
-
-					// Save the modifier state pressed until it is released
-					if (is_modifier == 1 && type == SWT.KeyDown) {
-						cachedModifierState = state & (~GDK.GDK_KEY_PRESS_MASK | ~GDK.GDK_KEY_RELEASE_MASK);
-					} else {
-						cachedModifierState = 0;
-					}
-
-					long gdkKeymap = GDK.gdk_keymap_get_for_display(gdkDisplay);
-					int hardware_keycode = 0;
-					int raw_keyval = untranslateKey(event.keyCode);
-					if (raw_keyval == 0) raw_keyval = event.character;
-
-					long [] keys_list = new long [1];
-					int [] n_keys = new int [1];
-					int [] keyval = new int [1], effective_group = new int [1], level = new int [1], consumed_modifiers = new int[1];
-					int final_keyval = raw_keyval;
-
-					if (GDK.gdk_keymap_get_entries_for_keyval(gdkKeymap, raw_keyval, keys_list, n_keys)) {
-						GdkKeymapKey key_entry = new GdkKeymapKey ();
-						if (n_keys[0] > 0) {
-							OS.memmove(key_entry, keys_list[0], GdkKeymapKey.sizeof);
-							hardware_keycode = key_entry.keycode;
-						}
-						OS.g_free(keys_list[0]);
-
-						GDK.gdk_keymap_translate_keyboard_state(gdkKeymap, hardware_keycode, state, 0, keyval, effective_group, level, consumed_modifiers);
-						if (is_modifier == 1) final_keyval = keyval[0];
-					}
-
-					/* Construct GdkEventKey */
-					eventPtr = GDK.gdk_event_new(type == SWT.KeyDown ? GDK.GDK_KEY_PRESS : GDK.GDK_KEY_RELEASE);
-					GdkEventKey newKeyEvent = new GdkEventKey ();
-					newKeyEvent.type = type == SWT.KeyDown ? GDK.GDK_KEY_PRESS : GDK.GDK_KEY_RELEASE;
-					newKeyEvent.window = gdkWindow;
-					newKeyEvent.send_event = 1;
-					newKeyEvent.time = GDK.GDK_CURRENT_TIME;
-					newKeyEvent.keyval = final_keyval;
-					newKeyEvent.state = state;
-					newKeyEvent.hardware_keycode = (short) hardware_keycode;
-					newKeyEvent.group = (byte) effective_group[0];
-					newKeyEvent.is_modifier = is_modifier;
-
-					OS.memmove(eventPtr, newKeyEvent, GdkEventKey.sizeof);
-					GDK.gdk_event_set_device (eventPtr, gdkKeyboardDevice);
-					if (GTK.GTK4) {
-						long display = GDK.gdk_display_get_default();
-						GDK.gdk_display_put_event(display, eventPtr);
-					} else {
-						GDK.gdk_event_put (eventPtr);
-					}
-					if (GTK.GTK4) {
-						OS.g_object_unref(eventPtr);
-					} else {
-						GDK.gdk_event_free (eventPtr);
-					}
-					return true;
-				case SWT.MouseDown:
-				case SWT.MouseUp:
-					int[] x = new int[1], y = new int[1], mask = new int[1];
-					gdkWindow = GDK.gdk_device_get_window_at_position(gdkPointerDevice, x, y);
-					// Under Wayland or some window managers, gdkWindow is not known to GDK and null is returned,
-					// cannot post mouse events as it will lead to crash
-					if (gdkWindow == 0) return false;
-					OS.g_object_ref(gdkWindow);
-
-					/* Construct GdkEventButton */
-					eventPtr = GDK.gdk_event_new(type == SWT.MouseDown ? GDK.GDK_BUTTON_PRESS : GDK.GDK_BUTTON_RELEASE);
-					GdkEventButton newButtonEvent = new GdkEventButton ();
-					newButtonEvent.type = type == SWT.MouseDown ? GDK.GDK_BUTTON_PRESS : GDK.GDK_BUTTON_RELEASE;
-					newButtonEvent.window = gdkWindow;
-					newButtonEvent.send_event = 1;
-					newButtonEvent.time = GDK.GDK_CURRENT_TIME;
-					newButtonEvent.x = x[0];
-					newButtonEvent.y = y[0];
-					newButtonEvent.state = mask[0];
-					newButtonEvent.button = event.button;
-					newButtonEvent.device = gdkPointerDevice;
-
-					OS.memmove(eventPtr, newButtonEvent, GdkEventButton.sizeof);
-					GDK.gdk_event_set_device(eventPtr, gdkPointerDevice);
-
-					GDK.gdk_event_put(eventPtr);
-					if (GTK.GTK4) {
-						OS.g_object_unref(eventPtr);
-					} else {
-						GDK.gdk_event_free (eventPtr);
-					}
-					return true;
-			}
-			return false;
+		if (type == SWT.MouseMove) {
+			Rectangle loc = DPIUtil.autoScaleUp(event.getBounds());
+			setCursorLocationInPixels(new Point(loc.x, loc.y));
+			return true;
 		}
-	} finally {
-		lock.unlock();
+
+		long gdkDisplay = GDK.gdk_display_get_default();
+		long gdkSeat = GDK.gdk_display_get_default_seat(gdkDisplay);
+		long gdkKeyboardDevice = GDK.gdk_seat_get_keyboard(gdkSeat);
+		long gdkPointerDevice = GDK.gdk_seat_get_pointer(gdkSeat);
+		long gdkWindow = GDK.gdk_get_default_root_window();
+		long window_list = GDK.gdk_window_get_children(gdkWindow);
+		if (window_list != 0) {
+			long windows = window_list;
+			while (windows != 0) {
+				long curr_window = OS.g_list_data(windows);
+				int state = GDK.gdk_window_get_state(curr_window);
+				if ((state & GDK.GDK_WINDOW_STATE_FOCUSED) != 0) {
+					gdkWindow = curr_window;
+					OS.g_object_ref(gdkWindow);
+					break;
+				}
+				windows = OS.g_list_next(windows);
+			}
+			OS.g_list_free(window_list);
+		}
+		if (gdkWindow == 0) return false;
+		long eventPtr = 0;
+
+		switch (type) {
+			case SWT.KeyDown:
+			case SWT.KeyUp:
+				/* Translate the SWT Event fields to GDK fields
+				 * We need hardware_keycode, GdkModifierType, group to get keyval
+				 * 1) event.character -> hardware_keycode
+				 * 2) event.stateMask -> GdkModifierType(state)
+				 * 3) event.keyCode -> hardware_keycode, GdkModifierType(state) (i.e. SWT.SHIFT)
+				 */
+				int state = type == SWT.KeyDown ? GDK.GDK_KEY_PRESS_MASK : GDK.GDK_KEY_RELEASE_MASK;
+				if (cachedModifierState != 0) {
+					state |= cachedModifierState;
+				}
+				int is_modifier = 1;
+				int modifier = event.stateMask != 0 ? event.stateMask : event.keyCode;
+				switch (modifier) {
+					case SWT.SHIFT: state |= GDK.GDK_SHIFT_MASK; break;
+					case SWT.ALT: state |= GDK.GDK_MOD1_MASK; break;
+					case SWT.CONTROL: state |= GDK.GDK_CONTROL_MASK; break;
+					case SWT.ALT_GR: state |= GDK.GDK_MOD5_MASK; break;
+					default:
+						is_modifier = cachedModifierState == 0 ? 0 : 1;
+				}
+
+				// Save the modifier state pressed until it is released
+				if (is_modifier == 1 && type == SWT.KeyDown) {
+					cachedModifierState = state & (~GDK.GDK_KEY_PRESS_MASK | ~GDK.GDK_KEY_RELEASE_MASK);
+				} else {
+					cachedModifierState = 0;
+				}
+
+				long gdkKeymap = GDK.gdk_keymap_get_for_display(gdkDisplay);
+				int hardware_keycode = 0;
+				int raw_keyval = untranslateKey(event.keyCode);
+				if (raw_keyval == 0) raw_keyval = event.character;
+
+				long [] keys_list = new long [1];
+				int [] n_keys = new int [1];
+				int [] keyval = new int [1], effective_group = new int [1], level = new int [1], consumed_modifiers = new int[1];
+				int final_keyval = raw_keyval;
+
+				if (GDK.gdk_keymap_get_entries_for_keyval(gdkKeymap, raw_keyval, keys_list, n_keys)) {
+					GdkKeymapKey key_entry = new GdkKeymapKey ();
+					if (n_keys[0] > 0) {
+						OS.memmove(key_entry, keys_list[0], GdkKeymapKey.sizeof);
+						hardware_keycode = key_entry.keycode;
+					}
+					OS.g_free(keys_list[0]);
+
+					GDK.gdk_keymap_translate_keyboard_state(gdkKeymap, hardware_keycode, state, 0, keyval, effective_group, level, consumed_modifiers);
+					if (is_modifier == 1) final_keyval = keyval[0];
+				}
+
+				/* Construct GdkEventKey */
+				eventPtr = GDK.gdk_event_new(type == SWT.KeyDown ? GDK.GDK_KEY_PRESS : GDK.GDK_KEY_RELEASE);
+				GdkEventKey newKeyEvent = new GdkEventKey ();
+				newKeyEvent.type = type == SWT.KeyDown ? GDK.GDK_KEY_PRESS : GDK.GDK_KEY_RELEASE;
+				newKeyEvent.window = gdkWindow;
+				newKeyEvent.send_event = 1;
+				newKeyEvent.time = GDK.GDK_CURRENT_TIME;
+				newKeyEvent.keyval = final_keyval;
+				newKeyEvent.state = state;
+				newKeyEvent.hardware_keycode = (short) hardware_keycode;
+				newKeyEvent.group = (byte) effective_group[0];
+				newKeyEvent.is_modifier = is_modifier;
+
+				OS.memmove(eventPtr, newKeyEvent, GdkEventKey.sizeof);
+				GDK.gdk_event_set_device (eventPtr, gdkKeyboardDevice);
+				if (GTK.GTK4) {
+					long display = GDK.gdk_display_get_default();
+					GDK.gdk_display_put_event(display, eventPtr);
+				} else {
+					GDK.gdk_event_put (eventPtr);
+				}
+				if (GTK.GTK4) {
+					OS.g_object_unref(eventPtr);
+				} else {
+					GDK.gdk_event_free (eventPtr);
+				}
+				return true;
+			case SWT.MouseDown:
+			case SWT.MouseUp:
+				int[] x = new int[1], y = new int[1], mask = new int[1];
+				gdkWindow = GDK.gdk_device_get_window_at_position(gdkPointerDevice, x, y);
+				// Under Wayland or some window managers, gdkWindow is not known to GDK and null is returned,
+				// cannot post mouse events as it will lead to crash
+				if (gdkWindow == 0) return false;
+				OS.g_object_ref(gdkWindow);
+
+				/* Construct GdkEventButton */
+				eventPtr = GDK.gdk_event_new(type == SWT.MouseDown ? GDK.GDK_BUTTON_PRESS : GDK.GDK_BUTTON_RELEASE);
+				GdkEventButton newButtonEvent = new GdkEventButton ();
+				newButtonEvent.type = type == SWT.MouseDown ? GDK.GDK_BUTTON_PRESS : GDK.GDK_BUTTON_RELEASE;
+				newButtonEvent.window = gdkWindow;
+				newButtonEvent.send_event = 1;
+				newButtonEvent.time = GDK.GDK_CURRENT_TIME;
+				newButtonEvent.x = x[0];
+				newButtonEvent.y = y[0];
+				newButtonEvent.state = mask[0];
+				newButtonEvent.button = event.button;
+				newButtonEvent.device = gdkPointerDevice;
+
+				OS.memmove(eventPtr, newButtonEvent, GdkEventButton.sizeof);
+				GDK.gdk_event_set_device(eventPtr, gdkPointerDevice);
+
+				GDK.gdk_event_put(eventPtr);
+				if (GTK.GTK4) {
+					OS.g_object_unref(eventPtr);
+				} else {
+					GDK.gdk_event_free (eventPtr);
+				}
+				return true;
+		}
+		return false;
 	}
 }
 
@@ -4499,6 +4518,7 @@ protected void release () {
 	disposeList = null;
 	synchronizer.releaseSynchronizer ();
 	synchronizer = null;
+	releaseDBusServices ();
 	releaseSessionManager ();
 	releaseDisplay ();
 	super.release ();
@@ -5482,17 +5502,8 @@ public boolean sleep () {
 					*/
 					if (timeout [0] < 0) timeout [0] = 50;
 
-					/* Exit the OS lock to allow other threads to enter GTK */
-					Lock lock = Platform.lock;
-					int count = lock.lock ();
-					for (int i = 0; i < count; i++) lock.unlock ();
-					try {
-						wake = false;
-						OS.Call (poll, fds, nfds, timeout [0]);
-					} finally {
-						for (int i = 0; i < count; i++) lock.lock ();
-						lock.unlock ();
-					}
+					wake = false;
+					OS.Call (poll, fds, nfds, timeout [0]);
 				}
 			}
 			OS.g_main_context_check (context, max_priority [0], fds, nfds);
@@ -5779,7 +5790,7 @@ public void syncExec (Runnable runnable) {
 		synchronized (idleLock) {
 			if (idleNeeded && idleHandle == 0) {
 				//NOTE: calling unlocked function in OS
-				idleHandle = OS._g_idle_add (idleProc, 0);
+				idleHandle = OS.g_idle_add (idleProc, 0);
 			}
 		}
 	}

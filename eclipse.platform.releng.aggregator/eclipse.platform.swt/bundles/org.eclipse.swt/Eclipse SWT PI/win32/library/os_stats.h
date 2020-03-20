@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -46,7 +46,6 @@ typedef enum {
 	BITMAP_1sizeof_FUNC,
 	BLENDFUNCTION_1sizeof_FUNC,
 	BP_1PAINTPARAMS_1sizeof_FUNC,
-	BROWSEINFO_1sizeof_FUNC,
 	BUTTON_1IMAGELIST_1sizeof_FUNC,
 	BeginBufferedPaint_FUNC,
 	BeginDeferWindowPos_FUNC,
@@ -183,7 +182,6 @@ typedef enum {
 	FLICK_1POINT_1sizeof_FUNC,
 	FileTimeToSystemTime_FUNC,
 	FillRect_FUNC,
-	FormatMessage_FUNC,
 	GCP_1RESULTS_1sizeof_FUNC,
 	GESTURECONFIG_1sizeof_FUNC,
 	GESTUREINFO_1sizeof_FUNC,
@@ -343,9 +341,6 @@ typedef enum {
 	ImageList_1Replace_FUNC,
 	ImageList_1ReplaceIcon_FUNC,
 	ImageList_1SetIconSize_FUNC,
-	ImmAssociateContext_FUNC,
-	ImmCreateContext_FUNC,
-	ImmDestroyContext_FUNC,
 	ImmEscape_FUNC,
 	ImmGetCompositionFont_FUNC,
 	ImmGetCompositionString__JI_3BI_FUNC,
@@ -610,13 +605,10 @@ typedef enum {
 	SCRIPT_1STRING_1ANALYSIS_1sizeof_FUNC,
 	SCROLLBARINFO_1sizeof_FUNC,
 	SCROLLINFO_1sizeof_FUNC,
-	SHBrowseForFolder_FUNC,
 	SHDRAGIMAGE_1sizeof_FUNC,
 	SHELLEXECUTEINFO_1sizeof_FUNC,
 	SHFILEINFO_1sizeof_FUNC,
 	SHGetFileInfo_FUNC,
-	SHGetMalloc_FUNC,
-	SHGetPathFromIDList_FUNC,
 	SIZE_1sizeof_FUNC,
 	STARTUPINFO_1sizeof_FUNC,
 	SYSTEMTIME_1sizeof_FUNC,
@@ -687,7 +679,6 @@ typedef enum {
 	SetCursorPos_FUNC,
 	SetDIBColorTable_FUNC,
 	SetDllDirectory_FUNC,
-	SetErrorMode_FUNC,
 	SetFocus_FUNC,
 	SetForegroundWindow_FUNC,
 	SetGestureConfig_FUNC,

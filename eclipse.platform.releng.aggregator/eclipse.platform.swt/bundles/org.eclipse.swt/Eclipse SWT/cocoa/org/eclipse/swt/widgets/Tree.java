@@ -1253,6 +1253,11 @@ void drawInteriorWithFrame_inView (long id, long sel, NSRect rect, long view) {
 		if (!drawExpansion) {
 			gc.setClipping ((int)(cellRect.x - offsetX), (int)(cellRect.y - offsetY), (int)cellRect.width, (int)cellRect.height);
 		}
+		/*
+		 * Client code can modify the item text in the paint listener, so reset the cached width.
+		 */
+		item.width = -1;
+
 		Event event = new Event ();
 		event.item = item;
 		event.gc = gc;
@@ -2697,10 +2702,13 @@ void sendDoubleSelection() {
 				if (column.id == checkColumn.id) return;
 			}
 		}
-		TreeItem item = (TreeItem) display.getWidget (outlineView.itemAtRow (rowIndex).id);
-		Event event = new Event ();
-		event.item = item;
-		sendSelectionEvent (SWT.DefaultSelection, event, false);
+		id itemAtRow = outlineView.itemAtRow (rowIndex);
+		if (itemAtRow != null) {
+			TreeItem item = (TreeItem) display.getWidget (itemAtRow.id);
+			Event event = new Event ();
+			event.item = item;
+			sendSelectionEvent (SWT.DefaultSelection, event, false);
+		}
 	}
 }
 
@@ -3450,7 +3458,30 @@ void showItem (TreeItem item, boolean scroll) {
 	}
 	if (scroll) {
 		NSOutlineView outlineView = (NSOutlineView) view;
-		outlineView.scrollRowToVisible (outlineView.rowForItem (item.handle));
+		if (outlineView.headerView () == null) {
+			/**
+			 * On macOS 10.15, scrollRowToVisible doesn't work properly if
+			 * contentView's bounds is not set (i.e, width or height is 0).
+			 * The contentView's bounds is set when the Tree's header view is set.
+			 * So don't call this code if Tree has a header already.
+			 */
+			NSClipView contentView = scrollView.contentView ();
+			if (contentView != null) {
+				NSRect contentViewBounds = contentView.bounds ();
+				if (contentViewBounds.height == 0 || contentViewBounds.width == 0) {
+					NSView documentView = scrollView.documentView ();
+					if (documentView != null) {
+						NSRect documentViewBounds = documentView.bounds ();
+						NSSize size = new NSSize ();
+						size.width = documentViewBounds.width;
+						size.height = documentViewBounds.height;
+						contentView.setBoundsSize (size);
+					}
+				}
+			}
+		}
+		long rowForItem = outlineView.rowForItem (item.handle);
+		outlineView.scrollRowToVisible (rowForItem);
 	}
 }
 

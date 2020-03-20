@@ -49,16 +49,12 @@ public long UTF8String() {
 	return OS.objc_msgSend(this.id, OS.sel_UTF8String);
 }
 
-public long characterAtIndex(long index) {
-	return OS.objc_msgSend(this.id, OS.sel_characterAtIndex_, index);
+public char characterAtIndex(long index) {
+	return (char)OS.objc_msgSend(this.id, OS.sel_characterAtIndex_, index);
 }
 
 public long compare(NSString string) {
 	return OS.objc_msgSend(this.id, OS.sel_compare_, string != null ? string.id : 0);
-}
-
-public long fileSystemRepresentation() {
-	return OS.objc_msgSend(this.id, OS.sel_fileSystemRepresentation);
 }
 
 public void getCharacters(char[] buffer) {
