@@ -1,10 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2015 Broadcom Corporation and others. All rights reserved.
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which accompanies this distribution,
-t https://www.eclipse.org/legal/epl-2.0/
-t
-t SPDX-License-Identifier: EPL-2.0
+ * Copyright (c) 2010, 2015 Broadcom Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
  * Broadcom Corporation - initial API and implementation
@@ -12,8 +14,6 @@ t SPDX-License-Identifier: EPL-2.0
  ******************************************************************************/
 package org.eclipse.core.tests.internal.builders;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.tests.resources.ResourceDeltaVerifier;
@@ -23,9 +23,6 @@ import org.eclipse.core.tests.resources.ResourceDeltaVerifier;
  * builder to be run for different project buildConfigs.
  */
 public class BuildConfigurationsTest extends AbstractBuilderTest {
-	public static Test suite() {
-		return new TestSuite(BuildConfigurationsTest.class);
-	}
 
 	private IProject project0;
 	private IProject project1;

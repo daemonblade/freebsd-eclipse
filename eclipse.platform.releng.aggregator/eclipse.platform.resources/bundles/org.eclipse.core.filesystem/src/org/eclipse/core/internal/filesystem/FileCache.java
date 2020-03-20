@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -50,7 +50,7 @@ public class FileCache {
 	 * Public accessor to obtain the singleton file cache instance,
 	 * creating the cache lazily if necessary.
 	 * @return The file cache instance
-	 * @throws CoreException
+	 * @throws CoreException If the file cache could not be created
 	 */
 	public static FileCache getCache() throws CoreException {
 		synchronized (creationLock) {
@@ -62,7 +62,7 @@ public class FileCache {
 
 	/**
 	 * Creates a new file cache.
-	 * 
+	 *
 	 * @throws CoreException If the file cache could not be created
 	 */
 	private FileCache() throws CoreException {
@@ -76,10 +76,11 @@ public class FileCache {
 
 	/**
 	 * Implements {@link FileStore#toLocalFile(int, IProgressMonitor)}
-	 * @param source 
+	 * @param source source data to cache on disk
 	 * @param monitor
+	 *            monitor to indicate progress and receive cancellation
 	 * @return The cached file
-	 * @throws CoreException
+	 * @throws CoreException on errors using the source filestore or writing the cache file
 	 */
 	public java.io.File cache(IFileStore source, IProgressMonitor monitor) throws CoreException {
 		try {
@@ -124,8 +125,8 @@ public class FileCache {
 		if (target.isDirectory()) {
 			File[] children = target.listFiles();
 			if (children != null) {
-				for (int i = 0, imax = children.length; i < imax; i++) {
-					clearImmutableFlag(children[i]);
+				for (File element : children) {
+					clearImmutableFlag(element);
 				}
 			}
 		} else {
@@ -152,7 +153,7 @@ public class FileCache {
 
 	/**
 	 * Returns a new unique directory in the given parent directory.
-	 * 
+	 *
 	 * @param parent
 	 * @param create <code>true</code> if the directory should
 	 * be created, and false otherwise.

@@ -13,24 +13,33 @@
  *******************************************************************************/
 package org.eclipse.core.tests.resources.content;
 
-import junit.framework.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.eclipse.core.internal.content.ContentTypeManager;
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.content.*;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IScopeContext;
-import org.eclipse.test.OrderedTestSuite;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
 
 /**
  * Tests content type matcher with a non-default context for user preferences.
  */
 public class SpecificContextTest extends ContentTypeTest {
+
+	@Rule
+	public TestName name = new TestName();
+
 	/**
 	 * A minimal scope implementation.
 	 */
 	private class SingleNodeScope implements IScopeContext {
-		private IEclipsePreferences node;
+		private final IEclipsePreferences node;
 
 		SingleNodeScope() {
 			this.node = new EclipsePreferences();
@@ -53,69 +62,46 @@ public class SpecificContextTest extends ContentTypeTest {
 		}
 	}
 
-	public static Test suite() {
-		return new OrderedTestSuite(SpecificContextTest.class);
-	}
-
-	public SpecificContextTest(String name) {
-		super(name);
-	}
-
-	public void testContentTypeLookup() {
+	@Test
+	public void testContentTypeLookup() throws CoreException {
 		IContentTypeManager global = Platform.getContentTypeManager();
 		final SingleNodeScope scope = new SingleNodeScope();
 		IContentTypeMatcher local = global.getMatcher(new LocalSelectionPolicy(), scope);
 		IContentType textContentType = global.getContentType(Platform.PI_RUNTIME + '.' + "text");
-		try {
-			// added "<test case name>.global" to the text content type as a global file spec
-			textContentType.addFileSpec(getName() + ".global", IContentType.FILE_NAME_SPEC);
-		} catch (CoreException e) {
-			fail("0.1", e);
-		}
-		try {
-			// added "<test case name>.local" to the text content type as a local (scope-specific) file spec
-			textContentType.getSettings(scope).addFileSpec(getName() + ".local", IContentType.FILE_NAME_SPEC);
-		} catch (CoreException e) {
-			fail("0.2", e);
-		}
-		// make ensure associations are properly recognized when doing content type lookup
-		assertEquals("1.0", textContentType, global.findContentTypeFor(getName() + ".global"));
-		assertEquals("1.1", null, local.findContentTypeFor(getName() + ".global"));
-		assertEquals("2.0", textContentType, local.findContentTypeFor(getName() + ".local"));
-		assertEquals("2.1", null, global.findContentTypeFor(getName() + ".local"));
+		// added "<test case name>.global" to the text content type as a global file
+		// spec
+		textContentType.addFileSpec(name.getMethodName() + ".global", IContentType.FILE_NAME_SPEC);
+		// added "<test case name>.local" to the text content type as a local
+		// (scope-specific) file spec
+		textContentType.getSettings(scope).addFileSpec(name.getMethodName() + ".local", IContentType.FILE_NAME_SPEC);
+		// make ensure associations are properly recognized when doing content type
+		// lookup
+		assertEquals("1.0", textContentType, global.findContentTypeFor(name.getMethodName() + ".global"));
+		assertEquals("1.1", null, local.findContentTypeFor(name.getMethodName() + ".global"));
+		assertEquals("2.0", textContentType, local.findContentTypeFor(name.getMethodName() + ".local"));
+		assertEquals("2.1", null, global.findContentTypeFor(name.getMethodName() + ".local"));
 
 		try {
-			textContentType.removeFileSpec(getName() + ".global", IContentType.FILE_NAME_SPEC);
+			textContentType.removeFileSpec(name.getMethodName() + ".global", IContentType.FILE_NAME_SPEC);
 		} catch (CoreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	public void testIsAssociatedWith() {
+	@Test
+	public void testIsAssociatedWith() throws CoreException {
 		IContentTypeManager contentTypeManager = Platform.getContentTypeManager();
 		final SingleNodeScope scope = new SingleNodeScope();
 		IContentType textContentType = contentTypeManager.getContentType(Platform.PI_RUNTIME + '.' + "text");
 		IContentTypeSettings localSettings = null;
-		try {
-			localSettings = textContentType.getSettings(scope);
-		} catch (CoreException e) {
-			fail("0.1", e);
-		}
+		localSettings = textContentType.getSettings(scope);
 		// haven't added association yet
-		assertTrue("1.0", !textContentType.isAssociatedWith("hello.foo", scope));
-		assertTrue("1.1", !textContentType.isAssociatedWith("hello.foo"));
-		try {
-			// associate at the scope level
-			localSettings.addFileSpec("foo", IContentType.FILE_EXTENSION_SPEC);
-		} catch (CoreException e) {
-			fail("1.5", e);
-		}
-		try {
-			localSettings = textContentType.getSettings(scope);
-		} catch (CoreException e) {
-			fail("2.1", e);
-		}
+		assertFalse("1.0", textContentType.isAssociatedWith("hello.foo", scope));
+		assertFalse("1.1", textContentType.isAssociatedWith("hello.foo"));
+		// associate at the scope level
+		localSettings.addFileSpec("foo", IContentType.FILE_EXTENSION_SPEC);
+		localSettings = textContentType.getSettings(scope);
 		// scope-specific settings should contain the filespec we just added
 		String[] fileSpecs = localSettings.getFileSpecs(IContentType.FILE_EXTENSION_SPEC);
 		assertEquals("2.2", 1, fileSpecs.length);
@@ -123,7 +109,7 @@ public class SpecificContextTest extends ContentTypeTest {
 		// now it is associated at the scope level...
 		assertTrue("2.5", textContentType.isAssociatedWith("hello.foo", scope));
 		// ...but not at the global level
-		assertTrue("2.6", !textContentType.isAssociatedWith("hello.foo"));
+		assertFalse("2.6", textContentType.isAssociatedWith("hello.foo"));
 	}
 
 }

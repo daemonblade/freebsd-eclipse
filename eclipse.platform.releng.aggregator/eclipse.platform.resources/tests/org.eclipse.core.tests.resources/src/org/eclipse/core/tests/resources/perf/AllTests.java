@@ -13,27 +13,17 @@
  *******************************************************************************/
 package org.eclipse.core.tests.resources.perf;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
 /**
  * @since 3.1
  */
-public class AllTests extends TestSuite {
-	public static Test suite() {
-		TestSuite suite = new TestSuite(AllTests.class.getName());
-		suite.addTest(BenchFileStore.suite());
-		suite.addTest(BenchWorkspace.suite());
-		suite.addTest(BenchMiscWorkspace.suite());
-		suite.addTest(BuilderPerformanceTest.suite());
-		suite.addTest(MarkerPerformanceTest.suite());
-		suite.addTest(LocalHistoryPerformanceTest.suite());
-		suite.addTest(WorkspacePerformanceTest.suite());
-		suite.addTest(PropertyManagerPerformanceTest.suite());
-		suite.addTest(FileSystemPerformanceTest.suite());
-		// these tests are flawed - see bug 57137
-		// suite.addTest(ContentDescriptionPerformanceTest.suite());
-		return suite;
-	}
-
+@RunWith(Suite.class)
+@Suite.SuiteClasses({ BenchFileStore.class, BenchWorkspace.class, BenchMiscWorkspace.class,
+		BuilderPerformanceTest.class, MarkerPerformanceTest.class, LocalHistoryPerformanceTest.class,
+		WorkspacePerformanceTest.class, PropertyManagerPerformanceTest.class, FileSystemPerformanceTest.class })
+public class AllTests {
+	// these tests are flawed - see bug 57137
+	// ContentDescriptionPerformanceTest.class
 }

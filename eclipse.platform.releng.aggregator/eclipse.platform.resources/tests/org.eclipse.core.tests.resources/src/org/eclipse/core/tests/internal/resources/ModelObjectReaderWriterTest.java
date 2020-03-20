@@ -21,8 +21,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.URIUtil;
@@ -33,28 +31,10 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.core.tests.resources.ResourceTest;
 import org.xml.sax.InputSource;
 
-/**
- *
- */
 public class ModelObjectReaderWriterTest extends ResourceTest {
 	static final IPath LONG_LOCATION = new Path("/eclipse/dev/i0218/eclipse/pffds/fds//fds///fdsfsdfsd///fdsfdsf/fsdfsdfsd/lugi/dsds/fsd//f/ffdsfdsf/fsdfdsfsd/fds//fdsfdsfdsf/fdsfdsfds/fdsfdsfdsf/fdsfdsfdsds/ns/org.eclipse.help.ui_2.1.0/contexts.xml").setDevice(isWindows() ? "D:" : null);
 	static final URI LONG_LOCATION_URI = LONG_LOCATION.toFile().toURI();
 	private static final String PATH_STRING = new Path("/abc/def").setDevice(isWindows() ? "D:" : null).toString();
-
-	public static Test suite() {
-		//	TestSuite suite = new TestSuite();
-		//	suite.addTest(new ModelObjectReaderWriterTest("testMultipleProjectDescriptions"));
-		//	return suite;
-		return new TestSuite(ModelObjectReaderWriterTest.class);
-	}
-
-	public ModelObjectReaderWriterTest() {
-		super();
-	}
-
-	public ModelObjectReaderWriterTest(String name) {
-		super(name);
-	}
 
 	private HashMap<String, ProjectDescription> buildBaselineDescriptors() {
 		HashMap<String, ProjectDescription> result = new HashMap<>();
@@ -313,7 +293,7 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 	public void testConsistentWrite() throws Throwable {
 		String locationA = getTempDir().append("testPath1").toPortableString();
 		String locationB = getTempDir().append("testPath1").toPortableString();
-		String newline = System.getProperty("line.separator");
+		String newline = System.lineSeparator();
 		String expected = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + newline + "<projectDescription>" + newline + "	<name>MyProjectDescription</name>" + newline + "	<comment></comment>" + newline + "	<projects>" + newline + "	</projects>" + newline + "	<buildSpec>" + newline + "		<buildCommand>" + newline + "			<name>MyCommand</name>" + newline + "			<arguments>" + newline + "				<dictionary>" + newline + "					<key>aA</key>" + newline + "					<value>2 x ARGH!</value>" + newline + "				</dictionary>" + newline + "				<dictionary>" + newline + "					<key>b</key>" + newline + "					<value>ARGH!</value>" + newline + "				</dictionary>" + newline
 				+ "			</arguments>" + newline + "		</buildCommand>" + newline + "	</buildSpec>" + newline + "	<natures>" + newline + "	</natures>" + newline + "	<linkedResources>" + newline + "		<link>" + newline + "			<name>pathA</name>" + newline + "			<type>2</type>" + newline + "			<location>" + locationA + "</location>" + newline + "		</link>" + newline + "		<link>" + newline + "			<name>pathB</name>" + newline + "			<type>2</type>" + newline + "			<location>" + locationB + "</location>" + newline + "		</link>" + newline + "	</linkedResources>" + newline + "</projectDescription>" + newline;
 
@@ -341,7 +321,7 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 		description.setLinkDescriptions(linkDescriptions);
 
 		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		new ModelObjectWriter().write(description, buffer, System.getProperty("line.separator"));
+		new ModelObjectWriter().write(description, buffer, System.lineSeparator());
 		String result = buffer.toString();
 
 		// order of keys in serialized file should be exactly the same as expected
@@ -627,7 +607,7 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 		description.setReferencedProjects(refProjects);
 
 		try (OutputStream output = tempStore.openOutputStream(EFS.NONE, getMonitor())) {
-			writer.write(description, output, System.getProperty("line.separator"));
+			writer.write(description, output, System.lineSeparator());
 		}
 
 		/* test read */
@@ -723,7 +703,7 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 		desc.setMaxFileStateSize(123456789l);
 
 		SafeFileOutputStream output = new SafeFileOutputStream(location.toFile());
-		writer.write(desc, output, System.getProperty("line.separator"));
+		writer.write(desc, output, System.lineSeparator());
 		output.close();
 
 		/* test read */
@@ -759,7 +739,7 @@ public class ModelObjectReaderWriterTest extends ResourceTest {
 		OutputStream output = null;
 		try {
 			output = store.openOutputStream(EFS.NONE, getMonitor());
-			new ModelObjectWriter().write(description, output, System.getProperty("line.separator"));
+			new ModelObjectWriter().write(description, output, System.lineSeparator());
 		} finally {
 			assertClose(output);
 		}

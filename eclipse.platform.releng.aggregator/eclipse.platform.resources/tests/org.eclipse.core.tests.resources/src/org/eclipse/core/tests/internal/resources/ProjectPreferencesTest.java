@@ -16,8 +16,6 @@ package org.eclipse.core.tests.internal.resources;
 
 import java.io.*;
 import java.util.*;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.internal.resources.ProjectPreferences;
 import org.eclipse.core.resources.*;
@@ -78,18 +76,6 @@ public class ProjectPreferencesTest extends ResourceTest {
 			log.append(event.getNewValue() == null ? "null" : event.getNewValue());
 			log.append("]");
 		}
-	}
-
-	public static Test suite() {
-		// all test methods are named "test..."
-		return new TestSuite(ProjectPreferencesTest.class);
-		//		TestSuite suite = new TestSuite();
-		//		suite.addTest(new ProjectPreferencesTest("testLoadIsImport"));
-		//		return suite;
-	}
-
-	public ProjectPreferencesTest(String name) {
-		super(name);
 	}
 
 	public void testSimple() {
@@ -589,26 +575,18 @@ public class ProjectPreferencesTest extends ResourceTest {
 		}
 
 		// add a log listener to ensure that no errors are reported silently
-		ILogListener logListener = new ILogListener() {
-			@Override
-			public void logging(IStatus status, String plugin) {
-				Throwable exception = status.getException();
-				if (exception == null || !(exception instanceof CoreException)) {
-					return;
-				}
-				if (IResourceStatus.WORKSPACE_LOCKED == ((CoreException) exception).getStatus().getCode()) {
-					fail("3.0");
-				}
+		ILogListener logListener = (status, plugin) -> {
+			Throwable exception = status.getException();
+			if (exception == null || !(exception instanceof CoreException)) {
+				return;
+			}
+			if (IResourceStatus.WORKSPACE_LOCKED == ((CoreException) exception).getStatus().getCode()) {
+				fail("3.0");
 			}
 		};
 
 		// listener to react to changes in the workspace
-		IResourceChangeListener rclistener = new IResourceChangeListener() {
-			@Override
-			public void resourceChanged(IResourceChangeEvent event) {
-				new ProjectScope(project).getNode(qualifier);
-			}
-		};
+		IResourceChangeListener rclistener = event -> new ProjectScope(project).getNode(qualifier);
 
 		// add the listeners
 		Platform.addLogListener(logListener);
@@ -913,7 +891,7 @@ public class ProjectPreferencesTest extends ResourceTest {
 
 	public void test_384151() throws BackingStoreException, CoreException {
 		// make sure each line separator is different
-		String systemValue = System.getProperty("line.separator");
+		String systemValue = System.lineSeparator();
 		String newInstanceValue;
 		String newProjectValue;
 		if (systemValue.equals("\n")) {

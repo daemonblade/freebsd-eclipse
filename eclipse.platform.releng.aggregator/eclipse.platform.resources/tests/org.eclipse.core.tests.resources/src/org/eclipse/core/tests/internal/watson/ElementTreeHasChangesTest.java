@@ -13,12 +13,14 @@
  *******************************************************************************/
 package org.eclipse.core.tests.internal.watson;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.eclipse.core.internal.events.ResourceComparator;
 import org.eclipse.core.internal.resources.ResourceInfo;
 import org.eclipse.core.internal.watson.ElementTree;
 import org.eclipse.core.runtime.IPath;
+import org.junit.Test;
 
 /**
  * Tests for
@@ -26,24 +28,12 @@ import org.eclipse.core.runtime.IPath;
  * while using
  * {@link org.eclipse.core.internal.events.ResourceComparator#getBuildComparator()}.
  */
-public class ElementTreeHasChangesTest extends WatsonTest implements IPathConstants {
-
-	public ElementTreeHasChangesTest() {
-		super(null);
-	}
-
-	public ElementTreeHasChangesTest(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		TestSuite suite = new TestSuite(ElementTreeHasChangesTest.class);
-		return suite;
-	}
+public class ElementTreeHasChangesTest implements IPathConstants {
 
 	/**
 	 * Test hasChanges() without any changes to the tree.
 	 */
+	@Test
 	public void testNoChanges() {
 		ElementTree oldTree = createTree(solution, project1, project2, file1);
 
@@ -56,6 +46,7 @@ public class ElementTreeHasChangesTest extends WatsonTest implements IPathConsta
 	/**
 	 * Test hasChanges() after adding an element to the tree.
 	 */
+	@Test
 	public void testAddElement() {
 		ElementTree oldTree = createTree(solution, project1, project2, file1);
 
@@ -69,6 +60,7 @@ public class ElementTreeHasChangesTest extends WatsonTest implements IPathConsta
 	/**
 	 * Test hasChanges() after removing an element from the tree.
 	 */
+	@Test
 	public void testRemoveElement() {
 		ElementTree oldTree = createTree(solution, project1, project2, file1);
 
@@ -83,6 +75,7 @@ public class ElementTreeHasChangesTest extends WatsonTest implements IPathConsta
 	 * Test hasChanges() after adding and then removing an element to and from the
 	 * tree.
 	 */
+	@Test
 	public void testAddAndRemoveElement() {
 		ElementTree oldTree = createTree(solution, project1, project2, file1);
 
@@ -98,6 +91,7 @@ public class ElementTreeHasChangesTest extends WatsonTest implements IPathConsta
 	/**
 	 * Test hasChanges() after changing the data of an element.
 	 */
+	@Test
 	public void testChangeElementData() {
 		IPath[] elements1 = { solution, project1, project2, file1 };
 		ElementTree oldTree = createTree(elements1);
@@ -113,6 +107,7 @@ public class ElementTreeHasChangesTest extends WatsonTest implements IPathConsta
 	 * Test hasChanges() after changing the data of a the tree, so that the build
 	 * comparator detects a change.
 	 */
+	@Test
 	public void testChangeTreeData() {
 		IPath[] elements1 = { solution, project1, project2, file1 };
 		ElementTree oldTree = createTree(elements1);

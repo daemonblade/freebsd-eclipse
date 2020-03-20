@@ -16,25 +16,13 @@ package org.eclipse.core.tests.resources;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.core.internal.resources.TestingSupport;
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.tests.internal.resources.TestActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
+import org.osgi.framework.*;
 
 public class IWorkspaceTest extends ResourceTest {
-
-	public IWorkspaceTest() {
-		super();
-	}
-
-	public IWorkspaceTest(String name) {
-		super(name);
-	}
 
 	@Override
 	public String[] defineHierarchy() {
@@ -51,18 +39,6 @@ public class IWorkspaceTest extends ResourceTest {
 			}
 		}
 		return null;
-	}
-
-	public static Test suite() {
-		return new TestSuite(IWorkspaceTest.class);
-		//		TestSuite suite = new TestSuite();
-		//		suite.addTest(new IWorkspaceTest("testValidateProjectLocation"));
-		//		return suite;
-	}
-
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
 	}
 
 	@Override
@@ -1188,7 +1164,7 @@ public class IWorkspaceTest extends ResourceTest {
 	}
 
 	public void testWorkspaceService() {
-		final BundleContext context = TestActivator.getContext();
+		final BundleContext context = FrameworkUtil.getBundle(IWorkspaceTest.class).getBundleContext();
 		ServiceReference<IWorkspace> ref = context.getServiceReference(IWorkspace.class);
 		assertNotNull("1.0", ref);
 		IWorkspace ws = context.getService(ref);

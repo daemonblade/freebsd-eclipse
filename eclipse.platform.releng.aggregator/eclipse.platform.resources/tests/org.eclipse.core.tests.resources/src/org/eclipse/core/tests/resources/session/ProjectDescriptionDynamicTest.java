@@ -1,10 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2015 Broadcom Corporation and others. All rights reserved.
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which accompanies this distribution,
-t https://www.eclipse.org/legal/epl-2.0/
-t
-t SPDX-License-Identifier: EPL-2.0
+ * Copyright (c) 2010, 2015 Broadcom Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
  * Broadcom Corporation - initial API and implementation
@@ -29,10 +31,6 @@ public class ProjectDescriptionDynamicTest extends WorkspaceSessionTest {
 	IProject[] dynRefs;
 	IBuildConfiguration[] configRefs;
 	IProject[] configRefsProjects;
-
-	public ProjectDescriptionDynamicTest() {
-		super();
-	}
 
 	/**
 	 * return reference to the active configuration in the project

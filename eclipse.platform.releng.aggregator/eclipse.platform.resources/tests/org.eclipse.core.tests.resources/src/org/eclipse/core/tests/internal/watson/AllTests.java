@@ -13,32 +13,14 @@
  *******************************************************************************/
 package org.eclipse.core.tests.internal.watson;
 
-import junit.framework.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
-public class AllTests extends TestCase {
-	/**
-	 * AllTests constructor comment.
-	 */
-	public AllTests() {
-		super(null);
-	}
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+		DeltaChainFlatteningTest.class, DeltaFlatteningTest.class, ElementTreeDeltaChainTest.class,
+		ElementTreeIteratorTest.class, ElementTreeHasChangesTest.class, TreeFlatteningTest.class
+})
+public class AllTests {
 
-	/**
-	 * AllTests constructor comment.
-	 * @param name java.lang.String
-	 */
-	public AllTests(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		TestSuite suite = new TestSuite(AllTests.class.getName());
-		suite.addTest(DeltaChainFlatteningTest.suite());
-		suite.addTest(DeltaFlatteningTest.suite());
-		suite.addTest(ElementTreeDeltaChainTest.suite());
-		suite.addTest(ElementTreeIteratorTest.suite());
-		suite.addTest(ElementTreeHasChangesTest.suite());
-		suite.addTest(TreeFlatteningTest.suite());
-		return suite;
-	}
 }

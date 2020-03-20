@@ -14,30 +14,19 @@
  *******************************************************************************/
 package org.eclipse.core.tests.internal.watson;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.Stack;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.core.internal.watson.*;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.junit.Test;
 
 /**
  * Unit tests for <code>ElementTreeIterator</code>.
  */
-public class ElementTreeIteratorTest extends WatsonTest {
-	public ElementTreeIteratorTest() {
-		super(null);
-	}
-
-	public ElementTreeIteratorTest(String name) {
-		super(name);
-	}
-
-	@Override
-	protected void setUp() throws Exception {
-		// do nothing
-	}
+public class ElementTreeIteratorTest {
 
 	static void setupElementTree(ElementTree tree, int num) {
 		final IElementTreeData data = new IElementTreeData() {
@@ -66,6 +55,7 @@ public class ElementTreeIteratorTest extends WatsonTest {
 		}
 	}
 
+	@Test
 	public void testConcurrentModification() {
 		//the dining detectives problem
 		ElementTree baseTree = new ElementTree();
@@ -102,16 +92,7 @@ public class ElementTreeIteratorTest extends WatsonTest {
 		}
 	}
 
-	public static Test suite() {
-		TestSuite suite = new TestSuite(ElementTreeIteratorTest.class);
-		return suite;
-	}
-
-	@Override
-	protected void tearDown() throws Exception {
-		//ElementTree tests don't use the CoreTest infrastructure
-	}
-
+	@Test
 	public void testContentIterator() {
 		ElementTree tree = new ElementTree();
 		int n = 3;

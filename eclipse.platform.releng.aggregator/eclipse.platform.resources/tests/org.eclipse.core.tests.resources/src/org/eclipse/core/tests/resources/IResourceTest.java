@@ -16,8 +16,6 @@ package org.eclipse.core.tests.resources;
 
 import java.io.File;
 import java.util.*;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.*;
@@ -78,8 +76,11 @@ public class IResourceTest extends ResourceTest {
 	ResourceDeltaVerifier verifier;
 
 	/**
-	 * @return Set
+	 * Get all files and directories in given directory recursive.
+	 *
 	 * @param dir
+	 *            the directory to start with
+	 * @return set of files and directories in given directory and sub-directories
 	 */
 	static protected Set<File> getAllFilesForDirectory(File dir) {
 		Set<File> result = new HashSet<>(50);
@@ -97,8 +98,14 @@ public class IResourceTest extends ResourceTest {
 	}
 
 	/**
-	 * @return Set
-	 * @param resource IResource
+	 * Get all files and directories in given resource recursive.
+	 *
+	 * @param resource
+	 *            the resource to start with. Resource can be a file in which case
+	 *            the result will only contain the file.
+	 * @param considerUnsyncLocalFiles
+	 *            if <code>true</code> force reading from filesystem
+	 * @return set of files and directories under given resource
 	 */
 	static protected Set<File> getAllFilesForResource(IResource resource, boolean considerUnsyncLocalFiles) throws CoreException {
 		Set<File> result = new HashSet<>(50);
@@ -144,22 +151,6 @@ public class IResourceTest extends ResourceTest {
 			}
 		}
 		return result;
-	}
-
-	public static Test suite() {
-		return new TestSuite(IResourceTest.class);
-
-		//		TestSuite suite = new TestSuite();
-		//		suite.addTest(new IResourceTest("testAttributeArchive"));
-		//		return suite;
-	}
-
-	public IResourceTest() {
-		super();
-	}
-
-	public IResourceTest(String name) {
-		super(name);
 	}
 
 	/**
@@ -398,23 +389,23 @@ public class IResourceTest extends ResourceTest {
 			nonExistingProject.open(null);
 			nonExistingProject.delete(true, null);
 
-			Vector<IResource> resources = new Vector<>();
-			resources.addElement(openProject);
+			ArrayList<IResource> resources = new ArrayList<>();
+			resources.add(openProject);
 			for (IResource element : resourcesInOpenProject) {
-				resources.addElement(element);
+				resources.add(element);
 			}
 
-			resources.addElement(closedProject);
+			resources.add(closedProject);
 			for (IResource element : resourcesInClosedProject) {
-				resources.addElement(element);
+				resources.add(element);
 				nonExistingResources.add(element);
 			}
 
-			resources.addElement(nonExistingProject);
+			resources.add(nonExistingProject);
 			nonExistingResources.add(nonExistingProject);
 
 			interestingResources = new IResource[resources.size()];
-			resources.copyInto(interestingResources);
+			resources.toArray(interestingResources);
 
 			String[] interestingPathnames = new String[] {"1/", "1/1/", "1/1/1/", "1/1/1/1", "1/1/2/1/", "1/1/2/2/", "1/1/2/3/", "1/2/", "1/2/1", "1/2/2", "1/2/3/", "1/2/3/1", "1/2/3/2", "1/2/3/3", "1/2/3/4", "2", "2/1", "2/2", "2/3", "2/4", "2/1/", "2/2/", "2/3/", "2/4/", ".."};
 			interestingPaths = new IPath[interestingPathnames.length];

@@ -14,9 +14,7 @@
  *******************************************************************************/
 package org.eclipse.core.tests.resources.perf;
 
-import java.util.Vector;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import java.util.ArrayList;
 import org.eclipse.core.internal.watson.ElementTree;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -166,8 +164,8 @@ public class BenchElementTree extends OldCorePerformanceTest {
 	 * Returns an array of all the intermediary element trees.
 	 */
 	private ElementTree[] buildDeltaChain(ElementTree tree) {
-		Vector<ElementTree> trees = new Vector<>();
-		trees.addElement(tree);
+		ArrayList<ElementTree> trees = new ArrayList<>();
+		trees.add(tree);
 
 		int repeat = 1;
 
@@ -179,7 +177,7 @@ public class BenchElementTree extends OldCorePerformanceTest {
 			tree.createElement(filePath, data);
 
 			tree.immutable();
-			trees.addElement(tree);
+			trees.add(tree);
 			tree = tree.newEmptyDelta();
 		}
 
@@ -190,7 +188,7 @@ public class BenchElementTree extends OldCorePerformanceTest {
 				tree.setElementData(filePath, data);
 
 				tree.immutable();
-				trees.addElement(tree);
+				trees.add(tree);
 				tree = tree.newEmptyDelta();
 			}
 		}
@@ -199,12 +197,12 @@ public class BenchElementTree extends OldCorePerformanceTest {
 		for (IPath filePath : filePaths) {
 			tree.deleteElement(filePath);
 			tree.immutable();
-			trees.addElement(tree);
+			trees.add(tree);
 			tree = tree.newEmptyDelta();
 		}
 
 		ElementTree[] results = new ElementTree[trees.size()];
-		trees.copyInto(results);
+		trees.toArray(results);
 		return results;
 	}
 
@@ -277,38 +275,4 @@ public class BenchElementTree extends OldCorePerformanceTest {
 		return jcuIDs;
 	}
 
-	/**
-	 * The environment should be set-up in the main method.
-	 */
-	@Override
-	protected void setUp() throws Exception {
-		//benchmarks don't use the core testing infrastructure
-	}
-
-	public static Test suite() {
-		TestSuite suite = new TestSuite(BenchElementTree.class.getName());
-
-		suite.addTest(new BenchElementTree("benchCreateElement"));
-		suite.addTest(new BenchElementTree("benchDeleteElement"));
-		suite.addTest(new BenchElementTree("benchDeltaLargeTreeFewChanges"));
-		suite.addTest(new BenchElementTree("benchDeltaLargeTreeManyChangesInOneLayer"));
-		suite.addTest(new BenchElementTree("benchDeltaSmallTreeManyChangesInSeperateLayers"));
-		suite.addTest(new BenchElementTree("benchGetElementData"));
-		//	suite.addTest(new BenchElementTree("benchMergeDeltaChain"));
-		suite.addTest(new BenchElementTree("benchReverseDeltaLargeTreeFewChanges"));
-		suite.addTest(new BenchElementTree("benchReverseDeltaLargeTreeManyChangesInOneLayer"));
-		suite.addTest(new BenchElementTree("benchReverseDeltaSmallTreeManyChangesInSeperateLayers"));
-		suite.addTest(new BenchElementTree("benchRoutineOperations"));
-		suite.addTest(new BenchElementTree("benchSetElementData"));
-
-		return suite;
-	}
-
-	/**
-	 *
-	 */
-	@Override
-	protected void tearDown() throws Exception {
-		//ElementTree tests don't use the CoreTest infrastructure
-	}
 }

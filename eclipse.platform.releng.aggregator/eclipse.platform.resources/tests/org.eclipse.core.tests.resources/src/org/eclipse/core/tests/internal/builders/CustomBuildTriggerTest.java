@@ -1,17 +1,17 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2015 IBM Corporation and others. All rights reserved.
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which accompanies this distribution,
-t https://www.eclipse.org/legal/epl-2.0/
-t
-t SPDX-License-Identifier: EPL-2.0
+ * Copyright (c) 2004, 2015 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors: IBM - Initial API and implementation
  ******************************************************************************/
 package org.eclipse.core.tests.internal.builders;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 
@@ -24,9 +24,6 @@ import org.eclipse.core.runtime.CoreException;
  * The "isConfigurable" attribute in the builder extension schema
  */
 public class CustomBuildTriggerTest extends AbstractBuilderTest {
-	public static Test suite() {
-		return new TestSuite(CustomBuildTriggerTest.class);
-	}
 
 	public CustomBuildTriggerTest(String name) {
 		super(name);

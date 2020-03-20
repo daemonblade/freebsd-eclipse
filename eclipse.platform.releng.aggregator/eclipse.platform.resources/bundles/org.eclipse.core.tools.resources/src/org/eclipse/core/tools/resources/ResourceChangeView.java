@@ -7,8 +7,8 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
- * Contributors: 
+ *
+ * Contributors:
  * Geoff Longman - Initial API and implementation
  * IBM - Tightening integration with existing Platform
  **********************************************************************/
@@ -389,12 +389,7 @@ public class ResourceChangeView extends SpyView implements IResourceChangeListen
 
 		IActionBars bars = getViewSite().getActionBars();
 		IMenuManager menuMgr = bars.getMenuManager();
-		menuMgr.addMenuListener(new IMenuListener() {
-			@Override
-			public void menuAboutToShow(final IMenuManager manager) {
-				fillPullDownBar(manager);
-			}
-		});
+		menuMgr.addMenuListener(this::fillPullDownBar);
 		fillPullDownBar(menuMgr);
 
 		// register for all types of events and then filter out the one that we
@@ -460,14 +455,11 @@ public class ResourceChangeView extends SpyView implements IResourceChangeListen
 		if (display == null)
 			return;
 		rootObject = event;
-		display.asyncExec(new Runnable() {
-			@Override
-			public void run() {
-				viewer.getControl().setRedraw(false);
-				viewer.setInput(ResourceChangeView.this.rootObject);
-				viewer.expandAll();
-				viewer.getControl().setRedraw(true);
-			}
+		display.asyncExec(() -> {
+			viewer.getControl().setRedraw(false);
+			viewer.setInput(ResourceChangeView.this.rootObject);
+			viewer.expandAll();
+			viewer.getControl().setRedraw(true);
 		});
 	}
 }

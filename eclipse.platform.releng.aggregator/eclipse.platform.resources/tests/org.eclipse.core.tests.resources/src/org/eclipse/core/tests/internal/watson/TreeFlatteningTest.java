@@ -14,24 +14,17 @@
 package org.eclipse.core.tests.internal.watson;
 
 import java.io.*;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.core.internal.watson.*;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Unit tests for <code>ElementTreeWriter</code> and
  * <code>ElementTreeReader</code>.
  */
 public class TreeFlatteningTest extends ElementTreeSerializationTest {
-	public TreeFlatteningTest() {
-		super();
-	}
-
-	public TreeFlatteningTest(String name) {
-		super(name);
-	}
 
 	/**
 	 * Performs the serialization activity for this test
@@ -65,16 +58,13 @@ public class TreeFlatteningTest extends ElementTreeSerializationTest {
 	}
 
 	@Override
-	protected void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		super.setUp();
 		fTree = TestUtil.createTestElementTree();
 	}
 
-	public static Test suite() {
-		TestSuite suite = new TestSuite(TreeFlatteningTest.class);
-		return suite;
-	}
-
+	@Test
 	public void test0() {
 		/* Get an element tree from somewhere. */
 		fTree = TestUtil.createTestElementTree();
@@ -86,10 +76,12 @@ public class TreeFlatteningTest extends ElementTreeSerializationTest {
 	/**
 	 * Tests the reading and writing of element deltas
 	 */
+	@Test
 	public void testExhaustive() {
 		doExhaustiveTests();
 	}
 
+	@Test
 	public void testNullData() {
 		/* Get an element tree from somewhere. */
 		fTree = TestUtil.createTestElementTree();
@@ -105,6 +97,7 @@ public class TreeFlatteningTest extends ElementTreeSerializationTest {
 		TestUtil.assertEqualTrees(this.getClass() + "test0", fTree, newTree);
 	}
 
+	@Test
 	public void testWriteRoot() {
 		/* Get an element tree from somewhere. */
 		fTree = TestUtil.createTestElementTree();

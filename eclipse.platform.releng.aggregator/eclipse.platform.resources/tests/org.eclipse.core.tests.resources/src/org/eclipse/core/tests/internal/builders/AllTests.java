@@ -14,32 +14,14 @@
  *******************************************************************************/
 package org.eclipse.core.tests.internal.builders;
 
-import junit.framework.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
-public class AllTests extends TestCase {
-	public AllTests() {
-		super(null);
-	}
+@RunWith(Suite.class)
+@Suite.SuiteClasses({ BuilderCycleTest.class, BuilderEventTest.class, BuilderNatureTest.class, BuilderTest.class,
+		BuildDeltaVerificationTest.class, CustomBuildTriggerTest.class, EmptyDeltaTest.class,
+		MultiProjectBuildTest.class, RelaxedSchedRuleBuilderTest.class, BuildConfigurationsTest.class,
+		BuildContextTest.class, ParallelBuildChainTest.class, ComputeProjectOrderTest.class })
+public class AllTests {
 
-	public AllTests(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		TestSuite suite = new TestSuite(AllTests.class.getName());
-		suite.addTest(BuilderCycleTest.suite());
-		suite.addTest(BuilderEventTest.suite());
-		suite.addTest(BuilderNatureTest.suite());
-		suite.addTest(BuilderTest.suite());
-		suite.addTest(BuildDeltaVerificationTest.suite());
-		suite.addTest(CustomBuildTriggerTest.suite());
-		suite.addTest(EmptyDeltaTest.suite());
-		suite.addTest(MultiProjectBuildTest.suite());
-		suite.addTest(RelaxedSchedRuleBuilderTest.suite());
-		suite.addTest(BuildConfigurationsTest.suite());
-		suite.addTest(BuildContextTest.suite());
-		suite.addTest(ParallelBuildChainTest.suite());
-		suite.addTest(ComputeProjectOrderTest.suite());
-		return suite;
-	}
 }

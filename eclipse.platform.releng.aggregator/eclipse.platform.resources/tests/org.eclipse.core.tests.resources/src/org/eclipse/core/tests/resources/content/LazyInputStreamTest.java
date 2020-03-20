@@ -13,14 +13,17 @@
  *******************************************************************************/
 package org.eclipse.core.tests.resources.content;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
 import java.io.*;
-import junit.framework.*;
 import org.eclipse.core.internal.content.LazyInputStream;
+import org.junit.Test;
 
 /**
  * Tests for {@link LazyInputStream}.
  */
-public class LazyInputStreamTest extends TestCase {
+public class LazyInputStreamTest {
 
 	/**
 	 * Opens up protected methods from LazyInputStream.
@@ -56,10 +59,7 @@ public class LazyInputStreamTest extends TestCase {
 
 	private final static int[] VARIOUS_INTS = {0xFF, 0xFE, 0xA0, 0x7F, 0x70, 0x10, 0x00};
 
-	public LazyInputStreamTest(String name) {
-		super(name);
-	}
-
+	@Test
 	public void testReadSingleByte() throws IOException {
 		ByteArrayInputStream underlying = new ByteArrayInputStream(DATA.getBytes());
 		OpenLazyInputStream stream = new OpenLazyInputStream(underlying, 7);
@@ -71,6 +71,7 @@ public class LazyInputStreamTest extends TestCase {
 		stream.close();
 	}
 
+	@Test
 	public void testReadBlock() throws IOException {
 		ByteArrayInputStream underlying = new ByteArrayInputStream(DATA.getBytes());
 		OpenLazyInputStream stream = new OpenLazyInputStream(underlying, 7);
@@ -109,6 +110,7 @@ public class LazyInputStreamTest extends TestCase {
 		stream.close();
 	}
 
+	@Test
 	public void testMarkAndReset() throws IOException {
 		ByteArrayInputStream underlying = new ByteArrayInputStream(DATA.getBytes());
 		OpenLazyInputStream stream = new OpenLazyInputStream(underlying, 7);
@@ -132,17 +134,19 @@ public class LazyInputStreamTest extends TestCase {
 		stream.close();
 	}
 
+	@Test
 	public void testContentHasEOF() throws IOException {
 		byte[] changedData = DATA.getBytes();
 		changedData[0] = (byte) 0xFF;
 		ByteArrayInputStream underlying = new ByteArrayInputStream(changedData);
 		OpenLazyInputStream stream = new OpenLazyInputStream(underlying, 7);
 		int c = stream.read();
-		assertTrue("1.0", -1 != c);
+		assertNotEquals("1.0", -1, c);
 		assertEquals("2.0", 0xFF, c);
 		stream.close();
 	}
 
+	@Test
 	public void testVariedContent() throws IOException {
 		byte[] contents = new byte[VARIOUS_INTS.length];
 		for (int i = 0; i < contents.length; i++) {
@@ -154,9 +158,5 @@ public class LazyInputStreamTest extends TestCase {
 			assertEquals("1.0." + i, VARIOUS_INTS[i], stream.read());
 		}
 		stream.close();
-	}
-
-	public static Test suite() {
-		return new TestSuite(LazyInputStreamTest.class);
 	}
 }

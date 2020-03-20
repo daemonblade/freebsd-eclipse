@@ -14,74 +14,22 @@
  *******************************************************************************/
 package org.eclipse.core.tests.resources.regression;
 
-import junit.framework.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
 /**
  * A suite that runs all regression tests.
  */
-public class AllTests extends TestCase {
-	/**
-	 * AllTests constructor comment.
-	 */
-	public AllTests() {
-		super(null);
-	}
-
-	/**
-	 * AllTests constructor comment.
-	 * @param name java.lang.String
-	 */
-	public AllTests(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		TestSuite suite = new TestSuite(AllTests.class.getName());
-		suite.addTest(Bug_006708.suite());
-		suite.addTest(Bug_025457.suite());
-		suite.addTest(Bug_026294.suite());
-		suite.addTest(Bug_027271.suite());
-		suite.addTest(Bug_028981.suite());
-		suite.addTest(Bug_029116.suite());
-		suite.addTest(Bug_029671.suite());
-		suite.addTest(Bug_029851.suite());
-		suite.addTest(Bug_032076.suite());
-		suite.addTest(Bug_044106.suite());
-		suite.addTest(Bug_092108.suite());
-		suite.addTest(Bug_097608.suite());
-		suite.addTest(Bug_098740.suite());
-		suite.addTest(Bug_126104.suite());
-		suite.addTest(Bug_127562.suite());
-		suite.addTest(Bug_132510.suite());
-		suite.addTest(Bug_134364.suite());
-		suite.addTest(Bug_147232.suite());
-		suite.addTest(Bug_160251.suite());
-		suite.addTest(Bug_165892.suite());
-		suite.addTest(Bug_192631.suite());
-		suite.addTest(Bug_226264.suite());
-		suite.addTest(Bug_231301.suite());
-		suite.addTest(Bug_233939.suite());
-		suite.addTest(Bug_265810.suite());
-		suite.addTest(Bug_264182.suite());
-		suite.addTest(Bug_288315.suite());
-		suite.addTest(Bug_303517.suite());
-		suite.addTest(Bug_329836.suite());
-		suite.addTest(Bug_331445.suite());
-		suite.addTest(Bug_332543.suite());
-		suite.addTest(Bug_378156.suite());
-		suite.addTest(IFileTest.suite());
-		suite.addTest(IFolderTest.suite());
-		suite.addTest(IProjectTest.suite());
-		suite.addTest(IResourceTest.suite());
-		suite.addTest(IWorkspaceTest.suite());
-		suite.addTest(LocalStoreRegressionTests.suite());
-		suite.addTest(NLTest.suite());
-		suite.addTest(PR_1GEAB3C_Test.suite());
-		suite.addTest(PR_1GH2B0N_Test.suite());
-		suite.addTest(PR_1GHOM0N_Test.suite());
-		suite.addTest(Bug_530868.suite());
-		suite.addTest(Bug_185247_recursiveLinks.suite());
-		suite.addTest(Bug_185247_LinuxTests.suite());
-		return suite;
-	}
+@RunWith(Suite.class)
+@Suite.SuiteClasses({ Bug_006708.class, Bug_025457.class, Bug_026294.class, Bug_027271.class, Bug_028981.class,
+		Bug_029116.class, Bug_029671.class, Bug_029851.class, Bug_032076.class, Bug_044106.class, Bug_092108.class,
+		Bug_097608.class, Bug_098740.class, Bug_126104.class, Bug_127562.class, Bug_132510.class, Bug_134364.class,
+		Bug_147232.class, Bug_160251.class, Bug_165892.class, Bug_192631.class, Bug_226264.class, Bug_231301.class,
+		Bug_233939.class, Bug_265810.class, Bug_264182.class, Bug_288315.class, Bug_303517.class, Bug_329836.class,
+		Bug_331445.class, Bug_332543.class, Bug_378156.class, IFileTest.class, IFolderTest.class, IProjectTest.class,
+		IResourceTest.class, IWorkspaceTest.class, LocalStoreRegressionTests.class, NLTest.class,
+		PR_1GEAB3C_Test.class,
+		PR_1GH2B0N_Test.class, PR_1GHOM0N_Test.class, Bug_530868.class, Bug_185247_recursiveLinks.class,
+		Bug_185247_LinuxTests.class })
+public class AllTests {
 }

@@ -13,14 +13,18 @@
  *******************************************************************************/
 package org.eclipse.core.tests.resources.content;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.*;
-import junit.framework.*;
 import org.eclipse.core.internal.content.LazyReader;
+import org.junit.Test;
 
 /**
  * Tests for {@link LazyReader}.
  */
-public class LazyReaderTest extends TestCase {
+public class LazyReaderTest {
 
 	/**
 	 * Opens up protected methods from LazyInputStream.
@@ -54,10 +58,7 @@ public class LazyReaderTest extends TestCase {
 
 	private final static String DATA = "012345678901234567890123456789";
 
-	public LazyReaderTest(String name) {
-		super(name);
-	}
-
+	@Test
 	public void testReadSingleChar() throws IOException {
 		CharArrayReader underlying = new CharArrayReader(DATA.toCharArray());
 		OpenLazyReader stream = new OpenLazyReader(underlying, 7);
@@ -69,6 +70,7 @@ public class LazyReaderTest extends TestCase {
 		stream.close();
 	}
 
+	@Test
 	public void testReadBlock() throws IOException {
 		CharArrayReader underlying = new CharArrayReader(DATA.toCharArray());
 		OpenLazyReader stream = new OpenLazyReader(underlying, 7);
@@ -107,6 +109,7 @@ public class LazyReaderTest extends TestCase {
 		stream.close();
 	}
 
+	@Test
 	public void testMarkAndReset() throws IOException {
 		CharArrayReader underlying = new CharArrayReader(DATA.toCharArray());
 		OpenLazyReader stream = new OpenLazyReader(underlying, 7);
@@ -133,9 +136,5 @@ public class LazyReaderTest extends TestCase {
 		stream.rewind();
 		assertEquals("3.0", 0, stream.getOffset());
 		stream.close();
-	}
-
-	public static Test suite() {
-		return new TestSuite(LazyReaderTest.class);
 	}
 }

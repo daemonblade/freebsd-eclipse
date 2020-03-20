@@ -13,31 +13,30 @@
  *******************************************************************************/
 package org.eclipse.core.tests.internal.dtree;
 
-import junit.framework.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import org.eclipse.core.internal.dtree.*;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Test class for complete data trees.
  */
-public class DataTreeTest extends TestCase {
+public class DataTreeTest {
 	DataTree tree, emptyTree;
 	IPath rootKey, leftKey, rightKey;
-
-	public DataTreeTest() {
-		super(null);
-	}
-
-	public DataTreeTest(String name) {
-		super(name);
-	}
 
 	/**
 	 * Init tests
 	 */
-	@Override
-	protected void setUp() {
+	@Before
+	public void setUp() {
 		//data tree tests don't use the CoreTest environment
 
 		emptyTree = new DataTree();
@@ -49,7 +48,7 @@ public class DataTreeTest extends TestCase {
 			tree.createChild(rootKey, "leftOfRoot");
 			tree.createChild(rootKey, "rightOfRoot");
 		} catch (ObjectNotFoundException e) {
-			throw new Error("Error in setUp");
+			fail("Error in setUp");
 		}
 
 		leftKey = rootKey.append("leftOfRoot");
@@ -63,25 +62,9 @@ public class DataTreeTest extends TestCase {
 
 			tree.createChild(rightKey, "rightOfRight");
 		} catch (ObjectNotFoundException e) {
-			throw new Error("Error in setUp");
+			fail("Error in setUp");
 		}
 
-	}
-
-	/**
-	 * Run all tests
-	 */
-	public static Test suite() {
-		TestSuite suite = new TestSuite(DataTreeTest.class);
-		suite.addTest(DeltaDataTreeTest.suite());
-		return suite;
-	}
-
-	/**
-	 */
-	@Override
-	protected void tearDown() throws Exception {
-		//data tree tests don't use the CoreTest environment
 	}
 
 	/**
@@ -90,6 +73,7 @@ public class DataTreeTest extends TestCase {
 	 * @exception ObjectNotFoundException
 	 *	parentKey does not exist in the receiver
 	 */
+	@Test
 	public void testCreateChild() {
 
 		boolean caught;
@@ -157,7 +141,7 @@ public class DataTreeTest extends TestCase {
 		tree.createChild(leftKey, "double");
 		tree.createChild(leftKey, "double");
 		/* Make sure size has only increased by one */
-		assertTrue((tree.getNamesOfChildren(leftKey)).length == size + 1);
+		assertEquals(size + 1, tree.getNamesOfChildren(leftKey).length);
 
 	}
 
@@ -169,6 +153,7 @@ public class DataTreeTest extends TestCase {
 	 * @exception ObjectNotFoundException
 	 *	a child of parentKey with name localName does not exist in the receiver
 	 */
+	@Test
 	public void testDeleteChild() {
 
 		boolean caught;
@@ -222,8 +207,8 @@ public class DataTreeTest extends TestCase {
 		} catch (ObjectNotFoundException e) {
 		}
 
-		assertTrue("8", !tree.includes(leftKey));
-		assertTrue("9", !tree.includes(leftKey.append("one")));
+		assertFalse("8", tree.includes(leftKey));
+		assertFalse("9", tree.includes(leftKey.append("one")));
 		assertTrue("10", tree.includes(rootKey));
 
 		/* delete a leaf */
@@ -231,10 +216,8 @@ public class DataTreeTest extends TestCase {
 			tree.deleteChild(rightKey, "rightOfRight");
 		} catch (ObjectNotFoundException e) {
 		}
-		assertTrue("11", !tree.includes(rightKey.append("rightOfRight")));
+		assertFalse("11", tree.includes(rightKey.append("rightOfRight")));
 		assertTrue("12", tree.includes(rightKey));
-
-		return;
 	}
 
 	/**
@@ -242,13 +225,12 @@ public class DataTreeTest extends TestCase {
 	 * not represent a delta on another tree.  An empty tree is defined to
 	 * have a root node with nil data and no children.
 	 */
+	@Test
 	public void testEmpty() {
 
 		assertTrue("1", emptyTree.includes(rootKey));
-		assertTrue("2", TestHelper.getRootNode(emptyTree) != null);
-		assertTrue("3", TestHelper.getRootNode(emptyTree).getChildren().length == 0);
-
-		return;
+		assertNotNull("2", TestHelper.getRootNode(emptyTree));
+		assertEquals("3", 0, TestHelper.getRootNode(emptyTree).getChildren().length);
 	}
 
 	/**
@@ -263,6 +245,7 @@ public class DataTreeTest extends TestCase {
 	 * @exception ArrayIndexOutOfBoundsException
 	 *	if no child with the given index (runtime exception)
 	 */
+	@Test
 	public void testGetChild() {
 
 		boolean caught;
@@ -275,7 +258,7 @@ public class DataTreeTest extends TestCase {
 		} catch (ObjectNotFoundException e) {
 			caught = true;
 		}
-		assertTrue(!caught);
+		assertFalse(caught);
 
 		/* Get non-existant child of root */
 		caught = false;
@@ -284,7 +267,7 @@ public class DataTreeTest extends TestCase {
 		} catch (ArrayIndexOutOfBoundsException e) {
 			caught = true;
 		} catch (ObjectNotFoundException e) {
-			throw new Error();
+			fail();
 		}
 		assertTrue(caught);
 
@@ -295,7 +278,7 @@ public class DataTreeTest extends TestCase {
 		} catch (ArrayIndexOutOfBoundsException e) {
 			caught = true;
 		} catch (ObjectNotFoundException e) {
-			throw new Error();
+			fail();
 		}
 		assertTrue(caught);
 
@@ -306,7 +289,7 @@ public class DataTreeTest extends TestCase {
 		} catch (ArrayIndexOutOfBoundsException e) {
 			caught = true;
 		} catch (ObjectNotFoundException e) {
-			throw new Error();
+			fail();
 		}
 		assertTrue(caught);
 
@@ -318,8 +301,6 @@ public class DataTreeTest extends TestCase {
 			caught = true;
 		}
 		assertTrue(caught);
-
-		return;
 	}
 
 	/**
@@ -328,6 +309,7 @@ public class DataTreeTest extends TestCase {
 	 * @exception ObjectNotFoundException
 	 *	parentKey does not exist in the receiver
 	 */
+	@Test
 	public void testGetChildCount() {
 
 		boolean caught;
@@ -335,23 +317,23 @@ public class DataTreeTest extends TestCase {
 		caught = false;
 		try {
 			/* empty tree */
-			assertTrue("1", emptyTree.getChildCount(rootKey) == 0);
+			assertEquals("1", 0, emptyTree.getChildCount(rootKey));
 
 			/* root node */
-			assertTrue("2", tree.getChildCount(rootKey) == 2);
+			assertEquals("2", 2, tree.getChildCount(rootKey));
 
 			/* interior nodes */
-			assertTrue("3", tree.getChildCount(leftKey) == 3);
-			assertTrue("4", tree.getChildCount(rightKey) == 1);
+			assertEquals("3", 3, tree.getChildCount(leftKey));
+			assertEquals("4", 1, tree.getChildCount(rightKey));
 
 			/* leaf nodes */
-			assertTrue("5", tree.getChildCount(leftKey.append("one")) == 0);
-			assertTrue("6", tree.getChildCount(leftKey.append("three")) == 0);
-			assertTrue("7", tree.getChildCount(rightKey.append("rightOfRight")) == 0);
+			assertEquals("5", 0, tree.getChildCount(leftKey.append("one")));
+			assertEquals("6", 0, tree.getChildCount(leftKey.append("three")));
+			assertEquals("7", 0, tree.getChildCount(rightKey.append("rightOfRight")));
 		} catch (ObjectNotFoundException e) {
 			caught = true;
 		} finally {
-			assertTrue(!caught);
+			assertFalse(caught);
 		}
 
 		caught = false;
@@ -371,8 +353,6 @@ public class DataTreeTest extends TestCase {
 			caught = true;
 		}
 		assertTrue(caught);
-
-		return;
 	}
 
 	/**
@@ -381,6 +361,7 @@ public class DataTreeTest extends TestCase {
 	 * @exception ObjectNotFoundException
 	 *	parentKey does not exist in the receiver"
 	 */
+	@Test
 	public void testGetChildren() {
 
 		boolean caught;
@@ -390,31 +371,31 @@ public class DataTreeTest extends TestCase {
 		try {
 			/* empty tree */
 			testChildren = emptyTree.getChildren(rootKey);
-			assertTrue("1", testChildren.length == 0);
+			assertEquals("1", 0, testChildren.length);
 
 			/* root node */
 			testChildren = tree.getChildren(rootKey);
-			assertTrue("2", testChildren.length == 2);
+			assertEquals("2", 2, testChildren.length);
 			assertTrue("3", testChildren[0].equals(rootChildren[0]));
 			assertTrue("4", testChildren[1].equals(rootChildren[1]));
 
 			/* interior nodes */
 			testChildren = tree.getChildren(leftKey);
-			assertTrue("5", testChildren.length == 3);
+			assertEquals("5", 3, testChildren.length);
 			assertTrue("6", testChildren[0].equals(leftChildren[0]));
 			assertTrue("7", testChildren[2].equals(leftChildren[1]));
 			assertTrue("8", testChildren[1].equals(leftChildren[2]));
 
 			/* leaf nodes */
 			testChildren = tree.getChildren(leftChildren[0]);
-			assertTrue("9", testChildren.length == 0);
+			assertEquals("9", 0, testChildren.length);
 
 			testChildren = tree.getChildren(rightChildren[0]);
-			assertTrue("10", testChildren.length == 0);
+			assertEquals("10", 0, testChildren.length);
 		} catch (ObjectNotFoundException e) {
 			caught = true;
 		} finally {
-			assertTrue("11", !caught);
+			assertFalse("11", caught);
 		}
 
 		caught = false;
@@ -434,23 +415,6 @@ public class DataTreeTest extends TestCase {
 			caught = true;
 		}
 		assertTrue("13", caught);
-
-		return;
-	}
-
-	/**
-	 * Answer the local name of the child with the given index of the
-	 * specified node.
-	 * @exception ObjectNotFoundException
-	 *	parentKey does not exist in the receiver
-	 * @exception ArrayIndexOutOfBoundsException
-	 *	if no child with the given index
-	 */
-	public void testGetNameOfChild() {
-
-		/* tested thoroughly in testGetChild() and testGetNamesOfChildren */
-
-		return;
 	}
 
 	/**
@@ -459,6 +423,7 @@ public class DataTreeTest extends TestCase {
 	 * @exception ObjectNotFoundException
 	 *	parentKey does not exist in the receiver
 	 */
+	@Test
 	public void testGetNamesOfChildren() {
 
 		boolean caught;
@@ -468,31 +433,31 @@ public class DataTreeTest extends TestCase {
 		try {
 			/* empty tree */
 			testChildren = emptyTree.getNamesOfChildren(rootKey);
-			assertTrue("1", testChildren.length == 0);
+			assertEquals("1", 0, testChildren.length);
 
 			/* root node */
 			testChildren = tree.getNamesOfChildren(rootKey);
-			assertTrue("2", testChildren.length == 2);
+			assertEquals("2", 2, testChildren.length);
 			assertTrue("3", testChildren[0].equals(rootChildren[0]));
 			assertTrue("4", testChildren[1].equals(rootChildren[1]));
 
 			/* interior nodes */
 			testChildren = tree.getNamesOfChildren(leftKey);
-			assertTrue("5", testChildren.length == 3);
+			assertEquals("5", 3, testChildren.length);
 			assertTrue("6", testChildren[0].equals(leftChildren[0]));
 			assertTrue("7", testChildren[2].equals(leftChildren[1]));
 			assertTrue("8", testChildren[1].equals(leftChildren[2]));
 
 			/* leaf nodes */
 			testChildren = tree.getNamesOfChildren(leftKey.append("one"));
-			assertTrue("9", testChildren.length == 0);
+			assertEquals("9", 0, testChildren.length);
 
 			testChildren = tree.getNamesOfChildren(rightKey.append("rightOfRight"));
-			assertTrue("10", testChildren.length == 0);
+			assertEquals("10", 0, testChildren.length);
 		} catch (ObjectNotFoundException e) {
 			caught = true;
 		} finally {
-			assertTrue("11", !caught);
+			assertFalse("11", caught);
 		}
 
 		caught = false;
@@ -512,14 +477,13 @@ public class DataTreeTest extends TestCase {
 			caught = true;
 		}
 		assertTrue("13", caught);
-
-		return;
 	}
 
 	/**
 	 * Answer true if the receiver includes a node with the given key, false
 	 * otherwise.
 	 */
+	@Test
 	public void testIncludes() {
 
 		/* tested in testCreateChild() and testDeleteChild() */
@@ -531,20 +495,10 @@ public class DataTreeTest extends TestCase {
 		assertTrue(tree.includes(leftKey.append("one")));
 		assertTrue(tree.includes(rightKey.append("rightOfRight")));
 
-		assertTrue(!emptyTree.includes(rootKey.append("bogus")));
-		assertTrue(!tree.includes(rootKey.append("bogus")));
-		assertTrue(!tree.includes(leftKey.append("bogus")));
-		assertTrue(!tree.includes(leftKey.append("one").append("bogus")));
-		assertTrue(!tree.includes(rightKey.append("bogus")));
-
-		return;
+		assertFalse(emptyTree.includes(rootKey.append("bogus")));
+		assertFalse(tree.includes(rootKey.append("bogus")));
+		assertFalse(tree.includes(leftKey.append("bogus")));
+		assertFalse(tree.includes(leftKey.append("one").append("bogus")));
+		assertFalse(tree.includes(rightKey.append("bogus")));
 	}
-	/*
-	 * @see Assert#assertTrue(boolean)
-	 */
-
-	/*
-	 * @see Assert#assertTrue(String, boolean)
-	 */
-
 }

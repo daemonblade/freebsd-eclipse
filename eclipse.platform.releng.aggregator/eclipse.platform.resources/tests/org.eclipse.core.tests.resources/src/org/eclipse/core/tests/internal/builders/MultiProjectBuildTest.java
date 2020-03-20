@@ -16,8 +16,6 @@ package org.eclipse.core.tests.internal.builders;
 
 import java.lang.reflect.Array;
 import java.util.*;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.tests.resources.TestPerformer;
@@ -38,10 +36,6 @@ public class MultiProjectBuildTest extends AbstractBuilderTest {
 	private IFile file3;
 	private IFile file4;
 
-	public MultiProjectBuildTest() {
-		super(null);
-	}
-
 	/**
 	 * Public constructor required for test harness.
 	 */
@@ -57,20 +51,15 @@ public class MultiProjectBuildTest extends AbstractBuilderTest {
 		return new IProject[][] {new IProject[] {}, new IProject[] {project3}, new IProject[] {project1}, new IProject[] {project1, project2, project3}, new IProject[] {project2}, new IProject[] {project3}, new IProject[] {project4}, new IProject[] {project1, project2}, new IProject[] {project1, project3}, new IProject[] {project3}, new IProject[] {project2, project3}, new IProject[] {project1, project2, project3}, new IProject[] {project1, project2, project4}, new IProject[] {project1}, new IProject[] {project1, project3, project4}, new IProject[] {project1, project2}, new IProject[] {project2, project3, project4}, new IProject[] {project3, project4}, new IProject[] {project1, project2, project3, project4},};
 	}
 
-	public static Test suite() {
-		return new TestSuite(MultiProjectBuildTest.class);
-	}
-
 	/**
 	 * Modifies any files in the given projects, all in a single operation
 	 */
 	protected void dirty(final IProject[] projects) throws CoreException {
 		getWorkspace().run((IWorkspaceRunnable) monitor -> {
 			for (IProject project : projects) {
-				IResource[] members = project.members();
-				for (int j = 0; j < members.length; j++) {
-					if (members[j].getType() == IResource.FILE && !members[j].getName().equals(IProjectDescription.DESCRIPTION_FILE_NAME)) {
-						((IFile) members[j]).setContents(getRandomContents(), true, true, null);
+				for (IResource member : project.members()) {
+					if (member.getType() == IResource.FILE && !member.getName().equals(IProjectDescription.DESCRIPTION_FILE_NAME)) {
+						((IFile) member).setContents(getRandomContents(), true, true, null);
 					}
 				}
 			}

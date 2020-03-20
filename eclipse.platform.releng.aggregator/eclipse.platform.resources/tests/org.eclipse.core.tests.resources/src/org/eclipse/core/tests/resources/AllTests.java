@@ -13,51 +13,20 @@
  *******************************************************************************/
 package org.eclipse.core.tests.resources;
 
-import junit.framework.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
-public class AllTests extends TestCase {
+@RunWith(Suite.class)
+@Suite.SuiteClasses({ CharsetTest.class, ContentDescriptionManagerTest.class, FilteredResourceTest.class,
+		HiddenResourceTest.class, VirtualFolderTest.class, IFileTest.class, IFolderTest.class,
+		IPathVariableTest.class,
+		IProjectDescriptionTest.class, IProjectTest.class, IResourceChangeEventTest.class,
+		IResourceChangeListenerTest.class, IResourceDeltaTest.class, IResourceTest.class, ISynchronizerTest.class,
+		IWorkspaceRootTest.class, IWorkspaceTest.class, LinkedResourceTest.class,
+		LinkedResourceWithPathVariableTest.class, LinkedResourceSyncMoveAndCopyTest.class, MarkerSetTest.class,
+		MarkerTest.class, NatureTest.class, NonLocalLinkedResourceTest.class, ProjectOrderTest.class,
+		ProjectScopeTest.class, ProjectSnapshotTest.class, ResourceAttributeTest.class, ResourceURLTest.class,
+		TeamPrivateMemberTest.class, WorkspaceTest.class })
+public class AllTests {
 
-	public AllTests() {
-		super(null);
-	}
-
-	public AllTests(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		TestSuite suite = new TestSuite(AllTests.class.getName());
-		suite.addTest(CharsetTest.suite());
-		suite.addTest(ContentDescriptionManagerTest.suite());
-		suite.addTest(FilteredResourceTest.suite());
-		suite.addTest(HiddenResourceTest.suite());
-		suite.addTest(VirtualFolderTest.suite());
-		suite.addTest(IFileTest.suite());
-		suite.addTest(IFolderTest.suite());
-		suite.addTest(IPathVariableTest.suite());
-		suite.addTest(IProjectDescriptionTest.suite());
-		suite.addTest(IProjectTest.suite());
-		suite.addTest(IResourceChangeEventTest.suite());
-		suite.addTest(IResourceChangeListenerTest.suite());
-		suite.addTest(IResourceDeltaTest.suite());
-		suite.addTest(IResourceTest.suite());
-		suite.addTest(ISynchronizerTest.suite());
-		suite.addTest(IWorkspaceRootTest.suite());
-		suite.addTest(IWorkspaceTest.suite());
-		suite.addTest(LinkedResourceTest.suite());
-		suite.addTest(LinkedResourceWithPathVariableTest.suite());
-		suite.addTest(LinkedResourceSyncMoveAndCopyTest.suite());
-		suite.addTest(MarkerSetTest.suite());
-		suite.addTest(MarkerTest.suite());
-		suite.addTest(NatureTest.suite());
-		suite.addTest(NonLocalLinkedResourceTest.suite());
-		suite.addTest(ProjectOrderTest.suite());
-		suite.addTest(ProjectScopeTest.suite());
-		suite.addTest(ProjectSnapshotTest.suite());
-		suite.addTest(ResourceAttributeTest.suite());
-		suite.addTest(ResourceURLTest.suite());
-		suite.addTest(TeamPrivateMemberTest.suite());
-		suite.addTest(WorkspaceTest.suite());
-		return suite;
-	}
 }

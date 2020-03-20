@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  * 	Martin Oberhuber (Wind River) - [170317] add symbolic link support to API
@@ -62,11 +62,11 @@ public class Convert {
 
 		long longValue = 0L;
 
-		// See method convertLongToBytes(long) for algorithm details.	
-		for (int i = 0; i < value.length; i++) {
+		// See method convertLongToBytes(long) for algorithm details.
+		for (byte element : value) {
 			// Left shift has no effect through first iteration of loop.
 			longValue <<= 8;
-			longValue ^= value[i] & 0xFF;
+			longValue ^= element & 0xFF;
 		}
 
 		return longValue;
