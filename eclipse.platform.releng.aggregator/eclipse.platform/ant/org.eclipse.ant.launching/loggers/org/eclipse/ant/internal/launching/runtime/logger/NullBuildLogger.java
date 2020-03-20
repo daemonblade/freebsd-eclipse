@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -36,9 +36,6 @@ public class NullBuildLogger extends AbstractEclipseBuildLogger implements Build
 	 */
 	protected Throwable fHandledException = null;
 
-	/**
-	 * @see org.apache.tools.ant.BuildLogger#setMessageOutputLevel(int)
-	 */
 	@Override
 	public void setMessageOutputLevel(int level) {
 		fMessageOutputLevel = level;
@@ -48,25 +45,16 @@ public class NullBuildLogger extends AbstractEclipseBuildLogger implements Build
 		return fMessageOutputLevel;
 	}
 
-	/**
-	 * @see org.apache.tools.ant.BuildLogger#setEmacsMode(boolean)
-	 */
 	@Override
 	public void setEmacsMode(boolean emacsMode) {
 		fEmacsMode = emacsMode;
 	}
 
-	/**
-	 * @see org.apache.tools.ant.BuildListener#buildStarted(org.apache.tools.ant.BuildEvent)
-	 */
 	@Override
 	public void buildStarted(BuildEvent event) {
 		// do nothing
 	}
 
-	/**
-	 * @see org.apache.tools.ant.BuildListener#buildFinished(org.apache.tools.ant.BuildEvent)
-	 */
 	@Override
 	public void buildFinished(BuildEvent event) {
 		String message = handleException(event);
@@ -76,43 +64,26 @@ public class NullBuildLogger extends AbstractEclipseBuildLogger implements Build
 		fHandledException = null;
 	}
 
-	/**
-	 * @see org.apache.tools.ant.BuildListener#targetStarted(org.apache.tools.ant.BuildEvent)
-	 */
 	@Override
 	public void targetStarted(BuildEvent event) {
 		// do nothing
 	}
 
-	/**
-	 * @see org.apache.tools.ant.BuildListener#targetFinished(org.apache.tools.ant.BuildEvent)
-	 */
 	@Override
 	public void targetFinished(BuildEvent event) {
 		// do nothing
 	}
 
-	/**
-	 * @see org.apache.tools.ant.BuildListener#taskStarted(org.apache.tools.ant.BuildEvent)
-	 */
 	@Override
 	public void taskStarted(BuildEvent event) {
 		// do nothing
 	}
 
-	/**
-	 * @see org.apache.tools.ant.BuildListener#taskFinished(org.apache.tools.ant.BuildEvent)
-	 */
 	@Override
 	public void taskFinished(BuildEvent event) {
 		// do nothing
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.tools.ant.BuildListener#messageLogged(org.apache.tools.ant.BuildEvent)
-	 */
 	@Override
 	public void messageLogged(BuildEvent event) {
 		logMessage(event.getMessage(), event.getPriority());
@@ -126,9 +97,6 @@ public class NullBuildLogger extends AbstractEclipseBuildLogger implements Build
 		return fOut;
 	}
 
-	/**
-	 * @see org.apache.tools.ant.BuildLogger#setErrorPrintStream(java.io.PrintStream)
-	 */
 	@Override
 	public void setErrorPrintStream(PrintStream err) {
 		// this build logger logs to "null" unless
@@ -140,9 +108,6 @@ public class NullBuildLogger extends AbstractEclipseBuildLogger implements Build
 		}
 	}
 
-	/**
-	 * @see org.apache.tools.ant.BuildLogger#setOutputPrintStream(java.io.PrintStream)
-	 */
 	@Override
 	public void setOutputPrintStream(PrintStream output) {
 		// this build logger logs to "null" unless
@@ -180,16 +145,16 @@ public class NullBuildLogger extends AbstractEclipseBuildLogger implements Build
 		}
 		fHandledException = exception;
 		StringBuilder message = new StringBuilder();
-		message.append(StringUtils.LINE_SEP);
+		message.append(System.lineSeparator());
 		message.append(RuntimeMessages.NullBuildLogger_1);
-		message.append(StringUtils.LINE_SEP);
+		message.append(System.lineSeparator());
 		if (Project.MSG_VERBOSE <= fMessageOutputLevel || !(exception instanceof BuildException)) {
 			message.append(StringUtils.getStackTrace(exception));
 		} else {
 			if (exception instanceof BuildException) {
-				message.append(exception.toString()).append(StringUtils.LINE_SEP);
+				message.append(exception.toString()).append(System.lineSeparator());
 			} else {
-				message.append(exception.getMessage()).append(StringUtils.LINE_SEP);
+				message.append(exception.getMessage()).append(System.lineSeparator());
 			}
 		}
 

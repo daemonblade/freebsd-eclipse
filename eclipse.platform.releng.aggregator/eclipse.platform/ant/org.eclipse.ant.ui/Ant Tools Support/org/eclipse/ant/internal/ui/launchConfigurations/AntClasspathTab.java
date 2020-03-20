@@ -40,11 +40,6 @@ import org.eclipse.swt.widgets.Composite;
  */
 public class AntClasspathTab extends JavaClasspathTab {
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jdt.debug.ui.launchConfigurations.JavaClasspathTab#isShowBootpath()
-	 */
 	@Override
 	public boolean isShowBootpath() {
 		return false;
@@ -76,21 +71,11 @@ public class AntClasspathTab extends JavaClasspathTab {
 		action.setEnabled(true);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.AbstractLaunchConfigurationTab#setDirty(boolean)
-	 */
 	@Override
 	public void setDirty(boolean dirty) {
 		super.setDirty(dirty);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#initializeFrom(org.eclipse.debug.core.ILaunchConfiguration)
-	 */
 	@Override
 	public void initializeFrom(ILaunchConfiguration configuration) {
 		try {
@@ -102,29 +87,16 @@ public class AntClasspathTab extends JavaClasspathTab {
 		super.initializeFrom(configuration);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jdt.internal.debug.ui.launcher.IEntriesChangedListener#entriesChanged(org.eclipse.jdt.internal.debug.ui.launcher.IClasspathViewer)
-	 */
 	@Override
 	public void entriesChanged(IClasspathViewer viewer) {
 		super.entriesChanged(viewer);
-		ILaunchConfigurationTab[] tabs = getLaunchConfigurationDialog().getTabs();
-		for (int i = 0; i < tabs.length; i++) {
-			ILaunchConfigurationTab tab = tabs[i];
+		for (ILaunchConfigurationTab tab : getLaunchConfigurationDialog().getTabs()) {
 			if (tab instanceof AntTargetsTab) {
 				((AntTargetsTab) tab).setDirty(true);
 			}
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#isValid(org.eclipse.debug.core.ILaunchConfiguration)
-	 */
 	@Override
 	public boolean isValid(ILaunchConfiguration launchConfig) {
 
@@ -139,10 +111,8 @@ public class AntClasspathTab extends JavaClasspathTab {
 	private boolean validateAntHome() {
 		ClasspathModel model = getModel();
 		IClasspathEntry userEntry = model.getUserEntry();
-		IClasspathEntry[] entries = userEntry.getEntries();
-		for (int i = 0; i < entries.length; i++) {
-			ClasspathEntry entry = (ClasspathEntry) entries[i];
-			IRuntimeClasspathEntry runtimeEntry = entry.getDelegate();
+		for (IClasspathEntry entry : userEntry.getEntries()) {
+			IRuntimeClasspathEntry runtimeEntry = ((ClasspathEntry) entry).getDelegate();
 			if (runtimeEntry instanceof AntHomeClasspathEntry) {
 				try {
 					((AntHomeClasspathEntry) runtimeEntry).resolveAntHome();

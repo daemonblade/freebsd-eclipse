@@ -33,11 +33,9 @@ import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.jface.viewers.IColorProvider;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
@@ -186,25 +184,16 @@ public class AntEditorPreferencePage extends AbstractAntEditorPreferencePage {
 	 */
 	private class ColorListLabelProvider extends LabelProvider implements IColorProvider {
 
-		/*
-		 * @see org.eclipse.jface.viewers.ILabelProvider#getText(java.lang.Object)
-		 */
 		@Override
 		public String getText(Object element) {
 			return ((HighlightingColorListItem) element).getDisplayName();
 		}
 
-		/*
-		 * @see org.eclipse.jface.viewers.IColorProvider#getForeground(java.lang.Object)
-		 */
 		@Override
 		public Color getForeground(Object element) {
 			return ((HighlightingColorListItem) element).getItemColor();
 		}
 
-		/*
-		 * @see org.eclipse.jface.viewers.IColorProvider#getBackground(java.lang.Object)
-		 */
 		@Override
 		public Color getBackground(Object element) {
 			return null;
@@ -218,25 +207,16 @@ public class AntEditorPreferencePage extends AbstractAntEditorPreferencePage {
 	 */
 	private class ColorListContentProvider implements IStructuredContentProvider {
 
-		/*
-		 * @see org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java.lang.Object)
-		 */
 		@Override
 		public Object[] getElements(Object inputElement) {
 			return ((List<?>) inputElement).toArray();
 		}
 
-		/*
-		 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
-		 */
 		@Override
 		public void dispose() {
 			// do nothing
 		}
 
-		/*
-		 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
-		 */
 		@Override
 		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 			// do nothing
@@ -247,8 +227,8 @@ public class AntEditorPreferencePage extends AbstractAntEditorPreferencePage {
 	private String[][] fSyntaxColorListModel;
 
 	private final String[] fProblemPreferenceKeys = new String[] { AntEditorPreferenceConstants.PROBLEM_CLASSPATH,
-			AntEditorPreferenceConstants.PROBLEM_PROPERTIES, AntEditorPreferenceConstants.PROBLEM_IMPORTS,
-			AntEditorPreferenceConstants.PROBLEM_TASKS, AntEditorPreferenceConstants.PROBLEM_SECURITY };
+			AntEditorPreferenceConstants.PROBLEM_PROPERTIES, AntEditorPreferenceConstants.PROBLEM_IMPORTS, AntEditorPreferenceConstants.PROBLEM_TASKS,
+			AntEditorPreferenceConstants.PROBLEM_SECURITY };
 
 	private ColorSelector fSyntaxForegroundColorSelector;
 	private Button fBoldCheckBox;
@@ -309,8 +289,8 @@ public class AntEditorPreferencePage extends AbstractAntEditorPreferencePage {
 
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, AntEditorPreferenceConstants.BUILDFILE_NAMES_TO_IGNORE));
 
-		for (int i = 0; i < fSyntaxColorListModel.length; i++) {
-			String colorKey = fSyntaxColorListModel[i][1];
+		for (String[] colorModel : fSyntaxColorListModel) {
+			String colorKey = colorModel[1];
 			addTextKeyToCover(overlayKeys, colorKey);
 		}
 
@@ -345,11 +325,6 @@ public class AntEditorPreferencePage extends AbstractAntEditorPreferencePage {
 		return appearanceComposite;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.preference.PreferencePage#createContents(org.eclipse.swt.widgets.Composite)
-	 */
 	@Override
 	protected Control createContents(Composite parent) {
 		getOverlayStore().load();
@@ -406,20 +381,14 @@ public class AntEditorPreferencePage extends AbstractAntEditorPreferencePage {
 
 		initializeFields();
 
-		for (int i = 0, n = fSyntaxColorListModel.length; i < n; i++) {
-			fHighlightingColorList.add(new HighlightingColorListItem(fSyntaxColorListModel[i][0], fSyntaxColorListModel[i][1], fSyntaxColorListModel[i][1]
-					+ AntEditorPreferenceConstants.EDITOR_BOLD_SUFFIX, fSyntaxColorListModel[i][1]
-					+ AntEditorPreferenceConstants.EDITOR_ITALIC_SUFFIX, null));
+		for (String[] colorModel : fSyntaxColorListModel) {
+			fHighlightingColorList.add(new HighlightingColorListItem(colorModel[0], colorModel[1], colorModel[1]
+					+ AntEditorPreferenceConstants.EDITOR_BOLD_SUFFIX, colorModel[1] + AntEditorPreferenceConstants.EDITOR_ITALIC_SUFFIX, null));
 		}
 		fHighlightingColorListViewer.setInput(fHighlightingColorList);
 		fHighlightingColorListViewer.setSelection(new StructuredSelection(fHighlightingColorListViewer.getElementAt(0)));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ant.internal.ui.preferences.AbstractAntEditorPreferencePage#handleDefaults()
-	 */
 	@Override
 	protected void handleDefaults() {
 		handleSyntaxColorListSelection();
@@ -497,12 +466,7 @@ public class AntEditorPreferencePage extends AbstractAntEditorPreferencePage {
 		gd.heightHint = convertHeightInCharsToPixels(5);
 		previewer.setLayoutData(gd);
 
-		fHighlightingColorListViewer.addSelectionChangedListener(new ISelectionChangedListener() {
-			@Override
-			public void selectionChanged(SelectionChangedEvent event) {
-				handleSyntaxColorListSelection();
-			}
-		});
+		fHighlightingColorListViewer.addSelectionChangedListener(event -> handleSyntaxColorListSelection());
 
 		foregroundColorButton.addSelectionListener(new SelectionListener() {
 			@Override
@@ -586,11 +550,6 @@ public class AntEditorPreferencePage extends AbstractAntEditorPreferencePage {
 		return (HighlightingColorListItem) selection.getFirstElement();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.dialogs.IDialogPage#dispose()
-	 */
 	@Override
 	public void dispose() {
 		super.dispose();
@@ -659,16 +618,14 @@ public class AntEditorPreferencePage extends AbstractAntEditorPreferencePage {
 
 	private void initializeWorkingValues() {
 		fWorkingValues = new HashMap<>(fProblemPreferenceKeys.length);
-		for (int i = 0; i < fProblemPreferenceKeys.length; i++) {
-			String key = fProblemPreferenceKeys[i];
+		for (String key : fProblemPreferenceKeys) {
 			fWorkingValues.put(key, getPreferenceStore().getString(key));
 		}
 	}
 
 	private void restoreWorkingValuesToDefaults() {
 		fWorkingValues = new HashMap<>(fProblemPreferenceKeys.length);
-		for (int i = 0; i < fProblemPreferenceKeys.length; i++) {
-			String key = fProblemPreferenceKeys[i];
+		for (String key : fProblemPreferenceKeys) {
 			fWorkingValues.put(key, getPreferenceStore().getDefaultString(key));
 		}
 		updateControls();
@@ -752,11 +709,6 @@ public class AntEditorPreferencePage extends AbstractAntEditorPreferencePage {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.preference.IPreferencePage#performOk()
-	 */
 	@Override
 	public boolean performOk() {
 		Iterator<String> iter = fWorkingValues.keySet().iterator();
@@ -791,11 +743,6 @@ public class AntEditorPreferencePage extends AbstractAntEditorPreferencePage {
 		link.setToolTipText(linktooltip);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ant.internal.ui.preferences.AbstractAntEditorPreferencePage#getHelpContextId()
-	 */
 	@Override
 	protected String getHelpContextId() {
 		return IAntUIHelpContextIds.ANT_EDITOR_PREFERENCE_PAGE;

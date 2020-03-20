@@ -46,11 +46,6 @@ public class XmlElementFormattingStrategy extends ContextBasedFormattingStrategy
 		this.prefs = prefs;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.text.formatter.IFormattingStrategyExtension#format()
-	 */
 	@Override
 	public void format() {
 
@@ -92,9 +87,6 @@ public class XmlElementFormattingStrategy extends ContextBasedFormattingStrategy
 
 	}
 
-	/*
-	 * @see org.eclipse.jface.text.formatter.ContextBasedFormattingStrategy#formatterStarts(org.eclipse.jface.text.formatter.IFormattingContext)
-	 */
 	@Override
 	public void formatterStarts(final IFormattingContext context) {
 		super.formatterStarts(context);
@@ -103,9 +95,6 @@ public class XmlElementFormattingStrategy extends ContextBasedFormattingStrategy
 		fDocuments.addLast((IDocument) context.getProperty(FormattingContextProperties.CONTEXT_MEDIUM));
 	}
 
-	/*
-	 * @see org.eclipse.jface.text.formatter.ContextBasedFormattingStrategy#formatterStops()
-	 */
 	@Override
 	public void formatterStops() {
 		super.formatterStops();

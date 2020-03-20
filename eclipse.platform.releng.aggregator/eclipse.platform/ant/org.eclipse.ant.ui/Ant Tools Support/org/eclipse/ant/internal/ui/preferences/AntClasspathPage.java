@@ -131,8 +131,8 @@ public class AntClasspathPage implements IAntBlockContainer {
 		}
 
 		List<IAntClasspathEntry> entries = new ArrayList<>(urls.length);
-		for (int i = 0; i < urls.length; i++) {
-			AntClasspathEntry entry = new AntClasspathEntry(urls[i]);
+		for (URL url : urls) {
+			AntClasspathEntry entry = new AntClasspathEntry(url);
 			entries.add(entry);
 		}
 		if (toolsJarEntry != null) {
@@ -158,12 +158,7 @@ public class AntClasspathPage implements IAntBlockContainer {
 			return urls;
 		}
 
-		File[] matches = location.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return name.toLowerCase().endsWith(extension);
-			}
-		});
+		File[] matches = location.listFiles((FilenameFilter) (dir, name) -> name.toLowerCase().endsWith(extension));
 
 		urls = new URL[matches.length];
 		for (int i = 0; i < matches.length; ++i) {
@@ -208,11 +203,6 @@ public class AntClasspathPage implements IAntBlockContainer {
 		return top;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ant.internal.ui.preferences.IAntBlockContainer#update()
-	 */
 	@Override
 	public void update() {
 		if (fAntClasspathBlock.isValidated()) {
@@ -229,31 +219,16 @@ public class AntClasspathPage implements IAntBlockContainer {
 		fPreferencePage.setValid(valid);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ant.internal.ui.preferences.IAntBlockContainer#setMessage(java.lang.String)
-	 */
 	@Override
 	public void setMessage(String message) {
 		fPreferencePage.setMessage(message);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ant.internal.ui.preferences.IAntBlockContainer#setErrorMessage(java.lang.String)
-	 */
 	@Override
 	public void setErrorMessage(String message) {
 		fPreferencePage.setErrorMessage(message);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ant.internal.ui.preferences.IAntBlockContainer#createPushButton(org.eclipse.swt.widgets.Composite, java.lang.String)
-	 */
 	@Override
 	public Button createPushButton(Composite parent, String buttonText) {
 		Button button = new Button(parent, SWT.PUSH);

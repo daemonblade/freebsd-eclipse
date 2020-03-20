@@ -70,8 +70,7 @@ public class dumper {
 	private static void dumpSchema(ISchema schema) {
 		IElement[] elements = schema.getElements();
 		System.out.println("" + elements.length + " elements defined"); //$NON-NLS-1$ //$NON-NLS-2$
-		for (int i = 0; i < elements.length; i++) {
-			IElement element = elements[i];
+		for (IElement element : elements) {
 			IModel model = element.getContentModel();
 			System.out.println("ELEMENT " + element.getName() //$NON-NLS-1$
 					+ '"' + model.stringRep() + '"');
@@ -82,11 +81,13 @@ public class dumper {
 	/**
 	 * Dump dfm as a series of states.
 	 * 
-	 * <pre>{@code
+	 * <pre>
+	 * {@code
 	 * S0  a=>S1 b=>S2 
 	 * S1  c=>S2
 	 * S2* d=>S2
-	 * }</pre>
+	 * }
+	 * </pre>
 	 * 
 	 * Where * indicates accepting state.
 	 * 
@@ -104,17 +105,15 @@ public class dumper {
 		}
 		State[] states = list.toArray(new State[list.size()]);
 		Arrays.sort(states);
-		for (int i = 0; i < states.length; i++) {
-			print(states[i], map);
+		for (State state : states) {
+			print(state, map);
 		}
 	}
 
 	private static void print(State state, HashMap<IDfm, Integer> map) {
 		System.out.print("  S" + state.n.intValue() //$NON-NLS-1$
 				+ (state.dfm.isAccepting() ? "*  " : "  ")); //$NON-NLS-1$ //$NON-NLS-2$
-		String[] accepts = state.dfm.getAccepts();
-		for (int i = 0; i < accepts.length; i++) {
-			String accept = accepts[i];
+		for (String accept : state.dfm.getAccepts()) {
 			IDfm next = state.dfm.advance(accept);
 			int n = map.get(next).intValue();
 			System.out.print(" " + accept + "=>S" + n); //$NON-NLS-1$ //$NON-NLS-2$
@@ -125,9 +124,8 @@ public class dumper {
 	private static int dumpDfm(IDfm dfm, HashMap<IDfm, Integer> map, int num) {
 		if (!map.containsKey(dfm)) {
 			map.put(dfm, Integer.valueOf(num++));
-			String[] accepts = dfm.getAccepts();
-			for (int i = 0; i < accepts.length; i++) {
-				IDfm next = dfm.advance(accepts[i]);
+			for (String accept : dfm.getAccepts()) {
+				IDfm next = dfm.advance(accept);
 				num = dumpDfm(next, map, num);
 			}
 		}
@@ -143,9 +141,6 @@ public class dumper {
 			this.n = n;
 		}
 
-		/**
-		 * @see java.lang.Comparable#compareTo(java.lang.Object)
-		 */
 		@Override
 		public int compareTo(State other) {
 			return n.intValue() < other.n.intValue() ? -1 : (n.intValue() == other.n.intValue() ? 0 : 1);

@@ -34,7 +34,6 @@ import org.eclipse.ant.launching.IAntLaunchConstants;
 import org.eclipse.core.externaltools.internal.IExternalToolConstants;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.variables.IStringVariableManager;
@@ -46,12 +45,8 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ColumnWeightData;
-import org.eclipse.jface.viewers.DoubleClickEvent;
-import org.eclipse.jface.viewers.ICheckStateListener;
-import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.TableLayout;
@@ -113,11 +108,6 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 	 * A comparator which can sort targets by name or description, in forward or reverse order.
 	 */
 	private class AntTargetsComparator extends ViewerComparator {
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.eclipse.jface.viewers.ViewerComparator#compare(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
-		 */
 		@Override
 		public int compare(Viewer viewer, Object e1, Object e2) {
 			if (!(e1 instanceof AntTargetNode && e2 instanceof AntTargetNode)) {
@@ -153,11 +143,6 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#createControl(org.eclipse.swt.widgets.Composite)
-	 */
 	@Override
 	public void createControl(Composite parent) {
 		Font font = parent.getFont();
@@ -333,9 +318,8 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 		int ok = dialog.open();
 		if (ok == Window.OK) {
 			fOrderedTargets.clear();
-			Object[] targets = dialog.getTargets();
-			for (int i = 0; i < targets.length; i++) {
-				fOrderedTargets.add((AntTargetNode) targets[i]);
+			for (Object target : dialog.getTargets()) {
+				fOrderedTargets.add((AntTargetNode) target);
 				updateSelectionCount();
 				updateLaunchConfigurationDialog();
 			}
@@ -405,26 +389,18 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 		fTableViewer.setContentProvider(new AntModelContentProvider());
 		fTableViewer.setComparator(new AntTargetsComparator());
 
-		fTableViewer.addDoubleClickListener(new IDoubleClickListener() {
-			@Override
-			public void doubleClick(DoubleClickEvent event) {
-				ISelection selection = event.getSelection();
-				if (!selection.isEmpty() && selection instanceof IStructuredSelection) {
-					IStructuredSelection ss = (IStructuredSelection) selection;
-					Object element = ss.getFirstElement();
-					boolean checked = !fTableViewer.getChecked(element);
-					fTableViewer.setChecked(element, checked);
-					updateOrderedTargets(element, checked);
-				}
+		fTableViewer.addDoubleClickListener(event -> {
+			ISelection selection = event.getSelection();
+			if (!selection.isEmpty() && selection instanceof IStructuredSelection) {
+				IStructuredSelection ss = (IStructuredSelection) selection;
+				Object element = ss.getFirstElement();
+				boolean checked = !fTableViewer.getChecked(element);
+				fTableViewer.setChecked(element, checked);
+				updateOrderedTargets(element, checked);
 			}
 		});
 
-		fTableViewer.addCheckStateListener(new ICheckStateListener() {
-			@Override
-			public void checkStateChanged(CheckStateChangedEvent event) {
-				updateOrderedTargets(event.getElement(), event.getChecked());
-			}
-		});
+		fTableViewer.addCheckStateListener(event -> updateOrderedTargets(event.getElement(), event.getChecked()));
 
 		TableColumn[] columns = fTableViewer.getTable().getColumns();
 		for (int i = 0; i < columns.length; i++) {
@@ -533,20 +509,12 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 			}
 			final CoreException[] exceptions = new CoreException[1];
 			try {
-				IRunnableWithProgress operation = new IRunnableWithProgress() {
-					/*
-					 * (non-Javadoc)
-					 * 
-					 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
-					 */
-					@Override
-					public void run(IProgressMonitor monitor) {
-						try {
-							fAllTargets = AntUtil.getTargets(expandedLocation, fLaunchConfiguration);
-						}
-						catch (CoreException ce) {
-							exceptions[0] = ce;
-						}
+				IRunnableWithProgress operation = monitor -> {
+					try {
+						fAllTargets = AntUtil.getTargets(expandedLocation, fLaunchConfiguration);
+					}
+					catch (CoreException ce) {
+						exceptions[0] = ce;
 					}
 				};
 
@@ -577,11 +545,9 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 
 			if (exceptions[0] != null) {
 				IStatus exceptionStatus = exceptions[0].getStatus();
-				IStatus[] children = exceptionStatus.getChildren();
 				StringBuilder message = new StringBuilder(exceptions[0].getMessage());
-				for (int i = 0; i < children.length; i++) {
+				for (IStatus childStatus : exceptionStatus.getChildren()) {
 					message.append(' ');
-					IStatus childStatus = children[i];
 					message.append(childStatus.getMessage());
 				}
 				setErrorMessage(message.toString());
@@ -597,8 +563,8 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 			AntTargetNode target = fAllTargets[0];
 			AntProjectNode projectNode = target.getProjectNode();
 			setErrorMessageFromNode(projectNode);
-			for (int i = 0; i < fAllTargets.length; i++) {
-				target = fAllTargets[i];
+			for (AntTargetNode mytarget : fAllTargets) {
+				target = mytarget;
 				if (target.isDefaultTarget()) {
 					fDefaultTarget = target;
 				}
@@ -623,21 +589,11 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#setDefaults(org.eclipse.debug.core.ILaunchConfigurationWorkingCopy)
-	 */
 	@Override
 	public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
 		// do nothing
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#initializeFrom(org.eclipse.debug.core.ILaunchConfiguration)
-	 */
 	@Override
 	public void initializeFrom(ILaunchConfiguration configuration) {
 		fInitializing = true;
@@ -703,11 +659,11 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 
 		setExecuteInput(allTargetNodes);
 		fTableViewer.setAllChecked(false);
-		for (int i = 0; i < targetNames.length; i++) {
-			for (int j = 0; j < fAllTargets.length; j++) {
-				if (targetNames[i].equals(fAllTargets[j].getTargetName())) {
-					fOrderedTargets.add(fAllTargets[j]);
-					fTableViewer.setChecked(fAllTargets[j], true);
+		for (String targetName : targetNames) {
+			for (AntTargetNode mytarget : fAllTargets) {
+				if (targetName.equals(mytarget.getTargetName())) {
+					fOrderedTargets.add(mytarget);
+					fTableViewer.setChecked(mytarget, true);
 				}
 			}
 		}
@@ -729,11 +685,6 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 		updateSelectionCount();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#performApply(org.eclipse.debug.core.ILaunchConfigurationWorkingCopy)
-	 */
 	@Override
 	public void performApply(ILaunchConfigurationWorkingCopy configuration) {
 		// attribute added in 3.0, so null must be used instead of false for backwards compatibility
@@ -755,7 +706,7 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 				configuration.setAttribute(IAntLaunchConstants.ATTR_ANT_TARGETS, (String) null);
 				return;
 			}
-		} else if (fOrderedTargets.size() == 0) {
+		} else if (fOrderedTargets.isEmpty()) {
 			configuration.setAttribute(IAntLaunchConstants.ATTR_ANT_TARGETS, (String) null);
 			return;
 		}
@@ -775,31 +726,16 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 		configuration.setAttribute(IAntLaunchConstants.ATTR_ANT_TARGETS, targets);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#getName()
-	 */
 	@Override
 	public String getName() {
 		return AntLaunchConfigurationMessages.AntTargetsTab_Tar_gets_14;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#getImage()
-	 */
 	@Override
 	public Image getImage() {
 		return AntUIImages.getImage(IAntUIConstants.IMG_TAB_ANT_TARGETS);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#isValid(org.eclipse.debug.core.ILaunchConfiguration)
-	 */
 	@Override
 	public boolean isValid(ILaunchConfiguration launchConfig) {
 		if (fAllTargets == null || isDirty()) {
@@ -819,22 +755,12 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 		return super.isValid(launchConfig);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.AbstractLaunchConfigurationTab#setDirty(boolean)
-	 */
 	@Override
 	protected void setDirty(boolean dirty) {
 		// provide package visibility
 		super.setDirty(dirty);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#activated(org.eclipse.debug.core.ILaunchConfigurationWorkingCopy)
-	 */
 	@Override
 	public void activated(ILaunchConfigurationWorkingCopy workingCopy) {
 		if (isDirty()) {
@@ -842,14 +768,9 @@ public class AntTargetsTab extends AbstractLaunchConfigurationTab {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#deactivated(org.eclipse.debug.core.ILaunchConfigurationWorkingCopy)
-	 */
 	@Override
 	public void deactivated(ILaunchConfigurationWorkingCopy workingCopy) {
-		if (fOrderedTargets.size() == 0) {
+		if (fOrderedTargets.isEmpty()) {
 			// set the dirty flag so that the state will be reinitialized on activation
 			setDirty(true);
 		}

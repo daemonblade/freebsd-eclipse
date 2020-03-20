@@ -31,7 +31,6 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.eclipse.jface.dialogs.IInputValidator;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
@@ -105,15 +104,12 @@ public class SearchForBuildFilesDialog extends InputDialog {
 	 * Creates a new dialog to search for build files.
 	 */
 	public SearchForBuildFilesDialog() {
-		super(Display.getCurrent().getActiveShell(), AntViewActionMessages.SearchForBuildFilesDialog_Search_for_Build_Files_1, AntViewActionMessages.SearchForBuildFilesDialog__Input, settings.get(IAntUIPreferenceConstants.ANTVIEW_LAST_SEARCH_STRING), new IInputValidator() {
-			@Override
-			public String isValid(String newText) {
-				String trimmedText = newText.trim();
-				if (trimmedText.length() == 0) {
-					return AntViewActionMessages.SearchForBuildFilesDialog_Build_name_cannot_be_empty_3;
-				}
-				return null;
+		super(Display.getCurrent().getActiveShell(), AntViewActionMessages.SearchForBuildFilesDialog_Search_for_Build_Files_1, AntViewActionMessages.SearchForBuildFilesDialog__Input, settings.get(IAntUIPreferenceConstants.ANTVIEW_LAST_SEARCH_STRING), newText -> {
+			String trimmedText = newText.trim();
+			if (trimmedText.length() == 0) {
+				return AntViewActionMessages.SearchForBuildFilesDialog_Build_name_cannot_be_empty_3;
 			}
+			return null;
 		});
 	}
 
@@ -307,12 +303,10 @@ public class SearchForBuildFilesDialog extends InputDialog {
 			validateInput();
 			return;
 		}
-		IAdaptable[] elements = set.getElements();
 		searchScopes = new ArrayList<>();
-		for (int i = 0; i < elements.length; i++) {
+		for (IAdaptable adaptable : set.getElements()) {
 			// Try to get an IResource object from each element
 			IResource resource = null;
-			IAdaptable adaptable = elements[i];
 			if (adaptable instanceof IResource) {
 				resource = (IResource) adaptable;
 			} else {
@@ -393,17 +387,14 @@ public class SearchForBuildFilesDialog extends InputDialog {
 			// The character "." must be escaped in regex
 			String input = getInput();
 			// replace "." with "\\."
-			input = input.replaceAll("\\.", "\\\\."); //$NON-NLS-1$ //$NON-NLS-2$ 
+			input = input.replaceAll("\\.", "\\\\."); //$NON-NLS-1$ //$NON-NLS-2$
 			// replace "*" with ".*"
 			input = input.replaceAll("\\*", "\\.\\*"); //$NON-NLS-1$ //$NON-NLS-2$
 			// replace "?" with ".?"
-			input = input.replaceAll("\\?", "\\.\\?"); //$NON-NLS-1$ //$NON-NLS-2$ 
+			input = input.replaceAll("\\?", "\\.\\?"); //$NON-NLS-1$ //$NON-NLS-2$
 			pattern = Pattern.compile(input);
 		}
 
-		/**
-		 * @see org.eclipse.core.resources.IResourceProxyVisitor#visit(org.eclipse.core.resources.IResourceProxy)
-		 */
 		@Override
 		public boolean visit(IResourceProxy proxy) {
 			if (proxy.getType() == IResource.FILE) {
@@ -417,22 +408,12 @@ public class SearchForBuildFilesDialog extends InputDialog {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
-	 */
 	@Override
 	protected void configureShell(Shell shell) {
 		super.configureShell(shell);
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(shell, IAntUIHelpContextIds.SEARCH_FOR_BUILDFILES_DIALOG);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.dialogs.InputDialog#validateInput()
-	 */
 	@Override
 	protected void validateInput() {
 		String errorMessage = null;

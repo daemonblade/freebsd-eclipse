@@ -34,11 +34,6 @@ public class EditorImageDescriptor extends ImageDescriptor {
 		this.program = program;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof EditorImageDescriptor)) {
@@ -61,9 +56,6 @@ public class EditorImageDescriptor extends ImageDescriptor {
 		return createImage();
 	}
 
-	/**
-	 * @see org.eclipse.jface.resource.ImageDescriptor#getImageData()
-	 */
 	@Override
 	public ImageData getImageData() {
 
@@ -84,11 +76,6 @@ public class EditorImageDescriptor extends ImageDescriptor {
 		return data;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		String programName = program.getName();

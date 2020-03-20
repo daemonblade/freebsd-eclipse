@@ -44,7 +44,6 @@ import org.eclipse.ant.internal.ui.editor.text.IReconcilingParticipant;
 import org.eclipse.ant.internal.ui.editor.text.XMLTextHover;
 import org.eclipse.ant.internal.ui.model.AntElementNode;
 import org.eclipse.ant.internal.ui.model.AntModel;
-import org.eclipse.ant.internal.ui.model.AntModelChangeEvent;
 import org.eclipse.ant.internal.ui.model.AntModelCore;
 import org.eclipse.ant.internal.ui.model.AntProjectNode;
 import org.eclipse.ant.internal.ui.model.IAntElement;
@@ -70,8 +69,6 @@ import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
-import org.eclipse.jface.text.IInformationControl;
-import org.eclipse.jface.text.IInformationControlCreator;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ISelectionValidator;
 import org.eclipse.jface.text.ISynchronizable;
@@ -170,9 +167,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 			}
 		}
 
-		/*
-		 * @see org.eclipse.jface.viewers.ISelectionChangedListener#selectionChanged(org.eclipse.jface.viewers.SelectionChangedEvent)
-		 */
 		@Override
 		public void selectionChanged(SelectionChangedEvent event) {
 			AntModel model = getAntModel();
@@ -198,11 +192,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 			super(composite, verticalRuler, overviewRuler, isOverviewRulerVisible(), styles);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.eclipse.jface.text.ITextOperationTarget#doOperation(int)
-		 */
 		@Override
 		public void doOperation(int operation) {
 			if (getTextWidget() == null || !redraws()) {
@@ -259,9 +248,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 					|| LinkedModeModel.hasInstalledModel(fDocument);
 		}
 
-		/*
-		 * @see Job#run(org.eclipse.core.runtime.IProgressMonitor)
-		 */
 		@Override
 		public IStatus run(IProgressMonitor progressMonitor) {
 
@@ -306,7 +292,7 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 					continue;
 				}
 				annotationMap.put(new Annotation("org.eclipse.jdt.ui.occurrences", false, message), //$NON-NLS-1$
-				position);
+						position);
 			}
 
 			if (isCanceled()) {
@@ -376,27 +362,17 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 			}
 		}
 
-		/*
-		 * @see org.eclipse.jface.text.IDocumentListener#documentAboutToBeChanged(org.eclipse.jface.text.DocumentEvent)
-		 */
 		@Override
 		public void documentAboutToBeChanged(DocumentEvent event) {
 			if (fOccurrencesFinderJob != null)
 				fOccurrencesFinderJob.doCancel();
 		}
 
-		/*
-		 * @see org.eclipse.jface.text.IDocumentListener#documentChanged(org.eclipse.jface.text.DocumentEvent)
-		 */
 		@Override
 		public void documentChanged(DocumentEvent event) {
 			// do nothing
 		}
 
-		/*
-		 * @see org.eclipse.jface.text.ITextInputListener#inputDocumentAboutToBeChanged(org.eclipse.jface.text.IDocument,
-		 * org.eclipse.jface.text.IDocument)
-		 */
 		@Override
 		public void inputDocumentAboutToBeChanged(IDocument oldInput, IDocument newInput) {
 			if (oldInput == null)
@@ -405,9 +381,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 			oldInput.removeDocumentListener(this);
 		}
 
-		/*
-		 * @see org.eclipse.jface.text.ITextInputListener#inputDocumentChanged(org.eclipse.jface.text.IDocument, org.eclipse.jface.text.IDocument)
-		 */
 		@Override
 		public void inputDocumentChanged(IDocument oldInput, IDocument newInput) {
 			if (newInput == null)
@@ -422,9 +395,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 	 * @since 3.1
 	 */
 	private class ActivationListener extends ShellAdapter {
-		/*
-		 * @see org.eclipse.swt.events.ShellAdapter#shellActivated(org.eclipse.swt.events.ShellEvent)
-		 */
 		@Override
 		public void shellActivated(ShellEvent e) {
 			if (fMarkOccurrenceAnnotations && isActivePart()) {
@@ -436,9 +406,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 			}
 		}
 
-		/*
-		 * @see org.eclipse.swt.events.ShellAdapter#shellDeactivated(org.eclipse.swt.events.ShellEvent)
-		 */
 		@Override
 		public void shellDeactivated(ShellEvent e) {
 			if (fMarkOccurrenceAnnotations && isActivePart())
@@ -449,13 +416,10 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 	/**
 	 * Selection changed listener for the outline view.
 	 */
-	protected ISelectionChangedListener fSelectionChangedListener = new ISelectionChangedListener() {
-		@Override
-		public void selectionChanged(SelectionChangedEvent event) {
-			fSelectionSetFromOutline = false;
-			doSelectionChanged(event);
-			fSelectionSetFromOutline = true;
-		}
+	protected ISelectionChangedListener fSelectionChangedListener = event -> {
+		fSelectionSetFromOutline = false;
+		doSelectionChanged(event);
+		fSelectionSetFromOutline = true;
 	};
 
 	private IAntModelListener fAntModelListener;
@@ -518,11 +482,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		setInsertMode(INSERT);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.texteditor.AbstractTextEditor#createActions()
-	 */
 	@Override
 	protected void createActions() {
 		super.createActions();
@@ -540,11 +499,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		setAction("renameInFile", action); //$NON-NLS-1$
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.editors.text.TextEditor#initializeEditor() Called from TextEditor.<init>
-	 */
 	@Override
 	protected void initializeEditor() {
 		setPreferenceStore(AntUIPlugin.getDefault().getCombinedPreferenceStore());
@@ -556,35 +510,20 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		setSourceViewerConfiguration(new AntEditorSourceViewerConfiguration(this));
 		setDocumentProvider(AntUIPlugin.getDefault().getDocumentProvider());
 
-		fAntModelListener = new IAntModelListener() {
-
-			/*
-			 * (non-Javadoc)
-			 * 
-			 * @see org.eclipse.ant.internal.ui.editor.outline.IDocumentModelListener#documentModelChanged(org.eclipse.ant.internal.ui.editor.outline.
-			 * DocumentModelChangeEvent)
-			 */
-			@Override
-			public void antModelChanged(AntModelChangeEvent event) {
-				AntModel model = getAntModel();
-				if (event.getModel() == model) {
-					if (event.isPreferenceChange()) {
-						updateEditorImage(model);
-					}
-					if (fFoldingStructureProvider != null) {
-						fFoldingStructureProvider.updateFoldingRegions(model);
-					}
+		fAntModelListener = event -> {
+			AntModel model = getAntModel();
+			if (event.getModel() == model) {
+				if (event.isPreferenceChange()) {
+					updateEditorImage(model);
+				}
+				if (fFoldingStructureProvider != null) {
+					fFoldingStructureProvider.updateFoldingRegions(model);
 				}
 			}
 		};
 		AntModelCore.getDefault().addAntModelListener(fAntModelListener);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
-	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getAdapter(Class<T> key) {
@@ -600,12 +539,7 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		}
 
 		if (key == IShowInTargetList.class) {
-			return (T) new IShowInTargetList() {
-				@Override
-				public String[] getShowInTargetIds() {
-					return new String[] { JavaUI.ID_PACKAGES, IPageLayout.ID_PROJECT_EXPLORER };
-				}
-			};
+			return (T) (IShowInTargetList) () -> new String[] { JavaUI.ID_PACKAGES, IPageLayout.ID_PROJECT_EXPLORER };
 		}
 
 		if (key == IToggleBreakpointsTarget.class) {
@@ -713,21 +647,11 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.texteditor.AbstractTextEditor#affectsTextPresentation(org.eclipse.jface.util.PropertyChangeEvent)
-	 */
 	@Override
 	protected boolean affectsTextPresentation(PropertyChangeEvent event) {
 		return ((AntEditorSourceViewerConfiguration) getSourceViewerConfiguration()).affectsTextPresentation(event);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.texteditor.AbstractTextEditor#handlePreferenceStoreChanged(org.eclipse.jface.util.PropertyChangeEvent)
-	 */
 	@Override
 	protected void handlePreferenceStoreChanged(PropertyChangeEvent event) {
 		String property = event.getProperty();
@@ -789,9 +713,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		super.handlePreferenceStoreChanged(event);
 	}
 
-	/*
-	 * @see org.eclipse.ui.editors.text.TextEditor#doSetInput(org.eclipse.ui.IEditorInput)
-	 */
 	@Override
 	protected void doSetInput(IEditorInput input) throws CoreException {
 		fAntModel = null;
@@ -824,12 +745,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		return fAntModel;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.texteditor.AbstractTextEditor#createSourceViewer(org.eclipse.swt.widgets.Composite,
-	 * org.eclipse.jface.text.source.IVerticalRuler, int)
-	 */
 	@Override
 	protected ISourceViewer createSourceViewer(Composite parent, IVerticalRuler ruler, int styles) {
 		fOverviewRuler = createOverviewRuler(getSharedColors());
@@ -970,11 +885,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		return IAntCoreConstants.EMPTY_STRING;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.texteditor.AbstractTextEditor#editorContextMenuAboutToShow(org.eclipse.jface.action.IMenuManager)
-	 */
 	@Override
 	public void editorContextMenuAboutToShow(IMenuManager menu) {
 		super.editorContextMenuAboutToShow(menu);
@@ -989,11 +899,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.IWorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
-	 */
 	@Override
 	public void createPartControl(Composite parent) {
 		super.createPartControl(parent);
@@ -1015,12 +920,7 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 
 	private void createFoldingSupport(ProjectionViewer projectionViewer) {
 		fProjectionSupport = new ProjectionSupport(projectionViewer, getAnnotationAccess(), getSharedColors());
-		fProjectionSupport.setHoverControlCreator(new IInformationControlCreator() {
-			@Override
-			public IInformationControl createInformationControl(Shell shell) {
-				return new AntSourceViewerInformationControl(shell);
-			}
-		});
+		fProjectionSupport.setHoverControlCreator(shell -> new AntSourceViewerInformationControl(shell));
 		fProjectionSupport.install();
 		((ProjectionViewer) getViewer()).addProjectionListener(this);
 
@@ -1031,9 +931,7 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		return store.getBoolean(AntEditorPreferenceConstants.EDITOR_FOLDING_ENABLED);
 	}
 
-	/*
-	 * @see org.eclipse.ui.texteditor.AbstractDecoratedTextEditor#isTabsToSpacesConversionEnabled()
-	 * 
+	/**
 	 * @since 3.3
 	 */
 	@Override
@@ -1041,11 +939,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		return super.isTabsToSpacesConversionEnabled(); // provide package visibility
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.IWorkbenchPart#dispose()
-	 */
 	@Override
 	public void dispose() {
 		disposed = true;
@@ -1202,11 +1095,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ant.internal.ui.editor.text.IReconcilingParticipant#reconciled()
-	 */
 	@Override
 	public void reconciled() {
 		if (fInitialReconcile) {
@@ -1217,9 +1105,7 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		if (config == null) {
 			return; // editor has been disposed.
 		}
-		IAutoEditStrategy[] strategies = config.getAutoEditStrategies(getViewer(), null);
-		for (int i = 0; i < strategies.length; i++) {
-			IAutoEditStrategy strategy = strategies[i];
+		for (IAutoEditStrategy strategy : config.getAutoEditStrategies(getViewer(), null)) {
 			if (strategy instanceof AntAutoEditStrategy) {
 				((AntAutoEditStrategy) strategy).reconciled();
 			}
@@ -1246,11 +1132,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		return service.getActivePart();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.texteditor.AbstractTextEditor#doSetSelection(org.eclipse.jface.viewers.ISelection)
-	 */
 	@Override
 	protected void doSetSelection(ISelection selection) {
 		super.doSetSelection(selection);
@@ -1270,11 +1151,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		return fFoldingGroup;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.text.source.projection.IProjectionListener#projectionEnabled()
-	 */
 	@Override
 	public void projectionEnabled() {
 		fFoldingStructureProvider = new AntFoldingStructureProvider(this);
@@ -1284,11 +1160,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		preferenceStore.setValue(AntEditorPreferenceConstants.EDITOR_FOLDING_ENABLED, true);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.text.source.projection.IProjectionListener#projectionDisabled()
-	 */
 	@Override
 	public void projectionDisabled() {
 		fFoldingStructureProvider = null;
@@ -1296,11 +1167,6 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		preferenceStore.setValue(AntEditorPreferenceConstants.EDITOR_FOLDING_ENABLED, false);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.texteditor.AbstractDecoratedTextEditor#initializeKeyBindingScopes()
-	 */
 	@Override
 	protected void initializeKeyBindingScopes() {
 		setKeyBindingScopes(new String[] { "org.eclipse.ant.ui.AntEditorScope" }); //$NON-NLS-1$
@@ -1310,11 +1176,7 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		return getPreferenceStore();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.texteditor.AbstractDecoratedTextEditor#collectContextMenuPreferencePages()
-	 * 
+	/**
 	 * @since 3.1
 	 */
 	@Override
@@ -1363,7 +1225,7 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		OccurrencesFinder finder = new OccurrencesFinder(this, antModel, document, selection.getOffset());
 		positions = finder.perform();
 
-		if (positions == null || positions.size() == 0) {
+		if (positions == null || positions.isEmpty()) {
 			if (!fStickyOccurrenceAnnotations) {
 				removeOccurrenceAnnotations();
 			}
@@ -1400,8 +1262,8 @@ public class AntEditor extends TextEditor implements IReconcilingParticipant, IP
 		if (annotationModel instanceof IAnnotationModelExtension) {
 			((IAnnotationModelExtension) annotationModel).replaceAnnotations(fOccurrenceAnnotations, null);
 		} else {
-			for (int i = 0, length = fOccurrenceAnnotations.length; i < length; i++) {
-				annotationModel.removeAnnotation(fOccurrenceAnnotations[i]);
+			for (Annotation annotation : fOccurrenceAnnotations) {
+				annotationModel.removeAnnotation(annotation);
 			}
 		}
 		fOccurrenceAnnotations = null;

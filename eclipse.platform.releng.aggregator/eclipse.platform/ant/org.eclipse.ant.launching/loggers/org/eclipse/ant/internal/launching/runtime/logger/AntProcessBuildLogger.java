@@ -185,9 +185,7 @@ public class AntProcessBuildLogger extends NullBuildLogger {
 	 */
 	protected AntProcess getAntProcess(String processId) {
 		if (fProcess == null && processId != null) {
-			IProcess[] all = DebugPlugin.getDefault().getLaunchManager().getProcesses();
-			for (int i = 0; i < all.length; i++) {
-				IProcess process = all[i];
+			for (IProcess process : DebugPlugin.getDefault().getLaunchManager().getProcesses()) {
 				if (process instanceof AntProcess && processId.equals(process.getAttribute(AbstractEclipseBuildLogger.ANT_PROCESS_ID))) {
 					fProcess = (AntProcess) process;
 					break;
@@ -197,21 +195,11 @@ public class AntProcessBuildLogger extends NullBuildLogger {
 		return fProcess;
 	}
 
-	/*
-	 * (non-Javadoc) Set the start time.
-	 * 
-	 * @see org.apache.tools.ant.BuildListener#buildStarted(org.apache.tools.ant.BuildEvent)
-	 */
 	@Override
 	public void buildStarted(BuildEvent event) {
 		fStartTime = System.currentTimeMillis();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.tools.ant.BuildListener#buildFinished(org.apache.tools.ant.BuildEvent)
-	 */
 	@Override
 	public void buildFinished(BuildEvent event) {
 		String message = handleException(event);
@@ -278,11 +266,6 @@ public class AntProcessBuildLogger extends NullBuildLogger {
 		return result.toString();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.tools.ant.BuildListener#messageLogged(org.apache.tools.ant.BuildEvent)
-	 */
 	@Override
 	public void messageLogged(BuildEvent event) {
 		if (event.getPriority() > getMessageOutputLevel()) {
@@ -293,11 +276,6 @@ public class AntProcessBuildLogger extends NullBuildLogger {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.tools.ant.BuildListener#targetStarted(org.apache.tools.ant.BuildEvent)
-	 */
 	@Override
 	public void targetStarted(BuildEvent event) {
 		if (Project.MSG_INFO > getMessageOutputLevel()) {

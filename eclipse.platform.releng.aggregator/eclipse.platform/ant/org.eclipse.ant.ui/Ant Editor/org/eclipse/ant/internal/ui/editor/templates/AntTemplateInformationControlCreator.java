@@ -17,8 +17,6 @@ import org.eclipse.ant.internal.ui.editor.AntSourceViewerInformationControl;
 import org.eclipse.jface.text.IInformationControl;
 import org.eclipse.jface.text.IInformationControlCreator;
 import org.eclipse.jface.text.IInformationControlCreatorExtension;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.widgets.Shell;
 
 public class AntTemplateInformationControlCreator implements IInformationControlCreator, IInformationControlCreatorExtension {
@@ -28,32 +26,18 @@ public class AntTemplateInformationControlCreator implements IInformationControl
 	public AntTemplateInformationControlCreator() {
 	}
 
-	/*
-	 * @see org.eclipse.jface.text.IInformationControlCreator#createInformationControl(org.eclipse.swt.widgets.Shell)
-	 */
 	@Override
 	public IInformationControl createInformationControl(Shell parent) {
 		fControl = new AntSourceViewerInformationControl(parent);
-		fControl.addDisposeListener(new DisposeListener() {
-			@Override
-			public void widgetDisposed(DisposeEvent e) {
-				fControl = null;
-			}
-		});
+		fControl.addDisposeListener(e -> fControl = null);
 		return fControl;
 	}
 
-	/*
-	 * @see org.eclipse.jface.text.IInformationControlCreatorExtension#canReuse(org.eclipse.jface.text.IInformationControl)
-	 */
 	@Override
 	public boolean canReuse(IInformationControl control) {
 		return fControl == control && fControl != null;
 	}
 
-	/*
-	 * @see org.eclipse.jface.text.IInformationControlCreatorExtension#canReplace(org.eclipse.jface.text.IInformationControlCreator)
-	 */
 	@Override
 	public boolean canReplace(IInformationControlCreator creator) {
 		return (creator != null && getClass() == creator.getClass());

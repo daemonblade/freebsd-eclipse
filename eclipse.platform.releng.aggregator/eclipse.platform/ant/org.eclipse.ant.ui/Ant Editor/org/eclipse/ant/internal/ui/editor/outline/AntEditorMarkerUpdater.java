@@ -50,11 +50,6 @@ public class AntEditorMarkerUpdater {
 			setSystem(true);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.eclipse.core.internal.resources.WorkspaceJob#runInWorkspace(org.eclipse.core.runtime.IProgressMonitor)
-		 */
 		@Override
 		public IStatus runInWorkspace(IProgressMonitor monitor) {
 			updateMarkers0(fProblems);
@@ -67,11 +62,6 @@ public class AntEditorMarkerUpdater {
 	public static final String BUILDFILE_PROBLEM_MARKER = AntUIPlugin.PI_ANTUI + ".buildFileProblem"; //$NON-NLS-1$
 	private IFile fFile = null;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ant.internal.ui.editor.outline.IProblemRequestor#acceptProblem(org.eclipse.ant.internal.ui.editor.outline.IProblem)
-	 */
 	public synchronized void acceptProblem(IProblem problem) {
 		if (fCollectedProblems.contains(problem)) {
 			return;

@@ -85,7 +85,7 @@ public class Utils {
 			((MultiStatus) status).add(childrenStatus);
 			((MultiStatus) status).addAll(childrenStatus);
 		} else {
-			StringBuffer completeString = new StringBuffer(""); //$NON-NLS-1$
+			StringBuilder completeString = new StringBuilder(); //$NON-NLS-1$
 			if (s != null)
 				completeString.append(s);
 			if (e != null) {
@@ -224,9 +224,9 @@ public class Utils {
 		if (bundles == null)
 			return null;
 		//Return the first bundle that is not installed or uninstalled
-		for (int i = 0; i < bundles.length; i++) {
-			if ((bundles[i].getState() & (Bundle.INSTALLED | Bundle.UNINSTALLED)) == 0) {
-				return bundles[i];
+		for (Bundle bundle : bundles) {
+			if ((bundle.getState() & (Bundle.INSTALLED | Bundle.UNINSTALLED)) == 0) {
+				return bundle;
 			}
 		}
 		return null;
@@ -351,7 +351,7 @@ public class Utils {
 
 		String s = string.trim();
 
-		if (s.equals("")) //$NON-NLS-1$
+		if (s.isEmpty())
 			return string;
 
 		if (!s.startsWith(KEY_PREFIX))

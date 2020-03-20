@@ -130,13 +130,10 @@ public class AntModel implements IAntModel {
 	private AntEditorMarkerUpdater fMarkerUpdater = null;
 	private List<AntElementNode> fNonStructuralNodes = new ArrayList<>(1);
 
-	private IPreferenceChangeListener fCoreListener = new IPreferenceChangeListener() {
-		@Override
-		public void preferenceChange(PreferenceChangeEvent event) {
-			if (IAntCoreConstants.PREFERENCE_CLASSPATH_CHANGED.equals(event.getKey())) {
-				if (Boolean.parseBoolean((String) event.getNewValue()) == true) {
-					reconcileForPropertyChange(true);
-				}
+	private IPreferenceChangeListener fCoreListener = event -> {
+		if (IAntCoreConstants.PREFERENCE_CLASSPATH_CHANGED.equals(event.getKey())) {
+			if (Boolean.parseBoolean((String) event.getNewValue()) == true) {
+				reconcileForPropertyChange(true);
 			}
 		}
 	};
@@ -236,11 +233,6 @@ public class AntModel implements IAntModel {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#dispose()
-	 */
 	@Override
 	public void dispose() {
 		synchronized (getLockObject()) {
@@ -290,11 +282,6 @@ public class AntModel implements IAntModel {
 		fEncoding = null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#reconcile()
-	 */
 	@Override
 	public void reconcile() {
 		synchronized (fDirtyLock) {
@@ -473,8 +460,7 @@ public class AntModel implements IAntModel {
 		if (fProperties != null) {
 			Pattern pattern = Pattern.compile("\\$\\{.*_prompt.*\\}"); //$NON-NLS-1$
 			IStringVariableManager manager = VariablesPlugin.getDefault().getStringVariableManager();
-			for (Iterator<String> iter = fProperties.keySet().iterator(); iter.hasNext();) {
-				String name = iter.next();
+			for (String name : fProperties.keySet()) {
 				String value = fProperties.get(name);
 				if (!pattern.matcher(value).find()) {
 					try {
@@ -552,8 +538,7 @@ public class AntModel implements IAntModel {
 	private void setGlobalProperties(Project project) {
 		List<Property> properties = AntCorePlugin.getPlugin().getPreferences().getProperties();
 		if (properties != null) {
-			for (Iterator<Property> iter = properties.iterator(); iter.hasNext();) {
-				Property property = iter.next();
+			for (Property property : properties) {
 				String value = property.getValue(true);
 				if (value != null) {
 					project.setUserProperty(property.getName(), value);
@@ -642,11 +627,9 @@ public class AntModel implements IAntModel {
 		}
 		String buildFileNames = AntUIPlugin.getDefault().getCombinedPreferenceStore().getString(AntEditorPreferenceConstants.BUILDFILE_NAMES_TO_IGNORE);
 		if (buildFileNames.length() > 0) {
-			String[] names = AntUtil.parseString(buildFileNames, ","); //$NON-NLS-1$
 			String editedFileName = getEditedFile().getName();
-			for (int i = 0; i < names.length; i++) {
-				String string = names[i];
-				if (string.trim().equals(editedFileName)) {
+			for (String fileName : AntUtil.parseString(buildFileNames, ",")) { //$NON-NLS-1$
+				if (fileName.trim().equals(editedFileName)) {
 					fDoNotReportProblems = true;
 					return fDoNotReportProblems;
 				}
@@ -679,12 +662,6 @@ public class AntModel implements IAntModel {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#handleBuildException(org.apache.tools.ant.BuildException,
-	 * org.eclipse.ant.internal.ui.model.AntElementNode, int)
-	 */
 	@Override
 	public void handleBuildException(BuildException e, AntElementNode node, int severity) {
 		try {
@@ -747,11 +724,6 @@ public class AntModel implements IAntModel {
 		handleBuildException(e, node, AntModelProblem.SEVERITY_ERROR);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#getEditedFile()
-	 */
 	@Override
 	public File getEditedFile() {
 		if (fLocationProvider != null && fEditedFile == null) {
@@ -771,21 +743,11 @@ public class AntModel implements IAntModel {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#getLocationProvider()
-	 */
 	@Override
 	public LocationProvider getLocationProvider() {
 		return fLocationProvider;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#addTarget(org.apache.tools.ant.Target, int, int)
-	 */
 	@Override
 	public void addTarget(Target newTarget, int line, int column) {
 		AntTargetNode targetNode = AntTargetNode.newAntTargetNode(newTarget);
@@ -807,11 +769,6 @@ public class AntModel implements IAntModel {
 		computeOffset(targetNode, line, column);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#addProject(org.apache.tools.ant.Project, int, int)
-	 */
 	@Override
 	public void addProject(Project project, int line, int column) {
 		fProjectNode = new AntProjectNode((AntModelProject) project, this);
@@ -819,11 +776,6 @@ public class AntModel implements IAntModel {
 		computeOffset(fProjectNode, line, column);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#addDTD(java.lang.String, int, int)
-	 */
 	@Override
 	public void addDTD(String name, int line, int column) {
 		AntDTDNode node = new AntDTDNode(name);
@@ -845,12 +797,6 @@ public class AntModel implements IAntModel {
 		fNonStructuralNodes.add(node);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#addTask(org.apache.tools.ant.Task, org.apache.tools.ant.Task, org.xml.sax.Attributes, int,
-	 * int)
-	 */
 	@Override
 	public void addTask(Task newTask, Task parentTask, Attributes attributes, int line, int column) {
 		if (!canGetTaskInfo()) {
@@ -893,11 +839,6 @@ public class AntModel implements IAntModel {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#addEntity(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public void addEntity(String entityName, String entityPath) {
 		if (fEntityNameToPath == null) {
@@ -1122,11 +1063,6 @@ public class AntModel implements IAntModel {
 		return offset;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#getOffset(int, int)
-	 */
 	@Override
 	public int getOffset(int line, int column) throws BadLocationException {
 		return fDocument.getLineOffset(line - 1) + column - 1;
@@ -1155,11 +1091,6 @@ public class AntModel implements IAntModel {
 		return fDocument.getLineLength(line - 1) - lineDelimiterLength;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#setCurrentElementLength(int, int)
-	 */
 	@Override
 	public void setCurrentElementLength(int lineNumber, int column) {
 		fLastNode = fStillOpenElements.pop();
@@ -1180,11 +1111,6 @@ public class AntModel implements IAntModel {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#getFile()
-	 */
 	@Override
 	public IFile getFile() {
 		IPath location = fLocationProvider.getLocation();
@@ -1244,31 +1170,16 @@ public class AntModel implements IAntModel {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#warning(java.lang.Exception)
-	 */
 	@Override
 	public void warning(Exception exception) {
 		handleError(exception, AntModelProblem.SEVERITY_WARNING);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#error(java.lang.Exception)
-	 */
 	@Override
 	public void error(Exception exception) {
 		handleError(exception, AntModelProblem.SEVERITY_ERROR);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#errorFromElementText(java.lang.Exception, int, int)
-	 */
 	@Override
 	public void errorFromElementText(Exception exception, int start, int count) {
 		AntElementNode node = fLastNode;
@@ -1285,12 +1196,6 @@ public class AntModel implements IAntModel {
 		markHierarchy(fLastNode, AntModelProblem.SEVERITY_ERROR, exception.getMessage());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#errorFromElement(java.lang.Exception, org.eclipse.ant.internal.ui.model.AntElementNode, int,
-	 * int)
-	 */
 	@Override
 	public void errorFromElement(Exception exception, AntElementNode node, int lineNumber, int column) {
 		if (node == null) {
@@ -1432,11 +1337,6 @@ public class AntModel implements IAntModel {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#fatalError(java.lang.Exception)
-	 */
 	@Override
 	public void fatalError(Exception exception) {
 		handleError(exception, AntModelProblem.SEVERITY_FATAL_ERROR);
@@ -1449,11 +1349,6 @@ public class AntModel implements IAntModel {
 		return fStillOpenElements.peek();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#getEntityName(java.lang.String)
-	 */
 	@Override
 	public String getEntityName(String path) {
 		if (fEntityNameToPath != null) {
@@ -1514,11 +1409,6 @@ public class AntModel implements IAntModel {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#getProjectNode(boolean)
-	 */
 	@Override
 	public AntProjectNode getProjectNode(boolean doReconcile) {
 		if (doReconcile) {
@@ -1529,11 +1419,6 @@ public class AntModel implements IAntModel {
 		return fProjectNode;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#getProjectNode()
-	 */
 	@Override
 	public AntProjectNode getProjectNode() {
 		return getProjectNode(true);
@@ -1577,11 +1462,6 @@ public class AntModel implements IAntModel {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#addComment(int, int, int)
-	 */
 	@Override
 	public void addComment(int lineNumber, int columnNumber, int length) {
 		AntCommentNode commentNode = new AntCommentNode();
@@ -1599,42 +1479,22 @@ public class AntModel implements IAntModel {
 		fNonStructuralNodes.add(commentNode);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#needsTaskResolution()
-	 */
 	@Override
 	public boolean canGetTaskInfo() {
 		return fHasTaskInfo;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#needsLexicalResolution()
-	 */
 	@Override
 	public boolean canGetLexicalInfo() {
 		return fHasLexicalInfo;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#setClassLoader(java.net.URLClassLoader)
-	 */
 	@Override
 	public void setClassLoader(URLClassLoader loader) {
 		AntDefiningTaskNode.setJavaClassPath(loader.getURLs());
 		fLocalClassLoader = loader;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#needsPositionResolution()
-	 */
 	@Override
 	public boolean canGetPositionInfo() {
 		return fHasPositionInfo;
@@ -1654,11 +1514,6 @@ public class AntModel implements IAntModel {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#getText(int, int)
-	 */
 	@Override
 	public String getText(int offset, int length) {
 		try {
@@ -1798,21 +1653,11 @@ public class AntModel implements IAntModel {
 		fMarkerUpdater.updateMarkers();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#setProperties(java.util.Map)
-	 */
 	@Override
 	public void setProperties(Map<String, String> properties) {
 		fProperties = properties;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#setPropertyFiles(java.util.List)
-	 */
 	@Override
 	public void setPropertyFiles(String[] propertyFiles) {
 		if (propertyFiles != null) {
@@ -1839,8 +1684,7 @@ public class AntModel implements IAntModel {
 				// update the data structures for the new node as the offset may have changed.
 				List<String> tasks = fDefinerNodeIdentifierToDefinedTasks.get(nodeIdentifier);
 				if (tasks != null) {
-					for (Iterator<String> iter = tasks.iterator(); iter.hasNext();) {
-						String taskName = iter.next();
+					for (String taskName : tasks) {
 						fTaskNameToDefiningNode.put(taskName, node);
 					}
 				}
@@ -1939,11 +1783,6 @@ public class AntModel implements IAntModel {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#addPrefixMapping(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public void addPrefixMapping(String prefix, String uri) {
 		if (fNamespacePrefixMappings == null) {
@@ -2008,11 +1847,6 @@ public class AntModel implements IAntModel {
 		fEncoding = IAntCoreConstants.UTF_8;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.ant.internal.ui.model.IAntModel#getEncoding()
-	 */
 	@Override
 	public String getEncoding() {
 		return fEncoding;

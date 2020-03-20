@@ -162,10 +162,9 @@ public class FeatureEntry
 			// make externalized URL install relative
 			featureElement.setAttribute(CFG_URL, Utils.makeRelative(installURL, url));
 		
-		URL[] roots = getFeatureRootURLs();
-		for (int i=0; i<roots.length; i++) {
+		for (URL url : getFeatureRootURLs()) {
 			// make externalized URL install relative
-			String root = Utils.makeRelative(installURL, roots[i]).toExternalForm();
+			String root = Utils.makeRelative(installURL, url).toExternalForm();
 			if (root.trim().length() > 0){
 				Element rootElement = doc.createElement(CFG_FEATURE_ENTRY_ROOT);
 				rootElement.appendChild(doc.createTextNode(root));
@@ -186,8 +185,7 @@ public class FeatureEntry
 			fullParse();
 		
 		ArrayList<Bundle> bundles = new ArrayList<>(plugins.size());
-		for (int i=0; i<plugins.size(); i++) {
-			PluginEntry plugin = plugins.get(i);
+		for (PluginEntry plugin : plugins) {
 			// get the highest version for the plugin
 			Bundle bundle = Utils.getBundle(plugin.getPluginIdentifier());
 			if (bundle != null)
@@ -249,7 +247,7 @@ public class FeatureEntry
 			URL[] urls = branding.getWindowImagesURLs();
 			if (urls == null)
 				return null;
-			StringBuffer windowImagesURLs = new StringBuffer();
+			StringBuilder windowImagesURLs = new StringBuilder();
 			for (int i=0; i<urls.length; i++){
 				windowImagesURLs.append(urls[i].toExternalForm());
 				if (i != urls.length-1)
@@ -314,7 +312,7 @@ public class FeatureEntry
 			return null;
 		
 		String resolvedURL = Utils.getResourceString(getResourceBundle(), licenseURL);
-		if (resolvedURL.startsWith("http://")) //$NON-NLS-1$
+		if (resolvedURL.startsWith("http://") || resolvedURL.startsWith("https://")) //$NON-NLS-1$ //$NON-NLS-2$
 			return resolvedURL;
 		try {
 			return new URL(getSite().getResolvedURL(), getURL() + resolvedURL).toExternalForm();

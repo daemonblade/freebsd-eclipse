@@ -142,11 +142,6 @@ public abstract class AbstractAntUITest extends TestCase {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see junit.framework.TestCase#setUp()
-	 */
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -548,8 +543,7 @@ public abstract class AbstractAntUITest extends TestCase {
 				// no links have been added
 				return null;
 			}
-			for (int i = 0; i < positions.length; i++) {
-				Position position = positions[i];
+			for (Position position : positions) {
 				if (offset >= position.getOffset() && offset <= (position.getOffset() + position.getLength())) {
 					return ((ConsoleHyperlinkPosition) position).getHyperLink();
 				}

@@ -200,13 +200,11 @@ public final class AntUtil {
 		String allArgs = config.getAttribute(IExternalToolConstants.ATTR_TOOL_ARGUMENTS, (String) null);
 		Map<String, String> properties = new HashMap<>();
 		if (allArgs != null) {
-			String[] arguments = ExternalToolsUtil.parseStringIntoList(allArgs);
 			// filter arguments to avoid resolving variables that will prompt the user
 			List<String> filtered = new ArrayList<>();
 			Pattern pattern = Pattern.compile("\\$\\{.*_prompt.*\\}"); //$NON-NLS-1$
 			IStringVariableManager manager = VariablesPlugin.getDefault().getStringVariableManager();
-			for (int i = 0; i < arguments.length; i++) {
-				String arg = arguments[i];
+			for (String arg : ExternalToolsUtil.parseStringIntoList(allArgs)) {
 				if (arg.startsWith("-D")) { //$NON-NLS-1$
 					if (!pattern.matcher(arg).find()) {
 						filtered.add(manager.performStringSubstitution(arg, false));
@@ -238,7 +236,7 @@ public final class AntUtil {
 				targets.add(node);
 			}
 		}
-		if (targets.size() == 0) {
+		if (targets.isEmpty()) {
 			return null;
 		}
 		return targets.toArray(new AntTargetNode[targets.size()]);
@@ -296,21 +294,11 @@ public final class AntUtil {
 		}
 		final IFile file = getFileForLocation(buildFile.getAbsolutePath(), null);
 		LocationProvider provider = new LocationProvider(null) {
-			/*
-			 * (non-Javadoc)
-			 * 
-			 * @see org.eclipse.ant.internal.ui.model.LocationProvider#getFile()
-			 */
 			@Override
 			public IFile getFile() {
 				return file;
 			}
 
-			/*
-			 * (non-Javadoc)
-			 * 
-			 * @see org.eclipse.ant.internal.ui.model.LocationProvider#getLocation()
-			 */
 			@Override
 			public IPath getLocation() {
 				if (file == null) {

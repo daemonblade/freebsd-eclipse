@@ -35,20 +35,15 @@ import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.variables.VariablesPlugin;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.StatusDialog;
-import org.eclipse.jface.viewers.DoubleClickEvent;
-import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -109,11 +104,6 @@ public class AddCustomDialog extends StatusDialog {
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
-	 */
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite topComposite = (Composite) super.createDialogArea(parent);
@@ -150,19 +140,9 @@ public class AddCustomDialog extends StatusDialog {
 		nameField.setLayoutData(data);
 		nameField.setFont(topComposite.getFont());
 		nameField.setText(name);
-		nameField.addModifyListener(new ModifyListener() {
-			@Override
-			public void modifyText(ModifyEvent e) {
-				updateStatus();
-			}
-		});
+		nameField.addModifyListener(e -> updateStatus());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
-	 */
 	@Override
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
@@ -187,7 +167,8 @@ public class AddCustomDialog extends StatusDialog {
 			file.close();
 		}
 		catch (IOException e) {
-			AntUIPlugin.log(MessageFormat.format(AntPreferencesMessages.AddCustomDialog_Could_not_close_zip_file__0__4, new Object[] { file.getName() }), e);
+			AntUIPlugin.log(MessageFormat.format(AntPreferencesMessages.AddCustomDialog_Could_not_close_zip_file__0__4, new Object[] {
+					file.getName() }), e);
 			return false;
 		}
 
@@ -220,9 +201,6 @@ public class AddCustomDialog extends StatusDialog {
 			sourceNameField.add(entry.getLabel());
 		}
 		sourceNameField.addKeyListener(new KeyAdapter() {
-			/*
-			 * @see KeyListener.keyPressed
-			 */
 			@Override
 			public void keyPressed(KeyEvent e) {
 				// If there has been a key pressed then mark as dirty
@@ -231,9 +209,6 @@ public class AddCustomDialog extends StatusDialog {
 		});
 
 		sourceNameField.addFocusListener(new FocusAdapter() {
-			/*
-			 * @see FocusListener.focusLost(FocusEvent)
-			 */
 			@Override
 			public void focusLost(FocusEvent e) {
 				// Clear the flag to prevent constant update
@@ -316,23 +291,15 @@ public class AddCustomDialog extends StatusDialog {
 		FileSystemElement dummyRoot = new FileSystemElement("Dummy", null, true); //$NON-NLS-1$
 		this.selectionGroup = new TreeAndListGroup(parent, dummyRoot, getFolderProvider(), new WorkbenchLabelProvider(), getFileProvider(), new WorkbenchLabelProvider(), SWT.NONE, 400, 150, false);
 
-		ISelectionChangedListener listener = new ISelectionChangedListener() {
-			@Override
-			public void selectionChanged(SelectionChangedEvent event) {
-				updateStatus();
-			}
-		};
+		ISelectionChangedListener listener = event -> updateStatus();
 
 		WorkbenchViewerComparator comparator = new WorkbenchViewerComparator();
 		this.selectionGroup.setTreeComparator(comparator);
 		this.selectionGroup.setListSorter(comparator);
 		this.selectionGroup.addSelectionChangedListener(listener);
-		selectionGroup.addDoubleClickListener(new IDoubleClickListener() {
-			@Override
-			public void doubleClick(DoubleClickEvent event) {
-				if (getButton(IDialogConstants.OK_ID).isEnabled()) {
-					buttonPressed(IDialogConstants.OK_ID);
-				}
+		selectionGroup.addDoubleClickListener(event -> {
+			if (getButton(IDialogConstants.OK_ID).isEnabled()) {
+				buttonPressed(IDialogConstants.OK_ID);
 			}
 		});
 	}
@@ -547,22 +514,12 @@ public class AddCustomDialog extends StatusDialog {
 		};
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.dialogs.Dialog#cancelPressed()
-	 */
 	@Override
 	protected void cancelPressed() {
 		clearProviderCache();
 		super.cancelPressed();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.dialogs.Dialog#okPressed()
-	 */
 	@Override
 	protected void okPressed() {
 		clearProviderCache();
@@ -627,11 +584,6 @@ public class AddCustomDialog extends StatusDialog {
 		this.className = className;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.window.Window#create()
-	 */
 	@Override
 	public void create() {
 		super.create();

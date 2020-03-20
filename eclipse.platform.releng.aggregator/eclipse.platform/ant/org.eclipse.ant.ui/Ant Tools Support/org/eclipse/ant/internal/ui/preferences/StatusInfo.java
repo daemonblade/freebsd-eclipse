@@ -74,11 +74,6 @@ public class StatusInfo implements IStatus {
 		return fSeverity == IStatus.ERROR;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.core.runtime.IStatus#getMessage()
-	 */
 	@Override
 	public String getMessage() {
 		return fStatusMessage;
@@ -128,9 +123,6 @@ public class StatusInfo implements IStatus {
 		fSeverity = IStatus.OK;
 	}
 
-	/*
-	 * @see IStatus#matches(int)
-	 */
 	@Override
 	public boolean matches(int severityMask) {
 		return (fSeverity & severityMask) != 0;
@@ -146,17 +138,11 @@ public class StatusInfo implements IStatus {
 		return false;
 	}
 
-	/*
-	 * @see IStatus#getSeverity()
-	 */
 	@Override
 	public int getSeverity() {
 		return fSeverity;
 	}
 
-	/*
-	 * @see IStatus#getPlugin()
-	 */
 	@Override
 	public String getPlugin() {
 		return IAntUIConstants.PLUGIN_ID;

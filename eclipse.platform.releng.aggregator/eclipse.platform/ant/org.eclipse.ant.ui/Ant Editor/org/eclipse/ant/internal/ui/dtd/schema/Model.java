@@ -110,8 +110,8 @@ public class Model implements IModel {
 		copy.fLeaf = fLeaf;
 		if (fContents != null) {
 			copy.fContentsList = new LinkedList<>();
-			for (int i = 0; i < fContents.length; i++) {
-				copy.fContentsList.add(fContents[i]);
+			for (IModel content : fContents) {
+				copy.fContentsList.add(content);
 			}
 		} else if (fContentsList != null) {
 			copy.fContentsList = new LinkedList<>();
@@ -123,33 +123,21 @@ public class Model implements IModel {
 		return copy;
 	}
 
-	/**
-	 * @see org.eclipse.ant.internal.ui.dtd.IModel#getKind()
-	 */
 	@Override
 	public int getKind() {
 		return 0;
 	}
 
-	/**
-	 * @see org.eclipse.ant.internal.ui.dtd.IModel#getMinOccurs()
-	 */
 	@Override
 	public int getMinOccurs() {
 		return fMin;
 	}
 
-	/**
-	 * @see org.eclipse.ant.internal.ui.dtd.IModel#getMaxOccurs()
-	 */
 	@Override
 	public int getMaxOccurs() {
 		return fMax;
 	}
 
-	/**
-	 * @see org.eclipse.ant.internal.ui.dtd.IModel#getContents()
-	 */
 	@Override
 	public IModel[] getContents() {
 		// A model contents may be referred to many times
@@ -164,27 +152,16 @@ public class Model implements IModel {
 		return fContents;
 	}
 
-	/**
-	 * @see org.eclipse.ant.internal.ui.dtd.IModel#getLeaf()
-	 */
 	@Override
 	public IAtom getLeaf() {
 		return fLeaf;
 	}
 
-	/**
-	 * @see org.eclipse.ant.internal.ui.dtd.IModel#getOperator()
-	 */
 	@Override
 	public String getOperator() {
 		return fOps[fKind];
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ant.internal.ui.dtd.IModel#stringRep()
-	 */
 	@Override
 	public String stringRep() {
 		StringBuffer buf = new StringBuffer();
@@ -217,17 +194,11 @@ public class Model implements IModel {
 		}
 	}
 
-	/**
-	 * @see org.eclipse.ant.internal.ui.dtd.IModel#getQualifier()
-	 */
 	@Override
 	public String getQualifier() {
 		return fMin == 1 ? (fMax == UNBOUNDED ? "+" : IAntCoreConstants.EMPTY_STRING) : (fMax == UNBOUNDED ? "*" : "?"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
-	/**
-	 * @see org.eclipse.ant.internal.ui.dtd.IModel#toNfm()
-	 */
 	@Override
 	public Nfm toNfm() {
 		Nfm nfm = null;

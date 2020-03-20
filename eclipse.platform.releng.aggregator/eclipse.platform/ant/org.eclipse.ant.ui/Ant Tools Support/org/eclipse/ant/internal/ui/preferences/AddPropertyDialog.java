@@ -18,8 +18,6 @@ import org.eclipse.debug.ui.StringVariableSelectionDialog;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -52,11 +50,6 @@ public class AddPropertyDialog extends Dialog {
 		fInitialValues = initialValues;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
-	 */
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite comp = (Composite) super.createDialogArea(parent);
@@ -72,12 +65,7 @@ public class AddPropertyDialog extends Dialog {
 		gd.widthHint = 300;
 		fNameText.setLayoutData(gd);
 		fNameText.setFont(comp.getFont());
-		fNameText.addModifyListener(new ModifyListener() {
-			@Override
-			public void modifyText(ModifyEvent e) {
-				updateButtons();
-			}
-		});
+		fNameText.addModifyListener(e -> updateButtons());
 
 		fValueLabel = new Label(comp, SWT.NONE);
 		fValueLabel.setText(AntPreferencesMessages.AddPropertyDialog__Value__2);
@@ -89,12 +77,7 @@ public class AddPropertyDialog extends Dialog {
 		gd.widthHint = 300;
 		fValueText.setLayoutData(gd);
 		fValueText.setFont(comp.getFont());
-		fValueText.addModifyListener(new ModifyListener() {
-			@Override
-			public void modifyText(ModifyEvent e) {
-				updateButtons();
-			}
-		});
+		fValueText.addModifyListener(e -> updateButtons());
 
 		Button variablesButton = new Button(comp, SWT.PUSH);
 		variablesButton.setText(AntPreferencesMessages.AddPropertyDialog_2);
@@ -133,11 +116,6 @@ public class AddPropertyDialog extends Dialog {
 		return new String[] { fName, fValue };
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.dialogs.Dialog#buttonPressed(int)
-	 */
 	@Override
 	protected void buttonPressed(int buttonId) {
 		if (buttonId == IDialogConstants.OK_ID) {
@@ -151,11 +129,6 @@ public class AddPropertyDialog extends Dialog {
 		super.buttonPressed(buttonId);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
-	 */
 	@Override
 	protected void configureShell(Shell shell) {
 		super.configureShell(shell);

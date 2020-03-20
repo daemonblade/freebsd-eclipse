@@ -25,9 +25,7 @@ import org.eclipse.ant.internal.ui.model.AntProjectNode;
 import org.eclipse.ant.internal.ui.model.AntProjectNodeProxy;
 import org.eclipse.ant.internal.ui.model.AntTargetNode;
 import org.eclipse.ant.internal.ui.views.AntView;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.IUpdate;
@@ -62,9 +60,8 @@ public class RefreshBuildFilesAction extends Action implements IUpdate {
 		final Set<AntProjectNode> projects = getSelectedProjects();
 		if (projects.isEmpty()) {
 			// If no selection, add all
-			AntProjectNode[] allProjects = fView.getProjects();
-			for (int i = 0; i < allProjects.length; i++) {
-				projects.add(allProjects[i]);
+			for (AntProjectNode antproject : fView.getProjects()) {
+				projects.add(antproject);
 			}
 		}
 		final Iterator<AntProjectNode> iter = projects.iterator();
@@ -73,17 +70,14 @@ public class RefreshBuildFilesAction extends Action implements IUpdate {
 		}
 
 		try {
-			PlatformUI.getWorkbench().getProgressService().busyCursorWhile(new IRunnableWithProgress() {
-				@Override
-				public void run(IProgressMonitor monitor) {
-					monitor.beginTask(AntViewActionMessages.RefreshBuildFilesAction_Refreshing_buildfiles_3, projects.size());
-					AntProjectNodeProxy project;
-					while (iter.hasNext()) {
-						project = (AntProjectNodeProxy) iter.next();
-						monitor.subTask(MessageFormat.format(AntViewActionMessages.RefreshBuildFilesAction_Refreshing__0__4, new Object[] { project.getBuildFileName() }));
-						project.parseBuildFile(true);
-						monitor.worked(1);
-					}
+			PlatformUI.getWorkbench().getProgressService().busyCursorWhile(monitor -> {
+				monitor.beginTask(AntViewActionMessages.RefreshBuildFilesAction_Refreshing_buildfiles_3, projects.size());
+				AntProjectNodeProxy project;
+				while (iter.hasNext()) {
+					project = (AntProjectNodeProxy) iter.next();
+					monitor.subTask(MessageFormat.format(AntViewActionMessages.RefreshBuildFilesAction_Refreshing__0__4, new Object[] { project.getBuildFileName() }));
+					project.parseBuildFile(true);
+					monitor.worked(1);
 				}
 			});
 		}

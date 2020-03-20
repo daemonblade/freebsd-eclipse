@@ -28,7 +28,6 @@ import org.eclipse.ant.internal.ui.editor.actions.TogglePresentationAction;
 import org.eclipse.ant.internal.ui.model.AntElementNode;
 import org.eclipse.ant.internal.ui.model.AntImportNode;
 import org.eclipse.ant.internal.ui.model.AntModel;
-import org.eclipse.ant.internal.ui.model.AntModelChangeEvent;
 import org.eclipse.ant.internal.ui.model.AntModelContentProvider;
 import org.eclipse.ant.internal.ui.model.AntModelCore;
 import org.eclipse.ant.internal.ui.model.AntModelLabelProvider;
@@ -39,13 +38,9 @@ import org.eclipse.ant.internal.ui.model.AntTaskNode;
 import org.eclipse.ant.internal.ui.model.IAntModel;
 import org.eclipse.ant.internal.ui.model.IAntModelListener;
 import org.eclipse.ant.internal.ui.views.actions.AntOpenWithMenu;
-
 import org.eclipse.core.resources.IFile;
-
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.ListenerList;
-
-import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
@@ -59,18 +54,14 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
-
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
-
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.part.IPageSite;
 import org.eclipse.ui.part.IShowInSource;
 import org.eclipse.ui.part.ShowInContext;
-
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
-
 import org.eclipse.ui.views.contentoutline.ContentOutlinePage;
 
 /**
@@ -133,11 +124,6 @@ public class AntEditorContentOutlinePage extends ContentOutlinePage implements I
 	}
 
 	private class AntOutlineComparator extends ViewerComparator {
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.eclipse.jface.viewers.ViewerComparator#compare(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
-		 */
 		@Override
 		public int compare(Viewer viewer, Object e1, Object e2) {
 			if (!(e1 instanceof AntElementNode && e2 instanceof AntElementNode)) {
@@ -282,11 +268,6 @@ public class AntEditorContentOutlinePage extends ContentOutlinePage implements I
 		fTogglePresentation.setEditor(editor);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.part.IPage#dispose()
-	 */
 	@Override
 	public void dispose() {
 		if (fMenu != null) {
@@ -324,12 +305,7 @@ public class AntEditorContentOutlinePage extends ContentOutlinePage implements I
 
 		MenuManager manager = new MenuManager("#PopUp"); //$NON-NLS-1$
 		manager.setRemoveAllWhenShown(true);
-		manager.addMenuListener(new IMenuListener() {
-			@Override
-			public void menuAboutToShow(IMenuManager menuManager) {
-				contextMenuAboutToShow(menuManager);
-			}
-		});
+		manager.addMenuListener(menuManager -> contextMenuAboutToShow(menuManager));
 		fMenu = manager.createContextMenu(viewer.getTree());
 		viewer.getTree().setMenu(fMenu);
 
@@ -348,12 +324,7 @@ public class AntEditorContentOutlinePage extends ContentOutlinePage implements I
 
 		fOpenWithMenu = new AntOpenWithMenu(this.getSite().getPage());
 
-		viewer.addPostSelectionChangedListener(new ISelectionChangedListener() {
-			@Override
-			public void selectionChanged(SelectionChangedEvent event) {
-				firePostSelectionChanged(event.getSelection());
-			}
-		});
+		viewer.addPostSelectionChangedListener(event -> firePostSelectionChanged(event.getSelection()));
 
 		site.getActionBars().setGlobalActionHandler(ITextEditorActionDefinitionIds.TOGGLE_SHOW_SELECTED_ELEMENT_ONLY, fTogglePresentation);
 	}
@@ -390,18 +361,15 @@ public class AntEditorContentOutlinePage extends ContentOutlinePage implements I
 	}
 
 	private IAntModelListener createAntModelChangeListener() {
-		return new IAntModelListener() {
-			@Override
-			public void antModelChanged(final AntModelChangeEvent event) {
-				if (event.getModel() == fModel && !getControl().isDisposed()) {
-					getControl().getDisplay().asyncExec(() -> {
-						Control ctrl = getControl();
-						if (ctrl != null && !ctrl.isDisposed()) {
-							getTreeViewer().refresh();
-							updateTreeExpansion();
-						}
-					});
-				}
+		return event -> {
+			if (event.getModel() == fModel && !getControl().isDisposed()) {
+				getControl().getDisplay().asyncExec(() -> {
+					Control ctrl = getControl();
+					if (ctrl != null && !ctrl.isDisposed()) {
+						getTreeViewer().refresh();
+						updateTreeExpansion();
+					}
+				});
 			}
 		};
 	}
@@ -482,11 +450,6 @@ public class AntEditorContentOutlinePage extends ContentOutlinePage implements I
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
-	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getAdapter(Class<T> key) {
@@ -496,11 +459,6 @@ public class AntEditorContentOutlinePage extends ContentOutlinePage implements I
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.part.IShowInSource#getShowInContext()
-	 */
 	@Override
 	public ShowInContext getShowInContext() {
 		IFile file = null;

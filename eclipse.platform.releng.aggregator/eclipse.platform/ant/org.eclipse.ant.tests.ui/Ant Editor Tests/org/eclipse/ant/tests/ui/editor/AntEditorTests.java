@@ -299,7 +299,8 @@ public class AntEditorTests extends AbstractAntUITest {
 		assertNotNull(region);
 		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
 		String text = doc.get(region.getOffset(), region.getLength());
-		assertTrue("Region incorrect. Expected length of 7 and text of \"compile\", length was " + region.getLength() + " and text was " + text, region.getLength() == 7 && "compile".equals(text)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		assertTrue("Region incorrect. Expected length of 7 and text of \"compile\", length was " + region.getLength() + " and text was " //$NON-NLS-1$ //$NON-NLS-2$
+				+ text, region.getLength() == 7 && "compile".equals(text)); //$NON-NLS-1$
 	}
 
 	public void testOpenImport() throws PartInitException {
@@ -308,6 +309,28 @@ public class AntEditorTests extends AbstractAntUITest {
 
 		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
 
+		assertNotNull("Should have a document", doc); //$NON-NLS-1$
+	}
+
+	public void testOpenImportViaClasspath() throws PartInitException {
+		IFile file = getIFile("importViaClasspath.xml"); //$NON-NLS-1$
+		AntEditor editor = (AntEditor) EditorTestHelper.openInEditor(file, "org.eclipse.ant.ui.internal.editor.AntEditor", true); //$NON-NLS-1$
+		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+		assertNotNull("Should have a document", doc); //$NON-NLS-1$
+
+		file = getIFile("BaseBaseBuild.xml"); //$NON-NLS-1$
+		editor = (AntEditor) EditorTestHelper.openInEditor(file, "org.eclipse.ant.ui.internal.editor.AntEditor", true); //$NON-NLS-1$
+		doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+		assertNotNull("Should have a document", doc); //$NON-NLS-1$
+
+		file = getIFile("BaseBuild.xml"); //$NON-NLS-1$
+		editor = (AntEditor) EditorTestHelper.openInEditor(file, "org.eclipse.ant.ui.internal.editor.AntEditor", true); //$NON-NLS-1$
+		doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+		assertNotNull("Should have a document", doc); //$NON-NLS-1$
+
+		file = getIFile("Base.xml"); //$NON-NLS-1$
+		editor = (AntEditor) EditorTestHelper.openInEditor(file, "org.eclipse.ant.ui.internal.editor.AntEditor", true); //$NON-NLS-1$
+		doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
 		assertNotNull("Should have a document", doc); //$NON-NLS-1$
 	}
 
@@ -328,11 +351,6 @@ public class AntEditorTests extends AbstractAntUITest {
 		return offset;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see junit.framework.TestCase#tearDown()
-	 */
 	@Override
 	protected void tearDown() throws Exception {
 		EditorTestHelper.closeAllEditors();

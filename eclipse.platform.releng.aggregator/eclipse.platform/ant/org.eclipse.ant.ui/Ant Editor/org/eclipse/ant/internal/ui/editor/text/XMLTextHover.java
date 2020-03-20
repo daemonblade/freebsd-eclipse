@@ -37,7 +37,6 @@ import org.eclipse.jface.internal.text.html.HTMLPrinter;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DefaultInformationControl;
 import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.IInformationControl;
 import org.eclipse.jface.text.IInformationControlCreator;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextHover;
@@ -49,7 +48,6 @@ import org.eclipse.jface.text.information.IInformationProviderExtension2;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.text.source.ISourceViewer;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.editors.text.EditorsUI;
 
 public class XMLTextHover implements ITextHover, ITextHoverExtension, IInformationProviderExtension2 {
@@ -80,8 +78,8 @@ public class XMLTextHover implements ITextHover, ITextHoverExtension, IInformati
 		HTMLPrinter.addPageProlog(buffer);
 		HTMLPrinter.addSmallHeader(buffer, AntEditorTextMessages.XMLTextHover_4);
 		HTMLPrinter.startBulletList(buffer);
-		for (int i = 0; i < list.length; i++) {
-			HTMLPrinter.addBullet(buffer, list[i]);
+		for (String element : list) {
+			HTMLPrinter.addBullet(buffer, element);
 		}
 		HTMLPrinter.endBulletList(buffer);
 		HTMLPrinter.addPageEpilog(buffer);
@@ -200,16 +198,16 @@ public class XMLTextHover implements ITextHover, ITextHoverExtension, IInformati
 		HTMLPrinter.addPageProlog(buffer);
 		if (includes != null && includes.length > 0) {
 			HTMLPrinter.addSmallHeader(buffer, AntEditorTextMessages.XMLTextHover_5);
-			for (int i = 0; i < includes.length; i++) {
-				HTMLPrinter.addBullet(buffer, includes[i]);
+			for (String include : includes) {
+				HTMLPrinter.addBullet(buffer, include);
 			}
 		}
 		HTMLPrinter.addParagraph(buffer, IAntCoreConstants.EMPTY_STRING);
 		HTMLPrinter.addParagraph(buffer, IAntCoreConstants.EMPTY_STRING);
 		if (excludes != null && excludes.length > 0) {
 			HTMLPrinter.addSmallHeader(buffer, AntEditorTextMessages.XMLTextHover_6);
-			for (int i = 0; i < excludes.length; i++) {
-				HTMLPrinter.addBullet(buffer, excludes[i]);
+			for (String exclude : excludes) {
+				HTMLPrinter.addBullet(buffer, exclude);
 			}
 		}
 		HTMLPrinter.addPageEpilog(buffer);
@@ -332,19 +330,9 @@ public class XMLTextHover implements ITextHover, ITextHoverExtension, IInformati
 		return r;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.text.ITextHoverExtension#getHoverControlCreator()
-	 */
 	@Override
 	public IInformationControlCreator getHoverControlCreator() {
-		return new IInformationControlCreator() {
-			@Override
-			public IInformationControl createInformationControl(Shell parent) {
-				return new DefaultInformationControl(parent, EditorsUI.getTooltipAffordanceString());
-			}
-		};
+		return parent -> new DefaultInformationControl(parent, EditorsUI.getTooltipAffordanceString());
 	}
 
 	/**
@@ -360,9 +348,7 @@ public class XMLTextHover implements ITextHover, ITextHoverExtension, IInformati
 		return null;
 	}
 
-	/*
-	 * @see org.eclipse.jface.text.information.IInformationProviderExtension2#getInformationPresenterControlCreator()
-	 * 
+	/**
 	 * @since 3.3
 	 */
 	@Override

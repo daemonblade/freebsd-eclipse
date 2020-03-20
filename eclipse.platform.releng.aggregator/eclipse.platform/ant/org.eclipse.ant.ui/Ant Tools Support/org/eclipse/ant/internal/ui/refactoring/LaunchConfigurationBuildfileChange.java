@@ -121,8 +121,7 @@ public class LaunchConfigurationBuildfileChange extends Change {
 	 */
 	private static List<Change> createChangesForProjectRename(ILaunchConfiguration[] configs, String projectName, String newProjectName) throws CoreException {
 		List<Change> changes = new ArrayList<>();
-		for (int i = 0; i < configs.length; i++) {
-			ILaunchConfiguration launchConfiguration = configs[i];
+		for (ILaunchConfiguration launchConfiguration : configs) {
 			String launchConfigurationProjectName = launchConfiguration.getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, (String) null);
 			if (projectName.equals(launchConfigurationProjectName)) {
 				LaunchConfigurationBuildfileChange change = new LaunchConfigurationBuildfileChange(launchConfiguration, null, null, newProjectName, false);
@@ -142,8 +141,7 @@ public class LaunchConfigurationBuildfileChange extends Change {
 	 */
 	private static List<Change> createChangesForBuildfileRename(IFile buildfile, ILaunchConfiguration[] configs, String projectName, String newBuildfileName) throws CoreException {
 		List<Change> changes = new ArrayList<>();
-		for (int i = 0; i < configs.length; i++) {
-			ILaunchConfiguration launchConfiguration = configs[i];
+		for (ILaunchConfiguration launchConfiguration : configs) {
 			String launchConfigurationProjectName = launchConfiguration.getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, (String) null);
 			if (projectName.equals(launchConfigurationProjectName)) {
 				LaunchConfigurationBuildfileChange change = new LaunchConfigurationBuildfileChange(launchConfiguration, buildfile.getName(), newBuildfileName, null, false);
@@ -190,11 +188,6 @@ public class LaunchConfigurationBuildfileChange extends Change {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ltk.core.refactoring.Change#getName()
-	 */
 	@Override
 	public String getName() {
 		if (fNewLaunchConfigurationName != null) {
@@ -207,21 +200,11 @@ public class LaunchConfigurationBuildfileChange extends Change {
 		return MessageFormat.format(RefactoringMessages.LaunchConfigurationBuildfileChange_2, new Object[] { fLaunchConfiguration.getName() });
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ltk.core.refactoring.Change#initializeValidationData(org.eclipse.core.runtime.IProgressMonitor)
-	 */
 	@Override
 	public void initializeValidationData(IProgressMonitor pm) {
 		// do nothing
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ltk.core.refactoring.Change#isValid(org.eclipse.core.runtime.IProgressMonitor)
-	 */
 	@Override
 	public RefactoringStatus isValid(IProgressMonitor pm) throws CoreException, OperationCanceledException {
 		if (fLaunchConfiguration.exists()) {
@@ -238,14 +221,10 @@ public class LaunchConfigurationBuildfileChange extends Change {
 			return RefactoringStatus.createWarningStatus(MessageFormat.format(RefactoringMessages.LaunchConfigurationBuildfileChange_5, new Object[] {
 					fLaunchConfiguration.getName(), fOldBuildfileLocation }));
 		}
-		return RefactoringStatus.createFatalErrorStatus(MessageFormat.format(RefactoringMessages.LaunchConfigurationBuildfileChange_6, new Object[] { fLaunchConfiguration.getName() }));
+		return RefactoringStatus.createFatalErrorStatus(MessageFormat.format(RefactoringMessages.LaunchConfigurationBuildfileChange_6, new Object[] {
+				fLaunchConfiguration.getName() }));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ltk.core.refactoring.Change#perform(org.eclipse.core.runtime.IProgressMonitor)
-	 */
 	@Override
 	public Change perform(IProgressMonitor pm) throws CoreException {
 		if (fNewConfigContainerName != null) {
@@ -288,11 +267,6 @@ public class LaunchConfigurationBuildfileChange extends Change {
 		return new LaunchConfigurationBuildfileChange(fNewLaunchConfiguration, fNewBuildfileLocation, fOldBuildfileLocation, oldProjectName, true);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ltk.core.refactoring.Change#getModifiedElement()
-	 */
 	@Override
 	public Object getModifiedElement() {
 		return fLaunchConfiguration;

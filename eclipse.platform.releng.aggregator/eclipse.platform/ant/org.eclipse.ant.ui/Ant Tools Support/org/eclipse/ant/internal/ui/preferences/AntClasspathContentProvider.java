@@ -91,9 +91,6 @@ public class AntClasspathContentProvider implements ITreeContentProvider {
 		refresh();
 	}
 
-	/**
-	 * @see ITreeContentProvider#getParent(Object)
-	 */
 	@Override
 	public Object getParent(Object element) {
 		if (element instanceof ClasspathEntry) {
@@ -106,9 +103,6 @@ public class AntClasspathContentProvider implements ITreeContentProvider {
 		return null;
 	}
 
-	/**
-	 * @see ITreeContentProvider#hasChildren(Object)
-	 */
 	@Override
 	public boolean hasChildren(Object element) {
 		if (element instanceof ClasspathEntry) {
@@ -125,32 +119,17 @@ public class AntClasspathContentProvider implements ITreeContentProvider {
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java.lang.Object)
-	 */
 	@Override
 	public Object[] getElements(Object inputElement) {
 		return getChildren(inputElement);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
-	 */
 	@Override
 	public void dispose() {
 		// do nothing
 
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		treeViewer = (TreeViewer) viewer;
@@ -165,11 +144,6 @@ public class AntClasspathContentProvider implements ITreeContentProvider {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
-	 */
 	@Override
 	public Object[] getChildren(Object parentElement) {
 		if (parentElement instanceof GlobalClasspathEntries) {
@@ -180,9 +154,7 @@ public class AntClasspathContentProvider implements ITreeContentProvider {
 		}
 		if (parentElement == null) {
 			List<Object> all = new ArrayList<>();
-			Object[] topEntries = model.getEntries();
-			for (int i = 0; i < topEntries.length; i++) {
-				Object object = topEntries[i];
+			for (Object object : model.getEntries()) {
 				if (object instanceof ClasspathEntry) {
 					all.add(object);
 				} else if (object instanceof GlobalClasspathEntries) {

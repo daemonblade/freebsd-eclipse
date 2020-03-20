@@ -50,11 +50,6 @@ public class EditAntHomeEntryAction extends RuntimeClasspathAction {
 		fTab = tab;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.action.IAction#run()
-	 */
 	@Override
 	public void run() {
 		IDialogSettings dialogSettings = AntUIPlugin.getDefault().getDialogSettings();
@@ -77,9 +72,7 @@ public class EditAntHomeEntryAction extends RuntimeClasspathAction {
 		}
 		fTab.setDirty(true);
 		// update existing entry or add a new one
-		IRuntimeClasspathEntry[] entries = getViewer().getEntries();
-		for (int i = 0; i < entries.length; i++) {
-			IRuntimeClasspathEntry entry = entries[i];
+		for (IRuntimeClasspathEntry entry : getViewer().getEntries()) {
 			if (entry.getType() == IRuntimeClasspathEntry.OTHER) {
 				IRuntimeClasspathEntry2 entry2 = (IRuntimeClasspathEntry2) ((ClasspathEntry) entry).getDelegate();
 				if (entry2.getTypeId().equals(AntHomeClasspathEntry.TYPE_ID)) {
@@ -94,9 +87,6 @@ public class EditAntHomeEntryAction extends RuntimeClasspathAction {
 		getViewer().addEntries(new IRuntimeClasspathEntry[] { new AntHomeClasspathEntry(path) });
 	}
 
-	/**
-	 * @see SelectionListenerAction#updateSelection(IStructuredSelection)
-	 */
 	@Override
 	protected boolean updateSelection(IStructuredSelection selection) {
 		return true;

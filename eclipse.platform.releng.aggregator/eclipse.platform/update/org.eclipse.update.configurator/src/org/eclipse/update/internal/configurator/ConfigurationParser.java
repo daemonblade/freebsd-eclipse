@@ -218,7 +218,7 @@ public class ConfigurationParser extends DefaultHandler implements IConfiguratio
 			site.setEnabled(true);
 
 		String linkname = attributes.getValue(CFG_LINK_FILE); 
-		if (linkname != null && !linkname.equals("")) { //$NON-NLS-1$
+		if (linkname != null && !linkname.isEmpty()) {
 			site.setLinkFileName(linkname.replace('/', File.separatorChar));
 		}
 
@@ -385,9 +385,8 @@ public class ConfigurationParser extends DefaultHandler implements IConfiguratio
 				// This is a bit of a hack.
 				// When no features were added to the site, but the site is initialized from platform.xml 
 				// we need to set the feature set to empty, so we don't try to detect them.
-				SiteEntry[] sites = config.getSites();
-				for (int i=0; i<sites.length; i++)
-					sites[i].initialized();
+				for (SiteEntry site : config.getSites())
+					site.initialized();
 				return;
 			}
 		} catch (Exception e) {

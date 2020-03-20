@@ -104,23 +104,11 @@ public class ProjectHelper extends ProjectHelper2 {
 
 		private Map<String, String> fNormalizedFileNames = new HashMap<>();
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartChild(java.lang.String, java.lang.String, java.lang.String,
-		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public AntHandler onStartChild(String uri, String tag, String qname, Attributes attrs, AntXMLContext context) {
 			return ProjectHelper.elementHandler;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartElement(java.lang.String, java.lang.String, java.lang.String,
-		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public void onStartElement(String uri, String tag, String qname, Attributes attrs, AntXMLContext context) {
 			try {
@@ -143,12 +131,6 @@ public class ProjectHelper extends ProjectHelper2 {
 			}
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onEndElement(java.lang.String, java.lang.String,
-		 * org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public void onEndElement(String uri, String tag, AntXMLContext context) {
 			super.onEndElement(uri, tag, context);
@@ -246,11 +228,6 @@ public class ProjectHelper extends ProjectHelper2 {
 			context.pushWrapper(wrapper);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#characters(char[], int, int, org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public void characters(char[] buf, int start, int count, AntXMLContext context) {
 			try {
@@ -273,12 +250,6 @@ public class ProjectHelper extends ProjectHelper2 {
 
 	public static class MainHandler extends ProjectHelper2.MainHandler {
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartChild(java.lang.String, java.lang.String, java.lang.String,
-		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public AntHandler onStartChild(String uri, String name, String qname, Attributes attrs, AntXMLContext context) throws SAXParseException {
 			if (name.equals("project") //$NON-NLS-1$
@@ -304,6 +275,17 @@ public class ProjectHelper extends ProjectHelper2 {
 	 */
 	public static String getProjectNameOfBuildFile(IFile buildFile) {
 		return parsedProjectNames.get(getBuildFileKey(buildFile));
+	}
+
+	/**
+	 * Gets the associated project name by the absolute build-file path
+	 *
+	 * @param buildFile
+	 *            The file
+	 * @return The project name
+	 */
+	public static String getProjectNameOfBuildFile(String absolutePath) {
+		return parsedProjectNames.get(absolutePath);
 	}
 
 	/**
@@ -348,12 +330,6 @@ public class ProjectHelper extends ProjectHelper2 {
 
 	public static class ProjectHandler extends ProjectHelper2.ProjectHandler {
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartChild(java.lang.String, java.lang.String, java.lang.String,
-		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public AntHandler onStartChild(String uri, String name, String qname, Attributes attrs, AntXMLContext context) {
 			if ((name.equals("target") || name.equals("extension-point"))//$NON-NLS-1$ //$NON-NLS-2$
@@ -363,12 +339,6 @@ public class ProjectHelper extends ProjectHelper2 {
 			return ProjectHelper.elementHandler;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onEndElement(java.lang.String, java.lang.String,
-		 * org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public void onEndElement(String uri, String tag, AntXMLContext context) {
 			super.onEndElement(uri, tag, context);
@@ -378,12 +348,6 @@ public class ProjectHelper extends ProjectHelper2 {
 			}
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartElement(java.lang.String, java.lang.String, java.lang.String,
-		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public void onStartElement(String uri, String tag, String qname, Attributes attrs, AntXMLContext context) {
 			try {
@@ -392,8 +356,11 @@ public class ProjectHelper extends ProjectHelper2 {
 				String currentProjectName = context.getCurrentProjectName();
 				// just an additional check if the name is non-empty
 				if (this.isCurrentProjectNameValid(currentProjectName)) {
-					String buildFilePath = context.getBuildFile().getAbsolutePath();
-					storeParsedProjectName(buildFilePath, currentProjectName);
+					if (context.getBuildFile() != null) {
+						storeParsedProjectName(context.getBuildFile().getAbsolutePath(), currentProjectName);
+					} else if (context.getBuildFileURL() != null) {
+						storeParsedProjectName(new File(context.getBuildFileURL().getPath()).getAbsolutePath(), currentProjectName);
+					}
 				}
 			}
 			catch (SAXParseException e) {
@@ -421,14 +388,9 @@ public class ProjectHelper extends ProjectHelper2 {
 		 * @return If the given project name is valid or not.
 		 */
 		private boolean isCurrentProjectNameValid(String currentProjectName) {
-			return currentProjectName != null && !currentProjectName.equals(""); //$NON-NLS-1$
+			return currentProjectName != null && !currentProjectName.isEmpty();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#characters(char[], int, int, org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public void characters(char[] buf, int start, int count, AntXMLContext context) {
 			try {
@@ -444,23 +406,11 @@ public class ProjectHelper extends ProjectHelper2 {
 	}
 
 	public static class TargetHandler extends ProjectHelper2.TargetHandler {
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartChild(java.lang.String, java.lang.String, java.lang.String,
-		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public AntHandler onStartChild(String uri, String name, String qname, Attributes attrs, AntXMLContext context) {
 			return ProjectHelper.elementHandler;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onStartElement(java.lang.String, java.lang.String, java.lang.String,
-		 * org.xml.sax.Attributes, org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public void onStartElement(String uri, String tag, String qname, Attributes attrs, AntXMLContext context) {
 			try {
@@ -484,12 +434,6 @@ public class ProjectHelper extends ProjectHelper2 {
 			getAntModel().errorFromElement(e, null, locator.getLineNumber(), locator.getColumnNumber());
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#onEndElement(java.lang.String, java.lang.String,
-		 * org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public void onEndElement(String uri, String tag, AntXMLContext context) {
 			super.onEndElement(uri, tag, context);
@@ -497,11 +441,6 @@ public class ProjectHelper extends ProjectHelper2 {
 			getAntModel().setCurrentElementLength(locator.getLineNumber(), locator.getColumnNumber());
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.apache.tools.ant.helper.ProjectHelper2.AntHandler#characters(char[], int, int, org.apache.tools.ant.helper.AntXMLContext)
-		 */
 		@Override
 		public void characters(char[] buf, int start, int count, AntXMLContext context) {
 			try {
@@ -522,41 +461,21 @@ public class ProjectHelper extends ProjectHelper2 {
 			super(context, rootHandler);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.xml.sax.ErrorHandler#error(org.xml.sax.SAXParseException)
-		 */
 		@Override
 		public void error(SAXParseException e) {
 			getAntModel().error(e);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.xml.sax.ErrorHandler#fatalError(org.xml.sax.SAXParseException)
-		 */
 		@Override
 		public void fatalError(SAXParseException e) {
 			getAntModel().fatalError(e);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.xml.sax.ErrorHandler#warning(org.xml.sax.SAXParseException)
-		 */
 		@Override
 		public void warning(SAXParseException e) {
 			getAntModel().warning(e);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.xml.sax.EntityResolver#resolveEntity(java.lang.String, java.lang.String)
-		 */
 		@Override
 		public InputSource resolveEntity(String publicId, String systemId) {
 			InputSource source = super.resolveEntity(publicId, systemId);
@@ -572,11 +491,6 @@ public class ProjectHelper extends ProjectHelper2 {
 			return source;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.xml.sax.ContentHandler#startPrefixMapping(java.lang.String, java.lang.String)
-		 */
 		@Override
 		public void startPrefixMapping(String prefix, String uri) {
 
@@ -605,21 +519,11 @@ public class ProjectHelper extends ProjectHelper2 {
 	}
 
 	private static class LexHandler implements LexicalHandler {
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.xml.sax.ext.LexicalHandler#endCDATA()
-		 */
 		@Override
 		public void endCDATA() throws SAXException {
 			// do nothing
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.xml.sax.ext.LexicalHandler#endDTD()
-		 */
 		@Override
 		public void endDTD() throws SAXException {
 			if (getAntModel().canGetLexicalInfo()) {
@@ -629,21 +533,11 @@ public class ProjectHelper extends ProjectHelper2 {
 			}
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.xml.sax.ext.LexicalHandler#startCDATA()
-		 */
 		@Override
 		public void startCDATA() throws SAXException {
 			// do nothing
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.xml.sax.ext.LexicalHandler#comment(char[], int, int)
-		 */
 		@Override
 		public void comment(char[] ch, int start, int length) throws SAXException {
 			if (getAntModel().canGetLexicalInfo()) {
@@ -655,21 +549,11 @@ public class ProjectHelper extends ProjectHelper2 {
 			}
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.xml.sax.ext.LexicalHandler#endEntity(java.lang.String)
-		 */
 		@Override
 		public void endEntity(String name) throws SAXException {
 			// do nothing
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.xml.sax.ext.LexicalHandler#startEntity(java.lang.String)
-		 */
 		@Override
 		public void startEntity(String name) throws SAXException {
 			if (currentEntityPath == null) {
@@ -680,11 +564,6 @@ public class ProjectHelper extends ProjectHelper2 {
 			}
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see org.xml.sax.ext.LexicalHandler#startDTD(java.lang.String, java.lang.String, java.lang.String)
-		 */
 		@Override
 		public void startDTD(String name, String publicId, String systemId) throws SAXException {
 			if (getAntModel().canGetLexicalInfo()) {
@@ -821,10 +700,8 @@ public class ProjectHelper extends ProjectHelper2 {
 	}
 
 	/*
-	 * (non-Javadoc) We override this method from ProjectHelper2 as we do not want to execute the implicit target or any other target for that matter
-	 * as it could hang Eclipse. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=50795 for more details.
-	 *
-	 * @see org.apache.tools.ant.ProjectHelper#parse(org.apache.tools.ant.Project, java.lang.Object)
+	 * We override this method from ProjectHelper2 as we do not want to execute the implicit target or any other target for that matter as it could
+	 * hang Eclipse. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=50795 for more details.
 	 */
 	@Override
 	public void parse(Project project, Object source) throws BuildException {

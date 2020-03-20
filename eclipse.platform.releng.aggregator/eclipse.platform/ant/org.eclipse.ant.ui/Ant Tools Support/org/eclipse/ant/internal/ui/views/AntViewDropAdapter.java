@@ -39,17 +39,13 @@ public class AntViewDropAdapter extends DropTargetAdapter {
 		this.view = view;
 	}
 
-	/**
-	 * @see org.eclipse.swt.dnd.DropTargetListener#drop(org.eclipse.swt.dnd.DropTargetEvent)
-	 */
 	@Override
 	public void drop(DropTargetEvent event) {
 		Object data = event.data;
 		if (data instanceof String[]) {
-			final String[] strings = (String[]) data;
 			BusyIndicator.showWhile(null, () -> {
-				for (int i = 0; i < strings.length; i++) {
-					processString(strings[i]);
+				for (String string : (String[]) data) {
+					processString(string);
 				}
 			});
 		}
@@ -68,9 +64,8 @@ public class AntViewDropAdapter extends DropTargetAdapter {
 			return;
 		}
 		String name = buildFile.getFullPath().toString();
-		AntProjectNode[] existingProjects = view.getProjects();
-		for (int j = 0; j < existingProjects.length; j++) {
-			AntProjectNodeProxy existingProject = (AntProjectNodeProxy) existingProjects[j];
+		for (AntProjectNode node : view.getProjects()) {
+			AntProjectNodeProxy existingProject = (AntProjectNodeProxy) node;
 			if (existingProject.getBuildFileName().equals(name)) {
 				// Don't parse projects that have already been added.
 				return;
@@ -80,22 +75,12 @@ public class AntViewDropAdapter extends DropTargetAdapter {
 		view.addProject(project);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.swt.dnd.DropTargetListener#dragEnter(org.eclipse.swt.dnd.DropTargetEvent)
-	 */
 	@Override
 	public void dragEnter(DropTargetEvent event) {
 		event.detail = DND.DROP_COPY;
 		super.dragEnter(event);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.swt.dnd.DropTargetListener#dragOperationChanged(org.eclipse.swt.dnd.DropTargetEvent)
-	 */
 	@Override
 	public void dragOperationChanged(DropTargetEvent event) {
 		event.detail = DND.DROP_COPY;

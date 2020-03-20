@@ -73,11 +73,6 @@ public class AntLaunchShortcut implements ILaunchShortcut2 {
 	private static final int MAX_TARGET_APPEND_LENGTH = 30;
 	private static final String DEFAULT_TARGET = "default"; //$NON-NLS-1$
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchShortcut#launch(org.eclipse.jface.viewers.ISelection, java.lang.String)
-	 */
 	@Override
 	public void launch(ISelection selection, String mode) {
 		if (selection instanceof IStructuredSelection) {
@@ -180,9 +175,8 @@ public class AntLaunchShortcut implements ILaunchShortcut2 {
 		IContainer lparent = parent;
 		IResource file = null;
 		while (file == null || file.getType() != IResource.FILE) {
-			for (int i = 0; i < names.length; i++) {
-				String string = names[i];
-				file = lparent.findMember(string);
+			for (String name : names) {
+				file = lparent.findMember(name);
 				if (file != null && file.getType() == IResource.FILE) {
 					break;
 				}
@@ -212,12 +206,12 @@ public class AntLaunchShortcut implements ILaunchShortcut2 {
 				ILaunchConfiguration[] configs = manager.getLaunchConfigurations(type);
 				ArrayList<ILaunchConfiguration> list = new ArrayList<>();
 				IPath location = null;
-				for (int i = 0; i < configs.length; i++) {
-					if (configs[i].exists()) {
+				for (ILaunchConfiguration config : configs) {
+					if (config.exists()) {
 						try {
-							location = ExternalToolsUtil.getLocation(configs[i]);
+							location = ExternalToolsUtil.getLocation(config);
 							if (location != null && location.equals(filepath)) {
-								list.add(configs[i]);
+								list.add(config);
 							}
 						}
 						catch (CoreException ce) {
@@ -324,7 +318,8 @@ public class AntLaunchShortcut implements ILaunchShortcut2 {
 				}
 			}
 			catch (CoreException exception) {
-				reportError(MessageFormat.format(AntLaunchConfigurationMessages.AntLaunchShortcut_Exception_launching, new Object[] { filePath.toFile().getName() }), exception);
+				reportError(MessageFormat.format(AntLaunchConfigurationMessages.AntLaunchShortcut_Exception_launching, new Object[] {
+						filePath.toFile().getName() }), exception);
 				return;
 			}
 			launch(mode, configuration);
@@ -433,11 +428,10 @@ public class AntLaunchShortcut implements ILaunchShortcut2 {
 				ILaunchConfigurationType type = manager.getLaunchConfigurationType(IAntLaunchConstants.ID_ANT_LAUNCH_CONFIGURATION_TYPE);
 				if (type != null) {
 					try {
-						ILaunchConfiguration[] configs = manager.getLaunchConfigurations(type);
-						for (int i = 0; i < configs.length; i++) {
+						for (ILaunchConfiguration config : manager.getLaunchConfigurations(type)) {
 							try {
-								if (filePath.equals(ExternalToolsUtil.getLocation(configs[i]))) {
-									validConfigs.add(configs[i]);
+								if (filePath.equals(ExternalToolsUtil.getLocation(config))) {
+									validConfigs.add(config);
 								}
 							}
 							catch (CoreException ce) {
@@ -480,11 +474,6 @@ public class AntLaunchShortcut implements ILaunchShortcut2 {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchShortcut#launch(org.eclipse.ui.IEditorPart, java.lang.String)
-	 */
 	@Override
 	public void launch(IEditorPart editor, String mode) {
 		IEditorInput input = editor.getEditorInput();
@@ -541,11 +530,6 @@ public class AntLaunchShortcut implements ILaunchShortcut2 {
 		fShowDialog = showDialog;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchShortcut2#getLaunchConfigurations(org.eclipse.jface.viewers.ISelection)
-	 */
 	@Override
 	public ILaunchConfiguration[] getLaunchConfigurations(ISelection selection) {
 		if (selection instanceof IStructuredSelection) {
@@ -580,11 +564,6 @@ public class AntLaunchShortcut implements ILaunchShortcut2 {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchShortcut2#getLaunchConfigurations(org.eclipse.ui.IEditorPart)
-	 */
 	@Override
 	public ILaunchConfiguration[] getLaunchConfigurations(IEditorPart editor) {
 		IEditorInput input = editor.getEditorInput();
@@ -607,11 +586,6 @@ public class AntLaunchShortcut implements ILaunchShortcut2 {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchShortcut2#getLaunchableResource(org.eclipse.jface.viewers.ISelection)
-	 */
 	@Override
 	public IResource getLaunchableResource(ISelection selection) {
 		if (selection instanceof IStructuredSelection) {
@@ -636,11 +610,6 @@ public class AntLaunchShortcut implements ILaunchShortcut2 {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchShortcut2#getLaunchableResource(org.eclipse.ui.IEditorPart)
-	 */
 	@Override
 	public IResource getLaunchableResource(IEditorPart editor) {
 		IEditorInput input = editor.getEditorInput();

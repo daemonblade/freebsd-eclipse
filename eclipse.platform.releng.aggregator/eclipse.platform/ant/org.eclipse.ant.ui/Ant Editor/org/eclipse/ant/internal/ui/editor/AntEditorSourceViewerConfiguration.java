@@ -41,7 +41,6 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.text.DefaultInformationControl;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.IInformationControl;
 import org.eclipse.jface.text.IInformationControlCreator;
 import org.eclipse.jface.text.ITextHover;
 import org.eclipse.jface.text.contentassist.ContentAssistant;
@@ -56,7 +55,6 @@ import org.eclipse.jface.text.source.IAnnotationHover;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.widgets.Shell;
 
 /**
  * The source viewer configuration for the Ant Editor.
@@ -79,11 +77,6 @@ public class AntEditorSourceViewerConfiguration extends AntSourceViewerConfigura
 		fEditor = editor;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getContentAssistant(ISourceViewer)
-	 */
 	@Override
 	public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
 		fContentAssistant = new ContentAssistant();
@@ -122,11 +115,6 @@ public class AntEditorSourceViewerConfiguration extends AntSourceViewerConfigura
 		return fContentAssistant;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getReconciler(org.eclipse.jface.text.source.ISourceViewer)
-	 */
 	@Override
 	public IReconciler getReconciler(ISourceViewer sourceViewer) {
 		NotifyingReconciler reconciler = new NotifyingReconciler(new XMLReconcilingStrategy(fEditor));
@@ -135,30 +123,16 @@ public class AntEditorSourceViewerConfiguration extends AntSourceViewerConfigura
 		return reconciler;
 	}
 
-	/*
-	 * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getAnnotationHover(org.eclipse.jface.text.source.ISourceViewer)
-	 */
 	@Override
 	public IAnnotationHover getAnnotationHover(ISourceViewer sourceViewer) {
 		return new XMLAnnotationHover();
 	}
 
-	/*
-	 * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getInformationControlCreator(org.eclipse.jface.text.source.ISourceViewer)
-	 */
 	@Override
 	public IInformationControlCreator getInformationControlCreator(ISourceViewer sourceViewer) {
-		return new IInformationControlCreator() {
-			@Override
-			public IInformationControl createInformationControl(Shell parent) {
-				return new DefaultInformationControl(parent, false);
-			}
-		};
+		return parent -> new DefaultInformationControl(parent, false);
 	}
 
-	/*
-	 * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getTextHover(org.eclipse.jface.text.source.ISourceViewer, java.lang.String)
-	 */
 	@Override
 	public ITextHover getTextHover(ISourceViewer sourceViewer, String contentType) {
 		if (fTextHover == null) {
@@ -194,11 +168,6 @@ public class AntEditorSourceViewerConfiguration extends AntSourceViewerConfigura
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getContentFormatter(org.eclipse.jface.text.source.ISourceViewer)
-	 */
 	@Override
 	public IContentFormatter getContentFormatter(ISourceViewer sourceViewer) {
 
@@ -213,11 +182,6 @@ public class AntEditorSourceViewerConfiguration extends AntSourceViewerConfigura
 		return formatter;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getInformationPresenter(org.eclipse.jface.text.source.ISourceViewer)
-	 */
 	@Override
 	public IInformationPresenter getInformationPresenter(ISourceViewer sourceViewer) {
 		InformationPresenter presenter = new InformationPresenter(getInformationPresenterControlCreator());
@@ -240,19 +204,9 @@ public class AntEditorSourceViewerConfiguration extends AntSourceViewerConfigura
 	 * @since 3.1
 	 */
 	public static IInformationControlCreator getInformationPresenterControlCreator() {
-		return new IInformationControlCreator() {
-			@Override
-			public IInformationControl createInformationControl(Shell parent) {
-				return new DefaultInformationControl(parent, true);
-			}
-		};
+		return parent -> new DefaultInformationControl(parent, true);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getIndentPrefixes(org.eclipse.jface.text.source.ISourceViewer, java.lang.String)
-	 */
 	@Override
 	public String[] getIndentPrefixes(ISourceViewer sourceViewer, String contentType) {
 		List<String> list = new ArrayList<>();
@@ -289,10 +243,6 @@ public class AntEditorSourceViewerConfiguration extends AntSourceViewerConfigura
 		return list.toArray(new String[list.size()]);
 	}
 
-	/*
-	 * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getAutoEditStrategies(org.eclipse.jface.text.source.ISourceViewer,
-	 * java.lang.String)
-	 */
 	@Override
 	public IAutoEditStrategy[] getAutoEditStrategies(ISourceViewer sourceViewer, String contentType) {
 		if (AntEditorPartitionScanner.XML_COMMENT.equals(contentType)) {
@@ -304,9 +254,6 @@ public class AntEditorSourceViewerConfiguration extends AntSourceViewerConfigura
 		return fAutoEditorStategies;
 	}
 
-	/*
-	 * @see org.eclipse.ui.editors.text.TextSourceViewerConfiguration#getHyperlinkDetectorTargets(org.eclipse.jface.text.source.ISourceViewer)
-	 */
 	@Override
 	protected Map<String, IAdaptable> getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
 		Map<String, IAdaptable> targets = super.getHyperlinkDetectorTargets(sourceViewer);

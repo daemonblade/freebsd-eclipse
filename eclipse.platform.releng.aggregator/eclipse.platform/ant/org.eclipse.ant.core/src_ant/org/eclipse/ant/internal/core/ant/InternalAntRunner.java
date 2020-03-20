@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2000, 2017 IBM Corporation and others.
+ *  Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  *  This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License 2.0
@@ -236,7 +236,7 @@ public class InternalAntRunner {
 				for (Iterator<String> iterator = buildListeners.iterator(); iterator.hasNext();) {
 					className = iterator.next();
 					Class<?> listener = Class.forName(className);
-					project.addBuildListener((BuildListener) listener.newInstance());
+					project.addBuildListener((BuildListener) listener.getConstructor().newInstance());
 				}
 			}
 		}
@@ -259,8 +259,7 @@ public class InternalAntRunner {
 	private void setProperties(Project project, boolean substituteVariables) {
 		setBuiltInProperties(project);
 		if (userProperties != null) {
-			for (Iterator<Map.Entry<String, String>> iterator = userProperties.entrySet().iterator(); iterator.hasNext();) {
-				Entry<String, String> entry = iterator.next();
+			for (Entry<String, String> entry : userProperties.entrySet()) {
 				String value = entry.getValue();
 				if (substituteVariables && value != null) {
 					try {
@@ -346,9 +345,7 @@ public class InternalAntRunner {
 	}
 
 	private void setTypes(Project project) {
-		List<Type> types = AntCorePlugin.getPlugin().getPreferences().getTypes();
-		for (Iterator<Type> iterator = types.iterator(); iterator.hasNext();) {
-			Type type = iterator.next();
+		for (Type type : AntCorePlugin.getPlugin().getPreferences().getTypes()) {
 			if (isVersionCompatible("1.6")) { //$NON-NLS-1$
 				AntTypeDefinition def = new AntTypeDefinition();
 				String name = ProjectHelper.genComponentName(type.getURI(), type.getTypeName());
@@ -540,8 +537,8 @@ public class InternalAntRunner {
 			return;
 		}
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < extraArguments.length; i++) {
-			sb.append(extraArguments[i]);
+		for (String extraArgument : extraArguments) {
+			sb.append(extraArgument);
 			sb.append(' ');
 		}
 		project.log(MessageFormat.format(InternalAntMessages.InternalAntRunner_Arguments, new Object[] { sb.toString().trim() }));
@@ -801,7 +798,7 @@ public class InternalAntRunner {
 			buildLogger = new DefaultLogger();
 		} else if (!IAntCoreConstants.EMPTY_STRING.equals(loggerClassname)) {
 			try {
-				buildLogger = (BuildLogger) (Class.forName(loggerClassname).newInstance());
+				buildLogger = (BuildLogger) (Class.forName(loggerClassname).getConstructor().newInstance());
 			}
 			catch (ClassCastException e) {
 				String message = MessageFormat.format(InternalAntMessages.InternalAntRunner_not_an_instance_of_apache_ant_BuildLogger, new Object[] {
@@ -987,8 +984,8 @@ public class InternalAntRunner {
 	 */
 	public void setExecutionTargets(String[] executionTargets) {
 		targets = new Vector<>(executionTargets.length);
-		for (int i = 0; i < executionTargets.length; i++) {
-			targets.add(executionTargets[i]);
+		for (String executionTarget : executionTargets) {
+			targets.add(executionTarget);
 		}
 	}
 
@@ -1300,8 +1297,8 @@ public class InternalAntRunner {
 		if (targets == null) {
 			targets = new Vector<>(commands.size());
 		}
-		for (Iterator<String> iter = commands.iterator(); iter.hasNext();) {
-			targets.add(iter.next());
+		for (String string : commands) {
+			targets.add(string);
 		}
 	}
 
@@ -1488,9 +1485,9 @@ public class InternalAntRunner {
 		}
 		StringBuilder buff = new StringBuilder();
 		File file = null;
-		for (int i = 0; i < antClasspath.length; i++) {
+		for (URL element : antClasspath) {
 			try {
-				file = new File(FileLocator.toFileURL(antClasspath[i]).getPath());
+				file = new File(FileLocator.toFileURL(element).getPath());
 			}
 			catch (IOException e) {
 				continue;

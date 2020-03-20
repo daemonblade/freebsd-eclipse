@@ -161,8 +161,8 @@ public class InternalAntRunner {
 		// what kind of list it will return. We need a list that
 		// implements the method List.remove(Object) and ArrayList does.
 		ArrayList<String> result = new ArrayList<String>(args.length);
-		for (int i = 0; i < args.length; i++) {
-			result.add(args[i]);
+		for (String arg : args) {
+			result.add(arg);
 		}
 		return result;
 	}
@@ -178,7 +178,7 @@ public class InternalAntRunner {
 				for (String className : buildListeners) {
 					clazz = className;
 					Class<?> listener = Class.forName(className);
-					project.addBuildListener((BuildListener) listener.newInstance());
+					project.addBuildListener((BuildListener) listener.getConstructor().newInstance());
 				}
 			}
 		}
@@ -235,8 +235,8 @@ public class InternalAntRunner {
 			return;
 		}
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < extraArguments.length; i++) {
-			sb.append(extraArguments[i]);
+		for (String extraArgument : extraArguments) {
+			sb.append(extraArgument);
 			sb.append(' ');
 		}
 		project.log(MessageFormat.format(RemoteAntMessages.getString("InternalAntRunner.Arguments__{0}_2"), new Object[] { sb.toString().trim() })); //$NON-NLS-1$
@@ -565,7 +565,7 @@ public class InternalAntRunner {
 			buildLogger = new DefaultLogger();
 		} else if (!IAntCoreConstants.EMPTY_STRING.equals(loggerClassname)) {
 			try {
-				buildLogger = (BuildLogger) (Class.forName(loggerClassname).newInstance());
+				buildLogger = (BuildLogger) (Class.forName(loggerClassname).getConstructor().newInstance());
 			}
 			catch (ClassCastException e) {
 				String message = MessageFormat.format(RemoteAntMessages.getString("InternalAntRunner.{0}_which_was_specified_to_perform_logging_is_not_an_instance_of_org.apache.tools.ant.BuildLogger._2"), new Object[] { //$NON-NLS-1$
@@ -600,8 +600,7 @@ public class InternalAntRunner {
 	private void fireBuildStarted(Project project) {
 		if (!isVersionCompatible("1.5")) { //$NON-NLS-1$
 			BuildEvent event = new BuildEvent(project);
-			for (Iterator<BuildListener> iterator = project.getBuildListeners().iterator(); iterator.hasNext();) {
-				BuildListener listener = iterator.next();
+			for (BuildListener listener : project.getBuildListeners()) {
 				listener.buildStarted(event);
 			}
 		} else {

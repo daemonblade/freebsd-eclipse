@@ -190,10 +190,10 @@ public class XmlDocumentFormatter {
 
 			String startOfTag = String.valueOf(buf);
 
-			for (int i = 0; i < tagReaders.length; i++) {
-				if (startOfTag.startsWith(tagReaders[i].getStartOfTag())) {
-					tagReaders[i].setReader(reader);
-					return tagReaders[i];
+			for (TagReader tagReader : tagReaders) {
+				if (startOfTag.startsWith(tagReader.getStartOfTag())) {
+					tagReader.setReader(reader);
+					return tagReader;
 				}
 			}
 			// else
@@ -213,21 +213,11 @@ public class XmlDocumentFormatter {
 			this.complete = false;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.eclipse.ant.internal.ui.editor.formatter.XmlDocumentFormatter.TagReader#getStartOfTag()
-		 */
 		@Override
 		public String getStartOfTag() {
 			return IAntCoreConstants.EMPTY_STRING;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.eclipse.ant.internal.ui.editor.formatter.XmlDocumentFormatter.TagReader#isTextNode()
-		 */
 		@Override
 		public boolean isTextNode() {
 			return this.isTextNode;
@@ -276,21 +266,11 @@ public class XmlDocumentFormatter {
 			return node.toString();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.eclipse.ant.internal.ui.editor.formatter.XmlDocumentFormatter.TagReader#requiresInitialIndent()
-		 */
 		@Override
 		public boolean requiresInitialIndent() {
 			return false;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.eclipse.ant.internal.ui.editor.formatter.XmlDocumentFormatter.TagReader#startsOnNewline()
-		 */
 		@Override
 		public boolean startsOnNewline() {
 			return false;

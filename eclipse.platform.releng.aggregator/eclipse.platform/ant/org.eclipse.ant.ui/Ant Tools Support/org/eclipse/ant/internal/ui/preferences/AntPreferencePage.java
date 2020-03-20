@@ -81,31 +81,16 @@ public class AntPreferencePage extends FieldEditorPreferencePage implements IWor
 			this.defaultvalue = defaultvalue;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.eclipse.jface.preference.IntegerFieldEditor#doStore()
-		 */
 		@Override
 		protected void doStore() {
 			InstanceScope.INSTANCE.getNode(node).putInt(key, Integer.parseInt(getStringValue()));
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.eclipse.jface.preference.FieldEditor#load()
-		 */
 		@Override
 		public void load() {
 			setStringValue(Integer.toString(Platform.getPreferencesService().getInt(node, key, defaultvalue, null)));
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.eclipse.jface.preference.FieldEditor#loadDefault()
-		 */
 		@Override
 		public void loadDefault() {
 			setStringValue(Integer.toString(DefaultScope.INSTANCE.getNode(AntLaunching.getUniqueIdentifier()).getInt(key, defaultvalue)));
@@ -137,11 +122,6 @@ public class AntPreferencePage extends FieldEditorPreferencePage implements IWor
 		setPreferenceStore(AntUIPlugin.getDefault().getPreferenceStore());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.preference.FieldEditorPreferencePage#createFieldEditors()
-	 */
 	@Override
 	protected void createFieldEditors() {
 		storeAppliedValues();
@@ -300,9 +280,9 @@ public class AntPreferencePage extends FieldEditorPreferencePage implements IWor
 	 */
 	@Override
 	public boolean performCancel() {
-		for (int i = 0; i < fAppearanceColorListModel.length; i++) {
-			String preference = fAppearanceColorListModel[i][1];
-			PreferenceConverter.setValue(getPreferenceStore(), preference, StringConverter.asRGB(fAppearanceColorListModel[i][2]));
+		for (String[] colorModel : fAppearanceColorListModel) {
+			String preference = colorModel[1];
+			PreferenceConverter.setValue(getPreferenceStore(), preference, StringConverter.asRGB(colorModel[2]));
 		}
 		return super.performCancel();
 	}
@@ -326,31 +306,22 @@ public class AntPreferencePage extends FieldEditorPreferencePage implements IWor
 		fConsoleColorSelector.setColorValue(rgb);
 	}
 
-	/**
-	 * @see FieldEditorPreferencePage#createContents(org.eclipse.swt.widgets.Composite)
-	 */
 	@Override
 	protected Control createContents(Composite parent) {
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(parent, IAntUIHelpContextIds.ANT_PREFERENCE_PAGE);
 		return super.createContents(parent);
 	}
 
-	/**
-	 * @see IWorkbenchPreferencePage#init(IWorkbench)
-	 */
 	@Override
 	public void init(IWorkbench workbench) {
 		// do nothing
 	}
 
-	/**
-	 * @see org.eclipse.jface.preference.FieldEditorPreferencePage#initialize()
-	 */
 	@Override
 	protected void initialize() {
 		super.initialize();
-		for (int i = 0; i < fAppearanceColorListModel.length; i++) {
-			fConsoleColorList.add(fAppearanceColorListModel[i][0]);
+		for (String[] colorModel : fAppearanceColorListModel) {
+			fConsoleColorList.add(colorModel[0]);
 		}
 		fConsoleColorList.getDisplay().asyncExec(() -> {
 			if (fConsoleColorList != null && !fConsoleColorList.isDisposed()) {
@@ -360,34 +331,21 @@ public class AntPreferencePage extends FieldEditorPreferencePage implements IWor
 		});
 	}
 
-	/**
-	 * @see org.eclipse.jface.preference.PreferencePage#performDefaults()
-	 */
 	@Override
 	protected void performDefaults() {
-		for (int i = 0; i < fAppearanceColorListModel.length; i++) {
-			String key = fAppearanceColorListModel[i][1];
+		for (String[] colorModel : fAppearanceColorListModel) {
+			String key = colorModel[1];
 			PreferenceConverter.setValue(getPreferenceStore(), key, PreferenceConverter.getDefaultColor(getPreferenceStore(), key));
 		}
 		handleAppearanceColorListSelection();
 		super.performDefaults();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.dialogs.IDialogPage#dispose()
-	 */
 	@Override
 	public void dispose() {
 		getPreferenceStore().removePropertyChangeListener(this);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
-	 */
 	@Override
 	public void propertyChange(PropertyChangeEvent event) {
 		if (event.getProperty().equals(IAntUIPreferenceConstants.ANT_TOOLS_JAR_WARNING)) {

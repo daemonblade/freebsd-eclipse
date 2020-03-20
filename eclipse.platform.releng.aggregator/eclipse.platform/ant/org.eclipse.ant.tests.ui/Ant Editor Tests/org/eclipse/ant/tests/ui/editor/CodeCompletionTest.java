@@ -25,9 +25,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
 import org.eclipse.ant.core.AntCorePlugin;
 import org.eclipse.ant.core.AntCorePreferences;
 import org.eclipse.ant.core.Property;
@@ -63,10 +60,6 @@ public class CodeCompletionTest extends AbstractAntUITest {
 		super(name);
 	}
 
-	public static Test suite() {
-		return new TestSuite(CodeCompletionTest.class);
-	}
-
 	/**
 	 * Tests the code completion for attributes of tasks.
 	 */
@@ -83,8 +76,7 @@ public class CodeCompletionTest extends AbstractAntUITest {
 		String displayString = proposal.getDisplayString();
 		assertTrue(displayString.equals("id") //$NON-NLS-1$
 				|| displayString.equals("taskname") //$NON-NLS-1$
-				|| displayString.equals(IAntCoreConstants.DESCRIPTION)
-				|| displayString.equals(IAntCoreConstants.FILE)
+				|| displayString.equals(IAntCoreConstants.DESCRIPTION) || displayString.equals(IAntCoreConstants.FILE)
 				|| displayString.equals("preservelastmodified - (true | false | on | off | yes | no)") //$NON-NLS-1$
 				|| displayString.equals("tofile") //$NON-NLS-1$
 				|| displayString.equals("todir") //$NON-NLS-1$
@@ -231,8 +223,8 @@ public class CodeCompletionTest extends AbstractAntUITest {
 			processor.setCursorPosition(lineOffset + columnNumber);
 			ICompletionProposal[] proposals = processor.getPropertyProposals(getCurrentDocument(), "", lineOffset + columnNumber); //$NON-NLS-1$
 			assertTrue(proposals.length >= 3);
-			assertContains("eclipse.home", proposals); //contributed //$NON-NLS-1$
-			assertContains("property.ui.testing2", proposals); //contributed //$NON-NLS-1$
+			assertContains("eclipse.home", proposals); // contributed //$NON-NLS-1$
+			assertContains("property.ui.testing2", proposals); // contributed //$NON-NLS-1$
 			assertContains("test", proposals); //$NON-NLS-1$
 		}
 		finally {
@@ -265,7 +257,8 @@ public class CodeCompletionTest extends AbstractAntUITest {
 		processor.setLineNumber(lineNumber);
 		processor.setColumnNumber(columnNumber);
 		processor.setCursorPosition(lineOffset + columnNumber);
-		proposals = processor.getTargetAttributeValueProposals(getCurrentDocument(), getCurrentDocument().get(0, lineOffset + columnNumber), "", "depends"); //$NON-NLS-1$ //$NON-NLS-2$
+		proposals = processor.getTargetAttributeValueProposals(getCurrentDocument(), getCurrentDocument().get(0, lineOffset
+				+ columnNumber), "", "depends"); //$NON-NLS-1$ //$NON-NLS-2$
 		assertTrue(proposals.length == 7);
 		assertContains("main", proposals); //$NON-NLS-1$
 		// XXX why do we not want a valid proposal?
@@ -290,14 +283,14 @@ public class CodeCompletionTest extends AbstractAntUITest {
 		assertContains("pretest", proposals); //$NON-NLS-1$
 		assertContains("test2", proposals); //$NON-NLS-1$
 
-		for (int i = 0; i < proposals.length; i++) {
-			String displayString = proposals[i].getDisplayString();
+		for (ICompletionProposal proposal : proposals) {
+			String displayString = proposal.getDisplayString();
 			if (displayString.equals("main")) { //$NON-NLS-1$
-				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_DEFAULT_TARGET), proposals[i].getImage());
+				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_DEFAULT_TARGET), proposal.getImage());
 			} else if (displayString.equals("pretest")) { //$NON-NLS-1$
-				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_TARGET), proposals[i].getImage());
+				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_TARGET), proposal.getImage());
 			} else if (displayString.equals("test2")) { //$NON-NLS-1$
-				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_TARGET_INTERNAL), proposals[i].getImage());
+				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_TARGET_INTERNAL), proposal.getImage());
 			} else {
 				fail("Unknown completion proposal detected: " + displayString); //$NON-NLS-1$
 			}
@@ -322,14 +315,14 @@ public class CodeCompletionTest extends AbstractAntUITest {
 		assertContains("task2", proposals); //$NON-NLS-1$
 		assertContains("task3", proposals); //$NON-NLS-1$
 
-		for (int i = 0; i < proposals.length; i++) {
-			String displayString = proposals[i].getDisplayString();
+		for (ICompletionProposal proposal : proposals) {
+			String displayString = proposal.getDisplayString();
 			if (displayString.equals("task3")) { //$NON-NLS-1$
-				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_DEFAULT_TARGET), proposals[i].getImage());
+				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_DEFAULT_TARGET), proposal.getImage());
 			} else if (displayString.equals("task")) { //$NON-NLS-1$
-				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_TARGET), proposals[i].getImage());
+				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_TARGET), proposal.getImage());
 			} else if (displayString.equals("task2")) { //$NON-NLS-1$
-				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_TARGET_INTERNAL), proposals[i].getImage());
+				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_TARGET_INTERNAL), proposal.getImage());
 			} else {
 				fail("Unknown completion proposal detected: " + displayString); //$NON-NLS-1$
 			}
@@ -352,12 +345,12 @@ public class CodeCompletionTest extends AbstractAntUITest {
 		assertContains("task", proposals); //$NON-NLS-1$
 		assertContains("task3", proposals); //$NON-NLS-1$
 
-		for (int i = 0; i < proposals.length; i++) {
-			String displayString = proposals[i].getDisplayString();
+		for (ICompletionProposal proposal : proposals) {
+			String displayString = proposal.getDisplayString();
 			if (displayString.equals("task3")) { //$NON-NLS-1$
-				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_DEFAULT_TARGET), proposals[i].getImage());
+				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_DEFAULT_TARGET), proposal.getImage());
 			} else if (displayString.equals("task")) { //$NON-NLS-1$
-				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_TARGET), proposals[i].getImage());
+				assertEquals(AntUIImages.getImage(IAntUIConstants.IMG_ANT_TARGET), proposal.getImage());
 			} else {
 				fail("Unknown completion proposal detected: " + displayString); //$NON-NLS-1$
 			}
@@ -423,8 +416,7 @@ public class CodeCompletionTest extends AbstractAntUITest {
 	 */
 	private void assertContains(String displayString, ICompletionProposal[] proposalArray) {
 		boolean found = false;
-		for (int i = 0; i < proposalArray.length; i++) {
-			ICompletionProposal proposal = proposalArray[i];
+		for (ICompletionProposal proposal : proposalArray) {
 			String proposalDisplayString = proposal.getDisplayString();
 			if (displayString.equals(proposalDisplayString)) {
 				found = true;
@@ -439,8 +431,7 @@ public class CodeCompletionTest extends AbstractAntUITest {
 	 */
 	private void assertDoesNotContain(String displayString, ICompletionProposal[] proposalArray) {
 		boolean found = false;
-		for (int i = 0; i < proposalArray.length; i++) {
-			ICompletionProposal proposal = proposalArray[i];
+		for (ICompletionProposal proposal : proposalArray) {
 			String proposalDisplayString = proposal.getDisplayString();
 			if (displayString.equals(proposalDisplayString)) {
 				found = true;
@@ -913,6 +904,7 @@ public class CodeCompletionTest extends AbstractAntUITest {
 		processor.setCursorPosition(lineOffset + columnNumber);
 		ICompletionProposal[] proposals = processor.getProposalsFromDocument(getCurrentDocument(), ""); //$NON-NLS-1$
 		// true false yes no on off
+		System.out.println("Proposals length:" + proposals.length); //$NON-NLS-1$
 		assertTrue(proposals.length == 6);
 		assertContains("true", proposals); //$NON-NLS-1$
 		assertContains("no", proposals); //$NON-NLS-1$

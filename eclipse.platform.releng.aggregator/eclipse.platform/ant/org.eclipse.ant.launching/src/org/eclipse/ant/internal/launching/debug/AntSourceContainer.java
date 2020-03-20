@@ -37,11 +37,6 @@ public class AntSourceContainer extends AbstractSourceContainer {
 		fRoot = ResourcesPlugin.getWorkspace().getRoot();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.core.sourcelookup.ISourceContainer#findSourceElements(java.lang.String)
-	 */
 	@Override
 	public Object[] findSourceElements(String path) throws CoreException {
 		ArrayList<IStorage> sources = new ArrayList<>();
@@ -51,8 +46,8 @@ public class AntSourceContainer extends AbstractSourceContainer {
 				IPath canonicalPath = new Path(osFile.getCanonicalPath());
 				IFile[] files = fRoot.findFilesForLocationURI(canonicalPath.makeAbsolute().toFile().toURI());
 				if (files.length > 0) {
-					for (int i = 0; i < files.length; i++) {
-						sources.add(files[i]);
+					for (IFile file : files) {
+						sources.add(file);
 					}
 				} else {
 					sources.add(new LocalFileStorage(osFile));
@@ -65,21 +60,11 @@ public class AntSourceContainer extends AbstractSourceContainer {
 		return sources.toArray();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.core.sourcelookup.ISourceContainer#getName()
-	 */
 	@Override
 	public String getName() {
 		return AntDebugMessages.AntSourceContainer_0;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.core.sourcelookup.ISourceContainer#getType() Not persisted via the launch configuration
-	 */
 	@Override
 	public ISourceContainerType getType() {
 		return null;

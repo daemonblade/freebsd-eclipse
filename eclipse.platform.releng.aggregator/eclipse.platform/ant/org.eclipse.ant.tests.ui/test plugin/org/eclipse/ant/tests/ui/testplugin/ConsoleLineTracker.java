@@ -32,17 +32,11 @@ public class ConsoleLineTracker implements IConsoleLineTrackerExtension {
 
 	private static boolean consoleClosed = true;
 
-	/**
-	 * @see org.eclipse.debug.ui.console.IConsoleLineTracker#dispose()
-	 */
 	@Override
 	public void dispose() {
 		// do nothing
 	}
 
-	/**
-	 * @see org.eclipse.debug.ui.console.IConsoleLineTracker#init(org.eclipse.debug.ui.console.IConsole)
-	 */
 	@Override
 	public void init(IConsole c) {
 		synchronized (lines) {
@@ -52,9 +46,6 @@ public class ConsoleLineTracker implements IConsoleLineTrackerExtension {
 		}
 	}
 
-	/**
-	 * @see org.eclipse.debug.ui.console.IConsoleLineTracker#lineAppended(org.eclipse.jface.text.IRegion)
-	 */
 	@Override
 	public void lineAppended(IRegion line) {
 		lines.add(line);
@@ -79,8 +70,7 @@ public class ConsoleLineTracker implements IConsoleLineTrackerExtension {
 
 	public static List<String> getAllMessages() {
 		List<String> all = new ArrayList<>(lines.size());
-		for (int i = 0; i < lines.size(); i++) {
-			IRegion lineRegion = lines.get(i);
+		for (IRegion lineRegion : lines) {
 			try {
 				all.add(console.getDocument().get(lineRegion.getOffset(), lineRegion.getLength()));
 			}
@@ -109,11 +99,6 @@ public class ConsoleLineTracker implements IConsoleLineTrackerExtension {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.console.IConsoleLineTrackerExtension#consoleClosed()
-	 */
 	@Override
 	public void consoleClosed() {
 		synchronized (lines) {

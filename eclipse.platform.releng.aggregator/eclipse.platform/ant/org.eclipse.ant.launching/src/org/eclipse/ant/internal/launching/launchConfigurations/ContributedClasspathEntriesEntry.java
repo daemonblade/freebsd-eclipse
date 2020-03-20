@@ -16,7 +16,6 @@
 package org.eclipse.ant.internal.launching.launchConfigurations;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -68,41 +67,21 @@ public class ContributedClasspathEntriesEntry extends AbstractRuntimeClasspathEn
 	public ContributedClasspathEntriesEntry() {
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jdt.internal.launching.AbstractRuntimeClasspathEntry#buildMemento(org.w3c.dom.Document, org.w3c.dom.Element)
-	 */
 	@Override
 	protected void buildMemento(Document document, Element memento) throws CoreException {
 		// do nothing
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jdt.internal.launching.IRuntimeClasspathEntry2#initializeFrom(org.w3c.dom.Element)
-	 */
 	@Override
 	public void initializeFrom(Element memento) throws CoreException {
 		// do nothing
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jdt.launching.IRuntimeClasspathEntry2#getTypeId()
-	 */
 	@Override
 	public String getTypeId() {
 		return TYPE_ID;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jdt.launching.IRuntimeClasspathEntry2#getRuntimeClasspathEntries(org.eclipse.debug.core.ILaunchConfiguration)
-	 */
 	@Override
 	public IRuntimeClasspathEntry[] getRuntimeClasspathEntries(ILaunchConfiguration configuration) throws CoreException {
 		boolean separateVM = AntLaunchingUtil.isSeparateJREAntBuild(configuration);
@@ -112,16 +91,16 @@ public class ContributedClasspathEntriesEntry extends AbstractRuntimeClasspathEn
 		IAntClasspathEntry[] userEntries = prefs.getAdditionalClasspathEntries();
 		List<IRuntimeClasspathEntry> rtes = new ArrayList<>(antClasspathEntries.length + userEntries.length);
 		IAntClasspathEntry entry;
-		for (int i = 0; i < antClasspathEntries.length; i++) {
-			entry = antClasspathEntries[i];
+		for (IAntClasspathEntry antClasspathEntry : antClasspathEntries) {
+			entry = antClasspathEntry;
 			if (!separateVM || (separateVM && !entry.isEclipseRuntimeRequired())) {
 				rtes.add(JavaRuntime.newStringVariableClasspathEntry(entry.getLabel()));
 			}
 		}
 		boolean haveToolsEntry = false;
 		String path;
-		for (int i = 0; i < userEntries.length; i++) {
-			entry = userEntries[i];
+		for (IAntClasspathEntry userEntry : userEntries) {
+			entry = userEntry;
 			path = entry.getLabel();
 			IPath toolsPath = new Path(path);
 			if (toolsPath.lastSegment().equals("tools.jar")) { //$NON-NLS-1$
@@ -156,16 +135,14 @@ public class ContributedClasspathEntriesEntry extends AbstractRuntimeClasspathEn
 				if (install != null) {
 					IAntClasspathEntry entry = AntCorePlugin.getPlugin().getPreferences().getToolsJarEntry(new Path(install.getInstallLocation().getAbsolutePath()));
 					if (entry != null) {
-						String pathString = null;
 						try {
-							pathString = URIUtil.toURL(URIUtil.toURI(entry.getEntryURL())).getPath();
-							rtes.add(JavaRuntime.newArchiveRuntimeClasspathEntry(new Path(pathString)));
+							URL entryURL = entry.getEntryURL();
+							String pathString = resolveFileFromUrl(entryURL.getFile());
+							if (!pathString.isEmpty()) {
+								rtes.add(JavaRuntime.newArchiveRuntimeClasspathEntry(new Path(pathString)));
+							}
 						}
 						catch (MalformedURLException e) {
-							AntLaunching.log(e);
-
-						}
-						catch (URISyntaxException e) {
 							AntLaunching.log(e);
 						}
 					}
@@ -194,27 +171,12 @@ public class ContributedClasspathEntriesEntry extends AbstractRuntimeClasspathEn
 					continue;
 				}
 				String urlFileName = bundleURL.getFile();
-				if (urlFileName.startsWith(IAntCoreConstants.FILE_PROTOCOL)) {
-					try {
-						try {
-							URI uri = URIUtil.toURI(new URL(urlFileName));
-							// fix bug 470390 using toFile() instead of toURL()
-							urlFileName = URIUtil.toFile(uri).getAbsolutePath();
-						}
-						catch (URISyntaxException e) {
-							AntLaunching.log(e);
-						}
-						if (urlFileName.endsWith("!/") || urlFileName.endsWith("!\\")) { //$NON-NLS-1$ //$NON-NLS-2$
-							urlFileName = urlFileName.substring(0, urlFileName.length() - 2);
-						}
-						if (urlFileName.endsWith("!")) { //$NON-NLS-1$
-							urlFileName = urlFileName.substring(0, urlFileName.length() - 1);
-						}
-					}
-					catch (MalformedURLException e) {
-						AntLaunching.log(e);
-						continue;
-					}
+				try {
+					urlFileName = resolveFileFromUrl(urlFileName);
+				}
+				catch (MalformedURLException e) {
+					AntLaunching.log(e);
+					continue;
 				}
 				IPath fragmentPath = new Path(urlFileName);
 				if (fragmentPath.getFileExtension() != null) { // JAR file
@@ -224,20 +186,35 @@ public class ContributedClasspathEntriesEntry extends AbstractRuntimeClasspathEn
 					if (!bundleFolder.isDirectory()) {
 						continue;
 					}
-					String[] names = bundleFolder.list(new FilenameFilter() {
-						@Override
-						public boolean accept(File dir, String name) {
-							return name.endsWith(".jar"); //$NON-NLS-1$
-						}
-					});
-					for (int j = 0; j < names.length; j++) {
-						String jarName = names[j];
+					String[] names = bundleFolder.list((dir, name) -> name.endsWith(".jar")); //$NON-NLS-1$
+					for (String jarName : names) {
 						fgSWTEntries.add(JavaRuntime.newArchiveRuntimeClasspathEntry(fragmentPath.append(jarName)));
 					}
 				}
 			}
 		}
 		rtes.addAll(fgSWTEntries);
+	}
+
+	private String resolveFileFromUrl(String urlFileName) throws MalformedURLException {
+		if (!urlFileName.startsWith(IAntCoreConstants.FILE_PROTOCOL)) {
+			return urlFileName;
+		}
+		try {
+			URI uri = URIUtil.toURI(new URL(urlFileName));
+			// fix bug 470390 using toFile() instead of toURL()
+			urlFileName = URIUtil.toFile(uri).getAbsolutePath();
+		}
+		catch (URISyntaxException e) {
+			AntLaunching.log(e);
+		}
+		if (urlFileName.endsWith("!/") || urlFileName.endsWith("!\\")) { //$NON-NLS-1$ //$NON-NLS-2$
+			urlFileName = urlFileName.substring(0, urlFileName.length() - 2);
+		}
+		if (urlFileName.endsWith("!")) { //$NON-NLS-1$
+			urlFileName = urlFileName.substring(0, urlFileName.length() - 1);
+		}
+		return urlFileName;
 	}
 
 	/**
@@ -264,51 +241,26 @@ public class ContributedClasspathEntriesEntry extends AbstractRuntimeClasspathEn
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jdt.launching.IRuntimeClasspathEntry2#getName()
-	 */
 	@Override
 	public String getName() {
 		return AntLaunchConfigurationMessages.ContributedClasspathEntriesEntry_1;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jdt.launching.IRuntimeClasspathEntry#getType()
-	 */
 	@Override
 	public int getType() {
 		return IRuntimeClasspathEntry.OTHER;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jdt.launching.IRuntimeClasspathEntry2#isComposite()
-	 */
 	@Override
 	public boolean isComposite() {
 		return true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		return obj instanceof ContributedClasspathEntriesEntry;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return getClass().hashCode();
