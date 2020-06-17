@@ -16,7 +16,6 @@ package org.eclipse.jdt.internal.ui.wizards.buildpaths.newsourcepage;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -51,6 +50,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.JavaCore;
 
+import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.buildpath.BuildpathDelta;
 import org.eclipse.jdt.internal.corext.buildpath.ClasspathModifier;
 import org.eclipse.jdt.internal.corext.util.Messages;
@@ -60,7 +60,6 @@ import org.eclipse.jdt.ui.JavaElementLabels;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
 import org.eclipse.jdt.internal.ui.dialogs.StatusInfo;
-import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.ui.wizards.NewWizardMessages;
 import org.eclipse.jdt.internal.ui.wizards.buildpaths.BuildPathBasePage;
 import org.eclipse.jdt.internal.ui.wizards.buildpaths.BuildPathsBlock;
@@ -78,7 +77,7 @@ public class AddFolderToBuildpathAction extends BuildpathModifierAction {
 
 	public AddFolderToBuildpathAction(IRunnableContext context, ISetSelectionTarget selectionTarget) {
 		this(null, selectionTarget, context);
-    }
+	}
 
 	private AddFolderToBuildpathAction(IWorkbenchSite site, ISetSelectionTarget selectionTarget, IRunnableContext context) {
 		super(site, selectionTarget, BuildpathModifierAction.ADD_SEL_SF_TO_BP);
@@ -136,7 +135,7 @@ public class AddFolderToBuildpathAction extends BuildpathModifierAction {
 			final IPath newDefaultOutputLocation;
 			final boolean removeOldClassFiles;
 			IPath projPath= project.getProject().getFullPath();
-			if (!(getSelectedElements().size() == 1 && getSelectedElements().get(0) instanceof IJavaProject) && //if only the project should be added, then the query does not need to be executed
+			if (((getSelectedElements().size() != 1) || !(getSelectedElements().get(0) instanceof IJavaProject)) && //if only the project should be added, then the query does not need to be executed
 					(outputLocation.equals(projPath) || defaultOutputLocation.segmentCount() == 1)) {
 
 
@@ -216,7 +215,7 @@ public class AddFolderToBuildpathAction extends BuildpathModifierAction {
 				}
 			}
 
-        	BuildpathDelta delta= new BuildpathDelta(getToolTipText());
+			BuildpathDelta delta= new BuildpathDelta(getToolTipText());
 
 			if (!project.getOutputLocation().equals(outputLocation)) {
 				project.setOutputLocation(outputLocation, new SubProgressMonitor(monitor, 1));
@@ -233,8 +232,7 @@ public class AddFolderToBuildpathAction extends BuildpathModifierAction {
 			}
 
 			List<CPListElement> newEntries= new ArrayList<>();
-			for (int i= 0; i < elements.size(); i++) {
-				Object element= elements.get(i);
+			for (Object element : elements) {
 				CPListElement entry;
 				if (element instanceof IResource)
 					entry= ClasspathModifier.addToClasspath((IResource) element, existingEntries, newEntries, project, new SubProgressMonitor(monitor, 1));
@@ -250,12 +248,12 @@ public class AddFolderToBuildpathAction extends BuildpathModifierAction {
 
 			ClasspathModifier.commitClassPath(existingEntries, project, new SubProgressMonitor(monitor, 1));
 
-        	delta.setNewEntries(existingEntries.toArray(new CPListElement[existingEntries.size()]));
-        	informListeners(delta);
+			delta.setNewEntries(existingEntries.toArray(new CPListElement[existingEntries.size()]));
+			informListeners(delta);
 
 			List<IJavaElement> result= new ArrayList<>();
-			for (int i= 0; i < newEntries.size(); i++) {
-				IClasspathEntry entry= newEntries.get(i).getClasspathEntry();
+			for (CPListElement newEntrie : newEntries) {
+				IClasspathEntry entry= newEntrie.getClasspathEntry();
 				IJavaElement root;
 				if (entry.getPath().equals(project.getPath()))
 					root= project;
@@ -277,18 +275,17 @@ public class AddFolderToBuildpathAction extends BuildpathModifierAction {
 		if (elements.size() == 0)
 			return false;
 		try {
-			for (Iterator<?> iter= elements.iterator(); iter.hasNext();) {
-				Object element= iter.next();
+			for (Object element : elements) {
 				if (element instanceof IJavaProject) {
 					if (ClasspathModifier.isSourceFolder((IJavaProject)element))
 						return false;
 				} else if (element instanceof IPackageFragment) {
 					IPackageFragment fragment= (IPackageFragment)element;
 					if (ClasspathModifier.isDefaultFragment(fragment))
-	                    return false;
+						return false;
 
 					if (ClasspathModifier.isInExternalOrArchive(fragment))
-	                    return false;
+						return false;
 					IResource res;
 					if ((res= fragment.getResource()) != null && res.isVirtual())
 						return false;

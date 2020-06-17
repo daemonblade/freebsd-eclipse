@@ -56,6 +56,7 @@ import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.NodeFinder;
@@ -79,10 +80,13 @@ import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchPattern;
 
+import org.eclipse.jdt.internal.core.manipulation.StubUtility;
+import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.CollectingSearchRequestor;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
@@ -119,9 +123,6 @@ import org.eclipse.jdt.internal.corext.util.SearchUtils;
 import org.eclipse.jdt.ui.JavaElementLabels;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.core.manipulation.StubUtility;
-import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.ui.viewsupport.BindingLabelProvider;
 
 /**
@@ -276,11 +277,11 @@ public class ChangeTypeRefactoring extends Refactoring {
 		fValidTypes= new HashSet<>();
 	}
 
-    public ChangeTypeRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
+	public ChangeTypeRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
    		this(null, 0, 0, null);
    		RefactoringStatus initializeStatus= initialize(arguments);
    		status.merge(initializeStatus);
-    }
+	}
 
 	// ------------------------------------------------------------------------------------------------- //
 
@@ -484,7 +485,7 @@ public class ChangeTypeRefactoring extends Refactoring {
 		pm.beginTask(RefactoringCoreMessages.ChangeTypeRefactoring_checking_preconditions, 1);
 
 		RefactoringStatus result= Checks.validateModifiesFiles(
-			ResourceUtil.getFiles(fAffectedUnits), getValidationContext());
+			ResourceUtil.getFiles(fAffectedUnits), getValidationContext(), pm);
 
 		pm.done();
 		return result;
@@ -512,7 +513,7 @@ public class ChangeTypeRefactoring extends Refactoring {
 			comment.addSetting(Messages.format(RefactoringCoreMessages.ChangeTypeRefactoring_refactored_type_pattern, BindingLabelProvider.getBindingLabel(fSelectedType, JavaElementLabels.ALL_FULLY_QUALIFIED)));
 			final GeneralizeTypeDescriptor descriptor= RefactoringSignatureDescriptorFactory.createGeneralizeTypeDescriptor(project, description, comment.asString(), arguments, (RefactoringDescriptor.STRUCTURAL_CHANGE | JavaRefactoringDescriptor.JAR_REFACTORING | JavaRefactoringDescriptor.JAR_SOURCE_ATTACHMENT));
 			arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_INPUT, JavaRefactoringDescriptorUtil.elementToHandle(project, fCu));
-			arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_SELECTION, Integer.valueOf(fSelectionStart).toString() + " " + Integer.valueOf(fSelectionLength).toString()); //$NON-NLS-1$
+			arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_SELECTION, Integer.toString(fSelectionStart) + " " + Integer.toString(fSelectionLength)); //$NON-NLS-1$
 			arguments.put(ATTRIBUTE_TYPE, fSelectedType.getQualifiedName());
 			final DynamicValidationRefactoringChange result= new DynamicValidationRefactoringChange(descriptor, RefactoringCoreMessages.ChangeTypeRefactoring_allChanges);
 			for (Map.Entry<ICompilationUnit, Set<ConstraintVariable>> entry : relevantVarsByUnit.entrySet()) {
@@ -544,8 +545,10 @@ public class ChangeTypeRefactoring extends Refactoring {
 		MultiTextEdit root= new MultiTextEdit();
 		unitChange.setEdit(root); // Adam sez don't need this, but then unitChange.addGroupDescription() fails an assertion!
 
+		ImportRemover remover= new ImportRemover(fCu.getJavaProject(), unit);
 		String typeName= updateImports(unit, root);
-		updateCu(unit, vars, unitChange, unitRewriter, typeName);
+		updateCu(unit, vars, unitChange, unitRewriter, typeName, remover);
+		removeUnusedImport(remover,unit, root);
 		root.addChild(unitRewriter.rewriteAST());
 	}
 
@@ -557,26 +560,26 @@ public class ChangeTypeRefactoring extends Refactoring {
 	}
 
 	private void updateCu(CompilationUnit unit, Set<ConstraintVariable> vars, CompilationUnitChange unitChange,
-		ASTRewrite unitRewriter, String typeName) throws JavaModelException {
+		ASTRewrite unitRewriter, String typeName, ImportRemover remover) throws JavaModelException {
 
-        // use custom SourceRangeComputer to avoid losing comments
+		// use custom SourceRangeComputer to avoid losing comments
 		unitRewriter.setTargetSourceRangeComputer(new SourceRangeComputer());
 
 		for (ConstraintVariable cv : vars) {
 			ASTNode decl= findDeclaration(unit, cv);
 			if ((decl instanceof SimpleName || decl instanceof QualifiedName) && cv instanceof ExpressionVariable) {
 				ASTNode gp= decl.getParent().getParent();
-				updateType(unit, getType(gp), unitChange, unitRewriter, typeName);   // local variable or parameter
+				updateType(unit, getType(gp), unitChange, unitRewriter, typeName, remover);   // local variable or parameter
 			} else if (decl instanceof MethodDeclaration || decl instanceof FieldDeclaration) {
-				updateType(unit, getType(decl), unitChange, unitRewriter, typeName); // method return or field type
+				updateType(unit, getType(decl), unitChange, unitRewriter, typeName, remover); // method return or field type
 			} else if (decl instanceof ParameterizedType){
-				updateType(unit, getType(decl), unitChange, unitRewriter, typeName);
+				updateType(unit, getType(decl), unitChange, unitRewriter, typeName, remover);
 			}
 		}
 	}
 
 	private void updateType(CompilationUnit cu, Type oldType, CompilationUnitChange unitChange,
-							ASTRewrite unitRewriter, String typeName) {
+							ASTRewrite unitRewriter, String typeName, ImportRemover remover) {
 
 		String oldName= fSelectionTypeBinding.getName();
 		String[] keys= { BasicElementLabels.getJavaElementName(oldName), BasicElementLabels.getJavaElementName(typeName)};
@@ -591,7 +594,7 @@ public class ChangeTypeRefactoring extends Refactoring {
 			}
 		}
 
-	    //TODO handle types other than simple & parameterized (e.g., arrays)
+		//TODO handle types other than simple & parameterized (e.g., arrays)
 		Assert.isTrue(fSelectedType.isClass() || fSelectedType.isInterface());
 
 		Type newType= null;
@@ -602,6 +605,7 @@ public class ChangeTypeRefactoring extends Refactoring {
 		}
 
 		unitRewriter.replace(nodeToReplace, newType, gd);
+		remover.registerRemovedNode(nodeToReplace);
 		unitChange.addTextEditGroup(gd);
 	}
 
@@ -957,11 +961,11 @@ public class ChangeTypeRefactoring extends Refactoring {
 	}
 
 	// ------------------------------------------------------------------------------------------------- //
-    // Methods for examining & solving type constraints. This includes:
-    //  (1) locating the ConstraintVariable corresponding to the selected ASTNode
-    //  (2) finding all ConstraintVariables "related" to (1) via overriding, method calls, field access
-    //  (3) find all ITypeConstraints of interest that mention ConstraintVariables in (2)
-    //  (4) determining all ITypes for which the ITypeConstraints in (3) are satisfied
+	// Methods for examining & solving type constraints. This includes:
+	//  (1) locating the ConstraintVariable corresponding to the selected ASTNode
+	//  (2) finding all ConstraintVariables "related" to (1) via overriding, method calls, field access
+	//  (3) find all ITypeConstraints of interest that mention ConstraintVariables in (2)
+	//  (4) determining all ITypes for which the ITypeConstraints in (3) are satisfied
 
 	/**
 	 * Find a ConstraintVariable that corresponds to the selected ASTNode.
@@ -1200,8 +1204,8 @@ public class ChangeTypeRefactoring extends Refactoring {
 	 * @throws JavaModelException
 	 */
 	private boolean isValid(ITypeBinding type,
-						    Collection<ConstraintVariable> relevantVars,
-						    Collection<ITypeConstraint> constraints,
+							Collection<ConstraintVariable> relevantVars,
+							Collection<ITypeConstraint> constraints,
 							IProgressMonitor pm) throws JavaModelException {
 		pm.beginTask(RefactoringCoreMessages.ChangeTypeRefactoring_analyzingMessage, constraints.size());
 
@@ -1278,7 +1282,8 @@ public class ChangeTypeRefactoring extends Refactoring {
 					if (memberBinding instanceof IMethodBinding) {
 						IMethodBinding methodBinding= Bindings.findMethodInHierarchy(superType, memberBinding.getName(), (ITypeBinding[]) null);
 						if (methodBinding == null) {
-							if (!(superType.isInterface() && isMethodFromObject)) {
+							if (!superType.isInterface()
+									|| !isMethodFromObject) {
 								return false;
 							}
 						}
@@ -1358,6 +1363,36 @@ public class ChangeTypeRefactoring extends Refactoring {
 		String typeName= rewrite.addImport(fSelectedType.getQualifiedName(), context);
 		rootEdit.addChild(rewrite.rewriteImports(null));
 		return typeName;
+	}
+
+	private void removeUnusedImport(ImportRemover remover, CompilationUnit astRoot, MultiTextEdit rootEdit) throws CoreException{
+		List<ImportDeclaration> declList= astRoot.imports();
+		ImportDeclaration oldImport= null;
+		String importStr= getImport(fSelectionTypeBinding.getQualifiedName());
+		for (ImportDeclaration decl: declList) {
+			if (decl.getName().getFullyQualifiedName().equals(importStr)) {
+				oldImport= decl;
+				break;
+			}
+		}
+		if (oldImport != null) {
+			ImportRewrite rewrite= StubUtility.createImportRewrite(astRoot, true);
+			remover.applyRemoves(rewrite);
+			rootEdit.addChild(rewrite.rewriteImports(null));
+		}
+	}
+
+	private String getImport(String qualifiedTypeName) {
+		String finalStr= qualifiedTypeName;
+		int angleBracketOffset= qualifiedTypeName.indexOf('<');
+		if (angleBracketOffset != -1) {
+			finalStr= qualifiedTypeName.substring(0, angleBracketOffset);
+		}
+		int bracketOffset= qualifiedTypeName.indexOf('[');
+		if (bracketOffset != -1) {
+			finalStr= qualifiedTypeName.substring(0, bracketOffset);
+		}
+		return finalStr;
 	}
 
 	//	------------------------------------------------------------------------------------------------- //
@@ -1561,11 +1596,11 @@ public class ChangeTypeRefactoring extends Refactoring {
 		return result.toArray(new ICompilationUnit[result.size()]);
 	}
 
-    /**
+	/**
 	 * This always includes the type itself. It will include type
 	 * Object for any type other than Object
-     * @param type
-     * @return the super types
+	 * @param type
+	 * @return the super types
 	 */
 	public Set<ITypeBinding> getAllSuperTypes(ITypeBinding type){
 		Set<ITypeBinding> result= new HashSet<>();
@@ -1582,15 +1617,15 @@ public class ChangeTypeRefactoring extends Refactoring {
 		return result;
 	}
 
-    private ITypeBinding findSuperTypeByName(ITypeBinding type, String superTypeName){
-    	Set<ITypeBinding> superTypes= getAllSuperTypes(type);
-    	for (ITypeBinding sup : superTypes) {
-    		if (sup.getQualifiedName().equals(superTypeName)){
-    			return sup;
-    		}
-    	}
-    	return null;
-    }
+	private ITypeBinding findSuperTypeByName(ITypeBinding type, String superTypeName){
+		Set<ITypeBinding> superTypes= getAllSuperTypes(type);
+		for (ITypeBinding sup : superTypes) {
+			if (sup.getQualifiedName().equals(superTypeName)){
+				return sup;
+			}
+		}
+		return null;
+	}
 
 	public boolean isSubTypeOf(ITypeBinding type1, ITypeBinding type2){
 
@@ -1616,9 +1651,9 @@ public class ChangeTypeRefactoring extends Refactoring {
 			int length= -1;
 			final StringTokenizer tokenizer= new StringTokenizer(selection);
 			if (tokenizer.hasMoreTokens())
-				offset= Integer.valueOf(tokenizer.nextToken()).intValue();
+				offset= Integer.parseInt(tokenizer.nextToken());
 			if (tokenizer.hasMoreTokens())
-				length= Integer.valueOf(tokenizer.nextToken()).intValue();
+				length= Integer.parseInt(tokenizer.nextToken());
 			if (offset >= 0 && length >= 0) {
 				fSelectionStart= offset;
 				fSelectionLength= length;

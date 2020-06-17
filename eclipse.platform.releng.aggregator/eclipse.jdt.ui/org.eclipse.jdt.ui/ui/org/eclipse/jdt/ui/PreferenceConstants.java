@@ -4099,7 +4099,7 @@ public class PreferenceConstants {
 		store.setDefault(PreferenceConstants.CODEASSIST_AUTOACTIVATION_DELAY, 0);
 		store.setDefault(PreferenceConstants.CODEASSIST_AUTOINSERT, true);
 		store.setDefault(PreferenceConstants.CODEASSIST_DISABLE_COMPLETION_PROPOSAL_TRIGGER_CHARS, false);
-		store.setDefault(PreferenceConstants.CODEASSIST_NONUITHREAD_COMPUTATION, false);
+		store.setDefault(PreferenceConstants.CODEASSIST_NONUITHREAD_COMPUTATION, true);
 		store.setDefault(PreferenceConstants.PREF_MIN_CHAIN_LENGTH, 2);
 		store.setDefault(PreferenceConstants.PREF_MAX_CHAIN_LENGTH, 4);
 		store.setDefault(PreferenceConstants.PREF_MAX_CHAINS, 20);
@@ -4121,7 +4121,7 @@ public class PreferenceConstants {
 
 		// Be sure to add the newly introduced disabled categories to JavaPlugin.disableNewCodeAssistCategoryPreferences()
 		store.setDefault(PreferenceConstants.CODEASSIST_EXCLUDED_CATEGORIES, "org.eclipse.jdt.ui.textProposalCategory\0org.eclipse.jdt.ui.javaTypeProposalCategory\0org.eclipse.jdt.ui.javaNoTypeProposalCategory\0org.eclipse.jdt.ui.javaChainProposalCategory\0org.eclipse.jdt.ui.javaPostfixProposalCategory\0"); //$NON-NLS-1$
-		store.setDefault(PreferenceConstants.CODEASSIST_CATEGORY_ORDER, "org.eclipse.jdt.ui.javaPostfixProposalCategory:65547\0org.eclipse.jdt.ui.javaChainProposalCategory:65546\0org.eclipse.jdt.ui.spellingProposalCategory:65545\0org.eclipse.jdt.ui.javaTypeProposalCategory:65540\0org.eclipse.jdt.ui.javaNoTypeProposalCategory:65539\0org.eclipse.jdt.ui.textProposalCategory:65541\0org.eclipse.jdt.ui.javaAllProposalCategory:65542\0org.eclipse.jdt.ui.templateProposalCategory:2\0org.eclipse.jdt.ui.swtProposalCategory:3\0"); //$NON-NLS-1$
+		store.setDefault(PreferenceConstants.CODEASSIST_CATEGORY_ORDER, "org.eclipse.jdt.ui.javaPostfixProposalCategory:65547\0org.eclipse.jdt.ui.spellingProposalCategory:65545\0org.eclipse.jdt.ui.javaTypeProposalCategory:65540\0org.eclipse.jdt.ui.javaNoTypeProposalCategory:65539\0org.eclipse.jdt.ui.textProposalCategory:65541\0org.eclipse.jdt.ui.javaAllProposalCategory:65542\0org.eclipse.jdt.ui.templateProposalCategory:2\0org.eclipse.jdt.ui.swtProposalCategory:3\0org.eclipse.jdt.ui.javaChainProposalCategory:4"); //$NON-NLS-1$
 
 		store.setDefault(PreferenceConstants.CODEASSIST_LRU_HISTORY, ""); //$NON-NLS-1$
 		store.setDefault(PreferenceConstants.CODEASSIST_SORTER, "org.eclipse.jdt.ui.RelevanceSorter"); //$NON-NLS-1$

@@ -17,7 +17,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -446,7 +445,7 @@ public final class PushDownWizard extends RefactoringWizard {
 						selectedMembers[0].getMember(), JavaElementLabels.M_PARAMETER_TYPES)) : Messages.format(RefactoringMessages.PushDownInputPage_Mark_selected_members_plural, String
 						.valueOf(selectedMembers.length));
 				final Map<String, Integer> stringMapping= createStringMappingForSelectedElements();
-				final String[] keys= stringMapping.keySet().toArray(new String[stringMapping.keySet().size()]);
+				final String[] keys= stringMapping.keySet().toArray(new String[stringMapping.size()]);
 				Arrays.sort(keys);
 				final int initialSelectionIndex= getInitialSelectionIndexForEditDialog(stringMapping, keys);
 
@@ -495,8 +494,7 @@ public final class PushDownWizard extends RefactoringWizard {
 			final int commonActionCode= getCommonActionCodeForSelectedInfos();
 			if (commonActionCode == -1)
 				return 0;
-			for (final Iterator<String> iterator= mapping.keySet().iterator(); iterator.hasNext();) {
-				final String key= iterator.next();
+			for (String key : mapping.keySet()) {
 				final int action= mapping.get(key).intValue();
 				if (commonActionCode == action) {
 					for (int index= 0; index < keys.length; index++) {

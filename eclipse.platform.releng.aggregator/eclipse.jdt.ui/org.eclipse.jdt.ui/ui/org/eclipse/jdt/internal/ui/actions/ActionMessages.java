@@ -425,6 +425,9 @@ public final class ActionMessages extends NLS {
 	public static String OpenNewEnumWizardAction_text;
 	public static String OpenNewEnumWizardAction_description;
 	public static String OpenNewEnumWizardAction_tooltip;
+	public static String OpenNewRecordWizardAction_text;
+	public static String OpenNewRecordWizardAction_description;
+	public static String OpenNewRecordWizardAction_tooltip;
 	public static String OpenNewInterfaceWizardAction_text;
 	public static String OpenNewInterfaceWizardAction_description;
 	public static String OpenNewInterfaceWizardAction_tooltip;
@@ -454,6 +457,10 @@ public final class ActionMessages extends NLS {
 	public static String CreateModuleInfoAction_question_message_overwrite_module_info;
 	public static String CreateModuleInfoAction_dialog_finish_button_label;
 	public static String CreateModuleInfoAction_dialog_cancel_button_label;
+
+	public static String EnablePreviewFeaturesAction_convert_message_compliance;
+	public static String EnablePreviewFeaturesAction_error_message_compliance;
+	public static String EnablePreviewFeaturesAction_error_title;
 
 	public static String GenerateToStringAction_label;
 	public static String GenerateToStringAction_description;

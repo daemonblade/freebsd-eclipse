@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -39,6 +39,8 @@ import org.eclipse.core.resources.ProjectScope;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.MultiTextEdit;
+import org.eclipse.text.templates.TemplatePersistenceData;
+import org.eclipse.text.templates.TemplateStoreCore;
 
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
@@ -47,8 +49,6 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateBuffer;
 import org.eclipse.jface.text.templates.TemplateException;
-import org.eclipse.text.templates.TemplatePersistenceData;
-import org.eclipse.text.templates.TemplateStoreCore;
 import org.eclipse.jface.text.templates.TemplateVariable;
 
 import org.eclipse.jdt.core.Flags;
@@ -102,11 +102,10 @@ import org.eclipse.jdt.core.manipulation.CodeGeneration;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 
-import org.eclipse.jdt.internal.corext.dom.ASTNodes;
-import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
-
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 
 /**
@@ -127,6 +126,7 @@ public class StubUtility {
 		VALID_TYPE_BODY_TEMPLATES.add(CodeTemplateContextType.INTERFACEBODY_ID);
 		VALID_TYPE_BODY_TEMPLATES.add(CodeTemplateContextType.ENUMBODY_ID);
 		VALID_TYPE_BODY_TEMPLATES.add(CodeTemplateContextType.ANNOTATIONBODY_ID);
+		VALID_TYPE_BODY_TEMPLATES.add(CodeTemplateContextType.RECORDBODY_ID);
 	}
 
 	//COPIED from org.eclipse.jdt.ui.PreferenceConstants
@@ -275,7 +275,7 @@ public class StubUtility {
 	 * Don't use this method directly, use CodeGeneration.
 	 * @see CodeGeneration#getTypeComment(ICompilationUnit, String, String[], String)
 	 */
-	public static String getTypeComment(ICompilationUnit cu, String typeQualifiedName, String[] typeParameterNames, String lineDelim) throws CoreException {
+	public static String getTypeComment(ICompilationUnit cu, String typeQualifiedName, String[] typeParameterNames, String[] params, String lineDelim) throws CoreException {
 		Template template= getCodeTemplate(CodeTemplateContextType.TYPECOMMENT_ID, cu.getJavaProject());
 		if (template == null) {
 			return null;
@@ -307,7 +307,7 @@ public class StubUtility {
 		int[] tagOffsets= position.getOffsets();
 		for (int i= tagOffsets.length - 1; i >= 0; i--) { // from last to first
 			try {
-				insertTag(document, tagOffsets[i], position.getLength(), EMPTY, EMPTY, null, typeParameterNames, false, lineDelim);
+				insertTag(document, tagOffsets[i], position.getLength(), params, EMPTY, null, typeParameterNames, false, lineDelim);
 			} catch (BadLocationException e) {
 				throw new CoreException(new Status(IStatus.ERROR, JavaManipulationPlugin.getPluginId(), IStatus.ERROR, e.getMessage(), e));
 			}
@@ -492,9 +492,8 @@ public class StubUtility {
 			if (position == null || position.getLength() > 0) {
 				continue;
 			}
-			int[] offsets= position.getOffsets();
-			for (int k= 0; k < offsets.length; k++) {
-				int line= doc.getLineOfOffset(offsets[k]);
+			for (int offset2 : position.getOffsets()) {
+				int line= doc.getLineOfOffset(offset2);
 				IRegion lineInfo= doc.getLineInformation(line);
 				int offset= lineInfo.getOffset();
 				String str= doc.get(offset, lineInfo.getLength());
@@ -562,17 +561,17 @@ public class StubUtility {
 		String lineStart= textBuffer.get(region.getOffset(), offset - region.getOffset());
 
 		StringBuilder buf= new StringBuilder();
-		for (int i= 0; i < providesNames.length; i++) {
+		for (String providesName : providesNames) {
 			if (buf.length() > 0) {
 				buf.append(lineDelimiter).append(lineStart);
 			}
-			buf.append("@provides ").append(providesNames[i]); //$NON-NLS-1$
+			buf.append("@provides ").append(providesName); //$NON-NLS-1$
 		}
-		for (int i= 0; i < usesNames.length; i++) {
+		for (String usesName : usesNames) {
 			if (buf.length() > 0) {
 				buf.append(lineDelimiter).append(lineStart);
 			}
-			buf.append("@uses ").append(usesNames[i]); //$NON-NLS-1$
+			buf.append("@uses ").append(usesName); //$NON-NLS-1$
 		}
 		if (buf.length() == 0 && isAllCommentWhitespace(lineStart)) {
 			int prevLine= textBuffer.getLineOfOffset(offset) - 1;
@@ -874,12 +873,12 @@ public class StubUtility {
 	}
 
 	private static boolean isAllCommentWhitespace(String lineStart) {
-		for (int i= 0; i < lineStart.length(); i++) {
-			char ch= lineStart.charAt(i);
+		for (char ch : lineStart.toCharArray()) {
 			if (!Character.isWhitespace(ch) && ch != '*') {
 				return false;
 			}
 		}
+
 		return true;
 	}
 
@@ -1171,8 +1170,7 @@ public class StubUtility {
 			String string= assignedExpression instanceof StringLiteral ? ((StringLiteral)assignedExpression).getLiteralValue() : ((NumberLiteral)assignedExpression).getToken();
 			StringBuilder res= new StringBuilder();
 			boolean needsUnderscore= false;
-			for (int i= 0; i < string.length(); i++) {
-				char ch= string.charAt(i);
+			for (char ch : string.toCharArray()) {
 				if (Character.isJavaIdentifierPart(ch)) {
 					if (res.length() == 0 && !Character.isJavaIdentifierStart(ch) || needsUnderscore) {
 						res.append('_');
@@ -1578,6 +1576,9 @@ public class StubUtility {
 			rewrite.setUseContextToFilterImplicitImports(true);
 		}
 		return rewrite;
+	}
+
+	private StubUtility() {
 	}
 
 }

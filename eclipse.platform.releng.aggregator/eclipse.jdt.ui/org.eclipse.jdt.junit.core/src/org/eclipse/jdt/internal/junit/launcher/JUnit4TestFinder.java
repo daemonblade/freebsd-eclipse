@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2019 IBM Corporation and others.
+ * Copyright (c) 2006, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,7 +16,6 @@ package org.eclipse.jdt.internal.junit.launcher;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
@@ -145,8 +144,7 @@ public class JUnit4TestFinder implements ITestFinder {
 			new SearchEngine().search(annotationsPattern, searchParticipants, scope, requestor, new SubProgressMonitor(pm, 2));
 
 			// find all classes in the region
-			for (Iterator<IType> iterator= candidates.iterator(); iterator.hasNext();) {
-				IType curr= iterator.next();
+			for (IType curr : candidates) {
 				if (CoreTestSearchEngine.isAccessibleClass(curr) && !Flags.isAbstract(curr.getFlags()) && region.contains(curr)) {
 					result.add(curr);
 				}
@@ -207,7 +205,7 @@ public class JUnit4TestFinder implements ITestFinder {
 			if (CoreTestSearchEngine.hasSuiteMethod(type)) { // since JUnit 4.3.1
 				return true;
 			}
-			ASTParser parser= ASTParser.newParser(AST.JLS13);
+			ASTParser parser= ASTParser.newParser(AST.JLS14);
 			/* TODO: When bug 156352 is fixed:
 			parser.setProject(type.getJavaProject());
 			IBinding[] bindings= parser.createBindings(new IJavaElement[] { type }, monitor);

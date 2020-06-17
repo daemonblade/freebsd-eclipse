@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -86,12 +86,15 @@ import org.eclipse.jdt.core.refactoring.descriptors.JavaRefactoringDescriptor;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.SearchPattern;
 
+import org.eclipse.jdt.internal.core.manipulation.StubUtility;
+import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
 import org.eclipse.jdt.internal.corext.codemanipulation.GetterSetterUtil;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.DimensionRewrite;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.dom.VariableDeclarationRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
@@ -113,9 +116,6 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.ui.JavaElementLabels;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.core.manipulation.StubUtility;
-import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.ui.viewsupport.BindingLabelProvider;
 
 /**
@@ -416,7 +416,7 @@ public class SelfEncapsulateFieldRefactoring extends Refactoring {
 
 		sub.done();
 		IFile[] filesToBeModified= ResourceUtil.getFiles(fChangeManager.getAllCompilationUnits());
-		result.merge(Checks.validateModifiesFiles(filesToBeModified, getValidationContext()));
+		result.merge(Checks.validateModifiesFiles(filesToBeModified, getValidationContext(), pm));
 		if (result.hasFatalError())
 			return result;
 		ResourceChangeChecker.checkFilesToBeChanged(filesToBeModified, new SubProgressMonitor(pm, 1));
@@ -471,16 +471,16 @@ public class SelfEncapsulateFieldRefactoring extends Refactoring {
 			comment.addSetting(RefactoringCoreMessages.SelfEncapsulateField_generate_comments);
 		final EncapsulateFieldDescriptor descriptor= RefactoringSignatureDescriptorFactory.createEncapsulateFieldDescriptor(project, description, comment.asString(), arguments, flags);
 		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_INPUT, JavaRefactoringDescriptorUtil.elementToHandle(project, fField));
-		arguments.put(ATTRIBUTE_VISIBILITY, Integer.valueOf(fVisibility).toString());
-		arguments.put(ATTRIBUTE_INSERTION, Integer.valueOf(fInsertionIndex).toString());
+		arguments.put(ATTRIBUTE_VISIBILITY, Integer.toString(fVisibility));
+		arguments.put(ATTRIBUTE_INSERTION, Integer.toString(fInsertionIndex));
 		if (fCreateSetter) {
 			arguments.put(ATTRIBUTE_SETTER, fSetterName);
 		}
 		if (fCreateGetter) {
 			arguments.put(ATTRIBUTE_GETTER, fGetterName);
 		}
-		arguments.put(ATTRIBUTE_COMMENTS, Boolean.valueOf(fGenerateJavadoc).toString());
-		arguments.put(ATTRIBUTE_DECLARING, Boolean.valueOf(fEncapsulateDeclaringClass).toString());
+		arguments.put(ATTRIBUTE_COMMENTS, Boolean.toString(fGenerateJavadoc));
+		arguments.put(ATTRIBUTE_DECLARING, Boolean.toString(fEncapsulateDeclaringClass));
 		final DynamicValidationRefactoringChange result= new DynamicValidationRefactoringChange(descriptor, getName());
 		TextChange[] changes= fChangeManager.getAllChanges();
 		pm.beginTask(NO_NAME, changes.length);
@@ -796,12 +796,12 @@ public class SelfEncapsulateFieldRefactoring extends Refactoring {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_SETTER));
 		final String encapsulate= arguments.getAttribute(ATTRIBUTE_DECLARING);
 		if (encapsulate != null) {
-			fEncapsulateDeclaringClass= Boolean.valueOf(encapsulate).booleanValue();
+			fEncapsulateDeclaringClass= Boolean.parseBoolean(encapsulate);
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_DECLARING));
 		final String matches= arguments.getAttribute(ATTRIBUTE_COMMENTS);
 		if (matches != null) {
-			fGenerateJavadoc= Boolean.valueOf(matches).booleanValue();
+			fGenerateJavadoc= Boolean.parseBoolean(matches);
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_COMMENTS));
 		final String visibility= arguments.getAttribute(ATTRIBUTE_VISIBILITY);

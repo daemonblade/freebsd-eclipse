@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -259,11 +259,11 @@ public class ExtractMethodRefactoring extends Refactoring {
 		fVisibility= -1;
 	}
 
-    public ExtractMethodRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
+	public ExtractMethodRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
    		this((ICompilationUnit) null, 0, 0);
    		RefactoringStatus initializeStatus= initialize(arguments);
    		status.merge(initializeStatus);
-    }
+	}
 
 	/**
 	 * Creates a new extract method refactoring
@@ -302,7 +302,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 			return mergeTextSelectionStatus(result);
 
 		IFile[] changedFiles= ResourceUtil.getFiles(new ICompilationUnit[]{fCUnit});
-		result.merge(Checks.validateModifiesFiles(changedFiles, getValidationContext()));
+		result.merge(Checks.validateModifiesFiles(changedFiles, getValidationContext(), pm));
 		if (result.hasFatalError())
 			return result;
 		result.merge(ResourceChangeChecker.checkFilesToBeChanged(changedFiles, new SubProgressMonitor(pm, 1)));
@@ -675,12 +675,12 @@ public class ExtractMethodRefactoring extends Refactoring {
 		final ExtractMethodDescriptor descriptor= RefactoringSignatureDescriptorFactory.createExtractMethodDescriptor(project, description, comment.asString(), arguments, flags);
 		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_INPUT, JavaRefactoringDescriptorUtil.elementToHandle(project, fCUnit));
 		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_NAME, fMethodName);
-		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_SELECTION, Integer.valueOf(fSelectionStart).toString() + " " + Integer.valueOf(fSelectionLength).toString()); //$NON-NLS-1$
-		arguments.put(ATTRIBUTE_VISIBILITY, Integer.valueOf(fVisibility).toString());
-		arguments.put(ATTRIBUTE_DESTINATION, Integer.valueOf(fDestinationIndex).toString());
-		arguments.put(ATTRIBUTE_EXCEPTIONS, Boolean.valueOf(fThrowRuntimeExceptions).toString());
-		arguments.put(ATTRIBUTE_COMMENTS, Boolean.valueOf(fGenerateJavadoc).toString());
-		arguments.put(ATTRIBUTE_REPLACE, Boolean.valueOf(fReplaceDuplicates).toString());
+		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_SELECTION, Integer.toString(fSelectionStart) + " " + Integer.toString(fSelectionLength)); //$NON-NLS-1$
+		arguments.put(ATTRIBUTE_VISIBILITY, Integer.toString(fVisibility));
+		arguments.put(ATTRIBUTE_DESTINATION, Integer.toString(fDestinationIndex));
+		arguments.put(ATTRIBUTE_EXCEPTIONS, Boolean.toString(fThrowRuntimeExceptions));
+		arguments.put(ATTRIBUTE_COMMENTS, Boolean.toString(fGenerateJavadoc));
+		arguments.put(ATTRIBUTE_REPLACE, Boolean.toString(fReplaceDuplicates));
 		return descriptor;
 	}
 
@@ -972,8 +972,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 		}
 
 		List<Expression> arguments= invocation.arguments();
-		for (int i= 0; i < fParameterInfos.size(); i++) {
-			ParameterInfo parameter= fParameterInfos.get(i);
+		for (ParameterInfo parameter : fParameterInfos) {
 			arguments.add(ASTNodeFactory.newName(fAST, getMappedName(duplicate, parameter)));
 		}
 		if (fLinkedProposalModel != null) {
@@ -1096,9 +1095,10 @@ public class ExtractMethodRefactoring extends Refactoring {
 		int modifiers= fVisibility;
 		BodyDeclaration enclosingBodyDeclaration= fAnalyzer.getEnclosingBodyDeclaration();
 		boolean isDestinationInterface= isDestinationInterface();
-		if (isDestinationInterface && !(enclosingBodyDeclaration instanceof MethodDeclaration &&
-				enclosingBodyDeclaration.getParent() == fDestination &&
-				Modifier.isPublic(enclosingBodyDeclaration.getModifiers()))) {
+		if (isDestinationInterface
+				&& ((!(enclosingBodyDeclaration instanceof MethodDeclaration)
+						|| (enclosingBodyDeclaration.getParent() != fDestination))
+						|| !Modifier.isPublic(enclosingBodyDeclaration.getModifiers()))) {
 			modifiers= Modifier.NONE;
 		}
 
@@ -1136,8 +1136,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 		ImportRewriteContext context= new ContextSensitiveImportRewriteContext(enclosingBodyDeclaration, fImportRewriter);
 
 		List<SingleVariableDeclaration> parameters= result.parameters();
-		for (int i= 0; i < fParameterInfos.size(); i++) {
-			ParameterInfo info= fParameterInfos.get(i);
+		for (ParameterInfo info : fParameterInfos) {
 			VariableDeclaration infoDecl= getVariableDeclaration(info);
 			SingleVariableDeclaration parameter= fAST.newSingleVariableDeclaration();
 			parameter.modifiers().addAll(ASTNodeFactory.newModifiers(fAST, ASTNodes.getModifiers(infoDecl)));
@@ -1156,8 +1155,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 
 	private ITypeBinding[] computeLocalTypeVariables(int modifier) {
 		List<ITypeBinding> result= new ArrayList<>(Arrays.asList(fAnalyzer.getTypeVariables()));
-		for (int i= 0; i < fParameterInfos.size(); i++) {
-			ParameterInfo info= fParameterInfos.get(i);
+		for (ParameterInfo info : fParameterInfos) {
 			processVariable(result, info.getOldBinding(), modifier);
 		}
 		for (IVariableBinding methodLocal : fAnalyzer.getMethodLocals()) {
@@ -1230,9 +1228,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 			ITypeBinding binding= fAnalyzer.getExpressionBinding();
 			if (binding != null && (!binding.isPrimitive() || !"void".equals(binding.getName()))) { //$NON-NLS-1$
 				ReturnStatement rs= fAST.newReturnStatement();
-				rs.setExpression((Expression)fRewriter.createMoveTarget(selectedNodes[0] instanceof ParenthesizedExpression
-						? ((ParenthesizedExpression)selectedNodes[0]).getExpression()
-						: selectedNodes[0]));
+				rs.setExpression((Expression)fRewriter.createMoveTarget(ASTNodes.getUnparenthesedExpression(selectedNodes[0])));
 				statements.insertLast(rs, null);
 			} else {
 				ExpressionStatement st= fAST.newExpressionStatement((Expression)fRewriter.createMoveTarget(selectedNodes[0]));
@@ -1308,9 +1304,9 @@ public class ExtractMethodRefactoring extends Refactoring {
 		int length= -1;
 		final StringTokenizer tokenizer= new StringTokenizer(selection);
 		if (tokenizer.hasMoreTokens())
-			offset= Integer.valueOf(tokenizer.nextToken()).intValue();
+			offset= Integer.parseInt(tokenizer.nextToken());
 		if (tokenizer.hasMoreTokens())
-			length= Integer.valueOf(tokenizer.nextToken()).intValue();
+			length= Integer.parseInt(tokenizer.nextToken());
 		if (offset < 0 || length < 0)
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_illegal_argument, new Object[] { selection, JavaRefactoringDescriptorUtil.ATTRIBUTE_SELECTION}));
 
@@ -1356,19 +1352,19 @@ public class ExtractMethodRefactoring extends Refactoring {
 		if (replace == null)
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_REPLACE));
 
-		fReplaceDuplicates= Boolean.valueOf(replace).booleanValue();
+		fReplaceDuplicates= Boolean.parseBoolean(replace);
 
 		final String comments= arguments.getAttribute(ATTRIBUTE_COMMENTS);
 		if (comments == null)
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_COMMENTS));
 
-		fGenerateJavadoc= Boolean.valueOf(comments).booleanValue();
+		fGenerateJavadoc= Boolean.parseBoolean(comments);
 
 		final String exceptions= arguments.getAttribute(ATTRIBUTE_EXCEPTIONS);
 		if (exceptions == null)
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_EXCEPTIONS));
 
-		fThrowRuntimeExceptions= Boolean.valueOf(exceptions).booleanValue();
+		fThrowRuntimeExceptions= Boolean.parseBoolean(exceptions);
 
 		return new RefactoringStatus();
 	}

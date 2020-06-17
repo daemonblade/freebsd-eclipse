@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2016 IBM Corporation and others.
+ * Copyright (c) 2008, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,9 +13,16 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.refactoring;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.junit.Rule;
+import org.junit.Test;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -51,6 +58,7 @@ import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
 import org.eclipse.jdt.core.search.SearchMatch;
 
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.ParameterInfo;
 import org.eclipse.jdt.internal.corext.refactoring.base.ReferencesInBinaryContext;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineMethodRefactoring;
@@ -60,31 +68,13 @@ import org.eclipse.jdt.internal.corext.refactoring.structure.MoveInstanceMethodP
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesSettings;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-
-public class BinaryReferencesTests extends TestCase {
-
+public class BinaryReferencesTests {
 	private static final boolean BUG_226660= true;
-	private static BinaryReferencesTestSetup fgTestSetup;
 
-	public BinaryReferencesTests(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		fgTestSetup= new BinaryReferencesTestSetup(new TestSuite(BinaryReferencesTests.class));
-		return fgTestSetup;
-	}
-
-	public static Test setUpTest(Test test) {
-		fgTestSetup= new BinaryReferencesTestSetup(test);
-		return fgTestSetup;
-	}
+	@Rule
+	public BinaryReferencesTestSetup fgTestSetup= new BinaryReferencesTestSetup();
 
 	private static void assertContainsMatches(List<SearchMatch> matches, String[] expectedHandleIdentifiers) {
 		int matchCount= matches.size();
@@ -102,7 +92,7 @@ public class BinaryReferencesTests extends TestCase {
 			assertEquals("not all expected matches", expected.toString(), actual.toString());
 	}
 
-	private static IType findType(String typeName) throws JavaModelException {
+	private IType findType(String typeName) throws JavaModelException {
 		return fgTestSetup.getSourceProject().findType(typeName);
 	}
 
@@ -131,7 +121,7 @@ public class BinaryReferencesTests extends TestCase {
 		CheckConditionsOperation op= new CheckConditionsOperation(refactoring, CheckConditionsOperation.ALL_CONDITIONS);
 		op.run(null);
 		RefactoringStatus validationStatus= op.getStatus();
-		assertTrue(!validationStatus.hasFatalError());
+		assertFalse(validationStatus.hasFatalError());
 		assertTrue(validationStatus.hasError());
 		assertEquals(1, validationStatus.getEntries().length);
 
@@ -139,6 +129,7 @@ public class BinaryReferencesTests extends TestCase {
 		return context.getMatches();
 	}
 
+	@Test
 	public void testRenameType01() throws Exception {
 		RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(IJavaRefactorings.RENAME_TYPE);
 		descriptor.setJavaElement(findType("source.BaseClass"));
@@ -153,6 +144,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testRenameType02() throws Exception {
 		RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(IJavaRefactorings.RENAME_TYPE);
 		descriptor.setJavaElement(findType("source.Color"));
@@ -168,7 +160,7 @@ public class BinaryReferencesTests extends TestCase {
 		CheckConditionsOperation op= new CheckConditionsOperation(refactoring, CheckConditionsOperation.ALL_CONDITIONS);
 		op.run(null);
 		RefactoringStatus validationStatus= op.getStatus();
-		assertTrue(!validationStatus.hasFatalError());
+		assertFalse(validationStatus.hasFatalError());
 		assertTrue(validationStatus.hasError());
 		assertEquals(2, validationStatus.getEntries().length);
 
@@ -186,7 +178,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
-	private static List<SearchMatch> doRenameMethod(String typeName, String methodName) throws CoreException {
+	private List<SearchMatch> doRenameMethod(String typeName, String methodName) throws CoreException {
 		RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(IJavaRefactorings.RENAME_METHOD);
 		IMethod method= findMethod(findType(typeName), methodName);
 		descriptor.setJavaElement(method);
@@ -196,6 +188,7 @@ public class BinaryReferencesTests extends TestCase {
 		return doRefactoring(descriptor);
 	}
 
+	@Test
 	public void testRenameVirtualMethod01() throws Exception {
 		List<SearchMatch> matches= doRenameMethod("source.BaseClass", "baseMethod");
 		assertContainsMatches(matches, new String[] {
@@ -203,6 +196,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testRenameVirtualMethod02() throws Exception {
 		List<SearchMatch> matches= doRenameMethod("source.BaseClass", "compareTo");
 		assertContainsMatches(matches, new String[] {
@@ -210,6 +204,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testRenameVirtualMethod03() throws Exception {
 		List<SearchMatch> matches= doRenameMethod("source.BaseClass", "referencedVirtualMethod");
 		assertContainsMatches(matches, new String[] {
@@ -219,6 +214,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testRenameNonVirtualMethod01() throws Exception {
 		List<SearchMatch> matches= doRenameMethod("source.BaseClass", "referencedMethod");
 		assertContainsMatches(matches, new String[] {
@@ -226,6 +222,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testRenameNonVirtualMethod02() throws Exception {
 		List<SearchMatch> matches= doRenameMethod("source.BaseClass", "referencedStaticMethod");
 		assertContainsMatches(matches, new String[] {
@@ -233,7 +230,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
-	private static List<SearchMatch> doRenameField(String typeName, String fieldName) throws CoreException {
+	private List<SearchMatch> doRenameField(String typeName, String fieldName) throws CoreException {
 		IField field= findType(typeName).getField(fieldName);
 		String refactoringID= field.isEnumConstant() ? IJavaRefactorings.RENAME_ENUM_CONSTANT : IJavaRefactorings.RENAME_FIELD;
 		RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(refactoringID);
@@ -244,6 +241,7 @@ public class BinaryReferencesTests extends TestCase {
 		return doRefactoring(descriptor);
 	}
 
+	@Test
 	public void testRenameField01() throws Exception {
 		List<SearchMatch> matches= doRenameField("source.BaseClass", "fProtected");
 		assertContainsMatches(matches, new String[] {
@@ -251,6 +249,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testRenameField02() throws Exception {
 		List<SearchMatch> matches= doRenameField("source.BaseClass", "fPublic");
 		assertContainsMatches(matches, new String[] {
@@ -258,6 +257,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testRenameField03() throws Exception {
 		List<SearchMatch> matches= doRenameField("source.Color", "RED");
 		assertContainsMatches(matches, new String[] {
@@ -265,6 +265,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testRenameField04() throws Exception {
 		if (BUG_226660) // https://bugs.eclipse.org/bugs/show_bug.cgi?id=226660
 			return;
@@ -274,6 +275,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testRenamePackage01() throws Exception {
 		RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(IJavaRefactorings.RENAME_PACKAGE);
 		IPackageFragment pack= findType("source.BaseClass").getPackageFragment();
@@ -292,6 +294,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testRenamePackage02() throws Exception {
 		RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(IJavaRefactorings.RENAME_PACKAGE);
 		IPackageFragment pack= findType("source.BaseClass").getPackageFragment();
@@ -306,7 +309,7 @@ public class BinaryReferencesTests extends TestCase {
 		CheckConditionsOperation op= new CheckConditionsOperation(refactoring, CheckConditionsOperation.ALL_CONDITIONS);
 		op.run(null);
 		RefactoringStatus validationStatus= op.getStatus();
-		assertTrue(!validationStatus.hasFatalError());
+		assertFalse(validationStatus.hasFatalError());
 		assertTrue(validationStatus.hasError());
 		assertEquals(2, validationStatus.getEntries().length);
 
@@ -328,7 +331,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
-	private static List<SearchMatch> doChangeSignature(String typeName, String methodName) throws JavaModelException, Exception, CoreException {
+	private List<SearchMatch> doChangeSignature(String typeName, String methodName) throws JavaModelException, Exception, CoreException {
 		IMethod method= findMethod(findType(typeName), methodName);
 		ChangeSignatureProcessor processor= new ChangeSignatureProcessor(method);
 
@@ -344,6 +347,7 @@ public class BinaryReferencesTests extends TestCase {
 		return doCheckConditions(refactoring);
 	}
 
+	@Test
 	public void testChangeSignature01() throws Exception {
 		List<SearchMatch> matches= doChangeSignature("source.BaseClass", "baseMethod");
 		assertContainsMatches(matches, new String[] {
@@ -352,6 +356,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testChangeSignature02() throws Exception {
 		List<SearchMatch> matches= doChangeSignature("source.BaseClass", "compareTo");
 		assertContainsMatches(matches, new String[] {
@@ -359,6 +364,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testChangeSignature03() throws Exception {
 		List<SearchMatch> matches= doChangeSignature("source.BaseClass", "referencedMethod");
 		assertContainsMatches(matches, new String[] {
@@ -366,6 +372,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testChangeConstructorSignature01() throws Exception {
 		List<SearchMatch> matches= doChangeSignature("source.BaseClass", "BaseClass");
 		assertContainsMatches(matches, new String[] {
@@ -374,7 +381,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
-	private static List<SearchMatch> doInlineMethod(String typeName, String methodName) throws JavaModelException, Exception, CoreException {
+	private List<SearchMatch> doInlineMethod(String typeName, String methodName) throws JavaModelException, Exception, CoreException {
 		IMethod method= findMethod(findType(typeName), methodName);
 		ICompilationUnit cu= method.getCompilationUnit();
 		CompilationUnit node= new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL).parse(cu, true);
@@ -383,6 +390,7 @@ public class BinaryReferencesTests extends TestCase {
 		return doCheckConditions(refactoring);
 	}
 
+	@Test
 	public void testInlineMethod01() throws Exception {
 		List<SearchMatch> matches= doInlineMethod("source.BaseClass", "referencedMethod");
 		assertContainsMatches(matches, new String[] {
@@ -390,6 +398,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testInlineMethod02() throws Exception {
 		// no error if inlining only selected reference from source
 		IMethod baseMethod= findMethod(findType("source.BaseClass"), "baseMethod");
@@ -403,10 +412,10 @@ public class BinaryReferencesTests extends TestCase {
 		CheckConditionsOperation op= new CheckConditionsOperation(refactoring, CheckConditionsOperation.ALL_CONDITIONS);
 		op.run(null);
 		RefactoringStatus validationStatus= op.getStatus();
-		assertTrue(!validationStatus.hasError());
+		assertFalse(validationStatus.hasError());
 	}
 
-	private static List<SearchMatch> doMoveType(String typeName, String newPackageName) throws CoreException {
+	private List<SearchMatch> doMoveType(String typeName, String newPackageName) throws CoreException {
 		IType type= findType(typeName);
 		IPackageFragmentRoot root= JavaModelUtil.getPackageFragmentRoot(type);
 
@@ -418,6 +427,7 @@ public class BinaryReferencesTests extends TestCase {
 		return doRefactoring(descriptor);
 	}
 
+	@Test
 	public void testMoveType01() throws Exception {
 		List<SearchMatch> matches= doMoveType("source.BaseClass", "source.sub");
 		assertContainsMatches(matches, new String[] {
@@ -430,7 +440,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
-	private static List<SearchMatch> doMoveStaticMembers(IMember[] members, String targetTypeName) throws CoreException {
+	private List<SearchMatch> doMoveStaticMembers(IMember[] members, String targetTypeName) throws CoreException {
 		IType targetType= findType(targetTypeName);
 
 		MoveStaticMembersDescriptor descriptor= (MoveStaticMembersDescriptor) RefactoringCore.getRefactoringContribution(IJavaRefactorings.MOVE_STATIC_MEMBERS).createDescriptor();
@@ -440,6 +450,7 @@ public class BinaryReferencesTests extends TestCase {
 		return doRefactoring(descriptor);
 	}
 
+	@Test
 	public void testMoveStaticMember01() throws Exception {
 		IType type= findType("source.BaseClass");
 		IMethod method= findMethod(type, "referencedStaticMethod");
@@ -451,6 +462,7 @@ public class BinaryReferencesTests extends TestCase {
 		});
 	}
 
+	@Test
 	public void testMoveMethod01() throws Exception {
 		IType type= findType("source.BaseClass");
 		IMethod method= findMethod(type, "referencedMethod");

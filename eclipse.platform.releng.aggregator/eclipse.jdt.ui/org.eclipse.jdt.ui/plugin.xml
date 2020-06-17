@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
 <!--
-     Copyright (c) 2000, 2019 IBM Corporation and others.
+     Copyright (c) 2000, 2020 IBM Corporation and others.
 
      This program and the accompanying materials
      are made available under the terms of the Eclipse Public License 2.0
@@ -358,16 +358,6 @@
 	<!-- javadoc completions -->
 	<extension
 		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
-		id="LegacyJavadocCompletionProposalComputer_no">
-		<javaCompletionProposalComputer
-			class="org.eclipse.jdt.internal.ui.text.javadoc.LegacyJavadocCompletionProposalComputer"
-			categoryId="org.eclipse.jdt.ui.javaNoTypeProposalCategory"
-			requiresUIThread="false">
-			<partition type="__java_javadoc"/>
-		</javaCompletionProposalComputer>
-	</extension>
-	<extension
-		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
 		id="JavadocCompletionProposalComputer_no">
 		<javaCompletionProposalComputer
 			requiresUIThread="false"
@@ -383,16 +373,6 @@
 			requiresUIThread="false"
 			class="org.eclipse.jdt.internal.ui.text.javadoc.HTMLTagCompletionProposalComputer"
 			categoryId="org.eclipse.jdt.ui.javaNoTypeProposalCategory">
-			<partition type="__java_javadoc"/>
-		</javaCompletionProposalComputer>
-	</extension>
-	<extension
-		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
-		id="LegacyJavadocCompletionProposalComputer_all">
-		<javaCompletionProposalComputer
-			requiresUIThread="false"
-			class="org.eclipse.jdt.internal.ui.text.javadoc.LegacyJavadocCompletionProposalComputer"
-			categoryId="org.eclipse.jdt.ui.javaAllProposalCategory">
 			<partition type="__java_javadoc"/>
 		</javaCompletionProposalComputer>
 	</extension>
@@ -754,6 +734,19 @@
          </class>
          <description>
             %NewEnumType.description
+         </description>
+         <keywordReference id="org.eclipse.jdt.ui.wizards.java"/>
+      </wizard>
+      <wizard
+            name="%NewRecordType.label"
+            icon="$nl$/icons/full/etool16/newrecord_wiz.png"
+            category="org.eclipse.jdt.ui.java"
+            id="org.eclipse.jdt.ui.wizards.NewRecordCreationWizard">
+         <class class="org.eclipse.jdt.internal.ui.wizards.NewRecordCreationWizard">
+            <parameter name="javatype" value="true"/>
+         </class>
+         <description>
+            %NewRecordType.description
          </description>
          <keywordReference id="org.eclipse.jdt.ui.wizards.java"/>
       </wizard>
@@ -6309,6 +6302,21 @@
 		    <commonWizard
 		          menuGroupId="org.eclipse.jdt.ui.java"
 		          type="new"
+		          wizardId="org.eclipse.jdt.ui.wizards.NewRecordCreationWizard">
+				<enablement>
+					<or>
+						<instanceof value="org.eclipse.jdt.core.IPackageFragment"/>
+						<instanceof value="org.eclipse.jdt.core.IPackageFragmentRoot"/>
+						<instanceof value="org.eclipse.jdt.core.ICompilationUnit"/>
+						<adapt type="org.eclipse.core.resources.IProject">
+							<test property="org.eclipse.core.resources.projectNature" value="org.eclipse.jdt.core.javanature"/>
+						</adapt>
+					</or>
+				 </enablement>
+		    </commonWizard>
+		    <commonWizard
+		          menuGroupId="org.eclipse.jdt.ui.java"
+		          type="new"
 		          wizardId="org.eclipse.jdt.ui.wizards.NewSourceFolderCreationWizard">
 				<enablement>
 					<or>
@@ -7036,9 +7044,14 @@
             runAfter="org.eclipse.jdt.ui.cleanup.loop">
       </cleanUp>
       <cleanUp
+            class="org.eclipse.jdt.internal.ui.fix.VarCleanUp"
+            id="org.eclipse.jdt.ui.cleanup.var"
+            runAfter="org.eclipse.jdt.ui.cleanup.variables">
+      </cleanUp>
+      <cleanUp
             class="org.eclipse.jdt.internal.ui.fix.LambdaExpressionsCleanUp"
             id="org.eclipse.jdt.ui.cleanup.lambda"
-            runAfter="org.eclipse.jdt.ui.cleanup.variables">
+            runAfter="org.eclipse.jdt.ui.cleanup.var">
       </cleanUp>
       <cleanUp
             class="org.eclipse.jdt.internal.ui.fix.ExpressionsCleanUp"
@@ -7051,9 +7064,14 @@
             runAfter="org.eclipse.jdt.ui.cleanup.expressions">
       </cleanUp>
       <cleanUp
+            class="org.eclipse.jdt.internal.ui.fix.LazyLogicalCleanUp"
+            id="org.eclipse.jdt.ui.cleanup.lazy_logical"
+            runAfter="org.eclipse.jdt.ui.cleanup.lambda_and_method_ref">
+      </cleanUp>
+      <cleanUp
             class="org.eclipse.jdt.internal.ui.fix.NumberSuffixCleanUp"
             id="org.eclipse.jdt.ui.cleanup.number_suffix"
-            runAfter="org.eclipse.jdt.ui.cleanup.lambda_and_method_ref">
+            runAfter="org.eclipse.jdt.ui.cleanup.lazy_logical">
       </cleanUp>
       <cleanUp
             class="org.eclipse.jdt.internal.ui.fix.UnusedCodeCleanUp"
@@ -7136,9 +7154,14 @@
             runAfter="org.eclipse.jdt.ui.cleanup.unboxing">
       </cleanUp>
       <cleanUp
+            class="org.eclipse.jdt.internal.ui.fix.MergeConditionalBlocksCleanUp"
+            id="org.eclipse.jdt.ui.cleanup.merge_conditional_blocks"
+            runAfter="org.eclipse.jdt.ui.cleanup.push_down_negation">
+      </cleanUp>
+      <cleanUp
             class="org.eclipse.jdt.internal.ui.fix.MapMethodCleanUp"
             id="org.eclipse.jdt.ui.cleanup.use_directly_map_method"
-            runAfter="org.eclipse.jdt.ui.cleanup.push_down_negation">
+            runAfter="org.eclipse.jdt.ui.cleanup.merge_conditional_blocks">
       </cleanUp>
    </extension>
 
@@ -7296,6 +7319,31 @@
             menubarPath="org.eclipse.ui.projectConfigure/additions"
             enablesFor="1"
             id="org.eclipse.jdt.ui.create.module.info.action">
+      	</action>
+      </objectContribution>
+  </extension>
+  <extension
+        point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            objectClass="org.eclipse.core.resources.IProject"
+            adaptable="true"
+            id="org.eclipse.jdt.ui.enable.preview.features">
+       	 <visibility>
+        	<and>
+            <objectState
+	            name="projectNature"
+	            value="org.eclipse.jdt.core.javanature"/>
+	        <objectState
+	        	name="open"
+	        	value="true"/>
+            </and>
+       	 </visibility>
+         <action
+            label="%enable.preview.features.label"
+            class="org.eclipse.jdt.internal.ui.actions.EnablePreviewFeaturesAction"
+            menubarPath="org.eclipse.ui.projectConfigure/additions"
+            enablesFor="1"
+            id="org.eclipse.jdt.ui.enable.preview.features.action">
       	</action>
       </objectContribution>
   </extension>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -65,8 +65,10 @@ import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.core.refactoring.IJavaRefactorings;
 import org.eclipse.jdt.core.refactoring.descriptors.InferTypeArgumentsDescriptor;
 
+import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
 import org.eclipse.jdt.internal.corext.SourceRangeFactory;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
@@ -93,8 +95,6 @@ import org.eclipse.jdt.ui.JavaElementLabels;
 
 import org.eclipse.jdt.internal.ui.IJavaStatusConstants;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 
 public class InferTypeArgumentsRefactoring extends Refactoring {
 
@@ -244,7 +244,7 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 			rewriteDeclarations(updates, new SubProgressMonitor(pm, 1));
 
 			IFile[] filesToModify= ResourceUtil.getFiles(fChangeManager.getAllCompilationUnits());
-			result.merge(Checks.validateModifiesFiles(filesToModify, getValidationContext()));
+			result.merge(Checks.validateModifiesFiles(filesToModify, getValidationContext(), pm));
 			return result;
 		} finally {
 			pm.done();
@@ -553,8 +553,8 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 					final InferTypeArgumentsDescriptor descriptor= RefactoringSignatureDescriptorFactory.createInferTypeArgumentsDescriptor(name, description, comment.asString(), arguments, RefactoringDescriptor.STRUCTURAL_CHANGE | RefactoringDescriptor.MULTI_CHANGE);
 					for (int index= 0; index < fElements.length; index++)
 						arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + (index + 1), JavaRefactoringDescriptorUtil.elementToHandle(name, fElements[index]));
-					arguments.put(ATTRIBUTE_CLONE, Boolean.valueOf(fAssumeCloneReturnsSameType).toString());
-					arguments.put(ATTRIBUTE_LEAVE, Boolean.valueOf(fLeaveUnconstrainedRaw).toString());
+					arguments.put(ATTRIBUTE_CLONE, Boolean.toString(fAssumeCloneReturnsSameType));
+					arguments.put(ATTRIBUTE_LEAVE, Boolean.toString(fLeaveUnconstrainedRaw));
 					return new RefactoringChangeDescriptor(descriptor);
 				}
 			};
@@ -581,12 +581,12 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 	private RefactoringStatus initialize(JavaRefactoringArguments arguments) {
 		final String clone= arguments.getAttribute(ATTRIBUTE_CLONE);
 		if (clone != null) {
-			fAssumeCloneReturnsSameType= Boolean.valueOf(clone).booleanValue();
+			fAssumeCloneReturnsSameType= Boolean.parseBoolean(clone);
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_CLONE));
 		final String leave= arguments.getAttribute(ATTRIBUTE_LEAVE);
 		if (leave != null) {
-			fLeaveUnconstrainedRaw= Boolean.valueOf(leave).booleanValue();
+			fLeaveUnconstrainedRaw= Boolean.parseBoolean(leave);
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_LEAVE));
 		int count= 1;

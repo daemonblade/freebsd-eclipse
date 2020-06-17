@@ -14,7 +14,6 @@
 package org.eclipse.ltk.internal.ui.refactoring.model;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.team.core.diff.IDiff;
@@ -29,7 +28,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
-import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
 
 import org.eclipse.ltk.core.refactoring.Refactoring;
@@ -64,28 +62,24 @@ public abstract class RefactoringHistoryMergeWizard extends RefactoringHistoryWi
 			final IResourceDelta delta= event.getDelta();
 			if (delta != null) {
 				try {
-					delta.accept(new IResourceDeltaVisitor() {
-
-						@Override
-						public final boolean visit(final IResourceDelta current) throws CoreException {
-							final IResource resource= current.getResource();
-							if (!resource.isDerived()) {
-								if (resource.getType() == IResource.FILE) {
-									switch (delta.getKind()) {
-										case IResourceDelta.ADDED:
-											fAddedFiles.add(resource);
-											break;
-										case IResourceDelta.REMOVED:
-											fRemovedFiles.add(resource);
-											break;
-										case IResourceDelta.CHANGED:
-											fChangedFiles.add(resource);
-											break;
-									}
+					delta.accept(current -> {
+						final IResource resource= current.getResource();
+						if (!resource.isDerived()) {
+							if (resource.getType() == IResource.FILE) {
+								switch (delta.getKind()) {
+									case IResourceDelta.ADDED:
+										fAddedFiles.add(resource);
+										break;
+									case IResourceDelta.REMOVED:
+										fRemovedFiles.add(resource);
+										break;
+									case IResourceDelta.CHANGED:
+										fChangedFiles.add(resource);
+										break;
 								}
 							}
-							return true;
 						}
+						return true;
 					});
 				} catch (CoreException exception) {
 					RefactoringUIPlugin.log(exception);
@@ -187,8 +181,7 @@ public abstract class RefactoringHistoryMergeWizard extends RefactoringHistoryWi
 	 */
 	public void resolveConflicts(final IMergeContext context) {
 		Assert.isNotNull(context);
-		for (final Iterator<IResource> iterator= fChangedFiles.iterator(); iterator.hasNext();) {
-			final IResource resource= iterator.next();
+		for (IResource resource : fChangedFiles) {
 			final IDiff diff= context.getDiffTree().getDiff(resource);
 			if (diff != null) {
 				try {
@@ -198,8 +191,7 @@ public abstract class RefactoringHistoryMergeWizard extends RefactoringHistoryWi
 				}
 			}
 		}
-		for (final Iterator<IResource> iterator= fAddedFiles.iterator(); iterator.hasNext();) {
-			final IResource resource= iterator.next();
+		for (IResource resource : fAddedFiles) {
 			final IDiff diff= context.getDiffTree().getDiff(resource);
 			if (diff != null) {
 				try {
@@ -209,8 +201,7 @@ public abstract class RefactoringHistoryMergeWizard extends RefactoringHistoryWi
 				}
 			}
 		}
-		for (final Iterator<IResource> iterator= fRemovedFiles.iterator(); iterator.hasNext();) {
-			final IResource resource= iterator.next();
+		for (IResource resource : fRemovedFiles) {
 			final IDiff diff= context.getDiffTree().getDiff(resource);
 			if (diff != null) {
 				try {

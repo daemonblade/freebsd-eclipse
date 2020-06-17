@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2014 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -157,11 +157,12 @@ public class ParameterGuessingProposal extends JavaMethodCompletionProposal {
 				ui.setExitPolicy(new ExitPolicy(exitChar, document) {
 					@Override
 					public ExitFlags doExit(LinkedModeModel model2, VerifyEvent event, int offset2, int length) {
-						if (event.character == ',') {
-							for (int i= 0; i < fPositions.length - 1; i++) { // not for the last one
-								Position position= fPositions[i];
-								if (position.offset <= offset2 && offset2 + length <= position.offset + position.length) {
-									try {
+						try {
+							switch (event.character) {
+							case ',':
+								for (int i= 0; i < fPositions.length - 1; i++) { // not for the last one
+									Position position= fPositions[i];
+									if (position.offset <= offset2 && offset2 + length <= position.offset + position.length) {
 										ITypedRegion partition= TextUtilities.getPartition(document, IJavaPartitions.JAVA_PARTITIONING, offset2 + length, false);
 										if (IDocument.DEFAULT_CONTENT_TYPE.equals(partition.getType())
 												|| offset2 + length == partition.getOffset() + partition.getLength()) {
@@ -169,17 +170,35 @@ public class ParameterGuessingProposal extends JavaMethodCompletionProposal {
 											event.keyCode= SWT.TAB;
 											return null;
 										}
-									} catch (BadLocationException e) {
-										// continue; not serious enough to log
 									}
 								}
+								break;
+
+							case ')':
+								if (!canExitLinkedMode(ui, document, offset2, length)) {
+									return null;
+								}
+								if (exitChar != ')') {
+									// exit from link mode when user is in the last ')' position.
+									Position position= fPositions[fPositions.length - 1];
+									if (position.offset <= offset2 && offset2 + length <= position.offset + position.length) {
+										return new ExitFlags(ILinkedModeListener.UPDATE_CARET, false);
+									}
+								}
+								break;
+
+							case ';':
+								ITypedRegion partition= TextUtilities.getPartition(document, IJavaPartitions.JAVA_PARTITIONING, offset2 + length, false);
+								if (!IDocument.DEFAULT_CONTENT_TYPE.equals(partition.getType())) {
+									return null;
+								}
+								break;
+
+							default:
+								break;
 							}
-						} else if (event.character == ')' && exitChar != ')') {
-							// exit from link mode when user is in the last ')' position.
-							Position position= fPositions[fPositions.length - 1];
-							if (position.offset <= offset2 && offset2 + length <= position.offset + position.length) {
-								return new ExitFlags(ILinkedModeListener.UPDATE_CARET, false);
-							}
+						} catch (BadLocationException e) {
+							// continue; not serious enough to log
 						}
 						return super.doExit(model2, event, offset2, length);
 					}
@@ -202,6 +221,41 @@ public class ParameterGuessingProposal extends JavaMethodCompletionProposal {
 			JavaPlugin.log(e);
 			openErrorDialog(e);
 		}
+	}
+
+	private boolean canExitLinkedMode(LinkedModeUI ui, IDocument document, int offset, int length) throws BadLocationException {
+		int selectionEnd= offset + length;
+		ITypedRegion partition= TextUtilities.getPartition(document, IJavaPartitions.JAVA_PARTITIONING, selectionEnd, false);
+		if (!IDocument.DEFAULT_CONTENT_TYPE.equals(partition.getType())) {
+			return false;
+		}
+
+		IRegion argumentRegion= ui.getSelectedRegion();
+
+		int openParens= 0;
+		int pos= argumentRegion.getOffset();
+		while (pos < selectionEnd) {
+			ITypedRegion p= TextUtilities.getPartition(document, IJavaPartitions.JAVA_PARTITIONING, pos, false);
+			int end= p.getOffset() + p.getLength();
+			if (IDocument.DEFAULT_CONTENT_TYPE.equals(p.getType())) { // don't count parenthesis in strings, comments, etc.
+				String argumentTextFromPartition= document.get(pos, Math.min(selectionEnd, end) - pos);
+				for (int i= 0; i < argumentTextFromPartition.length(); i++) {
+					char c= argumentTextFromPartition.charAt(i);
+					if (c == '(') {
+						openParens++;
+					} else if (c == ')') {
+						openParens--;
+					}
+				}
+			}
+
+			pos= end;
+		}
+
+		if (openParens > 0) {
+			return false;
+		}
+		return true;
 	}
 
 	/*
@@ -298,7 +352,7 @@ public class ParameterGuessingProposal extends JavaMethodCompletionProposal {
 	 * Returns the currently active java editor, or <code>null</code> if it
 	 * cannot be determined.
 	 *
-	 * @return  the currently active java editor, or <code>null</code>
+	 * @return the currently active java editor, or <code>null</code>
 	 */
 	private JavaEditor getJavaEditor() {
 		IEditorPart part= JavaPlugin.getActivePage().getActiveEditor();

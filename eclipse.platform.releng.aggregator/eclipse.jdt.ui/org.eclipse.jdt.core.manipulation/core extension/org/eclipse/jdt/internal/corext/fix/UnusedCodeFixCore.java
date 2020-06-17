@@ -224,9 +224,8 @@ public class UnusedCodeFixCore extends CompilationUnitRewriteOperationsFixCore {
 				rewrite.remove(declaration, group);
 			} else if (binding.getKind() == IBinding.VARIABLE) {
 				SimpleName nameNode= (SimpleName) NodeFinder.perform(completeRoot, simpleName.getStartPosition(), simpleName.getLength());
-				SimpleName[] references= LinkedNodeFinder.findByBinding(completeRoot, nameNode.resolveBinding());
-				for (int i= 0; i < references.length; i++) {
-					removeVariableReferences(rewrite, references[i], group);
+				for (SimpleName reference : LinkedNodeFinder.findByBinding(completeRoot, nameNode.resolveBinding())) {
+					removeVariableReferences(rewrite, reference, group);
 				}
 
 				IVariableBinding bindingDecl= ((IVariableBinding) nameNode.resolveBinding()).getVariableDeclaration();
@@ -334,12 +333,12 @@ public class UnusedCodeFixCore extends CompilationUnitRewriteOperationsFixCore {
 					}
 
 					IfStatement ifStatement= ast.newIfStatement();
-					ifStatement.setExpression((Expression) rewrite.createCopyTarget(getExpressionWithoutParenthezis(ce.getExpression())));
+					ifStatement.setExpression((Expression) rewrite.createCopyTarget(ASTNodes.getUnparenthesedExpression(ce.getExpression())));
 
 					Block thenBlock= ast.newBlock();
 					// check if 'then' block contains code to keep
 					if (checkCondtionalExpression(ce.getThenExpression())) {
-						ASTNode thenExpression= rewrite.createCopyTarget(getExpressionWithoutParenthezis(ce.getThenExpression()));
+						ASTNode thenExpression= rewrite.createCopyTarget(ASTNodes.getUnparenthesedExpression(ce.getThenExpression()));
 						thenBlock.statements().add(ast.newExpressionStatement((Expression) thenExpression));
 					}
 					ifStatement.setThenStatement(thenBlock);
@@ -347,7 +346,7 @@ public class UnusedCodeFixCore extends CompilationUnitRewriteOperationsFixCore {
 					// check if 'else' block contains code to keep
 					if (checkCondtionalExpression(ce.getElseExpression())) {
 						Block elseBlock= ast.newBlock();
-						ASTNode elseExpression= rewrite.createCopyTarget(getExpressionWithoutParenthezis(ce.getElseExpression()));
+						ASTNode elseExpression= rewrite.createCopyTarget(ASTNodes.getUnparenthesedExpression(ce.getElseExpression()));
 						elseBlock.statements().add(ast.newExpressionStatement((Expression) elseExpression));
 						ifStatement.setElseStatement(elseBlock);
 					}
@@ -412,19 +411,11 @@ public class UnusedCodeFixCore extends CompilationUnitRewriteOperationsFixCore {
 			}
 		}
 
-		private static Expression getExpressionWithoutParenthezis(Expression expression) {
-			Expression currExpression= expression;
-			while (currExpression instanceof ParenthesizedExpression) {
-				currExpression= ((ParenthesizedExpression) currExpression).getExpression();
-			}
-			return currExpression;
-		}
-
 		/*
 		 * Return TRUE if the expression node type is a method, pre/posfix or assignment
 		 */
 		private static boolean checkCondtionalExpression(Expression expression) {
-			int nodeType= getExpressionWithoutParenthezis(expression).getNodeType();
+			int nodeType= ASTNodes.getUnparenthesedExpression(expression).getNodeType();
 			if (nodeType == ASTNode.METHOD_INVOCATION ||
 					nodeType == ASTNode.POSTFIX_EXPRESSION ||
 					nodeType == ASTNode.PREFIX_EXPRESSION ||
@@ -678,10 +669,7 @@ public class UnusedCodeFixCore extends CompilationUnitRewriteOperationsFixCore {
 
 		ASTNode selectedNode= problem.getCoveringNode(compilationUnit);
 
-		ASTNode curr= selectedNode;
-		while (curr instanceof ParenthesizedExpression) {
-			curr= ((ParenthesizedExpression) curr).getExpression();
-		}
+		ASTNode curr= ASTNodes.getUnparenthesedExpression(selectedNode);
 
 		if (!(curr instanceof CastExpression))
 			return null;
@@ -772,18 +760,14 @@ public class UnusedCodeFixCore extends CompilationUnitRewriteOperationsFixCore {
 			if (removeUnusedCast && id == IProblem.UnnecessaryCast) {
 				ASTNode selectedNode= problem.getCoveringNode(compilationUnit);
 
-				ASTNode curr= selectedNode;
-				while (curr instanceof ParenthesizedExpression) {
-					curr= ((ParenthesizedExpression) curr).getExpression();
-				}
+				ASTNode curr= ASTNodes.getUnparenthesedExpression(selectedNode);
 
 				if (curr instanceof CastExpression) {
 					unnecessaryCasts.add((CastExpression) curr);
 				}
 			}
 		}
-		for (Map.Entry<ASTNode, List<SimpleName>> entry : variableDeclarations.entrySet()) {
-			List<SimpleName> names= entry.getValue();
+		for (List<SimpleName> names : variableDeclarations.values()) {
 			result.add(new RemoveUnusedMemberOperation(names.toArray(new SimpleName[0]), false));
 		}
 		if (unnecessaryCasts.size() > 0)

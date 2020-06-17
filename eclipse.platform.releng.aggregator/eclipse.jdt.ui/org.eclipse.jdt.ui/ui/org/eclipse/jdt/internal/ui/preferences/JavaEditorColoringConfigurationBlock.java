@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -269,7 +269,8 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 					List<HighlightingColorListItem> visibleChildren= new ArrayList<>();
 					for (HighlightingColorListItem listItem : subList) {
 						if (!listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_varKeyword) &&
-								!listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword)) {
+								!listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword) &&
+								!listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_recordKeyword)) {
 							visibleChildren.add(listItem);
 						}
 					}
@@ -397,20 +398,20 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 
 		fColorManager= new JavaColorManager(false);
 
-		for (int i= 0, n= fSyntaxColorListModel.length; i < n; i++)
-			fListModel.add(new HighlightingColorListItem (fSyntaxColorListModel[i][0], fSyntaxColorListModel[i][1], fSyntaxColorListModel[i][1] + BOLD, fSyntaxColorListModel[i][1] + ITALIC, fSyntaxColorListModel[i][1] + STRIKETHROUGH, fSyntaxColorListModel[i][1] + UNDERLINE));
+		for (String[] syntaxColor : fSyntaxColorListModel)
+			fListModel.add(new HighlightingColorListItem (syntaxColor[0], syntaxColor[1], syntaxColor[1] + BOLD, syntaxColor[1] + ITALIC, syntaxColor[1] + STRIKETHROUGH, syntaxColor[1] + UNDERLINE));
 
 		SemanticHighlighting[] semanticHighlightings= SemanticHighlightings.getSemanticHighlightings();
-		for (int i= 0, n= semanticHighlightings.length; i < n; i++)
+		for (SemanticHighlighting semanticHighlighting : semanticHighlightings)
 			fListModel.add(
 					new SemanticHighlightingColorListItem(
-							semanticHighlightings[i].getDisplayName(),
-							SemanticHighlightings.getColorPreferenceKey(semanticHighlightings[i]),
-							SemanticHighlightings.getBoldPreferenceKey(semanticHighlightings[i]),
-							SemanticHighlightings.getItalicPreferenceKey(semanticHighlightings[i]),
-							SemanticHighlightings.getStrikethroughPreferenceKey(semanticHighlightings[i]),
-							SemanticHighlightings.getUnderlinePreferenceKey(semanticHighlightings[i]),
-							SemanticHighlightings.getEnabledPreferenceKey(semanticHighlightings[i])
+							semanticHighlighting.getDisplayName(),
+							SemanticHighlightings.getColorPreferenceKey(semanticHighlighting),
+							SemanticHighlightings.getBoldPreferenceKey(semanticHighlighting),
+							SemanticHighlightings.getItalicPreferenceKey(semanticHighlighting),
+							SemanticHighlightings.getStrikethroughPreferenceKey(semanticHighlighting),
+							SemanticHighlightings.getUnderlinePreferenceKey(semanticHighlighting),
+							SemanticHighlightings.getEnabledPreferenceKey(semanticHighlighting)
 					));
 
 		store.addKeys(createOverlayStoreKeys());
@@ -420,8 +421,7 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 
 		ArrayList<OverlayKey> overlayKeys= new ArrayList<>();
 
-		for (int i= 0, n= fListModel.size(); i < n; i++) {
-			HighlightingColorListItem item= fListModel.get(i);
+		for (HighlightingColorListItem item : fListModel) {
 			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, item.getColorKey()));
 			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, item.getBoldKey()));
 			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, item.getItalicKey()));
@@ -726,9 +726,9 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 				if (item.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_keywords)) {
 					for (HighlightingColorListItem listItem : fListModel) {
 						if (listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_varKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword)) {
+								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword) ||
+								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_recordKeyword)) {
 							PreferenceConverter.setValue(getPreferenceStore(), listItem.getColorKey(), fSyntaxForegroundColorEditor.getColorValue());
-							break;
 						}
 					}
 				}
@@ -747,9 +747,9 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 				if (item.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_keywords)) {
 					for (HighlightingColorListItem listItem : fListModel) {
 						if (listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_varKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword)) {
+								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword) ||
+								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_recordKeyword)) {
 							getPreferenceStore().setValue(listItem.getBoldKey(), fBoldCheckBox.getSelection());
-							break;
 						}
 					}
 				}
@@ -768,9 +768,9 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 				if (item.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_keywords)) {
 					for (HighlightingColorListItem listItem : fListModel) {
 						if (listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_varKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword)) {
+								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword) ||
+								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_recordKeyword)) {
 							getPreferenceStore().setValue(listItem.getItalicKey(), fItalicCheckBox.getSelection());
-							break;
 						}
 					}
 				}
@@ -788,9 +788,9 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 				if (item.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_keywords)) {
 					for (HighlightingColorListItem listItem : fListModel) {
 						if (listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_varKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword)) {
+								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword) ||
+								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_recordKeyword)) {
 							getPreferenceStore().setValue(listItem.getStrikethroughKey(), fStrikethroughCheckBox.getSelection());
-							break;
 						}
 					}
 				}
@@ -809,9 +809,9 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 				if (item.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_keywords)) {
 					for (HighlightingColorListItem listItem : fListModel) {
 						if (listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_varKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword)) {
+								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword) ||
+								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_recordKeyword)) {
 							getPreferenceStore().setValue(listItem.getUnderlineKey(), fUnderlineCheckBox.getSelection());
-							break;
 						}
 					}
 				}

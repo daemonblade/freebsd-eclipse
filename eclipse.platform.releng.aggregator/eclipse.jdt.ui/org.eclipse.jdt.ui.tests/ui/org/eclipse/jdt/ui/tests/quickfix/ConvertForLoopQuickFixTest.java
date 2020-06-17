@@ -63,10 +63,10 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionPropos
 public class ConvertForLoopQuickFixTest extends QuickFixTest {
 
 	@Rule
-    public ProjectTestSetup projectsetup = new ProjectTestSetup();
+	public ProjectTestSetup projectsetup= new ProjectTestSetup();
 
 	private IJavaProject fJProject1;
-	private IPackageFragmentRoot fSourceFolder;
+	IPackageFragmentRoot fSourceFolder;
 	private FixCorrectionProposal fConvertLoopProposal;
 
 	@Before
@@ -123,6 +123,218 @@ public class ConvertForLoopQuickFixTest extends QuickFixTest {
 		buf.append("		for (int element : array) {\n");
 		buf.append("		}\n");
 		buf.append("    }\n");
+		buf.append("}\n");
+		String expected= buf.toString();
+		assertEqualString(preview1, expected);
+	}
+
+	@Test
+	public void testNameDetectionChildren() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		int[] children = {1,2,3,4};\n");
+		buf.append("		for (int i = 0; i < children.length; i++){\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(buf, cu);
+
+		assertNotNull(fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+
+		String preview1= getPreviewContent(fConvertLoopProposal);
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		int[] children = {1,2,3,4};\n");
+		buf.append("		for (int child : children) {\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		String expected= buf.toString();
+		assertEqualString(preview1, expected);
+	}
+
+	@Test
+	public void testNameDetectionS() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		int[] locations = {1,2,3,4};\n");
+		buf.append("		for (int i = 0; i < locations.length; i++){\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(buf, cu);
+
+		assertNotNull(fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+
+		String preview1= getPreviewContent(fConvertLoopProposal);
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		int[] locations = {1,2,3,4};\n");
+		buf.append("		for (int location : locations) {\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		String expected= buf.toString();
+		assertEqualString(preview1, expected);
+	}
+
+	@Test
+	public void testNameDetectionlocationEntries() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		int[] locationEntries = {1,2,3,4};\n");
+		buf.append("		for (int i = 0; i < locationEntries.length; i++){\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(buf, cu);
+
+		assertNotNull(fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+
+		String preview1= getPreviewContent(fConvertLoopProposal);
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		int[] locationEntries = {1,2,3,4};\n");
+		buf.append("		for (int locationEntry : locationEntries) {\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		String expected= buf.toString();
+		assertEqualString(preview1, expected);
+	}
+
+	@Test
+	public void testNameDetectionEntries() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		int[] Entries = {1,2,3,4};\n");
+		buf.append("		for (int i = 0; i < Entries.length; i++){\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(buf, cu);
+
+		assertNotNull(fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+
+		String preview1= getPreviewContent(fConvertLoopProposal);
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		int[] Entries = {1,2,3,4};\n");
+		buf.append("		for (int entry : Entries) {\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		String expected= buf.toString();
+		assertEqualString(preview1, expected);
+	}
+
+	@Test
+	public void testNameDetectionProxies() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		int[] proxies = {1,2,3,4};\n");
+		buf.append("		for (int i = 0; i < proxies.length; i++){\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(buf, cu);
+
+		assertNotNull(fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+
+		String preview1= getPreviewContent(fConvertLoopProposal);
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		int[] proxies = {1,2,3,4};\n");
+		buf.append("		for (int proxy : proxies) {\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		String expected= buf.toString();
+		assertEqualString(preview1, expected);
+	}
+
+	@Test
+	public void testNameDetectionAllChildren() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		String[] AllChildren = {\"aaa\",\"bbb\",\"ccc\"};\n");
+		buf.append("		for (int i = 0; i < AllChildren.length; i++){\n");
+		buf.append("			System.out.println(AllChildren[i]);\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(buf, cu);
+
+		assertNotNull(fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+
+		String preview1= getPreviewContent(fConvertLoopProposal);
+
+		buf= new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		String[] AllChildren = {\"aaa\",\"bbb\",\"ccc\"};\n");
+		buf.append("		for (String child : AllChildren) {\n");
+		buf.append("			System.out.println(child);\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
 		buf.append("}\n");
 		String expected= buf.toString();
 		assertEqualString(preview1, expected);
@@ -2726,6 +2938,92 @@ public class ConvertForLoopQuickFixTest extends QuickFixTest {
 		buf.append("}\n");
 		expected= buf.toString();
 		assertEqualString(preview2, expected);
+	}
+
+	@Test
+	public void testBug562291_1() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append(
+				"package test1;\n" +
+				"import java.io.Serializable;\n" +
+				"public class A {\n" +
+				"	public void test() {\n" +
+				"		Object[] foo= new Object[5];\n" +
+				"		for (int i= 0; i < foo.length; i++) {\n" +
+				"			if (!(foo[i] instanceof Serializable)) {\n" +
+				"			}\n" +
+				"		}\n" +
+				"	}\n" +
+				"}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(buf, cu);
+
+		assertNotNull(fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+
+		String preview1= getPreviewContent(fConvertLoopProposal);
+
+		buf= new StringBuilder();
+		buf.append(
+				"package test1;\n" +
+				"import java.io.Serializable;\n" +
+				"public class A {\n" +
+				"	public void test() {\n" +
+				"		Object[] foo= new Object[5];\n" +
+				"		for (Object element : foo) {\n" +
+				"			if (!(element instanceof Serializable)) {\n" +
+				"			}\n" +
+				"		}\n" +
+				"	}\n" +
+				"}\n");
+		String expected= buf.toString();
+		assertEqualString(preview1, expected);
+	}
+
+	@Test
+	public void testBug562291_2() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf= new StringBuilder();
+		buf.append(
+				"package test1;\n" +
+				"import java.io.Serializable;\n" +
+				"public class A {\n" +
+				"	public void test() {\n" +
+				"		boolean[] foo= new boolean[5];\n" +
+				"		for (int i= 0; i < foo.length; i++) {\n" +
+				"			if (!foo[i]) {\n" +
+				"			}\n" +
+				"		}\n" +
+				"	}\n" +
+				"}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(buf, cu);
+
+		assertNotNull(fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+
+		String preview1= getPreviewContent(fConvertLoopProposal);
+
+		buf= new StringBuilder();
+		buf.append(
+				"package test1;\n" +
+				"import java.io.Serializable;\n" +
+				"public class A {\n" +
+				"	public void test() {\n" +
+				"		boolean[] foo= new boolean[5];\n" +
+				"		for (boolean element : foo) {\n" +
+				"			if (!element) {\n" +
+				"			}\n" +
+				"		}\n" +
+				"	}\n" +
+				"}\n");
+		String expected= buf.toString();
+		assertEqualString(preview1, expected);
 	}
 
 	private boolean satisfiesPrecondition(ICompilationUnit cu) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 IBM Corporation and others.
+ * Copyright (c) 2013, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,13 +13,19 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.refactoring;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.Rule;
+import org.junit.Test;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 
@@ -47,35 +53,28 @@ import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
 
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
 
-public class RenameTests18 extends RefactoringTest {
+import org.eclipse.jdt.ui.tests.refactoring.rules.Java1d8Setup;
+import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 
-	private static final Class<RenameTests18> clazz= RenameTests18.class;
-
+/**
+ * Those tests are made to run on Java Spider 1.8 .
+ */
+public class RenameTests18 extends GenericRefactoringTest {
 	private static final String REFACTORING_PATH= "RenameTests18/";
 
-
-	public RenameTests18(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		return setUpTest(new TestSuite(clazz));
-	}
-
-	public static Test setUpTest(Test someTest) {
-		return new Java18Setup(someTest) {
-			@Override
-			protected void setUp() throws Exception {
-				JavaProjectHelper.PERFORM_DUMMY_SEARCH++;
-				super.setUp();
-			}
-			@Override
-			protected void tearDown() throws Exception {
-				super.tearDown();
-				JavaProjectHelper.PERFORM_DUMMY_SEARCH--;
-			}
-		};
-	}
+	@Rule
+	public RefactoringTestSetup fts= new Java1d8Setup() {
+		@Override
+		public void before() throws Exception {
+			JavaProjectHelper.PERFORM_DUMMY_SEARCH++;
+			super.before();
+		}
+		@Override
+		public void after() {
+			super.after();
+			JavaProjectHelper.PERFORM_DUMMY_SEARCH--;
+		}
+	};
 
 	@Override
 	protected String getRefactoringPath() {
@@ -83,16 +82,16 @@ public class RenameTests18 extends RefactoringTest {
 	}
 
 	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
+	public void genericbefore() throws Exception {
+		super.genericbefore();
 		Hashtable<String, String> options= JavaCore.getOptions();
 		JavaCore.setOptions(options);
 		fIsPreDeltaTest= true;
 	}
 
 	@Override
-	protected void tearDown() throws Exception {
-		super.tearDown();
+	public void genericafter() throws Exception {
+		super.genericafter();
 		Hashtable<String, String> options= JavaCore.getOptions();
 		JavaCore.setOptions(options);
 	}
@@ -100,9 +99,9 @@ public class RenameTests18 extends RefactoringTest {
 	private ISourceRange getSelection(ICompilationUnit cu) throws Exception {
 		String source= cu.getSource();
 		//Warning: this *includes* the SQUARE_BRACKET_OPEN!
-		int offset= source.indexOf(AbstractSelectionTestCase.SQUARE_BRACKET_OPEN);
-		int end= source.indexOf(AbstractSelectionTestCase.SQUARE_BRACKET_CLOSE);
-		return new SourceRange(offset + AbstractSelectionTestCase.SQUARE_BRACKET_OPEN.length(), end - offset);
+		int offset= source.indexOf(AbstractJunit4SelectionTestCase.SQUARE_BRACKET_OPEN);
+		int end= source.indexOf(AbstractJunit4SelectionTestCase.SQUARE_BRACKET_CLOSE);
+		return new SourceRange(offset + AbstractJunit4SelectionTestCase.SQUARE_BRACKET_OPEN.length(), end - offset);
 	}
 
 	private void renameLocalVariable(String newFieldName, boolean updateReferences) throws Exception {
@@ -128,7 +127,7 @@ public class RenameTests18 extends RefactoringTest {
 		try {
 //			org.eclipse.jdt.internal.core.JavaModelManager.VERBOSE= true;
 			RefactoringStatus result= performRefactoring(refactoring);
-			assertEquals("was supposed to pass", null, result);
+			assertNull("was supposed to pass", result);
 		} catch (CoreException e) {
 			System.out.println("RenameTest18." + getName() + ": " + e.toString());
 			System.out.println(cu.getResource().getLocationURI());
@@ -187,30 +186,34 @@ public class RenameTests18 extends RefactoringTest {
 			args.toArray(new RenameArguments[args.size()]));
 
 		assertTrue("anythingToUndo", RefactoringCore.getUndoManager().anythingToUndo());
-		assertTrue("! anythingToRedo", !RefactoringCore.getUndoManager().anythingToRedo());
+		assertFalse("! anythingToRedo", RefactoringCore.getUndoManager().anythingToRedo());
 
 		RefactoringCore.getUndoManager().performUndo(null, new NullProgressMonitor());
 		assertEqualLines("invalid undo", getFileContents(getInputTestFileName("A")), cu.getSource());
 
-		assertTrue("! anythingToUndo", !RefactoringCore.getUndoManager().anythingToUndo());
+		assertFalse("! anythingToUndo", RefactoringCore.getUndoManager().anythingToUndo());
 		assertTrue("anythingToRedo", RefactoringCore.getUndoManager().anythingToRedo());
 
 		RefactoringCore.getUndoManager().performRedo(null, new NullProgressMonitor());
 		assertEqualLines("invalid redo", getFileContents(getOutputTestFileName("A")), cu.getSource());
 	}
 
+	@Test
 	public void testLambda0() throws Exception {
 		renameLocalVariable("renamedF", true);
 	}
 
+	@Test
 	public void testLambda1() throws Exception {
 		renameLocalVariable("renamedP", true);
 	}
 
+	@Test
 	public void testLambda2() throws Exception {
 		renameLocalVariable("renamedIi", true);
 	}
 
+	@Test
 	public void testLambda3() throws Exception {
 		renameLocalVariable("x_renamed", true);
 	}
@@ -229,7 +232,7 @@ public class RenameTests18 extends RefactoringTest {
 		descriptor.setDeprecateDelegate(true);
 
 		try {
-			assertEquals("was supposed to pass", null, performRefactoring(descriptor));
+			assertNull("was supposed to pass", performRefactoring(descriptor));
 		} catch (CoreException e) {
 			System.out.println("RenameTest18." + getName() + ": " + e.toString());
 			System.out.println(cu.getResource().getLocationURI());
@@ -242,19 +245,19 @@ public class RenameTests18 extends RefactoringTest {
 			throw e;
 		}
 		if (!shouldPass){
-			assertTrue("incorrect renaming because of a java model bug", ! getFileContents(getOutputTestFileName("A")).equals(cu.getSource()));
+			assertNotEquals("incorrect renaming because of a java model bug", getFileContents(getOutputTestFileName("A")), cu.getSource());
 			return;
 		}
 		assertEqualLines("incorrect renaming", getFileContents(getOutputTestFileName("A")), cu.getSource());
 
 		assertTrue("anythingToUndo", RefactoringCore.getUndoManager().anythingToUndo());
-		assertTrue("! anythingToRedo", !RefactoringCore.getUndoManager().anythingToRedo());
+		assertFalse("! anythingToRedo", RefactoringCore.getUndoManager().anythingToRedo());
 		//assertEquals("1 to undo", 1, Refactoring.getUndoManager().getRefactoringLog().size());
 
 		RefactoringCore.getUndoManager().performUndo(null, new NullProgressMonitor());
 		assertEqualLines("invalid undo", getFileContents(getInputTestFileName("A")), cu.getSource());
 
-		assertTrue("! anythingToUndo", !RefactoringCore.getUndoManager().anythingToUndo());
+		assertFalse("! anythingToUndo", RefactoringCore.getUndoManager().anythingToUndo());
 		assertTrue("anythingToRedo", RefactoringCore.getUndoManager().anythingToRedo());
 		//assertEquals("1 to redo", 1, Refactoring.getUndoManager().getRedoStack().size());
 
@@ -267,19 +270,23 @@ public class RenameTests18 extends RefactoringTest {
 	}
 
 	// method with a lambda method as reference
+	@Test
 	public void testMethod0() throws Exception{
 		renameMethodInInterface();
 	}
 
 	// method with method references as reference
+	@Test
 	public void testMethod1() throws Exception{
 		renameMethodInInterface();
 	}
 
+	@Test
 	public void testMethod2() throws Exception {
 		renameMethodInInterface();
 	}
 
+	@Test
 	public void testMethodReference0() throws Exception {
 		renameMethod("searchForRefs", "searchForRefs1", new String[0], true, true, false);
 	}

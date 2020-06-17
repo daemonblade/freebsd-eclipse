@@ -18,7 +18,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -63,7 +62,7 @@ public class PerformanceTestCase2 extends TestCase {
 			// methods. getDeclaredMethods returns all
 			// methods of this class but excludes the
 			// inherited ones.
-			runMethod= getClass().getMethod(getName(), new Class[] {PerformanceMeter.class});
+			runMethod= getClass().getMethod(getName(), PerformanceMeter.class);
 		} catch (NoSuchMethodException e) {
 			fail("Method \""+getName()+"\" not found");  //$NON-NLS-1$//$NON-NLS-2$
 		}
@@ -139,8 +138,8 @@ public class PerformanceTestCase2 extends TestCase {
 	 */
 	protected final void commitAllMeasurements() {
 		if (fPerformanceMeters != null)
-			for (Iterator<PerformanceMeter> iter= fPerformanceMeters.iterator(); iter.hasNext();)
-				iter.next().commit();
+			for (PerformanceMeter performanceMeter : fPerformanceMeters)
+				performanceMeter.commit();
 	}
 
 	/**
@@ -163,8 +162,8 @@ public class PerformanceTestCase2 extends TestCase {
 	 */
 	protected final void assertAllPerformance() {
 		if (fPerformanceMeters != null)
-			for (Iterator<PerformanceMeter> iter= fPerformanceMeters.iterator(); iter.hasNext();)
-				assertPerformance(iter.next());
+			for (PerformanceMeter performanceMeter : fPerformanceMeters)
+				assertPerformance(performanceMeter);
 	}
 
 	/**

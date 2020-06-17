@@ -310,6 +310,7 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.SwitchExpressionsYieldMissingDefaultCase:
 			case IProblem.PreviewFeaturesNotAllowed:
 			case IProblem.UninitializedBlankFinalField:
+			case IProblem.SwitchExpressionsReturnWithinSwitchExpression:
 				return true;
 			default:
 				return SuppressWarningsSubProcessor.hasSuppressWarningsProposal(cu.getJavaProject(), problemId)
@@ -735,8 +736,6 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 				SuppressWarningsSubProcessor.addUnknownSuppressWarningProposals(context, problem, proposals);
 				break;
 			case IProblem.ProblemNotAnalysed:
-				SuppressWarningsSubProcessor.addRemoveUnusedSuppressWarningProposals(context, problem, proposals);
-				break;
 			case IProblem.UnusedWarningToken:
 				SuppressWarningsSubProcessor.addRemoveUnusedSuppressWarningProposals(context, problem, proposals);
 				break;
@@ -869,6 +868,9 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.PreviewFeatureNotSupported:
 			case IProblem.PreviewFeaturesNotAllowed:
 				PreviewFeaturesSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals);
+				break;
+			case IProblem.SwitchExpressionsReturnWithinSwitchExpression:
+				ReturnTypeSubProcessor.replaceReturnWithYieldStatementProposals(context, problem, proposals);
 				break;
 			default:
 		}

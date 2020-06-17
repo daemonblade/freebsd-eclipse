@@ -14,7 +14,6 @@
 package org.eclipse.jdt.internal.corext.fix;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
@@ -131,9 +130,8 @@ public class Java50Fix extends CompilationUnitRewriteOperationsFix {
 				ParameterizedType type= nodes[i];
 				List<Type> args= type.typeArguments();
 				int j= 0;
-				for (Iterator<Type> iter= args.iterator(); iter.hasNext();) {
+				for (Type argType : args) {
 					LinkedProposalPositionGroup group= new LinkedProposalPositionGroup("G" + i + "_" + j); //$NON-NLS-1$ //$NON-NLS-2$
-					Type argType= iter.next();
 					if (!positionGroups.hasLinkedPositions()) {
 						group.addPosition(astRewrite.track(argType), true);
 					} else {
@@ -335,7 +333,8 @@ public class Java50Fix extends CompilationUnitRewriteOperationsFix {
 					ASTNode rawReference= node.getParent();
 					if (isRawTypeReference(rawReference)) {
 						ASTNode parent= rawReference.getParent();
-						if (!(parent instanceof ArrayType || parent instanceof ParameterizedType))
+						if (!(parent instanceof ArrayType)
+								&& !(parent instanceof ParameterizedType))
 							result.add((SimpleType) rawReference);
 					}
 				} else if (node instanceof MethodInvocation) {
@@ -373,20 +372,18 @@ public class Java50Fix extends CompilationUnitRewriteOperationsFix {
 				}
 				CategorizedProblem categorizedProblem= (CategorizedProblem) problem;
 				int categoryID= categorizedProblem.getCategoryID();
-				if (categoryID == CategorizedProblem.CAT_BUILDPATH)
-					return true;
-				if (categoryID == CategorizedProblem.CAT_SYNTAX)
-					return true;
-				if (categoryID == CategorizedProblem.CAT_IMPORT)
-					return true;
-				if (categoryID == CategorizedProblem.CAT_TYPE)
-					return true;
-				if (categoryID == CategorizedProblem.CAT_MEMBER)
-					return true;
-				if (categoryID == CategorizedProblem.CAT_INTERNAL)
-					return true;
-				if (categoryID == CategorizedProblem.CAT_MODULE)
-					return true;
+				switch (categoryID) {
+					case CategorizedProblem.CAT_BUILDPATH:
+					case CategorizedProblem.CAT_SYNTAX:
+					case CategorizedProblem.CAT_IMPORT:
+					case CategorizedProblem.CAT_TYPE:
+					case CategorizedProblem.CAT_MEMBER:
+					case CategorizedProblem.CAT_INTERNAL:
+					case CategorizedProblem.CAT_MODULE:
+						return true;
+					default:
+						break;
+				}
 			}
 		}
 

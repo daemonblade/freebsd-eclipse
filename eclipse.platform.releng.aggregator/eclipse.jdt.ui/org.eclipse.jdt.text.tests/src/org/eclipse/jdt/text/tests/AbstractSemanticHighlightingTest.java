@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2008 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,13 +13,17 @@
  *******************************************************************************/
 package org.eclipse.jdt.text.tests;
 
-import junit.extensions.TestSetup;
-import junit.framework.Test;
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Before;
+import org.junit.rules.ExternalResource;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.text.tests.performance.EditorTestHelper;
 import org.eclipse.jdt.text.tests.performance.ResourceTestHelper;
+
+import org.eclipse.core.runtime.CoreException;
 
 import org.eclipse.text.tests.Accessor;
 
@@ -42,22 +46,19 @@ import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingManager;
 import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingPresenter;
 import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightings;
 
+public class AbstractSemanticHighlightingTest {
 
-public class AbstractSemanticHighlightingTest extends TestCase {
-
-	protected static class SemanticHighlightingTestSetup extends TestSetup {
+	protected static class SemanticHighlightingTestSetup extends ExternalResource {
 
 		private IJavaProject fJavaProject;
 		private final String fTestFilename;
 
-		public SemanticHighlightingTestSetup(Test test, String testFilename) {
-			super(test);
+		public SemanticHighlightingTestSetup(String testFilename) {
 			fTestFilename= testFilename;
 		}
 
 		@Override
-		protected void setUp() throws Exception {
-			super.setUp();
+		public void before() throws Exception {
 			fJavaProject= EditorTestHelper.createJavaProject(PROJECT, LINKED_FOLDER);
 
 			disableAllSemanticHighlightings();
@@ -72,7 +73,7 @@ public class AbstractSemanticHighlightingTest extends TestCase {
 		}
 
 		@Override
-		protected void tearDown () throws Exception {
+		public void after() {
 			EditorTestHelper.closeEditor(fEditor);
 			fEditor= null;
 			fSourceViewer= null;
@@ -80,16 +81,18 @@ public class AbstractSemanticHighlightingTest extends TestCase {
 			IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
 
 			SemanticHighlighting[] semanticHighlightings= SemanticHighlightings.getSemanticHighlightings();
-			for (int i= 0, n= semanticHighlightings.length; i < n; i++) {
-				String enabledPreferenceKey= SemanticHighlightings.getEnabledPreferenceKey(semanticHighlightings[i]);
+			for (SemanticHighlighting semanticHighlighting : semanticHighlightings) {
+				String enabledPreferenceKey= SemanticHighlightings.getEnabledPreferenceKey(semanticHighlighting);
 				if (!store.isDefault(enabledPreferenceKey))
 					store.setToDefault(enabledPreferenceKey);
 			}
 
 			if (fJavaProject != null)
-				JavaProjectHelper.delete(fJavaProject);
-
-			super.tearDown();
+				try {
+					JavaProjectHelper.delete(fJavaProject);
+				} catch (CoreException e) {
+					e.printStackTrace();
+				}
 		}
 	}
 
@@ -101,9 +104,8 @@ public class AbstractSemanticHighlightingTest extends TestCase {
 
 	private static SourceViewer fSourceViewer;
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
+	@Before
+	public void before() throws Exception {
 		disableAllSemanticHighlightings();
 	}
 
@@ -125,8 +127,7 @@ public class AbstractSemanticHighlightingTest extends TestCase {
 		StringBuilder buf= new StringBuilder();
 		IDocument document= fSourceViewer.getDocument();
 		buf.append("Position[] expected= new Position[] {\n");
-		for (int i= 0, n= positions.length; i < n; i++) {
-			Position position= positions[i];
+		for (Position position : positions) {
 			int line= document.getLineOfOffset(position.getOffset());
 			int column= position.getOffset() - document.getLineOffset(line);
 			buf.append("\tcreatePosition(" + line + ", " + column + ", " + position.getLength() + "),\n");
@@ -161,9 +162,7 @@ public class AbstractSemanticHighlightingTest extends TestCase {
 
 	private static void disableAllSemanticHighlightings() {
 		IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
-		SemanticHighlighting[] semanticHilightings= SemanticHighlightings.getSemanticHighlightings();
-		for (int i= 0, n= semanticHilightings.length; i < n; i++) {
-			SemanticHighlighting semanticHilighting= semanticHilightings[i];
+		for (SemanticHighlighting semanticHilighting : SemanticHighlightings.getSemanticHighlightings()) {
 			if (store.getBoolean(SemanticHighlightings.getEnabledPreferenceKey(semanticHilighting)))
 				store.setValue(SemanticHighlightings.getEnabledPreferenceKey(semanticHilighting), false);
 		}

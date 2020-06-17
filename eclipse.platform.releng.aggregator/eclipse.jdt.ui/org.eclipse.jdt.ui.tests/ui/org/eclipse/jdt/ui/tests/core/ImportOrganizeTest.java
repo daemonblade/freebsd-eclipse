@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,8 +14,17 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.core;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.util.Hashtable;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.JavaTestPlugin;
@@ -42,32 +51,17 @@ import org.eclipse.jdt.core.search.TypeNameMatch;
 
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jdt.ui.PreferenceConstants;
-
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
+import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
 
 public class ImportOrganizeTest extends CoreTests {
 
-	private static final Class<ImportOrganizeTest> THIS= ImportOrganizeTest.class;
-
 	private IJavaProject fJProject1;
 
-	public ImportOrganizeTest(String name) {
-		super(name);
-	}
+	@Rule
+	public ProjectTestSetup pts= new ProjectTestSetup();
 
-	public static Test setUpTest(Test test) {
-		return new ProjectTestSetup(test);
-	}
-
-	public static Test suite() {
-		return setUpTest(new TestSuite(THIS));
-	}
-
-
-	@Override
-	protected void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		fJProject1= ProjectTestSetup.getProject();
 
 		Hashtable<String, String> options= TestOptions.getDefaultOptions();
@@ -75,9 +69,8 @@ public class ImportOrganizeTest extends CoreTests {
 		JavaCore.setOptions(options);
 	}
 
-
-	@Override
-	protected void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		setOrganizeImportSettings(null, 99, 99, fJProject1);
 		JavaProjectHelper.clear(fJProject1, ProjectTestSetup.getDefaultClasspath());
 	}
@@ -86,10 +79,10 @@ public class ImportOrganizeTest extends CoreTests {
 		return new IChooseImportQuery() {
 			@Override
 			public TypeNameMatch[] chooseImports(TypeNameMatch[][] openChoices, ISourceRange[] ranges) {
-				assertTrue(name + "-query-nchoices1", choices.length == openChoices.length);
-				assertTrue(name + "-query-nchoices2", nEntries.length == openChoices.length);
+				assertEquals(name + "-query-nchoices1", choices.length, openChoices.length);
+				assertEquals(name + "-query-nchoices2", nEntries.length, openChoices.length);
 				for (int i= 0; i < nEntries.length; i++) {
-					assertTrue(name + "-query-cnt" + i, openChoices[i].length == nEntries[i]);
+					assertEquals(name + "-query-cnt" + i, openChoices[i].length, nEntries[i]);
 				}
 				TypeNameMatch[] res= new TypeNameMatch[openChoices.length];
 				for (int i= 0; i < openChoices.length; i++) {
@@ -118,9 +111,11 @@ public class ImportOrganizeTest extends CoreTests {
 		}
 	}
 
+	@Test
 	public void test1() throws Exception {
 		File junitSrcArchive= JavaTestPlugin.getDefault().getFileInPlugin(JavaProjectHelper.JUNIT_SRC_381);
-		assertTrue("junit src not found", junitSrcArchive != null && junitSrcArchive.exists());
+		assertNotNull("junit src not found", junitSrcArchive);
+		assertTrue("junit src not found", junitSrcArchive.exists());
 
 		JavaProjectHelper.addSourceContainerWithImport(fJProject1, "src", junitSrcArchive, JavaProjectHelper.JUNIT_SRC_ENCODING);
 
@@ -162,9 +157,11 @@ public class ImportOrganizeTest extends CoreTests {
 		});
 	}
 
+	@Test
 	public void test1WithOrder() throws Exception {
 		File junitSrcArchive= JavaTestPlugin.getDefault().getFileInPlugin(JavaProjectHelper.JUNIT_SRC_381);
-		assertTrue("junit src not found", junitSrcArchive != null && junitSrcArchive.exists());
+		assertNotNull("junit src not found", junitSrcArchive);
+		assertTrue("junit src not found", junitSrcArchive.exists());
 
 		JavaProjectHelper.addSourceContainerWithImport(fJProject1, "src", junitSrcArchive, JavaProjectHelper.JUNIT_SRC_ENCODING);
 
@@ -207,9 +204,11 @@ public class ImportOrganizeTest extends CoreTests {
 	}
 
 
+	@Test
 	public void test2() throws Exception {
 		File junitSrcArchive= JavaTestPlugin.getDefault().getFileInPlugin(JavaProjectHelper.JUNIT_SRC_381);
-		assertTrue("junit src not found", junitSrcArchive != null && junitSrcArchive.exists());
+		assertNotNull("junit src not found", junitSrcArchive);
+		assertTrue("junit src not found", junitSrcArchive.exists());
 
 		JavaProjectHelper.addSourceContainerWithImport(fJProject1, "src", junitSrcArchive, JavaProjectHelper.JUNIT_SRC_ENCODING);
 
@@ -230,9 +229,11 @@ public class ImportOrganizeTest extends CoreTests {
 	}
 
 
+	@Test
 	public void test3() throws Exception {
 		File junitSrcArchive= JavaTestPlugin.getDefault().getFileInPlugin(JavaProjectHelper.JUNIT_SRC_381);
-		assertTrue("junit src not found", junitSrcArchive != null && junitSrcArchive.exists());
+		assertNotNull("junit src not found", junitSrcArchive);
+		assertTrue("junit src not found", junitSrcArchive.exists());
 
 		JavaProjectHelper.addSourceContainerWithImport(fJProject1, "src", junitSrcArchive, JavaProjectHelper.JUNIT_SRC_ENCODING);
 
@@ -254,9 +255,11 @@ public class ImportOrganizeTest extends CoreTests {
 		});
 	}
 
+	@Test
 	public void test4() throws Exception {
 		File junitSrcArchive= JavaTestPlugin.getDefault().getFileInPlugin(JavaProjectHelper.JUNIT_SRC_381);
-		assertTrue("junit src not found", junitSrcArchive != null && junitSrcArchive.exists());
+		assertNotNull("junit src not found", junitSrcArchive);
+		assertTrue("junit src not found", junitSrcArchive.exists());
 
 		JavaProjectHelper.addSourceContainerWithImport(fJProject1, "src", junitSrcArchive, JavaProjectHelper.JUNIT_SRC_ENCODING);
 
@@ -281,6 +284,7 @@ public class ImportOrganizeTest extends CoreTests {
 		});
 	}
 
+	@Test
 	public void testVariousTypeReferences() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -333,6 +337,7 @@ public class ImportOrganizeTest extends CoreTests {
 		});
 	}
 
+	@Test
 	public void testInnerClassVisibility() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -405,6 +410,7 @@ public class ImportOrganizeTest extends CoreTests {
 	}
 
 
+	@Test
 	public void testClearImports() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -431,6 +437,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testNewImports() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -458,6 +465,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testReplaceImports() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -488,6 +496,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testClearImportsNoPackage() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -511,6 +520,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testNewImportsNoPackage() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -535,6 +545,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testReplaceImportsNoPackage() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -561,6 +572,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testCommentAfterImport() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -594,6 +606,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testImportToStar() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -648,6 +661,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testImportToStarWithComments() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -712,6 +726,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testImportToStarWithExplicit() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -787,6 +802,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testImportToStarWithExplicit2() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -840,6 +856,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testImportToStarWithExplicit3() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -900,6 +917,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testImportToStarWithExplicit4() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -962,13 +980,14 @@ public class ImportOrganizeTest extends CoreTests {
 
 
 
+	@Test
 	public void testImportToStarWithExplicit5() throws Exception {
 
 
 		// unrelated project, to fill the all types cache
 		IJavaProject project2 = JavaProjectHelper.createJavaProject("TestProject2", "bin");
 		try {
-			assertTrue("rt not found", JavaProjectHelper.addRTJar(project2) != null);
+			assertNotNull("rt not found", JavaProjectHelper.addRTJar(project2));
 			IPackageFragmentRoot sourceFolder2= JavaProjectHelper.addSourceContainer(project2, "src");
 
 			IPackageFragment pack22= sourceFolder2.createPackageFragment("packx", false, null);
@@ -1040,6 +1059,7 @@ public class ImportOrganizeTest extends CoreTests {
 	}
 
 
+	@Test
 	public void testImportFromDefault() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1089,6 +1109,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testImportFromDefaultWithStar() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1145,6 +1166,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testImportOfMemberFromLocal() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1190,6 +1212,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testGroups1() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1241,6 +1264,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testBaseGroups1() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1292,6 +1316,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testVisibility_bug26746() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1333,6 +1358,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testVisibility_bug37299a() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1376,6 +1402,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testVisibility_bug37299b() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1418,6 +1445,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testVisibility_bug56704() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1457,6 +1485,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testVisibility_bug67644() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1502,6 +1531,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testVisibility_bug85831() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1542,6 +1572,7 @@ public class ImportOrganizeTest extends CoreTests {
 	}
 
 
+	@Test
 	public void testVisibility_bug79174() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1586,6 +1617,7 @@ public class ImportOrganizeTest extends CoreTests {
 	}
 
 
+	@Test
 	public void testVisibility_bug131305() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1632,6 +1664,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString()); // no changes, import for Entry is required
 	}
 
+	@Test
 	public void testVisibility_bug159638() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1672,6 +1705,7 @@ public class ImportOrganizeTest extends CoreTests {
 	}
 
 
+	@Test
 	public void test5() throws Exception {
 
 		String[] types= new String[] {
@@ -1732,6 +1766,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void test_bug25773() throws Exception {
 
 		String[] types= new String[] {
@@ -1807,6 +1842,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void test_bug25113() throws Exception {
 
 		String[] types= new String[] {
@@ -1869,6 +1905,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testStaticImports1() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1908,6 +1945,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testStaticImports2() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1948,6 +1986,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testStaticImports_bug78585() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -1994,6 +2033,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testStaticImports_bug90556() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2034,6 +2074,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testStaticImports_bug113770() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2074,6 +2115,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testStaticImports_bug81589() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2123,6 +2165,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testStaticImports_bug159424() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2166,6 +2209,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString()); // no changes, don't add 'logger' as static import
 	}
 
+	@Test
 	public void testStaticImports_bug175498() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 		IPackageFragment pack1= sourceFolder.createPackageFragment("p", false, null);
@@ -2196,6 +2240,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString()); // no changes, don't add 'V1' and 'V2' as static import
 	}
 
+	@Test
 	public void testStaticImports_bug181895() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2234,6 +2279,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testStaticImports_bug187004a() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2278,6 +2324,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testStaticImports_bug187004b() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2322,6 +2369,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testStaticImports_bug230067() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2361,6 +2409,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testImportCountAddNew() throws Exception {
 	    IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2402,6 +2451,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEquals(0, op.getNumberOfImportsRemoved());
 	}
 
+	@Test
 	public void testImportCountAddandRemove() throws Exception {
 	    IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2445,6 +2495,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEquals(1, op.getNumberOfImportsRemoved());
 	}
 
+	@Test
 	public void testImportCountAddandRemoveWithComments() throws Exception {
 	    IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2490,6 +2541,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEquals(1, op.getNumberOfImportsRemoved());
 	}
 
+	@Test
 	public void testImportCountKeepOne() throws Exception {
 	    IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2532,6 +2584,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEquals(0, op.getNumberOfImportsRemoved());
 	}
 
+	@Test
 	public void testImportCountKeepStar() throws Exception {
 	    IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2578,6 +2631,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEquals(0, op.getNumberOfImportsRemoved());
 	}
 
+	@Test
 	public void testImportCountAddTwoRemoveOne() throws Exception {
 	    IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2621,6 +2675,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEquals(1, op.getNumberOfImportsRemoved());
 	}
 
+	@Test
 	public void testImportCountReplaceStar() throws Exception {
 	    IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2666,6 +2721,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEquals(3, op.getNumberOfImportsRemoved());
 	}
 
+	@Test
 	public void testImportCountRemoveStatic() throws Exception {
 	    IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2713,6 +2769,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEquals(4, op.getNumberOfImportsRemoved());
 	}
 
+	@Test
 	public void testImportCountKeepStatic() throws Exception {
 	    IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2764,6 +2821,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEquals(3, op.getNumberOfImportsRemoved());
 	}
 
+	@Test
 	public void test_bug78397() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2791,6 +2849,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void test_bug78533() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2819,6 +2878,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void test_bug78716() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2861,6 +2921,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void test_bug135122() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2906,6 +2967,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void test_PackageInfoBug157541a() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2936,6 +2998,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void test_PackageInfoBug157541b() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -2977,6 +3040,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void test_PackageInfoBug216432() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -3020,6 +3084,7 @@ public class ImportOrganizeTest extends CoreTests {
 	}
 
 
+	@Test
 	public void testTypeArgumentImports() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -3081,6 +3146,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testAnnotationImports1() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -3137,6 +3203,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testAnnotationImports2() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -3185,6 +3252,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testJavadocImports_bug319860() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -3226,6 +3294,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void test_bug450858() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -3303,6 +3372,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), expected.toString());
 	}
 
+	@Test
 	public void testPreserveUnresolvableTypeSingleImports() throws Exception {
 		StringBuilder classContents= new StringBuilder();
 		classContents.append("NotFound1 nf1;");
@@ -3315,6 +3385,7 @@ public class ImportOrganizeTest extends CoreTests {
 		expectUnresolvableImportsArePreserved(classContents, resultantImports);
 	}
 
+	@Test
 	public void testPreserveUnresolvableTypeOnDemandImports() throws Exception {
 		StringBuilder classContents= new StringBuilder();
 		classContents.append("NotFound3 nf3;");
@@ -3326,6 +3397,7 @@ public class ImportOrganizeTest extends CoreTests {
 		expectUnresolvableImportsArePreserved(classContents, resultantImports);
 	}
 
+	@Test
 	public void testPreserveUnresolvableStaticSingleImports() throws Exception {
 		StringBuilder classContents= new StringBuilder();
 		classContents.append("{\n");
@@ -3340,6 +3412,7 @@ public class ImportOrganizeTest extends CoreTests {
 		expectUnresolvableImportsArePreserved(classContents, resultantImports);
 	}
 
+	@Test
 	public void testPreserveUnresolvableStaticOnDemandImportDueToFieldReference() throws Exception {
 		StringBuilder classContents= new StringBuilder();
 		classContents.append("{\n");
@@ -3352,6 +3425,7 @@ public class ImportOrganizeTest extends CoreTests {
 		expectUnresolvableImportsArePreserved(classContents, resultantImports);
 	}
 
+	@Test
 	public void testPreserveUnresolvableStaticOnDemandImportDueToMethodReference() throws Exception {
 		StringBuilder classContents= new StringBuilder();
 		classContents.append("{\n");
@@ -3364,6 +3438,7 @@ public class ImportOrganizeTest extends CoreTests {
 		expectUnresolvableImportsArePreserved(classContents, resultantImports);
 	}
 
+	@Test
 	public void testPreserveUnresolvableImportRatherThanAddNewImport() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -3403,6 +3478,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), expected.toString());
 	}
 
+	@Test
 	public void testDealWithBrokenStaticImport() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -3433,6 +3509,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu.getSource(), buf.toString());
 	}
 
+	@Test
 	public void testBug508660() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -3474,6 +3551,7 @@ public class ImportOrganizeTest extends CoreTests {
 		assertEqualString(cu2.getSource(), buf2.toString());
 	}
 
+	@Test
 	public void testBug530193() throws Exception {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 		IPackageFragmentRoot testSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src-tests", new Path[0], new Path[0], "bin-tests",

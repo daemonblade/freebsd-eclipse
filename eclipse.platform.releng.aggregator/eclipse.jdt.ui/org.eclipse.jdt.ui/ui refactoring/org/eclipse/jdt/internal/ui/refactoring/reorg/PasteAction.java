@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -360,7 +359,7 @@ public class PasteAction extends SelectionDispatchAction{
 		public abstract void paste(IJavaElement[] selectedJavaElements, IResource[] selectedResources, IWorkingSet[] selectedWorkingSets, TransferData[] availableTypes) throws JavaModelException, InterruptedException, InvocationTargetException;
 	}
 
-    private static class TextPaster extends Paster {
+	private static class TextPaster extends Paster {
 
 		private static class ParsedCu {
 			private final String fText;
@@ -440,8 +439,7 @@ public class PasteAction extends SelectionDispatchAction{
 				int maxVisibility= JdtFlags.VISIBILITY_CODE_INVALID;
 
 				// Public types must be in separate CUs:
-				for (Iterator<AbstractTypeDeclaration> iter= types.iterator(); iter.hasNext(); ) {
-					AbstractTypeDeclaration type= iter.next();
+				for (AbstractTypeDeclaration type : types) {
 					if (typeName == null) {
 						// first in group:
 						maxVisibility= JdtFlags.getVisibilityCode(type);
@@ -554,7 +552,7 @@ public class PasteAction extends SelectionDispatchAction{
 						return new ByteArrayInputStream(text.getBytes(getCharset()));
 					} catch (UnsupportedEncodingException e) {
 						throw new CoreException(new Status(IStatus.ERROR, JavaPlugin.getPluginId(),
-			                    IJavaStatusConstants.INTERNAL_ERROR, JavaUIMessages.JavaPlugin_internal_error, e));
+								IJavaStatusConstants.INTERNAL_ERROR, JavaUIMessages.JavaPlugin_internal_error, e));
 					}
 				}
 				@Override
@@ -1154,7 +1152,7 @@ public class PasteAction extends SelectionDispatchAction{
 				return null;
 			}
 		}
-    }
+	}
 
 	private static class WorkingSetPaster extends Paster {
 		protected WorkingSetPaster(Shell shell, Clipboard clipboard) {
@@ -1177,13 +1175,11 @@ public class PasteAction extends SelectionDispatchAction{
 				List<IJavaElement> realJavaElements= new ArrayList<>();
 				List<IResource> realResource= new ArrayList<>();
 				ReorgUtils.splitIntoJavaElementsAndResources(resources, realJavaElements, realResource);
-				for (Iterator<IJavaElement> iter= realJavaElements.iterator(); iter.hasNext();) {
-					IJavaElement element= iter.next();
+				for (IJavaElement element : realJavaElements) {
 					if (!ReorgUtils.containsElementOrParent(elements, element))
 						elements.add(element);
 				}
-				for (Iterator<IResource> iter= realResource.iterator(); iter.hasNext();) {
-					IResource element= iter.next();
+				for (IResource element : realResource) {
 					if (!ReorgUtils.containsElementOrParent(elements, element))
 						elements.add(element);
 				}
@@ -1204,9 +1200,9 @@ public class PasteAction extends SelectionDispatchAction{
 		}
 	}
 
-    private static class ProjectPaster extends Paster{
+	private static class ProjectPaster extends Paster{
 
-    	protected ProjectPaster(Shell shell, Clipboard clipboard) {
+		protected ProjectPaster(Shell shell, Clipboard clipboard) {
 			super(shell, clipboard);
 		}
 
@@ -1219,7 +1215,7 @@ public class PasteAction extends SelectionDispatchAction{
 			if (! resourceTransfer)
 				return canPasteJavaProjects(availableDataTypes);
 			return canPasteJavaProjects(availableDataTypes) && canPasteSimpleProjects(availableDataTypes);
-    	}
+		}
 
 		@Override
 		public void paste(IJavaElement[] javaElements, IResource[] resources, IWorkingSet[] selectedWorkingSets, TransferData[] availableTypes) {
@@ -1270,9 +1266,9 @@ public class PasteAction extends SelectionDispatchAction{
 			}
 			return true;
 		}
-    }
+	}
 
-    private static class FilePaster extends Paster{
+	private static class FilePaster extends Paster{
 		protected FilePaster(Shell shell, Clipboard clipboard) {
 			super(shell, clipboard);
 		}
@@ -1317,7 +1313,7 @@ public class PasteAction extends SelectionDispatchAction{
 			boolean isPackageFragmentRoot= target instanceof IPackageFragmentRoot;
 			boolean isContainer= target instanceof IContainer;
 
-			if (!(isPackageFragment || isJavaProject || isPackageFragmentRoot || isContainer))
+			if (!isPackageFragment && !isJavaProject && !isPackageFragmentRoot && !isContainer)
 				return false;
 
 			if (isContainer) {
@@ -1354,8 +1350,8 @@ public class PasteAction extends SelectionDispatchAction{
 		private Object getCommonParent(IJavaElement[] javaElements, IResource[] resources) {
 			return new ParentChecker(resources, javaElements).getCommonParent();
 		}
-    }
-    private static class JavaElementAndResourcePaster extends Paster {
+	}
+	private static class JavaElementAndResourcePaster extends Paster {
 
 		protected JavaElementAndResourcePaster(Shell shell, Clipboard clipboard) {
 			super(shell, clipboard);
@@ -1411,9 +1407,9 @@ public class PasteAction extends SelectionDispatchAction{
 			fAvailableTypes= availableTypes;
 			return isAvailable(JavaElementTransfer.getInstance(), availableTypes) || isAvailable(ResourceTransfer.getInstance(), availableTypes);
 		}
-    }
+	}
 
-    private static class TypedSourcePaster extends Paster{
+	private static class TypedSourcePaster extends Paster{
 
 		protected TypedSourcePaster(Shell shell, Clipboard clipboard) {
 			super(shell, clipboard);
@@ -1550,7 +1546,7 @@ public class PasteAction extends SelectionDispatchAction{
 			@Override
 			public RefactoringStatus checkFinalConditions(IProgressMonitor pm) throws CoreException {
 				RefactoringStatus result= Checks.validateModifiesFiles(
-					ResourceUtil.getFiles(new ICompilationUnit[]{getDestinationCu()}), getValidationContext());
+					ResourceUtil.getFiles(new ICompilationUnit[]{getDestinationCu()}), getValidationContext(), pm);
 				return result;
 			}
 
@@ -1675,5 +1671,5 @@ public class PasteAction extends SelectionDispatchAction{
 				return ReorgMessages.PasteAction_name;
 			}
 		}
-    }
+	}
 }

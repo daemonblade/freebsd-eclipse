@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -440,8 +440,7 @@ public abstract class OptionsConfigurationBlock {
 			if (!fExpandableComposites.isEmpty()) {
 				ExpandableComposite expandable= getParentExpandableComposite(control);
 				if (expandable != null) {
-					for (int i= 0; i < fExpandableComposites.size(); i++) {
-						ExpandableComposite curr= fExpandableComposites.get(i);
+					for (ExpandableComposite curr : fExpandableComposites) {
 						curr.setExpanded(curr == expandable);
 					}
 					expandedStateChanged(expandable);
@@ -911,7 +910,7 @@ public abstract class OptionsConfigurationBlock {
 
 
 	protected boolean getBooleanValue(Key key) {
-		return Boolean.valueOf(getValue(key)).booleanValue();
+		return Boolean.parseBoolean(getValue(key));
 	}
 
 	/**
@@ -1167,6 +1166,10 @@ public abstract class OptionsConfigurationBlock {
 		settingsUpdated();
 		updateControls();
 		validateSettings(null, null, null);
+	}
+
+	protected final String getDefaultValue(Key key) {
+		return key.getStoredValue(fLookupOrder, true, fManager);
 	}
 
 	/**

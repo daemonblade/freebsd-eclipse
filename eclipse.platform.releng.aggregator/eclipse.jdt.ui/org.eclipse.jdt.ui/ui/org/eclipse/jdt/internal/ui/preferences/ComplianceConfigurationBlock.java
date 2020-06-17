@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -141,6 +141,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 	private static final String VERSION_11= JavaCore.VERSION_11;
 	private static final String VERSION_12 = JavaCore.VERSION_12;
 	private static final String VERSION_13 = JavaCore.VERSION_13;
+	private static final String VERSION_14 = JavaCore.VERSION_14;
 	private static final String VERSION_LATEST = JavaCore.latestSupportedJavaVersion();
 	private static final String VERSION_JSR14= "jsr14"; //$NON-NLS-1$
 
@@ -211,7 +212,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 	private Label fJRE50InfoImage;
 	private Composite fControlsComposite;
 	private ControlEnableState fBlockEnableState;
-	private Button fComplierReleaseCheck;
+	private Button fCompilerReleaseCheck;
 	private Button fEnablePreviewCheck;
 	private Combo fReportPreviewCombo;
 
@@ -298,7 +299,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 	private Composite createComplianceTabContent(Composite folder) {
 
 		final String[] complianceVersions= new String[] { VERSION_1_3, VERSION_1_4,
-				VERSION_1_5, VERSION_1_6, VERSION_1_7, VERSION_1_8, VERSION_9, VERSION_10, VERSION_11, VERSION_12, VERSION_13 };
+				VERSION_1_5, VERSION_1_6, VERSION_1_7, VERSION_1_8, VERSION_9, VERSION_10, VERSION_11, VERSION_12, VERSION_13, VERSION_14 };
 		final String[] complianceLabels= new String[] {
 			PreferencesMessages.ComplianceConfigurationBlock_version13,
 			PreferencesMessages.ComplianceConfigurationBlock_version14,
@@ -311,10 +312,11 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 			PreferencesMessages.ComplianceConfigurationBlock_version_11,
 			PreferencesMessages.ComplianceConfigurationBlock_version_12,
 			PreferencesMessages.ComplianceConfigurationBlock_version_13,
+			PreferencesMessages.ComplianceConfigurationBlock_version_14,
 		};
 
 		String[] targetVersions= new String[] { VERSION_CLDC_1_1, VERSION_1_1, VERSION_1_2, VERSION_1_3, VERSION_1_4,
-				VERSION_1_5, VERSION_1_6, VERSION_1_7, VERSION_1_8, VERSION_9, VERSION_10, VERSION_11, VERSION_12, VERSION_13 };
+				VERSION_1_5, VERSION_1_6, VERSION_1_7, VERSION_1_8, VERSION_9, VERSION_10, VERSION_11, VERSION_12, VERSION_13, VERSION_14 };
 		String[] targetLabels= new String[] {
 				PreferencesMessages.ComplianceConfigurationBlock_versionCLDC11,
 				PreferencesMessages.ComplianceConfigurationBlock_version11,
@@ -330,6 +332,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 				PreferencesMessages.ComplianceConfigurationBlock_version_11,
 				PreferencesMessages.ComplianceConfigurationBlock_version_12,
 				PreferencesMessages.ComplianceConfigurationBlock_version_13,
+				PreferencesMessages.ComplianceConfigurationBlock_version_14,
 		};
 		if (ComplianceConfigurationBlock.VERSION_JSR14.equals(getValue(PREF_CODEGEN_TARGET_PLATFORM))) {
 			targetVersions= append(targetVersions, ComplianceConfigurationBlock.VERSION_JSR14);
@@ -337,7 +340,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 		}
 
 		String[] sourceVersions= new String[] { VERSION_1_3, VERSION_1_4,
-				VERSION_1_5, VERSION_1_6, VERSION_1_7, VERSION_1_8, VERSION_9, VERSION_10, VERSION_11, VERSION_12, VERSION_13 };
+				VERSION_1_5, VERSION_1_6, VERSION_1_7, VERSION_1_8, VERSION_9, VERSION_10, VERSION_11, VERSION_12, VERSION_13, VERSION_14 };
 		String[] sourceLabels= new String[] {
 				PreferencesMessages.ComplianceConfigurationBlock_version13,
 				PreferencesMessages.ComplianceConfigurationBlock_version14,
@@ -350,6 +353,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 				PreferencesMessages.ComplianceConfigurationBlock_version_11,
 				PreferencesMessages.ComplianceConfigurationBlock_version_12,
 				PreferencesMessages.ComplianceConfigurationBlock_version_13,
+				PreferencesMessages.ComplianceConfigurationBlock_version_14,
 		};
 
 		final ScrolledPageContent sc1 = new ScrolledPageContent(folder);
@@ -404,7 +408,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 		addComboBox(group, label, PREF_COMPLIANCE, complianceVersions, complianceLabels, 0);
 
 		label= PreferencesMessages.ComplianceConfigurationBlock_jrecompliance_backwardcompatibility_label;
-		fComplierReleaseCheck= addCheckBox(group, label, PREF_RELEASE, new String[] { DISABLED, ENABLED }, 0, false);
+		fCompilerReleaseCheck= addCheckBox(group, label, PREF_RELEASE, new String[] { DISABLED, ENABLED }, 0, false);
 
 		label= PreferencesMessages.ComplianceConfigurationBlock_default_settings_label;
 		addCheckBox(group, label, INTR_DEFAULT_COMPLIANCE, defaultUserValues, 0);
@@ -530,19 +534,19 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 			String value= PREF_RELEASE.getStoredValue(new IScopeContext[] { new ProjectScope(fProject) }, false, null);
 			if (value != null) {
 				setValue(PREF_RELEASE, value);
-				fComplierReleaseCheck.setSelection(DISABLED.equals(value) ? false : true);
+				fCompilerReleaseCheck.setSelection(DISABLED.equals(value) ? false : true);
 			} else {
 				setValue(PREF_RELEASE, DISABLED);
-				fComplierReleaseCheck.setSelection(false);
+				fCompilerReleaseCheck.setSelection(false);
 			}
 		} else {
 			String value= PREF_RELEASE.getStoredValue(new IScopeContext[] { InstanceScope.INSTANCE }, false, null);
 			if (value != null) {
 				setValue(PREF_RELEASE, value);
-				fComplierReleaseCheck.setSelection(DISABLED.equals(value) ? false : true);
+				fCompilerReleaseCheck.setSelection(DISABLED.equals(value) ? false : true);
 			} else {
 				setValue(PREF_RELEASE, DISABLED);
-				fComplierReleaseCheck.setSelection(false);
+				fCompilerReleaseCheck.setSelection(false);
 			}
 		}
 	}
@@ -714,6 +718,22 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 		}
 	}
 
+	@Override
+	public void performDefaults() {
+		super.performDefaults();
+		performReleasePreferenceDefault();
+	}
+
+	private void performReleasePreferenceDefault() {
+		String defValue= getDefaultValue(PREF_RELEASE);
+		if (defValue == null) {
+			defValue= DISABLED;
+		}
+		fCompilerReleaseCheck.setSelection(DISABLED.equals(defValue) ? false : true);
+		setValue(PREF_RELEASE, defValue);
+		updateReleaseOptionStatus();
+	}
+
 	private void validateComplianceStatus() {
 		if (fJRE50InfoText != null && !fJRE50InfoText.isDisposed()) {
 			boolean isVisible= false;
@@ -743,7 +763,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 						args[1]= getVersionLabel(version);
 					}
 					if (JavaModelUtil.is9OrHigher(compilerCompliance)) {
-						if (!JavaModelUtil.is16OrHigher(compliance) || !fComplierReleaseCheck.getSelection()) {
+						if (!JavaModelUtil.is16OrHigher(compliance) || !fCompilerReleaseCheck.getSelection()) {
 							if (fProject == null) {
 								fJRE50InfoText.setText(Messages.format(PreferencesMessages.ComplianceConfigurationBlock_jrecompliance_info, args));
 							} else {
@@ -768,7 +788,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 				} else {
 					if (isJREUnsupportedAndGreater) {
 						String[] args= { getVersionLabel(compilerCompliance), getVersionLabel(version) };
-						if (fComplierReleaseCheck.getSelection()) {
+						if (fCompilerReleaseCheck.getSelection()) {
 							fJRE50InfoText.setText(Messages.format(PreferencesMessages.ComplianceConfigurationBlock_jrecompliance_backwardcompatibility_info, args));
 							image= JFaceResources.getImage(Dialog.DLG_IMG_MESSAGE_INFO);
 						} else {
@@ -783,9 +803,9 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 				}
 			}
 
-			//TODO: Comment once Java SE 13 has been shipped:
+			//TODO: Comment once Java SE 14 has been shipped:
 			/*String selectedCompliance= getValue(PREF_COMPLIANCE);
-			if (VERSION_13.equals(selectedCompliance)) {
+			if (VERSION_14.equals(selectedCompliance)) {
 				fJRE50InfoText.setText(
 						"This is an implementation of an early-draft specification developed under the Java Community Process (JCP) and is made available for testing and evaluation purposes only. The code is not compatible with any specification of the JCP."); //$NON-NLS-1$
 				isVisible= true;
@@ -798,7 +818,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 	}
 
 	private void updateReleaseOptionStatus() {
-		if (fComplierReleaseCheck != null && !fComplierReleaseCheck.isDisposed()) {
+		if (fCompilerReleaseCheck != null && !fCompilerReleaseCheck.isDisposed()) {
 			String compliance= getStoredValue(PREF_COMPLIANCE); // get actual value
 			IVMInstall install= null;
 			if (fProject != null) { // project specific settings: only test if a 50 JRE is installed
@@ -816,33 +836,37 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 				boolean isJREUnsupportedAndGreater= isJREVersionUnsupportedAndGreater(version, compilerCompliance);
 				if (!compilerCompliance.equals(compliance)) { // Discourage using compiler with version other than compliance
 					if (JavaModelUtil.is9OrHigher(compilerCompliance)) {
-						if (!JavaModelUtil.is16OrHigher(compliance)
-								|| ( JavaModelUtil.is12OrHigher(compilerCompliance)) && !JavaModelUtil.is17OrHigher(compliance)) {
-							fComplierReleaseCheck.setEnabled(false);
-							fComplierReleaseCheck.setSelection(false);
+						if (!JavaModelUtil.isVersionLessThan(compliance, compilerCompliance)
+								|| !JavaModelUtil.is16OrHigher(compliance)
+								|| ( JavaModelUtil.is12OrHigher(compilerCompliance))
+								&& !JavaModelUtil.is17OrHigher(compliance)) {
+							fCompilerReleaseCheck.setEnabled(false);
+							fCompilerReleaseCheck.setSelection(false);
 							setValue(PREF_RELEASE, DISABLED);
 						} else {
 							if (fProject != null) {
-								fComplierReleaseCheck.setEnabled(checkValue(INTR_COMPLIANCE_FOLLOWS_EE, USER_CONF) || checkValue(INTR_COMPLIANCE_FOLLOWS_EE, DISABLED));
+								fCompilerReleaseCheck.setEnabled(checkValue(INTR_COMPLIANCE_FOLLOWS_EE, USER_CONF) || checkValue(INTR_COMPLIANCE_FOLLOWS_EE, DISABLED));
 							} else {
-								fComplierReleaseCheck.setEnabled(true);
+								fCompilerReleaseCheck.setEnabled(true);
 							}
 						}
 						updateComplianceEnableSourceTargetState();
 					} else {
-						fComplierReleaseCheck.setEnabled(false);
-						fComplierReleaseCheck.setSelection(false);
+						fCompilerReleaseCheck.setEnabled(false);
+						fCompilerReleaseCheck.setSelection(false);
 						setValue(PREF_RELEASE, DISABLED);
 					}
 				} else if (!JavaModelUtil.is9OrHigher(compilerCompliance)) {
-					fComplierReleaseCheck.setEnabled(false);
-					fComplierReleaseCheck.setSelection(false);
+					fCompilerReleaseCheck.setEnabled(false);
+					fCompilerReleaseCheck.setSelection(false);
 					setValue(PREF_RELEASE, JavaCore.DISABLED);
 				} else {
 					if (fProject == null) {
-						fComplierReleaseCheck.setEnabled(true);
+						fCompilerReleaseCheck.setEnabled(true);
 					} else if (isJREUnsupportedAndGreater && JavaModelUtil.is16OrHigher(compliance)) {
-						fComplierReleaseCheck.setEnabled(true);
+						fCompilerReleaseCheck.setEnabled(true);
+					} else if (JavaModelUtil.is9OrHigher(compliance)) {
+						fCompilerReleaseCheck.setEnabled(true);
 					}
 					updateComplianceEnableSourceTargetState();
 				}
@@ -978,7 +1002,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 			String complianceFollowsEE= getValue(INTR_COMPLIANCE_FOLLOWS_EE);
 			enableComplianceControls= hasProjectSpecificOptions && !DEFAULT_CONF.equals(complianceFollowsEE); // is disabled or user
 		}
-		boolean enableBasedOnRelease= !fComplierReleaseCheck.getSelection() || !JavaModelUtil.is16OrHigher(getValue(PREF_COMPLIANCE));
+		boolean enableBasedOnRelease= !fCompilerReleaseCheck.getSelection() || !JavaModelUtil.is16OrHigher(getValue(PREF_COMPLIANCE));
 		boolean enableComplianceChildren= enableComplianceControls && checkValue(INTR_DEFAULT_COMPLIANCE, USER_CONF) && enableBasedOnRelease;
 		for (int i= fComplianceChildControls.size() - 1; i >= 0; i--) {
 			Control curr= fComplianceChildControls.get(i);
@@ -1191,7 +1215,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 				String release= eeOptions.get(PREF_RELEASE.getName());
 				if (release == null) {
 					setValue(PREF_RELEASE, DISABLED);
-					fComplierReleaseCheck.setSelection(false);
+					fCompilerReleaseCheck.setSelection(false);
 				}
 
 			} else if (isRelease) {
@@ -1361,12 +1385,13 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 			if (isOriginalDefaultCompliance(complianceLevel)) {
 				Map<String, String> complianceOptions= new HashMap<>();
 				JavaModelUtil.setComplianceOptions(complianceOptions, complianceLevel);
+				String releaseVal= complianceOptions.get(PREF_RELEASE.getName());
 				setDefaultValue(PREF_COMPLIANCE, complianceOptions.get(PREF_COMPLIANCE.getName()));
 				setDefaultValue(PREF_PB_ASSERT_AS_IDENTIFIER, complianceOptions.get(PREF_PB_ASSERT_AS_IDENTIFIER.getName()));
 				setDefaultValue(PREF_PB_ENUM_AS_IDENTIFIER, complianceOptions.get(PREF_PB_ENUM_AS_IDENTIFIER.getName()));
 				setDefaultValue(PREF_SOURCE_COMPATIBILITY, complianceOptions.get(PREF_SOURCE_COMPATIBILITY.getName()));
 				setDefaultValue(PREF_CODEGEN_TARGET_PLATFORM, complianceOptions.get(PREF_CODEGEN_TARGET_PLATFORM.getName()));
-				setDefaultValue(PREF_RELEASE, DISABLED);
+				setDefaultValue(PREF_RELEASE, releaseVal != null ? releaseVal : DISABLED);
 				if (JavaCore.compareJavaVersions(complianceLevel, JavaCore.VERSION_10) > 0) {
 					setDefaultValue(PREF_ENABLE_PREVIEW, complianceOptions.get(PREF_ENABLE_PREVIEW.getName()));
 					setDefaultValue(PREF_PB_REPORT_PREVIEW, complianceOptions.get(PREF_PB_REPORT_PREVIEW.getName()));

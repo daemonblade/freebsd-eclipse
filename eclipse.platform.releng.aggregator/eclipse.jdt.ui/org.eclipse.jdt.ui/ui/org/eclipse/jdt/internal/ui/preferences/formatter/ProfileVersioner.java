@@ -14,7 +14,6 @@
 
 package org.eclipse.jdt.internal.ui.preferences.formatter;
 
-import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.jdt.core.JavaCore;
@@ -46,10 +45,10 @@ public class ProfileVersioner implements IProfileVersioner {
 	private static final int VERSION_15= 15; // https://bugs.eclipse.org/205973
 	private static final int VERSION_16= 16; // https://bugs.eclipse.org/543080, https://bugs.eclipse.org/543475
 	private static final int VERSION_17= 17; // https://bugs.eclipse.org/214283
-
 	private static final int VERSION_18= 18; // https://bugs.eclipse.org/552919
+	private static final int VERSION_19= 19; // https://bugs.eclipse.org/553155
 
-	private static final int CURRENT_VERSION= VERSION_18;
+	private static final int CURRENT_VERSION= VERSION_19;
 
 	@Override
 	public int getFirstVersion() {
@@ -126,17 +125,19 @@ public class ProfileVersioner implements IProfileVersioner {
 		case VERSION_17:
 			version17to18(oldSettings);
 			//$FALL-THROUGH$
+		case VERSION_18:
+			version18to19(oldSettings);
+			//$FALL-THROUGH$
 		default:
-		    for (final Iterator<String> iter= oldSettings.keySet().iterator(); iter.hasNext(); ) {
-		        final String key= iter.next();
-		        if (!newSettings.containsKey(key))
-		            continue;
+				for (String key : oldSettings.keySet()) {
+				    if (!newSettings.containsKey(key))
+				        continue;
 
-		        final String value= oldSettings.get(key);
-		        if (value != null) {
-		            newSettings.put(key, value);
-		        }
-		    }
+				    final String value= oldSettings.get(key);
+				    if (value != null) {
+				        newSettings.put(key, value);
+				    }
+				}
 		    // copy over profile options (not formatter settings)
 		    if (oldSettings.containsKey(JavaCore.JAVA_FORMATTER)) {
 		        newSettings.put(JavaCore.JAVA_FORMATTER, oldSettings.get(JavaCore.JAVA_FORMATTER));
@@ -712,6 +713,44 @@ public class ProfileVersioner implements IProfileVersioner {
 	private static void version17to18(Map<String, String> oldSettings) {
 		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_UNARY_OPERATOR,
 				DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_NOT_OPERATOR);
+	}
+
+	private static void version18to19(Map<String, String> oldSettings) {
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_INDENT_BODY_DECLARATIONS_COMPARE_TO_TYPE_HEADER,
+				DefaultCodeFormatterConstants.FORMATTER_INDENT_BODY_DECLARATIONS_COMPARE_TO_RECORD_HEADER);
+
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_TYPE_DECLARATION,
+				DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_RECORD_DECLARATION);
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_CONSTRUCTOR_DECLARATION,
+				DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_RECORD_CONSTRUCTOR);
+
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_PARENTHESES_POSITIONS_IN_METHOD_DECLARATION,
+				DefaultCodeFormatterConstants.FORMATTER_PARENTHESES_POSITIONS_IN_RECORD_DECLARATION);
+
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_METHOD_DECLARATION,
+				DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_PAREN_IN_RECORD_DECLARATION);
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_METHOD_DECLARATION,
+				DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_OPENING_PAREN_IN_RECORD_DECLARATION);
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_METHOD_DECLARATION,
+				DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_CLOSING_PAREN_IN_RECORD_DECLARATION);
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_METHOD_DECLARATION_PARAMETERS,
+				DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_COMMA_IN_RECORD_COMPONENTS);
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_METHOD_DECLARATION_PARAMETERS,
+				DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_COMMA_IN_RECORD_COMPONENTS);
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_METHOD_DECLARATION,
+				DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_RECORD_DECLARATION);
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_CONSTRUCTOR_DECLARATION,
+				DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_OPENING_BRACE_IN_RECORD_CONSTRUCTOR);
+
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_KEEP_TYPE_DECLARATION_ON_ONE_LINE,
+				DefaultCodeFormatterConstants.FORMATTER_KEEP_RECORD_DECLARATION_ON_ONE_LINE);
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_KEEP_METHOD_BODY_ON_ONE_LINE,
+				DefaultCodeFormatterConstants.FORMATTER_KEEP_RECORD_CONSTRUCTOR_ON_ONE_LINE);
+
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_ALIGNMENT_FOR_PARAMETERS_IN_CONSTRUCTOR_DECLARATION,
+				DefaultCodeFormatterConstants.FORMATTER_ALIGNMENT_FOR_RECORD_COMPONENTS);
+		checkAndReplace(oldSettings, DefaultCodeFormatterConstants.FORMATTER_ALIGNMENT_FOR_SUPERINTERFACES_IN_TYPE_DECLARATION,
+				DefaultCodeFormatterConstants.FORMATTER_ALIGNMENT_FOR_SUPERINTERFACES_IN_RECORD_DECLARATION);
 	}
 
 	/* old format constant values */

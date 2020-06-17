@@ -249,8 +249,7 @@ public class JavadocContentAccess2 {
 					return result;
 				}
 			}
-			for (Iterator<IType> iter= toVisitChildren.iterator(); iter.hasNext(); ) {
-				IType child= iter.next();
+			for (IType child : toVisitChildren) {
 				Object result= visitInheritDocInterfaces(visited, child, typeHierarchy);
 				if (result != InheritDocVisitor.CONTINUE)
 					return result;
@@ -523,7 +522,9 @@ public class JavadocContentAccess2 {
 		if (element instanceof IPackageDeclaration) {
 			return getHTMLContent((IPackageDeclaration) element);
 		}
-		if (!(element instanceof IMember || element instanceof ITypeParameter || (element instanceof ILocalVariable && (((ILocalVariable) element).isParameter())))) {
+		if (!(element instanceof IMember)
+				&& !(element instanceof ITypeParameter)
+				&& (!(element instanceof ILocalVariable) || !(((ILocalVariable) element).isParameter()))) {
 			return null;
 		}
 		String sourceJavadoc= getHTMLContentFromSource(element);
@@ -614,7 +615,7 @@ public class JavadocContentAccess2 {
 	private static String createMethodInTypeLinks(IMethod overridden) {
 		CharSequence methodLink= createSimpleMemberLink(overridden);
 		CharSequence typeLink= createSimpleMemberLink(overridden.getDeclaringType());
-		String methodInType= MessageFormat.format(JavaDocMessages.JavaDoc2HTMLTextReader_method_in_type, new Object[] { methodLink, typeLink });
+		String methodInType= MessageFormat.format(JavaDocMessages.JavaDoc2HTMLTextReader_method_in_type, methodLink, typeLink);
 		return methodInType;
 	}
 
@@ -869,8 +870,7 @@ public class JavadocContentAccess2 {
 	private void parameterToHTML() {
 		String elementName= fElement.getElementName();
 		List<TagElement> tags= fJavadoc.tags();
-		for (Iterator<TagElement> iter= tags.iterator(); iter.hasNext();) {
-			TagElement tag= iter.next();
+		for (TagElement tag : tags) {
 			String tagName= tag.getTagName();
 			if (TagElement.TAG_PARAM.equals(tagName)) {
 				List<? extends ASTNode> fragments= tag.fragments();
@@ -943,91 +943,102 @@ public class JavadocContentAccess2 {
 		List<TagElement> hidden= new ArrayList<>(1);
 
 		List<TagElement> tags= fJavadoc.tags();
-		for (Iterator<TagElement> iter= tags.iterator(); iter.hasNext(); ) {
-			TagElement tag= iter.next();
+		for (TagElement tag : tags) {
 			String tagName= tag.getTagName();
 			if (tagName == null) {
 				start= tag;
 
-			} else if (TagElement.TAG_PARAM.equals(tagName)) {
-				List<? extends ASTNode> fragments= tag.fragments();
-				int size= fragments.size();
-				if (size > 0) {
-					Object first= fragments.get(0);
-					if (first instanceof SimpleName) {
-						String name= ((SimpleName) first).getIdentifier();
-						int paramIndex= parameterNames.indexOf(name);
-						if (paramIndex != -1) {
-							parameterNames.set(paramIndex, null);
-						}
-						parameters.add(tag);
-					} else if (size > 2 && first instanceof TextElement) {
-						String firstText= ((TextElement) first).getText();
-						if ("<".equals(firstText)) { //$NON-NLS-1$
-							Object second= fragments.get(1);
-							Object third= fragments.get(2);
-							if (second instanceof SimpleName && third instanceof TextElement) {
-								String name= ((SimpleName) second).getIdentifier();
-								String thirdText= ((TextElement) third).getText();
-								if (">".equals(thirdText)) { //$NON-NLS-1$
-									int paramIndex= typeParameterNames.indexOf(name);
-									if (paramIndex != -1) {
-										typeParameterNames.set(paramIndex, null);
+			} else {
+				switch (tagName) {
+					case TagElement.TAG_PARAM:
+						List<? extends ASTNode> fragments= tag.fragments();
+						int size= fragments.size();
+						if (size > 0) {
+							Object first= fragments.get(0);
+							if (first instanceof SimpleName) {
+								String name= ((SimpleName) first).getIdentifier();
+								int paramIndex= parameterNames.indexOf(name);
+								if (paramIndex != -1) {
+									parameterNames.set(paramIndex, null);
+								}
+								parameters.add(tag);
+							} else if (size > 2 && first instanceof TextElement) {
+								String firstText= ((TextElement) first).getText();
+								if ("<".equals(firstText)) { //$NON-NLS-1$
+									Object second= fragments.get(1);
+									Object third= fragments.get(2);
+									if (second instanceof SimpleName && third instanceof TextElement) {
+										String name= ((SimpleName) second).getIdentifier();
+										String thirdText= ((TextElement) third).getText();
+										if (">".equals(thirdText)) { //$NON-NLS-1$
+											int paramIndex= typeParameterNames.indexOf(name);
+											if (paramIndex != -1) {
+												typeParameterNames.set(paramIndex, null);
+											}
+											typeParameters.add(tag);
+										}
 									}
-									typeParameters.add(tag);
 								}
 							}
 						}
-					}
-				}
-
-			} else if (TagElement.TAG_RETURN.equals(tagName)) {
-				if (returnTag == null)
-					returnTag= tag; // the Javadoc tool only shows the first return tag
-
-			} else if (TagElement.TAG_EXCEPTION.equals(tagName) || TagElement.TAG_THROWS.equals(tagName)) {
-				exceptions.add(tag);
-				List<? extends ASTNode> fragments= tag.fragments();
-				if (fragments.size() > 0) {
-					Object first= fragments.get(0);
-					if (first instanceof Name) {
-						String name= ASTNodes.getSimpleNameIdentifier((Name) first);
-						int exceptionIndex= exceptionNames.indexOf(name);
-						if (exceptionIndex != -1) {
-							exceptionNames.set(exceptionIndex, null);
+						break;
+					case TagElement.TAG_RETURN:
+						if (returnTag == null)
+							returnTag= tag; // the Javadoc tool only shows the first return tag
+						break;
+					case TagElement.TAG_EXCEPTION:
+					case TagElement.TAG_THROWS:
+						exceptions.add(tag);
+						List<? extends ASTNode> fragments2= tag.fragments();
+						if (fragments2.size() > 0) {
+							Object first= fragments2.get(0);
+							if (first instanceof Name) {
+								String name= ASTNodes.getSimpleNameIdentifier((Name) first);
+								int exceptionIndex= exceptionNames.indexOf(name);
+								if (exceptionIndex != -1) {
+									exceptionNames.set(exceptionIndex, null);
+								}
+							}
 						}
-					}
+						break;
+					case TagElement.TAG_PROVIDES:
+						provides.add(tag);
+						break;
+					case TagElement.TAG_USES:
+						uses.add(tag);
+						break;
+					case TagElement.TAG_SINCE:
+						since.add(tag);
+						break;
+					case TagElement.TAG_VERSION:
+						versions.add(tag);
+						break;
+					case TagElement.TAG_AUTHOR:
+						authors.add(tag);
+						break;
+					case TagElement.TAG_SEE:
+						sees.add(tag);
+						break;
+					case TagElement.TAG_DEPRECATED:
+						if (deprecatedTag == null)
+							deprecatedTag= tag; // the Javadoc tool only shows the first deprecated tag
+						break;
+					case TagElement.TAG_API_NOTE:
+						apinote.add(tag);
+						break;
+					case TagElement.TAG_IMPL_SPEC:
+						implspec.add(tag);
+						break;
+					case TagElement.TAG_IMPL_NOTE:
+						implnote.add(tag);
+						break;
+					case TagElement.TAG_HIDDEN:
+						hidden.add(tag);
+						break;
+					default:
+						rest.add(tag);
+						break;
 				}
-
-			} else if (TagElement.TAG_PROVIDES.equals(tagName)) {
-				provides.add(tag);
-			} else if (TagElement.TAG_USES.equals(tagName)) {
-				uses.add(tag);
-			} else if (TagElement.TAG_SINCE.equals(tagName)) {
-				since.add(tag);
-			} else if (TagElement.TAG_VERSION.equals(tagName)) {
-				versions.add(tag);
-			} else if (TagElement.TAG_AUTHOR.equals(tagName)) {
-				authors.add(tag);
-			} else if (TagElement.TAG_SEE.equals(tagName)) {
-				sees.add(tag);
-			} else if (TagElement.TAG_DEPRECATED.equals(tagName)) {
-				if (deprecatedTag == null)
-					deprecatedTag= tag; // the Javadoc tool only shows the first deprecated tag
-			} else if (TagElement.TAG_API_NOTE.equals(tagName)) {
-				apinote.add(tag);
-			} else if (TagElement.TAG_IMPL_SPEC.equals(tagName)) {
-				implspec.add(tag);
-			} else if (TagElement.TAG_IMPL_NOTE.equals(tagName)) {
-				implnote.add(tag);
-			} else if (TagElement.TAG_USES.equals(tagName)) {
-				uses.add(tag);
-			} else if (TagElement.TAG_PROVIDES.equals(tagName)) {
-				provides.add(tag);
-			} else if (TagElement.TAG_HIDDEN.equals(tagName)) {
-				hidden.add(tag);
-			} else {
-				rest.add(tag);
 			}
 		}
 
@@ -1220,8 +1231,7 @@ public class JavadocContentAccess2 {
 			fLiteralContent= 0;
 
 			List<TagElement> tags= fJavadoc.tags();
-			for (Iterator<TagElement> iter= tags.iterator(); iter.hasNext(); ) {
-				TagElement tag= iter.next();
+			for (TagElement tag : tags) {
 				String tagName= tag.getTagName();
 				if (tagName == null) {
 					handleContentElements(tag.fragments());
@@ -1241,8 +1251,7 @@ public class JavadocContentAccess2 {
 			fLiteralContent= 0;
 
 			List<TagElement> tags= fJavadoc.tags();
-			for (Iterator<TagElement> iter= tags.iterator(); iter.hasNext(); ) {
-				TagElement tag= iter.next();
+			for (TagElement tag : tags) {
 				String tagName= tag.getTagName();
 				if (TagElement.TAG_RETURN.equals(tagName)) {
 					handleContentElements(tag.fragments());
@@ -1274,8 +1283,7 @@ public class JavadocContentAccess2 {
 
 			String typeParamName= typeParameterNames.get(typeParamIndex);
 			List<TagElement> tags= fJavadoc.tags();
-			for (Iterator<TagElement> iter= tags.iterator(); iter.hasNext();) {
-				TagElement tag= iter.next();
+			for (TagElement tag : tags) {
 				String tagName= tag.getTagName();
 				if (TagElement.TAG_PARAM.equals(tagName)) {
 					List<? extends ASTNode> fragments= tag.fragments();
@@ -1323,8 +1331,7 @@ public class JavadocContentAccess2 {
 
 			String paramName= parameterNames[paramIndex];
 			List<TagElement> tags= fJavadoc.tags();
-			for (Iterator<TagElement> iter= tags.iterator(); iter.hasNext(); ) {
-				TagElement tag= iter.next();
+			for (TagElement tag : tags) {
 				String tagName= tag.getTagName();
 				if (TagElement.TAG_PARAM.equals(tagName)) {
 					List<? extends ASTNode> fragments= tag.fragments();
@@ -1364,8 +1371,7 @@ public class JavadocContentAccess2 {
 			fLiteralContent= 0;
 
 			List<TagElement> tags= fJavadoc.tags();
-			for (Iterator<TagElement> iter= tags.iterator(); iter.hasNext(); ) {
-				TagElement tag= iter.next();
+			for (TagElement tag : tags) {
 				String tagName= tag.getTagName();
 				if (TagElement.TAG_THROWS.equals(tagName) || TagElement.TAG_EXCEPTION.equals(tagName)) {
 					List<? extends ASTNode> fragments= tag.fragments();
@@ -1752,8 +1758,7 @@ public class JavadocContentAccess2 {
 
 		handleBlockTagTitle(title);
 
-		for (Iterator<TagElement> iter= tags.iterator(); iter.hasNext(); ) {
-			TagElement tag= iter.next();
+		for (TagElement tag : tags) {
 			fBuf.append(BlOCK_TAG_ENTRY_START);
 			if (TagElement.TAG_SEE.equals(tag.getTagName())) {
 				handleSeeTag(tag);
@@ -1778,8 +1783,7 @@ public class JavadocContentAccess2 {
 	}
 
 	private void handleBlockTags(List<TagElement> tags) {
-		for (Iterator<TagElement> iter= tags.iterator(); iter.hasNext(); ) {
-			TagElement tag= iter.next();
+		for (TagElement tag : tags) {
 			handleBlockTagTitle(tag.getTagName());
 			fBuf.append(BlOCK_TAG_ENTRY_START);
 			handleContentElements(tag.fragments());
@@ -1803,8 +1807,7 @@ public class JavadocContentAccess2 {
 
 		handleBlockTagTitle(JavaDocMessages.JavaDoc2HTMLTextReader_throws_section);
 
-		for (Iterator<TagElement> iter= tags.iterator(); iter.hasNext(); ) {
-			TagElement tag= iter.next();
+		for (TagElement tag : tags) {
 			fBuf.append(BlOCK_TAG_ENTRY_START);
 			handleThrowsTag(tag);
 			fBuf.append(BlOCK_TAG_ENTRY_END);
@@ -1843,8 +1846,7 @@ public class JavadocContentAccess2 {
 		String tagTitle= isTypeParameters ? JavaDocMessages.JavaDoc2HTMLTextReader_type_parameters_section : JavaDocMessages.JavaDoc2HTMLTextReader_parameters_section;
 		handleBlockTagTitle(tagTitle);
 
-		for (Iterator<TagElement> iter= tags.iterator(); iter.hasNext(); ) {
-			TagElement tag= iter.next();
+		for (TagElement tag : tags) {
 			fBuf.append(BlOCK_TAG_ENTRY_START);
 			handleParamTag(tag);
 			fBuf.append(BlOCK_TAG_ENTRY_END);
@@ -1979,7 +1981,7 @@ public class JavadocContentAccess2 {
 					JavaPlugin.log(e);
 				}
 				fBuf.append("'>"); //$NON-NLS-1$
-				if (fs > 1 && !(fs == 2 && isWhitespaceTextElement(fragments.get(1)))) {
+				if (fs > 1 && ((fs != 2) || !isWhitespaceTextElement(fragments.get(1)))) {
 					handleContentElements(fragments.subList(1, fs), true);
 				} else {
 					fBuf.append(refTypeName);
@@ -2021,8 +2023,8 @@ public class JavadocContentAccess2 {
 	}
 
 	private boolean containsOnlyNull(List<String> parameterNames) {
-		for (Iterator<String> iter= parameterNames.iterator(); iter.hasNext(); ) {
-			if (iter.next() != null)
+		for (String string : parameterNames) {
+			if (string != null)
 				return false;
 		}
 		return true;

@@ -16,7 +16,6 @@ package org.eclipse.jdt.internal.ui.javaeditor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.swt.SWT;
@@ -259,7 +258,7 @@ public class ClassFileEditor extends JavaEditor implements ClassFileDocumentProv
 					return;
 				}
 				IStatus attributeStatus= initializer.getAttributeStatus(containerPath, jproject, IClasspathAttribute.SOURCE_ATTACHMENT_ENCODING);
-				canEditEncoding= !(attributeStatus.getCode() == ClasspathContainerInitializer.ATTRIBUTE_NOT_SUPPORTED || attributeStatus.getCode() == ClasspathContainerInitializer.ATTRIBUTE_READ_ONLY);
+				canEditEncoding= (attributeStatus.getCode() != ClasspathContainerInitializer.ATTRIBUTE_NOT_SUPPORTED) && (attributeStatus.getCode() != ClasspathContainerInitializer.ATTRIBUTE_READ_ONLY);
 				entry= JavaModelUtil.findEntryInContainer(container, root.getPath());
 				Assert.isNotNull(entry);
 			}
@@ -331,13 +330,11 @@ public class ClassFileEditor extends JavaEditor implements ClassFileDocumentProv
 		@Override
 		public void propertyChange(PropertyChangeEvent event) {
 
-			for (Iterator<Label> iterator = fBannerLabels.iterator(); iterator.hasNext();) {
-				Label label = iterator.next();
+			for (Label label : fBannerLabels) {
 				label.setFont(JFaceResources.getBannerFont());
 			}
 
-			for (Iterator<Label> iterator = fHeaderLabels.iterator(); iterator.hasNext();) {
-				Label label = iterator.next();
+			for (Label label : fHeaderLabels) {
 				label.setFont(JFaceResources.getHeaderFont());
 			}
 
@@ -899,8 +896,7 @@ public class ClassFileEditor extends JavaEditor implements ClassFileDocumentProv
 			if (isUsingSourceCopyAction) {
 				createNavigationActions();
 			} else {
-				for (int i= 0; i < ACTION_MAP.length; i++) {
-					IdMapEntry entry= ACTION_MAP[i];
+				for (IdMapEntry entry : ACTION_MAP) {
 					actionBars.setGlobalActionHandler(entry.getActionId(), null);
 					setAction(entry.getActionId(), null);
 				}

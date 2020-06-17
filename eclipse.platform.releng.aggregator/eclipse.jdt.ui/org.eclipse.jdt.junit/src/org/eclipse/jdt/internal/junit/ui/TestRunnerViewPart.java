@@ -53,7 +53,6 @@ import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.DropTargetAdapter;
 import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.TextTransfer;
-import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.dnd.URLTransfer;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
@@ -422,8 +421,7 @@ public class TestRunnerViewPart extends ViewPart {
 			for (TestRunSession testRunSession : testRunSessions) {
 				JUnitCorePlugin.getModel().removeTestRunSession(testRunSession);
 			}
-			for (Iterator<TestRunSession> iter= remainingEntries.iterator(); iter.hasNext();) {
-				TestRunSession remaining= iter.next();
+			for (TestRunSession remaining : remainingEntries) {
 				remaining.swapOut();
 			}
 		}
@@ -1630,7 +1628,7 @@ action enablement
 
 		String testRunLabel= BasicElementLabels.getJavaElementName(fTestRunSession.getTestRunName());
 		if (testKindDisplayStr != null)
-			setTitleToolTip(MessageFormat.format(JUnitMessages.TestRunnerViewPart_titleToolTip, new Object[] {testRunLabel, testKindDisplayStr}));
+			setTitleToolTip(MessageFormat.format(JUnitMessages.TestRunnerViewPart_titleToolTip, testRunLabel, testKindDisplayStr));
 		else
 			setTitleToolTip(testRunLabel);
 	}
@@ -1666,8 +1664,8 @@ action enablement
 	}
 
 	private void disposeImages() {
-		for (int i= 0; i < fImagesToDispose.size(); i++) {
-			fImagesToDispose.get(i).dispose();
+		for (Image imageToDispose : fImagesToDispose) {
+			imageToDispose.dispose();
 		}
 	}
 
@@ -1872,7 +1870,7 @@ action enablement
 
 	private void addDropAdapter(Composite parent) {
 		DropTarget dropTarget = new DropTarget(parent, DND.DROP_MOVE | DND.DROP_COPY | DND.DROP_LINK | DND.DROP_DEFAULT);
-		dropTarget.setTransfer(new Transfer[] { TextTransfer.getInstance() });
+		dropTarget.setTransfer(TextTransfer.getInstance());
 		class DropAdapter extends DropTargetAdapter {
 		    @Override
 			public void dragEnter(DropTargetEvent event) {
@@ -2035,8 +2033,8 @@ action enablement
 		viewMenu.add(new Separator());
 
 		MenuManager layoutSubMenu= new MenuManager(JUnitMessages.TestRunnerViewPart_layout_menu);
-		for (int i = 0; i < fToggleOrientationActions.length; ++i) {
-			layoutSubMenu.add(fToggleOrientationActions[i]);
+		for (ToggleOrientationAction toggleOrientationAction : fToggleOrientationActions) {
+			layoutSubMenu.add(toggleOrientationAction);
 		}
 		viewMenu.add(layoutSubMenu);
 		viewMenu.add(new Separator());
@@ -2231,8 +2229,8 @@ action enablement
 			return;
 		boolean horizontal = orientation == VIEW_ORIENTATION_HORIZONTAL;
 		fSashForm.setOrientation(horizontal ? SWT.HORIZONTAL : SWT.VERTICAL);
-		for (int i = 0; i < fToggleOrientationActions.length; ++i)
-			fToggleOrientationActions[i].setChecked(fOrientation == fToggleOrientationActions[i].getOrientation());
+		for (ToggleOrientationAction toggleOrientationAction : fToggleOrientationActions)
+			toggleOrientationAction.setChecked(fOrientation == toggleOrientationAction.getOrientation());
 		fCurrentOrientation = orientation;
 		GridLayout layout= (GridLayout) fCounterComposite.getLayout();
 		setCounterColumns(layout);

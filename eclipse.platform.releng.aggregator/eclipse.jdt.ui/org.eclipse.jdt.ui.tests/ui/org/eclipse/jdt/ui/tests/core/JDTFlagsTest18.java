@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2017 IBM Corporation and others.
+ * Copyright (c) 2013, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,10 +13,17 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.core;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.util.Hashtable;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.JavaTestPlugin;
@@ -51,40 +58,28 @@ import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.eclipse.jdt.ui.tests.core.rules.Java1d8ProjectTestSetup;
 
-public class JDTFlagsTest18 extends TestCase {
-
-	private static final Class<JDTFlagsTest18> THIS= JDTFlagsTest18.class;
-
+/**
+ * Those tests are made to run on Java Spider 1.8 .
+ */
+public class JDTFlagsTest18 {
 	private IJavaProject fJProject1;
 
 	private IPackageFragmentRoot fSourceFolder;
 
-	public JDTFlagsTest18(String name) {
-		super(name);
-	}
+	@Rule
+	public Java1d8ProjectTestSetup j18p= new Java1d8ProjectTestSetup();
 
-	public static Test suite() {
-		return new Java18ProjectTestSetup(new TestSuite(THIS));
-	}
-
-	public static Test setUpTest(Test test) {
-		return new Java18ProjectTestSetup(test);
-	}
-
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		fJProject1= Java18ProjectTestSetup.getProject();
+	@Before
+	public void setUp() throws Exception {
+		fJProject1= Java1d8ProjectTestSetup.getProject();
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 	}
 
-	@Override
-	protected void tearDown() throws Exception {
-		JavaProjectHelper.clear(fJProject1, Java18ProjectTestSetup.getDefaultClasspath());
+	@After
+	public void tearDown() throws Exception {
+		JavaProjectHelper.clear(fJProject1, Java1d8ProjectTestSetup.getDefaultClasspath());
 	}
 
 	protected CompilationUnit getCompilationUnitNode(String source) {
@@ -97,6 +92,7 @@ public class JDTFlagsTest18 extends TestCase {
 		return cuNode;
 	}
 
+	@Test
 	public void testIsStaticInSrcFile() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -127,6 +123,7 @@ public class JDTFlagsTest18 extends TestCase {
 		Assert.assertTrue(JdtFlags.isStatic(methodNode));
 	}
 
+	@Test
 	public void testNestedEnumInEnum() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -145,6 +142,7 @@ public class JDTFlagsTest18 extends TestCase {
 		Assert.assertTrue(JdtFlags.isStatic((IType)elem));
 	}
 
+	@Test
 	public void testNestedEnumInInterface() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -186,6 +184,7 @@ public class JDTFlagsTest18 extends TestCase {
 		Assert.assertTrue(JdtFlags.isFinal(type));
 	}
 
+	@Test
 	public void testNestedEnumInClass() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -234,6 +233,7 @@ public class JDTFlagsTest18 extends TestCase {
 
 	}
 
+	@Test
 	public void testNestedEnumIsFinal() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -249,9 +249,11 @@ public class JDTFlagsTest18 extends TestCase {
 		Assert.assertFalse(JdtFlags.isFinal(element));
 	}
 
+	@Test
 	public void testIsStaticInBinaryFile() throws Exception {
 		File clsJarPath= JavaTestPlugin.getDefault().getFileInPlugin(new Path("/testresources/JDTFlagsTest18.zip"));
-		assertTrue("lib not found", clsJarPath != null && clsJarPath.exists());//$NON-NLS-1$
+		assertNotNull("lib not found", clsJarPath);//$NON-NLS-1$
+		assertTrue("lib not found", clsJarPath.exists());
 		IPackageFragmentRoot jarRoot= JavaProjectHelper.addLibraryWithImport(fJProject1, new Path(clsJarPath.getAbsolutePath()), null, null);
 		fJProject1.open(null);
 		fJProject1.getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
@@ -267,6 +269,7 @@ public class JDTFlagsTest18 extends TestCase {
 		Assert.assertFalse(JdtFlags.isDefaultMethod(method));
 	}
 
+	@Test
 	public void testIsDefaultInInterface() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -295,9 +298,11 @@ public class JDTFlagsTest18 extends TestCase {
 		}
 	}
 
+	@Test
 	public void testIsDefaultInBinaryFile() throws Exception {
 		File clsJarPath= JavaTestPlugin.getDefault().getFileInPlugin(new Path("/testresources/JDTFlagsTest18.zip"));
-		assertTrue("lib not found", clsJarPath != null && clsJarPath.exists());//$NON-NLS-1$
+		assertNotNull("lib not found", clsJarPath);//$NON-NLS-1$
+		assertTrue("lib not found", clsJarPath.exists());//$NON-NLS-1$
 		IPackageFragmentRoot jarRoot= JavaProjectHelper.addLibraryWithImport(fJProject1, new Path(clsJarPath.getAbsolutePath()), null, null);
 		fJProject1.open(null);
 		fJProject1.getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
@@ -312,6 +317,7 @@ public class JDTFlagsTest18 extends TestCase {
 		Assert.assertFalse(JdtFlags.isAbstract(method));
 	}
 
+	@Test
 	public void testIsDefaultInClass() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -360,6 +366,7 @@ public class JDTFlagsTest18 extends TestCase {
 		}
 	}
 
+	@Test
 	public void testImplicitAbstractInSrcFile() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -390,6 +397,7 @@ public class JDTFlagsTest18 extends TestCase {
 		}
 	}
 
+	@Test
 	public void testExplicitAbstractInSrcFile() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();
@@ -417,9 +425,11 @@ public class JDTFlagsTest18 extends TestCase {
 		}
 	}
 
+	@Test
 	public void testExplicitAbstractInBinaryFile() throws Exception {
 		File clsJarPath= JavaTestPlugin.getDefault().getFileInPlugin(new Path("/testresources/JDTFlagsTest18.zip"));
-		assertTrue("lib not found", clsJarPath != null && clsJarPath.exists());//$NON-NLS-1$
+		assertNotNull("lib not found", clsJarPath);//$NON-NLS-1$
+		assertTrue("lib not found", clsJarPath.exists());//$NON-NLS-1$
 		IPackageFragmentRoot jarRoot= JavaProjectHelper.addLibraryWithImport(fJProject1, new Path(clsJarPath.getAbsolutePath()), null, null);
 		fJProject1.open(null);
 		fJProject1.getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
@@ -434,9 +444,11 @@ public class JDTFlagsTest18 extends TestCase {
 		Assert.assertTrue(JdtFlags.isAbstract(method));
 	}
 
+	@Test
 	public void testImplicitAbstractInBinaryFile() throws Exception {
 		File clsJarPath= JavaTestPlugin.getDefault().getFileInPlugin(new Path("/testresources/JDTFlagsTest18.zip"));
-		assertTrue("lib not found", clsJarPath != null && clsJarPath.exists());//$NON-NLS-1$
+		assertNotNull("lib not found", clsJarPath);//$NON-NLS-1$
+		assertTrue("lib not found", clsJarPath.exists());//$NON-NLS-1$
 		IPackageFragmentRoot jarRoot= JavaProjectHelper.addLibraryWithImport(fJProject1, new Path(clsJarPath.getAbsolutePath()), null, null);
 		fJProject1.open(null);
 		fJProject1.getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
@@ -451,6 +463,7 @@ public class JDTFlagsTest18 extends TestCase {
 		Assert.assertTrue(JdtFlags.isAbstract(method));
 	}
 
+	@Test
 	public void testIsStaticAnnotationType() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf= new StringBuilder();

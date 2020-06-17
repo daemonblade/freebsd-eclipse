@@ -26,6 +26,7 @@ package org.eclipse.jdt.internal.corext.dom;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -102,6 +103,7 @@ import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
+import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.QualifiedName;
@@ -116,6 +118,7 @@ import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.SwitchStatement;
+import org.eclipse.jdt.core.dom.ThrowStatement;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.UnionType;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
@@ -153,12 +156,168 @@ public class ASTNodes {
 	public static final int ERROR=					1 << 1;
 	public static final int INFO=					1 << 2;
 	public static final int PROBLEMS=				WARNING | ERROR | INFO;
+	public static final int EXCESSIVE_OPERAND_NUMBER= 5;
 
 	private static final Message[] EMPTY_MESSAGES= new Message[0];
 	private static final IProblem[] EMPTY_PROBLEMS= new IProblem[0];
 
 	private static final int CLEAR_VISIBILITY= ~(Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE);
 
+	/** Enum representing the possible side effect of an expression. */
+	public enum ExprActivity {
+		/** Does nothing. */
+		PASSIVE_WITHOUT_FALLING_THROUGH(0),
+
+		/** Does nothing but may fall through. */
+		PASSIVE(1),
+
+		/** May modify something. */
+		CAN_BE_ACTIVE(2),
+
+		/** Modify something. */
+		ACTIVE(3);
+
+		private final int asInteger;
+
+		ExprActivity(int asInteger) {
+			this.asInteger= asInteger;
+		}
+	}
+
+	private static final class ExprActivityVisitor extends InterruptibleVisitor {
+		private ExprActivity activityLevel= ExprActivity.PASSIVE_WITHOUT_FALLING_THROUGH;
+
+		public ExprActivity getActivityLevel() {
+			return activityLevel;
+		}
+
+		@Override
+		public boolean visit(CastExpression node) {
+			setActivityLevel(ExprActivity.PASSIVE);
+			return true;
+		}
+
+		@Override
+		public boolean visit(ArrayAccess node) {
+			setActivityLevel(ExprActivity.PASSIVE);
+			return true;
+		}
+
+		@Override
+		public boolean visit(FieldAccess node) {
+			setActivityLevel(ExprActivity.PASSIVE);
+			return true;
+		}
+
+		@Override
+		public boolean visit(QualifiedName node) {
+			if (node.getQualifier() == null
+					|| node.getQualifier().resolveBinding() == null
+					|| node.getQualifier().resolveBinding().getKind() != IBinding.PACKAGE
+							&& node.getQualifier().resolveBinding().getKind() != IBinding.TYPE) {
+				setActivityLevel(ExprActivity.PASSIVE);
+			}
+
+			return true;
+		}
+
+		@Override
+		public boolean visit(Assignment node) {
+			setActivityLevel(ExprActivity.ACTIVE);
+			return interruptVisit();
+		}
+
+		@Override
+		public boolean visit(PrefixExpression node) {
+			if (hasOperator(node, PrefixExpression.Operator.INCREMENT, PrefixExpression.Operator.DECREMENT)) {
+				setActivityLevel(ExprActivity.ACTIVE);
+				return interruptVisit();
+			} else if (hasType(node.getOperand(), Object.class.getCanonicalName())) {
+				setActivityLevel(ExprActivity.PASSIVE);
+			}
+
+			return true;
+		}
+
+		@Override
+		public boolean visit(PostfixExpression node) {
+			setActivityLevel(ExprActivity.ACTIVE);
+			return interruptVisit();
+		}
+
+		@Override
+		public boolean visit(InfixExpression node) {
+			if (hasOperator(node, InfixExpression.Operator.DIVIDE)) {
+				setActivityLevel(ExprActivity.PASSIVE);
+			} else {
+				for (Expression operand : allOperands(node)) {
+					if (hasType(operand, Object.class.getCanonicalName())) {
+						setActivityLevel(ExprActivity.PASSIVE);
+						break;
+					}
+				}
+			}
+
+			if (hasOperator(node, InfixExpression.Operator.PLUS) && hasType(node, String.class.getCanonicalName())
+					&& (mayCallActiveToString(node.getLeftOperand())
+							|| mayCallActiveToString(node.getRightOperand())
+							|| mayCallActiveToString(node.extendedOperands()))) {
+				setActivityLevel(ExprActivity.CAN_BE_ACTIVE);
+			}
+
+			return true;
+		}
+
+		private boolean mayCallActiveToString(List<Expression> extendedOperands) {
+			if (extendedOperands != null) {
+				for (Expression expression : extendedOperands) {
+					if (mayCallActiveToString(expression)) {
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		private boolean mayCallActiveToString(Expression expression) {
+			return !hasType(expression, String.class.getCanonicalName(), boolean.class.getSimpleName(), short.class.getSimpleName(), int.class.getSimpleName(), long.class.getSimpleName(),
+					float.class.getSimpleName(), double.class.getSimpleName(),
+					Short.class.getCanonicalName(), Boolean.class.getCanonicalName(), Integer.class.getCanonicalName(), Long.class.getCanonicalName(), Float.class.getCanonicalName(),
+					Double.class.getCanonicalName()) && !(expression instanceof PrefixExpression) && !(expression instanceof InfixExpression)
+					&& !(expression instanceof PostfixExpression);
+		}
+
+		@Override
+		public boolean visit(SuperMethodInvocation node) {
+			setActivityLevel(ExprActivity.CAN_BE_ACTIVE);
+			return true;
+		}
+
+		@Override
+		public boolean visit(MethodInvocation node) {
+			setActivityLevel(ExprActivity.CAN_BE_ACTIVE);
+			return true;
+		}
+
+		@Override
+		public boolean visit(ClassInstanceCreation node) {
+			setActivityLevel(ExprActivity.CAN_BE_ACTIVE);
+			return true;
+		}
+
+		@Override
+		public boolean visit(ThrowStatement node) {
+			setActivityLevel(ExprActivity.CAN_BE_ACTIVE);
+			return true;
+		}
+
+		private void setActivityLevel(final ExprActivity newActivityLevel) {
+			if (activityLevel.asInteger < newActivityLevel.asInteger) {
+				activityLevel= newActivityLevel;
+			}
+		}
+	}
 
 	private ASTNodes() {
 		// no instance;
@@ -418,6 +577,19 @@ public class ASTNodes {
 				parentType != ASTNode.CONTINUE_STATEMENT;
 	}
 
+	/**
+	 * Return true if the node changes nothing and throws no exceptions.
+	 *
+	 * @param node The node to visit.
+	 *
+	 * @return True if the node changes nothing and throws no exceptions.
+	 */
+	public static boolean isPassiveWithoutFallingThrough(final ASTNode node) {
+		final ExprActivityVisitor visitor= new ExprActivityVisitor();
+		visitor.traverseNodeInterruptibly(node);
+		return ExprActivity.PASSIVE_WITHOUT_FALLING_THROUGH.equals(visitor.getActivityLevel());
+	}
+
 	public static boolean isStatic(BodyDeclaration declaration) {
 		return Modifier.isStatic(declaration.getModifiers());
 	}
@@ -433,7 +605,11 @@ public class ASTNodes {
 
 		if (method.resolveMethodBinding() != null) {
 			return (method.resolveMethodBinding().getModifiers() & Modifier.STATIC) != 0;
-		} else if ((calledType instanceof Name) && ((Name) calledType).resolveBinding().getKind() == IBinding.TYPE) {
+		}
+
+		if ((calledType instanceof Name)
+				&& ((Name) calledType).resolveBinding() != null
+				&& ((Name) calledType).resolveBinding().getKind() == IBinding.TYPE) {
 			return Boolean.TRUE;
 		}
 
@@ -585,6 +761,33 @@ public class ASTNodes {
 	}
 
 	/**
+	 * Casts the provided statement to an object of the provided type if type
+	 * matches.
+	 *
+	 * @param <T>       the required statement type
+	 * @param statement the statement to cast
+	 * @param stmtClass the class representing the required statement type
+	 * @return the provided statement as an object of the provided type if type matches, null otherwise
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T extends Statement> T as(final Statement statement, final Class<T> stmtClass) {
+		if (statement == null) {
+			return null;
+		}
+
+		List<Statement> statements= asList(statement);
+		if (statements.size() == 1) {
+			Statement oneStatement= statements.get(0);
+
+			if (stmtClass.isAssignableFrom(oneStatement.getClass())) {
+				return (T) oneStatement;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Casts the provided expression to an object of the provided type if type matches.
 	 *
 	 * @param <T> the required expression type
@@ -599,7 +802,9 @@ public class ASTNodes {
 			if (exprClass.isAssignableFrom(expression.getClass())) {
 				return (T) expression;
 			} else if (expression instanceof ParenthesizedExpression) {
-				return as(((ParenthesizedExpression) expression).getExpression(), exprClass);
+				expression= ASTNodes.getUnparenthesedExpression(expression);
+
+				return as(expression, exprClass);
 			}
 		}
 		return null;
@@ -642,6 +847,31 @@ public class ASTNodes {
 		results.addAll(extOps);
 
 		return results;
+	}
+
+	/**
+	 * Returns the number of logical operands in the expression.
+	 *
+	 * @param node The expression
+	 * @return the number of logical operands in the expression
+	 */
+	public static int getNbOperands(final Expression node) {
+		InfixExpression infixExpression= as(node, InfixExpression.class);
+
+		if (infixExpression == null
+				|| !hasOperator(infixExpression, InfixExpression.Operator.CONDITIONAL_AND, InfixExpression.Operator.CONDITIONAL_OR)
+				&& (!hasOperator(infixExpression, InfixExpression.Operator.AND, InfixExpression.Operator.OR, InfixExpression.Operator.XOR)
+						|| !hasType(infixExpression.getLeftOperand(), boolean.class.getCanonicalName(), Boolean.class.getCanonicalName()))) {
+			return 1;
+		}
+
+		int nbOperands= 0;
+
+		for (Expression operand : allOperands(infixExpression)) {
+			nbOperands+= getNbOperands(operand);
+		}
+
+		return nbOperands;
 	}
 
 	/**
@@ -1075,8 +1305,7 @@ public class ASTNodes {
 		@Override
 		public boolean visit(ITypeBinding node) {
 			IMethodBinding[] methods= node.getDeclaredMethods();
-			for (int i= 0; i < methods.length; i++) {
-				IMethodBinding candidate= methods[i];
+			for (IMethodBinding candidate : methods) {
 				if (candidate == fOriginal) {
 					continue;
 				}
@@ -1375,6 +1604,36 @@ public class ASTNodes {
 	}
 
 	/**
+	 * Returns the first ancestor of the provided node which has any of the required types.
+	 *
+	 * @param node the start node
+	 * @param ancestorClass the required ancestor's type
+	 * @param ancestorClasses the required ancestor's types
+	 * @return the first ancestor of the provided node which has any of the required type, or
+	 *         {@code null}
+	 */
+	@SuppressWarnings("unchecked")
+	public static ASTNode getFirstAncestorOrNull(final ASTNode node, final Class<? extends ASTNode> ancestorClass, final Class<? extends ASTNode>... ancestorClasses) {
+		if (node == null || node.getParent() == null) {
+			return null;
+		}
+
+		ASTNode parent= node.getParent();
+
+		if (ancestorClass.isAssignableFrom(parent.getClass())) {
+			return parent;
+		}
+
+		for (Class<? extends ASTNode> oneClass : ancestorClasses) {
+			if (oneClass.isAssignableFrom(parent.getClass())) {
+				return parent;
+			}
+		}
+
+		return getFirstAncestorOrNull(parent, ancestorClass, ancestorClasses);
+	}
+
+	/**
 	 * Returns the closest ancestor of <code>node</code> that is an instance of <code>parentClass</code>, or <code>null</code> if none.
 	 * <p>
 	 * <b>Warning:</b> This method does not stop at any boundaries like parentheses, statements, body declarations, etc.
@@ -1475,8 +1734,8 @@ public class ASTNodes {
      *         returned
      */
     public static Expression getUnparenthesedExpression(Expression expression) {
-		if (expression != null && expression.getNodeType() == ASTNode.PARENTHESIZED_EXPRESSION) {
-            return getUnparenthesedExpression(((ParenthesizedExpression) expression).getExpression());
+		while (expression != null && expression.getNodeType() == ASTNode.PARENTHESIZED_EXPRESSION) {
+			expression= ((ParenthesizedExpression) expression).getExpression();
         }
         return expression;
     }
@@ -2053,8 +2312,7 @@ public class ASTNodes {
 	}
 
 	public static Modifier findModifierNode(int flag, List<IExtendedModifier> modifiers) {
-		for (int i= 0; i < modifiers.size(); i++) {
-			Object curr= modifiers.get(i);
+		for (IExtendedModifier curr : modifiers) {
 			if (curr instanceof Modifier && ((Modifier) curr).getKeyword().toFlagValue() == flag) {
 				return (Modifier) curr;
 			}
@@ -2131,6 +2389,30 @@ public class ASTNodes {
 			return rewrittenNode;
 		}
 		return rewrite.createCopyTarget(node);
+	}
+
+	/**
+	 * Type-safe variant of {@link ASTRewrite#createMoveTarget(ASTNode)}.
+	 *
+	 * @param rewrite ASTRewrite for the given node
+	 * @param nodes the nodes to create a move placeholder for
+	 * @return the new placeholder nodes
+	 * @throws IllegalArgumentException if the node is null, or if the node
+	 * is not part of the rewrite's AST
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T extends ASTNode> List<T> createMoveTarget(final ASTRewrite rewrite, final Collection<T> nodes) {
+		if (nodes != null) {
+			List<T> newNodes= new ArrayList<>(nodes.size());
+
+			for (T node : nodes) {
+				newNodes.add((T) rewrite.createMoveTarget(node));
+			}
+
+			return newNodes;
+		}
+
+		return null;
 	}
 
 	/**

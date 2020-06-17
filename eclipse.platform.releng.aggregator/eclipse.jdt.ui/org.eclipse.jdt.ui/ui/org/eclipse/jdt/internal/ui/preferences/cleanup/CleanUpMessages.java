@@ -51,11 +51,14 @@ public class CleanUpMessages extends NLS {
 	public static String CodeFormatingTabPage_SortMembersSemanticChange_warning;
 
 	public static String CodeStyleTabPage_CheckboxName_ConvertForLoopToEnhanced;
+	public static String CodeStyleTabPage_CheckboxName_ConvertLoopOnlyIfLoopVarUsed;
 	public static String CodeStyleTabPage_CheckboxName_UseBlocks;
 	public static String CodeStyleTabPage_CheckboxName_UseFinal;
 	public static String CodeStyleTabPage_CheckboxName_UseFinalForFields;
 	public static String CodeStyleTabPage_CheckboxName_UseFinalForLocals;
 	public static String CodeStyleTabPage_CheckboxName_UseFinalForParameters;
+
+	public static String CodeStyleTabPage_CheckboxName_UseVar;
 
 	public static String CodeStyleTabPage_CheckboxName_UseParentheses;
 	public static String CodeStyleTabPage_GroupName_ControlStatments;
@@ -70,6 +73,8 @@ public class CleanUpMessages extends NLS {
 	public static String CodeStyleTabPage_RadioName_AlwaysUseParantheses;
 	public static String CodeStyleTabPage_RadioName_NeverUseBlocks;
 	public static String CodeStyleTabPage_RadioName_NeverUseParantheses;
+
+	public static String CodeStyleTabPage_CheckboxName_UseLazyLogicalOperator;
 	public static String CodeStyleTabPage_RadioName_UseBlocksSpecial;
 
 	public static String CodeStyleTabPage_GroupName_FunctionalInterfaces;
@@ -115,6 +120,7 @@ public class CleanUpMessages extends NLS {
 	public static String UnnecessaryCodeTabPage_CheckboxName_Autoboxing;
 	public static String UnnecessaryCodeTabPage_CheckboxName_Unboxing;
 	public static String UnnecessaryCodeTabPage_CheckboxName_PushDownNegation;
+	public static String UnnecessaryCodeTabPage_CheckboxName_MergeConditionalBlocks;
 
 	public static String UnnecessaryCodeTabPage_CheckboxName_UseDirectlyMapMethod;
 	public static String UnnecessaryCodeTabPage_CheckboxName_RedundantModifiers;

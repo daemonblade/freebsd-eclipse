@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Comparator;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
@@ -110,13 +109,10 @@ public final class SerialVersionHashOperationCore extends AbstractSerialVersionO
 		int classModifiers= mod & (Flags.AccPublic | Flags.AccFinal | Flags.AccInterface | Flags.AccAbstract);
 
 		doos.writeInt(classModifiers); // class modifiers
-		char[][] interfaces= getSortedInterfacesNames(cfReader);
-		for (int i= 0; i < interfaces.length; i++) {
-			doos.writeUTF(getClassName(interfaces[i]));
+		for (char[] interface1 : getSortedInterfacesNames(cfReader)) {
+			doos.writeUTF(getClassName(interface1));
 		}
-		IFieldInfo[] sortedFields= getSortedFields(cfReader);
-		for (int i= 0; i < sortedFields.length; i++) {
-			IFieldInfo curr= sortedFields[i];
+		for (IFieldInfo curr : getSortedFields(cfReader)) {
 			int flags= curr.getAccessFlags();
 			if (!Flags.isPrivate(flags) || (!Flags.isStatic(flags) && !Flags.isTransient(flags))) {
 				doos.writeUTF(new String(curr.getName()));
@@ -129,9 +125,7 @@ public final class SerialVersionHashOperationCore extends AbstractSerialVersionO
 			doos.writeInt(Flags.AccStatic);
 			doos.writeUTF("()V"); //$NON-NLS-1$
 		}
-		IMethodInfo[] sortedMethods= getSortedMethods(cfReader);
-		for (int i= 0; i < sortedMethods.length; i++) {
-			IMethodInfo curr= sortedMethods[i];
+		for (IMethodInfo curr : getSortedMethods(cfReader)) {
 			int flags= curr.getAccessFlags();
 			if (!Flags.isPrivate(flags) && !curr.isClinit()) {
 				doos.writeUTF(new String(curr.getName()));
@@ -146,9 +140,7 @@ public final class SerialVersionHashOperationCore extends AbstractSerialVersionO
 	private static int getClassModifiers(IClassFileReader cfReader) {
 		IInnerClassesAttribute innerClassesAttribute= cfReader.getInnerClassesAttribute();
 		if (innerClassesAttribute != null) {
-			IInnerClassesAttributeEntry[] entries = innerClassesAttribute.getInnerClassAttributesEntries();
-			for (int i= 0; i < entries.length; i++) {
-				IInnerClassesAttributeEntry entry = entries[i];
+			for (IInnerClassesAttributeEntry entry : innerClassesAttribute.getInnerClassAttributesEntries()) {
 				char[] innerClassName = entry.getInnerClassName();
 				if (innerClassName != null) {
 					if (CharOperation.equals(cfReader.getClassName(), innerClassName)) {
@@ -193,30 +185,19 @@ public final class SerialVersionHashOperationCore extends AbstractSerialVersionO
 
 	private static char[][] getSortedInterfacesNames(IClassFileReader cfReader) {
 		char[][] interfaceNames= cfReader.getInterfaceNames();
-		Arrays.sort(interfaceNames, new Comparator<char[]>() {
-			@Override
-			public int compare(char[] o1, char[] o2) {
-				return CharOperation.compareTo(o1, o2);
-			}
-		});
+		Arrays.sort(interfaceNames, CharOperation::compareTo);
 		return interfaceNames;
 	}
 
 	private static IFieldInfo[] getSortedFields(IClassFileReader cfReader) {
 		IFieldInfo[] allFields= cfReader.getFieldInfos();
-		Arrays.sort(allFields, new Comparator<IFieldInfo>() {
-			@Override
-			public int compare(IFieldInfo o1, IFieldInfo o2) {
-				return CharOperation.compareTo(o1.getName(), o2.getName());
-			}
-		});
+		Arrays.sort(allFields, (o1, o2) -> CharOperation.compareTo(o1.getName(), o2.getName()));
 		return allFields;
 	}
 
 	private static boolean hasStaticClassInitializer(IClassFileReader cfReader) {
-		IMethodInfo[] methodInfos= cfReader.getMethodInfos();
-		for (int i= 0; i < methodInfos.length; i++) {
-			if (methodInfos[i].isClinit()) {
+		for (IMethodInfo methodInfo : cfReader.getMethodInfos()) {
+			if (methodInfo.isClinit()) {
 				return true;
 			}
 		}
@@ -225,20 +206,17 @@ public final class SerialVersionHashOperationCore extends AbstractSerialVersionO
 
 	private static IMethodInfo[] getSortedMethods(IClassFileReader cfReader) {
 		IMethodInfo[] allMethods= cfReader.getMethodInfos();
-		Arrays.sort(allMethods, new Comparator<IMethodInfo>() {
-			@Override
-			public int compare(IMethodInfo mi1, IMethodInfo mi2) {
-				if (mi1.isConstructor() != mi2.isConstructor()) {
-					return mi1.isConstructor() ? -1 : 1;
-				} else if (mi1.isConstructor()) {
-					return 0;
-				}
-				int res= CharOperation.compareTo(mi1.getName(), mi2.getName());
-				if (res != 0) {
-					return res;
-				}
-				return CharOperation.compareTo(mi1.getDescriptor(), mi2.getDescriptor());
+		Arrays.sort(allMethods, (mi1, mi2) -> {
+			if (mi1.isConstructor() != mi2.isConstructor()) {
+				return mi1.isConstructor() ? -1 : 1;
+			} else if (mi1.isConstructor()) {
+				return 0;
 			}
+			int res= CharOperation.compareTo(mi1.getName(), mi2.getName());
+			if (res != 0) {
+				return res;
+			}
+			return CharOperation.compareTo(mi1.getDescriptor(), mi2.getDescriptor());
 		});
 		return allMethods;
 	}
@@ -265,9 +243,7 @@ public final class SerialVersionHashOperationCore extends AbstractSerialVersionO
 
 		name += ".class"; //$NON-NLS-1$
 
-		IResource[] classFiles= JavaCore.getGeneratedResources(region, false);
-		for (int i= 0; i < classFiles.length; i++) {
-			IResource resource= classFiles[i];
+		for (IResource resource : JavaCore.getGeneratedResources(region, false)) {
 			if (resource.getType() == IResource.FILE && resource.getName().equals(name)) {
 				return (IFile) resource;
 			}

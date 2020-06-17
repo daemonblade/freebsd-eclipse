@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,11 +13,17 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.browsing;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.File;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.JavaTestPlugin;
@@ -50,15 +56,7 @@ import org.eclipse.jdt.internal.ui.browsing.LogicalPackage;
 import org.eclipse.jdt.internal.ui.util.CoreUtility;
 
 
-public class PackagesViewContentProviderTests2 extends TestCase {
-
-	public static Test suite() {
-		TestSuite suite= new TestSuite(PackagesViewContentProviderTests2.class.getName());
-		//$JUnit-BEGIN$
-		suite.addTestSuite(PackagesViewContentProviderTests2.class);
-		//$JUnit-END$
-		return suite;
-	}
+public class PackagesViewContentProviderTests2 {
 
 	private IJavaProject fJProject1;
 	private IJavaProject fJProject2;
@@ -101,18 +99,16 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 	private boolean fEnableAutoBuildAfterTesting;
 	private IPackageFragment fPack102;
 
-	public PackagesViewContentProviderTests2(String name) {
-		super(name);
-	}
-
 	//----------- getElement in flat view ------------------------------
 
+	@Test
 	public void testGetElementsPackageFragmentRoot() throws Exception {
 		Object[] children= fProvider.getElements(fRoot1);
 		Object[] expectedChildren= new Object[] { fPack21, fPack31, fPack41, fPack51, fPack61, fPack81, fPack91, fPackDefault1 };
 		assertTrue("Wrong children found for PackageFragment", compareArrays(children, expectedChildren)); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testGetElementsProject() throws Exception {
 
 		LogicalPackage cp3= new LogicalPackage(fPack31);
@@ -144,6 +140,7 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 	}
 
 	//---------------Delta Tests-----------------------------
+	@Test
 	public void testRemovePackageNotLogicalPackage() throws Exception {
 		//initialise Map
 		fProvider.getElements(fJProject2);
@@ -161,6 +158,7 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 		assertTrue("Correct package removed", fMyPart.getRemovedObject().contains(fPack12)); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testRemovePackageInTwoPackageLogicalPackage() throws Exception {
 
 		//initialise map
@@ -180,13 +178,15 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 		fMyPart.pushDisplay();
 
 		//assert remove happened (delta worked)
-		assertTrue("Refresh happened", fMyPart.hasRemoveHappened() && fMyPart.hasAddHappened()); //$NON-NLS-1$
+		assertTrue("Refresh happened", fMyPart.hasRemoveHappened()); //$NON-NLS-1$
+		assertTrue("Refresh happened", fMyPart.hasAddHappened()); //$NON-NLS-1$
 		Object addedObject= fMyPart.getAddedObject().get(0);
 		Object removedObject= fMyPart.getRemovedObject().get(0);
 		assertTrue("Correct guy removed", canFindEqualCompoundElement(cp10, new Object[] { removedObject })); //$NON-NLS-1$
-		assertTrue("Correct guy added", fInternalPack10.equals(addedObject)); //$NON-NLS-1$
+		assertEquals("Correct guy added", fInternalPack10, addedObject); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testRemovePackageFromLogicalPackage() throws Exception {
 
 		//initialise map
@@ -203,9 +203,10 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 		fMyPart.pushDisplay();
 
 		//assert remove happened (delta worked)
-		assertTrue("Refresh did not happened", !fMyPart.hasRefreshHappened()); //$NON-NLS-1$
+		assertFalse("Refresh did not happened", fMyPart.hasRefreshHappened()); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testRemoveCUFromPackageNotLogicalPackage() throws Exception {
 
 		//initialise Map
@@ -228,12 +229,11 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 
 	private void assertPack81RefreshedOnce() {
 		assertTrue("Refresh happened", fMyPart.hasRefreshHappened()); //$NON-NLS-1$
-		if (! fMyPart.getRefreshedObject().contains(fPack81))
-			fail("fPack81 not refreshed:\n" + fMyPart.getRefreshedObject());
-		if (fMyPart.getRefreshedObject().size() != 1)
-			fail("Too many refreshes (" + fMyPart.getRefreshedObject().size() + "):\n" + fMyPart.getRefreshedObject());
+		assertTrue("fPack81 not refreshed:\n" + fMyPart.getRefreshedObject(), fMyPart.getRefreshedObject().contains(fPack81));
+		assertEquals("Too many refreshes (" + fMyPart.getRefreshedObject().size() + "):\n" + fMyPart.getRefreshedObject(), 1, fMyPart.getRefreshedObject().size());
 	}
 
+	@Test
 	public void testAddCUFromPackageNotLogicalPackage() throws Exception {
 
 		ICompilationUnit cu= fPack81.createCompilationUnit("Object.java", "", true, null); //$NON-NLS-1$//$NON-NLS-2$
@@ -252,12 +252,11 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 
 		assertPack81RefreshedOnce();
 		assertTrue("Refresh happened", fMyPart.hasRefreshHappened()); //$NON-NLS-1$
-		if (! fMyPart.getRefreshedObject().contains(fPack81))
-			fail("fPack81 not refreshed:\n" + fMyPart.getRefreshedObject());
-		if (fMyPart.getRefreshedObject().size() != 1)
-			fail("Too many refreshes (" + fMyPart.getRefreshedObject().size() + "):\n" + fMyPart.getRefreshedObject());
+		assertTrue("fPack81 not refreshed:\n" + fMyPart.getRefreshedObject(), fMyPart.getRefreshedObject().contains(fPack81));
+		assertEquals("Too many refreshes (" + fMyPart.getRefreshedObject().size() + "):\n" + fMyPart.getRefreshedObject(), 1, fMyPart.getRefreshedObject().size());
 	}
 
+	@Test
 	public void testAddFragmentToLogicalPackage() throws Exception {
 
 		//create package fragment to be added
@@ -277,9 +276,10 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 		fMyPart.pushDisplay();
 
 		//make sure no refresh happened
-		assertTrue("Refresh did not happened", !fMyPart.hasRefreshHappened()); //$NON-NLS-1$
+		assertFalse("Refresh did not happened", fMyPart.hasRefreshHappened()); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testAddPackageNotLogicalPackage() throws Exception {
 
 		//initialise Map
@@ -299,6 +299,7 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 		assertTrue("Correct package added", fMyPart.getAddedObject().contains(test)); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testAddPackageToCreateLogicalPackage() throws Exception {
 		//initialise map
 		fProvider.getElements(fJProject2);
@@ -321,11 +322,12 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 		fMyPart.pushDisplay();
 
 		//assert remove and add happened (delta worked)
-		assertTrue("Remove and add happened", fMyPart.hasRemoveHappened() && fMyPart.hasAddHappened()); //$NON-NLS-1$
+		assertTrue("Remove and add happened", fMyPart.hasRemoveHappened()); //$NON-NLS-1$
+		assertTrue("Remove and add happened", fMyPart.hasAddHappened()); //$NON-NLS-1$
 		Object addedObject= fMyPart.getAddedObject().get(0);
 		Object removedObject= fMyPart.getRemovedObject().get(0);
-		assertTrue("Correct guy removed", fPack12.equals(removedObject)); //$NON-NLS-1$
-		assertTrue("Correct guy added", lp1.equals(addedObject) ); //$NON-NLS-1$
+		assertEquals("Correct guy removed", fPack12, removedObject); //$NON-NLS-1$
+		assertEquals("Correct guy added", lp1, addedObject); //$NON-NLS-1$
 	}
 
 
@@ -333,10 +335,8 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 	/*
 	 * @see TestCase#setUp()
 	 */
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-
+	@Before
+	public void setUp() throws Exception {
 		fWorkspace= ResourcesPlugin.getWorkspace();
 		assertNotNull(fWorkspace);
 
@@ -355,14 +355,15 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 		//------------set up project #1 : External Jar and zip file-------
 
 		IPackageFragmentRoot jdk= JavaProjectHelper.addVariableRTJar(fJProject1, "JRE_LIB_TEST", null, null);//$NON-NLS-1$
-		assertTrue("jdk not found", jdk != null);//$NON-NLS-1$
+		assertNotNull("jdk not found", jdk);//$NON-NLS-1$
 
 
 		//---Create zip file-------------------
 
 		java.io.File junitSrcArchive= JavaTestPlugin.getDefault().getFileInPlugin(JavaProjectHelper.JUNIT_SRC_381);
 
-		assertTrue("junit src not found", junitSrcArchive != null && junitSrcArchive.exists());//$NON-NLS-1$
+		assertNotNull("junit src not found", junitSrcArchive);//$NON-NLS-1$
+		assertTrue("junit src not found", junitSrcArchive.exists());//$NON-NLS-1$
 
 		fArchiveFragmentRoot= JavaProjectHelper.addSourceContainerWithImport(fJProject1, "src", junitSrcArchive, JavaProjectHelper.JUNIT_SRC_ENCODING);//$NON-NLS-1$
 
@@ -385,7 +386,8 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 
 		//----------------Set up internal jar----------------------------
 		File myInternalJar= JavaTestPlugin.getDefault().getFileInPlugin(new Path("testresources/compoundtest.jar"));//$NON-NLS-1$
-		assertTrue("lib not found", myInternalJar != null && myInternalJar.exists());//$NON-NLS-1$
+		assertNotNull("lib not found", myInternalJar);//$NON-NLS-1$
+		assertTrue("lib not found", myInternalJar.exists());//$NON-NLS-1$
 
 		fInternalJarRoot= JavaProjectHelper.addLibraryWithImport(fJProject2, Path.fromOSString(myInternalJar.getPath()), null, null);
 
@@ -453,7 +455,7 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 			fProvider.inputChanged(null,null,fJProject2);
 			JavaCore.removeElementChangedListener((IElementChangedListener) fProvider);
 		} else {
-			assertTrue("Unable to get view",false);//$NON-NLS-1$
+			fail("Unable to get view");//$NON-NLS-1$
 		}
 
 		assertNotNull(fProvider);
@@ -462,8 +464,8 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 	/*
 	 * @see TestCase#tearDown()
 	 */
-	@Override
-	protected void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 
 		JavaProjectHelper.delete(fJProject1);
 		JavaProjectHelper.delete(fJProject2);
@@ -472,8 +474,6 @@ public class PackagesViewContentProviderTests2 extends TestCase {
 
 		if (fEnableAutoBuildAfterTesting)
 			CoreUtility.setAutoBuilding(true);
-
-		super.tearDown();
 	}
 
 	private boolean compareArrays(Object[] children, Object[] expectedChildren) {

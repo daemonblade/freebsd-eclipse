@@ -102,12 +102,7 @@ public class DynamicValidationStateChange extends CompositeChange implements Wor
 	@Override
 	public Change perform(IProgressMonitor pm) throws CoreException {
 		final Change[] result= new Change[1];
-		IWorkspaceRunnable runnable= new IWorkspaceRunnable() {
-			@Override
-			public void run(IProgressMonitor monitor) throws CoreException {
-				result[0]= DynamicValidationStateChange.super.perform(monitor);
-			}
-		};
+		IWorkspaceRunnable runnable= monitor -> result[0]= DynamicValidationStateChange.super.perform(monitor);
 		JavaCore.run(runnable, fSchedulingRule, pm);
 		return result[0];
 	}
@@ -115,8 +110,8 @@ public class DynamicValidationStateChange extends CompositeChange implements Wor
 	@Override
 	protected Change createUndoChange(Change[] childUndos) {
 		DynamicValidationStateChange result= new DynamicValidationStateChange(getName(), true);
-		for (int i= 0; i < childUndos.length; i++) {
-			result.add(childUndos[i]);
+		for (Change childUndo : childUndos) {
+			result.add(childUndo);
 		}
 		return result;
 	}
@@ -131,9 +126,7 @@ public class DynamicValidationStateChange extends CompositeChange implements Wor
 		WorkspaceTracker.INSTANCE.removeListener(this);
 		fListenerRegistered= false;
 		// clear up the children to not hang onto too much memory
-		Change[] children= clear();
-		for (int i= 0; i < children.length; i++) {
-			final Change change= children[i];
+		for (final Change change : clear()) {
 			SafeRunner.run(new ISafeRunnable() {
 				@Override
 				public void run() throws Exception {

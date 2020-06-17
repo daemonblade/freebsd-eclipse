@@ -145,8 +145,7 @@ public class DefaultClasspathFixProcessor extends ClasspathFixProcessor {
 		HashSet<IClasspathEntry> classpaths= new HashSet<>();
 		HashSet<TypeNameMatch> typesWithModule= new HashSet<>();
 		if (currentModuleDescription != null) {
-			for (int i= 0; i < res.size(); i++) {
-				TypeNameMatch curr= res.get(i);
+			for (TypeNameMatch curr : res) {
 				IType type= curr.getType();
 				if (type != null) {
 					IPackageFragmentRoot root= (IPackageFragmentRoot) type.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
@@ -170,10 +169,10 @@ public class DefaultClasspathFixProcessor extends ClasspathFixProcessor {
 								typeNameMatchToModuleName.put(curr, moduleName);
 							}
 						} else {
-							Object typeNameMatch= classPathEntryToTypeNameMatch.get(entry);
+							TypeNameMatch typeNameMatch= classPathEntryToTypeNameMatch.get(entry);
 							if (typeNameMatch != null) {
 								if (moduleName != null) {
-									Object modName= typeNameMatchToModuleName.get(typeNameMatch);
+									String modName= typeNameMatchToModuleName.get(typeNameMatch);
 									if (!moduleName.equals(modName)) {
 										// remove classpath module if there are multiple type matches
 										// which belong to the same class path but different modules
@@ -197,8 +196,7 @@ public class DefaultClasspathFixProcessor extends ClasspathFixProcessor {
 
 
 		HashSet<Object> addedClaspaths= new HashSet<>();
-		for (int i= 0; i < res.size(); i++) {
-			TypeNameMatch curr= res.get(i);
+		for (TypeNameMatch curr : res) {
 			IType type= curr.getType();
 			if (type != null) {
 				IPackageFragmentRoot root= (IPackageFragmentRoot) type.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);

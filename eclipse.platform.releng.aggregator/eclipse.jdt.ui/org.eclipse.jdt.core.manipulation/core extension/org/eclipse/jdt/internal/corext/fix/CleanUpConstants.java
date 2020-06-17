@@ -488,7 +488,8 @@ public class CleanUpConstants {
 	public static final String CONTROL_STATMENTS_USE_BLOCKS_NEVER= "cleanup.never_use_blocks"; //$NON-NLS-1$
 
 	/**
-	 * Convert for loops to enhanced for loops.
+	 * Convert for loops to enhanced for loops.  For detailed setting use<br>
+	 * {@link #CONTROL_STATMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED}<br>
 	 * <p>
 	 * Example:
 	 *
@@ -505,6 +506,27 @@ public class CleanUpConstants {
 	 * @since 3.3
 	 */
 	public static final String CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED= "cleanup.convert_to_enhanced_for_loop"; //$NON-NLS-1$
+
+	/**
+	 * Convert a for loop to enhanced for loop only if the loop variable will be used.
+	 * <p>
+	 * Example:
+	 *
+	 * <pre>
+	 *                   for (int i = 0; i &lt; array.length; i++) {}; -&gt; will not be converted
+	 * </pre>
+	 * <br>
+	 * Only has an effect if {@link #CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED} is TRUE <br>
+	 * <br>
+	 * Possible values: {TRUE, FALSE}<br>
+	 *
+	 * <br>
+	 *
+	 * @see CleanUpOptionsCore#TRUE
+	 * @see CleanUpOptionsCore#FALSE
+	 * @since 4.16
+	 */
+	public static String CONTROL_STATMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED= "cleanup.convert_to_enhanced_for_loop_if_loop_var_used"; //$NON-NLS-1$
 
 	/**
 	 * Controls the usage of parentheses in expressions. For detailed settings use<br>
@@ -568,7 +590,20 @@ public class CleanUpConstants {
 	public static final String EXPRESSIONS_USE_PARENTHESES_NEVER= "cleanup.never_use_parentheses_in_expressions"; //$NON-NLS-1$
 
 	/**
-	 * Controls the usage of 'final' modifier for variable declarations. For detailed settings use:<br>
+	 * Use lazy logical operator.<br>
+	 * <br>
+	 * Possible values: {TRUE, FALSE}<br>
+	 * <br>
+	 *
+	 * @see CleanUpOptionsCore#TRUE
+	 * @see CleanUpOptionsCore#FALSE
+	 * @since 4.15
+	 */
+	public static final String USE_LAZY_LOGICAL_OPERATOR= "cleanup.lazy_logical_operator"; //$NON-NLS-1$
+
+	/**
+	 * Controls the usage of 'final' modifier for variable declarations. For detailed settings
+	 * use:<br>
 	 * {@link #VARIABLE_DECLARATIONS_USE_FINAL_LOCAL_VARIABLES}<br>
 	 * {@link #VARIABLE_DECLARATIONS_USE_FINAL_PARAMETERS}<br>
 	 * {@link #VARIABLE_DECLARATIONS_USE_FINAL_PRIVATE_FIELDS} <br>
@@ -641,8 +676,19 @@ public class CleanUpConstants {
 	public static final String VARIABLE_DECLARATIONS_USE_FINAL_LOCAL_VARIABLES= "cleanup.make_local_variable_final"; //$NON-NLS-1$
 
 	/**
-	 * Controls conversion between lambda expressions and anonymous class creations.
-	 * For detailed settings, use {@link #USE_LAMBDA} or {@link #USE_ANONYMOUS_CLASS_CREATION}
+	 * Replace type declaration by local variable type inference.
+	 * <p>
+	 * Possible values: {TRUE, FALSE}
+	 *
+	 * @see CleanUpOptionsCore#TRUE
+	 * @see CleanUpOptionsCore#FALSE
+	 * @since 4.15
+	 */
+	public static final String USE_VAR= "cleanup.use_var"; //$NON-NLS-1$
+
+	/**
+	 * Controls conversion between lambda expressions and anonymous class creations. For detailed
+	 * settings, use {@link #USE_LAMBDA} or {@link #USE_ANONYMOUS_CLASS_CREATION}
 	 * <p>
 	 * Possible values: {TRUE, FALSE}
 	 *
@@ -910,6 +956,18 @@ public class CleanUpConstants {
 	 * @since 4.13
 	 */
 	public static final String PUSH_DOWN_NEGATION= "cleanup.push_down_negation"; //$NON-NLS-1$
+
+	/**
+	 * Merge conditions of if/else if/else that have the same blocks.
+	 * <p>
+	 * Possible values: {TRUE, FALSE}
+	 * <p>
+	 *
+	 * @see CleanUpOptionsCore#TRUE
+	 * @see CleanUpOptionsCore#FALSE
+	 * @since 4.16
+	 */
+	public static final String MERGE_CONDITIONAL_BLOCKS= "cleanup.merge_conditional_blocks"; //$NON-NLS-1$
 
 
 	/**
@@ -1268,5 +1326,6 @@ public class CleanUpConstants {
 	 * @since 3.3
 	 */
 	public final static String DEFAULT_SAVE_PARTICIPANT_PROFILE= SAVE_PARTICIPANT_PROFILE;
+
 
 }

@@ -21,7 +21,6 @@ package org.eclipse.jdt.internal.corext.codemanipulation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
@@ -351,9 +350,7 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 				addMethod(rewriter, equalsMethod, hashCodeMethod, oldHash);
 
 				// helpers
-				for (final Iterator<ITypeBinding> iterator= fCustomHashCodeTypes.iterator(); iterator.hasNext();) {
-					final ITypeBinding binding= iterator.next();
-
+				for (ITypeBinding binding : fCustomHashCodeTypes) {
 					if (findMethodToReplace(list, METHODNAME_HASH_CODE, objectAsParam) == null) {
 						final MethodDeclaration helperDecl= createHashCodeHelper(binding);
 						addHelper(rewriter, null, helperDecl);
@@ -381,8 +378,7 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 	}
 
 	private BodyDeclaration findMethodToReplace(final List<BodyDeclaration> list, String name, ITypeBinding[] paramTypes) {
-		for (final Iterator<BodyDeclaration> iterator= list.iterator(); iterator.hasNext();) {
-			final BodyDeclaration bodyDecl= iterator.next();
+		for (BodyDeclaration bodyDecl : list) {
 			if (bodyDecl instanceof MethodDeclaration) {
 				final MethodDeclaration method= (MethodDeclaration) bodyDecl;
 				final IMethodBinding binding= method.resolveBinding();
@@ -728,15 +724,11 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 		body.statements().add(forStatement);
 
 		Block forBody= fAst.newBlock();
-		Statement[] statements= createAddSimpleHashCode(binding, new IHashCodeAccessProvider() {
-
-			@Override
-			public Expression getThisAccess(String name) {
-				ArrayAccess a= fAst.newArrayAccess();
-				a.setArray(fAst.newSimpleName(VARIABLE_NAME_HASHCODE_PARAM));
-				a.setIndex(fAst.newSimpleName(name));
-				return a;
-			}
+		Statement[] statements= createAddSimpleHashCode(binding, name -> {
+			ArrayAccess a= fAst.newArrayAccess();
+			a.setArray(fAst.newSimpleName(VARIABLE_NAME_HASHCODE_PARAM));
+			a.setIndex(fAst.newSimpleName(name));
+			return a;
 		}, VARIABLE_NAME_INDEX, true);
 		for (Statement statement : statements) {
 			forBody.statements().add(statement);
@@ -1028,7 +1020,7 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 				invoc.setExpression(getQualifiedName(JAVA_UTIL_OBJECTS));
 				invoc.setName(fAst.newSimpleName(METHODNAME_EQUALS));
 			}
-			invoc.arguments().add(fAst.newSimpleName(name));
+			invoc.arguments().add(getThisAccessForEquals(name));
 			invoc.arguments().add(getOtherAccess(name));
 			return invoc;
 		}

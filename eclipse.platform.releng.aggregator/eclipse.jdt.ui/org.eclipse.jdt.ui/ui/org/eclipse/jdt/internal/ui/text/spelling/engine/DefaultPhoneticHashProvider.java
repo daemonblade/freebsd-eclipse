@@ -14,6 +14,8 @@
 
 package org.eclipse.jdt.internal.ui.text.spelling.engine;
 
+import java.util.Arrays;
+
 /**
  * Default phonetic hash provider for english languages.
  * <p>
@@ -148,12 +150,7 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 			return false;
 
 		final String checkable= new String(token, offset, length);
-		for (int index= 0; index < candidates.length; index++) {
-
-			if (candidates[index].equals(checkable))
-				return true;
-		}
-		return false;
+		return hasOneOf(candidates, checkable);
 	}
 
 	/**
@@ -168,13 +165,7 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 	 *               candidates, <code>false</code> otherwise.
 	 */
 	protected static final boolean hasOneOf(final String[] candidates, final String token) {
-
-		for (int index= 0; index < candidates.length; index++) {
-
-			if (token.contains(candidates[index]))
-				return true;
-		}
-		return false;
+		return Arrays.asList(candidates).contains(token);
 	}
 
 	/**
@@ -195,9 +186,9 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 		if (offset >= 0 && offset < length) {
 
 			final char character= token[offset];
-			for (int index= 0; index < VOWEL_CHARACTERS.length; index++) {
+			for (char element : VOWEL_CHARACTERS) {
 
-				if (VOWEL_CHARACTERS[index] == character)
+				if (element == character)
 					return true;
 			}
 		}
@@ -294,7 +285,8 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 						offset += 2;
 						break;
 					}
-					if (hasOneOf(meta20, hashable, offset, 2) && !((offset == 1) && hashable[0] == 'M')) {
+					if (hasOneOf(meta20, hashable, offset, 2)
+							&& ((offset != 1) || (hashable[0] != 'M'))) {
 						if (hasOneOf(meta21, hashable, offset + 2, 1) && !hasOneOf(meta22, hashable, offset + 2, 2)) {
 							if (((offset == 1) && (hashable[offset - 1] == 'A')) || hasOneOf(meta23, hashable, (offset - 1), 5))
 								buffer.append("KS"); //$NON-NLS-1$
@@ -524,7 +516,10 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 					buffer.append('K');
 					break;
 				case 'R' :
-					if (!((offset == (hashable.length - 1)) && !has95 && hasOneOf(meta63, hashable, offset - 2, 2) && !hasOneOf(meta64, hashable, offset - 4, 2)))
+					if ((offset != (hashable.length - 1))
+							|| has95
+							|| !hasOneOf(meta63, hashable, offset - 2, 2)
+							|| hasOneOf(meta64, hashable, offset - 4, 2))
 						buffer.append('R');
 					if (hashable[offset + 1] == 'R')
 						offset += 2;
@@ -586,7 +581,7 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 						offset += 3;
 						break;
 					}
-					if (!((offset == (hashable.length - 1)) && hasOneOf(meta78, hashable, offset - 2, 2)))
+					if ((offset != (hashable.length - 1)) || !hasOneOf(meta78, hashable, offset - 2, 2))
 						buffer.append('S');
 					if (hasOneOf(meta79, hashable, offset + 1, 1))
 						offset += 2;
@@ -648,7 +643,7 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 					offset += 1;
 					break;
 				case 'X' :
-					if (!((offset == (hashable.length - 1)) && (hasOneOf(meta93, hashable, offset - 3, 3) || hasOneOf(meta94, hashable, offset - 2, 2))))
+					if ((offset != (hashable.length - 1)) || (!hasOneOf(meta93, hashable, offset - 3, 3) && !hasOneOf(meta94, hashable, offset - 2, 2)))
 						buffer.append("KS"); //$NON-NLS-1$
 					if (hasOneOf(meta49, hashable, offset + 1, 1))
 						offset += 2;

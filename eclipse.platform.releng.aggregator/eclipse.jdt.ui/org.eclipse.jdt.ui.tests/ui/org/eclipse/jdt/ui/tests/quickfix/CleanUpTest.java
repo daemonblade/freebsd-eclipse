@@ -3325,6 +3325,80 @@ public class CleanUpTest extends CleanUpTestCase {
 	}
 
 	@Test
+	public void testCodeStyleQualifyMethodAccessesImportConflictBug_552461() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
+		String sample= "" //
+				+ "package test;\n" //
+				+ "\n" //
+				+ "import static java.util.Date.parse;\n" //
+				+ "\n" //
+				+ "import java.sql.Date;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public Object addFullyQualifiedName(String dateText, Date sqlDate) {\n" //
+				+ "        return parse(dateText);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
+
+		enable(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS);
+		enable(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_METHOD);
+
+		sample= "" //
+				+ "package test;\n" //
+				+ "\n" //
+				+ "import static java.util.Date.parse;\n" //
+				+ "\n" //
+				+ "import java.sql.Date;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public Object addFullyQualifiedName(String dateText, Date sqlDate) {\n" //
+				+ "        return java.util.Date.parse(dateText);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+	}
+
+	@Test
+	public void testCodeStyleQualifyMethodAccessesAlreadyImportedBug_552461() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
+		String sample= "" //
+				+ "package test;\n" //
+				+ "\n" //
+				+ "import static java.util.Date.parse;\n" //
+				+ "\n" //
+				+ "import java.util.Date;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public Object addFullyQualifiedName(String dateText, Date sqlDate) {\n" //
+				+ "        return parse(dateText);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
+
+		enable(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS);
+		enable(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_METHOD);
+
+		sample= "" //
+				+ "package test;\n" //
+				+ "\n" //
+				+ "import static java.util.Date.parse;\n" //
+				+ "\n" //
+				+ "import java.util.Date;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public Object addFullyQualifiedName(String dateText, Date sqlDate) {\n" //
+				+ "        return Date.parse(dateText);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+	}
+
+	@Test
 	public void testCodeStyle_Bug140565() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -4337,6 +4411,191 @@ public class CleanUpTest extends CleanUpTestCase {
 	}
 
 	@Test
+	public void testUseLazyLogicalOperator() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "import java.util.List;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    private static int staticField = 0;\n" //
+				+ "\n" //
+				+ "    public void replaceOperatorWithPrimitiveTypes(boolean b1, boolean b2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = b1 & b2;\n" //
+				+ "        boolean newBoolean2 = b1 | b2;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceOperatorWithExtendedOperands(boolean b1, boolean b2, boolean b3) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = b1 & b2 & b3;\n" //
+				+ "        boolean newBoolean2 = b1 | b2 | b3;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceOperatorWithWrappers(Boolean b1, Boolean b2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = b1 & b2;\n" //
+				+ "        boolean newBoolean2 = b1 | b2;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithIntegers(int i1, int i2) {\n" //
+				+ "        int newInteger1 = i1 & i2;\n" //
+				+ "        int newInteger2 = i1 | i2;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceOperatorWithExpressions(int i1, int i2, int i3, int i4) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = (i1 == i2) & (i3 != i4);\n" //
+				+ "        boolean newBoolean2 = (i1 == i2) | (i3 != i4);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithMethods(List<String> myList) {\n" //
+				+ "        boolean newBoolean1 = myList.remove(\"lorem\") & myList.remove(\"ipsum\");\n" //
+				+ "        boolean newBoolean2 = myList.remove(\"lorem\") | myList.remove(\"ipsum\");\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithArrayAccess() {\n" //
+				+ "        boolean[] booleans = new boolean[] {true, true};\n" //
+				+ "        boolean newBoolean1 = booleans[0] & booleans[1] & booleans[2];\n" //
+				+ "        boolean newBoolean2 = booleans[0] | booleans[1] | booleans[2];\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithDivision(int i1, int i2) {\n" //
+				+ "        boolean newBoolean1 = (i1 == 123) & ((10 / i1) == i2);\n" //
+				+ "        boolean newBoolean2 = (i1 == 123) | ((10 / i1) == i2);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceOperatorWithMethodOnLeftOperand(List<String> myList, boolean b1, boolean b2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = myList.remove(\"lorem\") & b1 & b2;\n" //
+				+ "        boolean newBoolean2 = myList.remove(\"lorem\") | b1 | b2;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithIncrements(int i1, int i2, int i3, int i4) {\n" //
+				+ "        boolean newBoolean1 = (i1 == i2) & (i3 != i4++);\n" //
+				+ "        boolean newBoolean2 = (i1 == i2) & (i3 != ++i4);\n" //
+				+ "        boolean newBoolean3 = (i1 == i2) & (i3 != i4--);\n" //
+				+ "        boolean newBoolean4 = (i1 == i2) & (i3 != --i4);\n" //
+				+ "\n" //
+				+ "        boolean newBoolean5 = (i1 == i2) | (i3 != i4++);\n" //
+				+ "        boolean newBoolean6 = (i1 == i2) | (i3 != ++i4);\n" //
+				+ "        boolean newBoolean7 = (i1 == i2) | (i3 != i4--);\n" //
+				+ "        boolean newBoolean8 = (i1 == i2) | (i3 != --i4);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithAssignments(int i1, int i2, boolean b1, boolean b2) {\n" //
+				+ "        boolean newBoolean1 = (i1 == i2) & (b1 = b2);\n" //
+				+ "        boolean newBoolean2 = (i1 == i2) | (b1 = b2);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    private class SideEffect {\n" //
+				+ "        private SideEffect() {\n" //
+				+ "            staticField++;\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithInstanciations(Boolean b1) {\n" //
+				+ "        boolean newBoolean1 = b1 & new SideEffect() instanceof SideEffect;\n" //
+				+ "        boolean newBoolean2 = b1 | new SideEffect() instanceof SideEffect;\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.USE_LAZY_LOGICAL_OPERATOR);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "import java.util.List;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    private static int staticField = 0;\n" //
+				+ "\n" //
+				+ "    public void replaceOperatorWithPrimitiveTypes(boolean b1, boolean b2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = b1 && b2;\n" //
+				+ "        boolean newBoolean2 = b1 || b2;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceOperatorWithExtendedOperands(boolean b1, boolean b2, boolean b3) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = b1 && b2 && b3;\n" //
+				+ "        boolean newBoolean2 = b1 || b2 || b3;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceOperatorWithWrappers(Boolean b1, Boolean b2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = b1 && b2;\n" //
+				+ "        boolean newBoolean2 = b1 || b2;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithIntegers(int i1, int i2) {\n" //
+				+ "        int newInteger1 = i1 & i2;\n" //
+				+ "        int newInteger2 = i1 | i2;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceOperatorWithExpressions(int i1, int i2, int i3, int i4) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = (i1 == i2) && (i3 != i4);\n" //
+				+ "        boolean newBoolean2 = (i1 == i2) || (i3 != i4);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithMethods(List<String> myList) {\n" //
+				+ "        boolean newBoolean1 = myList.remove(\"lorem\") & myList.remove(\"ipsum\");\n" //
+				+ "        boolean newBoolean2 = myList.remove(\"lorem\") | myList.remove(\"ipsum\");\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithArrayAccess() {\n" //
+				+ "        boolean[] booleans = new boolean[] {true, true};\n" //
+				+ "        boolean newBoolean1 = booleans[0] & booleans[1] & booleans[2];\n" //
+				+ "        boolean newBoolean2 = booleans[0] | booleans[1] | booleans[2];\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithDivision(int i1, int i2) {\n" //
+				+ "        boolean newBoolean1 = (i1 == 123) & ((10 / i1) == i2);\n" //
+				+ "        boolean newBoolean2 = (i1 == 123) | ((10 / i1) == i2);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceOperatorWithMethodOnLeftOperand(List<String> myList, boolean b1, boolean b2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = myList.remove(\"lorem\") && b1 && b2;\n" //
+				+ "        boolean newBoolean2 = myList.remove(\"lorem\") || b1 || b2;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithIncrements(int i1, int i2, int i3, int i4) {\n" //
+				+ "        boolean newBoolean1 = (i1 == i2) & (i3 != i4++);\n" //
+				+ "        boolean newBoolean2 = (i1 == i2) & (i3 != ++i4);\n" //
+				+ "        boolean newBoolean3 = (i1 == i2) & (i3 != i4--);\n" //
+				+ "        boolean newBoolean4 = (i1 == i2) & (i3 != --i4);\n" //
+				+ "\n" //
+				+ "        boolean newBoolean5 = (i1 == i2) | (i3 != i4++);\n" //
+				+ "        boolean newBoolean6 = (i1 == i2) | (i3 != ++i4);\n" //
+				+ "        boolean newBoolean7 = (i1 == i2) | (i3 != i4--);\n" //
+				+ "        boolean newBoolean8 = (i1 == i2) | (i3 != --i4);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithAssignments(int i1, int i2, boolean b1, boolean b2) {\n" //
+				+ "        boolean newBoolean1 = (i1 == i2) & (b1 = b2);\n" //
+				+ "        boolean newBoolean2 = (i1 == i2) | (b1 = b2);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    private class SideEffect {\n" //
+				+ "        private SideEffect() {\n" //
+				+ "            staticField++;\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceOperatorWithInstanciations(Boolean b1) {\n" //
+				+ "        boolean newBoolean1 = b1 & new SideEffect() instanceof SideEffect;\n" //
+				+ "        boolean newBoolean2 = b1 | new SideEffect() instanceof SideEffect;\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	@Test
 	public void testPushDownNegationReplaceDoubleNegation() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		String sample= "" //
@@ -4865,6 +5124,352 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "}\n";
 
 		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	@Test
+	public void testMergeConditionalBlocks() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void duplicateIfAndElseIf(int i) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (i == 0) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else if (i == 1) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void mergeTwoStructures(int a, int b) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (a == 0) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else if (a == 1) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (b == 0) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else if (b == 1) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else code, merge it */\n" //
+				+ "    public void duplicateIfAndElse(int j) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (j == 0) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else if (j == 1) {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void duplicateIfAndElseIfWithoutElse(int k) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (k == 0) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else if (k == 1) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate else if codes, merge it */\n" //
+				+ "    public void duplicateIfAndElseIfAmongOther(int m) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (m == 0) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"A given code\");\n" //
+				+ "        } if (m == 1) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else if (m == 2) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void duplicateSingleStatement(int n) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (n == 0)\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        else if (n == 1)\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        else\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void numerousDuplicateIfAndElseIf(int o) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (o == 0) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else if (o == 1) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else if (o == 2)\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        else if (o == 3) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void complexIfAndElseIf(int p) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (p == 0) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate \");\n" //
+				+ "        } else if (p == 1 || p == 2) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate \");\n" //
+				+ "        } else if (p > 10) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate \");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void longIfAndElseIf(int q) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (q == 0) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "            System.out.println(\"code\");\n" //
+				+ "        } else if (q == 1) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "            System.out.println(\"code\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.MERGE_CONDITIONAL_BLOCKS);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void duplicateIfAndElseIf(int i) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if ((i == 0) || (i == 1)) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void mergeTwoStructures(int a, int b) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if ((a == 0) || (a == 1)) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if ((b == 0) || (b == 1)) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else code, merge it */\n" //
+				+ "    public void duplicateIfAndElse(int j) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if ((j == 0) || !(j == 1)) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void duplicateIfAndElseIfWithoutElse(int k) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if ((k == 0) || (k == 1)) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate else if codes, merge it */\n" //
+				+ "    public void duplicateIfAndElseIfAmongOther(int m) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (m == 0) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"A given code\");\n" //
+				+ "        } if ((m == 1) || (m == 2)) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void duplicateSingleStatement(int n) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if ((n == 0) || (n == 1))\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        else\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void numerousDuplicateIfAndElseIf(int o) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if ((o == 0) || (o == 1) || (o == 2)\n" //
+				+ "                || (o == 3)) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void complexIfAndElseIf(int p) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if ((p == 0) || (p == 1 || p == 2) || (p > 10)) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate \");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Duplicate if and else if code, merge it */\n" //
+				+ "    public void longIfAndElseIf(int q) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if ((q == 0) || (q == 1)) {\n" //
+				+ "            // Keep this comment too\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "            System.out.println(\"code\");\n" //
+				+ "        } else {\n" //
+				+ "            // Keep this comment also\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { sample });
+	}
+
+	@Test
+	public void testDoNotMergeConditionalBlocks() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    /** 5 operands, not easily readable */\n" //
+				+ "    public void doNotMergeMoreThanFourOperands(int i) {\n" //
+				+ "        if ((i == 0) || (i == 1 || i == 2)) {\n" //
+				+ "            System.out.println(\"Duplicate \");\n" //
+				+ "        } else if (i > 10 && i < 100) {\n" //
+				+ "            System.out.println(\"Duplicate \");\n" //
+				+ "        } else {\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Different if and else if code, leave it */\n" //
+				+ "    public void doNotMergeAdditionalCode(int i) {\n" //
+				+ "        if (i == 0) {\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else if (i == 1) {\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "            System.out.println(\"but not only\");\n" //
+				+ "        } else {\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    /** Different code in the middle, leave it */\n" //
+				+ "    public void doNotMergeIntruderCode(int i) {\n" //
+				+ "        if (i == 0) {\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else if (i == 1) {\n" //
+				+ "            System.out.println(\"Intruder\");\n" //
+				+ "        } else if (i == 2) {\n" //
+				+ "            System.out.println(\"Duplicate\");\n" //
+				+ "        } else {\n" //
+				+ "            System.out.println(\"Different\");\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.MERGE_CONDITIONAL_BLOCKS);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
 
 	@Test
@@ -6870,6 +7475,7 @@ public class CleanUpTest extends CleanUpTestCase {
 		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1});
 	}
 
+	@Test
 	public void testNumberSuffix() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		String sample= "" //
@@ -6935,6 +7541,7 @@ public class CleanUpTest extends CleanUpTestCase {
 		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
 	}
 
+	@Test
 	public void testRemoveQualifier02() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();
@@ -9055,6 +9662,7 @@ public class CleanUpTest extends CleanUpTestCase {
 
 	}
 
+	@Test
 	public void testDoNotTouchCleanedModifiers() throws Exception {
 		// Given
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -9076,7 +9684,7 @@ public class CleanUpTest extends CleanUpTestCase {
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 
 		// When
-		ASTParser parser= ASTParser.newParser(AST.JLS13);
+		ASTParser parser= ASTParser.newParser(AST.JLS14);
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		parser.setSource(cu1);
 		parser.setResolveBindings(true);
@@ -9090,6 +9698,7 @@ public class CleanUpTest extends CleanUpTestCase {
 		assertNull("ICleanInterface should not be cleaned up", fix);
 	}
 
+	@Test
 	public void testRemoveRedundantSemicolons () throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
 		StringBuffer buf= new StringBuffer();

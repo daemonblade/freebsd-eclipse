@@ -195,6 +195,7 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.NewProviderMethodDe
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrectionProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposal;
+import org.eclipse.jdt.internal.ui.util.ASTHelper;
 import org.eclipse.jdt.internal.ui.viewsupport.JavaElementImageProvider;
 
 /**
@@ -218,7 +219,7 @@ public class LocalCorrectionsSubProcessor {
 			return;
 		}
 		while (selectedNode != null && !(selectedNode instanceof Statement) && !(selectedNode instanceof VariableDeclarationExpression)
-				&& !(selectedNode.getLocationInParent() == LambdaExpression.BODY_PROPERTY) && !(selectedNode instanceof MethodReference)) {
+				&& (selectedNode.getLocationInParent() != LambdaExpression.BODY_PROPERTY) && !(selectedNode instanceof MethodReference)) {
 			selectedNode= selectedNode.getParent();
 		}
 		if (selectedNode == null) {
@@ -784,10 +785,7 @@ public class LocalCorrectionsSubProcessor {
 	public static void addUnnecessaryInstanceofProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
 
-		ASTNode curr= selectedNode;
-		while (curr instanceof ParenthesizedExpression) {
-			curr= ((ParenthesizedExpression) curr).getExpression();
-		}
+		ASTNode curr= ASTNodes.getUnparenthesedExpression(selectedNode);
 
 		if (curr instanceof InstanceofExpression) {
 			AST ast= curr.getAST();
@@ -814,10 +812,7 @@ public class LocalCorrectionsSubProcessor {
 	public static void addIllegalQualifiedEnumConstantLabelProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		ASTNode coveringNode= problem.getCoveringNode(context.getASTRoot());
 
-		ASTNode curr= coveringNode;
-		while (curr instanceof ParenthesizedExpression) {
-			curr= ((ParenthesizedExpression) curr).getExpression();
-		}
+		ASTNode curr= ASTNodes.getUnparenthesedExpression(coveringNode);
 
 		if (!(curr instanceof QualifiedName)) {
 			return;
@@ -924,11 +919,7 @@ public class LocalCorrectionsSubProcessor {
 		CompilationUnit root= context.getASTRoot();
 		AST ast= root.getAST();
 
-		ASTNode selectedNode= problem.getCoveringNode(root);
-
-		while (selectedNode instanceof ParenthesizedExpression) {
-			selectedNode= ((ParenthesizedExpression) selectedNode).getExpression();
-		}
+		ASTNode selectedNode= ASTNodes.getUnparenthesedExpression(problem.getCoveringNode(root));
 
 		if (selectedNode instanceof PrefixExpression) {
 			// !x instanceof X -> !(x instanceof X)
@@ -1164,10 +1155,7 @@ public class LocalCorrectionsSubProcessor {
 
 			ASTRewrite rewrite= ASTRewrite.create(parent.getAST());
 
-			Expression replacement= leftOperand;
-			while (replacement instanceof ParenthesizedExpression) {
-				replacement= ((ParenthesizedExpression) replacement).getExpression();
-			}
+			Expression replacement= ASTNodes.getUnparenthesedExpression(leftOperand);
 
 			Expression toReplace= infixExpression;
 			while (toReplace.getLocationInParent() == ParenthesizedExpression.EXPRESSION_PROPERTY) {
@@ -1778,12 +1766,10 @@ public class LocalCorrectionsSubProcessor {
 		}
 
 		boolean hasDefault=false;
-		List<Statement> statements= switchStatements;
-		for (int i= 0; i < statements.size(); i++) {
-			Statement curr= statements.get(i);
+		for (Statement curr : switchStatements) {
 			if (curr instanceof SwitchCase) {
 				SwitchCase switchCase= (SwitchCase) curr;
-				if (switchCase.getAST().isPreviewEnabled()) {
+				if (ASTHelper.isSwitchCaseExpressionsSupportedInAST(switchCase.getAST())) {
 					List<Expression> expressions= switchCase.expressions();
 					if (expressions.size() == 0) {
 						hasDefault= true;
@@ -1827,7 +1813,7 @@ public class LocalCorrectionsSubProcessor {
 			Statement curr= statements.get(i);
 			if (curr instanceof SwitchCase) {
 				SwitchCase switchCase= (SwitchCase) curr;
-				if (switchCase.getAST().isPreviewEnabled()) {
+				if (ASTHelper.isSwitchCaseExpressionsSupportedInAST(switchCase.getAST())) {
 					if (switchCase.expressions().size() == 0) {
 						defaultIndex= i;
 						break;
@@ -1855,11 +1841,10 @@ public class LocalCorrectionsSubProcessor {
 			String label= CorrectionMessages.LocalCorrectionsSubProcessor_add_missing_cases_description;
 			LinkedCorrectionProposal proposal= new LinkedCorrectionProposal(label, context.getCompilationUnit(), astRewrite, IProposalRelevance.ADD_MISSING_CASE_STATEMENTS, image);
 
-			for (int i= 0; i < enumConstNames.size(); i++) {
+			for (String enumConstName : enumConstNames) {
 				SwitchCase newSwitchCase= ast.newSwitchCase();
-				String enumConstName= enumConstNames.get(i);
 				Name newName= ast.newName(enumConstName);
-				if (ast.isPreviewEnabled()) {
+				if (ASTHelper.isSwitchCaseExpressionsSupportedInAST(ast)) {
 					newSwitchCase.expressions().add(newName);
 				} else {
 					newSwitchCase.setExpression(newName);
@@ -1867,7 +1852,7 @@ public class LocalCorrectionsSubProcessor {
 				listRewrite.insertAt(newSwitchCase, defaultIndex, null);
 				defaultIndex++;
 				if (!hasDefault) {
-					if (ast.isPreviewEnabled()) {
+					if (ASTHelper.isSwitchExpressionNodeSupportedInAST(ast)) {
 						if (statements.size() > 0) {
 							Statement firstStatement= statements.get(0);
 							SwitchCase switchCase= (SwitchCase) firstStatement;
@@ -1895,7 +1880,7 @@ public class LocalCorrectionsSubProcessor {
 				listRewrite.insertAt(newSwitchCase, defaultIndex, null);
 				defaultIndex++;
 
-				if (ast.isPreviewEnabled()) {
+				if (ASTHelper.isSwitchExpressionNodeSupportedInAST(ast)) {
 					if (statements.size() > 0) {
 						Statement firstStatement= statements.get(0);
 						SwitchCase switchCase= (SwitchCase) firstStatement;
@@ -1992,7 +1977,7 @@ public class LocalCorrectionsSubProcessor {
 		SwitchCase newSwitchCase= ast.newSwitchCase();
 		listRewrite.insertLast(newSwitchCase, null);
 
-		if (ast.isPreviewEnabled()) {
+		if (ASTHelper.isSwitchCaseExpressionsSupportedInAST(ast)) {
 			if (statements.size() > 0) {
 				Statement firstStatement= statements.get(0);
 				SwitchCase switchCase= (SwitchCase) firstStatement;
@@ -2298,7 +2283,8 @@ public class LocalCorrectionsSubProcessor {
 		ITypeBinding targetBinding= name.resolveTypeBinding();
 
 		if (targetBinding != null &&
-				!(targetBinding.isInterface() || Modifier.isAbstract(targetBinding.getModifiers()))) {
+				!targetBinding.isInterface()
+				&& !Modifier.isAbstract(targetBinding.getModifiers())) {
 			ICompilationUnit targetCU= ASTResolving.findCompilationUnitForBinding(context.getCompilationUnit(), context.getASTRoot(), targetBinding);
 			IJavaProject proj= targetCU.getJavaProject();
 
@@ -2350,5 +2336,8 @@ public class LocalCorrectionsSubProcessor {
 				proposals.add(new NewMethodCorrectionProposal(label, targetCU, targetRoot, new ArrayList<> (), targetBinding, IProposalRelevance.CREATE_CONSTRUCTOR, image));
 			}
 		}
+	}
+
+	private LocalCorrectionsSubProcessor() {
 	}
 }

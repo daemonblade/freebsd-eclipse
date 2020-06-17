@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -47,7 +47,7 @@ public abstract class CompilationUnitContextType extends TemplateContextType {
 	 	}
 	 	@Override
 		protected String resolve(TemplateContext context) {
-			IJavaElement element= ((ICompilationUnitContext) context).findEnclosingElement(IJavaElement.METHOD);
+			IJavaElement element= ((CompilationUnitContext) context).findEnclosingElement(IJavaElement.METHOD);
 			if (element == null)
 				return null;
 
@@ -65,7 +65,7 @@ public abstract class CompilationUnitContextType extends TemplateContextType {
 		}
 		@Override
 		protected String resolve(TemplateContext context) {
-			ICompilationUnit unit= ((ICompilationUnitContext) context).getCompilationUnit();
+			ICompilationUnit unit= ((CompilationUnitContext) context).getCompilationUnit();
 
 			return (unit == null) ? null : unit.getElementName();
 		}
@@ -86,7 +86,7 @@ public abstract class CompilationUnitContextType extends TemplateContextType {
 		}
 		@Override
 		protected String resolve(TemplateContext context) {
-			ICompilationUnit unit= ((ICompilationUnitContext) context).getCompilationUnit();
+			ICompilationUnit unit= ((CompilationUnitContext) context).getCompilationUnit();
 			if (unit == null)
 				return null;
 			return JavaCore.removeJavaLikeExtension(unit.getElementName());
@@ -110,7 +110,7 @@ public abstract class CompilationUnitContextType extends TemplateContextType {
 		}
 		@Override
 		protected String resolve(TemplateContext context) {
-			IJavaElement element= ((ICompilationUnitContext) context).findEnclosingElement(fElementType);
+			IJavaElement element= ((CompilationUnitContext) context).findEnclosingElement(fElementType);
 			if (element instanceof IType)
 				return JavaElementLabelsCore.getElementLabel(element, JavaElementLabelsCore.T_CONTAINER_QUALIFIED);
 			return (element == null) ? null : element.getElementName();
@@ -155,7 +155,7 @@ public abstract class CompilationUnitContextType extends TemplateContextType {
 		}
 		@Override
 		protected String resolve(TemplateContext context) {
-			IJavaElement element= ((ICompilationUnitContext) context).findEnclosingElement(IJavaElement.METHOD);
+			IJavaElement element= ((CompilationUnitContext) context).findEnclosingElement(IJavaElement.METHOD);
 			if (element == null)
 				return null;
 
@@ -163,15 +163,7 @@ public abstract class CompilationUnitContextType extends TemplateContextType {
 
 			try {
 				String[] arguments= method.getParameterNames();
-				StringBuilder buffer= new StringBuilder();
-
-				for (int i= 0; i < arguments.length; i++) {
-					if (i > 0)
-						buffer.append(", "); //$NON-NLS-1$
-					buffer.append(arguments[i]);
-				}
-
-				return buffer.toString();
+				return String.join(", ", arguments); //$NON-NLS-1$
 
 			} catch (JavaModelException e) {
 				return null;
@@ -195,8 +187,7 @@ public abstract class CompilationUnitContextType extends TemplateContextType {
 	@Override
 	protected void validateVariables(TemplateVariable[] variables) throws TemplateException {
 		// check for multiple cursor variables
-		for (int i= 0; i < variables.length; i++) {
-			TemplateVariable var= variables[i];
+		for (TemplateVariable var : variables) {
 			if (var.getType().equals(GlobalTemplateVariables.Cursor.NAME)) {
 				if (var.getOffsets().length > 1) {
 					throw new TemplateException(JavaTemplateMessages.ContextType_error_multiple_cursor_variables);

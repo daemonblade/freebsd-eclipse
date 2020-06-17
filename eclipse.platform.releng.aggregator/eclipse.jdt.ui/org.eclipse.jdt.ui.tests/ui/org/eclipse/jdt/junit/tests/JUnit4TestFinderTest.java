@@ -13,12 +13,15 @@
  *******************************************************************************/
 package org.eclipse.jdt.junit.tests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 
-import junit.framework.TestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import org.eclipse.jdt.junit.JUnitCore;
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
@@ -41,16 +44,13 @@ import org.eclipse.jdt.internal.junit.launcher.ITestKind;
 import org.eclipse.jdt.internal.junit.launcher.TestKindRegistry;
 
 
-public class JUnit4TestFinderTest extends TestCase {
+public class JUnit4TestFinderTest {
 
 	private IJavaProject fProject;
 	private IPackageFragmentRoot fRoot;
 
-	private static final boolean BUG_559685= true;
-
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
+	@Before
+	public void setUp() throws Exception {
 		fProject= JavaProjectHelper.createJavaProject("TestProject", "bin");
 		JavaProjectHelper.addRTJar(fProject);
 		IClasspathEntry cpe= JavaCore.newContainerEntry(JUnitCore.JUNIT4_CONTAINER_PATH);
@@ -60,20 +60,17 @@ public class JUnit4TestFinderTest extends TestCase {
 		fRoot= JavaProjectHelper.addSourceContainer(fProject, "src");
 	}
 
-	@Override
-	protected void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		JavaProjectHelper.delete(fProject);
-		super.tearDown();
 	}
 
 	/**
 	 * Copy from {@link JUnit3TestFinderTest}: All tests must work in Junit 4 as well
 	 * @throws Exception if it fails
 	 */
+	@Test
 	public void testTestCase() throws Exception {
-		if (BUG_559685) {
-			return;
-		}
 		IPackageFragment p= fRoot.createPackageFragment("p", true, null);
 		StringBuffer buf= new StringBuffer();
 		buf.append("package p;\n");
@@ -188,10 +185,8 @@ public class JUnit4TestFinderTest extends TestCase {
 		assertTestFound(fProject, validTests);
 	}
 
+	@Test
 	public void testSuiteFinder() throws Exception {
-		if (BUG_559685) {
-			return;
-		}
 		IPackageFragment p= fRoot.createPackageFragment("p", true, null);
 		StringBuilder buf= new StringBuilder();
 		buf.append("package p;\n");
@@ -213,10 +208,8 @@ public class JUnit4TestFinderTest extends TestCase {
 		assertTestFound(fProject, validTests);
 	}
 
+	@Test
 	public void testRunWith() throws Exception {
-		if (BUG_559685) {
-			return;
-		}
 		IPackageFragment p= fRoot.createPackageFragment("p", true, null);
 		StringBuffer buf= new StringBuffer();
 		buf.append("package p;\n");
@@ -342,10 +335,8 @@ public class JUnit4TestFinderTest extends TestCase {
 		assertTestFound(fProject, validTests);
 	}
 
+	@Test
 	public void testTestAnnotation() throws Exception {
-		if (BUG_559685) {
-			return;
-		}
 		IPackageFragment p= fRoot.createPackageFragment("p", true, null);
 		StringBuffer buf= new StringBuffer();
 		buf.append("package p;\n");
@@ -411,6 +402,7 @@ public class JUnit4TestFinderTest extends TestCase {
 		assertTestFound(fProject, validTests);
 	}
 
+	@Test
 	public void testTestAnnotation_bug204682() throws Exception {
 
 		IPackageFragment p= fRoot.createPackageFragment("p", true, null);
@@ -433,6 +425,7 @@ public class JUnit4TestFinderTest extends TestCase {
 		assertTestFound(validTest1.getCompilationUnit(), new String[] { });
 	}
 
+	@Test
 	public void testTestAnnotation2() throws Exception {
 
 		IPackageFragment p= fRoot.createPackageFragment("p", true, null);
@@ -472,8 +465,7 @@ public class JUnit4TestFinderTest extends TestCase {
 		set.addAll(Arrays.asList(JUnitCore.findTestTypes(container, null)));
 
 		HashSet<String> namesFound= new HashSet<>();
-		for (Iterator<IType> iterator= set.iterator(); iterator.hasNext();) {
-			IType curr= iterator.next();
+		for (IType curr : set) {
 			namesFound.add(curr.getFullyQualifiedName('.'));
 		}
 		String[] actuals= namesFound.toArray(new String[namesFound.size()]);

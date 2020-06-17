@@ -19,7 +19,6 @@ import java.lang.reflect.Constructor;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -256,8 +255,8 @@ public class InvocationCountPerformanceMeter extends InternalPerformanceMeter {
 		 * Prints the results.
 		 */
 		public void print() {
-			for (Iterator<Object> iter= fResultsMap.keySet().iterator(); iter.hasNext();)
-				print(iter.next());
+			for (Object object : fResultsMap.keySet())
+				print(object);
 		}
 
 		/**
@@ -393,9 +392,7 @@ public class InvocationCountPerformanceMeter extends InternalPerformanceMeter {
 
 			fEventReader= new EventReader(fVM.eventQueue());
 			fEventReader.start();
-		} catch (IOException x) {
-			x.printStackTrace();
-		} catch (IllegalConnectorArgumentsException x) {
+		} catch (IOException | IllegalConnectorArgumentsException x) {
 			x.printStackTrace();
 		} finally {
 			Assert.assertNotNull("Could not start performance meter, hints:\n1) check the command line arguments (see InvocationCountPerformanceMeter for details)\n2) use a different port number", fEventReader);
@@ -572,8 +569,8 @@ public class InvocationCountPerformanceMeter extends InternalPerformanceMeter {
 	private String getJNISignature(Class<?>[] paramTypes) {
 		StringBuilder signature= new StringBuilder();
 		signature.append('(');
-		for (int i = 0; i < paramTypes.length; ++i)
-			signature.append(getJNISignature(paramTypes[i]));
+		for (Class<?> paramType : paramTypes)
+			signature.append(getJNISignature(paramType));
 		signature.append(')');
 		return signature.toString();
 	}

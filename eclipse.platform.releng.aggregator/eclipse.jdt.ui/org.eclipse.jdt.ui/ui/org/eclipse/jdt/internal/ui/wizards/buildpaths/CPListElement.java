@@ -239,8 +239,7 @@ public class CPListElement {
 
 	private IClasspathAttribute[] getClasspathAttributes() {
 		ArrayList<IClasspathAttribute> res= new ArrayList<>();
-		for (int i= 0; i < fChildren.size(); i++) {
-			Object curr= fChildren.get(i);
+		for (Object curr : fChildren) {
 			if (curr instanceof CPListElementAttribute) {
 				CPListElementAttribute elem= (CPListElementAttribute) curr;
 				if (!elem.isBuiltIn()) {
@@ -418,8 +417,7 @@ public class CPListElement {
 	}
 
 	public CPListElementAttribute findAttributeElement(String key) {
-		for (int i= 0; i < fChildren.size(); i++) {
-			Object curr= fChildren.get(i);
+		for (Object curr : fChildren) {
 			if (curr instanceof CPListElementAttribute) {
 				CPListElementAttribute elem= (CPListElementAttribute) curr;
 				if (key.equals(elem.getKey())) {
@@ -441,8 +439,7 @@ public class CPListElement {
 
 	public CPListElementAttribute[] getAllAttributes() {
 		ArrayList<Object> res= new ArrayList<>();
-		for (int i= 0; i < fChildren.size(); i++) {
-			Object curr= fChildren.get(i);
+		for (Object curr : fChildren) {
 			if (curr instanceof CPListElementAttribute) {
 				res.add(curr);
 			}
@@ -495,8 +492,7 @@ public class CPListElement {
 		int nChildren= fChildren.size();
 		ArrayList<Object> res= new ArrayList<>(nChildren);
 
-		for (int i= 0; i < nChildren; i++) {
-			Object curr= fChildren.get(i);
+		for (Object curr : fChildren) {
 			if (!isFiltered(curr, filteredKeys)) {
 				res.add(curr);
 			}
@@ -651,8 +647,7 @@ public class CPListElement {
 	 * @return Returns a boolean
 	 */
 	public boolean hasMissingChildren() {
-		for (int i= 0; i < fChildren.size(); i++) {
-			Object curr= fChildren.get(i);
+		for (Object curr : fChildren) {
 			if (curr instanceof CPListElement && ((CPListElement) curr).isMissing()) {
 				return true;
 			}
@@ -884,38 +879,49 @@ public class CPListElement {
 			appendEncodePath(getLinkTarget(), buf).append(';');
 		}
 		buf.append(Boolean.valueOf(fIsExported)).append(';');
-		for (int i= 0; i < fChildren.size(); i++) {
-			Object curr= fChildren.get(i);
+		for (Object curr : fChildren) {
 			if (curr instanceof CPListElementAttribute) {
 				CPListElementAttribute elem= (CPListElementAttribute) curr;
 				if (elem.isBuiltIn()) {
 					String key= elem.getKey();
-					if (OUTPUT.equals(key) || SOURCEATTACHMENT.equals(key)) {
-						appendEncodePath((IPath) elem.getValue(), buf).append(';');
-					} else if (EXCLUSION.equals(key) || INCLUSION.equals(key)) {
-						appendEncodedFilter((IPath[]) elem.getValue(), buf).append(';');
-					} else if (ACCESSRULES.equals(key)) {
-						appendEncodedAccessRules((IAccessRule[]) elem.getValue(), buf).append(';');
-					} else if (COMBINE_ACCESSRULES.equals(key)) {
-						buf.append(((Boolean) elem.getValue()).booleanValue()).append(';');
-					} else if (MODULE.equals(key)) {
-						Object value= elem.getValue();
-						if (value instanceof ModuleEncapsulationDetail[]) {
-							buf.append(MODULE+"=true;"); //$NON-NLS-1$
-							for (ModuleEncapsulationDetail detail : ((ModuleEncapsulationDetail[]) value)) {
-								if (detail instanceof ModulePatch)
-									buf.append(IClasspathAttribute.PATCH_MODULE+':'+detail.toString()).append(';');
-								if (detail instanceof ModuleAddExport)
-									buf.append(IClasspathAttribute.ADD_EXPORTS+':'+detail.toString()).append(';');
-								if (detail instanceof ModuleAddOpens)
-									buf.append(IClasspathAttribute.ADD_OPENS+':'+detail.toString()).append(';');
-								if (detail instanceof ModuleAddReads)
-									buf.append(IClasspathAttribute.ADD_READS+':'+detail.toString()).append(';');
-								if (detail instanceof LimitModules)
-									buf.append(IClasspathAttribute.LIMIT_MODULES+':'+detail.toString()).append(';');
-							}
-						} else {
-							buf.append(MODULE+"=false;"); //$NON-NLS-1$
+					if (key != null) {
+						switch (key) {
+							case OUTPUT:
+							case SOURCEATTACHMENT:
+								appendEncodePath((IPath) elem.getValue(), buf).append(';');
+								break;
+							case EXCLUSION:
+							case INCLUSION:
+								appendEncodedFilter((IPath[]) elem.getValue(), buf).append(';');
+								break;
+							case ACCESSRULES:
+								appendEncodedAccessRules((IAccessRule[]) elem.getValue(), buf).append(';');
+								break;
+							case COMBINE_ACCESSRULES:
+								buf.append(((Boolean) elem.getValue()).booleanValue()).append(';');
+								break;
+							case MODULE:
+								Object value= elem.getValue();
+								if (value instanceof ModuleEncapsulationDetail[]) {
+									buf.append(MODULE+"=true;"); //$NON-NLS-1$
+									for (ModuleEncapsulationDetail detail : ((ModuleEncapsulationDetail[]) value)) {
+										if (detail instanceof ModulePatch)
+											buf.append(IClasspathAttribute.PATCH_MODULE+':'+detail.toString()).append(';');
+										if (detail instanceof ModuleAddExport)
+											buf.append(IClasspathAttribute.ADD_EXPORTS+':'+detail.toString()).append(';');
+										if (detail instanceof ModuleAddOpens)
+											buf.append(IClasspathAttribute.ADD_OPENS+':'+detail.toString()).append(';');
+										if (detail instanceof ModuleAddReads)
+											buf.append(IClasspathAttribute.ADD_READS+':'+detail.toString()).append(';');
+										if (detail instanceof LimitModules)
+											buf.append(IClasspathAttribute.LIMIT_MODULES+':'+detail.toString()).append(';');
+									}
+								} else {
+									buf.append(MODULE+"=false;"); //$NON-NLS-1$
+								}
+								break;
+							default:
+								break;
 						}
 					}
 				} else {
@@ -1061,8 +1067,7 @@ public class CPListElement {
 
 	public void updateExtraAttributeOfClasspathEntry() {
 		if (fChildren != null) {
-			for (int i= 0; i < fChildren.size(); i++) {
-				Object curr= fChildren.get(i);
+			for (Object curr : fChildren) {
 				if (curr instanceof CPListElementAttribute) {
 					CPListElementAttribute elem= (CPListElementAttribute) curr;
 					String key= elem.getKey();

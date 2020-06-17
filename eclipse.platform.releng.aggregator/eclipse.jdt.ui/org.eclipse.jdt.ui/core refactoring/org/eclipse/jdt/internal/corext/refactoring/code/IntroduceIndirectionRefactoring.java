@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -19,7 +19,6 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -90,12 +89,16 @@ import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchPattern;
 
+import org.eclipse.jdt.internal.core.manipulation.StubUtility;
+import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
+import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.BodyDeclarationRewrite;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
@@ -122,10 +125,6 @@ import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 import org.eclipse.jdt.ui.JavaElementLabels;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.core.manipulation.StubUtility;
-import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
-import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 
 /**
  *
@@ -265,11 +264,11 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		initialize(0, 0);
 	}
 
-    public IntroduceIndirectionRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
+	public IntroduceIndirectionRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
    		this((ICompilationUnit) null, 0, 0);
    		RefactoringStatus initializeStatus= initialize(arguments);
    		status.merge(initializeStatus);
-    }
+	}
 
 	private void initialize(int offset, int length) {
 		fSelectionStart= offset;
@@ -352,7 +351,8 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 				return RefactoringStatus.createErrorStatus(Messages.format(RefactoringCoreMessages.IntroduceIndirectionRefactoring_type_does_not_exist_error, BasicElementLabels.getJavaElementName(fullyQualifiedTypeName)));
 			if (target.isAnnotation())
 				return RefactoringStatus.createErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_cannot_create_in_annotation);
-			if (target.isInterface() && !(JavaModelUtil.is18OrHigher(target.getJavaProject()) && JavaModelUtil.is18OrHigher(getProject())))
+			if (target.isInterface()
+					&& (!JavaModelUtil.is18OrHigher(target.getJavaProject()) || !JavaModelUtil.is18OrHigher(getProject())))
 				return RefactoringStatus.createErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_cannot_create_on_interface);
 		} catch (JavaModelException e) {
 			return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_unable_determine_declaring_type);
@@ -486,8 +486,8 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		fTextChangeManager= new TextChangeManager();
 		fIntermediaryFirstParameterType= null;
 		fIntermediaryTypeBinding= null;
-		for (Iterator<CompilationUnitRewrite> iter= fRewrites.values().iterator(); iter.hasNext();)
-			iter.next().clearASTAndImportRewrites();
+		for (CompilationUnitRewrite compilationUnitRewrite : fRewrites.values())
+			compilationUnitRewrite.clearASTAndImportRewrites();
 
 		int startupTicks= 5;
 		int hierarchyTicks= 5;
@@ -570,7 +570,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 
 		createChangeAndDiscardRewrite(fIntermediaryType.getCompilationUnit());
 
-		result.merge(Checks.validateModifiesFiles(getAllFilesToModify(), getValidationContext()));
+		result.merge(Checks.validateModifiesFiles(getAllFilesToModify(), getValidationContext(), pm));
 		pm.done();
 
 		return result;
@@ -600,9 +600,8 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		// Need to adjust the overridden methods of the target method.
 		ITypeHierarchy hierarchy= fTargetMethod.getDeclaringType().newTypeHierarchy(null);
 		MethodOverrideTester tester= new MethodOverrideTester(fTargetMethod.getDeclaringType(), hierarchy);
-		IType[] subtypes= hierarchy.getAllSubtypes(fTargetMethod.getDeclaringType());
-		for (int i= 0; i < subtypes.length; i++) {
-			IMethod method= tester.findOverridingMethodInType(subtypes[i], fTargetMethod);
+		for (IType subtype : hierarchy.getAllSubtypes(fTargetMethod.getDeclaringType())) {
+			IMethod method= tester.findOverridingMethodInType(subtype, fTargetMethod);
 			if (method != null && method.exists()) {
 				result.merge(adjustVisibility(method, neededVisibility, monitor));
 				if (monitor.isCanceled())
@@ -765,7 +764,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_INPUT, JavaRefactoringDescriptorUtil.elementToHandle(project, fTargetMethod));
 		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_NAME, fIntermediaryMethodName);
 		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + 1, JavaRefactoringDescriptorUtil.elementToHandle(project, fIntermediaryType));
-		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES, Boolean.valueOf(fUpdateReferences).toString());
+		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES, Boolean.toString(fUpdateReferences));
 		return new DynamicValidationRefactoringChange(descriptor, RefactoringCoreMessages.IntroduceIndirectionRefactoring_introduce_indirection, fTextChangeManager.getAllChanges());
 	}
 
@@ -1393,7 +1392,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + 1));
 		final String references= arguments.getAttribute(JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES);
 		if (references != null) {
-			fUpdateReferences= Boolean.valueOf(references).booleanValue();
+			fUpdateReferences= Boolean.parseBoolean(references);
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES));
 		final String name= arguments.getAttribute(JavaRefactoringDescriptorUtil.ATTRIBUTE_NAME);

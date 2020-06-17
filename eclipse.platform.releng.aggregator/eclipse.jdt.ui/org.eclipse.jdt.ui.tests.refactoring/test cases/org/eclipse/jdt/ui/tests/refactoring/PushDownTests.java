@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,13 +13,16 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.refactoring;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.Rule;
+import org.junit.Test;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -39,23 +42,14 @@ import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTester
 import org.eclipse.jdt.internal.corext.refactoring.structure.PushDownRefactoringProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.structure.PushDownRefactoringProcessor.MemberActionInfo;
 
-public class PushDownTests extends RefactoringTest {
+import org.eclipse.jdt.ui.tests.refactoring.rules.Java15Setup;
+import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 
-	private static final Class<PushDownTests> clazz= PushDownTests.class;
-
+public class PushDownTests extends GenericRefactoringTest {
 	private static final String REFACTORING_PATH= "PushDown/";
 
-	public PushDownTests(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		return new Java15Setup(new TestSuite(clazz));
-	}
-
-	public static Test setUpTest(Test someTest) {
-		return new Java15Setup(someTest);
-	}
+	@Rule
+	public RefactoringTestSetup fts= new Java15Setup();
 
 	@Override
 	protected String getRefactoringPath() {
@@ -94,11 +88,11 @@ public class PushDownTests extends RefactoringTest {
 		for (MemberActionInfo info : processor.getMemberActionInfos()) {
 			if (membersToPushDown.contains(info.getMember())) {
 				info.setAction(MemberActionInfo.PUSH_DOWN_ACTION);
-				assertTrue(!methodsToDeclareAbstract.contains(info.getMember()));
+				assertFalse(methodsToDeclareAbstract.contains(info.getMember()));
 			}
 			if (methodsToDeclareAbstract.contains(info.getMember())) {
 				info.setAction(MemberActionInfo.PUSH_ABSTRACT_ACTION);
-				assertTrue(!membersToPushDown.contains(info.getMember()));
+				assertFalse(membersToPushDown.contains(info.getMember()));
 			}
 		}
 	}
@@ -117,7 +111,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfFieldsToPullUp, namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, cuA);
 
 		RefactoringStatus checkInputResult= ref.checkFinalConditions(new NullProgressMonitor());
-		assertTrue("precondition was supposed to pass but got " + checkInputResult.toString(), !checkInputResult.hasError());
+		assertFalse("precondition was supposed to pass but got " + checkInputResult.toString(), checkInputResult.hasError());
 		performChange(ref, false);
 
 		String expected= getFileContents(getOutputTestFileName("A"));
@@ -148,7 +142,7 @@ public class PushDownTests extends RefactoringTest {
 		IPackageFragment[] additionalPacks= new IPackageFragment[0];
 		if (additionalPackNames != null){
 			additionalPacks= new IPackageFragment[additionalPackNames.length];
-			assertTrue(additionalPackNames.length == additionalCuNames.length);
+			assertEquals(additionalPackNames.length, additionalCuNames.length);
 			for (int i= 0; i < additionalPackNames.length; i++) {
 				additionalPacks[i]= getRoot().getPackageFragment(additionalPackNames[i]);
 			}
@@ -207,12 +201,10 @@ public class PushDownTests extends RefactoringTest {
 		IMethod[] expectedMethods= getMethods(type, expectedMethodNames, expectedMethodSignatures);
 		List<IMember> expected= Arrays.asList(merge(expectedFields, expectedMethods));
 		assertEquals("incorrect size", expected.size(), required.size());
-		for (Iterator<IMember> iter= expected.iterator(); iter.hasNext();) {
-			Object each= iter.next();
+		for (IMember each : expected) {
 			assertTrue ("required does not contain " + each, required.contains(each));
 		}
-		for (Iterator<IMember> iter= required.iterator(); iter.hasNext();) {
-			Object each= iter.next();
+		for (IMember each : required) {
 			assertTrue ("expected does not contain " + each, expected.contains(each));
 		}
 	}
@@ -230,6 +222,7 @@ public class PushDownTests extends RefactoringTest {
 
 	//--------------------------------------------------------
 
+	@Test
 	public void test0() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -247,6 +240,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test1() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -264,6 +258,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test2() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -281,6 +276,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test3() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -298,6 +294,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test4() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -315,6 +312,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test5() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -332,6 +330,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test6() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -349,6 +348,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test7() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -366,6 +366,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test8() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -383,6 +384,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test9() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -400,6 +402,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test10() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -417,6 +420,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test11() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -434,6 +438,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test12() throws Exception{
 		String[] selectedMethodNames= {};
 		String[][] selectedMethodSignatures= {};
@@ -451,6 +456,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test13() throws Exception{
 		String[] selectedMethodNames= {};
 		String[][] selectedMethodSignatures= {};
@@ -468,6 +474,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test14() throws Exception{
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -485,6 +492,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test15() throws Exception{
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -502,6 +510,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test16() throws Exception{
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -519,6 +528,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test17() throws Exception{
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -536,6 +546,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test18() throws Exception{
 		String[] selectedMethodNames= {"f", "m"};
 		String[][] selectedMethodSignatures= {new String[0], new String[0]};
@@ -553,6 +564,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test19() throws Exception{
 		String[] selectedMethodNames= {"f", "m"};
 		String[][] selectedMethodSignatures= {new String[0], new String[0]};
@@ -570,6 +582,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test20() throws Exception{
 		String[] selectedMethodNames= {"f", "m"};
 		String[][] selectedMethodSignatures= {new String[0], new String[0]};
@@ -588,6 +601,7 @@ public class PushDownTests extends RefactoringTest {
 				new String[]{"B"}, new String[]{"p"});
 	}
 
+	@Test
 	public void test21() throws Exception{
 		String[] selectedMethodNames= {"f", "m"};
 		String[][] selectedMethodSignatures= {new String[0], new String[0]};
@@ -606,6 +620,7 @@ public class PushDownTests extends RefactoringTest {
 				new String[]{"B", "C"}, new String[]{"p", "p"});
 	}
 
+	@Test
 	public void test22() throws Exception{
 		String[] selectedMethodNames= {};
 		String[][] selectedMethodSignatures= {};
@@ -623,6 +638,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test23() throws Exception{
 		String[] selectedMethodNames= {};
 		String[][] selectedMethodSignatures= {};
@@ -640,6 +656,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test24() throws Exception{
 		String[] selectedMethodNames= {};
 		String[][] selectedMethodSignatures= {};
@@ -657,6 +674,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test25() throws Exception{
 		String[] selectedMethodNames= {"foo"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -674,6 +692,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test26() throws Exception{
 		String[] selectedMethodNames= {"bar"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -691,6 +710,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test27() throws Exception{
 		String[] selectedMethodNames= {"bar"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -708,6 +728,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test28() throws Exception{
 //		if (true){
 //			printTestDisabledMessage("37175");
@@ -729,6 +750,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test29() throws Exception{
 		String[] selectedMethodNames= {"foo"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -746,6 +768,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test30() throws Exception{
 		String[] selectedMethodNames= {"foo"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -763,6 +786,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test31() throws Exception{
 		String[] selectedMethodNames= {"foo"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -780,6 +804,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test32() throws Exception{
 		String[] selectedMethodNames= {"foo"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -797,6 +822,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void test33() throws Exception{
 		String[] selectedMethodNames= {"f", "m"};
 		String[][] selectedMethodSignatures= {new String[0], new String[0]};
@@ -815,6 +841,7 @@ public class PushDownTests extends RefactoringTest {
 				new String[]{"B", "C"}, new String[]{"p", "p"});
 	}
 
+	@Test
 	public void test34() throws Exception{
 		printTestDisabledMessage("disabled due to missing support for statically imported methods");
 
@@ -835,6 +862,26 @@ public class PushDownTests extends RefactoringTest {
 //			   new String[]{"B", "C"}, new String[]{"p", "p"});
 	}
 
+	@Test
+	public void test35() throws Exception{
+		String[] selectedMethodNames= {"foo"};
+		String[][] selectedMethodSignatures= {new String[0]};
+		String[] selectedFieldNames= {};
+		String[] namesOfMethodsToPushDown= {};
+		String[][] signaturesOfMethodsToPushDown= {};
+		String[] namesOfFieldsToPushDown= {};
+		String[] namesOfMethodsToDeclareAbstract= {};
+		String[][] signaturesOfMethodsToDeclareAbstract= {};
+
+		helper(selectedMethodNames, selectedMethodSignatures,
+				selectedFieldNames,
+				namesOfMethodsToPushDown, signaturesOfMethodsToPushDown,
+				namesOfFieldsToPushDown,
+				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
+	}
+
+
+	@Test
 	public void testFail0() throws Exception {
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -845,6 +892,7 @@ public class PushDownTests extends RefactoringTest {
 				RefactoringStatus.FATAL);
 	}
 
+	@Test
 	public void testFail1() throws Exception {
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -855,6 +903,7 @@ public class PushDownTests extends RefactoringTest {
 				RefactoringStatus.FATAL);
 	}
 
+	@Test
 	public void testFail2() throws Exception {
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -873,6 +922,7 @@ public class PushDownTests extends RefactoringTest {
 				RefactoringStatus.ERROR);
 	}
 
+	@Test
 	public void testFail3() throws Exception {
 		String[] selectedMethodNames= {};
 		String[][] selectedMethodSignatures= {};
@@ -891,6 +941,7 @@ public class PushDownTests extends RefactoringTest {
 				RefactoringStatus.ERROR);
 	}
 
+	@Test
 	public void testVisibility1() throws Exception {
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -908,6 +959,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testVisibility2() throws Exception {
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -925,6 +977,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testVisibility3() throws Exception {
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -942,6 +995,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testFail7() throws Exception {
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -960,6 +1014,7 @@ public class PushDownTests extends RefactoringTest {
 				RefactoringStatus.ERROR);
 	}
 
+	@Test
 	public void testFail8() throws Exception {
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -978,6 +1033,7 @@ public class PushDownTests extends RefactoringTest {
 				RefactoringStatus.ERROR);
 	}
 
+	@Test
 	public void testFail9() throws Exception {
 		String[] selectedMethodNames= {};
 		String[][] selectedMethodSignatures= {};
@@ -996,6 +1052,7 @@ public class PushDownTests extends RefactoringTest {
 				RefactoringStatus.ERROR);
 	}
 
+	@Test
 	public void testFail10() throws Exception {
 		String[] selectedMethodNames= {"foo"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1014,6 +1071,7 @@ public class PushDownTests extends RefactoringTest {
 				RefactoringStatus.ERROR);
 	}
 
+	@Test
 	public void testFail11() throws Exception {
 		String[] selectedMethodNames= {"foo"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1032,6 +1090,7 @@ public class PushDownTests extends RefactoringTest {
 				RefactoringStatus.ERROR);
 	}
 
+	@Test
 	public void testFail12() throws Exception {
 		String[] selectedMethodNames= {};
 		String[][] selectedMethodSignatures= {};
@@ -1050,6 +1109,7 @@ public class PushDownTests extends RefactoringTest {
 				RefactoringStatus.ERROR);
 	}
 
+	@Test
 	public void testVisibility0() throws Exception {
 		String[] selectedMethodNames= {"foo"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1067,6 +1127,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testAddingRequiredMembers0() throws Exception{
 		String[] fieldNames= {};
 		String[] methodNames= {"m"};
@@ -1078,6 +1139,7 @@ public class PushDownTests extends RefactoringTest {
 		addRequiredMembersHelper(fieldNames, methodNames, methodSignatures, expectedFieldNames, expectedMethodNames, expectedMethodSignatures);
 	}
 
+	@Test
 	public void testAddingRequiredMembers1() throws Exception{
 		String[] fieldNames= {};
 		String[] methodNames= {"m"};
@@ -1089,6 +1151,7 @@ public class PushDownTests extends RefactoringTest {
 		addRequiredMembersHelper(fieldNames, methodNames, methodSignatures, expectedFieldNames, expectedMethodNames, expectedMethodSignatures);
 	}
 
+	@Test
 	public void testAddingRequiredMembers2() throws Exception{
 		String[] fieldNames= {};
 		String[] methodNames= {"m"};
@@ -1100,6 +1163,7 @@ public class PushDownTests extends RefactoringTest {
 		addRequiredMembersHelper(fieldNames, methodNames, methodSignatures, expectedFieldNames, expectedMethodNames, expectedMethodSignatures);
 	}
 
+	@Test
 	public void testAddingRequiredMembers3() throws Exception{
 		String[] fieldNames= {};
 		String[] methodNames= {"m"};
@@ -1111,6 +1175,7 @@ public class PushDownTests extends RefactoringTest {
 		addRequiredMembersHelper(fieldNames, methodNames, methodSignatures, expectedFieldNames, expectedMethodNames, expectedMethodSignatures);
 	}
 
+	@Test
 	public void testAddingRequiredMembers4() throws Exception{
 		String[] fieldNames= {};
 		String[] methodNames= {"m", "f"};
@@ -1122,6 +1187,7 @@ public class PushDownTests extends RefactoringTest {
 		addRequiredMembersHelper(fieldNames, methodNames, methodSignatures, expectedFieldNames, expectedMethodNames, expectedMethodSignatures);
 	}
 
+	@Test
 	public void testAddingRequiredMembers5() throws Exception{
 		String[] fieldNames= {};
 		String[] methodNames= {"m"};
@@ -1133,6 +1199,7 @@ public class PushDownTests extends RefactoringTest {
 		addRequiredMembersHelper(fieldNames, methodNames, methodSignatures, expectedFieldNames, expectedMethodNames, expectedMethodSignatures);
 	}
 
+	@Test
 	public void testAddingRequiredMembers6() throws Exception{
 		String[] fieldNames= {"f"};
 		String[] methodNames= {"m"};
@@ -1144,6 +1211,7 @@ public class PushDownTests extends RefactoringTest {
 		addRequiredMembersHelper(fieldNames, methodNames, methodSignatures, expectedFieldNames, expectedMethodNames, expectedMethodSignatures);
 	}
 
+	@Test
 	public void testAddingRequiredMembers7() throws Exception{
 		String[] fieldNames= {"f"};
 		String[] methodNames= {};
@@ -1155,6 +1223,7 @@ public class PushDownTests extends RefactoringTest {
 		addRequiredMembersHelper(fieldNames, methodNames, methodSignatures, expectedFieldNames, expectedMethodNames, expectedMethodSignatures);
 	}
 
+	@Test
 	public void testAddingRequiredMembers8() throws Exception{
 		String[] fieldNames= {"f"};
 		String[] methodNames= {};
@@ -1166,6 +1235,7 @@ public class PushDownTests extends RefactoringTest {
 		addRequiredMembersHelper(fieldNames, methodNames, methodSignatures, expectedFieldNames, expectedMethodNames, expectedMethodSignatures);
 	}
 
+	@Test
 	public void testAddingRequiredMembers9() throws Exception{
 		String[] fieldNames= {"f"};
 		String[] methodNames= {};
@@ -1177,6 +1247,7 @@ public class PushDownTests extends RefactoringTest {
 		addRequiredMembersHelper(fieldNames, methodNames, methodSignatures, expectedFieldNames, expectedMethodNames, expectedMethodSignatures);
 	}
 
+	@Test
 	public void testEnablement0() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeA= cu.getType("A");
@@ -1184,28 +1255,32 @@ public class PushDownTests extends RefactoringTest {
 		assertTrue("should be enabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement1() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeA= cu.getType("A");
 		IMember[] members= {typeA};
-		assertTrue("should be disabled", ! RefactoringAvailabilityTester.isPushDownAvailable(members));
+		assertFalse("should be disabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement2() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeB= cu.getType("Outer").getType("B");
 		IMember[] members= {typeB};
-		assertTrue("should be disabled", ! RefactoringAvailabilityTester.isPushDownAvailable(members));
+		assertFalse("should be disabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement3() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeA= cu.getType("A");
 		IType typeB= cu.getType("B");
 		IMember[] members= {typeA, typeB};
-		assertTrue("should be disabled", ! RefactoringAvailabilityTester.isPushDownAvailable(members));
+		assertFalse("should be disabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement4() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeA= cu.getType("A");
@@ -1213,6 +1288,7 @@ public class PushDownTests extends RefactoringTest {
 		assertTrue("should be enabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement5() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeA= cu.getType("A");
@@ -1220,6 +1296,7 @@ public class PushDownTests extends RefactoringTest {
 		assertTrue("should be enabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement6() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeA= cu.getType("A");
@@ -1227,6 +1304,7 @@ public class PushDownTests extends RefactoringTest {
 		assertTrue("should be enabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement7() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeA= cu.getType("A");
@@ -1234,6 +1312,7 @@ public class PushDownTests extends RefactoringTest {
 		assertTrue("should be enabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement8() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeA= cu.getType("A");
@@ -1241,55 +1320,63 @@ public class PushDownTests extends RefactoringTest {
 		assertTrue("should be enabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement9() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeA= cu.getType("A");
 		IMember[] members= {typeA};
-		assertTrue("should be disabled", ! RefactoringAvailabilityTester.isPushDownAvailable(members));
+		assertFalse("should be disabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement10() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeA= cu.getType("A");
 		IMember[] members= {typeA};
-		assertTrue("should be disabled", ! RefactoringAvailabilityTester.isPushDownAvailable(members));
+		assertFalse("should be disabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement11() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeA= cu.getType("A");
 		IMember[] members= {typeA};
-		assertTrue("should be disabled", ! RefactoringAvailabilityTester.isPushDownAvailable(members));
+		assertFalse("should be disabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement12() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeB= cu.getType("Outer").getType("B");
 		IMember[] members= {typeB};
-		assertTrue("should be disabled", ! RefactoringAvailabilityTester.isPushDownAvailable(members));
+		assertFalse("should be disabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement13() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeB= cu.getType("Outer").getType("B");
 		IMember[] members= {typeB};
-		assertTrue("should be disabled", ! RefactoringAvailabilityTester.isPushDownAvailable(members));
+		assertFalse("should be disabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement14() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeB= cu.getType("Outer").getType("B");
 		IMember[] members= {typeB};
-		assertTrue("should be disabled", ! RefactoringAvailabilityTester.isPushDownAvailable(members));
+		assertFalse("should be disabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testEnablement15() throws Exception{
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
 		IType typeB= cu.getType("Outer").getType("B");
 		IMember[] members= {typeB};
-		assertTrue("should be disabled", ! RefactoringAvailabilityTester.isPushDownAvailable(members));
+		assertFalse("should be disabled", RefactoringAvailabilityTester.isPushDownAvailable(members));
 	}
 
+	@Test
 	public void testGenerics0() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1307,6 +1394,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics1() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1324,6 +1412,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics2() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1341,6 +1430,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics3() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1358,6 +1448,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics4() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1375,6 +1466,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics5() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1392,6 +1484,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics6() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1409,6 +1502,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics7() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1426,6 +1520,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics8() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1443,6 +1538,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics9() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1460,6 +1556,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics10() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1477,6 +1574,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics11() throws Exception{
 		String[] selectedMethodNames= {"m"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1494,6 +1592,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics12() throws Exception{
 		String[] selectedMethodNames= {};
 		String[][] selectedMethodSignatures= {};
@@ -1511,6 +1610,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics13() throws Exception{
 		String[] selectedMethodNames= {};
 		String[][] selectedMethodSignatures= {};
@@ -1528,6 +1628,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics14() throws Exception{
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1545,6 +1646,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics15() throws Exception{
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1562,6 +1664,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics16() throws Exception{
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1579,6 +1682,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics17() throws Exception{
 		String[] selectedMethodNames= {"f"};
 		String[][] selectedMethodSignatures= {new String[0]};
@@ -1596,6 +1700,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics18() throws Exception{
 		String[] selectedMethodNames= {"f", "m"};
 		String[][] selectedMethodSignatures= {new String[0], new String[] {"QT;"}};
@@ -1613,6 +1718,7 @@ public class PushDownTests extends RefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
 	public void testGenerics19() throws Exception{
 		String[] selectedMethodNames= {"f", "m"};
 		String[][] selectedMethodSignatures= {new String[0], new String[]{"QT;"}};

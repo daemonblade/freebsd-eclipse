@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.wizards.buildpaths;
 
+import java.util.Objects;
+
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IStatus;
 
@@ -134,7 +136,8 @@ public class CPListElementAttribute {
         if (!(obj instanceof CPListElementAttribute))
             return false;
         CPListElementAttribute attrib= (CPListElementAttribute)obj;
-        return attrib.fKey== this.fKey && attrib.getParent().getPath().equals(fParent.getPath());
+        return Objects.equals(attrib.fKey, this.fKey)
+        		&& Objects.equals(attrib.getParent().getPath(), fParent.getPath());
     }
 
     @Override

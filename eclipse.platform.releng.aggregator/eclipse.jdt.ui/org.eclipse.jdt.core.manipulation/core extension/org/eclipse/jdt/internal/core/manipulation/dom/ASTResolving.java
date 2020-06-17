@@ -16,7 +16,6 @@ package org.eclipse.jdt.internal.core.manipulation.dom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -62,7 +61,6 @@ import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.PrimitiveType.Code;
-import org.eclipse.jdt.core.manipulation.TypeKinds;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.QualifiedType;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -86,6 +84,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WildcardType;
+import org.eclipse.jdt.core.manipulation.TypeKinds;
 
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
@@ -95,6 +94,8 @@ import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.dom.TypeBindingVisitor;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 
+import org.eclipse.jdt.internal.ui.util.ASTHelper;
+
 /**
  * Helper methods to find AST nodes or bindings.
  */
@@ -102,7 +103,12 @@ import org.eclipse.jdt.internal.corext.util.JdtFlags;
 // @see org.eclipse.jdt.internal.ui.text.correction.ASTResolving (subclass of this one)
 public class ASTResolving {
 
+	@SuppressWarnings("nls")
 	public static ITypeBinding guessBindingForReference(ASTNode node) {
+		String i= "";
+		if ((((i))).equals(((("a"))))) {
+			return Bindings.normalizeTypeBinding(null);
+		}
 		return Bindings.normalizeTypeBinding(getPossibleReferenceBinding(node));
 	}
 
@@ -296,7 +302,7 @@ public class ASTResolving {
 			break;
 		case ASTNode.SWITCH_CASE:
 			SwitchCase switchCase= (SwitchCase) parent;
-			if (node.equals(switchCase.getExpression()) || (switchCase.getAST().isPreviewEnabled() && switchCase.expressions().contains(node))) {
+			if (node.equals(switchCase.getExpression()) || (ASTHelper.isSwitchCaseExpressionsSupportedInAST(switchCase.getAST()) && switchCase.expressions().contains(node))) {
 				ASTNode caseParent= switchCase.getParent();
 				if (caseParent instanceof SwitchStatement) {
 					return ((SwitchStatement) caseParent).getExpression().resolveTypeBinding();
@@ -483,8 +489,7 @@ public class ASTResolving {
 	}
 
 	public static ITypeBinding guessVariableType(List<VariableDeclarationFragment> fragments) {
-		for (Iterator<VariableDeclarationFragment> iter= fragments.iterator(); iter.hasNext();) {
-			VariableDeclarationFragment frag= iter.next();
+		for (VariableDeclarationFragment frag : fragments) {
 			if (frag.getInitializer() != null) {
 				return Bindings.normalizeTypeBinding(frag.getInitializer().resolveTypeBinding());
 			}

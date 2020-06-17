@@ -57,6 +57,8 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 
+import org.eclipse.jdt.internal.ui.util.ASTHelper;
+
 /**
  * Evaluates all fields, methods and types available (declared) at a given offset
  * in a compilation unit (Code assist that returns IBindings)
@@ -285,8 +287,8 @@ public class ScopeAnalyzer {
 			} else if (hasFlag(TYPES, flags)) {
 				if (fRoot.findDeclaringNode(binding) != null) {
 					List<AbstractTypeDeclaration> types= fRoot.types();
-					for (int i= 0; i < types.size(); i++) {
-						if (requestor.acceptBinding(types.get(i).resolveBinding()))
+					for (AbstractTypeDeclaration type : types) {
+						if (requestor.acceptBinding(type.resolveBinding()))
 							return true;
 					}
 				}
@@ -715,7 +717,7 @@ public class ScopeAnalyzer {
 		public boolean visit(SwitchCase node) {
 			// switch on enum allows to use enum constants without qualification
 			if (hasFlag(VARIABLES, fFlags) && !node.isDefault()) {
-				if (node.getAST().isPreviewEnabled()) {
+				if (ASTHelper.isSwitchCaseExpressionsSupportedInAST(node.getAST())) {
 					List<Expression> expressions= node.expressions();
 					for (Expression expression : expressions) {
 						visitExpression(node, expression);
@@ -910,8 +912,7 @@ public class ScopeAnalyzer {
 			result.add(b.getName());
 		}
 		List<ImportDeclaration> imports= fRoot.imports();
-		for (int i= 0; i < imports.size(); i++) {
-			ImportDeclaration decl= imports.get(i);
+		for (ImportDeclaration decl : imports) {
 			if (decl.isStatic() && !decl.isOnDemand()) {
 				result.add(ASTNodes.getSimpleNameIdentifier(decl.getName()));
 			}

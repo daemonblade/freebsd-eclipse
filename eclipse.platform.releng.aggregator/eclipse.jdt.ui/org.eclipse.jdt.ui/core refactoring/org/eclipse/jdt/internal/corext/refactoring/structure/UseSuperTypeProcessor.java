@@ -15,7 +15,6 @@ package org.eclipse.jdt.internal.corext.refactoring.structure;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.core.runtime.Assert;
@@ -407,7 +406,7 @@ public final class UseSuperTypeProcessor extends SuperTypeRefactoringProcessor {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + 1));
 		final String instance= extended.getAttribute(ATTRIBUTE_INSTANCEOF);
 		if (instance != null) {
-			fInstanceOf= Boolean.valueOf(instance).booleanValue();
+			fInstanceOf= Boolean.parseBoolean(instance);
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_INSTANCEOF));
 		return new RefactoringStatus();
@@ -448,8 +447,8 @@ public final class UseSuperTypeProcessor extends SuperTypeRefactoringProcessor {
 						currentRewrite= rewrite;
 					else
 						currentRewrite= new CompilationUnitRewrite(fOwner, unit, node);
-					for (final Iterator<ITypeConstraintVariable> iterator= collection.iterator(); iterator.hasNext();) {
-						variable= iterator.next();
+					for (ITypeConstraintVariable iTypeConstraintVariable : collection) {
+						variable= iTypeConstraintVariable;
 						estimate= (TType) variable.getData(SuperTypeConstraintsSolver.DATA_TYPE_ESTIMATE);
 						if (estimate != null && variable instanceof ITypeConstraintVariable) {
 							final ASTNode result= NodeFinder.perform(node, ((ITypeConstraintVariable) variable).getRange().getSourceRange());

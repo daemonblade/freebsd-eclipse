@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -74,6 +75,8 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.corext.util.Resources;
+
+import org.eclipse.jdt.internal.ui.util.ASTHelper;
 
 /**
  * This class defines a set of reusable static checks methods.
@@ -388,7 +391,7 @@ public class Checks {
 	public static boolean isEnumCase(ASTNode node) {
 		if (node instanceof SwitchCase) {
 			final SwitchCase caze= (SwitchCase) node;
-			if (node.getAST().isPreviewEnabled()) {
+			if (ASTHelper.isSwitchCaseExpressionsSupportedInAST(node.getAST())) {
 				List<Expression> expressions= caze.expressions();
 				boolean isEnumConst= true;
 				for (Expression expression : expressions) {
@@ -705,11 +708,21 @@ public class Checks {
 
 	//-------- validateEdit checks ----
 
-	public static RefactoringStatus validateModifiesFiles(IFile[] filesToModify, Object context) {
+	public static RefactoringStatus validateModifiesFiles(IFile[] filesToModify, Object context, IProgressMonitor pm) throws CoreException {
 		RefactoringStatus result= new RefactoringStatus();
 		IStatus status= Resources.checkInSync(filesToModify);
-		if (!status.isOK())
-			result.merge(RefactoringStatus.create(status));
+		if (!status.isOK()) {
+			boolean autoRefresh= Platform.getPreferencesService().getBoolean(ResourcesPlugin.PI_RESOURCES, ResourcesPlugin.PREF_LIGHTWEIGHT_AUTO_REFRESH, false, null);
+			if (autoRefresh) {
+				for (IFile resource : filesToModify) {
+					resource.refreshLocal(IResource.DEPTH_INFINITE, pm);
+				}
+				status= Resources.checkInSync(filesToModify);
+			}
+			if (!status.isOK()) {
+				result.merge(RefactoringStatus.create(status));
+			}
+		}
 		status= Resources.makeCommittable(filesToModify, context);
 		if (!status.isOK()) {
 			result.merge(RefactoringStatus.create(status));
@@ -730,14 +743,22 @@ public class Checks {
 	}
 
 
-	public static RefactoringStatus validateEdit(ICompilationUnit unit, Object context) {
+	public static RefactoringStatus validateEdit(ICompilationUnit unit, Object context, IProgressMonitor pm) throws CoreException {
 		IResource resource= unit.getPrimary().getResource();
 		RefactoringStatus result= new RefactoringStatus();
 		if (resource == null)
 			return result;
 		IStatus status= Resources.checkInSync(resource);
-		if (!status.isOK())
-			result.merge(RefactoringStatus.create(status));
+		if (!status.isOK()) {
+			boolean autoRefresh= Platform.getPreferencesService().getBoolean(ResourcesPlugin.PI_RESOURCES, ResourcesPlugin.PREF_LIGHTWEIGHT_AUTO_REFRESH, false, null);
+			if (autoRefresh) {
+				resource.refreshLocal(IResource.DEPTH_INFINITE, pm);
+				status= Resources.checkInSync(resource);
+			}
+			if (!status.isOK()) {
+				result.merge(RefactoringStatus.create(status));
+			}
+		}
 		status= Resources.makeCommittable(resource, context);
 		if (!status.isOK()) {
 			result.merge(RefactoringStatus.create(status));

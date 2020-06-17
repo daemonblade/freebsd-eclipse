@@ -26,7 +26,9 @@ import org.eclipse.jdt.internal.ui.fix.ConvertLoopCleanUp;
 import org.eclipse.jdt.internal.ui.fix.ExpressionsCleanUp;
 import org.eclipse.jdt.internal.ui.fix.LambdaExpressionAndMethodRefCleanUp;
 import org.eclipse.jdt.internal.ui.fix.LambdaExpressionsCleanUp;
+import org.eclipse.jdt.internal.ui.fix.LazyLogicalCleanUp;
 import org.eclipse.jdt.internal.ui.fix.NumberSuffixCleanUp;
+import org.eclipse.jdt.internal.ui.fix.VarCleanUp;
 import org.eclipse.jdt.internal.ui.fix.VariableDeclarationCleanUp;
 
 public final class CodeStyleTabPage extends AbstractCleanUpTabPage {
@@ -39,11 +41,13 @@ public final class CodeStyleTabPage extends AbstractCleanUpTabPage {
         		new ConvertLoopCleanUp(values),
         		new ExpressionsCleanUp(values),
 				new NumberSuffixCleanUp(values),
+				new LazyLogicalCleanUp(values),
 				new VariableDeclarationCleanUp(values),
+				new VarCleanUp(values),
 				new LambdaExpressionsCleanUp(values),
 				new LambdaExpressionAndMethodRefCleanUp(values)
-		};
-	}
+        };
+    }
 
 	@Override
 	protected void doCreatePreferences(Composite composite, int numColumns) {
@@ -60,6 +64,9 @@ public final class CodeStyleTabPage extends AbstractCleanUpTabPage {
 
 		CheckboxPreference convertLoop= createCheckboxPref(controlGroup, numColumns, CleanUpMessages.CodeStyleTabPage_CheckboxName_ConvertForLoopToEnhanced, CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED, CleanUpModifyDialog.FALSE_TRUE);
 		registerPreference(convertLoop);
+		intent(controlGroup);
+		final CheckboxPreference convertLoopOnlyIfLoopVariableUsed= createCheckboxPref(controlGroup, 1, CleanUpMessages.CodeStyleTabPage_CheckboxName_ConvertLoopOnlyIfLoopVarUsed, CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED, CleanUpModifyDialog.FALSE_TRUE);
+		registerSlavePreference(convertLoop, new CheckboxPreference[] {convertLoopOnlyIfLoopVariableUsed});
 
 		Group expressionsGroup= createGroup(numColumns, composite, CleanUpMessages.CodeStyleTabPage_GroupName_Expressions);
 
@@ -68,6 +75,9 @@ public final class CodeStyleTabPage extends AbstractCleanUpTabPage {
 		final RadioPreference useParenthesesAlwaysPref= createRadioPref(expressionsGroup, 1, CleanUpMessages.CodeStyleTabPage_RadioName_AlwaysUseParantheses, CleanUpConstants.EXPRESSIONS_USE_PARENTHESES_ALWAYS, CleanUpModifyDialog.FALSE_TRUE);
 		final RadioPreference useParenthesesNeverPref= createRadioPref(expressionsGroup, 1, CleanUpMessages.CodeStyleTabPage_RadioName_NeverUseParantheses, CleanUpConstants.EXPRESSIONS_USE_PARENTHESES_NEVER, CleanUpModifyDialog.FALSE_TRUE);
 		registerSlavePreference(useParenthesesPref, new RadioPreference[] {useParenthesesAlwaysPref, useParenthesesNeverPref});
+		final CheckboxPreference useLazyLogicalPref= createCheckboxPref(expressionsGroup, numColumns, CleanUpMessages.CodeStyleTabPage_CheckboxName_UseLazyLogicalOperator,
+				CleanUpConstants.USE_LAZY_LOGICAL_OPERATOR, CleanUpModifyDialog.FALSE_TRUE);
+		registerPreference(useLazyLogicalPref);
 
 		Group numberSuffixGroup= createGroup(numColumns, composite, CleanUpMessages.CodeStyleTabPage_GroupName_NumberLiteral);
 
@@ -83,6 +93,9 @@ public final class CodeStyleTabPage extends AbstractCleanUpTabPage {
 		final CheckboxPreference useFinalParametersPref= createCheckboxPref(variableGroup, 1, CleanUpMessages.CodeStyleTabPage_CheckboxName_UseFinalForParameters, CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL_PARAMETERS, CleanUpModifyDialog.FALSE_TRUE);
 		final CheckboxPreference useFinalVariablesPref= createCheckboxPref(variableGroup, 1, CleanUpMessages.CodeStyleTabPage_CheckboxName_UseFinalForLocals, CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL_LOCAL_VARIABLES, CleanUpModifyDialog.FALSE_TRUE);
 		registerSlavePreference(useFinalPref, new CheckboxPreference[] {useFinalFieldsPref, useFinalParametersPref, useFinalVariablesPref});
+		final CheckboxPreference useVarPref= createCheckboxPref(variableGroup, numColumns, CleanUpMessages.CodeStyleTabPage_CheckboxName_UseVar, CleanUpConstants.USE_VAR,
+				CleanUpModifyDialog.FALSE_TRUE);
+		registerPreference(useVarPref);
 
 		Group functionalInterfacesGroup= createGroup(numColumns, composite, CleanUpMessages.CodeStyleTabPage_GroupName_FunctionalInterfaces);
 

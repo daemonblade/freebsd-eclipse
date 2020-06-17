@@ -466,7 +466,7 @@ public class JavadocView extends AbstractInfoView {
 		@Override
 		public void run() {
 			if (fControl instanceof StyledText)
-		        ((StyledText)fControl).selectAll();
+				((StyledText)fControl).selectAll();
 			else {
 				// FIXME: see https://bugs.eclipse.org/bugs/show_bug.cgi?id=63022
 //				((Browser)fControl).selectAll();
@@ -492,15 +492,15 @@ public class JavadocView extends AbstractInfoView {
 		 * @param control	the widget
 		 */
 		public SelectionProvider(Control control) {
-		    Assert.isNotNull(control);
+			Assert.isNotNull(control);
 			fControl= control;
 			if (fControl instanceof StyledText) {
-			    ((StyledText)fControl).addSelectionListener(new SelectionAdapter() {
+				((StyledText)fControl).addSelectionListener(new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-					    fireSelectionChanged();
+						fireSelectionChanged();
 					}
-			    });
+				});
 			} else {
 				// FIXME: see https://bugs.eclipse.org/bugs/show_bug.cgi?id=63022
 //				((Browser)fControl).addSelectionListener(new SelectionAdapter() {
@@ -1207,7 +1207,7 @@ public class JavadocView extends AbstractInfoView {
 			try {
 				int offset= ((ITextSelection)selection).getOffset();
 				String partition= ((IDocumentExtension3)document).getContentType(IJavaPartitions.JAVA_PARTITIONING, offset, false);
-				return  partition != IJavaPartitions.JAVA_DOC;
+				return !IJavaPartitions.JAVA_DOC.equals(partition);
 			} catch (BadPartitioningException ex) {
 				return false;
 			} catch (BadLocationException ex) {
@@ -1458,8 +1458,8 @@ public class JavadocView extends AbstractInfoView {
 			@Override
 			public boolean handleExternalLink(final URL url, Display display) {
 				if (fCurrent == null ||
-						!(fCurrent.getInputElement() instanceof URL
-								&& url.toExternalForm().equals(((URL) fCurrent.getInputElement()).toExternalForm()))) {
+						!(fCurrent.getInputElement() instanceof URL)
+						|| !url.toExternalForm().equals(((URL) fCurrent.getInputElement()).toExternalForm())) {
 					fCurrent= new URLBrowserInput(fCurrent, url);
 
 					if (fBackAction != null) {

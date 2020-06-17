@@ -17,20 +17,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import com.ibm.icu.text.DateFormat;
 
 import org.xml.sax.InputSource;
 
@@ -365,20 +363,10 @@ public final class RefactoringHistoryService implements IRefactoringHistoryServi
 	public void connect() {
 		fReferenceCount++;
 		if (fReferenceCount == 1) {
-			fOperationListener= new IOperationHistoryListener() {
-				@Override
-				public void historyNotification(final OperationHistoryEvent event) {
-					performHistoryNotification(event);
-				}
-			};
+			fOperationListener= event -> performHistoryNotification(event);
 			OperationHistoryFactory.getOperationHistory().addOperationHistoryListener(fOperationListener);
 
-			fResourceListener= new IResourceChangeListener() {
-				@Override
-				public void resourceChanged(final IResourceChangeEvent event) {
-					peformResourceChanged(event);
-				}
-			};
+			fResourceListener= event -> peformResourceChanged(event);
 			ResourcesPlugin.getWorkspace().addResourceChangeListener(fResourceListener, IResourceChangeEvent.PRE_CLOSE | IResourceChangeEvent.POST_CHANGE);
 		}
 	}
@@ -427,8 +415,7 @@ public final class RefactoringHistoryService implements IRefactoringHistoryServi
 			try {
 				final Set<Entry<String, Collection<RefactoringDescriptorProxy>>> entries= projects.entrySet();
 				subMonitor.beginTask(RefactoringCoreMessages.RefactoringHistoryService_deleting_refactorings, entries.size());
-				for (final Iterator<Entry<String, Collection<RefactoringDescriptorProxy>>> iterator= entries.iterator(); iterator.hasNext();) {
-					final Entry<String, Collection<RefactoringDescriptorProxy>> entry= iterator.next();
+				for (Entry<String, Collection<RefactoringDescriptorProxy>> entry : entries) {
 					final Collection<RefactoringDescriptorProxy> collection= entry.getValue();
 					String project= entry.getKey();
 					if (project.equals(RefactoringHistoryService.NAME_WORKSPACE_PROJECT))

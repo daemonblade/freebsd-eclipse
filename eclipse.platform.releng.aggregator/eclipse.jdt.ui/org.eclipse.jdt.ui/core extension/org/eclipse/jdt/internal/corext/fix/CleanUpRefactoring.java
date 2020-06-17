@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,7 +16,6 @@ package org.eclipse.jdt.internal.corext.fix;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -70,7 +69,9 @@ import org.eclipse.jdt.core.dom.ASTRequestor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 
+import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.ASTBatchParser;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationStateChange;
 import org.eclipse.jdt.internal.corext.refactoring.changes.MultiStateCompilationUnitChange;
@@ -89,9 +90,7 @@ import org.eclipse.jdt.internal.ui.IJavaStatusConstants;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.fix.IMultiFix.MultiFixContext;
 import org.eclipse.jdt.internal.ui.fix.MapCleanUpOptions;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.ui.refactoring.IScheduledRefactoring;
-import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 
 public class CleanUpRefactoring extends Refactoring implements IScheduledRefactoring {
 
@@ -403,9 +402,7 @@ public class CleanUpRefactoring extends Refactoring implements IScheduledRefacto
 					}
 				}
 
-				for (Iterator<ICompilationUnit> iterator= sourceList.iterator(); iterator.hasNext();) {
-					ICompilationUnit cu= iterator.next();
-
+				for (ICompilationUnit cu : sourceList) {
 					monitor.worked(1);
 
 					requestor.acceptSource(cu);
@@ -421,8 +418,7 @@ public class CleanUpRefactoring extends Refactoring implements IScheduledRefacto
 		}
 
 		public void dispose() {
-			for (Iterator<ICompilationUnit> iterator= fWorkingCopies.values().iterator(); iterator.hasNext();) {
-				ICompilationUnit cu= iterator.next();
+			for (ICompilationUnit cu : fWorkingCopies.values()) {
 				try {
 					cu.discardWorkingCopy();
 				} catch (JavaModelException e) {
@@ -462,8 +458,8 @@ public class CleanUpRefactoring extends Refactoring implements IScheduledRefacto
 					result[i]= change;
 				} else {
 					MultiStateCompilationUnitChange mscuc= new MultiStateCompilationUnitChange(getChangeName(unit), unit);
-					for (int j= 0; j < changes.size(); j++) {
-						mscuc.addChange(createGroupFreeChange(changes.get(j)));
+					for (CleanUpChange change : changes) {
+						mscuc.addChange(createGroupFreeChange(change));
 					}
 					mscuc.setSaveMode(saveMode);
 					result[i]= mscuc;
@@ -484,8 +480,7 @@ public class CleanUpRefactoring extends Refactoring implements IScheduledRefacto
 
 		private void applyChange(ICompilationUnit compilationUnit, List<CleanUpChange> changes) throws JavaModelException, CoreException {
 			IDocument document= new Document(changes.get(0).getCurrentContent(new NullProgressMonitor()));
-			for (int i= 0; i < changes.size(); i++) {
-				CleanUpChange change= changes.get(i);
+			for (CleanUpChange change : changes) {
 				TextEdit edit= change.getEdit().copy();
 
 				try {
@@ -578,7 +573,7 @@ public class CleanUpRefactoring extends Refactoring implements IScheduledRefacto
 	}
 
 	public IJavaProject[] getProjects() {
-		return fProjects.keySet().toArray(new IJavaProject[fProjects.keySet().size()]);
+		return fProjects.keySet().toArray(new IJavaProject[fProjects.size()]);
 	}
 
 	public void setLeaveFilesDirty(boolean leaveFilesDirty) {
@@ -658,7 +653,7 @@ public class CleanUpRefactoring extends Refactoring implements IScheduledRefacto
 
 			List<IResource> files= new ArrayList<>();
 			findFilesToBeModified(change, files);
-			result.merge(Checks.validateModifiesFiles(files.toArray(new IFile[files.size()]), getValidationContext()));
+			result.merge(Checks.validateModifiesFiles(files.toArray(new IFile[files.size()]), getValidationContext(), pm));
 		} finally {
 			pm.done();
 		}

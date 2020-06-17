@@ -13,16 +13,14 @@
  *******************************************************************************/
 package org.eclipse.ltk.internal.ui.refactoring;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
-import com.ibm.icu.text.Collator;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.accessibility.ACC;
@@ -61,7 +59,6 @@ import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
@@ -155,13 +152,9 @@ public class PreviewWizardPage extends RefactoringWizardPage implements IPreview
 
 		@Override
 		public void run() {
-			BusyIndicator.showWhile(getShell().getDisplay(), new Runnable() {
-
-				@Override
-				public void run() {
-					setActiveGroupCategory(fGroupCategory);
-					fOwner.executed(FilterAction.this);
-				}
+			BusyIndicator.showWhile(getShell().getDisplay(), () -> {
+				setActiveGroupCategory(fGroupCategory);
+				fOwner.executed(FilterAction.this);
 			});
 		}
 	}
@@ -179,13 +172,9 @@ public class PreviewWizardPage extends RefactoringWizardPage implements IPreview
 
 		@Override
 		public void run() {
-			BusyIndicator.showWhile(getShell().getDisplay(), new Runnable() {
-
-				@Override
-				public final void run() {
-					clearGroupCategories();
-					fOwner.executed(ShowAllAction.this);
-				}
+			BusyIndicator.showWhile(getShell().getDisplay(), () -> {
+				clearGroupCategories();
+				fOwner.executed(ShowAllAction.this);
 			});
 		}
 	}
@@ -196,13 +185,10 @@ public class PreviewWizardPage extends RefactoringWizardPage implements IPreview
 		}
 		@Override
 		public void run() {
-			BusyIndicator.showWhile(getShell().getDisplay(), new Runnable() {
-				@Override
-				public final void run() {
-					boolean hideDerived= isChecked();
-					getRefactoringSettings().put(PREVIEW_WIZARD_PAGE_HIDE_DERIVED, hideDerived);
-					setHideDerived(hideDerived);
-				}
+			BusyIndicator.showWhile(getShell().getDisplay(), () -> {
+				boolean hideDerived= isChecked();
+				getRefactoringSettings().put(PREVIEW_WIZARD_PAGE_HIDE_DERIVED, hideDerived);
+				setHideDerived(hideDerived);
 			});
 		}
 	}
@@ -233,8 +219,8 @@ public class PreviewWizardPage extends RefactoringWizardPage implements IPreview
 			fActiveAction= fShowAllAction;
 			fFilterActions= new FilterAction[list.size()];
 			int i= 0;
-			for (Iterator<GroupCategory> iter= list.iterator(); iter.hasNext();) {
-				fFilterActions[i++]= new FilterAction(this, iter.next());
+			for (GroupCategory groupCategory : list) {
+				fFilterActions[i++]= new FilterAction(this, groupCategory);
 			}
 			fHideDerivedAction= new HideDerivedAction();
 		}
@@ -600,19 +586,16 @@ public class PreviewWizardPage extends RefactoringWizardPage implements IPreview
 	}
 
 	private ISelectionChangedListener createSelectionChangedListener() {
-		return new ISelectionChangedListener(){
-			@Override
-			public void selectionChanged(SelectionChangedEvent event) {
-				IStructuredSelection sel= (IStructuredSelection) event.getSelection();
-				if (sel.size() == 1) {
-					PreviewNode newSelection= (PreviewNode)sel.getFirstElement();
-					if (newSelection != fCurrentSelection) {
-						fCurrentSelection= newSelection;
-						showPreview(newSelection);
-					}
-				} else {
-					showPreview(null);
+		return event -> {
+			IStructuredSelection sel= (IStructuredSelection) event.getSelection();
+			if (sel.size() == 1) {
+				PreviewNode newSelection= (PreviewNode)sel.getFirstElement();
+				if (newSelection != fCurrentSelection) {
+					fCurrentSelection= newSelection;
+					showPreview(newSelection);
 				}
+			} else {
+				showPreview(null);
 			}
 		};
 	}

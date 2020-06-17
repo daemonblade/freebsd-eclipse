@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -112,11 +112,14 @@ import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.core.refactoring.IJavaRefactorings;
 import org.eclipse.jdt.core.refactoring.descriptors.JavaRefactoringDescriptor;
 
+import org.eclipse.jdt.internal.core.manipulation.StubUtility;
+import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.BodyDeclarationRewrite;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
@@ -148,14 +151,11 @@ import org.eclipse.jdt.internal.corext.util.JavaConventionsUtil;
 import org.eclipse.jdt.internal.corext.util.JavaElementResourceMapping;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
-import org.eclipse.jdt.internal.core.manipulation.StubUtility;
-import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 
 import org.eclipse.jdt.ui.JavaElementLabels;
 import org.eclipse.jdt.ui.refactoring.RefactoringSaveHelper;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 
 public final class ReorgPolicyFactory {
 
@@ -941,13 +941,13 @@ public final class ReorgPolicyFactory {
 			int flags= JavaRefactoringDescriptor.JAR_MIGRATION | JavaRefactoringDescriptor.JAR_REFACTORING | RefactoringDescriptor.STRUCTURAL_CHANGE | RefactoringDescriptor.MULTI_CHANGE;
 			final JDTRefactoringDescriptorComment comment= new JDTRefactoringDescriptorComment(project, this, header);
 			arguments.put(ATTRIBUTE_POLICY, getPolicyId());
-			arguments.put(ATTRIBUTE_FILES, Integer.valueOf(fFiles.length).toString());
+			arguments.put(ATTRIBUTE_FILES, Integer.toString(fFiles.length));
 			for (int offset= 0; offset < fFiles.length; offset++)
 				arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + (offset + 1), JavaRefactoringDescriptorUtil.resourceToHandle(project, fFiles[offset]));
-			arguments.put(ATTRIBUTE_FOLDERS, Integer.valueOf(fFolders.length).toString());
+			arguments.put(ATTRIBUTE_FOLDERS, Integer.toString(fFolders.length));
 			for (int offset= 0; offset < fFolders.length; offset++)
 				arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + (offset + fFiles.length + 1), JavaRefactoringDescriptorUtil.resourceToHandle(project, fFolders[offset]));
-			arguments.put(ATTRIBUTE_UNITS, Integer.valueOf(fCus.length).toString());
+			arguments.put(ATTRIBUTE_UNITS, Integer.toString(fCus.length));
 			for (int offset= 0; offset < fCus.length; offset++)
 				arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + (offset + fFolders.length + fFiles.length + 1), JavaRefactoringDescriptorUtil.elementToHandle(project, fCus[offset]));
 			arguments.putAll(getRefactoringArguments(project));
@@ -1429,9 +1429,14 @@ public final class ReorgPolicyFactory {
 				if (fChangeManager == null) {
 					fChangeManager= createChangeManager(new SubProgressMonitor(pm, 1), new RefactoringStatus());
 					// TODO: non-CU matches silently dropped
-					RefactoringStatus status= Checks.validateModifiesFiles(getAllModifiedFiles(), null);
-					if (status.hasFatalError())
+					RefactoringStatus status;
+					try {
+						status= Checks.validateModifiesFiles(getAllModifiedFiles(), null, pm);
+						if (status.hasFatalError())
+							fChangeManager= new TextChangeManager();
+					} catch (CoreException e) {
 						fChangeManager= new TextChangeManager();
+					}
 				}
 				// </workaround>
 
@@ -1590,8 +1595,8 @@ public final class ReorgPolicyFactory {
 			arguments.putAll(super.getRefactoringArguments(project));
 			if (fFilePatterns != null && !"".equals(fFilePatterns)) //$NON-NLS-1$
 				arguments.put(ATTRIBUTE_PATTERNS, fFilePatterns);
-			arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES, Boolean.valueOf(fUpdateReferences).toString());
-			arguments.put(ATTRIBUTE_QUALIFIED, Boolean.valueOf(fUpdateQualifiedNames).toString());
+			arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES, Boolean.toString(fUpdateReferences));
+			arguments.put(ATTRIBUTE_QUALIFIED, Boolean.toString(fUpdateQualifiedNames));
 			return arguments;
 		}
 
@@ -1634,12 +1639,12 @@ public final class ReorgPolicyFactory {
 				fFilePatterns= ""; //$NON-NLS-1$
 			final String references= arguments.getAttribute(JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES);
 			if (references != null) {
-				fUpdateReferences= Boolean.valueOf(references).booleanValue();
+				fUpdateReferences= Boolean.parseBoolean(references);
 			} else
 				return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES));
 			final String qualified= arguments.getAttribute(ATTRIBUTE_QUALIFIED);
 			if (qualified != null) {
-				fUpdateQualifiedNames= Boolean.valueOf(qualified).booleanValue();
+				fUpdateQualifiedNames= Boolean.parseBoolean(qualified);
 			} else
 				return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_QUALIFIED));
 			return super.initialize(arguments);
@@ -2899,7 +2904,7 @@ public final class ReorgPolicyFactory {
 			if (!super.canEnable() || fPackageFragmentRoots.length == 0)
 				return false;
 			for (IPackageFragmentRoot root : fPackageFragmentRoots) {
-				if (!(ReorgUtils.isSourceFolder(root) || root.isArchive() && !root.isExternal()))
+				if (!ReorgUtils.isSourceFolder(root) && (!root.isArchive() || root.isExternal()))
 					return false;
 			}
 			if (ReorgUtils.containsLinkedResources(fPackageFragmentRoots))
@@ -2940,7 +2945,7 @@ public final class ReorgPolicyFactory {
 			int flags= RefactoringDescriptor.STRUCTURAL_CHANGE | RefactoringDescriptor.MULTI_CHANGE;
 			final JDTRefactoringDescriptorComment comment= new JDTRefactoringDescriptorComment(project, this, header);
 			arguments.put(ATTRIBUTE_POLICY, getPolicyId());
-			arguments.put(ATTRIBUTE_ROOTS, Integer.valueOf(fPackageFragmentRoots.length).toString());
+			arguments.put(ATTRIBUTE_ROOTS, Integer.toString(fPackageFragmentRoots.length));
 			for (int offset= 0; offset < fPackageFragmentRoots.length; offset++)
 				arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + (offset + 1), JavaRefactoringDescriptorUtil.elementToHandle(project, fPackageFragmentRoots[offset]));
 			arguments.putAll(getRefactoringArguments(project));
@@ -3173,7 +3178,7 @@ public final class ReorgPolicyFactory {
 			int flags= JavaRefactoringDescriptor.JAR_REFACTORING | JavaRefactoringDescriptor.JAR_MIGRATION | RefactoringDescriptor.STRUCTURAL_CHANGE | RefactoringDescriptor.MULTI_CHANGE;
 			final JDTRefactoringDescriptorComment comment= new JDTRefactoringDescriptorComment(project, this, header);
 			arguments.put(ATTRIBUTE_POLICY, getPolicyId());
-			arguments.put(ATTRIBUTE_FRAGMENTS, Integer.valueOf(fPackageFragments.length).toString());
+			arguments.put(ATTRIBUTE_FRAGMENTS, Integer.toString(fPackageFragments.length));
 			for (int offset= 0; offset < fPackageFragments.length; offset++)
 				arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + (offset + 1), JavaRefactoringDescriptorUtil.elementToHandle(project, fPackageFragments[offset]));
 			arguments.putAll(getRefactoringArguments(project));
@@ -3918,7 +3923,7 @@ public final class ReorgPolicyFactory {
 			int flags= JavaRefactoringDescriptor.JAR_REFACTORING | JavaRefactoringDescriptor.JAR_MIGRATION | RefactoringDescriptor.STRUCTURAL_CHANGE | RefactoringDescriptor.MULTI_CHANGE;
 			final JDTRefactoringDescriptorComment comment= new JDTRefactoringDescriptorComment(project, this, header);
 			arguments.put(ATTRIBUTE_POLICY, getPolicyId());
-			arguments.put(ATTRIBUTE_MEMBERS, Integer.valueOf(fJavaElements.length).toString());
+			arguments.put(ATTRIBUTE_MEMBERS, Integer.toString(fJavaElements.length));
 			for (int offset= 0; offset < fJavaElements.length; offset++)
 				arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + (offset + 1), JavaRefactoringDescriptorUtil.elementToHandle(project, fJavaElements[offset]));
 			arguments.putAll(getRefactoringArguments(project));
@@ -4375,14 +4380,14 @@ public final class ReorgPolicyFactory {
 			if (element == null)
 				element= JavaRefactoringDescriptorUtil.handleToResource(arguments.getProject(), value);
 			if (tokenizer.hasMoreTokens()) {
-				final boolean processed= Boolean.valueOf(tokenizer.nextToken()).booleanValue();
+				final boolean processed= Boolean.parseBoolean(tokenizer.nextToken());
 				if (processed) {
 					log.markAsProcessed(element);
 					if (element instanceof IJavaElement)
 						log.markAsProcessed(JavaElementResourceMapping.create((IJavaElement) element));
 				}
 				if (tokenizer.hasMoreTokens()) {
-					final boolean renamed= Boolean.valueOf(tokenizer.nextToken()).booleanValue();
+					final boolean renamed= Boolean.parseBoolean(tokenizer.nextToken());
 					if (renamed && tokenizer.hasMoreTokens()) {
 						final String name= tokenizer.nextToken();
 						log.setNewName(element, name);

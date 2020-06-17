@@ -68,16 +68,14 @@ public class NumberSuffixCleanUp extends AbstractMultiFix {
 		return new String[0];
 	}
 
-	@SuppressWarnings("nls")
 	@Override
 	public String getPreview() {
 		StringBuilder bld= new StringBuilder();
-		bld.append("\n");
 
 		if (isEnabled(CleanUpConstants.NUMBER_SUFFIX)) {
-			bld.append("long number1 = 10L;\n");
+			bld.append("long number1 = 10L;\n"); //$NON-NLS-1$
 		} else {
-			bld.append("long number1 = 10l;\n");
+			bld.append("long number1 = 10l;\n"); //$NON-NLS-1$
 		}
 
 		return bld.toString();

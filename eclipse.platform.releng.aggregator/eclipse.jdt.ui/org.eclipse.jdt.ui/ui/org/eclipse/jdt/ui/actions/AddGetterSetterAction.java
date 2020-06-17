@@ -18,7 +18,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -510,8 +509,7 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 
 	private static List<IField> reorderFields(List<IField> collection, Set<IField> set) {
 		final List<IField> list= new ArrayList<>(collection.size());
-		for (final Iterator<IField> iterator= set.iterator(); iterator.hasNext();) {
-			final IField field= iterator.next();
+		for (IField field : set) {
 			if (collection.contains(field))
 				list.add(field);
 		}
@@ -1041,8 +1039,7 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 			label.setLayoutData(gd);
 
 			final Combo combo= new Combo(composite, SWT.READ_ONLY);
-			combo.setItems(new String[] { ActionMessages.GetterSetterTreeSelectionDialog_alpha_pair_sort,
-					ActionMessages.GetterSetterTreeSelectionDialog_alpha_method_sort});
+			combo.setItems(ActionMessages.GetterSetterTreeSelectionDialog_alpha_pair_sort, ActionMessages.GetterSetterTreeSelectionDialog_alpha_method_sort);
 			final int methodIndex= 1; // Hard-coded. Change this if the
 			// list gets more complicated.
 			// http://bugs.eclipse.org/bugs/show_bug.cgi?id=38400

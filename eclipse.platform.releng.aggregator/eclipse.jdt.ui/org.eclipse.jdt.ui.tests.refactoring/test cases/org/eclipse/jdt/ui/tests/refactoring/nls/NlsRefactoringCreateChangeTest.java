@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,15 +13,18 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.refactoring.nls;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 
@@ -41,42 +44,31 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.corext.refactoring.nls.NLSRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.nls.NLSSubstitution;
 
-import org.eclipse.jdt.ui.tests.core.ProjectTestSetup;
-import org.eclipse.jdt.ui.tests.refactoring.RefactoringTest;
+import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
+import org.eclipse.jdt.ui.tests.refactoring.GenericRefactoringTest;
 
-public class NlsRefactoringCreateChangeTest extends TestCase {
-
-	private static final Class<NlsRefactoringCreateChangeTest> THIS= NlsRefactoringCreateChangeTest.class;
+public class NlsRefactoringCreateChangeTest {
+	@Rule
+	public ProjectTestSetup pts= new ProjectTestSetup();
 
 	private NlsRefactoringTestHelper fHelper;
 	private IJavaProject fJavaProject;
 	private IPackageFragmentRoot fSourceFolder;
 
-	public NlsRefactoringCreateChangeTest(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		return setUpTest(new TestSuite(THIS));
-	}
-
-	public static Test setUpTest(Test test) {
-		return new ProjectTestSetup(test);
-	}
-
-	@Override
-	protected void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		fJavaProject= ProjectTestSetup.getProject();
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJavaProject, "src");
 		fHelper= new NlsRefactoringTestHelper(fJavaProject);
 	}
 
-	@Override
-	protected void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		JavaProjectHelper.clear(fJavaProject, ProjectTestSetup.getDefaultClasspath());
 	}
 
-	public void testWithoutPreviousNlsing() throws Exception {
+	@Test
+	public void withoutPreviousNlsing() throws Exception {
 
 		fHelper.createPackageFragment("p2", "/TestSetupProject/src2"); //$NON-NLS-1$//$NON-NLS-2$
 
@@ -86,7 +78,7 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		buf.append("class Test {\n");
 		buf.append("	String hello=\"helloworld\";\n");
 		buf.append("}");
-		ICompilationUnit cu= RefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/p"), "Test.java", //$NON-NLS-1$//$NON-NLS-2$
+		ICompilationUnit cu= GenericRefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/p"), "Test.java", //$NON-NLS-1$//$NON-NLS-2$
 				buf.toString());
 
 		NLSRefactoring nls= createDefaultNls(cu);
@@ -108,7 +100,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 	}
 
 
-	public void testCreateChangeWithCollidingImport() throws Exception {
+	@Test
+	public void createChangeWithCollidingImport() throws Exception {
 		//class to NLS
 		StringBuffer buf= new StringBuffer();
 		buf.append("package p;\n");
@@ -116,7 +109,7 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		buf.append("class Test {");
 		buf.append("	String hello=\"helloworld\";\r\n");
 		buf.append("}");
-		ICompilationUnit cu= RefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/p"), "Test.java", buf.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+		ICompilationUnit cu= GenericRefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/p"), "Test.java", buf.toString()); //$NON-NLS-1$ //$NON-NLS-2$
 
 		NLSRefactoring nls= createDefaultNls(cu);
 
@@ -137,7 +130,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 
 
 	// BUG 59156
-	public void testCreateChangeWithExistingAccessorclassInDifferentPackage() throws Exception {
+	@Test
+	public void createChangeWithExistingAccessorclassInDifferentPackage() throws Exception {
 		//Accessor class
 		StringBuffer buf= new StringBuffer();
 		buf.append("package p;\n");
@@ -147,7 +141,7 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		buf.append("		 		 return \"\";\n");
 		buf.append("		 }\n");
 		buf.append("}\n");
-		RefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/p"), "Accessor.java", buf.toString());
+		GenericRefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/p"), "Accessor.java", buf.toString());
 
 		//class to NLS
 		buf= new StringBuffer();
@@ -157,7 +151,7 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		buf.append("  String world=\"world\";\n");
 		buf.append("}\n");
 		fHelper.createPackageFragment("test", "/TestSetupProject/src1");
-		ICompilationUnit testClass= RefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/test"), "AClass.java", buf.toString());
+		ICompilationUnit testClass= GenericRefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/test"), "AClass.java", buf.toString());
 
 		NLSRefactoring nls= NLSRefactoring.create(testClass);
 
@@ -188,7 +182,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 	}
 
 	// BUG 202566
-	public void testCreateChangeWithExistingAccessorclassInDifferentPackage_1() throws Exception {
+	@Test
+	public void createChangeWithExistingAccessorclassInDifferentPackage_1() throws Exception {
 		//Accessor class
 		StringBuffer buf= new StringBuffer();
 		buf.append("package p;\n");
@@ -198,7 +193,7 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		buf.append("		 		 return \"\";\n");
 		buf.append("		 }\n");
 		buf.append("}\n");
-		RefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/p"), "Accessor.java", buf.toString());
+		GenericRefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/p"), "Accessor.java", buf.toString());
 
 		//class to NLS
 		buf= new StringBuffer();
@@ -207,7 +202,7 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		buf.append("  String hello=\"helloworld\";\n");
 		buf.append("}\n");
 		fHelper.createPackageFragment("test", "/TestSetupProject/src1");
-		ICompilationUnit testClass= RefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/test"), "AClass.java", buf.toString());
+		ICompilationUnit testClass= GenericRefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/test"), "AClass.java", buf.toString());
 
 		NLSRefactoring nls= NLSRefactoring.create(testClass);
 
@@ -230,7 +225,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		buf.append("}\n");
 		checkContentOfCu("manipulated class", testClass, buf.toString());
 	}
-	public void testCreateChangeWithNonDefaultSubstitution() throws Exception {
+	@Test
+	public void createChangeWithNonDefaultSubstitution() throws Exception {
 		//class to NLS
 		StringBuffer buf= new StringBuffer();
 		buf.append("package p;\n");
@@ -238,7 +234,7 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		buf.append("class Test {\n");
 		buf.append("	String hello=\"helloworld\";\n");
 		buf.append("}");
-		ICompilationUnit cu= RefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/p"), "Test.java", //$NON-NLS-1$ //$NON-NLS-2$
+		ICompilationUnit cu= GenericRefactoringTest.createCU(fHelper.getPackageFragment("/TestSetupProject/src1/p"), "Test.java", //$NON-NLS-1$ //$NON-NLS-2$
 				buf.toString());
 		NLSRefactoring nls= createDefaultNls(cu);
 
@@ -272,7 +268,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		pack1.createCompilationUnit("Accessor.java", buf.toString(), false, null);
 	}
 
-	public void testExternalizedToIgnore() throws Exception {
+	@Test
+	public void externalizedToIgnore() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
 
 		// Accessor class
@@ -319,7 +316,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		checkContentOfCu("nls file", cu, buf.toString());
 	}
 
-	public void testInsertToDuplicate() throws Exception {
+	@Test
+	public void insertToDuplicate() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
 
 		// Accessor class
@@ -368,7 +366,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		checkContentOfCu("nls file", cu, buf.toString());
 	}
 
-	public void testRenameToDuplicate() throws Exception {
+	@Test
+	public void renameToDuplicate() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
 
 		// Accessor class
@@ -417,7 +416,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		checkContentOfCu("nls file", cu, buf.toString());
 	}
 
-	public void testRenameDuplicate() throws Exception {
+	@Test
+	public void renameDuplicate() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
 
 		// Accessor class
@@ -466,7 +466,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		checkContentOfCu("nls file", cu, buf.toString());
 	}
 
-	public void testInternalizeDuplicate() throws Exception {
+	@Test
+	public void internalizeDuplicate() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
 
 		// Accessor class
@@ -513,7 +514,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		checkContentOfCu("nls file", cu, buf.toString());
 	}
 
-	public void testInternalizeAndInsert() throws Exception {
+	@Test
+	public void internalizeAndInsert() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
 
 		// Accessor class
@@ -565,7 +567,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 	}
 
 
-	public void testAddMissing1() throws Exception {
+	@Test
+	public void addMissing1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
 
 		// Accessor class
@@ -613,7 +616,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		checkContentOfCu("nls file", cu, buf.toString());
 	}
 
-	public void testAddMissing2() throws Exception {
+	@Test
+	public void addMissing2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
 
 		// Accessor class
@@ -664,7 +668,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		checkContentOfCu("nls file", cu, buf.toString());
 	}
 
-	public void testNoNewLineAtEnd() throws Exception {
+	@Test
+	public void noNewLineAtEnd() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
 
 		// Accessor class
@@ -709,7 +714,8 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 		checkContentOfCu("nls file", cu, buf.toString());
 	}
 
-	public void testTwoInsertsNoNewLineAtEnd() throws Exception {
+	@Test
+	public void twoInsertsNoNewLineAtEnd() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
 
 		// Accessor class
@@ -769,13 +775,13 @@ public class NlsRefactoringCreateChangeTest extends TestCase {
 	}
 
 	private void checkContentOfCu(String message, ICompilationUnit cu, String content) throws Exception {
-		RefactoringTest.assertEqualLines(message, content, cu.getBuffer().getContents());
+		GenericRefactoringTest.assertEqualLines(message, content, cu.getBuffer().getContents());
 	}
 
 	private void checkContentOfFile(String message, IFile file, String content) throws Exception {
 		try (InputStream in= file.getContents()) {
 			String realContent= copyToString(in);
-			RefactoringTest.assertEqualLines(message, content, realContent);
+			GenericRefactoringTest.assertEqualLines(message, content, realContent);
 		}
 	}
 

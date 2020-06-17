@@ -17,7 +17,6 @@ package org.eclipse.jdt.internal.corext.refactoring;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -344,8 +343,7 @@ public class TypeContextChecker {
 			new SearchEngine().searchAllTypeNames(null, matchMode, typeName.toCharArray(), matchMode, IJavaSearchConstants.TYPE, scope, requestor, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, pm);
 
 			List<TypeNameMatch> result= new ArrayList<>();
-			for (Iterator<TypeNameMatch> iter= collectedInfos.iterator(); iter.hasNext();) {
-				TypeNameMatch curr= iter.next();
+			for (TypeNameMatch curr : collectedInfos) {
 				IType type= curr.getType();
 				if (type != null) {
 					boolean visible=true;
@@ -410,8 +408,8 @@ public class TypeContextChecker {
 				return null;
 
 			RefactoringStatus result= new RefactoringStatus();
-			for (Iterator<String> iter= problemsCollector.iterator(); iter.hasNext();) {
-				String[] keys= new String[]{ BasicElementLabels.getJavaElementName(newTypeName), BasicElementLabels.getJavaElementName(iter.next())};
+			for (String problem : problemsCollector) {
+				String[] keys= new String[]{ BasicElementLabels.getJavaElementName(newTypeName), BasicElementLabels.getJavaElementName(problem)};
 				String msg= Messages.format(RefactoringCoreMessages.TypeContextChecker_invalid_return_type_syntax, keys);
 				result.addError(msg);
 			}
@@ -511,9 +509,9 @@ public class TypeContextChecker {
 			return null;
 
 		RefactoringStatus result= new RefactoringStatus();
-		for (Iterator<String> iter= problemsCollector.iterator(); iter.hasNext();) {
+		for (String problem : problemsCollector) {
 			String msg= Messages.format(RefactoringCoreMessages.TypeContextChecker_invalid_type_syntax,
-					new String[]{BasicElementLabels.getJavaElementName(newTypeName), BasicElementLabels.getJavaElementName(iter.next())});
+					new String[]{BasicElementLabels.getJavaElementName(newTypeName), BasicElementLabels.getJavaElementName(problem)});
 			result.addError(msg);
 		}
 		return result;
@@ -549,7 +547,7 @@ public class TypeContextChecker {
 					continue;
 				int bodyStart= bodyDeclaration.getStartPosition();
 				int bodyEnd= bodyDeclaration.getStartPosition() + bodyDeclaration.getLength();
-				if (! (bodyStart < focalPosition && focalPosition < bodyEnd))
+				if ((bodyStart >= focalPosition) || (focalPosition >= bodyEnd))
 					continue;
 				MethodDeclaration methodDeclaration= (MethodDeclaration) bodyDeclaration;
 				buf= bufBefore;
@@ -572,7 +570,7 @@ public class TypeContextChecker {
 							return true; // could be in CIC parameter list
 						int anonStart= anonDecl.getStartPosition();
 						int anonEnd= anonDecl.getStartPosition() + anonDecl.getLength();
-						if (! (anonStart < focalPosition && focalPosition < anonEnd))
+						if ((anonStart >= focalPosition) || (focalPosition >= anonEnd))
 							return false;
 						bufBefore.append(" new "); //$NON-NLS-1$
 						bufBefore.append(node.getType().toString());
@@ -640,8 +638,7 @@ public class TypeContextChecker {
 	}
 
 	private static void appendModifiers(StringBuilder buf, List<IExtendedModifier> modifiers) {
-		for (Iterator<IExtendedModifier> iterator= modifiers.iterator(); iterator.hasNext();) {
-			IExtendedModifier extendedModifier= iterator.next();
+		for (IExtendedModifier extendedModifier : modifiers) {
 			if (extendedModifier.isModifier()) {
 				Modifier modifier= (Modifier) extendedModifier;
 				buf.append(modifier.getKeyword().toString()).append(' ');
@@ -836,5 +833,8 @@ public class TypeContextChecker {
 			// won't happen
 		}
 		return result;
+	}
+
+	private TypeContextChecker() {
 	}
 }

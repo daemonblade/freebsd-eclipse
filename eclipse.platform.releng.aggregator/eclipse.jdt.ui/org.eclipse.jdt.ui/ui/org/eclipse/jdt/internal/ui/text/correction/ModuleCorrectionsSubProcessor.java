@@ -223,8 +223,7 @@ public class ModuleCorrectionsSubProcessor {
 
 		IClasspathEntry[] existingEntries= javaProject.readRawClasspath();
 		if (existingEntries != null && existingEntries.length > 0) {
-			for (int i= 0; i < moduleDescriptions.size(); i++) {
-				IModuleDescription moduleDesc= moduleDescriptions.get(i);
+			for (IModuleDescription moduleDesc : moduleDescriptions) {
 				IPackageFragmentRoot root= (IPackageFragmentRoot) moduleDesc.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
 				if (root != null) {
 					IClasspathEntry entry= null;
@@ -335,6 +334,7 @@ public class ModuleCorrectionsSubProcessor {
 		String[] args= null;
 		switch (entry.getEntryKind()) {
 			case IClasspathEntry.CPE_LIBRARY:
+			case IClasspathEntry.CPE_VARIABLE:
 				args= new String[] { JavaElementLabels.getElementLabel(root, JavaElementLabels.REFERENCED_ROOT_POST_QUALIFIED) };
 				break;
 			case IClasspathEntry.CPE_PROJECT:
@@ -356,9 +356,6 @@ public class ModuleCorrectionsSubProcessor {
 				if (args == null) {
 					args= new String[] { root.getElementName() };
 				}
-				break;
-			case IClasspathEntry.CPE_VARIABLE:
-				args= new String[] { JavaElementLabels.getElementLabel(root, JavaElementLabels.REFERENCED_ROOT_POST_QUALIFIED) };
 				break;
 			default:
 				break;
@@ -395,6 +392,9 @@ public class ModuleCorrectionsSubProcessor {
 			JavaPlugin.log(e);
 		}
 		return projectModule;
+	}
+
+	private ModuleCorrectionsSubProcessor() {
 	}
 
 }

@@ -14,11 +14,9 @@
 package org.eclipse.ltk.ui.refactoring.model;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.team.core.diff.IDiff;
-import org.eclipse.team.core.diff.IDiffVisitor;
 import org.eclipse.team.core.diff.IThreeWayDiff;
 import org.eclipse.team.core.diff.ITwoWayDiff;
 import org.eclipse.team.core.history.IFileRevision;
@@ -94,53 +92,46 @@ public abstract class AbstractSynchronizationContentProvider extends Synchroniza
 			final IProgressMonitor finalMonitor= monitor;
 			final Set<RefactoringDescriptorSynchronizationProxy> result= new HashSet<>();
 			final IResourceDiffTree tree= context.getDiffTree();
-			tree.accept(project.getFolder(RefactoringHistoryService.NAME_HISTORY_FOLDER).getFullPath(), new IDiffVisitor() {
-
-				@Override
-				public final boolean visit(final IDiff diff) {
-					if (diff instanceof IThreeWayDiff) {
-						final IThreeWayDiff threeWay= (IThreeWayDiff) diff;
-						final Set<RefactoringDescriptor> localDescriptors= new HashSet<>();
-						final Set<RefactoringDescriptor> remoteDescriptors= new HashSet<>();
-						final ITwoWayDiff localDiff= threeWay.getLocalChange();
-						if (localDiff instanceof IResourceDiff && localDiff.getKind() != IDiff.NO_CHANGE) {
-							final IResourceDiff resourceDiff= (IResourceDiff) localDiff;
-							final IFileRevision revision= resourceDiff.getAfterState();
-							if (revision != null) {
-								final String name= revision.getName();
-								if (name.equalsIgnoreCase(RefactoringHistoryService.NAME_HISTORY_FILE))
-									AbstractResourceMappingMerger.getRefactoringDescriptors(revision, localDescriptors, new SubProgressMonitor(finalMonitor, 1, SubProgressMonitor.SUPPRESS_SUBTASK_LABEL));
-							}
-						}
-						final ITwoWayDiff remoteDiff= threeWay.getLocalChange();
-						if (remoteDiff instanceof IResourceDiff && remoteDiff.getKind() != IDiff.NO_CHANGE) {
-							final IResourceDiff resourceDiff= (IResourceDiff) remoteDiff;
-							final IFileRevision revision= resourceDiff.getAfterState();
-							if (revision != null) {
-								final String name= revision.getName();
-								if (name.equalsIgnoreCase(RefactoringHistoryService.NAME_HISTORY_FILE))
-									AbstractResourceMappingMerger.getRefactoringDescriptors(revision, remoteDescriptors, new SubProgressMonitor(finalMonitor, 1, SubProgressMonitor.SUPPRESS_SUBTASK_LABEL));
-							}
-						}
-						final Set<RefactoringDescriptor> local= new HashSet<>(localDescriptors);
-						local.removeAll(remoteDescriptors);
-						for (final Iterator<RefactoringDescriptor> iterator= local.iterator(); iterator.hasNext();) {
-							final RefactoringDescriptor descriptor= iterator.next();
-							result.add(new RefactoringDescriptorSynchronizationProxy(new RefactoringDescriptorProxyAdapter(descriptor), project.getName(), IThreeWayDiff.OUTGOING));
-						}
-						final Set<RefactoringDescriptor> remote= new HashSet<>(remoteDescriptors);
-						remote.removeAll(localDescriptors);
-						for (final Iterator<RefactoringDescriptor> iterator= remote.iterator(); iterator.hasNext();) {
-							final RefactoringDescriptor descriptor= iterator.next();
-							result.add(new RefactoringDescriptorSynchronizationProxy(new RefactoringDescriptorProxyAdapter(descriptor), project.getName(), IThreeWayDiff.INCOMING));
+			tree.accept(project.getFolder(RefactoringHistoryService.NAME_HISTORY_FOLDER).getFullPath(), diff -> {
+				if (diff instanceof IThreeWayDiff) {
+					final IThreeWayDiff threeWay= (IThreeWayDiff) diff;
+					final Set<RefactoringDescriptor> localDescriptors= new HashSet<>();
+					final Set<RefactoringDescriptor> remoteDescriptors= new HashSet<>();
+					final ITwoWayDiff localDiff= threeWay.getLocalChange();
+					if (localDiff instanceof IResourceDiff && localDiff.getKind() != IDiff.NO_CHANGE) {
+						final IResourceDiff resourceDiff1= (IResourceDiff) localDiff;
+						final IFileRevision revision1= resourceDiff1.getAfterState();
+						if (revision1 != null) {
+							final String name1= revision1.getName();
+							if (name1.equalsIgnoreCase(RefactoringHistoryService.NAME_HISTORY_FILE))
+								AbstractResourceMappingMerger.getRefactoringDescriptors(revision1, localDescriptors, new SubProgressMonitor(finalMonitor, 1, SubProgressMonitor.SUPPRESS_SUBTASK_LABEL));
 						}
 					}
-					return true;
+					final ITwoWayDiff remoteDiff= threeWay.getLocalChange();
+					if (remoteDiff instanceof IResourceDiff && remoteDiff.getKind() != IDiff.NO_CHANGE) {
+						final IResourceDiff resourceDiff2= (IResourceDiff) remoteDiff;
+						final IFileRevision revision2= resourceDiff2.getAfterState();
+						if (revision2 != null) {
+							final String name2= revision2.getName();
+							if (name2.equalsIgnoreCase(RefactoringHistoryService.NAME_HISTORY_FILE))
+								AbstractResourceMappingMerger.getRefactoringDescriptors(revision2, remoteDescriptors, new SubProgressMonitor(finalMonitor, 1, SubProgressMonitor.SUPPRESS_SUBTASK_LABEL));
+						}
+					}
+					final Set<RefactoringDescriptor> local= new HashSet<>(localDescriptors);
+					local.removeAll(remoteDescriptors);
+					for (RefactoringDescriptor descriptor : local) {
+						result.add(new RefactoringDescriptorSynchronizationProxy(new RefactoringDescriptorProxyAdapter(descriptor), project.getName(), IThreeWayDiff.OUTGOING));
+					}
+					final Set<RefactoringDescriptor> remote= new HashSet<>(remoteDescriptors);
+					remote.removeAll(localDescriptors);
+					for (RefactoringDescriptor descriptor : remote) {
+						result.add(new RefactoringDescriptorSynchronizationProxy(new RefactoringDescriptorProxyAdapter(descriptor), project.getName(), IThreeWayDiff.INCOMING));
+					}
 				}
+				return true;
 			}, IResource.DEPTH_INFINITE);
 
-			for (final Iterator<RefactoringDescriptorSynchronizationProxy> iterator= result.iterator(); iterator.hasNext();) {
-				final RefactoringDescriptorSynchronizationProxy proxy= iterator.next();
+			for (RefactoringDescriptorSynchronizationProxy proxy : result) {
 				if (!includeDirection(proxy.getDirection()))
 					result.remove(proxy);
 			}

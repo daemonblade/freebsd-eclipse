@@ -14,7 +14,6 @@
 package org.eclipse.jdt.internal.ui.text.java.hover;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.jface.text.IInformationControlCreator;
@@ -75,9 +74,8 @@ public class BestMatchHover extends AbstractJavaEditorTextHover {
 
 		boolean done= true;
 		int i= -1;
-		for (Iterator<JavaEditorTextHoverDescriptor> iterator= fTextHoverSpecifications.iterator(); iterator.hasNext();) {
+		for (JavaEditorTextHoverDescriptor spec : fTextHoverSpecifications) {
 			i++;
-			JavaEditorTextHoverDescriptor spec= iterator.next();
 			if (spec == null)
 				continue;
 
@@ -163,7 +161,7 @@ public class BestMatchHover extends AbstractJavaEditorTextHover {
 
 			if (hover instanceof ITextHoverExtension2) {
 				Object info= ((ITextHoverExtension2) hover).getHoverInfo2(textViewer, hoverRegion);
-				if (info != null && !(forInformationProvider && getInformationPresenterControlCreator(hover) == null)) {
+				if (info != null && (!forInformationProvider || (getInformationPresenterControlCreator(hover) != null))) {
 					fBestHover= hover;
 					return info;
 				}

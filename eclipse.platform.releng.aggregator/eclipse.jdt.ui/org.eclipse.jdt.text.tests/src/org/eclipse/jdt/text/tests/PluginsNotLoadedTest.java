@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,10 +13,20 @@
  *******************************************************************************/
 package org.eclipse.jdt.text.tests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
 import org.osgi.framework.Bundle;
 
 import org.eclipse.jdt.text.tests.performance.EditorTestHelper;
@@ -36,19 +46,13 @@ import org.eclipse.jdt.ui.PreferenceConstants;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-
-
 /**
  * Tests whether the Java Editor forces the Search plug-in
  * to be loaded (which it should not).
  *
  * @since 3.1
  */
-public class PluginsNotLoadedTest extends TestCase {
-
+public class PluginsNotLoadedTest {
 	private static String[] NOT_LOADED_BUNDLES= new String[] {
 			"org.apache.xerces",
 			"org.eclipse.jdt.astview",
@@ -179,12 +183,11 @@ public class PluginsNotLoadedTest extends TestCase {
 
 	private JavaEditor fEditor;
 
-
-	public static Test setUpTest(Test someTest) {
-		return new JUnitProjectTestSetup(someTest) {
+	@Rule
+	public JUnitProjectTestSetup jpts=new JUnitProjectTestSetup() {
 			@Override
-			protected void setUp() throws Exception {
-				super.setUp();
+			public void before() throws Exception {
+				super.before();
 				/* Since https://bugs.eclipse.org/484795 in EGit 4.2, org.eclipse.egit.ui/plugin.xml contributes:
 				 * <extension point="org.eclipse.ui.services">
 				 *   <sourceProvider provider="org.eclipse.egit.ui.internal.selection.RepositorySourceProvider">
@@ -200,13 +203,10 @@ public class PluginsNotLoadedTest extends TestCase {
 				if (Platform.getBundle("org.eclipse.egit.ui") != null) {
 					addLoadedPlugIns("org.eclipse.compare");
 				}
+				addLoadedPlugIns("org.eclipse.core.filebuffers.tests", "org.eclipse.core.variables", "org.eclipse.team.cvs.core", "org.eclipse.test.performance");
 			}
 		};
-	}
 
-	public static Test suite() {
-		return setUpTest(new TestSuite(PluginsNotLoadedTest.class));
-	}
 
 	/**
 	 * If a test suite uses this test and has other tests that cause plug-ins to be loaded then
@@ -226,8 +226,8 @@ public class PluginsNotLoadedTest extends TestCase {
 	 * @see junit.framework.TestCase#setUp()
 	 * @since 3.1
 	 */
-	@Override
-	protected void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		JavaPlugin.getDefault().getPreferenceStore().setValue(PreferenceConstants.EDITOR_MARK_OCCURRENCES, true);
 		fEditor= openJavaEditor(new Path("/" + JUnitProjectTestSetup.getProject().getElementName() + "/src/junit/framework/TestCase.java"));
 		assertNotNull(fEditor);
@@ -237,8 +237,8 @@ public class PluginsNotLoadedTest extends TestCase {
 	 * @see junit.framework.TestCase#tearDown()
 	 * @since 3.1
 	 */
-	@Override
-	protected void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		EditorTestHelper.closeAllEditors();
 		fEditor= null;
 	}
@@ -254,20 +254,22 @@ public class PluginsNotLoadedTest extends TestCase {
 		}
 	}
 
-	public void _testPrintNotLoaded() {
+	@Ignore("Author: Dani Megert <dmegert> 2007-11-07 16:13:14 - Test more plug-ins.")
+	@Test
+	public void printNotLoaded() {
 		Bundle bundle= Platform.getBundle("org.eclipse.jdt.text.tests");
-		Bundle[] bundles= bundle.getBundleContext().getBundles();
-		for (int i= 0; i < bundles.length; i++) {
-			if (bundles[i].getState() != Bundle.ACTIVE)
-				System.out.println(bundles[i].getSymbolicName());
+		for (Bundle bundle2 : bundle.getBundleContext().getBundles()) {
+			if (bundle2.getState() != Bundle.ACTIVE)
+				System.out.println(bundle2.getSymbolicName());
 		}
 	}
 
-	public void testPluginsNotLoaded() {
+	@Test
+	public void pluginsNotLoaded() {
 		StringBuffer buf= new StringBuffer();
-		for (int i= 0; i < NOT_LOADED_BUNDLES.length; i++) {
-			Bundle bundle= Platform.getBundle(NOT_LOADED_BUNDLES[i]);
-			if (NOT_LOADED_BUNDLES[i].contains("org.junit"))
+		for (String element : NOT_LOADED_BUNDLES) {
+			Bundle bundle= Platform.getBundle(element);
+			if (element.contains("org.junit"))
 				System.out.println();
 			if (bundle == null) {
 				// log bundles that cannot be found:
@@ -276,10 +278,10 @@ public class PluginsNotLoadedTest extends TestCase {
 //				buf.append('\n');
 			} else if (bundle.getState() == Bundle.ACTIVE) {
 				buf.append("- ");
-				buf.append(NOT_LOADED_BUNDLES[i]);
+				buf.append(element);
 				buf.append('\n');
 			}
 		}
-		assertTrue("Wrong bundles loaded:\n" + buf, buf.length() == 0);
+		assertEquals("Wrong bundles loaded:\n" + buf, 0, buf.length());
 	}
 }

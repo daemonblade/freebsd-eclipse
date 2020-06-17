@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,9 @@
  *     Ferenc Hechler, ferenc_hechler@users.sourceforge.net - 83258 [jar exporter] Deploy java application as executable jar
  *******************************************************************************/
 package org.eclipse.jdt.testplugin;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -67,14 +70,10 @@ import org.eclipse.jdt.core.search.TypeNameRequestor;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.util.CoreUtility;
 
-import junit.framework.TestCase;
-
-
 /**
  * Helper methods to set up a IJavaProject.
  */
 public class JavaProjectHelper {
-
 	/**
 	 * XXX: Flag to enable/disable dummy search to synchronize with indexer. See https://bugs.eclipse.org/391927 .
 	 * <p>
@@ -103,6 +102,7 @@ public class JavaProjectHelper {
 	public static final IPath RT_STUBS_10= new Path("testresources/rtstubs10.jar");
 	public static final IPath RT_STUBS_12= new Path("testresources/rtstubs12.jar");
 	public static final IPath RT_STUBS13= new Path("testresources/rtstubs13.jar");
+	public static final IPath RT_STUBS14= new Path("testresources/rtstubs14.jar");
 	public static final IPath JUNIT_SRC_381= new Path("testresources/junit381-noUI-src.zip");
 	public static final String JUNIT_SRC_ENCODING= "ISO-8859-1";
 
@@ -193,10 +193,11 @@ public class JavaProjectHelper {
 		IJavaProject project= createJavaProject(projectName, outputFolderName);
 
 		IPackageFragmentRoot jdk= JavaProjectHelper.addVariableRTJar(project, "JRE_LIB_TEST", null, null);//$NON-NLS-1$
-		TestCase.assertNotNull(jdk);
+		assertNotNull(jdk);
 
 		File junitSrcArchive= JavaTestPlugin.getDefault().getFileInPlugin(JUNIT_SRC_381);
-		TestCase.assertTrue(junitSrcArchive != null && junitSrcArchive.exists());
+		assertNotNull(junitSrcArchive);
+		assertTrue(junitSrcArchive.exists());
 
 		JavaProjectHelper.addSourceContainerWithImport(project, srcContainerName, junitSrcArchive, JUNIT_SRC_ENCODING);
 
@@ -254,6 +255,24 @@ public class JavaProjectHelper {
 	public static void set13CompilerOptions(IJavaProject project, boolean enable_preview_feature) {
 		Map<String, String> options= project.getOptions(false);
 		set13_CompilerOptions(options);
+		if (enable_preview_feature) {
+			options.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+			options.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		}
+		project.setOptions(options);
+	}
+
+	/**
+	 * Sets the compiler options to 13 for the given project.
+	 *
+	 * @param project the java project
+	 * @param enable_preview_feature sets enable-preview compliance project option based on the
+	 *            value specified.
+	 * @since 3.20
+	 */
+	public static void set14CompilerOptions(IJavaProject project, boolean enable_preview_feature) {
+		Map<String, String> options= project.getOptions(false);
+		set14_CompilerOptions(options);
 		if (enable_preview_feature) {
 			options.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
 			options.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
@@ -348,6 +367,15 @@ public class JavaProjectHelper {
 	 */
 	public static void set13_CompilerOptions(Map<String, String> options) {
 		JavaCore.setComplianceOptions(JavaCore.VERSION_13, options);
+	}
+
+	/**
+	 * Sets the compiler options to 14.
+	 *
+	 * @param options the compiler options to configure
+	 */
+	public static void set14_CompilerOptions(Map<String, String> options) {
+		JavaCore.setComplianceOptions(JavaCore.VERSION_14, options);
 	}
 
 	/**
@@ -862,6 +890,12 @@ public class JavaProjectHelper {
 		return addLibrary(jproject, rtJarPath[0], rtJarPath[1], rtJarPath[2]);
 	}
 
+	public static IPackageFragmentRoot addRTJar_14(IJavaProject jproject, boolean enable_preview_feature) throws CoreException {
+		IPath[] rtJarPath= findRtJar(RT_STUBS14);
+		set14CompilerOptions(jproject, enable_preview_feature);
+		return addLibrary(jproject, rtJarPath[0], rtJarPath[1], rtJarPath[2]);
+	}
+
 	/**
 	 * Adds a variable entry with source attachment to a IJavaProject.
 	 * Can return null if variable can not be resolved.
@@ -993,8 +1027,8 @@ public class JavaProjectHelper {
 	 */
 	public static IPath[] findRtJar(IPath rtStubsPath) throws CoreException {
 		File rtStubs= JavaTestPlugin.getDefault().getFileInPlugin(rtStubsPath);
-		TestCase.assertNotNull(rtStubs);
-		TestCase.assertTrue(rtStubs.exists());
+		assertNotNull(rtStubs);
+		assertTrue(rtStubs.exists());
 		return new IPath[] {
 			Path.fromOSString(rtStubs.getPath()),
 			null,
@@ -1077,6 +1111,9 @@ public class JavaProjectHelper {
 			}
 			while (display.readAndDispatch()) { /*loop*/ }
 		}
+	}
+
+	private JavaProjectHelper() {
 	}
 }
 

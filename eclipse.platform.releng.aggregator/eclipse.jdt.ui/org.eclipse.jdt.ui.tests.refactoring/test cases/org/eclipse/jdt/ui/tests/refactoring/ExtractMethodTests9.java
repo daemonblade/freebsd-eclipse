@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 IBM Corporation and others.
+ * Copyright (c) 2017, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,24 +13,22 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.refactoring;
 
-import junit.framework.Test;
+import static org.eclipse.jdt.ui.tests.refactoring.AbstractJunit4SelectionTestCase.TestMode.COMPARE_WITH_OUTPUT;
+import static org.eclipse.jdt.ui.tests.refactoring.AbstractJunit4SelectionTestCase.TestMode.INVALID_SELECTION;
 
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import org.eclipse.jdt.ui.tests.CustomBaseRunner;
+import org.eclipse.jdt.ui.tests.IgnoreInheritedTests;
+
+@IgnoreInheritedTests
+@RunWith(CustomBaseRunner.class)
 public class ExtractMethodTests9 extends ExtractMethodTests {
-	private static ExtractMethodTestSetup9 fgTestSetup;
 
-	public ExtractMethodTests9(String name) {
-		super(name);
-	}
-
-	public static Test suite() {
-		fgTestSetup= new ExtractMethodTestSetup9(new NoSuperTestsSuite(ExtractMethodTests9.class));
-		return fgTestSetup;
-	}
-
-	public static Test setUpTest(Test test) {
-		fgTestSetup= new ExtractMethodTestSetup9(test);
-		return fgTestSetup;
-	}
+	@Rule
+	public ExtractMethodTestSetup9 fgTestSetup= new ExtractMethodTestSetup9();
 
 	protected void try9Test() throws Exception {
 		performTest(fgTestSetup.getTry9Package(), "A", COMPARE_WITH_OUTPUT, "try9_out");
@@ -46,6 +44,7 @@ public class ExtractMethodTests9 extends ExtractMethodTests {
 	//====================================================================================
 
 	@Override
+	@Test
 	public void test101() throws Exception {
 		invalidSelectionTest();
 	}
@@ -55,6 +54,7 @@ public class ExtractMethodTests9 extends ExtractMethodTests {
 	//====================================================================================
 
 	@Override
+	@Test
 	public void test201() throws Exception {
 		try9Test();
 	}

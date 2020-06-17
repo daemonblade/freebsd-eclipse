@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -116,7 +116,6 @@ import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.dom.fragments.ASTFragmentFactory;
 import org.eclipse.jdt.internal.corext.dom.fragments.IExpressionFragment;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
-import org.eclipse.jdt.internal.corext.refactoring.IRefactoringSearchRequestor;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
@@ -272,10 +271,9 @@ public class InlineConstantRefactoring extends Refactoring {
 					if (! (referenceContext instanceof VariableDeclarationFragment
 							|| referenceContext instanceof SingleVariableDeclaration
 							|| referenceContext instanceof Assignment)) {
-						ITypeBinding[] typeArguments= Invocations.getInferredTypeArguments(invocation);
 						ListRewrite typeArgsRewrite= Invocations.getInferredTypeArgumentsRewrite(fInitializerRewrite, invocation);
-						for (int i= 0; i < typeArguments.length; i++) {
-							Type typeArgument= fNewLocationCuRewrite.getImportRewrite().addImport(typeArguments[i], fNewLocationCuRewrite.getAST(), fNewLocationContext, TypeLocation.TYPE_ARGUMENT);
+						for (ITypeBinding typeArgument2 : Invocations.getInferredTypeArguments(invocation)) {
+							Type typeArgument= fNewLocationCuRewrite.getImportRewrite().addImport(typeArgument2, fNewLocationCuRewrite.getAST(), fNewLocationContext, TypeLocation.TYPE_ARGUMENT);
 							fNewLocationCuRewrite.getImportRemover().registerAddedImports(typeArgument);
 							typeArgsRewrite.insertLast(typeArgument, null);
 						}
@@ -494,8 +492,8 @@ public class InlineConstantRefactoring extends Refactoring {
 		}
 
 		public CompilationUnitChange getChange() throws CoreException {
-			for (int i= 0; i < fReferences.length; i++)
-				inlineReference(fReferences[i]);
+			for (Expression fReference : fReferences)
+				inlineReference(fReference);
 
 			removeConstantDeclarationIfNecessary();
 
@@ -828,11 +826,9 @@ public class InlineConstantRefactoring extends Refactoring {
 			ImportReferencesCollector.collect(getInitializer(), fField.getJavaProject(), null, new ArrayList<SimpleName>(), staticImportsInInitializer);
 
 			if (getReplaceAllReferences()) {
-				SearchResultGroup[] searchResultGroups= findReferences(pm, result);
-				for (int i= 0; i < searchResultGroups.length; i++) {
+				for (SearchResultGroup group : findReferences(pm, result)) {
 					if (pm.isCanceled())
 						throw new OperationCanceledException();
-					SearchResultGroup group= searchResultGroups[i];
 					ICompilationUnit cu= group.getCompilationUnit();
 
 					CompilationUnitRewrite cuRewrite= getCuRewrite(cu);
@@ -858,8 +854,7 @@ public class InlineConstantRefactoring extends Refactoring {
 
 			if (getRemoveDeclaration() && getReplaceAllReferences()) {
 				boolean declarationRemoved= false;
-				for (Iterator<CompilationUnitChange> iter= changes.iterator(); iter.hasNext();) {
-					CompilationUnitChange change= iter.next();
+				for (CompilationUnitChange change : changes) {
 					if (change.getCompilationUnit().equals(fDeclarationCuRewrite.getCu())) {
 						declarationRemoved= true;
 						break;
@@ -878,7 +873,7 @@ public class InlineConstantRefactoring extends Refactoring {
 				CompilationUnitChange change= changes.get(i);
 				cus[i]= change.getCompilationUnit();
 			}
-			result.merge(Checks.validateModifiesFiles(ResourceUtil.getFiles(cus), getValidationContext()));
+			result.merge(Checks.validateModifiesFiles(ResourceUtil.getFiles(cus), getValidationContext(), pm));
 
 			pm.worked(1);
 
@@ -915,12 +910,7 @@ public class InlineConstantRefactoring extends Refactoring {
 		engine.setFiltering(true, true);
 		engine.setScope(RefactoringScopeFactory.create(fField));
 		engine.setStatus(status);
-		engine.setRequestor(new IRefactoringSearchRequestor() {
-			@Override
-			public SearchMatch acceptSearchMatch(SearchMatch match) {
-				return match.isInsideDocComment() ? null : match;
-			}
-		});
+		engine.setRequestor(match -> match.isInsideDocComment() ? null : match);
 		engine.searchPattern(new SubProgressMonitor(pm, 1));
 		return (SearchResultGroup[]) engine.getResults();
 	}

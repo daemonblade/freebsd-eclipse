@@ -64,7 +64,7 @@ import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jdt.ui.PreferenceConstants;
 import org.eclipse.jdt.ui.cleanup.CleanUpOptions;
 import org.eclipse.jdt.ui.cleanup.ICleanUp;
-import org.eclipse.jdt.ui.tests.core.ProjectTestSetup;
+import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.dialogs.StatusInfo;
@@ -74,21 +74,20 @@ import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileManager.CustomPr
 import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileManager.Profile;
 import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileStore;
 
-
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	CleanUpStressTest.class,
 	CleanUpTest.class,
 	CleanUpTest1d5.class,
 	CleanUpTest1d7.class,
-	CleanUpTest18.class,
+	CleanUpTest1d8.class,
+	CleanUpTest1d10.class,
 	CleanUpAnnotationTest.class,
 	SaveParticipantTest.class,
 	CleanUpActionTest.class,
-	NullAnnotationsCleanUpTest18.class
+	NullAnnotationsCleanUpTest1d8.class
 })
 public class CleanUpTestCase extends QuickFixTest {
-
 	protected static final String FIELD_COMMENT= "/* Test */";
 
 	protected IPackageFragmentRoot fSourceFolder;
@@ -263,5 +262,4 @@ public class CleanUpTestCase extends QuickFixTest {
 	private void executePerformOperation(final PerformChangeOperation perform, IWorkspace workspace) throws CoreException {
 		workspace.run(perform, new NullProgressMonitor());
 	}
-
 }

@@ -61,22 +61,13 @@ public class UnnecessaryArrayCreationCleanUp extends AbstractMultiFix {
 		return new String[0];
 	}
 
-	@SuppressWarnings("nls")
 	@Override
 	public String getPreview() {
-		StringBuilder bld= new StringBuilder();
-		bld.append("\n");
-		bld.append("public class Foo {\n");
-		bld.append("    public static void bar() {\n");
 		if (isEnabled(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION)) {
-			bld.append("        List k= ArrayList.asList(\"a\", \"b\", \"c\");\n");
+			return "List k= Arrays.asList(\"a\", \"b\", \"c\");\n"; //$NON-NLS-1$
 		} else {
-			bld.append("        List k= ArrayList.asList(new String[] {\"a\", \"b\", \"c\"});\n");
+			return "List k= Arrays.asList(new String[] {\"a\", \"b\", \"c\"});\n"; //$NON-NLS-1$
 		}
-		bld.append("    }\n");
-		bld.append("}\n");
-
-		return bld.toString();
 	}
 
 	@Override
@@ -95,7 +86,7 @@ public class UnnecessaryArrayCreationCleanUp extends AbstractMultiFix {
 		}
 
 		return new CompilationUnitRewriteOperationsFix(MultiFixMessages.UnnecessaryArrayCreationCleanup_description, unit,
-				rewriteOperations.toArray(new CompilationUnitRewriteOperationsFixCore.CompilationUnitRewriteOperation[rewriteOperations.size()]));
+				rewriteOperations.toArray(new CompilationUnitRewriteOperationsFixCore.CompilationUnitRewriteOperation[0]));
 	}
 
 	@Override

@@ -30,9 +30,6 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.CreationReference;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionMethodReference;
-import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
-import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -51,10 +48,14 @@ import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeMethodReference;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFix;
 import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFix.CompilationUnitRewriteOperation;
@@ -99,24 +100,22 @@ public class LambdaExpressionAndMethodRefCleanUp extends AbstractMultiFix {
 		return new String[0];
 	}
 
-	@SuppressWarnings("nls")
 	@Override
 	public String getPreview() {
 		StringBuilder bld= new StringBuilder();
-		bld.append("\n");
 
 		if (isEnabled(CleanUpConstants.SIMPLIFY_LAMBDA_EXPRESSION_AND_METHOD_REF)) {
-			bld.append("someString -> someString.trim().toLowerCase();\n");
-			bld.append("someString -> someString.trim().toLowerCase();\n");
-			bld.append("someString -> (someString.trim().toLowerCase() + \"bar\");\n");
-			bld.append("ArrayList::new;\n");
-			bld.append("Date::getTime;\n");
+			bld.append("someString -> someString.trim().toLowerCase();\n"); //$NON-NLS-1$
+			bld.append("someString -> someString.trim().toLowerCase();\n"); //$NON-NLS-1$
+			bld.append("someString -> (someString.trim().toLowerCase() + \"bar\");\n"); //$NON-NLS-1$
+			bld.append("ArrayList::new;\n"); //$NON-NLS-1$
+			bld.append("Date::getTime;\n"); //$NON-NLS-1$
 		} else {
-			bld.append("(someString) -> someString.trim().toLowerCase();\n");
-			bld.append("someString -> {return someString.trim().toLowerCase();};\n");
-			bld.append("someString -> {return someString.trim().toLowerCase() + \"bar\";};\n");
-			bld.append("() -> new ArrayList<>();\n");
-			bld.append("date -> date.getTime();\n");
+			bld.append("(someString) -> someString.trim().toLowerCase();\n"); //$NON-NLS-1$
+			bld.append("someString -> {return someString.trim().toLowerCase();};\n"); //$NON-NLS-1$
+			bld.append("someString -> {return someString.trim().toLowerCase() + \"bar\";};\n"); //$NON-NLS-1$
+			bld.append("() -> new ArrayList<>();\n"); //$NON-NLS-1$
+			bld.append("date -> date.getTime();\n"); //$NON-NLS-1$
 		}
 
 		return bld.toString();
@@ -148,7 +147,9 @@ public class LambdaExpressionAndMethodRefCleanUp extends AbstractMultiFix {
 					ClassInstanceCreation ci= (ClassInstanceCreation) node.getBody();
 
 					List<Expression> arguments= ci.arguments();
-					if (node.parameters().size() == arguments.size() && areSameIdentifiers(node, arguments)) {
+					if (node.parameters().size() == arguments.size()
+							&& areSameIdentifiers(node, arguments)
+							&& ci.getAnonymousClassDeclaration() == null) {
 						rewriteOperations.add(new ReplaceByCreationReferenceOperation(node, ci));
 						return false;
 					}
@@ -204,7 +205,17 @@ public class LambdaExpressionAndMethodRefCleanUp extends AbstractMultiFix {
 							return false;
 						}
 
-						if (calledExpression instanceof StringLiteral || calledExpression instanceof NumberLiteral
+						if (calledExpression == null) {
+							if (methodBinding != null) {
+								ITypeBinding calledType= methodBinding.getDeclaringClass();
+								ITypeBinding enclosingType= Bindings.getBindingOfParentType(node);
+
+								if (calledType != null && Bindings.isSuperType(calledType, enclosingType)) {
+									rewriteOperations.add(new ReplaceByMethodReferenceOperation(node, methodInvocation));
+									return false;
+								}
+							}
+						} else if (calledExpression instanceof StringLiteral || calledExpression instanceof NumberLiteral
 								|| calledExpression instanceof ThisExpression) {
 							rewriteOperations.add(new ReplaceByMethodReferenceOperation(node, methodInvocation));
 							return false;

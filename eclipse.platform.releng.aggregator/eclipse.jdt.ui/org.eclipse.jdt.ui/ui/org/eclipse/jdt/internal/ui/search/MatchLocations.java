@@ -191,8 +191,7 @@ public class MatchLocations {
 		}
 
 		protected final void performSelectAction(boolean selectAll) {
-			for (int i= 0; i < fButtons.size(); i++) {
-				Button button= fButtons.get(i);
+			for (Button button : fButtons) {
 				button.setSelection(selectAll);
 			}
 			validateSettings();
@@ -245,8 +244,7 @@ public class MatchLocations {
 
 		private void validateSettings() {
 			int selected= 0;
-			for (int i= 0; i < fButtons.size(); i++) {
-				Button button= fButtons.get(i);
+			for (Button button : fButtons) {
 				if (button.getSelection()) {
 					selected |= getIntValue(button);
 				}
@@ -345,16 +343,18 @@ public class MatchLocations {
 	}
 
 	public static int getTotalNumberOfSettings(int searchFor) {
-		if (searchFor == IJavaSearchConstants.TYPE) {
-			return 15;
-		} else if (searchFor == IJavaSearchConstants.CONSTRUCTOR) {
-			return 1;
-		} else if (searchFor == IJavaSearchConstants.METHOD) {
-			return 5;
-		} else if (searchFor == IJavaSearchConstants.FIELD) {
-			return 4;
+		switch (searchFor) {
+			case IJavaSearchConstants.TYPE:
+				return 15;
+			case IJavaSearchConstants.CONSTRUCTOR:
+				return 1;
+			case IJavaSearchConstants.METHOD:
+				return 5;
+			case IJavaSearchConstants.FIELD:
+				return 4;
+			default:
+				return 0;
 		}
-		return 0;
 	}
 
 	public static int getNumberOfSelectedSettings(int locations, int searchFor) {
@@ -426,5 +426,8 @@ public class MatchLocations {
 			}
 		}
 		return count;
+	}
+
+	private MatchLocations() {
 	}
 }

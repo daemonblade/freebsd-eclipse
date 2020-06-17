@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -93,14 +93,16 @@ public class ConvertForLoopOperation extends ConvertLoopOperation {
 	private IMethodBinding fSizeMethodBinding;
 	private IMethodBinding fGetMethodBinding;
 	private MethodInvocation fSizeMethodAccess;
-
+	private boolean fCheckLoopVarUsed;
+	private boolean fLoopVarReferenced;
 	public ConvertForLoopOperation(ForStatement forStatement) {
-		this(forStatement, new String[0], false);
+		this(forStatement, new String[0], false, false);
 	}
 
-	public ConvertForLoopOperation(ForStatement forStatement, String[] usedNames, boolean makeFinal) {
+	public ConvertForLoopOperation(ForStatement forStatement, String[] usedNames, boolean makeFinal, boolean checkLoopVarUsed) {
 		super(forStatement, usedNames);
 		fMakeFinal= makeFinal;
+		fCheckLoopVarUsed= checkLoopVarUsed;
 	}
 
 	@Override
@@ -125,6 +127,9 @@ public class ConvertForLoopOperation extends ConvertLoopOperation {
 			return ERROR_STATUS;
 
 		if (!validateBody(statement))
+			return ERROR_STATUS;
+
+		if (fCheckLoopVarUsed && !fLoopVarReferenced)
 			return ERROR_STATUS;
 
 		return Status.OK_STATUS;
@@ -480,6 +485,7 @@ public class ConvertForLoopOperation extends ConvertLoopOperation {
 							throw new InvalidBodyError();
 
 						if (nameBinding.equals(fIndexBinding)) {
+							fLoopVarReferenced= true;
 							if (node.getLocationInParent() == ArrayAccess.INDEX_PROPERTY) {
 								if (fIsCollection)
 									throw new InvalidBodyError();
@@ -583,7 +589,7 @@ public class ConvertForLoopOperation extends ConvertLoopOperation {
 							return true;
 
 						if (current instanceof PrefixExpression
-								&& !(((PrefixExpression) current).getOperand() instanceof MethodInvocation && ((PrefixExpression) current).getOperator().equals(PrefixExpression.Operator.NOT)))
+								&& !((PrefixExpression) current).getOperator().equals(PrefixExpression.Operator.NOT))
 							return true;
 
 						if (current instanceof PostfixExpression)
@@ -713,8 +719,8 @@ public class ConvertForLoopOperation extends ConvertLoopOperation {
 		LinkedProposalPositionGroupCore pg= positionGroups.getPositionGroup(parameterName, true);
 		if (fElementDeclaration != null)
 			pg.addProposal(parameterName, 10);
-		for (int i= 0; i < proposals.length; i++) {
-			pg.addProposal(proposals[i], 10);
+		for (String proposal : proposals) {
+			pg.addProposal(proposal, 10);
 		}
 
 		AST ast= forStatement.getAST();
@@ -822,11 +828,7 @@ public class ConvertForLoopOperation extends ConvertLoopOperation {
 
 	private String[] getVariableNameProposals(ITypeBinding arrayTypeBinding, IJavaProject project) {
 		String[] variableNames= getUsedVariableNames();
-		String baseName= FOR_LOOP_ELEMENT_IDENTIFIER;
-		String name= fArrayBinding.getName();
-		if (name.length() > 2 && name.charAt(name.length() - 1) == 's') {
-			baseName= name.substring(0, name.length() - 1);
-		}
+		String baseName= modifybasename(fArrayBinding.getName());
 		String[] elementSuggestions= StubUtility.getLocalNameSuggestions(project, baseName, 0, variableNames);
 
 		String type= arrayTypeBinding.getElementType().getName();
@@ -840,12 +842,9 @@ public class ConvertForLoopOperation extends ConvertLoopOperation {
 
 	private String[] getVariableNameProposalsCollection(MethodInvocation sizeMethodAccess, IJavaProject project) {
 		String[] variableNames= getUsedVariableNames();
-		String baseName= FOR_LOOP_ELEMENT_IDENTIFIER;
 		Expression exp= sizeMethodAccess.getExpression();
 		String name= exp instanceof SimpleName ? ((SimpleName)exp).getFullyQualifiedName() : ""; //$NON-NLS-1$
-		if (name.length() > 2 && name.charAt(name.length() - 1) == 's') {
-			baseName= name.substring(0, name.length() - 1);
-		}
+		String baseName= modifybasename(name);
 		String[] elementSuggestions= StubUtility.getLocalNameSuggestions(project, baseName, 0, variableNames);
 
 		ITypeBinding[] typeArgs= fSizeMethodBinding.getDeclaringClass().getTypeArguments();

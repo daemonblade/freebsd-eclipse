@@ -45,9 +45,9 @@ import org.eclipse.jdt.ui.text.java.JavaContentAssistInvocationContext;
 
 import org.eclipse.jdt.internal.ui.text.Chain;
 import org.eclipse.jdt.internal.ui.text.ChainElement;
+import org.eclipse.jdt.internal.ui.text.ChainElementAnalyzer;
 import org.eclipse.jdt.internal.ui.text.ChainFinder;
 import org.eclipse.jdt.internal.ui.text.ChainType;
-import org.eclipse.jdt.internal.ui.text.ChainElementAnalyzer;
 import org.eclipse.jdt.internal.ui.text.template.contentassist.TemplateProposal;
 
 public class ChainCompletionProposalComputer implements IJavaCompletionProposalComputer {
@@ -97,6 +97,10 @@ public class ChainCompletionProposalComputer implements IJavaCompletionProposalC
 	}
 
 	private boolean shouldPerformCompletionOnExpectedType() {
+		if (ctx.getCoreContext() == null) {
+			return false;
+		}
+
 		AST ast;
 		CompilationUnit cuNode= SharedASTProviderCore.getAST(ctx.getCompilationUnit(), SharedASTProviderCore.WAIT_NO, null);
 		if (cuNode != null) {
@@ -168,6 +172,7 @@ public class ChainCompletionProposalComputer implements IJavaCompletionProposalC
 			long timeout= Long.parseLong(JavaManipulation.getPreference(PreferenceConstants.PREF_CHAIN_TIMEOUT, ctx.getProject()));
 			future.get(timeout, TimeUnit.SECONDS);
 		} catch (final Exception e) {
+			finder.cancel();
 			executor.shutdownNow();
 			setError("Timeout during call chain computation."); //$NON-NLS-1$
 		}

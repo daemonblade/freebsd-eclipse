@@ -14,6 +14,7 @@
 package org.eclipse.jdt.ui.tests.quickfix;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -203,12 +204,12 @@ public class ReorgQuickFixTest extends QuickFixTest {
 		StringBuffer buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("\n");
-		buf.append("import java.security.Permission;\n");
-		buf.append("import java.security.acl.Permission;\n");
+		buf.append("import java.util.Date;\n");
+		buf.append("import java.sql.Date;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
-		buf.append("    Permission p;\n");
+		buf.append("    Date d;\n");
 		buf.append("    Vector v;\n");
 		buf.append("}\n");
 		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
@@ -229,11 +230,11 @@ public class ReorgQuickFixTest extends QuickFixTest {
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
 		buf.append("\n");
-		buf.append("import java.security.Permission;\n");
+		buf.append("import java.util.Date;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
-		buf.append("    Permission p;\n");
+		buf.append("    Date d;\n");
 		buf.append("    Vector v;\n");
 		buf.append("}\n");
 		assertEqualString(preview, buf.toString());
@@ -256,8 +257,8 @@ public class ReorgQuickFixTest extends QuickFixTest {
 
 		boolean hasRename= true, hasMove= true;
 
-		for (int i= 0; i < proposals.size(); i++) {
-			ChangeCorrectionProposal curr= (ChangeCorrectionProposal) proposals.get(i);
+		for (IJavaCompletionProposal proposal2 : proposals) {
+			ChangeCorrectionProposal curr= (ChangeCorrectionProposal) proposal2;
 			if (curr instanceof CorrectPackageDeclarationProposal) {
 				assertTrue("Duplicated proposal", hasRename);
 				hasRename= false;
@@ -305,8 +306,8 @@ public class ReorgQuickFixTest extends QuickFixTest {
 
 		boolean hasRename= true, hasMove= true;
 
-		for (int i= 0; i < proposals.size(); i++) {
-			ChangeCorrectionProposal curr= (ChangeCorrectionProposal) proposals.get(i);
+		for (IJavaCompletionProposal proposal2 : proposals) {
+			ChangeCorrectionProposal curr= (ChangeCorrectionProposal) proposal2;
 			if (curr instanceof CorrectPackageDeclarationProposal) {
 				assertTrue("Duplicated proposal", hasRename);
 				hasRename= false;
@@ -354,8 +355,8 @@ public class ReorgQuickFixTest extends QuickFixTest {
 
 		boolean hasRename= true, hasMove= true;
 
-		for (int i= 0; i < proposals.size(); i++) {
-			ChangeCorrectionProposal curr= (ChangeCorrectionProposal) proposals.get(i);
+		for (IJavaCompletionProposal proposal2 : proposals) {
+			ChangeCorrectionProposal curr= (ChangeCorrectionProposal) proposal2;
 			if (curr instanceof CorrectPackageDeclarationProposal) {
 				assertTrue("Duplicated proposal", hasRename);
 				hasRename= false;
@@ -401,8 +402,8 @@ public class ReorgQuickFixTest extends QuickFixTest {
 
 		boolean hasRename= true, hasMove= true;
 
-		for (int i= 0; i < proposals.size(); i++) {
-			ChangeCorrectionProposal curr= (ChangeCorrectionProposal) proposals.get(i);
+		for (IJavaCompletionProposal proposal2 : proposals) {
+			ChangeCorrectionProposal curr= (ChangeCorrectionProposal) proposal2;
 			if (curr instanceof CorrectPackageDeclarationProposal) {
 				assertTrue("Duplicated proposal", hasRename);
 				hasRename= false;
@@ -480,8 +481,8 @@ public class ReorgQuickFixTest extends QuickFixTest {
 
 		boolean hasRename= true, hasMove= true;
 
-		for (int i= 0; i < proposals.size(); i++) {
-			ChangeCorrectionProposal curr= (ChangeCorrectionProposal) proposals.get(i);
+		for (IJavaCompletionProposal proposal2 : proposals) {
+			ChangeCorrectionProposal curr= (ChangeCorrectionProposal) proposal2;
 			if (curr instanceof CorrectMainTypeNameProposal) {
 				assertTrue("Duplicated proposal", hasRename);
 				hasRename= false;
@@ -528,8 +529,8 @@ public class ReorgQuickFixTest extends QuickFixTest {
 
 		boolean hasRename= true, hasMove= true;
 
-		for (int i= 0; i < proposals.size(); i++) {
-			ChangeCorrectionProposal curr= (ChangeCorrectionProposal) proposals.get(i);
+		for (IJavaCompletionProposal proposal2 : proposals) {
+			ChangeCorrectionProposal curr= (ChangeCorrectionProposal) proposal2;
 			if (curr instanceof CorrectMainTypeNameProposal) {
 				assertTrue("Duplicated proposal", hasRename);
 				hasRename= false;
@@ -981,7 +982,8 @@ public class ReorgQuickFixTest extends QuickFixTest {
 		IJavaProject otherProject= JavaProjectHelper.createJavaProject("other", "bin");
 		try {
 			File lib= JavaTestPlugin.getDefault().getFileInPlugin(JavaProjectHelper.MYLIB);
-			assertTrue("lib does not exist",  lib != null && lib.exists());
+			assertNotNull("lib does not exist", lib);
+			assertTrue("lib does not exist", lib.exists());
 			IPackageFragmentRoot otherRoot= JavaProjectHelper.addLibraryWithImport(otherProject, Path.fromOSString(lib.getPath()), null, null);
 
 			MultiStatus status= new MultiStatus(JavaUI.ID_PLUGIN, IStatus.OK, "", null);
@@ -1018,7 +1020,8 @@ public class ReorgQuickFixTest extends QuickFixTest {
 		IJavaProject otherProject= JavaProjectHelper.createJavaProject("other", "bin");
 		try {
 			File lib= JavaTestPlugin.getDefault().getFileInPlugin(JavaProjectHelper.MYLIB);
-			assertTrue("lib does not exist",  lib != null && lib.exists());
+			assertNotNull("lib does not exist", lib);
+			assertTrue("lib does not exist", lib.exists());
 
 			IPath path= Path.fromOSString(lib.getPath());
 
@@ -1053,7 +1056,8 @@ public class ReorgQuickFixTest extends QuickFixTest {
 		IJavaProject otherProject= JavaProjectHelper.createJavaProject("other", "bin");
 		try {
 			File lib= JavaTestPlugin.getDefault().getFileInPlugin(JavaProjectHelper.MYLIB);
-			assertTrue("lib does not exist",  lib != null && lib.exists());
+			assertNotNull("lib does not exist", lib);
+			assertTrue("lib does not exist", lib.exists());
 			IPath path= Path.fromOSString(lib.getPath());
 			final IClasspathEntry[] entries= { JavaCore.newLibraryEntry(path, null, null) };
 			final IPath containerPath= new Path(JavaCore.USER_LIBRARY_CONTAINER_ID).append("MyUserLibrary");

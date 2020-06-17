@@ -2168,7 +2168,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 	 * @param checkIfOutlinePageActive <code>true</code> if check for active outline page needs to be done
 	 */
 	protected void synchronizeOutlinePage(ISourceReference element, boolean checkIfOutlinePageActive) {
-		if (fOutlinePage != null && element != null && !(checkIfOutlinePageActive && isJavaOutlinePageActive())) {
+		if (fOutlinePage != null && element != null && (!checkIfOutlinePageActive || !isJavaOutlinePageActive())) {
 			fOutlinePage.select(element);
 		}
 	}
@@ -2810,14 +2810,14 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 	protected void setActionsActivated(boolean state) {
 		Method method= null;
 		try {
-			method= AbstractTextEditor.class.getDeclaredMethod("setActionActivation", new Class[] { boolean.class }); //$NON-NLS-1$
+			method= AbstractTextEditor.class.getDeclaredMethod("setActionActivation", boolean.class); //$NON-NLS-1$
 		} catch (SecurityException | NoSuchMethodException ex) {
 			JavaPlugin.log(ex);
 		}
 		Assert.isNotNull(method);
 		method.setAccessible(true);
 		try {
-			method.invoke(this, new Object[] { Boolean.valueOf(state) });
+			method.invoke(this, Boolean.valueOf(state));
 		} catch (IllegalArgumentException | InvocationTargetException | IllegalAccessException ex) {
 			JavaPlugin.log(ex);
 		}
@@ -2870,7 +2870,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 			boolean newBooleanValue= false;
 			Object newValue= event.getNewValue();
 			if (newValue != null)
-				newBooleanValue= Boolean.valueOf(newValue.toString()).booleanValue();
+				newBooleanValue= Boolean.parseBoolean(newValue.toString());
 
 			if (PreferenceConstants.EDITOR_SYNC_OUTLINE_ON_CURSOR_MOVE.equals(property)) {
 				if (newBooleanValue)
@@ -2898,45 +2898,39 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 				}
 				return;
 			}
-			if (PreferenceConstants.EDITOR_MARK_TYPE_OCCURRENCES.equals(property)) {
-				fMarkTypeOccurrences= newBooleanValue;
-				return;
-			}
-			if (PreferenceConstants.EDITOR_MARK_METHOD_OCCURRENCES.equals(property)) {
-				fMarkMethodOccurrences= newBooleanValue;
-				return;
-			}
-			if (PreferenceConstants.EDITOR_MARK_CONSTANT_OCCURRENCES.equals(property)) {
-				fMarkConstantOccurrences= newBooleanValue;
-				return;
-			}
-			if (PreferenceConstants.EDITOR_MARK_FIELD_OCCURRENCES.equals(property)) {
-				fMarkFieldOccurrences= newBooleanValue;
-				return;
-			}
-			if (PreferenceConstants.EDITOR_MARK_LOCAL_VARIABLE_OCCURRENCES.equals(property)) {
-				fMarkLocalVariableypeOccurrences= newBooleanValue;
-				return;
-			}
-			if (PreferenceConstants.EDITOR_MARK_EXCEPTION_OCCURRENCES.equals(property)) {
-				fMarkExceptions= newBooleanValue;
-				return;
-			}
-			if (PreferenceConstants.EDITOR_MARK_METHOD_EXIT_POINTS.equals(property)) {
-				fMarkMethodExitPoints= newBooleanValue;
-				return;
-			}
-			if (PreferenceConstants.EDITOR_MARK_BREAK_CONTINUE_TARGETS.equals(property)) {
-				fMarkBreakContinueTargets= newBooleanValue;
-				return;
-			}
-			if (PreferenceConstants.EDITOR_MARK_IMPLEMENTORS.equals(property)) {
-				fMarkImplementors= newBooleanValue;
-				return;
-			}
-			if (PreferenceConstants.EDITOR_STICKY_OCCURRENCES.equals(property)) {
-				fStickyOccurrenceAnnotations= newBooleanValue;
-				return;
+			switch (property) {
+				case PreferenceConstants.EDITOR_MARK_TYPE_OCCURRENCES:
+					fMarkTypeOccurrences= newBooleanValue;
+					return;
+				case PreferenceConstants.EDITOR_MARK_METHOD_OCCURRENCES:
+					fMarkMethodOccurrences= newBooleanValue;
+					return;
+				case PreferenceConstants.EDITOR_MARK_CONSTANT_OCCURRENCES:
+					fMarkConstantOccurrences= newBooleanValue;
+					return;
+				case PreferenceConstants.EDITOR_MARK_FIELD_OCCURRENCES:
+					fMarkFieldOccurrences= newBooleanValue;
+					return;
+				case PreferenceConstants.EDITOR_MARK_LOCAL_VARIABLE_OCCURRENCES:
+					fMarkLocalVariableypeOccurrences= newBooleanValue;
+					return;
+				case PreferenceConstants.EDITOR_MARK_EXCEPTION_OCCURRENCES:
+					fMarkExceptions= newBooleanValue;
+					return;
+				case PreferenceConstants.EDITOR_MARK_METHOD_EXIT_POINTS:
+					fMarkMethodExitPoints= newBooleanValue;
+					return;
+				case PreferenceConstants.EDITOR_MARK_BREAK_CONTINUE_TARGETS:
+					fMarkBreakContinueTargets= newBooleanValue;
+					return;
+				case PreferenceConstants.EDITOR_MARK_IMPLEMENTORS:
+					fMarkImplementors= newBooleanValue;
+					return;
+				case PreferenceConstants.EDITOR_STICKY_OCCURRENCES:
+					fStickyOccurrenceAnnotations= newBooleanValue;
+					return;
+				default:
+					break;
 			}
 			if (SemanticHighlightings.affectsEnablement(getPreferenceStore(), event)) {
 				if (isSemanticHighlightingEnabled())
@@ -2976,35 +2970,34 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 				return;
 			}
 
-			if (PreferenceConstants.EDITOR_FOLDING_PROVIDER.equals(property)) {
-				if (sourceViewer instanceof ProjectionViewer) {
-					ProjectionViewer projectionViewer= (ProjectionViewer) sourceViewer;
-					if (fProjectionModelUpdater != null)
-						fProjectionModelUpdater.uninstall();
-					// either freshly enabled or provider changed
-					fProjectionModelUpdater= JavaPlugin.getDefault().getFoldingStructureProviderRegistry().getCurrentFoldingProvider();
-					if (fProjectionModelUpdater != null) {
-						fProjectionModelUpdater.install(this, projectionViewer);
+			switch (property) {
+				case PreferenceConstants.EDITOR_FOLDING_PROVIDER:
+					if (sourceViewer instanceof ProjectionViewer) {
+						ProjectionViewer projectionViewer= (ProjectionViewer) sourceViewer;
+						if (fProjectionModelUpdater != null)
+							fProjectionModelUpdater.uninstall();
+						// either freshly enabled or provider changed
+						fProjectionModelUpdater= JavaPlugin.getDefault().getFoldingStructureProviderRegistry().getCurrentFoldingProvider();
+						if (fProjectionModelUpdater != null) {
+							fProjectionModelUpdater.install(this, projectionViewer);
+						}
 					}
-				}
-				return;
-			}
-
-			if (DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE.equals(property)
-					|| DefaultCodeFormatterConstants.FORMATTER_INDENTATION_SIZE.equals(property)
-					|| DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR.equals(property)) {
-				StyledText textWidget= sourceViewer.getTextWidget();
-				int tabWidth= getSourceViewerConfiguration().getTabWidth(sourceViewer);
-				if (textWidget.getTabs() != tabWidth)
-					textWidget.setTabs(tabWidth);
-				return;
-			}
-
-			if (PreferenceConstants.EDITOR_FOLDING_ENABLED.equals(property)) {
-				if (sourceViewer instanceof ProjectionViewer) {
-					new ToggleFoldingRunner().runWhenNextVisible();
-				}
-				return;
+					return;
+				case DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE:
+				case DefaultCodeFormatterConstants.FORMATTER_INDENTATION_SIZE:
+				case DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR:
+					StyledText textWidget= sourceViewer.getTextWidget();
+					int tabWidth= getSourceViewerConfiguration().getTabWidth(sourceViewer);
+					if (textWidget.getTabs() != tabWidth)
+						textWidget.setTabs(tabWidth);
+					return;
+				case PreferenceConstants.EDITOR_FOLDING_ENABLED:
+					if (sourceViewer instanceof ProjectionViewer) {
+						new ToggleFoldingRunner().runWhenNextVisible();
+					}
+					return;
+				default:
+					break;
 			}
 
 		} finally {
@@ -3016,7 +3009,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 			Object newValue= event.getNewValue();
 			ISourceViewer viewer= getSourceViewer();
 			if (newValue != null && viewer != null) {
-				if (Boolean.valueOf(newValue.toString()).booleanValue()) {
+				if (Boolean.parseBoolean(newValue.toString())) {
 					// adjust the highlightrange in order to get the magnet right after changing the selection
 					Point selection= viewer.getSelectedRange();
 					adjustHighlightRange(selection.x, selection.y);
@@ -3066,8 +3059,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 				int[] stateMasks= configuration.getConfiguredTextHoverStateMasks(getSourceViewer(), t);
 
 				if (stateMasks != null) {
-					for (int j= 0; j < stateMasks.length; j++)	{
-						int stateMask= stateMasks[j];
+					for (int stateMask : stateMasks) {
 						ITextHover textHover= configuration.getTextHover(sourceViewer, t, stateMask);
 						((ITextViewerExtension2)sourceViewer).setTextHover(textHover, t, stateMask);
 					}
@@ -3224,7 +3216,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 
 		private boolean isCanceled(IProgressMonitor progressMonitor) {
 			return fCanceled || progressMonitor.isCanceled()
-				||  fPostSelectionValidator != null && !(fPostSelectionValidator.isValid(fSelection) || fForcedMarkOccurrencesSelection == fSelection)
+				||  fPostSelectionValidator != null && (!fPostSelectionValidator.isValid(fSelection) && (fForcedMarkOccurrencesSelection != fSelection))
 				|| LinkedModeModel.hasInstalledModel(fDocument);
 		}
 
@@ -3255,12 +3247,11 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 			// Add occurrence annotations
 			int length= fLocations.length;
 			Map<Annotation, Position> annotationMap= new HashMap<>(length);
-			for (int i= 0; i < length; i++) {
+			for (OccurrenceLocation location : fLocations) {
 
 				if (isCanceled(progressMonitor))
 					return Status.CANCEL_STATUS;
 
-				OccurrenceLocation location= fLocations[i];
 				Position position= new Position(location.getOffset(), location.getLength());
 
 				String description= location.getDescription();
@@ -3283,7 +3274,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 						annotationModel.addAnnotation(mapEntry.getKey(), mapEntry.getValue());
 					}
 				}
-				fOccurrenceAnnotations= annotationMap.keySet().toArray(new Annotation[annotationMap.keySet().size()]);
+				fOccurrenceAnnotations= annotationMap.keySet().toArray(new Annotation[annotationMap.size()]);
 			}
 
 			return Status.OK_STATUS;
@@ -3497,8 +3488,8 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 			if (annotationModel instanceof IAnnotationModelExtension) {
 				((IAnnotationModelExtension)annotationModel).replaceAnnotations(fOccurrenceAnnotations, null);
 			} else {
-				for (int i= 0, length= fOccurrenceAnnotations.length; i < length; i++)
-					annotationModel.removeAnnotation(fOccurrenceAnnotations[i]);
+				for (Annotation fOccurrenceAnnotation : fOccurrenceAnnotations)
+					annotationModel.removeAnnotation(fOccurrenceAnnotation);
 			}
 			fOccurrenceAnnotations= null;
 		}
