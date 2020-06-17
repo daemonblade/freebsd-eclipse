@@ -24,9 +24,11 @@ public class CompletionTests3 extends AbstractJavaModelCompletionTests {
 public CompletionTests3(String name) {
 	super(name);
 }
+@Override
 public void setUpSuite() throws Exception {
 	super.setUpSuite();
 }
+@Override
 public void tearDownSuite() throws Exception {
 	super.tearDownSuite();
 }
@@ -50,7 +52,7 @@ public void testBug338398a() throws CoreException {
 			"		 assertno\n" +
 			"   }" +
 			"}\n");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/b/B.java",
 				"package b;\n"+
@@ -85,7 +87,7 @@ public void _testBug338398b() throws CoreException {
 			" 	 * A_CLASS#a_cl"  +
 			"	 */\n" +
 			"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		String str = this.workingCopies[0].getSource();
 		String completeBehind = "A_CLASS#a_cl";
@@ -111,7 +113,7 @@ public void _testBug338398c() throws CoreException {
 			"	 */\n" +
 			"	public A_CLASS(String MY_STring) {}\n" +
 			"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		String str = this.workingCopies[0].getSource();
 		String completeBehind = "@param my_s";
@@ -140,7 +142,7 @@ public void testBug504095() throws CoreException {
 			"		}\n" +
 			"	}\n" +
 			"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		String str = this.workingCopies[0].getSource();
 		String completeBehind = "memb";
@@ -176,7 +178,7 @@ public void testBug425035a() throws CoreException {
 				"@Annotation()\n" +
 				"public class Test {\n" +
 				"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
 		String str = this.workingCopies[2].getSource();
@@ -184,10 +186,10 @@ public void testBug425035a() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner);
 		assertResults(
-				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" + 
-				"value[ANNOTATION_ATTRIBUTE_REF]{value = , La.Annotation;, [La.Values;, value, null, 52}\n" + 
-				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" + 
-				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" + 
+				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" +
+				"value[ANNOTATION_ATTRIBUTE_REF]{value = , La.Annotation;, [La.Values;, value, null, 52}\n" +
+				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" +
+				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" +
 				"SOME_VALUE[FIELD_REF]{Values.SOME_VALUE, La.Values;, La.Values;, SOME_VALUE, null, 104}",
 				requestor.getResults());
 	} finally {
@@ -217,7 +219,7 @@ public void testBug425035b() throws CoreException {
 				"@Annotation({})\n" +
 				"public class Test {\n" +
 				"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
 		String str = this.workingCopies[2].getSource();
@@ -225,9 +227,9 @@ public void testBug425035b() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner);
 		assertResults(
-				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" + 
-				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" + 
-				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" + 
+				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" +
+				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" +
+				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" +
 				"SOME_VALUE[FIELD_REF]{Values.SOME_VALUE, La.Values;, La.Values;, SOME_VALUE, null, 104}",
 				requestor.getResults());
 	} finally {
@@ -258,7 +260,7 @@ public void testBug425035c() throws CoreException {
 				"@Annotation({Values.SOME_VALUE, })\n" +
 				"public class Test {\n" +
 				"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
 		String str = this.workingCopies[2].getSource();
@@ -266,9 +268,9 @@ public void testBug425035c() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner);
 		assertResults(
-				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" + 
-				"Values[TYPE_REF]{Values, a, La.Values;, null, null, 102}\n" + 
-				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" + 
+				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" +
+				"Values[TYPE_REF]{Values, a, La.Values;, null, null, 102}\n" +
+				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" +
 				"SOME_VALUE[FIELD_REF]{Values.SOME_VALUE, La.Values;, La.Values;, SOME_VALUE, null, 104}",
 				requestor.getResults());
 	} finally {
@@ -298,7 +300,7 @@ public void testBug425035d() throws CoreException {
 				"@Annotation(x=)\n" +
 				"public class Test {\n" +
 				"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
 		String str = this.workingCopies[2].getSource();
@@ -306,9 +308,9 @@ public void testBug425035d() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner);
 		assertResults(
-				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" + 
-				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" + 
-				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" + 
+				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" +
+				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" +
+				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" +
 				"SOME_VALUE[FIELD_REF]{Values.SOME_VALUE, La.Values;, La.Values;, SOME_VALUE, null, 104}",
 				requestor.getResults());
 	} finally {
@@ -338,7 +340,7 @@ public void testBug425035e() throws CoreException {
 				"@Annotation(x={})\n" +
 				"public class Test {\n" +
 				"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
 		String str = this.workingCopies[2].getSource();
@@ -346,9 +348,9 @@ public void testBug425035e() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner);
 		assertResults(
-				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" + 
-				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" + 
-				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" + 
+				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" +
+				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" +
+				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" +
 				"SOME_VALUE[FIELD_REF]{Values.SOME_VALUE, La.Values;, La.Values;, SOME_VALUE, null, 104}",
 				requestor.getResults());
 	} finally {
@@ -379,7 +381,7 @@ public void testBug425035f() throws CoreException {
 				"@Annotation(x={Values.SOME_VALUE, })\n" +
 				"public class Test {\n" +
 				"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
 		String str = this.workingCopies[2].getSource();
@@ -387,9 +389,9 @@ public void testBug425035f() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner);
 		assertResults(
-				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" + 
-				"Values[TYPE_REF]{Values, a, La.Values;, null, null, 102}\n" + 
-				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" + 
+				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" +
+				"Values[TYPE_REF]{Values, a, La.Values;, null, null, 102}\n" +
+				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" +
 				"SOME_VALUE[FIELD_REF]{Values.SOME_VALUE, La.Values;, La.Values;, SOME_VALUE, null, 104}",
 				requestor.getResults());
 	} finally {
@@ -421,7 +423,7 @@ public void testBug425035_method_a() throws CoreException {
 				"	@Annotation()\n" +
 				"	void f() {}\n" +
 				"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
 		String str = this.workingCopies[2].getSource();
@@ -429,11 +431,11 @@ public void testBug425035_method_a() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner);
 		assertResults(
-				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" + 
+				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" +
 				"i[FIELD_REF]{i, Lb.Test;, I, i, null, 52}\n" +
-				"value[ANNOTATION_ATTRIBUTE_REF]{value = , La.Annotation;, [La.Values;, value, null, 52}\n" + 
-				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" + 
-				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" + 
+				"value[ANNOTATION_ATTRIBUTE_REF]{value = , La.Annotation;, [La.Values;, value, null, 52}\n" +
+				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" +
+				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" +
 				"SOME_VALUE[FIELD_REF]{Values.SOME_VALUE, La.Values;, La.Values;, SOME_VALUE, null, 104}",
 				requestor.getResults());
 	} finally {
@@ -465,7 +467,7 @@ public void testBug425035_method_b() throws CoreException {
 				"	@Annotation({})\n" +
 				"	void f() {}\n" +
 				"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
 		String str = this.workingCopies[2].getSource();
@@ -473,10 +475,10 @@ public void testBug425035_method_b() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner);
 		assertResults(
-				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" + 
+				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" +
 				"i[FIELD_REF]{i, Lb.Test;, I, i, null, 52}\n" +
-				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" + 
-				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" + 
+				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" +
+				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" +
 				"SOME_VALUE[FIELD_REF]{Values.SOME_VALUE, La.Values;, La.Values;, SOME_VALUE, null, 104}",
 				requestor.getResults());
 	} finally {
@@ -509,7 +511,7 @@ public void testBug425035_method_c() throws CoreException {
 				"	@Annotation({Values.SOME_VALUE, })\n" +
 				"	void f() {}\n" +
 				"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
 		String str = this.workingCopies[2].getSource();
@@ -517,10 +519,10 @@ public void testBug425035_method_c() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner);
 		assertResults(
-				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" + 
+				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" +
 				"i[FIELD_REF]{i, Lb.Test;, I, i, null, 52}\n" +
-				"Values[TYPE_REF]{Values, a, La.Values;, null, null, 102}\n" + 
-				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" + 
+				"Values[TYPE_REF]{Values, a, La.Values;, null, null, 102}\n" +
+				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" +
 				"SOME_VALUE[FIELD_REF]{Values.SOME_VALUE, La.Values;, La.Values;, SOME_VALUE, null, 104}",
 				requestor.getResults());
 	} finally {
@@ -552,7 +554,7 @@ public void testBug425035_method_d() throws CoreException {
 				"	@Annotation(x=)\n" +
 				"	void f() {}\n" +
 				"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
 		String str = this.workingCopies[2].getSource();
@@ -560,10 +562,10 @@ public void testBug425035_method_d() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner);
 		assertResults(
-				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" + 
+				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" +
 				"i[FIELD_REF]{i, Lb.Test;, I, i, null, 52}\n" +
-				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" + 
-				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" + 
+				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" +
+				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" +
 				"SOME_VALUE[FIELD_REF]{Values.SOME_VALUE, La.Values;, La.Values;, SOME_VALUE, null, 104}",
 				requestor.getResults());
 	} finally {
@@ -595,7 +597,7 @@ public void testBug425035_method_e() throws CoreException {
 				"	@Annotation(x={})\n" +
 				"	void f() {}\n" +
 				"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
 		String str = this.workingCopies[2].getSource();
@@ -603,10 +605,10 @@ public void testBug425035_method_e() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner);
 		assertResults(
-				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" + 
+				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" +
 				"i[FIELD_REF]{i, Lb.Test;, I, i, null, 52}\n" +
-				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" + 
-				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" + 
+				"Values[TYPE_REF]{a.Values, a, La.Values;, null, null, 99}\n" +
+				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" +
 				"SOME_VALUE[FIELD_REF]{Values.SOME_VALUE, La.Values;, La.Values;, SOME_VALUE, null, 104}",
 				requestor.getResults());
 	} finally {
@@ -639,7 +641,7 @@ public void testBug425035_method_f() throws CoreException {
 				"	@Annotation(x={Values.SOME_VALUE, })\n" +
 				"	void f() {}\n" +
 				"}\n");
-		
+
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
 		String str = this.workingCopies[2].getSource();
@@ -647,10 +649,10 @@ public void testBug425035_method_f() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner);
 		assertResults(
-				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" + 
+				"Test[TYPE_REF]{Test, b, Lb.Test;, null, null, 52}\n" +
 				"i[FIELD_REF]{i, Lb.Test;, I, i, null, 52}\n" +
-				"Values[TYPE_REF]{Values, a, La.Values;, null, null, 102}\n" + 
-				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" + 
+				"Values[TYPE_REF]{Values, a, La.Values;, null, null, 102}\n" +
+				"OTHER_VALUE[FIELD_REF]{Values.OTHER_VALUE, La.Values;, La.Values;, OTHER_VALUE, null, 104}\n" +
 				"SOME_VALUE[FIELD_REF]{Values.SOME_VALUE, La.Values;, La.Values;, SOME_VALUE, null, 104}",
 				requestor.getResults());
 	} finally {
@@ -663,18 +665,18 @@ public void testBug547256() throws CoreException {
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/jdt/Something.java",
-				"package jdt;\n" + 
-				"public class Something {\n" + 
-				"	public static void main(String[] args) {\n" + 
-				"		done: for (int i = 0; i < 5; ++i) {\n" + 
-				"			if (i == 3) {\n" + 
-				"				break done;\n" + 
-				"			}\n" + 
-				"			System.out.println(i);\n" + 
+				"package jdt;\n" +
+				"public class Something {\n" +
+				"	public static void main(String[] args) {\n" +
+				"		done: for (int i = 0; i < 5; ++i) {\n" +
+				"			if (i == 3) {\n" +
+				"				break done;\n" +
+				"			}\n" +
+				"			System.out.println(i);\n" +
 				"		}\n" +
-				"		arg\n" + 
-				"		System.out.println(\"done\");\n" + 
-				"	}\n" + 
+				"		arg\n" +
+				"		System.out.println(\"done\");\n" +
+				"	}\n" +
 				"}\n");
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true);
 		requestor.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_REF, true);

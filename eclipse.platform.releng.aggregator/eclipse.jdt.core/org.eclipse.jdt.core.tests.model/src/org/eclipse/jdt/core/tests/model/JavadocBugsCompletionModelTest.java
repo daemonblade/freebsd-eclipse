@@ -40,6 +40,7 @@ public static Test suite() {
 /* (non-Javadoc)
  * @see org.eclipse.jdt.core.tests.model.AbstractJavadocCompletionModelTest#setUp()
  */
+@Override
 protected void setUp() throws Exception {
 	super.setUp();
 	setUpProjectOptions(CompilerOptions.VERSION_1_4);
@@ -1133,7 +1134,7 @@ public void testBug249785a() throws JavaModelException {
 	);
 }
 /**
- * @bug 255752 [javadoc][assist] Inappropriate completion proposals for javadoc at compilation unit level 
+ * @bug 255752 [javadoc][assist] Inappropriate completion proposals for javadoc at compilation unit level
  * @test that there are no tag completions offered at the compilation unit level for a non package-info.java
  * @see "https://bugs.eclipse.org/bugs/show_bug.cgi?id=255752"
  */

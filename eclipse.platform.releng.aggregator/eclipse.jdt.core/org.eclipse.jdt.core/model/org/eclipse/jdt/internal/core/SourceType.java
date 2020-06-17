@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2014 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -45,6 +45,7 @@ public class SourceType extends NamedMember implements IType {
  * Currently this is computed and used only for anonymous types.
  */
 public int localOccurrenceCount = 1;
+private static final IField[] NO_FIELDS = new IField[0];
 
 protected SourceType(JavaElement parent, String name) {
 	super(parent, name);
@@ -196,7 +197,7 @@ public IType createType(String contents, IJavaElement sibling, boolean force, IP
 @Override
 public boolean equals(Object o) {
 	if (!(o instanceof SourceType)) return false;
-	if (((SourceType) o).isLambda()) 
+	if (((SourceType) o).isLambda())
 		return false;
 	return super.equals(o);
 }
@@ -282,10 +283,47 @@ public IField getField(String fieldName) {
  */
 @Override
 public IField[] getFields() throws JavaModelException {
+	if (!isRecord()) {
+		ArrayList list = getChildrenOfType(FIELD);
+		if (list.size() == 0) {
+			return NO_FIELDS;
+		}
+		IField[] array= new IField[list.size()];
+		list.toArray(array);
+		return array;
+	}
+	return getFieldsOrComponents(false);
+}
+@Override
+public IField[] getRecordComponents() throws JavaModelException {
+	if (!isRecord())
+		return NO_FIELDS;
+	return getFieldsOrComponents(true);
+}
+private IField[] getFieldsOrComponents(boolean component) throws JavaModelException {
 	ArrayList list = getChildrenOfType(FIELD);
-	IField[] array= new IField[list.size()];
-	list.toArray(array);
+	if (list.size() == 0) {
+		return NO_FIELDS;
+	}
+	ArrayList<IField> fields = new ArrayList<>();
+	for (Object object : list) {
+		IField field = (IField) object;
+		if (field.isRecordComponent() == component)
+			fields.add(field);
+	}
+	IField[] array= new IField[fields.size()];
+	fields.toArray(array);
 	return array;
+}
+@Override
+public IField getRecordComponent(String compName) {
+	try {
+		if (isRecord())
+			return new SourceField(this, compName);
+	} catch (JavaModelException e) {
+		// Should throw an exception instead?
+	}
+	return null;
 }
 /**
  * @see IType#getFullyQualifiedName()
@@ -648,6 +686,16 @@ public boolean isEnum() throws JavaModelException {
 }
 
 /**
+ * @see IType#isRecord()
+ * @noreference This method is not intended to be referenced by clients as it is a part of Java preview feature.
+ */
+@Override
+public boolean isRecord() throws JavaModelException {
+	SourceTypeElementInfo info = (SourceTypeElementInfo) getElementInfo();
+	return TypeDeclaration.kind(info.getModifiers()) == TypeDeclaration.RECORD_DECL;
+}
+
+/**
  * @see IType
  */
 @Override
@@ -840,7 +888,7 @@ public ITypeHierarchy newTypeHierarchy(IJavaProject project, WorkingCopyOwner ow
 @Override
 public ITypeHierarchy newTypeHierarchy(IProgressMonitor monitor) throws JavaModelException {
 	// https://bugs.eclipse.org/bugs/show_bug.cgi?id=228845, The new type hierarchy should consider changes in primary
-	// working copy. 
+	// working copy.
 	return newTypeHierarchy(DefaultWorkingCopyOwner.PRIMARY, monitor);
 }
 
@@ -919,7 +967,9 @@ protected void toStringInfo(int tab, StringBuffer buffer, Object info, boolean s
 		}
 	} else {
 		try {
-			if (isEnum()) {
+			if (isRecord()) {
+				buffer.append("record "); //$NON-NLS-1$
+			} else if (isEnum()) {
 				buffer.append("enum "); //$NON-NLS-1$
 			} else if (isAnnotation()) {
 				buffer.append("@interface "); //$NON-NLS-1$

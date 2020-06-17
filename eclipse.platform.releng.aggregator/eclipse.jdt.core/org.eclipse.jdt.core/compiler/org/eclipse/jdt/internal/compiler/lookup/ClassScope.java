@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,7 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
- *     Stephan Herrmann <stephan@cs.tu-berlin.de> - Contributions for 
+ *     Stephan Herrmann <stephan@cs.tu-berlin.de> - Contributions for
  *     						Bug 328281 - visibility leaks not detected when analyzing unused field in private class
  *     						Bug 300576 - NPE Computing type hierarchy when compliance doesn't match libraries
  *     						Bug 354536 - compiling package-info.java still depends on the order of compilation units
@@ -36,13 +36,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.AbstractVariableDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.QualifiedAllocationExpression;
+import org.eclipse.jdt.internal.compiler.ast.RecordComponent;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeParameter;
 import org.eclipse.jdt.internal.compiler.ast.TypeReference;
@@ -104,6 +104,12 @@ public class ClassScope extends Scope {
 					problemReporter().cannotExtendEnum(anonymousType, typeReference, supertype);
 					anonymousType.tagBits |= TagBits.HierarchyHasProblems;
 					anonymousType.setSuperClass(getJavaLangObject());
+				} else if (supertype.erasure().id == TypeIds.T_JavaLangRecord) {
+					if (!(this.referenceContext.isRecord())) {
+						problemReporter().recordCannotExtendRecord(anonymousType, typeReference, supertype);
+						anonymousType.tagBits |= TagBits.HierarchyHasProblems;
+						anonymousType.setSuperClass(getJavaLangObject());
+					}
 				} else if (supertype.isFinal()) {
 					problemReporter().anonymousClassCannotExtendFinalClass(typeReference, supertype);
 					anonymousType.tagBits |= TagBits.HierarchyHasProblems;
@@ -119,6 +125,61 @@ public class ClassScope extends Scope {
 		buildFieldsAndMethods();
 		anonymousType.faultInTypesForFieldsAndMethods();
 		anonymousType.verifyMethods(environment().methodVerifier());
+	}
+
+	void buildComponents() {
+		SourceTypeBinding sourceType = this.referenceContext.binding;
+		if (!sourceType.isRecord()) return;
+		if (sourceType.areComponentsInitialized()) return;
+		if (this.referenceContext.recordComponents == null) {
+			sourceType.setComponents(Binding.NO_COMPONENTS);
+			return;
+		}
+		// count the number of fields vs. initializers
+		RecordComponent[] recComps = this.referenceContext.recordComponents;
+		int size = recComps.length;
+		int count = size;
+
+		// iterate the field declarations to create the bindings, lose all duplicates
+		RecordComponentBinding[] componentBindings = new RecordComponentBinding[count];
+		HashtableOfObject knownComponentNames = new HashtableOfObject(count);
+		count = 0;
+		for (int i = 0; i < size; i++) {
+			RecordComponent recComp = recComps[i];
+			RecordComponentBinding compBinding = new RecordComponentBinding(sourceType, recComp, null,
+					recComp.modifiers | ExtraCompilerModifiers.AccUnresolved);
+			compBinding.id = count;
+			checkAndSetModifiersForComponents(compBinding, recComp);
+
+			if (knownComponentNames.containsKey(recComp.name)) {
+				RecordComponentBinding previousBinding = (RecordComponentBinding) knownComponentNames.get(recComp.name);
+				if (previousBinding != null) {
+					for (int f = 0; f < i; f++) {
+						RecordComponent previousComponent = recComps[f];
+						if (previousComponent.binding == previousBinding) {
+							// flag the duplicate component name error here.
+							problemReporter().recordDuplicateComponent(previousComponent);
+							break;
+						}
+					}
+				}
+				knownComponentNames.put(recComp.name, null); // ensure that the duplicate field is found & removed
+				problemReporter().recordDuplicateComponent(recComp);
+				recComp.binding = null;
+			} else {
+				knownComponentNames.put(recComp.name, compBinding);
+				// remember that we have seen a component with this name
+				componentBindings[count++] = compBinding;
+			}
+		}
+		// remove duplicate components
+		if (count != componentBindings.length)
+			System.arraycopy(componentBindings, 0, componentBindings = new RecordComponentBinding[count], 0, count);
+		sourceType.setComponents(componentBindings);
+	}
+	private void checkAndSetModifiersForComponents(RecordComponentBinding compBinding, RecordComponent comp) {
+		// TODO Auto-generated method stub
+
 	}
 
 	void buildFields() {
@@ -184,6 +245,7 @@ public class ClassScope extends Scope {
 	}
 
 	void buildFieldsAndMethods() {
+		buildComponents();
 		buildFields();
 		buildMethods();
 
@@ -321,7 +383,7 @@ public class ClassScope extends Scope {
 		if (sourceType.areMethodsInitialized()) return;
 
 		boolean isEnum = TypeDeclaration.kind(this.referenceContext.modifiers) == TypeDeclaration.ENUM_DECL;
-		if (this.referenceContext.methods == null && !isEnum) {
+		if (this.referenceContext.methods == null && !(isEnum || sourceType.isRecord())) {
 			this.referenceContext.binding.setMethods(Binding.NO_METHODS);
 			return;
 		}
@@ -374,6 +436,11 @@ public class ClassScope extends Scope {
 			if (hasAbstractMethods)
 				problemReporter().abstractMethodInConcreteClass(sourceType);
 		}
+		if (sourceType.isRecord()) {
+			assert this.referenceContext.isRecord();
+			methodBindings = sourceType.checkAndAddSyntheticRecordMethods(methodBindings, count);
+			count = methodBindings.length;
+		}
 		if (count != methodBindings.length)
 			System.arraycopy(methodBindings, 0, methodBindings = new MethodBinding[count], 0, count);
 		sourceType.tagBits &= ~(TagBits.AreMethodsSorted|TagBits.AreMethodsComplete); // in case some static imports reached already into this type
@@ -386,7 +453,7 @@ public class ClassScope extends Scope {
 			}
 			FieldBinding[] fields = sourceType.unResolvedFields(); // https://bugs.eclipse.org/bugs/show_bug.cgi?id=301683
 			for (int i = 0; i < fields.length; i++) {
-				fields[i].modifiers |= ExtraCompilerModifiers.AccLocallyUsed;	
+				fields[i].modifiers |= ExtraCompilerModifiers.AccLocallyUsed;
 			}
 		}
 		if (isEnum && compilerOptions().isAnnotationBasedNullAnalysisEnabled) {
@@ -420,13 +487,13 @@ public class ClassScope extends Scope {
 		SourceTypeBinding sourceType = this.referenceContext.binding;
 		sourceType.module = module();
 		environment().setAccessRestriction(sourceType, accessRestriction);
-		
+
 		TypeParameter[] typeParameters = this.referenceContext.typeParameters;
 		sourceType.typeVariables = typeParameters == null || typeParameters.length == 0 ? Binding.NO_TYPE_VARIABLES : null;
 		sourceType.fPackage.addType(sourceType);
 		checkAndSetModifiers();
 		buildTypeVariables();
-		
+
 		buildMemberTypes(accessRestriction);
 		return sourceType;
 	}
@@ -458,6 +525,10 @@ public class ClassScope extends Scope {
 	private void checkAndSetModifiers() {
 		SourceTypeBinding sourceType = this.referenceContext.binding;
 		int modifiers = sourceType.modifiers;
+		if (sourceType.isRecord()) {
+			/* JLS 14 Records Sec 8.10 - A record declaration is implicitly final. */
+			modifiers |= ClassFileConstants.AccFinal;
+		}
 		if ((modifiers & ExtraCompilerModifiers.AccAlternateModifierProblem) != 0)
 			problemReporter().duplicateModifierForType(sourceType);
 		ReferenceBinding enclosingType = sourceType.enclosingType();
@@ -476,12 +547,20 @@ public class ClassScope extends Scope {
 					modifiers |= ClassFileConstants.AccStatic;
 			} else if (sourceType.isInterface()) {
 				modifiers |= ClassFileConstants.AccStatic; // 8.5.1
+			} else if (sourceType.isRecord()) {
+				/* JLS 14 Records Sec 8.10 A nested record type is implicitly static */
+				modifiers |= ClassFileConstants.AccStatic;
 			}
 		} else if (sourceType.isLocalType()) {
 			if (sourceType.isEnum()) {
 				problemReporter().illegalLocalTypeDeclaration(this.referenceContext);
 				sourceType.modifiers = 0;
 				return;
+			} else if (sourceType.isRecord()) {
+				if (enclosingType != null && enclosingType.isLocalType()) {
+					problemReporter().illegalLocalTypeDeclaration(this.referenceContext);
+					return;
+				}
 			}
 			if (sourceType.isAnonymousType()) {
 				if (compilerOptions().complianceLevel < ClassFileConstants.JDK9)
@@ -495,7 +574,7 @@ public class ClassScope extends Scope {
 				switch (scope.kind) {
 					case METHOD_SCOPE :
 						MethodScope methodScope = (MethodScope) scope;
-						if (methodScope.isLambdaScope()) 
+						if (methodScope.isLambdaScope())
 							methodScope = methodScope.namedMethodScope();
 						if (methodScope.isInsideInitializer()) {
 							SourceTypeBinding type = ((TypeDeclaration) methodScope.referenceContext).binding;
@@ -643,6 +722,37 @@ public class ClassScope extends Scope {
 					modifiers |= ClassFileConstants.AccFinal;
 				}
 			}
+		} else if (sourceType.isRecord()) {
+			if (isMemberType) {
+				final int UNEXPECTED_MODIFIERS = ~(ClassFileConstants.AccPublic | ClassFileConstants.AccPrivate | ClassFileConstants.AccProtected | ClassFileConstants.AccStatic | ClassFileConstants.AccFinal | ClassFileConstants.AccStrictfp);
+				if ((realModifiers & UNEXPECTED_MODIFIERS) != 0)
+					problemReporter().illegalModifierForInnerRecord(sourceType);
+			} else if (sourceType.isLocalType()) {
+				final int UNEXPECTED_MODIFIERS = ~(ClassFileConstants.AccAbstract | ClassFileConstants.AccFinal | ClassFileConstants.AccStrictfp | ClassFileConstants.AccStatic);
+				if ((realModifiers & UNEXPECTED_MODIFIERS) != 0)
+					problemReporter().illegalModifierForLocalClass(sourceType);
+			} else {
+				final int UNEXPECTED_MODIFIERS = ~(ClassFileConstants.AccPublic |  ClassFileConstants.AccFinal | ClassFileConstants.AccStrictfp);
+				if ((realModifiers & UNEXPECTED_MODIFIERS) != 0)
+					problemReporter().illegalModifierForRecord(sourceType);
+			}
+			// JLS 14 8.10 : It is a compile-time error if a record declaration has the modifier abstract.
+
+			/* Section 8.10 http://cr.openjdk.java.net/~gbierman/8222777/8222777-20190823/specs/records-jls.html#jls-8.10
+			 * It is a compile-time error if a record declaration has the modifier abstract.
+			 *
+			 * A record declaration is implicitly final. It is permitted for the declaration of a record type
+			 * to redundantly specify the final modifier.
+			 *
+			 * A nested record type is implicitly static. It is permitted for the declaration of a nested record
+			 * type to redundantly specify the static modifier.
+			 *
+			 * This implies that it is impossible to declare a record type in the body of an inner class (8.1.3),
+			 * because an inner class cannot have static members except for constant variables.
+			 *
+			 * It is a compile-time error if the same keyword appears more than once as a modifier for a record declaration,
+			 * or if a record declaration has more than one of the access modifiers public, protected, and private (6.6).
+			 */
 		} else {
 			// detect abnormal cases for classes
 			if (isMemberType) { // includes member types defined inside local types
@@ -698,8 +808,11 @@ public class ClassScope extends Scope {
 				if (enclosingType.isInterface())
 					modifiers |= ClassFileConstants.AccStatic;
 			} else if (!enclosingType.isStatic()) {
-				// error the enclosing type of a static field must be static or a top-level type
-				problemReporter().illegalStaticModifierForMemberType(sourceType);
+				if (sourceType.isRecord())
+					problemReporter().recordNestedRecordInherentlyStatic(sourceType);
+				else
+					// error the enclosing type of a static field must be static or a top-level type
+					problemReporter().illegalStaticModifierForMemberType(sourceType);
 			}
 		}
 
@@ -741,7 +854,7 @@ public class ClassScope extends Scope {
 			// set the modifiers
 			// https://bugs.eclipse.org/bugs/show_bug.cgi?id=267670. Force all enumerators to be marked
 			// as used locally. We are unable to track the usage of these reliably as they could be used
-			// in non obvious ways via the synthesized methods values() and valueOf(String) or by using 
+			// in non obvious ways via the synthesized methods values() and valueOf(String) or by using
 			// Enum.valueOf(Class<T>, String).
 			final int IMPLICIT_MODIFIERS = ClassFileConstants.AccPublic | ClassFileConstants.AccStatic | ClassFileConstants.AccFinal | ClassFileConstants.AccEnum | ExtraCompilerModifiers.AccLocallyUsed;
 			fieldBinding.modifiers|= IMPLICIT_MODIFIERS;
@@ -963,6 +1076,12 @@ public class ClassScope extends Scope {
 				problemReporter().superTypeCannotUseWildcard(sourceType, superclassRef, superclass);
 			} else if (superclass.erasure().id == TypeIds.T_JavaLangEnum) {
 				problemReporter().cannotExtendEnum(sourceType, superclassRef, superclass);
+			} else if (superclass.erasure().id == TypeIds.T_JavaLangRecord) {
+				if (!(this.referenceContext.isRecord())) {
+					problemReporter().recordCannotExtendRecord(sourceType, superclassRef, superclass);
+				} else {
+					return connectRecordSuperclass();
+				}
 			} else if ((superclass.tagBits & TagBits.HierarchyHasProblems) != 0
 					|| !superclassRef.resolvedType.isValidBinding()) {
 				sourceType.setSuperClass(superclass);
@@ -979,7 +1098,7 @@ public class ClassScope extends Scope {
 			}
 		}
 		sourceType.tagBits |= TagBits.HierarchyHasProblems;
-		sourceType.setSuperClass(getJavaLangObject());
+		sourceType.setSuperClass(sourceType.isRecord() ? getJavaLangRecord() : getJavaLangObject());
 		if ((sourceType.superclass.tagBits & TagBits.BeginHierarchyCheck) == 0)
 			detectHierarchyCycle(sourceType, sourceType.superclass, null);
 		return false; // reported some error against the source type
@@ -1022,6 +1141,16 @@ public class ClassScope extends Scope {
 		return !foundCycle;
 	}
 
+	private boolean connectRecordSuperclass() {
+		SourceTypeBinding sourceType = this.referenceContext.binding;
+		ReferenceBinding rootRecordType = getJavaLangRecord();
+		sourceType.setSuperClass(rootRecordType);
+		if ((rootRecordType.tagBits & TagBits.HasMissingType) != 0) {
+			sourceType.tagBits |= TagBits.HierarchyHasProblems; // mark missing supertpye
+			return false;
+		}
+		return !detectHierarchyCycle(sourceType, rootRecordType, null);
+	}
 	/*
 		Our current belief based on available JCK 1.3 tests is:
 			inherited member types are visible as a potential superclass.
@@ -1199,7 +1328,7 @@ public class ClassScope extends Scope {
 			return detectHierarchyCycle(this.referenceContext.binding, (ReferenceBinding) superType, reference);
 		}
 		// Reinstate the code deleted by the fix for https://bugs.eclipse.org/bugs/show_bug.cgi?id=205235
-		// For details, see https://bugs.eclipse.org/bugs/show_bug.cgi?id=294057. 
+		// For details, see https://bugs.eclipse.org/bugs/show_bug.cgi?id=294057.
 		if ((superType.tagBits & TagBits.BeginHierarchyCheck) == 0 && superType instanceof SourceTypeBinding)
 			// ensure if this is a source superclass that it has already been checked
 			((SourceTypeBinding) superType).scope.connectTypeHierarchyWithoutMembers();
@@ -1235,7 +1364,7 @@ public class ClassScope extends Scope {
 			// force its superclass & superinterfaces to be found... 2 possibilities exist - the source type is included in the hierarchy of:
 			//		- a binary type... this case MUST be caught & reported here
 			//		- another source type... this case is reported against the other source type
-			if (superType.problemId() != ProblemReasons.NotFound && (superType.tagBits & TagBits.HierarchyHasProblems) != 0) { 
+			if (superType.problemId() != ProblemReasons.NotFound && (superType.tagBits & TagBits.HierarchyHasProblems) != 0) {
 				sourceType.tagBits |= TagBits.HierarchyHasProblems;
 				problemReporter().hierarchyHasProblems(sourceType);
 				return true;
@@ -1298,7 +1427,7 @@ public class ClassScope extends Scope {
 			if (ref != null && ref.resolvedType == null) {
 				// https://bugs.eclipse.org/bugs/show_bug.cgi?id=319885 Don't cry foul prematurely.
 				// Check the edges traversed to see if there really is a cycle.
-				char [] referredName = ref.getLastToken(); 
+				char [] referredName = ref.getLastToken();
 				for (Iterator iter = environment().typesBeingConnected.iterator(); iter.hasNext();) {
 					SourceTypeBinding type = (SourceTypeBinding) iter.next();
 					if (CharOperation.equals(referredName, type.sourceName())) {
@@ -1396,7 +1525,7 @@ public class ClassScope extends Scope {
 		}
 		return this.parent.checkRedundantDefaultNullness(nullBits, sourceStart);
 	}
-	
+
 	@Override
 	public String toString() {
 		if (this.referenceContext != null)

@@ -252,8 +252,9 @@ protected void startEvaluationContext() throws TargetException {
 		launcher.setEvalPort(evalPort);
 		launcher.setEvalTargetPath(TARGET_PATH);
 		this.launchedVM = launcher.launch();
-	
+
 		(new Thread() {
+			@Override
 			public void run() {
 				try {
 					java.io.InputStream in = SimpleTest.this.launchedVM.getInputStream();
@@ -272,8 +273,9 @@ protected void startEvaluationContext() throws TargetException {
 				}
 			}
 		}).start();
-	
+
 		(new Thread() {
+			@Override
 			public void run() {
 				try {
 					java.io.InputStream in = SimpleTest.this.launchedVM.getErrorStream();
@@ -292,7 +294,7 @@ protected void startEvaluationContext() throws TargetException {
 				}
 			}
 		}).start();
-	
+
 		this.requestor = new Requestor();
 		this.target = new TargetInterface();
 		this.target.connect(server, 30000); // allow 30s max to connect (see https://bugs.eclipse.org/bugs/show_bug.cgi?id=188127)

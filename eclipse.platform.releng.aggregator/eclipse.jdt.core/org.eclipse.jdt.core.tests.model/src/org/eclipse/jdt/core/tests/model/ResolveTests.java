@@ -44,6 +44,7 @@ public static Test suite() {
 public ResolveTests(String name) {
 	super(name);
 }
+@Override
 public ICompilationUnit getWorkingCopy(String path, String source) throws JavaModelException {
 	return super.getWorkingCopy(path, source, this.wcOwner);
 }
@@ -54,21 +55,25 @@ private IJavaElement[] select(String path, String source, String selection) thro
 	int length = selection.length();
 	return this.wc.codeSelect(start, length, this.wcOwner);
 }
+@Override
 public void setUpSuite() throws Exception {
 	super.setUpSuite();
 
 	setUpJavaProject("Resolve");
 }
+@Override
 protected void setUp() throws Exception {
 	super.setUp();
 	this.wcOwner = new WorkingCopyOwner(){};
 }
 
+@Override
 public void tearDownSuite() throws Exception {
 	deleteProject("Resolve");
 
 	super.tearDownSuite();
 }
+@Override
 protected void tearDown() throws Exception {
 	if(this.wc != null) {
 		this.wc.discardWorkingCopy();
@@ -452,7 +457,7 @@ public void testEmptyCU1() throws JavaModelException {
 		"Unknown\n" +
 		"\n"
 	);
-	
+
 	IJavaElement[] elements = codeSelect(this.workingCopies[0], "Unknown", "Unknown");
 	assertElementsEqual(
 		"Unexpected elements",
@@ -2646,7 +2651,7 @@ public void testCodeSelectInHybrid1415Projects() throws CoreException, IOExcepti
 		this.workingCopies[0] = getWorkingCopy(
 			"/Resolve/src/Test.java",
 			"public class TextEditTests extends TestCase {\n" +
-			"	{\n" + 
+			"	{\n" +
 			"		new TestSuite(TextEditTests.class);\n" +
 			"	}\n" +
 			"}\n");

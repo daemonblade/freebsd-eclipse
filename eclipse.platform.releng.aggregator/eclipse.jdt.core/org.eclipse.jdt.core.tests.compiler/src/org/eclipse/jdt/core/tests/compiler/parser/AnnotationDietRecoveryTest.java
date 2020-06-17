@@ -54,6 +54,7 @@ public static Class testClass() {
 /*
  * Toggle compiler in mode -1.5
  */
+@Override
 protected Map getCompilerOptions() {
 	Map options = super.getCompilerOptions();
 	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_5);
@@ -1924,39 +1925,39 @@ public void test0041() {
 					"}\n";
 
 	String expectedDietUnitToString =
-			"package snippet;\n" + 
-					"public class Bug366003 {\n" + 
-					"  public Bug366003() {\n" + 
-					"  }\n" + 
-					"  void foo(Object o1) {\n" + 
-					"  }\n" + 
-					"  @Blah User(@Bla String str) {\n" + 
-					"  }\n" + 
+			"package snippet;\n" +
+					"public class Bug366003 {\n" +
+					"  public Bug366003() {\n" +
+					"  }\n" +
+					"  void foo(Object o1) {\n" +
+					"  }\n" +
+					"  @Blah User(@Bla String str) {\n" +
+					"  }\n" +
 					"}\n";
 
 	String expectedDietPlusBodyUnitToString =
-			"package snippet;\n" + 
-					"public class Bug366003 {\n" + 
-					"  public Bug366003() {\n" + 
-					"    super();\n" + 
-					"  }\n" + 
-					"  void foo(Object o1) {\n" + 
-					"  }\n" + 
-					"  @Blah User(@Bla String str) {\n" + 
-					"  }\n" + 
+			"package snippet;\n" +
+					"public class Bug366003 {\n" +
+					"  public Bug366003() {\n" +
+					"    super();\n" +
+					"  }\n" +
+					"  void foo(Object o1) {\n" +
+					"  }\n" +
+					"  @Blah User(@Bla String str) {\n" +
+					"  }\n" +
 					"}\n";
 
 	String expectedFullUnitToString = expectedDietUnitToString;
 
 	String expectedCompletionDietUnitToString =
-			"package snippet;\n" + 
-					"public class Bug366003 {\n" + 
-					"  public Bug366003() {\n" + 
-					"  }\n" + 
-					"  void foo(Object o1) {\n" + 
-					"  }\n" + 
-					"  User(@Bla String str) {\n" + 
-					"  }\n" + 
+			"package snippet;\n" +
+					"public class Bug366003 {\n" +
+					"  public Bug366003() {\n" +
+					"  }\n" +
+					"  void foo(Object o1) {\n" +
+					"  }\n" +
+					"  User(@Bla String str) {\n" +
+					"  }\n" +
 					"}\n";
 
 	String testName = "<annotation recovery>";

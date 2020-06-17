@@ -67,6 +67,7 @@ public static Test suite() {
 /* (non-Javadoc)
  * @see org.eclipse.jdt.core.tests.model.AbstractJavaModelTests#setUp()
  */
+@Override
 protected void setUp() throws Exception {
 	super.setUp();
 	if (TEST_PROJECT == null) {
@@ -120,6 +121,7 @@ protected void setUp() throws Exception {
 /* (non-Javadoc)
  * @see org.eclipse.jdt.core.tests.model.AbstractJavaModelTests#tearDown()
  */
+@Override
 protected void tearDown() throws Exception {
 	TESTS_COUNT--;
 	if (TEST_PROJECT != null && TESTS_COUNT == 0) {
@@ -1274,7 +1276,7 @@ public void testBug302455() throws CoreException, InterruptedException {
 		assertNotNull("We should have got a Java Source content type!", javaContentType);
 		javaContentType.addFileSpec("b302455", IContentType.FILE_EXTENSION_SPEC);
 		IJavaProject javaProject = createJavaProject("P");
-		createFolder("/P/p");			
+		createFolder("/P/p");
 		String filePath = "/P/p/Bug.b302455";
 		createFile(
 			filePath,
@@ -1284,14 +1286,14 @@ public void testBug302455() throws CoreException, InterruptedException {
 			""
 		);
 		waitUntilIndexesReady();
-		
+
 		// Get the secondary type
 		IType type = javaProject.findType("p.Secondary", new NullProgressMonitor());
 		assertNotNull("We should have found the secondary type!", type);
-		
+
 		// Remove file extension
 		javaContentType.removeFileSpec("b302455", IContentType.FILE_EXTENSION_SPEC);
-		
+
 		// As there's no specific event fo
 		type = javaProject.findType("p.Secondary", new NullProgressMonitor());
 		assertNull("We should have not found the secondary type!", type);
@@ -1312,19 +1314,19 @@ public void testBug306477() throws Exception {
 		createFolder("/P/p");
 		createFile(
 			"/P/p/Alice.java",
-			"package p;\n" + 
-			"class Alice {\n" + 
-			"	Object j = Bob.CHARLIE;\n" + 
+			"package p;\n" +
+			"class Alice {\n" +
+			"	Object j = Bob.CHARLIE;\n" +
 			"}\n"
 		);
 		createFile(
 			"/P/p/Misc.java",
-			"package p;\n" + 
-			"enum Bob {\n" + 
-			"	CHARLIE;\n" + 
+			"package p;\n" +
+			"enum Bob {\n" +
+			"	CHARLIE;\n" +
 			"}\n"
 		);
-		
+
 		// find secondary enum
 		IType type = project.findType("p.Bob", new NullProgressMonitor());
 		assertElementEquals("We should have found the secondary enum 'Bob'!",
@@ -1343,7 +1345,7 @@ public void testBug351498() throws CoreException, InterruptedException {
 		assertNotNull("We should have got a Java Source content type!", javaContentType);
 		javaContentType.addFileSpec("b351498", IContentType.FILE_EXTENSION_SPEC);
 		IJavaProject javaProject = createJavaProject("P");
-		createFolder("/P/p");			
+		createFolder("/P/p");
 		String filePath = "/P/p/Bug.b351498";
 		createFile(
 			filePath,
@@ -1354,14 +1356,14 @@ public void testBug351498() throws CoreException, InterruptedException {
 			""
 		);
 		waitUntilIndexesReady();
-		
+
 		// Get the secondary type
 		IType type = javaProject.findType("p.Secondary", new NullProgressMonitor());
 		assertNotNull("We should have found the secondary type!", type);
-		
+
 		// Remove file extension
 		javaContentType.removeFileSpec("b351498", IContentType.FILE_EXTENSION_SPEC);
-		
+
 		// As there's no specific event fo
 		type = javaProject.findType("p.Secondary", new NullProgressMonitor());
 		assertNull("We should have not found the secondary type!", type);

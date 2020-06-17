@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2019 Gábor Kövesdán and others.
+ * Copyright (c) 2015, 2020 Gábor Kövesdán and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,17 +7,15 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     Gábor Kövesdán - initial version
  *******************************************************************************/
 package org.eclipse.jdt.core.tests.model;
 
-import java.util.Hashtable;
-
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.codeassist.impl.AssistOptions;
 
 import junit.framework.Test;
 
@@ -29,6 +27,7 @@ public static Test suite() {
 public SubstringCompletionTests(String name) {
 	super(name);
 }
+@Override
 public void setUpSuite() throws Exception {
 	if (COMPLETION_PROJECT == null)  {
 		COMPLETION_PROJECT = setUpJavaProject("Completion", "1.8", true);
@@ -36,10 +35,9 @@ public void setUpSuite() throws Exception {
 		setUpProjectCompliance(COMPLETION_PROJECT, "1.8", true);
 	}
 	super.setUpSuite();
-	Hashtable<String, String> options = new Hashtable<>(this.oldOptions);
-	options.put(JavaCore.CODEASSIST_SUBSTRING_MATCH, JavaCore.ENABLED);
-	JavaCore.setOptions(options);
+	System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "true");
 }
+@Override
 public void tearDownSuite() throws Exception {
 	if (COMPLETION_SUITES == null) {
 		deleteProject("Completion");

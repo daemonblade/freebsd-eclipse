@@ -111,8 +111,7 @@ public class JavaCorePreferenceInitializer extends AbstractPreferenceInitializer
 		defaultOptionsMap.put(JavaCore.CODEASSIST_FORBIDDEN_REFERENCE_CHECK, JavaCore.ENABLED);
 		defaultOptionsMap.put(JavaCore.CODEASSIST_DISCOURAGED_REFERENCE_CHECK, JavaCore.DISABLED);
 		defaultOptionsMap.put(JavaCore.CODEASSIST_CAMEL_CASE_MATCH, JavaCore.ENABLED);
-		defaultOptionsMap.put(JavaCore.CODEASSIST_SUBSTRING_MATCH, JavaCore.ENABLED);
-		defaultOptionsMap.put(JavaCore.CODEASSIST_SUBWORD_MATCH, JavaCore.DISABLED);
+		defaultOptionsMap.put(JavaCore.CODEASSIST_SUBWORD_MATCH, JavaCore.ENABLED);
 		defaultOptionsMap.put(JavaCore.CODEASSIST_SUGGEST_STATIC_IMPORTS, JavaCore.ENABLED);
 		defaultOptionsMap.put(ChunkCache.CHUNK_CACHE_SIZE_MB, Double.toString(ChunkCache.CHUNK_CACHE_SIZE_MB_DEFAULT));
 		defaultOptionsMap.put(ChunkCache.CHUNK_CACHE_SIZE_PERCENT,
@@ -135,9 +134,9 @@ public class JavaCorePreferenceInitializer extends AbstractPreferenceInitializer
 	}
 
 	/**
-	 * Note: For deprecated formatter options, you may also add migration to their replacement options in 
+	 * Note: For deprecated formatter options, you may also add migration to their replacement options in
 	 * {@link org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions#setDeprecatedOptions}.
-	 * 
+	 *
 	 * @deprecated As using deprecated options
 	 */
 	private void initializeDeprecatedOptions() {

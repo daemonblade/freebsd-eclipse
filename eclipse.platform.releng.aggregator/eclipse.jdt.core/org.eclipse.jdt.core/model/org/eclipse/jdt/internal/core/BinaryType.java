@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -298,20 +298,50 @@ public int getElementType() {
 public IField getField(String fieldName) {
 	return new BinaryField(this, fieldName);
 }
-
 @Override
 public IField[] getFields() throws JavaModelException {
-	ArrayList list = getChildrenOfType(FIELD);
-	int size;
-	if ((size = list.size()) == 0) {
-		return NO_FIELDS;
-	} else {
-		IField[] array= new IField[size];
+	if (!isRecord()) {
+		ArrayList list = getChildrenOfType(FIELD);
+		if (list.size() == 0) {
+			return NO_FIELDS;
+		}
+		IField[] array= new IField[list.size()];
 		list.toArray(array);
 		return array;
 	}
+	return getFieldsOrComponents(false);
 }
-
+@Override
+public IField[] getRecordComponents() throws JavaModelException {
+	if (!isRecord())
+		return new IField[0];
+	return getFieldsOrComponents(true);
+}
+private IField[] getFieldsOrComponents(boolean component) throws JavaModelException {
+	ArrayList list = getChildrenOfType(FIELD);
+	if (list.size() == 0) {
+		return NO_FIELDS;
+	}
+	ArrayList<IField> fields = new ArrayList<>();
+	for (Object object : list) {
+		IField field = (IField) object;
+		if (field.isRecordComponent() == component)
+			fields.add(field);
+	}
+	IField[] array= new IField[fields.size()];
+	fields.toArray(array);
+	return array;
+}
+@Override
+public IField getRecordComponent(String compName) {
+	try {
+		if (isRecord())
+			return new BinaryField(this, compName);
+	} catch (JavaModelException e) {
+		//
+	}
+	return null;
+}
 @Override
 public int getFlags() throws JavaModelException {
 	IBinaryType info = (IBinaryType) getElementInfo();
@@ -704,6 +734,16 @@ public boolean isEnum() throws JavaModelException {
 	return TypeDeclaration.kind(info.getModifiers()) == TypeDeclaration.ENUM_DECL;
 }
 
+/**
+ * @see IType#isRecord()
+ * @noreference This method is not intended to be referenced by clients as it is a part of Java preview feature.
+ */
+@Override
+public boolean isRecord() throws JavaModelException {
+	IBinaryType info = (IBinaryType) getElementInfo();
+	return TypeDeclaration.kind(info.getModifiers()) == TypeDeclaration.RECORD_DECL;
+}
+
 @Override
 public boolean isInterface() throws JavaModelException {
 	IBinaryType info = (IBinaryType) getElementInfo();
@@ -952,7 +992,9 @@ protected void toStringInfo(int tab, StringBuffer buffer, Object info, boolean s
 		toStringName(buffer);
 	} else {
 		try {
-			if (isAnnotation()) {
+			if (isRecord()) {
+				buffer.append("record "); //$NON-NLS-1$
+			} else if (isAnnotation()) {
 				buffer.append("@interface "); //$NON-NLS-1$
 			} else if (isEnum()) {
 				buffer.append("enum "); //$NON-NLS-1$
@@ -986,7 +1028,7 @@ public JavadocContents getJavadocContents(IProgressMonitor monitor) throws JavaM
 	synchronized (projectInfo.javadocCache) {
 		cachedJavadoc = (JavadocContents) projectInfo.javadocCache.get(this);
 	}
-	
+
 	if (cachedJavadoc != null && cachedJavadoc != EMPTY_JAVADOC) {
 		return cachedJavadoc;
 	}

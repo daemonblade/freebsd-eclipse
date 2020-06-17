@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Luiz-Otavio Zorzella <zorzella at gmail dot com> - Improve CamelCase algorithm
@@ -807,90 +807,7 @@ public static final int[] getSubWordMatchingRegions(String pattern, String name)
 		return EMPTY_REGIONS;
 	}
 
-	int segmentStart = 0;
-	int[] segments = EMPTY_REGIONS;
-	char[] nameChars = name.toCharArray();
-
-	// Main loop is on pattern characters
-	int iName = -1;
-	int iPatternWordStart = 0;
-	for (int iPattern = 0; iPattern < pattern.length(); iPattern++) {
-		iName++;
-		if (iName == nameChars.length){
-			// We have exhausted the name (and not the pattern), so it's not a match
-			return null;
-		}
-
-		char patternChar = pattern.charAt(iPattern);
-		char nameChar = nameChars[iName];
-
-		// For as long as we're exactly matching, bring it on
-		if (patternChar == nameChar) {
-			continue;
-		}
-
-		// not matching, record previous segment and find next word match in name
-		if (iName > segmentStart) {
-			segments = Arrays.copyOf(segments, segments.length + 2);
-			segments[segments.length - 2] = segmentStart;
-			segments[segments.length - 1] = iName - segmentStart;
-		}
-
-		int wordStart = indexOfWordStart(nameChars, iName, patternChar);
-		if (wordStart < 0) {
-			// no matching word found, backtrack and try to find next occurrence of current word
-			int next = indexOfWordStart(nameChars, iName, pattern.charAt(iPatternWordStart));
-			if (next > 0) {
-				wordStart = next;
-				iPattern = iPatternWordStart;
-				 // last recorded segment was invalid -> drop it
-				segments = Arrays.copyOfRange(segments, 0, segments.length - 2);
-			}
-		}
-
-		if (wordStart < 0) {
-			// We have exhausted name (and not pattern), so it's not a match
-			return null;
-		}
-
-		segmentStart = wordStart;
-		iName = wordStart;
-		iPatternWordStart = iPattern;
-	}
-
-	 // we have exhausted pattern, record final segment
-	segments = Arrays.copyOf(segments, segments.length + 2);
-	segments[segments.length - 2] = segmentStart;
-	segments[segments.length - 1] = iName - segmentStart + 1;
-
-	return segments;
-}
-
-/**
- * Returns the index of the first word after nameStart, beginning with patternChar.
- * Returns -1 if no matching word is found.
- */
-private static int indexOfWordStart(char[] name, int nameStart, char patternChar) {
-
-	char target = ScannerHelper.toUpperCase(patternChar);
-	boolean lastWasSeparator = false;
-
-	for (int iName = nameStart; iName < name.length; iName++) {
-		char nameChar = name[iName];
-		if (nameChar == target || (lastWasSeparator && nameChar == patternChar)) {
-			return iName;
-		}
-
-		// don't match across identifiers (e.g. "index" should not match "substring(int beginIndex)")
-		if (!ScannerHelper.isJavaIdentifierPart(nameChar)) {
-			return -1;
-		}
-
-		lastWasSeparator = nameChar == '_';
-	}
-
-	// We have exhausted name
-	return -1;
+	return new SubwordMatcher(name).getMatchingRegions(pattern);
 }
 
 /**
@@ -1015,7 +932,7 @@ public static String charToString(char[] charArray) {
 /**
  * Converts the given list of strings to an array of equal size,
  * containing the individual strings converted to char[] each.
- * 
+ *
  * @param stringList
  * @return an array of char[], representing the elements in the input list, or {@code null} if the list was {@code null}.
  * @since 3.14
@@ -1108,7 +1025,7 @@ public static final int compareTo(char[] array1, char[] array2) {
  * @param array2 the second given array
  * @param start the starting position to compare (inclusive)
  * @param end the ending position to compare (exclusive)
- * 
+ *
  * @return the returned value of the comparison between array1 and array2
  * @throws NullPointerException if one of the arrays is null
  * @since 3.7.1
@@ -1900,7 +1817,7 @@ public static final char[] concatWith(char[][] array, char separator) {
 }
 
 /**
- * Answers the concatenation of the given array parts using the given separator between each part 
+ * Answers the concatenation of the given array parts using the given separator between each part
  * irrespective of whether an element is a zero length array or not.
  * <br>
  * <br>
@@ -3164,7 +3081,7 @@ public static final boolean match(
 		if (iPattern == patternEnd) {
 			if (iName == nameEnd) return true; // the chars match
 			return false; // pattern has ended but not the name, no match
-		} 
+		}
 		if ((patternChar = pattern[iPattern]) == '*') {
 			break;
 		}
@@ -4177,13 +4094,13 @@ public static final char[][] splitOnWithEnclosures(
 		int enclCount = 0;
 		for (int i = start; i < end; i++) {
 			if (array[i] == openEncl)
-				enclCount++; 
+				enclCount++;
 			else if (array[i] == divider)
 				wordCount++;
 		}
 		if (enclCount == 0)
 			return CharOperation.splitOn(divider, array, start, end);
-		
+
 		int nesting = 0;
 		if (openEncl == divider || closeEncl == divider) // divider should be distinct
 			return CharOperation.NO_CHAR_CHAR;
@@ -4196,7 +4113,7 @@ public static final char[][] splitOnWithEnclosures(
 				continue;
 			}
 			if (array[i] == closeEncl) {
-				if (nesting > 0) 
+				if (nesting > 0)
 					--nesting;
 				continue;
 			}
@@ -4383,7 +4300,7 @@ final static public char[] toLowerCase(char[] chars) {
  *
  * @param chars the chars to convert
  * @return the result of a char[] conversion to uppercase
- * 
+ *
  * @since 3.5
  */
 final static public char[] toUpperCase(char[] chars) {

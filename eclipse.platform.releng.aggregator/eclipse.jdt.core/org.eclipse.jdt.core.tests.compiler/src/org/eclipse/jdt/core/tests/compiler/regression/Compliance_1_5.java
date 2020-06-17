@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -36,6 +36,7 @@ public Compliance_1_5(String name) {
 /*
  * Toggle compiler in mode -1.5
  */
+@Override
 protected Map getCompilerOptions() {
 	Map options = super.getCompilerOptions();
 	options.put(CompilerOptions.OPTION_ReportUnnecessaryTypeCheck, CompilerOptions.IGNORE);
@@ -58,7 +59,7 @@ public static Test suite() {
 // All specified tests which does not belong to the class are skipped...
 static {
 	// Names of tests to run: can be "testBugXXXX" or "BugXXXX")
-//		TESTS_NAMES = new String[] { "Bug58069" };
+//		TESTS_NAMES = new String[] { "test079" };
 	// Numbers of tests to run: "test<number>" will be run for each number of this array
 //	TESTS_NUMBERS = new int[] { 88 };
 	// Range numbers of tests to run: all tests between "test<first>" and "test<last>" will be run for { first, last }
@@ -67,6 +68,7 @@ static {
 /* (non-Javadoc)
  * @see junit.framework.TestCase#setUp()
  */
+@Override
 protected void setUp() throws Exception {
 	super.setUp();
 	// Javadoc disabled by default
@@ -118,36 +120,36 @@ public void test011() {
 			"	}	\n" +
 			"} \n"
 		},
-		"----------\n" + 
-		"1. ERROR in p1\\X.java (at line 4)\n" + 
-		"	while (false);	\n" + 
-		"	             ^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"2. ERROR in p1\\X.java (at line 5)\n" + 
-		"	while (false) System.out.println(\"unreachable\");	\n" + 
-		"	              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"3. ERROR in p1\\X.java (at line 8)\n" + 
-		"	for (;false;);	\n" + 
-		"	             ^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"4. ERROR in p1\\X.java (at line 9)\n" + 
-		"	for (;false;) System.out.println(\"unreachable\");	\n" + 
-		"	              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"5. WARNING in p1\\X.java (at line 10)\n" + 
-		"	if (false);	\n" + 
-		"	          ^\n" + 
-		"Dead code\n" + 
-		"----------\n" + 
-		"6. WARNING in p1\\X.java (at line 11)\n" + 
-		"	if (false)System.out.println(\"unreachable\");		\n" + 
-		"	          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" + 
-		"Dead code\n" + 
+		"----------\n" +
+		"1. ERROR in p1\\X.java (at line 4)\n" +
+		"	while (false);	\n" +
+		"	             ^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"2. ERROR in p1\\X.java (at line 5)\n" +
+		"	while (false) System.out.println(\"unreachable\");	\n" +
+		"	              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"3. ERROR in p1\\X.java (at line 8)\n" +
+		"	for (;false;);	\n" +
+		"	             ^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"4. ERROR in p1\\X.java (at line 9)\n" +
+		"	for (;false;) System.out.println(\"unreachable\");	\n" +
+		"	              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"5. WARNING in p1\\X.java (at line 10)\n" +
+		"	if (false);	\n" +
+		"	          ^\n" +
+		"Dead code\n" +
+		"----------\n" +
+		"6. WARNING in p1\\X.java (at line 11)\n" +
+		"	if (false)System.out.println(\"unreachable\");		\n" +
+		"	          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
+		"Dead code\n" +
 		"----------\n");
 }
 /// binary compatibility
@@ -802,16 +804,16 @@ public void test027() {
 			"	}	\n"+
 			"}	\n"
 		},
-		"----------\n" + 
-		"1. WARNING in p1\\X.java (at line 4)\n" + 
-		"	for (;false;p());	\n" + 
-		"	            ^^^\n" + 
-		"Dead code\n" + 
-		"----------\n" + 
-		"2. ERROR in p1\\X.java (at line 4)\n" + 
-		"	for (;false;p());	\n" + 
-		"	                ^\n" + 
-		"Unreachable code\n" + 
+		"----------\n" +
+		"1. WARNING in p1\\X.java (at line 4)\n" +
+		"	for (;false;p());	\n" +
+		"	            ^^^\n" +
+		"Dead code\n" +
+		"----------\n" +
+		"2. ERROR in p1\\X.java (at line 4)\n" +
+		"	for (;false;p());	\n" +
+		"	                ^\n" +
+		"Unreachable code\n" +
 		"----------\n"
 );
 }
@@ -1041,22 +1043,22 @@ public void test032() {
 			"	String bar = \"X2.bar\";	\n" +
 			"}	\n",
 		},
-		"----------\n" + 
-		"1. ERROR in p\\X.java (at line 4)\n" + 
-		"	System.out.println(new q.X2().foo);	\n" + 
-		"	                              ^^^\n" + 
-		"The field X2.foo is not visible\n" + 
-		"----------\n" + 
-		"2. ERROR in p\\X.java (at line 5)\n" + 
-		"	System.out.println(new q.X2().bar);	\n" + 
-		"	                              ^^^\n" + 
-		"The field X2.bar is not visible\n" + 
-		"----------\n" + 
-		"----------\n" + 
-		"1. WARNING in q\\X2.java (at line 3)\n" + 
-		"	protected String foo = \"X2.foo\";	\n" + 
-		"	                 ^^^\n" + 
-		"The field X2.foo is hiding a field from type X1\n" + 
+		"----------\n" +
+		"1. ERROR in p\\X.java (at line 4)\n" +
+		"	System.out.println(new q.X2().foo);	\n" +
+		"	                              ^^^\n" +
+		"The field X2.foo is not visible\n" +
+		"----------\n" +
+		"2. ERROR in p\\X.java (at line 5)\n" +
+		"	System.out.println(new q.X2().bar);	\n" +
+		"	                              ^^^\n" +
+		"The field X2.bar is not visible\n" +
+		"----------\n" +
+		"----------\n" +
+		"1. WARNING in q\\X2.java (at line 3)\n" +
+		"	protected String foo = \"X2.foo\";	\n" +
+		"	                 ^^^\n" +
+		"The field X2.foo is hiding a field from type X1\n" +
 		"----------\n");
 }
 
@@ -1286,36 +1288,36 @@ public void test039() {
 			"	}	\n"+
 			"}	\n",
 		},
-		"----------\n" + 
-		"1. ERROR in X.java (at line 5)\n" + 
-		"	for (;false;);	\n" + 
-		"	             ^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"2. ERROR in X.java (at line 6)\n" + 
-		"	for (;false;){}	\n" + 
-		"	             ^^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"3. ERROR in X.java (at line 7)\n" + 
-		"	while (false);	\n" + 
-		"	             ^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"4. ERROR in X.java (at line 8)\n" + 
-		"	while (false){}	\n" + 
-		"	             ^^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"5. WARNING in X.java (at line 9)\n" + 
-		"	if (false) {} else {}	\n" + 
-		"	           ^^\n" + 
-		"Dead code\n" + 
-		"----------\n" + 
-		"6. WARNING in X.java (at line 10)\n" + 
-		"	if (false) ; else ;			\n" + 
-		"	           ^\n" + 
-		"Dead code\n" + 
+		"----------\n" +
+		"1. ERROR in X.java (at line 5)\n" +
+		"	for (;false;);	\n" +
+		"	             ^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 6)\n" +
+		"	for (;false;){}	\n" +
+		"	             ^^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"3. ERROR in X.java (at line 7)\n" +
+		"	while (false);	\n" +
+		"	             ^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"4. ERROR in X.java (at line 8)\n" +
+		"	while (false){}	\n" +
+		"	             ^^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"5. WARNING in X.java (at line 9)\n" +
+		"	if (false) {} else {}	\n" +
+		"	           ^^\n" +
+		"Dead code\n" +
+		"----------\n" +
+		"6. WARNING in X.java (at line 10)\n" +
+		"	if (false) ; else ;			\n" +
+		"	           ^\n" +
+		"Dead code\n" +
 		"----------\n");
 }
 // jls6.5.5.1 - simple type names favor member type over toplevel one.
@@ -2252,24 +2254,24 @@ public void test067() {
 			"----------\n";
 	if (this.complianceLevel == ClassFileConstants.JDK1_6) {
 		expectedError =
-				"----------\n" + 
-				"1. ERROR in X.java (at line 11)\n" + 
-				"	super(null); //1\n" + 
-				"	^^^^^^^^^^^^\n" + 
-				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" + 
-				"----------\n" + 
-				"2. ERROR in X.java (at line 14)\n" + 
-				"	super(new M());//2\n" + 
-				"	^^^^^^^^^^^^^^^\n" + 
-				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" + 
+				"----------\n" +
+				"1. ERROR in X.java (at line 11)\n" +
+				"	super(null); //1\n" +
+				"	^^^^^^^^^^^^\n" +
+				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" +
+				"----------\n" +
+				"2. ERROR in X.java (at line 14)\n" +
+				"	super(new M());//2\n" +
+				"	^^^^^^^^^^^^^^^\n" +
+				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" +
 				"----------\n";
 	} else if (this.complianceLevel >= ClassFileConstants.JDK1_7) {
 		expectedError =
-				"----------\n" + 
-				"1. ERROR in X.java (at line 14)\n" + 
-				"	super(new M());//2\n" + 
-				"	      ^^^^^^^\n" + 
-				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" + 
+				"----------\n" +
+				"1. ERROR in X.java (at line 14)\n" +
+				"	super(new M());//2\n" +
+				"	      ^^^^^^^\n" +
+				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" +
 				"----------\n";
 	}
 	this.runNegativeTest(
@@ -2354,31 +2356,31 @@ public void test069() {
 			"----------\n";
 	if (this.complianceLevel == ClassFileConstants.JDK1_6) {
 		expectedError =
-				"----------\n" + 
-				"1. ERROR in X.java (at line 8)\n" + 
-				"	super(new MX4());	// ko\n" + 
-				"	^^^^^^^^^^^^^^^^^\n" + 
-				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" + 
-				"----------\n" + 
-				"2. ERROR in X.java (at line 14)\n" + 
-				"	this(new MX4());		// ko\n" + 
-				"	     ^^^^^^^^^\n" + 
-				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" + 
+				"----------\n" +
+				"1. ERROR in X.java (at line 8)\n" +
+				"	super(new MX4());	// ko\n" +
+				"	^^^^^^^^^^^^^^^^^\n" +
+				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" +
+				"----------\n" +
+				"2. ERROR in X.java (at line 14)\n" +
+				"	this(new MX4());		// ko\n" +
+				"	     ^^^^^^^^^\n" +
+				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" +
 				"----------\n";
 	} else if (this.complianceLevel >= ClassFileConstants.JDK1_7) {
 		expectedError =
-				"----------\n" + 
-				"1. ERROR in X.java (at line 8)\n" + 
-				"	super(new MX4());	// ko\n" + 
-				"	      ^^^^^^^^^\n" + 
-				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" + 
-				"----------\n" + 
-				"2. ERROR in X.java (at line 14)\n" + 
-				"	this(new MX4());		// ko\n" + 
-				"	     ^^^^^^^^^\n" + 
-				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" + 
+				"----------\n" +
+				"1. ERROR in X.java (at line 8)\n" +
+				"	super(new MX4());	// ko\n" +
+				"	      ^^^^^^^^^\n" +
+				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" +
+				"----------\n" +
+				"2. ERROR in X.java (at line 14)\n" +
+				"	this(new MX4());		// ko\n" +
+				"	     ^^^^^^^^^\n" +
+				"No enclosing instance of type X is available due to some intermediate constructor invocation\n" +
 				"----------\n";
-		
+
 	}
 	this.runNegativeTest(
 		new String[] {
@@ -2719,7 +2721,63 @@ public void test078() {
 /*
  * https://bugs.eclipse.org/bugs/show_bug.cgi?id=47227
  */
+// TODO: Enable after Bug 552769 is fixed
 public void test079() {
+
+	String expectedErrorLog = 		"----------\n" +
+			"1. ERROR in Hello.java (at line 1)\n" +
+			"	void ___eval() {\n" +
+			"	^^^^\n" +
+			"Syntax error on token \"void\", @ expected\n" +
+			"----------\n" +
+			"2. ERROR in Hello.java (at line 1)\n" +
+			"	void ___eval() {\n" +
+			"	             ^\n" +
+			"Syntax error on token \")\", delete this token\n" +
+			"----------\n" +
+			"3. ERROR in Hello.java (at line 9)\n" +
+			"	};\n" +
+			"}\n" +
+			"	^^^^\n" +
+			"Syntax error on tokens, delete these tokens\n" +
+			"----------\n" +
+			"4. ERROR in Hello.java (at line 23)\n" +
+			"	}\n" +
+			"	^\n" +
+			"Syntax error, insert \"}\" to complete ClassBody\n" +
+			"----------\n" +
+			"5. ERROR in Hello.java (at line 23)\n" +
+			"	}\n" +
+			"	^\n" +
+			"Syntax error, insert \"}\" to complete MemberValue\n" +
+			"----------\n" +
+			"6. ERROR in Hello.java (at line 23)\n" +
+			"	}\n" +
+			"	^\n" +
+			"Syntax error, insert \")\" to complete Modifiers\n" +
+			"----------\n" +
+			"7. ERROR in Hello.java (at line 23)\n" +
+			"	}\n" +
+			"	^\n" +
+			"Syntax error, insert \"enum Identifier\" to complete EnumHeader\n" +
+			"----------\n" +
+			"8. ERROR in Hello.java (at line 23)\n" +
+			"	}\n" +
+			"	^\n" +
+			"Syntax error, insert \"EnumBody\" to complete CompilationUnit\n" +
+			"----------\n";
+	String expectedErrorLog_J14 = "----------\n" +
+			"1. ERROR in Hello.java (at line 1)\n" +
+			"	void ___eval() {\n" +
+			"	^^^^\n" +
+			"Syntax error on token \"void\", record expected\n" +
+			"----------\n" +
+			"2. ERROR in Hello.java (at line 2)\n" +
+			"	new Runnable() {\n" +
+			"	^^^\n" +
+			"Syntax error on token \"new\", record expected\n" +
+			"----------\n";
+
 	this.runNegativeTest(
 		new String[] {
 			"Hello.java",
@@ -2747,48 +2805,8 @@ public void test079() {
 			"	}\n" +
 			"}\n"
 		},
-		"----------\n" + 
-		"1. ERROR in Hello.java (at line 1)\n" + 
-		"	void ___eval() {\n" + 
-		"	^^^^\n" + 
-		"Syntax error on token \"void\", @ expected\n" + 
-		"----------\n" + 
-		"2. ERROR in Hello.java (at line 1)\n" + 
-		"	void ___eval() {\n" + 
-		"	             ^\n" + 
-		"Syntax error on token \")\", delete this token\n" + 
-		"----------\n" + 
-		"3. ERROR in Hello.java (at line 9)\n" + 
-		"	};\n" + 
-		"}\n" + 
-		"	^^^^\n" + 
-		"Syntax error on tokens, delete these tokens\n" + 
-		"----------\n" + 
-		"4. ERROR in Hello.java (at line 23)\n" + 
-		"	}\n" + 
-		"	^\n" + 
-		"Syntax error, insert \"}\" to complete ClassBody\n" + 
-		"----------\n" + 
-		"5. ERROR in Hello.java (at line 23)\n" + 
-		"	}\n" + 
-		"	^\n" + 
-		"Syntax error, insert \"}\" to complete MemberValue\n" + 
-		"----------\n" + 
-		"6. ERROR in Hello.java (at line 23)\n" + 
-		"	}\n" + 
-		"	^\n" + 
-		"Syntax error, insert \")\" to complete Modifiers\n" + 
-		"----------\n" + 
-		"7. ERROR in Hello.java (at line 23)\n" + 
-		"	}\n" + 
-		"	^\n" + 
-		"Syntax error, insert \"enum Identifier\" to complete EnumHeader\n" + 
-		"----------\n" + 
-		"8. ERROR in Hello.java (at line 23)\n" + 
-		"	}\n" + 
-		"	^\n" + 
-		"Syntax error, insert \"EnumBody\" to complete CompilationUnit\n" + 
-		"----------\n"
+		this.complianceLevel < ClassFileConstants.JDK14 ?
+		expectedErrorLog :expectedErrorLog_J14
 	);
 }
 /*

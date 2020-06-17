@@ -50,6 +50,7 @@ public static class DefaultVariableInitializer implements VariablesInitializer.I
 		}
 	}
 
+	@Override
 	public void initialize(String variable) throws JavaModelException {
 		if (this.variableValues == null) return;
 		JavaCore.setClasspathVariable(
@@ -63,9 +64,11 @@ public static class DefaultVariableInitializer implements VariablesInitializer.I
 // (30920 - stackoverflow when setting container to null)
 public class NullContainerInitializer implements ContainerInitializer.ITestInitializer {
 	public boolean hasRun = false;
+	@Override
 	public boolean allowFailureContainer() {
 		return false; // allow the initializer to run again
 	}
+	@Override
 	public void initialize(IPath containerPath, IJavaProject project) throws CoreException {
 		this.hasRun = true;
 		JavaCore.setClasspathContainer(
@@ -92,6 +95,7 @@ static {
 	// Range numbers of tests to run: all tests between "test<first>" and "test<last>" will be run for { first, last }
 //		TESTS_RANGE = new int[] { 16, -1 };
 }
+@Override
 protected void tearDown() throws Exception {
 	// Cleanup caches
 	JavaModelManager manager = JavaModelManager.getJavaModelManager();
@@ -324,6 +328,7 @@ public void testContainerInitializer07() throws CoreException {
 		boolean gotException = false;
 		try {
 			ContainerInitializer.setInitializer(new DefaultContainerInitializer(new String[] {"P1", "/P1/lib.jar"}) {
+				@Override
 				public void initialize(IPath containerPath, IJavaProject project) throws CoreException {
 					throw new OperationCanceledException("test");
 				}});
@@ -373,6 +378,7 @@ public void testContainerInitializer08() throws CoreException {
 					}
 				}
 			}
+			@Override
 			public void initialize(IPath containerPath, IJavaProject project) throws CoreException {
 				foo(500);
 				super.initialize(containerPath, project);
@@ -429,8 +435,10 @@ public void testContainerInitializer08() throws CoreException {
 public void testContainerInitializer09() throws CoreException {
 	try {
 		DefaultContainerInitializer initializer = new DefaultContainerInitializer(new String[] {"P1", "/P1/lib.jar"}) {
+			@Override
 			protected DefaultContainer newContainer(char[][] libPaths) {
 				return new DefaultContainer(libPaths) {
+					@Override
 					public IClasspathEntry[] getClasspathEntries() {
 						try {
 							getJavaProject("P1").getResolvedClasspath(true);
@@ -501,6 +509,7 @@ public void testContainerInitializer10() throws CoreException {
 		final IJavaProject p1 = createJavaProject("P1");
 		final IJavaProject p2 = createJavaProject("P2");
 		ContainerInitializer.setInitializer(new DefaultContainerInitializer(new String[] {"P3", "/P1"}) {
+			@Override
 	        public void initialize(IPath containerPath, IJavaProject project) throws CoreException {
 	            super.initialize(containerPath, project);
 	            getJavaModel().refreshExternalArchives(new IJavaElement[] {p1}, null);
@@ -566,6 +575,7 @@ public void testContainerInitializer11() throws CoreException {
 			"");
 		simulateExitRestart();
 		DefaultContainerInitializer initializer = new DefaultContainerInitializer(new String[] {}) {
+			@Override
 			public void initialize(IPath containerPath,IJavaProject project) throws CoreException {
 				assertTrue("Should not initialize container on shutdown", false);
 			}
@@ -603,6 +613,7 @@ public void testContainerInitializer12() throws CoreException {
 			public Initializer(String[] args) {
 				super(args);
 			}
+			@Override
 			public void initialize(IPath containerPath, IJavaProject p) throws CoreException {
 				super.initialize(containerPath, p);
 				this.initialized = true;
@@ -680,6 +691,7 @@ public void testContainerInitializer14() throws CoreException {
 			Container(String[] values) {
 				super(values);
 			}
+			@Override
 			public void initialize(IPath containerPath, IJavaProject project) 	throws CoreException {
 				this.initializeCount++;
 				super.initialize(containerPath, getJavaProject("P1"));
@@ -712,6 +724,7 @@ public void testContainerInitializer15() throws CoreException {
 			Container(String[] values) {
 				super(values);
 			}
+			@Override
 			public void initialize(IPath containerPath, IJavaProject project) 	throws CoreException {
 			}
 		}
@@ -792,6 +805,7 @@ public void testContainerInitializer17() throws CoreException {
 
 		// initialize to the same value
 		ContainerInitializer.setInitializer(new DefaultContainerInitializer(new String[] {"P2", "/P1/lib.jar", "P3", "/P1/lib.jar"}) {
+			@Override
 	        public void initialize(IPath containerPath, IJavaProject project) throws CoreException {
 	        	// simulate concurrency (another thread is initializing all containers in parallel and thus this flag is set to true)
 	        	JavaModelManager.getJavaModelManager().batchContainerInitializations = JavaModelManager.NEED_BATCH_INITIALIZATION;
@@ -880,6 +894,7 @@ public void testContainerInitializer20() throws CoreException {
 		IJavaProject p = createJavaProject("P");
 		final StringBuffer paths = new StringBuffer();
 		DefaultContainerInitializer initializer = new DefaultContainerInitializer(new String[] {"P", "/P/lib.jar"}) {
+			@Override
 			public void initialize(IPath containerPath, IJavaProject project) throws CoreException {
 				paths.append(containerPath);
 				paths.append('\n');
@@ -989,6 +1004,7 @@ public void testContainerInitializer24() throws Exception {
 
 		JavaProject.addCPResolutionBPListener(listener);
 		thread.start(new Runnable() {
+			@Override
 			public void run() {
 				try {
 					project2.getResolvedClasspath();
@@ -1061,12 +1077,12 @@ public void testContainerInitializer26() throws CoreException {
 				new String[] {"org.eclipse.jdt.core.tests.model.TEST_CONTAINER"},
 				"");
 		ContainerInitializer.setInitializer(new DefaultContainerInitializer(new String[] {"P2", "/P1"}));
-		
+
 		waitForAutoBuild();
-		getWorkspace().save(true/*full save*/, null/*no progress*/);		
+		getWorkspace().save(true/*full save*/, null/*no progress*/);
 		p2.getProject().close(null); // close the project after the save and before the shutdown
 		JavaModelManager.getJavaModelManager().shutdown();
-		
+
 		startLogListening();
 		simulateRestart();
 		assertLogEquals(""); // no error should be logged
@@ -1147,6 +1163,7 @@ public void testVariableInitializer04() throws CoreException {
 	try {
 		final StringBuffer buffer = new StringBuffer();
 		VariablesInitializer.setInitializer(new VariablesInitializer.ITestInitializer() {
+			@Override
 			public void initialize(String variable) throws JavaModelException {
 				buffer.append("Initializing " + variable + "\n");
 				IPath path = new Path(variable.toLowerCase());
@@ -1168,6 +1185,7 @@ public void testVariableInitializer05() throws CoreException {
 	try {
 		final StringBuffer buffer = new StringBuffer();
 		VariablesInitializer.setInitializer(new VariablesInitializer.ITestInitializer() {
+			@Override
 			public void initialize(String variable) throws JavaModelException {
 				buffer.append("Initializing " + variable + "\n");
 				IPath path = new Path(variable.toLowerCase());
@@ -1196,6 +1214,7 @@ public void testVariableInitializer06() throws CoreException {
 	try {
 		final StringBuffer buffer = new StringBuffer();
 		VariablesInitializer.setInitializer(new VariablesInitializer.ITestInitializer() {
+			@Override
 			public void initialize(String variable) {
 				// do nothing
 				buffer.append("Ignoring request to initialize");
@@ -1269,6 +1288,7 @@ public void testVariableInitializer08() throws CoreException {
 		boolean gotException = false;
 		try {
 			VariablesInitializer.setInitializer(new DefaultVariableInitializer(new String[] {"TEST_LIB", "/P1/lib.jar"}) {
+				@Override
 				public void initialize(String variable) throws JavaModelException {
 					throw new OperationCanceledException("test");
 				}
@@ -1292,6 +1312,7 @@ public void testVariableInitializer08() throws CoreException {
 public void testVariableInitializer09() throws CoreException {
 	try {
 		VariablesInitializer.setInitializer(new DefaultVariableInitializer(new String[] {"TEST_LIB", "/P1/lib.jar"}) {
+			@Override
 			public void initialize(String variable) throws JavaModelException {
 				JavaCore.removeClasspathVariable("TEST_LIB", null);
 			}
@@ -1314,6 +1335,7 @@ public void testVariableInitializer09() throws CoreException {
 public void testVariableInitializer10() throws CoreException {
 	try {
 		VariablesInitializer.setInitializer(new DefaultVariableInitializer(new String[] {"TEST_LIB", "/P1/lib.jar"}) {
+			@Override
 			public void initialize(String variable) throws JavaModelException {
 				// don't initialize
 			}
@@ -1371,8 +1393,8 @@ public void testVariableInitializerDeprecated() throws CoreException, IOExceptio
 		// Create project
 		IJavaProject project = createJavaProject("P1");
 		addLibrary(project, "lib.jar", null, new String[0],
-				new String[]{"META-INF/MANIFEST.MF", 
-					"Manifest-Version: 1.0\n"} , 
+				new String[]{"META-INF/MANIFEST.MF",
+					"Manifest-Version: 1.0\n"} ,
 					JavaCore.VERSION_1_4);
 		IClasspathEntry variable = JavaCore.newVariableEntry(new Path("TEST_DEPRECATED"), null, null);
 		IJavaModelStatus status = JavaConventions.validateClasspathEntry(project, variable, false);
@@ -1428,8 +1450,8 @@ public void testVariableInitializerReadOnly() throws CoreException, IOException 
 		// Create project
 		IJavaProject project = createJavaProject("P1");
 		addLibrary(project, "lib.jar", null, new String[0],
-				new String[]{"META-INF/MANIFEST.MF", 
-					"Manifest-Version: 1.0\n"} , 
+				new String[]{"META-INF/MANIFEST.MF",
+					"Manifest-Version: 1.0\n"} ,
 					JavaCore.VERSION_1_4);
 		IClasspathEntry variable = JavaCore.newVariableEntry(new Path("TEST_READ_ONLY"), null, null);
 		IJavaModelStatus status = JavaConventions.validateClasspathEntry(project, variable, false);
@@ -1456,8 +1478,8 @@ public void testVariableInitializerDeprecatedAndReadOnly() throws CoreException,
 		// Create project
 		IJavaProject project = createJavaProject("P1");
 		addLibrary(project, "lib.jar", null, new String[0],
-				new String[]{"META-INF/MANIFEST.MF", 
-					"Manifest-Version: 1.0\n"} , 
+				new String[]{"META-INF/MANIFEST.MF",
+					"Manifest-Version: 1.0\n"} ,
 					JavaCore.VERSION_1_4);
 		IClasspathEntry variable = JavaCore.newVariableEntry(new Path("TEST_DEPRECATED_READ_ONLY"), null, null);
 		IJavaModelStatus status = JavaConventions.validateClasspathEntry(project, variable, false);
@@ -1490,8 +1512,8 @@ public void testVariableInitializerBug172207() throws CoreException, IOException
 		// Create project
 		IJavaProject project = createJavaProject("P1");
 		addLibrary(project, "lib.jar", null, new String[0],
-				new String[]{"META-INF/MANIFEST.MF", 
-					"Manifest-Version: 1.0\n"} , 
+				new String[]{"META-INF/MANIFEST.MF",
+					"Manifest-Version: 1.0\n"} ,
 					JavaCore.VERSION_1_4);
 		IClasspathEntry variable = JavaCore.newVariableEntry(new Path("TEST_DEPRECATED_READ_ONLY"), null, null);
 		IClasspathEntry[] entries = project.getRawClasspath();
@@ -1666,7 +1688,7 @@ public void testBug346002() throws Exception {
 }
 
 /*
- * Ensures that when multiple threads enter the batch container initialization, 
+ * Ensures that when multiple threads enter the batch container initialization,
  * a second thread does not initialize a container if the first thread has already completed it
  */
 public void testBug525597() throws CoreException {
@@ -1713,6 +1735,7 @@ public void testBug525597() throws CoreException {
 		Semaphore s2=new Semaphore(0);
 
 		ContainerInitializer.setInitializer(new DefaultContainerInitializer(new String[] {"P2", "/P1/lib.jar", "P3", "/P1/lib.jar"}) {
+			@Override
 			public void initialize(IPath containerPath, IJavaProject project) throws CoreException {
 				if (Thread.currentThread() == helperThread) {
 					if (project.getElementName().equals("P2")) {
@@ -1759,7 +1782,7 @@ public void testBug525597() throws CoreException {
 	}
 }
 /*
- * Ensures that when multiple threads enter the batch container initialization, 
+ * Ensures that when multiple threads enter the batch container initialization,
  * and two threads both initialize a container, only one result is used.
  */
 public void testBug525597B() throws CoreException {
@@ -1806,6 +1829,7 @@ public void testBug525597B() throws CoreException {
 		AtomicReference<IJavaProject> p2Project=new AtomicReference<>();
 
 		ContainerInitializer.setInitializer(new DefaultContainerInitializer(new String[] {"P2", "/P1/lib.jar", "P3", "/P1/lib.jar"}) {
+			@Override
 			public void initialize(IPath containerPath, IJavaProject project) throws CoreException {
 				if (Thread.currentThread() == helperThread) {
 					if (project.getElementName().equals("P2")) {

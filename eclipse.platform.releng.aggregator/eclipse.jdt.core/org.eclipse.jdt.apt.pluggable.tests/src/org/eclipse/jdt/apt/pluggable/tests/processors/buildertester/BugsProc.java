@@ -7,14 +7,15 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.jdt.apt.pluggable.tests.processors.buildertester;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -27,15 +28,10 @@ import javax.lang.model.element.TypeElement;
 @SupportedAnnotationTypes({"org.eclipse.jdt.apt.pluggable.tests.annotations.Module"})
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class BugsProc extends AbstractProcessor {
-	
+
 	private static final String[] ELEMENT_NAMES = new String[] {"targets.bug407841.ModuleCore", "targets.bug407841.ModuleLegacy"};
-	private static HashSet<String> expectedElements = new HashSet<String>(2);
+	private static Set<String> expectedElements = Stream.of(ELEMENT_NAMES).collect(Collectors.toSet());
 	private static int _numRounds = 0;
-	{
-		for (String name : ELEMENT_NAMES) {
-			expectedElements.add(name);
-		}
-	}
 	RoundEnvironment roundEnv = null;
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -53,7 +49,7 @@ public class BugsProc extends AbstractProcessor {
 	public static int getNumRounds() {
 		return _numRounds;
 	}
-	
+
 	public static int getUnprocessedElements() {
 		return expectedElements.size();
 	}

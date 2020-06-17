@@ -23,6 +23,7 @@ public class CompletionContextTests_1_5 extends AbstractJavaModelCompletionTests
 public CompletionContextTests_1_5(String name) {
 	super(name);
 }
+@Override
 public void setUpSuite() throws Exception {
 	if (COMPLETION_PROJECT == null)  {
 		COMPLETION_PROJECT = setUpJavaProject("Completion", "1.5");
@@ -1313,7 +1314,7 @@ public void test0041() throws JavaModelException {
 		"  @TestAnnot(value=\"\")\n" +
 		"  public int field = 0;\n" +
 		"}");
-	
+
 	this.workingCopies[1] = getWorkingCopy(
 		"/Completion/src3/test/TestAnnot.java",
 		"package test;\n" +
@@ -1348,7 +1349,7 @@ public void test0042() throws JavaModelException {
 		"  @TestAnnot(\"\")\n" +
 		"  public int field = 0;\n" +
 		"}");
-	
+
 	this.workingCopies[1] = getWorkingCopy(
 		"/Completion/src3/test/TestAnnot.java",
 		"package test;\n" +

@@ -30,7 +30,7 @@ import org.eclipse.jdt.internal.compiler.lookup.Binding;
  * Implementation of ArrayType, which represents an array of some type.
  */
 public class ArrayTypeImpl extends TypeMirrorImpl implements ArrayType {
-	
+
 	ArrayTypeImpl(BaseProcessingEnvImpl env, ArrayBinding binding) {
 		super(env, binding);
 	}
@@ -51,6 +51,7 @@ public class ArrayTypeImpl extends TypeMirrorImpl implements ArrayType {
 		return v.visitArray(this, p);
 	}
 
+	@Override
 	protected AnnotationBinding[] getAnnotationBindings() {
 		AnnotationBinding[] oldies = ((ArrayBinding)_binding).getTypeAnnotations();
 		AnnotationBinding[] newbies = Binding.NO_ANNOTATIONS;

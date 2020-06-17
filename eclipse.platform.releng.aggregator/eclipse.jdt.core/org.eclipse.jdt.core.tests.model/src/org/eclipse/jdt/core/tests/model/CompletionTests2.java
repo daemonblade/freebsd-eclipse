@@ -56,7 +56,7 @@ import org.eclipse.jdt.internal.core.search.indexing.IndexManager;
 
 @SuppressWarnings({"rawtypes", "unchecked", "hiding"})
 public class CompletionTests2 extends AbstractJavaModelCompletionTests {
-	
+
 	static {
 //		TESTS_NAMES = new String[]{"testBug373409"};
 	}
@@ -133,9 +133,11 @@ public class CompletionTests2 extends AbstractJavaModelCompletionTests {
 		protected DefaultContainer newContainer(final char[][] libPaths, final boolean[] areExperted, final String[] forbiddenRefrences) {
 			return new DefaultContainer(libPaths, areExperted, forbiddenRefrences);
 		}
+		@Override
 		public boolean allowFailureContainer() {
 			return true;
 		}
+		@Override
 		public void initialize(IPath containerPath, IJavaProject project) throws CoreException {
 			if (this.containerValues == null) return;
 			try {
@@ -153,6 +155,7 @@ public class CompletionTests2 extends AbstractJavaModelCompletionTests {
 public CompletionTests2(String name) {
 	super(name);
 }
+@Override
 public void setUpSuite() throws Exception {
 	if (AbstractJavaModelCompletionTests.COMPLETION_PROJECT == null)  {
 		AbstractJavaModelCompletionTests.COMPLETION_PROJECT = setUpJavaProject("Completion");
@@ -162,6 +165,7 @@ public void setUpSuite() throws Exception {
 	}
 	super.setUpSuite();
 }
+@Override
 public void tearDownSuite() throws Exception {
 	if (AbstractJavaModelCompletionTests.COMPLETION_SUITES == null) {
 		deleteProject("Completion");
@@ -444,14 +448,14 @@ public void testBug33560() throws Exception {
 }
 public void testBug6930_01() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		this.workingCopies = new ICompilationUnit[3];
-		
+
 		this.workingCopies[1] = getWorkingCopy("/P/src/p6930/AllConstructors01.java",
 			"package p6930;\n" +
 			"public class AllConstructors01 {\n" +
@@ -461,17 +465,17 @@ public void testBug6930_01() throws Exception {
 			"  public AllConstructors01(Object o, String s) {}\n" +
 			"}\n"
 		);
-		
+
 		this.workingCopies[2] = getWorkingCopy("/P/src/p6930/AllConstructors01b.java",
 			"package p6930;\n" +
 			"public class AllConstructors01b {\n" +
 			"}\n"
 		);
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
 				"package test;"+
@@ -490,7 +494,7 @@ public void testBug6930_01() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors01[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors01;, ()V, AllConstructors01, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors01[TYPE_REF]{p6930.AllConstructors01, p6930, Lp6930.AllConstructors01;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -505,20 +509,20 @@ public void testBug6930_01() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_02() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createJar(new String[] {
 			"p6930/AllConstructors02.java",
 			"package p6930;\n" +
@@ -533,11 +537,11 @@ public void testBug6930_02() throws Exception {
 			"public class AllConstructors02b {\n" +
 			"}"
 		}, p.getProject().getLocation().append("lib6930.jar").toOSString());
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -557,7 +561,7 @@ public void testBug6930_02() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors02[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors02;, ()V, AllConstructors02, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors02[TYPE_REF]{p6930.AllConstructors02, p6930, Lp6930.AllConstructors02;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -572,22 +576,22 @@ public void testBug6930_02() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_03() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors03.java",
 				"package p6930;\n" +
@@ -597,16 +601,16 @@ public void testBug6930_03() throws Exception {
 				"  public AllConstructors03(int o) {}\n" +
 				"  public AllConstructors03(Object o, String s) {}\n" +
 				"}");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors03b.java",
 				"package p6930;\n" +
 				"public class AllConstructors03b {\n" +
 				"}");
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -626,7 +630,7 @@ public void testBug6930_03() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors03[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors03;, ()V, AllConstructors03, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors03[TYPE_REF]{p6930.AllConstructors03, p6930, Lp6930.AllConstructors03;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -641,24 +645,24 @@ public void testBug6930_03() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_04() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -680,7 +684,7 @@ public void testBug6930_04() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/test/AllConstructors04g.java",
 				"package test;"+
@@ -698,7 +702,7 @@ public void testBug6930_04() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors04a[CONSTRUCTOR_INVOCATION]{(), Ltest.AllConstructors04a;, ()V, AllConstructors04a, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors04a[TYPE_REF]{AllConstructors04a, test, Ltest.AllConstructors04a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -711,24 +715,24 @@ public void testBug6930_04() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_05() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -746,7 +750,7 @@ public void testBug6930_05() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/test/AllConstructors05g.java",
 				"package test;"+
@@ -764,7 +768,7 @@ public void testBug6930_05() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors05a[TYPE_REF]{AllConstructors05a, test, Ltest.AllConstructors05a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED)+"}\n" +
 			"AllConstructors05g[TYPE_REF]{AllConstructors05g, test, Ltest.AllConstructors05g;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED)+"}\n" +
@@ -778,39 +782,39 @@ public void testBug6930_05() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_06() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors06a.java",
 				"package p6930;\n" +
 				"public class AllConstructors06a {\n" +
 				"}");
-		
+
 		createJar(new String[] {
 			"p6930/AllConstructors06b.java",
 			"package p6930;\n" +
 			"public class AllConstructors06b {\n" +
 			"}"
 		}, p.getProject().getLocation().append("lib6930.jar").toOSString());
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -823,7 +827,7 @@ public void testBug6930_06() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors06c.java",
 				"package p6930;"+
@@ -839,7 +843,7 @@ public void testBug6930_06() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors06a[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors06a;, ()V, AllConstructors06a, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors06a[TYPE_REF]{AllConstructors06a, p6930, Lp6930.AllConstructors06a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -851,22 +855,22 @@ public void testBug6930_06() throws Exception {
 
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_07() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors07a.java",
 				"package p6930;\n" +
@@ -876,7 +880,7 @@ public void testBug6930_07() throws Exception {
 				"  public static class AllConstructors07c {\n" +
 				"  }\n" +
 				"}");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors07d.java",
 				"package p6930;\n" +
@@ -886,11 +890,11 @@ public void testBug6930_07() throws Exception {
 				"  public static class AllConstructors07f {\n" +
 				"  }\n" +
 				"}");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -911,7 +915,7 @@ public void testBug6930_07() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors07a[TYPE_REF]{p6930.AllConstructors07a, p6930, Lp6930.AllConstructors07a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED)+"}\n" +
 			"AllConstructors07d[TYPE_REF]{p6930.AllConstructors07d, p6930, Lp6930.AllConstructors07d;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED)+"}\n" +
@@ -922,22 +926,22 @@ public void testBug6930_07() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_08() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB", "/P/lib6930.jar"}, "bin", "1.5");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors08a.java",
 				"package p6930;\n" +
@@ -947,7 +951,7 @@ public void testBug6930_08() throws Exception {
 				"  public static class AllConstructors08c {\n" +
 				"  }\n" +
 				"}");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors08d.java",
 				"package p6930;\n" +
@@ -957,11 +961,11 @@ public void testBug6930_08() throws Exception {
 				"  public static class AllConstructors08f {\n" +
 				"  }\n" +
 				"}");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -982,7 +986,7 @@ public void testBug6930_08() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors08d[TYPE_REF]{p6930.AllConstructors08d, p6930, Lp6930.AllConstructors08d;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED)+"}\n" +
 					"AllConstructors08a[TYPE_REF]{AllConstructors08a, p6930, Lp6930.AllConstructors08a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED)+"}\n" +
@@ -993,23 +997,23 @@ public void testBug6930_08() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 
 public void testBug6930_09() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB", "/P/lib6930.jar"}, "bin", "1.5");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors09a.java",
 				"package p6930;\n" +
@@ -1019,7 +1023,7 @@ public void testBug6930_09() throws Exception {
 				"  public static class AllConstructors09c {\n" +
 				"  }\n" +
 				"}");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors09d.java",
 				"package p6930;\n" +
@@ -1031,11 +1035,11 @@ public void testBug6930_09() throws Exception {
 				"    }\n" +
 				"  }\n" +
 				"}");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1057,7 +1061,7 @@ public void testBug6930_09() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors09a[TYPE_REF]{p6930.AllConstructors09a, p6930, Lp6930.AllConstructors09a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED)+"}\n" +
 			"AllConstructors09d[TYPE_REF]{p6930.AllConstructors09d, p6930, Lp6930.AllConstructors09d;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED)+"}\n" +
@@ -1071,22 +1075,22 @@ public void testBug6930_09() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_10() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB", "/P/lib6930.jar"}, "bin", "1.5");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors10a.java",
 				"package p6930;\n" +
@@ -1100,7 +1104,7 @@ public void testBug6930_10() throws Exception {
 				"    }\n" +
 				"  }\n" +
 				"}");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors10d.java",
 				"package p6930;\n" +
@@ -1114,11 +1118,11 @@ public void testBug6930_10() throws Exception {
 				"    }\n" +
 				"  }\n" +
 				"}");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1142,7 +1146,7 @@ public void testBug6930_10() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors10a[TYPE_REF]{p6930.AllConstructors10a, p6930, Lp6930.AllConstructors10a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED)+"}\n" +
 			"AllConstructors10d[TYPE_REF]{p6930.AllConstructors10d, p6930, Lp6930.AllConstructors10d;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED)+"}\n" +
@@ -1159,33 +1163,33 @@ public void testBug6930_10() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_11() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors11a.java",
 				"package p6930;\n" +
 				"public class AllConstructors11a {\n" +
 				"}");
 
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1205,7 +1209,7 @@ public void testBug6930_11() throws Exception {
 	    String completeBehind = "new ";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"Test[CONSTRUCTOR_INVOCATION]{(), Ltest.Test;, ()V, Test, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   Test[TYPE_REF]{Test, test, Ltest.Test;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -1214,22 +1218,22 @@ public void testBug6930_11() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_12() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors12a.java",
 				"package p6930;\n" +
@@ -1237,11 +1241,11 @@ public void testBug6930_12() throws Exception {
 				"  public static class AllConstructors12b {\n" +
 				"  }\n" +
 				"}");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1261,7 +1265,7 @@ public void testBug6930_12() throws Exception {
 	    String completeBehind = "new ";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"Test[CONSTRUCTOR_INVOCATION]{(), Ltest.Test;, ()V, Test, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   Test[TYPE_REF]{Test, test, Ltest.Test;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -1271,33 +1275,33 @@ public void testBug6930_12() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_13() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors13a.java",
 				"package p6930;\n" +
 				"public class AllConstructors13a {\n" +
 				"}");
 
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1317,29 +1321,29 @@ public void testBug6930_13() throws Exception {
 	    String completeBehind = "new AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors13a[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors13a;, ()V, AllConstructors13a, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_EXACT_EXPECTED_TYPE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors13a[TYPE_REF]{p6930.AllConstructors13a, p6930, Lp6930.AllConstructors13a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_EXACT_EXPECTED_TYPE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}",
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_14() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors14a.java",
 				"package p6930;\n" +
@@ -1347,11 +1351,11 @@ public void testBug6930_14() throws Exception {
 				"  public static class AllConstructors14b {\n" +
 				"  }\n" +
 				"}");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1371,7 +1375,7 @@ public void testBug6930_14() throws Exception {
 	    String completeBehind = "new AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors14a[TYPE_REF]{p6930.AllConstructors14a, p6930, Lp6930.AllConstructors14a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_EXACT_EXPECTED_TYPE + R_NON_RESTRICTED)+"}\n" +
 			"AllConstructors14a[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors14a;, ()V, AllConstructors14a, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_EXACT_EXPECTED_TYPE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -1379,28 +1383,28 @@ public void testBug6930_14() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_15() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB", "/P/lib6930.jar"}, "bin", "1.5");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors15a.java",
 				"package p6930;\n" +
 				"public class AllConstructors15a<T> {\n" +
 				"}");
-		
+
 		createJar(
 				new String[] {
 					"p6930/AllConstructors15b.java",
@@ -1411,11 +1415,11 @@ public void testBug6930_15() throws Exception {
 				p.getProject().getLocation().append("lib6930.jar").toOSString(),
 				new String[]{getExternalJCLPathString("1.5")},
 				"1.5");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1425,7 +1429,7 @@ public void testBug6930_15() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors15c.java",
 				"package p6930;"+
@@ -1441,7 +1445,7 @@ public void testBug6930_15() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors15a[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors15a;, ()V, AllConstructors15a, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors15a[TYPE_REF]{p6930.AllConstructors15a, p6930, Lp6930.AllConstructors15a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -1452,29 +1456,29 @@ public void testBug6930_15() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_16() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB", "/P/lib6930.jar"}, "bin", "1.5");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors16a.java",
 				"package p6930;\n" +
 				"public class AllConstructors16a{\n" +
 				"  public <T> AllConstructors16a(){}\n" +
 				"}");
-		
+
 		createJar(
 				new String[] {
 					"p6930/AllConstructors16b.java",
@@ -1486,11 +1490,11 @@ public void testBug6930_16() throws Exception {
 				p.getProject().getLocation().append("lib6930.jar").toOSString(),
 				new String[]{getExternalJCLPathString("1.5")},
 				"1.5");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1500,7 +1504,7 @@ public void testBug6930_16() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors16c.java",
 				"package p6930;"+
@@ -1517,7 +1521,7 @@ public void testBug6930_16() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors16a[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors16a;, ()V, AllConstructors16a, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors16a[TYPE_REF]{p6930.AllConstructors16a, p6930, Lp6930.AllConstructors16a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -1528,29 +1532,29 @@ public void testBug6930_16() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_17() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB", "/P/lib6930.jar"}, "bin", "1.5");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors17a.java",
 				"package p6930;\n" +
 				"public class AllConstructors17a{\n" +
 				"  public AllConstructors17a(java.util.Collection<Object> o){}\n" +
 				"}");
-		
+
 		createJar(
 				new String[] {
 					"p6930/AllConstructors17b.java",
@@ -1562,11 +1566,11 @@ public void testBug6930_17() throws Exception {
 				p.getProject().getLocation().append("lib6930.jar").toOSString(),
 				new String[]{getExternalJCLPathString("1.5")},
 				"1.5");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1576,7 +1580,7 @@ public void testBug6930_17() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors17c.java",
 				"package p6930;"+
@@ -1593,7 +1597,7 @@ public void testBug6930_17() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors17a[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors17a;, (Ljava.util.Collection<Ljava.lang.Object;>;)V, AllConstructors17a, (o), "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors17a[TYPE_REF]{p6930.AllConstructors17a, p6930, Lp6930.AllConstructors17a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -1604,39 +1608,39 @@ public void testBug6930_17() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_18() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors18a.java",
 				"package p6930;\n" +
 				"public interface AllConstructors18a {\n" +
 				"}");
-		
+
 		createJar(new String[] {
 			"p6930/AllConstructors18b.java",
 			"package p6930;\n" +
 			"public interface AllConstructors18b {\n" +
 			"}"
 		}, p.getProject().getLocation().append("lib6930.jar").toOSString());
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1646,7 +1650,7 @@ public void testBug6930_18() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors18c.java",
 				"package p6930;"+
@@ -1662,7 +1666,7 @@ public void testBug6930_18() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors18a[ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors18a;, ()V, AllConstructors18a, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors18a[TYPE_REF]{p6930.AllConstructors18a, p6930, Lp6930.AllConstructors18a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -1673,39 +1677,39 @@ public void testBug6930_18() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_19() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors19a.java",
 				"package p6930;\n" +
 				"public interface AllConstructors19a {\n" +
 				"}");
-		
+
 		createJar(new String[] {
 			"p6930/AllConstructors19b.java",
 			"package p6930;\n" +
 			"public interface AllConstructors19b {\n" +
 			"}"
 		}, p.getProject().getLocation().append("lib6930.jar").toOSString());
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1718,7 +1722,7 @@ public void testBug6930_19() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors19c.java",
 				"package p6930;"+
@@ -1734,7 +1738,7 @@ public void testBug6930_19() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors19a[ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors19a;, ()V, AllConstructors19a, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED)+"}\n" +
 			"   AllConstructors19a[TYPE_REF]{AllConstructors19a, p6930, Lp6930.AllConstructors19a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED)+"}\n" +
@@ -1745,29 +1749,29 @@ public void testBug6930_19() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_20() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB", "/P/lib6930.jar"}, "bin", "1.5");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors20a.java",
 				"package p6930;\n" +
 				"public enum AllConstructors20a {\n" +
 				"	ZZZ;\n" +
 				"}");
-		
+
 		createJar(new String[] {
 				"p6930/AllConstructors20b.java",
 				"package p6930;\n" +
@@ -1778,11 +1782,11 @@ public void testBug6930_20() throws Exception {
 			p.getProject().getLocation().append("lib6930.jar").toOSString(),
 			new String[]{getExternalJCLPathString("1.5")},
 			"1.5");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1792,7 +1796,7 @@ public void testBug6930_20() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors20c.java",
 				"package p6930;"+
@@ -1809,35 +1813,35 @@ public void testBug6930_20() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"",
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_21() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB", "/P/lib6930.jar"}, "bin", "1.5");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors21a.java",
 				"package p6930;\n" +
 				"public enum AllConstructors21a {\n" +
 				"	ZZZ;\n" +
 				"}");
-		
+
 		createJar(
 				new String[] {
 					"p6930/AllConstructors21b.java",
@@ -1849,11 +1853,11 @@ public void testBug6930_21() throws Exception {
 				p.getProject().getLocation().append("lib6930.jar").toOSString(),
 				new String[]{getExternalJCLPathString("1.5")},
 				"1.5");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1866,7 +1870,7 @@ public void testBug6930_21() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors21c.java",
 				"package p6930;"+
@@ -1883,28 +1887,28 @@ public void testBug6930_21() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"",
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_22() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors22a.java",
 				"package p6930;\n" +
@@ -1912,7 +1916,7 @@ public void testBug6930_22() throws Exception {
 				"	private AllConstructors22a(){}\n" +
 				"	public static class AllConstructorsInner{}\n" +
 				"}");
-		
+
 		createJar(new String[] {
 			"p6930/AllConstructors22b.java",
 			"package p6930;\n" +
@@ -1921,11 +1925,11 @@ public void testBug6930_22() throws Exception {
 			"	public static class AllConstructorsInner{}\n" +
 			"}"
 		}, p.getProject().getLocation().append("lib6930.jar").toOSString());
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -1935,7 +1939,7 @@ public void testBug6930_22() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors22c.java",
 				"package p6930;"+
@@ -1953,7 +1957,7 @@ public void testBug6930_22() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors22a[TYPE_REF]{p6930.AllConstructors22a, p6930, Lp6930.AllConstructors22a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED)+"}\n" +
 			"AllConstructors22b[TYPE_REF]{p6930.AllConstructors22b, p6930, Lp6930.AllConstructors22b;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED)+"}\n" +
@@ -1961,22 +1965,22 @@ public void testBug6930_22() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_23() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors23a.java",
 				"package p6930;\n" +
@@ -1984,7 +1988,7 @@ public void testBug6930_23() throws Exception {
 				"	private AllConstructors23a(){}\n" +
 				"	public static class AllConstructorsInner{}\n" +
 				"}");
-		
+
 		createJar(new String[] {
 			"p6930/AllConstructors23b.java",
 			"package p6930;\n" +
@@ -1993,11 +1997,11 @@ public void testBug6930_23() throws Exception {
 			"	public static class AllConstructorsInner{}\n" +
 			"}"
 		}, p.getProject().getLocation().append("lib6930.jar").toOSString());
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -2010,7 +2014,7 @@ public void testBug6930_23() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors23c.java",
 				"package p6930;"+
@@ -2028,7 +2032,7 @@ public void testBug6930_23() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors23a[TYPE_REF]{AllConstructors23a, p6930, Lp6930.AllConstructors23a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED)+"}\n" +
 			"AllConstructors23b[TYPE_REF]{AllConstructors23b, p6930, Lp6930.AllConstructors23b;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED)+"}\n" +
@@ -2036,22 +2040,22 @@ public void testBug6930_23() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_24() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors24a.java",
 				"package p6930;\n" +
@@ -2059,7 +2063,7 @@ public void testBug6930_24() throws Exception {
 				"	public AllConstructors24a(){}\n" +
 				"	private static class AllConstructorsInner{}\n" +
 				"}");
-		
+
 		createJar(new String[] {
 			"p6930/AllConstructors24b.java",
 			"package p6930;\n" +
@@ -2068,11 +2072,11 @@ public void testBug6930_24() throws Exception {
 			"	private static class AllConstructorsInner{}\n" +
 			"}"
 		}, p.getProject().getLocation().append("lib6930.jar").toOSString());
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -2082,7 +2086,7 @@ public void testBug6930_24() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors24c.java",
 				"package p6930;"+
@@ -2100,7 +2104,7 @@ public void testBug6930_24() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors24a[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors24a;, ()V, AllConstructors24a, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors24a[TYPE_REF]{p6930.AllConstructors24a, p6930, Lp6930.AllConstructors24a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -2111,22 +2115,22 @@ public void testBug6930_24() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_25() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors25a.java",
 				"package p6930;\n" +
@@ -2134,7 +2138,7 @@ public void testBug6930_25() throws Exception {
 				"	public AllConstructors25a(){}\n" +
 				"	private static class AllConstructorsInner{}\n" +
 				"}");
-		
+
 		createJar(new String[] {
 			"p6930/AllConstructors25b.java",
 			"package p6930;\n" +
@@ -2143,11 +2147,11 @@ public void testBug6930_25() throws Exception {
 			"	private static class AllConstructorsInner{}\n" +
 			"}"
 		}, p.getProject().getLocation().append("lib6930.jar").toOSString());
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -2160,7 +2164,7 @@ public void testBug6930_25() throws Exception {
 				"    new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors25c.java",
 				"package p6930;"+
@@ -2178,7 +2182,7 @@ public void testBug6930_25() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors25a[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors25a;, ()V, AllConstructors25a, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors25a[TYPE_REF]{AllConstructors25a, p6930, Lp6930.AllConstructors25a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -2189,24 +2193,24 @@ public void testBug6930_25() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_26() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -2216,7 +2220,7 @@ public void testBug6930_26() throws Exception {
 				"    var.new AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors26a.java",
 				"package p6930;"+
@@ -2235,31 +2239,31 @@ public void testBug6930_26() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors26b[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors26a$AllConstructors26b;, (I)V, AllConstructors26b, (i), "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors26a.AllConstructors26b[TYPE_REF]{AllConstructors26b, p6930, Lp6930.AllConstructors26a$AllConstructors26b;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}",
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_27() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -2269,7 +2273,7 @@ public void testBug6930_27() throws Exception {
 				"    new p6930.AllConstructors27a.AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors27a.java",
 				"package p6930;"+
@@ -2288,31 +2292,31 @@ public void testBug6930_27() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors27b[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors27a$AllConstructors27b;, (I)V, AllConstructors27b, (i), "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors27a.AllConstructors27b[TYPE_REF]{AllConstructors27b, p6930, Lp6930.AllConstructors27a$AllConstructors27b;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}",
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_28() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[3];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/p6930/Test.java",
@@ -2325,14 +2329,14 @@ public void testBug6930_28() throws Exception {
 				"    new p6930.AllConstructors\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p6930/AllConstructors28b.java",
 				"package p6930;"+
 				"public class AllConstructors28b {\n" +
 				"	public AllConstructors28b(int i) {}\n" +
 				"}");
-		
+
 		this.workingCopies[2] = getWorkingCopy(
 				"/P/src/p6930b/AllConstructors28c.java",
 				"package p6930b;"+
@@ -2349,7 +2353,7 @@ public void testBug6930_28() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors28a[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors28a;, (I)V, AllConstructors28a, (i), "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors28a[TYPE_REF]{AllConstructors28a, p6930, Lp6930.AllConstructors28a;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -2358,20 +2362,20 @@ public void testBug6930_28() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_29() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib6930.jar"}, "bin");
-		
+
 		createJar(new String[] {
 			"p6930/AllConstructors29.java",
 			"package p6930;\n" +
@@ -2381,11 +2385,11 @@ public void testBug6930_29() throws Exception {
 			"  public AllConstructors29(Object o, String s) {}\n" +
 			"}"
 		}, p.getProject().getLocation().append("lib6930.jar").toOSString());
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -2405,7 +2409,7 @@ public void testBug6930_29() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors29[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors29;, ()V, AllConstructors29, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_EXACT_EXPECTED_TYPE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors29[TYPE_REF]{p6930.AllConstructors29, p6930, Lp6930.AllConstructors29;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_EXACT_EXPECTED_TYPE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -2416,24 +2420,24 @@ public void testBug6930_29() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_30() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/AllConstructors30.java",
@@ -2457,7 +2461,7 @@ public void testBug6930_30() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors30[TYPE_REF]{AllConstructors30, test, Ltest.AllConstructors30;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED)+"}\n" +
 			"AllConstructors30[CONSTRUCTOR_INVOCATION]{(), Ltest.AllConstructors30;, ()V, AllConstructors30, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -2467,24 +2471,24 @@ public void testBug6930_30() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_31() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/AllConstructors31.java",
@@ -2509,7 +2513,7 @@ public void testBug6930_31() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors31[TYPE_REF]{AllConstructors31, test, Ltest.AllConstructors31;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED)+"}\n" +
 			"AllConstructors31[CONSTRUCTOR_INVOCATION]{(), Ltest.AllConstructors31;, ()V, AllConstructors31, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_UNQUALIFIED + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -2519,24 +2523,24 @@ public void testBug6930_31() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_32() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -2562,7 +2566,7 @@ public void testBug6930_32() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 	    	"Test.AllConstructors32[TYPE_REF]{AllConstructors32, test, Ltest.Test$AllConstructors32;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED)+"}\n" +
 			"AllConstructors32[CONSTRUCTOR_INVOCATION]{(), Ltest.Test$AllConstructors32;, ()V, AllConstructors32, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -2572,24 +2576,24 @@ public void testBug6930_32() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_33() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		createFolder("/P/src/p6930");
 		createFolder("/P/src/p6930_1");
 		createFolder("/P/src/p6930_2");
-		
+
 		createFile(
 				"/P/src/p6930/AllConstructors33.java",
 				"package p6930;\n" +
@@ -2598,23 +2602,23 @@ public void testBug6930_33() throws Exception {
 				"  public AllConstructors33(ParamType p11, ParamType p12) {}\n" +
 				"  public AllConstructors33(p6930_1.ParamType p21, ParamType p22) {}\n" +
 				"}");
-		
+
 		createFile(
 				"/P/src/p6930_1/ParamType.java",
 				"package p6930_1;\n" +
 				"public class ParamType {\n" +
 				"}");
-		
+
 		createFile(
 				"/P/src/p6930_2/ParamType.java",
 				"package p6930_2;\n" +
 				"public class ParamType {\n" +
 				"}");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -2634,7 +2638,7 @@ public void testBug6930_33() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors33[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors33;, (Lp6930_1.ParamType;Lp6930_2.ParamType;)V, AllConstructors33, (p21, p22), "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors33[TYPE_REF]{p6930.AllConstructors33, p6930, Lp6930.AllConstructors33;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -2643,23 +2647,23 @@ public void testBug6930_33() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_34() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		Map compileOptions = new HashMap();
 		compileOptions.put(CompilerOptions.OPTION_LocalVariableAttribute, CompilerOptions.DO_NOT_GENERATE);
-	    
+
 		String[] pathsAndContents =
 			new String[] {
 				"p6930/AllConstructors34.java",
@@ -2672,13 +2676,13 @@ public void testBug6930_34() throws Exception {
 				pathsAndContents,
 				p.getProject().getLocation().append("lib6930.jar").toOSString(),
 				compileOptions);
-		
+
 		addLibraryEntry(p, "/P/lib6930.jar", null);
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -2698,30 +2702,30 @@ public void testBug6930_34() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors34[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors34;, (Ljava.lang.Object;)V, AllConstructors34, (arg0), "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors34[TYPE_REF]{p6930.AllConstructors34, p6930, Lp6930.AllConstructors34;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}",
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 public void testBug6930_35() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		Map compileOptions = new HashMap();
 		compileOptions.put(CompilerOptions.OPTION_LocalVariableAttribute, CompilerOptions.DO_NOT_GENERATE);
-	    
+
 		String[] pathsAndContents =
 			new String[] {
 				"p6930/AllConstructors35.java",
@@ -2734,17 +2738,17 @@ public void testBug6930_35() throws Exception {
 				pathsAndContents,
 				p.getProject().getLocation().append("lib6930.jar").toOSString(),
 				compileOptions);
-		
+
 		createSourceZip(
 				pathsAndContents,
 				p.getProject().getLocation().append("lib6930src.zip").toOSString());
-		
+
 		addLibraryEntry(p, "/P/lib6930.jar", "/P/lib6930src.zip");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -2764,14 +2768,14 @@ public void testBug6930_35() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors35[CONSTRUCTOR_INVOCATION]{(), Lp6930.AllConstructors35;, (Ljava.lang.Object;)V, AllConstructors35, (o), "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors35[TYPE_REF]{p6930.AllConstructors35, p6930, Lp6930.AllConstructors35;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}",
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
@@ -4615,16 +4619,16 @@ public void testBug96950() throws Exception {
 //https://bugs.eclipse.org/bugs/show_bug.cgi?id=276890
 public void testBug276890_01() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB"}, "bin", "1.5");
-		
+
 		createFolder("/P/src/p276890");
-		
+
 		createFile(
 				"/P/src/p276890/Stuff.java",
 				"package p276890;\n" +
@@ -4634,11 +4638,11 @@ public void testBug276890_01() throws Exception {
 				"  public Stuff(Stuff<E> ees) {}\n"+
 				"  public Stuff() {}\n"+
 				"}");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -4658,7 +4662,7 @@ public void testBug276890_01() throws Exception {
 	    String completeBehind = "Stuf";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"Stuff[CONSTRUCTOR_INVOCATION]{(), Lp276890.Stuff;, ()V, Stuff, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   Stuff[TYPE_REF]{p276890.Stuff, p276890, Lp276890.Stuff;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -4671,27 +4675,27 @@ public void testBug276890_01() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 //https://bugs.eclipse.org/bugs/show_bug.cgi?id=276890
 public void testBug276890_02() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB"}, "bin", "1.5");
-		
+
 		createFolder("/P/src/p276890");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[2];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -4701,7 +4705,7 @@ public void testBug276890_02() throws Exception {
 				"    new Stuf\n" +
 				"  }\n" +
 				"}");
-		
+
 		this.workingCopies[1] = getWorkingCopy(
 				"/P/src/p276890/Stuff.java",
 				"package p276890;\n" +
@@ -4721,7 +4725,7 @@ public void testBug276890_02() throws Exception {
 	    String completeBehind = "Stuf";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"Stuff[CONSTRUCTOR_INVOCATION]{(), Lp276890.Stuff;, ()V, Stuff, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   Stuff[TYPE_REF]{p276890.Stuff, p276890, Lp276890.Stuff;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -4734,23 +4738,23 @@ public void testBug276890_02() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
 //https://bugs.eclipse.org/bugs/show_bug.cgi?id=276890
 public void testBug276890_03() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB", "/P/lib276890.jar"}, "bin", "1.5");
-		
+
 		createFolder("/P/src/p276890");
-		
+
 		createJar(
 				new String[] {
 						"p276890/Stuff.java",
@@ -4765,11 +4769,11 @@ public void testBug276890_03() throws Exception {
 				p.getProject().getLocation().append("lib276890.jar").toOSString(),
 				new String[]{getExternalJCLPathString("1.5")},
 				"1.5");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -4789,7 +4793,7 @@ public void testBug276890_03() throws Exception {
 	    String completeBehind = "Stuf";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"Stuff[CONSTRUCTOR_INVOCATION]{(), Lp276890.Stuff;, ()V, Stuff, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   Stuff[TYPE_REF]{p276890.Stuff, p276890, Lp276890.Stuff;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
@@ -4802,7 +4806,7 @@ public void testBug276890_03() throws Exception {
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
@@ -4894,15 +4898,15 @@ public void testChangeInternalJar() throws CoreException, IOException {
 public void testBug237469a() throws Exception {
 	String externalJar1 = Util.getOutputDirectory() + File.separator + "bug237469a.jar"; //$NON-NLS-1$
 	String externalJar2 = Util.getOutputDirectory() + File.separator + "bug237469b.jar"; //$NON-NLS-1$
-	
+
 	try {
 		// create variable
 //		JavaCore.setClasspathVariables(
 //			new String[] {"JCL_LIB", "JCL_SRC", "JCL_SRCROOT"},
 //			new IPath[] {getExternalJCLPath(), getExternalJCLSourcePath(), getExternalJCLRootSourcePath()},
 //			null);
-		
-		
+
+
 		// create external jar 1
 		Util.createJar(
 				new String[] {
@@ -4913,7 +4917,7 @@ public void testBug237469a() throws Exception {
 				},
 				new HashMap(),
 				externalJar1);
-		
+
 		// create external jar 2
 		Util.createJar(
 				new String[] {
@@ -4990,15 +4994,15 @@ public void testBug237469a() throws Exception {
 public void testBug237469b() throws Exception {
 	String externalJar1 = Util.getOutputDirectory() + File.separator + "bug237469a.jar"; //$NON-NLS-1$
 	String externalJar2 = Util.getOutputDirectory() + File.separator + "bug237469b.jar"; //$NON-NLS-1$
-	
+
 	try {
 		// create variable
 //		JavaCore.setClasspathVariables(
 //			new String[] {"JCL_LIB", "JCL_SRC", "JCL_SRCROOT"},
 //			new IPath[] {getExternalJCLPath(), getExternalJCLSourcePath(), getExternalJCLRootSourcePath()},
 //			null);
-		
-		
+
+
 		// create external jar 1
 		Util.createJar(
 				new String[] {
@@ -5009,7 +5013,7 @@ public void testBug237469b() throws Exception {
 				},
 				new HashMap(),
 				externalJar1);
-		
+
 		// create external jar 2
 		Util.createJar(
 				new String[] {
@@ -5070,17 +5074,17 @@ public void testBug237469b() throws Exception {
 		requestor.setComputeEnclosingElement(false);
 		requestor.setComputeVisibleElements(true);
 		requestor.setAssignableType("Ltest/X;");
-		
+
 		ICompilationUnit cu= getCompilationUnit("PS2", "src", "test", "X.java");
 
 		String str = cu.getSource();
 		String completeBehind = "equals";
-		
+
 		int tokenStart = str.lastIndexOf(completeBehind);
 		int tokenEnd = tokenStart + completeBehind.length() - 1;
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		cu.codeComplete(cursorLocation, requestor);
-		
+
 		assertResults(
 				"completion offset="+(cursorLocation)+"\n" +
 				"completion range=["+(tokenStart)+", "+(tokenEnd)+"]\n" +
@@ -5103,14 +5107,14 @@ public void testBug237469b() throws Exception {
 //https://bugs.eclipse.org/bugs/show_bug.cgi?id=270113
 public void testBug270113_01() throws Exception {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB", "/P/lib270113.jar"}, "bin");
-		
+
 		createJar(new String[] {
 			"p270113/AllConstructors01.java",
 			"package p270113;\n" +
@@ -5118,11 +5122,11 @@ public void testBug270113_01() throws Exception {
 			"  protected AllConstructors01(int i) {}\n" +
 			"}"
 		}, p.getProject().getLocation().append("lib270113.jar").toOSString());
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -5142,14 +5146,14 @@ public void testBug270113_01() throws Exception {
 	    String completeBehind = "AllConstructors";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"AllConstructors01[ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION]{(), Lp270113.AllConstructors01;, (I)V, AllConstructors01, (i), "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}\n" +
 			"   AllConstructors01[TYPE_REF]{p270113.AllConstructors01, p270113, Lp270113.AllConstructors01;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR)+"}",
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }
@@ -5184,14 +5188,14 @@ public void testBug281598() throws Exception {
 	            long time = System.currentTimeMillis() - this.start;
 	            return time > 1000; // cancel after 1 sec
             }
-			
+
 		};
 
 	    String str = this.workingCopies[0].getSource();
 	    String completeBehind = "sys";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    // no results expected, just verify that no cancel operation exception occurs...
 	    assertResults("", requestor.getResults());
 	} finally {
@@ -5227,14 +5231,14 @@ public void testBug281598b() throws Exception {
 	            long time = System.currentTimeMillis() - this.start;
 	            return time > 1000; // cancel after 1 sec
             }
-			
+
 		};
 
 	    String str = this.workingCopies[0].getSource();
 	    String completeBehind = "String";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"String[CONSTRUCTOR_INVOCATION]{(), Ljava.lang.String;, ()V, String, null, "+(R_DEFAULT+R_RESOLVED+R_INTERESTING+R_CASE+R_EXACT_NAME+R_UNQUALIFIED+R_NON_RESTRICTED)+"}\n" +
 			"   String[TYPE_REF]{java.lang.String, java.lang, Ljava.lang.String;, null, null, "+(R_DEFAULT+R_RESOLVED+R_INTERESTING+R_CASE+R_EXACT_NAME+R_UNQUALIFIED+R_NON_RESTRICTED)+"}",
@@ -5249,7 +5253,7 @@ public void testBug281598c() throws Exception {
 		// Create project
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin", "1.4");
 		waitUntilIndexesReady();
-		
+
 		// Disable indexing
 		indexManager.disable();
 
@@ -5275,14 +5279,14 @@ public void testBug281598c() throws Exception {
 	            long time = System.currentTimeMillis() - this.start;
 	            return time > 1000; // cancel after 1 sec
             }
-			
+
 		};
 
 	    String completeBehind = "Strin";
 	    int cursorLocation = source.lastIndexOf(completeBehind) + completeBehind.length();
 	    IType type = p.findType("test.Test");
 	    type.getTypeRoot().codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"String[TYPE_REF]{String, java.lang, Ljava.lang.String;, null, null, "+(R_DEFAULT+R_RESOLVED+R_INTERESTING+R_CASE+R_UNQUALIFIED+R_NON_RESTRICTED)+"}",
 			requestor.getResults());
@@ -5317,11 +5321,11 @@ public void testBug151500a() throws Exception {
 				p.getProject().getLocation().append("lib151500.jar").toOSString(),
 				new String[]{getExternalJCLPathString("1.3")},
 				"1.3");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -5342,7 +5346,7 @@ public void testBug151500a() throws Exception {
 	    String completeBehind = "f.bar.s";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"someMethod[METHOD_REF]{someMethod(), Lfoo.Foo$Bar;, (Ljava.lang.String;)V, someMethod, (paramName), " + (R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_NON_STATIC)+ "}",
 			requestor.getResults());
@@ -5352,7 +5356,7 @@ public void testBug151500a() throws Exception {
 }
 
 // https://bugs.eclipse.org/bugs/show_bug.cgi?id=151500
-public void testBug151500b() throws Exception {	
+public void testBug151500b() throws Exception {
 	try {
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB", "/P/lib151500.jar"}, "bin", "1.4");
 		createJar(
@@ -5376,11 +5380,11 @@ public void testBug151500b() throws Exception {
 				p.getProject().getLocation().append("lib151500.jar").toOSString(),
 				new String[]{getExternalJCLPathString("1.3")},
 				"1.3");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -5400,7 +5404,7 @@ public void testBug151500b() throws Exception {
 	    String completeBehind = "new foo.Foo(1).new B";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 	    		"Bar[CONSTRUCTOR_INVOCATION]{(), Lfoo.Foo$Bar;, (II)V, Bar, (a, b), " + (R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_UNQUALIFIED + R_CONSTRUCTOR) + "}\n" +
 	    		"   Foo.Bar[TYPE_REF]{Bar, foo, Lfoo.Foo$Bar;, null, null, " + (R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_UNQUALIFIED + R_CONSTRUCTOR) + "}",
@@ -5411,7 +5415,7 @@ public void testBug151500b() throws Exception {
 }
 
 // https://bugs.eclipse.org/bugs/show_bug.cgi?id=151500
-public void testBug151500c() throws Exception {	
+public void testBug151500c() throws Exception {
 	try {
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL15_LIB", "/P/lib151500.jar"}, "bin", "1.4");
 		createJar(
@@ -5435,11 +5439,11 @@ public void testBug151500c() throws Exception {
 				p.getProject().getLocation().append("lib151500.jar").toOSString(),
 				new String[]{getExternalJCLPathString("1.3")},
 				"1.3");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[1];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/test/Test.java",
@@ -5459,7 +5463,7 @@ public void testBug151500c() throws Exception {
 	    String completeBehind = "new foo.Foo.B";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 	    		"Bar[CONSTRUCTOR_INVOCATION]{(), Lfoo.Foo$Bar;, (II)V, Bar, (a, b), " + (R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR) + "}\n" +
 	    		"   Foo.Bar[TYPE_REF]{Bar, foo, Lfoo.Foo$Bar;, null, null, " + (R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR) + "}",
@@ -5476,7 +5480,7 @@ public void testBug317264a() throws CoreException {
 	{
 		project = createJavaProject("P2", new String[] {""}, new String[] {"JCL15_LIB"}, "", "1.5");
 		addClasspathEntry(project, JavaCore.newLibraryEntry(new Path("/Completion/b317264/org.apache.commons.lang_2.modified.jar"), null, null));
-		
+
 		createFile(
 				"/P2/X.java",
 				"import org.apache.commons.lang.*;\n"+
@@ -5486,7 +5490,7 @@ public void testBug317264a() throws CoreException {
 				"  }\n"+
 				"}");
 		waitUntilIndexesReady();
-		
+
 		ICompilationUnit cu= getCompilationUnit("P2", "", "", "X.java");
 
 		String str = cu.getSource();
@@ -5497,7 +5501,7 @@ public void testBug317264a() throws CoreException {
 		assertResults(
 				"Enum[TYPE_REF]{Enum, java.lang, Ljava.lang.Enum;, null, null, " + (R_DEFAULT + 12) + "}",
 				requestor.getResults());
-				
+
 	} finally {
 		deleteProject(project);
 	}
@@ -5509,7 +5513,7 @@ public void testBug317264b() throws CoreException {
 	{
 		project = createJavaProject("P2", new String[] {""}, new String[] {"JCL_LIB"}, "", "1.4");
 		addClasspathEntry(project, JavaCore.newLibraryEntry(new Path("/Completion/b317264/org.apache.commons.lang_2.modified.jar"), null, null));
-		
+
 		createFile(
 				"/P2/X.java",
 				"import org.apache.commons.lang.*;\n"+
@@ -5519,7 +5523,7 @@ public void testBug317264b() throws CoreException {
 				"  }\n"+
 				"}");
 		waitUntilIndexesReady();
-		
+
 		ICompilationUnit cu= getCompilationUnit("P2", "", "", "X.java");
 
 		String str = cu.getSource();
@@ -5530,7 +5534,7 @@ public void testBug317264b() throws CoreException {
 		assertResults(
 				"Enum[TYPE_REF]{org.apache.commons.lang.enum.Enum, org.apache.commons.lang.enum, Lorg.apache.commons.lang.enum.Enum;, null, null, " + (R_DEFAULT + 9) + "}",
 				requestor.getResults());
-				
+
 	} finally {
 		deleteProject(project);
 	}
@@ -5542,16 +5546,16 @@ public void testBug317264c() throws CoreException {
 	{
 		project = createJavaProject("P2", new String[] {""}, new String[] {"JCL15_LIB"}, "", "1.5");
 		addClasspathEntry(project, JavaCore.newLibraryEntry(new Path("/Completion/b317264/org.apache.commons.lang_2.modified.jar"), null, null));
-		
+
 		createFile(
 				"/P2/X.java",
 				"import org.apache.commons.lang.enu;\n"+
 				"public class X {\n"+
-				"  public void foo() {\n"+   
+				"  public void foo() {\n"+
 				"  }\n"+
 				"}");
 		waitUntilIndexesReady();
-		
+
 		ICompilationUnit cu= getCompilationUnit("P2", "", "", "X.java");
 
 		String str = cu.getSource();
@@ -5560,7 +5564,7 @@ public void testBug317264c() throws CoreException {
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		cu.codeComplete(cursorLocation, requestor);
 		assertResults("", requestor.getResults());
-				
+
 	} finally {
 		deleteProject(project);
 	}
@@ -5572,16 +5576,16 @@ public void testBug317264d() throws CoreException {
 	{
 		project = createJavaProject("P2", new String[] {""}, new String[] {"JCL_LIB"}, "", "1.4");
 		addClasspathEntry(project, JavaCore.newLibraryEntry(new Path("/Completion/b317264/org.apache.commons.lang_2.modified.jar"), null, null));
-		
+
 		createFile(
 				"/P2/X.java",
 				"import org.apache.commons.lang.enu;\n"+
 				"public class X {\n"+
-				"  public void foo() {\n"+   
+				"  public void foo() {\n"+
 				"  }\n"+
 				"}");
 		waitUntilIndexesReady();
-		
+
 		ICompilationUnit cu= getCompilationUnit("P2", "", "", "X.java");
 
 		String str = cu.getSource();
@@ -5592,7 +5596,7 @@ public void testBug317264d() throws CoreException {
 		assertResults(
 				"org.apache.commons.lang.enum[PACKAGE_REF]{org.apache.commons.lang.enum.*;, org.apache.commons.lang.enum, null, null, null, " + (R_DEFAULT + 19) + "}",
 				requestor.getResults());
-				
+
 	} finally {
 		deleteProject(project);
 	}
@@ -5649,7 +5653,7 @@ public void testBug340945() throws JavaModelException {
 			"public final void notifyAll() throws java.lang.IllegalMonitorStateException\n" +
 			"public final void notify() throws java.lang.IllegalMonitorStateException\n" +
 			"public int hashCode() \n" +
-			"public final java.lang.Class getClass() \n" + 
+			"public final java.lang.Class getClass() \n" +
 			"protected void finalize() throws java.lang.Throwable\n" +
 			"public boolean equals(java.lang.Object) \n" +
 			"protected java.lang.Object clone() throws java.lang.CloneNotSupportedException\n" +
@@ -5698,7 +5702,7 @@ public void testBug340945a() throws JavaModelException {
 			"public final void notifyAll() throws java.lang.IllegalMonitorStateException\n" +
 			"public final void notify() throws java.lang.IllegalMonitorStateException\n" +
 			"public int hashCode() \n" +
-			"public final java.lang.Class getClass() \n" + 
+			"public final java.lang.Class getClass() \n" +
 			"protected void finalize() throws java.lang.Throwable\n" +
 			"public boolean equals(java.lang.Object) \n" +
 			"protected java.lang.Object clone() throws java.lang.CloneNotSupportedException\n",
@@ -5750,10 +5754,10 @@ public void testBug340945b() throws JavaModelException {
 			"public final void notifyAll() throws java.lang.IllegalMonitorStateException\n" +
 			"public final void notify() throws java.lang.IllegalMonitorStateException\n" +
 			"public int hashCode() \n" +
-			"public final java.lang.Class getClass() \n" + 
+			"public final java.lang.Class getClass() \n" +
 			"protected void finalize() throws java.lang.Throwable\n" +
 			"public boolean equals(java.lang.Object) \n" +
-			"protected java.lang.Object clone() throws java.lang.CloneNotSupportedException\n",			
+			"protected java.lang.Object clone() throws java.lang.CloneNotSupportedException\n",
 			requestor.getVisibleMethods());
 }
 
@@ -5804,10 +5808,10 @@ public void testBug340945c() throws JavaModelException {
 			"public final void notifyAll() throws java.lang.IllegalMonitorStateException\n" +
 			"public final void notify() throws java.lang.IllegalMonitorStateException\n" +
 			"public int hashCode() \n" +
-			"public final java.lang.Class getClass() \n" + 
+			"public final java.lang.Class getClass() \n" +
 			"protected void finalize() throws java.lang.Throwable\n" +
 			"public boolean equals(java.lang.Object) \n" +
-			"protected java.lang.Object clone() throws java.lang.CloneNotSupportedException\n",			
+			"protected java.lang.Object clone() throws java.lang.CloneNotSupportedException\n",
 			requestor.getVisibleMethods());
 }
 
@@ -5850,7 +5854,7 @@ public void testBug340945d() throws JavaModelException {
 			"",
 			requestor.getVisibleFields());
 	assertResults(
-			"static void foo() \n",			
+			"static void foo() \n",
 			requestor.getVisibleMethods());
 }
 // https://bugs.eclipse.org/bugs/show_bug.cgi?id=326610
@@ -5890,7 +5894,7 @@ public void testBug326610() throws Exception {
 			"element:NonNullByDefault    completion:org.eclipse.jdt.annotation.NonNullByDefault    relevance:"+ (R_DEFAULT + R_INTERESTING + R_CASE + R_QUALIFIED + R_EXACT_NAME + R_NON_RESTRICTED + R_ANNOTATION),
 			requestor.getResults());
 
-		
+
 	} finally {
 		this.deleteProject("P1");
 	}
@@ -5903,9 +5907,9 @@ public void testBug373409() throws Exception {
 		// Create project and jar
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
 		refresh(p);
-		
+
 		createFolder("/P/src/java/llang");
-		
+
 		createFile(
 				"/P/src/java/llang/Thread.java",
 				"package java.llang;\n"+
@@ -5917,14 +5921,14 @@ public void testBug373409() throws Exception {
 				"  public Thread(String s, int i) {\n" +
 				"  }\n" +
 				"}");
-		
+
 		createFile(
 				"/P/src/java/llang/ThreadLocal.java",
 				"package java.llang;\n"+
 				"public class ThreadLocal {\n" +
 				"	 static class ThreadLocalMap {}\n" + // non private static member class necessary for ThreadLocal to be proposed as a type
 				"}");
-		
+
 		createFile(
 				"/P/src/java/llang/ThreadGroup.java",
 				"package java.llang;\n"+
@@ -5934,9 +5938,9 @@ public void testBug373409() throws Exception {
 				"   public ThreadGroup(String s) {\n" +
 				"  }\n" +
 				"}");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
 
 		// Create working copy
@@ -5950,8 +5954,8 @@ public void testBug373409() throws Exception {
 				"    new Threa\n" +
 				"  }\n" +
 				"}");
-		
-		
+
+
 
 		// do completion
 		CompletionTestsRequestor2 requestor = new CompletionTestsRequestor2(true, false, false, true, true);
@@ -5962,7 +5966,7 @@ public void testBug373409() throws Exception {
 	    String completeBehind = "Threa";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 	    	"ThreadLocal[TYPE_REF]{java.llang.ThreadLocal, java.llang, Ljava.llang.ThreadLocal;, null, null, " + (R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED) + "}\n" +
 			"Thread[CONSTRUCTOR_INVOCATION]{(), Ljava.llang.Thread;, ()V, Thread, null, " + (R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED + R_CONSTRUCTOR) + "}\n" +
@@ -6076,7 +6080,7 @@ public void testBug392581() throws CoreException {
 	    String completeBehind = "super.";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 	    	"clone[METHOD_REF]{clone(), Ljava.lang.Object;, ()Ljava.lang.Object;, clone, null, "+ (R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_STATIC + R_NON_RESTRICTED) + "}\n"
 	    	+ "equals[METHOD_REF]{equals(), Ljava.lang.Object;, (Ljava.lang.Object;)Z, equals, (obj), "+ (R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_STATIC + R_NON_RESTRICTED) + "}\n"
@@ -6347,7 +6351,7 @@ public void testBug418011() throws CoreException {
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
 	    requestor.getContext();
-	    
+
 	} finally {
 		deleteProject("P");
 	}
@@ -6356,18 +6360,18 @@ public void testBug418011() throws CoreException {
 // https://bugs.eclipse.org/bugs/show_bug.cgi?id=376977
 public void testBug376977() throws CoreException {
 	Hashtable oldOptions = JavaCore.getOptions();
-	
+
 	try {
 		Hashtable options = new Hashtable(oldOptions);
 		options.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(options);
-		
+
 		IJavaProject p = createJavaProject("P", new String[] {"src"}, new String[]{"JCL_LIB"}, "bin");
-		
+
 		refresh(p);
-		
+
 		waitUntilIndexesReady();
-		
+
 		this.workingCopies = new ICompilationUnit[3];
 		this.workingCopies[0] = getWorkingCopy(
 				"/P/src/myannotations/Nested.java",
@@ -6400,13 +6404,13 @@ public void testBug376977() throws CoreException {
 	    String completeBehind = "nest= {@Nes";
 	    int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 	    this.workingCopies[2].codeComplete(cursorLocation, requestor, this.wcOwner, monitor);
-	    
+
 	    assertResults(
 			"Nested[TYPE_REF]{Nested, myannotations, Lmyannotations.Nested;, null, null, " + (R_DEFAULT + 42) + "}",
 			requestor.getResults());
 	} finally {
 		deleteProject("P");
-		
+
 		JavaCore.setOptions(oldOptions);
 	}
 }

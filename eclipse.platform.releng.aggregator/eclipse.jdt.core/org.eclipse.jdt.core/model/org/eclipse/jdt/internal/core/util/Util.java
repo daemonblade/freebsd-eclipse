@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -41,6 +41,7 @@ import org.eclipse.jdt.core.dom.WildcardType;
 import org.eclipse.jdt.core.util.IClassFileAttribute;
 import org.eclipse.jdt.core.util.IClassFileReader;
 import org.eclipse.jdt.core.util.ICodeAttribute;
+import org.eclipse.jdt.core.util.IComponentInfo;
 import org.eclipse.jdt.core.util.IFieldInfo;
 import org.eclipse.jdt.core.util.IMethodInfo;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
@@ -61,6 +62,7 @@ import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
+import org.eclipse.jdt.internal.compiler.lookup.RecordComponentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
@@ -742,6 +744,15 @@ public class Util {
 		}
 		return null;
 	}
+	public static IClassFileAttribute getAttribute(IComponentInfo componentInfo, char[] attributeName) {
+		IClassFileAttribute[] attributes = componentInfo.getAttributes();
+		for (int i = 0, max = attributes.length; i < max; i++) {
+			if (CharOperation.equals(attributes[i].getAttributeName(), attributeName)) {
+				return attributes[i];
+			}
+		}
+		return null;
+	}
 
 	public static IClassFileAttribute getAttribute(IMethodInfo methodInfo, char[] attributeName) {
 		IClassFileAttribute[] attributes = methodInfo.getAttributes();
@@ -922,7 +933,7 @@ public class Util {
 				if (lineSeparator != null)
 					return lineSeparator;
 			}
-	
+
 			// line delimiter in workspace preference
 			scopeContext= new IScopeContext[] { InstanceScope.INSTANCE };
 			lineSeparator = Platform.getPreferencesService().getString(Platform.PI_RUNTIME, Platform.PREF_LINE_SEPARATOR, null, scopeContext);
@@ -1038,7 +1049,7 @@ public class Util {
 
 	/**
 	 * Encode the argument by doubling the '#' if present into the argument value.
-	 * 
+	 *
 	 * <p>This stores the encoded argument into the given buffer.</p>
 	 *
 	 * @param argument the given argument
@@ -1347,6 +1358,18 @@ public class Util {
 	public static JavaElement getUnresolvedJavaElement(FieldBinding binding, WorkingCopyOwner workingCopyOwner, BindingsToNodesMap bindingsToNodes) {
 		if (binding.declaringClass == null) return null; // array length
 		JavaElement unresolvedJavaElement = getUnresolvedJavaElement(binding.declaringClass, workingCopyOwner, bindingsToNodes);
+		if (unresolvedJavaElement == null || unresolvedJavaElement.getElementType() != IJavaElement.TYPE) {
+			return null;
+		}
+		return (JavaElement) ((IType) unresolvedJavaElement).getField(String.valueOf(binding.name));
+	}
+
+	/**
+	 * Return the java element corresponding to the given compiler binding.
+	 */
+	public static JavaElement getUnresolvedJavaElement(RecordComponentBinding binding, WorkingCopyOwner workingCopyOwner, BindingsToNodesMap bindingsToNodes) {
+		if (binding.declaringRecord == null) return null; // array length
+		JavaElement unresolvedJavaElement = getUnresolvedJavaElement(binding.declaringRecord, workingCopyOwner, bindingsToNodes);
 		if (unresolvedJavaElement == null || unresolvedJavaElement.getElementType() != IJavaElement.TYPE) {
 			return null;
 		}
@@ -2717,7 +2740,7 @@ public class Util {
 		}
 		return signature;
 	}
-	
+
 	private static String[] typeSignatures(TypeReference[] types) {
 		int length = types.length;
 		String[] typeSignatures = new String[length];
@@ -2827,7 +2850,7 @@ public class Util {
 		char[] typeName = org.eclipse.jdt.core.Signature.toCharArray(CharOperation.replaceOnCopy(binaryAnnotation.getTypeName(), '/', '.'));
 		return new Annotation(parent, new String(typeName), memberValuePairName);
 	}
-	
+
 	public static Object getAnnotationMemberValue(JavaElement parent, MemberValuePair memberValuePair, Object binaryValue) {
 		if (binaryValue instanceof Constant) {
 			return getAnnotationMemberValue(memberValuePair, (Constant) binaryValue);
@@ -2916,7 +2939,7 @@ public class Util {
 				return null;
 		}
 	}
-	
+
 	/*
 	 * Creates a member value from the given constant in case of negative numerals,
 	 * and sets the valueKind on the given memberValuePair
@@ -3312,8 +3335,8 @@ public class Util {
 		}
 	}
 	/**
-	 * Finds the IMethod element corresponding to the given selector, 
-	 * without creating a new dummy instance of a binary method. 
+	 * Finds the IMethod element corresponding to the given selector,
+	 * without creating a new dummy instance of a binary method.
 	 * @param type the type in which the method is declared
 	 * @param selector the method name
 	 * @param paramTypeSignatures the type signatures of the method arguments
@@ -3326,7 +3349,7 @@ public class Util {
 		int startingIndex = 0;
 		String[] args;
 		IType enclosingType = type.getDeclaringType();
-		// If the method is a constructor of a non-static inner type, add the enclosing type as an 
+		// If the method is a constructor of a non-static inner type, add the enclosing type as an
 		// additional parameter to the constructor
 		if (enclosingType != null
 				&& isConstructor
@@ -3342,7 +3365,7 @@ public class Util {
 			args[i] = paramTypeSignatures[i-startingIndex];
 		}
 		method = type.getMethod(new String(selector), args);
-		
+
 		IMethod[] methods = type.findMethods(method);
 		if (methods != null && methods.length > 0) {
 			method = methods[0];

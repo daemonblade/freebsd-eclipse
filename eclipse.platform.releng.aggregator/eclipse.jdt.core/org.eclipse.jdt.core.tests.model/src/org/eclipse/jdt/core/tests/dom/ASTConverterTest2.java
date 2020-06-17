@@ -36,6 +36,7 @@ import org.eclipse.jdt.core.tests.util.Util;
 public class ASTConverterTest2 extends ConverterTestSetup {
 
 	/** @deprecated using deprecated code */
+	@Override
 	public void setUpSuite() throws Exception {
 		super.setUpSuite();
 		this.ast = AST.newAST(AST.JLS2, false);
@@ -52,7 +53,7 @@ public class ASTConverterTest2 extends ConverterTestSetup {
 	public static Test suite() {
 		return buildModelTestSuite(ASTConverterTest2.class);
 	}
-	/** 
+	/**
 	 * Internal access method to MethodDeclaration#thrownExceptions() for avoiding deprecated warnings.
 	 * @deprecated
 	 */
@@ -4323,6 +4324,7 @@ public class ASTConverterTest2 extends ConverterTestSetup {
 		ICompilationUnit sourceUnit = getCompilationUnit("Converter", "src", "test0538", "A.java"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 		try {
 			ReconcilerTests.ProblemRequestor pbRequestor = new ReconcilerTests.ProblemRequestor() {
+				@Override
                 public boolean isActive() {
                     return false;
                 }
@@ -5556,7 +5558,7 @@ public class ASTConverterTest2 extends ConverterTestSetup {
 				workingCopy.discardWorkingCopy();
 		}
 	}
-	
+
 	// https://bugs.eclipse.org/bugs/show_bug.cgi?id=270446. NPE while building abridged AST
 	public void test0610() throws CoreException {
 		ICompilationUnit workingCopy = null;
@@ -5572,7 +5574,7 @@ public class ASTConverterTest2 extends ConverterTestSetup {
 				"	  }\n" +
 				"	}\n"
 			);
-			
+
 			// Create parser
 			ASTParser parser = ASTParser.newParser(getJLS3());
 			parser.setSource(workingCopy);

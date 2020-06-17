@@ -30,6 +30,7 @@ public FormatterBugs18Tests(String name) {
 /**
  * Create project and set the jar placeholder.
  */
+@Override
 public void setUpSuite() throws Exception {
 	if (JAVA_PROJECT == null) {
 		JAVA_PROJECT = setUpJavaProject("FormatterBugs", "1.8"); //$NON-NLS-1$
@@ -40,7 +41,7 @@ public void setUpSuite() throws Exception {
 /**
  * @bug 426520: [1.8][formatter] inserts spaces into annotated qualified type
  * @test Ensure that formatting does not change the qualified type formatting for c and it
- * it removes the spaces for s. 
+ * it removes the spaces for s.
  * @see "https://bugs.eclipse.org/bugs/show_bug.cgi?id=426520"
  */
 public void testBug426520a() throws JavaModelException {

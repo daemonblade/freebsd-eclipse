@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corporation and others.
+ * Copyright (c) 2005, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -29,6 +29,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.RecordComponentElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
@@ -44,6 +45,7 @@ import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
+import org.eclipse.jdt.internal.compiler.lookup.RecordComponentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
@@ -84,6 +86,7 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 				case INTERFACE :
 				case CLASS :
 				case ENUM :
+				case RECORD :
 					TypeElementImpl typeElementImpl = (TypeElementImpl) e;
 					Binding typeBinding = typeElementImpl._binding;
 					if (typeBinding instanceof SourceTypeBinding) {
@@ -103,6 +106,7 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 					break;
 				case ENUM_CONSTANT :
 				case FIELD :
+				case RECORD_COMPONENT :
 					VariableElementImpl variableElementImpl = (VariableElementImpl) e;
 					binding = variableElementImpl._binding;
 					if (binding instanceof FieldBinding) {
@@ -122,7 +126,7 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 	}
 
 	private final ElementKind _kindHint;
-	
+
 	/**
 	 * In general, clients should call {@link Factory#newDeclaredType(ReferenceBinding)} or
 	 * {@link Factory#newElement(org.eclipse.jdt.internal.compiler.lookup.Binding)} to
@@ -132,7 +136,7 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 		super(env, binding);
 		_kindHint = kindHint;
 	}
-	
+
 	@Override
 	public <R, P> R accept(ElementVisitor<R, P> v, P p)
 	{
@@ -160,6 +164,13 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 				 enclosed.add(variable);
 			}
 		}
+		if (binding.isRecord() && binding instanceof SourceTypeBinding) {
+			SourceTypeBinding sourceBinding = (SourceTypeBinding) binding;
+			for (RecordComponentBinding comp : sourceBinding.components()) {
+				RecordComponentElement rec = new RecordComponentElementImpl(_env, comp);
+				enclosed.add(rec);
+			}
+		}
 		for (ReferenceBinding memberType : binding.memberTypes()) {
 			TypeElement type = new TypeElementImpl(_env, memberType, null);
 			enclosed.add(type);
@@ -169,6 +180,22 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 
 		return Collections.unmodifiableList(enclosed);
 	}
+
+	@Override
+    public List<? extends RecordComponentElement> getRecordComponents() {
+		if (_binding instanceof SourceTypeBinding) {
+			SourceTypeBinding binding = (SourceTypeBinding) _binding;
+			List<RecordComponentElement> enclosed = new ArrayList<>();
+			for (RecordComponentBinding comp : binding.components()) {
+				RecordComponentElement variable = new RecordComponentElementImpl(_env, comp);
+				enclosed.add(variable);
+			}
+			Collections.sort(enclosed, new SourceLocationComparator());
+			return Collections.unmodifiableList(enclosed);
+		}
+		// TODO: Add code for BinaryTypeBinding, which, as of now doesn't seem to contain components
+		return Collections.emptyList();
+    }
 
 	@Override
 	public Element getEnclosingElement() {
@@ -190,7 +217,7 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 			return null;
 		return new String(name);
 	}
-	
+
 	@Override
 	public List<? extends TypeMirror> getInterfaces() {
 		ReferenceBinding binding = (ReferenceBinding)_binding;
@@ -221,6 +248,9 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 		// The order of these comparisons is important: e.g., enum is subset of class
 		if (refBinding.isEnum()) {
 			return ElementKind.ENUM;
+		}
+		else if (refBinding.isRecord()) {
+			return ElementKind.RECORD;
 		}
 		else if (refBinding.isAnnotationType()) {
 			return ElementKind.ANNOTATION_TYPE;
@@ -303,7 +333,7 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 		// superclass of a type must be a DeclaredType
 		return _env.getFactory().newTypeMirror(superBinding);
 	}
-	
+
 	@Override
 	public List<? extends TypeParameterElement> getTypeParameters() {
 		ReferenceBinding binding = (ReferenceBinding)_binding;
@@ -311,7 +341,7 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 		if (variables.length == 0) {
 			return Collections.emptyList();
 		}
-		List<TypeParameterElement> params = new ArrayList<>(variables.length); 
+		List<TypeParameterElement> params = new ArrayList<>(variables.length);
 		for (TypeVariableBinding variable : variables) {
 			params.add(_env.getFactory().newTypeParameterElement(variable, this));
 		}
@@ -338,7 +368,7 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 		if (!CharOperation.equals(hiddenBinding.sourceName, hiderBinding.sourceName)) {
 			return false;
 		}
-		return null != hiderBinding.enclosingType().findSuperTypeOriginatingFrom(hiddenBinding.enclosingType()); 
+		return null != hiderBinding.enclosingType().findSuperTypeOriginatingFrom(hiddenBinding.enclosingType());
 	}
 
 	@Override

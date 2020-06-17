@@ -51,6 +51,7 @@ static {
 //	TESTS_RANGE = new int[] { 16, -1 };
 }
 
+@Override
 protected void tearDown() throws Exception {
 	// Cleanup caches
 	JavaModelManager manager = JavaModelManager.getJavaModelManager();
@@ -186,8 +187,10 @@ public void testApplicationLibrairiesClasspathContainer() throws CoreException {
 public void testSystemLibraries() throws CoreException {
 	try {
 		DefaultContainerInitializer intializer = new DefaultContainerInitializer(new String[] {"P", "/P/lib.jar"}) {
+			@Override
 			protected DefaultContainer newContainer(char[][] libPaths) {
 				return new DefaultContainer(libPaths) {
+					@Override
 					public int getKind() {
 						return IClasspathContainer.K_SYSTEM;
 					}
@@ -1090,9 +1093,9 @@ public void testBug250211() throws CoreException {
 						}
 					}
 					projects[i] = createJavaProject(projectName, new String[]{"src"}, new String[]{"JCL_LIB"}, dependents, exportedProjects, "bin");
-				}		
+				}
 			}
-		}, 
+		},
 		null);
 		SearchEngine.createJavaSearchScope(projects);
 	}
@@ -1107,7 +1110,7 @@ public void testBug250211() throws CoreException {
 public void testBug397818() throws CoreException {
 	try {
 		createJavaProject("P1", new String[] {"src"}, new String[] {}, "bin");
-		
+
 		createFolder("/P1/new folder");
 		IFile newFile = createFile("/P1/new folder/testindex.index", "");
 		try {

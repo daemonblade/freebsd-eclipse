@@ -32,11 +32,13 @@ public class ClasspathJmodTests extends ModuleCompilationTests {
 	public ClasspathJmodTests(String name) {
 		super(name);
 	}
+	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 		System.setProperty("modules.to.load", "java.base");
 	}
-	
+
+	@Override
 	public void tearDown() throws Exception {
 		super.tearDown();
 		System.setProperty("modules.to.load", "");
@@ -53,18 +55,19 @@ public class ClasspathJmodTests extends ModuleCompilationTests {
 		String home = Util.getJREDirectory();
 		return home + File.separator + "jmods" + File.separator + "java.sql.jmod" + File.pathSeparator;
 	}
+	@Override
 	public void test001() {
 		File outputDirectory = new File(OUTPUT_DIR);
 		Util.flushDirectoryContent(outputDirectory);
 		String out = "bin";
 		String directory = OUTPUT_DIR + File.separator + "src";
 		String moduleLoc = directory + File.separator + "mod.one";
-		List<String> files = new ArrayList<>(); 
-		writeFileCollecting(files, moduleLoc, "module-info.java", 
+		List<String> files = new ArrayList<>();
+		writeFileCollecting(files, moduleLoc, "module-info.java",
 						"module mod.one { \n" +
 						"  requires java.sql;\n" +
 						"}");
-		writeFileCollecting(files, moduleLoc + File.separator + "p", "X.java", 
+		writeFileCollecting(files, moduleLoc + File.separator + "p", "X.java",
 						"package p;\n" +
 						"public class X {\n" +
 						"	public static java.sql.Connection getConnection() {\n" +
@@ -78,25 +81,26 @@ public class ClasspathJmodTests extends ModuleCompilationTests {
 			.append(getJavaSqlJMod())
 			.append("\" ")
 			.append(" --module-source-path " + "\"" + directory + "\"");
-		runConformModuleTest(files, 
+		runConformModuleTest(files,
 				buffer,
 				"",
 				"",
 				false,
 				"p.X");
 	}
+	@Override
 	public void test002() {
 		File outputDirectory = new File(OUTPUT_DIR);
 		Util.flushDirectoryContent(outputDirectory);
 		String out = "bin";
 		String directory = OUTPUT_DIR + File.separator + "src";
 		String moduleLoc = directory + File.separator + "mod.one";
-		List<String> files = new ArrayList<>(); 
-		writeFileCollecting(files, moduleLoc, "module-info.java", 
+		List<String> files = new ArrayList<>();
+		writeFileCollecting(files, moduleLoc, "module-info.java",
 						"module mod.one { \n" +
 						"  requires java.sql;\n" +
 						"}");
-		writeFileCollecting(files, moduleLoc + File.separator + "p", "X.java", 
+		writeFileCollecting(files, moduleLoc + File.separator + "p", "X.java",
 						"package p;\n" +
 						"public class X {\n" +
 						"	public static java.sql.Connection getConnection() {\n" +
@@ -109,37 +113,38 @@ public class ClasspathJmodTests extends ModuleCompilationTests {
 			.append(" --module-path \"")
 			.append("\" ")
 			.append(" --module-source-path " + "\"" + directory + "\"");
-		runNegativeModuleTest(files, 
+		runNegativeModuleTest(files,
 				buffer,
 				"",
-				"----------\n" + 
-				"1. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 2)\n" + 
-				"	requires java.sql;\n" + 
-				"	         ^^^^^^^^\n" + 
-				"java.sql cannot be resolved to a module\n" + 
-				"----------\n" + 
-				"----------\n" + 
-				"2. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/p/X.java (at line 3)\n" + 
-				"	public static java.sql.Connection getConnection() {\n" + 
-				"	              ^^^^^^^^\n" + 
-				"java.sql cannot be resolved to a type\n" + 
-				"----------\n" + 
+				"----------\n" +
+				"1. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 2)\n" +
+				"	requires java.sql;\n" +
+				"	         ^^^^^^^^\n" +
+				"java.sql cannot be resolved to a module\n" +
+				"----------\n" +
+				"----------\n" +
+				"2. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/p/X.java (at line 3)\n" +
+				"	public static java.sql.Connection getConnection() {\n" +
+				"	              ^^^^^^^^\n" +
+				"java.sql cannot be resolved to a type\n" +
+				"----------\n" +
 				"2 problems (2 errors)\n",
 				false,
 				"p.X");
 	}
+	@Override
 	public void test003() {
 		File outputDirectory = new File(OUTPUT_DIR);
 		Util.flushDirectoryContent(outputDirectory);
 		String out = "bin";
 		String directory = OUTPUT_DIR + File.separator + "src";
 		String moduleLoc = directory + File.separator + "mod.one";
-		List<String> files = new ArrayList<>(); 
-		writeFileCollecting(files, moduleLoc, "module-info.java", 
+		List<String> files = new ArrayList<>();
+		writeFileCollecting(files, moduleLoc, "module-info.java",
 						"module mod.one { \n" +
 						"  requires java.sql;\n" +
 						"}");
-		writeFileCollecting(files, moduleLoc + File.separator + "p", "X.java", 
+		writeFileCollecting(files, moduleLoc + File.separator + "p", "X.java",
 						"package p;\n" +
 						"public class X {\n" +
 						"	public static java.sql.Connection getConnection() {\n" +
@@ -153,36 +158,37 @@ public class ClasspathJmodTests extends ModuleCompilationTests {
 			.append(getJavaSqlJMod())
 			.append("\" ")
 			.append(" --module-source-path " + "\"" + directory + "\"");
-		runNegativeModuleTest(files, 
+		runNegativeModuleTest(files,
 				buffer,
 				"",
-				"----------\n" + 
-				"1. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 2)\n" + 
-				"	requires java.sql;\n" + 
-				"	         ^^^^^^^^\n" + 
-				"java.sql cannot be resolved to a module\n" + 
-				"----------\n" + 
-				"----------\n" + 
-				"2. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/p/X.java (at line 3)\n" + 
-				"	public static java.sql.Connection getConnection() {\n" + 
-				"	              ^^^^^^^^\n" + 
-				"java.sql cannot be resolved to a type\n" + 
-				"----------\n" + 
+				"----------\n" +
+				"1. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 2)\n" +
+				"	requires java.sql;\n" +
+				"	         ^^^^^^^^\n" +
+				"java.sql cannot be resolved to a module\n" +
+				"----------\n" +
+				"----------\n" +
+				"2. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/p/X.java (at line 3)\n" +
+				"	public static java.sql.Connection getConnection() {\n" +
+				"	              ^^^^^^^^\n" +
+				"java.sql cannot be resolved to a type\n" +
+				"----------\n" +
 				"2 problems (2 errors)\n",
 				false,
 				"p.X");
 	}
+	@Override
 	public void test004() {
 		File outputDirectory = new File(OUTPUT_DIR);
 		Util.flushDirectoryContent(outputDirectory);
 		String out = "bin";
 		String directory = OUTPUT_DIR + File.separator + "src";
 		String moduleLoc = directory + File.separator + "mod.one";
-		List<String> files = new ArrayList<>(); 
-		writeFileCollecting(files, moduleLoc, "module-info.java", 
+		List<String> files = new ArrayList<>();
+		writeFileCollecting(files, moduleLoc, "module-info.java",
 						"module mod.one { \n" +
 						"}");
-		writeFileCollecting(files, moduleLoc + File.separator + "p", "X.java", 
+		writeFileCollecting(files, moduleLoc + File.separator + "p", "X.java",
 						"package p;\n" +
 						"public class X {\n" +
 						"	public static java.sql.Connection getConnection() {\n" +
@@ -196,33 +202,34 @@ public class ClasspathJmodTests extends ModuleCompilationTests {
 			.append(getJavaSqlJMod())
 			.append("\" ")
 			.append(" --module-source-path " + "\"" + directory + "\"");
-		runNegativeModuleTest(files, 
+		runNegativeModuleTest(files,
 				buffer,
 				"",
-				"----------\n" + 
-				"1. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/p/X.java (at line 3)\n" + 
-				"	public static java.sql.Connection getConnection() {\n" + 
-				"	              ^^^^^^^^\n" + 
-				"java.sql cannot be resolved to a type\n" + 
-				"----------\n" + 
+				"----------\n" +
+				"1. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/p/X.java (at line 3)\n" +
+				"	public static java.sql.Connection getConnection() {\n" +
+				"	              ^^^^^^^^\n" +
+				"java.sql cannot be resolved to a type\n" +
+				"----------\n" +
 				"1 problem (1 error)\n",
 				false,
 				"p.X");
 	}
+	@Override
 	public void test005() {
 		File outputDirectory = new File(OUTPUT_DIR);
 		Util.flushDirectoryContent(outputDirectory);
 		String out = "bin";
 		String directory = OUTPUT_DIR + File.separator + "src";
 		String moduleLoc = directory + File.separator + "mod.one";
-		List<String> files = new ArrayList<>(); 
-		writeFileCollecting(files, moduleLoc, "module-info.java", 
+		List<String> files = new ArrayList<>();
+		writeFileCollecting(files, moduleLoc, "module-info.java",
 						"module mod.one { \n" +
 						"	exports p;\n" +
 						"	requires mod.two;\n" +
 						"	requires transitive java.sql;\n" +
 						"}");
-		writeFileCollecting(files, moduleLoc + File.separator + "p", "X.java", 
+		writeFileCollecting(files, moduleLoc + File.separator + "p", "X.java",
 						"package p;\n" +
 						"import q.Y;\n" +
 						"public class X {\n" +
@@ -231,12 +238,12 @@ public class ClasspathJmodTests extends ModuleCompilationTests {
 						"	}\n" +
 						"}");
 		moduleLoc = directory + File.separator + "mod.two";
-		writeFileCollecting(files, moduleLoc, "module-info.java", 
+		writeFileCollecting(files, moduleLoc, "module-info.java",
 						"module mod.two { \n" +
 						"	exports q;\n" +
 						"	requires java.sql;\n" +
 						"}");
-		writeFileCollecting(files, moduleLoc + File.separator + "q", "Y.java", 
+		writeFileCollecting(files, moduleLoc + File.separator + "q", "Y.java",
 						"package q;\n" +
 						"public class Y {\n" +
 						"   public static java.sql.Connection con = null;\n" +
@@ -252,7 +259,7 @@ public class ClasspathJmodTests extends ModuleCompilationTests {
 			.append(" --module-source-path " + "\"" + directory + "\"");
 
 		runConformModuleTest(files,
-				buffer, 
+				buffer,
 				"",
 				"",
 				false);

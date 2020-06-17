@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -684,8 +684,13 @@ public void test05() {
 		"  }\n" +
 		"  void foo() {\n" +
 		"    System.out.println();\n" +
+		(this.complianceLevel < ClassFileConstants.JDK14
+		?
 		"    new baz() {\n" +
-		"    };\n" +
+		"    };\n"
+		:
+		"    void baz;\n"
+		) +
 		"  }\n" +
 		"  void bar() {\n" +
 		"  }\n" +
@@ -4660,23 +4665,23 @@ public void test75() {
 
 	String expectedCompletionDietUnitToString =
 		"package ZKentTest;\n" +
-		"import java.awt.color.*;\n" + 
-		"public class A {\n" + 
-		"  int[] ii;\n" + 
-		"  public A() {\n" + 
-		"  }\n" + 
-		"  A foo(int i) {\n" + 
-		"  }\n" + 
-		"}\n" + 
-		"class Local {\n" + 
-		"  Local() {\n" + 
-		"  }\n" + 
-		"  int hello() {\n" + 
-		"  }\n" + 
-		"  int world() {\n" + 
-		"  }\n" + 
-		"  void foo() {\n" + 
-		"  }\n" + 
+		"import java.awt.color.*;\n" +
+		"public class A {\n" +
+		"  int[] ii;\n" +
+		"  public A() {\n" +
+		"  }\n" +
+		"  A foo(int i) {\n" +
+		"  }\n" +
+		"}\n" +
+		"class Local {\n" +
+		"  Local() {\n" +
+		"  }\n" +
+		"  int hello() {\n" +
+		"  }\n" +
+		"  int world() {\n" +
+		"  }\n" +
+		"  void foo() {\n" +
+		"  }\n" +
 		"}\n";
 
 	String testName = "<bunch of syntax errors>";
@@ -7043,13 +7048,18 @@ public void test117() {
 			"        super();\n" +
 			"      }\n" +
 			"    }\n" +
+			(this.complianceLevel < ClassFileConstants.JDK14
+			?
 			"    new foo2() {\n" +
 			"    };\n" +
 			"    class Z<T> {\n" +
 			"      Z() {\n" +
 			"        super();\n" +
 			"      }\n" +
-			"    }\n" +
+			"    }\n"
+			:
+			"    void foo2;\n"
+			) +
 			"  }\n" +
 			"}\n";
 
@@ -7128,13 +7138,18 @@ public void test117_2() {
 		"        super();\n" +
 		"      }\n" +
 		"    }\n" +
+		(this.complianceLevel < ClassFileConstants.JDK14
+		?
 		"    new foo2() {\n" +
 		"    };\n" +
 		"    class Z {\n" +
 		"      Z() {\n" +
 		"        super();\n" +
 		"      }\n" +
-		"    }\n" +
+		"    }\n"
+		:
+		"    void foo2;\n"
+		) +
 		"  }\n" +
 		"}\n";
 
@@ -7636,12 +7651,12 @@ public void _test124() {
 			"}\n";
 	} else {
 		expectedDietPlusBodyPlusStatementsRecoveryUnitToString =
-			"public class Test {\n" + 
-			"  public Test() {\n" + 
-			"    super();\n" + 
-			"  }\n" + 
-			"  void aMethod() {\n" + 
-			"  }\n" + 
+			"public class Test {\n" +
+			"  public Test() {\n" +
+			"    super();\n" +
+			"  }\n" +
+			"  void aMethod() {\n" +
+			"  }\n" +
 			"}\n";
 	}
 
@@ -7674,7 +7689,7 @@ public void test125() {
 	String s =
 		"public class Test {\n" +
 		"}\n";
-	
+
 	StringBuffer buf = new StringBuffer();
 	for (int i = 0; i < 1000; i++) {
 		buf.append("class AClass #\n");
@@ -7705,14 +7720,14 @@ public void test125() {
 		buf.append(indent).append("  }\n");
 		buf.append(indent).append("}\n");
 	}
-	
+
 	expectedDietUnitToString += buf.toString();
-	
+
 	// expectedDietPlusBodyUnitToString
 	String expectedDietPlusBodyUnitToString =
 		"public class Test {\n" +
 		"  public Test() {\n" +
-		"    super();\n" + 
+		"    super();\n" +
 		"  }\n" +
 		"}\n";
 	buf = new StringBuffer();
@@ -7769,52 +7784,52 @@ public void test126() {
 		"}\n";
 
 	String expectedDietUnitToString =
-		"package p;\n" + 
-		"public class ContextTest {\n" + 
-		"  private Context context = new Context();\n" + 
-		"  public ContextTest() {\n" + 
-		"  }\n" + 
-		"  public void test() {\n" + 
-		"  }\n" + 
+		"package p;\n" +
+		"public class ContextTest {\n" +
+		"  private Context context = new Context();\n" +
+		"  public ContextTest() {\n" +
+		"  }\n" +
+		"  public void test() {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedDietPlusBodyUnitToString =
-		"package p;\n" + 
-		"public class ContextTest {\n" + 
-		"  private Context context = new Context();\n" + 
-		"  public ContextTest() {\n" + 
-		"    super();\n" + 
-		"  }\n" + 
-		"  public void test() {\n" + 
-		"  }\n" + 
+		"package p;\n" +
+		"public class ContextTest {\n" +
+		"  private Context context = new Context();\n" +
+		"  public ContextTest() {\n" +
+		"    super();\n" +
+		"  }\n" +
+		"  public void test() {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedDietPlusBodyPlusStatementsRecoveryUnitToString =
-		"package p;\n" + 
-		"public class ContextTest {\n" + 
-		"  private Context context = new Context();\n" + 
-		"  public ContextTest() {\n" + 
-		"    super();\n" + 
-		"  }\n" + 
-		"  public void test() {\n" + 
-		"    context.new Callback() {\n" + 
-		"      public void doit(int value) {\n" + 
-		"      }\n" + 
-		"    };\n" + 
-		"  }\n" + 
+		"package p;\n" +
+		"public class ContextTest {\n" +
+		"  private Context context = new Context();\n" +
+		"  public ContextTest() {\n" +
+		"    super();\n" +
+		"  }\n" +
+		"  public void test() {\n" +
+		"    context.new Callback() {\n" +
+		"      public void doit(int value) {\n" +
+		"      }\n" +
+		"    };\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedFullUnitToString =
 		expectedDietUnitToString;
 
 	String expectedCompletionDietUnitToString =
-		"package p;\n" + 
-		"public class ContextTest {\n" + 
-		"  private Context context;\n" + 
-		"  public ContextTest() {\n" + 
-		"  }\n" + 
-		"  public void test() {\n" + 
-		"  }\n" + 
+		"package p;\n" +
+		"public class ContextTest {\n" +
+		"  private Context context;\n" +
+		"  public ContextTest() {\n" +
+		"  }\n" +
+		"  public void test() {\n" +
+		"  }\n" +
 		"}\n";
 
 	String testName = "test";
@@ -7829,114 +7844,114 @@ public void test126() {
 // https://bugs.eclipse.org/bugs/show_bug.cgi?id=201762
 public void test127() {
 	String s =
-		"import org.eclipse.swt.*;\n" + 
-		"import org.eclipse.swt.events.*;\n" + 
-		"import org.eclipse.swt.widgets.*;\n" + 
-		"\n" + 
-		"public class Try {\n" + 
-		"\n" + 
-		"    void main(Shell shell) {\n" + 
-		"\n" + 
-		"        final Label label= new Label(shell, SWT.WRAP);\n" + 
-		"        label.addPaintListener(new PaintListener() {\n" + 
-		"            public void paintControl(PaintEvent e) {\n" + 
-		"                e.gc.setLineCap(SWT.CAP_); // content assist after CAP_\n" + 
-		"            }\n" + 
-		"        });\n" + 
-		"\n" + 
-		"        shell.addControlListener(new ControlAdapter() { });\n" + 
-		"\n" + 
-		"        while (!shell.isDisposed()) { }\n" + 
-		"    }\n" + 
-		"}\n" + 
+		"import org.eclipse.swt.*;\n" +
+		"import org.eclipse.swt.events.*;\n" +
+		"import org.eclipse.swt.widgets.*;\n" +
+		"\n" +
+		"public class Try {\n" +
+		"\n" +
+		"    void main(Shell shell) {\n" +
+		"\n" +
+		"        final Label label= new Label(shell, SWT.WRAP);\n" +
+		"        label.addPaintListener(new PaintListener() {\n" +
+		"            public void paintControl(PaintEvent e) {\n" +
+		"                e.gc.setLineCap(SWT.CAP_); // content assist after CAP_\n" +
+		"            }\n" +
+		"        });\n" +
+		"\n" +
+		"        shell.addControlListener(new ControlAdapter() { });\n" +
+		"\n" +
+		"        while (!shell.isDisposed()) { }\n" +
+		"    }\n" +
+		"}\n" +
 		"\n";
 
 	String expectedDietUnitToString =
-		"import org.eclipse.swt.*;\n" + 
-		"import org.eclipse.swt.events.*;\n" + 
-		"import org.eclipse.swt.widgets.*;\n" + 
-		"public class Try {\n" + 
-		"  public Try() {\n" + 
-		"  }\n" + 
-		"  void main(Shell shell) {\n" + 
-		"  }\n" + 
+		"import org.eclipse.swt.*;\n" +
+		"import org.eclipse.swt.events.*;\n" +
+		"import org.eclipse.swt.widgets.*;\n" +
+		"public class Try {\n" +
+		"  public Try() {\n" +
+		"  }\n" +
+		"  void main(Shell shell) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedDietPlusBodyUnitToString =
-		"import org.eclipse.swt.*;\n" + 
-		"import org.eclipse.swt.events.*;\n" + 
-		"import org.eclipse.swt.widgets.*;\n" + 
-		"public class Try {\n" + 
-		"  public Try() {\n" + 
-		"    super();\n" + 
-		"  }\n" + 
-		"  void main(Shell shell) {\n" + 
-		"    final Label label = new Label(shell, SWT.WRAP);\n" + 
-		"    label.addPaintListener(new PaintListener() {\n" + 
-		"  public void paintControl(PaintEvent e) {\n" + 
-		"    e.gc.setLineCap(SWT.CAP_);\n" + 
-		"  }\n" + 
-		"});\n" + 
-		"    shell.addControlListener(new ControlAdapter() {\n" + 
-		"});\n" + 
-		"    while ((! shell.isDisposed()))      {\n" + 
-		"      }\n" + 
-		"  }\n" + 
+		"import org.eclipse.swt.*;\n" +
+		"import org.eclipse.swt.events.*;\n" +
+		"import org.eclipse.swt.widgets.*;\n" +
+		"public class Try {\n" +
+		"  public Try() {\n" +
+		"    super();\n" +
+		"  }\n" +
+		"  void main(Shell shell) {\n" +
+		"    final Label label = new Label(shell, SWT.WRAP);\n" +
+		"    label.addPaintListener(new PaintListener() {\n" +
+		"  public void paintControl(PaintEvent e) {\n" +
+		"    e.gc.setLineCap(SWT.CAP_);\n" +
+		"  }\n" +
+		"});\n" +
+		"    shell.addControlListener(new ControlAdapter() {\n" +
+		"});\n" +
+		"    while ((! shell.isDisposed()))      {\n" +
+		"      }\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedDietPlusBodyPlusStatementsRecoveryUnitToString =
-		"import org.eclipse.swt.*;\n" + 
-		"import org.eclipse.swt.events.*;\n" + 
-		"import org.eclipse.swt.widgets.*;\n" + 
-		"public class Try {\n" + 
-		"  public Try() {\n" + 
-		"    super();\n" + 
-		"  }\n" + 
-		"  void main(Shell shell) {\n" + 
-		"    final Label label = new Label(shell, SWT.WRAP);\n" + 
-		"    label.addPaintListener(new PaintListener() {\n" + 
-		"  public void paintControl(PaintEvent e) {\n" + 
-		"    e.gc.setLineCap(SWT.CAP_);\n" + 
-		"  }\n" + 
-		"});\n" + 
-		"    shell.addControlListener(new ControlAdapter() {\n" + 
-		"});\n" + 
-		"    while ((! shell.isDisposed()))      {\n" + 
-		"      }\n" + 
-		"  }\n" + 
+		"import org.eclipse.swt.*;\n" +
+		"import org.eclipse.swt.events.*;\n" +
+		"import org.eclipse.swt.widgets.*;\n" +
+		"public class Try {\n" +
+		"  public Try() {\n" +
+		"    super();\n" +
+		"  }\n" +
+		"  void main(Shell shell) {\n" +
+		"    final Label label = new Label(shell, SWT.WRAP);\n" +
+		"    label.addPaintListener(new PaintListener() {\n" +
+		"  public void paintControl(PaintEvent e) {\n" +
+		"    e.gc.setLineCap(SWT.CAP_);\n" +
+		"  }\n" +
+		"});\n" +
+		"    shell.addControlListener(new ControlAdapter() {\n" +
+		"});\n" +
+		"    while ((! shell.isDisposed()))      {\n" +
+		"      }\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedFullUnitToString =
-		"import org.eclipse.swt.*;\n" + 
-		"import org.eclipse.swt.events.*;\n" + 
-		"import org.eclipse.swt.widgets.*;\n" + 
-		"public class Try {\n" + 
-		"  public Try() {\n" + 
-		"    super();\n" + 
-		"  }\n" + 
-		"  void main(Shell shell) {\n" + 
-		"    final Label label = new Label(shell, SWT.WRAP);\n" + 
-		"    label.addPaintListener(new PaintListener() {\n" + 
-		"  public void paintControl(PaintEvent e) {\n" + 
-		"    e.gc.setLineCap(SWT.CAP_);\n" + 
-		"  }\n" + 
-		"});\n" + 
-		"    shell.addControlListener(new ControlAdapter() {\n" + 
-		"});\n" + 
-		"    while ((! shell.isDisposed()))      {\n" + 
-		"      }\n" + 
-		"  }\n" + 
+		"import org.eclipse.swt.*;\n" +
+		"import org.eclipse.swt.events.*;\n" +
+		"import org.eclipse.swt.widgets.*;\n" +
+		"public class Try {\n" +
+		"  public Try() {\n" +
+		"    super();\n" +
+		"  }\n" +
+		"  void main(Shell shell) {\n" +
+		"    final Label label = new Label(shell, SWT.WRAP);\n" +
+		"    label.addPaintListener(new PaintListener() {\n" +
+		"  public void paintControl(PaintEvent e) {\n" +
+		"    e.gc.setLineCap(SWT.CAP_);\n" +
+		"  }\n" +
+		"});\n" +
+		"    shell.addControlListener(new ControlAdapter() {\n" +
+		"});\n" +
+		"    while ((! shell.isDisposed()))      {\n" +
+		"      }\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedCompletionDietUnitToString =
-		"import org.eclipse.swt.*;\n" + 
-		"import org.eclipse.swt.events.*;\n" + 
-		"import org.eclipse.swt.widgets.*;\n" + 
-		"public class Try {\n" + 
-		"  public Try() {\n" + 
-		"  }\n" + 
-		"  void main(Shell shell) {\n" + 
-		"  }\n" + 
+		"import org.eclipse.swt.*;\n" +
+		"import org.eclipse.swt.events.*;\n" +
+		"import org.eclipse.swt.widgets.*;\n" +
+		"public class Try {\n" +
+		"  public Try() {\n" +
+		"  }\n" +
+		"  void main(Shell shell) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String testName = "test";
@@ -7951,93 +7966,93 @@ public void test127() {
 // https://bugs.eclipse.org/bugs/show_bug.cgi?id=201762
 public void test128() {
 	String s =
-		"import org.eclipse.swt.*;\n" + 
-		"import org.eclipse.swt.events.*;\n" + 
-		"import org.eclipse.swt.widgets.*;\n" + 
-		"\n" + 
-		"public class Try {\n" + 
-		"\n" + 
-		"    void main(Shell shell) {\n" + 
-		"\n" + 
-		"        final Label label= new Label(shell, SWT.WRAP);\n" + 
-		"        label.addPaintListener(new PaintListener() {\n" + 
-		"            public void paintControl(PaintEvent e) {\n" + 
-		"                e.gc.setLineCap(SWT.CAP_#); // content assist after CAP_\n" + 
-		"            }\n" + 
-		"        });\n" + 
-		"\n" + 
-		"        shell.addControlListener(new ControlAdapter() { });\n" + 
-		"\n" + 
-		"        while (!shell.isDisposed()) { }\n" + 
-		"    }\n" + 
-		"}\n" + 
+		"import org.eclipse.swt.*;\n" +
+		"import org.eclipse.swt.events.*;\n" +
+		"import org.eclipse.swt.widgets.*;\n" +
+		"\n" +
+		"public class Try {\n" +
+		"\n" +
+		"    void main(Shell shell) {\n" +
+		"\n" +
+		"        final Label label= new Label(shell, SWT.WRAP);\n" +
+		"        label.addPaintListener(new PaintListener() {\n" +
+		"            public void paintControl(PaintEvent e) {\n" +
+		"                e.gc.setLineCap(SWT.CAP_#); // content assist after CAP_\n" +
+		"            }\n" +
+		"        });\n" +
+		"\n" +
+		"        shell.addControlListener(new ControlAdapter() { });\n" +
+		"\n" +
+		"        while (!shell.isDisposed()) { }\n" +
+		"    }\n" +
+		"}\n" +
 		"\n";
 
 	String expectedDietUnitToString =
-		"import org.eclipse.swt.*;\n" + 
-		"import org.eclipse.swt.events.*;\n" + 
-		"import org.eclipse.swt.widgets.*;\n" + 
-		"public class Try {\n" + 
-		"  public Try() {\n" + 
-		"  }\n" + 
-		"  void main(Shell shell) {\n" + 
-		"  }\n" + 
+		"import org.eclipse.swt.*;\n" +
+		"import org.eclipse.swt.events.*;\n" +
+		"import org.eclipse.swt.widgets.*;\n" +
+		"public class Try {\n" +
+		"  public Try() {\n" +
+		"  }\n" +
+		"  void main(Shell shell) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedDietPlusBodyUnitToString =
-		"import org.eclipse.swt.*;\n" + 
-		"import org.eclipse.swt.events.*;\n" + 
-		"import org.eclipse.swt.widgets.*;\n" + 
-		"public class Try {\n" + 
-		"  public Try() {\n" + 
-		"    super();\n" + 
-		"  }\n" + 
-		"  void main(Shell shell) {\n" + 
-		"  }\n" + 
+		"import org.eclipse.swt.*;\n" +
+		"import org.eclipse.swt.events.*;\n" +
+		"import org.eclipse.swt.widgets.*;\n" +
+		"public class Try {\n" +
+		"  public Try() {\n" +
+		"    super();\n" +
+		"  }\n" +
+		"  void main(Shell shell) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedDietPlusBodyPlusStatementsRecoveryUnitToString =
-		"import org.eclipse.swt.*;\n" + 
-		"import org.eclipse.swt.events.*;\n" + 
-		"import org.eclipse.swt.widgets.*;\n" + 
-		"public class Try {\n" + 
-		"  public Try() {\n" + 
-		"    super();\n" + 
-		"  }\n" + 
-		"  void main(Shell shell) {\n" + 
-		"    final Label label = new Label(shell, SWT.WRAP);\n" + 
-		"    label.addPaintListener(new PaintListener() {\n" + 
-		"  public void paintControl(PaintEvent e) {\n" + 
-		"    e.gc.setLineCap(SWT.CAP_);\n" + 
-		"  }\n" + 
-		"});\n" + 
-		"    shell.addControlListener(new ControlAdapter() {\n" + 
-		"});\n" + 
-		"    while ((! shell.isDisposed()))      {\n" + 
-		"      }\n" + 
-		"  }\n" + 
+		"import org.eclipse.swt.*;\n" +
+		"import org.eclipse.swt.events.*;\n" +
+		"import org.eclipse.swt.widgets.*;\n" +
+		"public class Try {\n" +
+		"  public Try() {\n" +
+		"    super();\n" +
+		"  }\n" +
+		"  void main(Shell shell) {\n" +
+		"    final Label label = new Label(shell, SWT.WRAP);\n" +
+		"    label.addPaintListener(new PaintListener() {\n" +
+		"  public void paintControl(PaintEvent e) {\n" +
+		"    e.gc.setLineCap(SWT.CAP_);\n" +
+		"  }\n" +
+		"});\n" +
+		"    shell.addControlListener(new ControlAdapter() {\n" +
+		"});\n" +
+		"    while ((! shell.isDisposed()))      {\n" +
+		"      }\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedFullUnitToString =
-		"import org.eclipse.swt.*;\n" + 
-		"import org.eclipse.swt.events.*;\n" + 
-		"import org.eclipse.swt.widgets.*;\n" + 
-		"public class Try {\n" + 
-		"  public Try() {\n" + 
-		"  }\n" + 
-		"  void main(Shell shell) {\n" + 
-		"  }\n" + 
+		"import org.eclipse.swt.*;\n" +
+		"import org.eclipse.swt.events.*;\n" +
+		"import org.eclipse.swt.widgets.*;\n" +
+		"public class Try {\n" +
+		"  public Try() {\n" +
+		"  }\n" +
+		"  void main(Shell shell) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedCompletionDietUnitToString =
-		"import org.eclipse.swt.*;\n" + 
-		"import org.eclipse.swt.events.*;\n" + 
-		"import org.eclipse.swt.widgets.*;\n" + 
-		"public class Try {\n" + 
-		"  public Try() {\n" + 
-		"  }\n" + 
-		"  void main(Shell shell) {\n" + 
-		"  }\n" + 
+		"import org.eclipse.swt.*;\n" +
+		"import org.eclipse.swt.events.*;\n" +
+		"import org.eclipse.swt.widgets.*;\n" +
+		"public class Try {\n" +
+		"  public Try() {\n" +
+		"  }\n" +
+		"  void main(Shell shell) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String testName = "test";
@@ -8052,68 +8067,68 @@ public void test128() {
 // https://bugs.eclipse.org/bugs/show_bug.cgi?id=405778 - [1.8][dom ast] method body recovery broken (empty body)
 public void test405778() {
 		String s =
-			"import java.util.Collection;\n" + 
-			"public class E {\n" + 
-			"    public void __test1() {\n" + 
-			"        Object o = new Object();\n" + 
-			"        if (o.hashCode() != 0) {\n" + 
-			"           o.\n" + 
-			"         \n" + 
-			"        }\n" + 
-			"     }\n" + 
-			"}" + 
+			"import java.util.Collection;\n" +
+			"public class E {\n" +
+			"    public void __test1() {\n" +
+			"        Object o = new Object();\n" +
+			"        if (o.hashCode() != 0) {\n" +
+			"           o.\n" +
+			"         \n" +
+			"        }\n" +
+			"     }\n" +
+			"}" +
 			"\n";
 
 		String expectedDietUnitToString =
-			"import java.util.Collection;\n" + 
-			"public class E {\n" + 
-			"  public E() {\n" + 
-			"  }\n" + 
-			"  public void __test1() {\n" + 
-			"  }\n" + 
+			"import java.util.Collection;\n" +
+			"public class E {\n" +
+			"  public E() {\n" +
+			"  }\n" +
+			"  public void __test1() {\n" +
+			"  }\n" +
 			"}\n";
 
 		String expectedDietPlusBodyUnitToString =
-			"import java.util.Collection;\n" + 
-			"public class E {\n" + 
-			"  public E() {\n" + 
-			"    super();\n" + 
-			"  }\n" + 
-			"  public void __test1() {\n" + 
-			"  }\n" + 
+			"import java.util.Collection;\n" +
+			"public class E {\n" +
+			"  public E() {\n" +
+			"    super();\n" +
+			"  }\n" +
+			"  public void __test1() {\n" +
+			"  }\n" +
 			"}\n";
 
 		String expectedDietPlusBodyPlusStatementsRecoveryUnitToString =
-			"import java.util.Collection;\n" + 
-			"public class E {\n" + 
-			"  public E() {\n" + 
-			"    super();\n" + 
-			"  }\n" + 
+			"import java.util.Collection;\n" +
+			"public class E {\n" +
+			"  public E() {\n" +
+			"    super();\n" +
+			"  }\n" +
 			"  public void __test1() {\n" +
 			"    Object o = new Object();\n" +
-			"    if ((o.hashCode() != 0))\n" + 
-			"        {\n" + 
-			"          o = $missing$;\n" + 
-			"        }\n" + 
-			"  }\n" + 
+			"    if ((o.hashCode() != 0))\n" +
+			"        {\n" +
+			"          o = $missing$;\n" +
+			"        }\n" +
+			"  }\n" +
 			"}\n";
 
 		String expectedFullUnitToString =
-			"import java.util.Collection;\n" + 
-			"public class E {\n" + 
-			"  public E() {\n" + 
-			"  }\n" + 
-			"  public void __test1() {\n" + 
-			"  }\n" + 
+			"import java.util.Collection;\n" +
+			"public class E {\n" +
+			"  public E() {\n" +
+			"  }\n" +
+			"  public void __test1() {\n" +
+			"  }\n" +
 			"}\n";
 
 		String expectedCompletionDietUnitToString =
-			"import java.util.Collection;\n" + 
-			"public class E {\n" + 
-			"  public E() {\n" + 
-			"  }\n" + 
-			"  public void __test1() {\n" + 
-			"  }\n" + 
+			"import java.util.Collection;\n" +
+			"public class E {\n" +
+			"  public E() {\n" +
+			"  }\n" +
+			"  public void __test1() {\n" +
+			"  }\n" +
 			"}\n";
 
 		String testName = "test";
@@ -8129,7 +8144,7 @@ public void test405778() {
 public void test405778a() {
 	String s =
 		"import java.util.Collection;\n" +
-		"public class E {\n" + 
+		"public class E {\n" +
 		"    void m(String[] names) {\n"
 			+ "/*[*/\n"
 			+ "for (String string : names) {\n"
@@ -8137,58 +8152,58 @@ public void test405778a() {
 			+ "}\n"
 			+ "/*]*/\n"
 			+ "}\n"
-			+ "}\n" + 
+			+ "}\n" +
 		"\n";
 
 	String expectedDietUnitToString =
-		"import java.util.Collection;\n" + 
-		"public class E {\n" + 
-		"  public E() {\n" + 
-		"  }\n" + 
-		"  void m(String[] names) {\n" + 
-		"  }\n" + 
+		"import java.util.Collection;\n" +
+		"public class E {\n" +
+		"  public E() {\n" +
+		"  }\n" +
+		"  void m(String[] names) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedDietPlusBodyUnitToString =
-		"import java.util.Collection;\n" + 
-		"public class E {\n" + 
-		"  public E() {\n" + 
-		"    super();\n" + 
-		"  }\n" + 
-		"  void m(String[] names) {\n" + 
-		"  }\n" + 
+		"import java.util.Collection;\n" +
+		"public class E {\n" +
+		"  public E() {\n" +
+		"    super();\n" +
+		"  }\n" +
+		"  void m(String[] names) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedDietPlusBodyPlusStatementsRecoveryUnitToString =
-		"import java.util.Collection;\n" + 
-		"public class E {\n" + 
-		"  public E() {\n" + 
-		"    super();\n" + 
-		"  }\n" + 
+		"import java.util.Collection;\n" +
+		"public class E {\n" +
+		"  public E() {\n" +
+		"    super();\n" +
+		"  }\n" +
 		"  void m(String[] names) {\n" +
-		"    for (String string : names) \n" + 
-		"      {\n" + 
-		"        System.out.println(string.class);\n" + 
-		"      }\n" + 
-		"  }\n" + 
+		"    for (String string : names) \n" +
+		"      {\n" +
+		"        System.out.println(string.class);\n" +
+		"      }\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedFullUnitToString =
-		"import java.util.Collection;\n" + 
-		"public class E {\n" + 
-		"  public E() {\n" + 
-		"  }\n" + 
-		"  void m(String[] names) {\n" + 
-		"  }\n" + 
+		"import java.util.Collection;\n" +
+		"public class E {\n" +
+		"  public E() {\n" +
+		"  }\n" +
+		"  void m(String[] names) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedCompletionDietUnitToString =
-		"import java.util.Collection;\n" + 
-		"public class E {\n" + 
-		"  public E() {\n" + 
-		"  }\n" + 
-		"  void m(String[] names) {\n" + 
-		"  }\n" + 
+		"import java.util.Collection;\n" +
+		"public class E {\n" +
+		"  public E() {\n" +
+		"  }\n" +
+		"  void m(String[] names) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String testName = "test";
@@ -8203,61 +8218,61 @@ public void test405778a() {
 // https://bugs.eclipse.org/bugs/show_bug.cgi?id=456861 - [recovery] NPE in RecoveryScanner since Mars M4
 public void test456861() {
 	String s =
-		"import java.awt.Point;\n" + 
-		"public class Test {\n" + 
-		"	public void foo(Point p, int[] a) {\n" + 
-		"		String s1 = \"\";\n" + 
-		"		s.;\n" + 
-		"	}\n" + 
+		"import java.awt.Point;\n" +
+		"public class Test {\n" +
+		"	public void foo(Point p, int[] a) {\n" +
+		"		String s1 = \"\";\n" +
+		"		s.;\n" +
+		"	}\n" +
 		" }";
 
 	String expectedDietUnitToString =
-		"import java.awt.Point;\n" + 
-		"public class Test {\n" + 
-		"  public Test() {\n" + 
-		"  }\n" + 
-		"  public void foo(Point p, int[] a) {\n" + 
-		"  }\n" + 
+		"import java.awt.Point;\n" +
+		"public class Test {\n" +
+		"  public Test() {\n" +
+		"  }\n" +
+		"  public void foo(Point p, int[] a) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedDietPlusBodyUnitToString =
-		"import java.awt.Point;\n" + 
-		"public class Test {\n" + 
-		"  public Test() {\n" + 
+		"import java.awt.Point;\n" +
+		"public class Test {\n" +
+		"  public Test() {\n" +
 		"    super();\n" +
-		"  }\n" + 
-		"  public void foo(Point p, int[] a) {\n" + 
-		"  }\n" + 
+		"  }\n" +
+		"  public void foo(Point p, int[] a) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedDietPlusBodyPlusStatementsRecoveryUnitToString =
-		"import java.awt.Point;\n" + 
-		"public class Test {\n" + 
-		"  public Test() {\n" + 
+		"import java.awt.Point;\n" +
+		"public class Test {\n" +
+		"  public Test() {\n" +
 		"    super();\n" +
-		"  }\n" + 
-		"  public void foo(Point p, int[] a) {\n" + 
-		"    String s1 = \"\";\n" + 
-		"    s = $missing$;\n" + 
-		"  }\n" + 
+		"  }\n" +
+		"  public void foo(Point p, int[] a) {\n" +
+		"    String s1 = \"\";\n" +
+		"    s = $missing$;\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedFullUnitToString =
-		"import java.awt.Point;\n" + 
-		"public class Test {\n" + 
-		"  public Test() {\n" + 
-		"  }\n" + 
-		"  public void foo(Point p, int[] a) {\n" + 
-		"  }\n" + 
+		"import java.awt.Point;\n" +
+		"public class Test {\n" +
+		"  public Test() {\n" +
+		"  }\n" +
+		"  public void foo(Point p, int[] a) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedCompletionDietUnitToString =
-		"import java.awt.Point;\n" + 
-		"public class Test {\n" + 
-		"  public Test() {\n" + 
-		"  }\n" + 
-		"  public void foo(Point p, int[] a) {\n" + 
-		"  }\n" + 
+		"import java.awt.Point;\n" +
+		"public class Test {\n" +
+		"  public Test() {\n" +
+		"  }\n" +
+		"  public void foo(Point p, int[] a) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String testName = "test";

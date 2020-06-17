@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     Jesper Steen Møller - initial API and implementation
  *******************************************************************************/
@@ -26,6 +26,7 @@ public class JEP286ReservedWordTest extends AbstractRegressionTest {
 public static Class testClass() {
 	return JEP286ReservedWordTest.class;
 }
+@Override
 public void initialize(CompilerTestSetup setUp) {
 	super.initialize(setUp);
 }
@@ -39,10 +40,10 @@ public JEP286ReservedWordTest(String testName){
 
 public void test0001_class_var_warning() throws IOException {
 	String classVar =
-		"	public class var { public int a; };\n";	
+		"	public class var { public int a; };\n";
 
 	String classX =
-			"public class X {\n" + 
+			"public class X {\n" +
 			classVar +
 			"	+\n" +
 			"}\n";
@@ -51,7 +52,7 @@ public void test0001_class_var_warning() throws IOException {
 			"2. ERROR in X.java (at line 3)\n" +
 			"	+\n" +
 			"	^\n" +
-			"Syntax error on token \"+\", delete this token\n" + 
+			"Syntax error on token \"+\", delete this token\n" +
 			"----------\n";
 
 	if (Long.compare(this.complianceLevel, ClassFileConstants.JDK10) >= 0) {
@@ -82,10 +83,10 @@ public void test0001_class_var_warning() throws IOException {
 }
 public void test0002_interface_var_warning() throws IOException {
 	String interfaceVar =
-		"	interface var { };\n";	
+		"	interface var { };\n";
 
 	String classX =
-			"public class X {\n" + 
+			"public class X {\n" +
 			interfaceVar +
 			"	+\n" +
 			"}\n";
@@ -94,7 +95,7 @@ public void test0002_interface_var_warning() throws IOException {
 			"2. ERROR in X.java (at line 3)\n" +
 			"	+\n" +
 			"	^\n" +
-			"Syntax error on token \"+\", delete this token\n" + 
+			"Syntax error on token \"+\", delete this token\n" +
 			"----------\n";
 
 	if (Long.compare(this.complianceLevel, ClassFileConstants.JDK10) >= 0) {
@@ -152,7 +153,7 @@ public void testBug530920a() throws IOException {
 			"	<var extends Number> var getNumber() {\n" +
 			"		return null;\n" +
 			"	}\n" +
-			"}"	
+			"}"
 		},
 		Long.compare(this.complianceLevel, ClassFileConstants.JDK10) >= 0 ?
 			"----------\n" +

@@ -39,12 +39,12 @@ public class TypeMirrorImpl implements TypeMirror {
 	// Caution: _env will be NULL for unannotated primitive types (PrimitiveTypeImpl).
 	protected final BaseProcessingEnvImpl _env;
 	protected final Binding _binding;
-	
+
 	/* package */ TypeMirrorImpl(BaseProcessingEnvImpl env, Binding binding) {
 		_env = env;
 		_binding = binding;
 	}
-	
+
 	/* package */ Binding binding() {
 		return _binding;
 	}
@@ -63,7 +63,7 @@ public class TypeMirrorImpl implements TypeMirror {
 	@Override
 	public TypeKind getKind() {
 		switch (_binding.kind()) {
-		// case Binding.TYPE: 
+		// case Binding.TYPE:
 		// case Binding.RAW_TYPE:
 		// case Binding.GENERIC_TYPE:
 		// case Binding.PARAMETERIZED_TYPE:
@@ -77,6 +77,7 @@ public class TypeMirrorImpl implements TypeMirror {
 		// TODO: fill in the rest of these
 		case Binding.FIELD:
 		case Binding.LOCAL:
+		case Binding.RECORD_COMPONENT:
 		case Binding.VARIABLE:
 		case Binding.IMPORT:
 			throw new IllegalArgumentException("Invalid binding kind: " + _binding.kind()); //$NON-NLS-1$
@@ -124,21 +125,24 @@ public class TypeMirrorImpl implements TypeMirror {
 	public final AnnotationBinding [] getPackedAnnotationBindings() {
 		return Factory.getPackedAnnotationBindings(getAnnotationBindings());
 	}
-	
+
 	protected AnnotationBinding[] getAnnotationBindings() {
 		return ((TypeBinding)_binding).getTypeAnnotations();
 	}
 
+	@Override
 	public List<? extends AnnotationMirror> getAnnotationMirrors() {
-		return _env == null ? Factory.EMPTY_ANNOTATION_MIRRORS : 
+		return _env == null ? Factory.EMPTY_ANNOTATION_MIRRORS :
 								_env.getFactory().getAnnotationMirrors(getPackedAnnotationBindings());
 	}
 
+	@Override
 	public <A extends Annotation> A getAnnotation(Class<A> annotationType) {
 		return _env == null ? null : _env.getFactory().getAnnotation(getPackedAnnotationBindings(), annotationType);
 	}
 
 	@SuppressWarnings("unchecked")
+	@Override
 	public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationType) {
 		if (_env == null)
 			return (A[]) Array.newInstance(annotationType, 0);

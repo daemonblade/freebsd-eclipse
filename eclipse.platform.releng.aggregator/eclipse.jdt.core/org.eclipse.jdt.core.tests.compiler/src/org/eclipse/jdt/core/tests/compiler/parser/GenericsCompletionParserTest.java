@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -27,6 +27,7 @@ public GenericsCompletionParserTest(String testName) {
 public static Test suite() {
 	return buildAllCompliancesTestSuite(GenericsCompletionParserTest.class);
 }
+@Override
 protected Map getCompilerOptions() {
 	Map options = super.getCompilerOptions();
 	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_5);
@@ -432,10 +433,10 @@ public void test0014(){
 	String completeBehind = "Y<Z>.";
 	int cursorLocation = str.indexOf("Y<Z>.") + completeBehind.length() - 1;
 	String expectedCompletionNodeToString = "<CompleteOnClass:Y<Z>.>";
-	String expectedParentNodeToString = 
-		"public class X extends <CompleteOnClass:Y<Z>.> {\n" + 
-		"  public X() {\n" + 
-		"  }\n" + 
+	String expectedParentNodeToString =
+		"public class X extends <CompleteOnClass:Y<Z>.> {\n" +
+		"  public X() {\n" +
+		"  }\n" +
 		"}";
 	String completionIdentifier = "";
 	String expectedReplacedSource = "Y<Z>.";
@@ -465,10 +466,10 @@ public void test0015(){
 	String completeBehind = "Y<Z>.";
 	int cursorLocation = str.indexOf("Y<Z>.") + completeBehind.length() - 1;
 	String expectedCompletionNodeToString = "<CompleteOnInterface:Y<Z>.>";
-	String expectedParentNodeToString = 
-		"public class X implements I1, <CompleteOnInterface:Y<Z>.> {\n" + 
-		"  public X() {\n" + 
-		"  }\n" + 
+	String expectedParentNodeToString =
+		"public class X implements I1, <CompleteOnInterface:Y<Z>.> {\n" +
+		"  public X() {\n" +
+		"  }\n" +
 		"}";
 	String completionIdentifier = "";
 	String expectedReplacedSource = "Y<Z>.";
@@ -11095,11 +11096,11 @@ public void test0219_Diet() {
 	String completionIdentifier = "";
 	String expectedReplacedSource = "\"\"";
 	String expectedUnitDisplayString =
-		"public class X {\n" + 
-		"  @Annot(value = <CompletionOnString:\"\">)\n" + 
-		"  int field;\n" + 
-		"  public X() {\n" + 
-		"  }\n" + 
+		"public class X {\n" +
+		"  @Annot(value = <CompletionOnString:\"\">)\n" +
+		"  int field;\n" +
+		"  public X() {\n" +
+		"  }\n" +
 		"}\n";
 
 	checkDietParse(
@@ -11128,11 +11129,11 @@ public void test0220_Diet() {
 	String completionIdentifier = "";
 	String expectedReplacedSource = "\"\"";
 	String expectedUnitDisplayString =
-		"public class X {\n" + 
-		"  @Annot(value = <CompletionOnString:\"\">)\n" + 
-		"  int field;\n" + 
-		"  public X() {\n" + 
-		"  }\n" + 
+		"public class X {\n" +
+		"  @Annot(value = <CompletionOnString:\"\">)\n" +
+		"  int field;\n" +
+		"  public X() {\n" +
+		"  }\n" +
 		"}\n";
 
 	checkDietParse(
@@ -11196,16 +11197,16 @@ public void testBug351426b(){
 	String completionIdentifier = "";
 	String expectedReplacedSource = "";
 	String expectedUnitDisplayString =
-			"public class X<T> {\n" + 
-			"  static class X1<E> {\n" + 
-			"    X1() {\n" + 
-			"    }\n" + 
-			"  }\n" + 
-			"  public X() {\n" + 
-			"  }\n" + 
-			"  void foo() {\n" + 
-			"    X1<String> x = new X.X1<<CompleteOnType:>>();\n" + 
-			"  }\n" + 
+			"public class X<T> {\n" +
+			"  static class X1<E> {\n" +
+			"    X1() {\n" +
+			"    }\n" +
+			"  }\n" +
+			"  public X() {\n" +
+			"  }\n" +
+			"  void foo() {\n" +
+			"    X1<String> x = new X.X1<<CompleteOnType:>>();\n" +
+			"  }\n" +
 			"}\n";
 
 	checkMethodParse(
@@ -11234,12 +11235,12 @@ public void testBug351426c(){
 	String completionIdentifier = "";
 	String expectedReplacedSource = "";
 	String expectedUnitDisplayString =
-			"public class X<T> {\n" + 
-			"  public X() {\n" + 
-			"  }\n" + 
-			"  public X<String> foo() {\n" + 
-			"    return new X<<CompleteOnType:>>();\n" + 
-			"  }\n" + 
+			"public class X<T> {\n" +
+			"  public X() {\n" +
+			"  }\n" +
+			"  public X<String> foo() {\n" +
+			"    return new X<<CompleteOnType:>>();\n" +
+			"  }\n" +
 			"}\n";
 
 	checkMethodParse(

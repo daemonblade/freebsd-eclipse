@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corporation and others.
+ * Copyright (c) 2016, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,8 +13,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.core.tests.model;
 
-import java.util.Hashtable;
-
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
@@ -25,6 +23,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.tests.util.AbstractCompilerTest;
+import org.eclipse.jdt.internal.codeassist.impl.AssistOptions;
 
 import junit.framework.Test;
 
@@ -40,6 +39,7 @@ public CompletionTests9(String name) {
 	super(name);
 }
 
+@Override
 public void setUpSuite() throws Exception {
 	if (COMPLETION_PROJECT == null)  {
 		COMPLETION_PROJECT = setUpJavaProject("Completion", "9", true);
@@ -146,14 +146,12 @@ public void test486988_0004() throws JavaModelException {
 	String str = this.workingCopies[0].getSource();
 	String completeBehind = "p";
 	int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
-	Hashtable<String, String> tmpOld = JavaCore.getOptions();
-	Hashtable<String, String> options = new Hashtable<>(tmpOld);
-	options.put(JavaCore.CODEASSIST_SUBSTRING_MATCH, JavaCore.DISABLED);
-	JavaCore.setOptions(options);
+	String oldValue = System.getProperty(AssistOptions.PROPERTY_SubstringMatch);
+	System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "false");
 
 	this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner);
 
-	JavaCore.setOptions(tmpOld);
+	System.setProperty(AssistOptions.PROPERTY_SubstringMatch, oldValue);
 	String expected = "provides[KEYWORD]{provides, null, null, provides, null, 49}";
 	assertResults(expected,	requestor.getResults());
 }
@@ -170,14 +168,12 @@ public void _test486988_0005() throws JavaModelException {
 	String str = this.workingCopies[0].getSource();
 	String completeBehind = "p";
 	int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
-	Hashtable<String, String> tmpOld = JavaCore.getOptions();
-	Hashtable<String, String> options = new Hashtable<>(tmpOld);
-	options.put(JavaCore.CODEASSIST_SUBSTRING_MATCH, JavaCore.ENABLED);
-	JavaCore.setOptions(options);
+	String oldValue = System.getProperty(AssistOptions.PROPERTY_SubstringMatch);
+	System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "true");
 
 	this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner);
 
-	JavaCore.setOptions(tmpOld);
+	System.setProperty(AssistOptions.PROPERTY_SubstringMatch, oldValue);
 	String expected = "exports[KEYWORD]{exports, null, null, exports, null, 19}\n"
 			+ "provides[KEYWORD]{provides, null, null, provides, null, 49}";
 	assertResults(expected,	requestor.getResults());
@@ -195,14 +191,12 @@ public void _test486988_0006() throws JavaModelException {
 	String completeBehind = "u";
 	int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 
-	Hashtable<String, String> tmpOld = JavaCore.getOptions();
-	Hashtable<String, String> options = new Hashtable<>(tmpOld);
-	options.put(JavaCore.CODEASSIST_SUBSTRING_MATCH, JavaCore.ENABLED);
-	JavaCore.setOptions(options);
+	String oldValue = System.getProperty(AssistOptions.PROPERTY_SubstringMatch);
+	System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "true");
 
 	this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner);
 
-	JavaCore.setOptions(tmpOld);
+	System.setProperty(AssistOptions.PROPERTY_SubstringMatch, oldValue);
 
 	String expected = "requires[KEYWORD]{requires, null, null, requires, null, 19}\n"
 			+ "uses[KEYWORD]{uses, null, null, uses, null, 49}";
@@ -217,7 +211,7 @@ public void test486988_0007() throws JavaModelException {
 
 	this.workingCopies[0] = getWorkingCopy(
 			"/Completion/src/module-info.java", fileContent);
-	
+
 	this.workingCopies[1] = getWorkingCopy(
 			"/Completion/src/mypack1/Y.java",
 			"package pack1;\n" +
@@ -242,17 +236,15 @@ public void test486988_0007() throws JavaModelException {
 	String completeBehind = "mypa";
 	int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 
-	Hashtable<String, String> tmpOld = JavaCore.getOptions();
-	Hashtable<String, String> options = new Hashtable<>(tmpOld);
-	options.put(JavaCore.CODEASSIST_SUBSTRING_MATCH, JavaCore.DISABLED);
-	JavaCore.setOptions(options);
+	String oldValue = System.getProperty(AssistOptions.PROPERTY_SubstringMatch);
+	System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "false");
 
 	this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner);
 	String expected = "mypack1[PACKAGE_REF]{mypack1, mypack1, null, null, null, 49}\n"
-			+ "mypack2[PACKAGE_REF]{mypack2, mypack2, null, null, null, 49}\n" 
+			+ "mypack2[PACKAGE_REF]{mypack2, mypack2, null, null, null, 49}\n"
 			+ "mypackage[PACKAGE_REF]{mypackage, mypackage, null, null, null, 49}";
 	assertResults(expected, requestor.getResults());
-	JavaCore.setOptions(tmpOld);
+	System.setProperty(AssistOptions.PROPERTY_SubstringMatch, oldValue);
 }
 
 public void test486988_0008() throws JavaModelException {
@@ -288,15 +280,13 @@ public void test486988_0008() throws JavaModelException {
 	String completeBehind = "mypack1 t";
 	int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 
-	Hashtable<String, String> tmpOld = JavaCore.getOptions();
-	Hashtable<String, String> options = new Hashtable<>(tmpOld);
-	options.put(JavaCore.CODEASSIST_SUBSTRING_MATCH, JavaCore.DISABLED);
-	JavaCore.setOptions(options);
+	String oldValue = System.getProperty(AssistOptions.PROPERTY_SubstringMatch);
+	System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "false");
 
 	this.workingCopies[0].codeComplete(cursorLocation, requestor, this.wcOwner);
 	String expected = "to[KEYWORD]{to, null, null, to, null, 49}";
 	assertResults(expected, requestor.getResults());
-	JavaCore.setOptions(tmpOld);
+	System.setProperty(AssistOptions.PROPERTY_SubstringMatch, oldValue);
 
 }
 public void test486988_0009() throws Exception {
@@ -380,7 +370,7 @@ public void test486988_0010() throws Exception {
 		String pack = "/Completion9_2/src/mypack1";
 		createFolder(pack);
 		filePath = pack + "/Y.java";
-		fileContent = "package pack1;\n" + 	
+		fileContent = "package pack1;\n" +
 		"public class Y {}\n";
 		createFile(filePath, fileContent);
 
@@ -605,7 +595,7 @@ public void test486988_0015() throws Exception {
 
 		String fileContent2 =  "module second { "
 				+ "exports pack21 to first;\n"
-				+ "exports pack22 to first;\n" 
+				+ "exports pack22 to first;\n"
 				+ "}\n";
 		String filePath2 = "/Completion9_2/src/module-info.java";
 		createFile(filePath2, fileContent2);
@@ -662,7 +652,7 @@ public void testBug518618_001() throws Exception {
 
 		String fileContent2 =  "module second { "
 				+ "exports pack21 to first;\n"
-				+ "exports pack22 to first;\n" 
+				+ "exports pack22 to first;\n"
 				+ "}\n";
 		String filePath2 = "/Completion9_2/src/module-info.java";
 		createFile(filePath2, fileContent2);
@@ -712,7 +702,7 @@ public void testBug522164_src() throws Exception {
 		project1.getProject().build(IncrementalProjectBuilder.FULL_BUILD, null);
 
 		IClasspathAttribute[] attributes = {
-			JavaCore.newClasspathAttribute(IClasspathAttribute.MODULE, "true")	
+			JavaCore.newClasspathAttribute(IClasspathAttribute.MODULE, "true")
 		};
 		addClasspathEntry(project2, JavaCore.newProjectEntry(new Path("/Completion9_1"), null, false, attributes, false));
 		createFolder("/Completion9_2/src/x");
@@ -770,7 +760,7 @@ public void testBug522164_jar() throws Exception {
 		refresh(project1);
 
 		IClasspathAttribute[] attributes = {
-			JavaCore.newClasspathAttribute(IClasspathAttribute.MODULE, "true")	
+			JavaCore.newClasspathAttribute(IClasspathAttribute.MODULE, "true")
 		};
 		addClasspathEntry(project1, JavaCore.newLibraryEntry(new Path("/Completion9_1/lib/mod.one.jar"), null, null, null, attributes, false));
 
@@ -839,7 +829,7 @@ public void test540591() throws Exception {
 		createTypePlus("/Completion9_1/src/", "pack11", "AbstractService", "implements pack11.IService", true /* isClass */, false /* createFolder */);
 		createTypePlus("/Completion9_1/src/", "pack11", "CCC2", "extends pack11.AbstractService", true /* isClass */, false /* createFolder */);
 		createTypePlus("/Completion9_1/src/", "pack11", "CCC3", "extends pack11.AbstractService", true /* isClass */, false /* createFolder */);
-		
+
 		String filePath1 = "/Completion9_1/src/module-info.java";
 		String completeBehind = "CC";
 		String fileContent1 =  "module first {\n"
@@ -857,8 +847,8 @@ public void test540591() throws Exception {
 		ICompilationUnit unit = getCompilationUnit(filePath1);
 		unit.codeComplete(cursorLocation, requestor);
 
-		String expected = "CCC[TYPE_REF]{pack11.CCC, pack11, Lpack11.CCC;, null, 49}\n" + 
-				"CCC2[TYPE_REF]{pack11.CCC2, pack11, Lpack11.CCC2;, null, 49}\n" + 
+		String expected = "CCC[TYPE_REF]{pack11.CCC, pack11, Lpack11.CCC;, null, 49}\n" +
+				"CCC2[TYPE_REF]{pack11.CCC2, pack11, Lpack11.CCC2;, null, 49}\n" +
 				"CCC3[TYPE_REF]{pack11.CCC3, pack11, Lpack11.CCC3;, null, 49}"
 			;
 		assertResults(expected,	requestor.getResults());
@@ -877,7 +867,7 @@ public void test540591_mismatchedCase() throws Exception {
 		createTypePlus("/Completion9_1/src/", "pack11", "AbstractService", "implements pack11.IService", true /* isClass */, false /* createFolder */);
 		createTypePlus("/Completion9_1/src/", "pack11", "CCC2", "extends pack11.AbstractService", true /* isClass */, false /* createFolder */);
 		createTypePlus("/Completion9_1/src/", "pack11", "CCC3", "extends pack11.AbstractService", true /* isClass */, false /* createFolder */);
-		
+
 		String filePath1 = "/Completion9_1/src/module-info.java";
 		String completeBehind = "cc";
 		String fileContent1 =  "module first {\n"
@@ -895,8 +885,8 @@ public void test540591_mismatchedCase() throws Exception {
 		ICompilationUnit unit = getCompilationUnit(filePath1);
 		unit.codeComplete(cursorLocation, requestor);
 
-		String expected = "CCC[TYPE_REF]{pack11.CCC, pack11, Lpack11.CCC;, null, 39}\n" + 
-				"CCC2[TYPE_REF]{pack11.CCC2, pack11, Lpack11.CCC2;, null, 39}\n" + 
+		String expected = "CCC[TYPE_REF]{pack11.CCC, pack11, Lpack11.CCC;, null, 39}\n" +
+				"CCC2[TYPE_REF]{pack11.CCC2, pack11, Lpack11.CCC2;, null, 39}\n" +
 				"CCC3[TYPE_REF]{pack11.CCC3, pack11, Lpack11.CCC3;, null, 39}"
 			;
 		assertResults(expected,	requestor.getResults());
@@ -914,7 +904,7 @@ public void test540591_withoutPrefix() throws Exception {
 		createTypePlus("/Completion9_1/src/", "pack11", "AbstractService", "implements pack11.IService", true /* isClass */, false /* createFolder */);
 		createTypePlus("/Completion9_1/src/", "pack11", "CCC2", "extends pack11.AbstractService", true /* isClass */, false /* createFolder */);
 		createTypePlus("/Completion9_1/src/", "pack11", "CCC3", "extends pack11.AbstractService", true /* isClass */, false /* createFolder */);
-		
+
 		String filePath1 = "/Completion9_1/src/module-info.java";
 		String completeBehind = "with ";
 		String fileContent1 =  "module first {\n"
@@ -933,12 +923,12 @@ public void test540591_withoutPrefix() throws Exception {
 		unit.codeComplete(cursorLocation, requestor);
 
 		String expected = "AbstractService[TYPE_REF]{pack11.AbstractService, pack11, Lpack11.AbstractService;, null, 39}\n" +
-				"CCC[TYPE_REF]{pack11.CCC, pack11, Lpack11.CCC;, null, 39}\n" + 
-				"CCC2[TYPE_REF]{pack11.CCC2, pack11, Lpack11.CCC2;, null, 39}\n" + 
+				"CCC[TYPE_REF]{pack11.CCC, pack11, Lpack11.CCC;, null, 39}\n" +
+				"CCC2[TYPE_REF]{pack11.CCC2, pack11, Lpack11.CCC2;, null, 39}\n" +
 				"CCC3[TYPE_REF]{pack11.CCC3, pack11, Lpack11.CCC3;, null, 39}\n"+
 				"pack11[PACKAGE_REF]{pack11, pack11, null, null, 39}"
 			;
-		 
+
 
 		assertResults(expected,	requestor.getResults());
 	} finally {
@@ -972,7 +962,7 @@ public void test527099_001() throws Exception {
 
 		String fileContent2 =  "module second { "
 				+ "exports pack21 to first;\n"
-				+ "exports pack22 to first;\n" 
+				+ "exports pack22 to first;\n"
 				+ "}\n";
 		String filePath2 = "/Completion9_2/src/module-info.java";
 		createFile(filePath2, fileContent2);
@@ -1025,7 +1015,7 @@ public void test527873_001() throws Exception {
 
 		String fileContent2 =  "module second { "
 				+ "exports pack21 to first;\n"
-				+ "exports pack22 to first;\n" 
+				+ "exports pack22 to first;\n"
 				+ "}\n";
 		String filePath2 = "/Completion9_2/src/module-info.java";
 		createFile(filePath2, fileContent2);
@@ -1043,7 +1033,7 @@ public void test527873_001() throws Exception {
 		ICompilationUnit unit = getCompilationUnit(filePath1);
 		unit.codeComplete(cursorLocation, requestor);
 
-		String expected = 
+		String expected =
 				"Y12[TYPE_REF]{pack12.Y12, pack12, Lpack12.Y12;, null, 39}\n" +
 				"Z12[TYPE_REF]{pack11.packinternal.Z12, pack11.packinternal, Lpack11.packinternal.Z12;, null, 39}\n" +
 				"pack11[PACKAGE_REF]{pack11, pack11, null, null, 39}\n" +
@@ -1082,7 +1072,7 @@ public void test527873_002() throws Exception {
 
 		String fileContent2 =  "module second { "
 				+ "exports pack21 to first;\n"
-				+ "exports pack22 to first;\n" 
+				+ "exports pack22 to first;\n"
 				+ "}\n";
 		String filePath2 = "/Completion9_2/src/module-info.java";
 		createFile(filePath2, fileContent2);
@@ -1100,7 +1090,7 @@ public void test527873_002() throws Exception {
 		ICompilationUnit unit = getCompilationUnit(filePath1);
 		unit.codeComplete(cursorLocation, requestor);
 
-		String expected = 
+		String expected =
 			"Y12[TYPE_REF]{pack12.Y12, pack12, Lpack12.Y12;, null, 39}\n" +
 			"Z12[TYPE_REF]{pack11.packinternal.Z12, pack11.packinternal, Lpack11.packinternal.Z12;, null, 39}\n" +
 			"pack11[PACKAGE_REF]{pack11, pack11, null, null, 39}\n" +
@@ -1168,7 +1158,7 @@ public void testBug529123_001() throws Exception {
 	}
 }
 public void testBug529123_002() throws Exception {
-	String pName = "Completion9-1"; // with a -, 
+	String pName = "Completion9-1"; // with a -,
 	IJavaProject project1 = createJavaProject(pName, new String[] {"src"}, new String[] {"JCL18_LIB"}, "bin", "9");
 	try {
 		project1.open(null);
@@ -1302,7 +1292,7 @@ public void testBug528948_001() throws Exception {
 			assertTrue(end > 0);
 		}
 		assertTrue("Incorrect Number of Proposals", count == 2);
-		String expected = "X11[TYPE_REF]{pack11.X11, pack11, Lpack11.X11;, null, 39}\n" + 
+		String expected = "X11[TYPE_REF]{pack11.X11, pack11, Lpack11.X11;, null, 39}\n" +
 				"X12[TYPE_REF]{pack12.X12, pack12, Lpack12.X12;, null, 39}";
 		assertResults(expected,	requestor.getResults());
 	} finally {
@@ -1359,7 +1349,7 @@ public void testBug528948_002() throws Exception {
 			assertTrue(end > 0);
 		}
 		assertTrue("Incorrect Number of Proposals", count == 2);
-		String expected = "X11[TYPE_REF]{pack11.X11, pack11, Lpack11.X11;, null, 39}\n" + 
+		String expected = "X11[TYPE_REF]{pack11.X11, pack11, Lpack11.X11;, null, 39}\n" +
 				"X12[TYPE_REF]{pack12.X12, pack12, Lpack12.X12;, null, 39}";
 		assertResults(expected,	requestor.getResults());
 	} finally {
@@ -1423,7 +1413,7 @@ public void testBug517417_001() throws Exception {
 		createType("/Completion9_2/src/", "pack21", "X21");
 		createType("/Completion9_2/src/", "pack2internal", "X22");
 
-		createFile("/Completion9_2/src/module-info.java", 
+		createFile("/Completion9_2/src/module-info.java",
 				"module second { \n" +
 				"	requires transitive third;\n" +
 				"	exports pack21 to first;\n" +
@@ -1434,7 +1424,7 @@ public void testBug517417_001() throws Exception {
 		project3.open(null);
 		createType("/Completion9_3/src/", "pack31", "X31");
 
-		createFile("/Completion9_3/src/module-info.java", 
+		createFile("/Completion9_3/src/module-info.java",
 				"module third { " +
 				"	exports pack31;\n" +
 				"}\n");
@@ -1453,9 +1443,9 @@ public void testBug517417_001() throws Exception {
 		ICompilationUnit unit = getCompilationUnit(filePath);
 		unit.codeComplete(cursorLocation, requestor);
 
-		String expected = "pack0[PACKAGE_REF]{pack0.*;, pack0, null, null, 49}\n" + // local 
+		String expected = "pack0[PACKAGE_REF]{pack0.*;, pack0, null, null, 49}\n" + // local
 				"pack11[PACKAGE_REF]{pack11.*;, pack11, null, null, 49}\n" + // local
-				"pack21[PACKAGE_REF]{pack21.*;, pack21, null, null, 49}\n" + // exported 
+				"pack21[PACKAGE_REF]{pack21.*;, pack21, null, null, 49}\n" + // exported
 				"pack31[PACKAGE_REF]{pack31.*;, pack31, null, null, 49}"; // exported in transitively required third
 				// package pack2internal is exported only to another module
 		assertResults(expected,	requestor.getResults());
@@ -1494,7 +1484,7 @@ public void testBug517417_002() throws Exception {
 		createType("/Completion9_2/src/", "pack21", "X21");
 		createType("/Completion9_2/src/", "pack2internal", "X22");
 
-		createFile("/Completion9_2/src/module-info.java", 
+		createFile("/Completion9_2/src/module-info.java",
 				"module second { \n" +
 				"	requires transitive third;\n" +
 				"	requires four;\n" +
@@ -1506,7 +1496,7 @@ public void testBug517417_002() throws Exception {
 		project3.open(null);
 		createType("/Completion9_3/src/", "pack31", "X31");
 
-		createFile("/Completion9_3/src/module-info.java", 
+		createFile("/Completion9_3/src/module-info.java",
 				"module third { " +
 				"	exports pack31;\n" +
 				"}\n");
@@ -1515,7 +1505,7 @@ public void testBug517417_002() throws Exception {
 		project4.open(null);
 		createType("/Completion9_4/src/", "pack41", "X41");
 
-		createFile("/Completion9_4/src/module-info.java", 
+		createFile("/Completion9_4/src/module-info.java",
 				"module four { " +
 				"	exports pack41;\n" +
 				"}\n");
@@ -1536,9 +1526,9 @@ public void testBug517417_002() throws Exception {
 		ICompilationUnit unit = getCompilationUnit(filePath);
 		unit.codeComplete(cursorLocation, requestor);
 
-		String expected = "pack0[PACKAGE_REF]{pack0.*;, pack0, null, null, 49}\n" + // local 
+		String expected = "pack0[PACKAGE_REF]{pack0.*;, pack0, null, null, 49}\n" + // local
 				"pack11[PACKAGE_REF]{pack11.*;, pack11, null, null, 49}\n" + // local
-				"pack21[PACKAGE_REF]{pack21.*;, pack21, null, null, 49}\n" + // exported 
+				"pack21[PACKAGE_REF]{pack21.*;, pack21, null, null, 49}\n" + // exported
 				"pack31[PACKAGE_REF]{pack31.*;, pack31, null, null, 49}"; // exported in transitively required third
 				// package pack2internal is exported only to another module
 		assertResults(expected,	requestor.getResults());
@@ -1556,14 +1546,14 @@ public void testBug530911() throws Exception {
 
 		createFile("/Completion9_1/src/module-info.java",
 				"module first {}\n");
-		String content =  "package annotation;\n" + 
-				"\n" + 
-				"import java.lang.annotation.ElementType;\n" + 
-				"import java.lang.annotation.Target;\n" + 
-				"\n" + 
-				"@Target()\n" + 
-				"public @interface NonNull {\n" + 
-				"}\n" + 
+		String content =  "package annotation;\n" +
+				"\n" +
+				"import java.lang.annotation.ElementType;\n" +
+				"import java.lang.annotation.Target;\n" +
+				"\n" +
+				"@Target()\n" +
+				"public @interface NonNull {\n" +
+				"}\n" +
 				"";
 		createFolder("/Completion9_1/src/p");
 		String filePath = "/Completion9_1/src/p/NonNull.java";
@@ -1577,19 +1567,19 @@ public void testBug530911() throws Exception {
 		ICompilationUnit unit = getCompilationUnit(filePath);
 		unit.codeComplete(cursorLocation, requestor);
 
-		String expected = "NonNull[TYPE_REF]{NonNull, p, Lp.NonNull;, null, 52}\n" + 
-				"value[ANNOTATION_ATTRIBUTE_REF]{value = , Ljava.lang.annotation.Target;, [Ljava.lang.annotation.ElementType;, value, 52}\n" + 
-				"ElementType[TYPE_REF]{ElementType, java.lang.annotation, Ljava.lang.annotation.ElementType;, null, 102}\n" + 
-				"ANNOTATION_TYPE[FIELD_REF]{ElementType.ANNOTATION_TYPE, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, ANNOTATION_TYPE, 104}\n" + 
-				"CONSTRUCTOR[FIELD_REF]{ElementType.CONSTRUCTOR, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, CONSTRUCTOR, 104}\n" + 
-				"FIELD[FIELD_REF]{ElementType.FIELD, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, FIELD, 104}\n" + 
-				"LOCAL_VARIABLE[FIELD_REF]{ElementType.LOCAL_VARIABLE, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, LOCAL_VARIABLE, 104}\n" + 
-				"METHOD[FIELD_REF]{ElementType.METHOD, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, METHOD, 104}\n" + 
-				"MODULE[FIELD_REF]{ElementType.MODULE, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, MODULE, 104}\n" + 
-				"PACKAGE[FIELD_REF]{ElementType.PACKAGE, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, PACKAGE, 104}\n" + 
-				"PARAMETER[FIELD_REF]{ElementType.PARAMETER, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, PARAMETER, 104}\n" + 
-				"TYPE[FIELD_REF]{ElementType.TYPE, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, TYPE, 104}\n" + 
-				"TYPE_PARAMETER[FIELD_REF]{ElementType.TYPE_PARAMETER, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, TYPE_PARAMETER, 104}\n" + 
+		String expected = "NonNull[TYPE_REF]{NonNull, p, Lp.NonNull;, null, 52}\n" +
+				"value[ANNOTATION_ATTRIBUTE_REF]{value = , Ljava.lang.annotation.Target;, [Ljava.lang.annotation.ElementType;, value, 52}\n" +
+				"ElementType[TYPE_REF]{ElementType, java.lang.annotation, Ljava.lang.annotation.ElementType;, null, 102}\n" +
+				"ANNOTATION_TYPE[FIELD_REF]{ElementType.ANNOTATION_TYPE, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, ANNOTATION_TYPE, 104}\n" +
+				"CONSTRUCTOR[FIELD_REF]{ElementType.CONSTRUCTOR, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, CONSTRUCTOR, 104}\n" +
+				"FIELD[FIELD_REF]{ElementType.FIELD, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, FIELD, 104}\n" +
+				"LOCAL_VARIABLE[FIELD_REF]{ElementType.LOCAL_VARIABLE, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, LOCAL_VARIABLE, 104}\n" +
+				"METHOD[FIELD_REF]{ElementType.METHOD, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, METHOD, 104}\n" +
+				"MODULE[FIELD_REF]{ElementType.MODULE, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, MODULE, 104}\n" +
+				"PACKAGE[FIELD_REF]{ElementType.PACKAGE, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, PACKAGE, 104}\n" +
+				"PARAMETER[FIELD_REF]{ElementType.PARAMETER, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, PARAMETER, 104}\n" +
+				"TYPE[FIELD_REF]{ElementType.TYPE, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, TYPE, 104}\n" +
+				"TYPE_PARAMETER[FIELD_REF]{ElementType.TYPE_PARAMETER, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, TYPE_PARAMETER, 104}\n" +
 				"TYPE_USE[FIELD_REF]{ElementType.TYPE_USE, Ljava.lang.annotation.ElementType;, Ljava.lang.annotation.ElementType;, TYPE_USE, 104}";
 		assertResults(expected,	requestor.getResults());
 	} finally {
@@ -1601,11 +1591,11 @@ public void testBug548888() throws Exception {
 	try  {
 		project1.open(null);
 
-		String content = 
+		String content =
 				"/**\n" +
-				"  * @see List\n" + 
-				"  */\n" + 
-				"module firstmod {\n" + 
+				"  * @see List\n" +
+				"  */\n" +
+				"module firstmod {\n" +
 				"}\n";
 		String filePath = "/Completion9_1/src/module-info.java";
 		String completeBehind="List";
@@ -1620,6 +1610,28 @@ public void testBug548888() throws Exception {
 
 		String expected = "List[TYPE_REF]{java.util.List, java.util, Ljava.util.List;, null, 53}";
 		assertResults(expected,	requestor.getResults());
+	} finally {
+		deleteProject(project1);
+	}
+}
+public void testBug560606() throws CoreException {
+	IJavaProject project1 = createJavaProject("Completion9_1", new String[] {"src"}, new String[] {"JCL19_LIB", "org.eclipse.jdt.core.tests.model.TEST_CONTAINER"}, "bin", "9");
+	try  {
+		project1.open(null);
+		createFile("/Completion9_1/src/module-info.java",
+				"module first {}\n");
+
+		CompletionResult result = complete(
+	            "/Completion9_1/src/bug560606/Test.java",
+	            "package bug560606;\n" +
+	            "import java.util.Coll;\n" +
+	            "public class Test {\n" +
+	            "}\n",
+	            "import java.util.Coll");
+
+	    assertResults(
+	            "Collection[TYPE_REF]{Collection, java.util, Ljava.util.Collection;, null, null, "+(R_DEFAULT + R_RESOLVED + R_INTERESTING + R_CASE + R_NON_RESTRICTED)+"}",
+	            result.proposals);
 	} finally {
 		deleteProject(project1);
 	}

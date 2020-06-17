@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,7 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
- *     Jesper Steen Møller <jesper@selskabet.org> - contributions for:	
+ *     Jesper Steen Møller <jesper@selskabet.org> - contributions for:
  *         Bug 531046: [10] ICodeAssist#codeSelect support for 'var'
  *******************************************************************************/
 package org.eclipse.jdt.internal.codeassist.select;
@@ -41,6 +41,7 @@ import org.eclipse.jdt.internal.compiler.ast.ExplicitConstructorCall;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.FieldReference;
 import org.eclipse.jdt.internal.compiler.ast.ImportReference;
+import org.eclipse.jdt.internal.compiler.ast.InstanceOfExpression;
 import org.eclipse.jdt.internal.compiler.ast.LambdaExpression;
 import org.eclipse.jdt.internal.compiler.ast.LocalDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MarkerAnnotation;
@@ -567,7 +568,7 @@ protected void consumeEnterAnonymousClassBody(boolean qualified) {
 			0,
 			argumentLength);
 	}
-	
+
 	if (qualified) {
 		this.expressionLengthPtr--;
 		alloc.enclosingInstance = this.expressionStack[this.expressionPtr--];
@@ -588,7 +589,7 @@ protected void consumeEnterAnonymousClassBody(boolean qualified) {
 		this.lastIgnoredToken = -1;
 		if (isIndirectlyInsideLambdaExpression())
 			this.ignoreNextOpeningBrace = true;
-		else 
+		else
 			this.currentToken = 0; // opening brace already taken into account.
 		this.hasReportedError = true;
 	}
@@ -601,7 +602,7 @@ protected void consumeEnterAnonymousClassBody(boolean qualified) {
 		this.currentElement = this.currentElement.add(anonymousType, 0);
 		if (isIndirectlyInsideLambdaExpression())
 			this.ignoreNextOpeningBrace = true;
-		else 
+		else
 			this.currentToken = 0; // opening brace already taken into account.
 		this.lastIgnoredToken = -1;
 	}
@@ -677,14 +678,6 @@ protected void consumeFieldAccess(boolean isSuperAccess) {
 protected void consumeFormalParameter(boolean isVarArgs) {
 	if (this.indexOfAssistIdentifier() < 0) {
 		super.consumeFormalParameter(isVarArgs);
-		if((!this.diet || this.dietInt != 0) && this.astPtr > -1) {
-			Argument argument = (Argument) this.astStack[this.astPtr];
-			if(argument.type == this.assistNode) {
-				this.isOrphanCompletionNode = true;
-				this.restartRecovery	= true;	// force to restart in recovery mode
-				this.lastIgnoredToken = -1;
-			}
-		}
 	} else {
 		boolean isReceiver = this.intStack[this.intPtr--] == 0;
 	    if (isReceiver) {
@@ -708,15 +701,15 @@ protected void consumeFormalParameter(boolean isVarArgs) {
 					varArgsAnnotations = new Annotation[length],
 					0,
 					length);
-			} 
+			}
 		}
 		int firstDimensions = this.intStack[this.intPtr--];
 		TypeReference type = getTypeReference(firstDimensions);
 
 		if (isVarArgs || extendedDimensions != 0) {
 			if (isVarArgs) {
-				type = augmentTypeWithAdditionalDimensions(type, 1, varArgsAnnotations != null ? new Annotation[][] { varArgsAnnotations } : null, true);	
-			} 
+				type = augmentTypeWithAdditionalDimensions(type, 1, varArgsAnnotations != null ? new Annotation[][] { varArgsAnnotations } : null, true);
+			}
 			if (extendedDimensions != 0) { // combination illegal.
 				type = augmentTypeWithAdditionalDimensions(type, extendedDimensions, annotationsOnExtendedDimensions, false);
 			}
@@ -791,6 +784,14 @@ protected void consumeInsideCastExpressionWithQualifiedGenerics() {
 protected void consumeInstanceOfExpression() {
 	if (indexOfAssistIdentifier() < 0) {
 		super.consumeInstanceOfExpression();
+		int length = this.expressionLengthPtr >= 0 ?
+				this.expressionLengthStack[this.expressionLengthPtr] : 0;
+		if (length > 0) {
+			InstanceOfExpression exp = (InstanceOfExpression) this.expressionStack[this.expressionPtr];
+			if (exp.elementVariable != null) {
+				pushOnAstStack(exp.elementVariable);
+			}
+		}
 	} else {
 		getTypeReference(this.intStack[this.intPtr--]);
 		this.isOrphanCompletionNode = true;
@@ -1679,7 +1680,7 @@ protected Argument typeElidedArgument() {
 	char[] selector = this.identifierStack[this.identifierPtr];
 	if (selector != assistIdentifier()){
 		return super.typeElidedArgument();
-	}	
+	}
 	this.identifierLengthPtr--;
 	char[] identifierName = this.identifierStack[this.identifierPtr];
 	long namePositions = this.identifierPositionStack[this.identifierPtr--];

@@ -43,11 +43,13 @@ public class CompatibilityRulesTests extends AbstractASTTests {
 //		TESTS_RANGE = new int[] { 83304, -1 };
 		}
 
+	@Override
 	public void setUpSuite() throws Exception {
 		super.setUpSuite();
 		createJavaProject("P", new String[] {""}, new String[] {"JCL15_LIB"}, "", "1.5");
 	}
 
+	@Override
 	public void tearDownSuite() throws Exception {
 		deleteProject("P");
 		super.tearDownSuite();
@@ -1056,7 +1058,7 @@ public class CompatibilityRulesTests extends AbstractASTTests {
 			});
 		assertTrue("Y#foo() should be a subsignature of X#foo()", bindings[1].isSubsignature(bindings[0]));
 	}
-	
+
 	/*
 	 * Ensures that the byte base type is assignment compatible with the int base type
 	 */

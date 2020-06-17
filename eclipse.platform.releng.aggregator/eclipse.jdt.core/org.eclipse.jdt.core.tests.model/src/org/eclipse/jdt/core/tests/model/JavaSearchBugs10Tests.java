@@ -43,11 +43,13 @@ public static Test suite() {
 	return buildModelTestSuite(JavaSearchBugs10Tests.class, BYTECODE_DECLARATION_ORDER);
 }
 class TestCollector extends JavaSearchResultCollector {
+	@Override
 	public void acceptSearchMatch(SearchMatch searchMatch) throws CoreException {
 		super.acceptSearchMatch(searchMatch);
 	}
 }
 class ReferenceCollector extends JavaSearchResultCollector {
+	@Override
 	protected void writeLine() throws CoreException {
 		super.writeLine();
 		ReferenceMatch refMatch = (ReferenceMatch) this.match;
@@ -68,6 +70,7 @@ class ReferenceCollector extends JavaSearchResultCollector {
 
 }
 class TypeReferenceCollector extends ReferenceCollector {
+	@Override
 	protected void writeLine() throws CoreException {
 		super.writeLine();
 		TypeReferenceMatch typeRefMatch = (TypeReferenceMatch) this.match;
@@ -92,6 +95,7 @@ class TypeReferenceCollector extends ReferenceCollector {
 	}
 }
 
+	@Override
 IJavaSearchScope getJavaSearchScope() {
 	return SearchEngine.createJavaSearchScope(new IJavaProject[] {getJavaProject("JavaSearchBugs")});
 }
@@ -99,6 +103,7 @@ IJavaSearchScope getJavaSearchScopeBugs(String packageName, boolean addSubpackag
 	if (packageName == null) return getJavaSearchScope();
 	return getJavaSearchPackageScope("JavaSearchBugs", packageName, addSubpackages);
 }
+@Override
 public ICompilationUnit getWorkingCopy(String path, String source) throws JavaModelException {
 	if (this.wcOwner == null) {
 		this.wcOwner = new WorkingCopyOwner() {};
@@ -110,10 +115,12 @@ public void setUpSuite() throws Exception {
 	super.setUpSuite();
 	JAVA_PROJECT = setUpJavaProject("JavaSearchBugs", "10");
 }
+@Override
 public void tearDownSuite() throws Exception {
 	deleteProject("JavaSearchBugs");
 	super.tearDownSuite();
 }
+@Override
 protected void setUp () throws Exception {
 	super.setUp();
 	this.resultCollector = new TestCollector();
@@ -132,7 +139,7 @@ public void testBug529434_001() throws CoreException {
 			"}\n"
 			);
 	search("B", CONSTRUCTOR, REFERENCES, EXACT_RULE);
-	assertSearchResults("src/X.java void X.main(String[]) [new B()] EXACT_MATCH"); 
+	assertSearchResults("src/X.java void X.main(String[]) [new B()] EXACT_MATCH");
 }
 // Add more tests here
 }

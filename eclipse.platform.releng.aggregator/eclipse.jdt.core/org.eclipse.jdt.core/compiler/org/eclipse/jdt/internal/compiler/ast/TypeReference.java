@@ -26,7 +26,7 @@
  *								Bug 435570 - [1.8][null] @NonNullByDefault illegally tries to affect "throws E"
  *								Bug 435805 - [1.8][compiler][null] Java 8 compiler does not recognize declaration style null annotations
  *								Bug 437072 - [compiler][null] Null analysis emits possibly incorrect warning for new int[][] despite @NonNullByDefault
- *								Bug 466713 - Null Annotations: NullPointerException using <int @Nullable []> as Type Param 
+ *								Bug 466713 - Null Annotations: NullPointerException using <int @Nullable []> as Type Param
  *        Andy Clement (GoPivotal, Inc) aclement@gopivotal.com - Contributions for
  *                          Bug 383624 - [1.8][compiler] Revive code generation support for type annotations (from Olivier's work)
  *                          Bug 409236 - [1.8][compiler] Type annotations on intersection cast types dropped by code generator
@@ -34,7 +34,7 @@
  *      Jesper S Møller <jesper@selskabet.org> -  Contributions for
  *                          bug 527554 - [18.3] Compiler support for JEP 286 Local-Variable Type
  *                          bug 529556 - [18.3] Add content assist support for 'var' as a type
- *                          
+ *
  *******************************************************************************/
 package org.eclipse.jdt.internal.compiler.ast;
 
@@ -56,6 +56,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
+import org.eclipse.jdt.internal.compiler.lookup.RecordComponentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LocalVariableBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment;
 import org.eclipse.jdt.internal.compiler.lookup.ProblemReasons;
@@ -88,7 +89,7 @@ public abstract class TypeReference extends Expression {
 		/** Any position admitting type annotations. */
 		ANY
 	}
-	
+
 static class AnnotationCollector extends ASTVisitor {
 	List annotationContexts;
 	Expression typeReference;
@@ -99,6 +100,7 @@ static class AnnotationCollector extends ASTVisitor {
 	Annotation[][] annotationsOnDimensions;
 	int dimensions;
 	Wildcard currentWildcard;
+	RecordComponentBinding recordComponentBinding;
 
 	public AnnotationCollector(
 			TypeParameter typeParameter,
@@ -182,7 +184,14 @@ static class AnnotationCollector extends ASTVisitor {
 		// of the dimensions.
 		this.dimensions = dimensions;
 	}
-	
+
+	public AnnotationCollector(RecordComponent recordComponent, int targetType, List annotationContexts) {
+		this.annotationContexts = annotationContexts;
+		this.typeReference = recordComponent.type;
+		this.targetType = targetType;
+		this.recordComponentBinding = recordComponent.binding;
+	}
+
 	private boolean internalVisit(Annotation annotation) {
 		AnnotationContext annotationContext = null;
 		if (annotation.isRuntimeTypeInvisible()) {
@@ -220,10 +229,11 @@ static class AnnotationCollector extends ASTVisitor {
 					annotationContext.info = this.info;
 					break;
 				case AnnotationTargetTypeConstants.FIELD :
+// 				case AnnotationTargetTypeConstants.RECORD_COMPONENT : // value same as FIELD
 				case AnnotationTargetTypeConstants.METHOD_RETURN :
 				case AnnotationTargetTypeConstants.METHOD_RECEIVER :
 					break;
-					
+
 			}
 			this.annotationContexts.add(annotationContext);
 		}
@@ -354,10 +364,10 @@ private void checkYieldUsage(Scope currentScope) {
 	char [][] qName = getTypeName();
 	String name = qName != null && qName[0] != null ? new String(qName[0]) : null;
 	long sourceLevel = currentScope.compilerOptions().sourceLevel;
-	if (sourceLevel < ClassFileConstants.JDK13 || name == null ||
+	if (sourceLevel < ClassFileConstants.JDK14 || name == null ||
 			!("yield".equals(new String(name)))) //$NON-NLS-1$
 		return;
-	if (sourceLevel == ClassFileConstants.JDK13 && currentScope.compilerOptions().enablePreviewFeatures) {
+	if (sourceLevel >= ClassFileConstants.JDK14) {
 		currentScope.problemReporter().switchExpressionsYieldTypeDeclarationError(this);
 	} else {
 		currentScope.problemReporter().switchExpressionsYieldTypeDeclarationWarning(this);
@@ -380,16 +390,14 @@ protected Annotation[][] getMergedAnnotationsOnDimensions(int additionalDimensio
 	*/
 	Annotation[][] annotationsOnDimensions = this.getAnnotationsOnDimensions(true);
 	int dimensions = this.dimensions();
-	
+
 	if (annotationsOnDimensions == null && additionalAnnotations == null)
 		return null;
 
 	final int totalDimensions = dimensions + additionalDimensions;
 	Annotation [][] mergedAnnotations = new Annotation[totalDimensions][];
 	if (annotationsOnDimensions != null) {
-		for (int i = 0; i < dimensions; i++) {
-			mergedAnnotations[i] = annotationsOnDimensions[i];
-		} 
+		System.arraycopy(annotationsOnDimensions, 0, mergedAnnotations, 0, dimensions);
 	}
 	if (additionalAnnotations != null) {
 		for (int i = dimensions, j = 0; i < totalDimensions; i++, j++) {
@@ -478,8 +486,8 @@ public TypeReference [][] getTypeArguments() {
  * int @Nullable [] f @NonNull [] ==> f is really a @NonNull array of @Nullable arrays of ints. This is the type system
  * view since extended dimensions bind more readily than type components that precede the identifier. This is how it ought
  * to be encoded in bindings and how it ought to be persisted in class files. However for DOM/AST construction, we need the
- * dimensions in source order, so we provide a way for the clients to ask what they want. 
- * 
+ * dimensions in source order, so we provide a way for the clients to ask what they want.
+ *
  */
 public Annotation[][] getAnnotationsOnDimensions(boolean useSourceOrder) {
 	return null;
@@ -534,6 +542,7 @@ protected TypeBinding internalResolveType(Scope scope, int location) {
 		} else {
 			reportInvalidType(scope);
 		}
+		TypeDeclaration.checkAndFlagRecordNameErrors(getTypeName(0), this, scope);
 		switch (type.problemId()) {
 			case ProblemReasons.NotFound :
 			case ProblemReasons.NotVisible :
@@ -701,7 +710,7 @@ protected void resolveAnnotations(Scope scope, int location) {
 			&& !this.resolvedType.isTypeVariable()
 			&& !this.resolvedType.isWildcard()
 			&& location != 0
-			&& scope.hasDefaultNullnessFor(location, this.sourceStart)) 
+			&& scope.hasDefaultNullnessFor(location, this.sourceStart))
 	{
 		if (location == Binding.DefaultLocationTypeBound && this.resolvedType.id == TypeIds.T_JavaLangObject) {
 			scope.problemReporter().implicitObjectBoundNoNullDefault(this);
@@ -738,7 +747,7 @@ protected void checkNullConstraints(Scope scope, Substitution substitution, Type
 }
 protected void checkIllegalNullAnnotation(Scope scope) {
 	if (this.resolvedType.leafComponentType().isBaseType() && hasNullTypeAnnotation(AnnotationPosition.LEAF_TYPE))
-		scope.problemReporter().illegalAnnotationForBaseType(this, this.annotations[0], this.resolvedType.tagBits & TagBits.AnnotationNullMASK);	
+		scope.problemReporter().illegalAnnotationForBaseType(this, this.annotations[0], this.resolvedType.tagBits & TagBits.AnnotationNullMASK);
 }
 /** Retrieve the null annotation that has been translated to the given nullTagBits. */
 public Annotation findAnnotation(long nullTagBits) {
@@ -775,7 +784,7 @@ public static boolean containsNullAnnotation(Annotation[] annotations) {
 				return true;
 		}
 	}
-	return false;	
+	return false;
 }
 public TypeReference[] getTypeReferences() {
 	return new TypeReference [] { this };
@@ -784,17 +793,21 @@ public TypeReference[] getTypeReferences() {
 public boolean isBaseTypeReference() {
 	return false;
 }
+private char[] getTypeName(int index) {
+	char[][] typeName = this.getTypeName();
+	return typeName != null && typeName.length > index ? typeName[index] :
+		CharOperation.NO_CHAR;
+}
 /**
- * Checks to see if the declaration uses 'var' as type name 
+ * Checks to see if the declaration uses 'var' as type name
  * @param scope Relevant scope, for error reporting
- * @return true, if source level is Java 10 or above and the type name is just 'var', false otherwise 
+ * @return true, if source level is Java 10 or above and the type name is just 'var', false otherwise
  */
 public boolean isTypeNameVar(Scope scope) {
 	CompilerOptions compilerOptions = scope != null ? scope.compilerOptions() : null;
 	if (compilerOptions != null && compilerOptions.sourceLevel < ClassFileConstants.JDK10) {
 		return false;
 	}
-	char[][] typeName = this.getTypeName();
-	return typeName.length == 1 && CharOperation.equals(typeName[0], TypeConstants.VAR);
+	return CharOperation.equals(getTypeName(0), TypeConstants.VAR);
 }
 }

@@ -26,6 +26,7 @@ import org.eclipse.jdt.core.util.IModifierConstants;
 @SuppressWarnings({"rawtypes"})
 public class ASTConverterAST8Test extends ConverterTestSetup {
 
+	@Override
 	public void setUpSuite() throws Exception {
 		super.setUpSuite();
 		this.ast = AST.newAST(getJLS8(), false);
@@ -42,7 +43,7 @@ public class ASTConverterAST8Test extends ConverterTestSetup {
 	public static Test suite() {
 		return buildModelTestSuite(ASTConverterAST8Test.class);
 	}
-	/** 
+	/**
 	 * Internal access method to MethodDeclaration#thrownExceptions() for avoiding deprecated warnings.
 	 * @deprecated
 	 */
@@ -8158,7 +8159,7 @@ public class ASTConverterAST8Test extends ConverterTestSetup {
 			List thrownExceptions = internalThrownExceptions(methodDeclaration);
 			assertEquals("Wrong size", 1, thrownExceptions.size()); //$NON-NLS-1$
 			Name name = (Name) thrownExceptions.get(0);
-			binding = name.resolveBinding();	
+			binding = name.resolveBinding();
 		} else {
 			List thrownExceptionTypes = methodDeclaration.thrownExceptionTypes();
 			assertEquals("Wrong size", 1, thrownExceptionTypes.size()); //$NON-NLS-1$
@@ -9779,7 +9780,7 @@ public class ASTConverterAST8Test extends ConverterTestSetup {
 		assertTrue("Not an superconstructorinvocation", statement.getNodeType() == ASTNode.SUPER_CONSTRUCTOR_INVOCATION); //$NON-NLS-1$
 		checkSourceRange(statement, "super();", source); //$NON-NLS-1$
 	}
-	
+
 	public void test0401() throws JavaModelException {
 		ICompilationUnit sourceUnit = getCompilationUnit("Converter18" , "src", "testBug496596", "Test.java"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 		ASTNode result = runConversion(getJLS8(), sourceUnit, true);

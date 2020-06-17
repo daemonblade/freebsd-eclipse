@@ -83,7 +83,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ASTConverterBindingsTest extends ConverterTestSetup {
 	private static final boolean DEBUG = false;
-	
+
 	static class BindingsCollector extends ASTVisitor {
 
 		public ArrayList arrayList;
@@ -485,6 +485,7 @@ public class ASTConverterBindingsTest extends ConverterTestSetup {
 	}
 
 
+	@Override
 	public void setUpSuite() throws Exception {
 		super.setUpSuite();
 		this.ast = AST.newAST(getJLS3(), false);

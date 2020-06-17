@@ -13,8 +13,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.apt.tests;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
@@ -35,31 +36,31 @@ import org.eclipse.jdt.core.tests.util.Util;
 
 import com.sun.mirror.apt.AnnotationProcessor;
 
-/** 
+/**
  * Setup a project for common APT testing.
  */
 public abstract class APTTestBase extends BuilderTests{
-	
+
 	private IJavaProject _jproj;
-	
+
 	public APTTestBase(final String name)
 	{
 		super(name);
 	}
-	
+
 	/**
 	 * Set up a basic project with the following properties.
-	 * - java compliance level is 1.5  
+	 * - java compliance level is 1.5
 	 * - 'src' is the source folder
-	 * - 'bin' is the output folder	  
+	 * - 'bin' is the output folder
 	 * - add java class library into the build class path
 	 * - create and add an annotation jar.
 	 */
 	public void setUp() throws Exception
-	{	
+	{
 		runFinalizers();
 		ProcessorTestStatus.reset();
-		
+
 		super.setUp();
 
 		env.resetWorkspace();
@@ -72,7 +73,7 @@ public abstract class APTTestBase extends BuilderTests{
 		_jproj = createJavaProject(projectName);
 		AptConfig.setEnabled(_jproj, true);
 	}
-	
+
 	/**
 	 * @return the java project created in setUp().  Note that some tests may
 	 * create more than one project; this method only returns the one named
@@ -81,12 +82,12 @@ public abstract class APTTestBase extends BuilderTests{
 	protected IJavaProject getCurrentJavaProject() {
 		return _jproj;
 	}
-	
+
 	/**
 	 * Create a java project with java libraries and test annotations on classpath
 	 * (compiler level is 1.5). Use "src" as source folder and "bin" as output folder.
 	 * APT is not enabled.
-	 * 
+	 *
 	 * @param projectName
 	 * @return a java project that has been added to the current workspace.
 	 * @throws Exception
@@ -104,7 +105,7 @@ public abstract class APTTestBase extends BuilderTests{
 		TestUtil.createAndAddAnnotationJar( javaProj );
 		return javaProj;
 	}
-	
+
 	/**
 	 * Add a test source folder to the current project and return it
 	 * @return IPath
@@ -115,7 +116,7 @@ public abstract class APTTestBase extends BuilderTests{
 		return env.addPackageFragmentRoot(currentJavaProject.getPath(), "src-tests", null, null,
 				"bin-tests", true);
 	}
-	
+
 	protected void tearDown()
 		throws Exception
 	{
@@ -124,7 +125,7 @@ public abstract class APTTestBase extends BuilderTests{
 		GenericFactory.PROCESSOR = null;
 		super.tearDown();
 	}
-	
+
 	private static void runFinalizers() {
         // GC in an attempt to release file lock on Classes.jar
 		System.gc();
@@ -132,7 +133,7 @@ public abstract class APTTestBase extends BuilderTests{
 		System.gc();
 		System.runFinalization();
 	}
-	
+
 	public String getProjectName()
 	{
 		return this.getClass().getName() + "Project"; //$NON-NLS-1$
@@ -155,7 +156,7 @@ public abstract class APTTestBase extends BuilderTests{
 		}
 		return buffer.toString();
 	}
-	
+
 	private String concate(IMarker[] markers){
 		final int len = markers == null ? 0 : markers.length;
 		StringBuilder buffer = new StringBuilder();
@@ -170,12 +171,12 @@ public abstract class APTTestBase extends BuilderTests{
 		}
 		return buffer.toString();
 	}
-	
+
 	protected void clearProcessorResult(Class<? extends AnnotationProcessor> processor) {
 		String propertyName = BaseProcessor.getPropertyName(processor);
 		System.clearProperty(propertyName);
 	}
-	
+
 	/*
 	 * Processors can set a result message with BaseProcessor.reportError() or reportSuccess().
 	 * This method will cause the test to fail if the processor reported an error.  The result
@@ -190,7 +191,7 @@ public abstract class APTTestBase extends BuilderTests{
 		}
 		return result;
 	}
-	
+
 	/*
 	 * Processors can set a result message with BaseProcessor.reportError() or reportSuccess().
 	 * This method returns the message reported by the processor, and clears the result value.
@@ -201,14 +202,11 @@ public abstract class APTTestBase extends BuilderTests{
 		System.clearProperty(propertyName);
 		return result;
 	}
-	
+
 	protected void expectingMarkers(String[] messages)
-	{	
+	{
 		final IMarker[] markers = getAllAPTMarkers(env.getWorkspaceRootPath());
-		final Set<String> expectedMessages = new HashSet<String>();
-		for(String msg : messages ){
-			expectedMessages.add(msg);
-		}
+		final Set<String> expectedMessages = Stream.of(messages).collect(Collectors.toSet());
 		boolean fail = false;
 		try{
 			for( IMarker marker : markers ){
@@ -228,15 +226,15 @@ public abstract class APTTestBase extends BuilderTests{
 		if( fail )
 			assertEquals(concate(messages), concate(markers));
 	}
-	
+
 	protected void expectingNoMarkers() {
 		expectingNoMarkers(env.getWorkspaceRootPath());
 	}
-	
+
 	protected void expectingNoMarkers(IPath path)
 	{
 		final IMarker[] markers = getAllAPTMarkers(path);
-		
+
 		if( markers != null && markers.length != 0 ){
 			try{
 				assertTrue("unexpected marker(s) : " + markers[0].getAttribute(IMarker.MESSAGE), false); //$NON-NLS-1$
@@ -246,7 +244,7 @@ public abstract class APTTestBase extends BuilderTests{
 			}
 		}
 	}
-	
+
 	protected IMarker[] getAllAPTMarkers(IPath path){
 		IResource resource;
 		if(path.equals(env.getWorkspaceRootPath())){
@@ -267,8 +265,8 @@ public abstract class APTTestBase extends BuilderTests{
 			final IMarker[] processorMarkers = resource.findMarkers(AptPlugin.APT_BATCH_PROCESSOR_PROBLEM_MARKER, true, IResource.DEPTH_INFINITE);
 			total = processorMarkers.length;
 			markers = processorMarkers;
-				
-			final IMarker[] factoryPathMarkers = resource.findMarkers(AptPlugin.APT_LOADER_PROBLEM_MARKER, true, IResource.DEPTH_INFINITE);			
+
+			final IMarker[] factoryPathMarkers = resource.findMarkers(AptPlugin.APT_LOADER_PROBLEM_MARKER, true, IResource.DEPTH_INFINITE);
 			if( factoryPathMarkers.length != 0 ){
 				if( total != 0 ){
 					final int len = factoryPathMarkers.length;
@@ -281,7 +279,7 @@ public abstract class APTTestBase extends BuilderTests{
 				else
 					markers = factoryPathMarkers;
 			}
-			final IMarker[] configMarkers = resource.findMarkers(AptPlugin.APT_CONFIG_PROBLEM_MARKER, true, IResource.DEPTH_INFINITE);			
+			final IMarker[] configMarkers = resource.findMarkers(AptPlugin.APT_CONFIG_PROBLEM_MARKER, true, IResource.DEPTH_INFINITE);
 			if( configMarkers.length != 0 ){
 				if( total != 0 ){
 					final int len = configMarkers.length;
@@ -300,7 +298,7 @@ public abstract class APTTestBase extends BuilderTests{
 		}
 	}
 
-	/** 
+	/**
 	 * Verifies that the given element has specifics problems and
 	 * only the given problems.
 	 * @see Tests#expectingOnlySpecificProblemsFor(IPath, Problem[]), and
@@ -310,9 +308,9 @@ public abstract class APTTestBase extends BuilderTests{
 	protected void expectingOnlySpecificProblemsFor(IPath root, ExpectedProblem[] expectedProblems) {
 		if (DEBUG)
 			printProblemsFor(root);
-	
+
 		Problem[] rootProblems = env.getProblemsFor(root);
-	
+
 		for (int i = 0; i < expectedProblems.length; i++) {
 			ExpectedProblem expectedProblem = expectedProblems[i];
 			boolean found = false;
@@ -335,7 +333,7 @@ public abstract class APTTestBase extends BuilderTests{
 			}
 		}
 	}
-	
+
 	/** Verifies that the given element has specific problems.
 	 */
 	protected void expectingSpecificProblemsFor(IPath root, ExpectedProblem[] problems) {
@@ -364,16 +362,16 @@ public abstract class APTTestBase extends BuilderTests{
 			assertTrue("missing expected problem : " + problem, false);
 		}
 	}
-	
+
 	/** Verifies that the given element has a specific problem and
 	 * only the given problem.
 	 */
 	protected void expectingOnlySpecificProblemFor(IPath root, ExpectedProblem problem) {
 		expectingOnlySpecificProblemsFor(root, new ExpectedProblem[] { problem });
 	}
-	
+
 	protected static void sleep( long millis )
-	{	
+	{
 		long end = System.currentTimeMillis() + millis;
 		while ( millis > 0 )
 		{
@@ -386,7 +384,7 @@ public abstract class APTTestBase extends BuilderTests{
 			millis = end - System.currentTimeMillis();
 		}
 	}
-	
 
-	
+
+
 }

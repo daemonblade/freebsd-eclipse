@@ -106,6 +106,9 @@ public abstract class ASTVisitor {
 	public void endVisit(Clinit clinit, ClassScope scope) {
 		// do nothing by default
 	}
+	public void endVisit(CompactConstructorDeclaration ccd, ClassScope scope) {
+		// do nothing by default
+	}
 	public void endVisit(
 		CompilationUnitDeclaration compilationUnitDeclaration,
 		CompilationUnitScope scope) {
@@ -503,7 +506,7 @@ public abstract class ASTVisitor {
 		// do nothing by default
 	}
 	public void endVisit(ReferenceExpression referenceExpression, BlockScope blockScope) {
-		// do nothing by default	
+		// do nothing by default
 	}
 	public void endVisit(IntersectionCastTypeReference intersectionCastTypeReference, ClassScope scope) {
 		// do nothing by default
@@ -513,6 +516,9 @@ public abstract class ASTVisitor {
 	}
 	public void endVisit(SwitchExpression switchExpression,	BlockScope scope) {
 		// do nothing by default
+	}
+	public void endVisit(RecordComponent recordComponent, BlockScope scope) {
+		// do nothing by default, keep traversing
 	}
 	public boolean visit(
     		AllocationExpression allocationExpression,
@@ -595,6 +601,9 @@ public abstract class ASTVisitor {
 	}
 	public boolean visit(ModuleDeclaration module, CompilationUnitScope scope) {
 		return true;
+	}
+	public boolean visit(CompactConstructorDeclaration ccd, ClassScope scope) {
+		return true; // do nothing by default, keep traversing
 	}
 	public boolean visit(
 		CompilationUnitDeclaration compilationUnitDeclaration,
@@ -1009,6 +1018,9 @@ public abstract class ASTVisitor {
 		return true; // do nothing by default, keep traversing
 	}
 	public boolean visit(SwitchExpression switchExpression, BlockScope blockScope) {
+		return true; // do nothing by default, keep traversing
+	}
+	public  boolean visit(RecordComponent recordComponent, BlockScope scope) {
 		return true; // do nothing by default, keep traversing
 	}
 }

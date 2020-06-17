@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     Jesper Steen Moller - initial API and implementation
  *                           Contribution for bug 403881
@@ -41,7 +41,7 @@ public class FormatterJSR308Tests extends AbstractJavaModelTests {
 	public static final String OUT = "_out";
 	public static final boolean DEBUG = false;
 	static final String LINE_SEPARATOR = System.getProperty("line.separator");
-	private static final String PROJECT_NAME = "FormatterJSR308"; 
+	private static final String PROJECT_NAME = "FormatterJSR308";
 	private long time;
 
 	DefaultCodeFormatterOptions formatterPrefs;
@@ -60,7 +60,7 @@ public class FormatterJSR308Tests extends AbstractJavaModelTests {
 		super(name);
 	}
 
-	/* 
+	/*
 	 * helper function for tests that are compatible with earlier page width
 	 */
 	private void setPageWidth80() {
@@ -92,6 +92,7 @@ public class FormatterJSR308Tests extends AbstractJavaModelTests {
 	/**
 	 * Init formatter preferences with Eclipse default settings.
 	 */
+	@Override
 	protected void setUp() throws Exception {
 	    super.setUp();
 		this.formatterPrefs = DefaultCodeFormatterOptions.getEclipseDefaultSettings();
@@ -106,6 +107,7 @@ public class FormatterJSR308Tests extends AbstractJavaModelTests {
 	/**
 	 * Create project and set the jar placeholder.
 	 */
+	@Override
 	public void setUpSuite() throws Exception {
 		// ensure autobuilding is turned off
 		IWorkspaceDescription description = getWorkspace().getDescription();
@@ -126,6 +128,7 @@ public class FormatterJSR308Tests extends AbstractJavaModelTests {
 	/**
 	 * Reset the jar placeholder and delete project.
 	 */
+	@Override
 	public void tearDownSuite() throws Exception {
 		deleteProject(JAVA_PROJECT); //$NON-NLS-1$
 		JAVA_PROJECT = null;
@@ -189,12 +192,12 @@ public class FormatterJSR308Tests extends AbstractJavaModelTests {
 			assertTrue(false);
 		}
 	}
-	
+
 	public void testLambda() {
 		setPageWidth80();
 		runTest("testLambda", "A.java");//$NON-NLS-1$ //$NON-NLS-2$
 	}
-	
+
 	public void testReferenceExpression() {
 		setPageWidth80();
 		runTest("testReferenceExpression", "A.java");//$NON-NLS-1$ //$NON-NLS-2$
@@ -363,7 +366,7 @@ public class FormatterJSR308Tests extends AbstractJavaModelTests {
 	public void test039() {
 		runTest("test039", "X.java");//$NON-NLS-1$ //$NON-NLS-2$
 	}
-	
+
 	public void testBug403881() {
 		runTest("testBugs", "Bug403881.java");//$NON-NLS-1$ //$NON-NLS-2$
 	}

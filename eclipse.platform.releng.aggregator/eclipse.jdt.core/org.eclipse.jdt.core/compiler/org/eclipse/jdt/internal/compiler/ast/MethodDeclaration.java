@@ -91,14 +91,14 @@ public class MethodDeclaration extends AbstractMethodDeclaration {
 			// may be in a non necessary <clinit> for innerclass with static final constant fields
 			if (this.binding.isAbstract() || this.binding.isNative())
 				return;
-			
+
 			// https://bugs.eclipse.org/bugs/show_bug.cgi?id=385780
 			if (this.typeParameters != null &&
 					!this.scope.referenceCompilationUnit().compilationResult.hasSyntaxError) {
 				for (int i = 0, length = this.typeParameters.length; i < length; ++i) {
 					TypeParameter typeParameter = this.typeParameters[i];
 					if ((typeParameter.binding.modifiers  & ExtraCompilerModifiers.AccLocallyUsed) == 0) {
-						this.scope.problemReporter().unusedTypeParameter(typeParameter);						
+						this.scope.problemReporter().unusedTypeParameter(typeParameter);
 					}
 				}
 			}
@@ -163,7 +163,7 @@ public class MethodDeclaration extends AbstractMethodDeclaration {
 						this.scope.problemReporter().methodCanBePotentiallyDeclaredStatic(this);
 					}
 				}
-					
+
 			}
 			this.scope.checkUnclosedCloseables(flowInfo, null, null/*don't report against a specific location*/, null);
 		} catch (AbortMethod e) {
@@ -179,10 +179,10 @@ public class MethodDeclaration extends AbstractMethodDeclaration {
 			annotation.traverse(collector, (BlockScope) null);
 		}
 	}
-	
+
 	public boolean hasNullTypeAnnotation(AnnotationPosition position) {
 		// parser associates SE8 annotations to the declaration
-		return TypeReference.containsNullAnnotation(this.annotations) || 
+		return TypeReference.containsNullAnnotation(this.annotations) ||
 				(this.returnType != null && this.returnType.hasNullTypeAnnotation(position)); // just in case
 	}
 
@@ -197,9 +197,33 @@ public class MethodDeclaration extends AbstractMethodDeclaration {
 	}
 
 	@Override
+	public RecordComponent getRecordComponent() {
+		if (this.arguments != null && this.arguments.length != 0)
+			return null;
+		ClassScope skope = this.scope.classScope();
+		TypeDeclaration typeDecl = skope.referenceContext;
+		if (!typeDecl.isRecord())
+			return null;
+		if (!(skope.referenceContext.isRecord()))
+			return null;
+		RecordComponent[] recComps = typeDecl.recordComponents;
+		if (recComps == null || recComps.length == 0)
+			return null;
+		for (RecordComponent recComp : recComps) {
+			if (recComp == null || recComp.name == null)
+				continue;
+			if (CharOperation.equals(this.selector, recComp.name)) {
+				return recComp;
+			}
+		}
+		return null;
+	}
+
+	@Override
 	public void parseStatements(Parser parser, CompilationUnitDeclaration unit) {
 		//fill up the method body with statement
 		parser.parse(this, unit);
+		this.containsSwitchWithTry = parser.switchWithTry;
 	}
 
 	@Override
@@ -215,6 +239,22 @@ public class MethodDeclaration extends AbstractMethodDeclaration {
 			this.bits |= (this.returnType.bits & ASTNode.HasTypeAnnotations);
 			this.returnType.resolvedType = this.binding.returnType;
 			// record the return type binding
+		}
+		RecordComponent recordComponent = getRecordComponent();
+		if (recordComponent != null) {
+			/* JLS 14 Records Sec 8.10.3 */
+			if (this.returnType != null && TypeBinding.notEquals(this.returnType.resolvedType, recordComponent.type.resolvedType))
+				this.scope.problemReporter().recordIllegalAccessorReturnType(this.returnType, recordComponent.type.resolvedType);
+			if (this.typeParameters != null)
+				this.scope.problemReporter().recordAccessorMethodShouldNotBeGeneric(this);
+			if (this.binding != null) {
+				if ((this.binding.modifiers & ClassFileConstants.AccPublic) == 0)
+					this.scope.problemReporter().recordAccessorMethodShouldBePublic(this);
+				if ((this.binding.modifiers & ClassFileConstants.AccStatic) != 0)
+					this.scope.problemReporter().recordAccessorMethodShouldNotBeStatic(this);
+			}
+			if (this.thrownExceptions != null)
+				this.scope.problemReporter().recordAccessorMethodHasThrowsClause(this);
 		}
 		// check if method with constructor name
 		if (CharOperation.equals(this.scope.enclosingSourceType().sourceName, this.selector)) {
@@ -269,7 +309,7 @@ public class MethodDeclaration extends AbstractMethodDeclaration {
 									// actually overrides, but did not claim to do so
 									this.scope.problemReporter().missingOverrideAnnotationForInterfaceMethodImplementation(this);
 							}
-							
+
 						}
 				}
 				else {	//For 1.6 and above only
@@ -291,6 +331,7 @@ public class MethodDeclaration extends AbstractMethodDeclaration {
 				if (this.selector == TypeConstants.VALUEOF) break;
 				//$FALL-THROUGH$
 			case TypeDeclaration.CLASS_DECL :
+			case TypeDeclaration.RECORD_DECL:
 				// if a method has an semicolon body and is not declared as abstract==>error
 				// native methods may have a semicolon body
 				if ((this.modifiers & ExtraCompilerModifiers.AccSemicolonBody) != 0) {

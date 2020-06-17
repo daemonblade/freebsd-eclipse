@@ -53,6 +53,7 @@ static {
 /* (non-Javadoc)
  * @see org.eclipse.jdt.core.tests.model.AbstractJavaModelTests#copyDirectory(java.io.File, java.io.File)
  */
+@Override
 protected void copyDirectory(File sourceDir, File targetDir) throws IOException {
 	if (!targetDir.exists()) {
 		super.copyDirectory(sourceDir, targetDir);
@@ -62,6 +63,7 @@ protected void copyDirectory(File sourceDir, File targetDir) throws IOException 
 /* (non-Javadoc)
  * @see org.eclipse.jdt.core.tests.model.SuiteOfTestCases#setUpSuite()
  */
+@Override
 public void setUpSuite() throws Exception {
 	super.setUpSuite();
 
@@ -70,6 +72,7 @@ public void setUpSuite() throws Exception {
 		setUpJavaProject("JavaSearch15", "1.5");
 	}
 }
+@Override
 public void tearDownSuite() throws Exception {
 	if (JAVA_SEARCH_SUITES == null) {
 		deleteProject("JavaSearch");
@@ -2193,6 +2196,7 @@ public void testSearchFieldInBinaryNoResolution() throws CoreException {
 
 		// exact match for a field declaration
 		JavaSearchResultCollector collector = new JavaSearchResultCollector() {
+			@Override
 			public void acceptSearchMatch(SearchMatch searchMatch) throws CoreException {
 	            IField field = (IField) searchMatch.getElement();
 	            if (field.getDeclaringType().getElementName().equals("MissingFieldType")) {
@@ -2234,7 +2238,7 @@ public void testSearchMethodInBinaryWithResolution() throws CoreException {
 		assertSearchResults(
 			"AbortCompilation.jar void AbortCompilation.MissingArgumentType.foo() [No source] EXACT_MATCH\n" +
 			"AbortCompilation.jar void AbortCompilation.MissingArgumentType.foo(java.util.EventListener) [No source] EXACT_MATCH\n" +
-			"AbortCompilation.jar void AbortCompilation.MissingArgumentType.foo2() [No source] EXACT_MATCH"		
+			"AbortCompilation.jar void AbortCompilation.MissingArgumentType.foo2() [No source] EXACT_MATCH"
 		);
 	} finally {
 		// reset classpath
@@ -2254,6 +2258,7 @@ public void testSearchMethodInBinaryNoResolution() throws CoreException {
 
 		// exact match for a method declaration
 		JavaSearchResultCollector collector = new JavaSearchResultCollector() {
+			@Override
 			public void acceptSearchMatch(SearchMatch searchMatch) throws CoreException {
 	            IMethod method = (IMethod) searchMatch.getElement();
 	            if (method.getDeclaringType().getElementName().equals("MissingArgumentType")) {
@@ -2453,7 +2458,7 @@ public void testSearchScope06() throws CoreException {
         ICompilationUnit cuC = this. getCompilationUnit("JavaSearch", "src", "a10", "C.java");
         IType type = cuC.getType("C");
         IJavaSearchScope scope = SearchEngine.createStrictHierarchyScope(null, type, true, false, null);
-        
+
         // don't include super-classes:
         assertFalse("a10.A should not be included in hierarchy scope", scope.encloses(cuB.getType("A")));
         assertFalse("a10.B should not be included in hierarchy scope", scope.encloses(cuB.getType("B")));
@@ -2467,10 +2472,10 @@ public void testSearchScope07() throws CoreException {
     	ICompilationUnit cuC = this. getCompilationUnit("JavaSearch", "src", "a10", "C.java");
         IType type = cuC.getType("C");
         IJavaSearchScope scope = SearchEngine.createStrictHierarchyScope(null, type, true, false, null);
-        
+
         // don't include focus type:
         assertFalse("a10.C should not be included in hierarchy scope", scope.encloses(type));
-        assertFalse("a10/C.java should not be included in hierarchy scope", scope.encloses(cuC.getUnderlyingResource().getFullPath().toString()));       
+        assertFalse("a10/C.java should not be included in hierarchy scope", scope.encloses(cuC.getUnderlyingResource().getFullPath().toString()));
 }
 /**
  * Hierarchy scope test.
@@ -2481,10 +2486,10 @@ public void testSearchScope07a() throws CoreException {
     	ICompilationUnit cuC = this. getCompilationUnit("JavaSearch", "src", "a10", "C.java");
         IType type = cuC.getType("C");
         IJavaSearchScope scope = SearchEngine.createStrictHierarchyScope(null, type, true, true, null);
-        
+
         // include focus type:
         assertTrue("a10.C should be included in hierarchy scope", scope.encloses(type));
-        assertTrue("a10/C.java should be included in hierarchy scope", scope.encloses(cuC.getUnderlyingResource().getFullPath().toString()));       
+        assertTrue("a10/C.java should be included in hierarchy scope", scope.encloses(cuC.getUnderlyingResource().getFullPath().toString()));
 }
 /**
  * Hierarchy scope test.
@@ -2496,11 +2501,11 @@ public void testSearchScope08() throws CoreException {
         ICompilationUnit cuE = this. getCompilationUnit("JavaSearch", "src", "a10", "E.java");
         IType type = cuC.getType("C");
         IJavaSearchScope scope = SearchEngine.createStrictHierarchyScope(null, type, true, false, null);
-        
+
         // regular sub-types:
         assertTrue("a10.D should be included in hierarchy scope", scope.encloses(cuD.getType("D")));
         assertTrue("a10/D.java should be included in hierarchy scope", scope.encloses(cuD.getUnderlyingResource().getFullPath().toString()));
-        
+
         assertTrue("a10.E should be included in hierarchy scope", scope.encloses(cuE.getType("E")));
         assertTrue("a10.F should be included in hierarchy scope", scope.encloses(cuE.getType("F")));
 }
@@ -2513,7 +2518,7 @@ public void testSearchScope09() throws CoreException {
         ICompilationUnit cuE = this. getCompilationUnit("JavaSearch", "src", "a10", "E.java");
         IType type = cuC.getType("C");
         IJavaSearchScope scope = SearchEngine.createStrictHierarchyScope(null, type, true, false, null);
-        
+
         // sub-type is a nested type:
         assertTrue("a10.H$I should be included in hierarchy scope", scope.encloses(cuE.getType("H").getType("I")));
 }
@@ -2526,7 +2531,7 @@ public void testSearchScope10() throws CoreException {
         ICompilationUnit cuE = this. getCompilationUnit("JavaSearch", "src", "a10", "E.java");
         IType type = cuC.getType("C");
         IJavaSearchScope scope = SearchEngine.createStrictHierarchyScope(null, type, true, false, null);
-        
+
         // member of a sub-type:
         assertFalse("a10.F$G should not be included in hierarchy scope", scope.encloses(cuE.getType("F").getType("G")));
 }
@@ -2539,7 +2544,7 @@ public void testSearchScope12() throws CoreException {
         ICompilationUnit cuE = this. getCompilationUnit("JavaSearch", "src", "a10", "E.java");
         IType type = cuC.getType("C");
         IJavaSearchScope scope = SearchEngine.createStrictHierarchyScope(null, type, true, false, null);
-        
+
         // enclosing of a sub-type:
         assertFalse("a10.H should not be included in hierarchy scope", scope.encloses(cuE.getType("H")));
         assertTrue("a10/E.java should be included in hierarchy scope", scope.encloses(cuE.getUnderlyingResource().getFullPath().toString()));
@@ -2552,12 +2557,12 @@ public void testSearchScope13() throws CoreException {
         ICompilationUnit cuC = this. getCompilationUnit("JavaSearch", "src", "a10", "C.java");
         IType type = cuC.getType("C");
         IJavaSearchScope scope = SearchEngine.createStrictHierarchyScope(null, type, true, false, null);
-        
+
         search("**", TYPE, DECLARATIONS, scope);
         assertSearchResults(
-        		"src/a10/D.java a10.D [D]\n" + 
-        		"src/a10/E.java a10.E [E]\n" + 
-        		"src/a10/E.java a10.F [F]\n" + 
+        		"src/a10/D.java a10.D [D]\n" +
+        		"src/a10/E.java a10.E [E]\n" +
+        		"src/a10/E.java a10.F [F]\n" +
         		"src/a10/E.java a10.H$I [I]"
         		);
 }
@@ -2569,16 +2574,16 @@ public void testSearchScope14() throws CoreException {
         ICompilationUnit cuC = this. getCompilationUnit("JavaSearch", "src", "a10", "C.java");
         IType type = cuC.getType("C");
         IJavaSearchScope scope = SearchEngine.createStrictHierarchyScope(null, type, /*onlySubTypes*/false, true, null);
-        
+
         search("**", TYPE, DECLARATIONS, scope);
         assertSearchResults(
-        		"src/a10/B.java a10.A [A]\n" + 
-        		"src/a10/B.java a10.B [B]\n" + 
-        		"src/a10/C.java a10.C [C]\n" + 
-        		"src/a10/D.java a10.D [D]\n" + 
-        		"src/a10/E.java a10.E [E]\n" + 
-        		"src/a10/E.java a10.F [F]\n" + 
-        		"src/a10/E.java a10.H$I [I]\n" + 
+        		"src/a10/B.java a10.A [A]\n" +
+        		"src/a10/B.java a10.B [B]\n" +
+        		"src/a10/C.java a10.C [C]\n" +
+        		"src/a10/D.java a10.D [D]\n" +
+        		"src/a10/E.java a10.E [E]\n" +
+        		"src/a10/E.java a10.F [F]\n" +
+        		"src/a10/E.java a10.H$I [I]\n" +
         		getExternalJCLPathString() + " java.lang.Object"
         		);
 }
@@ -2591,15 +2596,15 @@ public void testSearchScope14a() throws CoreException {
         ICompilationUnit cuC = this. getCompilationUnit("JavaSearch", "src", "a10", "C.java");
         IType type = cuC.getType("C");
         IJavaSearchScope scope = SearchEngine.createStrictHierarchyScope(null, type, /*onlySubTypes*/false, false, null);
-        
+
         search("**", TYPE, DECLARATIONS, scope);
         assertSearchResults(
-        		"src/a10/B.java a10.A [A]\n" + 
-        		"src/a10/B.java a10.B [B]\n" + 
-        		"src/a10/D.java a10.D [D]\n" + 
-        		"src/a10/E.java a10.E [E]\n" + 
-        		"src/a10/E.java a10.F [F]\n" + 
-        		"src/a10/E.java a10.H$I [I]\n" + 
+        		"src/a10/B.java a10.A [A]\n" +
+        		"src/a10/B.java a10.B [B]\n" +
+        		"src/a10/D.java a10.D [D]\n" +
+        		"src/a10/E.java a10.E [E]\n" +
+        		"src/a10/E.java a10.F [F]\n" +
+        		"src/a10/E.java a10.H$I [I]\n" +
         		getExternalJCLPathString() + " java.lang.Object"
         		);
 }
@@ -2612,6 +2617,7 @@ public void testSearchScope15() throws CoreException {
         IType type = cuC.getType("C");
         IJavaSearchScope scope = SearchEngine.createStrictHierarchyScope(null, type, true, false, null);
     	TypeNameMatchCollector collector = new TypeNameMatchCollector() {
+			@Override
     		public String toString(){
     			return toFullyQualifiedNamesString();
     		}
@@ -2623,7 +2629,7 @@ public void testSearchScope15() throws CoreException {
     		collector,
     		IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH,
     		null);
-    	String expected = 
+    	String expected =
     			"a10.D\n" +
     			"a10.E\n" +
     			"a10.F\n" +
@@ -2640,7 +2646,7 @@ public void testSearchScope17() throws CoreException {
         ICompilationUnit cuE = this. getCompilationUnit("JavaSearch", "src", "a10", "E.java");
         IType type = cuC.getType("C");
         IJavaSearchScope scope = SearchEngine.createStrictHierarchyScope(null, type, true, false, null);
-        
+
         // method of a member of a sub-type:
         assertFalse("a10.F$G.m() should not be included in hierarchy scope", scope.encloses(cuE.getType("F").getType("G").getMethod("m", new String[0])));
 }
@@ -4439,6 +4445,7 @@ public void testCamelCaseTypePattern13_CamelCaseSamePartCount() throws CoreExcep
 public void testBug160323() throws CoreException {
 	// Search all type names with TypeNameMatchRequestor
 	TypeNameMatchCollector collector = new TypeNameMatchCollector() {
+		@Override
 		public String toString(){
 			return toFullyQualifiedNamesString();
 		}

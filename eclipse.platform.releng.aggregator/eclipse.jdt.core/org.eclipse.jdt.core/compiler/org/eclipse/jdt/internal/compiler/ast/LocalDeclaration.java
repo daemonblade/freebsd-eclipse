@@ -35,7 +35,7 @@
  *							Bug 529556 - [18.3] Add content assist support for 'var' as a type
  *        Andy Clement (GoPivotal, Inc) aclement@gopivotal.com - Contributions for
  *							Bug 409250 - [1.8][compiler] Various loose ends in 308 code generation
- *							Bug 426616 - [1.8][compiler] Type Annotations, multiple problems 
+ *							Bug 426616 - [1.8][compiler] Type Annotations, multiple problems
  *******************************************************************************/
 package org.eclipse.jdt.internal.compiler.ast;
 
@@ -45,6 +45,7 @@ import static org.eclipse.jdt.internal.compiler.ast.ExpressionContext.VANILLA_CO
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.impl.*;
@@ -59,6 +60,12 @@ import org.eclipse.jdt.internal.compiler.parser.RecoveryScanner;
 public class LocalDeclaration extends AbstractVariableDeclaration {
 
 	public LocalVariableBinding binding;
+
+	/**
+	 * For pattern variable, resolve() may store here an obligation to be checked when we have
+	 * a flow info that tells us whether a potential duplicates is in fact in scope.
+	 */
+	Consumer<FlowInfo> duplicateCheckObligation;
 
 	public LocalDeclaration(
 		char[] name,
@@ -81,9 +88,9 @@ public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, Fl
 		return flowInfo;
 	}
 	this.initialization.checkNPEbyUnboxing(currentScope, flowContext, flowInfo);
-	
+
 	FlowInfo preInitInfo = null;
-	boolean shouldAnalyseResource = this.binding != null 
+	boolean shouldAnalyseResource = this.binding != null
 			&& flowInfo.reachMode() == FlowInfo.REACHABLE
 			&& currentScope.compilerOptions().analyseResourceLeaks
 			&& FakedTrackingVariable.isAnyCloseable(this.initialization.resolvedType);
@@ -117,6 +124,9 @@ public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, Fl
 		flowInfo.markNullStatus(this.binding, nullStatus);
 		// no need to inform enclosing try block since its locals won't get
 		// known by the finally block
+	}
+	if (this.duplicateCheckObligation != null) {
+		this.duplicateCheckObligation.accept(flowInfo);
 	}
 	return flowInfo;
 }
@@ -197,7 +207,7 @@ public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, Fl
 		AnnotationCollector collector = new AnnotationCollector(this, targetType, parameterIndex, allAnnotationContexts);
 		this.traverse(collector, (BlockScope) null);
 	}
-		
+
 	public boolean isArgument() {
 		return false;
 	}
@@ -208,7 +218,7 @@ public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, Fl
 		// Perform upwards projection on type wrt mentioned type variables
 		TypeBinding[] mentionedTypeVariables= findCapturedTypeVariables(newType);
 		if (mentionedTypeVariables != null && mentionedTypeVariables.length > 0) {
-			newType = newType.upwardsProjection(this.binding.declaringScope, mentionedTypeVariables); 	
+			newType = newType.upwardsProjection(this.binding.declaringScope, mentionedTypeVariables);
 		}
 		this.type.resolvedType = newType;
 		if (this.binding != null) {
@@ -231,7 +241,7 @@ public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, Fl
 		if (mentioned.isEmpty()) return null;
 		return mentioned.toArray(new TypeVariableBinding[mentioned.size()]);
 	}
-	
+
 	private static Expression findPolyExpression(Expression e) {
 		// This is simpler than using an ASTVisitor, since we only care about a very few select cases.
 		if (e instanceof FunctionalExpression) {
@@ -254,10 +264,12 @@ public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, Fl
 		}
 		return null;
 	}
-	
+
 	@Override
 	public void resolve(BlockScope scope) {
-
+		resolve(scope, false);
+	}
+	public void resolve(BlockScope scope, boolean isPatternVariable) {
 		// prescan NNBD
 		handleNonNullByDefault(scope, this.annotations, this);
 
@@ -296,13 +308,24 @@ public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, Fl
 
 		Binding existingVariable = scope.getBinding(this.name, Binding.VARIABLE, this, false /*do not resolve hidden field*/);
 		if (existingVariable != null && existingVariable.isValidBinding()){
-			boolean localExists = existingVariable instanceof LocalVariableBinding; 
-			if (localExists && (this.bits & ASTNode.ShadowsOuterLocal) != 0 && scope.isLambdaSubscope() && this.hiddenVariableDepth == 0) {
-					scope.problemReporter().lambdaRedeclaresLocal(this);
-			} else if (localExists && this.hiddenVariableDepth == 0) {
-					scope.problemReporter().redefineLocal(this);
+			boolean localExists = existingVariable instanceof LocalVariableBinding;
+			if (localExists && (isPatternVariable
+					|| (((LocalVariableBinding) existingVariable).modifiers & ExtraCompilerModifiers.AccPatternVariable) != 0))
+			{
+				// Do this only if either one of them is a pattern variable.
+				this.duplicateCheckObligation = (flowInfo) -> {
+					if (flowInfo.isDefinitelyAssigned((LocalVariableBinding) existingVariable)) {
+						scope.problemReporter().redefineLocal(this);
+					}
+				};
 			} else {
-				scope.problemReporter().localVariableHiding(this, existingVariable, false);
+				if (localExists && (this.bits & ASTNode.ShadowsOuterLocal) != 0 && scope.isLambdaSubscope() && this.hiddenVariableDepth == 0) {
+					scope.problemReporter().lambdaRedeclaresLocal(this);
+				} else if (localExists && this.hiddenVariableDepth == 0) {
+					scope.problemReporter().redefineLocal(this);
+				} else {
+					scope.problemReporter().localVariableHiding(this, existingVariable, false);
+				}
 			}
 		}
 
@@ -311,10 +334,10 @@ public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, Fl
 		}
 		if (isTypeNameVar) {
 			// Create binding for the initializer's type
-			// In order to resolve self-referential initializers, we must declare the variable with a placeholder type (j.l.Object), and then patch it later 
+			// In order to resolve self-referential initializers, we must declare the variable with a placeholder type (j.l.Object), and then patch it later
 			this.binding = new LocalVariableBinding(this, variableType != null ? variableType : scope.getJavaLangObject(), this.modifiers, false) {
 				private boolean isInitialized = false;
-				
+
 				@Override
 				public void markReferenced() {
 					if (! this.isInitialized) {
@@ -359,9 +382,9 @@ public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, Fl
 			return;
 		}
 		boolean resolveAnnotationsEarly = false;
-		if (scope.environment().usesNullTypeAnnotations() 
+		if (scope.environment().usesNullTypeAnnotations()
 				&& !isTypeNameVar // 'var' does not provide a target type
-				&& variableType != null && variableType.isValidBinding()) { 
+				&& variableType != null && variableType.isValidBinding()) {
 			resolveAnnotationsEarly = this.initialization instanceof Invocation
 					|| this.initialization instanceof ConditionalExpression
 					|| this.initialization instanceof SwitchExpression
@@ -481,8 +504,8 @@ public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, Fl
 		}
 		visitor.endVisit(this, scope);
 	}
-	
-	private void traverseWithoutInitializer(ASTVisitor visitor, BlockScope scope) {		
+
+	private void traverseWithoutInitializer(ASTVisitor visitor, BlockScope scope) {
 		if (visitor.visit(this, scope)) {
 			if (this.annotations != null) {
 				int annotationsLength = this.annotations.length;
@@ -495,12 +518,12 @@ public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, Fl
 	}
 
 	public boolean isRecoveredFromLoneIdentifier() { // recovered from lonely identifier or identifier cluster ?
-		return this.name == RecoveryScanner.FAKE_IDENTIFIER && 
+		return this.name == RecoveryScanner.FAKE_IDENTIFIER &&
 				(this.type instanceof SingleTypeReference || (this.type instanceof QualifiedTypeReference && !(this.type instanceof ArrayQualifiedTypeReference))) && this.initialization == null && !this.type.isBaseTypeReference();
 	}
-	
+
 	public boolean isTypeNameVar(Scope scope) {
 		return this.type != null && this.type.isTypeNameVar(scope);
 	}
-	
+
 }

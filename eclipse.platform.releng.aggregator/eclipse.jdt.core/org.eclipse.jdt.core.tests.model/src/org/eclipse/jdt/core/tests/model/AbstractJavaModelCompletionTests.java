@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.*;
 import org.eclipse.jdt.internal.codeassist.RelevanceConstants;
+import org.eclipse.jdt.internal.codeassist.impl.AssistOptions;
 
 import junit.framework.*;
 
@@ -74,6 +75,7 @@ protected void removeLibrary(String projectName, String jarName) throws CoreExce
 	String projectPath = '/' + project.getName() + '/';
 	removeClasspathEntry(javaProject, new Path(projectPath + jarName));
 }
+@Override
 public ICompilationUnit getWorkingCopy(String path, String source) throws JavaModelException {
 	return super.getWorkingCopy(path, source, this.wcOwner);
 }
@@ -159,19 +161,22 @@ protected CompletionResult snippetContextComplete(
 	result.cursorLocation = cursorLocation;
 	return result;
 }
+@Override
 public void setUpSuite() throws Exception {
 	super.setUpSuite();
 	this.oldOptions = JavaCore.getOptions();
 	Hashtable<String, String> options = new Hashtable<>(this.oldOptions);
-	options.put(JavaCore.CODEASSIST_SUBSTRING_MATCH, JavaCore.DISABLED);
 	options.put(JavaCore.CODEASSIST_SUBWORD_MATCH, JavaCore.DISABLED);
 	JavaCore.setOptions(options);
+	System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "false");
 	waitUntilIndexesReady();
 }
+@Override
 protected void setUp() throws Exception {
 	super.setUp();
 	this.wcOwner = new WorkingCopyOwner(){};
 }
+@Override
 public void tearDownSuite() throws Exception {
 	JavaCore.setOptions(this.oldOptions);
 	this.oldOptions = null;
@@ -186,6 +191,7 @@ public void tearDownSuite() throws Exception {
 	}
 	super.tearDownSuite();
 }
+@Override
 protected void tearDown() throws Exception {
 	if(this.wc != null) {
 		this.wc.discardWorkingCopy();

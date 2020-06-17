@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 IBM Corporation and others.
+ * Copyright (c) 2019, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -306,6 +306,10 @@ public class JavadocTestForModule extends AbstractBatchCompilerTest {
 				skipNext = true;
 				continue;
 			}
+			if (tokens[i].trim().equals("-enableJavadoc")) {
+				buf.append(" -Xdoclint:all ");
+				continue;
+			}
 			buf.append(tokens[i]).append(' ');
 		}
 		if (versionOptions != null) {
@@ -418,7 +422,9 @@ public class JavadocTestForModule extends AbstractBatchCompilerTest {
 				"----------\n" +
 				"2 problems (2 errors)\n",
 				false,
-				"missing tags");
+				"missing tags",
+				OUTPUT_DIR,
+				JavacTestOptions.JavacHasABug.NoWarningForMissingJavadocTag);
 	}
 
 	public void testBug549855b() {
@@ -479,29 +485,19 @@ public class JavadocTestForModule extends AbstractBatchCompilerTest {
 				buffer.toString(),
 				"",
 				"----------\n" +
-				"1. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 2)\n" +
-				"	@provides p.I\n" +
-				"	          ^^^\n" +
-				"Javadoc: Invalid provides class\n" +
-				"----------\n" +
-				"2. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 3)\n" +
-				"	@uses java.util.Currenc\n" +
-				"	      ^^^^^^^^^^^^^^^^^\n" +
-				"Javadoc: Invalid uses class\n" +
-				"----------\n" +
-				"3. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 7)\n" +
+				"1. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 7)\n" +
 				"	provides p.I1 with p.P1;\n" +
 				"	^^^^^^^^^^^^^^^^^^^^^^^\n" +
 				"Javadoc: Missing provides tag\n" +
 				"----------\n" +
-				"4. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 8)\n" +
+				"2. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 8)\n" +
 				"	uses java.util.Currency;\n" +
 				"	^^^^^^^^^^^^^^^^^^^^^^^\n" +
 				"Javadoc: Missing uses tag\n" +
 				"----------\n" +
-				"4 problems (4 errors)\n",
+				"2 problems (2 errors)\n",
 				false,
-				"missing and invalid tags");
+				"service-type not found");
 	}
 
 	public void testBug549855c() {
@@ -576,7 +572,9 @@ public class JavadocTestForModule extends AbstractBatchCompilerTest {
 				"----------\n" +
 				"2 problems (2 errors)\n",
 				false,
-				"duplicate tags");
+				"duplicate tags",
+				OUTPUT_DIR,
+				JavacTestOptions.JavacHasABug.NoWarningForDuplicateJavadocTag);
 	}
 
 	public void testBug549855d() {
@@ -696,7 +694,9 @@ public class JavadocTestForModule extends AbstractBatchCompilerTest {
 				"----------\n" +
 				"1 problem (1 error)\n",
 				false,
-				"missing tags");
+				"missing tags",
+				OUTPUT_DIR,
+				JavacTestOptions.JavacHasABug.NoWarningForMissingJavadocTag);
 	}
 
 	public void testBug549855f() {
@@ -763,7 +763,9 @@ public class JavadocTestForModule extends AbstractBatchCompilerTest {
 				"----------\n" +
 				"1 problem (1 error)\n",
 				false,
-				"missing tags");
+				"missing tags",
+				OUTPUT_DIR,
+				JavacTestOptions.JavacHasABug.NoWarningForMissingJavadocTag);
 	}
 
 	public void testBug549855g() {
@@ -834,7 +836,9 @@ public class JavadocTestForModule extends AbstractBatchCompilerTest {
 				"----------\n" +
 				"2 problems (2 errors)\n",
 				false,
-				"missing tags");
+				"missing tags",
+				OUTPUT_DIR,
+				JavacTestOptions.JavacHasABug.NoWarningForMissingJavadocTag);
 	}
 
 	public void testBug549855h() {
@@ -895,29 +899,19 @@ public class JavadocTestForModule extends AbstractBatchCompilerTest {
 				buffer.toString(),
 				"",
 				"----------\n" +
-				"1. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 2)\n" +
-				"	* @provides p.I\n" +
-				"	            ^^^\n" +
-				"Javadoc: Invalid provides class\n" +
-				"----------\n" +
-				"2. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 3)\n" +
-				"	* @uses java.util.Currenc\n" +
-				"	        ^^^^^^^^^^^^^^^^^\n" +
-				"Javadoc: Invalid uses class\n" +
-				"----------\n" +
-				"3. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 7)\n" +
+				"1. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 7)\n" +
 				"	provides p.I1 with p.P1;\n" +
 				"	^^^^^^^^^^^^^^^^^^^^^^^\n" +
 				"Javadoc: Missing provides tag\n" +
 				"----------\n" +
-				"4. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 8)\n" +
+				"2. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/mod.one/module-info.java (at line 8)\n" +
 				"	uses java.util.Currency;\n" +
 				"	^^^^^^^^^^^^^^^^^^^^^^^\n" +
 				"Javadoc: Missing uses tag\n" +
 				"----------\n" +
-				"4 problems (4 errors)\n",
+				"2 problems (2 errors)\n",
 				false,
-				"invalid tags");
+				"reference not found");
 	}
 
 	public void testBug549855i() {
@@ -955,7 +949,42 @@ public class JavadocTestForModule extends AbstractBatchCompilerTest {
 				"----------\n" +
 				"1 problem (1 error)\n",
 				false,
-				"missing comment");
+				"no comment");
+	}
+
+	public void testBug562960() {
+		File outputDirectory = new File(OUTPUT_DIR);
+		Util.flushDirectoryContent(outputDirectory);
+		String out = "bin";
+		String directory = OUTPUT_DIR + File.separator + "src";
+
+		String options =
+			"-d " + OUTPUT_DIR + File.separator + out +
+			" -9 " +
+			" -enableJavadoc " +
+			" -err:allJavadoc " +
+			" -classpath \"" + Util.getJavaClassLibsAsString() + "\" " +
+			directory + File.separator + "Test.java";
+
+		runNegativeModuleTest(
+			new String[] {
+				"src/Test.java",
+				"/**\n" +
+				" * {@link sun.security.ssl.X509TrustManagerImpl}\n" +
+				" */\n" +
+				"public class Test {}\n"
+			},
+			options,
+			"",
+			"----------\n" +
+			"1. ERROR in ---OUTPUT_DIR_PLACEHOLDER---/src/Test.java (at line 2)\n" +
+			"	* {@link sun.security.ssl.X509TrustManagerImpl}\n" +
+			"	         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
+			"Javadoc: The type sun.security.ssl.X509TrustManagerImpl is not accessible\n" +
+			"----------\n" +
+			"1 problem (1 error)\n",
+			false,
+			"reference not found");
 	}
 
 }

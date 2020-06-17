@@ -35,6 +35,7 @@ public static Test suite() {
 	return buildAllCompliancesTestSuite(AnnotationCompletionParserTest.class);
 }
 
+@Override
 protected Map getCompilerOptions() {
 	Map options = super.getCompilerOptions();
 	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_5);
@@ -3322,7 +3323,7 @@ public void test0087(){
 	String expectedReplacedSource = "foo";
 	String expectedUnitDisplayString =
 		"public class X {\n" +
-		"  @Annot(zzz = {<CompleteOnName:foo>})\n" + 
+		"  @Annot(zzz = {<CompleteOnName:foo>})\n" +
 		"  public X() {\n" +
 		"  }\n" +
 		"  void bar() {\n" +

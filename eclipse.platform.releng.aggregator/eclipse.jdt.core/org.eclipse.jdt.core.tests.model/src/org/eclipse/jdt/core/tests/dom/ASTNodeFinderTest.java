@@ -28,6 +28,7 @@ public class ASTNodeFinderTest extends ConverterTestSetup {
 
 	ICompilationUnit workingCopy;
 
+	@Override
 	public void setUpSuite() throws Exception {
 		super.setUpSuite();
 		this.ast = AST.newAST(getJLS3(), false);
@@ -37,6 +38,7 @@ public class ASTNodeFinderTest extends ConverterTestSetup {
 		super(name);
 	}
 
+	@Override
 	protected void tearDown() throws Exception {
 		super.tearDown();
 		if (this.workingCopy != null) {
@@ -44,7 +46,7 @@ public class ASTNodeFinderTest extends ConverterTestSetup {
 			this.workingCopy = null;
 		}
 	}
-	
+
 	static {
 //		TESTS_NUMBERS = new int[] { 9 };
 	}
@@ -56,12 +58,12 @@ public class ASTNodeFinderTest extends ConverterTestSetup {
 	public void test0001() throws JavaModelException {
 		this.workingCopy = getWorkingCopy("/NodeFinder/src/test0001/Test.java", false);
 		String contents =
-			"package test0001;\n" + 
-			"import java.util.*;\n" + 
-			"public class Test {\n" + 
-			"	public static void main(String[] args) {\n" + 
-			"		System.out.println(\"Hello\" + \" world\");\n" + 
-			"	}\n" + 
+			"package test0001;\n" +
+			"import java.util.*;\n" +
+			"public class Test {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(\"Hello\" + \" world\");\n" +
+			"	}\n" +
 			"}";
 		ASTNode result = buildAST(
 				contents,
@@ -77,12 +79,12 @@ public class ASTNodeFinderTest extends ConverterTestSetup {
 	public void test0002() throws JavaModelException {
 		this.workingCopy = getWorkingCopy("/NodeFinder/src/test0001/Test.java", false);
 		String contents =
-			"package test0001;\n" + 
-			"import java.util.*;\n" + 
-			"public class Test {\n" + 
-			"	public static void main(String[] args) {\n" + 
-			"		System.out.println(\"Hello\" + \" world\");\n" + 
-			"	}\n" + 
+			"package test0001;\n" +
+			"import java.util.*;\n" +
+			"public class Test {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(\"Hello\" + \" world\");\n" +
+			"	}\n" +
 			"}";
 		ASTNode result = buildAST(
 				contents,
@@ -97,12 +99,12 @@ public class ASTNodeFinderTest extends ConverterTestSetup {
 	public void test0003() throws JavaModelException {
 		this.workingCopy = getWorkingCopy("/NodeFinder/src/test0001/Test.java", false);
 		String contents =
-			"package test0001;\n" + 
-			"import java.util.*;\n" + 
-			"public class Test {\n" + 
-			"	public static void main(String[] args) {\n" + 
-			"		System.out.println(\"Hello\" + \" world\");\n" + 
-			"	}\n" + 
+			"package test0001;\n" +
+			"import java.util.*;\n" +
+			"public class Test {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(\"Hello\" + \" world\");\n" +
+			"	}\n" +
 			"}";
 		ASTNode result = buildAST(
 				contents,
@@ -119,12 +121,12 @@ public class ASTNodeFinderTest extends ConverterTestSetup {
 	public void test0004() throws JavaModelException {
 		this.workingCopy = getWorkingCopy("/NodeFinder/src/test0001/Test.java", false);
 		String contents =
-			"package test0001;\n" + 
-			"import java.util.*;\n" + 
-			"public class Test {\n" + 
-			"	public static void main(String[] args) {\n" + 
-			"		System.out.println(\"Hello\" + \" world\");\n" + 
-			"	}\n" + 
+			"package test0001;\n" +
+			"import java.util.*;\n" +
+			"public class Test {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(\"Hello\" + \" world\");\n" +
+			"	}\n" +
 			"}";
 		ASTNode result = buildAST(
 				contents,
@@ -140,12 +142,12 @@ public class ASTNodeFinderTest extends ConverterTestSetup {
 	public void test0005() throws JavaModelException {
 		this.workingCopy = getWorkingCopy("/NodeFinder/src/test0001/Test.java", false);
 		String contents =
-			"package test0001;\n" + 
-			"import java.util.*;\n" + 
-			"public class Test {\n" + 
-			"	public static void main(String[] args) {\n" + 
-			"		System.out.println(\"Hello\" + \" world\");\n" + 
-			"	}\n" + 
+			"package test0001;\n" +
+			"import java.util.*;\n" +
+			"public class Test {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(\"Hello\" + \" world\");\n" +
+			"	}\n" +
 			"}";
 		ASTNode result = buildAST(
 				contents,
@@ -161,12 +163,12 @@ public class ASTNodeFinderTest extends ConverterTestSetup {
 	public void test0006() throws JavaModelException {
 		this.workingCopy = getWorkingCopy("/NodeFinder/src/test0001/Test.java", false);
 		String contents =
-			"package test0001;\n" + 
-			"import java.util.*;\n" + 
-			"public class Test {\n" + 
-			"	public static void main(String[] args) {\n" + 
-			"		System.out.println(\"Hello\" + \" world\");\n" + 
-			"	}\n" + 
+			"package test0001;\n" +
+			"import java.util.*;\n" +
+			"public class Test {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(\"Hello\" + \" world\");\n" +
+			"	}\n" +
 			"}";
 		ASTNode result = buildAST(
 				contents,
@@ -181,12 +183,12 @@ public class ASTNodeFinderTest extends ConverterTestSetup {
 	public void test0007() throws JavaModelException {
 		this.workingCopy = getWorkingCopy("/NodeFinder/src/test0001/Test.java", false);
 		String contents =
-			"package test0001;\n" + 
-			"import java.util.*;\n" + 
-			"public class Test {\n" + 
-			"	public static void main(String[] args) {\n" + 
-			"		System.out.println(\"Hello\" + \" world\");\n" + 
-			"	}\n" + 
+			"package test0001;\n" +
+			"import java.util.*;\n" +
+			"public class Test {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(\"Hello\" + \" world\");\n" +
+			"	}\n" +
 			"}";
 		ASTNode result = buildAST(
 				contents,
@@ -202,12 +204,12 @@ public class ASTNodeFinderTest extends ConverterTestSetup {
 	public void test0008() throws JavaModelException {
 		this.workingCopy = getWorkingCopy("/NodeFinder/src/test0001/Test.java", false);
 		String contents =
-			"package test0001;\n" + 
-			"import java.util.*;\n" + 
-			"public class Test {\n" + 
-			"	public static void main(String[] args) {\n" + 
-			"		System.out.println(\"Hello\" + \" world\");\n" + 
-			"	}\n" + 
+			"package test0001;\n" +
+			"import java.util.*;\n" +
+			"public class Test {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(\"Hello\" + \" world\");\n" +
+			"	}\n" +
 			"}";
 		ASTNode result = buildAST(
 				contents,
@@ -224,12 +226,12 @@ public class ASTNodeFinderTest extends ConverterTestSetup {
 	public void test0009() throws JavaModelException {
 		this.workingCopy = getWorkingCopy("/NodeFinder/src/test0001/Test.java", false);
 		String contents =
-			"package test0001;\n" + 
-			"import java.util.*;\n" + 
-			"public class Test {\n" + 
-			"	public static void main(String[] args) {\n" + 
-			"		System.out.println(\"Hello\" + \" world\");\n" + 
-			"	}\n" + 
+			"package test0001;\n" +
+			"import java.util.*;\n" +
+			"public class Test {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(\"Hello\" + \" world\");\n" +
+			"	}\n" +
 			"}";
 		ASTNode result = buildAST(
 				contents,

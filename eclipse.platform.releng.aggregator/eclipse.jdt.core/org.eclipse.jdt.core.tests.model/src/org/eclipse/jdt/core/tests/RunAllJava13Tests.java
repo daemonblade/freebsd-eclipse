@@ -22,7 +22,7 @@ import junit.framework.TestSuite;
 
 import org.eclipse.jdt.core.tests.compiler.parser.ComplianceDiagnoseTest;
 import org.eclipse.jdt.core.tests.compiler.regression.SwitchExpressionsYieldTest;
-import org.eclipse.jdt.core.tests.dom.ASTConverter13Test;
+import org.eclipse.jdt.core.tests.dom.ASTConverter14Test;
 import org.eclipse.jdt.core.tests.dom.ConverterTestSetup;
 import org.eclipse.jdt.core.tests.model.JavaSearchBugs13Tests;
 import org.eclipse.jdt.core.tests.rewrite.describing.ASTRewritingTest;
@@ -30,7 +30,7 @@ import org.eclipse.jdt.core.tests.util.AbstractCompilerTest;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class RunAllJava13Tests extends TestCase {
-	
+
 	public RunAllJava13Tests(String name) {
 		super(name);
 	}
@@ -42,10 +42,10 @@ public class RunAllJava13Tests extends TestCase {
 			org.eclipse.jdt.compiler.apt.tests.AllTests.class,
 		};
 	}
-	
+
 	public static Class[] getConverterTestClasses() {
 		return new Class[] {
-				ASTConverter13Test.class,
+				ASTConverter14Test.class,
 				ASTRewritingTest.class,
 		};
 	}

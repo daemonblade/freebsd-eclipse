@@ -24,6 +24,7 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 
 	ICompilationUnit workingCopy;
 
+	@Override
 	public void setUpSuite() throws Exception {
 		super.setUpSuite();
 		this.ast = AST.newAST(AST_INTERNAL_LATEST, false);
@@ -42,6 +43,7 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		return buildModelTestSuite(TypeAnnotationsConverterTest.class);
 	}
 
+	@Override
 	protected void tearDown() throws Exception {
 		super.tearDown();
 		if (this.workingCopy != null) {
@@ -59,7 +61,7 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		    "        }\n" +
 			"    }\n" +
 			"    Object o = (@Marker X. @Marker Y.@Marker Z) null;\n" +
-			
+
 			"    @java.lang.annotation.Target (java.lang.annotation.ElementType.TYPE_USE)\n" +
 			"    @interface Marker {\n" +
 			"    }\n" +
@@ -68,14 +70,14 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		ASTNode node = buildAST(
 			contents,
 			this.workingCopy);
-		String expectedOutput = 
-				"public class X {\n" + 
-				"class Y {\n" + 
-				"class Z {\n" + 
-				"    }\n" + 
-				"  }\n" + 
-				"  Object o=(@Marker X.@Marker Y.@Marker Z)null;\n" + 
-				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" + 
+		String expectedOutput =
+				"public class X {\n" +
+				"class Y {\n" +
+				"class Z {\n" +
+				"    }\n" +
+				"  }\n" +
+				"  Object o=(@Marker X.@Marker Y.@Marker Z)null;\n" +
+				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" +
 				"}\n";
 		assertASTNodeEquals(expectedOutput, node);
 	}
@@ -88,7 +90,7 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		    "        }\n" +
 			"    }\n" +
 			"    Object o = (@Marker X. @Marker Y.@Marker Z<String>) null;\n" +
-			
+
 			"    @java.lang.annotation.Target (java.lang.annotation.ElementType.TYPE_USE)\n" +
 			"    @interface Marker {\n" +
 			"    }\n" +
@@ -97,14 +99,14 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		ASTNode node = buildAST(
 			contents,
 			this.workingCopy);
-		String expectedOutput = 
-				"public class X {\n" + 
-				"class Y {\n" + 
-				"class Z<T> {\n" + 
-				"    }\n" + 
-				"  }\n" + 
-				"  Object o=(@Marker X.@Marker Y.@Marker Z<String>)null;\n" + 
-				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" + 
+		String expectedOutput =
+				"public class X {\n" +
+				"class Y {\n" +
+				"class Z<T> {\n" +
+				"    }\n" +
+				"  }\n" +
+				"  Object o=(@Marker X.@Marker Y.@Marker Z<String>)null;\n" +
+				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" +
 				"}\n";
 		assertASTNodeEquals(expectedOutput, node);
 	}
@@ -117,7 +119,7 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		    "        }\n" +
 			"    }\n" +
 			"    Object o = (@Marker X<String>. @Marker Y<Integer>.@Marker Z<Object>) null;\n" +
-			
+
 			"    @java.lang.annotation.Target (java.lang.annotation.ElementType.TYPE_USE)\n" +
 			"    @interface Marker {\n" +
 			"    }\n" +
@@ -126,14 +128,14 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		ASTNode node = buildAST(
 			contents,
 			this.workingCopy);
-		String expectedOutput = 
-				"public class X<T> {\n" + 
-				"class Y<R> {\n" + 
-				"class Z<Q> {\n" + 
-				"    }\n" + 
-				"  }\n" + 
-				"  Object o=(@Marker X<String>.@Marker Y<Integer>.@Marker Z<Object>)null;\n" + 
-				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" + 
+		String expectedOutput =
+				"public class X<T> {\n" +
+				"class Y<R> {\n" +
+				"class Z<Q> {\n" +
+				"    }\n" +
+				"  }\n" +
+				"  Object o=(@Marker X<String>.@Marker Y<Integer>.@Marker Z<Object>)null;\n" +
+				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" +
 				"}\n";
 		assertASTNodeEquals(expectedOutput, node);
 	}
@@ -146,7 +148,7 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		    "        }\n" +
 			"    }\n" +
 			"    Object o = (@Marker X<@Marker String>. @Marker Y<@Marker Integer>.@Marker Z<@Marker Object> @Marker [] [] @Marker [] []) null;\n" +
-			
+
 			"    @java.lang.annotation.Target (java.lang.annotation.ElementType.TYPE_USE)\n" +
 			"    @interface Marker {\n" +
 			"    }\n" +
@@ -155,14 +157,14 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		ASTNode node = buildAST(
 			contents,
 			this.workingCopy);
-		String expectedOutput = 
-				"public class X<T> {\n" + 
-				"class Y<R> {\n" + 
-				"class Z<Q> {\n" + 
-				"    }\n" + 
-				"  }\n" + 
-				"  Object o=(@Marker X<@Marker String>.@Marker Y<@Marker Integer>.@Marker Z<@Marker Object> @Marker [][] @Marker [][])null;\n" + 
-				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" + 
+		String expectedOutput =
+				"public class X<T> {\n" +
+				"class Y<R> {\n" +
+				"class Z<Q> {\n" +
+				"    }\n" +
+				"  }\n" +
+				"  Object o=(@Marker X<@Marker String>.@Marker Y<@Marker Integer>.@Marker Z<@Marker Object> @Marker [][] @Marker [][])null;\n" +
+				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" +
 				"}\n";
 		assertASTNodeEquals(expectedOutput, node);
 	}
@@ -175,7 +177,7 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		    "        }\n" +
 			"    }\n" +
 			"    Object o = (@Marker X<@Marker String>. @Marker Y<@Marker Integer>.@Marker Z<@Marker Object> [] @Marker [] [] @Marker []) null;\n" +
-			
+
 			"    @java.lang.annotation.Target (java.lang.annotation.ElementType.TYPE_USE)\n" +
 			"    @interface Marker {\n" +
 			"    }\n" +
@@ -184,14 +186,14 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		ASTNode node = buildAST(
 			contents,
 			this.workingCopy);
-		String expectedOutput = 
-				"public class X<T> {\n" + 
-				"class Y<R> {\n" + 
-				"class Z<Q> {\n" + 
-				"    }\n" + 
-				"  }\n" + 
-				"  Object o=(@Marker X<@Marker String>.@Marker Y<@Marker Integer>.@Marker Z<@Marker Object>[] @Marker [][] @Marker [])null;\n" + 
-				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" + 
+		String expectedOutput =
+				"public class X<T> {\n" +
+				"class Y<R> {\n" +
+				"class Z<Q> {\n" +
+				"    }\n" +
+				"  }\n" +
+				"  Object o=(@Marker X<@Marker String>.@Marker Y<@Marker Integer>.@Marker Z<@Marker Object>[] @Marker [][] @Marker [])null;\n" +
+				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" +
 				"}\n";
 		assertASTNodeEquals(expectedOutput, node);
 	}
@@ -204,7 +206,7 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		    "        }\n" +
 			"    }\n" +
 			"    int[][][][] o = (@One int[] @Two [][] @Three []) null;\n" +
-			
+
 			"    @java.lang.annotation.Target (java.lang.annotation.ElementType.TYPE_USE)\n" +
 			"    @interface Marker {\n" +
 			"    }\n" +
@@ -213,14 +215,14 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		ASTNode node = buildAST(
 			contents,
 			this.workingCopy, false);
-		String expectedOutput = 
-				"public class X<T> {\n" + 
-				"class Y<R> {\n" + 
-				"class Z<Q> {\n" + 
-				"    }\n" + 
-				"  }\n" + 
-				"  int[][][][] o=(@One int[] @Two [][] @Three [])null;\n" + 
-				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" + 
+		String expectedOutput =
+				"public class X<T> {\n" +
+				"class Y<R> {\n" +
+				"class Z<Q> {\n" +
+				"    }\n" +
+				"  }\n" +
+				"  int[][][][] o=(@One int[] @Two [][] @Three [])null;\n" +
+				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" +
 				"}\n";
 		assertASTNodeEquals(expectedOutput, node);
 	}
@@ -233,7 +235,7 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		    "        }\n" +
 			"    }\n" +
 			"    String [][][][] o = (@One String[]@Two [][]@Three []) null;\n" +
-			
+
 			"    @java.lang.annotation.Target (java.lang.annotation.ElementType.TYPE_USE)\n" +
 			"    @interface Marker {\n" +
 			"    }\n" +
@@ -242,14 +244,14 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		ASTNode node = buildAST(
 			contents,
 			this.workingCopy, false);
-		String expectedOutput = 
-				"public class X<T> {\n" + 
-				"class Y<R> {\n" + 
-				"class Z<Q> {\n" + 
-				"    }\n" + 
-				"  }\n" + 
-				"  String[][][][] o=(@One String[] @Two [][] @Three [])null;\n" + 
-				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" + 
+		String expectedOutput =
+				"public class X<T> {\n" +
+				"class Y<R> {\n" +
+				"class Z<Q> {\n" +
+				"    }\n" +
+				"  }\n" +
+				"  String[][][][] o=(@One String[] @Two [][] @Three [])null;\n" +
+				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" +
 				"}\n";
 		assertASTNodeEquals(expectedOutput, node);
 	}
@@ -262,7 +264,7 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		    "        }\n" +
 			"    }\n" +
 			"    Object o = (@One X<String> [] @Two [][]@Three []) null;\n" +
-			
+
 			"    @java.lang.annotation.Target (java.lang.annotation.ElementType.TYPE_USE)\n" +
 			"    @interface Marker {\n" +
 			"    }\n" +
@@ -271,14 +273,14 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		ASTNode node = buildAST(
 			contents,
 			this.workingCopy, false);
-		String expectedOutput = 
-				"public class X<T> {\n" + 
-				"class Y<R> {\n" + 
-				"class Z<Q> {\n" + 
-				"    }\n" + 
-				"  }\n" + 
-				"  Object o=(@One X<String>[] @Two [][] @Three [])null;\n" + 
-				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" + 
+		String expectedOutput =
+				"public class X<T> {\n" +
+				"class Y<R> {\n" +
+				"class Z<Q> {\n" +
+				"    }\n" +
+				"  }\n" +
+				"  Object o=(@One X<String>[] @Two [][] @Three [])null;\n" +
+				"  @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Marker {}\n" +
 				"}\n";
 		assertASTNodeEquals(expectedOutput, node);
 	}
@@ -295,12 +297,12 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		ASTNode node = buildAST(
 			contents,
 			this.workingCopy, false);
-		String expectedOutput = 
-				"public class X<@NonNull T> {\n" + 
-				"class Y<@Nullable R> {\n" + 
-				"class Z<@Readonly Q> {\n" + 
-				"    }\n" + 
-				"  }\n" + 
+		String expectedOutput =
+				"public class X<@NonNull T> {\n" +
+				"class Y<@Nullable R> {\n" +
+				"class Z<@Readonly Q> {\n" +
+				"    }\n" +
+				"  }\n" +
 				"}\n";
 		assertASTNodeEquals(expectedOutput, node);
 	}
@@ -314,9 +316,9 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		ASTNode node = buildAST(
 			contents,
 			this.workingCopy, false);
-		String expectedOutput = 
-				"public class X<@NonNull T> {\n" + 
-				"  X<@NonNull ? extends @Nullable String> x;\n" + 
+		String expectedOutput =
+				"public class X<@NonNull T> {\n" +
+				"  X<@NonNull ? extends @Nullable String> x;\n" +
 				"}\n";
 		assertASTNodeEquals(expectedOutput, node);
 	}
@@ -334,14 +336,14 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		ASTNode node = buildAST(
 			contents,
 			this.workingCopy, false);
-		String expectedOutput = 
-				"public class X<@NonNull T> {\n" + 
-				"  void foo(){\n" + 
-				"    try {\n" + 
-				"    }\n" + 
-				" catch (    @NonNull NullPointerException|@Nullable ArrayIndexOutOfBoundsException e) {\n" + 
-				"    }\n" + 
-				"  }\n" + 
+		String expectedOutput =
+				"public class X<@NonNull T> {\n" +
+				"  void foo(){\n" +
+				"    try {\n" +
+				"    }\n" +
+				" catch (    @NonNull NullPointerException|@Nullable ArrayIndexOutOfBoundsException e) {\n" +
+				"    }\n" +
+				"  }\n" +
 				"}\n";
 		assertASTNodeEquals(expectedOutput, node);
 	}
@@ -359,14 +361,14 @@ public class TypeAnnotationsConverterTest extends ConverterTestSetup {
 		ASTNode node = buildAST(
 			contents,
 			this.workingCopy, false);
-		String expectedOutput = 
-				"public class X<@NonNull T> {\n" + 
-				"  void foo() throws @NonNull NullPointerException, @Nullable ArrayIndexOutOfBoundsException {\n" + 
-				"    try {\n" + 
-				"    }\n" + 
-				" catch (    @NonNull NullPointerException|@Nullable ArrayIndexOutOfBoundsException e) {\n" + 
-				"    }\n" + 
-				"  }\n" + 
+		String expectedOutput =
+				"public class X<@NonNull T> {\n" +
+				"  void foo() throws @NonNull NullPointerException, @Nullable ArrayIndexOutOfBoundsException {\n" +
+				"    try {\n" +
+				"    }\n" +
+				" catch (    @NonNull NullPointerException|@Nullable ArrayIndexOutOfBoundsException e) {\n" +
+				"    }\n" +
+				"  }\n" +
 				"}\n";
 		assertASTNodeEquals(expectedOutput, node);
 	}

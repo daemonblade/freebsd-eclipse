@@ -91,6 +91,7 @@ public String getBatchFileName() {
 /**
  * @see LocalVMLauncher#getCommandLine
  */
+@Override
 public String[] getCommandLine() {
 	Vector commandLine= new Vector();
 
@@ -114,7 +115,7 @@ public String[] getCommandLine() {
 	if (vmVersion != -1) {
 		if (vmVersion < ClassFileConstants.JDK13) { // FailOverToOldVerifier deprecated from 13
 			commandLine.addElement("-XX:-FailOverToOldVerifier");
-		} 	
+		}
 		if (vmVersion >= ClassFileConstants.JDK1_6) {
 			commandLine.addElement("-Xverify:all");
 		}

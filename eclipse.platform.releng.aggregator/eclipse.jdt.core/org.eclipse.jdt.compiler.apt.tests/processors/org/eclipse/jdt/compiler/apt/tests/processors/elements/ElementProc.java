@@ -11,7 +11,7 @@
  * Contributors:
  *    wharley@bea.com - initial API and implementation
  *    akurtakov@gmail.com - fix compilation with Java 7
- *    
+ *
  *******************************************************************************/
 
 package org.eclipse.jdt.compiler.apt.tests.processors.elements;
@@ -20,13 +20,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
@@ -55,18 +56,18 @@ import org.eclipse.jdt.compiler.apt.tests.processors.base.BaseProcessor;
 
 /**
  * A processor that explores the "model" target hierarchy and complains if it does
- * not find what it expects.  To enable this processor, add 
+ * not find what it expects.  To enable this processor, add
  * -Aorg.eclipse.jdt.compiler.apt.tests.processors.elements.ElementProc to the command line.
  * @since 3.3
  */
 @SupportedAnnotationTypes("*")
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class ElementProc extends BaseProcessor {
-	
+
 	// The set of elements we expect getRootElements to return in package pa
 	private static final String[] ROOT_ELEMENT_NAMES = new String[] {
 		"targets.model.pa.AnnoZ", "targets.model.pa.A", "targets.model.pa.IA", "targets.model.pa.ExceptionA"};
-	
+
 	// Initialized in collectElements()
 	private TypeElement _elementIA;
 	private TypeElement _elementAB;
@@ -81,7 +82,7 @@ public class ElementProc extends BaseProcessor {
 	private ExecutableElement _methodDvoid2;
 	private ExecutableElement _methodDvoid3;
 	private TypeElement _elementDEnum;
-	
+
 	// Always return false from this processor, because it supports "*".
 	// The return value does not signify success or failure!
 	@Override
@@ -95,59 +96,59 @@ public class ElementProc extends BaseProcessor {
 			// Disable this processor unless we are intentionally performing the test.
 			return false;
 		}
-		
+
 		if (!collectElements()) {
 			return false;
 		}
-		
+
 		if (!examineRoundEnv(roundEnv)) {
 			return false;
 		}
-		
+
 		if (!examineABInterfaces()) {
 			return false;
 		}
-		
+
 		if (!examineABModifiers()) {
 			return false;
 		}
-		
+
 		if (!examineDHierarchy()) {
 			return false;
 		}
-		
+
 		if (!examineAMethodsAndFields()) {
 			return false;
 		}
-		
+
 		if (!examineAMethodThrowables()) {
 			return false;
 		}
-		
+
 		if (!examineDMethods()) {
 			return false;
 		}
-		
+
 		if (!examineDEnum()) {
 			return false;
 		}
-		
+
 		if (!examinePBPackage()) {
 			return false;
 		}
-		
+
 		if (!examineDAnnotations()) {
 			return false;
 		}
-		
+
 		if (!examineGetAnnotation()) {
 			return false;
 		}
-		
+
 		if (!bug261969()) {
 			return false;
 		}
-		
+
 		if(!bug300408()) {
 			return false;
 		}
@@ -194,7 +195,7 @@ public class ElementProc extends BaseProcessor {
 	/**
 	 * Regression test for Bug 300408, checking if TypeElement.getEnclosedTypes() returns the elements
 	 * in the order as declared in the source
-	 * 
+	 *
 	 * @return true if all tests passed
 	 */
 	private boolean bug300408() {
@@ -205,7 +206,7 @@ public class ElementProc extends BaseProcessor {
 
 			return false;
 		}
-		
+
 		if (!enclosedElementOrderCorrect("targets.model.order.EnumInstances",
 				Arrays.asList(ElementKind.CONSTRUCTOR, ElementKind.METHOD),
 				"A", "G", "U", "D", "I", "N")) {
@@ -255,7 +256,7 @@ public class ElementProc extends BaseProcessor {
 			reportError("NestingKind of element IA is not TOP_LEVEL");
 			return false;
 		}
-		
+
 		_elementA = _elementUtils.getTypeElement("targets.model.pa.A");
 		if (_elementA == null) {
 			reportError("element A was not found");
@@ -265,7 +266,7 @@ public class ElementProc extends BaseProcessor {
 			reportError("A claims to not be a class");
 			return false;
 		}
-		
+
 		_elementAnnoZ = _elementUtils.getTypeElement("targets.model.pa.AnnoZ");
 		if (_elementAnnoZ == null) {
 			reportError("element AnnoZ was not found");
@@ -275,7 +276,7 @@ public class ElementProc extends BaseProcessor {
 			reportError("AnnoZ claims to not be an annotation type");
 			return false;
 		}
-		
+
 		_elementAB = _elementUtils.getTypeElement("targets.model.pb.AB");
 		if (_elementAB == null) {
 			reportError("element AB was not found");
@@ -285,7 +286,7 @@ public class ElementProc extends BaseProcessor {
 			reportError("AB claims to not be a class");
 			return false;
 		}
-		
+
 		_elementD = _elementUtils.getTypeElement("targets.model.pb.D");
 		if (_elementD == null) {
 			reportError("element D was not found");
@@ -295,7 +296,7 @@ public class ElementProc extends BaseProcessor {
 			reportError("D claims to not be a class");
 			return false;
 		}
-		
+
 		_elementDChild = _elementUtils.getTypeElement("targets.model.pb.DChild");
 		if (_elementDChild == null) {
 			reportError("secondary element DChild was not found");
@@ -308,17 +309,14 @@ public class ElementProc extends BaseProcessor {
 		_elementString = _elementUtils.getTypeElement("java.lang.String");
 		return true;
 	}
-	
+
 	/**
 	 * Check the methods on RoundEnvironment method
 	 * @return true if all tests passed
 	 */
 	private boolean examineRoundEnv(RoundEnvironment roundEnv) {
 		// Verify that we get the root elements we expect
-		Set<String> expectedRootElementNames = new HashSet<String>(ROOT_ELEMENT_NAMES.length);
-		for (String name : ROOT_ELEMENT_NAMES) {
-			expectedRootElementNames.add(name);
-		}
+		Set<String> expectedRootElementNames = Stream.of(ROOT_ELEMENT_NAMES).collect(Collectors.toSet());
 		Set<? extends Element> actualRootElements = roundEnv.getRootElements();
 		if (null == actualRootElements) {
 			reportError("getRootElements() returned null");
@@ -337,14 +335,14 @@ public class ElementProc extends BaseProcessor {
 			reportError("Found extra root elements including " + expectedRootElementNames.iterator().next());
 			return false;
 		}
-		
+
 		// Verify that we get the annotations we expect
 		Set<? extends Element> annotatedWithAnnoZ = roundEnv.getElementsAnnotatedWith(_elementAnnoZ);
 		if (null == annotatedWithAnnoZ || !annotatedWithAnnoZ.contains(_elementD)) {
 			reportError("Elements annotated with AnnoZ does not include D");
 			return false;
 		}
-		
+
 		// targets.model.pc.Deprecation contains @Deprecated annotations
 		Set<? extends Element> annotatedWithDeprecated = roundEnv.getElementsAnnotatedWith(Deprecated.class);
 		if (null == annotatedWithDeprecated) {
@@ -364,7 +362,7 @@ public class ElementProc extends BaseProcessor {
 
 		return true;
 	}
-	
+
 	/**
 	 * Examine the interfaces that AB implements
 	 * @return true if all tests passed
@@ -446,7 +444,7 @@ public class ElementProc extends BaseProcessor {
 
 		return true;
 	}
-	
+
 	/**
 	 * Examine the methods and fields of element A
 	 * @return true if all tests passed
@@ -479,7 +477,7 @@ public class ElementProc extends BaseProcessor {
 			reportError("Element enclosing A.methodIAString() is not A");
 			return false;
 		}
-		
+
 		// RETURN AND PARAMS
 		TypeMirror returnType = methodIAString.getReturnType();
 		if (!(returnType instanceof DeclaredType) || returnType.getKind() != TypeKind.DECLARED) {
@@ -519,7 +517,7 @@ public class ElementProc extends BaseProcessor {
 			reportError("The first parameter of A.methodIAString() is not named int1");
 			return false;
 		}
-		
+
 		// FIELDS
 		List<VariableElement> fieldsA = ElementFilter.fieldsIn(enclosedA);
 		VariableElement fieldAint = null;
@@ -539,7 +537,7 @@ public class ElementProc extends BaseProcessor {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Examine the methods of A which have throws clauses
 	 * @return true if all tests passed
@@ -604,7 +602,7 @@ public class ElementProc extends BaseProcessor {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Examine the methods of D (which are interesting because of an enum param and void return)
 	 * @return true if all tests passed
@@ -706,7 +704,7 @@ public class ElementProc extends BaseProcessor {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Read the annotations on element D (class and method)
 	 * @return true if all tests passed
@@ -725,7 +723,7 @@ public class ElementProc extends BaseProcessor {
 				return false;
 			}
 			Element annotDElem = annotDType.asElement();
-			if (!(annotDElem instanceof TypeElement) || 
+			if (!(annotDElem instanceof TypeElement) ||
 					!"targets.model.pa.AnnoZ".equals(((TypeElement)annotDElem).getQualifiedName().toString())) {
 				reportError("annotation on element D is not TypeElement targets.model.pa.AnnoZ");
 				return false;
@@ -751,9 +749,9 @@ public class ElementProc extends BaseProcessor {
 				reportError("Failed to find method annoZString on @AnnoZ on element D");
 				return false;
 			}
-			
+
 			// Check Elements.getElementValuesWithDefaults()
-			Map<? extends ExecutableElement, ? extends AnnotationValue> defaults = 
+			Map<? extends ExecutableElement, ? extends AnnotationValue> defaults =
 				_elementUtils.getElementValuesWithDefaults(annotD);
 			if (null == defaults) {
 				reportError("Element.getElementValuesWithDefaults(annotD) returned null");
@@ -779,7 +777,7 @@ public class ElementProc extends BaseProcessor {
 				}
 			}
 		}
-		
+
 		List<? extends AnnotationMirror> annotsMethodDvoid = _methodDvoid.getAnnotationMirrors();
 		if (null == annotsMethodDvoid || annotsMethodDvoid.isEmpty()) {
 			reportError("method D.methodDvoid() reports no annotations");
@@ -792,7 +790,7 @@ public class ElementProc extends BaseProcessor {
 				return false;
 			}
 			Element annotDElem = annotDType.asElement();
-			if (!(annotDElem instanceof TypeElement) || 
+			if (!(annotDElem instanceof TypeElement) ||
 					!"targets.model.pa.AnnoZ".equals(((TypeElement)annotDElem).getQualifiedName().toString())) {
 				reportError("annotation on D.methodDvoid() is not TypeElement targets.model.pa.AnnoZ");
 				return false;
@@ -826,7 +824,7 @@ public class ElementProc extends BaseProcessor {
 				return false;
 			}
 		}
-		
+
 		// methodDvoid2 is like methodDvoid but the annotation values are in opposite order;
 		// check to see that order has been preserved
 		List<? extends AnnotationMirror> annotsMethodDvoid2 = _methodDvoid2.getAnnotationMirrors();
@@ -856,7 +854,7 @@ public class ElementProc extends BaseProcessor {
 				}
 			}
 		}
-		
+
 		// methodDvoid3 has an annotation with string array type, but its value is a single string.
 		// See bug 261969.
 		List<? extends AnnotationMirror> annotsMethodDvoid3 = _methodDvoid3.getAnnotationMirrors();
@@ -867,7 +865,7 @@ public class ElementProc extends BaseProcessor {
 		AnnotationMirror annotMethodDvoid3 = annotsMethodDvoid3.get(0);
 		Map<? extends ExecutableElement, ? extends AnnotationValue> annotMethodDvoid3Values = annotMethodDvoid3.getElementValues();
 		if (1 != annotMethodDvoid3Values.size()) {
-			reportError("Wrong number of values on annotation on D.methodDvoid3(): expected 1, got " 
+			reportError("Wrong number of values on annotation on D.methodDvoid3(): expected 1, got "
 					+ annotMethodDvoid3Values.size());
 			return false;
 		}
@@ -889,10 +887,10 @@ public class ElementProc extends BaseProcessor {
 					innerDvoid3Value.getValue());
 			return false;
 		}
-		
+
 		return true;
 	}
-	
+
 	/**
 	 * Test the Element.getAnnotation() implementation
 	 * @return true if all tests passed
@@ -976,7 +974,7 @@ public class ElementProc extends BaseProcessor {
 			reportError(badValue + "AnnoAnnoChar");
 			return false;
 		}
-		
+
 		TypedAnnos.AnnoArrayInt annoArrayInt = annotatedElement.getAnnotation(TypedAnnos.AnnoArrayInt.class);
 		if (null == annoArrayInt) {
 			reportError(badValue + "AnnoArrayInt");
@@ -987,7 +985,7 @@ public class ElementProc extends BaseProcessor {
 			reportError(badValue + "AnnoArrayInt contents");
 			return false;
 		}
-		
+
 		TypedAnnos.AnnoArrayString annoArrayString = annotatedElement.getAnnotation(TypedAnnos.AnnoArrayString.class);
 		if (null == annoArrayString) {
 			reportError(badValue + "AnnoArrayString");
@@ -1022,7 +1020,7 @@ public class ElementProc extends BaseProcessor {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Regression test for bug 261969, retrieving annotation value for string[]-typed
 	 * annotation where the actual value is a non-arrayed string.

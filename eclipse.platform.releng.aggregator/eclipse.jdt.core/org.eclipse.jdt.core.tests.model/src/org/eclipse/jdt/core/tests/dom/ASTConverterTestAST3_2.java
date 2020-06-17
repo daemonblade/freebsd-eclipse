@@ -118,6 +118,7 @@ import org.eclipse.jdt.core.tests.util.Util;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 
+	@Override
 	public void setUpSuite() throws Exception {
 		super.setUpSuite();
 		this.ast = AST.newAST(getJLS3(), false);
@@ -135,7 +136,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 	public static Test suite() {
 		return buildModelTestSuite(ASTConverterTestAST3_2.class);
 	}
-	/** 
+	/**
 	 * Internal access method to MethodDeclaration#thrownExceptions() for avoiding deprecated warnings.
 	 * @deprecated
 	 */
@@ -4400,6 +4401,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 		ICompilationUnit sourceUnit = getCompilationUnit("Converter", "src", "test0538", "A.java"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 		try {
 			ReconcilerTests.ProblemRequestor pbRequestor = new ReconcilerTests.ProblemRequestor() {
+				@Override
                 public boolean isActive() {
                     return false;
                 }
@@ -6754,7 +6756,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 				"}";
 			workingCopy = getWorkingCopy("/Converter/src/X.java", true/*resolve*/);
 			workingCopy.getBuffer().setContents(contents.toCharArray());
-			ASTNode node = runConversion(getJLS3(), workingCopy, true);			
+			ASTNode node = runConversion(getJLS3(), workingCopy, true);
 			assertEquals("Not a compilation unit", ASTNode.COMPILATION_UNIT, node.getNodeType());
 			CompilationUnit unit = (CompilationUnit) node;
 			String expectedOutput = "Dead code";
@@ -9386,7 +9388,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 				"}";
 			workingCopy = getWorkingCopy("/Converter/src/X.java", true/*resolve*/);
 			workingCopy.getBuffer().setContents(contents.toCharArray());
-			ASTNode node = runConversion(getJLS3(), workingCopy, true);			
+			ASTNode node = runConversion(getJLS3(), workingCopy, true);
 			assertEquals("Not a compilation unit", ASTNode.COMPILATION_UNIT, node.getNodeType());
 			CompilationUnit unit = (CompilationUnit) node;
 			String expectedOutput = "Dead code";
@@ -9787,7 +9789,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 		ICompilationUnit unit = getCompilationUnit("Converter" , "src", "test0691", "X.java"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 		IType type = unit.getType("X");
 		IMethod method = type.getMethod("foo", new String[0]);
-		
+
 		ASTParser parser = ASTParser.newParser(getJLS3());
 		parser.setKind(ASTParser.K_CLASS_BODY_DECLARATIONS);
 		parser.setSource(unit);
@@ -9832,15 +9834,15 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 	public void test0693() throws JavaModelException {
 		ICompilationUnit unit = getCompilationUnit("Converter" , "src", "test0693", "X.java"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 		ICompilationUnit unit2 = getCompilationUnit("Converter" , "src", "test0693", "Y.java"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-		
+
 		ASTParser parser = ASTParser.newParser(getJLS3());
 		ASTRequestor requestor = new ASTRequestor() {};
 		ICompilationUnit[] cus = new ICompilationUnit[2];
 		cus[0] = unit;
 		cus[1] = unit2;
-		
+
 		try {
-			// the following line will throw exception but seemingly shouldn't 
+			// the following line will throw exception but seemingly shouldn't
 			parser.createASTs(cus, new String[0], requestor, null);
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -9853,15 +9855,15 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 	public void test0694() throws JavaModelException {
 		ICompilationUnit unit = getCompilationUnit("Converter" , "src", "test0694", "X.java"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 		ICompilationUnit unit2 = getCompilationUnit("Converter" , "src", "test0694", "Y.java"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-		
+
 		ASTParser parser = ASTParser.newParser(getJLS3());
 		ASTRequestor requestor = new ASTRequestor() {};
 		ICompilationUnit[] cus = new ICompilationUnit[2];
 		cus[0] = unit;
 		cus[1] = unit2;
-		
+
 		try {
-			// the following line will throw exception but seemingly shouldn't 
+			// the following line will throw exception but seemingly shouldn't
 			parser.createASTs(cus, new String[0], requestor, null);
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -9925,10 +9927,10 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 		ICompilationUnit workingCopy = null;
 		try {
 			String contents =
-				"public class X {\n" + 
-				"	/*start*/private void foo() {\n" + 
-				"		Object o = new new Object() {};\n" + 
-				"	}/*end*/\n" + 
+				"public class X {\n" +
+				"	/*start*/private void foo() {\n" +
+				"		Object o = new new Object() {};\n" +
+				"	}/*end*/\n" +
 				"}";
 			workingCopy = getWorkingCopy("/Converter/src/X.java", true/*resolve*/);
 			MethodDeclaration methodDeclaration = (MethodDeclaration) buildAST(
@@ -9952,10 +9954,10 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 		ICompilationUnit workingCopy = null;
 		try {
 			String contents =
-				"public class X {\n" + 
-				"	private void foo() {\n" + 
-				"		Object o = new /*start*/new Object() {}/*end*/;\n" + 
-				"	}\n" + 
+				"public class X {\n" +
+				"	private void foo() {\n" +
+				"		Object o = new /*start*/new Object() {}/*end*/;\n" +
+				"	}\n" +
 				"}";
 			workingCopy = getWorkingCopy("/Converter/src/X.java", true/*resolve*/);
 			ExpressionStatement statement = (ExpressionStatement) buildAST(
@@ -9972,7 +9974,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 			}
 		}
 	}
-	
+
 	/*
 	 * https://bugs.eclipse.org/bugs/show_bug.cgi?id=248246
 	 */
@@ -9980,10 +9982,10 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 		ICompilationUnit workingCopy = null;
 		try {
 			String contents =
-				"public class X {\n" + 
-				"	private void foo() {\n" + 
-				"		/*start*/Object o = new /*end*/new Object() {};\n" + 
-				"	}\n" + 
+				"public class X {\n" +
+				"	private void foo() {\n" +
+				"		/*start*/Object o = new /*end*/new Object() {};\n" +
+				"	}\n" +
 				"}";
 			workingCopy = getWorkingCopy("/Converter/src/X.java", true/*resolve*/);
 			VariableDeclarationStatement statement = (VariableDeclarationStatement) buildAST(
@@ -10007,13 +10009,13 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 		try {
 			workingCopy = getWorkingCopy("/Converter/src/example/Test.java", true/*resolve*/);
 			String contents =
-				"package example;\n" + 
-				"public class Test {\n" + 
-				"	public void test() throws Throwable {\n" + 
-				"		B /*start*/b = new B()/*end*/;\n" + 
-				"	}\n" + 
+				"package example;\n" +
+				"public class Test {\n" +
+				"	public void test() throws Throwable {\n" +
+				"		B /*start*/b = new B()/*end*/;\n" +
+				"	}\n" +
 				"}";
-	
+
 			VariableDeclarationFragment fragment = (VariableDeclarationFragment) buildAST(contents, workingCopy, false, true, true);
 			IVariableBinding variableBinding = fragment.resolveBinding();
 			final String key = variableBinding.getKey();
@@ -10021,7 +10023,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 			parser.setProject(workingCopy.getJavaProject());
 			parser.setResolveBindings(true);
 			parser.setKind(ASTParser.K_COMPILATION_UNIT);
-	
+
 			parser.createASTs(
 					new ICompilationUnit[] { workingCopy },
 					new String[] { key },
@@ -10031,7 +10033,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 							assertEquals("Wrong key", key, bindingKey);
 							assertTrue("Not a variable binding", binding.getKind() == IBinding.VARIABLE);
 						}
-	
+
 						public void acceptAST(ICompilationUnit source,
 								CompilationUnit astCompilationUnit) {
 						}
@@ -10048,14 +10050,14 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 		try {
 			workingCopy = getWorkingCopy("/Converter/src/example/Test.java", true/*resolve*/);
 			String contents =
-				"package example;\n" + 
+				"package example;\n" +
 				"import java.io.IOException;\n" +
-				"public class Test {\n" + 
-				"	public void test() throws IOException, RuntimeException {\n" + 
-				"		B /*start*/b = new B()/*end*/;\n" + 
-				"	}\n" + 
+				"public class Test {\n" +
+				"	public void test() throws IOException, RuntimeException {\n" +
+				"		B /*start*/b = new B()/*end*/;\n" +
+				"	}\n" +
 				"}";
-	
+
 			VariableDeclarationFragment fragment = (VariableDeclarationFragment) buildAST(contents, workingCopy, false, true, true);
 			IVariableBinding variableBinding = fragment.resolveBinding();
 			final String key = variableBinding.getKey();
@@ -10063,7 +10065,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 			parser.setProject(workingCopy.getJavaProject());
 			parser.setResolveBindings(true);
 			parser.setKind(ASTParser.K_COMPILATION_UNIT);
-	
+
 			parser.createASTs(
 					new ICompilationUnit[] { workingCopy },
 					new String[] { key },
@@ -10073,7 +10075,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 							assertEquals("Wrong key", key, bindingKey);
 							assertTrue("Not a variable binding", binding.getKind() == IBinding.VARIABLE);
 						}
-	
+
 						public void acceptAST(ICompilationUnit source,
 								CompilationUnit astCompilationUnit) {
 						}
@@ -10091,14 +10093,14 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 		try {
 			workingCopy = getWorkingCopy("/Converter/src/example/Test.java", true/*resolve*/);
 			String contents =
-				"package example;\n" + 
+				"package example;\n" +
 				"import java.io.IOException;\n" +
-				"public class Test {\n" + 
-				"	public void test() {\n" + 
-				"		B /*start*/b = new B()/*end*/;\n" + 
-				"	}\n" + 
+				"public class Test {\n" +
+				"	public void test() {\n" +
+				"		B /*start*/b = new B()/*end*/;\n" +
+				"	}\n" +
 				"}";
-	
+
 			VariableDeclarationFragment fragment = (VariableDeclarationFragment) buildAST(contents, workingCopy, false, true, true);
 			IVariableBinding variableBinding = fragment.resolveBinding();
 			final String key = variableBinding.getKey();
@@ -10106,7 +10108,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 			parser.setProject(workingCopy.getJavaProject());
 			parser.setResolveBindings(true);
 			parser.setKind(ASTParser.K_COMPILATION_UNIT);
-	
+
 			parser.createASTs(
 					new ICompilationUnit[] { workingCopy },
 					new String[] { key },
@@ -10130,7 +10132,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 	 * http://dev.eclipse.org/bugs/show_bug.cgi?id=270148
 	 */
 	public void test0702() throws JavaModelException {
-		final char[] source = ("void foo() {\n" + 
+		final char[] source = ("void foo() {\n" +
 				"	Integer I = new ${cursor}\n" +
 				"}").toCharArray();
 		ASTParser parser = ASTParser.newParser(getJLS3());
@@ -10152,10 +10154,10 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 	 * http://dev.eclipse.org/bugs/show_bug.cgi?id=270148
 	 */
 	public void test0703() throws JavaModelException {
-		final char[] source = ("public class Try {\n" + 
-				"	void foo() {\n" + 
-				"		Integer I = new ${cursor}\n" + 
-				"	}\n" + 
+		final char[] source = ("public class Try {\n" +
+				"	void foo() {\n" +
+				"		Integer I = new ${cursor}\n" +
+				"	}\n" +
 				"}").toCharArray();
 		ASTParser parser = ASTParser.newParser(getJLS3());
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
@@ -10176,7 +10178,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 	 * http://dev.eclipse.org/bugs/show_bug.cgi?id=270148
 	 */
 	public void test0704() throws JavaModelException {
-		final char[] source = ("{\n" + 
+		final char[] source = ("{\n" +
 				"	Integer I = new ${cursor}\n" +
 				"}").toCharArray();
 		ASTParser parser = ASTParser.newParser(getJLS3());
@@ -10198,10 +10200,10 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 	 * http://dev.eclipse.org/bugs/show_bug.cgi?id=270148
 	 */
 	public void test0705() throws JavaModelException {
-		final char[] source = ("{\n" + 
+		final char[] source = ("{\n" +
 				"	Integer I = new ${cursor}\n" +
 				"}\n" +
-				"{\n" + 
+				"{\n" +
 				"	Integer I = new ${cursor}\n" +
 				"}").toCharArray();
 		ASTParser parser = ASTParser.newParser(getJLS3());
@@ -10228,10 +10230,10 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 	 * http://dev.eclipse.org/bugs/show_bug.cgi?id=270148
 	 */
 	public void test0706() throws JavaModelException {
-		final char[] source = ("public class Try {\n" + 
-				"	Integer i = new Integer() {\n" + 
-				"		Integer I = new ${cursor}\n" + 
-				"	};\"\n" + 
+		final char[] source = ("public class Try {\n" +
+				"	Integer i = new Integer() {\n" +
+				"		Integer I = new ${cursor}\n" +
+				"	};\"\n" +
 				"}").toCharArray();
 		ASTParser parser = ASTParser.newParser(getJLS3());
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
@@ -10247,8 +10249,8 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 	 * http://dev.eclipse.org/bugs/show_bug.cgi?id=270148
 	 */
 	public void test0707() throws JavaModelException {
-		final char[] source = ("Integer i = new Integer() {\n" + 
-				"	Integer I = new ${cursor}\n" + 
+		final char[] source = ("Integer i = new Integer() {\n" +
+				"	Integer I = new ${cursor}\n" +
 				"};").toCharArray();
 		ASTParser parser = ASTParser.newParser(getJLS3());
 		parser.setKind(ASTParser.K_CLASS_BODY_DECLARATIONS);
@@ -10280,15 +10282,15 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 		try {
 			workingCopy = getWorkingCopy("/Converter/src/X.java", true/*resolve*/);
 			String contents =
-				"public class X {\n" + 
-				"	public Integer test() {\n" + 
-				"		return (new Integer(getId()));\n" + 
-				"	}\n" + 
-				"	public String getId() {\n" + 
-				"		return \"1\";\n" + 
-				"	}\n" + 
+				"public class X {\n" +
+				"	public Integer test() {\n" +
+				"		return (new Integer(getId()));\n" +
+				"	}\n" +
+				"	public String getId() {\n" +
+				"		return \"1\";\n" +
+				"	}\n" +
 				"}";
-	
+
 			ASTNode node = buildAST(
 					contents,
 					workingCopy);
@@ -10353,14 +10355,14 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 	 * http://dev.eclipse.org/bugs/show_bug.cgi?id=280063
 	 */
 	public void test0713() throws JavaModelException {
-		final char[] source = ("  class MyCommand extends CompoundCommand\n" + 
-				"  {\n" + 
-				"    public void execute()\n" + 
-				"    {\n" + 
-				"      // ...\n" + 
-				"      appendAndExecute(new AddCommand(...));\n" + 
-				"      if (condition) appendAndExecute(new AddCommand(...));\n" + 
-				"    }\n" + 
+		final char[] source = ("  class MyCommand extends CompoundCommand\n" +
+				"  {\n" +
+				"    public void execute()\n" +
+				"    {\n" +
+				"      // ...\n" +
+				"      appendAndExecute(new AddCommand(...));\n" +
+				"      if (condition) appendAndExecute(new AddCommand(...));\n" +
+				"    }\n" +
 				"  }").toCharArray();
 		ASTParser parser = ASTParser.newParser(getJLS3());
 		parser.setKind(ASTParser.K_CLASS_BODY_DECLARATIONS);
@@ -10375,41 +10377,41 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 	 * http://dev.eclipse.org/bugs/show_bug.cgi?id=280063
 	 */
 	public void test0714() throws JavaModelException {
-		final char[] source = ("class MyCommand extends CommandBase\n" + 
-				"  {\n" + 
-				"    protected Command subcommand;\n" + 
-				"\n" + 
-				"    //...\n" + 
-				"\n" + 
-				"    public void execute()\n" + 
-				"    {\n" + 
-				"      // ...\n" + 
-				"      Compound subcommands = new CompoundCommand();\n" + 
-				"      subcommands.appendAndExecute(new AddCommand(...));\n" + 
-				"      if (condition) subcommands.appendAndExecute(new AddCommand(...));\n" + 
-				"      subcommand = subcommands.unwrap();\n" + 
-				"    }\n" + 
-				"\n" + 
-				"    public void undo()\n" + 
-				"    {\n" + 
-				"      // ...\n" + 
-				"      subcommand.undo();\n" + 
-				"    }\n" + 
-				"\n" + 
-				"    public void redo()\n" + 
-				"    {\n" + 
-				"      // ...\n" + 
-				"      subcommand.redo();\n" + 
-				"    }\n" + 
-				"\n" + 
-				"    public void dispose()\n" + 
-				"    {\n" + 
-				"      // ...\n" + 
-				"      if (subcommand != null)\n" + 
-				"     {\n" + 
-				"        subcommand.dispose();\n" + 
-				"      }\n" + 
-				"    }\n" + 
+		final char[] source = ("class MyCommand extends CommandBase\n" +
+				"  {\n" +
+				"    protected Command subcommand;\n" +
+				"\n" +
+				"    //...\n" +
+				"\n" +
+				"    public void execute()\n" +
+				"    {\n" +
+				"      // ...\n" +
+				"      Compound subcommands = new CompoundCommand();\n" +
+				"      subcommands.appendAndExecute(new AddCommand(...));\n" +
+				"      if (condition) subcommands.appendAndExecute(new AddCommand(...));\n" +
+				"      subcommand = subcommands.unwrap();\n" +
+				"    }\n" +
+				"\n" +
+				"    public void undo()\n" +
+				"    {\n" +
+				"      // ...\n" +
+				"      subcommand.undo();\n" +
+				"    }\n" +
+				"\n" +
+				"    public void redo()\n" +
+				"    {\n" +
+				"      // ...\n" +
+				"      subcommand.redo();\n" +
+				"    }\n" +
+				"\n" +
+				"    public void dispose()\n" +
+				"    {\n" +
+				"      // ...\n" +
+				"      if (subcommand != null)\n" +
+				"     {\n" +
+				"        subcommand.dispose();\n" +
+				"      }\n" +
+				"    }\n" +
 				"  }").toCharArray();
 		ASTParser parser = ASTParser.newParser(getJLS3());
 		parser.setKind(ASTParser.K_CLASS_BODY_DECLARATIONS);
@@ -10465,14 +10467,14 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 	 * https://bugs.eclipse.org/bugs/show_bug.cgi?id=288211
 	 */
 	public void test0717() throws JavaModelException {
-		final char[] source = ("  class MyCommand extends CompoundCommand\n" + 
-				"  {\n" + 
-				"    public void execute()\n" + 
-				"    {\n" + 
-				"      // ...\n" + 
-				"      appendAndExecute(new AddCommand());\n" + 
-				"      if (condition) appendAndExecute(new AddCommand());\n" + 
-				"    }\n" + 
+		final char[] source = ("  class MyCommand extends CompoundCommand\n" +
+				"  {\n" +
+				"    public void execute()\n" +
+				"    {\n" +
+				"      // ...\n" +
+				"      appendAndExecute(new AddCommand());\n" +
+				"      if (condition) appendAndExecute(new AddCommand());\n" +
+				"    }\n" +
 				"  }").toCharArray();
 		ASTParser parser = ASTParser.newParser(getJLS3());
 		parser.setKind(ASTParser.K_CLASS_BODY_DECLARATIONS);
@@ -10497,15 +10499,15 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 		try {
 			workingCopy = getWorkingCopy("/Converter/src/X.java", true/*resolve*/);
 			String contents =
-				"public class X {\n" + 
-				"	public void v() {\n" + 
-				"		class Test2 {}\n" + 
-				"		Test2 t = get();\n" + 
-				"		t.toString();\n" + 
-				"	}\n" + 
-				"	public Object get() {return null;}\n" + 
+				"public class X {\n" +
+				"	public void v() {\n" +
+				"		class Test2 {}\n" +
+				"		Test2 t = get();\n" +
+				"		t.toString();\n" +
+				"	}\n" +
+				"	public Object get() {return null;}\n" +
 				"}";
-	
+
 			CompilationUnit unit = (CompilationUnit) buildAST(
 					contents,
 					workingCopy,
@@ -10527,7 +10529,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 			workingCopy = getWorkingCopy("/Converter/src/X.java", true/*resolve*/);
 			String contents =
 				"public class X {}";
-	
+
 			CompilationUnit unit = (CompilationUnit) buildAST(
 					contents,
 					workingCopy,
@@ -10616,7 +10618,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 		element = (TagElement) fragments.get(0);
 		assertEquals("wrong tag name", "@code", element.getTagName());
 		checkSourceRange((TextElement) element.fragments().get(0), " stars*", source);
-		
+
 		element = (TagElement) fragments.get(2);
 		assertEquals("wrong tag name", "@literal", element.getTagName());
 		checkSourceRange((TextElement) element.fragments().get(0), " stars****", source);
@@ -10628,7 +10630,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 		element = (TagElement) fragments.get(5);
 		assertEquals("wrong tag name", "@code", element.getTagName());
 		checkSourceRange((TextElement) element.fragments().get(0), " stars* ", source);
-		
+
 		element = (TagElement) fragments.get(7);
 		assertEquals("wrong tag name", "@literal", element.getTagName());
 		checkSourceRange((TextElement) element.fragments().get(0), " stars**** ", source);
@@ -10643,7 +10645,7 @@ public class ASTConverterTestAST3_2 extends ConverterTestSetup {
 						"    }\n" +
 						"  }\n" +
 						"}\n";
-		
+
 		ASTParser parser = ASTParser.newParser(getJLS3());
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		parser.setSource(source.toCharArray());

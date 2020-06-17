@@ -74,7 +74,7 @@ public class AbstractJavaSearchTests extends ModifyingResourceTests implements I
 
 	public static class ConstructorDeclarationsCollector implements IRestrictedAccessConstructorRequestor {
 		Vector results = new Vector();
-		
+
 		public void acceptConstructor(
 				int modifiers,
 				char[] simpleTypeName,
@@ -88,9 +88,9 @@ public class AbstractJavaSearchTests extends ModifyingResourceTests implements I
 				String path,
 				AccessRestriction access) {
 			StringBuffer buffer = new StringBuffer();
-			
+
 			boolean isMemberType = (extraFlags & ExtraFlags.IsMemberType) != 0;
-			
+
 			buffer.append(packageName == null ? CharOperation.NO_CHAR : packageName);
 			if (isMemberType) {
 				buffer.append('.');
@@ -103,12 +103,12 @@ public class AbstractJavaSearchTests extends ModifyingResourceTests implements I
 			buffer.append('#');
 			buffer.append(simpleTypeName);
 			buffer.append('(');
-			
+
 			parameterTypes = signature == null ? parameterTypes : Signature.getParameterTypes(signature);
-			
+
 			for (int i = 0; i < parameterCount; i++) {
 				if (i != 0) buffer.append(',');
-				
+
 				if (parameterTypes != null) {
 					char[] parameterType;
 					if (signature != null) {
@@ -131,14 +131,15 @@ public class AbstractJavaSearchTests extends ModifyingResourceTests implements I
 				}
 			}
 			buffer.append(')');
-			
+
 			if (parameterCount < 0) {
 				buffer.append('*');
 			}
-			
+
 			this.results.addElement(buffer.toString());
 		}
-		
+
+		@Override
 		public String toString(){
 			int length = this.results.size();
 			String[] strings = new String[length];
@@ -157,7 +158,7 @@ public class AbstractJavaSearchTests extends ModifyingResourceTests implements I
 			return this.results.size();
 		}
 	}
-	
+
 	static void checkAndAddtoBuffer(StringBuffer buffer, char[] precond, char c) {
 		if (precond == null || precond.length == 0) return;
 		buffer.append(precond);
@@ -168,17 +169,17 @@ public class AbstractJavaSearchTests extends ModifyingResourceTests implements I
 
 		@Override
 		public void acceptMethod(
-				char[] methodName, 
-				int parameterCount, 
+				char[] methodName,
+				int parameterCount,
 				char[] declaringQualifier,
-				char[] simpleTypeName, 
-				int typeModifiers, 
-				char[] packageName, 
-				char[] signature, 
+				char[] simpleTypeName,
+				int typeModifiers,
+				char[] packageName,
+				char[] signature,
 				char[][] parameterTypes,
-				char[][] parameterNames, 
-				char[] returnType, 
-				int modifiers, 
+				char[][] parameterNames,
+				char[] returnType,
+				int modifiers,
 				String path,
 				AccessRestriction access,
 				int methodIndex) {
@@ -229,12 +230,12 @@ public class AbstractJavaSearchTests extends ModifyingResourceTests implements I
 		private char[] getTypeErasure(char[] typeName) {
 			int index;
 			if ((index = CharOperation.indexOf('<', typeName)) == -1) return typeName;
-			
+
 			int length = typeName.length;
 			char[] typeErasurename = new char[length - 2];
-			
+
 			System.arraycopy(typeName, 0, typeErasurename, 0, index);
-			
+
 			int depth = 1;
 			for (int i = index + 1; i < length; i++) {
 				switch (typeName[i]) {
@@ -251,10 +252,11 @@ public class AbstractJavaSearchTests extends ModifyingResourceTests implements I
 						break;
 				}
 			}
-			
+
 			System.arraycopy(typeErasurename, 0, typeErasurename = new char[index], 0, index);
 			return typeErasurename;
 		}
+		@Override
 		public String toString(){
 			int length = this.results.size();
 			String[] strings = new String[length];
@@ -670,7 +672,7 @@ public class AbstractJavaSearchTests extends ModifyingResourceTests implements I
 			if (isLocal && !(type instanceof LambdaExpression)) { // don't want occurrence counts for lambdas. it can be confusing at best, as not all are built.
 				this.line.append("#");
 				this.line.append(((SourceRefElement)type).occurrenceCount);
-			} 
+			}
 		}
 		protected IJavaElement getElement(SearchMatch searchMatch) {
 			return (IJavaElement) searchMatch.getElement();
@@ -745,6 +747,7 @@ public class AbstractJavaSearchTests extends ModifyingResourceTests implements I
 	    	List displayedLines = new ArrayList(this.lines);
 	    	if (this.sorted) {
 	    		Collections.sort(displayedLines, new Comparator() {
+					@Override
 					public int compare(Object o1, Object o2) {
 						return o1.toString().compareTo(o2.toString());
 				    }
@@ -787,7 +790,7 @@ public class AbstractJavaSearchTests extends ModifyingResourceTests implements I
 					parameterNames = new String[] {Util.EMPTY_STRING};
 				}
 				int nParameterNames = parameterNames.length;
-				
+
 				StringBuffer buf = new StringBuffer();
 				buf.append(path);
 				buf.append(' ');
@@ -948,6 +951,7 @@ protected JavaSearchResultCollector resultCollector;
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.core.tests.model.AbstractJavaModelTests#copyDirectory(java.io.File, java.io.File)
 	 */
+	@Override
 	protected void copyDirectory(File sourceDir, File targetDir) throws IOException {
 		if (COPY_DIRS) {
 			super.copyDirectory(sourceDir, targetDir);
@@ -1019,6 +1023,7 @@ protected JavaSearchResultCollector resultCollector;
 	protected void search(IJavaElement element, int limitTo, int matchRule, IJavaSearchScope scope) throws CoreException {
 		search(element, limitTo, matchRule, scope, this.resultCollector);
 	}
+	@Override
 	protected void search(IJavaElement element, int limitTo, int matchRule, IJavaSearchScope scope, SearchRequestor requestor) throws CoreException {
 		SearchPattern pattern = SearchPattern.createPattern(element, limitTo, matchRule);
 		assertNotNull("Pattern should not be null", pattern);
@@ -1047,6 +1052,7 @@ protected JavaSearchResultCollector resultCollector;
 	protected void search(String patternString, int searchFor, int limitTo, int matchRule, IJavaSearchScope scope) throws CoreException {
 		search(patternString, searchFor, limitTo, matchRule, scope, this.resultCollector);
 	}
+	@Override
 	protected void search(String patternString, int searchFor, int limitTo, int matchRule, IJavaSearchScope scope, SearchRequestor requestor) throws CoreException {
 		if (patternString.indexOf('*') != -1 || patternString.indexOf('?') != -1) {
 			matchRule |= SearchPattern.R_PATTERN_MATCH;
@@ -1088,10 +1094,10 @@ protected JavaSearchResultCollector resultCollector;
 	}
 	protected void searchAllMethodNames(String pattern, int matchRule, IRestrictedAccessMethodRequestor requestor) throws JavaModelException {
 		new BasicSearchEngine(this.workingCopies).searchAllMethodNames(
-				null, SearchPattern.R_EXACT_MATCH, 
-				null, SearchPattern.R_EXACT_MATCH, 
-				null, SearchPattern.R_EXACT_MATCH, 
-				pattern.toCharArray(), matchRule, 
+				null, SearchPattern.R_EXACT_MATCH,
+				null, SearchPattern.R_EXACT_MATCH,
+				null, SearchPattern.R_EXACT_MATCH,
+				pattern.toCharArray(), matchRule,
 				getJavaSearchScope(),
 				requestor,
 				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH,
@@ -1099,34 +1105,34 @@ protected JavaSearchResultCollector resultCollector;
 	}
 	protected void searchAllMethodNames(String pattern, int matchRule, IJavaSearchScope scope, IRestrictedAccessMethodRequestor requestor) throws JavaModelException {
 		searchAllMethodNames(
-				null, SearchPattern.R_EXACT_MATCH, 
-				pattern, matchRule, 
+				null, SearchPattern.R_EXACT_MATCH,
+				pattern, matchRule,
 				scope,
 				requestor);
 	}
 	protected void searchAllMethodNames(
 			String declSimpleNamePattern, int declSimpleNameMatchRule,
-			String patternMethod, int methodMatchRule, 
-			IJavaSearchScope scope, 
+			String patternMethod, int methodMatchRule,
+			IJavaSearchScope scope,
 			IRestrictedAccessMethodRequestor requestor) throws JavaModelException {
 		searchAllMethodNames(
-				null, SearchPattern.R_EXACT_MATCH, 
-				declSimpleNamePattern, declSimpleNameMatchRule, 
-				patternMethod, methodMatchRule, 
+				null, SearchPattern.R_EXACT_MATCH,
+				declSimpleNamePattern, declSimpleNameMatchRule,
+				patternMethod, methodMatchRule,
 				scope,
 				requestor);
 	}
 	protected void searchAllMethodNames(
 			String declQualificationPattern, int declQualificationMatchRule,
 			String declSimpleNamePattern, int declSimpleNameMatchRule,
-			String patternMethod, int methodMatchRule, 
-			IJavaSearchScope scope, 
+			String patternMethod, int methodMatchRule,
+			IJavaSearchScope scope,
 			IRestrictedAccessMethodRequestor requestor) throws JavaModelException {
 		searchAllMethodNames(
-				null, SearchPattern.R_EXACT_MATCH, 
-				declQualificationPattern, declQualificationMatchRule, 
-				declSimpleNamePattern, declSimpleNameMatchRule, 
-				patternMethod, methodMatchRule, 
+				null, SearchPattern.R_EXACT_MATCH,
+				declQualificationPattern, declQualificationMatchRule,
+				declSimpleNamePattern, declSimpleNameMatchRule,
+				patternMethod, methodMatchRule,
 				scope,
 				requestor);
 	}
@@ -1134,14 +1140,14 @@ protected JavaSearchResultCollector resultCollector;
 			String patternPackage, int pkgMatchRule,
 			String declQualificationPattern, int declQualificationMatchRule,
 			String declSimpleNamePattern, int declSimpleNameMatchRule,
-			String patternMethod, int methodMatchRule, 
-			IJavaSearchScope scope, 
+			String patternMethod, int methodMatchRule,
+			IJavaSearchScope scope,
 			IRestrictedAccessMethodRequestor requestor) throws JavaModelException {
 		new BasicSearchEngine(this.workingCopies).searchAllMethodNames(
-				patternPackage == null ? null : patternPackage.toCharArray(), pkgMatchRule, 
-				declQualificationPattern == null ? null : declQualificationPattern.toCharArray(), declQualificationMatchRule, 
-				declSimpleNamePattern == null ? null : declSimpleNamePattern.toCharArray(), declSimpleNameMatchRule, 
-				patternMethod == null ? null : patternMethod.toCharArray(), methodMatchRule, 
+				patternPackage == null ? null : patternPackage.toCharArray(), pkgMatchRule,
+				declQualificationPattern == null ? null : declQualificationPattern.toCharArray(), declQualificationMatchRule,
+				declSimpleNamePattern == null ? null : declSimpleNamePattern.toCharArray(), declSimpleNameMatchRule,
+				patternMethod == null ? null : patternMethod.toCharArray(), methodMatchRule,
 				scope,
 				requestor,
 				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH,
@@ -1161,17 +1167,17 @@ protected JavaSearchResultCollector resultCollector;
 			final MethodNameMatchRequestor nameRequestor) {
 		try {
 			new SearchEngine(this.workingCopies).searchAllMethodNames(
-					packageName != null ? packageName.toCharArray() : null, pkgMatchRule, 
-					declaringQualification != null ? declaringQualification.toCharArray() : null, declQualificationMatchRule, 
-					declaringSimpleName != null ? declaringSimpleName.toCharArray() : null, declSimpleNameMatchRule, 
-					methodName != null ? methodName.toCharArray() : null, methodMatchRule, 
-					scope, nameRequestor, 
-					IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, 
+					packageName != null ? packageName.toCharArray() : null, pkgMatchRule,
+					declaringQualification != null ? declaringQualification.toCharArray() : null, declQualificationMatchRule,
+					declaringSimpleName != null ? declaringSimpleName.toCharArray() : null, declSimpleNameMatchRule,
+					methodName != null ? methodName.toCharArray() : null, methodMatchRule,
+					scope, nameRequestor,
+					IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH,
 					null);
 		} catch (JavaModelException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	public void searchAllMethodNames(
@@ -1183,15 +1189,15 @@ protected JavaSearchResultCollector resultCollector;
 			final MethodNameMatchRequestor nameRequestor) {
 		try {
 			new SearchEngine(this.workingCopies).searchAllMethodNames(
-					qualifier != null ? qualifier.toCharArray() : null, qualifierMatchRule, 
-					methodName != null ? methodName.toCharArray() : null, methodMatchRule, 
-					scope, nameRequestor, 
-					IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, 
+					qualifier != null ? qualifier.toCharArray() : null, qualifierMatchRule,
+					methodName != null ? methodName.toCharArray() : null, methodMatchRule,
+					scope, nameRequestor,
+					IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH,
 					null);
 		} catch (JavaModelException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	protected void searchAllTypeNames(String pattern, int matchRule, TypeNameRequestor requestor) throws JavaModelException {
@@ -1232,6 +1238,7 @@ protected JavaSearchResultCollector resultCollector;
 	protected void searchDeclarationsOfSentMessages(IJavaElement enclosingElement, SearchRequestor requestor) throws JavaModelException {
 		new SearchEngine().searchDeclarationsOfSentMessages(enclosingElement, requestor, null);
 	}
+	@Override
 	protected void setUp () throws Exception {
 		super.setUp();
 		this.resultCollector = new JavaSearchResultCollector();

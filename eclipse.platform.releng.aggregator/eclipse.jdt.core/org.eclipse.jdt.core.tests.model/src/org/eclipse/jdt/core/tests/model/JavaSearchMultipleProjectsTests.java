@@ -892,6 +892,7 @@ public void testBug167743() throws CoreException {
 
 		// Search all type names with TypeNameMatchRequestor
 		AbstractJavaSearchTests.TypeNameMatchCollector collector = new AbstractJavaSearchTests.TypeNameMatchCollector() {
+			@Override
 			public String toString(){
 				return toFullyQualifiedNamesString();
 			}
@@ -1081,6 +1082,7 @@ public void testBug199392_Jar() throws CoreException {
 
 		// Search all type names with TypeNameMatchRequestor
 		AbstractJavaSearchTests.TypeNameMatchCollector collector = new AbstractJavaSearchTests.TypeNameMatchCollector() {
+			@Override
 			public String toString(){
 				return toFullyQualifiedNamesString();
 			}
@@ -1117,6 +1119,7 @@ public void testBug199392_Jar_SamePartCount() throws CoreException {
 
 		// Search all type names with TypeNameMatchRequestor
 		AbstractJavaSearchTests.TypeNameMatchCollector collector = new AbstractJavaSearchTests.TypeNameMatchCollector() {
+			@Override
 			public String toString(){
 				return toFullyQualifiedNamesString();
 			}
@@ -1153,6 +1156,7 @@ public void testBug199392_Zip() throws CoreException {
 
 		// Search all type names with TypeNameMatchRequestor
 		AbstractJavaSearchTests.TypeNameMatchCollector collector = new AbstractJavaSearchTests.TypeNameMatchCollector() {
+			@Override
 			public String toString(){
 				return toFullyQualifiedNamesString();
 			}
@@ -1189,6 +1193,7 @@ public void testBug199392_Zip_SamePartCount() throws CoreException {
 
 		// Search all type names with TypeNameMatchRequestor
 		AbstractJavaSearchTests.TypeNameMatchCollector collector = new AbstractJavaSearchTests.TypeNameMatchCollector() {
+			@Override
 			public String toString(){
 				return toFullyQualifiedNamesString();
 			}
@@ -1447,8 +1452,8 @@ public void testBug250454() throws CoreException {
 		createFile(
 			"/P0/p/Shape.java",
 			"package p;\n" +
-			"public interface Shape {\n" + 
-			"	public void f();\n" + 
+			"public interface Shape {\n" +
+			"	public void f();\n" +
 			"}\n"
 		);
 
@@ -1458,8 +1463,8 @@ public void testBug250454() throws CoreException {
 		createFile(
 			"/P1/p/Square.java",
 			"package p;\n" +
-			"public class Square implements Shape {\n" + 
-			"	public void f() {}\n" + 
+			"public class Square implements Shape {\n" +
+			"	public void f() {}\n" +
 			"}\n"
 		);
 
@@ -1469,9 +1474,9 @@ public void testBug250454() throws CoreException {
 		createFile(
 			"/P2/p/ShapeUser.java",
 			"package p;\n" +
-			"public class ShapeUser {\n" + 
-			"	public void useShape(Shape p_shape) {\n" + 
-			"		p_shape.f();\n" + 
+			"public class ShapeUser {\n" +
+			"	public void useShape(Shape p_shape) {\n" +
+			"		p_shape.f();\n" +
 			"	}\n"
 		);
 
@@ -1507,8 +1512,8 @@ public void testBug250454_jars() throws CoreException, IOException {
 		String[] pathsAndContents= new String[] {
 			"p/Shape.java",
 			"package p;\n" +
-			"public interface Shape {\n" + 
-			"	public void f();\n" + 
+			"public interface Shape {\n" +
+			"	public void f();\n" +
 			"}\n"
 		};
 		createJar(pathsAndContents, jarPath);
@@ -1519,8 +1524,8 @@ public void testBug250454_jars() throws CoreException, IOException {
 		createFile(
 			"/P1/p/Square.java",
 			"package p;\n" +
-			"public class Square implements Shape {\n" + 
-			"	public void f() {}\n" + 
+			"public class Square implements Shape {\n" +
+			"	public void f() {}\n" +
 			"}\n"
 		);
 
@@ -1530,9 +1535,9 @@ public void testBug250454_jars() throws CoreException, IOException {
 		createFile(
 			"/P2/p/ShapeUser.java",
 			"package p;\n" +
-			"public class ShapeUser {\n" + 
-			"	public void useShape(Shape p_shape) {\n" + 
-			"		p_shape.f();\n" + 
+			"public class ShapeUser {\n" +
+			"	public void useShape(Shape p_shape) {\n" +
+			"		p_shape.f();\n" +
 			"	}\n"
 		);
 

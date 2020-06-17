@@ -81,18 +81,18 @@ public class SearchTests extends ModifyingResourceTests implements IJavaSearchCo
 		Vector results = new Vector<>();
 		@Override
 		public void acceptMethod(
-				char[] methodName, 
-				int parameterCount, 
-				char[] declaringQualifier, 
-				char[] simpleTypeName, 
-				int typeModifiers, 
-				char[] packageName, 
-				char[] signature, 
-				char[][] parameterTypes, 
-				char[][] parameterNames, 
-				char[] returnType, 
-				int modifiers, 
-				String path, 
+				char[] methodName,
+				int parameterCount,
+				char[] declaringQualifier,
+				char[] simpleTypeName,
+				int typeModifiers,
+				char[] packageName,
+				char[] signature,
+				char[][] parameterTypes,
+				char[][] parameterNames,
+				char[] returnType,
+				int modifiers,
+				String path,
 				int methodIndex) {
 			StringBuffer buffer = new StringBuffer();
 			char c = '.';
@@ -107,9 +107,9 @@ public class SearchTests extends ModifyingResourceTests implements IJavaSearchCo
 			buffer.append(methodName);
 			buffer.append('(');
 			parameterTypes = signature == null ? parameterTypes : Signature.getParameterTypes(signature);
-			
+
 			for (int i = 0; i < parameterCount; i++) {
-				
+
 				if (parameterTypes != null) {
 					char[] parameterType;
 					if (parameterTypes.length != parameterCount) {
@@ -323,6 +323,7 @@ protected void assertValidMatchRule(String pattern, int rule, int expected) {
 		assertEquals(pattern+"' does not match expected match rule!", expectedRule, validatedRule);
 	}
 }
+@Override
 public void setUpSuite() throws Exception {
 	super.setUpSuite();
 	createJavaProject("P");
@@ -345,6 +346,7 @@ public void setUpSuite() throws Exception {
 		"}"
 	);
 }
+@Override
 public void tearDownSuite() throws Exception {
 	deleteProject("P");
 	super.tearDownSuite();
@@ -472,6 +474,7 @@ public void testConcurrentJob() throws CoreException, InterruptedException, IOEx
 		final boolean[] success = new boolean[1];
 		final WaitUntilReadyMonitor monitor = new WaitUntilReadyMonitor();
 		Thread thread = new Thread() {
+			@Override
 			public void run() {
 				try {
 					assertAllTypes(

@@ -10,7 +10,7 @@
  *
  * Contributors:
  *    wharley@bea.com - initial API and implementation
- *    
+ *
  *******************************************************************************/
 
 package org.eclipse.jdt.internal.apt.pluggable.core.dispatch;
@@ -29,11 +29,11 @@ import org.eclipse.jdt.internal.compiler.apt.dispatch.AptProblem;
 import org.eclipse.jdt.internal.compiler.apt.dispatch.BaseMessagerImpl;
 
 /**
- * 
+ *
  * @since 3.3
  */
 public class IdeMessagerImpl implements Messager {
-	
+
 	private final IdeAnnotationProcessorManager _manager;
 	private final IdeProcessingEnvImpl _env;
 
@@ -50,6 +50,7 @@ public class IdeMessagerImpl implements Messager {
 	/* (non-Javadoc)
 	 * @see javax.annotation.processing.Messager#printMessage(javax.tools.Diagnostic.Kind, java.lang.CharSequence)
 	 */
+	@Override
 	public void printMessage(Kind kind, CharSequence msg) {
 		printMessage(kind, msg, null, null, null);
 	}
@@ -57,6 +58,7 @@ public class IdeMessagerImpl implements Messager {
 	/* (non-Javadoc)
 	 * @see javax.annotation.processing.Messager#printMessage(javax.tools.Diagnostic.Kind, java.lang.CharSequence, javax.lang.model.element.Element)
 	 */
+	@Override
 	public void printMessage(Kind kind, CharSequence msg, Element e) {
 		printMessage(kind, msg, e, null, null);
 	}
@@ -64,6 +66,7 @@ public class IdeMessagerImpl implements Messager {
 	/* (non-Javadoc)
 	 * @see javax.annotation.processing.Messager#printMessage(javax.tools.Diagnostic.Kind, java.lang.CharSequence, javax.lang.model.element.Element, javax.lang.model.element.AnnotationMirror)
 	 */
+	@Override
 	public void printMessage(Kind kind, CharSequence msg, Element e,
 			AnnotationMirror a) {
 		printMessage(kind, msg, e, a, null);
@@ -73,6 +76,7 @@ public class IdeMessagerImpl implements Messager {
 	/* (non-Javadoc)
 	 * @see javax.annotation.processing.Messager#printMessage(javax.tools.Diagnostic.Kind, java.lang.CharSequence, javax.lang.model.element.Element, javax.lang.model.element.AnnotationMirror, javax.lang.model.element.AnnotationValue)
 	 */
+	@Override
 	public void printMessage(Kind kind, CharSequence msg, Element e, AnnotationMirror a,
 			AnnotationValue v) {
 		AptProblem problem = BaseMessagerImpl.createProblem(kind, msg, e, a, v);

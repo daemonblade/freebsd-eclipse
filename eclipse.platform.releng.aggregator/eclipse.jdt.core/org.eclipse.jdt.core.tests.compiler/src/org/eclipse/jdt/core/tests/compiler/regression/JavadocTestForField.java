@@ -34,6 +34,7 @@ public class JavadocTestForField extends JavadocTest {
 	static { // Use this static to initialize testNames (String[]) , testRange (int[2]), testNumbers (int[])
 	}
 
+	@Override
 	protected Map getCompilerOptions() {
 		Map options = super.getCompilerOptions();
 		options.put(CompilerOptions.OPTION_ReportInvalidJavadoc, CompilerOptions.ERROR);
@@ -1033,12 +1034,12 @@ public class JavadocTestForField extends JavadocTest {
 					+ "	public int x;\n"
 					+ "}\n" });
 	}
-	
+
 	// https://bugs.eclipse.org/bugs/show_bug.cgi?id=451418, [1.8][compiler] NPE at ParameterizedGenericMethodBinding.computeCompatibleMethod18
 	public void test451418() {
 		if (this.complianceLevel < ClassFileConstants.JDK1_5)
 			return;
-		
+
 		runNegativeTest(
 			new String[] {
 				"X.java",
@@ -1050,11 +1051,11 @@ public class JavadocTestForField extends JavadocTest {
 				"  public int i;\n" +
 				"}\n"
 			},
-			"----------\n" + 
-			"1. ERROR in X.java (at line 2)\n" + 
-			"	public static <T> FieldSet<T> emptySet() { return null; }\n" + 
-			"	                  ^^^^^^^^\n" + 
-			"FieldSet cannot be resolved to a type\n" + 
+			"----------\n" +
+			"1. ERROR in X.java (at line 2)\n" +
+			"	public static <T> FieldSet<T> emptySet() { return null; }\n" +
+			"	                  ^^^^^^^^\n" +
+			"FieldSet cannot be resolved to a type\n" +
 			"----------\n");
 	}
 }

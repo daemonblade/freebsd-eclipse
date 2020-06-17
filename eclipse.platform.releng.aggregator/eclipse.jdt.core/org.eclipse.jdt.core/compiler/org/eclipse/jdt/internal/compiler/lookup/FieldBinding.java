@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -35,7 +35,7 @@ import org.eclipse.jdt.internal.compiler.problem.ProblemReporter;
 public class FieldBinding extends VariableBinding {
 	public ReferenceBinding declaringClass;
 	public int compoundUseFlag = 0; // number or accesses via postIncrement or compoundAssignment
-	
+
 protected FieldBinding() {
 	super(null, null, 0, null);
 	// for creating problem field
@@ -269,7 +269,7 @@ public void fillInDefaultNonNullness(FieldDeclaration sourceField, Scope scope) 
 			this.tagBits |= TagBits.AnnotationNonNull;
 		} else if ((this.tagBits & TagBits.AnnotationNonNull) != 0) {
 			scope.problemReporter().nullAnnotationIsRedundant(sourceField);
-		}		
+		}
 	}
 }
 
@@ -412,6 +412,10 @@ public final boolean isVolatile() {
 @Override
 public final int kind() {
 	return FIELD;
+}
+public boolean isRecordComponent() {
+	return this.declaringClass != null && this.declaringClass.isRecord() && !this.isStatic()
+			&& (this.modifiers & ExtraCompilerModifiers.AccRecord) != 0;
 }
 /* Answer true if the receiver is visible to the invocationPackage.
 */

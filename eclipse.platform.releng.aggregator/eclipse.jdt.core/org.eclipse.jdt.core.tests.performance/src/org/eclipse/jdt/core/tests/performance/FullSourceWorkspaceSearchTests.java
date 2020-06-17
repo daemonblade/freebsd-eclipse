@@ -80,12 +80,14 @@ public class FullSourceWorkspaceSearchTests extends FullSourceWorkspaceTests imp
 		return FullSourceWorkspaceSearchTests.class;
 	}
 
+	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 	}
 	/* (non-Javadoc)
 	 * @see junit.framework.TestCase#tearDown()
 	 */
+	@Override
 	protected void tearDown() throws Exception {
 
 		// End of execution => one test less
@@ -521,7 +523,7 @@ public class FullSourceWorkspaceSearchTests extends FullSourceWorkspaceTests imp
 	 */
 	public void testSearchMethod() throws CoreException {
 		tagAsSummary("Search method occurences (no resolution)", false); // do NOT put in fingerprint
-		
+
 		// Wait for indexing end
 		AbstractJavaModelTests.waitUntilIndexesReady();
 

@@ -46,6 +46,7 @@ public class EvaluationSetup extends CompilerTestSetup {
 		super(complianceLevel);
 	}
 
+	@Override
 	protected void setUp() {
 		if (this.context == null) { // non null if called from subclass
 			try (ServerSocket server = new ServerSocket(0)) {
@@ -83,8 +84,8 @@ public class EvaluationSetup extends CompilerTestSetup {
 				this.target = new TargetInterface();
 				// allow 30s max to connect (see https://bugs.eclipse.org/bugs/show_bug.cgi?id=188127)
 				// Increased to 60 s for https://bugs.eclipse.org/bugs/show_bug.cgi?id=547417
-				this.target.connect(server, 60000); 
-				
+				this.target.connect(server, 60000);
+
 				assertTrue("Failed to connect VM server", this.target.isConnected());
 
 				System.out.println(getName() + ": connected to target");
@@ -101,6 +102,7 @@ public class EvaluationSetup extends CompilerTestSetup {
 
 	protected void startReader(String name, final InputStream in, final PrintStream out) {
 		(new Thread(name) {
+			@Override
 			public void run() {
 				int read = 0;
 				while (read != -1) {
@@ -117,6 +119,7 @@ public class EvaluationSetup extends CompilerTestSetup {
 		}).start();
 	}
 
+	@Override
 	final protected void tearDown() {
 		if (this.context != null) {
 			LocalVirtualMachine vm = this.launchedVM;

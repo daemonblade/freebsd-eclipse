@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -54,6 +54,8 @@ private static Class[] getAllTestClasses() {
 
 		// Compilation unit tests
 		CompilationUnitTests.class,
+		// Compilation unitTests (Java 14)
+		CompilationUnitTests14.class,
 
 		// Source attachment tests
 		AttachSourceTests.class,
@@ -201,13 +203,13 @@ private static Class[] getAllTestClasses() {
 
 		// Creation of imports
 		CreateImportsTests.class,
-		
+
 		// Util tests
 		UtilTests.class,
-		
+
 		JavaCoreOptionsTests.class,
 		JavaCorePreferenceModifyListenerTest.class,
-		
+
 		// Tests regarding null-annotations:
 		NullAnnotationModelTests.class,
 		ExternalAnnotations17Test.class,

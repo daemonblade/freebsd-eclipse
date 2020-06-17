@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -116,13 +116,31 @@ public static void checkNeedForCastCast(BlockScope scope, CastExpression enclosi
 
 	CastExpression nestedCast = (CastExpression) enclosingCast.expression;
 	if ((nestedCast.bits & ASTNode.UnnecessaryCast) == 0) return;
+	if (nestedCast.losesPrecision(scope)) return;
 	// check if could cast directly to enclosing cast type, without intermediate type cast
 	CastExpression alternateCast = new CastExpression(null, enclosingCast.type);
 	alternateCast.resolvedType = enclosingCast.resolvedType;
-	if (!alternateCast.checkCastTypesCompatibility(scope, enclosingCast.resolvedType, nestedCast.expression.resolvedType, null /* no expr to avoid side-effects*/)) return;
+	if (!alternateCast.checkCastTypesCompatibility(scope, enclosingCast.resolvedType, nestedCast.expression.resolvedType, null /* no expr to avoid side-effects*/, true)) return;
 	scope.problemReporter().unnecessaryCast(nestedCast);
 }
 
+private boolean losesPrecision(Scope scope) {
+	// implements the following from JLS §5.1.2:
+	// "A widening primitive conversion from int to float, or from long to float, or from long to double, may result in loss of precision [...]"
+	// (extended to boxed types)
+	TypeBinding exprType = this.expression.resolvedType;
+	if (exprType.isBoxedPrimitiveType())
+		exprType = scope.environment().computeBoxingType(exprType);
+	switch (this.resolvedType.id) {
+		case TypeIds.T_JavaLangFloat:
+		case TypeIds.T_float: 	// (float)myInt , (float)myLong need rounding
+			return exprType.id == TypeIds.T_int || exprType.id == TypeIds.T_long;
+		case TypeIds.T_JavaLangDouble:
+		case TypeIds.T_double:	// (double)myLong needs rounding
+			return exprType.id == TypeIds.T_long;
+	}
+	return false;
+}
 
 /**
  * Casting an enclosing instance will considered as useful if removing it would actually bind to a different type
@@ -214,6 +232,7 @@ public static void checkNeedForArgumentCasts(BlockScope scope, Expression receiv
 public static void checkNeedForArgumentCasts(BlockScope scope, int operator, int operatorSignature, Expression left, int leftTypeId, boolean leftIsCast, Expression right, int rightTypeId, boolean rightIsCast) {
 	if (scope.compilerOptions().getSeverity(CompilerOptions.UnnecessaryTypeCheck) == ProblemSeverities.Ignore) return;
 
+	boolean useAutoBoxing = operator != OperatorIds.EQUAL_EQUAL && operator != OperatorIds.NOT_EQUAL;
 	// check need for left operand cast
 	int alternateLeftTypeId = leftTypeId;
 	if (leftIsCast) {
@@ -223,7 +242,10 @@ public static void checkNeedForArgumentCasts(BlockScope scope, int operator, int
 		} else  {
 			TypeBinding alternateLeftType = ((CastExpression)left).expression.resolvedType;
 			if (alternateLeftType == null) return; // cannot do better
-			if ((alternateLeftTypeId = alternateLeftType.id) == leftTypeId || scope.environment().computeBoxingType(alternateLeftType).id == leftTypeId) { // obvious identity cast
+			if ((alternateLeftTypeId = alternateLeftType.id) == leftTypeId
+					|| (useAutoBoxing
+							? scope.environment().computeBoxingType(alternateLeftType).id == leftTypeId
+							: TypeBinding.equalsEquals(alternateLeftType, left.resolvedType))) { // obvious identity cast
 				scope.problemReporter().unnecessaryCast((CastExpression)left);
 				leftIsCast = false;
 			} else if (alternateLeftTypeId == TypeIds.T_null) {
@@ -241,7 +263,10 @@ public static void checkNeedForArgumentCasts(BlockScope scope, int operator, int
 		} else {
 			TypeBinding alternateRightType = ((CastExpression)right).expression.resolvedType;
 			if (alternateRightType == null) return; // cannot do better
-			if ((alternateRightTypeId = alternateRightType.id) == rightTypeId || scope.environment().computeBoxingType(alternateRightType).id == rightTypeId) { // obvious identity cast
+			if ((alternateRightTypeId = alternateRightType.id) == rightTypeId
+					|| (useAutoBoxing
+							? scope.environment().computeBoxingType(alternateRightType).id == rightTypeId
+							: TypeBinding.equalsEquals(alternateRightType, right.resolvedType))) { // obvious identity cast
 				scope.problemReporter().unnecessaryCast((CastExpression)right);
 				rightIsCast = false;
 			} else if (alternateRightTypeId == TypeIds.T_null) {
@@ -371,10 +396,16 @@ private static boolean preventsUnlikelyTypeWarning(TypeBinding castedType, TypeB
 
 @Override
 public boolean checkUnsafeCast(Scope scope, TypeBinding castType, TypeBinding expressionType, TypeBinding match, boolean isNarrowing) {
+	return CastExpression.checkUnsafeCast(this, scope, castType, expressionType, match, isNarrowing);
+}
+public static boolean checkUnsafeCast(Expression expression, Scope scope, TypeBinding castType, TypeBinding expressionType, TypeBinding match, boolean isNarrowing) {
+	// In case of expression being a InstanceOfExpression, this.resolvedType is null
+	// hence use the type of RHS of the instanceof operator
+	TypeBinding resolvedType = expression.resolvedType != null ? expression.resolvedType : castType;
 	if (TypeBinding.equalsEquals(match, castType)) {
-		if (!isNarrowing && TypeBinding.equalsEquals(match, this.resolvedType.leafComponentType()) // do not tag as unnecessary when recursing through upper bounds
+		if (!isNarrowing && TypeBinding.equalsEquals(match, resolvedType.leafComponentType()) // do not tag as unnecessary when recursing through upper bounds
 				&& !(expressionType.isParameterizedType() && expressionType.isProvablyDistinct(castType))) {
-			tagAsUnnecessaryCast(scope, castType);
+			expression.tagAsUnnecessaryCast(scope, castType);
 		}
 		return true;
 	}
@@ -389,7 +420,7 @@ public boolean checkUnsafeCast(Scope scope, TypeBinding castType, TypeBinding ex
 		case Binding.PARAMETERIZED_TYPE :
 			if (!castType.isReifiable()) {
 				if (match == null) { // unrelated types
-					this.bits |= ASTNode.UnsafeCast;
+					expression.bits |= ASTNode.UnsafeCast;
 					return true;
 				}
 				switch (match.kind()) {
@@ -397,7 +428,7 @@ public boolean checkUnsafeCast(Scope scope, TypeBinding castType, TypeBinding ex
 						if (isNarrowing) {
 							// [JLS 5.5] T <: S
 							if (expressionType.isRawType() || !expressionType.isEquivalentTo(match)) {
-								this.bits |= ASTNode.UnsafeCast;
+								expression.bits |= ASTNode.UnsafeCast;
 								return true;
 							}
 							// [JLS 5.5] S has no subtype X != T, such that |X| == |T|
@@ -408,7 +439,7 @@ public boolean checkUnsafeCast(Scope scope, TypeBinding castType, TypeBinding ex
 							TypeBinding[] castArguments = paramCastType.arguments;
 							int length = castArguments == null ? 0 : castArguments.length;
 							if (paramMatch.arguments == null || length > paramMatch.arguments.length) {
-								this.bits |= ASTNode.UnsafeCast;
+								expression.bits |= ASTNode.UnsafeCast;
 							} else if ((paramCastType.tagBits & (TagBits.HasDirectWildcard|TagBits.HasTypeVariable)) != 0) {
 								// verify alternate cast type, substituting different type arguments
 								nextAlternateArgument: for (int i = 0; i < length; i++) {
@@ -426,7 +457,7 @@ public boolean checkUnsafeCast(Scope scope, TypeBinding castType, TypeBinding ex
 									LookupEnvironment environment = scope.environment();
 									ParameterizedTypeBinding alternateCastType = environment.createParameterizedType((ReferenceBinding)castType.erasure(), alternateArguments, castType.enclosingType());
 									if (TypeBinding.equalsEquals(alternateCastType.findSuperTypeOriginatingFrom(expressionType), match)) {
-										this.bits |= ASTNode.UnsafeCast;
+										expression.bits |= ASTNode.UnsafeCast;
 										break;
 									}
 								}
@@ -435,18 +466,18 @@ public boolean checkUnsafeCast(Scope scope, TypeBinding castType, TypeBinding ex
 						} else {
 							// [JLS 5.5] T >: S
 							if (!match.isEquivalentTo(castType)) {
-								this.bits |= ASTNode.UnsafeCast;
+								expression.bits |= ASTNode.UnsafeCast;
 								return true;
 							}
 						}
 						break;
 					case Binding.RAW_TYPE :
-						this.bits |= ASTNode.UnsafeCast; // upcast since castType is known to be bound paramType
+						expression.bits |= ASTNode.UnsafeCast; // upcast since castType is known to be bound paramType
 						return true;
 					default :
 						if (isNarrowing){
 							// match is not parameterized or raw, then any other subtype of match will erase  to |T|
-							this.bits |= ASTNode.UnsafeCast;
+							expression.bits |= ASTNode.UnsafeCast;
 							return true;
 						}
 						break;
@@ -456,14 +487,14 @@ public boolean checkUnsafeCast(Scope scope, TypeBinding castType, TypeBinding ex
 		case Binding.ARRAY_TYPE :
 			TypeBinding leafType = castType.leafComponentType();
 			if (isNarrowing && (!leafType.isReifiable() || leafType.isTypeVariable())) {
-				this.bits |= ASTNode.UnsafeCast;
+				expression.bits |= ASTNode.UnsafeCast;
 				return true;
 			}
 			break;
 		case Binding.TYPE_PARAMETER :
-			this.bits |= ASTNode.UnsafeCast;
+			expression.bits |= ASTNode.UnsafeCast;
 			return true;
-//		(disabled) https://bugs.eclipse.org/bugs/show_bug.cgi?id=240807			
+//		(disabled) https://bugs.eclipse.org/bugs/show_bug.cgi?id=240807
 //		case Binding.TYPE :
 //			if (isNarrowing && match == null && expressionType.isParameterizedType()) {
 //				this.bits |= ASTNode.UnsafeCast;
@@ -471,8 +502,8 @@ public boolean checkUnsafeCast(Scope scope, TypeBinding castType, TypeBinding ex
 //			}
 //			break;
 	}
-	if (!isNarrowing && TypeBinding.equalsEquals(match, this.resolvedType.leafComponentType())) { // do not tag as unnecessary when recursing through upper bounds
-		tagAsUnnecessaryCast(scope, castType);
+	if (!isNarrowing && TypeBinding.equalsEquals(match, resolvedType.leafComponentType())) { // do not tag as unnecessary when recursing through upper bounds
+		expression.tagAsUnnecessaryCast(scope, castType);
 	}
 	return true;
 }
@@ -615,7 +646,7 @@ public TypeBinding resolveType(BlockScope scope) {
 					&& expressionType.isProvablyDistinct(this.instanceofType)) {
 				this.bits |= ASTNode.DisableUnnecessaryCastCheck;
 			}
-			boolean isLegal = checkCastTypesCompatibility(scope, castType, expressionType, this.expression);
+			boolean isLegal = checkCastTypesCompatibility(scope, castType, expressionType, this.expression, true);
 			if (isLegal) {
 				this.expression.computeConversion(scope, castType, expressionType);
 				if ((this.bits & ASTNode.UnsafeCast) != 0) { // unsafe cast

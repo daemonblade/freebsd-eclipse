@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2014 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -17,10 +17,12 @@ package org.eclipse.jdt.core.dom;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jdt.internal.core.dom.util.DOMASTUtil;
+
 /**
  * Method declaration AST node type. A method declaration
  * is the union of a method declaration and a constructor declaration.
- * 
+ *
  * <pre>
  * MethodDeclaration:
  *    [ Javadoc ] { ExtendedModifier } [ <b>&lt;</b> TypeParameter { <b>,</b> TypeParameter } <b>&gt;</b> ] ( Type | <b>void</b> )
@@ -35,6 +37,10 @@ import java.util.List;
  *            [ ReceiverParameter <b>,</b> ] [ FormalParameter { <b>,</b> FormalParameter } ]
  *        <b>)</b> { Dimension }
  *        [ <b>throws</b> Type { <b>,</b> Type } ]
+ *        ( Block | <b>;</b> )
+ * CompactConstructorDeclaration:
+ *    [ Javadoc ] ExtendedModifier { ExtendedModifier}
+ *        Identifier
  *        ( Block | <b>;</b> )
  * </pre>
  * <p>
@@ -51,6 +57,7 @@ import java.util.List;
  * parameters), or the first character of the identifier (constructor,
  * no modifiers). The source range extends through the last character of the
  * ";" token (if no body), or the last character of the block (if body).
+ * The compact constructor must be declared public. (jls-8.10.5)
  * </p>
  *
  * @since 2.0
@@ -89,6 +96,13 @@ public class MethodDeclaration extends BodyDeclaration {
 		new SimplePropertyDescriptor(MethodDeclaration.class, "constructor", boolean.class, MANDATORY); //$NON-NLS-1$
 
 	/**
+	 * The "compact constructor" structural property of record node type (type: {@link Boolean}).
+	 * @since 3.22
+	 */
+	public static final SimplePropertyDescriptor COMPACT_CONSTRUCTOR_PROPERTY =
+		new SimplePropertyDescriptor(MethodDeclaration.class, "compactConstructor", boolean.class, OPTIONAL); //$NON-NLS-1$
+
+	/**
 	 * The "name" structural property of this node type (child type: {@link SimpleName}).
 	 * @since 3.0
 	 */
@@ -118,7 +132,7 @@ public class MethodDeclaration extends BodyDeclaration {
 	 */
 	public static final SimplePropertyDescriptor EXTRA_DIMENSIONS_PROPERTY =
 		new SimplePropertyDescriptor(MethodDeclaration.class, "extraDimensions", int.class, MANDATORY); //$NON-NLS-1$
-	
+
 	/**
 	 * The "extraDimensions2" structural property of this node type (element type: {@link Dimension}) (added in JLS8 API).
 	 * @since 3.10
@@ -146,7 +160,7 @@ public class MethodDeclaration extends BodyDeclaration {
 	 */
 	public static final ChildPropertyDescriptor RECEIVER_TYPE_PROPERTY =
 			new ChildPropertyDescriptor(MethodDeclaration.class, "receiverType", Type.class, OPTIONAL, NO_CYCLE_RISK); //$NON-NLS-1$
-	
+
 	/**
 	 * The "receiverQualifier" structural property of this node type (child type: {@link SimpleName}) (added in JLS8 API).
 	 * @since 3.10
@@ -200,6 +214,14 @@ public class MethodDeclaration extends BodyDeclaration {
 	 */
 	private static final List PROPERTY_DESCRIPTORS_8_0;
 
+	/**
+	 * A list of property descriptors (element type:
+	 * {@link StructuralPropertyDescriptor}),
+	 * or null if uninitialized.
+	 * @since 3.22
+	 */
+	private static final List PROPERTY_DESCRIPTORS_9_0;
+
 	static {
 		List propertyList = new ArrayList(10);
 		createPropertyList(MethodDeclaration.class, propertyList);
@@ -242,7 +264,24 @@ public class MethodDeclaration extends BodyDeclaration {
 		addProperty(EXTRA_DIMENSIONS2_PROPERTY, propertyList);
 		addProperty(THROWN_EXCEPTION_TYPES_PROPERTY, propertyList);
 		addProperty(BODY_PROPERTY, propertyList);
-		PROPERTY_DESCRIPTORS_8_0 = reapPropertyList(propertyList);	
+		PROPERTY_DESCRIPTORS_8_0 = reapPropertyList(propertyList);
+
+		propertyList = new ArrayList(14);
+		createPropertyList(MethodDeclaration.class, propertyList);
+		addProperty(JAVADOC_PROPERTY, propertyList);
+		addProperty(MODIFIERS2_PROPERTY, propertyList);
+		addProperty(CONSTRUCTOR_PROPERTY, propertyList);
+		addProperty(TYPE_PARAMETERS_PROPERTY, propertyList);
+		addProperty(RETURN_TYPE2_PROPERTY, propertyList);
+		addProperty(NAME_PROPERTY, propertyList);
+		addProperty(RECEIVER_TYPE_PROPERTY, propertyList);
+		addProperty(RECEIVER_QUALIFIER_PROPERTY, propertyList);
+		addProperty(PARAMETERS_PROPERTY, propertyList);
+		addProperty(EXTRA_DIMENSIONS2_PROPERTY, propertyList);
+		addProperty(THROWN_EXCEPTION_TYPES_PROPERTY, propertyList);
+		addProperty(BODY_PROPERTY, propertyList);
+		addProperty(COMPACT_CONSTRUCTOR_PROPERTY, propertyList);
+		PROPERTY_DESCRIPTORS_9_0 = reapPropertyList(propertyList);
 	}
 
 	/**
@@ -255,10 +294,28 @@ public class MethodDeclaration extends BodyDeclaration {
 	 * @since 3.0
 	 */
 	public static List propertyDescriptors(int apiLevel) {
+		return propertyDescriptors(apiLevel, false);
+	}
+
+	/**
+	 * Returns a list of structural property descriptors for this node type.
+	 * Clients must not modify the result.
+	 *
+	 * @param apiLevel the API level; one of the
+	 * <code>AST.JLS*</code> constants
+	 * @param previewEnabled the previewEnabled flag
+	 * @return a list of property descriptors (element type:
+	 * {@link StructuralPropertyDescriptor})
+	 * @noreference This method is not intended to be referenced by clients.
+	 * @since 3.22
+	 */
+	public static List propertyDescriptors(int apiLevel, boolean previewEnabled) {
 		if (apiLevel == AST.JLS2_INTERNAL) {
 			return PROPERTY_DESCRIPTORS_2_0;
 		} else if (apiLevel < AST.JLS8_INTERNAL) {
 			return PROPERTY_DESCRIPTORS_3_0;
+		} else if (DOMASTUtil.isRecordDeclarationSupported(apiLevel, previewEnabled)) {
+			return PROPERTY_DESCRIPTORS_9_0;
 		} else {
 			return PROPERTY_DESCRIPTORS_8_0;
 		}
@@ -269,6 +326,13 @@ public class MethodDeclaration extends BodyDeclaration {
 	 * Defaults to method.
 	 */
 	private boolean isConstructor = false;
+
+
+	/**
+	 * <code>true</code> for a compact constructor in a record, <code>false</code> for a method.
+	 * Defaults to method.
+	 */
+	private boolean isCompactConstructor = false;
 
 	/**
 	 * The method name; lazily initialized; defaults to an unspecified,
@@ -282,7 +346,7 @@ public class MethodDeclaration extends BodyDeclaration {
 	 * @since 3.10
 	 */
 	private Type optionalReceiverType = null;
-	
+
 	/**
 	 * Qualifying name of the explicit </code>this</code> parameter, or <code>null</code> if none.
 	 * Defaults to none.
@@ -334,7 +398,7 @@ public class MethodDeclaration extends BodyDeclaration {
 	 * (element type: {@link Dimension}).
 	 * Null before JLS8. Added in JLS8; defaults to an empty list
 	 * (see constructor).
-	 * 
+	 *
 	 * @since 3.10
 	 */
 	private ASTNode.NodeList extraDimensions = null;
@@ -351,7 +415,7 @@ public class MethodDeclaration extends BodyDeclaration {
 	 * The list of thrown exception Types (element type: {@link Type}).
 	 * Null before JLS8. Added in JLS8; defaults to an empty list
 	 * (see constructor).
-	 * 
+	 *
 	 * @since 3.10
 	 */
 	private ASTNode.NodeList thrownExceptionTypes = null;
@@ -400,6 +464,11 @@ public class MethodDeclaration extends BodyDeclaration {
 	}
 
 	@Override
+	final List internalStructuralPropertiesForType(int apiLevel, boolean previewEnabled) {
+		return propertyDescriptors(apiLevel, previewEnabled);
+	}
+
+	@Override
 	final int internalGetSetIntProperty(SimplePropertyDescriptor property, boolean get, int value) {
 		if (property == MODIFIERS_PROPERTY) {
 			if (get) {
@@ -430,10 +499,19 @@ public class MethodDeclaration extends BodyDeclaration {
 				setConstructor(value);
 				return false;
 			}
+		} else if (property == COMPACT_CONSTRUCTOR_PROPERTY) {
+			if (get) {
+				return isCompactConstructor();
+			} else {
+				setCompactConstructor(value);
+				return false;
+			}
 		}
 		// allow default implementation to flag the error
 		return super.internalGetSetBooleanProperty(property, get, value);
 	}
+
+
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
@@ -513,7 +591,7 @@ public class MethodDeclaration extends BodyDeclaration {
 		}
 		if (property == THROWN_EXCEPTION_TYPES_PROPERTY) {
 			return thrownExceptionTypes();
-		}		
+		}
 		if (property == EXTRA_DIMENSIONS2_PROPERTY) {
 			return extraDimensions();
 		}
@@ -575,7 +653,10 @@ public class MethodDeclaration extends BodyDeclaration {
 		if (this.ast.apiLevel() >= AST.JLS8_INTERNAL) {
 			result.thrownExceptionTypes().addAll(ASTNode.copySubtrees(target, thrownExceptionTypes()));
 		} else {
-			result.thrownExceptions().addAll(ASTNode.copySubtrees(target, thrownExceptions()));			
+			result.thrownExceptions().addAll(ASTNode.copySubtrees(target, thrownExceptions()));
+		}
+		if (DOMASTUtil.isRecordDeclarationSupported(this.ast)) {
+			result.setCompactConstructor(isCompactConstructor());
 		}
 		result.setBody(
 			(Block) ASTNode.copySubtree(target, getBody()));
@@ -610,9 +691,9 @@ public class MethodDeclaration extends BodyDeclaration {
 			acceptChildren(visitor, this.parameters);
 			if (this.ast.apiLevel() >= AST.JLS8_INTERNAL) {
 				acceptChildren(visitor, this.extraDimensions);
-				acceptChildren(visitor, this.thrownExceptionTypes);				
+				acceptChildren(visitor, this.thrownExceptionTypes);
 			} else {
-				acceptChildren(visitor, this.thrownExceptions);				
+				acceptChildren(visitor, this.thrownExceptions);
 			}
 			acceptChild(visitor, getBody());
 		}
@@ -639,6 +720,40 @@ public class MethodDeclaration extends BodyDeclaration {
 		preValueChange(CONSTRUCTOR_PROPERTY);
 		this.isConstructor = isConstructor;
 		postValueChange(CONSTRUCTOR_PROPERTY);
+	}
+
+	/**
+	 * Returns whether this declaration declares a constructor or a method.
+	 *
+	 * @return <code>true</code> if this is a compact constructor declaration in a record,
+	 *    and <code>false</code> if this is a method declaration
+	 * @since 3.22
+	 * @noreference This method is not intended to be referenced by clients.
+	 * @exception UnsupportedOperationException if this operation is not used in JLS14
+	 * @exception UnsupportedOperationException if this operation is used with previewEnabled flag as false
+	 */
+
+	public boolean isCompactConstructor() {
+		supportedOnlyIn14();
+		unsupportedWithoutPreviewError();
+		return this.isCompactConstructor;
+	}
+
+	/**
+	 * Sets whether this declaration declares a compact constructor in a record or a method.
+	 *
+	 * @param isCompactConstructor <code>true</code> for a constructor declaration,
+	 *    and <code>false</code> for a method declaration
+	 * @since 3.22
+	 * @noreference This method is not intended to be referenced by clients.
+	 * @exception UnsupportedOperationException if this operation is not used in JLS14
+	 * @exception UnsupportedOperationException if this operation is used with previewEnabled flag as false
+	 */
+
+	public void setCompactConstructor(boolean isCompactConstructor) {
+		preValueChange(COMPACT_CONSTRUCTOR_PROPERTY);
+		this.isCompactConstructor = isCompactConstructor;
+		postValueChange(COMPACT_CONSTRUCTOR_PROPERTY);
 	}
 
 	/**
@@ -703,10 +818,10 @@ public class MethodDeclaration extends BodyDeclaration {
 	}
 
 	/**
-	 * Returns the receiver type explicitly declared in the method or constructor 
+	 * Returns the receiver type explicitly declared in the method or constructor
 	 * declaration (added in JLS8 API).
 	 *
-	 * If the receiver is not explicitly declared in the method or constructor 
+	 * If the receiver is not explicitly declared in the method or constructor
 	 * declaration, <code>null</code> is returned.
 	 *
 	 * @return the receiver type or <code>null</code> if receiver is not declared explicitly
@@ -723,7 +838,7 @@ public class MethodDeclaration extends BodyDeclaration {
 	 * <p>
 	 * A receiver type is only legal in Java code if it appears on an instance method or on a constructor of an inner class.
 	 * </p>
-	 * 
+	 *
 	 * @param receiverType type of the explicit receiver parameter, or <code>null</code> if there is none
 	 * @exception UnsupportedOperationException if this operation is used below JLS8
 	 * @since 3.10
@@ -741,7 +856,7 @@ public class MethodDeclaration extends BodyDeclaration {
 	 * <p>
 	 * A receiver qualifier is only legal in Java code if it appears on a constructor of an inner class.
 	 * </p>
-	 * 
+	 *
 	 * @return the qualifying name or <code>null</code> if a qualifier was not specified
 	 * @exception UnsupportedOperationException if this operation is used below JLS8
 	 * @since 3.10
@@ -750,10 +865,10 @@ public class MethodDeclaration extends BodyDeclaration {
 		unsupportedIn2_3_4();
 		return this.optionalReceiverQualifier;
 	}
-	
+
 	/**
 	 * Sets the given simple name as the qualifier for the receiver (added in JLS8 API).
-	 * 
+	 *
 	 * @param receiverQualifier explicit receiver parameter to be added to the method declaration
 	 * @exception UnsupportedOperationException if this operation is used below JLS8
 	 * @since 3.10
@@ -765,7 +880,7 @@ public class MethodDeclaration extends BodyDeclaration {
 		this.optionalReceiverQualifier = receiverQualifier;
 		postReplaceChild(oldChild, receiverQualifier, RECEIVER_QUALIFIER_PROPERTY);
 	}
-	
+
 	/**
 	 * Returns the live ordered list of method parameter declarations for this
 	 * method declaration.
@@ -838,7 +953,7 @@ public class MethodDeclaration extends BodyDeclaration {
 	 * @return the live list of exception types
 	 *    (element type: {@link Type})
 	 * @exception UnsupportedOperationException if this operation is used
-	 *            in a JLS2, JLS3 or JLS4 AST    
+	 *            in a JLS2, JLS3 or JLS4 AST
 	 * @since 3.10
 	 */
 	public List thrownExceptionTypes()  {
@@ -1041,7 +1156,7 @@ public class MethodDeclaration extends BodyDeclaration {
 	 * @exception IllegalArgumentException if the number of dimensions is
 	 *    negative
 	 * @exception UnsupportedOperationException if this operation is used in
-	 * a JLS8 or later AST 
+	 * a JLS8 or later AST
 	 * @since 2.1
 	 * @deprecated In the JLS8 API, this method is replaced by
 	 * {@link #extraDimensions()} which contains a list of {@link Dimension} nodes.
@@ -1061,7 +1176,7 @@ public class MethodDeclaration extends BodyDeclaration {
 
 	/**
 	 * Returns the live ordered list of extra dimensions with optional annotations (added in JLS8 API).
-	 * 
+	 *
 	 * @return the live list of extra dimensions with optional annotations (element type: {@link Dimension})
 	 * @exception UnsupportedOperationException if this operation is used below JLS8
 	 * @since 3.10

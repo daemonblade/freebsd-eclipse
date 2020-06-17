@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -122,7 +122,7 @@ public static Test suite() {
 	ArrayList since_1_6 = new ArrayList();
 	since_1_6.add(StackMapAttributeTest.class);
 	since_1_6.add(Compliance_1_6.class);
-	
+
 	ArrayList since_1_7 = new ArrayList();
 	since_1_7.add(AssignmentTest_1_7.class);
 	since_1_7.add(BinaryLiteralTest.class);
@@ -133,7 +133,7 @@ public static Test suite() {
 	since_1_7.add(PolymorphicSignatureTest.class);
 	since_1_7.add(Compliance_1_7.class);
 	since_1_7.add(MethodHandleTest.class);
-	
+
 	ArrayList since_1_8 = new ArrayList();
 	since_1_8.add(NegativeTypeAnnotationTest.class);
 	since_1_8.add(NullTypeAnnotationTest.class);
@@ -168,26 +168,33 @@ public static Test suite() {
 	since_9.add(UnnamedModuleTest.class);
 	since_9.add(NullAnnotationTests9.class);
 	since_9.add(AnnotationTest_9.class);
+	since_9.add(JavadocTestForModule.class);
 
 	// add 10 specific test here (check duplicates)
 	ArrayList since_10 = new ArrayList();
 	since_10.add(JEP286Test.class);
 	since_10.add(Unicode10Test.class);
-	
+
 	// add 11 specific test here (check duplicates)
 	ArrayList since_11 = new ArrayList();
 	 since_11.add(JEP323VarLambdaParamsTest.class);
 	 since_11.add(JEP181NestTest.class);
+	 since_11.add(BatchCompilerTest2.class);
 
 	// add 12 specific test here (check duplicates)
 	 ArrayList since_12 = new ArrayList();
-	 since_12.add(SwitchExpressionTest.class);
 	 since_12.add(Unicode11Test.class);
 
 		// add 13 specific test here (check duplicates)
 	 ArrayList since_13 = new ArrayList();
-	 since_13.add(SwitchExpressionsYieldTest.class);
 	 since_13.add(Unicode12_1Test.class);
+
+	 // add 14 specific test here (check duplicates)
+	 ArrayList since_14 = new ArrayList();
+	 since_14.add(SwitchExpressionsYieldTest.class);
+	 since_14.add(RecordsRestrictedClassTest.class);
+	 since_14.add(PatternMatching14Test.class);
+	 since_14.add(JavadocTestForRecord.class);
 
 	// Build final test suite
 	TestSuite all = new TestSuite(TestAll.class.getName());
@@ -314,6 +321,22 @@ public static Test suite() {
 		tests_13.addAll(since_13);
 		TestCase.resetForgottenFilters(tests_13);
 		all.addTest(AbstractCompilerTest.buildComplianceTestSuite(ClassFileConstants.getComplianceLevelForJavaVersion(ClassFileConstants.MAJOR_VERSION_13), tests_13));
+	}
+	if ((possibleComplianceLevels & AbstractCompilerTest.F_14) != 0) {
+		ArrayList tests_14 = (ArrayList)standardTests.clone();
+		tests_14.addAll(since_1_4);
+		tests_14.addAll(since_1_5);
+		tests_14.addAll(since_1_6);
+		tests_14.addAll(since_1_7);
+		tests_14.addAll(since_1_8);
+		tests_14.addAll(since_9);
+		tests_14.addAll(since_10);
+		tests_14.addAll(since_11);
+		tests_14.addAll(since_12);
+		tests_14.addAll(since_13);
+		tests_14.addAll(since_14);
+		TestCase.resetForgottenFilters(tests_14);
+		all.addTest(AbstractCompilerTest.buildComplianceTestSuite(ClassFileConstants.getComplianceLevelForJavaVersion(ClassFileConstants.MAJOR_VERSION_14), tests_14));
 	}
 	all.addTest(new TestSuite(Jsr14Test.class));
 	return all;

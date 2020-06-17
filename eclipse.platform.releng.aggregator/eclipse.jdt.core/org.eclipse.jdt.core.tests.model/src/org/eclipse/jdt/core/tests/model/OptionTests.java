@@ -62,6 +62,7 @@ public static Test suite() {
 	return buildModelTestSuite(OptionTests.class);
 }
 
+@Override
 protected void tearDown() throws Exception {
 	// Put back default options
 	JavaCore.setOptions(JavaCore.getDefaultOptions());
@@ -730,11 +731,11 @@ public void testBug324987_Project01() throws CoreException {
 		project.setOption(obsoleteOption, JavaCore.DO_NOT_INSERT);
 		// Verify that obsolete preference is not stored
 		assertNull(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				project.getEclipsePreferences().get(obsoleteOption, null));
 		// Verify that project obsolete option is well retrieved
 		assertEquals(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaCore.DO_NOT_INSERT,
 				project.getOption(obsoleteOption, true));
 	} finally {
@@ -758,11 +759,11 @@ public void testBug324987_Project02() throws CoreException {
 		project.setOptions(testOptions);
 		// Verify that obsolete preference is not stored
 		assertNull(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				project.getEclipsePreferences().get(obsoleteOption, null));
 		// Verify that project obsolete option is well retrieved
 		assertEquals(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaCore.INSERT,
 				project.getOption(obsoleteOption, true));
 	} finally {
@@ -788,9 +789,11 @@ public void testBug346010() throws CoreException {
 			tmp.put(additionalKey, additionalValue);
 			this.additionalEntry = (Map.Entry) tmp.entrySet().iterator().next();
 		}
+		@Override
 		public Set entrySet() {
 			return new HashSet() {
 				private static final long serialVersionUID = 1L;
+				@Override
 				public Iterator iterator() {
 					List orderedEntries;
 					orderedEntries = new ArrayList(ForcedOrderMap.this.original.entrySet());
@@ -799,6 +802,7 @@ public void testBug346010() throws CoreException {
 				}
 			};
 		}
+		@Override
 		public synchronized boolean containsKey(Object key) {
 			return this.original.containsKey(key) || key.equals(this.additionalEntry.getKey());
 		}
@@ -812,11 +816,11 @@ public void testBug346010() throws CoreException {
 		project.setOptions(orderedOptions);
 		// Verify that obsolete preference is not stored
 		assertNull(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				project.getEclipsePreferences().get(obsoleteOption, null));
 		// Verify that project obsolete option is well retrieved
 		assertEquals(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaCore.INSERT,
 				project.getOption(obsoleteOption, true));
 	} finally {
@@ -840,12 +844,12 @@ public void testBug324987_Project03() throws CoreException {
 		project.getEclipsePreferences().put(obsoleteOption, JavaCore.DO_NOT_INSERT);
 		// Verify that obsolete preference is stored
 		assertEquals(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaCore.DO_NOT_INSERT,
 				project.getEclipsePreferences().get(obsoleteOption, null));
 		// Verify that project obsolete option is well retrieved
 		assertEquals(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaCore.DO_NOT_INSERT,
 				project.getOption(obsoleteOption, true));
 	} finally {
@@ -868,11 +872,11 @@ public void testBug324987_Workspace01() throws CoreException {
 		JavaCore.setOptions(testOptions);
 		// Verify that obsolete preference is not stored
 		assertNull(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaModelManager.getJavaModelManager().getInstancePreferences().get(obsoleteOption, null));
 		// Verify that workspace obsolete option is well retrieved
 		assertEquals(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaCore.INSERT,
 				JavaCore.getOption(obsoleteOption));
 	} finally {
@@ -894,12 +898,12 @@ public void testBug324987_Workspace02() throws CoreException {
 		instancePreferences.put(obsoleteOption, JavaCore.DO_NOT_INSERT);
 		// Verify that obsolete preference is stored
 		assertEquals(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaCore.DO_NOT_INSERT,
 				instancePreferences.get(obsoleteOption, null));
 		// Verify that project obsolete option is well retrieved
 		assertEquals(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaCore.DO_NOT_INSERT,
 				JavaCore.getOption(obsoleteOption));
 	} finally {
@@ -922,11 +926,11 @@ public void testBug324987_Workspace03() throws CoreException {
 		JavaCore.setOptions(testOptions);
 		// Verify that obsolete preference is not stored
 		assertNull(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaModelManager.getJavaModelManager().getInstancePreferences().get(obsoleteOption, null));
 		// Verify that workspace obsolete option is well retrieved
 		assertEquals(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaCore.INSERT,
 				JavaCore.getOption(obsoleteOption));
 	} finally {
@@ -948,12 +952,12 @@ public void testBug324987_Workspace04() throws CoreException {
 		instancePreferences.put(obsoleteOption, JavaCore.INSERT);
 		// Verify that obsolete preference is stored
 		assertEquals(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaCore.INSERT,
 				instancePreferences.get(obsoleteOption, null));
 		// Verify that project obsolete option is well retrieved
 		assertEquals(
-				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'", 
+				"Unexpected value for formatter deprecated option 'org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member'",
 				JavaCore.INSERT,
 				JavaCore.getOption(obsoleteOption));
 	} finally {

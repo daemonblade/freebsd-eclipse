@@ -67,6 +67,7 @@ public static Test suite() {
 /* (non-Javadoc)
  * @see org.eclipse.test.performance.PerformanceTestCase#setUp()
  */
+@Override
 protected void setUp() throws Exception {
 	super.setUp();
 	this.sourceLevel = null;
@@ -91,6 +92,7 @@ protected void assertCompletionNodeResult(String source, String expected) {
 		actual
 	);
 }
+@Override
 protected Map getCompilerOptions() {
 	Map options = super.getCompilerOptions();
 	if (this.sourceLevel == null) {
@@ -581,7 +583,7 @@ public void test025() {
 	} else if (this.complianceLevel >= ClassFileConstants.JDK12) {
 		additionalTags = new char[][] {
 			TAG_INHERITDOC, TAG_LINKPLAIN, TAG_VALUE,
-			TAG_CODE, TAG_LITERAL, 
+			TAG_CODE, TAG_LITERAL,
 			TAG_INDEX, TAG_SUMMARY, TAG_SYSTEM_PROPERTY
 		};
 	}

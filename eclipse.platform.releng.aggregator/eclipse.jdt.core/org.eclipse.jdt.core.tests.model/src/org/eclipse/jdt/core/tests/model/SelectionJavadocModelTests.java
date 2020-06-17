@@ -41,10 +41,12 @@ public class SelectionJavadocModelTests extends AbstractJavaModelTests {
 		return buildModelTestSuite(SelectionJavadocModelTests.class);
 	}
 
+	@Override
 	public void setUpSuite() throws Exception {
 		super.setUpSuite();
 		setUpJavaProject("Tests", "1.5");
 	}
+	@Override
 	public void tearDownSuite() throws Exception {
 		deleteProject("Tests");
 		super.tearDownSuite();
@@ -1344,7 +1346,7 @@ public class SelectionJavadocModelTests extends AbstractJavaModelTests {
 		elements[0] = selectMethod(this.workingCopies[0], "@inheritDoc", 1);
 		elements[1] = selectMethod(this.workingCopies[0], "@inheritDoc", 2);
 		assertElementsEqual("Invalid selection(s)",
-			"foo(int) [in X [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]\n" + 
+			"foo(int) [in X [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]\n" +
 			"foo(String) [in Y [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]",
 			elements
 		);
@@ -1382,7 +1384,7 @@ public class SelectionJavadocModelTests extends AbstractJavaModelTests {
 		elements[0] = selectMethod(this.workingCopies[0], "@inheritDoc", 1);
 		elements[1] = selectMethod(this.workingCopies[0], "@inheritDoc", 2);
 		assertElementsEqual("Invalid selection(s)",
-			"foo(int) [in X [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]\n" + 
+			"foo(int) [in X [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]\n" +
 			"foo(String) [in Y [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]",
 			elements
 		);
@@ -1533,9 +1535,9 @@ public class SelectionJavadocModelTests extends AbstractJavaModelTests {
 		elements[2] = selectMethod(this.workingCopies[0], "@inheritDoc", 3);
 		elements[3] = selectMethod(this.workingCopies[0], "@inheritDoc", 4);
 		assertElementsEqual("Invalid selection(s)",
-			"foo(int) [in X [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]\n" + 
-			"foo(int) [in X [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]\n" + 
-			"foo(int) [in X [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]\n" + 
+			"foo(int) [in X [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]\n" +
+			"foo(int) [in X [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]\n" +
+			"foo(int) [in X [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]\n" +
 			"foo(int) [in X [in [Working copy] X.java [in b171019 [in <project root> [in Tests]]]]]",
 			elements
 		);
@@ -1591,6 +1593,7 @@ public class SelectionJavadocModelTests extends AbstractJavaModelTests {
 		final IJavaElement[] selection = new IJavaElement[1];
 		final ICompilationUnit[] copy = this.workingCopies;
 		Thread t = new Thread(new Runnable() {
+			@Override
 			public void run() {
 				try {
 					selection[0] = selectMethod(copy[2], "componentShown");
@@ -1608,7 +1611,7 @@ public class SelectionJavadocModelTests extends AbstractJavaModelTests {
 		if (t.isAlive()) {
 			fail("Thread shouldn't still be running");
 		}
-		assertElementEquals("Should return a valid element", 
+		assertElementEquals("Should return a valid element",
 							"componentShown(ComponentEvent) [in ComponentAdapter [in [Working copy] ETest.java [in test [in <project root> [in Tests]]]]]", selection[0]);
 	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -36,6 +36,7 @@ public Compliance_1_4(String name) {
 /*
  * Toggle compiler in mode -1.4
  */
+@Override
 protected Map getCompilerOptions() {
 	Map options = super.getCompilerOptions();
 	if (this.docSupport) {
@@ -54,13 +55,14 @@ public static Class testClass() {
 // Use this static initializer to specify subset for tests
 // All specified tests which does not belong to the class are skipped...
 static {
-//		TESTS_NAMES = new String[] { "Bug58069" };
+//		TESTS_NAMES = new String[] { "test079" };
 //		TESTS_NUMBERS = new int[] { 104 };
 //		TESTS_RANGE = new int[] { 85, -1 };
 }
 /* (non-Javadoc)
  * @see junit.framework.TestCase#setUp()
  */
+@Override
 protected void setUp() throws Exception {
 	super.setUp();
 	// Javadoc disabled by default
@@ -112,36 +114,36 @@ public void test011() {
 			"	}	\n" +
 			"} \n"
 		},
-		"----------\n" + 
-		"1. ERROR in p1\\X.java (at line 4)\n" + 
-		"	while (false);	\n" + 
-		"	             ^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"2. ERROR in p1\\X.java (at line 5)\n" + 
-		"	while (false) System.out.println(\"unreachable\");	\n" + 
-		"	              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"3. ERROR in p1\\X.java (at line 8)\n" + 
-		"	for (;false;);	\n" + 
-		"	             ^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"4. ERROR in p1\\X.java (at line 9)\n" + 
-		"	for (;false;) System.out.println(\"unreachable\");	\n" + 
-		"	              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"5. WARNING in p1\\X.java (at line 10)\n" + 
-		"	if (false);	\n" + 
-		"	          ^\n" + 
-		"Dead code\n" + 
-		"----------\n" + 
-		"6. WARNING in p1\\X.java (at line 11)\n" + 
-		"	if (false)System.out.println(\"unreachable\");		\n" + 
-		"	          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" + 
-		"Dead code\n" + 
+		"----------\n" +
+		"1. ERROR in p1\\X.java (at line 4)\n" +
+		"	while (false);	\n" +
+		"	             ^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"2. ERROR in p1\\X.java (at line 5)\n" +
+		"	while (false) System.out.println(\"unreachable\");	\n" +
+		"	              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"3. ERROR in p1\\X.java (at line 8)\n" +
+		"	for (;false;);	\n" +
+		"	             ^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"4. ERROR in p1\\X.java (at line 9)\n" +
+		"	for (;false;) System.out.println(\"unreachable\");	\n" +
+		"	              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"5. WARNING in p1\\X.java (at line 10)\n" +
+		"	if (false);	\n" +
+		"	          ^\n" +
+		"Dead code\n" +
+		"----------\n" +
+		"6. WARNING in p1\\X.java (at line 11)\n" +
+		"	if (false)System.out.println(\"unreachable\");		\n" +
+		"	          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
+		"Dead code\n" +
 		"----------\n"
 	);
 }
@@ -792,16 +794,16 @@ public void test027() {
 			"	}	\n"+
 			"}	\n"
 		},
-		"----------\n" + 
-		"1. WARNING in p1\\X.java (at line 4)\n" + 
-		"	for (;false;p());	\n" + 
-		"	            ^^^\n" + 
-		"Dead code\n" + 
-		"----------\n" + 
-		"2. ERROR in p1\\X.java (at line 4)\n" + 
-		"	for (;false;p());	\n" + 
-		"	                ^\n" + 
-		"Unreachable code\n" + 
+		"----------\n" +
+		"1. WARNING in p1\\X.java (at line 4)\n" +
+		"	for (;false;p());	\n" +
+		"	            ^^^\n" +
+		"Dead code\n" +
+		"----------\n" +
+		"2. ERROR in p1\\X.java (at line 4)\n" +
+		"	for (;false;p());	\n" +
+		"	                ^\n" +
+		"Unreachable code\n" +
 		"----------\n");
 }
 /*
@@ -1020,22 +1022,22 @@ public void test032() {
 			"	String bar = \"X2.bar\";	\n" +
 			"}	\n",
 		},
-		"----------\n" + 
-		"1. ERROR in p\\X.java (at line 4)\n" + 
-		"	System.out.println(new q.X2().foo);	\n" + 
-		"	                              ^^^\n" + 
-		"The field X2.foo is not visible\n" + 
-		"----------\n" + 
-		"2. ERROR in p\\X.java (at line 5)\n" + 
-		"	System.out.println(new q.X2().bar);	\n" + 
-		"	                              ^^^\n" + 
-		"The field X2.bar is not visible\n" + 
-		"----------\n" + 
-		"----------\n" + 
-		"1. WARNING in q\\X2.java (at line 3)\n" + 
-		"	protected String foo = \"X2.foo\";	\n" + 
-		"	                 ^^^\n" + 
-		"The field X2.foo is hiding a field from type X1\n" + 
+		"----------\n" +
+		"1. ERROR in p\\X.java (at line 4)\n" +
+		"	System.out.println(new q.X2().foo);	\n" +
+		"	                              ^^^\n" +
+		"The field X2.foo is not visible\n" +
+		"----------\n" +
+		"2. ERROR in p\\X.java (at line 5)\n" +
+		"	System.out.println(new q.X2().bar);	\n" +
+		"	                              ^^^\n" +
+		"The field X2.bar is not visible\n" +
+		"----------\n" +
+		"----------\n" +
+		"1. WARNING in q\\X2.java (at line 3)\n" +
+		"	protected String foo = \"X2.foo\";	\n" +
+		"	                 ^^^\n" +
+		"The field X2.foo is hiding a field from type X1\n" +
 		"----------\n");
 }
 
@@ -1250,36 +1252,36 @@ public void test039() {
 			"	}	\n"+
 			"}	\n",
 		},
-		"----------\n" + 
-		"1. ERROR in X.java (at line 5)\n" + 
-		"	for (;false;);	\n" + 
-		"	             ^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"2. ERROR in X.java (at line 6)\n" + 
-		"	for (;false;){}	\n" + 
-		"	             ^^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"3. ERROR in X.java (at line 7)\n" + 
-		"	while (false);	\n" + 
-		"	             ^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"4. ERROR in X.java (at line 8)\n" + 
-		"	while (false){}	\n" + 
-		"	             ^^\n" + 
-		"Unreachable code\n" + 
-		"----------\n" + 
-		"5. WARNING in X.java (at line 9)\n" + 
-		"	if (false) {} else {}	\n" + 
-		"	           ^^\n" + 
-		"Dead code\n" + 
-		"----------\n" + 
-		"6. WARNING in X.java (at line 10)\n" + 
-		"	if (false) ; else ;			\n" + 
-		"	           ^\n" + 
-		"Dead code\n" + 
+		"----------\n" +
+		"1. ERROR in X.java (at line 5)\n" +
+		"	for (;false;);	\n" +
+		"	             ^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 6)\n" +
+		"	for (;false;){}	\n" +
+		"	             ^^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"3. ERROR in X.java (at line 7)\n" +
+		"	while (false);	\n" +
+		"	             ^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"4. ERROR in X.java (at line 8)\n" +
+		"	while (false){}	\n" +
+		"	             ^^\n" +
+		"Unreachable code\n" +
+		"----------\n" +
+		"5. WARNING in X.java (at line 9)\n" +
+		"	if (false) {} else {}	\n" +
+		"	           ^^\n" +
+		"Dead code\n" +
+		"----------\n" +
+		"6. WARNING in X.java (at line 10)\n" +
+		"	if (false) ; else ;			\n" +
+		"	           ^\n" +
+		"Dead code\n" +
 		"----------\n"
 );
 }
@@ -2620,24 +2622,24 @@ public void test079() {
 			"	}\n" +
 			"}\n"
 		},
-		"----------\n" + 
-		"1. ERROR in Hello.java (at line 1)\n" + 
-		"	void ___eval() {\n" + 
-		"	^^^^^^^^^^^^^^\n" + 
-		"Syntax error on tokens, delete these tokens\n" + 
-		"----------\n" + 
-		"2. ERROR in Hello.java (at line 2)\n" + 
-		"	new Runnable() {\n" + 
-		"		int ___run() throws Throwable {\n" + 
-		"			return blah;\n" + 
-		"		}\n" + 
-		"		private String blarg;\n" + 
-		"		public void run() {\n" + 
-		"		}\n" + 
-		"	};\n" + 
-		"}\n" + 
-		"	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" + 
-		"Syntax error on tokens, delete these tokens\n" + 
+		"----------\n" +
+		"1. ERROR in Hello.java (at line 1)\n" +
+		"	void ___eval() {\n" +
+		"	^^^^^^^^^^^^^^\n" +
+		"Syntax error on tokens, delete these tokens\n" +
+		"----------\n" +
+		"2. ERROR in Hello.java (at line 2)\n" +
+		"	new Runnable() {\n" +
+		"		int ___run() throws Throwable {\n" +
+		"			return blah;\n" +
+		"		}\n" +
+		"		private String blarg;\n" +
+		"		public void run() {\n" +
+		"		}\n" +
+		"	};\n" +
+		"}\n" +
+		"	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
+		"Syntax error on tokens, delete these tokens\n" +
 		"----------\n"
 	);
 }

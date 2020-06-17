@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     Jesper Steen Møller - initial API and implementation
  *                           bug 529556 - [18.3] Add content assist support for 'var' as a type
@@ -27,6 +27,7 @@ public class CompletionTests10 extends AbstractJavaModelCompletionTests {
 public CompletionTests10(String name) {
 	super(name);
 }
+@Override
 public void setUpSuite() throws Exception {
 	if (COMPLETION_PROJECT == null)  {
 		COMPLETION_PROJECT = setUpJavaProject("Completion", "10");
@@ -201,7 +202,7 @@ public void test0007_not_inside_expression() throws JavaModelException {
     	"+ ");
 
     assertResults(
-            "expectedTypesSignatures={S,I,J,F,D,C,B,Ljava.lang.String;}\n" + 
+            "expectedTypesSignatures={S,I,J,F,D,C,B,Ljava.lang.String;}\n" +
             "expectedTypesKeys={S,I,J,F,D,C,B,Ljava/lang/String;}",
             result.context);
 
@@ -235,7 +236,7 @@ public void test0008_not_in_class_scope() throws JavaModelException {
 	        "	}\n" +
 	        "}",
 	    	"x(");
-	
+
 	    assertResults(
 	            "expectedTypesSignatures=null\n" +
 	            "expectedTypesKeys=null",
@@ -268,7 +269,7 @@ public void testBug532476a() throws JavaModelException {
 	        "package p;\n" +
 	        "public class X {\n" +
 	        "   public static void main(String[] args) {\n" +
-	        "		var i_jk = 0;\n" + 
+	        "		var i_jk = 0;\n" +
 	        "		System.out.println(i_);/n"+
 	        "	}\n" +
 	        "}",
@@ -283,7 +284,7 @@ public void testBug532476b() throws JavaModelException {
 	        "package p;\n" +
 	        "public class X {\n" +
 	        "   public static void main(String[] args) {\n" +
-	        "		for (var i_jkl : args) {\n" + 
+	        "		for (var i_jkl : args) {\n" +
 	        "			System.out.println(i_);/n"+
 	        "		}\n" +
 	        "	}\n" +
@@ -327,7 +328,7 @@ public void testBug532476e() throws JavaModelException {
 	        "package p;\n" +
 	        "public class X {\n" +
 	        "   public static void main(String[] args) {\n" +
-	        "		for (var i_jkl : args) {\n" + 
+	        "		for (var i_jkl : args) {\n" +
 	        "			System.out.println(i_jkl.fin);/n"+
 	        "		}\n" +
 	        "	}\n" +

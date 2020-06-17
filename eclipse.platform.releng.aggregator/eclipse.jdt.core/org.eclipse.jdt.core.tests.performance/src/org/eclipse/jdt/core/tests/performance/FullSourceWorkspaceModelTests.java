@@ -89,7 +89,7 @@ public class FullSourceWorkspaceModelTests extends FullSourceWorkspaceTests impl
 	 * @deprecated
 	 */
 	/*package*/ static final int JLS3_INTERNAL = AST.JLS3;
-	
+
 	// Log file streams
 	private static PrintStream[] LOG_STREAMS = new PrintStream[DIM_NAMES.length];
 
@@ -125,6 +125,7 @@ private static Class testClass() {
 	return FullSourceWorkspaceModelTests.class;
 }
 
+@Override
 protected void setUp() throws Exception {
 	super.setUp();
 	setUpBigProject();
@@ -250,6 +251,7 @@ private void setUpBigJars() throws Exception {
 /* (non-Javadoc)
  * @see junit.framework.TestCase#tearDown()
  */
+@Override
 protected void tearDown() throws Exception {
 
 	// End of execution => one test less
@@ -1376,13 +1378,13 @@ public void testReopenSingleProject() throws CoreException {
 	int length=ALL_PROJECTS.length;
 	for (int j=0; j<length; j++) {
 		ALL_PROJECTS[j].getProject().close(null);
-	}		
+	}
 	AbstractJavaModelTests.waitUntilIndexesReady();
 	AbstractJavaModelTests.waitForAutoBuild();
 	if (PRINT) {
 		System.out.println((System.currentTimeMillis()-startTime)+"ms");
 	}
-	
+
 
 	// Warm-up
 	if (PRINT) {
@@ -1471,7 +1473,7 @@ public void testRefreshExternalArchives() throws Exception {
 			files[index]  = new File(filePath);
 		}
 		BIG_PROJECT.setRawClasspath(classpath, null);
-		
+
 		// warm up
 		int max = 20;
 		int warmup = WARMUP_COUNT / 10;
@@ -1494,8 +1496,8 @@ public void testRefreshExternalArchives() throws Exception {
 		}
 
 		commitMeasurements();
-		assertPerformance();		
-		
+		assertPerformance();
+
 	} finally {
 		BIG_PROJECT.setRawClasspath(oldClasspath, null);
 		for(int index=0; index < files.length; index++) {
@@ -1572,6 +1574,7 @@ public void testResolveClasspath() throws Exception {
  * Overriding getExternalPath() to be on a non-local disk (e.g., NFS) shows the advantages
  * of caching file existence checks in the testJavaModelManagerExternalFilesCache() test.
  */
+@Override
 protected String getExternalPath() {
 	// NOTE: Do something similar to this commented-out code to set up the tests to
 	// use a non-local file system.

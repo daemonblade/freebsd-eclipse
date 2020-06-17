@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2019 Mateusz Matela and others.
+ * Copyright (c) 2014, 2020 Mateusz Matela and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -31,6 +31,7 @@ import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNamew
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
@@ -64,6 +65,7 @@ import org.eclipse.jdt.core.dom.ModuleDeclaration;
 import org.eclipse.jdt.core.dom.ModuleDirective;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
+import org.eclipse.jdt.core.dom.RecordDeclaration;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
@@ -83,7 +85,6 @@ import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions.Alignment;
 import org.eclipse.jdt.internal.formatter.Token.WrapMode;
 import org.eclipse.jdt.internal.formatter.Token.WrapPolicy;
-import org.eclipse.jface.text.IRegion;
 
 public class LineBreaksPreparator extends ASTVisitor {
 	final private TokenManager tm;
@@ -274,13 +275,22 @@ public class LineBreaksPreparator extends ASTVisitor {
 	}
 
 	@Override
+	public boolean visit(RecordDeclaration node) {
+		handleBracedCode(node, node.getName(), this.options.brace_position_for_record_declaration,
+				this.options.indent_body_declarations_compare_to_record_header);
+		handleBodyDeclarations(node.bodyDeclarations());
+		return true;
+	}
+
+	@Override
 	public boolean visit(MethodDeclaration node) {
 		this.declarationModifierVisited = false;
 		if (node.getBody() == null)
 			return true;
 
-		String bracePosition = node.isConstructor() ? this.options.brace_position_for_constructor_declaration
-				: this.options.brace_position_for_method_declaration;
+		String bracePosition = node.isCompactConstructor() ? this.options.brace_position_for_record_constructor
+				: node.isConstructor() ? this.options.brace_position_for_constructor_declaration
+						: this.options.brace_position_for_method_declaration;
 		handleBracedCode(node.getBody(), null, bracePosition, this.options.indent_statements_compare_to_body,
 				this.options.blank_lines_at_beginning_of_method_body, this.options.blank_lines_at_end_of_method_body);
 
@@ -396,7 +406,7 @@ public class LineBreaksPreparator extends ASTVisitor {
 
 	private void doSwitchStatementsLineBreaks(List<Statement> statements) {
 		boolean arrowMode = statements.stream()
-				.anyMatch(s -> s instanceof SwitchCase && ((SwitchCase) s).isSwitchLabeledRule());
+				.anyMatch(s -> s instanceof SwitchCase && s.getAST().apiLevel() >= AST.JLS14 &&((SwitchCase) s).isSwitchLabeledRule());
 		Statement previous = null;
 		for (Statement statement : statements) {
 			boolean skip = statement instanceof Block // will add break in visit(Block) if necessary
@@ -742,7 +752,7 @@ public class LineBreaksPreparator extends ASTVisitor {
 	private void handleBracedCode(ASTNode node, ASTNode nodeBeforeOpenBrace, String bracePosition, boolean indentBody) {
 		handleBracedCode(node, nodeBeforeOpenBrace, bracePosition, indentBody, 0, 0);
 	}
-	
+
 	private void handleBracedCode(ASTNode node, ASTNode nodeBeforeOpenBrace, String bracePosition, boolean indentBody,
 			int blankLinesAfterOpeningBrace, int blankLinesBeforeClosingBrace) {
 		int openBraceIndex = nodeBeforeOpenBrace == null
@@ -797,37 +807,13 @@ public class LineBreaksPreparator extends ASTVisitor {
 			this.tm.get(lastIndex + 1).unindent();
 	}
 
-	public void finishUp(List<IRegion> regions) {
+	public void finishUp() {
 		// the visits only noted where indents increase and decrease,
-		// now prepare actual indent values, preserving indents outside formatting regions
-		int currentIndent = this.options.initial_indentation_level * this.options.indentation_size;
-		Token previous = null;
+		// now prepare actual indent values
+		int currentIndent = this.options.initial_indentation_level;
 		for (Token token : this.tm) {
-			if (isFixedLineStart(token, previous, regions)) {
-				currentIndent = this.tm.findSourcePositionInLine(token.originalStart);
-			} else {
-				currentIndent = Math.max(currentIndent + token.getIndent() * this.options.indentation_size, 0);
-			}
-			token.setIndent(currentIndent);
-			previous = token;
+			currentIndent += token.getIndent();
+			token.setIndent(currentIndent * this.options.indentation_size);
 		}
-	}
-
-	private boolean isFixedLineStart(Token token, Token previous, List<IRegion> regions) {
-		if (previous == null && this.options.initial_indentation_level >0)
-			return false; // must be handling ast rewrite
-		if (previous != null && this.tm.countLineBreaksBetween(previous, token) == 0)
-			return false;
-		if (token.getLineBreaksBefore() == 0 && (previous == null || previous.getLineBreaksAfter() == 0))
-			return false;
-		int lineStart = token.originalStart;
-		char c;
-		while (lineStart > 0 && (c = this.tm.charAt(lineStart - 1)) != '\r' && c != '\n')
-			lineStart--;
-		for (IRegion r : regions) {
-			if (token.originalStart >= r.getOffset() && lineStart <= r.getOffset() + r.getLength())
-				return false;
-		}
-		return true;
 	}
 }

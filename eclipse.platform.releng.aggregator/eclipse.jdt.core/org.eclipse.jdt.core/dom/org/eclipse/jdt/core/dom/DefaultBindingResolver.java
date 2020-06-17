@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -68,6 +68,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ProblemFieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ProblemPackageBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ProblemReasons;
 import org.eclipse.jdt.internal.compiler.lookup.ProblemReferenceBinding;
+import org.eclipse.jdt.internal.compiler.lookup.RecordComponentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.Scope;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
@@ -160,12 +161,12 @@ class DefaultBindingResolver extends BindingResolver {
 	 * Toggle controlling whether DOM bindings should be created when missing internal compiler bindings..
 	 */
 	boolean isRecoveringBindings;
-	
+
 	/**
 	 * Set to <code>true</code> if initialized from a java project
 	 */
 	boolean fromJavaProject;
-	
+
 	/**
 	 * Constructor for DefaultBindingResolver.
 	 */
@@ -239,6 +240,7 @@ class DefaultBindingResolver extends BindingResolver {
 				return getModuleBinding((org.eclipse.jdt.internal.compiler.lookup.ModuleBinding) binding);
 			case Binding.FIELD:
 			case Binding.LOCAL:
+			case Binding.RECORD_COMPONENT:
 				return getVariableBinding((org.eclipse.jdt.internal.compiler.lookup.VariableBinding) binding);
 		}
 		return null;
@@ -339,7 +341,7 @@ class DefaultBindingResolver extends BindingResolver {
 		TypeReference[][] typeArguments = typeReference.typeArguments;
 		int value = 0;
 		org.eclipse.jdt.internal.compiler.ast.Annotation[][] typeAnnotations = typeReference.annotations;
-		int length = typeReference.tokens.length;	
+		int length = typeReference.tokens.length;
 		for (int i = 0; i < length; ++i) {
 			if (value != 0 || (typeArguments != null && typeArguments[i] != null) ||
 				(typeAnnotations != null && typeAnnotations[i] != null )) {
@@ -860,6 +862,9 @@ class DefaultBindingResolver extends BindingResolver {
 							} else if (binding instanceof org.eclipse.jdt.internal.compiler.lookup.MethodBinding) {
 								// it is a type
 								return getMethodBinding((org.eclipse.jdt.internal.compiler.lookup.MethodBinding)binding);
+							} else if (binding instanceof RecordComponentBinding) {
+								IVariableBinding variableBinding = this.getVariableBinding((RecordComponentBinding) binding);
+								return variableBinding == null ? null : variableBinding;
 							}
 						} else {
 							if (binding instanceof org.eclipse.jdt.internal.compiler.lookup.TypeBinding) {
@@ -1080,6 +1085,9 @@ class DefaultBindingResolver extends BindingResolver {
 							case Binding.LOCAL:
 								type = ((LocalVariableBinding) qualifiedNameReference.binding).type;
 								break;
+							case Binding.RECORD_COMPONENT:
+								type = ((RecordComponentBinding) qualifiedNameReference.binding).type;
+								break;
 						}
 					}
 					return this.getTypeBinding(type);
@@ -1183,7 +1191,7 @@ class DefaultBindingResolver extends BindingResolver {
 			}
 		} if (node instanceof JavadocSingleNameReference) {
 			JavadocSingleNameReference singleNameReference = (JavadocSingleNameReference) node;
-			LocalVariableBinding localVariable = (LocalVariableBinding)singleNameReference.binding;
+			org.eclipse.jdt.internal.compiler.lookup.VariableBinding localVariable = (org.eclipse.jdt.internal.compiler.lookup.VariableBinding)singleNameReference.binding;
 			if (localVariable != null) {
 				return this.getTypeBinding(localVariable.type);
 			}
@@ -1243,6 +1251,10 @@ class DefaultBindingResolver extends BindingResolver {
 			IMethodBinding method = getMethodBinding(referenceExpression.getMethodBinding());
 			if (method == null) return null;
 			return method.getReturnType();
+		} else if (node instanceof org.eclipse.jdt.internal.compiler.ast.RecordComponent) {
+			org.eclipse.jdt.internal.compiler.ast.RecordComponent recordComponent = (org.eclipse.jdt.internal.compiler.ast.RecordComponent) node;
+			org.eclipse.jdt.internal.compiler.lookup.TypeBinding recordComponentType = recordComponent.type.resolvedType;
+			return this.getTypeBinding(recordComponentType);
 		}
 		return null;
 	}
@@ -1389,6 +1401,9 @@ class DefaultBindingResolver extends BindingResolver {
 					} else if (binding instanceof org.eclipse.jdt.internal.compiler.lookup.MethodBinding) {
 						// it is a type
 						return getMethodBinding((org.eclipse.jdt.internal.compiler.lookup.MethodBinding)binding);
+					} else if (binding instanceof org.eclipse.jdt.internal.compiler.lookup.RecordComponentBinding) {
+						// it is a type
+						return this.getVariableBinding((org.eclipse.jdt.internal.compiler.lookup.RecordComponentBinding)binding);
 					} else {
 						return null;
 					}
@@ -1474,7 +1489,7 @@ class DefaultBindingResolver extends BindingResolver {
 			QualifiedSuperReference qualifiedSuperReference = (QualifiedSuperReference) node;
 			return this.getTypeBinding(qualifiedSuperReference.qualification.resolvedType);
 		} else if (node instanceof LocalDeclaration) {
-			return name.getAST().apiLevel() >= AST.JLS10_INTERNAL && name instanceof SimpleName && ((SimpleName) name).isVar()  ? 
+			return name.getAST().apiLevel() >= AST.JLS10_INTERNAL && name instanceof SimpleName && ((SimpleName) name).isVar()  ?
 					resolveTypeBindingForName(name) :
 					this.getVariableBinding(((LocalDeclaration)node).binding);
 		} else if (node instanceof JavadocFieldReference) {
@@ -1519,6 +1534,9 @@ class DefaultBindingResolver extends BindingResolver {
 		} else if (node instanceof org.eclipse.jdt.internal.compiler.ast.ReferenceExpression) {
 			org.eclipse.jdt.internal.compiler.ast.ReferenceExpression referenceExpression = (org.eclipse.jdt.internal.compiler.ast.ReferenceExpression) node;
 			return getMethodBinding(referenceExpression.getMethodBinding());
+		} else if (node instanceof org.eclipse.jdt.internal.compiler.ast.RecordComponent) {
+			org.eclipse.jdt.internal.compiler.ast.RecordComponent recordComponent = (org.eclipse.jdt.internal.compiler.ast.RecordComponent) node;
+			return this.getVariableBinding(recordComponent.binding);
 		}
 		return null;
 	}
@@ -1585,7 +1603,7 @@ class DefaultBindingResolver extends BindingResolver {
 
 	/**
 	 * @see BindingResolver#resolveModule(ModuleDeclaration)
-	 * @since 3.14	
+	 * @since 3.14
 	 */
 	@Override
 	IModuleBinding resolveModule(ModuleDeclaration module) {
@@ -1676,6 +1694,27 @@ class DefaultBindingResolver extends BindingResolver {
 		}
 		return null;
 	}
+
+	@Override
+	ITypeBinding resolveType(RecordDeclaration type) {
+		final Object node = this.newAstToOldAst.get(type);
+		if (node instanceof org.eclipse.jdt.internal.compiler.ast.TypeDeclaration) {
+			org.eclipse.jdt.internal.compiler.ast.TypeDeclaration typeDeclaration = (org.eclipse.jdt.internal.compiler.ast.TypeDeclaration) node;
+			ITypeBinding typeBinding = this.getTypeBinding(typeDeclaration.binding);
+			if (typeBinding == null) {
+				return null;
+			}
+			this.bindingsToAstNodes.put(typeBinding, type);
+			String key = typeBinding.getKey();
+			if (key != null) {
+				this.bindingTables.bindingKeysToBindings.put(key, typeBinding);
+			}
+			return typeBinding;
+		}
+		return null;
+	}
+
+
 
 	@Override
 	synchronized ITypeBinding resolveType(Type type) {
@@ -1864,6 +1903,9 @@ class DefaultBindingResolver extends BindingResolver {
 			if (abstractVariableDeclaration instanceof org.eclipse.jdt.internal.compiler.ast.FieldDeclaration) {
 				org.eclipse.jdt.internal.compiler.ast.FieldDeclaration fieldDeclaration = (org.eclipse.jdt.internal.compiler.ast.FieldDeclaration) abstractVariableDeclaration;
 				variableBinding = this.getVariableBinding(fieldDeclaration.binding, variable);
+			} else if (abstractVariableDeclaration instanceof org.eclipse.jdt.internal.compiler.ast.RecordComponent) {
+				org.eclipse.jdt.internal.compiler.ast.RecordComponent recordComponent = (org.eclipse.jdt.internal.compiler.ast.RecordComponent) abstractVariableDeclaration;
+				variableBinding = this.getVariableBinding(recordComponent.binding, variable);
 			} else {
 				variableBinding = this.getVariableBinding(((LocalDeclaration) abstractVariableDeclaration).binding, variable);
 			}
@@ -1989,7 +2031,7 @@ class DefaultBindingResolver extends BindingResolver {
 			actualDimensions += typeBinding.getDimensions();
 		}
 		if (!(leafComponentType instanceof TypeBinding)) return null;
-		org.eclipse.jdt.internal.compiler.lookup.TypeBinding leafTypeBinding = 
+		org.eclipse.jdt.internal.compiler.lookup.TypeBinding leafTypeBinding =
 											((TypeBinding) leafComponentType).binding;
 		if (leafTypeBinding instanceof VoidTypeBinding) {
 			throw new IllegalArgumentException();
@@ -2005,7 +2047,7 @@ class DefaultBindingResolver extends BindingResolver {
 											actualDimensions));
 		}
 	}
-	
+
 	private org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding[] insertAnnotations(
 							org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding[] annots, int dimensions) {
 		if (dimensions == 0 || annots == null || annots.length == 0) {
@@ -2021,7 +2063,7 @@ class DefaultBindingResolver extends BindingResolver {
 			}
 			if (dimensions < 0) dimensions = 0; // Just means there were no annotations
 		}
-		org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding[] newAnnots = 
+		org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding[] newAnnots =
 				new org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding[annots.length - index + dimensions];
 
 		System.arraycopy(annots, index, newAnnots, dimensions, annots.length - index);

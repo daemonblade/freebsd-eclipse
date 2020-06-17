@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -3141,8 +3141,13 @@ public void test0038() {
 		"    }\n" +
 		"    public void aMethod(int A) {\n" +
 		"      public void anotherMethod;\n" +
+		(this.complianceLevel < ClassFileConstants.JDK14
+		?
 		"      int A;\n" +
-		"      ;\n" +
+		"      ;\n"
+		:
+		""
+		) +
 		"    }\n" +
 		"  }\n" +
 		"  public A() {\n" +
@@ -3883,48 +3888,48 @@ public void test0047() {
 public void testBug430336() {
 
 	String s =
-		"package test1;\n" + 
-		"import java.util.Collection;\n" + 
-		"public class E {\n" + 
-		"    void foo(Collection collection) {\n" + 
-		"        collection\n" + 
-		"    }\n" + 
+		"package test1;\n" +
+		"import java.util.Collection;\n" +
+		"public class E {\n" +
+		"    void foo(Collection collection) {\n" +
+		"        collection\n" +
+		"    }\n" +
 		"}\n";
 
 	String expectedDietUnitToString =
-		"package test1;\n" + 
-		"import java.util.Collection;\n" + 
-		"public class E {\n" + 
-		"  public E() {\n" + 
-		"  }\n" + 
-		"  void foo(Collection collection) {\n" + 
-		"  }\n" + 
+		"package test1;\n" +
+		"import java.util.Collection;\n" +
+		"public class E {\n" +
+		"  public E() {\n" +
+		"  }\n" +
+		"  void foo(Collection collection) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedDietWithStatementRecoveryUnitToString =
 		expectedDietUnitToString;
 
 	String expectedDietPlusBodyUnitToString =
-		"package test1;\n" + 
-		"import java.util.Collection;\n" + 
-		"public class E {\n" + 
-		"  public E() {\n" + 
-		"    super();\n" + 
-		"  }\n" + 
-		"  void foo(Collection collection) {\n" + 
-		"  }\n" + 
+		"package test1;\n" +
+		"import java.util.Collection;\n" +
+		"public class E {\n" +
+		"  public E() {\n" +
+		"    super();\n" +
+		"  }\n" +
+		"  void foo(Collection collection) {\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedDietPlusBodyWithStatementRecoveryUnitToString =
-		"package test1;\n" + 
-		"import java.util.Collection;\n" + 
-		"public class E {\n" + 
-		"  public E() {\n" + 
-		"    super();\n" + 
-		"  }\n" + 
+		"package test1;\n" +
+		"import java.util.Collection;\n" +
+		"public class E {\n" +
+		"  public E() {\n" +
+		"    super();\n" +
+		"  }\n" +
 		"  void foo(Collection collection) {\n" +
-		"    collection = $missing$;\n" + 
-		"  }\n" + 
+		"    collection = $missing$;\n" +
+		"  }\n" +
 		"}\n";
 
 	String expectedFullUnitToString =

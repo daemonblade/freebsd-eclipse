@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -158,7 +158,9 @@ private static AnnotationBinding buildTargetAnnotation(long bits, LookupEnvironm
 		arraysize++;
 	if ((bits & TagBits.AnnotationForModule) != 0)
 		arraysize++;
-	
+	if ((bits & TagBits.AnnotationForRecordComponent) != 0)
+		arraysize++;
+
 	Object[] value = new Object[arraysize];
 	if (arraysize > 0) {
 		ReferenceBinding elementType = env.getResolvedType(TypeConstants.JAVA_LANG_ANNOTATION_ELEMENTTYPE, null);
@@ -171,6 +173,8 @@ private static AnnotationBinding buildTargetAnnotation(long bits, LookupEnvironm
 			value[index++] = elementType.getField(TypeConstants.UPPER_CONSTRUCTOR, true);
 		if ((bits & TagBits.AnnotationForField) != 0)
 			value[index++] = elementType.getField(TypeConstants.UPPER_FIELD, true);
+		if ((bits & TagBits.AnnotationForRecordComponent) != 0)
+			value[index++] = elementType.getField(TypeConstants.UPPER_RECORD_COMPONENT, true);
 		if ((bits & TagBits.AnnotationForMethod) != 0)
 			value[index++] = elementType.getField(TypeConstants.UPPER_METHOD, true);
 		if ((bits & TagBits.AnnotationForPackage) != 0)
@@ -245,7 +249,7 @@ public String toString() {
 	if (this.pairs != null && this.pairs.length > 0) {
 		buffer.append('(');
 		if (this.pairs.length == 1 && CharOperation.equals(this.pairs[0].getName(), TypeConstants.VALUE)) {
-			buffer.append(this.pairs[0].value); 
+			buffer.append(this.pairs[0].value);
 		} else {
 			for (int i = 0, max = this.pairs.length; i < max; i++) {
 				if (i > 0) buffer.append(", "); //$NON-NLS-1$
@@ -280,7 +284,7 @@ public boolean equals(Object object) {
 	final ElementValuePair[] thisElementValuePairs = this.getElementValuePairs();
 	final ElementValuePair[] thatElementValuePairs = that.getElementValuePairs();
 	final int length = thisElementValuePairs.length;
-	if (length != thatElementValuePairs.length) 
+	if (length != thatElementValuePairs.length)
 		return false;
 	loop: for (int i = 0; i < length; i++) {
 		ElementValuePair thisPair = thisElementValuePairs[i];

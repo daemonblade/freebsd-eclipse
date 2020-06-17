@@ -43,6 +43,7 @@ public static Test suite() {
 /* (non-Javadoc)
  * @see org.eclipse.jdt.core.tests.model.AbstractJavadocCompletionModelTest#setUp()
  */
+@Override
 protected void setUp() throws Exception {
 	super.setUp();
 	setUpProjectOptions(CompilerOptions.VERSION_1_5);
@@ -51,6 +52,7 @@ protected void setUp() throws Exception {
 /*
  * Write files for self-hosting debug.
  */
+@Override
 protected void writeFiles(String[] sources) {
 
 	// Get write directory path
@@ -303,9 +305,9 @@ public void test015() throws JavaModelException {
 		"package javadoc.tags;\n";
 	completeInJavadoc("/Completion/src/javadoc/tags/package-info.java", source, true, "I");
 	assertSortedResults(
-		"IllegalMonitorStateException[TYPE_REF]{IllegalMonitorStateException, java.lang, Ljava.lang.IllegalMonitorStateException;, null, null, "+this.positions+R_DRICUNR+"}\n" + 
-		"InterruptedException[TYPE_REF]{InterruptedException, java.lang, Ljava.lang.InterruptedException;, null, null, "+this.positions+R_DRICUNR+"}\n" + 
-		"Inherited[TYPE_REF]{java.lang.annotation.Inherited, java.lang.annotation, Ljava.lang.annotation.Inherited;, null, null, "+this.positions+R_DRICNR+"}\n" + 
+		"IllegalMonitorStateException[TYPE_REF]{IllegalMonitorStateException, java.lang, Ljava.lang.IllegalMonitorStateException;, null, null, "+this.positions+R_DRICUNR+"}\n" +
+		"InterruptedException[TYPE_REF]{InterruptedException, java.lang, Ljava.lang.InterruptedException;, null, null, "+this.positions+R_DRICUNR+"}\n" +
+		"Inherited[TYPE_REF]{java.lang.annotation.Inherited, java.lang.annotation, Ljava.lang.annotation.Inherited;, null, null, "+this.positions+R_DRICNR+"}\n" +
 		"Iterator[TYPE_REF]{java.util.Iterator, java.util, Ljava.util.Iterator;, null, null, "+this.positions+R_DRICNR+"}"
 	);
 }

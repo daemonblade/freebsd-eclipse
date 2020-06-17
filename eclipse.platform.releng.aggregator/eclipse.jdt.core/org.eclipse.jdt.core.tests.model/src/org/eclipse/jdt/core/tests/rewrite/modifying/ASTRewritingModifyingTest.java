@@ -44,7 +44,7 @@ public abstract class ASTRewritingModifyingTest extends AbstractJavaModelTests {
 
 	/** @deprecated using deprecated code */
 	private static final int AST_INTERNAL_JLS2 = AST.JLS2;
-	
+
 	/**
 	 * Internal synonym for deprecated constant AST.JSL3
 	 * to alleviate deprecation warnings.
@@ -72,6 +72,7 @@ public abstract class ASTRewritingModifyingTest extends AbstractJavaModelTests {
 		return suite;
 	}
 
+	@Override
 	public void setUpSuite() throws Exception {
 		super.setUpSuite();
 
@@ -86,6 +87,7 @@ public abstract class ASTRewritingModifyingTest extends AbstractJavaModelTests {
 
 		waitUntilIndexesReady();
 	}
+	@Override
 	public void tearDownSuite() throws Exception {
 		deleteProject("P");
 		JavaCore.setOptions(this.oldOptions);
@@ -223,7 +225,7 @@ public abstract class ASTRewritingModifyingTest extends AbstractJavaModelTests {
 		buffer.append("\");");
 		return buffer.toString();
 	}
-	
+
 	static int getJLS3() {
 		return JLS3_INTERNAL;
 	}

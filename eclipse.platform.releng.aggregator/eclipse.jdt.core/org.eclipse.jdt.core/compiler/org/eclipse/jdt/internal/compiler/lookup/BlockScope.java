@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -101,10 +101,10 @@ public final void addAnonymousType(TypeDeclaration anonymousType, ReferenceBindi
 	anonymousClassScope.buildAnonymousTypeBinding(
 		enclosingSourceType(),
 		superBinding);
-	
+
 	/* Tag any enclosing lambdas as instance capturing. Strictly speaking they need not be, unless the local/anonymous type references enclosing instance state.
 	   but the types themselves track enclosing types regardless of whether the state is accessed or not. This creates a mismatch in expectations in code generation
-	   time, if we choose to make the lambda method static. To keep things simple and avoid a messy rollback, we force the lambda to be an instance method under 
+	   time, if we choose to make the lambda method static. To keep things simple and avoid a messy rollback, we force the lambda to be an instance method under
 	   this situation. However if per source, the lambda occurs in a static context, we would generate a static synthetic method.
 	*/
 	MethodScope methodScope = methodScope();
@@ -123,7 +123,7 @@ public final void addLocalType(TypeDeclaration localType) {
 	ClassScope localTypeScope = new ClassScope(this, localType);
 	addSubscope(localTypeScope);
 	localTypeScope.buildLocalTypeBinding(enclosingSourceType());
-	
+
 	// See comment in addAnonymousType.
 	MethodScope methodScope = methodScope();
 	while (methodScope != null && methodScope.referenceContext instanceof LambdaExpression) {
@@ -134,7 +134,6 @@ public final void addLocalType(TypeDeclaration localType) {
 		methodScope = methodScope.enclosingMethodScope();
 	}
 }
-
 /* Insert a local variable into a given scope, updating its position
  * and checking there are not too many locals or arguments allocated.
  */
@@ -178,7 +177,7 @@ public final boolean allowBlankFinalFieldAssignment(FieldBinding binding) {
 	MethodScope methodScope = methodScope();
 	if (methodScope.isStatic != binding.isStatic())
 		return false;
-	if (methodScope.isLambdaScope()) 
+	if (methodScope.isLambdaScope())
 		return false;
 	return methodScope.isInsideInitializer() // inside initializer
 			|| ((AbstractMethodDeclaration) methodScope.referenceContext).isInitializationMethod(); // inside constructor or clinit
@@ -212,6 +211,42 @@ private void checkAndSetModifiersForVariable(LocalVariableBinding varBinding) {
 	varBinding.modifiers = modifiers;
 }
 
+public void adjustLocalVariablePositions(int delta, boolean offsetAlreadyUpdated) {
+	this.offset += offsetAlreadyUpdated ? 0 : delta;
+	if (this.offset > this.maxOffset)
+		this.maxOffset = this.offset;
+
+	for (Scope subScope : this.subscopes) {
+		if (subScope instanceof BlockScope) {
+			((BlockScope) subScope).adjustCurrentAndSubScopeLocalVariablePositions(delta);
+		}
+	}
+
+	Scope scope = this.parent;
+	while (scope instanceof BlockScope) {
+		BlockScope pBlock = (BlockScope) scope;
+		int diff = this.maxOffset - pBlock.maxOffset;
+		pBlock.maxOffset += diff > 0 ? diff : 0;
+		if (scope instanceof MethodScope)
+			break;
+		scope = scope.parent;
+	}
+}
+public void adjustCurrentAndSubScopeLocalVariablePositions(int delta) {
+	this.offset += delta;
+	if (this.offset > this.maxOffset)
+		this.maxOffset = this.offset;
+
+	for (LocalVariableBinding lvb : this.locals) {
+		if (lvb != null && lvb.resolvedPosition != -1)
+			lvb.resolvedPosition += delta;
+	}
+	for (Scope subScope : this.subscopes) {
+		if (subScope instanceof BlockScope) {
+			((BlockScope) subScope).adjustCurrentAndSubScopeLocalVariablePositions(delta);
+		}
+	}
+}
 /* Compute variable positions in scopes given an initial position offset
  * ignoring unused local variables.
  *
@@ -313,7 +348,7 @@ public void emulateOuterAccess(LocalVariableBinding outerLocalVariable) {
 	BlockScope outerVariableScope = outerLocalVariable.declaringScope;
 	if (outerVariableScope == null)
 		return; // no need to further emulate as already inserted (val$this$0)
-	
+
 	int depth = 0;
 	Scope scope = this;
 	while (outerVariableScope != scope) {
@@ -321,7 +356,7 @@ public void emulateOuterAccess(LocalVariableBinding outerLocalVariable) {
 			case CLASS_SCOPE:
 				depth++;
 				break;
-			case METHOD_SCOPE: 
+			case METHOD_SCOPE:
 				if (scope.isLambdaScope()) {
 					LambdaExpression lambdaExpression = (LambdaExpression) scope.referenceContext();
 					lambdaExpression.addSyntheticArgument(outerLocalVariable);
@@ -330,9 +365,9 @@ public void emulateOuterAccess(LocalVariableBinding outerLocalVariable) {
 		}
 		scope = scope.parent;
 	}
-	if (depth == 0) 
+	if (depth == 0)
 		return;
-	
+
 	MethodScope currentMethodScope = methodScope();
 	if (outerVariableScope.methodScope() != currentMethodScope) {
 		NestedTypeBinding currentType = (NestedTypeBinding) enclosingSourceType();
@@ -419,7 +454,7 @@ public LocalDeclaration[] findLocalVariableDeclarations(int position) {
 		} else {
 			// consider variable first
 			LocalVariableBinding local = this.locals[ilocal]; // if no local at all, will be locals[ilocal]==null
-			if (local != null) {
+			if (local != null && (local.modifiers & ExtraCompilerModifiers.AccPatternVariable) == 0) {
 				LocalDeclaration localDecl = local.declaration;
 				if (localDecl != null) {
 					if (localDecl.declarationSourceStart <= position) {
@@ -447,9 +482,20 @@ public LocalDeclaration[] findLocalVariableDeclarations(int position) {
 public LocalVariableBinding findVariable(char[] variableName) {
 	int varLength = variableName.length;
 	for (int i = this.localIndex-1; i >= 0; i--) { // lookup backward to reach latest additions first
-		LocalVariableBinding local;
+		LocalVariableBinding local = this.locals[i];
+		if ((local.modifiers & ExtraCompilerModifiers.AccPatternVariable) != 0)
+			continue;
 		char[] localName;
-		if ((localName = (local = this.locals[i]).name).length == varLength && CharOperation.equals(localName, variableName))
+		if ((localName = local.name).length == varLength && CharOperation.equals(localName, variableName))
+			return local;
+	}
+	// Look at the pattern variables now
+	for (int i = this.localIndex-1; i >= 0; i--) { // lookup backward to reach latest additions first
+		LocalVariableBinding local = this.locals[i];
+		if ((local.modifiers & ExtraCompilerModifiers.AccPatternVariable) == 0)
+			continue;
+		char[] localName;
+		if ((localName = local.name).length == varLength && CharOperation.equals(localName, variableName))
 			return local;
 	}
 	return null;
@@ -562,10 +608,10 @@ public Binding getBinding(char[][] compoundName, int mask, InvocationSite invoca
 				((ProblemFieldBinding)binding).closestMatch,
 				((ProblemFieldBinding)binding).declaringClass,
 				CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
-				binding.problemId()); 
+				binding.problemId());
 			// https://bugs.eclipse.org/bugs/show_bug.cgi?id=317858 : If field is inaccessible,
-			// don't give up yet, continue to look for a visible member type 
-			if (binding.problemId() != ProblemReasons.NotVisible) {  
+			// don't give up yet, continue to look for a visible member type
+			if (binding.problemId() != ProblemReasons.NotVisible) {
 				return problemFieldBinding;
 			}
 		}
@@ -617,7 +663,7 @@ public Binding getBinding(char[][] compoundName, int mask, InvocationSite invoca
 				field.declaringClass,
 				CharOperation.concatWith(CharOperation.subarray(compoundName, 0, currentIndex), '.'),
 				ProblemReasons.NonStaticReferenceInStaticContext);
-		// Since a qualified reference must be for a static member, it won't affect static-ness of the enclosing method, 
+		// Since a qualified reference must be for a static member, it won't affect static-ness of the enclosing method,
 		// so we don't have to call resetEnclosingMethodStaticFlag() in this case
 		return binding;
 	}
@@ -1112,7 +1158,7 @@ public void checkUnclosedCloseables(FlowInfo flowInfo, FlowContext flowContext, 
 
 		// compute the most specific null status for this resource,
 		int status = trackingVar.findMostSpecificStatus(flowInfo, this, locationScope);
-		
+
 		if (status == FlowInfo.NULL) {
 			// definitely unclosed: highest priority
 			reportResourceLeak(trackingVar, location, status);
@@ -1123,12 +1169,12 @@ public void checkUnclosedCloseables(FlowInfo flowInfo, FlowContext flowContext, 
 			// problems at specific locations: medium priority
 			if (trackingVar.reportRecordedErrors(this, status, flowInfo.reachMode() != FlowInfo.REACHABLE)) // ... report previously recorded errors
 				continue;
-		} 
+		}
 		if (status == FlowInfo.POTENTIALLY_NULL) {
 			// potentially unclosed: lower priority
 			reportResourceLeak(trackingVar, location, status);
 		} else if (status == FlowInfo.NON_NULL) {
-			// properly closed but not managed by t-w-r: lowest priority 
+			// properly closed but not managed by t-w-r: lowest priority
 			if (environment().globalOptions.complianceLevel >= ClassFileConstants.JDK1_7)
 				trackingVar.reportExplicitClosing(problemReporter());
 		}
@@ -1136,7 +1182,7 @@ public void checkUnclosedCloseables(FlowInfo flowInfo, FlowContext flowContext, 
 	if (location == null) {
 		// when leaving this block dispose off all tracking variables:
 		for (int i=0; i<this.localIndex; i++)
-			this.locals[i].closeTracker = null;		
+			this.locals[i].closeTracker = null;
 		this.trackingVariables = null;
 	}
 }
@@ -1148,23 +1194,23 @@ private void reportResourceLeak(FakedTrackingVariable trackingVar, ASTNode locat
 		trackingVar.reportError(problemReporter(), null, nullStatus);
 }
 
-/** 
+/**
  * If one branch of an if-else closes any AutoCloseable resource, and if the same
  * resource is known to be null on the other branch mark it as closed, too,
  * so that merging both branches indicates that the resource is always closed.
  * Example:
  *	FileReader fr1 = null;
  *	try {\n" +
- *      fr1 = new FileReader(someFile);" + 
- *		fr1.read(buf);\n" + 
- *	} finally {\n" + 
+ *      fr1 = new FileReader(someFile);" +
+ *		fr1.read(buf);\n" +
+ *	} finally {\n" +
  *		if (fr1 != null)\n" +
  *           try {\n" +
  *               fr1.close();\n" +
  *           } catch (IOException e) {
- *              // do nothing 
+ *              // do nothing
  *           }
- *      // after this if statement fr1 is definitely not leaked 
+ *      // after this if statement fr1 is definitely not leaked
  *	}
  */
 public void correlateTrackingVarsIfElse(FlowInfo thenFlowInfo, FlowInfo elseFlowInfo) {
@@ -1181,7 +1227,7 @@ public void correlateTrackingVarsIfElse(FlowInfo thenFlowInfo, FlowInfo elseFlow
 					elseFlowInfo.markNullStatus(trackingVar.binding, nullStatus);
 				} else if (!hasNullInfoInThen && hasNullInfoInElse) {
 					int nullStatus = elseFlowInfo.nullStatus(trackingVar.binding);
-					thenFlowInfo.markNullStatus(trackingVar.binding, nullStatus);					
+					thenFlowInfo.markNullStatus(trackingVar.binding, nullStatus);
 				}
 				continue;
 			}
@@ -1211,7 +1257,7 @@ public void correlateTrackingVarsIfElse(FlowInfo thenFlowInfo, FlowInfo elseFlow
 						if (!var1SeenInThen && var1SeenInElse && var2SeenInThen && !var2SeenInElse) {
 							newStatus = FlowInfo.mergeNullStatus(thenFlowInfo.nullStatus(var2.binding), elseFlowInfo.nullStatus(trackingVar.binding));
 						} else if (var1SeenInThen && !var1SeenInElse && !var2SeenInThen && var2SeenInElse) {
-							newStatus = FlowInfo.mergeNullStatus(thenFlowInfo.nullStatus(trackingVar.binding), elseFlowInfo.nullStatus(var2.binding)); 
+							newStatus = FlowInfo.mergeNullStatus(thenFlowInfo.nullStatus(trackingVar.binding), elseFlowInfo.nullStatus(var2.binding));
 						} else {
 							continue;
 						}
@@ -1251,7 +1297,7 @@ private boolean checkAppropriate(MethodBinding compileTimeDeclaration, MethodBin
 		return true;
 	if (MethodVerifier.doesMethodOverride(otherMethod, compileTimeDeclaration, this.environment())) {
 		problemReporter().illegalSuperCallBypassingOverride(location, compileTimeDeclaration, otherMethod.declaringClass);
-		return false; 
+		return false;
 	}
 	return true;
 }

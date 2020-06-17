@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
@@ -41,11 +41,13 @@ public class RunCompletionModelTests extends junit.framework.TestCase {
 			COMPLETION_SUITES.add(CompletionTests9.class);
 			COMPLETION_SUITES.add(CompletionTests10.class);
 			COMPLETION_SUITES.add(CompletionTests11.class);
+			COMPLETION_SUITES.add(CompletionTests14.class);
 			COMPLETION_SUITES.add(CompletionContextTests.class);
 			COMPLETION_SUITES.add(CompletionContextTests_1_5.class);
 			COMPLETION_SUITES.add(CompletionWithMissingTypesTests.class);
 			COMPLETION_SUITES.add(CompletionWithMissingTypesTests2.class);
 			COMPLETION_SUITES.add(CompletionWithMissingTypesTests_1_5.class);
+			COMPLETION_SUITES.add(CompletionWithMissingTypesTests_1_8.class);
 			COMPLETION_SUITES.add(SnippetCompletionContextTests.class);
 			COMPLETION_SUITES.add(SubstringCompletionTests.class);
 			COMPLETION_SUITES.add(SubwordCompletionTests.class);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2007 BEA Systems, Inc. 
+ * Copyright (c) 2006, 2007 BEA Systems, Inc.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,7 +10,7 @@
  *
  * Contributors:
  *    wharley@bea.com - initial API and implementation
- *    
+ *
  *******************************************************************************/
 package org.eclipse.jdt.compiler.apt.tests.processors.genclass;
 
@@ -45,7 +45,7 @@ public class GenClassProc extends AbstractProcessor {
 	private Filer _filer;
 	private Elements _elementUtil;
 	private TypeElement _annoDecl;
-	
+
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
 		super.init(processingEnv);
@@ -53,7 +53,7 @@ public class GenClassProc extends AbstractProcessor {
 		_messager = processingEnv.getMessager();
 		_elementUtil = processingEnv.getElementUtils();
 		_annoDecl = _elementUtil.getTypeElement("org.eclipse.jdt.compiler.apt.tests.annotations.GenClass");
-		
+
 		//System.out.println("Processor options are: ");
 		//for (Map.Entry<String, String> option : processingEnv.getOptions().entrySet()) {
 		//	System.out.println(option.getKey() + " -> " + option.getValue());
@@ -63,7 +63,7 @@ public class GenClassProc extends AbstractProcessor {
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations,
 			RoundEnvironment roundEnv) {
-		
+
 		if (annotations == null || annotations.isEmpty()) {
 			return true;
 		}
@@ -71,12 +71,13 @@ public class GenClassProc extends AbstractProcessor {
 		if (!annotations.contains(_annoDecl)) {
 			throw new IllegalArgumentException("process() called on an unexpected set of annotations");
 		}
-		
+
 		// get annotated declarations - could also use getElsAnnoWith(Class) form.
 		for (Element d : roundEnv.getElementsAnnotatedWith(_annoDecl)) {
 			// get annotations on the declaration
 			String clazz = null;
 			String method = null;
+			boolean warn = false;
 			for (AnnotationMirror am : d.getAnnotationMirrors()) {
 				if (am.getAnnotationType().asElement().equals(_annoDecl)) {
 					// query the annotation to get its values
@@ -93,8 +94,11 @@ public class GenClassProc extends AbstractProcessor {
 						if ("method".equals(keyName)) {
 							method = (String)(value.getValue());
 						}
+						if ("warn".equals(keyName)) {
+							warn = ((Boolean) value.getValue()).booleanValue();
+						}
 					}
-					
+
 					if (null == clazz || clazz.length() > 40) {
 						_messager.printMessage(Diagnostic.Kind.WARNING, "Long name for clazz()", d, am);
 						clazz = null;
@@ -107,13 +111,13 @@ public class GenClassProc extends AbstractProcessor {
 					}
 				}
 			}
-			
+
 			if (null != clazz && null != method && !roundEnv.processingOver())
-				createSourceFile(d, clazz, method);
+				createSourceFile(d, clazz, method, warn);
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Create a source file named 'name', with contents
 	 * that reflect 'method' and 'name'.
@@ -121,32 +125,34 @@ public class GenClassProc extends AbstractProcessor {
 	 * @param clazz a fully qualified classname
 	 * @param method the name of a method that will be
 	 * added to the class
+	 * @param warn whether to generate code that will cause a
+	 * warning about an unused variable (if the warning is enabled)
 	 */
-	private void createSourceFile(Element parent, String clazz, String method) {
+	private void createSourceFile(Element parent, String clazz, String method, boolean warn) {
 		int lastDot = clazz.lastIndexOf('.');
 		if (lastDot <= 0 || clazz.length() == lastDot)
 			return;
 		String pkg = clazz.substring(0, lastDot);
 		String lname = clazz.substring(lastDot + 1);
-		Writer w = null;
-		PrintWriter pw = null;
 		try {
 			JavaFileObject jfo = _filer.createSourceFile(clazz, parent);
-			w = jfo.openWriter();
-			pw = new PrintWriter(w);
-			pw.println("package " + pkg + ";");
-			pw.println("public class " + lname + " {");
-			pw.println("\tpublic String " + method + "() {");
-			// This compile error won't be reported if the -proc:only flag is set:			
-			// pw.println("\t\tb = a;");
-			pw.println("\t\treturn new String(\"" + clazz + "\");");
-			pw.println("\t}");
-			pw.println("}");
-			pw.close();
-			w.close();
+			try (Writer	w = jfo.openWriter(); PrintWriter pw = new PrintWriter(w)) {
+				pw.println("package " + pkg + ";");
+				pw.println("public class " + lname + " {");
+				pw.println("\tpublic String " + method + "() {");
+				// This compile error won't be reported if the -proc:only flag is set:
+				// pw.println("\t\tb = a;");
+				if (warn) {
+					// Unused variable
+					pw.println("\t\tString s = \"" + clazz + "\";");
+				}
+				pw.println("\t\treturn new String(\"" + clazz + "\");");
+				pw.println("\t}");
+				pw.println("}");
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} 
+		}
 	}
 
 }

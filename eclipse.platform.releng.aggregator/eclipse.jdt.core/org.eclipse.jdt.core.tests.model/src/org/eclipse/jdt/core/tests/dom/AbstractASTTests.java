@@ -95,13 +95,14 @@ public class AbstractASTTests extends ModifyingResourceTests implements DefaultM
 		super(name);
 	}
 
+	@Override
 	public void setUpSuite() throws Exception {
 		super.setUpSuite();
-		
+
 		SourceRangeVerifier.DEBUG = true;
 		SourceRangeVerifier.DEBUG_THROW = true;
 	}
-	
+
 	/*
 	 * Removes the *start* and *end* markers from the given source
 	 * and remembers the positions.
@@ -493,16 +494,18 @@ public class AbstractASTTests extends ModifyingResourceTests implements DefaultM
 		String option = cu.getJavaProject().getOption(JavaCore.COMPILER_COMPLIANCE, true);
 		long jdkLevel = CompilerOptions.versionToJdkLevel(option);
 		int JLSLevel = AST_INTERNAL_JLS3;
-		if (jdkLevel >= ClassFileConstants.getComplianceLevelForJavaVersion(ClassFileConstants.MAJOR_VERSION_13)) {
+		if (jdkLevel >= ClassFileConstants.getComplianceLevelForJavaVersion(ClassFileConstants.MAJOR_VERSION_14)) {
+			JLSLevel = AST_INTERNAL_JLS14;
+		} else if (jdkLevel >= ClassFileConstants.getComplianceLevelForJavaVersion(ClassFileConstants.MAJOR_VERSION_13)) {
 			JLSLevel = AST_INTERNAL_JLS13;
 		} else if (jdkLevel >= ClassFileConstants.getComplianceLevelForJavaVersion(ClassFileConstants.MAJOR_VERSION_12)) {
 			JLSLevel = AST_INTERNAL_JLS12;
 		} else if (jdkLevel >= ClassFileConstants.getComplianceLevelForJavaVersion(ClassFileConstants.MAJOR_VERSION_11)) {
-			JLSLevel = AST_INTERNAL_JLS11;			
+			JLSLevel = AST_INTERNAL_JLS11;
 		} else if (jdkLevel >= ClassFileConstants.JDK10) {
-			JLSLevel = AST_INTERNAL_JLS10;			
+			JLSLevel = AST_INTERNAL_JLS10;
 		} else if (jdkLevel >= ClassFileConstants.JDK9) {
-			JLSLevel = AST_INTERNAL_JLS9;			
+			JLSLevel = AST_INTERNAL_JLS9;
 		} else if (jdkLevel >= ClassFileConstants.JDK1_8) {
 			JLSLevel = AST_INTERNAL_JLS8;
 		} else if (jdkLevel >= ClassFileConstants.JDK1_7) {
@@ -688,6 +691,7 @@ public class AbstractASTTests extends ModifyingResourceTests implements DefaultM
 	 * @param problemRequestor The requestor used to report problems
 	 * @return The created working copy owner
 	 */
+	@Override
 	protected WorkingCopyOwner newWorkingCopyOwner(final IProblemRequestor problemRequestor) {
 		return new WorkingCopyOwner() {
 			public IProblemRequestor getProblemRequestor(ICompilationUnit unit) {

@@ -11,7 +11,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Benjamin Muskalla - Contribution for bug 239066
- *     Stephan Herrmann  - Contributions for 
+ *     Stephan Herrmann  - Contributions for
  *     							bug 236385: [compiler] Warn for potential programming problem if an object is created but not used
  *     							bug 349326 - [1.7] new warning for missing try-with-resources
  *     							bug 186342 - [compiler][null] Using annotations for null checking
@@ -25,7 +25,7 @@
  *								bug 392862 - [1.8][compiler][null] Evaluate null annotations on array types
  *								bug 331649 - [compiler][null] consider null annotations for fields
  *								bug 382789 - [compiler][null] warn when syntactically-nonnull expression is compared against null
- *								bug 402028 - [1.8][compiler] null analysis for reference expressions 
+ *								bug 402028 - [1.8][compiler] null analysis for reference expressions
  *								bug 401796 - [1.8][compiler] don't treat default methods as overriding an independent inherited abstract method
  *								bug 404649 - [1.8][compiler] detect illegal reference to indirect or redundant super
  *								bug 400761 - [compiler][null] null may be return as boolean without a diagnostic
@@ -615,7 +615,7 @@ public void test011_problem_categories() {
 		expectedProblemAttributes.put("IncompatibleTypesInConditionalOperator", new ProblemAttributes(CategorizedProblem.CAT_TYPE));
 		expectedProblemAttributes.put("IncompatibleTypesInEqualityOperator", new ProblemAttributes(CategorizedProblem.CAT_TYPE));
 		expectedProblemAttributes.put("IncompatibleTypesInForeach", new ProblemAttributes(CategorizedProblem.CAT_TYPE));
-		
+
 		expectedProblemAttributes.put("IncorrectArityForParameterizedConstructor", new ProblemAttributes(CategorizedProblem.CAT_TYPE));
 		expectedProblemAttributes.put("IncorrectArityForParameterizedMethod", new ProblemAttributes(CategorizedProblem.CAT_TYPE));
 		expectedProblemAttributes.put("IncorrectArityForParameterizedType", new ProblemAttributes(CategorizedProblem.CAT_TYPE));
@@ -757,6 +757,7 @@ public void test011_problem_categories() {
 		expectedProblemAttributes.put("JavadocNonGenericConstructor", new ProblemAttributes(CategorizedProblem.CAT_JAVADOC));
 		expectedProblemAttributes.put("JavadocNonGenericMethod", new ProblemAttributes(CategorizedProblem.CAT_JAVADOC));
 		expectedProblemAttributes.put("JavadocNonStaticTypeFromStaticInvocation", new ProblemAttributes(CategorizedProblem.CAT_JAVADOC));
+		expectedProblemAttributes.put("JavadocNotAccessibleType", new ProblemAttributes(CategorizedProblem.CAT_JAVADOC));
 		expectedProblemAttributes.put("JavadocNotVisibleConstructor", new ProblemAttributes(CategorizedProblem.CAT_JAVADOC));
 		expectedProblemAttributes.put("JavadocNotVisibleField", new ProblemAttributes(CategorizedProblem.CAT_JAVADOC));
 		expectedProblemAttributes.put("JavadocNotVisibleMethod", new ProblemAttributes(CategorizedProblem.CAT_JAVADOC));
@@ -937,6 +938,7 @@ public void test011_problem_categories() {
 		expectedProblemAttributes.put("ParsingErrorOnKeywordNoSuggestion", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
 		expectedProblemAttributes.put("ParsingErrorReplaceTokens", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
 		expectedProblemAttributes.put("ParsingErrorUnexpectedEOF", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+		expectedProblemAttributes.put("PatternVariableNotInScope", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
 		expectedProblemAttributes.put("PolymorphicMethodNotBelow17", new ProblemAttributes(CategorizedProblem.CAT_MEMBER));
 		expectedProblemAttributes.put("PossibleAccidentalBooleanAssignment", new ProblemAttributes(CategorizedProblem.CAT_POTENTIAL_PROGRAMMING_PROBLEM));
 		expectedProblemAttributes.put("PotentialHeapPollutionFromVararg", new ProblemAttributes(CategorizedProblem.CAT_UNCHECKED_RAW));
@@ -1095,6 +1097,7 @@ public void test011_problem_categories() {
 		expectedProblemAttributes.put("UnqualifiedFieldAccess", new ProblemAttributes(CategorizedProblem.CAT_CODE_STYLE));
 		expectedProblemAttributes.put("UnreachableCatch", new ProblemAttributes(CategorizedProblem.CAT_TYPE));
 		expectedProblemAttributes.put("UnresolvedVariable", new ProblemAttributes(CategorizedProblem.CAT_MEMBER));
+		expectedProblemAttributes.put("UnsafeCast", new ProblemAttributes(CategorizedProblem.CAT_TYPE));
 		expectedProblemAttributes.put("UnsafeElementTypeConversion", new ProblemAttributes(CategorizedProblem.CAT_UNCHECKED_RAW));
 		expectedProblemAttributes.put("UnsafeGenericArrayForVarargs", new ProblemAttributes(CategorizedProblem.CAT_UNCHECKED_RAW));
 		expectedProblemAttributes.put("UnsafeGenericCast", new ProblemAttributes(CategorizedProblem.CAT_UNCHECKED_RAW));
@@ -1198,29 +1201,63 @@ public void test011_problem_categories() {
 	    expectedProblemAttributes.put("PreviewFeatureUsed", new ProblemAttributes(CategorizedProblem.CAT_COMPLIANCE));
 	    expectedProblemAttributes.put("PreviewFeatureNotSupported", new ProblemAttributes(CategorizedProblem.CAT_COMPLIANCE));
 	    expectedProblemAttributes.put("PreviewFeaturesNotAllowed", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldIncompatibleResultExpressionTypes", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldEmptySwitchBlock", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldNoResultExpression", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionaYieldSwitchLabeledBlockCompletesNormally", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldLastStatementCompletesNormally", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldTrailingSwitchLabels", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-		expectedProblemAttributes.put("SwitchPreviewMixedCase", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldMissingDefaultCase", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldMissingValue", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldMissingEnumConstantCase", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldIllegalLastStatement", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldBreakNotAllowed", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldUnqualifiedMethodWarning", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldUnqualifiedMethodError", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldOutsideSwitchExpression", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldRestrictedGeneralWarning", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldIllegalStatement", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldTypeDeclarationWarning", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
-	    expectedProblemAttributes.put("SwitchExpressionsYieldTypeDeclarationError", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldIncompatibleResultExpressionTypes", new ProblemAttributes(CategorizedProblem.CAT_TYPE));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldEmptySwitchBlock", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldNoResultExpression", new ProblemAttributes(CategorizedProblem.CAT_INTERNAL));
+	    expectedProblemAttributes.put("SwitchExpressionaYieldSwitchLabeledBlockCompletesNormally", new ProblemAttributes(CategorizedProblem.CAT_INTERNAL));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldLastStatementCompletesNormally", new ProblemAttributes(CategorizedProblem.CAT_INTERNAL));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldTrailingSwitchLabels", new ProblemAttributes(CategorizedProblem.CAT_INTERNAL));
+		expectedProblemAttributes.put("SwitchPreviewMixedCase", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldMissingDefaultCase", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldMissingValue", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldMissingEnumConstantCase", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldIllegalLastStatement", new ProblemAttributes(CategorizedProblem.CAT_INTERNAL));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldBreakNotAllowed", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldUnqualifiedMethodWarning", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldUnqualifiedMethodError", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldOutsideSwitchExpression", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldRestrictedGeneralWarning", new ProblemAttributes(CategorizedProblem.CAT_INTERNAL));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldIllegalStatement", new ProblemAttributes(CategorizedProblem.CAT_INTERNAL));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldTypeDeclarationWarning", new ProblemAttributes(CategorizedProblem.CAT_INTERNAL));
+	    expectedProblemAttributes.put("SwitchExpressionsYieldTypeDeclarationError", new ProblemAttributes(CategorizedProblem.CAT_INTERNAL));
+	    expectedProblemAttributes.put("MultiConstantCaseLabelsNotSupported", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("ArrowInCaseStatementsNotSupported", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsNotSupported", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsBreakOutOfSwitchExpression", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsContinueOutOfSwitchExpression", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("SwitchExpressionsReturnWithinSwitchExpression", new ProblemAttributes(CategorizedProblem.CAT_SYNTAX));
+	    expectedProblemAttributes.put("RecordIllegalModifierForRecord", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordIllegalModifierForInnerRecord", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordIllegalComponentNameInRecord", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordNonStaticFieldDeclarationInRecord", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordAccessorMethodHasThrowsClause", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordCanonicalConstructorHasThrowsClause", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordCanonicalConstructorShouldBePublic", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordMultipleCanonicalConstructors", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordCompactConstructorHasReturnStatement", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordDuplicateComponent", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordIllegalNativeModifierInRecord", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordInstanceInitializerBlockInRecord", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordIsAReservedTypeName", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordIllegalAccessorReturnType", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordAccessorMethodShouldNotBeGeneric", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordAccessorMethodShouldBePublic", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordCanonicalConstructorShouldNotBeGeneric", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordCanonicalConstructorHasReturnStatement", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordCanonicalConstructorHasExplicitConstructorCall", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordCompactConstructorHasExplicitConstructorCall", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordNestedRecordInherentlyStatic", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordAccessorMethodShouldNotBeStatic", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordCannotExtendRecord", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordComponentCannotBeVoid", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordIllegalVararg", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordStaticReferenceToOuterLocalVariable", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
+	    expectedProblemAttributes.put("RecordCannotDefineRecordInLocalType", new ProblemAttributes(CategorizedProblem.CAT_PREVIEW_RELATED));
 	    StringBuffer failures = new StringBuffer();
 		StringBuffer correctResult = new StringBuffer(70000);
 		Field[] fields = (iProblemClass = IProblem.class).getFields();
 		Arrays.sort(fields, new Comparator() {
+			@Override
 			public int compare(Object o1, Object o2) {
 				Field field1 = (Field) o1;
 				Field field2 = (Field) o2;
@@ -1745,6 +1782,7 @@ public void test012_compiler_problems_tuning() {
 		expectedProblemAttributes.put("JavadocNonGenericConstructor", new ProblemAttributes(JavaCore.COMPILER_PB_INVALID_JAVADOC));
 		expectedProblemAttributes.put("JavadocNonGenericMethod", new ProblemAttributes(JavaCore.COMPILER_PB_INVALID_JAVADOC));
 		expectedProblemAttributes.put("JavadocNonStaticTypeFromStaticInvocation", new ProblemAttributes(JavaCore.COMPILER_PB_INVALID_JAVADOC));
+		expectedProblemAttributes.put("JavadocNotAccessibleType", new ProblemAttributes(JavaCore.COMPILER_PB_INVALID_JAVADOC));
 		expectedProblemAttributes.put("JavadocNotVisibleConstructor", new ProblemAttributes(JavaCore.COMPILER_PB_INVALID_JAVADOC));
 		expectedProblemAttributes.put("JavadocNotVisibleField", new ProblemAttributes(JavaCore.COMPILER_PB_INVALID_JAVADOC));
 		expectedProblemAttributes.put("JavadocNotVisibleMethod", new ProblemAttributes(JavaCore.COMPILER_PB_INVALID_JAVADOC));
@@ -1925,6 +1963,7 @@ public void test012_compiler_problems_tuning() {
 		expectedProblemAttributes.put("ParsingErrorOnKeywordNoSuggestion", SKIP);
 		expectedProblemAttributes.put("ParsingErrorReplaceTokens", SKIP);
 		expectedProblemAttributes.put("ParsingErrorUnexpectedEOF", SKIP);
+		expectedProblemAttributes.put("PatternVariableNotInScope", SKIP);
 		expectedProblemAttributes.put("PolymorphicMethodNotBelow17", SKIP);
 		expectedProblemAttributes.put("PossibleAccidentalBooleanAssignment", new ProblemAttributes(JavaCore.COMPILER_PB_POSSIBLE_ACCIDENTAL_BOOLEAN_ASSIGNMENT));
 		expectedProblemAttributes.put("PotentialHeapPollutionFromVararg", new ProblemAttributes(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION));
@@ -2084,6 +2123,7 @@ public void test012_compiler_problems_tuning() {
 		expectedProblemAttributes.put("UnqualifiedFieldAccess", new ProblemAttributes(JavaCore.COMPILER_PB_UNQUALIFIED_FIELD_ACCESS));
 		expectedProblemAttributes.put("UnreachableCatch", SKIP);
 		expectedProblemAttributes.put("UnresolvedVariable", SKIP);
+		expectedProblemAttributes.put("UnsafeCast", SKIP);
 		expectedProblemAttributes.put("UnsafeElementTypeConversion", new ProblemAttributes(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION));
 		expectedProblemAttributes.put("UnsafeGenericArrayForVarargs", new ProblemAttributes(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION));
 		expectedProblemAttributes.put("UnsafeGenericCast", new ProblemAttributes(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION));
@@ -2205,6 +2245,39 @@ public void test012_compiler_problems_tuning() {
 	    expectedProblemAttributes.put("SwitchExpressionsYieldIllegalStatement", SKIP);
 	    expectedProblemAttributes.put("SwitchExpressionsYieldTypeDeclarationWarning", SKIP);
 	    expectedProblemAttributes.put("SwitchExpressionsYieldTypeDeclarationError", SKIP);
+	    expectedProblemAttributes.put("MultiConstantCaseLabelsNotSupported", SKIP);
+	    expectedProblemAttributes.put("ArrowInCaseStatementsNotSupported", SKIP);
+	    expectedProblemAttributes.put("SwitchExpressionsNotSupported", SKIP);
+	    expectedProblemAttributes.put("SwitchExpressionsBreakOutOfSwitchExpression", SKIP);
+	    expectedProblemAttributes.put("SwitchExpressionsContinueOutOfSwitchExpression", SKIP);
+	    expectedProblemAttributes.put("SwitchExpressionsReturnWithinSwitchExpression", SKIP);
+	    expectedProblemAttributes.put("RecordIllegalModifierForRecord", SKIP);
+	    expectedProblemAttributes.put("RecordIllegalModifierForInnerRecord", SKIP);
+	    expectedProblemAttributes.put("RecordIllegalComponentNameInRecord", SKIP);
+	    expectedProblemAttributes.put("RecordNonStaticFieldDeclarationInRecord", SKIP);
+	    expectedProblemAttributes.put("RecordAccessorMethodHasThrowsClause", SKIP);
+	    expectedProblemAttributes.put("RecordCanonicalConstructorHasThrowsClause", SKIP);
+	    expectedProblemAttributes.put("RecordCanonicalConstructorShouldBePublic", SKIP);
+	    expectedProblemAttributes.put("RecordMultipleCanonicalConstructors", SKIP);
+	    expectedProblemAttributes.put("RecordCompactConstructorHasReturnStatement", SKIP);
+	    expectedProblemAttributes.put("RecordDuplicateComponent", SKIP);
+	    expectedProblemAttributes.put("RecordIllegalNativeModifierInRecord", SKIP);
+	    expectedProblemAttributes.put("RecordInstanceInitializerBlockInRecord", SKIP);
+	    expectedProblemAttributes.put("RecordIsAReservedTypeName", SKIP);
+	    expectedProblemAttributes.put("RecordIllegalAccessorReturnType", SKIP);
+	    expectedProblemAttributes.put("RecordAccessorMethodShouldNotBeGeneric", SKIP);
+	    expectedProblemAttributes.put("RecordAccessorMethodShouldBePublic", SKIP);
+	    expectedProblemAttributes.put("RecordCanonicalConstructorShouldNotBeGeneric", SKIP);
+	    expectedProblemAttributes.put("RecordCanonicalConstructorHasReturnStatement", SKIP);
+	    expectedProblemAttributes.put("RecordCanonicalConstructorHasExplicitConstructorCall", SKIP);
+	    expectedProblemAttributes.put("RecordCompactConstructorHasExplicitConstructorCall", SKIP);
+	    expectedProblemAttributes.put("RecordNestedRecordInherentlyStatic", SKIP);
+	    expectedProblemAttributes.put("RecordAccessorMethodShouldNotBeStatic", SKIP);
+	    expectedProblemAttributes.put("RecordCannotExtendRecord", SKIP);
+	    expectedProblemAttributes.put("RecordComponentCannotBeVoid", SKIP);
+	    expectedProblemAttributes.put("RecordIllegalVararg", SKIP);
+	    expectedProblemAttributes.put("RecordStaticReferenceToOuterLocalVariable",SKIP);
+	    expectedProblemAttributes.put("RecordCannotDefineRecordInLocalType",SKIP);
 	    Map constantNamesIndex = new HashMap();
 		Field[] fields = JavaCore.class.getFields();
 		for (int i = 0, length = fields.length; i < length; i++) {
@@ -2218,6 +2291,7 @@ public void test012_compiler_problems_tuning() {
 			StringBuffer failures = new StringBuffer();
 			StringBuffer correctResult = new StringBuffer(70000);
 			Arrays.sort(fields, new Comparator() {
+				@Override
 				public int compare(Object o1, Object o2) {
 					Field field1 = (Field) o1;
 					Field field2 = (Field) o2;

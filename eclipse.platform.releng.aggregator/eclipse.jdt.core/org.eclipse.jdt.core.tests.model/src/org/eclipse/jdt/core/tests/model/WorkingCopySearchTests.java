@@ -45,6 +45,7 @@ public class WorkingCopySearchTests extends JavaSearchTests {
 	/**
 	 * Get a new working copy.
 	 */
+	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		try {
@@ -57,6 +58,7 @@ public class WorkingCopySearchTests extends JavaSearchTests {
 	/**
 	 * Destroy the working copy.
 	 */
+	@Override
 	protected void tearDown() throws Exception {
 		this.workingCopy.discardWorkingCopy();
 		this.workingCopy = null;
@@ -471,12 +473,12 @@ public class WorkingCopySearchTests extends JavaSearchTests {
 				"p478042".toCharArray(), SearchPattern.R_EXACT_MATCH, //package
 				null, SearchPattern.R_EXACT_MATCH,  // declaring Qualification
 				"AllMethod".toCharArray(), SearchPattern.R_PREFIX_MATCH, // declaring SimpleType
-				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH, 
-				scope, requestor, 
+				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH,
+				scope, requestor,
 				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, null);
 		assertSearchResults(
-				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.foo03(Object o,String s)\n" + 
-				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.foo02(Object o)\n" + 
+				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.foo03(Object o,String s)\n" +
+				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.foo02(Object o)\n" +
 				"/JavaSearch/src/wc/X.java void p478042.AllMethodDeclarations01.foo01()",
 				requestor
 		);
@@ -501,12 +503,12 @@ public class WorkingCopySearchTests extends JavaSearchTests {
 				"p478042".toCharArray(), SearchPattern.R_EXACT_MATCH, //package
 				"AllMethod".toCharArray(), SearchPattern.R_PREFIX_MATCH,  // declaring Qualification
 				"Nested".toCharArray(), SearchPattern.R_EXACT_MATCH, // declaring SimpleType
-				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH, 
-				scope, requestor, 
+				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH,
+				scope, requestor,
 				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, null);
 		assertSearchResults(
-				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.Nested.foo03(Object o,String s)\n" + 
-				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.Nested.foo02(Object o)\n" + 
+				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.Nested.foo03(Object o,String s)\n" +
+				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.Nested.foo02(Object o)\n" +
 				"/JavaSearch/src/wc/X.java void p478042.AllMethodDeclarations01.Nested.foo01()",
 				requestor
 		);
@@ -533,12 +535,12 @@ public class WorkingCopySearchTests extends JavaSearchTests {
 				"p478042".toCharArray(), SearchPattern.R_EXACT_MATCH, //package
 				"AllMethod".toCharArray(), SearchPattern.R_PREFIX_MATCH,  // declaring Qualification
 				"Inner".toCharArray(), SearchPattern.R_EXACT_MATCH, // declaring SimpleType
-				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH, 
-				scope, requestor, 
+				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH,
+				scope, requestor,
 				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, null);
 		assertSearchResults(
-				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.Nested.Inner.foo03(Object o,String s)\n" + 
-				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.Nested.Inner.foo02(Object o)\n" + 
+				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.Nested.Inner.foo03(Object o,String s)\n" +
+				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.Nested.Inner.foo02(Object o)\n" +
 				"/JavaSearch/src/wc/X.java void p478042.AllMethodDeclarations01.Nested.Inner.foo01()",
 				requestor
 		);
@@ -559,12 +561,12 @@ public class WorkingCopySearchTests extends JavaSearchTests {
 		SearchTests.SearchMethodNameRequestor requestor = new SearchTests.SearchMethodNameRequestor();
 		new SearchEngine(new ICompilationUnit[] {this.workingCopy}).searchAllMethodNames(
 				"p478042.AllMethod*".toCharArray(), SearchPattern.R_PATTERN_MATCH,
-				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH, 
-				scope, requestor, 
+				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH,
+				scope, requestor,
 				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, null);
 		assertSearchResults(
-				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.foo03(Object o,String s)\n" + 
-				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.foo02(Object o)\n" + 
+				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.foo03(Object o,String s)\n" +
+				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.foo02(Object o)\n" +
 				"/JavaSearch/src/wc/X.java void p478042.AllMethodDeclarations01.foo01()",
 				requestor
 		);
@@ -582,12 +584,12 @@ public class WorkingCopySearchTests extends JavaSearchTests {
 		SearchTests.SearchMethodNameRequestor requestor = new SearchTests.SearchMethodNameRequestor();
 		new SearchEngine(new ICompilationUnit[] {this.workingCopy}).searchAllMethodNames(
 				"p478042.AllMethod*".toCharArray(), SearchPattern.R_PATTERN_MATCH,
-				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH, 
-				scope, requestor, 
+				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH,
+				scope, requestor,
 				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, null);
 		assertSearchResults(
-				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.foo03(Object o,String s)\n" + 
-				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.foo02(Object o)\n" + 
+				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.foo03(Object o,String s)\n" +
+				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.foo02(Object o)\n" +
 				"/JavaSearch/src/wc/X.java void p478042.AllMethodDeclarations01.foo01()",
 				requestor
 		);
@@ -610,12 +612,12 @@ public class WorkingCopySearchTests extends JavaSearchTests {
 		SearchTests.SearchMethodNameRequestor requestor = new SearchTests.SearchMethodNameRequestor();
 		new SearchEngine(new ICompilationUnit[] {this.workingCopy}).searchAllMethodNames(
 				"p478042.AllMethod*.Nested".toCharArray(), SearchPattern.R_PATTERN_MATCH,
-				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH, 
-				scope, requestor, 
+				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH,
+				scope, requestor,
 				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, null);
 		assertSearchResults(
-				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.Nested.foo03(Object o,String s)\n" + 
-				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.Nested.foo02(Object o)\n" + 
+				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.Nested.foo03(Object o,String s)\n" +
+				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.Nested.foo02(Object o)\n" +
 				"/JavaSearch/src/wc/X.java void p478042.AllMethodDeclarations01.Nested.foo01()",
 				requestor
 		);
@@ -640,12 +642,12 @@ public class WorkingCopySearchTests extends JavaSearchTests {
 		SearchTests.SearchMethodNameRequestor requestor = new SearchTests.SearchMethodNameRequestor();
 		new SearchEngine(new ICompilationUnit[] {this.workingCopy}).searchAllMethodNames(
 				"p478042.AllMethod*.Inner".toCharArray(), SearchPattern.R_PATTERN_MATCH,
-				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH, 
-				scope, requestor, 
+				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH,
+				scope, requestor,
 				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, null);
 		assertSearchResults(
-				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.Nested.Inner.foo03(Object o,String s)\n" + 
-				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.Nested.Inner.foo02(Object o)\n" + 
+				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.Nested.Inner.foo03(Object o,String s)\n" +
+				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.Nested.Inner.foo02(Object o)\n" +
 				"/JavaSearch/src/wc/X.java void p478042.AllMethodDeclarations01.Nested.Inner.foo01()",
 				requestor
 		);
@@ -666,12 +668,12 @@ public class WorkingCopySearchTests extends JavaSearchTests {
 		SearchTests.SearchMethodNameRequestor requestor = new SearchTests.SearchMethodNameRequestor();
 		new SearchEngine(new ICompilationUnit[] {this.workingCopy}).searchAllMethodNames(
 				"p478042.AllMethod*".toCharArray(), SearchPattern.R_PATTERN_MATCH,
-				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH, 
-				scope, requestor, 
+				"foo".toCharArray(), SearchPattern.R_PREFIX_MATCH,
+				scope, requestor,
 				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, null);
 		assertSearchResults(
-				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.foo03(Object o,String s)\n" + 
-				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.foo02(Object o)\n" + 
+				"/JavaSearch/src/wc/X.java char p478042.AllMethodDeclarations01.foo03(Object o,String s)\n" +
+				"/JavaSearch/src/wc/X.java int p478042.AllMethodDeclarations01.foo02(Object o)\n" +
 				"/JavaSearch/src/wc/X.java void p478042.AllMethodDeclarations01.foo01()",
 				requestor
 		);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -83,6 +83,12 @@ public abstract class JavadocTest extends AbstractRegressionTest {
 		if ((complianceLevels & AbstractCompilerTest.F_1_5) != 0) {
 			testSuite.addTest(buildUniqueComplianceTestSuite(JavadocTest_1_5.class, ClassFileConstants.JDK1_5));
 		}
+		if ((complianceLevels & AbstractCompilerTest.F_9) != 0) {
+			testSuite.addTest(buildUniqueComplianceTestSuite(JavadocTestForModule.class, ClassFileConstants.JDK9));
+		}
+		if ((complianceLevels & AbstractCompilerTest.F_14) != 0) {
+			testSuite.addTest(buildUniqueComplianceTestSuite(JavadocTestForRecord.class, ClassFileConstants.JDK14));
+		}
 		return testSuite;
 	}
 
@@ -95,6 +101,7 @@ public abstract class JavadocTest extends AbstractRegressionTest {
 	public JavadocTest(String name) {
 		super(name);
 	}
+	@Override
 	protected Map getCompilerOptions() {
 		Map options = super.getCompilerOptions();
 		options.put(CompilerOptions.OPTION_ReportFieldHiding, CompilerOptions.IGNORE);
@@ -110,6 +117,7 @@ public abstract class JavadocTest extends AbstractRegressionTest {
 		return options;
 	}
 
+	@Override
 	protected String[] getDefaultClassPaths() {
 		if (this.useLibrary) {
 			String[] classLibs = super.getDefaultClassPaths();
@@ -279,54 +287,55 @@ public abstract class JavadocTest extends AbstractRegressionTest {
 	// The fix for https://bugs.eclipse.org/bugs/show_bug.cgi?id=201912 results in these additional
 	// diagnostics to be generated. Just as we arrange for the ``referencedClasses'' to be compiled
 	// automatically, we need to include these diagnostics automatically in the expected messages.
-	static String expectedDiagnosticsFromReferencedClasses = 
-		"----------\n" + 
-		"1. WARNING in test\\AbstractVisibility.java (at line 5)\n" + 
-		"	public int avf_public = avf_private;\n" + 
-		"	           ^^^^^^^^^^\n" + 
-		"The value of the field AbstractVisibility.AvcPrivate.avf_public is not used\n" + 
-		"----------\n" + 
-		"2. WARNING in test\\AbstractVisibility.java (at line 10)\n" + 
-		"	public int avm_public() {\n" + 
-		"	           ^^^^^^^^^^^^\n" + 
-		"The method avm_public() from the type AbstractVisibility.AvcPrivate is never used locally\n" + 
-		"----------\n" + 
-		"----------\n" + 
-		"1. WARNING in test\\Visibility.java (at line 5)\n" + 
-		"	public int vf_public = vf_private;\n" + 
-		"	           ^^^^^^^^^\n" + 
-		"The value of the field Visibility.VcPrivate.vf_public is not used\n" + 
-		"----------\n" + 
-		"2. WARNING in test\\Visibility.java (at line 11)\n" + 
-		"	public int vm_public() {\n" + 
-		"	           ^^^^^^^^^^^\n" + 
-		"The method vm_public() from the type Visibility.VcPrivate is never used locally\n" + 
-		"----------\n" + 
-		"----------\n" + 
-		"1. WARNING in test\\copy\\VisibilityPackage.java (at line 5)\n" + 
-		"	public int vf_public = vf_private;\n" + 
-		"	           ^^^^^^^^^\n" + 
-		"The value of the field VisibilityPackage.VpPrivate.vf_public is not used\n" + 
-		"----------\n" + 
-		"2. WARNING in test\\copy\\VisibilityPackage.java (at line 10)\n" + 
-		"	public int vm_public() {\n" + 
-		"	           ^^^^^^^^^^^\n" + 
-		"The method vm_public() from the type VisibilityPackage.VpPrivate is never used locally\n" + 
-		"----------\n" + 
-		"----------\n" + 
-		"1. WARNING in test\\copy\\VisibilityPublic.java (at line 5)\n" + 
-		"	public int vf_public = vf_private;\n" + 
-		"	           ^^^^^^^^^\n" + 
-		"The value of the field VisibilityPublic.VpPrivate.vf_public is not used\n" + 
-		"----------\n" + 
-		"2. WARNING in test\\copy\\VisibilityPublic.java (at line 10)\n" + 
-		"	public int vm_public() {\n" + 
-		"	           ^^^^^^^^^^^\n" + 
-		"The method vm_public() from the type VisibilityPublic.VpPrivate is never used locally\n" + 
+	static String expectedDiagnosticsFromReferencedClasses =
+		"----------\n" +
+		"1. WARNING in test\\AbstractVisibility.java (at line 5)\n" +
+		"	public int avf_public = avf_private;\n" +
+		"	           ^^^^^^^^^^\n" +
+		"The value of the field AbstractVisibility.AvcPrivate.avf_public is not used\n" +
+		"----------\n" +
+		"2. WARNING in test\\AbstractVisibility.java (at line 10)\n" +
+		"	public int avm_public() {\n" +
+		"	           ^^^^^^^^^^^^\n" +
+		"The method avm_public() from the type AbstractVisibility.AvcPrivate is never used locally\n" +
+		"----------\n" +
+		"----------\n" +
+		"1. WARNING in test\\Visibility.java (at line 5)\n" +
+		"	public int vf_public = vf_private;\n" +
+		"	           ^^^^^^^^^\n" +
+		"The value of the field Visibility.VcPrivate.vf_public is not used\n" +
+		"----------\n" +
+		"2. WARNING in test\\Visibility.java (at line 11)\n" +
+		"	public int vm_public() {\n" +
+		"	           ^^^^^^^^^^^\n" +
+		"The method vm_public() from the type Visibility.VcPrivate is never used locally\n" +
+		"----------\n" +
+		"----------\n" +
+		"1. WARNING in test\\copy\\VisibilityPackage.java (at line 5)\n" +
+		"	public int vf_public = vf_private;\n" +
+		"	           ^^^^^^^^^\n" +
+		"The value of the field VisibilityPackage.VpPrivate.vf_public is not used\n" +
+		"----------\n" +
+		"2. WARNING in test\\copy\\VisibilityPackage.java (at line 10)\n" +
+		"	public int vm_public() {\n" +
+		"	           ^^^^^^^^^^^\n" +
+		"The method vm_public() from the type VisibilityPackage.VpPrivate is never used locally\n" +
+		"----------\n" +
+		"----------\n" +
+		"1. WARNING in test\\copy\\VisibilityPublic.java (at line 5)\n" +
+		"	public int vf_public = vf_private;\n" +
+		"	           ^^^^^^^^^\n" +
+		"The value of the field VisibilityPublic.VpPrivate.vf_public is not used\n" +
+		"----------\n" +
+		"2. WARNING in test\\copy\\VisibilityPublic.java (at line 10)\n" +
+		"	public int vm_public() {\n" +
+		"	           ^^^^^^^^^^^\n" +
+		"The method vm_public() from the type VisibilityPublic.VpPrivate is never used locally\n" +
 		"----------\n";
 	/* (non-Javadoc)
 	 * @see junit.framework.TestCase#setUp()
 	 */
+	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		if (RUN_JAVAC) {
@@ -340,6 +349,7 @@ public abstract class JavadocTest extends AbstractRegressionTest {
 	/* (non-Javadoc)
 	 * @see junit.framework.TestCase#tearDown()
 	 */
+	@Override
 	protected void tearDown() throws Exception {
 //		SHIFT = false;
 //		INDENT = 2;
@@ -411,6 +421,7 @@ public abstract class JavadocTest extends AbstractRegressionTest {
 			generateOutput);
 	}
 	*/
+	@Override
 	protected void writeFiles(String[] testFiles) {
 		String classDirName = getClass().getName().substring(getClass().getName().lastIndexOf('.')+1); //.substring(11);
 		String testName = getName();
@@ -456,6 +467,7 @@ public abstract class JavadocTest extends AbstractRegressionTest {
 	 * Run Sun compilation using javadoc.
 	 * See implementation in parent for details.
 	 */
+	@Override
 	protected void runJavac(
 			String[] testFiles,
 			final String expectedProblemLog,
@@ -610,6 +622,7 @@ public abstract class JavadocTest extends AbstractRegressionTest {
 		}
 	}
 
+	@Override
 	protected void	printJavacResultsSummary() {
 		if (RUN_JAVAC) {
 			Integer count = (Integer)TESTS_COUNTERS.get(CURRENT_CLASS_NAME);

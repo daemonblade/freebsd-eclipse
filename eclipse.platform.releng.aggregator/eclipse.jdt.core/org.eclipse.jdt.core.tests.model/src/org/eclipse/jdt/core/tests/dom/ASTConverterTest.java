@@ -29,6 +29,7 @@ import org.eclipse.jdt.core.util.IModifierConstants;
 public class ASTConverterTest extends ConverterTestSetup {
 
 	/** @deprecated using deprecated code */
+	@Override
 	public void setUpSuite() throws Exception {
 		super.setUpSuite();
 		this.ast = AST.newAST(AST.JLS2, false);
@@ -44,7 +45,7 @@ public class ASTConverterTest extends ConverterTestSetup {
 	public static Test suite() {
 		return buildModelTestSuite(ASTConverterTest.class);
 	}
-	/** 
+	/**
 	 * Internal access method to MethodDeclaration#thrownExceptions() for avoiding deprecated warnings.
 	 * @deprecated
 	 */
@@ -8338,12 +8339,12 @@ public class ASTConverterTest extends ConverterTestSetup {
 			List thrownExceptions = internalThrownExceptions(methodDeclaration);
 			assertEquals("Wrong size", 1, thrownExceptions.size()); //$NON-NLS-1$
 			Name name = (Name) thrownExceptions.get(0);
-			binding = name.resolveBinding();			
+			binding = name.resolveBinding();
 		} else {
 			List thrownExceptionTypes = methodDeclaration.thrownExceptionTypes();
 			assertEquals("Wrong size", 1, thrownExceptionTypes.size()); //$NON-NLS-1$
 			Type type = (Type) thrownExceptionTypes.get(0);
-			binding = type.resolveBinding();			
+			binding = type.resolveBinding();
 		}
 		assertEquals("wrong type", IBinding.TYPE, binding.getKind()); //$NON-NLS-1$
 		assertEquals("wrong name", "IOException", binding.getName()); //$NON-NLS-1$ //$NON-NLS-2$

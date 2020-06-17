@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2019 Mateusz Matela and others.
+ * Copyright (c) 2014, 2020 Mateusz Matela and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -149,7 +149,7 @@ public class WrapExecutor {
 			if (token.hasNLSTag())
 				this.isNLSTagInLine = true;
 
-			if (token.isWrappable() && isInsideFormatRegion(token)) {
+			if (token.isWrappable() && isWrapInsideFormatRegion(index)) {
 				WrapPolicy wrapPolicy = token.getWrapPolicy();
 				if (wrapPolicy.wrapMode == WrapMode.TOP_PRIORITY && getLineBreaksBefore() == 0
 						&& index > this.currentTopPriorityGroupEnd) {
@@ -203,7 +203,7 @@ public class WrapExecutor {
 				this.isNextLineWrapped = true;
 				if (this.firstPotentialWrap < 0)
 					this.firstPotentialWrap = index + 1;
-				return false; 
+				return false;
 			}
 
 			boolean isLineEnd = getLineBreaksAfter() > 0 || getNext() == null || (getNext().isNextLineOnWrap()
@@ -232,6 +232,7 @@ public class WrapExecutor {
 		private ArrayDeque<Token> stack = new ArrayDeque<>();
 		private int initialIndent;
 		private int currentIndent;
+		private int fixedIndentDelta;
 		private WrapInfo nextWrap;
 
 		public WrapsApplier() {
@@ -297,13 +298,34 @@ public class WrapExecutor {
 				setIndent(token, getWrapIndent(token));
 				this.stack.push(token);
 			} else if (this.stack.isEmpty()) {
-				this.initialIndent = token.getIndent();
+				if (isFixedLineStart(token, index)) {
+					int fixedIndent = this.tm2.findSourcePositionInLine(token.originalStart);
+					this.initialIndent = fixedIndent;
+					this.fixedIndentDelta = fixedIndent - token.getIndent();
+				} else {
+					this.initialIndent = Math.max(0, token.getIndent() + this.fixedIndentDelta);
+				}
 				WrapExecutor.this.wrapSearchResults.clear();
 			}
 
 			this.currentIndent = this.stack.isEmpty() ? this.initialIndent : this.stack.peek().getIndent();
 			setIndent(token, this.currentIndent);
 			this.nextWrap = findWrapsCached(index, this.currentIndent).nextWrap;
+		}
+
+		private boolean isFixedLineStart(Token token, int index) {
+			if (WrapExecutor.this.options.initial_indentation_level > 0)
+				return false; // must be handling ast rewrite
+			if (index > 0 && this.tm2.countLineBreaksBetween(getPrevious(), token) == 0)
+				return false;
+			if (isWrapInsideFormatRegion(index))
+				return false;
+			int start = token.originalStart;
+			boolean inDisableFormat = this.tm2.getDisableFormatTokenPairs().stream()
+					.anyMatch(p -> p[0].originalStart <= start && p[1].originalStart >= start);
+			if (inDisableFormat)
+				return false;
+			return true;
 		}
 	}
 
@@ -465,7 +487,7 @@ public class WrapExecutor {
 				token.setWrapped(false);
 				this.wrapSearchStack.pop();
 				this.wrapSearchResults.put(item, wrapResult);
-				assert wrapResult.nextWrap == null || this.wrapSearchResults.get(wrapResult.nextWrap) != null; 
+				assert wrapResult.nextWrap == null || this.wrapSearchResults.get(wrapResult.nextWrap) != null;
 				if (item.wrapTokenIndex == startTokenIndex && item.indent == indent)
 					break;
 			} else {
@@ -483,7 +505,7 @@ public class WrapExecutor {
 
 	/**
 	 * The main algorithm that looks for optimal places to wrap.
-	 * Calls itself recursively to get results for wrapped sub-lines.  
+	 * Calls itself recursively to get results for wrapped sub-lines.
 	 */
 	private WrapResult findWraps(int wrapTokenIndex, int indent) {
 		final int lastIndex = this.lineAnalyzer.analyzeLine(wrapTokenIndex, indent);
@@ -521,7 +543,7 @@ public class WrapExecutor {
 			if (this.lineAnalyzer.minStructureDepth < currentDepth)
 				depthLimit = currentDepth;
 		}
-		// optimization: turns out there's no point checking multiple wraps with the same policy 
+		// optimization: turns out there's no point checking multiple wraps with the same policy
 		LinkedHashSet<WrapPolicy> policiesTried = new LinkedHashSet<>();
 
 		for (int i = lastIndex; firstPotentialWrap >= 0 && i >= firstPotentialWrap; i--) {
@@ -546,7 +568,7 @@ public class WrapExecutor {
 					|| (activeTopPriorityWrap >= 0 && i != activeTopPriorityWrap)
 					|| policiesTried.contains(wrapPolicy)
 					|| wrapPolicy.structureDepth >= depthLimit
-					|| !isInsideFormatRegion(token))
+					|| !isWrapInsideFormatRegion(i))
 				continue;
 			policiesTried.add(wrapPolicy);
 
@@ -678,9 +700,11 @@ public class WrapExecutor {
 		return result;
 	}
 
-	boolean isInsideFormatRegion(Token token) {
-		int pos = token.originalStart;
-		return this.regions.stream().anyMatch(r -> pos >= r.getOffset() && pos < r.getOffset() + r.getLength());
+	boolean isWrapInsideFormatRegion(int tokenIndex) {
+		int pos1 = tokenIndex == 0 ? 0 : this.tm.get(tokenIndex - 1).originalEnd;
+		int pos2 = this.tm.get(tokenIndex).originalStart;
+		return this.regions.stream().anyMatch(r -> (pos1 >= r.getOffset() && pos1 < r.getOffset() + r.getLength())
+				|| (pos2 >= r.getOffset() && pos2 < r.getOffset() + r.getLength()));
 	}
 
 	int getWrapIndent(Token token) {

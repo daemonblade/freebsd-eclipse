@@ -7,7 +7,7 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -275,6 +275,7 @@ public class CompletionTestsRequestor2 extends CompletionRequestor {
 	public String getReversedResults() {
 		if(this.proposalsPtr < 0) return "";
 		Arrays.sort(this.proposals, new Comparator() {
+			@Override
 			public int compare(Object o1, Object o2) {
 				if (o1 == o2)
 					return 0;
@@ -624,60 +625,60 @@ public class CompletionTestsRequestor2 extends CompletionRequestor {
 	public void setComputeEnclosingElement(boolean computeEnclosingElement) {
 		this.computeEnclosingElement = computeEnclosingElement;
 	}
-	
+
 	public boolean canUseDiamond(int proposalNo) {
 		if (proposalNo < this.proposals.length && this.proposals[proposalNo] != null) {
 			return this.proposals[proposalNo].canUseDiamond(this.context);
 		}
 		return false;
 	}
-	
+
 	public String getCompletionNode() {
 		if (this.context instanceof InternalCompletionContext) {
 			InternalCompletionContext internalCompletionContext = (InternalCompletionContext) this.context;
 			ASTNode astNode = internalCompletionContext.getCompletionNode();
 			if (astNode != null) return astNode.toString();
-			
+
 		}
 		return null;
 	}
-	
+
 	public String getCompletionNodeParent() {
 		if (this.context instanceof InternalCompletionContext) {
 			InternalCompletionContext internalCompletionContext = (InternalCompletionContext) this.context;
 			ASTNode astNode = internalCompletionContext.getCompletionNodeParent();
 			if (astNode != null) return astNode.toString();
-			
+
 		}
 		return null;
 	}
-	
+
 	public String getVisibleLocalVariables() {
 		if (this.context instanceof InternalCompletionContext) {
 			InternalCompletionContext internalCompletionContext = (InternalCompletionContext) this.context;
 			ObjectVector locals = internalCompletionContext.getVisibleLocalVariables();
 			if (locals != null) return locals.toString();
-			
+
 		}
 		return null;
 	}
-	
+
 	public String getVisibleFields() {
 		if (this.context instanceof InternalCompletionContext) {
 			InternalCompletionContext internalCompletionContext = (InternalCompletionContext) this.context;
 			ObjectVector fields = internalCompletionContext.getVisibleFields();
 			if (fields != null) return fields.toString();
-			
+
 		}
 		return null;
 	}
-	
+
 	public String getVisibleMethods() {
 		if (this.context instanceof InternalCompletionContext) {
 			InternalCompletionContext internalCompletionContext = (InternalCompletionContext) this.context;
 			ObjectVector methods = internalCompletionContext.getVisibleMethods();
 			if (methods != null) return methods.toString();
-			
+
 		}
 		return null;
 	}
