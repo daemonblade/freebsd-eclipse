@@ -19,6 +19,7 @@ package org.eclipse.ui.internal.ide.application;
 
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -84,11 +85,10 @@ import org.eclipse.ui.internal.ide.undo.WorkspaceUndoMonitor;
 import org.eclipse.ui.internal.progress.ProgressMonitorJobsDialog;
 import org.eclipse.ui.progress.IProgressService;
 import org.eclipse.ui.statushandlers.AbstractStatusHandler;
+import org.eclipse.urischeme.AutoRegisterSchemeHandlersJob;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.Version;
-
-import com.ibm.icu.text.Collator;
 
 /**
  * IDE-specified workbench advisor which configures the workbench for use as an
@@ -221,6 +221,7 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 			jfaceComparatorIsSet = true;
 		}
 
+		new AutoRegisterSchemeHandlersJob().schedule();
 	}
 
 	@Override
@@ -491,9 +492,8 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 	 */
 	private void disconnectFromWorkspace() {
 		// save the workspace
-		final MultiStatus status = new MultiStatus(
-				IDEWorkbenchPlugin.IDE_WORKBENCH, 1,
-				IDEWorkbenchMessages.ProblemSavingWorkbench, null);
+		final MultiStatus status = new MultiStatus(IDEWorkbenchPlugin.IDE_WORKBENCH, 1,
+				IDEWorkbenchMessages.ProblemSavingWorkbench);
 		try {
 			final ProgressMonitorJobsDialog p = new CancelableProgressMonitorJobsDialog(
 					null);

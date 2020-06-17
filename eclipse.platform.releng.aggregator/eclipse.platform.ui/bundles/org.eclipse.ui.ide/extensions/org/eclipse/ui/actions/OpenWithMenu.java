@@ -16,9 +16,9 @@
  *******************************************************************************/
 package org.eclipse.ui.actions;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -49,8 +49,6 @@ import org.eclipse.ui.internal.ide.DialogUtil;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.part.FileEditorInput;
-
-import com.ibm.icu.text.Collator;
 
 /**
  * A menu for opening files in the workbench.
@@ -239,7 +237,7 @@ public class OpenWithMenu extends ContributionItem {
 
 		editors = IDE.overrideEditorAssociations(editorInput, contentType, editors);
 
-		Collections.sort(Arrays.asList(editors), comparer);
+		Arrays.asList(editors).sort(comparer);
 
 		boolean defaultFound = false;
 

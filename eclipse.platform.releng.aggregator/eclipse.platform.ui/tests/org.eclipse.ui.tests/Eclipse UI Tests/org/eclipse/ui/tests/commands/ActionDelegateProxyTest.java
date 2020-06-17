@@ -14,6 +14,13 @@
 
 package org.eclipse.ui.tests.commands;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
@@ -28,9 +35,11 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.tests.api.workbenchpart.MenuContributionHarness;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.FileUtil;
 import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -41,7 +50,11 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 @Ignore("broke during e4 transition and still need adjustments")
-public class ActionDelegateProxyTest extends UITestCase {
+public class ActionDelegateProxyTest {
+
+	@Rule
+	public CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
+
 	/**
 	 *
 	 */
@@ -52,13 +65,9 @@ public class ActionDelegateProxyTest extends UITestCase {
 	private static final String GO_COMMAND = "org.eclipse.ui.tests.simplyGo";
 	private static final String STAY_COMMAND = "org.eclipse.ui.tests.simplyStay";
 
-	public ActionDelegateProxyTest() {
-		super(ActionDelegateProxyTest.class.getSimpleName());
-	}
-
 	@Test
 	public void testViewDelegate() throws Exception {
-		IWorkbenchWindow window = openTestWindow();
+		IWorkbenchWindow window = UITestCase.openTestWindow();
 		IWorkbenchPage page = window.getActivePage();
 		assertNull(page.findView(VIEW_ID));
 		IViewPart view = page.showView(VIEW_ID);
@@ -88,7 +97,7 @@ public class ActionDelegateProxyTest extends UITestCase {
 
 	@Test
 	public void testWWActionDelegate() throws Exception {
-		IWorkbenchWindow window = openTestWindow();
+		IWorkbenchWindow window = UITestCase.openTestWindow();
 		window.getActivePage().showActionSet(DELEGATE_ACTION_SET_ID);
 		IHandlerService service = window.getService(IHandlerService.class);
 		assertFalse(SimplyGoActionDelegate.executed);
@@ -100,7 +109,7 @@ public class ActionDelegateProxyTest extends UITestCase {
 
 	@Test
 	public void testEditorActionDelegate() throws Exception {
-		IWorkbenchWindow window = openTestWindow();
+		IWorkbenchWindow window = UITestCase.openTestWindow();
 		window.getActivePage().closeAllEditors(false);
 		IHandlerService service = window.getService(IHandlerService.class);
 		assertFalse(EditorActionDelegate.executed);
@@ -134,7 +143,7 @@ public class ActionDelegateProxyTest extends UITestCase {
 		assertEquals(editor2, EditorActionDelegate.part);
 
 		window.getActivePage().activate(editor1);
-		processEvents();
+		UITestCase.processEvents();
 		service.executeCommand(STAY_COMMAND, null);
 		assertTrue(EditorActionDelegate.executed);
 		assertEquals(editor1, EditorActionDelegate.part);

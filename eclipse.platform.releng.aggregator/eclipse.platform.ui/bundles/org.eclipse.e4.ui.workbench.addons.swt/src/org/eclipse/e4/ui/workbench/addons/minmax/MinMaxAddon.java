@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2018 IBM Corporation and others.
+ * Copyright (c) 2011, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,6 +14,7 @@
  *     Dirk Fauth (dirk.fauth@googlemail.com) - Bug 459285
  *     Eugen Neufeld (eneufeld@eclipsesource.com) - Bug 432466, Bug 455568
  *     Christoph Läubrich - Bug 365525
+ *     Pierre-Yves B. (pyvesdev@gmail.com) - Bug 562747
  ******************************************************************************/
 
 package org.eclipse.e4.ui.workbench.addons.minmax;
@@ -27,8 +28,6 @@ import org.eclipse.e4.core.di.annotations.Optional;
 import org.eclipse.e4.core.services.events.IEventBroker;
 import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.e4.ui.internal.workbench.swt.AbstractPartRenderer;
-import org.eclipse.e4.ui.internal.workbench.swt.AnimationEngine;
-import org.eclipse.e4.ui.internal.workbench.swt.FaderAnimationFeedback;
 import org.eclipse.e4.ui.model.application.MAddon;
 import org.eclipse.e4.ui.model.application.MApplication;
 import org.eclipse.e4.ui.model.application.ui.MUIElement;
@@ -185,10 +184,6 @@ public class MinMaxAddon {
 
 				MUIElement elementToChange = getElementToChange(e);
 				CTabFolder ctf = (CTabFolder) e.widget;
-
-				if (!getCTFFor(elementToChange).getMaximizeVisible()) {
-					return;
-				}
 
 				// Only fire if we're in the 'tab' area
 				if (e.y > ctf.getTabHeight()) {
@@ -741,14 +736,7 @@ public class MinMaxAddon {
 		}
 
 		List<MUIElement> elementsToMinimize = getElementsToMinimize(element);
-		Shell hostShell = (Shell) modelService.getTopLevelWindowFor(element).getWidget();
 		MWindow win = MinMaxAddonUtil.getWindowFor(element);
-
-		if (hostShell != null) {
-			FaderAnimationFeedback fader = new FaderAnimationFeedback(hostShell);
-			AnimationEngine engine = new AnimationEngine(win.getContext(), fader, 300);
-			engine.schedule();
-		}
 
 		// Restore any currently maximized element
 		restoreMaximizedElement(element, win);
@@ -935,13 +923,6 @@ public class MinMaxAddon {
 
 	void unzoom(final MUIElement element) {
 		MWindow win = MinMaxAddonUtil.getWindowFor(element);
-
-		Shell hostShell = (Shell) win.getWidget();
-		if (hostShell != null) {
-			FaderAnimationFeedback fader = new FaderAnimationFeedback(hostShell);
-			AnimationEngine engine = new AnimationEngine(win.getContext(), fader, 300);
-			engine.schedule();
-		}
 
 		List<MUIElement> elementsToRestore = getElementsToRestore(element);
 		for (MUIElement toRestore : elementsToRestore) {

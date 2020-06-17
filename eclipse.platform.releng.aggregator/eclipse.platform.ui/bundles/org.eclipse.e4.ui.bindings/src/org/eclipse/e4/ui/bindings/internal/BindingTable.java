@@ -176,11 +176,11 @@ public class BindingTable {
 				}
 				bindingList.add(binding);
 				bindingList.add(possibleConflict);
-				Collections.sort(bindingList, BEST_SEQUENCE);
+				bindingList.sort(BEST_SEQUENCE);
 			}
 		} else {
 			bindingList.add(binding);
-			Collections.sort(bindingList, BEST_SEQUENCE);
+			bindingList.sort(BEST_SEQUENCE);
 		}
 
 		if (possibleConflict != null && bindingList != null && !bindingList.isEmpty()
@@ -202,7 +202,7 @@ public class BindingTable {
 			bindingsByCommand.put(binding.getParameterizedCommand(), sequences);
 		}
 		sequences.add(binding);
-		Collections.sort(sequences, BEST_SEQUENCE);
+		sequences.sort(BEST_SEQUENCE);
 
 		TriggerSequence[] prefs = binding.getTriggerSequence().getPrefixes();
 		for (int i = 1; i < prefs.length; i++) {
@@ -337,7 +337,8 @@ public class BindingTable {
 	}
 
 	public boolean isPartialMatch(TriggerSequence seq) {
-		return bindingsByPrefix.get(seq) != null;
+		ArrayList<Binding> values = bindingsByPrefix.get(seq);
+		return values != null && !values.isEmpty();
 	}
 
 	public Collection<Binding> getBindings() {

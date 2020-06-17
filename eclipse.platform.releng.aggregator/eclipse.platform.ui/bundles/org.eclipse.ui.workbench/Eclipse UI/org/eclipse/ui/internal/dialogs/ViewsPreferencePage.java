@@ -57,7 +57,6 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -65,7 +64,6 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferenceConstants;
 import org.eclipse.ui.IWorkbenchPreferencePage;
@@ -91,11 +89,10 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 	private ControlDecoration themeComboDecorator;
 	private ITheme currentTheme;
 	private String defaultTheme;
-	private Button enableAnimations;
+	private Button useRoundTabs;
 	private Button enableMru;
 	private Button useColoredLabels;
 
-	private Text colorsAndFontsThemeDescriptionText;
 	private ComboViewer colorsAndFontsThemeCombo;
 	private ControlDecoration colorFontsDecorator;
 	private ColorsAndFontsTheme currentColorsAndFontsTheme;
@@ -156,7 +153,6 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 
 		currentColorsAndFontsTheme = getCurrentColorsAndFontsTheme();
 		createColorsAndFontsThemeCombo(comp);
-		createColorsAndFontsThemeDescriptionText(comp);
 
 		createThemeIndependentComposits(comp);
 
@@ -173,7 +169,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 	}
 
 	private void createThemeIndependentComposits(Composite comp) {
-		createEnableAnimationsPref(comp);
+		createUseRoundTabs(comp);
 		createColoredLabelsPref(comp);
 		createEnableMruPref(comp);
 	}
@@ -224,6 +220,12 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 		return label;
 	}
 
+	protected void createUseRoundTabs(Composite composite) {
+		IPreferenceStore apiStore = PrefUtil.getAPIPreferenceStore();
+		useRoundTabs = createCheckButton(composite, WorkbenchMessages.ViewsPreference_useRoundTabs,
+				apiStore.getBoolean(IWorkbenchPreferenceConstants.USE_ROUND_TABS));
+	}
+
 	protected void createEnableMruPref(Composite composite) {
 		createLabel(composite, ""); //$NON-NLS-1$
 		createLabel(composite, WorkbenchMessages.ViewsPreference_visibleTabs_description);
@@ -239,12 +241,6 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 		enableMru = createCheckButton(composite, WorkbenchMessages.ViewsPreference_enableMRU, actualValue);
 	}
 
-	protected void createEnableAnimationsPref(Composite composite) {
-		IPreferenceStore apiStore = PrefUtil.getAPIPreferenceStore();
-
-		enableAnimations = createCheckButton(composite, WorkbenchMessages.ViewsPreference_enableAnimations,
-				apiStore.getBoolean(IWorkbenchPreferenceConstants.ENABLE_ANIMATIONS));
-	}
 
 	/** @return the currently selected theme or null if there are no themes */
 	private ITheme getSelectedTheme() {
@@ -269,7 +265,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 		}
 
 		IPreferenceStore apiStore = PrefUtil.getAPIPreferenceStore();
-		apiStore.setValue(IWorkbenchPreferenceConstants.ENABLE_ANIMATIONS, enableAnimations.getSelection());
+		apiStore.setValue(IWorkbenchPreferenceConstants.USE_ROUND_TABS, useRoundTabs.getSelection());
 		apiStore.setValue(IWorkbenchPreferenceConstants.USE_COLORED_LABELS, useColoredLabels.getSelection());
 
 		IEclipsePreferences prefs = getSwtRendererPreferences();
@@ -311,7 +307,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 			}
 		}
 		IPreferenceStore apiStore = PrefUtil.getAPIPreferenceStore();
-		enableAnimations.setSelection(apiStore.getDefaultBoolean(IWorkbenchPreferenceConstants.ENABLE_ANIMATIONS));
+		useRoundTabs.setSelection(apiStore.getDefaultBoolean(IWorkbenchPreferenceConstants.USE_ROUND_TABS));
 		useColoredLabels.setSelection(apiStore.getDefaultBoolean(IWorkbenchPreferenceConstants.USE_COLORED_LABELS));
 		if (enableMru != null) {
 			enableMru.setSelection(getDefaultMRUValue());
@@ -337,9 +333,12 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 		super.performApply();
 		if (engine != null) {
 			ITheme theme = getSelectedTheme();
+			IPreferenceStore apiStore = PrefUtil.getAPIPreferenceStore();
 			boolean themeChanged = theme != null && !theme.equals(currentTheme);
 			boolean colorsAndFontsThemeChanged = !PlatformUI.getWorkbench().getThemeManager().getCurrentTheme().getId()
 					.equals(currentColorsAndFontsTheme.getId());
+			boolean tabCornersChanged = !useRoundTabs.getSelection() != apiStore
+					.getBoolean(IWorkbenchPreferenceConstants.USE_ROUND_TABS);
 
 			if (theme != null) {
 				currentTheme = theme;
@@ -353,7 +352,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 			themeComboDecorator.hide();
 			colorFontsDecorator.hide();
 
-			if (themeChanged || colorsAndFontsThemeChanged) {
+			if (themeChanged || colorsAndFontsThemeChanged || tabCornersChanged) {
 				MessageDialog.openWarning(getShell(), WorkbenchMessages.ThemeChangeWarningTitle,
 						WorkbenchMessages.ThemeChangeWarningText);
 			}
@@ -385,29 +384,8 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 				colorFontsDecorator.show();
 			} else
 				colorFontsDecorator.hide();
-			refreshColorsAndFontsThemeDescriptionText(colorsAndFontsTheme);
 			setColorsAndFontsTheme(colorsAndFontsTheme);
 		});
-	}
-
-	/**
-	 * Create the text box that will contain the current theme description text (if
-	 * any).
-	 *
-	 * @param parent the parent <code>Composite</code>.
-	 */
-	private void createColorsAndFontsThemeDescriptionText(Composite parent) {
-		new Label(parent, SWT.NONE).setText(WorkbenchMessages.ViewsPreference_currentThemeDescription);
-
-		colorsAndFontsThemeDescriptionText = new Text(parent,
-				SWT.H_SCROLL | SWT.V_SCROLL | SWT.READ_ONLY | SWT.BORDER | SWT.WRAP);
-		GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		// give a height hint that'll show at least two lines (and let the
-		// scroll bars draw nicely if necessary)
-		GC gc = new GC(parent);
-		layoutData.heightHint = Dialog.convertHeightInCharsToPixels(gc.getFontMetrics(), 2);
-		gc.dispose();
-		colorsAndFontsThemeDescriptionText.setLayoutData(layoutData);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -416,8 +394,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 			colorAndFontThemeId = currentColorsAndFontsTheme.getId();
 		}
 
-		for (ColorsAndFontsTheme theme : (List<ColorsAndFontsTheme>) colorsAndFontsThemeCombo
-				.getInput()) {
+		for (ColorsAndFontsTheme theme : (List<ColorsAndFontsTheme>) colorsAndFontsThemeCombo.getInput()) {
 			if (theme.getId().equals(colorAndFontThemeId)) {
 				ISelection selection = new StructuredSelection(theme);
 				colorsAndFontsThemeCombo.setSelection(selection);
@@ -486,20 +463,6 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 			result.add(new ColorsAndFontsTheme(themeDescriptor.getId(), themeString));
 		}
 		return result;
-	}
-
-	private void refreshColorsAndFontsThemeDescriptionText(ColorsAndFontsTheme theme) {
-		String description = ""; //$NON-NLS-1$
-		if (theme != null) {
-			IThemeDescriptor[] descs = WorkbenchPlugin.getDefault().getThemeRegistry().getThemes();
-			for (IThemeDescriptor desc : descs) {
-				if (desc.getId().equals(theme.getId()) && desc.getDescription() != null) {
-					description = desc.getDescription();
-					break;
-				}
-			}
-		}
-		colorsAndFontsThemeDescriptionText.setText(description);
 	}
 
 	private ColorsAndFontsTheme getSelectedColorsAndFontsTheme() {

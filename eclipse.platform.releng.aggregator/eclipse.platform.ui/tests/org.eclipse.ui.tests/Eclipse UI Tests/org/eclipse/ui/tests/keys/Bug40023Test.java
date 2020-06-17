@@ -14,6 +14,8 @@
 
 package org.eclipse.ui.tests.keys;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,20 +32,22 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.internal.Workbench;
 import org.eclipse.ui.internal.keys.BindingService;
 import org.eclipse.ui.keys.IBindingService;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * Tests Bug 40023
  *
  * @since 3.0
  */
-@RunWith(JUnit4.class)
 @Ignore("Intermittent failure.  SWT Bug 44344.  XGrabPointer?")
-public class Bug40023Test extends UITestCase {
+public class Bug40023Test {
+
+	@Rule
+	public CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
 
 	/**
 	 * Retrieves a menu item matching or starting with the given name from an
@@ -63,13 +67,6 @@ public class Bug40023Test extends UITestCase {
 		}
 
 		return null;
-	}
-
-	/**
-	 * Constructor for Bug40023Test.
-	 */
-	public Bug40023Test() {
-		super(Bug40023Test.class.getSimpleName());
 	}
 
 	/**
@@ -93,7 +90,7 @@ public class Bug40023Test extends UITestCase {
 	public void testCheckOnCheckbox() throws CoreException, CommandException,
 			FileNotFoundException, IOException, ParseException {
 		// Open a window to run the test.
-		IWorkbenchWindow window = openTestWindow();
+		IWorkbenchWindow window = UITestCase.openTestWindow();
 		Workbench workbench = (Workbench) window.getWorkbench();
 
 		// Set up a key binding for "Lock Toolbars".

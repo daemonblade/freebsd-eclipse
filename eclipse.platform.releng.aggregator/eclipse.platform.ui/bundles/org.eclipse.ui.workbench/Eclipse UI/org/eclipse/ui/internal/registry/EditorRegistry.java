@@ -18,7 +18,6 @@
  *******************************************************************************/
 package org.eclipse.ui.internal.registry;
 
-import com.ibm.icu.text.Collator;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -28,10 +27,10 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -1066,7 +1065,7 @@ public class EditorRegistry extends EventManager implements IEditorRegistry, IEx
 		IEditorDescriptor[] array = new IEditorDescriptor[unsortedList.size()];
 		unsortedList.toArray(array);
 
-		Collections.sort(Arrays.asList(array), comparer);
+		Arrays.asList(array).sort(comparer);
 		return array;
 	}
 

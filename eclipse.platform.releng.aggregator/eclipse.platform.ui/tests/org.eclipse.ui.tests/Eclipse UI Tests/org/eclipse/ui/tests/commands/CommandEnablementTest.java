@@ -14,6 +14,12 @@
 
 package org.eclipse.ui.tests.commands;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.lang.reflect.Field;
 import java.util.Map;
 
@@ -41,7 +47,9 @@ import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.ui.ISources;
+import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.commands.IElementUpdater;
 import org.eclipse.ui.contexts.IContextActivation;
@@ -59,8 +67,12 @@ import org.eclipse.ui.menus.MenuUtil;
 import org.eclipse.ui.menus.UIElement;
 import org.eclipse.ui.services.IEvaluationService;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -71,7 +83,10 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 @Ignore("broke during e4 transition and still need adjustments")
-public class CommandEnablementTest extends UITestCase {
+public class CommandEnablementTest {
+
+	@Rule
+	public CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
 
 	private static final String CONTEXT_TEST2 = "org.eclipse.ui.command.contexts.enablement_test2";
 	private static final String CONTEXT_TEST1 = "org.eclipse.ui.command.contexts.enablement_test1";
@@ -97,22 +112,15 @@ public class CommandEnablementTest extends UITestCase {
 	private CheckContextHandler contextHandler;
 	private IContextActivation contextActivation1;
 	private IContextActivation contextActivation2;
+	private IWorkbench fWorkbench;
 
-	public CommandEnablementTest() {
-		super(CommandEnablementTest.class.getSimpleName());
-	}
-
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
-		commandService = fWorkbench
-				.getService(ICommandService.class);
-		handlerService = fWorkbench
-				.getService(IHandlerService.class);
-		contextService = fWorkbench
-				.getService(IContextService.class);
-		evalService = fWorkbench
-				.getService(IEvaluationService.class);
+	@Before
+	public void doSetUp() throws Exception {
+		fWorkbench = PlatformUI.getWorkbench();
+		commandService = fWorkbench.getService(ICommandService.class);
+		handlerService = fWorkbench.getService(IHandlerService.class);
+		contextService = fWorkbench.getService(IContextService.class);
+		evalService = fWorkbench.getService(IEvaluationService.class);
 		cmd1 = commandService.getCommand(CMD1_ID);
 		cmd3 = commandService.getCommand(CMD3_ID);
 		normalHandler1 = new DefaultHandler();
@@ -124,8 +132,8 @@ public class CommandEnablementTest extends UITestCase {
 		contextHandler = new CheckContextHandler();
 	}
 
-	@Override
-	protected void doTearDown() throws Exception {
+	@After
+	public void doTearDown() throws Exception {
 		if (activation1 != null) {
 			handlerService.deactivateHandler(activation1);
 			activation1 = null;
@@ -142,7 +150,6 @@ public class CommandEnablementTest extends UITestCase {
 			contextService.deactivateContext(contextActivation2);
 			contextActivation2 = null;
 		}
-		super.doTearDown();
 	}
 
 	private static class DefaultHandler extends AbstractHandler {
@@ -238,6 +245,18 @@ public class CommandEnablementTest extends UITestCase {
 
 	}
 
+	// Test is currently failing for numerous reason:
+	// - Items are not CommandContributionItem but HandledContributionItem
+	// - Handlers are not instances of HandlerProxy but
+	// WorkbenchHandlerServiceHandler
+	// - The actual changes only happen in the MenuManager, if a real Menu is
+	// attached
+	// Even when changing test to address this via
+	// a) changing assertions to deal with HandledContributionItem
+	// b) manually inserting a CommandContributionItem to the MenuManager
+	// the actual restoring of the default text does not seem to work anymore.
+	// Bug 275126 might again be seen.
+	// Related bugs possibly breaking this: 382839, 394336
 	@Test
 	public void testRestoreContributedUI() throws Exception {
 
@@ -334,11 +353,11 @@ public class CommandEnablementTest extends UITestCase {
 	}
 
 	private IHandler getHandler(Command command) {
-		EHandlerService service = getWorkbench().getService(EHandlerService.class);
+		EHandlerService service = fWorkbench.getService(EHandlerService.class);
 		if (service == null) {
 			return null;
 		}
-		IEclipseContext ctx = getWorkbench().getService(IEclipseContext.class);
+		IEclipseContext ctx = fWorkbench.getService(IEclipseContext.class);
 		Object handler = HandlerServiceImpl.lookUpHandler(ctx, command.getId());
 		if (handler instanceof E4HandlerProxy) {
 			return ((E4HandlerProxy) handler).getHandler();
@@ -352,12 +371,10 @@ public class CommandEnablementTest extends UITestCase {
 		int enabledChangedCount = 0;
 
 		activation1 = handlerService.activateHandler(CMD1_ID, normalHandler1,
-				new ActiveContextExpression(CONTEXT_TEST1,
-						new String[] { ISources.ACTIVE_CONTEXT_NAME }));
+				new ActiveContextExpression(CONTEXT_TEST1, new String[] { ISources.ACTIVE_CONTEXT_NAME }));
 		activation2 = handlerService.activateHandler(CMD1_ID, normalHandler2,
-				new ActiveContextExpression(CONTEXT_TEST2,
-						new String[] { ISources.ACTIVE_CONTEXT_NAME }));
-		IEclipseContext ctx = getWorkbench().getService(IEclipseContext.class);
+				new ActiveContextExpression(CONTEXT_TEST2, new String[] { ISources.ACTIVE_CONTEXT_NAME }));
+		IEclipseContext ctx = fWorkbench.getService(IEclipseContext.class);
 		ctx.processWaiting();
 
 		assertFalse(cmd1.isHandled());
@@ -440,6 +457,11 @@ public class CommandEnablementTest extends UITestCase {
 		}
 	}
 
+	// Failure analysis:
+	// The isEnabled() assertions are correct, however, the
+	// enabledChanged listener is called more often than expected
+	// due to the way HandlerServiceHandler implements
+	// isEnabled() and setEnabled().
 	@Test
 	public void testEventsForEnabledHandlers() throws Exception {
 		// incremented for every change that should change enablement
@@ -549,6 +571,12 @@ public class CommandEnablementTest extends UITestCase {
 		}
 	}
 
+	// Test failure analysis:
+	// - Selections passed to WorkbenchSourceProvider#selectionChanged()
+	//   never make it into the IEclipseContext.
+	// - When using ESelectionService to modify the selection, the
+	//   test passes.
+	// Intended behavior? Bug?
 	@Test
 	public void testEnablementWithHandlerProxy() throws Exception {
 		IConfigurationElement handlerProxyConfig = null;
@@ -608,9 +636,23 @@ public class CommandEnablementTest extends UITestCase {
 		assertTrue(listener.lastChange);
 	}
 
+	// Test failure analysis:
+	// - Handlers are instances of WorkbenchHandlerServiceHandler
+	// - WorkbenchHandlerServiceHandler#setEnabled(Object) does not correctly
+	//   deal with IEvaluationContext instances being passed, i.e. none of the
+	//   variables in the snapshot created in the test are actually taken into
+	//   account.
+	// - Even when doing so by modifying
+	//   WorkbenchHandlerServiceHandler#setEnabled(Object), e.g. via
+	//   staticContext.set(IEvaluationContext.class, ...);
+	//   wont't help:
+	//   When WorkbenchHandlerServiceHandler#isEnabled() is called, the previous
+	//   call to #setEnabled(Object) is not relevant anymore, since the currently
+	//   active IEclipseContext is asked.
+	// Related bugs possibly breaking this: 382839, 394336
 	@Test
 	public void testEnablementForLocalContext() throws Exception {
-		openTestWindow("org.eclipse.ui.resourcePerspective");
+		UITestCase.openTestWindow("org.eclipse.ui.resourcePerspective");
 		activation1 = handlerService.activateHandler(CMD1_ID, contextHandler,
 				new ActiveContextExpression(CONTEXT_TEST1,
 						new String[] { ISources.ACTIVE_CONTEXT_NAME }));

@@ -50,8 +50,8 @@ public class ReadmeModelFactory {
 	protected void addSections(AdaptableList list, MarkElement element) {
 		list.add(element);
 		Object[] children = element.getChildren(element);
-		for (int i = 0; i < children.length; ++i) {
-			addSections(list, (MarkElement) children[i]);
+		for (Object child : children) {
+			addSections(list, (MarkElement) child);
 		}
 	}
 
@@ -143,14 +143,11 @@ public class ReadmeModelFactory {
 				// as a drop-down list. For the sake
 				// of simplicity, we will pick the last extension only.
 				if (i == extensions.length - 1) {
-					IConfigurationElement[] configElements = currentExtension
-							.getConfigurationElements();
-					for (int j = 0; j < configElements.length; j++) {
-						IConfigurationElement config = configElements[i];
-						if (config.getName()
-								.equals(IReadmeConstants.TAG_PARSER)) {
+					IConfigurationElement[] configElements = currentExtension.getConfigurationElements();
+					for (IConfigurationElement configElement : configElements) {
+						if (configElement.getName().equals(IReadmeConstants.TAG_PARSER)) {
 							// process the first 'parser' element and stop
-                            processParserElement(config);
+							processParserElement(configElement);
 							break;
 						}
 					}

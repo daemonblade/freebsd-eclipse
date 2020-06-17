@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corporation and others.
+ * Copyright (c) 2005, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -459,9 +459,8 @@ public class WorkbenchMessages extends NLS {
 	// --- Appearance ---
 	public static String ViewsPreferencePage_Theme;
 	public static String ViewsPreference_currentTheme;
-	public static String ViewsPreference_currentThemeDescription;
 	public static String ViewsPreference_currentThemeFormat;
-	public static String ViewsPreference_enableAnimations;
+	public static String ViewsPreference_useRoundTabs;
 	public static String ViewsPreference_visibleTabs_description;
 	public static String ViewsPreference_enableMRU;
 	public static String ViewsPreference_useColoredLabels;
@@ -536,9 +535,7 @@ public class WorkbenchMessages extends NLS {
 	public static String WorkbenchPreference_noEffectOnAllViews;
 	public static String WorkbenchPreference_HeapStatusButton;
 	public static String WorkbenchPreference_HeapStatusButtonToolTip;
-	public static String WorkbenchPreference_renameMode;
-	public static String WorkbenchPreference_renameModeInline;
-	public static String WorkbenchPreference_renameModeDialog;
+	public static String WorkbenchPreference_inlineRename;
 
 	// --- Globalization -----
 	public static String GlobalizationPreference_nlExtensions;
@@ -571,6 +568,7 @@ public class WorkbenchMessages extends NLS {
 	public static String PropertyDialog_toolTip;
 	public static String PropertyDialog_messageTitle;
 	public static String PropertyDialog_noPropertyMessage;
+	public static String PropertyDialog_noPropertyMessageForUnknown;
 	public static String PropertyDialog_propertyMessage;
 	public static String PropertyPageNode_errorMessage;
 

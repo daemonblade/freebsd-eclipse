@@ -14,6 +14,8 @@
 
 package org.eclipse.ui.tests.internal;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
@@ -27,27 +29,22 @@ import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.WorkbenchPage;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * Test for Bug 41931.
  *
  * @since 3.0
  */
-@RunWith(JUnit4.class)
 @Ignore
-public class Bug41931Test extends UITestCase {
+public class Bug41931Test {
 
-	/**
-	 * Constructs a new instance of this test case.
-	 */
-	public Bug41931Test() {
-		super(Bug41931Test.class.getSimpleName());
-	}
+	@Rule
+	public CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
 
 	/**
 	 * Tests that the <code>bringToTop(IWorkbenchPart)</code> correctly
@@ -59,7 +56,7 @@ public class Bug41931Test extends UITestCase {
 	@Test
 	public void testBringToTop() throws CoreException {
 		// Open a window.
-		IWorkbenchWindow window = openTestWindow();
+		IWorkbenchWindow window = UITestCase.openTestWindow();
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 
 		// Create a test project.

@@ -74,7 +74,7 @@ public class QuickAccessExtensionManager {
 				@Override
 				public void execute() {
 					try {
-						bundle.start();
+						bundle.start(Bundle.START_TRANSIENT);
 						reset();
 						if (onActivate != null) {
 							onActivate.run();

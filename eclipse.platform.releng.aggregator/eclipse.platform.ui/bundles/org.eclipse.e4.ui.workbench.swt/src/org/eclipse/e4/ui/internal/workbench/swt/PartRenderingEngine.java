@@ -178,11 +178,9 @@ public class PartRenderingEngine implements IPresentationEngine {
 			}
 
 			if (okToRender) {
-				// Un-maximize the element before tearing it down
-				if (changedElement.getTags().contains(MAXIMIZED)) {
-					changedElement.getTags().remove(MAXIMIZED);
-				}
-
+				// Un-maximize the element before tearing it down, required for example to show
+				// the views after the intro page is closed
+				changedElement.getTags().remove(MAXIMIZED);
 				// Note that the 'removeGui' protocol calls 'childRemoved'
 				removeGui(changedElement);
 			}
@@ -1266,12 +1264,10 @@ public class PartRenderingEngine implements IPresentationEngine {
 			appContext.set(IStylingEngine.class, new IStylingEngine() {
 				@Override
 				public void setClassname(Object widget, String classname) {
-					WidgetElement.setCSSClass((Widget) widget, classname);
 				}
 
 				@Override
 				public void setId(Object widget, String id) {
-					WidgetElement.setID((Widget) widget, id);
 				}
 
 				@Override
@@ -1284,10 +1280,7 @@ public class PartRenderingEngine implements IPresentationEngine {
 				}
 
 				@Override
-				public void setClassnameAndId(Object widget, String classname,
-						String id) {
-					WidgetElement.setCSSClass((Widget) widget, classname);
-					WidgetElement.setID((Widget) widget, id);
+				public void setClassnameAndId(Object widget, String classname, String id) {
 				}
 			});
 		} else if (cssTheme != null) {

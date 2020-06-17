@@ -754,7 +754,20 @@ public class WizardNewFileCreationPage extends WizardPage implements Listener {
 
 		String resourceName = resourceGroup.getResource();
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		IStatus result = workspace.validateName(resourceName, IResource.FILE);
+
+		IStatus result = null;
+		if (resourceName.isEmpty() || Path.ROOT.isValidSegment(resourceName)) { // just a file (no subfolder(s))
+			result = workspace.validateName(resourceName, IResource.FILE);
+		} else {
+			IPath containerPath = resourceGroup.getContainerFullPath();
+			if (containerPath == null) {
+				result = workspace.validatePath(resourceName, IResource.FILE);
+			} else {
+				result = workspace.validatePath(containerPath.toString() + IPath.SEPARATOR + resourceName,
+						IResource.FILE);
+			}
+		}
+
 		if (!result.isOK()) {
 			setErrorMessage(result.getMessage());
 			return false;

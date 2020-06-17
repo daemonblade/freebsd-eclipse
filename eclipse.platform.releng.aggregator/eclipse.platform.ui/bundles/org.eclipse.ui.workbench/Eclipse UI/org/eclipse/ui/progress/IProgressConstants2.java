@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2015 IBM Corporation and others.
+ * Copyright (c) 2010, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,7 +16,6 @@ package org.eclipse.ui.progress;
 
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.progress.IProgressConstants;
 
 /**
  * Constants relating to progress UI functionality of the workbench plug-in.

@@ -14,6 +14,7 @@
  *******************************************************************************/
 package org.eclipse.ui.actions;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +34,7 @@ import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.window.IShellProvider;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
@@ -54,8 +56,6 @@ import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 import org.eclipse.ui.internal.ide.actions.LTKLauncher;
-
-import com.ibm.icu.text.MessageFormat;
 
 /**
  * Standard action for renaming the selected resources.
@@ -546,7 +546,7 @@ public class RenameResourceAction extends WorkspaceAction {
 					if (!status.isOK()) {
 						displayError(status.getMessage());
 					} else {
-						if (!LTKLauncher.renameResource(newName, getStructuredSelection())) {
+						if (!LTKLauncher.renameResource(newName, new StructuredSelection(inlinedResource))) {
 							// LTK Launcher couldn't rename the resource
 							IPath newPath = inlinedResource.getFullPath().removeLastSegments(1).append(newName);
 							runWithNewPath(newPath, inlinedResource);

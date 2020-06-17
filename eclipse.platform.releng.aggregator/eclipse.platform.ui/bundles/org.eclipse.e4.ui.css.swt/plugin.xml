@@ -379,6 +379,12 @@
             composite="false"
             handler="org.eclipse.e4.ui.css.swt.properties.custom.CSSPropertye4SelectedTabFillHandler">
          <property-name
+               name="swt-selected-tab-highlight">
+         </property-name>
+                  <property-name
+               name="swt-selected-highlight-top">
+         </property-name>
+         <property-name
                name="swt-selected-tab-fill">
          </property-name>
       </handler>
@@ -433,35 +439,6 @@
                name="swt-background-mode">
          </property-name>
       </handler>
-      <handler
-            adapter="org.eclipse.e4.ui.css.swt.dom.TreeElement"
-            handler="org.eclipse.e4.ui.css.swt.properties.custom.CSSPropertyTreeArrowsSWTHandler">
-         <property-name
-               name="swt-tree-arrows-color">
-         </property-name>
-         <property-name
-               name="swt-tree-arrows-mode"> <!--triangle/square -->
-         </property-name>
-      </handler>
-      <handler
-            adapter="org.eclipse.e4.ui.css.swt.dom.TreeElement"
-            handler="org.eclipse.e4.ui.css.swt.properties.custom.CSSPropertySelectionBackgroundHandler">
-         <property-name
-               name="swt-selection-foreground-color">
-         </property-name>
-         <property-name
-               name="swt-selection-background-color">
-         </property-name>
-         <property-name
-               name="swt-selection-border-color">
-         </property-name>
-         <property-name
-               name="swt-hot-background-color">
-         </property-name>
-         <property-name
-               name="swt-hot-border-color">
-         </property-name>
-      </handler>
         <handler
             adapter="org.eclipse.e4.ui.css.swt.dom.TreeElement"
             handler="org.eclipse.e4.ui.css.swt.properties.custom.CSSPropertyHeaderHandler">
@@ -474,59 +451,12 @@
       </handler>
       <handler
             adapter="org.eclipse.e4.ui.css.swt.dom.TableElement"
-            handler="org.eclipse.e4.ui.css.swt.properties.custom.CSSPropertySelectionBackgroundHandler">
-         <property-name
-               name="swt-selection-foreground-color">
-         </property-name>
-         <property-name
-               name="swt-selection-background-color">
-         </property-name>
-         <property-name
-               name="swt-selection-border-color">
-         </property-name>
-         <property-name
-               name="swt-hot-background-color">
-         </property-name>
-         <property-name
-               name="swt-hot-border-color">
-         </property-name>
-      </handler>
-      <handler
-            adapter="org.eclipse.e4.ui.css.swt.dom.TableElement"
             handler="org.eclipse.e4.ui.css.swt.properties.custom.CSSPropertyHeaderHandler">
          <property-name
                name="swt-header-color">
          </property-name>
          <property-name
                name="swt-header-background-color">
-         </property-name>
-      </handler>
-      <handler
-            adapter="org.eclipse.e4.ui.css.swt.dom.StyledTextElement"
-            handler="org.eclipse.e4.ui.css.swt.properties.custom.CSSPropertyStyledTextScrollbarSWTHandler">
-         <property-name
-               name="swt-scrollbar-themed">
-         </property-name>
-         <property-name
-               name="swt-scrollbar-background-color">
-         </property-name>
-         <property-name
-               name="swt-scrollbar-foreground-color">
-         </property-name>
-         <property-name
-               name="swt-scrollbar-width">
-         </property-name>
-         <property-name
-               name="swt-scrollbar-mouse-near-scroll-width">
-         </property-name>
-         <property-name
-               name="swt-scrollbar-horizontal-visible">
-         </property-name>
-         <property-name
-               name="swt-scrollbar-vertical-visible">
-         </property-name>
-         <property-name
-               name="swt-scrollbar-border-radius">
          </property-name>
       </handler>
       <handler
