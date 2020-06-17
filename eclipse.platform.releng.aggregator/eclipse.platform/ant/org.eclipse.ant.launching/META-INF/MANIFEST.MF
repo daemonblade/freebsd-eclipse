@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Localization: plugin
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.eclipse.ant.launching;singleton:=true
-Bundle-Version: 1.2.800.qualifier
+Bundle-Version: 1.2.900.qualifier
 Bundle-Activator: org.eclipse.ant.internal.launching.AntLaunching
 Require-Bundle: org.eclipse.core.runtime;bundle-version="[3.5.0,4.0.0)",
  org.eclipse.debug.core;bundle-version="[3.12.0,4.0.0)",
@@ -27,5 +27,4 @@ Export-Package: org.eclipse.ant.internal.launching;x-friends:="org.eclipse.ant.u
  org.eclipse.ant.internal.launching.remote.logger;x-internal:=true,
  org.eclipse.ant.internal.launching.runtime.logger;x-friends:="org.eclipse.ant.ui",
  org.eclipse.ant.launching
-Import-Package: com.ibm.icu.text
 Automatic-Module-Name: org.eclipse.ant.launching
