@@ -28,3 +28,9 @@ Bug 559650: Force Javadoc re-generation for 4.15 M2
 Bug 560089: Force Javadoc re-generation for 4.15 M3
 Bug 560388: Force Javadoc re-generation for 4.15 RC1
 Bug 560534: Force Javadoc re-generation for 4.15 RC2
+Bug 561922 - Force Javadoc re-generation for 4.16 M1
+Bug 562597 - Force Javadoc re-generation for 4.16 M2
+Bug 563405 - Force Javadoc re-generation for 4.16 M3
+Bug 563639 - Force Javadoc re-generation for 4.16 RC1
+Bug 563781 - Javadoc generation fails
+Bug 563904 - Force Javadoc re-generation for 4.16 RC2
