@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     George Suaridze <suag@1c.ru> (1C-Soft LLC) - Bug 560168
  *******************************************************************************/
 package org.eclipse.help.ui.internal.preferences;
 
@@ -22,7 +23,6 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.help.internal.base.HelpBasePlugin;
 import org.eclipse.help.internal.base.IHelpBaseConstants;
 import org.eclipse.help.internal.browser.BrowserManager;
-import org.eclipse.help.ui.internal.HelpUIPlugin;
 import org.eclipse.help.ui.internal.IHelpUIConstants;
 import org.eclipse.help.ui.internal.Messages;
 import org.eclipse.jface.dialogs.Dialog;
@@ -281,7 +281,7 @@ public class HelpPreferencePage extends PreferencePage implements
 		try {
 			pref.flush();
 		} catch (BackingStoreException e) {
-			HelpUIPlugin.logError("Failed to save preferences", e); //$NON-NLS-1$
+			Platform.getLog(getClass()).error("Failed to save preferences", e); //$NON-NLS-1$
 		}
 
 		return true;

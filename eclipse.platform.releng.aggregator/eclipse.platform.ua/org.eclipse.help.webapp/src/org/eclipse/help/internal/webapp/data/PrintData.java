@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corporation and others.
+ * Copyright (c) 2007, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     George Suaridze <suag@1c.ru> (1C-Soft LLC) - Bug 560168
  *******************************************************************************/
 package org.eclipse.help.internal.webapp.data;
 
@@ -33,6 +34,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.help.HelpSystem;
 import org.eclipse.help.IToc;
 import org.eclipse.help.ITopic;
@@ -41,7 +43,6 @@ import org.eclipse.help.internal.HelpPlugin;
 import org.eclipse.help.internal.base.BaseHelpSystem;
 import org.eclipse.help.internal.base.scope.ScopeUtils;
 import org.eclipse.help.internal.search.HTMLDocParser;
-import org.eclipse.help.internal.webapp.HelpWebappPlugin;
 import org.eclipse.help.internal.xhtml.DynamicXHTMLProcessor;
 
 /*
@@ -137,7 +138,7 @@ public class PrintData extends RequestData {
 			try {
 				allowedConnections = Integer.parseInt(maxConnections);
 			} catch (NumberFormatException e) {
-				HelpWebappPlugin.logError("Init maxConnections error. Set to default.", e); //$NON-NLS-1$
+				Platform.getLog(PrintData.class).error("Init maxConnections error. Set to default.", e); //$NON-NLS-1$
 				allowedConnections = defaultMaxConnections;
 			}
 		}
@@ -150,7 +151,7 @@ public class PrintData extends RequestData {
 			try {
 				allowedMaxTopics = Integer.parseInt(maxTopics);
 			} catch (NumberFormatException e) {
-				HelpWebappPlugin.logError("Init maxTopics error. Set to default.", e); //$NON-NLS-1$
+				Platform.getLog(PrintData.class).error("Init maxTopics error. Set to default.", e); //$NON-NLS-1$
 				allowedMaxTopics = defaultMaxTopics;
 			}
 		}
@@ -381,6 +382,7 @@ public class PrintData extends RequestData {
 	/*
 	 * Returns the string content of the referenced topic in UTF-8.
 	 */
+	@SuppressWarnings("resource")
 	private String getContent(String href, String locale) {
 		InputStream in = HelpSystem.getHelpContent(href, locale);
 		StringBuilder buf = new StringBuilder();
@@ -409,7 +411,7 @@ public class PrintData extends RequestData {
 			}
 			catch (Exception e) {
 				String msg = "Error retrieving print preview content for " + href; //$NON-NLS-1$
-				HelpWebappPlugin.logError(msg, e);
+				Platform.getLog(getClass()).error(msg, e);
 			}
 			finally {
 				try {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2016 IBM Corporation and others.
+ * Copyright (c) 2006, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,15 +10,16 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     George Suaridze <suag@1c.ru> (1C-Soft LLC) - Bug 560168
  *******************************************************************************/
 package org.eclipse.help.internal.util;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +37,6 @@ import org.eclipse.help.internal.HelpData;
 import org.eclipse.help.internal.HelpPlugin;
 import org.osgi.framework.Bundle;
 
-import com.ibm.icu.text.Collator;
 
 /*
  * Reads and processes product preferences by considering not only the active
@@ -250,7 +250,7 @@ public class ProductPreferences {
 	}
 
 	private static void sortByName(List<String> remaining, Map<String, String> categorized) {
-		Collections.sort(remaining, new NameComparator(categorized));
+		remaining.sort(new NameComparator(categorized));
 	}
 
 	public static synchronized String getPluginId(Properties prefs) {
@@ -347,7 +347,8 @@ public class ProductPreferences {
 					return properties;
 				} catch (IOException e) {
 					// log the fact that it couldn't load it
-					HelpPlugin.logError("Error opening product's plugin customization file: " + bundleId + "/" + path, e); //$NON-NLS-1$ //$NON-NLS-2$
+					Platform.getLog(ProductPreferences.class)
+							.error("Error opening product's plugin customization file: " + bundleId + "/" + path, e); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 			}
 		}

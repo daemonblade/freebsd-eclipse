@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,11 +10,11 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     George Suaridze <suag@1c.ru> (1C-Soft LLC) - Bug 560168
  *******************************************************************************/
 package org.eclipse.help.internal.search;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,7 +27,6 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.help.internal.base.HelpBasePlugin;
 import org.eclipse.help.internal.base.remote.RemoteHelp;
 import org.eclipse.help.internal.base.remote.RemoteSearchManager;
 import org.eclipse.help.internal.search.federated.FederatedSearchEntry;
@@ -133,7 +132,7 @@ public class SearchManager {
 		}
 		catch (InterruptedException e) {
 			String msg = "Unexpected InterruptedException while waiting for help search jobs to finish"; //$NON-NLS-1$
-			HelpBasePlugin.logError(msg, e);
+			Platform.getLog(getClass()).error(msg, e);
 		}
 
 		// results are in; send them off to the collector
@@ -270,7 +269,7 @@ public class SearchManager {
 		public void flush(ISearchHitCollector collector) {
 			// sort by score
 			List<SearchHit> hitsList = new ArrayList<>(allHits);
-			Collections.sort(hitsList);
+			hitsList.sort(null);
 			collector.addHits(hitsList, wordsSearched);
 			allHits.clear();
 			wordsSearched = null;

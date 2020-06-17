@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corporation and others.
+ * Copyright (c) 2008, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,8 +15,8 @@
 package org.eclipse.help.internal.webapp.servlet;
 
 import java.io.IOException;
+import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -32,8 +32,6 @@ import org.eclipse.help.internal.webapp.WebappResources;
 import org.eclipse.help.internal.webapp.data.UrlUtil;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
-
-import com.ibm.icu.text.Collator;
 
 /**
  * A servlet that provides an informational page about the plugins that make up
@@ -132,7 +130,7 @@ public class AboutServlet extends HttpServlet {
 		}
 
 		Comparator<PluginDetails> pluginComparator = new PluginComparator(sortColumn);
-		Collections.sort(plugins, pluginComparator);
+		plugins.sort(pluginComparator);
 		String[] headerColumns = new String[] {WebappResources.getString("provider", locale), //$NON-NLS-1$
 				WebappResources.getString("pluginName", locale), //$NON-NLS-1$
 				WebappResources.getString("version", locale), //$NON-NLS-1$

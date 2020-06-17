@@ -39,9 +39,7 @@ import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.util.Geometry;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
@@ -301,30 +299,16 @@ public class IntroLaunchBar {
 		container = new Composite(parent, SWT.NULL);
 		computeColors(parent.getDisplay());
 		container.setLayout(new BarLayout());
-		// boolean vertical = (orientation & SWT.VERTICAL) != 0;
 		toolBarManager = new ToolBarManager(SWT.FLAT | getOrientation());
 
 
 		fillToolBar();
-		// coolBar = new CoolBar(container, SWT.NULL);
-		// CoolItem coolItem = new CoolItem(coolBar, SWT.NULL);
-		// toolBarManager.createControl(coolBar);
 		toolBarManager.createControl(container);
 		ToolBar toolBar = toolBarManager.getControl();
 
-		// coolItem.setControl(toolBar);
-		// Point toolBarSize = toolBar.computeSize(SWT.DEFAULT,
-		// SWT.DEFAULT);
-		// Set the preffered size to the size of the toolbar plus trim
-		// Point preferredSize = coolItem.computeSize(toolBarSize.x,
-		// toolBarSize.y);
-		// coolItem.setPreferredSize(preferredSize);
-
 		if (bg != null) {
 			toolBar.setBackground(bg);
-			// coolBar.setBackground(bg);
 		}
-		container.addPaintListener(this::onPaint);
 		MenuManager manager = new MenuManager();
 		IMenuListener listener = this::contextMenuAboutToShow;
 		manager.setRemoveAllWhenShown(true);
@@ -345,20 +329,6 @@ public class IntroLaunchBar {
 		return SideValue.BOTTOM;
 	}
 
-
-	protected void onPaint(PaintEvent e) {
-		GC gc = e.gc;
-		Color color = fg;
-		if (color == null) {
-			color = e.display.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
-		}
-		gc.setForeground(color);
-		if (bg != null)
-			gc.setBackground(bg);
-		Point size = container.getSize();
-		gc.fillRectangle(0, 0, size.x, size.y);
-		gc.drawRectangle(0, 0, size.x - 1, size.y - 1);
-	}
 
 	private void computeColors(Display display) {
 		if (element.getBackground() != null) {

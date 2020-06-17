@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2015 IBM Corporation and others.
+ * Copyright (c) 2011, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,12 +10,12 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     George Suaridze <suag@1c.ru> (1C-Soft LLC) - Bug 560168
  *******************************************************************************/
 
 package org.eclipse.help.internal.base;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -109,11 +109,11 @@ public class MissingContentManager {
 				} catch (Exception e) {
 					// log and skip
 					String msg = "Exception reading " + ELEMENT_NAME_PLACEHOLDER + " extension in bundle" + pluginId; //$NON-NLS-1$ //$NON-NLS-2$
-					HelpPlugin.logError(msg, e);
+					Platform.getLog(getClass()).error(msg, e);
 				}
 			}
 		}
-		Collections.sort(placeholders);
+		placeholders.sort(null);
 		// Read the preferences to find any ignored placeholders
 		String ignoredBundles = Platform.getPreferencesService().getString(HelpBasePlugin.PLUGIN_ID, IGNORE_MISSING_PLACEHOLDER_PREFERENCE, "", null); //$NON-NLS-1$
 		if (ignoredBundles.length() > 0) {
@@ -214,7 +214,7 @@ public class MissingContentManager {
 		try {
 			prefs.flush();
 		} catch (BackingStoreException e) {
-			HelpBasePlugin.logError("Cannot save preferences", e); //$NON-NLS-1$
+			Platform.getLog(getClass()).error("Cannot save preferences", e); //$NON-NLS-1$
 		}
 	}
 

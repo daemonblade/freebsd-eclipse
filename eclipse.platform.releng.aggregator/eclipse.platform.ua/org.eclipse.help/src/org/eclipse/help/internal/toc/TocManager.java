@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,12 +11,12 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     James Blackburn - fix for Bug 230842
+ *     George Suaridze <suag@1c.ru> (1C-Soft LLC) - Bug 560168
  *******************************************************************************/
 package org.eclipse.help.internal.toc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -81,7 +81,7 @@ public class TocManager {
 				catch (Throwable t) {
 					// log and skip
 					String msg = "Error getting " + Toc.class.getName() + " from " + ITocContribution.class.getName() + ": " + ordered[i]; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-					HelpPlugin.logError(msg, t);
+					Platform.getLog(getClass()).error(msg, t);
 				}
 			}
 			tocs = orderedTocs.toArray(new Toc[orderedTocs.size()]);
@@ -231,7 +231,7 @@ public class TocManager {
 				catch (Throwable t) {
 					// log, and skip the offending provider
 					String msg = "Error getting help table of contents data from provider: " + providers[i].getClass().getName() + " (skipping provider)"; //$NON-NLS-1$ //$NON-NLS-2$
-					HelpPlugin.logError(msg, t);
+					Platform.getLog(getClass()).error(msg, t);
 					continue;
 				}
 
@@ -273,11 +273,11 @@ public class TocManager {
 					catch (CoreException e) {
 						// log and skip
 						String msg = "Error instantiating help table of contents provider class \"" + elem.getAttribute(ATTRIBUTE_NAME_CLASS) + '"'; //$NON-NLS-1$
-						HelpPlugin.logError(msg, e);
+						Platform.getLog(getClass()).error(msg, e);
 					}
 				}
 			}
-			Collections.sort(providers, new TocProviderComparator());
+			providers.sort(new TocProviderComparator());
 			tocProviders = providers.toArray(new AbstractTocProvider[providers.size()]);
 		}
 		return tocProviders;

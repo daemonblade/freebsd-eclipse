@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2017 IBM Corporation and others.
+ * Copyright (c) 2011, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     George Suaridze <suag@1c.ru> (1C-Soft LLC) - Bug 560168
  *******************************************************************************/
 package org.eclipse.help.internal.webapp.servlet;
 
@@ -84,8 +85,9 @@ public class ValidatorServlet extends HttpServlet {
 
 			String errorMsg = WebappResources.getString("cantCreateServlet", //$NON-NLS-1$
 					locale, service);
-			HelpWebappPlugin.logError(errorMsg, ex);
+			Platform.getLog(getClass()).error(errorMsg, ex);
 
+			@SuppressWarnings("resource")
 			PrintWriter writer = resp.getWriter();
 			writer.println(errorMsg);
 			ex.printStackTrace(writer);
@@ -213,6 +215,7 @@ public class ValidatorServlet extends HttpServlet {
 			return stream;
 		}
 
+		@SuppressWarnings("resource")
 		public void commitOutput() throws IOException {
 
 			OutputStream os = response.getOutputStream();

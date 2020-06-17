@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     George Suaridze <suag@1c.ru> (1C-Soft LLC) - Bug 560168
  *******************************************************************************/
 package org.eclipse.help.ui.internal.views;
 
@@ -17,6 +18,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -99,8 +101,6 @@ import org.eclipse.ui.forms.widgets.FormText;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.ILayoutExtension;
 import org.eclipse.ui.forms.widgets.ScrolledForm;
-
-import com.ibm.icu.text.Collator;
 
 public class ReusableHelpPart implements IHelpUIConstants,
 		IActivityManagerListener {
@@ -1350,7 +1350,7 @@ public class ReusableHelpPart implements IHelpUIConstants,
 				PlatformUI.getWorkbench().getHelpSystem().displayHelpResource(aurl);
 
 			} catch (Exception e) {
-				HelpUIPlugin.logError("Error opening browser", e); //$NON-NLS-1$
+				Platform.getLog(getClass()).error("Error opening browser", e); //$NON-NLS-1$
 			}
 		}
 	}

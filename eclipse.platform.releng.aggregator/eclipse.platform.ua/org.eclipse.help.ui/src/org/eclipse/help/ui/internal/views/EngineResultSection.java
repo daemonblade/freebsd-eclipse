@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,6 +16,7 @@ package org.eclipse.help.ui.internal.views;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.help.IHelpResource;
@@ -24,7 +25,6 @@ import org.eclipse.help.internal.base.HelpBasePlugin;
 import org.eclipse.help.internal.search.SearchHit;
 import org.eclipse.help.search.ISearchEngineResult;
 import org.eclipse.help.search.ISearchEngineResult2;
-import org.eclipse.help.ui.internal.HelpUIPlugin;
 import org.eclipse.help.ui.internal.HelpUIResources;
 import org.eclipse.help.ui.internal.IHelpUIConstants;
 import org.eclipse.help.ui.internal.Messages;
@@ -217,7 +217,7 @@ public class EngineResultSection {
 				try {
 					page.showView(PROGRESS_VIEW);
 				} catch (PartInitException e) {
-					HelpUIPlugin.logError(Messages.EngineResultSection_progressError, e);
+					Platform.getLog(getClass()).error(Messages.EngineResultSection_progressError, e);
 				}
 			}
 		}

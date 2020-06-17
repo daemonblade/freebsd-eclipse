@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2016 IBM Corporation and others.
+ * Copyright (c) 2008, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     George Suaridze <suag@1c.ru> (1C-Soft LLC) - Bug 560168
  *******************************************************************************/
 
 package org.eclipse.help.internal.webapp.servlet;
@@ -25,7 +26,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.help.internal.webapp.HelpWebappPlugin;
 import org.eclipse.help.webapp.IFilter;
 
 public class ExtraFilters implements IFilter {
@@ -51,7 +51,7 @@ public class ExtraFilters implements IFilter {
 			try {
 				obj = element.createExecutableExtension("class"); //$NON-NLS-1$
 			} catch (CoreException e) {
-				HelpWebappPlugin.logError("Create extension failed:[" //$NON-NLS-1$
+				Platform.getLog(getClass()).error("Create extension failed:[" //$NON-NLS-1$
 						+ CONTENTFILTER_XP_NAME + "].", e); //$NON-NLS-1$
 			}
 			if (obj instanceof IFilter) {
@@ -72,7 +72,7 @@ public class ExtraFilters implements IFilter {
 	}
 
 	private static void sortFilters() {
-		Collections.sort(filters);
+		filters.sort(null);
 		Collections.reverse(filters);
 	}
 

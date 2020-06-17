@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,12 +14,12 @@
  *     Holger Voormann - fix for bug 365549 (http://eclip.se/365549)
  *     Holger Voormann - fix for bug 364324 (http://eclip.se/364324)
  *     Alex Blewitt - Bug 474070
+ *     George Suaridze <suag@1c.ru> (1C-Soft LLC) - Bug 560168
  *******************************************************************************/
 package org.eclipse.help.internal.webapp.data;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -48,7 +48,6 @@ import org.eclipse.help.internal.search.SearchProgressMonitor;
 import org.eclipse.help.internal.search.SearchQuery;
 import org.eclipse.help.internal.search.SearchResults;
 import org.eclipse.help.internal.util.ProductPreferences;
-import org.eclipse.help.internal.webapp.HelpWebappPlugin;
 import org.eclipse.help.internal.webapp.servlet.WebappWorkingSetManager;
 import org.eclipse.help.internal.workingset.AdaptableHelpResource;
 import org.eclipse.help.internal.workingset.AdaptableSelectedToc;
@@ -168,7 +167,7 @@ public class SearchData extends ActivitiesData {
 						searchWord = query;
 				}
 			}
-			Collections.sort(altList);
+			altList.sort(null);
 
 			loadSearchResults();
 			if (queryException != null) {
@@ -439,8 +438,7 @@ public class SearchData extends ActivitiesData {
 						results, pm);
 				hits = results.getSearchHits();
 				if (hits == null) {
-					HelpWebappPlugin
-							.logWarning("No search results returned.  Help index is in use."); //$NON-NLS-1$
+					Platform.getLog(getClass()).warn("No search results returned.  Help index is in use."); //$NON-NLS-1$
 				}
 				return;
 			}

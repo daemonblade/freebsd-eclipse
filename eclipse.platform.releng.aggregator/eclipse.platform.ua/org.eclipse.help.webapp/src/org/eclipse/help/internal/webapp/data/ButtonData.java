@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2016 IBM Corporation and others.
+ * Copyright (c) 2009, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,12 +10,12 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     George Suaridze <suag@1c.ru> (1C-Soft LLC) - Bug 560168
  *******************************************************************************/
 
 package org.eclipse.help.internal.webapp.data;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.servlet.ServletContext;
@@ -26,7 +26,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.help.internal.webapp.HelpWebappPlugin;
 import org.eclipse.help.webapp.AbstractButton;
 
 public class ButtonData extends RequestData {
@@ -50,14 +49,14 @@ public class ButtonData extends RequestData {
 				try {
 					obj = element.createExecutableExtension("class"); //$NON-NLS-1$
 				} catch (CoreException e) {
-					HelpWebappPlugin.logError("Create extension failed:[" //$NON-NLS-1$
+					Platform.getLog(getClass()).error("Create extension failed:[" //$NON-NLS-1$
 							+ BUTTON_EXTENSION_POINT + "].", e); //$NON-NLS-1$
 				}
 				if (obj instanceof AbstractButton) {
 					allButtons.add((AbstractButton) obj);
 				}
 			}
-			Collections.sort(allButtons);
+			allButtons.sort(null);
 		}
 
 		List<AbstractButton> buttonList = new ArrayList<>();
