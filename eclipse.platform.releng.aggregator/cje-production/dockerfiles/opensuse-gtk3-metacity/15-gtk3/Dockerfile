@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM opensuse/leap:15
 
 ### user name recognition at runtime w/ an arbitrary uid - for OpenShift deployments
 COPY scripts/uid_entrypoint /usr/local/bin/uid_entrypoint
@@ -7,28 +7,23 @@ RUN chmod u+x /usr/local/bin/uid_entrypoint && \
     chmod g=u /usr/local/bin/uid_entrypoint /etc/passwd
 ENTRYPOINT [ "uid_entrypoint" ]
 
-ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      libgtk-3-0=3.22.* \
-      tigervnc-standalone-server \
-      tigervnc-common \
+RUN zypper --non-interactive update && zypper --non-interactive install \
+      libgtk-3-0 \
+      xorg-x11-Xvnc \
+      tigervnc \
       metacity \
-      x11-xserver-utils \
-      libgl1-mesa-dri \
-      xfonts-base \
-      xfonts-scalable \
-      xfonts-100dpi \
-      xfonts-75dpi \
-      fonts-liberation \
-      fonts-liberation2 \
-      fonts-freefont-ttf \
-      fonts-dejavu \
-      fonts-dejavu-core \
-      fonts-dejavu-extra \
+      xorg-x11-fonts \
+      dejavu-fonts \
+      liberation-fonts \
+      Mesa-libGL1 \
+      Mesa-libEGL1 \
+      Mesa-dri \
       wget \
       curl \
       unzip \
-    && rm -rf /var/lib/apt/lists/*
+      vim \
+      tar \
+      gzip
 
 ENV HOME=/home/vnc
 ENV DISPLAY :0

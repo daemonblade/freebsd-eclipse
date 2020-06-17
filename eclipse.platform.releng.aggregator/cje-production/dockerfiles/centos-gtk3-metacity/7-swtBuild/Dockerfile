@@ -16,10 +16,23 @@ RUN yum -y update && yum -y install \
       gnu-free-fonts-common \
       dejavu-fonts-common \
       unzip \
+      zip \
       lsof \
       wget \
       curl \
       webkitgtk4 \
+      webkitgtk4-devel \
+      gtk3-devel \
+      gtk2 \
+      gtk2-devel \
+      java-openjdk \
+      maven \
+      webkit2gtk3-devel \
+      make \
+      gcc \
+      mesa-libGLU-devel \
+      mesa-libGL-devel \
+      libXt-devel \
     && yum clean all
 
 ENV HOME=/home/vnc

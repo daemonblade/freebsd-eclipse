@@ -33,8 +33,8 @@ $CJE_ROOT/$TMP_DIR/eclipse/eclipse -nosplash \
   -debug -consolelog -data $CJE_ROOT/$TMP_DIR/workspace-toolsinstall \
   -application org.eclipse.equinox.p2.director \
   -repository ${ECLIPSE_RUN_REPO},${BUILDTOOLS_REPO},${WEBTOOLS_REPO} \
-  -installIU org.eclipse.platform.ide,org.eclipse.pde.api.tools,org.eclipse.releng.build.tools.feature.feature.group,org.eclipse.wtp.releng.tools.feature.feature.group/${WEBTOOLS_VER},org.apache.derby.core.feature.feature.group \
+  -installIU org.eclipse.platform.ide,org.eclipse.pde.api.tools,org.eclipse.releng.build.tools.feature.feature.group,org.eclipse.wtp.releng.tools.feature.feature.group/${WEBTOOLS_VER} \
   -destination $CJE_ROOT/$BASEBUILDER_DIR \
-  -profile SDKProfile
+  -profile SDKProfile -vm ${JAVA_HOME}/bin/java
 
 fn-write-property LAUNCHER_JAR \"$(find $CJE_ROOT/$BASEBUILDER_DIR -name org.eclipse.equinox.launcher_*.jar | tail -1)\"
