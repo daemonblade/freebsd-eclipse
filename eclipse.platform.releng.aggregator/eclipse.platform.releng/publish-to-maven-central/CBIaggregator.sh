@@ -66,7 +66,8 @@ if [ ! -x ${ECLIPSE} ]
 then
 	cd ${LOCAL_TOOLS}
 	echo "Extracting Eclipse from ${FILE_ECLIPSE} ..."
-	tar xf ${FILE_ECLIPSE}
+	scp genie.releng@projects-storage.eclipse.org:${FILE_ECLIPSE} .
+	tar xf eclipse-SDK-${SDK_VERSION}-linux-gtk-x86_64.tar.gz
 	cd ${WORKSPACE}
 fi
 require_executable ${ECLIPSE}
@@ -371,7 +372,7 @@ do
 done < ${WORKSPACE}/work/sourceBundles.txt
 
 # copy ecj-src from build output (NB: we are mapping from SDK version (4.x) back to ECJ version (3.x)):
-/bin/cp ${DROPS4}/${SDK_BUILD_DIR}/ecjsrc-${SDK_VERSION}.jar org/eclipse/jdt/ecj/${ECJ_VERSION}/ecj-${ECJ_VERSION}-sources.jar
+scp genie.releng@projects-storage.eclipse.org:${DROPS4}/${SDK_BUILD_DIR}/ecjsrc-${SDK_VERSION}.jar org/eclipse/jdt/ecj/${ECJ_VERSION}/ecj-${ECJ_VERSION}-sources.jar
 
 echo "========== Repo completed ========="
 

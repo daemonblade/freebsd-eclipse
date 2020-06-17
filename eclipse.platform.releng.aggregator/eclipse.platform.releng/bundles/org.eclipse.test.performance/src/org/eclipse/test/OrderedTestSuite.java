@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,9 +20,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -56,13 +54,11 @@ public class OrderedTestSuite extends TestSuite {
 
         Set<String> existingMethods = new HashSet<>();
         Method[] methods = testClass.getMethods(); // just public member methods
-        for (int i = 0; i < methods.length; i++) {
-            Method method = methods[i];
+        for (Method method : methods) {
             existingMethods.add(method.getName());
         }
 
-        for (int i = 0; i < testMethods.length; i++) {
-            final String testMethod = testMethods[i];
+        for (final String testMethod : testMethods) {
             if (existingMethods.remove(testMethod)) {
                 addTest(createTest(testClass, testMethod));
             } else {
@@ -70,8 +66,7 @@ public class OrderedTestSuite extends TestSuite {
             }
         }
 
-        for (Iterator<String> iter = existingMethods.iterator(); iter.hasNext();) {
-            String existingMethod = iter.next();
+        for (String existingMethod : existingMethods) {
             if (existingMethod.startsWith("test")) { //$NON-NLS-1$
                 addTest(error(testClass, existingMethod, new IllegalArgumentException("Test method '" + existingMethod + "' not listed in OrderedTestSuite of class '" + testClass.getName() + "'."))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             }
@@ -116,27 +111,22 @@ public class OrderedTestSuite extends TestSuite {
 
         try {
             final List<String> orderedMethodNames = getBytecodeOrderedTestNames(testClass);
-            Collections.sort(tests, new Comparator<Test>() {
-
-                @Override
-                public int compare(Test o1, Test o2) {
-                    if (o1 instanceof TestCase && o2 instanceof TestCase) {
-                        TestCase t1 = (TestCase) o1;
-                        TestCase t2 = (TestCase) o2;
-                        int i1 = orderedMethodNames.indexOf(t1.getName());
-                        int i2 = orderedMethodNames.indexOf(t2.getName());
-                        if (i1 != -1 && i2 != -1)
-                            return i1 - i2;
-                    }
-                    throw new SortingException("suite failed to detect test order: " + o1 + ", " + o2); //$NON-NLS-1$ //$NON-NLS-2$
+            tests.sort((o1, o2) -> {
+                if (o1 instanceof TestCase && o2 instanceof TestCase) {
+                    TestCase t1 = (TestCase) o1;
+                    TestCase t2 = (TestCase) o2;
+                    int i1 = orderedMethodNames.indexOf(t1.getName());
+                    int i2 = orderedMethodNames.indexOf(t2.getName());
+                    if (i1 != -1 && i2 != -1)
+                        return i1 - i2;
                 }
+                throw new SortingException("suite failed to detect test order: " + o1 + ", " + o2); //$NON-NLS-1$ //$NON-NLS-2$
             });
         } catch (SortingException | IOException e) {
             addTest(error(testClass, "suite failed to detect test order", e)); //$NON-NLS-1$
         }
 
-        for (Iterator<Test> iter = tests.iterator(); iter.hasNext();) {
-            Test test = iter.next();
+        for (Test test : tests) {
             addTest(test);
         }
     }
