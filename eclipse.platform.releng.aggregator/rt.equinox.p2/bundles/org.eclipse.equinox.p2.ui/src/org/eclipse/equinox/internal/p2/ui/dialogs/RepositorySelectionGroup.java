@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corporation and others.
+ * Copyright (c) 2009, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,13 +11,14 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Yury Chernikov <Yury.Chernikov@borland.com> - Bug 271447 [ui] Bad layout in 'Install available software' dialog
+ *     Pierre-Yves B. <pyvesdev@gmail.com> - Bug 281164 - [ui] Install new software dialog 'Work with' 'type or select a site' should not be a selection
  *******************************************************************************/
 package org.eclipse.equinox.internal.p2.ui.dialogs;
 
-import com.ibm.icu.text.Collator;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.Collator;
 import java.util.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.equinox.internal.p2.ui.*;
@@ -46,8 +47,8 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 
 /**
- * A RepositorySelectionGroup is a reusable UI component that displays
- * available repositories and allows the user to select them.
+ * A RepositorySelectionGroup is a reusable UI component that displays available
+ * repositories and allows the user to select them.
  *
  * @since 3.5
  */
@@ -80,7 +81,8 @@ public class RepositorySelectionGroup {
 	URI[] comboRepos; // the URIs shown in the combo, kept in sync with combo items
 	HashMap<String, URI> disabledRepoProposals = new HashMap<>(); // proposal string -> disabled URI
 
-	public RepositorySelectionGroup(ProvisioningUI ui, IWizardContainer container, Composite parent, IUViewQueryContext queryContext) {
+	public RepositorySelectionGroup(ProvisioningUI ui, IWizardContainer container, Composite parent,
+			IUViewQueryContext queryContext) {
 		this.container = container;
 		this.queryContext = queryContext;
 		this.ui = ui;
@@ -98,8 +100,10 @@ public class RepositorySelectionGroup {
 	protected void createControl(Composite parent) {
 		final RepositoryTracker tracker = ui.getRepositoryTracker();
 		// Get the possible field error indicators
-		info = FieldDecorationRegistry.getDefault().getFieldDecoration(FieldDecorationRegistry.DEC_INFORMATION).getImage();
-		warning = FieldDecorationRegistry.getDefault().getFieldDecoration(FieldDecorationRegistry.DEC_WARNING).getImage();
+		info = FieldDecorationRegistry.getDefault().getFieldDecoration(FieldDecorationRegistry.DEC_INFORMATION)
+				.getImage();
+		warning = FieldDecorationRegistry.getDefault().getFieldDecoration(FieldDecorationRegistry.DEC_WARNING)
+				.getImage();
 		error = FieldDecorationRegistry.getDefault().getFieldDecoration(FieldDecorationRegistry.DEC_ERROR).getImage();
 
 		// Combo that filters sites
@@ -132,7 +136,8 @@ public class RepositorySelectionGroup {
 			}
 
 		});
-		// Auto complete - install before our own key listeners, so that auto complete gets first shot.
+		// Auto complete - install before our own key listeners, so that auto complete
+		// gets first shot.
 		repoAutoComplete = new ComboAutoCompleteField(repoCombo);
 		repoCombo.setVisibleItemCount(COUNT_VISIBLE_ITEMS);
 		repoCombo.addKeyListener(KeyListener.keyPressedAdapter(e -> {
@@ -157,27 +162,42 @@ public class RepositorySelectionGroup {
 			URI location = null;
 			IStatus status = null;
 			String text = repoCombo.getText().trim();
-			int index = getComboIndex(text);
-			// only validate text that doesn't match existing text in combo
-			if (index < 0) {
-				location = tracker.locationFromString(repoCombo.getText());
-				if (location == null) {
-					status = tracker.getInvalidLocationStatus(repoCombo.getText());
+			if (!text.isEmpty()) {
+				int index = getComboIndex(text);
+				// only validate text that doesn't match existing text in combo
+				if (index < 0) {
+					location = tracker.locationFromString(repoCombo.getText());
+					if (location == null) {
+						status = tracker.getInvalidLocationStatus(repoCombo.getText());
+					} else {
+						status = tracker.validateRepositoryLocation(ui.getSession(), location, false,
+								new NullProgressMonitor());
+					}
 				} else {
-					status = tracker.validateRepositoryLocation(ui.getSession(), location, false, new NullProgressMonitor());
+					// user typed or pasted an existing location. Select it.
+					repoComboSelectionChanged();
 				}
-			} else {
-				// user typed or pasted an existing location.  Select it.
-				repoComboSelectionChanged();
 			}
 			setRepoComboDecoration(status);
 		});
+
+		// Clear default text when user clicks in the combo box.
+		repoCombo.addMouseListener(MouseListener.mouseDownAdapter(e -> {
+			if (repoCombo.getText().equals(SITE_NONE))
+				repoCombo.setText(""); //$NON-NLS-1$
+		}));
+
+		// Restore default text when focus is lost from the combo box.
+		repoCombo.addFocusListener(FocusListener.focusLostAdapter(e -> {
+			if (repoCombo.getText().isEmpty())
+				fillRepoCombo(SITE_NONE);
+		}));
 
 		repoDec = new ControlDecoration(repoCombo, SWT.LEFT | SWT.TOP);
 		repoDec.setMarginWidth(DEC_MARGIN_WIDTH);
 
 		DropTarget target = new DropTarget(repoCombo, DND.DROP_MOVE | DND.DROP_COPY | DND.DROP_LINK);
-		target.setTransfer(new Transfer[] {URLTransfer.getInstance(), FileTransfer.getInstance()});
+		target.setTransfer(new Transfer[] { URLTransfer.getInstance(), FileTransfer.getInstance() });
 		target.addDropListener(new URLDropAdapter(true) {
 			@Override
 			protected void handleDrop(String urlText, DropTargetEvent event) {
@@ -245,17 +265,17 @@ public class RepositorySelectionGroup {
 
 	public void setRepositorySelection(int scope, URI location) {
 		switch (scope) {
-			case AvailableIUGroup.AVAILABLE_ALL :
-				fillRepoCombo(SITE_ALL);
-				break;
-			case AvailableIUGroup.AVAILABLE_LOCAL :
-				fillRepoCombo(SITE_LOCAL);
-				break;
-			case AvailableIUGroup.AVAILABLE_SPECIFIED :
-				fillRepoCombo(getSiteString(location));
-				break;
-			default :
-				fillRepoCombo(SITE_NONE);
+		case AvailableIUGroup.AVAILABLE_ALL:
+			fillRepoCombo(SITE_ALL);
+			break;
+		case AvailableIUGroup.AVAILABLE_LOCAL:
+			fillRepoCombo(SITE_LOCAL);
+			break;
+		case AvailableIUGroup.AVAILABLE_SPECIFIED:
+			fillRepoCombo(getSiteString(location));
+			break;
+		default:
+			fillRepoCombo(SITE_NONE);
 		}
 		setRepoComboDecoration(null);
 	}
@@ -270,7 +290,7 @@ public class RepositorySelectionGroup {
 			repoDec.setDescriptionText(ProvUIMessages.AvailableIUsPage_RepoFilterInstructions);
 			repoDec.setImage(info);
 			// We may have been previously showing an error or warning
-			// hover.  We will need to dismiss it, but if there is no text
+			// hover. We will need to dismiss it, but if there is no text
 			// typed, don't do this, so that the user gets the info cue
 			if (repoCombo.getText().length() > 0)
 				repoDec.showHoverText(null);
@@ -296,9 +316,9 @@ public class RepositorySelectionGroup {
 	}
 
 	/*
-	 * Fill the repo combo and use the specified string
-	 * as the selection.  If the selection is null, then the
-	 * current selection should be preserved if applicable.
+	 * Fill the repo combo and use the specified string as the selection. If the
+	 * selection is null, then the current selection should be preserved if
+	 * applicable.
 	 */
 	void fillRepoCombo(final String selection) {
 		RepositoryTracker tracker = ui.getRepositoryTracker();
@@ -364,7 +384,8 @@ public class RepositorySelectionGroup {
 	String getSiteString(URI uri) {
 		String nickname = getMetadataRepositoryManager().getRepositoryProperty(uri, IRepository.PROP_NICKNAME);
 		if (nickname != null && nickname.length() > 0)
-			return NLS.bind(ProvUIMessages.AvailableIUsPage_NameWithLocation, new Object[] {nickname, ProvUIMessages.RepositorySelectionGroup_NameAndLocationSeparator, URIUtil.toUnencodedString(uri)});
+			return NLS.bind(ProvUIMessages.AvailableIUsPage_NameWithLocation, new Object[] { nickname,
+					ProvUIMessages.RepositorySelectionGroup_NameAndLocationSeparator, URIUtil.toUnencodedString(uri) });
 		return URIUtil.toUnencodedString(uri);
 	}
 
@@ -430,7 +451,7 @@ public class RepositorySelectionGroup {
 		}
 		// Look for URI match - the user may have pasted or dragged
 		// in a location that matches one we already know about, even
-		// if the text does not match completely.  (slashes, no name, etc.)
+		// if the text does not match completely. (slashes, no name, etc.)
 		try {
 			URI location = URIUtil.fromString(repoText);
 			for (int i = 0; i < comboRepos.length; i++)
@@ -441,7 +462,7 @@ public class RepositorySelectionGroup {
 			// never mind
 		}
 
-		// Special case.  The user has typed a URI with a trailing slash.
+		// Special case. The user has typed a URI with a trailing slash.
 		// Make a URI without the trailing slash and see if it matches
 		// a location we know about.
 		// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=268580
@@ -454,7 +475,8 @@ public class RepositorySelectionGroup {
 
 	void addComboProvisioningListeners() {
 		// We need to monitor repository events so that we can adjust the repo combo.
-		comboRepoListener = new ProvUIProvisioningListener(getClass().getName(), ProvUIProvisioningListener.PROV_EVENT_METADATA_REPOSITORY, ui.getOperationRunner()) {
+		comboRepoListener = new ProvUIProvisioningListener(getClass().getName(),
+				ProvUIProvisioningListener.PROV_EVENT_METADATA_REPOSITORY, ui.getOperationRunner()) {
 			@Override
 			protected void repositoryAdded(RepositoryEvent e) {
 				fillRepoCombo(getSiteString(e.getRepositoryLocation()));
@@ -482,8 +504,8 @@ public class RepositorySelectionGroup {
 	}
 
 	/*
-	 *  Add a repository using the text in the combo or launch a dialog if the text
-	 *  represents an already known repo.
+	 * Add a repository using the text in the combo or launch a dialog if the text
+	 * represents an already known repo.
 	 */
 	void addRepository(boolean alwaysPrompt) {
 		final RepositoryTracker manipulator = ui.getRepositoryTracker();
@@ -533,7 +555,7 @@ public class RepositorySelectionGroup {
 				container.run(false, false, monitor -> {
 					URI location;
 					IStatus status;
-					// This might be a disabled repo.  If so, no need to validate further.
+					// This might be a disabled repo. If so, no need to validate further.
 					if (disabledRepoProposals.containsKey(selectedRepo)) {
 						location = disabledRepoProposals.get(selectedRepo);
 						status = Status.OK_STATUS;
@@ -580,8 +602,8 @@ public class RepositorySelectionGroup {
 		}
 		// A single site is selected.
 		ProvisioningContext context = new ProvisioningContext(ui.getSession().getProvisioningAgent());
-		context.setMetadataRepositories(new URI[] {comboRepos[siteSel]});
-		context.setArtifactRepositories(new URI[] {comboRepos[siteSel]});
+		context.setMetadataRepositories(new URI[] { comboRepos[siteSel] });
+		context.setArtifactRepositories(new URI[] { comboRepos[siteSel] });
 		return context;
 	}
 
