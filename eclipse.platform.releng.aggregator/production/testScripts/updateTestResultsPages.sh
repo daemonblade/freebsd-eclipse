@@ -101,11 +101,9 @@ then
   exit 1
 fi
 
+JAVA_11_HOME=${JAVA_11_HOME:-/opt/public/common/java/openjdk/jdk-11_x64-latest}
 
-JAVA_7_HOME=${JAVA_7_HOME:-/shared/common/jdk1.7.0-latest}
-JAVA_8_HOME=${JAVA_8_HOME:-/shared/common/jdk1.8.0_x64-latest}
-
-export JAVA_HOME=${JAVA_HOME:-${JAVA_8_HOME}}
+export JAVA_HOME=${JAVA_HOME:-${JAVA_11_HOME}}
 
 devJRE=$JAVA_HOME/jre/bin/java
 
@@ -135,8 +133,6 @@ fi
 ECLIPSE_EXE="${basebuilderDir}/eclipse"
 # somehow, seems like this is often not executable ... I guess launcher jar usually used.
 chmod -c +x $ECLIPSE_EXE
-
-export SWT_GTK3=2
 
 if [ ! -n ${ECLIPSE_EXE} -a -x ${ECLIPSE_EXE} ]
 then
@@ -314,7 +310,7 @@ then
 
   # TODO: avoid this hard coding of baseline value
   # NOTE: value must start with a letter match baselinePerfVersion in testScripts/configuration/streamSpecific.properties
-  baselineCode="R-4.14-201912100610"
+  baselineCode="R-4.15-202003050155"
   # to get time stamp, first remove initial IMN:
   baselineForBuildSuffix=${buildId/[IMN]/}
   #Then remove final '-' in build id

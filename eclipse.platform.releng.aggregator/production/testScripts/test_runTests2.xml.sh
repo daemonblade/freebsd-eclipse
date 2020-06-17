@@ -44,8 +44,8 @@ export ANT_HOME=/shared/common/apache-ant-1.9.6
 #export JAVA_HOME=/shared/common/jdk1.5.0-latest
 #export JAVA_HOME=/shared/common/jdk1.6.0-latest
 #export JAVA_HOME=/shared/common/jdk1.7.0-latest
-JAVA_8_HOME=/shared/common/jdk1.8.0_x64-latest
-export JAVA_HOME=${JAVA_HOME:-${JAVA_8_HOME}} 
+JAVA_11_HOME=/opt/public/common/java/openjdk/jdk-11_x64-latest
+export JAVA_HOME=${JAVA_HOME:-${JAVA_11_HOME}} 
 
 # added /opt/local/bin for 'port' version of wget, on Mac
 export PATH=${JAVA_HOME}/bin:${ANT_HOME}/bin:/usr/local/bin:/usr/bin:/bin:${HOME}/bin:/opt/local/bin
@@ -86,7 +86,7 @@ wget -O ${WORKSPACE}/getEBuilder.xml --no-verbose   https://${GIT_HOST}/c/platfo
 
 ANTFILE=getEBuilder.xml
 buildId=I20150320-0800
-eclipseStream=4.15.0
+eclipseStream=4.16.0
 EBUILDER_HASH=master
 #EBUILDER_HASH=4295494c43e464a0c4ee39b7e0c847fbc3263f2a
 
