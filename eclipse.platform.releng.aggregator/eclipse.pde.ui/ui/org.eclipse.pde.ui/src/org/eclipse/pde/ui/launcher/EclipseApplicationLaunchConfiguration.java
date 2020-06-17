@@ -219,7 +219,7 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 	 * @param monitor
 	 * 			the progress monitor
 	 * @throws CoreException
-	 * 			if unable to retrieve launch attribute values
+	 * 			if unable to retrieve launch attribute values or the clear operation was cancelled
 	 * @since 3.3
 	 */
 	@Override
@@ -231,8 +231,7 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 		SubMonitor subMon = SubMonitor.convert(monitor, 50);
 
 		// Clear workspace and prompt, if necessary
-		if (!LauncherUtils.clearWorkspace(configuration, fWorkspaceLocation, subMon.split(25)))
-			throw new CoreException(Status.CANCEL_STATUS);
+		LauncherUtils.clearWorkspace(configuration, fWorkspaceLocation, subMon.split(25));
 
 		subMon.setWorkRemaining(25);
 		if (subMon.isCanceled()) {

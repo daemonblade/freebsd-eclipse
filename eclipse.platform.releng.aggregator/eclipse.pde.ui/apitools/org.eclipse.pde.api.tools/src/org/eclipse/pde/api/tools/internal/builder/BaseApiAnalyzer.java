@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2019 IBM Corporation and others.
+ * Copyright (c) 2008, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -115,8 +116,6 @@ import org.eclipse.pde.api.tools.internal.util.SinceTagVersion;
 import org.eclipse.pde.api.tools.internal.util.Util;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
-
-import com.ibm.icu.text.MessageFormat;
 
 /**
  * Base implementation of the analyzer used in the {@link ApiAnalysisBuilder}
@@ -231,6 +230,10 @@ public class BaseApiAnalyzer implements IApiAnalyzer {
 			if (bcontext == null) {
 				bcontext = new BuildContext();
 			}
+			boolean isNested = checkIfNested(component);
+			if (isNested) {
+				return;
+			}
 			boolean checkfilters = false;
 			if (baseline != null) {
 				IApiComponent reference = baseline.getApiComponent(component.getSymbolicName());
@@ -307,6 +310,26 @@ public class BaseApiAnalyzer implements IApiAnalyzer {
 		}
 	}
 
+
+	private boolean checkIfNested(IApiComponent component) {
+		if (fJavaProject != null) {
+			return false;
+		}
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		IWorkspaceRoot root = workspace.getRoot();
+		IProject[] projects = root.getProjects();
+		Path componentLocation = new Path(component.getLocation());
+		for (IProject project : projects) {
+			if (project.getLocation().isPrefixOf(componentLocation)) {
+				// if same project, skipped here
+				if (componentLocation.segmentCount() == project.getLocation().segmentCount()
+						+ 1) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 	private IApiComponent getBestMatchFromMultipleComponents(Set<IApiComponent> baselineAllComponents, IApiComponent component) {
 		// baseline already sorted from higher to lower version. see
@@ -879,7 +902,7 @@ public class BaseApiAnalyzer implements IApiAnalyzer {
 		if (fJavaProject == null) {
 			return null;
 		}
-		ASTParser parser = ASTParser.newParser(AST.JLS10);
+		ASTParser parser = ASTParser.newParser(AST.JLS14);
 		parser.setFocalPosition(offset);
 		parser.setResolveBindings(false);
 		parser.setSource(root);
