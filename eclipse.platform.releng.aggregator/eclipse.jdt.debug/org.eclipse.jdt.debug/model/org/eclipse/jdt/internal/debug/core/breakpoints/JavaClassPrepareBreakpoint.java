@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,6 +14,7 @@
 package org.eclipse.jdt.internal.debug.core.breakpoints;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
@@ -58,6 +59,8 @@ public class JavaClassPrepareBreakpoint extends JavaBreakpoint implements
 	 */
 	protected static final String MEMBER_TYPE = "org.eclipse.jdt.debug.core.memberType"; //$NON-NLS-1$
 
+	private Pattern pattern = null;
+
 	/**
 	 * Creates and returns a Java class prepare breakpoint for the given type.
 	 *
@@ -97,13 +100,12 @@ public class JavaClassPrepareBreakpoint extends JavaBreakpoint implements
 
 				// add attributes
 				attributes.put(IBreakpoint.ID, getModelIdentifier());
-				attributes.put(IMarker.CHAR_START, new Integer(charStart));
-				attributes.put(IMarker.CHAR_END, new Integer(charEnd));
+				attributes.put(IMarker.CHAR_START, Integer.valueOf(charStart));
+				attributes.put(IMarker.CHAR_END, Integer.valueOf(charEnd));
 				attributes.put(TYPE_NAME, typeName);
-				attributes.put(MEMBER_TYPE, new Integer(memberType));
+				attributes.put(MEMBER_TYPE, Integer.valueOf(memberType));
 				attributes.put(ENABLED, Boolean.TRUE);
-				attributes.put(SUSPEND_POLICY, new Integer(
-						getDefaultSuspendPolicy()));
+				attributes.put(SUSPEND_POLICY, Integer.valueOf(getDefaultSuspendPolicy()));
 
 				ensureMarker().setAttributes(attributes);
 
@@ -213,13 +215,21 @@ public class JavaClassPrepareBreakpoint extends JavaBreakpoint implements
 	public boolean handleClassPrepareEvent(ClassPrepareEvent event,
 			JDIDebugTarget target, boolean suspendVote) {
 		try {
-			if (isEnabled()
-					&& event.referenceType().name().equals(getTypeName())) {
+			if (pattern == null){
+				 String typeName = ".*";//$NON-NLS-1$
+				 String breakpointName = ensureMarker().getAttribute(TYPE_NAME, null);
+				 typeName = typeName + breakpointName.replaceAll("\\.", "\\\\.");  //$NON-NLS-1$//$NON-NLS-2$
+				 typeName = typeName.replaceAll("\\$", "\\\\\\$");  //$NON-NLS-1$//$NON-NLS-2$
+				 typeName = typeName.concat(".*"); //$NON-NLS-1$
+				 pattern = Pattern.compile(typeName);
+			}
+			if (isEnabled() && pattern.matcher(event.referenceType().name()).find()){
 				ThreadReference threadRef = event.thread();
 				JDIThread thread = target.findThread(threadRef);
 				if (thread == null || thread.isIgnoringBreakpoints()) {
 					return true;
 				}
+				fInstalledTypeName = event.referenceType().name();
 				return handleBreakpointEvent(event, thread, suspendVote);
 			}
 		} catch (CoreException e) {

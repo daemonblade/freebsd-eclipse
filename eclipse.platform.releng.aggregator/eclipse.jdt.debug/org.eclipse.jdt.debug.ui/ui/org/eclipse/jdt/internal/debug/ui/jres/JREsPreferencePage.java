@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -338,7 +338,9 @@ public class JREsPreferencePage extends PreferencePage implements IWorkbenchPref
 	@Override
 	public void dispose() {
 		super.dispose();
-		fJREBlock.dispose();
+		if (fJREBlock != null) {
+			fJREBlock.dispose();
+		}
 	}
 
 	/*
@@ -353,15 +355,20 @@ public class JREsPreferencePage extends PreferencePage implements IWorkbenchPref
 					JREMessages.JREsPreferencePage_8 };
 			MessageDialog dialog = new MessageDialog(getShell(), title, null, message, MessageDialog.QUESTION, buttonLabels, 0);
 			int res = dialog.open();
-			if (res == 0) { // apply
+			switch (res) {
+			case 0:
+				// apply
 				return performOk() && super.okToLeave();
-			} else if (res == 1) { // discard
+			case 1:
+				// discard
 				fJREBlock.fillWithWorkspaceJREs();
 				fJREBlock.restoreColumnSettings(JDIDebugUIPlugin.getDefault().getDialogSettings(), IJavaDebugHelpContextIds.JRE_PREFERENCE_PAGE);
 				initDefaultVM();
 				fJREBlock.initializeTimeStamp();
-			} else {
+				break;
+			default:
 				// apply later
+				break;
 			}
 		}
 		return super.okToLeave();

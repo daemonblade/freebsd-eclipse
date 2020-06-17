@@ -20,9 +20,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UTFDataFormatException;
+import java.text.MessageFormat;
 import java.util.Arrays;
 
-import com.ibm.icu.text.MessageFormat;
 
 /**
  * The <code>VerbosePacketWriter</code> is responsible for writing out
@@ -200,7 +200,7 @@ public class VerbosePacketStream extends PrintStream {
 		printHex(flags);
 		if ((flags & JdwpPacket.FLAG_REPLY_PACKET) != 0) {
 			print(MessageFormat
-					.format(" (REPLY to {0})", new Object[] { JdwpCommandPacket.commandMap().get(new Integer(TcpipSpy.getCommand(packet))) })); //$NON-NLS-1$
+					.format(" (REPLY to {0})", new Object[] { JdwpCommandPacket.commandMap().get(Integer.valueOf(TcpipSpy.getCommand(packet))) })); //$NON-NLS-1$
 		} else {
 			print(" (COMMAND)"); //$NON-NLS-1$
 		}
@@ -229,7 +229,7 @@ public class VerbosePacketStream extends PrintStream {
 		printHex(command);
 		printParanthetical(command);
 		print(" ("); //$NON-NLS-1$
-		print(JdwpCommandPacket.commandMap().get(new Integer(commandAndSet)));
+		print(JdwpCommandPacket.commandMap().get(Integer.valueOf(commandAndSet)));
 		println(')');
 	}
 
@@ -240,7 +240,7 @@ public class VerbosePacketStream extends PrintStream {
 		printHex(error);
 		if (error != 0) {
 			print(" ("); //$NON-NLS-1$
-			print(JdwpReplyPacket.errorMap().get(new Integer(error)));
+			print(JdwpReplyPacket.errorMap().get(Integer.valueOf(error)));
 			print(')');
 		}
 		println();
@@ -258,8 +258,9 @@ public class VerbosePacketStream extends PrintStream {
 	private void printCommandData(JdwpCommandPacket command)
 			throws IOException, UnableToParseDataException {
 		byte[] data = command.data();
-		if (data == null)
+		if (data == null) {
 			return;
+		}
 		DataInputStream in = new DataInputStream(new ByteArrayInputStream(data));
 		int commandId = command.getCommand();
 		switch (commandId) {
@@ -564,8 +565,9 @@ public class VerbosePacketStream extends PrintStream {
 	private void printReplyData(JdwpReplyPacket reply) throws IOException,
 			UnableToParseDataException {
 		byte[] data = reply.data();
-		if (data == null)
+		if (data == null) {
 			return;
+		}
 		DataInputStream in = new DataInputStream(new ByteArrayInputStream(data));
 		JdwpCommandPacket command = TcpipSpy.getCommand(reply.getId());
 		int commandId = command.getCommand();

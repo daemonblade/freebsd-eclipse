@@ -15,6 +15,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.debug.core.breakpoints;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -48,7 +49,6 @@ import org.eclipse.jdt.internal.debug.core.model.JDIDebugTarget;
 import org.eclipse.jdt.internal.debug.core.model.JDIStackFrame;
 import org.eclipse.jdt.internal.debug.core.model.JDIThread;
 
-import com.ibm.icu.text.MessageFormat;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ClassNotPreparedException;
 import com.sun.jdi.InterfaceType;
@@ -156,8 +156,7 @@ public class JavaLineBreakpoint extends JavaBreakpoint implements
 						true, lineNumber, charStart, charEnd);
 				addTypeNameAndHitCount(attributes, typeName, hitCount);
 				// set attributes
-				attributes.put(SUSPEND_POLICY, new Integer(
-						getDefaultSuspendPolicy()));
+				attributes.put(SUSPEND_POLICY, Integer.valueOf(getDefaultSuspendPolicy()));
 				ensureMarker().setAttributes(attributes);
 
 				// add to breakpoint manager if requested
@@ -444,9 +443,9 @@ public class JavaLineBreakpoint extends JavaBreakpoint implements
 			int charStart, int charEnd) {
 		attributes.put(IBreakpoint.ID, modelIdentifier);
 		attributes.put(IBreakpoint.ENABLED, Boolean.valueOf(enabled));
-		attributes.put(IMarker.LINE_NUMBER, new Integer(lineNumber));
-		attributes.put(IMarker.CHAR_START, new Integer(charStart));
-		attributes.put(IMarker.CHAR_END, new Integer(charEnd));
+		attributes.put(IMarker.LINE_NUMBER, Integer.valueOf(lineNumber));
+		attributes.put(IMarker.CHAR_START, Integer.valueOf(charStart));
+		attributes.put(IMarker.CHAR_END, Integer.valueOf(charEnd));
 	}
 
 	/**
@@ -461,7 +460,7 @@ public class JavaLineBreakpoint extends JavaBreakpoint implements
 			int hitCount) {
 		attributes.put(TYPE_NAME, typeName);
 		if (hitCount > 0) {
-			attributes.put(HIT_COUNT, new Integer(hitCount));
+			attributes.put(HIT_COUNT, Integer.valueOf(hitCount));
 			attributes.put(EXPIRED, Boolean.FALSE);
 		}
 	}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -1561,14 +1561,19 @@ public final class JavaRuntime {
 		int property = -1;
 		switch (container.getKind()) {
 			case IClasspathContainer.K_APPLICATION:
-				if (entry.getClasspathProperty() == IRuntimeClasspathEntry.MODULE_PATH) {
-					property = IRuntimeClasspathEntry.MODULE_PATH;
-				} else if (entry.getClasspathProperty() == IRuntimeClasspathEntry.CLASS_PATH) {
-					property = IRuntimeClasspathEntry.CLASS_PATH;
-				} else {
-					property = IRuntimeClasspathEntry.USER_CLASSES;
+				switch (entry.getClasspathProperty()) {
+					case IRuntimeClasspathEntry.MODULE_PATH:
+						property = IRuntimeClasspathEntry.MODULE_PATH;
+						break;
+					case IRuntimeClasspathEntry.CLASS_PATH:
+						property = IRuntimeClasspathEntry.CLASS_PATH;
+						break;
+					default:
+						property = IRuntimeClasspathEntry.USER_CLASSES;
+						break;
 				}
 				break;
+
 			case IClasspathContainer.K_DEFAULT_SYSTEM:
 				property = IRuntimeClasspathEntry.STANDARD_CLASSES;
 				break;
@@ -1582,11 +1587,11 @@ public final class JavaRuntime {
 		if (projects == null) {
 			projects = new ArrayList<>();
 			fgProjects.set(projects);
-			count = new Integer(0);
+			count = Integer.valueOf(0);
 		}
 		int intCount = count.intValue();
 		intCount++;
-		fgEntryCount.set(new Integer(intCount));
+		fgEntryCount.set(Integer.valueOf(intCount));
 		try {
 			for (int i = 0; i < cpes.length; i++) {
 				IClasspathEntry cpe = cpes[i];
@@ -1617,7 +1622,7 @@ public final class JavaRuntime {
 				fgProjects.set(null);
 				fgEntryCount.set(null);
 			} else {
-				fgEntryCount.set(new Integer(intCount));
+				fgEntryCount.set(Integer.valueOf(intCount));
 			}
 		}
 		// set classpath property
@@ -3333,8 +3338,11 @@ public final class JavaRuntime {
 				} else if (javaVersion.startsWith(JavaCore.VERSION_13)
 						&& (javaVersion.length() == JavaCore.VERSION_13.length() || javaVersion.charAt(JavaCore.VERSION_13.length()) == '.')) {
 					compliance = JavaCore.VERSION_13;
+				} else if (javaVersion.startsWith(JavaCore.VERSION_14)
+						&& (javaVersion.length() == JavaCore.VERSION_14.length() || javaVersion.charAt(JavaCore.VERSION_14.length()) == '.')) {
+					compliance = JavaCore.VERSION_14;
 				} else {
-					compliance = JavaCore.VERSION_13; // use latest by default
+					compliance = JavaCore.VERSION_14; // use latest by default
 				}
 
             	Hashtable<String, String> options= JavaCore.getOptions();

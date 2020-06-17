@@ -14,6 +14,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.debug.core.model;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -59,9 +60,7 @@ import org.eclipse.jdt.internal.debug.core.JDIDebugPlugin;
 import org.eclipse.jdt.internal.debug.core.JavaDebugUtils;
 import org.eclipse.jdt.internal.debug.core.logicalstructures.JDILambdaVariable;
 import org.eclipse.jdt.internal.debug.core.logicalstructures.JDIReturnValueVariable;
-import org.eclipse.jdt.internal.debug.core.model.MethodResult.ResultType;
 
-import com.ibm.icu.text.MessageFormat;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.ClassType;
@@ -384,7 +383,7 @@ public class JDIStackFrame extends JDIDebugElement implements IJavaStackFrame {
 						IJavaStackFrame previousFrame = frames.get(previousIndex);
 						ObjectReference underlyingThisObject = ((JDIStackFrame) previousFrame).getUnderlyingThisObject();
 						IJavaValue closureValue = JDIValue.createValue((JDIDebugTarget) getDebugTarget(), underlyingThisObject);
-						setLambdaVariableNames(closureValue, underlyingThisObject);
+						tryToResolveLambdaVariableNames(closureValue, underlyingThisObject);
 						fVariables.add(new JDILambdaVariable(closureValue));
 					}
 				}
@@ -404,7 +403,15 @@ public class JDIStackFrame extends JDIDebugElement implements IJavaStackFrame {
 		}
 	}
 
-	private void setLambdaVariableNames(IJavaValue value, ObjectReference underlyingThisObject) {
+	/**
+	 * Tries to resolve "real" captured variable names by inspecting corresponding Java source code (if available)
+	 */
+	protected void tryToResolveLambdaVariableNames(IJavaValue value, ObjectReference underlyingThisObject) {
+		if (!isProbablyJavaCode()) {
+			// See bug 562056: we won't parse Java code if the current frame doesn't belong to Java, because
+			// we will most likely have different source line numbers and will produce garbage or errors
+			return;
+		}
 		try {
 			IType type = JavaDebugUtils.resolveType(value.getJavaType());
 			if (type == null) {
@@ -414,24 +421,61 @@ public class JDIStackFrame extends JDIDebugElement implements IJavaStackFrame {
 			parser.setResolveBindings(true);
 			parser.setSource(type.getTypeRoot());
 			CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-			cu.accept(new LambdaASTVisitor(false, underlyingThisObject, getUnderlyingMethod()));
+			List<Location> allLineLocations;
+			try {
+				allLineLocations = getUnderlyingMethod().allLineLocations();
+				int lineNo = allLineLocations.get(0).lineNumber();
+				cu.accept(new LambdaASTVisitor(false, underlyingThisObject, getUnderlyingMethod().isStatic(), cu, lineNo));
+			} catch (AbsentInformationException e) {
+				// Nothing to be done
+			}
 		} catch (CoreException e) {
 			logError(e);
 		}
 	}
 
+	/**
+	 * @return {@code true} if the current frame relates to the class generated from Java source file (and not from some different language)
+	 */
+	protected boolean isProbablyJavaCode() {
+		try {
+			String sourceName = getSourceName();
+			// Note: JavaCore.isJavaLikeFileName(sourceName) is too generic to be used here
+			// because it allows files that aren't using Java syntax, like groovy
+			// See https://github.com/groovy/groovy-eclipse/blob/master/base/org.eclipse.jdt.groovy.core/plugin.xml
+			if (sourceName == null || sourceName.endsWith(".java")) { //$NON-NLS-1$
+				// if nothing is defined (no source attributes), assume Java
+				return true;
+			}
+		} catch (DebugException e) {
+			// If we fail, assume Java
+			return true;
+		}
+		// Underlined source code is most likely not written in Java
+		return false;
+	}
+
 	private final static class LambdaASTVisitor extends ASTVisitor {
 		private final ObjectReference underlyingThisObject;
-		private Method underlyingMethod;
+		private boolean methodIsStatic;
+		private CompilationUnit cu;
+		private int lineNo;
 
-		private LambdaASTVisitor(boolean visitDocTags, ObjectReference underlyingThisObject, Method underlyingMethod) {
+		private LambdaASTVisitor(boolean visitDocTags, ObjectReference underlyingThisObject, boolean methodIsStatic, CompilationUnit cu, int lineNo) {
 			super(visitDocTags);
 			this.underlyingThisObject = underlyingThisObject;
-			this.underlyingMethod = underlyingMethod;
+			this.methodIsStatic = methodIsStatic;
+			this.cu = cu;
+			this.lineNo = lineNo;
 		}
 
 		@Override
 		public boolean visit(LambdaExpression lambdaExpression) {
+			// check if the lineNo fall in lambda region, it can either be single or multiline lambda body.
+			if (lineNo < cu.getLineNumber(lambdaExpression.getStartPosition())
+					|| lineNo > cu.getLineNumber(lambdaExpression.getStartPosition() + lambdaExpression.getLength())) {
+				return true;
+			}
 			IMethodBinding binding = lambdaExpression.resolveMethodBinding();
 			if (binding == null) {
 				return true;
@@ -443,7 +487,7 @@ public class JDIStackFrame extends JDIDebugElement implements IJavaStackFrame {
 			List<Field> allFields = underlyingThisObject.referenceType().fields();
 			ListIterator<Field> listIterator = allFields.listIterator();
 			int i = 0;
-			if (underlyingMethod.isStatic()) {
+			if (methodIsStatic) {
 				if (synVars.length == allFields.size()) {
 					while (listIterator.hasNext()) {
 						FieldImpl field = (FieldImpl) listIterator.next();
@@ -485,30 +529,42 @@ public class JDIStackFrame extends JDIDebugElement implements IJavaStackFrame {
 	private void addStepReturnValue(List<IJavaVariable> variables) {
 		if (fIsTop) {
 			MethodResult methodResult = fThread.getMethodResult();
-			if (methodResult != null) {
-				if (methodResult.fResultType == ResultType.returned) {
-					if (fDepth + 1 != methodResult.fTargetFrameCount) {
-						// can happen e.g., because of checkPackageAccess/System.getSecurityManager()
-						return;
+			if (methodResult != null && methodResult.fResultType != null) {
+				switch (methodResult.fResultType) {
+					case returned:{
+						if (fDepth + 1 != methodResult.fTargetFrameCount) {
+							// can happen e.g., because of checkPackageAccess/System.getSecurityManager()
+							return;
+						}
+						String name = MessageFormat.format(JDIDebugModelMessages.JDIStackFrame_ReturnValue, methodResult.fMethod.name());
+						variables.add(0, new JDIReturnValueVariable(name, JDIValue.createValue(getJavaDebugTarget(), methodResult.fValue), true));
+						break;
 					}
-					String name = MessageFormat.format(JDIDebugModelMessages.JDIStackFrame_ReturnValue, methodResult.fMethod.name());
-					variables.add(0, new JDIReturnValueVariable(name, JDIValue.createValue(getJavaDebugTarget(), methodResult.fValue), true));
-				} else if (methodResult.fResultType == ResultType.returning) {
-					String name = MessageFormat.format(JDIDebugModelMessages.JDIStackFrame_ReturningValue, methodResult.fMethod.name());
-					variables.add(0, new JDIReturnValueVariable(name, JDIValue.createValue(getJavaDebugTarget(), methodResult.fValue), true));
-				} else if (methodResult.fResultType == ResultType.threw) {
-					if (fDepth + 1 > methodResult.fTargetFrameCount) {
-						// don't know if this really can happen, but other jvm suprises were not expected either
-						return;
+					case returning:{
+						String name = MessageFormat.format(JDIDebugModelMessages.JDIStackFrame_ReturningValue, methodResult.fMethod.name());
+						variables.add(0, new JDIReturnValueVariable(name, JDIValue.createValue(getJavaDebugTarget(), methodResult.fValue), true));
+						break;
 					}
-					String name = MessageFormat.format(JDIDebugModelMessages.JDIStackFrame_ExceptionThrown, methodResult.fMethod.name());
-					variables.add(0, new JDIReturnValueVariable(name, JDIValue.createValue(getJavaDebugTarget(), methodResult.fValue), true));
-				} else if (methodResult.fResultType == ResultType.throwing) {
-					String name = MessageFormat.format(JDIDebugModelMessages.JDIStackFrame_ThrowingException, methodResult.fMethod.name());
-					variables.add(0, new JDIReturnValueVariable(name, JDIValue.createValue(getJavaDebugTarget(), methodResult.fValue), true));
-				} else if (methodResult.fResultType == ResultType.step_timeout) {
-					String msg = JDIDebugModelMessages.JDIStackFrame_NotObservedBecauseOfTimeout;
-					variables.add(0, new JDIReturnValueVariable(JDIDebugModelMessages.JDIStackFrame_NoMethodReturnValue, new JDIPlaceholderValue(getJavaDebugTarget(), msg), false));
+					case threw:{
+						if (fDepth + 1 > methodResult.fTargetFrameCount) {
+							// don't know if this really can happen, but other jvm suprises were not expected either
+							return;
+						}
+						String name = MessageFormat.format(JDIDebugModelMessages.JDIStackFrame_ExceptionThrown, methodResult.fMethod.name());
+						variables.add(0, new JDIReturnValueVariable(name, JDIValue.createValue(getJavaDebugTarget(), methodResult.fValue), true));
+						break;
+					}
+					case throwing:{
+						String name = MessageFormat.format(JDIDebugModelMessages.JDIStackFrame_ThrowingException, methodResult.fMethod.name());
+						variables.add(0, new JDIReturnValueVariable(name, JDIValue.createValue(getJavaDebugTarget(), methodResult.fValue), true));
+						break;
+					}
+					case step_timeout:
+						String msg = JDIDebugModelMessages.JDIStackFrame_NotObservedBecauseOfTimeout;
+						variables.add(0, new JDIReturnValueVariable(JDIDebugModelMessages.JDIStackFrame_NoMethodReturnValue, new JDIPlaceholderValue(getJavaDebugTarget(), msg), false));
+						break;
+					default:
+						break;
 				}
 			} else if (JDIThread.showStepResultIsEnabled(getDebugTarget())) {
 				variables.add(0, new JDIReturnValueVariable(JDIDebugModelMessages.JDIStackFrame_NoMethodReturnValue, new JDIPlaceholderValue(getJavaDebugTarget(), ""), false)); //$NON-NLS-1$

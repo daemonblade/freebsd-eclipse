@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.debug.core.breakpoints;
 
+import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,6 @@ import org.eclipse.jdt.debug.core.JDIDebugModel;
 import org.eclipse.jdt.internal.debug.core.JDIDebugPlugin;
 import org.eclipse.jdt.internal.debug.core.model.JDIDebugTarget;
 
-import com.ibm.icu.text.MessageFormat;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VMDisconnectedException;
@@ -78,8 +78,7 @@ public class JavaPatternBreakpoint extends JavaLineBreakpoint implements
 						true, lineNumber, charStart, charEnd);
 				addPatternAndHitCount(attributes, sourceName, pattern, hitCount);
 				// set attributes
-				attributes.put(SUSPEND_POLICY, new Integer(
-						getDefaultSuspendPolicy()));
+				attributes.put(SUSPEND_POLICY, Integer.valueOf(getDefaultSuspendPolicy()));
 				ensureMarker().setAttributes(attributes);
 
 				register(add);
@@ -165,7 +164,7 @@ public class JavaPatternBreakpoint extends JavaLineBreakpoint implements
 			attributes.put(SOURCE_NAME, sourceName);
 		}
 		if (hitCount > 0) {
-			attributes.put(HIT_COUNT, new Integer(hitCount));
+			attributes.put(HIT_COUNT, Integer.valueOf(hitCount));
 			attributes.put(EXPIRED, Boolean.FALSE);
 		}
 	}

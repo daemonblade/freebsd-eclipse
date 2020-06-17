@@ -17,6 +17,7 @@ package org.eclipse.jdt.internal.debug.core.model;
 
 import java.io.IOException;
 import java.net.URI;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -95,7 +96,6 @@ import org.eclipse.jdt.internal.debug.core.JDIDebugPlugin;
 import org.eclipse.jdt.internal.debug.core.breakpoints.JavaBreakpoint;
 import org.eclipse.jdt.internal.debug.core.breakpoints.JavaLineBreakpoint;
 
-import com.ibm.icu.text.MessageFormat;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.Location;
@@ -2013,7 +2013,7 @@ public class JDIDebugTarget extends JDIDebugElement implements
 					try {
 						org.eclipse.jdi.hcr.ReferenceType rt = (org.eclipse.jdi.hcr.ReferenceType) type;
 						if (rt.isVersionKnown()) {
-							return new Integer(rt.getClassFileVersion());
+							return Integer.valueOf(rt.getClassFileVersion());
 						}
 					} catch (RuntimeException e) {
 						targetRequestFailed(
@@ -2041,7 +2041,7 @@ public class JDIDebugTarget extends JDIDebugElement implements
 						new VMDisconnectedException());
 			}
 			List<ReferenceType> classes = vm.classesByName(name);
-			if (classes.size() == 0) {
+			if (classes.isEmpty()) {
 				switch (name.charAt(0)) {
 				case 'b':
 					if (name.equals("boolean")) { //$NON-NLS-1$

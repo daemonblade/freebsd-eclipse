@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2005, 2019 IBM Corporation and others.
+ *  Copyright (c) 2005, 2020 IBM Corporation and others.
  *
  *  This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License 2.0
@@ -196,7 +196,9 @@ public class EnvironmentsManager implements IExecutionEnvironmentsManager, IVMIn
 
 	private String getExecutionEnvironmentCompliance(IExecutionEnvironment executionEnvironment) {
 		String desc = executionEnvironment.getId();
-		if (desc.indexOf(JavaCore.VERSION_13) != -1) {
+		if (desc.indexOf(JavaCore.VERSION_14) != -1) {
+			return JavaCore.VERSION_14;
+		} else if (desc.indexOf(JavaCore.VERSION_13) != -1) {
 			return JavaCore.VERSION_13;
 		} else if (desc.indexOf(JavaCore.VERSION_12) != -1) {
 			return JavaCore.VERSION_12;
@@ -250,30 +252,39 @@ public class EnvironmentsManager implements IExecutionEnvironmentsManager, IVMIn
 			for (int i = 0; i < configs.length; i++) {
 				IConfigurationElement element = configs[i];
 				String name = element.getName();
-				if (name.equals(ENVIRONMENT_ELEMENT)) {
-					String id = element.getAttribute("id"); //$NON-NLS-1$
-					if (id == null) {
-						LaunchingPlugin.log(NLS.bind("Execution environment must specify \"id\" attribute. Contributed by {0}.", new String[]{element.getContributor().getName()})); //$NON-NLS-1$
-					} else {
-						IExecutionEnvironment env = new ExecutionEnvironment(element);
-						fEnvironments.add(env);
-						fEnvironmentsMap.put(id, env);
-					}
-				} else if (name.equals(ANALYZER_ELEMENT)) {
-					String id = element.getAttribute("id"); //$NON-NLS-1$
-					if (id == null) {
-						LaunchingPlugin.log(NLS.bind("Execution environment analyzer must specify \"id\" attribute. Contributed by {0}", new String[]{element.getContributor().getName()})); //$NON-NLS-1$
-					} else {
-						fAnalyzers.put(id, new Analyzer(element));
-					}
-				} else if (name.equals(RULE_PARTICIPANT_ELEMENT)) {
-					String id = element.getAttribute("id"); //$NON-NLS-1$
-					if (id == null) {
-						LaunchingPlugin.log(NLS.bind("Execution environment rule participant must specify \"id\" attribute. Contributed by {0}", new String[]{element.getContributor().getName()})); //$NON-NLS-1$
-					} else {
-						// use a linked hash set to avoid duplicate rule participants
-						fRuleParticipants.add(new AccessRuleParticipant(element));
-					}
+				switch (name) {
+					case ENVIRONMENT_ELEMENT:
+						String id = element.getAttribute("id"); //$NON-NLS-1$
+						if (id == null) {
+							LaunchingPlugin.log(NLS.bind("Execution environment must specify \"id\" attribute. Contributed by {0}.", new String[] { //$NON-NLS-1$
+									element.getContributor().getName() }));
+						} else {
+							IExecutionEnvironment env = new ExecutionEnvironment(element);
+							fEnvironments.add(env);
+							fEnvironmentsMap.put(id, env);
+						}
+						break;
+					case ANALYZER_ELEMENT:
+						id = element.getAttribute("id"); //$NON-NLS-1$
+						if (id == null) {
+							LaunchingPlugin.log(NLS.bind("Execution environment analyzer must specify \"id\" attribute. Contributed by {0}", new String[] { //$NON-NLS-1$
+									element.getContributor().getName() }));
+						} else {
+							fAnalyzers.put(id, new Analyzer(element));
+						}
+						break;
+					case RULE_PARTICIPANT_ELEMENT:
+						id = element.getAttribute("id"); //$NON-NLS-1$
+						if (id == null) {
+							LaunchingPlugin.log(NLS.bind("Execution environment rule participant must specify \"id\" attribute. Contributed by {0}", new String[] { //$NON-NLS-1$
+									element.getContributor().getName() }));
+						} else {
+							// use a linked hash set to avoid duplicate rule participants
+							fRuleParticipants.add(new AccessRuleParticipant(element));
+						}
+						break;
+					default:
+						break;
 				}
 			}
 		}

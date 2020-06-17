@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -70,6 +70,7 @@ import org.eclipse.jdt.internal.debug.core.model.JDIThisVariable;
 import org.eclipse.jdt.internal.debug.core.model.JDIThread;
 import org.eclipse.jdt.internal.debug.core.model.JDIValue;
 import org.eclipse.jdt.internal.debug.core.model.LambdaUtils;
+import org.eclipse.jdt.internal.debug.core.model.SyntheticVariableUtils;
 import org.eclipse.jdt.internal.debug.eval.EvaluationResult;
 import org.eclipse.jdt.internal.debug.eval.ast.instructions.InstructionSequence;
 
@@ -299,7 +300,7 @@ public class ASTEvaluationEngine implements IAstEvaluationEngine {
 			IJavaObject thisClass = context.getThis();
 			IVariable[] innerClassFields; // For anonymous classes, getting variables from outer class
 			if (null != thisClass) {
-				innerClassFields = thisClass.getVariables();
+				innerClassFields = extractVariables(thisClass);
 			} else {
 				innerClassFields = new IVariable[0];
 			}
@@ -330,12 +331,14 @@ public class ASTEvaluationEngine implements IAstEvaluationEngine {
 			for (IVariable variable : lambdaFrameVariables) {
 				if (variable instanceof IJavaVariable && !isLambdaOrImplicitVariable(variable)) {
 					IJavaVariable javaVariable = (IJavaVariable) variable;
-					String variableName = variable.getName();
-					if (variableName != null && !variableName.contains("$")) { //$NON-NLS-1$
+					final boolean lambdaField = LambdaUtils.isLambdaField(variable);
+					String name = variable.getName();
+					String variableName = (lambdaField && name.startsWith(ANONYMOUS_VAR_PREFIX)) ? name.substring(ANONYMOUS_VAR_PREFIX.length()) : name;
+					if (variableName != null && (!variableName.contains("$") || lambdaField)) { //$NON-NLS-1$
 						if (!isLocalType(javaVariable.getSignature()) && !names.contains(variableName)) {
 							locals[numLocals] = javaVariable;
-							names.add(variable.getName());
-							localVariablesWithNull[numLocals++] = variable.getName();
+							names.add(variableName);
+							localVariablesWithNull[numLocals++] = variableName;
 						}
 					}
 				}
@@ -355,8 +358,7 @@ public class ASTEvaluationEngine implements IAstEvaluationEngine {
 			// ******
 			String[] localTypesNames = new String[numLocals];
 			for (int i = 0; i < numLocals; i++) {
-				localTypesNames[i] = Signature.toString(
-						locals[i].getGenericSignature()).replace('/', '.');
+				localTypesNames[i] = getFixedUnresolvableGenericTypes(locals[i]);
 			}
 			// Copying local variables removing the nulls in the last
 			// String[] localVariables = Arrays.clonesub(localVariablesWithNull, names.size());
@@ -392,6 +394,28 @@ public class ASTEvaluationEngine implements IAstEvaluationEngine {
 		return createExpressionFromAST(snippet, mapper, unit);
 	}
 
+	private IVariable[] extractVariables(IJavaObject thisClass) throws DebugException {
+		IVariable[] vars = thisClass.getVariables();
+		List<IVariable> varList = new ArrayList<>(Arrays.asList(vars));
+		varList.addAll(Arrays.asList(SyntheticVariableUtils.findSyntheticVariables(vars)));
+		return varList.toArray(new IVariable[0]);
+	}
+
+	private String getFixedUnresolvableGenericTypes(IJavaVariable variable) throws DebugException {
+		/*
+		 * This actually fix variables which are type of Generic Types which cannot be resolved to a type in the current content. For example variable
+		 * type like P_OUT in java.util.stream.ReferencePipeline.filter(Predicate<? super P_OUT>)
+		 */
+
+		final String genericSignature = variable.getGenericSignature();
+		final String fqn = Signature.toString(genericSignature).replace('/', '.');
+		if (genericSignature.startsWith(String.valueOf(Signature.C_TYPE_VARIABLE))) {
+			// resolve to the signature of the variable.
+			return Signature.toString(variable.getSignature()).replace('/', '.');
+		}
+		return fqn;
+	}
+
 	private CompilationUnit parseCompilationUnit(char[] source,
 			String unitName, IJavaProject project) {
 		return parseCompilationUnit(source, unitName, project, Collections.EMPTY_MAP);
@@ -399,7 +423,7 @@ public class ASTEvaluationEngine implements IAstEvaluationEngine {
 
 	private CompilationUnit parseCompilationUnit(char[] source,
 			String unitName, IJavaProject project, Map<String, String> extraCompileOptions) {
-		ASTParser parser = ASTParser.newParser(AST.JLS13);
+		ASTParser parser = ASTParser.newParser(AST.JLS14);
 		parser.setSource(source);
 		parser.setUnitName(unitName);
 		parser.setProject(project);
