@@ -172,7 +172,7 @@ public final class InternalPlatform {
 		String value = getOption(option);
 		if (value == null)
 			return defaultValue;
-		return value.equalsIgnoreCase("true"); //$NON-NLS-1$
+		return "true".equalsIgnoreCase(value); //$NON-NLS-1$
 	}
 
 	public BundleContext getBundleContext() {
@@ -272,15 +272,15 @@ public final class InternalPlatform {
 	 * Lazy initialize ContentTypeManager - it can only be used after the registry is up and running
 	 */
 	public IContentTypeManager getContentTypeManager() {
-		return contentTracker == null ? null : (IContentTypeManager) contentTracker.getService();
+		return contentTracker == null ? null : contentTracker.getService();
 	}
 
 	public EnvironmentInfo getEnvironmentInfoService() {
-		return environmentTracker == null ? null : (EnvironmentInfo) environmentTracker.getService();
+		return environmentTracker == null ? null : environmentTracker.getService();
 	}
 
 	public FrameworkLog getFrameworkLog() {
-		return logTracker == null ? null : (FrameworkLog) logTracker.getService();
+		return logTracker == null ? null : logTracker.getService();
 	}
 
 	public Bundle[] getFragments(Bundle bundle) {
@@ -359,7 +359,7 @@ public final class InternalPlatform {
 		if (result != null)
 			return result;
 		ExtendedLogService logService = extendedLogTracker.getService();
-		Logger logger = logService == null ? null : logService.getLogger(bundle, PlatformLogWriter.EQUINOX_LOGGER_NAME);
+		Logger logger = logService != null ? logService.getLogger(bundle, PlatformLogWriter.EQUINOX_LOGGER_NAME) : null;
 		result = new Log(bundle, logger);
 		ExtendedLogReaderService logReader = logReaderTracker.getService();
 		logReader.addLogListener(result, result);
@@ -408,7 +408,7 @@ public final class InternalPlatform {
 
 
 	public IPreferencesService getPreferencesService() {
-		return preferencesTracker == null ? null : (IPreferencesService) preferencesTracker.getService();
+		return preferencesTracker == null ? null : preferencesTracker.getService();
 	}
 
 	/*
@@ -745,55 +745,42 @@ public final class InternalPlatform {
 	private void closeOSGITrackers() {
 		if (preferencesTracker != null) {
 			preferencesTracker.close();
-			preferencesTracker = null;
 		}
 		if (contentTracker != null) {
 			contentTracker.close();
-			contentTracker = null;
 		}
 		if (debugTracker != null) {
 			debugTracker.close();
-			debugTracker = null;
 		}
 		if (platformTracker != null) {
 			platformTracker.close();
-			platformTracker = null;
 		}
 		if (logTracker != null) {
 			logTracker.close();
-			logTracker = null;
 		}
 		if (groupProviderTracker != null) {
 			groupProviderTracker.close();
-			groupProviderTracker = null;
 		}
 		if (environmentTracker != null) {
 			environmentTracker.close();
-			environmentTracker = null;
 		}
 		if (logReaderTracker != null) {
 			logReaderTracker.close();
-			logReaderTracker = null;
 		}
 		if (extendedLogTracker != null) {
 			extendedLogTracker.close();
-			extendedLogTracker = null;
 		}
 		if (installLocation != null) {
 			installLocation.close();
-			installLocation = null;
 		}
 		if (userLocation != null) {
 			userLocation.close();
-			userLocation = null;
 		}
 		if (configurationLocation != null) {
 			configurationLocation.close();
-			configurationLocation = null;
 		}
 		if (instanceLocation != null) {
 			instanceLocation.close();
-			instanceLocation = null;
 		}
 	}
 

@@ -60,11 +60,11 @@ public class ContentTypeBuilder {
 	private static byte parsePriority(String priority) {
 		if (priority == null)
 			return ContentType.PRIORITY_NORMAL;
-		if (priority.equals("high")) //$NON-NLS-1$
+		if ("high".equals(priority)) //$NON-NLS-1$
 			return ContentType.PRIORITY_HIGH;
-		if (priority.equals("low")) //$NON-NLS-1$
+		if ("low".equals(priority)) //$NON-NLS-1$
 			return ContentType.PRIORITY_LOW;
-		if (!priority.equals("normal")) //$NON-NLS-1$
+		if (!"normal".equals(priority)) //$NON-NLS-1$
 			return ContentType.PRIORITY_NORMAL;
 		//TODO: should log - INVALID PRIORITY
 		return ContentType.PRIORITY_NORMAL;
@@ -92,7 +92,7 @@ public class ContentTypeBuilder {
 	public void buildCatalog(IScopeContext context) {
 		IConfigurationElement[] allContentTypeCEs = getConfigurationElements();
 		for (IConfigurationElement allContentTypeCE : allContentTypeCEs)
-			if (allContentTypeCE.getName().equals("content-type")) //$NON-NLS-1$
+			if ("content-type".equals(allContentTypeCE.getName())) //$NON-NLS-1$
 				registerContentType(allContentTypeCE);
 		for (String id : ContentTypeManager.getUserDefinedContentTypeIds(context)) {
 			IEclipsePreferences node = context.getNode(id);
@@ -103,7 +103,7 @@ public class ContentTypeBuilder {
 					null));
 		}
 		for (IConfigurationElement allContentTypeCE : allContentTypeCEs)
-			if (allContentTypeCE.getName().equals("file-association")) //$NON-NLS-1$
+			if ("file-association".equals(allContentTypeCE.getName())) //$NON-NLS-1$
 				registerFileAssociation(allContentTypeCE);
 		applyPreferences();
 	}
@@ -178,8 +178,8 @@ public class ContentTypeBuilder {
 		if (defaultCharset != null)
 			if (defaultProperties == null)
 				defaultProperties = Collections.singletonMap(IContentDescription.CHARSET, defaultCharset);
-			else if (!defaultProperties.containsKey(IContentDescription.CHARSET))
-				defaultProperties.put(IContentDescription.CHARSET, defaultCharset);
+			else
+				defaultProperties.putIfAbsent(IContentDescription.CHARSET, defaultCharset);
 		return ContentType.createContentType(catalog, uniqueId, name, priority, fileExtensions, fileNames, filePatterns,
 				baseTypeId, aliasTargetTypeId, defaultProperties, contentTypeCE);
 	}
