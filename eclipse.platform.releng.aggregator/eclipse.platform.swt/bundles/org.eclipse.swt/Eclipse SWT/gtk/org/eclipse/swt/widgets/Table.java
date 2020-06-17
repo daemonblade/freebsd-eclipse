@@ -1198,7 +1198,9 @@ void fixChildren (Shell newShell, Shell oldShell, Decorations newDecorations, De
 @Override
 Rectangle getClientAreaInPixels () {
 	checkWidget ();
-	forceResize ();
+	if(RESIZE_ON_GETCLIENTAREA) {
+		forceResize ();
+	}
 	long clientHandle = clientHandle ();
 	GtkAllocation allocation = new GtkAllocation ();
 	GTK.gtk_widget_get_allocation (clientHandle, allocation);
@@ -2991,13 +2993,6 @@ void rendererRender (long cell, long cr, long snapshot, long widget, long backgr
 			long path = GTK.gtk_tree_model_get_path (modelHandle, iter);
 			GTK.gtk_tree_view_get_background_area (handle, path, columnHandle, rect);
 			GTK.gtk_tree_path_free (path);
-			// A workaround for https://bugs.eclipse.org/bugs/show_bug.cgi?id=459117
-			if (cr != 0 && GTK.GTK_VERSION <= OS.VERSION(3, 14, 8)) {
-				GdkRectangle r2 = new GdkRectangle ();
-				GDK.gdk_cairo_get_clip_rectangle (cr, r2);
-				rect.x = r2.x;
-				rect.width = r2.width;
-			}
 			if ((drawState & SWT.SELECTED) == 0) {
 				if ((state & PARENT_BACKGROUND) != 0 || backgroundImage != null) {
 					Control control = findBackgroundControl ();
@@ -3046,10 +3041,6 @@ void rendererRender (long cell, long cr, long snapshot, long widget, long backgr
 					Rectangle rect2 = DPIUtil.autoScaleDown(new Rectangle(rect.x, r.y, r.width, r.height));
 					// Caveat: rect2 is necessary because GC#setClipping(Rectangle) got broken by bug 446075
 					gc.setClipping(rect2.x, rect2.y, rect2.width, rect2.height);
-
-					if (GTK.GTK_VERSION <= OS.VERSION(3, 14, 8)) {
-						rect.width = r.width;
-					}
 				} else {
 					Rectangle rect2 = DPIUtil.autoScaleDown(new Rectangle(rect.x, rect.y, rect.width, rect.height));
 					// Caveat: rect2 is necessary because GC#setClipping(Rectangle) got broken by bug 446075
@@ -3124,13 +3115,6 @@ void rendererRender (long cell, long cr, long snapshot, long widget, long backgr
 				long path = GTK.gtk_tree_model_get_path (modelHandle, iter);
 				GTK.gtk_tree_view_get_background_area (handle, path, columnHandle, rect);
 				GTK.gtk_tree_path_free (path);
-				// A workaround for https://bugs.eclipse.org/bugs/show_bug.cgi?id=459117
-				if (cr != 0 && GTK.GTK_VERSION <= OS.VERSION(3, 14, 8)) {
-					GdkRectangle r2 = new GdkRectangle ();
-					GDK.gdk_cairo_get_clip_rectangle (cr, r2);
-					rect.x = r2.x;
-					rect.width = r2.width;
-				}
 				ignoreSize = true;
 				int [] contentX = new int [1], contentWidth = new int [1];
 				gtk_cell_renderer_get_preferred_size (cell, handle, contentWidth, null);
@@ -3146,12 +3130,6 @@ void rendererRender (long cell, long cr, long snapshot, long widget, long backgr
 						bounds = image.getBoundsInPixels ();
 					}
 					imageWidth = bounds.width;
-				}
-				// On gtk < 3.14.8 the clip rectangle does not have image area into clip rectangle
-				// need to adjust clip rectangle with image width
-				if (cr != 0 && GTK.GTK_VERSION <= OS.VERSION(3, 14, 8)) {
-					rect.x -= imageWidth;
-					rect.width +=imageWidth;
 				}
 				contentX [0] -= imageWidth;
 				contentWidth [0] += imageWidth;
@@ -3400,14 +3378,13 @@ void setBackgroundGdkRGBA (long context, long handle, GdkRGBA rgba) {
 		background = rgba;
 	}
 	GdkRGBA selectedBackground = display.getSystemColor(SWT.COLOR_LIST_SELECTION).handle;
-	String name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? "treeview" : "GtkTreeView";
-	String css = name + " {background-color: " + display.gtk_rgba_to_css_string(background) + ";}\n"
-			+ name + ":selected {background-color: " + display.gtk_rgba_to_css_string(selectedBackground) + ";}";
+	String css = "treeview {background-color: " + display.gtk_rgba_to_css_string(background) + ";}\n"+
+			 "treeview:selected {background-color: " + display.gtk_rgba_to_css_string(selectedBackground) + ";}";
 
-		// Cache background color
-		cssBackground = css;
+	// Cache background color
+	cssBackground = css;
 
-		// Apply background color and any foreground color
+	// Apply background color and any foreground color
 	String finalCss = display.gtk_css_create_css_color_string (cssBackground, cssForeground, SWT.BACKGROUND);
 	gtk_css_provider_load_from_css(context, finalCss);
 }
@@ -3534,9 +3511,8 @@ public void setHeaderBackground(Color color) {
 	} else {
 		background = defaultBackground();
 	}
-	String name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? "button" : "GtkButton";
 	// background works for 3.18 and later, background-color only as of 3.20
-	String css = name + " {background: " + display.gtk_rgba_to_css_string(background) + ";}\n";
+	String css = "button {background: " + display.gtk_rgba_to_css_string(background) + ";}\n";
 	headerCSSBackground = css;
 	String finalCss = display.gtk_css_create_css_color_string (headerCSSBackground, headerCSSForeground, SWT.BACKGROUND);
 	for (TableColumn column : columns) {
@@ -3591,8 +3567,7 @@ public void setHeaderForeground (Color color) {
 	} else {
 		foreground = display.COLOR_LIST_FOREGROUND_RGBA;
 	}
-	String name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? "button" : "GtkButton";
-	String css = name + " {color: " + display.gtk_rgba_to_css_string(foreground) + ";}";
+	String css = "button {color: " + display.gtk_rgba_to_css_string(foreground) + ";}";
 	headerCSSForeground = css;
 	String finalCss = display.gtk_css_create_css_color_string (headerCSSBackground, headerCSSForeground, SWT.FOREGROUND);
 	for (TableColumn column : columns) {

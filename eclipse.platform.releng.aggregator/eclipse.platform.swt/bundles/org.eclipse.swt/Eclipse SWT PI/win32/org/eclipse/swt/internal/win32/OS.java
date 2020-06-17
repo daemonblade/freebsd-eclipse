@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,7 +15,9 @@
 package org.eclipse.swt.internal.win32;
 
 
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.internal.*;
+import org.eclipse.swt.widgets.Display;
 
 public class OS extends C {
 	static {
@@ -566,7 +568,7 @@ public class OS extends C {
 	public static final int GW_HWNDNEXT = 0x2;
 	public static final int GW_HWNDPREV = 0x3;
 	public static final int GW_OWNER = 0x4;
-	public static final int HBMMENU_CALLBACK = 0xffffffff;
+	public static final long HBMMENU_CALLBACK = -1;
 	public static final int HCBT_CREATEWND = 3;
 	public static final int HCF_HIGHCONTRASTON = 0x1;
 	public static final int HDF_BITMAP = 0x2000;
@@ -1282,6 +1284,7 @@ public class OS extends C {
 	public static final int SM_CXVSCROLL = 0x2;
 	public static final int SM_CYBORDER = 0x6;
 	public static final int SM_CYCURSOR = 0xe;
+	public static final int SM_CYEDGE = 0x2e;
 	public static final int SM_CYFOCUSBORDER = 84;
 	public static final int SM_CYHSCROLL = 0x3;
 	public static final int SM_CYMENU = 0xf;
@@ -1334,6 +1337,7 @@ public class OS extends C {
 	public static final int STM_SETIMAGE = 0x172;
 	public static final int SWP_ASYNCWINDOWPOS = 0x4000;
 	public static final int SWP_DRAWFRAME = 0x20;
+	public static final int SWP_FRAMECHANGED = 0x0020;
 	public static final int SWP_NOACTIVATE = 0x10;
 	public static final int SWP_NOCOPYBITS = 0x100;
 	public static final int SWP_NOMOVE = 0x2;
@@ -2319,6 +2323,45 @@ public static final int RegSetValueEx (long hKey, TCHAR lpValueName, int Reserve
 public static final long SendMessage (long hWnd, int Msg, long wParam, TCHAR lParam) {
 	char [] lParam1 = lParam == null ? null : lParam.chars;
 	return SendMessage (hWnd, Msg, wParam, lParam1);
+}
+
+/**
+ * Experimental API for dark theme.
+ * <p>
+ * On Windows, there is no OS API for dark theme yet, and this method only
+ * configures various tweaks. Some of these tweaks have drawbacks. The tweaks
+ * are configured with defaults that fit Eclipse. Non-Eclipse applications are
+ * expected to configure individual tweaks instead of calling this method.
+ * Please see <code>Display#setData()</code> and documentation for string keys
+ * used there.
+ *
+ * @param isDarkTheme <code>true</code> for dark theme
+ */
+public static final void setTheme(boolean isDarkTheme) {
+	/*
+	 * On macOS and GTK, setting dark theme is supported by system API.
+	 * Probably this is why it was chosen to have 'OS.setTheme()' SWT API
+	 * in 'OS' rather then 'Display'. However, on Windows, there is no
+	 * official API yet, just some tweaks to tailor things that SWT can't
+	 * color properly. These use settings in Display to allow applications
+	 * to configure individual tweaks.
+	 */
+
+	Display display = Display.getCurrent();
+	if (display == null)
+		throw new NullPointerException("Display must be already created before you call OS.setTheme()");
+
+	display.setData("org.eclipse.swt.internal.win32.useDarkModeExplorerTheme", isDarkTheme);
+	display.setData("org.eclipse.swt.internal.win32.menuBarForegroundColor",   isDarkTheme ? new Color(display, 0xD0, 0xD0, 0xD0) : null);
+	display.setData("org.eclipse.swt.internal.win32.menuBarBackgroundColor",   isDarkTheme ? new Color(display, 0x30, 0x30, 0x30) : null);
+	display.setData("org.eclipse.swt.internal.win32.menuBarBorderColor",       isDarkTheme ? new Color(display, 0x50, 0x50, 0x50) : null);
+	display.setData("org.eclipse.swt.internal.win32.Canvas.use_WS_BORDER",     isDarkTheme);
+	display.setData("org.eclipse.swt.internal.win32.List.use_WS_BORDER",       isDarkTheme);
+	display.setData("org.eclipse.swt.internal.win32.Table.use_WS_BORDER",      isDarkTheme);
+	display.setData("org.eclipse.swt.internal.win32.Text.use_WS_BORDER",       isDarkTheme);
+	display.setData("org.eclipse.swt.internal.win32.Tree.use_WS_BORDER",       isDarkTheme);
+	display.setData("org.eclipse.swt.internal.win32.Table.headerLineColor",    isDarkTheme ? new Color(display, 0x50, 0x50, 0x50) : null);
+	display.setData("org.eclipse.swt.internal.win32.Label.disabledForegroundColor", isDarkTheme ? new Color(display, 0x80, 0x80, 0x80) : null);
 }
 
 public static final boolean SetDllDirectory (TCHAR lpPathName) {

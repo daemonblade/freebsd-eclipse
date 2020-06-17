@@ -1349,35 +1349,14 @@ public ImageData getImageData(int zoom) {
 	NSAutoreleasePool pool = null;
 	if (!NSThread.isMainThread()) pool = (NSAutoreleasePool) new NSAutoreleasePool().alloc().init();
 	try {
-		boolean hasImageProvider = imageFileNameProvider != null || imageDataProvider != null;
 		if (zoom == 100) {
 			NSBitmapImageRep imageRep;
-			if (hasImageProvider) {
-				imageRep = getRepresentation_100();
-				return _getImageData(imageRep, alphaInfo_100);
-			} else {
-				imageRep = getRepresentation();
-				if (imageRep.pixelsHigh() == this.height) {
-					return _getImageData(imageRep, alphaInfo_100);
-				} else {
-					if (alphaInfo_200 == null) {
-						initAlpha_200(imageRep);
-					}
-
-					NSArray reps = handle.representations();
-					long count = reps.count();
-					for (int i = 0; i < count; i++) {
-						handle.removeRepresentation(new NSImageRep(handle.representations().objectAtIndex(0)));
-					}
-					handle.addRepresentation(imageRep);
-
-					NSSize targetSize = handle.size();
-					imageRep = createImageRep(targetSize);
-					/* Recreate alpha info */
-					initAlpha_100(imageRep);
-					return _getImageData(imageRep, alphaInfo_100);
-				}
+			NSSize size = handle.size();
+			imageRep = getRepresentation_100();
+			if (!((imageRep.pixelsHigh() == size.height) && (imageRep.pixelsWide() == size.width))) {
+				imageRep = createImageRep(size);
 			}
+			return _getImageData(imageRep, alphaInfo_100);
 		}
 		if (zoom == 200) {
 			NSBitmapImageRep imageRep200 = getRepresentation_200();
@@ -1621,10 +1600,11 @@ public long internal_new_GC (GCData data) {
 		int scaleFactor = DPIUtil.getDeviceZoom() / 100;
 		NSBitmapImageRep imageRep = getRepresentation();
 
-		// Can't perform transforms on image reps with alpha.
-		imageRep.setAlpha(false);
-
 		NSGraphicsContext context = NSGraphicsContext.graphicsContextWithBitmapImageRep(imageRep);
+		if (context == null) {
+			imageRep.setAlpha(false);
+			context = NSGraphicsContext.graphicsContextWithBitmapImageRep(imageRep);
+		}
 		NSGraphicsContext flippedContext = NSGraphicsContext.graphicsContextWithGraphicsPort(context.graphicsPort(), true);
 		context = flippedContext;
 		context.retain();

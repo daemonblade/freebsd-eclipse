@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -156,12 +156,86 @@ public class Display extends Device {
 	long hButtonTheme, hEditTheme, hExplorerBarTheme, hScrollBarTheme, hTabTheme;
 	static final char [] BUTTON = new char [] {'B', 'U', 'T', 'T', 'O', 'N', 0};
 	static final char [] EDIT = new char [] {'E', 'D', 'I', 'T', 0};
+	static final char [] DARKMODE_EXPLORER = new char [] {'D', 'A', 'R', 'K', 'M', 'O', 'D', 'E', '_', 'E', 'X', 'P', 'L', 'O', 'R', 'E', 'R', 0};
 	static final char [] EXPLORER = new char [] {'E', 'X', 'P', 'L', 'O', 'R', 'E', 'R', 0};
 	static final char [] EXPLORERBAR = new char [] {'E', 'X', 'P', 'L', 'O', 'R', 'E', 'R', 'B', 'A', 'R', 0};
 	static final char [] SCROLLBAR = new char [] {'S', 'C', 'R', 'O', 'L', 'L', 'B', 'A', 'R', 0};
 	static final char [] LISTVIEW = new char [] {'L', 'I', 'S', 'T', 'V', 'I', 'E', 'W', 0};
 	static final char [] TAB = new char [] {'T', 'A', 'B', 0};
 	static final char [] TREEVIEW = new char [] {'T', 'R', 'E', 'E', 'V', 'I', 'E', 'W', 0};
+	/* Emergency switch to be used in case of regressions. Not supposed to be changed when app is running. */
+	static final boolean disableCustomThemeTweaks = Boolean.valueOf(System.getProperty("org.eclipse.swt.internal.win32.disableCustomThemeTweaks")); //$NON-NLS-1$
+	/**
+	 * Changes Windows theme to 'DarkMode_Explorer' for Controls that can benefit from it.
+	 * Effects as of Windows 10 version 1909:<br>
+	 * <ul>
+	 *   <li>Dark scrollbars - this is the most important change for many applications.</li>
+	 *   <li>Tree - dark theme compatible expander icon.</li>
+	 *   <li>Tree - dark theme compatible colors for selected and hovered items.</li>
+	 *   <li>Table - uses older theme. It for example doesn't have mouse hover item highlight.</li>
+	 *   <li>The list is not exhaustive. Also, effects can change, because Windows dark theme is not yet official.</li>
+	 * </ul>
+	 * Limitations:<br>
+	 * <ul>
+	 *   <li>Only available since Win10 version 1809.</li>
+	 *   <li>Does not affect already created controls.</li>
+	 * </ul>
+	 * All Scrollable-based Controls are affected.
+	 */
+	static final String USE_DARKMODE_EXPLORER_THEME_KEY = "org.eclipse.swt.internal.win32.useDarkModeExplorerTheme";
+	boolean useDarkModeExplorerTheme;
+	/**
+	 * Configures background/foreground colors of Menu(SWT.BAR).<br>
+	 * Side effects:
+	 * <ul>
+	 * <li>Menu items are no longer highlighted when mouse hovers over</li>
+	 * </ul>
+	 * Expects a <code>Color</code> value.
+	 */
+	static final String MENUBAR_FOREGROUND_COLOR_KEY = "org.eclipse.swt.internal.win32.menuBarForegroundColor"; //$NON-NLS-1$
+	int menuBarForegroundPixel = -1;
+	static final String MENUBAR_BACKGROUND_COLOR_KEY = "org.eclipse.swt.internal.win32.menuBarBackgroundColor"; //$NON-NLS-1$
+	int menuBarBackgroundPixel = -1;
+	/**
+	 * Color of the 1px separator between Menu(SWT.BAR) and Shell's client area.<br>
+	 * Expects a <code>Color</code> value.
+	 */
+	static final String MENUBAR_BORDER_COLOR_KEY     = "org.eclipse.swt.internal.win32.menuBarBorderColor"; //$NON-NLS-1$
+	long menuBarBorderPen;
+	/**
+	 * Use a different border for Controls.
+	 * This often gives better results for dark themes.
+	 * The effect is slightly different for different controls.
+	 */
+	static final String USE_WS_BORDER_ALL_KEY        = "org.eclipse.swt.internal.win32.all.use_WS_BORDER"; //$NON-NLS-1$
+	boolean useWsBorderAll = false;
+	static final String USE_WS_BORDER_CANVAS_KEY     = "org.eclipse.swt.internal.win32.Canvas.use_WS_BORDER"; //$NON-NLS-1$
+	boolean useWsBorderCanvas = false;
+	static final String USE_WS_BORDER_LABEL_KEY      = "org.eclipse.swt.internal.win32.Label.use_WS_BORDER"; //$NON-NLS-1$
+	boolean useWsBorderLabel = false;
+	static final String USE_WS_BORDER_LIST_KEY       = "org.eclipse.swt.internal.win32.List.use_WS_BORDER"; //$NON-NLS-1$
+	boolean useWsBorderList = false;
+	static final String USE_WS_BORDER_SPINNER_KEY    = "org.eclipse.swt.internal.win32.Spinner.use_WS_BORDER"; //$NON-NLS-1$
+	boolean useWsBorderSpinner = false;
+	static final String USE_WS_BORDER_TABLE_KEY      = "org.eclipse.swt.internal.win32.Table.use_WS_BORDER"; //$NON-NLS-1$
+	boolean useWsBorderTable = false;
+	static final String USE_WS_BORDER_TEXT_KEY       = "org.eclipse.swt.internal.win32.Text.use_WS_BORDER"; //$NON-NLS-1$
+	boolean useWsBorderText = false;
+	static final String USE_WS_BORDER_TREE_KEY       = "org.eclipse.swt.internal.win32.Tree.use_WS_BORDER"; //$NON-NLS-1$
+	boolean useWsBorderTree = false;
+	/**
+	 * Changes the color of Table header's column delimiters.
+	 * Only affects custom-drawn header, that is when background/foreground header color is set.
+	 * Expects a <code>Color</code> value.
+	 */
+	static final String TABLE_HEADER_LINE_COLOR_KEY  = "org.eclipse.swt.internal.win32.Table.headerLineColor"; //$NON-NLS-1$
+	int tableHeaderLinePixel = -1;
+	/**
+	 * Disabled Label is drawn with specified foreground color.
+	 * Expects a <code>Color</code> value.
+	 */
+	static final String LABEL_DISABLED_FOREGROUND_COLOR_KEY = "org.eclipse.swt.internal.win32.Label.disabledForegroundColor"; //$NON-NLS-1$
+	int disabledLabelForegroundPixel = -1;
 
 	/* Custom icons */
 	long hIconSearch;
@@ -2737,6 +2811,38 @@ boolean isXMouseActive () {
 	return xMouseActive;
 }
 
+static boolean isThemeAvailable (String applicationName, String className) {
+	long appClassData = 0;
+	long defaultClassData = 0;
+	try {
+		final TCHAR appClass = new TCHAR (0, applicationName + "::" + className, true);
+		appClassData = OS.OpenThemeData (0, appClass.chars);
+		if (appClassData == 0) return false;
+
+		final TCHAR defaultClass = new TCHAR (0, className, true);
+		defaultClassData = OS.OpenThemeData (0, defaultClass.chars);
+		if (defaultClassData == 0) return false;
+
+		/*
+		 * OpenThemeData() will ignore unknown theme packages and still return something.
+		 * Example: If 'DarkMode_Explorer' is not available then 'DarkMode_Explorer::ScrollBar' will return the same as 'ScrollBar'.
+		 * If data handles are equal, then theme isn't really available.
+		 */
+		return (appClassData != defaultClassData);
+	} finally {
+		if (appClassData != 0) OS.CloseThemeData(appClassData);
+		if (defaultClassData != 0) OS.CloseThemeData(defaultClassData);
+	}
+}
+
+static boolean isThemeAvailable_DarkModeExplorer () {
+	/*
+	 * In the first Windows build with dark theme, scrollbar is already there,
+	 * so it could be used as good indicator of presence of the theme.
+	 */
+	return isThemeAvailable("DarkMode_Explorer", "ScrollBar");
+}
+
 boolean isValidThread () {
 	return thread == Thread.currentThread ();
 }
@@ -3613,6 +3719,8 @@ void releaseDisplay () {
 	if (hScrollBarTheme != 0) OS.CloseThemeData (hScrollBarTheme);
 	if (hTabTheme != 0) OS.CloseThemeData (hTabTheme);
 	hButtonTheme = hEditTheme = hExplorerBarTheme = hScrollBarTheme = hTabTheme = 0;
+	if (menuBarBorderPen != 0) OS.DeleteObject (menuBarBorderPen);
+	menuBarBorderPen = 0;
 
 	/* Unhook the message hook */
 	if (msgHook != 0) OS.UnhookWindowsHookEx (msgHook);
@@ -4199,6 +4307,15 @@ public void setCursorLocation (Point point) {
 	setCursorLocation (point.x, point.y);
 }
 
+boolean _toBoolean (Object value) {
+	return value != null && ((Boolean)value).booleanValue ();
+}
+
+int _toColorPixel (Object value) {
+	if (value == null) return -1;
+	return ((Color)value).handle;
+}
+
 /**
  * Sets the application defined property of the receiver
  * with the specified name to the given argument.
@@ -4228,31 +4345,84 @@ public void setData (String key, Object value) {
 	checkDevice ();
 	if (key == null) error (SWT.ERROR_NULL_ARGUMENT);
 
-	if (key.equals (RUN_MESSAGES_IN_IDLE_KEY)) {
-		Boolean data = (Boolean) value;
-		runMessagesInIdle = data != null && data.booleanValue ();
-		return;
+	switch (key) {
+		case RUN_MESSAGES_IN_IDLE_KEY:
+			runMessagesInIdle = _toBoolean (value);
+			return;
+		case RUN_MESSAGES_IN_MESSAGE_PROC_KEY:
+			runMessagesInMessageProc = _toBoolean (value);
+			return;
+		case USE_OWNDC_KEY:
+			useOwnDC = _toBoolean (value);
+			return;
+		case ACCEL_KEY_HIT:
+			accelKeyHit = _toBoolean (value);
+			return;
+		case EXTERNAL_EVENT_LOOP_KEY:
+			externalEventLoop = _toBoolean (value);
+			return;
+		case USE_DARKMODE_EXPLORER_THEME_KEY:
+			/*
+			 * Note: Request is ignored when theme is not available.
+			 * When theme is not available, SetWindowTheme() ignores it and
+			 * just uses default theme. That's fine for controls where SWT
+			 * doesn't set theme. However, controls such as Table choose
+			 * between 'Explorer' and 'DarkMode_Explorer' themes. When the
+			 * latter is not available and SWT tries to set it, default theme
+			 * will be used instead of 'Explorer'.
+			 */
+			useDarkModeExplorerTheme = _toBoolean (value) &&
+				!disableCustomThemeTweaks &&
+				isThemeAvailable_DarkModeExplorer ();
+			return;
+		case MENUBAR_FOREGROUND_COLOR_KEY:
+			menuBarForegroundPixel = disableCustomThemeTweaks ? -1 : _toColorPixel(value);
+			return;
+		case MENUBAR_BACKGROUND_COLOR_KEY:
+			menuBarBackgroundPixel = disableCustomThemeTweaks ? -1 : _toColorPixel(value);
+			return;
+		case MENUBAR_BORDER_COLOR_KEY:
+			if (menuBarBorderPen != 0)
+				OS.DeleteObject(menuBarBorderPen);
+
+			int pixel = _toColorPixel(value);
+			if (disableCustomThemeTweaks || (pixel == -1))
+				menuBarBorderPen = 0;
+			else
+				menuBarBorderPen = OS.CreatePen (OS.PS_SOLID, 1, pixel);
+			return;
+		case USE_WS_BORDER_ALL_KEY:
+			useWsBorderAll     = !disableCustomThemeTweaks && _toBoolean(value);
+			return;
+		case USE_WS_BORDER_CANVAS_KEY:
+			useWsBorderCanvas  = !disableCustomThemeTweaks && _toBoolean(value);
+			return;
+		case USE_WS_BORDER_LABEL_KEY:
+			useWsBorderLabel   = !disableCustomThemeTweaks && _toBoolean(value);
+			return;
+		case USE_WS_BORDER_LIST_KEY:
+			useWsBorderList    = !disableCustomThemeTweaks && _toBoolean(value);
+			return;
+		case USE_WS_BORDER_SPINNER_KEY:
+			useWsBorderSpinner = !disableCustomThemeTweaks && _toBoolean(value);
+			return;
+		case USE_WS_BORDER_TABLE_KEY:
+			useWsBorderTable   = !disableCustomThemeTweaks && _toBoolean(value);
+			return;
+		case USE_WS_BORDER_TEXT_KEY:
+			useWsBorderText    = !disableCustomThemeTweaks && _toBoolean(value);
+			return;
+		case USE_WS_BORDER_TREE_KEY:
+			useWsBorderTree    = !disableCustomThemeTweaks && _toBoolean(value);
+			return;
+		case TABLE_HEADER_LINE_COLOR_KEY:
+			tableHeaderLinePixel = disableCustomThemeTweaks ? -1 : _toColorPixel(value);
+			return;
+		case LABEL_DISABLED_FOREGROUND_COLOR_KEY:
+			disabledLabelForegroundPixel = disableCustomThemeTweaks ? -1 : _toColorPixel(value);
+			break;
 	}
-	if (key.equals (RUN_MESSAGES_IN_MESSAGE_PROC_KEY)) {
-		Boolean data = (Boolean) value;
-		runMessagesInMessageProc = data != null && data.booleanValue ();
-		return;
-	}
-	if (key.equals (USE_OWNDC_KEY)) {
-		Boolean data = (Boolean) value;
-		useOwnDC = data != null && data.booleanValue ();
-		return;
-	}
-	if (key.equals (ACCEL_KEY_HIT)) {
-		Boolean data = (Boolean) value;
-		accelKeyHit = data != null && data.booleanValue ();
-		return;
-	}
-	if (key.equals (EXTERNAL_EVENT_LOOP_KEY)) {
-		Boolean data = (Boolean) value;
-		externalEventLoop = data != null && data.booleanValue ();
-		return;
-	}
+
 	/* Remove the key/value pair */
 	if (value == null) {
 		if (keys == null) return;
@@ -4494,6 +4664,10 @@ public final void setErrorHandler (Consumer<Error> errorHandler) {
  */
 public final Consumer<Error> getErrorHandler () {
 	return errorHandler;
+}
+
+char[] getExplorerTheme() {
+	return useDarkModeExplorerTheme ? DARKMODE_EXPLORER : EXPLORER;
 }
 
 int shiftedKey (int key) {

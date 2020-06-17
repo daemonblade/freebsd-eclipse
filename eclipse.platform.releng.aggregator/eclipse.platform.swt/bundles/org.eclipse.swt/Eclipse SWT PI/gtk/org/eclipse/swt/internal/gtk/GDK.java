@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Red Hat Inc. and others. All rights reserved.
+ * Copyright (c) 2018, 2020 Red Hat Inc. and others. All rights reserved.
  * The contents of this file are made available under the terms
  * of the GNU Lesser General Public License (LGPL) Version 2.1 that
  * accompanies this distribution (lgpl-v21.txt).  The LGPL is also
@@ -209,6 +209,7 @@ public class GDK extends OS {
 	public static final int GDK_Up = 0xff52;
 	public static final int GDK_WINDOW_CHILD = 2;
 	public static final int GDK_WINDOW_STATE = 32;
+	public static final int GDK_WINDOW_STATE_WITHDRAWN  = 1 << 0;
 	public static final int GDK_WINDOW_STATE_ICONIFIED  = 1 << 1;
 	public static final int GDK_WINDOW_STATE_MAXIMIZED  = 1 << 2;
 	public static final int GDK_WINDOW_STATE_FULLSCREEN  = 1 << 4;
@@ -454,13 +455,6 @@ public class GDK extends OS {
 	 */
 	/* [GTK4 only, if-def'd in os.h] */
 	public static final native long gdk_surface_get_display(long surface);
-	/**
-	 *  @method flags=dynamic
-	 *  @param display cast=(GdkDisplay *)
-	 */
-	public static final native long gdk_display_get_device_manager(long display);
-	/** @method flags=dynamic */
-	public static final native long gdk_device_manager_get_client_pointer(long device_manager);
 	/**
 	 * @param device cast=(GdkDevice *)
 	 * @param win_x cast=(gint *)
@@ -768,24 +762,6 @@ public class GDK extends OS {
 	 * @param interp_type cast=(GdkInterpType)
 	 */
 	public static final native long gdk_pixbuf_scale_simple(long src, int dest_width, int dest_height, int interp_type);
-	/**
-	 * @method flags=dynamic
-	 * @param device cast=(GdkDevice *)
-	 * @param window cast=(GdkWindow *)
-	 * @param owner_events cast=(gboolean)
-	 * @param event_mask cast=(GdkEventMask)
-	 * @param cursor cast=(GdkCursor *)
-	 * @param time_ cast=(guint32)
-	 */
-	/*  [GTK3 only, if-def'd in os.h; 3.20 deprecated, replaced] */
-	public static final native int gdk_device_grab(long device, long window, int grab_ownership, boolean owner_events, int event_mask, long cursor, int time_);
-	/**
-	 *  @method flags=dynamic
-	 *  @param device cast=(GdkDevice *)
-	 *  @param time_ cast=(guint32)
-	 */
-	/*  [GTK3; 3.20 deprecated] */
-	public static final native void gdk_device_ungrab(long device, int time_);
 	/**
 	 * @param device cast=(GdkDevice *)
 	 */
@@ -1188,18 +1164,6 @@ public class GDK extends OS {
 	/** @param surface cast=(GdkSurface *) */
 	/* [GTK4 only, if-def'd in os.h] */
 	public static final native void gdk_surface_lower(long surface);
-	/**
-	 * @method flags=dynamic
-	 */
-	/* [GTK3 only; 3.16 deprecated, replaced] */
-	public static final native void gdk_window_process_all_updates();
-	/**
-	 * @method flags=dynamic
-	 * @param window cast=(GdkWindow *)
-	 * @param update_children cast=(gboolean)
-	 */
-	/* [GTK3 only, if-def'd in os.h; 3.16 deprecated, replaced] */
-	public static final native void gdk_window_process_updates(long window, boolean update_children);
 	/** @param window cast=(GdkWindow *) */
 	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gdk_window_raise(long window);
@@ -1304,13 +1268,8 @@ public class GDK extends OS {
 	public static final native void gdk_surface_show_unraised(long surface);
 
 	public static long gdk_get_pointer (long display) {
-		if (GTK.GTK_VERSION >= OS.VERSION(3, 20, 0)) {
-			long default_seat = GDK.gdk_display_get_default_seat(display);
-			return GDK.gdk_seat_get_pointer(default_seat);
-		} else {
-			long device_manager = GDK.gdk_display_get_device_manager(display);
-			return GDK.gdk_device_manager_get_client_pointer(device_manager);
-		}
+		long default_seat = GDK.gdk_display_get_default_seat(display);
+		return GDK.gdk_seat_get_pointer(default_seat);
 	}
 
 }

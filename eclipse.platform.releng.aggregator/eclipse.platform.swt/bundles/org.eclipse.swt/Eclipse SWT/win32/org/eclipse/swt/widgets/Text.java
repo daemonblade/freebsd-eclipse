@@ -306,7 +306,28 @@ long callWindowProc (long hwnd, int msg, long wParam, long lParam) {
 
 @Override
 void createHandle () {
-	super.createHandle ();
+	long editStyle = widgetStyle ();
+	if ((editStyle & OS.WS_BORDER) == 0)
+		super.createHandle ();
+	else {
+		/*
+		 * Feature on Windows: when `Edit` control is created, it removes
+		 * `WS_BORDER`, but then internally draws the border over the client
+		 * area. This is undesirable because all SWT coordinates will then
+		 * need to be adjusted by the border size. The workaround is to create
+		 * control without `WS_BORDER` and add it just after creating.
+		 */
+		style &= ~SWT.BORDER;
+		super.createHandle ();
+		style |= SWT.BORDER;
+
+		editStyle = OS.GetWindowLongPtr(handle, OS.GWL_STYLE);
+		editStyle |= OS.WS_BORDER;
+		OS.SetWindowLongPtr(handle, OS.GWL_STYLE, editStyle);
+
+		OS.SetWindowPos(handle, 0, 0, 0, 0, 0, OS.SWP_NOMOVE | OS.SWP_NOSIZE | OS.SWP_NOZORDER | OS.SWP_FRAMECHANGED);
+	}
+
 	OS.SendMessage (handle, OS.EM_LIMITTEXT, 0, 0);
 	if ((style & SWT.READ_ONLY) != 0) {
 		if (applyThemeBackground () == 1) {
@@ -766,7 +787,18 @@ public void clearSelection () {
 		rect.y -= 1;
 		rect.width += 2;
 		rect.height += 2;
+
+		// When WS_BORDER is used instead of WS_EX_CLIENTEDGE, compensate the size difference
+		if (isUseWsBorder ()) {
+			int dx = OS.GetSystemMetrics (OS.SM_CXEDGE) - OS.GetSystemMetrics (OS.SM_CXBORDER);
+			int dy = OS.GetSystemMetrics (OS.SM_CYEDGE) - OS.GetSystemMetrics (OS.SM_CYBORDER);
+			rect.x -= dx;
+			rect.y -= dy;
+			rect.width += 2*dx;
+			rect.height += 2*dy;
+		}
 	}
+
 	return rect;
 }
 
@@ -877,6 +909,18 @@ boolean dragDetect (long hwnd, int x, int y, boolean filter, boolean [] detect, 
 		return false;
 	}
 	return super.dragDetect (hwnd, x, y, filter, detect, consume);
+}
+
+@Override
+void enableDarkModeExplorerTheme() {
+	/*
+	 * Feature in Windows. If the control has default foreground and
+	 * background, the background gets black without focus and white with
+	 * focus, but the foreground color always stays black.
+	 */
+	if (hasCustomBackground() || hasCustomForeground()) {
+		super.enableDarkModeExplorerTheme();
+	}
 }
 
 void fixAlignment () {
@@ -1600,6 +1644,11 @@ public void insert (String string) {
 	applySegments ();
 }
 
+@Override
+boolean isUseWsBorder () {
+	return super.isUseWsBorder () || ((display != null) && display.useWsBorderText);
+}
+
 /**
  * Pastes text from clipboard.
  * <p>
@@ -1872,6 +1921,7 @@ void setBackgroundImage (long hBitmap) {
 
 @Override
 void setBackgroundPixel (int pixel) {
+	enableDarkModeExplorerTheme();
 	int flags = OS.RDW_ERASE | OS.RDW_ALLCHILDREN | OS.RDW_INVALIDATE;
 	OS.RedrawWindow (handle, null, 0, flags);
 }
@@ -2029,6 +2079,12 @@ public void setFont (Font font) {
 	super.setFont (font);
 	setTabStops (tabs);
 	setMargins ();
+}
+
+@Override
+void setForegroundPixel (int pixel) {
+	enableDarkModeExplorerTheme();
+	super.setForegroundPixel(pixel);
 }
 
 void setMargins () {

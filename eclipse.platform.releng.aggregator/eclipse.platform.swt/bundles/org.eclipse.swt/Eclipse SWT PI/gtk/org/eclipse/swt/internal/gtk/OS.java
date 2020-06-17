@@ -90,7 +90,6 @@ public class OS extends C {
 				Library.loadLibrary("swt-pi4");
 			}
 		}
-		cachejvmptr();
 	}
 
 	//Add ability to debug gtk warnings for SWT snippets via SWT_FATAL_WARNINGS=1
@@ -457,8 +456,6 @@ public class OS extends C {
 	/** @method flags=no_gen
 	 * @category custom
 	 */
-	/* Cache the JVM pointer so that it's usable in other implementations. */
-	public static final native void cachejvmptr();
 
 	/** @category custom */
 	/* Add ability to debug gtk warnings for SWT snippets via SWT_FATAL_WARNINGS=1
@@ -1079,12 +1076,6 @@ public static final native void g_object_get(long object, byte[] first_property_
  * @param terminator cast=(const gchar *),flags=sentinel
  */
 public static final native void g_object_get(long object, byte[] first_property_name, long[] value, long terminator);
-/**
- * @param object cast=(GObject *)
- * @param first_property_name cast=(const gchar *),flags=no_out
- * @param terminator cast=(const gchar *),flags=sentinel
- */
-public static final native void g_object_get(long object, byte[] first_property_name, boolean[] value, long terminator);
 /**
  * @param object cast=(GObject *)
  * @param quark cast=(GQuark)

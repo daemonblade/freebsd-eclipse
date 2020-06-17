@@ -511,6 +511,11 @@
 			<arg swt_gen="true"></arg>
 			<retval swt_gen="true"></retval>
 		</method>
+		<method selector="setValue:forHTTPHeaderField:" swt_gen="true">
+			<arg swt_gen="true"></arg>
+			<arg swt_gen="true"></arg>
+			<retval swt_gen="true"></retval>
+		</method>
 	</class>
 	<class name="NSNotification" swt_gen="mixed">
 		<method selector="object" swt_gen="true">
@@ -935,10 +940,16 @@
 		</method>
 	</class>
 	<class name="NSUndoManager" swt_gen="mixed">
+		<method selector="beginUndoGrouping" swt_gen="true">
+			<retval swt_gen="true"></retval>
+		</method>
 		<method selector="canRedo" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
 		<method selector="canUndo" swt_gen="true">
+			<retval swt_gen="true"></retval>
+		</method>
+		<method selector="endUndoGrouping" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
 		<method selector="redo" swt_gen="true">

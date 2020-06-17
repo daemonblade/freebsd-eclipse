@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -971,6 +971,11 @@ void drawThemeBackground (long hDC, long hwnd, RECT rect) {
 
 void enableDrag (boolean enabled) {
 	/* Do nothing */
+}
+
+void enableDarkModeExplorerTheme() {
+	if (display.useDarkModeExplorerTheme)
+		OS.SetWindowTheme (handle, Display.DARKMODE_EXPLORER, null);
 }
 
 void enableWidget (boolean enabled) {
@@ -1995,6 +2000,14 @@ public boolean isVisible () {
 	checkWidget ();
 	if (OS.IsWindowVisible (handle)) return true;
 	return getVisible () && parent.isVisible ();
+}
+
+/**
+ * Custom theming: whether to use WS_BORDER instead of WS_EX_CLIENTEDGE for SWT.BORDER
+ * Intended for override.
+ */
+boolean isUseWsBorder () {
+	return (display != null) && display.useWsBorderAll;
 }
 
 @Override
@@ -4649,7 +4662,11 @@ CREATESTRUCT widgetCreateStruct () {
 
 int widgetExtStyle () {
 	int bits = 0;
-	if ((style & SWT.BORDER) != 0) bits |= OS.WS_EX_CLIENTEDGE;
+
+	if (!isUseWsBorder ()) {
+		if ((style & SWT.BORDER) != 0) bits |= OS.WS_EX_CLIENTEDGE;
+	}
+
 	bits |= OS.WS_EX_NOINHERITLAYOUT;
 	if ((style & SWT.RIGHT_TO_LEFT) != 0) bits |= OS.WS_EX_LAYOUTRTL;
 	if ((style & SWT.FLIP_TEXT_DIRECTION) != 0) bits |= OS.WS_EX_RTLREADING;
@@ -4663,6 +4680,11 @@ long widgetParent () {
 int widgetStyle () {
 	/* Force clipping of siblings by setting WS_CLIPSIBLINGS */
 	int bits = OS.WS_CHILD | OS.WS_VISIBLE | OS.WS_CLIPSIBLINGS;
+
+	if (isUseWsBorder ()) {
+		if ((style & SWT.BORDER) != 0) bits |= OS.WS_BORDER;
+	}
+
 	return bits;
 }
 
@@ -5132,6 +5154,12 @@ LRESULT WM_KEYUP (long wParam, long lParam) {
 }
 
 LRESULT WM_KILLFOCUS (long wParam, long lParam) {
+	/*
+	 * Feature in Windows. File and directory dialogs might reset focus
+	 * to NULL before they open. As a result, Shell is unable to save
+	 * focus control in WM_ACTIVATE. The fix is to save focus here.
+	 */
+	if (wParam == 0) menuShell().setSavedFocus(this);
 	return wmKillFocus (handle, wParam, lParam);
 }
 

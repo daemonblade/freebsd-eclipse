@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -526,7 +526,7 @@ public class Display extends Device {
 
 	/* GTK Version */
 	static final int GTK3_MAJOR = 3;
-	static final int GTK3_MINOR = 14;
+	static final int GTK3_MINOR = 20;
 	static final int GTK3_MICRO = 0;
 
 	/* Display Data */
@@ -1110,9 +1110,9 @@ boolean checkAndSetThemeDetails (String themeName) {
 		return true;
 	}
 	long settings = GTK.gtk_settings_get_default ();
-	boolean [] darkThemePreferred = new boolean [1];
+	int [] darkThemePreferred = new int [1];
 	OS.g_object_get(settings, GTK.gtk_application_prefer_dark_theme, darkThemePreferred, 0);
-	if (darkThemePreferred[0]) {
+	if (darkThemePreferred[0] != 0) {
 		/*
 		 * When 'gtk-application-prefer-dark-theme' is set to true, GTK uses the 'dark'
 		 * variant of the theme specified in the system settings -- see 'get_theme_name'
@@ -1122,7 +1122,7 @@ boolean checkAndSetThemeDetails (String themeName) {
 	} else {
 		System.setProperty("org.eclipse.swt.internal.gtk.theme", themeName);
 	}
-	return darkThemePreferred[0];
+	return darkThemePreferred[0] != 0;
 }
 
 void createDisplay (DeviceData data) {
@@ -3234,13 +3234,11 @@ GdkRGBA styleContextGetColor(long context, int flag) {
 	GdkRGBA rgba = new GdkRGBA ();
 	if (GTK.GTK4) {
 		GTK.gtk_style_context_get_color(context, rgba);
-	} else if (GTK.GTK_VERSION >= OS.VERSION(3, 18, 0)) {
+	} else {
 		GTK.gtk_style_context_save(context);
 		GTK.gtk_style_context_set_state(context, flag);
 		GTK.gtk_style_context_get_color (context, flag, rgba);
 		GTK.gtk_style_context_restore(context);
-	} else {
-		GTK.gtk_style_context_get_color (context, flag, rgba);
 	}
 	return rgba;
 }
@@ -4229,7 +4227,7 @@ public boolean post (Event event) {
 			while (windows != 0) {
 				long curr_window = OS.g_list_data(windows);
 				int state = GDK.gdk_window_get_state(curr_window);
-				if ((state & GDK.GDK_WINDOW_STATE_FOCUSED) != 0) {
+				if ((state & GDK.GDK_WINDOW_STATE_FOCUSED) != 0 && (state & GDK.GDK_WINDOW_STATE_WITHDRAWN) == 0) {
 					gdkWindow = curr_window;
 					OS.g_object_ref(gdkWindow);
 					break;
@@ -5825,13 +5823,6 @@ static int untranslateKey (int key) {
 public void update () {
 	checkDevice ();
 	flushExposes (0, true);
-	/*
-	 * Do not send expose events on GTK 3.16.0+
-	 * It's worth checking whether can be removed on all GTK 3 versions.
-	 */
-	if (GTK.GTK_VERSION < OS.VERSION(3, 16, 0)) {
-		GDK.gdk_window_process_all_updates ();
-	}
 }
 
 /**

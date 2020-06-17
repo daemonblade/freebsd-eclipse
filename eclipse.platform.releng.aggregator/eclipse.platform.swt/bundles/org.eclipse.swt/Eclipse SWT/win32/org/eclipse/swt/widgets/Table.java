@@ -86,7 +86,7 @@ public class Table extends Composite {
 	boolean [] columnVisible;
 	long headerToolTipHandle, hwndHeader;
 	boolean ignoreCustomDraw, ignoreDrawForeground, ignoreDrawBackground, ignoreDrawFocus, ignoreDrawSelection, ignoreDrawHot;
-	boolean customDraw, dragStarted, explorerTheme, firstColumnImage, fixScrollWidth, tipRequested, wasSelected, wasResized, painted;
+	boolean customDraw, dragStarted, explorerTheme, darkExplorerTheme, firstColumnImage, fixScrollWidth, tipRequested, wasSelected, wasResized, painted;
 	boolean ignoreActivate, ignoreSelect, ignoreShrink, ignoreResize, ignoreColumnMove, ignoreColumnResize, fullRowSelect, settingItemHeight;
 	boolean headerItemDragging;
 	int itemHeight, lastIndexOf, lastWidth, sortDirection, resizeCount, selectionForeground, hotIndex;
@@ -1498,7 +1498,8 @@ void createHandle () {
 	/* Use the Explorer theme */
 	if (OS.IsAppThemed ()) {
 		explorerTheme = true;
-		OS.SetWindowTheme (handle, Display.EXPLORER, null);
+		darkExplorerTheme = display.useDarkModeExplorerTheme;
+		OS.SetWindowTheme (handle, display.getExplorerTheme(), null);
 	}
 
 	/* Get the header window handle */
@@ -3001,6 +3002,11 @@ public boolean isSelected (int index) {
 }
 
 @Override
+boolean isUseWsBorder () {
+	return super.isUseWsBorder () || ((display != null) && display.useWsBorderTable);
+}
+
+@Override
 void register () {
 	super.register ();
 	if (hwndHeader != 0) display.addControl (hwndHeader, this);
@@ -3539,8 +3545,24 @@ void sendEraseItemEvent (TableItem item, NMLVCUSTOMDRAW nmcd, long lParam, Event
 				focusRect = textRect;
 			}
 		}
+
+		// Draw selection background
 		if (explorerTheme) {
-			if (!ignoreDrawHot || drawDrophilited || (!ignoreDrawSelection && clrSelectionBk != -1)) {
+			boolean backgroundWanted = !ignoreDrawHot || drawDrophilited || (!ignoreDrawSelection && clrSelectionBk != -1);
+
+			/*
+			 * With 'DarkMode_Explorer' theme, Windows draws selection background in "paint"
+			 * step instead of "erase" step. In this case, the code below is not needed,
+			 * because Windows background drawing happens after rather then before SWT.EraseItem.
+			 * On top of this, windows draws selection in a smaller rect and with a different color.
+			 * Proceeding with code below will result in two selection backgrounds visible.
+			 * Finally, as of Windows 10 version 1909, 'DarkMode_Explorer::LISTVIEW' is not yet
+			 * present, and 'OpenThemeData("LISTVIEW")' opens wrong theme data.
+			 */
+			if (darkExplorerTheme)
+				backgroundWanted = false;
+
+			if (backgroundWanted) {
 				RECT pClipRect = new RECT ();
 				OS.SetRect (pClipRect, nmcd.left, nmcd.top, nmcd.right, nmcd.bottom);
 				RECT rect = new RECT ();
@@ -6932,18 +6954,24 @@ LRESULT wmNotifyHeader (NMHDR hdr, long wParam, long lParam) {
 							OS.DeleteObject (pen);
 						}
 
+						int alignmentCorrection = _getLinesVisible () ? 0 : 1;
+
 						/* Windows 7 and 10 always draw a nearly invisible vertical line between the columns, even if lines are disabled.
 						   This line uses no fixed color constant, but calculates it from the background color.
-						   The method getSlightlyDifferentColor gives us a color, that is near enough to the windows algorithm. */
+						   The method getSlightlyDifferentColor gives us a color, that is near enough to the windows algorithm.
+
+						   NOTE: This code has no effect since Bug 517003, because next OS.Polyline() draws over the same coords.
+
 						long pen = OS.CreatePen (OS.PS_SOLID, getGridLineWidthInPixels(), getSlightlyDifferentColor(getHeaderBackgroundPixel()));
 						long oldPen = OS.SelectObject (nmcd.hdc, pen);
-						int alignmentCorrection = _getLinesVisible () ? 0 : 1;
 						OS.Polyline(nmcd.hdc, new int[] {rects[i].right-alignmentCorrection, rects[i].top, rects[i].right-alignmentCorrection, rects[i].bottom}, 2);
 						OS.SelectObject (nmcd.hdc, oldPen);
 						OS.DeleteObject (pen);
+						*/
 
-						pen = OS.CreatePen (OS.PS_SOLID, getGridLineWidthInPixels(), OS.GetSysColor(OS.COLOR_3DFACE));
-						oldPen = OS.SelectObject (nmcd.hdc, pen);
+						int lineColor = (display.tableHeaderLinePixel != -1) ? display.tableHeaderLinePixel : OS.GetSysColor(OS.COLOR_3DFACE);
+						long pen = OS.CreatePen (OS.PS_SOLID, getGridLineWidthInPixels(), lineColor);
+						long oldPen = OS.SelectObject (nmcd.hdc, pen);
 						/* To differentiate headers, always draw header column separator. */
 						OS.Polyline(nmcd.hdc, new int[] {rects[i].right - alignmentCorrection, rects[i].top, rects[i].right - alignmentCorrection, rects[i].bottom}, 2);
 						/* To differentiate header & content area, always draw the line separator between header & first row. */

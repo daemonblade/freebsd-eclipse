@@ -528,6 +528,7 @@ Rectangle[] computeControlBounds (Point size, boolean[][] position) {
 	int x = borderLeft + SPACING;
 	int rightWidth = 0;
 	int allWidth = 0;
+	boolean spacingRight = false;
 	for (int i = 0; i < controls.length; i++) {
 		Point ctrlSize = tabControlSize[i] = !controls[i].isDisposed() && controls[i].getVisible() ? controls[i].computeSize(SWT.DEFAULT, SWT.DEFAULT) : new Point(0,0);
 		int alignment = controlAlignments[i];
@@ -539,6 +540,9 @@ Rectangle[] computeControlBounds (Point size, boolean[][] position) {
 			x += ctrlSize.x;
 			leftWidth += ctrlSize.x;
 		} else {
+			if ((alignment & SWT.WRAP) == 0 && ctrlSize.x > 0) {
+				spacingRight = true;
+			}
 			if ((alignment & (SWT.FILL | SWT.WRAP)) == 0) {
 				rightWidth += ctrlSize.x;
 			}
@@ -554,7 +558,7 @@ Rectangle[] computeControlBounds (Point size, boolean[][] position) {
 
 	int maxWidth = size.x - borderLeft - leftWidth - borderRight;
 	int availableWidth = Math.max(0, maxWidth - itemWidth - rightWidth);
-	if (rightWidth > 0) availableWidth -= SPACING * 2;
+	if (spacingRight) availableWidth -= SPACING * 2;
 	x =  size.x  - borderRight - SPACING;
 	if (itemWidth + allWidth <= maxWidth) {
 		//Everything fits
@@ -780,9 +784,8 @@ void destroyItem (CTabItem item) {
 			control.setVisible(false);
 		}
 		setToolTipText(null);
-		GC gc = new GC(this);
-		setButtonBounds(gc);
-		gc.dispose();
+		updateButtons();
+		setButtonBounds();
 		redraw();
 		return;
 	}
@@ -2493,8 +2496,11 @@ public void setBorderVisible(boolean show) {
 	this.borderVisible = show;
 	updateFolder(REDRAW);
 }
-void setButtonBounds(GC gc) {
-	Point size = getSize();
+
+/**
+ * Create or dispose min/max buttons.
+ */
+void updateButtons() {
 	// max button
 	Display display = getDisplay();
 	if (showMax) {
@@ -2547,10 +2553,17 @@ void setButtonBounds(GC gc) {
 		minMaxTb.dispose();
 		minMaxTb = null;
 	}
+}
+
+/**
+ * Update button bounds for min/max and update chevron button.
+ */
+void setButtonBounds() {
 	if (showChevron) {
 		updateChevronImage(false);
 	}
 
+	Point size = getSize();
 	boolean[][] overflow = new boolean[1][0];
 	Rectangle[] rects = computeControlBounds(size, overflow);
 	if (fixedTabHeight != SWT.DEFAULT) {
@@ -3822,9 +3835,17 @@ boolean updateItems (int showIndex) {
 
 	boolean oldShowChevron = showChevron;
 	boolean changed = setItemSize(gc);
+	updateButtons();
+	boolean chevronChanged = showChevron != oldShowChevron;
+	if (chevronChanged) {
+		if (updateTabHeight(false)) {
+			// Tab height has changed. Item sizes have to be set again.
+			changed |= setItemSize(gc);
+		}
+	}
 	changed |= setItemLocation(gc);
-	setButtonBounds(gc);
-	changed |= showChevron != oldShowChevron;
+	setButtonBounds();
+	changed |= chevronChanged;
 	if (changed && getToolTipText() != null) {
 		Point pt = getDisplay().getCursorLocation();
 		pt = toControl(pt);
@@ -3868,6 +3889,7 @@ void runUpdate() {
 	int flags = updateFlags;
 	updateFlags = 0;
 	Rectangle rectBefore = getClientArea();
+	updateButtons();
 	updateTabHeight(false);
 	updateItems(selectedIndex);
 	if ((flags & REDRAW) != 0) {

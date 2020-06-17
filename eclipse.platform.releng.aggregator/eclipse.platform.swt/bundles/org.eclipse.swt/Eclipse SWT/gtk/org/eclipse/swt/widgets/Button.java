@@ -577,7 +577,7 @@ long gtk_draw (long widget, long cairo) {
 	 * The fix is to make the widget invisible to the user. Resizing widget later on to a larger size
 	 * makes the widget visible again in setBounds. See Bug 533469, Bug 531120.
 	 */
-	if (GTK.GTK_VERSION >= OS.VERSION (3, 20, 0) && (state & ZERO_WIDTH) != 0 && (state & ZERO_HEIGHT) != 0) {
+	if ((state & ZERO_WIDTH) != 0 && (state & ZERO_HEIGHT) != 0) {
 		if (GTK.gtk_widget_get_visible(widget)) GTK.gtk_widget_set_visible(widget, false);
 		// Button and display should not be disposed after hiding widget
 		if (isDisposed() || display == null || display.isDisposed()) error (SWT.ERROR_DEVICE_DISPOSED);
@@ -793,13 +793,8 @@ void _setAlignment (int alignment) {
 			gtk_box_set_child_packing (boxHandle, imageHandle, true, true, 0, GTK.GTK_PACK_START);
 		}
 
-		if (GTK.GTK_VERSION >= OS.VERSION(3, 16, 0)) {
-			gtk_label_set_align(labelHandle,0.0f,0.5f);
-			gtk_widget_set_align(imageHandle,GTK.GTK_ALIGN_START, GTK.GTK_ALIGN_CENTER);
-		} else {
-			GTK.gtk_misc_set_alignment (labelHandle, 0.0f, 0.5f);
-			GTK.gtk_misc_set_alignment (imageHandle, 0.0f, 0.5f);
-		}
+		gtk_label_set_align(labelHandle,0.0f,0.5f);
+		gtk_widget_set_align(imageHandle,GTK.GTK_ALIGN_START, GTK.GTK_ALIGN_CENTER);
 
 		GTK.gtk_label_set_justify (labelHandle, GTK.GTK_JUSTIFY_LEFT);
 		return;
@@ -809,25 +804,15 @@ void _setAlignment (int alignment) {
 			gtk_box_set_child_packing (boxHandle, labelHandle, true, true, 0, GTK.GTK_PACK_END);
 			gtk_box_set_child_packing (boxHandle, imageHandle, true, true, 0, GTK.GTK_PACK_START);
 
-			if (GTK.GTK_VERSION >= OS.VERSION(3, 16, 0))  {
-				gtk_label_set_align(labelHandle,0.0f,0.5f);
-				gtk_widget_set_align(imageHandle,GTK.GTK_ALIGN_END, GTK.GTK_ALIGN_CENTER);
-			} else  {
-				GTK.gtk_misc_set_alignment (labelHandle, 0f, 0.5f);
-				GTK.gtk_misc_set_alignment (imageHandle, 1f, 0.5f);
-			}
+			gtk_label_set_align(labelHandle,0.0f,0.5f);
+			gtk_widget_set_align(imageHandle,GTK.GTK_ALIGN_END, GTK.GTK_ALIGN_CENTER);
 
 		} else {
 			gtk_box_set_child_packing (boxHandle, labelHandle, true, true, 0, GTK.GTK_PACK_END);
 			gtk_box_set_child_packing (boxHandle, imageHandle, true, true, 0, GTK.GTK_PACK_START);
 
-			if (GTK.GTK_VERSION >= OS.VERSION(3, 16, 0))  {
-				gtk_label_set_align(labelHandle,0.5f,0.5f);
-				gtk_widget_set_align(imageHandle,GTK.GTK_ALIGN_CENTER, GTK.GTK_ALIGN_CENTER);
-			} else {
-				GTK.gtk_misc_set_alignment (labelHandle, 0.5f, 0.5f);
-				GTK.gtk_misc_set_alignment (imageHandle, 0.5f, 0.5f);
-			}
+			gtk_label_set_align(labelHandle,0.5f,0.5f);
+			gtk_widget_set_align(imageHandle,GTK.GTK_ALIGN_CENTER, GTK.GTK_ALIGN_CENTER);
 			GTK.gtk_label_set_justify (labelHandle, GTK.GTK_JUSTIFY_CENTER);
 		}
 		return;
@@ -841,13 +826,8 @@ void _setAlignment (int alignment) {
 			gtk_box_set_child_packing (boxHandle, imageHandle, true, true, 0, GTK.GTK_PACK_START);
 		}
 
-		if (GTK.GTK_VERSION >= OS.VERSION(3, 16, 0))  {
-			gtk_label_set_align(labelHandle,1.0f,0.5f);
-			gtk_widget_set_align(imageHandle,GTK.GTK_ALIGN_END, GTK.GTK_ALIGN_CENTER);
-		} else {
-			GTK.gtk_misc_set_alignment (labelHandle, 1.0f, 0.5f);
-			GTK.gtk_misc_set_alignment (imageHandle, 1.0f, 0.5f);
-		}
+		gtk_label_set_align(labelHandle,1.0f,0.5f);
+		gtk_widget_set_align(imageHandle,GTK.GTK_ALIGN_END, GTK.GTK_ALIGN_CENTER);
 		GTK.gtk_label_set_justify (labelHandle, GTK.GTK_JUSTIFY_RIGHT);
 		return;
 	}
@@ -979,16 +959,6 @@ void setForegroundGdkRGBA (GdkRGBA rgba) {
 	setForegroundGdkRGBA (fixedHandle, rgba);
 	if (labelHandle != 0) setForegroundGdkRGBA (labelHandle, rgba);
 	if (imageHandle != 0) setForegroundGdkRGBA (imageHandle, rgba);
-
-	/*
-	 * Feature in GTK3: GtkCheckButton & its descendant GtkRadioButton are often invisible or
-	 * very hard to see with certain themes that don't define an icon for Check/Radio buttons.
-	 * Giving them a border color that matches the text color ensures consistent visibility
-	 * across most themes. See bug 463733.
-	 */
-	if (GTK.GTK_VERSION < OS.VERSION (3, 16, 0) && (style & (SWT.CHECK | SWT.RADIO)) != 0) {
-		gtk_swt_set_border_color (rgba);
-	}
 }
 
 @Override
@@ -996,41 +966,34 @@ void setForegroundGdkRGBA (long handle, GdkRGBA rgba) {
 	long context = GTK.gtk_widget_get_style_context (handle);
 
 	GdkRGBA toSet = rgba == null ? display.COLOR_WIDGET_FOREGROUND_RGBA : rgba;
-	String name, css;
+	String css;
 	String color = display.gtk_rgba_to_css_string(toSet);
 	int bits = SWT.CHECK | SWT.RADIO;
 	switch (style & bits) {
 		case SWT.CHECK:
-			name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? "checkbutton" : "GtkCheckButton";
-			css = name + " {color: " + color + ";}";
-			if (GTK.GTK_VERSION >= OS.VERSION(3, 20, 0)) {
-				String checkColor;
-				if (toggleButtonTheming) {
-					GdkRGBA checkRGBA = rgba == null ? display.COLOR_TOGGLE_BUTTON_FOREGROUND_RGBA : rgba;
-					checkColor = display.gtk_rgba_to_css_string(checkRGBA);
-				} else {
-					checkColor = display.gtk_rgba_to_css_string(toSet);
-				}
-				css += " check {color: " + checkColor + ";}";
+			css = "checkbutton {color: " + color + ";}";
+			String checkColor;
+			if (toggleButtonTheming) {
+				GdkRGBA checkRGBA = rgba == null ? display.COLOR_TOGGLE_BUTTON_FOREGROUND_RGBA : rgba;
+				checkColor = display.gtk_rgba_to_css_string(checkRGBA);
+			} else {
+				checkColor = display.gtk_rgba_to_css_string(toSet);
 			}
+			css += " check {color: " + checkColor + ";}";
 			break;
 		case SWT.RADIO:
-			name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? "radiobutton" : "GtkRadioButton";
-			css = name + " {color: " + color + ";}";
-			if (GTK.GTK_VERSION >= OS.VERSION(3, 20, 0)) {
-				String radioColor;
-				if (toggleButtonTheming) {
-					GdkRGBA radioRGBA = rgba == null ? display.COLOR_TOGGLE_BUTTON_FOREGROUND_RGBA : rgba;
-					radioColor = display.gtk_rgba_to_css_string(radioRGBA);
-				} else {
-					radioColor = display.gtk_rgba_to_css_string(toSet);
-				}
-				css += " radio {color: " + radioColor + ";}";
+			css = "radiobutton {color: " + color + ";}";
+			String radioColor;
+			if (toggleButtonTheming) {
+				GdkRGBA radioRGBA = rgba == null ? display.COLOR_TOGGLE_BUTTON_FOREGROUND_RGBA : rgba;
+				radioColor = display.gtk_rgba_to_css_string(radioRGBA);
+			} else {
+				radioColor = display.gtk_rgba_to_css_string(toSet);
 			}
+			css += " radio {color: " + radioColor + ";}";
 			break;
 		default:
-			name = GTK.GTK_VERSION >= OS.VERSION(3, 20, 0) ? "button" : "GtkButton";
-			css = name + " {color: " + color + ";}";
+			css = "button {color: " + color + ";}";
 	}
 
 	// Cache foreground color
@@ -1039,25 +1002,6 @@ void setForegroundGdkRGBA (long handle, GdkRGBA rgba) {
 	// Apply foreground color and any cached background color
 	String finalCss = display.gtk_css_create_css_color_string (cssBackground, cssForeground, SWT.FOREGROUND);
 	gtk_css_provider_load_from_css(context, finalCss);
-}
-
-private void gtk_swt_set_border_color (GdkRGBA rgba) {
-	String css_string = "* {\n";
-	if (rgba != null) {
-		String css_color = display.gtk_rgba_to_css_string (rgba);
-		css_string += "border-color: " + css_color + ";\n";
-	}
-	css_string += "}\n";
-
-	String finalCss;
-
-	// Cache foreground color
-	cssForeground += "\n" + css_string;
-	finalCss = display.gtk_css_create_css_color_string (cssBackground, cssForeground, SWT.FOREGROUND);
-
-	// Apply the CSS
-	long context = GTK.gtk_widget_get_style_context (handle);
-	gtk_css_provider_load_from_css (context, finalCss);
 }
 
 /**
