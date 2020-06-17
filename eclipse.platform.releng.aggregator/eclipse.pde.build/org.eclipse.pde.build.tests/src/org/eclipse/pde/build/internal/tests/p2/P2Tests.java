@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2018 IBM Corporation and others.
+ * Copyright (c) 2008, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which accompanies this distribution,
@@ -13,13 +13,14 @@
 
 package org.eclipse.pde.build.internal.tests.p2;
 
+import static org.junit.Assert.*;
+
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.zip.ZipOutputStream;
-import junit.framework.AssertionFailedError;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.runtime.*;
@@ -35,6 +36,7 @@ import org.eclipse.equinox.spi.p2.publisher.PublisherHelper;
 import org.eclipse.pde.build.internal.tests.Utils;
 import org.eclipse.pde.build.tests.BuildConfiguration;
 import org.eclipse.pde.internal.build.site.QualifierReplacer;
+import org.junit.Test;
 
 public class P2Tests extends P2TestCase {
 
@@ -144,6 +146,7 @@ public class P2Tests extends P2TestCase {
 		assertLogContainsLine(iniFile, "-foo");
 	}
 
+	@Test
 	public void testBug237096() throws Exception {
 		IFolder buildFolder = newTest("237096");
 		IFolder repo = Utils.createFolder(buildFolder, "repo");
@@ -188,6 +191,7 @@ public class P2Tests extends P2TestCase {
 		assertRequires(rootIU, ius, true);
 	}
 
+	@Test
 	public void testBug242346() throws Exception {
 		IFolder buildFolder = newTest("242346");
 		IFile productFile = buildFolder.getFile("rcp.product");
@@ -257,6 +261,7 @@ public class P2Tests extends P2TestCase {
 				"org.eclipse.equinox.simpleconfigurator.configUrl=file\\:org.eclipse.equinox.simpleconfigurator");
 	}
 
+	@Test
 	public void testBug222962_305837() throws Exception {
 		IFolder buildFolder = newTest("222962");
 		IFolder repo = Utils.createFolder(buildFolder, "repo");
@@ -304,6 +309,7 @@ public class P2Tests extends P2TestCase {
 		assertEquals(iu.getVersion().toString(), "1.2.3.456");
 	}
 
+	@Test
 	public void offBug237662() throws Exception {
 		IFolder buildFolder = newTest("237662");
 		IFolder repo = Utils.createFolder(buildFolder, "repo");
@@ -343,13 +349,14 @@ public class P2Tests extends P2TestCase {
 			// bug 270524
 			getIU(repository, "tooling" + p2Config + EQUINOX_PREFERENCES);
 			fail = true;
-		} catch (AssertionFailedError e) {
+		} catch (AssertionError e) {
 			// expected
 		}
 		if (fail)
 			fail("Unexpected CU found");
 	}
 
+	@Test
 	public void testBug255518() throws Exception {
 		IFolder buildFolder = newTest("255518");
 		IFolder repo = Utils.createFolder(buildFolder, "repo");
@@ -381,6 +388,7 @@ public class P2Tests extends P2TestCase {
 		assertJarVerifies(bundles[1]);
 	}
 
+	@Test
 	public void testBug258126() throws Exception {
 		IFolder buildFolder = newTest("258126");
 
@@ -424,11 +432,12 @@ public class P2Tests extends P2TestCase {
 		try {
 			assertTouchpoint(iu, "configure", "addProgramArg(programArg:-vmargs);");
 			fail("vmargs as program arg");
-		} catch (AssertionFailedError e) {
+		} catch (AssertionError e) {
 			assertEquals(e.getMessage(), "Action not found:addProgramArg(programArg:-vmargs);");
 		}
 	}
 
+	@Test
 	public void testBug262421() throws Exception {
 		IFolder buildFolder = newTest("262421");
 
@@ -460,6 +469,7 @@ public class P2Tests extends P2TestCase {
 		assertTouchpoint(iu, "configure", "addRepository");
 	}
 
+	@Test
 	public void testBug265526_265524() throws Exception {
 		IFolder buildFolder = newTest("265526");
 		IFolder a = Utils.createFolder(buildFolder, "plugins/a");
@@ -520,6 +530,7 @@ public class P2Tests extends P2TestCase {
 		assertResourceFile(outRepo2, "content.jar");
 	}
 
+	@Test
 	public void testBug265564() throws Exception {
 		IFolder buildFolder = newTest("265564");
 
@@ -585,19 +596,29 @@ public class P2Tests extends P2TestCase {
 				assertEquals(descriptors.length, 1);
 				continue;
 			}
-			assertEquals(descriptors.length, 2);
-
-			if (IArtifactDescriptor.FORMAT_PACKED.equals(descriptors[0].getProperty(IArtifactDescriptor.FORMAT))) {
-				assertMD5(repoFolder, descriptors[1]);
-			} else if (IArtifactDescriptor.FORMAT_PACKED
-					.equals(descriptors[1].getProperty(IArtifactDescriptor.FORMAT))) {
-				assertMD5(repoFolder, descriptors[0]);
+			boolean isJava14 = System.getProperty("java.specification.version").compareTo("14") >= 0;
+			if (isJava14) {
+				// no pack200 tool -> no pack.gz file
+				assertEquals(1, descriptors.length);
 			} else {
-				fail("No pack.gz desriptor");
+				assertEquals(2, descriptors.length);
+			}
+
+			if (!isJava14) { // no pack.gz on Java 14+
+				if (IArtifactDescriptor.FORMAT_PACKED.equals(descriptors[0].getProperty(IArtifactDescriptor.FORMAT))) {
+					assertMD5(repoFolder, descriptors[1]);
+				} else if (IArtifactDescriptor.FORMAT_PACKED
+						.equals(descriptors[1].getProperty(IArtifactDescriptor.FORMAT))) {
+					assertMD5(repoFolder, descriptors[0]);
+				} else {
+					fail("No pack.gz desriptor");
+				}
 			}
 
 			assertResourceFile(repoFolder, getArtifactLocation(descriptors[0]));
-			assertResourceFile(repoFolder, getArtifactLocation(descriptors[1]));
+			if (!isJava14) { // no pack.gz on Java 14+ thus only one descriptor in the array
+				assertResourceFile(repoFolder, getArtifactLocation(descriptors[1]));
+			}
 		}
 	}
 
@@ -611,6 +632,7 @@ public class P2Tests extends P2TestCase {
 		assertEquals(md5, actualMD5);
 	}
 
+	@Test
 	public void testBug263272() throws Exception {
 		IFolder buildFolder = newTest("263272");
 
@@ -766,12 +788,13 @@ public class P2Tests extends P2TestCase {
 		try {
 			assertLogContainsLine(buildFolder.getFile("compare.log"), "build.properties");
 			failed = false;
-		} catch (AssertionFailedError e) {
+		} catch (AssertionError e) {
 			// expected
 		}
 		assertTrue(failed);
 	}
 
+	@Test
 	public void testBug263272_2() throws Exception {
 		IFolder buildFolder = newTest("263272_2");
 
@@ -872,12 +895,13 @@ public class P2Tests extends P2TestCase {
 		try {
 			assertLogContainsLine(buildFolder.getFile("log.log"), "Mirroring completed with warnings and/or errors.");
 			warnings = true;
-		} catch (AssertionFailedError e) {
+		} catch (AssertionError e) {
 			// expected
 		}
 		assertFalse(warnings);
 	}
 
+	@Test
 	public void testBug267461() throws Exception {
 		IFolder buildFolder = newTest("267461");
 		File executable = Utils.findExecutable();
@@ -911,6 +935,7 @@ public class P2Tests extends P2TestCase {
 		assertTouchpoint(iu, "configure", "setProgramProperty(propName:eclipse.product,propValue:rcp.product);");
 	}
 
+	@Test
 	public void testBug304736() throws Exception {
 		IFolder buildFolder = newTest("304736");
 
@@ -963,6 +988,7 @@ public class P2Tests extends P2TestCase {
 		// test passes if there was no build failure
 	}
 
+	@Test
 	public void testBug271373() throws Exception {
 		IFolder buildFolder = newTest("271373_generator");
 
