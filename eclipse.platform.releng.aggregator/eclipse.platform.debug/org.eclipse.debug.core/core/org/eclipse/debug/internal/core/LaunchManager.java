@@ -31,6 +31,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -114,8 +115,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
-import com.ibm.icu.text.MessageFormat;
 
 /**
  * Manages launch configurations, launch configuration types, and registered launches.
@@ -993,13 +992,8 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 		final File directory = containerPath.toFile();
 		if (directory.isDirectory()) {
 			List<ILaunchConfiguration> configs = new ArrayList<>();
-			FilenameFilter configFilter = new FilenameFilter() {
-				@Override
-				public boolean accept(File dir, String name) {
-					return dir.equals(directory) &&
-							name.endsWith(ILaunchConfiguration.LAUNCH_CONFIGURATION_FILE_EXTENSION);
-				}
-			};
+			FilenameFilter configFilter = (dir, name) -> dir.equals(directory) &&
+					name.endsWith(ILaunchConfiguration.LAUNCH_CONFIGURATION_FILE_EXTENSION);
 			File[] configFiles = directory.listFiles(configFilter);
 			if (configFiles != null && configFiles.length > 0) {
 				LaunchConfiguration config = null;
@@ -1008,12 +1002,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 					configs.add(config);
 				}
 			}
-			FilenameFilter prototypeFilter = new FilenameFilter() {
-				@Override
-				public boolean accept(File dir, String name) {
-					return dir.equals(directory) && name.endsWith(ILaunchConfiguration.LAUNCH_CONFIGURATION_PROTOTYPE_FILE_EXTENSION);
-				}
-			};
+			FilenameFilter prototypeFilter = (dir, name) -> dir.equals(directory) && name.endsWith(ILaunchConfiguration.LAUNCH_CONFIGURATION_PROTOTYPE_FILE_EXTENSION);
 			File[] prototypeFiles = directory.listFiles(prototypeFilter);
 			if (prototypeFiles != null && prototypeFiles.length > 0) {
 				LaunchConfiguration config = null;

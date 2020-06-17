@@ -14,6 +14,7 @@
 package org.eclipse.debug.internal.core;
 
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,8 +55,6 @@ import org.eclipse.debug.core.IBreakpointsListener;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.IBreakpointImportParticipant;
 import org.eclipse.debug.core.model.ITriggerPoint;
-
-import com.ibm.icu.text.MessageFormat;
 
 /**
  * The breakpoint manager manages all registered breakpoints for the Debug plug-in. It is
@@ -331,12 +330,9 @@ public class BreakpointManager implements IBreakpointManager, IResourceChangeLis
 		// delete any markers that are not to be restored
 		if (!delete.isEmpty()) {
 			final IMarker[] delMarkers = delete.toArray(new IMarker[delete.size()]);
-			IWorkspaceRunnable wr = new IWorkspaceRunnable() {
-				@Override
-				public void run(IProgressMonitor pm) throws CoreException {
-					for (IMarker marker : delMarkers) {
-						marker.delete();
-					}
+			IWorkspaceRunnable wr = pm -> {
+				for (IMarker marker : delMarkers) {
+					marker.delete();
 				}
 			};
 			new BreakpointManagerJob(wr).schedule();
@@ -510,23 +506,20 @@ public class BreakpointManager implements IBreakpointManager, IResourceChangeLis
 			}
 			fireUpdate(remove, null, REMOVED);
 			refreshTriggerpointDisplay();
-			IWorkspaceRunnable r = new IWorkspaceRunnable() {
-				@Override
-				public void run(IProgressMonitor montitor) throws CoreException {
-					for (IBreakpoint breakpoint : remove) {
-						if (delete) {
-							breakpoint.delete();
-						} else {
-							// if the breakpoint is being removed from the manager
-							// because the project is closing, the breakpoint should
-							// remain as registered, otherwise, the breakpoint should
-							// be marked as unregistered
-							IMarker marker = breakpoint.getMarker();
-							if (marker.exists()) {
-								IProject project = breakpoint.getMarker().getResource().getProject();
-								if (project == null || project.isOpen()) {
-									breakpoint.setRegistered(false);
-								}
+			IWorkspaceRunnable r = monitor -> {
+				for (IBreakpoint breakpoint : remove) {
+					if (delete) {
+						breakpoint.delete();
+					} else {
+						// if the breakpoint is being removed from the manager
+						// because the project is closing, the breakpoint should
+						// remain as registered, otherwise, the breakpoint should
+						// be marked as unregistered
+						IMarker marker = breakpoint.getMarker();
+						if (marker.exists()) {
+							IProject project = breakpoint.getMarker().getResource().getProject();
+							if (project == null || project.isOpen()) {
+								breakpoint.setRegistered(false);
 							}
 						}
 					}
@@ -619,15 +612,12 @@ public class BreakpointManager implements IBreakpointManager, IResourceChangeLis
 			fireUpdate(added, null, ADDED);
 		}
 		if (!update.isEmpty()) {
-			IWorkspaceRunnable r = new IWorkspaceRunnable() {
-				@Override
-				public void run(IProgressMonitor monitor) throws CoreException {
-					List<IBreakpoint> bps = getBreakpoints0();
-					for (IBreakpoint breakpoint : update) {
-						bps.add(breakpoint);
-						breakpoint.setRegistered(true);
-						fMarkersToBreakpoints.put(breakpoint.getMarker(), breakpoint);
-					}
+			IWorkspaceRunnable r = monitor -> {
+				List<IBreakpoint> bps = getBreakpoints0();
+				for (IBreakpoint breakpoint : update) {
+					bps.add(breakpoint);
+					breakpoint.setRegistered(true);
+					fMarkersToBreakpoints.put(breakpoint.getMarker(), breakpoint);
 				}
 			};
 			// Need to suppress change notification, since this is really
@@ -747,12 +737,9 @@ public class BreakpointManager implements IBreakpointManager, IResourceChangeLis
 		public void update() {
 			if (!fMoved.isEmpty()) {
 				// delete moved markers
-				IWorkspaceRunnable wRunnable= new IWorkspaceRunnable() {
-					@Override
-					public void run(IProgressMonitor monitor) throws CoreException {
-						for (IMarker marker : fMoved) {
-							marker.delete();
-						}
+				IWorkspaceRunnable wRunnable= monitor -> {
+					for (IMarker marker : fMoved) {
+						marker.delete();
 					}
 				};
 				try {
@@ -769,13 +756,10 @@ public class BreakpointManager implements IBreakpointManager, IResourceChangeLis
 			}
 			if (!fAdded.isEmpty()) {
 				try {
-					IWorkspaceRunnable runnable= new IWorkspaceRunnable() {
-						@Override
-						public void run(IProgressMonitor monitor) throws CoreException {
-							for (IBreakpoint breakpoint : fAdded) {
-								breakpoint.getMarker().setAttribute(DebugPlugin.ATTR_BREAKPOINT_IS_DELETED, false);
-								breakpoint.setRegistered(true);
-							}
+					IWorkspaceRunnable runnable= monitor -> {
+						for (IBreakpoint breakpoint : fAdded) {
+							breakpoint.getMarker().setAttribute(DebugPlugin.ATTR_BREAKPOINT_IS_DELETED, false);
+							breakpoint.setRegistered(true);
 						}
 					};
 					getWorkspace().run(runnable, null, 0, null);
@@ -1396,19 +1380,16 @@ public class BreakpointManager implements IBreakpointManager, IResourceChangeLis
 	 * Touch and refresh display of all breakpoints
 	 */
 	private void touchAllBreakpoints() {
-		IWorkspaceRunnable runnable = new IWorkspaceRunnable() {
-			@Override
-			public void run(IProgressMonitor monitor) throws CoreException {
-				for (IBreakpoint breakpoint : getBreakpoints()) {
-					// Touch the marker (but don't actually change anything) so
-					// that the icon in
-					// the editor ruler will be updated (editors listen to
-					// marker changes).
-					try {
-						breakpoint.getMarker().setAttribute(IBreakpoint.ENABLED, breakpoint.isEnabled());
-					} catch (CoreException e) {
-						// don't care if marker was already deleted
-					}
+		IWorkspaceRunnable runnable = monitor -> {
+			for (IBreakpoint breakpoint : getBreakpoints()) {
+				// Touch the marker (but don't actually change anything) so
+				// that the icon in
+				// the editor ruler will be updated (editors listen to
+				// marker changes).
+				try {
+					breakpoint.getMarker().setAttribute(IBreakpoint.ENABLED, breakpoint.isEnabled());
+				} catch (CoreException e) {
+					// don't care if marker was already deleted
 				}
 			}
 		};

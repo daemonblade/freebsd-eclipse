@@ -14,6 +14,7 @@
  *******************************************************************************/
 package org.eclipse.debug.core.model;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -43,8 +44,6 @@ import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.IStatusHandler;
 import org.eclipse.debug.internal.core.DebugCoreMessages;
 import org.eclipse.debug.internal.core.IInternalDebugCoreConstants;
-
-import com.ibm.icu.text.MessageFormat;
 
 /**
  * Default implementation of a launch configuration delegate. Provides
@@ -397,20 +396,17 @@ public abstract class LaunchConfigurationDelegate implements ILaunchConfiguratio
 	 * @throws CoreException if an exception occurs while building
 	 */
 	protected void buildProjects(final IProject[] projects, IProgressMonitor monitor) throws CoreException {
-		IWorkspaceRunnable build = new IWorkspaceRunnable(){
-			@Override
-			public void run(IProgressMonitor pm) throws CoreException {
-				SubMonitor localmonitor = SubMonitor.convert(pm, DebugCoreMessages.LaunchConfigurationDelegate_scoped_incremental_build, projects.length);
-				try {
-					for (IProject project : projects) {
-						if (localmonitor.isCanceled()) {
-							throw new OperationCanceledException();
-						}
-						project.build(IncrementalProjectBuilder.INCREMENTAL_BUILD, localmonitor.newChild(1));
+		IWorkspaceRunnable build = pm -> {
+			SubMonitor localmonitor = SubMonitor.convert(pm, DebugCoreMessages.LaunchConfigurationDelegate_scoped_incremental_build, projects.length);
+			try {
+				for (IProject project : projects) {
+					if (localmonitor.isCanceled()) {
+						throw new OperationCanceledException();
 					}
-				} finally {
-					localmonitor.done();
+					project.build(IncrementalProjectBuilder.INCREMENTAL_BUILD, localmonitor.newChild(1));
 				}
+			} finally {
+				localmonitor.done();
 			}
 		};
 		ResourcesPlugin.getWorkspace().run(build, monitor);

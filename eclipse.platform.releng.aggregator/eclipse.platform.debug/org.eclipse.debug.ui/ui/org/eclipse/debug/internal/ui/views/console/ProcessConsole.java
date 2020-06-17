@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.text.DateFormat;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -32,6 +34,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IStorage;
@@ -94,10 +97,6 @@ import org.eclipse.ui.console.TextConsole;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.progress.UIJob;
-
-import com.ibm.icu.text.DateFormat;
-import com.ibm.icu.text.MessageFormat;
-
 
 /**
  * A console for a system process with standard I/O streams.
@@ -886,22 +885,12 @@ public class ProcessConsole extends IOConsole implements IConsole, IDebugEventSe
 		String fFilePath;
 
 		public ConsoleLogFilePatternMatcher(String filePath) {
-			fFilePath = escape(filePath);
-		}
-
-		private String escape(String path) {
-			StringBuilder buffer = new StringBuilder(path);
-			int index = buffer.indexOf("\\"); //$NON-NLS-1$
-			while (index >= 0) {
-				buffer.insert(index, '\\');
-				index = buffer.indexOf("\\", index+2); //$NON-NLS-1$
-			}
-			return buffer.toString();
+			fFilePath = filePath;
 		}
 
 		@Override
 		public String getPattern() {
-			return fFilePath;
+			return Pattern.quote(fFilePath);
 		}
 
 		@Override
