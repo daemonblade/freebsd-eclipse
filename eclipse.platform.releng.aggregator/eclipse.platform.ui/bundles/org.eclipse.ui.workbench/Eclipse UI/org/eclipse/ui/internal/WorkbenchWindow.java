@@ -316,42 +316,25 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 
 	private IPerspectiveDescriptor perspective;
 
-	private EventHandler windowWidgetHandler = new EventHandler() {
-		@Override
-		public void handleEvent(Event event) {
-			if (event.getProperty(UIEvents.EventTags.ELEMENT) == model
-					&& event.getProperty(UIEvents.EventTags.NEW_VALUE) == null) {
-				// HandledContributionItem.toolItemUpdater.removeWindowRunnable(menuUpdater);
-				manageChanges = false;
-				canUpdateMenus = false;
-				menuUpdater = null;
+	private EventHandler windowWidgetHandler = event -> {
+		if (event.getProperty(UIEvents.EventTags.ELEMENT) == model
+				&& event.getProperty(UIEvents.EventTags.NEW_VALUE) == null) {
+			// HandledContributionItem.toolItemUpdater.removeWindowRunnable(menuUpdater);
+			this.manageChanges = false;
+			this.canUpdateMenus = false;
+			this.menuUpdater = null;
 
-				MMenu menu = model.getMainMenu();
-				if (menu != null) {
-					engine.removeGui(menu);
-					model.setMainMenu(null);
-				}
-
-				eventBroker.unsubscribe(windowWidgetHandler);
+			MMenu menu = model.getMainMenu();
+			if (menu != null) {
+				engine.removeGui(menu);
+				model.setMainMenu(null);
 			}
+
+			eventBroker.unsubscribe(this.windowWidgetHandler);
 		}
 	};
 
 	static final String TEXT_DELIMITERS = TextProcessor.getDefaultDelimiters() + "-"; //$NON-NLS-1$
-
-	// constants for shortcut bar group ids
-	static final String GRP_PAGES = "pages"; //$NON-NLS-1$
-
-	static final String GRP_PERSPECTIVES = "perspectives"; //$NON-NLS-1$
-
-	static final String GRP_FAST_VIEWS = "fastViews"; //$NON-NLS-1$
-
-	// static fields for inner classes.
-	static final int VGAP = 0;
-
-	static final int CLIENT_INSET = 3;
-
-	static final int BAR_SIZE = 23;
 
 	/** Marks the beginning of a tag which contains positioning information. */
 	static final String MOVE_TAG = "move_"; //$NON-NLS-1$
@@ -517,12 +500,7 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 				}
 			});
 
-			windowContext.set(IWindowCloseHandler.class.getName(), new IWindowCloseHandler() {
-				@Override
-				public boolean close(MWindow window) {
-					return getWindowAdvisor().preWindowShellClose() && WorkbenchWindow.this.close();
-				}
-			});
+			windowContext.set(IWindowCloseHandler.class.getName(), (IWindowCloseHandler) window -> getWindowAdvisor().preWindowShellClose() && WorkbenchWindow.this.close());
 
 			final ISaveHandler defaultSaveHandler = windowContext.get(ISaveHandler.class);
 			final PartServiceSaveHandler localSaveHandler = new WWinPartServiceSaveHandler() {
@@ -1470,10 +1448,10 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 		// For sub-menu management -all- items must be id'd so enforce this
 		// here (we could optimize by checking the 'name' of the config
 		// element == "menu"
-		if (id == null || id.length() == 0) {
+		if (id == null || id.isEmpty()) {
 			id = getCommandId(element);
 		}
-		if (id == null || id.length() == 0) {
+		if (id == null || id.isEmpty()) {
 			id = element.toString();
 		}
 
@@ -2668,7 +2646,10 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 		MUIElement hsElement = modelService.find("org.eclipse.ui.HeapStatus", model); //$NON-NLS-1$
 		if (hsElement != null && hsElement.isToBeRendered() != show) {
 			hsElement.setToBeRendered(show);
-			getShell().layout(null, SWT.ALL | SWT.CHANGED | SWT.DEFER);
+			Object widget = hsElement.getParent().getWidget();
+			if (widget instanceof Control) {
+				((Control) widget).requestLayout();
+			}
 		}
 	}
 
@@ -2998,7 +2979,10 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 		MTrimBar topTrim = getTopTrim();
 		if (topTrim != null) {
 			topTrim.setVisible(isToolbarVisible());
-			getShell().layout();
+			Shell shell = getShell();
+			if (shell != null && !shell.isDisposed()) {
+				shell.layout();
+			}
 		}
 	}
 

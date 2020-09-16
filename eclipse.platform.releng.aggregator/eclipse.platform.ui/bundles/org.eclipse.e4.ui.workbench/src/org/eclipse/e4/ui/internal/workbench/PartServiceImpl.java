@@ -46,7 +46,6 @@ import org.eclipse.e4.ui.model.application.ui.advanced.MArea;
 import org.eclipse.e4.ui.model.application.ui.advanced.MPerspective;
 import org.eclipse.e4.ui.model.application.ui.advanced.MPlaceholder;
 import org.eclipse.e4.ui.model.application.ui.basic.MCompositePart;
-import org.eclipse.e4.ui.model.application.ui.basic.MInputPart;
 import org.eclipse.e4.ui.model.application.ui.basic.MPart;
 import org.eclipse.e4.ui.model.application.ui.basic.MPartSashContainer;
 import org.eclipse.e4.ui.model.application.ui.basic.MPartSashContainerElement;
@@ -75,44 +74,41 @@ public class PartServiceImpl implements EPartService {
 	 */
 	public static final String PART_ACTIVATION_TIME = "partActivationTime"; //$NON-NLS-1$
 
-	private EventHandler selectedHandler = new EventHandler() {
-		@Override
-		public void handleEvent(Event event) {
-			// no need to do anything if we have no listeners
-			if (!listeners.isEmpty()) {
-				Object oldSelected = event.getProperty(UIEvents.EventTags.OLD_VALUE);
-				if (oldSelected instanceof MPlaceholder) {
-					oldSelected = ((MPlaceholder) oldSelected).getRef();
-				}
+	private EventHandler selectedHandler = event -> {
+		// no need to do anything if we have no listeners
+		if (!this.listeners.isEmpty()) {
+			Object oldSelected = event.getProperty(UIEvents.EventTags.OLD_VALUE);
+			if (oldSelected instanceof MPlaceholder) {
+				oldSelected = ((MPlaceholder) oldSelected).getRef();
+			}
 
-				MPlaceholder placeholder = null;
-				Object selected = event.getProperty(UIEvents.EventTags.NEW_VALUE);
-				if (selected instanceof MPlaceholder) {
-					placeholder = (MPlaceholder) selected;
-					selected = placeholder.getRef();
-				}
+			MPlaceholder placeholder = null;
+			Object selected = event.getProperty(UIEvents.EventTags.NEW_VALUE);
+			if (selected instanceof MPlaceholder) {
+				placeholder = (MPlaceholder) selected;
+				selected = placeholder.getRef();
+			}
 
-				MPart oldSelectedPart = oldSelected instanceof MPart ? (MPart) oldSelected : null;
-				MPart selectedPart = selected instanceof MPart ? (MPart) selected : null;
+			MPart oldSelectedPart = oldSelected instanceof MPart ? (MPart) oldSelected : null;
+			MPart selectedPart = selected instanceof MPart ? (MPart) selected : null;
 
-				if (oldSelectedPart != null && getParts().contains(selectedPart)) {
-					firePartHidden(oldSelectedPart);
-				}
+			if (oldSelectedPart != null && getParts().contains(selectedPart)) {
+				firePartHidden(oldSelectedPart);
+			}
 
-				if (selectedPart != null && selectedPart.isToBeRendered()
-						&& getParts().contains(selectedPart)) {
-					// ask the renderer to create this part
-					if (placeholder == null) {
-						if (selectedPart.getParent().getRenderer() != null) {
-							engine.createGui(selectedPart);
-							firePartVisible(selectedPart);
-							firePartBroughtToTop(selectedPart);
-						}
-					} else if (placeholder.getParent().getRenderer() != null) {
-						engine.createGui(placeholder);
+			if (selectedPart != null && selectedPart.isToBeRendered()
+					&& getParts().contains(selectedPart)) {
+				// ask the renderer to create this part
+				if (placeholder == null) {
+					if (selectedPart.getParent().getRenderer() != null) {
+						this.engine.createGui(selectedPart);
 						firePartVisible(selectedPart);
 						firePartBroughtToTop(selectedPart);
 					}
+				} else if (placeholder.getParent().getRenderer() != null) {
+					this.engine.createGui(placeholder);
+					firePartVisible(selectedPart);
+					firePartBroughtToTop(selectedPart);
 				}
 			}
 		}
@@ -1481,27 +1477,6 @@ public class PartServiceImpl implements EPartService {
 			}
 		}
 		return true;
-	}
-
-	/**
-	 * @noreference This method is not intended to be referenced by clients.
-	 * @see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868">Bug
-	 *      509868</a>
-	 */
-	@Deprecated
-	@Override
-	public Collection<MInputPart> getInputParts(String inputUri) {
-		Assert.isNotNull(inputUri, "Input uri must not be null"); //$NON-NLS-1$
-
-		Collection<MInputPart> rv = new ArrayList<>();
-
-		for (MInputPart p : getParts(MInputPart.class, null)) {
-			if (inputUri.equals(p.getInputURI())) {
-				rv.add(p);
-			}
-		}
-
-		return rv;
 	}
 
 	/**

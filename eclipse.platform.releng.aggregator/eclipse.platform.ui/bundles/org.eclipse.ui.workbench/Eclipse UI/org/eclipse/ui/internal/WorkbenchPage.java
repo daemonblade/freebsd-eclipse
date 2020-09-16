@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -18,9 +18,12 @@
  *     Dirk Fauth <dirk.fauth@googlemail.com> - Bug 473063
  *     Stefan Prieschl <stefan.prieschl@gmail.com> - Bug 374132
  *     Paul Pazderski <paul-eclipse@ppazderski.de> - Bug 549361
+ *     Christoph Läubrich - Bug 538151
  *******************************************************************************/
 
 package org.eclipse.ui.internal;
+
+import static java.util.Collections.singletonList;
 
 import java.io.File;
 import java.io.IOException;
@@ -2662,7 +2665,7 @@ public class WorkbenchPage implements IWorkbenchPage {
 				if (ref instanceof MPart) {
 					MPart part = (MPart) ref;
 					String uri = part.getContributionURI();
-					if (uri.equals(CompatibilityPart.COMPATIBILITY_VIEW_URI)) {
+					if (CompatibilityPart.COMPATIBILITY_VIEW_URI.equals(uri)) {
 						createViewReferenceForPart(part, part.getElementId());
 					}
 				}
@@ -2993,9 +2996,8 @@ public class WorkbenchPage implements IWorkbenchPage {
 
 	@Override
 	public boolean isPageZoomed() {
-		List<String> maxTag = new ArrayList<>();
-		maxTag.add(IPresentationEngine.MAXIMIZED);
-		List<Object> maxElements = modelService.findElements(window, null, null, maxTag);
+		List<Object> maxElements = modelService.findElements(window, null, null,
+				singletonList(IPresentationEngine.MAXIMIZED));
 		return maxElements.size() > 0;
 	}
 
@@ -4233,7 +4235,7 @@ public class WorkbenchPage implements IWorkbenchPage {
 	public IViewPart showView(final String viewID, final String secondaryID, final int mode) throws PartInitException {
 
 		if (secondaryID != null) {
-			if (secondaryID.length() == 0 || secondaryID.indexOf(':') != -1) {
+			if (secondaryID.isEmpty() || secondaryID.indexOf(':') != -1) {
 				throw new IllegalArgumentException(WorkbenchMessages.WorkbenchPage_IllegalSecondaryId);
 			}
 		}
@@ -5466,7 +5468,7 @@ public class WorkbenchPage implements IWorkbenchPage {
 
 		String newValue = hiddenIDs.replaceFirst(persistedID, ""); //$NON-NLS-1$
 		if (hiddenIDs.length() != newValue.length()) {
-			if (newValue.length() == 0)
+			if (newValue.isEmpty())
 				perspective.getPersistedState().remove(ModeledPageLayout.HIDDEN_ITEMS_KEY);
 			else
 				perspective.getPersistedState().put(ModeledPageLayout.HIDDEN_ITEMS_KEY, newValue);

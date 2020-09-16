@@ -265,15 +265,6 @@ public class HeapStatus extends Composite {
 			disabledGcImage.dispose();
 		}
 
-		if (usedMemCol != null) {
-			usedMemCol.dispose();
-		}
-		if (lowMemCol != null) {
-			lowMemCol.dispose();
-		}
-		if (freeMemCol != null) {
-			freeMemCol.dispose();
-		}
 	}
 
 	@Override
@@ -313,7 +304,7 @@ public class HeapStatus extends Composite {
 	private void createContextMenu() {
 		MenuManager menuMgr = new MenuManager();
 		menuMgr.setRemoveAllWhenShown(true);
-		menuMgr.addMenuListener(menuMgr1 -> fillMenu(menuMgr1));
+		menuMgr.addMenuListener(this::fillMenu);
 		Menu menu = menuMgr.createContextMenu(this);
 		setMenu(menu);
 	}

@@ -227,7 +227,7 @@ public abstract class FilteredPreferenceDialog extends PreferenceDialog implemen
 
 		tree.addFilter(new CapabilityFilter());
 
-		tree.addSelectionChangedListener(event -> handleTreeSelectionChanged(event));
+		tree.addSelectionChangedListener(this::handleTreeSelectionChanged);
 
 		super.addListeners(tree);
 		return tree;
@@ -693,10 +693,8 @@ public abstract class FilteredPreferenceDialog extends PreferenceDialog implemen
 		if (hasAtMostOnePage()) {
 			Composite composite = getTreeViewer().getTree();
 			applyDialogFont(composite, dialogFont);
-			composite.layout(true);
 		} else {
 			applyDialogFont(filteredTree, dialogFont);
-			filteredTree.layout(true);
 		}
 	}
 

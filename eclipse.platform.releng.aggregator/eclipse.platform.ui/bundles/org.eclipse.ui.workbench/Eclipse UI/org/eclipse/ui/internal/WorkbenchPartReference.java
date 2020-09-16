@@ -20,6 +20,7 @@ package org.eclipse.ui.internal;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import org.eclipse.core.runtime.Adapters;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.ListenerList;
@@ -144,11 +145,11 @@ public abstract class WorkbenchPartReference implements IWorkbenchPartReference,
 
 	private ListenerList<IPropertyChangeListener> partChangeListeners = new ListenerList<>();
 
-	protected Map propertyCache = new HashMap();
+	protected Map<String, String> propertyCache = new HashMap<>();
 
-	private IPropertyListener propertyChangeListener = (source, propId) -> partPropertyChanged(source, propId);
+	private IPropertyListener propertyChangeListener = this::partPropertyChanged;
 
-	private IPropertyChangeListener partPropertyChangeListener = event -> partPropertyChanged(event);
+	private IPropertyChangeListener partPropertyChangeListener = this::partPropertyChanged;
 
 	private IWorkbenchPage page;
 
@@ -171,7 +172,7 @@ public abstract class WorkbenchPartReference implements IWorkbenchPartReference,
 
 	private EventHandler createContextEventHandler() {
 		if (contextEventHandler == null) {
-			contextEventHandler = event -> handleContextSet(event);
+			contextEventHandler = this::handleContextSet;
 		}
 		return contextEventHandler;
 	}
@@ -293,7 +294,7 @@ public abstract class WorkbenchPartReference implements IWorkbenchPartReference,
 	@Override
 	public String getTitleToolTip() {
 		String toolTip = (String) part.getTransientData().get(IPresentationEngine.OVERRIDE_TITLE_TOOL_TIP_KEY);
-		if (toolTip == null || toolTip.length() == 0)
+		if (toolTip == null || toolTip.isEmpty())
 			toolTip = part.getLocalizedTooltip();
 		return Util.safeString(toolTip);
 	}
@@ -476,7 +477,7 @@ public abstract class WorkbenchPartReference implements IWorkbenchPartReference,
 				return ((IWorkbenchPart3) legacyPart).getPartProperty(key);
 			}
 		} else {
-			return (String) propertyCache.get(key);
+			return propertyCache.get(key);
 		}
 		return null;
 	}
@@ -504,10 +505,10 @@ public abstract class WorkbenchPartReference implements IWorkbenchPartReference,
 	}
 
 	protected void createPartProperties(IWorkbenchPart3 workbenchPart) {
-		Iterator i = propertyCache.entrySet().iterator();
+		Iterator<Entry<String, String>> i = propertyCache.entrySet().iterator();
 		while (i.hasNext()) {
-			Map.Entry e = (Map.Entry) i.next();
-			workbenchPart.setPartProperty((String) e.getKey(), (String) e.getValue());
+			Entry<String, String> e = i.next();
+			workbenchPart.setPartProperty(e.getKey(), e.getValue());
 		}
 	}
 

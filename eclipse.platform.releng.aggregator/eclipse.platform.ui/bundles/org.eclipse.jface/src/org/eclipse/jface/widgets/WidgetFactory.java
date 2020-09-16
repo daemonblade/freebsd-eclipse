@@ -14,9 +14,12 @@
 package org.eclipse.jface.widgets;
 
 
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Sash;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -151,5 +154,38 @@ public final class WidgetFactory {
 	 */
 	public static TreeColumnFactory treeColumn(int style) {
 		return TreeColumnFactory.newTreeColumn(style);
+	}
+
+	/**
+	 * @param style SWT style applicable for Sash. Refer to
+	 *              {@link Sash#Sash(Composite, int)} for supported styles.
+	 * @return SashFactory
+	 *
+	 * @since 3.21
+	 */
+	public static SashFactory sash(int style) {
+		return SashFactory.newSash(style);
+	}
+
+	/**
+	 * @param style SWT style applicable for SashForm. Refer to
+	 *              {@link SashForm#SashForm(Composite, int)} for supported styles.
+	 * @return SashFormFactory
+	 *
+	 * @since 3.21
+	 */
+	public static SashFormFactory sashForm(int style) {
+		return SashFormFactory.newSashForm(style);
+	}
+
+	/**
+	 * @param style SWT style applicable for Shell. Refer to
+	 *              {@link Shell#Shell(Shell, int)} for supported styles.
+	 * @return SashFormFactory
+	 *
+	 * @since 3.21
+	 */
+	public static ShellFactory shell(int style) {
+		return ShellFactory.newShell(style);
 	}
 }

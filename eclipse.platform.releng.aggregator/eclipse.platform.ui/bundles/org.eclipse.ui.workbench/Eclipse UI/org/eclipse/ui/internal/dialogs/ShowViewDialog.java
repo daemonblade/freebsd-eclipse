@@ -218,7 +218,6 @@ public class ShowViewDialog extends Dialog implements ISelectionChangedListener,
 		Control treeControl = treeViewer.getControl();
 		RGB dimmedRGB = blend(treeControl.getForeground().getRGB(), treeControl.getBackground().getRGB(), 60);
 		dimmedForeground = new Color(treeControl.getDisplay(), dimmedRGB);
-		treeControl.addDisposeListener(e -> dimmedForeground.dispose());
 
 		treeViewer
 				.setLabelProvider(new ViewLabelProvider(context, modelService, partService, window, dimmedForeground));
@@ -422,7 +421,7 @@ public class ShowViewDialog extends Dialog implements ISelectionChangedListener,
 				if (o instanceof MPartDescriptor) {
 					String description = ((MPartDescriptor) o).getTooltip();
 					description = LocalizationHelper.getLocalized(description, (MPartDescriptor) o, context);
-					if (description != null && description.length() == 0)
+					if (description != null && description.isEmpty())
 						description = WorkbenchMessages.ShowView_noDesc;
 					popUp(description);
 				}

@@ -46,8 +46,9 @@ public class UIPreferenceInitializer extends AbstractPreferenceInitializer {
 
 
 		IScopeContext context = DefaultScope.INSTANCE;
-		IEclipsePreferences node = context.getNode(UIPlugin.getDefault()
-				.getBundle().getSymbolicName());
+		IEclipsePreferences node = context.getNode(UIPlugin.getDefault().getBundle().getSymbolicName());
+		// initialize preference node, see Bug 564662
+		context.getNode(WorkbenchPlugin.getDefault().getBundle().getSymbolicName());
 		node.put(IWorkbenchPreferenceConstants.OPEN_NEW_PERSPECTIVE,
 				IWorkbenchPreferenceConstants.OPEN_PERSPECTIVE_REPLACE);
 
@@ -67,11 +68,7 @@ public class UIPreferenceInitializer extends AbstractPreferenceInitializer {
 		node.putBoolean(IWorkbenchPreferenceConstants.LINK_NAVIGATOR_TO_EDITOR,
 				false);
 
-		node.putBoolean(IWorkbenchPreferenceConstants.ENABLE_ANIMATIONS, false);
-		node.putBoolean(IWorkbenchPreferenceConstants.USE_ROUND_TABS, false);
 		node.putBoolean(IWorkbenchPreferenceConstants.USE_COLORED_LABELS, true);
-		node.put(IWorkbenchPreferenceConstants.DOCK_PERSPECTIVE_BAR,
-				IWorkbenchPreferenceConstants.TOP_LEFT);
 		node.putBoolean(
 				IWorkbenchPreferenceConstants.SHOW_TEXT_ON_PERSPECTIVE_BAR,
 				false);
@@ -192,6 +189,5 @@ public class UIPreferenceInitializer extends AbstractPreferenceInitializer {
 
 				});
 	}
-
 
 }

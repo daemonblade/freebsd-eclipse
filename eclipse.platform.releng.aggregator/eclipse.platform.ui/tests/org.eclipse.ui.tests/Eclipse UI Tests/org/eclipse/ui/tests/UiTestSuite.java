@@ -25,6 +25,7 @@ import org.eclipse.ui.tests.api.StartupTest;
 import org.eclipse.ui.tests.commands.CommandsTestSuite;
 import org.eclipse.ui.tests.concurrency.ConcurrencyTestSuite;
 import org.eclipse.ui.tests.contexts.ContextsTestSuite;
+import org.eclipse.ui.tests.databinding.WorkbenchDatabindingTest;
 import org.eclipse.ui.tests.datatransfer.DataTransferTestSuite;
 import org.eclipse.ui.tests.decorators.DecoratorsTestSuite;
 import org.eclipse.ui.tests.dialogs.FilteredResourcesSelectionDialogTestSuite;
@@ -35,6 +36,7 @@ import org.eclipse.ui.tests.encoding.EncodingTestSuite;
 import org.eclipse.ui.tests.fieldassist.FieldAssistTestSuite;
 import org.eclipse.ui.tests.filteredtree.FilteredTreeTests;
 import org.eclipse.ui.tests.filteredtree.PatternFilterTest;
+import org.eclipse.ui.tests.filteredtree.TextMatcherTest;
 import org.eclipse.ui.tests.internal.InternalTestSuite;
 import org.eclipse.ui.tests.intro.IntroTestSuite;
 import org.eclipse.ui.tests.keys.KeysTestSuite;
@@ -86,6 +88,7 @@ import org.junit.runners.Suite;
 	ConcurrencyTestSuite.class,
 	FilteredTreeTests.class,
 	PatternFilterTest.class,
+	TextMatcherTest.class,
 	StatusHandlingTestSuite.class,
 	MenusTestSuite.class,
 	QuickAccessTestSuite.class,
@@ -100,6 +103,7 @@ import org.junit.runners.Suite;
 	IntroTestSuite.class,
 	MultiEditorTestSuite.class,
 	OpenSystemInPlaceEditorTest.class,
+	WorkbenchDatabindingTest.class,
 })
 public class UiTestSuite {
 }

@@ -75,7 +75,7 @@ public class DecoratingStyledCellLabelProvider extends
 		this.decorationContext = decorationContext != null ? decorationContext
 				: DecorationContext.DEFAULT_CONTEXT;
 
-		this.labelProviderListener = event -> fireLabelProviderChanged(event);
+		this.labelProviderListener = this::fireLabelProviderChanged;
 		labelProvider.addListener(this.labelProviderListener);
 		if (decorator != null)
 			decorator.addListener(this.labelProviderListener);
@@ -119,7 +119,7 @@ public class DecoratingStyledCellLabelProvider extends
 			isDecorationPending = !((IDelayedLabelDecorator) this.decorator)
 					.prepareDecoration(element, oldText);
 		}
-		if (isDecorationPending && oldText.length() == 0) {
+		if (isDecorationPending && oldText.isEmpty()) {
 			// item is empty: is shown for the first time: don't wait
 			return false;
 		}

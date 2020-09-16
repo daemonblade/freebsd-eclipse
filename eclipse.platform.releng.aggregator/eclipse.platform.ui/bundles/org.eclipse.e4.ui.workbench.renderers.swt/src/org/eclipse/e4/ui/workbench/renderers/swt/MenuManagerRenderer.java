@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corporation and others.
+ * Copyright (c) 2009, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -27,8 +27,8 @@ package org.eclipse.e4.ui.workbench.renderers.swt;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -97,14 +97,14 @@ public class MenuManagerRenderer extends SWTPartRenderer {
 	private static final String NO_LABEL = "UnLabled"; //$NON-NLS-1$
 	public static final String GROUP_MARKER = "org.eclipse.jface.action.GroupMarker.GroupMarker(String)"; //$NON-NLS-1$
 
-	private Map<MMenu, MenuManager> modelToManager = new HashMap<>();
-	private Map<MenuManager, MMenu> managerToModel = new HashMap<>();
+	private Map<MMenu, MenuManager> modelToManager = new IdentityHashMap<>();
+	private Map<MenuManager, MMenu> managerToModel = new IdentityHashMap<>();
 
-	private Map<MMenuElement, IContributionItem> modelToContribution = new HashMap<>();
-	private Map<IContributionItem, MMenuElement> contributionToModel = new HashMap<>();
+	private Map<MMenuElement, IContributionItem> modelToContribution = new IdentityHashMap<>();
+	private Map<IContributionItem, MMenuElement> contributionToModel = new IdentityHashMap<>();
 
-	private Map<MMenuElement, ContributionRecord> modelContributionToRecord = new HashMap<>();
-	private Map<MMenuElement, ArrayList<ContributionRecord>> sharedElementToRecord = new HashMap<>();
+	private Map<MMenuElement, ContributionRecord> modelContributionToRecord = new IdentityHashMap<>();
+	private Map<MMenuElement, ArrayList<ContributionRecord>> sharedElementToRecord = new IdentityHashMap<>();
 
 	private Collection<IContributionManager> mgrToUpdate = new LinkedHashSet<>();
 
@@ -337,9 +337,13 @@ public class MenuManagerRenderer extends SWTPartRenderer {
 		context.remove(MenuManagerRendererFilter.class);
 		Display display = context.get(Display.class);
 		if (display != null && !display.isDisposed() && rendererFilter != null) {
-			display.removeFilter(SWT.Show, rendererFilter);
-			display.removeFilter(SWT.Hide, rendererFilter);
-			display.removeFilter(SWT.Dispose, rendererFilter);
+			display.syncExec(() -> {
+				if (!display.isDisposed()) {
+					display.removeFilter(SWT.Show, rendererFilter);
+					display.removeFilter(SWT.Hide, rendererFilter);
+					display.removeFilter(SWT.Dispose, rendererFilter);
+				}
+			});
 		}
 		if (rendererFilter != null) {
 			ContextInjectionFactory.uninject(rendererFilter, context);

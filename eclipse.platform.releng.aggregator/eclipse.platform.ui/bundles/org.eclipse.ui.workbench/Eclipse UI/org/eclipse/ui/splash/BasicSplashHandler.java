@@ -156,13 +156,6 @@ public abstract class BasicSplashHandler extends AbstractSplashHandler {
 		return monitor;
 	}
 
-	@Override
-	public void dispose() {
-		if (foreground != null)
-			foreground.dispose();
-		super.dispose();
-	}
-
 	/**
 	 * Set the foreground text color. This method has no effect after
 	 * {@link #getBundleProgressMonitor()} has been invoked.
@@ -172,8 +165,6 @@ public abstract class BasicSplashHandler extends AbstractSplashHandler {
 	protected void setForeground(RGB foregroundRGB) {
 		if (monitor != null)
 			return;
-		if (this.foreground != null)
-			this.foreground.dispose();
 		this.foreground = new Color(getSplash().getShell().getDisplay(), foregroundRGB);
 	}
 

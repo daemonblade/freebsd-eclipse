@@ -14,12 +14,10 @@
 
 package org.eclipse.ui.internal.e4.compatibility;
 
-import org.eclipse.e4.ui.model.application.ui.MElementContainer;
-import org.eclipse.e4.ui.model.application.ui.MGenericStack;
 import org.eclipse.e4.ui.model.application.ui.MUIElement;
-import org.eclipse.e4.ui.model.application.ui.advanced.MPlaceholder;
 import org.eclipse.e4.ui.model.application.ui.basic.MPart;
 import org.eclipse.e4.ui.model.application.ui.basic.MPartStack;
+import org.eclipse.e4.ui.model.application.ui.basic.MStackElement;
 import org.eclipse.e4.ui.model.application.ui.menu.MToolBar;
 import org.eclipse.e4.ui.workbench.renderers.swt.StackRenderer;
 import org.eclipse.e4.ui.workbench.renderers.swt.ToolBarManagerRenderer;
@@ -29,8 +27,6 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.SubActionBars;
 import org.eclipse.ui.services.IServiceLocator;
@@ -66,28 +62,10 @@ public class ActionBars extends SubActionBars {
 
 	@Override
 	public void updateActionBars() {
-		// FIXME compat: updateActionBars : should do something useful
 		getStatusLineManager().update(false);
-		getMenuManager().update(false);
-		if (toolbarManager != null) {
-			// System.err.println("update toolbar manager for " + part.getElementId());
-			// //$NON-NLS-1$
-			Control tbCtrl = toolbarManager.getControl();
-			if (tbCtrl == null || tbCtrl.isDisposed()) {
-				if (part.getContext() != null) {
-					// TODO what to do
-				}
-			} else {
-				toolbarManager.update(true);
-				if (!tbCtrl.isDisposed()) {
-					Control packParent = getPackParent(tbCtrl);
-					packParent.pack();
 
-					// Specifically lay out the CTF
-					if (packParent.getParent() instanceof CTabFolder)
-						packParent.getParent().layout(true);
-				}
-			}
+		if (toolbarManager != null) {
+			toolbarManager.update(true);
 
 			MToolBar toolbar = part.getToolbar();
 			if (toolbar != null) {
@@ -99,70 +77,33 @@ public class ActionBars extends SubActionBars {
 			}
 		}
 
-		MUIElement parent = getParentModel();
-		if (parent != null && isOnTop()) {
-			Object renderer = parent.getRenderer();
-			if (renderer instanceof StackRenderer) {
-				StackRenderer stackRenderer = (StackRenderer) renderer;
-				CTabFolder folder = (CTabFolder) parent.getWidget();
-				stackRenderer.adjustTopRight(folder);
-			}
+		if (menuManager != null) {
+			menuManager.update(false);
+
+			// Changes in the menuManager are not propagated to the E4 model, forcing UI
+			// update to properly show the view menu, see Bug 566375
+			forceUpdateTopRight();
 		}
 
 		super.updateActionBars();
 	}
 
-	private MUIElement getParentModel() {
-		MElementContainer<MUIElement> parent = part.getParent();
-		if (parent == null) {
-			MPlaceholder placeholder = part.getCurSharedRef();
-			return placeholder == null ? null : placeholder.getParent();
+	private void forceUpdateTopRight() {
+		// Get the partstack and the element in the partstack
+		MStackElement element = part;
+		if (element.getCurSharedRef() != null) {
+			element = element.getCurSharedRef();
 		}
-		return parent;
-	}
+		MUIElement parentElement = element.getParent();
 
-	private boolean isOnTop() {
-		MUIElement parentModel = getParentModel();
-		if (parentModel.getRenderer() instanceof StackRenderer) {
-			MPartStack stack = (MPartStack) parentModel;
-			if (stack.getSelectedElement() == part)
-				return true;
-			if (stack.getSelectedElement() instanceof MPlaceholder) {
-				MPlaceholder ph = (MPlaceholder) stack.getSelectedElement();
-				return ph.getRef() == part;
-			}
+		if (!(parentElement instanceof MPartStack)) {
+			return;
 		}
 
-		return true;
-	}
-
-	private Control getPackParent(Control control) {
-		Composite parent = control.getParent();
-		while (parent != null) {
-			if (parent instanceof CTabFolder) {
-				Control topRight = ((CTabFolder) parent).getTopRight();
-				if (topRight != null) {
-					return topRight;
-				}
-				break;
-			}
-			parent = parent.getParent();
+		Object widget = parentElement.getWidget();
+		if (widget instanceof CTabFolder) {
+			((StackRenderer) parentElement.getRenderer()).adjustTopRight((CTabFolder) widget);
 		}
-		return control.getParent();
-	}
-
-	boolean isSelected(MPart part) {
-		MElementContainer<?> parent = part.getParent();
-		if (parent == null) {
-			MPlaceholder placeholder = part.getCurSharedRef();
-			if (placeholder == null) {
-				return false;
-			}
-
-			parent = placeholder.getParent();
-			return parent instanceof MGenericStack ? parent.getSelectedElement() == placeholder : parent != null;
-		}
-		return !(parent instanceof MGenericStack) || parent.getSelectedElement() == part;
 	}
 
 	@Override

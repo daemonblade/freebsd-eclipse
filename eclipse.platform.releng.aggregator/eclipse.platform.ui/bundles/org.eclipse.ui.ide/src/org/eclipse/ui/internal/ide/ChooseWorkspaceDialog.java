@@ -134,7 +134,7 @@ public class ChooseWorkspaceDialog extends TitleAreaDialog {
 		if (recent != null && recent.length > 0) {
 			workspace = recent[0];
 		}
-		if (workspace == null || workspace.length() == 0) {
+		if (workspace == null || workspace.isEmpty()) {
 			workspace = launchData.getInitialDefault();
 		}
 		launchData.workspaceSelected(TextProcessor.deprocess(workspace));
@@ -389,7 +389,7 @@ public class ChooseWorkspaceDialog extends TitleAreaDialog {
 			// list of found unique keys
 			List<String> uniqueNames = splittedWorkspaceNames.stream().map(stringArraytoName)
 					.collect(Collectors.groupingBy(s -> s, Collectors.counting())).entrySet().stream()
-					.filter(e -> e.getValue() == 1).map(e -> e.getKey()).collect(Collectors.toList());
+					.filter(e -> e.getValue() == 1).map(Entry::getKey).collect(Collectors.toList());
 
 			// remove paths for which we have found unique keys
 			splittedWorkspaceNames.removeIf(a -> {

@@ -32,6 +32,7 @@ import org.eclipse.jface.resource.FontRegistry;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.util.Util;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.RGB;
@@ -100,7 +101,7 @@ public class WorkbenchThemeManager extends EventManager implements IThemeManager
 
 	private IThemeRegistry themeRegistry;
 
-	private Map themes = new HashMap(7);
+	private Map<IThemeDescriptor, ITheme> themes = new HashMap<>(7);
 
 	private EventHandler themeChangedHandler = new WorkbenchThemeChangedHandler();
 
@@ -139,7 +140,7 @@ public class WorkbenchThemeManager extends EventManager implements IThemeManager
 				.getDefaultString(IWorkbenchPreferenceConstants.CURRENT_THEME_ID);
 
 		// If not set, use default
-		if (themeId.length() == 0)
+		if (themeId.isEmpty())
 			themeId = IThemeManager.DEFAULT_THEME;
 
 		final boolean highContrast = Display.getCurrent().getHighContrast();
@@ -168,6 +169,12 @@ public class WorkbenchThemeManager extends EventManager implements IThemeManager
 	 * themes and recompute the registries.
 	 */
 	private void updateThemes() {
+		// This code was added to fix a windows specific issue, see Bug 19229
+		// However, it's causing issues on Linux, see Bug 563001
+		if (Util.isLinux()) {
+			return;
+		}
+
 		// reread the themes since their descriptors have changed in value
 		ThemeRegistryReader reader = new ThemeRegistryReader();
 		reader.readThemes(Platform.getExtensionRegistry(), (ThemeRegistry) getThemeRegistry());
@@ -179,14 +186,14 @@ public class WorkbenchThemeManager extends EventManager implements IThemeManager
 		IThemeDescriptor[] themeDescriptors = getThemeRegistry().getThemes();
 
 		for (IThemeDescriptor themeDescriptor : themeDescriptors) {
-			ITheme theme = (ITheme) themes.get(themeDescriptor);
+			ITheme theme = themes.get(themeDescriptor);
 			// If theme is in our themes table then its already been populated
 			if (theme != null) {
-				ColorDefinition[] colorDefinitions = themeDescriptor.getColors();
-
-				if (colorDefinitions.length > 0) {
-					ThemeElementHelper.populateRegistry(theme, colorDefinitions, PrefUtil.getInternalPreferenceStore());
-				}
+				// By the time updateThemes is called, all colors have overrides in the
+				// CascadingColorRegistry (due to Workbench.initializeApplicationColors), so
+				// we need to repopulate using getColorsFor() to update everything.
+				ThemeElementHelper.populateRegistry(theme, getThemeRegistry().getColorsFor(theme.getId()),
+						PrefUtil.getInternalPreferenceStore());
 			}
 		}
 	}
@@ -205,8 +212,8 @@ public class WorkbenchThemeManager extends EventManager implements IThemeManager
 			eventBroker.unsubscribe(themeRegistryModifiedHandler);
 		}
 
-		for (Iterator i = themes.values().iterator(); i.hasNext();) {
-			ITheme theme = (ITheme) i.next();
+		for (Iterator<ITheme> i = themes.values().iterator(); i.hasNext();) {
+			ITheme theme = i.next();
 			theme.removePropertyChangeListener(currentThemeListener);
 			theme.dispose();
 		}
@@ -278,7 +285,7 @@ public class WorkbenchThemeManager extends EventManager implements IThemeManager
 	}
 
 	private ITheme getTheme(IThemeDescriptor td) {
-		ITheme theme = (ITheme) themes.get(td);
+		ITheme theme = themes.get(td);
 		if (theme == null) {
 			theme = new Theme(td);
 			themes.put(td, theme);

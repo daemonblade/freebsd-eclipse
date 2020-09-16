@@ -77,7 +77,6 @@ public class TitleRegion extends Canvas {
 	private Transfer[] dragTransferTypes;
 	private DragSourceListener dragListener;
 	private DragSource dragSource;
-	private Image dragImage;
 
 	private class HoverListener implements MouseTrackListener,
 			MouseMoveListener {
@@ -257,12 +256,6 @@ public class TitleRegion extends Canvas {
 		titleCache = new SizeCache();
 		super.setLayout(new TitleRegionLayout());
 		hookHoverListeners();
-		addListener(SWT.Dispose, e -> {
-			if (dragImage != null) {
-				dragImage.dispose();
-				dragImage = null;
-			}
-		});
 	}
 
 	@Override
@@ -280,7 +273,7 @@ public class TitleRegion extends Canvas {
 		addMouseMoveListener(listener);
 		titleLabel.addMouseTrackListener(listener);
 		titleLabel.addMouseMoveListener(listener);
-		addPaintListener(e -> onPaint(e));
+		addPaintListener(this::onPaint);
 	}
 
 	private void onPaint(PaintEvent e) {

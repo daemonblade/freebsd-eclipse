@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2016 IBM Corporation and others.
+ * Copyright (c) 2008, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,7 @@
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 441150, 472654
  *     Fabio Zadrozny (fabiofz@gmail.com) - Bug 436763
  *     Dirk Fauth <dirk.fauth@googlemail.com> - Bug 457939
+ *     Rolf Theunissen <rolf.theunissen@gmail.com> - Bug 564561
  *******************************************************************************/
 package org.eclipse.e4.ui.workbench.renderers.swt;
 
@@ -20,8 +21,11 @@ import static org.eclipse.core.runtime.Assert.isNotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 import org.eclipse.e4.core.contexts.IEclipseContext;
+import org.eclipse.e4.core.di.annotations.Optional;
 import org.eclipse.e4.core.services.events.IEventBroker;
+import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.e4.ui.model.application.ui.MContext;
 import org.eclipse.e4.ui.model.application.ui.MElementContainer;
 import org.eclipse.e4.ui.model.application.ui.MGenericStack;
@@ -32,12 +36,13 @@ import org.eclipse.e4.ui.model.application.ui.advanced.MPlaceholder;
 import org.eclipse.e4.ui.model.application.ui.basic.MPart;
 import org.eclipse.e4.ui.model.application.ui.basic.MPartStack;
 import org.eclipse.e4.ui.model.application.ui.basic.MWindow;
+import org.eclipse.e4.ui.model.application.ui.menu.MToolBar;
 import org.eclipse.e4.ui.workbench.IPresentationEngine;
 import org.eclipse.e4.ui.workbench.UIEvents;
-import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
+import org.osgi.service.event.Event;
 import org.osgi.service.event.EventHandler;
 
 /**
@@ -65,6 +70,9 @@ public abstract class LazyStackRenderer extends SWTPartRenderer {
 		}
 		LazyStackRenderer lsr = (LazyStackRenderer) stack.getRenderer();
 
+		Control widget = (Control) stack.getWidget();
+		widget.setRedraw(false);
+
 		// Gather up the elements that are being 'hidden' by this change
 		MUIElement oldSel = (MUIElement) event.getProperty(UIEvents.EventTags.OLD_VALUE);
 		if (oldSel != null) {
@@ -74,6 +82,7 @@ public abstract class LazyStackRenderer extends SWTPartRenderer {
 		if (stack.getSelectedElement() != null) {
 			lsr.showTab(stack.getSelectedElement());
 		}
+		widget.setRedraw(true);
 	};
 
 	public void init(IEventBroker eventBroker) {
@@ -115,12 +124,54 @@ public abstract class LazyStackRenderer extends SWTPartRenderer {
 	}
 
 	@Override
+	public void childRendered(MElementContainer<MUIElement> parentElement, MUIElement element) {
+		super.childRendered(parentElement, element);
+
+		if (parentElement.getSelectedElement() != element) {
+			// Make sure that everything is hidden
+			hideElementRecursive(element);
+		}
+	}
+
+	@Inject
+	@Optional
+	private void subscribePartTopicToolbar(@UIEventTopic(UIEvents.Part.TOPIC_TOOLBAR) Event event) {
+		Object obj = event.getProperty(UIEvents.EventTags.ELEMENT);
+		Object value = event.getProperty(UIEvents.EventTags.NEW_VALUE);
+		if (!(obj instanceof MPart) || !(value instanceof MToolBar)) {
+			return;
+		}
+
+		MUIElement element = (MUIElement) obj;
+		if (element.getCurSharedRef() != null) {
+			element = element.getCurSharedRef();
+		}
+
+		MElementContainer<MUIElement> parent = element.getParent();
+		if (parent.getRenderer() != LazyStackRenderer.this) {
+			return;
+		}
+
+		// A new ToolBar is added to a MPart in a lazy stack; make it visible when it is
+		// for the selected part, otherwise hide it.
+		MToolBar toolbar = (MToolBar) value;
+		if (element == parent.getSelectedElement()) {
+			toolbar.setVisible(true);
+		} else {
+			toolbar.setVisible(false);
+		}
+	}
+
+	@Override
 	public void processContents(MElementContainer<MUIElement> me) {
 		// Lazy Loading: here we only process the contents through childAdded,
 		// we specifically do not render them
 		IPresentationEngine renderer = context.get(IPresentationEngine.class);
 
 		for (MUIElement element : me.getChildren()) {
+			// Make sure that everything is hidden
+			hideElementRecursive(element);
+
 			if (!element.isToBeRendered() || !element.isVisible()) {
 				continue;
 			}
@@ -170,7 +221,7 @@ public abstract class LazyStackRenderer extends SWTPartRenderer {
 	}
 
 	private void hideElementRecursive(MUIElement element) {
-		if (element == null || element.getWidget() == null) {
+		if (element == null) {
 			return;
 		}
 
@@ -180,8 +231,15 @@ public abstract class LazyStackRenderer extends SWTPartRenderer {
 		}
 
 		// Hide any floating windows
-		if (element instanceof MWindow && element.getWidget() != null) {
+		if (element instanceof MWindow) {
 			element.setVisible(false);
+		}
+
+		if (element instanceof MPart) {
+			MToolBar toolbar = ((MPart) element).getToolbar();
+			if (toolbar != null) {
+				toolbar.setVisible(false);
+			}
 		}
 
 		if (element instanceof MGenericStack<?>) {
@@ -215,18 +273,12 @@ public abstract class LazyStackRenderer extends SWTPartRenderer {
 
 		if (element instanceof MPartStack && element.getRenderer() instanceof StackRenderer) {
 			MPartStack stackModel = (MPartStack) element;
-			StackRenderer sr = (StackRenderer) element.getRenderer();
-			CTabFolder ctf = (CTabFolder) element.getWidget();
 
 			MUIElement curSel = stackModel.getSelectedElement();
-			MPart part = (MPart) ((curSel instanceof MPlaceholder) ? ((MPlaceholder) curSel).getRef() : curSel);
 
-			// Ensure that the placeholder's ref is set correctly before
-			// adjusting its toolbar
-			if (curSel instanceof MPlaceholder) {
-				part.setCurSharedRef((MPlaceholder) curSel);
+			if (curSel != null) {
+				showElementRecursive(curSel);
 			}
-			sr.adjustTopRight(ctf);
 		}
 
 		if (element instanceof MPlaceholder && element.getWidget() != null) {
@@ -247,6 +299,13 @@ public abstract class LazyStackRenderer extends SWTPartRenderer {
 			}
 
 			element = ref;
+		}
+
+		if (element instanceof MPart) {
+			MToolBar toolbar = ((MPart) element).getToolbar();
+			if (toolbar != null) {
+				toolbar.setVisible(true);
+			}
 		}
 
 		if (element instanceof MContext) {

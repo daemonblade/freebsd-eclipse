@@ -335,6 +335,7 @@ public class Snippet026AnonymousBeanProperties {
 			ISetProperty<ContactGroup, Contact> groupContacts = BeanProperties.set(ContactGroup.class, "contacts",
 					Contact.class);
 
+			@SuppressWarnings("unchecked")
 			@Override
 			protected ISetProperty<Object, Object> doGetDelegate(Object source) {
 				if (source instanceof ApplicationModel) {
@@ -358,7 +359,7 @@ public class Snippet026AnonymousBeanProperties {
 		bindingContext.bindValue(WidgetProperties.text(SWT.Modify).observe(nameText),
 				BeanProperties.value("name").observeDetail(selection));
 
-		statusViewer.setContentProvider(new ArrayContentProvider());
+		statusViewer.setContentProvider(ArrayContentProvider.getInstance());
 		statusViewer.setInput(STATUSES);
 
 		bindingContext.bindValue(ViewerProperties.singleSelection().observe(statusViewer),

@@ -15,9 +15,23 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
-@SuiteClasses({ TestUnitControlFactory.class, TestUnitButtonFactory.class, TestUnitLabelFactory.class,
-		TestUnitCompositeFactory.class, TestUnitSpinnerFactory.class, TestUnitTextFactory.class,
-		TestUnitTableFactory.class, TestUnitItemFactory.class, TestUnitTableColumnFactory.class })
+@SuiteClasses({ TestUnitButtonFactory.class, //
+		TestUnitCompositeFactory.class, //
+		TestUnitControlFactory.class, //
+		TestUnitItemFactory.class, //
+		TestUnitLabelFactory.class, //
+		TestUnitLinkFactory.class, //
+		TestUnitSashFactory.class, //
+		TestUnitSashFormFactory.class, //
+		TestUnitShellFactory.class, //
+		TestUnitSpinnerFactory.class, //
+		TestUnitTableFactory.class, //
+		TestUnitTableColumnFactory.class, //
+		TestUnitTextFactory.class, //
+		TestUnitTreeColumnFactory.class, //
+		TestUnitTreeFactory.class, //
+		TestUnitWidgetFactory.class, //
+})
 public class AllWidgetTests {
 
 }

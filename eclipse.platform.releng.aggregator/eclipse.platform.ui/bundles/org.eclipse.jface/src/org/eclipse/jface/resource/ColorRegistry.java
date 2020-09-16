@@ -16,7 +16,6 @@ package org.eclipse.jface.resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -108,10 +107,10 @@ public class ColorRegistry extends ResourceRegistry {
 	/**
 	 * Create a new instance of the receiver.
 	 *
-	 * @param display the <code>Display</code> to hook into
-	 * @param cleanOnDisplayDisposal
-	 *            whether all fonts allocated by this <code>ColorRegistry</code>
-	 *            should be disposed when the display is disposed
+	 * @param display                the <code>Display</code> to hook into
+	 * @param cleanOnDisplayDisposal whether all colors allocated by this
+	 *                               <code>ColorRegistry</code> should be disposed
+	 *                               when the display is disposed
 	 * @since 3.1
 	 */
 	public ColorRegistry(Display display, boolean cleanOnDisplayDisposal) {
@@ -143,18 +142,6 @@ public class ColorRegistry extends ResourceRegistry {
 			}
 		}
 		return new Color(display, rgb);
-	}
-
-	/**
-	 * Dispose of all of the <code>Color</code>s in this iterator.
-	 *
-	 * @param iterator over <code>Collection</code> of <code>Color</code>
-	 */
-	private void disposeColors(Iterator<Color> iterator) {
-		while (iterator.hasNext()) {
-			Object next = iterator.next();
-			((Color) next).dispose();
-		}
 	}
 
 	/**
@@ -240,8 +227,6 @@ public class ColorRegistry extends ResourceRegistry {
 
 	@Override
 	protected void clearCaches() {
-		disposeColors(stringToColor.values().iterator());
-		disposeColors(staleColors.iterator());
 		stringToColor.clear();
 		staleColors.clear();
 		display = null;

@@ -34,6 +34,7 @@ import org.eclipse.core.commands.NotEnabledException;
 import org.eclipse.core.commands.NotHandledException;
 import org.eclipse.core.commands.ParameterizedCommand;
 import org.eclipse.core.commands.common.NotDefinedException;
+import org.eclipse.core.expressions.AndExpression;
 import org.eclipse.core.expressions.ElementHandler;
 import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.core.expressions.Expression;
@@ -64,7 +65,6 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.handlers.IHandlerActivation;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.internal.WorkbenchPlugin;
-import org.eclipse.ui.internal.expressions.AndExpression;
 import org.eclipse.ui.internal.expressions.WorkbenchWindowExpression;
 import org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants;
 import org.eclipse.ui.internal.services.EvaluationService;
@@ -585,7 +585,7 @@ public class LegacyHandlerService implements IHandlerService {
 		IConfigurationElement[] elements = extPoint.getConfigurationElements();
 		for (IConfigurationElement configElement : elements) {
 			String commandId = configElement.getAttribute(IWorkbenchRegistryConstants.ATT_COMMAND_ID);
-			if (commandId == null || commandId.length() == 0) {
+			if (commandId == null || commandId.isEmpty()) {
 				continue;
 			}
 			String defaultHandler = configElement.getAttribute(IWorkbenchRegistryConstants.ATT_CLASS);
@@ -650,7 +650,7 @@ public class LegacyHandlerService implements IHandlerService {
 		IConfigurationElement[] elements = extPoint.getConfigurationElements();
 		for (IConfigurationElement configElement : elements) {
 			String id = configElement.getAttribute(IWorkbenchRegistryConstants.ATT_ID);
-			if (id == null || id.length() == 0) {
+			if (id == null || id.isEmpty()) {
 				continue;
 			}
 			String defaultHandler = configElement.getAttribute(IWorkbenchRegistryConstants.ATT_DEFAULT_HANDLER);

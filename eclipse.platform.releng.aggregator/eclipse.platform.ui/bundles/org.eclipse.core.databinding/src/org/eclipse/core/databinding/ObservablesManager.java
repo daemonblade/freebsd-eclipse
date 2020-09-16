@@ -24,7 +24,6 @@ import java.util.Set;
 import org.eclipse.core.databinding.observable.IObservable;
 import org.eclipse.core.databinding.observable.ObservableTracker;
 import org.eclipse.core.internal.databinding.IdentitySet;
-import org.eclipse.core.internal.databinding.Pair;
 
 /**
  * An observables manager can be used for lifecycle management of
@@ -39,7 +38,7 @@ public class ObservablesManager {
 
 	private Set<IObservable> managedObservables = new IdentitySet<>();
 	private Set<IObservable> excludedObservables = new IdentitySet<>();
-	private Map<DataBindingContext, Pair> contexts = new HashMap<>();
+	private Map<DataBindingContext, ManagerEntry> contexts = new HashMap<>();
 
 	/**
 	 * Create a new observables manager.
@@ -50,8 +49,7 @@ public class ObservablesManager {
 	/**
 	 * Adds the given observable to this manager.
 	 *
-	 * @param observable
-	 *            the observable
+	 * @param observable the observable
 	 */
 	public void addObservable(IObservable observable) {
 		managedObservables.add(observable);
@@ -61,20 +59,23 @@ public class ObservablesManager {
 	 * Adds the given observable to this manager's exclusion list. The given
 	 * observable will not be disposed of by this manager.
 	 *
-	 * @param observable
-	 *            the observable
+	 * @param observable the observable
 	 */
 	public void excludeObservable(IObservable observable) {
 		excludedObservables.add(observable);
 	}
 
 	/**
-	 * Adds the given data binding context's target and/or model observables to this
-	 * manager.
+	 * Adds the given data binding context's target and/or model observables to be
+	 * disposed by this manager.
 	 * <p>
-	 * Note: The {@code context} argument must NOT be disposed before this object
+	 * Prefer the {@link #addContext} method if the {@code context} argument should
+	 * also be disposed.
+	 * </p>
+	 * <p>
+	 * Note: The {@code context} argument must NOT be disposed before this manager
 	 * itself is disposed. If it is then its contents will not be disposed by this
-	 * object.
+	 * manager.
 	 * </p>
 	 *
 	 * @param context      the data binding context
@@ -83,31 +84,51 @@ public class ObservablesManager {
 	 * @param trackModels  <code>true</code> if the model observables of the context
 	 *                     should be managed
 	 */
-	public void addObservablesFromContext(DataBindingContext context,
-			boolean trackTargets, boolean trackModels) {
+	public void addObservablesFromContext(DataBindingContext context, boolean trackTargets, boolean trackModels) {
 		if (trackTargets || trackModels) {
-			contexts.put(context, new Pair(Boolean.valueOf(trackTargets),
-					Boolean.valueOf(trackModels)));
+			contexts.put(context, new ManagerEntry(false, trackTargets, trackModels));
 		}
+	}
+
+	/**
+	 * Adds the databinding context to be disposed by this manager. Identical to
+	 * {@link #addObservablesFromContext} except that the binding context itself is
+	 * also disposed.
+	 * <p>
+	 * Note: The {@code context} argument must NOT be disposed before this manager
+	 * itself is disposed. (There is no reason to dispose {@code context} manually
+	 * when using this method.)
+	 * </p>
+	 *
+	 * @param context      the data binding context to add
+	 * @param trackTargets <code>true</code> if the target observables of the
+	 *                     context should be managed
+	 * @param trackModels  <code>true</code> if the model observables of the context
+	 *                     should be managed
+	 * @since 1.10
+	 */
+	public void addContext(DataBindingContext context, boolean trackTargets, boolean trackModels) {
+		contexts.put(context, new ManagerEntry(true, trackTargets, trackModels));
 	}
 
 	/**
 	 * Executes the specified runnable and adds to this manager all observables
 	 * created while executing the runnable.
 	 * <p>
-	 * <em>NOTE: As of 1.2 (Eclipse 3.5), there are unresolved problems with this API, see
-	 * <a href="https://bugs.eclipse.org/278550">bug 278550</a>. If we cannot
-	 * find a way to make this API work, it will be deprecated as of 3.6.</em>
+	 * <em>NOTE: As of 1.2 (Eclipse 3.5), there are unresolved problems with this
+	 * API, see <a href="https://bugs.eclipse.org/278550">bug 278550</a>. If we
+	 * cannot find a way to make this API work, it will be deprecated as of
+	 * 3.6.</em>
 	 * </p>
 	 *
-	 * @param runnable
-	 *            the runnable to execute
+	 * @param runnable the runnable to execute
 	 * @since 1.2
 	 */
 	public void runAndCollect(Runnable runnable) {
 		IObservable[] collected = ObservableTracker.runAndCollect(runnable);
-		for (IObservable observable : collected)
+		for (IObservable observable : collected) {
 			addObservable(observable);
+		}
 	}
 
 	/**
@@ -121,25 +142,39 @@ public class ObservablesManager {
 	public void dispose() {
 		Set<IObservable> observables = new IdentitySet<>();
 		observables.addAll(managedObservables);
-		for (Entry<DataBindingContext, Pair> entry : contexts.entrySet()) {
-			DataBindingContext context = entry.getKey();
-			Pair trackModelsOrTargets = entry.getValue();
-			boolean disposeTargets = ((Boolean) trackModelsOrTargets.a)
-					.booleanValue();
-			boolean disposeModels = ((Boolean) trackModelsOrTargets.b)
-					.booleanValue();
+
+		for (Entry<DataBindingContext, ManagerEntry> e : contexts.entrySet()) {
+			DataBindingContext context = e.getKey();
+			ManagerEntry entry = e.getValue();
+
 			for (Binding binding : context.getBindings()) {
-				if (disposeTargets) {
+				if (entry.disposeTargets) {
 					observables.addAll(binding.getTargets());
 				}
-				if (disposeModels) {
+				if (entry.disposeModels) {
 					observables.addAll(binding.getModels());
 				}
+			}
+
+			if (entry.disposeContext) {
+				context.dispose();
 			}
 		}
 		observables.removeAll(excludedObservables);
 		for (IObservable observable : observables) {
 			observable.dispose();
+		}
+	}
+
+	private static class ManagerEntry {
+		public final boolean disposeContext;
+		public final boolean disposeTargets;
+		public final boolean disposeModels;
+
+		public ManagerEntry(boolean disposeContext, boolean disposeTargets, boolean disposeModels) {
+			this.disposeContext = disposeContext;
+			this.disposeTargets = disposeTargets;
+			this.disposeModels = disposeModels;
 		}
 	}
 }

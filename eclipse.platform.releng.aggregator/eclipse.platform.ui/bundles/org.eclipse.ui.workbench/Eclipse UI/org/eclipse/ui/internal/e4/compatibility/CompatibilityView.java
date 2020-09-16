@@ -181,11 +181,10 @@ public class CompatibilityView extends CompatibilityPart {
 		final IContextFunction func = new ContextFunction() {
 			@Override
 			public Object compute(IEclipseContext context, String contextKey) {
-				if (toolbarContributed.get()) {
+				if (toolbarContributed.getAndSet(true)) {
 					// fix for bug 448873: don't contribute to the toolbar twice
 					return null;
 				}
-				toolbarContributed.set(true);
 				final ViewActionBuilder actionBuilder = new ViewActionBuilder();
 				actionBuilder.readActionExtensions(getView());
 				ActionDescriptor[] actionDescriptors = actionBuilder.getExtendedActions();
@@ -202,7 +201,7 @@ public class CompatibilityView extends CompatibilityPart {
 					}
 				}
 				actionBars.updateActionBars();
-				Runnable dispose = () -> actionBuilder.dispose();
+				Runnable dispose = actionBuilder::dispose;
 				return dispose;
 			}
 		};

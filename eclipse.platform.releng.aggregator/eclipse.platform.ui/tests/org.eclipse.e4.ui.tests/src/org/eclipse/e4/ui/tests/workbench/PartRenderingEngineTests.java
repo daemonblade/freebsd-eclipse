@@ -44,6 +44,7 @@ import org.eclipse.e4.ui.model.application.ui.basic.MTrimBar;
 import org.eclipse.e4.ui.model.application.ui.basic.MTrimmedWindow;
 import org.eclipse.e4.ui.model.application.ui.basic.MWindow;
 import org.eclipse.e4.ui.model.application.ui.menu.MDirectMenuItem;
+import org.eclipse.e4.ui.model.application.ui.menu.MDirectToolItem;
 import org.eclipse.e4.ui.model.application.ui.menu.MMenu;
 import org.eclipse.e4.ui.model.application.ui.menu.MToolBar;
 import org.eclipse.e4.ui.model.application.ui.menu.MToolControl;
@@ -70,7 +71,6 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-import org.osgi.service.log.LogEntry;
 import org.osgi.service.log.LogLevel;
 import org.osgi.service.log.LogListener;
 import org.osgi.service.log.LogReaderService;
@@ -89,12 +89,9 @@ public class PartRenderingEngineTests {
 	@Inject
 	private MApplication application;
 
-	private LogListener listener = new LogListener() {
-		@Override
-		public void logged(LogEntry entry) {
-			if (!logged) {
-				logged = entry.getLogLevel() == LogLevel.ERROR;
-			}
+	private LogListener listener = entry -> {
+		if (!this.logged) {
+			this.logged = entry.getLogLevel() == LogLevel.ERROR;
 		}
 	};
 	private boolean logged = false;
@@ -3055,6 +3052,53 @@ public class PartRenderingEngineTests {
 				.setContributionURI("bundleclass://org.eclipse.e4.ui.tests/org.eclipse.e4.ui.tests.workbench.SampleView");
 
 		return window;
+	}
+
+	/**
+	 * Do not remove local placeholders when toolbar items are added the toolbar
+	 */
+	@Test
+	public void testBug564299() {
+		MWindow window = ems.createModelElement(MWindow.class);
+
+		MPart part = ems.createModelElement(MPart.class);
+		window.getSharedElements().add(part);
+		part.setContributionURI(
+				"platform:/plugin/org.eclipse.e4.ui.tests/org.eclipse.e4.ui.tests.workbench.SampleView");
+		MToolBar toolbar = ems.createModelElement(MToolBar.class);
+		part.setToolbar(toolbar);
+
+		MPartSashContainer partSash = ems.createModelElement(MPartSashContainer.class);
+		window.getChildren().add(partSash);
+
+		// Add global placeholder
+		MPlaceholder placeholder1 = ems.createModelElement(MPlaceholder.class);
+		placeholder1.setRef(part);
+		partSash.getChildren().add(placeholder1);
+
+		// Add local placeholder
+		MPerspectiveStack perspectiveStack = ems.createModelElement(MPerspectiveStack.class);
+		partSash.getChildren().add(perspectiveStack);
+
+		MPerspective perspective = ems.createModelElement(MPerspective.class);
+		perspectiveStack.getChildren().add(perspective);
+		perspectiveStack.setSelectedElement(perspective);
+
+		MPlaceholder placeholder2 = ems.createModelElement(MPlaceholder.class);
+		placeholder2.setRef(part);
+		perspective.getChildren().add(placeholder2);
+
+		application.getChildren().add(window);
+		contextRule.createAndRunWorkbench(window);
+
+		assertTrue(placeholder1.isToBeRendered());
+		assertTrue(placeholder2.isToBeRendered());
+
+		MDirectToolItem item = ems.createModelElement(MDirectToolItem.class);
+		toolbar.getChildren().add(item);
+
+		assertTrue(placeholder1.isToBeRendered());
+		assertTrue(placeholder2.isToBeRendered());
 	}
 
 	@Test

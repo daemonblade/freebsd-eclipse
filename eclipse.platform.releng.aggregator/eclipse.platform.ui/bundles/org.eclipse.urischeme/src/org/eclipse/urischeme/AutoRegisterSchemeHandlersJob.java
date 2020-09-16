@@ -36,20 +36,29 @@ public class AutoRegisterSchemeHandlersJob extends Job {
 	private static final String PROCESSED_SCHEMES_PREFERENCE = "processedSchemes"; //$NON-NLS-1$
 	private static final String SCHEME_LIST_PREFERENCE_SEPARATOR = ","; //$NON-NLS-1$
 	private static boolean alreadyTriggered = false;
-	final private IEclipsePreferences preferenceNode;
+	private IEclipsePreferences preferenceNode;
+	private IUriSchemeExtensionReader extensionReader;
+	private IOperatingSystemRegistration osRegistration;	
 
 	/**
 	 *
 	 */
 	public AutoRegisterSchemeHandlersJob() {
+		this(InstanceScope.INSTANCE.getNode(UriSchemeExtensionReader.PLUGIN_ID),
+				IUriSchemeExtensionReader.newInstance(), IOperatingSystemRegistration.getInstance());
+	}
+
+	AutoRegisterSchemeHandlersJob(IEclipsePreferences preferenceNode, IUriSchemeExtensionReader extensionReader,
+			IOperatingSystemRegistration osRegistration) {
 		super(AutoRegisterSchemeHandlersJob.class.getSimpleName());
-		preferenceNode = InstanceScope.INSTANCE.getNode(UriSchemeExtensionReader.PLUGIN_ID);
+		this.preferenceNode = preferenceNode;
+		this.extensionReader = extensionReader;
+		this.osRegistration = osRegistration;
 		setSystem(true);
 	}
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
-		IUriSchemeExtensionReader extensionReader = IUriSchemeExtensionReader.newInstance();
 		Collection<String> processedSchemes = new LinkedHashSet<>(Arrays
 				.asList(preferenceNode.get(PROCESSED_SCHEMES_PREFERENCE, "").split(SCHEME_LIST_PREFERENCE_SEPARATOR))); //$NON-NLS-1$
 		Collection<IScheme> toProcessSchemes = new LinkedHashSet<>(extensionReader.getSchemes());
@@ -58,10 +67,9 @@ public class AutoRegisterSchemeHandlersJob extends Job {
 			alreadyTriggered = true;
 			return Status.OK_STATUS;
 		}
-		IOperatingSystemRegistration osRegistration = IOperatingSystemRegistration.getInstance();
 		try {
 			toProcessSchemes = osRegistration.getSchemesInformation(toProcessSchemes).stream() //
-					.filter(scheme -> !scheme.isHandled()) //
+					.filter(scheme -> !scheme.schemeIsHandledByOther()) //
 					.collect(Collectors.toSet());
 			if (toProcessSchemes.isEmpty()) {
 				alreadyTriggered = true;
@@ -81,12 +89,7 @@ public class AutoRegisterSchemeHandlersJob extends Job {
 
 	@Override
 	public boolean shouldSchedule() {
-		/**
-		 * see https://bugs.eclipse.org/bugs/show_bug.cgi?id=562426#c14 and
-		 * https://bugs.eclipse.org/bugs/show_bug.cgi?id=541653#c1 about skipping on
-		 * Windows
-		 */
-		return !(Platform.getOS().equals(Platform.OS_WIN32) || alreadyTriggered || Platform.getPreferencesService()
-				.getBoolean(UriSchemeExtensionReader.PLUGIN_ID, SKIP_PREFERENCE, false, null));
+		return !(alreadyTriggered || Platform.getPreferencesService().getBoolean(UriSchemeExtensionReader.PLUGIN_ID,
+				SKIP_PREFERENCE, false, null));
 	}
 }

@@ -200,7 +200,7 @@ public abstract class WizardDataTransferPage extends WizardPage implements Liste
 	protected IPath getPathFromText(Text textField) {
 		String text = textField.getText();
 		// Do not make an empty path absolute so as not to confuse with the root
-		if (text.length() == 0) {
+		if (text.isEmpty()) {
 			return new Path(text);
 		}
 
@@ -273,7 +273,7 @@ public abstract class WizardDataTransferPage extends WizardPage implements Liste
 		String[] response = new String[] { YES, ALL, NO, NO_ALL, CANCEL };
 		// run in syncExec because callback is from an operation,
 		// which is probably not running in the UI thread.
-		getControl().getDisplay().syncExec(() -> dialog.open());
+		getControl().getDisplay().syncExec(dialog::open);
 		return dialog.getReturnCode() < 0 ? CANCEL : response[dialog.getReturnCode()];
 	}
 

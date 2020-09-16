@@ -19,6 +19,7 @@
 package org.eclipse.ui.internal.dialogs;
 
 import static org.eclipse.jface.viewers.LabelProvider.createTextProvider;
+import static org.eclipse.swt.events.SelectionListener.widgetSelectedAdapter;
 import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_COLOR_AND_FONT_ID;
 import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_OS_VERSION;
 import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_THEME_ASSOCIATION;
@@ -42,11 +43,12 @@ import org.eclipse.e4.ui.css.swt.theme.IThemeEngine;
 import org.eclipse.e4.ui.internal.workbench.swt.E4Application;
 import org.eclipse.e4.ui.internal.workbench.swt.PartRenderingEngine;
 import org.eclipse.e4.ui.model.application.MApplication;
+import org.eclipse.e4.ui.workbench.renderers.swt.CTabRendering;
 import org.eclipse.e4.ui.workbench.renderers.swt.StackRenderer;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.ControlDecoration;
 import org.eclipse.jface.fieldassist.FieldDecorationRegistry;
+import org.eclipse.jface.notifications.AbstractNotificationPopup;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferencePage;
 import org.eclipse.jface.util.Util;
@@ -60,10 +62,13 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Link;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferenceConstants;
 import org.eclipse.ui.IWorkbenchPreferencePage;
@@ -101,6 +106,8 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 
 	private Button themingEnabled;
 
+	private NotificationPopUp notificationPopUp;
+
 	@Override
 	protected Control createContents(Composite parent) {
 		initializeDialogUnits(parent);
@@ -128,7 +135,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 
 		themeIdCombo = new ComboViewer(comp, SWT.READ_ONLY);
 		themeIdCombo.setLabelProvider(createTextProvider(element -> ((ITheme) element).getLabel()));
-		themeIdCombo.setContentProvider(new ArrayContentProvider());
+		themeIdCombo.setContentProvider(ArrayContentProvider.getInstance());
 		themeIdCombo.setInput(getCSSThemes(highContrastMode));
 		themeIdCombo.getCombo().setEnabled(!highContrastMode);
 		themeIdCombo.getControl().setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -221,21 +228,15 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 	}
 
 	protected void createUseRoundTabs(Composite composite) {
-		IPreferenceStore apiStore = PrefUtil.getAPIPreferenceStore();
-		useRoundTabs = createCheckButton(composite, WorkbenchMessages.ViewsPreference_useRoundTabs,
-				apiStore.getBoolean(IWorkbenchPreferenceConstants.USE_ROUND_TABS));
+		IEclipsePreferences prefs = getSwtRendererPreferences();
+		boolean enabled = prefs.getBoolean(CTabRendering.USE_ROUND_TABS, CTabRendering.USE_ROUND_TABS_DEFAULT);
+		useRoundTabs = createCheckButton(composite, WorkbenchMessages.ViewsPreference_useRoundTabs, enabled);
 	}
 
 	protected void createEnableMruPref(Composite composite) {
 		createLabel(composite, ""); //$NON-NLS-1$
 		createLabel(composite, WorkbenchMessages.ViewsPreference_visibleTabs_description);
 		IEclipsePreferences prefs = getSwtRendererPreferences();
-		if (engine != null) {
-			boolean mruControlledByCSS = prefs.getBoolean(StackRenderer.MRU_CONTROLLED_BY_CSS_KEY, false);
-			if (mruControlledByCSS) {
-				return;
-			}
-		}
 		boolean defaultValue = getDefaultMRUValue();
 		boolean actualValue = prefs.getBoolean(StackRenderer.MRU_KEY, defaultValue);
 		enableMru = createCheckButton(composite, WorkbenchMessages.ViewsPreference_enableMRU, actualValue);
@@ -265,19 +266,44 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 		}
 
 		IPreferenceStore apiStore = PrefUtil.getAPIPreferenceStore();
-		apiStore.setValue(IWorkbenchPreferenceConstants.USE_ROUND_TABS, useRoundTabs.getSelection());
 		apiStore.setValue(IWorkbenchPreferenceConstants.USE_COLORED_LABELS, useColoredLabels.getSelection());
 
 		IEclipsePreferences prefs = getSwtRendererPreferences();
-		if (enableMru != null) {
-			prefs.putBoolean(StackRenderer.MRU_KEY, enableMru.getSelection());
-		}
+		prefs.putBoolean(StackRenderer.MRU_KEY, enableMru.getSelection());
 		prefs.putBoolean(PartRenderingEngine.ENABLED_THEME_KEY, themingEnabled.getSelection());
+		prefs.putBoolean(CTabRendering.USE_ROUND_TABS, useRoundTabs.getSelection());
 		try {
 			prefs.flush();
 		} catch (BackingStoreException e) {
 			WorkbenchPlugin.log("Failed to set SWT renderer preferences", e); //$NON-NLS-1$
 		}
+
+		if (engine != null) {
+			ITheme theme = getSelectedTheme();
+			boolean themeChanged = theme != null && !theme.equals(currentTheme);
+			boolean colorsAndFontsThemeChanged = !PlatformUI.getWorkbench().getThemeManager().getCurrentTheme().getId()
+					.equals(currentColorsAndFontsTheme.getId());
+
+			if (theme != null) {
+				currentTheme = theme;
+			}
+
+			ColorsAndFontsTheme colorsAndFontsTheme = getSelectedColorsAndFontsTheme();
+			if (colorsAndFontsTheme != null) {
+				currentColorsAndFontsTheme = colorsAndFontsTheme;
+			}
+
+			themeComboDecorator.hide();
+			colorFontsDecorator.hide();
+
+			if (themeChanged || colorsAndFontsThemeChanged) {
+				if (notificationPopUp == null) {
+					notificationPopUp = new NotificationPopUp(getShell().getDisplay());
+					notificationPopUp.open();
+				}
+			}
+		}
+
 		return super.performOk();
 	}
 
@@ -307,11 +333,10 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 			}
 		}
 		IPreferenceStore apiStore = PrefUtil.getAPIPreferenceStore();
-		useRoundTabs.setSelection(apiStore.getDefaultBoolean(IWorkbenchPreferenceConstants.USE_ROUND_TABS));
 		useColoredLabels.setSelection(apiStore.getDefaultBoolean(IWorkbenchPreferenceConstants.USE_COLORED_LABELS));
-		if (enableMru != null) {
-			enableMru.setSelection(getDefaultMRUValue());
-		}
+
+		useRoundTabs.setSelection(CTabRendering.USE_ROUND_TABS_DEFAULT);
+		enableMru.setSelection(getDefaultMRUValue());
 		super.performDefaults();
 	}
 
@@ -328,38 +353,6 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 		return super.performCancel();
 	}
 
-	@Override
-	protected void performApply() {
-		super.performApply();
-		if (engine != null) {
-			ITheme theme = getSelectedTheme();
-			IPreferenceStore apiStore = PrefUtil.getAPIPreferenceStore();
-			boolean themeChanged = theme != null && !theme.equals(currentTheme);
-			boolean colorsAndFontsThemeChanged = !PlatformUI.getWorkbench().getThemeManager().getCurrentTheme().getId()
-					.equals(currentColorsAndFontsTheme.getId());
-			boolean tabCornersChanged = !useRoundTabs.getSelection() != apiStore
-					.getBoolean(IWorkbenchPreferenceConstants.USE_ROUND_TABS);
-
-			if (theme != null) {
-				currentTheme = theme;
-			}
-
-			ColorsAndFontsTheme colorsAndFontsTheme = getSelectedColorsAndFontsTheme();
-			if (colorsAndFontsTheme != null) {
-				currentColorsAndFontsTheme = colorsAndFontsTheme;
-			}
-
-			themeComboDecorator.hide();
-			colorFontsDecorator.hide();
-
-			if (themeChanged || colorsAndFontsThemeChanged || tabCornersChanged) {
-				MessageDialog.openWarning(getShell(), WorkbenchMessages.ThemeChangeWarningTitle,
-						WorkbenchMessages.ThemeChangeWarningText);
-			}
-		}
-
-	}
-
 	private void createColorsAndFontsThemeCombo(Composite composite) {
 		new Label(composite, SWT.NONE).setText(WorkbenchMessages.ViewsPreference_currentTheme);
 		colorsAndFontsThemeCombo = new ComboViewer(composite, SWT.READ_ONLY);
@@ -371,7 +364,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 			}
 		});
 		colorFontsDecorator = new ControlDecoration(colorsAndFontsThemeCombo.getCombo(), SWT.TOP | SWT.LEFT);
-		colorsAndFontsThemeCombo.setContentProvider(new ArrayContentProvider());
+		colorsAndFontsThemeCombo.setContentProvider(ArrayContentProvider.getInstance());
 		colorsAndFontsThemeCombo.setInput(getColorsAndFontsThemes());
 		colorsAndFontsThemeCombo.getControl().setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		colorsAndFontsThemeCombo.addSelectionChangedListener(event -> {
@@ -510,4 +503,29 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 		}
 
 	}
+
+	private class NotificationPopUp extends AbstractNotificationPopup {
+
+		public NotificationPopUp(Display display) {
+			super(display);
+			setDelayClose(0);
+			setParentShell(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell());
+		}
+
+		@Override
+		protected String getPopupShellTitle() {
+			return WorkbenchMessages.ThemeChangeWarningTitle;
+		}
+
+
+		@Override
+		protected void createContentArea(Composite parent) {
+			parent.setLayout(new RowLayout());
+
+			Link link = new Link(parent, SWT.WRAP);
+			link.setText(WorkbenchMessages.ThemeChangeWarningText);
+			link.addSelectionListener(widgetSelectedAdapter(e -> PlatformUI.getWorkbench().restart(true)));
+		}
+	}
+
 }

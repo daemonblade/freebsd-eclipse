@@ -46,6 +46,7 @@ import org.eclipse.swt.browser.ProgressListener;
 import org.eclipse.swt.browser.VisibilityWindowAdapter;
 import org.eclipse.swt.browser.WindowEvent;
 import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -218,7 +219,7 @@ public class BrowserViewer extends Composite {
 			if (showURLbar)
 				createLocationBar(toolbarComp);
 
-			if (showToolbar | showURLbar) {
+			if (showToolbar || showURLbar) {
 				busy = new BusyIndicator(toolbarComp, SWT.NONE);
 				busy.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
 				busy.addMouseListener(new MouseAdapter() {
@@ -273,7 +274,7 @@ public class BrowserViewer extends Composite {
 			text.getControl().setLayoutData(new GridData(GridData.FILL_BOTH));
 
 		addBrowserListeners();
-		//listen();
+		addDisposeListener(this::dispose);
 	}
 
 	/**
@@ -741,10 +742,7 @@ public class BrowserViewer extends Composite {
 	/**
 	 *
 	 */
-	@Override
-	public void dispose() {
-		super.dispose();
-
+	private void dispose(DisposeEvent event) {
 		showToolbar = false;
 
 		if (busy != null)
@@ -756,6 +754,15 @@ public class BrowserViewer extends Composite {
 		if (clipboard!=null)
 			clipboard.dispose();
 		clipboard=null;
+
+		if (watcher != null) {
+			try {
+				watcher.close();
+			} catch (IOException e) {
+				WebBrowserUIPlugin.logError(e.getMessage(), e);
+			}
+		}
+		watcher = null;
 
 		removeSynchronizationListener();
 	}
@@ -992,7 +999,7 @@ public class BrowserViewer extends Composite {
 			}
 			watcher = FileSystems.getDefault().newWatchService();
 			final Path path = FileSystems.getDefault().getPath(file.getAbsolutePath());
-			path.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY);
+			path.register(watcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY);
 			new Thread(() -> {
 				try {
 					WatchKey key = watcher.take();
