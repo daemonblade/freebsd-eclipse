@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Fragment-Host: org.eclipse.swt;bundle-version="[3.115.0,4.0.0)"
+Bundle-Name: Chromium SWT Widget for GTK
+Bundle-Vendor: Eclipse.org
+Bundle-SymbolicName: org.eclipse.swt.browser.chromium.gtk.linux.x86_64;singleton:=true
+Bundle-Version: 3.115.0.qualifier
+Bundle-ManifestVersion: 2
+Eclipse-PlatformFilter: (& (osgi.ws=gtk) (osgi.os=linux) (osgi.arch=x86_64))
+SWT-WS: gtk
+SWT-OS: linux
+SWT-Arch: x86_64
+Automatic-Module-Name: org.eclipse.swt.browser.chromium.gtk.linux.x86_64

@@ -15,17 +15,17 @@
     <parent>
         <artifactId>eclipse.platform.swt.binaries</artifactId>
         <groupId>eclipse.platform.swt.binaries</groupId>
-        <version>4.16.0-SNAPSHOT</version>
+        <version>4.17.0-SNAPSHOT</version>
         <relativePath>../../</relativePath>
     </parent>
       
     <groupId>eclipse.platform.swt.binaries</groupId>
     <artifactId>binaries-parent</artifactId>
-    <version>4.16.0-SNAPSHOT</version>
+    <version>4.17.0-SNAPSHOT</version>
     <packaging>pom</packaging>
       
     <properties>
-        <forceContextQualifier>v20200604-0951</forceContextQualifier>
+        <forceContextQualifier>v20200831-1002</forceContextQualifier>
     </properties>
       
     <build>
@@ -84,40 +84,15 @@
                     <dependency>
                         <groupId>org.apache.ant</groupId>
                         <artifactId>ant</artifactId>
-                        <version>1.10.7</version>
+                        <version>1.10.8</version>
                     </dependency>
                     <dependency>
                         <groupId>org.apache.ant</groupId>
                         <artifactId>ant-apache-bsf</artifactId>
-                        <version>1.10.7</version>
+                        <version>1.10.8</version>
                     </dependency>
                 </dependencies>
             </plugin>
         </plugins>
     </build>
-    <profiles>
-	<profile>
-		<id>pre-jigsaw</id>
-		<activation>
-			<jdk>1.8</jdk>
-		</activation>
-		<build>
-			<plugins>
-				<plugin>
-					<artifactId>maven-antrun-plugin</artifactId>
-					<dependencies>
-						<dependency>
-							<groupId>com.sun</groupId>
-							<artifactId>tools</artifactId>
-							<version>0.0.0</version>
-							<scope>system</scope>
-							<systemPath>${toolsjar}</systemPath>
-						</dependency>
-					</dependencies>
-				</plugin>
-			</plugins>
-		</build>
-	</profile>
-
-</profiles>
 </project>
