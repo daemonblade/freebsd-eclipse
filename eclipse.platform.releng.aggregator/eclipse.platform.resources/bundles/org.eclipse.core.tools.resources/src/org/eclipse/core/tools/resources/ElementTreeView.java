@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.tools.*;
 import org.eclipse.jface.action.*;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
@@ -93,7 +94,7 @@ public class ElementTreeView extends SpyView implements IResourceChangeListener 
 		UpdateAction() {
 			super("Update view");
 			this.setToolTipText("Update");
-			this.setImageDescriptor(CoreToolsPlugin.createImageDescriptor("refresh.gif"));
+			this.setImageDescriptor(ImageDescriptor.createFromURLSupplier(true, () -> ElementTreeView.class.getResource("/icons/refresh.gif")));
 		}
 
 		void addToStringCount(String name) {
@@ -116,7 +117,7 @@ public class ElementTreeView extends SpyView implements IResourceChangeListener 
 
 		void analyzeStrings() {
 			sortedList = new ArrayList<>(strings.values());
-			Collections.sort(sortedList);
+			sortedList.sort(null);
 		}
 
 		void analyzeTrees() {
@@ -322,7 +323,7 @@ public class ElementTreeView extends SpyView implements IResourceChangeListener 
 		private List<Map.Entry<Object, Integer>> sortEntrySet(Set<Map.Entry<Object, Integer>> set) {
 			List<Map.Entry<Object, Integer>> result = new ArrayList<>();
 			result.addAll(set);
-			Collections.sort(result, (arg0, arg1) -> arg1.getValue().intValue() - arg0.getValue().intValue());
+			result.sort((arg0, arg1) -> arg1.getValue().intValue() - arg0.getValue().intValue());
 			return result;
 		}
 
