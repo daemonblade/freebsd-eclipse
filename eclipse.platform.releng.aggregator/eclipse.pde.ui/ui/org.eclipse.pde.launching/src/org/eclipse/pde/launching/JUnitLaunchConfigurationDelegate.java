@@ -24,7 +24,6 @@ import org.eclipse.debug.core.*;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.internal.junit.launcher.*;
 import org.eclipse.jdt.launching.*;
-import org.eclipse.osgi.service.resolver.BundleDescription;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.pde.core.plugin.*;
 import org.eclipse.pde.internal.core.*;
@@ -146,12 +145,6 @@ public class JUnitLaunchConfigurationDelegate extends org.eclipse.jdt.junit.laun
 		programArgs.add("-dev"); //$NON-NLS-1$
 		programArgs.add(ClasspathHelper.getDevEntriesProperties(getConfigurationDirectory(configuration).toString() + "/dev.properties", fAllBundles)); //$NON-NLS-1$
 
-		// necessary for PDE to know how to load plugins when target platform = host platform
-		// see PluginPathFinder.getPluginPaths()
-		IPluginModelBase base = findPlugin(PDECore.PLUGIN_ID);
-		if (base != null && VersionUtil.compareMacroMinorMicro(base.getBundleDescription().getVersion(), new Version("3.3.1")) < 0) //$NON-NLS-1$
-			programArgs.add("-pdelaunch"); //$NON-NLS-1$
-
 		// Create the .options file if tracing is turned on
 		if (configuration.getAttribute(IPDELauncherConstants.TRACING, false) && !IPDELauncherConstants.TRACING_NONE.equals(configuration.getAttribute(IPDELauncherConstants.TRACING_CHECKED, (String) null))) {
 			programArgs.add("-debug"); //$NON-NLS-1$
@@ -232,23 +225,6 @@ public class JUnitLaunchConfigurationDelegate extends org.eclipse.jdt.junit.laun
 		} catch (CoreException e) {
 		}
 
-		// if application is not set, we should launch the default UI test app
-		// Check to see if we should launch the legacy UI app
-		if (application == null) {
-			IPluginModelBase model = fAllBundles.get("org.eclipse.pde.junit.runtime"); //$NON-NLS-1$
-			BundleDescription desc = model != null ? model.getBundleDescription() : null;
-			if (desc != null) {
-				Version version = desc.getVersion();
-				int major = version.getMajor();
-				// launch legacy UI app only if we are launching a target that does
-				// not use the new application model and we are launching with a
-				// org.eclipse.pde.junit.runtime whose version is >= 3.3
-				if (major >= 3 && version.getMinor() >= 3 && !TargetPlatformHelper.usesNewApplicationModel()) {
-					application = IPDEConstants.LEGACY_UI_TEST_APPLICATION;
-				}
-			}
-		}
-
 		// launch the UI test application
 		if (application == null)
 			application = IPDEConstants.UI_TEST_APPLICATION;
@@ -257,8 +233,6 @@ public class JUnitLaunchConfigurationDelegate extends org.eclipse.jdt.junit.laun
 
 	private IPluginModelBase findPlugin(String id) throws CoreException {
 		IPluginModelBase model = PluginRegistry.findModel(id);
-		if (model == null)
-			model = PDECore.getDefault().findPluginInHost(id);
 		if (model == null)
 			abort(NLS.bind(PDEMessages.JUnitLaunchConfiguration_error_missingPlugin, id), null, IStatus.OK);
 		return model;
