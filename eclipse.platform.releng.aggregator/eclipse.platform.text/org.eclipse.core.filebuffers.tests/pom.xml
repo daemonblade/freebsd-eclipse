@@ -14,12 +14,12 @@
   <parent>
     <artifactId>tests-pom</artifactId>
     <groupId>eclipse.platform.text</groupId>
-    <version>4.16.0-SNAPSHOT</version>
+    <version>4.17.0-SNAPSHOT</version>
     <relativePath>../tests-pom/</relativePath>
   </parent>
   <groupId>org.eclipse.core</groupId>
   <artifactId>org.eclipse.core.filebuffers.tests</artifactId>
-  <version>3.11.500-SNAPSHOT</version>
+  <version>3.11.600-SNAPSHOT</version>
   <packaging>eclipse-test-plugin</packaging>
   <properties>
   	<testSuite>${project.artifactId}</testSuite>

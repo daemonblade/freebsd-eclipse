@@ -69,50 +69,66 @@ public class GotoLastEditPositionAction extends Action implements IWorkbenchWind
 
 	@Override
 	public void run() {
-		EditPosition editPosition= TextEditorPlugin.getDefault().getLastEditPosition();
-		if (editPosition == null)
-			return;
-
-		final Position pos= editPosition.getPosition();
-		if (pos == null || pos.isDeleted)
-			return;
-
-		IWorkbenchWindow window= getWindow();
-		if (window == null)
-			return;
-
-		IWorkbenchPage page= window.getActivePage();
-
-		IEditorPart editor;
+		if (TextEditorPlugin.TraversalDirection.BACKWARD == TextEditorPlugin.getDefault()
+				.getEditHistoryTraversalDirection()) {
+			TextEditorPlugin.getDefault().backtrackEditPosition();
+		}
+		EditPosition editPosition = TextEditorPlugin.getDefault().getLastEditPosition();
 		try {
-			editor= page.openEditor(editPosition.getEditorInput(), editPosition.getEditorId());
-		} catch (PartInitException ex) {
-			IStatus status= new Status(IStatus.ERROR, TextEditorPlugin.PLUGIN_ID, IStatus.OK, "Go to Last Edit Location failed", ex); //$NON-NLS-1$
-			TextEditorPlugin.getDefault().getLog().log(status);
-			return;
-		}
 
-		// Optimization - could also use else branch
-		if (editor instanceof ITextEditor) {
-			ITextEditor textEditor= (ITextEditor)editor;
-			textEditor.selectAndReveal(pos.offset, pos.length);
-			return;
-		}
-
-		/*
-		 * Workaround: send out a text selection
-		 * XXX: Needs to be improved, see https://bugs.eclipse.org/bugs/show_bug.cgi?id=32214
-		 */
-		if (editor != null) {
-			IEditorSite site= editor.getEditorSite();
-			if (site == null)
+			if (editPosition == null) {
 				return;
+			}
 
-			ISelectionProvider provider= editor.getEditorSite().getSelectionProvider();
-			if (provider == null)
+			final Position pos = editPosition.getPosition();
+			if (pos == null || pos.isDeleted) {
 				return;
+			}
 
-			provider.setSelection(new TextSelection(pos.offset, pos.length));
+			IWorkbenchWindow window = getWindow();
+			if (window == null) {
+				return;
+			}
+
+			IWorkbenchPage page = window.getActivePage();
+
+			IEditorPart editor;
+			try {
+				editor = page.openEditor(editPosition.getEditorInput(), editPosition.getEditorId());
+			} catch (PartInitException ex) {
+				IStatus status = new Status(IStatus.ERROR, TextEditorPlugin.PLUGIN_ID, IStatus.OK,
+						"Go to Previous Edit Location failed", ex); //$NON-NLS-1$
+				TextEditorPlugin.getDefault().getLog().log(status);
+				return;
+			}
+
+			// Optimization - could also use else branch
+			if (editor instanceof ITextEditor) {
+				ITextEditor textEditor = (ITextEditor) editor;
+				textEditor.selectAndReveal(pos.offset, pos.length);
+				return;
+			}
+
+			/*
+			 * Workaround: send out a text selection XXX: Needs to be improved,
+			 * see https://bugs.eclipse.org/bugs/show_bug.cgi?id=32214
+			 */
+			if (editor != null) {
+				IEditorSite site = editor.getEditorSite();
+				if (site == null) {
+					return;
+				}
+
+				ISelectionProvider provider = editor.getEditorSite().getSelectionProvider();
+				if (provider == null) {
+					return;
+				}
+
+				provider.setSelection(new TextSelection(pos.offset, pos.length));
+			}
+		} finally {
+			TextEditorPlugin.getDefault()
+					.setEditHistoryTraversalDirection(TextEditorPlugin.TraversalDirection.BACKWARD);
 		}
 	}
 
@@ -127,7 +143,7 @@ public class GotoLastEditPositionAction extends Action implements IWorkbenchWind
 			 // adding the same action twice has no effect.
 			TextEditorPlugin.getDefault().addLastEditPositionDependentAction(action);
 			// this is always the same action for this instance
-			fAction= action;
+			fAction = action;
 		}
 	}
 
@@ -137,8 +153,9 @@ public class GotoLastEditPositionAction extends Action implements IWorkbenchWind
 	 * @return the workbench window
 	 */
 	private IWorkbenchWindow getWindow() {
-		if (fWindow == null)
+		if (fWindow == null) {
 			fWindow= PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		}
 		return fWindow;
 	}
 

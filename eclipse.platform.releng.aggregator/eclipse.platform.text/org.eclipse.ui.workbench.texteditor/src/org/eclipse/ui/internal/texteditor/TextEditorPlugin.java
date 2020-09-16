@@ -47,13 +47,32 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
  */
 public final class TextEditorPlugin extends AbstractUIPlugin implements IRegistryChangeListener {
 
+	/** how many edit locations will be remembered in history */
+	public static final int EDIT_LOCATION_HISTORY_SIZE = 15;
+
 	/** The plug-in instance */
 	private static TextEditorPlugin fgPlugin;
 
-	/** The last edit position */
-	private EditPosition fLastEditPosition;
+	/**
+	 * tracks whether cursor has moved since fEditPositionHistory was used to return
+	 * to prior or next location. If cursor has moved, then goto last edit location
+	 * simply returns to last edit location. But if cursor has not moved, that means
+	 * the command was invoked twice in a row without intervening other actions; in
+	 * that case we are in a traversal state of BACKWARD (or FORWARD), so we start
+	 * traversing backward (or forward) through history to prior (or next) edit
+	 * locations.
+	 */
+	TraversalDirection fEditHistoryTraversalDirection = TraversalDirection.NONE;
+
+	// an ordered history of prior edit positions
+	private HistoryTracker<EditPosition> fEditPositionHistory = new HistoryTracker<>(
+			EDIT_LOCATION_HISTORY_SIZE, EditPosition.class,
+			(a, b) -> b.getPosition().isDeleted || b.getPosition().isDeleted
+					|| EditPosition.areCoLocated(a, b),
+			false);
+
 	/** The action which goes to the last edit position */
-	private Set<IAction> fLastEditPositionDependentActions;
+	private Set<IAction> fEditPositionDependentActions;
 
 	/**
 	 * The quick diff extension registry.
@@ -105,29 +124,53 @@ public final class TextEditorPlugin extends AbstractUIPlugin implements IRegistr
 	 */
 	public static final String REFERENCE_PROVIDER_EXTENSION_POINT= "quickDiffReferenceProvider"; //$NON-NLS-1$
 
-	/**
-	 * Returns the last edit position.
-	 *
-	 * @return	the last edit position or <code>null</code>	if there is no last edit position
-	 * @see EditPosition
-	 */
-	public EditPosition getLastEditPosition() {
-		return fLastEditPosition;
+	public TraversalDirection getEditHistoryTraversalDirection() {
+		return fEditHistoryTraversalDirection;
+	}
+
+	public void setEditHistoryTraversalDirection(TraversalDirection direction) {
+		this.fEditHistoryTraversalDirection = direction;
+	}
+
+	public HistoryTracker<EditPosition> getEditPositionHistory() {
+		return fEditPositionHistory;
+	}
+
+	public void setEditPositionHistory(HistoryTracker<EditPosition> editPositionHistory) {
+		fEditPositionHistory = editPositionHistory;
 	}
 
 	/**
-	 * Sets the last edit position.
+	 * Returns the last edit position.
 	 *
-	 * @param lastEditPosition	the last edit position
+	 * @return the last edit position or <code>null</code> if there is no last
+	 *         edit position
 	 * @see EditPosition
 	 */
-	public void setLastEditPosition(EditPosition lastEditPosition) {
-		fLastEditPosition= lastEditPosition;
-		if (fLastEditPosition != null && fLastEditPositionDependentActions != null) {
-			Iterator<IAction> iter= fLastEditPositionDependentActions.iterator();
+	public EditPosition getLastEditPosition() {
+		return fEditPositionHistory.getCurrentBrowsePoint();
+	}
+
+	public EditPosition getNextEditPosition() {
+		return fEditPositionHistory.getNext();
+	}
+
+	public EditPosition backtrackEditPosition() {
+		return fEditPositionHistory.browseBackward();
+	}
+
+	public EditPosition advanceEditPosition() {
+		return fEditPositionHistory.browseForward();
+	}
+
+	public void enableLastEditPositionDependentActions() {
+		EditPosition last = fEditPositionHistory.getCurrentBrowsePoint();
+
+		if (last != null && getDependentActions() != null) {
+			Iterator<IAction> iter = getDependentActions().iterator();
 			while (iter.hasNext())
 				iter.next().setEnabled(true);
-			fLastEditPositionDependentActions= null;
+			setDependentActions(null);
 		}
 	}
 
@@ -137,11 +180,11 @@ public final class TextEditorPlugin extends AbstractUIPlugin implements IRegistr
 	 * @param action the goto last edit position action
 	 */
 	public void addLastEditPositionDependentAction(IAction action) {
-		if (fLastEditPosition != null)
+		if (!fEditPositionHistory.isEmpty()) {
 			return;
-		if (fLastEditPositionDependentActions == null)
-			fLastEditPositionDependentActions= new HashSet<>();
-		fLastEditPositionDependentActions.add(action);
+		}
+
+		addDependentAction(action);
 	}
 
 	/**
@@ -150,12 +193,33 @@ public final class TextEditorPlugin extends AbstractUIPlugin implements IRegistr
 	 * @param action the action that depends on the last edit position
 	 */
 	public void removeLastEditPositionDependentAction(IAction action) {
-		if (fLastEditPosition != null)
+		if (!fEditPositionHistory.isEmpty()) {
 			return;
-		if (fLastEditPositionDependentActions != null)
-			fLastEditPositionDependentActions.remove(action);
+		}
+
+		removeDependentAction(action);
 	}
 
+	private Set<IAction> getDependentActions() {
+		return fEditPositionDependentActions;
+	}
+
+	private void setDependentActions(Set<IAction> actions) {
+		fEditPositionDependentActions = actions;
+	}
+
+	public void addDependentAction(IAction action) {
+		if (getDependentActions() == null) {
+			setDependentActions(new HashSet<>());
+		}
+		getDependentActions().add(action);
+	}
+
+	public void removeDependentAction(IAction action) {
+		if (getDependentActions() != null) {
+			getDependentActions().remove(action);
+		}
+	}
 
 	@Override
 	public void start(BundleContext context) throws Exception {
@@ -215,5 +279,9 @@ public final class TextEditorPlugin extends AbstractUIPlugin implements IRegistr
 	 */
 	public CodeMiningProviderRegistry getCodeMiningProviderRegistry() {
 		return fCodeMiningProviderRegistry;
+	}
+
+	public static enum TraversalDirection {
+		NONE, BACKWARD, FORWARD;
 	}
 }
