@@ -180,7 +180,7 @@ public class AreaEditor extends AbstractComponentEditor<MArea> {
 
 			if (stackLayout.topControl != topControl) {
 				stackLayout.topControl = topControl;
-				composite.layout(true, true);
+				composite.requestLayout();
 			}
 		}
 
@@ -252,7 +252,7 @@ public class AreaEditor extends AbstractComponentEditor<MArea> {
 			final GridData gd = new GridData(GridData.FILL_HORIZONTAL);
 			gd.horizontalSpan = 2;
 			viewer.getControl().setLayoutData(gd);
-			viewer.setContentProvider(new ArrayContentProvider());
+			viewer.setContentProvider(ArrayContentProvider.getInstance());
 			viewer.setLabelProvider(new LabelProvider() {
 				@Override
 				public String getText(Object element) {

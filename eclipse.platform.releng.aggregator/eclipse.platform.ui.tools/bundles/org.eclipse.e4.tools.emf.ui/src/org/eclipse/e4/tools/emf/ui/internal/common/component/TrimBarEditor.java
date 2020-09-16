@@ -152,7 +152,7 @@ public class TrimBarEditor extends AbstractComponentEditor<MTrimBar> {
 
 			if (stackLayout.topControl != topControl) {
 				stackLayout.topControl = topControl;
-				composite.layout(true, true);
+				composite.requestLayout();
 			}
 		}
 
@@ -194,7 +194,7 @@ public class TrimBarEditor extends AbstractComponentEditor<MTrimBar> {
 			l.setLayoutData(new GridData());
 
 			final ComboViewer viewer = new ComboViewer(parent);
-			viewer.setContentProvider(new ArrayContentProvider());
+			viewer.setContentProvider(ArrayContentProvider.getInstance());
 			viewer.setInput(SideValue.values());
 			final GridData gd = new GridData();
 			gd.horizontalSpan = 2;

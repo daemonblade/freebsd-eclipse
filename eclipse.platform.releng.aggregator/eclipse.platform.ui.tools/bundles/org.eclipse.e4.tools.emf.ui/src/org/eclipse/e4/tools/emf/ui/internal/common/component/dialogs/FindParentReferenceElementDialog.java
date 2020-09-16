@@ -140,7 +140,7 @@ public class FindParentReferenceElementDialog extends SaveDialogBoundsSettingsDi
 		combo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		eClassViewer.setLabelProvider(LabelProvider.createTextProvider(element -> ((EClass) element).getName()));
 
-		eClassViewer.setContentProvider(new ArrayContentProvider());
+		eClassViewer.setContentProvider(ArrayContentProvider.getInstance());
 		final List<EClass> eClassList = getExtendableClasses();
 		eClassViewer.setComparator(new ViewerComparator() {
 			@Override
@@ -286,7 +286,7 @@ public class FindParentReferenceElementDialog extends SaveDialogBoundsSettingsDi
 				for (EClass c : p.getAllClasses()) {
 					// Fix 530772 : as far as MInput is still in Application meta model, it should
 					// removed manually ! (see also 509868)
-					if (Util.canBeExtendedInAFragment(c) && !"InputPart".equals(c.getName())) { //$NON-NLS-1$
+					if (Util.canBeExtendedInAFragment(c)) {
 						extendableClasses.add(c);
 					}
 				}
