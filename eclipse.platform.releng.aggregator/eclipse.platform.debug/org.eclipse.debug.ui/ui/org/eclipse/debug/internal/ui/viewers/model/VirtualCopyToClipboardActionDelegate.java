@@ -149,8 +149,9 @@ public class VirtualCopyToClipboardActionDelegate extends AbstractDebugActionDel
 			for (String label : labels) {
 				String text = trimLabel(label);
 				if (text != null && !text.equals(IInternalDebugCoreConstants.EMPTY_STRING)) {
-					buffer.append(text+TAB);
+					buffer.append(text);
 				}
+				buffer.append(TAB);
 			}
 			buffer.append(System.getProperty(SEPARATOR));
 		}
@@ -267,20 +268,17 @@ public class VirtualCopyToClipboardActionDelegate extends AbstractDebugActionDel
 		final IProgressMonitor monitor = dialog.getProgressMonitor();
 		dialog.setCancelable(true);
 
-		IRunnableWithProgress runnable = new IRunnableWithProgress() {
-			@Override
-			public void run(final IProgressMonitor m) throws InvocationTargetException, InterruptedException {
-				synchronized(listener) {
-					listener.fProgressMonitor = m;
-					listener.fProgressMonitor.beginTask(DebugUIPlugin.removeAccelerators(getAction().getText()), listener.fItemsToUpdate.size());
-				}
+		IRunnableWithProgress runnable = m -> {
+			synchronized(listener) {
+				listener.fProgressMonitor = m;
+				listener.fProgressMonitor.beginTask(DebugUIPlugin.removeAccelerators(getAction().getText()), listener.fItemsToUpdate.size());
+			}
 
-				while (!listener.fItemsToUpdate.isEmpty() && !listener.fProgressMonitor.isCanceled()) {
-					Thread.sleep(1);
-				}
-				synchronized(listener) {
-					listener.fProgressMonitor = null;
-				}
+			while (!listener.fItemsToUpdate.isEmpty() && !listener.fProgressMonitor.isCanceled()) {
+				Thread.sleep(1);
+			}
+			synchronized(listener) {
+				listener.fProgressMonitor = null;
 			}
 		};
 		try {

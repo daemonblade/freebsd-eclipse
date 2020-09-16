@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corporation and others.
+ * Copyright (c) 2009, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,11 +16,15 @@
 package org.eclipse.debug.tests;
 
 import org.eclipse.debug.tests.breakpoint.BreakpointOrderingTests;
+import org.eclipse.debug.tests.breakpoint.BreakpointTests;
 import org.eclipse.debug.tests.console.ConsoleDocumentAdapterTests;
 import org.eclipse.debug.tests.console.ConsoleManagerTests;
 import org.eclipse.debug.tests.console.ConsoleTests;
+import org.eclipse.debug.tests.console.FileLinkTests;
 import org.eclipse.debug.tests.console.IOConsoleFixedWidthTests;
 import org.eclipse.debug.tests.console.IOConsoleTests;
+import org.eclipse.debug.tests.console.InputStreamMonitorTests;
+import org.eclipse.debug.tests.console.OutputStreamMonitorTests;
 import org.eclipse.debug.tests.console.ProcessConsoleManagerTests;
 import org.eclipse.debug.tests.console.ProcessConsoleTests;
 import org.eclipse.debug.tests.console.RuntimeProcessTests;
@@ -59,23 +63,65 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-		SourceLookupFacilityTests.class, BreakpointOrderingTests.class,
-		VirtualViewerDeltaTests.class, VirtualViewerContentTests.class,
-		VirtualViewerLazyModeTests.class, VirtualViewerSelectionTests.class,
-		VirtualViewerStateTests.class, VirtualViewerUpdateTests.class,
-		VirtualViewerFilterTests.class, FilterTransformTests.class,
-		ChildrenUpdateTests.class, PresentationContextTests.class,
-		MemoryRenderingTests.class, LaunchConfigurationTests.class,
-		AcceleratorSubstitutionTests.class, LaunchHistoryTests.class,
-		LaunchFavoriteTests.class, LaunchManagerTests.class,
-		RefreshTabTests.class, ArgumentParsingTests.class, LaunchTests.class,
+		// Source lookup tests
+		SourceLookupFacilityTests.class,
+		// BP tests
+		BreakpointOrderingTests.class,
+		BreakpointTests.class,
+		// Note: jface viewer tests were moved out of nightly tests
+		// due to frequent problems on nightly build machines.
+		// (Bug 343308).
+
+		// Virtual viewer tests
+		VirtualViewerDeltaTests.class,
+		VirtualViewerContentTests.class,
+		VirtualViewerLazyModeTests.class,
+		VirtualViewerSelectionTests.class,
+		VirtualViewerStateTests.class,
+		VirtualViewerUpdateTests.class,
+		VirtualViewerFilterTests.class,
+
+		// Viewer neutral tests
+		FilterTransformTests.class,
+		ChildrenUpdateTests.class,
+		PresentationContextTests.class,
+		
+		// Memory view
+		MemoryRenderingTests.class,
+
+		// Launch framework
+		LaunchConfigurationTests.class,
+		AcceleratorSubstitutionTests.class,
+		LaunchHistoryTests.class,
+		LaunchFavoriteTests.class,
+		LaunchManagerTests.class,
+		RefreshTabTests.class,
+		ArgumentParsingTests.class,
+		LaunchTests.class,
+
+		// Status handlers
 		StatusHandlerTests.class,
+
+		// Step filters
 		StepFiltersTests.class,
-		ConsoleDocumentAdapterTests.class, ConsoleManagerTests.class,
-		ConsoleTests.class, IOConsoleTests.class,
-		IOConsoleFixedWidthTests.class, ProcessConsoleManagerTests.class,
-		ProcessConsoleTests.class, StreamsProxyTests.class,
-		TextConsoleViewerTest.class, RuntimeProcessTests.class,
-		LaunchGroupTests.class })
+
+		// Console view
+		ConsoleDocumentAdapterTests.class,
+		ConsoleManagerTests.class,
+		ConsoleTests.class,
+		IOConsoleTests.class,
+		IOConsoleFixedWidthTests.class,
+		ProcessConsoleManagerTests.class,
+		ProcessConsoleTests.class,
+		StreamsProxyTests.class,
+		TextConsoleViewerTest.class,
+		RuntimeProcessTests.class,
+		OutputStreamMonitorTests.class,
+		InputStreamMonitorTests.class,
+		FileLinkTests.class,
+
+		// Launch Groups
+		LaunchGroupTests.class,
+})
 public class AutomatedSuite {
 }

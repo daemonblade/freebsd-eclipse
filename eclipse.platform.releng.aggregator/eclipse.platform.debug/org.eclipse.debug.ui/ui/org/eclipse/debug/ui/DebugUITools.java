@@ -72,6 +72,7 @@ import org.eclipse.debug.internal.ui.memory.MemoryRenderingManager;
 import org.eclipse.debug.internal.ui.sourcelookup.SourceLookupFacility;
 import org.eclipse.debug.internal.ui.sourcelookup.SourceLookupUIUtils;
 import org.eclipse.debug.internal.ui.stringsubstitution.SelectedResourceManager;
+import org.eclipse.debug.internal.ui.views.breakpoints.DeleteBreakpointMarkersOperation;
 import org.eclipse.debug.ui.actions.IToggleBreakpointsTargetManager;
 import org.eclipse.debug.ui.contexts.IDebugContextListener;
 import org.eclipse.debug.ui.contexts.IDebugContextManager;
@@ -101,7 +102,6 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.handlers.HandlerUtil;
-import org.eclipse.ui.ide.undo.DeleteMarkersOperation;
 import org.eclipse.ui.ide.undo.WorkspaceUndoUtil;
 
 
@@ -301,6 +301,13 @@ public class DebugUITools {
 	 * @since 3.7
 	 */
 	public static void deleteBreakpoints(IBreakpoint[] breakpoints, final Shell shell, IProgressMonitor progressMonitor) throws CoreException {
+		if (breakpoints.length == 0) {
+			// Note: this is not only a small performance optimization but also the fix for
+			// bug 344352. When removing no breakpoints the DeleteMarkersOperation will show
+			// an error dialog about missing markers.
+			return;
+		}
+
 		IMarker[] markers= new IMarker[breakpoints.length];
 		int markerCount;
 		for (markerCount= 0; markerCount < breakpoints.length; markerCount++) {
@@ -319,11 +326,6 @@ public class DebugUITools {
 		DebugPlugin.getDefault().getBreakpointManager().removeBreakpoints(breakpoints, !allowUndo);
 
 		if (allowUndo) {
-
-			for (IMarker marker : markers) {
-				marker.setAttribute(DebugPlugin.ATTR_BREAKPOINT_IS_DELETED, true);
-			}
-
 			IAdaptable context= null;
 			if (shell != null) {
 				context= new IAdaptable() {
@@ -339,7 +341,7 @@ public class DebugUITools {
 			}
 
 			String operationName= markers.length == 1 ? ActionMessages.DeleteBreakpointOperationName : ActionMessages.DeleteBreakpointsOperationName;
-			IUndoableOperation deleteMarkerOperation= new DeleteMarkersOperation(markers, operationName);
+			IUndoableOperation deleteMarkerOperation = new DeleteBreakpointMarkersOperation(markers, operationName);
 			deleteMarkerOperation.removeContext(WorkspaceUndoUtil.getWorkspaceUndoContext());
 			deleteMarkerOperation.addContext(DebugUITools.getBreakpointsUndoContext());
 			IOperationHistory operationHistory= PlatformUI.getWorkbench().getOperationSupport().getOperationHistory();

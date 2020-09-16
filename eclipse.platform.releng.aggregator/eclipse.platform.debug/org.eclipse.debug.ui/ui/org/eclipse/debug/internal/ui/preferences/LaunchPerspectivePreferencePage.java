@@ -42,12 +42,8 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialogWithToggle;
 import org.eclipse.jface.preference.PreferencePage;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
-import org.eclipse.jface.viewers.DoubleClickEvent;
-import org.eclipse.jface.viewers.IDoubleClickListener;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
@@ -328,20 +324,12 @@ public class LaunchPerspectivePreferencePage extends PreferencePage implements I
 		gd.heightHint = 250;
 		fTree.setLayoutData(gd);
 		fTreeViewer = new PerspectivesTreeViewer(fTree);
-		fTreeViewer.addSelectionChangedListener(new ISelectionChangedListener() {
-			@Override
-			public void selectionChanged(SelectionChangedEvent event) {
-				fPerspectivesPanel.refreshPanel(event.getStructuredSelection());
-			}
-		});
-		fTreeViewer.addDoubleClickListener(new IDoubleClickListener() {
-			@Override
-			public void doubleClick(DoubleClickEvent event) {
-				IStructuredSelection ss = (IStructuredSelection) event.getSelection();
-				if(!ss.isEmpty()) {
-					Object obj = ss.getFirstElement();
-					fTreeViewer.setExpandedState(obj, !fTreeViewer.getExpandedState(obj));
-				}
+		fTreeViewer.addSelectionChangedListener(event -> fPerspectivesPanel.refreshPanel(event.getStructuredSelection()));
+		fTreeViewer.addDoubleClickListener(event -> {
+			IStructuredSelection ss = (IStructuredSelection) event.getSelection();
+			if(!ss.isEmpty()) {
+				Object obj = ss.getFirstElement();
+				fTreeViewer.setExpandedState(obj, !fTreeViewer.getExpandedState(obj));
 			}
 		});
 		fTreeViewer.setLabelProvider(DebugUITools.newDebugModelPresentation());
@@ -468,27 +456,22 @@ public class LaunchPerspectivePreferencePage extends PreferencePage implements I
 
 	//prep selection context, remove types from the equation
 		HashSet<ILaunchDelegate> delegates = new HashSet<>();
-		Object o = null;
-		for(int i = 0; i < selection.length; i++) {
-			o = selection[i];
+		for (Object o : selection) {
 			if(o instanceof ILaunchDelegate) {
 				delegates.add((ILaunchDelegate) o);
 			}
 			else if(o instanceof ILaunchConfigurationType) {
 				fgCurrentWorkingContext.add(o);
-				Object[] kids = fTreeViewer.getFilteredChildren(o);
-				for (int j = 0; j < kids.length; j++) {
-					delegates.add((ILaunchDelegate) kids[i]);
+				for (Object kid : fTreeViewer.getFilteredChildren(o)) {
+					delegates.add((ILaunchDelegate) kid);
 				}
 			}
 		}
 	//compare the listing of delegates to find common mode sets
 		HashSet<Set<String>> common = new HashSet<>();
-		List<Set<String>> modes = null;
 		HashSet<Set<String>> pruned = new HashSet<>();
 		for (ILaunchDelegate delegate : delegates) {
-			modes = delegate.getModes();
-			for (Set<String> fmodes : modes) {
+			for (Set<String> fmodes : delegate.getModes()) {
 				if (isCommonModeset(fmodes, delegates, pruned)) {
 					common.add(fmodes);
 					fgCurrentWorkingContext.add(delegate);
