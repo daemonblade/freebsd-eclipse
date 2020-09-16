@@ -33,6 +33,7 @@ import org.eclipse.help.webapp.AbstractView;
 import org.eclipse.osgi.service.localization.BundleLocalization;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 
 public class LayoutData extends RequestData {
@@ -219,7 +220,8 @@ public class LayoutData extends RequestData {
 			String resource = titlePref.substring(slash + 1);
 			try {
 				Bundle bundle = Platform.getBundle(resourceContainer);
-				BundleContext bundleContext = HelpWebappPlugin.getContext();
+
+				BundleContext bundleContext = FrameworkUtil.getBundle(LayoutData.class).getBundleContext();
 				ServiceReference<?> ref = bundleContext.getServiceReference(BundleLocalization.class.getName());
 				BundleLocalization localization = (BundleLocalization) bundleContext.getService(ref);
 				return localization.getLocalization(bundle, locale).getString(resource);

@@ -25,7 +25,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.help.internal.webapp.HelpWebappPlugin;
 import org.eclipse.help.internal.webapp.WebappResources;
 import org.eclipse.help.internal.webapp.data.UrlUtil;
 import org.eclipse.help.internal.webapp.parser.AboutParser;
@@ -34,6 +33,7 @@ import org.eclipse.help.internal.webapp.servlet.PreferenceWriter;
 import org.eclipse.help.internal.webapp.servlet.XMLGenerator;
 import org.eclipse.help.internal.webapp.utils.Utils;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * Generates either xml, json or html page having informations about either
@@ -184,7 +184,7 @@ public class AboutService extends AboutServlet {
 
 		List<PluginDetails> plugins = new ArrayList<>();
 
-		Bundle[] bundles = HelpWebappPlugin.getContext().getBundles();
+		Bundle[] bundles =  FrameworkUtil.getBundle(AboutServlet.class).getBundleContext().getBundles();
 		for (Bundle bundle : bundles) {
 			plugins.add(pluginDetails(bundle));
 		}
