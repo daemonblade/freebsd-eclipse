@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="EclipseRT OSGi Starter Kit" uid="org.eclipse.rt.osgistarterkit.product" version="4.16.0.qualifier" useFeatures="true" includeLaunchers="true">
+<product name="EclipseRT OSGi Starter Kit" uid="org.eclipse.rt.osgistarterkit.product" version="4.17.0.qualifier" useFeatures="true" includeLaunchers="true">
 
    <configIni use="default">
    </configIni>
@@ -20,7 +20,8 @@
    <launcher name="rt">
       <freebsd icon="icon.xpm"/>
       <macosx icon="rt.icns"/>
-      <win useIco="false">
+      <win useIco="true">
+         <ico path="rt.ico"/>
          <bmp/>
       </win>
    </launcher>
@@ -187,8 +188,8 @@ United States, other countries, or both.
       <plugin id="org.eclipse.equinox.frameworkadmin.equinox" autoStart="true" startLevel="3" />
       <plugin id="org.eclipse.equinox.p2.console" autoStart="true" startLevel="3" />
       <plugin id="org.eclipse.equinox.simpleconfigurator.manipulator" autoStart="true" startLevel="3" />
-      <property name="osgi.noShutdown" value="true" />
       <property name="eclipse.ignoreApp" value="true" />
+      <property name="osgi.noShutdown" value="true" />
    </configurations>
 
 </product>

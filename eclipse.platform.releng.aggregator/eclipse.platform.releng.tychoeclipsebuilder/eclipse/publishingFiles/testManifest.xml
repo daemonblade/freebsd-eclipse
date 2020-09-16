@@ -15,6 +15,10 @@
         name="FreeBSD (64 bit version for Power PC)"
         fileName="eclipse-SDK-${BUILD_ID}-freebsd-gtk-powerpc64.tar.gz"></platform>
       <platform
+        id="SLG2AARCH64"
+        name="FreeBSD (64 bit version for AArch64)"
+        fileName="eclipse-SDK-${BUILD_ID}-freebsd-gtk-aarch64.tar.gz"></platform>
+      <platform
         id="SMCC64"
         name="Mac OSX (64 bit version)"
         fileName="eclipse-SDK-${BUILD_ID}-macosx-cocoa-x86_64.dmg"></platform>
@@ -76,6 +80,10 @@
         id="PLG2PPC64LE"
         name="FreeBSD (64 bit version for Power PC)"
         fileName="eclipse-platform-${BUILD_ID}-freebsd-gtk-powerpc64.tar.gz"></platform>
+      <platform
+        id="PLG2AARCH64"
+        name="FreeBSD (64 bit version for AArch64)"
+        fileName="eclipse-platform-${BUILD_ID}-freebsd-gtk-aarch64.tar.gz"></platform>
       <platform
         id="PMCC64"
         name="Mac OSX (64 bit version)"
@@ -157,9 +165,28 @@
         name="FreeBSD (64 bit version for Power PC)"
         fileName="swt-${BUILD_ID}-gtk-freebsd-powerpc64.zip"></platform>
       <platform
+        id="SWTLG2AARCH64"
+        name="FreeBSD (64 bit version for AArch64)"
+        fileName="swt-${BUILD_ID}-gtk-freebsd-aarch64.zip"></platform>
+      <platform
         id="SWTMCC64"
         name="Mac OSX (64 bit version)"
         fileName="swt-${BUILD_ID}-cocoa-macosx-x86_64.zip"></platform>
+    </zipType>
+
+    <zipType name="SWT Chromium">
+      <platform
+        id="SWTChromiumWX86_64"
+        name="Windows Chromium (64 bit version)"
+        fileName="swt-chromium-${BUILD_ID}-win32-win32-x86_64.zip"></platform>
+      <platform
+        id="SWTChromiumLG64"
+        name="Linux Chromium (64 bit version)"
+        fileName="swt-chromium-${BUILD_ID}-gtk-linux-x86_64.zip"></platform>
+      <platform
+        id="SWTChromiumMCC64"
+        name="Mac OSX Chromium (64 bit version)"
+        fileName="swt-chromium-${BUILD_ID}-cocoa-macosx-x86_64.zip"></platform>
     </zipType>
 
     <zipType name="RelEng Tool plug-in">
