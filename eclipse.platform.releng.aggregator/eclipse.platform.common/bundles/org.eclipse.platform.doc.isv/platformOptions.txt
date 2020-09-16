@@ -93,6 +93,7 @@
 ;${eclipse.platform.ui.bundles}/org.eclipse.e4.ui.workbench3/src
 ;${eclipse.platform.ui.bundles}/org.eclipse.jface/src
 ;${eclipse.platform.ui.bundles}/org.eclipse.jface.databinding/src
+;${eclipse.platform.ui.bundles}/org.eclipse.jface.notifications/src
 ;${eclipse.platform.ui.bundles}/org.eclipse.ui/src
 ;${eclipse.platform.ui.bundles}/org.eclipse.ui.forms/src
 ;${eclipse.platform.ui.bundles}/org.eclipse.ui.genericeditor/src
@@ -183,7 +184,7 @@
 -splitIndex
 -windowtitle "Eclipse Platform API Specification"
 -doctitle "Eclipse Platform API Specification"
--header "<span style='font-size:small'><b>Eclipse Platform</b><br>2020-06 (4.16)</span>"
+-header "<span style='font-size:small'><b>Eclipse Platform</b><br>2020-09 (4.17)</span>"
 -bottom "<br><span style='font-size:small;float:right'>Copyright (c) 2000, 2020 Eclipse Contributors and others. All rights reserved.</span><span style='font-size:small'><a href='{@docRoot}/../misc/api-usage-rules.html'>Guidelines for using Eclipse APIs.</a></span>"
 -link https://docs.oracle.com/en/java/javase/11/docs/api
 -link https://docs.osgi.org/javadoc/osgi.core/7.0.0/
@@ -353,6 +354,7 @@ org.eclipse.jface.dialogs
 org.eclipse.jface.fieldassist
 org.eclipse.jface.layout
 org.eclipse.jface.menus
+org.eclipse.jface.notifications
 org.eclipse.jface.operation
 org.eclipse.jface.preference
 org.eclipse.jface.resource

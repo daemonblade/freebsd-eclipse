@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html lang="en">
 <head>
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2011, 2018. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2011, 2020. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <meta http-equiv="Content-Style-Type" content="text/css">
 <link rel="STYLESHEET" href="../book.css" charset="ISO-8859-1" type="text/css">
@@ -12,7 +12,7 @@
 
 <p>
   Deprecated API can be marked for deletion.
-  See the <a href="http://wiki.eclipse.org/Eclipse/API_Central/Deprecation_Policy">policy</a>   for the details.
+  See the <a href="http://wiki.eclipse.org/Eclipse/API_Central/Deprecation_Policy">policy</a> for the details.
   This section describes API removals that occurred in past releases, and upcoming removals in future releases.
 </p>
 
@@ -62,6 +62,17 @@ Removed APIs in the Eclipse 4.12 release:
  <li><a href="#tabletree">TableTree</a></li>
 </ol>
 
+<p>
+Removed APIs in the Eclipse 4.17 release:
+</p>
+<ol>
+ <li><a href="#minputpart">Remove Input and MInputPart</a></li>
+ <li><a href="#platform-getjobmanager">org.eclipse.core.runtime.Platform#getJobManager()</a></li>
+  <li><a href="#jfaceassert">JFace and JFace text Assert</a></li>
+</ol>
+
+
+
 
 
 <p>
@@ -83,12 +94,9 @@ Planned API removals after June 2018:
 Planned API removals after June 2020:
 </p>
 <ol>
- <li><a href="#jfaceassert">JFace and JFace text Assert</a></li>
- <li><a href="#minputpart">Remove Input and MInputPart</a></li>
  <li><a href="#mpartdescriptor">Remove Dirtable flag from MPartDescriptor</a></li>
  <li><a href="#iplatformrunnable">Remove org.eclipse.core.runtime.IPlatformRunnable</a></li>
  <li><a href="#ui-dialogs">Remove deprecated dialogs from org.eclipse.ui.dialogs</a></li>
- <li><a href="#platform-getjobmanager">Remove method org.eclipse.core.runtime.Platform#getJobManager()</a></li>
  <li><a href="#jface-popupdialog">Remove deprecated method and constructor in PopupDialog</a></li>
 </ol>
 
@@ -138,6 +146,14 @@ Planned API removals after June 2022:
 </p>
 <ol>
  <li><a href="#icu4j">ICU4J bundle from SDK</a></li>
+</ol>
+
+<p>
+Planned API removals after September 2022:
+</p>
+<ol>
+ <li><a href="#pde.ui.launcher">Remove deprecated contents of org.eclipse.pde.ui.launcher package</a></li>
+ <li><a href="#createPlatformConfiguration">Remove TargetPlatform::createPlatformConfiguration</a></li>
 </ol>
 
 <hr>
@@ -265,6 +281,37 @@ For further details or to provide feedback on this change, see <a href="https://
 </p>
 
 
+<!-- ############################################## -->
+<h2>API removals in the Eclipse 4.17 release</h2>
+
+<h3>2. <a name="minputpart">Remove Input and MInputPart</a></h3>
+<p>
+The <code>MInput</code> and <code>MInputPart</code> classes and related API are removed.
+</p>
+For further details or to provide feedback on this change, see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=562813" target="_blank">bug 562813</a>.
+ 
+<p>
+
+<h3>6. <a name="platform-getjobmanager">Remove method org.eclipse.core.runtime.Platform#getJobManager()</a></h3>
+
+The method <code>getJobManager()</code> is planned to be removed from class <code>org.eclipse.core.runtime.Platform</code>.
+Clients are encouraged to use the method <code>org.eclipse.core.runtime.jobs.Job#getJobManager()</code> instead.
+
+<p>
+For further details or to provide feedback on this change, see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=564893" target="_blank">bug 564893</a>.
+</p>
+
+
+
+<h3>1. <a name="jfaceassert"> org.eclipse.jface.util.Assert and org.eclipse.jface.text.Assert </a></h3>
+<p>
+The <code>org.eclipse.jface.util.Assert</code> and <code>org.eclipse.jface.text.Assert</code> classes are removed.
+</p>
+<p>
+For further details or to provide feedback on this change, see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=564891" target="_blank">bug 564891</a>.
+</p>
+
+
 
 <!-- ############################################## -->
 
@@ -320,21 +367,6 @@ For further details or to provide feedback on this change, see
 
 <!-- ############################################## -->
 <h2>API removals after June 2020</h2>
-<h3>1. <a name="jfaceassert"> org.eclipse.jface.util.Assert and org.eclipse.jface.text.Assert </a></h3>
-<p>
-The <code>org.eclipse.jface.util.Assert</code> and <code>org.eclipse.jface.text.Assert</code> classes are planned to be removed.
-</p>
-<p>
-For further details or to provide feedback on this change, see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=528191" target="_blank">bug 528191</a>.
-</p>
-
-<h3>2. <a name="minputpart">Remove Input and MInputPart</a></h3>
-<p>
-The <code>MInput</code> and <code>MInputPart</code> classes and related API are planned to be removed.
-</p>
-<p>
-For further details or to provide feedback on this change, see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=509868" target="_blank">bug 509868</a>.
-</p>
 
 <h3>3. <a name="mpartdescriptor">Remove Dirtable flag from MPartDescriptor</a></h3>
 <p>
@@ -366,15 +398,6 @@ The following dialogs are planned to be removed from this package:
 </ul>
 <p>
 For further details or to provide feedback on this change, see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=448275" target="_blank">bug 448275</a>.
-</p>
-
-<h3>6. <a name="platform-getjobmanager">Remove method org.eclipse.core.runtime.Platform#getJobManager()</a></h3>
-
-The method <code>getJobManager()</code> is planned to be removed from class <code>org.eclipse.core.runtime.Platform</code>.
-Clients are encouraged to use the method <code>org.eclipse.core.runtime.jobs.Job#getJobManager()</code> instead.
-
-<p>
-For further details or to provide feedback on this change, see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=528192" target="_blank">bug 528192</a>.
 </p>
 
 <h3>7. <a name="jface-popupdialog">Remove deprecated method and constructor in PopupDialog</a></h3>
@@ -577,6 +600,64 @@ For further details or to provide feedback on this change, see <a href="https://
 Support and/or usage of ICU4J is being gradually removed from internals. Wherever ICU4J is exposed in API it's being deprecated and scheduled for removal after June 2022 release.
 <p>
 For further details or to provide feedback on this change, see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=562582" target="_blank">bug 562582</a>.
+</p>
+
+<!-- ############################################## -->
+<h2>API removals after September 2022</h2>
+
+<h3>1. <a name="observablefactories">Observable factory classes</a></h3>
+
+The following databinding classes will be removed. They have been obsolete since the databinding framework was transitioned to work with property classes in 2014. They are replaced by corresponding property factory classes.
+
+See <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=546820">bug 546820</a>.
+
+<ul>
+ <li>org.eclipse.jface.databinding.viewers.ViewersObservables</li>
+ <li>org.eclipse.jface.databinding.swt.SWTObservables</li>
+ <li>org.eclipse.core.databinding.beans.BeansObservables</li>
+ <li>org.eclipse.core.databinding.beans.PojoObservables</li>
+ <li>org.eclipse.ui.databinding.WorkbenchObservables</li>
+</ul>
+
+<h3>2. <a name="propertyfactories">Untyped databinding property factory classes</a></h3>
+
+The following classes in the databinding bundles will be removed. They are replaced by typed factory classes with the same name, but in a sub-package that is called "typed".
+
+See <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=546822">bug 546822</a>.
+
+<ul>
+ <li>org.eclipse.ui.databinding.WorkbenchProperties</li>
+ <li>org.eclipse.core.databinding.beans.BeanProperties</li>
+ <li>org.eclipse.core.databinding.beans.PojoProperties</li>
+ <li>org.eclipse.jface.databinding.viewers.ViewerProperties</li>
+ <li>org.eclipse.jface.databinding.swt.WidgetProperties</li>
+</ul>
+
+<h3>3. <a name="pde.ui.launcher">Remove deprecated contents of org.eclipse.pde.ui.launcher package</a></h3>
+
+The following classes from <code>org.eclipse.pde.ui.launcher</code> have been deprecated since 2009 and are scheduled for removal after the September 2022 release.
+All classes have corresponding replacements in the <code>org.eclipse.pde.launching</code> bundle.
+<ul>
+  <li><code>org.eclipse.pde.ui.launcher.AbstractPDELaunchConfiguration</code></li>
+  <li><code>org.eclipse.pde.ui.launcher.EclipseApplicationLaunchConfiguration</code></li>
+  <li><code>org.eclipse.pde.ui.launcher.EquinoxLaunchConfiguration</code></li>
+  <li><code>org.eclipse.pde.ui.launcher.EquinoxPluginsTab</code></li>
+  <li><code>org.eclipse.pde.ui.launcher.EquinoxSettingsTab</code></li>
+  <li><code>org.eclipse.pde.ui.launcher.IPDELauncherConstants</code></li>
+  <li><code>org.eclipse.pde.ui.launcher.JUnitLaunchConfigurationDelegate</code></li>
+  <li><code>org.eclipse.pde.ui.launcher.OSGiLaunchConfigurationDelegate</code></li>
+  <li><code>org.eclipse.pde.ui.launcher.OSGiLaunchConfigurationInitializer</code></li>
+  <li><code>org.eclipse.pde.ui.launcher.PDESourcePathProvider</code></li>
+</ul>
+<p>
+For further details or to provide feedback on this change, see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=564563" target="_blank">bug 564563</a>.
+</p>
+
+<h3>4. <a name="createPlatformConfiguration">Remove TargetPlatform::createPlatformConfiguration</a></h3>
+
+The method <code>org.eclipse.pde.core.plugin.TargetPlatform.createPlatformConfiguration(File, IPluginModelBase[], IPluginModelBase)</code> is scheduled for removal after the September 2022 release.
+<p>
+For further details or to provide feedback on this change, see <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=564763" target="_blank">bug 564763</a>.
 </p>
 
 </body>
