@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.platform"
       label="%featureName"
-      version="4.16.0.qualifier"
+      version="4.17.0.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -404,6 +404,16 @@
          id="org.eclipse.core.filesystem.freebsd.powerpc64"
          os="freebsd"
          arch="powerpc64"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+         
+   <plugin
+         id="org.eclipse.core.filesystem.linux.aarch64"
+         os="linux"
+         arch="aarch64"
          download-size="0"
          install-size="0"
          version="0.0.0"
