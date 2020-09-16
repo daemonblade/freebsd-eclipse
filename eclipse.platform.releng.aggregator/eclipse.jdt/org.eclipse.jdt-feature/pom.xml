@@ -14,12 +14,13 @@
   <parent>
     <artifactId>eclipse.jdt</artifactId>
     <groupId>eclipse.jdt</groupId>
-    <version>4.16.0-SNAPSHOT</version>
+    <version>4.17.0-SNAPSHOT</version>
   </parent>
   <groupId>org.eclipse.jdt.feature</groupId>
   <artifactId>org.eclipse.jdt</artifactId>
-  <version>3.18.400-SNAPSHOT</version>
+  <version>3.18.500-SNAPSHOT</version>
   <packaging>eclipse-feature</packaging>
+  <name>org eclipse jdt feature</name>
 
   <build>
     <plugins>
