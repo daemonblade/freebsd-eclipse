@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.debug.tests.core;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchManager;
@@ -64,7 +65,11 @@ public class ProcessTests extends AbstractDebugTest {
 	 * @throws Exception
 	 */
 	public void testAlreadyTerminatedProcess() throws Exception {
+		if (Platform.getOS().equals(Platform.OS_LINUX)) {
+			return;
+		}
 		Process process = DebugPlugin.exec(new String[]{"java"}, null);
+
 		boolean terminated = false;
 		int value = -1;
 		while (!terminated) {
