@@ -56,6 +56,7 @@ import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.ArrayInitializer;
+import org.eclipse.jdt.core.dom.AssertStatement;
 import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CatchClause;
@@ -1088,6 +1089,26 @@ public class WrapPreparator extends ASTVisitor {
 		return true;
 	}
 
+	@Override
+	public boolean visit(AssertStatement node) {
+		Expression message = node.getMessage();
+		if (message != null) {
+			int atColon = this.tm.firstIndexBefore(message, TokenNameCOLON);
+			int afterColon = this.tm.firstIndexIn(message, -1);
+			if (this.options.wrap_before_assertion_message_operator) {
+				this.wrapIndexes.add(atColon);
+				this.secondaryWrapIndexes.add(afterColon);
+			} else {
+				this.wrapIndexes.add(afterColon);
+				this.secondaryWrapIndexes.add(atColon);
+			}
+			this.wrapParentIndex = this.tm.firstIndexIn(node,  -1);
+			this.wrapGroupEnd = this.tm.lastIndexIn(node, -1);
+			handleWrap(this.options.alignment_for_assertion_message);
+		}
+		return true;
+	}
+
 	/**
 	 * Makes sure all new lines within given node will have wrap policy so that
 	 * wrap executor will fix their indentation if necessary.
@@ -1444,9 +1465,9 @@ public class WrapPreparator extends ASTVisitor {
 				if (isEmpty)
 					break;
 				this.tm.get(openingParenIndex + 1).setWrapPolicy(new WrapPolicy(WrapMode.TOP_PRIORITY,
-						openingParenIndex, closingParenIndex, this.options.indentation_size, 1, 1, true, false));
+						openingParenIndex, closingParenIndex, this.options.indentation_size, this.currentDepth, 1, true, false));
 				this.tm.get(closingParenIndex).setWrapPolicy(new WrapPolicy(WrapMode.TOP_PRIORITY,
-						openingParenIndex, closingParenIndex, 0, 1, 1, false, false));
+						openingParenIndex, closingParenIndex, 0, this.currentDepth, 1, false, false));
 				break;
 			case DefaultCodeFormatterConstants.SEPARATE_LINES_IF_NOT_EMPTY:
 				if (isEmpty)

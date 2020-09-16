@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -29,6 +30,7 @@ import org.eclipse.jdt.core.dom.BreakStatement;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
@@ -729,8 +731,7 @@ public class ASTConverter14Test extends ConverterTestSetup {
 			"		}\n" +
 			"\n" +
 			"		public X(int a) {\n" +
-			"			this.param1 = 6;\n" +
-			"			this.param2 = 16;\n" +
+			"			this(6, 16);\n" +
 			"			a = 6;\n" +
 			"		}\n" +
 			"}\n";
@@ -927,4 +928,103 @@ public class ASTConverter14Test extends ConverterTestSetup {
 		}
 	}
 
+	public void testRecordConstructor001() throws CoreException {
+		if (!isJRE14) {
+			System.err.println("Test "+getName()+" requires a JRE 14");
+			return;
+		}
+		String contents = "record X(int lo) {\n" +
+				"   public X {\n" +
+				"   \n}\n" +
+				"   public X(String str) {\n" +
+				"		this((str != null) ? str.length() : 0);\n" +
+				"   \n}\n" +
+				"	public int abc() {\n" +
+				"		return this.lo;\n" +
+				"	}\n" +
+				"\n" +
+				"}\n";
+		this.workingCopy = getWorkingCopy("/Converter14/src/X.java", true/*resolve*/);
+		IJavaProject javaProject = this.workingCopy.getJavaProject();
+		String old = javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true);
+		try {
+			javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+			javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+			ASTNode node = buildAST(
+				contents,
+				this.workingCopy);
+			assertEquals("Not a compilation unit", ASTNode.COMPILATION_UNIT, node.getNodeType());
+			CompilationUnit compilationUnit = (CompilationUnit) node;
+			assertProblemsSize(compilationUnit, 0);
+			node = ((AbstractTypeDeclaration)compilationUnit.types().get(0));
+			assertEquals("Not a Type", ASTNode.RECORD_DECLARATION, node.getNodeType());
+
+			ASTParser parser= ASTParser.newParser(getAST14());
+			parser.setProject(javaProject);
+			IBinding[] bindings = parser.createBindings(new IJavaElement[] { this.workingCopy.findPrimaryType() }, null);
+			IMethodBinding methodBinding= ((ITypeBinding) bindings[0]).getDeclaredMethods()[0];
+			assertEquals("compact constructor name", "X", methodBinding.getName());
+			assertTrue("not a Constructor", methodBinding.isConstructor());
+			assertTrue("not a CompactConstructor", methodBinding.isCompactConstructor());
+			methodBinding= ((ITypeBinding) bindings[0]).getDeclaredMethods()[1];
+			assertEquals("constructor name", "X", methodBinding.getName());
+			assertTrue("not a Constructor", methodBinding.isConstructor());
+			assertFalse("Is CompactConstructor?", methodBinding.isCompactConstructor());
+			methodBinding= ((ITypeBinding) bindings[0]).getDeclaredMethods()[2];
+			assertEquals("method name", "abc", methodBinding.getName());
+			assertFalse("Is a Constructor?", methodBinding.isConstructor());
+			assertFalse("Is a CompactConstructor?", methodBinding.isCompactConstructor());
+		} finally {
+			javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, old);
+		}
+	}
+	// Test the code with error doesn't cause a CCE and
+	// produces a decent recovered AST
+	public void testBug564766() throws JavaModelException {
+		if (!isJRE14) {
+			System.err.println("Test "+getName()+" requires a JRE 14");
+			return;
+		}
+		String contents =
+				"record Foo(int y) {\n" +
+				"    record Bar(int x) {\n" +
+				"        public Bar {\n" +
+				"            c(a.b);\n" +
+				"        }\n" +
+				"    }\n" +
+				"    enum Letter { \n" +
+				"        A\n" +
+				"        private Letter { }\n" +
+				"    }\n" +
+				"}";
+		this.workingCopy = getWorkingCopy("/Converter14/src/Foo.java", true/*resolve*/);
+		IJavaProject javaProject = this.workingCopy.getJavaProject();
+		String old = javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true);
+		try {
+			javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+			javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+			ASTNode node = buildAST(
+					contents,
+					this.workingCopy,
+					false);
+			assertEquals("Not a compilation unit", ASTNode.COMPILATION_UNIT, node.getNodeType());
+			CompilationUnit compilationUnit = (CompilationUnit) node;
+			assertProblemsSize(compilationUnit, 3,
+					"a cannot be resolved to a variable\n" +
+					"Syntax error on token \"A\", invalid Modifiers\n" +
+					"Illegal modifier for the enum constant Letter; no modifier is allowed");
+			List types = compilationUnit.types();
+			assertEquals("incorrect child elements", 1, types.size());
+			RecordDeclaration rec = (RecordDeclaration) types.get(0);
+			List bodyDeclarations = rec.bodyDeclarations();
+			assertEquals("Incorrect child elements", 2, bodyDeclarations.size());
+			node = (ASTNode) bodyDeclarations.get(0);
+			assertEquals("Not a compilation unit", ASTNode.RECORD_DECLARATION, node.getNodeType());
+			node = (ASTNode) bodyDeclarations.get(1);
+			assertEquals("Not a compilation unit", ASTNode.ENUM_DECLARATION, node.getNodeType());
+			assertTrue("must be marked as malformed", ((node.getFlags() & ASTNode.MALFORMED) != 0));
+		} finally {
+			javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, old);
+		}
+	}
 }
