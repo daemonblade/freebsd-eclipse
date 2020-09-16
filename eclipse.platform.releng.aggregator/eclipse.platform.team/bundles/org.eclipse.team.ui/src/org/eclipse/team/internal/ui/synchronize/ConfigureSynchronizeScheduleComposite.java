@@ -155,8 +155,8 @@ public class ConfigureSynchronizeScheduleComposite extends Composite {
 			String string = e.text;
 			char[] chars = new char[string.length()];
 			string.getChars(0, chars.length, chars, 0);
-			for (int i = 0; i < chars.length; i++) {
-				if (!('0' <= chars[i] && chars[i] <= '9')) {
+			for (char element : chars) {
+				if (!('0' <= element && element <= '9')) {
 					e.doit = false;
 					return;
 				}
@@ -164,7 +164,7 @@ public class ConfigureSynchronizeScheduleComposite extends Composite {
 		});
 
 		hoursOrMinutes = new Combo(area, SWT.READ_ONLY);
-		hoursOrMinutes.setItems(new String[] { TeamUIMessages.ConfigureRefreshScheduleDialog_5, TeamUIMessages.ConfigureRefreshScheduleDialog_6 }); //
+		hoursOrMinutes.setItems(TeamUIMessages.ConfigureRefreshScheduleDialog_5, TeamUIMessages.ConfigureRefreshScheduleDialog_6); //
 		hoursOrMinutes.setLayoutData(new GridData());
 
 		final Label label = new Label(area, SWT.WRAP);

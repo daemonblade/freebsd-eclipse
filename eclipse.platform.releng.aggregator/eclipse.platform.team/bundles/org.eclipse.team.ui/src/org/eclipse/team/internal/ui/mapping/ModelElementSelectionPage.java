@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2017 IBM Corporation and others.
+ * Copyright (c) 2006, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,7 +16,6 @@ package org.eclipse.team.internal.ui.mapping;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
@@ -166,7 +165,7 @@ public class ModelElementSelectionPage extends GlobalRefreshElementSelectionPage
 
 	@Override
 	protected boolean checkWorkingSetElements() {
-		List allWorkingSetElements = new ArrayList();
+		List<Object> allWorkingSetElements = new ArrayList<>();
 		IWorkingSet[] workingSets = getWorkingSets();
 		for (IWorkingSet set : workingSets) {
 			allWorkingSetElements.addAll(computeSelectedResources(new StructuredSelection(set.getElements())));
@@ -175,10 +174,9 @@ public class ModelElementSelectionPage extends GlobalRefreshElementSelectionPage
 		return !allWorkingSetElements.isEmpty();
 	}
 
-	private Collection computeSelectedResources(StructuredSelection selection) {
-		List result = new ArrayList();
-		for (Iterator iter = selection.iterator(); iter.hasNext();) {
-			Object element = iter.next();
+	private Collection<Object> computeSelectedResources(StructuredSelection selection) {
+		List<Object> result = new ArrayList<>();
+		for (Object element : selection) {
 			ResourceMapping mapping = Utils.getResourceMapping(element);
 			if (mapping != null && scopeContainsMapping(mapping)) {
 				result.add(element);

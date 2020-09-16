@@ -16,7 +16,6 @@ package org.eclipse.team.internal.ui.synchronize.actions;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
@@ -161,7 +160,7 @@ public class RemoveSynchronizeParticipantAction extends Action {
 		} else {
 			ListSelectionDialog dlg = new ListSelectionDialog(
 					view.getSite().getShell(), dirtyModels,
-					new ArrayContentProvider(),
+					ArrayContentProvider.getInstance(),
 					new WorkbenchPartLabelProvider(), TeamUIMessages.RemoveSynchronizeParticipantAction_4);
 			dlg.setInitialSelections(dirtyModels.toArray());
 			dlg.setTitle(TeamUIMessages.RemoveSynchronizeParticipantAction_5);
@@ -182,8 +181,8 @@ public class RemoveSynchronizeParticipantAction extends Action {
 		final List finalModels = dirtyModels;
 		IRunnableWithProgress progressOp = monitor -> {
 			monitor.beginTask(null, finalModels.size());
-			for (Iterator i = finalModels.iterator(); i.hasNext();) {
-				Saveable model = (Saveable) i.next();
+			for (Object finalModel : finalModels) {
+				Saveable model = (Saveable) finalModel;
 				if (model.isDirty()) {
 					try {
 						model.doSave(SubMonitor.convert(monitor, 1));
