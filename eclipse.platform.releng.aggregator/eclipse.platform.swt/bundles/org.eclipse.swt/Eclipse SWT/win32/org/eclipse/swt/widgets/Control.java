@@ -973,9 +973,15 @@ void enableDrag (boolean enabled) {
 	/* Do nothing */
 }
 
-void enableDarkModeExplorerTheme() {
-	if (display.useDarkModeExplorerTheme)
-		OS.SetWindowTheme (handle, Display.DARKMODE_EXPLORER, null);
+void maybeEnableDarkSystemTheme() {
+	maybeEnableDarkSystemTheme(handle);
+}
+
+void maybeEnableDarkSystemTheme(long handle) {
+	if (display.useDarkModeExplorerTheme) {
+		OS.AllowDarkModeForWindow(handle, true);
+		OS.SetWindowTheme(handle, Display.EXPLORER, null);
+	}
 }
 
 void enableWidget (boolean enabled) {
@@ -1219,7 +1225,19 @@ int getBorderWidthInPixels () {
 	if ((bits1 & OS.WS_EX_CLIENTEDGE) != 0) return OS.GetSystemMetrics (OS.SM_CXEDGE);
 	if ((bits1 & OS.WS_EX_STATICEDGE) != 0) return OS.GetSystemMetrics (OS.SM_CXBORDER);
 	int bits2 = OS.GetWindowLong (borderHandle, OS.GWL_STYLE);
-	if ((bits2 & OS.WS_BORDER) != 0) return OS.GetSystemMetrics (OS.SM_CXBORDER);
+
+	if ((bits2 & OS.WS_BORDER) != 0) {
+		/*
+		 * For compatibility reasons, isUseWsBorder() shall not change layout size
+		 * compared to previously used WS_EX_CLIENTEDGE. Removing this workaround
+		 * saves screen space, but could break some layouts.
+		 */
+		if (isUseWsBorder ())
+			return OS.GetSystemMetrics (OS.SM_CXEDGE);
+
+		return OS.GetSystemMetrics (OS.SM_CXBORDER);
+	}
+
 	return 0;
 }
 
@@ -2428,16 +2446,9 @@ public void requestLayout () {
  */
 public void redraw () {
 	checkWidget ();
-	redraw (false);
+	redrawInPixels (null,false);
 }
 
-void redraw (boolean all) {
-//	checkWidget ();
-	if (!OS.IsWindowVisible (handle)) return;
-	int flags = OS.RDW_ERASE | OS.RDW_FRAME | OS.RDW_INVALIDATE;
-	if (all) flags |= OS.RDW_ALLCHILDREN;
-	OS.RedrawWindow (handle, null, 0, flags);
-}
 /**
  * Causes the rectangular area of the receiver specified by
  * the arguments to be marked as needing to be redrawn.
@@ -2481,15 +2492,23 @@ public void redraw (int x, int y, int width, int height, boolean all) {
 	y = DPIUtil.autoScaleUp(y);
 	width = DPIUtil.autoScaleUp(width);
 	height = DPIUtil.autoScaleUp(height);
-	redrawInPixels(x, y, width, height, all);
-}
-
-void redrawInPixels (int x, int y, int width, int height, boolean all) {
 	if (width <= 0 || height <= 0) return;
-	if (!OS.IsWindowVisible (handle)) return;
+
 	RECT rect = new RECT ();
 	OS.SetRect (rect, x, y, x + width, y + height);
-	int flags = OS.RDW_ERASE | OS.RDW_FRAME | OS.RDW_INVALIDATE;
+
+	redrawInPixels(rect, all);
+}
+
+void redrawInPixels (RECT rect, boolean all) {
+	if (!OS.IsWindowVisible (handle)) return;
+	/*
+	 * For many years, it also used RDW_FRAME here for no apparent reason.
+	 * This caused Bug 565613, and also is a performance issue. Should the
+	 * need for RDW_FRAME arise again, add a function parameter and only
+	 * use it where it is indeed necessary.
+	 */
+	int flags = OS.RDW_ERASE | OS.RDW_INVALIDATE;
 	if (all) flags |= OS.RDW_ALLCHILDREN;
 	OS.RedrawWindow (handle, rect, 0, flags);
 }

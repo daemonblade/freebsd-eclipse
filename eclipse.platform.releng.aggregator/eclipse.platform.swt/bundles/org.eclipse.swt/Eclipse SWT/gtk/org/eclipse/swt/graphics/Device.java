@@ -97,13 +97,6 @@ public abstract class Device implements Drawable {
 	/* Device dpi */
 	Point dpi;
 
-	/*Device Scale Factor in percentage*/
-	/**
-	 * @noreference This field is not intended to be referenced by clients.
-	 * @since 3.105
-	 */
-	protected int scaleFactor;
-
 	long emptyTab;
 
 	/*
@@ -168,13 +161,56 @@ public Device(DeviceData data) {
 			tracking = data.tracking;
 		}
 		if (tracking) {
-			errors = new Error [128];
-			objects = new Object [128];
-			trackingLock = new Object ();
+			startTracking();
 		}
 		create (data);
 		init ();
 		register (this);
+	}
+}
+
+/**
+ *
+ * @exception SWTException <ul>
+ *    <li>ERROR_DEVICE_DISPOSED - if the receiver has been disposed</li>
+ * </ul>
+ * @since 3.115
+ */
+public boolean isTracking() {
+	checkDevice();
+	return tracking;
+}
+
+/**
+ * @exception SWTException <ul>
+ *    <li>ERROR_DEVICE_DISPOSED - if the receiver has been disposed</li>
+ * </ul>
+ * @since 3.115
+ */
+public void setTracking(boolean tracking) {
+	checkDevice();
+	if (tracking == this.tracking) {
+		return;
+	}
+	this.tracking = tracking;
+	if (tracking) {
+		startTracking();
+	} else {
+		stopTracking();
+	}
+}
+
+private void startTracking() {
+	errors = new Error [128];
+	objects = new Object [128];
+	trackingLock = new Object ();
+}
+
+private void stopTracking() {
+	synchronized (trackingLock) {
+		objects = null;
+		errors = null;
+		trackingLock = null;
 	}
 }
 
@@ -239,11 +275,8 @@ public void dispose () {
 		xDisplay = 0;
 		disposed = true;
 		if (tracking) {
-			synchronized (trackingLock) {
-				objects = null;
-				errors = null;
-				trackingLock = null;
-			}
+			tracking = false;
+			stopTracking();
 		}
 	}
 }
@@ -576,8 +609,7 @@ public boolean getWarnings () {
  */
 protected void init () {
 	this.dpi = getDPI();
-	this.scaleFactor = getDeviceZoom ();
-	DPIUtil.setDeviceZoom (scaleFactor);
+	DPIUtil.setDeviceZoom (getDeviceZoom ());
 
 	if (debug) {
 		if (xDisplay != 0) {
@@ -618,29 +650,33 @@ protected void init () {
 	}
 
 	/* Create the standard colors */
-	COLOR_TRANSPARENT = new Color (this, 0xFF,0xFF,0xFF,0);
-	COLOR_BLACK = new Color (this, 0,0,0);
-	COLOR_DARK_RED = new Color (this, 0x80,0,0);
-	COLOR_DARK_GREEN = new Color (this, 0,0x80,0);
-	COLOR_DARK_YELLOW = new Color (this, 0x80,0x80,0);
-	COLOR_DARK_BLUE = new Color (this, 0,0,0x80);
-	COLOR_DARK_MAGENTA = new Color (this, 0x80,0,0x80);
-	COLOR_DARK_CYAN = new Color (this, 0,0x80,0x80);
-	COLOR_GRAY = new Color (this, 0xC0,0xC0,0xC0);
-	COLOR_DARK_GRAY = new Color (this, 0x80,0x80,0x80);
-	COLOR_RED = new Color (this, 0xFF,0,0);
-	COLOR_GREEN = new Color (this, 0,0xFF,0);
-	COLOR_YELLOW = new Color (this, 0xFF,0xFF,0);
-	COLOR_BLUE = new Color (this, 0,0,0xFF);
-	COLOR_MAGENTA = new Color (this, 0xFF,0,0xFF);
-	COLOR_CYAN = new Color (this, 0,0xFF,0xFF);
-	COLOR_WHITE = new Color (this, 0xFF,0xFF,0xFF);
+	COLOR_TRANSPARENT = new Color (0xFF, 0xFF,0xFF,0);
+	COLOR_BLACK = new Color (0, 0,0);
+	COLOR_DARK_RED = new Color (0x80, 0,0);
+	COLOR_DARK_GREEN = new Color (0, 0x80,0);
+	COLOR_DARK_YELLOW = new Color (0x80, 0x80,0);
+	COLOR_DARK_BLUE = new Color (0, 0,0x80);
+	COLOR_DARK_MAGENTA = new Color (0x80, 0,0x80);
+	COLOR_DARK_CYAN = new Color (0, 0x80,0x80);
+	COLOR_GRAY = new Color (0xC0, 0xC0,0xC0);
+	COLOR_DARK_GRAY = new Color (0x80, 0x80,0x80);
+	COLOR_RED = new Color (0xFF, 0,0);
+	COLOR_GREEN = new Color (0, 0xFF,0);
+	COLOR_YELLOW = new Color (0xFF, 0xFF,0);
+	COLOR_BLUE = new Color (0, 0,0xFF);
+	COLOR_MAGENTA = new Color (0xFF, 0,0xFF);
+	COLOR_CYAN = new Color (0, 0xFF,0xFF);
+	COLOR_WHITE = new Color (0xFF, 0xFF,0xFF);
 
 	emptyTab = OS.pango_tab_array_new(1, false);
 	if (emptyTab == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 	OS.pango_tab_array_set_tab(emptyTab, 0, OS.PANGO_TAB_LEFT, 1);
 
-	shellHandle = GTK.gtk_window_new(GTK.GTK_WINDOW_TOPLEVEL);
+	if (GTK.GTK4) {
+		shellHandle = GTK.gtk_window_new();
+	} else {
+		shellHandle = GTK.gtk_window_new (GTK.GTK_WINDOW_TOPLEVEL);
+	}
 	if (shellHandle == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 	GTK.gtk_widget_realize(shellHandle);
 
@@ -656,7 +692,7 @@ protected void init () {
 			surface = GDK.gdk_window_create_similar_surface(gdkResource, Cairo.CAIRO_CONTENT_COLOR, 10, 10);
 		}
 		Cairo.cairo_surface_get_device_scale(surface, sx, sy);
-		DPIUtil.setUseCairoAutoScale((sx[0]*100) == scaleFactor || OS.isGNOME);
+		DPIUtil.setUseCairoAutoScale((sx[0]*100) == DPIUtil.getDeviceZoom() || OS.isGNOME);
 	}
 
 	/* Initialize the system font slot */
@@ -924,22 +960,6 @@ protected void release () {
 	if (systemFont != null) systemFont.dispose ();
 	systemFont = null;
 
-	if (COLOR_BLACK != null) COLOR_BLACK.dispose();
-	if (COLOR_DARK_RED != null) COLOR_DARK_RED.dispose();
-	if (COLOR_DARK_GREEN != null) COLOR_DARK_GREEN.dispose();
-	if (COLOR_DARK_YELLOW != null) COLOR_DARK_YELLOW.dispose();
-	if (COLOR_DARK_BLUE != null) COLOR_DARK_BLUE.dispose();
-	if (COLOR_DARK_MAGENTA != null) COLOR_DARK_MAGENTA.dispose();
-	if (COLOR_DARK_CYAN != null) COLOR_DARK_CYAN.dispose();
-	if (COLOR_GRAY != null) COLOR_GRAY.dispose();
-	if (COLOR_DARK_GRAY != null) COLOR_DARK_GRAY.dispose();
-	if (COLOR_RED != null) COLOR_RED.dispose();
-	if (COLOR_GREEN != null) COLOR_GREEN.dispose();
-	if (COLOR_YELLOW != null) COLOR_YELLOW.dispose();
-	if (COLOR_BLUE != null) COLOR_BLUE.dispose();
-	if (COLOR_MAGENTA != null) COLOR_MAGENTA.dispose();
-	if (COLOR_CYAN != null) COLOR_CYAN.dispose();
-	if (COLOR_WHITE != null) COLOR_WHITE.dispose();
 	COLOR_BLACK = COLOR_DARK_RED = COLOR_DARK_GREEN = COLOR_DARK_YELLOW = COLOR_DARK_BLUE =
 	COLOR_DARK_MAGENTA = COLOR_DARK_CYAN = COLOR_GRAY = COLOR_DARK_GRAY = COLOR_RED =
 	COLOR_GREEN = COLOR_YELLOW = COLOR_BLUE = COLOR_MAGENTA = COLOR_CYAN = COLOR_WHITE = null;
@@ -1041,15 +1061,6 @@ static long XIOErrorProc (long xDisplay) {
 }
 
 /**
- * Returns DPI in x direction. In the modern monitors DPI for
- * X and Y directions is same.
- *
- * @return the horizontal DPI
- */
-int _getDPIx () {
-	return scaleFactor * 96/100;
-}
-/**
  * Gets the scaling factor from the device and calculates the zoom level.
  * @return zoom in percentage
  *
@@ -1077,19 +1088,6 @@ protected int getDeviceZoom() {
 		dpi = dpi * scale;
 	}
 	return DPIUtil.mapDPIToZoom (dpi);
-}
-/**
- * @noreference This method is not intended to be referenced by clients.
- * @nooverride This method is not intended to be re-implemented or extended by clients.
- * @since 3.105
- */
-protected long gsettingsProc (long gobject, long arg1, long user_data) {
-	switch((int)user_data) {
-		case CHANGE_SCALEFACTOR:
-			this.scaleFactor = getDeviceZoom ();
-			DPIUtil.setDeviceZoom (scaleFactor);
-	}
-	return 0;
 }
 
 }

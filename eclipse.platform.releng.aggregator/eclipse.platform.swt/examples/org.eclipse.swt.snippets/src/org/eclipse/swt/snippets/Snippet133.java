@@ -97,8 +97,6 @@ public class Snippet133 {
 			if (!display.readAndDispatch()) display.sleep();
 		}
 		if (font != null) font.dispose();
-		if (foregroundColor != null) foregroundColor.dispose();
-		if (backgroundColor != null) backgroundColor.dispose();
 		display.dispose();
 	}
 
@@ -152,8 +150,7 @@ public class Snippet133 {
 		colorDialog.setRGB(text.getForeground().getRGB());
 		RGB rgb = colorDialog.open();
 		if (rgb != null) {
-			if (foregroundColor != null) foregroundColor.dispose();
-			foregroundColor = new Color(display, rgb);
+			foregroundColor = new Color(rgb);
 			text.setForeground(foregroundColor);
 		}
 	}
@@ -163,8 +160,7 @@ public class Snippet133 {
 		colorDialog.setRGB(text.getBackground().getRGB());
 		RGB rgb = colorDialog.open();
 		if (rgb != null) {
-			if (backgroundColor != null) backgroundColor.dispose();
-			backgroundColor = new Color(display, rgb);
+			backgroundColor = new Color(rgb);
 			text.setBackground(backgroundColor);
 		}
 	}
@@ -216,8 +212,8 @@ public class Snippet133 {
 			/* Create printer GC, and create and set the printer font & foreground color. */
 			gc = new GC(printer);
 			Font printerFont = new Font(printer, printerFontData);
-			Color printerForegroundColor = new Color(printer, printerForeground);
-			Color printerBackgroundColor = new Color(printer, printerBackground);
+			Color printerForegroundColor = new Color(printerForeground);
+			Color printerBackgroundColor = new Color(printerBackground);
 
 			gc.setFont(printerFont);
 			gc.setForeground(printerForegroundColor);
@@ -231,8 +227,6 @@ public class Snippet133 {
 
 			/* Cleanup graphics resources used in printing */
 			printerFont.dispose();
-			printerForegroundColor.dispose();
-			printerBackgroundColor.dispose();
 			gc.dispose();
 		}
 	}

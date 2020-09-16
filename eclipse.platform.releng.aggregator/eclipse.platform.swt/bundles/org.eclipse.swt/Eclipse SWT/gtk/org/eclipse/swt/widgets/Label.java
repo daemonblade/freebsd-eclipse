@@ -275,7 +275,7 @@ void createHandle (int index) {
 		if (frameHandle == 0) error (SWT.ERROR_NO_HANDLES);
 		GTK.gtk_container_add (fixedHandle, frameHandle);
 		GTK.gtk_container_add (frameHandle, handle);
-		GTK.gtk_frame_set_shadow_type (frameHandle, GTK.GTK_SHADOW_ETCHED_IN);
+		if (!GTK.GTK4) GTK.gtk_frame_set_shadow_type (frameHandle, GTK.GTK_SHADOW_ETCHED_IN);
 	} else {
 		GTK.gtk_container_add (fixedHandle, handle);
 	}
@@ -623,13 +623,12 @@ public void setImage (Image image) {
 	imageList = null;
 	if (image != null) {
 		imageList = new ImageList ();
-		int imageIndex = imageList.add (image);
-		long pixbuf = imageList.getPixbuf (imageIndex);
-		gtk_image_set_from_gicon (imageHandle, pixbuf);
+		imageList.add (image);
+		GTK.gtk_image_set_from_surface(imageHandle, image.surface);
 		GTK.gtk_widget_hide (labelHandle);
 		GTK.gtk_widget_show (imageHandle);
 	} else {
-		gtk_image_set_from_gicon (imageHandle, 0);
+		GTK.gtk_image_set_from_surface(imageHandle, 0);
 		GTK.gtk_widget_show (labelHandle);
 		GTK.gtk_widget_hide (imageHandle);
 	}
@@ -708,5 +707,17 @@ long windowProc (long handle, long arg0, long user_data) {
 		}
 	}
 	return super.windowProc(handle, arg0, user_data);
+}
+
+@Override
+long dpiChanged(long object, long arg0) {
+	super.dpiChanged(object, arg0);
+
+	if (image != null) {
+		image.internal_gtk_refreshImageForZoom();
+		setImage(image);
+	}
+
+	return 0;
 }
 }

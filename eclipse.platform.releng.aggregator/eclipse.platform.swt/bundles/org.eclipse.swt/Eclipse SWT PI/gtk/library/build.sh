@@ -1,6 +1,6 @@
 #!/bin/sh
 #*******************************************************************************
-# Copyright (c) 2000, 2018 IBM Corporation and others.
+# Copyright (c) 2000, 2020 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -100,10 +100,6 @@ case $MODEL in
 		SWT_ARCH=x86_64
 		AWT_ARCH=amd64
 		;;
-	i?86 | "x86")
-		SWT_ARCH=x86
-		AWT_ARCH=i386
-		;;
 	"powerpc" | "powerpc64")
 		SWT_ARCH=ppc64
 		AWT_ARCH=ppc64
@@ -123,50 +119,19 @@ case $SWT_OS.$SWT_ARCH in
 			export JAVA_HOME
 		fi
 		;;
-	"linux.x86")
-		if [ "${CC}" = "" ]; then
-			export CC=gcc
-		fi
-		if [ "${JAVA_HOME}" = "" ]; then
-
-			# Dynamically find JAVA_HOME for 32bit java on a system that also has 64bit java installed.
-			#   We cannot use `readlink $(which java)` or related methods as they point to the 64 bit java.
-			#   So instead we find the path manually and assume java.i386 is installed in the default /ur/lib/jvm path.
-			# This matches folders such as:
-			#   java-1.8.0-openjdk-........i386
-			#   java-9-openjdk....i386
-			JAVA_FOLDER=$(ls /usr/lib/jvm | grep java | grep -i openjdk | grep i386 | sort | tail -n 1)
-			if [ "${JAVA_FOLDER}" = "" ]; then
-				func_echo_error "ERROR: Could not find JAVA_HOME/AWT_LIB_PATH on 32bit build system automatically. Expecting it to be in /usr/lib/jvm/ but none was found. See also Bug 533496"
-			fi
-
-			export JAVA_HOME=/usr/lib/jvm/${JAVA_FOLDER}
-			export AWT_LIB_PATH=${JAVA_HOME}/jre/lib/i386
-		fi
-		if [ "${PKG_CONFIG_PATH}" = "" ]; then
-			export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/bluebird/teamswt/swt-builddir/cairo_1.0.2/linux_x86/lib/pkgconfig"
-		fi
-		;;
 	"linux.x86_64")
 		if [ "${CC}" = "" ]; then
 			export CC=gcc
 		fi
 		if [ "${JAVA_HOME}" = "" ]; then
-			# Validate that we set JAVA_HOME to an existing directory. If not try to look for a better one.
-			BLUEBIRD_JAVA_HOME="/bluebird/teamswt/swt-builddir/JDKs/x86_64/jdk1.5.0"
-			if [ -d "$BLUEBIRD_JAVA_HOME" ]; then
-				func_echo_plus "JAVA_HOME not set, configured to: $BLUEBIRD_JAVA_HOME"
-				export JAVA_HOME="$BLUEBIRD_JAVA_HOME"
+			# Cross-platform method of finding JAVA_HOME.
+			# Tested on Fedora 24 and Ubuntu 16
+			DYNAMIC_JAVA_HOME=`readlink -f /usr/bin/java | sed "s:jre/::" | sed "s:bin/java::"`
+			if [ -e "${DYNAMIC_JAVA_HOME}include/jni.h" ]; then
+				func_echo_plus "JAVA_HOME not set, but jni.h found, dynamically configured to $DYNAMIC_JAVA_HOME"
+				export JAVA_HOME="$DYNAMIC_JAVA_HOME"
 			else
-				# Cross-platform method of finding JAVA_HOME.
-				# Tested on Fedora 24 and Ubuntu 16
-				DYNAMIC_JAVA_HOME=`readlink -f /usr/bin/java | sed "s:jre/::" | sed "s:bin/java::"`
-				if [ -e "${DYNAMIC_JAVA_HOME}include/jni.h" ]; then
-					func_echo_plus "JAVA_HOME not set, but jni.h found, dynamically configured to $DYNAMIC_JAVA_HOME"
-					export JAVA_HOME="$DYNAMIC_JAVA_HOME"
-				else
-					func_echo_error "JAVA_HOME not set and jni.h could not be located. You might get a compile error about include 'jni.h'. You should install 'java-*-openjdk-devel' package or if you have it installed already, find jni.h and  set JAVA_HOME manually to base of 'include' folder"
-				fi
+				func_echo_error "JAVA_HOME not set and jni.h could not be located. You might get a compile error about include 'jni.h'. You should install 'java-*-openjdk-devel' package or if you have it installed already, find jni.h and  set JAVA_HOME manually to base of 'include' folder"
 			fi
 		fi
 		if [ "${PKG_CONFIG_PATH}" = "" ]; then
@@ -184,22 +149,11 @@ case $SWT_OS.$SWT_ARCH in
 			export PKG_CONFIG_PATH="/usr/lib64/pkgconfig/"
 		fi
 		;;
-	"linux.s390x")
-		if [ "${CC}" = "" ]; then
-			export CC=gcc
-		fi
-		if [ "${JAVA_HOME}" = "" ]; then
-			export JAVA_HOME="/home/swtbuild/java5/s390x/ibm-java2-s390x-50"
-		fi
-		if [ "${PKG_CONFIG_PATH}" = "" ]; then
-			export PKG_CONFIG_PATH="/usr/lib64/pkgconfig"
-		fi
-		;;
 esac
 
 
 # For 64-bit CPUs, we have a switch
-if [ ${MODEL} = 'amd64' -o ${MODEL} = 'ia64' -o ${MODEL} = 's390x' -o ${MODEL} = 'ppc64le' -o ${MODEL} = 'aarch64' -o ${MODEL} = 'powerpc64' ]; then
+if [ ${MODEL} = 'amd64' -o ${MODEL} = 'powerpc64' -o ${MODEL} = 'aarch64' ]; then
 	SWT_PTR_CFLAGS=-DJNI64
 	if [ -d /lib64 ]; then
 		XLIB64=-L/usr/X11R6/lib64
@@ -217,11 +171,6 @@ if [ ${MODEL} = 'amd64' -o ${MODEL} = 'ia64' -o ${MODEL} = 's390x' -o ${MODEL} =
 		export SWT_LFLAGS=-m64
 	fi
 	export SWT_PTR_CFLAGS
-fi
-if [ ${MODEL} = 'x86' -a ${SWT_OS} = 'linux' ]; then
-	SWT_PTR_CFLAGS="-m32"
-	SWT_LFLAGS=-m32
-	export SWT_LFLAGS SWT_PTR_CFLAGS
 fi
 
 if [ x`pkg-config --exists cairo && echo YES` = "xYES" ]; then
@@ -334,6 +283,23 @@ func_build_gtk4 () {
 	fi
 }
 
+func_build_chromium () {
+	func_echo_plus "Building Chromium bindings:"
+	if [ -d "chromium_subp/cef_linux" ]; then
+		export CHROMIUM_HEADERS=./chromium_subp/cef_linux
+	else
+		export CHROMIUM_HEADERS=$CHROMIUM_OUTPUT_DIR/../../../../eclipse.platform.swt/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_linux
+	fi
+	${MAKE_TYPE} -f $MAKEFILE "${@}"
+	RETURN_VALUE=$?   #make can return 1 or 2 if it fails. Thus need to cache it in case it's used programmatically somewhere.
+	if [ "$RETURN_VALUE" -eq 0 ]; then
+		func_echo_plus "Chromium Build succeeded"
+	else
+		func_echo_error "Chromium Build failed, aborting further actions.."
+		exit $RETURN_VALUE
+	fi
+}
+
 func_build_gtk3 () {
 	export GTK_VERSION=3.0
 
@@ -369,6 +335,8 @@ elif [ "$1" = "-gtk4" ]; then
 elif [ "$1" = "-gtk3" ]; then
 	shift
 	func_build_gtk3 "$@"
+elif [ "$1" = "chromium_install" ] || [ "$1" = "chromium_cargo" ]; then
+	func_build_chromium "$@"
 elif [ "${GTK_VERSION}" = "4.0" ]; then
 	func_build_gtk4 "$@"
 elif [ "${GTK_VERSION}" = "3.0" -o "${GTK_VERSION}" = "" ]; then

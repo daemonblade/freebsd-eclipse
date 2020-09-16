@@ -19,16 +19,9 @@
 echo
 echo INFO Starting build of binaries. Detailed system setup instructions can be found in /Readme.Win32.md
 
-@rem builddir used for 32 bit building with webkit. Not needed on 64 bit builds.
+@rem SWT_BUILDDIR defaults to "W:" on the SWT Windows native build infrastructure machine.
 IF "x.%SWT_BUILDDIR%"=="x." set "SWT_BUILDDIR=W:"
 echo SWT build dir: %SWT_BUILDDIR%
-IF "x.%MSSDK%"=="x." set "MSSDK=%ProgramFiles(x86)%\Windows Kits\10"
-echo Microsoft Windows10 SDK dir: %MSSDK%
-IF "x.%WEBKIT_DIR%"=="x." set "WEBKIT_DIR=%SWT_BUILDDIR%\WebKit\r72896"
-echo Webkit dir: %WEBKIT_DIR%
-IF "x.%WEBKIT_SUPPORT_DIR%"=="x." set "WEBKIT_SUPPORT_DIR=%SWT_BUILDDIR%\WebKit\SupportLibrary"
-echo Webkit SupportLibrary dir: %WEBKIT_SUPPORT_DIR%
-
 
 IF "x.%MSVC_HOME%"=="x." set "MSVC_HOME=%SWT_BUILDDIR%\Microsoft\Visual Studio\2017\"
 IF NOT EXIST "%MSVC_HOME%" set "MSVC_HOME=%ProgramFiles(x86)%\Microsoft Visual Studio\2017"
@@ -74,6 +67,13 @@ IF "x.%SWT_JAVA_HOME%"=="x." (
 )
 
 set CFLAGS=-DJNI64
+IF "x.%CHROMIUM_RUST_DIR%"=="x." (
+    set CHROMIUM_HEADERS=chromium_subp\cef_win32
+    set CHROMIUM_TARGET=chromium_swt\target\release
+) ELSE (
+    set CHROMIUM_HEADERS=%CHROMIUM_RUST_DIR%\chromium_subp\cef_win32
+    set CHROMIUM_TARGET=%CHROMIUM_RUST_DIR%\chromium_swt\target\release
+)
 call "%MSVC_HOME%\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 shift
 GOTO MAKE

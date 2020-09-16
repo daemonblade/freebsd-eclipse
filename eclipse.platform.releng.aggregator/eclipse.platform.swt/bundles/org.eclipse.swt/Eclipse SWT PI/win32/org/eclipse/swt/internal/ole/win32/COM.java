@@ -196,6 +196,7 @@ public class COM extends OS {
 	public static final int OLEEMBEDDED = 1;
 	public static final int OLELINKED = 0;
 	public static final int OLERENDER_DRAW = 1;
+	public static final int REGDB_E_CLASSNOTREG = 0x80040154;
 	public static final int S_FALSE = 1;
 	public static final int S_OK = 0;
 	public static final int STGC_DEFAULT = 0;
@@ -656,14 +657,6 @@ public static final int IA2_SCROLL_TYPE_ANYWHERE = 6;
 /** Accessibility natives */
 
 /**
- * @method flags=dynamic
- * @param hwnd cast=(HWND)
- * @param dwObjectID cast=(DWORD)
- * @param ppvObject cast=(LPVOID *)
- */
-public static final native int AccessibleObjectFromWindow (long hwnd, int dwObjectID, GUID riid, long[] ppvObject);
-/**
- * @method flags=dynamic
  * @param hwnd cast=(HWND)
  * @param ppvObject cast=(LPVOID *)
  */
@@ -673,15 +666,6 @@ public static final native int CreateStdAccessibleObject (long hwnd, int idObjec
  * @param pAcc cast=(LPUNKNOWN)
  */
 public static final native long LresultFromObject (GUID riid, long wParam, long pAcc);
-/**
- * @method flags=dynamic
- * @param paccContainer cast=(IAccessible *)
- * @param iChildStart cast=(LONG)
- * @param cChildren cast=(LONG)
- * @param rgvarChildren cast=(VARIANT *)
- * @param pcObtained cast=(LONG *)
- */
-public static final native int AccessibleChildren(long paccContainer, int iChildStart, int cChildren, long rgvarChildren, int [] pcObtained);
 
 /* sizeof's */
 public static final native int CAUUID_sizeof();

@@ -816,7 +816,13 @@ void createHandle (int index) {
 	int hsp = (style & SWT.H_SCROLL) != 0 ? GTK.GTK_POLICY_AUTOMATIC : GTK.GTK_POLICY_NEVER;
 	int vsp = (style & SWT.V_SCROLL) != 0 ? GTK.GTK_POLICY_AUTOMATIC : GTK.GTK_POLICY_NEVER;
 	GTK.gtk_scrolled_window_set_policy (scrolledHandle, hsp, vsp);
-	if ((style & SWT.BORDER) != 0) GTK.gtk_scrolled_window_set_shadow_type (scrolledHandle, GTK.GTK_SHADOW_ETCHED_IN);
+	if ((style & SWT.BORDER) != 0) {
+		if (GTK.GTK4) {
+			GTK.gtk_scrolled_window_set_has_frame(scrolledHandle, true);
+		} else {
+			GTK.gtk_scrolled_window_set_shadow_type (scrolledHandle, GTK.GTK_SHADOW_ETCHED_IN);
+		}
+	}
 	/*
 	 * We enable fixed-height-mode for performance reasons (see bug 490203).
 	 */
@@ -1770,7 +1776,11 @@ int getItemHeightInPixels () {
 		long column = GTK.gtk_tree_view_get_column (handle, 0);
 		int [] w = new int [1], h = new int [1];
 		ignoreSize = true;
-		GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, w, h);
+		if (GTK.GTK4) {
+			GTK.gtk_tree_view_column_cell_get_size(column, null, null, w, h);
+		} else {
+			GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, w, h);
+		}
 		int height = h [0];
 		long textRenderer = getTextRenderer (column);
 		if (textRenderer != 0) GTK.gtk_cell_renderer_get_preferred_height_for_width (textRenderer, handle, 0, h, null);
@@ -2117,16 +2127,28 @@ TreeItem _getCachedTopItem() {
 long gtk_button_press_event (long widget, long event) {
 	double [] eventX = new double [1];
 	double [] eventY = new double [1];
-	GDK.gdk_event_get_coords(event, eventX, eventY);
+	if (GTK.GTK4) {
+		GDK.gdk_event_get_position(event, eventX, eventY);
+	} else {
+		GDK.gdk_event_get_coords(event, eventX, eventY);
+	}
+
 	int eventType = GDK.gdk_event_get_event_type(event);
 	eventType = fixGdkEventTypeValues(eventType);
+
 	int [] eventButton = new int [1];
-	GDK.gdk_event_get_button(event, eventButton);
+	int [] eventState = new int [1];
+	if (GTK.GTK4) {
+		eventButton[0] = GDK.gdk_button_event_get_button(event);
+		eventState[0] = GDK.gdk_event_get_modifier_state(event);
+	} else {
+		GDK.gdk_event_get_button(event, eventButton);
+		GDK.gdk_event_get_state(event, eventState);
+	}
 	double [] eventRX = new double [1];
 	double [] eventRY = new double [1];
 	GDK.gdk_event_get_root_coords(event, eventRX, eventRY);
-	int [] eventState = new int [1];
-	GDK.gdk_event_get_state(event, eventState);
+
 	long eventGdkResource = gdk_event_get_surface_or_window(event);
 	if (GTK.GTK4) {
 		if (eventGdkResource != gtk_widget_get_surface (handle)) return 0;
@@ -2249,28 +2271,27 @@ long gtk_row_activated (long tree, long path, long column) {
 @Override
 long gtk_key_press_event (long widget, long event) {
 	int [] key = new int[1];
-	GDK.gdk_event_get_keyval(event, key);
-	keyPressDefaultSelectionHandler (event, key[0]);
-	return super.gtk_key_press_event (widget, event);
-}
 
-/**
- * Used to emulate DefaultSelection event. See Bug 312568.
- * @param event the gtk key press event that was fired.
- */
-void keyPressDefaultSelectionHandler (long event, int key) {
-	int keymask = gdk_event_get_state (event);
-	switch (key) {
+	if (GTK.GTK4) {
+		key[0] = GDK.gdk_key_event_get_keyval(event);
+	} else {
+		GDK.gdk_event_get_keyval(event, key);
+	}
+
+	switch (key[0]) {
 		case GDK.GDK_Return:
 			// Send DefaultSelectionEvent when:
-			// when    : Enter, Shift+Enter, Ctrl+Enter are pressed.
+			// When    : Enter, Shift+Enter, Ctrl+Enter are pressed.
 			// Not when: Alt+Enter, (Meta|Super|Hyper)+Enter, reason is stateMask is not provided on Gtk.
-			// Note: alt+Enter creates a selection on GTK, but we filter it out to be a bit more consitent Win32 (521387)
+			// Note: alt+Enter creates a selection on GTK, but we filter it out to be a bit more consistent Win32 (521387)
+			int keymask = gdk_event_get_state (event);
 			if ((keymask & (GDK.GDK_SUPER_MASK | GDK.GDK_META_MASK | GDK.GDK_HYPER_MASK | GDK.GDK_MOD1_MASK)) == 0) {
 				sendTreeDefaultSelection ();
+				return 0; // Avoid doubling the enter event to other widgets when it is a DefaultSelectionEvent
 			}
-			break;
 	}
+
+	return super.gtk_key_press_event (widget, event);
 }
 
 /**
@@ -2297,14 +2318,25 @@ void sendTreeDefaultSelection() {
 long gtk_button_release_event (long widget, long event) {
 	double [] eventX = new double [1];
 	double [] eventY = new double [1];
-	GDK.gdk_event_get_coords(event, eventX, eventY);
+	if (GTK.GTK4) {
+		GDK.gdk_event_get_position(event, eventX, eventY);
+	} else {
+		GDK.gdk_event_get_coords(event, eventX, eventY);
+	}
 	int [] eventButton = new int [1];
-	GDK.gdk_event_get_button(event, eventButton);
+	int [] eventState = new int [1];
+	if (GTK.GTK4) {
+		eventButton[0] = GDK.gdk_button_event_get_button(event);
+		eventState[0] = GDK.gdk_event_get_modifier_state(event);
+	} else {
+		GDK.gdk_event_get_button(event, eventButton);
+		GDK.gdk_event_get_state(event, eventState);
+	}
+
 	double [] eventRX = new double [1];
 	double [] eventRY = new double [1];
 	GDK.gdk_event_get_root_coords(event, eventRX, eventRY);
-	int [] eventState = new int [1];
-	GDK.gdk_event_get_state(event, eventState);
+
 	long eventGdkResource = gdk_event_get_surface_or_window(event);
 	if (GTK.GTK4) {
 		if (eventGdkResource != gtk_widget_get_surface (handle)) return 0;
@@ -2912,29 +2944,27 @@ void remove (long parentIter, int start, int end) {
 public void removeAll () {
 	checkWidget ();
 	checkSetDataInProcessBeforeRemoval();
-	for (int i=0; i<items.length; i++) {
-		TreeItem item = items [i];
-		if (item != null && !item.isDisposed ()) item.release (false);
-	}
-	items = new TreeItem[4];
+
 	long selection = GTK.gtk_tree_view_get_selection (handle);
 	OS.g_signal_handlers_block_matched (selection, OS.G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, CHANGED);
+
 	if (fixAccessibility ()) {
 		ignoreAccessibility = true;
 	}
-	/**
-	 * Hack for GTK3 in order to not get cellDataFunc while clearing as it calls it for each row-deleted
-	 * and this causes AAIOB in getId as items are already cleared but the model is not yet.
-	 * By disconnecting the model from the handle while clearing no intermediate signals are emitted.
-	 */
-	GTK.gtk_tree_view_set_model(handle, 0);
+
 	GTK.gtk_tree_store_clear (modelHandle);
-	GTK.gtk_tree_view_set_model(handle, modelHandle);
+
 	if (fixAccessibility ()) {
 		ignoreAccessibility = false;
 		OS.g_object_notify (handle, OS.model);
 	}
 	OS.g_signal_handlers_unblock_matched (selection, OS.G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, CHANGED);
+
+	for (int i=0; i<items.length; i++) {
+		TreeItem item = items [i];
+		if (item != null && !item.isDisposed ()) item.release (false);
+	}
+	items = new TreeItem[4];
 
 	if (!searchEnabled ()) {
 		GTK.gtk_tree_view_set_search_column (handle, -1);

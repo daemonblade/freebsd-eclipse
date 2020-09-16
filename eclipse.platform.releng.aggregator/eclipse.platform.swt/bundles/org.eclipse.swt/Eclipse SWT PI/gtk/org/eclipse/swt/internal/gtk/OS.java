@@ -494,6 +494,19 @@ public class OS extends C {
 	 */
 	public static final native void swt_fixed_resize(long fixed, long widget, int width, int height);
 
+	/**
+	 * @param container cast=(GtkWidget*)
+	 * @param widget cast=(GtkWidget*)
+	 * @category custom
+	 */
+	public static final native void swt_fixed_add(long container, long widget);
+	/**
+	 * @param container cast=(GtkWidget*)
+	 * @param widget cast=(GtkWidget*)
+	 * @category custom
+	 */
+	public static final native void swt_fixed_remove(long container, long widget);
+
 	/** @param str cast=(const gchar *)
 	 * @category custom
 	 */
@@ -2251,4 +2264,32 @@ public static final native void g_variant_unref(long value);
  * @param object cast=(GObject *)
  */
 public static final native long g_object_ref_sink(long object);
+
+/**
+ * @param dateTime cast=(GDateTime *)
+ * @param year cast=(gint *)
+ * @param month cast=(gint *)
+ * @param day cast=(gint *)
+ */
+public static final native void g_date_time_get_ymd(long dateTime, int[] year, int[] month, int[] day);
+
+public static final native long g_date_time_new_local(int year, int month, int day, int hour, int minute, double seconds);
+
+/** @param file cast=(GFile *) */
+public static final native long g_file_get_path(long file);
+
+/* GMenu */
+public static final native long g_menu_new();
+/**
+ * @param menu_item cast=(GMenuItem *)
+ * @param submenu cast=(GMenuModel *)
+ */
+public static final native void g_menu_item_set_submenu(long menu_item, long submenu);
+/**
+ * @param menu cast=(GMenu *)
+ * @param label cast=(const gchar *)
+ * @param detailed_action cast=(const gchar *)
+ */
+public static final native void g_menu_insert(long menu, int position, long label, long detailed_action);
+
 }

@@ -15,12 +15,12 @@
   <parent>
     <artifactId>eclipse.platform.swt</artifactId>
     <groupId>eclipse.platform.swt</groupId>
-    <version>4.16.0-SNAPSHOT</version>
+    <version>4.17.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.swt.tools.feature</groupId>
   <artifactId>org.eclipse.swt.tools.feature</artifactId>
-  <version>3.107.800-SNAPSHOT</version>
+  <version>3.107.900-SNAPSHOT</version>
   <packaging>eclipse-feature</packaging>
   <build>
     <plugins>

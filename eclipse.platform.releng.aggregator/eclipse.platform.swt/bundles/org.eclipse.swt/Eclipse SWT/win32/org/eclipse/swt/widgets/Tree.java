@@ -1847,7 +1847,7 @@ void createHandle () {
 	/* Use the Explorer theme */
 	if (OS.IsAppThemed ()) {
 		explorerTheme = true;
-		OS.SetWindowTheme (handle, display.getExplorerTheme(), null);
+		OS.SetWindowTheme (handle, Display.EXPLORER, null);
 		int bits = OS.TVS_EX_DOUBLEBUFFER | OS.TVS_EX_RICHTOOLTIP;
 		if (ENABLE_TVS_EX_FADEINOUTEXPANDOS) bits |= OS.TVS_EX_FADEINOUTEXPANDOS;
 		OS.SendMessage (handle, OS.TVM_SETEXTENDEDSTYLE, 0, bits);
@@ -2208,15 +2208,36 @@ void createItemToolTips () {
 	OS.SendMessage (itemToolTipHandle, OS.TTM_ADDTOOL, 0, lpti);
 }
 
+/**
+ * On Windows, Tree does not support columns. The workaround is to emulate it
+ * by adding a Header control and custom-drawing Tree items.
+ *
+ * Creates Header (for columns) and wraps (Tree+Header) into an intermediate
+ * parent, so that (Tree+Header) behave as one whole. The wrapper is designed
+ * to mimic original Tree as much as possible. For that reason, all sorts of
+ * settings are copied over.
+ */
 void createParent () {
 	forceResize ();
+
+	/* Copy Tree position to hwndParent */
 	RECT rect = new RECT ();
 	OS.GetWindowRect (handle, rect);
 	OS.MapWindowPoints (0, parent.handle, rect, 2);
-	int oldStyle = OS.GetWindowLong (handle, OS.GWL_STYLE);
-	int newStyle = super.widgetStyle () & ~OS.WS_VISIBLE;
+
+	/* Copy Tree styles to hwndParent */
+	final int oldStyle = OS.GetWindowLong (handle, OS.GWL_STYLE);
+	int newStyle = super.widgetStyle ();
+	newStyle &= ~OS.WS_VISIBLE;	/* Show control once everything is configured */
 	if ((oldStyle & OS.WS_DISABLED) != 0) newStyle |= OS.WS_DISABLED;
-//	if ((oldStyle & OS.WS_VISIBLE) != 0) newStyle |= OS.WS_VISIBLE;
+
+	/* Get rid of internal borders; hwndParent will have the borders now */
+	if ((oldStyle & OS.WS_BORDER) != 0) {
+		int noBorderStyle = oldStyle & ~OS.WS_BORDER;
+		OS.SetWindowLong (handle, OS.GWL_STYLE, noBorderStyle);
+	}
+
+	/* Create hwndParent */
 	hwndParent = OS.CreateWindowEx (
 		super.widgetExtStyle (),
 		super.windowClass (),
@@ -2231,8 +2252,14 @@ void createParent () {
 		OS.GetModuleHandle (null),
 		null);
 	if (hwndParent == 0) error (SWT.ERROR_NO_HANDLES);
+
+	/* Old code, not sure if needed */
 	OS.SetWindowLongPtr (hwndParent, OS.GWLP_ID, hwndParent);
-	OS.SetWindowTheme (hwndParent, display.getExplorerTheme(), null);
+
+	/* Copy dark scrollbar settings to hwndParent */
+	maybeEnableDarkSystemTheme(hwndParent);
+
+	/* Create header */
 	int bits = OS.WS_EX_NOINHERITLAYOUT;
 	if ((style & SWT.RIGHT_TO_LEFT) != 0) bits |= OS.WS_EX_LAYOUTRTL;
 	hwndHeader = OS.CreateWindowEx (
@@ -2246,12 +2273,20 @@ void createParent () {
 		OS.GetModuleHandle (null),
 		null);
 	if (hwndHeader == 0) error (SWT.ERROR_NO_HANDLES);
+
+	/* Old code, not sure if needed */
 	OS.SetWindowLongPtr (hwndHeader, OS.GWLP_ID, hwndHeader);
+
+	/* Copy Tree's font to header */
 	long hFont = OS.SendMessage (handle, OS.WM_GETFONT, 0, 0);
 	if (hFont != 0) OS.SendMessage (hwndHeader, OS.WM_SETFONT, hFont, 0);
+
+	/* Copy Tree's tab-order to hwndParent */
 	long hwndInsertAfter = OS.GetWindow (handle, OS.GW_HWNDPREV);
 	int flags = OS.SWP_NOSIZE | OS.SWP_NOMOVE | OS.SWP_NOACTIVATE;
 	OS.SetWindowPos (hwndParent, hwndInsertAfter, 0, 0, 0, 0, flags);
+
+	/* Copy Tree's scrollbar settings to hwndParent */
 	SCROLLINFO info = new SCROLLINFO ();
 	info.cbSize = SCROLLINFO.sizeof;
 	info.fMask = OS.SIF_RANGE | OS.SIF_PAGE;
@@ -2261,9 +2296,13 @@ void createParent () {
 	OS.GetScrollInfo (hwndParent, OS.SB_VERT, info);
 	info.nPage = info.nMax + 1;
 	OS.SetScrollInfo (hwndParent, OS.SB_VERT, info, true);
+
+	/* Columns are emulated by custom drawing items */
 	customDraw = true;
+
 	deregister ();
 	if ((oldStyle & OS.WS_VISIBLE) != 0) {
+		/* All set, show the new hwndParent wrapper */
 		OS.ShowWindow (hwndParent, OS.SW_SHOW);
 	}
 	long hwndFocus = OS.GetFocus ();
@@ -3793,7 +3832,7 @@ boolean isItemSelected (NMTVCUSTOMDRAW nmcd) {
 
 @Override
 boolean isUseWsBorder () {
-	return super.isUseWsBorder () || ((display != null) && display.useWsBorderTree);
+	return true;
 }
 
 void redrawSelection () {
@@ -4851,13 +4890,11 @@ void setScrollWidth (int width) {
 	if (playout.prc != 0) OS.HeapFree (hHeap, 0, playout.prc);
 	if (playout.pwpos != 0) OS.HeapFree (hHeap, 0, playout.pwpos);
 	OS.SetWindowPos (hwndHeader, OS.HWND_TOP, pos.x - left, pos.y, pos.cx + left, pos.cy, OS.SWP_NOACTIVATE);
-	int bits = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
-	int b = (bits & OS.WS_EX_CLIENTEDGE) != 0 ? OS.GetSystemMetrics (OS.SM_CXEDGE) : 0;
 	int w = pos.cx + (columnCount == 0 && width == 0 ? 0 : OS.GetSystemMetrics (OS.SM_CXVSCROLL));
 	int h = rect.bottom - rect.top - pos.cy;
 	boolean oldIgnore = ignoreResize;
 	ignoreResize = true;
-	OS.SetWindowPos (handle, 0, pos.x - left - b, pos.y + pos.cy - b, w + left + b * 2, h + b * 2, OS.SWP_NOACTIVATE | OS.SWP_NOZORDER);
+	OS.SetWindowPos (handle, 0, pos.x - left, pos.y + pos.cy, w + left, h, OS.SWP_NOACTIVATE | OS.SWP_NOZORDER);
 	ignoreResize = oldIgnore;
 }
 
@@ -6288,8 +6325,8 @@ LRESULT WM_LBUTTONDBLCLK (long wParam, long lParam) {
 			if ((lpht.flags & OS.TVHT_ONITEMSTATEICON) != 0) {
 				Display display = this.display;
 				display.captureChanged = false;
-				sendMouseEvent (SWT.MouseDown, 1, handle, OS.WM_LBUTTONDOWN, wParam, lParam);
-				if (!sendMouseEvent (SWT.MouseDoubleClick, 1, handle, OS.WM_LBUTTONDBLCLK, wParam, lParam)) {
+				sendMouseEvent (SWT.MouseDown, 1, handle, lParam);
+				if (!sendMouseEvent (SWT.MouseDoubleClick, 1, handle, lParam)) {
 					if (!display.captureChanged && !isDisposed ()) {
 						if (OS.GetCapture () != handle) OS.SetCapture (handle);
 					}
@@ -6361,7 +6398,7 @@ LRESULT WM_LBUTTONDOWN (long wParam, long lParam) {
 	if (lpht.hItem == 0 || (lpht.flags & OS.TVHT_ONITEMBUTTON) != 0) {
 		Display display = this.display;
 		display.captureChanged = false;
-		if (!sendMouseEvent (SWT.MouseDown, 1, handle, OS.WM_LBUTTONDOWN, wParam, lParam)) {
+		if (!sendMouseEvent (SWT.MouseDown, 1, handle, lParam)) {
 			if (!display.captureChanged && !isDisposed ()) {
 				if (OS.GetCapture () != handle) OS.SetCapture (handle);
 			}
@@ -6451,7 +6488,7 @@ LRESULT WM_LBUTTONDOWN (long wParam, long lParam) {
 		if ((lpht.flags & OS.TVHT_ONITEMSTATEICON) != 0) {
 			Display display = this.display;
 			display.captureChanged = false;
-			if (!sendMouseEvent (SWT.MouseDown, 1, handle, OS.WM_LBUTTONDOWN, wParam, lParam)) {
+			if (!sendMouseEvent (SWT.MouseDown, 1, handle, lParam)) {
 				if (!display.captureChanged && !isDisposed ()) {
 					if (OS.GetCapture () != handle) OS.SetCapture (handle);
 				}
@@ -6512,7 +6549,7 @@ LRESULT WM_LBUTTONDOWN (long wParam, long lParam) {
 		if ((lpht.flags & OS.TVHT_ONITEM) == 0) {
 			Display display = this.display;
 			display.captureChanged = false;
-			if (!sendMouseEvent (SWT.MouseDown, 1, handle, OS.WM_LBUTTONDOWN, wParam, lParam)) {
+			if (!sendMouseEvent (SWT.MouseDown, 1, handle, lParam)) {
 				if (!display.captureChanged && !isDisposed ()) {
 					if (OS.GetCapture () != handle) OS.SetCapture (handle);
 				}
@@ -6584,7 +6621,7 @@ LRESULT WM_LBUTTONDOWN (long wParam, long lParam) {
 	/* Do the selection */
 	Display display = this.display;
 	display.captureChanged = false;
-	if (!sendMouseEvent (SWT.MouseDown, 1, handle, OS.WM_LBUTTONDOWN, wParam, lParam)) {
+	if (!sendMouseEvent (SWT.MouseDown, 1, handle, lParam)) {
 		if (!display.captureChanged && !isDisposed ()) {
 			if (OS.GetCapture () != handle) OS.SetCapture (handle);
 		}
@@ -6733,7 +6770,7 @@ LRESULT WM_LBUTTONDOWN (long wParam, long lParam) {
 	} else {
 		int bits = OS.GetWindowLong (handle, OS.GWL_STYLE);
 		if ((bits & OS.TVS_DISABLEDRAGDROP) == 0) {
-			sendMouseEvent (SWT.MouseUp, 1, handle, OS.WM_LBUTTONUP, wParam, lParam);
+			sendMouseEvent (SWT.MouseUp, 1, handle, lParam);
 		}
 	}
 	dragStarted = false;
@@ -6816,7 +6853,7 @@ LRESULT WM_RBUTTONDOWN (long wParam, long lParam) {
 	*/
 	Display display = this.display;
 	display.captureChanged = false;
-	if (!sendMouseEvent (SWT.MouseDown, 3, handle, OS.WM_RBUTTONDOWN, wParam, lParam)) {
+	if (!sendMouseEvent (SWT.MouseDown, 3, handle, lParam)) {
 		if (!display.captureChanged && !isDisposed ()) {
 			if (OS.GetCapture () != handle) OS.SetCapture (handle);
 		}

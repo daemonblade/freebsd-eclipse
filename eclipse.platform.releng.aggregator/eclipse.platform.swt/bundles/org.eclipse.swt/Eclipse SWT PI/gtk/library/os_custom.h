@@ -21,10 +21,12 @@
 #define GPollFD_sizeof() sizeof(GPollFD)
 #define GtkCellRendererText_sizeof() sizeof(GtkCellRendererText)
 #define GtkCellRendererTextClass_sizeof() sizeof(GtkCellRendererTextClass)
+#if !defined(GTK4)
 #define GtkCellRendererPixbuf_sizeof() sizeof(GtkCellRendererPixbuf)
 #define GtkCellRendererPixbufClass_sizeof() sizeof(GtkCellRendererPixbufClass)
 #define GtkCellRendererToggle_sizeof() sizeof(GtkCellRendererToggle)
 #define GtkCellRendererToggleClass_sizeof() sizeof(GtkCellRendererToggleClass)
+#endif
 #define GtkTextIter_sizeof() sizeof(GtkTextIter)
 #define GtkTreeIter_sizeof() sizeof(GtkTreeIter)
 
@@ -36,10 +38,10 @@
 #define LIB_ATK "libatk-1.0-0.dll"
 #define LIB_FONTCONFIG "libfontconfig-1.dll"
 #else
-#if GTK_CHECK_VERSION(3,96,0)
-#define LIB_GTK "libgtk-4.so.0.9600.0"
+#if defined(GTK4)
+#define LIB_GTK "libgtk-4.so.0.9804.0"
 // Point GDK to GTK for GTK4
-#define LIB_GDK "libgtk-4.so.0.9600.0"
+#define LIB_GDK "libgtk-4.so.0.9804.0"
 #else
 #define LIB_GTK "libgtk-3.so.0"
 #define LIB_GDK "libgdk-3.so.0"
@@ -58,21 +60,6 @@
 /* Field accessors */
 #define G_OBJECT_CLASS_CONSTRUCTOR(arg0) (arg0)->constructor
 #define G_OBJECT_CLASS_SET_CONSTRUCTOR(arg0, arg1) (arg0)->constructor = (GObject* (*) (GType, guint, GObjectConstructParam *))arg1
-struct _GtkAccelLabelPrivate
-{
-  GtkWidget     *accel_widget;       /* done */
-  GClosure      *accel_closure;      /* has set function */
-  GtkAccelGroup *accel_group;        /* set by set_accel_closure() */
-  gchar         *accel_string;       /* has set function */
-  guint          accel_padding;      /* should be style property? */
-  guint16        accel_string_width; /* seems to be private */
-};
-#define GTK_ACCEL_LABEL_SET_ACCEL_STRING(arg0, arg1) (arg0)->priv->accel_string = arg1
-#define GTK_ACCEL_LABEL_GET_ACCEL_STRING(arg0) (arg0)->priv->accel_string
-#define GTK_ENTRY_IM_CONTEXT(arg0) (arg0)->im_context
-#define GTK_TEXTVIEW_IM_CONTEXT(arg0) (arg0)->im_context
-#define GTK_WIDGET_REQUISITION_WIDTH(arg0) (arg0)->requisition.width
-#define GTK_WIDGET_REQUISITION_HEIGHT(arg0) (arg0)->requisition.height
 #define GDK_EVENT_TYPE(arg0) (arg0)->type
 #define GDK_EVENT_WINDOW(arg0) (arg0)->window
 #define X_EVENT_TYPE(arg0) (arg0)->type
@@ -82,9 +69,6 @@ struct _GtkAccelLabelPrivate
 #define g_slist_data(arg0) (arg0)->data
 #define g_list_set_next(arg0, arg1) (arg0)->next = arg1
 #define g_list_set_previous(arg0, arg1) (arg0)->prev = arg1
-#define gtk_style_get_font_desc(arg0) (arg0)->font_desc
-#define gtk_style_get_xthickness(arg0) (arg0)->xthickness
-#define gtk_style_get_ythickness(arg0) (arg0)->ythickness
 #define localeconv_decimal_point() localeconv()->decimal_point
 
 // Mechanism to get function pointers of C/gtk functions back to java.
@@ -116,6 +100,23 @@ typedef struct _SwtFixed SwtFixed;
 typedef struct _SwtFixedPrivate SwtFixedPrivate;
 typedef struct _SwtFixedClass SwtFixedClass;
 
+#if defined(GTK4)
+struct _SwtFixed
+{
+  GtkWidget container;
+
+  /*< private >*/
+  SwtFixedPrivate *priv;
+
+  /* Accessibility */
+  AtkObject *accessible;
+};
+
+struct _SwtFixedClass
+{
+  GtkWidgetClass parent_class;
+};
+#else
 struct _SwtFixed
 {
   GtkContainer container;
@@ -131,9 +132,14 @@ struct _SwtFixedClass
 {
   GtkContainerClass parent_class;
 };
+#endif
 
 GType swt_fixed_get_type (void) G_GNUC_CONST;
 
+#if defined(GTK4)
+void swt_fixed_add (GtkWidget *container, GtkWidget *widget);
+void swt_fixed_remove (GtkWidget *container, GtkWidget *widget);
+#endif
 void swt_fixed_restack(SwtFixed *fixed, GtkWidget *widget, GtkWidget *sibling, gboolean above);
 void swt_fixed_move(SwtFixed *fixed, GtkWidget *widget, gint x, gint y);
 void swt_fixed_resize(SwtFixed *fixed, GtkWidget *widget, gint width, gint height);
@@ -148,6 +154,19 @@ typedef struct _SwtFixedAccessible SwtFixedAccessible;
 typedef struct _SwtFixedAccessiblePrivate SwtFixedAccessiblePrivate;
 typedef struct _SwtFixedAccessibleClass SwtFixedAccessibleClass;
 
+#if defined(GTK4)
+struct _SwtFixedAccessible
+{
+	GtkWidgetAccessible parent;
+
+	SwtFixedAccessiblePrivate *priv;
+};
+
+struct _SwtFixedAccessibleClass
+{
+	GtkWidgetAccessibleClass parent_class;
+};
+#else
 struct _SwtFixedAccessible
 {
 	GtkContainerAccessible parent;
@@ -159,6 +178,7 @@ struct _SwtFixedAccessibleClass
 {
 	GtkContainerAccessibleClass parent_class;
 };
+#endif
 
 GType swt_fixed_accessible_get_type (void) G_GNUC_CONST;
 AtkObject *swt_fixed_accessible_new (GtkWidget *widget);

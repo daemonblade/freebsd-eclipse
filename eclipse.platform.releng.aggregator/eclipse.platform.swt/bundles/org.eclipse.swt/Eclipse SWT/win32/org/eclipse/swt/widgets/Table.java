@@ -86,7 +86,7 @@ public class Table extends Composite {
 	boolean [] columnVisible;
 	long headerToolTipHandle, hwndHeader;
 	boolean ignoreCustomDraw, ignoreDrawForeground, ignoreDrawBackground, ignoreDrawFocus, ignoreDrawSelection, ignoreDrawHot;
-	boolean customDraw, dragStarted, explorerTheme, darkExplorerTheme, firstColumnImage, fixScrollWidth, tipRequested, wasSelected, wasResized, painted;
+	boolean customDraw, dragStarted, explorerTheme, firstColumnImage, fixScrollWidth, tipRequested, wasSelected, wasResized, painted;
 	boolean ignoreActivate, ignoreSelect, ignoreShrink, ignoreResize, ignoreColumnMove, ignoreColumnResize, fullRowSelect, settingItemHeight;
 	boolean headerItemDragging;
 	int itemHeight, lastIndexOf, lastWidth, sortDirection, resizeCount, selectionForeground, hotIndex;
@@ -877,7 +877,7 @@ LRESULT CDDS_PREPAINT (NMLVCUSTOMDRAW nmcd, long wParam, long lParam) {
 		OS.SetRect (rect, nmcd.left, nmcd.top, nmcd.right, nmcd.bottom);
 		if (explorerTheme && columnCount == 0) {
 			long hDC = nmcd.hdc;
-			if (OS.IsWindowEnabled (handle) || findImageControl () != null) {
+			if (OS.IsWindowEnabled (handle) || findImageControl () != null || hasCustomBackground()) {
 				drawBackground (hDC, rect);
 			} else {
 				fillBackground (hDC, OS.GetSysColor (OS.COLOR_3DFACE), rect);
@@ -1498,8 +1498,7 @@ void createHandle () {
 	/* Use the Explorer theme */
 	if (OS.IsAppThemed ()) {
 		explorerTheme = true;
-		darkExplorerTheme = display.useDarkModeExplorerTheme;
-		OS.SetWindowTheme (handle, display.getExplorerTheme(), null);
+		OS.SetWindowTheme (handle, Display.EXPLORER, null);
 	}
 
 	/* Get the header window handle */
@@ -3399,17 +3398,7 @@ void sendEraseItemEvent (TableItem item, NMLVCUSTOMDRAW nmcd, long lParam, Event
 	long hDC = nmcd.hdc;
 	int clrText = item.cellForeground != null ? item.cellForeground [nmcd.iSubItem] : -1;
 	if (clrText == -1) clrText = item.foreground;
-	int clrTextBk = -1;
-	if (OS.IsAppThemed ()) {
-		if (sortColumn != null && sortDirection != SWT.NONE) {
-			if (findImageControl () == null) {
-				if (indexOf (sortColumn) == nmcd.iSubItem) {
-					clrTextBk = getSortColumnPixel ();
-				}
-			}
-		}
-	}
-	clrTextBk = item.cellBackground != null ? item.cellBackground [nmcd.iSubItem] : -1;
+	int clrTextBk = item.cellBackground != null ? item.cellBackground [nmcd.iSubItem] : -1;
 	if (clrTextBk == -1) clrTextBk = item.background;
 	/*
 	* Bug in Windows.  For some reason, CDIS_SELECTED always set,
@@ -3550,18 +3539,6 @@ void sendEraseItemEvent (TableItem item, NMLVCUSTOMDRAW nmcd, long lParam, Event
 		if (explorerTheme) {
 			boolean backgroundWanted = !ignoreDrawHot || drawDrophilited || (!ignoreDrawSelection && clrSelectionBk != -1);
 
-			/*
-			 * With 'DarkMode_Explorer' theme, Windows draws selection background in "paint"
-			 * step instead of "erase" step. In this case, the code below is not needed,
-			 * because Windows background drawing happens after rather then before SWT.EraseItem.
-			 * On top of this, windows draws selection in a smaller rect and with a different color.
-			 * Proceeding with code below will result in two selection backgrounds visible.
-			 * Finally, as of Windows 10 version 1909, 'DarkMode_Explorer::LISTVIEW' is not yet
-			 * present, and 'OpenThemeData("LISTVIEW")' opens wrong theme data.
-			 */
-			if (darkExplorerTheme)
-				backgroundWanted = false;
-
 			if (backgroundWanted) {
 				RECT pClipRect = new RECT ();
 				OS.SetRect (pClipRect, nmcd.left, nmcd.top, nmcd.right, nmcd.bottom);
@@ -3692,7 +3669,7 @@ Event sendMeasureItemEvent (TableItem item, int row, int column, long hDC) {
 LRESULT sendMouseDownEvent (int type, int button, int msg, long wParam, long lParam) {
 	Display display = this.display;
 	display.captureChanged = false;
-	if (!sendMouseEvent (type, button, handle, msg, wParam, lParam)) {
+	if (!sendMouseEvent (type, button, handle, lParam)) {
 		if (!display.captureChanged && !isDisposed ()) {
 			if (OS.GetCapture () != handle) OS.SetCapture (handle);
 		}
@@ -3751,16 +3728,6 @@ LRESULT sendMouseDownEvent (int type, int button, int msg, long wParam, long lPa
 	}
 
 	/*
-	* Force the table to have focus so that when the user
-	* reselects the focus item, the LVIS_FOCUSED state bits
-	* for the item will be set.  If the user did not click on
-	* an item, then set focus to the table so that it will
-	* come to the front and take focus in the work around
-	* below.
-	*/
-	OS.SetFocus (handle);
-
-	/*
 	* Feature in Windows.  When the user selects outside of
 	* a table item, Windows deselects all the items, even
 	* when the table is multi-select.  While not strictly
@@ -3772,6 +3739,8 @@ LRESULT sendMouseDownEvent (int type, int button, int msg, long wParam, long lPa
 			if (!display.captureChanged && !isDisposed ()) {
 				if (OS.GetCapture () != handle) OS.SetCapture (handle);
 			}
+			/* We're skipping default processing, but at least set focus to control */
+			OS.SetFocus (handle);
 			return LRESULT.ZERO;
 		}
 	}
@@ -3859,7 +3828,7 @@ LRESULT sendMouseDownEvent (int type, int button, int msg, long wParam, long lPa
 			fakeMouseUp = (pinfo.flags & OS.LVHT_ONITEMSTATEICON) == 0;
 		}
 		if (fakeMouseUp) {
-			sendMouseEvent (SWT.MouseUp, button, handle, msg, wParam, lParam);
+			sendMouseEvent (SWT.MouseUp, button, handle, lParam);
 		}
 	}
 	return new LRESULT (code);
@@ -6016,8 +5985,8 @@ LRESULT WM_LBUTTONDBLCLK (long wParam, long lParam) {
 	int index = (int)OS.SendMessage (handle, OS.LVM_HITTEST, 0, pinfo);
 	Display display = this.display;
 	display.captureChanged = false;
-	sendMouseEvent (SWT.MouseDown, 1, handle, OS.WM_LBUTTONDOWN, wParam, lParam);
-	if (!sendMouseEvent (SWT.MouseDoubleClick, 1, handle, OS.WM_LBUTTONDBLCLK, wParam, lParam)) {
+	sendMouseEvent (SWT.MouseDown, 1, handle, lParam);
+	if (!sendMouseEvent (SWT.MouseDoubleClick, 1, handle, lParam)) {
 		if (!display.captureChanged && !isDisposed ()) {
 			if (OS.GetCapture () != handle) OS.SetCapture (handle);
 		}
@@ -6126,8 +6095,8 @@ LRESULT WM_RBUTTONDBLCLK (long wParam, long lParam) {
 	OS.SendMessage (handle, OS.LVM_HITTEST, 0, pinfo);
 	Display display = this.display;
 	display.captureChanged = false;
-	sendMouseEvent (SWT.MouseDown, 3, handle, OS.WM_RBUTTONDOWN, wParam, lParam);
-	if (sendMouseEvent (SWT.MouseDoubleClick, 3, handle, OS.WM_RBUTTONDBLCLK, wParam, lParam)) {
+	sendMouseEvent (SWT.MouseDown, 3, handle, lParam);
+	if (sendMouseEvent (SWT.MouseDoubleClick, 3, handle, lParam)) {
 		if (pinfo.iItem != -1) callWindowProc (handle, OS.WM_RBUTTONDBLCLK, wParam, lParam);
 	}
 	if (!display.captureChanged && !isDisposed ()) {

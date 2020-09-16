@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,6 +73,7 @@ import org.eclipse.swt.printing.Printer;
 import org.eclipse.swt.widgets.Caret;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Widget;
 import org.eclipse.test.Screenshots;
 import org.junit.After;
 import org.junit.Assume;
@@ -163,13 +165,12 @@ private Color getColor(RGB rgb) {
 }
 // this method must not be public so that the auto-gen tool keeps it
 protected void initializeColors() {
-	Display display = Display.getDefault();
-	colors.put(RED, new Color (display, RED));
-	colors.put(BLUE, new Color (display, BLUE));
-	colors.put(GREEN, new Color (display, GREEN));
-	colors.put(YELLOW, new Color (display, YELLOW));
-	colors.put(CYAN, new Color (display, CYAN));
-	colors.put(PURPLE, new Color (display, PURPLE));
+	colors.put(RED, new Color (RED));
+	colors.put(BLUE, new Color (BLUE));
+	colors.put(GREEN, new Color (GREEN));
+	colors.put(YELLOW, new Color (YELLOW));
+	colors.put(CYAN, new Color (CYAN));
+	colors.put(PURPLE, new Color (PURPLE));
 }
 
 @Override
@@ -5833,5 +5834,52 @@ public void test_caretLocationOnArrowMove() {
 	text.setCaretOffset(0);
 	text.setCaretOffset(caretOffset);
 	assertEquals(text.getCaret().getLocation(), caretLocation);
+}
+
+/**
+ * Bug 565164 - SWT.BS event no longer working
+ */
+@Test
+public void test_backspaceAndDelete() {
+	shell.open();
+	text.setSize(10, 50);
+	final Instant timeOut = Instant.now().plusSeconds(10);
+
+	Display display = Display.getDefault();
+
+	Event a = keyEvent('a', SWT.KeyDown, display.getFocusControl());
+	Event aUp = keyEvent('a', SWT.KeyUp, display.getFocusControl());
+
+	display.post(a);
+	display.post(aUp);
+
+	while (Instant.now().isBefore(timeOut)) {
+		if (text.getText().length() == 1) break;
+
+		if (!shell.isDisposed()) {
+			display.readAndDispatch();
+		}
+	}
+
+	// Simulate the backspace, ensuring that the caret is in the correct position
+	text.invokeAction(ST.DELETE_PREVIOUS);
+
+	while (Instant.now().isBefore(timeOut)) {
+		if (text.getText().length() == 0) break;
+
+		if (!shell.isDisposed()) {
+			display.readAndDispatch();
+		}
+	}
+
+	assertEquals(0, text.getText().length());
+}
+private Event keyEvent(int key, int type, Widget w) {
+	Event e = new Event();
+	e.keyCode= key;
+	e.character = (char) key;
+	e.type = type;
+	e.widget = w;
+	return e;
 }
 }

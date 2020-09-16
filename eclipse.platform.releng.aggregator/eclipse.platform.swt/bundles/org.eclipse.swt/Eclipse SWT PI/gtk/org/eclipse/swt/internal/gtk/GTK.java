@@ -284,6 +284,13 @@ public class GTK extends OS {
 
 	public static final native long gtk_button_new();
 
+	/** @method flags=dynamic
+	 *  @param button cast=(GtkButton *)
+	 *  @param child cast=(GtkWidget *)
+	 */
+	/* [GTK4 only] */
+	public static final native void gtk_button_set_child(long button, long child);
+
 	/**
 	 * @method flags=dynamic
 	 * @param button cast=(GtkButton *)
@@ -291,6 +298,10 @@ public class GTK extends OS {
 	 */
 	/* [GTK3 only] */
 	public static final native void gtk_button_set_image(long button, long image);
+	/**
+	 * @param button cast=(GtkButton *)
+	 */
+	public static final native void gtk_button_set_use_underline(long button, boolean use_underline);
 
 	/**
 	 * @method flags=dynamic
@@ -369,38 +380,82 @@ public class GTK extends OS {
 	 * @param value cast=(gdouble)
 	 */
 	public static final native void gtk_adjustment_set_page_increment(long adjustment, double value);
-	/** @param bin cast=(GtkBin *) */
-	public static final native long gtk_bin_get_child(long bin);
 	/** @param border cast=(GtkBorder *) */
 	public static final native void gtk_border_free(long border);
+
+	/* GtkBin [GTK3 only] */
+	/** @param bin cast=(GtkBin *) */
+	public static final native long gtk_bin_get_child(long bin);
+
+	/* GtkBox */
 	/** @param box cast=(GtkBox *) */
 	public static final native void gtk_box_set_spacing(long box, int spacing);
 	/**
+	 * @param orientation cast=(GtkOrientation)
+	 * @param spacing cast=(gint)
+	 */
+	public static final native long gtk_box_new(int orientation, int spacing);
+	/**
+	 * @param box cast=(GtkBox *)
+	 * @param homogeneous cast=(gboolean)
+	 */
+	public static final native void gtk_box_set_homogeneous(long box, boolean homogeneous);
+
+	/* GtkBox [GTK3 only] */
+	/**
 	 * @method flags=dynamic
 	 * @param box cast=(GtkBox *)
 	 * @param child cast=(GtkWidget *)
 	 */
-	/* [GTK3 only] */
 	public static final native void gtk_box_set_child_packing(long box, long child, boolean expand, boolean fill, int padding, int pack_type);
+
 	/**
 	 * @method flags=dynamic
 	 * @param box cast=(GtkBox *)
 	 * @param child cast=(GtkWidget *)
 	 */
-	/* [GTK4 only] */
 	public static final native void gtk_box_set_child_packing(long box, long child, int pack_type);
+	/**
+	 * @method flags=dynamic
+	 * @param box cast=(GtkBox *)
+	 * @param child cast=(GtkWidget *)
+	 * @param position cast=(gint)
+	 */
+	public static final native void gtk_box_reorder_child(long box, long child, int position);
+	/**
+	 * @method flags=dynamic
+	 * @param box cast=(GtkBox *)
+	 * @param widget cast=(GtkWidget *)
+	 * @param expand cast=(gboolean)
+	 * @param fill cast=(gboolean)
+	 * @param padding cast=(guint)
+	 */
+	public static final native void gtk_box_pack_end(long box, long widget, boolean expand, boolean fill, int padding);
+
+	/* GtkBox [GTK4 only] */
+	/**
+	 * @method flags=dynamic
+	 * @param box cast=(GtkBox *)
+	 * @param child cast=(GtkWidget *)
+	 */
+	public static final native void gtk_box_append(long box, long child);
+	/**
+	 * @method flags=dynamic
+	 * @param box cast=(GtkBox *)
+	 * @param child cast=(GtkWidget *)
+	 */
+	public static final native void gtk_box_prepend(long box, long child);
+
+	/**
+	 * @method flags=dynamic
+	 * @param box cast=(GtkBox *)
+	 * @param child cast=(GtkWidget *)
+	 * @param sibling cast=(GtkWidget *)
+	 */
+	public static final native void gtk_box_insert_child_after(long box, long child, long sibling);
+
+	/* GtkCalendar */
 	public static final native long gtk_calendar_new();
-	/**
-	 * @param calendar cast=(GtkCalendar *)
-	 * @param month cast=(guint)
-	 * @param year cast=(guint)
-	 */
-	public static final native void /*long*/ gtk_calendar_select_month(long calendar, int month, int year);
-	/**
-	 * @param calendar cast=(GtkCalendar *)
-	 * @param day cast=(guint)
-	 */
-	public static final native void gtk_calendar_select_day(long calendar, int day);
 	/**
 	 * @param calendar cast=(GtkCalendar *)
 	 * @param day cast=(guint)
@@ -410,18 +465,68 @@ public class GTK extends OS {
 	 * @param calendar cast=(GtkCalendar *)
 	 */
 	public static final native void gtk_calendar_clear_marks(long calendar);
+
+	/* GtkCalendar [GTK3 only] */
 	/**
+	 * @method flags=dynamic
+	 * @param calendar cast=(GtkCalendar *)
+	 * @param month cast=(guint)
+	 * @param year cast=(guint)
+	 */
+	public static final native void /*long*/ gtk_calendar_select_month(long calendar, int month, int year);
+	/**
+	 * @method flags=dynamic
+	 * @param calendar cast=(GtkCalendar *)
+	 * @param day cast=(guint)
+	 */
+	public static final native void gtk_calendar_select_day(long calendar, int day);
+	/**
+	 * @method flags=dynamic
 	 * @param calendar cast=(GtkCalendar *)
 	 * @param flags cast=(GtkCalendarDisplayOptions)
 	 */
+	/* [GTK3 only] */
 	public static final native void gtk_calendar_set_display_options(long calendar, int flags);
 	/**
+	 * @method flags=dynamic
 	 * @param calendar cast=(GtkCalendar *)
 	 * @param year cast=(guint *)
 	 * @param month cast=(guint *)
 	 * @param day cast=(guint *)
 	 */
 	public static final native void gtk_calendar_get_date(long calendar, int[] year, int[] month, int[] day);
+
+	/* GtkCalendar [GTK4 only] */
+	/**
+	 * @method flags=dynamic
+	 * @param calendar cast=(GtkCalendar *)
+	 */
+	public static final native long gtk_calendar_get_date(long calendar);
+	/**
+	 * @method flags=dynamic
+	 * @param calendar cast=(GtkCalendar *)
+	 * @param date cast=(GDateTime *)
+	 */
+	public static final native void gtk_calendar_select_day(long calendar, long date);
+	/**
+	 * @method flags=dynamic
+	 * @param calendar cast=(GtkCalendar *)
+	 * @param value cast=(gboolean)
+	 */
+	public static final native void gtk_calendar_set_show_day_names(long calendar, boolean value);
+	/**
+	 * @method flags=dynamic
+	 * @param calendar cast=(GtkCalendar *)
+	 * @param value cast=(gboolean)
+	 */
+	public static final native void gtk_calendar_set_show_heading(long calendar, boolean value);
+	/**
+	 * @method flags=dynamic
+	 * @param calendar cast=(GtkCalendar *)
+	 * @param value cast=(gboolean)
+	 */
+	public static final native void gtk_calendar_set_show_week_numbers(long calendar, boolean value);
+
 	/** @param cell_layout cast=(GtkCellLayout *) */
 	public static final native void gtk_cell_layout_clear(long cell_layout);
 	/** @param cell_layout cast=(GtkCellLayout *) */
@@ -511,14 +616,6 @@ public class GTK extends OS {
 	 */
 	public static final native void gtk_cell_view_set_fit_model(long cell_view, boolean fit_model);
 	public static final native long gtk_check_button_new();
-	/** @param check_menu_item cast=(GtkCheckMenuItem *) */
-	public static final native boolean gtk_check_menu_item_get_active(long check_menu_item);
-	public static final native long gtk_check_menu_item_new();
-	/**
-	 * @param wid cast=(GtkCheckMenuItem *)
-	 * @param active cast=(gboolean)
-	 */
-	public static final native void gtk_check_menu_item_set_active(long wid, boolean active);
 	public static final native long gtk_check_version(int required_major, int required_minor, int required_micro);
 	/** @param clipboard cast=(GtkClipboard *) */
 	/* [GTK3 only, if-def'd in os.h] */
@@ -638,6 +735,9 @@ public class GTK extends OS {
 	* @param combo_box cast=(GtkComboBox *)
 	*/
 	public static final native void gtk_combo_box_popdown(long combo_box);
+
+
+	/* GtkContainer [GTK3 only] */
 	/**
 	 * @param container cast=(GtkContainer *)
 	 * @param widget cast=(GtkWidget *)
@@ -657,12 +757,10 @@ public class GTK extends OS {
 	 * @param child cast=(GtkWidget *)
 	 * @param cairo cast=(cairo_t *)
 	 */
-	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gtk_container_propagate_draw(long container, long child, long cairo);
 	/**
 	 * @param container cast=(GtkContainer *)
 	 */
-	/* [GTK3 only, if-def'd in os.h] */
 	public static final native int gtk_container_get_border_width(long container);
 	/** @param container cast=(GtkContainer *) */
 	public static final native long gtk_container_get_children(long container);
@@ -675,8 +773,10 @@ public class GTK extends OS {
 	 * @param container cast=(GtkContainer *)
 	 * @param border_width cast=(guint)
 	 */
-	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gtk_container_set_border_width(long container, int border_width);
+
+
+
 	/**
 	 * @param dialog cast=(GtkDialog *)
 	 * @param button_text cast=(const gchar *)
@@ -906,31 +1006,15 @@ public class GTK extends OS {
 	 * @param label_widget cast=(GtkWidget *)
 	 */
 	public static final native void gtk_expander_set_label_widget(long expander, long label_widget);
+
+	/* GtkFileChooser */
 	/**
 	 * @param chooser cast=(GtkFileChooser *)
 	 * @param filter cast=(GtkFileFilter *)
 	 */
 	public static final native void gtk_file_chooser_add_filter(long chooser, long filter);
 	/** @param chooser cast=(GtkFileChooser *) */
-	public static final native long gtk_file_chooser_get_filename(long chooser);
-	/**  @param chooser cast=(GtkFileChooser *) */
-	public static final native long gtk_file_chooser_get_filenames(long chooser);
-	/** @param chooser cast=(GtkFileChooser *) */
-	public static final native long gtk_file_chooser_get_uri(long chooser);
-	/** @param chooser cast=(GtkFileChooser *) */
-	public static final native long gtk_file_chooser_get_uris(long chooser);
-	/** @param chooser cast=(GtkFileChooser *) */
 	public static final native long gtk_file_chooser_get_filter(long chooser);
-	/**
-	 * @param chooser cast=(GtkFileChooser *)
-	 * @param filename cast=(const gchar *)
-	 */
-	public static final native void gtk_file_chooser_set_current_folder(long chooser, long filename);
-	/**
-	 * @param chooser cast=(GtkFileChooser *)
-	 * @param uri cast=(const gchar *)
-	 */
-	public static final native void gtk_file_chooser_set_current_folder_uri(long chooser, byte [] uri);
 	/**
 	 * @param chooser cast=(GtkFileChooser *)
 	 * @param name cast=(const gchar *)
@@ -938,24 +1022,9 @@ public class GTK extends OS {
 	public static final native void gtk_file_chooser_set_current_name(long chooser, byte[] name);
 	/**
 	 * @param chooser cast=(GtkFileChooser *)
-	 * @param local_only cast=(gboolean)
-	 */
-	public static final native void gtk_file_chooser_set_local_only(long chooser, boolean local_only);
-	/**
-	 * @param chooser cast=(GtkFileChooser *)
-	 * @param do_overwrite_confirmation cast=(gboolean)
-	 */
-	public static final native void gtk_file_chooser_set_do_overwrite_confirmation(long chooser, boolean do_overwrite_confirmation);
-	/**
-	 * @param chooser cast=(GtkFileChooser *)
 	 * @param extra_widget cast=(GtkWidget *)
 	 */
 	public static final native void gtk_file_chooser_set_extra_widget(long chooser, long extra_widget);
-	/**
-	 * @param chooser cast=(GtkFileChooser *)
-	 * @param name cast=(const gchar *)
-	 */
-	public static final native void gtk_file_chooser_set_filename(long chooser, long name);
 	/**
 	 * @param chooser cast=(GtkFileChooser *)
 	 * @param filter cast=(GtkFileFilter *)
@@ -963,14 +1032,88 @@ public class GTK extends OS {
 	public static final native void gtk_file_chooser_set_filter(long chooser, long filter);
 	/**
 	 * @param chooser cast=(GtkFileChooser *)
-	 * @param uri cast=(const char *)
-	 */
-	public static final native void gtk_file_chooser_set_uri(long chooser, byte [] uri);
-	/**
-	 * @param chooser cast=(GtkFileChooser *)
 	 * @param select_multiple cast=(gboolean)
 	 */
 	public static final native void gtk_file_chooser_set_select_multiple(long chooser, boolean select_multiple);
+
+	/* GtkFileChooser [GTK3] */
+	/**
+	 * @method flags=dynamic
+	 * @param chooser cast=(GtkFileChooser *)
+	 * */
+	public static final native long gtk_file_chooser_get_filename(long chooser);
+	/**
+	 * @method flags=dynamic
+	 * @param chooser cast=(GtkFileChooser *)
+	 * */
+	public static final native long gtk_file_chooser_get_filenames(long chooser);
+	/**
+	 * @method flags=dynamic
+	 * @param chooser cast=(GtkFileChooser *)
+	 * */
+	public static final native long gtk_file_chooser_get_uri(long chooser);
+	/**
+	 * @method flags=dynamic
+	 * @param chooser cast=(GtkFileChooser *)
+	 * */
+	public static final native long gtk_file_chooser_get_uris(long chooser);
+	/**
+	 * @method flags=dynamic
+	 * @param chooser cast=(GtkFileChooser *)
+	 * @param filename cast=(const gchar *)
+	 */
+	public static final native void gtk_file_chooser_set_current_folder(long chooser, long filename);
+	/**
+	 * @method flags=dynamic
+	 * @param chooser cast=(GtkFileChooser *)
+	 * @param uri cast=(const gchar *)
+	 */
+	public static final native void gtk_file_chooser_set_current_folder_uri(long chooser, byte [] uri);
+	/**
+	 * @method flags=dynamic
+	 * @param chooser cast=(GtkFileChooser *)
+	 * @param local_only cast=(gboolean)
+	 */
+	public static final native void gtk_file_chooser_set_local_only(long chooser, boolean local_only);
+	/**
+	 * @method flags=dynamic
+	 * @param chooser cast=(GtkFileChooser *)
+	 * @param do_overwrite_confirmation cast=(gboolean)
+	 */
+	public static final native void gtk_file_chooser_set_do_overwrite_confirmation(long chooser, boolean do_overwrite_confirmation);
+	/**
+	 * @method flags=dynamic
+	 * @param chooser cast=(GtkFileChooser *)
+	 * @param name cast=(const gchar *)
+	 */
+	public static final native void gtk_file_chooser_set_filename(long chooser, long name);
+	/**
+	 * @method flags=dynamic
+	 * @param chooser cast=(GtkFileChooser *)
+	 * @param uri cast=(const char *)
+	 */
+	public static final native void gtk_file_chooser_set_uri(long chooser, byte [] uri);
+
+	/* GtkFileChooser [GTK4] */
+	/** @param chooser cast=(GtkFileChooser *) */
+	public static final native long gtk_file_chooser_get_files(long chooser);
+	/** @param chooser cast=(GtkFileChooser *) */
+	public static final native long gtk_file_chooser_get_file(long chooser);
+	/**
+	 * @method flags=dynamic
+	 * @param chooser cast=(GtkFileChooser *)
+	 * @param file cast=(GFile *)
+	 * @param error cast=(GError **)
+	 */
+	public static final native boolean gtk_file_chooser_set_current_folder(long chooser, long file, long error);
+	/**
+	 * @method flags=dynamic
+	 * @param chooser cast=(GtkFileChooser *)
+	 * @param file cast=(GFile *)
+	 * @param error cast=(GError **)
+	 */
+	public static final native boolean gtk_file_chooser_set_file(long chooser, long file, long error);
+
 	/* [GTK4 only, if-def'd in os.h] */
 	public static final native long gtk_gesture_multi_press_new();
 	/* [GTK4 only, if-def'd in os.h] */
@@ -1178,8 +1321,12 @@ public class GTK extends OS {
 	 * @param frame cast=(GtkFrame *)
 	 * @param type cast=(GtkShadowType)
 	 */
+	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gtk_frame_set_shadow_type(long frame, int type);
+	/* [GTK3 only, if-def'd in os.h] */
 	public static final native long gtk_get_current_event();
+	/* [GTK4 only, if-def'd in os.h] */
+	public static final native long gtk_event_controller_get_current_event(long controller);
 	/** @param state cast=(GdkModifierType*) */
 	public static final native boolean gtk_get_current_event_state(int[] state);
 	public static final native long gtk_get_default_language();
@@ -1209,40 +1356,6 @@ public class GTK extends OS {
 	 */
 	public static final native void gtk_rgb_to_hsv(double r, double g, double b, double[] h, double[] s, double[] v);
 	/**
-	 * @param orientation cast=(GtkOrientation)
-	 * @param spacing cast=(gint)
-	 */
-	public static final native long gtk_box_new(int orientation, int spacing);
-	/**
-	 * @method flags=dynamic
-	 * @param box cast=(GtkBox *)
-	 * @param widget cast=(GtkWidget *)
-	 * @param expand cast=(gboolean)
-	 * @param fill cast=(gboolean)
-	 * @param padding cast=(guint)
-	 */
-	/* [GTK3 only] */
-	public static final native void gtk_box_pack_end(long box, long widget,
-			boolean expand, boolean fill, int padding);
-	/**
-	 * @method flags=dynamic
-	 * @param box cast=(GtkBox *)
-	 * @param child cast=(GtkWidget *)
-	 */
-	/* [GTK4 only] */
-	public static final native void gtk_box_pack_end(long box, long child);
-	/**
-	 * @param box cast=(GtkBox *)
-	 * @param child cast=(GtkWidget *)
-	 * @param position cast=(gint)
-	 */
-	public static final native void gtk_box_reorder_child(long box, long child, int position);
-	/**
-	 * @param box cast=(GtkBox *)
-	 * @param homogeneous cast=(gboolean)
-	 */
-	public static final native void gtk_box_set_homogeneous(long box, boolean homogeneous);
-	/**
 	 * @method flags=dynamic
 	 */
 	/* [GTK3 only] */
@@ -1265,15 +1378,15 @@ public class GTK extends OS {
 	// Get function pointer to gtk_status_icon_position_menu
 	// See os_custom.h
 	public static final native long gtk_status_icon_position_menu_func();
+
+	/* GtkIconTheme [GTK3 only, if-def'd in os.h] */
+	/**
+	 * @param icon_info cast=(GtkIconInfo *)
+	 * @param error cast=(GError **)
+	 */
+	public static final native long gtk_icon_info_load_icon(long icon_info, long error[]);
 	/** @return cast=(GtkIconTheme *) */
 	public static final native long gtk_icon_theme_get_default();
-	/**
-	 * @param icon_theme cast=(GtkIconTheme *)
-	 * @param icon cast=(GIcon *)
-	 * @param size cast=(gint)
-	 * @param flags cast=(GtkIconLookupFlags)
-	 */
-	public static final native long gtk_icon_theme_lookup_by_gicon(long icon_theme, long icon, int size, int flags);
 	/**
 	 * @param icon_theme cast=(GtkIconTheme *)
 	 * @param icon_name cast=(const gchar *)
@@ -1283,14 +1396,37 @@ public class GTK extends OS {
 	 */
 	public static final native long gtk_icon_theme_load_icon(long icon_theme, byte[] icon_name, int size, int flags, long error);
 	/**
-	 * @param icon_info cast=(GtkIconInfo *)
-	 * @param error cast=(GError **)
+	 * @param icon_theme cast=(GtkIconTheme *)
+	 * @param icon cast=(GIcon *)
+	 * @param size cast=(gint)
+	 * @param flags cast=(GtkIconLookupFlags)
 	 */
-	public static final native long gtk_icon_info_load_icon(long icon_info, long error[]);
+	public static final native long gtk_icon_theme_lookup_by_gicon(long icon_theme, long icon, int size, int flags);
+
+	/* GtkIconTheme [GTK4 only, if-def'd in os.h] */
+	/** @param display cast=(GdkDisplay *) */
+	public static final native long gtk_icon_theme_get_for_display(long display);
 	/**
-	 * @param context cast=(GtkIMContext *)
-	 * @param event cast=(GdkEventKey *)
+	 * @param self cast=(GtkIconTheme *)
+	 * @param icon_name cast=(const char *)
+	 * @param size cast=(gint)
+	 * @param scale cast=(gint)
+	 * @param fallbacks cast=(const char **)
+	 * @param direction cast=(GtkTextDirection)
+	 * @param flags cast=(GtkIconLookupFlags)
 	 */
+	public static final native long gtk_icon_theme_lookup_icon(long self, long icon_name, long fallbacks, int size, int scale, int direction, int flags);
+	/**
+	 * @param self cast=(GtkIconTheme *)
+	 * @param icon cast=(GIcon *)
+	 * @param size cast=(gint)
+	 * @param scale cast=(gint)
+	 * @param direction cast=(GtkTextDirection)
+	 * @param flags cast=(GtkIconLookupFlags)
+	 */
+	public static final native long gtk_icon_theme_lookup_by_gicon(long self, long icon, int size, int scale, int direction, int flags);
+
+	/** @param context cast=(GtkIMContext *) */
 	public static final native boolean gtk_im_context_filter_keypress(long context, long event);
 	/** @param context cast=(GtkIMContext *) */
 	public static final native void gtk_im_context_focus_in(long context);
@@ -1331,20 +1467,10 @@ public class GTK extends OS {
 	 */
 	public static final native void gtk_image_set_from_pixbuf(long image, long pixbuf);
 	/**
-	 * @method flags=dynamic
 	 * @param image cast=(GtkImage *)
-	 * @param gicon cast=(GIcon *)
-	 * @param size cast=(GtkIconSize)
+	 * @param surface cast=(cairo_surface_t *)
 	 */
-	/* [GTK3 only] */
-	public static final native void gtk_image_set_from_gicon(long image, long gicon, int size);
-	/**
-	 * @method flags=dynamic
-	 * @param image cast=(GtkImage *)
-	 * @param gicon cast=(GIcon *)
-	 */
-	/* [GTK4 only] */
-	public static final native void gtk_image_set_from_gicon(long image, long gicon);
+	public static final native void gtk_image_set_from_surface(long image, long surface);
 	/**
 	 * @method flags=dynamic
 	 * @param icon_name cast=(const gchar *)
@@ -1524,6 +1650,16 @@ public class GTK extends OS {
 	public static final native int gtk_get_micro_version();
 	/** @param event cast=(GdkEvent *) */
 	public static final native void gtk_main_do_event(long event);
+
+	/** @method flags=dynamic */
+	/* [GTK2/GTK3; 3.22 deprecated, replaced] */
+	public static final native void gtk_menu_popup(long menu, long parent_menu_shell, long parent_menu_item, long func, long data, int button, int activate_time);
+	/** @method flags=dynamic */
+	public static final native void gtk_menu_popup_at_pointer(long menu, long trigger_event);
+	/** @method flags=dynamic */
+	public static final native void gtk_menu_popup_at_rect(long menu, long rect_window, GdkRectangle rect, int rect_anchor, int menu_anchor, long trigger_event);
+
+	/* GtkMenu/GtkMenuItem [GTK3 only, if-def'd in os.h] */
 	public static final native long gtk_menu_bar_new();
 	/** @param menu_item cast=(GtkMenuItem *) */
 	public static final native long gtk_menu_item_get_submenu(long menu_item);
@@ -1536,19 +1672,6 @@ public class GTK extends OS {
 	public static final native long gtk_menu_new();
 	/** @param menu cast=(GtkMenu *) */
 	public static final native void gtk_menu_popdown(long menu);
-	/**
-	 * @method flags=dynamic
-	 */
-	/* [GTK2/GTK3; 3.22 deprecated, replaced] */
-	public static final native void gtk_menu_popup(long menu, long parent_menu_shell, long parent_menu_item, long func, long data, int button, int activate_time);
-	/**
-	 *  @method flags=dynamic
-	 */
-	public static final native void gtk_menu_popup_at_pointer(long menu, long trigger_event);
-	/**
-	 *  @method flags=dynamic
-	 */
-	public static final native void gtk_menu_popup_at_rect(long menu, long rect_window, GdkRectangle rect, int rect_anchor, int menu_anchor, long trigger_event);
 	/** @param menu_shell cast=(GtkMenuShell *) */
 	public static final native void gtk_menu_shell_deactivate(long menu_shell);
 	/**
@@ -1562,11 +1685,40 @@ public class GTK extends OS {
 	 * @param take_focus cast=(gboolean)
 	 */
 	public static final native void gtk_menu_shell_set_take_focus(long menu_shell, boolean take_focus);
+
+	/** @param check_menu_item cast=(GtkCheckMenuItem *) */
+	public static final native boolean gtk_check_menu_item_get_active(long check_menu_item);
+	public static final native long gtk_check_menu_item_new();
 	/**
-	 * @param icon_widget cast=(GtkWidget *)
-	 * @param label cast=(const gchar *)
+	 * @param wid cast=(GtkCheckMenuItem *)
+	 * @param active cast=(gboolean)
 	 */
-	public static final native long gtk_menu_tool_button_new(long icon_widget, byte[] label);
+	public static final native void gtk_check_menu_item_set_active(long wid, boolean active);
+	/** @param radio_menu_item cast=(GtkRadioMenuItem *) */
+	public static final native long gtk_radio_menu_item_get_group(long radio_menu_item);
+	/** @param group cast=(GSList *) */
+	public static final native long gtk_radio_menu_item_new(long group);
+	public static final native long gtk_separator_menu_item_new();
+
+	/* GtkPopover */
+	/** @param popover cast=(GtkPopover *) */
+	public static final native void gtk_popover_popdown(long popover);
+
+	/* GtkPopoverMenuBar [GTK4 only] */
+	/**
+	 * @method flags=dynamic
+	 * @param model cast=(GMenuModel *) */
+	public static final native long gtk_popover_menu_bar_new_from_model(long model);
+
+	/* GtkPopoverMenu [GTK4 only] */
+	/**
+	 * @method flags=dynamic
+	 * @param model cast=(GMenuModel *) */
+	public static final native long gtk_popover_menu_new_from_model(long model);
+
+	/* GtkMenuButton */
+	public static final native long gtk_menu_button_new();
+
 	/**
 	 * @param parent cast=(GtkWindow *)
 	 * @param flags cast=(GtkDialogFlags)
@@ -1973,10 +2125,6 @@ public class GTK extends OS {
 	public static final native long gtk_radio_button_get_group(long radio_button);
 	/** @param group cast=(GSList *) */
 	public static final native long gtk_radio_button_new(long group);
-	/** @param radio_menu_item cast=(GtkRadioMenuItem *) */
-	public static final native long gtk_radio_menu_item_get_group(long radio_menu_item);
-	/** @param group cast=(GSList *) */
-	public static final native long gtk_radio_menu_item_new(long group);
 	/** @param range cast=(GtkRange *) */
 	public static final native long gtk_range_get_adjustment(long range);
 	/** @param range cast=(GtkRange *) */
@@ -2020,8 +2168,6 @@ public class GTK extends OS {
 	 */
 	public static final native void gtk_scrolled_window_get_policy(long scrolled_window, int[] hscrollbar_policy, int[] vscrollbar_policy);
 	/** @param scrolled_window cast=(GtkScrolledWindow *) */
-	public static final native int gtk_scrolled_window_get_shadow_type(long scrolled_window);
-	/** @param scrolled_window cast=(GtkScrolledWindow *) */
 	public static final native long gtk_scrolled_window_get_vadjustment(long scrolled_window);
 	/**
 	 * @param scrolled_window cast=(GtkScrolledWindow *)
@@ -2047,7 +2193,18 @@ public class GTK extends OS {
 	 * @param scrolled_window cast=(GtkScrolledWindow *)
 	 * @param type cast=(GtkShadowType)
 	 */
+	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gtk_scrolled_window_set_shadow_type(long scrolled_window, int type);
+	/** @param scrolled_window cast=(GtkScrolledWindow *) */
+	/* [GTK3 only, if-def'd in os.h] */
+	public static final native int gtk_scrolled_window_get_shadow_type(long scrolled_window);
+	/** @param scrolled_window cast=(GtkScrolledWindow *) */
+	/* [GTK4 only, if-def'd in os.h] */
+	public static final native void gtk_scrolled_window_set_has_frame(long scrolled_window, boolean has_frame);
+	/** @param scrolled_window cast=(GtkScrolledWindow *) */
+	/* [GTK4 only, if-def'd in os.h] */
+	public static final native boolean gtk_scrolled_window_get_has_frame(long scrolled_window);
+
 	public static final native long gtk_settings_get_default();
 	/** @param selection_data cast=(GtkSelectionData *) */
 	public static final native void gtk_selection_data_free(long selection_data);
@@ -2079,13 +2236,6 @@ public class GTK extends OS {
 	 * @param length cast=(gint)
 	 */
 	public static final native void gtk_selection_data_set(long selection_data, long type, int format, long data, int length);
-	public static final native long gtk_separator_menu_item_new();
-	public static final native long gtk_separator_tool_item_new();
-	/**
-	 * @param item cast=(GtkSeparatorToolItem *)
-	 * @param draw cast=(gboolean)
-	 */
-	public static final native void gtk_separator_tool_item_set_draw(long item, boolean draw);
 	/** @param socket cast=(GtkSocket *) */
 	public static final native long gtk_socket_get_id(long socket);
 	public static final native long gtk_socket_new();
@@ -2490,14 +2640,9 @@ public class GTK extends OS {
 	 */
 	/* [GTK3 only] */
 	public static final native void gtk_toggle_button_set_inconsistent(long toggle_button, boolean setting);
-	/** @param button cast=(GtkToggleToolButton *) */
-	public static final native boolean gtk_toggle_tool_button_get_active(long button);
-	public static final native long gtk_toggle_tool_button_new();
-	/**
-	 * @param item cast=(GtkToggleToolButton *)
-	 * @param selected cast=(gboolean)
-	 */
-	public static final native void gtk_toggle_tool_button_set_active(long item, boolean selected);
+
+
+	/* GtkToolbar & related tool items [GTK3 only] */
 	/**
 	 * @param icon_widget cast=(GtkWidget *)
 	 * @param label cast=(const gchar *)
@@ -2518,6 +2663,16 @@ public class GTK extends OS {
 	 * @param underline cast=(gboolean)
 	 */
 	public static final native void gtk_tool_button_set_use_underline(long item, boolean underline);
+
+	/** @param button cast=(GtkToggleToolButton *) */
+	public static final native boolean gtk_toggle_tool_button_get_active(long button);
+	public static final native long gtk_toggle_tool_button_new();
+	/**
+	 * @param item cast=(GtkToggleToolButton *)
+	 * @param selected cast=(gboolean)
+	 */
+	public static final native void gtk_toggle_tool_button_set_active(long item, boolean selected);
+
 	/**
 	 * @param item cast=(GtkToolItem *)
 	 * @param menu_id cast=(const gchar *)
@@ -2552,16 +2707,27 @@ public class GTK extends OS {
 	 * @param show_arrow cast=(gboolean)
 	 */
 	public static final native void gtk_toolbar_set_show_arrow(long toolbar, boolean show_arrow);
-	/** @param toolbar cast=(GtkToolbar *)
+	/**
+	 * @param toolbar cast=(GtkToolbar *)
 	 * @param style cast=(GtkToolbarStyle)
 	 */
 	public static final native void gtk_toolbar_set_style(long toolbar, int style);
-	/**
-	 * @method flags=dynamic
-	 * @param toolbar cast=(GtkToolbar *)
-	 */
-	/* [GTK3 only] */
+	/** @param toolbar cast=(GtkToolbar *)*/
 	public static final native void gtk_toolbar_set_icon_size(long toolbar, int size);
+	/**
+	 * @param icon_widget cast=(GtkWidget *)
+	 * @param label cast=(const gchar *)
+	 */
+	public static final native long gtk_menu_tool_button_new(long icon_widget, byte[] label);
+	public static final native long gtk_separator_tool_item_new();
+	/**
+	 * @param item cast=(GtkSeparatorToolItem *)
+	 * @param draw cast=(gboolean)
+	 */
+	public static final native void gtk_separator_tool_item_set_draw(long item, boolean draw);
+
+
+
 	public static final native long gtk_tooltip_get_type();
 	/**
 	 * @param tooltip cast=(GtkTooltip *)
@@ -2774,7 +2940,17 @@ public class GTK extends OS {
 	 * @param width cast=(gint *)
 	 * @param height cast=(gint *)
 	 */
+	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gtk_tree_view_column_cell_get_size(long tree_column, GdkRectangle cell_area, int[] x_offset, int[] y_offset, int[] width, int[] height);
+	/**
+	 * @param tree_column cast=(GtkTreeViewColumn *)
+	 * @param x_offset cast=(int *)
+	 * @param y_offset cast=(int *)
+	 * @param width cast=(int *)
+	 * @param height cast=(int *)
+	 */
+	/* [GTK4 only, if-def'd in os.h] */
+	public static final native void gtk_tree_view_column_cell_get_size(long tree_column, int[] x_offset, int[] y_offset, int[] width, int[] height);
 	/**
 	 * @param tree_column cast=(GtkTreeViewColumn *)
 	 * @param tree_model cast=(GtkTreeModel *)
@@ -3012,7 +3188,22 @@ public class GTK extends OS {
 	 * @param viewport cast=(GtkViewport *)
 	 * @param type cast=(GtkShadowType)
 	 */
+	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gtk_viewport_set_shadow_type(long viewport, int type);
+
+	/* GtkNative [GTK4 only] */
+	/** @param self cast=(GtkNative *) */
+	public static final native long gtk_native_get_surface(long self);
+
+
+	/* GtkWidget [GTK4 only] */
+	/**
+	 * @method flags=dynamic
+	 * @param widget cast=(GtkWidget *)
+	 */
+	public static final native long gtk_widget_get_native(long widget);
+
+	/* GtkWidget [GTK3 only] */
 	/**
 	 * @param widget cast=(GtkWidget *)
 	 * @param accel_signal cast=(const gchar *)
@@ -3022,12 +3213,21 @@ public class GTK extends OS {
 	 */
 	public static final native void gtk_widget_add_accelerator(long widget, byte[] accel_signal, long accel_group, int accel_key, int accel_mods, int accel_flags);
 	/**
+	 * @param widget cast=(GtkWidget *)
+	 * @param accel_group cast=(GtkAccelGroup *)
+	 * @param accel_key cast=(guint)
+	 * @param accel_mods cast=(GdkModifierType)
+	 */
+	public static final native void gtk_widget_remove_accelerator(long widget, long accel_group, int accel_key, int accel_mods);
+	/**
 	 * @method flags=dynamic
 	 * @param widget cast=(GtkWidget *)
 	 * @param events cast=(gint)
 	 */
-	/* [GTK3 only] */
 	public static final native void gtk_widget_add_events(long widget, int events);
+
+
+
 	/** @param widget cast=(GtkWidget *) */
 	public static final native boolean gtk_widget_child_focus(long widget, int direction);
 	/**
@@ -3090,12 +3290,6 @@ public class GTK extends OS {
 	 * @method flags=dynamic
 	 * @param widget cast=(GtkWidget *)
 	 */
-	/* [GTK4 only] */
-	public static final native long gtk_widget_get_surface(long widget);
-	/**
-	 * @method flags=dynamic
-	 * @param widget cast=(GtkWidget *)
-	 */
 	public static final native int gtk_widget_get_margin_start(long widget);
 	/**
 	 * @method flags=dynamic
@@ -3152,7 +3346,11 @@ public class GTK extends OS {
 	 * @param height cast=(gint *)
 	 */
 	public static final native void gtk_widget_get_size_request(long widget, int [] width, int [] height);
-	/** @param widget cast=(GtkWidget *) */
+	/**
+	 * @method flags=dynamic
+	 * @param widget cast=(GtkWidget *)
+	 * */
+	/* [GTK3 only] */
 	public static final native long gtk_widget_get_toplevel(long widget);
 	/** @param widget cast=(GtkWidget *) */
 	public static final native long gtk_widget_get_tooltip_text(long widget);
@@ -3194,13 +3392,6 @@ public class GTK extends OS {
 	public static final native void gtk_widget_queue_resize(long widget);
 	/** @param widget cast=(GtkWidget *) */
 	public static final native void gtk_widget_realize(long widget);
-	/**
-	 * @param widget cast=(GtkWidget *)
-	 * @param accel_group cast=(GtkAccelGroup *)
-	 * @param accel_key cast=(guint)
-	 * @param accel_mods cast=(GdkModifierType)
-	 */
-	public static final native void gtk_widget_remove_accelerator(long widget, long accel_group, int accel_key, int accel_mods);
 	/**
 	 * @method flags=dynamic
 	 * @param widget cast=(GtkWidget *)
@@ -3328,122 +3519,8 @@ public class GTK extends OS {
 	 * @param dest_y cast=(gint *)
 	 */
 	public static final native boolean gtk_widget_translate_coordinates(long src_widget, long dest_widget, int src_x, int src_y, int[] dest_x, int[] dest_y);
-	/** @param window cast=(GtkWindow *) */
-	public static final native boolean gtk_window_activate_default(long window);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param accel_group cast=(GtkAccelGroup *)
-	 */
-	public static final native void gtk_window_add_accel_group(long window, long accel_group);
-	/** @param handle cast=(GtkWindow *) */
-	public static final native void gtk_window_deiconify(long handle);
-	/** @param window cast=(GtkWindow *) */
-	public static final native long gtk_window_get_focus(long window);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 */
-	public static final native long gtk_window_get_group(long window);
-	/** @param window cast=(GtkWindow *) */
-	public static final native long gtk_window_get_icon_list(long window);
-	/** @param window cast=(GtkWindow *) */
-	public static final native boolean gtk_window_get_modal(long window);
-	/** @param window cast=(GtkWindow *) */
-	public static final native int gtk_window_get_mnemonic_modifier(long window);
-	/**
-	 * @param handle cast=(GtkWindow *)
-	 * @param x cast=(gint *)
-	 * @param y cast=(gint *)
-	 */
-	public static final native void gtk_window_get_position(long handle, int[] x, int[] y);
-	/**
-	 * @param group cast=(GtkWindowGroup*)
-	 * @param window cast=(GtkWindow*)
-	 */
-	public static final native void gtk_window_group_add_window(long group, long window);
-	/**
-	 * @param group cast=(GtkWindowGroup*)
-	 * @param window cast=(GtkWindow*)
-	 */
-	public static final native void gtk_window_group_remove_window(long group, long window);
-	public static final native long gtk_window_group_new();
-	/** @param handle cast=(GtkWindow *) */
-	public static final native boolean gtk_window_is_active(long handle);
-	/** @param handle cast=(GtkWindow *) */
-	public static final native void gtk_window_iconify(long handle);
-	public static final native long gtk_window_list_toplevels();
-	/** @param handle cast=(GtkWindow *) */
-	public static final native void gtk_window_maximize(long handle);
-	/** @param handle cast=(GtkWindow *) */
-	public static final native void gtk_window_fullscreen(long handle);
-	/** @param handle cast=(GtkWindow *) */
-	public static final native void gtk_window_unfullscreen(long handle);
-	/**
-	 * @param handle cast=(GtkWindow *)
-	 * @param x cast=(gint)
-	 * @param y cast=(gint)
-	 */
-	public static final native void gtk_window_move(long handle, int x, int y);
-	/** @param type cast=(GtkWindowType) */
-	public static final native long gtk_window_new(int type);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param accel_group cast=(GtkAccelGroup *)
-	 */
-	public static final native void gtk_window_remove_accel_group(long window, long accel_group);
-	/**
-	 * @param handle cast=(GtkWindow *)
-	 * @param x cast=(gint)
-	 * @param y cast=(gint)
-	 */
-	public static final native void gtk_window_resize(long handle, int x, int y);
-	/**
-	 * @param handle cast=(GtkWindow *)
-	 * @param width cast=(gint *)
-	 * @param height cast=(gint *)
-	 */
-	public static final native void gtk_window_get_size(long handle, int[] width, int[] height);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param attach_widget cast=(GtkWidget *)
-	 */
-	public static final native void gtk_window_set_attached_to(long window, long attach_widget);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param widget cast=(GtkWidget *)
-	 */
-	public static final native void gtk_window_set_default(long window, long widget);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param decorated cast=(gboolean)
-	 */
-	public static final native void gtk_window_set_decorated(long window, boolean decorated);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param setting cast=(gboolean)
-	 */
-	public static final native void gtk_window_set_destroy_with_parent(long window, boolean setting);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param geometry_widget cast=(GtkWidget *)
-	 * @param geometry flags=no_out
-	 */
-	/* [GTK3 only, if-def'd in os.h] */
-	public static final native void gtk_window_set_geometry_hints(long window, long geometry_widget, GdkGeometry geometry, int geom_mask);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param list cast=(GList *)
-	 */
-	public static final native void gtk_window_set_icon_list(long window, long list);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param setting cast=(gboolean)
-	 */
-	public static final native void gtk_window_set_keep_above(long window, boolean setting);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param modal cast=(gboolean)
-	 */
-	public static final native void gtk_window_set_modal(long window, boolean modal);
+	/** @param widget cast=(GtkWidget *) */
+	public static final native boolean gtk_widget_activate(long widget);
 	/**
 	 * @param widget cast=(GtkWidget *)
 	 * @param tip_text cast=(const gchar *)
@@ -3461,30 +3538,6 @@ public class GTK extends OS {
 	 */
 	/* [GTK4 only, if-def'd in os.h] */
 	public static final native void gtk_widget_set_parent_surface(long widget, long parent_surface);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param resizable cast=(gboolean)
-	 */
-	public static final native void gtk_window_set_resizable(long window, boolean resizable);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param title cast=(const gchar *)
-	 */
-	public static final native void gtk_window_set_title(long window, byte[] title);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param skips_taskbar cast=(gboolean)
-	 */
-	public static final native void gtk_window_set_skip_taskbar_hint(long window, boolean skips_taskbar);
-	/** @param window cast=(GtkWindow *) */
-	public static final native void gtk_window_set_type_hint(long window, int hint);
-	/**
-	 * @param window cast=(GtkWindow *)
-	 * @param parent cast=(GtkWindow *)
-	 */
-	public static final native void gtk_window_set_transient_for(long window, long parent);
-	/** @param handle cast=(GtkWindow *) */
-	public static final native void gtk_window_unmaximize(long handle);
 	/** @method flags=dynamic */
 	public static final native long gtk_printer_option_widget_get_type();
 	/**
@@ -3501,4 +3554,167 @@ public class GTK extends OS {
 	 */
 	/* [GTK4 only, if-def'd in os.h] */
 	public static final native void gtk_widget_snapshot_child(long widget, long child, long snapshot);
+
+
+	/* GtkWindow */
+	/** @param window cast=(GtkWindow *) */
+	public static final native long gtk_window_get_focus(long window);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 */
+	public static final native long gtk_window_get_group(long window);
+	/** @param window cast=(GtkWindow *) */
+	public static final native boolean gtk_window_get_modal(long window);
+	/**
+	 * @param group cast=(GtkWindowGroup*)
+	 * @param window cast=(GtkWindow*)
+	 */
+	public static final native void gtk_window_group_add_window(long group, long window);
+	/**
+	 * @param group cast=(GtkWindowGroup*)
+	 * @param window cast=(GtkWindow*)
+	 */
+	public static final native void gtk_window_group_remove_window(long group, long window);
+	public static final native long gtk_window_group_new();
+	/** @param handle cast=(GtkWindow *) */
+	public static final native boolean gtk_window_is_active(long handle);
+	public static final native long gtk_window_list_toplevels();
+	/** @param handle cast=(GtkWindow *) */
+	public static final native void gtk_window_maximize(long handle);
+	/** @param handle cast=(GtkWindow *) */
+	public static final native void gtk_window_fullscreen(long handle);
+	/** @param handle cast=(GtkWindow *) */
+	public static final native void gtk_window_unfullscreen(long handle);
+	/**
+	 * @param handle cast=(GtkWindow *)
+	 * @param x cast=(gint)
+	 * @param y cast=(gint)
+	 */
+	public static final native void gtk_window_resize(long handle, int x, int y);
+	/**
+	 * @param handle cast=(GtkWindow *)
+	 * @param width cast=(gint *)
+	 * @param height cast=(gint *)
+	 */
+	public static final native void gtk_window_get_size(long handle, int[] width, int[] height);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param decorated cast=(gboolean)
+	 */
+	public static final native void gtk_window_set_decorated(long window, boolean decorated);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param setting cast=(gboolean)
+	 */
+	public static final native void gtk_window_set_destroy_with_parent(long window, boolean setting);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param modal cast=(gboolean)
+	 */
+	public static final native void gtk_window_set_modal(long window, boolean modal);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param resizable cast=(gboolean)
+	 */
+	public static final native void gtk_window_set_resizable(long window, boolean resizable);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param title cast=(const gchar *)
+	 */
+	public static final native void gtk_window_set_title(long window, byte[] title);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param parent cast=(GtkWindow *)
+	 */
+	public static final native void gtk_window_set_transient_for(long window, long parent);
+	/** @param handle cast=(GtkWindow *) */
+	public static final native void gtk_window_unmaximize(long handle);
+	/** @param window cast=(GtkWindow *) */
+	public static final native long gtk_window_get_default_widget(long window);
+
+	/* GtkWindow [GTK3 only, if-def'd in os.h] */
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param accel_group cast=(GtkAccelGroup *)
+	 */
+	public static final native void gtk_window_add_accel_group(long window, long accel_group);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param accel_group cast=(GtkAccelGroup *)
+	 */
+	public static final native void gtk_window_remove_accel_group(long window, long accel_group);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param geometry_widget cast=(GtkWidget *)
+	 * @param geometry flags=no_out
+	 */
+	public static final native void gtk_window_set_geometry_hints(long window, long geometry_widget, GdkGeometry geometry, int geom_mask);
+	/** @param handle cast=(GtkWindow *) */
+	public static final native void gtk_window_deiconify(long handle);
+	/** @param handle cast=(GtkWindow *) */
+	public static final native void gtk_window_iconify(long handle);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param widget cast=(GtkWidget *)
+	 */
+	public static final native void gtk_window_set_default(long window, long widget);
+	/** @param window cast=(GtkWindow *) */
+	public static final native boolean gtk_window_activate_default(long window);
+	/** @param window cast=(GtkWindow *) */
+	public static final native void gtk_window_set_type_hint(long window, int hint);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param skips_taskbar cast=(gboolean)
+	 */
+	public static final native void gtk_window_set_skip_taskbar_hint(long window, boolean skips_taskbar);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param setting cast=(gboolean)
+	 */
+	public static final native void gtk_window_set_keep_above(long window, boolean setting);
+	/** @param window cast=(GtkWindow *) */
+	public static final native long gtk_window_get_icon_list(long window);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param list cast=(GList *)
+	 */
+	public static final native void gtk_window_set_icon_list(long window, long list);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param attach_widget cast=(GtkWidget *)
+	 */
+	public static final native void gtk_window_set_attached_to(long window, long attach_widget);
+	/**
+	 * @param handle cast=(GtkWindow *)
+	 * @param x cast=(gint)
+	 * @param y cast=(gint)
+	 */
+	public static final native void gtk_window_move(long handle, int x, int y);
+	/** @param type cast=(GtkWindowType) */
+	public static final native long gtk_window_new(int type);
+	/**
+	 * @param handle cast=(GtkWindow *)
+	 * @param x cast=(gint *)
+	 * @param y cast=(gint *)
+	 */
+	public static final native void gtk_window_get_position(long handle, int[] x, int[] y);
+	/** @param window cast=(GtkWindow *) */
+	public static final native int gtk_window_get_mnemonic_modifier(long window);
+
+	/* GtkWindow [GTK4 only, if-def'd in os.h] */
+	public static final native long gtk_window_new();
+	/** @param window cast=(GtkWindow *) */
+	public static final native void gtk_window_minimize(long window);
+	/** @param window cast=(GtkWindow *) */
+	public static final native void gtk_window_unminimize(long window);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param default_widget cast=(GtkWidget *)
+	 */
+	public static final native void gtk_window_set_default_widget(long window, long default_widget);
+	/**
+	 * @param window cast=(GtkWindow *)
+	 * @param child cast=(GtkWidget *)
+	 */
+	public static final native void gtk_window_set_child(long window, long child);
 }

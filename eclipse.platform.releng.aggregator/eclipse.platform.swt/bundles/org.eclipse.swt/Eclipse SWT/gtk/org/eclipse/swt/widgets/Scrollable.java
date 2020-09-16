@@ -128,7 +128,14 @@ Rectangle computeTrimInPixels (int x, int y, int width, int height) {
 	trimHeight += hScrollBarWidth ();
 	trimWidth  += vScrollBarWidth ();
 	if (scrolledHandle != 0) {
-		if (GTK.gtk_scrolled_window_get_shadow_type (scrolledHandle) != GTK.GTK_SHADOW_NONE) {
+		boolean hasFrame;
+		if (GTK.GTK4) {
+			hasFrame = GTK.gtk_scrolled_window_get_has_frame(scrolledHandle);
+		} else {
+			hasFrame = GTK.gtk_scrolled_window_get_shadow_type (scrolledHandle) != GTK.GTK_SHADOW_NONE;
+		}
+
+		if (hasFrame) {
 			Point thickness = getThickness (scrolledHandle);
 			int xthickness = thickness.x;
 			int ythickness = thickness.y;
@@ -208,7 +215,14 @@ int getBorderWidthInPixels () {
 	if (fixedHandle != 0) border += gtk_container_get_border_width_or_margin (fixedHandle);
 	if (scrolledHandle != 0) {
 		border += gtk_container_get_border_width_or_margin (scrolledHandle);
-		if (GTK.gtk_scrolled_window_get_shadow_type (scrolledHandle) != GTK.GTK_SHADOW_NONE) {
+
+		boolean hasFrame;
+		if (GTK.GTK4) {
+			hasFrame = GTK.gtk_scrolled_window_get_has_frame(scrolledHandle);
+		} else {
+			hasFrame = GTK.gtk_scrolled_window_get_shadow_type (scrolledHandle) != GTK.GTK_SHADOW_NONE;
+		}
+		if (hasFrame) {
 			border += getThickness (scrolledHandle).x;
 		}
 	}
@@ -358,10 +372,26 @@ long gtk_scroll_event (long widget, long eventPtr) {
 	if ((state & CANVAS) != 0) {
 		ScrollBar scrollBar;
 		int [] direction = new int[1];
-		boolean fetched = GDK.gdk_event_get_scroll_direction(eventPtr, direction);
+		boolean fetched;
+		if (GTK.GTK4) {
+			direction[0] = GDK.gdk_scroll_event_get_direction(eventPtr);
+			fetched = direction[0] != GDK.GDK_SCROLL_SMOOTH;
+		} else {
+			fetched = GDK.gdk_event_get_scroll_direction(eventPtr, direction);
+		}
+
 		if (!fetched) {
 			double[] delta_x = new double[1], delta_y = new double [1];
-			if (GDK.gdk_event_get_scroll_deltas (eventPtr, delta_x, delta_y)) {
+			boolean deltasAvailable;
+			if (GTK.GTK4) {
+				GDK.gdk_scroll_event_get_deltas(eventPtr, delta_x, delta_y);
+				// In GTK4, deltas is always available but zero when not GDK_SMOOTH_SCROLL
+				deltasAvailable = true;
+			} else {
+				deltasAvailable = GDK.gdk_event_get_scroll_deltas (eventPtr, delta_x, delta_y);
+			}
+
+			if (deltasAvailable) {
 				if (delta_x [0] != 0) {
 					scrollBar = horizontalBar;
 					if (scrollBar != null && !GTK.gtk_widget_get_visible (scrollBar.handle) && scrollBar.getEnabled()) {
@@ -484,8 +514,9 @@ void redrawWidget (int x, int y, int width, int height, boolean redrawAll, boole
 		rect.height = Math.max (0, height);
 	}
 	if (GTK.GTK4) {
-		long surface = gtk_widget_get_surface (topHandle);
-		GDK.gdk_surface_invalidate_rect (surface, rect);
+		/* TODO: GTK4 no ability to invalidate surfaces, may need to keep track of
+		 * invalid regions ourselves and do gdk_surface_queue_expose. Will need a different way to force redraws.
+		 * New "render" signal? */
 	} else {
 		long window = gtk_widget_get_window (topHandle);
 		GDK.gdk_window_invalidate_rect (window, rect, all);

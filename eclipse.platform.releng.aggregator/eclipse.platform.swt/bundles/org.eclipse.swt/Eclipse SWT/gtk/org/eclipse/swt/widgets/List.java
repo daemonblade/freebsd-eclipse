@@ -232,7 +232,13 @@ void createHandle (int index) {
 	int hsp = (style & SWT.H_SCROLL) != 0 ? GTK.GTK_POLICY_AUTOMATIC : GTK.GTK_POLICY_NEVER;
 	int vsp = (style & SWT.V_SCROLL) != 0 ? GTK.GTK_POLICY_AUTOMATIC : GTK.GTK_POLICY_NEVER;
 	GTK.gtk_scrolled_window_set_policy (scrolledHandle, hsp, vsp);
-	if ((style & SWT.BORDER) != 0) GTK.gtk_scrolled_window_set_shadow_type (scrolledHandle, GTK.GTK_SHADOW_ETCHED_IN);
+	if ((style & SWT.BORDER) != 0) {
+		if (GTK.GTK4) {
+			GTK.gtk_scrolled_window_set_has_frame(scrolledHandle, true);
+		} else {
+			GTK.gtk_scrolled_window_set_shadow_type (scrolledHandle, GTK.GTK_SHADOW_ETCHED_IN);
+		}
+	}
 	/*
 	* Bug in GTK. When a treeview is the child of an override shell,
 	* and if the user has ever invokes the interactive search field,
@@ -535,28 +541,34 @@ int getItemHeightInPixels () {
 	checkWidget();
 	int itemCount = GTK.gtk_tree_model_iter_n_children (modelHandle, 0);
 	long column = GTK.gtk_tree_view_get_column (handle, 0);
+
+	int height;
+	int [] w = new int [1], h = new int [1];
+
 	if (itemCount == 0) {
-		int [] w = new int [1], h = new int [1];
-		GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, w, h);
-		int height = h [0];
-		long textRenderer = getTextRenderer (column);
-		if (textRenderer != 0) GTK.gtk_cell_renderer_get_preferred_height_for_width (textRenderer, handle, 0, h, null);
-		height += h [0];
-		return height;
+		if (GTK.GTK4) {
+			GTK.gtk_tree_view_column_cell_get_size(column, null, null, w, h);
+		} else {
+			GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, w, h);
+		}
+
+		height = h[0];
 	} else {
-		int height = 0;
 		long iter = OS.g_malloc (GTK.GtkTreeIter_sizeof ());
 		GTK.gtk_tree_model_get_iter_first (modelHandle, iter);
 		GTK.gtk_tree_view_column_cell_set_cell_data (column, modelHandle, iter, false, false);
-		int [] w = new int [1], h = new int [1];
 		GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, w, h);
-		long textRenderer = getTextRenderer (column);
-		int [] ypad = new int[1];
-		if (textRenderer != 0) GTK.gtk_cell_renderer_get_padding(textRenderer, null, ypad);
-		height = h [0] + ypad [0];
+		height = h[0];
+
 		OS.g_free (iter);
-		return height;
 	}
+
+	long textRenderer = getTextRenderer (column);
+	int [] ypad = new int[1];
+	if (textRenderer != 0) GTK.gtk_cell_renderer_get_padding(textRenderer, null, ypad);
+	height += ypad [0];
+
+	return height;
 }
 
 /**
@@ -795,15 +807,23 @@ long gtk_button_press_event (long widget, long event) {
 	 * in GTK in the case that additional items aren't being added (CTRL_MASK or SHIFT_MASK) and the item being dragged is already
 	 * selected, we can give the DnD handling to MOTION-NOTIFY. See Bug 503431
 	 */
-	double [] eventX = new double [1];
-	double [] eventY = new double [1];
-	GDK.gdk_event_get_coords(event, eventX, eventY);
 	int eventType = GDK.gdk_event_get_event_type(event);
 	eventType = fixGdkEventTypeValues(eventType);
+
+	double [] eventX = new double [1];
+	double [] eventY = new double [1];
 	int [] eventState = new int [1];
-	GDK.gdk_event_get_state(event, eventState);
 	int [] eventButton = new int [1];
-	GDK.gdk_event_get_button(event, eventButton);
+	if (GTK.GTK4) {
+		eventButton[0] = GDK.gdk_button_event_get_button(event);
+		eventState[0] = GDK.gdk_event_get_modifier_state(event);
+		GDK.gdk_event_get_position(event, eventX, eventY);
+	} else {
+		GDK.gdk_event_get_button(event, eventButton);
+		GDK.gdk_event_get_state(event, eventState);
+		GDK.gdk_event_get_coords(event, eventX, eventY);
+	}
+
 	if ((state & DRAG_DETECT) != 0 && hooks (SWT.DragDetect) &&
 			!OS.isX11() && eventType == GDK.GDK_BUTTON_PRESS) { // Wayland
 		// check to see if there is another event coming in that is not a double/triple click, this is to prevent Bug 514531
@@ -913,8 +933,13 @@ long gtk_row_activated (long tree, long path, long column) {
 
 @Override
 long gtk_key_press_event (long widget, long event) {
-	int [] key = new int[1];
-	GDK.gdk_event_get_keyval(event, key);
+	int [] key = new int [1];
+	if (GTK.GTK4) {
+		key[0] = GDK.gdk_key_event_get_keyval(event);
+	} else {
+		GDK.gdk_event_get_keyval(event, key);
+	}
+
 	keyPressDefaultSelectionHandler (event, key[0]);
 	return super.gtk_key_press_event (widget, event);
 }
@@ -922,10 +947,16 @@ long gtk_key_press_event (long widget, long event) {
 @Override
 long gtk_button_release_event (long widget, long event) {
 	int [] eventState = new int [1];
-	GDK.gdk_event_get_state(event, eventState);
 	double [] eventX = new double [1];
 	double [] eventY = new double [1];
-	GDK.gdk_event_get_coords(event, eventX, eventY);
+	if (GTK.GTK4) {
+		eventState[0] = GDK.gdk_event_get_modifier_state(event);
+		GDK.gdk_event_get_position(event, eventX, eventY);
+	} else {
+		GDK.gdk_event_get_state(event, eventState);
+		GDK.gdk_event_get_coords(event, eventX, eventY);
+	}
+
 	long eventGdkResource = gdk_event_get_surface_or_window(event);
 	if (GTK.GTK4) {
 		if (eventGdkResource != gtk_widget_get_surface (handle)) return 0;

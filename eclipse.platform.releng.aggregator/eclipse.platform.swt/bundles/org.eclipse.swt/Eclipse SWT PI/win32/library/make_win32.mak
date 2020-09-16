@@ -25,7 +25,7 @@ WS_PREFIX   = win32
 SWT_VERSION = $(maj_ver)$(min_ver)r$(rev)
 SWT_LIB     = $(SWT_PREFIX)-$(WS_PREFIX)-$(SWT_VERSION).dll
 SWT_LIBS    = comctl32.lib shell32.lib imm32.lib oleacc.lib usp10.lib \
-	wininet.lib Crypt32.lib Shlwapi.lib Uxtheme.lib Propsys.lib Urlmon.lib \
+	wininet.lib Shlwapi.lib Uxtheme.lib Propsys.lib Urlmon.lib \
 	Msimg32.lib
 SWT_OBJS    = swt.obj callback.obj c.obj c_stats.obj \
 	os.obj os_structs.obj os_custom.obj os_stats.obj \
@@ -41,10 +41,10 @@ AWT_LIB    = $(AWT_PREFIX)-$(WS_PREFIX)-$(SWT_VERSION).dll
 AWT_LIBS   = "$(SWT_JAVA_HOME)\lib\jawt.lib"
 AWT_OBJS   = swt_awt.obj
 
-WEBKIT_PREFIX = swt-webkit
-WEBKIT_LIB    = $(WEBKIT_PREFIX)-$(WS_PREFIX)-$(SWT_VERSION).dll
-WEBKIT_LIBS   = $(WEBKIT_DIR)\lib\webkit.lib $(WEBKIT_SUPPORT_DIR)\win\lib\CFNetwork.lib $(WEBKIT_SUPPORT_DIR)\win\lib\CoreFoundation.lib
-WEBKIT_OBJS   = webkit_win32.obj webkit_win32_stats.obj webkit_win32_custom.obj webkit_win32_structs.obj
+CHROMIUM_PREFIX = swt-chromium
+CHROMIUM_LIB    = $(CHROMIUM_PREFIX)-$(WS_PREFIX)-$(SWT_VERSION).dll
+CHROMIUM_LIBS   = $(CHROMIUM_TARGET)\chromium_swt_$(SWT_VERSION).dll.lib
+CHROMIUM_OBJS   = chromiumlib.obj chromiumlib_stats.obj chromiumlib_custom.obj chromiumlib_structs.obj
 
 WGL_PREFIX = swt-wgl
 WGL_LIB    = $(WGL_PREFIX)-$(WS_PREFIX)-$(SWT_VERSION).dll
@@ -54,19 +54,13 @@ WGL_OBJS   = wgl.obj wgl_structs.obj wgl_stats.obj
 # Uncomment for Native Stats tool
 #NATIVE_STATS = -DNATIVE_STATS
 
-WEBKITCFLAGS = -c -O1\
-	-DSWT_VERSION=$(SWT_VERSION) \
-	$(NATIVE_STATS) \
-	-I"$(SWT_JAVA_HOME)\include" -I"$(SWT_JAVA_HOME)\include\win32" \
-	-I"$(WEBKIT_DIR)" \
-	-I"$(WEBKIT_DIR)\WebKit\win" \
-	-I"$(WEBKIT_DIR)\JavaScriptCore\ForwardingHeaders" \
-	-I"$(WEBKIT_SUPPORT_DIR)\win\include"
-
 #CFLAGS = $(cdebug) $(cflags) $(cvarsmt) $(CFLAGS) \
 CFLAGS = -O1 -DNDEBUG -DUNICODE -D_UNICODE /c $(cflags) $(cvarsmt) $(CFLAGS) \
 	-DSWT_VERSION=$(maj_ver)$(min_ver) -DSWT_REVISION=$(rev) $(NATIVE_STATS) -DUSE_ASSEMBLER \
 	/I"$(SWT_JAVA_HOME)\include" /I"$(SWT_JAVA_HOME)\include\win32" /I.
+	
+CHROMIUMCFLAGS = $(CFLAGS) /I"$(CHROMIUM_HEADERS)"
+
 RCFLAGS = $(rcflags) $(rcvars) $(RCFLAGS) -DSWT_FILE_VERSION=\"$(maj_ver).$(min_ver).$(rev).0\" -DSWT_COMMA_VERSION=$(comma_ver)
 ldebug = /RELEASE  /INCREMENTAL:NO /NOLOGO
 dlllflags = -dll
@@ -75,14 +69,14 @@ olelibsmt = ole32.lib uuid.lib oleaut32.lib $(guilibsmt)
 
 all: make_swt make_awt make_gdip make_wgl
 
-webkit_win32_custom.obj: webkit_win32_custom.cpp
-	cl $(WEBKITCFLAGS) webkit_win32_custom.cpp
-webkit_win32_stats.obj: webkit_win32_stats.cpp
-	cl $(WEBKITCFLAGS) webkit_win32_stats.cpp
-webkit_win32_structs.obj: webkit_win32_structs.cpp
-	cl $(WEBKITCFLAGS) webkit_win32_structs.cpp
-webkit_win32.obj: webkit_win32.cpp
-	cl $(WEBKITCFLAGS) webkit_win32.cpp
+chromiumlib_stats.obj: chromiumlib_stats.c
+	cl $(CHROMIUMCFLAGS) chromiumlib_stats.c
+chromiumlib_structs.obj: chromiumlib_structs.c
+	cl $(CHROMIUMCFLAGS) chromiumlib_structs.c
+chromiumlib_custom.obj: chromiumlib_custom.c
+	cl $(CHROMIUMCFLAGS) chromiumlib_custom.c
+chromiumlib.obj: chromiumlib.c
+	cl $(CHROMIUMCFLAGS) chromiumlib.c
 
 .c.obj:
 	cl $(CFLAGS) $*.c
@@ -117,12 +111,12 @@ make_awt: $(AWT_OBJS) swt_awt.res
 	link @templrf
 	del templrf
 
-make_webkit: $(WEBKIT_OBJS) swt_webkit.res
+make_chromium: $(CHROMIUM_OBJS) swt_chromium.res
 	echo $(ldebug) $(dlllflags) >templrf
-	echo $(WEBKIT_LIBS) >>templrf
-	echo $(WEBKIT_OBJS) >>templrf
-	echo swt_webkit.res >>templrf
-	echo -out:$(WEBKIT_LIB) >>templrf
+	echo $(CHROMIUM_LIBS) >>templrf
+	echo $(CHROMIUM_OBJS) >>templrf
+	echo swt_chromium.res >>templrf
+	echo -out:$(CHROMIUM_LIB) >>templrf
 	link @templrf
 	del templrf
 
@@ -144,14 +138,24 @@ swt_gdip.res:
 swt_awt.res:
 	rc $(RCFLAGS) -DSWT_ORG_FILENAME=\"$(AWT_LIB)\" -r -fo swt_awt.res swt_awt.rc
 
-swt_webkit.res:
-	rc $(RCFLAGS) -DSWT_ORG_FILENAME=\"$(WEBKIT_LIB)\" -r -fo swt_webkit.res swt_webkit.rc
+swt_chromium.res:
+	rc $(RCFLAGS) -DSWT_ORG_FILENAME=\"$(CHROMIUM_LIB)\" -r -fo swt_chromium.res swt_chromium.rc
 
 swt_wgl.res:
 	rc $(RCFLAGS) -DSWT_ORG_FILENAME=\"$(WGL_LIB)\" -r -fo swt_wgl.res swt_wgl.rc
 
 install:
 	copy *.dll "$(OUTPUT_DIR)"
+
+chromium_cargo:
+	cd chromium_subp && cargo build --release
+	cd chromium_swt && cargo build --release
+	mkdir $(CHROMIUM_OUTPUT_DIR)\chromium-$(cef_ver)
+	copy chromium_subp\target\release\chromium_subp.exe $(CHROMIUM_OUTPUT_DIR)\chromium-$(cef_ver)\chromium_subp-$(SWT_VERSION).exe
+	copy chromium_swt\target\release\chromium_swt_$(SWT_VERSION).dll $(CHROMIUM_OUTPUT_DIR)\chromium-$(cef_ver)
+	
+chromium_install: make_chromium
+	copy $(CHROMIUM_PREFIX)*.dll "$(CHROMIUM_OUTPUT_DIR)\chromium-$(cef_ver)"
 
 clean:
     del *.obj *.res *.dll *.lib *.exp

@@ -912,14 +912,14 @@ boolean dragDetect (long hwnd, int x, int y, boolean filter, boolean [] detect, 
 }
 
 @Override
-void enableDarkModeExplorerTheme() {
+void maybeEnableDarkSystemTheme() {
 	/*
 	 * Feature in Windows. If the control has default foreground and
 	 * background, the background gets black without focus and white with
 	 * focus, but the foreground color always stays black.
 	 */
 	if (hasCustomBackground() || hasCustomForeground()) {
-		super.enableDarkModeExplorerTheme();
+		super.maybeEnableDarkSystemTheme();
 	}
 }
 
@@ -1921,7 +1921,7 @@ void setBackgroundImage (long hBitmap) {
 
 @Override
 void setBackgroundPixel (int pixel) {
-	enableDarkModeExplorerTheme();
+	maybeEnableDarkSystemTheme();
 	int flags = OS.RDW_ERASE | OS.RDW_ALLCHILDREN | OS.RDW_INVALIDATE;
 	OS.RedrawWindow (handle, null, 0, flags);
 }
@@ -2083,7 +2083,7 @@ public void setFont (Font font) {
 
 @Override
 void setForegroundPixel (int pixel) {
-	enableDarkModeExplorerTheme();
+	maybeEnableDarkSystemTheme();
 	super.setForegroundPixel(pixel);
 }
 
@@ -2890,8 +2890,8 @@ LRESULT WM_LBUTTONDBLCLK (long wParam, long lParam) {
 	* calling the window proc.
 	*/
 	LRESULT result = null;
-	sendMouseEvent (SWT.MouseDown, 1, handle, OS.WM_LBUTTONDOWN, wParam, lParam);
-	if (!sendMouseEvent (SWT.MouseDoubleClick, 1, handle, OS.WM_LBUTTONDBLCLK, wParam, lParam)) {
+	sendMouseEvent (SWT.MouseDown, 1, handle, lParam);
+	if (!sendMouseEvent (SWT.MouseDoubleClick, 1, handle, lParam)) {
 		result = LRESULT.ZERO;
 	}
 	if (!display.captureChanged && !isDisposed ()) {

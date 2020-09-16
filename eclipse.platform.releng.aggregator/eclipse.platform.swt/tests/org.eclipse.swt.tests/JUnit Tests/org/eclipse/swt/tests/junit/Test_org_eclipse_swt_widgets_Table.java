@@ -1402,7 +1402,7 @@ public void test_setFontLorg_eclipse_swt_graphics_Font() {
 @Test
 public void test_setHeaderBackgroundLorg_eclipse_swt_graphics_Color() {
 	assertNotNull(table.getHeaderBackground());
-	Color color = new Color(control.getDisplay(), 12, 34, 56);
+	Color color = new Color(12, 34, 56);
 	table.setHeaderBackground(color);
 	assertEquals(color, table.getHeaderBackground());
 	table.setHeaderBackground(null);
@@ -1413,7 +1413,7 @@ public void test_setHeaderBackgroundLorg_eclipse_swt_graphics_Color() {
 @Test
 public void test_setHeaderForegroundLorg_eclipse_swt_graphics_Color() {
 	assertNotNull(table.getHeaderForeground());
-	Color color = new Color(control.getDisplay(), 12, 34, 56);
+	Color color = new Color(12, 34, 56);
 	table.setHeaderForeground(color);
 	assertEquals(color, table.getHeaderForeground());
 	table.setHeaderForeground(null);
@@ -1894,9 +1894,9 @@ public void test_Virtual() {
 			}
 		}
 	}
-	// the "* 2" allows some surplus for platforms that pre-fetch items to improve scrolling performance:
+	// the "* 3" allows some surplus for platforms that pre-fetch items to improve scrolling performance:
 	assertTrue("SetData callback count not in range: " + dataCounter[0],
-			dataCounter[0] > visibleCount / 2 && dataCounter[0] <= visibleCount * 2);
+			dataCounter[0] > visibleCount / 2 && dataCounter[0] <= visibleCount * 3);
 }
 
 @Test

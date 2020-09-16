@@ -559,7 +559,8 @@ void copyAreaInPixels(int srcX, int srcY, int width, int height, int destX, int 
 			srcRect.height = height;
 			long invalidateRegion = Cairo.cairo_region_create_rectangle (srcRect);
 			if (GTK.GTK4) {
-				GDK.gdk_surface_invalidate_region(drawable, invalidateRegion);
+				/* TODO: GTK4 no ability to invalidate surfaces, may need to keep track of
+				 * invalid regions ourselves and do gdk_surface_queue_expose */
 			} else {
 				long visibleRegion = GDK.gdk_window_get_visible_region (drawable);
 				long copyRegion = Cairo.cairo_region_create_rectangle (srcRect);
@@ -573,7 +574,7 @@ void copyAreaInPixels(int srcX, int srcY, int width, int height, int destX, int 
 			Cairo.cairo_region_destroy (invalidateRegion);
 		}
 	}
-	if (data.image == null & paint) {
+	if (data.image == null && paint) {
 		boolean disjoint = (destX + width < srcX) || (srcX + width < destX) || (destY + height < srcY) || (srcY + height < destY);
 		GdkRectangle rect = new GdkRectangle ();
 		if (disjoint) {
@@ -582,7 +583,8 @@ void copyAreaInPixels(int srcX, int srcY, int width, int height, int destX, int 
 			rect.width = Math.max (0, width);
 			rect.height = Math.max (0, height);
 			if (GTK.GTK4) {
-				GDK.gdk_surface_invalidate_rect (drawable, rect);
+				/* TODO: GTK4 no ability to invalidate surfaces, may need to keep track of
+				 * invalid regions ourselves and do gdk_surface_queue_expose */
 			} else {
 				GDK.gdk_window_invalidate_rect (drawable, rect, false);
 			}
@@ -595,7 +597,8 @@ void copyAreaInPixels(int srcX, int srcY, int width, int height, int destX, int 
 				rect.width = Math.abs(deltaX);
 				rect.height = Math.max (0, height);
 				if (GTK.GTK4) {
-					GDK.gdk_surface_invalidate_rect (drawable, rect);
+					/* TODO: GTK4 no ability to invalidate surfaces, may need to keep track of
+					 * invalid regions ourselves and do gdk_surface_queue_expose */
 				} else {
 					GDK.gdk_window_invalidate_rect (drawable, rect, false);
 				}
@@ -608,7 +611,8 @@ void copyAreaInPixels(int srcX, int srcY, int width, int height, int destX, int 
 				rect.width = Math.max (0, width);
 				rect.height = Math.abs(deltaY);
 				if (GTK.GTK4) {
-					GDK.gdk_surface_invalidate_rect (drawable, rect);
+					/* TODO: GTK4 no ability to invalidate surfaces, may need to keep track of
+					 * invalid regions ourselves and do gdk_surface_queue_expose */
 				} else {
 					GDK.gdk_window_invalidate_rect (drawable, rect, false);
 				}
@@ -839,9 +843,8 @@ public void drawImage(Image image, int srcX, int srcY, int srcWidth, int srcHeig
 	}
 	if (image == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 	if (image.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
-	Rectangle srcRect = DPIUtil.autoScaleUp(drawable, new Rectangle(srcX, srcY, srcWidth, srcHeight));
 	Rectangle destRect = DPIUtil.autoScaleUp(drawable, new Rectangle(destX, destY, destWidth, destHeight));
-	drawImage(image, srcRect.x, srcRect.y, srcRect.width, srcRect.height, destRect.x, destRect.y, destRect.width, destRect.height, false);
+	drawImage(image, srcX, srcY, srcWidth, srcHeight, destRect.x, destRect.y, destRect.width, destRect.height, false);
 }
 void drawImage(Image srcImage, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple) {
 	/* Refresh Image as per zoom level, if required. */

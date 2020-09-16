@@ -71,7 +71,7 @@ public class Combo extends Composite {
 	int indexSelected;
 	GdkRGBA background, buttonBackground;
 	String cssButtonBackground, cssButtonForeground = " ";
-	long buttonProvider;
+	long buttonProvider, comboProvider;
 	boolean firstDraw = true;
 	boolean unselected = true, fitModelToggled = false;
 	/**
@@ -561,7 +561,7 @@ void createHandle (int index) {
 	* fix is to call size_request() to force the creation of the button
 	* for those versions of GTK that defer the creation.
 	*/
-	menuHandle = findMenuHandle ();
+	menuHandle = findMenuHandle();
 	if (menuHandle != 0) OS.g_object_ref (menuHandle);
 	buttonHandle = findButtonHandle ();
 	if (buttonHandle != 0) OS.g_object_ref (buttonHandle);
@@ -758,22 +758,31 @@ long findArrowHandle() {
 }
 
 long findMenuHandle() {
-	if (popupHandle == 0) return 0;
+	/*
+	* Feature in GTK.  There is no API to query the menu
+	* handle from a combo box. So we walk the popupHandle to
+	* find the handle for the menu.
+	*/
 	long result = 0;
-	GTK.gtk_container_forall (popupHandle, display.allChildrenProc, 0);
-	if (display.allChildren != 0) {
-		long list = display.allChildren;
-		while (list != 0) {
-			long widget = OS.g_list_data (list);
-			if (OS.G_OBJECT_TYPE (widget) == GTK.GTK_TYPE_MENU ()) {
-				result = widget;
-				break;
+
+	if (popupHandle != 0) {
+		GTK.gtk_container_forall(popupHandle, display.allChildrenProc, 0);
+		if (display.allChildren != 0) {
+			long list = display.allChildren;
+			while (list != 0) {
+				long widget = OS.g_list_data(list);
+				String name = display.gtk_widget_get_name(widget);
+				if (name != null && name.contains("gtk-combobox-popup-menu")) {
+					result = widget;
+					break;
+				}
+				list = OS.g_list_next(list);
 			}
-			list = OS.g_list_next (list);
+			OS.g_list_free(display.allChildren);
+			display.allChildren = 0;
 		}
-		OS.g_list_free (display.allChildren);
-		display.allChildren = 0;
 	}
+
 	return result;
 }
 
@@ -1348,7 +1357,12 @@ long gtk_button_press_event (long widget, long event) {
 	* send the mouse event from the event_after handler.
 	*/
 	int [] eventButton = new int [1];
-	GDK.gdk_event_get_button(event, eventButton);
+	if (GTK.GTK4) {
+		eventButton[0] = GDK.gdk_button_event_get_button(event);
+	} else {
+		GDK.gdk_event_get_button(event, eventButton);
+	}
+
 	int eventType = GDK.gdk_event_get_event_type(event);
 	eventType = fixGdkEventTypeValues(eventType);
 	if (eventType == GDK.GDK_BUTTON_PRESS && eventButton[0] == 1) {
@@ -1560,13 +1574,21 @@ long gtk_event_after (long widget, long gdkEvent)  {
 	switch (eventType) {
 		case GDK.GDK_BUTTON_PRESS: {
 			int [] eventButton = new int [1];
-			GDK.gdk_event_get_button(gdkEvent, eventButton);
+			int [] eventState = new int [1];
+			if (GTK.GTK4) {
+				eventButton[0] = GDK.gdk_button_event_get_button(gdkEvent);
+				eventState[0] = GDK.gdk_event_get_modifier_state(gdkEvent);
+			} else {
+				GDK.gdk_event_get_button(gdkEvent, eventButton);
+				GDK.gdk_event_get_state(gdkEvent, eventState);
+			}
+
 			int eventTime = GDK.gdk_event_get_time(gdkEvent);
+
 			double [] eventRX = new double [1];
 			double [] eventRY = new double [1];
 			GDK.gdk_event_get_root_coords(gdkEvent, eventRX, eventRY);
-			int [] eventState = new int [1];
-			GDK.gdk_event_get_state(gdkEvent, eventState);
+
 			if (eventButton[0] == 1) {
 				if (!sendMouseEvent (SWT.MouseDown, eventButton[0], display.clickCount, 0, false, eventTime, eventRX[0], eventRY[0], false, eventState[0])) {
 					return 1;
@@ -1581,7 +1603,7 @@ long gtk_event_after (long widget, long gdkEvent)  {
 			if ((style & SWT.READ_ONLY) == 0) {
 				boolean [] focusIn = new boolean [1];
 				if (GTK.GTK4) {
-					GDK.gdk_event_get_focus_in(gdkEvent, focusIn);
+					focusIn[0] = GDK.gdk_focus_event_get_in(gdkEvent);
 				} else {
 					GdkEventFocus gdkEventFocus = new GdkEventFocus ();
 					OS.memmove (gdkEventFocus, gdkEvent, GdkEventFocus.sizeof);
@@ -1660,7 +1682,12 @@ long gtk_key_press_event (long widget, long event) {
 		int oldIndex = GTK.gtk_combo_box_get_active (handle);
 		int newIndex = oldIndex;
 		int [] eventKeyval = new int [1];
-		GDK.gdk_event_get_keyval(event, eventKeyval);
+		if (GTK.GTK4) {
+			eventKeyval[0] = GDK.gdk_key_event_get_keyval(event);
+		} else {
+			GDK.gdk_event_get_keyval(event, eventKeyval);
+		}
+
 		switch (eventKeyval[0]) {
 			case GDK.GDK_Down:
 			case GDK.GDK_KP_Down:
@@ -1811,17 +1838,7 @@ long paintSurface () {
 	GTK.gtk_widget_realize (childHandle);
 	long surface = gtk_widget_get_surface (childHandle);
 	if ((style & SWT.READ_ONLY) != 0) return surface;
-	long children = GDK.gdk_surface_get_children (surface);
-	if (children != 0) {
-		/*
-		 * The only direct child of GtkComboBox since 3.20 is GtkBox thus the children
-		 * have to be traversed to get to the entry one.
-		 */
-		do {
-			surface = OS.g_list_data (children);
-		} while ((children = OS.g_list_next (children)) != 0);
-	}
-	OS.g_list_free (children);
+	/* TODO: GTK4 no access to children of the surface, for combobox may need to use gtk_combo_box_get_child () */
 
 	return surface;
 }
@@ -2177,15 +2194,18 @@ void setBackgroundGdkRGBA (long context, long handle, GdkRGBA rgba) {
 	}
 	// CSS to be parsed for various widgets within Combo
 	String css = "* {";
-	String color;
+	String color, menuColor;
 	if (rgba != null) {
 		color = display.gtk_rgba_to_css_string (rgba);
+		menuColor = color;
 	} else {
 		if ((style & SWT.READ_ONLY) != 0) {
 			color = display.gtk_rgba_to_css_string (display.COLOR_WIDGET_BACKGROUND_RGBA);
 		} else {
 			color = display.gtk_rgba_to_css_string (display.COLOR_LIST_BACKGROUND_RGBA);
 		}
+
+		menuColor = display.gtk_rgba_to_css_string (display.COLOR_LIST_BACKGROUND_RGBA);
 	}
 	css += "background: " + color + ";}\n";
 
@@ -2207,8 +2227,19 @@ void setBackgroundGdkRGBA (long context, long handle, GdkRGBA rgba) {
 		gtk_css_provider_load_from_css (GTK.gtk_widget_get_style_context(entryHandle), finalCss);
 		setButtonBackgroundGdkRGBA (rgba);
 	}
-	// Set the background color of the text of the drop down menu.
-	OS.g_object_set (textRenderer, OS.background_rgba, rgba, 0);
+
+	String menuCss = "menu { background: " + menuColor + ";}";
+	GTK.gtk_css_provider_load_from_data (getComboProvider(), Converter.wcsToMbcs (menuCss, true), -1, null);
+}
+
+long getComboProvider() {
+	if (comboProvider == 0) {
+		comboProvider = GTK.gtk_css_provider_new();
+		GTK.gtk_style_context_add_provider(GTK.gtk_widget_get_style_context(menuHandle), comboProvider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+		OS.g_object_unref(comboProvider);
+	}
+
+	return comboProvider;
 }
 
 @Override
@@ -2596,8 +2627,13 @@ boolean checkSubwindow () {
 
 @Override
 boolean translateTraversal (long event) {
-	int [] key = new int[1];
-	GDK.gdk_event_get_keyval(event, key);
+	int [] key = new int [1];
+	if (GTK.GTK4) {
+		key[0] = GDK.gdk_key_event_get_keyval(event);
+	} else {
+		GDK.gdk_event_get_keyval(event, key);
+	}
+
 	switch (key[0]) {
 		case GDK.GDK_KP_Enter:
 		case GDK.GDK_Return: {

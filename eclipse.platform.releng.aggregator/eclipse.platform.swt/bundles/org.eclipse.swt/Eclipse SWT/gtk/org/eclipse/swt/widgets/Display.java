@@ -155,7 +155,6 @@ public class Display extends Device {
 	long lastHandle;
 	Widget lastWidget;
 	Widget [] widgetTable;
-	Shell firstShell;
 	final static int GROW_SIZE = 1024;
 	static final int SWT_OBJECT_INDEX;
 	static final int SWT_OBJECT_INDEX1;
@@ -1176,7 +1175,9 @@ void createDisplay (DeviceData data) {
 		byte [] type_name = Converter.wcsToMbcs ("SwtTextRenderer", true); //$NON-NLS-1$
 		text_renderer_type = OS.g_type_register_static (GTK.GTK_TYPE_CELL_RENDERER_TEXT (), type_name, text_renderer_info_ptr, 0);
 	}
-	if (pixbuf_renderer_type == 0) {
+
+	// TODO: GTK4 These classes no longer exist (ignore initialization of them for time being)
+	if (pixbuf_renderer_type == 0 && !GTK.GTK4) {
 		GTypeInfo renderer_info = new GTypeInfo ();
 		renderer_info.class_size = (short) GTK.GtkCellRendererPixbufClass_sizeof ();
 		renderer_info.class_init = rendererClassInitProc;
@@ -1186,7 +1187,7 @@ void createDisplay (DeviceData data) {
 		byte [] type_name = Converter.wcsToMbcs ("SwtPixbufRenderer", true); //$NON-NLS-1$
 		pixbuf_renderer_type = OS.g_type_register_static (GTK.GTK_TYPE_CELL_RENDERER_PIXBUF (), type_name, pixbuf_renderer_info_ptr, 0);
 	}
-	if (toggle_renderer_type == 0) {
+	if (toggle_renderer_type == 0 && !GTK.GTK4) {
 		GTypeInfo renderer_info = new GTypeInfo ();
 		renderer_info.class_size = (short) GTK.GtkCellRendererToggleClass_sizeof ();
 		renderer_info.class_init = rendererClassInitProc;
@@ -1205,7 +1206,11 @@ void createDisplay (DeviceData data) {
 	}
 
 	/* Initialize the hidden shell */
-	shellHandle = GTK.gtk_window_new (GTK.GTK_WINDOW_TOPLEVEL);
+	if (GTK.GTK4) {
+		shellHandle = GTK.gtk_window_new();
+	} else {
+		shellHandle = GTK.gtk_window_new (GTK.GTK_WINDOW_TOPLEVEL);
+	}
 	if (shellHandle == 0) error (SWT.ERROR_NO_HANDLES);
 	GTK.gtk_widget_realize (shellHandle);
 
@@ -1234,11 +1239,12 @@ void createDisplay (DeviceData data) {
 	long keymap;
 	long display = GDK.gdk_display_get_default();
 	if (GTK.GTK4) {
-		keymap = GDK.gdk_display_get_keymap(display);
+		long keyboardDevice = GDK.gdk_seat_get_keyboard(GDK.gdk_display_get_default_seat(display));
+		OS.g_signal_connect (keyboardDevice, OS.changed, keysChangedProc, 0);
 	} else {
 		keymap = GDK.gdk_keymap_get_for_display(display);
+		OS.g_signal_connect (keymap, OS.keys_changed, keysChangedProc, 0);
 	}
-	OS.g_signal_connect (keymap, OS.keys_changed, keysChangedProc, 0);
 }
 
 /**
@@ -1250,20 +1256,22 @@ void createDisplay (DeviceData data) {
 private int findLatinKeyGroup () {
 	int result = 0;
 	groupKeysCount = new HashMap<> ();
-	long keymap;
 	long display = GDK.gdk_display_get_default();
-	if (GTK.GTK4) {
-		keymap = GDK.gdk_display_get_keymap(display);
-	} else {
-		keymap = GDK.gdk_keymap_get_for_display(display);
-	}
 
 	// count all key groups for Latin alphabet
 	for (int keyval = GDK.GDK_KEY_a; keyval <= GDK.GDK_KEY_z; keyval++) {
 		long [] keys = new long [1];
 		int [] n_keys = new int [1];
 
-		if (GDK.gdk_keymap_get_entries_for_keyval (keymap, keyval, keys, n_keys)) {
+		boolean foundKeys;
+		if (GTK.GTK4) {
+			foundKeys = GDK.gdk_display_map_keyval(display, keyval, keys, n_keys);
+		} else {
+			long keymap = GDK.gdk_keymap_get_for_display(display);
+			foundKeys = GDK.gdk_keymap_get_entries_for_keyval (keymap, keyval, keys, n_keys);
+		}
+
+		if (foundKeys) {
 			GdkKeymapKey key_entry = new GdkKeymapKey ();
 			for (int key = 0; key < n_keys [0]; key++) {
 				OS.memmove (key_entry, keys [0] + key * GdkKeymapKey.sizeof, GdkKeymapKey.sizeof);
@@ -1318,7 +1326,15 @@ long keysChangedProc (long keymap, long user_data) {
 
 Image createImage (String name) {
 	byte[] buffer = Converter.wcsToMbcs (name, true);
-	long pixbuf = GTK.gtk_icon_theme_load_icon(GTK.gtk_icon_theme_get_default(), buffer, 48, GTK.GTK_ICON_LOOKUP_FORCE_SIZE, 0);
+
+	long iconTheme;
+	if (GTK.GTK4) {
+		iconTheme = GTK.gtk_icon_theme_get_for_display(GDK.gdk_display_get_default());
+	} else {
+		iconTheme = GTK.gtk_icon_theme_get_default();
+	}
+
+	long pixbuf = GTK.gtk_icon_theme_load_icon(iconTheme, buffer, 48, GTK.GTK_ICON_LOOKUP_FORCE_SIZE, 0);
 	if (pixbuf == 0) return null;
 	int width = GDK.gdk_pixbuf_get_width (pixbuf);
 	int height = GDK.gdk_pixbuf_get_height (pixbuf);
@@ -1378,9 +1394,17 @@ void destroyDisplay () {
 }
 
 long emissionProc (long ihint, long n_param_values, long param_values, long data) {
-	if (GTK.gtk_widget_get_toplevel (OS.g_value_peek_pointer(param_values)) == data) {
+	long topLevel;
+	if (GTK.GTK4) {
+		topLevel = GTK.gtk_widget_get_native (OS.g_value_peek_pointer(param_values));
+	} else {
+		topLevel = GTK.gtk_widget_get_toplevel (OS.g_value_peek_pointer(param_values));
+	}
+
+	if (topLevel == data) {
 		GTK.gtk_widget_set_direction (OS.g_value_peek_pointer(param_values), GTK.GTK_TEXT_DIR_RTL);
 	}
+
 	return 1;
 }
 
@@ -1476,7 +1500,14 @@ long eventProc (long event, long data) {
 		}
 	}
 	if (!dispatch) {
-		addGdkEvent (GDK.gdk_event_copy (event));
+		long copiedEvent;
+		if (GTK.GTK4) {
+			copiedEvent = GDK.gdk_event_ref (event);
+		} else {
+			copiedEvent = GDK.gdk_event_copy (event);
+		}
+
+		addGdkEvent (copiedEvent);
 		return 0;
 	}
 	dispatch = true;
@@ -1784,13 +1815,16 @@ public Control getCursorControl () {
 	long [] user_data = new long [1];
 	long gdkResource;
 	if (GTK.GTK4) {
-		gdkResource = gdk_device_get_surface_at_position (x,y);
+		double[] xDouble = new double [1], yDouble = new double [1];
+		gdkResource = gdk_device_get_surface_at_position (xDouble, yDouble);
+		x[0] = (int) xDouble[0];
+		y[0] = (int) yDouble[0];
 	} else {
 		gdkResource = gdk_device_get_window_at_position (x,y);
 	}
 	if (gdkResource != 0) {
 		if (GTK.GTK4) {
-			GDK.gdk_surface_get_user_data (gdkResource, user_data);
+			user_data[0] = GDK.gdk_popup_get_parent(gdkResource);
 		} else {
 			GDK.gdk_window_get_user_data (gdkResource, user_data);
 		}
@@ -3165,9 +3199,18 @@ private void initializeSystemColorsLink() {
 	 */
 
 	// The 'Clearlooks-Phenix' theme sets 'color:' for 'window {' css node, so a stand-alone label is not enough
-	long window = GTK.gtk_window_new (GTK.GTK_WINDOW_TOPLEVEL);
+	long window;
+	if (GTK.GTK4) {
+		window = GTK.gtk_window_new();
+	} else {
+		window = GTK.gtk_window_new (GTK.GTK_WINDOW_TOPLEVEL);
+	}
 	long label = GTK.gtk_label_new(null);
-	GTK.gtk_container_add (window, label);
+	if (GTK.GTK4) {
+		GTK.gtk_window_set_child(window, label);
+	} else {
+		GTK.gtk_container_add(window, label);
+	}
 
 	long styleContextLink = GTK.gtk_widget_get_style_context (label);
 	COLOR_LINK_FOREGROUND_RGBA = styleContextGetColor (styleContextLink, GTK.GTK_STATE_FLAG_LINK);
@@ -3212,9 +3255,18 @@ void initializeSystemColorsDisabled() {
 	 * The workaround is to use a temporary window as parent. GTK will blend
 	 * colors and return non-transparent result.
 	 */
-	long window = GTK.gtk_window_new (GTK.GTK_WINDOW_TOPLEVEL);
+	long window;
+	if (GTK.GTK4) {
+		window = GTK.gtk_window_new();
+	} else {
+		window = GTK.gtk_window_new (GTK.GTK_WINDOW_TOPLEVEL);
+	}
 	long entry = GTK.gtk_entry_new ();
-	GTK.gtk_container_add (window, entry);
+	if (GTK.GTK4) {
+		GTK.gtk_window_set_child(window, entry);
+	} else {
+		GTK.gtk_container_add(window, entry);
+	}
 
 	long context = GTK.gtk_widget_get_style_context (entry);
 
@@ -4270,7 +4322,6 @@ public boolean post (Event event) {
 					cachedModifierState = 0;
 				}
 
-				long gdkKeymap = GDK.gdk_keymap_get_for_display(gdkDisplay);
 				int hardware_keycode = 0;
 				int raw_keyval = untranslateKey(event.keyCode);
 				if (raw_keyval == 0) raw_keyval = event.character;
@@ -4280,7 +4331,17 @@ public boolean post (Event event) {
 				int [] keyval = new int [1], effective_group = new int [1], level = new int [1], consumed_modifiers = new int[1];
 				int final_keyval = raw_keyval;
 
-				if (GDK.gdk_keymap_get_entries_for_keyval(gdkKeymap, raw_keyval, keys_list, n_keys)) {
+				boolean foundKeys;
+				long keymap = 0;
+				if (GTK.GTK4) {
+					// TODO: Find alternative for gdk_keymap_translate_keyboard_state (no longer exist, and keymap can not be retrieved)
+					foundKeys = GDK.gdk_display_map_keyval(gdkDisplay, raw_keyval, keys_list, n_keys);
+				} else {
+					keymap = GDK.gdk_keymap_get_for_display(gdkDisplay);
+					foundKeys = GDK.gdk_keymap_get_entries_for_keyval (keymap, raw_keyval, keys_list, n_keys);
+				}
+
+				if (foundKeys) {
 					GdkKeymapKey key_entry = new GdkKeymapKey ();
 					if (n_keys[0] > 0) {
 						OS.memmove(key_entry, keys_list[0], GdkKeymapKey.sizeof);
@@ -4288,7 +4349,7 @@ public boolean post (Event event) {
 					}
 					OS.g_free(keys_list[0]);
 
-					GDK.gdk_keymap_translate_keyboard_state(gdkKeymap, hardware_keycode, state, 0, keyval, effective_group, level, consumed_modifiers);
+					GDK.gdk_keymap_translate_keyboard_state(keymap, hardware_keycode, state, 0, keyval, effective_group, level, consumed_modifiers);
 					if (is_modifier == 1) final_keyval = keyval[0];
 				}
 
@@ -4308,15 +4369,15 @@ public boolean post (Event event) {
 				OS.memmove(eventPtr, newKeyEvent, GdkEventKey.sizeof);
 				GDK.gdk_event_set_device (eventPtr, gdkKeyboardDevice);
 				if (GTK.GTK4) {
-					long display = GDK.gdk_display_get_default();
-					GDK.gdk_display_put_event(display, eventPtr);
+					GDK.gdk_display_put_event(gdkDisplay, eventPtr);
 				} else {
 					GDK.gdk_event_put (eventPtr);
 				}
+
 				if (GTK.GTK4) {
-					OS.g_object_unref(eventPtr);
+					GDK.gdk_event_unref(eventPtr);
 				} else {
-					GDK.gdk_event_free (eventPtr);
+					GDK.gdk_event_free(eventPtr);
 				}
 				return true;
 			case SWT.MouseDown:
@@ -4346,7 +4407,7 @@ public boolean post (Event event) {
 
 				GDK.gdk_event_put(eventPtr);
 				if (GTK.GTK4) {
-					OS.g_object_unref(eventPtr);
+					GDK.gdk_event_unref(eventPtr);
 				} else {
 					GDK.gdk_event_free (eventPtr);
 				}
@@ -4392,7 +4453,7 @@ void putGdkEvents () {
 				}
 			}
 			if (GTK.GTK4) {
-				OS.g_object_unref (event);
+				GDK.gdk_event_unref(event);
 			} else {
 				GDK.gdk_event_free (event);
 			}
@@ -4890,9 +4951,8 @@ String debugInfoForIndex(long index) {
 	return s;
 }
 
-void dpiChanged() {
-	this.scaleFactor = getDeviceZoom ();
-	DPIUtil.setDeviceZoom (scaleFactor);
+void dpiChanged(int newScaleFactor) {
+	DPIUtil.setDeviceZoom (DPIUtil.mapDPIToZoom(getDPI().x * newScaleFactor));
 	Shell[] shells = getShells();
 	for (int i = 0; i < shells.length; i++) {
 		shells[i].layout(true, true);
@@ -5288,7 +5348,7 @@ public void setData (Object data) {
 
 long setDirectionProc (long widget, long direction) {
 	GTK.gtk_widget_set_direction (widget, (int)direction);
-	if (GTK.GTK_IS_MENU_ITEM (widget)) {
+	if (!GTK.GTK4 && GTK.GTK_IS_MENU_ITEM (widget)) {
 		long submenu = GTK.gtk_menu_item_get_submenu (widget);
 		if (submenu != 0) {
 			GTK.gtk_widget_set_direction (submenu, (int)direction);
@@ -5853,35 +5913,35 @@ long enterMotionScrollProc (long controller, double x, double y, long user_data)
 	long handle = GTK.gtk_event_controller_get_widget(controller);
 	Widget widget = getWidget (handle);
 	if (widget == null) return 0;
-	return widget.enterMotionScrollProc(handle, x, y, user_data);
+	return widget.enterMotionScrollProc(controller, handle, x, y, user_data);
 }
 
 long focusProc (long controller, long user_data) {
 	long handle = GTK.gtk_event_controller_get_widget(controller);
 	Widget widget = getWidget (handle);
 	if (widget == null) return 0;
-	return widget.focusProc(handle, user_data);
+	return widget.focusProc(controller, handle, user_data);
 }
 
 long keyPressReleaseProc (long controller, int keyval, int keycode, int state, long user_data) {
 	long handle = GTK.gtk_event_controller_get_widget(controller);
 	Widget widget = getWidget (handle);
 	if (widget == null) return 0;
-	return widget.keyPressReleaseProc(handle, keyval, keycode, state, user_data);
+	return widget.keyPressReleaseProc(controller, handle, keyval, keycode, state, user_data);
 }
 
 long gesturePressReleaseProc (long gesture, int n_press, double x, double y, long user_data) {
 	long handle = GTK.gtk_event_controller_get_widget(gesture);
 	Widget widget = getWidget (handle);
 	if (widget == null) return 0;
-	return widget.getsurePressReleaseProc (gesture, n_press, x, y, user_data);
+	return widget.gesturePressReleaseProc (gesture, n_press, x, y, user_data);
 }
 
 long leaveProc (long controller, long user_data) {
 	long handle = GTK.gtk_event_controller_get_widget(controller);
 	Widget widget = getWidget (handle);
 	if (widget == null) return 0;
-	return widget.leaveProc(handle, user_data);
+	return widget.leaveProc(controller, handle, user_data);
 }
 
 long notifyProc (long object, long param_spec, long user_data) {
@@ -5955,13 +6015,13 @@ long gdk_window_get_device_position (long window, int[] x, int[] y, int[] mask) 
 	return GDK.gdk_window_get_device_position(window, pointer, x, y, mask);
 }
 
-long gdk_surface_get_device_position (long surface, int[] x, int[] y, int[] mask) {
+void gdk_surface_get_device_position (long surface, double[] x, double[] y, int[] mask) {
 	long display = 0;
 	if (surface != 0) {
 		display = GDK.gdk_surface_get_display (surface);
 	}
 	long pointer = GDK.gdk_get_pointer(display);
-	return GDK.gdk_surface_get_device_position(surface, pointer, x, y, mask);
+	GDK.gdk_surface_get_device_position(surface, pointer, x, y, mask);
 }
 
 long gdk_device_get_window_at_position (int[] win_x, int[] win_y) {
@@ -5970,28 +6030,10 @@ long gdk_device_get_window_at_position (int[] win_x, int[] win_y) {
 	return GDK.gdk_device_get_window_at_position (device, win_x, win_y);
 }
 
-long gdk_device_get_surface_at_position (int[] win_x, int[] win_y) {
+long gdk_device_get_surface_at_position (double[] win_x, double[] win_y) {
 	long display = GDK.gdk_display_get_default ();
 	long device = GDK.gdk_get_pointer(display);
 	return GDK.gdk_device_get_surface_at_position (device, win_x, win_y);
-}
-
-/**
- * @noreference This method is not intended to be referenced by clients.
- * @nooverride This method is not intended to be re-implemented or extended by clients.
- */
-@Override
-protected long gsettingsProc (long gobject, long arg1, long user_data) {
-	switch((int)user_data) {
-		case CHANGE_SCALEFACTOR:
-			this.scaleFactor = getDeviceZoom ();
-			DPIUtil.setDeviceZoom (scaleFactor);
-			Shell[] shells = getShells();
-			for (int i = 0; i < shells.length; i++) {
-				shells[i].layout(true, true);
-			}
-	}
-	return 0;
 }
 
 static int _getDeviceZoom (long monitor_num) {

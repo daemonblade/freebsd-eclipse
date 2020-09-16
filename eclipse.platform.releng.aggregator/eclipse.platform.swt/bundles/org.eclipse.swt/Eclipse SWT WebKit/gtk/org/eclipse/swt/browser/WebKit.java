@@ -547,10 +547,16 @@ static long JSDOMEventProc (long arg0, long event, long user_data) {
 			switch (GDK.GDK_EVENT_TYPE (event)) {
 				case GDK.GDK_KEY_PRESS: {
 					if (browser.isFocusControl ()) {
-						int [] key = new int[1];
-						GDK.gdk_event_get_keyval(event, key);
+						int [] key = new int [1];
 						int [] state = new int[1];
-						GDK.gdk_event_get_state(event, state);
+						if (GTK.GTK4) {
+							key[0] = GDK.gdk_key_event_get_keyval(event);
+							state[0] = GDK.gdk_event_get_modifier_state(event);
+						} else {
+							GDK.gdk_event_get_keyval(event, key);
+							GDK.gdk_event_get_state(event, state);
+						}
+
 						switch (key[0]) {
 							case GDK.GDK_ISO_Left_Tab:
 							case GDK.GDK_Tab: {
@@ -1565,7 +1571,11 @@ boolean handleDOMEvent (long event, int type) {
 	if (eventPtr != 0) {
 		int eventType = GDK.gdk_event_get_event_type(eventPtr);
 		int [] state = new int[1];
-		GDK.gdk_event_get_state(eventPtr, state);
+		if (GTK.GTK4) {
+			state[0] = GDK.gdk_event_get_modifier_state(eventPtr);
+		} else {
+			GDK.gdk_event_get_state(eventPtr, state);
+		}
 		switch (eventType) {
 			case GDK.GDK_KEY_PRESS:
 			case GDK.GDK_KEY_RELEASE:
@@ -1953,8 +1963,8 @@ void onDispose (Event e) {
 		OS.g_object_ref (webView);
 		GTK.gtk_container_remove (GTK.gtk_widget_get_parent (webView), webView);
 		long webViewTempRef = webView;
-		browser.getDisplay().asyncExec(() -> {
-			OS.g_object_unref (webViewTempRef);
+		Display.getDefault().asyncExec(() -> {
+			OS.g_object_unref(webViewTempRef);
 		});
 		webView = 0;
 	}

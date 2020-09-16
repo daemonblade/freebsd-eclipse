@@ -1090,11 +1090,11 @@ boolean sendKeyEvent (int type, int msg, long wParam, long lParam, Event event) 
 	return event.doit;
 }
 
-boolean sendMouseEvent (int type, int button, long hwnd, int msg, long wParam, long lParam) {
-	return sendMouseEvent (type, button, display.getClickCount (type, button, hwnd, lParam), 0, false, hwnd, msg, wParam, lParam);
+boolean sendMouseEvent (int type, int button, long hwnd, long lParam) {
+	return sendMouseEvent (type, button, display.getClickCount (type, button, hwnd, lParam), 0, false, hwnd, lParam);
 }
 
-boolean sendMouseEvent (int type, int button, int count, int detail, boolean send, long hwnd, int msg, long wParam, long lParam) {
+boolean sendMouseEvent (int type, int button, int count, int detail, boolean send, long hwnd, long lParam) {
 	if (!hooks (type) && !filters (type)) return true;
 	Event event = new Event ();
 	event.button = button;
@@ -1112,36 +1112,78 @@ boolean sendMouseEvent (int type, int button, int count, int detail, boolean sen
 	return event.doit;
 }
 
-boolean sendMouseWheelEvent (int type, long hwnd, long wParam, long lParam) {
-	int delta = OS.GET_WHEEL_DELTA_WPARAM (wParam);
-	int detail = 0;
-	if (type == SWT.MouseWheel) {
-		int [] linesToScroll = new int [1];
-		OS.SystemParametersInfo (OS.SPI_GETWHEELSCROLLLINES, 0, linesToScroll, 0);
-		if (linesToScroll [0] == OS.WHEEL_PAGESCROLL) {
-			detail = SWT.SCROLL_PAGE;
-		} else {
-			detail = SWT.SCROLL_LINE;
-			delta *= linesToScroll [0];
-		}
-		/* Check if the delta and the remainder have the same direction (sign) */
-		if ((delta ^ display.scrollRemainder) >= 0) delta += display.scrollRemainder;
-		display.scrollRemainder = delta % OS.WHEEL_DELTA;
-	} else {
-		/* Check if the delta and the remainder have the same direction (sign) */
-		if ((delta ^ display.scrollHRemainder) >= 0) delta += display.scrollHRemainder;
-		display.scrollHRemainder = delta % OS.WHEEL_DELTA;
+class MouseWheelData {
+	MouseWheelData (boolean isVertical, ScrollBar scrollBar, long wParam, Point remainder) {
+		/* WHEEL_DELTA is expressed in precision units, see OS.WHEEL_DELTA */
+		int delta = OS.GET_WHEEL_DELTA_WPARAM (wParam);
 
-		delta = -delta;
+		/* Wheel speed can be configured in Windows mouse settings */
+		if (isVertical) {
+			int [] wheelSpeed = new int [1];
+			OS.SystemParametersInfo (OS.SPI_GETWHEELSCROLLLINES, 0, wheelSpeed, 0);
+			if (wheelSpeed [0] == OS.WHEEL_PAGESCROLL) {
+				detail = SWT.SCROLL_PAGE;
+			} else {
+				delta *= wheelSpeed [0];
+				detail = SWT.SCROLL_LINE;
+			}
+		} else {
+			int [] wheelSpeed = new int [1];
+			OS.SystemParametersInfo (OS.SPI_GETWHEELSCROLLCHARS, 0, wheelSpeed, 0);
+			delta *= wheelSpeed [0];
+
+			/* For legacy compatibility reasons, detail is set to 0 here */
+			detail = 0;
+		}
+
+		/* Take scrollbar scrolling speed into account */
+		if (scrollBar != null) {
+			if (detail == SWT.SCROLL_PAGE) {
+				delta *= scrollBar.getPageIncrement ();
+			} else {
+				delta *= scrollBar.getIncrement ();
+			}
+		}
+
+		/*
+		 * Accumulate remainder to deal with fractional scrolls. This is only seen
+		 * on some devices which support "smooth scrolling". MSDN also says:
+		 *     The remainder must be zeroed when the wheel rotation switches
+		 *     directions or when window focus changes.
+		 */
+		if (isVertical) {
+			if ((delta ^ remainder.y) >= 0) delta += remainder.y;
+			remainder.y = delta % OS.WHEEL_DELTA;
+		} else {
+			if ((delta ^ remainder.x) >= 0) delta += remainder.x;
+			remainder.x = delta % OS.WHEEL_DELTA;
+		}
+
+		/* Finally, divide by WHEEL_DELTA */
+		count = delta / OS.WHEEL_DELTA;
 	}
 
+	int count;		// lines or pages scrolled
+	int detail;		// {0, SWT.SCROLL_PAGE, SWT.SCROLL_LINE}
+}
+
+boolean sendMouseWheelEvent (int type, long hwnd, long wParam, long lParam) {
 	if (!hooks (type) && !filters (type)) return true;
-	int count = delta / OS.WHEEL_DELTA;
+
+	boolean vertical = (type == SWT.MouseWheel);
+	MouseWheelData wheelData = new MouseWheelData (vertical, null, wParam, display.scrollRemainderEvt);
+
+	if (wheelData.count == 0) return true;
+
+	/* Legacy code. I wonder if any SWT application actually cares? */
+	if (!vertical)
+		wheelData.count = -wheelData.count;
+
 	POINT pt = new POINT ();
 	OS.POINTSTOPOINT (pt, lParam);
 	OS.ScreenToClient (hwnd, pt);
 	lParam = OS.MAKELPARAM (pt.x, pt.y);
-	return sendMouseEvent (type, 0, count, detail, true, hwnd, OS.WM_MOUSEWHEEL, wParam, lParam);
+	return sendMouseEvent (type, 0, wheelData.count, wheelData.detail, true, hwnd, lParam);
 }
 
 /**
@@ -1794,7 +1836,15 @@ LRESULT wmKeyUp (long hwnd, long wParam, long lParam) {
 }
 
 LRESULT wmKillFocus (long hwnd, long wParam, long lParam) {
-	display.scrollRemainder = display.scrollHRemainder = 0;
+	/*
+	 * MSDN says: The remainder must be zeroed when the wheel rotation switches
+	 * directions or when window focus changes.
+	 */
+	display.scrollRemainderEvt.x = 0;
+	display.scrollRemainderEvt.y = 0;
+	display.scrollRemainderBar.x = 0;
+	display.scrollRemainderBar.y = 0;
+
 	long code = callWindowProc (hwnd, OS.WM_KILLFOCUS, wParam, lParam);
 	sendFocusEvent (SWT.FocusOut);
 	// widget could be disposed at this point
@@ -1828,8 +1878,8 @@ LRESULT wmLButtonDblClk (long hwnd, long wParam, long lParam) {
 	LRESULT result = null;
 	Display display = this.display;
 	display.captureChanged = false;
-	sendMouseEvent (SWT.MouseDown, 1, hwnd, OS.WM_LBUTTONDOWN, wParam, lParam);
-	if (sendMouseEvent (SWT.MouseDoubleClick, 1, hwnd, OS.WM_LBUTTONDBLCLK, wParam, lParam)) {
+	sendMouseEvent (SWT.MouseDown, 1, hwnd, lParam);
+	if (sendMouseEvent (SWT.MouseDoubleClick, 1, hwnd, lParam)) {
 		result = new LRESULT (callWindowProc (hwnd, OS.WM_LBUTTONDBLCLK, wParam, lParam));
 	} else {
 		result = LRESULT.ZERO;
@@ -1864,7 +1914,7 @@ LRESULT wmLButtonDown (long hwnd, long wParam, long lParam) {
 		mouseDown = OS.GetKeyState (OS.VK_LBUTTON) < 0;
 	}
 	display.captureChanged = false;
-	boolean dispatch = sendMouseEvent (SWT.MouseDown, 1, count, 0, false, hwnd, OS.WM_LBUTTONDOWN, wParam, lParam);
+	boolean dispatch = sendMouseEvent (SWT.MouseDown, 1, count, 0, false, hwnd, lParam);
 	if (dispatch && (consume == null || !consume [0])) {
 		result = new LRESULT (callWindowProc (hwnd, OS.WM_LBUTTONDOWN, wParam, lParam));
 	} else {
@@ -1910,7 +1960,7 @@ LRESULT wmLButtonDown (long hwnd, long wParam, long lParam) {
 LRESULT wmLButtonUp (long hwnd, long wParam, long lParam) {
 	Display display = this.display;
 	LRESULT result = null;
-	if (sendMouseEvent (SWT.MouseUp, 1, hwnd, OS.WM_LBUTTONUP, wParam, lParam)) {
+	if (sendMouseEvent (SWT.MouseUp, 1, hwnd, lParam)) {
 		result = new LRESULT (callWindowProc (hwnd, OS.WM_LBUTTONUP, wParam, lParam));
 	} else {
 		result = LRESULT.ZERO;
@@ -1946,8 +1996,8 @@ LRESULT wmMButtonDblClk (long hwnd, long wParam, long lParam) {
 	LRESULT result = null;
 	Display display = this.display;
 	display.captureChanged = false;
-	sendMouseEvent (SWT.MouseDown, 2, hwnd, OS.WM_MBUTTONDOWN, wParam, lParam);
-	if (sendMouseEvent (SWT.MouseDoubleClick, 2, hwnd, OS.WM_MBUTTONDBLCLK, wParam, lParam)) {
+	sendMouseEvent (SWT.MouseDown, 2, hwnd, lParam);
+	if (sendMouseEvent (SWT.MouseDoubleClick, 2, hwnd, lParam)) {
 		result = new LRESULT (callWindowProc (hwnd, OS.WM_MBUTTONDBLCLK, wParam, lParam));
 	} else {
 		result = LRESULT.ZERO;
@@ -1962,7 +2012,7 @@ LRESULT wmMButtonDown (long hwnd, long wParam, long lParam) {
 	LRESULT result = null;
 	Display display = this.display;
 	display.captureChanged = false;
-	if (sendMouseEvent (SWT.MouseDown, 2, hwnd, OS.WM_MBUTTONDOWN, wParam, lParam)) {
+	if (sendMouseEvent (SWT.MouseDown, 2, hwnd, lParam)) {
 		result = new LRESULT (callWindowProc (hwnd, OS.WM_MBUTTONDOWN, wParam, lParam));
 	} else {
 		result = LRESULT.ZERO;
@@ -1976,7 +2026,7 @@ LRESULT wmMButtonDown (long hwnd, long wParam, long lParam) {
 LRESULT wmMButtonUp (long hwnd, long wParam, long lParam) {
 	Display display = this.display;
 	LRESULT result = null;
-	if (sendMouseEvent (SWT.MouseUp, 2, hwnd, OS.WM_MBUTTONUP, wParam, lParam)) {
+	if (sendMouseEvent (SWT.MouseUp, 2, hwnd, lParam)) {
 		result = new LRESULT (callWindowProc (hwnd, OS.WM_MBUTTONUP, wParam, lParam));
 	} else {
 		result = LRESULT.ZERO;
@@ -1996,7 +2046,7 @@ LRESULT wmMButtonUp (long hwnd, long wParam, long lParam) {
 }
 
 LRESULT wmMouseHover (long hwnd, long wParam, long lParam) {
-	if (!sendMouseEvent (SWT.MouseHover, 0, hwnd, OS.WM_MOUSEHOVER, wParam, lParam)) {
+	if (!sendMouseEvent (SWT.MouseHover, 0, hwnd, lParam)) {
 		return LRESULT.ZERO;
 	}
 	return null;
@@ -2009,7 +2059,7 @@ LRESULT wmMouseLeave (long hwnd, long wParam, long lParam) {
 	OS.POINTSTOPOINT (pt, pos);
 	OS.ScreenToClient (hwnd, pt);
 	lParam = OS.MAKELPARAM (pt.x, pt.y);
-	if (!sendMouseEvent (SWT.MouseExit, 0, hwnd, OS.WM_MOUSELEAVE, wParam, lParam)) {
+	if (!sendMouseEvent (SWT.MouseExit, 0, hwnd, lParam)) {
 		return LRESULT.ZERO;
 	}
 	return null;
@@ -2047,7 +2097,7 @@ LRESULT wmMouseMove (long hwnd, long wParam, long lParam) {
 						OS.TranslateMessage (msg);
 						OS.DispatchMessage (msg);
 					}
-					sendMouseEvent (SWT.MouseEnter, 0, hwnd, OS.WM_MOUSEMOVE, wParam, lParam);
+					sendMouseEvent (SWT.MouseEnter, 0, hwnd, lParam);
 				}
 			} else {
 				lpEventTrack.dwFlags = OS.TME_HOVER;
@@ -2056,7 +2106,7 @@ LRESULT wmMouseMove (long hwnd, long wParam, long lParam) {
 		}
 		if (pos != display.lastMouse) {
 			display.lastMouse = pos;
-			if (!sendMouseEvent (SWT.MouseMove, 0, hwnd, OS.WM_MOUSEMOVE, wParam, lParam)) {
+			if (!sendMouseEvent (SWT.MouseMove, 0, hwnd, lParam)) {
 				result = LRESULT.ZERO;
 			}
 		}
@@ -2160,8 +2210,8 @@ LRESULT wmRButtonDblClk (long hwnd, long wParam, long lParam) {
 	LRESULT result = null;
 	Display display = this.display;
 	display.captureChanged = false;
-	sendMouseEvent (SWT.MouseDown, 3, hwnd, OS.WM_RBUTTONDOWN, wParam, lParam);
-	if (sendMouseEvent (SWT.MouseDoubleClick, 3, hwnd, OS.WM_RBUTTONDBLCLK, wParam, lParam)) {
+	sendMouseEvent (SWT.MouseDown, 3, hwnd, lParam);
+	if (sendMouseEvent (SWT.MouseDoubleClick, 3, hwnd, lParam)) {
 		result = new LRESULT (callWindowProc (hwnd, OS.WM_RBUTTONDBLCLK, wParam, lParam));
 	} else {
 		result = LRESULT.ZERO;
@@ -2176,7 +2226,7 @@ LRESULT wmRButtonDown (long hwnd, long wParam, long lParam) {
 	LRESULT result = null;
 	Display display = this.display;
 	display.captureChanged = false;
-	if (sendMouseEvent (SWT.MouseDown, 3, hwnd, OS.WM_RBUTTONDOWN, wParam, lParam)) {
+	if (sendMouseEvent (SWT.MouseDown, 3, hwnd, lParam)) {
 		result = new LRESULT (callWindowProc (hwnd, OS.WM_RBUTTONDOWN, wParam, lParam));
 	} else {
 		result = LRESULT.ZERO;
@@ -2190,7 +2240,7 @@ LRESULT wmRButtonDown (long hwnd, long wParam, long lParam) {
 LRESULT wmRButtonUp (long hwnd, long wParam, long lParam) {
 	Display display = this.display;
 	LRESULT result = null;
-	if (sendMouseEvent (SWT.MouseUp, 3, hwnd, OS.WM_RBUTTONUP, wParam, lParam)) {
+	if (sendMouseEvent (SWT.MouseUp, 3, hwnd, lParam)) {
 		result = new LRESULT (callWindowProc (hwnd, OS.WM_RBUTTONUP, wParam, lParam));
 	} else {
 		/* Call the DefWindowProc() to support WM_CONTEXTMENU */
@@ -2369,8 +2419,8 @@ LRESULT wmXButtonDblClk (long hwnd, long wParam, long lParam) {
 	Display display = this.display;
 	display.captureChanged = false;
 	int button = OS.HIWORD (wParam) == OS.XBUTTON1 ? 4 : 5;
-	sendMouseEvent (SWT.MouseDown, button, hwnd, OS.WM_XBUTTONDOWN, wParam, lParam);
-	if (sendMouseEvent (SWT.MouseDoubleClick, button, hwnd, OS.WM_XBUTTONDBLCLK, wParam, lParam)) {
+	sendMouseEvent (SWT.MouseDown, button, hwnd, lParam);
+	if (sendMouseEvent (SWT.MouseDoubleClick, button, hwnd, lParam)) {
 		result = new LRESULT (callWindowProc (hwnd, OS.WM_XBUTTONDBLCLK, wParam, lParam));
 	} else {
 		result = LRESULT.ZERO;
@@ -2387,7 +2437,7 @@ LRESULT wmXButtonDown (long hwnd, long wParam, long lParam) {
 	display.captureChanged = false;
 	display.xMouse = true;
 	int button = OS.HIWORD (wParam) == OS.XBUTTON1 ? 4 : 5;
-	if (sendMouseEvent (SWT.MouseDown, button, hwnd, OS.WM_XBUTTONDOWN, wParam, lParam)) {
+	if (sendMouseEvent (SWT.MouseDown, button, hwnd, lParam)) {
 		result = new LRESULT (callWindowProc (hwnd, OS.WM_XBUTTONDOWN, wParam, lParam));
 	} else {
 		result = LRESULT.ZERO;
@@ -2402,7 +2452,7 @@ LRESULT wmXButtonUp (long hwnd, long wParam, long lParam) {
 	Display display = this.display;
 	LRESULT result = null;
 	int button = OS.HIWORD (wParam) == OS.XBUTTON1 ? 4 : 5;
-	if (sendMouseEvent (SWT.MouseUp, button, hwnd, OS.WM_XBUTTONUP, wParam, lParam)) {
+	if (sendMouseEvent (SWT.MouseUp, button, hwnd, lParam)) {
 		result = new LRESULT (callWindowProc (hwnd, OS.WM_XBUTTONUP, wParam, lParam));
 	} else {
 		result = LRESULT.ZERO;

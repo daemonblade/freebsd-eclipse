@@ -530,17 +530,18 @@ public void dispose () {
 }
 
 long dpiChanged (long object, long arg0) {
-	int oldZoom = DPIUtil.getDeviceZoom() / 100;
-	int newZoom = GTK.gtk_widget_get_scale_factor(object);
+	int oldScaleFactor = DPIUtil.getDeviceZoom() / 100;
+	int newScaleFactor = GTK.gtk_widget_get_scale_factor(object);
 
-	if (oldZoom != newZoom) {
+	if (oldScaleFactor != newScaleFactor) {
+		display.dpiChanged(newScaleFactor);
+
 		Event event = new Event();
 		event.type = SWT.ZoomChanged;
 		event.widget = this;
-		event.detail = newZoom;
+		event.detail = newScaleFactor;
 		event.doit = true;
 		notifyListeners(SWT.ZoomChanged, event);
-		display.dpiChanged();
 	}
 
 	return 0;
@@ -1157,6 +1158,9 @@ boolean isValidSubclass() {
 }
 
 void hookEvents () {
+	if (handle != 0) {
+		OS.g_signal_connect (handle, OS.dpi_changed, display.notifyProc, Widget.DPI_CHANGED);
+	}
 }
 
 /*
@@ -1453,19 +1457,17 @@ void sendEvent (int eventType, Event event, boolean send) {
 }
 
 boolean sendKeyEvent (int type, long event) {
-	int length;
-	long string;
+	int length = 0;
+	long string = 0;
 	if (GTK.GTK4) {
-		long [] eventString = new long [1];
-		GDK.gdk_event_get_string(event, eventString);
-		string = eventString[0];
-		length = (int)OS.g_utf16_strlen (string, -1);
+		/* TODO: GTK4 no access to key event string */
 	} else {
 		GdkEventKey gdkEvent = new GdkEventKey ();
 		OS.memmove(gdkEvent, event, GdkEventKey.sizeof);
 		length = gdkEvent.length;
 		string = gdkEvent.string;
 	}
+
 	if (string == 0 || OS.g_utf16_strlen (string, length) <= 1) {
 		Event javaEvent = new Event ();
 		javaEvent.time = GDK.gdk_event_get_time(event);
@@ -1500,7 +1502,11 @@ char [] sendIMKeyEvent (int type, long event, char [] chars) {
 				case GDK.GDK_KEY_PRESS:
 				case GDK.GDK_KEY_RELEASE:
 					int [] eventState = new int[1];
-					GDK.gdk_event_get_state(ptr, eventState);
+					if (GTK.GTK4) {
+						eventState[0] = GDK.gdk_event_get_modifier_state(event);
+					} else {
+						GDK.gdk_event_get_state(event, eventState);
+					}
 					state = eventState[0];
 					break;
 				default:
@@ -1566,14 +1572,23 @@ void sendSelectionEvent (int eventType, Event event, boolean send) {
 			case GDK.GDK_2BUTTON_PRESS:
 			case GDK.GDK_BUTTON_RELEASE: {
 				int [] eventButton = new int [1];
-				GDK.gdk_event_get_button(ptr, eventButton);
+				if (GTK.GTK4) {
+					eventButton[0] = GDK.gdk_button_event_get_button(ptr);
+				} else {
+					GDK.gdk_event_get_button(ptr, eventButton);
+				}
+
 				setButtonState(event, eventButton [0]);
 			}
 			//$FALL-THROUGH$
 			case GDK.GDK_KEY_PRESS:
 			case GDK.GDK_KEY_RELEASE: {
-				int [] state = new int [1];
-				GDK.gdk_event_get_state (ptr, state);
+				int [] state = new int[1];
+				if (GTK.GTK4) {
+					state[0] = GDK.gdk_event_get_modifier_state(ptr);
+				} else {
+					GDK.gdk_event_get_state(ptr, state);
+				}
 				setInputState (event, state [0]);
 				break;
 			}
@@ -1737,21 +1752,22 @@ boolean setInputState (Event event, int state) {
 }
 
 boolean setKeyState (Event javaEvent, long event) {
-	long string;
-	int length;
-	int [] eventKeyval = new int[1];
+	long string = 0;
+	int length = 0;
 	int group;
-	GDK.gdk_event_get_keyval(event, eventKeyval);
-	int [] eventState = new int[1];
-	GDK.gdk_event_get_state(event, eventState);
+
+	int [] eventKeyval = new int [1];
+	int [] eventState = new int [1];
 	if (GTK.GTK4) {
-		long [] eventString = new long [1];
-		GDK.gdk_event_get_string(event, eventString);
-		string = eventString[0];
-		length = (int)OS.g_utf16_strlen (string, -1);
-		int [] eventGroup = new int [1];
-		GDK.gdk_event_get_key_group(event, eventGroup);
-		group = eventGroup[0];
+		eventKeyval[0] = GDK.gdk_key_event_get_keyval(event);
+		eventState[0] = GDK.gdk_event_get_modifier_state(event);
+	} else {
+		GDK.gdk_event_get_keyval(event, eventKeyval);
+		GDK.gdk_event_get_state(event, eventState);
+	}
+
+	if (GTK.GTK4) {
+		group = GDK.gdk_key_event_get_layout(event);
 	} else {
 		GdkEventKey gdkEvent = new GdkEventKey ();
 		OS.memmove(gdkEvent, event, GdkEventKey.sizeof);
@@ -1759,6 +1775,7 @@ boolean setKeyState (Event javaEvent, long event) {
 		string = gdkEvent.string;
 		group = gdkEvent.group;
 	}
+
 	if (string != 0 && OS.g_utf16_strlen (string, length) > 1) return false;
 	boolean isNull = false;
 	javaEvent.keyCode = Display.translateKey (eventKeyval[0]);
@@ -1781,15 +1798,22 @@ boolean setKeyState (Event javaEvent, long event) {
 				if (!groupLatinKeysCount.containsKey(group)) {
 					group = display.getLatinKeyGroup();
 				}
+
 				long keymap = 0;
 				long display = GDK.gdk_display_get_default();
 				if (GTK.GTK4) {
-					keymap = GDK.gdk_display_get_keymap(display);
+					//TODO: GTK4 Get keymap or find alternative for gdk_keymap_translate_keyboard_state (no longer exist in GTK4)
 				} else {
 					keymap = GDK.gdk_keymap_get_for_display(display);
 				}
+
 				short [] keyCode = new short [1];
-				GDK.gdk_event_get_keycode(event, keyCode);
+				if (GTK.GTK4) {
+					keyCode[0] = (short) GDK.gdk_key_event_get_keycode(event);
+				} else {
+					GDK.gdk_event_get_keycode(event, keyCode);
+				}
+
 				if (GDK.gdk_keymap_translate_keyboard_state (keymap, keyCode[0],
 						0, group, keyval, effective_group, level, consumed_modifiers)) {
 					javaEvent.keyCode = (int) GDK.gdk_keyval_to_unicode (keyval [0]);
@@ -1815,7 +1839,12 @@ boolean setKeyState (Event javaEvent, long event) {
 
 void setLocationState (Event event, long eventPtr) {
 	int [] eventKeyval = new int[1];
-	GDK.gdk_event_get_keyval(eventPtr, eventKeyval);
+	if (GTK.GTK4) {
+		eventKeyval[0] = GDK.gdk_key_event_get_keyval(eventPtr);
+	} else {
+		GDK.gdk_event_get_keyval(eventPtr, eventKeyval);
+	}
+
 	switch (eventKeyval[0]) {
 		case GDK.GDK_Alt_L:
 		case GDK.GDK_Shift_L:
@@ -1908,7 +1937,7 @@ long gtk_widget_get_window (long widget){
 
 long gtk_widget_get_surface (long widget){
 	GTK.gtk_widget_realize(widget);
-	return GTK.gtk_widget_get_surface (widget);
+	return GTK.gtk_native_get_surface(GTK.gtk_widget_get_native (widget));
 }
 
 void gtk_widget_set_has_surface_or_window (long widget, boolean has) {
@@ -1953,7 +1982,7 @@ void gdk_surface_get_size (long surface, int[] width, int[] height) {
 void gdk_event_free (long event) {
 	if (event == 0) return;
 	if (GTK.GTK4) {
-		OS.g_object_unref(event);
+		GDK.gdk_event_unref(event);
 	} else {
 		GDK.gdk_event_free(event);
 	}
@@ -1997,8 +2026,13 @@ long gdk_event_peek() {
  *        OS.GDK_SHIFT_MASK / OS.GDK_CONTROL_MASK / OS.GDK_MOD1_MASK etc..
  */
 int gdk_event_get_state (long event) {
-	int [] state = new int [1];
-	GDK.gdk_event_get_state (event, state);
+	int [] state = new int[1];
+	if (GTK.GTK4) {
+		state[0] = GDK.gdk_event_get_modifier_state(event);
+	} else {
+		GDK.gdk_event_get_state(event, state);
+	}
+
 	return state[0];
 }
 
@@ -2033,7 +2067,7 @@ void gtk_box_pack_end (long box, long child, boolean expand, boolean fill, int p
 			GTK.gtk_widget_set_valign(child, GTK.GTK_ALIGN_FILL);
 		}
 		OS.g_object_set(box, OS.margin, padding, 0);
-		GTK.gtk_box_pack_end(box, child);
+		GTK.gtk_box_append(box, child);
 	} else {
 		GTK.gtk_box_pack_end(box, child, expand, fill, padding);
 	}
@@ -2069,7 +2103,7 @@ void gdk_pointer_ungrab (long gdkResource, int time_) {
 static long GdkSeatGrabPrepareFunc (long gdkSeat, long gdkResource, long userData_gdkResource) {
 	if (userData_gdkResource != 0) {
 		if (GTK.GTK4) {
-			GDK.gdk_surface_show(userData_gdkResource);
+			/* TODO: GTK does not provide a gdk_surface_show, probably will require use of the present api */
 		} else {
 			GDK.gdk_window_show(userData_gdkResource);
 		}
@@ -2105,9 +2139,16 @@ boolean translateTraversal (int event) {
 	return false;
 }
 
-long enterMotionScrollProc (long handle, double x, double y, long user_data) {
-	long event = GTK.gtk_get_current_event();
+long enterMotionScrollProc (long controller, long handle, double x, double y, long user_data) {
+	long event;
 	long result = 0;
+
+	if (GTK.GTK4) {
+		event = GTK.gtk_event_controller_get_current_event(controller);
+	} else {
+		event = GTK.gtk_get_current_event();
+	}
+
 	switch ((int)user_data) {
 		case ENTER:
 			result = gtk_enter_notify_event(handle, event);
@@ -2126,9 +2167,16 @@ long enterMotionScrollProc (long handle, double x, double y, long user_data) {
 	return result;
 }
 
-long focusProc (long handle, long user_data) {
-	long event = GTK.gtk_get_current_event();
+long focusProc (long controller, long handle, long user_data) {
+	long event;
 	long result = 0;
+
+	if (GTK.GTK4) {
+		event = GTK.gtk_event_controller_get_current_event(controller);
+	} else {
+		event = GTK.gtk_get_current_event();
+	}
+
 	switch ((int)user_data) {
 		case FOCUS_IN:
 			result = gtk_focus_in_event(handle, event);
@@ -2141,9 +2189,16 @@ long focusProc (long handle, long user_data) {
 	return result;
 }
 
-long keyPressReleaseProc (long handle, int keyval, int keycode, int state, long user_data) {
-	long event = GTK.gtk_get_current_event();
+long keyPressReleaseProc (long controller, long handle, int keyval, int keycode, int state, long user_data) {
+	long event;
 	long result = 0;
+
+	if (GTK.GTK4) {
+		event = GTK.gtk_event_controller_get_current_event(controller);
+	} else {
+		event = GTK.gtk_get_current_event();
+	}
+
 	switch ((int)user_data) {
 		case KEY_PRESSED:
 			result = gtk_key_press_event(handle, event);
@@ -2156,9 +2211,16 @@ long keyPressReleaseProc (long handle, int keyval, int keycode, int state, long 
 	return result;
 }
 
-long getsurePressReleaseProc (long gesture, int n_press, double x, double y, long user_data) {
-	long event = GTK.gtk_get_current_event();
+long gesturePressReleaseProc (long gesture, int n_press, double x, double y, long user_data) {
+	long event;
 	long result = 0;
+
+	if (GTK.GTK4) {
+		event = GTK.gtk_event_controller_get_current_event(gesture);
+	} else {
+		event = GTK.gtk_get_current_event();
+	}
+
 	switch ((int)user_data) {
 		case GESTURE_PRESSED:
 			result = gtk_gesture_press_event(gesture, n_press, x, y, event);
@@ -2171,9 +2233,16 @@ long getsurePressReleaseProc (long gesture, int n_press, double x, double y, lon
 	return result;
 }
 
-long leaveProc (long handle, long user_data) {
-	long event = GTK.gtk_get_current_event();
+long leaveProc (long controller, long handle, long user_data) {
+	long event;
 	long result = 0;
+
+	if (GTK.GTK4) {
+		event = GTK.gtk_event_controller_get_current_event(controller);
+	} else {
+		event = GTK.gtk_get_current_event();
+	}
+
 	switch ((int)user_data) {
 		case LEAVE:
 			result = gtk_leave_notify_event(handle, event);
@@ -2319,9 +2388,6 @@ void gtk_widget_get_preferred_size (long widget, GtkRequisition requisition){
 	GTK.gtk_widget_get_preferred_size (widget, requisition, null);
 }
 
-void gtk_image_set_from_gicon (long imageHandle, long pixbuf){
-	GTK.gtk_image_set_from_gicon(imageHandle, pixbuf, GTK.GTK_ICON_SIZE_SMALL_TOOLBAR);
-}
 /**
  * Retrieves the amount of space around the outside of the container.
  * On GTK3: this is done using gtk_container_get_border_width.

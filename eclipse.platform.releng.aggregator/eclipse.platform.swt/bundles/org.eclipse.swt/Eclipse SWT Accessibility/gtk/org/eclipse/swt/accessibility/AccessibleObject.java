@@ -624,12 +624,6 @@ class AccessibleObject {
 				if (style.font != null) {
 					style.font.dispose();
 				}
-				if (style.foreground != null) {
-					style.foreground.dispose();
-				}
-				if (style.background != null) {
-					style.background.dispose();
-				}
 				return ACC.OK.equals(event.result) ? 1 : 0;
 			}
 		}
@@ -653,7 +647,7 @@ class AccessibleObject {
 			int r = Integer.parseInt(rgbString.substring(0, comma1));
 			int g = Integer.parseInt(rgbString.substring(comma1 + 1, comma2));
 			int b = Integer.parseInt(rgbString.substring(comma2 + 1, rgbString.length()));
-			return new Color(display, r, g, b);
+			return new Color(r, g, b);
 		} catch (NumberFormatException ex) {}
 		return null;
 	}
@@ -4547,11 +4541,13 @@ class AccessibleObject {
 			widget = GTK.gtk_accessible_get_widget(object.atkHandle);
 		}
 		if (widget == 0) return;
-		long topLevel = GTK.gtk_widget_get_toplevel (widget);
+
 		if (GTK.GTK4) {
-			long surface = GTK.gtk_widget_get_surface (topLevel);
+			long topLevel = GTK.gtk_widget_get_native(widget);
+			long surface = GTK.gtk_native_get_surface(topLevel);
 			GDK.gdk_surface_get_origin (surface, x, y);
 		} else {
+			long topLevel = GTK.gtk_widget_get_toplevel (widget);
 			long window = GTK.gtk_widget_get_window (topLevel);
 			GDK.gdk_window_get_origin (window, x, y);
 		}

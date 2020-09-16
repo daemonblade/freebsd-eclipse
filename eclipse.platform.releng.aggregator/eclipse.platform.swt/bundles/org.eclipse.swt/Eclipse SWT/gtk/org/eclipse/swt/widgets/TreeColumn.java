@@ -352,7 +352,12 @@ long gtk_clicked (long widget) {
 	long eventPtr = GTK.gtk_get_current_event ();
 	if (eventPtr != 0) {
 		int [] eventButton = new int [1];
-		GDK.gdk_event_get_button(eventPtr, eventButton);
+		if (GTK.GTK4) {
+			eventButton[0] = GDK.gdk_button_event_get_button(eventPtr);
+		} else {
+			GDK.gdk_event_get_button(eventPtr, eventButton);
+		}
+
 		int eventType = GDK.gdk_event_get_event_type(eventPtr);
 		eventType = Control.fixGdkEventTypeValues(eventType);
 		int eventTime = GDK.gdk_event_get_time(eventPtr);
@@ -380,10 +385,16 @@ long gtk_event_after (long widget, long gdkEvent) {
 	switch (eventType) {
 		case GDK.GDK_BUTTON_PRESS: {
 			int [] eventButton = new int [1];
-			GDK.gdk_event_get_button(gdkEvent, eventButton);
+			if (GTK.GTK4) {
+				eventButton[0] = GDK.gdk_button_event_get_button(gdkEvent);
+			} else {
+				GDK.gdk_event_get_button(gdkEvent, eventButton);
+			}
+
 			double [] eventRX = new double [1];
 			double [] eventRY = new double [1];
 			GDK.gdk_event_get_root_coords(gdkEvent, eventRX, eventRY);
+
 			if (eventButton[0] == 3) {
 				parent.showMenu ((int) eventRX[0], (int) eventRY[0]);
 			}
@@ -590,11 +601,10 @@ public void setImage (Image image) {
 		}
 		int imageIndex = headerImageList.indexOf (image);
 		if (imageIndex == -1) imageIndex = headerImageList.add (image);
-		long pixbuf = headerImageList.getPixbuf (imageIndex);
-		gtk_image_set_from_gicon (imageHandle, pixbuf);
+		GTK.gtk_image_set_from_surface(imageHandle, image.surface);
 		GTK.gtk_widget_show (imageHandle);
 	} else {
-		gtk_image_set_from_gicon (imageHandle, 0);
+		GTK.gtk_image_set_from_surface(imageHandle, 0);
 		GTK.gtk_widget_hide (imageHandle);
 	}
 }
@@ -747,24 +757,8 @@ void setWidthInPixels (int width) {
 	if (width != 0) {
 		if (buttonHandle != 0) {
 			if (GTK.GTK4) {
-				long surface = GTK.gtk_widget_get_parent_surface (buttonHandle);
-				if (surface != 0) {
-					long surfaceList = GDK.gdk_surface_get_children (surface);
-					if (surfaceList != 0) {
-						long surfaces = surfaceList;
-						long [] userData = new long [1];
-						while (surfaces != 0) {
-							long child = OS.g_list_data (surfaces);
-							GDK.gdk_surface_get_user_data (child, userData);
-							if (userData[0] == buttonHandle) {
-								GDK.gdk_surface_lower (child);
-								break;
-							}
-							surfaces = OS.g_list_next (surfaces);
-						}
-						OS.g_list_free (surfaceList);
-					}
-				}
+				/* TODO: GTK4 Removed this for time being, as not confirm if this bug still exists. Has to be
+				 * removed since the fix requires functions that no longer exist in GTK4. */
 			} else {
 				long window = GTK.gtk_widget_get_parent_window (buttonHandle);
 				if (window != 0) {
@@ -790,4 +784,15 @@ void setWidthInPixels (int width) {
 	sendEvent (SWT.Resize);
 }
 
+@Override
+long dpiChanged(long object, long arg0) {
+	super.dpiChanged(object, arg0);
+
+	if (image != null) {
+		image.internal_gtk_refreshImageForZoom();
+		setImage(image);
+	}
+
+	return 0;
+}
 }

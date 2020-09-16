@@ -344,7 +344,12 @@ int calculateWidth (long column, long iter) {
 
 	//This workaround is causing the problem Bug 459834 in GTK3. So reverting the workaround for GTK3
 	int [] width = new int [1];
-	GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, width, null);
+	if (GTK.GTK4) {
+		GTK.gtk_tree_view_column_cell_get_size(column, null, null, width, null);
+	} else {
+		GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, width, null);
+	}
+
 	long textRenderer = getTextRenderer (column);
 	int [] xpad = new int[1];
 	if (textRenderer != 0) GTK.gtk_cell_renderer_get_padding(textRenderer, xpad, null);
@@ -659,7 +664,13 @@ void createHandle (int index) {
 	int hsp = (style & SWT.H_SCROLL) != 0 ? GTK.GTK_POLICY_AUTOMATIC : GTK.GTK_POLICY_NEVER;
 	int vsp = (style & SWT.V_SCROLL) != 0 ? GTK.GTK_POLICY_AUTOMATIC : GTK.GTK_POLICY_NEVER;
 	GTK.gtk_scrolled_window_set_policy (scrolledHandle, hsp, vsp);
-	if ((style & SWT.BORDER) != 0) GTK.gtk_scrolled_window_set_shadow_type (scrolledHandle, GTK.GTK_SHADOW_ETCHED_IN);
+	if ((style & SWT.BORDER) != 0) {
+		if (GTK.GTK4) {
+			GTK.gtk_scrolled_window_set_has_frame(scrolledHandle, true);
+		} else {
+			GTK.gtk_scrolled_window_set_shadow_type (scrolledHandle, GTK.GTK_SHADOW_ETCHED_IN);
+		}
+	}
 	/*
 	 * We enable fixed-height-mode for performance reasons (see bug 490203).
 	 */
@@ -1678,7 +1689,11 @@ int getItemHeightInPixels () {
 		long column = GTK.gtk_tree_view_get_column (handle, 0);
 		int [] w = new int [1], h = new int [1];
 		ignoreSize = true;
-		GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, w, h);
+		if (GTK.GTK4) {
+			GTK.gtk_tree_view_column_cell_get_size(column, null, null, w, h);
+		} else {
+			GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, w, h);
+		}
 		int height = h [0];
 		long textRenderer = getTextRenderer (column);
 		if (textRenderer != 0) GTK.gtk_cell_renderer_get_preferred_height_for_width (textRenderer, handle, 0, h, null);
@@ -2017,22 +2032,36 @@ public int getTopIndex () {
 long gtk_button_press_event (long widget, long event) {
 	double [] eventX = new double [1];
 	double [] eventY = new double [1];
-	GDK.gdk_event_get_coords(event, eventX, eventY);
+	if (GTK.GTK4) {
+		GDK.gdk_event_get_position(event, eventX, eventY);
+	} else {
+		GDK.gdk_event_get_coords(event, eventX, eventY);
+	}
+
 	int eventType = GDK.gdk_event_get_event_type(event);
 	eventType = fixGdkEventTypeValues(eventType);
+
 	int [] eventButton = new int [1];
-	GDK.gdk_event_get_button(event, eventButton);
+	int [] eventState = new int [1];
+	if (GTK.GTK4) {
+		eventButton[0] = GDK.gdk_button_event_get_button(event);
+		eventState[0] = GDK.gdk_event_get_modifier_state(event);
+	} else {
+		GDK.gdk_event_get_button(event, eventButton);
+		GDK.gdk_event_get_state(event, eventState);
+	}
+
 	double [] eventRX = new double [1];
 	double [] eventRY = new double [1];
 	GDK.gdk_event_get_root_coords(event, eventRX, eventRY);
-	int [] eventState = new int [1];
-	GDK.gdk_event_get_state(event, eventState);
+
 	long eventGdkResource = gdk_event_get_surface_or_window(event);
 	if (GTK.GTK4) {
 		if (eventGdkResource != gtk_widget_get_surface (handle)) return 0;
 	} else {
 		if (eventGdkResource != GTK.gtk_tree_view_get_bin_window (handle)) return 0;
 	}
+
 	long result = super.gtk_button_press_event (widget, event);
 	if (result != 0) return result;
 	/*
@@ -2149,28 +2178,46 @@ long gtk_row_activated (long tree, long path, long column) {
 @Override
 long gtk_key_press_event (long widget, long event) {
 	int [] key = new int[1];
-	GDK.gdk_event_get_keyval(event, key);
-	keyPressDefaultSelectionHandler (event, key[0]);
-	return super.gtk_key_press_event (widget, event);
-}
+	if (GTK.GTK4) {
+		key[0] = GDK.gdk_key_event_get_keyval(event);
+	} else {
+		GDK.gdk_event_get_keyval(event, key);
+	}
 
-/**
- * Used to emulate DefaultSelection event. See Bug 312568.
- * @param event the gtk key press event that was fired.
- */
-void keyPressDefaultSelectionHandler (long event, int key) {
-	int keymask = gdk_event_get_state (event);
-	switch (key) {
+	switch (key[0]) {
 		case GDK.GDK_Return:
 			// Send DefaultSelectionEvent when:
 			// when    : Enter, Shift+Enter, Ctrl+Enter are pressed.
 			// Not when: Alt+Enter, (Meta|Super|Hyper)+Enter, reason is stateMask is not provided on Gtk.
 			// Note: alt+Enter creates a selection on GTK, but we filter it out to be a bit more consitent Win32 (521387)
+			int keymask = gdk_event_get_state (event);
 			if ((keymask & (GDK.GDK_SUPER_MASK | GDK.GDK_META_MASK | GDK.GDK_HYPER_MASK | GDK.GDK_MOD1_MASK)) == 0) {
 				sendTreeDefaultSelection ();
 			}
 			break;
+		case GDK.GDK_space:
+			if ((style & SWT.CHECK) != 0) {
+				TableItem[] selected = getSelection();
+				for (int i = 0; i < selected.length; i++) {
+					toggleItemAndSendEvent(selected[i]);
+				}
+
+				// Maintain current selection by stopping additional handling to GDK_space event
+				return 1;
+			}
+			break;
 	}
+
+	return super.gtk_key_press_event (widget, event);
+}
+
+private void toggleItemAndSendEvent(TableItem item) {
+	item.setChecked (!item.getChecked ());
+
+	Event event = new Event ();
+	event.detail = SWT.CHECK;
+	event.item = item;
+	sendSelectionEvent (SWT.Selection, event, false);
 }
 
 /**
@@ -2198,14 +2245,26 @@ void sendTreeDefaultSelection() {
 long gtk_button_release_event (long widget, long event) {
 	double [] eventX = new double [1];
 	double [] eventY = new double [1];
-	GDK.gdk_event_get_coords(event, eventX, eventY);
+	if (GTK.GTK4) {
+		GDK.gdk_event_get_position(event, eventX, eventY);
+	} else {
+		GDK.gdk_event_get_coords(event, eventX, eventY);
+	}
+
 	int [] eventButton = new int [1];
-	GDK.gdk_event_get_button(event, eventButton);
+	int [] eventState = new int [1];
+	if (GTK.GTK4) {
+		eventButton[0] = GDK.gdk_button_event_get_button(event);
+		eventState[0] = GDK.gdk_event_get_modifier_state(event);
+	} else {
+		GDK.gdk_event_get_button(event, eventButton);
+		GDK.gdk_event_get_state(event, eventState);
+	}
+
 	double [] eventRX = new double [1];
 	double [] eventRY = new double [1];
 	GDK.gdk_event_get_root_coords(event, eventRX, eventRY);
-	int [] eventState = new int [1];
-	GDK.gdk_event_get_state(event, eventState);
+
 	long eventGdkResource = gdk_event_get_surface_or_window(event);
 	if (GTK.GTK4) {
 		if (eventGdkResource != gtk_widget_get_surface (handle)) return 0;
@@ -2360,11 +2419,7 @@ long gtk_toggled (long renderer, long pathStr) {
 		int [] index = new int [1];
 		C.memmove (index, indices, 4);
 		TableItem item = _getItem (index [0]);
-		item.setChecked (!item.getChecked ());
-		Event event = new Event ();
-		event.detail = SWT.CHECK;
-		event.item = item;
-		sendSelectionEvent (SWT.Selection, event, false);
+		toggleItemAndSendEvent(item);
 	}
 	GTK.gtk_tree_path_free (path);
 	return 0;

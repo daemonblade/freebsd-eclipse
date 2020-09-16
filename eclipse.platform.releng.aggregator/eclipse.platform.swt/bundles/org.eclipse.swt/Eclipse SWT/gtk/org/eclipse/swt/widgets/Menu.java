@@ -42,6 +42,7 @@ import org.eclipse.swt.internal.gtk.*;
  * @noextend This class is not intended to be subclassed by clients.
  */
 public class Menu extends Widget {
+	long modelHandle; // used in GTK4 only
 	int x, y;
 	boolean hasLocation;
 	MenuItem cascade, selectedItem;
@@ -216,6 +217,29 @@ boolean ableToSetLocation() {
 void _setVisible (boolean visible) {
 	if (visible == GTK.gtk_widget_get_mapped (handle)) return;
 	if (visible) {
+		/*
+		 * Feature in GTK. When a menu with no items is shown, GTK shows a
+		 * weird small rectangle. For comparison, Windows API prevents showing
+		 * empty menus on its own. At the same time, Eclipse creates menu items
+		 * lazily in `SWT.Show`, so we can't know if menu is empty before
+		 * `SWT.Show` is sent.
+		 * Known solutions all have drawbacks:
+		 * 1) Send `SWT.Show` here, instead of sending it when GtkMenu
+		 *    receives 'show' event (see gtk_show()). This allows us to test if
+		 *    menu has items before asking GTK to show it. The drawback is that
+		 *    when GTK fails to show menu (see Bug 564595), application still
+		 *    receives fake `SWT.Show` without a matching `SWT.Hide`.
+		 * 2) Send SWT.Show` from gtk_show(). This solves drawback of (1).
+		 *    The new drawback is that empty menu will now show, because it's
+		 *    hard to stop menu from showing at this point.
+		 * 3) Rework Eclipse (and possibly other SWT users) to stop depending
+		 *    on `SWT.Show` and use some other event for lazy init. This will
+		 *    allow to know if menu is empty in advance. This sounds like the
+		 *    best solution, because it solves core problem: empty menus
+		 *    shouldn't try to show. The drawback is that it will be a breaking
+		 *    change.
+		 * Solution (1) has been there since 2002-05-29.
+		 */
 		sendEvent (SWT.Show);
 		if (getItemCount () != 0) {
 			/*
@@ -225,7 +249,13 @@ void _setVisible (boolean visible) {
 			* when it is being shown in an ON_TOP shell.
 			*/
 			if ((parent._getShell ().style & SWT.ON_TOP) != 0) {
-				GTK.gtk_menu_shell_set_take_focus (handle, false);
+				if (GTK.GTK4) {
+					/* TODO: Behavior of menu is unknown at the moment. After compilation
+					 * testing will be done to see if this type of fix is required.
+					 */
+				} else {
+					GTK.gtk_menu_shell_set_take_focus (handle, false);
+				}
 			}
 			if (GTK.GTK_VERSION < OS.VERSION(3, 22, 0)) {
 				long address = 0;
@@ -285,7 +315,8 @@ void _setVisible (boolean visible) {
 						// On Wayland, get the relative GdkWindow from the parent shell.
 						long gdkResource;
 						if (GTK.GTK4) {
-							gdkResource = GTK.gtk_widget_get_surface (getShell().topHandle());
+							long surface = GTK.gtk_native_get_surface(GTK.gtk_widget_get_native (getShell().topHandle()));
+							gdkResource = GTK.gtk_native_get_surface (surface);
 						} else {
 							gdkResource = GTK.gtk_widget_get_window (getShell().topHandle());
 						}
@@ -322,7 +353,11 @@ void _setVisible (boolean visible) {
 					adjustParentWindowWayland(eventPtr);
 					verifyMenuPosition(getItemCount());
 					GTK.gtk_menu_popup_at_pointer(handle, eventPtr);
-					GDK.gdk_event_free (eventPtr);
+					if (GTK.GTK4) {
+						GDK.gdk_event_unref(eventPtr);
+					} else {
+						GDK.gdk_event_free(eventPtr);
+					}
 				}
 			}
 			poppedUpCount = getItemCount();
@@ -330,7 +365,11 @@ void _setVisible (boolean visible) {
 			sendEvent (SWT.Hide);
 		}
 	} else {
-		GTK.gtk_menu_popdown (handle);
+		if (GTK.GTK4) {
+			GTK.gtk_popover_popdown(handle);
+		} else {
+			GTK.gtk_menu_popdown (handle);
+		}
 	}
 }
 
@@ -398,14 +437,27 @@ public void addHelpListener (HelpListener listener) {
 @Override
 void createHandle (int index) {
 	state |= HANDLE;
+
+	if (GTK.GTK4) modelHandle = OS.g_menu_new();
+
 	if ((style & SWT.BAR) != 0) {
-		handle = GTK.gtk_menu_bar_new ();
+		if (GTK.GTK4) {
+			handle = GTK.gtk_popover_menu_bar_new_from_model(modelHandle);
+		} else {
+			handle = GTK.gtk_menu_bar_new ();
+		}
+
 		if (handle == 0) error (SWT.ERROR_NO_HANDLES);
 		long vboxHandle = parent.vboxHandle;
 		GTK.gtk_container_add (vboxHandle, handle);
 		gtk_box_set_child_packing (vboxHandle, handle, false, true, 0, GTK.GTK_PACK_START);
 	} else {
-		handle = GTK.gtk_menu_new ();
+		if (GTK.GTK4) {
+			handle = GTK.gtk_popover_menu_new_from_model(modelHandle);
+		} else {
+			handle = GTK.gtk_menu_new ();
+		}
+
 		if (handle == 0) error (SWT.ERROR_NO_HANDLES);
 	}
 }
@@ -750,6 +802,7 @@ long gtk_show (long widget) {
 @Override
 long gtk_show_help (long widget, long helpType) {
 	if (sendHelpEvent (helpType)) {
+		// TODO: GTK4 there is no idea of a menu shell
 		GTK.gtk_menu_shell_deactivate (handle);
 		return 1;
 	}
@@ -1197,21 +1250,19 @@ void verifyMenuPosition (int itemCount) {
 			 */
 			GTK.gtk_widget_get_preferred_height(handle, null, naturalHeight);
 			if (naturalHeight[0] > 0) {
-				long topLevelWidget = GTK.gtk_widget_get_toplevel(handle);
-				int width;
 				if (GTK.GTK4) {
-					long topLevelSurface = GTK.gtk_widget_get_surface(topLevelWidget);
-					width = GDK.gdk_surface_get_width(topLevelSurface);
-					GDK.gdk_surface_resize(topLevelSurface, width, naturalHeight[0]);
+					/* TODO: GTK4 gdk_surface_resize/move no longer exist & have been replaced with
+					 * gdk_toplevel_begin_resize & gdk_toplevel_begin_move. These functions might change the
+					 * design of resizing and moving in GTK4 */
 				} else {
+					long topLevelWidget = GTK.gtk_widget_get_toplevel(handle);
 					long topLevelWindow = GTK.gtk_widget_get_window(topLevelWidget);
-					width = GDK.gdk_window_get_width(topLevelWindow);
+					int width = GDK.gdk_window_get_width(topLevelWindow);
 					GDK.gdk_window_resize(topLevelWindow, width, naturalHeight[0]);
 				}
 			}
 		}
 	}
-	return;
 }
 
 /**

@@ -724,6 +724,11 @@ void createHandle () {
 	}
 	state &= ~(CANVAS | THEME_BACKGROUND);
 
+	if (display.comboUseDarkTheme) {
+		OS.AllowDarkModeForWindow(handle, true);
+		OS.SetWindowTheme(handle, "CFD\0".toCharArray(), null);
+	}
+
 	stateFlagsUsable = stateFlagsTest();
 
 	/* Get the text and list window procs */
@@ -2485,6 +2490,18 @@ void updateDropDownHeight () {
 	}
 }
 
+void updateDropDownTheme () {
+	COMBOBOXINFO pcbi = new COMBOBOXINFO ();
+	pcbi.cbSize = COMBOBOXINFO.sizeof;
+	if (!OS.GetComboBoxInfo(handle, pcbi))
+		return;
+
+	if (pcbi.hwndList == 0)
+		return;
+
+	maybeEnableDarkSystemTheme(pcbi.hwndList);
+}
+
 @Override
 boolean updateTextDirection(int textDirection) {
 	if (super.updateTextDirection(textDirection)) {
@@ -2721,7 +2738,7 @@ long windowProc (long hwnd, int msg, long wParam, long lParam) {
 				if (!(code == OS.CB_ERR || code == OS.CB_ERRSPACE)) {
 					Event event = getSegments (items [index]);
 					segments = event != null ? event.segments : null;
-					if (event.segmentsChars != null) {
+					if (event != null && event.segmentsChars != null) {
 						int auto = state & HAS_AUTO_DIRECTION;
 						if (event.segmentsChars[0] == RLE) {
 							super.updateTextDirection(SWT.RIGHT_TO_LEFT);
@@ -3216,6 +3233,7 @@ LRESULT wmCommandChild (long wParam, long lParam) {
 		case OS.CBN_DROPDOWN:
 			setCursor ();
 			updateDropDownHeight ();
+			updateDropDownTheme ();
 			break;
 		case OS.CBN_KILLFOCUS:
 			sendFocusEvent (SWT.FocusOut);

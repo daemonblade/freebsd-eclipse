@@ -145,15 +145,13 @@ public class GradientDialog extends Dialog {
 		canvas.addListener (SWT.Paint, e -> {
 			Image preview = null;
 			Point size = canvas.getSize();
-			Color color1 = new Color(display, rgb1);
-			Color color2 = new Color(display, rgb2);
+			Color color1 = new Color(rgb1);
+			Color color2 = new Color(rgb2);
 			preview = GraphicsExample.createImage(display, color1, color2, size.x, size.y);
 			if (preview != null) {
 				e.gc.drawImage (preview, 0, 0);
 			}
 			preview.dispose();
-			color1.dispose();
-			color2.dispose();
 		});
 
 		// composite used for both color buttons
@@ -174,9 +172,8 @@ public class GradientDialog extends Dialog {
 		// color controls: first color
 		colorButton1 = new Button(colorButtonComp, SWT.PUSH);
 		colorButton1.setText(GraphicsExample.getResourceString("GradientDlgButton1"));
-		Color color1 = new Color(display, rgb1);
+		Color color1 = new Color(rgb1);
 		Image img1 = GraphicsExample.createImage(display, color1);
-		color1.dispose();
 		colorButton1.setImage(img1);
 		resources.add(img1);
 		menu1 = colorMenu.createMenu(parent.getParent(), gb -> {
@@ -196,9 +193,8 @@ public class GradientDialog extends Dialog {
 		// color controls: second color
 		colorButton2 = new Button(colorButtonComp, SWT.PUSH);
 		colorButton2.setText(GraphicsExample.getResourceString("GradientDlgButton2"));
-		Color color2 = new Color(display, rgb2);
+		Color color2 = new Color(rgb2);
 		Image img2 = GraphicsExample.createImage(display, color2);
-		color2.dispose();
 		colorButton2.setImage(img2);
 		resources.add(img2);
 		menu2 = colorMenu.createMenu(parent.getParent(), gb -> {

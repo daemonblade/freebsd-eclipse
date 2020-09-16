@@ -807,9 +807,7 @@ long paintWindow () {
 @Override
 long paintSurface () {
 	long surface = super.paintSurface ();
-	long children = GDK.gdk_surface_get_children (surface);
-	if (children != 0) surface = OS.g_list_data (children);
-	OS.g_list_free (children);
+	/* TODO: GTK4 no access to children of the surface. Need to find alternative, note that class hierarchy can change from GTK3 */
 	return surface;
 }
 
@@ -1220,8 +1218,13 @@ boolean checkSubwindow () {
 
 @Override
 boolean translateTraversal (long event) {
-	int [] key = new int[1];
-	GDK.gdk_event_get_keyval(event, key);
+	int [] key = new int [1];
+	if (GTK.GTK4) {
+		key[0] = GDK.gdk_key_event_get_keyval(event);
+	} else {
+		GDK.gdk_event_get_keyval(event, key);
+	}
+
 	switch (key[0]) {
 		case GDK.GDK_KP_Enter:
 		case GDK.GDK_Return: {

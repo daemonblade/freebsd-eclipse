@@ -430,8 +430,7 @@ void computeRuns (GC gc) {
 				lineWidth += lineIndent;
 				long hHeap = OS.GetProcessHeap();
 				int newLineWidth = 0;
-				for (int j = 0; j < runs[line].length; j++) {
-					StyleItem item = runs[line][j];
+				for (StyleItem item : runs[line]) {
 					int iDx = item.width * wrapWidth / lineWidth;
 					if (iDx != item.width) {
 						item.justify = OS.HeapAlloc(hHeap, OS.HEAP_ZERO_MEMORY, item.glyphCount * 4);
@@ -455,9 +454,9 @@ void computeRuns (GC gc) {
 			}
 
 			lineWidth = getLineIndent(line);
-			for (int j = 0; j < runs[line].length; j++) {
-				runs[line][j].x = lineWidth;
-				lineWidth += runs[line][j].width;
+			for (StyleItem run1 : runs[line]) {
+				run1.x = lineWidth;
+				lineWidth += run1.width;
 			}
 			line++;
 			lineY[line] = lineY[line - 1] + ascentInPoints + descentInPoints + lineSpacingInPoints;
@@ -2719,7 +2718,7 @@ StyleItem[] itemize () {
 	*/
 //	scriptControl.fReserved = 0x1;
 
-	OS.ScriptApplyDigitSubstitution(null, scriptControl, scriptState);
+	OS.ScriptApplyDigitSubstitution(0, scriptControl, scriptState);
 
 	long hHeap = OS.GetProcessHeap();
 	long pItems = OS.HeapAlloc(hHeap, OS.HEAP_ZERO_MEMORY, MAX_ITEM * SCRIPT_ITEM.sizeof);
@@ -2729,6 +2728,28 @@ StyleItem[] itemize () {
 	segmentsText.getChars(0, length, chars, 0);
 	// enable font ligatures
 	scriptControl.fMergeNeutralItems = true;
+	/*
+	 * With font ligatures enabled: CJK characters are not rendered properly when
+	 * used in Java comments, workaround is to avoid ligatures between ascii and
+	 * non-ascii chars. For more details refer bug 565526
+	 */
+	for (int i = 0, latestNeutralIndex = -2, latestUnicodeIndex = -2; i < length; i++) {
+		char c = chars[i];
+
+		if (c >= ' ' && c <= '~' && !Character.isAlphabetic(c)) {
+			latestNeutralIndex = i;
+		} else if (c > 255) {
+			latestUnicodeIndex = i;
+		} else {
+			continue;
+		}
+
+		// If the latest neutral and unicode characters are adjacent
+		if (Math.abs(latestNeutralIndex - latestUnicodeIndex) == 1) {
+			// Change the neutral into a non-neutral alphabet character
+			chars[latestNeutralIndex] = 'A';
+		}
+	}
 
 	OS.ScriptItemize(chars, length, MAX_ITEM, scriptControl, scriptState, pItems, pcItems);
 

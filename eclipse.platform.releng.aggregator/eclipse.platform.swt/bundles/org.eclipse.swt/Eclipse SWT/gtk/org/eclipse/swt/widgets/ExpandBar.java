@@ -145,8 +145,10 @@ void createHandle (int index) {
 		GTK.gtk_scrolled_window_set_policy (scrolledHandle, GTK.GTK_POLICY_NEVER, GTK.GTK_POLICY_AUTOMATIC);
 		GTK.gtk_container_add (fixedHandle, scrolledHandle);
 		GTK.gtk_container_add(scrolledHandle, handle);
-		long viewport = GTK.gtk_bin_get_child (scrolledHandle);
-		GTK.gtk_viewport_set_shadow_type (viewport, GTK.GTK_SHADOW_NONE);
+		if (!GTK.GTK4) {
+			long viewport = GTK.gtk_bin_get_child (scrolledHandle);
+			GTK.gtk_viewport_set_shadow_type (viewport, GTK.GTK_SHADOW_NONE);
+		}
 	} else {
 		GTK.gtk_container_add (fixedHandle, handle);
 	}
@@ -318,8 +320,14 @@ long gtk_key_press_event (long widget, long event) {
 		if (items [index].hasFocus ()) break;
 		index++;
 	}
-	int [] key = new int[1];
-	GDK.gdk_event_get_keyval(event, key);
+
+	int [] key = new int [1];
+	if (GTK.GTK4) {
+		key[0] = GDK.gdk_key_event_get_keyval(event);
+	} else {
+		GDK.gdk_event_get_keyval(event, key);
+	}
+
 	boolean next = false;
 	switch (key[0]) {
 		case GDK.GDK_Up:
