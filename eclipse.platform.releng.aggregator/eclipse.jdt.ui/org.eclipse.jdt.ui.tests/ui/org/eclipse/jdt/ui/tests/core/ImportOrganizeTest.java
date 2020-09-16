@@ -35,13 +35,14 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
 import org.eclipse.core.resources.ProjectScope;
 
+import org.eclipse.jface.preference.IPreferenceStore;
+
 import org.eclipse.jdt.core.IClasspathAttribute;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
@@ -62,7 +63,7 @@ public class ImportOrganizeTest extends CoreTests {
 
 	@Before
 	public void setUp() throws Exception {
-		fJProject1= ProjectTestSetup.getProject();
+		fJProject1= pts.getProject();
 
 		Hashtable<String, String> options= TestOptions.getDefaultOptions();
 		options.put(DefaultCodeFormatterConstants.FORMATTER_NUMBER_OF_EMPTY_LINES_TO_PRESERVE, String.valueOf(99));
@@ -72,34 +73,31 @@ public class ImportOrganizeTest extends CoreTests {
 	@After
 	public void tearDown() throws Exception {
 		setOrganizeImportSettings(null, 99, 99, fJProject1);
-		JavaProjectHelper.clear(fJProject1, ProjectTestSetup.getDefaultClasspath());
+		JavaProjectHelper.clear(fJProject1, pts.getDefaultClasspath());
 	}
 
 	protected IChooseImportQuery createQuery(final String name, final String[] choices, final int[] nEntries) {
-		return new IChooseImportQuery() {
-			@Override
-			public TypeNameMatch[] chooseImports(TypeNameMatch[][] openChoices, ISourceRange[] ranges) {
-				assertEquals(name + "-query-nchoices1", choices.length, openChoices.length);
-				assertEquals(name + "-query-nchoices2", nEntries.length, openChoices.length);
-				for (int i= 0; i < nEntries.length; i++) {
-					assertEquals(name + "-query-cnt" + i, openChoices[i].length, nEntries[i]);
-				}
-				TypeNameMatch[] res= new TypeNameMatch[openChoices.length];
-				for (int i= 0; i < openChoices.length; i++) {
-					TypeNameMatch[] selection= openChoices[i];
-					assertNotNull(name + "-query-setset" + i, selection);
-					assertTrue(name + "-query-setlen" + i, selection.length > 0);
-					TypeNameMatch found= null;
-					for (TypeNameMatch s : selection) {
-						if (s.getFullyQualifiedName().equals(choices[i])) {
-							found= s;
-						}
-					}
-					assertNotNull(name + "-query-notfound" + i, found);
-					res[i]= found;
-				}
-				return res;
+		return (openChoices, ranges) -> {
+			assertEquals(name + "-query-nchoices1", choices.length, openChoices.length);
+			assertEquals(name + "-query-nchoices2", nEntries.length, openChoices.length);
+			for (int i1= 0; i1 < nEntries.length; i1++) {
+				assertEquals(name + "-query-cnt" + i1, openChoices[i1].length, nEntries[i1]);
 			}
+			TypeNameMatch[] res= new TypeNameMatch[openChoices.length];
+			for (int i2= 0; i2 < openChoices.length; i2++) {
+				TypeNameMatch[] selection= openChoices[i2];
+				assertNotNull(name + "-query-setset" + i2, selection);
+				assertTrue(name + "-query-setlen" + i2, selection.length > 0);
+				TypeNameMatch found= null;
+				for (TypeNameMatch s : selection) {
+					if (s.getFullyQualifiedName().equals(choices[i2])) {
+						found= s;
+					}
+				}
+				assertNotNull(name + "-query-notfound" + i2, found);
+				res[i2]= found;
+			}
+			return res;
 		};
 	}
 
@@ -2404,6 +2402,42 @@ public class ImportOrganizeTest extends CoreTests {
 		buf.append("        public void test() {\n");
 		buf.append("            TEST.concat(\"access\");\n");
 		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		assertEqualString(cu.getSource(), buf.toString());
+	}
+
+	@Test
+	public void testStaticImports_bug562641() throws Exception {
+		IPreferenceStore preferenceStore= PreferenceConstants.getPreferenceStore();
+		preferenceStore.setValue(PreferenceConstants.CODEASSIST_FAVORITE_STATIC_MEMBERS, "java.lang.Math.max");
+		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
+
+		IPackageFragment pack1= sourceFolder.createPackageFragment("pack1", false, null);
+		StringBuffer buf= new StringBuffer();
+		buf.append("package pack1;\n");
+		buf.append("\n");
+		buf.append("public class C {\n");
+		buf.append("    private int foo() {\n");
+		buf.append("        return max(1, 2);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("C.java", buf.toString(), false, null);
+
+		String[] order= new String[] {};
+		IChooseImportQuery query= createQuery("Test", new String[] {}, new int[] {});
+
+		OrganizeImportsOperation op= createOperation(cu, order, 99, false, true, true, query);
+		op.run(null);
+
+		buf= new StringBuffer();
+		buf.append("package pack1;\n");
+		buf.append("\n");
+		buf.append("import static java.lang.Math.max;\n");
+		buf.append("\n");
+		buf.append("public class C {\n");
+		buf.append("    private int foo() {\n");
+		buf.append("        return max(1, 2);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		assertEqualString(cu.getSource(), buf.toString());

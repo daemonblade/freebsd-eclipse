@@ -24,8 +24,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 
@@ -60,7 +58,6 @@ import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
  *
  * @author Simeon Andreev
  */
-@RunWith(JUnit4.class)
 public class IsCompletelySelectedTest  {
 
 	private IJavaProject testProject;
@@ -73,7 +70,7 @@ public class IsCompletelySelectedTest  {
 	private IPackageFragment package_a_b_e;
 
 	@Rule
-    public ProjectTestSetup projectsetup = new ProjectTestSetup();
+    public ProjectTestSetup projectSetup = new ProjectTestSetup();
 
 	@Before
 	public void setUp() throws Exception {

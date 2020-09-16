@@ -15,8 +15,6 @@ package org.eclipse.jdt.ui.tests.quickfix;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.core.runtime.CoreException;
 
@@ -26,28 +24,30 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
+import org.eclipse.jdt.internal.corext.fix.FixMessages;
 
 import org.eclipse.jdt.ui.tests.core.rules.Java1d5ProjectTestSetup;
 import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
+
+import org.eclipse.jdt.internal.ui.fix.MultiFixMessages;
 
 
 /**
  * Tests the cleanup features related to Java 5.
  */
-@RunWith(JUnit4.class)
 public class CleanUpTest1d5 extends CleanUpTestCase {
 
 	@Rule
-    public ProjectTestSetup projectsetup = new Java1d5ProjectTestSetup();
+    public ProjectTestSetup projectSetup = new Java1d5ProjectTestSetup();
 
 	@Override
 	protected IJavaProject getProject() {
-		return Java1d5ProjectTestSetup.getProject();
+		return projectSetup.getProject();
 	}
 
 	@Override
 	protected IClasspathEntry[] getDefaultClasspath() throws CoreException {
-		return Java1d5ProjectTestSetup.getDefaultClasspath();
+		return projectSetup.getDefaultClasspath();
 	}
 
 	@Test
@@ -810,8 +810,8 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "    }\n" //
 				+ "    public void bar(List<Object> objs) {\n" //
 				+ "        if (objs != null) {\n" //
-				+ "            for (Object object : objs) {\n" //
-				+ "                System.out.println(object);\n" //
+				+ "            for (Object obj : objs) {\n" //
+				+ "                System.out.println(obj);\n" //
 				+ "            }\n" //
 				+ "        }\n" //
 				+ "    }\n" //
@@ -1468,6 +1468,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
+		assertGroupCategoryUsed(new ICompilationUnit[] { cu1 }, new String[] { MultiFixMessages.AutoboxingCleanup_description });
 		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
 	}
 
@@ -2423,6 +2424,114 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 
 		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
 		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1, cu2 }, new String[] { expected1, expected2 });
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug564983_1() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "import java.lang.reflect.Method;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public void foo(Object... elementsOrTreePaths) {\n" //
+				+ "        return;\n" //
+				+ "    }\n" //
+				+ "    public void foo(Object elementsOrTreePaths) {\n" //
+				+ "        foo(new Object[] {elementsOrTreePaths});\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu });
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug564983_2() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public class B {\n" //
+				+ "        public void foo(Object elementsOrTreePaths, Integer obj, Integer obj2) {\n" //
+				+ "            return;\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "    public class C extends B {\n" //
+				+ "        public void foo(Object... elementsOrTreePaths) {\n" //
+				+ "            return;\n" //
+				+ "        }\n" //
+				+ "        public void foo(Object elementsOrTreePaths, Integer obj) {\n" //
+				+ "            foo(new Object[] {elementsOrTreePaths, obj});\n" //
+				+ "            foo(new Object[] {elementsOrTreePaths, elementsOrTreePaths});\n" //
+				+ "            foo(new Object[] {elementsOrTreePaths, obj, obj});\n" //
+				+ "            foo(new Object[] {elementsOrTreePaths, obj, elementsOrTreePaths});\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public class B {\n" //
+				+ "        public void foo(Object elementsOrTreePaths, Integer obj, Integer obj2) {\n" //
+				+ "            return;\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "    public class C extends B {\n" //
+				+ "        public void foo(Object... elementsOrTreePaths) {\n" //
+				+ "            return;\n" //
+				+ "        }\n" //
+				+ "        public void foo(Object elementsOrTreePaths, Integer obj) {\n" //
+				+ "            foo(new Object[] {elementsOrTreePaths, obj});\n" //
+				+ "            foo(elementsOrTreePaths, elementsOrTreePaths);\n" //
+				+ "            foo(new Object[] {elementsOrTreePaths, obj, obj});\n" //
+				+ "            foo(elementsOrTreePaths, obj, elementsOrTreePaths);\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug565374() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public class B {\n" //
+				+ "        public void foo(Object elementsOrTreePaths, Integer obj, Integer obj2) {\n" //
+				+ "            return;\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "    public class C extends B {\n" //
+				+ "        public void foo(Object... elementsOrTreePaths) {\n" //
+				+ "            return;\n" //
+				+ "        }\n" //
+				+ "        public void foo(Object elementsOrTreePaths, Integer obj) {\n" //
+				+ "            foo(new Object[] {elementsOrTreePaths, obj});\n" //
+				+ "            foo(new Object[] {elementsOrTreePaths, elementsOrTreePaths});\n" //
+				+ "            foo(new Object[] {elementsOrTreePaths, obj, obj});\n" //
+				+ "            foo(new Object[] {elementsOrTreePaths, obj, elementsOrTreePaths});\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertGroupCategoryUsed(new ICompilationUnit[] { cu1 }, new String[] { FixMessages.UnusedCodeFix_RemoveUnnecessaryArrayCreation_description });
 	}
 
 	@Test

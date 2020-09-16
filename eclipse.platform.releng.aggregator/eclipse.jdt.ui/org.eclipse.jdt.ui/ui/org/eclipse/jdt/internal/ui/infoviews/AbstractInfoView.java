@@ -158,14 +158,8 @@ public abstract class AbstractInfoView extends ViewPart implements ISelectionLis
 	 */
 	private IProgressMonitor fComputeProgressMonitor;
 
-	/**
-	 * Background color.
-	 * @since 3.2
-	 */
-	private Color fBackgroundColor;
 	private RGB fBackgroundColorRGB;
 
-	private Color fForegroundColor;
 	private RGB fForegroundColorRGB;
 
 	/**
@@ -393,8 +387,7 @@ public abstract class AbstractInfoView extends ViewPart implements ISelectionLis
 			fgColor = display.getSystemColor(SWT.COLOR_INFO_FOREGROUND);
 			fForegroundColorRGB= fgColor.getRGB();
 		} else {
-			fgColor = new Color(display, fForegroundColorRGB);
-			fForegroundColor= fgColor;
+			fgColor = new Color(fForegroundColorRGB);
 		}
 		setForeground(fgColor);
 
@@ -404,8 +397,7 @@ public abstract class AbstractInfoView extends ViewPart implements ISelectionLis
 			bgColor= display.getSystemColor(SWT.COLOR_INFO_BACKGROUND);
 			fBackgroundColorRGB= bgColor.getRGB();
 		} else {
-			bgColor= new Color(display, fBackgroundColorRGB);
-			fBackgroundColor= bgColor;
+			bgColor= new Color(fBackgroundColorRGB);
 		}
 		setBackground(bgColor);
 	}
@@ -669,16 +661,8 @@ public abstract class AbstractInfoView extends ViewPart implements ISelectionLis
 
 		JFaceResources.getColorRegistry().removeListener(this);
 		fBackgroundColorRGB= null;
-		if (fBackgroundColor != null) {
-			fBackgroundColor.dispose();
-			fBackgroundColor= null;
-		}
 
 		fForegroundColorRGB= null;
-		if (fForegroundColor != null) {
-			fForegroundColor.dispose();
-			fForegroundColor= null;
-		}
 
 		internalDispose();
 
@@ -781,22 +765,16 @@ public abstract class AbstractInfoView extends ViewPart implements ISelectionLis
 				if (display.isDisposed())
 					return;
 
-				display.asyncExec(new Runnable() {
-					/*
-					 * @see java.lang.Runnable#run()
-					 */
-					@Override
-					public void run() {
+				display.asyncExec(() -> {
 
-						if (fComputeCount != currentCount || getViewSite().getShell().isDisposed())
-							return;
+					if (fComputeCount != currentCount || getViewSite().getShell().isDisposed())
+						return;
 
-						fCurrentViewInput= je;
-						doSetInput(input, description);
-						fToggleLinkAction.updateLinkImage(false);
+					fCurrentViewInput= je;
+					doSetInput(input, description);
+					fToggleLinkAction.updateLinkImage(false);
 
-						fComputeProgressMonitor= null;
-					}
+					fComputeProgressMonitor= null;
 				});
 			}
 
@@ -809,15 +787,7 @@ public abstract class AbstractInfoView extends ViewPart implements ISelectionLis
 				if (display.isDisposed())
 					return;
 
-				display.asyncExec(new Runnable() {
-					/*
-					 * @see java.lang.Runnable#run()
-					 */
-					@Override
-					public void run() {
-						fToggleLinkAction.updateLinkImage(isBroken);
-					}
-				});
+				display.asyncExec(() -> fToggleLinkAction.updateLinkImage(isBroken));
 			}
 		};
 

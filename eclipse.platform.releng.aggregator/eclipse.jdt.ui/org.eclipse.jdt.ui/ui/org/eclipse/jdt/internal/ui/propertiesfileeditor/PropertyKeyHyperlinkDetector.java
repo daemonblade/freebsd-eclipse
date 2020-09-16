@@ -106,11 +106,7 @@ public class PropertyKeyHyperlinkDetector extends AbstractHyperlinkDetector {
 
 			return new PropertyKeyHyperlink[] { new PropertyKeyHyperlink(new Region(partition.getOffset() + delta, realKey.length()), realKey, textEditor) };
 
-		} catch (BadLocationException ex) {
-			return null;
-		} catch (BadPartitioningException ex) {
-			return null;
-		} catch (IOException ex) {
+		} catch (BadLocationException | BadPartitioningException | IOException ex) {
 			return null;
 		} catch (IllegalArgumentException ex) {
 			showErrorInStatusLine(ex.getLocalizedMessage(), textEditor);
@@ -176,15 +172,7 @@ public class PropertyKeyHyperlinkDetector extends AbstractHyperlinkDetector {
 		display.beep();
 		final IEditorStatusLine statusLine= textEditor.getAdapter(IEditorStatusLine.class);
 		if (statusLine != null) {
-			display.asyncExec(new Runnable() {
-				/*
-				 * @see java.lang.Runnable#run()
-				 */
-				@Override
-				public void run() {
-					statusLine.setMessage(true, message, null);
-				}
-			});
+			display.asyncExec(() -> statusLine.setMessage(true, message, null));
 		}
 	}
 }

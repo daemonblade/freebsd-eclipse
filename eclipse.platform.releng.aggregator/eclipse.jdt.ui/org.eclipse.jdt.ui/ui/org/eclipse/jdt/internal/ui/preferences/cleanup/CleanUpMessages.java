@@ -74,7 +74,6 @@ public class CleanUpMessages extends NLS {
 	public static String CodeStyleTabPage_RadioName_NeverUseBlocks;
 	public static String CodeStyleTabPage_RadioName_NeverUseParantheses;
 
-	public static String CodeStyleTabPage_CheckboxName_UseLazyLogicalOperator;
 	public static String CodeStyleTabPage_RadioName_UseBlocksSpecial;
 
 	public static String CodeStyleTabPage_GroupName_FunctionalInterfaces;
@@ -82,6 +81,11 @@ public class CleanUpMessages extends NLS {
 	public static String CodeStyleTabPage_RadioName_UseLambdaWherePossible;
 	public static String CodeStyleTabPage_RadioName_UseAnonymous;
 	public static String CodeStyleTabPage_CheckboxName_SimplifyLambdaExpressionAndMethodRefSyntax;
+
+	public static String OptimizationTabPage_GroupName_Optimization;
+
+	public static String OptimizationTabPage_CheckboxName_UseLazyLogicalOperator;
+	public static String OptimizationTabPage_CheckboxName_PrecompileRegEx;
 
 	public static String ContributedCleanUpTabPage_ErrorPage_message;
 
@@ -128,6 +132,7 @@ public class CleanUpMessages extends NLS {
 	public static String UnnecessaryCodeTabPage_CheckboxName_RedundantSemicolons;
 	public static String UnnecessaryCodeTabPage_CheckboxName_RedundantSemicolons_description;
 	public static String UnnecessaryCodeTabPage_CheckboxName_RedundantArrayCreation_description;
+	public static String UnnecessaryCodeTabPage_CheckboxName_ObjectsEquals;
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnnecessaryVarargsArrayCreation;
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnusedConstructors;
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnusedFields;

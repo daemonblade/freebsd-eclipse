@@ -16,15 +16,15 @@ package org.eclipse.jdt.ui.tests.quickfix;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
@@ -41,11 +41,15 @@ import org.eclipse.jface.preference.IPreferenceStore;
 
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
+import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.ltk.core.refactoring.CreateChangeOperation;
+import org.eclipse.ltk.core.refactoring.GroupCategory;
 import org.eclipse.ltk.core.refactoring.IUndoManager;
 import org.eclipse.ltk.core.refactoring.PerformChangeOperation;
 import org.eclipse.ltk.core.refactoring.RefactoringCore;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
+import org.eclipse.ltk.core.refactoring.TextEditBasedChange;
+import org.eclipse.ltk.core.refactoring.TextEditBasedChangeGroup;
 
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -64,7 +68,6 @@ import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jdt.ui.PreferenceConstants;
 import org.eclipse.jdt.ui.cleanup.CleanUpOptions;
 import org.eclipse.jdt.ui.cleanup.ICleanUp;
-import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.dialogs.StatusInfo;
@@ -74,24 +77,10 @@ import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileManager.CustomPr
 import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileManager.Profile;
 import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileStore;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-	CleanUpStressTest.class,
-	CleanUpTest.class,
-	CleanUpTest1d5.class,
-	CleanUpTest1d7.class,
-	CleanUpTest1d8.class,
-	CleanUpTest1d10.class,
-	CleanUpAnnotationTest.class,
-	SaveParticipantTest.class,
-	CleanUpActionTest.class,
-	NullAnnotationsCleanUpTest1d8.class
-})
-public class CleanUpTestCase extends QuickFixTest {
+public abstract class CleanUpTestCase extends QuickFixTest {
 	protected static final String FIELD_COMMENT= "/* Test */";
 
 	protected IPackageFragmentRoot fSourceFolder;
-	protected IJavaProject fJProject1;
 
 	private CustomProfile fProfile;
 
@@ -117,9 +106,7 @@ public class CleanUpTestCase extends QuickFixTest {
 		corePrefs.setValue(JavaCore.CODEASSIST_FIELD_SUFFIXES, "");
 		corePrefs.setValue(JavaCore.CODEASSIST_STATIC_FIELD_SUFFIXES, "");
 
-		fJProject1= getProject();
-
-		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
+		fSourceFolder= JavaProjectHelper.addSourceContainer(getProject(), "src");
 
 		Map<String, String> settings= new Hashtable<>();
 		fProfile= new ProfileManager.CustomProfile("testProfile", settings, CleanUpProfileVersioner.CURRENT_VERSION, CleanUpProfileVersioner.PROFILE_KIND);
@@ -131,20 +118,15 @@ public class CleanUpTestCase extends QuickFixTest {
 
 	@After
 	public void tearDown() throws Exception {
-		JavaProjectHelper.clear(fJProject1, getDefaultClasspath());
+		JavaProjectHelper.clear(getProject(), getDefaultClasspath());
 		disableAll();
-		fJProject1= null;
 		fSourceFolder= null;
 		fProfile= null;
 	}
 
-	protected IJavaProject getProject() {
-		return ProjectTestSetup.getProject();
-	}
+	protected abstract IJavaProject getProject();
 
-	protected IClasspathEntry[] getDefaultClasspath() throws CoreException {
-		return ProjectTestSetup.getDefaultClasspath();
-	}
+	protected abstract IClasspathEntry[] getDefaultClasspath() throws CoreException;
 
 	private void disableAll() throws CoreException {
 		Map<String, String> settings= fProfile.getSettings();
@@ -174,6 +156,52 @@ public class CleanUpTestCase extends QuickFixTest {
 		profileStore.writeProfiles(profiles, InstanceScope.INSTANCE);
 
 		CleanUpPreferenceUtil.saveSaveParticipantOptions(InstanceScope.INSTANCE, fProfile.getSettings());
+	}
+
+	private void collectGroupCategories(Set<GroupCategory> result, Change change) {
+		if (change instanceof TextEditBasedChange) {
+			for (TextEditBasedChangeGroup group : ((TextEditBasedChange)change).getChangeGroups()) {
+				result.addAll(group.getGroupCategorySet().asList());
+			}
+		} else if (change instanceof CompositeChange) {
+			for (Change child : ((CompositeChange)change).getChildren()) {
+				collectGroupCategories(result, child);
+			}
+		}
+	}
+
+	protected void assertGroupCategoryUsed(ICompilationUnit[] cus, String[] expectedGroupCategories) throws CoreException {
+		final CleanUpRefactoring ref= new CleanUpRefactoring();
+		ref.setUseOptionsFromProfile(true);
+		ICleanUp[] cleanUps= JavaPlugin.getDefault().getCleanUpRegistry().createCleanUps();
+
+		for (ICompilationUnit cu : cus) {
+			ref.addCompilationUnit(cu);
+		}
+		for (ICleanUp cleanUp : cleanUps) {
+			ref.addCleanUp(cleanUp);
+		}
+
+		final CreateChangeOperation create= new CreateChangeOperation(
+			new CheckConditionsOperation(ref, CheckConditionsOperation.ALL_CONDITIONS),
+			RefactoringStatus.FATAL);
+
+		create.run(new NullProgressMonitor());
+		Change change= create.getChange();
+
+		Set<GroupCategory> set= new HashSet<>();
+
+		collectGroupCategories(set, change);
+
+		for (String expectedGroupCategory : expectedGroupCategories) {
+			boolean found= false;
+			for (GroupCategory category : set) {
+				if (category.getName().equals(expectedGroupCategory)) {
+					found= true;
+				}
+			}
+			assertTrue("should have group category: " + expectedGroupCategory + ", found instead: "+set.stream().map(e -> e.getName()).reduce("", String::concat), found);
+		}
 	}
 
 	protected RefactoringStatus assertRefactoringResultAsExpected(ICompilationUnit[] cus, String[] expected) throws CoreException {

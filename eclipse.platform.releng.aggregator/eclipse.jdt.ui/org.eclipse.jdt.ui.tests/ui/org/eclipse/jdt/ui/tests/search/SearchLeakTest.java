@@ -17,8 +17,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.util.DisplayHelper;
 
@@ -44,11 +42,10 @@ import org.eclipse.jdt.internal.ui.search.JavaSearchResult;
 /**
  * XXX: Every test in this class needs a delegate method in {@link SearchLeakTestWrapper}!
  */
-@RunWith(JUnit4.class)
 public class SearchLeakTest extends LeakTestCase {
 
 	@Rule
-	public LeakTestSetup projectsetup = new LeakTestSetup();
+	public LeakTestSetup projectSetup = new LeakTestSetup();
 
 	@Test
 	public void testRemoveSearchQueries() throws Exception {

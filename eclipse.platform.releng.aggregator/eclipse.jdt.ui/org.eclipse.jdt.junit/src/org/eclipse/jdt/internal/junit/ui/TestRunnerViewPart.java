@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,6 +20,7 @@
  *     Thirumala Reddy Mutchukota <thirumala@google.com> - [JUnit] Avoid rerun test launch on UI thread - https://bugs.eclipse.org/bugs/show_bug.cgi?id=411841
  *     Andrew Eisenberg <andrew@eisenberg.as> - [JUnit] Add a monospace font option for the junit results view - https://bugs.eclipse.org/bugs/show_bug.cgi?id=411794
  *     Andrej Zachar <andrej@chocolatejar.eu> - [JUnit] Add a filter for ignored tests - https://bugs.eclipse.org/bugs/show_bug.cgi?id=298603
+ *     Sandra Lions <sandra.lions-piron@oracle.com> - [JUnit] allow to sort by name and by execution time - https://bugs.eclipse.org/bugs/show_bug.cgi?id=219466
  *******************************************************************************/
 package org.eclipse.jdt.internal.junit.ui;
 
@@ -98,7 +99,6 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.IInputValidator;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 
 import org.eclipse.ui.IActionBars;
@@ -168,8 +168,8 @@ public class TestRunnerViewPart extends ViewPart {
 
 	static final int REFRESH_INTERVAL= 200;
 
-	static final int LAYOUT_FLAT= 0;
-	static final int LAYOUT_HIERARCHICAL= 1;
+	public static final int LAYOUT_FLAT= 0;
+	public static final int LAYOUT_HIERARCHICAL= 1;
 
 	/**
 	 * Whether the output scrolls and reveals tests as they are executed.
@@ -208,6 +208,14 @@ public class TestRunnerViewPart extends ViewPart {
 	 */
 	private boolean fIsDisposed= false;
 
+	public enum SortingCriterion {
+		SORT_BY_NAME, SORT_BY_EXECUTION_ORDER, SORT_BY_EXECUTION_TIME
+	}
+	/**
+	 * The current sorting criterion.
+	 */
+	private SortingCriterion fSortingCriterion= SortingCriterion.SORT_BY_EXECUTION_ORDER;
+
 	/**
 	 * Actions
 	 */
@@ -231,6 +239,9 @@ public class TestRunnerViewPart extends ViewPart {
 	private ShowTimeAction fShowTimeAction;
 	private ActivateOnErrorAction fActivateOnErrorAction;
 	private IMenuListener fViewMenuListener;
+
+	private MenuManager fSortByMenu;
+	private ToggleSortingAction[] fToggleSortingActions;
 
 	private TestRunSession fTestRunSession;
 	private TestSessionListener fTestSessionListener;
@@ -289,6 +300,8 @@ public class TestRunnerViewPart extends ViewPart {
 	 * @since 3.4
 	 */
 	static final String TAG_SHOW_TIME= "time"; //$NON-NLS-1$
+
+	static final String TAG_SORTING_CRITERION= "sortingCriterion"; //$NON-NLS-1$
 
 	/**
 	 * @since 3.5
@@ -676,45 +689,39 @@ public class TestRunnerViewPart extends ViewPart {
 	private class TestRunSessionListener implements ITestRunSessionListener {
 		@Override
 		public void sessionAdded(final TestRunSession testRunSession) {
-			getDisplay().asyncExec(new Runnable() {
-				@Override
-				public void run() {
-					if (JUnitUIPreferencesConstants.getShowInAllViews() ||
-							getSite().getWorkbenchWindow() == JUnitPlugin.getActiveWorkbenchWindow()) {
-						if (fInfoMessage == null) {
-							String testRunLabel= BasicElementLabels.getJavaElementName(testRunSession.getTestRunName());
-							String msg;
-							if (testRunSession.getLaunch() != null) {
-								msg= Messages.format(JUnitMessages.TestRunnerViewPart_Launching, new Object[]{ testRunLabel });
-							} else {
-								msg= testRunLabel;
-							}
-							registerInfoMessage(msg);
+			getDisplay().asyncExec(() -> {
+				if (JUnitUIPreferencesConstants.getShowInAllViews() ||
+						getSite().getWorkbenchWindow() == JUnitPlugin.getActiveWorkbenchWindow()) {
+					if (fInfoMessage == null) {
+						String testRunLabel= BasicElementLabels.getJavaElementName(testRunSession.getTestRunName());
+						String msg;
+						if (testRunSession.getLaunch() != null) {
+							msg= Messages.format(JUnitMessages.TestRunnerViewPart_Launching, new Object[]{ testRunLabel });
+						} else {
+							msg= testRunLabel;
 						}
-
-						TestRunSession deactivatedSession= setActiveTestRunSession(testRunSession);
-						if (deactivatedSession != null)
-							deactivatedSession.swapOut();
+						registerInfoMessage(msg);
 					}
+
+					TestRunSession deactivatedSession= setActiveTestRunSession(testRunSession);
+					if (deactivatedSession != null)
+						deactivatedSession.swapOut();
 				}
 			});
 		}
 		@Override
 		public void sessionRemoved(final TestRunSession testRunSession) {
-			getDisplay().asyncExec(new Runnable() {
-				@Override
-				public void run() {
-					if (testRunSession.equals(fTestRunSession)) {
-						List<TestRunSession> testRunSessions= JUnitCorePlugin.getModel().getTestRunSessions();
-						TestRunSession deactivatedSession;
-						if (! testRunSessions.isEmpty()) {
-							deactivatedSession= setActiveTestRunSession(testRunSessions.get(0));
-						} else {
-							deactivatedSession= setActiveTestRunSession(null);
-						}
-						if (deactivatedSession != null)
-							deactivatedSession.swapOut();
+			getDisplay().asyncExec(() -> {
+				if (testRunSession.equals(fTestRunSession)) {
+					List<TestRunSession> testRunSessions= JUnitCorePlugin.getModel().getTestRunSessions();
+					TestRunSession deactivatedSession;
+					if (! testRunSessions.isEmpty()) {
+						deactivatedSession= setActiveTestRunSession(testRunSessions.get(0));
+					} else {
+						deactivatedSession= setActiveTestRunSession(null);
 					}
+					if (deactivatedSession != null)
+						deactivatedSession.swapOut();
 				}
 			});
 		}
@@ -730,6 +737,13 @@ public class TestRunnerViewPart extends ViewPart {
 
 			fStopAction.setEnabled(true);
 			fRerunLastTestAction.setEnabled(true);
+
+			// While tests are running, always use the execution order
+			getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					fTestViewer.setSortingCriterion(SortingCriterion.SORT_BY_EXECUTION_ORDER);
+				}
+			});
 		}
 
 		@Override
@@ -742,26 +756,30 @@ public class TestRunnerViewPart extends ViewPart {
 			String msg= Messages.format(JUnitMessages.TestRunnerViewPart_message_finish, keys);
 			registerInfoMessage(msg);
 
-			postSyncRunnable(new Runnable() {
-				@Override
-				public void run() {
-					if (isDisposed())
-						return;
-					fStopAction.setEnabled(lastLaunchIsKeptAlive());
-					updateRerunFailedFirstAction();
-					processChangesInUI();
-					if (hasErrorsOrFailures()) {
-						selectFirstFailure();
-					}
-					if (fDirtyListener == null) {
-						fDirtyListener= new DirtyListener();
-						JavaCore.addElementChangedListener(fDirtyListener);
-					}
-					warnOfContentChange();
+			postSyncRunnable(() -> {
+				if (isDisposed())
+					return;
+				fStopAction.setEnabled(lastLaunchIsKeptAlive());
+				updateRerunFailedFirstAction();
+				processChangesInUI();
+				if (hasErrorsOrFailures()) {
+					selectFirstFailure();
 				}
+				if (fDirtyListener == null) {
+					fDirtyListener= new DirtyListener();
+					JavaCore.addElementChangedListener(fDirtyListener);
+				}
+				warnOfContentChange();
 			});
 			stopUpdateJobs();
 			showMessageIfNoTests();
+
+			// When test session ended, apply user sorting criterion
+			getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					setSortingCriterion(fSortingCriterion);
+				}
+			});
 		}
 
 		@Override
@@ -1003,6 +1021,50 @@ public class TestRunnerViewPart extends ViewPart {
 		}
 	}
 
+	private class ToggleSortingAction extends Action {
+		private final SortingCriterion fActionSortingCriterion;
+
+		public ToggleSortingAction(SortingCriterion sortingCriterion) {
+			super("", AS_RADIO_BUTTON); //$NON-NLS-1$
+			switch (sortingCriterion) {
+				case SORT_BY_NAME:
+					setText(JUnitMessages.TestRunnerViewPart_toggle_name_label);
+					break;
+				case SORT_BY_EXECUTION_ORDER:
+					setText(JUnitMessages.TestRunnerViewPart_toggle_execution_order_label);
+					break;
+				case SORT_BY_EXECUTION_TIME:
+					setText(JUnitMessages.TestRunnerViewPart_toggle_execution_time_label);
+					break;
+				default:
+					break;
+			}
+			fActionSortingCriterion= sortingCriterion;
+		}
+
+		@Override
+		public void run() {
+			if (isChecked()) {
+				setSortingCriterion(fActionSortingCriterion);
+			}
+		}
+
+		public SortingCriterion getActionSortingCriterion() {
+			return fActionSortingCriterion;
+		}
+	}
+
+	public SortingCriterion getSortingCriterion() {
+		return fSortingCriterion;
+	}
+
+	public void setSortingCriterion(SortingCriterion sortingCriterion) {
+		fSortingCriterion= sortingCriterion;
+		if (fTestRunSession != null && !fTestRunSession.isStarting() && !fTestRunSession.isRunning()) {
+			fTestViewer.setSortingCriterion(sortingCriterion);
+		}
+	}
+
 	/**
 	 * Listen for for modifications to Java elements
 	 */
@@ -1203,6 +1265,7 @@ public class TestRunnerViewPart extends ViewPart {
 		memento.putString(TAG_IGNORED_ONLY, fIgnoredOnlyFilterAction.isChecked() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
 		memento.putInteger(TAG_LAYOUT, fLayout);
 		memento.putString(TAG_SHOW_TIME, fShowTimeAction.isChecked() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+		memento.putInteger(TAG_SORTING_CRITERION, fSortingCriterion.ordinal());
 	}
 
 	private void restoreLayoutState(IMemento memento) {
@@ -1246,6 +1309,16 @@ public class TestRunnerViewPart extends ViewPart {
 		boolean showTime= true;
 		if (time != null)
 			showTime= time.equals("true"); //$NON-NLS-1$
+
+		SortingCriterion sortingCriterion= SortingCriterion.SORT_BY_EXECUTION_ORDER;
+		Integer tagSortingCriterion= memento.getInteger(TAG_SORTING_CRITERION);
+		if (tagSortingCriterion != null) {
+			sortingCriterion= SortingCriterion.values() [tagSortingCriterion.intValue()];
+		}
+		setSortingCriterion(sortingCriterion);
+		for (int i= 0; i < fToggleSortingActions.length; i++) {
+			fToggleSortingActions[i].setChecked(sortingCriterion == fToggleSortingActions[i].getActionSortingCriterion());
+		}
 
 		setFilterAndLayout(showFailuresOnly, showIgnoredOnly, layoutValue);
 		setShowExecutionTime(showTime);
@@ -1450,15 +1523,12 @@ public class TestRunnerViewPart extends ViewPart {
 	}
 
 	private void handleStopped() {
-		postSyncRunnable(new Runnable() {
-			@Override
-			public void run() {
-				if (isDisposed())
-					return;
-				resetViewIcon();
-				fStopAction.setEnabled(false);
-				updateRerunFailedFirstAction();
-			}
+		postSyncRunnable(() -> {
+			if (isDisposed())
+				return;
+			resetViewIcon();
+			fStopAction.setEnabled(false);
+			updateRerunFailedFirstAction();
 		});
 		stopUpdateJobs();
 		showMessageIfNoTests();
@@ -1466,12 +1536,9 @@ public class TestRunnerViewPart extends ViewPart {
 
 	private void showMessageIfNoTests() {
 		if (fTestRunSession != null && TestKindRegistry.JUNIT5_TEST_KIND_ID.equals(fTestRunSession.getTestRunnerKind().getId()) && fTestRunSession.getTotalCount() == 0) {
-			Display.getDefault().asyncExec(new Runnable() {
-				@Override
-				public void run() {
-					String msg= Messages.format(JUnitMessages.TestRunnerViewPart_error_notests_kind, fTestRunSession.getTestRunnerKind().getDisplayName());
-					MessageDialog.openInformation(JUnitPlugin.getActiveWorkbenchShell(), JUnitMessages.TestRunnerViewPart__error_cannotrun, msg);
-				}
+			Display.getDefault().asyncExec(() -> {
+				String msg= Messages.format(JUnitMessages.TestRunnerViewPart_error_notests_kind, fTestRunSession.getTestRunnerKind().getDisplayName());
+				MessageDialog.openInformation(JUnitPlugin.getActiveWorkbenchShell(), JUnitMessages.TestRunnerViewPart__error_cannotrun, msg);
 			});
 		}
 	}
@@ -1582,12 +1649,14 @@ action enablement
 				startUpdateJobs();
 
 				fStopAction.setEnabled(true);
+				fTestViewer.setSortingCriterion(SortingCriterion.SORT_BY_EXECUTION_ORDER);
 
 			} else /* old or fresh session: don't want jobs at this stage */ {
 				stopUpdateJobs();
 
 				fStopAction.setEnabled(fTestRunSession.isKeptAlive());
 				fTestViewer.expandFirstLevel();
+				setSortingCriterion(fSortingCriterion);
 			}
 		}
 		return deactivatedSession;
@@ -1725,13 +1794,10 @@ action enablement
 	}
 
 	protected void postShowTestResultsView() {
-		postSyncRunnable(new Runnable() {
-			@Override
-			public void run() {
-				if (isDisposed())
-					return;
-				showTestResultsView();
-			}
+		postSyncRunnable(() -> {
+			if (isDisposed())
+				return;
+			showTestResultsView();
 		});
 	}
 
@@ -2032,6 +2098,18 @@ action enablement
 		viewMenu.add(fShowTimeAction);
 		viewMenu.add(new Separator());
 
+		fToggleSortingActions=
+				new ToggleSortingAction[] {
+						new ToggleSortingAction(SortingCriterion.SORT_BY_EXECUTION_ORDER),
+						new ToggleSortingAction(SortingCriterion.SORT_BY_EXECUTION_TIME),
+						new ToggleSortingAction(SortingCriterion.SORT_BY_NAME)};
+		fSortByMenu= new MenuManager(JUnitMessages.TestRunnerViewPart_sort_by_menu);
+		for (int i= 0; i < fToggleSortingActions.length; ++i) {
+			fSortByMenu.add(fToggleSortingActions[i]);
+		}
+		viewMenu.add(fSortByMenu);
+		viewMenu.add(new Separator());
+
 		MenuManager layoutSubMenu= new MenuManager(JUnitMessages.TestRunnerViewPart_layout_menu);
 		for (ToggleOrientationAction toggleOrientationAction : fToggleOrientationActions) {
 			layoutSubMenu.add(toggleOrientationAction);
@@ -2045,12 +2123,7 @@ action enablement
 
 		fActivateOnErrorAction= new ActivateOnErrorAction();
 		viewMenu.add(fActivateOnErrorAction);
-		fViewMenuListener= new IMenuListener() {
-			@Override
-			public void menuAboutToShow(IMenuManager manager) {
-				fActivateOnErrorAction.update();
-			}
-		};
+		fViewMenuListener= manager -> fActivateOnErrorAction.update();
 
 		viewMenu.addMenuListener(fViewMenuListener);
 
@@ -2101,12 +2174,9 @@ action enablement
 	}
 
 	private void showFailure(final TestElement test) {
-		postSyncRunnable(new Runnable() {
-			@Override
-			public void run() {
-				if (!isDisposed())
-					fFailureTrace.showFailure(test);
-			}
+		postSyncRunnable(() -> {
+			if (!isDisposed())
+				fFailureTrace.showFailure(test);
 		});
 	}
 
@@ -2148,13 +2218,10 @@ action enablement
 		else if (fViewImage == fTestRunFailIcon)
 			fViewImage= fTestRunFailDirtyIcon;
 
-		Runnable r= new Runnable() {
-			@Override
-			public void run() {
-				if (isDisposed())
-					return;
-				firePropertyChange(IWorkbenchPart.PROP_TITLE);
-			}
+		Runnable r= () -> {
+			if (isDisposed())
+				return;
+			firePropertyChange(IWorkbenchPart.PROP_TITLE);
 		};
 		if (!isDisposed())
 			getDisplay().asyncExec(r);
@@ -2250,12 +2317,7 @@ action enablement
 
 	static void importTestRunSession(final String url) {
 		try {
-			PlatformUI.getWorkbench().getProgressService().busyCursorWhile(new IRunnableWithProgress() {
-				@Override
-				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-					JUnitModel.importTestRunSession(url, monitor);
-				}
-			});
+			PlatformUI.getWorkbench().getProgressService().busyCursorWhile(monitor -> JUnitModel.importTestRunSession(url, monitor));
 		} catch (InterruptedException e) {
 			// cancelled
 		} catch (InvocationTargetException e) {
@@ -2268,6 +2330,13 @@ action enablement
 		return fFailureTrace;
 	}
 
+	public TestViewer getTestViewer() {
+		return fTestViewer;
+	}
+
+	public TestRunSession getTestRunSession() {
+		return fTestRunSession;
+	}
 
 	void setShowFailuresOnly(boolean failuresOnly) {
 		setFilterAndLayout(failuresOnly, false /*ignoredOnly must be off*/, fLayout);
@@ -2277,7 +2346,7 @@ action enablement
 		setFilterAndLayout( false /*failuresOnly must be off*/, ignoredOnly, fLayout);
 	}
 
-	private void setLayoutMode(int mode) {
+	public void setLayoutMode(int mode) {
 		setFilterAndLayout(fFailuresOnlyFilterAction.isChecked(), fIgnoredOnlyFilterAction.isChecked(), mode);
 	}
 

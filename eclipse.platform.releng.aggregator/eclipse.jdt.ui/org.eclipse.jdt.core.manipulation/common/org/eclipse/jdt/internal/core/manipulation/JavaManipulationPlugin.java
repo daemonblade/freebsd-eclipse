@@ -19,7 +19,7 @@ import org.eclipse.osgi.service.debug.DebugOptions;
 import org.eclipse.osgi.service.debug.DebugOptionsListener;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 
@@ -32,6 +32,14 @@ public class JavaManipulationPlugin extends Plugin implements DebugOptionsListen
 
 	public static final boolean CODEASSIST_SUBSTRING_MATCH_ENABLED= //
 			Boolean.parseBoolean(System.getProperty("jdt.codeCompleteSubstringMatch", "true")); //$NON-NLS-1$//$NON-NLS-2$
+
+	/**
+	 * A named preference that holds the favorite static members.
+	 * <p>
+	 * Value is of type <code>String</code>: semicolon separated list of favorites.
+	 * </p>
+	 */
+	public final static String CODEASSIST_FAVORITE_STATIC_MEMBERS= "content_assist_favorite_static_members"; //$NON-NLS-1$
 
 	public static boolean DEBUG_AST_PROVIDER;
 
@@ -88,34 +96,8 @@ public class JavaManipulationPlugin extends Plugin implements DebugOptionsListen
 		fMembersOrderPreferenceCacheCommon= mpcc;
 	}
 
-	public static String getPluginId() {
-		return JavaManipulation.ID_PLUGIN;
-	}
-
-	public static void log(IStatus status) {
-		getDefault().getLog().log(status);
-	}
-
-	public static void logErrorMessage(String message) {
-		log(new Status(IStatus.ERROR, getPluginId(), IStatusConstants.INTERNAL_ERROR, message, null));
-	}
-
-	public static void logErrorStatus(String message, IStatus status) {
-		if (status == null) {
-			logErrorMessage(message);
-			return;
-		}
-		MultiStatus multi= new MultiStatus(getPluginId(), IStatusConstants.INTERNAL_ERROR, message, null);
-		multi.add(status);
-		log(multi);
-	}
-
 	public static void log(Throwable e) {
-		log(new Status(IStatus.ERROR, getPluginId(), IStatusConstants.INTERNAL_ERROR, JavaManipulationMessages.JavaManipulationMessages_internalError, e));
-	}
-
-	public static void logException(String message, Throwable ex) {
-		log(new Status(IStatus.ERROR, getPluginId(), IStatusConstants.INTERNAL_ERROR, message, ex));
+		Platform.getLog(JavaManipulationPlugin.class).log(new Status(IStatus.ERROR, JavaManipulation.ID_PLUGIN, IStatusConstants.INTERNAL_ERROR, JavaManipulationMessages.JavaManipulationMessages_internalError, e));
 	}
 
 	@Override

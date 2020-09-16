@@ -288,9 +288,7 @@ public class StubUtility {
 		TemplateBuffer buffer;
 		try {
 			buffer= context.evaluate(template);
-		} catch (BadLocationException e) {
-			throw new CoreException(Status.CANCEL_STATUS);
-		} catch (TemplateException e) {
+		} catch (BadLocationException | TemplateException e) {
 			throw new CoreException(Status.CANCEL_STATUS);
 		}
 		String str= buffer.getString();
@@ -309,7 +307,7 @@ public class StubUtility {
 			try {
 				insertTag(document, tagOffsets[i], position.getLength(), params, EMPTY, null, typeParameterNames, false, lineDelim);
 			} catch (BadLocationException e) {
-				throw new CoreException(new Status(IStatus.ERROR, JavaManipulationPlugin.getPluginId(), IStatus.ERROR, e.getMessage(), e));
+				throw new CoreException(new Status(IStatus.ERROR, JavaManipulation.ID_PLUGIN, IStatus.ERROR, e.getMessage(), e));
 			}
 		}
 		return document.get();
@@ -446,9 +444,7 @@ public class StubUtility {
 		TemplateBuffer buffer;
 		try {
 			buffer= context.evaluate(template);
-		} catch (BadLocationException e) {
-			throw new CoreException(Status.CANCEL_STATUS);
-		} catch (TemplateException e) {
+		} catch (BadLocationException | TemplateException e) {
 			throw new CoreException(Status.CANCEL_STATUS);
 		}
 		if (buffer == null) {
@@ -475,7 +471,7 @@ public class StubUtility {
 			try {
 				insertTag(document, tagOffsets[i], position.getLength(), paramNames, exceptionNames, returnType, typeParameterNames, false, lineDelimiter);
 			} catch (BadLocationException e) {
-				throw new CoreException(new Status(IStatus.ERROR, JavaManipulationPlugin.getPluginId(), IStatus.ERROR, e.getMessage(), e));
+				throw new CoreException(new Status(IStatus.ERROR, JavaManipulation.ID_PLUGIN, IStatus.ERROR, e.getMessage(), e));
 			}
 		}
 		return document.get();
@@ -524,9 +520,7 @@ public class StubUtility {
 		TemplateBuffer buffer;
 		try {
 			buffer= context.evaluate(template);
-		} catch (BadLocationException e) {
-			throw new CoreException(Status.CANCEL_STATUS);
-		} catch (TemplateException e) {
+		} catch (BadLocationException | TemplateException e) {
 			throw new CoreException(Status.CANCEL_STATUS);
 		}
 		String str= buffer.getString();
@@ -546,7 +540,7 @@ public class StubUtility {
 				insertModuleTags(document, tagOffsets[i], position.getLength(), providesNames, usesNames,
 						lineDelimiter);
 			} catch (BadLocationException e) {
-				throw new CoreException(new Status(IStatus.ERROR, JavaManipulationPlugin.getPluginId(), IStatus.ERROR, e.getMessage(), e));
+				throw new CoreException(new Status(IStatus.ERROR, JavaManipulation.ID_PLUGIN, IStatus.ERROR, e.getMessage(), e));
 			}
 		}
 		return document.get();
@@ -652,9 +646,7 @@ public class StubUtility {
 		TemplateBuffer buffer;
 		try {
 			buffer= context.evaluate(template);
-		} catch (BadLocationException e) {
-			throw new CoreException(Status.CANCEL_STATUS);
-		} catch (TemplateException e) {
+		} catch (BadLocationException | TemplateException e) {
 			throw new CoreException(Status.CANCEL_STATUS);
 		}
 		if (buffer == null)
@@ -677,9 +669,7 @@ public class StubUtility {
 				return null;
 			}
 			return str;
-		} catch (BadLocationException e) {
-			throw new CoreException(Status.CANCEL_STATUS);
-		} catch (TemplateException e) {
+		} catch (BadLocationException | TemplateException e) {
 			throw new CoreException(Status.CANCEL_STATUS);
 		}
 	}
@@ -723,9 +713,7 @@ public class StubUtility {
 		TemplateBuffer buffer;
 		try {
 			buffer= context.evaluate(template);
-		} catch (BadLocationException e) {
-			throw new CoreException(Status.CANCEL_STATUS);
-		} catch (TemplateException e) {
+		} catch (BadLocationException | TemplateException e) {
 			throw new CoreException(Status.CANCEL_STATUS);
 		}
 		if (buffer == null)
@@ -763,7 +751,7 @@ public class StubUtility {
 			try {
 				insertTag(textBuffer, tagOffsets[i], position.getLength(), paramNames, exceptionNames, returnType, typeParamNames, isDeprecated, lineDelimiter);
 			} catch (BadLocationException e) {
-				throw new CoreException(new Status(IStatus.ERROR, JavaManipulationPlugin.getPluginId(), IStatus.ERROR, e.getMessage(), e));
+				throw new CoreException(new Status(IStatus.ERROR, JavaManipulation.ID_PLUGIN, IStatus.ERROR, e.getMessage(), e));
 			}
 		}
 		return textBuffer.get();

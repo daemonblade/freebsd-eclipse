@@ -38,18 +38,20 @@ import org.eclipse.jdt.core.dom.ForStatement;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.manipulation.JavaManipulation;
 
-import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFixCore.CompilationUnitRewriteOperation;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
+import org.eclipse.jdt.internal.corext.refactoring.util.TightSourceRangeComputer;
 
 public abstract class ConvertLoopOperation extends CompilationUnitRewriteOperation {
 
 	protected static final String FOR_LOOP_ELEMENT_IDENTIFIER= "element"; //$NON-NLS-1$
 
-	protected static final IStatus ERROR_STATUS= new Status(IStatus.ERROR, JavaManipulationPlugin.getPluginId(), ""); //$NON-NLS-1$
+	protected static final IStatus ERROR_STATUS= new Status(IStatus.ERROR, JavaManipulation.ID_PLUGIN, ""); //$NON-NLS-1$
 
 	private static final Map<String, String> IRREG_NOUNS= Stream.of(
 			new AbstractMap.SimpleImmutableEntry<>("Children", "Child"), //$NON-NLS-1$ //$NON-NLS-2$
@@ -156,7 +158,25 @@ public abstract class ConvertLoopOperation extends CompilationUnitRewriteOperati
 		return results.toArray(new String[results.size()]);
 	}
 
-	protected String modifybasename(String suggestedName) {
+	@Override
+	public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModelCore positionGroups) throws CoreException {
+		TextEditGroup group= createTextEditGroup(FixMessages.Java50Fix_ConvertToEnhancedForLoop_description, cuRewrite);
+		ASTRewrite rewrite= cuRewrite.getASTRewrite();
+
+		TightSourceRangeComputer rangeComputer;
+		if (rewrite.getExtendedSourceRangeComputer() instanceof TightSourceRangeComputer) {
+			rangeComputer= (TightSourceRangeComputer)rewrite.getExtendedSourceRangeComputer();
+		} else {
+			rangeComputer= new TightSourceRangeComputer();
+		}
+		rangeComputer.addTightSourceNode(getForStatement());
+		rewrite.setTargetSourceRangeComputer(rangeComputer);
+
+		Statement statement= convert(cuRewrite, group, positionGroups);
+		rewrite.replace(getForStatement(), statement, group);
+	}
+
+	public static String modifybasename(String suggestedName) {
 		String name= suggestedName;
 		for(String prefix : CUT_PREFIX) {
 			if(prefix.length() >= suggestedName.length()) {

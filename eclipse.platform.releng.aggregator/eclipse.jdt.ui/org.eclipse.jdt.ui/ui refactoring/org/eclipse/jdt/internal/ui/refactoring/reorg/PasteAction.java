@@ -49,7 +49,6 @@ import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.resources.IWorkspaceRunnable;
 
 import org.eclipse.core.filebuffers.ITextFileBuffer;
 
@@ -237,12 +236,7 @@ public class PasteAction extends SelectionDispatchAction{
 	private static Object getContents(final Clipboard clipboard, final Transfer transfer, Shell shell) {
 		//see bug 33028 for explanation why we need this
 		final Object[] result= new Object[1];
-		shell.getDisplay().syncExec(new Runnable() {
-			@Override
-			public void run() {
-				result[0]= clipboard.getContents(transfer);
-			}
-		});
+		shell.getDisplay().syncExec(() -> result[0]= clipboard.getContents(transfer));
 		return result[0];
 	}
 
@@ -706,33 +700,30 @@ public class PasteAction extends SelectionDispatchAction{
 
 					final ArrayList<ICompilationUnit> cus= new ArrayList<>();
 					try {
-						JavaCore.run(new IWorkspaceRunnable() {
-							@Override
-							public void run(IProgressMonitor pm) throws CoreException {
-								pm.beginTask("", 1 + fParsedCus.length); //$NON-NLS-1$
+						JavaCore.run(pm -> {
+							pm.beginTask("", 1 + fParsedCus.length); //$NON-NLS-1$
 
-								if (fDestination == null) {
-									fDestination= createNewProject(new SubProgressMonitor(pm, 1));
-								} else {
-									pm.worked(1);
-								}
-								IConfirmQuery confirmQuery= new ReorgQueries(getShell()).createYesYesToAllNoNoToAllQuery(ReorgMessages.PasteAction_TextPaster_confirmOverwriting, true, IReorgQueries.CONFIRM_OVERWRITING);
-								for (ParsedCu parsedCu : fParsedCus) {
-									if (pm.isCanceled())
-										break;
-									ICompilationUnit cu= pasteCU(parsedCu, new SubProgressMonitor(pm, 1), confirmQuery);
-									if (cu != null)
-										cus.add(cu);
-								}
+							if (fDestination == null) {
+								fDestination= createNewProject(new SubProgressMonitor(pm, 1));
+							} else {
+								pm.worked(1);
+							}
+							IConfirmQuery confirmQuery= new ReorgQueries(getShell()).createYesYesToAllNoNoToAllQuery(ReorgMessages.PasteAction_TextPaster_confirmOverwriting, true, IReorgQueries.CONFIRM_OVERWRITING);
+							for (ParsedCu parsedCu : fParsedCus) {
+								if (pm.isCanceled())
+									break;
+								ICompilationUnit cu= pasteCU(parsedCu, new SubProgressMonitor(pm, 1), confirmQuery);
+								if (cu != null)
+									cus.add(cu);
+							}
 
-								if (selectedWorkingSets.length == 1) {
-									IWorkingSet ws= selectedWorkingSets[0];
-									if (!IWorkingSetIDs.OTHERS.equals(ws.getId())) {
-										ArrayList<IAdaptable> newElements= new ArrayList<>();
-										newElements.addAll(Arrays.asList(ws.getElements()));
-										newElements.addAll(Arrays.asList(ws.adaptElements(new IAdaptable[] { fDestination.getJavaProject() })));
-										ws.setElements(newElements.toArray(new IAdaptable[newElements.size()]));
-									}
+							if (selectedWorkingSets.length == 1) {
+								IWorkingSet ws= selectedWorkingSets[0];
+								if (!IWorkingSetIDs.OTHERS.equals(ws.getId())) {
+									ArrayList<IAdaptable> newElements= new ArrayList<>();
+									newElements.addAll(Arrays.asList(ws.getElements()));
+									newElements.addAll(Arrays.asList(ws.adaptElements(new IAdaptable[] { fDestination.getJavaProject() })));
+									ws.setElements(newElements.toArray(new IAdaptable[newElements.size()]));
 								}
 							}
 						}, monitor);
@@ -959,9 +950,7 @@ public class PasteAction extends SelectionDispatchAction{
 					try {
 						edit.apply(document, TextEdit.UPDATE_REGIONS);
 						return textPosition;
-					} catch (MalformedTreeException e) {
-						JavaPlugin.log(e);
-					} catch (BadLocationException e) {
+					} catch (MalformedTreeException | BadLocationException e) {
 						JavaPlugin.log(e);
 					} finally {
 						if (rewriteSession != null)
@@ -1043,10 +1032,7 @@ public class PasteAction extends SelectionDispatchAction{
 		private IEditorPart openCu(ICompilationUnit cu) {
 			try {
 				return JavaUI.openInEditor(cu, true, true);
-			} catch (PartInitException e) {
-				JavaPlugin.log(e);
-				return null;
-			} catch (JavaModelException e) {
+			} catch (PartInitException | JavaModelException e) {
 				JavaPlugin.log(e);
 				return null;
 			}

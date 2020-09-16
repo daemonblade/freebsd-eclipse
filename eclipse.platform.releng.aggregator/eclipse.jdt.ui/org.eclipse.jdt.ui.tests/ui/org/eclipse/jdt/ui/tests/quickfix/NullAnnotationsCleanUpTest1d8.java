@@ -17,11 +17,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Hashtable;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.osgi.framework.Bundle;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
@@ -50,16 +47,14 @@ import org.eclipse.jdt.internal.ui.fix.NullAnnotationsCleanUp;
 /**
  * Those tests are made to run on Java Spider 1.8 .
  */
-@RunWith(JUnit4.class)
 public class NullAnnotationsCleanUpTest1d8 extends CleanUpTestCase {
 
 	@Rule
-    public ProjectTestSetup projectsetup = new Java1d8ProjectTestSetup();
+    public ProjectTestSetup projectSetup = new Java1d8ProjectTestSetup();
 
 	private String ANNOTATION_JAR_PATH;
 
 	@Override
-	@Before
 	public void setUp() throws Exception {
 		super.setUp();
 		Hashtable<String, String> options= JavaCore.getOptions();
@@ -89,17 +84,17 @@ public class NullAnnotationsCleanUpTest1d8 extends CleanUpTestCase {
 			else
 				this.ANNOTATION_JAR_PATH= bundleFile.getPath();
 		}
-		JavaProjectHelper.addLibrary(fJProject1, new Path(ANNOTATION_JAR_PATH));
+		JavaProjectHelper.addLibrary(getProject(), new Path(ANNOTATION_JAR_PATH));
 		}
 
 	@Override
 	protected IJavaProject getProject() {
-		return Java1d8ProjectTestSetup.getProject();
+		return projectSetup.getProject();
 	}
 
 	@Override
 	protected IClasspathEntry[] getDefaultClasspath() throws CoreException {
-		return Java1d8ProjectTestSetup.getDefaultClasspath();
+		return projectSetup.getDefaultClasspath();
 	}
 
 	@Test

@@ -21,11 +21,10 @@ import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 
@@ -47,30 +46,29 @@ import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 
-import org.eclipse.jdt.internal.compiler.CompilationResult;
-
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
-import org.eclipse.jdt.ui.tests.quickfix.JarUtil.ClassFileFilter;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor;
 import org.eclipse.jdt.internal.ui.javaeditor.JavaSourceViewer;
 
-@RunWith(JUnit4.class)
 public class AnnotateAssistTest1d5 extends AbstractAnnotateAssistTests {
 	@Rule
-	public ProjectTestSetup projectsetup= new ProjectTestSetup();
+	public ProjectTestSetup projectSetup= new ProjectTestSetup();
 
 	protected static final String ANNOTATION_PATH= "annots";
 
-	protected static final Class<?> THIS= AnnotateAssistTest1d5.class;
-
 	@Before
 	public void setUp() throws Exception {
-		fJProject1= ProjectTestSetup.getProject();
+		fJProject1= projectSetup.getProject();
 		fJProject1.getProject().getFolder(ANNOTATION_PATH).create(true, true, null);
 		fJProject1.setOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, JavaCore.ENABLED);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		JavaProjectHelper.clear(fJProject1, projectSetup.getDefaultClasspath());
 	}
 
 	// === Tests ===
@@ -639,12 +637,7 @@ public class AnnotateAssistTest1d5 extends AbstractAnnotateAssistTests {
 					"}\n"
 				};
 
-		addLibrary(fJProject1, "lib.jar", "lib.zip", pathAndContents, ANNOTATION_PATH, JavaCore.VERSION_1_5, new ClassFileFilter() {
-			@Override
-			public boolean include(CompilationResult unitResult) {
-				return !new Path(MISSINGPATH + ".java").equals(new Path(String.valueOf(unitResult.getFileName())));
-			}
-		});
+		addLibrary(fJProject1, "lib.jar", "lib.zip", pathAndContents, ANNOTATION_PATH, JavaCore.VERSION_1_5, unitResult -> !new Path(MISSINGPATH + ".java").equals(new Path(String.valueOf(unitResult.getFileName()))));
 		IType type= fJProject1.findType(CLASS2_PATH.replace('/', '.'));
 		JavaEditor javaEditor= (JavaEditor) JavaUI.openInEditor(type);
 
@@ -655,16 +648,13 @@ public class AnnotateAssistTest1d5 extends AbstractAnnotateAssistTests {
 
 			// Not expecting proposals, but a log message, due to incomplete AST (no binding information available).
 			final IStatus[] resultingStatus= new IStatus[1];
-			logListener= new ILogListener() {
-				@Override
-				public void logging(IStatus status, String plugin) {
-					assertNull("Only one status", resultingStatus[0]);
-					assertEquals("Expected status message",
-							"Error during computation of Annotate proposals: " +
-									"Could not resolve type Missing",
-							status.getMessage());
-					resultingStatus[0]= status;
-				}
+			logListener= (status, plugin) -> {
+				assertNull("Only one status", resultingStatus[0]);
+				assertEquals("Expected status message",
+						"Error during computation of Annotate proposals: " +
+								"Could not resolve type Missing",
+						status.getMessage());
+				resultingStatus[0]= status;
 			};
 			log.log(new Status(IStatus.INFO, JavaUI.ID_PLUGIN, "Expecting an error message to be logged after this."));
 			log.addLogListener(logListener);

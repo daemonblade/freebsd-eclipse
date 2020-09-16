@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.Map;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Shell;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IAdaptable;
@@ -32,7 +31,6 @@ import org.eclipse.jface.text.AbstractInformationControlManager;
 import org.eclipse.jface.text.DefaultInformationControl;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.IInformationControl;
 import org.eclipse.jface.text.IInformationControlCreator;
 import org.eclipse.jface.text.ITextDoubleClickStrategy;
 import org.eclipse.jface.text.ITextHover;
@@ -74,6 +72,7 @@ import org.eclipse.jdt.ui.actions.IJavaEditorActionDefinitionIds;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
+import org.eclipse.jdt.internal.ui.javaeditor.JavaSourceViewer;
 import org.eclipse.jdt.internal.ui.text.AbstractJavaScanner;
 import org.eclipse.jdt.internal.ui.text.ContentAssistPreference;
 import org.eclipse.jdt.internal.ui.text.HTMLAnnotationHover;
@@ -86,7 +85,6 @@ import org.eclipse.jdt.internal.ui.text.JavaReconciler;
 import org.eclipse.jdt.internal.ui.text.PreferencesAdapter;
 import org.eclipse.jdt.internal.ui.text.SingleTokenJavaScanner;
 import org.eclipse.jdt.internal.ui.text.correction.JavaCorrectionAssistant;
-import org.eclipse.jdt.internal.ui.text.java.CompletionProposalComputerRegistry;
 import org.eclipse.jdt.internal.ui.text.java.ContentAssistProcessor;
 import org.eclipse.jdt.internal.ui.text.java.JavaAutoIndentStrategy;
 import org.eclipse.jdt.internal.ui.text.java.JavaCodeScanner;
@@ -435,7 +433,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
 
 		if (getEditor() != null) {
-			ContentAssistant assistant= new ContentAssistant(fPreferenceStore.getBoolean(PreferenceConstants.CODEASSIST_NONUITHREAD_COMPUTATION) && !CompletionProposalComputerRegistry.getDefault().computingCompletionRequiresUIThread());
+			ContentAssistant assistant= new ContentAssistant((sourceViewer instanceof JavaSourceViewer) && ((JavaSourceViewer) sourceViewer).isAsyncCompletionActive());
 			assistant.setDocumentPartitioning(getConfiguredDocumentPartitioning(sourceViewer));
 
 			assistant.setRestoreCompletionProposalSize(getSettings("completion_proposal_size")); //$NON-NLS-1$
@@ -461,12 +459,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 			ContentAssistPreference.configure(assistant, fPreferenceStore);
 
 			assistant.setContextInformationPopupOrientation(IContentAssistant.CONTEXT_INFO_ABOVE);
-			assistant.setInformationControlCreator(new IInformationControlCreator() {
-				@Override
-				public IInformationControl createInformationControl(Shell parent) {
-					return new DefaultInformationControl(parent, JavaPlugin.getAdditionalInfoAffordanceString());
-				}
-			});
+			assistant.setInformationControlCreator(parent -> new DefaultInformationControl(parent, JavaPlugin.getAdditionalInfoAffordanceString()));
 
 			return assistant;
 		}
@@ -773,12 +766,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 */
 	@Override
 	public IInformationControlCreator getInformationControlCreator(ISourceViewer sourceViewer) {
-		return new IInformationControlCreator() {
-			@Override
-			public IInformationControl createInformationControl(Shell parent) {
-				return new DefaultInformationControl(parent, false);
-			}
-		};
+		return parent -> new DefaultInformationControl(parent, false);
 	}
 
 	/**
@@ -791,12 +779,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @since 2.1
 	 */
 	private IInformationControlCreator getInformationPresenterControlCreator(ISourceViewer sourceViewer) {
-		return new IInformationControlCreator() {
-			@Override
-			public IInformationControl createInformationControl(Shell parent) {
-				return new DefaultInformationControl(parent, true);
-			}
-		};
+		return parent -> new DefaultInformationControl(parent, true);
 	}
 
 	/**
@@ -810,24 +793,18 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @since 2.1
 	 */
 	private IInformationControlCreator getOutlinePresenterControlCreator(ISourceViewer sourceViewer, final String commandId) {
-		return new IInformationControlCreator() {
-			@Override
-			public IInformationControl createInformationControl(Shell parent) {
-				int shellStyle= SWT.RESIZE;
-				int treeStyle= SWT.V_SCROLL | SWT.H_SCROLL;
-				return new JavaOutlineInformationControl(parent, shellStyle, treeStyle, commandId);
-			}
+		return parent -> {
+			int shellStyle= SWT.RESIZE;
+			int treeStyle= SWT.V_SCROLL | SWT.H_SCROLL;
+			return new JavaOutlineInformationControl(parent, shellStyle, treeStyle, commandId);
 		};
 	}
 
 	private IInformationControlCreator getHierarchyPresenterControlCreator() {
-		return new IInformationControlCreator() {
-			@Override
-			public IInformationControl createInformationControl(Shell parent) {
-				int shellStyle= SWT.RESIZE;
-				int treeStyle= SWT.V_SCROLL | SWT.H_SCROLL;
-				return new HierarchyInformationControl(parent, shellStyle, treeStyle);
-			}
+		return parent -> {
+			int shellStyle= SWT.RESIZE;
+			int treeStyle= SWT.V_SCROLL | SWT.H_SCROLL;
+			return new HierarchyInformationControl(parent, shellStyle, treeStyle);
 		};
 	}
 

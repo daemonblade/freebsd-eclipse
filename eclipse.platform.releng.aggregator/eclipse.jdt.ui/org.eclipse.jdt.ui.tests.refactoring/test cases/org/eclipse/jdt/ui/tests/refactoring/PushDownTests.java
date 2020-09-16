@@ -42,14 +42,14 @@ import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTester
 import org.eclipse.jdt.internal.corext.refactoring.structure.PushDownRefactoringProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.structure.PushDownRefactoringProcessor.MemberActionInfo;
 
-import org.eclipse.jdt.ui.tests.refactoring.rules.Java15Setup;
+import org.eclipse.jdt.ui.tests.refactoring.rules.Java1d5Setup;
 import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 
 public class PushDownTests extends GenericRefactoringTest {
 	private static final String REFACTORING_PATH= "PushDown/";
 
 	@Rule
-	public RefactoringTestSetup fts= new Java15Setup();
+	public RefactoringTestSetup fts= new Java1d5Setup();
 
 	@Override
 	protected String getRefactoringPath() {
@@ -880,6 +880,23 @@ public class PushDownTests extends GenericRefactoringTest {
 				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
 	}
 
+	@Test
+	public void test36() throws Exception {
+		String[] selectedMethodNames= { "m" };
+		String[][] selectedMethodSignatures= { new String[0] };
+		String[] selectedFieldNames= {};
+		String[] namesOfMethodsToPushDown= selectedMethodNames;
+		String[][] signaturesOfMethodsToPushDown= selectedMethodSignatures;
+		String[] namesOfFieldsToPushDown= {};
+		String[] namesOfMethodsToDeclareAbstract= {};
+		String[][] signaturesOfMethodsToDeclareAbstract= {};
+
+		helper(selectedMethodNames, selectedMethodSignatures,
+				selectedFieldNames,
+				namesOfMethodsToPushDown, signaturesOfMethodsToPushDown,
+				namesOfFieldsToPushDown,
+				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
+	}
 
 	@Test
 	public void testFail0() throws Exception {

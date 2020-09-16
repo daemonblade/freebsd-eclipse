@@ -29,8 +29,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
@@ -69,12 +67,10 @@ import org.eclipse.jdt.internal.ui.propertiesfileeditor.PropertiesFileEditor;
 import org.eclipse.jdt.internal.ui.propertiesfileeditor.PropertiesFileEditorMessages;
 import org.eclipse.jdt.internal.ui.propertiesfileeditor.PropertiesQuickAssistProcessor;
 
-
-@RunWith(JUnit4.class)
 public class PropertiesFileQuickAssistTest {
 
 	@Rule
-    public ProjectTestSetup projectsetup = new ProjectTestSetup();
+    public ProjectTestSetup projectSetup = new ProjectTestSetup();
 
 	private IJavaProject fJProject;
 	private IPackageFragmentRoot fSourceFolder;
@@ -92,7 +88,7 @@ public class PropertiesFileQuickAssistTest {
 
 		setPreferences();
 
-		fJProject= ProjectTestSetup.getProject();
+		fJProject= projectSetup.getProject();
 
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject, "src");
 
@@ -112,7 +108,7 @@ public class PropertiesFileQuickAssistTest {
 
 	@After
 	public void tearDown() throws Exception {
-		JavaProjectHelper.clear(fJProject, ProjectTestSetup.getDefaultClasspath());
+		JavaProjectHelper.clear(fJProject, projectSetup.getDefaultClasspath());
 	}
 
 	private static IFile createPropertyFile(IPackageFragment pack, String name, String content) throws UnsupportedEncodingException, CoreException {

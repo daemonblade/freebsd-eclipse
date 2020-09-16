@@ -23,8 +23,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.util.DisplayHelper;
@@ -79,11 +77,10 @@ import org.eclipse.jdt.internal.ui.wizards.JavaProjectWizard;
 import org.eclipse.jdt.internal.ui.wizards.NewClassCreationWizard;
 import org.eclipse.jdt.internal.ui.wizards.NewInterfaceCreationWizard;
 
-@RunWith(JUnit4.class)
 public class JavaLeakTest extends LeakTestCase {
 
 	@Rule
-	public LeakTestSetup projectsetup = new LeakTestSetup();
+	public LeakTestSetup projectSetup = new LeakTestSetup();
 
 	private IJavaProject fJProject;
 
@@ -453,12 +450,7 @@ public class JavaLeakTest extends LeakTestCase {
 
         menu.setVisible(true);
 
-		display.asyncExec(new Runnable() {
-            @Override
-			public void run() {
-                menu.setVisible(false);
-            }
-        });
+		display.asyncExec(() -> menu.setVisible(false));
 
         while (!menu.isDisposed() && display.readAndDispatch()) {
         	//loop, don't sleep

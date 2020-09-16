@@ -197,9 +197,7 @@ public class NLSKeyHyperlink implements IHyperlink {
 							offset= region.getOffset();
 					}
 				}
-			} catch (BadLocationException ex) {
-				found= false;
-			} catch (BadPartitioningException e1) {
+			} catch (BadLocationException | BadPartitioningException e1) {
 				found= false;
 			}
 		}
@@ -222,15 +220,7 @@ public class NLSKeyHyperlink implements IHyperlink {
 		display.beep();
 		final IEditorStatusLine statusLine= editor.getAdapter(IEditorStatusLine.class);
 		if (statusLine != null) {
-			display.asyncExec(new Runnable() {
-				/*
-				 * @see java.lang.Runnable#run()
-				 */
-				@Override
-				public void run() {
-					statusLine.setMessage(true, message, null);
-				}
-			});
+			display.asyncExec(() -> statusLine.setMessage(true, message, null));
 		}
 	}
 

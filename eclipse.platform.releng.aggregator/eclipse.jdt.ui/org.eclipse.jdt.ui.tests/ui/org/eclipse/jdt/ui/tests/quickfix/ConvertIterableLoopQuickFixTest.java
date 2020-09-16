@@ -26,8 +26,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
@@ -52,11 +50,10 @@ import org.eclipse.jdt.internal.ui.text.correction.AssistContext;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposal;
 
-@RunWith(JUnit4.class)
 public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 
 	@Rule
-    public ProjectTestSetup projectsetup = new ProjectTestSetup();
+    public ProjectTestSetup projectSetup= new ProjectTestSetup();
 
 	private FixCorrectionProposal fConvertLoopProposal;
 
@@ -86,7 +83,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
 		store.setValue(PreferenceConstants.CODEGEN_ADD_COMMENTS, false);
 
-		fProject= ProjectTestSetup.getProject();
+		fProject= projectSetup.getProject();
 
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fProject, "src");
 		fConvertLoopProposal= null;
@@ -94,7 +91,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 
 	@After
 	public void tearDown() throws Exception {
-		JavaProjectHelper.clear(fProject, ProjectTestSetup.getDefaultClasspath());
+		JavaProjectHelper.clear(fProject, projectSetup.getDefaultClasspath());
 		fConvertLoopProposal= null;
 		fProject= null;
 		fSourceFolder= null;
@@ -141,9 +138,123 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 		assertEqualString(preview, expected);
 	}
 
-	@Ignore
 	@Test
-	public void testKeepComment() throws Exception {
+	public void testRawIterator() throws Exception {
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
+		String sample= "" //
+				+ "package test;\n" //
+				+ "\n" //
+				+ "import java.util.Collection;\n" //
+				+ "import java.util.Iterator;\n" //
+				+ "\n" //
+				+ "public class B {\n" //
+				+ "  Collection c;\n" //
+				+ "  public void useForeach() {\n" //
+				+ "    for (final Iterator<?> iterator= c.iterator(); iterator.hasNext();) {\n" //
+				+ "      Object test= iterator.next();\n" //
+				+ "      System.out.println(test);\n" //
+				+ "    }\n" //
+				+ "  }\n" //
+				+ "}\n";
+		ICompilationUnit unit= pack.createCompilationUnit("B.java", sample, false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(sample, unit);
+
+		assertNotNull("A quickfix should be proposed", fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+
+		String preview= getPreviewContent(fConvertLoopProposal);
+
+		sample= "" //
+				+ "package test;\n" //
+				+ "\n" //
+				+ "import java.util.Collection;\n" //
+				+ "\n" //
+				+ "public class B {\n" //
+				+ "  Collection c;\n" //
+				+ "  public void useForeach() {\n" //
+				+ "    for (Object test : c) {\n" //
+				+ "      System.out.println(test);\n" //
+				+ "    }\n" //
+				+ "  }\n" //
+				+ "}\n";
+		String expected= sample;
+		assertEqualString(preview, expected);
+	}
+
+	@Test
+	public void testWrongInitializer() throws Exception {
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
+		String sample= "" //
+				+ "package test;\n" //
+				+ "\n" //
+				+ "import java.util.Collection;\n" //
+				+ "import java.util.Iterator;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "	Iterator<String> otherIterator;\n" //
+				+ "	Iterator<String> anotherIterator;\n" //
+				+ "	Collection<String> c;\n" //
+				+ "\n" //
+				+ "	public A() {\n" //
+				+ "		for (final Iterator<String> iterator= (c.iterator() == null) ? otherIterator : anotherIterator; iterator.hasNext();) {\n" //
+				+ "			String test= iterator.next();\n" //
+				+ "			System.out.println(test);\n" //
+				+ "		}\n" //
+				+ "	}\n" //
+				+ "}";
+		ICompilationUnit unit= pack.createCompilationUnit("A.java", sample, false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(sample, unit);
+
+		assertNull(fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+	}
+
+	@Test
+	public void testChildren() throws Exception {
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
+		String sample= "" //
+				+ "package test;\n" //
+				+ "import java.util.Collection;\n" //
+				+ "import java.util.Iterator;\n" //
+				+ "public class A {\n" //
+				+ "	Collection<String> children;\n" //
+				+ "	public A() {\n" //
+				+ "		for (Iterator<String> iterator= children.iterator(); iterator.hasNext();) {\n" //
+				+ "			System.out.println(iterator.next());\n" //
+				+ "		}\n" //
+				+ "	}\n" //
+				+ "}";
+		ICompilationUnit unit= pack.createCompilationUnit("A.java", sample, false, null);
+
+		List<IJavaCompletionProposal> proposals= fetchConvertingProposal(sample, unit);
+
+		assertNotNull(fConvertLoopProposal);
+
+		assertCorrectLabels(proposals);
+
+		String preview= getPreviewContent(fConvertLoopProposal);
+
+		sample= "" //
+				+ "package test;\n" //
+				+ "import java.util.Collection;\n" //
+				+ "public class A {\n" //
+				+ "	Collection<String> children;\n" //
+				+ "	public A() {\n" //
+				+ "		for (String child : children) {\n" //
+				+ "			System.out.println(child);\n" //
+				+ "		}\n" //
+				+ "	}\n" //
+				+ "}";
+		String expected= sample;
+		assertEqualString(preview, expected);
+	}
+
+	@Test
+	public void testBug553634() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		String sample= "" //
 				+ "package test;\r\n" //
@@ -153,9 +264,9 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 				+ "	Collection<String> c;\r\n" //
 				+ "	public A() {\r\n" //
 				+ "		for (final Iterator<String> iterator= c.iterator(); iterator.hasNext();) {\r\n" //
-				+ "			// Comment line\r\n" //
-				+ "			String test= iterator.next();\r\n" //
-				+ "			System.out.println(test);\r\n" //
+				+ "			// Comment line 1\r\n" //
+				+ "			String test= iterator.next(); // Comment 2\r\n" //
+				+ "			System.out.println(test); /* Comment 3 */\r\n" //
 				+ "		}\r\n" //
 				+ "	}\r\n" //
 				+ "}";
@@ -176,8 +287,8 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 				+ "	Collection<String> c;\r\n" //
 				+ "	public A() {\r\n" //
 				+ "		for (String test : c) {\r\n" //
-				+ "			// Comment line\r\n" //
-				+ "			System.out.println(test);\r\n" //
+				+ "			// Comment line 1\r\n" //
+				+ "			System.out.println(test); /* Comment 3 */\r\n" //
 				+ "		}\r\n" //
 				+ "	}\r\n" //
 				+ "}";
@@ -188,7 +299,7 @@ public final class ConvertIterableLoopQuickFixTest extends QuickFixTest {
 	/**
 	 * quickfix creates strange indentation because of the return in the start statement
 	 * see https://bugs.eclipse.org/bugs/show_bug.cgi?id=553635
-	 * @throws Exception
+	 * @throws Exception Any exception
 	 */
 	@Ignore("Bug 553635")
 	@Test

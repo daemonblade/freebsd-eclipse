@@ -16,29 +16,30 @@
 package org.eclipse.jdt.ui.tests.quickfix;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.JavaTestPlugin;
+
+import org.eclipse.core.runtime.CoreException;
 
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
@@ -48,23 +49,31 @@ import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.ui.JavaElementLabels;
 import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
 
-@RunWith(JUnit4.class)
 public class CleanUpStressTest extends CleanUpTestCase {
 
 	@Rule
-    public ProjectTestSetup projectsetup = new ProjectTestSetup();
+    public ProjectTestSetup projectSetup = new ProjectTestSetup();
+
+	@Override
+	protected IJavaProject getProject() {
+		return projectSetup.getProject();
+	}
+
+	@Override
+	protected IClasspathEntry[] getDefaultClasspath() throws CoreException {
+		return projectSetup.getDefaultClasspath();
+	}
 
 	private static final String SRC_CONTAINER= "src";
 
 	protected static IPackageFragmentRoot fJunitSrcRoot;
 
 	@Override
-	@Before
 	public void setUp() throws Exception {
 		super.setUp();
 
 		File junitSrcArchive= JavaTestPlugin.getDefault().getFileInPlugin(JavaProjectHelper.JUNIT_SRC_381);
-		fJunitSrcRoot= JavaProjectHelper.addSourceContainerWithImport(fJProject1, SRC_CONTAINER, junitSrcArchive, JavaProjectHelper.JUNIT_SRC_ENCODING);
+		fJunitSrcRoot= JavaProjectHelper.addSourceContainerWithImport(getProject(), SRC_CONTAINER, junitSrcArchive, JavaProjectHelper.JUNIT_SRC_ENCODING);
 	}
 
 	private void addAllCUs(IJavaElement[] children, List<IJavaElement> result) throws JavaModelException {
@@ -1103,9 +1112,8 @@ public class CleanUpStressTest extends CleanUpTestCase {
         buf.append("     */\n");
         buf.append("    public synchronized void addError(final Test test, final Throwable t) {\n");
         buf.append("        this.fErrors.addElement(new TestFailure(test, t));\n");
-        buf.append("        for (final Enumeration e = this.cloneListeners().elements(); e\n");
-        buf.append("                .hasMoreElements();) {\n");
-        buf.append("            ((TestListener) e.nextElement()).addError(test, t);\n");
+        buf.append("        for (final Object element : this.cloneListeners()) {\n");
+        buf.append("            ((TestListener) element).addError(test, t);\n");
         buf.append("        }\n");
         buf.append("    }\n");
         buf.append("    /**\n");
@@ -1115,9 +1123,8 @@ public class CleanUpStressTest extends CleanUpTestCase {
         buf.append("    public synchronized void addFailure(final Test test,\n");
         buf.append("            final AssertionFailedError t) {\n");
         buf.append("        this.fFailures.addElement(new TestFailure(test, t));\n");
-        buf.append("        for (final Enumeration e = this.cloneListeners().elements(); e\n");
-        buf.append("                .hasMoreElements();) {\n");
-        buf.append("            ((TestListener) e.nextElement()).addFailure(test, t);\n");
+        buf.append("        for (final Object element : this.cloneListeners()) {\n");
+        buf.append("            ((TestListener) element).addFailure(test, t);\n");
         buf.append("        }\n");
         buf.append("    }\n");
         buf.append("    /**\n");
@@ -1136,9 +1143,8 @@ public class CleanUpStressTest extends CleanUpTestCase {
         buf.append("     * Informs the result that a test was completed.\n");
         buf.append("     */\n");
         buf.append("    public void endTest(final Test test) {\n");
-        buf.append("        for (final Enumeration e = this.cloneListeners().elements(); e\n");
-        buf.append("                .hasMoreElements();) {\n");
-        buf.append("            ((TestListener) e.nextElement()).endTest(test);\n");
+        buf.append("        for (final Object element : this.cloneListeners()) {\n");
+        buf.append("            ((TestListener) element).endTest(test);\n");
         buf.append("        }\n");
         buf.append("    }\n");
         buf.append("    /**\n");
@@ -1219,9 +1225,8 @@ public class CleanUpStressTest extends CleanUpTestCase {
         buf.append("        synchronized (this) {\n");
         buf.append("            this.fRunTests += count;\n");
         buf.append("        }\n");
-        buf.append("        for (final Enumeration e = this.cloneListeners().elements(); e\n");
-        buf.append("                .hasMoreElements();) {\n");
-        buf.append("            ((TestListener) e.nextElement()).startTest(test);\n");
+        buf.append("        for (final Object element : this.cloneListeners()) {\n");
+        buf.append("            ((TestListener) element).startTest(test);\n");
         buf.append("        }\n");
         buf.append("    }\n");
         buf.append("    /**\n");
@@ -4527,7 +4532,6 @@ public class CleanUpStressTest extends CleanUpTestCase {
         buf= new StringBuffer();
         buf.append("package junit.samples.money;\n");
         buf.append("\n");
-        buf.append("import java.util.Enumeration;\n");
         buf.append("import java.util.Vector;\n");
         buf.append("\n");
         buf.append("/**\n");
@@ -4559,9 +4563,8 @@ public class CleanUpStressTest extends CleanUpTestCase {
         buf.append("        return MoneyBag.create(s, this);\n");
         buf.append("    }\n");
         buf.append("    void appendBag(final MoneyBag aBag) {\n");
-        buf.append("        for (final Enumeration e = aBag.fMonies.elements(); e\n");
-        buf.append("                .hasMoreElements();) {\n");
-        buf.append("            this.appendMoney((Money) e.nextElement());\n");
+        buf.append("        for (final Object element : aBag.fMonies) {\n");
+        buf.append("            this.appendMoney((Money) element);\n");
         buf.append("        }\n");
         buf.append("    }\n");
         buf.append("    void appendMoney(final Money aMoney) {\n");
@@ -4604,9 +4607,8 @@ public class CleanUpStressTest extends CleanUpTestCase {
         buf.append("                return false;\n");
         buf.append("            }\n");
         buf.append("\n");
-        buf.append("            for (final Enumeration e = this.fMonies.elements(); e\n");
-        buf.append("                    .hasMoreElements();) {\n");
-        buf.append("                final Money m = (Money) e.nextElement();\n");
+        buf.append("            for (final Object element : this.fMonies) {\n");
+        buf.append("                final Money m = (Money) element;\n");
         buf.append("                if (!aMoneyBag.contains(m)) {\n");
         buf.append("                    return false;\n");
         buf.append("                }\n");
@@ -4616,9 +4618,8 @@ public class CleanUpStressTest extends CleanUpTestCase {
         buf.append("        return false;\n");
         buf.append("    }\n");
         buf.append("    private Money findMoney(final String currency) {\n");
-        buf.append("        for (final Enumeration e = this.fMonies.elements(); e\n");
-        buf.append("                .hasMoreElements();) {\n");
-        buf.append("            final Money m = (Money) e.nextElement();\n");
+        buf.append("        for (final Object element : this.fMonies) {\n");
+        buf.append("            final Money m = (Money) element;\n");
         buf.append("            if (m.currency().equals(currency)) {\n");
         buf.append("                return m;\n");
         buf.append("            }\n");
@@ -4628,9 +4629,7 @@ public class CleanUpStressTest extends CleanUpTestCase {
         buf.append("    @Override\n");
         buf.append("    public int hashCode() {\n");
         buf.append("        int hash = 0;\n");
-        buf.append("        for (final Enumeration e = this.fMonies.elements(); e\n");
-        buf.append("                .hasMoreElements();) {\n");
-        buf.append("            final Object m = e.nextElement();\n");
+        buf.append("        for (Object m : this.fMonies) {\n");
         buf.append("            hash ^= m.hashCode();\n");
         buf.append("        }\n");
         buf.append("        return hash;\n");
@@ -4641,9 +4640,8 @@ public class CleanUpStressTest extends CleanUpTestCase {
         buf.append("    public IMoney multiply(final int factor) {\n");
         buf.append("        final MoneyBag result = new MoneyBag();\n");
         buf.append("        if (factor != 0) {\n");
-        buf.append("            for (final Enumeration e = this.fMonies.elements(); e\n");
-        buf.append("                    .hasMoreElements();) {\n");
-        buf.append("                final Money m = (Money) e.nextElement();\n");
+        buf.append("            for (final Object element : this.fMonies) {\n");
+        buf.append("                final Money m = (Money) element;\n");
         buf.append("                result.appendMoney((Money) m.multiply(factor));\n");
         buf.append("            }\n");
         buf.append("        }\n");
@@ -4651,9 +4649,8 @@ public class CleanUpStressTest extends CleanUpTestCase {
         buf.append("    }\n");
         buf.append("    public IMoney negate() {\n");
         buf.append("        final MoneyBag result = new MoneyBag();\n");
-        buf.append("        for (final Enumeration e = this.fMonies.elements(); e\n");
-        buf.append("                .hasMoreElements();) {\n");
-        buf.append("            final Money m = (Money) e.nextElement();\n");
+        buf.append("        for (final Object element : this.fMonies) {\n");
+        buf.append("            final Money m = (Money) element;\n");
         buf.append("            result.appendMoney((Money) m.negate());\n");
         buf.append("        }\n");
         buf.append("        return result;\n");
@@ -4671,9 +4668,8 @@ public class CleanUpStressTest extends CleanUpTestCase {
         buf.append("    public String toString() {\n");
         buf.append("        final StringBuffer buffer = new StringBuffer();\n");
         buf.append("        buffer.append(\"{\"); //$NON-NLS-1$\n");
-        buf.append("        for (final Enumeration e = this.fMonies.elements(); e\n");
-        buf.append("                .hasMoreElements();) {\n");
-        buf.append("            buffer.append(e.nextElement());\n");
+        buf.append("        for (final Object element : this.fMonies) {\n");
+        buf.append("            buffer.append(element);\n");
         buf.append("        }\n");
         buf.append("        buffer.append(\"}\"); //$NON-NLS-1$\n");
         buf.append("        return buffer.toString();\n");
@@ -5246,7 +5242,7 @@ public class CleanUpStressTest extends CleanUpTestCase {
 	@Test
 	public void testAllCleanUps() throws Exception {
 		List<IJavaElement> cus= new ArrayList<>();
-		addAllCUs(fJProject1.getChildren(), cus);
+		addAllCUs(getProject().getChildren(), cus);
 
 		enable(CleanUpConstants.MEMBER_ACCESSES_NON_STATIC_FIELD_USE_THIS);
 		enable(CleanUpConstants.MEMBER_ACCESSES_NON_STATIC_FIELD_USE_THIS_ALWAYS);
@@ -5312,7 +5308,7 @@ public class CleanUpStressTest extends CleanUpTestCase {
 
 			String expected= fExpectedChangesAllTests.get(compilationUnitName);
 
-			assertTrue("No expected value in table for " + compilationUnitName, expected != null);
+			assertNotNull("No expected value in table for " + compilationUnitName, expected);
 			assertEquals("Content not as expected for " + compilationUnitName, expected, previewContent);
 		}
 	}

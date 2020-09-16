@@ -24,8 +24,6 @@ import java.net.URL;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTError;
 import org.eclipse.swt.browser.Browser;
-import org.eclipse.swt.browser.OpenWindowListener;
-import org.eclipse.swt.browser.WindowEvent;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
@@ -59,7 +57,6 @@ import org.eclipse.jface.internal.text.html.HTMLTextPresenter;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ISelectionProvider;
@@ -571,12 +568,7 @@ public class JavadocView extends AbstractInfoView {
 			fBrowser.setJavascriptEnabled(false);
 			fIsUsingBrowserWidget= true;
 			addLinkListener(fBrowser);
-			fBrowser.addOpenWindowListener(new OpenWindowListener() {
-				@Override
-				public void open(WindowEvent event) {
-					event.required= true; // Cancel opening of new windows
-				}
-			});
+			fBrowser.addOpenWindowListener(event -> event.required= true);
 
 		} catch (SWTError er) {
 
@@ -631,25 +623,19 @@ public class JavadocView extends AbstractInfoView {
 	 * @since 3.3
 	 */
 	private void listenForFontChanges() {
-		fFontListener= new IPropertyChangeListener() {
-			@Override
-			public void propertyChange(PropertyChangeEvent event) {
-				if (PreferenceConstants.APPEARANCE_JAVADOC_FONT.equals(event.getProperty())) {
-					fgStyleSheetLoaded= false;
-					// trigger reloading, but make sure other listeners have already run, so that
-					// the style sheet gets reloaded only once.
-					final Display display= getSite().getPage().getWorkbenchWindow().getWorkbench().getDisplay();
-					if (!display.isDisposed()) {
-						display.asyncExec(new Runnable() {
-							@Override
-							public void run() {
-								if (!display.isDisposed()) {
-									initStyleSheet();
-									refresh();
-								}
-							}
-						});
-					}
+		fFontListener= event -> {
+			if (PreferenceConstants.APPEARANCE_JAVADOC_FONT.equals(event.getProperty())) {
+				fgStyleSheetLoaded= false;
+				// trigger reloading, but make sure other listeners have already run, so that
+				// the style sheet gets reloaded only once.
+				final Display display= getSite().getPage().getWorkbenchWindow().getWorkbench().getDisplay();
+				if (!display.isDisposed()) {
+					display.asyncExec(() -> {
+						if (!display.isDisposed()) {
+							initStyleSheet();
+							refresh();
+						}
+					});
 				}
 			}
 		};
@@ -702,12 +688,7 @@ public class JavadocView extends AbstractInfoView {
 		actionBars.setGlobalActionHandler(ActionFactory.BACK.getId(), fBackAction);
 		actionBars.setGlobalActionHandler(ActionFactory.FORWARD.getId(), fForthAction);
 
-		fInputSelectionProvider.addSelectionChangedListener(new ISelectionChangedListener() {
-			@Override
-			public void selectionChanged(SelectionChangedEvent event) {
-				actionBars.setGlobalActionHandler(JdtActionConstants.OPEN_ATTACHED_JAVA_DOC, fOpenBrowserAction);
-			}
-		});
+		fInputSelectionProvider.addSelectionChangedListener(event -> actionBars.setGlobalActionHandler(JdtActionConstants.OPEN_ATTACHED_JAVA_DOC, fOpenBrowserAction));
 
 	}
 
@@ -1208,9 +1189,7 @@ public class JavadocView extends AbstractInfoView {
 				int offset= ((ITextSelection)selection).getOffset();
 				String partition= ((IDocumentExtension3)document).getContentType(IJavaPartitions.JAVA_PARTITIONING, offset, false);
 				return !IJavaPartitions.JAVA_DOC.equals(partition);
-			} catch (BadPartitioningException ex) {
-				return false;
-			} catch (BadLocationException ex) {
+			} catch (BadPartitioningException | BadLocationException ex) {
 				return false;
 			}
 
@@ -1271,9 +1250,7 @@ public class JavadocView extends AbstractInfoView {
 				}
 			}
 
-		} catch (JavaModelException e) {
-			return null;
-		} catch (BadLocationException e) {
+		} catch (JavaModelException | BadLocationException e) {
 			return null;
 		}
 		return element;
@@ -1448,9 +1425,7 @@ public class JavadocView extends AbstractInfoView {
 			public void handleDeclarationLink(IJavaElement target) {
 				try {
 					JavadocHover.openDeclaration(target);
-				} catch (PartInitException e) {
-					JavaPlugin.log(e);
-				} catch (JavaModelException e) {
+				} catch (PartInitException | JavaModelException e) {
 					JavaPlugin.log(e);
 				}
 			}

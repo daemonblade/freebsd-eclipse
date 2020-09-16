@@ -56,7 +56,6 @@ import org.eclipse.jface.text.DocumentCommand;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentExtension;
-import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.jface.text.IPositionUpdater;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextOperationTarget;
@@ -579,9 +578,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 
 				event.doit= false;
 
-			} catch (BadLocationException e) {
-				JavaPlugin.log(e);
-			} catch (BadPositionCategoryException e) {
+			} catch (BadLocationException | BadPositionCategoryException e) {
 				JavaPlugin.log(e);
 			}
 		}
@@ -602,30 +599,26 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 			final IDocument document= sourceViewer.getDocument();
 			if (document instanceof IDocumentExtension) {
 				IDocumentExtension extension= (IDocumentExtension) document;
-				extension.registerPostNotificationReplace(null, new IDocumentExtension.IReplace() {
-
-					@Override
-					public void perform(IDocument d, IDocumentListener owner) {
-						if ((level.fFirstPosition.isDeleted || level.fFirstPosition.length == 0)
-								&& !level.fSecondPosition.isDeleted
-								&& level.fSecondPosition.offset == level.fFirstPosition.offset)
-						{
-							try {
-								document.replace(level.fSecondPosition.offset,
-												 level.fSecondPosition.length,
-												 ""); //$NON-NLS-1$
-							} catch (BadLocationException e) {
-								JavaPlugin.log(e);
-							}
+				extension.registerPostNotificationReplace(null, (d, owner) -> {
+					if ((level.fFirstPosition.isDeleted || level.fFirstPosition.length == 0)
+							&& !level.fSecondPosition.isDeleted
+							&& level.fSecondPosition.offset == level.fFirstPosition.offset)
+					{
+						try {
+							document.replace(level.fSecondPosition.offset,
+											 level.fSecondPosition.length,
+											 ""); //$NON-NLS-1$
+						} catch (BadLocationException e1) {
+							JavaPlugin.log(e1);
 						}
+					}
 
-						if (fBracketLevelStack.isEmpty()) {
-							document.removePositionUpdater(fUpdater);
-							try {
-								document.removePositionCategory(CATEGORY);
-							} catch (BadPositionCategoryException e) {
-								JavaPlugin.log(e);
-							}
+					if (fBracketLevelStack.isEmpty()) {
+						document.removePositionUpdater(fUpdater);
+						try {
+							document.removePositionCategory(CATEGORY);
+						} catch (BadPositionCategoryException e2) {
+							JavaPlugin.log(e2);
 						}
 					}
 				});
@@ -1695,12 +1688,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		if (!forced && !progressMonitor.isCanceled()) {
 			Shell shell= getSite().getShell();
 			if (shell != null && !shell.isDisposed()) {
-				shell.getDisplay().asyncExec(new Runnable() {
-					@Override
-					public void run() {
-						selectionChanged();
-					}
-				});
+				shell.getDisplay().asyncExec(this::selectionChanged);
 			}
 		}
 	}

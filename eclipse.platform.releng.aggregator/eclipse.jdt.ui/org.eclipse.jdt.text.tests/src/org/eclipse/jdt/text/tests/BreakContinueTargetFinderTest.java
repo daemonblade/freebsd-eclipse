@@ -17,7 +17,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.util.Arrays;
-import java.util.Comparator;
 
 import org.junit.After;
 import org.junit.Before;
@@ -63,13 +62,13 @@ public class BreakContinueTargetFinderTest {
 		fParser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
 		fFinder= new BreakContinueTargetFinder();
 
-		fJProject1= ProjectTestSetup.getProject();
+		fJProject1= pts.getProject();
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		JavaProjectHelper.clear(fJProject1, ProjectTestSetup.getDefaultClasspath());
+		JavaProjectHelper.clear(fJProject1, pts.getDefaultClasspath());
 	}
 
 	private OccurrenceLocation[] getHighlights(StringBuffer source, int offset, int length) throws Exception {
@@ -98,12 +97,7 @@ public class BreakContinueTargetFinderTest {
 	}
 
 	private void sortByStartIndex(OccurrenceLocation[] OccurrenceLocations) {
-		Arrays.sort(OccurrenceLocations, new Comparator<OccurrenceLocation>() {
-			@Override
-			public int compare(OccurrenceLocation node0, OccurrenceLocation node1) {
-				return node0.getOffset() - node1.getOffset();
-			}
-		});
+		Arrays.sort(OccurrenceLocations, (node0, node1) -> node0.getOffset() - node1.getOffset());
 	}
 
 	//pattern must be found - otherwise it's assumed to be an error

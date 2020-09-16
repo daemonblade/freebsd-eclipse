@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,8 @@
  *     David Saff (saff@mit.edu) - bug 102632: [JUnit] Support for JUnit 4.
  *     Robert Konigsberg <konigsberg@google.com> - [JUnit] Improve discoverability of the ability to run a single method under JUnit Tests - https://bugs.eclipse.org/bugs/show_bug.cgi?id=285637
  *     Andrej Zachar <andrej@chocolatejar.eu> - [JUnit] Add a filter for ignored tests - https://bugs.eclipse.org/bugs/show_bug.cgi?id=298603
+ *     Gautier de Saint Martin Lacaze <gautier.desaintmartinlacaze@gmail.com> - [JUnit] need 'collapse all' feature in JUnit view - https://bugs.eclipse.org/bugs/show_bug.cgi?id=277806
+ *     Sandra Lions <sandra.lions-piron@oracle.com> - [JUnit] allow to sort by name and by execution time - https://bugs.eclipse.org/bugs/show_bug.cgi?id=219466
  *******************************************************************************/
 package org.eclipse.jdt.internal.junit.ui;
 
@@ -52,6 +54,8 @@ public final class JUnitMessages extends NLS {
 	public static String EnableStackFilterAction_action_tooltip;
 	public static String ExpandAllAction_text;
 	public static String ExpandAllAction_tooltip;
+	public static String CollapseAllAction_text;
+	public static String CollapseAllAction_tooltip;
 	public static String GotoReferencedTestAction_dialog_error;
 	public static String GotoReferencedTestAction_dialog_error_nomethod;
 	public static String GotoReferencedTestAction_dialog_message;
@@ -334,6 +338,11 @@ public final class JUnitMessages extends NLS {
 	public static String TestRunnerViewPart_show_failures_only;
 	public static String TestRunnerViewPart_show_ignored_only;
 	public static String TestRunnerViewPart_hierarchical_layout;
+
+	public static String TestRunnerViewPart_sort_by_menu;
+	public static String TestRunnerViewPart_toggle_name_label;
+	public static String TestRunnerViewPart_toggle_execution_order_label;
+	public static String TestRunnerViewPart_toggle_execution_time_label;
 
 	public static String TestSessionLabelProvider_testName_elapsedTimeInSeconds;
 

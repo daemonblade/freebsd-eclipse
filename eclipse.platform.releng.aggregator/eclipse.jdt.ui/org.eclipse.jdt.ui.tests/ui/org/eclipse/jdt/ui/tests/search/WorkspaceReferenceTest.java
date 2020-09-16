@@ -17,18 +17,15 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.ui.tests.core.rules.JUnitSourceSetup;
 
 /**
  */
-@RunWith(JUnit4.class)
 public class WorkspaceReferenceTest {
 
 	@Rule
-	public JUnitSourceSetup projectsetup = new JUnitSourceSetup();
+	public JUnitSourceSetup projectSetup = new JUnitSourceSetup();
 
 	@Test
 	public void testSimpleMethodRef() throws Exception {

@@ -71,6 +71,7 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
@@ -297,9 +298,7 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 			final TextEdit edit= targetRewrite.rewriteAST(document, subType.getJavaProject().getOptions(true));
 			try {
 				edit.apply(document, TextEdit.UPDATE_REGIONS);
-			} catch (MalformedTreeException exception) {
-				JavaPlugin.log(exception);
-			} catch (BadLocationException exception) {
+			} catch (MalformedTreeException | BadLocationException exception) {
 				JavaPlugin.log(exception);
 			}
 			buffer.setLength(0);
@@ -341,11 +340,7 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 			final IDocument document= new Document();
 			try {
 				rewrite.rewriteImports(new SubProgressMonitor(monitor, 100)).apply(document);
-			} catch (MalformedTreeException exception) {
-				JavaPlugin.log(exception);
-			} catch (BadLocationException exception) {
-				JavaPlugin.log(exception);
-			} catch (CoreException exception) {
+			} catch (MalformedTreeException | BadLocationException | CoreException exception) {
 				JavaPlugin.log(exception);
 			}
 			fTypeBindings.clear();
@@ -442,10 +437,7 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 			if (edit != null) {
 				try {
 					edit.apply(document, TextEdit.UPDATE_REGIONS);
-				} catch (MalformedTreeException exception) {
-					JavaPlugin.log(exception);
-					status.merge(RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.ExtractInterfaceProcessor_internal_error));
-				} catch (BadLocationException exception) {
+				} catch (MalformedTreeException | BadLocationException exception) {
 					JavaPlugin.log(exception);
 					status.merge(RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.ExtractInterfaceProcessor_internal_error));
 				}
@@ -859,8 +851,22 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 				}
 			} else if (node instanceof ArrayType) {
 				final ASTNode type= node;
-				while (node != null && !(node instanceof MethodDeclaration) && !(node instanceof VariableDeclarationFragment))
+				FieldDeclaration fieldDeclaration= ASTNodes.getParent(node, FieldDeclaration.class);
+				if (fieldDeclaration != null) {
+					binding= ((VariableDeclaration) fieldDeclaration.fragments().get(0)).resolveBinding();
+					node= target.findDeclaringNode(binding.getKey());
+					fieldDeclaration= ASTNodes.getParent(node, FieldDeclaration.class);
+					Type elementType= ((ArrayType) fieldDeclaration.getType()).getElementType();
+					ASTNode changeNode= NodeFinder.perform(target, elementType.getStartPosition(), elementType.getLength());
+					if (changeNode instanceof SimpleName || changeNode instanceof ParameterizedType) {
+						rewriteTypeOccurrence(estimate, rewrite, changeNode, group);
+					}
+					return;
+				}
+
+				while (node != null && !(node instanceof MethodDeclaration) && !(node instanceof VariableDeclarationFragment)) {
 					node= node.getParent();
+				}
 				if (node != null) {
 					final int delta= node.getStartPosition() + node.getLength() - type.getStartPosition();
 					if (node instanceof MethodDeclaration)

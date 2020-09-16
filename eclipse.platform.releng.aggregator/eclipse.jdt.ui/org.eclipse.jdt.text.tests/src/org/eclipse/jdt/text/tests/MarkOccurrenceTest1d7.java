@@ -17,7 +17,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.util.Arrays;
-import java.util.Comparator;
 
 import org.junit.After;
 import org.junit.Before;
@@ -68,7 +67,7 @@ public class MarkOccurrenceTest1d7 {
 	public void setUp() throws Exception {
 		fParser= ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
 
-		fJProject1= Java1d7ProjectTestSetup.getProject();
+		fJProject1= j7s.getProject();
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 		JavaPlugin.getDefault().getPreferenceStore().setValue(PreferenceConstants.EDITOR_MARK_OCCURRENCES, true);
 		JavaPlugin.getDefault().getPreferenceStore().setValue(PreferenceConstants.EDITOR_MARK_IMPLEMENTORS, true);
@@ -76,7 +75,7 @@ public class MarkOccurrenceTest1d7 {
 
 	@After
 	public void tearDown() throws Exception {
-		JavaProjectHelper.clear(fJProject1, Java1d7ProjectTestSetup.getDefaultClasspath());
+		JavaProjectHelper.clear(fJProject1, j7s.getDefaultClasspath());
 	}
 
 	private OccurrenceLocation[] getHighlights(StringBuffer source, int offset, int length) throws Exception {
@@ -106,12 +105,7 @@ public class MarkOccurrenceTest1d7 {
 	}
 
 	private void sortByStartIndex(OccurrenceLocation[] OccurrenceLocations) {
-		Arrays.sort(OccurrenceLocations, new Comparator<OccurrenceLocation>() {
-			@Override
-			public int compare(OccurrenceLocation node0, OccurrenceLocation node1) {
-				return node0.getOffset() - node1.getOffset();
-			}
-		});
+		Arrays.sort(OccurrenceLocations, (node0, node1) -> node0.getOffset() - node1.getOffset());
 	}
 
 	//pattern must be found - otherwise it's assumed to be an error

@@ -243,9 +243,7 @@ public class OccurrencesSearchResultPage extends AbstractTextSearchViewPage {
 			// activating at the end avoids an outdated selection event from JavaUI.openInEditor(..):
 			if (editor != null && activate)
 				editor.getEditorSite().getPage().activate(editor);
-		} catch (PartInitException e1) {
-			return;
-		} catch (JavaModelException e1) {
+		} catch (PartInitException | JavaModelException e1) {
 			return;
 		}
 
@@ -346,12 +344,7 @@ public class OccurrencesSearchResultPage extends AbstractTextSearchViewPage {
 			OccurrencesSearchResult result= (OccurrencesSearchResult) query.getSearchResult();
 			final JavaElementLine line= getMatchingLine(result, offset, length);
 
-			getSite().getShell().getDisplay().asyncExec(new Runnable() {
-				@Override
-				public void run() {
-					setInput(query.getSearchResult(), line == null ? null : new StructuredSelection(line));
-				}
-			});
+			getSite().getShell().getDisplay().asyncExec(() -> setInput(query.getSearchResult(), line == null ? null : new StructuredSelection(line)));
 		}
 	}
 

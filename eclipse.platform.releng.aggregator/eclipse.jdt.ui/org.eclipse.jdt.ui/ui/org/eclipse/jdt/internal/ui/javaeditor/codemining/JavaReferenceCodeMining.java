@@ -99,8 +99,6 @@ public class JavaReferenceCodeMining extends AbstractJavaElementLineHeaderCodeMi
 									textEditor.selectAndReveal(match.getOffset(), match.getLength());
 								}
 							}
-						} catch (JavaModelException e1) {
-							// Should never occur
 						} catch (CoreException e1) {
 							// Should never occur
 						}
@@ -114,8 +112,6 @@ public class JavaReferenceCodeMining extends AbstractJavaElementLineHeaderCodeMi
 				} else {
 					super.setLabel(MessageFormat.format(JavaCodeMiningMessages.JavaReferenceCodeMining_label, refCount));
 				}
-			} catch (JavaModelException e) {
-				// Should never occur
 			} catch (CoreException e) {
 				// Should never occur
 			}

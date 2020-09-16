@@ -22,8 +22,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.swt.events.TreeListener;
 import org.eclipse.swt.widgets.Control;
@@ -50,11 +48,10 @@ import org.eclipse.jdt.internal.ui.search.LevelTreeContentProvider;
 
 /**
  */
-@RunWith(JUnit4.class)
 public class TreeContentProviderTest {
 
 	@Rule
-	public JUnitSourceSetup projectsetup = new JUnitSourceSetup();
+	public JUnitSourceSetup projectSetup = new JUnitSourceSetup();
 
 	private LevelTreeContentProvider fProvider;
 	private JavaSearchResult fResult;

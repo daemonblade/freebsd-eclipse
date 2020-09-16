@@ -36,12 +36,10 @@ import org.eclipse.core.commands.operations.OperationHistoryFactory;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
@@ -375,13 +373,9 @@ public class RenameLinkedMode {
 				restoreFullSelection();
 			}
 			JavaModelUtil.reconcile(getCompilationUnit());
-		} catch (CoreException ex) {
-			JavaPlugin.log(ex);
 		} catch (InterruptedException ex) {
 			// canceling is OK -> redo text changes in that case?
-		} catch (InvocationTargetException ex) {
-			JavaPlugin.log(ex);
-		} catch (BadLocationException e) {
+		} catch (CoreException |InvocationTargetException | BadLocationException e) {
 			JavaPlugin.log(e);
 		} finally {
 			if (label != null)
@@ -417,20 +411,17 @@ public class RenameLinkedMode {
 
 		try {
 			if (! fOriginalName.equals(newName)) {
-				fEditor.getSite().getWorkbenchWindow().run(false, true, new IRunnableWithProgress() {
-					@Override
-					public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-						if (viewer instanceof ITextViewerExtension6) {
-							IUndoManager undoManager= ((ITextViewerExtension6)viewer).getUndoManager();
-							if (undoManager instanceof IUndoManagerExtension) {
-								IUndoManagerExtension undoManagerExtension= (IUndoManagerExtension)undoManager;
-								IUndoContext undoContext= undoManagerExtension.getUndoContext();
-								IOperationHistory operationHistory= OperationHistoryFactory.getOperationHistory();
-								while (undoManager.undoable()) {
-									if (fStartingUndoOperation != null && fStartingUndoOperation.equals(operationHistory.getUndoOperation(undoContext)))
-										return;
-									undoManager.undo();
-								}
+				fEditor.getSite().getWorkbenchWindow().run(false, true, monitor -> {
+					if (viewer instanceof ITextViewerExtension6) {
+						IUndoManager undoManager= ((ITextViewerExtension6)viewer).getUndoManager();
+						if (undoManager instanceof IUndoManagerExtension) {
+							IUndoManagerExtension undoManagerExtension= (IUndoManagerExtension)undoManager;
+							IUndoContext undoContext= undoManagerExtension.getUndoContext();
+							IOperationHistory operationHistory= OperationHistoryFactory.getOperationHistory();
+							while (undoManager.undoable()) {
+								if (fStartingUndoOperation != null && fStartingUndoOperation.equals(operationHistory.getUndoOperation(undoContext)))
+									return;
+								undoManager.undo();
 							}
 						}
 					}
@@ -467,9 +458,7 @@ public class RenameLinkedMode {
 			RenameSupport renameSupport= undoAndCreateRenameSupport(newName);
 			if (renameSupport != null)
 				renameSupport.openDialog(fEditor.getSite().getShell());
-		} catch (CoreException e) {
-			JavaPlugin.log(e);
-		} catch (BadLocationException e) {
+		} catch (CoreException | BadLocationException e) {
 			JavaPlugin.log(e);
 		}
 	}

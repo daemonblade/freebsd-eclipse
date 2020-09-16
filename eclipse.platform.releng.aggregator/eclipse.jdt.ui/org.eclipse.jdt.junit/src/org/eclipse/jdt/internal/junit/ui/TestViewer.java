@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,12 +14,15 @@
  *         - https://bugs.eclipse.org/bugs/show_bug.cgi?id=102236: [JUnit] display execution time next to each test
  *     Xavier Coulon <xcoulon@redhat.com> - https://bugs.eclipse.org/bugs/show_bug.cgi?id=102512 - [JUnit] test method name cut off before (
  *     Andrej Zachar <andrej@chocolatejar.eu> - [JUnit] Add a filter for ignored tests - https://bugs.eclipse.org/bugs/show_bug.cgi?id=298603
+ *     Gautier de Saint Martin Lacaze <gautier.desaintmartinlacaze@gmail.com> - [JUnit] need 'collapse all' feature in JUnit view - https://bugs.eclipse.org/bugs/show_bug.cgi?id=277806
+ *     Sandra Lions <sandra.lions-piron@oracle.com> - [JUnit] allow to sort by name and by execution time - https://bugs.eclipse.org/bugs/show_bug.cgi?id=219466
  *******************************************************************************/
 
 package org.eclipse.jdt.internal.junit.ui;
 
 import java.util.AbstractList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -42,7 +45,6 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.core.runtime.CoreException;
 
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
@@ -55,6 +57,7 @@ import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
 
 import org.eclipse.ui.IWorkbenchActionConstants;
@@ -66,7 +69,6 @@ import org.eclipse.debug.core.ILaunchManager;
 
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.JavaModelException;
 
 import org.eclipse.jdt.internal.junit.launcher.ITestFinder;
 import org.eclipse.jdt.internal.junit.model.TestCaseElement;
@@ -75,6 +77,7 @@ import org.eclipse.jdt.internal.junit.model.TestElement.Status;
 import org.eclipse.jdt.internal.junit.model.TestRoot;
 import org.eclipse.jdt.internal.junit.model.TestRunSession;
 import org.eclipse.jdt.internal.junit.model.TestSuiteElement;
+import org.eclipse.jdt.internal.junit.ui.TestRunnerViewPart.SortingCriterion;
 
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 
@@ -178,6 +181,18 @@ public class TestViewer {
 		}
 	}
 
+	private class CollapseAllAction extends Action {
+		public CollapseAllAction() {
+			setText(JUnitMessages.CollapseAllAction_text);
+			setToolTipText(JUnitMessages.CollapseAllAction_tooltip);
+		}
+
+		@Override
+		public void run(){
+			fTreeViewer.collapseAll();
+		}
+	}
+
 	private final FailuresOnlyFilter fFailuresOnlyFilter= new FailuresOnlyFilter();
 	private final IgnoredOnlyFilter fIgnoredOnlyFilter= new IgnoredOnlyFilter();
 
@@ -252,12 +267,7 @@ public class TestViewer {
 	private void initContextMenu() {
 		MenuManager menuMgr= new MenuManager("#PopupMenu"); //$NON-NLS-1$
 		menuMgr.setRemoveAllWhenShown(true);
-		menuMgr.addMenuListener(new IMenuListener() {
-			@Override
-			public void menuAboutToShow(IMenuManager manager) {
-				handleMenuAboutToShow(manager);
-			}
-		});
+		menuMgr.addMenuListener(this::handleMenuAboutToShow);
 		fTestRunnerPart.getSite().registerContextMenu(menuMgr, fSelectionProvider);
 		Menu menu= menuMgr.createContextMenu(fViewerbook);
 		fTreeViewer.getTree().setMenu(menu);
@@ -286,6 +296,7 @@ public class TestViewer {
 			if (fLayoutMode == TestRunnerViewPart.LAYOUT_HIERARCHICAL) {
 				manager.add(new Separator());
 				manager.add(new ExpandAllAction());
+				manager.add(new CollapseAllAction());
 			}
 
 		}
@@ -387,8 +398,6 @@ public class TestViewer {
 						return null;
 					}
 				}
-			} catch (JavaModelException e) {
-				// fall through
 			} catch (CoreException e) {
 				// fall through
 			}
@@ -467,6 +476,80 @@ public class TestViewer {
 		} finally {
 			fViewerbook.setRedraw(true);
 		}
+	}
+
+	public synchronized void setSortingCriterion(SortingCriterion sortingCriterion) {
+		ViewerComparator viewerComparator;
+		switch (sortingCriterion) {
+			case SORT_BY_EXECUTION_ORDER:
+				viewerComparator= null;
+				break;
+			case SORT_BY_EXECUTION_TIME:
+				viewerComparator= new TestExecutionTimeComparator();
+				break;
+			case SORT_BY_NAME:
+				viewerComparator= new TestNameComparator();
+				break;
+			default:
+				viewerComparator= null;
+				break;
+		}
+		fTableViewer.setComparator(viewerComparator);
+		fTreeViewer.setComparator(viewerComparator);
+	}
+
+	private final class TestNameComparator extends ViewerComparator {
+		@Override
+		public int compare(Viewer viewer, Object o1, Object o2) {
+			return compareName(o1, o2);
+		}
+	}
+
+	private final class TestExecutionTimeComparator extends ViewerComparator {
+		@Override
+		public int compare(Viewer viewer, Object o1, Object o2) {
+			return compareElapsedTime(o1, o2);
+		}
+	}
+
+	private Comparator<ITestElement> getComparator() {
+		SortingCriterion sortingCriterion= fTestRunnerPart.getSortingCriterion();
+		Comparator<ITestElement> comparator;
+		switch (sortingCriterion) {
+			case SORT_BY_EXECUTION_ORDER:
+				comparator= null;
+				break;
+			case SORT_BY_EXECUTION_TIME:
+				comparator= new Comparator<ITestElement>() {
+					public int compare(ITestElement o1, ITestElement o2) {
+						return compareElapsedTime(o1, o2);
+					}
+				};
+				break;
+			case SORT_BY_NAME:
+				comparator= new Comparator<ITestElement>() {
+					public int compare(ITestElement o1, ITestElement o2) {
+						return compareName(o1, o2);
+					}
+				};
+				break;
+			default:
+				comparator= null;
+				break;
+		}
+		return comparator;
+	}
+
+	private int compareElapsedTime(Object o1, Object o2) {
+		double elapsedTime1= ((TestElement)o1).getElapsedTimeInSeconds();
+		double elapsedTime2= ((TestElement)o2).getElapsedTimeInSeconds();
+		return Double.compare(elapsedTime2, elapsedTime1);
+	}
+
+	private int compareName(Object o1, Object o2) {
+		String testName1= ((TestElement)o1).getTestName();
+		String testName2= ((TestElement)o2).getTestName();
+		return testName1.toLowerCase().compareTo(testName2.toLowerCase());
 	}
 
 	/**
@@ -559,7 +642,7 @@ public class TestViewer {
 			fTableHasFilter= filter;
 	}
 
-	private StructuredViewer getActiveViewer() {
+	public StructuredViewer getActiveViewer() {
 		if (fLayoutMode == TestRunnerViewPart.LAYOUT_HIERARCHICAL)
 			return fTreeViewer;
 		else
@@ -773,7 +856,13 @@ public class TestViewer {
 		if (parent == null)
 			return null;
 
-		List<ITestElement> siblings= Arrays.asList(parent.getChildren());
+		ITestElement[] elements= parent.getChildren();
+		Comparator<ITestElement> comparator= getComparator();
+		if (comparator != null) {
+			Arrays.sort(elements, comparator);
+		}
+		List<ITestElement> siblings= Arrays.asList(elements);
+
 		if (! showNext)
 			siblings= new ReverseList<>(siblings);
 
@@ -796,7 +885,12 @@ public class TestViewer {
 	}
 
 	private TestElement getNextChildFailure(TestSuiteElement root, boolean showNext) {
-		List<ITestElement> children= Arrays.asList(root.getChildren());
+		ITestElement[] elements= root.getChildren();
+		Comparator<ITestElement> comparator= getComparator();
+		if (comparator != null) {
+			Arrays.sort(elements, comparator);
+		}
+		List<ITestElement> children= Arrays.asList(elements);
 		if (! showNext)
 			children= new ReverseList<>(children);
 		for (ITestElement element : children) {

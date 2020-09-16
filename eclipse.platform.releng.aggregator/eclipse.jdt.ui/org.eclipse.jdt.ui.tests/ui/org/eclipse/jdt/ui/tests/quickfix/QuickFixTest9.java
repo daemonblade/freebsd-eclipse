@@ -22,8 +22,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 
@@ -49,11 +47,10 @@ import org.eclipse.jdt.ui.text.java.correction.CUCorrectionProposal;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.internal.ui.text.correction.CorrectionMessages;
 
-@RunWith(JUnit4.class)
 public class QuickFixTest9 extends QuickFixTest {
 
 	@Rule
-    public ProjectTestSetup projectsetup = new Java9ProjectTestSetup();
+    public ProjectTestSetup projectSetup = new Java9ProjectTestSetup();
 
 	private IJavaProject fJProject1;
 
@@ -67,7 +64,7 @@ public class QuickFixTest9 extends QuickFixTest {
 	public void setUp() throws CoreException {
 		fJProject2= JavaProjectHelper.createJavaProject("TestProject2", "bin");
 		JavaProjectHelper.set9CompilerOptions(fJProject2);
-		JavaProjectHelper.addRequiredModularProject(fJProject2, Java9ProjectTestSetup.getProject());
+		JavaProjectHelper.addRequiredModularProject(fJProject2, projectSetup.getProject());
 		IPackageFragmentRoot java9Src= JavaProjectHelper.addSourceContainer(fJProject2, "src");
 		IPackageFragment def= java9Src.createPackageFragment("", false, null);
 		IPackageFragment pkgFrag= java9Src.createPackageFragment("java.defaultProject", false, null);
@@ -84,7 +81,7 @@ public class QuickFixTest9 extends QuickFixTest {
 		fJProject1= JavaProjectHelper.createJavaProject("TestProject1", "bin");
 		JavaProjectHelper.set9CompilerOptions(fJProject1);
 		JavaProjectHelper.addRequiredModularProject(fJProject1, fJProject2);
-		JavaProjectHelper.addRequiredModularProject(fJProject1, Java9ProjectTestSetup.getProject());
+		JavaProjectHelper.addRequiredModularProject(fJProject1, projectSetup.getProject());
 
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
@@ -260,7 +257,7 @@ public class QuickFixTest9 extends QuickFixTest {
 	public void testMultipleNewServiceProvider() throws Exception {
 		IJavaProject jProject1= JavaProjectHelper.createJavaProject("TestProject_1", "bin");
 		JavaProjectHelper.set9CompilerOptions(jProject1);
-		JavaProjectHelper.addRequiredModularProject(jProject1, Java9ProjectTestSetup.getProject());
+		JavaProjectHelper.addRequiredModularProject(jProject1, projectSetup.getProject());
 		IPackageFragmentRoot fProject1Src = JavaProjectHelper.addSourceContainer(jProject1, "src");
 
 		StringBuffer buf= new StringBuffer();
@@ -313,7 +310,7 @@ public class QuickFixTest9 extends QuickFixTest {
 		// Project 1 (The Libraries)
 		IJavaProject jProject1= JavaProjectHelper.createJavaProject("TestProject_1", "bin");
 		JavaProjectHelper.set9CompilerOptions(jProject1);
-		JavaProjectHelper.addRequiredModularProject(jProject1, Java9ProjectTestSetup.getProject());
+		JavaProjectHelper.addRequiredModularProject(jProject1, projectSetup.getProject());
 		IPackageFragmentRoot fProject1Src = JavaProjectHelper.addSourceContainer(jProject1, "src");
 
 		StringBuffer buf= new StringBuffer();
@@ -334,7 +331,7 @@ public class QuickFixTest9 extends QuickFixTest {
 		IJavaProject jProject2= JavaProjectHelper.createJavaProject("TestProject_2", "bin");
 		JavaProjectHelper.set9CompilerOptions(jProject2);
 		JavaProjectHelper.addRequiredModularProject(jProject2, jProject1);
-		JavaProjectHelper.addRequiredModularProject(jProject2, Java9ProjectTestSetup.getProject());
+		JavaProjectHelper.addRequiredModularProject(jProject2, projectSetup.getProject());
 		IPackageFragmentRoot fProject2Src = JavaProjectHelper.addSourceContainer(jProject2, "src");
 
 		buf= new StringBuffer();
@@ -355,7 +352,7 @@ public class QuickFixTest9 extends QuickFixTest {
 		IJavaProject jProject3= JavaProjectHelper.createJavaProject("TestProject_3", "bin");
 		JavaProjectHelper.set9CompilerOptions(jProject3);
 		JavaProjectHelper.addRequiredModularProject(jProject3, jProject1);
-		JavaProjectHelper.addRequiredModularProject(jProject3, Java9ProjectTestSetup.getProject());
+		JavaProjectHelper.addRequiredModularProject(jProject3, projectSetup.getProject());
 		IPackageFragmentRoot fProject3Src = JavaProjectHelper.addSourceContainer(jProject3, "src");
 
 		pack= fProject3Src.createPackageFragment("test3", false, null);
@@ -400,7 +397,7 @@ public class QuickFixTest9 extends QuickFixTest {
 	public void testServiceProviderLocalTypeVisibility() throws Exception {
 		IJavaProject jProject1= JavaProjectHelper.createJavaProject("TestProject_1", "bin");
 		JavaProjectHelper.set9CompilerOptions(jProject1);
-		JavaProjectHelper.addRequiredModularProject(jProject1, Java9ProjectTestSetup.getProject());
+		JavaProjectHelper.addRequiredModularProject(jProject1, projectSetup.getProject());
 		IPackageFragmentRoot fProject1Src = JavaProjectHelper.addSourceContainer(jProject1, "src");
 
 		StringBuffer buf= new StringBuffer();
@@ -442,7 +439,7 @@ public class QuickFixTest9 extends QuickFixTest {
 	public void testServiceProviderConstructorProposal () throws Exception {
 		IJavaProject jProject1= JavaProjectHelper.createJavaProject("TestProject_1", "bin");
 		JavaProjectHelper.set9CompilerOptions(jProject1);
-		JavaProjectHelper.addRequiredModularProject(jProject1, Java9ProjectTestSetup.getProject());
+		JavaProjectHelper.addRequiredModularProject(jProject1, projectSetup.getProject());
 		IPackageFragmentRoot fProject1Src = JavaProjectHelper.addSourceContainer(jProject1, "src");
 
 		StringBuffer buf= new StringBuffer();
@@ -495,7 +492,7 @@ public class QuickFixTest9 extends QuickFixTest {
 	public void testServiceProviderVisibilityProposal () throws Exception {
 		IJavaProject jProject1= JavaProjectHelper.createJavaProject("TestProject_1", "bin");
 		JavaProjectHelper.set9CompilerOptions(jProject1);
-		JavaProjectHelper.addRequiredModularProject(jProject1, Java9ProjectTestSetup.getProject());
+		JavaProjectHelper.addRequiredModularProject(jProject1, projectSetup.getProject());
 		IPackageFragmentRoot fProject1Src = JavaProjectHelper.addSourceContainer(jProject1, "src");
 
 		StringBuffer buf= new StringBuffer();

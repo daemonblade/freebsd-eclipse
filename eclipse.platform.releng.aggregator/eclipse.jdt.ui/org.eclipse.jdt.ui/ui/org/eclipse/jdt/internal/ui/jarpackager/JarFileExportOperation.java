@@ -1066,13 +1066,10 @@ public class JarFileExportOperation extends WorkspaceModifyOperation implements 
 
 		if (fParentShell != null) {
 			final boolean[] res= { false };
-			fParentShell.getDisplay().syncExec(new Runnable() {
-				@Override
-				public void run() {
-					RefactoringSaveHelper refactoringSaveHelper= new RefactoringSaveHelper(RefactoringSaveHelper.SAVE_ALL_ALWAYS_ASK);
-					res[0]= refactoringSaveHelper.saveEditors(fParentShell);
-					fFilesSaved= refactoringSaveHelper.didSaveFiles();
-				}
+			fParentShell.getDisplay().syncExec(() -> {
+				RefactoringSaveHelper refactoringSaveHelper= new RefactoringSaveHelper(RefactoringSaveHelper.SAVE_ALL_ALWAYS_ASK);
+				res[0]= refactoringSaveHelper.saveEditors(fParentShell);
+				fFilesSaved= refactoringSaveHelper.didSaveFiles();
 			});
 			if (!res[0]) {
 				addError(JarPackagerMessages.JarFileExportOperation_fileUnsaved, null);
@@ -1088,9 +1085,7 @@ public class JarFileExportOperation extends WorkspaceModifyOperation implements 
 		if (fJarPackage.areGeneratedFilesExported() && fJarPackage.isManifestGenerated() && fJarPackage.isManifestSaved()) {
 			try {
 				saveManifest();
-			} catch (CoreException ex) {
-				addError(JarPackagerMessages.JarFileExportOperation_errorSavingManifest, ex);
-			} catch (IOException ex) {
+			} catch (CoreException | IOException ex) {
 				addError(JarPackagerMessages.JarFileExportOperation_errorSavingManifest, ex);
 			}
 		}
@@ -1099,9 +1094,7 @@ public class JarFileExportOperation extends WorkspaceModifyOperation implements 
 		if (fJarPackage.isDescriptionSaved()) {
 			try {
 				saveDescription();
-			} catch (CoreException ex) {
-				addError(JarPackagerMessages.JarFileExportOperation_errorSavingDescription, ex);
-			} catch (IOException ex) {
+			} catch (CoreException | IOException ex) {
 				addError(JarPackagerMessages.JarFileExportOperation_errorSavingDescription, ex);
 			}
 		}

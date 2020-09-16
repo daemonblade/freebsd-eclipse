@@ -14,12 +14,15 @@
 package org.eclipse.jdt.internal.ui.fix;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import org.eclipse.core.runtime.CoreException;
+
+import org.eclipse.text.edits.TextEditGroup;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.AST;
@@ -157,17 +160,17 @@ public class VarCleanUp extends AbstractMultiFix {
 								|| (classInstanceCreation != null
 										&& classInstanceCreation.getType().isParameterizedType()
 										&& classInstanceCreation.getType().resolveBinding() != null
-										&& Objects.equals(variableType.getTypeArguments(), classInstanceCreation.getType().resolveBinding().getTypeArguments())
+										&& Arrays.equals(variableType.getTypeArguments(), classInstanceCreation.getType().resolveBinding().getTypeArguments())
 										&& !((ParameterizedType) classInstanceCreation.getType()).typeArguments().isEmpty())
 								|| (castExpression != null
 										&& castExpression.getType().isParameterizedType()
 										&& castExpression.getType().resolveBinding() != null
 										&& variableType.getTypeArguments().length == ((ParameterizedType) castExpression.getType()).typeArguments().size()
-										&& Objects.equals(variableType.getTypeArguments(), castExpression.getType().resolveBinding().getTypeArguments()))
+										&& Arrays.equals(variableType.getTypeArguments(), castExpression.getType().resolveBinding().getTypeArguments()))
 								|| (methodInvocation != null
 										&& methodInvocation.resolveMethodBinding() != null
 										&& methodInvocation.resolveMethodBinding().getReturnType().isParameterizedType()
-										&& Objects.equals(variableType.getTypeArguments(), methodInvocation.resolveMethodBinding().getReturnType().getTypeArguments()))
+										&& Arrays.equals(variableType.getTypeArguments(), methodInvocation.resolveMethodBinding().getReturnType().getTypeArguments()))
 								|| (classInstanceCreation == null
 										&& castExpression == null
 										&& methodInvocation == null
@@ -175,7 +178,7 @@ public class VarCleanUp extends AbstractMultiFix {
 										&& expression != null
 										&& expression.resolveTypeBinding() != null
 										&& expression.resolveTypeBinding().isParameterizedType()
-										&& Objects.equals(variableType.getTypeArguments(), expression.resolveTypeBinding().getTypeArguments()))) {
+										&& Arrays.equals(variableType.getTypeArguments(), expression.resolveTypeBinding().getTypeArguments()))) {
 							rewriteOperations.add(new VarOperation(type));
 							return false;
 						} else if (variableType.isParameterizedType()
@@ -258,14 +261,15 @@ public class VarCleanUp extends AbstractMultiFix {
 		public void rewriteAST(final CompilationUnitRewrite cuRewrite, final LinkedProposalModel linkedModel) throws CoreException {
 			ASTRewrite rewrite= cuRewrite.getASTRewrite();
 			AST ast= cuRewrite.getRoot().getAST();
+			TextEditGroup group= createTextEditGroup(MultiFixMessages.VarCleanUp_description, cuRewrite);
 
 			if (classInstanceCreation != null) {
-				rewrite.replace(classInstanceCreation.getType(), rewrite.createCopyTarget(node), null);
+				rewrite.replace(classInstanceCreation.getType(), rewrite.createCopyTarget(node), group);
 			} else if (literal != null) {
-				rewrite.replace(literal, ast.newNumberLiteral(literal.getToken() + postfix), null);
+				rewrite.replace(literal, ast.newNumberLiteral(literal.getToken() + postfix), group);
 			}
 
-			rewrite.replace(node, ast.newSimpleType(ast.newSimpleName("var")), null); //$NON-NLS-1$
+			rewrite.replace(node, ast.newSimpleType(ast.newSimpleName("var")), group); //$NON-NLS-1$
 		}
 	}
 }

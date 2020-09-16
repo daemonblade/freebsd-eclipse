@@ -21,8 +21,6 @@ import java.util.List;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -288,11 +286,13 @@ public class FilteredPreferenceTree {
 	 */
 	private Label fDescription;
 
+	/**
+	 * The filter text control.
+	 */
+	private FilterTextControl fFilterTextControl;
 
 	private ToolItem fExpandAllItem;
 	private ToolItem fCollapseAllItem;
-
-	private Text fFilterBox;
 
 
 	public FilteredPreferenceTree(Composite parentComposite, String label, String hint) {
@@ -310,12 +310,7 @@ public class FilteredPreferenceTree {
 
 		fRefreshJob= doCreateRefreshJob();
 		fRefreshJob.setSystem(true);
-		fParentComposite.addDisposeListener(new DisposeListener() {
-			@Override
-			public void widgetDisposed(DisposeEvent e) {
-				fRefreshJob.cancel();
-			}
-		});
+		fParentComposite.addDisposeListener(e -> fRefreshJob.cancel());
 	}
 
 	private void createDescription(String label) {
@@ -338,16 +333,18 @@ public class FilteredPreferenceTree {
 		composite.setLayout(layout);
 		composite.setFont(fParentComposite.getFont());
 
-		fFilterBox = new Text(composite, SWT.SINGLE | SWT.BORDER | SWT.SEARCH | SWT.ICON_CANCEL);
+		//TODO: Directly use the hint flags once Bug 293230 is fixed
+		fFilterTextControl= new FilterTextControl(composite);
 
-		fFilterBox.setMessage(hint);
+		Text filterBox= fFilterTextControl.getFilterControl();
+		filterBox.setMessage(hint);
 
-		fFilterBox.addModifyListener(new ModifyListener() {
+		filterBox.addModifyListener(new ModifyListener() {
 			private String fPrevFilterText;
 
 			@Override
 			public void modifyText(ModifyEvent e) {
-				String input= fFilterBox.getText();
+				String input= filterBox.getText();
 				fExpandAllItem.setEnabled(input.isEmpty());
 				fCollapseAllItem.setEnabled(input.isEmpty());
 				if (!input.equalsIgnoreCase(fPrevFilterText)) {
@@ -378,12 +375,9 @@ public class FilteredPreferenceTree {
 				setAllExpanded(null, expand);
 			}
 		});
-		item.addDisposeListener(new DisposeListener() {
-			@Override
-			public void widgetDisposed(DisposeEvent e) {
-				createdImage.dispose();
-				createdDisabledImage.dispose();
-			}
+		item.addDisposeListener(e -> {
+			createdImage.dispose();
+			createdDisabledImage.dispose();
 		});
 		return item;
 	}
@@ -553,7 +547,7 @@ public class FilteredPreferenceTree {
 		if (fDescription != null) {
 			fDescription.setEnabled(enabled);
 		}
-		fFilterBox.setEnabled(enabled);
+		fFilterTextControl.setEnabled(enabled);
 		fCollapseAllItem.setEnabled(enabled);
 		fExpandAllItem.setEnabled(enabled);
 		fRoot.getChildren().forEach(node -> node.setEnabled(enabled));

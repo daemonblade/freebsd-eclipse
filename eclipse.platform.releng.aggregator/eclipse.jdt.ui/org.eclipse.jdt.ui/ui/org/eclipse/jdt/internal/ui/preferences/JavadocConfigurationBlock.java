@@ -440,11 +440,9 @@ public class JavadocConfigurationBlock {
 					// just read
 				}
 			}
-		} catch (IllegalArgumentException e) {
-			return false; // workaround for bug 91072
-		} catch (NullPointerException e) {
-			return false; // workaround for http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6536522
-		} catch (IOException e) {
+		} catch (IllegalArgumentException | NullPointerException | IOException e) {
+			// workaround for bug 91072
+			// workaround for http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6536522
 			return false;
 		}
 		return res < 400;
@@ -522,12 +520,7 @@ public class JavadocConfigurationBlock {
 
 	private String chooseArchivePath() {
 		final String[] res= new String[] { null };
-		BusyIndicator.showWhile(fShell.getDisplay(), new Runnable() {
-			@Override
-			public void run() {
-				res[0]= internalChooseArchivePath();
-			}
-		});
+		BusyIndicator.showWhile(fShell.getDisplay(), () -> res[0]= internalChooseArchivePath());
 		return res[0];
 	}
 

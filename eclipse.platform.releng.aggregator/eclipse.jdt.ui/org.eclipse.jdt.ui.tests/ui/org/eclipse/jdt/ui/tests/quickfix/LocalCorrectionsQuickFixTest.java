@@ -33,8 +33,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
@@ -68,11 +66,10 @@ import org.eclipse.jdt.internal.ui.text.correction.CorrectionMessages;
 import org.eclipse.jdt.internal.ui.text.correction.JavaCorrectionProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedNamesAssistProposal;
 
-@RunWith(JUnit4.class)
 public class LocalCorrectionsQuickFixTest extends QuickFixTest {
 
 	@Rule
-    public ProjectTestSetup projectsetup = new ProjectTestSetup();
+	public ProjectTestSetup projectSetup= new ProjectTestSetup();
 
 	/**
 	 * Bug 434188: [quick fix] shows sign of quick fix, but says no suggestions available.
@@ -101,17 +98,15 @@ public class LocalCorrectionsQuickFixTest extends QuickFixTest {
 		StubUtility.setCodeTemplate(CodeTemplateContextType.CONSTRUCTORSTUB_ID, "", null);
 		StubUtility.setCodeTemplate(CodeTemplateContextType.METHODSTUB_ID, "", null);
 
-		fJProject1= ProjectTestSetup.getProject();
+		fJProject1= projectSetup.getProject();
 
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 	}
 
-
 	@After
 	public void tearDown() throws Exception {
-		JavaProjectHelper.clear(fJProject1, ProjectTestSetup.getDefaultClasspath());
+		JavaProjectHelper.clear(fJProject1, projectSetup.getDefaultClasspath());
 	}
-
 
 	@Test
 	public void testFieldAccessToStatic() throws Exception {
@@ -12151,7 +12146,7 @@ public class LocalCorrectionsQuickFixTest extends QuickFixTest {
 
 	@Test
 	public void testConvertLambdaToAnonymous() throws Exception {
-		assertTrue("error should not appear in 1.8 or higher", !JavaModelUtil.is18OrHigher(fJProject1));
+		assertFalse("error should not appear in 1.8 or higher", JavaModelUtil.is18OrHigher(fJProject1));
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("p", false, null);
 		StringBuffer buf= new StringBuffer();

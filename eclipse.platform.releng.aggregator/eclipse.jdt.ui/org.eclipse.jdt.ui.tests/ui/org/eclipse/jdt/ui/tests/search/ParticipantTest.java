@@ -20,8 +20,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -42,11 +40,10 @@ import org.eclipse.jdt.internal.ui.search.SearchParticipantsExtensionPoint;
 
 /**
  */
-@RunWith(JUnit4.class)
 public class ParticipantTest {
 
 	@Rule
-	public JUnitSourceSetup projectsetup = new JUnitSourceSetup(new TestExtensionPoint());
+	public JUnitSourceSetup projectSetup = new JUnitSourceSetup(new TestExtensionPoint());
 
 	static class TestExtensionPoint extends SearchParticipantsExtensionPoint {
 		@Override

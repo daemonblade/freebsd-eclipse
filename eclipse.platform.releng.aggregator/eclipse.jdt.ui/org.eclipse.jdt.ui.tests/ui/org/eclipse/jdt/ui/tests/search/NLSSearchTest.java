@@ -22,8 +22,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 
@@ -48,19 +46,17 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 
 import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
 
-
-@RunWith(JUnit4.class)
 public class NLSSearchTest {
 
 	@Rule
-	public ProjectTestSetup projectsetup = new ProjectTestSetup();
+	public ProjectTestSetup projectSetup = new ProjectTestSetup();
 
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
 	@Before
 	public void setUp() throws CoreException {
-		fJProject1= ProjectTestSetup.getProject();
+		fJProject1= projectSetup.getProject();
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack= fSourceFolder.createPackageFragment("org.eclipse.osgi.util", false, null);
@@ -73,7 +69,7 @@ public class NLSSearchTest {
 
 	@After
 	public void tearDown() throws Exception {
-		JavaProjectHelper.clear(fJProject1, ProjectTestSetup.getDefaultClasspath());
+		JavaProjectHelper.clear(fJProject1, projectSetup.getDefaultClasspath());
 		ISearchResultViewPart searchResultView= NewSearchUI.getSearchResultView();
 		if (searchResultView != null) {
 			searchResultView.getSite().getPage().hideView(searchResultView);
