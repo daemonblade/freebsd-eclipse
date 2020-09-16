@@ -35,15 +35,10 @@ source localBuildProperties.shsource 2>/dev/null
 #   Different versions of Ant are specified here in test script, just to confirm
 #   nothing is specific to any recent version of ant. (Though, some of the machines
 #   have ant 1.6 set as 'default'!)
-#export ANT_HOME=/shared/common/apache-ant-1.7.1
-#export ANT_HOME=/shared/common/apache-ant-1.8.4/
 export ANT_HOME=/shared/common/apache-ant-1.9.6
 
 #   JAVA_HOME is, at least, what runs the ant instance. If no 'jvm' option is specified,
 #   it also becomes the instance that runs the tests.
-#export JAVA_HOME=/shared/common/jdk1.5.0-latest
-#export JAVA_HOME=/shared/common/jdk1.6.0-latest
-#export JAVA_HOME=/shared/common/jdk1.7.0-latest
 JAVA_11_HOME=/opt/public/common/java/openjdk/jdk-11_x64-latest
 export JAVA_HOME=${JAVA_HOME:-${JAVA_11_HOME}} 
 
@@ -86,7 +81,7 @@ wget -O ${WORKSPACE}/getEBuilder.xml --no-verbose   https://${GIT_HOST}/c/platfo
 
 ANTFILE=getEBuilder.xml
 buildId=I20150320-0800
-eclipseStream=4.16.0
+eclipseStream=4.17.0
 EBUILDER_HASH=master
 #EBUILDER_HASH=4295494c43e464a0c4ee39b7e0c847fbc3263f2a
 
