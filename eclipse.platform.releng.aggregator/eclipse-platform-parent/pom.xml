@@ -19,7 +19,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.eclipse</groupId>
   <artifactId>eclipse-platform-parent</artifactId>
-  <version>4.16.0-SNAPSHOT</version>
+  <version>4.17.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <!--
     See maven-enforcer-plugin configuration to actually break the build if
@@ -30,7 +30,7 @@
     If version number changed in one place, be sure to change in the other.
   -->
   <prerequisites>
-    <maven>3.5.4</maven>
+    <maven>3.6.3</maven>
   </prerequisites>
   <properties>
     <!-- As of Tycho 0.22, skipTests takes priority, if maven.test.skip also specified,
@@ -49,7 +49,7 @@
       such as Version: Mars (4.5), for main features.
       See bug 328139.
     -->
-    <releaseName>2020-06</releaseName>
+    <releaseName>2020-09</releaseName>
     <!--
       The releaseNumbers below, for SDK and Platform, might be
       thought of as the "marketing number" or "branding number",
@@ -64,14 +64,14 @@
       but we'd still want the "marketing number" to be increased to reflect
       "a new yearly release".
     -->
-    <releaseNumberSDK>4.16</releaseNumberSDK>
-    <releaseNumberPlatform>4.16</releaseNumberPlatform>
+    <releaseNumberSDK>4.17</releaseNumberSDK>
+    <releaseNumberPlatform>4.17</releaseNumberPlatform>
 
 
 	<!-- using released version (normal case)
 	     when upgrading make sure you change pom-version-updater version in build-functions.shsource
     -->
-    <tycho.version>1.7.0</tycho.version>
+    <tycho.version>2.0.0</tycho.version>
 
     <cbi-plugins.version>1.1.8-SNAPSHOT</cbi-plugins.version>
 
@@ -80,9 +80,9 @@
       'eclipiserun-repo' repository, such as for computing .api-descriptions and
       generating API Tools reports.
     -->
-    <eclipserun-repo>https://download.eclipse.org/eclipse/updates/4.16/</eclipserun-repo>
+    <eclipserun-repo>https://download.eclipse.org/eclipse/updates/4.17/</eclipserun-repo>
     
-    <comparator.repo>https://download.eclipse.org/eclipse/updates/4.16</comparator.repo>
+    <comparator.repo>https://download.eclipse.org/eclipse/updates/4.17</comparator.repo>
 
     <!--
       NOTE: this EMF and ECF URL must match exactly what is in the eclipse-sdk-prereqs.target file.
@@ -91,16 +91,16 @@
       it).
       And, of course, in the PDE target file, the URL is expected to be the actual URL, not a variable.
     -->
-    <emf-repo.url>https://download.eclipse.org/modeling/emf/emf/builds/release/2.22/</emf-repo.url>
+    <emf-repo.url>https://download.eclipse.org/modeling/emf/emf/builds/release/2.23/</emf-repo.url>
 
-    <ecf-repo.url>https://download.eclipse.org/rt/ecf/staging/site.p2/3.14.8.v20200522-1203/</ecf-repo.url>
+    <ecf-repo.url>https://download.eclipse.org/rt/ecf/3.14.14/site.p2/</ecf-repo.url>
 
     <!-- only used when Tycho snapshot repo is enabled in <pluginRepositories> further down -->
     <tycho-snapshot-repo.url>https://repo.eclipse.org/content/repositories/tycho-snapshots/</tycho-snapshot-repo.url>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <cbi-jdt-repo.url>https://repo.eclipse.org/content/repositories/eclipse-staging/</cbi-jdt-repo.url>
-    <cbi-ecj-version>3.22.0.v20200527-0621</cbi-ecj-version>
+    <cbi-ecj-version>3.23.0.v20200824-0559</cbi-ecj-version>
 
     <!--
       Production bundles are produced by ignoring the compiler warnings specified
@@ -148,7 +148,7 @@
     <qualifier.format>'v'yyyyMMdd-HHmm</qualifier.format>
 
     <compare-version-with-baselines.skip>true</compare-version-with-baselines.skip>
-    <previous-release.baseline>https://download.eclipse.org/eclipse/updates/4.15/R-4.15-202003050155/</previous-release.baseline>
+    <previous-release.baseline>https://download.eclipse.org/eclipse/updates/4.16/R-4.16-202006040540/</previous-release.baseline>
 
     <!--
       Declaration of properties that contribute to the arg line for the tycho-surefire-plugin.
@@ -249,7 +249,7 @@
             <artifact>
               <groupId>org.eclipse</groupId>
               <artifactId>eclipse-sdk-prereqs</artifactId>
-              <version>4.16.0-SNAPSHOT</version>
+              <version>4.17.0-SNAPSHOT</version>
             </artifact>
           </target>
           <environments>
@@ -262,6 +262,11 @@
               <os>freebsd</os>
               <ws>gtk</ws>
               <arch>powerpc64</arch>
+            </environment>
+             <environment>
+              <os>freebsd</os>
+              <ws>gtk</ws>
+              <arch>aarch64</arch>
             </environment>
             <environment>
               <os>win32</os>
@@ -384,7 +389,7 @@
           <!-- this is actually present in any 0.14+ version -->
           <version>${tycho.version}</version>
           <configuration>
-            <executionEnvironment>JavaSE-1.8</executionEnvironment>
+            <executionEnvironment>JavaSE-11</executionEnvironment>
             <repositories>
               <repository>
                 <id>eclipse</id>
@@ -392,11 +397,6 @@
                 <url>${eclipserun-repo}</url>
               </repository>
             </repositories>
-            <!--
-              This is to fix some lucene 3.x compatibility issues.
-              Required for 4.2 and earlier. Not for 4.3 and later.
-              <argLine>-Dhelp.lucene.tokenizer=standard</argLine>
-            -->
           </configuration>
         </plugin>
         <plugin>
@@ -547,7 +547,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
-          <version>3.2.0</version>
+          <version>3.3.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -574,9 +574,9 @@
   </build>
   <profiles>
    <profile>
-      <id>java14patch415</id>
+        <id>java15patch</id>
       <properties>
-        <qualifier.format>'v'yyyyMMdd-HHmm'_BETA_JAVA14'</qualifier.format>
+        <qualifier.format>'v'yyyyMMdd-HHmm'_BETA_JAVA15'</qualifier.format>
  
         <featureToPatch>org.eclipse.jdt</featureToPatch>
         <featureToPatchPDE>org.eclipse.pde</featureToPatchPDE>
@@ -584,29 +584,29 @@
         <!--
           For future versions, in addition to changing this value of "featureToPatchVersion",
           the same value needs to be edited in
-          .../java14patch415/org.eclipse.jdt.java14patch/feature.xml
+          .../java15patch/org.eclipse.jdt.java15patch/feature.xml
           and
-          .../java14patch415/org.eclipse.jdt-feature-dummy/feature.xml
+          .../java15patch/org.eclipse.jdt-feature-dummy/feature.xml
           and it of course, must "match" what ever version was produced by the build specified
-          a few lines below, as the eclipse-p2-repo-java14patch415 p2 repository, as well as the lower
+          a few lines below, as the eclipse-p2-repo-java15patch p2 repository, as well as the lower
           bound, in 'versionRangeForPatch'.
  
           Also, when new patch created, should update the wiki at
-          https://wiki.eclipse.org/Java14
+          https://wiki.eclipse.org/Java15
         -->
         <!-- This needs the version of the feature to be patched. -->
-        <featureToPatchVersion>3.18.300.v20200226-1800</featureToPatchVersion>
-        <featureToPatchVersionPDE>3.14.300.v20200226-1800</featureToPatchVersionPDE>
+        <featureToPatchVersion>3.18.500.v20200826-1800</featureToPatchVersion>
+        <featureToPatchVersionPDE>3.14.500.v20200826-1800</featureToPatchVersionPDE>
         <!-- Can specify an exact range here, or something of a loose range, depending on what's needed. -->
-        <versionRangeForPatch>[3.18.300.v20200226-1800,3.19.0.v20200610-0905)</versionRangeForPatch>
-        <versionRangeForPatchPDE>[3.14.300.v20200226-1800,3.14.400.v20200610-0905)</versionRangeForPatchPDE>
+        <versionRangeForPatch>[3.18.500.v20200826-1800,3.18.549.v20210708-1800)</versionRangeForPatch>
+        <versionRangeForPatchPDE>[3.14.500.v20200826-1800,3.14.549.v20210708-1800)</versionRangeForPatchPDE>
         <!-- Comment this line when a patch is required on top of I-build -->
-        <comparator.repo>https://download.eclipse.org/eclipse/updates/4.15milestones/S-4.15RC1-202002261800/</comparator.repo>
+        <comparator.repo>https://download.eclipse.org/eclipse/updates/4.17milestones/</comparator.repo>
       </properties>
       <repositories>
        <repository>
-         <id>eclipse-p2-repo-java14patch415</id>
-         <url>https://download.eclipse.org/eclipse/updates/4.15milestones/S-4.15RC1-202002261800/</url>
+         <id>eclipse-p2-repo-java15patch</id>
+         <url>https://download.eclipse.org/eclipse/updates/4.17milestones/</url>
          <layout>p2</layout>
        </repository>
      </repositories>
@@ -626,7 +626,7 @@
           For maintenance streams should always be "M-builds".
           Ideally, this value would be provided by the environment, see bug 489789.
         -->
-        <eclipse-p2-repo.url>https://download.eclipse.org/eclipse/updates/4.16</eclipse-p2-repo.url>
+        <eclipse-p2-repo.url>https://download.eclipse.org/eclipse/updates/4.17</eclipse-p2-repo.url>
       </properties>
       <repositories>
         <repository>
@@ -1128,6 +1128,37 @@
             <configuration>
               <append>true</append>
             </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>spotbugs</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+            <version>4.0.0</version>
+            <configuration>
+              <targetJDK>11</targetJDK>
+              <xmlOutput>true</xmlOutput>
+              <effort>Max</effort>
+              <maxHeap>2000</maxHeap>
+              <threshold>medium</threshold>
+              <failOnError>false</failOnError>
+              <excludeFilterFile>spotbugs/spotbugs-exclude.xml</excludeFilterFile>
+            </configuration>
+            <executions>
+              <execution>
+                <id>analyze-compile</id>
+                <phase>compile</phase>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
