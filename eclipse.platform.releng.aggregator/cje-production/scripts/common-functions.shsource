@@ -46,33 +46,63 @@ fn-run-command ()
 
 fn-notarize-macbuild ()
 {
-	set -x
-	BUILD_DIR="$1"; shift
-	DMG="$1"; shift
-	
-	pushd $BUILD_DIR
-		
-	PRIMARY_BUNDLE_ID="$(echo ${DMG} | sed  's/-macosx-cocoa-x86_64.dmg//g')"
-	
-	RESPONSE=$(curl -s -X POST -F file=@${DMG} -F 'options={"primaryBundleId": "'${PRIMARY_BUNDLE_ID}'", "staple": true};type=application/json' http://172.30.206.146:8383/macos-notarization-service/notarize)
-	  
-	UUID=$(echo $RESPONSE | grep -Po '"uuid"\s*:\s*"\K[^"]+')
-    STATUS=$(echo $RESPONSE | grep -Po '"status"\s*:\s*"\K[^"]+')
-	
-	while [[ ${STATUS} == 'IN_PROGRESS' ]]; do
-	  sleep 1m
-	  RESPONSE=$(curl -s http://172.30.206.146:8383/macos-notarization-service/${UUID}/status)
-      STATUS=$(echo $RESPONSE | grep -Po '"status"\s*:\s*"\K[^"]+')
-	done
-	
-	if [[ ${STATUS} != 'COMPLETE' ]]; then
-	  echo "Notarization failed: ${RESPONSE}"
-	  exit 1
-	fi
-	
-	rm "${DMG}"
-	
-	curl -JO http://172.30.206.146:8383/macos-notarization-service/${UUID}/download
-	popd
-	set +x
+  set -x
+  BUILD_DIR="$1"; shift
+  DMG="$1"; shift
+
+  pushd "$BUILD_DIR" || exit 5
+
+  PRIMARY_BUNDLE_ID="${DMG//-macosx-cocoa-x86_64.dmg/}"
+
+  retryCount=3
+  while [ ${retryCount} -gt 0 ]; do
+
+    RAW_RESPONSE=$(curl -sS --write-out "\n%{http_code}" -X POST -F file=@"${DMG}" -F 'options={"primaryBundleId": "'"${PRIMARY_BUNDLE_ID}"'", "staple": true};type=application/json' http://172.30.206.146:8383/macos-notarization-service/notarize || : )
+
+    RESPONSE=$(head -n-1 <<<"${RAW_RESPONSE}")
+    STATUS_CODE=$(tail -n1 <<<"${RAW_RESPONSE}")
+
+    if [[ "${STATUS_CODE}" != "200" ]]; then
+      echo "Bad response from the server (status=${STATUS_CODE})"
+      echo "${RESPONSE}"
+      retryCount=$((retryCount - 1))
+      if [ $retryCount -eq 0 ]; then
+        echo "Notarization failed 3 times. Exiting"
+        exit 1
+      else
+        echo "Retrying..."
+        sleep 2
+      fi
+    fi
+
+    UUID=$(echo "$RESPONSE" | grep -Po '"uuid"\s*:\s*"\K[^"]+' || : )
+    STATUS=$(echo "$RESPONSE" | grep -Po '"status"\s*:\s*"\K[^"]+' || : )
+
+    while [[ ${STATUS} == 'IN_PROGRESS' ]]; do
+      sleep 1m
+      RESPONSE=$(curl -sS "http://172.30.206.146:8383/macos-notarization-service/${UUID}/status")
+      STATUS=$(echo "$RESPONSE" | grep -Po '"status"\s*:\s*"\K[^"]+' || : )
+    done
+
+    if [[ ${STATUS} != 'COMPLETE' ]]; then
+      echo "Notarization failed: ${RESPONSE}"
+      retryCount=$((retryCount - 1))
+      if [ $retryCount -eq 0 ]; then
+        echo "Notarization failed 3 times. Exiting"
+        exit 1
+      else
+        echo "Retrying..."
+        sleep 2
+      fi
+    else
+      break
+    fi
+
+  done
+
+  rm "${DMG}"
+
+  curl -sSJO "http://172.30.206.146:8383/macos-notarization-service/${UUID}/download"
+  popd || exit 5
+  set +x
 }

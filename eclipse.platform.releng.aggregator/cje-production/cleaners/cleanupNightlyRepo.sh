@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #*******************************************************************************
-# Copyright (c) 2019 IBM Corporation and others.
+# Copyright (c) 2020 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -130,7 +130,7 @@ function cleanRepo ()
     echo -e "\t${eclipseexe}"
     exit 1
   fi
-  javaexe=${workspace}/jdk8/jre/bin/java
+  javaexe=/opt/public/common/java/openjdk/jdk-11_x64-latest/bin/java
   if [[ ! -x ${javaexe} ]]
   then
     echo -e "\n\tERROR: expected java location not found, or not executable"
@@ -193,19 +193,9 @@ function cleanRepo ()
 workspace=$1
 remoteBase="/home/data/httpd/download.eclipse.org"
 
-eclipseYRepo="${remoteBase}/eclipse/updates/4.15-Y-builds"
-eclipsePRepo="${remoteBase}/eclipse/updates/4.15-P-builds"
-
-#doDryrun=dryrun
-doDryrun=
-# global
-declare -a reposToRemove=()
-cleanRepo $eclipseYRepo Y 2 $doDryrun
-declare -a reposToRemove=()
-cleanRepo $eclipsePRepo P 1 $doDryrun
-
-eclipseIRepo="${remoteBase}/eclipse/updates/4.16-I-builds"
-eclipseSRepo="${remoteBase}/eclipse/updates/4.16milestones"
+eclipseIRepo="${remoteBase}/eclipse/updates/4.17-I-builds"
+eclipseSRepo="${remoteBase}/eclipse/updates/4.17milestones"
+eclipseYRepo="${remoteBase}/eclipse/updates/4.17-Y-builds"
 
 #doDryrun=dryrun
 doDryrun=
@@ -214,5 +204,7 @@ declare -a reposToRemove=()
 cleanRepo $eclipseIRepo I 4 $doDryrun
 declare -a reposToRemove=()
 cleanRepo $eclipseSRepo S 2 $doDryrun
+declare -a reposToRemove=()
+cleanRepo $eclipseYRepo Y 2 $doDryrun
 
 unset reposToRemove

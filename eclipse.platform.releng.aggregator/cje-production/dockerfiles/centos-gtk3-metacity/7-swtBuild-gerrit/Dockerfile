@@ -2,6 +2,7 @@ ARG FROM_TAG="7"
 FROM centos:${FROM_TAG}
 
 RUN yum -y update && yum -y install \
+      git \
       gtk3 \
       tigervnc-server \
       tigervnc \
@@ -26,8 +27,8 @@ RUN yum -y update && yum -y install \
       gtk3-devel \
       gtk2 \
       gtk2-devel \
-      java-openjdk \
-      java-openjdk-devel \
+      java-11-openjdk \
+      java-11-openjdk-devel \
       webkit2gtk3-devel \
       make \
       gcc \
@@ -49,12 +50,19 @@ RUN mkdir -p ${HOME}/.vnc && chmod -R 775 ${HOME} \
 
 RUN cd ${HOME} && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > ${HOME}/setup-rust.sh \
   && chmod 755 ${HOME}/setup-rust.sh \
-  && ${HOME}/setup-rust.sh -y 
+  && ${HOME}/setup-rust.sh -y
 ENV PATH=$HOME/.cargo/bin:$PATH
 
 RUN mkdir -p ${HOME}/cef-libs && wget -O ${HOME}/cef-libs/cef.tar.bz2 --no-verbose http://opensource.spotify.com/cefbuilds/cef_binary_3.3071.1649.g98725e6_linux64_minimal.tar.bz2
 
+RUN mkdir -p ${HOME}/maven && wget -O ${HOME}/maven/maven.tar.gz --no-verbose https://downloads.apache.org/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz \
+  && cd ${HOME}/maven \
+  && tar xzf maven.tar.gz
+
 RUN chmod -R 755 ${HOME}
+ENV JAVA_HOME=/usr/lib/jvm/java-11
+ENV PATH=$JAVA_HOME/bin:$HOME/maven/apache-maven-3.6.3/bin:$PATH
+
 RUN chmod -R 777 ${HOME}/.cargo
 
 # Create a custom vnc xstartup file

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #*******************************************************************************
-# Copyright (c) 2019 IBM Corporation and others.
+# Copyright (c) 2020 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -11,7 +11,7 @@
 # SPDX-License-Identifier: EPL-2.0
 #
 # Contributors:
-#     Kit Lo - initial API and implementation
+#     Sravan Lakkimsetti - initial API and implementation
 #*******************************************************************************
 set -e
 
@@ -23,9 +23,8 @@ fi
 source $CJE_ROOT/scripts/common-functions.shsource
 source $1
 
-pushd $CJE_ROOT/$TMP_DIR
-mkdir -p $CJE_ROOT/$TMP_DIR/$BUILD_TO_COMPARE_SITE/$PREVIOUS_RELEASE_VER
-epDownloadDir=/home/data/httpd/download.eclipse.org/eclipse
-p2RepoPath=${epDownloadDir}/updates
-scp -r genie.releng@projects-storage.eclipse.org:$p2RepoPath/$PREVIOUS_RELEASE_REPO_ID/$PREVIOUS_RELEASE_ID $CJE_ROOT/$TMP_DIR/$BUILD_TO_COMPARE_SITE/$PREVIOUS_RELEASE_VER/.
+epUpdateDir=/home/data/httpd/download.eclipse.org/eclipse/updates
+dropsPath=${epUpdateDir}/${STREAMMajor}.${STREAMMinor}-${BUILD_TYPE}-builds
+pushd $CJE_ROOT/$UPDATES_DIR
+scp -r ${BUILD_ID} genie.releng@projects-storage.eclipse.org:${dropsPath}/.
 popd

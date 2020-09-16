@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #*******************************************************************************
-# Copyright (c) 2019 IBM Corporation and others.
+# Copyright (c) 2019, 2020 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -23,9 +23,20 @@ fi
 source $CJE_ROOT/scripts/common-functions.shsource
 source $1
 
-pushd $CJE_ROOT/$TMP_DIR
-mkdir -p $CJE_ROOT/$TMP_DIR/$BUILD_TO_COMPARE_SITE/$PREVIOUS_RELEASE_VER
-epDownloadDir=/home/data/httpd/download.eclipse.org/eclipse
-p2RepoPath=${epDownloadDir}/updates
-scp -r genie.releng@projects-storage.eclipse.org:$p2RepoPath/$PREVIOUS_RELEASE_REPO_ID/$PREVIOUS_RELEASE_ID $CJE_ROOT/$TMP_DIR/$BUILD_TO_COMPARE_SITE/$PREVIOUS_RELEASE_VER/.
-popd
+mkdir -p $CJE_ROOT/$UPDATES_DIR/$BUILD_ID
+
+JavaCMD=${JAVA_HOME}/bin/java
+
+# gather maven properties
+cp $CJE_ROOT/$AGG_DIR/eclipse-platform-parent/target/mavenproperties.properties  $CJE_ROOT/$DROP_DIR/$BUILD_ID/mavenproperties.properties
+
+# gather repo
+echo $PATCH_BUILD
+PATCH_BUILD_GENERIC=java15patch
+REPO_DIR=$ECLIPSE_BUILDER_DIR/$PATCH_BUILD/eclipse.releng.repository.$PATCH_BUILD_GENERIC/target/repository
+  
+if [ -d $REPO_DIR ]; then
+  pushd $REPO_DIR
+  cp -r * $CJE_ROOT/$UPDATES_DIR/$BUILD_ID
+  popd
+fi
