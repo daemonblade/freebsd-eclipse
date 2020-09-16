@@ -21,8 +21,6 @@ import java.net.URL;
 import java.util.*;
 import org.eclipse.core.internal.runtime.*;
 import org.eclipse.core.runtime.content.IContentTypeManager;
-import org.eclipse.core.runtime.jobs.IJobManager;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.eclipse.osgi.service.datalocation.Location;
@@ -718,6 +716,31 @@ public final class Platform {
 	}
 
 	/**
+	 * Returns whether the identified option is <code>true</code>.
+	 *
+	 * <code>false</code> is returned if no such option is found, or if the string
+	 * is not "true" (ignoring case).
+	 *
+	 * Options are specified in the general form <i>&lt;plug-in
+	 * id&gt;/&lt;option-path&gt;</i>.
+	 *
+	 * For example, <code>org.eclipse.core.runtime/debug=true</code>
+	 *
+	 * Clients are also able to acquire the {@link DebugOptions} service and query
+	 * it for debug options.
+	 *
+	 * See @link {@link Platform#getDebugOption(String)}
+	 *
+	 * @param option the name of the option to lookup
+	 * @return <code>true</code> if the value is equal to the string "true" or
+	 *         <code>false</code> otherwise
+	 * @since 3.19
+	 */
+	public static boolean getDebugBoolean(String option) {
+		return "true".equalsIgnoreCase(InternalPlatform.getDefault().getOption(option)); //$NON-NLS-1$
+	}
+
+	/**
 	 * Returns the location of the platform working directory.
 	 * <p>
 	 * Callers of this method should consider using <code>getInstanceLocation</code>
@@ -868,19 +891,6 @@ public final class Platform {
 	@Deprecated
 	public static void run(ISafeRunnable runnable) {
 		SafeRunner.run(runnable);
-	}
-
-	/**
-	 * Returns the platform job manager.
-	 *
-	 * @return the platform's job manager
-	 * @since 3.0
-	 * @deprecated The method {@link Job#getJobManager()} should be used instead.
-	 * @noreference This method is planned for removal. See bug#528192 for details.
-	 */
-	@Deprecated
-	public static IJobManager getJobManager() {
-		return Job.getJobManager();
 	}
 
 	/**

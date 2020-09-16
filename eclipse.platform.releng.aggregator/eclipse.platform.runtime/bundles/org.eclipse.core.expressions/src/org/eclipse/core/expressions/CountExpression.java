@@ -12,22 +12,21 @@
  *     IBM Corporation - initial API and implementation.
  *     Ian Phillips - additional expressions support ( "-N)", "(N-" ).
  *******************************************************************************/
-package org.eclipse.core.internal.expressions;
+package org.eclipse.core.expressions;
 
 import java.util.Collection;
 
 import org.w3c.dom.Element;
 
-import org.eclipse.core.expressions.EvaluationResult;
-import org.eclipse.core.expressions.Expression;
-import org.eclipse.core.expressions.ExpressionInfo;
-import org.eclipse.core.expressions.ICountable;
-import org.eclipse.core.expressions.IEvaluationContext;
+import org.eclipse.core.internal.expressions.Expressions;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 
 
+/**
+ * @since 3.7
+ */
 public class CountExpression extends Expression {
 
 	private static final int GREATER_THAN = 7; // (N-

@@ -266,10 +266,8 @@ public final class ContentTypeCatalog {
 			throw llioe.getActualException();
 		} catch (IOException ioe) {
 			// bugs 67841/ 62443  - non-low level IOException should be "ignored"
-			if (ContentTypeManager.DEBUGGING) {
-				String message = NLS.bind(ContentMessages.content_errorReadingContents, type.getId());
-				ContentType.log(message, ioe);
-			}
+			String message = NLS.bind(ContentMessages.content_errorReadingContents, type.getId());
+			ContentType.log(message, ioe);
 			// we don't know what the describer would say if the exception didn't occur
 			return IContentDescriber.INDETERMINATE;
 		} finally {
@@ -662,7 +660,7 @@ public final class ContentTypeCatalog {
 			if (ensureValid(type))
 				associate(type);
 		}
-		if (ContentTypeManager.DEBUGGING)
+		if (ContentTypeManager.DebuggingHolder.DEBUGGING)
 			for (IContentType iContentType : contentTypes.values()) {
 				ContentType type = (ContentType) iContentType;
 				if (!type.isValid())

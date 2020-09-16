@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.content.*;
 import org.eclipse.core.runtime.preferences.*;
+import org.eclipse.osgi.service.debug.DebugOptions;
 import org.eclipse.osgi.util.NLS;
 import org.osgi.service.prefs.BackingStoreException;
 
@@ -44,10 +45,26 @@ public class ContentTypeManager extends ContentTypeMatcher implements IContentTy
 
 	public static final int BLOCK_SIZE = 0x400;
 	public static final String CONTENT_TYPE_PREF_NODE = IContentConstants.RUNTIME_NAME + IPath.SEPARATOR + "content-types"; //$NON-NLS-1$
-	private static final String OPTION_DEBUG_CONTENT_TYPES = "org.eclipse.core.contenttype/debug"; //$NON-NLS-1$;
-	static final boolean DEBUGGING = Activator.getDefault().getBooleanDebugOption(OPTION_DEBUG_CONTENT_TYPES, false);
+	private static final String OPTION_DEBUG_CONTENT_TYPES = "org.eclipse.core.contenttype/debug"; //$NON-NLS-1$
 	private ContentTypeCatalog catalog;
 	private int catalogGeneration;
+
+	/**
+	 * The DebuggingHolder contains a single boolean with a
+	 * {@link DebuggingHolder#DEBUGGING} field. By providing a class that wraps it,
+	 * it will defer the lookup of this field until it is needed.
+	 */
+	static class DebuggingHolder {
+		static final boolean DEBUGGING;
+		static {
+			boolean[] debugging = { false };
+			ServiceCaller.callOnce(DebuggingHolder.class, DebugOptions.class,
+					debugOptions -> {
+						debugging[0] = debugOptions.getBooleanOption(OPTION_DEBUG_CONTENT_TYPES, false);
+					});
+			DEBUGGING = debugging[0];
+		}
+	}
 
 	/**
 	 * List of registered listeners (element type:
@@ -58,7 +75,7 @@ public class ContentTypeManager extends ContentTypeMatcher implements IContentTy
 	protected final ListenerList<IContentTypeChangeListener> contentTypeListeners = new ListenerList<>();
 
 
-	public static void addRegistryChangeListener(IExtensionRegistry registry) {
+	public void addRegistryChangeListener(IExtensionRegistry registry) {
 		if (registry == null)
 			return;
 		// Different instances of listener required. See documentation of
@@ -76,7 +93,7 @@ public class ContentTypeManager extends ContentTypeMatcher implements IContentTy
 		instance = null;
 	}
 
-	public static void removeRegistryChangeListener(IExtensionRegistry registry) {
+	public void removeRegistryChangeListener(IExtensionRegistry registry) {
 		if (registry == null)
 			return;
 		getInstance().invalidate();
@@ -120,6 +137,7 @@ public class ContentTypeManager extends ContentTypeMatcher implements IContentTy
 
 	public ContentTypeManager() {
 		super(null, InstanceScope.INSTANCE);
+		instance = this;
 	}
 
 	protected ContentTypeBuilder createBuilder(ContentTypeCatalog newCatalog) {
@@ -180,7 +198,7 @@ public class ContentTypeManager extends ContentTypeMatcher implements IContentTy
 	 * Causes a new catalog to be built afresh next time an API call is made.
 	 */
 	synchronized void invalidate() {
-		if (ContentTypeManager.DEBUGGING && catalog != null)
+		if (DebuggingHolder.DEBUGGING && catalog != null)
 			ContentMessages.message("Registry discarded"); //$NON-NLS-1$
 		catalog = null;
 	}

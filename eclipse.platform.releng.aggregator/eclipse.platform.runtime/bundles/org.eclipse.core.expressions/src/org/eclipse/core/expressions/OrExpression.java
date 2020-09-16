@@ -11,26 +11,27 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.core.internal.expressions;
-
-import org.eclipse.core.expressions.EvaluationResult;
-import org.eclipse.core.expressions.IEvaluationContext;
+package org.eclipse.core.expressions;
 
 import org.eclipse.core.runtime.CoreException;
 
-public class AndExpression extends CompositeExpression {
+/**
+ * @since 3.7
+ */
 
-	@Override
-	public boolean equals(final Object object) {
-		if (!(object instanceof AndExpression))
-			return false;
-
-		final AndExpression that= (AndExpression)object;
-		return equals(this.fExpressions, that.fExpressions);
-	}
+public class OrExpression extends CompositeExpression {
 
 	@Override
 	public EvaluationResult evaluate(IEvaluationContext context) throws CoreException {
-		return evaluateAnd(context);
+		return evaluateOr(context);
+	}
+
+	@Override
+	public boolean equals(final Object object) {
+		if (!(object instanceof OrExpression))
+			return false;
+
+		final OrExpression that= (OrExpression)object;
+		return equals(this.fExpressions, that.fExpressions);
 	}
 }

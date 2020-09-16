@@ -11,14 +11,12 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.core.internal.expressions;
+package org.eclipse.core.expressions;
 
 import org.w3c.dom.Element;
 
-import org.eclipse.core.expressions.EvaluationResult;
-import org.eclipse.core.expressions.Expression;
-import org.eclipse.core.expressions.ExpressionInfo;
-import org.eclipse.core.expressions.IEvaluationContext;
+import org.eclipse.core.internal.expressions.DefinitionRegistry;
+import org.eclipse.core.internal.expressions.Expressions;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
@@ -29,7 +27,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
  * extension point to evaluate the current context against pre-defined
  * expressions. It provides core expression re-use.
  *
- * @since 3.3
+ * @since 3.7
  */
 public class ReferenceExpression extends Expression {
 

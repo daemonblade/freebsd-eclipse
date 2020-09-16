@@ -11,18 +11,17 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.core.internal.expressions;
+package org.eclipse.core.expressions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.core.expressions.EvaluationResult;
-import org.eclipse.core.expressions.Expression;
-import org.eclipse.core.expressions.ExpressionInfo;
-import org.eclipse.core.expressions.IEvaluationContext;
-
 import org.eclipse.core.runtime.CoreException;
+
+/**
+ * @since 3.7
+ */
 
 public abstract class CompositeExpression extends Expression {
 

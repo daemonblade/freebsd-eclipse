@@ -11,19 +11,23 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.core.internal.expressions;
+package org.eclipse.core.expressions;
 
 import org.w3c.dom.Element;
 
-import org.eclipse.core.expressions.EvaluationResult;
-import org.eclipse.core.expressions.Expression;
-import org.eclipse.core.expressions.ExpressionInfo;
-import org.eclipse.core.expressions.IEvaluationContext;
+import org.eclipse.core.internal.expressions.ExpressionMessages;
+import org.eclipse.core.internal.expressions.ExpressionStatus;
+import org.eclipse.core.internal.expressions.Expressions;
+import org.eclipse.core.internal.expressions.Property;
+import org.eclipse.core.internal.expressions.TypeExtensionManager;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 
+/**
+ * @since 3.7
+ */
 public class TestExpression extends Expression {
 
 	private String fNamespace;
