@@ -15,10 +15,8 @@
 package org.eclipse.osgi.internal.framework;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URLConnection;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
@@ -37,7 +35,6 @@ import org.eclipse.osgi.framework.eventmgr.EventDispatcher;
 import org.eclipse.osgi.internal.debug.Debug;
 import org.eclipse.osgi.internal.loader.BundleLoader;
 import org.eclipse.osgi.internal.messages.Msg;
-import org.eclipse.osgi.internal.serviceregistry.HookContext;
 import org.eclipse.osgi.internal.serviceregistry.ServiceReferenceImpl;
 import org.eclipse.osgi.internal.serviceregistry.ServiceRegistrationImpl;
 import org.eclipse.osgi.internal.serviceregistry.ServiceRegistry;
@@ -75,7 +72,6 @@ import org.osgi.resource.Capability;
  */
 
 public class BundleContextImpl implements BundleContext, EventDispatcher<Object, Object, Object> {
-	static final String findHookName = FindHook.class.getName();
 	/** true if the bundle context is still valid */
 	private volatile boolean valid;
 
@@ -182,14 +178,9 @@ public class BundleContextImpl implements BundleContext, EventDispatcher<Object,
 	@Override
 	public Bundle installBundle(String location, InputStream in) throws BundleException {
 		checkValid();
-		try {
-			URLConnection content = container.getStorage().getContentConnection(null, location, in);
-			Generation generation = container.getStorage().install(bundle.getModule(), location, content);
-			return generation.getRevision().getBundle();
-		} catch (IOException e) {
-			throw new BundleException("Error reading bundle content.", e); //$NON-NLS-1$
-		}
 
+		Generation generation = container.getStorage().install(bundle.getModule(), location, in);
+		return generation.getRevision().getBundle();
 	}
 
 	/**
@@ -266,28 +257,8 @@ public class BundleContextImpl implements BundleContext, EventDispatcher<Object,
 		if (debug.DEBUG_HOOKS) {
 			Debug.println("notifyBundleFindHooks(" + allBundles + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		container.getServiceRegistry().notifyHooksPrivileged(new HookContext() {
-			@Override
-			public void call(Object hook, ServiceRegistration<?> hookRegistration) throws Exception {
-				if (hook instanceof FindHook) {
-					((FindHook) hook).find(context, allBundles);
-				}
-			}
-
-			@Override
-			public String getHookClassName() {
-				return findHookName;
-			}
-
-			@Override
-			public String getHookMethodName() {
-				return "find"; //$NON-NLS-1$
-			}
-
-			@Override
-			public boolean skipRegistration(ServiceRegistration<?> hookRegistration) {
-				return false;
-			}
+		container.getServiceRegistry().notifyHooksPrivileged(FindHook.class, "find", (hook, hookRegistration) -> { //$NON-NLS-1$
+			hook.find(context, allBundles);
 		});
 	}
 

@@ -16,11 +16,19 @@ package org.eclipse.osgi.internal.hooks;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import org.eclipse.osgi.container.ModuleCapability;
+import org.eclipse.osgi.container.namespaces.EquinoxModuleDataNamespace;
 import org.eclipse.osgi.framework.util.KeyedElement;
 import org.eclipse.osgi.internal.framework.EquinoxConfiguration;
 import org.eclipse.osgi.internal.hookregistry.ClassLoaderHook;
-import org.eclipse.osgi.internal.loader.classpath.*;
+import org.eclipse.osgi.internal.loader.classpath.ClasspathEntry;
+import org.eclipse.osgi.internal.loader.classpath.ClasspathManager;
+import org.eclipse.osgi.internal.loader.classpath.FragmentClasspath;
 import org.eclipse.osgi.storage.BundleInfo.Generation;
+import org.eclipse.osgi.storage.ContentProvider.Type;
 import org.eclipse.osgi.storage.bundlefile.BundleFile;
 
 public class DevClassLoadingHook extends ClassLoaderHook implements KeyedElement {
@@ -36,6 +44,10 @@ public class DevClassLoadingHook extends ClassLoaderHook implements KeyedElement
 
 	@Override
 	public boolean addClassPathEntry(ArrayList<ClasspathEntry> cpEntries, String cp, ClasspathManager hostmanager, Generation sourceGeneration) {
+		// if this is a connect bundle just ignore
+		if (sourceGeneration.getContentType() == Type.CONNECT) {
+			return false;
+		}
 		// first check that we are in devmode for this sourcedata
 		String[] devClassPaths = !configuration.inDevelopmentMode() ? null : configuration.getDevClassPath(sourceGeneration.getRevision().getSymbolicName());
 		if (devClassPaths == null || devClassPaths.length == 0)
@@ -43,8 +55,22 @@ public class DevClassLoadingHook extends ClassLoaderHook implements KeyedElement
 		// check that dev classpath entries have not already been added; we mark this in the first entry below
 		if (cpEntries.size() > 0 && cpEntries.get(0).getUserObject(KEY) != null)
 			return false; // this source has already had its dev classpath entries added.
+
+		// get the specified classpath from the Bundle-ClassPath header to check for dups
+		List<ModuleCapability> moduleDatas = sourceGeneration.getRevision().getModuleCapabilities(EquinoxModuleDataNamespace.MODULE_DATA_NAMESPACE);
+		@SuppressWarnings("unchecked")
+		List<String> specifiedCP = Optional.ofNullable(moduleDatas.isEmpty()
+				?
+				null
+				: (List<String>) moduleDatas.get(0).getAttributes().get(EquinoxModuleDataNamespace.CAPABILITY_CLASSPATH))
+				.orElse(Collections.singletonList(".")); //$NON-NLS-1$
 		boolean result = false;
 		for (String devClassPath : devClassPaths) {
+			if (specifiedCP.contains(devClassPath)) {
+				// dev properties contained a duplicate of an entry on the Bundle-ClassPath header
+				// don't add anything, the framework will do it for us
+				continue;
+			}
 			if (hostmanager.addClassPathEntry(cpEntries, devClassPath, hostmanager, sourceGeneration)) {
 				result = true;
 			} else {
@@ -53,7 +79,7 @@ public class DevClassLoadingHook extends ClassLoaderHook implements KeyedElement
 				if (!fromFragment && devCP.indexOf("..") >= 0) { //$NON-NLS-1$
 					// if in dev mode, try using cp as a relative path from the base bundle file
 					File base = sourceGeneration.getBundleFile().getBaseFile();
-					if (base.isDirectory()) {
+					if (base != null && base.isDirectory()) {
 						// this is only supported for directory bundles
 						ClasspathEntry entry = hostmanager.getExternalClassPath(new File(base, devCP).getAbsolutePath(), sourceGeneration);
 						if (entry != null) {

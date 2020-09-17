@@ -360,6 +360,23 @@ public class AbstractBundleTests extends CoreTest {
 		return waitForStop(equinox, uuid, quietly, timeout);
 	}
 
+	protected static boolean delete(File file) {
+		if (file.exists()) {
+			if (file.isDirectory()) {
+				String list[] = file.list();
+				if (list != null) {
+					int len = list.length;
+					for (int i = 0; i < len; i++) {
+						delete(new File(file, list[i]));
+					}
+				}
+			}
+
+			return file.delete();
+		}
+		return (true);
+	}
+
 	static public FrameworkEvent waitForStop(Framework equinox, String uuid, boolean quietly, long timeout) {
 		try {
 			FrameworkEvent stopEvent = equinox.waitForStop(timeout);

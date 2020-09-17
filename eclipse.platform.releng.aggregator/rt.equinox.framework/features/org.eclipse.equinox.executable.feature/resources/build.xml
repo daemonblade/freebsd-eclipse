@@ -139,6 +139,7 @@
 		<antcall target="rootFileswin32_win32_x86_64"/>
 		<antcall target="rootFilesmacosx_cocoa_x86_64"/>
 		<antcall target="rootFilesfreebsd_gtk_powerpc64"/>
+		<antcall target="rootFilesfreebsd_gtk_aarch64"/>
 		<antcall target="rootFilesfreebsd_gtk_amd64"/>
 	</target>
 

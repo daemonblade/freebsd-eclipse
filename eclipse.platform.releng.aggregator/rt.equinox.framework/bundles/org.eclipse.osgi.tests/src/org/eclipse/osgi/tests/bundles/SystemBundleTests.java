@@ -793,25 +793,25 @@ public class SystemBundleTests extends AbstractBundleTests {
 	}
 
 	public void testChangeEE() throws IOException, BundleException {
-		URL javaSE7Profile = OSGiTestsActivator.getContext().getBundle(Constants.SYSTEM_BUNDLE_LOCATION).getEntry("JavaSE-1.7.profile");
 		URL javaSE8Profile = OSGiTestsActivator.getContext().getBundle(Constants.SYSTEM_BUNDLE_LOCATION).getEntry("JavaSE-1.8.profile");
+		URL javaSE9Profile = OSGiTestsActivator.getContext().getBundle(Constants.SYSTEM_BUNDLE_LOCATION).getEntry("JavaSE-9.profile");
 
-		// configure equinox for javaSE 8
+		// configure equinox for javaSE 9
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
 		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
-		configuration.put("osgi.java.profile", javaSE8Profile.toExternalForm()); //$NON-NLS-1$
+		configuration.put("osgi.java.profile", javaSE9Profile.toExternalForm()); //$NON-NLS-1$
 
 		Equinox equinox = new Equinox(configuration);
 		equinox.start();
 
-		// install a bundle that requires java 8
+		// install a bundle that requires java 9
 		BundleContext systemContext = equinox.getBundleContext();
 		assertNotNull("System context is null", systemContext); //$NON-NLS-1$
 		Map<String, String> testHeaders = new HashMap<>();
 		testHeaders.put(Constants.BUNDLE_MANIFESTVERSION, "2");
 		testHeaders.put(Constants.BUNDLE_SYMBOLICNAME, getName());
-		testHeaders.put(Constants.BUNDLE_REQUIREDEXECUTIONENVIRONMENT, "JavaSE-1.8");
+		testHeaders.put(Constants.BUNDLE_REQUIREDEXECUTIONENVIRONMENT, "JavaSE-9");
 		File testBundle = createBundle(config, getName(), testHeaders);
 		Bundle b = systemContext.installBundle("reference:file:///" + testBundle.getAbsolutePath()); //$NON-NLS-1$
 		long bid = b.getBundleId();
@@ -822,8 +822,8 @@ public class SystemBundleTests extends AbstractBundleTests {
 		// put the framework back to the RESOLVED state
 		stop(equinox);
 
-		// configure equinox for java 7
-		configuration.put("osgi.java.profile", javaSE7Profile.toExternalForm());
+		// configure equinox for java 8
+		configuration.put("osgi.java.profile", javaSE8Profile.toExternalForm());
 		equinox = new Equinox(configuration);
 		try {
 			equinox.start();
@@ -837,8 +837,8 @@ public class SystemBundleTests extends AbstractBundleTests {
 		// put the framework back to the RESOLVED state
 		stop(equinox);
 
-		// move back to java 8
-		configuration.put("osgi.java.profile", javaSE8Profile.toExternalForm());
+		// move back to java 9
+		configuration.put("osgi.java.profile", javaSE9Profile.toExternalForm());
 		equinox = new Equinox(configuration);
 		try {
 			equinox.start();
@@ -2223,7 +2223,7 @@ public class SystemBundleTests extends AbstractBundleTests {
 		config.mkdirs();
 		Map<String, Object> configuration = new HashMap<>();
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
-		configuration.put(Constants.FRAMEWORK_SYSTEMCAPABILITIES, "osgi.ee; osgi.ee=JavaSE; version:Version=1.7, something.system");
+		configuration.put(Constants.FRAMEWORK_SYSTEMCAPABILITIES, "osgi.ee; osgi.ee=JavaSE; version:Version=1.8, something.system");
 		configuration.put(Constants.FRAMEWORK_SYSTEMPACKAGES, "something.system");
 		configuration.put(Constants.FRAMEWORK_SYSTEMCAPABILITIES_EXTRA, "something.extra");
 		configuration.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, "something.extra");
@@ -2294,7 +2294,6 @@ public class SystemBundleTests extends AbstractBundleTests {
 			doTestJavaProfile("1.10.1", "JavaSE-1.8", null);
 			doTestJavaProfile("1.9", "JavaSE-1.8", null);
 			doTestJavaProfile("1.8", "JavaSE-1.8", null);
-			doTestJavaProfile("1.7", "JavaSE-1.7", null);
 			doTestJavaProfile("1.8", "JavaSE/compact3-1.8", "compact3");
 			doTestJavaProfile("1.8", "JavaSE/compact3-1.8", "\"compact3\"");
 			doTestJavaProfile("1.8", "JavaSE/compact3-1.8", " \"compact3\" ");
@@ -2417,7 +2416,8 @@ public class SystemBundleTests extends AbstractBundleTests {
 		return manifest;
 	}
 
-	static File createBundle(File outputDir, String bundleName, Map<String, String> headers, Map<String, String>... entries) throws IOException {
+	public static File createBundle(File outputDir, String bundleName, Map<String, String> headers,
+			Map<String, String>... entries) throws IOException {
 		Manifest m = new Manifest();
 		Attributes attributes = m.getMainAttributes();
 		attributes.putValue("Manifest-Version", "1.0");
@@ -2432,6 +2432,32 @@ public class SystemBundleTests extends AbstractBundleTests {
 					jos.putNextEntry(new JarEntry(entry.getKey()));
 					if (entry.getValue() != null) {
 						jos.write(entry.getValue().getBytes());
+					}
+					jos.closeEntry();
+				}
+			}
+		}
+		jos.flush();
+		jos.close();
+		return file;
+	}
+
+	public static File createBundleWithBytes(File outputDir, String bundleName, Map<String, String> headers,
+			Map<String, byte[]>... entries) throws IOException {
+		Manifest m = new Manifest();
+		Attributes attributes = m.getMainAttributes();
+		attributes.putValue("Manifest-Version", "1.0");
+		for (Map.Entry<String, String> entry : headers.entrySet()) {
+			attributes.putValue(entry.getKey(), entry.getValue());
+		}
+		File file = new File(outputDir, "bundle" + bundleName + ".jar"); //$NON-NLS-1$ //$NON-NLS-2$
+		JarOutputStream jos = new JarOutputStream(new FileOutputStream(file), m);
+		if (entries != null) {
+			for (Map<String, byte[]> entryMap : entries) {
+				for (Map.Entry<String, byte[]> entry : entryMap.entrySet()) {
+					jos.putNextEntry(new JarEntry(entry.getKey()));
+					if (entry.getValue() != null) {
+						jos.write(entry.getValue());
 					}
 					jos.closeEntry();
 				}

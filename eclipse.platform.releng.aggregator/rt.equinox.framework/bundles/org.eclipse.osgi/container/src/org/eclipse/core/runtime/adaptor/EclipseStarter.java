@@ -1417,14 +1417,10 @@ public class EclipseStarter {
 			return;
 
 		final Bundle systemBundle = context.getBundle();
-		for (Iterator<Runnable> it = shutdownHandlers.iterator(); it.hasNext();) {
-			final Runnable handler = it.next();
-			BundleListener listener = new BundleListener() {
-				@Override
-				public void bundleChanged(BundleEvent event) {
-					if (event.getBundle() == systemBundle && event.getType() == BundleEvent.STOPPED) {
-						handler.run();
-					}
+		for (Runnable handler : shutdownHandlers) {
+			BundleListener listener = event -> {
+				if (event.getBundle() == systemBundle && event.getType() == BundleEvent.STOPPED) {
+					handler.run();
 				}
 			};
 			context.addBundleListener(listener);

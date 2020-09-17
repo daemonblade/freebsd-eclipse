@@ -168,6 +168,7 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S>, Compa
 		final ServiceReferenceImpl<S> ref;
 		final Map<String, Object> previousProperties;
 		synchronized (registry) {
+			int previousRanking;
 			synchronized (registrationLock) {
 				if (state != REGISTERED) { /* in the process of unregisterING */
 					throw new IllegalStateException(Msg.SERVICE_ALREADY_UNREGISTERED_EXCEPTION + ' ' + this);
@@ -175,9 +176,10 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S>, Compa
 
 				ref = reference; /* used to publish event outside sync */
 				previousProperties = this.properties;
+				previousRanking = serviceranking;
 				this.properties = createProperties(props);
 			}
-			registry.modifyServiceRegistration(context, this);
+			registry.modifyServiceRegistration(context, this, previousRanking);
 		}
 		/* must not hold the registrationLock when this event is published */
 		registry.publishServiceEvent(new ModifiedServiceEvent(ref, previousProperties));
@@ -488,15 +490,6 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S>, Compa
 		return bundle;
 	}
 
-	S getSafeService(BundleContextImpl user, ServiceConsumer consumer) {
-		try {
-			return getService(user, consumer);
-		} catch (IllegalStateException e) {
-			// can happen if the user is stopped on another thread
-			return null;
-		}
-	}
-
 	/**
 	 * Get a service object for the using BundleContext.
 	 *
@@ -709,8 +702,9 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S>, Compa
 		}
 	}
 
-	boolean isAssignableTo(Bundle client, String className) {
-		return PackageSource.isServiceAssignableTo(bundle, client, className, service.getClass(), context.getContainer());
+	boolean isAssignableTo(Bundle client, String className, boolean checkInternal) {
+		return PackageSource.isServiceAssignableTo(bundle, client, className, service.getClass(), checkInternal,
+				context.getContainer());
 	}
 
 	/**
@@ -754,23 +748,15 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S>, Compa
 	 */
 	@Override
 	public int compareTo(ServiceRegistrationImpl<?> other) {
-		final int thisRanking = this.getRanking();
-		final int otherRanking = other.getRanking();
-		if (thisRanking != otherRanking) {
-			if (thisRanking < otherRanking) {
-				return 1;
-			}
-			return -1;
+		return compareTo(other.getRanking(), other.getId());
+	}
+
+	int compareTo(int otherRanking, long otherId) {
+		int compared = Integer.compare(otherRanking, getRanking());
+		if (compared != 0) {
+			return compared;
 		}
-		final long thisId = this.getId();
-		final long otherId = other.getId();
-		if (thisId == otherId) {
-			return 0;
-		}
-		if (thisId < otherId) {
-			return -1;
-		}
-		return 1;
+		return Long.compare(getId(), otherId);
 	}
 
 	static class FrameworkHookRegistration<S> extends ServiceRegistrationImpl<S> {
@@ -778,11 +764,13 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S>, Compa
 		private volatile S hookInstance;
 		private final BundleContextImpl systemContext;
 		private final Object hookLock = new Object();
+		private final List<Class<?>> hookTypes;
 
 		FrameworkHookRegistration(ServiceRegistry registry, BundleContextImpl context, String[] clazzes, S service,
-				BundleContextImpl systemContext) {
+				BundleContextImpl systemContext, List<Class<?>> hookTypes) {
 			super(registry, context, clazzes, service);
 			this.systemContext = systemContext;
+			this.hookTypes = hookTypes;
 		}
 
 		@Override
@@ -811,6 +799,23 @@ public class ServiceRegistrationImpl<S> implements ServiceRegistration<S>, Compa
 		void ungetHookInstance() {
 			if (hookInstance != null) {
 				systemContext.ungetService(getReferenceImpl());
+			}
+		}
+
+		S getSafeService(BundleContextImpl user, ServiceConsumer consumer) {
+			try {
+				S hook = getService(user, consumer);
+				if (hookTypes.stream().filter((hookType) -> !hookType.isInstance(hook)).findFirst().isPresent()) {
+					// the hook impl is wired to a different hook package than the framework
+					if (hook != null) {
+						systemContext.ungetService(getReference());
+					}
+					return null;
+				}
+				return hook;
+			} catch (IllegalStateException e) {
+				// can happen if the user is stopped on another thread
+				return null;
 			}
 		}
 	}

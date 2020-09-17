@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2015 IBM Corporation and others.
+ * Copyright (c) 2013, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -25,6 +25,8 @@ public class AllFrameworkHookTests {
 		suite.addTest(new TestSuite(ContextFinderTests.class));
 		suite.addTest(new TestSuite(DevClassPathWithExtensionTests.class));
 		suite.addTest(new TestSuite(EmbeddedEquinoxWithURLInClassLoadTests.class));
+		suite.addTest(new TestSuite(ActivatorOrderTest.class));
+		suite.addTest(new TestSuite(DevClassPathDuplicateTests.class));
 		return suite;
 	}
 }
