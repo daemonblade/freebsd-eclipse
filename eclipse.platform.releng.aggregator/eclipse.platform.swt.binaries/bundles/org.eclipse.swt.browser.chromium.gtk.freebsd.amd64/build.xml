@@ -11,11 +11,11 @@
 	Contributors:
 		Guillermo Zunino, Equo - initial implementation
  -->
-<project name="org.eclipse.swt.browser.chromium.gtk.linux.x86_64" default="build.jars" basedir=".">
+<project name="org.eclipse.swt.browser.chromium.gtk.freebsd.amd64" default="build.jars" basedir=".">
 
 	<property name="swt.ws" value="gtk" />
-	<property name="swt.os" value="linux" />
-	<property name="swt.arch" value="x86_64" />
+	<property name="swt.os" value="freebsd" />
+	<property name="swt.arch" value="amd64" />
 
 	<!-- These properties are used by eclipse when exporting as Deployable plugin and fragments -->
 	<property name="version.suffix" value="3.115.0" />
@@ -26,7 +26,7 @@
 	
 	<target name="@dot" depends="init" unless="@dot" description="Create jar: @dot.">
 		<path id="@dot.cp">
-			<fileset dir="../org.eclipse.swt.gtk.linux.x86_64/target">
+			<fileset dir="../org.eclipse.swt.gtk.freebsd.amd64/target">
 				<include name="*.jar"/>
 			</fileset>
 		</path>
