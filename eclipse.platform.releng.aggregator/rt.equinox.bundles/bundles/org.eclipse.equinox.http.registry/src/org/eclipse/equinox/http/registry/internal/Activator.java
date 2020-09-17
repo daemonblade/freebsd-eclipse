@@ -21,6 +21,7 @@ import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class Activator implements BundleActivator, ServiceTrackerCustomizer {
 
 	private ServiceTracker httpServiceTracker;
@@ -33,10 +34,10 @@ public class Activator implements BundleActivator, ServiceTrackerCustomizer {
 
 	public void start(BundleContext context) throws Exception {
 		this.context = context;
-		packageAdminTracker = new ServiceTracker(context, PackageAdmin.class.getName(), this);
+		packageAdminTracker = new ServiceTracker<>(context, PackageAdmin.class, this);
 		packageAdminTracker.open();
 
-		registryTracker = new ServiceTracker(context, IExtensionRegistry.class.getName(), this);
+		registryTracker = new ServiceTracker<>(context, IExtensionRegistry.class, this);
 		registryTracker.open();
 	}
 
