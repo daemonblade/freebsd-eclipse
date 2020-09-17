@@ -5,6 +5,6 @@ Bundle-Vendor: Eclipse.org
 Bundle-SymbolicName: org.eclipse.swt.browser.chromium;singleton:=true
 Bundle-Version: 3.115.0.qualifier
 Bundle-ManifestVersion: 2
-Eclipse-PlatformFilter: (osgi.arch=x86_64)
-SWT-Arch: x86_64
+Eclipse-PlatformFilter: (osgi.arch=amd64)
+SWT-Arch: amd64
 Automatic-Module-Name: org.eclipse.swt.browser.chromium
