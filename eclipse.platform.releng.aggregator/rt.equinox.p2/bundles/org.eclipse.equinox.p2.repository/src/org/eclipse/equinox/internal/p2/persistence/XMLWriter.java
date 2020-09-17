@@ -7,7 +7,7 @@
  *  https://www.eclipse.org/legal/epl-2.0/
  *
  *  SPDX-License-Identifier: EPL-2.0
- * 
+ *
  *  Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -21,6 +21,8 @@ import java.util.*;
 import org.eclipse.equinox.p2.metadata.Version;
 
 public class XMLWriter implements XMLConstants {
+
+	static final boolean ignoreWhitespace = Boolean.getBoolean("p2.ignoreWhitespace"); //$NON-NLS-1$
 
 	public static class ProcessingInstruction {
 
@@ -82,7 +84,9 @@ public class XMLWriter implements XMLConstants {
 		if (this.open) {
 			println('>');
 		}
-		indent();
+		if (!ignoreWhitespace) {
+			indent();
+		}
 		print('<');
 		print(name);
 		this.elements.push(name);
@@ -308,15 +312,25 @@ public class XMLWriter implements XMLConstants {
 	}
 
 	private void println(char c) {
-		this.pw.println(c);
+		if (ignoreWhitespace) {
+			this.pw.print(c);
+		} else {
+			this.pw.println(c);
+		}
 	}
 
 	private void println(String s) {
-		this.pw.println(s);
+		if (ignoreWhitespace) {
+			this.pw.print(s);
+		} else {
+			this.pw.println(s);
+		}
 	}
 
 	private void println() {
-		this.pw.println();
+		if (!ignoreWhitespace) {
+			this.pw.println();
+		}
 	}
 
 	private void print(char c) {
@@ -331,14 +345,18 @@ public class XMLWriter implements XMLConstants {
 		if (s.length() == 0) {
 			println();
 		} else {
-			indent();
+			if (!ignoreWhitespace) {
+				indent();
+			}
 			println(escape ? escape(s) : s);
 		}
 	}
 
 	private void indent() {
-		for (int i = this.elements.size(); i > 0; i -= 1) {
-			print(this.indent);
+		if (!ignoreWhitespace) {
+			for (int i = this.elements.size(); i > 0; i -= 1) {
+				print(this.indent);
+			}
 		}
 	}
 
