@@ -35,10 +35,8 @@
 		<condition property="cefos" value="windows" else="${swt.os}">
 			<equals arg1="${swt.os}" arg2="win32"/>
 		</condition>
-		<property name="ceffile" value="cef_binary_3.3071.1649.g98725e6_${cefos}64_minimal.tar.bz2"/>
-		<mkdir dir="${tmphome}"/>
-		<get src="http://opensource.spotify.com/cefbuilds/${ceffile}" dest="${tmphome}/${ceffile}" usetimestamp="true"/>
-		<untar dest="${repo.src}/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_${swt.os}" overwrite="false" compression="bzip2" src="${tmphome}/${ceffile}">
+		<property name="ceffile" value="cef_binary_3.3071.1649.g98725e6_linux64_minimal.tar.bz2"/>
+		<untar dest="${repo.src}/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_${swt.os}" overwrite="false" compression="bzip2" src="${local.distfiles}/${ceffile}">
 			<cutdirsmapper dirs="1"/>
 		</untar>
 	</target>

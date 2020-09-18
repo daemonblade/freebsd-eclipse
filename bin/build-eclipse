@@ -14,6 +14,7 @@ fi
 . ./config.sh
 
 TOP_MODULE=$(basename $ECLIPSE_TOP)
+DISTFILES="${PWD}/distfiles"
 
 #
 # Create dummies for output and packaging.
@@ -55,6 +56,7 @@ REPO_PATH=$(realpath ${REPO})
 		-DskipTests=true \
 		-Dmaven.repo.local=${REPO_PATH} \
 		-Dnative=gtk.freebsd.${ARCH} \
+		-Dlocal.distfiles=${DISTFILES} \
 		clean verify 2>&1
 ) | tee build-$(date '+%Y%m%d-%H%M')${BUILD_SUFFIX}.log
 
