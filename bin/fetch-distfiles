@@ -26,3 +26,19 @@ do
 		fetch --retry $* -o distfiles ${HTTP_BASE}/${M}.git/snapshot/${FILE}
 	fi
 done
+
+#
+# Misc files
+#
+MISC="http://opensource.spotify.com/cefbuilds/cef_binary_3.3071.1649.g98725e6_linux64_minimal.tar.bz2"
+
+for M in ${MISC}
+do
+	FILE=$(basename $M)
+	if [ -r distfiles/${FILE} ]
+	then
+		echo "INFO: ${FILE} present."
+	else
+		fetch --retry $* -o distfiles ${M}
+	fi
+done
