@@ -16,14 +16,14 @@
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
-#[cfg(target_os = "linux")] pub mod linux;
-#[cfg(target_os = "linux")] pub use self::linux::_cef_window_info_t;
-#[cfg(target_os = "linux")] pub use self::linux::_cef_main_args_t;
-#[cfg(target_os = "linux")] pub type wchar_t = i32;
-#[cfg(target_os = "linux")] pub type char16 = i32;
-#[cfg(target_os = "linux")] pub type time_t = isize;
-#[cfg(target_os = "linux")] pub type int64 = ::std::os::raw::c_longlong;
-#[cfg(target_os = "linux")] pub type uint64 = ::std::os::raw::c_ulonglong;
+#[cfg(target_os = "freebsd")] pub mod linux;
+#[cfg(target_os = "freebsd")] pub use self::linux::_cef_window_info_t;
+#[cfg(target_os = "freebsd")] pub use self::linux::_cef_main_args_t;
+#[cfg(target_os = "freebsd")] pub type wchar_t = i32;
+#[cfg(target_os = "freebsd")] pub type char16 = i32;
+#[cfg(target_os = "freebsd")] pub type time_t = isize;
+#[cfg(target_os = "freebsd")] pub type int64 = ::std::os::raw::c_longlong;
+#[cfg(target_os = "freebsd")] pub type uint64 = ::std::os::raw::c_ulonglong;
 #[cfg(target_os = "macos")] pub mod mac;
 #[cfg(target_os = "macos")] pub use self::mac::_cef_window_info_t;
 #[cfg(target_os = "macos")] pub use self::mac::_cef_main_args_t;

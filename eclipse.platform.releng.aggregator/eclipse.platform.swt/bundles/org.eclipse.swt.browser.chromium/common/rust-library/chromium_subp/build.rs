@@ -38,8 +38,8 @@ fn get_cef_path() -> std::path::PathBuf {
   if cfg!(target_os = "macos") {
     cef_path.push("cef_macosx");
   } 
-  else if cfg!(target_os = "linux") {
-    cef_path.push("cef_linux");
+  else if cfg!(target_os = "freebsd") {
+    cef_path.push("cef_freebsd");
   } 
   else if cfg!(target_os = "windows") {
     if std::env::var("CARGO_CFG_TARGET_ARCH").unwrap() == "x86" {
@@ -58,7 +58,7 @@ fn link() {
     panic!("cargo:warning=Extract and rename cef binary (minimal) distro to {:?}", cef_path);
   }
 
-  if cfg!(target_os = "linux") {
+  if cfg!(target_os = "freebsd") {
     // println!("cargo:rustc-link-lib=gtk-x11-2.0");
     // println!("cargo:rustc-link-lib=gdk-x11-2.0");
     // println!("cargo:rustc-link-lib=gtk-3.so.0");
@@ -97,14 +97,14 @@ fn gen_os(cef_path: std::path::Display) {
 }
 
 #[cfg(feature = "gen")]
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 fn gen_os(cef_path: std::path::Display) {
   let _ = generator(cef_path)
     .header("cef_linux.h")
     .whitelist_type("_cef_main_args_t")
     .whitelist_type("_cef_window_info_t")
     .whitelist_function("cef_get_xdisplay")
-    .generate().expect("Failed to gencef linux")
+    .generate().expect("Failed to gencef freebsd")
     .write_to_file(std::path::Path::new("src").join("cef").join("linux.rs"));
 }
 
@@ -126,7 +126,7 @@ fn gen_os(cef_path: std::path::Display) {
 fn gen_cef(cef_path: std::path::Display) {
   use std::io::Write;
   #[cfg(target_os = "windows")] let gen = generator(cef_path).header("include/internal/cef_types_win.h");
-  #[cfg(target_os = "linux")] let gen = generator(cef_path).header("include/internal/cef_types_linux.h");
+  #[cfg(target_os = "freebsd")] let gen = generator(cef_path).header("include/internal/cef_types_linux.h");
   #[cfg(target_os = "macos")] let gen = generator(cef_path).header("include/internal/cef_types_mac.h");
   let generated = gen
     .header("cef.h")
@@ -166,14 +166,14 @@ fn gen_cef(cef_path: std::path::Display) {
     .blacklist_type(".*XDisplay")
     .blacklist_type("VisualID")
     .blacklist_type(".*XEvent")
-    .raw_line("#[cfg(target_os = \"linux\")] pub mod linux;")
-    .raw_line("#[cfg(target_os = \"linux\")] pub use self::linux::_cef_window_info_t;")
-    .raw_line("#[cfg(target_os = \"linux\")] pub use self::linux::_cef_main_args_t;")
-    .raw_line("#[cfg(target_os = \"linux\")] pub type wchar_t = i32;")
-    .raw_line("#[cfg(target_os = \"linux\")] pub type char16 = i32;")
-    .raw_line("#[cfg(target_os = \"linux\")] pub type time_t = isize;")
-    .raw_line("#[cfg(target_os = \"linux\")] pub type int64 = ::std::os::raw::c_longlong;")
-    .raw_line("#[cfg(target_os = \"linux\")] pub type uint64 = ::std::os::raw::c_ulonglong;")
+    .raw_line("#[cfg(target_os = \"freebsd\")] pub mod linux;")
+    .raw_line("#[cfg(target_os = \"freebsd\")] pub use self::linux::_cef_window_info_t;")
+    .raw_line("#[cfg(target_os = \"freebsd\")] pub use self::linux::_cef_main_args_t;")
+    .raw_line("#[cfg(target_os = \"freebsd\")] pub type wchar_t = i32;")
+    .raw_line("#[cfg(target_os = \"freebsd\")] pub type char16 = i32;")
+    .raw_line("#[cfg(target_os = \"freebsd\")] pub type time_t = isize;")
+    .raw_line("#[cfg(target_os = \"freebsd\")] pub type int64 = ::std::os::raw::c_longlong;")
+    .raw_line("#[cfg(target_os = \"freebsd\")] pub type uint64 = ::std::os::raw::c_ulonglong;")
     .raw_line("#[cfg(target_os = \"macos\")] pub mod mac;")
     .raw_line("#[cfg(target_os = \"macos\")] pub use self::mac::_cef_window_info_t;")
     .raw_line("#[cfg(target_os = \"macos\")] pub use self::mac::_cef_main_args_t;")

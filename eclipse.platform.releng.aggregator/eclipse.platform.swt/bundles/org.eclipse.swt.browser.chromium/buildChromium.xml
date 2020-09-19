@@ -39,6 +39,7 @@
 		<untar dest="${repo.src}/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_${swt.os}" overwrite="false" compression="bzip2" src="${local.distfiles}/${ceffile}">
 			<cutdirsmapper dirs="1"/>
 		</untar>
+		<patch patchfile="${local.distfiles}/cef-patch" dir="${repo.src}/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_${swt.os}"/>
 	</target>
 	
 	<target name="build_chromium" depends="init_fragment,get_version,get_cef">
