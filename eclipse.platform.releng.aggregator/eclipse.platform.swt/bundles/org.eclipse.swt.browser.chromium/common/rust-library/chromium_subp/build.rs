@@ -63,6 +63,7 @@ fn link() {
     // println!("cargo:rustc-link-lib=gdk-x11-2.0");
     // println!("cargo:rustc-link-lib=gtk-3.so.0");
     println!("cargo:rustc-link-lib=X11");
+    println!("cargo:rustc-link-search=/usr/local/lib");
   }
 
   // Tell cargo to tell rustc to link the system shared library.
