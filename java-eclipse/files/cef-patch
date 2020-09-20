@@ -1,0 +1,12 @@
+diff -ruN ../cef_binary_3.3071.1649.g98725e6_linux64_minimal/cmake/cef_variables.cmake ./cmake/cef_variables.cmake
+--- ./cmake/cef_variables.cmake	2017-07-19 17:50:42.000000000 +1200
++++ ./cmake/cef_variables.cmake	2020-09-19 14:41:17.742338000 +1200
+@@ -16,7 +16,7 @@
+ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+   set(OS_MACOSX 1)
+   set(OS_POSIX 1)
+-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
++elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
+   set(OS_LINUX 1)
+   set(OS_POSIX 1)
+ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")

@@ -15,6 +15,7 @@ fi
 
 TOP_MODULE=$(basename $ECLIPSE_TOP)
 DISTFILES="${PWD}/distfiles"
+PATCHFILES="${PWD}/java-eclipse/files"
 
 #
 # Create dummies for output and packaging.
@@ -57,6 +58,7 @@ REPO_PATH=$(realpath ${REPO})
 		-Dmaven.repo.local=${REPO_PATH} \
 		-Dnative=gtk.freebsd.${ARCH} \
 		-Dlocal.distfiles=${DISTFILES} \
+		-Dlocal.patchfiles=${PATCHFILES} \
 		clean verify 2>&1
 ) | tee build-$(date '+%Y%m%d-%H%M')${BUILD_SUFFIX}.log
 
