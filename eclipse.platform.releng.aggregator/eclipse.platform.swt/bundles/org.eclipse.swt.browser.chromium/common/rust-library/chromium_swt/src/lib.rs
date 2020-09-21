@@ -12,7 +12,7 @@
  ********************************************************************************/
 extern crate chromium;
 
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 extern crate x11;
 #[cfg(unix)]
 extern crate nix;
@@ -25,21 +25,21 @@ use chromium::utils;
 use chromium::socket;
 
 mod app;
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 mod gtk;
 
 use std::os::raw::{c_char, c_int, c_void};
 #[cfg(unix)]
 use std::collections::HashMap;
 
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 unsafe extern fn xerror_handler_impl(_: *mut x11::xlib::Display, _event: *mut x11::xlib::XErrorEvent) -> c_int {
     //print!("X error received: ");
     //println!("type {}, serial {}, error_code {}, request_code {}, minor_code {}",
     //    (*event).type_, (*event).serial, (*event).error_code, (*event).request_code, (*event).minor_code);
     0
 }
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 unsafe extern fn xioerror_handler_impl(_: *mut x11::xlib::Display) -> c_int {
     //println!("XUI error received");
     0
@@ -67,7 +67,7 @@ pub extern fn cefswt_init(japp: *mut cef::cef_app_t, cefrust_path: *const c_char
         if cfg!(target_family = "windows") {
             set_env_var(cef_path, "PATH", ";");
         }
-        if cfg!(target_os = "linux") {
+        if cfg!(target_os = "freebsd") {
             set_env_var(cef_path, "LD_LIBRARY_PATH", ":");
         }
         if cfg!(target_os = "macos") {
@@ -146,7 +146,7 @@ fn set_env_var(cef_path: &str, var: &str, sep: &str) {
     };
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 fn do_initialize(main_args: cef::_cef_main_args_t, settings: cef::_cef_settings_t, app_raw: *mut cef::_cef_app_t) {
     unsafe { x11::xlib::XSetErrorHandler(Option::Some(xerror_handler_impl)) };
     unsafe { x11::xlib::XSetIOErrorHandler(Option::Some(xioerror_handler_impl)) };
@@ -366,7 +366,7 @@ pub extern fn cefswt_resized(browser: *mut cef::cef_browser_t, width: i32, heigh
     do_resize(win_handle, width, height);
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 fn do_resize(win_handle: *mut c_void, width: i32, height: i32) {
     use x11::xlib;
 
@@ -642,7 +642,7 @@ pub extern fn cefswt_set_focus(browser: *mut cef::cef_browser_t, set: bool, pare
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 fn do_set_focus(parent: *mut c_void, _focus: i32) {
     let root = unsafe { gtk::gtk_widget_get_toplevel(parent) };
     //println!("<<<<<<<< set_focus {} {:?} {:?}", focus, parent, root);

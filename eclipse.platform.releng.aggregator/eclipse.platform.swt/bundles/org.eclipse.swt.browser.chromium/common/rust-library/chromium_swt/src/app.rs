@@ -12,7 +12,7 @@
  ********************************************************************************/
 use cef;
 use utils;
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 use gtk;
 
 use std::os::raw::{c_int, c_void};
@@ -76,7 +76,7 @@ pub fn create_browser(canvas_hwnd: *mut c_void, url: &str, jclient: &mut cef::_c
     browser
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 fn override_system_visual(visual: *mut c_void) {
     unsafe {
         let xvisual = gtk::gdk_x11_visual_get_xvisual(visual);
@@ -85,12 +85,12 @@ fn override_system_visual(visual: *mut c_void) {
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 extern "C" {
     pub fn cef_override_system_visual(visual_id: std::os::raw::c_ulong);
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 fn cef_window_info(hwnd: *mut c_void, w: c_int, h: c_int) -> cef::_cef_window_info_t {
     use std::os::raw::{c_uint};
     let window_info = unsafe {
@@ -112,7 +112,7 @@ fn cef_window_info(hwnd: *mut c_void, w: c_int, h: c_int) -> cef::_cef_window_in
     window_info
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "freebsd")]
 pub fn set_window_parent(window_info: *mut cef::_cef_window_info_t, hwnd: *mut c_void, x: c_int, y: c_int, w: c_int, h: c_int) {
     use std::os::raw::{c_uint};
     //unsafe {println!("orig window_info {} {:?}", hwnd, (*window_info)); };
