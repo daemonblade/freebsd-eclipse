@@ -15,7 +15,7 @@ codegen-units = 1
 [dependencies]
 chromium = { path = "../chromium_subp/" }
 
-[target.'cfg(target_os = "linux")'.dependencies]
+[target.'cfg(target_os = "freebsd")'.dependencies]
 x11 = "2.17.0"
 
 [target.'cfg(unix)'.dependencies]

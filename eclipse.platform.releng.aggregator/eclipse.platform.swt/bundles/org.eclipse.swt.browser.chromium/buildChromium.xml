@@ -36,7 +36,7 @@
 			<equals arg1="${swt.os}" arg2="win32"/>
 		</condition>
 		<property name="ceffile" value="cef_binary_3.3071.1649.g98725e6_linux64_minimal.tar.bz2"/>
-		<untar dest="${repo.src}/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_${swt.os}" overwrite="false" compression="bzip2" src="${local.distfiles}/${ceffile}">
+		<untar dest="${repo.src}/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_${swt.os}" overwrite="true" compression="bzip2" src="${local.distfiles}/${ceffile}">
 			<cutdirsmapper dirs="1"/>
 		</untar>
 		<patch patchfile="${local.patchfiles}/cef-patch" dir="${repo.src}/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_${swt.os}"/>
