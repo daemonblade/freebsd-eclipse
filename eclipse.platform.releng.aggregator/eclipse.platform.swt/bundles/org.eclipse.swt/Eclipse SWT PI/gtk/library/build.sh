@@ -285,10 +285,10 @@ func_build_gtk4 () {
 
 func_build_chromium () {
 	func_echo_plus "Building Chromium bindings:"
-	if [ -d "chromium_subp/cef_linux" ]; then
-		export CHROMIUM_HEADERS=./chromium_subp/cef_linux
+	if [ -d "chromium_subp/cef_freebsd" ]; then
+		export CHROMIUM_HEADERS=./chromium_subp/cef_freebsd
 	else
-		export CHROMIUM_HEADERS=$CHROMIUM_OUTPUT_DIR/../../../../eclipse.platform.swt/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_linux
+		export CHROMIUM_HEADERS=$CHROMIUM_OUTPUT_DIR/../../../../eclipse.platform.swt/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_freebsd
 	fi
 	${MAKE_TYPE} -f $MAKEFILE "${@}"
 	RETURN_VALUE=$?   #make can return 1 or 2 if it fails. Thus need to cache it in case it's used programmatically somewhere.
