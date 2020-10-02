@@ -40,7 +40,18 @@ diff -ru eclipse.platform.releng/features/org.eclipse.platform-feature/feature.x
           download-size="0"
           install-size="0"
           version="0.0.0"
-@@ -465,9 +465,9 @@
+@@ -411,8 +411,8 @@
+          unpack="false"/>
+          
+    <plugin
+-         id="org.eclipse.core.filesystem.linux.aarch64"
+-         os="linux"
++         id="org.eclipse.core.filesystem.freebsd.aarch64"
++         os="freebsd"
+          arch="aarch64"
+          download-size="0"
+          install-size="0"
+@@ -475,9 +475,9 @@
           unpack="false"/>
  
     <plugin
