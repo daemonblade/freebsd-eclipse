@@ -411,8 +411,8 @@
          unpack="false"/>
          
    <plugin
-         id="org.eclipse.core.filesystem.linux.aarch64"
-         os="linux"
+         id="org.eclipse.core.filesystem.freebsd.aarch64"
+         os="freebsd"
          arch="aarch64"
          download-size="0"
          install-size="0"

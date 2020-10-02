@@ -51,6 +51,7 @@ BUILD_SUFFIX=$(echo $* | tr -d '[:space:]/')
 REPO="maven-repo.${ECLIPSE_TAG}"
 mkdir -p ${REPO}
 REPO_PATH=$(realpath ${REPO})
+export CARGO_HOME="${REPO_PATH}/cargo"
 (
 	cd ${TOP_MODULE}
 	mvn $* \
