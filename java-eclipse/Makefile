@@ -49,7 +49,7 @@ COMMENT=	Eclipse IDE 2020-06
 
 LICENSE=	EPL
 
-ONLY_FOR_ARCHS=	amd64 powerpc64
+ONLY_FOR_ARCHS=	amd64 powerpc64 powerpc64le
 
 BUILD_DEPENDS=	git:devel/git-lite \
 		${LOCALBASE}/share/java/maven/bin/mvn:devel/maven \
@@ -74,8 +74,9 @@ DESKTOP_ENTRIES="Eclipse" \
 
 SUB_FILES=	${PORTNAME}
 
-MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME}
-MAVEN_REPO=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
+REPO_PATH=	${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
+MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME} CARGO_HOME=${REPO_PATH}/cargo
+MAVEN_REPO=	-Dmaven.repo.local=${REPO_PATH}
 MAVEN_ECLIPSE=	-Dnative=gtk.freebsd.${ARCH} -DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
 ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
