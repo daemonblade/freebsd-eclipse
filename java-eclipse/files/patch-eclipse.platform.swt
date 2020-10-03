@@ -10,6 +10,17 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/.classpath_gtk eclipse.pla
  		</attributes>
  	</classpathentry>
  	<classpathentry kind="src" path="Eclipse SWT PI/cairo"/>
+diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT/common/org/eclipse/swt/layout/FillLayout.java eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT/common/org/eclipse/swt/layout/FillLayout.java
+--- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT/common/org/eclipse/swt/layout/FillLayout.java	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT/common/org/eclipse/swt/layout/FillLayout.java	0000-00-00 00:00:00.000000000 +0000
+@@ -10,7 +10,6 @@
+  *
+  * Contributors:
+  *     IBM Corporation - initial API and implementation
+- *     Christoph Läubrich - Bug 513185
+  *******************************************************************************/
+ package org.eclipse.swt.layout;
+ 
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT/win32/org/eclipse/swt/widgets/Widget.java eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT/win32/org/eclipse/swt/widgets/Widget.java
 --- eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT/win32/org/eclipse/swt/widgets/Widget.java	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt/Eclipse SWT/win32/org/eclipse/swt/widgets/Widget.java	0000-00-00 00:00:00.000000000 +0000

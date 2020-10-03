@@ -10,7 +10,6 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
- *     Christoph Läubrich - Bug 513185
  *******************************************************************************/
 package org.eclipse.swt.layout;
 
