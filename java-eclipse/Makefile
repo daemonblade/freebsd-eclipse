@@ -42,6 +42,9 @@ MASTER_SITES+=	https://github.com/${GH_ACCOUNT}/${GH_PROJECT}/releases/download/
 DISTFILES+=	${M:C/.*\///}-${ECLIPSE_SUFX}:${M:C/[\.\/]//g}
 .endfor
 
+MASTER_SITES+=	http://opensource.spotify.com/cefbuilds/:spotify
+DISTFILES+=	cef_binary_3.3071.1649.g98725e6_linux64_minimal.tar.bz2:spotify
+
 DIST_SUBDIR=	${PORTNAME}
 
 MAINTAINER=	jonc@chen.org.nz
@@ -49,7 +52,7 @@ COMMENT=	Eclipse IDE 2020-06
 
 LICENSE=	EPL
 
-ONLY_FOR_ARCHS=	amd64 powerpc64 powerpc64le
+ONLY_FOR_ARCHS=	aarch64 amd64 powerpc64 powerpc64le
 
 BUILD_DEPENDS=	git:devel/git-lite \
 		${LOCALBASE}/share/java/maven/bin/mvn:devel/maven \
@@ -75,10 +78,13 @@ DESKTOP_ENTRIES="Eclipse" \
 
 SUB_FILES=	${PORTNAME}
 
-REPO_PATH=	${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
-MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME} CARGO_HOME=${REPO_PATH}/cargo
-MAVEN_REPO=	-Dmaven.repo.local=${REPO_PATH}
-MAVEN_ECLIPSE=	-Dnative=gtk.freebsd.${ARCH} -DforceContextQualifier=v${ECLIPSE_TSTAMP}
+MAVEN_REPO=	${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
+MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME} CARGO_HOME=${MAVEN_REPO}/cargo
+MAVEN_ECLIPSE=	-Dmaven.repo.local=${MAVEN_REPO} \
+		-Dlocal.distfiles=${}
+		-Dlocal.patchfiles=${}
+		-Dnative=gtk.freebsd.${ARCH} \
+		-DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
 ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
 
@@ -86,7 +92,7 @@ ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/
 WRKSRC_SUBDIR=	../eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
 
 do-build:
-	cd ${WRKSRC} && ${SETENV} ${MAVEN_ENV} mvn --offline ${MAVEN_REPO} ${MAVEN_ECLIPSE} -DskipTests clean verify
+	cd ${WRKSRC} && ${SETENV} ${MAVEN_ENV} mvn --offline ${MAVEN_ECLIPSE} -DskipTests clean verify
 
 do-install:
 	${MKDIR} ${STAGEDIR}${DATADIR}
