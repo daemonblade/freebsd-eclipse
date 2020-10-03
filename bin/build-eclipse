@@ -50,10 +50,15 @@ done
 # Maven build
 #
 BUILD_SUFFIX=$(echo $* | tr -d '[:space:]/')
-REPO="maven-repo.${ECLIPSE_TAG}"
-mkdir -p ${REPO}
-REPO_PATH=$(realpath ${REPO})
-export CARGO_HOME="${REPO_PATH}/cargo"
+
+MAVEN_REPO="maven-repo.${ECLIPSE_TAG}"
+mkdir -p ${MAVEN_REPO}
+REPO_PATH=$(realpath ${MAVEN_REPO})
+
+CARGO_REPO="cargo-repo.${ECLIPSE_TAG}"
+mkdir -p ${CARGO_REPO}
+export CARGO_HOME=$(realpath ${CARGO_REPO})
+
 (
 	cd ${TOP_MODULE}
 	mvn $* \
