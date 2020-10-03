@@ -299,7 +299,7 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt.browser.chromium/META-INF/
 diff -ru eclipse.platform.swt/bundles/org.eclipse.swt.browser.chromium/buildChromium.xml eclipse.platform.swt/bundles/org.eclipse.swt.browser.chromium/buildChromium.xml
 --- eclipse.platform.swt/bundles/org.eclipse.swt.browser.chromium/buildChromium.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.swt/bundles/org.eclipse.swt.browser.chromium/buildChromium.xml	0000-00-00 00:00:00.000000000 +0000
-@@ -35,12 +35,11 @@
+@@ -35,12 +35,10 @@
  		<condition property="cefos" value="windows" else="${swt.os}">
  			<equals arg1="${swt.os}" arg2="win32"/>
  		</condition>
@@ -307,10 +307,11 @@ diff -ru eclipse.platform.swt/bundles/org.eclipse.swt.browser.chromium/buildChro
 -		<mkdir dir="${tmphome}"/>
 -		<get src="http://opensource.spotify.com/cefbuilds/${ceffile}" dest="${tmphome}/${ceffile}" usetimestamp="true"/>
 -		<untar dest="${repo.src}/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_${swt.os}" overwrite="false" compression="bzip2" src="${tmphome}/${ceffile}">
-+		<property name="ceffile" value="cef_binary_3.3071.1649.g98725e6_linux64_minimal.tar.bz2"/>
-+		<untar dest="${repo.src}/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_${swt.os}" overwrite="true" compression="bzip2" src="${local.distfiles}/${ceffile}">
- 			<cutdirsmapper dirs="1"/>
- 		</untar>
+-			<cutdirsmapper dirs="1"/>
+-		</untar>
++		<copy todir="${repo.src}/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_${swt.os}" overwrite="true">
++			<fileset dir="${local.cefsource}"/>
++		</copy>
 +		<patch patchfile="${local.patchfiles}/cef-patch" dir="${repo.src}/bundles/org.eclipse.swt.browser.chromium/common/rust-library/chromium_subp/cef_${swt.os}"/>
  	</target>
  	
