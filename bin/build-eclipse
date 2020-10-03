@@ -65,7 +65,8 @@ export CARGO_HOME=$(realpath ${CARGO_REPO})
 		-DskipTests=true \
 		-Dmaven.repo.local=${REPO_PATH} \
 		-Dnative=gtk.freebsd.${ARCH} \
-		-Dlocal.distfiles=${DISTFILES} \
+		-Dlocal.ceffile=${CEF_FILE} \
+		-Dlocal.wrkdir=${DISTFILES} \
 		-Dlocal.patchfiles=${PATCHFILES} \
 		clean verify 2>&1
 ) | tee build-$(date '+%Y%m%d-%H%M')${BUILD_SUFFIX}.log

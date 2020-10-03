@@ -30,6 +30,7 @@ done
 #
 # Misc files
 #
+FETCH_MISC="http://opensource.spotify.com/cefbuilds/${CEF_FILE}.tar.bz2"
 for M in ${FETCH_MISC}
 do
 	FILE=$(basename $M)

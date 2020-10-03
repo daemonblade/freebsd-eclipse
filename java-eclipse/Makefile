@@ -42,9 +42,10 @@ MASTER_SITES+=	https://github.com/${GH_ACCOUNT}/${GH_PROJECT}/releases/download/
 DISTFILES+=	${M:C/.*\///}-${ECLIPSE_SUFX}:${M:C/[\.\/]//g}
 .endfor
 
+CEF_FILE=	cef_binary_3.3071.1649.g98725e6_linux64_minimal
 MASTER_SITES+=	http://opensource.spotify.com/cefbuilds/:spotify \
 		https://github.com/${GH_ACCOUNT}/${GH_PROJECT}/releases/download/${PORTVERSION}/:github
-DISTFILES+=	cef_binary_3.3071.1649.g98725e6_linux64_minimal.tar.bz2:spotify \
+DISTFILES+=	${CEF_FILE}.tar.bz2:spotify \
 		cargo-repo.${ECLIPSE_TAG}.tbz:github
 
 DIST_SUBDIR=	${PORTNAME}
@@ -82,7 +83,8 @@ SUB_FILES=	${PORTNAME}
 
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME} CARGO_HOME=${WRKDIR}/cargo-repo.${ECLIPSE_TAG}
 MAVEN_ECLIPSE=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION} \
-		-Dlocal.distfiles=${DISTDIR}/${DIST_SUBDIR} \
+		-Dlocal.ceffile=${CEF_FILE} \
+		-Dlocal.wrkdir=${WRKDIR} \
 		-Dlocal.patchfiles=${FILESDIR} \
 		-Dnative=gtk.freebsd.${ARCH} \
 		-DforceContextQualifier=v${ECLIPSE_TSTAMP}
