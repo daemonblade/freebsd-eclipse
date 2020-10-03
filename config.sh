@@ -49,3 +49,5 @@ PATCHED_DIRS="
 	rt.equinox.framework
 	rt.equinox.p2
 "
+
+FETCH_MISC="http://opensource.spotify.com/cefbuilds/cef_binary_3.3071.1649.g98725e6_linux64_minimal.tar.bz2"
