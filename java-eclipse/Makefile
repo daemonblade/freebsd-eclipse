@@ -81,8 +81,8 @@ SUB_FILES=	${PORTNAME}
 MAVEN_REPO=	${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
 MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME} CARGO_HOME=${MAVEN_REPO}/cargo
 MAVEN_ECLIPSE=	-Dmaven.repo.local=${MAVEN_REPO} \
-		-Dlocal.distfiles=${}
-		-Dlocal.patchfiles=${}
+		-Dlocal.distfiles=${DISTDIR}/${DIST_SUBDIR} \
+		-Dlocal.patchfiles=${FILESDIR} \
 		-Dnative=gtk.freebsd.${ARCH} \
 		-DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
