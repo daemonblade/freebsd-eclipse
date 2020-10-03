@@ -5,6 +5,7 @@ distfiles
 /.baseline.eclipse.platform.releng.aggregator
 
 # Build artifacts
+/cargo-repo.*
 /maven-repo.*
 /build-*.log
 /*.tar.gz

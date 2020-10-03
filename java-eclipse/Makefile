@@ -2,12 +2,12 @@
 # $FreeBSD$
 
 PORTNAME=	eclipse
-PORTVERSION=	4.16
+PORTVERSION=	4.17
 CATEGORIES=	java devel
 
 # Update to eclipse.platform.releng.aggregator.git git-tag on git.eclipse.org
-ECLIPSE_TAG=	R4_16
-ECLIPSE_TSTAMP=	20200617-1404
+ECLIPSE_TAG=	R4_17
+ECLIPSE_TSTAMP=	20200916-1119
 
 ECLIPSE_SUFX=	${ECLIPSE_TAG}.tar.xz
 ECLIPSE_MODULES=jdt/eclipse.jdt \
@@ -42,13 +42,15 @@ MASTER_SITES+=	https://github.com/${GH_ACCOUNT}/${GH_PROJECT}/releases/download/
 DISTFILES+=	${M:C/.*\///}-${ECLIPSE_SUFX}:${M:C/[\.\/]//g}
 .endfor
 
-MASTER_SITES+=	http://opensource.spotify.com/cefbuilds/:spotify
-DISTFILES+=	cef_binary_3.3071.1649.g98725e6_linux64_minimal.tar.bz2:spotify
+MASTER_SITES+=	http://opensource.spotify.com/cefbuilds/:spotify \
+		https://github.com/${GH_ACCOUNT}/${GH_PROJECT}/releases/download/${PORTVERSION}/:github
+DISTFILES+=	cef_binary_3.3071.1649.g98725e6_linux64_minimal.tar.bz2:spotify \
+		cargo-repo.${ECLIPSE_TAG}.tbz:github
 
 DIST_SUBDIR=	${PORTNAME}
 
 MAINTAINER=	jonc@chen.org.nz
-COMMENT=	Eclipse IDE 2020-06
+COMMENT=	Eclipse IDE 2020-09
 
 LICENSE=	EPL
 
@@ -78,9 +80,8 @@ DESKTOP_ENTRIES="Eclipse" \
 
 SUB_FILES=	${PORTNAME}
 
-MAVEN_REPO=	${WRKDIR}/${GH_PROJECT}-${PORTVERSION}
-MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME} CARGO_HOME=${MAVEN_REPO}/cargo
-MAVEN_ECLIPSE=	-Dmaven.repo.local=${MAVEN_REPO} \
+MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME} CARGO_HOME=${WRKDIR}/cargo-repo.${ECLIPSE_TAG}
+MAVEN_ECLIPSE=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION} \
 		-Dlocal.distfiles=${DISTDIR}/${DIST_SUBDIR} \
 		-Dlocal.patchfiles=${FILESDIR} \
 		-Dnative=gtk.freebsd.${ARCH} \
