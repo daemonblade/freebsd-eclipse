@@ -43,6 +43,7 @@ do
 
 	NEWNAME=$(rename_arch ${D})
 	mv ${D} ${NEWNAME}
+	echo "INFO: ${D} -> ${NEWNAME}"
 done
 
 # Clean up binaries
