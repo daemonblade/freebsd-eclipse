@@ -2,12 +2,12 @@
 # $FreeBSD$
 
 PORTNAME=	eclipse
-PORTVERSION=	4.17
+PORTVERSION=	4.18
 CATEGORIES=	java devel
 
 # Update to eclipse.platform.releng.aggregator.git git-tag on git.eclipse.org
-ECLIPSE_TAG=	R4_17
-ECLIPSE_TSTAMP=	20200916-1119
+ECLIPSE_TAG=	R4_18
+ECLIPSE_TSTAMP=	20201217-0940
 
 ECLIPSE_SUFX=	${ECLIPSE_TAG}.tar.xz
 ECLIPSE_MODULES=jdt/eclipse.jdt \
