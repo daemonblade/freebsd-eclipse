@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (c) 2012, 2020 Eclipse Foundation and others.
+  Copyright (c) 2012, 2021 Eclipse Foundation and others.
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Distribution License v1.0
   which accompanies this distribution, and is available at
@@ -19,7 +19,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.eclipse</groupId>
   <artifactId>eclipse-platform-parent</artifactId>
-  <version>4.17.0-SNAPSHOT</version>
+  <version>4.21.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <!--
     See maven-enforcer-plugin configuration to actually break the build if
@@ -49,7 +49,7 @@
       such as Version: Mars (4.5), for main features.
       See bug 328139.
     -->
-    <releaseName>2020-09</releaseName>
+    <releaseName>2021-09</releaseName>
     <!--
       The releaseNumbers below, for SDK and Platform, might be
       thought of as the "marketing number" or "branding number",
@@ -64,43 +64,33 @@
       but we'd still want the "marketing number" to be increased to reflect
       "a new yearly release".
     -->
-    <releaseNumberSDK>4.17</releaseNumberSDK>
-    <releaseNumberPlatform>4.17</releaseNumberPlatform>
+    <releaseNumberSDK>4.21</releaseNumberSDK>
+    <releaseNumberPlatform>4.21</releaseNumberPlatform>
 
 
 	<!-- using released version (normal case)
 	     when upgrading make sure you change pom-version-updater version in build-functions.shsource
     -->
-    <tycho.version>2.0.0</tycho.version>
+    <tycho.version>2.4.0</tycho.version>
 
-    <cbi-plugins.version>1.1.8-SNAPSHOT</cbi-plugins.version>
+    <cbi-plugins.version>1.3.1</cbi-plugins.version>
+    <surefire.version>3.0.0-M5</surefire.version>
 
     <!--  
       The tycho-eclipserun-plugin will create its instance of Eclipse from this
       'eclipiserun-repo' repository, such as for computing .api-descriptions and
       generating API Tools reports.
     -->
-    <eclipserun-repo>https://download.eclipse.org/eclipse/updates/4.17/</eclipserun-repo>
+    <eclipserun-repo>https://download.eclipse.org/eclipse/updates/4.21/</eclipserun-repo>
     
-    <comparator.repo>https://download.eclipse.org/eclipse/updates/4.17</comparator.repo>
-
-    <!--
-      NOTE: this EMF and ECF URL must match exactly what is in the eclipse-sdk-prereqs.target file.
-      We use it (the EMF repo and ECF repo) not only for resolving pre-reqs during the build, but also in 'repository' POM for mirroring
-      a copy of the EMF features and ECF features into our own repository. This is required since we merely "require" EMF (not "include"
-      it).
-      And, of course, in the PDE target file, the URL is expected to be the actual URL, not a variable.
-    -->
-    <emf-repo.url>https://download.eclipse.org/modeling/emf/emf/builds/release/2.23/</emf-repo.url>
-
-    <ecf-repo.url>https://download.eclipse.org/rt/ecf/3.14.14/site.p2/</ecf-repo.url>
+    <comparator.repo>https://download.eclipse.org/eclipse/updates/4.21</comparator.repo>
 
     <!-- only used when Tycho snapshot repo is enabled in <pluginRepositories> further down -->
     <tycho-snapshot-repo.url>https://repo.eclipse.org/content/repositories/tycho-snapshots/</tycho-snapshot-repo.url>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <cbi-jdt-repo.url>https://repo.eclipse.org/content/repositories/eclipse-staging/</cbi-jdt-repo.url>
-    <cbi-ecj-version>3.23.0.v20200824-0559</cbi-ecj-version>
+    <cbi-ecj-version>3.27.0.v20210823-1758</cbi-ecj-version>
 
     <!--
       Production bundles are produced by ignoring the compiler warnings specified
@@ -125,6 +115,8 @@
     <eclipse-repo.url>https://repo.eclipse.org/content/repositories/cbi/</eclipse-repo.url>
     <cbi-snapshots-repo.url>https://repo.eclipse.org/content/repositories/cbi-snapshots/</cbi-snapshots-repo.url>
 
+    <cbi-releases-repo.url>https://repo.eclipse.org/content/repositories/cbi-releases/</cbi-releases-repo.url>
+
 
     <!--
       This eclipse-p2-repo.url is specifically for the build-individual-bundles profile.
@@ -148,7 +140,7 @@
     <qualifier.format>'v'yyyyMMdd-HHmm</qualifier.format>
 
     <compare-version-with-baselines.skip>true</compare-version-with-baselines.skip>
-    <previous-release.baseline>https://download.eclipse.org/eclipse/updates/4.16/R-4.16-202006040540/</previous-release.baseline>
+    <previous-release.baseline>https://download.eclipse.org/eclipse/updates/4.20/R-4.20-202106111600/</previous-release.baseline>
 
     <!--
       Declaration of properties that contribute to the arg line for the tycho-surefire-plugin.
@@ -163,6 +155,7 @@
     <surefire.moduleProperties></surefire.moduleProperties>
     <!-- system specific JVM args; if needed provided by system properties to the build command -->
     <surefire.systemProperties></surefire.systemProperties>
+    <java.version>11</java.version>
   </properties>
 
   <organization>
@@ -220,6 +213,16 @@
       </snapshots>
     </pluginRepository>
     <pluginRepository>
+      <id>cbi-releases</id>
+      <url>${cbi-releases-repo.url}</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+    <pluginRepository>
       <id>eclipse</id>
       <url>${eclipse-repo.url}</url>
       <releases>
@@ -249,7 +252,7 @@
             <artifact>
               <groupId>org.eclipse</groupId>
               <artifactId>eclipse-sdk-prereqs</artifactId>
-              <version>4.17.0-SNAPSHOT</version>
+              <version>4.21.0-SNAPSHOT</version>
             </artifact>
           </target>
           <environments>
@@ -277,6 +280,11 @@
               <os>macosx</os>
               <ws>cocoa</ws>
               <arch>x86_64</arch>
+            </environment>
+            <environment>
+              <os>macosx</os>
+              <ws>cocoa</ws>
+              <arch>aarch64</arch>
             </environment>
           </environments>
         </configuration>
@@ -404,6 +412,11 @@
           <artifactId>maven-antrun-plugin</artifactId>
           <version>3.0.0</version>
         </plugin>
+         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${surefire.version}</version>
+        </plugin>
         <plugin>
           <groupId>org.eclipse.tycho</groupId>
           <artifactId>target-platform-configuration</artifactId>
@@ -502,6 +515,7 @@
             <archive>
               <addMavenDescriptor>false</addMavenDescriptor>
             </archive>
+            <reuseBrandingPlugin>false</reuseBrandingPlugin>
           </configuration>
         </plugin>
         <plugin>
@@ -513,17 +527,6 @@
           <groupId>org.eclipse.tycho</groupId>
           <artifactId>tycho-p2-repository-plugin</artifactId>
           <version>${tycho.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.eclipse.tycho.extras</groupId>
-          <artifactId>tycho-source-feature-plugin</artifactId>
-          <version>${tycho.version}</version>
-          <configuration>
-            <archive>
-              <addMavenDescriptor>false</addMavenDescriptor>
-            </archive>
-            <reuseBrandingPlugin>false</reuseBrandingPlugin>
-          </configuration>
         </plugin>
         <plugin>
           <groupId>org.eclipse.tycho</groupId>
@@ -557,26 +560,21 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.2.0</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>xml-maven-plugin</artifactId>
           <version>1.0.2</version>
         </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>sonar-maven-plugin</artifactId>
-          <version>3.3.0.603</version>
-        </plugin>
       </plugins>
     </pluginManagement>
   </build>
   <profiles>
    <profile>
-        <id>java15patch</id>
+      <id>java17patch</id>
       <properties>
-        <qualifier.format>'v'yyyyMMdd-HHmm'_BETA_JAVA15'</qualifier.format>
+        <qualifier.format>'v'yyyyMMdd-HHmm'_BETA_JAVA17'</qualifier.format>
  
         <featureToPatch>org.eclipse.jdt</featureToPatch>
         <featureToPatchPDE>org.eclipse.pde</featureToPatchPDE>
@@ -584,29 +582,29 @@
         <!--
           For future versions, in addition to changing this value of "featureToPatchVersion",
           the same value needs to be edited in
-          .../java15patch/org.eclipse.jdt.java15patch/feature.xml
+          .../java17patch/org.eclipse.jdt.java17patch/feature.xml
           and
-          .../java15patch/org.eclipse.jdt-feature-dummy/feature.xml
+          .../java17patch/org.eclipse.jdt-feature-dummy/feature.xml
           and it of course, must "match" what ever version was produced by the build specified
-          a few lines below, as the eclipse-p2-repo-java15patch p2 repository, as well as the lower
+          a few lines below, as the eclipse-p2-repo-java17patch p2 repository, as well as the lower
           bound, in 'versionRangeForPatch'.
  
           Also, when new patch created, should update the wiki at
-          https://wiki.eclipse.org/Java15
+          https://wiki.eclipse.org/Java17
         -->
         <!-- This needs the version of the feature to be patched. -->
-        <featureToPatchVersion>3.18.500.v20200826-1800</featureToPatchVersion>
-        <featureToPatchVersionPDE>3.14.500.v20200826-1800</featureToPatchVersionPDE>
+        <featureToPatchVersion>3.18.900.v20210830-0600</featureToPatchVersion>
+        <featureToPatchVersionPDE>3.14.900.v20210830-0600</featureToPatchVersionPDE>
         <!-- Can specify an exact range here, or something of a loose range, depending on what's needed. -->
-        <versionRangeForPatch>[3.18.500.v20200826-1800,3.18.549.v20210708-1800)</versionRangeForPatch>
-        <versionRangeForPatchPDE>[3.14.500.v20200826-1800,3.14.549.v20210708-1800)</versionRangeForPatchPDE>
+        <versionRangeForPatch>[3.18.900.v20210830-0600,3.18.949.v20211028-1800)</versionRangeForPatch>
+        <versionRangeForPatchPDE>[3.14.900.v20210830-0600,3.14.949.v20211028-1800)</versionRangeForPatchPDE>
         <!-- Comment this line when a patch is required on top of I-build -->
-        <comparator.repo>https://download.eclipse.org/eclipse/updates/4.17milestones/</comparator.repo>
+        <comparator.repo>https://download.eclipse.org/eclipse/updates/4.21-I-builds/I20210830-0600/</comparator.repo>
       </properties>
       <repositories>
        <repository>
-         <id>eclipse-p2-repo-java15patch</id>
-         <url>https://download.eclipse.org/eclipse/updates/4.17milestones/</url>
+         <id>eclipse-p2-repo-java17patch</id>
+         <url>https://download.eclipse.org/eclipse/updates/4.21-I-builds/I20210830-0600/</url>
          <layout>p2</layout>
        </repository>
      </repositories>
@@ -626,7 +624,7 @@
           For maintenance streams should always be "M-builds".
           Ideally, this value would be provided by the environment, see bug 489789.
         -->
-        <eclipse-p2-repo.url>https://download.eclipse.org/eclipse/updates/4.17</eclipse-p2-repo.url>
+        <eclipse-p2-repo.url>https://download.eclipse.org/eclipse/updates/4.21</eclipse-p2-repo.url>
       </properties>
       <repositories>
         <repository>
@@ -647,20 +645,6 @@
             <configuration>
               <includePackedArtifacts>false</includePackedArtifacts>
             </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.eclipse.tycho.extras</groupId>
-            <artifactId>tycho-pack200a-plugin</artifactId>
-            <version>${tycho.version}</version>
-            <executions>
-              <execution>
-                <id>pack200-normalize</id>
-                <goals>
-                  <goal>normalize</goal>
-                </goals>
-                <phase>verify</phase>
-              </execution>
-            </executions>
           </plugin>
           <plugin>
             <groupId>org.eclipse.cbi.maven.plugins</groupId>
@@ -686,20 +670,6 @@
             </configuration>
           </plugin>
           <plugin>
-            <groupId>org.eclipse.tycho.extras</groupId>
-            <artifactId>tycho-pack200b-plugin</artifactId>
-            <version>${tycho.version}</version>
-            <executions>
-              <execution>
-                <id>pack200-pack</id>
-                <goals>
-                  <goal>pack</goal>
-                </goals>
-                <phase>verify</phase>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
             <groupId>org.eclipse.tycho</groupId>
             <artifactId>tycho-p2-plugin</artifactId>
             <version>${tycho.version}</version>
@@ -710,64 +680,6 @@
                   <goal>p2-metadata</goal>
                 </goals>
                 <phase>verify</phase>
-              </execution>
-            </executions>
-            <configuration>
-              <defaultP2Metadata>false</defaultP2Metadata>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>eclipse-pack</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.eclipse.tycho</groupId>
-            <artifactId>target-platform-configuration</artifactId>
-            <version>${tycho.version}</version>
-            <configuration>
-              <includePackedArtifacts>false</includePackedArtifacts>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.eclipse.tycho.extras</groupId>
-            <artifactId>tycho-pack200a-plugin</artifactId>
-            <version>${tycho.version}</version>
-            <executions>
-              <execution>
-                <id>pack200-normalize</id>
-                <goals>
-                  <goal>normalize</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.eclipse.tycho.extras</groupId>
-            <artifactId>tycho-pack200b-plugin</artifactId>
-            <version>${tycho.version}</version>
-            <executions>
-              <execution>
-                <id>pack200-pack</id>
-                <goals>
-                  <goal>pack</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.eclipse.tycho</groupId>
-            <artifactId>tycho-p2-plugin</artifactId>
-            <version>${tycho.version}</version>
-            <executions>
-              <execution>
-                <id>p2-metadata</id>
-                <goals>
-                  <goal>p2-metadata</goal>
-                </goals>
-                <phase>package</phase>
               </execution>
             </executions>
             <configuration>
@@ -841,6 +753,8 @@
     <profile>
       <id>api-generation</id>
       <activation>
+        <!-- Does it have to be a profile if we can evaluate condition reliably in antrun? -->
+        <file><exists>META-INF/MANIFEST.MF</exists></file>
         <property>
           <name>!longnotexistingproperty</name>
         </property>
@@ -848,18 +762,30 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.eclipse.cbi.maven.plugins</groupId>
-            <artifactId>eclipse-cbi-plugin</artifactId>
-            <version>${cbi-plugins.version}</version>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
             <executions>
               <execution>
-                <!--
-                    Default lifecycle phase: 'GENERATE_SOURCES'
-                    See https://maven.apache.org/ref/3.5.4/maven-core/lifecycles.html
-                -->
+                <id>check-has-apiTools-nature</id>
+                <phase>validate</phase>
                 <goals>
-                  <goal>generate-api-build-xml</goal>
+                  <goal>run</goal>
                 </goals>
+                <configuration>
+                  <exportAntProperties>true</exportAntProperties>
+                  <target>
+                    <loadfile srcfile=".project" property="natureIn.project" failonerror="false">
+                      <filterchain>
+                        <linecontains>
+                          <contains value="org.eclipse.pde.api.tools.apiAnalysisNature"/>
+                        </linecontains>
+                      </filterchain>
+                    </loadfile>
+                    <condition property="skipAPIDescription" value="false" else="true">
+                        <isset property="natureIn.project" />
+                    </condition>
+                  </target>
+                </configuration>
               </execution>
             </executions>
           </plugin>
@@ -871,21 +797,19 @@
                 <goals>
                   <goal>eclipse-run</goal>
                 </goals>
-                <phase>compile</phase>
+                <phase>process-classes</phase>
+                <id>build-.api_description</id>
                 <configuration>
-                  <!-- actual indexer call -->
-                  <appArgLine>-data target/apibuild-workspace -application org.eclipse.ant.core.antRunner -buildfile
-                    target/.apibuild.xml</appArgLine>
+                  <skip>${skipAPIDescription}</skip>
+                  <work>${project.build.directory}/apigeneration-workspace</work>
+                  <appArgLine>-application org.eclipse.pde.api.tools.apiGeneration
+                  -projectName ${project.artifactId}_${qualifiedVersion}
+                  -project ${project.basedir}
+                  -binary ${tychoProject.build.outputDirectories}
+                  -target ${project.build.directory}
+                  </appArgLine>
                   <dependencies>
                     <!-- list of bundles that we need -->
-                    <dependency>
-                      <artifactId>org.eclipse.ant.core</artifactId>
-                      <type>eclipse-plugin</type>
-                    </dependency>
-                    <dependency>
-                      <artifactId>org.apache.ant</artifactId>
-                      <type>eclipse-plugin</type>
-                    </dependency>
                     <dependency>
                       <artifactId>org.eclipse.pde.api.tools</artifactId>
                       <type>eclipse-plugin</type>
@@ -991,10 +915,11 @@
                 <phase>verify</phase>
                 <configuration>
                   <skip>${skipAPIAnalysis}</skip>
+                  <!-- keep workspace across execution to reuse downloaded artifacts -->
+                  <clearWorkspaceBeforeLaunch>false</clearWorkspaceBeforeLaunch>
+                  <!-- need to set workspace to a dir that's not a child of the project and that the same for all executions -->
+                  <work>${user.dir}/apiAnalyzer-workspace</work>
                   <applicationsArgs>
-                    <!-- need to set workspace to a dir that's not a child of the project --> 
-                    <arg>-data</arg>
-                    <args>${project.basedir}/../target/${project.artifactId}-apiAnalyzer-workspace</args>
                     <args>-application</args>
                     <args>org.eclipse.pde.api.tools.apiAnalyzer</args>
                     <args>-project</args>
@@ -1007,13 +932,11 @@
                   </applicationsArgs>
                   <jvmArgs>
                   	<jvmArg>-Xmx2048M</jvmArg>
+                  	<jvmArg>-Dp2.RepositoryPreferences.retryOnSocketTimeout=true</jvmArg>
+                  	<jvmArg>-Dp2.RepositoryPreferences.connectionRetryCount=3</jvmArg>
+                  	<jvmArg>-Dp2.RepositoryPreferences.connectionMsRetryDelay=500</jvmArg>
+                  	<jvmArg>-Dorg.eclipse.ecf.provider.filetransfer.retrieve.readTimeout=10000</jvmArg>
                   </jvmArgs>
-                  <repositories>
-                    <repository>
-                      <layout>p2</layout>
-                      <url>${comparator.repo}</url>
-                    </repository>
-                  </repositories>
                   <dependencies>
                     <dependency>
                       <artifactId>org.eclipse.pde.api.tools</artifactId>
@@ -1116,7 +1039,7 @@
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.8.5</version>
+            <version>0.8.6</version>
             <executions>
               <execution>
                 <id>jacoco-agent</id>
@@ -1140,15 +1063,75 @@
           <plugin>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-maven-plugin</artifactId>
-            <version>4.0.0</version>
+            <version>4.1.4</version>
             <configuration>
-              <targetJDK>11</targetJDK>
+              <targetJDK>${java.version}</targetJDK>
               <xmlOutput>true</xmlOutput>
               <effort>Max</effort>
               <maxHeap>2000</maxHeap>
               <threshold>medium</threshold>
               <failOnError>false</failOnError>
               <excludeFilterFile>spotbugs/spotbugs-exclude.xml</excludeFilterFile>
+            </configuration>
+            <executions>
+              <execution>
+                <id>analyze-compile</id>
+                <phase>compile</phase>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>pmd</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-pmd-plugin</artifactId>
+            <version>3.13.0</version>
+            <configuration>
+            <!-- PMD options -->
+              <targetJDK>${java.version}</targetJDK>
+              <aggregate>true</aggregate>
+              <failOnViolation>false</failOnViolation>
+              <format>xml</format>
+              <rulesets><ruleset>pmd/eclipse_ruleset.xml</ruleset></rulesets>
+            <!-- CPD options -->
+              <minimumTokens>100</minimumTokens>
+              <ignoreIdentifiers>true</ignoreIdentifiers>
+            </configuration>
+            <executions>
+              <execution>
+                <id>analyze-compile</id>
+                <phase>compile</phase>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>checkstyle</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <version>3.1.1</version>
+            <configuration>
+              <consoleOutput>true</consoleOutput>
+              <failsOnError>false</failsOnError>
+              <configLocation>checkstyle/checkstyle.xml</configLocation>
             </configuration>
             <executions>
               <execution>
