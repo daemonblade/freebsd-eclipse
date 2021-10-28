@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2017 IBM Corporation and others.
+ * Copyright (c) 2010, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,7 +15,8 @@
 package org.eclipse.pde.internal.build.tasks;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.PatternSet;
 import org.apache.tools.ant.types.resources.Files;
@@ -23,7 +24,7 @@ import org.apache.tools.ant.types.resources.Union;
 
 public class CompileErrorTask extends Task {
 	private static final Object LOCK = new Object();
-	private static final String NEW_LINE = System.getProperty("line.separator"); //$NON-NLS-1$
+	private static final String NEW_LINE = System.lineSeparator();
 	private static final String ANT_PREFIX = "${"; //$NON-NLS-1$
 
 	private final Files problemFiles = new Files();
@@ -38,18 +39,14 @@ public class CompileErrorTask extends Task {
 		Union union = new Union(problemFiles);
 		String[] prereqFiles = union.list();
 		List<String> problems = new ArrayList<>();
-		BufferedReader reader = null;
-		for (int i = 0; i < prereqFiles.length; i++) {
-			File file = new File(prereqFiles[i]);
-			try {
-				reader = new BufferedReader(new FileReader(file));
+		for (String prereqFile : prereqFiles) {
+			File file = new File(prereqFile);
+			try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
 				String line = reader.readLine();
 				if (line != null)
 					problems.add(line);
 			} catch (IOException e) {
 				// 
-			} finally {
-				close(reader);
 			}
 		}
 
@@ -58,36 +55,18 @@ public class CompileErrorTask extends Task {
 			if (!log.getParentFile().exists())
 				log.getParentFile().mkdirs();
 			synchronized (LOCK) {
-				FileWriter writer = null;
-				try {
-					writer = new FileWriter(log, true);
+				try (FileWriter writer = new FileWriter(log, true)) {
 					writer.write(bundle + ": the following prerequisites contain compile errors" + NEW_LINE); //$NON-NLS-1$
-					for (Iterator<String> iterator = problems.iterator(); iterator.hasNext();) {
+					for (String problem : problems) {
 						writer.write("\t"); //$NON-NLS-1$
-						writer.write(iterator.next());
+						writer.write(problem);
 						writer.write(NEW_LINE);
 					}
 				} catch (IOException e) {
 					// 
-				} finally {
-					close(writer);
 				}
 
 			}
-		}
-
-	}
-
-	private void close(Object o) {
-		if (o == null)
-			return;
-		try {
-			if (o instanceof Reader)
-				((Reader) o).close();
-			if (o instanceof Writer)
-				((Writer) o).close();
-		} catch (IOException e) {
-			// ignore
 		}
 
 	}

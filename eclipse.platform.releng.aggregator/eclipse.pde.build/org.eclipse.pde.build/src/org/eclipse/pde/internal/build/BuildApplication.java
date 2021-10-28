@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2018 IBM Corporation and others.
+ * Copyright (c) 2007, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -38,25 +38,12 @@ public class BuildApplication implements IApplication {
 		if (ee instanceof AntRunner) {
 			return ((AntRunner) ee).run(args);
 		}
-		// else it is probably an old IPlatformRunnable
-		return doPlatformRunnable(ee, args);
-	}
-
-	/*
-	 * If the Executable Extension is an old IPlatformRunnable, use this method to run it to 
-	 * avoid the warnings about deprecation.
-	 * @deprecated
-	 * @throws Exception
-	 */
-	private Object doPlatformRunnable(Object ee, Object args) throws Exception {
-		if (ee instanceof IPlatformRunnable)
-			return ((IPlatformRunnable) ee).run(args);
+		// else it is probably an old no longer supported IPlatformRunnable
 		return null;
 	}
 
 	private String[] updateArgs(String[] args) throws IOException {
-		for (int i = 0; i < args.length; i++) {
-			String string = args[i];
+		for (String string : args) {
 			if (string.equals("-f") || string.equals("-buildfile")) //$NON-NLS-1$ //$NON-NLS-2$
 				return args;
 		}

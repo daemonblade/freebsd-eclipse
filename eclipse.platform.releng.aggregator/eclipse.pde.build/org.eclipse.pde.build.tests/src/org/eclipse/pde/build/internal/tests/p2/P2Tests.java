@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2020 IBM Corporation and others.
+ * Copyright (c) 2008, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which accompanies this distribution,
@@ -311,6 +311,9 @@ public class P2Tests extends P2TestCase {
 
 	@Test
 	public void offBug237662() throws Exception {
+		if (Platform.getOS().equals(Platform.OS_MACOSX)) {
+			return;
+		}
 		IFolder buildFolder = newTest("237662");
 		IFolder repo = Utils.createFolder(buildFolder, "repo");
 		IFile productFile = buildFolder.getFile("rcp.product");
@@ -530,6 +533,7 @@ public class P2Tests extends P2TestCase {
 		assertResourceFile(outRepo2, "content.jar");
 	}
 
+	@SuppressWarnings("removal")
 	@Test
 	public void testBug265564() throws Exception {
 		IFolder buildFolder = newTest("265564");
@@ -628,7 +632,7 @@ public class P2Tests extends P2TestCase {
 			return;
 
 		IFile artifact = repository.getFile(getArtifactLocation(descriptor));
-		String actualMD5 = ChecksumProducer.computeMD5(artifact.getLocation().toFile());
+		String actualMD5 = ChecksumProducer.produce(artifact.getLocation().toFile(), "MD5", null);
 		assertEquals(md5, actualMD5);
 	}
 

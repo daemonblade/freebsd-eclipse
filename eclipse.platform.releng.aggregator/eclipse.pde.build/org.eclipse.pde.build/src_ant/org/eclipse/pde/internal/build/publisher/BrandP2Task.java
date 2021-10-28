@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corporation and others.
+ * Copyright (c) 2009, 2021 IBM Corporation and others.
  *
  * This
  * program and the accompanying materials are made available under the terms of
@@ -45,7 +45,6 @@ import org.eclipse.equinox.p2.repository.artifact.IArtifactRepositoryManager;
 import org.eclipse.equinox.p2.repository.artifact.spi.ArtifactDescriptor;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
-import org.eclipse.equinox.spi.p2.publisher.PublisherHelper;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.pde.internal.build.*;
 import org.eclipse.pde.internal.build.tasks.Config;
@@ -69,7 +68,7 @@ public class BrandP2Task extends Repo2RunnableTask {
 		application = new Repo2Runnable() {
 			@Override
 			protected PhaseSet getPhaseSet() {
-				return new PhaseSet(new Phase[] {new Collect(100), new Install(100)}) { /* nothing to override */};
+				return new PhaseSet(new Phase[] {new Collect(100), new Install(100)});
 			}
 
 			@Override
@@ -217,16 +216,16 @@ public class BrandP2Task extends Repo2RunnableTask {
 		newIUDescription.setSingleton(originalIU.isSingleton());
 		newIUDescription.setId(id);
 		newIUDescription.setVersion(version);
-		newIUDescription.setCapabilities(new IProvidedCapability[] {PublisherHelper.createSelfCapability(id, version)});
+		newIUDescription.setCapabilities(new IProvidedCapability[] {MetadataFactory.createProvidedCapability(IInstallableUnit.NAMESPACE_IU_ID, id, version)});
 		newIUDescription.setTouchpointType(originalIU.getTouchpointType());
 		newIUDescription.setFilter(originalIU.getFilter());
 
 		List<ITouchpointData> data = brandTouchpointData(originalIU.getTouchpointData());
-		for (int i = 0; i < data.size(); i++) {
-			newIUDescription.addTouchpointData(data.get(i));
+		for (ITouchpointData element : data) {
+			newIUDescription.addTouchpointData(element);
 		}
 
-		IArtifactKey key = artifactRepo.createArtifactKey(PublisherHelper.BINARY_ARTIFACT_CLASSIFIER, newIUDescription.getId(), newIUDescription.getVersion());
+		IArtifactKey key = artifactRepo.createArtifactKey("binary", newIUDescription.getId(), newIUDescription.getVersion()); //$NON-NLS-1$
 		newIUDescription.setArtifacts(new IArtifactKey[] {key});
 
 		IInstallableUnit newIU = MetadataFactory.createInstallableUnit(newIUDescription);
@@ -289,8 +288,8 @@ public class BrandP2Task extends Repo2RunnableTask {
 			Map<String, ITouchpointInstruction> instructions = new HashMap<>(td.getInstructions());
 
 			String[] phases = new String[] {INSTALL, CONFIGURE};
-			for (int phase = 0; phase < phases.length; phase++) {
-				ITouchpointInstruction instruction = td.getInstruction(phases[phase]);
+			for (String element : phases) {
+				ITouchpointInstruction instruction = td.getInstruction(element);
 				if (instruction == null)
 					continue;
 
@@ -319,7 +318,7 @@ public class BrandP2Task extends Repo2RunnableTask {
 				}
 				if (phaseChanged) {
 					TouchpointInstruction newInstruction = new TouchpointInstruction(toString(actions, ";"), instruction.getImportAttribute()); //$NON-NLS-1$
-					instructions.put(phases[phase], newInstruction);
+					instructions.put(element, newInstruction);
 				}
 			}
 
@@ -387,9 +386,9 @@ public class BrandP2Task extends Repo2RunnableTask {
 		int close = action.lastIndexOf(')');
 		String parameterString = action.substring(open + 1, close);
 		String[] parameters = Utils.getArrayFromString(parameterString, ","); //$NON-NLS-1$
-		for (int i = 0; i < parameters.length; i++) {
-			int colon = parameters[i].indexOf(':');
-			result.put(parameters[i].substring(0, colon).trim(), parameters[i].substring(colon + 1).trim());
+		for (String parameter : parameters) {
+			int colon = parameter.indexOf(':');
+			result.put(parameter.substring(0, colon).trim(), parameter.substring(colon + 1).trim());
 		}
 		return result;
 	}
