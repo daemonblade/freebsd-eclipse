@@ -41,7 +41,9 @@ import org.eclipse.debug.core.model.ITerminate;
 import org.eclipse.debug.core.model.IThread;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.Signature;
+import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -61,6 +63,7 @@ import org.eclipse.jdt.debug.eval.IAstEvaluationEngine;
 import org.eclipse.jdt.debug.eval.ICompiledExpression;
 import org.eclipse.jdt.debug.eval.IEvaluationListener;
 import org.eclipse.jdt.debug.eval.IEvaluationResult;
+import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.debug.core.JDIDebugOptions;
 import org.eclipse.jdt.internal.debug.core.JDIDebugPlugin;
 import org.eclipse.jdt.internal.debug.core.logicalstructures.JDILambdaVariable;
@@ -79,6 +82,8 @@ import com.sun.jdi.ObjectReference;
 
 public class ASTEvaluationEngine implements IAstEvaluationEngine {
 	public static final String ANONYMOUS_VAR_PREFIX = "val$"; //$NON-NLS-1$
+	private static final int EVALUATION_DETAIL_BITMASK = DebugEvent.EVALUATION | DebugEvent.EVALUATION_IMPLICIT;
+	private static final String QN_OBJECT = "java.lang.Object"; //$NON-NLS-1$
 	private IJavaProject fProject;
 
 	private IJavaDebugTarget fDebugTarget;
@@ -381,10 +386,16 @@ public class ASTEvaluationEngine implements IAstEvaluationEngine {
 			// frame.getThis().getJavaType();
 			// }
 
+			Map<String, String> extraOptions = Collections.emptyMap();
+			// if target runtime is above java 1.8 then switch the compiler to debug mode to ignore java 9 module system
+			if (JavaCore.compareJavaVersions(((IJavaDebugTarget) frame.getDebugTarget()).getVersion(), JavaCore.VERSION_1_8) > 0) {
+				extraOptions = Collections.singletonMap(CompilerOptions.OPTION_JdtDebugCompileMode, JavaCore.ENABLED);
+			}
+
 			unit = parseCompilationUnit(
 					mapper.getSource(receivingType, frame.getLineNumber(), javaProject,
 							frame.isStatic()).toCharArray(),
-					mapper.getCompilationUnitName(), javaProject);
+					mapper.getCompilationUnitName(), javaProject, extraOptions);
 		} catch (CoreException e) {
 			InstructionSequence expression = new InstructionSequence(snippet);
 			expression.addError(e.getStatus().getMessage());
@@ -402,18 +413,63 @@ public class ASTEvaluationEngine implements IAstEvaluationEngine {
 	}
 
 	private String getFixedUnresolvableGenericTypes(IJavaVariable variable) throws DebugException {
+		StringBuilder fixedSignature = new StringBuilder();
+		scanAndFixSignature(variable.getGenericSignature(), Signature.toString(variable.getSignature()), fixedSignature);
+		return fixedSignature.toString();
+	}
+
+	private void scanAndFixSignature(String genericSignature, String erasureSignature, StringBuilder fixedSignature) {
 		/*
 		 * This actually fix variables which are type of Generic Types which cannot be resolved to a type in the current content. For example variable
 		 * type like P_OUT in java.util.stream.ReferencePipeline.filter(Predicate<? super P_OUT>)
+		 *
+		 * and also generic signature such as Ljava/util/function/Predicate<+Ljava/util/List<Ljava/lang/Integer;>;>; Ljava/util/Comparator<-TT;>;
+		 * which will fail the properly resolved to the type.
 		 */
-
-		final String genericSignature = variable.getGenericSignature();
-		final String fqn = Signature.toString(genericSignature).replace('/', '.');
-		if (genericSignature.startsWith(String.valueOf(Signature.C_TYPE_VARIABLE))) {
-			// resolve to the signature of the variable.
-			return Signature.toString(variable.getSignature()).replace('/', '.');
+		if (genericSignature.startsWith(String.valueOf(Signature.C_TYPE_VARIABLE)) ||
+				genericSignature.startsWith(String.valueOf(Signature.C_CAPTURE)) ||
+				genericSignature.startsWith(String.valueOf(Signature.C_STAR)) ||
+				genericSignature.startsWith(String.valueOf(Signature.C_SUPER)))
+		{
+			fixedSignature.append(toDotQualified(erasureSignature));
+			return;
 		}
-		return fqn;
+
+		if(genericSignature.startsWith(String.valueOf(Signature.C_EXTENDS))) {
+			fixedSignature.append(toDotQualified(Signature.toString(getUpperBoundTypeSignature(genericSignature))));
+			return;
+		}
+
+		// we have a proper type which might be parameterized so extract the type FQN
+		fixedSignature.append(toDotQualified(Signature.toString(Signature.getTypeErasure(genericSignature))));
+
+		String[] typeArguments = Signature.getTypeArguments(genericSignature);
+		if (typeArguments.length > 0) {
+			fixedSignature.append(Signature.C_GENERIC_START);
+			for (int i = 0; i < typeArguments.length; i++) {
+				if (i > 0) {
+					fixedSignature.append(',');
+				}
+				scanAndFixSignature(typeArguments[i], QN_OBJECT, fixedSignature);
+			}
+			fixedSignature.append(Signature.C_GENERIC_END);
+		}
+	}
+
+	private String toDotQualified(String fqn) {
+		return fqn.replace('/', '.');
+	}
+
+	private String getUpperBoundTypeSignature(String typeParamaterSignature) {
+		// +Ljava/util/List<Ljava/lang/Integer;>;
+		return String.valueOf(getBoudTypeParameterSignature(typeParamaterSignature.toCharArray(), Signature.C_EXTENDS));
+	}
+
+	private char[] getBoudTypeParameterSignature(char[] typeParamaterSignature, char boundType) {
+		if (typeParamaterSignature.length < 2 || typeParamaterSignature[0] != boundType) {
+			throw new IllegalArgumentException(Signature.toString(String.valueOf(typeParamaterSignature)));
+		}
+		return CharOperation.subarray(typeParamaterSignature, 1, typeParamaterSignature.length);
 	}
 
 	private CompilationUnit parseCompilationUnit(char[] source,
@@ -423,7 +479,7 @@ public class ASTEvaluationEngine implements IAstEvaluationEngine {
 
 	private CompilationUnit parseCompilationUnit(char[] source,
 			String unitName, IJavaProject project, Map<String, String> extraCompileOptions) {
-		ASTParser parser = ASTParser.newParser(AST.JLS14);
+		ASTParser parser = ASTParser.newParser(AST.JLS15);
 		parser.setSource(source);
 		parser.setUnitName(unitName);
 		parser.setProject(project);
@@ -479,11 +535,11 @@ public class ASTEvaluationEngine implements IAstEvaluationEngine {
 			// Arrays with a base component type of a class or interface are
 			// treated
 			// as Object arrays and evaluated in Object.
-			String recTypeName = "java.lang.Object"; //$NON-NLS-1$
+			String recTypeName = QN_OBJECT;
 			String typeName = arrayType.getName();
 			if (componentType instanceof IJavaReferenceType) {
 				StringBuilder buf = new StringBuilder();
-				buf.append("java.lang.Object"); //$NON-NLS-1$
+				buf.append(QN_OBJECT);
 				for (int i = 0; i < dimension; i++) {
 					buf.append("[]"); //$NON-NLS-1$
 				}
@@ -698,6 +754,8 @@ public class ASTEvaluationEngine implements IAstEvaluationEngine {
 
 		private IEvaluationListener fListener;
 
+		private boolean fDisableGcOnResult;
+
 		public EvalRunnable(InstructionSequence expression, IJavaThread thread,
 				IRuntimeContext context, IEvaluationListener listener,
 				int evaluationDetail, boolean hitBreakpoints) {
@@ -705,8 +763,9 @@ public class ASTEvaluationEngine implements IAstEvaluationEngine {
 			fThread = thread;
 			fContext = context;
 			fListener = listener;
-			fEvaluationDetail = evaluationDetail;
+			fEvaluationDetail = (evaluationDetail & EVALUATION_DETAIL_BITMASK);
 			fHitBreakpoints = hitBreakpoints;
+			fDisableGcOnResult = (evaluationDetail & IAstEvaluationEngine.DISABLE_GC_ON_RESULT) != 0;
 		}
 
 		@Override
@@ -773,7 +832,7 @@ public class ASTEvaluationEngine implements IAstEvaluationEngine {
 					EventFilter filter = new EventFilter();
 					try {
 						DebugPlugin.getDefault().addDebugEventFilter(filter);
-						interpreter.execute();
+						interpreter.execute(fDisableGcOnResult);
 					} catch (CoreException exception) {
 						fException = exception;
 						if (fEvaluationDetail == DebugEvent.EVALUATION

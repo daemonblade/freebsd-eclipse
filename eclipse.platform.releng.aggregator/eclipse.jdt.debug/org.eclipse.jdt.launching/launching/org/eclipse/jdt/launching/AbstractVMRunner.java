@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,7 +21,6 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.variables.IStringVariableManager;
 import org.eclipse.core.variables.VariablesPlugin;
@@ -29,9 +28,9 @@ import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.launching.CommandLineQuoting;
 import org.eclipse.jdt.internal.launching.LaunchingMessages;
 import org.eclipse.jdt.internal.launching.LaunchingPlugin;
-import org.eclipse.osgi.service.environment.Constants;
 
 /**
  * Abstract implementation of a VM runner.
@@ -121,46 +120,7 @@ public abstract class AbstractVMRunner implements IVMRunner {
 	 * @since 3.11
 	 */
 	protected static String[] quoteWindowsArgs(String[] cmdLine) {
-		// see https://bugs.eclipse.org/387504 , workaround for http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6511002
-		if (Platform.getOS().equals(Constants.OS_WIN32)) {
-			String[] winCmdLine = new String[cmdLine.length];
-			if(cmdLine.length > 0) {
-				winCmdLine[0] = cmdLine[0];
-			}
-			for (int i = 1; i < cmdLine.length; i++) {
-				winCmdLine[i] = winQuote(cmdLine[i]);
-			}
-			cmdLine = winCmdLine;
-		}
-		return cmdLine;
-	}
-
-
-	private static boolean needsQuoting(String s) {
-		int len = s.length();
-		if (len == 0) {
-			return true;
-		}
-		if ("\"\"".equals(s)) //$NON-NLS-1$
-		 {
-			return false; // empty quotes must not be quoted again
-		}
-		for (int i = 0; i < len; i++) {
-			switch (s.charAt(i)) {
-				case ' ': case '\t': case '\\': case '"':
-					return true;
-			}
-		}
-		return false;
-	}
-
-	private static String winQuote(String s) {
-		if (! needsQuoting(s)) {
-			return s;
-		}
-		s = s.replaceAll("([\\\\]*)\"", "$1$1\\\\\""); //$NON-NLS-1$ //$NON-NLS-2$
-		s = s.replaceAll("([\\\\]*)\\z", "$1$1"); //$NON-NLS-1$ //$NON-NLS-2$
-		return "\"" + s + "\""; //$NON-NLS-1$ //$NON-NLS-2$
+		return CommandLineQuoting.quoteWindowsArgs(cmdLine);
 	}
 
 	/**
@@ -170,12 +130,18 @@ public abstract class AbstractVMRunner implements IVMRunner {
 	 * @return a single space-delimited string
 	 */
 	protected String getCmdLineAsString(String[] cmdLine) {
-		StringBuilder buff= new StringBuilder();
-		for (int i = 0, numStrings= cmdLine.length; i < numStrings; i++) {
+		StringBuilder buff = new StringBuilder();
+		for (int i = 0; i < cmdLine.length; i++) {
 			buff.append(cmdLine[i]);
-			buff.append(' ');
+			if (i != cmdLine.length - 1) {
+				if (cmdLine[i + 1].startsWith("-")) { //$NON-NLS-1$
+					buff.append("\n"); //$NON-NLS-1$
+				} else {
+					buff.append(' ');
+				}
+			}
 		}
-		return buff.toString().trim();
+		return buff.toString();
 	}
 
 	/**

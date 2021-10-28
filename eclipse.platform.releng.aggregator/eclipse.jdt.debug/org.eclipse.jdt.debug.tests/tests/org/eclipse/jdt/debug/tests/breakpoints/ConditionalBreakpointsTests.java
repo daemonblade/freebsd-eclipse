@@ -56,7 +56,7 @@ public class ConditionalBreakpointsTests extends AbstractDebugTest {
 			IJavaPrimitiveValue value = (IJavaPrimitiveValue)var.getValue();
 			assertNotNull("variable 'i' has no value", value);
 			int iValue = value.getIntValue();
-			assertTrue("value of 'i' should be '3', but was " + iValue, iValue == 3);
+			assertEquals("value of 'i' should be '3', but was " + iValue, 3, iValue);
 
 			bp.delete();
 		} finally {
@@ -84,7 +84,7 @@ public class ConditionalBreakpointsTests extends AbstractDebugTest {
 			IJavaPrimitiveValue value = (IJavaPrimitiveValue)var.getValue();
 			assertNotNull("variable 'i' has no value", value);
 			int iValue = value.getIntValue();
-			assertTrue("value of 'i' should be '4', but was " + iValue, iValue == 4);
+			assertEquals("value of 'i' should be '4', but was " + iValue, 4, iValue);
 
 			bp.delete();
 		} finally {
@@ -516,7 +516,7 @@ public class ConditionalBreakpointsTests extends AbstractDebugTest {
 	 */
 	public void testConditionBreakpointReturnNonBooleanObject() throws Exception {
 		String typeName = "HitCountLooper";
-		createConditionalLineBreakpoint(16, typeName, "return new Integer(1)", true);
+		createConditionalLineBreakpoint(16, typeName, "return Integer.valueOf(1)", true);
 		IJavaLineBreakpoint bp1 = createConditionalLineBreakpoint(17, typeName, "return true", true);
 
 		IJavaThread thread = null;

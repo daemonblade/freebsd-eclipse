@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -38,6 +38,7 @@ import org.eclipse.jdt.debug.tests.breakpoints.MethodBreakpointTests15;
 import org.eclipse.jdt.debug.tests.breakpoints.MiscBreakpointsTests;
 import org.eclipse.jdt.debug.tests.breakpoints.PatternBreakpointTests;
 import org.eclipse.jdt.debug.tests.breakpoints.PreLaunchBreakpointTest;
+import org.eclipse.jdt.debug.tests.breakpoints.RecordBreakpointTests;
 import org.eclipse.jdt.debug.tests.breakpoints.RunToLineTests;
 import org.eclipse.jdt.debug.tests.breakpoints.SpecialExceptionBreakpointTests;
 import org.eclipse.jdt.debug.tests.breakpoints.SuspendVMBreakpointsTests;
@@ -55,6 +56,7 @@ import org.eclipse.jdt.debug.tests.console.IOConsoleTests;
 import org.eclipse.jdt.debug.tests.console.JavaStackTraceConsoleTest;
 import org.eclipse.jdt.debug.tests.core.AlternateStratumTests;
 import org.eclipse.jdt.debug.tests.core.ArgumentTests;
+import org.eclipse.jdt.debug.tests.core.ArgumentTestsWithArgfile;
 import org.eclipse.jdt.debug.tests.core.ArrayTests;
 import org.eclipse.jdt.debug.tests.core.BootpathTests;
 import org.eclipse.jdt.debug.tests.core.ClasspathContainerTests;
@@ -89,8 +91,13 @@ import org.eclipse.jdt.debug.tests.core.VMInstallTests;
 import org.eclipse.jdt.debug.tests.core.WatchExpressionTests;
 import org.eclipse.jdt.debug.tests.core.WorkingDirectoryTests;
 import org.eclipse.jdt.debug.tests.core.WorkspaceSourceContainerTests;
+import org.eclipse.jdt.debug.tests.eval.BlockStatementEvaluationTests;
+import org.eclipse.jdt.debug.tests.eval.ExpressionEvalTest;
 import org.eclipse.jdt.debug.tests.eval.GeneralEvalTests;
+import org.eclipse.jdt.debug.tests.eval.GenericsEval17Test;
 import org.eclipse.jdt.debug.tests.eval.GenericsEvalTests;
+import org.eclipse.jdt.debug.tests.eval.Java9Tests;
+import org.eclipse.jdt.debug.tests.eval.LambdaVariableTest;
 import org.eclipse.jdt.debug.tests.eval.SyntheticVariableTests;
 import org.eclipse.jdt.debug.tests.launching.ClasspathShortenerTests;
 import org.eclipse.jdt.debug.tests.launching.ConfigurationEncodingTests;
@@ -117,6 +124,7 @@ import org.eclipse.jdt.debug.tests.refactoring.RenameNonPublicTypeUnitTests;
 import org.eclipse.jdt.debug.tests.refactoring.RenamePackageUnitTests;
 import org.eclipse.jdt.debug.tests.refactoring.RenamePublicTypeUnitTests;
 import org.eclipse.jdt.debug.tests.sourcelookup.ArchiveSourceLookupTests;
+import org.eclipse.jdt.debug.tests.sourcelookup.Bug565462Tests;
 import org.eclipse.jdt.debug.tests.sourcelookup.DefaultSourceContainerTests;
 import org.eclipse.jdt.debug.tests.sourcelookup.DirectorySourceContainerTests;
 import org.eclipse.jdt.debug.tests.sourcelookup.DirectorySourceLookupTests;
@@ -201,6 +209,7 @@ public class AutomatedSuite extends DebugSuite {
 		addTest(new TestSuite(SourceLocationTests.class));
 		addTest(new TestSuite(TypeResolutionTests.class));
 		addTest(new TestSuite(JarSourceLookupTests.class));
+		addTest(new TestSuite(Bug565462Tests.class));
 
 	// Variable tests
 		addTest(new TestSuite(InstanceVariableTests.class));
@@ -243,6 +252,7 @@ public class AutomatedSuite extends DebugSuite {
 		addTest(new TestSuite(EnvironmentTests.class));
 		addTest(new TestSuite(ExecutionEnvironmentTests.class));
 		addTest(new TestSuite(ArgumentTests.class));
+		addTest(new TestSuite(ArgumentTestsWithArgfile.class));
 
 	//Console tests
 		addTest(new TestSuite(ConsoleTests.class));
@@ -323,7 +333,16 @@ public class AutomatedSuite extends DebugSuite {
 
 	//add the complete eval suite
 		addTest(new TestSuite(GeneralEvalTests.class));
+		addTest(new TestSuite(GenericsEval17Test.class));
+		addTest(new TestSuite(BlockStatementEvaluationTests.class));
+		addTest(new TestSuite(ExpressionEvalTest.class));
+		if (JavaProjectHelper.isJava8Compatible()) {
+			addTest(new TestSuite(LambdaVariableTest.class));
+		}
 		//addTest(EvalTestSuite.suite());
+		if (JavaProjectHelper.isJava9Compatible()) {
+			addTest(new TestSuite(Java9Tests.class));
+		}
 
 		// long classpath tests
 		addTest(new TestSuite(ClasspathShortenerTests.class));
@@ -374,5 +393,9 @@ public class AutomatedSuite extends DebugSuite {
 			addTest(new TestSuite(AlternateStratumTests.class));
 		}
 		addTest(new TestSuite(ConditionalBreakpointsTests.class));
+
+		if (JavaProjectHelper.isJava16_Compatible()) {
+			addTest(new TestSuite(RecordBreakpointTests.class));
+		}
 	}
 }

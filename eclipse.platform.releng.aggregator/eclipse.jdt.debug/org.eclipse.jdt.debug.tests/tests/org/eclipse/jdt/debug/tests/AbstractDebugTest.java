@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -187,6 +187,7 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 	public static final String ONE_SEVEN_PROJECT_NAME = "OneSeven";
 	public static final String ONE_EIGHT_PROJECT_NAME = "OneEight";
 	public static final String NINE_PROJECT_NAME = "Nine";
+	public static final String ONESIX_PROJECT_NAME = "One_Six";
 	public static final String BOUND_JRE_PROJECT_NAME = "BoundJRE";
 	public static final String CLONE_SUFFIX = "Clone";
 
@@ -206,7 +207,7 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 			"org.eclipse.debug.tests.targets.HcrClass9", "TestContributedStepFilterClass", "TerminateAll_01", "TerminateAll_02", "StepResult1",
 			"StepResult2", "StepResult3", "StepUncaught", "TriggerPoint_01", "BulkThreadCreationTest", "MethodExitAndException",
 			"Bug534319earlyStart", "Bug534319lateStart", "Bug534319singleThread", "Bug534319startBetwen", "MethodCall", "Bug538303", "Bug540243",
-			"OutSync", "OutSync2", "ConsoleOutputUmlaut", "ErrorRecurrence", "ModelPresentationTests" };
+			"OutSync", "OutSync2", "ConsoleOutputUmlaut", "ErrorRecurrence", "ModelPresentationTests", "Bug565982" };
 
 	/**
 	 * the default timeout
@@ -239,6 +240,7 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 	private static boolean loaded17 = false;
 	private static boolean loaded18 = false;
 	private static boolean loaded9 = false;
+	private static boolean loaded16_ = false;
 	private static boolean loadedEE = false;
 	private static boolean loadedJRE = false;
 	private static boolean loadedMulti = false;
@@ -270,6 +272,8 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 		loaded18 = pro.exists();
 		pro = ResourcesPlugin.getWorkspace().getRoot().getProject(NINE_PROJECT_NAME);
 		loaded9 = pro.exists();
+		pro = ResourcesPlugin.getWorkspace().getRoot().getProject(ONESIX_PROJECT_NAME);
+		loaded16_ = pro.exists();
 		pro = ResourcesPlugin.getWorkspace().getRoot().getProject(BOUND_JRE_PROJECT_NAME);
 		loadedJRE = pro.exists();
 		pro = ResourcesPlugin.getWorkspace().getRoot().getProject(BOUND_EE_PROJECT_NAME);
@@ -318,6 +322,11 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 	        	node.putBoolean(ResourcesPlugin.PREF_LIGHTWEIGHT_AUTO_REFRESH, true);
 	        	node.flush();
 	        }
+
+			IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode("org.eclipse.urischeme");
+			if (prefs != null) {
+				prefs.putBoolean("skipAutoRegistration", true);
+			}
 	        loadedPrefs = true;
 		}
     }
@@ -397,6 +406,7 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 				cfgs.add(createLaunchConfiguration(jp, "a.b.c.bug484686"));
 				cfgs.add(createLaunchConfiguration(jp, "a.b.c.GenericMethodEntryTest"));
 				cfgs.add(createLaunchConfiguration(jp, "org.eclipse.debug.tests.targets.HcrClass", true));
+				cfgs.add(createLaunchConfiguration(jp, "a.b.c.Bug570988"));
 				loaded15 = true;
 				waitForBuild();
 	        }
@@ -428,6 +438,8 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 	        	jp = createProject(ONE_SEVEN_PROJECT_NAME, JavaProjectHelper.TEST_1_7_SRC_DIR.toString(), JavaProjectHelper.JAVA_SE_1_7_EE_NAME, false);
 	    		cfgs.add(createLaunchConfiguration(jp, LiteralTests17.LITERAL_TYPE_NAME));
 				cfgs.add(createLaunchConfiguration(jp, "ThreadNameChange"));
+				cfgs.add(createLaunchConfiguration(jp, "Bug567801"));
+				cfgs.add(createLaunchConfiguration(jp, "Bug572782"));
 	    		loaded17 = true;
 	    		waitForBuild();
 	        }
@@ -478,6 +490,15 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 				cfgs.add(createLaunchConfiguration(jp, "RemoteEvaluator"));
 				cfgs.add(createLaunchConfiguration(jp, "AnonymousEvaluator"));
 				cfgs.add(createLaunchConfiguration(jp, "Bug564486"));
+				cfgs.add(createLaunchConfiguration(jp, "Bug564801"));
+				cfgs.add(createLaunchConfiguration(jp, "Bug567801"));
+				cfgs.add(createLaunchConfiguration(jp, "Bug571230"));
+				cfgs.add(createLaunchConfiguration(jp, "Bug572629"));
+				cfgs.add(createLaunchConfiguration(jp, "Bug569413"));
+				cfgs.add(createLaunchConfiguration(jp, "Bug573589"));
+				cfgs.add(createLaunchConfiguration(jp, "Bug574395"));
+				cfgs.add(createLaunchConfiguration(jp, "Bug571310"));
+				cfgs.add(createLaunchConfiguration(jp, "Bug573547"));
 	    		loaded18 = true;
 	    		waitForBuild();
 	        }
@@ -508,6 +529,7 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 			if (!loaded9) {
 				jp = createProject(NINE_PROJECT_NAME, JavaProjectHelper.TEST_9_SRC_DIR.toString(), JavaProjectHelper.JAVA_SE_9_EE_NAME, false);
 				cfgs.add(createLaunchConfiguration(jp, "LogicalStructures"));
+				cfgs.add(createLaunchConfiguration(jp, "Bug575039"));
 				loaded9 = true;
 				waitForBuild();
 			}
@@ -523,6 +545,34 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 				// ignore
 			}
 			handleProjectCreationException(e, NINE_PROJECT_NAME, jp);
+		}
+	}
+
+	/**
+	 * Creates the Java 16 compliant project
+	 */
+	synchronized void assert16_Project() {
+		IJavaProject jp = null;
+		ArrayList<ILaunchConfiguration> cfgs = new ArrayList<>(1);
+		try {
+			if (!loaded16_) {
+				jp = createProject(ONESIX_PROJECT_NAME, JavaProjectHelper.TEST_16_SRC_DIR.toString(), JavaProjectHelper.JAVA_SE_16_EE_NAME, false);
+				cfgs.add(createLaunchConfiguration(jp, "RecordTests"));
+				loaded16_ = true;
+				waitForBuild();
+			}
+		} catch (Exception e) {
+			try {
+				if (jp != null) {
+					jp.getProject().delete(true, true, null);
+					for (int i = 0; i < cfgs.size(); i++) {
+						cfgs.get(i).delete();
+					}
+				}
+			} catch (CoreException ce) {
+				// ignore
+			}
+			handleProjectCreationException(e, ONESIX_PROJECT_NAME, jp);
 		}
 	}
 
@@ -743,6 +793,16 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 	 */
 	protected IJavaProject getProjectContext() {
 		return get14Project();
+	}
+
+	/**
+	 * Returns the 'DebugTests' project.
+	 *
+	 * @return the test project
+	 */
+	protected IJavaProject get16_Project() {
+		assert16_Project();
+		return getJavaProject(ONESIX_PROJECT_NAME);
 	}
 
 	/**
@@ -1383,12 +1443,12 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 		IJavaThread thread = (IJavaThread) suspendee;
 		IBreakpoint hit = getBreakpoint(thread);
 		assertNotNull("suspended, but not by breakpoint", hit); //$NON-NLS-1$
-		assertTrue("hit un-registered breakpoint", bp.equals(hit)); //$NON-NLS-1$
+		assertEquals("hit un-registered breakpoint", bp, hit); //$NON-NLS-1$
 		assertTrue("suspended, but not by line breakpoint", hit instanceof ILineBreakpoint); //$NON-NLS-1$
 		ILineBreakpoint breakpoint= (ILineBreakpoint) hit;
 		int lineNumber = breakpoint.getLineNumber();
 		int stackLine = thread.getTopStackFrame().getLineNumber();
-		assertTrue("line numbers of breakpoint and stack frame do not match", lineNumber == stackLine); //$NON-NLS-1$
+		assertEquals("line numbers of breakpoint and stack frame do not match", lineNumber, stackLine); //$NON-NLS-1$
 
 		return thread;
 	}
@@ -1470,12 +1530,12 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 		IJavaThread thread = (IJavaThread) suspendee;
 		IBreakpoint hit = getBreakpoint(thread);
 		assertNotNull("suspended, but not by breakpoint", hit); //$NON-NLS-1$
-		assertTrue("hit un-registered breakpoint", bp.equals(hit)); //$NON-NLS-1$
+		assertEquals("hit un-registered breakpoint", bp, hit); //$NON-NLS-1$
 		assertTrue("suspended, but not by line breakpoint", hit instanceof ILineBreakpoint); //$NON-NLS-1$
 		ILineBreakpoint breakpoint= (ILineBreakpoint) hit;
 		int lineNumber = breakpoint.getLineNumber();
 		int stackLine = thread.getTopStackFrame().getLineNumber();
-		assertTrue("line numbers of breakpoint and stack frame do not match", lineNumber == stackLine); //$NON-NLS-1$
+		assertEquals("line numbers of breakpoint and stack frame do not match", lineNumber, stackLine); //$NON-NLS-1$
 
 		return (IJavaThread)suspendee;
 	}
@@ -2831,6 +2891,19 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 	 * @throws Exception
 	 */
 	protected IValue doEval(IJavaThread thread, String snippet) throws Exception{
+		return this.doEval(thread, () -> (IJavaStackFrame) thread.getTopStackFrame(), snippet);
+	}
+
+	/**
+	 * Perform the actual evaluation (inspect)
+	 *
+	 * @param thread
+	 * @param frameSupplier
+	 *            The frame supplier which provides the frame for the evaluation
+	 * @return the result of the evaluation
+	 * @throws Exception
+	 */
+	protected IValue doEval(IJavaThread thread, StackFrameSupplier frameSupplier, String snippet) throws Exception {
 		class Listener implements IEvaluationListener {
 			IEvaluationResult fResult;
 
@@ -2844,7 +2917,7 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 			}
 		}
 		Listener listener = new Listener();
-		IJavaStackFrame frame = (IJavaStackFrame) thread.getTopStackFrame();
+		IJavaStackFrame frame = frameSupplier.get();
 		assertNotNull("There should be a stackframe", frame);
 		ASTEvaluationEngine engine = new ASTEvaluationEngine(getProjectContext(), (IJavaDebugTarget) thread.getDebugTarget());
 		try {
@@ -2918,5 +2991,9 @@ public abstract class AbstractDebugTest extends TestCase implements  IEvaluation
 			markersInfo.append(marker);
 		}
 		return markersInfo.toString();
+	}
+
+	public interface StackFrameSupplier {
+		IJavaStackFrame get() throws Exception;
 	}
 }

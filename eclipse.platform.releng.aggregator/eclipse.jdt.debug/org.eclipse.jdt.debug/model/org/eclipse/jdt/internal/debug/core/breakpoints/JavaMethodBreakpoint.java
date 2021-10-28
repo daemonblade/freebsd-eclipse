@@ -147,9 +147,6 @@ public class JavaMethodBreakpoint extends JavaLineBreakpoint implements
 			final int charStart, final int charEnd, final int hitCount,
 			final boolean register, final Map<String, Object> attributes) throws CoreException {
 		IWorkspaceRunnable wr = monitor -> {
-			// create the marker
-			setMarker(resource.createMarker(JAVA_METHOD_BREAKPOINT));
-
 			// add attributes
 			addLineBreakpointAttributes(attributes, getModelIdentifier(),
 					true, lineNumber, charStart, charEnd);
@@ -160,8 +157,8 @@ public class JavaMethodBreakpoint extends JavaLineBreakpoint implements
 			attributes.put(EXIT, Boolean.valueOf(exit));
 			attributes.put(NATIVE, Boolean.valueOf(nativeOnly));
 			attributes.put(SUSPEND_POLICY, Integer.valueOf(getDefaultSuspendPolicy()));
-			// set attributes
-			ensureMarker().setAttributes(attributes);
+			// create the marker
+			setMarker(resource.createMarker(JAVA_METHOD_BREAKPOINT, attributes));
 			register(register);
 		};
 		run(getMarkerRule(resource), wr);
@@ -518,14 +515,8 @@ public class JavaMethodBreakpoint extends JavaLineBreakpoint implements
 			event.request().putProperty(HIT_COUNT, count);
 			if (hitCount == 0) {
 				// the count has reached 0, breakpoint hit
-				try {
-					// make a note that we auto-disabled the breakpoint
-					// order is important here...see methodEntryChanged
-					setExpired(true);
-					setEnabled(false);
-				} catch (CoreException e) {
-					JDIDebugPlugin.log(e);
-				}
+				expireHitCount(event);
+				disableTriggerPoint(event);
 				return false;
 			}
 			// count still > 0, keep running

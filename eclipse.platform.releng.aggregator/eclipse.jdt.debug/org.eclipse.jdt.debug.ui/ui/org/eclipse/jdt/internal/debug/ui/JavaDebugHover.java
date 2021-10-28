@@ -15,9 +15,17 @@
 package org.eclipse.jdt.internal.debug.ui;
 
 
+import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.model.IStackFrame;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
@@ -27,6 +35,7 @@ import org.eclipse.jdt.core.ICodeAssist;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IInitializer;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -35,9 +44,11 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
@@ -49,8 +60,12 @@ import org.eclipse.jdt.debug.core.IJavaThread;
 import org.eclipse.jdt.debug.core.IJavaType;
 import org.eclipse.jdt.debug.core.IJavaValue;
 import org.eclipse.jdt.debug.core.IJavaVariable;
+import org.eclipse.jdt.debug.eval.IAstEvaluationEngine;
+import org.eclipse.jdt.debug.eval.IEvaluationListener;
+import org.eclipse.jdt.debug.eval.IEvaluationResult;
 import org.eclipse.jdt.internal.debug.core.JDIDebugPlugin;
 import org.eclipse.jdt.internal.debug.core.logicalstructures.JDIPlaceholderVariable;
+import org.eclipse.jdt.internal.debug.core.model.JDIThisVariable;
 import org.eclipse.jdt.internal.debug.eval.ast.engine.ASTEvaluationEngine;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jdt.ui.text.java.hover.IJavaEditorTextHover;
@@ -68,7 +83,8 @@ import org.eclipse.ui.IEditorPart;
 
 public class JavaDebugHover implements IJavaEditorTextHover, ITextHoverExtension, ITextHoverExtension2 {
 
-    private IEditorPart fEditor;
+	private static final String THIS = "this"; //$NON-NLS-1$
+	private IEditorPart fEditor;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ui.text.java.hover.IJavaEditorTextHover#setEditor(org.eclipse.ui.IEditorPart)
@@ -255,7 +271,7 @@ public class JavaDebugHover implements IJavaEditorTextHover, ITextHoverExtension
 			if (document != null) {
 			    try {
                     String variableName= document.get(hoverRegion.getOffset(), hoverRegion.getLength());
-                    if (variableName.equals("this")) { //$NON-NLS-1$
+					if (variableName.equals(THIS)) {
                         try {
                             IJavaVariable variable = frame.findVariable(variableName);
                             if (variable != null) {
@@ -284,20 +300,23 @@ public class JavaDebugHover implements IJavaEditorTextHover, ITextHoverExtension
 		        return resolveLocalVariable(frame, textViewer, hoverRegion);
 		    }
 
-            IJavaElement[] resolve = null;
-            try {
-                resolve = codeAssist.codeSelect(hoverRegion.getOffset(), 0);
-            } catch (JavaModelException e1) {
-                resolve = new IJavaElement[0];
-            }
-            try {
-            	for (int i = 0; i < resolve.length; i++) {
-            		IJavaElement javaElement = resolve[i];
-            		if (javaElement instanceof IField) {
-            		    IField field = (IField)javaElement;
-            		    IJavaVariable variable = null;
-            		    IJavaDebugTarget debugTarget = (IJavaDebugTarget)frame.getDebugTarget();
-            		    if (Flags.isStatic(field.getFlags())) {
+			IJavaElement[] resolve = resolveElement(hoverRegion.getOffset(), codeAssist);
+			try {
+				boolean onArrayLength = false;
+				if (resolve.length == 0 && isOverNameLength(hoverRegion, document)) {
+					// lets check if this is part of an array variable by jumping 2 chars backward from offset.
+					resolve = resolveElement(hoverRegion.getOffset() - 2, codeAssist);
+					onArrayLength = (resolve.length == 1) && isLocalOrMemberVariable(resolve[0])
+							&& isArrayTypeVariable(resolve[0]);
+				}
+
+				for (int i = 0; i < resolve.length; i++) {
+					IJavaElement javaElement = resolve[i];
+					if (javaElement instanceof IField) {
+						IField field = (IField) javaElement;
+						IJavaVariable variable = null;
+						IJavaDebugTarget debugTarget = (IJavaDebugTarget) frame.getDebugTarget();
+						if (Flags.isStatic(field.getFlags()) && !onArrayLength) {
 							IJavaType[] javaTypes = debugTarget.getJavaTypes(field.getDeclaringType().getFullyQualifiedName());
             		    	if (javaTypes != null) {
 	            		    	for (int j = 0; j < javaTypes.length; j++) {
@@ -344,38 +363,29 @@ public class JavaDebugHover implements IJavaEditorTextHover, ITextHoverExtension
 								}
             		    	}
             		    } else {
-							if (!frame.isStatic() && !frame.isNative()) {
-            		    		// ensure that we only resolve a field access on 'this':
-            		    		if (!(codeAssist instanceof ITypeRoot)) {
+							if ((!frame.isStatic() || isLocalOrMemberVariable(javaElement)) && !frame.isNative()) {
+								// we resolve chain elements which are either on "this" or local variables. In case of
+								// local variables we also consider static frames.
+								if (!(codeAssist instanceof ITypeRoot)) {
 									return null;
 								}
-            		    		ITypeRoot typeRoot = (ITypeRoot) codeAssist;
-								ASTNode root = SharedASTProviderCore.getAST(typeRoot, SharedASTProviderCore.WAIT_NO, null);
-            		    		if (root == null) {
-									ASTParser parser = ASTParser.newParser(AST.JLS14);
-	            		    		parser.setSource(typeRoot);
-	            		    		parser.setFocalPosition(hoverRegion.getOffset());
-									root = parser.createAST(null);
-            		    		}
-            		    		ASTNode node = NodeFinder.perform(root, hoverRegion.getOffset(), hoverRegion.getLength());
-            		    		if (node == null) {
+								ITypeRoot typeRoot = (ITypeRoot) codeAssist;
+								ASTNode node = findNodeAtRegion(typeRoot, hoverRegion);
+								if (node == null) {
 									return null;
 								}
 								StructuralPropertyDescriptor locationInParent = node.getLocationInParent();
 								if (locationInParent == FieldAccess.NAME_PROPERTY) {
 									FieldAccess fieldAccess = (FieldAccess) node.getParent();
-									if (!(fieldAccess.getExpression() instanceof ThisExpression)) {
-										return null;
+									if (fieldAccess.getExpression() instanceof ThisExpression && !onArrayLength) {
+										variable = evaluateField(findFirstFrameForVariable(frame, forField(field)), field);
+									} else {
+										variable = evaluateQualifiedNode(fieldAccess, frame, typeRoot.getJavaProject(), forField(field));
 									}
 								} else if (locationInParent == QualifiedName.NAME_PROPERTY) {
-									return null;
-								}
-
-            		    		String typeSignature = Signature.createTypeSignature(field.getDeclaringType().getFullyQualifiedName(), true);
-            		    		typeSignature = typeSignature.replace('.', '/');
-								IJavaObject ths = frame.getThis();
-								if (ths != null) {
-									variable = ths.getField(field.getElementName(), typeSignature);
+									variable = evaluateQualifiedNode(node.getParent(), frame, typeRoot.getJavaProject(), forField(field));
+								} else {
+									variable = evaluateField(findFirstFrameForVariable(frame, forField(field)), field);
 								}
             		    	}
             		    }
@@ -385,7 +395,20 @@ public class JavaDebugHover implements IJavaEditorTextHover, ITextHoverExtension
             			break;
             		}
             		if (javaElement instanceof ILocalVariable) {
-            		    ILocalVariable var = (ILocalVariable)javaElement;
+						ILocalVariable var = (ILocalVariable) javaElement;
+						// if we are on a array, regardless where we are send it to evaluation engine
+						if (onArrayLength) {
+							if (!(codeAssist instanceof ITypeRoot)) {
+								return null;
+							}
+							ITypeRoot typeRoot = (ITypeRoot) codeAssist;
+							ASTNode node = findNodeAtRegion(typeRoot, hoverRegion);
+							if (node == null) {
+								return null;
+							}
+							return evaluateQualifiedNode(node.getParent(), frame, typeRoot.getJavaProject(), forLocalVariable(var));
+						}
+
             		    IJavaElement parent = var.getParent();
 						while (!(parent instanceof IMethod) && !(parent instanceof IInitializer) && parent != null) {
             		    	parent = parent.getParent();
@@ -443,7 +466,7 @@ public class JavaDebugHover implements IJavaEditorTextHover, ITextHoverExtension
             				}
             				// find variable if equal or method is a Lambda Method
             				if (equal || method.isLambdaMethod()) {
-            					return findLocalVariable(frame, var.getElementName());
+								return findLocalVariable(findFirstFrameForVariable(frame, forLocalVariable(var)), var.getElementName());
             				}
             			}
             		    break;
@@ -456,7 +479,183 @@ public class JavaDebugHover implements IJavaEditorTextHover, ITextHoverExtension
 	    return null;
 	}
 
+	private ASTNode findNodeAtRegion(ITypeRoot typeRoot, IRegion hoverRegion) {
+		ASTNode root = SharedASTProviderCore.getAST(typeRoot, SharedASTProviderCore.WAIT_NO, null);
+		if (root == null) {
+			ASTParser parser = ASTParser.newParser(AST.JLS15);
+			parser.setSource(typeRoot);
+			parser.setFocalPosition(hoverRegion.getOffset());
+			root = parser.createAST(null);
+		}
+		return NodeFinder.perform(root, hoverRegion.getOffset(), hoverRegion.getLength());
+	}
+
+	private boolean isArrayTypeVariable(IJavaElement element) throws JavaModelException {
+		String signature;
+		if (element instanceof IField) {
+			signature = ((IField) element).getTypeSignature();
+		} else if (element instanceof ILocalVariable) {
+			signature = ((ILocalVariable) element).getTypeSignature();
+		} else {
+			signature = ""; //$NON-NLS-1$
+		}
+		return signature.startsWith("["); //$NON-NLS-1$
+	}
+
+	private boolean isLocalOrMemberVariable(IJavaElement element) {
+		return (element instanceof IField) || (element instanceof ILocalVariable);
+	}
+
+	private boolean isOverNameLength(IRegion hoverRegion, IDocument document) {
+		try {
+			return "length".equals(document.get(hoverRegion.getOffset(), hoverRegion.getLength())); //$NON-NLS-1$
+		} catch (BadLocationException e) {
+			return false;
+		}
+	}
+
+	private IJavaElement[] resolveElement(int offset, ICodeAssist codeAssist) {
+		IJavaElement[] resolve;
+		try {
+			resolve = codeAssist.codeSelect(offset, 0);
+		} catch (JavaModelException e1) {
+			resolve = new IJavaElement[0];
+		}
+		return resolve;
+	}
+
+	private IJavaVariable evaluateField(IJavaStackFrame frame, IField field) throws DebugException {
+		IJavaObject ths = frame.getThis();
+		if (ths != null) {
+			String typeSignature = Signature.createTypeSignature(field.getDeclaringType().getFullyQualifiedName(), true);
+			typeSignature = typeSignature.replace('.', '/');
+			return ths.getField(field.getElementName(), typeSignature);
+		}
+		return null;
+	}
+
+	private IJavaVariable evaluateQualifiedNode(ASTNode node, IJavaStackFrame frame, IJavaProject project, Predicate<IJavaStackFrame> framePredicate) {
+		StringBuilder snippetBuilder = new StringBuilder();
+		if (node instanceof QualifiedName) {
+			snippetBuilder.append(((QualifiedName) node).getFullyQualifiedName());
+		} else if (node instanceof FieldAccess) {
+			StringJoiner segments = new StringJoiner("."); //$NON-NLS-1$
+			node.accept(new ASTVisitor() {
+				@Override
+				public boolean visit(SimpleName node) {
+					segments.add(node.getFullyQualifiedName());
+					return true;
+				}
+
+				@Override
+				public boolean visit(ThisExpression node) {
+					segments.add(THIS);
+					return true;
+				}
+
+			});
+			snippetBuilder.append(segments.toString());
+		} else {
+			return null;
+		}
+
+		final String snippet = snippetBuilder.toString();
+
+		class Evaluator implements IEvaluationListener {
+			private CompletableFuture<IEvaluationResult> result = new CompletableFuture<>();
+
+			@Override
+			public void evaluationComplete(IEvaluationResult result) {
+				this.result.complete(result);
+			}
+
+			public void run() throws DebugException {
+				IAstEvaluationEngine engine = JDIDebugPlugin.getDefault().getEvaluationEngine(project, (IJavaDebugTarget) frame.getDebugTarget());
+				engine.evaluate(snippet, findFirstFrameForVariable(frame, framePredicate), this, DebugEvent.EVALUATION_IMPLICIT, false);
+			}
+
+			public Optional<IEvaluationResult> getResult() {
+				try {
+					return Optional.ofNullable(result.get());
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				} catch (ExecutionException e) {
+					JDIDebugUIPlugin.log(e);
+				}
+				return Optional.empty();
+			}
+		}
+		Evaluator evaluator = new Evaluator();
+		try {
+			evaluator.run();
+		} catch (DebugException e) {
+			JDIDebugUIPlugin.log(e);
+		}
+		return evaluator.getResult().flatMap(r -> Optional.ofNullable(r.getValue()))
+				.map(r -> new JDIPlaceholderVariable(snippet, r)).orElse(null);
+	}
+
 	public IInformationControlCreator getInformationPresenterControlCreator() {
 		return new ExpressionInformationControlCreator();
 	}
+
+	private static IJavaStackFrame findFirstFrameForVariable(IJavaStackFrame currentFrame, Predicate<IJavaStackFrame> framePredicate) throws DebugException {
+		// check the current frame first
+		if (framePredicate.test(currentFrame)) {
+			return currentFrame;
+		}
+
+		for (IStackFrame stackFrame : currentFrame.getThread().getStackFrames()) {
+			IJavaStackFrame javaStackFrame = (IJavaStackFrame) stackFrame;
+			if (currentFrame != javaStackFrame && framePredicate.test(javaStackFrame)) {
+				return javaStackFrame;
+			}
+		}
+
+		// we couldn't find a frame, so return the current frame, this is highly unlikely we endup here.
+		return currentFrame;
+	}
+
+	private static boolean containsVariable(IStackFrame frame, String variableName) throws DebugException {
+		for (IVariable variable : frame.getVariables()) {
+			if (variable instanceof JDIThisVariable) {
+				for (IVariable fieldVar : variable.getValue().getVariables()) {
+					if (variableName.equals(fieldVar.getName())) {
+						return true;
+					}
+				}
+			} else if (variableName.equals(variable.getName())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// the following two predicates will make sure to find correct frame according the java element's enclosing parent.
+	private static Predicate<IJavaStackFrame> forLocalVariable(ILocalVariable variable) {
+		return frame -> {
+			try {
+				return variable.getDeclaringMember() != null && variable.getDeclaringMember().getElementName().equals(frame.getMethodName())
+						&& containsVariable(frame, variable.getElementName());
+			} catch (DebugException e) {
+				JDIDebugUIPlugin.log(e);
+				return false;
+			}
+		};
+
+	}
+
+	private static Predicate<IJavaStackFrame> forField(IField field) {
+		return frame -> {
+			try {
+				return frame.getThis() != null && frame.getThis().getJavaType().getName().equals(field.getDeclaringType().getFullyQualifiedName())
+						&& containsVariable(frame, field.getElementName());
+			} catch (DebugException e) {
+				JDIDebugUIPlugin.log(e);
+				return false;
+			}
+		};
+
+	}
+
 }

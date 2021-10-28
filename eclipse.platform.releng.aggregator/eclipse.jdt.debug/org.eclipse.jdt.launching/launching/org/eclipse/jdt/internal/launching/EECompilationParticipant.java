@@ -14,8 +14,10 @@
 package org.eclipse.jdt.internal.launching;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IMarker;
@@ -232,6 +234,10 @@ public class EECompilationParticipant extends CompilationParticipant {
 		String version = vMInstall.getJavaVersion();
 		if (version == null) {
 			return null;
+		} else if (version.startsWith(JavaCore.VERSION_16)) {
+			return JavaCore.VERSION_16;
+		} else if (version.startsWith(JavaCore.VERSION_15)) {
+			return JavaCore.VERSION_15;
 		} else if (version.startsWith(JavaCore.VERSION_14)) {
 			return JavaCore.VERSION_14;
 		} else if (version.startsWith(JavaCore.VERSION_13)) {
@@ -306,17 +312,11 @@ public class EECompilationParticipant extends CompilationParticipant {
 	 */
 	private void createJREContainerProblem(IJavaProject javaProject, String message, int severity) {
 		try {
-			IMarker marker = javaProject.getProject().createMarker(JavaRuntime.JRE_CONTAINER_MARKER);
-			marker.setAttributes(
-				new String[] {
-						IMarker.MESSAGE,
-						IMarker.SEVERITY,
-						IMarker.LOCATION},
-					new Object[] {
-						message,
-						Integer.valueOf(severity),
-						LaunchingMessages.LaunchingPlugin_37
-					});
+			Map<String, Object> attributes = Map.of(IMarker.MESSAGE, message, //
+					IMarker.SEVERITY, Integer.valueOf(severity), //
+					IMarker.LOCATION, LaunchingMessages.LaunchingPlugin_37);
+
+			javaProject.getProject().createMarker(JavaRuntime.JRE_CONTAINER_MARKER, attributes);
 		} catch (CoreException e) {
 			return;
 		}
@@ -334,17 +334,12 @@ public class EECompilationParticipant extends CompilationParticipant {
 	 */
 	private void createProblemMarker(IJavaProject javaProject, String message, int severity, String problemId, String location) {
 		try {
-			IMarker marker = javaProject.getProject().createMarker(problemId);
-			marker.setAttributes(
-					new String[] {
-							IMarker.MESSAGE,
-							IMarker.SEVERITY,
-							IMarker.LOCATION },
-						new Object[] {
-								message,
-								Integer.valueOf(severity),
-								location
-						});
+			Map<String, Object> attributes = new HashMap<>();
+			attributes.put(IMarker.MESSAGE, message);
+			attributes.put(IMarker.SEVERITY, Integer.valueOf(severity));
+			attributes.put(IMarker.LOCATION, location);
+
+			javaProject.getProject().createMarker(problemId, attributes);
 		} catch (CoreException e) {
 			return;
 		}

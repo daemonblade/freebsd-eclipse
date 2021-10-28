@@ -19,12 +19,14 @@ import java.util.Enumeration;
 import org.eclipse.jdt.debug.tests.eval.ArrayAllocationTests;
 import org.eclipse.jdt.debug.tests.eval.ArrayAssignmentTests;
 import org.eclipse.jdt.debug.tests.eval.ArrayValueTests;
+import org.eclipse.jdt.debug.tests.eval.BlockStatementEvaluationTests;
 import org.eclipse.jdt.debug.tests.eval.BooleanAssignmentOperatorsTests;
 import org.eclipse.jdt.debug.tests.eval.BooleanOperatorsTests;
 import org.eclipse.jdt.debug.tests.eval.ByteAssignmentOperatorsTests;
 import org.eclipse.jdt.debug.tests.eval.ByteOperatorsTests;
 import org.eclipse.jdt.debug.tests.eval.CharAssignmentOperatorsTests;
 import org.eclipse.jdt.debug.tests.eval.CharOperatorsTests;
+import org.eclipse.jdt.debug.tests.eval.DebugShellVariableTests;
 import org.eclipse.jdt.debug.tests.eval.DoubleAssignmentOperatorsTests;
 import org.eclipse.jdt.debug.tests.eval.DoubleOperatorsTests;
 import org.eclipse.jdt.debug.tests.eval.FieldValueTests;
@@ -230,8 +232,11 @@ public class EvalTestSuite extends TestSuite {
 		addTest(new TestSuite(LoopTests.class));
 		addTest(new TestSuite(LabelTests.class));
 		addTest(new TestSuite(TestsAnonymousClassVariable.class));
+		addTest(new TestSuite(BlockStatementEvaluationTests.class));
 
 		addTest(new TestSuite(TestsBreakpointConditions.class));
+
+		addTest(new TestSuite(DebugShellVariableTests.class));
 
 	}
 

@@ -157,14 +157,7 @@ public class RemoteEvaluatorBuilder {
 	}
 
 	private static String makeClassName(String[] names) {
-		StringBuilder sb = new StringBuilder();
-		for (int j = 0; j < names.length; j++) {
-			if (j > 0) {
-				sb.append('/');
-			}
-			sb.append(names[j]);
-		}
-		return sb.toString();
+		return String.join(String.valueOf('/'), names);
 	}
 
 	public List<String> getVariableTypeNames() {
@@ -254,6 +247,18 @@ public class RemoteEvaluatorBuilder {
 
 		boolean isLocalBinding(IBinding binding) {
 			return localBindings.containsKey(binding);
+		}
+
+		private boolean isParentInLocalBinding(ASTNode parent) {
+			if (parent instanceof QualifiedName) {
+				// this will avoid unwanted upward traversals
+				if (isLocalBinding(((QualifiedName) parent).getQualifier().resolveBinding())) {
+					return true;
+				}
+				// traverse upstream to see if a parent is already handled
+				return isParentInLocalBinding(parent.getParent());
+			}
+			return false;
 		}
 
 		void addLocalBinding(IBinding binding, String name) {
@@ -612,9 +617,9 @@ public class RemoteEvaluatorBuilder {
 
 		@Override
 		public boolean visit(CastExpression node) {
-			//buffer.append("(");//$NON-NLS-1$
+			buffer.append("(");//$NON-NLS-1$
 			node.getType().accept(this);
-			//buffer.append(")");//$NON-NLS-1$
+			buffer.append(")");//$NON-NLS-1$
 			node.getExpression().accept(this);
 			return false;
 		}
@@ -1501,7 +1506,10 @@ public class RemoteEvaluatorBuilder {
 		@Override
 		public boolean visit(SimpleName node) {
 			IBinding binding = node.resolveBinding();
-			if (!isLocalBinding(binding)) {
+			// when having code like arr.length the length is identified as a field variable. But since the arr is
+			// already pushed as a variable we don't need to handle length here. So if we have chained field access like
+			// obj.f1.f2 we will only push the obj as a variable.
+			if (!isLocalBinding(binding) && !isParentInLocalBinding(node.getParent())) {
 				if (binding instanceof IVariableBinding) {
 					IVariableBinding vb = ((IVariableBinding) binding);
 					// For future optimization: Check for duplicates, so same value is only bound once
