@@ -5,7 +5,7 @@
   are made available under the terms of the Eclipse Distribution License v1.0
   which accompanies this distribution, and is available at
   http://www.eclipse.org/org/documents/edl-v10.php
- 
+
   Contributors:
      Igor Fedorenko - initial implementation
 -->
@@ -14,7 +14,7 @@
   <parent>
     <artifactId>eclipse.platform.common</artifactId>
     <groupId>eclipse.platform.common</groupId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.platform</groupId>
@@ -93,7 +93,7 @@
                   </requirement>
                   <requirement>
                     <type>eclipse-plugin</type>
-                    <id>javax.servlet</id>
+                    <id>jakarta.servlet-api</id>
                     <versionRange>0.0.0</versionRange>
                   </requirement>
                   <requirement>
@@ -188,11 +188,6 @@
                   </requirement>
                   <requirement>
                     <type>eclipse-plugin</type>
-                    <id>org.eclipse.jetty.continuation</id>
-                    <versionRange>0.0.0</versionRange>
-                  </requirement>
-                  <requirement>
-                    <type>eclipse-plugin</type>
                     <id>org.eclipse.jetty.http</id>
                     <versionRange>0.0.0</versionRange>
                   </requirement>
@@ -239,6 +234,11 @@
                   <requirement>
                     <type>eclipse-plugin</type>
                     <id>org.eclipse.update.configurator</id>
+                    <versionRange>0.0.0</versionRange>
+                  </requirement>
+                  <requirement>
+                    <type>eclipse-plugin</type>
+                    <id>org.bouncycastle.bcpg</id>
                     <versionRange>0.0.0</versionRange>
                   </requirement>
                 </extraRequirements>
@@ -297,6 +297,10 @@
                     <dependency>
                       <artifactId>org.eclipse.update.configurator</artifactId>
                       <type>eclipse-plugin</type>
+                    </dependency>
+                    <dependency>
+                      <type>eclipse-plugin</type>
+                      <artifactId>org.bouncycastle.bcpg</artifactId>
                     </dependency>
                   </dependencies>
                 </configuration>

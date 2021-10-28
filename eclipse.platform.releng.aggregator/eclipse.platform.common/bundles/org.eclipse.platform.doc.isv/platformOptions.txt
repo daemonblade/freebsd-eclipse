@@ -10,6 +10,7 @@
 ;${eclipse.platform.debug}/org.eclipse.debug.core/core
 ;${eclipse.platform.debug}/org.eclipse.debug.ui/ui
 ;${eclipse.platform.debug}/org.eclipse.ui.console/src
+;${eclipse.platform.debug}/org.eclipse.unittest.ui/src
 ;${eclipse.platform.platform}/org.eclipse.platform/src
 ;${eclipse.platform.resources.bundles}/org.eclipse.core.filesystem/src
 ;${eclipse.platform.resources.bundles}/org.eclipse.core.resources/src
@@ -138,7 +139,7 @@
 ;${dependency.dir}/javax.el_*.jar
 ;${dependency.dir}/javax.inject_*.jar
 ;${dependency.dir}/javax.servlet.jsp_*.jar
-;${dependency.dir}/javax.servlet_*.jar
+;${dependency.dir}/jakarta.servlet-api_*.jar
 ;${dependency.dir}/org.apache.ant_*/lib/ant.jar
 ;${dependency.dir}/org.apache.batik.css_*.jar
 ;${dependency.dir}/org.apache.commons.jxpath_*.jar
@@ -167,6 +168,7 @@
 ;${dependency.dir}/org.sat4j.core_*.jar
 ;${dependency.dir}/org.sat4j.pb_*.jar
 ;${dependency.dir}/org.w3c.css.sac_*.jar
+;${dependency.dir}/org.bouncycastle.bcpg_*.jar
 ;${eclipse.equinox.supplement}/${dot.classes}
 ;${eclipse.platform.ua}/org.eclipse.help.appserver/${dot.classes}
 ;${eclipse.platform.ui.bundles}/org.eclipse.e4.ui.workbench.addons.swt/${dot.classes}
@@ -184,10 +186,10 @@
 -splitIndex
 -windowtitle "Eclipse Platform API Specification"
 -doctitle "Eclipse Platform API Specification"
--header "<span style='font-size:small'><b>Eclipse Platform</b><br>2020-09 (4.17)</span>"
--bottom "<br><span style='font-size:small;float:right'>Copyright (c) 2000, 2020 Eclipse Contributors and others. All rights reserved.</span><span style='font-size:small'><a href='{@docRoot}/../misc/api-usage-rules.html'>Guidelines for using Eclipse APIs.</a></span>"
+-header "<span style='font-size:small'><b>Eclipse Platform</b><br>2021-09 (4.21)</span>"
+-bottom "<br><span style='font-size:small;float:right'>Copyright (c) 2000, 2021 Eclipse Contributors and others. All rights reserved.</span><span style='font-size:small'><a href='{@docRoot}/../misc/api-usage-rules.html'>Guidelines for using Eclipse APIs.</a></span>"
 -link https://docs.oracle.com/en/java/javase/11/docs/api
--link https://docs.osgi.org/javadoc/osgi.core/7.0.0/
+-link https://docs.osgi.org/javadoc/osgi.core/8.0.0/
 -link https://docs.osgi.org/javadoc/osgi.cmpn/7.0.0/
 -link https://docs.osgi.org/javadoc/osgi.enterprise/7.0.0/
 -tag 'noimplement:a:Restriction:'
@@ -201,6 +203,7 @@
 -tag 'ordered:X:"EMF generated tag"'
 -tag 'Immutable:t'
 -tag 'implNote:a:<em>Implementation Note:</em>'
+-tag "implSpec:a:Implementation Requirements:"
 -Xdoclint:reference,html,syntax
 -Xmaxwarns 10000
 -Xmaxerrs 10000
@@ -415,7 +418,7 @@ org.eclipse.search.ui
 org.eclipse.search.ui.actions
 org.eclipse.search.ui.text
 
-"${eclipse.platform.swt.bundles}/org.eclipse.swt/Eclipse SWT/common_j2se/org/eclipse/swt/internal/SWTEventListener.java"
+"${eclipse.platform.swt.bundles}/org.eclipse.swt/Eclipse SWT/common/org/eclipse/swt/internal/SWTEventListener.java"
 org.eclipse.swt
 org.eclipse.swt.accessibility
 org.eclipse.swt.awt
@@ -517,5 +520,9 @@ org.eclipse.ui.views.tasklist
 org.eclipse.ui.wizards
 org.eclipse.ui.wizards.datatransfer
 org.eclipse.ui.wizards.newresource
+
+org.eclipse.unittest.launcher
+org.eclipse.unittest.model
+org.eclipse.unittest.ui
 
 org.eclipse.update.configurator

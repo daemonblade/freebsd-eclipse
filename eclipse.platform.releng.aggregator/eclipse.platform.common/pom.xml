@@ -5,7 +5,7 @@
   are made available under the terms of the Eclipse Distribution License v1.0
   which accompanies this distribution, and is available at
   http://www.eclipse.org/org/documents/edl-v10.php
- 
+
   Contributors:
      Igor Fedorenko - initial implementation
 -->
@@ -15,24 +15,23 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
   <groupId>eclipse.platform.common</groupId>
   <artifactId>eclipse.platform.common</artifactId>
-  <version>4.17.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
    <properties>
-     <tycho.scmUrl>scm:git:git://git.eclipse.org/gitroot/platform/eclipse.platform.common.git</tycho.scmUrl>
+     <tycho.scmUrl>scm:git:https://git.eclipse.org/r/platform/eclipse.platform.common.git</tycho.scmUrl>
   </properties>
 
-  <!-- 
-    To build individual bundles, we specify a repository where to find parent pom, 
+  <!--
+    To build individual bundles, we specify a repository where to find parent pom,
     in case it is not in local maven cache already
-    and that parent pom also has fuller individual-bundle profile 
-    defined that is combined with this one. --> 
+    and that parent pom also has fuller individual-bundle profile
+    defined that is combined with this one. -->
   <profiles>
     <profile>
       <id>build-individual-bundles</id>
@@ -56,7 +55,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.1.2</version>
           <executions>
             <execution>
               <id>copy</id>

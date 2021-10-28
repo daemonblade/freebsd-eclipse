@@ -17,20 +17,21 @@ table.news tr td.title {vertical-align: top; font-weight: bold;}
 table.news tr td.content {vertical-align: top;}
 ul {padding-left: 13px;}
 </style>
-<title>What's New in Eclipse 4.17 (JDT)</title>
+<title>What's New in Eclipse 4.21 (JDT)</title>
 </head>
 
 <body>
-<h2>What's New in Eclipse 4.17 (JDT)</h2>
+<h2>What's New in Eclipse 4.21 (JDT)</h2>
 <p>Here are descriptions of some of the more interesting or significant changes made to the Java development tools (JDT)
-for the 4.17 release of Eclipse.
+for the 4.21 release of Eclipse.
 They are grouped into:</p>
 <ul> <!-- NOTE: Sync ../topics_WhatsNew.xml with this! -->
-  	<!--li><a href="#JavaXX">Java&trade; XX Support</a></li-->
+  	<!--<li><a href="#Java16">Java&trade; 16 Support</a></li>-->
   	<li><a href="#JUnit">JUnit</a></li>
 	<li><a href="#JavaEditor">Java Editor</a></li>
-	<li><a href="#JavaViewsAndDialogs">Java Views and Dialogs</a></li>
-	<li><a href="#JavaFormatter">Java Formatter</a></li>
+	<li><a href="#JavaCompiler">Java Compiler</a></li>
+	<!--<li><a href="#JavaViewsAndDialogs">Java Views and Dialogs</a></li>-->
+	<!--li><a href="#JavaFormatter">Java Formatter</a></li-->
 	<li><a href="#Debug">Debug</a></li>
 	<!--li><a href="#JDTDev">JDT Developers</a></li-->
 </ul>
@@ -49,11 +50,13 @@ document for changes in the Platform.</p>
 <tbody>
 
   <!-- ******************* Java XX Support ************************************* -->
-  <!--tr>
+  <!--
+  <tr>
     <td id="JavaXX" class="section" colspan="2">
     <h2>Java&trade; XX Support </h2>
     </td>
-  </tr-->
+  </tr>
+  -->
   <!-- ******************* End of Java XX Support ************************************* -->
 
   <!-- ******************* JUnit ************************************* -->
@@ -62,28 +65,16 @@ document for changes in the Platform.</p>
     <h2>JUnit</h2>
     </td>
   </tr>
-  <tr id="junit-collapse-all"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=564964 -->
-    <td class="title"><a href="#junit-collapse-all">Collapse all nodes in JUnit view</a></td>
+  
+  <tr id="mockitomatchers"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=575246 -->
+    <td class="title"><a href="#mockitomatchers">mockito ArgumentMatchers.* added to favorites in Java tooling</a></td>
     <td class="content">
-     JUnit view now provides a context-menu option to collapse all nodes: 
-     <p><img src="images/junit-collapse-all.png" alt=""/></p>
+      Mockito based tests frequently use <code>org.mockito.ArgumentMatchers.*</code>.  
+      This has been added to the Java favorites in the preferences under <b>Java &gt; Editor &gt; Content Assist &gt; Favorites</b>.
+	  This way the organize imports action in the IDE will automatically add static imports for these classes if you use them in your tests.
     </td>
   </tr>
 
-  <tr id="junit-sort-time"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=219466 -->
-    <td class="title"><a href="#junit-sort-time">Sort test results by execution time</a></td>
-    <td class="content">
-     JUnit view now provides the ability to sort results by execution time.
-     By default, results will be sorted by execution order.  Choosing <b>Sort By &gt; Execution Time</b>
-     from the <b>JUnit View</b> menu will reorder the results once all tests are complete.  While tests are still running, they will be shown in
-     execution order.
-     <p><img src="images/junit-sort-time-before.png" alt=""/></p>
-     <p>
-     Sorting by execution order results in:
-     </p>
-     <p><img src="images/junit-sort-time-after.png" alt=""/></p>
-    </td>
-  </tr>
   <!-- ******************* End of JUnit ************************************* -->
 
   <!-- ******************* Java Editor ************************************* -->
@@ -92,129 +83,177 @@ document for changes in the Platform.</p>
     <h2>Java Editor </h2>
     </td>
   </tr>
-  <tr id="content-assist-substring-types"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=481323 -->
-    <td class="title"><a href="#content-assist-substring-types">Substring/Subword matches for types</a></td>
-    <td class="content">
-     Content Assist now fully supports both substring and subword matches for types:
-     <p><img src="images/substring-types.png" alt=""/></p>
-     <p>
-         Substring matches are always shown and subword matches can be enabled/disabled with the existing <b>Show subword matches</b> option on the
-         <b>Java &gt; Editor &gt; Content Assist</b> preference page.
-     </p>
-    </td>
-  </tr>
 
-  <tr id="optimization"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=565630 -->
-    <td class="title"><a href="#optimization">Optimization tab</a></td>
+  <tr id="stringbuffer-to-stringbuilder"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=569835 -->
+    <td class="title"><a href="#stringbuffer-to-stringbuilder">Use StringBuilder instead of StringBuffer clean up</a></td>
     <td class="content">
-      A new tab has been added that gathers cleanups that improve the time performance: the existing lazy operator cleanup and the regex precompiler cleanup.
-      <p><img src="images/regex-preferences.png" alt="Preferences" width="800 px"/></p>
-    </td>
-  </tr>
-
-  <tr id="objects-equals"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=562077 -->
-    <td class="title"><a href="#objects-equals">Objects.equals()</a></td>
-    <td class="content">
-      A new clean up has been added that makes use of <code>Objects.equals()</code> to implement the <code>equals(Object)</code> method.
+      A new clean up has been added that converts code to use <code>StringBuilder</code> (added in Java 1.5) rather than <code>StringBuffer</code> which has synchronized methods and is slower than using <code>StringBuilder</code>.
       <p>
-        It reduces the code and improves the reading.
-        The cleanup is only available for Java 7 or higher.
-        Although this kind of comparison is almost exclusively seen in the <code>equals(Object)</code> method, it can also reduce code in other methods.
+        There is a sub-option where changes will only occur to local variables which is on by default.  When this sub-option is on, changes will only occur to <code>StringBuffer</code> variables that are local to a method.  When a method calls other methods with such variables or assigns to/from fields/parameters, the method contents will not be converted.  It is permitted to append <code>StringBuffer</code> fields or parameters to local <code>StringBuffer</code> variables which can then still be converted to <code>StringBuilder</code>.
       </p>
       <p>
-        To select the clean up, invoke <b>Source &gt; Clean Up...</b>, use a custom profile, and on the <b>Configure...</b> dialog select <b>Use Objects.equals() in the equals method implementation</b> on the <b>Unnecessary Code</b> tab.
-      </p>
-      <p><img src="images/objects-equals-preferences.png" alt="Preferences" width="800 px"/></p>
-      For the given code:
-      <p><img src="images/objects-equals-before.png" alt="Before"/></p>
-      You get this after the clean up:
-      <p><img src="images/objects-equals-after.png" alt="After"/></p>
-    </td>
-  </tr>
-
-  <tr id="regex"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=561769 -->
-    <td class="title"><a href="#regex">Precompiles the regular expressions</a></td>
-    <td class="content">
-      A new clean up has been added that optimizes the regular expression execution by precompiling it.
-      <p>
-        It replaces some usages of <code>java.lang.String</code> by usages of <code>java.util.regex.Pattern</code>.
-        The cleanup is done only if it is sure that the string is used as a regular expression.
-        If there is any doubt, nothing is done.
-        The regular expression must be explicitly used several times to be sure the cleanup is useful.
+      When the option is selected and the sub-option for local variables is off,all usage of <code>StringBuffer</code> in the selected files are changed to <code>StringBuilder</code> regardless of usage.  It should be noted that in this case, the clean up will not track down non-selected classes and methods that are referenced and might require changes to compile successfully.
       </p>
       <p>
-        To select the clean up, invoke <b>Source &gt; Clean Up...</b>, use a custom profile, and on the <b>Configure...</b> dialog select <b>Precompiles reused regular expressions</b> on the <b>Optimization</b> tab.
+        To apply the clean up, select the <b>Use StringBuilder instead of StringBuffer</b> check box on the <b>Performance</b> tab in your clean up profile.  To specify just for local variables, select the <b>Only for local variables</b> check box found just below.
       </p>
-      <p><img src="images/regex-preferences.png" alt="Preferences" width="800 px"/></p>
-      For the given code:
-      <p><img src="images/regex-before.png" alt="Before"/></p>
-      You get this after the clean up:
-      <p><img src="images/regex-after.png" alt="After"/></p>
-    </td>
-  </tr>
-  
-  <tr id="String.format-quickfix"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=565040 -->
-    <td class="title"><a href="#String.format-quickfix">String.format quickfix</a></td>
-    <td class="content">
-	  A new quickfix has been added to replace string concatenation with <code>String.format</code>, similar to the existing ones for <code>StringBuilder</code> and <code>MessageFormat</code>.
-      <p><img src="images/String.format-quickfix.png" alt=""/></p>
+      <p><img src="images/stringbuffer-to-stringbuilder-prefs.png" alt="Preferences" width="800"/></p>
+      <p>
+        For the given code:
+      </p>
+      <p><img src="images/stringbuffer-to-stringbuilder-before.png" alt="Before"/></p>
+      <p>
+        One gets:
+      </p>
+      <p><img src="images/stringbuffer-to-stringbuilder-after.png" alt="After"/></p>
     </td>
   </tr>
 
-  <tr id="method_reference-quickfix"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=516504 -->
-    <td class="title"><a href="#method_reference-quickfix">Method reference quickfix</a></td>
+  <tr id="while-to-do-while"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=572574 -->
+    <td class="title"><a href="#while-to-do-while">Convert while to do/while</a></td>
     <td class="content">
-	  A new quickfix has been added to create missing methods for method references.
-	  <p><b>NOTE! Current restriction is that this quickfix is only available on current class.</b></p>
-	  <p><b>NOTE! Expect current implementation to work on simple cases only.
-	  <br/>Method references invoking nested generics or type parameters might be problematic to resolve correct.</b></p>
-      
-      <p><img src="images/methodreference_1.png" alt=""/></p>
-      
+      A new quick-assist has been added to convert appropriate <b>while</b> loops into <b>do/while</b> loops.  Appropriate <b>while</b> loops require the first evaluation of the while expression is guaranteed to be true and that the evaluation is passive.
+      <p>
+        For the following loop:
+      </p>
+      <p><img src="images/while-to-do-while-before.png" alt="Before"/></p>
+      <p>
+        One is offered:
+      </p>
+      <p><img src="images/while-to-do-while-after.png" alt="After"/></p>
     </td>
   </tr>
-  <!-- ******************* End of Java Editor ************************************* -->
 
-  <!-- ******************* Java Views and Dialogs ************************************* -->
-  <tr>
+  <tr id="extract-superclass-enhancement"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=573884 -->
+    <td class="title"><a href="#extract-superclass-enhancement">Extract Superclass Enhancement</a></td>
+    <td class="content">
+      The <b>Extract Superclass</b> refactoring has been enhanced to support movement of uninitialized non-static final fields.  In the past, a warning was issued for extracting uninitialized non-static final fields as the resultant code would be in error.  The refactoring has been enhanced to add additional parameters to the moved constructors and to pass initialization values from the original class constructors.
+      <p>
+        For the following class:
+      </p>
+      <p><img src="images/extract-superclass-original-before.png" alt="Before"/></p>
+      <p>
+        Extracting to Superclass and choosing all fields, one gets:
+      </p>
+      <p><img src="images/extract-superclass-original-after.png" alt="After"/></p>
+      <p>
+	and
+      </p>
+      <p><img src="images/extract-superclass-superclass-after.png" alt="After"/></p>
+    </td>
+  </tr>
+
+  <tr id="raw-paste"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=5222184 -->
+    <td class="title"><a href="#raw-paste">Raw Paste</a></td>
+    <td class="content">
+      A new menu item has been added for doing a raw paste when editing Java files.  The menu item <b>Raw Paste</b> can be found in the <b>Edit</b> pull-down menu and by right-clicking in the edit window to bring up the context-menu.  The menu item performs a paste action but toggles off the smart insert feature, if required, and restores it, if necessary, after the paste.  For end-users in smart insert mode, this is the same as doing a <b>Shift+Ctrl+Insert</b> followed by <b>Ctrl+V</b>, followed by <b>Shift+Ctrl+Insert</b> to retoggle into smart insert mode again.
+    </td>
+  </tr>
+
+  <tr id="default-type-filters"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=571758 -->
+    <td class="title"><a href="#default-type-filters">Default Type Filters</a></td>
+    <td class="content">
+      Default values have been added to the <b>Java &gt; Appearance &gt; Type Filters</b> preferences. Types matching these filters will be excluded 
+      from appearing in the Open Type dialog, content assist, quick fix, and organize imports. These filter patterns do not affect the Package Explorer and Type Hierarchy views.   
+      <p><img src="images/default-type-filters.png" alt=""/></p>
+      <p>
+      </p>
+    </td>
+  </tr> 
+  <tr id="change-compliance-jre-multi-constant-labels"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=574707 -->
+    <td class="title"><a href="#change-compliance-jre-multi-constant-labels">Change project compliance and JRE on using multi-constant case labels</a></td>
+    <td class="content">
+      A new quick fix (<b>Ctrl+1</b>) has been added to change the project compliance and JRE when multi-constant case labels 
+      are used in a project below Java 14: 
+      <p><img src="images/change-compliance-jre-multi-constant-labels.png" alt=""/></p>
+      <p>
+      </p>
+    </td>
+  </tr>
+  <tr id="declare-as-super-interface"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=573980 -->
+    <td class="title"><a href="#declare-sealed-interface-as-super-interface">Quick fix to declare sealed interface as super interface</a></td>
+    <td class="content">
+      You can use the following quick fix (<b>Ctrl+1</b>) to declare a sealed interface as super interface of its permitted types:
+      <p><img src="images/declare-sealed-interface-as-super-interface.png" alt=""/></p>
+      <p>
+      </p>
+    </td>
+  </tr> 
+  <tr id="declare-as-super-class"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=574860 -->
+    <td class="title"><a href="#declare-sealed-class-as-super-class">Quick fix to declare sealed class as super class</a></td>
+    <td class="content">
+      You can use the following quick fix (<b>Ctrl+1</b>) to declare a sealed class as super class of its permitted classes:
+      <p><img src="images/declare-sealed-class-as-super-class.png" alt=""/></p>
+      <p>
+      </p>
+    </td>
+  </tr>  
+
+  <tr id="add-to-permitted-types"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=574526 -->
+    <td class="title"><a href="#add-sub -type-as-permitted -type-of-sealed-type">Quick fix to add the sub type to permitted types of sealed super type</a></td>
+    <td class="content">
+      You can use the following quick fix (<b>Ctrl+1</b>) to add a sub type to permitted types of a sealed super type:
+      <p><img src="images/add-subtype-to-permitted-types-of-supertype.png" alt=""/></p>
+      <p>
+      </p>
+    </td>
+  </tr>
+
+  <!--******************* End of Java Editor ************************************* -->
+
+ <!-- ******************* Java Views and Dialogs ************************************* -->
+   <!--  <tr>
     <td id="JavaViewsAndDialogs" class="section" colspan="2">
     <h2>Java Views and Dialogs</h2>
     </td>
-  </tr>
-
-  <tr id="toggle-code-minings"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=563199 -->
-    <td class="title"><a href="#toggle-code-minings">Toggle Code Minings From Find Actions Menu</a></td>
-    <td class="content">
-      The code minings within an editor can be enabled/disabled through the Find Actions menu (<b>Ctrl+3</b>).
-      <p><img src="images/toggle-code-minings.png" alt=""/></p>
-    </td>
-  </tr>
-  <!-- ******************* End of Java Views and Dialogs ************************************* -->
+  </tr>-->
+  <!-- ******************* End of Java Views and Dialogs ************************************* --> 
 
   <!-- ******************* Java Compiler ************************************* -->
-  <!--tr>
+  <tr>
     <td id="JavaCompiler" class="section" colspan="2">
     <h2>Java Compiler</h2>
     </td>
-  </tr-->
+  </tr>
+    <tr id="external_annotations_all_locations"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=574603 -->
+    <td class="title"><a href="#external_annotations_all_locations">Find external annotations anywhere</a></td>
+    <td class="content">
+      External annotations, which are used for annotation based null analysis, can now be associated 
+      to unannotated classes more freely.
+      <p>Previously, all external annotations where declared per build path entry. I.e., whenever a project of yours
+      uses a library for which external annotations exist, you would need to explicitly declare where
+      the corresponding external annotations for this particular library can be found.</p>
+      <p>A new compiler preference has been added by which you can instruct the compiler to search
+      for external annotations in all build path locations of the current project.</p>
+      <p><img src="images/external_annotations_all_locations.png" alt=""/></p>
+      <p>
+      When enabled, this strategy will be applied to all class files encountered during compilation.</p>
+      <p>Some examples, where this option is useful:</p>
+      <ul><li>A project A contains generated sources (in a separate source folder), which are decorated using
+      external annotations in the same project. When project A ships a jar containing also the external annotations,
+      any client of A will immediately see the generated classes with their external annotations applied.</li>
+      <li>When dedicated jars have been created, each containing external annotations for a set of libraries,
+      you only have to add these annotation jars to your build path and enable the new option, without worrying
+      which annotation jar corresponds to which individual dependency (dependencies).
+      The compiler will match external annotations to class files with no further help.
+      </li>
+      </ul>
+      <p>For batch compilation a corresponding option already exists. To match the above strategy in CI-builds,
+      just add the following to the compiler command line (verbatim):
+      <br/>
+      	<code>-annotationpath CLASSPATH</code>
+      </p>
+    </td>
+  </tr> 
+
   <!-- ******************* End of Java Compiler ************************************* -->
 
-  <!-- ******************* Java Formatter ************************************* -->
-  <tr>
+<!-- ******************* Java Formatter ************************************* -->
+   <!--  <tr>
     <td id="JavaFormatter" class="section" colspan="2">
     <h2>Java Formatter </h2>
     </td>
-  </tr>
-
-  <tr id="formatter-wrap-assert"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=563558 -->
-    <td class="title"><a href="#formatter-wrap-assert">Assert statement wrapping</a></td>
-    <td class="content">
-      A new setting in the Formatter profile controls <b>line wrapping of assert statements</b>.
-      A line wrap can be added between the assert condition and its error message.
-      The setting can be found in the <b>Profile Editor</b> (<b>Preferences &gt; Java &gt; Code Style &gt; Formatter &gt; Edit...</b>) in the <b>Line Wrapping &gt; Wrapping Settings &gt; Statemtens &gt; 'assert' messages</b> node.
-      <p><img src="images/formatter-wrap-assert.png" alt=""/></p>
-    </td>
-  </tr>
+  </tr>  -->
   <!-- ******************* End of Java Formatter ************************************* -->
   
   <!-- *********************** Debug ******************************** -->
@@ -223,48 +262,26 @@ document for changes in the Platform.</p>
     <h2>Debug</h2>
     </td>
   </tr>
-  <tr id="anonymous-class-inspection"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=549952 -->
-    <td class="title"><a href="#anonymous-class-inspection">Anonymous class instance in evaluation</a></td>
+  <tr id="debug-intrim-eval"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=574395 -->
+    <td class="title"><a href="#debug-intrim-eval">Evaluate variables in current execution stack</a></td>
     <td class="content">
-      The <b>JDT debugger</b> is now capable of inspecting/evaluating expressions with anonymous class instances.
-      <p><img src="images/anon-instance-inspection-code.png" alt=""/></p>
-      <p><img src="images/anon-instance-inspection.png" alt=""/></p>
+        In debug mode, regardless of the selected stack frame now you can evaluate variables which are
+        in the scope of the current execution stack frame and stack frames below it which are defined in 
+        the current focused java class. 
+        <p>
+          <img src="images/debug_eval_intrim_stack.png" alt="screenshot showing evaluation result" />
+        </p>
     </td>
   </tr>
-  <tr id="helpful-nullpointer-exceptions"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=551483 -->
-    <td class="title"><a href="#helpful-nullpointer-exceptions">JEP 358: Helpful NullPointerExceptions</a></td>
-    <td class="content">
-      The <b>JDT debugger</b> has now a checkbox option to activate the command line support for <a href="https://openjdk.java.net/jeps/358" target="_blank">JEP 358</a>.
-      This is disabled below Java 14 and enabled by default for Java programs launched with Java 14 and above.
-      <p><b>-XX:+ShowCodeDetailsInExceptionMessages</b></p>
-      <p><img src="images/helpfulNullPointerExceptions.png" alt=""/></p>
-      JVM is now capable of analyzing which variable was null at the point of NullPointerException and describe the variable with a null-detail message in the NPE.
-      
-    </td>
-  </tr>
-  <tr id="variables-actual-type"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=547096 -->
-    <td class="title"><a href="#variables-actual-type">Actual type in Variables view</a></td>
-    <td class="content">
-	  The option <b>Show Type Names</b> in the <b>Variables</b> and <b>Expressions</b> views now displays the value's actual type instead of its declared type.
-	  This simplifies debugging especially when variable details (<code>toString()</code>) is shown <b>As the label for all variables</b>.
-	  <p>To enable <b>Show Type Names</b> in the <b>Variables</b> view, column mode must be disabled (<b>View Menu &gt; Layout &gt; Show Columns</b>).</p>
-	  <p>Example:</p><pre>
-	Object s = "some string";
-	Collection&lt;?&gt; c = Arrays.asList(s, 1);
-	// breakpoint
-	  </pre>
-      <p><img src="images/variables-actual-type.png" alt=""/></p>      
-    </td>
-  </tr>
-
+ 
   <!--************************ End of Debug ******************************** -->
 
-  <!-- *********************** JDT Developers ******************************** -->
-  <!--tr>
+ <!-- *********************** JDT Developers ******************************** -->
+<!--   <tr>
     <td id="JDTDev" class="section" colspan="2">
     <h2>JDT Developers</h2>
     </td>
-  </tr-->
+  </tr> -->
   <!-- *********************** End of JDT Developers ******************************** -->
 </tbody>
 </table>

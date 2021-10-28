@@ -5,7 +5,7 @@
     are made available under the terms of the Eclipse Public License v2.0
     which accompanies this distribution, and is available at
     https://www.eclipse.org/legal/epl-v20.html
-   
+
     Contributors:
         simon.scholz@vogella.com - initial API and implementation
  -->
@@ -16,11 +16,11 @@
   <parent>
     <artifactId>eclipse.platform.common</artifactId>
     <groupId>eclipse.platform.common</groupId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.ui</groupId>
   <artifactId>org.eclipse.platform.doc.tips</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 </project>

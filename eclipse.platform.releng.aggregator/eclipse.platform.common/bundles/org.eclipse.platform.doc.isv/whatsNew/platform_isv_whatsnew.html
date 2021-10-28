@@ -17,22 +17,23 @@ table.news tr td.title {vertical-align: top; font-weight: bold;}
 table.news tr td.content {vertical-align: top;}
 ul {padding-left: 13px;}
 </style>
-<title>Eclipse Platform What's New in 4.17</title>
+<title>Eclipse Platform What's New in 4.21</title>
 </head>
 
 <body>
-<h2>What's New in Eclipse 4.17</h2>
+<h2>What's New in Eclipse 4.21</h2>
 <p>Here are descriptions of some of the changes of interest to plug-in developers
-made to the Eclipse Platform and SWT for the 4.17 release of Eclipse.
+made to the Eclipse Platform and SWT for the 4.21 release of Eclipse.
 </p>
 <ul><!-- NOTE: Sync ../topics_WhatsNew.xml with this! -->
   <li><a href="#Platform">Platform Changes</a></li>
   <li><a href="#SWT">SWT Changes</a></li>
+  <li><a href="#Equinox">Equinox Changes</a></li>
 </ul>
 
 <p>
 New features oriented towards end-users of the platform
-can be viewed in the 
+can be viewed in the
 <a href="../../org.eclipse.platform.doc.user/whatsNew/platform_whatsnew.html">What's New</a>
 section of the Workbench User Guide.
 </p>
@@ -48,124 +49,76 @@ section of the Workbench User Guide.
   <tr>
     <td id="Platform" class="section" colspan="2"><h2>Platform Changes</h2></td>
   </tr>
-  <tr id="deferred-image-descriptor"><!-- https://bugs.eclipse.org/477391 -->
-    <td class="title"><a href="#deferred-image-descriptor">DeferredImageDescriptor API</a></td>
+  <tr id="path-to-bundlepool-launcher-dir"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=573131 -->
+    <td class="title"><a href="#path-to-bundlepool-launcher-dir">Path to bundlepool expressed using @launcher.dir</a></td>
     <td class="content">
-	  The <code>DeferredImageDescriptor</code> API has been added to JFace
-	  allowing the creation of <code>ImageDescriptor</code> instances from
-	  a URL, where the calculation of the URL is potentially costly
-	  (because it might involve searching through multiple directories or
-	  bundles/fragments on disk).
-	  <p>The new API can be called using
-	  <code>ImageDescriptor.createFromSupplier</code> along with a
-	  <code>Supplier&lt;URL&gt;</code> which will calculate on demand the
-	  URL when the image is acessed for the first time. This allows images
-	  registered at startup in an <code>ImageRegistry</code> to be deferred
-	  until the first time the image is shown on screen.</p>
-	  <p>Old way:</p>
-<pre><code>URL url = FileLocator.find(bundle, path);
-descriptor = ImageDescriptor.createFromURL(url);
-</code></pre>
-	  <p>New way:</p>
-<pre><code>descriptor = ImageDescriptor.createFromURLSupplier(
-  () -&gt; FileLocator.find(bundle, path)
-);
-</code></pre>
-	</td>
-  </tr>
-
-	<tr id="system-color-in-workbench-css"><!-- https://bugs.eclipse.org/565775 -->
-		<td class="title"><a href="#system-color-in-workbench-css">Use System colors in workbench CSS theme files</a></td>
-		<td class="content">
-			In workbench theme CSS files, you can now reference the system colors defined by SWT. To do so, use the
-			SWT field name replacing uderscores <code>_</code> by dashes <code>-</code> and prefixing with hash <code>#</code>.
-			<p>
-			For example, to reference the system color <code>SWT.COLOR_LIST_SELECTION_BACKGROUND</code>, you can use
-			<code>#COLOR-LIST-SELECTION-BACKGROUND</code> in your .css files.
-			</p>
-		</td>
-	</tr>
-		
-	
-  <tr id="widget-factories"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=551589 -->
-   <td class="title"><a href="#widget-factories">Additional widget factories</a></td>
-    <td class="content">
-      Factories for additional SWT widgets have been created: SashFactory, ShellFactory and SectionFactory.
+      When creating a bundlepool installation of eclipse, the location of the bundlepool is expressed using the @launcher.dir varliable.
+      The launcher, typically eclipse.exe, will replace the string "@launcher.dir" with the location where the launcher is located on disk at startup.
+      This delayed resolution of the bundlepool location allows the bundled pool and the eclipse installations to be relocated in the file system as
+      long as the internal relationship stays the same. Previously, the path to the bundlepool (expressed using the "-install" launcher option) was
+      always an absolute path and produced when the installation took place.
     </td>
-  </tr>	
+  </tr>
   <!-- ******************** End of Platform ********************** -->
 
   <!-- *********************** SWT *********************** -->
   <tr>
     <td id="SWT" class="section" colspan="2"><h2>SWT Changes</h2></td>
   </tr>
-  <tr id="swt-chromium"> <!-- https://bugs.eclipse.org/549585 -->
-    <td class="title"><a href="#swt-chromium">Support for Chromium browser renderer</a></td>
+
+  <tr id="styled-text-multi-selection"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=562676 -->
+    <td class="title"><a href="#styled-text-multi-selection">StyledText API to use multiple carets or selection ranges</a></td>
     <td class="content">
-      SWT now supports Chromium as a browser renderer on all platforms using a new <code>SWT.CHROMIUM</code> constant. Please see this 
-      <a href="https://www.eclipse.org/swt/faq.php#howusechromium" target="_blank">FAQ</a> entry for details on using the Chromium style browser.
+      StyledText widget now has a new <code>setSelectionRanges(int[] ranges)</code> API which allows to pass
+      an arbitraty number of selection ranges. When multiple ranges are used, the text widget will display them
+      as distinct carets and selection ranges and will allow simultaneous edits at those locations.
     </td>
   </tr>
-
-  <tr id="swt-device-free-constructors"> <!-- https://bugs.eclipse.org/563560 -->
-    <td class="title"><a href="#swt-device-free-constructors">Colors have new Device free constructors</a></td>
+  <tr id="swt-win-dark-themed-tooltips"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=574685 -->
+    <td class="title"><a href="#swt-win-dark-themed-tooltips">SWT Windows now supports dark-theme tool-tips</a></td>
     <td class="content">
-      Starting from Eclipse 4.16, SWT no longer required Colors to be disposed, with Eclipse 4.17
-      new constructors are available which don't require a Device when creating Colors.
-    </td>
-
-  </tr>
-
-  <tr id="dark-win32-menu"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=562454 -->
-    <td class="title"><a href="#dark-win32-menu">Support for dark theme Menu under Windows10</a></td>
-    <td class="content">
-      SWT supports dark theme <code>Menu</code> under Windows10 as below:
-      <p>
-        Old:
-      </p>
-      <p>
-        <img src="images/menu-background-old.png" alt="" />
-      </p>
-      <p>
-        New:
-      </p>
-      <p>
-        <img src="images/menu-background-dark.png" alt="" />
-      </p>
-      <p>
-        On <b>Windows 10</b>, all the dark theme tweaks including the <a href="#dark-win32-menu">dark menu</a> can be disabled using the 
-        <code>org.eclipse.swt.internal.win32.disableCustomThemeTweaks</code> Java property.<br/>
-        For Example: add this VM argument in eclipse.ini or on the command line after <b><code>-vmargs</code></b>:
-      </p>
-      <pre><b>-Dorg.eclipse.swt.internal.win32.disableCustomThemeTweaks=true</b></pre>
-    </td>
-  </tr>
-
-  <tr id="dark-win32-combo"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=562454 -->
-    <td class="title"><a href="#dark-win32-combo">Improved dark theme Combo under Windows</a></td>
-    <td class="content">
-      SWT supports improved dark theme <code>Combo</code> under Windows10 as below:
-      <p>
-        Old:
-      </p>
-      <p>
-        <img src="images/combo-win32-dark-old.png" alt="" />
-      </p>
-      <p>
-        New:
-      </p>
-      <p>
-        <img src="images/combo-win32-dark-new.png" alt="" />
-      </p>
-      <p>
-        On <b>Windows 10</b>, all the dark theme tweaks including the <a href="#dark-win32-combo">dark combo</a> can be disabled using the 
-        <code>org.eclipse.swt.internal.win32.disableCustomThemeTweaks</code> Java property.<br/>
-        For Example: add this VM argument in eclipse.ini or on the command line after <b><code>-vmargs</code></b>:
-      </p>
-      <pre><b>-Dorg.eclipse.swt.internal.win32.disableCustomThemeTweaks=true</b></pre>
+      Table, Tree, CTabFolder, ToolBar and MenuItem widgets now support dark-theme tool-tips.
+      Refer below screen-shots which show combined tool-tips for various widgets.
+      <img src="images/swt-win-darkthemed-tooltips.png" alt=""/>
     </td>
   </tr>
   <!-- *********************** End of SWT *********************** -->
+
+  <!-- *********************** p2 *********************** -->
+  <tr>
+    <td id="p2" class="section" colspan="2"><h2>p2 Changes</h2></td>
+  </tr>
+
+  <tr id="trust-PGP"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=572816 -->
+    <td class="title"><a href="#trust-PGP">Trust signers of PGP-signed artifacts</a></td>
+    <td class="content">
+      When artifacts to be installed have the <code>pgp.signatures</code> property set, additionally to the integrity check that
+      are responsible of verifying the signatures are valid for the given artifact, the public key of the signers will now be
+      prompted to user in the same <b>Trust</b> dialog as unknown certificates, and user will have to declare the signer
+      key as trusted for installation to complete. All PGP-signed artifacts need to have at least 1 trusted signer for installation
+      to complete; an artifact that has no trusted signer will block the installation.
+      <p>The behavior is similar to what's already in place for artifacts signed with jarsigner. However, some convenience
+      behavior such as remembering what was already trusted is not implemented yet.</p>
+      <p>For extenders or users of p2's API, beware that <code>org.eclipse.equinox.p2.core.UIServices</code> now has an
+      extra <code>getTrustInfo(Certificate[][] unTrustedCertificateChains, Collection&lt;PGPPublicKey> untrustedPGPKeys,
+      String[] details)</code> method that should be used and implemented in place of legacy method with same name,
+      but without the <code>PGPPublicKey</code> parameter.</p>
+    </td>
+  </tr>
+
+   <!-- ******************** Equinox ********************** -->
+   <tr>
+    <td id="Equinox" class="section" colspan="2"><h2>Equinox Changes</h2></td>
+  </tr>
+
+  <tr id="splash-screen-image-formats"> <!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=114567 -->
+    <td class="title"><a href="#splash-screen-image-formats">Splash screen image format</a></td>
+    <td class="content">
+      Launcher splash screen image can be in any of the following formats: PNG, JPG, GIF and BMP.
+      Transparency and animation are not supported yet.
+    </td>
+  </tr>
+  <!-- ******************** End of Equinox ********************** -->
 
 </tbody>
 </table>
