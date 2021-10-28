@@ -19,13 +19,15 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
+import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -218,6 +220,7 @@ public class TracingSuite extends Suite {
                         SecurityException |
                         IllegalAccessException |
                         IllegalArgumentException |
+                        InaccessibleObjectException |
                         InvocationTargetException e1) {
                     e1.printStackTrace();
                 }
@@ -225,7 +228,8 @@ public class TracingSuite extends Suite {
         }
 
         private Thread dumpStackTraces(PrintStream stream) {
-            String message = format(new Date(), fDescription) + " ran for more than " + (long) (10 * 60) + " seconds";
+            long seconds = fTracingOptions.stackDumpTimeoutSeconds();
+            String message = format(new Date(), fDescription) + " ran for more than " + seconds + " seconds";
             stream.println(message);
 
             stream.format("totalMemory:           %11d\n", Runtime.getRuntime().totalMemory());
@@ -233,19 +237,29 @@ public class TracingSuite extends Suite {
             System.gc();
             stream.format("freeMemory (after GC): %11d\n", Runtime.getRuntime().freeMemory());
 
-            Thread main = null;
-            Map<Thread, StackTraceElement[]> stackTraces = Thread.getAllStackTraces();
-            for (Entry<Thread, StackTraceElement[]> entry : stackTraces.entrySet()) {
-                String name = entry.getKey().getName();
-                if ("main".equals(name)) {
-                    main = entry.getKey();
+            ThreadMXBean threadStuff = ManagementFactory.getThreadMXBean();
+            ThreadInfo[] allThreads = threadStuff.getThreadInfo(threadStuff.getAllThreadIds(), 200);
+            for (ThreadInfo threadInfo : allThreads) {
+                stream.print("\"");
+                stream.print(threadInfo.getThreadName());
+                stream.print("\": ");
+                stream.print(threadInfo.getThreadState());
+                stream.println();
+                final StackTraceElement[] elements = threadInfo.getStackTrace();
+                for (StackTraceElement element : elements) {
+                    stream.print("    ");
+                    stream.print(element);
+                    stream.println();
                 }
-                StackTraceElement[] stack = entry.getValue();
-                ThreadDump exception = new ThreadDump("for thread \"" + name + "\"");
-                exception.setStackTrace(stack);
-                exception.printStackTrace(stream);
+                stream.println();
             }
-            return main;
+            for (Thread t : Thread.getAllStackTraces().keySet()) {
+                String name = t.getName();
+                if ("main".equals(name)) {
+                    return t;
+                }
+            }
+            return null;
         }
     }
 

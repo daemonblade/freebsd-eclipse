@@ -16,16 +16,16 @@
   <parent>
     <groupId>eclipse.platform.releng</groupId>
     <artifactId>eclipse.platform.releng</artifactId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.releng</groupId>
   <artifactId>org.eclipse.releng.tests</artifactId>
-  <version>3.4.500-SNAPSHOT</version>
+  <version>3.5.100-SNAPSHOT</version>
   <packaging>eclipse-test-plugin</packaging>
   <properties>
     <code.ignoredWarnings>${tests.ignoredWarnings}</code.ignoredWarnings>
     <testSuite>${project.artifactId}</testSuite>
-    <testClass>org.eclipse.releng.tests.tools.AllRelengToolsTests</testClass>
+    <skipTests>true</skipTests>
   </properties>
 </project>

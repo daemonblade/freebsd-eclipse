@@ -3,7 +3,7 @@
 <feature
       id="org.eclipse.help"
       label="%featureName"
-      version="2.3.300.qualifier"
+      version="2.3.700.qualifier"
       provider-name="%providerName"
       plugin="org.eclipse.help.base"
       license-feature="org.eclipse.license"
@@ -29,7 +29,7 @@
          unpack="false"/>
 
    <plugin
-         id="javax.servlet"
+         id="jakarta.servlet-api"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -141,13 +141,6 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.jetty.continuation"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.jetty.http"
          download-size="0"
          install-size="0"
@@ -184,6 +177,20 @@
 
    <plugin
          id="org.eclipse.jetty.util"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+   
+   <plugin
+         id="org.eclipse.jetty.util.ajax"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.slf4j.api"
          download-size="0"
          install-size="0"
          version="0.0.0"

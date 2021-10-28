@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Red Hat Inc. and others.
+ * Copyright (c) 2021 Red Hat Inc. and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -63,7 +63,6 @@ public class LegacyXmlResultFormatter extends AbstractJUnitResultFormatter {
 	final AtomicLong numTestsErrored = new AtomicLong(0);
 	final AtomicLong numTestsSkipped = new AtomicLong(0);
 	final AtomicLong numTestsAborted = new AtomicLong(0);
-
 
 	@Override
 	public void testPlanExecutionStarted(final TestPlan plan) {
@@ -156,6 +155,11 @@ public class LegacyXmlResultFormatter extends AbstractJUnitResultFormatter {
 			this.startedAt = startedAt;
 		}
 	}
+	@Override
+	public void setUseLegacyReportingName(final boolean useLegacyReportingName) {
+		//do nothing
+	}
+
 
 	private final class XMLReportWriter {
 

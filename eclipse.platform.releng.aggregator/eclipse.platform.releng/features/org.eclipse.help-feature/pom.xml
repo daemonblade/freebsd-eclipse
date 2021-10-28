@@ -14,25 +14,26 @@
   <parent>
     <groupId>eclipse.platform.releng</groupId>
     <artifactId>eclipse.platform.releng</artifactId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.help.feature</groupId>
   <artifactId>org.eclipse.help</artifactId>
-  <version>2.3.300-SNAPSHOT</version>
+  <name>org.eclipse.help.feature</name>
+  <version>2.3.700-SNAPSHOT</version>
   <packaging>eclipse-feature</packaging>
     <build>
      <plugins>
       <plugin>
-        <groupId>org.eclipse.tycho.extras</groupId>
-        <artifactId>tycho-source-feature-plugin</artifactId>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-source-plugin</artifactId>
         <version>${tycho.version}</version>
         <executions>
           <execution>
             <phase>package</phase>
-            <id>source-feature</id>
+            <id>feature-source</id>
             <goals>
-              <goal>source-feature</goal>
+              <goal>feature-source</goal>
             </goals>
           </execution>
         </executions>
@@ -43,7 +44,7 @@
         <version>${tycho.version}</version>
         <executions>
           <execution>
-            <id>attached-p2-metadata</id>
+            <id>attach-p2-metadata</id>
             <phase>package</phase>
             <goals>
               <goal>p2-metadata</goal>

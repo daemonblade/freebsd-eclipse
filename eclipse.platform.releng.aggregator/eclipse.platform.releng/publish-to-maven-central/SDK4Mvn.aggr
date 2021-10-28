@@ -2,32 +2,33 @@
 <aggregator:Aggregation xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aggregator="http://www.eclipse.org/cbi/p2repo/2011/aggregator/1.1.0" label="SDK4Mvn" packedStrategy="UNPACK_AS_SIBLING" type="R" mavenResult="true" versionFormat="MavenRelease">
   <validationSets label="main">
     <contributions label="sdk">
-      <repositories enabled="false" location="/home/data/httpd/download.eclipse.org/eclipse/updates/4.16/R-4.16-202006040540/">
+      <repositories enabled="false" location="/home/data/httpd/download.eclipse.org/eclipse/updates/4.20/R-4.20-202106111600/">
         <mapRules xsi:type="aggregator:ExclusionRule" name="org.eclipse.e4.core.tools.feature.feature.group"/>
         <mapRules xsi:type="aggregator:ExclusionRule" name="org.eclipse.e4.core.tools.feature.source.feature.group"/>
       </repositories>
-      <repositories enabled="false" location="/home/data/httpd/download.eclipse.org/eclipse/updates/4.16/R-4.16-202006040540/">
+      <repositories enabled="false" location="/home/data/httpd/download.eclipse.org/eclipse/updates/4.20/R-4.20-202106111600/">
         <bundles name="org.eclipse.jdt.core.compiler.batch"/>
       </repositories>
     </contributions>
     <contributions label="sdk_http">
-      <repositories location="https://download.eclipse.org/eclipse/updates/4.16/R-4.16-202006040540/">
+      <repositories location="https://download.eclipse.org/eclipse/updates/4.20/R-4.20-202106111600/">
         <mapRules xsi:type="aggregator:ExclusionRule" name="org.eclipse.e4.core.tools.feature.feature.group"/>
         <mapRules xsi:type="aggregator:ExclusionRule" name="org.eclipse.e4.core.tools.feature.source.feature.group"/>
       </repositories>
-      <repositories location="https://download.eclipse.org/eclipse/updates/4.16/R-4.16-202006040540/">
+      <repositories location="https://download.eclipse.org/eclipse/updates/4.20/R-4.20-202106111600/">
         <bundles name="org.eclipse.jdt.core.compiler.batch"/>
       </repositories>
     </contributions>
-    <validationRepositories enabled="false" location="/home/data/httpd/download.eclipse.org/modeling/emf/emf/builds/release/2.22/"/>
-    <validationRepositories location="https://download.eclipse.org/modeling/emf/emf/builds/release/2.22/"/>
-    <validationRepositories enabled="false" location="/home/data/httpd/download.eclipse.org/tools/orbit/downloads/drops/R20200529191137/repository/"/>
-    <validationRepositories location="https://download.eclipse.org/tools/orbit/downloads/drops/R20200529191137/repository/"/>
+    <validationRepositories enabled="false" location="/home/data/httpd/download.eclipse.org/modeling/emf/emf/builds/release/2.26/"/>
+    <validationRepositories location="https://download.eclipse.org/modeling/emf/emf/builds/release/2.26/"/>
+    <validationRepositories enabled="false" location="/home/data/httpd/download.eclipse.org/tools/orbit/downloads/drops/R20210602031627/repository/"/>
+    <validationRepositories location="https://download.eclipse.org/tools/orbit/downloads/drops/R20210602031627/repository/"/>
   </validationSets>
   <configurations operatingSystem="linux" windowSystem="gtk" architecture="aarch64"/>
   <configurations operatingSystem="linux" windowSystem="gtk" architecture="ppc64le"/>
   <configurations operatingSystem="linux" windowSystem="gtk" architecture="x86_64"/>
   <configurations operatingSystem="macosx" windowSystem="cocoa" architecture="x86_64"/>
+  <configurations operatingSystem="macosx" windowSystem="cocoa" architecture="aarch64"/>
   <configurations architecture="x86_64"/>
   <mavenMappings namePattern="(org\.eclipse\.jdt)\.core\.compiler\.batch" groupId="$1" artifactId="ecj"/>
   <mavenMappings namePattern="(org\.eclipse\.jdt)(.*)" groupId="$1" artifactId="$1$2"/>
@@ -39,7 +40,7 @@
   <mavenMappings namePattern="com\.ibm\.icu" groupId="com.ibm.icu" artifactId="icu4j" versionPattern="([^.]+)\.([^.]+)\.0(?:\..*)?" versionTemplate="$1.$2"/>
   <mavenMappings namePattern="(com\.jcraft)\.(.*)" groupId="$1" artifactId="$2"/>
   <mavenMappings namePattern="com\.sun\.el" groupId="org.eclipse.jetty.orbit" artifactId="com.sun.el"/>
-  <mavenMappings namePattern="javax\.annotation" groupId="javax.annotation" artifactId="javax.annotation-api"/>
+  <mavenMappings namePattern="javax\.annotation" groupId="jakarta.annotation" artifactId="jakarta.annotation-api"/>
   <mavenMappings namePattern="javax\.el" groupId="javax.el" artifactId="el-api"/>
   <mavenMappings namePattern="javax\.servlet$" groupId="javax.servlet" artifactId="javax.servlet-api"/>
   <mavenMappings namePattern="javax\.servlet\.jsp" groupId="javax.servlet.jsp" artifactId="javax.servlet.jsp-api"/>
@@ -64,6 +65,8 @@
   <mavenMappings namePattern="org.w3c.css.sac" groupId="org.eclipse.birt.runtime" artifactId="org.w3c.css.sac"/>
   <mavenMappings namePattern="org.apache.batik.css" groupId="org.apache.xmlgraphics" artifactId="batik-css" versionPattern="([^.]+)\.([^.]+)\.0(?:\..*)?" versionTemplate="$1.$2"/>
   <mavenMappings namePattern="com.google.gson" groupId="com.google.code.gson" artifactId="gson"/>
+  <mavenMappings namePattern="com.sun.jna.platform" groupId="net.java.dev.jna" artifactId="jna-platform"/>
+  <mavenMappings namePattern="com.sun.jna" groupId="net.java.dev.jna" artifactId="jna"/>
   <mavenMappings namePattern="^(([^.]+(?:\.[^.]+(?:\.[^.]+)?)?)(?:\.[^.]+)*)$" groupId="$2" artifactId="$1"/>
   <mavenMappings namePattern="(.*)" groupId="p2.osgi.bundle" artifactId="$1"/>
 </aggregator:Aggregation>

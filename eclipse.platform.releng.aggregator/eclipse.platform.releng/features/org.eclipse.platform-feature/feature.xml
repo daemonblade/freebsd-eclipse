@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.platform"
       label="%featureName"
-      version="4.17.0.qualifier"
+      version="4.21.0.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -95,6 +95,15 @@
          version="0.0.0"
          unpack="false"/>
 
+   <plugin
+         id="org.eclipse.core.net.freebsd"
+         os="freebsd"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+   
    <plugin
          id="org.eclipse.core.net.freebsd.amd64"
          os="freebsd"
@@ -409,6 +418,16 @@
          version="0.0.0"
          fragment="true"
          unpack="false"/>
+
+   <plugin
+         id="org.eclipse.core.filesystem.freebsd.powerpc64le"
+         os="freebsd"
+         arch="powerpc64le"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
          
    <plugin
          id="org.eclipse.core.filesystem.freebsd.aarch64"
@@ -474,6 +493,15 @@
          fragment="true"
          unpack="false"/>
 
+   <plugin
+         id="org.eclipse.equinox.security.freebsd"
+         os="freebsd"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+   
    <plugin
          id="org.eclipse.equinox.security.freebsd.amd64"
          os="freebsd"

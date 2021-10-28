@@ -14,11 +14,12 @@
   <parent>
     <groupId>eclipse.platform.releng</groupId>
     <artifactId>eclipse.platform.releng</artifactId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.platform.feature</groupId>
   <artifactId>org.eclipse.platform</artifactId>
+  <name>org.eclipse.platform.feature</name>
   <packaging>eclipse-feature</packaging>
   <build>
     <plugins>
@@ -39,15 +40,15 @@
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.eclipse.tycho.extras</groupId>
-        <artifactId>tycho-source-feature-plugin</artifactId>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-source-plugin</artifactId>
         <version>${tycho.version}</version>
         <executions>
           <execution>
             <phase>package</phase>
-            <id>source-feature</id>
+            <id>feature-source</id>
             <goals>
-              <goal>source-feature</goal>
+              <goal>feature-source</goal>
             </goals>
             <configuration>
               <plugins>
@@ -59,6 +60,7 @@
                 <plugin id="org.eclipse.core.filesystem.macosx"/>
                 <plugin id="org.eclipse.core.filesystem.win32.x86_64"/>
                 <plugin id="org.eclipse.core.filesystem.freebsd.powerpc64"/>
+                <plugin id="org.eclipse.core.filesystem.freebsd.powerpc64le"/>
                 <plugin id="org.eclipse.core.resources.win32.x86_64"/>
               </excludes>
             </configuration>
@@ -71,7 +73,7 @@
         <version>${tycho.version}</version>
         <executions>
           <execution>
-            <id>attached-p2-metadata</id>
+            <id>attach-p2-metadata</id>
             <phase>package</phase>
             <goals>
               <goal>p2-metadata</goal>
