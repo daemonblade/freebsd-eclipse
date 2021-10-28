@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %name
 Bundle-SymbolicName: org.eclipse.pde.core; singleton:=true
-Bundle-Version: 3.14.0.qualifier
+Bundle-Version: 3.14.400.qualifier
 Bundle-Activator: org.eclipse.pde.internal.core.PDECore
 Bundle-Vendor: %provider-name
 Bundle-Localization: plugin
@@ -21,7 +21,8 @@ Export-Package:
    org.eclipse.pde.ua.ui,
    org.eclipse.pde.ds.ui,
    org.eclipse.pde.ua.core,
-   org.eclipse.pde.api.tools.tests",
+   org.eclipse.pde.api.tools.tests,
+   org.eclipse.pde.unittest.junit",
  org.eclipse.pde.internal.core.build;x-friends:="org.eclipse.pde.ui,org.eclipse.pde.ds.ui,org.eclipse.pde.ua.ui",
  org.eclipse.pde.internal.core.builders;x-friends:="org.eclipse.pde.ui,org.eclipse.pde.launching,org.eclipse.pde.ds.core",
  org.eclipse.pde.internal.core.bundle;x-friends:="org.eclipse.pde.ui,org.eclipse.pde.ds.ui",
@@ -65,6 +66,7 @@ Export-Package:
    org.eclipse.pde.ds.tests,
    org.eclipse.pde.ua.core,
    org.eclipse.pde.ua.tests",
+ org.eclipse.pde.internal.core.update.configurator;x-internal:=true,
  org.eclipse.pde.internal.core.util;
   x-friends:="org.eclipse.pde.ui,
    org.eclipse.pde.ua.ui,
@@ -72,10 +74,11 @@ Export-Package:
    org.eclipse.pde.ds.core,
    org.eclipse.pde.ds.ui,
    org.eclipse.pde.ua.core,
-   org.eclipse.pde.api.tools",
+   org.eclipse.pde.api.tools,
+   org.eclipse.pde.unittest.junit",
  org.eclipse.pde.internal.core.variables;x-internal:=true
 Require-Bundle: 
- org.eclipse.core.runtime;bundle-version="[3.11.0,4.0.0)",
+ org.eclipse.core.runtime;bundle-version="[3.14.0,4.0.0)",
  org.eclipse.e4.core.contexts;bundle-version="[1.8.0,2.0.0)",
  org.eclipse.e4.core.services;bundle-version="[2.0.0,3.0.0)",
  org.eclipse.jdt.core;bundle-version="[3.2.0,4.0.0)",

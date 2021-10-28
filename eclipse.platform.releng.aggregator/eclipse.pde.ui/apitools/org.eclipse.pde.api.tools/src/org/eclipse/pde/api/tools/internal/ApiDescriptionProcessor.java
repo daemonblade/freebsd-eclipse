@@ -171,7 +171,7 @@ public class ApiDescriptionProcessor {
 				} catch (CoreException e) {
 					addStatus(e.getStatus());
 				} catch (BadLocationException e) {
-					addStatus(new Status(IStatus.ERROR, ApiPlugin.PLUGIN_ID, ScannerMessages.ComponentXMLScanner_0 + element.toString(), e));
+					addStatus(Status.error(ScannerMessages.ComponentXMLScanner_0 + element.toString(), e));
 				}
 				members.clear();
 			}
@@ -489,7 +489,7 @@ public class ApiDescriptionProcessor {
 					}
 				}
 				if (stream != null) {
-					return new String(Util.getInputStreamAsCharArray(stream, -1, StandardCharsets.UTF_8));
+					return new String(Util.getInputStreamAsCharArray(stream, StandardCharsets.UTF_8));
 				}
 			} catch (IOException e) {
 				ApiPlugin.log(e);
@@ -550,7 +550,7 @@ public class ApiDescriptionProcessor {
 	 * @throws BadLocationException
 	 */
 	static void processTagUpdates(IType type, IReferenceTypeDescriptor desc, IApiDescription description, List<IElementDescriptor> members, Map<IFile, Set<TextEdit>> collector) throws CoreException, BadLocationException {
-		ASTParser parser = ASTParser.newParser(AST.JLS14);
+		ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
 		ICompilationUnit cunit = type.getCompilationUnit();
 		if (cunit != null) {
 			parser.setSource(cunit);
@@ -592,7 +592,7 @@ public class ApiDescriptionProcessor {
 	 * @throws CoreException
 	 */
 	private static void abort(String message, Throwable exception) throws CoreException {
-		IStatus status = new Status(IStatus.ERROR, ApiPlugin.PLUGIN_ID, message, exception);
+		IStatus status = Status.error(message, exception);
 		throw new CoreException(status);
 	}
 

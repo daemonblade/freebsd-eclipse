@@ -403,6 +403,7 @@ public class TargetDefinition implements ITargetDefinition {
 							synchronizer.synchronize(this,
 									subMonitor.split(synchronizerNumContainerMap.get(synchronizer).intValue() * 95));
 						} catch (CoreException e) {
+							PDECore.log(e.getStatus());
 							status.add(e.getStatus());
 						}
 					}
@@ -831,7 +832,7 @@ public class TargetDefinition implements ITargetDefinition {
 	 * @throws CoreException
 	 */
 	private void abort(String message, Exception e) throws CoreException {
-		throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, message, e));
+		throw new CoreException(Status.error(message, e));
 	}
 
 	@Override
@@ -1291,13 +1292,18 @@ public class TargetDefinition implements ITargetDefinition {
 					&& node.getNodeName().equalsIgnoreCase(TargetDefinitionPersistenceHelper.LOCATION)) {
 				Element element = (Element) node;
 				String type = (element).getAttribute(TargetDefinitionPersistenceHelper.ATTR_LOCATION_TYPE);
-				if (type.equals(IUBundleContainer.TYPE)) {
+				switch (type) {
+				case IUBundleContainer.TYPE:
 					oldIUContainers.add(element);
-				} else if (type.equals(DirectoryBundleContainer.TYPE) || type.equals(FeatureBundleContainer.TYPE)
-						|| type.equals(ProfileBundleContainer.TYPE)) {
+					break;
+				case DirectoryBundleContainer.TYPE:
+				case FeatureBundleContainer.TYPE:
+				case ProfileBundleContainer.TYPE:
 					oldContainers.add(element);
-				} else {
+					break;
+				default:
 					oldGenericContainers.add(element);
+					break;
 				}
 			}
 		}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2015 IBM Corporation and others.
+ * Copyright (c) 2007, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -17,10 +17,14 @@ package org.eclipse.pde.internal.ui.wizards.tools;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jdt.core.*;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.pde.core.IBaseModel;
 import org.eclipse.pde.core.build.IBuild;
 import org.eclipse.pde.core.build.IBuildEntry;
@@ -32,12 +36,12 @@ import org.eclipse.pde.internal.core.ibundle.IBundle;
 import org.eclipse.pde.internal.core.ibundle.IBundlePluginModelBase;
 import org.eclipse.pde.internal.core.natures.PDE;
 import org.eclipse.pde.internal.core.project.PDEProject;
-import org.eclipse.pde.internal.core.util.CoreUtility;
-import org.eclipse.pde.internal.core.util.IdUtil;
+import org.eclipse.pde.internal.core.util.*;
 import org.eclipse.pde.internal.ui.PDEPlugin;
 import org.eclipse.pde.internal.ui.PDEUIMessages;
 import org.eclipse.pde.internal.ui.util.ModelModification;
 import org.eclipse.pde.internal.ui.util.PDEModelUtility;
+import org.eclipse.pde.internal.ui.wizards.plugin.NewProjectCreationOperation;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.osgi.framework.Constants;
 
@@ -54,6 +58,7 @@ public class ConvertProjectToPluginOperation extends WorkspaceModifyOperation {
 	private String fLibraryName;
 	private String[] fSrcEntries;
 	private String[] fLibEntries;
+	private final static String NO_EXECUTION_ENVIRONMENT = PDEUIMessages.PluginContentPage_noEE;
 
 	/**
 	 * Workspace operation to convert the specified project into a plug-in
@@ -251,6 +256,46 @@ public class ConvertProjectToPluginOperation extends WorkspaceModifyOperation {
 		pluginBundle.setHeader(Constants.BUNDLE_SYMBOLICNAME, pluginId);
 		pluginBundle.setHeader(Constants.BUNDLE_VERSION, pluginVersion);
 		pluginBundle.setHeader(Constants.BUNDLE_NAME, pluginName);
+		IJavaProject jp = JavaCore.create(file.getProject());
+		IModuleDescription moduleDescription = null;
+		if (jp != null) {
+			try {
+				moduleDescription = jp.getModuleDescription();
+			} catch (JavaModelException e) {
+			}
+		}
+		if (moduleDescription == null) {
+			pluginBundle.setHeader(ICoreConstants.AUTOMATIC_MODULE_NAME,
+					NewProjectCreationOperation.determineAutomaticModuleNameFromBSN(pluginId));
+		}
+		IExecutionEnvironment[] exeEnvs = VMUtil.getExecutionEnvironments();
+		IExecutionEnvironment ee = null;
+		IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
+		for (int i = 0; i < exeEnvs.length; i++) {
+			if (!(exeEnvs[i].getId().equals(NO_EXECUTION_ENVIRONMENT))) {
+				if (VMUtil.getExecutionEnvironment(exeEnvs[i].getId()).isStrictlyCompatible(defaultVM)) {
+					ee = exeEnvs[i];
+					break;
+				}
+			}
+		}
+		if (ee == null) {
+			for (int i = exeEnvs.length - 1; i >= 0; i--) {
+				if (!(exeEnvs[i].getId().equals(NO_EXECUTION_ENVIRONMENT))) {
+					IVMInstall[] vm = VMUtil.getExecutionEnvironment(exeEnvs[i].getId()).getCompatibleVMs();
+					if (vm == null || vm.length == 0) {
+						continue;
+					}
+					java.util.List<IVMInstall> vmList = Arrays.asList(vm);
+					if (vmList.contains(defaultVM)) {
+						ee = exeEnvs[i];
+						break;
+					}
+				}
+			}
+		}
+		if (ee != null)
+			pluginBundle.setHeader(Constants.BUNDLE_REQUIREDEXECUTIONENVIRONMENT, ee.getId());
 
 		if (missingInfo) {
 			IPluginModelFactory factory = model.getPluginFactory();

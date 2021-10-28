@@ -99,7 +99,7 @@ public class ApiDescription implements IApiDescription {
 	/**
 	 * Represents a single node in the tree of mapped manifest items
 	 */
-	class ManifestNode {
+	static class ManifestNode {
 		protected IElementDescriptor element = null;
 		protected int visibility, restrictions;
 		protected ManifestNode parent = null;
@@ -498,7 +498,9 @@ public class ApiDescription implements IApiDescription {
 			buffer.append(RestrictionModifiers.getRestrictionText(res));
 			System.out.println(buffer.toString());
 		}
-		return new ApiAnnotations(vis, res);
+		ApiAnnotations apiAno = new ApiAnnotations(vis, res);
+		apiAno.setExact(node.element.equals(element));
+		return apiAno;
 	}
 
 	/**

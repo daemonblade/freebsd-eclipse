@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2020 IBM Corporation and others.
+ * Copyright (c) 2014, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -524,6 +524,10 @@ public class PDEUIMessages extends NLS {
 
 	public static String MainPreferencePage_notNow;
 
+	public static String MainPreferencePage_AddSwtNonDisposedToVMArguments;
+
+	public static String MainPreferencePage_AddSwtNonDisposedToVMArgumentsToolTop;
+
 	public static String MainPreferencePage_addToJavaSearch;
 	public static String MainPreferencePage_junitWorkspace_asContainer;
 
@@ -652,6 +656,7 @@ public class PDEUIMessages extends NLS {
 	public static String TableSection_itemCount;
 
 	public static String UpdateClasspathResolution_label;
+	public static String UpdateExecutionEnvironment_label;
 
 	//
 	// PDE resource strings
@@ -1995,6 +2000,8 @@ public class PDEUIMessages extends NLS {
 	public static String RequiresSection_up;
 	public static String RequiresSection_open;
 	public static String RequiresSection_delete;
+
+	public static String RequiresSection_nullLog;
 	public static String LoopDialog_title;
 	public static String MatchSection_title;
 	public static String MatchSection_desc;
@@ -3179,8 +3186,10 @@ public class PDEUIMessages extends NLS {
 	public static String OpenManifestsAction_cannotFind;
 
 	public static String OpenManifestsAction_cannotOpen;
+	public static String OpenManifestsAction_cannotOpenThisFile;
 
 	public static String OpenManifestsAction_title;
+	public static String OpenPluginManifestsAction_title;
 
 	public static String NewProjectCreationPage_invalidProjectName;
 	public static String NewProjectCreationPage_invalidLocationPath;
@@ -3296,6 +3305,7 @@ public class PDEUIMessages extends NLS {
 
 	public static String PDECompilersConfigurationBlock_error;
 	public static String PDECompilersConfigurationBlock_warning;
+	public static String PDECompilersConfigurationBlock_info;
 	public static String PDECompilersConfigurationBlock_ignore;
 
 	public static String PDEJUnitLaunchConfigurationTab_Run_Tests_In_UI_Thread;

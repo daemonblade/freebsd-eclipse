@@ -75,9 +75,6 @@ public class ArchiveApiTypeContainer extends ApiElement implements IApiTypeConta
 			return getTypeName().compareTo(((ArchiveApiTypeRoot) o).getTypeName());
 		}
 
-		/**
-		 * @see java.lang.Object#equals(java.lang.Object)
-		 */
 		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof ArchiveApiTypeRoot) {
@@ -87,9 +84,6 @@ public class ArchiveApiTypeContainer extends ApiElement implements IApiTypeConta
 			return false;
 		}
 
-		/**
-		 * @see java.lang.Object#hashCode()
-		 */
 		@Override
 		public int hashCode() {
 			return getName().hashCode();
@@ -119,7 +113,7 @@ public class ArchiveApiTypeContainer extends ApiElement implements IApiTypeConta
 						return null;
 					}
 					try {
-						fContents = Util.getInputStreamAsByteArray(stream, -1);
+						fContents = stream.readAllBytes();
 						return fContents;
 					} catch (IOException ioe) {
 						abort("Unable to read class file: " + getTypeName(), ioe); //$NON-NLS-1$
@@ -211,9 +205,6 @@ public class ArchiveApiTypeContainer extends ApiElement implements IApiTypeConta
 		visitor.end(this);
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		StringBuilder buff = new StringBuilder();

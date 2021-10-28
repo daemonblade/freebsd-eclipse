@@ -76,8 +76,8 @@ public abstract class UsageTest extends ApiBuilderTest {
 	protected void ensureCompliance(String[] projectnames) {
 		IJavaProject project = null;
 		String compliance = null;
-		for (int i = 0; i < projectnames.length; i++) {
-			project = getEnv().getJavaProject(projectnames[i]);
+		for (String projectname : projectnames) {
+			project = getEnv().getJavaProject(projectname);
 			compliance = getTestCompliance();
 			if (!compliance.equals(project.getOption(JavaCore.COMPILER_COMPLIANCE, true))) {
 				getEnv().setProjectCompliance(project, compliance);
@@ -138,8 +138,10 @@ public abstract class UsageTest extends ApiBuilderTest {
 	 */
 	@Override
 	protected void setUp() throws Exception {
+		indexDisabledForTest = false;
 		// If we have an existing environment, set it to revert rather than
 		// delete the workspace to improve performance
+		resetBuilderOptions();
 		ApiTestingEnvironment env = getEnv();
 		if (env != null) {
 			env.setRevert(true);
@@ -183,8 +185,7 @@ public abstract class UsageTest extends ApiBuilderTest {
 		TestCase.RUN_ONLY_ID = null;
 
 		/* tests */
-		for (int i = 0, length = classes.length; i < length; i++) {
-			Class<?> clazz = classes[i];
+		for (Class<?> clazz : classes) {
 			Method suiteMethod;
 			try {
 				suiteMethod = clazz.getDeclaredMethod("suite"); //$NON-NLS-1$

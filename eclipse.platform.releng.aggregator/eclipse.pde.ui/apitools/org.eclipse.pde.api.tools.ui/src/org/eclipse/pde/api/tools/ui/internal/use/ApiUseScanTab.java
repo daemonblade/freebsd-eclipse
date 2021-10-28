@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corporation and others.
+ * Copyright (c) 2009, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -22,6 +22,7 @@ import java.util.regex.PatternSyntaxException;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
@@ -39,6 +40,7 @@ import org.eclipse.pde.core.target.ITargetDefinition;
 import org.eclipse.pde.core.target.ITargetHandle;
 import org.eclipse.pde.core.target.ITargetPlatformService;
 import org.eclipse.pde.internal.core.PDECore;
+import org.eclipse.pde.internal.core.TargetPlatformHelper;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionListener;
@@ -546,8 +548,16 @@ public class ApiUseScanTab extends AbstractLaunchConfigurationTab {
 				break;
 			}
 			default: {
-				radioBaseline.setSelection(true);
-				radioTarget.setSelection(false);
+				int itemCount = ApiUseScanTab.this.baseline.getItemCount();
+				if (itemCount > 0) {
+					radioBaseline.setSelection(true);
+					radioTarget.setSelection(false);
+				} else {
+					radioBaseline.setSelection(false);
+					radioTarget.setSelection(true);
+					TargetPlatformHelper.getWorkspaceTargetResolved(new NullProgressMonitor());
+					updateAvailableTargets();
+				}
 				radioInstall.setSelection(false);
 				radioReportOnly.setSelection(false);
 			}

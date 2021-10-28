@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2020 IBM Corporation and others.
+ * Copyright (c) 2008, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -77,7 +77,7 @@ public abstract class AbstractProblemDetector implements IApiProblemDetector {
 	 * {@link IApiType} when we do not have any enclosing method infos (pre Java
 	 * 1.5 class files
 	 */
-	class MethodFinder extends ASTVisitor {
+	static class MethodFinder extends ASTVisitor {
 		IMethod method = null;
 		private IType jtype = null;
 		private ApiType type = null;
@@ -677,7 +677,7 @@ public abstract class AbstractProblemDetector implements IApiProblemDetector {
 			String name = apitype.getSimpleName();
 			ICompilationUnit cunit = type.getCompilationUnit();
 			if (cunit.isWorkingCopy()) {
-				cunit.reconcile(AST.JLS14, false, null, null);
+				cunit.reconcile(AST.getJLSLatest(), false, null, null);
 			}
 			IMethod method = getEnclosingMethod(type, reference, doc);
 			if (method != null) {
@@ -735,7 +735,7 @@ public abstract class AbstractProblemDetector implements IApiProblemDetector {
 				if (method == null) {
 					// look it up the hard way
 					ISourceRange range = jtype.getCompilationUnit().getSourceRange();
-					ASTParser parser = ASTParser.newParser(AST.JLS14);
+					ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
 					parser.setSource(jtype.getCompilationUnit());
 					parser.setSourceRange(range.getOffset(), range.getLength());
 					parser.setResolveBindings(true);
@@ -946,7 +946,7 @@ public abstract class AbstractProblemDetector implements IApiProblemDetector {
 				// what if space between the two?
 				start = line.indexOf(METHOD_REFERENCE + CONSTRUCTOR_NEW);
 				if (start < 0) {
-					line.indexOf(CONSTRUCTOR_NEW);
+					start = line.indexOf(CONSTRUCTOR_NEW);
 					if (start < 0) {
 						start = 0;
 					}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2019 IBM Corporation and others.
+ * Copyright (c) 2007, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -29,8 +29,11 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
+import org.eclipse.pde.api.tools.internal.problems.ApiProblemFactory;
 import org.eclipse.pde.api.tools.internal.provisional.ApiPlugin;
 import org.eclipse.pde.api.tools.internal.provisional.IApiMarkerConstants;
+import org.eclipse.pde.api.tools.internal.provisional.descriptors.IElementDescriptor;
+import org.eclipse.pde.api.tools.internal.provisional.problems.IApiProblem;
 import org.eclipse.pde.api.tools.internal.provisional.problems.IApiProblemTypes;
 import org.eclipse.pde.api.tools.internal.util.Util;
 import org.eclipse.pde.api.tools.ui.internal.ApiUIPlugin;
@@ -208,10 +211,11 @@ public class ApiBaselinesConfigurationBlock extends ConfigurationBlock {
 
 	private static final Key KEY_MISSING_DEFAULT_API_PROFILE = getApiToolsKey(IApiProblemTypes.MISSING_DEFAULT_API_BASELINE);
 
+	private static final Key KEY_PLUGIN_MISSING_IN_BASELINE = getApiToolsKey(IApiProblemTypes.MISSING_PLUGIN_IN_API_BASELINE);
 	/**
 	 * An array of all of the keys for the page
 	 */
-	private static Key[] fgAllKeys = { KEY_MISSING_DEFAULT_API_PROFILE };
+	private static Key[] fgAllKeys = { KEY_MISSING_DEFAULT_API_PROFILE, KEY_PLUGIN_MISSING_IN_BASELINE };
 
 	/**
 	 * Constant representing the severity values presented in the combo boxes
@@ -249,11 +253,12 @@ public class ApiBaselinesConfigurationBlock extends ConfigurationBlock {
 	/**
 	 * Listing of all of the {@link Combo}s added to the block
 	 */
-	private Combo fCombo = null;
+
+	private ArrayList<Combo> fCombos = new ArrayList<>();
 	/**
 	 * Listing of the label in the block
 	 */
-	private Label fLabel = null;
+	private ArrayList<Label> fLabels = new ArrayList<>();
 
 	/**
 	 * The context of settings locations to search for values in
@@ -307,7 +312,14 @@ public class ApiBaselinesConfigurationBlock extends ConfigurationBlock {
 		fParent = parent;
 		fMainComp = SWTFactory.createComposite(parent, 1, 1, GridData.FILL_HORIZONTAL, 0, 0);
 		Group optionsProfileGroup = SWTFactory.createGroup(fMainComp, PreferenceMessages.ApiProfilesConfigurationBlock_options_group_title, 2, 1, GridData.FILL_BOTH);
-		this.fCombo = createComboControl(optionsProfileGroup, PreferenceMessages.ApiProfilesConfigurationBlock_missing_default_api_profile_message, KEY_MISSING_DEFAULT_API_PROFILE);
+		Combo combo = createComboControl(optionsProfileGroup,
+				PreferenceMessages.ApiProfilesConfigurationBlock_missing_default_api_profile_message,
+				KEY_MISSING_DEFAULT_API_PROFILE);
+		fCombos.add(combo);
+		combo = createComboControl(optionsProfileGroup,
+				PreferenceMessages.ApiProfilesConfigurationBlock_plugin_missing_in_baseline_message,
+				KEY_PLUGIN_MISSING_IN_BASELINE);
+		fCombos.add(combo);
 		Dialog.applyDialogFont(fMainComp);
 		return fMainComp;
 	}
@@ -334,8 +346,8 @@ public class ApiBaselinesConfigurationBlock extends ConfigurationBlock {
 			try {
 				ArrayList<Key> changes = new ArrayList<>();
 				collectChanges(fLookupOrder[0], changes);
-				if (changes.size() == 1) {
-					// Note that there is only 1 key in ApiBaselineConfigBlock
+				filterOutChanges(changes);
+				if (changes.size() == 1 && changes.get(0).equals(KEY_MISSING_DEFAULT_API_PROFILE)) {
 					Key k = changes.get(0);
 
 					String original = k.getStoredValue(fLookupOrder[0], null);
@@ -398,6 +410,37 @@ public class ApiBaselinesConfigurationBlock extends ConfigurationBlock {
 			} catch (BackingStoreException bse) {
 				ApiPlugin.log(bse);
 			}
+		}
+	}
+
+	// Filter out redundant change
+	private void filterOutChanges(ArrayList<Key> changes) {
+		if (changes.size() == 2) {
+			Key k1 = changes.get(0);
+			String original1 = k1.getStoredValue(fLookupOrder[0], null);
+			String newval1 = k1.getStoredValue(fLookupOrder[0], fManager);
+			if (original1 == null && newval1 == null) {
+				changes.remove(0);
+			}
+			if (original1 != null && newval1 != null) {
+				if (original1.equals(newval1)) {
+					changes.remove(0);
+				}
+			}
+			if (changes.size() == 2) {
+				Key k2 = changes.get(1);
+				String original2 = k2.getStoredValue(fLookupOrder[0], null);
+				String newval2 = k2.getStoredValue(fLookupOrder[0], fManager);
+				if (original2 == null && newval2 == null) {
+					changes.remove(1);
+				}
+				if (original2 != null && newval2 != null) {
+					if (original2.equals(newval2)) {
+						changes.remove(1);
+					}
+				}
+			}
+
 		}
 	}
 
@@ -488,6 +531,8 @@ public class ApiBaselinesConfigurationBlock extends ConfigurationBlock {
 
 	private ArrayList<IMarker> findMissingBaselineMarker() {
 		ArrayList<IMarker> markList = new ArrayList<>();
+		int missing_plugin = ApiProblemFactory.createProblemId(IApiProblem.CATEGORY_API_BASELINE,
+				IElementDescriptor.RESOURCE, IApiProblem.API_PLUGIN_NOT_PRESENT_IN_BASELINE, IApiProblem.NO_FLAGS);
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		try {
 			IMarker[] findMarkers = root.findMarkers(IApiMarkerConstants.DEFAULT_API_BASELINE_PROBLEM_MARKER, false,
@@ -508,6 +553,10 @@ public class ApiBaselinesConfigurationBlock extends ConfigurationBlock {
 				findMarkers = iProject.findMarkers(IApiMarkerConstants.DEFAULT_API_BASELINE_PROBLEM_MARKER, false,
 						IResource.DEPTH_ZERO);
 				for (IMarker iMarker : findMarkers) {
+					int id = ApiProblemFactory.getProblemId(iMarker);
+					if (id == missing_plugin) {
+						continue;
+					}
 					markList.add(iMarker);
 				}
 			} catch (CoreException e) {
@@ -542,9 +591,12 @@ public class ApiBaselinesConfigurationBlock extends ConfigurationBlock {
 	 * fCombos
 	 */
 	private void updateCombos() {
-		if (this.fCombo != null) {
-			ControlData data = (ControlData) fCombo.getData();
-			this.fCombo.select(data.getSelection(data.getKey().getStoredValue(fLookupOrder, false, fManager)));
+		for (Combo combo : fCombos) {
+			if (combo != null) {
+				ControlData data = (ControlData) combo.getData();
+				combo.select(data.getSelection(data.getKey().getStoredValue(fLookupOrder, false, fManager)));
+			}
+
 		}
 	}
 
@@ -577,7 +629,7 @@ public class ApiBaselinesConfigurationBlock extends ConfigurationBlock {
 		combo.addSelectionListener(selectionlistener);
 		combo.select(data.getSelection(key.getStoredValue(fLookupOrder, false, fManager)));
 		addHighlight(parent, lbl, combo);
-		fLabel = lbl;
+		fLabels.add(lbl);
 		return combo;
 	}
 
@@ -587,11 +639,9 @@ public class ApiBaselinesConfigurationBlock extends ConfigurationBlock {
 	 * @param changes the {@link List} to collect changed keys into
 	 */
 	private void collectChanges(IScopeContext context, List<Key> changes) {
-		Key key = null;
 		String origval = null, newval = null;
 		boolean complete = true;
-		for (Key fgAllKey : fgAllKeys) {
-			key = fgAllKey;
+		for (Key key : fgAllKeys) {
 			origval = key.getStoredValue(context, null);
 			newval = key.getStoredValue(context, fManager);
 			if (newval == null) {
@@ -611,13 +661,14 @@ public class ApiBaselinesConfigurationBlock extends ConfigurationBlock {
 		return fgAllKeys;
 	}
 
-	public void selectOption() {
-		if (fCombo != null && !fCombo.isDisposed()) {
-			fCombo.setFocus();
-			if (fLabel != null && !fLabel.isDisposed()) {
+	public void selectOption(int index) {
+		if (fCombos.get(index) != null && !fCombos.get(index).isDisposed()) {
+			fCombos.get(index).setFocus();
+			if (fLabels.get(index) != null && !(fLabels.get(index).isDisposed())) {
 				if (org.eclipse.jface.util.Util.isMac()) {
-					if (fLabel != null) {
-						highlight(fCombo.getParent(), fLabel, fCombo, ConfigurationBlock.HIGHLIGHT_FOCUS);
+					if (fLabels.get(index) != null) {
+						highlight(fCombos.get(index).getParent(), fLabels.get(index), fCombos.get(index),
+								ConfigurationBlock.HIGHLIGHT_FOCUS);
 					}
 				}
 			}

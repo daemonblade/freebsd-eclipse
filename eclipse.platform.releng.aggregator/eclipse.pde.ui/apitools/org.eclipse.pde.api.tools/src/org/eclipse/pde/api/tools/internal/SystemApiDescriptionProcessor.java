@@ -86,7 +86,7 @@ public class SystemApiDescriptionProcessor {
 					}
 				}
 				if (stream != null) {
-					return new String(Util.getInputStreamAsCharArray(stream, -1, StandardCharsets.UTF_8));
+					return new String(Util.getInputStreamAsCharArray(stream, StandardCharsets.UTF_8));
 				}
 			} catch (IOException e) {
 				ApiPlugin.log(e);
@@ -118,7 +118,7 @@ public class SystemApiDescriptionProcessor {
 	 * @throws CoreException
 	 */
 	private static void abort(String message, Throwable exception) throws CoreException {
-		IStatus status = new Status(IStatus.ERROR, ApiPlugin.PLUGIN_ID, message, exception);
+		IStatus status = Status.error(message, exception);
 		throw new CoreException(status);
 	}
 

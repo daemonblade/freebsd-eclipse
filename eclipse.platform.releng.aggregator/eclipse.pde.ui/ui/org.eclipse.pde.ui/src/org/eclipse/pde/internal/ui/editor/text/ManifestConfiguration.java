@@ -153,7 +153,7 @@ public class ManifestConfiguration extends ChangeAwareSourceViewerConfiguration 
 		}
 	}
 
-	class AssignmentDetector implements IWordDetector {
+	static class AssignmentDetector implements IWordDetector {
 		@Override
 		public boolean isWordStart(char c) {
 			return c == ':' || c == '=';
@@ -165,7 +165,7 @@ public class ManifestConfiguration extends ChangeAwareSourceViewerConfiguration 
 		}
 	}
 
-	class KeywordDetector implements IWordDetector {
+	static class KeywordDetector implements IWordDetector {
 		@Override
 		public boolean isWordStart(char c) {
 			return Character.isJavaIdentifierStart(c);
@@ -246,9 +246,10 @@ public class ManifestConfiguration extends ChangeAwareSourceViewerConfiguration 
 
 	@Override
 	public void dispose() {
-		super.dispose();
-		if (fContentAssistant != null)
+		if (fContentAssistantProcessor != null) {
 			fContentAssistantProcessor.dispose();
+		}
+		super.dispose();
 	}
 
 	@Override

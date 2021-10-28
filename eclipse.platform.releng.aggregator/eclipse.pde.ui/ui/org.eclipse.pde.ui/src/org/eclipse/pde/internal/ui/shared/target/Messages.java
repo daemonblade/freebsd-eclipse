@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2005, 2016 IBM Corporation and others.
+ *  Copyright (c) 2005, 2021 IBM Corporation and others.
  *
  *  This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License 2.0
@@ -17,13 +17,12 @@ import org.eclipse.osgi.util.NLS;
 
 public class Messages extends NLS {
 	private static final String BUNDLE_NAME = "org.eclipse.pde.internal.ui.shared.target.messages"; //$NON-NLS-1$
-	public static String AddBundleContainerSelectionPage_0;
+
 	public static String AddBundleContainerSelectionPage_1;
 	public static String AddBundleContainerSelectionPage_10;
 	public static String AddBundleContainerSelectionPage_2;
 	public static String AddBundleContainerSelectionPage_3;
 	public static String AddBundleContainerSelectionPage_4;
-	public static String AddBundleContainerSelectionPage_5;
 	public static String AddBundleContainerSelectionPage_6;
 	public static String AddBundleContainerSelectionPage_7;
 	public static String AddBundleContainerSelectionPage_9;
@@ -57,16 +56,19 @@ public class Messages extends NLS {
 	public static String ArgumentsFromContainerSelectionDialog_3;
 	public static String ArgumentsFromContainerSelectionDialog_4;
 	public static String ArgumentsFromContainerSelectionDialog_5;
-	public static String BundleContainerTable_0;
-	public static String BundleContainerTable_1;
-	public static String BundleContainerTable_10;
-	public static String BundleContainerTable_14;
-	public static String BundleContainerTable_15;
-	public static String BundleContainerTable_2;
-	public static String BundleContainerTable_3;
-	public static String BundleContainerTable_4;
+	public static String BundleContainerTable_Btn_Text_Add;
+	public static String BundleContainerTable_Btn_Text_Edit;
+	public static String BundleContainerTable_Btn_Text_Remove;
+	public static String BundleContainerTable_Btn_Text_Update;
+	public static String BundleContainerTable_Btn_Text_Reload;
 	public static String BundleContainerTable_8;
 	public static String BundleContainerTable_9;
+	public static String BundleContainerTable_10;
+	public static String BundleContainerTable_Btn_Text_Enable;
+	public static String BundleContainerTable_Btn_Text_Disable;
+	public static String BundleContainerTable_Btn_Text_Toggle;
+	public static String BundleContainerTable_14;
+	public static String BundleContainerTable_15;
 	public static String EditBundleContainerWizard_0;
 	public static String EditDirectoryContainerPage_0;
 	public static String EditDirectoryContainerPage_1;
@@ -139,7 +141,6 @@ public class Messages extends NLS {
 	public static String UpdateTargetJob_TargetUpdateFailedStatus;
 	public static String UpdateTargetJob_TargetUpdateSuccessStatus;
 	public static String UpdateTargetJob_UpdateJobName;
-	public static String UpdateTargetJob_UpdatingContainer;
 	public static String UpdateTargetJob_UpdatingTarget;
 	static {
 		// initialize resource bundle

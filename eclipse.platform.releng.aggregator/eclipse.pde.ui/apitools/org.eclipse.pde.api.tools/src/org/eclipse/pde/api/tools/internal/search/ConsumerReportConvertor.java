@@ -53,7 +53,7 @@ public class ConsumerReportConvertor extends UseReportConverter {
 	 * Use scan visitor that collects a list of the bundles (as
 	 * {@link IComponentDescriptor}s) that consume api references.
 	 */
-	class ListConsumersVisitor extends UseScanVisitor {
+	static class ListConsumersVisitor extends UseScanVisitor {
 		/**
 		 * Set of {@link IComponentDescriptor}s representing the consumers of
 		 * references
@@ -416,18 +416,18 @@ public class ConsumerReportConvertor extends UseReportConverter {
 		}
 	}
 
-	class Consumer {
+	static class Consumer {
 		String name;
 		CountGroup counts = new CountGroup();
 	}
 
-	class Producer {
+	static class Producer {
 		String name;
 		Map<IReferenceTypeDescriptor, Type2> types = new HashMap<>();
 		CountGroup counts = new CountGroup();
 	}
 
-	class Type2 extends Type {
+	static class Type2 extends Type {
 		public Type2(IElementDescriptor desc) {
 			super(desc);
 		}

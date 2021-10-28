@@ -67,7 +67,7 @@ public class ImportPackageSection extends TableSection {
 
 	private ImportPackageHeader fHeader;
 
-	class ImportItemWrapper {
+	static class ImportItemWrapper {
 		Object fUnderlying;
 
 		public ImportItemWrapper(Object underlying) {
@@ -134,7 +134,7 @@ public class ImportPackageSection extends TableSection {
 		}
 	}
 
-	class ImportPackageDialogLabelProvider extends LabelProvider {
+	static class ImportPackageDialogLabelProvider extends LabelProvider {
 		@Override
 		public Image getImage(Object element) {
 			return JavaUI.getSharedImages().getImage(ISharedImages.IMG_OBJS_PACKAGE);
@@ -301,9 +301,10 @@ public class ImportPackageSection extends TableSection {
 					// Value needs to be empty string so no import package
 					// object is created as the initial value
 					bundle.setHeader(getImportedPackageHeader(), ""); //$NON-NLS-1$
+				} else {
+					// Add the import package to the header
+					fHeader.addPackage(importPackageObject);
 				}
-				// Add the import package to the header
-				fHeader.addPackage(importPackageObject);
 			}
 		}
 	}

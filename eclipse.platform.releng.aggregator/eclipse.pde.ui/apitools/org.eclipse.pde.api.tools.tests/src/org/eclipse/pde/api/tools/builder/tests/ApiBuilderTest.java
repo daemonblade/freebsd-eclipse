@@ -692,11 +692,11 @@ public abstract class ApiBuilderTest extends BuilderTests {
 		}
 		IMarker[] markers = getEnv().getMarkersFor(root);
 		IMarker marker = null;
-		next: for (int i = 0; i < problemids.length; i++) {
+		next: for (int problemid : problemids) {
 			for (int j = 0; j < markers.length; j++) {
 				marker = markers[j];
 				if (marker != null) {
-					if (problemids[i] == getProblemId(marker)) {
+					if (problemid == getProblemId(marker)) {
 						markers[j] = null;
 						continue next;
 					}
@@ -704,9 +704,9 @@ public abstract class ApiBuilderTest extends BuilderTests {
 			}
 			System.out.println("--------------------------------------------------------------------------------"); //$NON-NLS-1$
 			System.out.println("Missing problem while running test " + getName() + ":"); //$NON-NLS-1$ //$NON-NLS-2$
-			System.out.println("	- expected : " + problemids[i]); //$NON-NLS-1$
+			System.out.println("	- expected : " + problemid); //$NON-NLS-1$
 			System.out.println("	- current: " + arrayToString(markers)); //$NON-NLS-1$
-			assumeTrue("missing expected problem: " + problemids[i], false); //$NON-NLS-1$
+			assumeTrue("missing expected problem: " + problemid, false); //$NON-NLS-1$
 		}
 	}
 
@@ -819,6 +819,7 @@ public abstract class ApiBuilderTest extends BuilderTests {
 		inode.put(IApiProblemTypes.CHANGED_EXECUTION_ENV, ApiPlugin.VALUE_ERROR);
 
 		inode.put(IApiProblemTypes.MISSING_DEFAULT_API_BASELINE, ApiPlugin.VALUE_WARNING);
+		inode.put(IApiProblemTypes.MISSING_PLUGIN_IN_API_BASELINE, ApiPlugin.VALUE_IGNORE);
 		try {
 			inode.flush();
 		} catch (BackingStoreException e) {

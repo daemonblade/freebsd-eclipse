@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2020 IBM Corporation and others.
+ * Copyright (c) 2008, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -44,8 +44,7 @@ public class MarkerMessages extends NLS {
 	public static String FilterProblemWithCommentResolution_create_commented_filters;
 	public static String ExplainProblemResolution_explain_incompatibility;
 	public static String ExplainProblemResolution_explain_incompatibility_desc;
-	public static String InstallEEDescriptionProblemResolution_0;
-	public static String InstallEEDescriptionProblemResolution_1;
+
 
 	public static String OpenPropertyPageResolution_element_cannot_be_null;
 	public static String OpenPropertyPageResolution_open_the_property_page;
@@ -53,7 +52,6 @@ public class MarkerMessages extends NLS {
 	public static String OpenPropertyPageResolution_opens_the_property_page;
 	public static String OpenPropertyPageResolution_page_id_cannot_be_null;
 	public static String OpenPropertyPageResolution_the_page_name_cannot_be_null;
-	public static String OptionalMessageDialog_0;
 	public static String PDEConfigureProblemSeverityAction_0;
 	public static String PDEConfigureProblemSeverityAction_1;
 	public static String PDEConfigureProblemSeverityAction_2;
@@ -99,8 +97,10 @@ public class MarkerMessages extends NLS {
 	public static String VersionNumberingResolution_reexportedMinor0;
 	public static String VersionNumberingResolution_unnecessaryMicroIncrease;
 	public static String VersionNumberingResolution_unnecessaryMinorIncrease;
+	public static String VersionNumberingResolution_unnecessaryMicro;
+	public static String VersionNumberingResolution_unnecessaryMinor;
 	public static String VersionNumberingResolution_breeMinor;
-	public static String VersionNumberingResolution_unnecessary;
+
 
 	public static String UpdateVersionNumberingOperation_title;
 

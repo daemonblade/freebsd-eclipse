@@ -28,6 +28,7 @@ import org.eclipse.core.resources.ProjectScope;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
@@ -176,8 +177,6 @@ public class ApiPlugin extends Plugin implements ISaveParticipant, DebugOptionsL
 	 * This bundle's OSGi context
 	 */
 	private BundleContext fBundleContext = null;
-
-	private static boolean DEBUG = false;
 
 	/**
 	 * Private debug options
@@ -351,7 +350,7 @@ public class ApiPlugin extends Plugin implements ISaveParticipant, DebugOptionsL
 	 * A set of listeners that want to participate in the saving life-cycle of
 	 * the workbench via this plug-in
 	 */
-	private HashSet<ISaveParticipant> savelisteners = new HashSet<>();
+	private ListenerList<ISaveParticipant> savelisteners = new ListenerList<>();
 
 	/**
 	 * This is used to log resolution errors only once per session
@@ -854,7 +853,7 @@ public class ApiPlugin extends Plugin implements ISaveParticipant, DebugOptionsL
 
 	@Override
 	public void optionsChanged(DebugOptions options) {
-		DEBUG = options.getBooleanOption(DEBUG_FLAG, false);
+		boolean DEBUG = options.getBooleanOption(DEBUG_FLAG, false);
 		boolean option = options.getBooleanOption(DELTA_DEBUG, false);
 		DEBUG_CLASSFILE_COMPARATOR = DEBUG && option;
 		DEBUG_API_COMPARATOR = DEBUG_CLASSFILE_COMPARATOR;

@@ -23,7 +23,6 @@
    <extension-point id="newExtension" name="%expoint.newExtension.name" schema="schema/newExtension.exsd"/>
    <extension-point id="templates" name="%expoint.templates.name" schema="schema/templates.exsd"/>
    <extension-point id="samples" name="%expoint.samples.name" schema="schema/samples.exsd"/>
-   <extension-point id="targetProvisioners" name="%extension-point.name.0" schema="schema/targetProvisioners.exsd"/>
    <extension-point id="targetLocationProvisioners" name="%extension-point.name.2" schema="schema/targetLocationProvisioners.exsd"/>
    <extension-point id="launchShortcuts" name="%extension-point.name.1" schema="schema/launchShortcuts.exsd"/>
 
@@ -665,7 +664,7 @@
    <extension
          point="org.eclipse.debug.ui.launchConfigurationTypeImages">
       <launchConfigurationTypeImage
-            icon="$nl$/icons/etool16/eclipse16.png"
+            icon="$nl$/icons/etool16/eclipse.png"
             configTypeID="org.eclipse.pde.ui.RuntimeWorkbench"
             id="org.eclipse.pde.ui.runtimeWorkbenchLaunchImage">
       </launchConfigurationTypeImage>
@@ -766,7 +765,7 @@
       <shortcut
             class="org.eclipse.pde.ui.launcher.EclipseLaunchShortcut"
             helpContextId="org.eclipse.pde.doc.user.launcher_eclipse_application"
-            icon="$nl$/icons/etool16/eclipse16.png"
+            icon="$nl$/icons/etool16/eclipse.png"
             id="org.eclipse.pde.ui.runtimeWorkbenchShortcut"
             label="%launcher.shortcut.label"
             modes="run, debug">
@@ -2137,7 +2136,7 @@
       <extension
          point="org.eclipse.core.runtime.adapters">
       <factory
-            adaptableType="org.eclipse.pde.core.target.ITargetLocation"
+            adaptableType="org.eclipse.pde.internal.core.target.IUBundleContainer"
             class="org.eclipse.pde.internal.ui.shared.target.IUFactory">
          <adapter
                type="org.eclipse.jface.viewers.ILabelProvider">
@@ -2146,10 +2145,59 @@
                type="org.eclipse.jface.viewers.ITreeContentProvider">
          </adapter>
          <adapter
-               type="org.eclipse.pde.ui.target.ITargetLocationEditor">
+               type="org.eclipse.pde.ui.target.ITargetLocationHandler">
+         </adapter>
+      </factory>
+      <factory
+            adaptableType="org.eclipse.pde.internal.ui.shared.target.IUContentProvider$IUWrapper"
+            class="org.eclipse.pde.internal.ui.shared.target.IUFactory">
+         <adapter
+               type="org.eclipse.jface.viewers.ILabelProvider">
          </adapter>
          <adapter
-               type="org.eclipse.pde.ui.target.ITargetLocationUpdater">
+               type="org.eclipse.pde.ui.target.ITargetLocationHandler">
+         </adapter>
+      </factory>
+      <factory
+            adaptableType="org.eclipse.pde.internal.core.target.DirectoryBundleContainer"
+            class="org.eclipse.pde.internal.ui.shared.target.BundleContainerFactory">
+         <adapter
+               type="org.eclipse.pde.ui.target.ITargetLocationHandler">
+         </adapter>
+      </factory>
+      <factory
+            adaptableType="org.eclipse.pde.internal.core.target.ProfileBundleContainer"
+            class="org.eclipse.pde.internal.ui.shared.target.BundleContainerFactory">
+         <adapter
+               type="org.eclipse.pde.ui.target.ITargetLocationHandler">
+         </adapter>
+      </factory>
+      <factory
+            adaptableType="org.eclipse.pde.internal.core.target.FeatureBundleContainer"
+            class="org.eclipse.pde.internal.ui.shared.target.BundleContainerFactory">
+         <adapter
+               type="org.eclipse.pde.ui.target.ITargetLocationHandler">
+         </adapter>
+      </factory>
+      <factory
+            adaptableType="org.eclipse.pde.core.target.ITargetLocation"
+            class="org.eclipse.pde.internal.ui.shared.target.LegacyAdapterFactory">
+         <adapter
+               type="org.eclipse.pde.ui.target.ITargetLocationHandler">
+         </adapter>
+      </factory>
+      <factory
+            adaptableType="org.eclipse.pde.core.target.TargetBundle"
+            class="org.eclipse.pde.internal.ui.shared.target.TargetBundleAdapter">
+         <adapter
+               type="org.eclipse.pde.ui.target.ITargetLocationHandler">
+         </adapter>
+      </factory>
+       <factory
+            adaptableType="org.eclipse.pde.core.target.TargetFeature"
+            class="org.eclipse.pde.internal.ui.shared.target.TargetFeatureAdapter">
+         <adapter
+               type="org.eclipse.pde.ui.target.ITargetLocationHandler">
          </adapter>
       </factory>
    </extension>

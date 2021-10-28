@@ -201,7 +201,7 @@ public class PluginContentPage extends ContentPage {
 
 		IDialogSettings settings = getDialogSettings();
 
-		boolean generateActivator = settings == null ? null : settings.getBoolean(S_GENERATE_ACTIVATOR);
+		boolean generateActivator = settings == null ? false : settings.getBoolean(S_GENERATE_ACTIVATOR);
 
 		fGenerateActivator = SWTFactory.createCheckButton(classGroup, PDEUIMessages.ContentPage_generate, null,
 				generateActivator, 2);
@@ -323,7 +323,7 @@ public class PluginContentPage extends ContentPage {
 			// plugin class group
 			if (((fChangedGroups & P_CLASS_GROUP) == 0)) {
 				int oldfChanged = fChangedGroups;
-				fClassText.setText(computeId().replaceAll("-", "_").toLowerCase(Locale.ENGLISH) + ".Activator"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				fClassText.setText(computeId().replace('-', '_').toLowerCase(Locale.ENGLISH) + ".Activator"); //$NON-NLS-1$
 				fChangedGroups = oldfChanged;
 			}
 
@@ -350,7 +350,8 @@ public class PluginContentPage extends ContentPage {
 	protected void validatePage() {
 		String errorMessage = validateProperties();
 		if (errorMessage == null && fGenerateActivator.getSelection()) {
-			IStatus status = JavaConventions.validateJavaTypeName(fClassText.getText().trim(), PDEJavaHelper.getJavaSourceLevel(null), PDEJavaHelper.getJavaComplianceLevel(null));
+			IStatus status = JavaConventions.validateJavaTypeName(fClassText.getText().trim(),
+					PDEJavaHelper.getJavaSourceLevel(null), PDEJavaHelper.getJavaComplianceLevel(null), null);
 			if (status.getSeverity() == IStatus.ERROR) {
 				errorMessage = status.getMessage();
 			} else if (status.getSeverity() == IStatus.WARNING) {

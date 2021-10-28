@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Red Hat Inc. and others.
+ * Copyright (c) 2019, 2021 Red Hat Inc. and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,18 +13,18 @@
  *******************************************************************************/
 package org.eclipse.pde.api.tools.internal;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.ICommand;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -35,6 +35,7 @@ import org.eclipse.core.resources.ProjectScope;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.ICoreRunnable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -102,8 +103,11 @@ public class ApiAnalysisApplication implements IApplication {
 		public File tpFile;
 	}
 
+	private ICoreRunnable restoreOriginalProjectState = null;
+
 	@Override
 	public Object start(IApplicationContext context) throws Exception {
+		restoreOriginalProjectState = null;
 		try {
 			IWorkspaceDescription desc = ResourcesPlugin.getWorkspace().getDescription();
 			desc.setAutoBuilding(false);
@@ -171,9 +175,16 @@ public class ApiAnalysisApplication implements IApplication {
 				return IStatus.ERROR;
 			}
 			return IStatus.OK;
+		} catch (CoreException e) {
+			System.err.println(e.getStatus());
+			return IStatus.ERROR;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return IStatus.ERROR;
+		} finally {
+			if (restoreOriginalProjectState != null) {
+				restoreOriginalProjectState.run(new NullProgressMonitor());
+			}
 		}
 	}
 
@@ -183,25 +194,10 @@ public class ApiAnalysisApplication implements IApplication {
 				throw new IllegalArgumentException(
 						"dependencyList argument points to non readable file: " + dependencyList.getAbsolutePath());//$NON-NLS-1$
 			}
-			// File is typically the output of `mvn dependnecy:list
-			// -DoutputAbsoluteArtifactFilename=true -DoutputScope=false -DoutputFile=...`
-			// like
-			// ```
-			// The following files have been resolved:
-			// p2.eclipse-plugin:org.eclipse.equinoxz.event:jar:1.5.0.v20181008-1938:/home/mistria/.m2/repository/p2/osgi/bundle/org.eclipse.equinox.event/1.5.0.v20181008-1938/org.eclipse.equinox.event-1.5.0.v20181008-1938.jar
-			// p2.eclipse-plugin:org.eclipse.equinox.p2.core:jar:2.6.0.v20190215-2242:/home/mistria/.m2/repository/p2/osgi/bundle/org.eclipse.equinox.p2.core/2.6.0.v20190215-2242/org.eclipse.equinox.p2.core-2.6.0.v20190215-2242.jar
-			// p2.eclipse-plugin:org.eclipse.osgi.compatibility.state:jar:1.1.400.v20190208-1533:/home/mistria/.m2/repository/p2/osgi/bundle/org.eclipse.osgi.compatibility.state/1.1.400.v20190208-1533/org.eclipse.osgi.compatibility.state-1.1.400.v20190208-1533.jar
-			// ```
 			ITargetPlatformService service = TargetPlatformService.getDefault();
 			ITargetDefinition target = service.newTarget();
 			target.setName("buildpath"); //$NON-NLS-1$
-			TargetBundle[] bundles = Files.readAllLines(dependencyList.toPath()).stream()//
-					.filter(line -> line.contains("jar")) //$NON-NLS-1$
-					.flatMap(line -> Arrays.stream(line.split(":"))) //$NON-NLS-1$
-					.filter(maybePath -> !maybePath.trim().isEmpty())
-					.map(File::new)//
-					.filter(File::isAbsolute)//
-					.filter(File::isFile)//
+			TargetBundle[] bundles = new BundleJarFiles(dependencyList).list().stream()//
 					.map(absoluteFile -> {
 						try {
 							return new TargetBundle(absoluteFile);
@@ -245,7 +241,9 @@ public class ApiAnalysisApplication implements IApplication {
 			ApiBaselineManager.getManager().addApiBaseline(baseline);
 			ApiBaselineManager.getManager().setDefaultApiBaseline(baseline.getName());
 			return baseline;
-		} else if (baselinePath.isFile() && baselinePath.getName().endsWith(".target")) { //$NON-NLS-1$
+		}
+		String baselineFileName = baselinePath.getName();
+		if (baselinePath.isFile() && baselineFileName.endsWith(".target")) { //$NON-NLS-1$
 			ITargetPlatformService service = TargetPlatformService.getDefault();
 			ITargetDefinition definition = service.getTarget(baselinePath.toURI()).getTargetDefinition();
 			IStatus resolutionStatus = definition.resolve(new NullProgressMonitor());
@@ -258,7 +256,9 @@ public class ApiAnalysisApplication implements IApplication {
 					throw new CoreException(resolutionStatus);
 				default: // Nothing
 				}
-			ApiBaseline baseline = new ApiBaseline(baselinePath.getAbsolutePath());
+			// remove ".target"
+			String baselineName = baselineFileName.substring(0, baselineFileName.lastIndexOf('.'));
+			ApiBaseline baseline = new ApiBaseline(baselineName);
 			for (TargetBundle bundle : definition.getAllBundles()) {
 				BundleInfo bundleInfo = bundle.getBundleInfo();
 				if (bundleInfo.getBundleId() != 0) {
@@ -277,7 +277,7 @@ public class ApiAnalysisApplication implements IApplication {
 		return ApiBaselineManager.getManager().getDefaultApiBaseline();
 	}
 
-	private IProject importProject(File projectPath) throws CoreException {
+	private IProject importProject(File projectPath) throws CoreException, IOException {
 		File dotProject = new File(projectPath, IProjectDescription.DESCRIPTION_FILE_NAME);
 		if (!dotProject.isFile()) {
 			System.err.println("Expected `" + dotProject.getAbsolutePath() + "` file doesn't exist."); //$NON-NLS-1$ //$NON-NLS-2$
@@ -286,46 +286,67 @@ public class ApiAnalysisApplication implements IApplication {
 		IProjectDescription projectDescription = ResourcesPlugin.getWorkspace()
 				.loadProjectDescription(Path.fromOSString(dotProject.getAbsolutePath()));
 		projectDescription.setLocation(Path.fromOSString(projectPath.getAbsolutePath()));
-		IProject res = ResourcesPlugin.getWorkspace().getRoot().getProject(projectDescription.getName());
-		if (res.exists()) {
-			if (!res.getDescription().getLocationURI().equals(projectDescription.getLocationURI())) {
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectDescription.getName());
+
+		ICoreRunnable projectRemover;
+		if (project.exists()) {
+			projectRemover = !project.isOpen() ? project::close : m -> {
+				/* do nothing */ };
+			project.open(new NullProgressMonitor());
+			project.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+
+			if (!project.getDescription().getLocationURI().equals(projectDescription.getLocationURI())) {
 				System.err.println("Project with same name and different location exists in workspace."); //$NON-NLS-1$
 				return null;
 			}
-			res.open(new NullProgressMonitor());
-			res.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
 		} else {
-			res.create(projectDescription, new NullProgressMonitor());
-			res.open(new NullProgressMonitor());
+			projectRemover = m -> project.delete(IResource.NEVER_DELETE_PROJECT_CONTENT | IResource.FORCE, m);
+			project.create(projectDescription, new NullProgressMonitor());
+			project.open(new NullProgressMonitor());
 		}
 
-		projectDescription = res.getDescription();
-		if (Arrays.stream(res.getDescription().getBuildSpec()).map(ICommand::getBuilderName)
-				.noneMatch(ApiPlugin.BUILDER_ID::equals)) {
-			ICommand[] builders = new ICommand[projectDescription.getBuildSpec().length + 1];
-			System.arraycopy(projectDescription.getBuildSpec(), 0, builders, 0,
-					projectDescription.getBuildSpec().length);
-			ICommand buildCommand = projectDescription.newCommand();
-			buildCommand.setBuilderName(ApiPlugin.BUILDER_ID);
-			builders[builders.length - 1] = buildCommand;
-			projectDescription.setBuildSpec(builders);
-			res.setDescription(projectDescription, 0, new NullProgressMonitor());
-		}
+		projectDescription = project.getDescription();
 		ICommand[] buildSpec = projectDescription.getBuildSpec();
-		List<ICommand> newBuilders = removeManifestAndSchemaBuilders(buildSpec);
-		projectDescription.setBuildSpec(
-				newBuilders.toArray(new ICommand[newBuilders.size()]));
-		res.setDescription(projectDescription, new NullProgressMonitor());
-		return res;
+
+		if (Arrays.stream(buildSpec).map(ICommand::getBuilderName).noneMatch(ApiPlugin.BUILDER_ID::equals)) {
+
+			ICommand apiAnalysisBuilderCommand = projectDescription.newCommand();
+			apiAnalysisBuilderCommand.setBuilderName(ApiPlugin.BUILDER_ID);
+
+			ICommand[] builders = new ICommand[buildSpec.length + 1];
+			System.arraycopy(buildSpec, 0, builders, 0, buildSpec.length);
+			builders[builders.length - 1] = apiAnalysisBuilderCommand;
+			buildSpec = builders;
+		}
+
+		ICommand[] newBuilders = removeManifestAndSchemaBuilders(buildSpec);
+
+		if (!Arrays.equals(newBuilders, projectDescription.getBuildSpec())) {
+
+			IFile projectFile = project.getFile(IProjectDescription.DESCRIPTION_FILE_NAME);
+			byte[] originalContent; // save the raw byte-content to avoid encoding and formatting issues
+			try (InputStream contentStream = projectFile.getContents()) {
+				originalContent = contentStream.readAllBytes();
+			}
+
+			projectDescription.setBuildSpec(newBuilders);
+			project.setDescription(projectDescription, IResource.NONE, new NullProgressMonitor());
+
+			restoreOriginalProjectState = m -> {
+				projectFile.setContents(new ByteArrayInputStream(originalContent), IResource.FORCE, m);
+				projectRemover.run(m);
+			};
+		} else {
+			restoreOriginalProjectState = projectRemover;
+		}
+		return project;
 	}
 
-	private static List<ICommand> removeManifestAndSchemaBuilders(ICommand[] buildSpec) {
+	private static ICommand[] removeManifestAndSchemaBuilders(ICommand[] buildSpec) {
 		// remove manifest and schema builders
-		return Arrays.stream(buildSpec)
-				.filter(x -> !("org.eclipse.pde.ManifestBuilder".equals(x.getBuilderName()) //$NON-NLS-1$
+		return Arrays.stream(buildSpec).filter(x -> !("org.eclipse.pde.ManifestBuilder".equals(x.getBuilderName()) //$NON-NLS-1$
 				|| "org.eclipse.pde.SchemaBuilder".equals(x.getBuilderName())) //$NON-NLS-1$
-
-				).collect(Collectors.toList());
+		).toArray(ICommand[]::new);
 	}
 
 	@Override

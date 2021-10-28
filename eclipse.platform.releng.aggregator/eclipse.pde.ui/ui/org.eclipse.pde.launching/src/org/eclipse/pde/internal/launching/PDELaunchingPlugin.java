@@ -72,10 +72,6 @@ public class PDELaunchingPlugin extends Plugin implements IPDEConstants {
 		ResourcesPlugin.getPlugin().getLog().log(status);
 	}
 
-	public static void logErrorMessage(String message) {
-		log(new Status(IStatus.ERROR, getPluginId(), IStatus.ERROR, message, null));
-	}
-
 	public static void log(Throwable e) {
 		if (e instanceof InvocationTargetException)
 			e = ((InvocationTargetException) e).getTargetException();
@@ -154,7 +150,7 @@ public class PDELaunchingPlugin extends Plugin implements IPDEConstants {
 	 *
 	 * @since 3.4
 	 */
-	private class DebugPluginUtil {
+	private static class DebugPluginUtil {
 		private ILaunchConfigurationListener fLaunchConfigurationListener;
 
 		public void addListener() {
