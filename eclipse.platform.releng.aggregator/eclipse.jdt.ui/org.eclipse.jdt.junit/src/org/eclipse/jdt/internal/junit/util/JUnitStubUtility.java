@@ -45,12 +45,11 @@ import org.eclipse.jdt.core.formatter.CodeFormatter;
 import org.eclipse.jdt.core.formatter.IndentManipulation;
 import org.eclipse.jdt.core.manipulation.CodeGeneration;
 
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
 import org.eclipse.jdt.ui.wizards.NewTypeWizardPage.ImportsManager;
-
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 
 /**
  * Utility methods for code generation.
@@ -73,8 +72,8 @@ public class JUnitStubUtility {
 		public final int tabWidth;
 
 		public GenStubSettings(IJavaProject project) {
-			this.createComments= Boolean.valueOf(PreferenceConstants.getPreference(PreferenceConstants.CODEGEN_ADD_COMMENTS, project)).booleanValue();
-			this.useKeywordThis= Boolean.valueOf(PreferenceConstants.getPreference(PreferenceConstants.CODEGEN_KEYWORD_THIS, project)).booleanValue();
+			this.createComments= Boolean.parseBoolean(PreferenceConstants.getPreference(PreferenceConstants.CODEGEN_ADD_COMMENTS, project));
+			this.useKeywordThis= Boolean.parseBoolean(PreferenceConstants.getPreference(PreferenceConstants.CODEGEN_KEYWORD_THIS, project));
 			this.tabWidth= IndentManipulation.getTabWidth(project.getOptions(true));
 		}
 	}
@@ -205,11 +204,11 @@ public class JUnitStubUtility {
 		} else {
 			buf.append(" {\n\t"); //$NON-NLS-1$
 			if (!settings.callSuper) {
-				if (retTypeSig != null && !retTypeSig.equals(Signature.SIG_VOID)) {
+				if (retTypeSig != null && !Signature.SIG_VOID.equals(retTypeSig)) {
 					buf.append('\t');
 					if (!isBuiltInType(retTypeSig) || Signature.getArrayCount(retTypeSig) > 0) {
 						buf.append("return null;\n\t"); //$NON-NLS-1$
-					} else if (retTypeSig.equals(Signature.SIG_BOOLEAN)) {
+					} else if (Signature.SIG_BOOLEAN.equals(retTypeSig)) {
 						buf.append("return false;\n\t"); //$NON-NLS-1$
 					} else {
 						buf.append("return 0;\n\t"); //$NON-NLS-1$

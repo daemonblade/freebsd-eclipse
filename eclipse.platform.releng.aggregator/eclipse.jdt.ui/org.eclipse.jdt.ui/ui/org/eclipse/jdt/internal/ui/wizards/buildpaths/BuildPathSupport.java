@@ -387,6 +387,11 @@ public class BuildPathSupport {
 					options.put(option, inlineJSR);
 				}
 
+				// enable '--release' option for Java 7 or higher
+				String compliance= eeOptions.get(JavaCore.COMPILER_COMPLIANCE);
+				boolean release= compliance != null && JavaCore.compareJavaVersions(compliance, JavaCore.VERSION_1_7) >= 0;
+				options.put(JavaCore.COMPILER_RELEASE, release ? JavaCore.ENABLED : JavaCore.DISABLED);
+
 				javaProject.setOptions(options);
 			}
 		}
@@ -417,13 +422,13 @@ public class BuildPathSupport {
 		if (eeOptions == null)
 			return null;
 
-		Object complianceOption= eeOptions.get(JavaCore.COMPILER_COMPLIANCE);
-		if (!(complianceOption instanceof String))
+		String complianceOption= eeOptions.get(JavaCore.COMPILER_COMPLIANCE);
+		if (complianceOption == null)
 			return null;
 
 		// eeOptions can miss some options, make sure they are complete:
 		HashMap<String, String> options= new HashMap<>();
-		JavaModelUtil.setComplianceOptions(options, (String)complianceOption);
+		JavaModelUtil.setComplianceOptions(options, complianceOption);
 		options.putAll(eeOptions);
 		return options;
 	}

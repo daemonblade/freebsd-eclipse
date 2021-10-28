@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 Fabrice TIERCELIN and others.
+ * Copyright (c) 2020, 2021 Fabrice TIERCELIN and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -26,17 +26,25 @@ import org.eclipse.text.edits.TextEditGroup;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.ArrayInitializer;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.MethodReference;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.ParameterizedType;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
+import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
+import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
@@ -88,18 +96,17 @@ public class VarCleanUp extends AbstractMultiFix {
 
 	@Override
 	public String getPreview() {
-		StringBuilder bld= new StringBuilder();
 		if (isEnabled(CleanUpConstants.USE_VAR)) {
-			bld.append("var number = 0;\n"); //$NON-NLS-1$
-			bld.append("var list = new ArrayList<String>();\n"); //$NON-NLS-1$
-			bld.append("var map = new HashMap<Integer, String>();\n"); //$NON-NLS-1$
-		} else {
-			bld.append("int number = 0;\n"); //$NON-NLS-1$
-			bld.append("ArrayList<String> list = new ArrayList<String>();\n"); //$NON-NLS-1$
-			bld.append("HashMap<Integer, String> map = new HashMap<>();\n"); //$NON-NLS-1$
+			return "" //$NON-NLS-1$
+					+ "var number = 0;\n" //$NON-NLS-1$
+					+ "var list = new ArrayList<String>();\n" //$NON-NLS-1$
+					+ "var map = new HashMap<Integer, String>();\n"; //$NON-NLS-1$
 		}
 
-		return bld.toString();
+		return "" //$NON-NLS-1$
+				+ "int number = 0;\n" //$NON-NLS-1$
+				+ "ArrayList<String> list = new ArrayList<String>();\n" //$NON-NLS-1$
+				+ "HashMap<Integer, String> map = new HashMap<>();\n"; //$NON-NLS-1$
 	}
 
 	@Override
@@ -139,8 +146,82 @@ public class VarCleanUp extends AbstractMultiFix {
 			}
 
 			private boolean maybeUseVar(final Type type, final Expression initializer, final int extraDimensions) {
-				if (type.isVar() || initializer == null || initializer.resolveTypeBinding() == null || type.resolveBinding() == null
-						|| extraDimensions > 0) {
+				if (type.isVar()
+						|| initializer == null
+						|| initializer.resolveTypeBinding() == null
+						|| type.resolveBinding() == null
+						|| extraDimensions > 0
+						|| initializer instanceof ArrayInitializer) {
+					if (JavaModelUtil.is11OrHigher(unit.getJavaElement().getJavaProject())
+							&& !type.isVar()
+							&& initializer == null
+							&& type.resolveBinding() != null
+							&& extraDimensions == 0
+							&& type.getParent() instanceof SingleVariableDeclaration
+							&& type.getParent().getParent() instanceof LambdaExpression
+							&& type.getParent().getLocationInParent() == LambdaExpression.PARAMETERS_PROPERTY) {
+						LambdaExpression lambda= (LambdaExpression) type.getParent().getParent();
+						ASTNode lambdaParent= lambda.getParent();
+
+						if (lambdaParent instanceof MethodInvocation) {
+							MethodInvocation methodInvocation= (MethodInvocation) lambdaParent;
+							List<Expression> args= methodInvocation.arguments();
+							IMethodBinding methodBinding= methodInvocation.resolveMethodBinding();
+							if (checkForWildCard(lambda, args, methodBinding)) {
+								return true;
+							}
+						} else if (lambdaParent instanceof ClassInstanceCreation) {
+							ClassInstanceCreation classInstance= (ClassInstanceCreation) lambdaParent;
+							List<Expression> args= classInstance.arguments();
+							IMethodBinding methodBinding= classInstance.resolveConstructorBinding();
+							if (checkForWildCard(lambda, args, methodBinding)) {
+								return true;
+							}
+						} else if (lambdaParent instanceof SuperMethodInvocation) {
+							SuperMethodInvocation superMethodInvocation= (SuperMethodInvocation) lambdaParent;
+							List<Expression> args= superMethodInvocation.arguments();
+							IMethodBinding methodBinding= superMethodInvocation.resolveMethodBinding();
+							if (checkForWildCard(lambda, args, methodBinding)) {
+								return true;
+							}
+						} else if (lambdaParent instanceof SuperConstructorInvocation) {
+							SuperConstructorInvocation superConstructorInvocation= (SuperConstructorInvocation) lambdaParent;
+							List<Expression> args= superConstructorInvocation.arguments();
+							IMethodBinding methodBinding= superConstructorInvocation.resolveConstructorBinding();
+							if (checkForWildCard(lambda, args, methodBinding)) {
+								return true;
+							}
+						} else if (lambdaParent instanceof VariableDeclarationFragment) {
+							VariableDeclarationStatement statement= (VariableDeclarationStatement) ASTNodes.getFirstAncestorOrNull(lambdaParent, VariableDeclarationStatement.class);
+							FieldDeclaration fieldDeclaration= (FieldDeclaration) ASTNodes.getFirstAncestorOrNull(lambdaParent, FieldDeclaration.class);
+							Type statementType= null;
+
+							if (statement != null) {
+								statementType= statement.getType();
+							} else if (fieldDeclaration != null) {
+								statementType= fieldDeclaration.getType();
+							}
+
+							if (statementType == null) {
+								return true;
+							}
+
+							if (statementType.isParameterizedType()) {
+								ParameterizedType parameterizedType= (ParameterizedType) statementType;
+								List<Type> typeArgs= parameterizedType.typeArguments();
+
+								for (Type typeArg : typeArgs) {
+									if (typeArg.isWildcardType()) {
+										return true;
+									}
+								}
+							}
+						}
+
+						rewriteOperations.add(new VarOperation(type));
+						return false;
+					}
+
 					return true;
 				}
 
@@ -153,10 +234,12 @@ public class VarCleanUp extends AbstractMultiFix {
 						ClassInstanceCreation classInstanceCreation= ASTNodes.as(initializer, ClassInstanceCreation.class);
 						CastExpression castExpression= ASTNodes.as(initializer, CastExpression.class);
 						MethodInvocation methodInvocation= ASTNodes.as(initializer, MethodInvocation.class);
+						SuperMethodInvocation superMethodInvocation= ASTNodes.as(initializer, SuperMethodInvocation.class);
 						LambdaExpression lambdaExpression= ASTNodes.as(initializer, LambdaExpression.class);
 						Expression expression= ASTNodes.as(initializer, Expression.class);
+						MethodReference methodReference= ASTNodes.as(initializer, MethodReference.class);
 
-						if (!variableType.isParameterizedType()
+						if (!variableType.isParameterizedType() && lambdaExpression == null
 								|| (classInstanceCreation != null
 										&& classInstanceCreation.getType().isParameterizedType()
 										&& classInstanceCreation.getType().resolveBinding() != null
@@ -170,11 +253,19 @@ public class VarCleanUp extends AbstractMultiFix {
 								|| (methodInvocation != null
 										&& methodInvocation.resolveMethodBinding() != null
 										&& methodInvocation.resolveMethodBinding().getReturnType().isParameterizedType()
+										&& !methodInvocation.resolveMethodBinding().isParameterizedMethod()
 										&& Arrays.equals(variableType.getTypeArguments(), methodInvocation.resolveMethodBinding().getReturnType().getTypeArguments()))
+								|| (superMethodInvocation != null
+										&& superMethodInvocation.resolveMethodBinding() != null
+										&& superMethodInvocation.resolveMethodBinding().getReturnType().isParameterizedType()
+										&& !superMethodInvocation.resolveMethodBinding().isParameterizedMethod()
+										&& Arrays.equals(variableType.getTypeArguments(), superMethodInvocation.resolveMethodBinding().getReturnType().getTypeArguments()))
 								|| (classInstanceCreation == null
 										&& castExpression == null
 										&& methodInvocation == null
+										&& superMethodInvocation == null
 										&& lambdaExpression == null
+										&& methodReference == null
 										&& expression != null
 										&& expression.resolveTypeBinding() != null
 										&& expression.resolveTypeBinding().isParameterizedType()
@@ -182,6 +273,7 @@ public class VarCleanUp extends AbstractMultiFix {
 							rewriteOperations.add(new VarOperation(type));
 							return false;
 						} else if (variableType.isParameterizedType()
+								&& methodReference == null
 								&& classInstanceCreation != null
 								&& classInstanceCreation.getType().isParameterizedType()
 								&& ((ParameterizedType) classInstanceCreation.getType()).typeArguments().isEmpty()) {
@@ -193,17 +285,17 @@ public class VarCleanUp extends AbstractMultiFix {
 
 				        if (literal != null && (literal.getToken().matches(".*[^lLdDfF]") || literal.getToken().matches("0x.*[^lL]"))) { //$NON-NLS-1$ //$NON-NLS-2$
 				            if (ASTNodes.hasType(variableType, long.class.getSimpleName())) {
-				            	rewriteOperations.add(new VarOperation(type, literal, Character.valueOf('L')));
+				            	rewriteOperations.add(new VarOperation(type, literal, 'L'));
 				                return false;
 				            }
 
 				            if (ASTNodes.hasType(variableType, float.class.getSimpleName())) {
-				            	rewriteOperations.add(new VarOperation(type, literal, Character.valueOf('F')));
+				            	rewriteOperations.add(new VarOperation(type, literal, 'F'));
 				                return false;
 				            }
 
 				            if (ASTNodes.hasType(variableType, double.class.getSimpleName())) {
-				            	rewriteOperations.add(new VarOperation(type, literal, Character.valueOf('D')));
+				            	rewriteOperations.add(new VarOperation(type, literal, 'D'));
 				                return false;
 				            }
 				        }
@@ -219,7 +311,36 @@ public class VarCleanUp extends AbstractMultiFix {
 		}
 
 		return new CompilationUnitRewriteOperationsFix(MultiFixMessages.VarCleanUp_description, unit,
-				rewriteOperations.toArray(new CompilationUnitRewriteOperation[rewriteOperations.size()]));
+				rewriteOperations.toArray(new CompilationUnitRewriteOperation[0]));
+	}
+
+	private boolean checkForWildCard(LambdaExpression lambda, List<Expression> args, IMethodBinding methodBinding) {
+		int index= -1;
+
+		for (int i= 0; i < args.size(); ++i) {
+			if (args.get(i) == lambda) {
+				index= i;
+				break;
+			}
+		}
+
+		if (index < 0) {
+			return true;
+		}
+
+		if (methodBinding == null) {
+			return true;
+		}
+
+		ITypeBinding lambdaParamType= methodBinding.getParameterTypes()[index];
+		ITypeBinding[] typeArgs= lambdaParamType.getTypeArguments();
+
+		for (ITypeBinding typeArg : typeArgs) {
+			if (typeArg.isWildcardType()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -264,12 +385,16 @@ public class VarCleanUp extends AbstractMultiFix {
 			TextEditGroup group= createTextEditGroup(MultiFixMessages.VarCleanUp_description, cuRewrite);
 
 			if (classInstanceCreation != null) {
-				rewrite.replace(classInstanceCreation.getType(), rewrite.createCopyTarget(node), group);
+				Type node1= classInstanceCreation.getType();
+				ASTNode replacement= rewrite.createCopyTarget(node);
+				ASTNodes.replaceButKeepComment(rewrite, node1, replacement, group);
 			} else if (literal != null) {
-				rewrite.replace(literal, ast.newNumberLiteral(literal.getToken() + postfix), group);
+				NumberLiteral replacement= ast.newNumberLiteral(literal.getToken() + postfix);
+				ASTNodes.replaceButKeepComment(rewrite, literal, replacement, group);
 			}
 
-			rewrite.replace(node, ast.newSimpleType(ast.newSimpleName("var")), group); //$NON-NLS-1$
+			SimpleType replacement= ast.newSimpleType(ast.newSimpleName("var")); //$NON-NLS-1$
+			ASTNodes.replaceButKeepComment(rewrite, node, replacement, group);
 		}
 	}
 }

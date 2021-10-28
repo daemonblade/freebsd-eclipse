@@ -105,7 +105,7 @@ import org.eclipse.jdt.internal.ui.wizards.dialogfields.StringButtonDialogField;
 
 public class BuildPathsBlock {
 
-	public static interface IRemoveOldBinariesQuery {
+	public interface IRemoveOldBinariesQuery {
 
 		/**
 		 * Do the callback. Returns <code>true</code> if .class files should be removed from the
@@ -319,10 +319,9 @@ public class BuildPathsBlock {
 	 */
 	public void init(IJavaProject jproject, IPath outputLocation, IClasspathEntry[] classpathEntries) {
 		fCurrJProject= jproject;
-		boolean projectExists= false;
 		List<CPListElement> newClassPath= null;
 		IProject project= fCurrJProject.getProject();
-		projectExists= (project.exists() && project.getFile(".classpath").exists()); //$NON-NLS-1$
+		boolean projectExists= (project.exists() && project.getFile(".classpath").exists()); //$NON-NLS-1$
 		IClasspathEntry[] existingEntries= null;
 		if  (projectExists) {
 			if (outputLocation == null) {
@@ -679,7 +678,7 @@ public class BuildPathsBlock {
 		String pathStr= fBuildPathDialogField.getText();
 		Path outputPath= (new Path(pathStr));
 		pathStr= outputPath.lastSegment();
-		if (pathStr.equals(".settings") && outputPath.segmentCount() == 2) { //$NON-NLS-1$
+		if (".settings".equals(pathStr) && outputPath.segmentCount() == 2) { //$NON-NLS-1$
 			fOutputFolderStatus.setWarning(NewWizardMessages.OutputLocation_SettingsAsLocation);
 		}
 
@@ -809,12 +808,9 @@ public class BuildPathsBlock {
 			} else if (!outputLocation.equals(oldOutputLocation)) {
 				IFolder folder= ResourcesPlugin.getWorkspace().getRoot().getFolder(oldOutputLocation);
 				if (folder.exists()) {
-					if (folder.members().length == 0) {
+					if (folder.members().length == 0
+							|| BuildPathsBlock.getRemoveOldBinariesQuery(JavaPlugin.getActiveWorkbenchShell()).doQuery(folder.isDerived(), oldOutputLocation)) {
 						BuildPathsBlock.removeOldClassfiles(folder);
-					} else {
-						if (BuildPathsBlock.getRemoveOldBinariesQuery(JavaPlugin.getActiveWorkbenchShell()).doQuery(folder.isDerived(), oldOutputLocation)) {
-							BuildPathsBlock.removeOldClassfiles(folder);
-						}
 					}
 				}
 			}
@@ -1143,8 +1139,4 @@ public class BuildPathsBlock {
 	public void setFocus() {
 		fSourceContainerPage.setFocus();
     }
-
-	public BuildPathBasePage getSourceContainerPage() {
-		return fSourceContainerPage;
-	}
 }

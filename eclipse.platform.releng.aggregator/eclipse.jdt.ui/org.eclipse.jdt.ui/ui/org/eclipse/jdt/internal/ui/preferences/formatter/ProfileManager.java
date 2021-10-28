@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Observable;
 
 import org.osgi.service.prefs.BackingStoreException;
@@ -88,11 +89,7 @@ public abstract class ProfileManager extends Observable {
 			for (String key : allKeys) {
 				Object other= otherMap.get(key);
 				Object curr= settings.get(key);
-				if (other == null) {
-					if (curr != null) {
-						return false;
-					}
-				} else if (!other.equals(curr)) {
+				if (!Objects.equals(other, curr)) {
 					return false;
 				}
 			}
@@ -115,6 +112,8 @@ public abstract class ProfileManager extends Observable {
 	/**
 	 * Represents a built-in profile. The state of a built-in profile
 	 * cannot be changed after instantiation.
+	 *
+	 * Note: this class has a natural ordering that is inconsistent with equals.
 	 */
 	public static final class BuiltInProfile extends Profile {
 		private final String fName;
@@ -161,7 +160,7 @@ public abstract class ProfileManager extends Observable {
 		}
 
 		@Override
-		public final int compareTo(Profile o) {
+		public int compareTo(Profile o) {
 			if (o instanceof BuiltInProfile) {
 				return fOrder - ((BuiltInProfile)o).fOrder;
 			}
@@ -187,6 +186,8 @@ public abstract class ProfileManager extends Observable {
 
 	/**
 	 * Represents a user-defined profile. A custom profile can be modified after instantiation.
+	 *
+	 * Note: this class has a natural ordering that is inconsistent with equals.
 	 */
 	public static class CustomProfile extends Profile {
 		private String fName;
@@ -299,7 +300,7 @@ public abstract class ProfileManager extends Observable {
 		}
 
 		@Override
-		public final int compareTo(Profile o) {
+		public int compareTo(Profile o) {
 			return 1;
 		}
 
@@ -587,9 +588,8 @@ public abstract class ProfileManager extends Observable {
 			uiPrefs.putInt(fProfileVersionKey, fProfileVersioner.getCurrentVersion());
 		}
 
-		if (context.getName() == InstanceScope.SCOPE) {
-			uiPrefs.put(fProfileKey, profile.getID());
-		} else if (context.getName() == ProjectScope.SCOPE && !profile.isSharedProfile()) {
+		if (context.getName() == InstanceScope.SCOPE
+				|| (context.getName() == ProjectScope.SCOPE && !profile.isSharedProfile())) {
 			uiPrefs.put(fProfileKey, profile.getID());
 		}
 	}

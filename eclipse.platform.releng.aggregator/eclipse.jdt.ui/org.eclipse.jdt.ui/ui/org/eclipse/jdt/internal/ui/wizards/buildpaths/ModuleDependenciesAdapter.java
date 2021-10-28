@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 GK Software SE, and others.
+ * Copyright (c) 2019, 2020 GK Software SE, and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -253,8 +253,8 @@ class ModuleDependenciesAdapter implements IDialogFieldListener, ITreeListAdapte
 									filteredDetails.add(new PatchModule(JavaCore.create(project), this));
 								} else {
 									IFolder folder= ResourcesPlugin.getWorkspace().getRoot().getFolder(iPath);
-									IJavaElement elem= JavaCore.create(folder.getProject()).getPackageFragmentRoot(folder);
-									if (elem instanceof IPackageFragmentRoot) {
+									IPackageFragmentRoot elem= JavaCore.create(folder.getProject()).getPackageFragmentRoot(folder);
+									if (elem != null) {
 										filteredDetails.add(new PatchModule(elem, this));
 									}
 								}
@@ -314,7 +314,17 @@ class ModuleDependenciesAdapter implements IDialogFieldListener, ITreeListAdapte
 
 			Set<String> possibleTargetModules= new HashSet<>(fDependenciesPage.getAllModules());
 			possibleTargetModules.remove(fFocusModule.getElementName());
-			ModuleAddExportsDialog dialog= new ModuleAddExportsDialog(shell, new IJavaElement[] { jContainer }, possibleTargetModules, initial);
+			Object moduleAttributes= fElem.getAttribute(CPListElement.MODULE);
+			Set<String> alreadyExportedPackages= new HashSet<>();
+			if (moduleAttributes instanceof ModuleEncapsulationDetail[]) {
+				ModuleEncapsulationDetail encapDetails[]= (ModuleEncapsulationDetail[]) moduleAttributes;
+				for (ModuleEncapsulationDetail moduleEncapsulationDetail : encapDetails) {
+					if (moduleEncapsulationDetail instanceof ModuleAddExport) {
+						alreadyExportedPackages.add(((ModuleAddExport) moduleEncapsulationDetail).fPackage);
+					}
+				}
+			}
+			ModuleAddExportsDialog dialog= new ModuleAddExportsDialog(shell, new IJavaElement[] { jContainer }, possibleTargetModules, initial, alreadyExportedPackages);
 			if (dialog.open() == Window.OK) {
 				try {
 					moduleAttribute = ensureModuleAttribute(moduleAttribute);
@@ -448,6 +458,17 @@ class ModuleDependenciesAdapter implements IDialogFieldListener, ITreeListAdapte
 			irrelevantModules.add(fFocusModule.getElementName());
 
 			IClasspathEntry jreEntry= fDependenciesPage.findSystemLibraryElement().getClasspathEntry();
+			//Get addread from fElem and add to irrelevantModules, dont want to re-add it
+			Object moduleAttributes= fElem.getAttribute(CPListElement.MODULE);
+			if (moduleAttributes instanceof ModuleEncapsulationDetail[]) {
+				ModuleEncapsulationDetail encapDetails[]= (ModuleEncapsulationDetail[]) moduleAttributes;
+				for (ModuleEncapsulationDetail moduleEncapsulationDetail : encapDetails) {
+					if (moduleEncapsulationDetail instanceof ModuleAddReads) {
+						String fTargetModule= ((ModuleAddReads) moduleEncapsulationDetail).fTargetModule;
+						irrelevantModules.add(fTargetModule);
+					}
+				}
+			}
 			ModuleSelectionDialog dialog= ModuleSelectionDialog.forReads(shell, fElem.getJavaProject(), jreEntry, irrelevantModules);
 			if (dialog.open() != 0) {
 				return false;

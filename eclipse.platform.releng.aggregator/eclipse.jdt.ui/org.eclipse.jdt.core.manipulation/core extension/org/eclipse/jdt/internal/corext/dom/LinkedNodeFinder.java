@@ -18,7 +18,6 @@ import java.util.List;
 
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.compiler.IProblem;
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.BreakStatement;
@@ -72,7 +71,8 @@ public class LinkedNodeFinder  {
 				if (bBinding.isParameter()) {
 					IMethodBinding mBinding= bBinding.getDeclaringMethod();
 					if (mBinding != null
-							&& mBinding.isCompactConstructor()) {
+							&& (mBinding.isCompactConstructor()
+									|| mBinding.isCanonicalConstructor())) {
 						ITypeBinding typeBinding= mBinding.getDeclaringClass();
 						if (typeBinding != null
 								&& typeBinding.isRecord()) {
@@ -268,7 +268,7 @@ public class LinkedNodeFinder  {
 
 
 	public static SimpleName[] findByProblems(ASTNode parent, SimpleName nameNode) {
-		if (nameNode.getAST().apiLevel() >= AST.JLS10 && nameNode.isVar()) {
+		if (nameNode.getAST().apiLevel() >= ASTHelper.JLS10 && nameNode.isVar()) {
 			return null;
 		}
 		ArrayList<SimpleName> res= new ArrayList<>();
@@ -298,7 +298,7 @@ public class LinkedNodeFinder  {
 				if ((nameNodeKind & currKind) != 0) {
 					ASTNode node= NodeFinder.perform(parent, probStart, (probEnd - probStart));
 					if (node instanceof SimpleName && name.equals(((SimpleName) node).getIdentifier())) {
-						if (node.getAST().apiLevel() < AST.JLS10 || !((SimpleName) node).isVar()) {
+						if (node.getAST().apiLevel() < ASTHelper.JLS10 || !((SimpleName) node).isVar()) {
 							res.add((SimpleName) node);
 						}
 					}
@@ -370,7 +370,7 @@ public class LinkedNodeFinder  {
 
 		@Override
 		public boolean visit(SimpleName node) {
-			if (node.getAST().apiLevel() >= AST.JLS10 && node.isVar()) {
+			if (node.getAST().apiLevel() >= ASTHelper.JLS10 && node.isVar()) {
 				return false;
 			}
 			IBinding binding= node.resolveBinding();

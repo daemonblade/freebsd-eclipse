@@ -28,7 +28,7 @@ import java.util.Hashtable;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -48,8 +48,8 @@ import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.refactoring.code.ConvertAnonymousToNestedRefactoring;
 
 import org.eclipse.jdt.ui.tests.refactoring.infra.TextRangeUtil;
-import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 import org.eclipse.jdt.ui.tests.refactoring.rules.Java1d5Setup;
+import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 
 public class ConvertAnonymousToNestedTests extends GenericRefactoringTest {
 	private static final String REFACTORING_PATH= "ConvertAnonymousToNested/";
@@ -61,20 +61,25 @@ public class ConvertAnonymousToNestedTests extends GenericRefactoringTest {
 		return REFACTORING_PATH;
 	}
 
-	@Rule
-	public RefactoringTestSetup js= new Java1d5Setup();
+	public ConvertAnonymousToNestedTests() {
+		this.rts= new Java1d5Setup();
+	}
+
+	protected ConvertAnonymousToNestedTests(RefactoringTestSetup rts) {
+		super(rts);
+	}
 
 	private String getSimpleTestFileName(boolean canInline, boolean input){
-		String fileName = "A_" + getName();
+		StringBuilder fileName = new StringBuilder("A_").append(getName());
 		if (canInline)
-			fileName += input ? "_in": "_out";
-		return fileName + ".java";
+			fileName.append(input ? "_in": "_out");
+		return fileName.append(".java").toString();
 	}
 
 	private String getTestFileName(boolean canConvert, boolean input){
-		String fileName= TEST_PATH_PREFIX + getRefactoringPath();
-		fileName += (canConvert ? "canConvert/": "cannotConvert/");
-		return fileName + getSimpleTestFileName(canConvert, input);
+		StringBuilder fileName= new StringBuilder(TEST_PATH_PREFIX).append(getRefactoringPath());
+		fileName.append(canConvert ? "canConvert/": "cannotConvert/");
+		return fileName.append(getSimpleTestFileName(canConvert, input)).toString();
 	}
 
 	protected ICompilationUnit createCUfromTestFile(IPackageFragment pack, boolean canConvert, boolean input) throws Exception {
@@ -184,10 +189,10 @@ public class ConvertAnonymousToNestedTests extends GenericRefactoringTest {
 
 	//--- TESTS
 
+	@Ignore("corner case - local types")
 	@Test
 	public void testFail0() throws Exception{
-		printTestDisabledMessage("corner case - local types");
-//		failHelper1(6, 14, 6, 16, true, "Inner", Modifier.PRIVATE, RefactoringStatus.FATAL);
+		failHelper1(6, 14, 6, 16, true, "Inner", Modifier.PRIVATE, RefactoringStatus.FATAL);
 	}
 
 	@Test

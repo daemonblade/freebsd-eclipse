@@ -138,7 +138,7 @@ class JavaEditorHoverConfigurationBlock implements IPreferenceConfigurationBlock
 	}
 
 
-	private class JavaEditorTextHoverDescriptorContentProvider implements IStructuredContentProvider {
+	private static class JavaEditorTextHoverDescriptorContentProvider implements IStructuredContentProvider {
 
 		@Override
 		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
@@ -477,7 +477,7 @@ class JavaEditorHoverConfigurationBlock implements IPreferenceConfigurationBlock
 				modifierString= modifierString.substring(1);
 			}
 
-			if (modifierString.equals(JavaEditorTextHoverDescriptor.NO_MODIFIER))
+			if (JavaEditorTextHoverDescriptor.NO_MODIFIER.equals(modifierString))
 				modifierString= ""; //$NON-NLS-1$
 
 			fHoverConfigs[i].fModifierString= modifierString;
@@ -544,7 +544,7 @@ class JavaEditorHoverConfigurationBlock implements IPreferenceConfigurationBlock
 		while (fStatus.isOK() && i < fHoverConfigs.length) {
 			if (fHoverConfigs[i].fIsEnabled) {
 				String label= getContributedHovers()[i].getLabel();
-				Integer stateMask= Integer.valueOf(fHoverConfigs[i].fStateMask);
+				Integer stateMask= fHoverConfigs[i].fStateMask;
 				if (fHoverConfigs[i].fStateMask == -1)
 					fStatus= new StatusInfo(IStatus.ERROR, Messages.format(PreferencesMessages.JavaEditorHoverConfigurationBlock_modifierIsNotValidForHover, new String[] {fHoverConfigs[i].fModifierString, label}));
 				else if (stateMasks.containsKey(stateMask))

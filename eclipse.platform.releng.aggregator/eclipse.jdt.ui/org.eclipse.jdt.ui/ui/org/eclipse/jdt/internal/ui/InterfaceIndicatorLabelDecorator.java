@@ -14,6 +14,7 @@
 package org.eclipse.jdt.internal.ui;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
@@ -71,11 +72,9 @@ public class InterfaceIndicatorLabelDecorator extends AbstractJavaElementLabelDe
 				return false;
 			if (fPackageDefault != other.fPackageDefault)
 				return false;
-			if (fType == null) {
-				if (other.fType != null)
-					return false;
-			} else if (!fType.equals(other.fType))
+			if (!Objects.equals(fType, other.fType)) {
 				return false;
+			}
 			return true;
 		}
 
@@ -116,12 +115,7 @@ public class InterfaceIndicatorLabelDecorator extends AbstractJavaElementLabelDe
 		 */
 		@Override
 		public int hashCode() {
-			final int prime= 31;
-			int result= 1;
-			result= prime * result + (fDeprecated ? 1231 : 1237);
-			result= prime * result + (fPackageDefault ? 1231 : 1237);
-			result= prime * result + ((fType == null) ? 0 : fType.hashCode());
-			return result;
+			return Objects.hash(fDeprecated, fPackageDefault, fType);
 		}
 	}
 

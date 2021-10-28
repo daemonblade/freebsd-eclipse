@@ -100,7 +100,7 @@ public class IntroduceParameterObjectWizard extends RefactoringWizard {
 		private static final String CREATE_SETTERS_SETTING= "CreateSetters"; //$NON-NLS-1$
 		private static final String CREATE_GETTERS_SETTING= "CreateGetters"; //$NON-NLS-1$
 
-		private final class ParameterObjectCreatorContentProvider implements IStructuredContentProvider {
+		private final static class ParameterObjectCreatorContentProvider implements IStructuredContentProvider {
 			@Override
 			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 			}
@@ -125,7 +125,7 @@ public class IntroduceParameterObjectWizard extends RefactoringWizard {
 			}
 		}
 
-		private abstract class ParameterInfoLabelProvider extends CellLabelProvider {
+		private abstract static class ParameterInfoLabelProvider extends CellLabelProvider {
 			@Override
 			public void update(ViewerCell cell) {
 				ParameterInfo pi= (ParameterInfo) cell.getElement();

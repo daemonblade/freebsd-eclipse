@@ -21,7 +21,6 @@ import java.util.Hashtable;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
@@ -49,11 +48,16 @@ import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesSettings;
 
 public class ExtractInterfaceTests extends GenericRefactoringTest {
 	private static final String REFACTORING_PATH= "ExtractInterface/";
-    private Hashtable<String, String> fOldOptions;
-    protected boolean fGenerateAnnotations= false;
+	private Hashtable<String, String> fOldOptions;
+	protected boolean fGenerateAnnotations= false;
 
-    @Rule
-	public RefactoringTestSetup rts= new RefactoringTestSetup();
+	public ExtractInterfaceTests() {
+		super(new RefactoringTestSetup());
+	}
+
+	protected ExtractInterfaceTests(RefactoringTestSetup rts) {
+		super(rts);
+	}
 
 	@Override
 	protected String getRefactoringPath() {
@@ -877,15 +881,14 @@ public class ExtractInterfaceTests extends GenericRefactoringTest {
 	public void test109() throws Exception{
 		// Generate @Override in 1.6 project
 		fGenerateAnnotations= true;
-		RefactoringTestSetup refactoringTestSetup= new RefactoringTestSetup();
 		try {
 			JavaProjectHelper.addRTJar16(getRoot().getJavaProject());
 
 			standardPassingTest();
 
-			refactoringTestSetup.after();
+			rts.after();
 		} finally {
-			refactoringTestSetup.before();
+			rts.before();
 		}
 	}
 

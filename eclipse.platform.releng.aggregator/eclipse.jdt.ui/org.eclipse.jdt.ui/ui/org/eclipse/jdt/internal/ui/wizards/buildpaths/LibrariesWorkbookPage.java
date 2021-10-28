@@ -34,7 +34,6 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
 
 import org.eclipse.core.runtime.IPath;
 
@@ -46,7 +45,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.PixelConverter;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -397,14 +395,6 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 		return composite;
 	}
 
-	private Shell getShell() {
-		if (fSWTControl != null) {
-			return fSWTControl.getShell();
-		}
-		return JavaPlugin.getActiveWorkbenchShell();
-	}
-
-
 	private class LibrariesAdapter extends CPListAdapter {
 
 		// -------- IListAdapter --------
@@ -649,7 +639,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 				String key= attrib.getKey();
 				if (attrib.isBuiltIn()) {
 					Object value= null;
-					if (key.equals(CPListElement.ACCESSRULES)) {
+					if (CPListElement.ACCESSRULES.equals(key)) {
 						value= new IAccessRule[0];
 					}
 					attrib.setValue(value);
@@ -716,7 +706,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 					if (attrib.getParent().isInContainer(JavaRuntime.JRE_CONTAINER) && CPListElement.ACCESSRULES.equals(attrib.getKey())) {
 						return false; // workaround for 166519 until we have full story
 					}
-					if (attrib.getKey().equals(CPListElement.ACCESSRULES)) {
+					if (CPListElement.ACCESSRULES.equals(attrib.getKey())) {
 						return ((IAccessRule[]) attrib.getValue()).length > 0;
 					}
 					if (attrib.getValue() == null) {
@@ -777,7 +767,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 				canEditEncoding= !attribute.isNonModifiable() && !attribute.isNotSupported();
 			}
 		}
-		if (key.equals(CPListElement.SOURCEATTACHMENT)) {
+		if (CPListElement.SOURCEATTACHMENT.equals(key)) {
 			IClasspathEntry result= BuildPathDialogAccess.configureSourceAttachment(getShell(), selElement.getClasspathEntry(), canEditEncoding);
 			if (result != null) {
 				selElement.setAttribute(CPListElement.SOURCEATTACHMENT, result.getSourceAttachmentPath());
@@ -789,7 +779,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 				fClassPathList.refresh(); // images
 				updateEnabledState();
 			}
-		} else if (key.equals(CPListElement.ACCESSRULES)) {
+		} else if (CPListElement.ACCESSRULES.equals(key)) {
 			AccessRulesDialog dialog= new AccessRulesDialog(getShell(), selElement, fCurrJProject, fPageContainer != null);
 			int res= dialog.open();
 			if (res == Window.OK || res == AccessRulesDialog.SWITCH_PAGE) {
@@ -805,7 +795,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 					dialog.performPageSwitch(fPageContainer);
 				}
 			}
-		} else if (key.equals(CPListElement.MODULE)) {
+		} else if (CPListElement.MODULE.equals(key)) {
 			boolean wasModular= selElement.getAttribute(CPListElement.MODULE) != null;
 			if (showModuleDialog(getShell(), elem)) {
 				String[] changedAttributes= { CPListElement.MODULE };
@@ -825,24 +815,14 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 			if (editCustomAttribute(getShell(), elem)) {
 				String[] changedAttributes= { key };
 				attributeUpdated(selElement, changedAttributes);
-				if(key.equals(CPListElement.TEST) || key.equals(CPListElement.WITHOUT_TEST_CODE)) {
+				if(CPListElement.TEST.equals(key) || CPListElement.WITHOUT_TEST_CODE.equals(key)) {
 					fLibrariesList.refresh(elem.getParent());
 				} else {
 					fLibrariesList.refresh(elem);
 				}
 				fClassPathList.dialogFieldChanged(); // validate
 				updateEnabledState();
-				if (key.equals(IClasspathAttribute.EXTERNAL_ANNOTATION_PATH)) {
-					if (fCurrJProject.getOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, true).equals(JavaCore.DISABLED)) {
-						MessageDialog messageDialog= new MessageDialog(getShell(),
-								NewWizardMessages.LibrariesWorkbookPage_externalAnnotationNeedsNullAnnotationEnabled_title,
-								null,
-								NewWizardMessages.LibrariesWorkbookPage_externalAnnotationNeedsNullAnnotationEnabled_message,
-								MessageDialog.INFORMATION, new String[] { IDialogConstants.OK_LABEL },
-								0);
-						messageDialog.open();
-					}
-				}
+				checkAttributeEffect(key, fCurrJProject);
 			}
 		}
 	}
@@ -1063,7 +1043,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 			if (!attrib.isBuiltIn()) {
 				return canEditCustomAttribute(attrib);
 			}
-			if (hasRootNodes() && attrib.getKey().equals(IClasspathAttribute.MODULE)) {
+			if (hasRootNodes() && IClasspathAttribute.MODULE.equals(attrib.getKey())) {
 				//module attribute should always be enabled
 				return true;
 			}
@@ -1140,7 +1120,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 
 	private CPListElement[] openClassFolderDialog(CPListElement existing) {
 		if (existing == null) {
-			IPath[] selected= BuildPathDialogAccess.chooseClassFolderEntries(getShell(), fCurrJProject.getPath(), getUsedContainers(existing));
+			IPath[] selected= BuildPathDialogAccess.chooseClassFolderEntries(getShell(), fCurrJProject.getPath(), getUsedContainers(null));
 			if (selected != null) {
 				IWorkspaceRoot root= fCurrJProject.getProject().getWorkspace().getRoot();
 				ArrayList<CPListElement> res= new ArrayList<>();
@@ -1164,7 +1144,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 		IWorkspaceRoot root= fCurrJProject.getProject().getWorkspace().getRoot();
 
 		if (existing == null) {
-			IPath[] selected= BuildPathDialogAccess.chooseJAREntries(getShell(), fCurrJProject.getPath(), getUsedJARFiles(existing));
+			IPath[] selected= BuildPathDialogAccess.chooseJAREntries(getShell(), fCurrJProject.getPath(), getUsedJARFiles(null));
 			if (selected != null) {
 				ArrayList<CPListElement> res= new ArrayList<>();
 

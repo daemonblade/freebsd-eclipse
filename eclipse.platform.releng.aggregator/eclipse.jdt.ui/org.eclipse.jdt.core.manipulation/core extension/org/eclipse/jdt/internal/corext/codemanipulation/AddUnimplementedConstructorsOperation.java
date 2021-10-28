@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,6 +11,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Microsoft Corporation - refactored to jdt.core.manipulation
+ *     Microsoft Corporation - read preferences from the compilation unit
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.codemanipulation;
 
@@ -122,7 +123,7 @@ public final class AddUnimplementedConstructorsOperation implements IWorkspaceRu
 			throw new IllegalArgumentException("The type must not be null"); //$NON-NLS-1$
 		}
 		ASTNode node= astRoot.findDeclaringNode(type);
-		if (!(node instanceof AnonymousClassDeclaration || node instanceof AbstractTypeDeclaration)) {
+		if (!(node instanceof AnonymousClassDeclaration) && !(node instanceof AbstractTypeDeclaration)) {
 			throw new IllegalArgumentException("type has to map to a type declaration in the AST"); //$NON-NLS-1$
 		}
 
@@ -174,7 +175,7 @@ public final class AddUnimplementedConstructorsOperation implements IWorkspaceRu
 	 *
 	 * @return the resulting text edit
 	 */
-	public final TextEdit getResultingEdit() {
+	public TextEdit getResultingEdit() {
 		return fResultingEdit;
 	}
 
@@ -236,7 +237,7 @@ public final class AddUnimplementedConstructorsOperation implements IWorkspaceRu
 				// not possible, we checked this in the constructor
 			}
 
-			final CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(cu.getJavaProject());
+			final CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(cu);
 			settings.createComments= fCreateComments;
 
 			ASTNode insertion= getNodeToInsertBefore(memberRewriter);
@@ -304,8 +305,8 @@ public final class AddUnimplementedConstructorsOperation implements IWorkspaceRu
 	private ASTNode getNodeToInsertBefore(ListRewrite rewriter) {
 		if (fInsertPos != -1) {
 			List<?> members= rewriter.getOriginalList();
-			for (int i= 0; i < members.size(); i++) {
-				ASTNode curr= (ASTNode) members.get(i);
+			for (Object member : members) {
+				ASTNode curr= (ASTNode) member;
 				if (curr.getStartPosition() >= fInsertPos) {
 					return curr;
 				}

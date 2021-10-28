@@ -137,6 +137,7 @@ public class CPListElement {
 				createAttributeElement(INCLUSION, new Path[0], true);
 				createAttributeElement(EXCLUSION, new Path[0], true);
 				createAttributeElement(NATIVE_LIB_PATH, null, false);
+				createAttributeElement(IClasspathAttribute.EXTERNAL_ANNOTATION_PATH, null, false);
 				createAttributeElement(IGNORE_OPTIONAL_PROBLEMS, null, false);
 				createAttributeElement(TEST, null, false);
 				break;
@@ -292,7 +293,7 @@ public class CPListElement {
 			}
 			case IClasspathEntry.CPE_PROJECT: {
 				IAccessRule[] accesRules= (IAccessRule[]) getAttribute(ACCESSRULES);
-				boolean combineAccessRules= ((Boolean) getAttribute(COMBINE_ACCESSRULES)).booleanValue();
+				boolean combineAccessRules= ((Boolean) getAttribute(COMBINE_ACCESSRULES));
 				return JavaCore.newProjectEntry(fPath, accesRules, combineAccessRules, extraAttributes, isExported());
 			}
 			case IClasspathEntry.CPE_CONTAINER: {
@@ -349,14 +350,14 @@ public class CPListElement {
 		if (attribute == null) {
 			return null;
 		}
-		if (key.equals(EXCLUSION) || key.equals(INCLUSION)) {
+		if (EXCLUSION.equals(key) || INCLUSION.equals(key)) {
 			Assert.isTrue(value != null || fEntryKind != IClasspathEntry.CPE_SOURCE);
 		}
 
-		if (key.equals(ACCESSRULES)) {
+		if (ACCESSRULES.equals(key)) {
 			Assert.isTrue(value != null || fEntryKind == IClasspathEntry.CPE_SOURCE);
 		}
-		if (key.equals(COMBINE_ACCESSRULES)) {
+		if (COMBINE_ACCESSRULES.equals(key)) {
 			Assert.isTrue(value instanceof Boolean);
 		}
 
@@ -481,7 +482,7 @@ public class CPListElement {
 			if (curr.isNotSupported()) {
 				return true;
 			}
-			if (!curr.isBuiltIn() && !key.equals(CPListElement.JAVADOC) && !key.equals(CPListElement.NATIVE_LIB_PATH) && !key.equals(CPListElement.IGNORE_OPTIONAL_PROBLEMS)) {
+			if (!curr.isBuiltIn() && !CPListElement.JAVADOC.equals(key) && !key.equals(CPListElement.NATIVE_LIB_PATH) && !CPListElement.IGNORE_OPTIONAL_PROBLEMS.equals(key)) {
 				return !JavaPlugin.getDefault().getClasspathAttributeConfigurationDescriptors().containsKey(key);
 			}
 		}
@@ -779,14 +780,14 @@ public class CPListElement {
 			if (attribElem == null) {
 				if (!isModuleAttribute(attrib.getName())) {
 					elem.createAttributeElement(attrib.getName(), attrib.getValue(), false);
-				} else if (attrib.getName().equals(MODULE)) {
+				} else if (MODULE.equals(attrib.getName())) {
 					attribElem= new CPListElementAttribute(elem, MODULE, null, true);
 					attribElem.setValue(getModuleAttributeValue(attribElem, attrib, extraAttributes));
 					elem.fChildren.add(attribElem);
 				}
 			} else {
 				Object value= attrib.getValue();
-				if (attrib.getName().equals(MODULE)) {
+				if (MODULE.equals(attrib.getName())) {
 					value= getModuleAttributeValue(attribElem, attrib, extraAttributes);
 				}
 				attribElem.setValue(value);
@@ -898,7 +899,7 @@ public class CPListElement {
 								appendEncodedAccessRules((IAccessRule[]) elem.getValue(), buf).append(';');
 								break;
 							case COMBINE_ACCESSRULES:
-								buf.append(((Boolean) elem.getValue()).booleanValue()).append(';');
+								buf.append(elem.getValue()).append(';');
 								break;
 							case MODULE:
 								Object value= elem.getValue();

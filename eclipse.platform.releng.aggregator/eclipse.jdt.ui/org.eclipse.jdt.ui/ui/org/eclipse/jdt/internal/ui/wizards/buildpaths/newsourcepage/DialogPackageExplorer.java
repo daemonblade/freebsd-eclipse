@@ -245,7 +245,7 @@ public class DialogPackageExplorer implements IMenuListener, IPostSelectionProvi
      * folder (if any) as first child of a source folder. The other java elements
      * are sorted in the normal way.
      */
-    private final class ExtendedJavaElementSorter extends JavaElementComparator {
+    private final static class ExtendedJavaElementSorter extends JavaElementComparator {
         public ExtendedJavaElementSorter() {
             super();
         }
@@ -267,14 +267,14 @@ public class DialogPackageExplorer implements IMenuListener, IPostSelectionProvi
      * the default package, and
      * hidden folders.
      */
-    private final class PackageFilter extends LibraryFilter {
+    private final static class PackageFilter extends LibraryFilter {
         private OutputFolderFilter fOutputFolderFilter= new OutputFolderFilter();
         @Override
 		public boolean select(Viewer viewer, Object parentElement, Object element) {
             try {
                 if (element instanceof IFile) {
                     IFile file= (IFile) element;
-                    if (file.getName().equals(".classpath") || file.getName().equals(".project")) //$NON-NLS-1$//$NON-NLS-2$
+                    if (".classpath".equals(file.getName()) || ".project".equals(file.getName())) //$NON-NLS-1$//$NON-NLS-2$
                         return false;
                 } else if (element instanceof IPackageFragmentRoot) {
                     IClasspathEntry cpe= ((IPackageFragmentRoot)element).getRawClasspathEntry();
@@ -349,7 +349,7 @@ public class DialogPackageExplorer implements IMenuListener, IPostSelectionProvi
 		    } else {
 		    	if (element instanceof CPListElementAttribute) {
 					CPListElementAttribute attribute= (CPListElementAttribute)element;
-		    		if (attribute.getKey().equals(CPListElement.OUTPUT)) {
+		    		if (CPListElement.OUTPUT.equals(attribute.getKey())) {
 		    			fActionGroup.getEditOutputFolderAction().run();
 		    		}
 		    	}

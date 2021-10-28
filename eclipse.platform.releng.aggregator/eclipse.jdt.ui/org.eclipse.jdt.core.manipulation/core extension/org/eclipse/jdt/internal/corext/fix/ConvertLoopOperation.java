@@ -33,6 +33,7 @@ import org.eclipse.core.runtime.Status;
 
 import org.eclipse.text.edits.TextEditGroup;
 
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ForStatement;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
@@ -41,6 +42,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFixCore.CompilationUnitRewriteOperation;
@@ -173,7 +175,8 @@ public abstract class ConvertLoopOperation extends CompilationUnitRewriteOperati
 		rewrite.setTargetSourceRangeComputer(rangeComputer);
 
 		Statement statement= convert(cuRewrite, group, positionGroups);
-		rewrite.replace(getForStatement(), statement, group);
+		ASTNode node= getForStatement();
+		ASTNodes.replaceButKeepComment(rewrite, node, statement, group);
 	}
 
 	public static String modifybasename(String suggestedName) {
@@ -198,10 +201,11 @@ public abstract class ConvertLoopOperation extends CompilationUnitRewriteOperati
 				}
 			}
 		}
-		for(String suffix : IRREG_NOUNS.keySet()) {
+		for(Map.Entry<String, String> entry : IRREG_NOUNS.entrySet()) {
+			String suffix = entry.getKey();
 			if(name.toLowerCase().endsWith(suffix.toLowerCase())) {
 				String firstPart= name.substring(0, name.length() - suffix.length());
-				return firstPart + IRREG_NOUNS.get(suffix);
+				return firstPart + entry.getValue();
 			}
 		}
 		for(String varname : NO_BASE_TYPES) {

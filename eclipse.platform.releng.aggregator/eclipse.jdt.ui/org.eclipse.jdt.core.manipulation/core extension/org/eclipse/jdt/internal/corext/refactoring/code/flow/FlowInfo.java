@@ -16,6 +16,7 @@
 package org.eclipse.jdt.internal.corext.refactoring.code.flow;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -365,9 +366,8 @@ public abstract class FlowInfo {
 		for (int i= 0; i < fAccessModes.length; i++) {
 			int accessMode= fAccessModes[i];
 			int otherMode= others[i];
-			if (accessMode == UNUSED) {
-				fAccessModes[i]= otherMode;
-			} else if (accessMode == WRITE_POTENTIAL && (otherMode == READ || otherMode == READ_POTENTIAL)) {
+			if (accessMode == UNUSED
+					|| (accessMode == WRITE_POTENTIAL && (otherMode == READ || otherMode == READ_POTENTIAL))) {
 				// Read always supersedes a potential write even if the read is potential as well
 				// (we have to consider the potential read as an argument then).
 				fAccessModes[i]= otherMode;
@@ -387,9 +387,7 @@ public abstract class FlowInfo {
 
 	protected void createAccessModeArray(FlowContext context) {
 		fAccessModes= new int[context.getArrayLength()];
-		for (int i= 0; i < fAccessModes.length; i++) {
-			fAccessModes[i]= UNUSED;
-		}
+		Arrays.fill(fAccessModes, UNUSED);
 	}
 
 	protected void mergeAccessModeConditional(FlowInfo otherInfo, FlowContext context) {

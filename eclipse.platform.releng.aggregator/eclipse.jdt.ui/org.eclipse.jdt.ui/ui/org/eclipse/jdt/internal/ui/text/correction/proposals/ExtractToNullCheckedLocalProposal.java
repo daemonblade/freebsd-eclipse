@@ -234,9 +234,8 @@ public class ExtractToNullCheckedLocalProposal extends LinkedCorrectionProposal 
 
 		Expression toReplace;
 		ASTNode directParent= this.fieldReference.getParent();
-		if (directParent instanceof FieldAccess) {
-			toReplace= (Expression) directParent;
-		} else if (directParent instanceof QualifiedName && this.fieldReference.getLocationInParent() == QualifiedName.NAME_PROPERTY) {
+		if (directParent instanceof FieldAccess
+				|| (directParent instanceof QualifiedName && this.fieldReference.getLocationInParent() == QualifiedName.NAME_PROPERTY)) {
 			toReplace= (Expression) directParent;
 		} else {
 			toReplace= this.fieldReference;
@@ -277,15 +276,15 @@ public class ExtractToNullCheckedLocalProposal extends LinkedCorrectionProposal 
 
 		// else block: a Todo comment
 		Block elseBlock = ast.newBlock();
-		String elseStatement= "// TODO "+FixMessages.ExtractToNullCheckedLocalProposal_todoHandleNullDescription; //$NON-NLS-1$
+		StringBuilder elseStatement= new StringBuilder("// TODO ").append(FixMessages.ExtractToNullCheckedLocalProposal_todoHandleNullDescription); //$NON-NLS-1$
 		if (origStmt instanceof ReturnStatement) {
 			Type returnType= newType(((ReturnStatement)origStmt).getExpression().resolveTypeBinding(), ast, imports);
 			ReturnStatement returnStatement= ast.newReturnStatement();
 			returnStatement.setExpression(ASTNodeFactory.newDefaultExpression(ast, returnType, 0));
-			elseStatement+= '\n' + ASTNodes.asFormattedString(returnStatement, 0, String.valueOf('\n'), FormatterProfileManager.getProjectSettings(getCompilationUnit().getJavaProject()));
+			elseStatement.append('\n').append(ASTNodes.asFormattedString(returnStatement, 0, String.valueOf('\n'), FormatterProfileManager.getProjectSettings(getCompilationUnit().getJavaProject())));
 		}
 
-		EmptyStatement todoNode= (EmptyStatement) rewrite.createStringPlaceholder(elseStatement, ASTNode.EMPTY_STATEMENT);
+		EmptyStatement todoNode= (EmptyStatement) rewrite.createStringPlaceholder(elseStatement.toString(), ASTNode.EMPTY_STATEMENT);
 		elseBlock.statements().add(todoNode);
 		ifStmt.setElseStatement(elseBlock);
 

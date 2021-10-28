@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -752,7 +751,7 @@ public class TypeInfoViewer {
 		private String fMessage;
 		private int fMessageLength;
 		public String getText(int width) {
-			StringBuffer dashes= new StringBuffer();
+			StringBuilder dashes= new StringBuilder();
 			int chars= (((width - fMessageLength) / fSeparatorWidth) / 2) -2;
 			for (int i= 0; i < chars; i++) {
 				dashes.append(SEPARATOR);
@@ -787,8 +786,8 @@ public class TypeInfoViewer {
 		}
 
 		public void dispose() {
-			for (Iterator iter= fImages.values().iterator(); iter.hasNext(); ) {
-				Image image= (Image)iter.next();
+			for (Object element : fImages.values()) {
+				Image image= (Image)element;
 				image.dispose();
 			}
 			fImages.clear();

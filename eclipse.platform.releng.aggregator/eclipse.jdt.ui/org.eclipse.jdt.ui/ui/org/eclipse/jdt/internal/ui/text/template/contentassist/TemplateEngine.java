@@ -47,7 +47,6 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
-import org.eclipse.jdt.internal.ui.text.correction.PreviewFeaturesSubProcessor;
 
 
 public class TemplateEngine {
@@ -156,8 +155,7 @@ public class TemplateEngine {
 		Template[] templates= JavaPlugin.getDefault().getTemplateStore().getTemplates();
 		boolean needsCheck= !isJava12OrHigherProject(compilationUnit);
 		if (selectedRange.y == 0) {
-			for (int i= 0; i != templates.length; i++) {
-				Template template= templates[i];
+			for (Template template : templates) {
 				if (canEvaluate(context, template, needsCheck)) {
 					fProposals.add(new TemplateProposal(template, context, region, getImage()));
 				}
@@ -170,14 +168,13 @@ public class TemplateEngine {
 
 			boolean multipleLinesSelected= areMultipleLinesSelected(document, selectedRange);
 
-			for (int i= 0; i != templates.length; i++) {
-				Template template= templates[i];
+			for (Template template : templates) {
 				if (canEvaluate(context, template, needsCheck))
 				{
 					Matcher wordSelectionMatcher= $_WORD_SELECTION_PATTERN.matcher(template.getPattern());
 					Matcher lineSelectionMatcher= $_LINE_SELECTION_PATTERN.matcher(template.getPattern());
 					if ((!multipleLinesSelected && wordSelectionMatcher.find()) || (multipleLinesSelected && lineSelectionMatcher.find())) {
-						fProposals.add(new TemplateProposal(templates[i], context, region, getImage()));
+						fProposals.add(new TemplateProposal(template, context, region, getImage()));
 					}
 				}
 			}
@@ -215,7 +212,7 @@ public class TemplateEngine {
 			}
 			return false;
 		}
-		if (NEW_RECORD_TEMPLATE_NAME.equals(template.getName()) && PreviewFeaturesSubProcessor.isPreviewFeatureEnabled(context.getJavaProject())) {
+		if (NEW_RECORD_TEMPLATE_NAME.equals(template.getName()) && JavaModelUtil.is16OrHigher(context.getJavaProject())) {
 			return true;
 		}
 		return true;

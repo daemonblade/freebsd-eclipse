@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -45,7 +45,7 @@ public final class JavaIndenter {
 	 * The JDT Core preferences.
 	 * @since 3.2
 	 */
-	private final class CorePrefs {
+	private final static class CorePrefs {
 		final boolean prefUseTabs;
 		final int prefTabSize;
 		final int prefIndentationSize;
@@ -673,10 +673,8 @@ public final class JavaIndenter {
 		if (JavaCore.SPACE.equals(fPrefs.prefTabChar)) {
 			tabs= 0;
 			spaces= missing;
-		} else if (JavaCore.TAB.equals(fPrefs.prefTabChar)) {
-			tabs= tabSize > 0 ? missing / tabSize : 0;
-			spaces= tabSize > 0 ? missing % tabSize : missing;
-		} else if (DefaultCodeFormatterConstants.MIXED.equals(fPrefs.prefTabChar)) {
+		} else if (JavaCore.TAB.equals(fPrefs.prefTabChar)
+				|| DefaultCodeFormatterConstants.MIXED.equals(fPrefs.prefTabChar)) {
 			tabs= tabSize > 0 ? missing / tabSize : 0;
 			spaces= tabSize > 0 ? missing % tabSize : missing;
 		} else {
@@ -1343,8 +1341,10 @@ public final class JavaIndenter {
 
 				case Symbols.TokenCOLON:
 					int pos= fPreviousPos;
+					int pos2= fPosition;
 					if (!isConditional())
 						return pos;
+					fPosition= pos2;
 					break;
 
 				case Symbols.TokenRBRACE:

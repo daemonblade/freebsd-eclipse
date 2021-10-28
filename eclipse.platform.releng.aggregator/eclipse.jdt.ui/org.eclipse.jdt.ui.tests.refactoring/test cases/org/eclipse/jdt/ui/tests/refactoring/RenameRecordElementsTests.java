@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 IBM Corporation and others.
+ * Copyright (c) 2020, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.refactoring;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -22,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
-import org.junit.Rule;
 import org.junit.Test;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -35,6 +35,8 @@ import org.eclipse.ltk.core.refactoring.participants.RenameRefactoring;
 import org.eclipse.jdt.core.IAnnotatable;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
@@ -45,15 +47,16 @@ import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenameFieldProcessor;
 
-import org.eclipse.jdt.ui.tests.refactoring.rules.JavaPreviewSetup;
-import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
+import org.eclipse.jdt.ui.tests.refactoring.rules.Java16Setup;
 
 public class RenameRecordElementsTests extends GenericRefactoringTest {
 	private static final String REFACTORING_PATH= "RenameRecordElements/";
 
 	private String fPrefixPref;
-	@Rule
-	public RefactoringTestSetup fts= new JavaPreviewSetup();
+
+	public RenameRecordElementsTests() {
+		rts= new Java16Setup();
+	}
 
 	@Override
 	protected String getRefactoringPath() {
@@ -89,6 +92,29 @@ public class RenameRecordElementsTests extends GenericRefactoringTest {
 		IType recordA= getType(cu, "A");
 		IField field= recordA.getField(fieldName);
 		IMethod method= recordA.getMethod(fieldName, new String[] {});
+		if (isGetterPresent) {
+			assertTrue(method.exists());
+		}
+		ILocalVariable localVar= null;
+		IMethod[] methods= recordA.getMethods();
+		if (methods != null && methods.length > 0) {
+			for (IMethod meth : methods) {
+				if (meth.getElementName().equals(recordA.getElementName())) {
+					ILocalVariable[] lVars= meth.getParameters();
+					if (lVars != null && lVars.length > 0) {
+						for (ILocalVariable lVar : lVars) {
+							if (lVar != null && lVar.getElementName().equals(fieldName)) {
+								localVar= lVar;
+								break;
+							}
+						}
+					}
+				}
+				if (localVar != null) {
+					break;
+				}
+			}
+		}
 		RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(IJavaRefactorings.RENAME_FIELD);
 		descriptor.setJavaElement(field);
 		descriptor.setNewName(newFieldName);
@@ -102,7 +128,7 @@ public class RenameRecordElementsTests extends GenericRefactoringTest {
 		if (isGetterPresent) {
 			assertNull("Getter rename should be enabled", processor.canEnableGetterRenaming());
 		} else {
-			assertTrue("Getter rename should not be enabled", "".equals(processor.canEnableGetterRenaming()));
+			assertEquals("Getter rename should not be enabled", "", processor.canEnableGetterRenaming());
 		}
 
 		List<IAnnotatable> elements= new ArrayList<>();
@@ -113,7 +139,10 @@ public class RenameRecordElementsTests extends GenericRefactoringTest {
 			elements.add(method);
 			args.add(new RenameArguments(newFieldName, updateReferences));
 		}
-
+		if (localVar != null && localVar.exists()) {
+			elements.add(localVar);
+			args.add(new RenameArguments(newFieldName, updateReferences));
+		}
 
 		String[] renameHandles= ParticipantTesting.createHandles(elements.toArray());
 
@@ -154,6 +183,29 @@ public class RenameRecordElementsTests extends GenericRefactoringTest {
 		IType recordA= getType(cu, "A");
 		IField field= recordA.getField(fieldName);
 		IMethod method= recordA.getMethod(fieldName, new String[] {});
+		if (isGetterPresent) {
+			assertTrue(method.exists());
+		}
+		ILocalVariable localVar= null;
+		IMethod[] methods= recordA.getMethods();
+		if (methods != null && methods.length > 0) {
+			for (IMethod meth : methods) {
+				if (meth.getElementName().equals(recordA.getElementName())) {
+					ILocalVariable[] lVars= meth.getParameters();
+					if (lVars != null && lVars.length > 0) {
+						for (ILocalVariable lVar : lVars) {
+							if (lVar != null && lVar.getElementName().equals(fieldName)) {
+								localVar= lVar;
+								break;
+							}
+						}
+					}
+				}
+				if (localVar != null) {
+					break;
+				}
+			}
+		}
 		RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(IJavaRefactorings.RENAME_FIELD);
 		descriptor.setJavaElement(field);
 		descriptor.setNewName(newFieldName);
@@ -167,7 +219,7 @@ public class RenameRecordElementsTests extends GenericRefactoringTest {
 		if (isGetterPresent) {
 			assertNull("Getter rename should be enabled", processor.canEnableGetterRenaming());
 		} else {
-			assertTrue("Getter rename should not be enabled", "".equals(processor.canEnableGetterRenaming()));
+			assertEquals("Getter rename should not be enabled", "", processor.canEnableGetterRenaming());
 		}
 
 		List<IAnnotatable> elements= new ArrayList<>();
@@ -178,7 +230,10 @@ public class RenameRecordElementsTests extends GenericRefactoringTest {
 			elements.add(method);
 			args.add(new RenameArguments(newFieldName, updateReferences));
 		}
-
+		if (localVar != null && localVar.exists()) {
+			elements.add(localVar);
+			args.add(new RenameArguments(newFieldName, updateReferences));
+		}
 
 		String[] renameHandles= ParticipantTesting.createHandles(elements.toArray());
 
@@ -217,60 +272,28 @@ public class RenameRecordElementsTests extends GenericRefactoringTest {
 	}
 
 	private void renameRecordExplicitAccessor(String methodName, String newMethodName, boolean updateReferences, boolean fail) throws Exception{
+		renameRecordCompactConstructor(methodName, newMethodName, updateReferences, fail, true);
+	}
+
+	private void renameRecordComponentFail(String record, String fieldName, String newFieldName, String failMsg) throws Exception {
 		ParticipantTesting.reset();
-		ICompilationUnit cu= createCUfromTestFile(getPackageP(), "A");
-		ICompilationUnit cu2= createCUfromTestFile(getPackageP(), "B");
-		IType recordA= getType(cu, "A");
-		IMethod method= recordA.getMethod(methodName,new String[] {});
-		RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(IJavaRefactorings.RENAME_METHOD);
-		descriptor.setJavaElement(method);
-		descriptor.setNewName(newMethodName);
-		descriptor.setUpdateReferences(updateReferences);
-		descriptor.setKeepOriginal(false);
-		descriptor.setDeprecateDelegate(false);
-
+		ICompilationUnit cu= createCUfromTestFile(getPackageP(), record);
+		IType recordA= getType(cu, record);
+		IField field= recordA.getField(fieldName);
+		IJavaProject jProj= recordA.getJavaProject();
+		String projName= jProj.getElementName();
+		RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(IJavaRefactorings.RENAME_FIELD);
+		descriptor.setJavaElement(field);
+		descriptor.setNewName(newFieldName);
+		descriptor.setUpdateReferences(true);
+		descriptor.setUpdateTextualOccurrences(false);
+		descriptor.setRenameGetters(false);
+		descriptor.setRenameSetters(false);
 		RenameRefactoring refactoring= (RenameRefactoring) createRefactoring(descriptor);
-
-		List<IAnnotatable> elements= new ArrayList<>();
-		elements.add(method);
-		List<RenameArguments> args= new ArrayList<>();
-		args.add(new RenameArguments(newMethodName, updateReferences));
-		IField field= recordA.getField(methodName);
-		if (field != null && field.exists()) {
-			elements.add(field);
-			args.add(new RenameArguments(newMethodName, updateReferences));
-		}
-
-
-
-		String[] renameHandles= ParticipantTesting.createHandles(elements.toArray());
-
 		RefactoringStatus result= performRefactoring(refactoring);
-		if (fail) {
-			assertNotNull("was supposed to fail", result);
-		} else {
-			assertNull("was supposed to pass", result);
-			assertEqualLines("invalid renaming", getFileContents(getOutputTestFileName("A")), cu.getSource());
-			assertEqualLines("invalid renaming", getFileContents(getOutputTestFileName("B")), cu2.getSource());
-
-			ParticipantTesting.testRename(
-				renameHandles,
-				args.toArray(new RenameArguments[args.size()]));
-
-			assertTrue("anythingToUndo", RefactoringCore.getUndoManager().anythingToUndo());
-			assertFalse("! anythingToRedo", RefactoringCore.getUndoManager().anythingToRedo());
-
-			RefactoringCore.getUndoManager().performUndo(null, new NullProgressMonitor());
-			assertEqualLines("invalid undo", getFileContents(getInputTestFileName("A")), cu.getSource());
-			assertEqualLines("invalid undo", getFileContents(getInputTestFileName("B")), cu2.getSource());
-
-			assertFalse("! anythingToUndo", RefactoringCore.getUndoManager().anythingToUndo());
-			assertTrue("anythingToRedo", RefactoringCore.getUndoManager().anythingToRedo());
-
-			RefactoringCore.getUndoManager().performRedo(null, new NullProgressMonitor());
-			assertEqualLines("invalid redo", getFileContents(getOutputTestFileName("A")), cu.getSource());
-			assertEqualLines("invalid redo", getFileContents(getOutputTestFileName("B")), cu2.getSource());
-		}
+		assertNotNull("was supposed to fail", result);
+		assertTrue("should have errors", result.hasError());
+		assertEquals(failMsg.replaceAll("TestProject", projName), result.toString());
 	}
 
 	private void renameRecord(String recordName, String newRecordName, boolean updateReferences) throws Exception{
@@ -354,5 +377,52 @@ public class RenameRecordElementsTests extends GenericRefactoringTest {
 	@Test
 	public void testRenameRecordCompactConstructorFailMethodConflict() throws Exception{
 		renameRecordCompactConstructor("f", "g", true, true, true);
+	}
+
+	@Test
+	public void testRenameRecordCanonicalConstructorImplicitAccessor() throws Exception{
+		renameRecordCompactConstructor("f", "g", true, false, false);
+	}
+
+	@Test
+	public void testRenameRecordCanonicalConstructorImplicitAccessor2() throws Exception{
+		renameRecordCompactConstructor2("f", "g", true, false, false);
+	}
+
+	@Test
+	public void testRenameRecordCanonicalConstructorExplicitAccessor() throws Exception{
+		renameRecordCompactConstructor("f", "g", true, false, true);
+	}
+
+	@Test
+	public void testRenameRecordCanonicalConstructorFailFieldConflict() throws Exception{
+		renameRecordCompactConstructor("f", "g", true, true, true);
+	}
+
+	@Test
+	public void testRenameRecordCanonicalConstructorFailMethodConflict() throws Exception{
+		renameRecordCompactConstructor("f", "g", true, true, true);
+	}
+
+	@Test
+	public void testRenameRecordCanonicalConstructorFailLocalVariableConflict() throws Exception{
+		renameRecordCompactConstructor("f", "g", true, true, true);
+	}
+
+	@Test
+	public void testRenameRecordCompactConstructorFailLocalVariableConflict() throws Exception{
+		renameRecordCompactConstructor("f", "g", true, true, true);
+	}
+
+	@Test
+	public void testRenameRecordComponentFail01() throws Exception{
+		String errorMsg = "<ERROR\n" +
+				"	\n" +
+				"ERROR: Method 'void g()' already exists in 'p.A', having same signature as the new accessor method.\n" +
+				"Context: A.java (not open) [in p [in src [in TestProject]]]\n" +
+				"code: none\n" +
+				"Data: null\n" +
+				">";
+		renameRecordComponentFail("A","f","g",errorMsg);
 	}
 }

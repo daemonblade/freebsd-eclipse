@@ -98,7 +98,7 @@ public class CustomBuilderGenerator extends AbstractToStringGenerator {
 	 * Class for storing information about versions of append method in the builder class that can
 	 * be used for different member types
 	 */
-	private class AppendMethodInformation {
+	private static class AppendMethodInformation {
 		/**
 		 * Type of method with respect to taken parameter types. Possible values:
 		 * <ol>
@@ -229,10 +229,10 @@ public class CustomBuilderGenerator extends AbstractToStringGenerator {
 					case 2:
 						String resolvedParameterTypeName1= JavaModelUtil.getResolvedTypeName(parameterTypes[0], type2);
 						String resolvedParameterTypeName2= JavaModelUtil.getResolvedTypeName(parameterTypes[1], type2);
-						if (resolvedParameterTypeName1.equals("java.lang.String")) {//$NON-NLS-1$
+						if ("java.lang.String".equals(resolvedParameterTypeName1)) {//$NON-NLS-1$
 							specyficType= resolvedParameterTypeName2;
 							appendMethodInformation.methodType= 3;
-						} else if (resolvedParameterTypeName2.equals("java.lang.String")) {//$NON-NLS-1$
+						} else if ("java.lang.String".equals(resolvedParameterTypeName2)) {//$NON-NLS-1$
 							specyficType= resolvedParameterTypeName1;
 							appendMethodInformation.methodType= 2;
 						} else

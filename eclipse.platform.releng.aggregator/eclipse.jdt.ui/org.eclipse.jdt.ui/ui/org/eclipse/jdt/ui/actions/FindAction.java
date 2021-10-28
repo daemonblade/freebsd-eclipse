@@ -15,7 +15,6 @@ package org.eclipse.jdt.ui.actions;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -164,8 +163,7 @@ public abstract class FindAction extends SelectionDispatchAction {
 	IJavaElement[] getJavaElements(IStructuredSelection selection, boolean silent) {
 		IJavaElement[] javaElements= new IJavaElement[selection.size()];
 		int index= 0;
-		for (Iterator<?> iter= selection.iterator(); iter.hasNext();) {
-			Object firstElement= iter.next();
+		for (Object firstElement : selection) {
 			IJavaElement elem= null;
 			if (firstElement instanceof IJavaElement)
 				elem= (IJavaElement) firstElement;
@@ -234,9 +232,8 @@ public abstract class FindAction extends SelectionDispatchAction {
 			if (element == null || !element.exists()) {
 				showOperationUnavailableDialog();
 				return;
-			} else if (element == RETURN_WITHOUT_BEEP) {
-				return;
-			} else if (!ActionUtil.isProcessable(getShell(), element)) {
+			} else if ((element == RETURN_WITHOUT_BEEP)
+					|| !ActionUtil.isProcessable(getShell(), element)) {
 				return;
 			}
 		}

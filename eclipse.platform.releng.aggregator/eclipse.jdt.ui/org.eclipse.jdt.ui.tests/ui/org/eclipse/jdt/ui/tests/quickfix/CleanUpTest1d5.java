@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corporation and others.
+ * Copyright (c) 2019, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,14 @@
  *     Fabrice TIERCELIN - Split the tests
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.quickfix;
+
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.fail;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,14 +39,12 @@ import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
 
 import org.eclipse.jdt.internal.ui.fix.MultiFixMessages;
 
-
 /**
- * Tests the cleanup features related to Java 5.
+ * Tests the cleanup features related to Java 5 (i.e. Tiger).
  */
 public class CleanUpTest1d5 extends CleanUpTestCase {
-
 	@Rule
-    public ProjectTestSetup projectSetup = new Java1d5ProjectTestSetup();
+	public ProjectTestSetup projectSetup= new Java1d5ProjectTestSetup();
 
 	@Override
 	protected IJavaProject getProject() {
@@ -48,6 +54,551 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 	@Override
 	protected IClasspathEntry[] getDefaultClasspath() throws CoreException {
 		return projectSetup.getDefaultClasspath();
+	}
+
+	@Test
+	public void testAddOverride1d5() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String given= "" //
+				+ "package test1;\n" //
+				+ "interface I {\n" //
+				+ "    void m();\n" //
+				+ "    boolean equals(Object obj);\n" //
+				+ "}\n" //
+				+ "interface J extends I {\n" //
+				+ "    void m(); // @Override error in 1.5, not in 1.6\n" //
+				+ "}\n" //
+				+ "class X implements J {\n" //
+				+ "    public void m() {} // @Override error in 1.5, not in 1.6\n" //
+				+ "    public int hashCode() { return 0; }\n" //
+				+ "}\n";
+		ICompilationUnit cu= pack1.createCompilationUnit("I.java", given, false, null);
+
+		enable(CleanUpConstants.ADD_MISSING_ANNOTATIONS);
+		enable(CleanUpConstants.ADD_MISSING_ANNOTATIONS_OVERRIDE);
+		enable(CleanUpConstants.ADD_MISSING_ANNOTATIONS_OVERRIDE_FOR_INTERFACE_METHOD_IMPLEMENTATION);
+
+		String expected= "" //
+				+ "package test1;\n" //
+				+ "interface I {\n" //
+				+ "    void m();\n" //
+				+ "    boolean equals(Object obj);\n" //
+				+ "}\n" //
+				+ "interface J extends I {\n" //
+				+ "    void m(); // @Override error in 1.5, not in 1.6\n" //
+				+ "}\n" //
+				+ "class X implements J {\n" //
+				+ "    public void m() {} // @Override error in 1.5, not in 1.6\n" //
+				+ "    @Override\n" //
+				+ "    public int hashCode() { return 0; }\n" //
+				+ "}\n";
+
+		assertNotEquals("The class must be changed", given, expected);
+		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu}, new String[] {expected}, null);
+	}
+
+	@Test
+	public void testAddAll() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String given= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "import java.util.ArrayList;\n" //
+				+ "import java.util.Collection;\n" //
+				+ "import java.util.Iterator;\n" //
+				+ "import java.util.List;\n" //
+				+ "import java.util.Map;\n" //
+				+ "import java.util.Set;\n" //
+				+ "\n" //
+				+ "public class E1 extends ArrayList<java.util.Date> {\n" //
+				+ "    private java.util.Date[] innerArray = new java.util.Date[10];\n" //
+				+ "\n" //
+				+ "    private List<java.util.Date> innerList = new ArrayList<java.util.Date>();\n" //
+				+ "\n" //
+				+ "    public Collection<? super java.util.Date> replaceAddWithForLoopByCollectionsAddAll(\n" //
+				+ "            List<? super java.util.Date> output, java.util.Date[] elems1, java.sql.Date[] elems2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (int i = 0; i < elems1.length; i++) {\n" //
+				+ "            output.add(elems1[i]);\n" //
+				+ "        }\n" //
+				+ "        for (int i = 0; i < elems2.length; i++) {\n" //
+				+ "            output.add(elems2[i]);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<? super java.util.Date> replaceUsingVariableForEnd(\n" //
+				+ "            List<? super java.util.Date> output, java.util.Date[] elements1, java.sql.Date[] elements2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (int i = 0, len = elements1.length; i < len; i++) {\n" //
+				+ "            output.add(elements1[i]);\n" //
+				+ "        }\n" //
+				+ "        for (int i = 0, len = elements2.length; i < len; i++) {\n" //
+				+ "            output.add(elements2[i]);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<? super java.util.Date> replaceStartingWithVariableForEnd(\n" //
+				+ "            List<? super java.util.Date> output, java.util.Date[] elems1, java.sql.Date[] elems2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (int len = elems1.length, i = 0; i < len; i++) {\n" //
+				+ "            output.add(elems1[i]);\n" //
+				+ "        }\n" //
+				+ "        for (int len = elems2.length, i = 0; i < len; i++) {\n" //
+				+ "            output.add(elems2[i]);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<? super java.util.Date> replaceBackwardLoopOnSet(\n" //
+				+ "            Set<? super java.util.Date> output, java.util.Date[] elems1, java.sql.Date[] elems2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (int i = elems1.length - 1; i >= 0; i--) {\n" //
+				+ "            output.add(elems1[i]);\n" //
+				+ "        }\n" //
+				+ "        for (int i = elems2.length - 1; 0 <= i; i--) {\n" //
+				+ "            output.add(elems2[i]);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceAddWithNotEqualOperator(Collection<? super java.util.Date> output, java.util.Date[] dates) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (int i = 0; i != dates.length; i++) {\n" //
+				+ "            output.add(dates[i]);\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceAddWithForLoopByCollectionsAddAll(Collection<? super java.util.Date> output, java.util.Date[] dates) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (int i = 0; i < dates.length; i++) {\n" //
+				+ "            output.add(dates[i]);\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceLoopWithFieldArray(Collection<? super java.util.Date> output) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (int i = 0; i < innerArray.length; i++) {\n" //
+				+ "            output.add(innerArray[i]);\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceForeachWithFieldArray(Collection<? super java.util.Date> output) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (java.util.Date d : this.innerArray) {\n" //
+				+ "            output.add(d);\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceLoopWithFieldList(Collection<? super java.util.Date> output) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (int i = 0; i < this.innerList.size(); i++) {\n" //
+				+ "            output.add(this.innerList.get(i));\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceForeachWithFieldList(Collection<? super java.util.Date> output) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (java.util.Date d : innerList) {\n" //
+				+ "            output.add(d);\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection replaceAddWithForEachByCollectionsAddAll(\n" //
+				+ "            List<? super java.util.Date> output, java.util.Date[] elems1, java.sql.Date[] elems2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (java.util.Date d : elems1) {\n" //
+				+ "            output.add(d);\n" //
+				+ "        }\n" //
+				+ "        for (java.sql.Date d : elems2) {\n" //
+				+ "            output.add(d);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceAddWithForEachByCollectionsAddAll(Collection<? super java.util.Date> output, java.util.Date[] dates) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (java.util.Date date : dates) {\n" //
+				+ "            output.add(date);\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Map<String, List<String>> replaceLoopOnCollectionAsExpressionWithArray(\n" //
+				+ "            Map<String, List<String>> mapToFill, String[] inputList) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (String input : inputList) {\n" //
+				+ "            mapToFill.get(\"foo\").add(input);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return mapToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection replaceLoopOnRawCollectionWithArray(\n" //
+				+ "            List colToFill, String[] inputList) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (String input : inputList) {\n" //
+				+ "            colToFill.add(input);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return colToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Map<String, List<String>> replaceLoopOnCollectionAsExpressionWithList(\n" //
+				+ "            Map<String, List<String>> mapToFill, List<String> inputList) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (String input : inputList) {\n" //
+				+ "            mapToFill.get(\"foo\").add(input);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return mapToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection replaceLoopOnRawCollectionWithList(\n" //
+				+ "            List colToFill, List<String> inputList) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (String input : inputList) {\n" //
+				+ "            colToFill.add(input);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return colToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<String> replaceAddWithForLoopByAddAll(List<String> col, List<String> output) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (int i = 0; i < col.size(); i++) {\n" //
+				+ "            output.add(col.get(i));\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<String> replaceAddWithForEachByAddAll(Collection<String> col, List<String> output) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (String s : col) {\n" //
+				+ "            output.add(s);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    private String doSomething(String s) {\n" //
+				+ "        return null;\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu= pack1.createCompilationUnit("E1.java", given, false, null);
+
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_ADD_ALL);
+
+		String expected= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "import java.util.ArrayList;\n" //
+				+ "import java.util.Arrays;\n" //
+				+ "import java.util.Collection;\n" //
+				+ "import java.util.Collections;\n" //
+				+ "import java.util.Iterator;\n" //
+				+ "import java.util.List;\n" //
+				+ "import java.util.Map;\n" //
+				+ "import java.util.Set;\n" //
+				+ "\n" //
+				+ "public class E1 extends ArrayList<java.util.Date> {\n" //
+				+ "    private java.util.Date[] innerArray = new java.util.Date[10];\n" //
+				+ "\n" //
+				+ "    private List<java.util.Date> innerList = new ArrayList<java.util.Date>();\n" //
+				+ "\n" //
+				+ "    public Collection<? super java.util.Date> replaceAddWithForLoopByCollectionsAddAll(\n" //
+				+ "            List<? super java.util.Date> output, java.util.Date[] elems1, java.sql.Date[] elems2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Collections.addAll(output, elems1);\n" //
+				+ "        Collections.addAll(output, elems2);\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<? super java.util.Date> replaceUsingVariableForEnd(\n" //
+				+ "            List<? super java.util.Date> output, java.util.Date[] elements1, java.sql.Date[] elements2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Collections.addAll(output, elements1);\n" //
+				+ "        Collections.addAll(output, elements2);\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<? super java.util.Date> replaceStartingWithVariableForEnd(\n" //
+				+ "            List<? super java.util.Date> output, java.util.Date[] elems1, java.sql.Date[] elems2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Collections.addAll(output, elems1);\n" //
+				+ "        Collections.addAll(output, elems2);\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<? super java.util.Date> replaceBackwardLoopOnSet(\n" //
+				+ "            Set<? super java.util.Date> output, java.util.Date[] elems1, java.sql.Date[] elems2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Collections.addAll(output, elems1);\n" //
+				+ "        Collections.addAll(output, elems2);\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceAddWithNotEqualOperator(Collection<? super java.util.Date> output, java.util.Date[] dates) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Collections.addAll(output, dates);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceAddWithForLoopByCollectionsAddAll(Collection<? super java.util.Date> output, java.util.Date[] dates) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Collections.addAll(output, dates);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceLoopWithFieldArray(Collection<? super java.util.Date> output) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Collections.addAll(output, innerArray);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceForeachWithFieldArray(Collection<? super java.util.Date> output) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Collections.addAll(output, this.innerArray);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceLoopWithFieldList(Collection<? super java.util.Date> output) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        output.addAll(this.innerList);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceForeachWithFieldList(Collection<? super java.util.Date> output) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        output.addAll(innerList);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection replaceAddWithForEachByCollectionsAddAll(\n" //
+				+ "            List<? super java.util.Date> output, java.util.Date[] elems1, java.sql.Date[] elems2) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Collections.addAll(output, elems1);\n" //
+				+ "        Collections.addAll(output, elems2);\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceAddWithForEachByCollectionsAddAll(Collection<? super java.util.Date> output, java.util.Date[] dates) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Collections.addAll(output, dates);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Map<String, List<String>> replaceLoopOnCollectionAsExpressionWithArray(\n" //
+				+ "            Map<String, List<String>> mapToFill, String[] inputList) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Collections.addAll(mapToFill.get(\"foo\"), inputList);\n" //
+				+ "\n" //
+				+ "        return mapToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection replaceLoopOnRawCollectionWithArray(\n" //
+				+ "            List colToFill, String[] inputList) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        colToFill.addAll(Arrays.asList(inputList));\n" //
+				+ "\n" //
+				+ "        return colToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Map<String, List<String>> replaceLoopOnCollectionAsExpressionWithList(\n" //
+				+ "            Map<String, List<String>> mapToFill, List<String> inputList) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        mapToFill.get(\"foo\").addAll(inputList);\n" //
+				+ "\n" //
+				+ "        return mapToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection replaceLoopOnRawCollectionWithList(\n" //
+				+ "            List colToFill, List<String> inputList) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        colToFill.addAll(inputList);\n" //
+				+ "\n" //
+				+ "        return colToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<String> replaceAddWithForLoopByAddAll(List<String> col, List<String> output) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        output.addAll(col);\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<String> replaceAddWithForEachByAddAll(Collection<String> col, List<String> output) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        output.addAll(col);\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    private String doSomething(String s) {\n" //
+				+ "        return null;\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertNotEquals("The class must be changed", given, expected);
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { expected },
+				new HashSet<>(Arrays.asList(MultiFixMessages.AddAllCleanup_description)));
+	}
+
+	@Test
+	public void testDoNotAddAll() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "import java.util.ArrayList;\n" //
+				+ "import java.util.Collection;\n" //
+				+ "import java.util.Iterator;\n" //
+				+ "import java.util.List;\n" //
+				+ "import java.util.Map;\n" //
+				+ "import java.util.Set;\n" //
+				+ "\n" //
+				+ "public class E1 extends ArrayList<java.util.Date> {\n" //
+				+ "    private List<java.util.Date> innerList = new ArrayList<java.util.Date>();\n" //
+				+ "\n" //
+				+ "    @Override\n" //
+				+ "    public boolean addAll(Collection<? extends java.util.Date> doNotRefactorWithCyclicCalls) {\n" //
+				+ "        for (java.util.Date doNotRefactorWithCyclicCall : doNotRefactorWithCyclicCalls) {\n" //
+				+ "            add(doNotRefactorWithCyclicCall);\n" //
+				+ "        }\n" //
+				+ "        return true;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public List<? super java.util.Date>[] doNotReplaceWithUsesVariableForEnd(\n" //
+				+ "            List<? super java.util.Date>[] output, java.util.Date[] elems1, java.util.Date[] elems2) {\n" //
+				+ "        for (int i = 0, len = elems1.length; i < len; i++) {\n" //
+				+ "            output[len].add(elems1[i]);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<? super java.util.Date> doNotReplaceBackwardLoopOnCollection(\n" //
+				+ "            Collection<? super java.util.Date> output, java.util.Date[] elems1, java.sql.Date[] elems2) {\n" //
+				+ "        for (int i = elems1.length - 1; i >= 0; i--) {\n" //
+				+ "            output.add(elems1[i]);\n" //
+				+ "        }\n" //
+				+ "        for (int i = elems2.length - 1; 0 <= i; i--) {\n" //
+				+ "            output.add(elems2[i]);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public boolean doNotRefactorInsideImplementation(Collection<? extends java.util.Date> dates) {\n" //
+				+ "        for (java.util.Date date : dates) {\n" //
+				+ "            this.add(date);\n" //
+				+ "        }\n" //
+				+ "        return true;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotReplaceLoopWithFieldList(Collection<? super java.util.Date> output, List<java.util.Date> input) {\n" //
+				+ "        for (int i = 0; i < input.size(); i++) {\n" //
+				+ "            output.add(innerList.get(i));\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Map<String, List<String>> doNotRefactorForEachWithListUsingLoopVariable(\n" //
+				+ "            Map<String, List<String>> mapToFill, List<String> inputList) {\n" //
+				+ "        for (String input : inputList) {\n" //
+				+ "            mapToFill.get(input).add(input);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return mapToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Map<String, List<String>> doNotRefactorForLoopWithListUsingLoopIndex(\n" //
+				+ "            Map<String, List<String>> mapToFill, List<String> inputList) {\n" //
+				+ "        for (int i = 0; i < inputList.size(); i++) {\n" //
+				+ "            mapToFill.get(inputList.get(i)).add(inputList.get(i));\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return mapToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Map<String, List<String>> doNotRefactorForLoopWithListUsingLoopIterator(\n" //
+				+ "            Map<String, List<String>> mapToFill, List<String> inputList) {\n" //
+				+ "        String input = null;\n" //
+				+ "        for (Iterator<String> it = inputList.iterator(); it.hasNext(); input = it.next()) {\n" //
+				+ "            mapToFill.get(input).add(input);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return mapToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotRefactorForLoopWithListUsingLoopIterator(List<String> col) {\n" //
+				+ "        for (Iterator<String> it = col.iterator(); it.hasNext();) {\n" //
+				+ "            System.out.println(it.next());\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Map<String, List<String>> doNotRefactorForEachWithArrayUsingLoopVariable(\n" //
+				+ "            Map<String, List<String>> mapToFill, String[] inputArray) {\n" //
+				+ "        for (String input : inputArray) {\n" //
+				+ "            mapToFill.get(input).add(input);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return mapToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Map<String, List<String>> doNotRefactorForLoopWithArrayUsingLoopIndex(\n" //
+				+ "            Map<String, List<String>> mapToFill, String[] inputArray) {\n" //
+				+ "        for (int i = 0; i < inputArray.length; i++) {\n" //
+				+ "            mapToFill.get(inputArray[i]).add(inputArray[i]);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return mapToFill;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<String> doNotRefactorForLoopAddMethodResult(List<String> output, String[] elems) {\n" //
+				+ "        for (int i = 0; i < elems.length; i++) {\n" //
+				+ "            output.add(doSomething(elems[i]));\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<String> doNotRefactorForEachAddMethodResult(List<String> output, String[] elems) {\n" //
+				+ "        for (String s : elems) {\n" //
+				+ "            output.add(doSomething(s));\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<String> doNotRefactorForLoopAddMethodResult(List<String> output, List<String> col) {\n" //
+				+ "        for (int i = 0; i < col.size(); i++) {\n" //
+				+ "            output.add(doSomething(col.get(i)));\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public Collection<String> doNotRefactorForEachAddMethodResult(List<String> output, List<String> col) {\n" //
+				+ "        for (String s : col) {\n" //
+				+ "            output.add(doSomething(s));\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return output;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    private String doSomething(String s) {\n" //
+				+ "        return null;\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_ADD_ALL);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
 
 	@Test
@@ -61,6 +612,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "public class E1 {\n" //
 				+ "    public void foo() {\n" //
 				+ "        List<E1> list= new ArrayList<E1>();\n" //
+				+ "        // Keep this comment\n" //
 				+ "        for (Iterator<E1> iter = list.iterator(); iter.hasNext();) {\n" //
 				+ "            E1 e = iter.next();\n" //
 				+ "            System.out.println(e);\n" //
@@ -69,7 +621,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -78,6 +630,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "public class E1 {\n" //
 				+ "    public void foo() {\n" //
 				+ "        List<E1> list= new ArrayList<E1>();\n" //
+				+ "        // Keep this comment\n" //
 				+ "        for (E1 e : list) {\n" //
 				+ "            System.out.println(e);\n" //
 				+ "        }\n" //
@@ -85,7 +638,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -112,7 +665,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -133,7 +686,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -145,8 +698,8 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "    public void foo() {\n" //
 				+ "        int[] array={1,2,3,4};\n" //
 				+ "        for (int i=0;i<array.length;i++) {\n" //
-				+ "            String[] strs={\"1\",\"2\"};\n" //
-				+ "            for (int j = 0; j < strs.length; j++) {\n" //
+				+ "            String[] strs={\"1\", \"2\"};\n" //
+				+ "            for (int j = 1 - 1; j < strs.length; j++) {\n" //
 				+ "                System.out.println(array[i]+strs[j]);\n" //
 				+ "            }\n" //
 				+ "        }\n" //
@@ -154,7 +707,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -162,7 +715,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "    public void foo() {\n" //
 				+ "        int[] array={1,2,3,4};\n" //
 				+ "        for (int element : array) {\n" //
-				+ "            String[] strs={\"1\",\"2\"};\n" //
+				+ "            String[] strs={\"1\", \"2\"};\n" //
 				+ "            for (String str : strs) {\n" //
 				+ "                System.out.println(element+str);\n" //
 				+ "            }\n" //
@@ -171,7 +724,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -196,7 +749,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -217,7 +770,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -233,7 +786,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
@@ -251,7 +804,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
@@ -269,7 +822,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
@@ -288,7 +841,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
@@ -308,7 +861,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -321,7 +874,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -339,7 +892,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
@@ -362,7 +915,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -379,7 +932,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -397,7 +950,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -411,7 +964,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -429,7 +982,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
@@ -472,7 +1025,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		pack2.createCompilationUnit("E3.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -489,7 +1042,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -509,7 +1062,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -523,7 +1076,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -539,7 +1092,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -551,7 +1104,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -570,7 +1123,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -585,7 +1138,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -606,7 +1159,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -623,7 +1176,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -645,8 +1198,8 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED);
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
@@ -669,8 +1222,8 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED);
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
@@ -693,7 +1246,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -710,7 +1263,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -729,7 +1282,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
@@ -751,9 +1304,9 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_NEVER);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS_NEVER);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -767,7 +1320,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -793,9 +1346,9 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS_ALWAYS);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -818,7 +1371,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -842,9 +1395,9 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_NEVER);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS_NEVER);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -861,7 +1414,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -883,9 +1436,9 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS_ALWAYS);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -904,7 +1457,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -921,9 +1474,9 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS_ALWAYS);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -938,7 +1491,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -968,7 +1521,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -994,7 +1547,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -1012,8 +1565,8 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
 		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS_ALWAYS);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -1028,7 +1581,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -1045,7 +1598,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -1058,7 +1611,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -1076,8 +1629,8 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
 		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS_ALWAYS);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -1092,7 +1645,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -1109,7 +1662,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -1122,7 +1675,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -1140,8 +1693,8 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
 		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS_ALWAYS);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -1156,7 +1709,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -1181,7 +1734,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -1200,7 +1753,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -1218,7 +1771,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 		enable(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL);
 		enable(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL_LOCAL_VARIABLES);
 		enable(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL_PARAMETERS);
@@ -1234,7 +1787,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -1256,7 +1809,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -1273,7 +1826,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -1305,7 +1858,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -1332,7 +1885,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -1351,7 +1904,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -1365,7 +1918,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -1384,7 +1937,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		sample= "" //
 				+ "package test1;\n" //
@@ -1398,7 +1951,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
 	}
 
 	@Test
@@ -1424,18 +1977,21 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
 
 	@Test
 	public void testAutoboxing() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
+		// Given
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
+		String given= "" //
 				+ "package test1;\n" //
+				+ "\n" //
 				+ "public class E {\n" //
 				+ "    public static void bar() {\n" //
+				+ "        // Keep this comment\n" //
 				+ "        Character c = Character.valueOf('*');\n" //
 				+ "        Byte by = Byte.valueOf((byte) 0);\n" //
 				+ "        Boolean bo = Boolean.valueOf(true);\n" //
@@ -1446,38 +2002,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        Float f = Float.valueOf(42.42F);\n" //
 				+ "        Double d = Double.valueOf(42.42);\n" //
 				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_AUTOBOXING);
-
-		sample= "" //
-				+ "package test1;\n" //
-				+ "public class E {\n" //
-				+ "    public static void bar() {\n" //
-				+ "        Character c = '*';\n" //
-				+ "        Byte by = (byte) 0;\n" //
-				+ "        Boolean bo = true;\n" //
-				+ "        Integer i = 42;\n" //
-				+ "        Long l1 = 42L;\n" //
-				+ "        Long l2 = (long) 42;\n" //
-				+ "        Short s = (short) 42;\n" //
-				+ "        Float f = 42.42F;\n" //
-				+ "        Double d = 42.42;\n" //
-				+ "    }\n" //
-				+ "}\n";
-		String expected1= sample;
-
-		assertGroupCategoryUsed(new ICompilationUnit[] { cu1 }, new String[] { MultiFixMessages.AutoboxingCleanup_description });
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	@Test
-	public void testAutoboxingSpecialCases() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
-				+ "public class E {\n" //
+				+ "\n" //
 				+ "    public static void removeUnnecessaryValueOfCallsInPrimitiveDeclaration() {\n" //
 				+ "        char c = Character.valueOf('*');\n" //
 				+ "        byte by = Byte.valueOf((byte) 0);\n" //
@@ -1488,18 +2013,6 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        short s = Short.valueOf((short) 42);\n" //
 				+ "        float f = Float.valueOf(42.42F);\n" //
 				+ "        double d = Double.valueOf(42.42);\n" //
-				+ "    }\n" //
-				+ "\n" //
-				+ "    public static void doNotUseAutoboxingWithObjectDeclaration() {\n" //
-				+ "        Object c = Character.valueOf('*');\n" //
-				+ "        Object by = Byte.valueOf((byte) 0);\n" //
-				+ "        Object bo = Boolean.valueOf(true);\n" //
-				+ "        Object i = Integer.valueOf(42);\n" //
-				+ "        Object l1 = Long.valueOf(42L);\n" //
-				+ "        Object l2 = Long.valueOf(42);\n" //
-				+ "        Object s = Short.valueOf((short) 42);\n" //
-				+ "        Object f = Float.valueOf(42.42F);\n" //
-				+ "        Object d = Double.valueOf(42.42);\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public static void directlyReturnWrapperParameter(Character c, Byte by, Boolean bo, Integer i, Long l, Short s,\n" //
@@ -1561,27 +2074,6 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        d = Double.valueOf(42.42);\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public static void doNotUseAutoboxingWithObjectAssignment() {\n" //
-				+ "        Object c;\n" //
-				+ "        c = Character.valueOf('*');\n" //
-				+ "        Object by;\n" //
-				+ "        by = Byte.valueOf((byte) 0);\n" //
-				+ "        Object bo1;\n" //
-				+ "        bo1 = Boolean.valueOf(true);\n" //
-				+ "        Object i;\n" //
-				+ "        i = Integer.valueOf(42);\n" //
-				+ "        Object l1;\n" //
-				+ "        l1 = Long.valueOf(42L);\n" //
-				+ "        Object l2;\n" //
-				+ "        l2 = Long.valueOf(42);\n" //
-				+ "        Object s;\n" //
-				+ "        s = Short.valueOf((short) 42);\n" //
-				+ "        Object f;\n" //
-				+ "        f = Float.valueOf(42.42F);\n" //
-				+ "        Object d;\n" //
-				+ "        d = Double.valueOf(42.42);\n" //
-				+ "    }\n" //
-				+ "\n" //
 				+ "    public static Character removeUnnecessaryValueOfCallsInCharacterWrapper() {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        return Character.valueOf('*');\n" //
@@ -1666,13 +2158,24 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        return Character.valueOf('a');\n" //
 				+ "    }\n" //
 				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
 
-		enable(CleanUpConstants.USE_AUTOBOXING);
-
-		sample= "" //
+		String expected= "" //
 				+ "package test1;\n" //
+				+ "\n" //
 				+ "public class E {\n" //
+				+ "    public static void bar() {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Character c = '*';\n" //
+				+ "        Byte by = (byte) 0;\n" //
+				+ "        Boolean bo = true;\n" //
+				+ "        Integer i = 42;\n" //
+				+ "        Long l1 = 42L;\n" //
+				+ "        Long l2 = (long) 42;\n" //
+				+ "        Short s = (short) 42;\n" //
+				+ "        Float f = 42.42F;\n" //
+				+ "        Double d = 42.42;\n" //
+				+ "    }\n" //
+				+ "\n" //
 				+ "    public static void removeUnnecessaryValueOfCallsInPrimitiveDeclaration() {\n" //
 				+ "        char c = '*';\n" //
 				+ "        byte by = (byte) 0;\n" //
@@ -1683,18 +2186,6 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        short s = (short) 42;\n" //
 				+ "        float f = 42.42F;\n" //
 				+ "        double d = 42.42;\n" //
-				+ "    }\n" //
-				+ "\n" //
-				+ "    public static void doNotUseAutoboxingWithObjectDeclaration() {\n" //
-				+ "        Object c = Character.valueOf('*');\n" //
-				+ "        Object by = Byte.valueOf((byte) 0);\n" //
-				+ "        Object bo = Boolean.valueOf(true);\n" //
-				+ "        Object i = Integer.valueOf(42);\n" //
-				+ "        Object l1 = Long.valueOf(42L);\n" //
-				+ "        Object l2 = Long.valueOf(42);\n" //
-				+ "        Object s = Short.valueOf((short) 42);\n" //
-				+ "        Object f = Float.valueOf(42.42F);\n" //
-				+ "        Object d = Double.valueOf(42.42);\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public static void directlyReturnWrapperParameter(Character c, Byte by, Boolean bo, Integer i, Long l, Short s,\n" //
@@ -1756,27 +2247,6 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        d = 42.42;\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public static void doNotUseAutoboxingWithObjectAssignment() {\n" //
-				+ "        Object c;\n" //
-				+ "        c = Character.valueOf('*');\n" //
-				+ "        Object by;\n" //
-				+ "        by = Byte.valueOf((byte) 0);\n" //
-				+ "        Object bo1;\n" //
-				+ "        bo1 = Boolean.valueOf(true);\n" //
-				+ "        Object i;\n" //
-				+ "        i = Integer.valueOf(42);\n" //
-				+ "        Object l1;\n" //
-				+ "        l1 = Long.valueOf(42L);\n" //
-				+ "        Object l2;\n" //
-				+ "        l2 = Long.valueOf(42);\n" //
-				+ "        Object s;\n" //
-				+ "        s = Short.valueOf((short) 42);\n" //
-				+ "        Object f;\n" //
-				+ "        f = Float.valueOf(42.42F);\n" //
-				+ "        Object d;\n" //
-				+ "        d = Double.valueOf(42.42);\n" //
-				+ "    }\n" //
-				+ "\n" //
 				+ "    public static Character removeUnnecessaryValueOfCallsInCharacterWrapper() {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        return '*';\n" //
@@ -1861,9 +2331,15 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        return Character.valueOf('a');\n" //
 				+ "    }\n" //
 				+ "}\n";
-		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		// When
+		ICompilationUnit cu= pack.createCompilationUnit("E.java", given, false, null);
+		enable(CleanUpConstants.USE_AUTOBOXING);
+
+		// Then
+		assertNotEquals("The class must be changed", given, expected);
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { expected },
+				new HashSet<>(Arrays.asList(MultiFixMessages.AutoboxingCleanup_description)));
 	}
 
 	@Test
@@ -1880,6 +2356,39 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        Float f = Float.valueOf(\"1\");\n" //
 				+ "        Double d = Double.valueOf(\"1\");\n" //
 				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void doNotUseAutoboxingWithObjectDeclaration() {\n" //
+				+ "        Object c = Character.valueOf('*');\n" //
+				+ "        Object by = Byte.valueOf((byte) 0);\n" //
+				+ "        Object bo = Boolean.valueOf(true);\n" //
+				+ "        Object i = Integer.valueOf(42);\n" //
+				+ "        Object l1 = Long.valueOf(42L);\n" //
+				+ "        Object l2 = Long.valueOf(42);\n" //
+				+ "        Object s = Short.valueOf((short) 42);\n" //
+				+ "        Object f = Float.valueOf(42.42F);\n" //
+				+ "        Object d = Double.valueOf(42.42);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void doNotUseAutoboxingWithObjectAssignment() {\n" //
+				+ "        Object c;\n" //
+				+ "        c = Character.valueOf('*');\n" //
+				+ "        Object by;\n" //
+				+ "        by = Byte.valueOf((byte) 0);\n" //
+				+ "        Object bo1;\n" //
+				+ "        bo1 = Boolean.valueOf(true);\n" //
+				+ "        Object i;\n" //
+				+ "        i = Integer.valueOf(42);\n" //
+				+ "        Object l1;\n" //
+				+ "        l1 = Long.valueOf(42L);\n" //
+				+ "        Object l2;\n" //
+				+ "        l2 = Long.valueOf(42);\n" //
+				+ "        Object s;\n" //
+				+ "        s = Short.valueOf((short) 42);\n" //
+				+ "        Object f;\n" //
+				+ "        f = Float.valueOf(42.42F);\n" //
+				+ "        Object d;\n" //
+				+ "        d = Double.valueOf(42.42);\n" //
+				+ "    }\n" //
 				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
 
@@ -1889,10 +2398,12 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 	}
 
 	@Test
-	public void testUseUnboxingOnPrimitiveDeclaration() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
+	public void testUseUnboxing() throws Exception {
+		// Given
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
+		String given= "" //
 				+ "package test1;\n" //
+				+ "\n" //
 				+ "public class E {\n" //
 				+ "    public static void useUnboxingOnPrimitiveDeclaration(Character cObject, Byte byObject, Boolean boObject,\n" //
 				+ "            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n" //
@@ -1906,83 +2417,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        float f = fObject.floatValue();\n" //
 				+ "        double d = dObject.doubleValue();\n" //
 				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		sample= "" //
-				+ "package test1;\n" //
-				+ "public class E {\n" //
-				+ "    public static void useUnboxingOnPrimitiveDeclaration(Character cObject, Byte byObject, Boolean boObject,\n" //
-				+ "            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n" //
-				+ "        // Keep this comment\n" //
-				+ "        char c = cObject;\n" //
-				+ "        byte by = byObject;\n" //
-				+ "        boolean bo = boObject;\n" //
-				+ "        int i = iObject;\n" //
-				+ "        short s = sObject;\n" //
-				+ "        long l = lObject;\n" //
-				+ "        float f = fObject;\n" //
-				+ "        double d = dObject;\n" //
-				+ "    }\n" //
-				+ "}\n";
-		String expected1= sample;
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	@Test
-	public void testDoNotUseUnboxingOnNarrowingType() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
-				+ "public class E1 {\n" //
-				+ "    public static void doNotUseUnboxingOnNarrowingType(Character cObject, Byte byObject,\n" //
-				+ "            Integer iObject, Short sObject, Float fObject) {\n" //
-				+ "        int c = cObject.charValue();\n" //
-				+ "        int by = byObject.byteValue();\n" //
-				+ "        long i = iObject.intValue();\n" //
-				+ "        int s = sObject.shortValue();\n" //
-				+ "        double f = fObject.floatValue();\n" //
-				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
-	}
-
-	@Test
-	public void testDoNotUseUnboxingWhenTypesDontMatch() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
-				+ "public class E1 {\n" //
-				+ "    public static void doNotUseUnboxingWhenTypesDontMatch(Byte byObject,\n" //
-				+ "            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n" //
-				+ "        short by = byObject.shortValue();\n" //
-				+ "        short i = iObject.shortValue();\n" //
-				+ "        byte s = sObject.byteValue();\n" //
-				+ "        short l = lObject.shortValue();\n" //
-				+ "        short f = fObject.shortValue();\n" //
-				+ "        short d = dObject.shortValue();\n" //
-				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
-	}
-
-	@Test
-	public void testUnboxing2() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
-				+ "public class E {\n" //
+				+ "\n" //
 				+ "    public static void reuseWrapper(Character cObject, Byte byObject, Boolean boObject,\n" //
 				+ "            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n" //
 				+ "        // Keep this comment\n" //
@@ -1995,39 +2430,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        Float f = fObject.floatValue();\n" //
 				+ "        Double d = dObject.doubleValue();\n" //
 				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-
-		sample= "" //
-				+ "package test1;\n" //
-				+ "public class E {\n" //
-				+ "    public static void reuseWrapper(Character cObject, Byte byObject, Boolean boObject,\n" //
-				+ "            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n" //
-				+ "        // Keep this comment\n" //
-				+ "        Character c = cObject;\n" //
-				+ "        Byte by = byObject;\n" //
-				+ "        Boolean bo = boObject;\n" //
-				+ "        Integer i = iObject;\n" //
-				+ "        Short s = sObject;\n" //
-				+ "        Long l = lObject;\n" //
-				+ "        Float f = fObject;\n" //
-				+ "        Double d = dObject;\n" //
-				+ "    }\n" //
-				+ "}\n";
-		String expected1= sample;
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	@Test
-	public void testUnboxing3() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
 				+ "\n" //
-				+ "public class E {\n" //
 				+ "    public static void useUnboxingOnPrimitiveAssignment(Character cObject, Byte byObject, Boolean boObject,\n" //
 				+ "            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n" //
 				+ "        // Keep this comment\n" //
@@ -2048,14 +2451,83 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        double d;\n" //
 				+ "        d = dObject.doubleValue();\n" //
 				+ "    }\n" //
+				+ "\n" //
+				+ "    public static char useUnboxingOnPrimitiveReturn(Character cObject) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        return cObject.charValue();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static byte useUnboxingOnPrimitiveReturn(Byte byObject) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        return byObject.byteValue();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static boolean useUnboxingOnPrimitiveReturn(Boolean boObject) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        return boObject.booleanValue();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static int useUnboxingOnPrimitiveReturn(Integer iObject) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        return iObject.intValue();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static short useUnboxingOnPrimitiveReturn(Short sObject) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        return sObject.shortValue();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static long useUnboxingOnPrimitiveReturn(Long lObject) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        return lObject.longValue();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static float useUnboxingOnPrimitiveReturn(Float fObject) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        return fObject.floatValue();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static double useUnboxingOnPrimitiveReturn(Double dObject) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        return dObject.doubleValue();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static String useUnboxingOnArrayAccess(String[] strings, Integer i) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        return strings[i.intValue()];\n" //
+				+ "    }\n" //
 				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
 
-		enable(CleanUpConstants.USE_UNBOXING);
-		sample= "" //
+		String expected= "" //
 				+ "package test1;\n" //
 				+ "\n" //
 				+ "public class E {\n" //
+				+ "    public static void useUnboxingOnPrimitiveDeclaration(Character cObject, Byte byObject, Boolean boObject,\n" //
+				+ "            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        char c = cObject;\n" //
+				+ "        byte by = byObject;\n" //
+				+ "        boolean bo = boObject;\n" //
+				+ "        int i = iObject;\n" //
+				+ "        short s = sObject;\n" //
+				+ "        long l = lObject;\n" //
+				+ "        float f = fObject;\n" //
+				+ "        double d = dObject;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void reuseWrapper(Character cObject, Byte byObject, Boolean boObject,\n" //
+				+ "            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        Character c = cObject;\n" //
+				+ "        Byte by = byObject;\n" //
+				+ "        Boolean bo = boObject;\n" //
+				+ "        Integer i = iObject;\n" //
+				+ "        Short s = sObject;\n" //
+				+ "        Long l = lObject;\n" //
+				+ "        Float f = fObject;\n" //
+				+ "        Double d = dObject;\n" //
+				+ "    }\n" //
+				+ "\n" //
 				+ "    public static void useUnboxingOnPrimitiveAssignment(Character cObject, Byte byObject, Boolean boObject,\n" //
 				+ "            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n" //
 				+ "        // Keep this comment\n" //
@@ -2076,271 +2548,155 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        double d;\n" //
 				+ "        d = dObject;\n" //
 				+ "    }\n" //
-				+ "}\n";
-		String expected1= sample;
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	@Test
-	public void testUnboxing4() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
 				+ "\n" //
-				+ "public class E {\n" //
-				+ "    public static char useUnboxingOnPrimitiveReturn(Character cObject) {\n" //
-				+ "        // Keep this comment\n" //
-				+ "        return cObject.charValue();\n" //
-				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-		sample= "" //
-				+ "package test1;\n" //
-				+ "\n" //
-				+ "public class E {\n" //
 				+ "    public static char useUnboxingOnPrimitiveReturn(Character cObject) {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        return cObject;\n" //
 				+ "    }\n" //
-				+ "}\n";
-		String expected1= sample;
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	@Test
-	public void testUnboxing5() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
 				+ "\n" //
-				+ "public class E {\n" //
-				+ "    public static byte useUnboxingOnPrimitiveReturn(Byte byObject) {\n" //
-				+ "        // Keep this comment\n" //
-				+ "        return byObject.byteValue();\n" //
-				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-		sample= "" //
-				+ "package test1;\n" //
-				+ "\n" //
-				+ "public class E {\n" //
 				+ "    public static byte useUnboxingOnPrimitiveReturn(Byte byObject) {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        return byObject;\n" //
 				+ "    }\n" //
-				+ "}\n";
-		String expected1= sample;
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	@Test
-	public void testUnboxing6() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
 				+ "\n" //
-				+ "public class E {\n" //
-				+ "    public static boolean useUnboxingOnPrimitiveReturn(Boolean boObject) {\n" //
-				+ "        // Keep this comment\n" //
-				+ "        return boObject.booleanValue();\n" //
-				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-		sample= "" //
-				+ "package test1;\n" //
-				+ "\n" //
-				+ "public class E {\n" //
 				+ "    public static boolean useUnboxingOnPrimitiveReturn(Boolean boObject) {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        return boObject;\n" //
 				+ "    }\n" //
-				+ "}\n";
-		String expected1= sample;
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	@Test
-	public void testUnboxing7() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
 				+ "\n" //
-				+ "public class E {\n" //
-				+ "    public static int useUnboxingOnPrimitiveReturn(Integer iObject) {\n" //
-				+ "        // Keep this comment\n" //
-				+ "        return iObject.intValue();\n" //
-				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-		sample= "" //
-				+ "package test1;\n" //
-				+ "\n" //
-				+ "public class E {\n" //
 				+ "    public static int useUnboxingOnPrimitiveReturn(Integer iObject) {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        return iObject;\n" //
 				+ "    }\n" //
-				+ "}\n";
-		String expected1= sample;
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	@Test
-	public void testUnboxing8() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
 				+ "\n" //
-				+ "public class E {\n" //
-				+ "    public static short useUnboxingOnPrimitiveReturn(Short sObject) {\n" //
-				+ "        // Keep this comment\n" //
-				+ "        return sObject.shortValue();\n" //
-				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-		sample= "" //
-				+ "package test1;\n" //
-				+ "\n" //
-				+ "public class E {\n" //
 				+ "    public static short useUnboxingOnPrimitiveReturn(Short sObject) {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        return sObject;\n" //
 				+ "    }\n" //
-				+ "}\n";
-		String expected1= sample;
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	@Test
-	public void testUnboxing9() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
 				+ "\n" //
-				+ "public class E {\n" //
-				+ "    public static long useUnboxingOnPrimitiveReturn(Long lObject) {\n" //
-				+ "        // Keep this comment\n" //
-				+ "        return lObject.longValue();\n" //
-				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-		sample= "" //
-				+ "package test1;\n" //
-				+ "\n" //
-				+ "public class E {\n" //
 				+ "    public static long useUnboxingOnPrimitiveReturn(Long lObject) {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        return lObject;\n" //
 				+ "    }\n" //
-				+ "}\n";
-		String expected1= sample;
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	@Test
-	public void testUnboxing10() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
 				+ "\n" //
-				+ "public class E {\n" //
-				+ "    public static float useUnboxingOnPrimitiveReturn(Float fObject) {\n" //
-				+ "        // Keep this comment\n" //
-				+ "        return fObject.floatValue();\n" //
-				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-		sample= "" //
-				+ "package test1;\n" //
-				+ "\n" //
-				+ "public class E {\n" //
 				+ "    public static float useUnboxingOnPrimitiveReturn(Float fObject) {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        return fObject;\n" //
 				+ "    }\n" //
-				+ "}\n";
-		String expected1= sample;
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	@Test
-	public void testUnboxing11() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
 				+ "\n" //
-				+ "public class E {\n" //
-				+ "    public static double useUnboxingOnPrimitiveReturn(Double dObject) {\n" //
-				+ "        // Keep this comment\n" //
-				+ "        return dObject.doubleValue();\n" //
-				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-		sample= "" //
-				+ "package test1;\n" //
-				+ "\n" //
-				+ "public class E {\n" //
 				+ "    public static double useUnboxingOnPrimitiveReturn(Double dObject) {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        return dObject;\n" //
 				+ "    }\n" //
-				+ "}\n";
-		String expected1= sample;
-
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
-	}
-
-	@Test
-	public void testUnboxingInArrayAccess() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		String sample= "" //
-				+ "package test1;\n" //
 				+ "\n" //
-				+ "public class E {\n" //
-				+ "    public static String useUnboxingOnArrayAccess(String[] strings, Integer i) {\n" //
-				+ "        // Keep this comment\n" //
-				+ "        return strings[i.intValue()];\n" //
-				+ "    }\n" //
-				+ "}\n";
-		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
-
-		enable(CleanUpConstants.USE_UNBOXING);
-		sample= "" //
-				+ "package test1;\n" //
-				+ "\n" //
-				+ "public class E {\n" //
 				+ "    public static String useUnboxingOnArrayAccess(String[] strings, Integer i) {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        return strings[i];\n" //
 				+ "    }\n" //
 				+ "}\n";
-		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		// When
+		ICompilationUnit cu= pack.createCompilationUnit("E.java", given, false, null);
+		enable(CleanUpConstants.USE_UNBOXING);
+
+		// Then
+		assertNotEquals("The class must be changed", given, expected);
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { expected },
+				new HashSet<>(Arrays.asList(MultiFixMessages.UnboxingCleanup_description)));
+	}
+
+	@Test
+	public void testDoNotUseUnboxing() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "    public static void doNotUseUnboxingOnNarrowingType(Character cObject, Byte byObject,\n" //
+				+ "            Integer iObject, Short sObject, Float fObject) {\n" //
+				+ "        int c = cObject.charValue();\n" //
+				+ "        int by = byObject.byteValue();\n" //
+				+ "        long i = iObject.intValue();\n" //
+				+ "        int s = sObject.shortValue();\n" //
+				+ "        double f = fObject.floatValue();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void doNotUseUnboxingWhenTypesDontMatch(Byte byObject,\n" //
+				+ "            Integer iObject, Short sObject, Long lObject, Float fObject, Double dObject) {\n" //
+				+ "        short by = byObject.shortValue();\n" //
+				+ "        short i = iObject.shortValue();\n" //
+				+ "        byte s = sObject.byteValue();\n" //
+				+ "        short l = lObject.shortValue();\n" //
+				+ "        short f = fObject.shortValue();\n" //
+				+ "        short d = dObject.shortValue();\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.USE_UNBOXING);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
+	}
+
+	@Test
+	public void testBooleanLiteral() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String input= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public static boolean replaceUselessUnboxing() {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean bo1 = Boolean.TRUE;\n" //
+				+ "        boolean bo2 = Boolean.FALSE;\n" //
+				+ "        bo1 = Boolean.TRUE;\n" //
+				+ "        if (Boolean.TRUE) {\n" //
+				+ "            bo2 = Boolean.FALSE;\n" //
+				+ "        }\n" //
+				+ "        return bo1 && bo2;\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", input, false, null);
+
+		enable(CleanUpConstants.PREFER_BOOLEAN_LITERAL);
+
+		String output= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public static boolean replaceUselessUnboxing() {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean bo1 = true;\n" //
+				+ "        boolean bo2 = false;\n" //
+				+ "        bo1 = true;\n" //
+				+ "        if (true) {\n" //
+				+ "            bo2 = false;\n" //
+				+ "        }\n" //
+				+ "        return bo1 && bo2;\n" //
+				+ "    }\n" //
+				+ "}\n";
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { output },
+				new HashSet<>(Arrays.asList(MultiFixMessages.BooleanLiteralCleanup_description)));
+	}
+
+	@Test
+	public void testDoNotUseBooleanLiteral() throws Exception {
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public static boolean doNotCreateUselessAutoboxing() {\n" //
+				+ "        Boolean bo = Boolean.TRUE;\n" //
+				+ "        bo = Boolean.FALSE;\n" //
+				+ "        return bo;\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack.createCompilationUnit("E.java", sample, false, null);
+
+		enable(CleanUpConstants.PREFER_BOOLEAN_LITERAL);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
 	}
 
 	@Test
@@ -2352,7 +2708,8 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "public class X {\n" //
 				+ "  public int foo(String x, String ...y) { return y.length + 1; }\n" //
 				+ "  public int bar() {\n" //
-				+ "      return foo(\"a\", new String[] {\"b\", \"c\", \"d\"});\n" //
+				+ "      return foo\n" //
+				+ "          (/* first */ \"a\", new String[] {\"b\", \"c\", \"d\"});\n" //
 				+ "  };\n" //
 				+ "  public int bar2() {\n" //
 				+ "      return foo(\"a\", \"b\", new String[] {\"c\", \"d\"});\n" //
@@ -2370,7 +2727,8 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "public class X {\n" //
 				+ "  public int foo(String x, String ...y) { return y.length + 1; }\n" //
 				+ "  public int bar() {\n" //
-				+ "      return foo(\"a\", \"b\", \"c\", \"d\");\n" //
+				+ "      return foo\n" //
+				+ "          (/* first */ \"a\", \"b\", \"c\", \"d\");\n" //
 				+ "  };\n" //
 				+ "  public int bar2() {\n" //
 				+ "      return foo(\"a\", \"b\", new String[] {\"c\", \"d\"});\n" //
@@ -2423,7 +2781,7 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 		String expected2= sample;
 
 		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1, cu2 }, new String[] { expected1, expected2 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1, cu2 }, new String[] { expected1, expected2 }, null);
 	}
 
 	@Test
@@ -2431,8 +2789,6 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		String sample= "" //
 				+ "package test1;\n" //
-				+ "\n" //
-				+ "import java.lang.reflect.Method;\n" //
 				+ "\n" //
 				+ "public class A {\n" //
 				+ "    public void foo(Object... elementsOrTreePaths) {\n" //
@@ -2500,7 +2856,209 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "}\n";
 		String expected1= sample;
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 });
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 },
+				new HashSet<>(Arrays.asList(FixMessages.UnusedCodeFix_RemoveUnnecessaryArrayCreation_description)));
+	}
+
+	@Test
+	public void testUnnecessaryArray_default_package() throws Exception {
+		try {
+			// Given
+			IPackageFragment pack1= fSourceFolder.createPackageFragment("", false, null);
+			String given= "" //
+					+ "public class A {\n" //
+					+ "    public class B {\n" //
+					+ "        public void foo(Object elementsOrTreePaths, Integer obj, Integer obj2) {\n" //
+					+ "            return;\n" //
+					+ "        }\n" //
+					+ "    }\n" //
+					+ "\n" //
+					+ "    public class C extends B {\n" //
+					+ "        public void foo(Object... elementsOrTreePaths) {\n" //
+					+ "            return;\n" //
+					+ "        }\n" //
+					+ "\n" //
+					+ "        public void foo(Object elementsOrTreePaths, Integer obj) {\n" //
+					+ "            foo(new Object[] {elementsOrTreePaths, obj});\n" //
+					+ "            foo(new Object[] {elementsOrTreePaths, elementsOrTreePaths});\n" //
+					+ "            foo(new Object[] {elementsOrTreePaths, obj, obj});\n" //
+					+ "            foo(new Object[] {elementsOrTreePaths, obj, elementsOrTreePaths});\n" //
+					+ "        }\n" //
+					+ "    }\n" //
+					+ "}\n";
+
+			String expected= "" //
+					+ "public class A {\n" //
+					+ "    public class B {\n" //
+					+ "        public void foo(Object elementsOrTreePaths, Integer obj, Integer obj2) {\n" //
+					+ "            return;\n" //
+					+ "        }\n" //
+					+ "    }\n" //
+					+ "\n" //
+					+ "    public class C extends B {\n" //
+					+ "        public void foo(Object... elementsOrTreePaths) {\n" //
+					+ "            return;\n" //
+					+ "        }\n" //
+					+ "\n" //
+					+ "        public void foo(Object elementsOrTreePaths, Integer obj) {\n" //
+					+ "            foo(new Object[] {elementsOrTreePaths, obj});\n" //
+					+ "            foo(elementsOrTreePaths, elementsOrTreePaths);\n" //
+					+ "            foo(new Object[] {elementsOrTreePaths, obj, obj});\n" //
+					+ "            foo(elementsOrTreePaths, obj, elementsOrTreePaths);\n" //
+					+ "        }\n" //
+					+ "    }\n" //
+					+ "}\n";
+
+			// When
+			ICompilationUnit cu= pack1.createCompilationUnit("A.java", given, false, null);
+			enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+			// Then
+			assertNotEquals("The class must be changed", given, expected);
+			assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { expected },
+					new HashSet<>(Arrays.asList(FixMessages.UnusedCodeFix_RemoveUnnecessaryArrayCreation_description)));
+		} catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            fail(sw.toString());
+		}
+	}
+
+	@Test
+	public void testUnnecessaryEmptyArray() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public static void foo(Object... elementsOrTreePaths) {\n" //
+				+ "        return;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void bar() {\n" //
+				+ "        foo(new Object[] {});\n" //
+				+ "        foo(new Object[0]);\n" //
+				+ "        foo(new Object[0 + 0]);\n" //
+				+ "        foo(new Object[1 - 1]);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public static void foo(Object... elementsOrTreePaths) {\n" //
+				+ "        return;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void bar() {\n" //
+				+ "        foo();\n" //
+				+ "        foo();\n" //
+				+ "        foo();\n" //
+				+ "        foo();\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 },
+				new HashSet<>(Arrays.asList(FixMessages.UnusedCodeFix_RemoveUnnecessaryArrayCreation_description)));
+	}
+
+	@Test
+	public void testUnnecessaryArrayIncompatibleParameters() throws Exception {
+		// Given
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String given= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public static void foo(int i, String text, String... elementsOrTreePaths) {\n" //
+				+ "        return;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void foo(String i, int text) {\n" //
+				+ "        return;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void foo(String i, int text, String anotherParameter) {\n" //
+				+ "        return;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void bar() {\n" //
+				+ "        foo(0, \"bar\", new String[0]);\n" //
+				+ "        foo(0, \"bar\", new String[] {\"bar\"});\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		String expected= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public static void foo(int i, String text, String... elementsOrTreePaths) {\n" //
+				+ "        return;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void foo(String i, int text) {\n" //
+				+ "        return;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void foo(String i, int text, String anotherParameter) {\n" //
+				+ "        return;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void bar() {\n" //
+				+ "        foo(0, \"bar\");\n" //
+				+ "        foo(0, \"bar\", \"bar\");\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		// When
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", given, false, null);
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		// Then
+		assertNotEquals("The class must be changed", given, expected);
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { expected },
+				new HashSet<>(Arrays.asList(FixMessages.UnusedCodeFix_RemoveUnnecessaryArrayCreation_description)));
+	}
+
+	@Test
+	public void testUnnecessaryArrayOnConstructor() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public A(Object... elements) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static A foo() {\n" //
+				+ "        return new A(new Object[] {\"a\", \"b\"});\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public A(Object... elements) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static A foo() {\n" //
+				+ "        return new A(\"a\", \"b\");\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { expected },
+				new HashSet<>(Arrays.asList(FixMessages.UnusedCodeFix_RemoveUnnecessaryArrayCreation_description)));
 	}
 
 	@Test
@@ -2527,11 +3085,493 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        }\n" //
 				+ "    }\n" //
 				+ "}\n";
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		String expected= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public class B {\n" //
+				+ "        public void foo(Object elementsOrTreePaths, Integer obj, Integer obj2) {\n" //
+				+ "            return;\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "    public class C extends B {\n" //
+				+ "        public void foo(Object... elementsOrTreePaths) {\n" //
+				+ "            return;\n" //
+				+ "        }\n" //
+				+ "        public void foo(Object elementsOrTreePaths, Integer obj) {\n" //
+				+ "            foo(new Object[] {elementsOrTreePaths, obj});\n" //
+				+ "            foo(elementsOrTreePaths, elementsOrTreePaths);\n" //
+				+ "            foo(new Object[] {elementsOrTreePaths, obj, obj});\n" //
+				+ "            foo(elementsOrTreePaths, obj, elementsOrTreePaths);\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { expected },
+				new HashSet<>(Arrays.asList(FixMessages.UnusedCodeFix_RemoveUnnecessaryArrayCreation_description)));
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug567988() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public static void main(String[] args) {\n" //
+				+ "        someMethod(new byte[]{42});\n" //
+	    		+ "    }\n" //
+	    		+ "    private static void someMethod(byte[]... byteArrays) {}\n" //
+				+ "}\n";
 		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
 
 		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
 
-		assertGroupCategoryUsed(new ICompilationUnit[] { cu1 }, new String[] { FixMessages.UnusedCodeFix_RemoveUnnecessaryArrayCreation_description });
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
+	}
+
+	@Test
+	public void testUnnecessaryArrayNotCompilingParameter() throws Exception {
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "import java.util.Date;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public static void doNotRefactorOnNotCompilingMethod() {\n" //
+				+ "        bar(undeclaredVariable, new String[] {\"b\"});\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void bar(Object boss, String... elements) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void bar(Integer boss, String parameter) {\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu= pack.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { sample }, null);
+	}
+
+	@Test
+	public void testUnnecessaryArrayUndeclaredVariable() throws Exception {
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public static void doNotRefactorOnNotCompilingMethod() {\n" //
+				+ "        bar(undeclaredVariable, new String[] {\"c\"});\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void bar(Object parameter, String... elements) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void bar(Integer parameter, String text) {\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu= pack.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { sample }, null);
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug572656_ConstructorConflict() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public static A doNotChangeConstructorDispatch() {\n" //
+				+ "        return new A(new Object[] {\"d\"});\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public A(Object... elements) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public A(Object element) {\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug572656_MethodConflict() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public static void doNotChangeMethodDispatch() {\n" //
+				+ "        bar(new Object[] {\"e\"});\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void bar(Object... elements) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void bar(Object element) {\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug572656_SelfMethodConflict() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public static void doNotChangeToSelfMethod(Object element) {\n" //
+				+ "        doNotChangeToSelfMethod(new Object[] {\"f\"});\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void doNotChangeToSelfMethod(Object... elements) {\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug572656_ConflictingStaticMethodImport() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "import static java.util.Date.parse;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public void doNotCallAnotherMethod(String text) {\n" //
+				+ "        parse(new String[]{text});\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void parse(String... texts) {\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug572656_1() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public class ChildClass extends A {\n" //
+				+ "        public void overloadedMethod(int number) {\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        public void doNotCallAnotherMethod(int number) {\n" //
+				+ "            overloadedMethod(new int[]{number});\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void overloadedMethod(int... numbers) {\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug572656_2() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    private void overloadedMethod(int number) {\n" //
+				+ "    }\n" //
+				+ "    public class ChildClass {\n" //
+				+ "\n" //
+				+ "        public void doNotCallAnotherMethod(int number) {\n" //
+				+ "            overloadedMethod(new int[]{number});\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void overloadedMethod(int... numbers) {\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug572656_3() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A extends C {\n" //
+				+ "    @SuppressWarnings(\"unused\")\n" //
+				+ "    private void func(Object a) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    protected void func(Object ...objs) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void foo() {\n" //
+				+ "        new B().func(new Object[] {this});\n" //
+				+ "        new B().func(new Object[] {this, this});\n" //
+				+ "        B b = new B();\n" //
+				+ "        b.func(new Object[] {this});\n" //
+				+ "        b.func(new Object[] {this, this});\n" //
+				+ "        this.func(new Object[] {this});\n" //
+				+ "        this.func(new Object[] {this, this});\n" //
+				+ "        A a = new A();\n" //
+				+ "        a.func(new Object[] {this});\n" //
+				+ "        a.func(new Object[] {this, this});\n" //
+				+ "        super.func(new Object[] {this});\n" //
+				+ "        super.func(new Object[] {this, this, this});\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		String sample2= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class B {\n" //
+				+ "    public void func(Object ...objs) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    protected void func(Object a, Object b) {\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu2= pack1.createCompilationUnit("B.java", sample2, false, null);
+
+		String sample3= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class C {\n" //
+				+ "    protected void func(Object ...objs) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    protected void func(Object a, Object b, Object c) {\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu3= pack1.createCompilationUnit("C.java", sample3, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A extends C {\n" //
+				+ "    @SuppressWarnings(\"unused\")\n" //
+				+ "    private void func(Object a) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    protected void func(Object ...objs) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void foo() {\n" //
+				+ "        new B().func(this);\n" //
+				+ "        new B().func(new Object[] {this, this});\n" //
+				+ "        B b = new B();\n" //
+				+ "        b.func(this);\n" //
+				+ "        b.func(new Object[] {this, this});\n" //
+				+ "        this.func(new Object[] {this});\n" //
+				+ "        this.func(this, this);\n" //
+				+ "        A a = new A();\n" //
+				+ "        a.func(new Object[] {this});\n" //
+				+ "        a.func(this, this);\n" //
+				+ "        super.func(this);\n" //
+				+ "        super.func(new Object[] {this, this, this});\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1, cu2, cu3 }, new String[] { expected1, sample2, sample3 }, null);
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug572656_4() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "import static test1.B.func;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public void foo() {\n" //
+				+ "        func(new Object[] {this, this});\n" //
+				+ "        func(new Object[] {this});\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		String sample2= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class B {\n" //
+				+ "    public static void func(Object ...objects) {\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void func(Object a) {\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu2= pack1.createCompilationUnit("B.java", sample2, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "import static test1.B.func;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public void foo() {\n" //
+				+ "        func(this, this);\n" //
+				+ "        func(new Object[] {this});\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected1= sample;
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1, cu2 }, new String[] { expected1, sample2 }, null);
+    }
+
+	@Test
+	public void testUnnecessaryArrayBug568082() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    public static void main(String[] args) {\n" //
+				+ "        someMethod(new byte[]{42});\n" //
+				+ "        someMethod2(new char[]{42});\n" //
+				+ "        someMethod3(new short[]{42});\n" //
+	    		+ "    }\n" //
+	    		+ "    private static void someMethod(byte... bytes) {}\n" //
+	    		+ "    private static void someMethod2(char... chars) {}\n" //
+	    		+ "    private static void someMethod3(short... shorts) {}\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug572131_1() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "    void doError(String a, Object b) {}\n" //
+				+ "    private void doError(String a, Object b, Object c) {}\n" //
+				+ "    public void doError(String a, Object b, Object c, Object d) {}\n" //
+				+ "    public void doError(String a, Object ...objects) {}\n" //
+				+ "    public void foo() {\n" //
+				+ "        doError(\"a\", new Object[] {\"b\"});\n" //
+				+ "        doError(\"a\", new Object[] {\"b\", \"c\"});\n" //
+				+ "        doError(\"a\", new Object[] {\"b\", \"c\", \"d\"});\n" //
+	    		+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
+	}
+
+	@Test
+	public void testUnnecessaryArrayBug572131_2() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "private class B {\n" //
+				+ "    void doError(String a, Object b) {}\n" //
+				+ "    private void doError(String a, Object b, Object c) {}\n" //
+				+ "    protected void doError(String a, Object b, Object c, Object d) {};\n" //
+				+ "}\n"
+				+ "public class A extends B {\n" //
+				+ "    public void doError(String a, Object ...objects);\n" //
+				+ "    public void foo() {\n" //
+				+ "        doError(\"a\", new Object[] {\"b\"});\n" //
+				+ "        doError(\"a\", new Object[] {\"b\", \"c\"});\n" //
+				+ "        doError(\"a\", new Object[] {\"b\", \"c\", \"d\"});\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "private class B {\n" //
+				+ "    void doError(String a, Object b) {}\n" //
+				+ "    private void doError(String a, Object b, Object c) {}\n" //
+				+ "    protected void doError(String a, Object b, Object c, Object d) {};\n" //
+				+ "}\n"
+				+ "public class A extends B {\n" //
+				+ "    public void doError(String a, Object ...objects);\n" //
+				+ "    public void foo() {\n" //
+				+ "        doError(\"a\", new Object[] {\"b\"});\n" //
+				+ "        doError(\"a\", \"b\", \"c\");\n" //
+				+ "        doError(\"a\", new Object[] {\"b\", \"c\", \"d\"});\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected },
+				new HashSet<>(Arrays.asList(FixMessages.UnusedCodeFix_RemoveUnnecessaryArrayCreation_description)));
+	}
+
+	@Test
+	public void testKeepArrayWithSingleArrayElement() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "import java.lang.reflect.Method;\n" //
+				+ "\n" //
+				+ "public class A {\n" //
+				+ "  public void foo() throws Throwable {\n" //
+				+ "    Method method= A.class.getMethod(\"bah\", A.class);\n" //
+				+ "    method.invoke(this, new Object[] {new Object[] {\"bar\"}});\n" //
+				+ "  }\n" //
+				+ "}\n";
+		ICompilationUnit cu= pack1.createCompilationUnit("A.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_ARRAY_CREATION);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu });
 	}
 
 	@Test
@@ -2554,4 +3594,495 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu });
 	}
+
+	@Test
+	public void testOrganizeImportsBug573629() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "import java.util.List;\n" //
+				+ "public class TestOrganizeImports {\n" //
+				+ "    public void foo(int a, List<String> list) {\n" //
+				+ "        label_1:\n" //
+				+ "        switch (a) {\n" //
+				+ "            case 0:\n" //
+				+ "                while (true) {\n" //
+				+ "                    int len = 0;\n" //
+				+ "                    for (int i = 0; i < list.size(); ++i) {\n" //
+				+ "                        String s = list.get(i);\n" //
+				+ "                        len += s.length();\n" //
+				+ "                    }\n" //
+				+ "                    if (len < 100) {\n"
+				+ "                        break label_1;\n" //
+				+ "                    }\n" //
+				+ "                    break;\n" //
+				+ "                }\n" //
+				+ "                break;\n" //
+				+ "            default:\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n"; //
+		ICompilationUnit cu1= pack1.createCompilationUnit("TestOrganizeImports.java", sample, false, null);
+
+		enable(CleanUpConstants.ORGANIZE_IMPORTS);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "import java.util.List;\n" //
+				+ "public class TestOrganizeImports {\n" //
+				+ "    public void foo(int a, List<String> list) {\n" //
+				+ "        label_1:\n" //
+				+ "        switch (a) {\n" //
+				+ "            case 0:\n" //
+				+ "                while (true) {\n" //
+				+ "                    int len = 0;\n" //
+				+ "                    for (String s : list) {\n" //
+				+ "                        len += s.length();\n" //
+				+ "                    }\n" //
+				+ "                    if (len < 100) {\n"
+				+ "                        break label_1;\n" //
+				+ "                    }\n" //
+				+ "                    break;\n" //
+				+ "                }\n" //
+				+ "                break;\n" //
+				+ "            default:\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n"; //
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
+	}
+
+	@Test
+	public void testStringBufferToStringBuilderForLocals() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+
+		String sample0= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class SuperClass {\n" //
+				+ "    public StringBuffer field0;\n" //
+				+ "    public void method0(StringBuffer parm) {\n" //
+				+ "        System.out.println(parm.toString());\n" //
+				+ "    }\n" //
+				+ "}";
+		ICompilationUnit cu0= pack1.createCompilationUnit("SuperClass.java", sample0, false, null);
+
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class TestStringBuilderCleanup extends SuperClass {\n" //
+				+ "    StringBuffer field1;\n" //
+				+ "    StringBuffer field2;\n" //
+				+ "    public void changeForSimpleCase() {\n" //
+				+ "        StringBuffer x = new StringBuffer();\n" //
+				+ "        x.append(\"abc\");\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    public void changeWithSafeParmUse(StringBuffer a) {\n" //
+				+ "        StringBuffer x = new StringBuffer();\n" //
+				+ "        x.append(a.toString());\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    public void changeWithArrayAndForLoop() {\n" //
+				+ "        StringBuffer[] j = new StringBuffer[14];\n" //
+				+ "        for (StringBuffer sb : j) {\n" //
+				+ "            StringBuffer k = sb.append(\"abc\");\n" //
+				+ "            System.out.println(k.toString());\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "    public void changeConstructors() {\n" //
+				+ "        StringBuffer x = null;\n" //
+				+ "        x = new StringBuffer();\n" //
+				+ "        x.append(new StringBuffer(\"abc\"));\n" //
+				+ "    }\n" //
+				+ "    public void changeWithConditional(int x) {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        StringBuffer b = null;\n" //
+				+ "        b = x < 0 ? new StringBuffer() : a;\n" //
+				+ "    }\n" //
+				+ "    private void someMethod(Object a) {}\n" //
+				+ "    public void changeWithValidMethodCall() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        someMethod(a.toString());\n" //
+				+ "    }\n" //
+				+ "    private void varArgMethod(StringBuffer ...a) {}\n" //
+				+ "    public void changeWithVarArgMethodWithSafeUse(StringBuffer parm) {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        varArgMethod(field1, super.field0, parm);\n" //
+				+ "    }\n" //
+				+ "    public void changeWithVarArgMethodWithSafeUse2() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        varArgMethod();\n" //
+				+ "    }\n" //
+				+ "    public StringBuffer changeWithSafeFieldAndParmUse(StringBuffer parm) {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        StringBuffer b = new StringBuffer(\"abc\");\n" //
+				+ "        a.append(b);\n" //
+				+ "        a.append(field1.toString());\n" //
+				+ "        b.append(parm.toString());\n" //
+				+ "        field1 = field2;\n" //
+				+ "        super.field0 = field1;\n" //
+				+ "        changeWithSafeParmUse(parm);\n" //
+				+ "        super.method0(parm);\n" //
+				+ "        field2 = parm.append(\"def\");\n" //
+				+ "        return field2;\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("TestStringBuilderCleanup.java", sample, false, null);
+
+		enable(CleanUpConstants.STRINGBUFFER_TO_STRINGBUILDER);
+		enable(CleanUpConstants.STRINGBUFFER_TO_STRINGBUILDER_FOR_LOCALS);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class TestStringBuilderCleanup extends SuperClass {\n" //
+				+ "    StringBuffer field1;\n" //
+				+ "    StringBuffer field2;\n" //
+				+ "    public void changeForSimpleCase() {\n" //
+				+ "        StringBuilder x = new StringBuilder();\n" //
+				+ "        x.append(\"abc\");\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    public void changeWithSafeParmUse(StringBuffer a) {\n" //
+				+ "        StringBuilder x = new StringBuilder();\n" //
+				+ "        x.append(a.toString());\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    public void changeWithArrayAndForLoop() {\n" //
+				+ "        StringBuilder[] j = new StringBuilder[14];\n" //
+				+ "        for (StringBuilder sb : j) {\n" //
+				+ "            StringBuilder k = sb.append(\"abc\");\n" //
+				+ "            System.out.println(k.toString());\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "    public void changeConstructors() {\n" //
+				+ "        StringBuilder x = null;\n" //
+				+ "        x = new StringBuilder();\n" //
+				+ "        x.append(new StringBuffer(\"abc\"));\n" //
+				+ "    }\n" //
+				+ "    public void changeWithConditional(int x) {\n" //
+				+ "        StringBuilder a = new StringBuilder();\n" //
+				+ "        StringBuilder b = null;\n" //
+				+ "        b = x < 0 ? new StringBuilder() : a;\n" //
+				+ "    }\n" //
+				+ "    private void someMethod(Object a) {}\n" //
+				+ "    public void changeWithValidMethodCall() {\n" //
+				+ "        StringBuilder a = new StringBuilder();\n" //
+				+ "        someMethod(a.toString());\n" //
+				+ "    }\n" //
+				+ "    private void varArgMethod(StringBuffer ...a) {}\n" //
+				+ "    public void changeWithVarArgMethodWithSafeUse(StringBuffer parm) {\n" //
+				+ "        StringBuilder a = new StringBuilder();\n" //
+				+ "        varArgMethod(field1, super.field0, parm);\n" //
+				+ "    }\n" //
+				+ "    public void changeWithVarArgMethodWithSafeUse2() {\n" //
+				+ "        StringBuilder a = new StringBuilder();\n" //
+				+ "        varArgMethod();\n" //
+				+ "    }\n" //
+				+ "    public StringBuffer changeWithSafeFieldAndParmUse(StringBuffer parm) {\n" //
+				+ "        StringBuilder a = new StringBuilder();\n" //
+				+ "        StringBuilder b = new StringBuilder(\"abc\");\n" //
+				+ "        a.append(b);\n" //
+				+ "        a.append(field1.toString());\n" //
+				+ "        b.append(parm.toString());\n" //
+				+ "        field1 = field2;\n" //
+				+ "        super.field0 = field1;\n" //
+				+ "        changeWithSafeParmUse(parm);\n" //
+				+ "        super.method0(parm);\n" //
+				+ "        field2 = parm.append(\"def\");\n" //
+				+ "        return field2;\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu0, cu1 }, new String[] { sample0, expected1 }, null);
+	}
+
+	@Test
+	public void testDoNotConvertStringBufferToStringBuilderForLocals() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample0= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class SuperClass {\n" //
+				+ "    public StringBuffer field0;\n" //
+				+ "    public void method0(StringBuffer parm) {\n" //
+				+ "        System.out.println(parm.toString());\n" //
+				+ "    }\n" //
+				+ "}";
+		ICompilationUnit cu0= pack1.createCompilationUnit("SuperClass.java", sample0, false, null);
+
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class TestStringBuilderCleanup extends SuperClass {\n" //
+				+ "    StringBuffer field1;\n" //
+				+ "    StringBuffer field2;\n" //
+				+ "    public void doNotChangeForParmAssignment(StringBuffer parm) {\n" //
+				+ "        StringBuffer x = parm;\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    public void doNotChangeForFieldAssignment(StringBuffer a) {\n" //
+				+ "        StringBuffer x = field1.append(\"abc\");\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    public void doNotChangeForSuperFieldAssignment(StringBuffer a) {\n" //
+				+ "        StringBuffer x = super.field0.append(\"abc\");\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    public void doNotChangeWithParmForLoop(StringBuffer[] parm) {\n" //
+				+ "        for (StringBuffer sb : parm) {\n" //
+				+ "            StringBuffer k = sb.append(\"abc\");\n" //
+				+ "            System.out.println(k.toString());\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "    public void doNotChangeWithParmCast(Object o) {\n" //
+				+ "        StringBuffer k= (StringBuffer)o;\n" //
+				+ "    }\n" //
+				+ "    public StringBuffer doNotChangeWithReturn() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        return a;\n" //
+				+ "    }"
+				+ "    public void doNotChangeWithMethodReturnAssignment() {\n" //
+				+ "        StringBuffer a = doNotChangeWithReturn();\n" //
+				+ "    }\n" //
+				+ "    public void doNotChangeWhenMethodParm() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        doNotChangeForFieldAssignment(a);\n" //
+				+ "    }\n" //
+				+ "    public void doNotChangeWhenSuperMethodParm() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        super.method0(a);\n" //
+				+ "    }\n" //
+				+ "    private void someMethod(Object a, Object b) {}\n" //
+				+ "    public void doNotChangeWhenMethodParmPassedAsObject() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        someMethod(a.toString(), a);\n" //
+				+ "    }\n" //
+				+ "    private void varArgMethod(StringBuffer ...a) {}\n" //
+				+ "    public void doNotChangeWhenPassedAsVarArg() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        varArgMethod(a);\n" //
+				+ "    }\n" //
+				+ "    public void doNotChangeWhenPassedAsVarArg2() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        varArgMethod(field1, a);\n" //
+				+ "    }\n" //
+				+ "    private void varArgObjectMethod(Object ...a) {}\n" //
+				+ "    public void doNotChangeWhenPassedAsObjectVarArg() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        varArgObjectMethod(a);\n" //
+				+ "    }\n" //
+			+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("TestStringBuilderCleanup.java", sample, false, null);
+
+		enable(CleanUpConstants.STRINGBUFFER_TO_STRINGBUILDER);
+		enable(CleanUpConstants.STRINGBUFFER_TO_STRINGBUILDER_FOR_LOCALS);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu0, cu1 });
+	}
+
+	@Test
+	public void testDoNotConvertStringBufferToStringBuilder() throws Exception {
+		// test bug 574588 NPE on private constructor
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class TestStringBuilderCleanup {\n" //
+				+ "    private TestStringBuilderCleanup(){\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("TestStringBuilderCleanup.java", sample, false, null);
+
+		enable(CleanUpConstants.STRINGBUFFER_TO_STRINGBUILDER);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu1 });
+	}
+
+	@Test
+	public void testConvertStringBufferToStringBuilderAll() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample0= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class SuperClass {\n" //
+				+ "    public StringBuffer field0;\n" //
+				+ "    private SuperClass(StringBuffer a) {\n" //
+				+ "        this.field0 = a;\n" //
+				+ "    }\n" //
+				+ "    public void method0(StringBuffer parm) {\n" //
+				+ "        System.out.println(parm.toString());\n" //
+				+ "    }\n" //
+				+ "}";
+		ICompilationUnit cu0= pack1.createCompilationUnit("SuperClass.java", sample0, false, null);
+
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "import java.util.Map;\n" //
+				+ "public class TestStringBuilderCleanup extends SuperClass {\n" //
+				+ "    StringBuffer field1;\n" //
+				+ "    StringBuffer field2;\n" //
+				+ "    /**\n" //
+				+ "     * {@link StringBuffer}\n" //
+				+ "     */\n" //
+				+ "    public void changeForParmAssignment(StringBuffer parm) {\n" //
+				+ "        StringBuffer x = (parm instanceof StringBuffer) ? parm : null;\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    /**\n" //
+				+ "     * @see StringBuffer#append(StringBuffer)\n" //
+				+ "     */\n" //
+				+ "    public void changeForFieldAssignment(StringBuffer a) {\n" //
+				+ "        StringBuffer x = field1.append(\"abc\");\n" //
+				+ "        Map<String, StringBuffer> map= null;\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    public void changeForSuperFieldAssignment(StringBuffer a) {\n" //
+				+ "        StringBuffer x = super.field0.append(\"abc\");\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    public void changeWithParmForLoop(StringBuffer[] parm) {\n" //
+				+ "        for (StringBuffer sb : parm) {\n" //
+				+ "            StringBuffer k = sb.append(\"abc\");\n" //
+				+ "            System.out.println(k.toString());\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "    public void changeWithParmCast(Object o) {\n" //
+				+ "        StringBuffer k= (StringBuffer)o;\n" //
+				+ "    }\n" //
+				+ "    public StringBuffer changeWithReturn() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        return a;\n" //
+				+ "    }"
+				+ "    public void changeWithMethodReturnAssignment() {\n" //
+				+ "        StringBuffer a = changeWithReturn();\n" //
+				+ "    }\n" //
+				+ "    public void changeWhenMethodParm() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        changeForFieldAssignment(a);\n" //
+				+ "    }\n" //
+				+ "    public void changeWhenSuperMethodParm() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        super.method0(a);\n" //
+				+ "    }\n" //
+				+ "    private void someMethod(Object a, Object b) {}\n" //
+				+ "    public void changeWhenMethodParmPassedAsObject() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        someMethod(a.toString(), a);\n" //
+				+ "    }\n" //
+				+ "    private void varArgMethod(StringBuffer ...a) {}\n" //
+				+ "    public void changeWhenPassedAsVarArg() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        varArgMethod(a);\n" //
+				+ "    }\n" //
+				+ "    public void changeWhenPassedAsVarArg2() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        varArgMethod(field1, a);\n" //
+				+ "    }\n" //
+				+ "    private void varArgObjectMethod(Object ...a) {}\n" //
+				+ "    public void changeWhenPassedAsObjectVarArg() {\n" //
+				+ "        StringBuffer a = new StringBuffer();\n" //
+				+ "        varArgObjectMethod(a);\n" //
+				+ "    }\n" //
+			+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("TestStringBuilderCleanup.java", sample, false, null);
+
+		String expected0= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class SuperClass {\n" //
+				+ "    public StringBuilder field0;\n" //
+				+ "    private SuperClass(StringBuilder a) {\n" //
+				+ "        this.field0 = a;\n" //
+				+ "    }\n" //
+				+ "    public void method0(StringBuilder parm) {\n" //
+				+ "        System.out.println(parm.toString());\n" //
+				+ "    }\n" //
+				+ "}";
+
+		String expected1= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "import java.util.Map;\n" //
+				+ "public class TestStringBuilderCleanup extends SuperClass {\n" //
+				+ "    StringBuilder field1;\n" //
+				+ "    StringBuilder field2;\n" //
+				+ "    /**\n" //
+				+ "     * {@link StringBuilder}\n" //
+				+ "     */\n" //
+				+ "    public void changeForParmAssignment(StringBuilder parm) {\n" //
+				+ "        StringBuilder x = (parm instanceof StringBuilder) ? parm : null;\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    /**\n" //
+				+ "     * @see StringBuilder#append(StringBuilder)\n" //
+				+ "     */\n" //
+				+ "    public void changeForFieldAssignment(StringBuilder a) {\n" //
+				+ "        StringBuilder x = field1.append(\"abc\");\n" //
+				+ "        Map<String, StringBuilder> map= null;\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    public void changeForSuperFieldAssignment(StringBuilder a) {\n" //
+				+ "        StringBuilder x = super.field0.append(\"abc\");\n" //
+				+ "        System.out.println(x.toString());\n" //
+				+ "    }\n" //
+				+ "    public void changeWithParmForLoop(StringBuilder[] parm) {\n" //
+				+ "        for (StringBuilder sb : parm) {\n" //
+				+ "            StringBuilder k = sb.append(\"abc\");\n" //
+				+ "            System.out.println(k.toString());\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "    public void changeWithParmCast(Object o) {\n" //
+				+ "        StringBuilder k= (StringBuilder)o;\n" //
+				+ "    }\n" //
+				+ "    public StringBuilder changeWithReturn() {\n" //
+				+ "        StringBuilder a = new StringBuilder();\n" //
+				+ "        return a;\n" //
+				+ "    }"
+				+ "    public void changeWithMethodReturnAssignment() {\n" //
+				+ "        StringBuilder a = changeWithReturn();\n" //
+				+ "    }\n" //
+				+ "    public void changeWhenMethodParm() {\n" //
+				+ "        StringBuilder a = new StringBuilder();\n" //
+				+ "        changeForFieldAssignment(a);\n" //
+				+ "    }\n" //
+				+ "    public void changeWhenSuperMethodParm() {\n" //
+				+ "        StringBuilder a = new StringBuilder();\n" //
+				+ "        super.method0(a);\n" //
+				+ "    }\n" //
+				+ "    private void someMethod(Object a, Object b) {}\n" //
+				+ "    public void changeWhenMethodParmPassedAsObject() {\n" //
+				+ "        StringBuilder a = new StringBuilder();\n" //
+				+ "        someMethod(a.toString(), a);\n" //
+				+ "    }\n" //
+				+ "    private void varArgMethod(StringBuilder ...a) {}\n" //
+				+ "    public void changeWhenPassedAsVarArg() {\n" //
+				+ "        StringBuilder a = new StringBuilder();\n" //
+				+ "        varArgMethod(a);\n" //
+				+ "    }\n" //
+				+ "    public void changeWhenPassedAsVarArg2() {\n" //
+				+ "        StringBuilder a = new StringBuilder();\n" //
+				+ "        varArgMethod(field1, a);\n" //
+				+ "    }\n" //
+				+ "    private void varArgObjectMethod(Object ...a) {}\n" //
+				+ "    public void changeWhenPassedAsObjectVarArg() {\n" //
+				+ "        StringBuilder a = new StringBuilder();\n" //
+				+ "        varArgObjectMethod(a);\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		enable(CleanUpConstants.STRINGBUFFER_TO_STRINGBUILDER);
+		disable(CleanUpConstants.STRINGBUFFER_TO_STRINGBUILDER_FOR_LOCALS);
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu0, cu1 }, new String[] { expected0, expected1 },
+				new HashSet<>(Arrays.asList(MultiFixMessages.StringBufferToStringBuilderCleanUp_description)));
+	}
+
 }

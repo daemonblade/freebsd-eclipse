@@ -19,12 +19,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Rule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -56,14 +57,11 @@ import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 public class ChangeSignatureTests extends GenericRefactoringTest {
 	private static final String REFACTORING_PATH= "ChangeSignature/";
 
-	private static final boolean BUG_83691_CORE_JAVADOC_REF= true;
-
-	private static final boolean BUG_NEED_TO_DECIDE_HOW_TO_TREAT_COMPILE_ERRORS= true;
-
 	private static final boolean RUN_CONSTRUCTOR_TEST= true;
 
-	@Rule
-	public RefactoringTestSetup fts= new RefactoringTestSetup();
+	public ChangeSignatureTests() {
+		rts= new RefactoringTestSetup();
+	}
 
 	@Override
 	protected String getRefactoringPath() {
@@ -71,10 +69,10 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 	}
 
 	private String getSimpleTestFileName(boolean canReorder, boolean input){
-		String fileName = "A_" + getName();
+		StringBuilder fileName = new StringBuilder("A_").append(getName());
 		if (canReorder)
-			fileName += input ? "_in": "_out";
-		return fileName + ".java";
+			fileName.append(input ? "_in": "_out");
+		return fileName.append(".java").toString();
 	}
 
 	private String getTestFileName(boolean canReorder, boolean input){
@@ -83,9 +81,9 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 	}
 
 	private String getTestFolderPath(boolean canModify) {
-		String fileName= TEST_PATH_PREFIX + getRefactoringPath();
-		fileName += (canModify ? "canModify/": "cannotModify/");
-		return fileName;
+		StringBuilder fileName= new StringBuilder(TEST_PATH_PREFIX).append(getRefactoringPath());
+		fileName.append(canModify ? "canModify/": "cannotModify/");
+		return fileName.toString();
 	}
 
 	//---helpers
@@ -144,7 +142,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 		assertParticipant(classA);
 	}
 
-	private static void assertParticipant(IType typeOfMethod) throws JavaModelException {
+	protected static void assertParticipant(IType typeOfMethod) throws JavaModelException {
 		TestChangeMethodSignaturParticipant.testParticipant(typeOfMethod);
 	}
 
@@ -152,10 +150,24 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 	 * Rename method 'A.m(signature)' to 'A.newMethodName(signature)'
 	 */
 	protected void helperRenameMethod(String[] signature, String newMethodName, boolean createDelegate, boolean markAsDeprecated) throws Exception {
+		helperRenameMethod(signature, newMethodName, createDelegate, markAsDeprecated, "A");
+	}
+
+	/*
+	 * Rename method 'A.B.m(signature)' to 'A.B.newMethodName(signature)'
+	 */
+	protected void helperRenameInnerClassMethod(String[] signature, String newMethodName, boolean createDelegate, boolean markAsDeprecated) throws Exception {
+		helperRenameMethod(signature, newMethodName, createDelegate, markAsDeprecated, "B");
+	}
+
+	/*
+	 * Rename method 'm(signature)' to 'newMethodName(signature)'
+	 */
+	private void helperRenameMethod(String[] signature, String newMethodName, boolean createDelegate, boolean markAsDeprecated, String typeName) throws Exception {
 		ICompilationUnit cu= createCUfromTestFile(getPackageP(), true, true);
-		IType classA= getType(cu, "A");
-		IMethod method = classA.getMethod("m", signature);
-		assertTrue("method m does not exist in A", method.exists());
+		IType classType= getType(cu, typeName);
+		IMethod method = classType.getMethod("m", signature);
+		assertTrue("method m does not exist in " +typeName, method.exists());
 		assertTrue("refactoring not available", RefactoringAvailabilityTester.isChangeSignatureAvailable(method));
 
 		ChangeSignatureProcessor processor= new ChangeSignatureProcessor(method);
@@ -176,7 +188,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 		String expectedFileContents= getFileContents(getTestFileName(true, false));
 		assertEqualLines("invalid change of method name", expectedFileContents, newcu.getSource());
 
-		assertParticipant(classA);
+		assertParticipant(classType);
 	}
 
 	private void helperDoAll(String typeName,
@@ -291,7 +303,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 			if (infos.get(i).isAdded())
 				continue;
 			if (! swapped.contains(Integer.valueOf(i))){
-				swapped.add(Integer.valueOf(permutation[i]));
+				swapped.add(permutation[i]);
 
 				ParameterInfo infoI= infos.get(i);
 				infoI.setNewName(newNameList.get(oldNameList.indexOf(infoI.getOldName())));
@@ -324,7 +336,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 			List<String> newNameList= Arrays.asList(newNames);
 			for (int i= 0; i < permutation.length; i++) {
 				if (! swapped.contains(Integer.valueOf(i))){
-					swapped.add(Integer.valueOf(permutation[i]));
+					swapped.add(permutation[i]);
 					ParameterInfo infoI= infos.get(i);
 					infoI.setNewName(newNameList.get(oldNameList.indexOf(infoI.getOldName())));
 					ParameterInfo infoI1= infos.get(permutation[i]);
@@ -872,10 +884,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 //constructor tests
 	@Test
 	public void test21() throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 		String[] signature= {"I", "I"};
 		ParameterInfo[] newParamInfo= null;
 		int[] newIndices= null;
@@ -890,10 +899,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 	}
 	@Test
 	public void test22() throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 		String[] signature= {"I", "I"};
 		ParameterInfo[] newParamInfo= null;
 		int[] newIndices= null;
@@ -908,10 +914,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 	}
 	@Test
 	public void test23() throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 		String[] signature= {"I", "I"};
 		ParameterInfo[] newParamInfo= null;
 		int[] newIndices= null;
@@ -926,10 +929,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 	}
 	@Test
 	public void test24() throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 //		if (true){
 //			printTestDisabledMessage("Bug 24230");
 //			return;
@@ -948,10 +948,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 	}
 	@Test
 	public void test25() throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 		String[] signature= {"I", "I"};
 		ParameterInfo[] newParamInfo= null;
 		int[] newIndices= null;
@@ -966,10 +963,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 	}
 	@Test
 	public void test26() throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 		String[] signature= {"I", "I"};
 		ParameterInfo[] newParamInfo= null;
 		int[] newIndices= null;
@@ -985,10 +979,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 
 	@Test
 	public void test27() throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 		String[] signature= {"QString;", "QObject;", "I"};
 		ParameterInfo[] newParamInfo= createNewParamInfos(new String[]{"Object"}, new String[]{"newParam"}, new String[]{"null"});
 		int[] newIndices= { 3 };
@@ -1258,12 +1249,9 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 		helperDoAll("A", "m", signature, newParamInfo, newIndices, oldParamNames, newParamNames, null, permutation, newVisibility, deletedIndices, newReturnTypeName, true);
 	}
 
+	@Ignore("need to decide how to treat compile errors")
 	@Test
 	public void testAll44()throws Exception{
-		if (BUG_NEED_TO_DECIDE_HOW_TO_TREAT_COMPILE_ERRORS) {
-			printTestDisabledMessage("need to decide how to treat compile errors");
-			return;
-		}
 		String[] signature= {"I", "I"};
 		String[] newNames= null;
 		String[] newTypes= null;
@@ -1280,13 +1268,9 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 		helperDoAll("A", "m", signature, newParamInfo, newIndices, oldParamNames, newParamNames, null, permutation, newVisibility, deletedIndices, newReturnTypeName);
 	}
 
+	@Ignore("need to decide how to treat compile errors")
 	@Test
 	public void testAll45()throws Exception{
-		if (BUG_NEED_TO_DECIDE_HOW_TO_TREAT_COMPILE_ERRORS) {
-			printTestDisabledMessage("need to decide how to treat compile errors");
-			return;
-		}
-
 		String[] signature= {"I", "I"};
 		String[] newNames= null;
 		String[] newTypes= null;
@@ -1306,10 +1290,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 
 	@Test
 	public void testAll46()throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 
 		String[] signature= {};
 		String[] newNames= {"i"};
@@ -1329,10 +1310,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 
 	@Test
 	public void testAll47()throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 
 		String[] signature= {};
 		String[] newNames= {"i"};
@@ -1352,10 +1330,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 
 	@Test
 	public void testAll48()throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 
 		String[] signature= {};
 		String[] newNames= {"i"};
@@ -1375,10 +1350,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 
 	@Test
 	public void testAll49()throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 
 		String[] signature= {};
 		String[] newNames= {"i"};
@@ -1398,10 +1370,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 
 	@Test
 	public void testAll50()throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 
 		String[] signature= {};
 		String[] newNames= {"i"};
@@ -1421,10 +1390,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 
 	@Test
 	public void testAll51()throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 
 		String[] signature= {};
 		String[] newNames= {"i"};
@@ -1444,10 +1410,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 
 	@Test
 	public void testAll52()throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 
 		String[] signature= {};
 		String[] newNames= {"i"};
@@ -1516,10 +1479,7 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 
 	@Test
 	public void testAll56()throws Exception{
-		if (! RUN_CONSTRUCTOR_TEST){
-			printTestDisabledMessage("disabled for constructors for now");
-			return;
-		}
+		assumeFalse("disabled for constructors for now",RUN_CONSTRUCTOR_TEST);
 
 //		printTestDisabledMessage("test for 38366 ArrayIndexOutOfBoundsException in change signeture [refactoring] ");
 		String[] signature= {"QEvaViewPart;", "I"};
@@ -1938,12 +1898,9 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 		helperDoAll("A", "textContains", signature, newParamInfo, newIndices, oldParamNames, newParamNames, newParamTypeNames, permutation, newVisibility, deletedIndices, newReturnTypeName);
 	}
 
+	@Ignore("BUG_83691_CORE_JAVADOC_REF")
 	@Test
 	public void testEnum01() throws Exception {
-		if (BUG_83691_CORE_JAVADOC_REF) {
-			printTestDisabledMessage("BUG_83691_CORE_JAVADOC_REF");
-			return;
-		}
 		String[] signature= {"I"};
 		String[] newNames= {"a"};
 		String[] newTypes= {"int"};
@@ -1978,12 +1935,9 @@ public class ChangeSignatureTests extends GenericRefactoringTest {
 		helperDoAll("A_testEnum02_in", "A_testEnum02_in", signature, newParamInfo, newIndices, oldParamNames, newParamNames, null, permutation, newVisibility, deletedIndices, newReturnTypeName);
 	}
 
+	@Ignore("BUG_83691_CORE_JAVADOC_REF")
 	@Test
 	public void testEnum03() throws Exception {
-		if (BUG_83691_CORE_JAVADOC_REF) {
-			printTestDisabledMessage("BUG_83691_CORE_JAVADOC_REF");
-			return;
-		}
 		String[] signature= {};
 		String[] newNames= {"obj"};
 		String[] newTypes= {"Object"};

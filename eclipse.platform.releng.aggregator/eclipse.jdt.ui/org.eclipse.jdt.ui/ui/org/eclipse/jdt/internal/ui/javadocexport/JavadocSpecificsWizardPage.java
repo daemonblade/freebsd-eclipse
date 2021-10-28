@@ -13,6 +13,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.javadocexport;
 
+import static org.eclipse.jdt.internal.ui.javadocexport.JavadocSpecificsWizardPage.JavadocsSpecifics.ANTSTATUS;
+import static org.eclipse.jdt.internal.ui.javadocexport.JavadocSpecificsWizardPage.JavadocsSpecifics.OVERVIEWSTATUS;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,8 +69,9 @@ public class JavadocSpecificsWizardPage extends JavadocWizardPage {
 
 	private JavadocOptionsManager fStore;
 
-	private final int OVERVIEWSTATUS= 1;
-	private final int ANTSTATUS= 2;
+	enum JavadocsSpecifics {
+		OVERVIEWSTATUS, ANTSTATUS;
+	}
 
 	protected JavadocSpecificsWizardPage(String pageName, JavadocTreeWizardPage firstPage, JavadocOptionsManager store) {
 		super(pageName);
@@ -226,7 +230,7 @@ public class JavadocSpecificsWizardPage extends JavadocWizardPage {
 		});
 	} //end method createExtraOptionsGroup
 
-	private void doValidation(int val) {
+	private void doValidation(JavadocsSpecifics val) {
 		switch (val) {
 
 			case OVERVIEWSTATUS :
@@ -240,7 +244,7 @@ public class JavadocSpecificsWizardPage extends JavadocWizardPage {
 						String ext= filename.substring(filename.lastIndexOf('.') + 1);
 						if (!file.isFile()) {
 							fOverviewStatus.setError(JavadocExportMessages.JavadocSpecificsWizardPage_overviewnotfound_error);
-						} else if (!ext.equalsIgnoreCase("html")) { //$NON-NLS-1$
+						} else if (!"html".equalsIgnoreCase(ext)) { //$NON-NLS-1$
 							fOverviewStatus.setError(JavadocExportMessages.JavadocSpecificsWizardPage_overviewincorrect_error);
 						}
 					}
@@ -255,7 +259,7 @@ public class JavadocSpecificsWizardPage extends JavadocWizardPage {
 					} else {
 						File file= new File(filename);
 						String ext= filename.substring(filename.lastIndexOf('.') + 1);
-						if (file.isDirectory() || !(ext.equalsIgnoreCase("xml"))) //$NON-NLS-1$
+						if (file.isDirectory() || !("xml".equalsIgnoreCase(ext))) //$NON-NLS-1$
 							fAntStatus.setError(JavadocExportMessages.JavadocSpecificsWizardPage_antfileincorrect_error);
 						else if (file.exists())
 							fAntStatus.setWarning(JavadocExportMessages.JavadocSpecificsWizardPage_antfileoverwrite_warning);

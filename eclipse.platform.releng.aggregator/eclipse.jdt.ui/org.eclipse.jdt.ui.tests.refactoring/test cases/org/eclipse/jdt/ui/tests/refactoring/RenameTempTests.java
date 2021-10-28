@@ -18,7 +18,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Rule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.eclipse.ltk.core.refactoring.Refactoring;
@@ -39,13 +39,11 @@ import org.eclipse.jdt.ui.tests.refactoring.infra.TextRangeUtil;
 import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 
 public class RenameTempTests extends GenericRefactoringTest{
-	private static final boolean BUG_checkDeclInNestedClass= true;
-	private static final boolean BUG_checkShadowing= true;
-
 	private static final String REFACTORING_PATH= "RenameTemp/";
 
-	@Rule
-	public RefactoringTestSetup fts= new RefactoringTestSetup();
+	public RenameTempTests() {
+		rts= new RefactoringTestSetup();
+	}
 
 	@Override
 	protected String getRefactoringPath() {
@@ -53,16 +51,16 @@ public class RenameTempTests extends GenericRefactoringTest{
 	}
 
 	private String getSimpleTestFileName(boolean canRename, boolean input){
-		String fileName = "A_" + getName();
+		StringBuilder fileName = new StringBuilder("A_").append(getName());
 		if (canRename)
-			fileName += input ? "_in": "_out";
-		return fileName + ".java";
+			fileName.append(input ? "_in": "_out");
+		return fileName.append(".java").toString();
 	}
 
 	private String getTestFileName(boolean canRename, boolean input){
-		String fileName= TEST_PATH_PREFIX + getRefactoringPath();
-		fileName += (canRename ? "canRename/": "cannotRename/");
-		return fileName + getSimpleTestFileName(canRename, input);
+		StringBuilder fileName= new StringBuilder(TEST_PATH_PREFIX).append(getRefactoringPath());
+		fileName.append(canRename ? "canRename/": "cannotRename/");
+		return fileName.append(getSimpleTestFileName(canRename, input)).toString();
 	}
 
 	//------------
@@ -500,12 +498,9 @@ public class RenameTempTests extends GenericRefactoringTest{
 	}
 
 // -----
+	@Ignore("BUG_checkDeclInNestedClass fails - must revisit")
 	@Test
 	public void testFail0() throws Exception{
-		if (BUG_checkDeclInNestedClass) {
-			printTestDisabledMessage("fails - must revisit");
-			return;
-		}
 		helper2("j");
 	}
 
@@ -534,12 +529,9 @@ public class RenameTempTests extends GenericRefactoringTest{
 		helper2("j");
 	}
 
+	@Ignore("BUG_checkDeclInNestedClass fails - must revisit")
 	@Test
 	public void testFail6() throws Exception{
-		if (BUG_checkDeclInNestedClass) {
-			printTestDisabledMessage("fails - must revisit");
-			return;
-		}
 		helper2("j");
 	}
 
@@ -640,12 +632,9 @@ public class RenameTempTests extends GenericRefactoringTest{
 		helper2("j");
 	}
 
+	@Ignore("BUG_checkShadowing Test disabled until it is clear how 1.4 treats this")
 	@Test
 	public void testFail26() throws Exception{
-		if (BUG_checkShadowing) {
-			printTestDisabledMessage("Test disabled until it is clear how 1.4 treats this");
-			return;
-		}
 		helper2("j");
 	}
 

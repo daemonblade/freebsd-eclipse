@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,7 @@
  *     IBM Corporation - initial API and implementation
  *     Benjamin Muskalla <bmuskalla@eclipsesource.com> - [extract method] remember selected access modifier - https://bugs.eclipse.org/bugs/show_bug.cgi?id=101233
  *     Samrat Dhillon <samrat.dhillon@gmail.com> -  [extract method] Extracted method should be declared static if extracted expression is also used in another static method https://bugs.eclipse.org/bugs/show_bug.cgi?id=393098
+ *     Microsoft Corporation - read preferences from the compilation unit
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.refactoring.code;
 
@@ -148,8 +149,8 @@ public class ExtractMethodInputPage extends UserInputWizardPage {
 			RefactoringMessages.ExtractMethodInputPage_default,
 			RefactoringMessages.ExtractMethodInputPage_private
 		};
-		Integer[] data= new Integer[] {Integer.valueOf(Modifier.PUBLIC), Integer.valueOf(Modifier.PROTECTED), Integer.valueOf(Modifier.NONE), Integer.valueOf(Modifier.PRIVATE)};
-		Integer visibility= Integer.valueOf(fRefactoring.getVisibility());
+		Integer[] data= new Integer[] {Modifier.PUBLIC, Modifier.PROTECTED, Modifier.NONE, Modifier.PRIVATE};
+		int visibility= fRefactoring.getVisibility();
 		for (int i= 0; i < labels.length; i++) {
 			Button radio= new Button(accessModifiersGroup, SWT.RADIO);
 			radio.setText(labels[i]);
@@ -160,7 +161,7 @@ public class ExtractMethodInputPage extends UserInputWizardPage {
 				@Override
 				public void widgetSelected(SelectionEvent event) {
 					final Integer selectedModifier= (Integer)event.widget.getData();
-					fSettings.put(ACCESS_MODIFIER, selectedModifier.intValue());
+					fSettings.put(ACCESS_MODIFIER, selectedModifier);
 					setVisibility(selectedModifier);
 				}
 			});
@@ -254,8 +255,8 @@ public class ExtractMethodInputPage extends UserInputWizardPage {
 	private void updateAccessModifiers() {
 		final Control[] radioButtons= accessModifiersGroup.getChildren();
 		if (fRefactoring.isDestinationInterface()) {
-			Integer visibility= Integer.valueOf(Modifier.PUBLIC);
-			fRefactoring.setVisibility(visibility.intValue());
+			int visibility= Modifier.PUBLIC;
+			fRefactoring.setVisibility(visibility);
 			for (Control radioButton : radioButtons) {
 				radioButton.setEnabled(false);
 				if (radioButton.getData().equals(visibility)) {
@@ -266,8 +267,8 @@ public class ExtractMethodInputPage extends UserInputWizardPage {
 			}
 		} else {
 			final String accessModifier= fSettings.get(ACCESS_MODIFIER);
-			Integer visibility= accessModifier != null ? Integer.valueOf(accessModifier) : Integer.valueOf(fRefactoring.getVisibility());
-			fRefactoring.setVisibility(visibility.intValue());
+			int visibility= accessModifier != null ? Integer.parseInt(accessModifier) : fRefactoring.getVisibility();
+			fRefactoring.setVisibility(visibility);
 			for (Control radioButton : radioButtons) {
 				radioButton.setEnabled(true);
 				if (radioButton.getData().equals(visibility)) {
@@ -314,7 +315,7 @@ public class ExtractMethodInputPage extends UserInputWizardPage {
 	}
 
 	private void setVisibility(Integer visibility) {
-		fRefactoring.setVisibility(visibility.intValue());
+		fRefactoring.setVisibility(visibility);
 		updatePreview(getText());
 	}
 
@@ -368,7 +369,7 @@ public class ExtractMethodInputPage extends UserInputWizardPage {
 		if (fSettings == null) {
 			fSettings= getDialogSettings().addNewSection(ExtractMethodWizard.DIALOG_SETTING_SECTION);
 			fSettings.put(THROW_RUNTIME_EXCEPTIONS, false);
-			fSettings.put(GENERATE_JAVADOC, JavaPreferencesSettings.getCodeGenerationSettings(fRefactoring.getCompilationUnit().getJavaProject()).createComments);
+			fSettings.put(GENERATE_JAVADOC, JavaPreferencesSettings.getCodeGenerationSettings(fRefactoring.getCompilationUnit()).createComments);
 			fSettings.put(ACCESS_MODIFIER, Modifier.PRIVATE);
 		}
 		fRefactoring.setThrowRuntimeExceptions(fSettings.getBoolean(THROW_RUNTIME_EXCEPTIONS));

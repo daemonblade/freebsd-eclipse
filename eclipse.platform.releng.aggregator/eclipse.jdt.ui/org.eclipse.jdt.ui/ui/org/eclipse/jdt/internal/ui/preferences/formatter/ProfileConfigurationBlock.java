@@ -79,7 +79,7 @@ public abstract class ProfileConfigurationBlock {
 		public void update(Observable o, Object arg) {
 			try {
 				fPreferenceListenerEnabled= false;
-    			final int value= ((Integer)arg).intValue();
+    			final int value= ((Integer)arg);
     			switch (value) {
     			case ProfileManager.PROFILE_DELETED_EVENT:
     			case ProfileManager.PROFILE_RENAMED_EVENT:
@@ -126,7 +126,7 @@ public abstract class ProfileConfigurationBlock {
 		@Override
 		public void update(Observable o, Object arg) {
 			if (arg == null) return;
-			final int value= ((Integer)arg).intValue();
+			final int value= ((Integer)arg);
 			switch (value) {
 			case ProfileManager.PROFILE_CREATED_EVENT:
 			case ProfileManager.PROFILE_DELETED_EVENT:
@@ -210,8 +210,7 @@ public abstract class ProfileConfigurationBlock {
 			final IContentType type= Platform.getContentTypeManager().getContentType("org.eclipse.core.runtime.xml"); //$NON-NLS-1$
 			if (type != null)
 				encoding= type.getDefaultCharset();
-			final Collection<Profile> profiles= new ArrayList<>();
-			profiles.addAll(fProfileManager.getSortedProfiles());
+			final Collection<Profile> profiles= new ArrayList<>(fProfileManager.getSortedProfiles());
 			try {
 				fProfileStore.writeProfilesToFile(profiles, file, encoding);
 			} catch (CoreException e) {

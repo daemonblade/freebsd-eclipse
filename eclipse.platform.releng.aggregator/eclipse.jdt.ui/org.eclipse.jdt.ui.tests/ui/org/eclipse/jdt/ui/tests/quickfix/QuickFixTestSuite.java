@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -22,6 +22,7 @@ import org.junit.runners.Suite;
 	QuickFixTest9.class,
 	QuickFixTest1d8.class,
 	QuickFixTest14.class,
+	QuickFixTest15.class,
 	QuickFixTestPreview.class,
 	SerialVersionQuickFixTest.class,
 	UtilitiesTest.class,
@@ -47,13 +48,14 @@ import org.junit.runners.Suite;
 	MarkerResolutionTest.class,
 	JavadocQuickFixTest.class,
 	JavadocQuickFixTest9.class,
-	JavadocQuickFixTestPreview.class,
+	JavadocQuickFixTest16.class,
 	ConvertForLoopQuickFixTest.class,
 	ConvertIterableLoopQuickFixTest.class,
 	ConvertIterableLoopQuickFixTest1d7.class,
 	AdvancedQuickAssistTest.class,
 	AdvancedQuickAssistTest1d7.class,
 	AdvancedQuickAssistTest1d8.class,
+	AdvancedQuickAssistTest10.class,
 	CleanUpTestCaseSuite.class,
 	QuickFixEnablementTest.class,
 	SurroundWithTemplateTest.class,

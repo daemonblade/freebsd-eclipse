@@ -56,7 +56,7 @@ import org.eclipse.jdt.ui.refactoring.IRefactoringProcessorIds;
 
 public final class JavaMoveProcessor extends MoveProcessor implements IQualifiedNameUpdating, IReorgDestinationValidator {
 
-	private ICreateTargetQueries fCreateTargetQueries;
+	private MonitoringCreateTargetQueries fCreateTargetQueries;
 
 	private IMovePolicy fMovePolicy;
 
@@ -194,8 +194,8 @@ public final class JavaMoveProcessor extends MoveProcessor implements IQualified
 				}
 			};
 			CreateTargetExecutionLog log= null;
-			if (fCreateTargetQueries instanceof MonitoringCreateTargetQueries) {
-				final MonitoringCreateTargetQueries queries= (MonitoringCreateTargetQueries) fCreateTargetQueries;
+			if (fCreateTargetQueries != null) {
+				final MonitoringCreateTargetQueries queries= fCreateTargetQueries;
 				final ICreateTargetQueries delegate= queries.getDelegate();
 				if (delegate instanceof LoggedCreateTargetQueries)
 					log= queries.getCreateTargetExecutionLog();
@@ -221,8 +221,7 @@ public final class JavaMoveProcessor extends MoveProcessor implements IQualified
 	private String[] getAffectedProjectNatures() throws CoreException {
 		String[] jNatures= JavaProcessors.computeAffectedNaturs(fMovePolicy.getJavaElements());
 		String[] rNatures= ResourceProcessors.computeAffectedNatures(fMovePolicy.getResources());
-		Set<String> result= new HashSet<>();
-		result.addAll(Arrays.asList(jNatures));
+		Set<String> result= new HashSet<>(Arrays.asList(jNatures));
 		result.addAll(Arrays.asList(rNatures));
 		return result.toArray(new String[result.size()]);
 	}

@@ -94,7 +94,7 @@ public class CustomFiltersActionGroup extends ActionGroup {
 	 *
 	 * @since 3.0
 	 */
-	class FilterActionMenuContributionItem extends ContributionItem {
+	static class FilterActionMenuContributionItem extends ContributionItem {
 
 		private int fItemNumber;
 		private boolean fState;
@@ -721,7 +721,7 @@ public class CustomFiltersActionGroup extends ActionGroup {
 				Boolean isEnabled= Boolean.valueOf(child.getString(TAG_IS_ENABLED));
 				FilterItem item= fFilterItems.get(id);
 				if (item != null) {
-					item.enabled= isEnabled.booleanValue();
+					item.enabled= isEnabled;
 				}
 			}
 		}

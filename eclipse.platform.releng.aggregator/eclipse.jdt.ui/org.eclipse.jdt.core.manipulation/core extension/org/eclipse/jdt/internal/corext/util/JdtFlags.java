@@ -84,8 +84,9 @@ public class JdtFlags {
 		if (isNestedInterfaceOrAnnotation(bodyDeclaration))
 			return true;
 		int nodeType= bodyDeclaration.getNodeType();
-		if (!(nodeType == ASTNode.METHOD_DECLARATION || nodeType == ASTNode.ANNOTATION_TYPE_MEMBER_DECLARATION) &&
-				isInterfaceOrAnnotationMember(bodyDeclaration))
+		if (nodeType != ASTNode.METHOD_DECLARATION
+				&& nodeType != ASTNode.ANNOTATION_TYPE_MEMBER_DECLARATION
+				&& isInterfaceOrAnnotationMember(bodyDeclaration))
 			return true;
 		if (bodyDeclaration instanceof EnumConstantDeclaration)
 			return true;
@@ -124,7 +125,7 @@ public class JdtFlags {
 	}
 
 	private static boolean isEnumTypeFinal(IMember member) throws JavaModelException {
-		if (!(isEnum(member) && member.getElementType() == IJavaElement.TYPE))
+		if ((!isEnum(member) || (member.getElementType() != IJavaElement.TYPE)))
 			return false;
 		// An enum type is implicitly final unless it contains at least one enum constant that has a class body.
 		IJavaElement[] children= member.getChildren();
@@ -336,18 +337,17 @@ public class JdtFlags {
 
 	public static int getVisibilityCode(String visibilityString) {
 		Assert.isNotNull(visibilityString);
-		if (null != visibilityString)
-			switch (visibilityString) {
-		case VISIBILITY_STRING_PACKAGE:
-			return 0;
-		case VISIBILITY_STRING_PRIVATE:
-			return Modifier.PRIVATE;
-		case VISIBILITY_STRING_PROTECTED:
-			return Modifier.PROTECTED;
-		case VISIBILITY_STRING_PUBLIC:
-			return Modifier.PUBLIC;
-		default:
-			break;
+		switch (visibilityString) {
+			case VISIBILITY_STRING_PACKAGE:
+				return 0;
+			case VISIBILITY_STRING_PRIVATE:
+				return Modifier.PRIVATE;
+			case VISIBILITY_STRING_PROTECTED:
+				return Modifier.PROTECTED;
+			case VISIBILITY_STRING_PUBLIC:
+				return Modifier.PUBLIC;
+			default:
+				break;
 		}
 		return VISIBILITY_CODE_INVALID;
 	}

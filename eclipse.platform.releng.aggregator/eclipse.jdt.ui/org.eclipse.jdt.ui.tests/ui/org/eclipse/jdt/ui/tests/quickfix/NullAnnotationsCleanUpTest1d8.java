@@ -101,7 +101,7 @@ public class NullAnnotationsCleanUpTest1d8 extends CleanUpTestCase {
 	public void testMoveTypeAnnotation() throws Exception {
 		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=468457
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface X {}\n");
 		buf.append("@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Y {}\n");
@@ -113,7 +113,7 @@ public class NullAnnotationsCleanUpTest1d8 extends CleanUpTestCase {
 		String original= buf.toString();
 		ICompilationUnit cu1= pack1.createCompilationUnit("Test.java", original, false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface X {}\n");
 		buf.append("@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Y {}\n");
@@ -125,7 +125,7 @@ public class NullAnnotationsCleanUpTest1d8 extends CleanUpTestCase {
 		String expected1= buf.toString();
 
 		ICleanUp[] cleanUps= { new NullAnnotationsCleanUp(new HashMap<>(), IProblem.TypeAnnotationAtQualifiedName) };
-		performRefactoring(new CleanUpRefactoring(), new ICompilationUnit[] { cu1 }, cleanUps);
+		performRefactoring(new CleanUpRefactoring(), new ICompilationUnit[] { cu1 }, cleanUps, null);
 
 		assertEqualStringsIgnoreOrder(new String[] { cu1.getBuffer().getContents() }, new String[] { expected1 });
 	}
@@ -133,7 +133,7 @@ public class NullAnnotationsCleanUpTest1d8 extends CleanUpTestCase {
 	@Test
 	public void testBug528222() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("\n");
 		buf.append("import org.eclipse.jdt.annotation.NonNullByDefault;\n");
@@ -154,7 +154,7 @@ public class NullAnnotationsCleanUpTest1d8 extends CleanUpTestCase {
 		String original= buf.toString();
 		ICompilationUnit cu1= pack1.createCompilationUnit("Test.java", original, false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("\n");
 		buf.append("import org.eclipse.jdt.annotation.NonNullByDefault;\n");
@@ -177,7 +177,7 @@ public class NullAnnotationsCleanUpTest1d8 extends CleanUpTestCase {
 		String expected1= buf.toString();
 
 		ICleanUp[] cleanUps= { new NullAnnotationsCleanUp(new HashMap<>(), IProblem.RequiredNonNullButProvidedNull) };
-		performRefactoring(new CleanUpRefactoring(), new ICompilationUnit[] { cu1 }, cleanUps);
+		performRefactoring(new CleanUpRefactoring(), new ICompilationUnit[] { cu1 }, cleanUps, null);
 
 		assertEqualStringsIgnoreOrder(new String[] { cu1.getBuffer().getContents() }, new String[] { expected1 });
 	}

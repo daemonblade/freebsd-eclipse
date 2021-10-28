@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,7 @@
  *     IBM Corporation - initial API and implementation
  *     Samrat Dhillon samrat.dhillon@gmail.com - [move member type] Moving a member interface to its own file adds the host's type parameters to it - https://bugs.eclipse.org/bugs/show_bug.cgi?id=385237
  *     Microsoft Corporation - copied to jdt.core.manipulation
+ *     Microsoft Corporation - read formatting options from the compilation unit
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.refactoring.structure;
 
@@ -437,8 +438,7 @@ public final class MoveInnerToTopRefactoring extends Refactoring {
 	}
 
 	private static Set<ICompilationUnit> getMergedSet(Set<ICompilationUnit> s1, Set<ICompilationUnit> s2) {
-		Set<ICompilationUnit> result= new HashSet<>();
-		result.addAll(s1);
+		Set<ICompilationUnit> result= new HashSet<>(s1);
 		result.addAll(s2);
 		return result;
 	}
@@ -535,7 +535,7 @@ public final class MoveInnerToTopRefactoring extends Refactoring {
 		fQualifiedTypeName= JavaModelUtil.concatenateName(fType.getPackageFragment().getElementName(), fType.getElementName());
 		fEnclosingInstanceFieldName= getInitialNameForEnclosingInstanceField();
 		fSourceRewrite= new CompilationUnitRewrite(fType.getCompilationUnit());
-		fIsInstanceFieldCreationPossible= !(JdtFlags.isStatic(fType) || fType.isAnnotation() || fType.isEnum() || (fType.getDeclaringType() == null && !JavaElementUtil.isMainType(fType)));
+		fIsInstanceFieldCreationPossible= !JdtFlags.isStatic(fType) && !fType.isAnnotation() && !fType.isEnum() && (fType.getDeclaringType() != null || JavaElementUtil.isMainType(fType));
 		fIsInstanceFieldCreationMandatory= fIsInstanceFieldCreationPossible && isInstanceFieldCreationMandatory();
 		fCreateInstanceField= fIsInstanceFieldCreationMandatory;
 	}
@@ -784,10 +784,10 @@ public final class MoveInnerToTopRefactoring extends Refactoring {
 			arguments.put(ATTRIBUTE_FIELD_NAME, fEnclosingInstanceFieldName);
 		if (fNameForEnclosingInstanceConstructorParameter != null && !"".equals(fNameForEnclosingInstanceConstructorParameter)) //$NON-NLS-1$
 			arguments.put(ATTRIBUTE_PARAMETER_NAME, fNameForEnclosingInstanceConstructorParameter);
-		arguments.put(ATTRIBUTE_FIELD, Boolean.valueOf(fCreateInstanceField).toString());
-		arguments.put(ATTRIBUTE_FINAL, Boolean.valueOf(fMarkInstanceFieldAsFinal).toString());
-		arguments.put(ATTRIBUTE_POSSIBLE, Boolean.valueOf(fIsInstanceFieldCreationPossible).toString());
-		arguments.put(ATTRIBUTE_MANDATORY, Boolean.valueOf(fIsInstanceFieldCreationMandatory).toString());
+		arguments.put(ATTRIBUTE_FIELD, Boolean.toString(fCreateInstanceField));
+		arguments.put(ATTRIBUTE_FINAL, Boolean.toString(fMarkInstanceFieldAsFinal));
+		arguments.put(ATTRIBUTE_POSSIBLE, Boolean.toString(fIsInstanceFieldCreationPossible));
+		arguments.put(ATTRIBUTE_MANDATORY, Boolean.toString(fIsInstanceFieldCreationMandatory));
 		final DynamicValidationRefactoringChange result= new DynamicValidationRefactoringChange(descriptor, RefactoringCoreMessages.MoveInnerToTopRefactoring_move_to_Top);
 		result.addAll(fChangeManager.getAllChanges());
 		result.add(createCompilationUnitForMovedType(new SubProgressMonitor(monitor, 1)));
@@ -894,8 +894,8 @@ public final class MoveInnerToTopRefactoring extends Refactoring {
 				fTypeImports= new HashSet<>();
 				fStaticImports= new HashSet<>();
 				ImportRewriteUtil.collectImports(fType.getJavaProject(), declaration, fTypeImports, fStaticImports, false);
-				if (binding != null)
-					fTypeImports.remove(binding);
+				handleParametrizedTypeImports(fTypeImports);
+				removeEnclosingTypeImports(binding);
 			}
 			addEnclosingInstanceTypeParameters(parameters, declaration, rewrite);
 			modifyAccessToEnclosingInstance(targetRewrite, declaration, monitor);
@@ -933,6 +933,53 @@ public final class MoveInnerToTopRefactoring extends Refactoring {
 			updateTypeReference(parameters, reference, targetRewrite, targetUnit);
 		for (ASTNode reference : getReferenceNodesIn(root, constructorReferences, targetUnit))
 			updateConstructorReference(parameters, reference, targetRewrite, targetUnit);
+	}
+
+	private void removeEnclosingTypeImports(final ITypeBinding binding) {
+		if (binding != null && fTypeImports != null) {
+			Iterator<ITypeBinding> iterator= fTypeImports.iterator();
+			while (iterator.hasNext()) {
+				ITypeBinding typeBinding=  iterator.next();
+				ITypeBinding parentBinding= typeBinding;
+				while (parentBinding != null) {
+					if (parentBinding == binding) {
+						iterator.remove();
+						break;
+					}
+					parentBinding= parentBinding.getDeclaringClass();
+				}
+			}
+		}
+	}
+
+	private void handleParametrizedTypeImports(Collection<ITypeBinding> imports) {
+		if (imports != null) {
+			Iterator<ITypeBinding> iterator= imports.iterator();
+			Collection<ITypeBinding> additionalTypeImports= new HashSet<>();
+			while (iterator.hasNext()) {
+				ITypeBinding typeBinding=  iterator.next();
+				if (typeBinding.isParameterizedType()) {
+					addParametrizedTypeArgumentImports(additionalTypeImports, typeBinding);
+					iterator.remove();
+				}
+			}
+			imports.addAll(additionalTypeImports);
+		}
+	}
+
+	private void addParametrizedTypeArgumentImports(Collection<ITypeBinding> importsList,ITypeBinding typeBinding) {
+		if (importsList != null && typeBinding != null && typeBinding.isParameterizedType()) {
+			ITypeBinding basicType= typeBinding.getTypeDeclaration();
+			ITypeBinding[] typeArguments= typeBinding.getTypeArguments();
+			importsList.add(basicType);
+			for (ITypeBinding typeArgument : typeArguments) {
+				if (typeArgument.isParameterizedType()) {
+					addParametrizedTypeArgumentImports(importsList, typeArgument);
+				} else {
+					importsList.add(typeArgument);
+				}
+			}
+		}
 	}
 
 	private void createConstructor(final AbstractTypeDeclaration declaration, final ASTRewrite rewrite) throws CoreException {
@@ -1109,7 +1156,7 @@ public final class MoveInnerToTopRefactoring extends Refactoring {
 	private String getAlignedSourceBlock(final ICompilationUnit unit, final String block) {
 		Assert.isNotNull(block);
 		final String[] lines= Strings.convertIntoLines(block);
-		Strings.trimIndentation(lines, unit.getJavaProject(), false);
+		Strings.trimIndentation(lines, unit, false);
 		return Strings.concatenate(lines, StubUtility.getLineDelimiterUsed(fType.getJavaProject()));
 	}
 
@@ -1330,7 +1377,7 @@ public final class MoveInnerToTopRefactoring extends Refactoring {
 	private void modifyAccessToFieldsFromEnclosingInstance(CompilationUnitRewrite targetRewrite, SimpleName[] simpleNames, AbstractTypeDeclaration declaration) {
 		for (SimpleName simpleName : simpleNames) {
 			IBinding binding= simpleName.resolveBinding();
-			if (binding != null && binding instanceof IVariableBinding && !(simpleName.getParent() instanceof FieldAccess)) {
+			if (binding instanceof IVariableBinding && !(simpleName.getParent() instanceof FieldAccess)) {
 				IVariableBinding variable= (IVariableBinding) binding;
 				final FieldAccess access= simpleName.getAST().newFieldAccess();
 				access.setExpression(createAccessExpressionToEnclosingInstanceFieldText(simpleName, variable, declaration));
@@ -1350,7 +1397,7 @@ public final class MoveInnerToTopRefactoring extends Refactoring {
 					final Expression expression= createAccessExpressionToEnclosingInstanceFieldText(invocation, binding, declaration);
 					targetRewrite.getASTRewrite().set(invocation, MethodInvocation.EXPRESSION_PROPERTY, expression, null);
 				} else {
-					if (!(invocation.getExpression() instanceof ThisExpression) || !(((ThisExpression) invocation.getExpression()).getQualifier() != null))
+					if (!(invocation.getExpression() instanceof ThisExpression) || (((ThisExpression) invocation.getExpression()).getQualifier() == null))
 						continue;
 					targetRewrite.getASTRewrite().replace(target, createAccessExpressionToEnclosingInstanceFieldText(invocation, binding, declaration), null);
 					targetRewrite.getImportRemover().registerRemovedNode(target);
@@ -1578,22 +1625,22 @@ public final class MoveInnerToTopRefactoring extends Refactoring {
 			fNameForEnclosingInstanceConstructorParameter= parameterName;
 		final String createField= arguments.getAttribute(ATTRIBUTE_FIELD);
 		if (createField != null) {
-			fCreateInstanceField= Boolean.valueOf(createField).booleanValue();
+			fCreateInstanceField= Boolean.parseBoolean(createField);
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_FIELD));
 		final String markFinal= arguments.getAttribute(ATTRIBUTE_FINAL);
 		if (markFinal != null) {
-			fMarkInstanceFieldAsFinal= Boolean.valueOf(markFinal).booleanValue();
+			fMarkInstanceFieldAsFinal= Boolean.parseBoolean(markFinal);
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_FINAL));
 		final String possible= arguments.getAttribute(ATTRIBUTE_POSSIBLE);
 		if (possible != null) {
-			fIsInstanceFieldCreationPossible= Boolean.valueOf(possible).booleanValue();
+			fIsInstanceFieldCreationPossible= Boolean.parseBoolean(possible);
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_POSSIBLE));
 		final String mandatory= arguments.getAttribute(ATTRIBUTE_MANDATORY);
 		if (mandatory != null)
-			fIsInstanceFieldCreationMandatory= Boolean.valueOf(mandatory).booleanValue();
+			fIsInstanceFieldCreationMandatory= Boolean.parseBoolean(mandatory);
 		else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_MANDATORY));
 		return new RefactoringStatus();

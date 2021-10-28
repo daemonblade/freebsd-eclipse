@@ -41,8 +41,8 @@ import org.eclipse.jdt.internal.junit.JUnitPreferencesConstants;
 
 public class JUnitContainerInitializer extends ClasspathContainerInitializer {
 
-	private static final IStatus NOT_SUPPORTED= new Status(IStatus.ERROR, JUnitCorePlugin.CORE_PLUGIN_ID, ClasspathContainerInitializer.ATTRIBUTE_NOT_SUPPORTED, new String(), null);
-	private static final IStatus READ_ONLY= new Status(IStatus.ERROR, JUnitCorePlugin.CORE_PLUGIN_ID, ClasspathContainerInitializer.ATTRIBUTE_READ_ONLY, new String(), null);
+	private static final IStatus NOT_SUPPORTED= new Status(IStatus.ERROR, JUnitCorePlugin.CORE_PLUGIN_ID, ClasspathContainerInitializer.ATTRIBUTE_NOT_SUPPORTED, "", null); //$NON-NLS-1$
+	private static final IStatus READ_ONLY= new Status(IStatus.ERROR, JUnitCorePlugin.CORE_PLUGIN_ID, ClasspathContainerInitializer.ATTRIBUTE_READ_ONLY, "", null); //$NON-NLS-1$
 
 	/**
 	 * @deprecated just for compatibility
@@ -175,7 +175,7 @@ public class JUnitContainerInitializer extends ClasspathContainerInitializer {
 
 	@Override
 	public IStatus getAttributeStatus(IPath containerPath, IJavaProject project, String attributeKey) {
-		if (attributeKey.equals(IClasspathAttribute.JAVADOC_LOCATION_ATTRIBUTE_NAME)) {
+		if (IClasspathAttribute.JAVADOC_LOCATION_ATTRIBUTE_NAME.equals(attributeKey)) {
 			return Status.OK_STATUS;
 		}
 		return NOT_SUPPORTED;
@@ -209,7 +209,7 @@ public class JUnitContainerInitializer extends ClasspathContainerInitializer {
 					// preferenceStore.setValue(preferenceKey, "");
 				} else {
 					for (IClasspathAttribute attrib : extraAttributes) {
-						if (attrib.getName().equals(IClasspathAttribute.JAVADOC_LOCATION_ATTRIBUTE_NAME)) {
+						if (IClasspathAttribute.JAVADOC_LOCATION_ATTRIBUTE_NAME.equals(attrib.getName())) {
 							if (preferenceKey != null) {
 								preferences.put(preferenceKey, attrib.getValue());
 							}

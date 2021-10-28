@@ -222,10 +222,6 @@ public class PluginsNotLoadedTest {
 		NOT_LOADED_BUNDLES= l.toArray(new String[0]);
 	}
 
-	/*
-	 * @see junit.framework.TestCase#setUp()
-	 * @since 3.1
-	 */
 	@Before
 	public void setUp() throws Exception {
 		JavaPlugin.getDefault().getPreferenceStore().setValue(PreferenceConstants.EDITOR_MARK_OCCURRENCES, true);
@@ -233,10 +229,6 @@ public class PluginsNotLoadedTest {
 		assertNotNull(fEditor);
 	}
 
-	/*
-	 * @see junit.framework.TestCase#tearDown()
-	 * @since 3.1
-	 */
 	@After
 	public void tearDown() throws Exception {
 		EditorTestHelper.closeAllEditors();
@@ -266,7 +258,7 @@ public class PluginsNotLoadedTest {
 
 	@Test
 	public void pluginsNotLoaded() {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		for (String element : NOT_LOADED_BUNDLES) {
 			Bundle bundle= Platform.getBundle(element);
 			if (element.contains("org.junit"))

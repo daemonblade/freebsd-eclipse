@@ -13,9 +13,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.jeview.views;
 
-import org.eclipse.core.resources.IMarker;
+import org.eclipse.jdt.jeview.JEPluginImages;
 
 import org.eclipse.swt.graphics.Image;
+
+import org.eclipse.core.resources.IMarker;
 
 import org.eclipse.jface.viewers.LabelProvider;
 
@@ -23,8 +25,6 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
 import org.eclipse.jdt.ui.JavaElementLabelProvider;
-
-import org.eclipse.jdt.jeview.JEPluginImages;
 
 
 
@@ -59,16 +59,12 @@ public class JEViewLabelProvider extends LabelProvider /*implements IColorProvid
 		} else if (element instanceof JEJarEntryResource) {
 			return fJavaElementLabelProvider.getImage(((JEJarEntryResource) element).getJarEntryResource());
 
-		} else if (element instanceof JavaElementProperty) {
+		} else if (element instanceof JavaElementProperty
+				|| (element instanceof JEMemberValuePair)) {
 			return fInfoImg;
 
-		} else if (element instanceof JEMemberValuePair) {
-			return fInfoImg;
-
-		} else if (element instanceof JavaElementChildrenProperty) {
-			return fChildrenImg;
-
-		} else if (element instanceof JEClasspathEntry) {
+		} else if (element instanceof JavaElementChildrenProperty
+				|| element instanceof JEClasspathEntry) {
 			return fChildrenImg;
 
 		} else if (element instanceof Error) {
@@ -79,7 +75,7 @@ public class JEViewLabelProvider extends LabelProvider /*implements IColorProvid
 			Object severity= marker.getMarkerAttribute(IMarker.SEVERITY);
 			if (severity instanceof Integer) {
 				Integer sev= (Integer) severity;
-				switch (sev.intValue()) {
+				switch (sev) {
 					case IMarker.SEVERITY_INFO:
 						return PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJS_INFO_TSK);
 					case IMarker.SEVERITY_WARNING:

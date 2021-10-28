@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 20201 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,6 +11,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Philippe Ombredanne - bug 149382
+ *     Microsoft Corporation - read formatting options from the compilation unit
  *******************************************************************************/
 package org.eclipse.jdt.ui.actions;
 
@@ -556,7 +557,12 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 			if (element != null) {
 				IType type= (IType) element.getAncestor(IJavaElement.TYPE);
 				if (type != null) {
-					if (type.getFields().length > 0) {
+					if (type.isRecord()) {
+						if (type.getRecordComponents().length > 0) {
+							run(type, new IField[0], true);
+							return;
+						}
+					} else if (type.getFields().length > 0) {
 						run(type, new IField[0], true);
 						return;
 					}
@@ -580,7 +586,7 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 			target.beginCompoundChange();
 		}
 		try {
-			CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(cu.getJavaProject());
+			CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(cu);
 			settings.createComments= fGenerateComment;
 
 			AddGetterSetterOperation op= new AddGetterSetterOperation(type, getterFields, setterFields, getterSetterFields, unit, skipReplaceQuery(), elementPosition, settings, true, false);
@@ -761,6 +767,21 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 
 				if (!l.isEmpty())
 					result.put(field, l.toArray(new GetterSetterEntry[l.size()]));
+			}
+		}
+		if (type.isRecord()) {
+			for (IField field : type.getRecordComponents()) {
+				int flags= field.getFlags();
+				if (!Flags.isEnum(flags)) {
+					List<GetterSetterEntry> l= new ArrayList<>(1);
+					if (GetterSetterUtil.getGetter(field) == null) {
+						l.add(new GetterSetterEntry(field, true, Flags.isFinal(flags)));
+						incNumEntries();
+					}
+
+					if (!l.isEmpty())
+						result.put(field, l.toArray(new GetterSetterEntry[l.size()]));
+				}
 			}
 		}
 		return result;

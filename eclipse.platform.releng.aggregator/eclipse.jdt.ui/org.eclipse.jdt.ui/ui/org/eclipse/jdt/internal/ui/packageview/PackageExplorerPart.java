@@ -19,7 +19,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.help.IContextProvider;
@@ -110,6 +109,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 
+import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.internal.corext.util.Messages;
 
 import org.eclipse.jdt.ui.IPackagesViewPart;
@@ -126,8 +126,8 @@ import org.eclipse.jdt.internal.ui.dnd.JdtViewerDragSupport;
 import org.eclipse.jdt.internal.ui.dnd.JdtViewerDropSupport;
 import org.eclipse.jdt.internal.ui.filters.OutputFolderFilter;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
-import org.eclipse.jdt.internal.ui.preferences.MembersOrderPreferenceCache;
 import org.eclipse.jdt.internal.ui.util.JavaUIHelp;
+import org.eclipse.jdt.internal.ui.util.SWTUtil;
 import org.eclipse.jdt.internal.ui.util.SelectionUtil;
 import org.eclipse.jdt.internal.ui.viewsupport.AppearanceAwareLabelProvider;
 import org.eclipse.jdt.internal.ui.viewsupport.BasicElementLabels;
@@ -323,8 +323,7 @@ public class PackageExplorerPart extends ViewPart
 				ns= new ArrayList<>();
 			}
 			boolean changed= false;
-			for (Iterator<?> iter= is.iterator(); iter.hasNext();) {
-				Object element= iter.next();
+			for (Object element : is) {
 				if (element instanceof IJavaProject) {
 					IProject project= ((IJavaProject)element).getProject();
 					if (!project.isOpen() && project.exists()) {
@@ -408,7 +407,7 @@ public class PackageExplorerPart extends ViewPart
 
 	private void restoreRootMode(IMemento memento) {
 		Integer value= memento.getInteger(TAG_ROOT_MODE);
-		fRootMode= value == null ? PROJECTS_AS_ROOTS : value.intValue();
+		fRootMode= value == null ? PROJECTS_AS_ROOTS : value;
 		if (fRootMode != PROJECTS_AS_ROOTS && fRootMode != WORKING_SETS_AS_ROOTS)
 			fRootMode= PROJECTS_AS_ROOTS;
 	}
@@ -1191,23 +1190,25 @@ public class PackageExplorerPart extends ViewPart
 		if (fViewer == null)
 			return;
 
-		boolean refreshViewer= false;
+		SWTUtil.execDirectOrAsyncIfNecessary(fViewer::getControl, ()-> {
+			boolean refreshViewer= false;
 
-		if (PreferenceConstants.SHOW_CU_CHILDREN.equals(event.getProperty())) {
-			boolean showCUChildren= PreferenceConstants.getPreferenceStore().getBoolean(PreferenceConstants.SHOW_CU_CHILDREN);
-			((StandardJavaElementContentProvider)fViewer.getContentProvider()).setProvideMembers(showCUChildren);
+			if (PreferenceConstants.SHOW_CU_CHILDREN.equals(event.getProperty())) {
+				boolean showCUChildren= PreferenceConstants.getPreferenceStore().getBoolean(PreferenceConstants.SHOW_CU_CHILDREN);
+				((StandardJavaElementContentProvider)fViewer.getContentProvider()).setProvideMembers(showCUChildren);
 
-			refreshViewer= true;
-		} else if (MembersOrderPreferenceCache.isMemberOrderProperty(event.getProperty())) {
-			refreshViewer= true;
-		} else if (PreferenceConstants.APPEARANCE_SORT_LIBRARY_ENTRIES_BY_NAME.equals(event.getProperty())) {
-			// set new comparator, since it might evaluate this property on construction
-			setComparator();
-			refreshViewer = true;
-		}
+				refreshViewer= true;
+			} else if (MembersOrderPreferenceCacheCommon.isMemberOrderProperty(event.getProperty())) {
+				refreshViewer= true;
+			} else if (PreferenceConstants.APPEARANCE_SORT_LIBRARY_ENTRIES_BY_NAME.equals(event.getProperty())) {
+				// set new comparator, since it might evaluate this property on construction
+				setComparator();
+				refreshViewer = true; // is this really necessary? setComparator() calls refresh if the comparator changes
+			}
 
-		if (refreshViewer)
-			fViewer.refresh();
+			if (refreshViewer)
+				fViewer.refresh();
+		});
 	}
 
 	@Override

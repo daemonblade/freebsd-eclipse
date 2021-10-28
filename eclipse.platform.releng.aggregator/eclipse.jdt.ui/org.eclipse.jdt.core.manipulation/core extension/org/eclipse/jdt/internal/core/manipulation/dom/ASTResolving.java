@@ -40,6 +40,7 @@ import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConditionalExpression;
 import org.eclipse.jdt.core.dom.ConstructorInvocation;
+import org.eclipse.jdt.core.dom.EnhancedForStatement;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
@@ -103,12 +104,7 @@ import org.eclipse.jdt.internal.ui.util.ASTHelper;
 // @see org.eclipse.jdt.internal.ui.text.correction.ASTResolving (subclass of this one)
 public class ASTResolving {
 
-	@SuppressWarnings("nls")
 	public static ITypeBinding guessBindingForReference(ASTNode node) {
-		String i= "";
-		if ((((i))).equals(((("a"))))) {
-			return Bindings.normalizeTypeBinding(null);
-		}
 		return Bindings.normalizeTypeBinding(getPossibleReferenceBinding(node));
 	}
 
@@ -244,13 +240,37 @@ public class ASTResolving {
 			break;
 		case ASTNode.CONDITIONAL_EXPRESSION:
 			ConditionalExpression expression= (ConditionalExpression) parent;
-			if (node.equals(expression.getExpression())) {
+
+			if (node.getLocationInParent() == ConditionalExpression.EXPRESSION_PROPERTY) {
 				return parent.getAST().resolveWellKnownType("boolean"); //$NON-NLS-1$
 			}
-			if (node.equals(expression.getElseExpression())) {
-				return expression.getThenExpression().resolveTypeBinding();
+
+			ITypeBinding parentTypeBinding= getPossibleReferenceBinding(expression);
+
+			if (parentTypeBinding != null
+					&& !parentTypeBinding.isNullType()) {
+				return parentTypeBinding;
 			}
-			return expression.getElseExpression().resolveTypeBinding();
+
+			if (node.getLocationInParent() == ConditionalExpression.THEN_EXPRESSION_PROPERTY) {
+				ITypeBinding elseTypeBinding= expression.getElseExpression().resolveTypeBinding();
+
+				if (elseTypeBinding != null
+						&& !elseTypeBinding.isNullType()) {
+					return elseTypeBinding;
+				}
+			}
+
+			if (node.getLocationInParent() == ConditionalExpression.ELSE_EXPRESSION_PROPERTY) {
+				ITypeBinding thenTypeBinding= expression.getThenExpression().resolveTypeBinding();
+
+				if (thenTypeBinding != null
+						&& !thenTypeBinding.isNullType()) {
+					return thenTypeBinding;
+				}
+			}
+
+			return getPossibleReferenceBinding(expression);
 		case ASTNode.POSTFIX_EXPRESSION:
 			return parent.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
 		case ASTNode.PREFIX_EXPRESSION:
@@ -258,6 +278,16 @@ public class ASTResolving {
 				return parent.getAST().resolveWellKnownType("boolean"); //$NON-NLS-1$
 			}
 			return parent.getAST().resolveWellKnownType("int"); //$NON-NLS-1$
+		case ASTNode.ENHANCED_FOR_STATEMENT:
+			if (node.getLocationInParent() == EnhancedForStatement.EXPRESSION_PROPERTY) {
+				EnhancedForStatement enhancedForStatement= (EnhancedForStatement) parent;
+				ITypeBinding parameterTypeBinding= enhancedForStatement.getParameter().getType().resolveBinding();
+
+				if (parameterTypeBinding != null) {
+					return parameterTypeBinding.createArrayType(1);
+				}
+			}
+			break;
 		case ASTNode.IF_STATEMENT:
 		case ASTNode.WHILE_STATEMENT:
 		case ASTNode.DO_STATEMENT:
@@ -619,7 +649,7 @@ public class ASTResolving {
 			lastLocation= node.getLocationInParent();
 			node= node.getParent();
 		}
-		return (BodyDeclaration) node;
+		return null;
 	}
 
 
@@ -1076,6 +1106,13 @@ public class ASTResolving {
 						kind= TypeKinds.INTERFACES;
 					} else if (node.getLocationInParent() == TypeDeclaration.SUPERCLASS_TYPE_PROPERTY) {
 						kind= TypeKinds.CLASSES;
+					} else if (node.getLocationInParent() == TypeDeclaration.PERMITS_TYPES_PROPERTY) {
+						if (ASTHelper.isSealedTypeSupportedInAST(node.getAST())) {
+							kind = TypeKinds.CLASSES;
+							if (((TypeDeclaration) parent).isInterface()) {
+								kind |= TypeKinds.INTERFACES;
+							}
+						}
 					}
 					break;
 				case ASTNode.ENUM_DECLARATION:

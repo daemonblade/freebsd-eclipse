@@ -235,7 +235,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 	private Map<IMember, IncomingMemberVisibilityAdjustment> fIntermediaryAdjustments;
 
 
-	private class NoOverrideProgressMonitor extends SubProgressMonitor {
+	private static class NoOverrideProgressMonitor extends SubProgressMonitor {
 
 		public NoOverrideProgressMonitor(IProgressMonitor monitor, int ticks) {
 			super(monitor, ticks, SubProgressMonitor.SUPPRESS_SUBTASK_LABEL);
@@ -352,7 +352,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 			if (target.isAnnotation())
 				return RefactoringStatus.createErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_cannot_create_in_annotation);
 			if (target.isInterface()
-					&& (!JavaModelUtil.is18OrHigher(target.getJavaProject()) || !JavaModelUtil.is18OrHigher(getProject())))
+					&& (!JavaModelUtil.is1d8OrHigher(target.getJavaProject()) || !JavaModelUtil.is1d8OrHigher(getProject())))
 				return RefactoringStatus.createErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_cannot_create_on_interface);
 		} catch (JavaModelException e) {
 			return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_unable_determine_declaring_type);
@@ -1174,9 +1174,8 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 
 	private ASTNode getEnclosingTypeDeclaration(ASTNode node) {
 		while (node != null) {
-			if (node instanceof AbstractTypeDeclaration) {
-				return node;
-			} else if (node instanceof AnonymousClassDeclaration) {
+			if (node instanceof AbstractTypeDeclaration
+					|| node instanceof AnonymousClassDeclaration) {
 				return node;
 			}
 			node= node.getParent();
@@ -1248,9 +1247,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 	}
 
 	private IFile[] getAllFilesToModify() {
-		List<ICompilationUnit> cus= new ArrayList<>();
-		cus.addAll(Arrays.asList(fTextChangeManager.getAllCompilationUnits()));
-		return ResourceUtil.getFiles(cus.toArray(new ICompilationUnit[cus.size()]));
+		return ResourceUtil.getFiles(fTextChangeManager.getAllCompilationUnits().clone());
 	}
 
 	private boolean isStaticTarget() throws JavaModelException {

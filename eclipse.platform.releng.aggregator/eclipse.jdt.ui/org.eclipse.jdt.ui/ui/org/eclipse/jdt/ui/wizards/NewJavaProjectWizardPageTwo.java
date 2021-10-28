@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,14 +14,14 @@
 package org.eclipse.jdt.ui.wizards;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -61,11 +61,7 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 
-import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
-
-import org.eclipse.jdt.launching.IVMInstall2;
-import org.eclipse.jdt.launching.JavaRuntime;
 
 import org.eclipse.jdt.ui.JavaUI;
 
@@ -76,9 +72,6 @@ import org.eclipse.jdt.internal.ui.util.CoreUtility;
 import org.eclipse.jdt.internal.ui.util.ExceptionHandler;
 import org.eclipse.jdt.internal.ui.wizards.ClassPathDetector;
 import org.eclipse.jdt.internal.ui.wizards.NewWizardMessages;
-import org.eclipse.jdt.internal.ui.wizards.buildpaths.BuildPathsBlock;
-import org.eclipse.jdt.internal.ui.wizards.buildpaths.BuildPathBasePage;
-import org.eclipse.jdt.internal.ui.wizards.buildpaths.newsourcepage.NewSourceContainerWorkbookPage;
 
 /**
  * The second page of the New Java project wizard. It allows to configure the build path and output location.
@@ -147,13 +140,6 @@ public class NewJavaProjectWizardPageTwo extends JavaCapabilityConfigurationPage
 		if (isShownFirstTime) {
 			setFocus();
 		}
-		if (visible) {
-			String compilerCompliance= fFirstPage.getCompilerCompliance();
-			if (compilerCompliance == null) {
-				compilerCompliance= JavaModelUtil.getCompilerCompliance((IVMInstall2) JavaRuntime.getDefaultVMInstall(), JavaCore.VERSION_1_4);
-			}
-			setCompilerCompliance(compilerCompliance);
-		}
 	}
 
 
@@ -171,7 +157,7 @@ public class NewJavaProjectWizardPageTwo extends JavaCapabilityConfigurationPage
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {
 					if (fIsAutobuild == null) {
-						fIsAutobuild= Boolean.valueOf(CoreUtility.setAutoBuilding(false));
+						fIsAutobuild= CoreUtility.setAutoBuilding(false);
 					}
 					infoStatus= updateProject(monitor);
 				} catch (CoreException e) {
@@ -448,33 +434,14 @@ public class NewJavaProjectWizardPageTwo extends JavaCapabilityConfigurationPage
 	}
 
 	private void copyFile(IFileStore source, File target) throws IOException, CoreException {
-		InputStream is= source.openInputStream(EFS.NONE, null);
-		FileOutputStream os= new FileOutputStream(target);
-		copyFile(is, os);
+		try(InputStream is= source.openInputStream(EFS.NONE, null)) {
+			Files.copy(is, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		}
 	}
 
 	private void copyFile(File source, IFileStore target, IProgressMonitor monitor) throws IOException, CoreException {
-		FileInputStream is= new FileInputStream(source);
-		OutputStream os= target.openOutputStream(EFS.NONE, monitor);
-		copyFile(is, os);
-	}
-
-	private void copyFile(InputStream is, OutputStream os) throws IOException {
-		try {
-			byte[] buffer = new byte[8192];
-			while (true) {
-				int bytesRead= is.read(buffer);
-				if (bytesRead == -1)
-					break;
-
-				os.write(buffer, 0, bytesRead);
-			}
-		} finally {
-			try {
-				is.close();
-			} finally {
-				os.close();
-			}
+		try(OutputStream os= target.openOutputStream(EFS.NONE, monitor)){
+			Files.copy(source.toPath(), os);
 		}
 	}
 
@@ -498,7 +465,7 @@ public class NewJavaProjectWizardPageTwo extends JavaCapabilityConfigurationPage
 			monitor.done();
 			fCurrProject= null;
 			if (fIsAutobuild != null) {
-				CoreUtility.setAutoBuilding(fIsAutobuild.booleanValue());
+				CoreUtility.setAutoBuilding(fIsAutobuild);
 				fIsAutobuild= null;
 			}
 		}
@@ -559,7 +526,7 @@ public class NewJavaProjectWizardPageTwo extends JavaCapabilityConfigurationPage
 
 				restoreExistingFiles(projLoc, new SubProgressMonitor(monitor, 1));
 			} finally {
-				CoreUtility.setAutoBuilding(fIsAutobuild.booleanValue()); // fIsAutobuild must be set
+				CoreUtility.setAutoBuilding(fIsAutobuild); // fIsAutobuild must be set
 				fIsAutobuild= null;
 			}
 		} catch (CoreException e) {
@@ -585,42 +552,14 @@ public class NewJavaProjectWizardPageTwo extends JavaCapabilityConfigurationPage
 		super.dispose();
 	}
 
-	private void setCompilerCompliance(String compilerCompliance) {
-		BuildPathsBlock buildPathsBlock= getBuildPathsBlock();
-		if (buildPathsBlock != null) {
-			BuildPathBasePage sourceContainerPage= buildPathsBlock.getSourceContainerPage();
-			if (sourceContainerPage instanceof NewSourceContainerWorkbookPage) {
-				((NewSourceContainerWorkbookPage) sourceContainerPage).setCompilerCompliance(compilerCompliance);
-			}
-		}
-	}
-
 	private void createJavaProjectModuleInfoFile() {
-		String compilerCompliance= fFirstPage.getCompilerCompliance();
-		if (compilerCompliance == null) {
-			compilerCompliance= JavaModelUtil.getCompilerCompliance((IVMInstall2) JavaRuntime.getDefaultVMInstall(), JavaCore.VERSION_1_4);
+		boolean createModuleInfoFile= fFirstPage.getCreateModuleInfoFile();
+		if (createModuleInfoFile) {
+			Display.getDefault().asyncExec(() -> {
+				CreateModuleInfoAction action= new CreateModuleInfoAction();
+				action.selectionChanged(null, new StructuredSelection(getJavaProject()));
+				action.run(null);
+			});
 		}
-		if (compilerCompliance!= null && JavaModelUtil.is9OrHigher(compilerCompliance)) {
-			boolean createModuleInfoFile= isCreateModuleInfoFile();
-			if (createModuleInfoFile) {
-				Display.getDefault().asyncExec(() -> {
-					CreateModuleInfoAction action= new CreateModuleInfoAction();
-					action.selectionChanged(null, new StructuredSelection(getJavaProject()));
-					action.run(null);
-				});
-
-			}
-		}
-	}
-
-	boolean isCreateModuleInfoFile() {
-		BuildPathsBlock buildPathsBlock= getBuildPathsBlock();
-		if (buildPathsBlock != null) {
-			BuildPathBasePage sourceContainerPage= buildPathsBlock.getSourceContainerPage();
-			if (sourceContainerPage instanceof NewSourceContainerWorkbookPage) {
-				return ((NewSourceContainerWorkbookPage) sourceContainerPage).isCreateModuleInfoFile();
-			}
-		}
-		return false;
 	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -1046,7 +1046,7 @@ public abstract class ModifyDialog extends StatusDialog implements IModification
 		}
 	}
 
-	public class Images {
+	public static class Images {
 		private Map<ImageDescriptor, Image> imagesMap= new HashMap<>();
 
 		protected Images(Composite rootComposite) {
@@ -1094,7 +1094,7 @@ public abstract class ModifyDialog extends StatusDialog implements IModification
 		private void add(Control control) {
 			control.addFocusListener(this);
 			fItemList.add(fIndex, control);
-			fItemMap.put(control, Integer.valueOf(fIndex++));
+			fItemMap.put(control, fIndex++);
 		}
 
 		@Override
@@ -1107,7 +1107,7 @@ public abstract class ModifyDialog extends StatusDialog implements IModification
 				updatePreviewCode();
 			}
 
-			fDialogSettings.put(fKeyLastFocusIndex, fItemMap.get(e.widget).intValue());
+			fDialogSettings.put(fKeyLastFocusIndex, fItemMap.get(e.widget));
 		}
 
 		private void highlightCurrent(boolean focus) {
@@ -1127,7 +1127,10 @@ public abstract class ModifyDialog extends StatusDialog implements IModification
 			Display.getCurrent().asyncExec(() -> {
 				FontData fd= control.getFont().getFontData()[0];
 				int style= italic ? (fd.getStyle() | SWT.ITALIC) : (fd.getStyle() & ~SWT.ITALIC);
-				control.setFont(new Font(control.getDisplay(), new FontData(fd.getName(), fd.getHeight(), style)));
+				FontData fontData= new FontData(fd.getName(), fd.getHeight(), style);
+				Font font= new Font(control.getDisplay(), fontData);
+				control.addDisposeListener(e -> font.dispose());
+				control.setFont(font);
 				if (control instanceof Composite)
 					((Composite) control).layout();
 			});

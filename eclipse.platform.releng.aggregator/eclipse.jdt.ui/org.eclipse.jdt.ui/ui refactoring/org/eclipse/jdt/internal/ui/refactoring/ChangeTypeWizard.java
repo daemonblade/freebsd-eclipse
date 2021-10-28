@@ -82,24 +82,24 @@ public class ChangeTypeWizard extends RefactoringWizard {
 	static String print(Collection<ITypeBinding> types){
 		if (types.isEmpty())
 			return "{ }"; //$NON-NLS-1$
-		String result = "{ "; //$NON-NLS-1$
+		StringBuilder result = new StringBuilder("{ "); //$NON-NLS-1$
 		for (Iterator<ITypeBinding> it=types.iterator(); it.hasNext(); ){
 			ITypeBinding type= it.next();
-			result += type.getQualifiedName();
+			result.append(type.getQualifiedName());
 			if (it.hasNext()){
-				result += ", ";  //$NON-NLS-1$
+				result.append(", ");  //$NON-NLS-1$
 			} else {
-				result += " }"; //$NON-NLS-1$
+				result.append(" }"); //$NON-NLS-1$
 			}
 		}
-		return result;
+		return result.toString();
 	}
 
 
 	/**
 	 * A JavaElementLabelProvider that supports graying out of invalid types.
 	 */
-	private class ChangeTypeLabelProvider extends BindingLabelProvider
+	private static class ChangeTypeLabelProvider extends BindingLabelProvider
 										  implements IColorProvider {
 
 		private Color fGrayColor;

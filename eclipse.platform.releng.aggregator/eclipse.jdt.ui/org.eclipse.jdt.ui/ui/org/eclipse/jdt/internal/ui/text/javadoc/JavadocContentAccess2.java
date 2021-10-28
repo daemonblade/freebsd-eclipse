@@ -278,7 +278,7 @@ public class JavadocContentAccess2 {
 			}
 		};
 
-		private static interface DescriptionGetter {
+		private interface DescriptionGetter {
 			/**
 			 * Returns a Javadoc tag description or <code>null</code>.
 			 *
@@ -513,7 +513,7 @@ public class JavadocContentAccess2 {
 			return null;
 		}
 		String sourceJavadoc= getHTMLContentFromSource(element);
-		if (sourceJavadoc == null || sourceJavadoc.length() == 0 || sourceJavadoc.trim().equals("{@inheritDoc}")) { //$NON-NLS-1$
+		if (sourceJavadoc == null || sourceJavadoc.length() == 0 || "{@inheritDoc}".equals(sourceJavadoc.trim())) { //$NON-NLS-1$
 			if (useAttachedJavadoc) {
 				if (element.getOpenable().getBuffer() == null) { // only if no source available
 					return element.getAttachedJavadoc(null);
@@ -1497,10 +1497,8 @@ public class JavadocContentAccess2 {
 			handleIndex(node.fragments());
 		else if (isCode || isLiteral)
 			handleContentElements(node.fragments(), true);
-		else if (handleInheritDoc(node)) {
-			// handled
-		} else if (handleDocRoot(node)) {
-			// handled
+		else if (handleInheritDoc(node) || handleDocRoot(node)) {
+			// Handled
 		} else {
 			//print uninterpreted source {@tagname ...} for unknown tags
 			int start= node.getStartPosition();

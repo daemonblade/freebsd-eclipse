@@ -29,6 +29,9 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.equinox.bidi.StructuredTextTypeHandlerFactory;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
@@ -427,7 +430,7 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 
 			CompletableFuture.supplyAsync(this::getLastSelectedJREKind)
 				.thenAcceptAsync(kind -> {
-					switch (kind.intValue()) {
+					switch (kind) {
 						case DEFAULT_JRE:
 							fUseDefaultJRE.setSelection(true);
 							break;
@@ -670,6 +673,7 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 			}
 			updateEnableState();
 			fDetectGroup.handlePossibleJVMChange();
+			fModuleGroup.handlePossibleJVMChange();
 			if (field == fJRECombo) {
 				if (fUseProjectJRE.isSelected()) {
 					storeSelectionValue(fJRECombo, LAST_SELECTED_JRE_SETTINGS_KEY);
@@ -769,7 +773,7 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 		}
 	}
 
-	private final class WorkingSetGroup {
+	private final static class WorkingSetGroup {
 
 		private WorkingSetConfigurationBlock fWorkingSetBlock;
 
@@ -800,6 +804,70 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 		}
 	}
 
+	private final class ModuleGroup implements IDialogFieldListener{
+
+		private final String LAST_SELECTED_CREATE_MODULEINFO_SETTINGS_KEY= JavaUI.ID_PLUGIN + ".last.selected.create.moduleinfo"; //$NON-NLS-1$
+		private final SelectionButtonDialogField fCreateModuleInfo;
+		private boolean savePreference;
+
+		public ModuleGroup() {
+			fCreateModuleInfo= new SelectionButtonDialogField(SWT.CHECK);
+			fCreateModuleInfo.setLabelText(NewWizardMessages.NewJavaProjectWizardPageOne_Create_ModuleInfoFile_name);
+			fCreateModuleInfo.setDialogFieldListener(this);
+			fCreateModuleInfo.setEnabled(false);
+			savePreference= false;
+		}
+
+		public String getCompliance() {
+			String compilerCompliance= fJREGroup.getSelectedCompilerCompliance();
+			if (compilerCompliance == null) {
+				compilerCompliance= JavaModelUtil.getCompilerCompliance((IVMInstall2) JavaRuntime.getDefaultVMInstall(), JavaCore.VERSION_1_4);
+			}
+			return compilerCompliance;
+		}
+
+		public Control createControl(Composite composite) {
+			Group moduleGroup= new Group(composite, SWT.NONE);
+			moduleGroup.setFont(composite.getFont());
+			moduleGroup.setText(NewWizardMessages.NewJavaProjectWizardPageOne_Module_group);
+			moduleGroup.setLayout(new GridLayout(1, false));
+
+			fCreateModuleInfo.doFillIntoGrid(moduleGroup, 1);
+			return moduleGroup;
+		}
+
+		public void handlePossibleJVMChange() {
+			boolean enable= false;
+			boolean oldValEnabled= fCreateModuleInfo.isEnabled();
+			String compliance= getCompliance();
+			if (compliance != null && JavaModelUtil.is9OrHigher(compliance)) {
+				enable= true;
+			}
+			fCreateModuleInfo.setEnabled(enable);
+			savePreference= false;
+			if (!enable) {
+				fCreateModuleInfo.setSelection(false);
+			} else if(oldValEnabled != enable) {
+				String setting=JavaPlugin.getDefault().getDialogSettings().get(LAST_SELECTED_CREATE_MODULEINFO_SETTINGS_KEY);
+				fCreateModuleInfo.setSelection((setting == null) ? true : Boolean.parseBoolean(setting));
+			}
+			savePreference= true;
+		}
+
+		public boolean getCreateModuleInfoFile() {
+			return fCreateModuleInfo.isSelected();
+		}
+
+
+		@Override
+		public void dialogFieldChanged(DialogField field) {
+			// TODO Auto-generated method stub
+			if (field == fCreateModuleInfo && savePreference) {
+				JavaPlugin.getDefault().getDialogSettings().put(LAST_SELECTED_CREATE_MODULEINFO_SETTINGS_KEY, fCreateModuleInfo.isSelected());
+			}
+		}
+	}
+
 	/**
 	 * Show a warning when the project location contains files.
 	 */
@@ -816,20 +884,22 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 		public Control createControl(Composite parent) {
 
 			Composite composite= new Composite(parent, SWT.NONE);
-			composite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			GridData gridData= new GridData(SWT.FILL, SWT.TOP, true, false);
+			gridData.exclude= true;
+			composite.setLayoutData(gridData);
 			GridLayout layout= new GridLayout(2, false);
 			layout.horizontalSpacing= 10;
 			composite.setLayout(layout);
 
-			fIcon= new Label(composite, SWT.LEFT);
+			fIcon= new Label(composite, SWT.LEAD);
 			fIcon.setImage(Dialog.getImage(Dialog.DLG_IMG_MESSAGE_WARNING));
-			GridData gridData= new GridData(SWT.LEFT, SWT.TOP, false, false);
+			gridData= new GridData(SWT.LEAD, SWT.TOP, false, false);
 			fIcon.setLayoutData(gridData);
 
 			fHintText= new Link(composite, SWT.WRAP);
 			fHintText.setFont(composite.getFont());
 			fHintText.addSelectionListener(this);
-			gridData= new GridData(GridData.FILL, SWT.FILL, true, true);
+			gridData= new GridData(GridData.FILL, SWT.FILL, true, false);
 			gridData.widthHint= convertWidthInCharsToPixels(50);
 			gridData.heightHint= convertHeightInCharsToPixels(3);
 			fHintText.setLayoutData(gridData);
@@ -842,9 +912,8 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 
 			if (JavaRuntime.getDefaultVMInstall() == null) {
 				fHintText.setText(NewWizardMessages.NewJavaProjectWizardPageOne_NoJREFound_link);
-				fHintText.setVisible(true);
 				fIcon.setImage(Dialog.getImage(Dialog.DLG_IMG_MESSAGE_WARNING));
-				fIcon.setVisible(true);
+				setInfoControlVisible(true);
 				return;
 			}
 
@@ -852,13 +921,11 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 			if (selectedCompliance != null) {
 				String defaultCompliance= JavaCore.getOption(JavaCore.COMPILER_COMPLIANCE);
 				if (selectedCompliance.equals(defaultCompliance)) {
-					fHintText.setVisible(false);
-					fIcon.setVisible(false);
+					setInfoControlVisible(false);
 				} else {
 					fHintText.setText(Messages.format(NewWizardMessages.NewJavaProjectWizardPageOne_DetectGroup_differendWorkspaceCC_message, new String[] {  BasicElementLabels.getVersionName(defaultCompliance), BasicElementLabels.getVersionName(selectedCompliance)}));
-					fHintText.setVisible(true);
 					fIcon.setImage(Dialog.getImage(Dialog.DLG_IMG_MESSAGE_INFO));
-					fIcon.setVisible(true);
+					setInfoControlVisible(true);
 				}
 				return;
 			}
@@ -874,14 +941,19 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 			}
 			if (!selectedCompliance.equals(jvmCompliance) && (JavaModelUtil.is50OrHigher(selectedCompliance) || JavaModelUtil.is50OrHigher(jvmCompliance))) {
 				fHintText.setText(Messages.format(NewWizardMessages.NewJavaProjectWizardPageOne_DetectGroup_jre_message, new String[] {BasicElementLabels.getVersionName(selectedCompliance), BasicElementLabels.getVersionName(jvmCompliance)}));
-				fHintText.setVisible(true);
 				fIcon.setImage(Dialog.getImage(Dialog.DLG_IMG_MESSAGE_WARNING));
-				fIcon.setVisible(true);
+				setInfoControlVisible(true);
 			} else {
-				fHintText.setVisible(false);
-				fIcon.setVisible(false);
+				setInfoControlVisible(false);
 			}
 
+		}
+
+		private void setInfoControlVisible(boolean visible) {
+			Composite composite= fHintText.getParent();
+			composite.setVisible(visible);
+			((GridData) composite.getLayoutData()).exclude= !visible;
+			updateSize();
 		}
 
 		private boolean computeDetectState() {
@@ -1073,6 +1145,8 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 	private final DetectGroup fDetectGroup;
 	private final Validator fValidator;
 	private final WorkingSetGroup fWorkingSetGroup;
+	private final ModuleGroup fModuleGroup;
+	private Runnable sizeUpdater;
 
 	/**
 	 * Creates a new {@link NewJavaProjectWizardPageOne}.
@@ -1089,6 +1163,7 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 		fLayoutGroup= new LayoutGroup();
 		fWorkingSetGroup= new WorkingSetGroup();
 		fDetectGroup= new DetectGroup();
+		fModuleGroup= new ModuleGroup();
 
 		// establish connections
 		fNameGroup.addObserver(fLocationGroup);
@@ -1132,9 +1207,13 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 	public void createControl(Composite parent) {
 		initializeDialogUnits(parent);
 
-		final Composite composite= new Composite(parent, SWT.NULL);
+		final ScrolledComposite scroll= new ScrolledComposite(parent, SWT.V_SCROLL | SWT.H_SCROLL);
+		scroll.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+		final Composite composite= new Composite(scroll, SWT.NULL);
 		composite.setFont(parent.getFont());
-		composite.setLayout(initGridLayout(new GridLayout(1, false), true));
+		final GridLayout compositeLayout= initGridLayout(new GridLayout(1, false), true);
+		composite.setLayout(compositeLayout);
 		composite.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
 
 		// create UI elements
@@ -1153,10 +1232,66 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 		Control workingSetControl= createWorkingSetControl(composite);
 		workingSetControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-		Control infoControl= createInfoControl(composite);
-		infoControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		Control moduleControl= createModuleControl(composite);
+		moduleControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-		setControl(composite);
+		createInfoControl(composite);
+
+		scroll.setContent(composite);
+		scroll.setExpandHorizontal(true);
+		scroll.setExpandVertical(true);
+		scroll.setShowFocusedControl(true);
+		sizeUpdater= new Runnable() {
+
+			@Override
+			public void run() {
+
+				// show/hide horizontal scrollbar
+				scroll.setMinWidth(composite.computeSize(SWT.DEFAULT, SWT.DEFAULT).x);
+
+				// show/hide vertical scrollbar
+				final int availableWidthBefore = scroll.getClientArea().width;
+				scroll.setMinHeight(computeHeight(availableWidthBefore));
+
+				// showing/hiding vertical scrollbar can change available width and therefore the height
+				final int availableWidthAfter = scroll.getClientArea().width;
+				if (availableWidthBefore != availableWidthAfter) {
+					scroll.setMinHeight(computeHeight(availableWidthAfter));
+				}
+
+			}
+
+			private int computeHeight(int width) {
+				final int availableWidth= width - 2 * compositeLayout.marginWidth;
+				int height= 0;
+				for (Control child : composite.getChildren()) {
+					if (child.getLayoutData() instanceof GridData && ((GridData) child.getLayoutData()).exclude) {
+						continue;
+					}
+					if (height > 0) {
+						height+= compositeLayout.verticalSpacing;
+					}
+					height+= child.computeSize(availableWidth, SWT.DEFAULT).y;
+				}
+				height+= 2 * compositeLayout.marginHeight;
+				return height;
+			}
+
+		};
+		scroll.addControlListener(new ControlAdapter() {
+			@Override
+			public void controlResized(ControlEvent e) {
+				updateSize();
+			}
+		});
+
+		setControl(scroll);
+	}
+
+	private void updateSize() {
+		if (sizeUpdater != null) {
+			sizeUpdater.run();
+		}
 	}
 
 	@Override
@@ -1230,6 +1365,17 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 	}
 
 	/**
+	 * Creates the controls for the module section.
+	 *
+	 * @param composite the parent composite
+	 * @return the created control
+	 * @since 3.23
+	 */
+	protected Control createModuleControl(Composite composite) {
+		return fModuleGroup.createControl(composite);
+	}
+
+	/**
 	 * Gets a project name for the new project.
 	 *
 	 * @return the new project resource handle
@@ -1282,6 +1428,16 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 	 */
 	public String getCompilerCompliance() {
 		return fJREGroup.getSelectedCompilerCompliance();
+	}
+
+	/**
+	 * Returns if the module-info creation dialog needs to be shown or not.
+	 *
+	 * @return 'create module-info.java file' has been checked or not.
+	 * @since 3.23
+	 */
+	public boolean getCreateModuleInfoFile() {
+		return fModuleGroup.getCreateModuleInfoFile();
 	}
 
 	/**
@@ -1409,6 +1565,7 @@ public class NewJavaProjectWizardPageOne extends WizardPage {
 		super.setVisible(visible);
 		if (visible) {
 			fNameGroup.postSetFocus();
+			updateSize();
 		}
 	}
 

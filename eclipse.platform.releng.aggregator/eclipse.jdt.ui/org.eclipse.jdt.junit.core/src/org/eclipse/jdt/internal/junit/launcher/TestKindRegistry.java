@@ -144,7 +144,7 @@ public class TestKindRegistry {
 				if (runWithAnnotation.exists()) {
 					IMemberValuePair[] memberValuePairs= runWithAnnotation.getMemberValuePairs();
 					for (IMemberValuePair memberValuePair : memberValuePairs) {
-						if (memberValuePair.getMemberName().equals("value") && memberValuePair.getValue().equals("JUnitPlatform")) { //$NON-NLS-1$ //$NON-NLS-2$
+						if ("value".equals(memberValuePair.getMemberName()) && "JUnitPlatform".equals(memberValuePair.getValue())) { //$NON-NLS-1$ //$NON-NLS-2$
 							return true;
 						}
 					}
@@ -170,10 +170,10 @@ public class TestKindRegistry {
 
 	public String getAllKindIds() {
 		ArrayList<TestKind> allKinds= getAllKinds();
-		String returnThis= ""; //$NON-NLS-1$
+		StringBuilder returnThis= new StringBuilder();
 		for (ITestKind kind : allKinds) {
-			returnThis+= "(" + kind.getId() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+			returnThis.append("(").append(kind.getId()).append(")"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		return returnThis;
+		return returnThis.toString();
 	}
 }

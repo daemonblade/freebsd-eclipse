@@ -394,7 +394,7 @@ public class GenerateToStringDialog extends SourceActionDialog {
 				//Ctrl+Enter should execute the default button, workaround for https://bugs.eclipse.org/bugs/show_bug.cgi?id=145959
 				template.addTraverseListener(e -> {
 					if (e.detail == SWT.TRAVERSE_RETURN && (e.stateMask & SWT.MODIFIER_MASK) != 0) {
-						buttonPressed(((Integer)getShell().getDefaultButton().getData()).intValue());
+						buttonPressed(((Integer)getShell().getDefaultButton().getData()));
 					}
 				});
 
@@ -443,7 +443,7 @@ public class GenerateToStringDialog extends SourceActionDialog {
 			private String fixLineBreaks(String input) {
 				String systemLineDelimiter= Text.DELIMITER;
 				final String javaLineDelimiter= "\n"; //$NON-NLS-1$
-				if (!systemLineDelimiter.equals(javaLineDelimiter)) {
+				if (!javaLineDelimiter.equals(systemLineDelimiter)) {
 					StringBuilder outputBuffer= new StringBuilder(input);
 					int pos= outputBuffer.indexOf(systemLineDelimiter);
 					while (pos >= 0) {
@@ -863,7 +863,7 @@ public class GenerateToStringDialog extends SourceActionDialog {
 			if (fLastValidBuilderType != null && fLastValidBuilderType.equals(type)) {
 				return fLastValidResultMethodSuggestions;
 			}
-			return getMethodSuggestions(type, method -> Flags.isPublic(method.getFlags()) && method.getParameterTypes().length == 0 && "java.lang.String".equals(JavaModelUtil.getResolvedTypeName(method.getReturnType(), type)));
+			return getMethodSuggestions(type, method -> Flags.isPublic(method.getFlags()) && method.getParameterTypes().length == 0 && "java.lang.String".equals(JavaModelUtil.getResolvedTypeName(method.getReturnType(), type))); //$NON-NLS-1$
 		}
 
 		private interface MethodChecker {

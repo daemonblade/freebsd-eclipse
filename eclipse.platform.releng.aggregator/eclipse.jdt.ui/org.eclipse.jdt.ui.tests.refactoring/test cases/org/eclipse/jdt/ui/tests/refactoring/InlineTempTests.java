@@ -20,7 +20,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Rule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
@@ -43,20 +43,25 @@ public class InlineTempTests extends GenericRefactoringTest {
 		return REFACTORING_PATH;
 	}
 
-	@Rule
-	public RefactoringTestSetup rts= new RefactoringTestSetup();
+	public InlineTempTests() {
+		super(new RefactoringTestSetup());
+	}
+
+	protected InlineTempTests(RefactoringTestSetup rts) {
+		super(rts);
+	}
 
 	protected String getSimpleTestFileName(boolean canInline, boolean input){
-		String fileName = "A_" + getName();
+		StringBuilder fileName = new StringBuilder("A_").append(getName());
 		if (canInline)
-			fileName += input ? "_in": "_out";
-		return fileName + ".java";
+			fileName.append(input ? "_in": "_out");
+		return fileName.append(".java").toString();
 	}
 
 	protected String getTestFileName(boolean canInline, boolean input){
-		String fileName= TEST_PATH_PREFIX + getRefactoringPath();
-		fileName += (canInline ? "canInline/": "cannotInline/");
-		return fileName + getSimpleTestFileName(canInline, input);
+		StringBuilder fileName= new StringBuilder(TEST_PATH_PREFIX).append(getRefactoringPath());
+		fileName.append(canInline ? "canInline/": "cannotInline/");
+		return fileName.append(getSimpleTestFileName(canInline, input)).toString();
 	}
 
 	protected ICompilationUnit createCUfromTestFile(IPackageFragment pack, boolean canInline, boolean input) throws Exception {
@@ -416,16 +421,16 @@ public class InlineTempTests extends GenericRefactoringTest {
 
 	//------
 
+	@Ignore("compile errors are ok now")
 	@Test
 	public void testFail0() throws Exception{
-		printTestDisabledMessage("compile errors are ok now");
-//		helper2();
+		helper2();
 	}
 
+	@Ignore("compile errors are ok now")
 	@Test
 	public void testFail1() throws Exception{
-		printTestDisabledMessage("compile errors are ok now");
-//		helper2();
+			helper2();
 	}
 
 	@Test
@@ -481,23 +486,22 @@ public class InlineTempTests extends GenericRefactoringTest {
 		helper2(8, 14, 8, 18);
 	}
 
+	@Ignore("compile errors are ok now")
 	@Test
 	public void testFail12() throws Exception{
-		printTestDisabledMessage("compile errors are ok now");
 		//test for 19851
-//		helper2(10, 16, 10, 19);
+		helper2(10, 16, 10, 19);
 	}
 
-
+	@Ignore("12106")
 	@Test
 	public void testFail13() throws Exception{
-//		printTestDisabledMessage("12106");
 		helper2(4, 18, 4, 19);
 	}
 
+	@Ignore("https://bugs.eclipse.org/bugs/show_bug.cgi?id=93850")
 	@Test
 	public void testFail14() throws Exception {
-		//https://bugs.eclipse.org/bugs/show_bug.cgi?id=93850
 		helper2(5, 17, 5, 18);
 	}
 

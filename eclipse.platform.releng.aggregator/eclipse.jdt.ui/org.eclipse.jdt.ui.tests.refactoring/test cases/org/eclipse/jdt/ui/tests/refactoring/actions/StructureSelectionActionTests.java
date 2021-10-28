@@ -17,7 +17,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 
-import org.junit.Rule;
 import org.junit.Test;
 
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -38,8 +37,9 @@ import org.eclipse.jdt.internal.ui.javaeditor.selectionactions.StructureSelectPr
 public class StructureSelectionActionTests extends GenericRefactoringTest {
 	private static final String REFACTORING_PATH= "StructureSelectionAction/";
 
-	@Rule
-	public RefactoringTestSetup rts= new RefactoringTestSetup();
+	public StructureSelectionActionTests() {
+		rts= new RefactoringTestSetup();
+	}
 
 	@Override
 	protected String getRefactoringPath() {
@@ -47,10 +47,10 @@ public class StructureSelectionActionTests extends GenericRefactoringTest {
 	}
 
 	private String getSimpleTestFileName(boolean input){
-		String fileName = "A_" + getName();
-		fileName += input ? "": "_out";
-		fileName +=  input ? ".java": ".txt";
-		return fileName;
+		StringBuilder fileName = new StringBuilder("A_").append(getName());
+		fileName.append(input ? "": "_out");
+		fileName.append(input ? ".java": ".txt");
+		return fileName.toString();
 	}
 
 	private String getTestFileName(boolean input){

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,7 @@
  *     IBM Corporation - initial API and implementation
  *     Nikolay Metchev <nikolaymetchev@gmail.com> - [inline] problem with fields from generic types - https://bugs.eclipse.org/218431
  *     Microsoft Corporation - copied to jdt.core.manipulation
+ *     Microsoft Corporation - read formatting options from the compilation unit
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.refactoring.code;
 
@@ -149,9 +150,26 @@ public class InlineConstantRefactoring extends Refactoring {
 					return false;
 
 				ITypeBinding onesContainerBinding= getTypeBindingForTypeDeclaration(onesContainer);
+				if (one instanceof SimpleName) {
+					IBinding oneTypeBinding= ((SimpleName)one).resolveBinding();
+					if (oneTypeBinding instanceof IVariableBinding) {
+						ITypeBinding onesDeclaringClassBinding= ((IVariableBinding)oneTypeBinding).getDeclaringClass();
+						if (onesDeclaringClassBinding != null) {
+							onesContainerBinding= onesDeclaringClassBinding;
+						}
+					}
+				} else if (one instanceof MethodInvocation) {
+					IMethodBinding oneMethodBinding= ((MethodInvocation)one).resolveMethodBinding();
+					if (oneMethodBinding != null) {
+						ITypeBinding onesDeclaringClassBinding= oneMethodBinding.getDeclaringClass();
+						if (onesDeclaringClassBinding != null) {
+							onesContainerBinding= onesDeclaringClassBinding;
+						}
+					}
+				}
 				ITypeBinding othersContainerBinding= getTypeBindingForTypeDeclaration(othersContainer);
 
-				Assert.isNotNull(onesContainerBinding);
+
 				Assert.isNotNull(othersContainerBinding);
 
 				String onesKey= onesContainerBinding.getKey();
@@ -268,9 +286,9 @@ public class InlineConstantRefactoring extends Refactoring {
 			private void addExplicitTypeArgumentsIfNecessary(Expression invocation) {
 				if (Invocations.isResolvedTypeInferredFromExpectedType(invocation)) {
 					ASTNode referenceContext= fNewLocation.getParent();
-					if (! (referenceContext instanceof VariableDeclarationFragment
-							|| referenceContext instanceof SingleVariableDeclaration
-							|| referenceContext instanceof Assignment)) {
+					if (!(referenceContext instanceof VariableDeclarationFragment)
+							&& !(referenceContext instanceof SingleVariableDeclaration)
+							&& !(referenceContext instanceof Assignment)) {
 						ListRewrite typeArgsRewrite= Invocations.getInferredTypeArgumentsRewrite(fInitializerRewrite, invocation);
 						for (ITypeBinding typeArgument2 : Invocations.getInferredTypeArguments(invocation)) {
 							Type typeArgument= fNewLocationCuRewrite.getImportRewrite().addImport(typeArgument2, fNewLocationCuRewrite.getAST(), fNewLocationContext, TypeLocation.TYPE_ARGUMENT);
@@ -382,10 +400,8 @@ public class InlineConstantRefactoring extends Refactoring {
 					IBinding memberBinding= memberName.resolveBinding();
 
 					if (memberBinding instanceof IVariableBinding || memberBinding instanceof IMethodBinding) {
-						if (fStaticImportsInReference.contains(fNewLocation)) { // use static import if reference location used static import
-							importStatically(memberName, memberBinding);
-							return;
-						} else if (fStaticImportsInInitializer2.contains(memberName)) { // use static import if already imported statically in initializer
+						if (fStaticImportsInReference.contains(fNewLocation) // Use static import if reference location used static import
+								|| fStaticImportsInInitializer2.contains(memberName)) { // Use static import if already imported statically in initializer
 							importStatically(memberName, memberBinding);
 							return;
 						}
@@ -572,14 +588,14 @@ public class InlineConstantRefactoring extends Refactoring {
 			IDocument document= new Document(fInitializerUnit.getBuffer().getContents()); // could reuse document when generating and applying undo edits
 
 			final RangeMarker marker= new RangeMarker(fInitializer.getStartPosition(), fInitializer.getLength());
-			TextEdit[] rewriteEdits= initializerRewrite.rewriteAST(document, fInitializerUnit.getJavaProject().getOptions(true)).removeChildren();
+			TextEdit[] rewriteEdits= initializerRewrite.rewriteAST(document, fInitializerUnit.getOptions(true)).removeChildren();
 			marker.addChildren(rewriteEdits);
 			try {
 				marker.apply(document, TextEdit.UPDATE_REGIONS);
 				String rewrittenInitializer= document.get(marker.getOffset(), marker.getLength());
 				IRegion region= document.getLineInformation(document.getLineOfOffset(marker.getOffset()));
-				int oldIndent= Strings.computeIndentUnits(document.get(region.getOffset(), region.getLength()), project);
-				return Strings.changeIndent(rewrittenInitializer, oldIndent, project, "", TextUtilities.getDefaultLineDelimiter(document)); //$NON-NLS-1$
+				int oldIndent= Strings.computeIndentUnits(document.get(region.getOffset(), region.getLength()), fInitializerUnit);
+				return Strings.changeIndent(rewrittenInitializer, oldIndent, fInitializerUnit, "", TextUtilities.getDefaultLineDelimiter(document)); //$NON-NLS-1$
 			} catch (MalformedTreeException | BadLocationException e) {
 				JavaManipulationPlugin.log(e);
 			}
@@ -622,6 +638,7 @@ public class InlineConstantRefactoring extends Refactoring {
 	private IField fField;
 	private CompilationUnitRewrite fDeclarationCuRewrite;
 	private VariableDeclarationFragment fDeclaration;
+	private SearchResultGroup[] fReferences;
 	private boolean fDeclarationSelected;
 	private boolean fDeclarationSelectedChecked= false;
 	private boolean fInitializerAllStaticFinal;
@@ -691,7 +708,7 @@ public class InlineConstantRefactoring extends Refactoring {
 		if (!variableBinding.isField() || variableBinding.isEnumConstant())
 			return null;
 		int modifiers= binding.getModifiers();
-		if (! (Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers)))
+		if (!Modifier.isStatic(modifiers) || !Modifier.isFinal(modifiers))
 			return null;
 
 		return name;
@@ -824,7 +841,7 @@ public class InlineConstantRefactoring extends Refactoring {
 			ImportReferencesCollector.collect(getInitializer(), fField.getJavaProject(), null, new ArrayList<SimpleName>(), staticImportsInInitializer);
 
 			if (getReplaceAllReferences()) {
-				for (SearchResultGroup group : findReferences(pm, result)) {
+				for (SearchResultGroup group : getReferences(pm, result)) {
 					if (pm.isCanceled())
 						throw new OperationCanceledException();
 					ICompilationUnit cu= group.getCompilationUnit();
@@ -939,9 +956,9 @@ public class InlineConstantRefactoring extends Refactoring {
 				comment.addSetting(RefactoringCoreMessages.InlineConstantRefactoring_replace_references);
 			final InlineConstantDescriptor descriptor= RefactoringSignatureDescriptorFactory.createInlineConstantDescriptor(project, description, comment.asString(), arguments, flags);
 			arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_INPUT, JavaRefactoringDescriptorUtil.elementToHandle(project, fSelectionCu));
-			arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_SELECTION, Integer.valueOf(fSelectionStart).toString() + " " + Integer.valueOf(fSelectionLength).toString()); //$NON-NLS-1$
-			arguments.put(ATTRIBUTE_REMOVE, Boolean.valueOf(fRemoveDeclaration).toString());
-			arguments.put(ATTRIBUTE_REPLACE, Boolean.valueOf(fReplaceAllReferences).toString());
+			arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_SELECTION, Integer.toString(fSelectionStart) + " " + Integer.toString(fSelectionLength)); //$NON-NLS-1$
+			arguments.put(ATTRIBUTE_REMOVE, Boolean.toString(fRemoveDeclaration));
+			arguments.put(ATTRIBUTE_REPLACE, Boolean.toString(fReplaceAllReferences));
 			return new DynamicValidationRefactoringChange(descriptor, RefactoringCoreMessages.InlineConstantRefactoring_inline, fChanges);
 		} finally {
 			pm.done();
@@ -982,6 +999,24 @@ public class InlineConstantRefactoring extends Refactoring {
 		checkInvariant();
 	}
 
+	/**
+	 * Returns the references, or empty list if the references could not be found.
+	 * @param monitor progress monitor
+	 * @param status the status to report errors
+	 *
+	 * @return the references
+	 */
+	public SearchResultGroup[] getReferences(IProgressMonitor monitor, RefactoringStatus status) {
+		if (this.fReferences == null) {
+			try {
+				this.fReferences= findReferences(monitor, status);
+			} catch (JavaModelException e) {
+				this.fReferences= new SearchResultGroup[0];
+			}
+		}
+		return this.fReferences;
+	}
+
 	private RefactoringStatus initialize(JavaRefactoringArguments arguments) {
 		final String selection= arguments.getAttribute(JavaRefactoringDescriptorUtil.ATTRIBUTE_SELECTION);
 		if (selection != null) {
@@ -989,9 +1024,9 @@ public class InlineConstantRefactoring extends Refactoring {
 			int length= -1;
 			final StringTokenizer tokenizer= new StringTokenizer(selection);
 			if (tokenizer.hasMoreTokens())
-				offset= Integer.valueOf(tokenizer.nextToken()).intValue();
+				offset= Integer.parseInt(tokenizer.nextToken());
 			if (tokenizer.hasMoreTokens())
-				length= Integer.valueOf(tokenizer.nextToken()).intValue();
+				length= Integer.parseInt(tokenizer.nextToken());
 			if (offset >= 0 && length >= 0) {
 				fSelectionStart= offset;
 				fSelectionLength= length;
@@ -1035,12 +1070,12 @@ public class InlineConstantRefactoring extends Refactoring {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_INPUT));
 		final String replace= arguments.getAttribute(ATTRIBUTE_REPLACE);
 		if (replace != null) {
-			fReplaceAllReferences= Boolean.valueOf(replace).booleanValue();
+			fReplaceAllReferences= Boolean.parseBoolean(replace);
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_REPLACE));
 		final String remove= arguments.getAttribute(ATTRIBUTE_REMOVE);
 		if (remove != null)
-			fRemoveDeclaration= Boolean.valueOf(remove).booleanValue();
+			fRemoveDeclaration= Boolean.parseBoolean(remove);
 		else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_REMOVE));
 		return new RefactoringStatus();

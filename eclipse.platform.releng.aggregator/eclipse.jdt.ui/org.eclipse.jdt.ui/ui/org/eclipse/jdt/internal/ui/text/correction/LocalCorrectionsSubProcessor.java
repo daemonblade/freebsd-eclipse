@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,6 +15,7 @@
  *     Lukas Hanke <hanke@yatta.de> - Bug 241696 [quick fix] quickfix to iterate over a collection - https://bugs.eclipse.org/bugs/show_bug.cgi?id=241696
  *     Sandra Lions <sandra.lions-piron@oracle.com> - [quick fix] for qualified enum constants in switch-case labels - https://bugs.eclipse.org/bugs/90140
  *     Stephan Herrmann - Contribution for Bug 463360 - [override method][null] generating method override should not create redundant null annotations
+ *     Microsoft Corporation - read preferences from the compilation unit
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.text.correction;
 
@@ -50,9 +51,11 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
 
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -75,6 +78,7 @@ import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.FieldAccess;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ForStatement;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
@@ -147,6 +151,7 @@ import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFix;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFix;
 import org.eclipse.jdt.internal.corext.refactoring.code.Invocations;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
+import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.surround.ExceptionAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryCatchAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryCatchRefactoring;
@@ -185,6 +190,9 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatu
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposal.InsertDescription;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposal.RemoveDescription;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ConstructorFromSuperclassProposal;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.CreateNewObjectProposal;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.CreateObjectReferenceProposal;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.CreateVariableReferenceProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedNamesAssistProposal;
@@ -201,15 +209,18 @@ import org.eclipse.jdt.internal.ui.viewsupport.JavaElementImageProvider;
 /**
   */
 public class LocalCorrectionsSubProcessor {
-
 	private static final String RAW_TYPE_REFERENCE_ID= "org.eclipse.jdt.ui.correction.rawTypeReference"; //$NON-NLS-1$
+
 	private static final String ADD_EXCEPTION_TO_THROWS_ID= "org.eclipse.jdt.ui.correction.addThrowsDecl"; //$NON-NLS-1$
+
 	private static final String ADD_NON_NLS_ID= "org.eclipse.jdt.ui.correction.addNonNLS"; //$NON-NLS-1$
+
 	private static final String ADD_FIELD_QUALIFICATION_ID= "org.eclipse.jdt.ui.correction.qualifyField"; //$NON-NLS-1$
+
 	private static final String ADD_STATIC_ACCESS_ID= "org.eclipse.jdt.ui.correction.changeToStatic"; //$NON-NLS-1$
+
 	private static final String REMOVE_UNNECESSARY_NLS_TAG_ID= "org.eclipse.jdt.ui.correction.removeNlsTag"; //$NON-NLS-1$
 
-	@SuppressWarnings("deprecation")
 	public static void addUncaughtExceptionProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
 		ICompilationUnit cu= context.getCompilationUnit();
 
@@ -226,8 +237,8 @@ public class LocalCorrectionsSubProcessor {
 			return;
 		}
 		boolean isSelectedNodeThrowStatement= false;
-		if (selectedNode instanceof  ThrowStatement) {
-			isSelectedNodeThrowStatement = true;
+		if (selectedNode instanceof ThrowStatement) {
+			isSelectedNodeThrowStatement= true;
 		}
 
 		int offset= selectedNode.getStartPosition();
@@ -246,11 +257,11 @@ public class LocalCorrectionsSubProcessor {
 		List<String> affectedLocals= new ArrayList<>();
 		SimpleName vName= null;
 		ITypeBinding vType= null;
-		if (selectedNode.getAST().apiLevel() >= AST.JLS10 && (selectedNode instanceof VariableDeclarationStatement)) {
-			for (Object o : ((VariableDeclarationStatement)selectedNode).fragments()) {
-				VariableDeclarationFragment v= ((VariableDeclarationFragment)o);
+		if (selectedNode.getAST().apiLevel() >= ASTHelper.JLS10 && (selectedNode instanceof VariableDeclarationStatement)) {
+			for (Object o : ((VariableDeclarationStatement) selectedNode).fragments()) {
+				VariableDeclarationFragment v= ((VariableDeclarationFragment) o);
 				vName= v.getName();
-				vType= ((VariableDeclarationStatement)selectedNode).getType().resolveBinding();
+				vType= ((VariableDeclarationStatement) selectedNode).getType().resolveBinding();
 			}
 
 			// If no references to 'var' type exist, entire statement will be placed in try block
@@ -273,7 +284,7 @@ public class LocalCorrectionsSubProcessor {
 			proposals.add(proposal);
 		}
 
-		if (JavaModelUtil.is17OrHigher(cu.getJavaProject())) {
+		if (JavaModelUtil.is1d7OrHigher(cu.getJavaProject())) {
 			refactoring= SurroundWithTryCatchRefactoring.create(cu, offset, length, true);
 			if (refactoring == null)
 				return;
@@ -312,135 +323,115 @@ public class LocalCorrectionsSubProcessor {
 		TryStatement surroundingTry= ASTResolving.findParentTryStatement(selectedNode);
 		AST ast= astRoot.getAST();
 		if (surroundingTry != null && (ASTNodes.isParent(selectedNode, surroundingTry.getBody()) || selectedNode.getLocationInParent() == TryStatement.RESOURCES2_PROPERTY)) {
-			{
-				ASTRewrite rewrite= ASTRewrite.create(surroundingTry.getAST());
+			addAdditionalCatchProposal(context, proposals, cu, selectedNode, offset, length, decl, uncaughtExceptions, surroundingTry, ast);
 
-				String label= CorrectionMessages.LocalCorrectionsSubProcessor_addadditionalcatch_description;
-				Image image= JavaPluginImages.get(JavaPluginImages.IMG_OBJS_EXCEPTION);
-				LinkedCorrectionProposal proposal= new LinkedCorrectionProposal(label, cu, rewrite, IProposalRelevance.ADD_ADDITIONAL_CATCH, image);
-
-				ImportRewrite imports= proposal.createImportRewrite(context.getASTRoot());
-				ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(decl, imports);
-
-				CodeScopeBuilder.Scope scope= CodeScopeBuilder.perform(decl, Selection.createFromStartLength(offset, length)).
-						findScope(offset, length);
-				scope.setCursor(offset);
-
-				ListRewrite clausesRewrite= rewrite.getListRewrite(surroundingTry, TryStatement.CATCH_CLAUSES_PROPERTY);
-				for (int i= 0; i < uncaughtExceptions.length; i++) {
-					ITypeBinding excBinding= uncaughtExceptions[i];
-					String varName= StubUtility.getExceptionVariableName(cu.getJavaProject());
-					String name= scope.createName(varName, false);
-					SingleVariableDeclaration var= ast.newSingleVariableDeclaration();
-					var.setName(ast.newSimpleName(name));
-					var.setType(imports.addImport(excBinding, ast, importRewriteContext, TypeLocation.EXCEPTION));
-					CatchClause newClause= ast.newCatchClause();
-					newClause.setException(var);
-					String catchBody= StubUtility.getCatchBodyContent(cu, excBinding.getName(), name, selectedNode, String.valueOf('\n'));
-					if (catchBody != null) {
-						ASTNode node= rewrite.createStringPlaceholder(catchBody, ASTNode.RETURN_STATEMENT);
-						newClause.getBody().statements().add(node);
-					}
-					clausesRewrite.insertLast(newClause, null);
-
-					String typeKey= "type" + i; //$NON-NLS-1$
-					String nameKey= "name" + i; //$NON-NLS-1$
-					proposal.addLinkedPosition(rewrite.track(var.getType()), false, typeKey);
-					proposal.addLinkedPosition(rewrite.track(var.getName()), false, nameKey);
-					addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
-				}
-				proposals.add(proposal);
-			}
-
-			if (JavaModelUtil.is17OrHigher(cu.getJavaProject())) {
+			if (JavaModelUtil.is1d7OrHigher(cu.getJavaProject())) {
 				List<CatchClause> catchClauses= surroundingTry.catchClauses();
+				List<ITypeBinding> filteredExceptions= SurroundWithTryCatchRefactoring.filterSubtypeExceptions(uncaughtExceptions);
+				Image image= JavaPluginImages.get(JavaPluginImages.IMG_OBJS_EXCEPTION);
+				ASTRewrite rewrite= ASTRewrite.create(ast);
 
 				if (catchClauses != null && catchClauses.size() == 1) {
-					List<ITypeBinding> filteredExceptions= SurroundWithTryCatchRefactoring.filterSubtypeExceptions(uncaughtExceptions);
 					String label= filteredExceptions.size() > 1
 							? CorrectionMessages.LocalCorrectionsSubProcessor_addexceptionstoexistingcatch_description
 							: CorrectionMessages.LocalCorrectionsSubProcessor_addexceptiontoexistingcatch_description;
-					Image image= JavaPluginImages.get(JavaPluginImages.IMG_OBJS_EXCEPTION);
-					ASTRewrite rewrite= ASTRewrite.create(ast);
 					LinkedCorrectionProposal proposal= new LinkedCorrectionProposal(label, cu, rewrite, IProposalRelevance.ADD_EXCEPTIONS_TO_EXISTING_CATCH, image);
 					ImportRewrite imports= proposal.createImportRewrite(context.getASTRoot());
 					ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(decl, imports);
 
 					CatchClause catchClause= catchClauses.get(0);
-					Type type= catchClause.getException().getType();
-					if (type instanceof UnionType) {
-						UnionType unionType= (UnionType) type;
-						ListRewrite listRewrite= rewrite.getListRewrite(unionType, UnionType.TYPES_PROPERTY);
-						for (int i= 0; i < filteredExceptions.size(); i++) {
-							ITypeBinding excBinding= filteredExceptions.get(i);
-							Type type2= imports.addImport(excBinding, ast, importRewriteContext, TypeLocation.EXCEPTION);
-							listRewrite.insertLast(type2, null);
+					Type originalType= catchClause.getException().getType();
 
-							String typeKey= "type" + i; //$NON-NLS-1$
-							proposal.addLinkedPosition(rewrite.track(type2), false, typeKey);
-							addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
+					if (originalType instanceof UnionType) {
+						UnionType unionType= (UnionType) originalType;
+						ListRewrite listRewrite= rewrite.getListRewrite(unionType, UnionType.TYPES_PROPERTY);
+						@SuppressWarnings("unchecked")
+						List<Type> existingTypes= new ArrayList<>(unionType.types());
+
+						for (int i= 0; i < filteredExceptions.size(); i++) {
+							Type addedType= addNewException(ast, filteredExceptions, rewrite, proposal, imports, importRewriteContext, i);
+							boolean isReplaced= false;
+
+							for (Type existingType : existingTypes) {
+								if (existingType.resolveBinding().isSubTypeCompatible(filteredExceptions.get(i))) {
+									listRewrite.replace(existingType, addedType, null);
+									isReplaced= true;
+									break;
+								}
+							}
+
+							if (!isReplaced) {
+								listRewrite.insertLast(addedType, null);
+							}
 						}
 					} else {
-						UnionType newUnionType= ast.newUnionType();
-						List<Type> types= newUnionType.types();
+						Type firstType= null;
+						List<Type> typesToAdd= new ArrayList<>();
 
-						types.add((Type) rewrite.createCopyTarget(type));
 						for (int i= 0; i < filteredExceptions.size(); i++) {
-							ITypeBinding excBinding= filteredExceptions.get(i);
-							Type type2= imports.addImport(excBinding, ast, importRewriteContext, TypeLocation.EXCEPTION);
-							types.add(type2);
+							Type addedType= addNewException(ast, filteredExceptions, rewrite, proposal, imports, importRewriteContext, i);
 
-							String typeKey= "type" + i; //$NON-NLS-1$
-							proposal.addLinkedPosition(rewrite.track(type2), false, typeKey);
-							addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
+							if (originalType.resolveBinding().isSubTypeCompatible(filteredExceptions.get(i))) {
+								firstType= addedType;
+							} else {
+								typesToAdd.add(addedType);
+							}
 						}
-						rewrite.replace(type, newUnionType, null);
+
+						if (!typesToAdd.isEmpty()) {
+							UnionType newUnionType= ast.newUnionType();
+							List<Type> types= newUnionType.types();
+
+							if (firstType == null) {
+								types.add(ASTNodes.createMoveTarget(rewrite, originalType));
+							} else {
+								types.add(firstType);
+							}
+							types.addAll(typesToAdd);
+
+							rewrite.replace(originalType, newUnionType, null);
+						} else if (firstType != null) {
+							rewrite.replace(originalType, firstType, null);
+						}
 					}
+
 					proposals.add(proposal);
-				} else if (catchClauses != null && catchClauses.isEmpty()) {
-					List<ITypeBinding> filteredExceptions= SurroundWithTryCatchRefactoring.filterSubtypeExceptions(uncaughtExceptions);
-					if (filteredExceptions.size() > 1) {
-						String label= CorrectionMessages.LocalCorrectionsSubProcessor_addadditionalmulticatch_description;
-						Image image= JavaPluginImages.get(JavaPluginImages.IMG_OBJS_EXCEPTION);
-						ASTRewrite rewrite= ASTRewrite.create(ast);
-						LinkedCorrectionProposal proposal= new LinkedCorrectionProposal(label, cu, rewrite, IProposalRelevance.ADD_ADDITIONAL_MULTI_CATCH, image);
-						ImportRewrite imports= proposal.createImportRewrite(context.getASTRoot());
-						ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(decl, imports);
+				} else if (catchClauses != null && catchClauses.isEmpty() && filteredExceptions.size() > 1) {
+					String label= CorrectionMessages.LocalCorrectionsSubProcessor_addadditionalmulticatch_description;
+					LinkedCorrectionProposal proposal= new LinkedCorrectionProposal(label, cu, rewrite, IProposalRelevance.ADD_EXCEPTIONS_TO_EXISTING_CATCH, image);
+					ImportRewrite imports= proposal.createImportRewrite(context.getASTRoot());
+					ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(decl, imports);
 
-						CodeScopeBuilder.Scope scope= CodeScopeBuilder.perform(decl, Selection.createFromStartLength(offset, length)).findScope(offset, length);
-						scope.setCursor(offset);
+					CodeScopeBuilder.Scope scope= CodeScopeBuilder.perform(decl, Selection.createFromStartLength(offset, length)).findScope(offset, length);
+					scope.setCursor(offset);
 
-						CatchClause newCatchClause= ast.newCatchClause();
-						String varName= StubUtility.getExceptionVariableName(cu.getJavaProject());
-						String name= scope.createName(varName, false);
-						SingleVariableDeclaration var= ast.newSingleVariableDeclaration();
-						var.setName(ast.newSimpleName(name));
+					CatchClause newCatchClause= ast.newCatchClause();
+					String varName= StubUtility.getExceptionVariableName(cu.getJavaProject());
+					String name= scope.createName(varName, false);
+					SingleVariableDeclaration var= ast.newSingleVariableDeclaration();
+					var.setName(ast.newSimpleName(name));
 
-						UnionType newUnionType= ast.newUnionType();
-						List<Type> types= newUnionType.types();
+					UnionType newUnionType= ast.newUnionType();
+					List<Type> types= newUnionType.types();
 
-						for (int i= 0; i < filteredExceptions.size(); i++) {
-							ITypeBinding excBinding= filteredExceptions.get(i);
-							Type type2= imports.addImport(excBinding, ast, importRewriteContext, TypeLocation.EXCEPTION);
-							types.add(type2);
-
-							String typeKey= "type" + i; //$NON-NLS-1$
-							proposal.addLinkedPosition(rewrite.track(type2), false, typeKey);
-							addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
-						}
-						String nameKey= "name"; //$NON-NLS-1$
-						proposal.addLinkedPosition(rewrite.track(var.getName()), false, nameKey);
-						var.setType(newUnionType);
-						newCatchClause.setException(var);
-						String catchBody= StubUtility.getCatchBodyContent(cu, "Exception", name, selectedNode, String.valueOf('\n')); //$NON-NLS-1$
-						if (catchBody != null) {
-							ASTNode node= rewrite.createStringPlaceholder(catchBody, ASTNode.RETURN_STATEMENT);
-							newCatchClause.getBody().statements().add(node);
-						}
-						ListRewrite listRewrite= rewrite.getListRewrite(surroundingTry, TryStatement.CATCH_CLAUSES_PROPERTY);
-						listRewrite.insertFirst(newCatchClause, null);
-						proposals.add(proposal);
+					for (int i= 0; i < filteredExceptions.size(); i++) {
+						types.add(addNewException(ast, filteredExceptions, rewrite, proposal, imports, importRewriteContext, i));
 					}
+
+					String nameKey= "name"; //$NON-NLS-1$
+					proposal.addLinkedPosition(rewrite.track(var.getName()), false, nameKey);
+					var.setType(newUnionType);
+					newCatchClause.setException(var);
+					String catchBody= StubUtility.getCatchBodyContent(cu, "Exception", name, selectedNode, String.valueOf('\n')); //$NON-NLS-1$
+
+					if (catchBody != null) {
+						ASTNode node= rewrite.createStringPlaceholder(catchBody, ASTNode.RETURN_STATEMENT);
+						newCatchClause.getBody().statements().add(node);
+					}
+
+					ListRewrite listRewrite= rewrite.getListRewrite(surroundingTry, TryStatement.CATCH_CLAUSES_PROPERTY);
+					listRewrite.insertFirst(newCatchClause, null);
+					proposals.add(proposal);
 				}
 			}
 		}
@@ -449,58 +440,124 @@ public class LocalCorrectionsSubProcessor {
 		if (enclosingNode instanceof MethodDeclaration) {
 			MethodDeclaration methodDecl= (MethodDeclaration) enclosingNode;
 			IMethodBinding binding= methodDecl.resolveBinding();
-			boolean isApplicable= (binding != null);
+			boolean isApplicable= binding != null;
+
 			if (isApplicable) {
 				IMethodBinding overriddenMethod= Bindings.findOverriddenMethod(binding, true);
-				if (overriddenMethod != null ) {
+
+				if (overriddenMethod != null) {
 					isApplicable= overriddenMethod.getDeclaringClass().isFromSource();
+
 					if (!isApplicable) { // bug 349051
 						ITypeBinding[] exceptionTypes= overriddenMethod.getExceptionTypes();
 						ArrayList<ITypeBinding> unhandledExceptions= new ArrayList<>(uncaughtExceptions.length);
+
 						for (ITypeBinding curr : uncaughtExceptions) {
 							if (isSubtype(curr, exceptionTypes)) {
 								unhandledExceptions.add(curr);
 							}
 						}
+
 						uncaughtExceptions= unhandledExceptions.toArray(new ITypeBinding[unhandledExceptions.size()]);
-						isApplicable|= uncaughtExceptions.length > 0;
+						isApplicable= uncaughtExceptions.length > 0;
 					}
 				}
-			}
-			if (isApplicable) {
-				ITypeBinding[] methodExceptions= binding.getExceptionTypes();
-				ArrayList<ITypeBinding> unhandledExceptions= new ArrayList<>(uncaughtExceptions.length);
-				for (ITypeBinding curr : uncaughtExceptions) {
-					if (!isSubtype(curr, methodExceptions)) {
-						unhandledExceptions.add(curr);
+
+				if (isApplicable) {
+					ITypeBinding[] methodExceptions= binding.getExceptionTypes();
+					ArrayList<ITypeBinding> unhandledExceptions= new ArrayList<>(uncaughtExceptions.length);
+
+					for (ITypeBinding curr : uncaughtExceptions) {
+						if (!isSubtype(curr, methodExceptions)) {
+							unhandledExceptions.add(curr);
+						}
 					}
-				}
-				uncaughtExceptions= unhandledExceptions.toArray(new ITypeBinding[unhandledExceptions.size()]);
 
-				List<Type> exceptions= methodDecl.thrownExceptionTypes();
-				int nExistingExceptions= exceptions.size();
-				ChangeDescription[] desc= new ChangeDescription[nExistingExceptions + uncaughtExceptions.length];
-				for (int i= 0; i < exceptions.size(); i++) {
-					Type elem= exceptions.get(i);
-					if (isSubtype(elem.resolveBinding(), uncaughtExceptions)) {
-						desc[i]= new RemoveDescription();
+					uncaughtExceptions= unhandledExceptions.toArray(new ITypeBinding[unhandledExceptions.size()]);
+
+					List<Type> exceptions= methodDecl.thrownExceptionTypes();
+					int nExistingExceptions= exceptions.size();
+
+					ChangeDescription[] desc= new ChangeDescription[nExistingExceptions + uncaughtExceptions.length];
+					for (int i= 0; i < exceptions.size(); i++) {
+						Type elem= exceptions.get(i);
+
+						if (isSubtype(elem.resolveBinding(), uncaughtExceptions)) {
+							desc[i]= new RemoveDescription();
+						}
 					}
-				}
-				for (int i = 0; i < uncaughtExceptions.length; i++) {
-					desc[i + nExistingExceptions]= new InsertDescription(uncaughtExceptions[i], ""); //$NON-NLS-1$
-				}
 
-				String label= CorrectionMessages.LocalCorrectionsSubProcessor_addthrows_description;
-				Image image= JavaPluginImages.get(JavaPluginImages.IMG_OBJS_EXCEPTION);
+					for (int i= 0; i < uncaughtExceptions.length; i++) {
+						desc[i + nExistingExceptions]= new InsertDescription(uncaughtExceptions[i], ""); //$NON-NLS-1$
+					}
 
-				ChangeMethodSignatureProposal proposal= new ChangeMethodSignatureProposal(label, cu, astRoot, binding, null, desc, IProposalRelevance.ADD_THROWS_DECLARATION, image);
-				for (int i= 0; i < uncaughtExceptions.length; i++) {
-					addExceptionTypeLinkProposals(proposal, uncaughtExceptions[i], proposal.getExceptionTypeGroupId(i + nExistingExceptions));
+					String label= CorrectionMessages.LocalCorrectionsSubProcessor_addthrows_description;
+					Image image= JavaPluginImages.get(JavaPluginImages.IMG_OBJS_EXCEPTION);
+
+					ChangeMethodSignatureProposal proposal= new ChangeMethodSignatureProposal(label, cu, astRoot, binding, null, desc, IProposalRelevance.ADD_THROWS_DECLARATION, image);
+
+					for (int i= 0; i < uncaughtExceptions.length; i++) {
+						addExceptionTypeLinkProposals(proposal, uncaughtExceptions[i], proposal.getExceptionTypeGroupId(i + nExistingExceptions));
+					}
+
+					proposal.setCommandId(ADD_EXCEPTION_TO_THROWS_ID);
+					proposals.add(proposal);
 				}
-				proposal.setCommandId(ADD_EXCEPTION_TO_THROWS_ID);
-				proposals.add(proposal);
 			}
 		}
+	}
+
+	private static Type addNewException(AST ast, List<ITypeBinding> filteredExceptions, ASTRewrite rewrite, LinkedCorrectionProposal proposal, ImportRewrite imports,
+			ImportRewriteContext importRewriteContext, int i) {
+		ITypeBinding excBinding= filteredExceptions.get(i);
+		Type type= imports.addImport(excBinding, ast, importRewriteContext, TypeLocation.EXCEPTION);
+
+		String typeKey= "type" + i; //$NON-NLS-1$
+		proposal.addLinkedPosition(rewrite.track(type), false, typeKey);
+		addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
+
+		return type;
+	}
+
+	private static void addAdditionalCatchProposal(IInvocationContext context, Collection<ICommandAccess> proposals, ICompilationUnit cu, ASTNode selectedNode, int offset, int length,
+			BodyDeclaration decl,
+			ITypeBinding[] uncaughtExceptions, TryStatement surroundingTry, AST ast) throws CoreException {
+		ASTRewrite rewrite= ASTRewrite.create(surroundingTry.getAST());
+
+		String label= CorrectionMessages.LocalCorrectionsSubProcessor_addadditionalcatch_description;
+		Image image= JavaPluginImages.get(JavaPluginImages.IMG_OBJS_EXCEPTION);
+		LinkedCorrectionProposal proposal= new LinkedCorrectionProposal(label, cu, rewrite, IProposalRelevance.ADD_ADDITIONAL_CATCH, image);
+
+		ImportRewrite imports= proposal.createImportRewrite(context.getASTRoot());
+		ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(decl, imports);
+
+		CodeScopeBuilder.Scope scope= CodeScopeBuilder.perform(decl, Selection.createFromStartLength(offset, length)).findScope(offset, length);
+		scope.setCursor(offset);
+
+		ListRewrite clausesRewrite= rewrite.getListRewrite(surroundingTry, TryStatement.CATCH_CLAUSES_PROPERTY);
+		for (int i= 0; i < uncaughtExceptions.length; i++) {
+			ITypeBinding excBinding= uncaughtExceptions[i];
+			String varName= StubUtility.getExceptionVariableName(cu.getJavaProject());
+			String name= scope.createName(varName, false);
+			SingleVariableDeclaration var= ast.newSingleVariableDeclaration();
+			var.setName(ast.newSimpleName(name));
+			var.setType(imports.addImport(excBinding, ast, importRewriteContext, TypeLocation.EXCEPTION));
+			CatchClause newClause= ast.newCatchClause();
+			newClause.setException(var);
+			String catchBody= StubUtility.getCatchBodyContent(cu, excBinding.getName(), name, selectedNode, String.valueOf('\n'));
+			if (catchBody != null) {
+				ASTNode node= rewrite.createStringPlaceholder(catchBody, ASTNode.RETURN_STATEMENT);
+				newClause.getBody().statements().add(node);
+			}
+			clausesRewrite.insertLast(newClause, null);
+
+			String typeKey= "type" + i; //$NON-NLS-1$
+			String nameKey= "name" + i; //$NON-NLS-1$
+			proposal.addLinkedPosition(rewrite.track(var.getType()), false, typeKey);
+			proposal.addLinkedPosition(rewrite.track(var.getName()), false, nameKey);
+			addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
+		}
+		proposals.add(proposal);
 	}
 
 	private static void addExceptionTypeLinkProposals(LinkedCorrectionProposal proposal, ITypeBinding exc, String key) {
@@ -535,7 +592,7 @@ public class LocalCorrectionsSubProcessor {
 
 	public static void addNLSProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
 		final ICompilationUnit cu= context.getCompilationUnit();
-		if (cu == null || !cu.exists()){
+		if (cu == null || !cu.exists()) {
 			return;
 		}
 		String name= CorrectionMessages.LocalCorrectionsSubProcessor_externalizestrings_description;
@@ -545,6 +602,7 @@ public class LocalCorrectionsSubProcessor {
 			public void apply(IDocument document) {
 				ExternalizeWizard.open(cu, JavaPlugin.getActiveWorkbenchShell());
 			}
+
 			@Override
 			public Object getAdditionalProposalInfo(IProgressMonitor monitor) {
 				return CorrectionMessages.LocalCorrectionsSubProcessor_externalizestrings_additional_info;
@@ -610,7 +668,7 @@ public class LocalCorrectionsSubProcessor {
 				options1.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_SUBTYPE_ACCESS, CleanUpOptions.TRUE);
 				options1.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_INSTANCE_ACCESS, CleanUpOptions.TRUE);
 				IProposableFix fix2= fixes[1];
-				proposal= new FixCorrectionProposal(fix2, new CodeStyleCleanUp(options), IProposalRelevance.CREATE_NON_STATIC_ACCESS_USING_INSTANCE_TYPE, image, context);
+				proposal= new FixCorrectionProposal(fix2, new CodeStyleCleanUp(options1), IProposalRelevance.CREATE_NON_STATIC_ACCESS_USING_INSTANCE_TYPE, image, context);
 				proposals.add(proposal);
 			}
 		}
@@ -708,14 +766,149 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
+	public static void addNewObjectProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
+		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
+		if (selectedNode == null) {
+			return;
+		}
+		ASTNode selectedExpressionStatement= ASTNodes.getParent(selectedNode, ASTNode.EXPRESSION_STATEMENT);
+		if (selectedExpressionStatement != null) {
+			ExpressionStatement expressionStatement= (ExpressionStatement) selectedExpressionStatement;
+			Expression expression= expressionStatement.getExpression();
+			ITypeBinding binding= null;
+			if (expression instanceof MethodInvocation) {
+				Expression expression2= ((MethodInvocation) expression).getExpression();
+				binding= expression2 == null ? null : expression2.resolveTypeBinding();
+			}
+			if (binding == null) {
+				return;
+			}
+			ICompilationUnit cu= context.getCompilationUnit();
+			CreateNewObjectProposal createNewObjectProposal= new CreateNewObjectProposal(cu, expressionStatement, binding, IProposalRelevance.ADD_CONSTRUCTOR_FROM_SUPER_CLASS);
+			if (createNewObjectProposal.hasProposal()) {
+				proposals.add(createNewObjectProposal);
+			}
+			return;
+		}
+
+		ASTNode selectedVariableDeclarationFragment= ASTNodes.getParent(selectedNode, ASTNode.VARIABLE_DECLARATION_FRAGMENT);
+		if (selectedVariableDeclarationFragment != null) {
+			VariableDeclarationFragment vdf= (VariableDeclarationFragment) selectedVariableDeclarationFragment;
+			VariableDeclarationStatement vds= (VariableDeclarationStatement) ASTNodes.getParent(selectedNode, ASTNode.VARIABLE_DECLARATION_STATEMENT);
+			if (vds == null) {
+				return;
+			}
+			Type type= vds.getType();
+			ITypeBinding binding= null;
+			binding= type == null ? null : type.resolveBinding();
+			if (binding == null) {
+				return;
+			}
+			ICompilationUnit cu= context.getCompilationUnit();
+			CreateNewObjectProposal createNewObjectProposal= new CreateNewObjectProposal(cu, vdf, binding, IProposalRelevance.ADD_CONSTRUCTOR_FROM_SUPER_CLASS);
+			if (createNewObjectProposal.hasProposal()) {
+				proposals.add(createNewObjectProposal);
+			}
+			/* create instance of qualifier, ex; X in X.s; */
+			Expression initializer= vdf.getInitializer();
+			if(initializer instanceof QualifiedName == false) {
+				return;
+			}
+			QualifiedName qualifiedName= (QualifiedName)initializer;
+			IBinding resolveBinding= qualifiedName.getName().resolveBinding();
+			if(resolveBinding instanceof IVariableBinding == false) {
+				return;
+			}
+			CreateNewObjectProposal createNewObjectProposal2= new CreateNewObjectProposal(cu, vdf, (IVariableBinding)resolveBinding, IProposalRelevance.ADD_CONSTRUCTOR_FROM_SUPER_CLASS);
+			if (createNewObjectProposal2.hasProposal()) {
+				proposals.add(createNewObjectProposal2);
+			}
+			return;
+		}
+		if (problem.getProblemId() == IProblem.StaticMethodRequested ||
+				problem.getProblemId() == IProblem.NonStaticFieldFromStaticInvocation) {
+			addUncaughtExceptionProposals(context, problem, proposals);
+		}
+	}
+
+	public static void addObjectReferenceProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
+		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
+		ITypeBinding binding= null;
+		if (selectedNode == null) {
+			return;
+		}
+		if (problem.getProblemId() == IProblem.NonStaticFieldFromStaticInvocation) {
+			if (selectedNode instanceof QualifiedName) {
+				QualifiedName qualifiedName= (QualifiedName) selectedNode;
+				Name qualifier= qualifiedName.getQualifier();
+				binding= qualifier.resolveTypeBinding();
+			}
+		} else {
+			selectedNode= ASTNodes.getParent(selectedNode, ASTNode.EXPRESSION_STATEMENT);
+			if (selectedNode == null) {
+				if (problem.getProblemId() == IProblem.StaticMethodRequested) {
+					addUncaughtExceptionProposals(context, problem, proposals);
+				}
+				return;
+			}
+			ExpressionStatement expressionStatement= (ExpressionStatement) selectedNode;
+			Expression expression= expressionStatement.getExpression();
+			if (expression instanceof MethodInvocation) {
+				Expression expression2= ((MethodInvocation) expression).getExpression();
+				binding= expression2 == null ? null : expression2.resolveTypeBinding();
+			}
+		}
+		if (binding == null) {
+			return;
+		}
+		ICompilationUnit cu= context.getCompilationUnit();
+		CreateObjectReferenceProposal createObjectReferenceProposal= new CreateObjectReferenceProposal(cu, selectedNode, binding, IProposalRelevance.ADD_CONSTRUCTOR_FROM_SUPER_CLASS);
+		if (createObjectReferenceProposal.hasProposal()) {
+			proposals.add(createObjectReferenceProposal);
+		}
+	}
+
+	public static void addVariableReferenceProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
+		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
+		if (selectedNode == null) {
+			return;
+		}
+		selectedNode= ASTNodes.getParent(selectedNode, ASTNode.VARIABLE_DECLARATION_FRAGMENT);
+		if (selectedNode == null) {
+			if (problem.getProblemId() == IProblem.NonStaticFieldFromStaticInvocation) {
+				addUncaughtExceptionProposals(context, problem, proposals);
+			}
+			return;
+		}
+		VariableDeclarationFragment fragment= (VariableDeclarationFragment) selectedNode;
+		Type type= null;
+		if(fragment.getParent() instanceof VariableDeclarationStatement) {
+			type= ((VariableDeclarationStatement)fragment.getParent()).getType();
+		} else if(fragment.getParent() instanceof FieldDeclaration) {
+			type= ((FieldDeclaration)fragment.getParent()).getType();
+		}
+		if (type == null) {
+			return;
+		}
+		ITypeBinding binding= type.resolveBinding();
+		if (binding == null) {
+			return;
+		}
+		ICompilationUnit cu= context.getCompilationUnit();
+		CreateVariableReferenceProposal createVariableReferenceProposal= new CreateVariableReferenceProposal(cu, fragment, binding, IProposalRelevance.ADD_CONSTRUCTOR_FROM_SUPER_CLASS);
+		if (createVariableReferenceProposal.hasProposal()) {
+			proposals.add(createVariableReferenceProposal);
+		}
+	}
+
 	public static void addUnusedMemberProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
-		int problemId = problem.getProblemId();
+		int problemId= problem.getProblemId();
 		UnusedCodeFix fix= UnusedCodeFix.createUnusedMemberFix(context.getASTRoot(), problem, false);
 		if (fix != null) {
 			addProposal(context, proposals, fix);
 		}
 
-		if (problemId==IProblem.LocalVariableIsNeverUsed){
+		if (problemId == IProblem.LocalVariableIsNeverUsed) {
 			fix= UnusedCodeFix.createUnusedMemberFix(context.getASTRoot(), problem, true);
 			addProposal(context, proposals, fix);
 		}
@@ -727,7 +920,6 @@ public class LocalCorrectionsSubProcessor {
 		if (problemId == IProblem.UnusedPrivateField) {
 			GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context, problem, proposals, IProposalRelevance.GETTER_SETTER_UNUSED_PRIVATE_FIELD);
 		}
-
 	}
 
 	public static void addUnusedTypeParameterProposal(IInvocationContext context, IProblemLocation problemLoc, Collection<ICommandAccess> proposals) {
@@ -765,13 +957,13 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
-	public static void addSuperfluousSemicolonProposal(IInvocationContext context, IProblemLocation problem,  Collection<ICommandAccess> proposals) {
+	public static void addSuperfluousSemicolonProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		String label= CorrectionMessages.LocalCorrectionsSubProcessor_removesemicolon_description;
 		ReplaceCorrectionProposal proposal= new ReplaceCorrectionProposal(label, context.getCompilationUnit(), problem.getOffset(), problem.getLength(), "", IProposalRelevance.REMOVE_SEMICOLON); //$NON-NLS-1$
 		proposals.add(proposal);
 	}
 
-	public static void addUnnecessaryCastProposal(IInvocationContext context, IProblemLocation problem,  Collection<ICommandAccess> proposals) {
+	public static void addUnnecessaryCastProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		IProposableFix fix= UnusedCodeFix.createRemoveUnusedCastFix(context.getASTRoot(), problem);
 		if (fix != null) {
 			Image image= JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
@@ -934,7 +1126,7 @@ public class LocalCorrectionsSubProcessor {
 						label= CorrectionMessages.LocalCorrectionsSubProcessor_setparenteses_instanceof_description;
 						break;
 					case ASTNode.INFIX_EXPRESSION:
-						InfixExpression infixExpression= (InfixExpression)parent;
+						InfixExpression infixExpression= (InfixExpression) parent;
 						label= Messages.format(CorrectionMessages.LocalCorrectionsSubProcessor_setparenteses_description, infixExpression.getOperator().toString());
 						break;
 				}
@@ -992,6 +1184,7 @@ public class LocalCorrectionsSubProcessor {
 	private static class CompareInBitWiseOpFinder extends ASTVisitor {
 
 		private InfixExpression fCompareExpression= null;
+
 		private final ASTNode fSelectedNode;
 
 		public CompareInBitWiseOpFinder(ASTNode selectedNode) {
@@ -1046,7 +1239,7 @@ public class LocalCorrectionsSubProcessor {
 		}
 
 		ASTRewrite rewrite= ASTRewrite.create(root.getAST());
-		ASTNode placeholder=QuickAssistProcessor.getCopyOfInner(rewrite, ifStatement.getElseStatement(), false);
+		ASTNode placeholder= QuickAssistProcessor.getCopyOfInner(rewrite, ifStatement.getElseStatement(), false);
 		if (placeholder == null) {
 			return;
 		}
@@ -1112,6 +1305,141 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
+	public static void addTypeAsPermittedSubTypeProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws JavaModelException {
+		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
+		if (selectedNode == null) {
+			return;
+		}
+		if (!ASTHelper.isSealedTypeSupportedInAST(selectedNode.getAST())) {
+			return;
+		}
+
+		while (selectedNode.getParent() instanceof Type) {
+			selectedNode= selectedNode.getParent();
+		}
+		if (selectedNode.getLocationInParent() != TypeDeclaration.SUPERCLASS_TYPE_PROPERTY
+				&& selectedNode.getLocationInParent() != TypeDeclaration.SUPER_INTERFACE_TYPES_PROPERTY) {
+			return;
+		}
+		TypeDeclaration subType= (TypeDeclaration) selectedNode.getParent();
+		ITypeBinding subTypeBinding= subType.resolveBinding();
+		IJavaElement sealedTypeElement= null;
+		if (selectedNode instanceof SimpleType) {
+			ITypeBinding typeBinding= ((SimpleType) selectedNode).resolveBinding();
+			if (typeBinding != null) {
+				sealedTypeElement= typeBinding.getJavaElement();
+			}
+		}
+		if (!(sealedTypeElement instanceof IType)) {
+			return;
+		}
+		IType sealedType= (IType) sealedTypeElement;
+		if (sealedType.isBinary() || !sealedType.isSealed()) {
+			return;
+		}
+		ICompilationUnit compilationUnit= sealedType.getCompilationUnit();
+		CompilationUnitRewrite cuRewrite= new CompilationUnitRewrite(compilationUnit);
+		TypeDeclaration declaration= ASTNodeSearchUtil.getTypeDeclarationNode(sealedType, cuRewrite.getRoot());
+		if (declaration == null) {
+			return;
+		}
+
+		AST ast= declaration.getAST();
+		String subTypeName= subType.getName().getIdentifier();
+		Type type= ast.newSimpleType(ast.newSimpleName(subTypeName));
+
+		ASTRewrite astRewrite= cuRewrite.getASTRewrite();
+		astRewrite.getListRewrite(declaration, TypeDeclaration.PERMITS_TYPES_PROPERTY).insertLast(type, null);
+
+		String sealedTypeName= problem.getProblemArguments()[1];
+		String label= Messages.format(CorrectionMessages.LocalCorrectionsSubProcessor_declareSubClassAsPermitsSealedClass_description, new String[] { subTypeName, sealedTypeName });
+		Image image= JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_ADD);
+		ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, compilationUnit, astRewrite, IProposalRelevance.DECLARE_SEALED_AS_DIRECT_SUPER_TYPE, image);
+		ImportRewrite importRewrite= proposal.getImportRewrite();
+		if (importRewrite == null) {
+			importRewrite= StubUtility.createImportRewrite(compilationUnit, true);
+		}
+
+		ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(declaration.getRoot(), importRewrite);
+		importRewrite.addImport(subTypeBinding, astRewrite.getAST(), importRewriteContext);
+		proposal.setImportRewrite(importRewrite);
+		proposals.add(proposal);
+	}
+
+	public static void addSealedAsDirectSuperTypeProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws JavaModelException {
+		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
+		if (selectedNode == null) {
+			return;
+		}
+		if (!ASTHelper.isSealedTypeSupportedInAST(selectedNode.getAST())) {
+			return;
+		}
+
+		while (selectedNode.getParent() instanceof Type) {
+			selectedNode= selectedNode.getParent();
+		}
+		if (selectedNode.getLocationInParent() != TypeDeclaration.PERMITS_TYPES_PROPERTY) {
+			return;
+		}
+		TypeDeclaration sealedType= (TypeDeclaration) selectedNode.getParent();
+
+		IJavaElement permittedTypeElement= null;
+		if (selectedNode instanceof SimpleType) {
+			ITypeBinding typeBinding= ((SimpleType) selectedNode).resolveBinding();
+			if (typeBinding != null) {
+				permittedTypeElement= typeBinding.getJavaElement();
+			}
+		}
+		if (!(permittedTypeElement instanceof IType)) {
+			return;
+		}
+
+		ICompilationUnit compilationUnit= ((IType) permittedTypeElement).getCompilationUnit();
+		if (compilationUnit == null) {
+			return;
+		}
+
+		CompilationUnitRewrite cuRewrite= new CompilationUnitRewrite(compilationUnit);
+		TypeDeclaration permittedTypeDeclaration= ASTNodeSearchUtil.getTypeDeclarationNode((IType) permittedTypeElement, cuRewrite.getRoot());
+		if (permittedTypeDeclaration == null) {
+			return;
+		}
+
+		AST ast= permittedTypeDeclaration.getAST();
+		String sealedTypeName= sealedType.getName().getIdentifier();
+		Type type= ast.newSimpleType(ast.newSimpleName(sealedTypeName));
+
+		boolean isSealedInterface= sealedType.isInterface();
+
+		ASTRewrite astRewrite= cuRewrite.getASTRewrite();
+		if (isSealedInterface) {
+			astRewrite.getListRewrite(permittedTypeDeclaration, TypeDeclaration.SUPER_INTERFACE_TYPES_PROPERTY).insertLast(type, null);
+		} else {
+			astRewrite.set(permittedTypeDeclaration, TypeDeclaration.SUPERCLASS_TYPE_PROPERTY, type, null);
+		}
+
+		String permittedTypeName= problem.getProblemArguments()[0];
+		String label;
+		if (isSealedInterface) {
+			label= Messages.format(CorrectionMessages.LocalCorrectionsSubProcessor_declareSealedAsDirectSuperInterface_description, new String[] { sealedTypeName, permittedTypeName });
+		} else {
+			label= Messages.format(CorrectionMessages.LocalCorrectionsSubProcessor_declareSealedAsDirectSuperClass_description, new String[] { sealedTypeName, permittedTypeName });
+		}
+		Image image= JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_ADD);
+		ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, compilationUnit, astRewrite, IProposalRelevance.DECLARE_SEALED_AS_DIRECT_SUPER_TYPE, image);
+
+		ImportRewrite importRewrite= proposal.getImportRewrite();
+		if (importRewrite == null) {
+			importRewrite= StubUtility.createImportRewrite(compilationUnit, true);
+		}
+
+		ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(permittedTypeDeclaration.getRoot(), importRewrite);
+		importRewrite.addImport(sealedType.resolveBinding(), astRewrite.getAST(), importRewriteContext);
+		proposal.setImportRewrite(importRewrite);
+
+		proposals.add(proposal);
+	}
+
 	public static void getUnreachableCodeProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		CompilationUnit root= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(root);
@@ -1129,28 +1457,28 @@ public class LocalCorrectionsSubProcessor {
 			addRemoveIncludingConditionProposal(context, parent, null, proposals);
 
 		} else if (selectedNode.getLocationInParent() == IfStatement.THEN_STATEMENT_PROPERTY) {
-			Statement elseStatement= ((IfStatement)parent).getElseStatement();
+			Statement elseStatement= ((IfStatement) parent).getElseStatement();
 			addRemoveIncludingConditionProposal(context, parent, elseStatement, proposals);
 
 		} else if (selectedNode.getLocationInParent() == IfStatement.ELSE_STATEMENT_PROPERTY) {
-			Statement thenStatement= ((IfStatement)parent).getThenStatement();
+			Statement thenStatement= ((IfStatement) parent).getThenStatement();
 			addRemoveIncludingConditionProposal(context, parent, thenStatement, proposals);
 
 		} else if (selectedNode.getLocationInParent() == ForStatement.BODY_PROPERTY) {
-			Statement body= ((ForStatement)parent).getBody();
+			Statement body= ((ForStatement) parent).getBody();
 			addRemoveIncludingConditionProposal(context, parent, body, proposals);
 
 		} else if (selectedNode.getLocationInParent() == ConditionalExpression.THEN_EXPRESSION_PROPERTY) {
-			Expression elseExpression= ((ConditionalExpression)parent).getElseExpression();
+			Expression elseExpression= ((ConditionalExpression) parent).getElseExpression();
 			addRemoveIncludingConditionProposal(context, parent, elseExpression, proposals);
 
 		} else if (selectedNode.getLocationInParent() == ConditionalExpression.ELSE_EXPRESSION_PROPERTY) {
-			Expression thenExpression= ((ConditionalExpression)parent).getThenExpression();
+			Expression thenExpression= ((ConditionalExpression) parent).getThenExpression();
 			addRemoveIncludingConditionProposal(context, parent, thenExpression, proposals);
 
 		} else if (selectedNode.getLocationInParent() == InfixExpression.RIGHT_OPERAND_PROPERTY) {
 			// also offer split && / || condition proposals:
-			InfixExpression infixExpression= (InfixExpression)parent;
+			InfixExpression infixExpression= (InfixExpression) parent;
 			Expression leftOperand= infixExpression.getLeftOperand();
 
 			ASTRewrite rewrite= ASTRewrite.create(parent.getAST());
@@ -1249,7 +1577,7 @@ public class LocalCorrectionsSubProcessor {
 
 		if (replacement == null
 				|| replacement instanceof EmptyStatement
-				|| replacement instanceof Block && ((Block)replacement).statements().size() == 0) {
+				|| replacement instanceof Block && ((Block) replacement).statements().size() == 0) {
 			if (ASTNodes.isControlStatementBody(toRemove.getLocationInParent())) {
 				rewrite.replace(toRemove, toRemove.getAST().newBlock(), null);
 			} else {
@@ -1281,7 +1609,7 @@ public class LocalCorrectionsSubProcessor {
 			ASTNode moveTarget;
 			if ((parent instanceof Block || parent instanceof SwitchStatement) && replacement instanceof Block) {
 				ListRewrite listRewrite= rewrite.getListRewrite(replacement, Block.STATEMENTS_PROPERTY);
-				List<Statement> list= ((Block)replacement).statements();
+				List<Statement> list= ((Block) replacement).statements();
 				int lastIndex= list.size() - 1;
 				moveTarget= listRewrite.createMoveTarget(list.get(0), list.get(lastIndex));
 			} else {
@@ -1350,7 +1678,7 @@ public class LocalCorrectionsSubProcessor {
 				if (returnTypeBinding != null && exprType != null && exprType.isAssignmentCompatible(returnTypeBinding)) {
 					relevance= IProposalRelevance.RETURN_ALLOCATED_OBJECT_MATCH;
 				} else if (method.getReturnType2() instanceof PrimitiveType
-						&& ((PrimitiveType)method.getReturnType2()).getPrimitiveTypeCode() == PrimitiveType.VOID) {
+						&& ((PrimitiveType) method.getReturnType2()).getPrimitiveTypeCode() == PrimitiveType.VOID) {
 					relevance= IProposalRelevance.RETURN_ALLOCATED_OBJECT_VOID;
 				} else {
 					relevance= IProposalRelevance.RETURN_ALLOCATED_OBJECT;
@@ -1392,7 +1720,7 @@ public class LocalCorrectionsSubProcessor {
 			return;
 		}
 		ITypeBinding typeBinding= Bindings.getBindingOfParentType(selectedNode);
-		if (typeBinding == null)  {
+		if (typeBinding == null) {
 			return;
 		}
 		IVariableBinding fieldBinding= Bindings.findFieldInHierarchy(typeBinding, binding.getName());
@@ -1461,7 +1789,7 @@ public class LocalCorrectionsSubProcessor {
 		if (fix != null) {
 			for (ICommandAccess element : proposals) {
 				if (element instanceof FixCorrectionProposal) {
-					FixCorrectionProposal fixProp= (FixCorrectionProposal)element;
+					FixCorrectionProposal fixProp= (FixCorrectionProposal) element;
 					if (RAW_TYPE_REFERENCE_ID.equals(fixProp.getCommandId())) {
 						return;
 					}
@@ -1479,15 +1807,16 @@ public class LocalCorrectionsSubProcessor {
 		boolean hasInferTypeArgumentsProposal= false;
 		for (ICommandAccess completionProposal : proposals) {
 			if (completionProposal instanceof ChangeCorrectionProposal) {
-				if (IJavaEditorActionDefinitionIds.INFER_TYPE_ARGUMENTS_ACTION.equals(((ChangeCorrectionProposal)completionProposal).getCommandId())) {
+				if (IJavaEditorActionDefinitionIds.INFER_TYPE_ARGUMENTS_ACTION.equals(((ChangeCorrectionProposal) completionProposal).getCommandId())) {
 					hasInferTypeArgumentsProposal= true;
 					break;
 				}
 			}
 		}
-		if (! hasInferTypeArgumentsProposal) {
+		if (!hasInferTypeArgumentsProposal) {
 			final ICompilationUnit cu= context.getCompilationUnit();
-			ChangeCorrectionProposal proposal= new ChangeCorrectionProposal(CorrectionMessages.LocalCorrectionsSubProcessor_InferGenericTypeArguments, null, IProposalRelevance.INFER_GENERIC_TYPE_ARGUMENTS, JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE)) {
+			ChangeCorrectionProposal proposal= new ChangeCorrectionProposal(CorrectionMessages.LocalCorrectionsSubProcessor_InferGenericTypeArguments, null,
+					IProposalRelevance.INFER_GENERIC_TYPE_ARGUMENTS, JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE)) {
 				@Override
 				public void apply(IDocument document) {
 					IEditorInput input= new FileEditorInput((IFile) cu.getResource());
@@ -1499,7 +1828,7 @@ public class LocalCorrectionsSubProcessor {
 					if (!(part instanceof JavaEditor))
 						return;
 
-					IEditorSite site= ((JavaEditor)part).getEditorSite();
+					IEditorSite site= ((JavaEditor) part).getEditorSite();
 					InferTypeArgumentsAction action= new InferTypeArgumentsAction(site);
 					action.run(new StructuredSelection(cu));
 				}
@@ -1574,7 +1903,8 @@ public class LocalCorrectionsSubProcessor {
 			if (!(normalizedNode.getParent() instanceof Type) && node.getParent() != normalizedNode) {
 				ITypeBinding normBinding= ASTResolving.guessBindingForTypeReference(normalizedNode);
 				if (normBinding != null && !normBinding.isRecovered()) {
-					proposals.add(UnresolvedElementsSubProcessor.createTypeRefChangeFullProposal(cu, normBinding, normalizedNode, IProposalRelevance.TYPE_ARGUMENTS_FROM_CONTEXT, TypeLocation.TYPE_ARGUMENT));
+					proposals.add(UnresolvedElementsSubProcessor.createTypeRefChangeFullProposal(cu, normBinding, normalizedNode, IProposalRelevance.TYPE_ARGUMENTS_FROM_CONTEXT,
+							TypeLocation.TYPE_ARGUMENT));
 				}
 			}
 		}
@@ -1669,7 +1999,7 @@ public class LocalCorrectionsSubProcessor {
 						ASTNode parent= selectedNode.getParent();
 						ICompilationUnit cu= context.getCompilationUnit();
 						// add explicit type arguments if necessary (for 1.8 and later, we're optimistic that inference just works):
-						if (Invocations.isInvocationWithArguments(parent) && !JavaModelUtil.is18OrHigher(cu.getJavaProject())) {
+						if (Invocations.isInvocationWithArguments(parent) && !JavaModelUtil.is1d8OrHigher(cu.getJavaProject())) {
 							IMethodBinding methodBinding= Invocations.resolveBinding(parent);
 							if (methodBinding != null) {
 								ITypeBinding[] parameterTypes= methodBinding.getParameterTypes();
@@ -1678,7 +2008,7 @@ public class LocalCorrectionsSubProcessor {
 									ITypeBinding[] typeArguments= parameterTypes[i].getTypeArguments();
 									for (ITypeBinding typeArgument : typeArguments) {
 										typeArgument= Bindings.normalizeForDeclarationUse(typeArgument, ast);
-										if (! TypeRules.isJavaLangObject(typeArgument)) {
+										if (!TypeRules.isJavaLangObject(typeArgument)) {
 											// add all type arguments if at least one is found to be necessary:
 											List<Type> typeArgumentsList= method.typeArguments();
 											for (ITypeBinding t : typeArguments) {
@@ -1694,7 +2024,8 @@ public class LocalCorrectionsSubProcessor {
 
 						astRewrite.replace(selectedNode, method, null);
 
-						String label= Messages.format(CorrectionMessages.LocalCorrectionsSubProcessor_replacefieldaccesswithmethod_description, BasicElementLabels.getJavaElementName(ASTNodes.asString(method)));
+						String label= Messages.format(CorrectionMessages.LocalCorrectionsSubProcessor_replacefieldaccesswithmethod_description,
+								BasicElementLabels.getJavaElementName(ASTNodes.asString(method)));
 						Image image= JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
 						ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, cu, astRewrite, IProposalRelevance.REPLACE_FIELD_ACCESS_WITH_METHOD, image);
 						proposal.setImportRewrite(importRewrite);
@@ -1706,12 +2037,13 @@ public class LocalCorrectionsSubProcessor {
 	}
 
 	private static Map<String, String[]> resolveMap;
+
 	private static String[] getMethod(String fieldName) {
-		if (resolveMap==null){
-			resolveMap=new HashMap<>();
-			resolveMap.put("java.util.Collections.EMPTY_MAP", new String[]{"java.util.Collections","emptyMap"});   //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
-			resolveMap.put("java.util.Collections.EMPTY_SET", new String[]{"java.util.Collections","emptySet"});  //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
-			resolveMap.put("java.util.Collections.EMPTY_LIST", new String[]{"java.util.Collections","emptyList"});//$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
+		if (resolveMap == null) {
+			resolveMap= new HashMap<>();
+			resolveMap.put("java.util.Collections.EMPTY_MAP", new String[] { "java.util.Collections", "emptyMap" }); //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
+			resolveMap.put("java.util.Collections.EMPTY_SET", new String[] { "java.util.Collections", "emptySet" }); //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
+			resolveMap.put("java.util.Collections.EMPTY_LIST", new String[] { "java.util.Collections", "emptyList" });//$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
 		}
 		return resolveMap.get(fieldName);
 	}
@@ -1765,7 +2097,7 @@ public class LocalCorrectionsSubProcessor {
 			}
 		}
 
-		boolean hasDefault=false;
+		boolean hasDefault= false;
 		for (Statement curr : switchStatements) {
 			if (curr instanceof SwitchCase) {
 				SwitchCase switchCase= (SwitchCase) curr;
@@ -2024,13 +2356,12 @@ public class LocalCorrectionsSubProcessor {
 			return;
 		}
 
-		AbstractTypeDeclaration typeDeclaration= null;
 		StructuralPropertyDescriptor locationInParent= selectedNode.getLocationInParent();
 		if (locationInParent != TypeDeclaration.NAME_PROPERTY && locationInParent != EnumDeclaration.NAME_PROPERTY) {
 			return;
 		}
 
-		typeDeclaration= (AbstractTypeDeclaration) selectedNode.getParent();
+		AbstractTypeDeclaration typeDeclaration= (AbstractTypeDeclaration) selectedNode.getParent();
 
 		ITypeBinding binding= typeDeclaration.resolveBinding();
 		if (binding == null || binding.getSuperclass() == null) {
@@ -2061,7 +2392,7 @@ public class LocalCorrectionsSubProcessor {
 					if (!(part instanceof JavaEditor))
 						return;
 
-					IEditorSite site= ((JavaEditor)part).getEditorSite();
+					IEditorSite site= ((JavaEditor) part).getEditorSite();
 					GenerateHashCodeEqualsAction action= new GenerateHashCodeEqualsAction(site);
 					action.run(new StructuredSelection(type));
 				}
@@ -2088,7 +2419,7 @@ public class LocalCorrectionsSubProcessor {
 		LinkedCorrectionProposal proposal2= new LinkedCorrectionProposal(label, cu, rewrite, IProposalRelevance.OVERRIDE_HASHCODE, image);
 		ImportRewrite importRewrite= proposal2.createImportRewrite(astRoot);
 
-		final CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(cu.getJavaProject());
+		final CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(cu);
 
 		try {
 			ImportRewriteContext importContext= new ContextSensitiveImportRewriteContext(astRoot, problem.getOffset(), importRewrite);
@@ -2235,7 +2566,7 @@ public class LocalCorrectionsSubProcessor {
 
 		ImportRewrite importRewrite= proposal.createImportRewrite(astRoot);
 		ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(astRoot, typeNode.getStartPosition(), importRewrite);
-		CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(cu.getJavaProject());
+		CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(cu);
 		try {
 			MethodDeclaration stub= StubUtility2.createImplementationStub(cu, rewrite, importRewrite, importRewriteContext, methodToOverride, typeBinding, settings,
 					typeBinding.isInterface(), new NodeFinder(astRoot, typeNode.getStartPosition(), 0).getCoveringNode());
@@ -2249,9 +2580,9 @@ public class LocalCorrectionsSubProcessor {
 		proposals.add(proposal);
 	}
 
-	public static void addServiceProviderProposal (IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
+	public static void addServiceProviderProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
 		ASTNode node= problem.getCoveredNode(context.getASTRoot());
-		if (! (node instanceof Name) && ! (node.getParent() instanceof ProvidesDirective)) {
+		if (!(node instanceof Name) && !(node.getParent() instanceof ProvidesDirective)) {
 			return;
 		}
 
@@ -2274,7 +2605,7 @@ public class LocalCorrectionsSubProcessor {
 
 	public static void addServiceProviderConstructorProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
 		ASTNode node= problem.getCoveredNode(context.getASTRoot());
-		if (! (node instanceof Name) && ! (node.getParent() instanceof ProvidesDirective)) {
+		if (!(node instanceof Name) && !(node.getParent() instanceof ProvidesDirective)) {
 			return;
 		}
 
@@ -2319,8 +2650,8 @@ public class LocalCorrectionsSubProcessor {
 				}
 
 				String label= CorrectionMessages.LocalCorrectionsSubProcessor_changeconstructor_public_description;
-				int include=Modifier.PUBLIC;
-				int exclude=Modifier.PRIVATE | Modifier.PROTECTED | Modifier.PUBLIC;
+				int include= Modifier.PUBLIC;
+				int exclude= Modifier.PRIVATE | Modifier.PROTECTED | Modifier.PUBLIC;
 
 				// Locate the constructor declaration node in the target AST Node
 				MethodDeclaration targetMethodDecl= ASTNodeSearchUtil.getMethodDeclarationNode(targetMethod, (CompilationUnit) targetRoot);
@@ -2329,14 +2660,16 @@ public class LocalCorrectionsSubProcessor {
 						JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE)));
 			} else {
 				// no-arg constructor does not exist, need to create it
-				String[] args= new String[] { org.eclipse.jdt.internal.ui.text.correction.ASTResolving.getMethodSignature(org.eclipse.jdt.internal.ui.text.correction.ASTResolving.getTypeSignature(targetBinding), new ITypeBinding[0], false) };
+				String[] args= new String[] { org.eclipse.jdt.internal.ui.text.correction.ASTResolving
+						.getMethodSignature(org.eclipse.jdt.internal.ui.text.correction.ASTResolving.getTypeSignature(targetBinding), new ITypeBinding[0], false) };
 				String label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_createconstructor_description, args);
 				Image image= JavaElementImageProvider.getDecoratedImage(JavaPluginImages.DESC_MISC_PUBLIC, JavaElementImageDescriptor.CONSTRUCTOR, JavaElementImageProvider.SMALL_SIZE);
-				proposals.add(new NewMethodCorrectionProposal(label, targetCU, targetRoot, new ArrayList<> (), targetBinding, IProposalRelevance.CREATE_CONSTRUCTOR, image));
+				proposals.add(new NewMethodCorrectionProposal(label, targetCU, targetRoot, new ArrayList<>(), targetBinding, IProposalRelevance.CREATE_CONSTRUCTOR, image));
 			}
 		}
 	}
 
 	private LocalCorrectionsSubProcessor() {
 	}
+
 }

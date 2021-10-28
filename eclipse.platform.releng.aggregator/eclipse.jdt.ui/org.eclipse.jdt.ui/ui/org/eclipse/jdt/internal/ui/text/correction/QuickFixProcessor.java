@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -128,6 +128,12 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.UnnecessaryInstanceof:
 			case IProblem.IndirectAccessToStaticField:
 			case IProblem.IndirectAccessToStaticMethod:
+			case IProblem.SealedMissingClassModifier:
+			case IProblem.SealedMissingInterfaceModifier:
+			case IProblem.SealedNotDirectSuperInterface:
+			case IProblem.SealedNotDirectSuperClass:
+			case IProblem.SealedSuperClassDoesNotPermit:
+			case IProblem.SealedSuperInterfaceDoesNotPermit:
 			case IProblem.Task:
 			case IProblem.UnusedMethodDeclaredThrownException:
 			case IProblem.UnusedConstructorDeclaredThrownException:
@@ -291,6 +297,7 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.ConstructorReferenceNotBelow18:
 			case IProblem.IntersectionCastNotBelow18:
 			case IProblem.InvalidUsageOfTypeAnnotations:
+			case IProblem.MultiConstantCaseLabelsNotSupported:
 			case IProblem.DuplicateInheritedDefaultMethods:
 			case IProblem.InheritedDefaultMethodConflictsWithOtherInherited:
 			case IProblem.IllegalTypeAnnotationsInStaticMemberAccess:
@@ -310,6 +317,7 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.SwitchExpressionsYieldMissingDefaultCase:
 			case IProblem.PreviewFeaturesNotAllowed:
 			case IProblem.UninitializedBlankFinalField:
+			case IProblem.FeatureNotSupported:
 			case IProblem.SwitchExpressionsReturnWithinSwitchExpression:
 			case IProblem.DanglingReference:
 				return true;
@@ -344,7 +352,7 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 		HashSet<Integer> handledProblems= new HashSet<>(locations.length);
 		ArrayList<ICommandAccess> resultingCollections= new ArrayList<>();
 		for (IProblemLocation curr : locations) {
-			Integer id= Integer.valueOf(curr.getProblemId());
+			Integer id= curr.getProblemId();
 			if (handledProblems.add(id)) {
 				process(context, curr, resultingCollections);
 			}
@@ -462,8 +470,24 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.IndirectAccessToStaticMethod:
 				LocalCorrectionsSubProcessor.addCorrectAccessToStaticProposals(context, problem, proposals);
 				break;
+			case IProblem.SealedMissingClassModifier:
+			case IProblem.SealedMissingInterfaceModifier:
+				ModifierCorrectionSubProcessor.addSealedMissingModifierProposal(context, problem, proposals);
+				break;
+			case IProblem.SealedNotDirectSuperInterface:
+			case IProblem.SealedNotDirectSuperClass:
+				LocalCorrectionsSubProcessor.addSealedAsDirectSuperTypeProposal(context, problem, proposals);
+				break;
+			case IProblem.SealedSuperClassDoesNotPermit:
+			case IProblem.SealedSuperInterfaceDoesNotPermit:
+				LocalCorrectionsSubProcessor.addTypeAsPermittedSubTypeProposal(context, problem, proposals);
+				break;
 			case IProblem.StaticMethodRequested:
 			case IProblem.NonStaticFieldFromStaticInvocation:
+				LocalCorrectionsSubProcessor.addObjectReferenceProposal(context, problem, proposals);
+				LocalCorrectionsSubProcessor.addVariableReferenceProposal(context, problem, proposals);
+				LocalCorrectionsSubProcessor.addNewObjectProposal(context, problem, proposals);
+				//$FALL-THROUGH$
 			case IProblem.InstanceMethodDuringConstructorInvocation:
 			case IProblem.InstanceFieldDuringConstructorInvocation:
 				ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_STATIC, IProposalRelevance.CHANGE_MODIFIER_TO_STATIC);
@@ -687,6 +711,9 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.InvalidUsageOfTypeAnnotations:
 				ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals, JavaCore.VERSION_1_8);
 				break;
+			case IProblem.MultiConstantCaseLabelsNotSupported:
+				ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals, JavaCore.VERSION_14);
+				break;
 			case IProblem.NonGenericType:
 				TypeArgumentMismatchSubProcessor.removeMismatchedArguments(context, problem, proposals);
 				break;
@@ -869,6 +896,9 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.PreviewFeatureNotSupported:
 			case IProblem.PreviewFeaturesNotAllowed:
 				PreviewFeaturesSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals);
+				break;
+			case IProblem.FeatureNotSupported:
+				ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals);
 				break;
 			case IProblem.SwitchExpressionsReturnWithinSwitchExpression:
 				ReturnTypeSubProcessor.replaceReturnWithYieldStatementProposals(context, problem, proposals);

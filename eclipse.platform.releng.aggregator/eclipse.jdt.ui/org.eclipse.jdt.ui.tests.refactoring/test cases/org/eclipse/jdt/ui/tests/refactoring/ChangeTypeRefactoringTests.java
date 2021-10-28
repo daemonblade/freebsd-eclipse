@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.Collection;
 
 import org.junit.Assert;
-import org.junit.Rule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.eclipse.jdt.testplugin.StringAsserts;
@@ -46,8 +46,6 @@ import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
  *
  */
 public class ChangeTypeRefactoringTests extends GenericRefactoringTest {
-	private static final boolean BUG_CORE_TYPE_HIERARCHY_ILLEGAL_PARAMETERIZED_INTERFACES= true;
-
 	private static final String REFACTORING_PATH= "ChangeTypeRefactoring/";
 
 	public static ChangeTypeRefactoring create(ICompilationUnit cu, int selectionStart, int selectionLength){
@@ -58,8 +56,9 @@ public class ChangeTypeRefactoringTests extends GenericRefactoringTest {
 		return new ChangeTypeRefactoring(cu, selectionStart, selectionLength, selectedType);
 	}
 
-	@Rule
-	public RefactoringTestSetup fts= new RefactoringTestSetup();
+	public ChangeTypeRefactoringTests() {
+		rts= new RefactoringTestSetup();
+	}
 
 	@Override
 	protected String getRefactoringPath() {
@@ -72,11 +71,11 @@ public class ChangeTypeRefactoringTests extends GenericRefactoringTest {
 	}
 
 	protected String getTestFileName(boolean positive, boolean input) {
-		String fileName= TEST_PATH_PREFIX + getRefactoringPath();
+		StringBuilder fileName= new StringBuilder(TEST_PATH_PREFIX).append(getRefactoringPath());
 
-		fileName += (positive ? "positive/": "negative/");
-		fileName += getSimpleTestFileName(input);
-		return fileName;
+		fileName.append(positive ? "positive/": "negative/");
+		fileName.append(getSimpleTestFileName(input));
+		return fileName.toString();
 	}
 
 	private ICompilationUnit createCUfromTestFile(IPackageFragment pack, boolean positive, boolean input) throws Exception {
@@ -471,12 +470,9 @@ public class ChangeTypeRefactoringTests extends GenericRefactoringTest {
 		};
 		StringAsserts.assertEqualStringsIgnoreOrder(actual, expected);
 	}
+	@Ignore("BUG_CORE_TYPE_HIERARCHY_ILLEGAL_PARAMETERIZED_INTERFACES core bug")
 	@Test
 	public void test4TypeParameters() throws Exception {
-		if (BUG_CORE_TYPE_HIERARCHY_ILLEGAL_PARAMETERIZED_INTERFACES) {
-			printTestDisabledMessage("core bug");
-			return;
-		}
 
 		Collection<String> types= helper1(3, 40, 3, 40, "p.I<java.lang.Double,java.lang.Float>").getValidTypeNames();
 		String[] actual= types.toArray(new String[types.size()]);

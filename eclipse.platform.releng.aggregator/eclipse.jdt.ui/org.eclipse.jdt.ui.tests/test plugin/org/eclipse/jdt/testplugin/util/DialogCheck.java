@@ -13,6 +13,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.testplugin.util;
 
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+
 import org.junit.Assert;
 
 import org.eclipse.swt.SWT;
@@ -59,14 +62,12 @@ public class DialogCheck {
 	 * @param dialog the test dialog to be verified.
 	 */
 	public static void assertDialog(Dialog dialog) {
-		Assert.assertNotNull(dialog);
+		assertNotNull(dialog);
 		if (_verifyDialog.getShell() == null) {
 			//force the creation of the verify dialog
 			getShell();
 		}
-		if (_verifyDialog.open(dialog) == IDialogConstants.NO_ID) {
-			Assert.assertTrue(_verifyDialog.getFailureText(), false);
-		}
+		assertNotEquals(_verifyDialog.getFailureText(), IDialogConstants.NO_ID, _verifyDialog.open(dialog));
 	}
 
 
@@ -78,7 +79,7 @@ public class DialogCheck {
 	 * @param dialog the test dialog to be verified.
 	 */
 	public static void assertDialogTexts(Dialog dialog) {
-		Assert.assertNotNull(dialog);
+		assertNotNull(dialog);
 		dialog.setBlockOnOpen(false);
 		dialog.open();
 		Shell shell = dialog.getShell();
@@ -161,7 +162,7 @@ public class DialogCheck {
 		if (preferred.x > size.x) {
 			//close the dialog
 			button.getShell().dispose();
-			Assert.assertTrue(message.toString(), false);
+			Assert.fail(message.toString());
 		}
 	}
 
@@ -195,7 +196,7 @@ public class DialogCheck {
 		if (preferred.x > size.x) {
 			//close the dialog
 			label.getShell().dispose();
-			Assert.assertTrue(message.toString(), false);
+			Assert.fail(message.toString());
 		}
 	}
 

@@ -199,7 +199,7 @@ public final class RefactoringHistoryService implements IRefactoringHistoryServi
 		final IScopeContext[] contexts= new IScopeContext[] { new ProjectScope(project)};
 		final String preference= Platform.getPreferencesService().getString(RefactoringCorePlugin.getPluginId(), RefactoringPreferenceConstants.PREFERENCE_SHARED_REFACTORING_HISTORY, Boolean.FALSE.toString(), contexts);
 		if (preference != null)
-			return Boolean.valueOf(preference).booleanValue();
+			return Boolean.parseBoolean(preference);
 		return false;
 	}
 
@@ -418,7 +418,7 @@ public final class RefactoringHistoryService implements IRefactoringHistoryServi
 				for (Entry<String, Collection<RefactoringDescriptorProxy>> entry : entries) {
 					final Collection<RefactoringDescriptorProxy> collection= entry.getValue();
 					String project= entry.getKey();
-					if (project.equals(RefactoringHistoryService.NAME_WORKSPACE_PROJECT))
+					if (RefactoringHistoryService.NAME_WORKSPACE_PROJECT.equals(project))
 						project= null;
 					final RefactoringHistoryManager manager= getManager(project);
 					if (manager != null)
@@ -513,7 +513,7 @@ public final class RefactoringHistoryService implements IRefactoringHistoryServi
 			monitor.beginTask(RefactoringCoreMessages.RefactoringHistoryService_deleting_refactorings, 100);
 			final String name= project.getName();
 			final IFileStore stateStore= EFS.getLocalFileSystem().getStore(RefactoringCorePlugin.getDefault().getStateLocation());
-			if (name.equals(NAME_WORKSPACE_PROJECT)) {
+			if (NAME_WORKSPACE_PROJECT.equals(name)) {
 				final IFileStore metaStore= stateStore.getChild(NAME_HISTORY_FOLDER).getChild(name);
 				metaStore.delete(EFS.NONE, new SubProgressMonitor(monitor, 100));
 			} else {

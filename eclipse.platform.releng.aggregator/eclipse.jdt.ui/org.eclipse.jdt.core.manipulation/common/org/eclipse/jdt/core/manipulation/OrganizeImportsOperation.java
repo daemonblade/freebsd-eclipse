@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -83,7 +83,7 @@ import org.eclipse.jdt.internal.corext.util.JdtFlags;
  * @since 1.10
  */
 public class OrganizeImportsOperation implements IWorkspaceRunnable {
-	public static interface IChooseImportQuery {
+	public interface IChooseImportQuery {
 		/**
 		 * Selects imports from a list of choices.
 		 * @param openChoices From each array, a type reference has to be selected
@@ -258,7 +258,7 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 
 			fCurrPackage= (IPackageFragment) cu.getParent();
 
-			fAllowDefaultPackageImports= cu.getJavaProject().getOption(JavaCore.COMPILER_SOURCE, true).equals(JavaCore.VERSION_1_3);
+			fAllowDefaultPackageImports= JavaCore.VERSION_1_3.equals(cu.getJavaProject().getOption(JavaCore.COMPILER_SOURCE, true));
 
 			fImportsAdded= new HashSet<>();
 			fUnresolvedTypes= new HashMap<>();
@@ -631,22 +631,22 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 	}
 
 	private void determineImportDifferences(ImportRewrite importsStructure, Set<String> oldSingleImports, Set<String> oldDemandImports) {
-  		ArrayList<String> importsAdded= new ArrayList<>();
-  		importsAdded.addAll(Arrays.asList(importsStructure.getCreatedImports()));
-  		importsAdded.addAll(Arrays.asList(importsStructure.getCreatedStaticImports()));
+		List<String> importsAdded= new ArrayList<>(importsStructure.getCreatedImports().length + importsStructure.getCreatedStaticImports().length);
+		importsAdded.addAll(Arrays.asList(importsStructure.getCreatedImports()));
+		importsAdded.addAll(Arrays.asList(importsStructure.getCreatedStaticImports()));
 
-  		for (Object element : oldSingleImports.toArray()) {
-	        String importName= (String) element;
-	        if (importsAdded.remove(importName))
-	            oldSingleImports.remove(importName);
-	    }
-	    for (Object element : oldDemandImports.toArray()) {
-	        String importName= (String) element;
-	        if (importsAdded.remove(importName + ".*")) //$NON-NLS-1$
-	            oldDemandImports.remove(importName);
-	    }
-	    fNumberOfImportsAdded= importsAdded.size();
-	    fNumberOfImportsRemoved= oldSingleImports.size() + oldDemandImports.size();
+		for (Object element : oldSingleImports.toArray()) {
+			String importName= (String) element;
+			if (importsAdded.remove(importName))
+				oldSingleImports.remove(importName);
+		}
+		for (Object element : oldDemandImports.toArray()) {
+			String importName= (String) element;
+			if (importsAdded.remove(importName + ".*")) //$NON-NLS-1$
+				oldDemandImports.remove(importName);
+		}
+		fNumberOfImportsAdded= importsAdded.size();
+		fNumberOfImportsRemoved= oldSingleImports.size() + oldDemandImports.size();
 	}
 
 
@@ -682,7 +682,8 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 					try {
 						// check favourite static imports
 						boolean isMethod= name.getParent() instanceof MethodInvocation;
-						String[] staticFavourites= JavaModelUtil.getStaticImportFavorites(importRewrite.getCompilationUnit(), identifier, isMethod, favourites);
+						ICompilationUnit cu= importRewrite.getCompilationUnit().getPrimary();
+						String[] staticFavourites= JavaModelUtil.getStaticImportFavorites(cu, identifier, isMethod, favourites);
 						if (staticFavourites.length > 0) {
 							String qualifiedTypeName= Signature.getQualifier(staticFavourites[0]);
 							importRewrite.addStaticImport(qualifiedTypeName, identifier, !isMethod);

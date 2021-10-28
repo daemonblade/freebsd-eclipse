@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,6 +14,7 @@
  *     Tom Eicher (Avaloq Evolution AG) - block selection mode
  *     Stefan Xenos (sxenos@gmail.com) - bug 306646, make editor margins follow the java formatter preference
  *     Angelo Zerr <angelo.zerr@gmail.com> - [CodeMining] Update CodeMinings with IJavaReconcilingListener - Bug 530825
+ *     Red Hat Inc. - Add raw paste functionality - Bug 522218
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.javaeditor;
 
@@ -252,7 +253,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 	 * Internal implementation class for a change listener.
 	 * @since 3.0
 	 */
-	protected abstract class AbstractSelectionChangedListener implements ISelectionChangedListener  {
+	protected abstract static class AbstractSelectionChangedListener implements ISelectionChangedListener  {
 
 		/**
 		 * Installs this selection changed listener with the given selection provider. If
@@ -651,7 +652,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 			}
 
 			int index= super.getLineStartPosition(document, line, length, offset);
-			if (type.equals(IJavaPartitions.JAVA_DOC) || type.equals(IJavaPartitions.JAVA_MULTI_LINE_COMMENT)) {
+			if (IJavaPartitions.JAVA_DOC.equals(type) || IJavaPartitions.JAVA_MULTI_LINE_COMMENT.equals(type)) {
 				if (index < length - 1 && line.charAt(index) == '*' && line.charAt(index + 1) != '/') {
 					do {
 						++index;
@@ -2108,6 +2109,15 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 		else
 			addAction(menu, ITextEditorActionConstants.GROUP_COPY, IJavaEditorActionConstants.COPY_QUALIFIED_NAME);
 
+		// Raw Paste
+		action= getAction(IJavaEditorActionConstants.RAW_PASTE);
+		action.setDisabledImageDescriptor(JavaPluginImages.DESC_DLCL_COPY_QUALIFIED_NAME);
+		action.setImageDescriptor(JavaPluginImages.DESC_ELCL_COPY_QUALIFIED_NAME);
+		if (menu.find(ITextEditorActionConstants.PASTE) != null)
+			menu.insertAfter(ITextEditorActionConstants.PASTE, action);
+		else
+			addAction(menu, ITextEditorActionConstants.GROUP_COPY, IJavaEditorActionConstants.RAW_PASTE);
+
 	}
 
 	/**
@@ -2452,7 +2462,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 
 	protected boolean isActivePart() {
 		IWorkbenchPart part= getActivePart();
-		return part != null && part.equals(this);
+		return part != null && this.equals(part);
 	}
 
 	private boolean isJavaOutlinePageActive() {
@@ -2748,6 +2758,10 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 
 		action= new ClipboardOperationAction(JavaEditorMessages.getBundleForConstructedKeys(), "Editor.Paste.", this, ITextOperationTarget.PASTE); //$NON-NLS-1$
 		setAction(ITextEditorActionConstants.PASTE, action);
+
+		action= new ClipboardOperationAction(JavaEditorMessages.getBundleForConstructedKeys(), "Editor.RawPaste.", this, ClipboardOperationAction.RAW_PASTE); //$NON-NLS-1$
+		setAction(IJavaEditorActionConstants.RAW_PASTE, action);
+		action.setEnabled(true);
 
 		action= new CopyQualifiedNameAction(this);
 		action.setActionDefinitionId(CopyQualifiedNameAction.ACTION_DEFINITION_ID);
@@ -3329,10 +3343,10 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 		}
 
 		if (locations == null) {
-			if (!fStickyOccurrenceAnnotations)
+			if (!fStickyOccurrenceAnnotations
+					|| hasChanged) { // check consistency of current annotations
 				removeOccurrenceAnnotations();
-			else if (hasChanged) // check consistency of current annotations
-				removeOccurrenceAnnotations();
+			}
 			return;
 		}
 

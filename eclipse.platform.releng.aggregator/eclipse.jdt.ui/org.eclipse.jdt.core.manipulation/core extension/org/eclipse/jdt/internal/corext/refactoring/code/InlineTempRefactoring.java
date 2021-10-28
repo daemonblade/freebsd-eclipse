@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,7 @@
  *     IBM Corporation - initial API and implementation
  *     Pierre-Yves B. <pyvesdev@gmail.com> - [inline] Allow inlining of local variable initialized to null. - https://bugs.eclipse.org/93850
  *     Microsoft Corporation - copied to jdt.core.manipulation
+ *     Microsoft Corporation - read formatting options from the compilation unit
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.refactoring.code;
 
@@ -380,9 +381,9 @@ public class InlineTempRefactoring extends Refactoring {
 
 		ASTNode referenceContext= reference.getParent();
 		if (Invocations.isResolvedTypeInferredFromExpectedType(initializer)) {
-			if (! (referenceContext instanceof VariableDeclarationFragment
-					|| referenceContext instanceof SingleVariableDeclaration
-					|| referenceContext instanceof Assignment)) {
+			if (!(referenceContext instanceof VariableDeclarationFragment)
+					&& !(referenceContext instanceof SingleVariableDeclaration)
+					&& !(referenceContext instanceof Assignment)) {
 				ITypeBinding[] typeArguments= Invocations.getInferredTypeArguments(initializer);
 				if (typeArguments != null) {
 					String newSource= createParameterizedInvocation(initializer, typeArguments, rewrite);
@@ -448,15 +449,14 @@ public class InlineTempRefactoring extends Refactoring {
 
 		IDocument document= new Document(fCu.getBuffer().getContents());
 		final RangeMarker marker= new RangeMarker(invocation.getStartPosition(), invocation.getLength());
-		IJavaProject project= fCu.getJavaProject();
-		TextEdit[] rewriteEdits= rewrite.rewriteAST(document, project.getOptions(true)).removeChildren();
+		TextEdit[] rewriteEdits= rewrite.rewriteAST(document, fCu.getOptions(true)).removeChildren();
 		marker.addChildren(rewriteEdits);
 		try {
 			marker.apply(document, TextEdit.UPDATE_REGIONS);
 			String rewrittenInitializer= document.get(marker.getOffset(), marker.getLength());
 			IRegion region= document.getLineInformation(document.getLineOfOffset(marker.getOffset()));
-			int oldIndent= Strings.computeIndentUnits(document.get(region.getOffset(), region.getLength()), project);
-			return Strings.changeIndent(rewrittenInitializer, oldIndent, project, "", TextUtilities.getDefaultLineDelimiter(document)); //$NON-NLS-1$
+			int oldIndent= Strings.computeIndentUnits(document.get(region.getOffset(), region.getLength()), fCu);
+			return Strings.changeIndent(rewrittenInitializer, oldIndent, fCu, "", TextUtilities.getDefaultLineDelimiter(document)); //$NON-NLS-1$
 		} catch (MalformedTreeException | BadLocationException e) {
 			JavaManipulationPlugin.log(e);
 		}
@@ -480,9 +480,9 @@ public class InlineTempRefactoring extends Refactoring {
 			int length= -1;
 			final StringTokenizer tokenizer= new StringTokenizer(selection);
 			if (tokenizer.hasMoreTokens())
-				offset= Integer.valueOf(tokenizer.nextToken()).intValue();
+				offset= Integer.parseInt(tokenizer.nextToken());
 			if (tokenizer.hasMoreTokens())
-				length= Integer.valueOf(tokenizer.nextToken()).intValue();
+				length= Integer.parseInt(tokenizer.nextToken());
 			if (offset >= 0 && length >= 0) {
 				fSelectionStart= offset;
 				fSelectionLength= length;

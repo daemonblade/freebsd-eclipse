@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -66,6 +66,7 @@ import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.QualifiedType;
+import org.eclipse.jdt.core.dom.RecordDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
@@ -78,20 +79,19 @@ import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.TypeNameMatch;
 
+import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.ASTFlattener;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.HierarchicalASTVisitor;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
+import org.eclipse.jdt.internal.corext.dom.Selection;
+import org.eclipse.jdt.internal.corext.dom.SelectionAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.corext.dom.Selection;
-import org.eclipse.jdt.internal.corext.dom.SelectionAnalyzer;
-
 import org.eclipse.jdt.internal.ui.refactoring.contentassist.JavaTypeCompletionProcessor;
-import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 
 public class TypeContextChecker {
 	private static class MethodTypesChecker {
@@ -464,12 +464,14 @@ public class TypeContextChecker {
 	}
 
 	private static ITypeBinding handleBug84585(ITypeBinding typeBinding) {
-		if (typeBinding == null)
+		if (typeBinding != null
+				&& typeBinding.isGenericType()
+				&& !typeBinding.isRawType()
+				&& !typeBinding.isParameterizedType()) {
 			return null;
-		else if (typeBinding.isGenericType() && ! typeBinding.isRawType() && ! typeBinding.isParameterizedType())
-			return null; //see bug 84585
-		else
-			return typeBinding;
+		}
+
+		return typeBinding;
 	}
 
 	public static RefactoringStatus[] checkAndResolveMethodTypes(IMethod method, StubTypeContext stubTypeContext, List<ParameterInfo> parameterInfos, ReturnTypeInfo returnTypeInfo) throws CoreException {
@@ -612,6 +614,16 @@ public class TypeContextChecker {
 				buf.append(enumDecl.getName().getIdentifier());
 				List<Type> superInterfaces= enumDecl.superInterfaceTypes();
 				appendSuperInterfaces(buf, superInterfaces);
+			} else if (decl instanceof RecordDeclaration) {
+				RecordDeclaration recordDecl= (RecordDeclaration) decl;
+				buf.append("record "); //$NON-NLS-1$
+				buf.append(recordDecl.getName().getIdentifier());
+				buf.append("("); //$NON-NLS-1$
+				appendRecordComponents(buf, recordDecl.recordComponents());
+				buf.append(")"); //$NON-NLS-1$
+				appendTypeParameters(buf, recordDecl.typeParameters());
+				List<Type> superInterfaces= recordDecl.superInterfaceTypes();
+				appendSuperInterfaces(buf, superInterfaces);
 			}
 
 			buf.append("{\n"); //$NON-NLS-1$
@@ -620,6 +632,18 @@ public class TypeContextChecker {
 			fillWithTypeStubs(bufBefore, bufAfter, focalPosition, decl.bodyDeclarations());
 			buf= decl.getStartPosition() + decl.getLength() < focalPosition ? bufBefore : bufAfter;
 			buf.append("}\n"); //$NON-NLS-1$
+		}
+	}
+
+	private static void appendRecordComponents(StringBuilder buf, List<SingleVariableDeclaration> recordComponents) {
+		int recCompsCount= recordComponents.size();
+		if (recCompsCount > 0) {
+			for (int i= 0; i < recCompsCount; i++) {
+				SingleVariableDeclaration recComp= recordComponents.get(i);
+				buf.append(ASTNodes.asString(recComp));
+				if (i < recCompsCount - 1)
+					buf.append(',');
+			}
 		}
 	}
 

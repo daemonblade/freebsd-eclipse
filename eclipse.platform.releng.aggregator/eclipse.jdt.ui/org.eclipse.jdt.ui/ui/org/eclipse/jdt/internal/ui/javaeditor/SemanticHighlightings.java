@@ -54,8 +54,6 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
 
-import org.eclipse.jdt.internal.ui.preferences.PreferencesMessages;
-
 	/**
  * Semantic highlightings
  *
@@ -201,21 +199,6 @@ public class SemanticHighlightings {
 	 * @since 3.8
 	 */
 	public static final String INHERITED_FIELD= SemanticHighlightingsCore.INHERITED_FIELD;
-
-	/**
-	 * A named preference part that controls the highlighting of 'var' keywords.
-	 */
-	public static final String VAR_KEYWORD= SemanticHighlightingsCore.VAR_KEYWORD;
-
-	/**
-	 * A named preference part that controls the highlighting of 'yield' keywords.
-	 */
-	public static final String YIELD_KEYWORD= SemanticHighlightingsCore.YIELD_KEYWORD;
-
-	/**
-	 * A named preference part that controls the highlighting of 'record' keywords.
-	 */
-	public static final String RECORD_KEYWORD= SemanticHighlightingsCore.RECORD_KEYWORD;
 
 	/**
 	 * Semantic highlightings
@@ -1451,7 +1434,7 @@ public class SemanticHighlightings {
 			ASTNode node= name.getParent();
 			int nodeType= node.getNodeType();
 			if (nodeType != ASTNode.METHOD_INVOCATION && nodeType != ASTNode.SIMPLE_TYPE && nodeType != ASTNode.QUALIFIED_TYPE && nodeType != ASTNode.QUALIFIED_NAME
-					&& nodeType != ASTNode.QUALIFIED_NAME && nodeType != ASTNode.ENUM_DECLARATION)
+					&& nodeType != ASTNode.ENUM_DECLARATION)
 				return false;
 			while (nodeType == ASTNode.QUALIFIED_NAME) {
 				node= node.getParent();
@@ -1937,13 +1920,13 @@ public class SemanticHighlightings {
 	}
 
 	/**
-	 * Semantic highlighting for 'var' keyword.
+	 *
 	 */
-	static final class VarKeywordHighlighting extends SemanticHighlighting {
+	static final class RestrictedIdentifiersHighlighting extends SemanticHighlighting {
 
 		@Override
 		public String getPreferenceKey() {
-			return VAR_KEYWORD;
+			return SemanticHighlightingsCore.RESTRICTED_KEYWORDS;
 		}
 
 		@Override
@@ -1968,89 +1951,7 @@ public class SemanticHighlightings {
 
 		@Override
 		public String getDisplayName() {
-			return PreferencesMessages.JavaEditorPreferencePage_varKeyword;
-		}
-
-		@Override
-		public boolean consumes(SemanticToken token) {
-			return false;
-		}
-	}
-
-	/**
-	 * Semantic highlighting for 'record' keyword.
-	 */
-	static final class RecordKeywordHighlighting extends SemanticHighlighting {
-
-		@Override
-		public String getPreferenceKey() {
-			return RECORD_KEYWORD;
-		}
-
-		@Override
-		public RGB getDefaultDefaultTextColor() {
-			return new RGB(127, 0, 85);
-		}
-
-		@Override
-		public boolean isBoldByDefault() {
-			return true;
-		}
-
-		@Override
-		public boolean isItalicByDefault() {
-			return false;
-		}
-
-		@Override
-		public boolean isEnabledByDefault() {
-			return true;
-		}
-
-		@Override
-		public String getDisplayName() {
-			return PreferencesMessages.JavaEditorPreferencePage_recordKeyword;
-		}
-
-		@Override
-		public boolean consumes(SemanticToken token) {
-			return false;
-		}
-	}
-
-	/**
-	 * Semantic highlighting for 'yield' keyword.
-	 */
-	static final class YieldKeywordHighlighting extends SemanticHighlighting {
-
-		@Override
-		public String getPreferenceKey() {
-			return YIELD_KEYWORD;
-		}
-
-		@Override
-		public RGB getDefaultDefaultTextColor() {
-			return new RGB(127, 0, 85);
-		}
-
-		@Override
-		public boolean isBoldByDefault() {
-			return true;
-		}
-
-		@Override
-		public boolean isItalicByDefault() {
-			return false;
-		}
-
-		@Override
-		public boolean isEnabledByDefault() {
-			return true;
-		}
-
-		@Override
-		public String getDisplayName() {
-			return PreferencesMessages.JavaEditorPreferencePage_yieldKeyword;
+			return JavaEditorMessages.SemanticHighlighting_restrictedIdentifiers;
 		}
 
 		@Override
@@ -2150,9 +2051,7 @@ public class SemanticHighlightings {
 				new AnnotationHighlighting(), // before interfaces
 				new InterfaceHighlighting(),
 				new NumberHighlighting(),
-				new VarKeywordHighlighting(),
-				new YieldKeywordHighlighting(),
-				new RecordKeywordHighlighting()
+				new RestrictedIdentifiersHighlighting()
 			};
 		return fgSemanticHighlightings;
 	}

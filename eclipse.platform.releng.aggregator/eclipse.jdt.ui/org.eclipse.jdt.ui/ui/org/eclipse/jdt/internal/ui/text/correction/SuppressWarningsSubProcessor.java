@@ -134,7 +134,7 @@ public class SuppressWarningsSubProcessor {
 		if (fragments.size() > 0) {
 			return fragments.get(0).getName().getIdentifier();
 		}
-		return new String();
+		return ""; //$NON-NLS-1$
 	}
 
 
@@ -223,8 +223,7 @@ public class SuppressWarningsSubProcessor {
 		}
 
 		private static Annotation findExistingAnnotation(List<? extends ASTNode> modifiers) {
-			for (int i= 0, len= modifiers.size(); i < len; i++) {
-				Object curr= modifiers.get(i);
+			for (ASTNode curr : modifiers) {
 				if (curr instanceof NormalAnnotation || curr instanceof SingleMemberAnnotation) {
 					Annotation annotation= (Annotation) curr;
 					ITypeBinding typeBinding= annotation.resolveTypeBinding();

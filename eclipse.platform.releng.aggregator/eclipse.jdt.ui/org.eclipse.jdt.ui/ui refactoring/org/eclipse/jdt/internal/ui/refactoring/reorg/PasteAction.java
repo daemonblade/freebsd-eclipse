@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Microsoft Corporation - read formatting options from the compilation unit
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.refactoring.reorg;
 
@@ -720,8 +721,7 @@ public class PasteAction extends SelectionDispatchAction{
 							if (selectedWorkingSets.length == 1) {
 								IWorkingSet ws= selectedWorkingSets[0];
 								if (!IWorkingSetIDs.OTHERS.equals(ws.getId())) {
-									ArrayList<IAdaptable> newElements= new ArrayList<>();
-									newElements.addAll(Arrays.asList(ws.getElements()));
+									ArrayList<IAdaptable> newElements= new ArrayList<>(Arrays.asList(ws.getElements()));
 									newElements.addAll(Arrays.asList(ws.adaptElements(new IAdaptable[] { fDestination.getJavaProject() })));
 									ws.setElements(newElements.toArray(new IAdaptable[newElements.size()]));
 								}
@@ -946,7 +946,7 @@ public class PasteAction extends SelectionDispatchAction{
 					DocumentRewriteSession rewriteSession= null;
 					if (document instanceof IDocumentExtension4)
 						rewriteSession= ((IDocumentExtension4) document).startRewriteSession(DocumentRewriteSessionType.UNRESTRICTED_SMALL);
-					TextEdit edit= rewrite.rewriteAST(document, cu.getJavaProject().getOptions(true));
+					TextEdit edit= rewrite.rewriteAST(document, cu.getOptions(true));
 					try {
 						edit.apply(document, TextEdit.UPDATE_REGIONS);
 						return textPosition;
@@ -1413,9 +1413,9 @@ public class PasteAction extends SelectionDispatchAction{
 			if (selectedResources.length != 0 || selectedWorkingSets.length != 0)
 				return false;
 			TypedSource[] typedSources= getClipboardTypedSources(fAvailableTypes);
-			Object destination= getTarget(selectedJavaElements, selectedResources);
-			if (destination instanceof IJavaElement)
-				return ReorgTypedSourcePasteStarter.create(typedSources, (IJavaElement)destination) != null;
+			IJavaElement destination= getTarget(selectedJavaElements, selectedResources);
+			if (destination != null)
+				return ReorgTypedSourcePasteStarter.create(typedSources, destination) != null;
 			return false;
 		}
 
@@ -1554,14 +1554,15 @@ public class PasteAction extends SelectionDispatchAction{
 					}
 				}
 				final CompilationUnitChange result= new CompilationUnitChange(ReorgMessages.PasteAction_change_name, getDestinationCu());
+				ICompilationUnit destinationCu= getDestinationCu();
 				try {
-					ITextFileBuffer buffer= RefactoringFileBuffers.acquire(getDestinationCu());
-					TextEdit rootEdit= rewrite.rewriteAST(buffer.getDocument(), fDestination.getJavaProject().getOptions(true));
-					if (getDestinationCu().isWorkingCopy())
+					ITextFileBuffer buffer= RefactoringFileBuffers.acquire(destinationCu);
+					TextEdit rootEdit= rewrite.rewriteAST(buffer.getDocument(), destinationCu.getOptions(true));
+					if (destinationCu.isWorkingCopy())
 						result.setSaveMode(TextFileChange.LEAVE_DIRTY);
 					TextChangeCompatibility.addTextEdit(result, ReorgMessages.PasteAction_edit_name, rootEdit);
 				} finally {
-					RefactoringFileBuffers.release(getDestinationCu());
+					RefactoringFileBuffers.release(destinationCu);
 				}
 				return result;
 			}

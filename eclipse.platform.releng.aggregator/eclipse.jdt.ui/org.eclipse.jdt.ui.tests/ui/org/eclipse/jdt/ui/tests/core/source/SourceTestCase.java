@@ -92,7 +92,7 @@ public class SourceTestCase {
 		StubUtility.setCodeTemplate(CodeTemplateContextType.CONSTRUCTORCOMMENT_ID, constructorComment, null);
 		StubUtility.setCodeTemplate(CodeTemplateContextType.CONSTRUCTORSTUB_ID, constructorBody, null);
 
-		fSettings= JavaPreferencesSettings.getCodeGenerationSettings(null);
+		fSettings= JavaPreferencesSettings.getCodeGenerationSettings((IJavaProject)null);
 		fSettings.createComments= true;
 	}
 
@@ -119,14 +119,6 @@ public class SourceTestCase {
 
 	protected void compareSource(String expected, String actual) throws IOException {
 		StringAsserts.assertEqualStringIgnoreDelim(actual, expected);
-	}
-
-	protected void printTestDisabledMessage(String explanation) {
-		System.out.println("\n" + getClass().getName() + "::" + getName() + " disabled (" + explanation + ")");
-	}
-
-	private String getName() {
-		return tn.getMethodName();
 	}
 
 }

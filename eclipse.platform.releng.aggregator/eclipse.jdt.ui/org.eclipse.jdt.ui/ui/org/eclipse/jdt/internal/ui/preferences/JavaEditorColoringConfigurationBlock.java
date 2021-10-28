@@ -20,7 +20,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -81,6 +80,7 @@ import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlighting;
 import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingManager;
 import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingManager.HighlightedRange;
 import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightings;
+import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingsCore;
 import org.eclipse.jdt.internal.ui.preferences.OverlayPreferenceStore.OverlayKey;
 import org.eclipse.jdt.internal.ui.text.JavaColorManager;
 import org.eclipse.jdt.internal.ui.text.PreferencesAdapter;
@@ -215,7 +215,7 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 	 *
 	 * @since 3.0
 	 */
-	private class ColorListLabelProvider extends LabelProvider {
+	private static class ColorListLabelProvider extends LabelProvider {
 		/*
 		 * @see org.eclipse.jface.viewers.ILabelProvider#getText(java.lang.Object)
 		 */
@@ -261,16 +261,7 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 			if (parentElement instanceof String) {
 				String entry= (String) parentElement;
 				if (fJavaCategory.equals(entry)) {
-					List<HighlightingColorListItem> subList= fListModel.subList(7, fListModel.size());
-					List<HighlightingColorListItem> visibleChildren= new ArrayList<>();
-					for (HighlightingColorListItem listItem : subList) {
-						if (!listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_varKeyword) &&
-								!listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword) &&
-								!listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_recordKeyword)) {
-							visibleChildren.add(listItem);
-						}
-					}
-					return visibleChildren.toArray();
+					return fListModel.subList(7, fListModel.size()).toArray();
 				}
 				if (fJavadocCategory.equals(entry))
 					return fListModel.subList(0, 4).toArray();
@@ -392,7 +383,7 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 	public JavaEditorColoringConfigurationBlock(OverlayPreferenceStore store) {
 		super(store);
 
-		fColorManager= new JavaColorManager(false);
+		fColorManager= new JavaColorManager();
 
 		for (String[] syntaxColor : fSyntaxColorListModel)
 			fListModel.add(new HighlightingColorListItem (syntaxColor[0], syntaxColor[1], syntaxColor[1] + BOLD, syntaxColor[1] + ITALIC, syntaxColor[1] + STRIKETHROUGH, syntaxColor[1] + UNDERLINE));
@@ -714,15 +705,6 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 			public void widgetSelected(SelectionEvent e) {
 				HighlightingColorListItem item= getHighlightingColorListItem();
 				PreferenceConverter.setValue(getPreferenceStore(), item.getColorKey(), fSyntaxForegroundColorEditor.getColorValue());
-				if (item.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_keywords)) {
-					for (HighlightingColorListItem listItem : fListModel) {
-						if (listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_varKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_recordKeyword)) {
-							PreferenceConverter.setValue(getPreferenceStore(), listItem.getColorKey(), fSyntaxForegroundColorEditor.getColorValue());
-						}
-					}
-				}
 			}
 		});
 
@@ -735,15 +717,6 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 			public void widgetSelected(SelectionEvent e) {
 				HighlightingColorListItem item= getHighlightingColorListItem();
 				getPreferenceStore().setValue(item.getBoldKey(), fBoldCheckBox.getSelection());
-				if (item.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_keywords)) {
-					for (HighlightingColorListItem listItem : fListModel) {
-						if (listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_varKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_recordKeyword)) {
-							getPreferenceStore().setValue(listItem.getBoldKey(), fBoldCheckBox.getSelection());
-						}
-					}
-				}
 			}
 		});
 
@@ -756,15 +729,6 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 			public void widgetSelected(SelectionEvent e) {
 				HighlightingColorListItem item= getHighlightingColorListItem();
 				getPreferenceStore().setValue(item.getItalicKey(), fItalicCheckBox.getSelection());
-				if (item.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_keywords)) {
-					for (HighlightingColorListItem listItem : fListModel) {
-						if (listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_varKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_recordKeyword)) {
-							getPreferenceStore().setValue(listItem.getItalicKey(), fItalicCheckBox.getSelection());
-						}
-					}
-				}
 			}
 		});
 		fStrikethroughCheckBox.addSelectionListener(new SelectionListener() {
@@ -776,15 +740,6 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 			public void widgetSelected(SelectionEvent e) {
 				HighlightingColorListItem item= getHighlightingColorListItem();
 				getPreferenceStore().setValue(item.getStrikethroughKey(), fStrikethroughCheckBox.getSelection());
-				if (item.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_keywords)) {
-					for (HighlightingColorListItem listItem : fListModel) {
-						if (listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_varKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_recordKeyword)) {
-							getPreferenceStore().setValue(listItem.getStrikethroughKey(), fStrikethroughCheckBox.getSelection());
-						}
-					}
-				}
 			}
 		});
 
@@ -797,15 +752,6 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 			public void widgetSelected(SelectionEvent e) {
 				HighlightingColorListItem item= getHighlightingColorListItem();
 				getPreferenceStore().setValue(item.getUnderlineKey(), fUnderlineCheckBox.getSelection());
-				if (item.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_keywords)) {
-					for (HighlightingColorListItem listItem : fListModel) {
-						if (listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_varKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_yieldKeyword) ||
-								listItem.getDisplayName().equals(PreferencesMessages.JavaEditorPreferencePage_recordKeyword)) {
-							getPreferenceStore().setValue(listItem.getUnderlineKey(), fUnderlineCheckBox.getSelection());
-						}
-					}
-				}
 			}
 		});
 
@@ -969,26 +915,30 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 				{ createHighlightedRange( 7, 14,  3, SemanticHighlightings.STATIC_FINAL_FIELD), createHighlightedRange( 7, 14,  3, SemanticHighlightings.STATIC_FIELD), createHighlightedRange(7, 14, 3, SemanticHighlightings.FIELD) },
 				{ createHighlightedRange( 7, 19,  5, SemanticHighlightings.STATIC_FINAL_FIELD), createHighlightedRange( 7, 19,  5, SemanticHighlightings.STATIC_FIELD), createHighlightedRange(7, 19, 5, SemanticHighlightings.FIELD) },
 				{ createHighlightedRange( 7, 26,  4, SemanticHighlightings.STATIC_FINAL_FIELD), createHighlightedRange( 7, 26,  4, SemanticHighlightings.STATIC_FIELD), createHighlightedRange(7, 26, 4, SemanticHighlightings.FIELD) },
-				{ createHighlightedRange( 9,  8,  6, SemanticHighlightings.CLASS), },
-				{ createHighlightedRange( 9, 15, 11, SemanticHighlightings.STATIC_FIELD), createHighlightedRange( 9, 15, 11, SemanticHighlightings.FIELD) },
-				{ createHighlightedRange(11,  9,  1, SemanticHighlightings.TYPE_VARIABLE) },
-				{ createHighlightedRange(11, 11,  5, SemanticHighlightings.FIELD) },
-				{ createHighlightedRange(12,  9, 17, SemanticHighlightings.ABSTRACT_CLASS), createHighlightedRange(12,  9, 17, SemanticHighlightings.CLASS) },
-				{ createHighlightedRange(12, 27,  6, SemanticHighlightings.FIELD) },
-				{ createHighlightedRange(14,  2, 16, SemanticHighlightings.ANNOTATION) },
-				{ createHighlightedRange(14, 19,  5, SemanticHighlightings.ANNOTATION_ELEMENT_REFERENCE) },
-				{ createHighlightedRange(15, 12,  3, SemanticHighlightings.METHOD_DECLARATION), createHighlightedRange(15, 12,  3, SemanticHighlightings.METHOD) },
-				{ createHighlightedRange(15, 16,  7, SemanticHighlightings.CLASS) },
-				{ createHighlightedRange(15, 24,  9, SemanticHighlightings.PARAMETER_VARIABLE), createHighlightedRange(15, 24, 9, SemanticHighlightings.LOCAL_VARIABLE_DECLARATION), createHighlightedRange(15, 24, 9, SemanticHighlightings.LOCAL_VARIABLE) },
-				{ createHighlightedRange(16,  2, 14, SemanticHighlightings.ABSTRACT_METHOD_INVOCATION), createHighlightedRange(16,  2, 14, SemanticHighlightings.METHOD) },
-				{ createHighlightedRange(16, 17, 14, SemanticHighlightings.INHERITED_FIELD), createHighlightedRange(16, 17, 14, SemanticHighlightings.FIELD) },
-				{ createHighlightedRange(17,  6,  5, SemanticHighlightings.LOCAL_VARIABLE_DECLARATION), createHighlightedRange(17, 6, 5, SemanticHighlightings.LOCAL_VARIABLE) },
-				{ createHighlightedRange(17, 13,  2, SemanticHighlightings.NUMBER) },
-				{ createHighlightedRange(17, 16,  8, SemanticHighlightings.INHERITED_METHOD_INVOCATION), createHighlightedRange(17, 16,  8, SemanticHighlightings.METHOD) },
-				{ createHighlightedRange(18,  2, 12, SemanticHighlightings.STATIC_METHOD_INVOCATION), createHighlightedRange(18,  2, 12, SemanticHighlightings.METHOD) },
-				{ createHighlightedRange(19,  9,  3, SemanticHighlightings.METHOD) },
-				{ createHighlightedRange(19, 13,  5, SemanticHighlightings.LOCAL_VARIABLE) },
-				{ createHighlightedRange(19, 22,  9, SemanticHighlightings.AUTOBOXING), createHighlightedRange(19, 22, 9, SemanticHighlightings.PARAMETER_VARIABLE), createHighlightedRange(19, 22,  9, SemanticHighlightings.LOCAL_VARIABLE) },
+				{ createHighlightedRange( 8, 1,  6, SemanticHighlightingsCore.RESTRICTED_KEYWORDS) },
+				{ createHighlightedRange( 10,  8,  6, SemanticHighlightings.CLASS), },
+				{ createHighlightedRange( 10, 15, 11, SemanticHighlightings.STATIC_FIELD), createHighlightedRange( 10, 15, 11, SemanticHighlightings.FIELD) },
+				{ createHighlightedRange(12,  9,  1, SemanticHighlightings.TYPE_VARIABLE) },
+				{ createHighlightedRange(12, 11,  5, SemanticHighlightings.FIELD) },
+				{ createHighlightedRange(13,  9, 17, SemanticHighlightings.ABSTRACT_CLASS), createHighlightedRange(13,  9, 17, SemanticHighlightings.CLASS) },
+				{ createHighlightedRange(13, 27,  6, SemanticHighlightings.FIELD) },
+				{ createHighlightedRange(15,  2, 16, SemanticHighlightings.ANNOTATION) },
+				{ createHighlightedRange(15, 19,  5, SemanticHighlightings.ANNOTATION_ELEMENT_REFERENCE) },
+				{ createHighlightedRange(16, 12,  3, SemanticHighlightings.METHOD_DECLARATION), createHighlightedRange(16, 12,  3, SemanticHighlightings.METHOD) },
+				{ createHighlightedRange(16, 16,  7, SemanticHighlightings.CLASS) },
+				{ createHighlightedRange(16, 24,  9, SemanticHighlightings.PARAMETER_VARIABLE), createHighlightedRange(16, 24, 9, SemanticHighlightings.LOCAL_VARIABLE_DECLARATION), createHighlightedRange(16, 24, 9, SemanticHighlightings.LOCAL_VARIABLE) },
+				{ createHighlightedRange(17,  2, 14, SemanticHighlightings.ABSTRACT_METHOD_INVOCATION), createHighlightedRange(17,  2, 14, SemanticHighlightings.METHOD) },
+				{ createHighlightedRange(17, 17, 14, SemanticHighlightings.INHERITED_FIELD), createHighlightedRange(17, 17, 14, SemanticHighlightings.FIELD) },
+				{ createHighlightedRange(18,  6,  5, SemanticHighlightings.LOCAL_VARIABLE_DECLARATION), createHighlightedRange(18, 6, 5, SemanticHighlightings.LOCAL_VARIABLE) },
+				{ createHighlightedRange(18, 13,  2, SemanticHighlightings.NUMBER) },
+				{ createHighlightedRange(18, 16,  8, SemanticHighlightings.INHERITED_METHOD_INVOCATION), createHighlightedRange(18, 16,  8, SemanticHighlightings.METHOD) },
+				{ createHighlightedRange(19,  2,  3, SemanticHighlightingsCore.RESTRICTED_KEYWORDS) },
+				{ createHighlightedRange(19,  6,  8, SemanticHighlightings.LOCAL_VARIABLE) },
+				{ createHighlightedRange(19, 16,  5, SemanticHighlightings.LOCAL_VARIABLE) },
+				{ createHighlightedRange(20,  2, 12, SemanticHighlightings.STATIC_METHOD_INVOCATION), createHighlightedRange(20,  2, 12, SemanticHighlightings.METHOD) },
+				{ createHighlightedRange(21,  9,  3, SemanticHighlightings.METHOD) },
+				{ createHighlightedRange(21, 13,  8, SemanticHighlightings.LOCAL_VARIABLE) },
+				{ createHighlightedRange(21, 25,  9, SemanticHighlightings.AUTOBOXING), createHighlightedRange(21, 25, 9, SemanticHighlightings.PARAMETER_VARIABLE), createHighlightedRange(21, 25,  9, SemanticHighlightings.LOCAL_VARIABLE) },
 			};
 	}
 

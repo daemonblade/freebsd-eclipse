@@ -93,11 +93,10 @@ public class TypingRunDetector {
 			if (fType.equals(change.fType)) {
 				if (fType == TypingRun.DELETE)
 					return fNextOffset == change.fNextOffset - 1;
-				else if (fType == TypingRun.INSERT)
+				else if (fType == TypingRun.INSERT
+						|| fType == TypingRun.OVERTYPE) {
 					return fNextOffset == change.fNextOffset + 1;
-				else if (fType == TypingRun.OVERTYPE)
-					return fNextOffset == change.fNextOffset + 1;
-				else if (fType == TypingRun.SELECTION)
+				} else if (fType == TypingRun.SELECTION)
 					return true;
 			}
 			return false;
@@ -338,7 +337,7 @@ public class TypingRunDetector {
 		int end= e.getOffset() + e.getLength();
 		String newText= e.getText();
 		if (newText == null)
-			newText= new String();
+			newText= ""; //$NON-NLS-1$
 
 		if (start == end) {
 			// no replace / delete / overwrite

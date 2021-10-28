@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -42,7 +43,6 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
 import org.eclipse.jdt.internal.corext.dom.HierarchicalASTVisitor;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.typeconstraints.types.TType;
 import org.eclipse.jdt.internal.corext.refactoring.typeconstraints.types.TypeEnvironment;
 
@@ -87,7 +87,7 @@ public class TypeEnvironmentTests extends AbstractJunit4CUTestCase {
 		}
 		private void checkTypeBinding(IBinding binding) {
 			ITypeBinding type= (ITypeBinding)binding;
-			if (!(type.isPrimitive() && type.getName().equals("void"))) {
+			if (!type.isPrimitive() || !"void".equals(type.getName())) {
 				TType refType= fTypeEnvironment.create(type);
 				assertNotNull("Refactoring type is null", refType);
 				assertEquals("Not same name", type.getName(), refType.getName());
@@ -109,7 +109,7 @@ public class TypeEnvironmentTests extends AbstractJunit4CUTestCase {
 		public boolean visit(FieldDeclaration node) {
 			List<VariableDeclarationFragment> fragments= node.fragments();
 			VariableDeclarationFragment fragment= fragments.get(0);
-			if (fragment.getName().getIdentifier().equals("NullType")) {
+			if ("NullType".equals(fragment.getName().getIdentifier())) {
 				fResult.add(fragment.getInitializer().resolveTypeBinding());
 			} else {
 				fResult.add(fragment.resolveBinding().getType());
@@ -181,7 +181,7 @@ public class TypeEnvironmentTests extends AbstractJunit4CUTestCase {
 
 	private ASTNode createAST(IPackageFragment pack) throws Exception {
 		IJavaProject project= pack.getJavaProject();
-		ASTParser parser= ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
+		ASTParser parser= ASTParser.newParser(AST.getJLSLatest());
 		parser.setProject(project);
 		parser.setResolveBindings(true);
 		ICompilationUnit unit= createCU(pack, getName());
@@ -263,7 +263,7 @@ public class TypeEnvironmentTests extends AbstractJunit4CUTestCase {
 		for (int i= 0; i < bindings.length; i++) {
 			assertEquals("Equal to second environment", types[i], secondEnvironment.create(bindings[i]));
 		}
-		ITypeBinding[] restoredBindings= TypeEnvironment.createTypeBindings(types, RefactoringTestSetup.getProject());
+		ITypeBinding[] restoredBindings= TypeEnvironment.createTypeBindings(types, mts.getProject());
 		assertEquals("Not same length", restoredBindings.length, bindings.length);
 		for (int i= 0; i < restoredBindings.length; i++) {
 			assertTrue("Not same binding", bindings[i].isEqualTo(restoredBindings[i]));

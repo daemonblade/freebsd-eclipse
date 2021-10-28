@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -118,7 +118,7 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 	/**
 	 * Queue of rerun requests.
 	 */
-	private Vector<RerunRequest> fRerunRequests= new Vector<RerunRequest>(10);
+	private Vector<RerunRequest> fRerunRequests= new Vector<>(10);
 	/**
 	 * Thread reading from the socket
 	 */
@@ -240,8 +240,8 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 	 */
 	protected final void defaultInit(String[] args) {
 		for(int i= 0; i < args.length; i++) {
-			if(args[i].toLowerCase().equals("-classnames") || args[i].toLowerCase().equals("-classname")){ //$NON-NLS-1$ //$NON-NLS-2$
-				Vector<String> list= new Vector<String>();
+			if("-classnames".equals(args[i].toLowerCase()) || "-classname".equals(args[i].toLowerCase())){ //$NON-NLS-1$ //$NON-NLS-2$
+				Vector<String> list= new Vector<>();
 				for (int j= i+1; j < args.length; j++) {
 					if (args[j].startsWith("-")) //$NON-NLS-1$
 						break;
@@ -249,7 +249,7 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 				}
 				fTestClassNames= list.toArray(new String[list.size()]);
 			}
-			else if(args[i].toLowerCase().equals("-test")) { //$NON-NLS-1$
+			else if("-test".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 				String testName= args[i+1];
 				int p= testName.indexOf(':');
 				if (p == -1)
@@ -258,7 +258,7 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 				fTestClassNames= new String[]{ testName.substring(0, p)  };
 				i++;
 			}
-			else if(args[i].toLowerCase().equals("-testnamefile")) { //$NON-NLS-1$
+			else if("-testnamefile".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 				String testNameFile= args[i+1];
 				try {
 					readTestNames(testNameFile);
@@ -267,7 +267,7 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 				}
 				i++;
 
-			} else if (args[i].toLowerCase().equals("-packagenamefile")) { //$NON-NLS-1$
+			} else if ("-packagenamefile".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 				String pkgNameFile= args[i+1];
 				try {
 					readPackageNames(pkgNameFile);
@@ -276,7 +276,7 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 				}
 				i++;
 
-			} else if (args[i].toLowerCase().equals("-testfailures")) { //$NON-NLS-1$
+			} else if ("-testfailures".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 				String testFailuresFile= args[i+1];
 				try {
 					readFailureNames(testFailuresFile);
@@ -285,34 +285,34 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 				}
 				i++;
 
-			} else if(args[i].toLowerCase().equals("-port")) { //$NON-NLS-1$
+			} else if("-port".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 				fPort= Integer.parseInt(args[i+1]);
 				i++;
 			}
-			else if(args[i].toLowerCase().equals("-host")) { //$NON-NLS-1$
+			else if("-host".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 				fHost= args[i+1];
 				i++;
 			}
-			else if(args[i].toLowerCase().equals("-rerun")) { //$NON-NLS-1$
+			else if("-rerun".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 				fRerunTest= args[i+1];
 				i++;
 			}
-			else if(args[i].toLowerCase().equals("-keepalive")) { //$NON-NLS-1$
+			else if("-keepalive".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 				fKeepAlive= true;
 			}
-			else if(args[i].toLowerCase().equals("-debugging") || args[i].toLowerCase().equals("-debug")){ //$NON-NLS-1$ //$NON-NLS-2$
+			else if("-debugging".equals(args[i].toLowerCase()) || "-debug".equals(args[i].toLowerCase())){ //$NON-NLS-1$ //$NON-NLS-2$
 			    fDebugMode= true;
 
-			} else if (args[i].toLowerCase().equals("-junitconsole")) { //$NON-NLS-1$
+			} else if ("-junitconsole".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 			    fConsoleMode  = true;
-			} else if (args[i].toLowerCase().equals("-testloaderclass")) { //$NON-NLS-1$
+			} else if ("-testloaderclass".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 				String className = args[i + 1];
 				createLoader(className);
 				i++;
-			} else if(args[i].toLowerCase().equals("-uniqueid")) { //$NON-NLS-1$
+			} else if("-uniqueid".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 				fUniqueId= args[i+1];
 				i++;
-			} else if (args[i].toLowerCase().equals("--include-tag")) { //$NON-NLS-1$
+			} else if ("--include-tag".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 				String[] includeTags= fIncludeExcludeTags[0];
 				if (includeTags == null) {
 					includeTags= new String[1];
@@ -325,7 +325,7 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 				}
 				fIncludeExcludeTags[0]= includeTags;
 				i++;
-			} else if (args[i].toLowerCase().equals("--exclude-tag")) { //$NON-NLS-1$
+			} else if ("--exclude-tag".equals(args[i].toLowerCase())) { //$NON-NLS-1$
 				String[] excludeTags= fIncludeExcludeTags[1];
 				if (excludeTags == null) {
 					excludeTags= new String[1];
@@ -386,64 +386,52 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 	}
 
 	private void readPackageNames(String pkgNameFile) throws IOException {
-		BufferedReader br= new BufferedReader(new InputStreamReader(new FileInputStream(new File(pkgNameFile)), "UTF-8")); //$NON-NLS-1$
-		try {
+		try(BufferedReader br= new BufferedReader(new InputStreamReader(new FileInputStream(new File(pkgNameFile)), "UTF-8"))) { //$NON-NLS-1$
 			String line;
-			Vector<String> list= new Vector<String>();
+			Vector<String> list= new Vector<>();
 			while ((line= br.readLine()) != null) {
 				list.add(line);
 			}
 			fPackageNames= list.toArray(new String[list.size()]);
 		}
-		finally {
-			br.close();
-		}
 		if (fDebugMode) {
 			System.out.println("Packages:"); //$NON-NLS-1$
-			for (int i= 0; i < fPackageNames.length; i++) {
-				System.out.println("    "+fPackageNames[i]); //$NON-NLS-1$
+			for (String fPackageName : fPackageNames) {
+				System.out.println("    "+fPackageName); //$NON-NLS-1$
 			}
 		}
 	}
 
 	private void readTestNames(String testNameFile) throws IOException {
-		BufferedReader br= new BufferedReader(new InputStreamReader(new FileInputStream(new File(testNameFile)), "UTF-8")); //$NON-NLS-1$
-		try {
+		try(BufferedReader br= new BufferedReader(new InputStreamReader(new FileInputStream(new File(testNameFile)), "UTF-8"))) { //$NON-NLS-1$
 			String line;
-			Vector<String> list= new Vector<String>();
+			Vector<String> list= new Vector<>();
 			while ((line= br.readLine()) != null) {
 				list.add(line);
 			}
 			fTestClassNames= list.toArray(new String[list.size()]);
 		}
-		finally {
-			br.close();
-		}
 		if (fDebugMode) {
 			System.out.println("Tests:"); //$NON-NLS-1$
-			for (int i= 0; i < fTestClassNames.length; i++) {
-				System.out.println("    "+fTestClassNames[i]); //$NON-NLS-1$
+			for (String fTestClassName : fTestClassNames) {
+				System.out.println("    "+fTestClassName); //$NON-NLS-1$
 			}
 		}
 	}
 
 	private void readFailureNames(String testFailureFile) throws IOException {
-		BufferedReader br= new BufferedReader(new InputStreamReader(new FileInputStream(new File(testFailureFile)), "UTF-8")); //$NON-NLS-1$
-		try {
+		try(BufferedReader br= new BufferedReader(new InputStreamReader(new FileInputStream(new File(testFailureFile)), "UTF-8"))) { //$NON-NLS-1$
 			String line;
-			Vector<String> list= new Vector<String>();
+			Vector<String> list= new Vector<>();
 			while ((line= br.readLine()) != null) {
 				list.add(line);
 			}
 			fFailureNames= list.toArray(new String[list.size()]);
 		}
-		finally {
-			br.close();
-		}
 		if (fDebugMode) {
 			System.out.println("Failures:"); //$NON-NLS-1$
-			for (int i= 0; i < fFailureNames.length; i++) {
-				System.out.println("    "+fFailureNames[i]); //$NON-NLS-1$
+			for (String fFailureName : fFailureNames) {
+				System.out.println("    "+fFailureName); //$NON-NLS-1$
 			}
 		}
 	}
@@ -497,9 +485,8 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 	}
 
 	protected Class<?>[] loadClasses(String[] testClassNames) {
-		Vector<Class<?>> classes= new Vector<Class<?>>();
-		for (int i = 0; i < testClassNames.length; i++) {
-			String name = testClassNames[i];
+		Vector<Class<?>> classes= new Vector<>();
+		for (String name : testClassNames) {
 			Class<?> clazz = loadClass(name, this);
 			if (clazz != null) {
 				classes.add(clazz);
@@ -547,8 +534,8 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 		long startTime = System.currentTimeMillis();
 		if (fDebugMode)
 			System.out.print("start send tree..."); //$NON-NLS-1$
-		for (int i = 0; i < suites.length; i++) {
-			suites[i].sendTree(this);
+		for (ITestReference suite : suites) {
+			suite.sendTree(this);
 			}
 		if (fDebugMode)
 			System.out.println("done send tree - time(ms): " + (System.currentTimeMillis() - startTime)); //$NON-NLS-1$
@@ -556,8 +543,7 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 
 	private int countTests(ITestReference[] tests) {
 		int count= 0;
-		for (int i= 0; i < tests.length; i++) {
-			ITestReference test= tests[i];
+		for (ITestReference test : tests) {
 			if (test != null)
 				count= count + test.countTestCases();
 		}
@@ -589,6 +575,7 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 		return new DefaultClassifier();
 	}
 
+	@Override
 	public void visitTreeEntry(ITestIdentifier identifier, boolean hasChildren, int testCount, boolean isDynamicTest, String parentId) {
 		String treeEntry= getTestId(identifier) + ',' + escapeText(identifier.getName()) + ',' + hasChildren + ',' + testCount
 				+ ',' + isDynamicTest + ',' + parentId + ',' + escapeText(identifier.getDisplayName()) + ',' + escapeText(identifier.getParameterTypes())
@@ -599,7 +586,7 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 	public static String escapeText(String s) {
 		if ((s.indexOf(',') < 0) && (s.indexOf('\\') < 0) && (s.indexOf('\r') < 0) && (s.indexOf('\n') < 0))
 			return s;
-		StringBuffer sb= new StringBuffer(s.length()+10);
+		StringBuilder sb= new StringBuilder(s.length()+10);
 		for (int i= 0; i < s.length(); i++) {
 			char c= s.charAt(i);
 			switch (c) {
@@ -720,9 +707,7 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 		}
 	}
 
-	/*
-	 * @see org.eclipse.jdt.internal.junit.runner.MessageSender#sendMessage(java.lang.String)
-	 */
+	@Override
 	public void sendMessage(String msg) {
 		if(fWriter == null)
 			return;
@@ -762,6 +747,7 @@ public class RemoteTestRunner implements MessageSender, IVisitsTestTrees {
 		}
 	}
 
+	@Override
 	public void flush() {
 	    fWriter.flush();
 	}

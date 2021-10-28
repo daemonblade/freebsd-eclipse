@@ -35,8 +35,10 @@ import java.util.Map;
 import java.util.zip.ZipInputStream;
 
 import org.junit.Assert;
-import org.junit.Rule;
+import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.JavaTestPlugin;
@@ -92,15 +94,11 @@ import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.ui.tests.refactoring.infra.DebugUtils;
 import org.eclipse.jdt.ui.tests.refactoring.infra.ZipTools;
 import org.eclipse.jdt.ui.tests.refactoring.rules.Java1d5Setup;
-import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 
 import org.eclipse.jdt.internal.ui.util.CoreUtility;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RenamePackageTests extends GenericRefactoringTest {
-	private static final boolean BUG_PACKAGE_CANT_BE_RENAMED_TO_A_PACKAGE_THAT_ALREADY_EXISTS= true;
-	private static final boolean BUG_6054= false;
-	private static final boolean BUG_54962_71267= false;
-
 	private static final String REFACTORING_PATH= "RenamePackage/";
 
 	private boolean fUpdateReferences;
@@ -108,8 +106,9 @@ public class RenamePackageTests extends GenericRefactoringTest {
 	private String fQualifiedNamesFilePatterns;
 	private boolean fRenameSubpackages;
 
-	@Rule
-	public RefactoringTestSetup fts= new Java1d5Setup();
+	public RenamePackageTests() {
+		rts= new Java1d5Setup();
+	}
 
 //	public void run(TestResult result) {
 //		System.out.println("--- " + getName() + " - RenamePackageTests ---");
@@ -596,7 +595,7 @@ public class RenamePackageTests extends GenericRefactoringTest {
 		fragment.createCompilationUnit("MyClass.java", buf.toString(), true, null);
 
 		IFile file= ((IFolder) getRoot().getResource()).getFile("x.properties");
-		byte[] content= "This is about 'org.test' and more".getBytes();
+		byte[] content= "This is about 'org.test' and more".getBytes(ENCODING);
 		file.create(new ByteArrayInputStream(content), true, null);
 		file.refreshLocal(IResource.DEPTH_ONE, null);
 
@@ -633,7 +632,7 @@ public class RenamePackageTests extends GenericRefactoringTest {
 		fragment.createCompilationUnit("MyClass.java", buf.toString(), true, null);
 
 		IFile file= ((IFolder) fragment.getResource()).getFile("x.properties");
-		byte[] content= "This is about 'org.test' and more".getBytes();
+		byte[] content= "This is about 'org.test' and more".getBytes(ENCODING);
 		file.create(new ByteArrayInputStream(content), true, null);
 		file.refreshLocal(IResource.DEPTH_ONE, null);
 
@@ -673,18 +672,16 @@ public class RenamePackageTests extends GenericRefactoringTest {
 		IFolder myPackFolder= getRoot().getJavaProject().getProject().getFolder("my").getFolder("pack");
 		CoreUtility.createFolder(myPackFolder, true, true, null);
 		IFile textfile= myPackFolder.getFile(textFileName);
-		textfile.create(new ByteArrayInputStream(textfileContent.getBytes()), true, null);
+		textfile.create(new ByteArrayInputStream(textfileContent.getBytes(ENCODING)), true, null);
 
 		helper2(new String[]{"my.pack", "my"}, new String[][]{{}, {}}, "my");
 
-		InputStreamReader reader= new InputStreamReader(textfile.getContents(true));
+
 		StringBuilder newContent= new StringBuilder();
-		try {
+		try (InputStreamReader reader= new InputStreamReader(textfile.getContents(true), ENCODING)){
 			int ch;
 			while((ch= reader.read()) != -1)
 				newContent.append((char)ch);
-		} finally {
-			reader.close();
 		}
 		String definedContent= getFileContents(getTestPath() + getName() + TEST_OUTPUT_INFIX + "my/" + textFileName);
 		assertEqualLines("invalid updating", definedContent, newContent.toString());
@@ -712,12 +709,9 @@ public class RenamePackageTests extends GenericRefactoringTest {
 		});
 	}
 
+	@Ignore("BUG_PACKAGE_CANT_BE_RENAMED_TO_A_PACKAGE_THAT_ALREADY_EXISTS")
 	@Test
 	public void testHierarchical02() throws Exception {
-		if (BUG_PACKAGE_CANT_BE_RENAMED_TO_A_PACKAGE_THAT_ALREADY_EXISTS) {
-			printTestDisabledMessage("package can't be renamed to a package that already exists.");
-			return;
-		}
 		fRenameSubpackages= true;
 
 		PackageRename rename= new PackageRename(new String[]{"my", "my.a", "my.b", "your"}, new String[][]{{"MyA"},{"ATest"},{"B"}, {"Y"}}, "your");
@@ -1031,10 +1025,10 @@ public class RenamePackageTests extends GenericRefactoringTest {
 		helper1(new String[]{"r"}, new String[][]{{"A"}}, "9");
 	}
 
+	@Ignore("needs revisiting")
 	@Test
 	public void testFail1() throws Exception{
-		printTestDisabledMessage("needs revisiting");
-		//helper1(new String[]{"r.p1"}, new String[][]{{"A"}}, "r");
+		helper1(new String[]{"r.p1"}, new String[][]{{"A"}}, "r");
 	}
 
 	@Test
@@ -1057,24 +1051,24 @@ public class RenamePackageTests extends GenericRefactoringTest {
 		helper1();
 	}
 
+	@Ignore("corner case - name obscuring")
 	@Test
 	public void testFail7() throws Exception{
 		//printTestDisabledMessage("1GK90H4: ITPJCORE:WIN2000 - search: missing package reference");
-		printTestDisabledMessage("corner case - name obscuring");
-//		helper1(new String[]{"r", "p1"}, new String[][]{{"A"}, {"A"}}, "fred");
+		helper1(new String[]{"r", "p1"}, new String[][]{{"A"}, {"A"}}, "fred");
 	}
 
+	@Ignore("corner case - name obscuring")
 	@Test
 	public void testFail8() throws Exception{
-		printTestDisabledMessage("corner case - name obscuring");
-//		helper1(new String[]{"r", "p1"}, new String[][]{{"A"}, {"A"}}, "fred");
+		helper1(new String[]{"r", "p1"}, new String[][]{{"A"}, {"A"}}, "fred");
 	}
 
 	//native method used r.A as a parameter
+	@Ignore("corner case - qualified name used  as a parameter of a native method")
 	@Test
 	public void testFail9() throws Exception{
-		printTestDisabledMessage("corner case - qualified name used  as a parameter of a native method");
-		//helper1(new String[]{"r", "p1"}, new String[][]{{"A"}, {"A"}}, "fred");
+		helper1(new String[]{"r", "p1"}, new String[][]{{"A"}, {"A"}}, "fred");
 	}
 
 	@Test
@@ -1083,12 +1077,9 @@ public class RenamePackageTests extends GenericRefactoringTest {
 	}
 
 	//-------
+//	@Ignore("bugs 54962, 71267")
 	@Test
 	public void test0() throws Exception{
-		if (BUG_54962_71267) {
-			printTestDisabledMessage("bugs 54962, 71267");
-			return;
-		}
 		fIsPreDeltaTest= true;
 	}
 
@@ -1163,18 +1154,15 @@ public class RenamePackageTests extends GenericRefactoringTest {
 
 		String textfileContent= getFileContents(getTestPath() + getName() + TEST_INPUT_INFIX + textFileName);
 		IFile textfile= getRoot().getJavaProject().getProject().getFile(textFileName);
-		textfile.create(new ByteArrayInputStream(textfileContent.getBytes()), true, null);
+		textfile.create(new ByteArrayInputStream(textfileContent.getBytes(ENCODING)), true, null);
 
 		helper2(new String[]{"r.p1", "r"}, new String[][]{{"A"}, {"A"}}, "q");
 
-		InputStreamReader reader= new InputStreamReader(textfile.getContents(true));
 		StringBuilder newContent= new StringBuilder();
-		try {
+		try (InputStreamReader reader= new InputStreamReader(textfile.getContents(true), ENCODING)){
 			int ch;
 			while((ch= reader.read()) != -1)
 				newContent.append((char)ch);
-		} finally {
-			reader.close();
 		}
 		String definedContent= getFileContents(getTestPath() + getName() + TEST_OUTPUT_INFIX + textFileName);
 		assertEqualLines("invalid updating", definedContent, newContent.toString());
@@ -1262,12 +1250,9 @@ public class RenamePackageTests extends GenericRefactoringTest {
 		});
 	}
 
+//	@Ignore("see bug#6054 (renaming a read-only package resets the read-only flag)")
 	@Test
 	public void testReadOnly() throws Exception{
-		if (BUG_6054) {
-			printTestDisabledMessage("see bug#6054 (renaming a read-only package resets the read-only flag)");
-			return;
-		}
 
 		fIsPreDeltaTest= true;
 		String[] packageNames= new String[]{"r"};

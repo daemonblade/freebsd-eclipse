@@ -642,7 +642,7 @@ public class ModifierCorrectionSubProcessor {
 				proposals.add(proposal);
 			}
 
-			if (JavaModelUtil.is18OrHigher(cu.getJavaProject()) && parentIsInterface) {
+			if (JavaModelUtil.is1d8OrHigher(cu.getJavaProject()) && parentIsInterface) {
 				{
 					// insert proposal to add static modifier
 					String label= Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifiertostatic_description, decl.getName());
@@ -915,7 +915,7 @@ public class ModifierCorrectionSubProcessor {
 			ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, cu, rewrite, IProposalRelevance.REMOVE_OVERRIDE, image);
 			proposals.add(proposal);
 
-			QuickAssistProcessor.getCreateInSuperClassProposals(context, methodDecl.getName(), proposals);
+			QuickAssistProcessor.getCreateInSuperClassProposals(context, methodDecl.getName(), proposals, false);
 		}
 	}
 
@@ -936,12 +936,48 @@ public class ModifierCorrectionSubProcessor {
 			return;
 		}
 
-		IBinding binding= ((MethodDeclaration) selectedNode).resolveBinding();
-		if (binding instanceof IMethodBinding) {
-			binding= ((IMethodBinding) binding).getMethodDeclaration();
+		IMethodBinding binding= ((MethodDeclaration) selectedNode).resolveBinding();
+		if (binding != null) {
+			binding= binding.getMethodDeclaration();
 			Image image= JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
 			proposals.add(new ModifierChangeCorrectionProposal(label, cu, binding, selectedNode, modifier, 0, IProposalRelevance.ADD_METHOD_MODIFIER, image));
 		}
+	}
+
+	public static void addSealedMissingModifierProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
+		if (proposals == null) {
+			return;
+		}
+		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
+		if (!(selectedNode instanceof SimpleName)) {
+			return;
+		}
+		if (!(((SimpleName) selectedNode).getParent() instanceof TypeDeclaration)) {
+			return;
+		}
+		TypeDeclaration typeDecl= (TypeDeclaration) ((SimpleName) selectedNode).getParent();
+		boolean isInterface= typeDecl.isInterface();
+
+		ICompilationUnit cu= context.getCompilationUnit();
+		ITypeBinding typeDeclBinding= typeDecl.resolveBinding();
+		int relevance= IProposalRelevance.CHANGE_MODIFIER_TO_FINAL;
+		Image image= JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
+		String label;
+
+		if (!isInterface) {
+			// Add final modifier
+			label= Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifierto_final_description, typeDecl.getName());
+			proposals.add(new ModifierChangeCorrectionProposal(label, cu, typeDeclBinding, typeDecl, Modifier.FINAL, 0, relevance, image));
+		}
+
+		// Add sealed modifier
+		label= Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifierto_sealed_description, typeDecl.getName());
+		proposals.add(new ModifierChangeCorrectionProposal(label, cu, typeDeclBinding, typeDecl, Modifier.SEALED, 0, relevance, image));
+
+		// Add non-sealed modifier
+		label= Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifierto_nonsealed_description, typeDecl.getName());
+		proposals.add(new ModifierChangeCorrectionProposal(label, cu, typeDeclBinding, typeDecl, Modifier.NON_SEALED, 0, relevance, image));
+
 	}
 
 	private ModifierCorrectionSubProcessor() {

@@ -29,6 +29,7 @@ import org.eclipse.jdt.core.IType;
  * org.eclipse.jdt.junit.internal_testKinds.
  */
 public interface ITestFinder {
+
 	ITestFinder NULL= new ITestFinder() {
 		@Override
 		public void findTestsInContainer(IJavaElement element, Set<IType> result, IProgressMonitor pm) {
@@ -47,7 +48,7 @@ public interface ITestFinder {
 	 * @param pm the progress monitor
 	 * @throws CoreException thrown when tests can not be found
 	 */
-	public abstract void findTestsInContainer(IJavaElement element, Set<IType> result, IProgressMonitor pm) throws CoreException;
+	void findTestsInContainer(IJavaElement element, Set<IType> result, IProgressMonitor pm) throws CoreException;
 
-	public abstract boolean isTest(IType type) throws CoreException;
+	boolean isTest(IType type) throws CoreException;
 }

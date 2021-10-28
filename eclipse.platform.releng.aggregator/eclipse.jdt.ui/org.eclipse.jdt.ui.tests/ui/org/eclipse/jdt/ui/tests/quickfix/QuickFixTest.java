@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,6 +15,7 @@
 package org.eclipse.jdt.ui.tests.quickfix;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -87,9 +88,13 @@ import org.eclipse.jdt.internal.ui.text.template.contentassist.SurroundWithTempl
 /**
  */
 public class QuickFixTest {
+
+	protected static String MODULE_INFO_FILE_CONTENT = ""
+			+ "module test {\n"
+			+ "}\n";
+
 	public static void assertCorrectLabels(List<? extends ICompletionProposal> proposals) {
-		for (int i= 0; i < proposals.size(); i++) {
-			ICompletionProposal proposal= proposals.get(i);
+		for (ICompletionProposal proposal : proposals) {
 			String name= proposal.getDisplayString();
 			if (name == null || name.length() == 0 || name.charAt(0) == '!' || name.contains("{0}") || name.contains("{1}")) {
 				fail("wrong proposal label: " + name);
@@ -100,9 +105,7 @@ public class QuickFixTest {
 
 	public static void assertCorrectContext(IInvocationContext context, ProblemLocation problem) {
 		if (problem.getProblemId() != 0) {
-			if (!JavaCorrectionProcessor.hasCorrections(context.getCompilationUnit(), problem.getProblemId(), problem.getMarkerType())) {
-				fail("Problem type not marked with light bulb: " + problem);
-			}
+			assertTrue("Problem type not marked with light bulb: " + problem, JavaCorrectionProcessor.hasCorrections(context.getCompilationUnit(), problem.getProblemId(), problem.getMarkerType()));
 		}
 	}
 
@@ -359,7 +362,7 @@ public class QuickFixTest {
 		return false;
 	}
 
-	protected static final ArrayList<IJavaCompletionProposal> collectAssists(IInvocationContext context, boolean includeLinkedRename) throws CoreException {
+	public static final ArrayList<IJavaCompletionProposal> collectAssists(IInvocationContext context, boolean includeLinkedRename) throws CoreException {
 		Class<?>[] filteredTypes= includeLinkedRename ? null : new Class[] { LinkedNamesAssistProposal.class, RenameRefactoringProposal.class };
 		return collectAssists(context, filteredTypes);
 	}
@@ -463,8 +466,7 @@ public class QuickFixTest {
 		if (proposals.size() != expectedProposals) {
 			StringBuffer buf= new StringBuffer();
 			buf.append("Wrong number of proposals, is: ").append(proposals.size()). append(", expected: ").append(expectedProposals).append('\n');
-			for (int i= 0; i < proposals.size(); i++) {
-				ICompletionProposal curr= proposals.get(i);
+			for (ICompletionProposal curr : proposals) {
 				buf.append(" - ").append(curr.getDisplayString()).append('\n');
 				if (curr instanceof CUCorrectionProposal) {
 					appendSource(((CUCorrectionProposal) curr), buf);
@@ -475,8 +477,7 @@ public class QuickFixTest {
 	}
 
 	protected static ICommandAccess findProposalByCommandId(String commandId, List<? extends ICompletionProposal> proposals) {
-		for (int i= 0; i < proposals.size(); i++) {
-			Object curr= proposals.get(i);
+		for (ICompletionProposal curr : proposals) {
 			if (curr instanceof ICommandAccess) {
 				if (commandId.equals(((ICommandAccess) curr).getCommandId())) {
 					return (ICommandAccess) curr;
@@ -487,10 +488,9 @@ public class QuickFixTest {
 	}
 
 	protected static ICompletionProposal findProposalByName(String name, List<? extends ICompletionProposal> proposals) {
-		for (int i= 0; i < proposals.size(); i++) {
-			Object curr= proposals.get(i);
-			if (curr instanceof ICompletionProposal && name.equals(((ICompletionProposal)curr).getDisplayString()))
-				return (ICompletionProposal)curr;
+		for (ICompletionProposal curr : proposals) {
+			if (name.equals(curr.getDisplayString()))
+				return curr;
 		}
 		return null;
 	}
@@ -506,9 +506,7 @@ public class QuickFixTest {
 
 	protected static void assertNoErrors(IInvocationContext context) {
 		for (IProblem problem : context.getASTRoot().getProblems()) {
-			if (problem.isError()) {
-				fail("source has error: " + problem.getMessage());
-			}
+			assertFalse("source has error: " + problem.getMessage(), problem.isError());
 		}
 	}
 
@@ -601,6 +599,22 @@ public class QuickFixTest {
 									.collect(Collectors.toList());
 		for (int i=0; i<expectedChoices.length; i++) {
 			assertEquals("Unexpected choice", expectedChoices[i], sortedChoices.get(i));
+		}
+	}
+	protected void assertLinkedChoicesContains(ICompletionProposal proposal, String linkedGroup, String[] expectedChoices) throws CoreException{
+		assertTrue("Not a LinkedCorrectionProposal", proposal instanceof LinkedCorrectionProposal);
+		LinkedCorrectionProposal linkedProposal = (LinkedCorrectionProposal)proposal;
+		linkedProposal.getChange(); // force computing the proposal details
+		LinkedProposalModel linkedProposalModel = linkedProposal.getLinkedProposalModel();
+		LinkedProposalPositionGroup positionGroup = linkedProposalModel.getPositionGroup(linkedGroup, false);
+		Proposal[] choices = positionGroup.getProposals();
+		assertTrue("Contains less number of choices", choices.length >= expectedChoices.length);
+		List<String> sortedChoices= Arrays.stream(choices)
+									.map(Proposal::getDisplayString)
+									.sorted()
+									.collect(Collectors.toList());
+		for (int i=0; i<expectedChoices.length; i++) {
+			assertTrue("choice not found" + expectedChoices[i], sortedChoices.contains(expectedChoices[i]));
 		}
 	}
 

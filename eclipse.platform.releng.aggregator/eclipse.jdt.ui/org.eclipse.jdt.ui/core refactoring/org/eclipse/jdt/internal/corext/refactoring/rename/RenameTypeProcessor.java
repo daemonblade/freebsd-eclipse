@@ -186,7 +186,7 @@ public class RenameTypeProcessor extends JavaRenameProcessor implements ITextUpd
 		}
 	}
 
-	private class NoOverrideProgressMonitor extends SubProgressMonitor {
+	private static class NoOverrideProgressMonitor extends SubProgressMonitor {
 		public NoOverrideProgressMonitor(IProgressMonitor monitor, int ticks) {
 			super(monitor, ticks, SubProgressMonitor.SUPPRESS_SUBTASK_LABEL);
 		}
@@ -322,8 +322,7 @@ public class RenameTypeProcessor extends JavaRenameProcessor implements ITextUpd
 
 	@Override
 	protected IFile[] getChangedFiles() throws CoreException {
-		List<IFile> result= new ArrayList<>();
-		result.addAll(Arrays.asList(ResourceUtil.getFiles(fChangeManager.getAllCompilationUnits())));
+		List<IFile> result= new ArrayList<>(Arrays.asList(ResourceUtil.getFiles(fChangeManager.getAllCompilationUnits())));
 		if (fQualifiedNameSearchResult != null)
 			result.addAll(Arrays.asList(fQualifiedNameSearchResult.getAllFiles()));
 		if (willRenameCU())
@@ -1606,7 +1605,7 @@ public class RenameTypeProcessor extends JavaRenameProcessor implements ITextUpd
 		return (addSelectionWarning || addNameWarning);
 	}
 
-	private class Warning {
+	private static class Warning {
 
 		private IMethod[] fRipple;
 		private boolean fSelectionWarning;

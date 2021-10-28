@@ -98,7 +98,7 @@ public class CategoryFilterActionGroup extends ActionGroup {
 
 	}
 
-	private class CategoryFilterSelectionDialog extends SelectionStatusDialog implements IListAdapter<String> {
+	private static class CategoryFilterSelectionDialog extends SelectionStatusDialog implements IListAdapter<String> {
 
 		private static final int SELECT_ALL= 0;
 		private static final int DESELECT_ALL= 1;
@@ -241,7 +241,7 @@ public class CategoryFilterActionGroup extends ActionGroup {
 	}
 
 	private interface IResultCollector {
-		public boolean accept(String[] category);
+		boolean accept(String[] category);
 	}
 
 	private static int COUNTER= 0;//WORKAROUND for Bug 132669 https://bugs.eclipse.org/bugs/show_bug.cgi?id=132669
@@ -365,7 +365,7 @@ public class CategoryFilterActionGroup extends ActionGroup {
 		IContributionItem[] items= manager.getItems();
 		if (items != null) {
 			for (IContributionItem item : items) {
-				if (item != null && item.getId() != null && item.getId().equals(FILTER_CATEGORY_ACTION_ID)) {
+				if (item != null && item.getId() != null && FILTER_CATEGORY_ACTION_ID.equals(item.getId())) {
 					IContributionItem removed= manager.remove(item);
 					if (removed != null) {
 						item.dispose();

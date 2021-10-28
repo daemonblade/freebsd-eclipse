@@ -71,6 +71,7 @@ import org.eclipse.jface.text.contentassist.BoldStylerProvider;
 import org.eclipse.jface.text.contentassist.ICompletionProposalExtension;
 import org.eclipse.jface.text.contentassist.ICompletionProposalExtension2;
 import org.eclipse.jface.text.contentassist.ICompletionProposalExtension3;
+import org.eclipse.jface.text.contentassist.ICompletionProposalExtension4;
 import org.eclipse.jface.text.contentassist.ICompletionProposalExtension5;
 import org.eclipse.jface.text.contentassist.ICompletionProposalExtension6;
 import org.eclipse.jface.text.contentassist.ICompletionProposalExtension7;
@@ -124,7 +125,7 @@ import org.eclipse.jdt.internal.ui.text.javadoc.JavadocContentAccess2;
  * @since 3.2
  */
 public abstract class AbstractJavaCompletionProposal implements IJavaCompletionProposal, ICompletionProposalExtension, ICompletionProposalExtension2, ICompletionProposalExtension3,
-		ICompletionProposalExtension5, ICompletionProposalExtension6, ICompletionProposalExtension7 {
+	ICompletionProposalExtension4, ICompletionProposalExtension5, ICompletionProposalExtension6, ICompletionProposalExtension7 {
 
 
 	/**
@@ -353,17 +354,9 @@ public abstract class AbstractJavaCompletionProposal implements IJavaCompletionP
 					LazyJavaCompletionProposal proposal= createRequiredTypeCompletionProposal(requiredProposals[i], fInvocationContext);
 					proposal.apply(document);
 					setReplacementOffset(getReplacementOffset() + document.getLength() - oldLen);
-				} else if (requiredProposals[i].getKind() == CompletionProposal.TYPE_IMPORT) {
-					ImportCompletionProposal proposal= new ImportCompletionProposal(requiredProposals[i], fInvocationContext, coreProposal.getKind());
-					proposal.setReplacementOffset(getReplacementOffset());
-					proposal.apply(document);
-					setReplacementOffset(getReplacementOffset() + document.getLength() - oldLen - proposal.getLengthOfImportsAddedBehindReplacementOffset());
-				} else if (requiredProposals[i].getKind() == CompletionProposal.METHOD_IMPORT) {
-					ImportCompletionProposal proposal= new ImportCompletionProposal(requiredProposals[i], fInvocationContext, coreProposal.getKind());
-					proposal.setReplacementOffset(getReplacementOffset());
-					proposal.apply(document);
-					setReplacementOffset(getReplacementOffset() + document.getLength() - oldLen - proposal.getLengthOfImportsAddedBehindReplacementOffset());
-				} else if (requiredProposals[i].getKind() == CompletionProposal.FIELD_IMPORT) {
+				} else if (requiredProposals[i].getKind() == CompletionProposal.TYPE_IMPORT
+						|| requiredProposals[i].getKind() == CompletionProposal.METHOD_IMPORT
+						|| requiredProposals[i].getKind() == CompletionProposal.FIELD_IMPORT) {
 					ImportCompletionProposal proposal= new ImportCompletionProposal(requiredProposals[i], fInvocationContext, coreProposal.getKind());
 					proposal.setReplacementOffset(getReplacementOffset());
 					proposal.apply(document);
@@ -1127,7 +1120,7 @@ public abstract class AbstractJavaCompletionProposal implements IJavaCompletionP
 		repairPresentation(viewer);
 		fRememberedStyleRange= null;
 
-		if (!insertCompletion() ^ smartToggle) {
+		if (insertCompletion() == smartToggle) {
 			StyleRange range= createStyleRange(viewer);
 			if (range == null)
 				return;
@@ -1332,4 +1325,25 @@ public abstract class AbstractJavaCompletionProposal implements IJavaCompletionP
 		return proposal != null && (proposal.getKind() == CompletionProposal.METHOD_REF || proposal.getKind() == CompletionProposal.FIELD_REF || proposal.getKind() == CompletionProposal.TYPE_REF || proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION || proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION);
 	}
 
+	@Override
+	public boolean isAutoInsertable() {
+		if (fInvocationContext == null) {
+			return false;
+		}
+		if (insertCompletion()) {
+			return true;
+		}
+		IDocument document = fInvocationContext.getDocument();
+		try {
+			String documentString = document.get(getReplacementOffset(), getReplacementLength());
+			if(documentString == null) {
+				return false;
+			}
+			String replacementString = getReplacementString();
+			return replacementString.startsWith(documentString);
+		} catch (BadLocationException e) {
+			JavaPlugin.log(e);
+			return false;
+		}
+	}
 }

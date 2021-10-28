@@ -15,6 +15,7 @@ package org.eclipse.jdt.core.refactoring.descriptors;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 
 import org.eclipse.core.runtime.Assert;
 
@@ -116,10 +117,7 @@ public class ExtractClassDescriptor extends JavaRefactoringDescriptor {
 
 		@Override
 		public int hashCode() {
-			final int prime= 31;
-			int result= 1;
-			result= prime * result + ((fFieldName == null) ? 0 : fFieldName.hashCode());
-			return result;
+			return Objects.hash(fFieldName);
 		}
 
 		@Override
@@ -131,11 +129,9 @@ public class ExtractClassDescriptor extends JavaRefactoringDescriptor {
 			if (getClass() != obj.getClass())
 				return false;
 			Field other= (Field) obj;
-			if (fFieldName == null) {
-				if (other.fFieldName != null)
-					return false;
-			} else if (!fFieldName.equals(other.fFieldName))
+			if (!Objects.equals(fFieldName, other.fFieldName)) {
 				return false;
+			}
 			return true;
 		}
 

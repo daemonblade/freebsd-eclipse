@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -132,64 +132,24 @@ import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 
 import org.eclipse.jdt.ui.JavaUI;
 
+import org.eclipse.jdt.internal.ui.util.ASTHelper;
+
 
 public class ASTView extends ViewPart implements IShowInSource, IShowInTargetList {
 
-	static final int JLS_LATEST= AST.JLS14;
-
-	private static final int JLS14= AST.JLS14;
-
-	/**
-	 * @deprecated to get rid of deprecation warnings in code
-	 */
-	@Deprecated
-	private static final int JLS13= AST.JLS13;
-
-	/**
-	 * @deprecated to get rid of deprecation warnings in code
-	 */
-	@Deprecated
-	private static final int JLS12= AST.JLS12;
-
-	/**
-	 * @deprecated to get rid of deprecation warnings in code
-	 */
-	@Deprecated
-	private static final int JLS11= AST.JLS11;
-
-	/**
-	 * @deprecated to get rid of deprecation warnings in code
-	 */
-	@Deprecated
-	private static final int JLS10= AST.JLS10;
-
-	/**
-	 * @deprecated to get rid of deprecation warnings in code
-	 */
-	@Deprecated
-	private static final int JLS9= AST.JLS9;
-
-	/**
-	 * @deprecated to get rid of deprecation warnings in code
-	 */
-	@Deprecated
-	private static final int JLS8= AST.JLS8;
-
-	/**
-	 * @deprecated to get rid of deprecation warnings in code
-	 */
-	@Deprecated
-	private static final int JLS4= AST.JLS4;
-	/**
-	 * @deprecated to get rid of deprecation warnings in code
-	 */
-	@Deprecated
-	private static final int JLS3= AST.JLS3;
-	/**
-	 * @deprecated to get rid of deprecation warnings in code
-	 */
-	@Deprecated
-	private static final int JLS2= AST.JLS2;
+	static final int JLS_LATEST= AST.getJLSLatest();
+	private static final int JLS16= ASTHelper.JLS16;
+	private static final int JLS15= ASTHelper.JLS15;
+	private static final int JLS14= ASTHelper.JLS14;
+	private static final int JLS13= ASTHelper.JLS13;
+	private static final int JLS12= ASTHelper.JLS12;
+	private static final int JLS11= ASTHelper.JLS11;
+	private static final int JLS10= ASTHelper.JLS10;
+	private static final int JLS9= ASTHelper.JLS9;
+	private static final int JLS8= ASTHelper.JLS8;
+	private static final int JLS4= ASTHelper.JLS4;
+	private static final int JLS3= ASTHelper.JLS3;
+	private static final int JLS2= ASTHelper.JLS2;
 
 	private class ASTViewSelectionProvider implements ISelectionProvider {
 		ListenerList<ISelectionChangedListener> fListeners= new ListenerList<>(ListenerList.IDENTITY);
@@ -547,6 +507,8 @@ public class ASTView extends ViewPart implements IShowInSource, IShowInTargetLis
 				case JLS12:
 				case JLS13:
 				case JLS14:
+				case JLS15:
+				case JLS16:
 					fCurrentASTLevel= level;
 			}
 		} catch (NumberFormatException e) {
@@ -754,16 +716,16 @@ public class ASTView extends ViewPart implements IShowInSource, IShowInTargetLis
 	}
 
 	private void updateContentDescription(IJavaElement element, CompilationUnit root, long time) {
-		String version= "AST Level " + root.getAST().apiLevel();
+		StringBuilder version= new StringBuilder("AST Level ").append(root.getAST().apiLevel());
 		switch (getCurrentInputKind()) {
 		case ASTInputKindAction.USE_RECONCILE:
-			version+= ", from reconciler"; //$NON-NLS-1$
+			version.append(", from reconciler"); //$NON-NLS-1$
 			break;
 		case ASTInputKindAction.USE_CACHE:
-			version+= ", from ASTProvider"; //$NON-NLS-1$
+			version.append(", from ASTProvider"); //$NON-NLS-1$
 			break;
 		case ASTInputKindAction.USE_FOCAL:
-			version+= ", using focal position"; //$NON-NLS-1$
+			version.append(", using focal position"); //$NON-NLS-1$
 			break;
 		default:
 			break;
@@ -771,7 +733,7 @@ public class ASTView extends ViewPart implements IShowInSource, IShowInTargetLis
 		TreeInfoCollector collector= new TreeInfoCollector(root);
 
 		String msg= "{0} ({1}).  Creation time: {2,number} ms.  Size: {3,number} nodes, {4,number} bytes (AST nodes only)."; //$NON-NLS-1$
-		Object[] args= { element.getElementName(), version, Long.valueOf(time),  Integer.valueOf(collector.getNumberOfNodes()), Integer.valueOf(collector.getSize())};
+		Object[] args= { element.getElementName(), version.toString(), Long.valueOf(time),  Integer.valueOf(collector.getNumberOfNodes()), Integer.valueOf(collector.getSize())};
 		setContentDescription(MessageFormat.format(msg, args));
 
 	}
@@ -1167,6 +1129,8 @@ public class ASTView extends ViewPart implements IShowInSource, IShowInTargetLis
 				new ASTLevelToggle("AST Level 1&2 (12)", JLS12), //$NON-NLS-1$
 				new ASTLevelToggle("AST Level 1&3 (13)", JLS13), //$NON-NLS-1$
 				new ASTLevelToggle("AST Level 1&4 (14)", JLS14), //$NON-NLS-1$
+				new ASTLevelToggle("AST Level 1&5 (15)", JLS15), //$NON-NLS-1$
+				new ASTLevelToggle("AST Level 1&6 (16)", JLS16), //$NON-NLS-1$
 		};
 
 		fAddToTrayAction= new Action() {

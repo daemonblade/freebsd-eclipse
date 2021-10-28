@@ -25,7 +25,7 @@ import org.eclipse.text.edits.TextEditGroup;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTMatcher;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
@@ -75,22 +75,23 @@ public class MergeConditionalBlocksCleanUp extends AbstractMultiFix {
 
 	@Override
 	public String getPreview() {
-		StringBuilder bld= new StringBuilder();
-
 		if (isEnabled(CleanUpConstants.MERGE_CONDITIONAL_BLOCKS)) {
-			bld.append("if ((i == 0) || (i == 1)) {\n"); //$NON-NLS-1$
-		} else {
-			bld.append("if (i == 0) {\n"); //$NON-NLS-1$
-			bld.append("    System.out.println(\"Duplicate\");\n"); //$NON-NLS-1$
-			bld.append("} else if (i == 1) {\n"); //$NON-NLS-1$
+			return "" //$NON-NLS-1$
+					+ "if (isValid || (i != 1)) {\n" //$NON-NLS-1$
+					+ "    System.out.println(\"Duplicate\");\n" //$NON-NLS-1$
+					+ "} else {\n" //$NON-NLS-1$
+					+ "    System.out.println(\"Different\");\n" //$NON-NLS-1$
+					+ "}\n\n\n"; //$NON-NLS-1$
 		}
 
-		bld.append("    System.out.println(\"Duplicate\");\n"); //$NON-NLS-1$
-		bld.append("} else {\n"); //$NON-NLS-1$
-		bld.append("    System.out.println(\"Different\");\n"); //$NON-NLS-1$
-		bld.append("}\n"); //$NON-NLS-1$
-
-		return bld.toString();
+		return "" //$NON-NLS-1$
+				+ "if (isValid) {\n" //$NON-NLS-1$
+				+ "    System.out.println(\"Duplicate\");\n" //$NON-NLS-1$
+				+ "} else if (i == 1) {\n" //$NON-NLS-1$
+				+ "    System.out.println(\"Different\");\n" //$NON-NLS-1$
+				+ "} else {\n" //$NON-NLS-1$
+				+ "    System.out.println(\"Duplicate\");\n" //$NON-NLS-1$
+				+ "}\n"; //$NON-NLS-1$
 	}
 
 	@Override
@@ -103,12 +104,29 @@ public class MergeConditionalBlocksCleanUp extends AbstractMultiFix {
 
 		unit.accept(new ASTVisitor() {
 			@Override
-			public boolean visit(final IfStatement node) {
-				if (node.getElseStatement() != null) {
+			public boolean visit(final IfStatement visited) {
+				if (visited.getElseStatement() != null) {
+					IfStatement innerIf= ASTNodes.as(visited.getThenStatement(), IfStatement.class);
+
+					if (innerIf != null
+							&& innerIf.getElseStatement() != null
+							&& !ASTNodes.asList(visited.getElseStatement()).isEmpty()
+							&& ASTNodes.getNbOperands(visited.getExpression()) + ASTNodes.getNbOperands(innerIf.getExpression()) < ASTNodes.EXCESSIVE_OPERAND_NUMBER) {
+						if (ASTNodes.match(visited.getElseStatement(), innerIf.getElseStatement())) {
+							rewriteOperations.add(new InnerIfOperation(visited, innerIf, true));
+							return false;
+						}
+
+						if (ASTNodes.match(visited.getElseStatement(), innerIf.getThenStatement())) {
+							rewriteOperations.add(new InnerIfOperation(visited, innerIf, false));
+							return false;
+						}
+					}
+
 					List<IfStatement> duplicateIfBlocks= new ArrayList<>(4);
 					List<Boolean> isThenStatement= new ArrayList<>(4);
-					AtomicInteger operandCount= new AtomicInteger(ASTNodes.getNbOperands(node.getExpression()));
-					duplicateIfBlocks.add(node);
+					AtomicInteger operandCount= new AtomicInteger(ASTNodes.getNbOperands(visited.getExpression()));
+					duplicateIfBlocks.add(visited);
 					isThenStatement.add(Boolean.TRUE);
 
 					while (addOneMoreIf(duplicateIfBlocks, isThenStatement, operandCount)) {
@@ -134,7 +152,7 @@ public class MergeConditionalBlocksCleanUp extends AbstractMultiFix {
 
 					if (nextElse != null
 							&& operandCount.get() + ASTNodes.getNbOperands(nextElse.getExpression()) < ASTNodes.EXCESSIVE_OPERAND_NUMBER) {
-						if (match(previousStatement, nextElse.getThenStatement())) {
+						if (ASTNodes.match(previousStatement, nextElse.getThenStatement())) {
 							operandCount.addAndGet(ASTNodes.getNbOperands(nextElse.getExpression()));
 							duplicateIfBlocks.add(nextElse);
 							isThenStatement.add(Boolean.TRUE);
@@ -142,7 +160,7 @@ public class MergeConditionalBlocksCleanUp extends AbstractMultiFix {
 						}
 
 						if (nextElse.getElseStatement() != null
-								&& match(previousStatement, nextElse.getElseStatement())) {
+								&& ASTNodes.match(previousStatement, nextElse.getElseStatement())) {
 							operandCount.addAndGet(ASTNodes.getNbOperands(nextElse.getExpression()));
 							duplicateIfBlocks.add(nextElse);
 							isThenStatement.add(Boolean.FALSE);
@@ -152,24 +170,6 @@ public class MergeConditionalBlocksCleanUp extends AbstractMultiFix {
 				}
 
 				return false;
-			}
-
-			private boolean match(final Statement expectedStatement, final Statement actualStatement) {
-				ASTMatcher matcher= new ASTMatcher();
-				List<Statement> expectedStatements= ASTNodes.asList(expectedStatement);
-				List<Statement> actualStatements= ASTNodes.asList(actualStatement);
-
-				if (expectedStatements.size() != actualStatements.size()) {
-					return false;
-				}
-
-				for (int codeLine= 0; codeLine < expectedStatements.size(); codeLine++) {
-					if (!matcher.safeSubtreeMatch(expectedStatements.get(codeLine), actualStatements.get(codeLine))) {
-						return false;
-					}
-				}
-
-				return true;
 			}
 		});
 
@@ -191,6 +191,44 @@ public class MergeConditionalBlocksCleanUp extends AbstractMultiFix {
 		return null;
 	}
 
+	private static class InnerIfOperation extends CompilationUnitRewriteOperation {
+		private final IfStatement visited;
+		private final IfStatement innerIf;
+		private final boolean isInnerMainFirst;
+
+		public InnerIfOperation(final IfStatement visited, final IfStatement innerIf,
+				final boolean isInnerMainFirst) {
+			this.visited= visited;
+			this.innerIf= innerIf;
+			this.isInnerMainFirst= isInnerMainFirst;
+		}
+
+		@Override
+		public void rewriteAST(final CompilationUnitRewrite cuRewrite, final LinkedProposalModel linkedModel) throws CoreException {
+			ASTRewrite rewrite= cuRewrite.getASTRewrite();
+			AST ast= cuRewrite.getRoot().getAST();
+			TextEditGroup group= createTextEditGroup(MultiFixMessages.MergeConditionalBlocksCleanup_description_inner_if, cuRewrite);
+
+			InfixExpression newInfixExpression= ast.newInfixExpression();
+
+			Expression outerCondition;
+			if (isInnerMainFirst) {
+				outerCondition= ASTNodes.createMoveTarget(rewrite, visited.getExpression());
+			} else {
+				outerCondition= ASTNodeFactory.negate(ast, rewrite, visited.getExpression(), true);
+			}
+
+			newInfixExpression.setLeftOperand(ASTNodeFactory.parenthesizeIfNeeded(ast, outerCondition));
+			newInfixExpression.setOperator(isInnerMainFirst ? InfixExpression.Operator.CONDITIONAL_AND
+					: InfixExpression.Operator.CONDITIONAL_OR);
+			newInfixExpression.setRightOperand(ASTNodeFactory.parenthesizeIfNeeded(ast,
+					ASTNodes.createMoveTarget(rewrite, innerIf.getExpression())));
+
+			ASTNodes.replaceButKeepComment(rewrite, innerIf.getExpression(), newInfixExpression, group);
+			ASTNodes.replaceButKeepComment(rewrite, visited, ASTNodes.createMoveTarget(rewrite, innerIf), group);
+		}
+	}
+
 	private static class MergeConditionalBlocksOperation extends CompilationUnitRewriteOperation {
 		private final List<IfStatement> duplicateIfBlocks;
 		private final List<Boolean> isThenStatement;
@@ -204,7 +242,7 @@ public class MergeConditionalBlocksCleanUp extends AbstractMultiFix {
 		public void rewriteAST(final CompilationUnitRewrite cuRewrite, final LinkedProposalModel linkedModel) throws CoreException {
 			ASTRewrite rewrite= cuRewrite.getASTRewrite();
 			AST ast= cuRewrite.getRoot().getAST();
-			TextEditGroup group= createTextEditGroup(MultiFixMessages.MergeConditionalBlocksCleanup_description, cuRewrite);
+			TextEditGroup group= createTextEditGroup(MultiFixMessages.MergeConditionalBlocksCleanup_description_if_suite, cuRewrite);
 
 			List<Expression> newConditions= new ArrayList<>(duplicateIfBlocks.size());
 
@@ -223,11 +261,14 @@ public class MergeConditionalBlocksCleanUp extends AbstractMultiFix {
 			newCondition.setLeftOperand(newConditions.remove(0));
 			newCondition.setRightOperand(newConditions.remove(0));
 			newCondition.extendedOperands().addAll(newConditions);
+			ASTNode node= duplicateIfBlocks.get(0).getExpression();
 
-			rewrite.replace(duplicateIfBlocks.get(0).getExpression(), newCondition, group);
+			ASTNodes.replaceButKeepComment(rewrite, node, newCondition, group);
 
 			if (remainingStatement != null) {
-				rewrite.replace(duplicateIfBlocks.get(0).getElseStatement(), ASTNodes.createMoveTarget(rewrite, remainingStatement), group);
+				ASTNode node1= duplicateIfBlocks.get(0).getElseStatement();
+				ASTNode replacement= ASTNodes.createMoveTarget(rewrite, remainingStatement);
+				ASTNodes.replaceButKeepComment(rewrite, node1, replacement, group);
 			} else if (duplicateIfBlocks.get(0).getElseStatement() != null) {
 				rewrite.remove(duplicateIfBlocks.get(0).getElseStatement(), group);
 			}

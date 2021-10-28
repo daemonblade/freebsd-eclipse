@@ -14,6 +14,8 @@
 package org.eclipse.jdt.astview.views;
 
 
+import java.util.Objects;
+
 import org.eclipse.swt.graphics.Image;
 
 import org.eclipse.jdt.core.dom.IBinding;
@@ -37,7 +39,7 @@ public class BindingProperty extends ASTAttribute {
 				fName= name + ": " + Binding.getEscapedStringLiteral((String) value); //$NON-NLS-1$
 			}
 		} else if (value instanceof Character) {
-			fName= name + ": " + Binding.getEscapedCharLiteral(((Character) value).charValue()); //$NON-NLS-1$
+			fName= name + ": " + Binding.getEscapedCharLiteral(((Character) value)); //$NON-NLS-1$
 		} else {
 			fName= name + ": " + String.valueOf(value); //$NON-NLS-1$
 		}
@@ -81,7 +83,16 @@ public class BindingProperty extends ASTAttribute {
 		fIsRelevant= isRelevant;
 	}
 
+
+	@Deprecated
 	public BindingProperty(Binding parent, StringBuffer label, boolean isRelevant) {
+		fParent= parent;
+		fName= label.toString();
+		fValues= null;
+		fIsRelevant= isRelevant;
+	}
+
+	public BindingProperty(Binding parent, StringBuilder label, boolean isRelevant) {
 		fParent= parent;
 		fName= label.toString();
 		fValues= null;
@@ -140,17 +151,11 @@ public class BindingProperty extends ASTAttribute {
 		}
 
 		BindingProperty other= (BindingProperty) obj;
-		if (fParent == null) {
-			if (other.fParent != null)
-				return false;
-		} else if (! fParent.equals(other.fParent)) {
+		if (!Objects.equals(fParent, other.fParent)) {
 			return false;
 		}
 
-		if (fName == null) {
-			if (other.fName != null)
-				return false;
-		} else if (! fName.equals(other.fName)) {
+		if (!Objects.equals(fName, other.fName)) {
 			return false;
 		}
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 IBM Corporation and others.
+ * Copyright (c) 2011, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -119,15 +119,15 @@ public class PropertiesQuickAssistProcessor {
 				return false;
 
 			String type= partition.getType();
-			if (!type.equals(IPropertiesFilePartitions.PROPERTY_VALUE)
-					&& !type.equals(IDocument.DEFAULT_CONTENT_TYPE)) {
+			if (!IPropertiesFilePartitions.PROPERTY_VALUE.equals(type)
+					&& !IDocument.DEFAULT_CONTENT_TYPE.equals(type)) {
 				return false;
 			}
 			proposalOffset= partition.getOffset();
 			proposalLength= partition.getLength();
 			text= document.get(proposalOffset, proposalLength);
 
-			if (type.equals(IPropertiesFilePartitions.PROPERTY_VALUE)) {
+			if (IPropertiesFilePartitions.PROPERTY_VALUE.equals(type)) {
 				text= text.substring(1); //see PropertiesFilePartitionScanner()
 				proposalOffset++;
 				proposalLength--;
@@ -262,7 +262,6 @@ public class PropertiesQuickAssistProcessor {
 		IDocument document= invocationContext.getDocument();
 		int selectionOffset= invocationContext.getOffset();
 		int selectionLength= invocationContext.getLength();
-		IField field= null;
 
 		IType accessorClass= invocationContext.getAccessorType();
 		if (accessorClass == null || !isEclipseNLSUsed(accessorClass))
@@ -272,7 +271,7 @@ public class PropertiesQuickAssistProcessor {
 		if (keys == null || keys.size() != 1)
 			return false;
 
-		field= accessorClass.getField(keys.get(0));
+		IField field= accessorClass.getField(keys.get(0));
 		if (!field.exists())
 			return false;
 		if (resultingCollections == null)
@@ -313,7 +312,7 @@ public class PropertiesQuickAssistProcessor {
 				return null;
 
 			String type= partition.getType();
-			if (!(type.equals(IDocument.DEFAULT_CONTENT_TYPE))) {
+			if (!(IDocument.DEFAULT_CONTENT_TYPE.equals(type))) {
 				return null;
 			}
 			String key= document.get(partition.getOffset(), partition.getLength()).trim();
@@ -335,7 +334,7 @@ public class PropertiesQuickAssistProcessor {
 				offset= partitionOffset + partitionLength;
 
 				String type= partition.getType();
-				if (!(type.equals(IDocument.DEFAULT_CONTENT_TYPE))) {
+				if (!(IDocument.DEFAULT_CONTENT_TYPE.equals(type))) {
 					continue;
 				}
 				String key= document.get(partitionOffset, partitionLength).trim();
@@ -365,9 +364,9 @@ public class PropertiesQuickAssistProcessor {
 			final StringBuffer buf= new StringBuffer();
 
 			try {
-				for (Change fChange : fChanges) {
-					if (fChange instanceof TextChange) {
-						TextChange change= (TextChange) fChange;
+				for (Change changeObj : fChanges) {
+					if (changeObj instanceof TextChange) {
+						TextChange change= (TextChange) changeObj;
 						String filename= getFileName(change);
 						if (filename != null) {
 							buf.append("<b>"); //$NON-NLS-1$

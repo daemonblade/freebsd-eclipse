@@ -172,7 +172,7 @@ public class NewTypeDropDownAction extends Action implements IMenuCreator, IWork
 		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(PlatformUI.PLUGIN_ID, PL_NEW);
 		if (extensionPoint != null) {
 			for (IConfigurationElement element : extensionPoint.getConfigurationElements()) {
-				if (element.getName().equals(TAG_WIZARD) && isJavaTypeWizard(element)) {
+				if (TAG_WIZARD.equals(element.getName()) && isJavaTypeWizard(element)) {
 					containers.add(new OpenTypeWizardAction(element));
 				}
 			}
@@ -184,12 +184,12 @@ public class NewTypeDropDownAction extends Action implements IMenuCreator, IWork
 		for (IConfigurationElement classElement : element.getChildren(TAG_CLASS)) {
 			for (IConfigurationElement curr : classElement.getChildren(TAG_PARAMETER)) {
 				if (ATT_JAVATYPE.equals(curr.getAttribute(TAG_NAME))) {
-					return Boolean.valueOf(curr.getAttribute(TAG_VALUE)).booleanValue();
+					return Boolean.parseBoolean(curr.getAttribute(TAG_VALUE));
 				}
 			}
 		}
 		// old way, deprecated
-		if (Boolean.valueOf(element.getAttribute(ATT_JAVATYPE)).booleanValue()) {
+		if (Boolean.parseBoolean(element.getAttribute(ATT_JAVATYPE))) {
 			return true;
 		}
 		return false;

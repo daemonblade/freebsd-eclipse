@@ -1,12 +1,10 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
- *
- * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
@@ -230,6 +228,9 @@ public final class SearchMessages extends NLS {
 	public static String MatchFilter_ImportFilter_name;
 	public static String MatchFilter_ImportFilter_actionLabel;
 	public static String MatchFilter_ImportFilter_description;
+	public static String MatchFilter_StaticImportFilter_name;
+	public static String MatchFilter_StaticImportFilter_actionLabel;
+	public static String MatchFilter_StaticImportFilter_description;
 	public static String MatchFilter_WriteFilter_name;
 	public static String MatchFilter_WriteFilter_actionLabel;
 	public static String MatchFilter_WriteFilter_description;
@@ -263,6 +264,7 @@ public final class SearchMessages extends NLS {
 	public static String BreakContinueTargetFinder_job_label;
 	public static String BreakContinueTargetFinder_no_break_or_continue_selected;
 	public static String BreakContinueTargetFinder_occurrence_description;
+	public static String EnumConstructorTargetFinder_description;
 	public static String TextSearchLabelProvider_matchCountFormat;
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, SearchMessages.class);
@@ -319,7 +321,9 @@ public final class SearchMessages extends NLS {
 	public static String MatchLocations_super_description;
 	public static String MatchLocations_super_label;
 	public static String MatchLocations_super_types_description;
+	public static String MatchLocations_permitted_types_description;
 	public static String MatchLocations_super_types_label;
+	public static String MatchLocations_permitted_types_label;
 	public static String MatchLocations_this_description;
 	public static String MatchLocations_this_label;
 	public static String MatchLocations_thrown_exceptions_description;

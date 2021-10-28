@@ -76,7 +76,7 @@ public final class GenerateHashCodeEqualsAction extends GenerateMethodAbstractAc
 	private static final String METHODNAME_HASH_CODE= "hashCode"; //$NON-NLS-1$
 	private static final String METHODNAME_EQUALS= "equals"; //$NON-NLS-1$
 
-	private class HashCodeEqualsInfo {
+	private static class HashCodeEqualsInfo {
 
 		public boolean foundHashCode= false;
 
@@ -87,7 +87,7 @@ public final class GenerateHashCodeEqualsAction extends GenerateMethodAbstractAc
 		public boolean foundFinalEquals= false;
 	}
 
-	private class HashCodeEqualsGenerationSettings extends CodeGenerationSettings {
+	private static class HashCodeEqualsGenerationSettings extends CodeGenerationSettings {
 		public boolean useInstanceOf= false;
 		public boolean useBlocks= false;
 		public boolean useJ7HashEquals= false;
@@ -147,16 +147,16 @@ public final class GenerateHashCodeEqualsAction extends GenerateMethodAbstractAc
 
 		while (true) {
 			for (IMethodBinding declaredMethod : someType.getDeclaredMethods()) {
-				if (declaredMethod.getName().equals(METHODNAME_EQUALS)) {
+				if (METHODNAME_EQUALS.equals(declaredMethod.getName())) {
 					ITypeBinding[] b= declaredMethod.getParameterTypes();
-					if ((b.length == 1) && (b[0].getQualifiedName().equals("java.lang.Object"))) { //$NON-NLS-1$
+					if ((b.length == 1) && ("java.lang.Object".equals(b[0].getQualifiedName()))) { //$NON-NLS-1$
 						info.foundEquals= true;
 						if (Modifier.isFinal(declaredMethod.getModifiers())) {
 							info.foundFinalEquals= true;
 						}
 					}
 				}
-				if (declaredMethod.getName().equals(METHODNAME_HASH_CODE) && declaredMethod.getParameterTypes().length == 0) {
+				if (METHODNAME_HASH_CODE.equals(declaredMethod.getName()) && declaredMethod.getParameterTypes().length == 0) {
 					info.foundHashCode= true;
 					if (Modifier.isFinal(declaredMethod.getModifiers())) {
 						info.foundFinalHashCode= true;

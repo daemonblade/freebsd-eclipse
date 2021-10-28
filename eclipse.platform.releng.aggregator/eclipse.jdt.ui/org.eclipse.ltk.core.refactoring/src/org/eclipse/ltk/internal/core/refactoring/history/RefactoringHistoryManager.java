@@ -210,7 +210,7 @@ public final class RefactoringHistoryManager {
 		try {
 			monitor.beginTask(RefactoringCoreMessages.RefactoringHistoryService_retrieving_history, 22);
 			final IFileInfo info= store.fetchInfo(EFS.NONE, new SubProgressMonitor(monitor, 2, SubProgressMonitor.SUPPRESS_SUBTASK_LABEL));
-			if (!info.isDirectory() && info.exists() && store.getName().equalsIgnoreCase(RefactoringHistoryService.NAME_INDEX_FILE)) {
+			if (!info.isDirectory() && info.exists() && RefactoringHistoryService.NAME_INDEX_FILE.equalsIgnoreCase(store.getName())) {
 				try (InputStream stream= store.openInputStream(EFS.NONE, new SubProgressMonitor(monitor, 1, SubProgressMonitor.SUPPRESS_SUBTASK_LABEL))) {
 					final RefactoringDescriptorProxy[] proxies= readRefactoringDescriptorProxies(stream, project, start, end);
 					collection.addAll(Arrays.asList(proxies));
@@ -267,7 +267,7 @@ public final class RefactoringHistoryManager {
 				final int index= line.indexOf(DELIMITER_COMPONENT);
 				if (index > 0) {
 					try {
-						final long stamp= Long.valueOf(line.substring(0, index)).longValue();
+						final long stamp= Long.parseLong(line.substring(0, index));
 						if (stamp >= start && stamp <= end)
 							list.add(new DefaultRefactoringDescriptorProxy(unescapeString(line.substring(index + 1)), project, stamp));
 					} catch (NumberFormatException exception) {
@@ -337,7 +337,7 @@ public final class RefactoringHistoryManager {
 			monitor.beginTask(task, 16);
 			final IFileInfo info= store.fetchInfo(EFS.NONE, new SubProgressMonitor(monitor, 1, SubProgressMonitor.SUPPRESS_SUBTASK_LABEL));
 			if (info.isDirectory()) {
-				if (info.getName().equalsIgnoreCase(RefactoringHistoryService.NAME_HISTORY_FOLDER))
+				if (RefactoringHistoryService.NAME_HISTORY_FOLDER.equalsIgnoreCase(info.getName()))
 					return;
 				final IFileStore[] stores= store.childStores(EFS.NONE, new SubProgressMonitor(monitor, 1, SubProgressMonitor.SUPPRESS_SUBTASK_LABEL));
 				final IProgressMonitor subMonitor= new SubProgressMonitor(monitor, 1, SubProgressMonitor.SUPPRESS_SUBTASK_LABEL);
@@ -799,7 +799,8 @@ public final class RefactoringHistoryManager {
 							final Element root= document.getDocumentElement();
 							if (sort) {
 								final String string= Long.toString(stamp);
-								for (int offset= 0; offset < list.getLength(); offset++) {
+								int length= list.getLength();
+								for (int offset= 0; offset < length; offset++) {
 									final Element element= (Element) list.item(offset);
 									final String attribute= element.getAttribute(IRefactoringSerializationConstants.ATTRIBUTE_STAMP);
 									if (attribute != null) {
@@ -1145,7 +1146,8 @@ public final class RefactoringHistoryManager {
 						}
 						final String time= String.valueOf(stamp);
 						final NodeList list= document.getElementsByTagName(IRefactoringSerializationConstants.ELEMENT_REFACTORING);
-						for (int index= 0; index < list.getLength(); index++) {
+						int length= list.getLength();
+						for (int index= 0; index < length; index++) {
 							final Element element= (Element) list.item(index);
 							if (time.equals(element.getAttribute(IRefactoringSerializationConstants.ATTRIBUTE_STAMP))) {
 								element.setAttribute(IRefactoringSerializationConstants.ATTRIBUTE_COMMENT, comment);

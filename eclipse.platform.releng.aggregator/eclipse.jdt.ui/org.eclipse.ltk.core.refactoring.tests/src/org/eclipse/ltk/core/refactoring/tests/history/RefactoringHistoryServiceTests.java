@@ -13,10 +13,21 @@
  *******************************************************************************/
 package org.eclipse.ltk.core.refactoring.tests.history;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.osgi.service.prefs.BackingStoreException;
 
 import org.eclipse.core.runtime.CoreException;
@@ -44,12 +55,8 @@ import org.eclipse.ltk.internal.core.refactoring.history.RefactoringDescriptorPr
 import org.eclipse.ltk.internal.core.refactoring.history.RefactoringHistoryImplementation;
 import org.eclipse.ltk.internal.core.refactoring.history.RefactoringHistoryService;
 
-import junit.framework.TestCase;
-
-public class RefactoringHistoryServiceTests extends TestCase {
-
+public class RefactoringHistoryServiceTests {
 	private static final class RefactoringExecutionListener implements IRefactoringExecutionListener {
-
 		private RefactoringExecutionEvent fLastEvent= null;
 
 		public void assertEventDescriptor(RefactoringDescriptorProxyAdapter expected) throws Exception {
@@ -65,7 +72,7 @@ public class RefactoringHistoryServiceTests extends TestCase {
 
 		public void assertEventSource(IRefactoringHistoryService expected) throws Exception {
 			assertNotNull("No refactoring history event has been recorded", fLastEvent);
-			assertTrue("Wrong refactoring history service in refactoring history event:", expected == fLastEvent.getHistoryService());
+			assertSame("Wrong refactoring history service in refactoring history event:", expected, fLastEvent.getHistoryService());
 		}
 
 		public void assertEventType(int expected) throws Exception {
@@ -88,13 +95,13 @@ public class RefactoringHistoryServiceTests extends TestCase {
 			int previous= fLastEvent != null ? fLastEvent.getEventType() : -1;
 			switch (event.getEventType()) {
 				case RefactoringExecutionEvent.PERFORMED:
-					assertTrue("Previous event should be ABOUT_TO_PERFORM", previous == RefactoringExecutionEvent.ABOUT_TO_PERFORM);
+					assertEquals("Previous event should be ABOUT_TO_PERFORM", RefactoringExecutionEvent.ABOUT_TO_PERFORM, previous);
 					break;
 				case RefactoringExecutionEvent.REDONE:
-					assertTrue("Previous event should be ABOUT_TO_REDO", previous == RefactoringExecutionEvent.ABOUT_TO_REDO);
+					assertEquals("Previous event should be ABOUT_TO_REDO", RefactoringExecutionEvent.ABOUT_TO_REDO, previous);
 					break;
 				case RefactoringExecutionEvent.UNDONE:
-					assertTrue("Previous event should be ABOUT_TO_UNDO", previous == RefactoringExecutionEvent.ABOUT_TO_UNDO);
+					assertEquals("Previous event should be ABOUT_TO_UNDO", RefactoringExecutionEvent.ABOUT_TO_UNDO, previous);
 					break;
 			}
 			fLastEvent= event;
@@ -118,7 +125,7 @@ public class RefactoringHistoryServiceTests extends TestCase {
 
 		public void assertEventSource(IRefactoringHistoryService expected) throws Exception {
 			assertNotNull("No refactoring history event has been recorded", fLastEvent);
-			assertTrue("Wrong refactoring history service in refactoring history event:", expected == fLastEvent.getHistoryService());
+			assertSame("Wrong refactoring history service in refactoring history event:", expected, fLastEvent.getHistoryService());
 		}
 
 		public void assertEventType(int expected) throws Exception {
@@ -188,16 +195,15 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		RefactoringHistoryService.setSharedRefactoringHistory(fProject.getProject(), shared, null);
 	}
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
+	@Before
+	public void setUp() throws Exception {
 		final RefactoringHistoryService service= RefactoringHistoryService.getInstance();
 		service.connect();
 		fProject= new SimpleTestProject();
 		setSharedRefactoringHistory(true);
 		assertTrue("Refactoring history should be shared", RefactoringHistoryService.hasSharedRefactoringHistory(fProject.getProject()));
 		IFolder folder= fProject.getProject().getFolder(RefactoringHistoryService.NAME_HISTORY_FOLDER);
-		assertTrue("Refactoring history folder should not exist.", !folder.exists());
+		assertFalse("Refactoring history folder should not exist.", folder.exists());
 		setUpTestProjectRefactorings();
 		assertTrue("Refactoring history folder should exist", folder.exists());
 	}
@@ -221,8 +227,8 @@ public class RefactoringHistoryServiceTests extends TestCase {
 			executeRefactoring(null, index + TOTAL_PROJECT_NUMBER, RefactoringDescriptor.BREAKING_CHANGE);
 	}
 
-	@Override
-	protected void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		final RefactoringHistoryService service= RefactoringHistoryService.getInstance();
 		service.deleteRefactoringHistory(fProject.getProject(), null);
 		RefactoringHistory history= service.getWorkspaceHistory(null);
@@ -231,24 +237,25 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		assertTrue("Refactoring history must be empty", history.isEmpty());
 		service.disconnect();
 		fProject.delete();
-		super.tearDown();
 	}
 
+	@Test
 	public void testDeleteProjectHistory0() throws Exception {
 		setUpWorkspaceRefactorings();
 		final IProject project= fProject.getProject();
 		final RefactoringHistoryService service= RefactoringHistoryService.getInstance();
 		service.deleteRefactoringHistory(project, null);
 		RefactoringHistory projectHistory= service.getProjectHistory(project, null);
-		assertTrue("Refactoring history has wrong size:", projectHistory.getDescriptors().length == COMMON_NUMBER);
+		assertEquals("Refactoring history has wrong size:", COMMON_NUMBER, projectHistory.getDescriptors().length);
 		RefactoringHistory workspaceHistory= service.getWorkspaceHistory(null);
 		final RefactoringDescriptorProxy[] descriptors= workspaceHistory.getDescriptors();
 		assertEquals("Refactoring history has wrong size:", COMMON_NUMBER, descriptors.length);
 		for (RefactoringDescriptorProxy descriptor : descriptors) {
-			assertTrue("Workspace refactoring should have no project attribute set:\n\n" + descriptor.toString(), descriptor.getProject() == null);
+			assertNull("Workspace refactoring should have no project attribute set:\n\n" + descriptor.toString(), descriptor.getProject());
 		}
 	}
 
+	@Test
 	public void testDeleteProjectHistory1() throws Exception {
 		setUpWorkspaceRefactorings();
 		final IProject project= fProject.getProject();
@@ -271,11 +278,12 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		assertTrue("Refactoring history should be empty", workspaceHistory.isEmpty());
 	}
 
+	@Test
 	public void testDeleteRefactoringDescriptors0() throws Exception {
 		final IProject project= fProject.getProject();
 		final RefactoringHistoryService service= RefactoringHistoryService.getInstance();
 		RefactoringHistory projectHistory= service.getProjectHistory(project, null);
-		assertTrue("Refactoring history should not be empty", !projectHistory.isEmpty());
+		assertFalse("Refactoring history should not be empty", projectHistory.isEmpty());
 		service.deleteRefactoringDescriptors(projectHistory.getDescriptors(), null);
 		projectHistory= service.getProjectHistory(project, null);
 		projectHistory= service.getProjectHistory(project, null);
@@ -284,17 +292,19 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		assertTrue("Refactoring history should be empty", workspaceHistory.isEmpty());
 	}
 
+	@Test
 	public void testDeleteRefactoringDescriptors1() throws Exception {
 		final IProject project= fProject.getProject();
 		final RefactoringHistoryService service= RefactoringHistoryService.getInstance();
 		RefactoringHistory workspaceHistory= service.getWorkspaceHistory(null);
 		RefactoringHistory projectHistory= service.getProjectHistory(project, 0, Long.MAX_VALUE, RefactoringDescriptor.BREAKING_CHANGE, null);
-		assertTrue("Refactoring history should not be empty", !projectHistory.isEmpty());
+		assertFalse("Refactoring history should not be empty", projectHistory.isEmpty());
 		service.deleteRefactoringDescriptors(projectHistory.getDescriptors(), null);
 		RefactoringHistory afterHistory= service.getWorkspaceHistory(null);
 		assertEquals("", afterHistory.getDescriptors().length + BREAKING_NUMBER, workspaceHistory.getDescriptors().length);
 	}
 
+	@Test
 	public void testPopDescriptor0() throws Exception {
 		final RefactoringHistoryService service= RefactoringHistoryService.getInstance();
 		RefactoringHistory previousWorkspaceHistory= service.getWorkspaceHistory(null);
@@ -347,6 +357,7 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		}
 	}
 
+	@Test
 	public void testPopDescriptor1() throws Exception {
 		final RefactoringHistoryService service= RefactoringHistoryService.getInstance();
 		RefactoringHistory previousWorkspaceHistory= service.getWorkspaceHistory(null);
@@ -420,6 +431,7 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		}
 	}
 
+	@Test
 	public void testPushDescriptor0() throws Exception {
 		final RefactoringHistoryService service= RefactoringHistoryService.getInstance();
 		RefactoringHistory previousWorkspaceHistory= service.getWorkspaceHistory(null);
@@ -450,6 +462,7 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		}
 	}
 
+	@Test
 	public void testPushDescriptor1() throws Exception {
 		final RefactoringHistoryService service= RefactoringHistoryService.getInstance();
 		RefactoringHistory previousWorkspaceHistory= service.getWorkspaceHistory(null);
@@ -480,6 +493,7 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		}
 	}
 
+	@Test
 	public void testPushDescriptor2() throws Exception {
 		setUpWorkspaceRefactorings();
 		final RefactoringHistoryService service= RefactoringHistoryService.getInstance();
@@ -511,34 +525,39 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		}
 	}
 
+	@Test
 	public void testReadProjectHistory0() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", RefactoringHistoryServiceTests.TOTAL_PROJECT_NUMBER, proxies.length);
 	}
 
+	@Test
 	public void testReadProjectHistory1() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), 0, Long.MAX_VALUE, RefactoringDescriptor.NONE, null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", RefactoringHistoryServiceTests.TOTAL_PROJECT_NUMBER, proxies.length);
 	}
 
+	@Test
 	public void testReadProjectHistory2() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), 0, Long.MAX_VALUE, RefactoringDescriptor.BREAKING_CHANGE, null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", BREAKING_NUMBER, proxies.length);
 	}
 
+	@Test
 	public void testReadProjectHistory3() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), 0, Long.MAX_VALUE, RefactoringDescriptor.STRUCTURAL_CHANGE, null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", STRUCTURAL_NUMBER, proxies.length);
 	}
 
+	@Test
 	public void testReadProjectHistory4() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), 0, Long.MAX_VALUE, RefactoringDescriptor.MULTI_CHANGE, null);
 		assertTrue("Refactoring history should  be empty", history.isEmpty());
@@ -546,13 +565,15 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		assertEquals("Refactoring history has wrong size", 0, proxies.length);
 	}
 
+	@Test
 	public void testReadProjectHistory5() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), 0, Long.MAX_VALUE, CUSTOM_FLAG, null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", CUSTOM_NUMBER, proxies.length);
 	}
 
+	@Test
 	public void testReadProjectHistory6() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), 0, STAMP_FACTOR, CUSTOM_FLAG, null);
 		assertTrue("Refactoring history should  be empty", history.isEmpty());
@@ -560,50 +581,57 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		assertEquals("Refactoring history has wrong size", 0, proxies.length);
 	}
 
+	@Test
 	public void testReadRefactoringHistory0() throws Exception {
 		setUpWorkspaceRefactorings();
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getWorkspaceHistory(null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", RefactoringHistoryServiceTests.TOTALZ_HISTORY_NUMBER, proxies.length);
 	}
 
+	@Test
 	public void testReadRefactoringHistory1() throws Exception {
 		setUpWorkspaceRefactorings();
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getWorkspaceHistory(0, Long.MAX_VALUE, null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", RefactoringHistoryServiceTests.TOTALZ_HISTORY_NUMBER, proxies.length);
 	}
 
+	@Test
 	public void testReadWorkspaceHistory0() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getWorkspaceHistory(0, STAMP_FACTOR, null);
-		assertTrue("Refactoring history should  be empty", !history.isEmpty());
+		assertFalse("Refactoring history should  be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", 1, proxies.length);
 	}
 
+	@Test
 	public void testReadWorkspaceHistory1() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getWorkspaceHistory(0, Long.MAX_VALUE, null);
-		assertTrue("Refactoring history should  be empty", !history.isEmpty());
+		assertFalse("Refactoring history should  be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", TOTAL_PROJECT_NUMBER, proxies.length);
 	}
 
+	@Test
 	public void testReadWorkspaceHistory2() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getWorkspaceHistory(STAMP_FACTOR, STAMP_FACTOR * 5, null);
-		assertTrue("Refactoring history should  be empty", !history.isEmpty());
+		assertFalse("Refactoring history should  be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", 5, proxies.length);
 	}
 
+	@Test
 	public void testReadWorkspaceHistory3() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getWorkspaceHistory(STAMP_FACTOR * 3, STAMP_FACTOR * 5, null);
-		assertTrue("Refactoring history should  be empty", !history.isEmpty());
+		assertFalse("Refactoring history should  be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", 3, proxies.length);
 	}
 
+	@Test
 	public void testSharing0() throws Exception {
 		final IProject project= fProject.getProject();
 		final RefactoringHistoryService service= RefactoringHistoryService.getInstance();
@@ -618,6 +646,7 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		assertFalse("Refactoring history folder should not exist.", folder.exists());
 	}
 
+	@Test
 	public void testSharing1() throws Exception {
 		final IProject project= fProject.getProject();
 		final RefactoringHistoryService service= RefactoringHistoryService.getInstance();
@@ -638,65 +667,73 @@ public class RefactoringHistoryServiceTests extends TestCase {
 		assertTrue("Refactoring history folder should exist.", folder.exists());
 	}
 
+	@Test
 	public void testSortOrder0() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", RefactoringHistoryServiceTests.TOTAL_PROJECT_NUMBER, proxies.length);
 		assertDescendingSortOrder(proxies);
 	}
 
+	@Test
 	public void testSortOrder1() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), STAMP_FACTOR, STAMP_FACTOR * 5, RefactoringDescriptor.NONE, null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", 5, proxies.length);
 		assertDescendingSortOrder(proxies);
 	}
 
+	@Test
 	public void testSortOrder2() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), STAMP_FACTOR * 3, STAMP_FACTOR * 5, RefactoringDescriptor.NONE, null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", 3, proxies.length);
 		assertDescendingSortOrder(proxies);
 	}
 
+	@Test
 	public void testSortOrder3() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), STAMP_FACTOR * (NONE_NUMBER + 1), STAMP_FACTOR * (NONE_NUMBER + 4), RefactoringDescriptor.BREAKING_CHANGE, null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", 4, proxies.length);
 		assertDescendingSortOrder(proxies);
 	}
 
+	@Test
 	public void testSortOrder4() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), STAMP_FACTOR * (NONE_NUMBER + 1), STAMP_FACTOR * (NONE_NUMBER + 18), RefactoringDescriptor.NONE, null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", 18, proxies.length);
 		assertDescendingSortOrder(proxies);
 	}
 
+	@Test
 	public void testSortOrder5() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getProjectHistory(fProject.getProject(), 0, Long.MAX_VALUE, CUSTOM_FLAG, null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", CUSTOM_NUMBER, proxies.length);
 		assertDescendingSortOrder(proxies);
 	}
 
+	@Test
 	public void testSortOrder6() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getWorkspaceHistory(0, Long.MAX_VALUE, null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", TOTAL_PROJECT_NUMBER, proxies.length);
 		assertDescendingSortOrder(proxies);
 	}
 
+	@Test
 	public void testSortOrder7() throws Exception {
 		RefactoringHistory history= RefactoringHistoryService.getInstance().getWorkspaceHistory(STAMP_FACTOR * 3, STAMP_FACTOR * 5, null);
-		assertTrue("Refactoring history must not be empty", !history.isEmpty());
+		assertFalse("Refactoring history must not be empty", history.isEmpty());
 		RefactoringDescriptorProxy[] proxies= history.getDescriptors();
 		assertEquals("Refactoring history has wrong size", 3, proxies.length);
 		assertDescendingSortOrder(proxies);

@@ -136,7 +136,7 @@ public abstract class AbstractJspParser {
 
 		boolean hasValue= false;
 		StringBuilder name= new StringBuilder();
-		StringBuffer value= new StringBuffer();
+		StringBuilder value= new StringBuilder();
 		String startTag= ""; //$NON-NLS-1$
 		int i= 0;
 		int ix= 0;
@@ -176,7 +176,7 @@ public abstract class AbstractJspParser {
 					startValue= i;
 
 					// Special handling for this taglib tag
-					if (startTag.equals("c:out"))  { //$NON-NLS-1$
+					if ("c:out".equals(startTag))  { //$NON-NLS-1$
 						value= value.append(s.substring(startValue, Math.max(startValue, s.length() - 2)));
 						name.setLength(0);
 						tagAttribute(name.toString(), value.toString(), startName+pos, startValue+pos);

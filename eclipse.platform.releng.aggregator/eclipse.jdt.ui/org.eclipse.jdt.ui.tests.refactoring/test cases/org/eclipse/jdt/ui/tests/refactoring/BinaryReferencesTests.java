@@ -16,6 +16,7 @@ package org.eclipse.jdt.ui.tests.refactoring;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,6 +48,7 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -58,7 +60,6 @@ import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
 import org.eclipse.jdt.core.search.SearchMatch;
 
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.ParameterInfo;
 import org.eclipse.jdt.internal.corext.refactoring.base.ReferencesInBinaryContext;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineMethodRefactoring;
@@ -267,8 +268,7 @@ public class BinaryReferencesTests {
 
 	@Test
 	public void testRenameField04() throws Exception {
-		if (BUG_226660) // https://bugs.eclipse.org/bugs/show_bug.cgi?id=226660
-			return;
+		assumeFalse(BUG_226660); // https://bugs.eclipse.org/bugs/show_bug.cgi?id=226660
 		List<SearchMatch> matches= doRenameField("source.Color", "GREEN");
 		assertContainsMatches(matches, new String[] {
 				"=BinaryReference/binary<ref(ReferenceClass.class[ReferenceClass~main~\\[Ljava.lang.String;"
@@ -384,7 +384,7 @@ public class BinaryReferencesTests {
 	private List<SearchMatch> doInlineMethod(String typeName, String methodName) throws JavaModelException, Exception, CoreException {
 		IMethod method= findMethod(findType(typeName), methodName);
 		ICompilationUnit cu= method.getCompilationUnit();
-		CompilationUnit node= new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL).parse(cu, true);
+		CompilationUnit node= new RefactoringASTParser(AST.getJLSLatest()).parse(cu, true);
 		ISourceRange nameRange= method.getNameRange();
 		Refactoring refactoring= InlineMethodRefactoring.create(cu, node, nameRange.getOffset(), nameRange.getLength());
 		return doCheckConditions(refactoring);
@@ -404,7 +404,7 @@ public class BinaryReferencesTests {
 		IMethod baseMethod= findMethod(findType("source.BaseClass"), "baseMethod");
 		ICompilationUnit cu= baseMethod.getCompilationUnit();
 
-		CompilationUnit node= new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL).parse(cu, true);
+		CompilationUnit node= new RefactoringASTParser(AST.getJLSLatest()).parse(cu, true);
 		MethodDeclaration baseDecl= ASTNodeSearchUtil.getMethodDeclarationNode(baseMethod, node);
 		ExpressionStatement methodStmt= (ExpressionStatement) baseDecl.getBody().statements().get(0);
 

@@ -164,7 +164,7 @@ public class TestRunHandler extends DefaultHandler {
 				String name= attributes.getValue(IXMLTags.ATTR_NAME);
 				String classname= attributes.getValue(IXMLTags.ATTR_CLASSNAME);
 				String testName= name + '(' + classname + ')';
-				boolean isDynamicTest= Boolean.valueOf(attributes.getValue(IXMLTags.ATTR_DYNAMIC_TEST)).booleanValue();
+				boolean isDynamicTest= Boolean.parseBoolean(attributes.getValue(IXMLTags.ATTR_DYNAMIC_TEST));
 				String displayName= attributes.getValue(IXMLTags.ATTR_DISPLAY_NAME);
 				String paramTypesStr= attributes.getValue(IXMLTags.ATTR_PARAMETER_TYPES);
 				String[] paramTypes;
@@ -177,8 +177,8 @@ public class TestRunHandler extends DefaultHandler {
 				if (uniqueId != null && uniqueId.trim().isEmpty()) {
 					uniqueId= null;
 				}	fTestCase= (TestCaseElement) fTestRunSession.createTestElement(fTestSuite, getNextId(), testName, false, 0, isDynamicTest, displayName, paramTypes, uniqueId);
-				fNotRun.push(Boolean.valueOf(attributes.getValue(IXMLTags.ATTR_INCOMPLETE)));
-				fTestCase.setIgnored(Boolean.valueOf(attributes.getValue(IXMLTags.ATTR_IGNORED)).booleanValue());
+				fNotRun.push(Boolean.parseBoolean(attributes.getValue(IXMLTags.ATTR_INCOMPLETE)));
+				fTestCase.setIgnored(Boolean.parseBoolean(attributes.getValue(IXMLTags.ATTR_IGNORED)));
 				readTime(fTestCase, attributes);
 				break;
 			}
@@ -332,11 +332,11 @@ public class TestRunHandler extends DefaultHandler {
 
 	private void handleUnknownNode(String qName) throws SAXException {
 		//TODO: just log if debug option is enabled?
-		String msg= "unknown node '" + qName + "'"; //$NON-NLS-1$//$NON-NLS-2$
+		StringBuilder msg= new StringBuilder("unknown node '").append(qName).append("'"); //$NON-NLS-1$//$NON-NLS-2$
 		if (fLocator != null) {
-			msg += " at line " + fLocator.getLineNumber() + ", column " + fLocator.getColumnNumber();  //$NON-NLS-1$//$NON-NLS-2$
+			msg.append(" at line ").append(fLocator.getLineNumber()).append(", column ").append(fLocator.getColumnNumber());  //$NON-NLS-1$//$NON-NLS-2$
 		}
-		throw new SAXException(msg);
+		throw new SAXException(msg.toString());
 	}
 
 	@Override

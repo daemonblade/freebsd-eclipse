@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Rule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.eclipse.core.runtime.CoreException;
@@ -43,13 +43,13 @@ import org.eclipse.jdt.internal.corext.refactoring.structure.PushDownRefactoring
 import org.eclipse.jdt.internal.corext.refactoring.structure.PushDownRefactoringProcessor.MemberActionInfo;
 
 import org.eclipse.jdt.ui.tests.refactoring.rules.Java1d5Setup;
-import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 
 public class PushDownTests extends GenericRefactoringTest {
 	private static final String REFACTORING_PATH= "PushDown/";
 
-	@Rule
-	public RefactoringTestSetup fts= new Java1d5Setup();
+	public PushDownTests() {
+		rts= new Java1d5Setup();
+	}
 
 	@Override
 	protected String getRefactoringPath() {
@@ -841,25 +841,25 @@ public class PushDownTests extends GenericRefactoringTest {
 				new String[]{"B", "C"}, new String[]{"p", "p"});
 	}
 
+	@Ignore("disabled due to missing support for statically imported methods")
 	@Test
 	public void test34() throws Exception{
-		printTestDisabledMessage("disabled due to missing support for statically imported methods");
 
-//		String[] selectedMethodNames= {"f", "m"};
-//		String[][] selectedMethodSignatures= {new String[0], new String[0]};
-//		String[] selectedFieldNames= {"i"};
-//		String[] namesOfMethodsToPushDown= {"f", "m"};
-//		String[][] signaturesOfMethodsToPushDown= {new String[0], new String[0]};
-//		String[] namesOfFieldsToPushDown= {"i"};
-//		String[] namesOfMethodsToDeclareAbstract= {};
-//		String[][] signaturesOfMethodsToDeclareAbstract= {};
-//
-//		helper(selectedMethodNames, selectedMethodSignatures,
-//			   selectedFieldNames,
-//			   namesOfMethodsToPushDown, signaturesOfMethodsToPushDown,
-//			   namesOfFieldsToPushDown,
-//			   namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract,
-//			   new String[]{"B", "C"}, new String[]{"p", "p"});
+		String[] selectedMethodNames= {"f", "m"};
+		String[][] selectedMethodSignatures= {new String[0], new String[0]};
+		String[] selectedFieldNames= {"i"};
+		String[] namesOfMethodsToPushDown= {"f", "m"};
+		String[][] signaturesOfMethodsToPushDown= {new String[0], new String[0]};
+		String[] namesOfFieldsToPushDown= {"i"};
+		String[] namesOfMethodsToDeclareAbstract= {};
+		String[][] signaturesOfMethodsToDeclareAbstract= {};
+
+		helper(selectedMethodNames, selectedMethodSignatures,
+			   selectedFieldNames,
+			   namesOfMethodsToPushDown, signaturesOfMethodsToPushDown,
+			   namesOfFieldsToPushDown,
+			   namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract,
+			   new String[]{"B", "C"}, new String[]{"p", "p"});
 	}
 
 	@Test
@@ -882,6 +882,42 @@ public class PushDownTests extends GenericRefactoringTest {
 
 	@Test
 	public void test36() throws Exception {
+		String[] selectedMethodNames= { "m" };
+		String[][] selectedMethodSignatures= { new String[0] };
+		String[] selectedFieldNames= {};
+		String[] namesOfMethodsToPushDown= selectedMethodNames;
+		String[][] signaturesOfMethodsToPushDown= selectedMethodSignatures;
+		String[] namesOfFieldsToPushDown= {};
+		String[] namesOfMethodsToDeclareAbstract= {};
+		String[][] signaturesOfMethodsToDeclareAbstract= {};
+
+		helper(selectedMethodNames, selectedMethodSignatures,
+				selectedFieldNames,
+				namesOfMethodsToPushDown, signaturesOfMethodsToPushDown,
+				namesOfFieldsToPushDown,
+				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
+	}
+
+	@Test
+	public void test37() throws Exception {
+		String[] selectedMethodNames= { "m" };
+		String[][] selectedMethodSignatures= { new String[0] };
+		String[] selectedFieldNames= {};
+		String[] namesOfMethodsToPushDown= selectedMethodNames;
+		String[][] signaturesOfMethodsToPushDown= selectedMethodSignatures;
+		String[] namesOfFieldsToPushDown= {};
+		String[] namesOfMethodsToDeclareAbstract= {};
+		String[][] signaturesOfMethodsToDeclareAbstract= {};
+
+		helper(selectedMethodNames, selectedMethodSignatures,
+				selectedFieldNames,
+				namesOfMethodsToPushDown, signaturesOfMethodsToPushDown,
+				namesOfFieldsToPushDown,
+				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract, null, null);
+	}
+
+	@Test
+	public void test38() throws Exception {
 		String[] selectedMethodNames= { "m" };
 		String[][] selectedMethodSignatures= { new String[0] };
 		String[] selectedFieldNames= {};
@@ -1112,6 +1148,63 @@ public class PushDownTests extends GenericRefactoringTest {
 		String[] selectedMethodNames= {};
 		String[][] selectedMethodSignatures= {};
 		String[] selectedFieldNames= {"bar"};
+		String[] namesOfMethodsToPushDown= {};
+		String[][] signaturesOfMethodsToPushDown= {};
+		String[] namesOfFieldsToPushDown= selectedFieldNames;
+		String[] namesOfMethodsToDeclareAbstract= {};
+		String[][] signaturesOfMethodsToDeclareAbstract= {};
+
+		failInputHelper(selectedMethodNames, selectedMethodSignatures,
+				selectedFieldNames,
+				namesOfMethodsToPushDown, signaturesOfMethodsToPushDown,
+				namesOfFieldsToPushDown,
+				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract,
+				RefactoringStatus.ERROR);
+	}
+
+	@Test
+	public void testFail13() throws Exception {
+		String[] selectedMethodNames= {"m"};
+		String[][] selectedMethodSignatures= { new String[0]};
+		String[] selectedFieldNames= {};
+		String[] namesOfMethodsToPushDown= {};
+		String[][] signaturesOfMethodsToPushDown= {};
+		String[] namesOfFieldsToPushDown= selectedFieldNames;
+		String[] namesOfMethodsToDeclareAbstract= {};
+		String[][] signaturesOfMethodsToDeclareAbstract= {};
+
+		failInputHelper(selectedMethodNames, selectedMethodSignatures,
+				selectedFieldNames,
+				namesOfMethodsToPushDown, signaturesOfMethodsToPushDown,
+				namesOfFieldsToPushDown,
+				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract,
+				RefactoringStatus.ERROR);
+	}
+
+	@Test
+	public void testFail14() throws Exception {
+		String[] selectedMethodNames= {"m"};
+		String[][] selectedMethodSignatures= { new String[0]};
+		String[] selectedFieldNames= {};
+		String[] namesOfMethodsToPushDown= {};
+		String[][] signaturesOfMethodsToPushDown= {};
+		String[] namesOfFieldsToPushDown= selectedFieldNames;
+		String[] namesOfMethodsToDeclareAbstract= {};
+		String[][] signaturesOfMethodsToDeclareAbstract= {};
+
+		failInputHelper(selectedMethodNames, selectedMethodSignatures,
+				selectedFieldNames,
+				namesOfMethodsToPushDown, signaturesOfMethodsToPushDown,
+				namesOfFieldsToPushDown,
+				namesOfMethodsToDeclareAbstract, signaturesOfMethodsToDeclareAbstract,
+				RefactoringStatus.ERROR);
+	}
+
+	@Test
+	public void testFail15() throws Exception {
+		String[] selectedMethodNames= {"m"};
+		String[][] selectedMethodSignatures= { new String[0]};
+		String[] selectedFieldNames= {};
 		String[] namesOfMethodsToPushDown= {};
 		String[][] signaturesOfMethodsToPushDown= {};
 		String[] namesOfFieldsToPushDown= selectedFieldNames;

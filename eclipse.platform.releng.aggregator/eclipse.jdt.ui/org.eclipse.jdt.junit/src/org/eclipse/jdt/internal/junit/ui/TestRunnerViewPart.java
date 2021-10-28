@@ -740,6 +740,7 @@ public class TestRunnerViewPart extends ViewPart {
 
 			// While tests are running, always use the execution order
 			getDisplay().asyncExec(new Runnable() {
+				@Override
 				public void run() {
 					fTestViewer.setSortingCriterion(SortingCriterion.SORT_BY_EXECUTION_ORDER);
 				}
@@ -772,10 +773,11 @@ public class TestRunnerViewPart extends ViewPart {
 				warnOfContentChange();
 			});
 			stopUpdateJobs();
-			showMessageIfNoTests();
+			logMessageIfNoTests();
 
 			// When test session ended, apply user sorting criterion
 			getDisplay().asyncExec(new Runnable() {
+				@Override
 				public void run() {
 					setSortingCriterion(fSortingCriterion);
 				}
@@ -1279,45 +1281,45 @@ public class TestRunnerViewPart extends ViewPart {
 //		}
 		Integer ratio= memento.getInteger(TAG_RATIO);
 		if (ratio != null)
-			fSashForm.setWeights(new int[] { ratio.intValue(), 1000 - ratio.intValue()} );
+			fSashForm.setWeights(new int[] { ratio, 1000 - ratio} );
 		Integer orientation= memento.getInteger(TAG_ORIENTATION);
 		if (orientation != null)
-			fOrientation= orientation.intValue();
+			fOrientation= orientation;
 		computeOrientation();
 		String scrollLock= memento.getString(TAG_SCROLL);
 		if (scrollLock != null) {
-			fScrollLockAction.setChecked(scrollLock.equals("true")); //$NON-NLS-1$
+			fScrollLockAction.setChecked("true".equals(scrollLock)); //$NON-NLS-1$
 			setAutoScroll(!fScrollLockAction.isChecked());
 		}
 
 		Integer layout= memento.getInteger(TAG_LAYOUT);
 		int layoutValue= LAYOUT_HIERARCHICAL;
 		if (layout != null)
-			layoutValue= layout.intValue();
+			layoutValue= layout;
 
 		String failuresOnly= memento.getString(TAG_FAILURES_ONLY);
 		boolean showFailuresOnly= false;
 		if (failuresOnly != null)
-			showFailuresOnly= failuresOnly.equals("true"); //$NON-NLS-1$
+			showFailuresOnly= "true".equals(failuresOnly); //$NON-NLS-1$
 
 		String ignoredOnly= memento.getString(TAG_IGNORED_ONLY);
 		boolean showIgnoredOnly= false;
 		if (ignoredOnly != null)
-			showIgnoredOnly= ignoredOnly.equals("true"); //$NON-NLS-1$
+			showIgnoredOnly= "true".equals(ignoredOnly); //$NON-NLS-1$
 
 		String time= memento.getString(TAG_SHOW_TIME);
 		boolean showTime= true;
 		if (time != null)
-			showTime= time.equals("true"); //$NON-NLS-1$
+			showTime= "true".equals(time); //$NON-NLS-1$
 
 		SortingCriterion sortingCriterion= SortingCriterion.SORT_BY_EXECUTION_ORDER;
 		Integer tagSortingCriterion= memento.getInteger(TAG_SORTING_CRITERION);
 		if (tagSortingCriterion != null) {
-			sortingCriterion= SortingCriterion.values() [tagSortingCriterion.intValue()];
+			sortingCriterion= SortingCriterion.values() [tagSortingCriterion];
 		}
 		setSortingCriterion(sortingCriterion);
-		for (int i= 0; i < fToggleSortingActions.length; i++) {
-			fToggleSortingActions[i].setChecked(sortingCriterion == fToggleSortingActions[i].getActionSortingCriterion());
+		for (ToggleSortingAction fToggleSortingAction : fToggleSortingActions) {
+			fToggleSortingAction.setChecked(sortingCriterion == fToggleSortingAction.getActionSortingCriterion());
 		}
 
 		setFilterAndLayout(showFailuresOnly, showIgnoredOnly, layoutValue);
@@ -1531,15 +1533,13 @@ public class TestRunnerViewPart extends ViewPart {
 			updateRerunFailedFirstAction();
 		});
 		stopUpdateJobs();
-		showMessageIfNoTests();
+		logMessageIfNoTests();
 	}
 
-	private void showMessageIfNoTests() {
+	private void logMessageIfNoTests() {
 		if (fTestRunSession != null && TestKindRegistry.JUNIT5_TEST_KIND_ID.equals(fTestRunSession.getTestRunnerKind().getId()) && fTestRunSession.getTotalCount() == 0) {
-			Display.getDefault().asyncExec(() -> {
-				String msg= Messages.format(JUnitMessages.TestRunnerViewPart_error_notests_kind, fTestRunSession.getTestRunnerKind().getDisplayName());
-				MessageDialog.openInformation(JUnitPlugin.getActiveWorkbenchShell(), JUnitMessages.TestRunnerViewPart__error_cannotrun, msg);
-			});
+			String msg= Messages.format(JUnitMessages.TestRunnerViewPart_error_notests_kind, fTestRunSession.getTestRunnerKind().getDisplayName());
+			Platform.getLog(getClass()).error(msg);
 		}
 	}
 
@@ -2104,8 +2104,8 @@ action enablement
 						new ToggleSortingAction(SortingCriterion.SORT_BY_EXECUTION_TIME),
 						new ToggleSortingAction(SortingCriterion.SORT_BY_NAME)};
 		fSortByMenu= new MenuManager(JUnitMessages.TestRunnerViewPart_sort_by_menu);
-		for (int i= 0; i < fToggleSortingActions.length; ++i) {
-			fSortByMenu.add(fToggleSortingActions[i]);
+		for (ToggleSortingAction fToggleSortingAction : fToggleSortingActions) {
+			fSortByMenu.add(fToggleSortingAction);
 		}
 		viewMenu.add(fSortByMenu);
 		viewMenu.add(new Separator());

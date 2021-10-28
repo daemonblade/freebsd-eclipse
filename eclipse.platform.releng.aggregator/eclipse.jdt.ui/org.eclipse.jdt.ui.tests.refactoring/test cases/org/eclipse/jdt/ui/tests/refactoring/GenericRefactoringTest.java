@@ -24,8 +24,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -80,8 +83,20 @@ import org.eclipse.jdt.ui.tests.refactoring.infra.RefactoringTestPlugin;
 import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 
 public abstract class GenericRefactoringTest {
+	protected static final Charset ENCODING= StandardCharsets.UTF_8;
+
+	@Rule
+	public RefactoringTestSetup rts;
+
 	@Rule
 	public TestName tn= new TestName();
+
+	public GenericRefactoringTest() {
+	}
+
+	public GenericRefactoringTest(RefactoringTestSetup rts) {
+		this.rts=rts;
+	}
 
 	/**
 	 * If <code>true</code> a descriptor is created from the change.
@@ -104,13 +119,13 @@ public abstract class GenericRefactoringTest {
 	protected static final String TEST_OUTPUT_INFIX= "/out/";
 	protected static final String CONTAINER= "src";
 
-	protected static final List<String> PROJECT_RESOURCE_CHILDREN= Arrays.asList(".project", ".classpath", ".settings");
+	protected static final List<String> PROJECT_RESOURCE_CHILDREN= Collections.unmodifiableList(Arrays.asList(".project", ".classpath", ".settings"));
 
 	@Before
 	public void genericbefore() throws Exception {
-		fRoot= RefactoringTestSetup.getDefaultSourceFolder();
-		fPackageP= RefactoringTestSetup.getPackageP();
-		fPackageQ= RefactoringTestSetup.getPackageQ();
+		fRoot= rts.getDefaultSourceFolder();
+		fPackageP= rts.getPackageP();
+		fPackageQ= rts.getPackageQ();
 		fIsPreDeltaTest= false;
 
 		if (fIsVerbose){
@@ -181,7 +196,7 @@ public abstract class GenericRefactoringTest {
 		IJavaProject javaProject= getRoot().getJavaProject();
 		if (javaProject.exists()) {
 			IClasspathEntry srcEntry= getRoot().getRawClasspathEntry();
-			IClasspathEntry jreEntry= RefactoringTestSetup.getJRELibrary().getRawClasspathEntry();
+			IClasspathEntry jreEntry= rts.getJRELibrary().getRawClasspathEntry();
 			ArrayList<IClasspathEntry> newCPEs= new ArrayList<>();
 			boolean cpChanged= false;
 			for (IClasspathEntry cpe : javaProject.getRawClasspath()) {
@@ -462,7 +477,7 @@ public abstract class GenericRefactoringTest {
 
 	//-----------------------
 	public static InputStream getStream(String content){
-		return new ByteArrayInputStream(content.getBytes());
+		return new ByteArrayInputStream(content.getBytes(ENCODING));
 	}
 
 	public static IPackageFragmentRoot getSourceFolder(IJavaProject javaProject, String name) throws JavaModelException{
@@ -490,15 +505,11 @@ public abstract class GenericRefactoringTest {
 	}
 
 	public static String getContents(InputStream in) throws IOException {
-		BufferedReader br= new BufferedReader(new InputStreamReader(in));
-
 		StringBuilder sb= new StringBuilder(300);
-		try {
+		try (BufferedReader br= new BufferedReader(new InputStreamReader(in, ENCODING))){
 			int read= 0;
 			while ((read= br.read()) != -1)
 				sb.append((char) read);
-		} finally {
-			br.close();
 		}
 		return sb.toString();
 	}

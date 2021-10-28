@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -141,6 +141,7 @@ public class RecentSettingsStore {
 		ProjectData data= fPerProjectSettings.get(project);
 		if (data == null) {
 			data= new ProjectData();
+			fPerProjectSettings.put(project, data);
 		}
 		data.setDestination(destination);
 		data.setAntpath(antpath);
@@ -206,7 +207,7 @@ public class RecentSettingsStore {
 		if (project != null) {
 			URL url= JavaUI.getProjectJavadocLocation(project);
 			//uses default if source is has http protocol
-			if (url == null || !url.getProtocol().equals("file")) { //$NON-NLS-1$
+			if (url == null || !"file".equals(url.getProtocol())) { //$NON-NLS-1$
 				// Since Javadoc.exe is a local tool its output is local.
 				// So if the project isn't local then the default location
 				// can't be local to a project. So use #getLocation() to

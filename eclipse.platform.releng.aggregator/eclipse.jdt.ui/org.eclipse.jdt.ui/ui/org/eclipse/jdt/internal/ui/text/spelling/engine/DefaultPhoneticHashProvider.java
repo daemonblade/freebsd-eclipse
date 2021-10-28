@@ -144,7 +144,7 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 	 * @return <code>true</code> iff the string contains one of the
 	 *               candidates, <code>false</code> otherwise.
 	 */
-	protected static final boolean hasOneOf(final String[] candidates, final char[] token, final int offset, final int length) {
+	protected static boolean hasOneOf(final String[] candidates, final char[] token, final int offset, final int length) {
 
 		if (offset < 0 || offset >= token.length || candidates.length == 0)
 			return false;
@@ -164,7 +164,7 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 	 * @return <code>true</code> iff the string contains one of the
 	 *               candidates, <code>false</code> otherwise.
 	 */
-	protected static final boolean hasOneOf(final String[] candidates, final String token) {
+	protected static boolean hasOneOf(final String[] candidates, final String token) {
 		return Arrays.asList(candidates).contains(token);
 	}
 
@@ -181,7 +181,7 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 	 * @return <code>true</code> iff the token contains a vowel, <code>false</code>
 	 *               otherwise.
 	 */
-	protected static final boolean hasVowel(final char[] token, final int offset, final int length) {
+	protected static boolean hasVowel(final char[] token, final int offset, final int length) {
 
 		if (offset >= 0 && offset < length) {
 
@@ -196,7 +196,7 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 	}
 
 	@Override
-	public final String getHash(final String word) {
+	public String getHash(final String word) {
 
 		final String input= word.toUpperCase() + "     "; //$NON-NLS-1$
 		final char[] hashable= input.toCharArray();
@@ -441,18 +441,11 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 					}
 					if ((offset == 0) && !hasOneOf(meta53, hashable, offset, 4)) {
 						buffer.append('J');
-					} else {
-						if (hasVowel(hashable, offset - 1, hashable.length) && !has95 && ((hashable[offset + 1] == 'A') || hashable[offset + 1] == 'O')) {
-							buffer.append('J');
-						} else {
-							if (offset == (hashable.length - 1)) {
-								buffer.append('J');
-							} else {
-								if (!hasOneOf(meta54, hashable, offset + 1, 1) && !hasOneOf(meta55, hashable, offset - 1, 1)) {
-									buffer.append('J');
-								}
-							}
-						}
+					} else if (hasVowel(hashable, offset - 1, hashable.length) && !has95 && ((hashable[offset + 1] == 'A') || hashable[offset + 1] == 'O')) {
+						buffer.append('J');
+					} else if ((offset == hashable.length - 1)
+							|| (!hasOneOf(meta54, hashable, offset + 1, 1) && !hasOneOf(meta55, hashable, offset - 1, 1))) {
+						buffer.append('J');
 					}
 					if (hashable[offset + 1] == 'J')
 						offset += 2;
@@ -671,7 +664,7 @@ public final class DefaultPhoneticHashProvider implements IPhoneticHashProvider 
 	}
 
 	@Override
-	public final char[] getMutators() {
+	public char[] getMutators() {
 		return MUTATOR_CHARACTERS;
 	}
 }

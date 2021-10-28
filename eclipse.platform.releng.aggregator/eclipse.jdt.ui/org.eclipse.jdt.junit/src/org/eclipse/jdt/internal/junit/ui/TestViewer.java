@@ -521,6 +521,7 @@ public class TestViewer {
 				break;
 			case SORT_BY_EXECUTION_TIME:
 				comparator= new Comparator<ITestElement>() {
+					@Override
 					public int compare(ITestElement o1, ITestElement o2) {
 						return compareElapsedTime(o1, o2);
 					}
@@ -528,6 +529,7 @@ public class TestViewer {
 				break;
 			case SORT_BY_NAME:
 				comparator= new Comparator<ITestElement>() {
+					@Override
 					public int compare(ITestElement o1, ITestElement o2) {
 						return compareName(o1, o2);
 					}
@@ -696,8 +698,7 @@ public class TestViewer {
 					for (Object element : toUpdate)
 						updateElementInTree((TestElement) element);
 				else {
-					HashSet<Object> toUpdateWithParents= new HashSet<>();
-					toUpdateWithParents.addAll(Arrays.asList(toUpdate));
+					HashSet<Object> toUpdateWithParents= new HashSet<>(Arrays.asList(toUpdate));
 					for (Object element : toUpdate) {
 						TestElement parent= ((TestElement) element).getParent();
 						while (parent != null) {

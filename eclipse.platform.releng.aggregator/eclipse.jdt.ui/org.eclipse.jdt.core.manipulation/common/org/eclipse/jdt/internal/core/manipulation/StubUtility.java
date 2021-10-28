@@ -69,7 +69,6 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.NamingConventions;
 import org.eclipse.jdt.core.Signature;
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
@@ -107,6 +106,8 @@ import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
+
+import org.eclipse.jdt.internal.ui.util.ASTHelper;
 
 /**
  * Implementations for {@link CodeGeneration} APIs, and other helper methods
@@ -493,7 +494,7 @@ public class StubUtility {
 				IRegion lineInfo= doc.getLineInformation(line);
 				int offset= lineInfo.getOffset();
 				String str= doc.get(offset, lineInfo.getLength());
-				if (Strings.containsOnlyWhitespaces(str) && nLines > line + 1 && removedLines.add(Integer.valueOf(line))) {
+				if (Strings.containsOnlyWhitespaces(str) && nLines > line + 1 && removedLines.add(line)) {
 					int nextStart= doc.getLineOffset(line + 1);
 					edit.addChild(new DeleteEdit(offset, nextStart - offset));
 				}
@@ -765,7 +766,7 @@ public class StubUtility {
 	@Deprecated
 	private static String[] getExceptionNames(MethodDeclaration decl) {
 		String[] exceptionNames;
-		if (decl.getAST().apiLevel() >= AST.JLS8) {
+		if (decl.getAST().apiLevel() >= ASTHelper.JLS8) {
 			List<Type> exceptions= decl.thrownExceptionTypes();
 			exceptionNames= new String[exceptions.size()];
 			for (int i= 0; i < exceptionNames.length; i++) {
@@ -793,7 +794,7 @@ public class StubUtility {
 	@Deprecated
 	private static ASTNode getReturnType(MethodDeclaration decl) {
 		// used from API, can't eliminate
-		return decl.getAST().apiLevel() == AST.JLS2 ? decl.getReturnType() : decl.getReturnType2();
+		return decl.getAST().apiLevel() == ASTHelper.JLS2 ? decl.getReturnType() : decl.getReturnType2();
 	}
 
 
@@ -827,7 +828,7 @@ public class StubUtility {
 			}
 			buf.append("@param ").append(paramName); //$NON-NLS-1$
 		}
-		if (returnType != null && !returnType.equals("void")) { //$NON-NLS-1$
+		if (returnType != null && !"void".equals(returnType)) { //$NON-NLS-1$
 			if (buf.length() > 0) {
 				buf.append(lineDelimiter).append(lineStart);
 			}
@@ -1496,11 +1497,11 @@ public class StubUtility {
 	// -------------------- preference access -----------------------
 
 	public static boolean useThisForFieldAccess(IJavaProject project) {
-		return Boolean.valueOf(JavaManipulation.getPreference(CODEGEN_KEYWORD_THIS, project)).booleanValue();
+		return Boolean.parseBoolean(JavaManipulation.getPreference(CODEGEN_KEYWORD_THIS, project));
 	}
 
 	public static boolean useIsForBooleanGetters(IJavaProject project) {
-		return Boolean.valueOf(JavaManipulation.getPreference(CODEGEN_IS_FOR_GETTERS, project)).booleanValue();
+		return Boolean.parseBoolean(JavaManipulation.getPreference(CODEGEN_IS_FOR_GETTERS, project));
 	}
 
 	public static String getExceptionVariableName(IJavaProject project) {
@@ -1508,7 +1509,7 @@ public class StubUtility {
 	}
 
 	public static boolean doAddComments(IJavaProject project) {
-		return Boolean.valueOf(JavaManipulation.getPreference(CODEGEN_ADD_COMMENTS, project)).booleanValue();
+		return Boolean.parseBoolean(JavaManipulation.getPreference(CODEGEN_ADD_COMMENTS, project));
 	}
 
 	/**

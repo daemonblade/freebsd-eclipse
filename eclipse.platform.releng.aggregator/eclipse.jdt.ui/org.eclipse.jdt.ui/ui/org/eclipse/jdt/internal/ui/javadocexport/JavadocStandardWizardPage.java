@@ -14,6 +14,9 @@
 
 package org.eclipse.jdt.internal.ui.javadocexport;
 
+import static org.eclipse.jdt.internal.ui.javadocexport.JavadocStandardWizardPage.JavadocStandard.LINK_REFERENCES;
+import static org.eclipse.jdt.internal.ui.javadocexport.JavadocStandardWizardPage.JavadocStandard.STYLESHEETSTATUS;
+
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -74,8 +77,7 @@ import org.eclipse.jdt.internal.ui.wizards.dialogfields.ListDialogField;
 public class JavadocStandardWizardPage extends JavadocWizardPage {
 
 
-	private final int STYLESHEETSTATUS= 1;
-	private final int LINK_REFERENCES= 2;
+	enum JavadocStandard{ STYLESHEETSTATUS,LINK_REFERENCES}
 
 	private JavadocOptionsManager fStore;
 	private Composite fUpperComposite;
@@ -155,14 +157,14 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 		fBasicOptionsGroup.setLayoutData(createGridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL, 2, 0));
 		fBasicOptionsGroup.setText(JavadocExportMessages.JavadocStandardWizardPage_basicgroup_label);
 
-		new FlaggedButton(fBasicOptionsGroup, JavadocExportMessages.JavadocStandardWizardPage_usebutton_label, new GridData(GridData.FILL_HORIZONTAL), fStore.USE, true);
-		new FlaggedButton(fBasicOptionsGroup, JavadocExportMessages.JavadocStandardWizardPage_hierarchybutton_label, new GridData(GridData.FILL_HORIZONTAL), fStore.NOTREE, false);
-		new FlaggedButton(fBasicOptionsGroup, JavadocExportMessages.JavadocStandardWizardPage_navigartorbutton_label, new GridData(GridData.FILL_HORIZONTAL), fStore.NONAVBAR, false);
+		new FlaggedButton(fBasicOptionsGroup, JavadocExportMessages.JavadocStandardWizardPage_usebutton_label, new GridData(GridData.FILL_HORIZONTAL), JavadocOptionsManager.USE, true);
+		new FlaggedButton(fBasicOptionsGroup, JavadocExportMessages.JavadocStandardWizardPage_hierarchybutton_label, new GridData(GridData.FILL_HORIZONTAL), JavadocOptionsManager.NOTREE, false);
+		new FlaggedButton(fBasicOptionsGroup, JavadocExportMessages.JavadocStandardWizardPage_navigartorbutton_label, new GridData(GridData.FILL_HORIZONTAL), JavadocOptionsManager.NONAVBAR, false);
 
-		fIndexCheck= new FlaggedButton(fBasicOptionsGroup, JavadocExportMessages.JavadocStandardWizardPage_indexbutton_label, new GridData(GridData.FILL_HORIZONTAL), fStore.NOINDEX, false);
+		fIndexCheck= new FlaggedButton(fBasicOptionsGroup, JavadocExportMessages.JavadocStandardWizardPage_indexbutton_label, new GridData(GridData.FILL_HORIZONTAL), JavadocOptionsManager.NOINDEX, false);
 
 		fSeperatedIndexCheck= new FlaggedButton(fBasicOptionsGroup, JavadocExportMessages.JavadocStandardWizardPage_seperateindexbutton_label, createGridData(GridData.GRAB_HORIZONTAL, 1,
-				LayoutUtil.getIndent()), fStore.SPLITINDEX, true);
+				LayoutUtil.getIndent()), JavadocOptionsManager.SPLITINDEX, true);
 		fSeperatedIndexCheck.getButton().setEnabled(fIndexCheck.getButton().getSelection());
 
 		fIndexCheck.getButton().addSelectionListener(new ToggleSelectionAdapter(new Control[] { fSeperatedIndexCheck.getButton()}));
@@ -176,11 +178,11 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 		fTagsGroup.setLayoutData(createGridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL, 2, 0));
 		fTagsGroup.setText(JavadocExportMessages.JavadocStandardWizardPage_tagsgroup_label);
 
-		new FlaggedButton(fTagsGroup, JavadocExportMessages.JavadocStandardWizardPage_authorbutton_label, new GridData(GridData.FILL_HORIZONTAL), fStore.AUTHOR, true);
-		new FlaggedButton(fTagsGroup, JavadocExportMessages.JavadocStandardWizardPage_versionbutton_label, new GridData(GridData.FILL_HORIZONTAL), fStore.VERSION, true);
-		fDeprecatedCheck= new FlaggedButton(fTagsGroup, JavadocExportMessages.JavadocStandardWizardPage_deprecatedbutton_label, new GridData(GridData.FILL_HORIZONTAL), fStore.NODEPRECATED, false);
+		new FlaggedButton(fTagsGroup, JavadocExportMessages.JavadocStandardWizardPage_authorbutton_label, new GridData(GridData.FILL_HORIZONTAL), JavadocOptionsManager.AUTHOR, true);
+		new FlaggedButton(fTagsGroup, JavadocExportMessages.JavadocStandardWizardPage_versionbutton_label, new GridData(GridData.FILL_HORIZONTAL), JavadocOptionsManager.VERSION, true);
+		fDeprecatedCheck= new FlaggedButton(fTagsGroup, JavadocExportMessages.JavadocStandardWizardPage_deprecatedbutton_label, new GridData(GridData.FILL_HORIZONTAL), JavadocOptionsManager.NODEPRECATED, false);
 		fDeprecatedList= new FlaggedButton(fTagsGroup, JavadocExportMessages.JavadocStandardWizardPage_deprecatedlistbutton_label, createGridData(GridData.FILL_HORIZONTAL, 1,
-				LayoutUtil.getIndent()), fStore.NODEPRECATEDLIST, false);
+				LayoutUtil.getIndent()), JavadocOptionsManager.NODEPRECATEDLIST, false);
 		fDeprecatedList.getButton().setEnabled(fDeprecatedCheck.getButton().getSelection());
 
 		fDeprecatedCheck.getButton().addSelectionListener(new ToggleSelectionAdapter(new Control[] { fDeprecatedList.getButton()}));
@@ -261,8 +263,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 
 		String hrefs[]= fStore.getHRefs();
 		if (hrefs.length > 0) {
-			HashSet<String> set= new HashSet<>();
-			set.addAll(Arrays.asList(hrefs));
+			HashSet<String> set= new HashSet<>(Arrays.asList(hrefs));
 			for (JavadocLinkRef curr : referencesClasses) {
 				URL url= curr.getURL();
 				if (url != null && set.contains(url.toExternalForm())) {
@@ -316,7 +317,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 		}
 	}
 
-	final void doValidation(int VALIDATE) {
+	final void doValidation(JavadocStandard VALIDATE) {
 		switch (VALIDATE) {
 			case STYLESHEETSTATUS :
 				fStyleSheetStatus= new StatusInfo();
@@ -329,7 +330,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 						String ext= filename.substring(filename.lastIndexOf('.') + 1);
 						if (!file.isFile()) {
 							fStyleSheetStatus.setError(JavadocExportMessages.JavadocStandardWizardPage_stylesheetnopath_error);
-						} else if (!ext.equalsIgnoreCase("css")) { //$NON-NLS-1$
+						} else if (!"css".equalsIgnoreCase(ext)) { //$NON-NLS-1$
 							fStyleSheetStatus.setError(JavadocExportMessages.JavadocStandardWizardPage_stylesheetnotcss_error);
 						}
 					}

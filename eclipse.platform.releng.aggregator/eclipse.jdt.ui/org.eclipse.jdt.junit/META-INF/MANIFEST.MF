@@ -3,16 +3,16 @@ Automatic-Module-Name: org.eclipse.jdt.junit
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.eclipse.jdt.junit;singleton:=true
-Bundle-Version: 3.11.900.qualifier
+Bundle-Version: 3.13.0.qualifier
 Bundle-Activator: org.eclipse.jdt.internal.junit.ui.JUnitPlugin
 Bundle-ActivationPolicy: lazy
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
 Export-Package: org.eclipse.jdt.internal.junit.buildpath;x-internal:=true,
- org.eclipse.jdt.internal.junit.launcher;x-internal:=true,
+ org.eclipse.jdt.internal.junit.launcher;x-friends:="org.eclipse.jdt.ui.unittest.junit,org.eclipse.pde.unittest.junit",
  org.eclipse.jdt.internal.junit.refactoring;x-internal:=true,
  org.eclipse.jdt.internal.junit.ui;x-internal:=true,
- org.eclipse.jdt.internal.junit.util;x-internal:=true,
+ org.eclipse.jdt.internal.junit.util;x-friends:="org.eclipse.jdt.ui.unittest.junit,org.eclipse.pde.unittest.junit",
  org.eclipse.jdt.internal.junit.wizards;x-internal:=true,
  org.eclipse.jdt.junit.launcher,
  org.eclipse.jdt.junit.wizards
@@ -40,4 +40,4 @@ Require-Bundle:
  org.eclipse.jdt.junit.core;bundle-version="[3.6.0,4.0.0)";visibility:=reexport,
  com.ibm.icu;bundle-version="4.4.2",
  org.eclipse.jdt.core.manipulation;bundle-version="1.9.0"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11

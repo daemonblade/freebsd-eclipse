@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -156,6 +156,9 @@ public final class CorrectionMessages extends NLS {
 	public static String RenameRefactoringProposal_additionalInfo;
 	public static String RenameRefactoringProposal_name;
 
+	public static String ModifierCorrectionSubProcessor_changemodifierto_final_description;
+	public static String ModifierCorrectionSubProcessor_changemodifierto_sealed_description;
+	public static String ModifierCorrectionSubProcessor_changemodifierto_nonsealed_description;
 	public static String ModifierCorrectionSubProcessor_changemodifiertoabstract_description;
 	public static String ModifierCorrectionSubProcessor_changemodifiertostatic_description;
 	public static String ModifierCorrectionSubProcessor_changemodifiertononstatic_description;
@@ -221,6 +224,9 @@ public final class CorrectionMessages extends NLS {
 	public static String UnresolvedElementsSubProcessor_createconst_description;
 	public static String UnresolvedElementsSubProcessor_createenum_description;
 	public static String UnresolvedElementsSubProcessor_createconst_other_description;
+	public static String UnresolvedElementsSubProcessor_createnew_instance_of_object;
+	public static String UnresolvedElementsSubProcessor_createnew_reference_to_instance;
+	public static String UnresolvedElementsSubProcessor_createnew_reference_to_variable;
 	public static String UnresolvedElementsSubProcessor_removestatement_description;
 	public static String UnresolvedElementsSubProcessor_changeparamsignature_description;
 	public static String UnresolvedElementsSubProcessor_changemethodtargetcast_description;
@@ -295,6 +301,7 @@ public final class CorrectionMessages extends NLS {
 	public static String AssignToVariableAssistProposal_assigntofield_description;
 	public static String AssignToVariableAssistProposal_assignparamtofield_description;
 	public static String AssignToVariableAssistProposal_assignallparamstofields_description;
+	public static String AssignToVariableAssistProposal_assignintrywithresources_description;
 	public static String QuickAssistProcessor_catchclausetothrows_description;
 	public static String QuickAssistProcessor_change_lambda_body_to_block;
 	public static String QuickAssistProcessor_change_lambda_body_to_expression;
@@ -419,6 +426,8 @@ public final class CorrectionMessages extends NLS {
 	public static String QuickAssistProcessor_move_exceptions_to_separate_catch_block;
 	public static String QuickAssistProcessor_create_new_junit_test_case;
 	public static String QuickAssistProcessor_create_new_junit_test_case_desc;
+	public static String QuickAssistProcessor_create_new_impl;
+	public static String QuickAssistProcessor_create_new_impl_desc;
 	public static String SuppressWarningsSubProcessor_suppress_warnings_label;
 	public static String ReorgCorrectionsSubProcessor_accessrules_description;
 	public static String ReorgCorrectionsSubProcessor_project_seup_fix_description;
@@ -453,6 +462,9 @@ public final class CorrectionMessages extends NLS {
 	public static String LocalCorrectionsSubProcessor_replace_with_unqualified_enum_constant;
 	public static String LocalCorrectionsSubProcessor_throw_allocated_description;
 	public static String LocalCorrectionsSubProcessor_add_provider_method_description;
+	public static String LocalCorrectionsSubProcessor_declareSealedAsDirectSuperInterface_description;
+	public static String LocalCorrectionsSubProcessor_declareSealedAsDirectSuperClass_description;
+	public static String LocalCorrectionsSubProcessor_declareSubClassAsPermitsSealedClass_description;
 	public static String SuppressWarningsSubProcessor_fix_suppress_token_label;
 	public static String SuppressWarningsSubProcessor_remove_annotation_label;
 	public static String VarargsWarningsSubProcessor_add_safevarargs_label;

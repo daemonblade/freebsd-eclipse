@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corporation and others.
+ * Copyright (c) 2005, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -17,7 +17,6 @@ package org.eclipse.jdt.internal.corext.refactoring;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -40,6 +39,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IModuleDescription;
 import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
@@ -52,13 +52,17 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.refactoring.rename.MethodChecks;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.ReorgPolicyFactory;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.ReorgUtils;
+import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
@@ -166,25 +170,55 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static boolean isChangeSignatureAvailable(final IMethod method) throws JavaModelException {
-		return Checks.isAvailable(method) && !Flags.isAnnotation(method.getDeclaringType().getFlags());
+		return (method != null) && Checks.isAvailable(method) && !Flags.isAnnotation(method.getDeclaringType().getFlags());
 	}
 
 	public static boolean isChangeSignatureAvailable(final IStructuredSelection selection) throws JavaModelException {
-		if (selection.size() == 1) {
-			if (selection.getFirstElement() instanceof IMethod) {
-				final IMethod method= (IMethod) selection.getFirstElement();
-				return isChangeSignatureAvailable(method);
-			}
-		}
-		return false;
+		final IMethod method= getSelectedMethod(selection);
+		return isChangeSignatureAvailable(method);
 	}
 
 	public static boolean isChangeSignatureAvailable(final JavaTextSelection selection) throws JavaModelException {
+		final IMethod method= getSelectedMethod(selection);
+		return isChangeSignatureAvailable(method);
+	}
+
+	public static IMethod getSelectedMethod(final IStructuredSelection selection) {
+		if (selection.size() == 1) {
+			if (selection.getFirstElement() instanceof IMethod) {
+				return (IMethod) selection.getFirstElement();
+			}
+		}
+		return null;
+	}
+
+	public static IMethod getSelectedMethod(final JavaTextSelection selection) throws JavaModelException {
 		final IJavaElement[] elements= selection.resolveElementAtOffset();
 		if (elements.length == 1 && (elements[0] instanceof IMethod))
-			return isChangeSignatureAvailable((IMethod) elements[0]);
+			return ((IMethod) elements[0]);
 		final IJavaElement element= selection.resolveEnclosingElement();
-		return (element instanceof IMethod) && isChangeSignatureAvailable((IMethod) element);
+		return (element instanceof IMethod) ? (IMethod)element : null;
+	}
+
+	public static boolean isCanonicalConstructor(IMethod method) {
+		boolean isCanonicalConstructor = false;
+		try {
+			if (method != null && method.isConstructor()) {
+				CompilationUnit cUnit= SharedASTProviderCore.getAST(method.getCompilationUnit(), SharedASTProviderCore.WAIT_YES, null);
+				if (cUnit != null) {
+					MethodDeclaration mDecl= ASTNodeSearchUtil.getMethodDeclarationNode(method, cUnit);
+					if (mDecl != null) {
+						IMethodBinding mBinding= mDecl.resolveBinding();
+						if (mBinding != null && mBinding.isCanonicalConstructor()) {
+							isCanonicalConstructor= true;
+						}
+					}
+				}
+			}
+		} catch (JavaModelException e) {
+			//do nothing
+		}
+		return isCanonicalConstructor;
 	}
 
 	public static boolean isCommonDeclaringType(final IMember[] members) {
@@ -289,8 +323,7 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static boolean isExternalizeStringsAvailable(final IStructuredSelection selection) throws JavaModelException {
-		for (Iterator<?> iter= selection.iterator(); iter.hasNext();) {
-			Object element= iter.next();
+		for (Object element : selection) {
 			if (element instanceof IJavaElement) {
 				IJavaElement javaElement= (IJavaElement)element;
 				if (javaElement.exists() && !javaElement.isReadOnly()) {
@@ -434,8 +467,8 @@ public final class RefactoringAvailabilityTester {
 				if (type != null)
 					return Checks.isAvailable(type) && isExtractSupertypeAvailable(new IType[] { type});
 			}
-			for (final Iterator<?> iterator= selection.iterator(); iterator.hasNext();) {
-				if (!(iterator.next() instanceof IMember))
+			for (Object member : selection) {
+				if (!(member instanceof IMember))
 					return false;
 			}
 			final Set<IMember> members= new HashSet<>();
@@ -529,9 +562,8 @@ public final class RefactoringAvailabilityTester {
 			return ((IPackageFragmentRoot) element).getKind() == IPackageFragmentRoot.K_SOURCE;
 		} else if (element instanceof IPackageFragment) {
 			return ((IPackageFragment) element).getKind() == IPackageFragmentRoot.K_SOURCE;
-		} else if (element instanceof ICompilationUnit) {
-			return true;
-		} else if (element.getAncestor(IJavaElement.COMPILATION_UNIT) != null) {
+		} else if (element instanceof ICompilationUnit
+				|| element.getAncestor(IJavaElement.COMPILATION_UNIT) != null) {
 			return true;
 		} else {
 			return false;
@@ -554,8 +586,7 @@ public final class RefactoringAvailabilityTester {
 		if (selection.isEmpty())
 			return false;
 
-		for (Iterator<?> iter= selection.iterator(); iter.hasNext();) {
-			Object element= iter.next();
+		for (Object element : selection) {
 			if (!(element instanceof IJavaElement))
 				return false;
 			if (element instanceof ICompilationUnit) {
@@ -748,7 +779,11 @@ public final class RefactoringAvailabilityTester {
 					return false;
 				if ((element instanceof IPackageDeclaration))
 					return false;
-				if (element instanceof IField && JdtFlags.isEnum((IMember) element))
+				if (element instanceof IField
+						&& (JdtFlags.isEnum((IMember) element)
+								|| ((IField) element).isRecordComponent()))
+					return false;
+				if ((element instanceof IMethod) && ((IMethod)element).isConstructor())
 					return false;
 			}
 		}
@@ -884,8 +919,8 @@ public final class RefactoringAvailabilityTester {
 				if (type != null)
 					return Checks.isAvailable(type) && isPullUpAvailable(new IType[] { type});
 			}
-			for (final Iterator<?> iterator= selection.iterator(); iterator.hasNext();) {
-				if (!(iterator.next() instanceof IMember))
+			for (Object member : selection) {
+				if (!(member instanceof IMember))
 					return false;
 			}
 			final Set<IMember> members= new HashSet<>();
@@ -955,8 +990,8 @@ public final class RefactoringAvailabilityTester {
 				if (type != null)
 					return isPushDownAvailable(new IType[] { type});
 			}
-			for (final Iterator<?> iterator= selection.iterator(); iterator.hasNext();) {
-				if (!(iterator.next() instanceof IMember))
+			for (Object member : selection) {
+				if (!(member instanceof IMember))
 					return false;
 			}
 			final Set<IMember> members= new HashSet<>();
@@ -995,6 +1030,10 @@ public final class RefactoringAvailabilityTester {
 		if (!project.isConsistent())
 			return false;
 		return true;
+	}
+
+	public static boolean isRenameAvailable(final IModuleDescription module) throws JavaModelException {
+		return Checks.isAvailable(module);
 	}
 
 	public static boolean isRenameAvailable(final ILocalVariable variable) throws JavaModelException {
@@ -1075,22 +1114,26 @@ public final class RefactoringAvailabilityTester {
 		return Checks.isAvailable(field) && !JdtFlags.isEnum(field);
 	}
 
+	public static boolean isRenameModuleAvailable(final IModuleDescription module) throws JavaModelException {
+		return Checks.isAvailable(module);
+	}
+
 	public static boolean isRenameNonVirtualMethodAvailable(final IMethod method) throws JavaModelException, CoreException {
 		return isRenameAvailable(method) && !MethodChecks.isVirtual(method);
 	}
 
 	public static boolean isRenameProhibited(final IMethod method) throws CoreException {
-		if (method.getElementName().equals("toString") //$NON-NLS-1$
-				&& (method.getNumberOfParameters() == 0) && (method.getReturnType().equals("Ljava.lang.String;") //$NON-NLS-1$
-						|| method.getReturnType().equals("QString;") //$NON-NLS-1$
-						|| method.getReturnType().equals("Qjava.lang.String;"))) //$NON-NLS-1$
+		if ("toString".equals(method.getElementName()) //$NON-NLS-1$
+				&& (method.getNumberOfParameters() == 0) && ("Ljava.lang.String;".equals(method.getReturnType()) //$NON-NLS-1$
+						|| "QString;".equals(method.getReturnType()) //$NON-NLS-1$
+						|| "Qjava.lang.String;".equals(method.getReturnType()))) //$NON-NLS-1$
 			return true;
 		else
 			return false;
 	}
 
 	public static boolean isRenameProhibited(final IType type) {
-		return type.getPackageFragment().getElementName().equals("java.lang"); //$NON-NLS-1$
+		return "java.lang".equals(type.getPackageFragment().getElementName()); //$NON-NLS-1$
 	}
 
 	public static boolean isRenameVirtualMethodAvailable(final IMethod method) throws CoreException {
@@ -1098,33 +1141,45 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static boolean isRenameElementAvailable(IJavaElement element) throws CoreException {
-		switch (element.getElementType()) {
-			case IJavaElement.JAVA_PROJECT:
-				return isRenameAvailable((IJavaProject) element);
-			case IJavaElement.PACKAGE_FRAGMENT_ROOT:
-				return isRenameAvailable((IPackageFragmentRoot) element);
-			case IJavaElement.PACKAGE_FRAGMENT:
-				return isRenameAvailable((IPackageFragment) element);
-			case IJavaElement.COMPILATION_UNIT:
-				return isRenameAvailable((ICompilationUnit) element);
-			case IJavaElement.TYPE:
-				return isRenameAvailable((IType) element);
-			case IJavaElement.METHOD:
-				final IMethod method= (IMethod) element;
-				if (method.isConstructor())
-					return isRenameAvailable(method.getDeclaringType());
-				else
-					return isRenameAvailable(method);
-			case IJavaElement.FIELD:
-				final IField field= (IField) element;
-				if (Flags.isEnum(field.getFlags()))
-					return isRenameEnumConstAvailable(field);
-				else
-					return isRenameFieldAvailable(field);
-			case IJavaElement.TYPE_PARAMETER:
-				return isRenameAvailable((ITypeParameter) element);
-			case IJavaElement.LOCAL_VARIABLE:
-				return isRenameAvailable((ILocalVariable) element);
+		return isRenameElementAvailable(element, false);
+	}
+
+	public static boolean isRenameElementAvailable(IJavaElement element, boolean isTextSelection) throws CoreException {
+		if (element != null) {
+			switch (element.getElementType()) {
+				case IJavaElement.JAVA_PROJECT:
+					return isRenameAvailable((IJavaProject) element);
+				case IJavaElement.PACKAGE_FRAGMENT_ROOT:
+					return isRenameAvailable((IPackageFragmentRoot) element);
+				case IJavaElement.PACKAGE_FRAGMENT:
+					return isRenameAvailable((IPackageFragment) element);
+				case IJavaElement.COMPILATION_UNIT:
+					return isRenameAvailable((ICompilationUnit) element);
+				case IJavaElement.TYPE:
+					return isRenameAvailable((IType) element);
+				case IJavaElement.METHOD:
+					final IMethod method= (IMethod) element;
+					if (method.isConstructor())
+						return isRenameAvailable(method.getDeclaringType());
+					else
+						return isRenameAvailable(method);
+				case IJavaElement.FIELD:
+					final IField field= (IField) element;
+					if (Flags.isEnum(field.getFlags()))
+						return isRenameEnumConstAvailable(field);
+					else
+						return isRenameFieldAvailable(field);
+				case IJavaElement.TYPE_PARAMETER:
+					return isRenameAvailable((ITypeParameter) element);
+				case IJavaElement.LOCAL_VARIABLE:
+					return isRenameAvailable((ILocalVariable) element);
+				case IJavaElement.JAVA_MODULE: {
+					if (isTextSelection) return false;
+					return isRenameAvailable((IModuleDescription) element);
+				}
+				default:
+					break;
+			}
 		}
 		return false;
 	}
@@ -1212,12 +1267,16 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static boolean isIntroduceParameterObjectAvailable(IStructuredSelection selection) throws JavaModelException{
-		return isChangeSignatureAvailable(selection); //TODO test selected element for more than 1 parameter?
+		IMethod method= getSelectedMethod(selection); //TODO test selected element for more than 1 parameter?
+		return isChangeSignatureAvailable(method) && !isCanonicalConstructor(method);
 	}
 
 	public static boolean isIntroduceParameterObjectAvailable(JavaTextSelection selection) throws JavaModelException{
-		return isChangeSignatureAvailable(selection); //TODO test selected element for more than 1 parameter?
+		IMethod method= getSelectedMethod(selection); //TODO test selected element for more than 1 parameter?
+		return isChangeSignatureAvailable(method) && !isCanonicalConstructor(method);
 	}
+
+
 
 	public static boolean isExtractClassAvailable(IType type) throws JavaModelException {
 		if (type == null)
@@ -1226,4 +1285,5 @@ public final class RefactoringAvailabilityTester {
 			return false;
 		return ReorgUtils.isInsideCompilationUnit(type) && type.isClass() && !type.isAnonymous()  && !type.isLambda();
 	}
+
 }

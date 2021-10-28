@@ -58,6 +58,8 @@ public final class FixMessages extends NLS {
 	public static String ConvertIterableLoopOperation_semanticChangeWarning;
 	public static String ExpressionsFix_add_parentheses_change_name;
 	public static String ExpressionsFix_remove_parentheses_change_name;
+	public static String PrimitiveComparisonFix_convert_compareTo_to_primitive_comparison;
+	public static String PrimitiveRatherThanWrapperFix_description;
 	public static String ImportsFix_OrganizeImports_Description;
 	public static String Java50Fix_add_annotations_change_name;
 	public static String Java50Fix_add_type_parameters_change_name;
@@ -103,6 +105,8 @@ public final class FixMessages extends NLS {
 	public static String StringFix_AddNonNls_description;
 	public static String StringFix_RemoveNonNls_description;
 
+	public static String ValueOfRatherThanInstantiationFix_description;
+
 	public static String CodeStyleFix_ChangeAccessToStatic_description;
 	public static String CodeStyleFix_QualifyWithThis_description;
 	public static String CodeStyleFix_ChangeAccessToStaticUsingInstanceType_description;
@@ -114,6 +118,9 @@ public final class FixMessages extends NLS {
 	public static String CodeStyleFix_ChangeAccessUsingDeclaring_description;
 	public static String CodeStyleFix_QualifyMethodWithDeclClass_description;
 	public static String CodeStyleFix_QualifyFieldWithDeclClass_description;
+
+	public static String InvertEqualsFix_invert;
+	public static String StandardComparisonFix_compare_to_zero;
 
 	public static String SerialVersion_group_description;
 
@@ -129,6 +136,7 @@ public final class FixMessages extends NLS {
 	public static String VariableDeclarationFix_changeModifierOfUnknownToFinal_description;
 	public static String VariableDeclarationFix_ChangeMidifiersToFinalWherPossible_description;
 
+	public static String DoWhileRatherThanWhileFix_description;
 	public static String NullAnnotationsFix_add_annotation_change_name;
 	public static String NullAnnotationsRewriteOperations_change_method_parameter_nullness;
 	public static String NullAnnotationsRewriteOperations_change_target_method_parameter_nullness;
@@ -149,14 +157,28 @@ public final class FixMessages extends NLS {
 	public static String LambdaExpressionsFix_convert_to_anonymous_class_creation;
 	public static String LambdaExpressionsFix_convert_to_lambda_expression;
 	public static String LambdaExpressionsFix_convert_to_lambda_expression_removes_annotations;
+	public static String PatternMatchingForInstanceofFix_refactor;
+	public static String SwitchExpressionsFix_convert_to_switch_expression;
+	public static String SwitchFix_convert_if_to_switch;
 
 	public static String TypeParametersFix_insert_inferred_type_arguments_description;
 	public static String TypeParametersFix_insert_inferred_type_arguments_name;
 	public static String TypeParametersFix_remove_redundant_type_arguments_description;
 	public static String TypeParametersFix_remove_redundant_type_arguments_name;
+	public static String BooleanValueRatherThanComparisonFix_description;
+	public static String PlainReplacementFix_use_plain_text;
+	public static String UseStringIsBlankCleanUp_description;
+	public static String RedundantComparatorFix_remove_comparator;
+	public static String ArrayWithCurlyFix_description;
+	public static String ReturnExpressionFix_description;
+
+	public static String OneIfRatherThanDuplicateBlocksThatFallThroughFix_description;
+	public static String PullOutIfFromIfElseFix_description;
 
 	public static String TypeAnnotationFix_move;
 	public static String TypeAnnotationFix_remove;
+	public static String ConstantsCleanUpFix_refactor;
+	public static String StringBufferToStringBuilderFix_convert_msg;
 
 	static {
 		// initialize resource bundle

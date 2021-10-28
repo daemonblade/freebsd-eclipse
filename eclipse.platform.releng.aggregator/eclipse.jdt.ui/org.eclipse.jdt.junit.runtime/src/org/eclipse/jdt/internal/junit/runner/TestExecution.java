@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2019 IBM Corporation and others.
+ * Copyright (c) 2006, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -17,7 +17,6 @@
 package org.eclipse.jdt.internal.junit.runner;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class TestExecution {
 	private boolean fShouldStop = false;
@@ -26,7 +25,7 @@ public class TestExecution {
 
 	private IClassifiesThrowables fClassifier;
 
-	private ArrayList<IStopListener> fStopListeners = new ArrayList<IStopListener>();
+	private ArrayList<IStopListener> fStopListeners = new ArrayList<>();
 
 	public TestExecution(IListensToTestExecutions listener,
 			IClassifiesThrowables classifier) {
@@ -35,10 +34,10 @@ public class TestExecution {
 	}
 
 	public void run(ITestReference[] suites) {
-		for (int i = 0; i < suites.length; i++) {
+		for (ITestReference suite : suites) {
 			if (fShouldStop)
 				return;
-			suites[i].run(this);
+			suite.run(this);
 		}
 	}
 
@@ -48,8 +47,7 @@ public class TestExecution {
 
 	public void stop() {
 		fShouldStop = true;
-		for (Iterator<IStopListener> iter = fStopListeners.iterator(); iter.hasNext();) {
-			IStopListener listener = iter.next();
+		for (IStopListener listener : fStopListeners) {
 			listener.stop();
 		}
 	}

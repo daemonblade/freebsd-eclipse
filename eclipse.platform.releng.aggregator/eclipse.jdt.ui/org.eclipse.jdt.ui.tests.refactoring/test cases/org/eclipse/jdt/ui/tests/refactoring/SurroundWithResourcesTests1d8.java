@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 IBM Corporation and others.
+ * Copyright (c) 2020, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -115,6 +115,16 @@ public class SurroundWithResourcesTests1d8 extends AbstractJunit4SelectionTestCa
 	}
 
 	@Test
+	public void testWithThrows2() throws Exception {
+		tryResourcesTest();
+	}
+
+	@Test
+	public void testWithThrows3() throws Exception {
+		tryResourcesTest();
+	}
+
+	@Test
 	public void testInvalidStatement1() throws Exception {
 		tryResourcesInvalidTest();
 	}
@@ -172,6 +182,16 @@ public class SurroundWithResourcesTests1d8 extends AbstractJunit4SelectionTestCa
 	@Test
 	public void testMethodReference1() throws Exception {
 		tryResourcesInvalidTest();
+	}
+
+	@Test
+	public void testTry1() throws Exception {
+		tryResourcesTest();
+	}
+
+	@Test
+	public void testTry2() throws Exception {
+		tryResourcesTest();
 	}
 
 }

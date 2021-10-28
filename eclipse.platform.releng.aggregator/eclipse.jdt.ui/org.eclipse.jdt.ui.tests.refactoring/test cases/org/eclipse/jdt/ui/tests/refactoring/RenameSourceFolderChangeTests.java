@@ -17,7 +17,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Rule;
 import org.junit.Test;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
@@ -36,8 +35,10 @@ import org.eclipse.jdt.internal.corext.refactoring.changes.RenameSourceFolderCha
 import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 
 public class RenameSourceFolderChangeTests extends GenericRefactoringTest {
-	@Rule
-	public RefactoringTestSetup fts= new RefactoringTestSetup();
+
+	public RenameSourceFolderChangeTests() {
+		rts= new RefactoringTestSetup();
+	}
 
 	@Test
 	public void test0() throws Exception {
@@ -45,8 +46,8 @@ public class RenameSourceFolderChangeTests extends GenericRefactoringTest {
 		String newName= "newName";
 
 		try{
-			IJavaProject testProject= RefactoringTestSetup.getProject();
-			IPackageFragmentRoot oldRoot= JavaProjectHelper.addSourceContainer(RefactoringTestSetup.getProject(), oldName);
+			IJavaProject testProject= rts.getProject();
+			IPackageFragmentRoot oldRoot= JavaProjectHelper.addSourceContainer(rts.getProject(), oldName);
 
 			assertTrue("old folder should exist here", oldRoot.exists());
 
@@ -61,7 +62,7 @@ public class RenameSourceFolderChangeTests extends GenericRefactoringTest {
 				assertTrue("should exist " + i, newRoots[i].exists());
 			}
 		} finally{
-			JavaProjectHelper.removeSourceContainer(RefactoringTestSetup.getProject(), newName);
+			JavaProjectHelper.removeSourceContainer(rts.getProject(), newName);
 		}
 	}
 
@@ -73,9 +74,9 @@ public class RenameSourceFolderChangeTests extends GenericRefactoringTest {
 
 		try{
 
-			IJavaProject testProject= RefactoringTestSetup.getProject();
-			IPackageFragmentRoot oldRoot1= JavaProjectHelper.addSourceContainer(RefactoringTestSetup.getProject(), oldName1);
-			IPackageFragmentRoot oldRoot2= JavaProjectHelper.addSourceContainer(RefactoringTestSetup.getProject(), oldName2);
+			IJavaProject testProject= rts.getProject();
+			IPackageFragmentRoot oldRoot1= JavaProjectHelper.addSourceContainer(rts.getProject(), oldName1);
+			IPackageFragmentRoot oldRoot2= JavaProjectHelper.addSourceContainer(rts.getProject(), oldName2);
 
 			assertTrue("old folder should exist here", oldRoot1.exists());
 			assertTrue("old folder 2 should exist here", oldRoot2.exists());
@@ -94,8 +95,8 @@ public class RenameSourceFolderChangeTests extends GenericRefactoringTest {
 					assertEquals("3rd position should be:" + newName1, newName1, newRoots[i].getElementName());
 			}
 		}finally{
-			JavaProjectHelper.removeSourceContainer(RefactoringTestSetup.getProject(), newName1);
-			JavaProjectHelper.removeSourceContainer(RefactoringTestSetup.getProject(), oldName2);
+			JavaProjectHelper.removeSourceContainer(rts.getProject(), newName1);
+			JavaProjectHelper.removeSourceContainer(rts.getProject(), oldName2);
 		}
 	}
 

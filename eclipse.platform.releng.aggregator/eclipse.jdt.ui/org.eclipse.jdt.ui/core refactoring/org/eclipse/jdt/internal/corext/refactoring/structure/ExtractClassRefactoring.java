@@ -249,12 +249,12 @@ public class ExtractClassRefactoring extends Refactoring {
 				if (initializer != null) {
 					FieldReferenceFinder frf= new FieldReferenceFinder();
 					initializer.accept(frf);
-					hasFieldReferences= Boolean.valueOf(frf.fFieldRefFound);
+					hasFieldReferences= frf.fFieldRefFound;
 				} else {
 					hasFieldReferences= Boolean.FALSE;
 				}
 			}
-			return hasFieldReferences.booleanValue();
+			return hasFieldReferences;
 		}
 
 		private FieldInfo(ParameterInfo parameterInfo, IField ifield) {
@@ -723,10 +723,10 @@ public class ExtractClassRefactoring extends Refactoring {
 			if (isCreateField(pi)) {
 				VariableDeclarationFragment vdf= pi.declaration;
 				FieldDeclaration parent= (FieldDeclaration) vdf.getParent();
-				if (lastField == null)
+				if (lastField == null
+						|| lastField.getStartPosition() < parent.getStartPosition()) {
 					lastField= parent;
-				else if (lastField.getStartPosition() < parent.getStartPosition())
-					lastField= parent;
+				}
 
 				ListRewrite listRewrite= rewrite.getListRewrite(parent, FieldDeclaration.FRAGMENTS_PROPERTY);
 				removeNode(vdf, removeFieldGroup, fBaseCURewrite);

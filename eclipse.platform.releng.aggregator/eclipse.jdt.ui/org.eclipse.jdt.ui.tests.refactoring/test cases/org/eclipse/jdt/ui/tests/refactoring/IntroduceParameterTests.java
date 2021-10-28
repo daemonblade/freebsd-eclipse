@@ -37,7 +37,15 @@ public class IntroduceParameterTests extends LineColumnSelectionTestCase {
 	private static final String SLASH_OUT= "/out";
 
 	@Rule
-	public RefactoringTestSetup rts= new RefactoringTestSetup();
+	public RefactoringTestSetup rts;
+
+	public IntroduceParameterTests() {
+		this.rts= new RefactoringTestSetup();
+	}
+
+	protected IntroduceParameterTests(RefactoringTestSetup rts) {
+		this.rts= rts;
+	}
 
 	@Override
 	protected String getResourceLocation() {
@@ -74,7 +82,7 @@ public class IntroduceParameterTests extends LineColumnSelectionTestCase {
 
 	protected void perform(int expectedActivationStatus, int expectedInputStatus) throws Exception {
 		String packageName= adaptPackage(getName());
-		IPackageFragment packageFragment= RefactoringTestSetup.getDefaultSourceFolder().createPackageFragment(packageName, true , null);
+		IPackageFragment packageFragment= rts.getDefaultSourceFolder().createPackageFragment(packageName, true , null);
 		ICompilationUnit cu= createCU(packageFragment, getName());
 
 		ISourceRange selection= getSelection(cu);

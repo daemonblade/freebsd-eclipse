@@ -40,7 +40,7 @@ import org.eclipse.jdt.internal.ui.wizards.TypedViewerFilter;
 
 public class SourceContainerDialog extends ElementTreeSelectionDialog {
 
-	private class PackageAndProjectSelectionValidator extends TypedElementSelectionValidator {
+	private static class PackageAndProjectSelectionValidator extends TypedElementSelectionValidator {
 
 		public PackageAndProjectSelectionValidator() {
 			super(new Class[]{IPackageFragmentRoot.class},false);
@@ -69,7 +69,7 @@ public class SourceContainerDialog extends ElementTreeSelectionDialog {
 	 * A TypedViewerFilter that accepts only PackageFragments and JavaProjects.
 	 * PackageFragments are only accepted if they are of the kind K_SOURCE.
 	 */
-	private class JavaTypedViewerFilter extends TypedViewerFilter {
+	private static class JavaTypedViewerFilter extends TypedViewerFilter {
 
 		public JavaTypedViewerFilter() {
 			super(new Class[]{IPackageFragmentRoot.class, IJavaProject.class});

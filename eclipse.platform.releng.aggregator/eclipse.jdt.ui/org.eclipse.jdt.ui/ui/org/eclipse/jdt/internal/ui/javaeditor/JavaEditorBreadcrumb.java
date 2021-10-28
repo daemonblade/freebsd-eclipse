@@ -536,7 +536,7 @@ public class JavaEditorBreadcrumb extends EditorBreadcrumb {
 			if (delta.getKind() != IJavaElementDelta.CHANGED)
 				return true;
 
-			return (delta.getFlags() & IJavaElementDelta.F_CONTENT | IJavaElementDelta.F_FINE_GRAINED) == IJavaElementDelta.F_CONTENT;
+			return (delta.getFlags() & (IJavaElementDelta.F_CONTENT | IJavaElementDelta.F_FINE_GRAINED)) == IJavaElementDelta.F_CONTENT;
 		}
 
 		private boolean onlyChildrenChanged(IJavaElementDelta delta) {
@@ -641,11 +641,8 @@ public class JavaEditorBreadcrumb extends EditorBreadcrumb {
 				for (IPackageFragmentRoot root : project.getPackageFragmentRoots()) {
 					IClasspathEntry classpathEntry= JavaModelUtil.getClasspathEntry(root);
 					int entryKind= classpathEntry.getEntryKind();
-					if (entryKind == IClasspathEntry.CPE_CONTAINER) {
-						// all ClassPathContainers are added later
-					} else if (SHOW_LIBRARIES_NODE && (entryKind == IClasspathEntry.CPE_LIBRARY || entryKind == IClasspathEntry.CPE_VARIABLE)) {
-						// skip: will add the referenced library node later
-					} else {
+					if (entryKind != IClasspathEntry.CPE_CONTAINER // all ClassPathContainers are added later
+							&& (!SHOW_LIBRARIES_NODE || (entryKind != IClasspathEntry.CPE_LIBRARY && entryKind != IClasspathEntry.CPE_VARIABLE))) { // skip: will add the referenced library node later
 						if (isProjectPackageFragmentRoot(root)) {
 							// filter out package fragments that correspond to projects and
 							// replace them with the package fragments directly

@@ -26,7 +26,6 @@ import org.eclipse.text.edits.TextEditGroup;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTMatcher;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.Block;
@@ -94,21 +93,21 @@ public class ObjectsEqualsCleanUp extends AbstractMultiFix implements ICleanUpFi
 					+ "if (!Objects.equals(aText, other.aText)) {\n" //$NON-NLS-1$
 					+ "	return false;\n" //$NON-NLS-1$
 					+ "}\n\n\n\n\n"; //$NON-NLS-1$
-		} else {
-			return "" //$NON-NLS-1$
-					+ "if (aText == null) {\n" //$NON-NLS-1$
-					+ "  if (other.aText != null) {\n" //$NON-NLS-1$
-					+ "    return false;\n" //$NON-NLS-1$
-					+ "  }\n" //$NON-NLS-1$
-					+ "} else if (!aText.equals(other.aText)) {\n" //$NON-NLS-1$
-					+ "	return false;\n" //$NON-NLS-1$
-					+ "}\n"; //$NON-NLS-1$
 		}
+
+		return "" //$NON-NLS-1$
+				+ "if (aText == null) {\n" //$NON-NLS-1$
+				+ "  if (other.aText != null) {\n" //$NON-NLS-1$
+				+ "    return false;\n" //$NON-NLS-1$
+				+ "  }\n" //$NON-NLS-1$
+				+ "} else if (!aText.equals(other.aText)) {\n" //$NON-NLS-1$
+				+ "	return false;\n" //$NON-NLS-1$
+				+ "}\n"; //$NON-NLS-1$
 	}
 
 	@Override
 	protected ICleanUpFix createFix(CompilationUnit unit) throws CoreException {
-		if (!isEnabled(CleanUpConstants.USE_OBJECTS_EQUALS) || !JavaModelUtil.is17OrHigher(unit.getJavaElement().getJavaProject())) {
+		if (!isEnabled(CleanUpConstants.USE_OBJECTS_EQUALS) || !JavaModelUtil.is1d7OrHigher(unit.getJavaElement().getJavaProject())) {
 			return null;
 		}
 
@@ -153,18 +152,17 @@ public class ObjectsEqualsCleanUp extends AbstractMultiFix implements ICleanUpFi
 				if (checkNullityStatement != null && checkNullityStatement.getElseStatement() == null && checkEqualsStatement != null
 						&& checkEqualsStatement.getElseStatement() == null) {
 					InfixExpression nullityCondition= ASTNodes.as(checkNullityStatement.getExpression(), InfixExpression.class);
-					List<Statement> nullityStatements= ASTNodes.asList(checkNullityStatement.getThenStatement());
+					ReturnStatement nullityStatement= ASTNodes.as(checkNullityStatement.getThenStatement(), ReturnStatement.class);
 
 					PrefixExpression equalsCondition= ASTNodes.as(checkEqualsStatement.getExpression(), PrefixExpression.class);
-					List<Statement> equalsStatements= ASTNodes.asList(checkEqualsStatement.getThenStatement());
+					ReturnStatement equalsStatement= ASTNodes.as(checkEqualsStatement.getThenStatement(), ReturnStatement.class);
 
 					if (nullityCondition != null && !nullityCondition.hasExtendedOperands()
-							&& ASTNodes.hasOperator(nullityCondition, InfixExpression.Operator.NOT_EQUALS) && nullityStatements != null
-							&& nullityStatements.size() == 1 && equalsCondition != null
-							&& ASTNodes.hasOperator(equalsCondition, PrefixExpression.Operator.NOT) && equalsStatements != null
-							&& equalsStatements.size() == 1) {
-						return maybeReplaceEquals(node, firstField, nullityCondition, nullityStatements, equalsCondition,
-								equalsStatements);
+							&& ASTNodes.hasOperator(nullityCondition, InfixExpression.Operator.NOT_EQUALS) && nullityStatement != null
+							&& equalsCondition != null
+							&& ASTNodes.hasOperator(equalsCondition, PrefixExpression.Operator.NOT) && equalsStatement != null) {
+						return maybeReplaceEquals(node, firstField, nullityCondition, nullityStatement, equalsCondition,
+								equalsStatement);
 					}
 				}
 
@@ -172,11 +170,9 @@ public class ObjectsEqualsCleanUp extends AbstractMultiFix implements ICleanUpFi
 			}
 
 			private boolean maybeReplaceEquals(final IfStatement node, final Expression firstField,
-					final InfixExpression nullityCondition, final List<Statement> nullityStatements,
-					final PrefixExpression equalsCondition, final List<Statement> equalsStatements) {
+					final InfixExpression nullityCondition, final ReturnStatement returnStatement1,
+					final PrefixExpression equalsCondition, final ReturnStatement returnStatement2) {
 				OrderedInfixExpression<Expression, NullLiteral> nullityTypedCondition= ASTNodes.orderedInfix(nullityCondition, Expression.class, NullLiteral.class);
-				ReturnStatement returnStatement1= ASTNodes.as(nullityStatements.get(0), ReturnStatement.class);
-				ReturnStatement returnStatement2= ASTNodes.as(equalsStatements.get(0), ReturnStatement.class);
 				MethodInvocation equalsMethod= ASTNodes.as(equalsCondition.getOperand(), MethodInvocation.class);
 
 				if (nullityTypedCondition != null && returnStatement1 != null && returnStatement2 != null && equalsMethod != null
@@ -205,8 +201,7 @@ public class ObjectsEqualsCleanUp extends AbstractMultiFix implements ICleanUpFi
 
 			private boolean match(final Expression firstField, final Expression secondField, final Expression thisObject,
 					final ASTNode otherObject) {
-				ASTMatcher astMatcher= new ASTMatcher();
-				return astMatcher.safeSubtreeMatch(thisObject, firstField) && astMatcher.safeSubtreeMatch(otherObject, secondField);
+				return ASTNodes.match(thisObject, firstField) && ASTNodes.match(otherObject, secondField);
 			}
 		});
 
@@ -268,13 +263,16 @@ public class ObjectsEqualsCleanUp extends AbstractMultiFix implements ICleanUpFi
 			notExpression.setOperand(newEqualsMethod);
 
 			ReturnStatement copyOfReturnStatement= ASTNodes.createMoveTarget(rewrite, returnStatement);
+			ASTNode node1= node.getExpression();
 
-			rewrite.replace(node.getExpression(), notExpression, group);
+			ASTNodes.replaceButKeepComment(rewrite, node1, notExpression, group);
 
 			if (node.getThenStatement() instanceof Block) {
-				rewrite.replace((ASTNode) ((Block) node.getThenStatement()).statements().get(0), copyOfReturnStatement, group);
+				ASTNode node2= (ASTNode) ((Block) node.getThenStatement()).statements().get(0);
+				ASTNodes.replaceButKeepComment(rewrite, node2, copyOfReturnStatement, group);
 			} else {
-				rewrite.replace(node.getThenStatement(), copyOfReturnStatement, group);
+				ASTNode node2= node.getThenStatement();
+				ASTNodes.replaceButKeepComment(rewrite, node2, copyOfReturnStatement, group);
 			}
 
 			if (node.getElseStatement() != null) {

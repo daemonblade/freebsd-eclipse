@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Rule;
 import org.junit.Test;
 
 import org.eclipse.core.runtime.Assert;
@@ -30,8 +29,8 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.ISourceRange;
+import org.eclipse.jdt.core.dom.AST;
 
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.base.RefactoringStatusCodes;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineConstantRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
@@ -44,8 +43,13 @@ public class InlineConstantTests extends GenericRefactoringTest {
 
 	protected boolean toSucceed;
 
-	@Rule
-	public RefactoringTestSetup rts= new RefactoringTestSetup();
+	public InlineConstantTests() {
+		this.rts= new RefactoringTestSetup();
+	}
+
+	InlineConstantTests(RefactoringTestSetup rts) {
+		super(rts);
+	}
 
 	@Override
 	protected String getRefactoringPath() {
@@ -99,7 +103,7 @@ public class InlineConstantTests extends GenericRefactoringTest {
 		ICompilationUnit selectionCu= cus[selectionCuIndex];
 
 		ISourceRange selection= TextRangeUtil.getSelection(selectionCu, startLine, startColumn, endLine, endColumn);
-		InlineConstantRefactoring ref= new InlineConstantRefactoring(selectionCu, new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL).parse(selectionCu, true), selection.getOffset(), selection.getLength());
+		InlineConstantRefactoring ref= new InlineConstantRefactoring(selectionCu, new RefactoringASTParser(AST.getJLSLatest()).parse(selectionCu, true), selection.getOffset(), selection.getLength());
 		if (ref.checkStaticFinalConstantNameSelected().hasFatalError())
 			ref= null;
 		RefactoringStatus preconditionResult= ref.checkInitialConditions(new NullProgressMonitor());
@@ -140,7 +144,7 @@ public class InlineConstantTests extends GenericRefactoringTest {
 		ICompilationUnit selectionCu= cus[selectionCuIndex];
 
 		ISourceRange selection= TextRangeUtil.getSelection(selectionCu, startLine, startColumn, endLine, endColumn);
-		InlineConstantRefactoring ref= new InlineConstantRefactoring(selectionCu, new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL).parse(selectionCu, true), selection.getOffset(), selection.getLength());
+		InlineConstantRefactoring ref= new InlineConstantRefactoring(selectionCu, new RefactoringASTParser(AST.getJLSLatest()).parse(selectionCu, true), selection.getOffset(), selection.getLength());
 		if (ref.checkStaticFinalConstantNameSelected().hasFatalError())
 			ref= null;
 		if (ref == null)
@@ -383,6 +387,16 @@ public class InlineConstantTests extends GenericRefactoringTest {
 	@Test
 	public void test43() throws Exception { // test for https://bugs.eclipse.org/bugs/show_bug.cgi?id=434747
 		helper1("p.A", 4, 39, 4, 40, true, true);
+	}
+
+	@Test
+	public void test44() throws Exception { // test for https://bugs.eclipse.org/bugs/show_bug.cgi?id=221003
+		helper1(new String[] {"p1.A", "p2.B"}, "p2.B", 8, 33, 8, 40, true, true);
+	}
+
+	@Test
+	public void test45() throws Exception { // test for https://bugs.eclipse.org/bugs/show_bug.cgi?id=221003
+		helper1(new String[] {"p1.A", "p2.B"}, "p2.B", 8, 33, 8, 40, true, true);
 	}
 
 	// -- testing failing preconditions

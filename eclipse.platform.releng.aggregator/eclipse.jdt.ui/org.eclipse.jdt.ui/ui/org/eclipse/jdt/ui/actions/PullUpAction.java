@@ -15,7 +15,6 @@ package org.eclipse.jdt.ui.actions;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -73,12 +72,11 @@ public class PullUpAction extends SelectionDispatchAction {
 				JavaPlugin.log(exception);
 			}
 		}
-		for (Iterator<?> iter= selection.iterator(); iter.hasNext();) {
-			if (!(iter.next() instanceof IMember))
+		for (Object name : selection) {
+			if (!(name instanceof IMember))
 				return null;
 		}
-		Set<Object> memberSet= new HashSet<>();
-		memberSet.addAll(Arrays.asList(selection.toArray()));
+		Set<Object> memberSet= new HashSet<>(Arrays.asList(selection.toArray()));
 		return memberSet.toArray(new IMember[memberSet.size()]);
 	}
 

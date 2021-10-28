@@ -91,7 +91,7 @@ public class AddUnimplementedConstructorsTest extends CoreTests {
 	private void checkMethods(String[] expected, IMethod[] methods) {
 		int nMethods= methods.length;
 		int nExpected= expected.length;
-		assertTrue("" + nExpected + " methods expected, is " + nMethods, nMethods == nExpected);
+		assertEquals("" + nExpected + " methods expected, is " + nMethods, nExpected, nMethods);
 		for (int i= 0; i < nExpected; i++) {
 			String methName= expected[i];
 			assertTrue("method " + methName + " expected", nameContained(methName, methods));
@@ -131,7 +131,7 @@ public class AddUnimplementedConstructorsTest extends CoreTests {
 
 		StubUtility.setCodeTemplate(CodeTemplateContextType.CONSTRUCTORCOMMENT_ID, comment.toString(), null);
 		StubUtility.setCodeTemplate(CodeTemplateContextType.CONSTRUCTORSTUB_ID, "${body_statement}\n// TODO", null);
-		fSettings= JavaPreferencesSettings.getCodeGenerationSettings(null);
+		fSettings= JavaPreferencesSettings.getCodeGenerationSettings((IJavaProject)null);
 		fSettings.createComments= true;
 	}
 
@@ -1116,7 +1116,7 @@ public class AddUnimplementedConstructorsTest extends CoreTests {
 		IPackageFragmentRoot root= JavaProjectHelper.addSourceContainer(fJavaProject, "src");
 		fPackage= root.createPackageFragment("p", true, null);
 
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("\n");
 		buf.append("public class B  {\n");
@@ -1126,7 +1126,7 @@ public class AddUnimplementedConstructorsTest extends CoreTests {
 		fPackage.createCompilationUnit("B.java", buf.toString(), true, null);
 
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("\n");
 		buf.append("public class A extends B {\n");
@@ -1152,7 +1152,7 @@ public class AddUnimplementedConstructorsTest extends CoreTests {
 
 		final int NUM_MEMBERS= 6;
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("public A(int x) {\n");
 		buf.append("        super(x);\n");
 		buf.append("        // TODO\n");

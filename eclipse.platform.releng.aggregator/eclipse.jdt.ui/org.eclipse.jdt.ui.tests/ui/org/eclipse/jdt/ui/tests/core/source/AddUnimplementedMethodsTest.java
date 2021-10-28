@@ -47,7 +47,6 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IMethodBinding;
@@ -68,6 +67,8 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jdt.ui.PreferenceConstants;
 import org.eclipse.jdt.ui.tests.core.rules.ProjectTestSetup;
+
+import org.eclipse.jdt.internal.ui.util.ASTHelper;
 
 public class AddUnimplementedMethodsTest {
 	@Rule
@@ -209,7 +210,7 @@ public class AddUnimplementedMethodsTest {
 
 	@Test
 	public void bug119171() throws Exception {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package ibm.util;\n");
 		buf.append("import java.util.Properties;\n");
 		buf.append("public interface F {\n");
@@ -217,14 +218,14 @@ public class AddUnimplementedMethodsTest {
 		buf.append("}\n");
 		fPackage.createCompilationUnit("F.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package ibm.util;\n");
 		buf.append("public class Properties {\n");
 		buf.append("    public int get() {return 0;}\n");
 		buf.append("}\n");
 		fPackage.createCompilationUnit("Properties.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("public class Test5 implements F {\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        Properties p= new Properties();\n");
@@ -245,7 +246,7 @@ public class AddUnimplementedMethodsTest {
 
 	@Test
 	public void bug297183() throws Exception {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package ibm.util;\n");
 		buf.append("interface Shape {\r\n");
 		buf.append("  int getX();\r\n");
@@ -255,7 +256,7 @@ public class AddUnimplementedMethodsTest {
 		buf.append("}\r\n");
 		fPackage.createCompilationUnit("Shape.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package ibm.util;\n");
 		buf.append("interface Circle extends Shape {\r\n");
 		buf.append("  int getR();\r\n");
@@ -263,7 +264,7 @@ public class AddUnimplementedMethodsTest {
 		buf.append("\r\n");
 		fPackage.createCompilationUnit("Circle.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package ibm.util;\n");
 		buf.append("public class DefaultCircle implements Circle {\n");
 		buf.append("}\n");
@@ -287,7 +288,7 @@ public class AddUnimplementedMethodsTest {
 		IPackageFragmentRoot root= JavaProjectHelper.addSourceContainer(fJavaProject, "src");
 		fPackage= root.createPackageFragment("p", true, null);
 
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("\n");
 		buf.append("public abstract class B  {\n");
@@ -297,7 +298,7 @@ public class AddUnimplementedMethodsTest {
 		fPackage.createCompilationUnit("B.java", buf.toString(), true, null);
 
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("\n");
 		buf.append("public class A extends B {\n");
@@ -322,7 +323,7 @@ public class AddUnimplementedMethodsTest {
 
 		final int NUM_MEMBERS= 6;
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("public void foo() {\n");
 		buf.append("        // TODO\n");
 		buf.append("    }");
@@ -385,7 +386,7 @@ public class AddUnimplementedMethodsTest {
 	@Deprecated
 	@Test
 	public void jLS3() throws Exception {
-		doTestOldAstLevel(AST.JLS3);
+		doTestOldAstLevel(ASTHelper.JLS3);
 	}
 
 	/**
@@ -395,12 +396,12 @@ public class AddUnimplementedMethodsTest {
 	@Deprecated
 	@Test
 	public void jLS4() throws Exception {
-		doTestOldAstLevel(AST.JLS4);
+		doTestOldAstLevel(ASTHelper.JLS4);
 	}
 
 	@Test
 	public void jLS8() throws Exception {
-		doTestOldAstLevel(AST.JLS8);
+		doTestOldAstLevel(ASTHelper.JLS8);
 	}
 
 	/**

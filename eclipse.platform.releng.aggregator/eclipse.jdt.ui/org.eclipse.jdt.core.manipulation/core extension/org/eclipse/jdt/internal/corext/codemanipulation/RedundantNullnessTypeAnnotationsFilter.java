@@ -129,10 +129,10 @@ public class RedundantNullnessTypeAnnotationsFilter {
 					for (IAnnotationBinding nestedBinding : annotationAnnotations) {
 						ITypeBinding nestedAnnotationType= nestedBinding.getAnnotationType();
 						if (nestedAnnotationType != null) {
-							if (nestedAnnotationType.getName().equals("TypeQualifierDefault")) { //$NON-NLS-1$
+							if ("TypeQualifierDefault".equals(nestedAnnotationType.getName())) { //$NON-NLS-1$
 								foundTypeQualifierDefault= true;
 								for (final IMemberValuePairBinding pair : nestedBinding.getAllMemberValuePairs()) {
-									if (pair.getKey() == null || pair.getKey().equals("value")) { //$NON-NLS-1$
+									if (pair.getKey() == null || "value".equals(pair.getKey())) { //$NON-NLS-1$
 										Object value= pair.getValue();
 										if (value instanceof Object[]) {
 											Object[] values= (Object[]) value;
@@ -155,7 +155,7 @@ public class RedundantNullnessTypeAnnotationsFilter {
 				}
 			} else {
 				for (final IMemberValuePairBinding pair : pairs) {
-					if (pair.getKey() == null || pair.getKey().equals("value")) { //$NON-NLS-1$
+					if (pair.getKey() == null || "value".equals(pair.getKey())) { //$NON-NLS-1$
 						Object value= pair.getValue();
 						if (value instanceof Object[]) {
 							Object[] values= (Object[]) value;
@@ -180,12 +180,10 @@ public class RedundantNullnessTypeAnnotationsFilter {
 			} catch (IllegalArgumentException e) {
 				// ignore
 			}
-		} else if (value instanceof Boolean) {
-			if (((Boolean) value).booleanValue()) {
-				result.add(TypeLocation.RETURN_TYPE);
-				result.add(TypeLocation.PARAMETER);
-				result.add(TypeLocation.FIELD);
-			}
+		} else if (Boolean.TRUE.equals(value)) {
+			result.add(TypeLocation.RETURN_TYPE);
+			result.add(TypeLocation.PARAMETER);
+			result.add(TypeLocation.FIELD);
 		}
 	}
 
@@ -316,14 +314,9 @@ public class RedundantNullnessTypeAnnotationsFilter {
 			ArrayList<IAnnotationBinding> list= new ArrayList<>(annotations.length);
 			for (IAnnotationBinding annotation : annotations) {
 				ITypeBinding annotationType= annotation.getAnnotationType();
-				if (annotationType != null) {
-					if (annotationType.getQualifiedName().equals(fNonNullAnnotationName)) {
-						// ignore @NonNull
-					} else if (excludeAllNullAnnotations && annotationType.getQualifiedName().equals(fNullableAnnotationName)) {
-						// also ignore @Nullable
-					} else {
-						list.add(annotation);
-					}
+				if (annotationType != null
+						&& (annotationType.getQualifiedName().equals(fNonNullAnnotationName) || (excludeAllNullAnnotations && annotationType.getQualifiedName().equals(fNullableAnnotationName)))) {
+					// Ignore @NonNull
 				} else {
 					list.add(annotation);
 				}

@@ -77,8 +77,7 @@ public final class FillArgumentNamesCompletionProposalCollector extends Completi
 		if ((completion.length() == 0) || ((completion.length() == 1) && completion.charAt(0) == ')') || Signature.getParameterCount(methodProposal.getSignature()) == 0 || getContext().isInJavadoc())
 			return super.createJavaCompletionProposal(methodProposal);
 
-		LazyJavaCompletionProposal proposal= null;
-		proposal= ParameterGuessingProposal.createProposal(methodProposal, getInvocationContext(), fIsGuessArguments);
+		LazyJavaCompletionProposal proposal= ParameterGuessingProposal.createProposal(methodProposal, getInvocationContext(), fIsGuessArguments);
 		if (proposal == null) {
 			proposal= new FilledArgumentNamesMethodProposal(methodProposal, getInvocationContext());
 		}
@@ -118,7 +117,7 @@ public final class FillArgumentNamesCompletionProposalCollector extends Completi
 	 * @return <code>true</code> if the generic proposals should be allowed,
 	 *         <code>false</code> if not
 	 */
-	private final boolean shouldProposeGenerics(IJavaProject project) {
+	private boolean shouldProposeGenerics(IJavaProject project) {
 		String sourceVersion;
 		if (project != null)
 			sourceVersion= project.getOption(JavaCore.COMPILER_SOURCE, true);

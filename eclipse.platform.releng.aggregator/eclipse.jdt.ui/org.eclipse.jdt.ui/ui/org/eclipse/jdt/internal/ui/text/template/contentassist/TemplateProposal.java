@@ -67,7 +67,6 @@ import org.eclipse.jface.text.templates.TemplateException;
 import org.eclipse.jface.text.templates.TemplateVariable;
 
 import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.part.IWorkbenchPartOrientation;
 
 import org.eclipse.ui.texteditor.link.EditorLinkedModeUI;
 
@@ -249,9 +248,7 @@ public class TemplateProposal
 			MultiVariableGuess guess= fContext instanceof JavaContext ? ((JavaContext) fContext).getMultiVariableGuess() : null;
 
 			boolean hasPositions= false;
-			for (int i= 0; i != variables.length; i++) {
-				TemplateVariable variable= variables[i];
-
+			for (TemplateVariable variable : variables) {
 				if (variable.isUnambiguous())
 					continue;
 
@@ -386,9 +383,8 @@ public class TemplateProposal
 	private int getCaretOffset(TemplateBuffer buffer) {
 
 	    TemplateVariable[] variables= buffer.getVariables();
-		for (int i= 0; i != variables.length; i++) {
-			TemplateVariable variable= variables[i];
-			if (variable.getType().equals(GlobalTemplateVariables.Cursor.NAME))
+		for (TemplateVariable variable : variables) {
+			if (GlobalTemplateVariables.Cursor.NAME.equals(variable.getType()))
 				return variable.getOffsets()[0];
 		}
 
@@ -575,9 +571,9 @@ public class TemplateProposal
 	@Override
 	public IInformationControlCreator getInformationControlCreator() {
 		int orientation;
-		IEditorPart editor= getJavaEditor();
-		if (editor instanceof IWorkbenchPartOrientation)
-			orientation= ((IWorkbenchPartOrientation)editor).getOrientation();
+		JavaEditor editor= getJavaEditor();
+		if (editor != null)
+			orientation= editor.getOrientation();
 		else
 			orientation= SWT.LEFT_TO_RIGHT;
 		return new TemplateInformationControlCreator(orientation);

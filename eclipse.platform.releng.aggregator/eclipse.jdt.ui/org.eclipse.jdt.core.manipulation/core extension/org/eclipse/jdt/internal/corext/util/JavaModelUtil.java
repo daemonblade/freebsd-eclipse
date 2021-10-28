@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -80,7 +80,7 @@ public final class JavaModelUtil {
 	 */
 	public static final String VERSION_LATEST;
 	static {
-		VERSION_LATEST= JavaCore.VERSION_14; // make sure it is not inlined
+		VERSION_LATEST= JavaCore.VERSION_16; // make sure it is not inlined
 	}
 
 	public static final int VALIDATE_EDIT_CHANGED_CONTENT= 10003;
@@ -463,7 +463,7 @@ public final class JavaModelUtil {
 	 * @throws JavaModelException thrown when the field can not be accessed
 	 */
 	public static boolean isBoolean(IField field) throws JavaModelException{
-		return field.getTypeSignature().equals(Signature.SIG_BOOLEAN);
+		return Signature.SIG_BOOLEAN.equals(field.getTypeSignature());
 	}
 
 	/**
@@ -789,6 +789,10 @@ public final class JavaModelUtil {
 	}
 
 
+	public static boolean is20OrHigher(String compliance) {
+		return !isVersionLessThan(compliance, JavaCore.VERSION_1_2);
+	}
+
 	public static boolean is40OrHigher(String compliance) {
 		return !isVersionLessThan(compliance, JavaCore.VERSION_1_4);
 	}
@@ -797,15 +801,15 @@ public final class JavaModelUtil {
 		return !isVersionLessThan(compliance, JavaCore.VERSION_1_5);
 	}
 
-	public static boolean is16OrHigher(String compliance) {
+	public static boolean is1d6OrHigher(String compliance) {
 		return !isVersionLessThan(compliance, JavaCore.VERSION_1_6);
 	}
 
-	public static boolean is17OrHigher(String compliance) {
+	public static boolean is1d7OrHigher(String compliance) {
 		return !isVersionLessThan(compliance, JavaCore.VERSION_1_7);
 	}
 
-	public static boolean is18OrHigher(String compliance) {
+	public static boolean is1d8OrHigher(String compliance) {
 		return !isVersionLessThan(compliance, JavaCore.VERSION_1_8);
 	}
 
@@ -831,6 +835,24 @@ public final class JavaModelUtil {
 
 	public static boolean is14OrHigher(String compliance) {
 		return !isVersionLessThan(compliance, JavaCore.VERSION_14);
+	}
+
+	public static boolean is15OrHigher(String compliance) {
+		return !isVersionLessThan(compliance, JavaCore.VERSION_15);
+	}
+
+	public static boolean is16OrHigher(String compliance) {
+		return !isVersionLessThan(compliance, JavaCore.VERSION_16);
+	}
+
+	/**
+	 * Checks if the given project or workspace has source compliance 1.2 or greater.
+	 *
+	 * @param project the project to test or <code>null</code> to test the workspace settings
+	 * @return <code>true</code> if the given project or workspace has source compliance 1.2 or greater.
+	 */
+	public static boolean is1d2OrHigher(IJavaProject project) {
+		return is20OrHigher(getSourceCompliance(project));
 	}
 
 	/**
@@ -859,8 +881,8 @@ public final class JavaModelUtil {
 	 * @param project the project to test or <code>null</code> to test the workspace settings
 	 * @return <code>true</code> if the given project or workspace has source compliance 1.7 or greater.
 	 */
-	public static boolean is17OrHigher(IJavaProject project) {
-		return is17OrHigher(getSourceCompliance(project));
+	public static boolean is1d7OrHigher(IJavaProject project) {
+		return is1d7OrHigher(getSourceCompliance(project));
 	}
 
 	/**
@@ -870,8 +892,8 @@ public final class JavaModelUtil {
 	 * @return <code>true</code> if the given project or workspace has source compliance 1.8 or
 	 *         greater.
 	 */
-	public static boolean is18OrHigher(IJavaProject project) {
-		return is18OrHigher(getSourceCompliance(project));
+	public static boolean is1d8OrHigher(IJavaProject project) {
+		return is1d8OrHigher(getSourceCompliance(project));
 	}
 
 	/**
@@ -930,7 +952,29 @@ public final class JavaModelUtil {
 		return is14OrHigher(getSourceCompliance(project));
 	}
 
-	private static String getSourceCompliance(IJavaProject project) {
+	/**
+	 * Checks if the given project or workspace has source compliance 15 or greater.
+	 *
+	 * @param project the project to test or <code>null</code> to test the workspace settings
+	 * @return <code>true</code> if the given project or workspace has source compliance 15 or
+	 *         greater.
+	 */
+	public static boolean is15OrHigher(IJavaProject project) {
+		return is15OrHigher(getSourceCompliance(project));
+	}
+
+	/**
+	 * Checks if the given project or workspace has source compliance 16 or greater.
+	 *
+	 * @param project the project to test or <code>null</code> to test the workspace settings
+	 * @return <code>true</code> if the given project or workspace has source compliance 16 or
+	 *         greater.
+	 */
+	public static boolean is16OrHigher(IJavaProject project) {
+		return is16OrHigher(getSourceCompliance(project));
+	}
+
+	public static String getSourceCompliance(IJavaProject project) {
 		return project != null ? project.getOption(JavaCore.COMPILER_SOURCE, true) : JavaCore.getOption(JavaCore.COMPILER_SOURCE);
 	}
 
@@ -980,6 +1024,10 @@ public final class JavaModelUtil {
 		String version= vMInstall.getJavaVersion();
 		if (version == null) {
 			return defaultCompliance;
+		} else if (version.startsWith(JavaCore.VERSION_16)) {
+			return JavaCore.VERSION_16;
+		} else if (version.startsWith(JavaCore.VERSION_15)) {
+			return JavaCore.VERSION_15;
 		} else if (version.startsWith(JavaCore.VERSION_14)) {
 			return JavaCore.VERSION_14;
 		} else if (version.startsWith(JavaCore.VERSION_13)) {
@@ -1002,11 +1050,9 @@ public final class JavaModelUtil {
 			return JavaCore.VERSION_1_5;
 		} else if (version.startsWith(JavaCore.VERSION_1_4)) {
 			return JavaCore.VERSION_1_4;
-		} else if (version.startsWith(JavaCore.VERSION_1_3)) {
-			return JavaCore.VERSION_1_3;
-		} else if (version.startsWith(JavaCore.VERSION_1_2)) {
-			return JavaCore.VERSION_1_3;
-		} else if (version.startsWith(JavaCore.VERSION_1_1)) {
+		} else if (version.startsWith(JavaCore.VERSION_1_3)
+				|| version.startsWith(JavaCore.VERSION_1_2)
+				|| version.startsWith(JavaCore.VERSION_1_1)) {
 			return JavaCore.VERSION_1_3;
 		}
 		return JavaCore.isSupportedJavaVersion(version) ? defaultCompliance : JavaModelUtil.VERSION_LATEST;
@@ -1015,14 +1061,18 @@ public final class JavaModelUtil {
 	public static String getExecutionEnvironmentCompliance(IExecutionEnvironment executionEnvironment) {
 		Map<String, String> complianceOptions= executionEnvironment.getComplianceOptions();
 		if (complianceOptions != null) {
-			Object compliance= complianceOptions.get(JavaCore.COMPILER_COMPLIANCE);
-			if (compliance instanceof String)
-				return (String)compliance;
+			String compliance= complianceOptions.get(JavaCore.COMPILER_COMPLIANCE);
+			if (compliance != null)
+				return compliance;
 		}
 
 		// fallback:
 		String desc= executionEnvironment.getId();
-		if (desc.indexOf(JavaCore.VERSION_14) != -1) {
+		if (desc.indexOf(JavaCore.VERSION_16) != -1) {
+			return JavaCore.VERSION_16;
+		} else if (desc.indexOf(JavaCore.VERSION_15) != -1) {
+			return JavaCore.VERSION_15;
+		} else if (desc.indexOf(JavaCore.VERSION_14) != -1) {
 			return JavaCore.VERSION_14;
 		} else if (desc.indexOf(JavaCore.VERSION_13) != -1) {
 			return JavaCore.VERSION_13;

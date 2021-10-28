@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corporation and others.
+ * Copyright (c) 2018, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,7 @@
  *     IBM Corporation - initial API and implementation
  *     Red Hat Inc. - copied and pared down to methods needed by jdt.core.manipulation
  *     Microsoft Corporation - copied methods needed by jdt.core.manipulation
+ *     Microsoft Corporation - read formatting options from the compilation unit
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.codemanipulation;
 
@@ -84,6 +85,8 @@ import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
+import org.eclipse.jdt.internal.ui.util.ASTHelper;
+
 /**
  * Utilities for code generation based on AST rewrite.
  *
@@ -117,7 +120,7 @@ public final class StubUtility2Core {
 				varDecl= iterator.next();
 				invocation.arguments().add(ast.newSimpleName(varDecl.getName().getIdentifier()));
 			}
-			bodyStatement= ASTNodes.asFormattedString(invocation, 0, delimiter, formatSettings == null ? unit.getJavaProject().getOptions(true) : formatSettings);
+			bodyStatement= ASTNodes.asFormattedString(invocation, 0, delimiter, formatSettings == null ? unit.getOptions(true) : formatSettings);
 		}
 
 		if (todo) {
@@ -261,7 +264,7 @@ public final class StubUtility2Core {
 			invocation.setExpression(access);
 		} else
 			invocation.setExpression(ast.newSimpleName(delegatingField.getName()));
-		if (delegate.getReturnType().isPrimitive() && delegate.getReturnType().getName().equals("void")) {//$NON-NLS-1$
+		if (delegate.getReturnType().isPrimitive() && "void".equals(delegate.getReturnType().getName())) {//$NON-NLS-1$
 			statement= ast.newExpressionStatement(invocation);
 		} else {
 			ReturnStatement returnStatement= ast.newReturnStatement();
@@ -348,10 +351,10 @@ public final class StubUtility2Core {
 		int modifiers= binding.getModifiers();
 		ITypeBinding declaringType= binding.getDeclaringClass();
 		ITypeBinding typeObject= ast.resolveWellKnownType("java.lang.Object"); //$NON-NLS-1$
-		if (!inInterface || (declaringType != typeObject && JavaModelUtil.is18OrHigher(javaProject))) {
+		if (!inInterface || (declaringType != typeObject && JavaModelUtil.is1d8OrHigher(javaProject))) {
 			// generate a method body
 
-			Map<String, String> options= javaProject.getOptions(true);
+			Map<String, String> options= unit.getOptions(true);
 
 			Block body= ast.newBlock();
 			decl.setBody(body);
@@ -524,7 +527,7 @@ public final class StubUtility2Core {
 
 	public static void createThrownExceptions(MethodDeclaration decl, IMethodBinding method, ImportRewrite imports, ImportRewriteContext context, AST ast) {
 		ITypeBinding[] excTypes= method.getExceptionTypes();
-		if (ast.apiLevel() >= AST.JLS8) {
+		if (ast.apiLevel() >= ASTHelper.JLS8) {
 			List<Type> thrownExceptions= decl.thrownExceptionTypes();
 			for (ITypeBinding t : excTypes) {
 				Type excType= imports.addImport(t, ast, context, TypeLocation.EXCEPTION);
@@ -614,7 +617,7 @@ public final class StubUtility2Core {
 		int modifiers= method.getModifiers();
 		if (inInterface) {
 			modifiers= modifiers & ~Modifier.PROTECTED & ~Modifier.PUBLIC;
-			if (Modifier.isAbstract(modifiers) && JavaModelUtil.is18OrHigher(javaProject)) {
+			if (Modifier.isAbstract(modifiers) && JavaModelUtil.is1d8OrHigher(javaProject)) {
 				modifiers= modifiers | Modifier.DEFAULT;
 			}
 		} else {
@@ -679,7 +682,11 @@ public final class StubUtility2Core {
 		final List<DelegateEntry> tuples= new ArrayList<>();
 		final List<IMethodBinding> declared= new ArrayList<>();
 		IMethodBinding[] typeMethods= binding.getDeclaredMethods();
-		declared.addAll(Arrays.asList(typeMethods));
+		for (IMethodBinding typeMethod : typeMethods) {
+			if (!typeMethod.isSyntheticRecordMethod()) {
+				declared.add(typeMethod);
+			}
+		}
 		for (IVariableBinding fieldBinding : binding.getDeclaredFields()) {
 			if (fieldBinding.isField() && !fieldBinding.isEnumConstant() && !fieldBinding.isSynthetic())
 				getDelegatableMethods(new ArrayList<>(declared), fieldBinding, fieldBinding.getType(), binding, tuples);
@@ -731,7 +738,9 @@ public final class StubUtility2Core {
 			final int modifiers= typeMethod.getModifiers();
 			if (!typeMethod.isConstructor() && !Modifier.isStatic(modifiers) && (isInterface || Modifier.isPublic(modifiers))) {
 				IMethodBinding result= Bindings.findOverriddenMethodInHierarchy(hierarchy, typeMethod);
-				if (result != null && Flags.isFinal(result.getModifiers()))
+				if (result != null
+						&& Flags.isFinal(result.getModifiers())
+						&& !result.isSyntheticRecordMethod())
 					continue;
 				ITypeBinding[] parameterBindings= typeMethod.getParameterTypes();
 				boolean upper= false;
@@ -753,7 +762,7 @@ public final class StubUtility2Core {
 		IMethodBinding[] typeMethods= typeBinding.getDeclaredMethods();
 		for (IMethodBinding typeMethod : typeMethods) {
 			final int modifiers= typeMethod.getModifiers();
-			if (!typeMethod.isConstructor() && !Modifier.isStatic(modifiers) && !Modifier.isPrivate(modifiers)) {
+			if (!typeMethod.isConstructor() && !Modifier.isStatic(modifiers) && !Modifier.isPrivate(modifiers) && !typeMethod.isSyntheticRecordMethod()) {
 				allMethods.add(typeMethod);
 			}
 		}

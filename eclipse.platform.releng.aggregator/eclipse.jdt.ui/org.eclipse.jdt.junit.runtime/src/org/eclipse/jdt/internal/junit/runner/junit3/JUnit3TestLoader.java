@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2019 IBM Corporation and others.
+ * Copyright (c) 2006, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,10 +21,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-
 import org.eclipse.jdt.internal.junit.runner.FailuresFirstPrioritizer;
 import org.eclipse.jdt.internal.junit.runner.ITestLoader;
 import org.eclipse.jdt.internal.junit.runner.ITestPrioritizer;
@@ -33,12 +29,17 @@ import org.eclipse.jdt.internal.junit.runner.JUnitMessages;
 import org.eclipse.jdt.internal.junit.runner.NullPrioritizer;
 import org.eclipse.jdt.internal.junit.runner.RemoteTestRunner;
 
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
+
 public class JUnit3TestLoader implements ITestLoader {
 	private static final String SUITE_METHODNAME= "suite"; //$NON-NLS-1$
 	public static final String SET_UP_TEST_METHOD_NAME = "setUpTest"; //$NON-NLS-1$
 
 	// WANT: give test loaders a schema
 
+	@Override
 	public ITestReference[] loadTests(Class<?>[] testClasses, String testName, String[] failureNames, String[] packages, String[][] includeExcludeTags, String uniqueId, RemoteTestRunner listener) {
 		// instantiate all tests
 		ITestReference[] suites= new ITestReference[testClasses.length];
@@ -66,7 +67,7 @@ public class JUnit3TestLoader implements ITestLoader {
 		try {
 			try {
 				constructor= testClass.getConstructor(classArgs);
-				test= (Test) constructor.newInstance(new Object[] { testName });
+				test= (Test) constructor.newInstance(testName);
 			} catch (NoSuchMethodException e) {
 				// try the no arg constructor supported in 3.8.1
 				constructor= testClass.getConstructor(new Class[0]);
@@ -77,10 +78,15 @@ public class JUnit3TestLoader implements ITestLoader {
 			if (test != null)
 				return test;
 		} catch (InstantiationException e) {
+			// do nothing
 		} catch (IllegalAccessException e) {
+			// do nothing
 		} catch (InvocationTargetException e) {
+			// do nothing
 		} catch (NoSuchMethodException e) {
+			// do nothing
 		} catch (ClassCastException e) {
+			// do nothing
 		}
 		return error(testName, "Could not create test \'" + testName + "\' "); //$NON-NLS-1$ //$NON-NLS-2$
 	}
@@ -135,7 +141,7 @@ public class JUnit3TestLoader implements ITestLoader {
 
 		Method setup= null;
 		try {
-			setup= reloadedTestClass.getMethod(SET_UP_TEST_METHOD_NAME, new Class[] { Test.class });
+			setup= reloadedTestClass.getMethod(SET_UP_TEST_METHOD_NAME, Test.class);
 		} catch (SecurityException e1) {
 			return reloadedTest;
 		} catch (NoSuchMethodException e) {
@@ -148,7 +154,7 @@ public class JUnit3TestLoader implements ITestLoader {
 		if (!Modifier.isStatic(setup.getModifiers()))
 			return error(testName, JUnitMessages.getString("RemoteTestRunner.error.shouldbestatic")); //$NON-NLS-1$
 		try {
-			Test test= (Test) setup.invoke(null, new Object[] { reloadedTest });
+			Test test= (Test) setup.invoke(null, reloadedTest);
 			if (test == null)
 				return error(testName, JUnitMessages.getString("RemoteTestRunner.error.nullreturn")); //$NON-NLS-1$
 			return test;

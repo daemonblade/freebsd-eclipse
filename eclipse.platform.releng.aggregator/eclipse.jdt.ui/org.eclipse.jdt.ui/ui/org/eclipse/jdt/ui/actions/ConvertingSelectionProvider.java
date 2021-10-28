@@ -14,7 +14,6 @@
 package org.eclipse.jdt.ui.actions;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
@@ -102,11 +101,12 @@ public class ConvertingSelectionProvider implements ISelectionProvider {
 			return viewerSelection;
 		IStructuredSelection selection= (IStructuredSelection)viewerSelection;
 		List<Object> result= new ArrayList<>(selection.size());
-		for (Iterator<?> iter= selection.iterator(); iter.hasNext();) {
-			Object element= iter.next();
-			if (element instanceof IResource || element instanceof IJavaElement) {
+		for (Object element : selection) {
+			if (element instanceof IResource
+					|| element instanceof IJavaElement
+					|| !(element instanceof IAdaptable)) {
 				result.add(element);
-			} else if (element instanceof IAdaptable) {
+			} else {
 				IAdaptable adaptable= (IAdaptable)element;
 				IJavaElement jElement= adaptable.getAdapter(IJavaElement.class);
 				if (jElement != null) {
@@ -119,8 +119,6 @@ public class ConvertingSelectionProvider implements ISelectionProvider {
 						result.add(element);
 					}
 				}
-			} else {
-				result.add(element);
 			}
 		}
 		return new StructuredSelection(result);

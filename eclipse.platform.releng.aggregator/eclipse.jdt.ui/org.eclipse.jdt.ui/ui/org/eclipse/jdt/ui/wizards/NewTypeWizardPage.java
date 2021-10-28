@@ -149,7 +149,6 @@ import org.eclipse.jdt.internal.ui.refactoring.contentassist.CompletionContextRe
 import org.eclipse.jdt.internal.ui.refactoring.contentassist.ControlContentAssistHelper;
 import org.eclipse.jdt.internal.ui.refactoring.contentassist.JavaPackageCompletionProcessor;
 import org.eclipse.jdt.internal.ui.refactoring.contentassist.JavaTypeCompletionProcessor;
-import org.eclipse.jdt.internal.ui.text.correction.PreviewFeaturesSubProcessor;
 import org.eclipse.jdt.internal.ui.util.SWTUtil;
 import org.eclipse.jdt.internal.ui.wizards.NewWizardMessages;
 import org.eclipse.jdt.internal.ui.wizards.SuperInterfaceSelectionDialog;
@@ -185,6 +184,8 @@ import org.eclipse.jdt.internal.ui.wizards.dialogfields.StringDialogField;
  * @since 2.0
  */
 public abstract class NewTypeWizardPage extends NewContainerWizardPage {
+
+	private static final Pattern NUM_PATTERN= Pattern.compile("[0-9]+$"); //$NON-NLS-1$
 
 	/**
 	 * Class used in stub creation routines to add needed imports to a
@@ -665,8 +666,7 @@ public abstract class NewTypeWizardPage extends NewContainerWizardPage {
 			boolean initial= true;
 			while (resource == null || resource.exists()) {
 				typeName= Signature.getSimpleName(typeName);
-				Pattern p= Pattern.compile("[0-9]+$"); //$NON-NLS-1$
-				Matcher m= p.matcher(typeName);
+				Matcher m= NUM_PATTERN.matcher(typeName);
 				if (m.find()) {
 					// String ends with a number: increment it by 1
 					BigDecimal newNumber= null;
@@ -1612,10 +1612,8 @@ public abstract class NewTypeWizardPage extends NewContainerWizardPage {
 	    }
 		if ((fTypeKind == RECORD_TYPE) && !status.matches(IStatus.ERROR)) {
 	    	if (root != null) {
-	    		if (!JavaModelUtil.is14OrHigher(root.getJavaProject())) {
-	    			return new StatusInfo(IStatus.ERROR, Messages.format(NewWizardMessages.NewTypeWizardPage_warning_NotJDKCompliant2, new String[] {BasicElementLabels.getJavaElementName(root.getJavaProject().getElementName()), "14" })); //$NON-NLS-1$
-	    		} else if (!PreviewFeaturesSubProcessor.isPreviewFeatureEnabled(root.getJavaProject())) {
-	    			return new StatusInfo(IStatus.ERROR, Messages.format(NewWizardMessages.NewTypeWizardPage_warning_PreviewFeatureNotEnabled, BasicElementLabels.getJavaElementName(root.getJavaProject().getElementName())));
+	    		if (!JavaModelUtil.is16OrHigher(root.getJavaProject())) {
+	    			return new StatusInfo(IStatus.ERROR, Messages.format(NewWizardMessages.NewTypeWizardPage_warning_NotJDKCompliant2, new String[] {BasicElementLabels.getJavaElementName(root.getJavaProject().getElementName()), "16" })); //$NON-NLS-1$
 	    		}
 	    		try {
 		    	    // if findType(...) == null then Record is unavailable

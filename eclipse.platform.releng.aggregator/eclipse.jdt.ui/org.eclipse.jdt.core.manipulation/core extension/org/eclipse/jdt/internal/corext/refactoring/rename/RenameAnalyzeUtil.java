@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -294,7 +294,7 @@ public class RenameAnalyzeUtil {
 			SearchMatch[] oldMatches, SearchMatch[] newMatches, String newElementName, RefactoringStatus result) {
 		Map<Integer, SearchMatch> updatedOldOffsets= getUpdatedChangeOffsets(change, oldMatches);
 		for (SearchMatch newMatch : newMatches) {
-			Integer offsetInNew= Integer.valueOf(newMatch.getOffset());
+			Integer offsetInNew= newMatch.getOffset();
 			SearchMatch oldMatch= updatedOldOffsets.remove(offsetInNew);
 			if (oldMatch == null) {
 				addReferenceShadowedError(cu, newMatch, newElementName, result);
@@ -317,7 +317,7 @@ public class RenameAnalyzeUtil {
 		for (SearchMatch oldMatch : oldMatches) {
 			Integer updatedOffset= oldToUpdatedOffsets.get(Integer.valueOf(oldMatch.getOffset()));
 			if (updatedOffset == null)
-				updatedOffset= Integer.valueOf(-1); //match not updated
+				updatedOffset= -1; //match not updated
 			updatedOffsets.put(updatedOffset, oldMatch);
 		}
 		return updatedOffsets;
@@ -339,7 +339,7 @@ public class RenameAnalyzeUtil {
 			if (updatedRegion == null)
 				continue;
 
-			offsetUpdates.put(Integer.valueOf(oldRegion.getOffset()), Integer.valueOf(updatedRegion.getOffset()));
+			offsetUpdates.put(oldRegion.getOffset(), updatedRegion.getOffset());
 		}
 		return offsetUpdates;
 	}
@@ -400,6 +400,19 @@ public class RenameAnalyzeUtil {
 	 * @throws CoreException thrown if there was an error greating the preview content of the change
 	 */
 	public static RefactoringStatus analyzeLocalRenames(LocalAnalyzePackage[] analyzePackages, TextChange cuChange, CompilationUnit oldCUNode, boolean recovery) throws CoreException {
+		return analyzeLocalRenames(analyzePackages, cuChange, oldCUNode, false, recovery);
+	}
+
+	/**
+	 *
+	 * @noreference This method is not intended to be referenced by clients.
+	 */
+	@SuppressWarnings("javadoc")
+	public static RefactoringStatus analyzeCompactConstructorLocalRenames(LocalAnalyzePackage[] analyzePackages, TextChange cuChange, CompilationUnit oldCUNode, boolean recovery) throws CoreException {
+		return analyzeLocalRenames(analyzePackages, cuChange, oldCUNode, true, recovery);
+	}
+
+	private static RefactoringStatus analyzeLocalRenames(LocalAnalyzePackage[] analyzePackages, TextChange cuChange, CompilationUnit oldCUNode, boolean isCompactConstructor, boolean recovery) throws CoreException {
 
 		RefactoringStatus result= new RefactoringStatus();
 		ICompilationUnit compilationUnit= (ICompilationUnit) oldCUNode.getJavaElement();
@@ -412,10 +425,17 @@ public class RenameAnalyzeUtil {
 			return result;
 
 		for (LocalAnalyzePackage analyzePackage : analyzePackages) {
-			ASTNode enclosing= getEnclosingBlockOrMethodOrLambda(analyzePackage.fDeclarationEdit, cuChange, newCUNode);
+			ASTNode enclosing;
+			IRegion newRegion;
+			if (!isCompactConstructor) {
+				enclosing= getEnclosingBlockOrMethodOrLambda(analyzePackage.fDeclarationEdit, cuChange, newCUNode);
+				newRegion= RefactoringAnalyzeUtil.getNewTextRange(analyzePackage.fDeclarationEdit, cuChange);
+			} else {
+				enclosing= RefactoringAnalyzeUtil.getRecordDeclarationCompactConstructor(analyzePackage.fDeclarationEdit.getParent(), cuChange, newCUNode);
+				newRegion= RefactoringAnalyzeUtil.getNewTextRange(analyzePackage.fDeclarationEdit.getParent(), cuChange);
+			}
 
 			// get new declaration
-			IRegion newRegion= RefactoringAnalyzeUtil.getNewTextRange(analyzePackage.fDeclarationEdit, cuChange);
 			ASTNode newDeclaration= NodeFinder.perform(newCUNode, newRegion.getOffset(), newRegion.getLength());
 			Assert.isTrue(newDeclaration instanceof Name);
 
@@ -427,6 +447,7 @@ public class RenameAnalyzeUtil {
 		}
 		return result;
 	}
+
 
 	private static VariableDeclaration getVariableDeclaration(Name node) {
 		IBinding binding= node.resolveBinding();

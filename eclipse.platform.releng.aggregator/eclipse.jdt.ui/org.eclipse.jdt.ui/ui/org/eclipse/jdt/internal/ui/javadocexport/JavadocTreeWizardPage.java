@@ -13,6 +13,12 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.javadocexport;
 
+import static org.eclipse.jdt.internal.ui.javadocexport.JavadocTreeWizardPage.JavadocTree.CUSTOMSTATUS;
+import static org.eclipse.jdt.internal.ui.javadocexport.JavadocTreeWizardPage.JavadocTree.JAVADOCSTATUS;
+import static org.eclipse.jdt.internal.ui.javadocexport.JavadocTreeWizardPage.JavadocTree.PREFERENCESTATUS;
+import static org.eclipse.jdt.internal.ui.javadocexport.JavadocTreeWizardPage.JavadocTree.STANDARDSTATUS;
+import static org.eclipse.jdt.internal.ui.javadocexport.JavadocTreeWizardPage.JavadocTree.TREESTATUS;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -73,6 +79,7 @@ import org.eclipse.jdt.internal.ui.util.SWTUtil;
 import org.eclipse.jdt.internal.ui.wizards.dialogfields.LayoutUtil;
 
 public class JavadocTreeWizardPage extends JavadocWizardPage {
+	enum JavadocTree {PREFERENCESTATUS,CUSTOMSTATUS,STANDARDSTATUS,TREESTATUS,JAVADOCSTATUS}
 
 	private CheckboxTreeAndListGroup fInputGroup;
 
@@ -102,12 +109,6 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 	private StatusInfo fTreeStatus;
 	private StatusInfo fPreferenceStatus;
 	private StatusInfo fWizardStatus;
-
-	private final int PREFERENCESTATUS= 0;
-	private final int CUSTOMSTATUS= 1;
-	private final int STANDARDSTATUS= 2;
-	private final int TREESTATUS= 3;
-	private final int JAVADOCSTATUS= 4;
 
 	/**
 	 * Constructor for JavadocTreeWizardPage.
@@ -235,7 +236,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				if (((Button) e.widget).getSelection()) {
-					fVisibilitySelection= fStore.PRIVATE;
+					fVisibilitySelection= JavadocOptionsManager.PRIVATE;
 					fDescriptionLabel.setText(JavadocExportMessages.JavadocTreeWizardPage_privatevisibilitydescription_label);
 				}
 			}
@@ -244,7 +245,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				if (((Button) e.widget).getSelection()) {
-					fVisibilitySelection= fStore.PACKAGE;
+					fVisibilitySelection= JavadocOptionsManager.PACKAGE;
 					fDescriptionLabel.setText(JavadocExportMessages.JavadocTreeWizardPage_packagevisibledescription_label);
 				}
 			}
@@ -253,7 +254,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				if (((Button) e.widget).getSelection()) {
-					fVisibilitySelection= fStore.PROTECTED;
+					fVisibilitySelection= JavadocOptionsManager.PROTECTED;
 					fDescriptionLabel.setText(JavadocExportMessages.JavadocTreeWizardPage_protectedvisibilitydescription_label);
 				}
 			}
@@ -263,7 +264,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				if (((Button) e.widget).getSelection()) {
-					fVisibilitySelection= fStore.PUBLIC;
+					fVisibilitySelection= JavadocOptionsManager.PUBLIC;
 					fDescriptionLabel.setText(JavadocExportMessages.JavadocTreeWizardPage_publicvisibilitydescription_label);
 				}
 			}
@@ -275,19 +276,19 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 
 	protected void setVisibilitySettings() {
 		fVisibilitySelection= fStore.getAccess();
-		fPrivateVisibility.setSelection(fVisibilitySelection.equals(fStore.PRIVATE));
+		fPrivateVisibility.setSelection(JavadocOptionsManager.PRIVATE.equals(fVisibilitySelection));
 		if (fPrivateVisibility.getSelection())
 			fDescriptionLabel.setText(JavadocExportMessages.JavadocTreeWizardPage_privatevisibilitydescription_label);
 
-		fProtectedVisibility.setSelection(fVisibilitySelection.equals(fStore.PROTECTED));
+		fProtectedVisibility.setSelection(JavadocOptionsManager.PROTECTED.equals(fVisibilitySelection));
 		if (fProtectedVisibility.getSelection())
 			fDescriptionLabel.setText(JavadocExportMessages.JavadocTreeWizardPage_protectedvisibilitydescription_label);
 
-		fPackageVisibility.setSelection(fVisibilitySelection.equals(fStore.PACKAGE));
+		fPackageVisibility.setSelection(JavadocOptionsManager.PACKAGE.equals(fVisibilitySelection));
 		if (fPackageVisibility.getSelection())
 			fDescriptionLabel.setText(JavadocExportMessages.JavadocTreeWizardPage_packagevisibledescription_label);
 
-		fPublicVisibility.setSelection(fVisibilitySelection.equals(fStore.PUBLIC));
+		fPublicVisibility.setSelection(JavadocOptionsManager.PUBLIC.equals(fVisibilitySelection));
 		if (fPublicVisibility.getSelection())
 			fDescriptionLabel.setText(JavadocExportMessages.JavadocTreeWizardPage_publicvisibilitydescription_label);
 	}
@@ -400,9 +401,8 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 		for (IJavaElement curr : sourceElements) {
 			if (curr instanceof ICompilationUnit) {
 				fInputGroup.initialCheckListItem(curr);
-			} else if (curr instanceof IPackageFragment) {
-				fInputGroup.initialCheckTreeItem(curr);
-			} else if (curr instanceof IJavaProject) {
+			} else if (curr instanceof IPackageFragment
+					|| curr instanceof IJavaProject) {
 				fInputGroup.initialCheckTreeItem(curr);
 			} else if (curr instanceof IPackageFragmentRoot) {
 				IPackageFragmentRoot root= (IPackageFragmentRoot) curr;
@@ -575,10 +575,10 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 		return res.toArray(new IJavaProject[res.size()]);
 	}
 
-	protected void doValidation(int validate) {
+	protected void doValidation(JavadocTree javadocstatus) {
 
 
-		switch (validate) {
+		switch (javadocstatus) {
 			case PREFERENCESTATUS :
 				fPreferenceStatus= new StatusInfo();
 				fDocletStatus= new StatusInfo();

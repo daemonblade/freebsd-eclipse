@@ -15,7 +15,6 @@ package org.eclipse.jdt.internal.ui.text;
 
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.swt.graphics.Color;
@@ -33,47 +32,6 @@ public class JavaColorManager implements IColorManager, IColorManagerExtension {
 	protected Map<String, RGB> fKeyTable= new HashMap<>(10);
 	protected Map<Display, Map<RGB, Color>> fDisplayTable= new HashMap<>(2);
 
-	/**
-	 * Flag which tells if the colors are automatically disposed when
-	 * the current display gets disposed.
-	 */
-	private boolean fAutoDisposeOnDisplayDispose;
-
-
-	/**
-	 * Creates a new Java color manager which automatically
-	 * disposes the allocated colors when the current display
-	 * gets disposed.
-	 */
-	public JavaColorManager() {
-		this(true);
-	}
-
-	/**
-	 * Creates a new Java color manager.
-	 *
-	 * @param autoDisposeOnDisplayDispose 	if <code>true</code>  the color manager
-	 * automatically disposes all managed colors when the current display gets disposed
-	 * and all calls to {@link org.eclipse.jface.text.source.ISharedTextColors#dispose()} are ignored.
-	 *
-	 * @since 2.1
-	 */
-	public JavaColorManager(boolean autoDisposeOnDisplayDispose) {
-		fAutoDisposeOnDisplayDispose= autoDisposeOnDisplayDispose;
-	}
-
-	public void dispose(Display display) {
-		Map<RGB, Color> colorTable= fDisplayTable.get(display);
-		if (colorTable != null) {
-			Iterator<Color> e= colorTable.values().iterator();
-			while (e.hasNext()) {
-				Color color= e.next();
-				if (color != null && !color.isDisposed())
-					color.dispose();
-			}
-		}
-	}
-
 	/*
 	 * @see IColorManager#getColor(RGB)
 	 */
@@ -88,9 +46,6 @@ public class JavaColorManager implements IColorManager, IColorManagerExtension {
 		if (colorTable == null) {
 			colorTable= new HashMap<>(10);
 			fDisplayTable.put(display, colorTable);
-			if (fAutoDisposeOnDisplayDispose) {
-				display.disposeExec(() -> dispose(display));
-			}
 		}
 
 		Color color= colorTable.get(rgb);
@@ -107,9 +62,9 @@ public class JavaColorManager implements IColorManager, IColorManagerExtension {
 	 */
 	@Override
 	public void dispose() {
-		if (!fAutoDisposeOnDisplayDispose)
-			dispose(Display.getCurrent());
+		// no-op
 	}
+
 
 	/*
 	 * @see IColorManager#getColor(String)

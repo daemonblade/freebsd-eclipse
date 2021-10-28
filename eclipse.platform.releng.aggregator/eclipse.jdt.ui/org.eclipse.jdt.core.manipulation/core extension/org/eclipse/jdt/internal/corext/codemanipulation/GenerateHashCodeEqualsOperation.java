@@ -135,7 +135,7 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 
 	private interface IHashCodeAccessProvider {
 
-		public Expression getThisAccess(String name);
+		Expression getThisAccess(String name);
 	}
 
 	private static final String JAVA_UTIL_ARRAYS= "java.util.Arrays"; //$NON-NLS-1$
@@ -296,7 +296,7 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 	 *
 	 * @return the resulting edit
 	 */
-	public final TextEdit getResultingEdit() {
+	public TextEdit getResultingEdit() {
 		return fEdit;
 	}
 
@@ -305,7 +305,7 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 	 *
 	 * @return the scheduling rule
 	 */
-	public final ISchedulingRule getSchedulingRule() {
+	public ISchedulingRule getSchedulingRule() {
 		return ResourcesPlugin.getWorkspace().getRoot();
 	}
 
@@ -313,7 +313,7 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 	 * @see org.eclipse.core.resources.IWorkspaceRunnable#run(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-	public final void run(IProgressMonitor monitor) throws CoreException {
+	public void run(IProgressMonitor monitor) throws CoreException {
 		if (monitor == null)
 			monitor= new NullProgressMonitor();
 		try {
@@ -475,9 +475,7 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 					j7Invoc.arguments().add(fAst.newSimpleName(field.getName()));
 				} else if (field.getType().isPrimitive()) {
 					Statement[] sts= createAddSimpleHashCode(field.getType(), this::getThisAccessForHashCode, field.getName(), false);
-					for (Statement st : sts) {
-						body.statements().add(st);
-					}
+					body.statements().addAll(Arrays.asList(sts));
 				} else {
 					body.statements().add(createAddQualifiedHashCode(field));
 				}
@@ -498,7 +496,7 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 			ITypeBinding object= fAst.resolveWellKnownType(JAVA_LANG_OBJECT);
 			IMethodBinding objectMethod= null;
 			for (IMethodBinding objm : object.getDeclaredMethods()) {
-				if (objm.getName().equals(METHODNAME_HASH_CODE) && objm.getParameterTypes().length == 0) {
+				if (METHODNAME_HASH_CODE.equals(objm.getName()) && objm.getParameterTypes().length == 0) {
 					objectMethod= objm;
 				}
 			}
@@ -730,9 +728,7 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 			a.setIndex(fAst.newSimpleName(name));
 			return a;
 		}, VARIABLE_NAME_INDEX, true);
-		for (Statement statement : statements) {
-			forBody.statements().add(statement);
-		}
+		forBody.statements().addAll(Arrays.asList(statements));
 		forStatement.setBody(forBody);
 
 		// END RETURN
@@ -950,7 +946,7 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 			ITypeBinding object= fAst.resolveWellKnownType(JAVA_LANG_OBJECT);
 			IMethodBinding objectMethod= null;
 			for (IMethodBinding objm : object.getDeclaredMethods()) {
-				if (objm.getName().equals(METHODNAME_EQUALS) && objm.getParameterTypes().length == 1 && objm.getParameterTypes()[0].getQualifiedName().equals(JAVA_LANG_OBJECT)) {
+				if (METHODNAME_EQUALS.equals(objm.getName()) && objm.getParameterTypes().length == 1 && JAVA_LANG_OBJECT.equals(objm.getParameterTypes()[0].getQualifiedName())) {
 					objectMethod= objm;
 				}
 			}
@@ -1190,7 +1186,7 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 		IMethodBinding binding= Bindings.findMethodInHierarchy(typeBinding.getSuperclass(), name, parameters);
 		if (binding != null && !Modifier.isAbstract(binding.getModifiers())) {
 			ITypeBinding declaring= binding.getDeclaringClass();
-			return declaring.getQualifiedName().equals(JAVA_LANG_OBJECT);
+			return JAVA_LANG_OBJECT.equals(declaring.getQualifiedName());
 		}
 		return true;
 	}
@@ -1275,9 +1271,9 @@ public final class GenerateHashCodeEqualsOperation implements IWorkspaceRunnable
 
 	private boolean needsThisQualification(String name, boolean isHashCode) {
 		if (isHashCode)
-			return ( (fDoubleCount > 0 && name.equals(VARIABLE_NAME_DOUBLE_TEMPORARY)) || (name.equals(VARIABLE_NAME_PRIME)) || (name
-					.equals(VARIABLE_NAME_RESULT)));
-		return ( (name.equals(VARIABLE_NAME_EQUALS_CASTED)) || (name.equals(VARIABLE_NAME_EQUALS_PARAM)));
+			return ( (fDoubleCount > 0 && VARIABLE_NAME_DOUBLE_TEMPORARY.equals(name)) || (VARIABLE_NAME_PRIME.equals(name)) || (VARIABLE_NAME_RESULT
+					.equals(name)));
+		return ( (VARIABLE_NAME_EQUALS_CASTED.equals(name)) || (VARIABLE_NAME_EQUALS_PARAM.equals(name)));
 	}
 
 	private boolean needsDeepMethod(ITypeBinding type) {

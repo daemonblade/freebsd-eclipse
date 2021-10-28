@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,7 +20,6 @@ import java.util.List;
 import org.eclipse.jface.text.Region;
 
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AnnotatableType;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
@@ -43,6 +42,7 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.MethodRef;
 import org.eclipse.jdt.core.dom.MethodRefParameter;
 import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.ModuleQualifiedName;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
@@ -68,7 +68,6 @@ import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
 import org.eclipse.jdt.internal.ui.util.ASTHelper;
-
 
 /**
  * @since 1.10
@@ -148,6 +147,14 @@ public class ImportReferencesCollector extends GenericVisitor {
 
 	private void typeRefFound(Name node) {
 		if (node != null) {
+			if (node instanceof ModuleQualifiedName) {
+				ModuleQualifiedName mName = (ModuleQualifiedName)node;
+				if (mName.getName() != null) {
+					node= mName.getName();
+				} else {
+					return;
+				}
+			}
 			while (node.isQualifiedName()) {
 				node= ((QualifiedName) node).getQualifier();
 			}
@@ -156,6 +163,14 @@ public class ImportReferencesCollector extends GenericVisitor {
 	}
 
 	private void possibleTypeRefFound(Name node) {
+		if (node instanceof ModuleQualifiedName) {
+			ModuleQualifiedName mName= (ModuleQualifiedName) node;
+			Name name= mName.getName();
+			if (name != null) {
+				possibleTypeRefFound(name);
+			}
+			return;
+		}
 		while (node.isQualifiedName()) {
 			node= ((QualifiedName) node).getQualifier();
 		}
@@ -228,21 +243,15 @@ public class ImportReferencesCollector extends GenericVisitor {
 		return isAffected(node);
 	}
 
-	/*
-	 * @see ASTVisitor#visit(SimpleType)
-	 */
 	@Override
 	public boolean visit(SimpleType node) {
-		if (node.getAST().apiLevel() < AST.JLS10 || !node.isVar()) {
+		if (node.getAST().apiLevel() < ASTHelper.JLS10 || !node.isVar()) {
 			typeRefFound(node.getName());
 		}
 		visitAnnotations(node);
 		return false;
 	}
 
-	/*
-	 * @see ASTVisitor#visit(NameQualifiedType)
-	 */
 	@Override
 	public boolean visit(NameQualifiedType node) {
 		possibleTypeRefFound(node.getQualifier());
@@ -250,9 +259,6 @@ public class ImportReferencesCollector extends GenericVisitor {
 		return false;
 	}
 
-	/*
-	 * @see ASTVisitor#visit(QualifiedType)
-	 */
 	@Override
 	public boolean visit(QualifiedType node) {
 		doVisitNode(node.getQualifier());
@@ -261,14 +267,21 @@ public class ImportReferencesCollector extends GenericVisitor {
 	}
 
 	private void visitAnnotations(AnnotatableType node) {
-		if (node.getAST().apiLevel() >= AST.JLS8) {
+		if (node.getAST().apiLevel() >= ASTHelper.JLS8) {
 			doVisitChildren(node.annotations());
 		}
 	}
 
-	/*
-	 * @see ASTVisitor#visit(QualifiedName)
-	 */
+	@Override
+	public boolean visit(ModuleQualifiedName node) {
+		Name name = node.getName();
+		if (name != null) {
+			possibleTypeRefFound(node); // possible ref
+			possibleStaticImportFound(node);
+		}
+		return false;
+	}
+
 	@Override
 	public boolean visit(QualifiedName node) {
 		possibleTypeRefFound(node); // possible ref
@@ -276,17 +289,11 @@ public class ImportReferencesCollector extends GenericVisitor {
 		return false;
 	}
 
-	/*
-	 * @see ASTVisitor#visit(ImportDeclaration)
-	 */
 	@Override
 	public boolean visit(ImportDeclaration node) {
 		return false;
 	}
 
-	/*
-	 * @see ASTVisitor#visit(PackageDeclaration)
-	 */
 	@Override
 	public boolean visit(PackageDeclaration node) {
 		doVisitNode(node.getJavadoc());
@@ -313,9 +320,6 @@ public class ImportReferencesCollector extends GenericVisitor {
 		return false;
 	}
 
-	/*
-	 * @see ASTVisitor#visit(ThisExpression)
-	 */
 	@Override
 	public boolean visit(ThisExpression node) {
 		typeRefFound(node.getQualifier());
@@ -342,9 +346,6 @@ public class ImportReferencesCollector extends GenericVisitor {
 		}
 	}
 
-	/*
-	 * @see ASTVisitor#visit(ClassInstanceCreation)
-	 */
 	@Override
 	public boolean visit(ClassInstanceCreation node) {
 		doVisitChildren(node.typeArguments());
@@ -357,9 +358,6 @@ public class ImportReferencesCollector extends GenericVisitor {
 		return false;
 	}
 
-	/*
-	 * @see ASTVisitor#endVisit(MethodInvocation)
-	 */
 	@Override
 	public boolean visit(MethodInvocation node) {
 		evalQualifyingExpression(node.getExpression(), node.getName());
@@ -411,9 +409,6 @@ public class ImportReferencesCollector extends GenericVisitor {
 		return false;
 	}
 
-	/*
-	 * @see ASTVisitor#visit(SuperConstructorInvocation)
-	 */
 	@Override
 	public boolean visit(SuperConstructorInvocation node) {
 		if (!isAffected(node)) {
@@ -426,18 +421,12 @@ public class ImportReferencesCollector extends GenericVisitor {
 		return false;
 	}
 
-	/*
-	 * @see ASTVisitor#visit(FieldAccess)
-	 */
 	@Override
 	public boolean visit(FieldAccess node) {
 		evalQualifyingExpression(node.getExpression(), node.getName());
 		return false;
 	}
 
-	/*
-	 * @see ASTVisitor#visit(SimpleName)
-	 */
 	@Override
 	public boolean visit(SimpleName node) {
 		// if the call gets here, it can only be a variable reference
@@ -465,9 +454,6 @@ public class ImportReferencesCollector extends GenericVisitor {
 		return false;
 	}
 
-	/*
-	 * @see ASTVisitor#visit(TypeDeclaration)
-	 */
 	@Override
 	public boolean visit(TypeDeclaration node) {
 		if (!isAffected(node)) {
@@ -476,9 +462,6 @@ public class ImportReferencesCollector extends GenericVisitor {
 		return true;
 	}
 
-	/*
-	 * @see ASTVisitor#visit(MethodDeclaration)
-	 */
 	@Override
 	public boolean visit(MethodDeclaration node) {
 		if (!isAffected(node)) {
@@ -495,13 +478,13 @@ public class ImportReferencesCollector extends GenericVisitor {
 		// name not visited
 
 		int apiLevel= node.getAST().apiLevel();
-		if (apiLevel >= AST.JLS8) {
+		if (apiLevel >= ASTHelper.JLS8) {
 			doVisitNode(node.getReceiverType());
 		}
 		// receiverQualifier not visited:
 		//   Enclosing class names cannot be shadowed by an import (qualification is always redundant).
 		doVisitChildren(node.parameters());
-		if (apiLevel >= AST.JLS8) {
+		if (apiLevel >= ASTHelper.JLS8) {
 			doVisitChildren(node.extraDimensions());
 			doVisitChildren(node.thrownExceptionTypes());
 		} else {
@@ -538,7 +521,15 @@ public class ImportReferencesCollector extends GenericVisitor {
 					typeRefFound((Name) first);
 				} else if ("@see".equals(tagName) || "@link".equals(tagName) || "@linkplain".equals(tagName)) {  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
 					Name name= (Name) first;
-					possibleTypeRefFound(name);
+					if (name instanceof ModuleQualifiedName) {
+						ModuleQualifiedName mqName = (ModuleQualifiedName)name;
+						Name iname = mqName.getName();
+						if (iname != null) {
+							possibleTypeRefFound(iname);
+						}
+					} else {
+						possibleTypeRefFound(name);
+					}
 				}
 				idx++;
 			}

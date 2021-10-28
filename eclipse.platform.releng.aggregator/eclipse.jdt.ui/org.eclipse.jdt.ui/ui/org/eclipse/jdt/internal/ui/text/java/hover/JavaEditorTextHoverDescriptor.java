@@ -179,7 +179,7 @@ public class JavaEditorTextHoverDescriptor {
 
 
 	public boolean canActivatePlugIn() {
-		return Boolean.valueOf(fElement.getAttribute(ACTIVATE_PLUG_IN_ATTRIBUTE)).booleanValue();
+		return Boolean.parseBoolean(fElement.getAttribute(ACTIVATE_PLUG_IN_ATTRIBUTE));
 	}
 
 	@Override
@@ -237,7 +237,7 @@ public class JavaEditorTextHoverDescriptor {
 				enabled= false;
 				modifierString= modifierString.substring(1);
 			}
-			if (modifierString.equals(NO_MODIFIER))
+			if (NO_MODIFIER.equals(modifierString))
 				modifierString= ""; //$NON-NLS-1$
 			hover.fModifierString= modifierString;
 			hover.fIsEnabled= enabled;

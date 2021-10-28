@@ -356,9 +356,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 			try {
 				Position[] positions= event.getDocument().getPositions(fCategory);
 
-				for (int i= 0; i != positions.length; i++) {
-
-					Position position= positions[i];
+				for (Position position : positions) {
 
 					if (position.isDeleted())
 						continue;
@@ -430,7 +428,6 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 			return identifier.length() > 0
 					&& (Character.isUpperCase(identifier.charAt(0))
 							|| identifier.startsWith("final") //$NON-NLS-1$
-							|| identifier.startsWith("public") //$NON-NLS-1$
 							|| identifier.startsWith("public") //$NON-NLS-1$
 							|| identifier.startsWith("protected") //$NON-NLS-1$
 							|| identifier.startsWith("private")); //$NON-NLS-1$
@@ -1005,8 +1002,6 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	private final static String CLOSE_BRACKETS= PreferenceConstants.EDITOR_CLOSE_BRACKETS;
 
 
-	/** The editor's save policy */
-	protected ISavePolicy fSavePolicy;
 	/** Listener to annotation model changes that updates the error tick in the tab image */
 	private JavaEditorErrorTickUpdater fJavaEditorErrorTickUpdater;
 	/**
@@ -1055,7 +1050,6 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		setRulerContextMenuId("#CompilationUnitRulerContext"); //$NON-NLS-1$
 		setOutlinerContextMenuId("#CompilationUnitOutlinerContext"); //$NON-NLS-1$
 		// don't set help contextId, we install our own help context
-		fSavePolicy= null;
 
 		fJavaEditorErrorTickUpdater= new JavaEditorErrorTickUpdater(this);
 		fCorrectionCommands= null;
@@ -1262,7 +1256,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		IDocumentProvider p= getDocumentProvider();
 		if (p instanceof ICompilationUnitDocumentProvider) {
 			ICompilationUnitDocumentProvider cp= (ICompilationUnitDocumentProvider) p;
-			cp.setSavePolicy(fSavePolicy);
+			cp.setSavePolicy(null);
 		}
 		try {
 			super.performSave(overwrite, progressMonitor);
@@ -1705,7 +1699,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		if (page == null)
 			return false;
 		IEditorPart activeEditor= page.getActiveEditor();
-		return activeEditor != null && activeEditor.equals(this);
+		return activeEditor != null && this.equals(activeEditor);
 	}
 
 	/**

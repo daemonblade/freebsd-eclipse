@@ -78,7 +78,7 @@ public class UseSupertypeWizard extends RefactoringWizard{
 
 	private static class UseSupertypeInputPage extends UserInputWizardPage{
 
-		private class UseSupertypeContentProvider implements ITreeContentProvider {
+		private static class UseSupertypeContentProvider implements ITreeContentProvider {
 
 			private ITypeHierarchy fHierarchy;
 
@@ -268,7 +268,7 @@ public class UseSupertypeWizard extends RefactoringWizard{
 		private void updateUpdateLabels() {
 			IType selectedType= getSelectedSupertype();
 			final int count= getUseSupertypeProcessor().getChanges();
-			fFileCount.put(selectedType, Integer.valueOf(count));
+			fFileCount.put(selectedType, count);
 			if (count == 0) {
 				setMessage(RefactoringMessages.UseSupertypeInputPage_No_updates, IMessageProvider.INFORMATION);
 				setPageComplete(false);
@@ -286,8 +286,8 @@ public class UseSupertypeWizard extends RefactoringWizard{
 
 		private int countFilesWithValue(int i) {
 			int count= 0;
-			for (IType iType : fFileCount.keySet()) {
-				if (fFileCount.get(iType).intValue() == i)
+			for (Map.Entry<IType, Integer> entry : fFileCount.entrySet()) {
+				if (entry.getValue().intValue() == i)
 					count++;
 			}
 			return count;
@@ -335,7 +335,7 @@ public class UseSupertypeWizard extends RefactoringWizard{
 				String superText= super.getText(element);
 				if  (! fFileCount.containsKey(element))
 					return superText;
-				int count= fFileCount.get(element).intValue();
+				int count= fFileCount.get(element);
 				switch (count) {
 				case 0:
 				{

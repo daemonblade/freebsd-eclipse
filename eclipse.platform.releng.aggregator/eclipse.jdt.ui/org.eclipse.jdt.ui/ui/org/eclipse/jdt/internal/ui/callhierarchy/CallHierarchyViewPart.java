@@ -136,7 +136,7 @@ import org.eclipse.jdt.internal.ui.viewsupport.StatusBarUpdater;
 public class CallHierarchyViewPart extends ViewPart implements ICallHierarchyViewPart, ISelectionChangedListener {
 
 
-	private class CallHierarchySelectionProvider extends SelectionProviderMediator {
+	private static class CallHierarchySelectionProvider extends SelectionProviderMediator {
 
 		public CallHierarchySelectionProvider(StructuredViewer[] viewers) {
 			super(viewers, null);
@@ -599,8 +599,6 @@ public class CallHierarchyViewPart extends ViewPart implements ICallHierarchyVie
 			setOrientation(fOrientation);
 		}
 		else {
-			if (fOrientation == VIEW_ORIENTATION_SINGLE)
-				return;
 			Point size= fParent.getSize();
 			if (size.x != 0 && size.y != 0) {
 				if (size.x > size.y)
@@ -1360,8 +1358,7 @@ public class CallHierarchyViewPart extends ViewPart implements ICallHierarchyVie
 				treeElements.add(((MethodWrapper) data).getMember());
 		}
 
-		List<IMember> newInput= new ArrayList<>();
-		newInput.addAll(inputElements);
+		List<IMember> newInput= new ArrayList<>(inputElements);
 		List<IMember> addedElements= new ArrayList<>();
 
 		for (IMember newElement : newElements) {

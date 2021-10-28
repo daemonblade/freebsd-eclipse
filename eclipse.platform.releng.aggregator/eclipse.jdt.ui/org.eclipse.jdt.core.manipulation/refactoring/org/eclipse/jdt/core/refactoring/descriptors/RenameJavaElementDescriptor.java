@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2008 IBM Corporation and others.
+ * Copyright (c) 2006, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -194,7 +194,7 @@ public final class RenameJavaElementDescriptor extends JavaRefactoringDescriptor
 		super(id, project, description, comment, arguments, flags);
 		Assert.isLegal(checkId(id), "Refactoring id is not a rename refactoring id"); //$NON-NLS-1$
 		fName= JavaRefactoringDescriptorUtil.getString(fArguments, ATTRIBUTE_NAME);
-		if (getID().equals(IJavaRefactorings.RENAME_TYPE_PARAMETER)) {
+		if (IJavaRefactorings.RENAME_TYPE_PARAMETER.equals(getID())) {
 			fJavaElement= JavaRefactoringDescriptorUtil.getJavaElement(fArguments, ATTRIBUTE_INPUT, getProject());
 			String parameterName= JavaRefactoringDescriptorUtil.getString(fArguments, ATTRIBUTE_PARAMETER);
 			if (fJavaElement instanceof IType) {
@@ -288,6 +288,8 @@ public final class RenameJavaElementDescriptor extends JavaRefactoringDescriptor
 			return true;
 		case IJavaRefactorings.RENAME_TYPE_PARAMETER:
 			return true;
+		case IJavaRefactorings.RENAME_MODULE:
+			return true;
 		default:
 			break;
 		}
@@ -298,7 +300,7 @@ public final class RenameJavaElementDescriptor extends JavaRefactoringDescriptor
 	protected void populateArgumentMap() {
 		super.populateArgumentMap();
 		JavaRefactoringDescriptorUtil.setString(fArguments, ATTRIBUTE_NAME, fName);
-		if (getID().equals(IJavaRefactorings.RENAME_TYPE_PARAMETER)) {
+		if (IJavaRefactorings.RENAME_TYPE_PARAMETER.equals(getID())) {
 			final ITypeParameter parameter= (ITypeParameter) fJavaElement;
 			JavaRefactoringDescriptorUtil.setJavaElement(fArguments, ATTRIBUTE_INPUT, getProject(), parameter.getDeclaringMember());
 			JavaRefactoringDescriptorUtil.setString(fArguments, ATTRIBUTE_PARAMETER, parameter.getElementName());

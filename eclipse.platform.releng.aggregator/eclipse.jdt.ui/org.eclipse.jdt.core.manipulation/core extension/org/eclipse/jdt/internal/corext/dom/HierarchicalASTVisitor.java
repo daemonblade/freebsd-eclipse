@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -450,6 +450,16 @@ public abstract class HierarchicalASTVisitor extends ASTVisitor {
 	}
 
 	@Override
+	public boolean visit(PatternInstanceofExpression node) {
+		return visit((Expression)node);
+	}
+
+	@Override
+	public void endVisit(PatternInstanceofExpression node) {
+		endVisit((Expression)node);
+	}
+
+	@Override
 	public boolean visit(LambdaExpression node) {
 		return visit((Expression)node);
 	}
@@ -566,6 +576,16 @@ public abstract class HierarchicalASTVisitor extends ASTVisitor {
 
 	@Override
 	public void endVisit(QualifiedName node) {
+		endVisit((Name)node);
+	}
+
+	@Override
+	public boolean visit(ModuleQualifiedName node) {
+		return visit((Name)node);
+	}
+
+	@Override
+	public void endVisit(ModuleQualifiedName node) {
 		endVisit((Name)node);
 	}
 

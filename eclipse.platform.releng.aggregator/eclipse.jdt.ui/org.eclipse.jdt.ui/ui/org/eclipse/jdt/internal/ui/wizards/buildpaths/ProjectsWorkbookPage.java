@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -28,7 +28,6 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
 
 import org.eclipse.jface.layout.PixelConverter;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -52,10 +51,10 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
 import org.eclipse.jdt.ui.JavaElementComparator;
 
-import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.viewsupport.JavaUILabelProvider;
 import org.eclipse.jdt.internal.ui.wizards.NewWizardMessages;
 import org.eclipse.jdt.internal.ui.wizards.buildpaths.RootCPListElement.RootNodeChange;
+import org.eclipse.jdt.internal.ui.wizards.dialogfields.CheckedListDialogField;
 import org.eclipse.jdt.internal.ui.wizards.dialogfields.DialogField;
 import org.eclipse.jdt.internal.ui.wizards.dialogfields.LayoutUtil;
 import org.eclipse.jdt.internal.ui.wizards.dialogfields.ListDialogField;
@@ -334,8 +333,8 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 	public void setSelection(List<?> selElements, boolean expand) {
 		fProjectsList.selectElements(new StructuredSelection(selElements));
 		if (expand) {
-			for (int i= 0; i < selElements.size(); i++) {
-				fProjectsList.expandElement(selElements.get(i), 1);
+			for (Object selElement : selElements) {
+				fProjectsList.expandElement(selElement, 1);
 			}
 		}
 	}
@@ -419,6 +418,15 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 					return;
 				boolean isClassRootExpanded= getRootExpansionState(fProjectsList, true);
 				boolean isModuleRootExpanded= getRootExpansionState(fProjectsList, false);
+				List<CPListElement> checkedElements= new ArrayList<>();
+				if (fClassPathList instanceof CheckedListDialogField) {
+					CheckedListDialogField<CPListElement> checkedDialogField= (CheckedListDialogField<CPListElement>)fClassPathList;
+					for (CPListElement element : checkedDialogField.getElements()) {
+						if (checkedDialogField.isChecked(element)) {
+							checkedElements.add(element);
+						}
+					}
+				}
 				fProjectsList.removeAllElements();
 				for (Object selectedElement : selectedElements) {
 					if( ((CPListElement)selectedElement).isClassPathRootNode()) {
@@ -444,6 +452,15 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 				fProjectsList.getTreeViewer().expandToLevel(2);
 				setRootExpansionState(fProjectsList, isClassRootExpanded, true);
 				setRootExpansionState(fProjectsList, isModuleRootExpanded, false);
+				if (fClassPathList instanceof CheckedListDialogField) {
+					CheckedListDialogField<CPListElement> checkedDialogField= (CheckedListDialogField<CPListElement>)fClassPathList;
+					List<CPListElement> dialogElements= checkedDialogField.getElements();
+					for (CPListElement element : checkedElements) {
+						if (dialogElements.contains(element)) {
+							checkedDialogField.setChecked(element, true);
+						}
+					}
+				}
 			}
 
 			if (index == IDX_ADDPROJECT && !hasRootNodes()) {
@@ -462,7 +479,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 				if (attrib.isBuiltIn()) {
 					String key= attrib.getKey();
 					Object value= null;
-					if (key.equals(CPListElement.ACCESSRULES)) {
+					if (CPListElement.ACCESSRULES.equals(key)) {
 						value= new IAccessRule[0];
 					}
 					attrib.getParent().setAttribute(key, value);
@@ -499,8 +516,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 			return false;
 		}
 
-		for (int i= 0; i < selElements.size(); i++) {
-			Object elem= selElements.get(i);
+		for (Object elem : selElements) {
 			if (elem instanceof CPListElementAttribute) {
 				CPListElementAttribute attrib= (CPListElementAttribute) elem;
 				if (IClasspathAttribute.MODULE.equals(attrib.getKey())) {
@@ -549,7 +565,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 			if (!attrib.isBuiltIn()) {
 				return canEditCustomAttribute(attrib);
 			}
-			if (hasRootNodes() && attrib.getKey().equals(IClasspathAttribute.MODULE)) {
+			if (hasRootNodes() && IClasspathAttribute.MODULE.equals(attrib.getKey())) {
 				// module info should always be enabled.
 				return true;
 			}
@@ -576,16 +592,16 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 		String key= elem.getKey();
 		boolean needRefresh= false;
 		boolean wasModular= false;
-		if (key.equals(CPListElement.ACCESSRULES)) {
+		if (CPListElement.ACCESSRULES.equals(key)) {
 			showAccessRestrictionDialog(elem.getParent());
-		} else if (key.equals(CPListElement.MODULE)) {
+		} else if (CPListElement.MODULE.equals(key)) {
 			wasModular= elem.getValue() != null;
 			needRefresh= showModuleDialog(getShell(), elem);
 		} else {
 			needRefresh= editCustomAttribute(getShell(), elem);
 		}
 		if (needRefresh) {
-			if (key.equals(CPListElement.MODULE) && hasRootNodes()) {
+			if (CPListElement.MODULE.equals(key) && hasRootNodes()) {
 				// if module attribute is changed, the element may change nodes
 				CPListElement selElement= elem.getParent();
 				boolean isModular= selElement.getAttribute(CPListElement.MODULE) != null;
@@ -594,7 +610,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 					moveCPElementAcrossNode(fProjectsList, selElement, changeDirection);
 				}
 			}
-			if(key.equals(CPListElement.TEST) || key.equals(CPListElement.WITHOUT_TEST_CODE)) {
+			if(CPListElement.TEST.equals(key) || CPListElement.WITHOUT_TEST_CODE.equals(key)) {
 				fProjectsList.refresh(elem.getParent());
 			} else {
 				fProjectsList.refresh(elem);
@@ -603,7 +619,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 			fProjectsList.postSetSelection(new StructuredSelection(elem));
 			// if module attribute was changed - it will switch nodes and hence parent should be
 			// selected
-			if (key.equals(CPListElement.MODULE) && hasRootNodes()) {
+			if (CPListElement.MODULE.equals(key) && hasRootNodes()) {
 				fProjectsList.postSetSelection(new StructuredSelection(elem.getParent()));
 			} else {
 				fProjectsList.postSetSelection(new StructuredSelection(elem));
@@ -626,14 +642,6 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 			}
 		}
 	}
-
-	private Shell getShell() {
-		if (fSWTControl != null) {
-			return fSWTControl.getShell();
-		}
-		return JavaPlugin.getActiveWorkbenchShell();
-	}
-
 
 	private CPListElement[] addProjectDialog() {
 
@@ -662,8 +670,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 	}
 
 	private Object[] getNotYetRequiredProjects() throws JavaModelException {
-		ArrayList<IJavaProject> selectable= new ArrayList<>();
-		selectable.addAll(Arrays.asList(fCurrJProject.getJavaModel().getJavaProjects()));
+		ArrayList<IJavaProject> selectable= new ArrayList<>(Arrays.asList(fCurrJProject.getJavaModel().getJavaProjects()));
 		selectable.remove(fCurrJProject);
 
 		for (CPListElement curr : fProjectsList.getElements()) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2020 IBM Corporation and others.
+ * Copyright (c) 2006, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Microsoft Corporation - read formatting options from the compilation unit
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.refactoring.structure;
 
@@ -54,21 +55,28 @@ import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTRequestor;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IExtendedModifier;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ITrackedNodePosition;
@@ -88,7 +96,9 @@ import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.BodyDeclarationRewrite;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.dom.ModifierRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
@@ -291,18 +301,79 @@ public final class PushDownRefactoringProcessor extends HierarchyProcessor {
 
 	private static IJavaElement[] getReferencingElementsFromSameClass(IMember member, IProgressMonitor pm, RefactoringStatus status) throws JavaModelException {
 		Assert.isNotNull(member);
-		final RefactoringSearchEngine2 engine= new RefactoringSearchEngine2(SearchPattern.createPattern(member, IJavaSearchConstants.REFERENCES, SearchUtils.GENERICS_AGNOSTIC_MATCH_RULE));
+		final RefactoringSearchEngine2 engine= new RefactoringSearchEngine2(SearchPattern.createPattern(member,
+				IJavaSearchConstants.REFERENCES, SearchUtils.GENERICS_AGNOSTIC_MATCH_RULE));
 		engine.setFiltering(true, true);
-		engine.setScope(SearchEngine.createJavaSearchScope(new IJavaElement[] { member.getDeclaringType() }));
+		IType declaringType= member.getDeclaringType();
+		engine.setScope(SearchEngine.createJavaSearchScope(new IJavaElement[] { declaringType }));
 		engine.setStatus(status);
 		engine.searchPattern(new SubProgressMonitor(pm, 1));
 		Set<IJavaElement> result= new HashSet<>(3);
+		ICompilationUnit cu= member.getCompilationUnit();
+		String source= cu.getSource();
+		CompilationUnit cuRoot= null;
 		for (SearchResultGroup group : (SearchResultGroup[]) engine.getResults()) {
+			outer:
 			for (SearchMatch searchResult : group.getSearchResults()) {
+				if (source.charAt(searchResult.getOffset() - 1) == '.') {
+					if (cuRoot == null) {
+						cuRoot= getCompilationUnitRoot(cu, source);
+					}
+					if (cuRoot != null) {
+						ASTNode node= NodeFinder.perform(cuRoot, searchResult.getOffset(), searchResult.getLength());
+						if (node != null && node instanceof MethodInvocation) {
+							MethodInvocation methodInvocation= (MethodInvocation)node;
+							Expression expression= methodInvocation.getExpression();
+							if (expression != null && !(expression instanceof ThisExpression)) {
+								if (expression instanceof ClassInstanceCreation) {
+									ClassInstanceCreation cic= (ClassInstanceCreation)expression;
+									Type t= cic.getType();
+									if (t.isSimpleType() && !((SimpleType)t).getName().getFullyQualifiedName().equals(declaringType.getElementName())) {
+										continue;
+									}
+								} else if (expression instanceof SimpleName) {
+									String referenceName= ((SimpleName)expression).getFullyQualifiedName();
+									final TypeDeclaration thisType= (TypeDeclaration)ASTNodes.getFirstAncestorOrNull(methodInvocation, TypeDeclaration.class);
+									if (thisType != null) {
+										final String thisTypeName= thisType.getName().getFullyQualifiedName();
+										for (FieldDeclaration fieldDeclaration : thisType.getFields()) {
+											List<VariableDeclarationFragment> fragments= fieldDeclaration.fragments();
+											for (VariableDeclarationFragment fragment : fragments) {
+												SimpleName name= fragment.getName();
+												if (name.getFullyQualifiedName().equals(referenceName)) {
+													Type fieldType= fieldDeclaration.getType();
+													if (!fieldType.isSimpleType()) {
+														continue outer;
+													}
+													SimpleType simpleType= (SimpleType)fieldType;
+													if (!simpleType.getName().getFullyQualifiedName().equals(thisTypeName)) {
+														continue outer;
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
 				result.add(SearchUtils.getEnclosingJavaElement(searchResult));
 			}
 		}
 		return result.toArray(new IJavaElement[result.size()]);
+	}
+
+	private static CompilationUnit getCompilationUnitRoot(ICompilationUnit cu, String source) {
+		Map<String, String> options = cu.getJavaProject().getOptions(true);
+		ASTParser parser= ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
+		parser.setKind(ASTParser.K_COMPILATION_UNIT);
+		parser.setResolveBindings(false);
+		parser.setSource(source.toCharArray());
+		parser.setCompilerOptions(options);
+		parser.setProject(cu.getJavaProject());
+		CompilationUnit selectionCURoot= (CompilationUnit) parser.createAST(null);
+		return selectionCURoot;
 	}
 
 	private ITypeHierarchy fCachedClassHierarchy;
@@ -518,8 +589,7 @@ public final class PushDownRefactoringProcessor extends HierarchyProcessor {
 
 	private RefactoringStatus checkNonAbstractMembersInDestinationClasses(IMember[] membersToPushDown, IType[] destinationClassesForNonAbstract) throws JavaModelException {
 		RefactoringStatus result= new RefactoringStatus();
-		List<IMember> list= new ArrayList<>(); // Arrays.asList does not support removing
-		list.addAll(Arrays.asList(membersToPushDown));
+		List<IMember> list= new ArrayList<>(Arrays.asList(membersToPushDown)); // Arrays.asList does not support removing
 		list.removeAll(Arrays.asList(getAbstractMembers(membersToPushDown)));
 		IMember[] nonAbstractMembersToPushDown= list.toArray(new IMember[list.size()]);
 		for (IType type : destinationClassesForNonAbstract) {
@@ -613,10 +683,10 @@ public final class PushDownRefactoringProcessor extends HierarchyProcessor {
 			final ITrackedNodePosition position= rewriter.track(body);
 			body.accept(new TypeVariableMapper(rewriter, mapping));
 			body.accept(new ThisVisitor(rewriter, fCachedDeclaringType));
-			rewriter.rewriteAST(document, getDeclaringType().getCompilationUnit().getJavaProject().getOptions(true)).apply(document, TextEdit.NONE);
+			rewriter.rewriteAST(document, getDeclaringType().getCompilationUnit().getOptions(true)).apply(document, TextEdit.NONE);
 			String content= document.get(position.getStartPosition(), position.getLength());
 			String[] lines= Strings.convertIntoLines(content);
-			Strings.trimIndentation(lines, method.getJavaProject(), false);
+			Strings.trimIndentation(lines, method.getCompilationUnit(), false);
 			content= Strings.concatenate(lines, StubUtility.getLineDelimiterUsed(method));
 			newMethod.setBody((Block) targetRewrite.createStringPlaceholder(content, ASTNode.BLOCK));
 		} catch (MalformedTreeException | BadLocationException exception) {
@@ -872,7 +942,7 @@ public final class PushDownRefactoringProcessor extends HierarchyProcessor {
 		if (info.copyJavadocToCopiesInSubclasses())
 			copyJavadocNode(rewrite, oldMethod, newMethod);
 		final IJavaProject project= rewriter.getCu().getJavaProject();
-		if (info.isNewMethodToBeDeclaredAbstract() && JavaModelUtil.is50OrHigher(project) && JavaPreferencesSettings.getCodeGenerationSettings(project).overrideAnnotation) {
+		if (info.isNewMethodToBeDeclaredAbstract() && JavaModelUtil.is50OrHigher(project) && JavaPreferencesSettings.getCodeGenerationSettings(rewriter.getCu()).overrideAnnotation) {
 			final MarkerAnnotation annotation= ast.newMarkerAnnotation();
 			annotation.setTypeName(ast.newSimpleName("Override")); //$NON-NLS-1$
 			newMethod.modifiers().add(annotation);

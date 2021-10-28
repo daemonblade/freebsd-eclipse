@@ -15,7 +15,6 @@ package org.eclipse.jdt.ui.tests.quickfix;
 
 import java.util.ArrayList;
 
-import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -33,33 +32,27 @@ import org.eclipse.jdt.ui.text.java.IJavaCompletionProposal;
 import org.eclipse.jdt.ui.text.java.correction.CUCorrectionProposal;
 
 public class QuickFixTest14 extends QuickFixTest {
-    @Rule
-    public ProjectTestSetup projectSetup = new Java14ProjectTestSetup(true);
+	@Rule
+	public ProjectTestSetup projectSetup= new Java14ProjectTestSetup(true);
 
-    private IJavaProject fJProject1;
+	private IJavaProject fJProject1;
 
-    private IPackageFragmentRoot fSourceFolder;
+	private IPackageFragmentRoot fSourceFolder;
 
-	private static String MODULE_INFO_FILE_CONTENT = ""
+	public static final String MODULE_INFO_FILE= "module-info.java";
+	public static final String MODULE_INFO_FILE_CONTENT= ""
 										+ "module test {\n"
 										+ "}\n";
 
-	@After
-	public void tearDown() throws Exception {
-		if (fJProject1 != null) {
-			JavaProjectHelper.delete(fJProject1);
-		}
-	}
-
 	@Test
 	public void testAddDefaultCaseSwitchStatement1() throws Exception {
-		fJProject1= JavaProjectHelper.createJavaProject("TestProject1", "bin");
+		fJProject1= projectSetup.getProject();
 		fJProject1.setRawClasspath(projectSetup.getDefaultClasspath(), null);
 		JavaProjectHelper.set14CompilerOptions(fJProject1, false);
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment def= fSourceFolder.createPackageFragment("", false, null);
-		def.createCompilationUnit("module-info.java", MODULE_INFO_FILE_CONTENT, false, null);
+		def.createCompilationUnit(MODULE_INFO_FILE, MODULE_INFO_FILE_CONTENT, false, null);
 
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		String test= ""
@@ -107,13 +100,13 @@ public class QuickFixTest14 extends QuickFixTest {
 
 	@Test
 	public void testAddDefaultCaseSwitchStatement2() throws Exception {
-		fJProject1= JavaProjectHelper.createJavaProject("TestProject1", "bin");
+		fJProject1= projectSetup.getProject();
 		fJProject1.setRawClasspath(projectSetup.getDefaultClasspath(), null);
 		JavaProjectHelper.set14CompilerOptions(fJProject1, false);
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment def= fSourceFolder.createPackageFragment("", false, null);
-		def.createCompilationUnit("module-info.java", MODULE_INFO_FILE_CONTENT, false, null);
+		def.createCompilationUnit(MODULE_INFO_FILE, MODULE_INFO_FILE_CONTENT, false, null);
 
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		String test= ""
@@ -162,13 +155,13 @@ public class QuickFixTest14 extends QuickFixTest {
 
 	@Test
 	public void testAddDefaultCaseSwitchStatement3() throws Exception {
-		fJProject1= JavaProjectHelper.createJavaProject("TestProject1", "bin");
+		fJProject1= projectSetup.getProject();
 		fJProject1.setRawClasspath(projectSetup.getDefaultClasspath(), null);
 		JavaProjectHelper.set14CompilerOptions(fJProject1, false);
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment def= fSourceFolder.createPackageFragment("", false, null);
-		def.createCompilationUnit("module-info.java", MODULE_INFO_FILE_CONTENT, false, null);
+		def.createCompilationUnit(MODULE_INFO_FILE, MODULE_INFO_FILE_CONTENT, false, null);
 
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		String test= ""
@@ -213,13 +206,13 @@ public class QuickFixTest14 extends QuickFixTest {
 
 	@Test
 	public void testAddMissingCaseSwitchStatement1() throws Exception {
-		fJProject1= JavaProjectHelper.createJavaProject("TestProject1", "bin");
+		fJProject1= projectSetup.getProject();
 		fJProject1.setRawClasspath(projectSetup.getDefaultClasspath(), null);
 		JavaProjectHelper.set14CompilerOptions(fJProject1, false);
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment def= fSourceFolder.createPackageFragment("", false, null);
-		def.createCompilationUnit("module-info.java", MODULE_INFO_FILE_CONTENT, false, null);
+		def.createCompilationUnit(MODULE_INFO_FILE, MODULE_INFO_FILE_CONTENT, false, null);
 
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		String test= ""
@@ -269,13 +262,13 @@ public class QuickFixTest14 extends QuickFixTest {
 
 	@Test
 	public void testAddDefaultCaseSwitchExpression1() throws Exception {
-		fJProject1= JavaProjectHelper.createJavaProject("TestProject1", "bin");
+		fJProject1= projectSetup.getProject();
 		fJProject1.setRawClasspath(projectSetup.getDefaultClasspath(), null);
 		JavaProjectHelper.set14CompilerOptions(fJProject1, false);
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment def= fSourceFolder.createPackageFragment("", false, null);
-		def.createCompilationUnit("module-info.java", MODULE_INFO_FILE_CONTENT, false, null);
+		def.createCompilationUnit(MODULE_INFO_FILE, MODULE_INFO_FILE_CONTENT, false, null);
 
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		String test= ""
@@ -323,13 +316,13 @@ public class QuickFixTest14 extends QuickFixTest {
 
 	@Test
 	public void testAddDefaultCaseSwitchExpression2() throws Exception {
-		fJProject1= JavaProjectHelper.createJavaProject("TestProject1", "bin");
+		fJProject1= projectSetup.getProject();
 		fJProject1.setRawClasspath(projectSetup.getDefaultClasspath(), null);
 		JavaProjectHelper.set14CompilerOptions(fJProject1, false);
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment def= fSourceFolder.createPackageFragment("", false, null);
-		def.createCompilationUnit("module-info.java", MODULE_INFO_FILE_CONTENT, false, null);
+		def.createCompilationUnit(MODULE_INFO_FILE, MODULE_INFO_FILE_CONTENT, false, null);
 
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		String test= ""
@@ -383,7 +376,7 @@ public class QuickFixTest14 extends QuickFixTest {
 
 	@Test
 	public void testAddDefaultCaseSwitchExpression3() throws Exception {
-		fJProject1= JavaProjectHelper.createJavaProject("TestProject1", "bin");
+		fJProject1= projectSetup.getProject();
 		fJProject1.setRawClasspath(projectSetup.getDefaultClasspath(), null);
 		JavaProjectHelper.set14CompilerOptions(fJProject1, false);
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
@@ -427,13 +420,13 @@ public class QuickFixTest14 extends QuickFixTest {
 
 	@Test
 	public void testAddMissingCaseSwitchExpression() throws Exception {
-		fJProject1= JavaProjectHelper.createJavaProject("TestProject1", "bin");
+		fJProject1= projectSetup.getProject();
 		fJProject1.setRawClasspath(projectSetup.getDefaultClasspath(), null);
 		JavaProjectHelper.set14CompilerOptions(fJProject1, false);
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment def= fSourceFolder.createPackageFragment("", false, null);
-		def.createCompilationUnit("module-info.java", MODULE_INFO_FILE_CONTENT, false, null);
+		def.createCompilationUnit(MODULE_INFO_FILE, MODULE_INFO_FILE_CONTENT, false, null);
 
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		String test= ""
@@ -495,13 +488,13 @@ public class QuickFixTest14 extends QuickFixTest {
 
 	@Test
 	public void testReplaceIncorrectReturnInSwitchExpressionWithYieldStatement() throws Exception {
-		fJProject1= JavaProjectHelper.createJavaProject("TestProject1", "bin");
+		fJProject1= projectSetup.getProject();
 		fJProject1.setRawClasspath(projectSetup.getDefaultClasspath(), null);
 		JavaProjectHelper.set14CompilerOptions(fJProject1, false);
 		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment def= fSourceFolder.createPackageFragment("", false, null);
-		def.createCompilationUnit("module-info.java", MODULE_INFO_FILE_CONTENT, false, null);
+		def.createCompilationUnit(MODULE_INFO_FILE, MODULE_INFO_FILE_CONTENT, false, null);
 
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
 		String test= ""
@@ -548,6 +541,74 @@ public class QuickFixTest14 extends QuickFixTest {
 						+ "		System.out.println(process(0));\n"
 						+ "	}\n"
 						+ "}";
+
+		assertEqualStringsIgnoreOrder(new String[] { preview }, new String[] { expected });
+	}
+
+	@Test
+	public void testReplaceIncorrectReturnInSwitchExpressionWithYieldStatement2() throws Exception {
+		fJProject1= JavaProjectHelper.createJavaProject("TestProject1", "bin");
+		fJProject1.setRawClasspath(projectSetup.getDefaultClasspath(), null);
+		JavaProjectHelper.set14CompilerOptions(fJProject1, false);
+		fSourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
+
+		StringBuilder buf= new StringBuilder();
+		buf.append("module test {\n");
+		buf.append("}\n");
+		IPackageFragment def= fSourceFolder.createPackageFragment("", false, null);
+		def.createCompilationUnit("module-info.java", buf.toString(), false, null);
+
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
+		String test= "" +
+					"package test;\n" +
+					"public class Cls {\n" +
+					"\n" +
+					"	public static int process(int i) {\n" +
+					"		var t = switch (i) {\n" +
+					"	        case 0:\n" +
+					"	             return 1; // Error - Quick Fix works only if the return statement is surrounded in curly braces\n" +
+					"	        default:\n" +
+					"                     yield 100;\n" +
+					"		};\n" +
+					"       System.out.println(t);\n" +
+					"		return t;\n" +
+					"	}\n" +
+					"	public static void main(String[] args) {\n" +
+					"		process(1);\n" +
+					"		process(0);\n" +
+					"		process(2);\n" +
+					"	}\n" +
+					"}";
+
+		ICompilationUnit cu= pack.createCompilationUnit("Cls.java", test, false, null);
+
+		CompilationUnit astRoot= getASTRoot(cu);
+		ArrayList<IJavaCompletionProposal> proposals= collectCorrections(cu, astRoot);
+		assertNumberOfProposals(proposals, 1);
+		assertCorrectLabels(proposals);
+
+		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
+		String preview= getPreviewContent(proposal);
+		String expected= "" +
+				"package test;\n" +
+				"public class Cls {\n" +
+				"\n" +
+				"	public static int process(int i) {\n" +
+				"		var t = switch (i) {\n" +
+				"	        case 0:\n" +
+				"	             yield 1;\n" +
+				"	        default:\n" +
+				"                     yield 100;\n" +
+				"		};\n" +
+				"       System.out.println(t);\n" +
+				"		return t;\n" +
+				"	}\n" +
+				"	public static void main(String[] args) {\n" +
+				"		process(1);\n" +
+				"		process(0);\n" +
+				"		process(2);\n" +
+				"	}\n" +
+				"}";
 
 		assertEqualStringsIgnoreOrder(new String[] { preview }, new String[] { expected });
 	}

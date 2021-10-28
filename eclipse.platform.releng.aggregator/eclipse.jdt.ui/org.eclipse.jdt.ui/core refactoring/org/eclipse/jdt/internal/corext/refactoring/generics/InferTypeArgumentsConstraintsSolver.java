@@ -93,8 +93,7 @@ public class InferTypeArgumentsConstraintsSolver {
 		ParametricStructureComputer parametricStructureComputer= new ParametricStructureComputer(allConstraintVariables, fTCModel);
 		Collection<CollectionElementVariable2> newVars= parametricStructureComputer.createElemConstraintVariables();
 
-		ArrayList<ConstraintVariable2> newAllConstraintVariables= new ArrayList<>();
-		newAllConstraintVariables.addAll(Arrays.asList(allConstraintVariables));
+		ArrayList<ConstraintVariable2> newAllConstraintVariables= new ArrayList<>(Arrays.asList(allConstraintVariables));
 		newAllConstraintVariables.addAll(newVars);
 		allConstraintVariables= newAllConstraintVariables.toArray(new ConstraintVariable2[newAllConstraintVariables.size()]);
 
@@ -160,10 +159,9 @@ public class InferTypeArgumentsConstraintsSolver {
 //		}
 
 		TType type= cv.getType();
-		if (type == null) {
-			return fTypeSetEnvironment.getUniverseTypeSet();
-
-		} else if (cv instanceof IndependentTypeVariable2) {
+		if (type == null
+				|| cv instanceof IndependentTypeVariable2
+				|| cv instanceof ArrayTypeVariable2) {
 			return fTypeSetEnvironment.getUniverseTypeSet();
 			//TODO: solve problem with recursive bounds
 //			TypeVariable tv= (TypeVariable) type;
@@ -174,8 +172,6 @@ public class InferTypeArgumentsConstraintsSolver {
 //			}
 //			return result;
 
-		} else if (cv instanceof ArrayTypeVariable2) {
-			return fTypeSetEnvironment.getUniverseTypeSet();
 		} else if (cv instanceof ArrayElementVariable2) {
 			if (cv.getType() != null && cv.getType().isTypeVariable()) {
 				return fTypeSetEnvironment.getUniverseTypeSet();
@@ -338,10 +334,10 @@ public class InferTypeArgumentsConstraintsSolver {
 
 		for (int i= 0; i < interfaceCandidates.size(); i++) {
 			TType interf= interfaceCandidates.get(i);
-			Object isTagging= fInterfaceTaggingCache.get(interf);
+			Boolean isTagging= fInterfaceTaggingCache.get(interf);
 			if (isTagging == null)
 				unresolvedTypes.add(interf);
-			else if (isTagging == Boolean.FALSE)
+			else if (Boolean.FALSE.equals(isTagging))
 				nonTagging.add(interf);
 		}
 

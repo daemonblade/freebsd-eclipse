@@ -21,7 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Rule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.eclipse.core.runtime.Assert;
@@ -53,6 +53,14 @@ public class MoveInstanceMethodTests extends GenericRefactoringTest {
 
 	private static final String REFACTORING_PATH= "MoveInstanceMethod/";
 
+	public MoveInstanceMethodTests() {
+		this.rts= new Java1d5Setup();
+	}
+
+	protected MoveInstanceMethodTests(RefactoringTestSetup rts) {
+		super(rts);
+	}
+
 	public static void chooseNewTarget(MoveInstanceMethodProcessor processor, int newTargetType, String newTargetName) {
 		IVariableBinding target= null;
 		for (IVariableBinding candidate : processor.getPossibleTargets()) {
@@ -72,8 +80,6 @@ public class MoveInstanceMethodTests extends GenericRefactoringTest {
 		return (IMethod) jes[0];
 	}
 
-	@Rule
-	public RefactoringTestSetup fts= new Java1d5Setup();
 
 	private static boolean typeMatches(int newTargetType, IVariableBinding newTarget) {
 		return newTargetType == PARAMETER && !newTarget.isField() || newTargetType == FIELD && newTarget.isField();
@@ -409,10 +415,10 @@ public class MoveInstanceMethodTests extends GenericRefactoringTest {
 	}
 
 	// extended junit case with generics, enums, static imports and deprecation message
+	@Ignore("disabled due to missing support for statically imported methods")
 	@Test
 	public void test31() throws Exception {
-		printTestDisabledMessage("disabled due to missing support for statically imported methods");
-//		helper1(new String[] { "p1.TR", "p1.TC", "p1.P"}, "p1.TR", 10, 21, 10, 21, PARAMETER, "test", false, false, true);
+		helper1(new String[] { "p1.TR", "p1.TC", "p1.P"}, "p1.TR", 10, 21, 10, 21, PARAMETER, "test", false, false, true);
 	}
 
 	@Test
@@ -719,10 +725,10 @@ public class MoveInstanceMethodTests extends GenericRefactoringTest {
 	}
 
 	// Cannot move method - annotations are not supported
+	@Ignore("disabled - jcore does not have elements for annotation members")
 	@Test
 	public void testFail13() throws Exception {
-		printTestDisabledMessage("disabled - jcore does not have elements for annotation members");
-//		failHelper2(new String[] { "p1.A", "p2.B"}, "p1.A", 5, 12, 5, 13, PARAMETER, "b", "a", true, true);
+		failHelper2(new String[] { "p1.A", "p2.B"}, "p1.A", 5, 12, 5, 13, PARAMETER, "b", "a", true, true);
 	}
 
 	// bug 404477 - target method already exists

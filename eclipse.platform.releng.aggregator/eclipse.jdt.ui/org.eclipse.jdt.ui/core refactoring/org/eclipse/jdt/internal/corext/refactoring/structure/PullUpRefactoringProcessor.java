@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2020 IBM Corporation and others.
+ * Copyright (c) 2006, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,7 @@
  *     IBM Corporation - initial API and implementation
  *     Benjamin Muskalla - 228950: [pull up] exception if target calls super with multiple parameters
  *     Jerome Cambon <jerome.cambon@oracle.com> - [code style] don't generate redundant modifiers "public static final abstract" for interface members - https://bugs.eclipse.org/71627
+ *     Microsoft Corporation - read formatting options from the compilation unit
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.refactoring.structure;
 
@@ -132,7 +133,6 @@ import org.eclipse.jdt.internal.corext.refactoring.structure.MemberVisibilityAdj
 import org.eclipse.jdt.internal.corext.refactoring.structure.constraints.SuperTypeConstraintsSolver;
 import org.eclipse.jdt.internal.corext.refactoring.typeconstraints.CompilationUnitRange;
 import org.eclipse.jdt.internal.corext.refactoring.typeconstraints.types.TType;
-import org.eclipse.jdt.internal.corext.refactoring.typeconstraints2.ISourceConstraintVariable;
 import org.eclipse.jdt.internal.corext.refactoring.typeconstraints2.ITypeConstraintVariable;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
@@ -724,7 +724,7 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 	@Override
 	protected RefactoringStatus checkDeclaringType(final IProgressMonitor monitor) throws JavaModelException {
 		final RefactoringStatus status= super.checkDeclaringType(monitor);
-		if (getDeclaringType().getFullyQualifiedName('.').equals("java.lang.Object")) //$NON-NLS-1$
+		if ("java.lang.Object".equals(getDeclaringType().getFullyQualifiedName('.'))) //$NON-NLS-1$
 			status.merge(RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.PullUpRefactoring_no_java_lang_Object));
 		status.merge(checkDeclaringSuperTypes(monitor));
 		return status;
@@ -791,7 +791,7 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 		}
 	}
 
-	private RefactoringStatus checkFinalFields(final IProgressMonitor monitor) throws JavaModelException {
+	protected RefactoringStatus checkFinalFields(final IProgressMonitor monitor) throws JavaModelException {
 		final RefactoringStatus result= new RefactoringStatus();
 		monitor.beginTask(RefactoringCoreMessages.PullUpRefactoring_checking, fMembersToMove.length);
 		for (final IMember member : fMembersToMove) {
@@ -1013,10 +1013,10 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 			final ASTRewrite rewrite= ASTRewrite.create(body.getAST());
 			final ITrackedNodePosition position= rewrite.track(body);
 			body.accept(new PullUpAstNodeMapper(sourceRewrite, targetRewrite, rewrite, getDeclaringSuperTypeHierarchy(monitor).getSuperclass(getDeclaringType()), mapping, oldMethod.resolveBinding()));
-			rewrite.rewriteAST(document, method.getJavaProject().getOptions(true)).apply(document, TextEdit.NONE);
+			rewrite.rewriteAST(document, method.getCompilationUnit().getOptions(true)).apply(document, TextEdit.NONE);
 			String content= document.get(position.getStartPosition(), position.getLength());
 			final String[] lines= Strings.convertIntoLines(content);
-			Strings.trimIndentation(lines, method.getJavaProject(), false);
+			Strings.trimIndentation(lines, method.getCompilationUnit(), false);
 			content= Strings.concatenate(lines, StubUtility.getLineDelimiterUsed(method));
 			newMethod.setBody((Block) targetRewrite.getASTRewrite().createStringPlaceholder(content, ASTNode.BLOCK));
 		} catch (MalformedTreeException | BadLocationException exception) {
@@ -1527,7 +1527,7 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 				}
 			}
 		}
-		if (superTypes.length == 1 && superTypes[0].getFullyQualifiedName().equals("java.lang.Object")) //$NON-NLS-1$
+		if (superTypes.length == 1 && "java.lang.Object".equals(superTypes[0].getFullyQualifiedName())) //$NON-NLS-1$
 			status.addFatalError(RefactoringCoreMessages.PullUPRefactoring_not_java_lang_object);
 		else if (superTypes.length == binary)
 			status.addFatalError(RefactoringCoreMessages.PullUPRefactoring_no_all_binary);
@@ -1611,8 +1611,7 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 	}
 
 	private Map<IMember, Set<IMember>> getMatchingMembers(final ITypeHierarchy hierarchy, final IType type, final boolean includeAbstract) throws JavaModelException {
-		final Map<IMember, Set<IMember>> result= new HashMap<>();
-		result.putAll(getMatchingMembersMapping(type));
+		final Map<IMember, Set<IMember>> result= new HashMap<>(getMatchingMembersMapping(type));
 		for (IType subType : hierarchy.getAllSubtypes(type)) {
 			final Map<IMember, Set<IMember>> map= getMatchingMembersMapping(subType);
 			mergeMaps(result, map);
@@ -1903,12 +1902,10 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 					subMonitor.beginTask("", collection.size() * 10); //$NON-NLS-1$
 					subMonitor.setTaskName(RefactoringCoreMessages.ExtractInterfaceProcessor_creating);
 					for (ITypeConstraintVariable iTypeConstraintVariable : collection) {
-						ISourceConstraintVariable variable= iTypeConstraintVariable;
-						if (variable instanceof ITypeConstraintVariable) {
-							ITypeConstraintVariable constraint= (ITypeConstraintVariable) variable;
-							TType estimate= (TType) constraint.getData(SuperTypeConstraintsSolver.DATA_TYPE_ESTIMATE);
+						if (iTypeConstraintVariable != null) {
+							TType estimate= (TType) iTypeConstraintVariable.getData(SuperTypeConstraintsSolver.DATA_TYPE_ESTIMATE);
 							if (estimate != null) {
-								final CompilationUnitRange range= constraint.getRange();
+								final CompilationUnitRange range= iTypeConstraintVariable.getRange();
 								if (isTouched)
 									rewriteTypeOccurrence(range, estimate, requestor, currentRewrite, node, replacements, currentRewrite.createCategorizedGroupDescription(RefactoringCoreMessages.SuperTypeRefactoringProcessor_update_type_occurrence, SET_SUPER_TYPE));
 								else {

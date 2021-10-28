@@ -370,13 +370,12 @@ public class NullAnnotationsRewriteOperations {
 		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModel linkedModel) throws CoreException {
 
 			if (fProblem.getProblemId() == IProblem.MissingNonNullByDefaultAnnotationOnPackage) {
-				ASTNode selectedNode= fCompilationUnit.getPackage();
-				if (selectedNode instanceof PackageDeclaration) {
+				PackageDeclaration packageDeclaration= fCompilationUnit.getPackage();
+				if (packageDeclaration != null) {
 					String nonNullByDefaultAnnotationname= NullAnnotationsFix.getNonNullByDefaultAnnotationName(fCompilationUnit.getJavaElement(), true);
 					String label= Messages.format(FixMessages.NullAnnotationsRewriteOperations_add_missing_default_nullness_annotation, new String[] { nonNullByDefaultAnnotationname });
 					TextEditGroup group= createTextEditGroup(label, cuRewrite);
 					ASTRewrite astRewrite= cuRewrite.getASTRewrite();
-					PackageDeclaration packageDeclaration= (PackageDeclaration) selectedNode;
 					AST ast= cuRewrite.getRoot().getAST();
 					ListRewrite listRewrite= astRewrite.getListRewrite(packageDeclaration, PackageDeclaration.ANNOTATIONS_PROPERTY);
 					Annotation newAnnotation= ast.newMarkerAnnotation();
@@ -416,7 +415,7 @@ public class NullAnnotationsRewriteOperations {
 
 		private boolean usesNullTypeAnnotations(IJavaElement cu, String annotationName) {
 			IJavaProject project= (IJavaProject) cu.getAncestor(IJavaElement.JAVA_PROJECT);
-			if (!JavaModelUtil.is18OrHigher(project)) {
+			if (!JavaModelUtil.is1d8OrHigher(project)) {
 				return false;
 			}
 			try {
@@ -428,7 +427,14 @@ public class NullAnnotationsRewriteOperations {
 					if (annotationType.isBinary()) {
 						if (annotation.getElementName().equals(Target.class.getName())) {
 							for (IMemberValuePair valuePair : annotation.getMemberValuePairs()) {
-								if (TYPE_USE_NAME.equals(valuePair.getValue())) {
+								Object value= valuePair.getValue();
+								if (value instanceof Object[]) {
+									for (Object val : (Object[]) value) {
+										if (TYPE_USE_NAME.equals(val)) {
+											return true;
+										}
+									}
+								} else if (TYPE_USE_NAME.equals(value)) {
 									return true;
 								}
 							}

@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -169,11 +170,7 @@ public abstract class ModuleEncapsulationDetail {
 
 		@Override
 		public int hashCode() {
-			final int prime= 31;
-			int result= 1;
-			result= prime * result + ((fModule == null) ? 0 : fModule.hashCode());
-			result= prime * result + ((fPaths == null) ? 0 : fPaths.hashCode());
-			return result;
+			return Objects.hash(fModule, fPaths);
 		}
 
 		@Override
@@ -185,16 +182,12 @@ public abstract class ModuleEncapsulationDetail {
 			if (getClass() != obj.getClass())
 				return false;
 			ModulePatch other= (ModulePatch) obj;
-			if (fModule == null) {
-				if (other.fModule != null)
-					return false;
-			} else if (!fModule.equals(other.fModule))
+			if (!Objects.equals(fModule, other.fModule)) {
 				return false;
-			if (fPaths == null) {
-				if (other.fPaths != null)
-					return false;
-			} else if (!fPaths.equals(other.fPaths))
+			}
+			if (!Objects.equals(fPaths, other.fPaths)) {
 				return false;
+			}
 			return true;
 		}
 
@@ -334,12 +327,7 @@ public abstract class ModuleEncapsulationDetail {
 
 		@Override
 		public int hashCode() {
-			final int prime= 31;
-			int result= 1;
-			result= prime * result + ((fPackage == null) ? 0 : fPackage.hashCode());
-			result= prime * result + ((fSourceModule == null) ? 0 : fSourceModule.hashCode());
-			result= prime * result + ((fTargetModules == null) ? 0 : fTargetModules.hashCode());
-			return result;
+			return Objects.hash(fPackage, fSourceModule, fTargetModules);
 		}
 
 		@Override
@@ -351,21 +339,15 @@ public abstract class ModuleEncapsulationDetail {
 			if (getClass() != obj.getClass())
 				return false;
 			ModuleAddExpose other= (ModuleAddExpose) obj;
-			if (fPackage == null) {
-				if (other.fPackage != null)
-					return false;
-			} else if (!fPackage.equals(other.fPackage))
+			if (!Objects.equals(fPackage, other.fPackage)) {
 				return false;
-			if (fSourceModule == null) {
-				if (other.fSourceModule != null)
-					return false;
-			} else if (!fSourceModule.equals(other.fSourceModule))
+			}
+			if (!Objects.equals(fSourceModule, other.fSourceModule)) {
 				return false;
-			if (fTargetModules == null) {
-				if (other.fTargetModules != null)
-					return false;
-			} else if (!fTargetModules.equals(other.fTargetModules))
+			}
+			if (!Objects.equals(fTargetModules, other.fTargetModules)) {
 				return false;
+			}
 			return true;
 		}
 
@@ -443,11 +425,7 @@ public abstract class ModuleEncapsulationDetail {
 
 		@Override
 		public int hashCode() {
-			final int prime= 31;
-			int result= 1;
-			result= prime * result + ((fSourceModule == null) ? 0 : fSourceModule.hashCode());
-			result= prime * result + ((fTargetModule == null) ? 0 : fTargetModule.hashCode());
-			return result;
+			return Objects.hash(fSourceModule, fTargetModule);
 		}
 
 		@Override
@@ -459,16 +437,12 @@ public abstract class ModuleEncapsulationDetail {
 			if (getClass() != obj.getClass())
 				return false;
 			ModuleAddReads other= (ModuleAddReads) obj;
-			if (fSourceModule == null) {
-				if (other.fSourceModule != null)
-					return false;
-			} else if (!fSourceModule.equals(other.fSourceModule))
+			if (!Objects.equals(fSourceModule, other.fSourceModule)) {
 				return false;
-			if (fTargetModule == null) {
-				if (other.fTargetModule != null)
-					return false;
-			} else if (!fTargetModule.equals(other.fTargetModule))
+			}
+			if (!Objects.equals(fTargetModule, other.fTargetModule)) {
 				return false;
+			}
 			return true;
 		}
 

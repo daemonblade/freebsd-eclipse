@@ -112,7 +112,7 @@ public class PullUpMemberPage extends UserInputWizardPage {
 		public void modify(final Object element, final String property, final Object value) {
 			if (!ACTION_PROPERTY.equals(property))
 				return;
-			final int action= ((Integer) value).intValue();
+			final int action= ((Integer) value);
 			MemberActionInfo info;
 			if (element instanceof Item) {
 				info= (MemberActionInfo) ((Item) element).getData();
@@ -291,7 +291,7 @@ public class PullUpMemberPage extends UserInputWizardPage {
 	}
 
 	private static void putToStringMapping(final Map<String, Integer> result, final String[] actionLabels, final int actionIndex) {
-		result.put(actionLabels[actionIndex], Integer.valueOf(actionIndex));
+		result.put(actionLabels[actionIndex], actionIndex);
 	}
 
 	private static void setActionForInfos(final MemberActionInfo[] infos, final int action) {
@@ -712,7 +712,7 @@ public class PullUpMemberPage extends UserInputWizardPage {
 			dialog.setBlockOnOpen(true);
 			if (dialog.open() == Window.CANCEL)
 				return;
-			final int action= stringMapping.get(dialog.getSelectedString()).intValue();
+			final int action= stringMapping.get(dialog.getSelectedString());
 			setActionForInfos(selectedMembers, action);
 		} finally {
 			updateWizardPage(preserved, true);
@@ -768,8 +768,9 @@ public class PullUpMemberPage extends UserInputWizardPage {
 		final int commonActionCode= getCommonActionCodeForSelectedInfos();
 		if (commonActionCode == -1)
 			return 0;
-		for (String key : stringMapping.keySet()) {
-			final int action= stringMapping.get(key).intValue();
+		for (Map.Entry<String, Integer> entry : stringMapping.entrySet()) {
+			String key = entry.getKey();
+			final int action= entry.getValue();
 			if (commonActionCode == action) {
 				for (int i= 0; i < keys.length; i++) {
 					if (key.equals(keys[i]))

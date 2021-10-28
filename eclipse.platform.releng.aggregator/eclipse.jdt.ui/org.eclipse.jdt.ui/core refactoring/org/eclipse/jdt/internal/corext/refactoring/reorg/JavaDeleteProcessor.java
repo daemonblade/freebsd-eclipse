@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -183,8 +184,7 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 	private String[] getAffectedProjectNatures() throws CoreException {
 		String[] jNatures= JavaProcessors.computeAffectedNaturs(fJavaElements);
 		String[] rNatures= ResourceProcessors.computeAffectedNatures(fResources);
-		Set<String> result= new HashSet<>();
-		result.addAll(Arrays.asList(jNatures));
+		Set<String> result= new HashSet<>(Arrays.asList(jNatures));
 		result.addAll(Arrays.asList(rNatures));
 		return result.toArray(new String[result.size()]);
 	}
@@ -430,11 +430,10 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 			return;
 
 		// Move from inner to outer packages
-		Collections.sort(initialPackagesToDelete, (one, two) -> two.getElementName().compareTo(one.getElementName()));
+		Collections.sort(initialPackagesToDelete, Comparator.comparing(IPackageFragment::getElementName).reversed());
 
 		// Get resources and java elements which will be deleted as well
-		final Set<IResource> deletedChildren= new HashSet<>();
-		deletedChildren.addAll(Arrays.asList(fResources));
+		final Set<IResource> deletedChildren= new HashSet<>(Arrays.asList(fResources));
 		for (IJavaElement javaElement : fJavaElements) {
 			if (!ReorgUtils.isInsideCompilationUnit(javaElement)) {
 				deletedChildren.add(javaElement.getResource());

@@ -19,7 +19,6 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import org.eclipse.jdt.testplugin.JavaTestPlugin;
@@ -70,8 +69,10 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
  * @since 3.6
  */
 public class DocumentChangeTest extends GenericRefactoringTest {
-	@Rule
-	public RefactoringTestSetup fts= new RefactoringTestSetup();
+
+	public DocumentChangeTest() {
+		rts= new RefactoringTestSetup();
+	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -88,7 +89,7 @@ public class DocumentChangeTest extends GenericRefactoringTest {
 
 	@Test
 	public void testDocumentChange() throws Exception {
-		IProject project= RefactoringTestSetup.getProject().getProject();
+		IProject project= rts.getProject().getProject();
 		IFile file= project.getFile("file.txt");
 		final String prolog= "This is a ";
 		final String insertion= "modified ";

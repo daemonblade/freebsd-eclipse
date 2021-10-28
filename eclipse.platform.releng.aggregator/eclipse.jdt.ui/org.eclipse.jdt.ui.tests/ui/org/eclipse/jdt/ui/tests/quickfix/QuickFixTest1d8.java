@@ -57,7 +57,7 @@ import org.eclipse.jdt.internal.ui.text.correction.AssistContext;
  */
 public class QuickFixTest1d8 extends QuickFixTest {
 	@Rule
-    public ProjectTestSetup projectSetup = new Java1d8ProjectTestSetup();
+	public ProjectTestSetup projectSetup= new Java1d8ProjectTestSetup();
 
 	private IJavaProject fJProject1;
 
@@ -69,6 +69,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.SPACE);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, "4");
 		options.put(DefaultCodeFormatterConstants.FORMATTER_INSERT_NEW_LINE_AFTER_ANNOTATION_ON_LOCAL_VARIABLE, JavaCore.DO_NOT_INSERT);
+		options.put(DefaultCodeFormatterConstants.FORMATTER_ALIGNMENT_FOR_ANNOTATIONS_ON_LOCAL_VARIABLE, DefaultCodeFormatterConstants.createAlignmentValue(false, DefaultCodeFormatterConstants.WRAP_NO_SPLIT));
 
 
 		JavaCore.setOptions(options);
@@ -92,7 +93,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	@Test
 	public void testUnimplementedMethods1() throws Exception {
 		IPackageFragment pack2= fSourceFolder.createPackageFragment("test2", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test2;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public interface Inter {\n");
@@ -104,7 +105,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test2.Inter;\n");
 		buf.append("public class E implements Inter{\n");
@@ -119,7 +120,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(1);
 		String preview1= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test2.Inter;\n");
 		buf.append("public abstract class E implements Inter{\n");
@@ -129,7 +130,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview2= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("\n");
@@ -149,9 +150,9 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testUnimplementedMethods2() throws Exception {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class MyString implements CharSequence{\n");
 		buf.append("}\n");
@@ -165,7 +166,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(1);
 		String preview1= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public abstract class MyString implements CharSequence{\n");
 		buf.append("}\n");
@@ -174,7 +175,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview2= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class MyString implements CharSequence{\n");
 		buf.append("\n");
@@ -206,7 +207,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		IPackageFragment pack2= fSourceFolder.createPackageFragment("test2", false, null);
 
 
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test2;\n");
 		buf.append("public interface List {\n");
 		buf.append("}\n");
@@ -228,7 +229,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test2.Inter;\n");
 		buf.append("public class E implements Inter{\n");
@@ -243,7 +244,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(1);
 		String preview1= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test2.Inter;\n");
 		buf.append("public abstract class E implements Inter{\n");
@@ -253,7 +254,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview2= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("import java.util.List;\n\n");
@@ -293,7 +294,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		IPackageFragment pack2= fSourceFolder.createPackageFragment("test1", false, null);
 
 
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n\n");
 		buf.append("import org.eclipse.jdt.annotation.*;\n");
@@ -316,7 +317,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(1);
 		String preview1= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n\n");
 		buf.append("import org.eclipse.jdt.annotation.*;\n");
@@ -333,7 +334,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview2= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n\n");
 		buf.append("import org.eclipse.jdt.annotation.*;\n");
@@ -365,7 +366,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		IPackageFragment pack2= fSourceFolder.createPackageFragment("test2", false, null);
 
 
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test2;\n");
 		buf.append("public interface List {\n");
 		buf.append("}\n");
@@ -387,7 +388,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test2.Inter;\n");
 		buf.append("public class E implements Inter{\n");
@@ -402,7 +403,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(1);
 		String preview1= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test2.Inter;\n");
 		buf.append("public abstract class E implements Inter{\n");
@@ -412,7 +413,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview2= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test2.Inter;\n");
 		buf.append("import test2.N1;\n");
@@ -435,7 +436,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	@Test
 	public void testUnimplementedMethods6() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.math.BigInteger;\n");
 		buf.append("interface IHasInt {\n");
@@ -458,7 +459,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		assertNumberOfProposals(proposals, 2);
 
 		String[] expected= new String[2];
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.math.BigInteger;\n");
 		buf.append("interface IHasInt {\n");
@@ -479,7 +480,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		buf.append("}\n");
 		expected[0]= buf.toString();
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.math.BigInteger;\n");
 		buf.append("interface IHasInt {\n");
@@ -501,7 +502,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	@Test
 	public void testUnimplementedMethodReference1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class E {\n");
 		buf.append("    void foo(Runnable r) {\n");
@@ -519,7 +520,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		assertNumberOfProposals(proposals, 4);
 
 		String[] expected= new String[1];
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class E {\n");
 		buf.append("    void foo(Runnable r) {\n");
@@ -538,7 +539,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	@Test
 	public void testUnimplementedMethodReference2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Comparator;\n");
 		buf.append("class E {\n");
@@ -557,7 +558,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		assertNumberOfProposals(proposals, 4);
 
 		String[] expected= new String[1];
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Comparator;\n");
 		buf.append("class E {\n");
@@ -578,7 +579,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	@Test
 	public void testUnimplementedMethodReference3() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.function.Function;\n");
 		buf.append("class E {\n");
@@ -597,7 +598,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		assertNumberOfProposals(proposals, 4);
 
 		String[] expected= new String[1];
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.function.Function;\n");
 		buf.append("class E {\n");
@@ -618,7 +619,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	@Test
 	public void testUnimplementedMethodReference4() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface F<T>\n");
 		buf.append("    T baz();\n");
@@ -639,7 +640,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		assertNumberOfProposals(proposals, 4);
 
 		String[] expected= new String[1];
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface F<T>\n");
 		buf.append("    T baz();\n");
@@ -662,7 +663,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	@Test
 	public void testUnimplementedMethodReference5() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.function.BiFunction;\n");
 		buf.append("class E {\n");
@@ -681,7 +682,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		assertNumberOfProposals(proposals, 4);
 
 		String[] expected= new String[1];
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.function.BiFunction;\n");
 		buf.append("class E {\n");
@@ -701,9 +702,8 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testLambdaReturnType1() throws Exception {
-		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("@FunctionalInterface\n");
 		buf.append("interface I {\n");
@@ -728,7 +728,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("@FunctionalInterface\n");
 		buf.append("interface I {\n");
@@ -750,9 +750,8 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testLambdaReturnType2() throws Exception {
-		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("@FunctionalInterface\n");
 		buf.append("interface I {\n");
@@ -776,7 +775,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("@FunctionalInterface\n");
 		buf.append("interface I {\n");
@@ -797,9 +796,8 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testLambdaReturnType3() throws Exception {
-		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("@FunctionalInterface\n");
 		buf.append("interface I {\n");
@@ -825,7 +823,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("@FunctionalInterface\n");
 		buf.append("interface I {\n");
@@ -847,9 +845,8 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testLambdaReturnType4() throws Exception {
-		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("@FunctionalInterface\n");
 		buf.append("interface I {\n");
@@ -872,7 +869,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("@FunctionalInterface\n");
 		buf.append("interface I {\n");
@@ -893,9 +890,9 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	// bug 424172
 	@Test
 	public void testImportTypeInMethodReference() throws Exception {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test.one", false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test.one;\n");
 		buf.append("\n");
 		buf.append("public class X {\n");
@@ -904,7 +901,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		pack1.createCompilationUnit("X.java", buf.toString(), false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test.one;\n");
 		buf.append("\n");
 		buf.append("@FunctionalInterface\n");
@@ -914,7 +911,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		pack1.createCompilationUnit("F2.java", buf.toString(), false, null);
 
 		IPackageFragment pack2= fSourceFolder.createPackageFragment("test.two", false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test.two;\n");
 		buf.append("\n");
 		buf.append("import test.one.F2;\n");
@@ -933,7 +930,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test.two;\n");
 		buf.append("\n");
 		buf.append("import test.one.F2;\n");
@@ -949,9 +946,8 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testLambdaReturnType5() throws Exception {
-		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.math.BigInteger;\n");
 		buf.append("\n");
@@ -976,7 +972,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.math.BigInteger;\n");
 		buf.append("\n");
@@ -999,7 +995,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	@Test
 	public void testChangeModifierToStatic1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface A {\n");
 		buf.append("    int i = foo();\n");
@@ -1024,7 +1020,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		assertNumberOfProposals(proposals, 1);
 		assertCorrectLabels(proposals);
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface A {\n");
 		buf.append("    int i = foo();\n");
@@ -1047,7 +1043,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		assertNumberOfProposals(proposals, 1);
 		assertCorrectLabels(proposals);
 		proposal= (CUCorrectionProposal)proposals.get(0);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface A {\n");
 		buf.append("    int i = foo();\n");
@@ -1072,7 +1068,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		assertNumberOfProposals(proposals, 1);
 		assertCorrectLabels(proposals);
 		proposal= (CUCorrectionProposal)proposals.get(0);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface A {\n");
 		buf.append("    int i = foo();\n");
@@ -1096,7 +1092,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		assertNumberOfProposals(proposals, 1);
 		assertCorrectLabels(proposals);
 		proposal= (CUCorrectionProposal)proposals.get(0);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface A {\n");
 		buf.append("    int i = foo();\n");
@@ -1121,7 +1117,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	@Test
 	public void testChangeModifierToStatic2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface Test {\n");
 		buf.append("    int i= foo();\n");
@@ -1137,7 +1133,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		assertNumberOfProposals(proposals, 1);
 		assertCorrectLabels(proposals);
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface Test {\n");
 		buf.append("    int i= foo();\n");
@@ -1152,7 +1148,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	@Test
 	public void testInvalidInterfaceMethodModifier1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public interface Inter {\n");
@@ -1168,7 +1164,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview1= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public interface Inter {\n");
@@ -1183,7 +1179,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	@Test
 	public void testInvalidInterfaceMethodModifier2() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public interface Inter {\n");
@@ -1199,7 +1195,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview1= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public interface Inter {\n");
@@ -1213,9 +1209,9 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	// bug 414084
 	@Test
 	public void testAbstractInterfaceMethodWithBody1() throws Exception {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface Snippet{\n");
 		buf.append("\n");
@@ -1232,7 +1228,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview1= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface Snippet{\n");
 		buf.append("\n");
@@ -1243,7 +1239,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		proposal= (CUCorrectionProposal)proposals.get(1);
 		String preview2= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface Snippet{\n");
 		buf.append("\n");
@@ -1255,7 +1251,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		proposal= (CUCorrectionProposal)proposals.get(2);
 		String preview3= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface Snippet{\n");
 		buf.append("\n");
@@ -1271,9 +1267,9 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	// bug 414084
 	@Test
 	public void testAbstractInterfaceMethodWithBody2() throws Exception {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface Snippet{\n");
 		buf.append("\n");
@@ -1290,7 +1286,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview1= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface Snippet{\n");
 		buf.append("\n");
@@ -1301,7 +1297,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		proposal= (CUCorrectionProposal)proposals.get(1);
 		String preview2= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface Snippet{\n");
 		buf.append("\n");
@@ -1313,7 +1309,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		proposal= (CUCorrectionProposal)proposals.get(2);
 		String preview3= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface Snippet{\n");
 		buf.append("\n");
@@ -1328,9 +1324,9 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	// bug 434173
 	@Test
 	public void testAbstractInterfaceMethodWithBody3() throws Exception {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface I {\n");
 		buf.append("    public strictfp native void foo() {}\n");
@@ -1344,7 +1340,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(3);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface I {\n");
 		buf.append("    public void foo() {}\n");
@@ -1353,7 +1349,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		proposal= (CUCorrectionProposal)proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface I {\n");
 		buf.append("    public void foo();\n");
@@ -1364,9 +1360,9 @@ public class QuickFixTest1d8 extends QuickFixTest {
 	// bug 424616
 	@Test
 	public void testInferredExceptionType() throws Exception {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class AddThrows {\n");
 		buf.append("  interface Getter2<T, E extends Exception> { T get() throws E; }\n");
@@ -1386,7 +1382,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class AddThrows {\n");
 		buf.append("  interface Getter2<T, E extends Exception> { T get() throws E; }\n");
@@ -1406,7 +1402,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		proposal= (CUCorrectionProposal)proposals.get(1);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class AddThrows {\n");
 		buf.append("  interface Getter2<T, E extends Exception> { T get() throws E; }\n");
@@ -1435,7 +1431,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java1d8ProjectTestSetup.getJdtAnnotations20Path()));
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public <T extends Number> double foo(T t) {\n");
@@ -1453,7 +1449,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
 		String preview= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import org.eclipse.jdt.annotation.NonNull;\n");
@@ -1479,11 +1475,12 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		options.put(JavaCore.COMPILER_PB_REDUNDANT_NULL_CHECK, JavaCore.WARNING);
 		options.put(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION, JavaCore.WARNING);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_INSERT_NEW_LINE_AFTER_ANNOTATION_ON_LOCAL_VARIABLE, JavaCore.INSERT);
+		options.put(DefaultCodeFormatterConstants.FORMATTER_ALIGNMENT_FOR_ANNOTATIONS_ON_LOCAL_VARIABLE, DefaultCodeFormatterConstants.createAlignmentValue(true, DefaultCodeFormatterConstants.WRAP_ONE_PER_LINE));
 		JavaCore.setOptions(options);
 
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java1d8ProjectTestSetup.getJdtAnnotations20Path()));
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public <T extends Number> double foo(T t) {\n");
@@ -1501,7 +1498,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
 		String preview= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import org.eclipse.jdt.annotation.NonNull;\n");
@@ -1528,11 +1525,12 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		options.put(JavaCore.COMPILER_PB_REDUNDANT_NULL_CHECK, JavaCore.WARNING);
 		options.put(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION, JavaCore.WARNING);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_INSERT_NEW_LINE_AFTER_ANNOTATION_ON_LOCAL_VARIABLE, JavaCore.INSERT);
+		options.put(DefaultCodeFormatterConstants.FORMATTER_ALIGNMENT_FOR_ANNOTATIONS_ON_LOCAL_VARIABLE, DefaultCodeFormatterConstants.createAlignmentValue(true, DefaultCodeFormatterConstants.WRAP_ONE_PER_LINE));
 		JavaCore.setOptions(options);
 
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java1d8ProjectTestSetup.getJdtAnnotations20Path()));
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import org.eclipse.jdt.annotation.*;\n");
 		buf.append("public class E {\n");
@@ -1552,7 +1550,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import org.eclipse.jdt.annotation.*;\n");
 		buf.append("public class E {\n");
@@ -1578,11 +1576,12 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		options.put(JavaCore.COMPILER_PB_REDUNDANT_NULL_CHECK, JavaCore.WARNING);
 		options.put(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION, JavaCore.WARNING);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_INSERT_NEW_LINE_AFTER_ANNOTATION_ON_LOCAL_VARIABLE, JavaCore.INSERT);
+		options.put(DefaultCodeFormatterConstants.FORMATTER_ALIGNMENT_FOR_ANNOTATIONS_ON_LOCAL_VARIABLE, DefaultCodeFormatterConstants.createAlignmentValue(true, DefaultCodeFormatterConstants.WRAP_ONE_PER_LINE));
 		JavaCore.setOptions(options);
 
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java1d8ProjectTestSetup.getJdtAnnotations20Path()));
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import org.eclipse.jdt.annotation.*;\n");
 		buf.append("public class E {\n");
@@ -1604,7 +1603,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import org.eclipse.jdt.annotation.*;\n");
 		buf.append("public class E {\n");
@@ -1632,11 +1631,12 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		options.put(JavaCore.COMPILER_PB_REDUNDANT_NULL_CHECK, JavaCore.WARNING);
 		options.put(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION, JavaCore.WARNING);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_INSERT_NEW_LINE_AFTER_ANNOTATION_ON_LOCAL_VARIABLE, JavaCore.INSERT);
+		options.put(DefaultCodeFormatterConstants.FORMATTER_ALIGNMENT_FOR_ANNOTATIONS_ON_LOCAL_VARIABLE, DefaultCodeFormatterConstants.createAlignmentValue(true, DefaultCodeFormatterConstants.WRAP_ONE_PER_LINE));
 		JavaCore.setOptions(options);
 
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java1d8ProjectTestSetup.getJdtAnnotations20Path()));
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import org.eclipse.jdt.annotation.*;\n");
 		buf.append("@NonNullByDefault\n");
@@ -1652,7 +1652,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import org.eclipse.jdt.annotation.*;\n");
 		buf.append("@NonNullByDefault\n");
@@ -1674,6 +1674,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		options.put(JavaCore.COMPILER_PB_REDUNDANT_NULL_CHECK, JavaCore.WARNING);
 		options.put(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION, JavaCore.WARNING);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_INSERT_NEW_LINE_AFTER_ANNOTATION_ON_LOCAL_VARIABLE, JavaCore.INSERT);
+		options.put(DefaultCodeFormatterConstants.FORMATTER_ALIGNMENT_FOR_ANNOTATIONS_ON_LOCAL_VARIABLE, DefaultCodeFormatterConstants.createAlignmentValue(true, DefaultCodeFormatterConstants.WRAP_ONE_PER_LINE));
 		JavaCore.setOptions(options);
 
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java1d8ProjectTestSetup.getJdtAnnotations20Path()));
@@ -1726,7 +1727,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		JavaProjectHelper.addLibrary(fJProject1, new Path(Java1d8ProjectTestSetup.getJdtAnnotations20Path()));
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import org.eclipse.jdt.annotation.*;\n");
 		buf.append("@NonNullByDefault\n");
@@ -1743,7 +1744,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
 		String preview= getPreviewContent(proposal);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import org.eclipse.jdt.annotation.*;\n");
 		buf.append("@NonNullByDefault\n");
@@ -1762,14 +1763,14 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 
-		StringBuffer buf;
+		StringBuilder buf;
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("@org.eclipse.jdt.annotation.NonNullByDefault\n");
 		buf.append("package test1;\n");
 		pack1.createCompilationUnit("package-info.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import org.eclipse.jdt.annotation.NonNull;\n");
@@ -1800,7 +1801,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		List<IJavaCompletionProposal> proposals1= collectCorrections(cu, problems[0], null);
 		List<IJavaCompletionProposal> proposals2= collectCorrections(cu, problems[1], null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import org.eclipse.jdt.annotation.NonNull;\n");
@@ -1825,7 +1826,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		buf.append("}");
 		assertProposalPreviewEquals(buf.toString(), "Change method 'g(Number, Number)' to 'g(Boolean, Boolean)'", proposals1);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import org.eclipse.jdt.annotation.NonNull;\n");
@@ -1859,14 +1860,14 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 
-		StringBuffer buf;
+		StringBuilder buf;
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("@org.eclipse.jdt.annotation.NonNullByDefault\n");
 		buf.append("package test1;\n");
 		pack1.createCompilationUnit("package-info.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.lang.annotation.ElementType;\n");
@@ -1910,7 +1911,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		List<IJavaCompletionProposal> proposals1= collectCorrections(cu, problems[0], null);
 		List<IJavaCompletionProposal> proposals2= collectCorrections(cu, problems[1], null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.lang.annotation.ElementType;\n");
@@ -1948,7 +1949,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		buf.append("}");
 		assertProposalPreviewEquals(buf.toString(), "Change type of 'f1' to 'String'", proposals1);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.lang.annotation.ElementType;\n");
@@ -1986,7 +1987,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		buf.append("}");
 		assertProposalPreviewEquals(buf.toString(), "Change type of 'f2' to 'String'", proposals2);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.lang.annotation.ElementType;\n");
@@ -2023,7 +2024,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		buf.append("}");
 		assertProposalPreviewEquals(buf.toString(), "Change return type of 'g(..)' to 'Map<? extends Number, Integer>[]'", proposals1);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.lang.annotation.ElementType;\n");
@@ -2069,14 +2070,14 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 
-		StringBuffer buf;
+		StringBuilder buf;
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("@org.eclipse.jdt.annotation.NonNullByDefault\n");
 		buf.append("package test1;\n");
 		pack1.createCompilationUnit("package-info.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.lang.annotation.ElementType;\n");
@@ -2119,7 +2120,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		List<IJavaCompletionProposal> proposals1= collectCorrections(cu, problems[0], null);
 		List<IJavaCompletionProposal> proposals2= collectCorrections(cu, problems[1], null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.lang.annotation.ElementType;\n");
@@ -2156,7 +2157,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		buf.append("");
 		assertProposalPreviewEquals(buf.toString(), "Change type of 'l1' to 'String'", proposals1);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.lang.annotation.ElementType;\n");
@@ -2193,7 +2194,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		buf.append("");
 		assertProposalPreviewEquals(buf.toString(), "Change type of 'l2' to 'String'", proposals2);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.lang.annotation.ElementType;\n");
@@ -2229,7 +2230,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		buf.append("");
 		assertProposalPreviewEquals(buf.toString(), "Change return type of 'h(..)' to 'Map<? extends Number, Integer>[]'", proposals1);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.lang.annotation.ElementType;\n");
@@ -2274,7 +2275,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		IPackageFragment pack2= fSourceFolder.createPackageFragment("test1", false, null);
 
 
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class E {\n");
 		buf.append("	protected final String param1;\n");
@@ -2296,7 +2297,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 		ArrayList<IJavaCompletionProposal> proposals= collectCorrections(cu, astRoot);
 		assertCorrectLabels(proposals);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class E {\n");
 		buf.append("	protected final static String param1;\n");
@@ -2314,7 +2315,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		assertExpectedExistInProposals(proposals, new String[] {expected});
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class E {\n");
 		buf.append("	protected final String param1;\n");
@@ -2334,7 +2335,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		assertExpectedExistInProposals(proposals, new String[] {expected});
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class E {\n");
 		buf.append("	protected final String param1;\n");
@@ -2352,7 +2353,7 @@ public class QuickFixTest1d8 extends QuickFixTest {
 
 		assertExpectedExistInProposals(proposals, new String[] {expected});
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class E {\n");
 		buf.append("	protected final String param1;\n");

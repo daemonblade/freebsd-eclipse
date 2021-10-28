@@ -118,7 +118,6 @@ public final class NewWizardMessages extends NLS {
 	public static String NewTypeWizardPage_warning_NotJDKCompliant2;
 	public static String NewTypeWizardPage_warning_EnumClassNotFound;
 	public static String NewTypeWizardPage_warning_RecordClassNotFound;
-	public static String NewTypeWizardPage_warning_PreviewFeatureNotEnabled;
 	public static String NewTypeWizardPage_default;
 	public static String NewTypeWizardPage_ChoosePackageDialog_title;
 	public static String NewTypeWizardPage_ChoosePackageDialog_description;
@@ -254,6 +253,8 @@ public final class NewWizardMessages extends NLS {
 	public static String NewJavaProjectWizardPageOne_Message_invalidDirectory;
 	public static String NewJavaProjectWizardPageOne_Message_projectAlreadyExists;
 	public static String NewJavaProjectWizardPageOne_UnknownDefaultJRE_name;
+	public static String NewJavaProjectWizardPageOne_Module_group;
+	public static String NewJavaProjectWizardPageOne_Create_ModuleInfoFile_name;
 	public static String NewJavaProjectWizardPageTwo_error_remove_message;
 	public static String NewJavaProjectWizardPageTwo_error_remove_title;
 	public static String NewJavaProjectWizardPageTwo_problem_backup;
@@ -341,7 +342,6 @@ public final class NewWizardMessages extends NLS {
 	public static String SourceContainerWorkbookPage_folders_edit_button;
 	public static String SourceContainerWorkbookPage_folders_toggle_button;
 	public static String SourceContainerWorkbookPage_folders_check;
-	public static String SourceContainerWorkbookPage_create_moduleinfo_check;
 	public static String SourceContainerWorkbookPage_ExistingSourceFolderDialog_new_title;
 	public static String SourceContainerWorkbookPage_ChangeOutputLocationDialog_title;
 	public static String SourceContainerWorkbookPage_ChangeOutputLocationDialog_project_and_output_message;

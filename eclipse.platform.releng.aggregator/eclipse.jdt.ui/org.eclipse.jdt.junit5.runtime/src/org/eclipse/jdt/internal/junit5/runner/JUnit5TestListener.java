@@ -118,11 +118,11 @@ public class JUnit5TestListener implements TestExecutionListener {
 
 		// Avoid reference to ComparisonFailure initially to avoid NoClassDefFoundError for ComparisonFailure when junit.jar is not on the build path
 		String classname= exception.getClass().getName();
-		if (classname.equals("junit.framework.ComparisonFailure")) { //$NON-NLS-1$
+		if ("junit.framework.ComparisonFailure".equals(classname)) { //$NON-NLS-1$
 			junit.framework.ComparisonFailure comparisonFailure= (junit.framework.ComparisonFailure) exception;
 			return new FailedComparison(comparisonFailure.getExpected(), comparisonFailure.getActual());
 		}
-		if (classname.equals("org.junit.ComparisonFailure")) { //$NON-NLS-1$
+		if ("org.junit.ComparisonFailure".equals(classname)) { //$NON-NLS-1$
 			org.junit.ComparisonFailure comparisonFailure= (org.junit.ComparisonFailure) exception;
 			return new FailedComparison(comparisonFailure.getExpected(), comparisonFailure.getActual());
 		}
@@ -131,20 +131,23 @@ public class JUnit5TestListener implements TestExecutionListener {
 	}
 
 	protected FailedComparison getComparisonForMultipleFailures(Throwable exception) {
-		String expectedStr= ""; //$NON-NLS-1$
-		String actualStr= ""; //$NON-NLS-1$
+		StringBuilder expectedStr= new StringBuilder();
+		StringBuilder actualStr= new StringBuilder();
 		String delimiter= "\n\n"; //$NON-NLS-1$
 		List<Throwable> failures= ((MultipleFailuresError) exception).getFailures();
 		for (Throwable assertionError : failures) {
 			if (assertionError instanceof MultipleFailuresError) {
 				FailedComparison failedComparison= getComparisonForMultipleFailures(assertionError);
+				if(failedComparison == null) {
+					return null;
+				}
 				String expected= failedComparison.getExpected();
 				String actual= failedComparison.getActual();
 				if (expected == null || actual == null) {
 					return null;
 				}
-				expectedStr+= expected;
-				actualStr+= actual;
+				expectedStr.append(expected);
+				actualStr.append(actual);
 			} else if (assertionError instanceof AssertionFailedError) {
 				AssertionFailedError assertionFailedError= (AssertionFailedError) assertionError;
 				ValueWrapper expected= assertionFailedError.getExpected();
@@ -152,13 +155,13 @@ public class JUnit5TestListener implements TestExecutionListener {
 				if (expected == null || actual == null) {
 					return null;
 				}
-				expectedStr+= expected.getStringRepresentation() + delimiter;
-				actualStr+= actual.getStringRepresentation() + delimiter;
+				expectedStr.append(expected.getStringRepresentation()).append(delimiter);
+				actualStr.append(actual.getStringRepresentation()).append(delimiter);
 			} else {
 				return null;
 			}
 		}
-		return new FailedComparison(expectedStr, actualStr);
+		return new FailedComparison(expectedStr.toString(), actualStr.toString());
 	}
 
 	@Override
@@ -217,7 +220,7 @@ public class JUnit5TestListener implements TestExecutionListener {
 		return new JUnit5Identifier(testIdentifier);
 	}
 
-	private class IgnoredTestIdentifier extends JUnit5Identifier {
+	private static class IgnoredTestIdentifier extends JUnit5Identifier {
 		public IgnoredTestIdentifier(TestIdentifier description) {
 			super(description);
 		}
@@ -231,7 +234,7 @@ public class JUnit5TestListener implements TestExecutionListener {
 		}
 	}
 
-	private class AssumptionFailedTestIdentifier extends JUnit5Identifier {
+	private static class AssumptionFailedTestIdentifier extends JUnit5Identifier {
 		public AssumptionFailedTestIdentifier(TestIdentifier description) {
 			super(description);
 		}

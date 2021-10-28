@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
-import org.junit.Rule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.eclipse.core.runtime.CoreException;
@@ -56,8 +56,6 @@ import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 public class RenameNonPrivateFieldTests extends GenericRefactoringTest {
 	private static final String REFACTORING_PATH= "RenameNonPrivateField/";
 
-	private static final boolean BUG_79990_CORE_SEARCH_METHOD_DECL= true;
-
 	private String fPrefixPref;
 
 	//Test methods can configure these fields:
@@ -66,8 +64,9 @@ public class RenameNonPrivateFieldTests extends GenericRefactoringTest {
 	private boolean fRenameGetter= false;
 	private boolean fRenameSetter= false;
 
-	@Rule
-	public RefactoringTestSetup fts= new RefactoringTestSetup();
+	public RenameNonPrivateFieldTests() {
+		rts= new RefactoringTestSetup();
+	}
 
 	@Override
 	protected String getRefactoringPath() {
@@ -414,9 +413,8 @@ public class RenameNonPrivateFieldTests extends GenericRefactoringTest {
 	public void testStaticImport() throws Exception{
 		//bug 77622
 		IPackageFragment test1= getRoot().createPackageFragment("test1", true, null);
-		ICompilationUnit cuC= null;
 		ICompilationUnit cuB= createCUfromTestFile(test1, "B");
-		cuC= createCUfromTestFile(getRoot().getPackageFragment(""), "C");
+		ICompilationUnit cuC= createCUfromTestFile(getRoot().getPackageFragment(""), "C");
 
 		helper2("PI", "e");
 
@@ -428,9 +426,8 @@ public class RenameNonPrivateFieldTests extends GenericRefactoringTest {
 	public void testEnumConst() throws Exception {
 		//bug 77619
 		IPackageFragment test1= getRoot().createPackageFragment("test1", true, null);
-		ICompilationUnit cuC= null;
 		ICompilationUnit cuB= createCUfromTestFile(test1, "B");
-		cuC= createCUfromTestFile(getRoot().getPackageFragment(""), "C");
+		ICompilationUnit cuC= createCUfromTestFile(getRoot().getPackageFragment(""), "C");
 
 		helper2("RED", "REDDISH");
 
@@ -450,12 +447,9 @@ public class RenameNonPrivateFieldTests extends GenericRefactoringTest {
 		helper2();
 	}
 
+	@Ignore("BUG_79990_CORE_SEARCH_METHOD_DECL")
 	@Test
 	public void testGenerics3() throws Exception {
-		if (BUG_79990_CORE_SEARCH_METHOD_DECL) {
-			printTestDisabledMessage("BUG_79990_CORE_SEARCH_METHOD_DECL");
-			return;
-		}
 		fRenameSetter= true;
 		fRenameGetter= true;
 		helper2();

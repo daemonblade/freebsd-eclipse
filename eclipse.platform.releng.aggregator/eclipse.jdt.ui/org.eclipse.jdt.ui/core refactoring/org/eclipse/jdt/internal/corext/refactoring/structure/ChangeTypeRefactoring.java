@@ -552,7 +552,7 @@ public class ChangeTypeRefactoring extends Refactoring {
 		root.addChild(unitRewriter.rewriteAST());
 	}
 
-	private class SourceRangeComputer extends TargetSourceRangeComputer {
+	private static class SourceRangeComputer extends TargetSourceRangeComputer {
 		@Override
 		public SourceRange computeSourceRange(ASTNode node) {
 			return new SourceRange(node.getStartPosition(),node.getLength());
@@ -570,9 +570,9 @@ public class ChangeTypeRefactoring extends Refactoring {
 			if ((decl instanceof SimpleName || decl instanceof QualifiedName) && cv instanceof ExpressionVariable) {
 				ASTNode gp= decl.getParent().getParent();
 				updateType(unit, getType(gp), unitChange, unitRewriter, typeName, remover);   // local variable or parameter
-			} else if (decl instanceof MethodDeclaration || decl instanceof FieldDeclaration) {
-				updateType(unit, getType(decl), unitChange, unitRewriter, typeName, remover); // method return or field type
-			} else if (decl instanceof ParameterizedType){
+			} else if (decl instanceof MethodDeclaration
+					|| decl instanceof FieldDeclaration // Method return or field type
+					|| decl instanceof ParameterizedType) {
 				updateType(unit, getType(decl), unitChange, unitRewriter, typeName, remover);
 			}
 		}
@@ -1143,17 +1143,17 @@ public class ChangeTypeRefactoring extends Refactoring {
 	static String print(Collection<ITypeBinding> types){
 		if (types.isEmpty())
 			return "{ }"; //$NON-NLS-1$
-		String result = "{ "; //$NON-NLS-1$
+		StringBuilder result = new StringBuilder("{ "); //$NON-NLS-1$
 		for (Iterator<ITypeBinding> it=types.iterator(); it.hasNext(); ){
 			ITypeBinding type= it.next();
-			result += type.getQualifiedName();
+			result.append(type.getQualifiedName());
 			if (it.hasNext()){
-				result += ", ";  //$NON-NLS-1$
+				result.append(", ");  //$NON-NLS-1$
 			} else {
-				result += " }"; //$NON-NLS-1$
+				result.append(" }"); //$NON-NLS-1$
 			}
 		}
-		return result;
+		return result.toString();
 	}
 
 
@@ -1173,9 +1173,7 @@ public class ChangeTypeRefactoring extends Refactoring {
 
 		Collection<ITypeBinding> result= new HashSet<>();
 
-		Collection<ITypeBinding> allTypes= new HashSet<>();
-		allTypes.addAll(getAllSuperTypes(originalType));
-
+		Collection<ITypeBinding> allTypes= new HashSet<>(getAllSuperTypes(originalType));
 		pm.beginTask(RefactoringCoreMessages.ChangeTypeRefactoring_analyzingMessage, allTypes.size());
 
 		for (ITypeBinding type : allTypes) {
@@ -1378,16 +1376,14 @@ public class ChangeTypeRefactoring extends Refactoring {
 		if (fMethodBinding != null && fCuToSearchResultGroup.containsKey(unit)){
 			SearchResultGroup group= fCuToSearchResultGroup.get(unit);
 			for (ASTNode node : ASTNodeSearchUtil.getAstNodes(group.getSearchResults(), cu)) {
-				if (fMethodBinding != null){
-					// find MethodDeclaration above it in the tree
-					ASTNode n= node;
-					while (n != null && !(n instanceof MethodDeclaration)) {
-						n = n.getParent();
-					}
-					MethodDeclaration md= (MethodDeclaration) n;
-					if (md != null)
-						md.accept(fCollector);
+				// find MethodDeclaration above it in the tree
+				ASTNode n= node;
+				while (n != null && !(n instanceof MethodDeclaration)) {
+					n = n.getParent();
 				}
+				MethodDeclaration md= (MethodDeclaration) n;
+				if (md != null)
+					md.accept(fCollector);
 			}
 		} else {
 			cu.accept(fCollector);
@@ -1528,39 +1524,37 @@ public class ChangeTypeRefactoring extends Refactoring {
 			return fAffectedUnits;
 		}
 		if (fMethodBinding != null) {
-			if (fMethodBinding != null) {
 
+			IMethod selectedMethod= (IMethod) fMethodBinding.getJavaElement();
+			if (selectedMethod == null) {
+				// can't happen since we checked it up front in check initial conditions
+				Assert.isTrue(false, RefactoringCoreMessages.ChangeTypeRefactoring_no_method);
+			}
 
-				IMethod selectedMethod= (IMethod) fMethodBinding.getJavaElement();
-				if (selectedMethod == null) {
-					// can't happen since we checked it up front in check initial conditions
-					Assert.isTrue(false, RefactoringCoreMessages.ChangeTypeRefactoring_no_method);
-				}
+			// the following code fragment appears to be the source of a memory leak, when
+			// GT is repeatedly applied
 
-				// the following code fragment appears to be the source of a memory leak, when
-				// GT is repeatedly applied
+			IMethod root= selectedMethod;
+			if (! root.getDeclaringType().isInterface() && MethodChecks.isVirtual(root)) {
+				final SubProgressMonitor subMonitor= new SubProgressMonitor(pm, 5);
+				IMethod inInterface= MethodChecks.isDeclaredInInterface(root, root.getDeclaringType().newTypeHierarchy(new SubProgressMonitor(subMonitor, 1)), subMonitor);
+				if (inInterface != null && !inInterface.equals(root))
+					root= inInterface;
+			}
 
-				IMethod root= selectedMethod;
-				if (! root.getDeclaringType().isInterface() && MethodChecks.isVirtual(root)) {
-					final SubProgressMonitor subMonitor= new SubProgressMonitor(pm, 5);
-					IMethod inInterface= MethodChecks.isDeclaredInInterface(root, root.getDeclaringType().newTypeHierarchy(new SubProgressMonitor(subMonitor, 1)), subMonitor);
-					if (inInterface != null && !inInterface.equals(root))
-						root= inInterface;
-				}
+			// end code fragment
 
-				// end code fragment
+			IMethod[] rippleMethods= RippleMethodFinder2.getRelatedMethods(
+					root, new SubProgressMonitor(pm, 15), null);
+			SearchPattern pattern= RefactoringSearchEngine.createOrPattern(
+					rippleMethods, IJavaSearchConstants.ALL_OCCURRENCES);
 
-				IMethod[] rippleMethods= RippleMethodFinder2.getRelatedMethods(
-						root, new SubProgressMonitor(pm, 15), null);
-				SearchPattern pattern= RefactoringSearchEngine.createOrPattern(
-						rippleMethods, IJavaSearchConstants.ALL_OCCURRENCES);
+			// To compute the scope we have to use the selected method. Otherwise we
+			// might start from the wrong project.
+			IJavaSearchScope scope= RefactoringScopeFactory.create(selectedMethod);
+			CollectingSearchRequestor csr= new CollectingSearchRequestor();
 
-				// To compute the scope we have to use the selected method. Otherwise we
-				// might start from the wrong project.
-				IJavaSearchScope scope= RefactoringScopeFactory.create(selectedMethod);
-				CollectingSearchRequestor csr= new CollectingSearchRequestor();
-
-				SearchResultGroup[] groups= RefactoringSearchEngine.search(
+			SearchResultGroup[] groups= RefactoringSearchEngine.search(
 					pattern,
 					null,
 					scope,
@@ -1568,8 +1562,7 @@ public class ChangeTypeRefactoring extends Refactoring {
 					new SubProgressMonitor(pm, 80),
 					new RefactoringStatus()); //TODO: deal with errors from non-CU matches
 
-				fAffectedUnits= getCus(groups);
-			}
+			fAffectedUnits= getCus(groups);
 		} else if (fFieldBinding != null) {
 			IField iField= (IField) fFieldBinding.getJavaElement();
 			if (iField == null) {

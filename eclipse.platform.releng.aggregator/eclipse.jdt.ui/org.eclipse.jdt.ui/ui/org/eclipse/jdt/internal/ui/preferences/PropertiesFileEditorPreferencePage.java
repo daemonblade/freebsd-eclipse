@@ -103,7 +103,7 @@ public class PropertiesFileEditorPreferencePage extends PreferencePage implement
 			Assert.isNotNull(configuration);
 			Assert.isNotNull(preferenceStore);
 			final IPropertyChangeListener fontChangeListener= event -> {
-				if (event.getProperty().equals(PreferenceConstants.PROPERTIES_FILE_EDITOR_TEXT_FONT)) {
+				if (PreferenceConstants.PROPERTIES_FILE_EDITOR_TEXT_FONT.equals(event.getProperty())) {
 					Font font= JFaceResources.getFont(PreferenceConstants.PROPERTIES_FILE_EDITOR_TEXT_FONT);
 					viewer.getTextWidget().setFont(font);
 				}
@@ -224,7 +224,7 @@ public class PropertiesFileEditorPreferencePage extends PreferencePage implement
 	/**
 	 * Color list label provider.
 	 */
-	private class ColorListLabelProvider extends LabelProvider implements IColorProvider {
+	private static class ColorListLabelProvider extends LabelProvider implements IColorProvider {
 
 		/*
 		 * @see org.eclipse.jface.viewers.ILabelProvider#getText(java.lang.Object)
@@ -254,7 +254,7 @@ public class PropertiesFileEditorPreferencePage extends PreferencePage implement
 	/**
 	 * Color list content provider.
 	 */
-	private class ColorListContentProvider implements IStructuredContentProvider {
+	private static class ColorListContentProvider implements IStructuredContentProvider {
 
 		/*
 		 * @see org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java.lang.Object)
@@ -546,7 +546,7 @@ public class PropertiesFileEditorPreferencePage extends PreferencePage implement
 
 		IPreferenceStore store= new ChainedPreferenceStore(new IPreferenceStore[] { fOverlayStore, JavaPlugin.getDefault().getCombinedPreferenceStore()});
 		fPreviewViewer= new JavaSourceViewer(parent, null, null, false, SWT.V_SCROLL | SWT.H_SCROLL | SWT.BORDER, store);
-		fColorManager= new JavaColorManager(false);
+		fColorManager= new JavaColorManager();
 		PropertiesFileSourceViewerConfiguration configuration= new PropertiesFileSourceViewerConfiguration(fColorManager, store, null, IPropertiesFilePartitions.PROPERTIES_FILE_PARTITIONING);
 		fPreviewViewer.configure(configuration);
 		Font font= JFaceResources.getFont(PreferenceConstants.PROPERTIES_FILE_EDITOR_TEXT_FONT);

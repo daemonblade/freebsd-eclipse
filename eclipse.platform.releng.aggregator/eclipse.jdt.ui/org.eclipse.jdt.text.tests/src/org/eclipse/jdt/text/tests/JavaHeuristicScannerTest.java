@@ -21,6 +21,7 @@ import java.util.Hashtable;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.eclipse.jface.text.Document;
@@ -41,15 +42,11 @@ import org.eclipse.jdt.internal.ui.text.JavaIndenter;
  * @since 3.0
  */
 public class JavaHeuristicScannerTest {
-	private static final boolean BUG_65463= true;
 	private FastPartitioner fPartitioner;
 	private Document fDocument;
 	private JavaIndenter fScanner;
 	private JavaHeuristicScanner fHeuristicScanner;
 
-	/*
-	 * @see junit.framework.TestCase#setUp()
-	 */
 	@Before
 	public void setUp() {
 		if (JavaCore.getPlugin() != null) {
@@ -81,9 +78,6 @@ public class JavaHeuristicScannerTest {
 		fScanner= new JavaIndenter(fDocument, fHeuristicScanner);
 	}
 
-	/*
-	 * @see junit.framework.TestCase#tearDown()
-	 */
 	@After
 	public void tearDown() throws Exception {
 		fDocument.setDocumentPartitioner(IJavaPartitions.JAVA_PARTITIONING, null);
@@ -878,10 +872,9 @@ public class JavaHeuristicScannerTest {
 	    	assertFalse(fHeuristicScanner.looksLikeClassInstanceCreationBackward(offset, JavaHeuristicScanner.UNBOUND));
     }
 
+	@Ignore("enable when https://bugs.eclipse.org/bugs/show_bug.cgi?id=65463 is fixed")
 	@Test
 	public void testConditional1() throws Exception {
-		if (BUG_65463) // XXX enable when https://bugs.eclipse.org/bugs/show_bug.cgi?id=65463 is fixed
-			return;
     	fDocument.set(
     			"		public boolean isPrime() {\n" +
     			"			return fPrime == true ? true\n" +
@@ -892,10 +885,9 @@ public class JavaHeuristicScannerTest {
     	assertEquals("			                      ", indent);
     }
 
+	@Ignore("enable when https://bugs.eclipse.org/bugs/show_bug.cgi?id=65463 is fixed")
 	@Test
 	public void testConditional2() throws Exception {
-		if (BUG_65463) // XXX enable when https://bugs.eclipse.org/bugs/show_bug.cgi?id=65463 is fixed
-			return;
     	fDocument.set(
     			"		public boolean isPrime() {\n" +
     			"			return fPrime == true" +
@@ -907,6 +899,16 @@ public class JavaHeuristicScannerTest {
     	assertEquals("					", indent);
 
     }
+
+	@Test
+	public void testTernaryAfterConditional() throws Exception {
+		fDocument.set(
+		"		if (true)\n" +
+		"			ret = true ? \"\".substring(0) : \"\";\n");
+
+		String indent= fScanner.computeIndentation(fDocument.getLength() - 1).toString();
+		assertEquals("		", indent);
+	}
 
 	@Test
 	public void testContinuationIndentationOfForStatement() throws Exception {

@@ -451,8 +451,8 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 		public void propertyChange(PropertyChangeEvent event) {
 			String property= event.getProperty();
 			if (iControl != null &&
-					(property.equals("org.eclipse.jdt.ui.Javadoc.foregroundColor") //$NON-NLS-1$
-							|| property.equals("org.eclipse.jdt.ui.Javadoc.backgroundColor"))) { //$NON-NLS-1$
+					("org.eclipse.jdt.ui.Javadoc.foregroundColor".equals(property) //$NON-NLS-1$
+							|| "org.eclipse.jdt.ui.Javadoc.backgroundColor".equals(property))) { //$NON-NLS-1$
 				setHoverColors();
 			}
 		}
@@ -799,11 +799,11 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 		ASTNode node= haveSource ? getHoveredASTNode(editorInputElement, hoverRegion) : null;
 		IBinding binding= getHoverBinding(element, node);
 
-		StringBuffer label;
+		StringBuilder label;
 		if (binding != null) {
-			label= new StringBuffer(JavaElementLinks.getBindingLabel(binding, element, flags, haveSource));
+			label= new StringBuilder(JavaElementLinks.getBindingLabel(binding, element, flags, haveSource));
 		} else {
-			label= new StringBuffer(JavaElementLinks.getElementLabel(element, flags));
+			label= new StringBuilder(JavaElementLinks.getElementLabel(element, flags));
 		}
 
 		if (element.getElementType() == IJavaElement.FIELD) {
@@ -907,7 +907,7 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 	 */
 	public static IBinding getHoverBinding(IJavaElement element, ASTNode node) {
 
-		if (element.getJavaProject().getOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, true).equals(JavaCore.ENABLED)) {
+		if (JavaCore.ENABLED.equals(element.getJavaProject().getOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, true))) {
 			if (node == null) {
 				if (element instanceof ISourceReference) {
 					ASTParser p= ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
@@ -1102,7 +1102,7 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 					element= null; // no link
 				}
 			}
-			StringBuffer imageStyle= new StringBuffer("border:none; position: absolute; "); //$NON-NLS-1$
+			StringBuilder imageStyle= new StringBuilder("border:none; position: absolute; "); //$NON-NLS-1$
 			imageStyle.append("width: ").append(imageWidth).append("px; "); //$NON-NLS-1$ //$NON-NLS-2$
 			imageStyle.append("height: ").append(imageHeight).append("px; "); //$NON-NLS-1$ //$NON-NLS-2$
 			imageStyle.append("left: ").append(- labelLeft - 1).append("px; "); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1289,7 +1289,7 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 			buf.append(ASTNodes.getEscapedStringLiteral((String)value));
 
 		} else if (value instanceof Character) {
-			buf.append(ASTNodes.getEscapedCharacterLiteral(((Character)value).charValue()));
+			buf.append(ASTNodes.getEscapedCharacterLiteral(((Character)value)));
 
 		} else if (value instanceof Object[]) {
 			Object[] values= (Object[])value;
@@ -1315,7 +1315,7 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 		if (constantValue instanceof Character) {
 			String constantResult= '\'' + constantValue.toString() + '\'';
 
-			char charValue= ((Character) constantValue).charValue();
+			char charValue= ((Character) constantValue);
 			String hexString= Integer.toHexString(charValue);
 			StringBuilder hexResult= new StringBuilder("\\u"); //$NON-NLS-1$
 			for (int i= hexString.length(); i < 4; i++) {
@@ -1333,11 +1333,11 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 			return formatWithHexValue(constantValue, "0x" + Integer.toHexString(shortValue)); //$NON-NLS-1$
 
 		} else if (constantValue instanceof Integer) {
-			int intValue= ((Integer) constantValue).intValue();
+			int intValue= ((Integer) constantValue);
 			return formatWithHexValue(constantValue, "0x" + Integer.toHexString(intValue)); //$NON-NLS-1$
 
 		} else if (constantValue instanceof Long) {
-			long longValue= ((Long) constantValue).longValue();
+			long longValue= ((Long) constantValue);
 			return formatWithHexValue(constantValue, "0x" + Long.toHexString(longValue)); //$NON-NLS-1$
 
 		} else {

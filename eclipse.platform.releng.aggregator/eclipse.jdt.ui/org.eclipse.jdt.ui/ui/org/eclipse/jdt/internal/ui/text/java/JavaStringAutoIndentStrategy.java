@@ -38,12 +38,12 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.actions.IndentAction;
-import org.eclipse.jdt.internal.ui.text.correction.PreviewFeaturesSubProcessor;
 
 
 /**
@@ -72,11 +72,11 @@ public class JavaStringAutoIndentStrategy extends DefaultIndentLineAutoEditStrat
 		while (tokenizer.hasMoreTokens()){
 
 			String token = tokenizer.nextToken();
-			if (token.equals("\r")) { //$NON-NLS-1$
+			if ("\r".equals(token)) { //$NON-NLS-1$
 				buffer.append("\\r"); //$NON-NLS-1$
 				if (tokenizer.hasMoreTokens()) {
 					token = tokenizer.nextToken();
-					if (token.equals("\n")) { //$NON-NLS-1$
+					if ("\n".equals(token)) { //$NON-NLS-1$
 						buffer.append("\\n"); //$NON-NLS-1$
 						appendToBuffer(buffer, indentation, delimiter);
 						continue;
@@ -86,7 +86,7 @@ public class JavaStringAutoIndentStrategy extends DefaultIndentLineAutoEditStrat
 				} else {
 					continue;
 				}
-			} else if (token.equals("\n")) { //$NON-NLS-1$
+			} else if ("\n".equals(token)) { //$NON-NLS-1$
 				buffer.append("\\n"); //$NON-NLS-1$
 				appendToBuffer(buffer, indentation, delimiter);
 				continue;
@@ -201,13 +201,13 @@ public class JavaStringAutoIndentStrategy extends DefaultIndentLineAutoEditStrat
 		IRegion line= document.getLineInformationOfOffset(offset);
 		String string= document.get(line.getOffset(), offset - line.getOffset()).trim();
 		boolean isLineDelimiter= isLineDelimiter(document, command.text);
-		boolean isTextBlock= PreviewFeaturesSubProcessor.isPreviewFeatureEnabled(fProject) && string.endsWith(IndentAction.POTENTIAL_TEXT_BLOCK_STR) && isLineDelimiter;
+		boolean isTextBlock= JavaModelUtil.is15OrHigher(fProject) && string.endsWith(IndentAction.POTENTIAL_TEXT_BLOCK_STR) && isLineDelimiter;
 		if (isTextBlock) {
 			JavaMultiLineStringAutoIndentStrategy mlsStrategy= getMultiLineStringAutoIndentStrategy();
 			mlsStrategy.customizeDocumentCommand(document, command);
 			return;
 		}
-		if (string.length() != 0 && !string.equals("+")) //$NON-NLS-1$
+		if (string.length() != 0 && !"+".equals(string)) //$NON-NLS-1$
 			indentation += getExtraIndentAfterNewLine();
 
 		if (isEditorWrapStrings() && isLineDelimiter) {

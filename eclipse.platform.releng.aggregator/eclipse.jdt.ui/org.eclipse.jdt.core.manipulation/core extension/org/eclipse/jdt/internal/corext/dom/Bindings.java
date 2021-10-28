@@ -160,7 +160,7 @@ public class Bindings {
 		if (! variableBinding.isField())
 			return variableBinding.toString();
 		if (variableBinding.getDeclaringClass() == null) {
-			Assert.isTrue(variableBinding.getName().equals("length"));//$NON-NLS-1$
+			Assert.isTrue("length".equals(variableBinding.getName()));//$NON-NLS-1$
 			return ARRAY_LENGTH_FIELD_BINDING_STRING;
 		}
 		StringBuilder result= new StringBuilder();
@@ -770,7 +770,7 @@ public class Bindings {
 				ITypeBinding m2Param= m2Params[i];
 				if (containsTypeVariables(m1Param) || m1Param.isRawType())
 					m1Param= m1Param.getErasure(); // try to achieve effect of "rename type variables"
-				if (! (equals(m1Param, m2Param) || equals(m1Param, m2Param.getErasure())))
+				if ((!equals(m1Param, m2Param) && !equals(m1Param, m2Param.getErasure())))
 					return false;
 			}
 			return true;
@@ -784,7 +784,7 @@ public class Bindings {
 				ITypeBinding m2Param= m2Params[i];
 				if (m1Param.isRawType())
 					m1Param= m1Param.getTypeDeclaration();
-				if (! (equals(m1Param, m2Param) || equals(m1Param, m2Param.getErasure())))
+				if (!equals(m1Param, m2Param) && !equals(m1Param, m2Param.getErasure()))
 					return false;
 			}
 			return true;
@@ -1204,9 +1204,8 @@ public class Bindings {
 			if (node instanceof AbstractTypeDeclaration) {
 				AbstractTypeDeclaration decl= (AbstractTypeDeclaration) node;
 				if (lastLocation == decl.getBodyDeclarationsProperty()
-						|| lastLocation == decl.getJavadocProperty()) {
-					return decl.resolveBinding();
-				} else if (decl instanceof EnumDeclaration && lastLocation == EnumDeclaration.ENUM_CONSTANTS_PROPERTY) {
+						|| lastLocation == decl.getJavadocProperty()
+						|| (decl instanceof EnumDeclaration && lastLocation == EnumDeclaration.ENUM_CONSTANTS_PROPERTY)) {
 					return decl.resolveBinding();
 				}
 			} else if (node instanceof AnonymousClassDeclaration) {

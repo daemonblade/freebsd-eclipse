@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Hashtable;
 
-import org.junit.Rule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -47,14 +47,16 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 public class ExtractConstantTests extends GenericRefactoringTest {
 	private static final String REFACTORING_PATH = "ExtractConstant/";
 
-	private static final boolean BUG_86113_ImportRewrite= true;
-	private static final boolean BUG_405780= true; //XXX: [1.8][compiler] Bad syntax error 'insert ":: IdentifierOrNew"' for missing semicolon
-
 	private String fCompactPref;
 	private boolean fAddComments;
 
-	@Rule
-	public RefactoringTestSetup rts= new RefactoringTestSetup();
+	public ExtractConstantTests() {
+		this.rts= new RefactoringTestSetup();
+	}
+
+	protected ExtractConstantTests(RefactoringTestSetup rts) {
+		super(rts);
+	}
 
 	@Override
 	protected String getRefactoringPath() {
@@ -62,16 +64,16 @@ public class ExtractConstantTests extends GenericRefactoringTest {
 	}
 
 	protected String getSimpleTestFileName(boolean canInline, boolean input) {
-		String fileName = "A_" + getName();
+		StringBuilder fileName = new StringBuilder("A_").append(getName());
 		if (canInline)
-			fileName += input ? "_in": "_out";
-		return fileName + ".java";
+			fileName.append(input ? "_in": "_out");
+		return fileName.append(".java").toString();
 	}
 
 	protected String getTestFileName(boolean canExtract, boolean input) {
-		String fileName= TEST_PATH_PREFIX + getRefactoringPath();
-		fileName += (canExtract ? "canExtract/": "cannotExtract/");
-		return fileName + getSimpleTestFileName(canExtract, input);
+		StringBuilder fileName= new StringBuilder(TEST_PATH_PREFIX).append(getRefactoringPath());
+		fileName.append(canExtract ? "canExtract/": "cannotExtract/");
+		return fileName.append(getSimpleTestFileName(canExtract, input)).toString();
 	}
 
 	protected ICompilationUnit createCUfromTestFile(IPackageFragment pack, boolean canExtract, boolean input) throws Exception {
@@ -287,12 +289,9 @@ public class ExtractConstantTests extends GenericRefactoringTest {
 		helper1(14, 12, 14, 15, true, false, "COLOR", "RED2");
 	}
 
+	@Ignore("BUG_86113_ImportRewrite")
 	@Test
 	public void test24() throws Exception {
-		if (BUG_86113_ImportRewrite) {
-			printTestDisabledMessage("BUG_86113_ImportRewrite");
-			return;
-		}
 		helper1(9, 28, 9, 36, true, false, "NUM", "ENUM");
 	}
 
@@ -341,10 +340,9 @@ public class ExtractConstantTests extends GenericRefactoringTest {
 		helper1(7, 20, 7, 35, true, false, "STRING", "STRING");
 	}
 
+	@Ignore("BUG 405780 [1.8][compiler] Bad syntax error 'insert \":: IdentifierOrNew\"' for missing semicolon")
 	@Test
 	public void test34() throws Exception { // syntax error
-		if (BUG_405780)
-			return;
 		helper1(7, 20, 7, 35, true, false, "STRING", "STRING");
 	}
 

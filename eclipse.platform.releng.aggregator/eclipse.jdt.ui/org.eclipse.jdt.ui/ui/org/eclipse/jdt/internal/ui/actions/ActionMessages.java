@@ -208,6 +208,7 @@ public final class ActionMessages extends NLS {
 	public static String AddUnimplementedConstructorsAction_not_applicable;
 	public static String AddUnimplementedConstructorsAction_interface_not_applicable;
 	public static String AddUnimplementedConstructorsAction_enum_not_applicable;
+	public static String AddUnimplementedConstructorsAction_record_not_applicable;
 	public static String AddUnimplementedConstructorsAction_annotation_not_applicable;
 	public static String AddUnimplementedConstructorsAction_methods_selected;
 	public static String AddUnimplementedConstructorsAction_error_nothing_found;
@@ -219,6 +220,7 @@ public final class ActionMessages extends NLS {
 	public static String GenerateConstructorUsingFieldsAction_tooltip;
 	public static String GenerateConstructorUsingFieldsAction_error_title;
 	public static String GenerateConstructorUsingFieldsAction_not_applicable;
+	public static String GenerateConstructorUsingFieldsAction_record_not_applicable;
 	public static String GenerateConstructorUsingFieldsAction_fields_selected;
 	public static String GenerateConstructorUsingFieldsAction_error_duplicate_constructor;
 	public static String GenerateConstructorUsingFieldsAction_error_nothing_found;

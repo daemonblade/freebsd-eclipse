@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,12 +13,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.preferences.formatter;
 
-import java.util.Objects;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -80,7 +79,7 @@ public abstract class ModifyDialogTabPage implements IModifyDialogTabPage {
 	 * around one or more SWT widgets and handles the input of values for some key.
 	 * On each change, the new value is written to the map and the listeners are notified.
 	 */
-	protected abstract class Preference extends Observable {
+	protected abstract static class Preference extends Observable {
 	    private final Map<String, String> fPreferences;
 	    private boolean fEnabled;
 	    private String fKey;
@@ -637,13 +636,13 @@ public abstract class ModifyDialogTabPage implements IModifyDialogTabPage {
 
 		@Override
 		public void focusGained(FocusEvent e) {
-			fDialogSettings.put(PREF_LAST_FOCUS_INDEX, fItemMap.get(e.widget).intValue());
+			fDialogSettings.put(PREF_LAST_FOCUS_INDEX, fItemMap.get(e.widget));
 		}
 
 		public void add(Control control) {
 			control.addFocusListener(this);
 			fItemList.add(fIndex, control);
-			fItemMap.put(control, Integer.valueOf(fIndex++));
+			fItemMap.put(control, fIndex++);
 		}
 
 		public void add(Preference preference) {
@@ -826,6 +825,7 @@ public abstract class ModifyDialogTabPage implements IModifyDialogTabPage {
 		scroll.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		scroll.setExpandHorizontal(true);
 		scroll.setExpandVertical(true);
+		scroll.setShowFocusedControl(true);
 
 		final Composite settingsContainer= new Composite(scroll, SWT.NONE);
 		settingsContainer.setFont(sashForm.getFont());

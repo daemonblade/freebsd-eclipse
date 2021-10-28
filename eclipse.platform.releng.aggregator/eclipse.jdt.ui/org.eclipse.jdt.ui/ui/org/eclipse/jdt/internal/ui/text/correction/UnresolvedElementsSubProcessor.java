@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -204,7 +205,7 @@ public class UnresolvedElementsSubProcessor {
 				if (locationInParent == ExpressionMethodReference.EXPRESSION_PROPERTY) {
 					typeKind= TypeKinds.REF_TYPES;
 				} else if (locationInParent == MethodInvocation.EXPRESSION_PROPERTY) {
-					if (JavaModelUtil.is18OrHigher(cu.getJavaProject())) {
+					if (JavaModelUtil.is1d8OrHigher(cu.getJavaProject())) {
 						typeKind= TypeKinds.CLASSES | TypeKinds.INTERFACES | TypeKinds.ENUMS;
 					} else {
 						typeKind= TypeKinds.CLASSES;
@@ -322,7 +323,7 @@ public class UnresolvedElementsSubProcessor {
 			addNewFieldProposals(cu, astRoot, binding, declaringTypeBinding, simpleName, isWriteAccess, proposals);
 
 			// new parameters and local variables
-			if (binding == null) {
+			if (binding == null && !isParentSwitchCase(simpleName)) {
 				addNewVariableProposals(cu, node, simpleName, proposals);
 			}
 		}
@@ -379,7 +380,7 @@ public class UnresolvedElementsSubProcessor {
 			return;
 		}
 
-		boolean mustBeConst= ASTResolving.isInsideModifiers(simpleName);
+		boolean mustBeConst= (ASTResolving.isInsideModifiers(simpleName) || isParentSwitchCase(simpleName)) ;
 
 		addNewFieldForType(targetCU, binding, senderDeclBinding, simpleName, isWriteAccess, mustBeConst, proposals);
 
@@ -392,6 +393,13 @@ public class UnresolvedElementsSubProcessor {
 				}
 			}
 		}
+	}
+
+	private static boolean isParentSwitchCase(SimpleName simpleName) {
+		if (simpleName != null) {
+			return (simpleName.getParent() instanceof SwitchCase);
+		}
+		return false;
 	}
 
 	private static void addNewFieldForType(ICompilationUnit targetCU, ITypeBinding binding, ITypeBinding senderDeclBinding, SimpleName simpleName, boolean isWriteAccess, boolean mustBeConst, Collection<ICommandAccess> proposals) {
@@ -644,7 +652,7 @@ public class UnresolvedElementsSubProcessor {
 				String[] args= problem.getProblemArguments();
 				if (args != null && args.length > 0) {
 					String name= args[0];
-					if (name.equals("var")) { //$NON-NLS-1$
+					if ("var".equals(name)) { //$NON-NLS-1$
 						isVarTypeProblem= true;
 					}
 				}
@@ -755,7 +763,7 @@ public class UnresolvedElementsSubProcessor {
 			return;
 		if (javaProject.findType(defaultOptions.get(annotationNameOptions[0])) != null)
 			return;
-		String version= JavaModelUtil.is18OrHigher(javaProject) ? "2" : "[1.1.0,2.0.0)"; //$NON-NLS-1$ //$NON-NLS-2$
+		String version= JavaModelUtil.is1d8OrHigher(javaProject) ? "2" : "[1.1.0,2.0.0)"; //$NON-NLS-1$ //$NON-NLS-2$
 		Bundle[] annotationsBundles= JavaPlugin.getDefault().getBundles("org.eclipse.jdt.annotation", version); //$NON-NLS-1$
 		if (annotationsBundles == null)
 			return;
@@ -1338,7 +1346,7 @@ public class UnresolvedElementsSubProcessor {
 				ITypeBinding[] parameterTypes= getParameterTypes(arguments);
 				if (parameterTypes != null) {
 					String sig= org.eclipse.jdt.internal.ui.text.correction.ASTResolving.getMethodSignature(methodName, parameterTypes, false);
-					boolean is18OrHigher= JavaModelUtil.is18OrHigher(targetCU.getJavaProject());
+					boolean is18OrHigher= JavaModelUtil.is1d8OrHigher(targetCU.getJavaProject());
 					boolean isSenderTypeAbstractClass = (senderDeclBinding.getModifiers() &  Modifier.ABSTRACT) > 0;
 					boolean isSenderBindingInterface= senderDeclBinding.isInterface();
 					if (nodeParentType == senderDeclBinding) {
@@ -1544,7 +1552,7 @@ public class UnresolvedElementsSubProcessor {
 		}
 
 		// remove parameters
-		if (!declaringType.isFromSource()) {
+		if (!declaringType.isFromSource() || (methodBinding.isConstructor() && declaringType.isRecord())) {
 			return;
 		}
 
@@ -1651,7 +1659,7 @@ public class UnresolvedElementsSubProcessor {
 		ITypeBinding declaringType= methodDecl.getDeclaringClass();
 
 		// add parameters
-		if (!declaringType.isFromSource()) {
+		if (!declaringType.isFromSource() || (methodDecl.isConstructor() && declaringType.isRecord())) {
 			return;
 		}
 		ICompilationUnit targetCU= ASTResolving.findCompilationUnitForBinding(cu, astRoot, declaringType);
@@ -1736,7 +1744,7 @@ public class UnresolvedElementsSubProcessor {
 		CompilationUnit astRoot= context.getASTRoot();
 
 		ASTNode nameNode= problem.getCoveringNode(astRoot);
-		if (nameNode == null) {
+		if (nameNode == null || ( methodBinding.isConstructor() && declaringTypeDecl.isRecord())) {
 			return;
 		}
 
@@ -1839,6 +1847,13 @@ public class UnresolvedElementsSubProcessor {
 					ITypeBinding[] newParamTypes= new ITypeBinding[changeDesc.length];
 					for (int i= 0; i < newParamTypes.length; i++) {
 						newParamTypes[i]= changeDesc[i] == null ? declParamTypes[i] : ((EditDescription) changeDesc[i]).type;
+					}
+					if (methodDecl.isVarargs() && newParamTypes.length > 0 && !newParamTypes[newParamTypes.length - 1].isArray()) {
+						List<ITypeBinding> newArgs= new ArrayList<>();
+						newArgs.addAll(Arrays.asList(argTypes));
+						newArgs.add(paramTypes[paramTypes.length - 1]);
+						doMoreArguments(context, invocationNode, arguments, newArgs.toArray(new ITypeBinding[0]), methodBinding, proposals);
+						return;
 					}
 					boolean isVarArgs= methodDecl.isVarargs() && newParamTypes.length > 0 && newParamTypes[newParamTypes.length - 1].isArray();
 					String[] args=  new String[] { org.eclipse.jdt.internal.ui.text.correction.ASTResolving.getMethodSignature(methodDecl), org.eclipse.jdt.internal.ui.text.correction.ASTResolving.getMethodSignature(methodDecl.getName(), newParamTypes, isVarArgs) };
@@ -1972,9 +1987,9 @@ public class UnresolvedElementsSubProcessor {
 		if (type == ASTNode.CLASS_INSTANCE_CREATION) {
 			ClassInstanceCreation creation= (ClassInstanceCreation) selectedNode;
 
-			IBinding binding= creation.getType().resolveBinding();
-			if (binding instanceof ITypeBinding) {
-				targetBinding= (ITypeBinding) binding;
+			ITypeBinding binding= creation.getType().resolveBinding();
+			if (binding != null) {
+				targetBinding= binding;
 				arguments= creation.arguments();
 			}
 		} else if (type == ASTNode.SUPER_CONSTRUCTOR_INVOCATION) {

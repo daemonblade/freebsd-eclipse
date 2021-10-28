@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -100,7 +101,6 @@ import org.eclipse.jdt.internal.ui.text.java.JavaTypeCompletionProposalComputer;
 //predictable order for https://bugs.eclipse.org/bugs/show_bug.cgi?id=423416
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class CodeCompletionTest extends AbstractCompletionTest {
-	private final static boolean BUG_80782= true;
 
 	private IJavaProject fJProject1;
 
@@ -215,7 +215,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class A {\n");
 		buf.append("    public void foo() {\n");
@@ -243,7 +243,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n" +
 				"public class A {\n" +
 				"    public void foo() {\n" +
@@ -265,7 +265,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class A {\n");
 		buf.append("    public void foo() {\n");
@@ -293,7 +293,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n" +
 				"public class A {\n" +
 				"    public void foo() {\n" +
@@ -315,7 +315,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class A {\n");
 		buf.append("    interface Inner {\n");
@@ -346,7 +346,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class A {\n");
 		buf.append("    interface Inner {\n");
@@ -370,7 +370,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class A {\n");
 		buf.append("    public void foo() {\n");
@@ -401,7 +401,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class A {\n");
 		buf.append("    public void foo() {\n");
@@ -426,7 +426,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class A {\n");
 		buf.append("    abstract class Local<E> {\n");
@@ -458,7 +458,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class A {\n");
 		buf.append("    abstract class Local<E> {\n");
@@ -483,7 +483,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.Serializable;\n");
 		buf.append("//BUG\n");
@@ -513,7 +513,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n" +
 				"import java.io.Serializable;\n"+
 				"//BUG\n"+
@@ -765,7 +765,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Try {\n");
 		buf.append("    Object m() {\n");
@@ -793,7 +793,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Try {\n");
 		buf.append("    Object m() {\n");
@@ -814,7 +814,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Try {\n");
 		buf.append("    Object m() {\n");
@@ -842,7 +842,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Try {\n");
 		buf.append("    Object m() {\n");
@@ -863,7 +863,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Try {\n");
 		buf.append("    Object m() {\n");
@@ -891,7 +891,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Try {\n");
 		buf.append("    Object m() {\n");
@@ -918,7 +918,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 				"public abstract class B {}",
 				false, null);
 
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("/**\n");
 		buf.append(" * Lore ipsum dolor sit amet, consectetur adipisici elit,\n");
@@ -950,7 +950,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("/**\n");
 		buf.append(" * Lore ipsum dolor sit amet, consectetur adipisici elit,\n");
@@ -970,7 +970,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.io.BufferedWriter;\n");
@@ -1006,7 +1006,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 			IDocument doc= JavaUI.getDocumentProvider().getDocument(part.getEditorInput());
 			proposal.apply(doc);
 
-			buf= new StringBuffer();
+			buf= new StringBuilder();
 			buf.append("package test1;\n");
 			buf.append("\n");
 			buf.append("import java.io.BufferedWriter;\n");
@@ -1104,7 +1104,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.io.BufferedWriter;\n");
@@ -1140,7 +1140,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 			IDocument doc= JavaUI.getDocumentProvider().getDocument(part.getEditorInput());
 			proposal.apply(doc);
 
-			buf= new StringBuffer();
+			buf= new StringBuilder();
 			buf.append("package test1;\n");
 			buf.append("\n");
 			buf.append("import java.io.BufferedWriter;\n");
@@ -1165,7 +1165,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.io.BufferedWriter;\n");
@@ -1201,7 +1201,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 			IDocument doc= JavaUI.getDocumentProvider().getDocument(part.getEditorInput());
 			proposal.apply(doc);
 
-			buf= new StringBuffer();
+			buf= new StringBuilder();
 			buf.append("package test1;\n");
 			buf.append("\n");
 			buf.append("import java.io.BufferedWriter;\n");
@@ -1427,7 +1427,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.io.Writer;\n");
@@ -1464,7 +1464,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= new Document(contents);
 		toStringProposal.apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.io.Writer;\n");
@@ -1489,7 +1489,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.io.Writer;\n");
@@ -1526,7 +1526,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= new Document(contents);
 		closeProposal.apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.io.IOException;\n");
@@ -1552,7 +1552,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.io.BufferedWriter;\n");
@@ -1589,7 +1589,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= new Document(contents);
 		closeProposal.apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.io.BufferedWriter;\n");
@@ -1615,7 +1615,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class A {\n");
@@ -1624,7 +1624,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("A.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public interface Inter {\n");
@@ -1632,7 +1632,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Inter.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class B extends A implements Inter {\n");
@@ -1665,7 +1665,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= new Document(contents);
 		closeProposal.apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class B extends A implements Inter {\n");
@@ -1681,16 +1681,14 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		assertEquals(buf.toString(), doc.get());
 	}
 
+	@Ignore("BUG_80782")
 	@Test
 	public void testOverrideCompletion5() throws Exception {
-		if (BUG_80782) {
-			return;
-		}
 
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class A {\n");
@@ -1727,7 +1725,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= new Document(contents);
 		toStringProposal.apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class A {\n");
@@ -1751,7 +1749,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class A {\n");
@@ -1761,7 +1759,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("A.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class B extends A {\n");
@@ -1794,7 +1792,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= new Document(contents);
 		closeProposal.apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class B extends A {\n");
@@ -1816,7 +1814,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("interface Z<T> {}\n");
@@ -1855,7 +1853,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= new Document(contents);
 		toStringProposal.apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("interface Z<T> {}\n");
@@ -1883,7 +1881,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("interface Z<T> {}\n");
@@ -1922,7 +1920,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= new Document(contents);
 		toStringProposal.apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("interface Z<T> {}\n");
@@ -1950,7 +1948,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.util.List;\n");
@@ -1991,7 +1989,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= new Document(contents);
 		toStringProposal.apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.util.List;\n");
@@ -2021,7 +2019,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class Super<T> {\n");
 		buf.append("    void foo(T t) {\n");
@@ -2054,7 +2052,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= new Document(contents);
 		toStringProposal.apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class Super<T> {\n");
 		buf.append("    void foo(T t) {\n");
@@ -2079,7 +2077,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class Super {\n");
 		buf.append("    public <T extends Number> void foo(T[] t) {\n");
@@ -2112,7 +2110,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= new Document(contents);
 		toStringProposal.apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class Super {\n");
 		buf.append("    public <T extends Number> void foo(T[] t) {\n");
@@ -2136,7 +2134,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.io.BufferedWriter;\n");
@@ -2172,7 +2170,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 			IDocument doc= JavaUI.getDocumentProvider().getDocument(part.getEditorInput());
 			proposal.apply(doc);
 
-			buf= new StringBuffer();
+			buf= new StringBuilder();
 			buf.append("package test1;\n");
 			buf.append("\n");
 			buf.append("import java.io.BufferedWriter;\n");
@@ -2200,7 +2198,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class A {\n");
@@ -2209,7 +2207,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("A.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class B {\n");
@@ -2247,7 +2245,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 			IDocument doc= JavaUI.getDocumentProvider().getDocument(part.getEditorInput());
 			proposal.apply(doc);
 
-			buf= new StringBuffer();
+			buf= new StringBuilder();
 			buf.append("package test1;\n");
 			buf.append("\n");
 			buf.append("import static test1.A.foo;\n");
@@ -2273,7 +2271,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class A {\n");
@@ -2283,7 +2281,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		pack1.createCompilationUnit("A.java", buf.toString(), false, null);
 
 		IPackageFragment pack2= sourceFolder.createPackageFragment("test2", false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test2;\n");
 		buf.append("\n");
 		buf.append("public class B {\n");
@@ -2325,7 +2323,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 			IDocument doc= JavaUI.getDocumentProvider().getDocument(part.getEditorInput());
 			proposal.apply(doc);
 
-			buf= new StringBuffer();
+			buf= new StringBuilder();
 			buf.append("package test2;\n");
 			buf.append("\n");
 			buf.append("import test1.A;\n");
@@ -2353,7 +2351,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayL; // here\n");
 		buf.append("public class A {\n");
@@ -2378,7 +2376,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= JavaUI.getDocumentProvider().getDocument(part.getEditorInput());
 		proposals.get(0).apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList; // here\n");
 		buf.append("public class A {\n");
@@ -2394,7 +2392,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayLWrong;\n");
 		buf.append("public class A {\n");
@@ -2419,7 +2417,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= JavaUI.getDocumentProvider().getDocument(part.getEditorInput());
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class A {\n");
@@ -2437,7 +2435,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayLWrong;\n");
 		buf.append("public class A {\n");
@@ -2461,7 +2459,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IDocument doc= JavaUI.getDocumentProvider().getDocument(part.getEditorInput());
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class A {\n");
@@ -2474,7 +2472,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
 
 		IPackageFragment pack1= sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("public class EclipseTest {\n");
 		buf.append("   private static interface InvokerIF{\n");
 		buf.append("       public <T extends ArgIF, Y> T invoke(T arg) throws RuntimeException, IndexOutOfBoundsException;\n");
@@ -2524,7 +2522,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		proposals[0].apply(doc);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("public class EclipseTest {\n");
 		buf.append("   private static interface InvokerIF{\n");
 		buf.append("       public <T extends ArgIF, Y> T invoke(T arg) throws RuntimeException, IndexOutOfBoundsException;\n");
@@ -2581,7 +2579,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 
 		boolean finallyTemplateFound= false;
 		for (Template template : templates) {
-			if (template.getName().equals("finally")) {
+			if ("finally".equals(template.getName())) {
 				finallyTemplateFound= true;
 				break;
 			}
@@ -2637,7 +2635,7 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 			for (ICompletionProposal curr : proposals) {
 				if (curr instanceof AbstractJavaCompletionProposal) {
 					AbstractJavaCompletionProposal javaProposal= (AbstractJavaCompletionProposal) curr;
-					if (javaProposal.getReplacementString().equals("ARRAY_CONTENTS")) {
+					if ("ARRAY_CONTENTS".equals(javaProposal.getReplacementString())) {
 						proposal= curr;
 						break;
 					}
@@ -2695,5 +2693,253 @@ public class CodeCompletionTest extends AbstractCompletionTest {
 		}
 		assertNull(exception.get());
 		assertEquals(Collections.emptyList(), errors);
+	}
+
+	@Test
+	public void testCastExpressionUnaryExpression() throws CoreException {
+		// copy-adjusted from JDT/Core's FieldAccessCompletionTest.testCastExpressionUnaryExpression() to validate replacement
+		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
+		IPackageFragment pack0= sourceFolder.createPackageFragment("pack", false, null);
+		String contents=
+				"package pack;\n" +
+				"class Fred {\n" +
+				"	Object xyzObject;\n" +
+				"}\n" +
+				"public class Bar {\n" +
+				"	Fred fred() { return new Fred(); }n" +
+				"	Bar foo() {\n" +
+				"		return (Bar)(fred().xyz);\n" +
+				"	}\n" +
+				"}\n";
+		ICompilationUnit cu= pack0.createCompilationUnit("Bar.java", contents, false, null);
+		int offset = contents.indexOf("(fred().x") + "(fred().x".length();
+		JavaCompletionProposalComputer computer= new JavaNoTypeCompletionProposalComputer();
+		List<ICompletionProposal> proposals= computer.computeCompletionProposals(createContext(offset, cu), null);
+		assertEquals("expect 1 proposal", 1, proposals.size());
+
+		IDocument doc= new Document(contents);
+		proposals.get(0).apply(doc);
+
+		String expected=
+				"package pack;\n" +
+				"class Fred {\n" +
+				"	Object xyzObject;\n" +
+				"}\n" +
+				"public class Bar {\n" +
+				"	Fred fred() { return new Fred(); }n	Bar foo() {\n" +
+				"		return (Bar)(fred().xyzObject);\n" +
+				"	}\n" +
+				"}\n";
+		assertEquals(expected, doc.get());
+	}
+
+	@Test
+	public void testArgumentName() throws CoreException {
+		// copy-adjusted from JDT/Core's CompletionRecoveryTest.test12() to validate replacement
+		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
+		IPackageFragment pack0= sourceFolder.createPackageFragment("pack", false, null);
+		String contents=
+				"package pack;\n"+
+				"class A  {\n"+
+				"\n"+
+				"	public static void main(String[] argv\n"+
+				"			new Member().f\n"+
+				"			;\n"+
+				"	}\n"+
+				"	class Member {\n"+
+				"		int foo()\n"+
+				"		}\n"+
+				"	}\n"+
+				"};\n";
+		ICompilationUnit cu= pack0.createCompilationUnit("A.java", contents, false, null);
+		int offset = contents.indexOf("argv") + "argv".length();
+		JavaCompletionProposalComputer computer= new JavaNoTypeCompletionProposalComputer();
+		List<ICompletionProposal> proposals= computer.computeCompletionProposals(createContext(offset, cu), null);
+		assertEquals("expect 1 proposal", 1, proposals.size());
+
+		IDocument doc= new Document(contents);
+		proposals.get(0).apply(doc);
+
+		String expected=
+				"package pack;\n"+
+				"class A  {\n"+
+				"\n"+
+				"	public static void main(String[] argvStrings\n"+
+				"			new Member().f\n"+
+				"			;\n"+
+				"	}\n"+
+				"	class Member {\n"+
+				"		int foo()\n"+
+				"		}\n"+
+				"	}\n"+
+				"};\n";
+		assertEquals(expected, doc.get());
+	}
+
+	@Test
+	public void superCallInAnonymous() throws CoreException {
+		// copy-adjusted from JDT/Core's CompletionParserTest2.test0137_Method() to validate replacement
+		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
+		IPackageFragment pack0= sourceFolder.createPackageFragment("pack", false, null);
+		String contents=
+				"package pack;" +
+				"class MyObject {\n" +
+				"	void zzzX() {}\n" +
+				"}\n" +
+				"public class X {\n" +
+				"	void foo(){\n" +
+				"		new MyObject(){\n" +
+				"			void bar(){\n" +
+				"				super.zzz();\n" +
+				"			}\n" +
+				"		};\n" +
+				"	}\n" +
+				"}\n";
+		String completeBehind = "zzz(";
+		int cursorLocation = contents.indexOf(completeBehind) + completeBehind.length() - 1;
+		ICompilationUnit cu= pack0.createCompilationUnit("X.java", contents, false, null);
+		JavaCompletionProposalComputer computer= new JavaNoTypeCompletionProposalComputer();
+		List<ICompletionProposal> proposals= computer.computeCompletionProposals(createContext(cursorLocation, cu), null);
+		assertEquals("expect 1 proposal", 1, proposals.size());
+
+		IDocument doc= new Document(contents);
+		proposals.get(0).apply(doc);
+
+		String expected=
+				"package pack;" +
+				"class MyObject {\n" +
+				"	void zzzX() {}\n" +
+				"}\n" +
+				"public class X {\n" +
+				"	void foo(){\n" +
+				"		new MyObject(){\n" +
+				"			void bar(){\n" +
+				"				super.zzzX();\n" +
+				"			}\n" +
+				"		};\n" +
+				"	}\n" +
+				"}\n";
+		assertEquals(expected, doc.get());
+	}
+
+	@Test
+	public void testInIfStatement() throws CoreException {
+		// copy-adjusted from JDT/Core's MethodInvocationCompletionTest.testInIfStatement() to validate replacement
+		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
+		IPackageFragment pack0= sourceFolder.createPackageFragment("pack", false, null);
+		String contents =
+				"package pack;" +
+				"class Bar {\n" +
+				"	void freddy() {}\n" +
+				"}\n" +
+				"class X {\n" +
+				"	void foo(Bar bar) {\n" +
+				"		if (true) {\n" +
+				"			bar.fred();\n" +
+				"		}\n" +
+				"	}\n" +
+				"}\n";
+		String completeBehind = "fred(";
+		int cursorLocation = contents.indexOf(completeBehind) + completeBehind.length() - 1;
+		ICompilationUnit cu= pack0.createCompilationUnit("X.java", contents, false, null);
+		JavaCompletionProposalComputer computer= new JavaNoTypeCompletionProposalComputer();
+		List<ICompletionProposal> proposals= computer.computeCompletionProposals(createContext(cursorLocation, cu), null);
+		assertEquals("expect 1 proposal", 1, proposals.size());
+
+		IDocument doc= new Document(contents);
+		proposals.get(0).apply(doc);
+
+		String expected=
+				"package pack;" +
+				"class Bar {\n" +
+				"	void freddy() {}\n" +
+				"}\n" +
+				"class X {\n" +
+				"	void foo(Bar bar) {\n" +
+				"		if (true) {\n" +
+				"			bar.freddy();\n" +
+				"		}\n" +
+				"	}\n" +
+				"}\n";
+		assertEquals(expected, doc.get());
+	}
+
+	@Test
+	public void testWithExpressionReceiver() throws CoreException {
+		// copy-adjusted from JDT/Core's MethodInvocationCompletionTest.testWithExpressionReceiver() to validate replacement
+		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
+		IPackageFragment pack0= sourceFolder.createPackageFragment("pack", false, null);
+		String contents =
+				"package pack;" +
+				"class Bar {\n" +
+				"	void freddy() {}\n" +
+				"}\n" +
+				"class X {\n" +
+				"	Bar bar() { return new Bar(); }\n" +
+				"	void foo() {\n" +
+				"		if (true) {\n" +
+				"			bar().fred();\n" +
+				"		}\n" +
+				"	}\n" +
+				"}\n";
+		String completeBehind = "fred(";
+		int cursorLocation = contents.indexOf(completeBehind) + completeBehind.length() - 1;
+		ICompilationUnit cu= pack0.createCompilationUnit("X.java", contents, false, null);
+		JavaCompletionProposalComputer computer= new JavaNoTypeCompletionProposalComputer();
+		List<ICompletionProposal> proposals= computer.computeCompletionProposals(createContext(cursorLocation, cu), null);
+		assertEquals("expect 1 proposal", 1, proposals.size());
+
+		IDocument doc= new Document(contents);
+		proposals.get(0).apply(doc);
+
+		String expected=
+				"package pack;" +
+				"class Bar {\n" +
+				"	void freddy() {}\n" +
+				"}\n" +
+				"class X {\n" +
+				"	Bar bar() { return new Bar(); }\n" +
+				"	void foo() {\n" +
+				"		if (true) {\n" +
+				"			bar().freddy();\n" +
+				"		}\n" +
+				"	}\n" +
+				"}\n";
+		assertEquals(expected, doc.get());
+	}
+
+	@Test
+	public void test0215_Method() throws CoreException {
+		// copy-adjusted from JDT/Core's GenericsCompletionParserTest.test0215_Method() to validate replacement
+		IPackageFragmentRoot sourceFolder= JavaProjectHelper.addSourceContainer(fJProject1, "src");
+		IPackageFragment pack0= sourceFolder.createPackageFragment("pack", false, null);
+		String contents =
+				"package pack;\n" +
+				"public class X {\n" +
+				"	<T> void bar(T t) { }\n" +
+				"	void foo() {\n" +
+				"      this.<X>bar();\n" +
+				"   }" +
+				"}\n";
+
+		String completeBehind = "<X>bar(";
+		int cursorLocation = contents.indexOf(completeBehind) + completeBehind.length() - 1;
+		ICompilationUnit cu= pack0.createCompilationUnit("X.java", contents, false, null);
+		JavaCompletionProposalComputer computer= new JavaNoTypeCompletionProposalComputer();
+		List<ICompletionProposal> proposals= computer.computeCompletionProposals(createContext(cursorLocation, cu), null);
+		assertEquals("expect 1 proposal", 1, proposals.size());
+
+		IDocument doc= new Document(contents);
+		proposals.get(0).apply(doc);
+
+		String expected=
+				"package pack;\n" +
+				"public class X {\n" +
+				"	<T> void bar(T t) { }\n" +
+				"	void foo() {\n" +
+				"      this.<X>bar(t);\n" +
+				"   }" +
+				"}\n";
+		assertEquals(expected, doc.get());
 	}
 }

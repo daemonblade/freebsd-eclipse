@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -115,11 +116,7 @@ public class ModuleDependenciesPage extends BuildPathBasePage {
 		}
 		@Override
 		public int hashCode() {
-			final int prime= 31;
-			int result= 1;
-			result= prime * result + ((fBaseImage == null) ? 0 : fBaseImage.hashCode());
-			result= prime * result + ((fOverlay == null) ? 0 : fOverlay.hashCode());
-			return result;
+			return Objects.hash(fBaseImage, fOverlay);
 		}
 		@Override
 		public boolean equals(Object obj) {
@@ -130,16 +127,12 @@ public class ModuleDependenciesPage extends BuildPathBasePage {
 			if (getClass() != obj.getClass())
 				return false;
 			DecoratedImageDescriptor other= (DecoratedImageDescriptor) obj;
-			if (fBaseImage == null) {
-				if (other.fBaseImage != null)
-					return false;
-			} else if (!fBaseImage.equals(other.fBaseImage))
+			if (!Objects.equals(fBaseImage, other.fBaseImage)) {
 				return false;
-			if (fOverlay == null) {
-				if (other.fOverlay != null)
-					return false;
-			} else if (!fOverlay.equals(other.fOverlay))
+			}
+			if (!Objects.equals(fOverlay, other.fOverlay)) {
 				return false;
+			}
 			return true;
 		}
 	}
@@ -252,13 +245,6 @@ public class ModuleDependenciesPage extends BuildPathBasePage {
 		fSWTControl= composite;
 
 		return composite;
-	}
-
-	public Shell getShell() {
-		if (fSWTControl != null) {
-			return fSWTControl.getShell();
-		}
-		return JavaPlugin.getActiveWorkbenchShell();
 	}
 
 	@Override
@@ -458,8 +444,8 @@ public class ModuleDependenciesPage extends BuildPathBasePage {
 	public void setSelection(List<?> selElements, boolean expand) {
 		fDetailsList.selectElements(new StructuredSelection(selElements));
 		if (expand) {
-			for (int i= 0; i < selElements.size(); i++) {
-				fDetailsList.expandElement(selElements.get(i), 1);
+			for (Object selElement : selElements) {
+				fDetailsList.expandElement(selElement, 1);
 			}
 		}
 	}
@@ -606,7 +592,7 @@ public class ModuleDependenciesPage extends BuildPathBasePage {
 				return;
 			}
 			String moduleName= mod.getElementName();
-			if (moduleName.equals("java.base")) { //$NON-NLS-1$
+			if ("java.base".equals(moduleName)) { //$NON-NLS-1$
 				MessageDialog.openError(getShell(), NewWizardMessages.ModuleDependenciesPage_removeModule_dialog_title,
 						MessageFormat.format(NewWizardMessages.ModuleDependenciesPage_removeModule_error_with_hint, moduleName, "")); //$NON-NLS-1$
 				return;

@@ -394,7 +394,7 @@ public class ConvertAnonymousToNestedRefactoring extends Refactoring {
 			@Override
 			public boolean visit(QualifiedName node) {
 				final IBinding binding= node.resolveBinding();
-				if (binding != null && binding instanceof IVariableBinding) {
+				if (binding instanceof IVariableBinding) {
 					IVariableBinding variable= (IVariableBinding) binding;
 					if (!variable.isEnumConstant() && variable.isField())
 						accessedFields.add(binding);
@@ -405,7 +405,7 @@ public class ConvertAnonymousToNestedRefactoring extends Refactoring {
 			@Override
 			public boolean visit(SimpleName node) {
 				final IBinding binding= node.resolveBinding();
-				if (binding != null && binding instanceof IVariableBinding) {
+				if (binding instanceof IVariableBinding) {
 					IVariableBinding variable= (IVariableBinding) binding;
 					if (!variable.isEnumConstant() && variable.isField())
 						accessedFields.add(binding);
@@ -567,10 +567,10 @@ public class ConvertAnonymousToNestedRefactoring extends Refactoring {
 			comment.addSetting(RefactoringCoreMessages.ConvertAnonymousToNestedRefactoring_declare_static);
 		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_INPUT, JavaRefactoringDescriptorUtil.elementToHandle(projectName, fCu));
 		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_NAME, fClassName);
-		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_SELECTION, Integer.valueOf(fSelectionStart).toString() + ' ' + Integer.valueOf(fSelectionLength).toString());
-		arguments.put(ATTRIBUTE_FINAL, Boolean.valueOf(fDeclareFinal).toString());
-		arguments.put(ATTRIBUTE_STATIC, Boolean.valueOf(fDeclareStatic).toString());
-		arguments.put(ATTRIBUTE_VISIBILITY, Integer.valueOf(fVisibility).toString());
+		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_SELECTION, Integer.toString(fSelectionStart) + ' ' + Integer.toString(fSelectionLength));
+		arguments.put(ATTRIBUTE_FINAL, Boolean.toString(fDeclareFinal));
+		arguments.put(ATTRIBUTE_STATIC, Boolean.toString(fDeclareStatic));
+		arguments.put(ATTRIBUTE_VISIBILITY, Integer.toString(fVisibility));
 
 		ConvertAnonymousDescriptor descriptor= RefactoringSignatureDescriptorFactory.createConvertAnonymousDescriptor(projectName, description, comment.asString(), arguments, flags);
 		return new RefactoringChangeDescriptor(descriptor);
@@ -851,7 +851,7 @@ public class ConvertAnonymousToNestedRefactoring extends Refactoring {
     private boolean isBindingToTemp(IVariableBinding variable) {
 		if (variable.isField())
 			return false;
-		if (!Modifier.isFinal(variable.getModifiers()) && !JavaModelUtil.is18OrHigher(fCu.getJavaProject()))
+		if (!Modifier.isFinal(variable.getModifiers()) && !JavaModelUtil.is1d8OrHigher(fCu.getJavaProject()))
 			return false;
 		ASTNode declaringNode= fCompilationUnitNode.findDeclaringNode(variable);
 		if (declaringNode == null)
@@ -1006,10 +1006,9 @@ public class ConvertAnonymousToNestedRefactoring extends Refactoring {
 
         for (IBinding iBinding : localsUsed) {
 			IVariableBinding curr= (IVariableBinding) iBinding;
-			if (isBindingToTemp(curr)) { // reference a local from outside
+			if (isBindingToTemp(curr) // Reference a local from outside
+					|| (curr.isField() && curr.getDeclaringClass() == anonType && fieldsToInitialize.contains(fCompilationUnitNode.findDeclaringNode(curr)))) { // References a field that references a local from outside
 				return true;
-			} else if (curr.isField() && (curr.getDeclaringClass() == anonType) && fieldsToInitialize.contains(fCompilationUnitNode.findDeclaringNode(curr))) {
-				return true; // references a field that references a local from outside
 			}
 		}
         return false;
@@ -1065,7 +1064,7 @@ public class ConvertAnonymousToNestedRefactoring extends Refactoring {
         if (binding == null)
             return;
 		Type newType= (Type) ASTNode.copySubtree(fAnonymousInnerClassNode.getAST(), classInstanceCreation.getType());
-		if (binding.getSuperclass().getQualifiedName().equals("java.lang.Object")) { //$NON-NLS-1$
+		if ("java.lang.Object".equals(binding.getSuperclass().getQualifiedName())) { //$NON-NLS-1$
             Assert.isTrue(binding.getInterfaces().length <= 1);
             if (binding.getInterfaces().length == 0)
                 return;
@@ -1177,9 +1176,9 @@ public class ConvertAnonymousToNestedRefactoring extends Refactoring {
 			int length= -1;
 			final StringTokenizer tokenizer= new StringTokenizer(selection);
 			if (tokenizer.hasMoreTokens())
-				offset= Integer.valueOf(tokenizer.nextToken()).intValue();
+				offset= Integer.parseInt(tokenizer.nextToken());
 			if (tokenizer.hasMoreTokens())
-				length= Integer.valueOf(tokenizer.nextToken()).intValue();
+				length= Integer.parseInt(tokenizer.nextToken());
 			if (offset >= 0 && length >= 0) {
 				fSelectionStart= offset;
 				fSelectionLength= length;
@@ -1189,12 +1188,12 @@ public class ConvertAnonymousToNestedRefactoring extends Refactoring {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_SELECTION));
 		final String declareStatic= arguments.getAttribute(ATTRIBUTE_STATIC);
 		if (declareStatic != null) {
-			fDeclareStatic= Boolean.valueOf(declareStatic).booleanValue();
+			fDeclareStatic= Boolean.parseBoolean(declareStatic);
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_STATIC));
 		final String declareFinal= arguments.getAttribute(ATTRIBUTE_FINAL);
 		if (declareFinal != null) {
-			fDeclareFinal= Boolean.valueOf(declareFinal).booleanValue();
+			fDeclareFinal= Boolean.parseBoolean(declareFinal);
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_FINAL));
 		return new RefactoringStatus();

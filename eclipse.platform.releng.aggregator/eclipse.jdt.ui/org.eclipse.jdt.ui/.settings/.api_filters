@@ -1,27 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <component id="org.eclipse.jdt.ui" version="2">
-    <resource path="META-INF/MANIFEST.MF">
-        <filter comment="This is for Java14 work" id="924844039">
-            <message_arguments>
-                <message_argument value="3.21.50"/>
-                <message_argument value="3.21.0"/>
-            </message_arguments>
-        </filter>
-    </resource>
     <resource path="core refactoring/org/eclipse/jdt/internal/corext/refactoring/code/ReplaceInvocationsRefactoring.java" type="org.eclipse.jdt.internal.corext.refactoring.code.ReplaceInvocationsRefactoring">
         <filter id="571519004">
             <message_arguments>
                 <message_argument value="org.eclipse.jdt.internal.corext.refactoring.code.ReplaceInvocationsRefactoring.createChange(IProgressMonitor)"/>
                 <message_argument value="JavaRefactoringDescriptor"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="core refactoring/org/eclipse/jdt/internal/corext/refactoring/rename/RenameVirtualMethodProcessor.java" type="org.eclipse.jdt.internal.corext.refactoring.rename.RenameVirtualMethodProcessor">
-        <filter id="640712815">
-            <message_arguments>
-                <message_argument value="IType"/>
-                <message_argument value="RenameVirtualMethodProcessor"/>
-                <message_argument value="isRecord()"/>
             </message_arguments>
         </filter>
     </resource>
@@ -46,15 +29,6 @@
             <message_arguments>
                 <message_argument value="CheckboxTableViewer"/>
                 <message_argument value="PullPushCheckboxTableViewer"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="ui refactoring/org/eclipse/jdt/internal/ui/refactoring/actions/RenameJavaElementAction.java" type="org.eclipse.jdt.internal.ui.refactoring.actions.RenameJavaElementAction">
-        <filter id="640712815">
-            <message_arguments>
-                <message_argument value="IType"/>
-                <message_argument value="RenameJavaElementAction"/>
-                <message_argument value="isRecord()"/>
             </message_arguments>
         </filter>
     </resource>
@@ -139,9 +113,9 @@
         </filter>
     </resource>
     <resource path="ui/org/eclipse/jdt/internal/ui/javaeditor/SemanticHighlightingReconciler.java" type="org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingReconciler$PositionCollector">
-        <filter comment="For Java 14 preview features" id="640712815">
+        <filter comment="This is a Java 15 preview feature" id="640712815">
             <message_arguments>
-                <message_argument value="RecordDeclaration"/>
+                <message_argument value="TypeDeclaration"/>
                 <message_argument value="PositionCollector"/>
                 <message_argument value="getRestrictedIdentifierStartPosition()"/>
             </message_arguments>
@@ -155,106 +129,12 @@
             </message_arguments>
         </filter>
     </resource>
-    <resource path="ui/org/eclipse/jdt/internal/ui/text/correction/JavadocTagsSubProcessor.java" type="org.eclipse.jdt.internal.ui.text.correction.JavadocTagsSubProcessor">
-        <filter comment="For Java 14 Enable Preview feature" id="623939596">
+    <resource path="ui/org/eclipse/jdt/internal/ui/text/correction/LocalCorrectionsSubProcessor.java" type="org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsSubProcessor">
+        <filter comment="Sealed types preview feature" id="640712815">
             <message_arguments>
-                <message_argument value="RecordDeclaration"/>
-                <message_argument value="JavadocTagsSubProcessor"/>
-                <message_argument value="RECORD_COMPONENTS_PROPERTY"/>
-            </message_arguments>
-        </filter>
-        <filter comment="For Java 14 Enable Preview feature" id="623939596">
-            <message_arguments>
-                <message_argument value="RecordDeclaration"/>
-                <message_argument value="JavadocTagsSubProcessor"/>
-                <message_argument value="TYPE_PARAMETERS_PROPERTY"/>
-            </message_arguments>
-        </filter>
-        <filter comment="For Java 14 Enable Preview feature" id="640712815">
-            <message_arguments>
-                <message_argument value="RecordDeclaration"/>
-                <message_argument value="JavadocTagsSubProcessor"/>
-                <message_argument value="recordComponents()"/>
-            </message_arguments>
-        </filter>
-        <filter comment="For Java 14 Enable Preview feature" id="640712815">
-            <message_arguments>
-                <message_argument value="RecordDeclaration"/>
-                <message_argument value="JavadocTagsSubProcessor"/>
-                <message_argument value="typeParameters()"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="ui/org/eclipse/jdt/internal/ui/text/correction/JavadocTagsSubProcessor.java" type="org.eclipse.jdt.internal.ui.text.correction.JavadocTagsSubProcessor$AddAllMissingJavadocTagsProposal">
-        <filter comment="For Java 14 Enable Preview feature" id="640712815">
-            <message_arguments>
-                <message_argument value="ASTNode"/>
-                <message_argument value="AddAllMissingJavadocTagsProposal"/>
-                <message_argument value="getAST()"/>
-            </message_arguments>
-        </filter>
-        <filter comment="For Java 14 Enable Preview feature" id="640712815">
-            <message_arguments>
-                <message_argument value="BodyDeclaration"/>
-                <message_argument value="AddAllMissingJavadocTagsProposal"/>
-                <message_argument value="getJavadoc()"/>
-            </message_arguments>
-        </filter>
-        <filter comment="For Java 14 Enable Preview feature" id="640712815">
-            <message_arguments>
-                <message_argument value="RecordDeclaration"/>
-                <message_argument value="AddAllMissingJavadocTagsProposal"/>
-                <message_argument value="recordComponents()"/>
-            </message_arguments>
-        </filter>
-        <filter comment="For Java 14 Enable Preview feature" id="640712815">
-            <message_arguments>
-                <message_argument value="RecordDeclaration"/>
-                <message_argument value="AddAllMissingJavadocTagsProposal"/>
-                <message_argument value="typeParameters()"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="ui/org/eclipse/jdt/internal/ui/text/correction/JavadocTagsSubProcessor.java" type="org.eclipse.jdt.internal.ui.text.correction.JavadocTagsSubProcessor$AddMissingJavadocTagProposal">
-        <filter comment="For Java 14 Enable Preview feature" id="640712815">
-            <message_arguments>
-                <message_argument value="RecordDeclaration"/>
-                <message_argument value="AddMissingJavadocTagProposal"/>
-                <message_argument value="typeParameters()"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="ui/org/eclipse/jdt/internal/ui/text/correction/SuppressWarningsSubProcessor.java" type="org.eclipse.jdt.internal.ui.text.correction.SuppressWarningsSubProcessor">
-        <filter comment="For Java 14 Enable Preview feature" id="623939596">
-            <message_arguments>
-                <message_argument value="RecordDeclaration"/>
-                <message_argument value="SuppressWarningsSubProcessor"/>
-                <message_argument value="MODIFIERS2_PROPERTY"/>
-            </message_arguments>
-        </filter>
-        <filter comment="For Java 14 Enable Preview feature" id="640712815">
-            <message_arguments>
-                <message_argument value="AbstractTypeDeclaration"/>
-                <message_argument value="SuppressWarningsSubProcessor"/>
-                <message_argument value="getName()"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="ui/org/eclipse/jdt/internal/ui/text/correction/proposals/InitializeFinalFieldProposal.java" type="org.eclipse.jdt.internal.ui.text.correction.proposals.InitializeFinalFieldProposal">
-        <filter id="640712815">
-            <message_arguments>
-                <message_argument value="AbstractTypeDeclaration"/>
-                <message_argument value="InitializeFinalFieldProposal"/>
-                <message_argument value="getName()"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="ui/org/eclipse/jdt/internal/ui/text/correction/proposals/InitializeFinalFieldProposal.java" type="org.eclipse.jdt.internal.ui.text.correction.proposals.InitializeFinalFieldProposal$RecordComponentVisitor">
-        <filter id="640712815">
-            <message_arguments>
-                <message_argument value="RecordDeclaration"/>
-                <message_argument value="RecordComponentVisitor"/>
-                <message_argument value="recordComponents()"/>
+                <message_argument value="IType"/>
+                <message_argument value="LocalCorrectionsSubProcessor"/>
+                <message_argument value="isSealed()"/>
             </message_arguments>
         </filter>
     </resource>
@@ -263,6 +143,22 @@
             <message_arguments>
                 <message_argument value="ViewForm"/>
                 <message_argument value="ViewerPane"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="ui/org/eclipse/jdt/internal/ui/viewsupport/JavaElementImageProvider.java" type="org.eclipse.jdt.internal.ui.viewsupport.JavaElementImageProvider">
+        <filter comment="This is a Java 15 preview feature" id="640712815">
+            <message_arguments>
+                <message_argument value="Flags"/>
+                <message_argument value="JavaElementImageProvider"/>
+                <message_argument value="isNonSealed(int)"/>
+            </message_arguments>
+        </filter>
+        <filter comment="This is a Java 15 preview feature" id="640712815">
+            <message_arguments>
+                <message_argument value="Flags"/>
+                <message_argument value="JavaElementImageProvider"/>
+                <message_argument value="isSealed(int)"/>
             </message_arguments>
         </filter>
     </resource>
@@ -295,22 +191,6 @@
             <message_arguments>
                 <message_argument value="ITextEditorActionDefinitionIds"/>
                 <message_argument value="IJavaEditorActionDefinitionIds"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="ui/org/eclipse/jdt/ui/text/IJavaPartitions.java" type="org.eclipse.jdt.ui.text.IJavaPartitions">
-        <filter id="403767336">
-            <message_arguments>
-                <message_argument value="org.eclipse.jdt.ui.text.IJavaPartitions"/>
-                <message_argument value="JAVA_MULTI_LINE_STRING"/>
-            </message_arguments>
-        </filter>
-    </resource>
-    <resource path="ui/org/eclipse/jdt/ui/wizards/NewTypeWizardPage.java" type="org.eclipse.jdt.ui.wizards.NewTypeWizardPage">
-        <filter id="336658481">
-            <message_arguments>
-                <message_argument value="org.eclipse.jdt.ui.wizards.NewTypeWizardPage"/>
-                <message_argument value="RECORD_TYPE"/>
             </message_arguments>
         </filter>
     </resource>

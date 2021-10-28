@@ -119,9 +119,8 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testCreateMethodQuickFix1() throws Exception {
-		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface Snippet {\n");
 		buf.append("    public abstract String name();\n");
@@ -140,7 +139,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface Snippet {\n");
 		buf.append("    public abstract String name();\n");
@@ -157,9 +156,9 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testCreateMethodQuickFix2() throws Exception {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf;
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface Snippet {\n");
 		buf.append("    public abstract String name();\n");
@@ -178,7 +177,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface Snippet {\n");
 		buf.append("    public abstract String name();\n");
@@ -197,7 +196,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testCreateMethodQuickFix3() throws Exception {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		buf.append("package test1;\n");
 		buf.append("public interface NestedInterfaceInInterface {\n");
@@ -228,7 +227,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 		buf1.append("    }\n");
 		buf1.append("}\n");
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface NestedInterfaceInInterface {\n");
 		buf.append("    interface Interface {\n");
@@ -246,9 +245,8 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testCreateMethodQuickFix4() throws Exception {
-		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Arrays;\n");
 		buf.append("public interface NestedInterfaceInInterface {\n");
@@ -267,7 +265,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Arrays;\n");
 		buf.append("public interface NestedInterfaceInInterface {\n");
@@ -283,9 +281,8 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testCreateMethodQuickFix5() throws Exception {
-		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface NestedInterfaceInInterface {\n");
 		buf.append("    interface Interface {\n");
@@ -303,7 +300,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface NestedInterfaceInInterface {\n");
 		buf.append("    interface Interface {\n");
@@ -320,7 +317,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testCreateMethodQuickFix6() throws Exception {
-		StringBuffer buf1= new StringBuffer();
+		StringBuilder buf1= new StringBuilder();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		buf1.append("package test1;\n");
 		buf1.append("public class NestedInterfaceInClass {\n");
@@ -341,7 +338,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 		CUCorrectionProposal proposal1= (CUCorrectionProposal) proposals.get(0);
 		CUCorrectionProposal proposal2= (CUCorrectionProposal) proposals.get(1);
 
-		buf1= new StringBuffer();
+		buf1= new StringBuilder();
 		buf1.append("package test1;\n");
 		buf1.append("public class NestedInterfaceInClass {\n");
 		buf1.append("    public static final int total= 10;\n");
@@ -373,9 +370,8 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 	@Test
 	public void testCreateMethodQuickFix7() throws Exception {
-		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
-		buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class NestedInterfaceInClass {\n");
 		buf.append("    int total= 10;\n");
@@ -392,7 +388,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 		CUCorrectionProposal proposal= (CUCorrectionProposal) proposals.get(0);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class NestedInterfaceInClass {\n");
 		buf.append("    int total= 10;\n");
@@ -414,14 +410,14 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 
-		StringBuffer buf;
+		StringBuilder buf;
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("@org.eclipse.jdt.annotation.NonNullByDefault\n");
 		buf.append("package test1;\n");
 		pack1.createCompilationUnit("package-info.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.util.Comparator;\n");
@@ -449,7 +445,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 		AssistContext context= getCorrectionContext(cu, buf.toString().indexOf("f("), 0);
 		List<IJavaCompletionProposal> proposals= collectAssists(context, false);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.util.Comparator;\n");
@@ -478,7 +474,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 		buf.append("}");
 		assertProposalPreviewEquals(buf.toString(), "Create 'f()' in super type 'I1'", proposals);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.util.Comparator;\n");
@@ -516,14 +512,14 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 
-		StringBuffer buf;
+		StringBuilder buf;
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("@org.eclipse.jdt.annotation.NonNullByDefault\n");
 		buf.append("package test1;\n");
 		pack1.createCompilationUnit("package-info.java", buf.toString(), false, null);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.util.Comparator;\n");
@@ -554,7 +550,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 		assertNumberOfProblems(2, problems);
 		List<IJavaCompletionProposal> proposals1= collectCorrections(cu, problems[0], null);
 		List<IJavaCompletionProposal> proposals2= collectCorrections(cu, problems[1], null);
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.util.Comparator;\n");
@@ -584,7 +580,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 		buf.append("}");
 		assertProposalPreviewEquals(buf.toString(), "Create method 'g(Number, Number)' in type 'I1'", proposals1);
 
-		buf= new StringBuffer();
+		buf= new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.util.Comparator;\n");
@@ -618,7 +614,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 		NullTestUtils.prepareNullTypeAnnotations(fSourceFolder);
 		try {
 			IPackageFragment pack1= fSourceFolder.createPackageFragment("pack", false, null);
-			StringBuffer buf= new StringBuffer();
+			StringBuilder buf= new StringBuilder();
 			buf.append("package pack;\n");
 			buf.append("import annots.*;\n");
 			buf.append("@NonNullByDefault\n");
@@ -640,7 +636,7 @@ public class UnresolvedMethodsQuickFixTest1d8 extends QuickFixTest {
 			assertCorrectLabels(proposals);
 			assertNumberOfProposals(proposals, 1);
 
-			buf= new StringBuffer();
+			buf= new StringBuilder();
 			buf.append("package pack;\n");
 			buf.append("import annots.*;\n");
 			buf.append("@NonNullByDefault\n");

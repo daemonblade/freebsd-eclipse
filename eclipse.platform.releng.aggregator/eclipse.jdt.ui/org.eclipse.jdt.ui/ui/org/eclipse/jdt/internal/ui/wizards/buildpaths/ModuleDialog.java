@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 GK Software SE, and others.
+ * Copyright (c) 2017, 2020 GK Software SE, and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -134,7 +133,7 @@ public class ModuleDialog extends StatusDialog {
 
 	}
 
-	public class AddDetailsLabelProvider extends LabelProvider implements ITableLabelProvider {
+	public static class AddDetailsLabelProvider extends LabelProvider implements ITableLabelProvider {
 
 		@Override
 		public Image getColumnImage(Object element, int columnIndex) {
@@ -526,8 +525,7 @@ public class ModuleDialog extends StatusDialog {
 			}
 			List<String> sourceList= fModuleLists[sourceIdx].fNames;
 			List<String> targetList= fModuleLists[targetIdx].fNames;
-			for (Iterator<?> iter= ((IStructuredSelection) selection).iterator(); iter.hasNext();) {
-				Object selected= iter.next();
+			for (Object selected : ((IStructuredSelection) selection)) {
 				if (selected instanceof String) {
 					sourceList.remove(selected);
 					targetList.add((String) selected);
@@ -752,7 +750,7 @@ public class ModuleDialog extends StatusDialog {
 		IClasspathAttribute[] newAttributes= new IClasspathAttribute[oldAttributes.length];
 		int count= 0;
 		for (IClasspathAttribute oldAttribute : oldAttributes) {
-			if (!oldAttribute.getName().equals(IClasspathAttribute.MODULE)) {
+			if (!IClasspathAttribute.MODULE.equals(oldAttribute.getName())) {
 				newAttributes[count++]= oldAttribute;
 			}
 		}
@@ -942,7 +940,7 @@ public class ModuleDialog extends StatusDialog {
 		@Override
 		void addEntry(ListDialogField<ModuleAddExpose> field) {
 			ModuleAddExport initialValue= new ModuleAddExport(getSourceModuleName(), NO_NAME, getCurrentModuleName(), null);
-			ModuleAddExportsDialog dialog= new ModuleAddExportsDialog(getShell(), fJavaElements, null, initialValue);
+			ModuleAddExportsDialog dialog= new ModuleAddExportsDialog(getShell(), fJavaElements, null, initialValue, null);
 			if (dialog.open() == Window.OK) {
 				ModuleAddExpose export= dialog.getExport(fCurrCPElement.findAttributeElement(CPListElement.MODULE));
 				if (export != null)
@@ -952,7 +950,7 @@ public class ModuleDialog extends StatusDialog {
 
 		@Override
 		void editEntry(ListDialogField<ModuleAddExpose> field, ModuleAddExpose export) {
-			ModuleAddExportsDialog dialog= new ModuleAddExportsDialog(getShell(), fJavaElements, null, export);
+			ModuleAddExportsDialog dialog= new ModuleAddExportsDialog(getShell(), fJavaElements, null, export, null);
 			if (dialog.open() == Window.OK) {
 				ModuleAddExpose newExport= dialog.getExport(fCurrCPElement.findAttributeElement(CPListElement.MODULE));
 				if (newExport != null) {

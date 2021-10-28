@@ -15,6 +15,7 @@ package org.eclipse.jdt.ui.tests.quickfix;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -25,6 +26,7 @@ import java.util.regex.Pattern;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.jupiter.api.Assertions;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
@@ -56,10 +58,14 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.CleanUpPreferenceUtil;
 import org.eclipse.jdt.internal.corext.fix.CleanUpRefactoring;
@@ -170,14 +176,22 @@ public abstract class CleanUpTestCase extends QuickFixTest {
 		}
 	}
 
-	protected void assertGroupCategoryUsed(ICompilationUnit[] cus, String[] expectedGroupCategories) throws CoreException {
+	/**
+	 * @param cus The compilation units
+	 * @param setOfExpectedGroupCategories The expected group categories
+	 * @throws CoreException The core exception
+	 * @deprecated Use assertRefactoringResultAsExpected(ICompilationUnit[] cus, String[] expected, Set<String> expectedGroupCategories) instead.
+	 */
+	protected void assertGroupCategoryUsed(ICompilationUnit[] cus, Set<String> setOfExpectedGroupCategories) throws CoreException {
 		final CleanUpRefactoring ref= new CleanUpRefactoring();
 		ref.setUseOptionsFromProfile(true);
 		ICleanUp[] cleanUps= JavaPlugin.getDefault().getCleanUpRegistry().createCleanUps();
 
 		for (ICompilationUnit cu : cus) {
+			assertNotNull("No compilation unit should be null", cu);
 			ref.addCompilationUnit(cu);
 		}
+
 		for (ICleanUp cleanUp : cleanUps) {
 			ref.addCleanUp(cleanUp);
 		}
@@ -189,23 +203,23 @@ public abstract class CleanUpTestCase extends QuickFixTest {
 		create.run(new NullProgressMonitor());
 		Change change= create.getChange();
 
-		Set<GroupCategory> set= new HashSet<>();
+		Set<GroupCategory> actualCategories= new HashSet<>();
 
-		collectGroupCategories(set, change);
+		collectGroupCategories(actualCategories, change);
 
-		for (String expectedGroupCategory : expectedGroupCategories) {
-			boolean found= false;
-			for (GroupCategory category : set) {
-				if (category.getName().equals(expectedGroupCategory)) {
-					found= true;
-				}
+		for (GroupCategory actualCategory : actualCategories) {
+			if (!setOfExpectedGroupCategories.contains(actualCategory.getName())) {
+				fail("Unexpected group category: " + actualCategory.getName() + ", should find: " + String.join(", ", setOfExpectedGroupCategories));
 			}
-			assertTrue("should have group category: " + expectedGroupCategory + ", found instead: "+set.stream().map(e -> e.getName()).reduce("", String::concat), found);
 		}
 	}
 
 	protected RefactoringStatus assertRefactoringResultAsExpected(ICompilationUnit[] cus, String[] expected) throws CoreException {
-		RefactoringStatus status= performRefactoring(cus);
+		return assertRefactoringResultAsExpected(cus, expected, null);
+	}
+
+	protected RefactoringStatus assertRefactoringResultAsExpected(ICompilationUnit[] cus, String[] expected, Set<String> setOfExpectedGroupCategories) throws CoreException {
+		RefactoringStatus status= performRefactoring(cus, setOfExpectedGroupCategories);
 
 		String[] previews= new String[cus.length];
 		for (int i= 0; i < cus.length; i++) {
@@ -219,7 +233,7 @@ public abstract class CleanUpTestCase extends QuickFixTest {
 	}
 
 	protected void assertRefactoringResultAsExpectedIgnoreHashValue(ICompilationUnit[] cus, String[] expected) throws CoreException {
-		performRefactoring(cus);
+		performRefactoring(cus, null);
 
 		Pattern regex= Pattern.compile("long serialVersionUID = .*L;");
 
@@ -233,22 +247,61 @@ public abstract class CleanUpTestCase extends QuickFixTest {
 	}
 
 	protected RefactoringStatus assertRefactoringHasNoChange(ICompilationUnit[] cus) throws CoreException {
+		for (ICompilationUnit cu : cus) {
+			assertNoCompilationError(cu);
+		}
+
+		return assertRefactoringHasNoChangeEventWithError(cus);
+	}
+
+	protected RefactoringStatus assertRefactoringHasNoChangeEventWithError(ICompilationUnit[] cus) throws CoreException {
 		String[] expected= new String[cus.length];
+
 		for (int i= 0; i < cus.length; i++) {
 			expected[i]= cus[i].getBuffer().getContents();
 		}
-		return assertRefactoringResultAsExpected(cus, expected);
+
+		return assertRefactoringResultAsExpected(cus, expected, null);
 	}
 
-	protected final RefactoringStatus performRefactoring(ICompilationUnit[] cus) throws CoreException {
+	protected CompilationUnit assertNoCompilationError(ICompilationUnit cu) {
+		ASTParser parser= ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
+		parser.setSource(cu);
+		parser.setResolveBindings(true);
+		CompilationUnit root= (CompilationUnit) parser.createAST(null);
+		IProblem[] problems= root.getProblems();
+		boolean hasProblems= false;
+
+		for (IProblem prob : problems) {
+			if (!prob.isWarning() && !prob.isInfo()) {
+				hasProblems= true;
+				break;
+			}
+		}
+
+		if (hasProblems) {
+			StringBuilder builder= new StringBuilder();
+			builder.append(cu.getElementName() + " has compilation problems: \n");
+
+			for (IProblem prob : problems) {
+				builder.append(prob.getMessage()).append('\n');
+			}
+
+			fail(builder.toString());
+		}
+
+		return root;
+	}
+
+	protected final RefactoringStatus performRefactoring(ICompilationUnit[] cus, Set<String> setOfExpectedGroupCategories) throws CoreException {
 		final CleanUpRefactoring ref= new CleanUpRefactoring();
 		ref.setUseOptionsFromProfile(true);
 		ICleanUp[] cleanUps= JavaPlugin.getDefault().getCleanUpRegistry().createCleanUps();
 
-		return performRefactoring(ref, cus, cleanUps);
+		return performRefactoring(ref, cus, cleanUps, setOfExpectedGroupCategories);
 	}
 
-	protected RefactoringStatus performRefactoring(final CleanUpRefactoring ref, ICompilationUnit[] cus, ICleanUp[] cleanUps) throws CoreException {
+	protected RefactoringStatus performRefactoring(final CleanUpRefactoring ref, ICompilationUnit[] cus, ICleanUp[] cleanUps, Set<String> setOfExpectedGroupCategories) throws CoreException {
 		for (ICompilationUnit cu : cus) {
 			ref.addCompilationUnit(cu);
 		}
@@ -277,6 +330,17 @@ public abstract class CleanUpTestCase extends QuickFixTest {
 		Change undo= perform.getUndoChange();
 		assertNotNull("Undo doesn't exist", undo);
 		assertTrue("Undo manager is empty", undoManager.anythingToUndo());
+
+		if (setOfExpectedGroupCategories != null) {
+			Change change= create.getChange();
+			Set<GroupCategory> actualCategories= new HashSet<>();
+			collectGroupCategories(actualCategories, change);
+
+			for (GroupCategory actualCategory : actualCategories) {
+				Assertions.assertTrue(setOfExpectedGroupCategories.contains(actualCategory.getName()),
+						() -> "Unexpected group category: " + actualCategory.getName() + ", should find: " + String.join(", ", setOfExpectedGroupCategories));
+			}
+		}
 
 		return status;
 	}

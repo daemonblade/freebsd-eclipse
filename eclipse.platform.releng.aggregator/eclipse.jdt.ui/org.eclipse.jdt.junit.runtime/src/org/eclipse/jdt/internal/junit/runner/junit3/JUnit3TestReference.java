@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2019 IBM Corporation and others.
+ * Copyright (c) 2006, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -64,6 +64,7 @@ public class JUnit3TestReference implements ITestReference {
 		this.fTest= test;
 	}
 
+	@Override
 	public int countTestCases() {
 		return fTest.countTestCases();
 	}
@@ -85,12 +86,11 @@ public class JUnit3TestReference implements ITestReference {
 	public String getName() {
 		if (isJUnit4TestCaseAdapter(fTest)) {
 			Method method= (Method) callJUnit4GetterMethod(fTest, "getTestMethod"); //$NON-NLS-1$
-			return MessageFormat.format(
-					MessageIds.TEST_IDENTIFIER_MESSAGE_FORMAT, new Object[] { method.getName(), method.getDeclaringClass().getName() });
+			return MessageFormat.format(MessageIds.TEST_IDENTIFIER_MESSAGE_FORMAT, method.getName(), method.getDeclaringClass().getName());
 		}
 		if (fTest instanceof TestCase) {
 			TestCase testCase= (TestCase) fTest;
-			return MessageFormat.format(MessageIds.TEST_IDENTIFIER_MESSAGE_FORMAT, new Object[] { testCase.getName(), fTest.getClass().getName() });
+			return MessageFormat.format(MessageIds.TEST_IDENTIFIER_MESSAGE_FORMAT, testCase.getName(), fTest.getClass().getName());
 		}
 		if (fTest instanceof TestSuite) {
 			TestSuite suite= (TestSuite) fTest;
@@ -113,10 +113,12 @@ public class JUnit3TestReference implements ITestReference {
 		return fTest;
 	}
 
+	@Override
 	public void run(TestExecution execution) {
 		final TestResult testResult= new TestResult();
 		testResult.addListener(new JUnit3Listener(execution));
 		execution.addStopListener(new IStopListener() {
+			@Override
 			public void stop() {
 				testResult.stop();
 			}
@@ -126,6 +128,7 @@ public class JUnit3TestReference implements ITestReference {
 		fTest.run(tr);
 	}
 
+	@Override
 	public void sendTree(IVisitsTestTrees notified) {
 		if (fTest instanceof TestDecorator) {
 			TestDecorator decorator= (TestDecorator) fTest;
@@ -181,7 +184,7 @@ public class JUnit3TestReference implements ITestReference {
 	}
 
 	private boolean isJUnit4TestCaseAdapter(Test test) {
-		return test.getClass().getName().equals("junit.framework.JUnit4TestCaseAdapter"); //$NON-NLS-1$
+		return "junit.framework.JUnit4TestCaseAdapter".equals(test.getClass().getName()); //$NON-NLS-1$
 	}
 
 	private boolean isJUnit4TestSuiteAdapter(Test test) {
@@ -193,6 +196,7 @@ public class JUnit3TestReference implements ITestReference {
 		new JUnit3TestReference(test).sendTree(notified);
 	}
 
+	@Override
 	public ITestIdentifier getIdentifier() {
 		return new JUnit3Identifier(this);
 	}

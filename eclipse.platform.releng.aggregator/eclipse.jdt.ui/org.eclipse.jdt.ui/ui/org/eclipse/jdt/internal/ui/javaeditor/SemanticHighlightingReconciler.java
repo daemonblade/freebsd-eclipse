@@ -40,10 +40,13 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConstructorInvocation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.Modifier.ModifierKeyword;
 import org.eclipse.jdt.core.dom.RecordDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.YieldStatement;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 
@@ -51,9 +54,7 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingManager.HighlightedPosition;
 import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingManager.Highlighting;
 import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightings.DeprecatedMemberHighlighting;
-import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightings.RecordKeywordHighlighting;
-import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightings.VarKeywordHighlighting;
-import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightings.YieldKeywordHighlighting;
+import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightings.RestrictedIdentifiersHighlighting;
 import org.eclipse.jdt.internal.ui.text.java.IJavaReconcilingListener;
 import org.eclipse.jdt.internal.ui.util.ASTHelper;
 
@@ -130,13 +131,13 @@ public class SemanticHighlightingReconciler implements IJavaReconcilingListener,
 
 		@Override
 		public boolean visit(SimpleType node) {
-			if (node.getAST().apiLevel() >= AST.JLS10 && node.isVar()) {
+			if (node.getAST().apiLevel() >= ASTHelper.JLS10 && node.isVar()) {
 				int offset= node.getStartPosition();
 				int length= node.getLength();
 				if (offset > -1 && length > 0) {
 					for (int i= 0; i < fJobSemanticHighlightings.length; i++) {
 						SemanticHighlighting semanticHighlighting= fJobSemanticHighlightings[i];
-						if (semanticHighlighting instanceof VarKeywordHighlighting) {
+						if (semanticHighlighting instanceof RestrictedIdentifiersHighlighting) {
 							addPosition(offset, length, fJobHighlightings[i]);
 							return false;
 						}
@@ -155,7 +156,7 @@ public class SemanticHighlightingReconciler implements IJavaReconcilingListener,
 				if (offset > -1 && length > 0) {
 					for (int i= 0; i < fJobSemanticHighlightings.length; i++) {
 						SemanticHighlighting semanticHighlighting= fJobSemanticHighlightings[i];
-						if (semanticHighlighting instanceof YieldKeywordHighlighting) {
+						if (semanticHighlighting instanceof RestrictedIdentifiersHighlighting) {
 							addPosition(offset, length, fJobHighlightings[i]);
 							return false;
 						}
@@ -174,7 +175,56 @@ public class SemanticHighlightingReconciler implements IJavaReconcilingListener,
 				if (offset > -1 && length > 0) {
 					for (int i= 0; i < fJobSemanticHighlightings.length; i++) {
 						SemanticHighlighting semanticHighlighting= fJobSemanticHighlightings[i];
-						if (semanticHighlighting instanceof RecordKeywordHighlighting) {
+						if (semanticHighlighting instanceof RestrictedIdentifiersHighlighting) {
+							addPosition(offset, length, fJobHighlightings[i]);
+							return true;
+						}
+					}
+				}
+			}
+			return true;
+		}
+
+		@Override
+		public boolean visit(TypeDeclaration node) {
+			try {
+				if (node.permittedTypes().size() > 0) {
+					int offset= node.getRestrictedIdentifierStartPosition();
+					int length= 7; // length of 'permits'
+					if (offset > -1) {
+						for (int i= 0; i < fJobSemanticHighlightings.length; i++) {
+							SemanticHighlighting semanticHighlighting= fJobSemanticHighlightings[i];
+							if (semanticHighlighting instanceof RestrictedIdentifiersHighlighting) {
+								addPosition(offset, length, fJobHighlightings[i]);
+								return true;
+							}
+						}
+					}
+				}
+			} catch (UnsupportedOperationException e) {
+				// do nothing
+			}
+			return true;
+		}
+
+		@Override
+		public boolean visit(Modifier node) {
+			AST ast= node.getAST();
+			if (ASTHelper.isSealedTypeSupportedInAST(ast)) {
+				ModifierKeyword keyword= node.getKeyword();
+				int offset= node.getStartPosition();
+				int length;
+				if (keyword == ModifierKeyword.SEALED_KEYWORD) {
+					length= 6;
+				} else if (keyword == ModifierKeyword.NON_SEALED_KEYWORD) {
+					length= 10;
+				} else {
+					return true;
+				}
+				if (offset > -1 && length > 0) {
+					for (int i= 0; i < fJobSemanticHighlightings.length; i++) {
+						SemanticHighlighting semanticHighlighting= fJobSemanticHighlightings[i];
+						if (semanticHighlighting instanceof RestrictedIdentifiersHighlighting) {
 							addPosition(offset, length, fJobHighlightings[i]);
 							return false;
 						}

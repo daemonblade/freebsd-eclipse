@@ -125,8 +125,9 @@ public class Resources {
 
 		IStatus modified= null;
 		Map<IFile, Long> newTimeStamps= createModificationStampMap(readOnlyFiles);
-		for (IFile file : oldTimeStamps.keySet()) {
-			if (!oldTimeStamps.get(file).equals(newTimeStamps.get(file)))
+		for (Map.Entry<IFile, Long> entry : oldTimeStamps.entrySet()) {
+			IFile file = entry.getKey();
+			if (!entry.getValue().equals(newTimeStamps.get(file)))
 				modified= addModified(modified, file);
 		}
 		if (modified != null)
@@ -138,7 +139,7 @@ public class Resources {
 		Map<IFile, Long> map= new HashMap<>();
 		for (IResource iResource : files) {
 			IFile file= (IFile)iResource;
-			map.put(file, Long.valueOf(file.getModificationStamp()));
+			map.put(file, file.getModificationStamp());
 		}
 		return map;
 	}

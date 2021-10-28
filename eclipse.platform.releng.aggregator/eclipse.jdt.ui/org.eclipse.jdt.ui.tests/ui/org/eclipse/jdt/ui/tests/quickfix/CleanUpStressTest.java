@@ -93,8 +93,7 @@ public class CleanUpStressTest extends CleanUpTestCase {
     private Hashtable<String, String> fExpectedChangesAllTests;
     {
         fExpectedChangesAllTests= new Hashtable<>();
-        StringBuffer buf= null;
-        buf= new StringBuffer();
+        StringBuffer buf= new StringBuffer();
         buf.append("package junit.runner;\n");
         buf.append("\n");
         buf.append("import java.io.BufferedReader;\n");
@@ -5255,8 +5254,8 @@ public class CleanUpStressTest extends CleanUpTestCase {
 		enable(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_SUBTYPE_ACCESS);
 
 		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_USE_BLOCKS_ALWAYS);
-		enable(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS_ALWAYS);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
 
 		enable(CleanUpConstants.EXPRESSIONS_USE_PARENTHESES);
 		enable(CleanUpConstants.EXPRESSIONS_USE_PARENTHESES_ALWAYS);
@@ -5298,7 +5297,7 @@ public class CleanUpStressTest extends CleanUpTestCase {
 		enable(CleanUpConstants.REMOVE_REDUNDANT_SEMICOLONS);
 
 		ICompilationUnit[] units= cus.toArray(new ICompilationUnit[cus.size()]);
-		performRefactoring(units);
+		performRefactoring(units, null);
 
 
 //		generateTable(units);

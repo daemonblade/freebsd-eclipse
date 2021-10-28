@@ -114,6 +114,7 @@ public final class PreferencesMessages extends NLS {
 	public static String JavaBasePreferencePage_refactoring_auto_save;
 	public static String JavaBasePreferencePage_search;
 	public static String JavaBasePreferencePage_search_small_menu;
+	public static String JavaBasePreferencePage_search_enable_parallel;
 	public static String JavaBuildConfigurationBlock_build_recreate_modified;
 	public static String JavadocConfigurationBlock_error_archive_not_found_in_workspace;
 	public static String JavadocConfigurationBlock_external_radio;
@@ -147,9 +148,6 @@ public final class PreferencesMessages extends NLS {
 	public static String JavaEditorPreferencePage_singleLineComment;
 	public static String JavaEditorPreferencePage_returnKeyword;
 	public static String JavaEditorPreferencePage_keywords;
-	public static String JavaEditorPreferencePage_varKeyword;
-	public static String JavaEditorPreferencePage_yieldKeyword;
-	public static String JavaEditorPreferencePage_recordKeyword;
 	public static String JavaEditorPreferencePage_strings;
 	public static String JavaEditorPreferencePage_others;
 	public static String JavaEditorPreferencePage_operators;
@@ -840,12 +838,15 @@ public final class PreferencesMessages extends NLS {
 	public static String ComplianceConfigurationBlock_version_12;
 	public static String ComplianceConfigurationBlock_version_13;
 	public static String ComplianceConfigurationBlock_version_14;
+	public static String ComplianceConfigurationBlock_version_15;
+	public static String ComplianceConfigurationBlock_version_16;
 	public static String ComplianceConfigurationBlock_versionCLDC11;
 	public static String ComplianceConfigurationBlock_src_greater_compliance;
 	public static String ComplianceConfigurationBlock_classfile_greater_compliance;
 	public static String ComplianceConfigurationBlock_classfile_greater_source;
 	public static String ProblemSeveritiesConfigurationBlock_enable_syntactic_null_analysis_for_fields;
 	public static String ProblemSeveritiesConfigurationBlock_inherit_null_annotations;
+	public static String ProblemSeveritiesConfigurationBlock_external_annotations_from_all_locations;
 	public static String ProblemSeveritiesConfigurationBlock_pb_parameter_assignment;
 	public static String ProblemSeveritiesConfigurationBlock_pb_null_reference;
 	public static String ProblemSeveritiesConfigurationBlock_pb_null_spec_violation;

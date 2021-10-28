@@ -50,7 +50,6 @@ import org.eclipse.jdt.internal.corext.buildpath.ClasspathModifier;
 
 import org.eclipse.jdt.ui.actions.AbstractOpenWizardAction;
 
-import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.wizards.NewWizardMessages;
 import org.eclipse.jdt.internal.ui.wizards.dialogfields.DialogField;
 import org.eclipse.jdt.internal.ui.wizards.dialogfields.IDialogFieldListener;
@@ -91,7 +90,7 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 
 		@Override
 		public void propertyChange(PropertyChangeEvent event) {
-			if (event.getProperty().equals(IAction.RESULT)) {
+			if (IAction.RESULT.equals(event.getProperty())) {
 				if (event.getNewValue().equals(Boolean.TRUE)) {
 					finishWizard();
 				} else {
@@ -246,14 +245,6 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 		}
 		return composite;
 	}
-
-	private Shell getShell() {
-		if (fSWTControl != null) {
-			return fSWTControl.getShell();
-		}
-		return JavaPlugin.getActiveWorkbenchShell();
-	}
-
 
 	private class SourceContainerAdapter implements ITreeListAdapter<CPListElement>, IDialogFieldListener {
 
@@ -419,7 +410,7 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 
 	private void editAttributeEntry(CPListElementAttribute elem) {
 		String key= elem.getKey();
-		if (key.equals(CPListElement.OUTPUT)) {
+		if (CPListElement.OUTPUT.equals(key)) {
 			CPListElement selElement=  elem.getParent();
 			OutputLocationDialog dialog= new OutputLocationDialog(getShell(), selElement, fClassPathList.getElements(), new Path(fOutputLocationField.getText()).makeAbsolute(), true);
 			if (dialog.open() == Window.OK) {
@@ -427,20 +418,20 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 				fFoldersList.refresh();
 				fClassPathList.dialogFieldChanged(); // validate
 			}
-		} else if (key.equals(CPListElement.EXCLUSION) || key.equals(CPListElement.INCLUSION)) {
+		} else if (CPListElement.EXCLUSION.equals(key) || CPListElement.INCLUSION.equals(key)) {
 			EditFilterWizard wizard= newEditFilterWizard(elem.getParent(), fFoldersList.getElements(), fOutputLocationField.getText());
 			OpenBuildPathWizardAction action= new OpenBuildPathWizardAction(wizard);
 			action.run();
-		} else if (key.equals(CPListElement.IGNORE_OPTIONAL_PROBLEMS)) {
+		} else if (CPListElement.IGNORE_OPTIONAL_PROBLEMS.equals(key)) {
 			String newValue= "true".equals(elem.getValue()) ? null : "true"; //$NON-NLS-1$ //$NON-NLS-2$
 			elem.setValue(newValue);
 			fFoldersList.refresh(elem);
-		} else if (key.equals(CPListElement.TEST)) {
+		} else if (CPListElement.TEST.equals(key)) {
 			String newValue= "true".equals(elem.getValue()) ? null : "true"; //$NON-NLS-1$ //$NON-NLS-2$
 			elem.setValue(newValue);
 			fFoldersList.refresh(elem.getParent());
 			fClassPathList.dialogFieldChanged(); // validate
-		} else if (key.equals(CPListElement.WITHOUT_TEST_CODE)) {
+		} else if (CPListElement.WITHOUT_TEST_CODE.equals(key)) {
 			String newValue= "true".equals(elem.getValue()) ? null : "true"; //$NON-NLS-1$ //$NON-NLS-2$
 			elem.setValue(newValue);
 			fFoldersList.refresh(elem.getParent());
@@ -448,6 +439,7 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 			if (editCustomAttribute(getShell(), elem)) {
 				fFoldersList.refresh();
 				fClassPathList.dialogFieldChanged(); // validate
+				checkAttributeEffect(key, fCurrJProject);
 			}
 		}
 	}
@@ -484,7 +476,7 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 				String key= attrib.getKey();
 				if (attrib.isBuiltIn()) {
 					Object value= null;
-					if (key.equals(CPListElement.EXCLUSION) || key.equals(CPListElement.INCLUSION)) {
+					if (CPListElement.EXCLUSION.equals(key) || CPListElement.INCLUSION.equals(key)) {
 						value= new Path[0];
 					}
 					attrib.getParent().setAttribute(key, value);
@@ -520,11 +512,8 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 				CPListElementAttribute attrib= (CPListElementAttribute) elem;
 				String key= attrib.getKey();
 				if (attrib.isBuiltIn()) {
-					if (CPListElement.INCLUSION.equals(key)) {
-						if (((IPath[]) attrib.getValue()).length == 0) {
-							return false;
-						}
-					} else if (CPListElement.EXCLUSION.equals(key)) {
+					if (CPListElement.INCLUSION.equals(key)
+							|| CPListElement.EXCLUSION.equals(key)) {
 						if (((IPath[]) attrib.getValue()).length == 0) {
 							return false;
 						}
@@ -560,9 +549,7 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 		}
 		if (elem instanceof CPListElementAttribute) {
 			CPListElementAttribute attrib= (CPListElementAttribute) elem;
-			if (attrib.isBuiltIn()) {
-				return true;
-			} else if (CPListElement.IGNORE_OPTIONAL_PROBLEMS.equals(attrib.getKey())) {
+			if (attrib.isBuiltIn() || CPListElement.IGNORE_OPTIONAL_PROBLEMS.equals(attrib.getKey())) {
 				return true;
 			} else {
 				return canEditCustomAttribute(attrib);
@@ -640,8 +627,8 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 	public void setSelection(List<?> selElements, boolean expand) {
 		fFoldersList.selectElements(new StructuredSelection(selElements));
 		if (expand) {
-			for (int i= 0; i < selElements.size(); i++) {
-				fFoldersList.expandElement(selElements.get(i), 1);
+			for (Object selElement : selElements) {
+				fFoldersList.expandElement(selElement, 1);
 			}
 		}
 	}

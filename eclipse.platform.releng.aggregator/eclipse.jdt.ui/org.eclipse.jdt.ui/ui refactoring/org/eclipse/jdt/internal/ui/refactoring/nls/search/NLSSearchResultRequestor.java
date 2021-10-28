@@ -79,7 +79,7 @@ class NLSSearchResultRequestor extends SearchRequestor {
 	 * @see #findKey(Position, IJavaElement)
 	 * @since 3.6
 	 */
-	private static final String NO_KEY= new String();
+	private static final String NO_KEY= ""; //$NON-NLS-1$
 
 	private NLSSearchResult fResult;
 	private IFile fPropertiesFile;
@@ -301,7 +301,7 @@ class NLSSearchResultRequestor extends SearchRequestor {
 					String identifier= source.substring(tokenStart, tokenEnd + 1);
 					for (IField field : parentClass.getFields()) {
 						if (field.getElementName().equals(identifier)) {
-							if (!Signature.getSignatureSimpleName(field.getTypeSignature()).equals("String")) { //$NON-NLS-1$
+							if (!"String".equals(Signature.getSignatureSimpleName(field.getTypeSignature()))) { //$NON-NLS-1$
 								return null;
 							}
 							Object obj= field.getConstant();

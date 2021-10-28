@@ -1483,8 +1483,7 @@ public final class ReorgPolicyFactory {
 
 		@Override
 		public IFile[] getAllModifiedFiles() {
-			Set<IFile> result= new HashSet<>();
-			result.addAll(Arrays.asList(ResourceUtil.getFiles(fChangeManager.getAllCompilationUnits())));
+			Set<IFile> result= new HashSet<>(Arrays.asList(ResourceUtil.getFiles(fChangeManager.getAllCompilationUnits())));
 			result.addAll(Arrays.asList(fQualifiedNameSearchResult.getAllFiles()));
 			if (!(getJavaElementDestination() instanceof IPackageFragmentRoot) && getDestinationAsPackageFragment() != null && getUpdateReferences())
 				result.addAll(Arrays.asList(ResourceUtil.getFiles(getCus())));
@@ -1591,8 +1590,7 @@ public final class ReorgPolicyFactory {
 
 		@Override
 		protected Map<String, String> getRefactoringArguments(String project) {
-			final Map<String, String> arguments= new HashMap<>();
-			arguments.putAll(super.getRefactoringArguments(project));
+			final Map<String, String> arguments= new HashMap<>(super.getRefactoringArguments(project));
 			if (fFilePatterns != null && !"".equals(fFilePatterns)) //$NON-NLS-1$
 				arguments.put(ATTRIBUTE_PATTERNS, fFilePatterns);
 			arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES, Boolean.toString(fUpdateReferences));
@@ -4435,8 +4433,7 @@ public final class ReorgPolicyFactory {
 
 	public static void storeReorgExecutionLog(String project, Map<String, String> arguments, ReorgExecutionLog log) {
 		if (log != null) {
-			final Set<Object> set= new HashSet<>();
-			set.addAll(Arrays.asList(log.getProcessedElements()));
+			final Set<Object> set= new HashSet<>(Arrays.asList(log.getProcessedElements()));
 			set.addAll(Arrays.asList(log.getRenamedElements()));
 			final StringBuilder buffer= new StringBuilder(64);
 			for (Object object : set) {

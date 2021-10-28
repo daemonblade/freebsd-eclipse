@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,7 @@
  *     IBM Corporation - initial API and implementation
  *     Mateusz Wenus <mateusz.wenus@gmail.com> - [override method] generate in declaration order [code generation] - https://bugs.eclipse.org/bugs/show_bug.cgi?id=140971
  *     Stephan Herrmann - Contribution for Bug 463360 - [override method][null] generating method override should not create redundant null annotations
+ *     Microsoft Corporation - read preferences from the compilation unit
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.codemanipulation;
 
@@ -134,7 +135,7 @@ public final class AddUnimplementedMethodsOperation implements IWorkspaceRunnabl
 	 *
 	 * @return the generated imports
 	 */
-	public final String[] getCreatedImports() {
+	public String[] getCreatedImports() {
 		if (fCreatedImports != null) {
 			return fCreatedImports;
 		}
@@ -146,7 +147,7 @@ public final class AddUnimplementedMethodsOperation implements IWorkspaceRunnabl
 	 *
 	 * @return the method binding keys
 	 */
-	public final String[] getCreatedMethods() {
+	public String[] getCreatedMethods() {
 		final String[] keys= new String[fCreatedMethods.size()];
 		fCreatedMethods.toArray(keys);
 		return keys;
@@ -157,7 +158,7 @@ public final class AddUnimplementedMethodsOperation implements IWorkspaceRunnabl
 	 *
 	 * @return the scheduling rule
 	 */
-	public final ISchedulingRule getSchedulingRule() {
+	public ISchedulingRule getSchedulingRule() {
 		return ResourcesPlugin.getWorkspace().getRoot();
 	}
 
@@ -165,7 +166,7 @@ public final class AddUnimplementedMethodsOperation implements IWorkspaceRunnabl
 	 * @see org.eclipse.core.resources.IWorkspaceRunnable#run(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-	public final void run(IProgressMonitor monitor) throws CoreException {
+	public void run(IProgressMonitor monitor) throws CoreException {
 		if (monitor == null)
 			monitor= new NullProgressMonitor();
 		try {
@@ -193,7 +194,7 @@ public final class AddUnimplementedMethodsOperation implements IWorkspaceRunnabl
 				// not possible, we checked this in the constructor
 			}
 
-			final CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(cu.getJavaProject());
+			final CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(cu);
 			settings.createComments= fDoCreateComments;
 
 			ASTNode insertion= getNodeToInsertBefore(memberRewriter);
@@ -245,8 +246,8 @@ public final class AddUnimplementedMethodsOperation implements IWorkspaceRunnabl
 	private ASTNode getNodeToInsertBefore(ListRewrite rewriter) {
 		if (fInsertPos != -1) {
 			List<?> members= rewriter.getOriginalList();
-			for (int i= 0; i < members.size(); i++) {
-				ASTNode curr= (ASTNode) members.get(i);
+			for (Object member : members) {
+				ASTNode curr= (ASTNode) member;
 				if (curr.getStartPosition() >= fInsertPos) {
 					return curr;
 				}

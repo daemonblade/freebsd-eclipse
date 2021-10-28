@@ -78,8 +78,6 @@ public class JUnitPlugin extends AbstractUIPlugin {
 
 	private BundleContext fBundleContext;
 
-	private static boolean fIsStopped= false;
-
 
 	public JUnitPlugin() {
 		fgPlugin= this;
@@ -217,6 +215,8 @@ public class JUnitPlugin extends AbstractUIPlugin {
 		favoritesToAdd.add("org.junit.jupiter.api.Assumptions.*"); //$NON-NLS-1$
 		favoritesToAdd.add("org.junit.jupiter.api.DynamicContainer.*"); //$NON-NLS-1$
 		favoritesToAdd.add("org.junit.jupiter.api.DynamicTest.*"); //$NON-NLS-1$
+		favoritesToAdd.add("org.mockito.ArgumentMatchers.*"); //$NON-NLS-1$
+		favoritesToAdd.add("org.mockito.Mockito.*"); //$NON-NLS-1$
 
 		// default value
 		Set<String> defaultFavorites= new LinkedHashSet<>();
@@ -249,7 +249,6 @@ public class JUnitPlugin extends AbstractUIPlugin {
 
 	@Override
 	public void stop(BundleContext context) throws Exception {
-		fIsStopped= true;
 		super.stop(context);
 		fBundleContext= null;
 	}
@@ -329,10 +328,6 @@ public class JUnitPlugin extends AbstractUIPlugin {
 		if (bundles != null && bundles.length > 0)
 			return bundles;
 		return null;
-	}
-
-	public static boolean isStopped() {
-		return fIsStopped;
 	}
 
 	public IDialogSettings getDialogSettingsSection(String name) {

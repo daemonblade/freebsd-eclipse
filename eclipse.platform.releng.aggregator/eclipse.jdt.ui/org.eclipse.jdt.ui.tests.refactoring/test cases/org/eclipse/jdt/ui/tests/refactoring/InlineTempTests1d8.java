@@ -13,14 +13,12 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.refactoring;
 
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.eclipse.jdt.ui.tests.CustomBaseRunner;
 import org.eclipse.jdt.ui.tests.IgnoreInheritedTests;
 import org.eclipse.jdt.ui.tests.refactoring.rules.Java1d8Setup;
-import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 
 /**
  * Those tests are made to run on Java Spider 1.8 .
@@ -28,14 +26,16 @@ import org.eclipse.jdt.ui.tests.refactoring.rules.RefactoringTestSetup;
 @IgnoreInheritedTests
 @RunWith(CustomBaseRunner.class)
 public class InlineTempTests1d8 extends InlineTempTests {
-	@Rule
-	public RefactoringTestSetup js= new Java1d8Setup();
+
+	public InlineTempTests1d8() {
+		super(new Java1d8Setup());
+	}
 
 	@Override
 	protected String getTestFileName(boolean canInline, boolean input) {
-		String fileName= TEST_PATH_PREFIX + getRefactoringPath();
-		fileName+= (canInline ? "canInline18/" : "cannotInline18/");
-		return fileName + getSimpleTestFileName(canInline, input);
+		StringBuilder fileName= new StringBuilder(TEST_PATH_PREFIX).append(getRefactoringPath());
+		fileName.append(canInline ? "canInline18/" : "cannotInline18/");
+		return fileName.append(getSimpleTestFileName(canInline, input)).toString();
 	}
 
 	//--- tests for lambda expressions
