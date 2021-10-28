@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
@@ -31,14 +31,9 @@
     <module>rcp.config</module>
     <module>equinox.starterkit.product</module>
     <module>equinox-sdk</module>
-    <module>rcp</module>
-    <module>rcp.sdk</module>
-    <module>platform</module>
-    <module>platform.sdk</module>
-    <module>sdk</module>
-	<!-- disabled
+<!-- disabled
     <module>eclipse-junit-tests</module>
     <module>eclipse.platform.repository</module>
-	  -->
+-->
   </modules>
 </project>

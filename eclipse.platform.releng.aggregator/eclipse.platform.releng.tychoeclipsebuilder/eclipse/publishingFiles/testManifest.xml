@@ -15,6 +15,10 @@
         name="FreeBSD (64 bit version for Power PC)"
         fileName="eclipse-SDK-${BUILD_ID}-freebsd-gtk-powerpc64.tar.gz"></platform>
       <platform
+        id="SLG2PPC64BE"
+        name="FreeBSD (64 bit version for Power PC LE)"
+        fileName="eclipse-SDK-${BUILD_ID}-freebsd-gtk-powerpc64le.tar.gz"></platform>
+      <platform
         id="SLG2AARCH64"
         name="FreeBSD (64 bit version for AArch64)"
         fileName="eclipse-SDK-${BUILD_ID}-freebsd-gtk-aarch64.tar.gz"></platform>
@@ -22,6 +26,10 @@
         id="SMCC64"
         name="Mac OSX (64 bit version)"
         fileName="eclipse-SDK-${BUILD_ID}-macosx-cocoa-x86_64.dmg"></platform>
+      <platform
+        id="SMCCARM64"
+        name="Mac OSX (64 bit version for Arm64/AArch64)"
+        fileName="eclipse-SDK-${BUILD_ID}-macosx-cocoa-aarch64.dmg"></platform>     
       <platform
         id="SST"
         name="Source Tarball"
@@ -44,13 +52,6 @@
         id="JT"
         name="All"
         fileName="eclipse-Automated-Tests-${BUILD_ID}.zip"></platform>
-    </zipType>
-
-    <zipType name="Example plug-ins">
-      <platform
-        id="EA"
-        name="&lt;img src = &quot;repo.gif&quot; alt=&quot;Examples&quot; /> Eclipse Examples Repo"
-        fileName="org.eclipse.sdk.examples.source-${BUILD_ID}.zip"></platform>
     </zipType>
 
     <zipType name="RCP Runtime Binary">
@@ -89,23 +90,13 @@
         name="Mac OSX (64 bit version)"
         fileName="eclipse-platform-${BUILD_ID}-macosx-cocoa-x86_64.dmg"></platform>
       <platform
+        id="PMCCARM64"
+        name="Mac OSX (64 bit version for Arm64/AArch64)"
+        fileName="eclipse-platform-${BUILD_ID}-macosx-cocoa-aarch64.dmg"></platform>
+      <platform
         id="PLR"
         name="&lt;img src = &quot;repo.gif&quot;  alt=&quot;Runtime Repo&quot; /> Platform Runtime Repo "
         fileName="org.eclipse.platform-${BUILD_ID}.zip"></platform>
-    </zipType>
-
-    <zipType name="JDT Runtime Binary">
-      <platform
-        id="JRR"
-        name="&lt;img src = &quot;repo.gif&quot; alt=&quot;JDT Repo&quot; /> JDT Runtime Repo "
-        fileName="org.eclipse.jdt-${BUILD_ID}.zip"></platform>
-    </zipType>
-
-    <zipType name="JDT SDK">
-      <platform
-        id="JSR"
-        name="&lt;img src = &quot;repo.gif&quot; alt=&quot; JDT Source Repo&quot; /> JDT Source Repo "
-        fileName="org.eclipse.jdt.source-${BUILD_ID}.zip"></platform>
     </zipType>
 
     <zipType name="JDTC">
@@ -117,38 +108,6 @@
         id="ECJSRC"
         name="All"
         fileName="ecjsrc-${BUILD_ID}.jar"></platform>
-    </zipType>
-
-    <zipType name="PDE Runtime">
-      <platform
-        id="PRR"
-        name="&lt;img src = &quot;repo.gif&quot; alt=&quot;PDE Repo&quot; /> PDE Repo "
-        fileName="org.eclipse.pde-${BUILD_ID}.zip"></platform>
-      <platform
-        id="PAR"
-        name="&lt;img src = &quot;repo.gif&quot; alt=&quot;PDE API Tools&quot; /> PDE API Tools execution environment fragments repo"
-        fileName="org.eclipse.pde.api.tools.ee.feature-${BUILD_ID}.zip"></platform>
-    </zipType>
-
-    <zipType name="PDE SDK">
-      <platform
-        id="PSR"
-        name="&lt;img src = &quot;repo.gif&quot; alt=&quot;PDE Source Repo&quot; /> PDE Source Repo "
-        fileName="org.eclipse.pde.source-${BUILD_ID}.zip"></platform>
-    </zipType>
-
-    <zipType name="CVS Runtime">
-      <platform
-        id="CRR"
-        name="&lt;img src = &quot;repo.gif&quot; alt=&quot;CVS Repo&quot; /> CVS Runtime Repo "
-        fileName="org.eclipse.cvs-${BUILD_ID}.zip"></platform>
-    </zipType>
-
-    <zipType name="CVS SDK">
-      <platform
-        id="CSR"
-        name="&lt;img src = &quot;repo.gif&quot; alt=&quot;CVS Source Repo&quot; /> CVS Source Repo "
-        fileName="org.eclipse.cvs.source-${BUILD_ID}.zip"></platform>
     </zipType>
 
     <zipType name="SWT">
@@ -172,28 +131,10 @@
         id="SWTMCC64"
         name="Mac OSX (64 bit version)"
         fileName="swt-${BUILD_ID}-cocoa-macosx-x86_64.zip"></platform>
-    </zipType>
-
-    <zipType name="SWT Chromium">
       <platform
-        id="SWTChromiumWX86_64"
-        name="Windows Chromium (64 bit version)"
-        fileName="swt-chromium-${BUILD_ID}-win32-win32-x86_64.zip"></platform>
-      <platform
-        id="SWTChromiumLG64"
-        name="Linux Chromium (64 bit version)"
-        fileName="swt-chromium-${BUILD_ID}-gtk-linux-x86_64.zip"></platform>
-      <platform
-        id="SWTChromiumMCC64"
-        name="Mac OSX Chromium (64 bit version)"
-        fileName="swt-chromium-${BUILD_ID}-cocoa-macosx-x86_64.zip"></platform>
-    </zipType>
-
-    <zipType name="RelEng Tool plug-in">
-      <platform
-        id="RE"
-        name="&lt;img src = &quot;repo.gif&quot; alt=&quot;Releng Tools Repo&quot; /> Releng Tools Repo"
-        fileName="org.eclipse.releng.tools-${BUILD_ID}.zip"></platform>
+        id="SWTMCCARM64"
+        name="Mac OSX (64 bit version for Arm64/AArch64)"
+        fileName="swt-${BUILD_ID}-cocoa-macosx-aarch64.zip"></platform>
     </zipType>
 
   </zipTypes>
@@ -758,6 +699,9 @@
       type="test" />
     <logFile
       name="org.eclipse.team.tests.core"
+      type="test" />
+    <logFile
+      name="org.eclipse.tests.urischeme"
       type="test" />
     <logFile
       name="org.eclipse.text.tests"

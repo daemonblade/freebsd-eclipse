@@ -13,7 +13,7 @@
    (the "License"); you may not use this file except in compliance with
    the License.  You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+       https://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -90,6 +90,9 @@
       }
       .Failure {
         font-weight:bold; color:purple;
+      }
+      .Skipped {
+        font-weight:bold; color:darkgrey;
       }
       .Properties {
         text-align:right;
@@ -184,7 +187,7 @@
             var elt = errs[i];
             var tds = elt.getElementsByTagName("td");
             if (tds.length >= 2) {
-                var status = tds[1].firstChild.nodeValue;
+                var status = tds[2].firstChild.nodeValue;
                 if (status != "Error" && status != "Failure")
                     continue; // only stop in test results, not in summary header
             }
@@ -255,6 +258,8 @@
                 <xsl:variable name="testCount" select="sum($testsuites-in-package/@tests)"/>
                 <xsl:variable name="errorCount" select="sum($testsuites-in-package/@errors)"/>
                 <xsl:variable name="failureCount" select="sum($testsuites-in-package/@failures)"/>
+                <xsl:variable name="skippedCount" select="sum($testsuites-in-package/@skipped)" />
+                <xsl:variable name="abortedCount" select="sum($testsuites-in-package/@aborted)" />
                 <xsl:variable name="timeCount" select="sum($testsuites-in-package/@time)"/>
 
                 <!-- write a summary for the package -->
@@ -270,6 +275,8 @@
                     <td><xsl:value-of select="$testCount"/></td>
                     <td><xsl:value-of select="$errorCount"/></td>
                     <td><xsl:value-of select="$failureCount"/></td>
+                    <td><xsl:value-of select="$skippedCount" /></td>
+                    <td><xsl:value-of select="$abortedCount" /></td>
                     <td>
                     <xsl:call-template name="display-time">
                         <xsl:with-param name="value" select="$timeCount"/>
@@ -325,7 +332,11 @@
                         <td colspan="4"><xsl:apply-templates select="./error"/></td>
                     </tr>
                 </xsl:if>
-                <xsl:apply-templates select="./testcase" mode="print.test"/>
+                <!--
+              as alternative we could sort against the time like this - maybe this is more useful?
+              <xsl:apply-templates select="./testcase" mode="print.test"><xsl:sort select="@time" data-type="number" /></xsl:apply-templates>
+              -->
+                <xsl:apply-templates select="./testcase" mode="print.test"><xsl:sort select="@classname" /><xsl:sort select="@name" /></xsl:apply-templates>
             </table>
             <div class="Properties">
                 <a>
@@ -344,6 +355,8 @@
         <xsl:variable name="testCount" select="sum(testsuite/@tests)"/>
         <xsl:variable name="errorCount" select="sum(testsuite/@errors)"/>
         <xsl:variable name="failureCount" select="sum(testsuite/@failures)"/>
+        <xsl:variable name="skippedCount" select="sum(testsuite/@skipped)" />
+        <xsl:variable name="abortedCount" select="sum(testsuite/@aborted)" />
         <xsl:variable name="timeCount" select="sum(testsuite/@time)"/>
         <xsl:variable name="successRate" select="($testCount - $failureCount - $errorCount) div $testCount"/>
         <table class="details" border="0" cellpadding="5" cellspacing="2" width="95%">
@@ -351,6 +364,8 @@
             <th>Tests</th>
             <th>Failures</th>
             <th>Errors</th>
+            <th>Skipped</th>
+            <th>Aborted</th>
             <th>Success rate</th>
             <th>Time</th>
         </tr>
@@ -364,6 +379,8 @@
             <td><xsl:value-of select="$testCount"/></td>
             <td><xsl:value-of select="$failureCount"/></td>
             <td><xsl:value-of select="$errorCount"/></td>
+            <td><xsl:value-of select="$skippedCount" /></td>
+            <td><xsl:value-of select="$abortedCount" /></td>
             <td>
                 <xsl:call-template name="display-percent">
                     <xsl:with-param name="value" select="$successRate"/>
@@ -425,6 +442,8 @@
         <th>Tests</th>
         <th>Errors</th>
         <th>Failures</th>
+        <th>Skipped</th>
+        <th>Aborted</th>
         <th nowrap="nowrap">Time(s)</th>
     </tr>
 </xsl:template>
@@ -436,6 +455,8 @@
         <th>Tests</th>
         <th>Errors</th>
         <th>Failures</th>
+        <th>Skipped</th>
+        <th>Aborted</th>
         <th nowrap="nowrap">Time(s)</th>
         <th nowrap="nowrap">Time Stamp</th>
         <th>Host</th>
@@ -445,6 +466,7 @@
 <!-- method header -->
 <xsl:template name="testcase.test.header">
     <tr valign="top">
+		<th>Class</th>
         <th>Name</th>
         <th>Status</th>
         <th width="80%">Type</th>
@@ -469,6 +491,8 @@
         <td><xsl:value-of select="@tests"/></td>
         <td><xsl:value-of select="@errors"/></td>
         <td><xsl:value-of select="@failures"/></td>
+        <td><xsl:value-of select="@skipped" /></td>
+        <td><xsl:value-of select="@aborted" /></td>
         <td>
             <xsl:call-template name="display-time">
                 <xsl:with-param name="value" select="@time"/>
@@ -485,7 +509,13 @@
             <xsl:choose>
                 <xsl:when test="failure | error">Error</xsl:when>
             </xsl:choose>
+            <xsl:choose>
+                <xsl:when test="skipped | aborted">Skipped</xsl:when>
+            </xsl:choose>
         </xsl:attribute>
+         <td>
+            <xsl:value-of select="@classname"/>
+        </td>
         <td>
             <xsl:attribute name="title"><xsl:value-of select="@classname"/></xsl:attribute>
             <xsl:value-of select="@name"/>
@@ -498,6 +528,14 @@
             <xsl:when test="error">
                 <td>Error</td>
                 <td><xsl:apply-templates select="error"/></td>
+            </xsl:when>
+            <xsl:when test="skipped">
+            	<td>Skipped</td>
+            	<td><xsl:apply-templates select="skipped"/></td>
+            </xsl:when>
+            <xsl:when test="aborted">
+            	<td>Aborted</td>
+            	<td><xsl:apply-templates select="aborted"/></td>
             </xsl:when>
             <xsl:otherwise>
                 <td>Success</td>
@@ -521,7 +559,15 @@
     <xsl:call-template name="display-failures"/>
 </xsl:template>
 
-<!-- Style for the error and failure in the tescase template -->
+<xsl:template match="skipped">
+    <xsl:call-template name="display-failures"/>
+</xsl:template>
+
+<xsl:template match="aborted">
+    <xsl:call-template name="display-failures"/>
+</xsl:template>
+
+<!-- Style for the error, failure, skipped and aborted in the testcase template -->
 <xsl:template name="display-failures">
     <xsl:choose>
         <xsl:when test="not(@message)">N/A</xsl:when>
@@ -556,7 +602,24 @@
 -->
 <xsl:template name="br-replace">
     <xsl:param name="word"/>
+    <xsl:param name="splitlimit">32</xsl:param>
+    <xsl:variable name="secondhalfstartindex" select="(string-length($word)+(string-length($word) mod 2)) div 2"/>
+    <xsl:variable name="secondhalfword" select="substring($word, $secondhalfstartindex)"/>
+    <!-- When word is very big, a recursive replace is very heap/stack expensive, so subdivide on line break after middle of string -->
     <xsl:choose>
+      <xsl:when test="(string-length($word) > $splitlimit) and (contains($secondhalfword, '&#xa;'))">
+        <xsl:variable name="secondhalfend" select="substring-after($secondhalfword, '&#xa;')"/>
+        <xsl:variable name="firsthalflen" select="string-length($word) - string-length($secondhalfword)"/>
+        <xsl:variable name="firsthalfword" select="substring($word, 1, $firsthalflen)"/>
+        <xsl:variable name="firsthalfend" select="substring-before($secondhalfword, '&#xa;')"/>
+        <xsl:call-template name="br-replace">
+          <xsl:with-param name="word" select="concat($firsthalfword,$firsthalfend)"/>
+        </xsl:call-template>
+        <br/>
+        <xsl:call-template name="br-replace">
+          <xsl:with-param name="word" select="$secondhalfend"/>
+        </xsl:call-template>
+      </xsl:when>
       <xsl:when test="contains($word, '&#xa;')">
         <xsl:value-of select="substring-before($word, '&#xa;')"/>
         <br/>
@@ -565,7 +628,7 @@
         </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
-  <xsl:value-of select="$word"/>
+        <xsl:value-of select="$word"/>
       </xsl:otherwise>
     </xsl:choose>
 </xsl:template>

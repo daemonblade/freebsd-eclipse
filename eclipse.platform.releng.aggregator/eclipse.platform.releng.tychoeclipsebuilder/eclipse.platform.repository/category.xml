@@ -7,8 +7,6 @@
    <feature id="org.eclipse.core.runtime.feature" version="0.0.0"/>
    <feature id="org.eclipse.equinox.sdk" version="0.0.0"/>
    <feature id="org.eclipse.sdk.examples.source" version="0.0.0"/>
-   <feature id="org.eclipse.releng.tools" version="0.0.0"/>
-   <feature id="org.eclipse.releng.tools.source" version="0.0.0"/>
    <feature id="org.eclipse.swt.tools.feature" version="0.0.0"/>
    <feature id="org.eclipse.swt.tools.feature.source" version="0.0.0"/>
    <feature id="org.eclipse.rcp.configuration" version="0.0.0"/>
@@ -18,9 +16,30 @@
    <feature id="org.eclipse.cvs.source" version="0.0.0"/>
    <feature id="org.eclipse.e4.core.tools.feature.source" version="0.0.0"/>
    <feature id="org.eclipse.pde.api.tools.ee.feature" version="0.0.0"/>
+   <feature id="org.eclipse.pde.unittest.junit" version="0.0.0"/>
+   <feature id="org.eclipse.pde.unittest.junit.source" version="0.0.0"/>
    <feature id="org.eclipse.tips.feature" version="0.0.0"/>
    <feature id="org.eclipse.tips.feature.source" version="0.0.0"/>
+   <feature id="org.eclipse.jdt.ui.unittest.junit.feature" version="0.0.0"/>
+   <feature id="org.eclipse.jdt.ui.unittest.junit.feature.source" version="0.0.0"/>
+   <feature id="org.eclipse.emf.common" version="0.0.0"/>
+   <feature id="org.eclipse.emf.ecore" version="0.0.0"/>
+   <feature id="org.eclipse.emf.common.source" version="0.0.0"/>
+   <feature id="org.eclipse.emf.ecore.source" version="0.0.0"/>
+   <feature id="org.eclipse.ecf.core.feature" version="0.0.0"/>
+   <feature id="org.eclipse.ecf.core.feature.source" version="0.0.0"/>
+   <feature id="org.eclipse.ecf.core.ssl.feature" version="0.0.0"/>
+   <feature id="org.eclipse.ecf.core.ssl.feature.source" version="0.0.0"/>
+   <feature id="org.eclipse.ecf.filetransfer.feature" version="0.0.0"/>
+   <feature id="org.eclipse.ecf.filetransfer.feature.source" version="0.0.0"/>
+   <feature id="org.eclipse.ecf.filetransfer.httpclient45.feature" version="0.0.0"/>
+   <feature id="org.eclipse.ecf.filetransfer.httpclient45.feature.source" version="0.0.0"/>
+   <feature id="org.eclipse.ecf.filetransfer.ssl.feature" version="0.0.0"/>
+   <feature id="org.eclipse.ecf.filetransfer.ssl.feature.source" version="0.0.0"/>
    <bundle id="org.eclipse.jdt.core.compiler.batch" version="0.0.0"/>
    <bundle id="org.eclipse.e4.ui.progress"/>
    <bundle id="org.eclipse.e4.ui.progress.source"/>
+   <!-- Will be removed soon, once integrated in an appropriate feature -->
+   <bundle id="org.eclipse.unittest.ui"/>
+   <bundle id="org.eclipse.unittest.ui.source"/>
 </site>

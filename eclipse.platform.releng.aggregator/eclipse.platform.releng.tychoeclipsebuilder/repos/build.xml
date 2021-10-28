@@ -1,51 +1,6 @@
 <project name="Build Repos" default="all" basedir=".">
 
   <target name="all">
-    <antcall target="pde" />
-    <antcall target="pde-api" />
-    <antcall target="jdt" />
-    <antcall target="cvs" />
-    <antcall target="relengtools" />
-    <antcall target="sdkexamples" />
-    <antcall target="pdesource" />
-    <antcall target="jdtsource" />
-    <antcall target="cvssource" />
-  </target>
-
-  <target name="pde">
-    <buildRepos feature="org.eclipse.pde" />
-  </target>
-
-  <target name="pde-api">
-    <buildRepos feature="org.eclipse.pde.api.tools.ee.feature" />
-  </target>
-
-  <target name="jdt">
-    <buildRepos feature="org.eclipse.jdt" />
-  </target>
-
-  <target name="cvs">
-    <buildRepos feature="org.eclipse.cvs" />
-  </target>
-
-  <target name="relengtools">
-    <buildRepos feature="org.eclipse.releng.tools" />
-  </target>
-
-  <target name="sdkexamples">
-    <buildRepos feature="org.eclipse.sdk.examples.source" />
-  </target>
-
-  <target name="pdesource">
-    <buildReposSource feature="org.eclipse.pde" />
-  </target>
-
-  <target name="jdtsource">
-    <buildReposSource feature="org.eclipse.jdt" />
-  </target>
-
-  <target name="cvssource">
-    <buildReposSource feature="org.eclipse.cvs" />
   </target>
 
   <macrodef name="buildReposSource">
@@ -81,6 +36,7 @@
       <property name="featureTemp" value="${eclipse.build.configs}/repos/featureTemp" />
       <delete dir="${featureTemp}" />
       <mkdir dir="${featureTemp}" />
+      <echo message="buildRepo: {buildRepo}" />
       <p2.mirror source="file://${buildRepo}">
         <destination kind="metadata" location="file://${featureTemp}" name="@{feature} Repo" format="file://${buildRepo}" />
         <destination kind="artifact" location="file://${featureTemp}" name="@{feature} Repo" format="file://${buildRepo}" />

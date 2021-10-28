@@ -19,7 +19,7 @@
   <parent>
     <groupId>eclipse.platform.releng.tychoeclipsebuilder</groupId>
     <artifactId>eclipse.platform.releng.tychoeclipsebuilder</artifactId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>org.eclipse.rt.osgistarterkit.product</artifactId>
@@ -56,6 +56,11 @@
               <os>macosx</os>
               <ws>cocoa</ws>
               <arch>x86_64</arch>
+            </environment>
+            <environment>
+              <os>macosx</os>
+              <ws>cocoa</ws>
+              <arch>aarch64</arch>
             </environment>
           </environments>
         </configuration>
@@ -156,7 +161,7 @@
                                   <arg value="--silent"/>
                                   <arg value="--show-error"/>
                                   <arg value="--fail"/>
-                                  <arg value="http://build.eclipse.org:31338/winsign.php"/>
+                                  <arg value="https://cbi.eclipse.org/authenticode/sign"/>
                     </exec>
                     <exec dir="${project.build.directory}/tosign/" executable="curl">
                                   <arg value="--output"/>
@@ -166,7 +171,7 @@
                                   <arg value="--silent"/>
                                   <arg value="--show-error"/>
                                   <arg value="--fail"/>
-                                  <arg value="http://build.eclipse.org:31338/winsign.php"/>
+                                  <arg value="https://cbi.eclipse.org/authenticode/sign"/>
                     </exec>
                     
                     <zip
@@ -215,7 +220,6 @@
                   <timeoutMillis>300000</timeoutMillis> <!-- 5 min -->
                   <continueOnFail>${macSigner.forceContinue}</continueOnFail>
                   <entitlements>${project.basedir}/../entitlement/equinox.entitlement</entitlements> 
-                  <signerUrl>http://172.30.206.146:8282/macosx-signing-service/1.0.1-SNAPSHOT</signerUrl>
                 </configuration>
               </execution>
             </executions>
@@ -226,12 +230,27 @@
             <version>${cbi-plugins.version}</version>
             <executions>
               <execution>
+                <id>dmg-x86_64</id>
                 <goals>
                   <goal>package-dmg</goal>
                 </goals>
                 <phase>verify</phase>
                 <configuration>
                   <source>${project.build.directory}/products/org.eclipse.rt.osgistarterkit.product-macosx.cocoa.x86_64.tar.gz</source>
+                  <continueOnFail>true</continueOnFail>
+                  <timeoutMillis>600000</timeoutMillis> <!-- 10 min -->
+                  <continueOnFail>${macSigner.forceContinue}</continueOnFail> 
+                  <sign>true</sign>
+                </configuration>
+              </execution>
+              <execution>
+                <id>dmg-aarch64</id>
+                <goals>
+                  <goal>package-dmg</goal>
+                </goals>
+                <phase>verify</phase>
+                <configuration>
+                  <source>${project.build.directory}/products/org.eclipse.rt.osgistarterkit.product-macosx.cocoa.aarch64.tar.gz</source>
                   <continueOnFail>true</continueOnFail>
                   <timeoutMillis>600000</timeoutMillis> <!-- 10 min -->
                   <continueOnFail>${macSigner.forceContinue}</continueOnFail> 
