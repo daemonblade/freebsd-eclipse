@@ -41,6 +41,7 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.env.AccessRule;
 import org.eclipse.jdt.internal.compiler.env.AccessRuleSet;
@@ -59,8 +60,8 @@ public class State {
 String javaProjectName;
 public ClasspathMultiDirectory[] sourceLocations;
 public ClasspathMultiDirectory[] testSourceLocations;
-ClasspathLocation[] binaryLocations;
-ClasspathLocation[] testBinaryLocations;
+public ClasspathLocation[] binaryLocations;
+public ClasspathLocation[] testBinaryLocations;
 // keyed by the project relative path of the type (i.e. "src1/p1/p2/A.java"), value is a ReferenceCollection or an AdditionalTypeCollection
 Map<String, ReferenceCollection> references;
 // keyed by qualified type name "p1/p2/A", value is the project relative path which defines this type "src1/p1/p2/A.java"
@@ -76,7 +77,7 @@ private long previousStructuralBuildTime;
 private StringSet structurallyChangedTypes;
 public static int MaxStructurallyChangedTypes = 100; // keep track of ? structurally changed types, otherwise consider all to be changed
 
-public static final byte VERSION = 0x0022;
+public static final byte VERSION = 0x0024;
 
 static final byte SOURCE_FOLDER = 1;
 static final byte BINARY_FOLDER = 2;
@@ -256,129 +257,18 @@ static State read(IProject project, DataInputStream in) throws IOException, Core
 	newState.buildNumber = in.readInt();
 	newState.lastStructuralBuildTime = in.readLong();
 
-	int length = in.readInt();
-	newState.sourceLocations = new ClasspathMultiDirectory[length];
-	for (int i = 0; i < length; i++) {
-		IContainer sourceFolder = project, outputFolder = project;
-		String folderName;
-		if ((folderName = in.readUTF()).length() > 0) sourceFolder = project.getFolder(folderName);
-		if ((folderName = in.readUTF()).length() > 0) outputFolder = project.getFolder(folderName);
-		ClasspathMultiDirectory md =
-			(ClasspathMultiDirectory) ClasspathLocation.forSourceFolder(sourceFolder, outputFolder, readNames(in), readNames(in), in.readBoolean());
-		if (in.readBoolean())
-			md.hasIndependentOutputFolder = true;
-		newState.sourceLocations[i] = md;
+	ArrayList<ClasspathLocation> allLocationsForEEA = null;
+	if (JavaCore.ENABLED.equals(JavaCore.create(project).getOption(JavaCore.CORE_JAVA_BUILD_EXTERNAL_ANNOTATIONS_FROM_ALL_LOCATIONS, true))) {
+		allLocationsForEEA = new ArrayList<>(); // signals that we are collecting locations
 	}
 
-	length = in.readInt();
-	newState.binaryLocations = new ClasspathLocation[length];
-	IWorkspaceRoot root = project.getWorkspace().getRoot();
-	for (int i = 0; i < length; i++) {
-		switch (in.readByte()) {
-			case SOURCE_FOLDER :
-				newState.binaryLocations[i] = newState.sourceLocations[in.readInt()];
-				break;
-			case BINARY_FOLDER :
-				IPath path = new Path(in.readUTF());
-				IContainer outputFolder = path.segmentCount() == 1
-					? (IContainer) root.getProject(path.toString())
-					: (IContainer) root.getFolder(path);
-					newState.binaryLocations[i] = ClasspathLocation.forBinaryFolder(outputFolder, in.readBoolean(),
-							readRestriction(in), new Path(in.readUTF()), in.readBoolean());
-				break;
-			case EXTERNAL_JAR :
-				String jarPath = in.readUTF();
-				if (Util.isJrt(jarPath)) {
-					newState.binaryLocations[i] = ClasspathLocation.forJrtSystem(jarPath, readRestriction(in), new Path(in.readUTF()), in.readUTF());
-				} else {
-					newState.binaryLocations[i] = ClasspathLocation.forLibrary(jarPath, in.readLong(),
-							readRestriction(in), new Path(in.readUTF()), in.readBoolean(), in.readUTF());
-				}
-				break;
-			case INTERNAL_JAR :
-					newState.binaryLocations[i] = ClasspathLocation.forLibrary(root.getFile(new Path(in.readUTF())),
-							readRestriction(in), new Path(in.readUTF()), in.readBoolean(), in.readUTF());
-					break;
-		}
-		ClasspathLocation loc = newState.binaryLocations[i];
-		char[] patchName = readName(in);
-		loc.patchModuleName = patchName.length > 0 ? new String(patchName) : null;
-		int limitSize = in.readInt();
-		if (limitSize != 0) {
-			loc.limitModuleNames = new LinkedHashSet<>(limitSize);
-			for (int j = 0; j < limitSize; j++) {
-				loc.limitModuleNames.add(in.readUTF());
-			}
-		} else {
-			loc.limitModuleNames = null;
-		}
-		IUpdatableModule.UpdatesByKind updates = new IUpdatableModule.UpdatesByKind();
-		List<Consumer<IUpdatableModule>> packageUpdates = null;
-		int packageUpdatesSize = in.readInt();
-		if (packageUpdatesSize != 0) {
-			packageUpdates = updates.getList(UpdateKind.PACKAGE, true);
-			for (int j = 0; j < packageUpdatesSize; j++) {
-				char[] pkgName = readName(in);
-				char[][] targets = readNames(in);
-				packageUpdates.add(new AddExports(pkgName, targets));
-			}
-		}
-		List<Consumer<IUpdatableModule>> moduleUpdates = null;
-		int moduleUpdatesSize = in.readInt();
-		if (moduleUpdatesSize != 0) {
-			moduleUpdates = updates.getList(UpdateKind.MODULE, true);
-			char[] modName = readName(in);
-			moduleUpdates.add(new AddReads(modName));
-		}
-		if (packageUpdates != null || moduleUpdates != null)
-			loc.updates = updates;
-	}
+	newState.sourceLocations = readSourceLocations(project, in, allLocationsForEEA);
+	newState.binaryLocations = readBinaryLocations(project, in, newState.sourceLocations, allLocationsForEEA);
 
-	length = in.readInt();
-	newState.testSourceLocations = new ClasspathMultiDirectory[length];
-	for (int i = 0; i < length; i++) {
-		IContainer sourceFolder = project, outputFolder = project;
-		String folderName;
-		if ((folderName = in.readUTF()).length() > 0) sourceFolder = project.getFolder(folderName);
-		if ((folderName = in.readUTF()).length() > 0) outputFolder = project.getFolder(folderName);
-		ClasspathMultiDirectory md =
-			(ClasspathMultiDirectory) ClasspathLocation.forSourceFolder(sourceFolder, outputFolder, readNames(in), readNames(in), in.readBoolean());
-		if (in.readBoolean())
-			md.hasIndependentOutputFolder = true;
-		newState.testSourceLocations[i] = md;
-	}
+	newState.testSourceLocations = readSourceLocations(project, in, allLocationsForEEA);
+	newState.testBinaryLocations = readBinaryLocations(project, in, newState.testSourceLocations, allLocationsForEEA);
 
-	length = in.readInt();
-	newState.testBinaryLocations = new ClasspathLocation[length];
-	for (int i = 0; i < length; i++) {
-		switch (in.readByte()) {
-			case SOURCE_FOLDER :
-				newState.testBinaryLocations[i] = newState.testSourceLocations[in.readInt()];
-				break;
-			case BINARY_FOLDER :
-				IPath path = new Path(in.readUTF());
-				IContainer outputFolder = path.segmentCount() == 1
-					? (IContainer) root.getProject(path.toString())
-					: (IContainer) root.getFolder(path);
-					newState.testBinaryLocations[i] = ClasspathLocation.forBinaryFolder(outputFolder, in.readBoolean(),
-							readRestriction(in), new Path(in.readUTF()), in.readBoolean());
-				break;
-			case EXTERNAL_JAR :
-				String jarPath = in.readUTF();
-				if (Util.isJrt(jarPath)) {
-					newState.testBinaryLocations[i] = ClasspathLocation.forJrtSystem(jarPath, readRestriction(in), new Path(in.readUTF()), in.readUTF());
-				} else {
-						newState.testBinaryLocations[i] = ClasspathLocation.forLibrary(jarPath, in.readLong(),
-								readRestriction(in), new Path(in.readUTF()), in.readBoolean(), in.readUTF());
-				}
-				break;
-			case INTERNAL_JAR :
-					newState.testBinaryLocations[i] = ClasspathLocation.forLibrary(root.getFile(new Path(in.readUTF())),
-							readRestriction(in), new Path(in.readUTF()), in.readBoolean(), in.readUTF());
-					break;
-		}
-	}
-
+	int length;
 	newState.structuralBuildTimes = new SimpleLookupTable(length = in.readInt());
 	for (int i = 0; i < length; i++)
 		newState.structuralBuildTimes.put(in.readUTF(), Long.valueOf(in.readLong()));
@@ -445,6 +335,95 @@ static State read(IProject project, DataInputStream in) throws IOException, Core
 	return newState;
 }
 
+private static ClasspathMultiDirectory[] readSourceLocations(IProject project, DataInputStream in, List<ClasspathLocation> allLocationsForEEA) throws IOException {
+	int length = in.readInt();
+	ClasspathMultiDirectory[] sourceLocations = new ClasspathMultiDirectory[length];
+	for (int i = 0; i < length; i++) {
+		IContainer sourceFolder = project, outputFolder = project;
+		String folderName;
+		if ((folderName = in.readUTF()).length() > 0) sourceFolder = project.getFolder(folderName);
+		if ((folderName = in.readUTF()).length() > 0) outputFolder = project.getFolder(folderName);
+		ClasspathMultiDirectory md =
+			(ClasspathMultiDirectory) ClasspathLocation.forSourceFolder(sourceFolder, outputFolder, readNames(in), readNames(in), in.readBoolean(), readNullablePath(in), allLocationsForEEA);
+		if (in.readBoolean())
+			md.hasIndependentOutputFolder = true;
+		sourceLocations[i] = md;
+		if (allLocationsForEEA != null)
+			allLocationsForEEA.add(md);
+	}
+	return sourceLocations;
+}
+
+private static ClasspathLocation[] readBinaryLocations(IProject project, DataInputStream in, ClasspathMultiDirectory[] sourceLocations, ArrayList<ClasspathLocation> allLocationsForEEA) throws IOException, CoreException {
+	int length = in.readInt();
+	ClasspathLocation[] locations = new ClasspathLocation[length];
+	IWorkspaceRoot root = project.getWorkspace().getRoot();
+	for (int i = 0; i < length; i++) {
+		byte kind = in.readByte();
+		switch (kind) {
+			case SOURCE_FOLDER :
+				locations[i] = sourceLocations[in.readInt()];
+				break;
+			case BINARY_FOLDER :
+				IPath path = new Path(in.readUTF());
+				IContainer outputFolder = path.segmentCount() == 1
+					? (IContainer) root.getProject(path.toString())
+					: (IContainer) root.getFolder(path);
+				locations[i] = ClasspathLocation.forBinaryFolder(outputFolder, in.readBoolean(),
+							readRestriction(in), new Path(in.readUTF()), allLocationsForEEA, in.readBoolean());
+				break;
+			case EXTERNAL_JAR :
+				String jarPath = in.readUTF();
+				if (Util.isJrt(jarPath)) {
+					locations[i] = ClasspathLocation.forJrtSystem(jarPath, readRestriction(in), new Path(in.readUTF()), allLocationsForEEA, in.readUTF());
+				} else {
+					locations[i] = ClasspathLocation.forLibrary(jarPath, in.readLong(),
+							readRestriction(in), new Path(in.readUTF()), in.readBoolean(), in.readUTF());
+				}
+				break;
+			case INTERNAL_JAR :
+					locations[i] = ClasspathLocation.forLibrary(root.getFile(new Path(in.readUTF())),
+							readRestriction(in), new Path(in.readUTF()), allLocationsForEEA, in.readBoolean(), in.readUTF());
+					break;
+		}
+		ClasspathLocation loc = locations[i];
+		if (allLocationsForEEA != null && kind != SOURCE_FOLDER && !allLocationsForEEA.contains(loc))
+			allLocationsForEEA.add(loc);
+		char[] patchName = readName(in);
+		loc.patchModuleName = patchName.length > 0 ? new String(patchName) : null;
+		int limitSize = in.readInt();
+		if (limitSize != 0) {
+			loc.limitModuleNames = new LinkedHashSet<>(limitSize);
+			for (int j = 0; j < limitSize; j++) {
+				loc.limitModuleNames.add(in.readUTF());
+			}
+		} else {
+			loc.limitModuleNames = null;
+		}
+		IUpdatableModule.UpdatesByKind updates = new IUpdatableModule.UpdatesByKind();
+		List<Consumer<IUpdatableModule>> packageUpdates = null;
+		int packageUpdatesSize = in.readInt();
+		if (packageUpdatesSize != 0) {
+			packageUpdates = updates.getList(UpdateKind.PACKAGE, true);
+			for (int j = 0; j < packageUpdatesSize; j++) {
+				char[] pkgName = readName(in);
+				char[][] targets = readNames(in);
+				packageUpdates.add(new AddExports(pkgName, targets));
+			}
+		}
+		List<Consumer<IUpdatableModule>> moduleUpdates = null;
+		int moduleUpdatesSize = in.readInt();
+		if (moduleUpdatesSize != 0) {
+			moduleUpdates = updates.getList(UpdateKind.MODULE, true);
+			char[] modName = readName(in);
+			moduleUpdates.add(new AddReads(modName));
+		}
+		if (packageUpdates != null || moduleUpdates != null)
+			loc.updates = updates;
+	}
+	return locations;
+}
+
 private static char[] readName(DataInputStream in) throws IOException {
 	int nLength = in.readInt();
 	char[] name = new char[nLength];
@@ -459,6 +438,13 @@ private static char[][] readNames(DataInputStream in) throws IOException {
 	for (int i = 0; i < length; i++)
 		names[i] = readName(in);
 	return names;
+}
+
+private static IPath readNullablePath(DataInputStream in) throws IOException {
+	String path = in.readUTF();
+	if (!path.isEmpty())
+		return new Path(path);
+	return null;
 }
 
 private static AccessRuleSet readRestriction(DataInputStream in) throws IOException {
@@ -526,184 +512,29 @@ void write(DataOutputStream out) throws IOException {
  * ClasspathMultiDirectory[]
  * int			id
  * String		path(s)
-*/
-	out.writeInt(length = this.sourceLocations.length);
-	for (int i = 0; i < length; i++) {
-		ClasspathMultiDirectory md = this.sourceLocations[i];
-		out.writeUTF(md.sourceFolder.getProjectRelativePath().toString());
-		out.writeUTF(md.binaryFolder.getProjectRelativePath().toString());
-		writeNames(md.inclusionPatterns, out);
-		writeNames(md.exclusionPatterns, out);
-		out.writeBoolean(md.ignoreOptionalProblems);
-		out.writeBoolean(md.hasIndependentOutputFolder);
-	}
+ */
+	writeSourceLocations(out, this.sourceLocations);
 
 /*
  * ClasspathLocation[]
  * int			id
  * String		path(s)
-*/
-	out.writeInt(length = this.binaryLocations.length);
-	for (int i = 0; i < length; i++) {
-		ClasspathLocation c = this.binaryLocations[i];
-		if (c instanceof ClasspathMultiDirectory) {
-			out.writeByte(SOURCE_FOLDER);
-			for (int j = 0, m = this.sourceLocations.length; j < m; j++) {
-				if (this.sourceLocations[j] == c) {
-					out.writeInt(j);
-					//continue next;
-				}
-			}
-		} else if (c instanceof ClasspathDirectory) {
-			out.writeByte(BINARY_FOLDER);
-			ClasspathDirectory cd = (ClasspathDirectory) c;
-			out.writeUTF(cd.binaryFolder.getFullPath().toString());
-			out.writeBoolean(cd.isOutputFolder);
-			writeRestriction(cd.accessRuleSet, out);
-			out.writeUTF(cd.externalAnnotationPath != null ? cd.externalAnnotationPath : ""); //$NON-NLS-1$
-			out.writeBoolean(cd.isOnModulePath);
-		} else if (c instanceof ClasspathJar) {
-			ClasspathJar jar = (ClasspathJar) c;
-			if (jar.resource == null) {
-				out.writeByte(EXTERNAL_JAR);
-				out.writeUTF(jar.zipFilename);
-				out.writeLong(jar.lastModified());
-			} else {
-				out.writeByte(INTERNAL_JAR);
-				out.writeUTF(jar.resource.getFullPath().toString());
-			}
-			writeRestriction(jar.accessRuleSet, out);
-			out.writeUTF(jar.externalAnnotationPath != null ? jar.externalAnnotationPath : ""); //$NON-NLS-1$
-			out.writeBoolean(jar.isOnModulePath);
-			out.writeUTF(jar.compliance == null ? "" : jar.compliance); //$NON-NLS-1$
+ */
+	writeBinaryLocations(out, this.binaryLocations, this.sourceLocations);
 
-		} else if (c instanceof ClasspathJrt) {
-			ClasspathJrt jrt = (ClasspathJrt) c;
-			out.writeByte(EXTERNAL_JAR);
-			out.writeUTF(jrt.zipFilename);
-			writeRestriction(jrt.accessRuleSet, out);
-			out.writeUTF(jrt.externalAnnotationPath != null ? jrt.externalAnnotationPath : ""); //$NON-NLS-1$
-			if (jrt instanceof ClasspathJrtWithReleaseOption)
-				out.writeUTF(((ClasspathJrtWithReleaseOption) jrt).release);
-			else
-				out.writeUTF(""); //$NON-NLS-1$
-		}
-		char[] patchName = c.patchModuleName == null ? CharOperation.NO_CHAR : c.patchModuleName.toCharArray();
-		writeName(patchName, out);
-		if (c.limitModuleNames != null) {
-			out.writeInt(c.limitModuleNames.size());
-			for (String name : c.limitModuleNames) {
-				out.writeUTF(name);
-			}
-		} else {
-			out.writeInt(0);
-		}
-		if (c.updates != null) {
-			List<Consumer<IUpdatableModule>> pu = c.updates.getList(UpdateKind.PACKAGE, false);
-			if (pu != null) {
-				Map<String, List<Consumer<IUpdatableModule>>> map = pu.stream().
-						collect(Collectors.groupingBy(
-								update -> CharOperation.charToString(((IUpdatableModule.AddExports)update).getName())));
-				out.writeInt(map.size());
-				map.entrySet().stream().forEach(entry -> {
-					String pkgName = entry.getKey();
-					try {
-						writeName(pkgName.toCharArray(), out);
-						char[][] targetModules = entry.getValue().stream()
-								.map(consumer -> ((IUpdatableModule.AddExports) consumer).getTargetModules())
-								.filter(targets -> targets != null)
-								.reduce((f,s) -> CharOperation.arrayConcat(f,s))
-								.orElse(null);
-						writeNames(targetModules, out);
-					} catch (IOException e) {
-						// ignore
-					}
+/*
+ * ClasspathMultiDirectory[]
+ * int			id
+ * String		path(s)
+ */
+	writeSourceLocations(out, this.testSourceLocations);
 
-				});
-			} else {
-				out.writeInt(0);
-			}
-			List<Consumer<IUpdatableModule>> mu = c.updates.getList(UpdateKind.MODULE, false);
-			if (mu != null) {
-				out.writeInt(mu.size());
-				for (Consumer<IUpdatableModule> cons : mu) {
-					AddReads m = (AddReads) cons;
-					writeName(m.getTarget(), out);
-				}
-			} else {
-				out.writeInt(0);
-			}
-		} else {
-			out.writeInt(0);
-			out.writeInt(0);
-		}
-	}
-	/*
-	 * ClasspathMultiDirectory[]
-	 * int			id
-	 * String		path(s)
-	*/
-		out.writeInt(length = this.testSourceLocations.length);
-		for (int i = 0; i < length; i++) {
-			ClasspathMultiDirectory md = this.testSourceLocations[i];
-			out.writeUTF(md.sourceFolder.getProjectRelativePath().toString());
-			out.writeUTF(md.binaryFolder.getProjectRelativePath().toString());
-			writeNames(md.inclusionPatterns, out);
-			writeNames(md.exclusionPatterns, out);
-			out.writeBoolean(md.ignoreOptionalProblems);
-			out.writeBoolean(md.hasIndependentOutputFolder);
-		}
-
-	/*
-	 * ClasspathLocation[]
-	 * int			id
-	 * String		path(s)
-	*/
-		out.writeInt(length = this.testBinaryLocations.length);
-		next : for (int i = 0; i < length; i++) {
-			ClasspathLocation c = this.testBinaryLocations[i];
-			if (c instanceof ClasspathMultiDirectory) {
-				out.writeByte(SOURCE_FOLDER);
-				for (int j = 0, m = this.testSourceLocations.length; j < m; j++) {
-					if (this.testSourceLocations[j] == c) {
-						out.writeInt(j);
-						continue next;
-					}
-				}
-			} else if (c instanceof ClasspathDirectory) {
-				out.writeByte(BINARY_FOLDER);
-				ClasspathDirectory cd = (ClasspathDirectory) c;
-				out.writeUTF(cd.binaryFolder.getFullPath().toString());
-				out.writeBoolean(cd.isOutputFolder);
-				writeRestriction(cd.accessRuleSet, out);
-				out.writeUTF(cd.externalAnnotationPath != null ? cd.externalAnnotationPath : ""); //$NON-NLS-1$
-				out.writeBoolean(cd.isOnModulePath);
-			} else if (c instanceof ClasspathJar) {
-				ClasspathJar jar = (ClasspathJar) c;
-				if (jar.resource == null) {
-					out.writeByte(EXTERNAL_JAR);
-					out.writeUTF(jar.zipFilename);
-					out.writeLong(jar.lastModified());
-				} else {
-					out.writeByte(INTERNAL_JAR);
-					out.writeUTF(jar.resource.getFullPath().toString());
-				}
-				writeRestriction(jar.accessRuleSet, out);
-				out.writeUTF(jar.externalAnnotationPath != null ? jar.externalAnnotationPath : ""); //$NON-NLS-1$
-				out.writeBoolean(jar.isOnModulePath);
-				out.writeUTF(jar.compliance != null ? jar.compliance : ""); //$NON-NLS-1$
-			} else if (c instanceof ClasspathJrt) {
-				ClasspathJrt jrt = (ClasspathJrt) c;
-				out.writeByte(EXTERNAL_JAR);
-				out.writeUTF(jrt.zipFilename);
-				writeRestriction(jrt.accessRuleSet, out);
-				out.writeUTF(jrt.externalAnnotationPath != null ? jrt.externalAnnotationPath : ""); //$NON-NLS-1$
-				if (jrt instanceof ClasspathJrtWithReleaseOption)
-					out.writeUTF(((ClasspathJrtWithReleaseOption) jrt).release);
-				else
-					out.writeUTF(""); //$NON-NLS-1$
-			}
-		}
+/*
+ * ClasspathLocation[]
+ * int			id
+ * String		path(s)
+ */
+	writeBinaryLocations(out, this.testBinaryLocations, this.testSourceLocations);
 
 /*
  * Structural build numbers table
@@ -888,6 +719,126 @@ void write(DataOutputStream out) throws IOException {
 	}
 }
 
+private void writeSourceLocations(DataOutputStream out, ClasspathMultiDirectory[] srcLocations) throws IOException {
+	int length;
+	out.writeInt(length = srcLocations.length);
+	for (int i = 0; i < length; i++) {
+		ClasspathMultiDirectory md = srcLocations[i];
+		out.writeUTF(md.sourceFolder.getProjectRelativePath().toString());
+		out.writeUTF(md.binaryFolder.getProjectRelativePath().toString());
+		writeNames(md.inclusionPatterns, out);
+		writeNames(md.exclusionPatterns, out);
+		out.writeBoolean(md.ignoreOptionalProblems);
+		writeNullablePath(md.externalAnnotationPath, out);
+		out.writeBoolean(md.hasIndependentOutputFolder);
+	}
+}
+
+private void writeBinaryLocations(DataOutputStream out, ClasspathLocation[] locations, ClasspathMultiDirectory[] srcLocations)
+		throws IOException {
+	/*
+	 * ClasspathLocation[]
+	 * int			id
+	 * String		path(s)
+	 * String       module updates
+	*/
+
+	out.writeInt(locations.length);
+	for (int i = 0; i < locations.length; i++) {
+		ClasspathLocation c = locations[i];
+		if (c instanceof ClasspathMultiDirectory) {
+			out.writeByte(SOURCE_FOLDER);
+			for (int j = 0, m = srcLocations.length; j < m; j++) {
+				if (srcLocations[j] == c) {
+					out.writeInt(j);
+					//continue next;
+				}
+			}
+		} else if (c instanceof ClasspathDirectory) {
+			out.writeByte(BINARY_FOLDER);
+			ClasspathDirectory cd = (ClasspathDirectory) c;
+			out.writeUTF(cd.binaryFolder.getFullPath().toString());
+			out.writeBoolean(cd.isOutputFolder);
+			writeRestriction(cd.accessRuleSet, out);
+			writeNullablePath(cd.externalAnnotationPath, out);
+			out.writeBoolean(cd.isOnModulePath);
+		} else if (c instanceof ClasspathJar) {
+			ClasspathJar jar = (ClasspathJar) c;
+			if (jar.resource == null) {
+				out.writeByte(EXTERNAL_JAR);
+				out.writeUTF(jar.zipFilename);
+				out.writeLong(jar.lastModified());
+			} else {
+				out.writeByte(INTERNAL_JAR);
+				out.writeUTF(jar.resource.getFullPath().toString());
+			}
+			writeRestriction(jar.accessRuleSet, out);
+			writeNullablePath(jar.externalAnnotationPath, out);
+			out.writeBoolean(jar.isOnModulePath);
+			out.writeUTF(jar.compliance == null ? "" : jar.compliance); //$NON-NLS-1$
+
+		} else if (c instanceof ClasspathJrt) {
+			ClasspathJrt jrt = (ClasspathJrt) c;
+			out.writeByte(EXTERNAL_JAR);
+			out.writeUTF(jrt.zipFilename);
+			writeRestriction(jrt.accessRuleSet, out);
+			writeNullablePath(jrt.externalAnnotationPath, out);
+			if (jrt instanceof ClasspathJrtWithReleaseOption)
+				out.writeUTF(((ClasspathJrtWithReleaseOption) jrt).release);
+			else
+				out.writeUTF(""); //$NON-NLS-1$
+		}
+		char[] patchName = c.patchModuleName == null ? CharOperation.NO_CHAR : c.patchModuleName.toCharArray();
+		writeName(patchName, out);
+		if (c.limitModuleNames != null) {
+			out.writeInt(c.limitModuleNames.size());
+			for (String name : c.limitModuleNames) {
+				out.writeUTF(name);
+			}
+		} else {
+			out.writeInt(0);
+		}
+		if (c.updates != null) {
+			List<Consumer<IUpdatableModule>> pu = c.updates.getList(UpdateKind.PACKAGE, false);
+			if (pu != null) {
+				Map<String, List<AddExports>> map = pu.stream().filter(AddExports.class::isInstance)
+						.map(AddExports.class::cast)
+						.collect(Collectors.groupingBy(addExport -> CharOperation.charToString(addExport.getName())));
+				out.writeInt(map.size());
+				map.entrySet().stream().forEach(entry -> {
+					String pkgName = entry.getKey();
+					try {
+						writeName(pkgName.toCharArray(), out);
+						char[][] targetModules = entry.getValue().stream()
+								.map(addExport -> addExport.getTargetModules()).filter(targets -> targets != null)
+								.reduce((f, s) -> CharOperation.arrayConcat(f, s)).orElse(null);
+						writeNames(targetModules, out);
+					} catch (IOException e) {
+						// ignore
+					}
+
+				});
+			} else {
+				out.writeInt(0);
+			}
+			List<Consumer<IUpdatableModule>> mu = c.updates.getList(UpdateKind.MODULE, false);
+			if (mu != null) {
+				// TODO, here we cannot handle MODULE_MAIN_CLASS nor MODULE_PACKAGES (ModuleUpdater stores a lambda), should we?
+				List<AddReads> allReads = mu.stream().filter(AddReads.class::isInstance).map(AddReads.class::cast).collect(Collectors.toList());
+				out.writeInt(allReads.size());
+				for (AddReads m : allReads) {
+					writeName(m.getTarget(), out);
+				}
+			} else {
+				out.writeInt(0);
+			}
+		} else {
+			out.writeInt(0);
+			out.writeInt(0);
+		}
+	}
+}
+
 private void writeName(char[] name, DataOutputStream out) throws IOException {
 	int nLength = name.length;
 	out.writeInt(nLength);
@@ -900,6 +851,10 @@ private void writeNames(char[][] names, DataOutputStream out) throws IOException
 	out.writeInt(length);
 	for (int i = 0; i < length; i++)
 		writeName(names[i], out);
+}
+
+private void writeNullablePath(String path, DataOutputStream out) throws IOException {
+	out.writeUTF(path != null ? path : ""); //$NON-NLS-1$
 }
 
 private void writeRestriction(AccessRuleSet accessRuleSet, DataOutputStream out) throws IOException {

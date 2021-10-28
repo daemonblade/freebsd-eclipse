@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corporation and others.
+ * Copyright (c) 2004, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,6 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -107,7 +106,7 @@ public class AbstractASTTests extends ModifyingResourceTests implements DefaultM
 	 * Removes the *start* and *end* markers from the given source
 	 * and remembers the positions.
 	 */
-	public class MarkerInfo {
+	public static class MarkerInfo {
 		String path;
 		String source;
 
@@ -205,7 +204,7 @@ public class AbstractASTTests extends ModifyingResourceTests implements DefaultM
 
 	}
 
-	public class BindingRequestor extends ASTRequestor {
+	public static class BindingRequestor extends ASTRequestor {
 		HashMap bindings = new HashMap();
 		public void acceptBinding(String bindingKey, IBinding binding) {
 			this.bindings.put(bindingKey, binding);
@@ -238,7 +237,7 @@ public class AbstractASTTests extends ModifyingResourceTests implements DefaultM
 	}
 
 	protected void assertASTNodesEqual(String expected, List nodes) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		Iterator iterator = nodes.iterator();
 		while (iterator.hasNext()) {
 			ASTNode node = (ASTNode) iterator.next();
@@ -267,7 +266,7 @@ public class AbstractASTTests extends ModifyingResourceTests implements DefaultM
 	}
 
 	protected void assertBindingKeysEqual(String expected, String[] actualKeys) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		for (int i = 0, length = actualKeys.length; i < length; i++) {
 			if (i > 0) buffer.append('\n');
 			buffer.append(actualKeys[i]);
@@ -292,7 +291,7 @@ public class AbstractASTTests extends ModifyingResourceTests implements DefaultM
 	}
 
 	protected void assertBindingsEqual(String message, String expected, IBinding[] actualBindings) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		for (int i = 0, length = actualBindings.length; i < length; i++) {
 			if (i > 0) buffer.append('\n');
 			if (actualBindings[i] == null)
@@ -494,7 +493,11 @@ public class AbstractASTTests extends ModifyingResourceTests implements DefaultM
 		String option = cu.getJavaProject().getOption(JavaCore.COMPILER_COMPLIANCE, true);
 		long jdkLevel = CompilerOptions.versionToJdkLevel(option);
 		int JLSLevel = AST_INTERNAL_JLS3;
-		if (jdkLevel >= ClassFileConstants.getComplianceLevelForJavaVersion(ClassFileConstants.MAJOR_VERSION_14)) {
+		if (jdkLevel >= ClassFileConstants.getComplianceLevelForJavaVersion(ClassFileConstants.MAJOR_VERSION_16)) {
+			JLSLevel = AST_INTERNAL_JLS16;
+		} else if (jdkLevel >= ClassFileConstants.getComplianceLevelForJavaVersion(ClassFileConstants.MAJOR_VERSION_15)) {
+			JLSLevel = AST_INTERNAL_JLS15;
+		} else if (jdkLevel >= ClassFileConstants.getComplianceLevelForJavaVersion(ClassFileConstants.MAJOR_VERSION_14)) {
 			JLSLevel = AST_INTERNAL_JLS14;
 		} else if (jdkLevel >= ClassFileConstants.getComplianceLevelForJavaVersion(ClassFileConstants.MAJOR_VERSION_13)) {
 			JLSLevel = AST_INTERNAL_JLS13;

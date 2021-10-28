@@ -477,9 +477,19 @@ public LocalDeclaration[] findLocalVariableDeclarations(int position) {
 	}
 	return null;
 }
-
+private boolean isPatternVariableInScope(InvocationSite invocationSite, LocalVariableBinding variable) {
+	LocalVariableBinding[] patternVariablesInScope = invocationSite.getPatternVariablesWhenTrue();
+	if (patternVariablesInScope == null)
+		return false;
+	for (LocalVariableBinding v : patternVariablesInScope) {
+		if (v == variable) {
+			return true;
+		}
+	}
+	return false;
+}
 @Override
-public LocalVariableBinding findVariable(char[] variableName) {
+public LocalVariableBinding findVariable(char[] variableName, InvocationSite invocationSite) {
 	int varLength = variableName.length;
 	for (int i = this.localIndex-1; i >= 0; i--) { // lookup backward to reach latest additions first
 		LocalVariableBinding local = this.locals[i];
@@ -495,8 +505,11 @@ public LocalVariableBinding findVariable(char[] variableName) {
 		if ((local.modifiers & ExtraCompilerModifiers.AccPatternVariable) == 0)
 			continue;
 		char[] localName;
-		if ((localName = local.name).length == varLength && CharOperation.equals(localName, variableName))
+		if ((localName = local.name).length != varLength || !CharOperation.equals(localName, variableName))
+			continue;
+		if (isPatternVariableInScope(invocationSite, local)) {
 			return local;
+		}
 	}
 	return null;
 }
@@ -866,6 +879,11 @@ public Object[] getEmulationPath(ReferenceBinding targetEnclosingType, boolean o
 			return BlockScope.NoEnclosingInstanceInStaticContext;
 		}
 		return null;
+	}
+	if (sourceType.isNestedType() && currentMethodScope.isInsideInitializer()) {
+		if (currentMethodScope.isStatic) {
+			return BlockScope.NoEnclosingInstanceInStaticContext;
+		}
 	}
 	boolean insideConstructor = currentMethodScope.isInsideInitializerOrConstructor();
 	// use synthetic constructor arguments if possible

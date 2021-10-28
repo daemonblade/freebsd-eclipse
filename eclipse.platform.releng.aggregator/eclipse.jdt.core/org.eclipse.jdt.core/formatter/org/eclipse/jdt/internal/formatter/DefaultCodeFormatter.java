@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IModuleDescription;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -127,14 +126,14 @@ public class DefaultCodeFormatter extends CodeFormatter {
 			this.workingOptions = new DefaultCodeFormatterOptions(options);
 			this.oldCommentFormatOption = getOldCommentFormatOption(options);
 			String compilerSource = options.get(CompilerOptions.OPTION_Source);
-			this.sourceLevel = compilerSource != null ? compilerSource : CompilerOptions.VERSION_14;
+			this.sourceLevel = compilerSource != null ? compilerSource : CompilerOptions.getLatestVersion();
 			this.previewEnabled = JavaCore.ENABLED.equals(options.get(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES));
 		} else {
 			Map<String, String> settings = DefaultCodeFormatterConstants.getJavaConventionsSettings();
 			this.originalOptions = new DefaultCodeFormatterOptions(settings);
 			this.workingOptions = new DefaultCodeFormatterOptions(settings);
 			this.oldCommentFormatOption = DefaultCodeFormatterConstants.TRUE;
-			this.sourceLevel = CompilerOptions.VERSION_14;
+			this.sourceLevel = CompilerOptions.getLatestVersion();
 		}
 		if (defaultCodeFormatterOptions != null) {
 			this.originalOptions.set(defaultCodeFormatterOptions.getMap());
@@ -334,7 +333,7 @@ public class DefaultCodeFormatter extends CodeFormatter {
 	}
 
 	private ASTParser createParser(int kind) {
-		ASTParser parser = ASTParser.newParser(AST.JLS14);
+		ASTParser parser = ASTParser.newParser(AST.JLS16);
 
 		if (kind == K_MODULE_INFO) {
 			parser.setSource(createDummyModuleInfoCompilationUnit());
@@ -353,7 +352,7 @@ public class DefaultCodeFormatter extends CodeFormatter {
 	}
 
 	private ICompilationUnit createDummyModuleInfoCompilationUnit() {
-		IJavaProject dummyProject = new JavaProject() {
+		JavaProject dummyProject = new JavaProject() {
 			@Override
 			public Map<String, String> getOptions(boolean inheritJavaCoreOptions) {
 				return new HashMap<>();
@@ -372,7 +371,7 @@ public class DefaultCodeFormatter extends CodeFormatter {
 			}
 
 			@Override
-			public IJavaProject getJavaProject() {
+			public JavaProject getJavaProject() {
 				return dummyProject;
 			}
 		};

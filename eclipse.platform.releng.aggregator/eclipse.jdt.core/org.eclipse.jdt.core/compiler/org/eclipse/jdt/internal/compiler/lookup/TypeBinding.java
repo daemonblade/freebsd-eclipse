@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -173,7 +173,7 @@ TypeBinding [] additionalBounds() {
 
 public String annotatedDebugName() {
 	TypeBinding enclosingType = enclosingType();
-	StringBuffer buffer = new StringBuffer(16);
+	StringBuilder buffer = new StringBuilder(16);
 	if (enclosingType != null) {
 		buffer.append(enclosingType.annotatedDebugName());
 		buffer.append('.');
@@ -1556,6 +1556,10 @@ public final boolean hasTypeAnnotations() {
 	return (this.tagBits & TagBits.HasTypeAnnotations) != 0;
 }
 
+public boolean hasValueBasedTypeAnnotation() {
+	return (this.extendedTagBits & ExtendedTagBits.AnnotationValueBased) != 0;
+}
+
 /**
  * Answer the qualified name of the receiver's package separated by periods
  * or an empty string if its the default package.
@@ -1720,6 +1724,10 @@ public boolean canBeSeenBy(Scope scope) {
 
 public ReferenceBinding superclass() {
 	return null;
+}
+
+public ReferenceBinding[] permittedTypes() {
+	return Binding.NO_PERMITTEDTYPES;
 }
 
 public ReferenceBinding[] superInterfaces() {

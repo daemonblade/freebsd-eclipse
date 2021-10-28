@@ -7362,6 +7362,7 @@ public void testIntersectionCast() {
 // https://bugs.eclipse.org/bugs/show_bug.cgi?id=421711, [1.8][compiler] '_' as identifier for a lambda parameter should be rejected.
 public void testUnderScoreParameter() {
 		String level = this.complianceLevel >= ClassFileConstants.JDK9 ? "ERROR" : "WARNING";
+		String errorMessage = this.complianceLevel >= ClassFileConstants.JDK9 ? "\'_\' is a keyword from source level 9 onwards, cannot be used as identifier\n" : "\'_\' should not be used as an identifier, since it is a reserved keyword from source level 1.8 on\n";
 		this.runNegativeTest(
 			new String[] {
 					"X.java",
@@ -7380,17 +7381,17 @@ public void testUnderScoreParameter() {
 			"1. ERROR in X.java (at line 6)\n" +
 			"	F f = (int _) -> {\n" +
 			"	           ^\n" +
-			"\'_\' should not be used as an identifier, since it is a reserved keyword from source level 1.8 on\n" +
+			"\'_\' is a keyword from source level 9 onwards, cannot be used as identifier\n" +
 			"----------\n" +
 			"2. "+ level +" in X.java (at line 8)\n" +
 			"	F f2 = _ -> {};\n" +
 			"	       ^\n" +
-			"\'_\' should not be used as an identifier, since it is a reserved keyword from source level 1.8 on\n" +
+			errorMessage +
 			"----------\n" +
 			"3. ERROR in X.java (at line 8)\n" +
 			"	F f2 = _ -> {};\n" +
 			"	       ^\n" +
-			"\'_\' should not be used as an identifier, since it is a reserved keyword from source level 1.8 on\n" +
+			"\'_\' is a keyword from source level 9 onwards, cannot be used as identifier\n" +
 			"----------\n"
 		);
 }
@@ -8592,12 +8593,12 @@ public void test428177() {
 		"4. ERROR in X.java (at line 36)\n" +
 		"	if(\"1\" == \"\") { return stream.collect(Collectors.toList()).stream(); // ERROR\n" +
 		"	                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
-		"Type mismatch: cannot convert from Stream<capture#25-of ? extends String> to Stream<String>\n" +
+		"Type mismatch: cannot convert from Stream<capture#24-of ? extends String> to Stream<String>\n" +
 		"----------\n" +
 		"5. ERROR in X.java (at line 38)\n" +
 		"	return stream.collect(Collectors.toList()); // NO ERROR\n" +
 		"	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
-		"Type mismatch: cannot convert from List<capture#28-of ? extends String> to Stream<String>\n" +
+		"Type mismatch: cannot convert from List<capture#27-of ? extends String> to Stream<String>\n" +
 		"----------\n");
 }
 // https://bugs.eclipse.org/bugs/show_bug.cgi?id=428795, - [1.8]Internal compiler error: java.lang.NullPointerException at org.eclipse.jdt.internal.compiler.ast.MessageSend.analyseCode

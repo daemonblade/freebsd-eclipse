@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -119,7 +119,7 @@ public void codeComplete(
 		throw new IllegalArgumentException("Completion requestor cannot be null"); //$NON-NLS-1$
 	}
 
-	JavaProject project = (JavaProject) getJavaProject();
+	JavaProject project = getJavaProject();
 	SearchableEnvironment environment = project.newSearchableNameEnvironment(owner, requestor.isTestCodeExcluded());
 	CompletionEngine engine = new CompletionEngine(environment, requestor, project.getOptions(true), project, owner, monitor);
 
@@ -300,6 +300,12 @@ public IField[] getRecordComponents() throws JavaModelException {
 		return NO_FIELDS;
 	return getFieldsOrComponents(true);
 }
+@Override
+public String[] getPermittedSubtypeNames() throws JavaModelException {
+	SourceTypeElementInfo info = (SourceTypeElementInfo) getElementInfo();
+	char[][] names= info.getPermittedSubtypeNames();
+	return CharOperation.toStrings(names);
+}
 private IField[] getFieldsOrComponents(boolean component) throws JavaModelException {
 	ArrayList list = getChildrenOfType(FIELD);
 	if (list.size() == 0) {
@@ -389,7 +395,7 @@ public IJavaElement getHandleFromMemento(String token, MementoTokenizer memento,
 					case JEM_METHOD:
 						if (!memento.hasMoreTokens()) return this;
 						String param = memento.nextToken();
-						StringBuffer buffer = new StringBuffer();
+						StringBuilder buffer = new StringBuilder();
 						while (param.length() == 1 && Signature.C_ARRAY == param.charAt(0)) { // backward compatible with 3.0 mementos
 							buffer.append(Signature.C_ARRAY);
 							if (!memento.hasMoreTokens()) return this;
@@ -497,7 +503,7 @@ public IMethod[] getMethods() throws JavaModelException {
  */
 @Override
 public IPackageFragment getPackageFragment() {
-	IJavaElement parentElement = this.parent;
+	IJavaElement parentElement = this.getParent();
 	while (parentElement != null) {
 		if (parentElement.getElementType() == IJavaElement.PACKAGE_FRAGMENT) {
 			return (IPackageFragment)parentElement;
@@ -511,21 +517,21 @@ public IPackageFragment getPackageFragment() {
 }
 
 @Override
-public IJavaElement getPrimaryElement(boolean checkOwner) {
+public JavaElement getPrimaryElement(boolean checkOwner) {
 	if (checkOwner) {
 		CompilationUnit cu = (CompilationUnit)getAncestor(COMPILATION_UNIT);
 		if (cu.isPrimary()) return this;
 	}
-	IJavaElement primaryParent = this.parent.getPrimaryElement(false);
+	IJavaElement primaryParent = this.getParent().getPrimaryElement(false);
 	switch (primaryParent.getElementType()) {
 		case IJavaElement.COMPILATION_UNIT:
-			return ((ICompilationUnit)primaryParent).getType(this.name);
+			return (JavaElement)((ICompilationUnit)primaryParent).getType(this.name);
 		case IJavaElement.TYPE:
-			return ((IType)primaryParent).getType(this.name);
+			return (JavaElement)((IType)primaryParent).getType(this.name);
 		case IJavaElement.FIELD:
 		case IJavaElement.INITIALIZER:
 		case IJavaElement.METHOD:
-			return ((IMember)primaryParent).getType(this.name, this.occurrenceCount);
+			return (JavaElement)((IMember)primaryParent).getType(this.name, this.occurrenceCount);
 	}
 	return this;
 }
@@ -687,12 +693,21 @@ public boolean isEnum() throws JavaModelException {
 
 /**
  * @see IType#isRecord()
- * @noreference This method is not intended to be referenced by clients as it is a part of Java preview feature.
+ * @since 3.26
  */
 @Override
 public boolean isRecord() throws JavaModelException {
 	SourceTypeElementInfo info = (SourceTypeElementInfo) getElementInfo();
 	return TypeDeclaration.kind(info.getModifiers()) == TypeDeclaration.RECORD_DECL;
+}
+/**
+ * @see IType#isSealed()
+ * @noreference This method is not intended to be referenced by clients as it is a part of Java preview feature.
+ */
+@Override
+public boolean isSealed() throws JavaModelException {
+	SourceTypeElementInfo info = (SourceTypeElementInfo) getElementInfo();
+	return Flags.isSealed(info.getModifiers());
 }
 
 /**
@@ -724,7 +739,7 @@ public boolean isAnnotation() throws JavaModelException {
  */
 @Override
 public boolean isLocal() {
-	switch (this.parent.getElementType()) {
+	switch (this.getParent().getElementType()) {
 		case IJavaElement.METHOD:
 		case IJavaElement.INITIALIZER:
 		case IJavaElement.FIELD:
@@ -937,7 +952,7 @@ public ITypeHierarchy newTypeHierarchy(
 }
 @Override
 public JavaElement resolved(Binding binding) {
-	ResolvedSourceType resolvedHandle = new ResolvedSourceType(this.parent, this.name, new String(binding.computeUniqueKey()));
+	ResolvedSourceType resolvedHandle = new ResolvedSourceType(this.getParent(), this.name, new String(binding.computeUniqueKey()));
 	resolvedHandle.occurrenceCount = this.occurrenceCount;
 	resolvedHandle.localOccurrenceCount = this.localOccurrenceCount;
 	return resolvedHandle;
@@ -967,6 +982,9 @@ protected void toStringInfo(int tab, StringBuffer buffer, Object info, boolean s
 		}
 	} else {
 		try {
+			if (isSealed()) {
+				buffer.append("sealed "); //$NON-NLS-1$
+			}
 			if (isRecord()) {
 				buffer.append("record "); //$NON-NLS-1$
 			} else if (isEnum()) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 IBM Corporation and others.
+ * Copyright (c) 2019, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -28,9 +28,7 @@ import org.eclipse.jdt.internal.compiler.parser.TerminalTokens;
  *
  * These are block of String literal nodes.
  *
- * @since 3.20
- * @noinstantiate This class is not intended to be instantiated by clients.
- * @noreference This class is not intended to be referenced by clients as it is a part of Java preview feature.
+ * @since 3.22
  */
 @SuppressWarnings("rawtypes")
 public class TextBlock extends Expression {
@@ -65,35 +63,23 @@ public class TextBlock extends Expression {
 
 	 * @return a list of property descriptors (element type:
 	 * {@link StructuralPropertyDescriptor})
-	 * @since 3.0
+	 * @since 3.24
 	 */
 	public static List propertyDescriptors(int apiLevel) {
-		return propertyDescriptors(apiLevel, false);
+		return PROPERTY_DESCRIPTORS;
 	}
 
-	/**
-	 * Returns a list of structural property descriptors for this node type.
-	 * Clients must not modify the result.
-	 *
-	 * @param apiLevel the API level; one of the
-	 * <code>AST.JLS*</code> constants
-	 * @param previewEnabled the previewEnabled flag
-	 * @return a list of property descriptors (element type:
-	 * {@link StructuralPropertyDescriptor})
-	 * @noreference This method is not intended to be referenced by clients.
-	 * @since 3.20
-	 */
-	public static List propertyDescriptors(int apiLevel, boolean previewEnabled) {
-		if (apiLevel == AST.JLS14_INTERNAL && previewEnabled) {
-			return PROPERTY_DESCRIPTORS;
-		}
-		return null;
-	}
 	/**
 	 * The literal string, including quotes and escapes; defaults to the
 	 * literal for the empty string.
 	 */
 	private String escapedValue = "\"\"";//$NON-NLS-1$
+
+	/**
+	 * The literal string without the quotes and the applicable preceding and
+	 * trailing whitespace if any ; defaults to empty string.
+	 */
+	private String literalValue = "";//$NON-NLS-1$
 
 	/**
 	 * Creates a new unparented TextBlock node owned by the given AST.
@@ -103,23 +89,16 @@ public class TextBlock extends Expression {
 	 * </p>
 	 *
 	 * @param ast the AST that is to own this node
-	 * @exception UnsupportedOperationException if this operation is used other than JLS14
-	 * @exception UnsupportedOperationException if this expression is used with previewEnabled flag as false
+	 * @exception UnsupportedOperationException if this operation is used beloe JLS15
 	 */
 	TextBlock(AST ast) {
 		super(ast);
-		supportedOnlyIn14();
-		unsupportedWithoutPreviewError();
+		unsupportedBelow15();
 	}
 
 	@Override
 	final List internalStructuralPropertiesForType(int apiLevel) {
 		return propertyDescriptors(apiLevel);
-	}
-
-	@Override
-	final List internalStructuralPropertiesForType(int apiLevel, boolean previewEnabled) {
-		return propertyDescriptors(apiLevel, previewEnabled);
 	}
 
 	@Override
@@ -169,6 +148,7 @@ public class TextBlock extends Expression {
 	 *
 	 * @return the string literal token, including enclosing double
 	 *    quotes and embedded escapes
+	 * @since 3.24
 	 */
 	public String getEscapedValue() {
 		return this.escapedValue;
@@ -188,6 +168,7 @@ public class TextBlock extends Expression {
 	 * @param token the string literal token, including enclosing double
 	 *    quotes and embedded escapes
 	 * @exception IllegalArgumentException if the argument is incorrect
+	 * @since 3.24
 	 */
 	public void setEscapedValue(String token) {
 		// update internalSetEscapedValue(String) if this is changed
@@ -215,14 +196,15 @@ public class TextBlock extends Expression {
 	}
 
 	/* (omit javadoc for this method)
-	 * This method is a copy of setEscapedValue(String) that doesn't do any validation.
+	 * This method is does what setEscapedValue(String) does but without any validation.
+	 * In addition, it also sets the literalValue property.
 	 */
-	void internalSetEscapedValue(String token) {
+	void internalSetEscapedValue(String token, String literal) {
 		preValueChange(ESCAPED_VALUE_PROPERTY);
 		this.escapedValue = token;
+		this.literalValue = literal;
 		postValueChange(ESCAPED_VALUE_PROPERTY);
 	}
-
 	/**
 	 * Returns the value of this literal node.
 	 * <p>
@@ -239,8 +221,12 @@ public class TextBlock extends Expression {
 	 *
 	 * @return the string value without enclosing triple quotes
 	 * @exception IllegalArgumentException if the literal value cannot be converted
+	 * @since 3.24
 	 */
 	public String getLiteralValue() {
+		if (!this.literalValue.isEmpty()) {
+			return this.literalValue;
+		}
 		char[] escaped = getEscapedValue().toCharArray();
 		int len = escaped.length;
 		if (len < 7) {

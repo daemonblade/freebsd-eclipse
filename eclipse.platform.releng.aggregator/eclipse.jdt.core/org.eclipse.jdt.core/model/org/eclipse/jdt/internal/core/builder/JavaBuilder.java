@@ -239,15 +239,12 @@ protected IProject[] build(int kind, Map ignored, IProgressMonitor monitor) thro
 		if (DEBUG)
 			System.out.println(Messages.bind(Messages.build_missingSourceFile, e.missingSourceFile));
 		removeProblemsAndTasksFor(this.currentProject); // make this the only problem for this project
-		IMarker marker = this.currentProject.createMarker(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER);
-		marker.setAttributes(
-			new String[] {IMarker.MESSAGE, IMarker.SEVERITY, IMarker.SOURCE_ID},
-			new Object[] {
-				Messages.bind(Messages.build_missingSourceFile, e.missingSourceFile),
-				Integer.valueOf(IMarker.SEVERITY_ERROR),
-				JavaBuilder.SOURCE_ID
-			}
-		);
+
+		Map<String, Object> attributes = new HashMap<>();
+		attributes.put(IMarker.MESSAGE, Messages.bind(Messages.build_missingSourceFile, e.missingSourceFile));
+		attributes.put(IMarker.SEVERITY, Integer.valueOf(IMarker.SEVERITY_ERROR));
+		attributes.put(IMarker.SOURCE_ID, JavaBuilder.SOURCE_ID);
+		this.currentProject.createMarker(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, attributes);
 	} finally {
 		for (int i = 0, l = this.participants == null ? 0 : this.participants.length; i < l; i++)
 			this.participants[i].buildFinished(this.javaProject);
@@ -341,16 +338,12 @@ private void createInconsistentBuildMarker(CoreException coreException) throws C
  	if (message == null)
  		message = coreException.getMessage();
 
-	IMarker marker = this.currentProject.createMarker(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER);
-	marker.setAttributes(
-		new String[] {IMarker.MESSAGE, IMarker.SEVERITY, IJavaModelMarker.CATEGORY_ID, IMarker.SOURCE_ID},
-		new Object[] {
-			Messages.bind(Messages.build_inconsistentProject, message),
-			Integer.valueOf(IMarker.SEVERITY_ERROR),
-			Integer.valueOf(CategorizedProblem.CAT_BUILDPATH),
-			JavaBuilder.SOURCE_ID
-		}
-	);
+	Map<String, Object> attributes = new HashMap<>();
+	attributes.put(IMarker.MESSAGE, Messages.bind(Messages.build_inconsistentProject, message));
+	attributes.put(IMarker.SEVERITY, Integer.valueOf(IMarker.SEVERITY_ERROR));
+	attributes.put(IJavaModelMarker.CATEGORY_ID, Integer.valueOf(CategorizedProblem.CAT_BUILDPATH));
+	attributes.put(IMarker.SOURCE_ID, JavaBuilder.SOURCE_ID);
+	this.currentProject.createMarker(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, attributes);
 }
 
 private void cleanup() {
@@ -580,14 +573,14 @@ private boolean hasClasspathChanged(CompilationGroup compilationGroup) {
 	for (n = o = 0; n < newLength && o < oldLength; n++, o++) {
 		if (newBinaryLocations[n].equals(oldBinaryLocations[o])) continue;
 		if (DEBUG) {
-			System.out.println("JavaBuilder: New location: " + newBinaryLocations[n] + "\n!= old location: " + oldBinaryLocations[o]); //$NON-NLS-1$ //$NON-NLS-2$
+			System.out.println("JavaBuilder: New test location: " + newBinaryLocations[n] + "\n!= old test location: " + oldBinaryLocations[o]); //$NON-NLS-1$ //$NON-NLS-2$
 			printLocations(newBinaryLocations, oldBinaryLocations);
 		}
 		return true;
 	}
 	if (n < newLength || o < oldLength) {
 		if (DEBUG) {
-			System.out.println("JavaBuilder: Number of binary folders/jar files has changed:"); //$NON-NLS-1$
+			System.out.println("JavaBuilder: Number of test binary folders/jar files has changed:"); //$NON-NLS-1$
 			printLocations(newBinaryLocations, oldBinaryLocations);
 		}
 		return true;
@@ -713,16 +706,13 @@ private boolean isWorthBuilding() throws CoreException {
 
 		removeProblemsAndTasksFor(this.currentProject); // remove all compilation problems
 
-		IMarker marker = this.currentProject.createMarker(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER);
-		marker.setAttributes(
-			new String[] {IMarker.MESSAGE, IMarker.SEVERITY, IJavaModelMarker.CATEGORY_ID, IMarker.SOURCE_ID},
-			new Object[] {
-				Messages.build_abortDueToClasspathProblems,
-				Integer.valueOf(IMarker.SEVERITY_ERROR),
-				Integer.valueOf(CategorizedProblem.CAT_BUILDPATH),
-				JavaBuilder.SOURCE_ID
-			}
-		);
+		Map<String, Object> attributes = new HashMap<>();
+		attributes.put(IMarker.MESSAGE, Messages.build_abortDueToClasspathProblems);
+		attributes.put(IMarker.SEVERITY, Integer.valueOf(IMarker.SEVERITY_ERROR));
+		attributes.put(IJavaModelMarker.CATEGORY_ID, Integer.valueOf(CategorizedProblem.CAT_BUILDPATH));
+		attributes.put(IMarker.SOURCE_ID, JavaBuilder.SOURCE_ID);
+
+		this.currentProject.createMarker(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, attributes);
 		return false;
 	}
 
@@ -754,18 +744,16 @@ private boolean isWorthBuilding() throws CoreException {
 					+ " was not built"); //$NON-NLS-1$
 
 			removeProblemsAndTasksFor(this.currentProject); // make this the only problem for this project
-			IMarker marker = this.currentProject.createMarker(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER);
-			marker.setAttributes(
-				new String[] {IMarker.MESSAGE, IMarker.SEVERITY, IJavaModelMarker.CATEGORY_ID, IMarker.SOURCE_ID},
-				new Object[] {
+
+			Map<String, Object> attributes = new HashMap<>();
+			attributes.put(IMarker.MESSAGE,
 					isClasspathBroken(prereq, true)
-						? Messages.bind(Messages.build_prereqProjectHasClasspathProblems, p.getName())
-						: Messages.bind(Messages.build_prereqProjectMustBeRebuilt, p.getName()),
-					Integer.valueOf(IMarker.SEVERITY_ERROR),
-					Integer.valueOf(CategorizedProblem.CAT_BUILDPATH),
-					JavaBuilder.SOURCE_ID
-				}
-			);
+							? Messages.bind(Messages.build_prereqProjectHasClasspathProblems, p.getName())
+							: Messages.bind(Messages.build_prereqProjectMustBeRebuilt, p.getName()));
+			attributes.put(IMarker.SEVERITY, Integer.valueOf(IMarker.SEVERITY_ERROR));
+			attributes.put(IJavaModelMarker.CATEGORY_ID, Integer.valueOf(CategorizedProblem.CAT_BUILDPATH));
+			attributes.put(IMarker.SOURCE_ID, JavaBuilder.SOURCE_ID);
+			this.currentProject.createMarker(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, attributes);
 			return false;
 		}
 	}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -39,7 +39,6 @@ import org.eclipse.jdt.internal.compiler.problem.ProblemReporter;
 import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 import org.eclipse.jdt.internal.compiler.util.Util;
 
-@SuppressWarnings("rawtypes")
 public class FieldDeclaration extends AbstractVariableDeclaration {
 
 	public FieldBinding binding;
@@ -84,9 +83,11 @@ public FlowInfo analyseCode(MethodScope initializationScope, FlowContext flowCon
 			&& this.binding.constant(initializationScope) == Constant.NotAConstant
 			&& this.binding.declaringClass.isNestedType()
 			&& !this.binding.declaringClass.isStatic()) {
-		initializationScope.problemReporter().unexpectedStaticModifierForField(
-			(SourceTypeBinding) this.binding.declaringClass,
-			this);
+		if (initializationScope.compilerOptions().sourceLevel < ClassFileConstants.JDK16) {
+			initializationScope.problemReporter().unexpectedStaticModifierForField(
+					(SourceTypeBinding) this.binding.declaringClass,
+					this);
+		}
 	}
 
 	if (this.initialization != null) {
@@ -154,7 +155,7 @@ public void generateCode(BlockScope currentScope, CodeStream codeStream) {
 //	}
 	codeStream.recordPositionsFrom(pc, this.sourceStart);
 }
-public void getAllAnnotationContexts(int targetType, List allAnnotationContexts) {
+public void getAllAnnotationContexts(int targetType, List<AnnotationContext> allAnnotationContexts) {
 	AnnotationCollector collector = new AnnotationCollector(this.type, targetType, allAnnotationContexts);
 	for (int i = 0, max = this.annotations.length; i < max; i++) {
 		Annotation annotation = this.annotations[i];

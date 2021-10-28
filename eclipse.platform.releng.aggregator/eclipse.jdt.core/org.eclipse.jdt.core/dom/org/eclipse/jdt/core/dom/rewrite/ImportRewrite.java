@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,6 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     John Glassmyer <jogl@google.com> - import group sorting is broken - https://bugs.eclipse.org/430303
@@ -412,7 +411,7 @@ public final class ImportRewrite {
 			List imports= astRoot.imports();
 			for (int i= 0; i < imports.size(); i++) {
 				ImportDeclaration curr= (ImportDeclaration) imports.get(i);
-				StringBuffer buf= new StringBuffer();
+				StringBuilder buf= new StringBuilder();
 				buf.append(curr.isStatic() ? STATIC_PREFIX : NORMAL_PREFIX).append(curr.getName().getFullyQualifiedName());
 				if (curr.isOnDemand()) {
 					if (buf.length() > 1)
@@ -861,7 +860,7 @@ public final class ImportRewrite {
 			return "invalid"; //$NON-NLS-1$
 		}
 		if (normalizedBinding.isWildcardType()) {
-			StringBuffer res= new StringBuffer("?"); //$NON-NLS-1$
+			StringBuilder res= new StringBuilder("?"); //$NON-NLS-1$
 			ITypeBinding bound= normalizedBinding.getBound();
 			if (bound != null && !bound.isWildcardType() && !bound.isCapture()) { // bug 95942
 				if (normalizedBinding.isUpperbound()) {
@@ -875,7 +874,7 @@ public final class ImportRewrite {
 		}
 
 		if (normalizedBinding.isArray()) {
-			StringBuffer res= new StringBuffer(addImport(normalizedBinding.getElementType(), context));
+			StringBuilder res= new StringBuilder(addImport(normalizedBinding.getElementType(), context));
 			for (int i= normalizedBinding.getDimensions(); i > 0; i--) {
 				res.append("[]"); //$NON-NLS-1$
 			}
@@ -888,7 +887,7 @@ public final class ImportRewrite {
 
 			ITypeBinding[] typeArguments= normalizedBinding.getTypeArguments();
 			if (typeArguments.length > 0) {
-				StringBuffer res= new StringBuffer(str);
+				StringBuilder res= new StringBuilder(str);
 				res.append('<');
 				for (int i= 0; i < typeArguments.length; i++) {
 					if (i > 0) {
@@ -1317,7 +1316,7 @@ public final class ImportRewrite {
 
 		CompilationUnit usedAstRoot= this.astRoot;
 		if (usedAstRoot == null) {
-			ASTParser parser= ASTParser.newParser(AST.JLS14);
+			ASTParser parser= ASTParser.newParser(AST.getJLSLatest());
 			parser.setSource(this.compilationUnit);
 			parser.setFocalPosition(0); // reduced AST
 			parser.setResolveBindings(false);

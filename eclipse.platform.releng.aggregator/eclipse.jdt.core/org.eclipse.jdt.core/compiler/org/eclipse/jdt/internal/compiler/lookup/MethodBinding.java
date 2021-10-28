@@ -605,7 +605,7 @@ public MethodBinding findOriginalInheritedMethod(MethodBinding inheritedMethod) 
  */
 public char[] genericSignature() {
 	if ((this.modifiers & ExtraCompilerModifiers.AccGenericSignature) == 0) return null;
-	StringBuffer sig = new StringBuffer(10);
+	StringBuilder sig = new StringBuilder(10);
 	if (this.typeVariables != Binding.NO_TYPE_VARIABLES) {
 		sig.append('<');
 		for (int i = 0, length = this.typeVariables.length; i < length; i++) {
@@ -975,7 +975,7 @@ public MethodBinding genericMethod() {
 
 @Override
 public char[] readableName() /* foo(int, Thread) */ {
-	StringBuffer buffer = new StringBuffer(this.parameters.length + 1 * 20);
+	StringBuilder buffer = new StringBuilder(this.parameters.length + 1 * 20);
 	if (isConstructor())
 		buffer.append(this.declaringClass.sourceName());
 	else
@@ -1032,7 +1032,7 @@ protected final void setSelector(char[] selector) {
  */
 @Override
 public char[] shortReadableName() {
-	StringBuffer buffer = new StringBuffer(this.parameters.length + 1 * 20);
+	StringBuilder buffer = new StringBuilder(this.parameters.length + 1 * 20);
 	if (isConstructor())
 		buffer.append(this.declaringClass.shortReadableName());
 	else
@@ -1062,7 +1062,7 @@ public final char[] signature() /* (ILjava/lang/Thread;)Ljava/lang/Object; */ {
 	if (this.signature != null)
 		return this.signature;
 
-	StringBuffer buffer = new StringBuffer(this.parameters.length + 1 * 20);
+	StringBuilder buffer = new StringBuilder(this.parameters.length + 1 * 20);
 	buffer.append('(');
 
 	TypeBinding[] targetParameters = this.parameters;
@@ -1123,7 +1123,9 @@ public char[] signature(ClassFile classFile) {
 			// we need to record inner classes references
 			boolean isConstructor = isConstructor();
 			TypeBinding[] targetParameters = this.parameters;
-			boolean needSynthetics = isConstructor && this.declaringClass.isNestedType();
+			boolean needSynthetics = isConstructor
+						&& this.declaringClass.isNestedType()
+						&& !this.declaringClass.isStatic();
 			if (needSynthetics) {
 				// take into account the synthetic argument type signatures as well
 				ReferenceBinding[] syntheticArgumentTypes = this.declaringClass.syntheticEnclosingInstanceTypes();
@@ -1169,7 +1171,7 @@ public char[] signature(ClassFile classFile) {
 		return this.signature;
 	}
 
-	StringBuffer buffer = new StringBuffer((this.parameters.length + 1) * 20);
+	StringBuilder buffer = new StringBuilder((this.parameters.length + 1) * 20);
 	buffer.append('(');
 
 	TypeBinding[] targetParameters = this.parameters;
@@ -1178,7 +1180,9 @@ public char[] signature(ClassFile classFile) {
 		buffer.append(ConstantPool.JavaLangStringSignature);
 		buffer.append(TypeBinding.INT.signature());
 	}
-	boolean needSynthetics = isConstructor && this.declaringClass.isNestedType();
+	boolean needSynthetics = isConstructor
+			&& this.declaringClass.isNestedType()
+			&& !this.declaringClass.isStatic();
 	if (needSynthetics) {
 		// take into account the synthetic argument type signatures as well
 		ReferenceBinding[] syntheticArgumentTypes = this.declaringClass.syntheticEnclosingInstanceTypes();

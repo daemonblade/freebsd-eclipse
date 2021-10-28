@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -158,7 +158,6 @@ public FlowInfo analyseCode(BlockScope currentScope, FlowContext flowContext, Fl
 	flowContext.conditionalLevel--;
 	return mergedInfo;
 }
-
 /**
  * If code generation
  *
@@ -217,7 +216,7 @@ public void generateCode(BlockScope currentScope, CodeStream codeStream) {
 			// May loose some local variable initializations : affecting the local variable attributes
 			if (this.elseInitStateIndex != -1) {
 				codeStream.removeNotDefinitelyAssignedVariables(
-					currentScope,
+						currentScope,
 					this.elseInitStateIndex);
 				codeStream.addDefinitelyAssignedVariables(currentScope, this.elseInitStateIndex);
 			}
@@ -247,7 +246,16 @@ public void generateCode(BlockScope currentScope, CodeStream codeStream) {
 		this.elseStatement.generateCode(currentScope, codeStream);
 	} else {
 		// generate condition side-effects
-		this.condition.generateCode(currentScope, codeStream, false);
+		if (this.condition.containsPatternVariable()) {
+			this.condition.generateOptimizedBoolean(
+				currentScope,
+				codeStream,
+				endifLabel,
+				null,
+				cst == Constant.NotAConstant);
+		} else {
+			this.condition.generateCode(currentScope, codeStream, false);
+		}
 		codeStream.recordPositionsFrom(pc, this.sourceStart);
 	}
 	// May loose some local variable initializations : affecting the local variable attributes
@@ -276,14 +284,43 @@ public StringBuffer printStatement(int indent, StringBuffer output) {
 	}
 	return output;
 }
-@Override
-public void resolve(BlockScope scope) {
+private void resolveIfStatement(BlockScope scope) {
 	TypeBinding type = this.condition.resolveTypeExpecting(scope, TypeBinding.BOOLEAN);
 	this.condition.computeConversion(scope, type, type);
 	if (this.thenStatement != null)
 		this.thenStatement.resolve(scope);
 	if (this.elseStatement != null)
 		this.elseStatement.resolve(scope);
+}
+@Override
+public void resolve(BlockScope scope) {
+	if (containsPatternVariable()) {
+		this.condition.collectPatternVariablesToScope(null, scope);
+		LocalVariableBinding[] patternVariablesInTrueScope = this.condition.getPatternVariablesWhenTrue();
+		LocalVariableBinding[] patternVariablesInFalseScope = this.condition.getPatternVariablesWhenFalse();
+		TypeBinding type = this.condition.resolveTypeExpecting(scope, TypeBinding.BOOLEAN);
+		this.condition.computeConversion(scope, type, type);
+
+		if (this.thenStatement != null) {
+			this.thenStatement.resolveWithPatternVariablesInScope(patternVariablesInTrueScope, scope);
+		}
+		if (this.elseStatement != null) {
+			this.elseStatement.resolveWithPatternVariablesInScope(patternVariablesInFalseScope, scope);
+		}
+		if (this.thenStatement != null)
+			this.thenStatement.promotePatternVariablesIfApplicable(patternVariablesInFalseScope,
+				this.thenStatement::doesNotCompleteNormally);
+		if (this.elseStatement != null)
+			this.elseStatement.promotePatternVariablesIfApplicable(patternVariablesInTrueScope,
+					this.elseStatement::doesNotCompleteNormally);
+	} else {
+		resolveIfStatement(scope);
+	}
+}
+
+@Override
+public boolean containsPatternVariable() {
+	return this.condition.containsPatternVariable();
 }
 
 @Override

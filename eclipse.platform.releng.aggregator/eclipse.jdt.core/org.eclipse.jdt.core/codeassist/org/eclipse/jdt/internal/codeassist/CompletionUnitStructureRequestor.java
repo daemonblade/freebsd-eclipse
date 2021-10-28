@@ -41,8 +41,8 @@ import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.compiler.ast.ParameterizedQualifiedTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.ParameterizedSingleTypeReference;
-import org.eclipse.jdt.internal.compiler.ast.RecordComponent;
 import org.eclipse.jdt.internal.compiler.ast.TypeReference;
+import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.parser.Parser;
 import org.eclipse.jdt.internal.core.AnnotatableInfo;
 import org.eclipse.jdt.internal.core.Annotation;
@@ -60,22 +60,22 @@ import org.eclipse.jdt.internal.core.SourceMethod;
 import org.eclipse.jdt.internal.core.SourceType;
 import org.eclipse.jdt.internal.core.TypeParameter;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"rawtypes"})
 public class CompletionUnitStructureRequestor extends CompilationUnitStructureRequestor {
 	private ASTNode assistNode;
 
-	private Map bindingCache;
-	private Map elementCache;
-	private Map elementWithProblemCache;
+	private Map<JavaElement, Binding> bindingCache;
+	private Map<Binding, JavaElement> elementCache;
+	private Map<ASTNode, JavaElement> elementWithProblemCache;
 
 	public CompletionUnitStructureRequestor(
 			ICompilationUnit unit,
 			CompilationUnitElementInfo unitInfo,
 			Parser parser,
 			ASTNode assistNode,
-			Map bindingCache,
-			Map elementCache,
-			Map elementWithProblemCache,
+			Map<JavaElement, Binding> bindingCache,
+			Map<Binding, JavaElement> elementCache,
+			Map<ASTNode, JavaElement> elementWithProblemCache,
 			Map newElements) {
 		super(unit, unitInfo, newElements);
 		this.parser = parser;
@@ -94,7 +94,7 @@ public class CompletionUnitStructureRequestor extends CompilationUnitStructureRe
 	protected SourceField createField(JavaElement parent, FieldInfo fieldInfo) {
 		String fieldName = JavaModelManager.getJavaModelManager().intern(new String(fieldInfo.name));
 		AssistSourceField field = new AssistSourceField(parent, fieldName, this.bindingCache, this.newElements);
-		FieldDeclaration decl = (fieldInfo.node);
+		FieldDeclaration decl = (FieldDeclaration) (fieldInfo.node);
 		if (decl.binding != null) {
 			this.bindingCache.put(field, decl.binding);
 			this.elementCache.put(decl.binding, field);
@@ -104,7 +104,7 @@ public class CompletionUnitStructureRequestor extends CompilationUnitStructureRe
 		return field;
 	}
 	@Override
-	protected SourceField createRecordComponent(JavaElement parent, RecordComponentInfo compInfo) {
+	protected SourceField createRecordComponent(JavaElement parent, FieldInfo compInfo) {
 		String compName = JavaModelManager.getJavaModelManager().intern(new String(compInfo.name));
 		SourceField comp = new AssistSourceField(parent, compName, this.bindingCache, this.newElements) {
 			@Override
@@ -112,12 +112,12 @@ public class CompletionUnitStructureRequestor extends CompilationUnitStructureRe
 				return true;
 			}
 		};
-		RecordComponent decl = (compInfo.node);
+		FieldDeclaration decl = (FieldDeclaration) (compInfo.node);
 		if (decl.binding != null) {
-			this.bindingCache.put(compName, decl.binding);
-			this.elementCache.put(decl.binding, compName);
+			this.bindingCache.put(comp, decl.binding);
+			this.elementCache.put(decl.binding, comp);
 		} else {
-			this.elementWithProblemCache.put(compInfo.node, compName);
+			this.elementWithProblemCache.put(compInfo.node, comp);
 		}
 		return comp;
 	}

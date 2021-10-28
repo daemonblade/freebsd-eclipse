@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corporation and others.
+ * Copyright (c) 2019, 2021 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -29,14 +29,14 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 	static {
 //		TESTS_NUMBERS = new int [] { 40 };
 //		TESTS_RANGE = new int[] { 1, -1 };
-//		TESTS_NAMES = new String[] { "testBug564146"};
+//		TESTS_NAMES = new String[] { "testBug574284"};
 	}
 
 	public static Class<?> testClass() {
 		return RecordsRestrictedClassTest.class;
 	}
 	public static Test suite() {
-		return buildMinimalComplianceTestSuite(testClass(), F_14);
+		return buildMinimalComplianceTestSuite(testClass(), F_16);
 	}
 	public RecordsRestrictedClassTest(String testName){
 		super(testName);
@@ -45,9 +45,9 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 	// Enables the tests to run individually
 	protected Map<String, String> getCompilerOptions() {
 		Map<String, String> defaultOptions = super.getCompilerOptions();
-		defaultOptions.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_14); // FIXME
-		defaultOptions.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_14);
-		defaultOptions.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_14);
+		defaultOptions.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_16);
+		defaultOptions.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_16);
+		defaultOptions.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_16);
 		defaultOptions.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.ENABLED);
 		defaultOptions.put(CompilerOptions.OPTION_ReportPreviewFeatures, CompilerOptions.IGNORE);
 		defaultOptions.put(CompilerOptions.OPTION_Store_Annotations, CompilerOptions.ENABLED);
@@ -59,20 +59,23 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 		runConformTest(testFiles, expectedOutput, getCompilerOptions());
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	protected void runConformTest(String[] testFiles, String expectedOutput, Map customOptions) {
+	protected void runConformTest(String[] testFiles, String expectedOutput, Map<String, String> customOptions) {
+		if (!isJRE16Plus)
+			return;
 		Runner runner = new Runner();
 		runner.testFiles = testFiles;
 		runner.expectedOutputString = expectedOutput;
 		runner.vmArguments = new String[] {"--enable-preview"};
 		runner.customOptions = customOptions;
-		runner.javacTestOptions = JavacTestOptions.forReleaseWithPreview("14");
+		runner.javacTestOptions = JavacTestOptions.forReleaseWithPreview("16");
 		runner.runConformTest();
 	}
 	@Override
 	protected void runNegativeTest(String[] testFiles, String expectedCompilerLog) {
-		runNegativeTest(testFiles, expectedCompilerLog, JavacTestOptions.forReleaseWithPreview("14"));
+		if (!isJRE16Plus)
+			return;
+		runNegativeTest(testFiles, expectedCompilerLog, JavacTestOptions.DEFAULT);
 	}
 	protected void runWarningTest(String[] testFiles, String expectedCompilerLog) {
 		runWarningTest(testFiles, expectedCompilerLog, null);
@@ -82,14 +85,15 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 	}
 	protected void runWarningTest(String[] testFiles, String expectedCompilerLog,
 			Map<String, String> customOptions, String javacAdditionalTestOptions) {
-
+		if (!isJRE16Plus)
+			return;
 		Runner runner = new Runner();
 		runner.testFiles = testFiles;
 		runner.expectedCompilerLog = expectedCompilerLog;
 		runner.customOptions = customOptions;
 		runner.vmArguments = new String[] {"--enable-preview"};
-		runner.javacTestOptions = javacAdditionalTestOptions == null ? JavacTestOptions.forReleaseWithPreview("14") :
-			JavacTestOptions.forReleaseWithPreview("14", javacAdditionalTestOptions);
+		runner.javacTestOptions = javacAdditionalTestOptions == null ? JavacTestOptions.forReleaseWithPreview("16") :
+			JavacTestOptions.forReleaseWithPreview("16", javacAdditionalTestOptions);
 		runner.runWarningTest();
 	}
 
@@ -108,12 +112,39 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 			assertEquals("Wrong contents", expectedOutput, result);
 		}
 	}
+	private void verifyOutputNegative(String result, String expectedOutput) {
+		verifyOutput(result, expectedOutput, false);
+	}
+	private void verifyOutput(String result, String expectedOutput, boolean positive) {
+		int index = result.indexOf(expectedOutput);
+		if (positive) {
+			if (index == -1 || expectedOutput.length() == 0) {
+				System.out.println(Util.displayString(result, 3));
+				System.out.println("...");
+			}
+			if (index == -1) {
+				assertEquals("Wrong contents", expectedOutput, result);
+			}
+		} else {
+			if (index != -1) {
+				assertEquals("Unexpected contents", "", result);
+			}
+		}
+	}
+	private String getClassFileContents( String classFileName, int mode) throws IOException,
+	ClassFormatException {
+		File f = new File(OUTPUT_DIR + File.separator + classFileName);
+		byte[] classFileBytes = org.eclipse.jdt.internal.compiler.util.Util.getFileByteContent(f);
+		ClassFileBytesDisassembler disassembler = ToolFactory.createDefaultClassFileBytesDisassembler();
+		String result = disassembler.disassemble(classFileBytes, "\n", mode);
+		return result;
+	}
 
 	public void testBug550750_001() {
 		runConformTest(
 				new String[] {
 						"X.java",
-						"class X {\n"+
+						"public class X {\n"+
 						"  public static void main(String[] args){\n"+
 						"     System.out.println(0);\n" +
 						"  }\n"+
@@ -429,7 +460,7 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 			"1. ERROR in X.java (at line 7)\n" +
 			"	private Point {\n" +
 			"	        ^^^^^\n" +
-			"The canonical constructor Point of a record declaration must be declared public.\n" +
+			"Cannot reduce the visibility of a canonical constructor Point from that of the record\n" +
 			"----------\n");
 	}
 	public void testBug550750_020() {
@@ -449,31 +480,17 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 						"}\n" +
 						"interface I {}\n"
 				},
-			"----------\n" +
-			"1. ERROR in X.java (at line 7)\n" +
-			"	protected Point {\n" +
-			"	          ^^^^^\n" +
-			"The canonical constructor Point of a record declaration must be declared public.\n" +
-			"----------\n");
-	}
-	public void testBug550750_021() {
-		runConformTest(
-				new String[] {
-						"X.java",
-						"public class X {\n"+
-						"  public static void main(String[] args){\n"+
-						"     System.out.println(0);\n" +
-						"  }\n"+
-						"}\n"+
-						"record Point(int myInt, char myChar) implements I {\n"+
-						"  public Point {\n"+
-						"     this.myInt = myInt;\n" +
-						"     this.myChar = myChar;\n" +
-						"  }\n"+
-						"}\n" +
-						"interface I {}\n"
-				},
-			"0");
+				"----------\n" +
+				"1. ERROR in X.java (at line 8)\n" +
+				"	this.myInt = myInt;\n" +
+				"	^^^^^^^^^^\n" +
+				"Illegal explicit assignment of a final field myInt in compact constructor\n" +
+				"----------\n" +
+				"2. ERROR in X.java (at line 9)\n" +
+				"	this.myChar = myChar;\n" +
+				"	^^^^^^^^^^^\n" +
+				"Illegal explicit assignment of a final field myChar in compact constructor\n" +
+				"----------\n");
 	}
 	public void testBug550750_022() {
 		this.runNegativeTest(
@@ -633,6 +650,16 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 			"	static final int z;\n" +
 			"	                 ^\n" +
 			"The blank final field z may not have been initialized\n" +
+			"----------\n" +
+			"2. ERROR in X.java (at line 9)\n" +
+			"	this.myInt = myInt;\n" +
+			"	^^^^^^^^^^\n" +
+			"Illegal explicit assignment of a final field myInt in compact constructor\n" +
+			"----------\n" +
+			"3. ERROR in X.java (at line 10)\n" +
+			"	this.myZ = myZ;\n" +
+			"	^^^^^^^^\n" +
+			"Illegal explicit assignment of a final field myZ in compact constructor\n" +
 			"----------\n");
 	}
 	public void testBug550750_028() {
@@ -742,7 +769,7 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 			"1. ERROR in X.java (at line 1)\n" +
 			"	class record {\n" +
 			"	      ^^^^^^\n" +
-			"Record is a restricted identifier and hence not a valid type name\n" +
+			"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
 			"----------\n");
 	}
 	public void testBug550750_033() {
@@ -759,7 +786,7 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 			"1. ERROR in X.java (at line 1)\n" +
 			"	class X<record> {\n" +
 			"	        ^^^^^^\n" +
-			"Record is a restricted identifier and hence not a valid type name\n" +
+			"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
 			"----------\n");
 	}
 	public void testBug550750_034() {
@@ -777,7 +804,12 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 			"1. ERROR in X.java (at line 5)\n" +
 			"	public <record> void foo(record args){}\n" +
 			"	        ^^^^^^\n" +
-			"Record is a restricted identifier and hence not a valid type name\n" +
+			"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+			"----------\n" +
+			"2. ERROR in X.java (at line 5)\n" +
+			"	public <record> void foo(record args){}\n" +
+			"	                         ^^^^^^\n" +
+			"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
 			"----------\n");
 	}
 	public void testBug550750_035() {
@@ -795,12 +827,7 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 			"1. ERROR in X.java (at line 5)\n" +
 			"	public void foo(record args){}\n" +
 			"	                ^^^^^^\n" +
-			"record cannot be resolved to a type\n" +
-			"----------\n" +
-			"2. ERROR in X.java (at line 5)\n" +
-			"	public void foo(record args){}\n" +
-			"	                ^^^^^^\n" +
-			"Record is a restricted identifier and hence not a valid type name\n" +
+			"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
 			"----------\n");
 	}
 	public void testBug550750_036() {
@@ -826,12 +853,7 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 			"2. ERROR in X.java (at line 4)\n" +
 			"	I lambda = (record r) -> {};\n" +
 			"	            ^^^^^^\n" +
-			"record cannot be resolved to a type\n" +
-			"----------\n" +
-			"3. ERROR in X.java (at line 4)\n" +
-			"	I lambda = (record r) -> {};\n" +
-			"	            ^^^^^^\n" +
-			"Record is a restricted identifier and hence not a valid type name\n" +
+			"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
 			"----------\n");
 	}
 	public void testBug550750_037() {
@@ -1105,14 +1127,24 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 			"	       ^^^^^\n" +
 			"Duplicate method Point(Integer, int) in type Point\n" +
 			"----------\n" +
-			"2. ERROR in X.java (at line 11)\n" +
+			"2. ERROR in X.java (at line 8)\n" +
+			"	this.myInt = 0;\n" +
+			"	^^^^^^^^^^\n" +
+			"Illegal explicit assignment of a final field myInt in compact constructor\n" +
+			"----------\n" +
+			"3. ERROR in X.java (at line 9)\n" +
+			"	this.myZ = 0;\n" +
+			"	^^^^^^^^\n" +
+			"Illegal explicit assignment of a final field myZ in compact constructor\n" +
+			"----------\n" +
+			"4. ERROR in X.java (at line 11)\n" +
 			"	public Point(Integer myInt, int myZ) {\n" +
 			"	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
 			"Duplicate method Point(Integer, int) in type Point\n" +
 			"----------\n");
 	}
 	public void testBug553152_009() {
-		this.runNegativeTest(
+		this.runConformTest(
 				new String[] {
 						"X.java",
 						"public class X {\n"+
@@ -1128,12 +1160,7 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 						"}\n" +
 						"interface I {}\n"
 				},
-			"----------\n" +
-			"1. ERROR in X.java (at line 7)\n" +
-			"	Point(Integer myInt, int myZ) {\n" +
-			"	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
-			"The canonical constructor Point of a record declaration must be declared public.\n" +
-			"----------\n");
+			"0");
 	}
 	public void testBug553152_010() {
 		this.runNegativeTest(
@@ -1317,7 +1344,7 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 			"----------\n");
 	}
 	public void testBug553152_017() {
-		this.runNegativeTest(
+		this.runConformTest(
 			new String[] {
 				"X.java",
 				"public class X {\n"+
@@ -1329,14 +1356,9 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 				"  }\n"+
 				"}\n"
 		},
-		"----------\n" +
-		"1. ERROR in X.java (at line 3)\n" +
-		"	record Point(int myInt, char myChar) {}\n" +
-		"	       ^^^^^\n" +
-		"Nested Record is (implicitly) static and hence enclosing type should be static\n" +
-		"----------\n");
+		"0");
 	}
-	public void _testBug553152_018() {
+	public void testBug553152_018() {
 		runConformTest(
 				new String[] {
 						"X.java",
@@ -1376,25 +1398,7 @@ public class RecordsRestrictedClassTest extends AbstractRegressionTest {
 			"The accessor method must not be static\n" +
 			"----------\n");
 	}
-public void testBug553153_01() {
-		runConformTest(
-			new String[] {
-				"X.java",
-				"public class X {\n"+
-				"  public static void main(String[] args){\n"+
-				"     System.out.println(0);\n" +
-				"  }\n"+
-				"}\n"+
-				"record Point(int myInt, char myChar) implements I {\n"+
-				"  public Point {\n"+
-				"     this.myInt = myInt;\n" +
-				"  }\n"+
-				"}\n" +
-				"interface I {}\n"
-			},
-			"0");
-	}
-	public void testBug553153_002() {
+public void testBug553153_002() {
 		this.runNegativeTest(
 			new String[] {
 				"X.java",
@@ -1413,10 +1417,20 @@ public void testBug553153_01() {
 				"interface I {}\n"
 		},
 		"----------\n" +
-		"1. ERROR in X.java (at line 7)\n" +
-		"	public Point {\n" +
-		"	       ^^^^^\n" +
-		"The blank final field myChar may not have been initialized\n" +
+		"1. ERROR in X.java (at line 8)\n" +
+		"	this.myInt = myInt;\n" +
+		"	^^^^^^^^^^\n" +
+		"Illegal explicit assignment of a final field myInt in compact constructor\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 9)\n" +
+		"	if (this.myInt > 0)  // conditional assignment\n" +
+		"	         ^^^^^\n" +
+		"The blank final field myInt may not have been initialized\n" +
+		"----------\n" +
+		"3. ERROR in X.java (at line 10)\n" +
+		"	this.myChar = myChar;\n" +
+		"	^^^^^^^^^^^\n" +
+		"Illegal explicit assignment of a final field myChar in compact constructor\n" +
 		"----------\n");
 }
 public void testBug553153_003() {
@@ -1431,7 +1445,6 @@ public void testBug553153_003() {
 			"record Point(int myInt, char myChar) implements I {\n"+
 			"  static int f;\n"+
 			"  public Point {\n"+
-			"     this.myInt = myInt;\n" +
 			"  }\n"+
 			"}\n" +
 			"interface I {}\n"
@@ -1979,21 +1992,19 @@ public void testBug560256_002() {
 		"----------\n");
 }
 public void testBug560256_003() {
-	this.runNegativeTest(
+	this.runConformTest(
 		new String[] {
 			"X.java",
 			"class X {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
 			"  class Inner {\n"+
 			"	  record Point(int x, int y){}\n"+
 			"  }\n" +
 			"}",
 		},
-		"----------\n" +
-		"1. ERROR in X.java (at line 3)\n" +
-		"	record Point(int x, int y){}\n" +
-		"	       ^^^^^\n" +
-		"Nested Record is (implicitly) static and hence enclosing type should be static\n" +
-		"----------\n");
+		"0");
 }
 public void testBug560256_004() {
 	this.runNegativeTest(
@@ -2069,12 +2080,36 @@ public void testBug560569_001() throws Exception {
 	 "true");
 	String expectedOutput =
 			"Bootstrap methods:\n" +
-			"  0 : # 68 invokestatic java/lang/runtime/ObjectMethods.bootstrap:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/TypeDescriptor;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/invoke/MethodHandle;)Ljava/lang/Object;\n" +
+			"  0 : # 69 invokestatic java/lang/runtime/ObjectMethods.bootstrap:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/TypeDescriptor;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/invoke/MethodHandle;)Ljava/lang/Object;\n" +
 			"	Method arguments:\n" +
 			"		#1 Car\n" +
-			"		#69 model;year\n" +
-			"		#71 REF_getField model:Ljava/lang/String;\n" +
-			"		#72 REF_getField year:I\n";
+			"		#70 model;year\n" +
+			"		#72 REF_getField model:Ljava/lang/String;\n" +
+			"		#73 REF_getField year:I\n";
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Car.class", ClassFileBytesDisassembler.SYSTEM);
+	expectedOutput = 			"  // Method descriptor #12 (Ljava/lang/String;I)V\n" +
+			"  // Stack: 2, Locals: 3\n" +
+			"  public Car(java.lang.String model, int year);\n" +
+			"     0  aload_0 [this]\n" +
+			"     1  invokespecial java.lang.Record() [14]\n" +
+			"     4  aload_0 [this]\n" +
+			"     5  aload_1 [model]\n" +
+			"     6  putfield Car.model : java.lang.String [17]\n" +
+			"     9  aload_0 [this]\n" +
+			"    10  iload_2 [year]\n" +
+			"    11  putfield Car.year : int [19]\n" +
+			"    14  return\n" +
+			"      Line numbers:\n" +
+			"        [pc: 0, line: 3]\n" +
+			"        [pc: 4, line: 4]\n" +
+			"      Local variable table:\n" +
+			"        [pc: 0, pc: 15] local: this index: 0 type: Car\n" +
+			"        [pc: 0, pc: 15] local: model index: 1 type: java.lang.String\n" +
+			"        [pc: 0, pc: 15] local: year index: 2 type: int\n" +
+			"      Method Parameters:\n" +
+			"        model\n" +
+			"        year\n" +
+			"  \n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Car.class", ClassFileBytesDisassembler.SYSTEM);
 }
 public void testBug560496_001() throws Exception {
@@ -2233,26 +2268,6 @@ public void testBug560798_005() throws Exception {
 		},
 	 "true");
 }
-@SuppressWarnings({ "unchecked", "rawtypes" })
-public void testBug560770_001() {
-	Map options = getCompilerOptions();
-	options.put(CompilerOptions.OPTION_ReportPreviewFeatures, CompilerOptions.ERROR);
-	this.runNegativeTest(
-	new String[] {
-			"X.java",
-			"record R() {}\n",
-		},
-		"----------\n" +
-		"1. ERROR in X.java (at line 1)\n" +
-		"	record R() {}\n" +
-		"	       ^\n" +
-		"You are using a preview language feature that may or may not be supported in a future release\n" +
-		"----------\n",
-		null,
-		true,
-		options
-	);
-}
 public void testBug560893_001() {
 	runConformTest(
 			new String[] {
@@ -2337,7 +2352,7 @@ public void testBug560893_006() {
 				"X.java",
 				"class X {\n"+
 				"       public static void main(String[] args) {\n"+
-				"           static record R(int x, int y) {}\n"+
+				"           record R(int x, int y) {}\n"+
 				"           R r =  new R(100,200);\n"+
 				"           System.out.println(r.x());\n"+
 				"       }\n"+
@@ -2371,7 +2386,7 @@ public void testBug560893_007() {
 		"1. ERROR in X.java (at line 10)\n" +
 		"	System.out.println(li);  // error, local variable\n" +
 		"	                   ^^\n" +
-		"Cannot make a static reference to the non-static variable li from a local record\n" +
+		"Cannot make a static reference to the non-static variable li\n" +
 		"----------\n" +
 		"2. ERROR in X.java (at line 11)\n" +
 		"	System.out.println(nsi); // error, non-static member\n" +
@@ -2382,6 +2397,7 @@ public void testBug560893_007() {
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public void testBug558718_001() {
 	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
 	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
 	this.runNegativeTest(
 	new String[] {
@@ -2391,8 +2407,8 @@ public void testBug558718_001() {
 		"----------\n" +
 		"1. ERROR in X.java (at line 1)\n" +
 		"	record R() {}\n" +
-		"	^^^^^^\n" +
-		"record is a preview feature and disabled by default. Use --enable-preview to enable\n" +
+		"	       ^\n" +
+		"The Java feature \'Records\' is only available with source level 16 and above\n" +
 		"----------\n",
 		null,
 		true,
@@ -2409,21 +2425,53 @@ public void testBug558718_002() {
 			"X.java",
 			"record R() {}\n",
 		},
+		"----------\n" +
+				"1. ERROR in X.java (at line 1)\n" +
+				"	record R() {}\n" +
+				"	       ^\n" +
+				"The Java feature \'Records\' is only available with source level 16 and above\n" +
+				"----------\n",
+		null,
+		true,
+		options
+	);
+}
+@SuppressWarnings({ "unchecked", "rawtypes" })
+public void testBug558718_003() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_14);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runNegativeTest(
+	new String[] {
+			"X.java",
+			"record R() {}\n",
+		},
 	"----------\n" +
 	"1. ERROR in X.java (at line 1)\n" +
 	"	record R() {}\n" +
-	"	^^^^^^\n" +
-	"Syntax error on token \"record\", @ expected\n" +
-	"----------\n" +
-	"2. ERROR in X.java (at line 1)\n" +
-	"	record R() {}\n" +
-	"	         ^\n" +
-	"Syntax error, insert \"enum Identifier\" to complete EnumHeader\n" +
+	"	       ^\n" +
+	"The Java feature \'Records\' is only available with source level 16 and above\n" +
 	"----------\n",
 		null,
 		true,
 		options
 	);
+}
+public void testBug56180_001() throws Exception {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"record R () {} \n"+
+			"class X {\n"+
+			"       public static void main(String[] args) {\n"+
+			"               System.out.println(new R().toString());\n"+
+			"       }\n"+
+			"}\n"
+		},
+	 "R[]");
+	String expectedOutput =
+			" public final java.lang.String toString();\n";
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "R.class", ClassFileBytesDisassembler.SYSTEM);
 }
 public void testBug561528_001() {
 	runConformTest(
@@ -2531,7 +2579,28 @@ public void testBug561778_001() throws IOException, ClassFormatException {
 			},
 		"0");
 	String expectedOutput =
-			"  // Method descriptor #24 ()Ljava/lang/Object;\n" +
+			"  // Method descriptor #10 (Ljava/lang/Object;)V\n" +
+			"  // Signature: (TT;)V\n" +
+			"  // Stack: 2, Locals: 2\n" +
+			"  public X(java.lang.Object value);\n" +
+			"     0  aload_0 [this]\n" +
+			"     1  invokespecial java.lang.Record() [13]\n" +
+			"     4  aload_0 [this]\n" +
+			"     5  aload_1 [value]\n" +
+			"     6  putfield X.value : java.lang.Object [16]\n" +
+			"     9  return\n" +
+			"      Line numbers:\n" +
+			"        [pc: 0, line: 1]\n" +
+			"      Local variable table:\n" +
+			"        [pc: 0, pc: 10] local: this index: 0 type: X\n" +
+			"        [pc: 0, pc: 10] local: value index: 1 type: java.lang.Object\n" +
+			"      Local variable type table:\n" +
+			"        [pc: 0, pc: 10] local: this index: 0 type: X<T>\n" +
+			"        [pc: 0, pc: 10] local: value index: 1 type: T\n" +
+			"      Method Parameters:\n" +
+			"        value\n" +
+			"  \n" +
+			"  // Method descriptor #25 ()Ljava/lang/Object;\n" +
 			"  // Signature: ()TT;\n" +
 			"  // Stack: 1, Locals: 1\n" +
 			"  public java.lang.Object value();\n";
@@ -2557,18 +2626,18 @@ public void testBug561778_002() throws IOException, ClassFormatException {
 			},
 		"0");
 	String expectedOutput =
-			"  // Method descriptor #24 ()LY;\n" +
+			"  // Method descriptor #25 ()LY;\n" +
 			"  // Signature: ()LY<TT;>;\n" +
 			"  // Stack: 1, Locals: 1\n" +
 			"  public Y value();\n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "X.class", ClassFileBytesDisassembler.SYSTEM);
 }
 public void testBug562219_001() {
-	this.runNegativeTest(
+	runConformTest(
 			new String[] {
 				"X.java",
 				"public class X {\n"+
-				"       public void foo() {\n"+
+				"       public static void main(String[] args) {\n"+
 				"               @SuppressWarnings(\"unused\")\n"+
 				"               class Y {\n"+
 				"                       @SuppressWarnings(\"preview\")\n"+
@@ -2581,38 +2650,22 @@ public void testBug562219_001() {
 				"       }\n"+
 				"}\n"
 			},
-		"----------\n" +
-		"1. ERROR in X.java (at line 7)\n" +
-		"	record R() {\n" +
-		"	       ^\n" +
-		"A record declaration R is not allowed in a local inner class\n" +
-		"----------\n",
-		null,
-		true
-	);
+		"");
 }
 public void testBug562219_002() {
-	this.runNegativeTest(
+	runConformTest(
 			new String[] {
 				"X.java",
 				"public class X {\n"+
-				"    public void foo() {\n"+
+				"    public static void main(String[] args) {\n"+
 				"        @SuppressWarnings(\"unused\")\n"+
 				"        class Y {\n"+
-				"           @SuppressWarnings(\"preview\")\n"+
 				"           record R() {}\n"+
 				"        }\n"+
 				"    }\n"+
 				"}\n"
 			},
-		"----------\n" +
-		"1. ERROR in X.java (at line 6)\n" +
-		"	record R() {}\n" +
-		"	       ^\n" +
-		"A record declaration R is not allowed in a local inner class\n" +
-		"----------\n",
-		null,
-		true
+		""
 	);
 }
 /*
@@ -2766,7 +2819,7 @@ public void testBug562439_001() throws IOException, ClassFormatException {
 			"// Component descriptor #6 I\n" +
 			"int myInt;\n" +
 			"  RuntimeInvisibleAnnotations: \n" +
-			"    #61 @RC(\n" +
+			"    #62 @RC(\n" +
 			"    )\n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 }
@@ -2801,7 +2854,7 @@ public void testBug562439_002() throws IOException, ClassFormatException {
 			"// Component descriptor #6 I\n" +
 			"int myInt;\n" +
 			"  RuntimeVisibleAnnotations: \n" +
-			"    #61 @RC(\n" +
+			"    #62 @RC(\n" +
 			"    )\n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 }
@@ -3077,7 +3130,7 @@ public void testBug562439_009() throws IOException, ClassFormatException {
 		},
 		"100");
 	String expectedOutput =
-			"  // Method descriptor #23 ()I\n" +
+			"  // Method descriptor #24 ()I\n" +
 			"  // Stack: 1, Locals: 1\n" +
 			"  public int myInt();\n" +
 			"    0  aload_0 [this]\n" +
@@ -3086,7 +3139,7 @@ public void testBug562439_009() throws IOException, ClassFormatException {
 			"      Line numbers:\n" +
 			"        [pc: 0, line: 11]\n" +
 			"    RuntimeInvisibleAnnotations: \n" +
-			"      #25 @RCM(\n" +
+			"      #26 @RCM(\n" +
 			"      )\n" +
 			"  \n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
@@ -3097,7 +3150,7 @@ public void testBug562439_009() throws IOException, ClassFormatException {
 			"// Component descriptor #6 I\n" +
 			"int myInt;\n" +
 			"  RuntimeInvisibleAnnotations: \n" +
-			"    #25 @RCM(\n" +
+			"    #26 @RCM(\n" +
 			"    )\n" +
 			"// Component descriptor #8 C\n" +
 			"char myChar;\n";
@@ -3134,7 +3187,7 @@ public void testBug562439_010() throws IOException, ClassFormatException {
 			"      Line numbers:\n" +
 			"        [pc: 0, line: 13]\n" +
 			"    RuntimeVisibleAnnotations: \n" +
-			"      #25 @RCM(\n" +
+			"      #26 @RCM(\n" +
 			"      )\n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 	expectedOutput =
@@ -3144,7 +3197,7 @@ public void testBug562439_010() throws IOException, ClassFormatException {
 			"// Component descriptor #6 I\n" +
 			"int myInt;\n" +
 			"  RuntimeVisibleAnnotations: \n" +
-			"    #25 @RCM(\n" +
+			"    #26 @RCM(\n" +
 			"    )\n" +
 			"// Component descriptor #8 C\n" +
 			"char myChar;\n";
@@ -3171,7 +3224,7 @@ public void testBug562439_011() throws IOException, ClassFormatException {
 		},
 		"100");
 	String expectedOutput =
-			"  // Method descriptor #23 ()I\n" +
+			"  // Method descriptor #24 ()I\n" +
 			"  // Stack: 1, Locals: 1\n" +
 			"  public int myInt();\n" +
 			"    0  aload_0 [this]\n" +
@@ -3180,7 +3233,7 @@ public void testBug562439_011() throws IOException, ClassFormatException {
 			"      Line numbers:\n" +
 			"        [pc: 0, line: 11]\n" +
 			"    RuntimeInvisibleAnnotations: \n" +
-			"      #25 @M(\n" +
+			"      #26 @M(\n" +
 			"      )\n" +
 			"  \n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
@@ -3225,7 +3278,7 @@ public void testBug562439_012() throws IOException, ClassFormatException {
 			"      Line numbers:\n" +
 			"        [pc: 0, line: 13]\n" +
 			"    RuntimeVisibleAnnotations: \n" +
-			"      #25 @M(\n" +
+			"      #26 @M(\n" +
 			"      )\n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 	expectedOutput =
@@ -3268,7 +3321,7 @@ public void testBug562439_013() throws IOException, ClassFormatException {
 			"  \n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 	expectedOutput =
-			"  // Method descriptor #25 ()I\n" +
+			"  // Method descriptor #26 ()I\n" +
 			"  // Stack: 1, Locals: 1\n" +
 			"  public int myInt();\n" +
 			"    0  aload_0 [this]\n" +
@@ -3278,6 +3331,10 @@ public void testBug562439_013() throws IOException, ClassFormatException {
 			"        [pc: 0, line: 11]\n" +
 			"    RuntimeInvisibleAnnotations: \n" +
 			"      #8 @RCMU(\n" +
+			"      )\n" +
+			"    RuntimeInvisibleTypeAnnotations: \n" +
+			"      #8 @RCMU(\n" +
+			"        target type = 0x14 METHOD_RETURN\n" +
 			"      )\n" +
 			"  \n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
@@ -3326,7 +3383,7 @@ public void testBug562439_014() throws IOException, ClassFormatException {
 			"  \n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 	expectedOutput =
-			"  // Method descriptor #25 ()I\n" +
+			"  // Method descriptor #26 ()I\n" +
 			"  // Stack: 1, Locals: 1\n" +
 			"  public int myInt();\n" +
 			"    0  aload_0 [this]\n" +
@@ -3384,7 +3441,7 @@ public void testBug562439_015() throws IOException, ClassFormatException {
 			"  \n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 	expectedOutput =
-			"  // Method descriptor #25 ()I\n" +
+			"  // Method descriptor #26 ()I\n" +
 			"  // Stack: 1, Locals: 1\n" +
 			"  public int myInt();\n" +
 			"    0  aload_0 [this]\n" +
@@ -3392,9 +3449,11 @@ public void testBug562439_015() throws IOException, ClassFormatException {
 			"    4  ireturn\n" +
 			"      Line numbers:\n" +
 			"        [pc: 0, line: 11]\n" +
-			"    RuntimeInvisibleAnnotations: \n" +
+			"    RuntimeInvisibleTypeAnnotations: \n" +
 			"      #8 @T(\n" +
-			"      )\n";
+			"        target type = 0x14 METHOD_RETURN\n" +
+			"      )\n" +
+			"  ";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 	expectedOutput =
 			"Record: #Record\n" +
@@ -3408,7 +3467,7 @@ public void testBug562439_015() throws IOException, ClassFormatException {
 			"    )\n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 	expectedOutput =
-			"  public Point(int myInt, char myChar);\n" +
+			"  Point(int myInt, char myChar);\n" +
 			"     0  aload_0 [this]\n" +
 			"     1  invokespecial java.lang.Record() [14]\n" +
 			"     4  aload_0 [this]\n" +
@@ -3424,6 +3483,9 @@ public void testBug562439_015() throws IOException, ClassFormatException {
 			"        [pc: 0, pc: 15] local: this index: 0 type: Point\n" +
 			"        [pc: 0, pc: 15] local: myInt index: 1 type: int\n" +
 			"        [pc: 0, pc: 15] local: myChar index: 2 type: char\n" +
+			"      Method Parameters:\n" +
+			"        myInt\n" +
+			"        myChar\n" +
 			"    RuntimeInvisibleTypeAnnotations: \n" +
 			"      #8 @T(\n" +
 			"        target type = 0x16 METHOD_FORMAL_PARAMETER\n" +
@@ -3471,10 +3533,11 @@ public void testBug562439_016() throws IOException, ClassFormatException {
 			"    4  ireturn\n" +
 			"      Line numbers:\n" +
 			"        [pc: 0, line: 13]\n" +
-			"    RuntimeVisibleAnnotations: \n" +
+			"    RuntimeVisibleTypeAnnotations: \n" +
 			"      #8 @T(\n" +
+			"        target type = 0x14 METHOD_RETURN\n" +
 			"      )\n" +
-			"  \n";
+			"  ";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 	expectedOutput =
 			"Record: #Record\n" +
@@ -3488,7 +3551,7 @@ public void testBug562439_016() throws IOException, ClassFormatException {
 			"    )\n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 	expectedOutput =
-			"  public Point(int myInt, char myChar);\n" +
+			"  Point(int myInt, char myChar);\n" +
 			"     0  aload_0 [this]\n" +
 			"     1  invokespecial java.lang.Record() [14]\n" +
 			"     4  aload_0 [this]\n" +
@@ -3504,6 +3567,9 @@ public void testBug562439_016() throws IOException, ClassFormatException {
 			"        [pc: 0, pc: 15] local: this index: 0 type: Point\n" +
 			"        [pc: 0, pc: 15] local: myInt index: 1 type: int\n" +
 			"        [pc: 0, pc: 15] local: myChar index: 2 type: char\n" +
+			"      Method Parameters:\n" +
+			"        myInt\n" +
+			"        myChar\n" +
 			"    RuntimeVisibleTypeAnnotations: \n" +
 			"      #8 @T(\n" +
 			"        target type = 0x16 METHOD_FORMAL_PARAMETER\n" +
@@ -3533,7 +3599,7 @@ public void testBug562439_017() throws IOException, ClassFormatException {
 		},
 		"100");
 	String expectedOutput =
-			"  public Point(int myInt, char myChar);\n" +
+			"  Point(int myInt, char myChar);\n" +
 			"     0  aload_0 [this]\n" +
 			"     1  invokespecial java.lang.Record() [14]\n" +
 			"     4  aload_0 [this]\n" +
@@ -3549,6 +3615,9 @@ public void testBug562439_017() throws IOException, ClassFormatException {
 			"        [pc: 0, pc: 15] local: this index: 0 type: Point\n" +
 			"        [pc: 0, pc: 15] local: myInt index: 1 type: int\n" +
 			"        [pc: 0, pc: 15] local: myChar index: 2 type: char\n" +
+			"      Method Parameters:\n" +
+			"        myInt\n" +
+			"        myChar\n" +
 			"    RuntimeInvisibleParameterAnnotations: \n" +
 			"      Number of annotations for parameter 0: 1\n" +
 			"        #12 @RCP(\n" +
@@ -3591,7 +3660,7 @@ public void testBug562439_018() throws IOException, ClassFormatException {
 		},
 		"100");
 	String expectedOutput =
-			"  public Point(int myInt, char myChar);\n" +
+			"  Point(int myInt, char myChar);\n" +
 			"     0  aload_0 [this]\n" +
 			"     1  invokespecial java.lang.Record() [14]\n" +
 			"     4  aload_0 [this]\n" +
@@ -3607,6 +3676,9 @@ public void testBug562439_018() throws IOException, ClassFormatException {
 			"        [pc: 0, pc: 15] local: this index: 0 type: Point\n" +
 			"        [pc: 0, pc: 15] local: myInt index: 1 type: int\n" +
 			"        [pc: 0, pc: 15] local: myChar index: 2 type: char\n" +
+			"      Method Parameters:\n" +
+			"        myInt\n" +
+			"        myChar\n" +
 			"    RuntimeVisibleParameterAnnotations: \n" +
 			"      Number of annotations for parameter 0: 1\n" +
 			"        #12 @RCP(\n" +
@@ -3657,7 +3729,7 @@ public void testBug562439_019() throws IOException, ClassFormatException {
 			"  \n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 	expectedOutput =
-			"  public Point(int myInt, char myChar);\n" +
+			"  Point(int myInt, char myChar);\n" +
 			"     0  aload_0 [this]\n" +
 			"     1  invokespecial java.lang.Record() [16]\n" +
 			"     4  aload_0 [this]\n" +
@@ -3673,6 +3745,9 @@ public void testBug562439_019() throws IOException, ClassFormatException {
 			"        [pc: 0, pc: 15] local: this index: 0 type: Point\n" +
 			"        [pc: 0, pc: 15] local: myInt index: 1 type: int\n" +
 			"        [pc: 0, pc: 15] local: myChar index: 2 type: char\n" +
+			"      Method Parameters:\n" +
+			"        myInt\n" +
+			"        myChar\n" +
 			"    RuntimeInvisibleParameterAnnotations: \n" +
 			"      Number of annotations for parameter 0: 1\n" +
 			"        #8 @Annot(\n" +
@@ -3686,7 +3761,7 @@ public void testBug562439_019() throws IOException, ClassFormatException {
 			"  \n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 	expectedOutput =
-			"  // Method descriptor #27 ()I\n" +
+			"  // Method descriptor #28 ()I\n" +
 			"  // Stack: 1, Locals: 1\n" +
 			"  public int myInt();\n" +
 			"    0  aload_0 [this]\n" +
@@ -3697,7 +3772,10 @@ public void testBug562439_019() throws IOException, ClassFormatException {
 			"    RuntimeInvisibleAnnotations: \n" +
 			"      #8 @Annot(\n" +
 			"      )\n" +
-			"  \n";
+			"    RuntimeInvisibleTypeAnnotations: \n" +
+			"      #8 @Annot(\n" +
+			"        target type = 0x14 METHOD_RETURN\n" +
+			"      )\n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 	expectedOutput =
 			"Record: #Record\n" +
@@ -3738,7 +3816,7 @@ public void testBug562439_020() throws IOException, ClassFormatException {
 		},
 		"100");
 	String expectedOutput =
-			"  public Point(int myInt, char myChar);\n" +
+			"  Point(int myInt, char myChar);\n" +
 			"     0  aload_0 [this]\n" +
 			"     1  invokespecial java.lang.Record() [14]\n" +
 			"     4  aload_0 [this]\n" +
@@ -3754,6 +3832,9 @@ public void testBug562439_020() throws IOException, ClassFormatException {
 			"        [pc: 0, pc: 15] local: this index: 0 type: Point\n" +
 			"        [pc: 0, pc: 15] local: myInt index: 1 type: int\n" +
 			"        [pc: 0, pc: 15] local: myChar index: 2 type: char\n" +
+			"      Method Parameters:\n" +
+			"        myInt\n" +
+			"        myChar\n" +
 			"    RuntimeVisibleParameterAnnotations: \n" +
 			"      Number of annotations for parameter 0: 1\n" +
 			"        #12 @Annot(\n" +
@@ -3772,134 +3853,3866 @@ public void testBug562439_020() throws IOException, ClassFormatException {
 			"    )\n";
 	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
 }
-public void testBug564146_001() {
+public void testBug563178_001() {
 	this.runNegativeTest(
 		new String[] {
 			"X.java",
-			"public record X(int i) {\n"+
-			"  public X() {\n"+
-			"    this.i = 10;\n"+
+			"class X {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"+
+			"record Point(final int x, int y){\n"+
+		"}",
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 6)\n" +
+		"	record Point(final int x, int y){\n" +
+		"	                       ^\n" +
+		"A record component x cannot have modifiers\n" +
+		"----------\n");
+}
+public void testBug563183_001() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public record X() {\n"+
+			"  public X() {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
 			"  }\n"+
 			"}",
 		},
-		"----------\n" +
-		"1. ERROR in X.java (at line 2)\n" +
-		"	public X() {\n" +
-		"	       ^^^\n" +
-		"A non-canonical constructor must start with an explicit invocation to a constructor\n" +
-		"----------\n");
+		"0");
 }
-public void testBug564146_002() {
-	this.runNegativeTest(
+public void testBug563183_002() {
+	this.runConformTest(
 		new String[] {
 			"X.java",
-			"public record X(int i) {\n"+
-			"  public X() {\n"+
-			"    super();\n"+
-			"    this.i = 10;\n"+
+			"public record X() {\n"+
+			"  public X {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
 			"  }\n"+
 			"}",
 		},
-		"----------\n" +
-		"1. ERROR in X.java (at line 2)\n" +
-		"	public X() {\n" +
-		"	       ^^^\n" +
-		"A non-canonical constructor must start with an explicit invocation to a constructor\n" +
-		"----------\n");
+		"0");
 }
-public void testBug564146_003() {
-	this.runNegativeTest(
-		new String[] {
-			"X.java",
-			"public record X(int i) {\n"+
-			"  public X(int i) {\n"+
-			"    this.i = 10;\n"+
-			"    Zork();\n"+
-			"  }\n"+
-			"}",
-		},
-		"----------\n" +
-		"1. ERROR in X.java (at line 4)\n" +
-		"	Zork();\n" +
-		"	^^^^\n" +
-		"The method Zork() is undefined for the type X\n" +
-		"----------\n");
-}
-public void testBug564146_004() {
-	runConformTest(
-		new String[] {
-			"X.java",
-			"public record X(int i) {\n"+
-				" public X() {\n"+
-				"   this(10);\n"+
-				" }\n"+
-				" public static void main(String[] args) {\n"+
-				"   System.out.println(new X().i());\n"+
-				" }\n"+
-				"}"
-			},
-		"10");
-}
-public void testBug564146_005() {
+public void testBug563183_003() {
 	this.runNegativeTest(
 		new String[] {
 			"X.java",
 			"public record X() {\n"+
-			" public X(int i) {\n"+
-			"   this(10);\n"+
-			" }\n"+
+			"  protected X() {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	protected X() {}\n" +
+		"	          ^^^\n" +
+		"Cannot reduce the visibility of a canonical constructor X from that of the record\n" +
+		"----------\n");
+}
+public void testBug563183_004() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public record X() {\n"+
+			"  protected X {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	protected X {}\n" +
+		"	          ^\n" +
+		"Cannot reduce the visibility of a canonical constructor X from that of the record\n" +
+		"----------\n");
+}
+public void testBug563183_005() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public record X() {\n"+
+			"  /*package */ X() {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	/*package */ X() {}\n" +
+		"	             ^^^\n" +
+		"Cannot reduce the visibility of a canonical constructor X from that of the record\n" +
+		"----------\n");
+}
+public void testBug563183_006() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public record X() {\n"+
+			"  /*package */ X {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	/*package */ X {}\n" +
+		"	             ^\n" +
+		"Cannot reduce the visibility of a canonical constructor X from that of the record\n" +
+		"----------\n");
+}
+public void testBug563183_007() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public record X() {\n"+
+			"  private X() {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	private X() {}\n" +
+		"	        ^^^\n" +
+		"Cannot reduce the visibility of a canonical constructor X from that of the record\n" +
+		"----------\n");
+}
+public void testBug563183_008() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public record X() {\n"+
+			"  private X {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	private X {}\n" +
+		"	        ^\n" +
+		"Cannot reduce the visibility of a canonical constructor X from that of the record\n" +
+		"----------\n");
+}
+public void testBug563183_009() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			"  protected record R() {\n"+
+			"    public R() {}\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_010() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			"  protected record R() {\n"+
+			"    public R {}\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_011() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			"  protected record R() {\n"+
+			"    protected R() {}\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_012() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			"  protected record R() {\n"+
+			"    protected R {}\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_013() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			"  protected record R() {\n"+
+			"    /*package */ R() {}\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
 			"}",
 		},
 		"----------\n" +
 		"1. ERROR in X.java (at line 3)\n" +
-		"	this(10);\n" +
-		"	^^^^^^^^^\n" +
-		"Recursive constructor invocation X(int)\n" +
+		"	/*package */ R() {}\n" +
+		"	             ^^^\n" +
+		"Cannot reduce the visibility of a canonical constructor R from that of the record\n" +
 		"----------\n");
 }
-public void testBug564146_006() {
+public void testBug563183_014() {
 	this.runNegativeTest(
 		new String[] {
 			"X.java",
-			"public record X() {\n"+
-			" public X() {\n"+
-			"   System.out.println(10);\n"+
-			"   this(10);\n"+
-			" }\n"+
+			"public class X {\n"+
+			"  protected record R() {\n"+
+			"    /*package */ R {}\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
 			"}",
 		},
 		"----------\n" +
-		"1. ERROR in X.java (at line 4)\n" +
-		"	this(10);\n" +
-		"	^^^^^^^^^\n" +
-		"The body of a canonical constructor must not contain an explicit constructor call\n" +
-		"----------\n" +
-		"2. ERROR in X.java (at line 4)\n" +
-		"	this(10);\n" +
-		"	^^^^^^^^^\n" +
-		"Constructor call must be the first statement in a constructor\n" +
+		"1. ERROR in X.java (at line 3)\n" +
+		"	/*package */ R {}\n" +
+		"	             ^\n" +
+		"Cannot reduce the visibility of a canonical constructor R from that of the record\n" +
 		"----------\n");
 }
-public void testBug564146_007() {
-	runConformTest(
+public void testBug563183_015() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			"  protected record R() {\n"+
+			"    private R() {}\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 3)\n" +
+		"	private R() {}\n" +
+		"	        ^^^\n" +
+		"Cannot reduce the visibility of a canonical constructor R from that of the record\n" +
+		"----------\n");
+}
+public void testBug563183_016() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			"  protected record R() {\n"+
+			"    private R {}\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 3)\n" +
+		"	private R {}\n" +
+		"	        ^\n" +
+		"Cannot reduce the visibility of a canonical constructor R from that of the record\n" +
+		"----------\n");
+}
+public void testBug563183_017() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"/*package */ record X() {\n"+
+			"  public X() {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_018() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"/*package */ record X() {\n"+
+			"  public X {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_019() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"record X() {\n"+
+			"  protected X() {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_020() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"record X() {\n"+
+			"  protected X {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_021() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			" record X() {\n"+
+			"  /*package */ X() {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_022() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			" record X() {\n"+
+			"  /*package */ X {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_023() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"record X() {\n"+
+			"  private X() {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	private X() {}\n" +
+		"	        ^^^\n" +
+		"Cannot reduce the visibility of a canonical constructor X from that of the record\n" +
+		"----------\n");
+}
+public void testBug563183_024() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"record X() {\n"+
+			"  private X {}\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	private X {}\n" +
+		"	        ^\n" +
+		"Cannot reduce the visibility of a canonical constructor X from that of the record\n" +
+		"----------\n");
+}
+public void testBug563183_025() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			"  private record R() {\n"+
+			"    public R() {}\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_026() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			"  private record R() {\n"+
+			"    protected R {}\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_027() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			"  private record R() {\n"+
+			"    /* package */ R() {}\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563183_028() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			"  private record R() {\n"+
+			"    private R {}\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug563184_001() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"record X(int angel) {\n"+
+			"  X(int devil) {\n"+
+			"     this.angel = devil;\n" +
+			"  }\n"+
+			"}",
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	X(int devil) {\n" +
+		"	      ^^^^^\n" +
+		"Illegal parameter name devil in canonical constructor, expected angel, the corresponding component name\n" +
+		"----------\n");
+}
+public void testBug563184_002() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"record X(int myInt) {\n"+
+			"  X(int myInt) {\n"+
+			"     this.myInt = myInt;\n" +
+			"  }\n"+
+			"  X(int i, int j) {\n"+
+			"    this(i);\n"+
+			"  }\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}",
+		},
+		"0");
+}
+public void testBug562637_001() {
+	this.runConformTest(
 		new String[] {
 			"X.java",
 			"public record X(int i) {\n"+
-			" public X() {\n"+
-			"   this(10);\n"+
-			" }\n"+
-			" public X(int i, int k) {\n"+
-			"   this();\n"+
-			" }\n"+
-			" public static void main(String[] args) {\n"+
-			"   System.out.println(new X(2, 3).i());\n"+
-			" }\n"+
-			"}"
-			},
-		"10");
+			"    public X {\n"+
+			"            i = i/2;\n"+
+			"    }\n"+
+			"    public static void main(String[] args) {\n"+
+			"            System.out.println(new X(10).i());\n"+
+			"    }\n"+
+			"}",
+		},
+		"5");
 }
-public void testBug565830_01() {
+	public void testBug563181_01() throws IOException, ClassFormatException {
+		runConformTest(
+				new String[] {
+						"X.java",
+						"import java.lang.annotation.ElementType;\n"+
+						"import java.lang.annotation.Target;\n"+
+						"public class X { \n"+
+						"  public static void main(String[] args){}\n"+
+						"}\n"+
+						"record Point(@RCMU int myInt, char myChar) { \n"+
+						"  public int myInt(){\n"+
+						"     return this.myInt;\n" +
+						"  }\n"+
+						"}   \n"+
+						"@Target({ ElementType.RECORD_COMPONENT, ElementType.METHOD, ElementType.TYPE_USE})\n"+
+						"@interface RCMU {}\n"
+				},
+				"");
+		String expectedOutput =
+				"  // Method descriptor #26 ()I\n" +
+				"  // Stack: 1, Locals: 1\n" +
+				"  public int myInt();\n" +
+				"    0  aload_0 [this]\n" +
+				"    1  getfield Point.myInt : int [17]\n" +
+				"    4  ireturn\n" +
+				"      Line numbers:\n" +
+				"        [pc: 0, line: 8]\n" +
+				"      Local variable table:\n" +
+				"        [pc: 0, pc: 5] local: this index: 0 type: Point\n" +
+				"  \n";
+		RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
+	}
+	public void testBug563181_02() throws IOException, ClassFormatException {
+		runConformTest(
+				new String[] {
+						"X.java",
+						"import java.lang.annotation.ElementType;\n"+
+						"import java.lang.annotation.Target;\n"+
+						"public class X { \n"+
+						"  public static void main(String[] args){}\n"+
+						"}\n"+
+						"record Point(@RCMU int myInt, char myChar) {\n"+
+						"  @RCMU public int myInt(){\n"+
+						"     return this.myInt;\n" +
+						"  }\n"+
+						"}\n"+
+						"@Target({ ElementType.RECORD_COMPONENT, ElementType.METHOD, ElementType.TYPE_USE})\n"+
+						"@interface RCMU {}\n"
+				},
+				"");
+		String expectedOutput =
+				"  // Method descriptor #26 ()I\n" +
+				"  // Stack: 1, Locals: 1\n" +
+				"  public int myInt();\n" +
+				"    0  aload_0 [this]\n" +
+				"    1  getfield Point.myInt : int [17]\n" +
+				"    4  ireturn\n" +
+				"      Line numbers:\n" +
+				"        [pc: 0, line: 8]\n" +
+				"      Local variable table:\n" +
+				"        [pc: 0, pc: 5] local: this index: 0 type: Point\n" +
+				"    RuntimeInvisibleAnnotations: \n" +
+				"      #8 @RCMU(\n" +
+				"      )\n" +
+				"    RuntimeInvisibleTypeAnnotations: \n" +
+				"      #8 @RCMU(\n" +
+				"        target type = 0x14 METHOD_RETURN\n" +
+				"      )\n" +
+				"  \n";
+		RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
+	}
+	public void testBug563181_03() throws IOException, ClassFormatException {
+		runConformTest(
+				new String[] {
+						"X.java",
+						"import java.lang.annotation.*;\n"+
+						"public class X { \n"+
+						"  public static void main(String[] args){}\n"+
+						"}\n"+
+						"record Point(@TypeAnnot @SimpleAnnot int myInt, char myChar) {}\n"+
+						"@Target({ ElementType.RECORD_COMPONENT, ElementType.METHOD})\n"+
+						"@Retention(RetentionPolicy.RUNTIME)\n" +
+						"@interface SimpleAnnot {}\n" +
+						"@Target({ ElementType.RECORD_COMPONENT, ElementType.TYPE_USE})\n"+
+						"@Retention(RetentionPolicy.RUNTIME)\n" +
+						"@interface TypeAnnot {}\n"
+				},
+				"");
+		String expectedOutput =
+				"  // Method descriptor #26 ()I\n" +
+				"  // Stack: 1, Locals: 1\n" +
+				"  public int myInt();\n" +
+				"    0  aload_0 [this]\n" +
+				"    1  getfield Point.myInt : int [17]\n" +
+				"    4  ireturn\n" +
+				"      Line numbers:\n" +
+				"        [pc: 0, line: 5]\n" +
+				"    RuntimeVisibleAnnotations: \n" +
+				"      #28 @SimpleAnnot(\n" +
+				"      )\n" +
+				"    RuntimeVisibleTypeAnnotations: \n" +
+				"      #8 @TypeAnnot(\n" +
+				"        target type = 0x14 METHOD_RETURN\n" +
+				"      )\n" +
+				"  \n";
+		RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
+	}
+	public void testBug563181_04() throws IOException, ClassFormatException {
+		runConformTest(
+				new String[] {
+						"X.java",
+						"import java.lang.annotation.*;\n"+
+						"public class X { \n"+
+						"  public static void main(String[] args){}\n"+
+						"}\n"+
+						"record Point(@TypeAnnot @SimpleAnnot int myInt, char myChar) {\n"+
+						"  @TypeAnnot @SimpleAnnot public int myInt(){\n"+
+						"     return this.myInt;\n" +
+						"  }\n"+
+						"}\n"+
+						"@Target({ ElementType.RECORD_COMPONENT, ElementType.METHOD})\n"+
+						"@Retention(RetentionPolicy.RUNTIME)\n" +
+						"@interface SimpleAnnot {}\n" +
+						"@Target({ ElementType.RECORD_COMPONENT, ElementType.TYPE_USE})\n"+
+						"@Retention(RetentionPolicy.RUNTIME)\n" +
+						"@interface TypeAnnot {}\n"
+				},
+				"");
+		String expectedOutput =
+				" // Method descriptor #26 ()I\n" +
+				"  // Stack: 1, Locals: 1\n" +
+				"  public int myInt();\n" +
+				"    0  aload_0 [this]\n" +
+				"    1  getfield Point.myInt : int [17]\n" +
+				"    4  ireturn\n" +
+				"      Line numbers:\n" +
+				"        [pc: 0, line: 7]\n" +
+				"      Local variable table:\n" +
+				"        [pc: 0, pc: 5] local: this index: 0 type: Point\n" +
+				"    RuntimeVisibleAnnotations: \n" +
+				"      #28 @SimpleAnnot(\n" +
+				"      )\n" +
+				"    RuntimeVisibleTypeAnnotations: \n" +
+				"      #8 @TypeAnnot(\n" +
+				"        target type = 0x14 METHOD_RETURN\n" +
+				"      )\n" +
+				"  \n";
+		RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "Point.class", ClassFileBytesDisassembler.SYSTEM);
+	}
+	public void testBug565104_001() throws IOException, ClassFormatException {
+		runConformTest(
+			new String[] {
+				"X.java",
+				"public class X { \n"+
+				"  public record R() {}\n"+
+				"  public static void main(String[] args){}\n"+
+				"}\n"
+			},
+		"");
+		String expectedOutput =
+				"  // Stack: 1, Locals: 1\n" +
+				"  public X$R();\n" +
+				"    0  aload_0 [this]\n";
+		RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "X$R.class", ClassFileBytesDisassembler.SYSTEM);
+	}
+	public void testBug565104_002() throws IOException, ClassFormatException {
+		runConformTest(
+			new String[] {
+				"X.java",
+				"public class X { \n"+
+				"  record R() {}\n"+
+				"  public static void main(String[] args){}\n"+
+				"}\n"
+			},
+		"");
+		String expectedOutput =
+				"  // Stack: 1, Locals: 1\n" +
+				"  X$R();\n" +
+				"    0  aload_0 [this]\n";
+		RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "X$R.class", ClassFileBytesDisassembler.SYSTEM);
+	}
+	public void testBug565104_003() throws IOException, ClassFormatException {
+		runConformTest(
+			new String[] {
+				"X.java",
+				"public class X { \n"+
+				"  protected record R() {}\n"+
+				"  public static void main(String[] args){}\n"+
+				"}\n"
+			},
+		"");
+		String expectedOutput =
+				"  // Stack: 1, Locals: 1\n" +
+				"  protected X$R();\n" +
+				"    0  aload_0 [this]\n";
+		RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "X$R.class", ClassFileBytesDisassembler.SYSTEM);
+	}
+	public void testBug565104_004() throws IOException, ClassFormatException {
+		runConformTest(
+			new String[] {
+				"X.java",
+				"public class X { \n"+
+				"  private record R() {}\n"+
+				"  public static void main(String[] args){}\n"+
+				"}\n"
+			},
+		"");
+		String expectedOutput =
+				"  // Stack: 1, Locals: 1\n" +
+				"  private X$R();\n" +
+				"    0  aload_0 [this]\n";
+		RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "X$R.class", ClassFileBytesDisassembler.SYSTEM);
+	}
+	public void testBug564146_001() {
+		this.runNegativeTest(
+			new String[] {
+				"X.java",
+				"public record X(int i) {\n"+
+				"  public X() {\n"+
+				"    this.i = 10;\n"+
+				"  }\n"+
+				"}",
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 2)\n" +
+			"	public X() {\n" +
+			"	       ^^^\n" +
+			"A non-canonical constructor must start with an explicit invocation to a constructor\n" +
+			"----------\n");
+	}
+	public void testBug564146_002() {
+		this.runNegativeTest(
+			new String[] {
+				"X.java",
+				"public record X(int i) {\n"+
+				"  public X() {\n"+
+				"    super();\n"+
+				"    this.i = 10;\n"+
+				"  }\n"+
+				"}",
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 2)\n" +
+			"	public X() {\n" +
+			"	       ^^^\n" +
+			"A non-canonical constructor must start with an explicit invocation to a constructor\n" +
+			"----------\n");
+	}
+	public void testBug564146_003() {
+		this.runNegativeTest(
+			new String[] {
+				"X.java",
+				"public record X(int i) {\n"+
+				"  public X(int i) {\n"+
+				"    this.i = 10;\n"+
+				"    Zork();\n"+
+				"  }\n"+
+				"}",
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 4)\n" +
+			"	Zork();\n" +
+			"	^^^^\n" +
+			"The method Zork() is undefined for the type X\n" +
+			"----------\n");
+	}
+	public void testBug564146_004() {
+		runConformTest(
+			new String[] {
+				"X.java",
+				"public record X(int i) {\n"+
+					" public X() {\n"+
+					"   this(10);\n"+
+					" }\n"+
+					" public static void main(String[] args) {\n"+
+					"   System.out.println(new X().i());\n"+
+					" }\n"+
+					"}"
+				},
+			"10");
+	}
+	public void testBug564146_005() {
+		this.runNegativeTest(
+			new String[] {
+				"X.java",
+				"public record X() {\n"+
+				" public X(int i) {\n"+
+				"   this(10);\n"+
+				" }\n"+
+				"}",
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 3)\n" +
+			"	this(10);\n" +
+			"	^^^^^^^^^\n" +
+			"Recursive constructor invocation X(int)\n" +
+			"----------\n");
+	}
+	public void testBug564146_006() {
+		this.runNegativeTest(
+			new String[] {
+				"X.java",
+				"public record X() {\n"+
+				" public X() {\n"+
+				"   System.out.println(10);\n"+
+				"   this(10);\n"+
+				" }\n"+
+				"}",
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 4)\n" +
+			"	this(10);\n" +
+			"	^^^^^^^^^\n" +
+			"The body of a canonical constructor must not contain an explicit constructor call\n" +
+			"----------\n");
+	}
+	public void testBug564146_007() {
+		runConformTest(
+			new String[] {
+				"X.java",
+				"public record X(int i) {\n"+
+				" public X() {\n"+
+				"   this(10);\n"+
+				" }\n"+
+				" public X(int i, int k) {\n"+
+				"   this();\n"+
+				" }\n"+
+				" public static void main(String[] args) {\n"+
+				"   System.out.println(new X(2, 3).i());\n"+
+				" }\n"+
+				"}"
+				},
+			"10");
+	}
+
+public void testBug564672_001() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X extends record {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n" +
+			"class record {}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	class X extends record {\n" +
+		"	                ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 6)\n" +
+		"	class record {}\n" +
+		"	      ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_002() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X extends record {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	class X extends record {\n" +
+		"	                ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_003() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X implements record {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"interface record {}\n;" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	class X implements record {\n" +
+		"	                   ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 5)\n" +
+		"	interface record {}\n" +
+		"	          ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_004() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X implements record {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	class X implements record {\n" +
+		"	                   ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_005() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X {\n"+
+			"  class Y extends record {\n"+
+			"  }\n" +
+			"  class record {}\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class Y extends record {\n" +
+		"	                ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 4)\n" +
+		"	class record {}\n" +
+		"	      ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_006() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X {\n"+
+			"  class Y extends record {\n"+
+			"  }\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class Y extends record {\n" +
+		"	                ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_007() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X {\n"+
+			"  class Y implements record {\n"+
+			"  }\n" +
+			"  interface record {}\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class Y implements record {\n" +
+		"	                   ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 4)\n" +
+		"	interface record {}\n" +
+		"	          ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_008() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X {\n"+
+			"  class Y implements record {\n"+
+			"  }\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class Y implements record {\n" +
+		"	                   ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_009() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface Y extends record {\n"+
+			"}\n" +
+			"interface record {}\n" +
+			"class X {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	interface Y extends record {\n" +
+		"	                    ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 3)\n" +
+		"	interface record {}\n" +
+		"	          ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_010() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface Y extends record {\n"+
+			"}\n" +
+			"class X {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	interface Y extends record {\n" +
+		"	                    ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_011() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X {\n"+
+			"  interface Y extends record {\n"+
+			"  }\n" +
+			"  interface record {}\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	interface Y extends record {\n" +
+		"	                    ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 4)\n" +
+		"	interface record {}\n" +
+		"	          ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_012() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X {\n"+
+			"  interface Y extends record {\n"+
+			"  }\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	interface Y extends record {\n" +
+		"	                    ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_013() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface X {\n"+
+			"  class Y extends record {\n"+
+			"  }\n" +
+			"  class record {}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class Y extends record {\n" +
+		"	                ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 4)\n" +
+		"	class record {}\n" +
+		"	      ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_014() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface X {\n"+
+			"  class Y extends record {\n"+
+			"  }\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class Y extends record {\n" +
+		"	                ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_015() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface X {\n"+
+			"  class Y implements record {\n"+
+			"  }\n" +
+			"  interface record {}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class Y implements record {\n" +
+		"	                   ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 4)\n" +
+		"	interface record {}\n" +
+		"	          ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_016() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface X {\n"+
+			"  class Y implements record {\n"+
+			"  }\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class Y implements record {\n" +
+		"	                   ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_017() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface X {\n"+
+			"  interface Y extends record {\n"+
+			"  }\n" +
+			"  interface record {}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	interface Y extends record {\n" +
+		"	                    ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 4)\n" +
+		"	interface record {}\n" +
+		"	          ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_018() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface X {\n"+
+			"  interface Y extends record {\n"+
+			"  }\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	interface Y extends record {\n" +
+		"	                    ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_019() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	static record a(int i, int j) {\n" +
+			"		record r=new record(i,j);\n" +
+			"		return r;\n" +
+			"	}\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 3)\n" +
+		"	record r=new record(i,j);\n" +
+		"	^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 3)\n" +
+		"	record r=new record(i,j);\n" +
+		"	             ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"3. ERROR in X.java (at line 4)\n" +
+		"	return r;\n" +
+		"	^^^^^^\n" +
+		"Syntax error on token \"return\", byte expected\n" +
+		"----------\n");
+}
+public void testBug564672_020() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	class record {};\n" +
+			"	static record a(int i, int j) {\n" +
+			"		record r=new record();\n" +
+			"		return r;\n" +
+			"	}\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class record {};\n" +
+		"	      ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 4)\n" +
+		"	record r=new record();\n" +
+		"	^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"3. ERROR in X.java (at line 4)\n" +
+		"	record r=new record();\n" +
+		"	             ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"4. ERROR in X.java (at line 5)\n" +
+		"	return r;\n" +
+		"	^^^^^^\n" +
+		"Syntax error on token \"return\", byte expected\n" +
+			"----------\n");
+}
+public void testBug564672_021() {
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	interface IPoint {\n" +
+			"	}\n" +
+			"	record Point(int x, int y) implements IPoint {}\n" +
+			"	static IPoint a(int i, int j) {\n" +
+			"		Point record=new Point(i,j);\n" +
+			"		return record;\n" +
+			"	}\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(a(5,10));\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"Point[x=5, y=10]");
+}
+public void testBug564672_022() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	record R(int i){} \n" +
+			"	interface IPoint {\n" +
+			"		record a(int i) {\n" +
+			"       	System.out.println(0);\n" +
+			"           return new R(i);\n" +
+			"		}\n" +
+			"	}\n" +
+			"	record Point(int x, int y) implements IPoint {}\n" +
+			"	static IPoint a(int i, int j) {\n" +
+			"		Point record=new Point(i,j);\n" +
+			"		record.a(1);\n" +
+			"		return record;\n" +
+			"	}\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 5)\n" +
+		"	System.out.println(0);\n" +
+		"	          ^\n" +
+		"Syntax error on token \".\", @ expected after this token\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 5)\n" +
+		"	System.out.println(0);\n" +
+		"           return new R(i);\n" +
+		"	                   ^^^^^^^^^^^^^^^^^^^^^\n" +
+		"Syntax error on tokens, delete these tokens\n" +
+		"----------\n" +
+		"3. ERROR in X.java (at line 6)\n" +
+		"	return new R(i);\n" +
+		"	              ^\n" +
+		"Syntax error, insert \")\" to complete SingleMemberAnnotation\n" +
+		"----------\n" +
+		"4. ERROR in X.java (at line 6)\n" +
+		"	return new R(i);\n" +
+		"	              ^\n" +
+		"Syntax error, insert \"SimpleName\" to complete QualifiedName\n" +
+		"----------\n" +
+		"5. ERROR in X.java (at line 6)\n" +
+		"	return new R(i);\n" +
+		"	              ^\n" +
+		"Syntax error, insert \"Identifier (\" to complete MethodHeaderName\n" +
+		"----------\n" +
+		"6. ERROR in X.java (at line 6)\n" +
+		"	return new R(i);\n" +
+		"	              ^\n" +
+		"Syntax error, insert \")\" to complete MethodDeclaration\n" +
+		"----------\n" +
+		"7. ERROR in X.java (at line 12)\n" +
+		"	record.a(1);\n" +
+		"	       ^\n" +
+		"The method a(int) is undefined for the type X.Point\n" +
+		"----------\n");
+}
+public void testBug564672_023() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	interface IPoint {\n" +
+			"	}\n" +
+			"	record Point(int x, int y) implements IPoint {}\n" +
+			"	static IPoint a(int i, int j) throws record{\n" +
+			"		Point record=new Point(i,j);\n" +
+			"		return record;\n" +
+			"	}\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 5)\n" +
+		"	static IPoint a(int i, int j) throws record{\n" +
+		"	                                     ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_024() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	X() throws record {} \n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	X() throws record {} \n" +
+		"	           ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_025() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface X {\n" +
+			"	int a() throws record; \n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	int a() throws record; \n" +
+		"	               ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_026() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"import java.util.List;" +
+			"public class X {\n" +
+			"	List<record> R = new List<record>();\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	List<record> R = new List<record>();\n" +
+		"	     ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 2)\n" +
+		"	List<record> R = new List<record>();\n" +
+		"	                     ^^^^\n" +
+		"Cannot instantiate the type List<record>\n" +
+		"----------\n" +
+		"3. ERROR in X.java (at line 2)\n" +
+		"	List<record> R = new List<record>();\n" +
+		"	                          ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_027() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface I<S> {\n" +
+			"	void print(S arg);\n" +
+			"}\n" +
+			"public class X implements I<record>{\n" +
+			"	void print(record arg){\n" +
+			"		System.out.println(arg);\n" +
+			"	}\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 4)\n" +
+		"	public class X implements I<record>{\n" +
+		"	             ^\n" +
+		"The type X must implement the inherited abstract method I<record>.print(record)\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 4)\n" +
+		"	public class X implements I<record>{\n" +
+		"	                            ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"3. ERROR in X.java (at line 5)\n" +
+		"	void print(record arg){\n" +
+		"	           ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_028() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class Y<record> {\n" +
+			"	void equal(record R) {}\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	class Y<record> {\n" +
+		"	        ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 2)\n" +
+		"	void equal(record R) {}\n" +
+		"	           ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_029() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class Y<record> {\n" +
+			"	Y(record R) {}\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	class Y<record> {\n" +
+		"	        ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 2)\n" +
+		"	Y(record R) {}\n" +
+		"	  ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_030() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	static record i= 0;\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	static record i= 0;\n" +
+		"	       ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_031() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface I {\n" +
+			"	record i=0;\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	record i=0;\n" +
+		"	^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_032() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	static int sum(record i, int param){\n" +
+			"		return 1;\n" +
+			"	}\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	static int sum(record i, int param){\n" +
+		"	               ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_033() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	X(record i, int param){\n" +
+			"	}\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	X(record i, int param){\n" +
+		"	  ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_034() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface I {\n" +
+			"	int sum(record i, int num);\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	int sum(record i, int num);\n" +
+		"	        ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_035() {
+	this.runConformTest(
+			new String[] {
+				"X.java",
+				"interface Greetings {\n" +
+				"  void greet(String head, String tail);\n" +
+				"}\n" +
+				"public class X {\n" +
+				"  public static void main(String[] args) {\n" +
+				"    Greetings g = (record, y) -> {\n" +
+				"      System.out.println(record + y);\n" +
+				"    };\n" +
+				"    g.greet(\"Hello, \", \"World!\");\n" +
+				"  }\n" +
+				"}\n",
+			},
+			"Hello, World!"
+			);
+}
+public void testBug564672_036() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class Y {\n" +
+			"	int sum(record this, int i, int num) {}\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	int sum(record this, int i, int num) {}\n" +
+		"	        ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_037() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	static record i;\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	static record i;\n" +
+		"	       ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_038() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		for (record i = 0; i<10; i++) {\n" +
+			"			System.out.println(0);\n" +
+			"		}\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 3)\n" +
+		"	for (record i = 0; i<10; i++) {\n" +
+		"	     ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_039() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		int rec[] = {1,2,3,4,5,6,7,8,9};\n" +
+			"		for (record i: rec) {\n" +
+			"			System.out.println(0);\n" +
+			"		}\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 4)\n" +
+		"	for (record i: rec) {\n" +
+		"	     ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 4)\n" +
+		"	for (record i: rec) {\n" +
+		"	               ^^^\n" +
+		"Type mismatch: cannot convert from element type int to record\n" +
+		"----------\n");
+}
+public void testBug564672_040() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		try (record i = 0){\n" +
+			"		}\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 3)\n" +
+		"	try (record i = 0){\n" +
+		"	     ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_041() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		try{\n" +
+			"		}\n" +
+			"		catch (record e) {}\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 5)\n" +
+		"	catch (record e) {}\n" +
+		"	       ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_042() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"record Point(record x, int i) { }\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	record Point(record x, int i) { }\n" +
+		"	^\n" +
+		"record cannot be resolved to a type\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 1)\n" +
+		"	record Point(record x, int i) { }\n" +
+		"	             ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_043() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class Point {\n" +
+			"	<T> Point(T i) {\n" +
+			"	}\n" +
+			"	Point (int i, int j) {\n" +
+			"		<record> this(null);\n" +
+			"	}\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 5)\n" +
+		"	<record> this(null);\n" +
+		"	 ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 5)\n" +
+		"	<record> this(null);\n" +
+		"	         ^^^^^^^^^^^\n" +
+		"The constructor Point(record) refers to the missing type record\n" +
+		"----------\n");
+}
+public void testBug564672_044() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class Point {\n" +
+			"	<T> Point(T i) {\n" +
+			"	}\n" +
+			"}\n" +
+			"class PointEx extends Point {\n" +
+			"	PointEx (int i, int j) {\n" +
+			"		<record> super(null);\n" +
+			"	}\n;" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 7)\n" +
+		"	<record> super(null);\n" +
+		"	 ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 7)\n" +
+		"	<record> super(null);\n" +
+		"	         ^^^^^^^^^^^^\n" +
+		"The constructor Point(record) refers to the missing type record\n" +
+		"----------\n");
+}
+public void testBug564672_045() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class Y {\n" +
+			"	void m1() {} \n" +
+			"	void m2() {\n" +
+			"		this.<record>m1();" +
+			"	}\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 4)\n" +
+		"	this.<record>m1();	}\n" +
+		"	      ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. WARNING in X.java (at line 4)\n" +
+		"	this.<record>m1();	}\n" +
+		"	      ^^^^^^\n" +
+		"Unused type arguments for the non generic method m1() of type Y; it should not be parameterized with arguments <record>\n" +
+		"----------\n");
+}
+public void testBug564672_046() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class Y{\n" +
+			"	void a() {\n" +
+			"		System.out.println(\"1\");\n" +
+			"	}\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		new <record>Y().a();\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 8)\n" +
+		"	new <record>Y().a();\n" +
+		"	     ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. WARNING in X.java (at line 8)\n" +
+		"	new <record>Y().a();\n" +
+		"	     ^^^^^^\n" +
+		"Unused type arguments for the non generic constructor Y() of type Y; it should not be parameterized with arguments <record>\n" +
+		"----------\n");
+}
+public void testBug564672_047() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface Y{}\n" +
+			"\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		new <record>Y() {\n" +
+			"			void a() {\n" +
+			"				System.out.println(\"1\");\n" +
+			"			}\n" +
+			"		}.a();\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 5)\n" +
+		"	new <record>Y() {\n" +
+		"	     ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. WARNING in X.java (at line 5)\n" +
+		"	new <record>Y() {\n" +
+		"	     ^^^^^^\n" +
+		"Unused type arguments for the non generic constructor Object() of type Object; it should not be parameterized with arguments <record>\n" +
+		"----------\n");
+}
+public void testBug564672_048() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class Y{}\n" +
+			"\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		new <record>Y() {\n" +
+			"			void a() {\n" +
+			"				System.out.println(\"1\");\n" +
+			"			}\n" +
+			"		}.a();\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 5)\n" +
+		"	new <record>Y() {\n" +
+		"	     ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. WARNING in X.java (at line 5)\n" +
+		"	new <record>Y() {\n" +
+		"	     ^^^^^^\n" +
+		"Unused type arguments for the non generic constructor Y() of type Y; it should not be parameterized with arguments <record>\n" +
+		"----------\n");
+}
+public void testBug564672_049() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		record[] y= new record[3]; \n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 3)\n" +
+		"	record[] y= new record[3]; \n" +
+		"	^^^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 3)\n" +
+		"	record[] y= new record[3]; \n" +
+		"	                ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_050() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		String s=\"Hello\";\n" +
+			"		record y= (record)s; \n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 4)\n" +
+		"	record y= (record)s; \n" +
+		"	^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 4)\n" +
+		"	record y= (record)s; \n" +
+		"	           ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_051() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		String s=\"Hello\";\n" +
+			"		if (s instanceof record) { \n" +
+			"			System.out.println(1);\n" +
+			"		}\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 4)\n" +
+		"	if (s instanceof record) { \n" +
+		"	                 ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+public void testBug564672_052() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"import java.util.Arrays;\n" +
+			"import java.util.List;\n" +
+			"\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		List<String> messages = Arrays.asList(\"hello\", \"java\", \"testers!\");\n" +
+			"		messages.forEach(record::length);\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 7)\n" +
+		"	messages.forEach(record::length);\n" +
+		"	                 ^^^^^^\n" +
+		"record cannot be resolved\n" +
+		"----------\n");
+}
+public void testBug564672_053() {
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"import java.util.Arrays;\n" +
+			"import java.util.List;\n" +
+			"\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		List<String> messages = Arrays.asList(\"hello\", \"java\", \"testers!\");\n" +
+			"		messages.stream().map(record::new).toArray(record[]::new);\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 7)\n" +
+		"	messages.stream().map(record::new).toArray(record[]::new);\n" +
+		"	                      ^^^^^^\n" +
+		"record cannot be resolved to a type\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 7)\n" +
+		"	messages.stream().map(record::new).toArray(record[]::new);\n" +
+		"	                                           ^^^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n");
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_001() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"class X extends record {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n" +
+			"class record {}\n"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_002() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X extends record {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	class X extends record {\n" +
+		"	                ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_003() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"class X implements record {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"+
+			"interface record {}\n;"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_004() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X implements record {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	class X implements record {\n" +
+		"	                   ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_005() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"class X {\n"+
+			"  class Y extends record {\n"+
+			"  }\n" +
+			"  class record {}\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_006() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X {\n"+
+			"  class Y extends record {\n"+
+			"  }\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class Y extends record {\n" +
+		"	                ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_007() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"class X {\n"+
+			"  class Y implements record {\n"+
+			"  }\n" +
+			"  interface record {}\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_008() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X {\n"+
+			"  class Y implements record {\n"+
+			"  }\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class Y implements record {\n" +
+		"	                   ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_009() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"interface Y extends record {\n"+
+			"}\n" +
+			"interface record {}\n" +
+			"class X {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_010() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface Y extends record {\n"+
+			"}\n" +
+			"class X {\n"+
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	interface Y extends record {\n" +
+		"	                    ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_011() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"class X {\n"+
+			"  interface Y extends record {\n"+
+			"  }\n" +
+			"  interface record {}\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_012() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X {\n"+
+			"  interface Y extends record {\n"+
+			"  }\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n"+
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	interface Y extends record {\n" +
+		"	                    ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_013() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"interface Z {\n"+
+			"  class Y extends record {\n"+
+			"  }\n" +
+			"  class record {}\n" +
+			"}\n" +
+			"class X {\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n" +
+			"}\n"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_014() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface X {\n"+
+			"  class Y extends record {\n"+
+			"  }\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class Y extends record {\n" +
+		"	                ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_015() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"interface Z {\n"+
+			"  class Y implements record {\n"+
+			"  }\n" +
+			"  interface record {}\n" +
+			"}\n" +
+			"class X {\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n" +
+			"}\n"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_016() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface X {\n"+
+			"  class Y implements record {\n"+
+			"  }\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	class Y implements record {\n" +
+		"	                   ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_017() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"interface Z {\n"+
+			"  interface Y extends record {\n"+
+			"  }\n" +
+			"  interface record {}\n" +
+			"}\n" +
+			"class X {\n" +
+			"  public static void main(String[] args){\n"+
+			"     System.out.println(0);\n" +
+			"  }\n" +
+			"}\n"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_018() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"interface X {\n"+
+			"  interface Y extends record {\n"+
+			"  }\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	interface Y extends record {\n" +
+		"	                    ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_019() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	static record a(int i, int j) {\n" +
+			"		record r=new record(i,j);\n" +
+			"		return r;\n" +
+			"	}\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 3)\n" +
+		"	record r=new record(i,j);\n" +
+		"	^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java 16\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 3)\n" +
+		"	record r=new record(i,j);\n" +
+		"	             ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java 16\n" +
+		"----------\n" +
+		"3. ERROR in X.java (at line 4)\n" +
+		"	return r;\n" +
+		"	^^^^^^\n" +
+		"Syntax error on token \"return\", byte expected\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_020() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	class record {}\n" +
+			"\n" +
+			"	static record a(int i, int j) {\n" +
+			"		record r = new X().new record();\n" +
+			"		return r;\n" +
+			"	}\n" +
+			"\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_021() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	X() throws record {} \n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"\n" +
+			"class record extends Exception {\n" +
+			"	private static final long serialVersionUID = 1L;\n" +
+			"}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_022() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"interface Y {\n" +
+			"	int a() throws record;\n" +
+			"}\n" +
+			"\n" +
+			"class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"\n" +
+			"class record extends Exception {\n" +
+			"	private static final long serialVersionUID = 1L;\n" +
+			"}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_023() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"import java.util.ArrayList;\n" +
+			"import java.util.List;\n" +
+			"public class X {\n" +
+			"	List<record> R = new ArrayList<record>();\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record{}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_024() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"interface I<S> {\n" +
+			"	void print(S arg);\n" +
+			"}\n" +
+			"\n" +
+			"public class X implements I<record> {\n" +
+			"	public void print(record arg) {\n" +
+			"		System.out.println(arg);\n" +
+			"	}\n" +
+			"\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record {\n" +
+			"}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_025() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"class Y<record> {\n" +
+			"	void equal(record R) {}\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_026() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"class Y<record> {\n" +
+			"	Y(record R) {}\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_027() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	static record i;\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record {}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_028() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"interface I {\n" +
+			"	record i = new record(0);\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record {\n" +
+			"	int i;\n" +
+			"	record (int i) {\n" +
+			"		this.i=i;\n" +
+			"	}\n" +
+			"}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_029() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	static int sum(record i, int param) {\n" +
+			"		return 1;\n" +
+			"	}\n" +
+			"\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record{}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_030() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	X(record i, int param){\n" +
+			"	}\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record{}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_031() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"interface I {\n" +
+			"	int sum(record i, int num);\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record{}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_032() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+			new String[] {
+				"X.java",
+				"interface Greetings {\n" +
+				"  void greet(String head, String tail);\n" +
+				"}\n" +
+				"public class X {\n" +
+				"  public static void main(String[] args) {\n" +
+				"    Greetings g = (record, y) -> {\n" +
+				"      System.out.println(record + y);\n" +
+				"    };\n" +
+				"    g.greet(\"Hello, \", \"World!\");\n" +
+				"  }\n" +
+				"}\n",
+			},
+			"Hello, World!",
+			options
+		);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_033() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"\n" +
+			"class record {\n" +
+			"	int sum(record this, int i, int num) {\n" +
+			"		return 0;\n" +
+			"	}\n" +
+			"}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_034() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	static Rec record;\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class Rec {}\n"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_035() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"import java.util.ArrayList;\n" +
+			"import java.util.Iterator;\n" +
+			"import java.util.List;\n" +
+			"\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		int rec[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };\n" +
+			"		String s=\"\";\n" +
+			"		List <record> recList= new ArrayList<>();\n" +
+			"		for (int i:rec) {\n" +
+			"			recList.add(new record(i));\n" +
+			"		}\n" +
+			"		for (Iterator<record> i =recList.iterator(); i.hasNext();) {\n" +
+			"			s=s+i.next()+\" \";\n" +
+			"		}\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"\n" +
+			"class record {\n" +
+			"	int i;\n" +
+			"	record (int i) {\n" +
+			"		this.i=i;\n" +
+			"	}\n" +
+			"	public String toString (){\n" +
+			"		return Integer.toString(i);\n" +
+			"	}\n" +
+			"}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_036() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"import java.util.ArrayList;\n" +
+			"import java.util.List;\n" +
+			"\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		int rec[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };\n" +
+			"		String s=\"\";\n" +
+			"		List <record> recList= new ArrayList<>();\n" +
+			"		for (int i:rec) {\n" +
+			"			recList.add(new record(i));\n" +
+			"		}\n" +
+			"		for (record i : recList) {\n" +
+			"			s=s+i+\" \";\n" +
+			"		}\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"\n" +
+			"class record {\n" +
+			"	int i;\n" +
+			"	record (int i) {\n" +
+			"		this.i=i;\n" +
+			"	}\n" +
+			"	public String toString (){\n" +
+			"		return Integer.toString(i);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_037() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		try (record i = new record (0)){\n" +
+			"		} catch (Exception e) {\n" +
+			"			e.printStackTrace();\n" +
+			"		}\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record implements AutoCloseable{\n" +
+			"	int i;\n" +
+			"	record (int i) {\n" +
+			"		this.i=i;\n" +
+			"	}\n" +
+			"	@Override\n" +
+			"	public void close() throws Exception {}\n" +
+			"}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_038() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		try {\n" +
+			"			throw new record();\n" +
+			"		} catch (record e) {\n" +
+			"			System.out.println(\"0\");\n" +
+			"		}\n" +
+			"	}\n" +
+			"}\n" +
+			"\n" +
+			"class record extends Exception {\n" +
+			"	private static final long serialVersionUID = 1L;\n" +
+			"}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_039() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"record Point(record x, int i) { }\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record {}"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	record Point(record x, int i) { }\n" +
+		"	             ^^^^^^\n" +
+		"'record' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java 16\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 7)\n" +
+		"	class record {}\n" +
+		"	      ^^^^^^\n" +
+		"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java "+ AbstractRegressionTest.PREVIEW_ALLOWED_LEVEL +"\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_040() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"class Point {\n" +
+			"	<T> Point(T i) {\n" +
+			"	}\n" +
+			"	Point (int i, int j) {\n" +
+			"		<record> this(null);\n" +
+			"	}\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record {}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_041() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"class Point {\n" +
+			"	<T> Point(T i) {\n" +
+			"	}\n" +
+			"}\n" +
+			"class PointEx extends Point {\n" +
+			"	PointEx (int i, int j) {\n" +
+			"		<record> super(null);\n" +
+			"	}\n;" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record {}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_042() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"class Y {\n" +
+			"	<T> void m1() {} \n" +
+			"	void m2() {\n" +
+			"		this.<record>m1();" +
+			"	}\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record {}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_043() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"class Y{\n" +
+			"	<T> Y() {}\n" +
+			"	void a() {\n" +
+			"		System.out.println(\"1\");\n" +
+			"	}\n" +
+			"}\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		new <record>Y().a();\n" +
+			"	}\n" +
+			"}\n" +
+			"class record {}"
+		},
+		"1",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_044() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"interface Y{\n" +
+			"}\n" +
+			"\n" +
+			"class Z implements Y {\n" +
+			"	<T> Z() {\n" +
+			"		\n" +
+			"	}\n" +
+			"}\n" +
+			"\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		new <record>Z() {\n" +
+			"			void a() {\n" +
+			"				System.out.println(\"1\");\n" +
+			"			}\n" +
+			"		}.a();\n" +
+			"	}\n" +
+			"}\n" +
+			"class record {}"
+		},
+		"1",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_045() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"class Y{" +
+			"	<T> Y() {\n" +
+			"	}" +
+			"}\n" +
+			"\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		new <record>Y() {\n" +
+			"			void a() {\n" +
+			"				System.out.println(\"1\");\n" +
+			"			}\n" +
+			"		}.a();\n" +
+			"	}\n" +
+			"}\n" +
+			"class record {}"
+		},
+		"1",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_046() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		record[] y= new record[3]; \n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}" +
+			"class record {}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_047() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		StrRec s = new StrRec(\"Hello\");\n" +
+			"		record y = (record) s;\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"\n" +
+			"class record {\n" +
+			"}\n" +
+			"\n" +
+			"class StrRec extends record {\n" +
+			"	String s;\n" +
+			"\n" +
+			"	StrRec(String s) {\n" +
+			"		this.s = s;\n" +
+			"	}\n" +
+			"}"
+		},
+		"0",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_048() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		StrRec s=new StrRec(\"Hello\");\n" +
+			"		if (s instanceof record) { \n" +
+			"			System.out.println(1);\n" +
+			"		}\n" +
+			"	}\n" +
+			"}\n" +
+			"class record {}\n" +
+			"\n" +
+			"class StrRec extends record {\n" +
+			"	String s;\n" +
+			"\n" +
+			"	StrRec(String s) {\n" +
+			"		this.s = s;\n" +
+			"	}\n" +
+			"}"
+		},
+		"1",
+		options
+	);
+}
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public void testBug564672b_049() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_15);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"import java.util.Arrays;\n" +
+			"import java.util.List;\n" +
+			"public class X {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		List<String> messages = Arrays.asList(\"hello\", \"java\", \"testers!\");\n" +
+			"		\n" +
+			"		messages.stream().map(record::new).toArray(record[]::new);;\n" +
+			"		System.out.println(0);\n" +
+			"	}\n" +
+			"}\n" +
+			"class record {\n" +
+			"	String s;\n" +
+			"\n" +
+			"	record(String s) {\n" +
+			"		this.s = s;\n" +
+			"	}\n" +
+			"}"
+		},
+		"0",
+		options
+	);
+}
+public void testBug565388_001() {
+	Map<String, String> options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.ENABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public non-sealed record X() {}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	public non-sealed record X() {}\n" +
+		"	                         ^\n" +
+		"Illegal modifier for the record X; only public, final and strictfp are permitted\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+}
+public void testBug565388_002() {
+	Map<String, String> options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.ENABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public sealed record X() {}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 1)\n" +
+		"	public sealed record X() {}\n" +
+		"	                     ^\n" +
+		"Illegal modifier for the record X; only public, final and strictfp are permitted\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+}
+public void testBug565786_001() throws IOException, ClassFormatException {
 	runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"    public static void main(String[] args) {\n"+
+			"        System.out.println(0);\n"+
+			"   }\n"+
+			"}\n"+
+			"interface I {\n"+
+			"    record R() {}\n"+
+			"}",
+		},
+		"0");
+	String expectedOutput =
+			"  // Method descriptor #6 ()V\n" +
+			"  // Stack: 1, Locals: 1\n" +
+			"  public I$R();\n";
+	verifyClassFile(expectedOutput, "I$R.class", ClassFileBytesDisassembler.SYSTEM);
+}
+// Test that without an explicit canonical constructor, we
+// report the warning on the record type.
+public void testBug563182_01() {
+	Map<String, String> customOptions = getCompilerOptions();
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X<T> {\n" +
+			"	record Point<T> (T ... args) { // 1\n" +
+			"	}\n" +
+			"   public static void main(String[] args) {}\n"+
+			"}\n",
+		},
+		"----------\n" +
+		"1. WARNING in X.java (at line 2)\n" +
+		"	record Point<T> (T ... args) { // 1\n" +
+		"	                       ^^^^\n" +
+		"Type safety: Potential heap pollution via varargs parameter args\n" +
+		"----------\n",
+		null,
+		true,
+		new String[] {"--enable-preview"},
+		customOptions);
+}
+//Test that in presence of an explicit canonical constructor that is NOT annotated with @SafeVarargs,
+// we don't report the warning on the record type but report on the explicit canonical constructor
+public void testBug563182_02() {
+	Map<String, String> customOptions = getCompilerOptions();
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X<T> {\n" +
+			"	record Point<T> (T ... args) { // 1\n" +
+			"		Point(T ... args) { // 2\n" +
+			"			this.args = args;\n" +
+			"		}\n" +
+			"	}\n" +
+			"   public static void main(String[] args) {}\n"+
+			"}\n",
+		},
+		"----------\n" +
+		"1. WARNING in X.java (at line 3)\n" +
+		"	Point(T ... args) { // 2\n" +
+		"	            ^^^^\n" +
+		"Type safety: Potential heap pollution via varargs parameter args\n" +
+		"----------\n",
+		null,
+		true,
+		new String[] {"--enable-preview"},
+		customOptions);
+}
+//Test that in presence of an explicit canonical constructor that IS annotated with @SafeVarargs,
+//we don't report the warning on neither the record type nor the explicit canonical constructor
+public void testBug563182_03() {
+	Map<String, String> customOptions = getCompilerOptions();
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X<T> {\n" +
+			"	record Point<T> (T ... args) { // 1\n" +
+			"		@SafeVarargs\n" +
+			"		Point(T ... args) { // 2\n" +
+			"			this.args = args;\n" +
+			"		}\n" +
+			"	}\n" +
+			"   public static void main(String[] args) {}\n"+
+			"}\n",
+		},
+		"",
+		null,
+		true,
+		new String[] {"--enable-preview"},
+		customOptions);
+}
+//Test that in presence of a compact canonical constructor that is NOT annotated with @SafeVarargs,
+//we don't report the warning on the compact canonical constructor but report on the record type
+public void testBug563182_04() {
+	Map<String, String> customOptions = getCompilerOptions();
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X<T> {\n" +
+			"	record Point<T> (T ... args) { // 1\n" +
+			"		Point { // 2\n" +
+			"		}\n" +
+			"	}\n" +
+			"   public static void main(String[] args) {}\n"+
+			"}\n",
+		},
+		"----------\n" +
+		"1. WARNING in X.java (at line 2)\n" +
+		"	record Point<T> (T ... args) { // 1\n" +
+		"	                       ^^^^\n" +
+		"Type safety: Potential heap pollution via varargs parameter args\n" +
+		"----------\n",
+		null,
+		true,
+		new String[] {"--enable-preview"},
+		customOptions);
+}
+//Test that in presence of a compact canonical constructor that IS annotated with @SafeVarargs,
+//we don't report the warning on neither the record type nor the compact canonical constructor
+public void testBug563182_05() {
+	Map<String, String> customOptions = getCompilerOptions();
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X<T> {\n" +
+			"	record Point<T> (T ... args) { // 1\n" +
+			"		@SafeVarargs\n" +
+			"		Point { // 2\n" +
+			"		}\n" +
+			"	}\n" +
+			"   public static void main(String[] args) {}\n"+
+			"}\n",
+		},
+		"",
+		null,
+		true,
+		new String[] {"--enable-preview"},
+		customOptions);
+}
+//Test that in presence of a non-canonical constructor that is annotated with @SafeVarargs,
+//we don't report the warning on the non-canonical constructor but report on the record type
+public void testBug563182_06() {
+	Map<String, String> customOptions = getCompilerOptions();
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X<T> {\n" +
+			"	record Point<T> (T ... args) { // 1\n" +
+			"		@SafeVarargs\n" +
+			"		Point (String s, T ... t) {\n" +
+			"			this(t);\n" +
+			"		}\n" +
+			"	}\n" +
+			"   public static void main(String[] args) {}\n"+
+			"}\n",
+		},
+		"----------\n" +
+		"1. WARNING in X.java (at line 2)\n" +
+		"	record Point<T> (T ... args) { // 1\n" +
+		"	                       ^^^^\n" +
+		"Type safety: Potential heap pollution via varargs parameter args\n" +
+		"----------\n",
+		null,
+		true,
+		new String[] {"--enable-preview"},
+		customOptions);
+}
+//Test that in presence of a non-canonical constructor that is NOT annotated with @SafeVarargs,
+//we don't report the warning on the non-canonical constructor but report on the record type
+public void testBug563182_07() {
+	Map<String, String> customOptions = getCompilerOptions();
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"class X<T> {\n" +
+			"	record Point<T> (T ... args) { // 1\n" +
+			"		Point (String s, T ... t) {\n" +
+			"			this(t);\n" +
+			"		}\n" +
+			"	}\n" +
+			"   public static void main(String[] args) {}\n"+
+			"}\n",
+		},
+		"----------\n" +
+		"1. WARNING in X.java (at line 2)\n" +
+		"	record Point<T> (T ... args) { // 1\n" +
+		"	                       ^^^^\n" +
+		"Type safety: Potential heap pollution via varargs parameter args\n" +
+		"----------\n" +
+		"2. WARNING in X.java (at line 3)\n" +
+		"	Point (String s, T ... t) {\n" +
+		"	                       ^\n" +
+		"Type safety: Potential heap pollution via varargs parameter t\n" +
+		"----------\n",
+		null,
+		true,
+		new String[] {"--enable-preview"},
+		customOptions);
+}
+	public void testBug563186_01() {
+		runConformTest(
+				new String[] {
+					"X.java",
+					"public class X {\n"+
+					"  private record Point(int myInt){\n"+
+					"  	 @Override\n" +
+					"  	 public int myInt(){\n"+
+					"      return this.myInt;\n" +
+					"    }\n"+
+					"  }\n"+
+					"    public static void main(String[] args) {\n"+
+					"        System.out.println(0);\n"+
+					"   }\n"+
+					"}\n"
+				},
+			 "0");
+	}
+	public void testBug563186_02() {
+		runConformTest(
+				new String[] {
+					"X.java",
+					"public class X {\n"+
+					"  private record Point(int myInt){\n"+
+					"  	 public int myInt(){\n"+
+					"      return this.myInt;\n" +
+					"    }\n"+
+					"  }\n"+
+					"    public static void main(String[] args) {\n"+
+					"        System.out.println(0);\n"+
+					"   }\n"+
+					"}\n"
+				},
+			 "0");
+	}
+	public void testBug563186_03() {
+		runNegativeTest(
+				new String[] {
+					"X.java",
+					"public class X {\n"+
+					"  private record Point(int myInt){\n"+
+					"  	 @Override\n" +
+					"  	 public int myInt(int i){\n"+
+					"      return this.myInt;\n" +
+					"    }\n"+
+					"  }\n"+
+					"    public static void main(String[] args) {\n"+
+					"        System.out.println(0);\n"+
+					"   }\n"+
+					"}\n"
+				},
+				"----------\n" +
+				"1. WARNING in X.java (at line 2)\n" +
+				"	private record Point(int myInt){\n" +
+				"	               ^^^^^\n" +
+				"The type X.Point is never used locally\n" +
+				"----------\n" +
+				"2. ERROR in X.java (at line 4)\n" +
+				"	public int myInt(int i){\n" +
+				"	           ^^^^^^^^^^^^\n" +
+				"The method myInt(int) of type X.Point must override or implement a supertype method\n" +
+				"----------\n",
+				null,
+				true,
+				new String[] {"--enable-preview"},
+				getCompilerOptions());
+	}
+	public void testBug563186_04() {
+		runConformTest(
+				new String[] {
+					"X.java",
+					"public class X {\n"+
+					"  private record Point(int myInt){\n"+
+					"  	 public int myInt(int i){\n"+
+					"      return this.myInt;\n" +
+					"    }\n"+
+					"  }\n"+
+					"    public static void main(String[] args) {\n"+
+					"        System.out.println(0);\n"+
+					"   }\n"+
+					"}\n"
+				},
+			 "0");
+	}
+	public void testBug565732_01() {
+		runNegativeTest(
+				new String[] {
+					"X.java",
+					"public record X {\n" +
+					"} "
+				},
+				"----------\n" +
+				"1. ERROR in X.java (at line 1)\n" +
+				"	public record X {\n" +
+				"	              ^\n" +
+				"Syntax error, insert \"RecordHeader\" to complete RecordHeaderPart\n" +
+				"----------\n",
+				null,
+				true,
+				new String[] {"--enable-preview"},
+				getCompilerOptions());
+	}
+	public void testBug565732_02() {
+		runNegativeTest(
+				new String[] {
+					"X.java",
+					"public record X<T> {\n" +
+					"} "
+				},
+				"----------\n" +
+				"1. ERROR in X.java (at line 1)\n" +
+				"	public record X<T> {\n" +
+				"	                 ^\n" +
+				"Syntax error, insert \"RecordHeader\" to complete RecordHeaderPart\n" +
+				"----------\n",
+				null,
+				true,
+				new String[] {"--enable-preview"},
+				getCompilerOptions());
+	}
+	// Test that a record without any record components was indeed compiled
+	// to be a record at runtime
+	public void testBug565732_03() {
+		runConformTest(
+				new String[] {
+					"X.java",
+					"public record X() {\n" +
+					"	public static void main(String[] args) {\n" +
+					"		System.out.println(X.class.getSuperclass().getName());\n" +
+					"	}\n" +
+					"}"
+				},
+			 "java.lang.Record");
+	}
+	// Test that a record without any record components was indeed compiled
+	// to be a record at runtime
+	public void testBug565732_04() {
+		runConformTest(
+				new String[] {
+					"X.java",
+					"public record X<T>() {\n" +
+					"	public static void main(String[] args) {\n" +
+					"		System.out.println(X.class.getSuperclass().getName());\n" +
+					"	}\n" +
+					"}"
+				},
+			 "java.lang.Record");
+	}
+	// Test that a "record" can be used as a method name and invoked inside a record
+	public void testBug565732_05() {
+		runConformTest(
+				new String[] {
+					"X.java",
+					"public record X<T>() {\n" +
+					"	public static void main(String[] args) {\n" +
+					"		record();\n" +
+					"	}\n" +
+					"	public static void record() {\n" +
+					"		System.out.println(\"record()\");\n" +
+					"	}\n" +
+					"}"
+				},
+			 "record()");
+	}
+	// Test that a "record" can be used as a label and invoked inside a record
+	public void testBug565732_06() {
+		runConformTest(
+				new String[] {
+					"X.java",
+					"public record X<T>() {\n" +
+					"	public static void main(String[] args) {\n" +
+					"		boolean flag = true;\n" +
+					"		record: {\n" +
+					"			if (flag) {\n" +
+					"				System.out.println(\"record:\");\n" +
+					"				flag = false;\n" +
+					"				break record;\n" +
+					"			}\n" +
+					"		}\n" +
+					"	}\n" +
+					"}"
+				},
+			 "record:");
+	}
+	public void testBug565732_07() {
+		runNegativeTest(
+				new String[] {
+					"X.java",
+					"public class X {\n" +
+					"	record R {};\n" +
+					"}"
+				},
+				"----------\n" +
+				"1. ERROR in X.java (at line 2)\n" +
+				"	record R {};\n" +
+				"	       ^\n" +
+				"Syntax error, insert \"RecordHeader\" to complete RecordHeaderPart\n" +
+				"----------\n",
+				null,
+				true,
+				new String[] {"--enable-preview"},
+				getCompilerOptions());
+	}
+	public void testBug565732_08() {
+		runConformTest(
+				new String[] {
+					"X.java",
+					"public class X {\n" +
+					"	public static void main(String[] args) {\n" +
+					"		System.out.println(R.class.getSuperclass().getName());\n" +
+					"	}\n" +
+					"	record R() {};\n" +
+					"}"
+				},
+			 "java.lang.Record");
+	}
+	public void testBug565830_01() {
+		runConformTest(
 		new String[] {
 			"X.java",
 			"class X {\n"+
@@ -3921,6 +7734,173 @@ public void testBug565830_01() {
 			"}",
 		},
 		"private final int X$1Bar.x");
+	}
+public void testBug566063_001() {
+	Map<String, String> options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.ENABLED);
+	runConformTest(
+			new String[] {
+				"X.java",
+				"class X {\n"+
+				"    void bar() throws Exception {\n"+
+				"        enum E {\n"+
+				"               ONE,\n"+
+				"               TWO\n"+
+				"        }\n"+
+				"        interface I {}\n"+
+				"        record Bar(E x) implements I{}\n"+
+				"        E e = new Bar(E.ONE).x();\n"+
+				"        System.out.println(e);\n"+
+				"    }\n"+
+				"    public static void main(String[] args) throws Exception {\n"+
+				"       new X().bar();\n"+
+				"    }\n"+
+				"}"
+			},
+			"ONE",
+			options
+		);
+		options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+}
+public void testBug566063_002() {
+	Map<String, String> options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.ENABLED);
+	runNegativeTest(
+			new String[] {
+				"X.java",
+				"class X {\n"+
+				"    void bar() throws Exception {\n"+
+				"        static enum E {\n"+
+				"               ONE,\n"+
+				"               TWO\n"+
+				"        }\n"+
+				"        interface I {}\n"+
+				"        record Bar(E x) implements I{}\n"+
+				"        E e = new Bar(E.ONE).x();\n"+
+				"        System.out.println(e);\n"+
+				"    }\n"+
+				"    public static void main(String[] args) throws Exception {\n"+
+				"       new X().bar();\n"+
+				"    }\n"+
+				"}"
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 3)\n" +
+			"	static enum E {\n" +
+			"	            ^\n" +
+			"Illegal modifier for local enum E; no explicit modifier is permitted\n" +
+			"----------\n",
+			null,
+			true,
+			options
+		);
+		options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+}
+public void testBug566063_003() {
+	Map<String, String> options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.ENABLED);
+	runNegativeTest(
+			new String[] {
+				"X.java",
+				"class X {\n"+
+				"    void bar() throws Exception {\n"+
+				"        static enum E {\n"+
+				"               ONE,\n"+
+				"               TWO\n"+
+				"        }\n"+
+				"        static interface I {}\n"+
+				"        static record Bar(E x) implements I{}\n"+
+				"        E e = new Bar(E.ONE).x();\n"+
+				"        System.out.println(e);\n"+
+				"    }\n"+
+				"    public static void main(String[] args) throws Exception {\n"+
+				"       new X().bar();\n"+
+				"    }\n"+
+				"}"
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 3)\n" +
+			"	static enum E {\n" +
+			"	            ^\n" +
+			"Illegal modifier for local enum E; no explicit modifier is permitted\n" +
+			"----------\n" +
+			"2. ERROR in X.java (at line 7)\n" +
+			"	static interface I {}\n" +
+			"	                 ^\n" +
+			"Illegal modifier for the local interface I; abstract and strictfp are the only modifiers allowed explicitly \n" +
+			"----------\n" +
+			"3. ERROR in X.java (at line 8)\n" +
+			"	static record Bar(E x) implements I{}\n" +
+			"	              ^^^\n" +
+			"A local class or interface Bar is implicitly static; cannot have explicit static declaration\n" +
+			"----------\n",
+			null,
+			true,
+			options
+		);
+		options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+}
+public void testBug566063_004() {
+	Map<String, String> options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.ENABLED);
+	this.runConformTest(
+			new String[] {
+					"X.java",
+					"class X {\n"+
+					"    void bar() throws Exception {\n"+
+					"        enum E {\n"+
+					"               ONE,\n"+
+					"               TWO\n"+
+					"        }\n"+
+					"		 interface I {}\n" +
+					"        record Bar(E x) implements I{}\n"+
+					"        E e = new Bar(E.ONE).x();\n"+
+					"        System.out.println(e);\n"+
+					"    }\n"+
+					"    public static void main(String[] args) throws Exception {\n"+
+					"       new X().bar();\n"+
+					"    }\n"+
+					"}"
+				},
+				"ONE");
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+}
+@SuppressWarnings({ "unchecked", "rawtypes" })
+public void testBug566418_001() {
+	Map options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_ReportUnnecessaryTypeCheck, CompilerOptions.ERROR);
+	options.put(CompilerOptions.OPTION_ReportUnusedWarningToken, CompilerOptions.ERROR);
+	options.put(CompilerOptions.OPTION_SuppressOptionalErrors, CompilerOptions.ENABLED);
+	this.runNegativeTest(
+	new String[] {
+			"X.java",
+			"public class X {\n"+
+			" static void foo() {\n"+
+			"   record R() {\n"+
+			"     static int create(int lo) {\n"+
+			"       return lo;\n"+
+			"     }\n"+
+			"   }\n"+
+			"   System.out.println(R.create(0));\n"+
+			"   }\n"+
+			"   Zork();\n"+
+			"}",
+		},
+	"----------\n" +
+	"1. ERROR in X.java (at line 10)\n" +
+	"	Zork();\n" +
+	"	^^^^^^\n" +
+	"Return type for the method is missing\n" +
+	"----------\n" +
+	"2. ERROR in X.java (at line 10)\n" +
+	"	Zork();\n" +
+	"	^^^^^^\n" +
+	"This method requires a body instead of a semicolon\n" +
+	"----------\n",
+		null,
+		true,
+		options
+	);
 }
 public void testBug565787_01() {
 	runConformTest(
@@ -3939,4 +7919,1164 @@ public void testBug565787_01() {
 		},
 		"");
 }
+public void testBug566554_01() {
+	runConformTest(
+		new String[] {
+			"Main.java",
+			"@SuppressWarnings(\"preview\")\n" +
+			"public class Main {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		final Margin margins = new Margin(0);\n" +
+			"		System.out.println(margins.left()); \n" +
+			"	}\n" +
+			"}\n" +
+			"record Margin(int left) {\n" +
+			"	public Margin left(int value) {\n" +
+			"		return new Margin(value);\n" +
+			"	}\n" +
+			"	public String toString() {\n" +
+			"		return \"Margin[left=\" + this.left + \"]\";\n" +
+			"	}\n" +
+			"}",
+		},
+		"0");
+}
+public void testBug566554_02() {
+	runConformTest(
+		new String[] {
+			"Main.java",
+			"@SuppressWarnings(\"preview\")\n" +
+			"public class Main {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		final Margin margins = new Margin(0);\n" +
+			"		System.out.println(margins.left()); \n" +
+			"	}\n" +
+			"}\n" +
+			"record Margin(int left) {\n" +
+			"	public Margin left(int value) {\n" +
+			"		return new Margin(value);\n" +
+			"	}\n" +
+			"	public int left() {\n" +
+			"		return this.left;\n" +
+			"	}\n" +
+			"	public String toString() {\n" +
+			"		return \"Margin[left=\" + this.left + \"]\";\n" +
+			"	}\n" +
+			"}",
+		},
+		"0");
+}
+public void testBug566554_03() {
+	runConformTest(
+		new String[] {
+			"Main.java",
+			"@SuppressWarnings(\"preview\")\n" +
+			"public class Main {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		final Margin margins = new Margin(0);\n" +
+			"		System.out.println(margins.left(0)); \n" +
+			"	}\n" +
+			"}\n" +
+			"record Margin(int left) {\n" +
+			"	public Margin left(int value) {\n" +
+			"		return new Margin(value);\n" +
+			"	}\n" +
+			"	public int left() {\n" +
+			"		return this.left;\n" +
+			"	}\n" +
+			"	public String toString() {\n" +
+			"		return \"Margin[left=\" + this.left + \"]\";\n" +
+			"	}\n" +
+			"}",
+		},
+		"Margin[left=0]");
+}
+public void testBug566554_04() {
+	runNegativeTest(
+		new String[] {
+			"Main.java",
+			"@SuppressWarnings(\"preview\")\n" +
+			"public class Main {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		final Margin margins = new Margin(0);\n" +
+			"		int l = margins.left(0); \n" +
+			"	}\n" +
+			"}\n" +
+			"record Margin(int left) {\n" +
+			"	public Margin left(int value) {\n" +
+			"		return new Margin(value);\n" +
+			"	}\n" +
+			"	public int left() {\n" +
+			"		return this.left;\n" +
+			"	}\n" +
+			"}",
+		},
+		"----------\n" +
+		"1. ERROR in Main.java (at line 5)\n" +
+		"	int l = margins.left(0); \n" +
+		"	        ^^^^^^^^^^^^^^^\n" +
+		"Type mismatch: cannot convert from Margin to int\n" +
+		"----------\n");
+}
+public void testBug567731_001() {
+	Map<String, String> options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.ENABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"  non-sealed record R() {}\n" +
+			"  public static void main(String[] args) {\n" +
+			"	  sealed record B() { }  \n" +
+			"  }" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	non-sealed record R() {}\n" +
+		"	                  ^\n" +
+		"Illegal modifier for the record R; only public, private, protected, static, final and strictfp are permitted\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 4)\n" +
+		"	sealed record B() { }  \n" +
+		"	              ^\n" +
+		"Illegal modifier for the local record B; only final and strictfp are permitted\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+}
+public void testBug567731_002() {
+	Map<String, String> options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.ENABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public class X {\n" +
+			"  sealed record R1() {}\n" +
+			"  public static void main(String[] args) {\n" +
+			"	  non-sealed record R2() { }  \n" +
+			"  }" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 2)\n" +
+		"	sealed record R1() {}\n" +
+		"	              ^^\n" +
+		"Illegal modifier for the record R1; only public, private, protected, static, final and strictfp are permitted\n" +
+		"----------\n" +
+		"2. ERROR in X.java (at line 4)\n" +
+		"	non-sealed record R2() { }  \n" +
+		"	                  ^^\n" +
+		"Illegal modifier for the local record R2; only final and strictfp are permitted\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+	options.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.DISABLED);
+}
+public void testBug566846_1() {
+	runNegativeTest(
+			new String[] {
+				"X.java",
+				"public record X;\n"
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 1)\n" +
+			"	public record X;\n" +
+			"	       ^^^^^^\n" +
+			"Syntax error on token \"record\", package expected\n" +
+			"----------\n",
+			null,
+			true,
+			new String[] {"--enable-preview"},
+			getCompilerOptions());
+}
+public void testBug566846_2() {
+	runNegativeTest(
+			new String[] {
+				"X.java",
+				"public class X {\n"
+				+ "} \n"
+				+ "record R1;\n"
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 2)\n" +
+			"	} \n" +
+			"	^\n" +
+			"Syntax error on token \"}\", delete this token\n" +
+			"----------\n" +
+			"2. ERROR in X.java (at line 3)\n" +
+			"	record R1;\n" +
+			"	^^^^^^\n" +
+			"\'record\' is not a valid type name; it is a restricted identifier and not allowed as a type identifier in Java 16\n" +
+			"----------\n" +
+			"3. ERROR in X.java (at line 3)\n" +
+			"	record R1;\n" +
+			"	         ^\n" +
+			"Syntax error, insert \"}\" to complete ClassBody\n" +
+			"----------\n",
+			null,
+			true,
+			new String[] {"--enable-preview"},
+			getCompilerOptions());
+}
+public void testBug561199_001() {
+	Map<String, String> options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_ReportMissingSerialVersion, CompilerOptions.ERROR);
+	runNegativeTest(
+			new String[] {
+				"R.java",
+				"record R() implements java.io.Serializable {}\n",
+				"X.java",
+				"class X implements java.io.Serializable {}\n"
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 1)\n" +
+			"	class X implements java.io.Serializable {}\n" +
+			"	      ^\n" +
+			"The serializable class X does not declare a static final serialVersionUID field of type long\n" +
+			"----------\n",
+			null,
+			true,
+			new String[] {"--enable-preview"},
+			options);
+}
+public void testBug568922_001() {
+	runNegativeTest(
+			new String[] {
+				"X.java",
+				"public class X {\n"+
+				" public static void main(String[] args) {\n"+
+				"   @SuppressWarnings(\"preview\")\n"+
+				"   record R() {\n"+
+				"     R  {\n"+
+				"       super();\n"+
+				"       System.out.println(\"helo\");\n"+
+				"     }\n"+
+				"   }\n"+
+				"   new R();\n"+
+				" }\n"+
+				"}"
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 6)\n" +
+			"	super();\n" +
+			"	^^^^^^^^\n" +
+			"The body of a compact constructor must not contain an explicit constructor call\n" +
+			"----------\n",
+			null,
+			true,
+			new String[] {"--enable-preview"},
+			getCompilerOptions());
+}
+public void testBug568922_002() {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			" public static void main(String[] args) {\n"+
+			"   @SuppressWarnings(\"preview\")\n"+
+			"   record R() {\n"+
+			"     R  {\n"+
+			"       System.out.println(\"helo\");\n"+
+			"     }\n"+
+			"   }\n"+
+			"   new R();\n"+
+			" }\n"+
+			"}"
+		},
+		"helo");
+}
+public void testBug570243_001() {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"import java.lang.reflect.Parameter;\n"+
+			"  \n"+
+			"public record X(int myCompOne) {\n"+
+			"       public static void main(String[] x1) {\n"+
+			"        try {\n"+
+			"            Parameter param = Class.forName(\"X\").getConstructors()[0].getParameters()[0];\n"+
+			"               System.out.println(param.getType().getSimpleName()+\" \"+ param.getName());\n"+
+			"        } catch(ClassNotFoundException e) {\n"+
+			"               // do nothing\n"+
+			"        }\n"+
+			"       }\n"+
+			"}"
+		},
+		"int myCompOne");
+}
+public void testBug570243_002() {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"import java.lang.reflect.Parameter;\n"+
+			"  \n"+
+			"public record X(int myCompOne, char myCompChar) {\n"+
+			"       public static void main(String[] x1) {\n"+
+			"        try {\n"+
+			"            Parameter[] params = Class.forName(\"X\").getConstructors()[0].getParameters();\n"+
+			"            for (Parameter param : params)\n"+
+			"               System.out.println(param.getType().getSimpleName()+\" \"+ param.getName());\n"+
+			"        } catch(ClassNotFoundException e) {\n"+
+			"               // do nothing\n"+
+			"        }\n"+
+			"       }\n"+
+			"}"
+		},
+		"int myCompOne\n"+
+		"char myCompChar");
+}
+public void testBug570243_003() {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"import java.lang.reflect.Parameter;\n"+
+			"  \n"+
+			"public record X(int myCompOne, char ...myCompChar) {\n"+
+			"       public static void main(String[] x1) {\n"+
+			"        try {\n"+
+			"            Parameter[] params = Class.forName(\"X\").getConstructors()[0].getParameters();\n"+
+			"            for (Parameter param : params)\n"+
+			"               System.out.println(param.getType().getSimpleName()+\" \"+ param.getName());\n"+
+			"        } catch(ClassNotFoundException e) {\n"+
+			"               // do nothing\n"+
+			"        }\n"+
+			"       }\n"+
+			"}"
+		},
+		"int myCompOne\n"+
+		"char[] myCompChar");
+}
+public void testBug570230_001() {
+	runNegativeTest(
+			new String[] {
+				"X.java",
+				"public record X(int marr[]) {}"
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 1)\n" +
+			"	public record X(int marr[]) {}\n" +
+			"	                    ^^^^\n" +
+			"Extended dimensions are illegal for a record component\n" +
+			"----------\n");
+}
+public void testBug571015_001() {
+	runNegativeTest(
+			new String[] {
+				"X.java",
+				"record R() {\n"+
+				"       R(I<T> ... t) {}\n"+
+				"}\n"+
+				"interface I{}"
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 2)\n" +
+			"	R(I<T> ... t) {}\n" +
+			"	  ^\n" +
+			"The type I is not generic; it cannot be parameterized with arguments <T>\n" +
+			"----------\n" +
+			"2. ERROR in X.java (at line 2)\n" +
+			"	R(I<T> ... t) {}\n" +
+			"	    ^\n" +
+			"T cannot be resolved to a type\n" +
+			"----------\n");
+}
+public void testBug571015_002() {
+	runNegativeTest(
+			new String[] {
+				"X.java",
+				"record R() {\n"+
+				"       R(I<X> ... t) {}\n"+
+				"}\n"+
+				"interface I<T>{}\n"+
+				"class X{}"
+			},
+			"----------\n" +
+			"1. ERROR in X.java (at line 2)\n" +
+			"	R(I<X> ... t) {}\n" +
+			"	^^^^^^^^^^^^^\n" +
+			"A non-canonical constructor must start with an explicit invocation to a constructor\n" +
+			"----------\n" +
+			"2. WARNING in X.java (at line 2)\n" +
+			"	R(I<X> ... t) {}\n" +
+			"	           ^\n" +
+			"Type safety: Potential heap pollution via varargs parameter t\n" +
+			"----------\n");
+}
+public void testBug571038_1() throws Exception {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"
+			+ " public static void main(String[] args) {\n"
+			+ "   System.out.println(\"hello\");\n"
+			+ " }\n"
+			+ "}\n"
+			+ "record MyRecord<T> (MyIntf<T>... t) {\n"
+			+ "	public MyRecord(MyIntf<T>... t) {\n"
+			+ "		this.t = null;\n"
+			+ "	}\n"
+			+ "}\n"
+			+ "interface MyIntf<T> {}\n"
+		},
+	 "hello");
+	String expectedOutput = "  // Method descriptor #25 ()[LMyIntf;\n"
+			+ "  // Signature: ()[LMyIntf<TT;>;\n"
+			+ "  // Stack: 1, Locals: 1\n"
+			+ "  public MyIntf[] t();\n";
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "MyRecord.class", ClassFileBytesDisassembler.SYSTEM);
+}
+public void testBug571038_2() throws Exception {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"
+			+ " public static void main(String[] args) {\n"
+			+ "   System.out.println(\"hello\");\n"
+			+ " }\n"
+			+ "}\n"
+			+ "record MyRecord<T> (MyIntf<T>... t) {\n"
+			+ "	@SafeVarargs\n"
+			+ "	public MyRecord(MyIntf<T>... t) {\n"
+			+ "		this.t = null;\n"
+			+ "	}\n"
+			+ "}\n"
+			+ "interface MyIntf<T> {}\n"
+		},
+	 "hello");
+	String expectedOutput = "  // Method descriptor #27 ()[LMyIntf;\n"
+			+ "  // Signature: ()[LMyIntf<TT;>;\n"
+			+ "  // Stack: 1, Locals: 1\n"
+			+ "  public MyIntf[] t();\n";
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "MyRecord.class", ClassFileBytesDisassembler.SYSTEM);
+}
+public void testBug571038_3() throws Exception {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"import java.lang.annotation.*;\n"
+			+ "public class X {\n"
+			+ " public static void main(String[] args) {\n"
+			+ "   System.out.println(\"hello\");\n"
+			+ " }\n"
+			+ "}\n"
+			+ "record MyRecord<T> (MyIntf<T>... t) {\n"
+			+ "	@SafeVarargs\n"
+			+ "	public MyRecord(@MyAnnot MyIntf<T>... t) {\n"
+			+ "		this.t = null;\n"
+			+ "	}\n"
+			+ "}\n"
+			+ "interface MyIntf<T> {}\n"
+			+ "@Retention(RetentionPolicy.RUNTIME)\n"
+			+ "@interface MyAnnot {}\n"
+		},
+	 "hello");
+	String expectedOutput = "  // Method descriptor #30 ()[LMyIntf;\n"
+			+ "  // Signature: ()[LMyIntf<TT;>;\n"
+			+ "  // Stack: 1, Locals: 1\n"
+			+ "  public MyIntf[] t();\n";
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "MyRecord.class", ClassFileBytesDisassembler.SYSTEM);
+}
+public void testBug571038_4() throws Exception {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"import java.lang.annotation.*;\n"
+			+ "public class X {\n"
+			+ " public static void main(String[] args) {\n"
+			+ "   System.out.println(\"hello\");\n"
+			+ " }\n"
+			+ "}\n"
+			+ "record MyRecord<T> (MyIntf<T>... t) {\n"
+			+ "	@SafeVarargs\n"
+			+ "	public MyRecord(MyIntf<@MyAnnot T>... t) {\n"
+			+ "		this.t = null;\n"
+			+ "	}\n"
+			+ "}\n"
+			+ "interface MyIntf<T> {}\n"
+			+ "@Retention(RetentionPolicy.RUNTIME)\n"
+			+ "@interface MyAnnot {}\n"
+		},
+	 "hello");
+	String expectedOutput = "  // Method descriptor #29 ()[LMyIntf;\n"
+			+ "  // Signature: ()[LMyIntf<TT;>;\n"
+			+ "  // Stack: 1, Locals: 1\n"
+			+ "  public MyIntf[] t();\n";
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "MyRecord.class", ClassFileBytesDisassembler.SYSTEM);
+}
+public void testBug571454() {
+	this.runNegativeTest(
+			new String[] {
+					"X.java",
+					"public class X {\n"+
+					"    public static void main(String argv[]) {\n"+
+					"       R rec = new R(3);\n"+
+					"		if (rec.x() == 3) {\n" +
+					"			// do nothing\n" +
+					"		}\n" +
+					"    }\n"+
+					"}\n",
+					"R.java",
+					"record R(int x) {\n"+
+					"       R {\n"+
+					"               super();\n"+
+					"       }\n"+
+					"}",
+				},
+	        "----------\n"
+	        + "1. ERROR in R.java (at line 3)\n"
+	        + "	super();\n"
+	        + "	^^^^^^^^\n"
+	        + "The body of a compact constructor must not contain an explicit constructor call\n"
+	        + "----------\n");
+}
+public void testBug570399_001() throws Exception {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"public class X {\n"+
+			" public static void main(String[] args) {\n"+
+			"    R r1 = new R( 2, 3); // Wrong error: The constructor MyRecord(int, int) is undefined\n"+
+			"    R r2 = new R();      // works\n"+
+			"    int total = r1.x()+r2.x()+r1.y()+r2.y();\n"+
+			"    System.out.println(\"Hi\"+total);\n"+
+			"  }\n"+
+			"}",
+			"R.java",
+			"public record R(int x, int y) {\n"+
+			"    R() {\n"+
+			"        this(0, 0);\n"+
+			"    }\n"+
+			"}",
+		},
+	 "Hi5");
+}
+public void testBug570399_002() throws Exception {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"record R(int x) {\n"+
+			"}\n" +
+			"public class X {\n"+
+			" public static void main(String[] args) {\n"+
+			"    R r2 = new R(5);      // works\n"+
+			"    int total = r2.x();\n"+
+			"    System.out.println(\"Hi\"+total);\n"+
+			"  }\n"+
+			"}",
+		},
+	 "Hi5");
+}
+public void testBug571141_1() {
+	runConformTest(new String[] { "X.java",
+			"public class X {\n" +
+			" public static void main(String[] args) {\n" +
+			"   System.out.println(\"helo\");\n" +
+			" }\n" +
+			"}\n" +
+			"record MyRecord(boolean equals){\n" +
+			"    public boolean equals() {\n" +
+			"        return equals;\n" +
+			"    }\n" +
+			"}" },
+		"helo");
+}
+public void testBug571141_2() {
+	runConformTest(new String[] { "X.java",
+			"public class X {\n" +
+			" public static void main(String[] args) {\n" +
+			"   System.out.println(\"helo\");\n" +
+			" }\n" +
+			"}\n" +
+			"record MyRecord(boolean equals){\n" +
+			"    public boolean equals() {\n" +
+			"        return equals;\n" +
+			"    }\n" +
+			"    public boolean equals(Object obj) {\n" +
+			"      return equals;\n" +
+			"    } \n" +
+			"}" },
+		"helo");
+}
+public void testBug571141_3() throws IOException, ClassFormatException {
+	runConformTest(new String[] { "X.java",
+			"public class X {\n" +
+			" public static void main(String[] args) {\n" +
+			"   System.out.println(\"helo\");\n" +
+			" }\n" +
+			"}\n" +
+			"record MyRecord(boolean b){\n" +
+			"    public boolean equals(Object other) {\n" +
+			"        return true;\n" +
+			"    }\n" +
+			"}" },
+		"helo");
+	String unExpectedOutput =
+			 "  public final boolean equals(java.lang.Object arg0);\n"
+			 + "    0  aload_0 [this]\n"
+			 + "    1  aload_1 [arg0]\n"
+			 + "    2  invokedynamic 0 equals(MyRecord, java.lang.Object) : boolean [35]\n"
+			 + "    7  ireturn\n"
+			 + "";
+	String rFile = getClassFileContents("MyRecord.class", ClassFileBytesDisassembler.SYSTEM);
+	verifyOutputNegative(rFile, unExpectedOutput);
+}
+public void testBugLazyCanon_001() throws IOException, ClassFormatException {
+	runConformTest(new String[] { "X.java",
+			"record X(int xyz, int y2k) {\n"+
+					" public X(int xyz, int y2k) {\n"+
+					"     this.xyz = xyz;\n"+
+					"     this.y2k = y2k;\n"+
+					"   }\n"+
+					" public static void main(String[] args) {\n"+
+					"   System.out.println(new X(33,1).xyz());\n"+
+					" }\n"+
+					"}"
+	},
+		"33");
+}
+public void testBugLazyCanon_002() throws IOException, ClassFormatException {
+	runConformTest(new String[] { "X.java",
+			"record X(int xyz, int y2k) {\n"+
+					" public static void main(String[] args) {\n"+
+					"   System.out.println(new X(33,1).xyz());\n"+
+					" }\n"+
+					"}"
+	},
+		"33");
+}
+public void testBugLazyCanon_003() throws IOException, ClassFormatException {
+	runConformTest(new String[] { "X.java",
+			"class X {\n"+
+					"  record Point (int  args) {\n"+
+					"    Point (String s, int t) {\n"+
+					"      this(t);\n"+
+					"    }\n"+
+					"  }\n"+
+					"   public static void main(String[] args) {\n"+
+					"    System.out.println(new X.Point(null, 33).args());\n"+
+					"    \n"+
+					"   }\n"+
+					"}"
+	},
+	"33");
+}
+public void testBugLazyCanon_004() throws IOException, ClassFormatException {
+	runConformTest(new String[] {
+			"X.java",
+			"record X<T> (T args) {\n"+
+			" public static void main(String[] args) {\n"+
+			"   System.out.println(new X<Integer>(100).args());\n"+
+			"   \n"+
+			" }\n"+
+			"}"
+	},
+	"100");
+}
+public void testBugLazyCanon_005() throws IOException, ClassFormatException {
+	runConformTest(new String[] {
+			"X.java",
+			"record X<T> (T args) {\n"+
+			" X(String s, T t) {\n"+
+			"   this(t);\n"+
+			" }\n"+
+			" public static void main(String[] args) {\n"+
+			"   System.out.println(100);\n"+
+			"   \n"+
+			" }\n"+
+			"}"
+	},
+	"100");
+}
+public void testBugLazyCanon_006() throws IOException, ClassFormatException {
+	runConformTest(new String[] {
+			"X.java",
+			"record X<T> (T args) {\n"+
+			" X(String s, T t) {\n"+
+			"   this(t);\n"+
+			" }\n"+
+			" public static void main(String[] args) {\n"+
+			"   System.out.println(new X<Integer>(100).args());\n"+
+			"   \n"+
+			" }\n"+
+			"}"
+	},
+	"100");
+}
+public void testBug571765_001() {
+	this.runNegativeTest(
+			new String[] {
+					"module-info.java",
+					"public record R() {}\n",
+				},
+	        "----------\n" +
+			"1. ERROR in module-info.java (at line 1)\n" +
+			"	public record R() {}\n" +
+			"	       ^^^^^^\n" +
+			"Syntax error on token \"record\", record expected\n" +
+	        "----------\n");
+}
+public void testBug571905_01() throws Exception {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"import java.lang.annotation.*;\n" +
+			"record X( int @MyAnnot [] j) {\n" +
+			" public static void main(String[] args) {\n" +
+			"   System.out.println(\"helo\");\n" +
+			" }\n" +
+			"}\n" +
+			"@Target({ElementType.TYPE_USE})\n" +
+			"@Retention(RetentionPolicy.RUNTIME)\n" +
+			"@interface MyAnnot {}\n"
+		},
+	 "helo");
+	String expectedOutput = // constructor
+			"  \n" +
+			"  // Method descriptor #10 ([I)V\n" +
+			"  // Stack: 2, Locals: 2\n" +
+			"  X(int[] j);\n" +
+			"     0  aload_0 [this]\n" +
+			"     1  invokespecial java.lang.Record() [12]\n" +
+			"     4  aload_0 [this]\n" +
+			"     5  aload_1 [j]\n" +
+			"     6  putfield X.j : int[] [15]\n" +
+			"     9  return\n" +
+			"      Line numbers:\n" +
+			"        [pc: 0, line: 2]\n" +
+			"      Local variable table:\n" +
+			"        [pc: 0, pc: 10] local: this index: 0 type: X\n" +
+			"        [pc: 0, pc: 10] local: j index: 1 type: int[]\n" +
+			"      Method Parameters:\n" +
+			"        j\n" +
+			"    RuntimeVisibleTypeAnnotations: \n" +
+			"      #8 @MyAnnot(\n" +
+			"        target type = 0x16 METHOD_FORMAL_PARAMETER\n" +
+			"        method parameter index = 0\n" +
+			"      )\n";
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "X.class", ClassFileBytesDisassembler.SYSTEM);
+	expectedOutput = // accessor
+			"  public int[] j();\n" +
+			"    0  aload_0 [this]\n" +
+			"    1  getfield X.j : int[] [15]\n" +
+			"    4  areturn\n" +
+			"      Line numbers:\n" +
+			"        [pc: 0, line: 2]\n" +
+			"    RuntimeVisibleTypeAnnotations: \n" +
+			"      #8 @MyAnnot(\n" +
+			"        target type = 0x14 METHOD_RETURN\n" +
+			"      )\n" ;
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "X.class", ClassFileBytesDisassembler.SYSTEM);
+}
+public void testBug571905_02() throws Exception {
+	runConformTest(
+		new String[] {
+			"X.java",
+			"import java.lang.annotation.*;\n" +
+			"record X( int @MyAnnot ... j) {\n" +
+			" public static void main(String[] args) {\n" +
+			"   System.out.println(\"helo\");\n" +
+			" }\n" +
+			"}\n" +
+			"@Target({ElementType.TYPE_USE})\n" +
+			"@Retention(RetentionPolicy.RUNTIME)\n" +
+			"@interface MyAnnot {}\n"
+		},
+	 "helo");
+	String expectedOutput = // constructor
+			"  \n" +
+			"  // Method descriptor #10 ([I)V\n" +
+			"  // Stack: 2, Locals: 2\n" +
+			"  X(int... j);\n" +
+			"     0  aload_0 [this]\n" +
+			"     1  invokespecial java.lang.Record() [12]\n" +
+			"     4  aload_0 [this]\n" +
+			"     5  aload_1 [j]\n" +
+			"     6  putfield X.j : int[] [15]\n" +
+			"     9  return\n" +
+			"      Line numbers:\n" +
+			"        [pc: 0, line: 2]\n" +
+			"      Local variable table:\n" +
+			"        [pc: 0, pc: 10] local: this index: 0 type: X\n" +
+			"        [pc: 0, pc: 10] local: j index: 1 type: int[]\n" +
+			"      Method Parameters:\n" +
+			"        j\n" +
+			"    RuntimeVisibleTypeAnnotations: \n" +
+			"      #8 @MyAnnot(\n" +
+			"        target type = 0x16 METHOD_FORMAL_PARAMETER\n" +
+			"        method parameter index = 0\n" +
+			"      )\n";
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "X.class", ClassFileBytesDisassembler.SYSTEM);
+	expectedOutput = // accessor
+			"  public int[] j();\n" +
+			"    0  aload_0 [this]\n" +
+			"    1  getfield X.j : int[] [15]\n" +
+			"    4  areturn\n" +
+			"      Line numbers:\n" +
+			"        [pc: 0, line: 2]\n" +
+			"    RuntimeVisibleTypeAnnotations: \n" +
+			"      #8 @MyAnnot(\n" +
+			"        target type = 0x14 METHOD_RETURN\n" +
+			"      )\n" ;
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "X.class", ClassFileBytesDisassembler.SYSTEM);
+}
+public void testBug572204_001() {
+	runNegativeTest(
+			new String[] {
+					"R.java",
+					"record R (@SafeVarargs String... s) {}\n"
+				},
+				"----------\n" +
+				"1. ERROR in R.java (at line 1)\n" +
+				"	record R (@SafeVarargs String... s) {}\n" +
+				"	                                 ^\n" +
+				"@SafeVarargs annotation cannot be applied to record component without explicit accessor method s\n" +
+				"----------\n");
+}
+public void testBug572204_002() {
+	runConformTest(
+			new String[] {
+					"R.java",
+					"record R (@SafeVarargs String... s) {\n" +
+					" public static void main(String[] args) {\n" +
+					"   System.out.println(\"helo\");\n" +
+					" }\n" +
+					" public String[] s() {\n" +
+					"  return this.s;\n" +
+					" }\n" +
+					"}\n"
+				},
+				"helo");
+}
+public void testBug572204_003() {
+	runNegativeTest(
+			new String[] {
+					"R.java",
+					"record R (@SafeVarargs String... s) {\n" +
+					" public static void main(String[] args) {\n" +
+					"   System.out.println(\"helo\");\n" +
+					" }\n" +
+					" R (@SafeVarargs String... s) {\n" +
+					"   this.s=s;\n" +
+					" }\n" +
+					"}\n"
+				},
+				"----------\n" +
+				"1. ERROR in R.java (at line 1)\n" +
+				"	record R (@SafeVarargs String... s) {\n" +
+				"	                                 ^\n" +
+				"@SafeVarargs annotation cannot be applied to record component without explicit accessor method s\n" +
+				"----------\n" +
+				"2. ERROR in R.java (at line 5)\n" +
+				"	R (@SafeVarargs String... s) {\n" +
+				"	   ^^^^^^^^^^^^\n" +
+				"The annotation @SafeVarargs is disallowed for this location\n" +
+				"----------\n");
+}
+public void testBug572204_004() {
+	runNegativeTest(
+			new String[] {
+					"R.java",
+					"record R (@SafeVarargs String... s) {\n" +
+					" public static void main(String[] args) {\n" +
+					"   System.out.println(\"helo\");\n" +
+					" }\n" +
+					" R (@SafeVarargs String... s) {\n" +
+					"   this.s=s;\n" +
+					" }\n" +
+					" public String[] s() {\n" +
+					"  return this.s;\n" +
+					" }\n" +
+					"}\n"
+				},
+			"----------\n" +
+			"1. ERROR in R.java (at line 5)\n" +
+			"	R (@SafeVarargs String... s) {\n" +
+			"	   ^^^^^^^^^^^^\n" +
+			"The annotation @SafeVarargs is disallowed for this location\n" +
+			"----------\n");
+}
+public void testBug572204_005() {
+	runNegativeTest(
+			new String[] {
+					"R.java",
+					"record R (@SafeVarargs String... s) {\n" +
+					"@SafeVarargs" +
+					" R (String... s) {\n" +
+					"   this.s = s;\n" +
+					" }\n" +
+					"}\n"
+				},
+				"----------\n" +
+				"1. ERROR in R.java (at line 1)\n" +
+				"	record R (@SafeVarargs String... s) {\n" +
+				"	                                 ^\n" +
+				"@SafeVarargs annotation cannot be applied to record component without explicit accessor method s\n" +
+				"----------\n");
+}
+public void testBug572204_006() {
+	runConformTest(
+			new String[] {
+					"R.java",
+					"record R (@SafeVarargs String... s) {\n" +
+					" public static void main(String[] args) {\n" +
+					"   System.out.println(\"helo\");\n" +
+					" }\n" +
+					"@SafeVarargs" +
+					" R (String... s) {\n" +
+					"   this.s = s;\n" +
+					" }\n" +
+					" public String[] s() {\n" +
+					"  return this.s;\n" +
+					" }\n" +
+					"}\n"
+				},
+			"helo");
+}
+public void testBug572204_007() throws Exception {
+	runConformTest(
+			new String[] {
+					"R.java",
+					"import java.lang.annotation.*;\n" +
+					"@Target(ElementType.PARAMETER) \n" +
+					"@Retention(RetentionPolicy.RUNTIME)\n" +
+					"@interface I {}\r\n" +
+					"record R(@I String... s) {\n" +
+					" public static void main(String[] args) {\n" +
+					"   System.out.println(\"helo\");\n" +
+					" }\n" +
+					"}\n"
+				},
+				"helo");
+	String expectedOutput = // constructor
+			"  \n"	+
+			"  // Method descriptor #8 ([Ljava/lang/String;)V\n" +
+			"  // Stack: 2, Locals: 2\n" +
+			"  R(java.lang.String... s);\n" +
+			"     0  aload_0 [this]\n" +
+			"     1  invokespecial java.lang.Record() [12]\n" +
+			"     4  aload_0 [this]\n" +
+			"     5  aload_1 [s]\n" +
+			"     6  putfield R.s : java.lang.String[] [15]\n" +
+			"     9  return\n" +
+			"      Line numbers:\n" +
+			"        [pc: 0, line: 5]\n" +
+			"      Local variable table:\n" +
+			"        [pc: 0, pc: 10] local: this index: 0 type: R\n" +
+			"        [pc: 0, pc: 10] local: s index: 1 type: java.lang.String[]\n" +
+			"      Method Parameters:\n" +
+			"        s\n" +
+			"    RuntimeVisibleParameterAnnotations: \n" +
+			"      Number of annotations for parameter 0: 1\n" +
+			"        #10 @I(\n" +
+			"        )\n";
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "R.class", ClassFileBytesDisassembler.SYSTEM);
+	expectedOutput = // accessor
+			"  \n" +
+			"  // Method descriptor #38 ()[Ljava/lang/String;\n" +
+	 		"  // Stack: 1, Locals: 1\n" +
+			"  public java.lang.String[] s();\n" +
+			"    0  aload_0 [this]\n" +
+			"    1  getfield R.s : java.lang.String[] [15]\n" +
+			"    4  areturn\n" +
+			"      Line numbers:\n" +
+			"        [pc: 0, line: 5]\n";
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "R.class", ClassFileBytesDisassembler.SYSTEM);
+}
+public void testBug572934_001() {
+	Map<String, String> options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_ReportLocalVariableHiding, CompilerOptions.ERROR);
+	options.put(CompilerOptions.OPTION_ReportSpecialParameterHidingField, CompilerOptions.ENABLED);
+	//This test should not report any error
+	this.runConformTest(
+		new String[] {
+			"X.java",
+			"public record X(int param) {\n" +
+			"	public X(int param) {\n" +
+			"		this.param = param;\n" +
+			"	}\n" +
+			"	public static void main(String[] args) {\n" +
+			"		X abc= new X(10);\n" +
+			"		System.out.println(abc.param());\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"10",
+		options
+	);
+	options.put(CompilerOptions.OPTION_ReportLocalVariableHiding, CompilerOptions.IGNORE);
+	options.put(CompilerOptions.OPTION_ReportSpecialParameterHidingField, CompilerOptions.DISABLED);
+}
+public void testBug572934_002() {
+	Map<String, String> options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_ReportLocalVariableHiding, CompilerOptions.ERROR);
+	options.put(CompilerOptions.OPTION_ReportSpecialParameterHidingField, CompilerOptions.ENABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public record X(int param) {\n" +
+			"	public X(int param) {\n" +
+			"		this.param = param;\n" +
+			"	}\n" +
+			"	public void main(int param) {\n" +
+			"		System.out.println(param);\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 5)\n" +
+		"	public void main(int param) {\n" +
+		"	                     ^^^^^\n" +
+		"The parameter param is hiding a field from type X\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+	options.put(CompilerOptions.OPTION_ReportLocalVariableHiding, CompilerOptions.IGNORE);
+	options.put(CompilerOptions.OPTION_ReportSpecialParameterHidingField, CompilerOptions.DISABLED);
+}
+public void testBug572934_003() {
+	Map<String, String> options = getCompilerOptions();
+	options.put(CompilerOptions.OPTION_ReportLocalVariableHiding, CompilerOptions.ERROR);
+	options.put(CompilerOptions.OPTION_ReportSpecialParameterHidingField, CompilerOptions.ENABLED);
+	this.runNegativeTest(
+		new String[] {
+			"X.java",
+			"public record X(int param) {\n" +
+			"	public X(int param) {\n" +
+			"		this.param = param;\n" +
+			"	}" +
+			"	public void setParam(int param) {\n" +
+			"		\n" +
+			"	}\n" +
+			"}\n"
+		},
+		"----------\n" +
+		"1. ERROR in X.java (at line 4)\n" +
+		"	}	public void setParam(int param) {\n" +
+		"	 	                         ^^^^^\n" +
+		"The parameter param is hiding a field from type X\n" +
+		"----------\n",
+		null,
+		true,
+		options
+	);
+	options.put(CompilerOptions.OPTION_ReportLocalVariableHiding, CompilerOptions.IGNORE);
+	options.put(CompilerOptions.OPTION_ReportSpecialParameterHidingField, CompilerOptions.DISABLED);
+}
+public void testBug573195_001() throws Exception {
+	runConformTest(
+			new String[] {
+					"X.java",
+					"public class X {\n"+
+					"    protected record R(int i) {\n"+
+					"        public R(int i, int j) {\n"+
+					"            this(i);\n"+
+					"        }\n"+
+					"    }\n"+
+					"    public static void main(String[] args) {\n"+
+					"   R r = new R(1, 2);\n"+
+					"   System.out.println(r.i());\n"+
+					" }\n"+
+					"}"
+				},
+				"1");
+	String expectedOutput = // constructor
+			"  // Method descriptor #12 (I)V\n" +
+			"  // Stack: 2, Locals: 2\n" +
+			"  protected X$R(int arg0);\n" +
+			"     0  aload_0 [this]\n" +
+			"     1  invokespecial java.lang.Record() [36]\n" +
+			"     4  aload_0 [this]\n" +
+			"     5  iload_1 [arg0]\n" +
+			"     6  putfield X$R.i : int [20]\n" +
+			"     9  return\n";
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "X$R.class", ClassFileBytesDisassembler.SYSTEM);
+}
+
+public void testBug574284_001() throws Exception {
+	runConformTest(
+			new String[] {
+					"X.java",
+					"public class X {\n" +
+					"\n" +
+					"    public static void main(String[] args) {\n" +
+					"        new X.Rec(false); // fails\n" +
+					"        new X.Rec(false, new int[0]);\n" +
+					"        System.out.println(0);\n" +
+					"    }\n" +
+					"\n" +
+					"    record Rec(boolean isHidden, int... indexes) {\n" +
+					"        Rec(int... indexes) {\n" +
+					"            this(false, indexes);\n" +
+					"        }\n" +
+					"    }\n" +
+					"}"
+			},
+		"0");
+	String expectedOutput = // constructor
+			"  // Method descriptor #14 (Z[I)V\n" +
+			"  // Stack: 2, Locals: 3\n" +
+			"  X$Rec(boolean arg0, int... arg1);\n" +
+			"     0  aload_0 [this]\n" +
+			"     1  invokespecial java.lang.Record() [41]\n" +
+			"     4  aload_0 [this]\n" +
+			"     5  iload_1 [arg0]\n" +
+			"     6  putfield X$Rec.isHidden : boolean [21]\n" +
+			"     9  aload_0 [this]\n" +
+			"    10  aload_2 [arg1]\n" +
+			"    11  putfield X$Rec.indexes : int[] [24]\n" +
+			"    14  return\n";
+	RecordsRestrictedClassTest.verifyClassFile(expectedOutput, "X$Rec.class", ClassFileBytesDisassembler.SYSTEM);
+
+}
+public void testBug574284_002() {
+	runConformTest(
+			new String[] {
+					"X.java",
+					"public class X {\n" +
+					"\n" +
+					"    public static void main(String[] args) {\n" +
+					"        new X.Rec(false); // fails\n" +
+					"        new X.Rec(false, new int[0]);\n" +
+					"        System.out.println(0);\n" +
+					"    }\n" +
+					"\n" +
+					"    record Rec(boolean isHidden, int... indexes) {\n" +
+					"    }\n" +
+					"}"
+			},
+		"0");
+}
+
+public void testBug574282_001() {
+	runConformTest(
+			new String[] {
+					"X.java",
+					"record Rec(String name) {\n" +
+					"\n" +
+					"    Rec() {\n" +
+					"        this(\"\");\n" +
+					"    }\n" +
+					"\n" +
+					"    @Override\n" +
+					"    public boolean equals(Object obj) {\n" +
+					"        return false;\n" +
+					"    }\n" +
+					"}\n" +
+					"public class X {\n"+
+					"  public static void main(String[] args){\n"+
+					"     System.out.println(0);\n" +
+					"  }\n"+
+					"}\n"
+			},
+		"0");
+}
+
 }

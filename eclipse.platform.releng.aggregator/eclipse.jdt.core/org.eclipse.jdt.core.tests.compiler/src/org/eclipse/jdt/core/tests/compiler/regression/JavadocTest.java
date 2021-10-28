@@ -89,6 +89,12 @@ public abstract class JavadocTest extends AbstractRegressionTest {
 		if ((complianceLevels & AbstractCompilerTest.F_14) != 0) {
 			testSuite.addTest(buildUniqueComplianceTestSuite(JavadocTestForRecord.class, ClassFileConstants.JDK14));
 		}
+		if ((complianceLevels & AbstractCompilerTest.F_15) != 0) {
+			testSuite.addTest(buildUniqueComplianceTestSuite(JavadocTest_15.class, ClassFileConstants.JDK15));
+		}
+		if ((complianceLevels & AbstractCompilerTest.F_16) != 0) {
+			testSuite.addTest(buildUniqueComplianceTestSuite(JavadocTest_15.class, ClassFileConstants.JDK16));
+		}
 		return testSuite;
 	}
 
@@ -489,10 +495,10 @@ public abstract class JavadocTest extends AbstractRegressionTest {
 			writeFiles(testFiles);
 
 			// Prepare command line
-			StringBuffer cmdLine = new StringBuffer(javadocCommandLineHeader);
+			StringBuilder cmdLine = new StringBuilder(javadocCommandLineHeader);
 			// compute extra classpath
 			String[] classpath = Util.concatWithClassLibs(JAVAC_OUTPUT_DIR_NAME, false);
-			StringBuffer cp = new StringBuffer(" -classpath ");
+			StringBuilder cp = new StringBuilder(" -classpath ");
 			int length = classpath.length;
 			for (int i = 0; i < length; i++) {
 				if (i > 0)

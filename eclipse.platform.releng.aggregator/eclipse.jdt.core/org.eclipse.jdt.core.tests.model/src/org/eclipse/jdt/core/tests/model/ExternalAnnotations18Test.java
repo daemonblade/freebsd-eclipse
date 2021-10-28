@@ -315,6 +315,13 @@ public class ExternalAnnotations18Test extends ModifyingResourceTests {
 		this.project.setRawClasspath(rawClasspath, new NullProgressMonitor());
 	}
 
+	protected void addSourceFolderWithExternalAnnotations(IJavaProject javaProject, String sourceFolder, String outputFolder, String externalAnnotationPath) throws JavaModelException {
+		IClasspathAttribute[] extraAttributes = new IClasspathAttribute[] { new ClasspathAttribute(IClasspathAttribute.EXTERNAL_ANNOTATION_PATH, externalAnnotationPath) };
+		IClasspathEntry entry = JavaCore.newSourceEntry(new Path(sourceFolder), null, null,
+				outputFolder != null ? new Path(outputFolder) : null, extraAttributes);
+		addClasspathEntry(javaProject, entry);
+	}
+
 	protected void createFileInProject(String projectRelativeFolder, String fileName, String content) throws CoreException {
 		String folderPath = this.project.getProject().getName()+'/'+projectRelativeFolder;
 		createFolder(folderPath);
@@ -2438,7 +2445,7 @@ public class ExternalAnnotations18Test extends ModifyingResourceTests {
 				"public interface List<T> extends java.util.Collection<T> {\n" +
 				"	Stream<T> stream();\n" +
 				"}\n",
-				"Collector.java",
+				"/UnannotatedLib/libs/Collector.java",
 				"package libs;\n" +
 				"public interface Collector<T, A, R> { }\n"
 			}, null);
@@ -2665,5 +2672,439 @@ public class ExternalAnnotations18Test extends ModifyingResourceTests {
 		} finally {
 			deleteProject("Bug500024");
 		}
+	}
+
+	// reconcile client of a "generated" source+eea
+    @SuppressWarnings("deprecation")
+	public void testSourceFolder1() throws CoreException {
+		myCreateJavaProject("Bug509397");
+		addSourceFolderWithExternalAnnotations(this.project, "/Bug509397/src-gen", "/Bug509397/bin-gen", "/Bug509397/annot-gen");
+
+		createFileInProject("annot-gen/pgen", "CGen.eea",
+				"class pgen/CGen\n" +
+				"\n" +
+				"get\n" +
+				" (Ljava/lang/String;)Ljava/lang/String;\n" +
+				" (L1java/lang/String;)L1java/lang/String;\n");
+
+		createFileInProject("src-gen/pgen", "CGen.java",
+				"package pgen;\n" +
+				"public class CGen {\n" +
+				"	public String get(String in) { return in; }\n" +
+				"}\n");
+
+		IPackageFragment fragment = this.project.getPackageFragmentRoots()[0].createPackageFragment("p", true, null);
+		ICompilationUnit unit = fragment.createCompilationUnit("Use.java",
+				"package p;\n" +
+				"import pgen.CGen;\n" +
+				"import org.eclipse.jdt.annotation.NonNull;\n" +
+				"public class Use {\n" +
+				"	public @NonNull String test(CGen c) {\n" +
+				"		String s = c.get(null);\n" + // problem here (6)
+				"		return s;\n" + // no problem here
+				"	}\n" +
+				"}\n",
+				true, new NullProgressMonitor()).getWorkingCopy(new NullProgressMonitor());
+		CompilationUnit reconciled = unit.reconcile(AST.JLS8, true, null, new NullProgressMonitor());
+		IProblem[] problems = reconciled.getProblems();
+		assertProblems(problems, new String[] {
+				"Pb(910) Null type mismatch: required '@NonNull String' but the provided value is null"
+			}, new int[] { 6 });
+	}
+
+	// reconcile client of a "generated" source+eea
+    // single merged output folder
+    @SuppressWarnings("deprecation")
+	public void testSourceFolder1a() throws CoreException {
+		myCreateJavaProject("Bug509397");
+		addSourceFolderWithExternalAnnotations(this.project, "/Bug509397/src-gen", null, "/Bug509397/annot-gen");
+
+		createFileInProject("annot-gen/pgen", "CGen.eea",
+				"class pgen/CGen\n" +
+				"\n" +
+				"get\n" +
+				" (Ljava/lang/String;)Ljava/lang/String;\n" +
+				" (L1java/lang/String;)L1java/lang/String;\n");
+
+		createFileInProject("src-gen/pgen", "CGen.java",
+				"package pgen;\n" +
+				"public class CGen {\n" +
+				"	public String get(String in) { return in; }\n" +
+				"}\n");
+		this.project.getProject().build(IncrementalProjectBuilder.FULL_BUILD, null);
+
+		IPackageFragment fragment = this.project.getPackageFragmentRoots()[0].createPackageFragment("p", true, null);
+		ICompilationUnit unit = fragment.createCompilationUnit("Use.java",
+				"package p;\n" +
+				"import pgen.CGen;\n" +
+				"import org.eclipse.jdt.annotation.NonNull;\n" +
+				"public class Use {\n" +
+				"	public @NonNull String test(CGen c) {\n" +
+				"		String s = c.get(null);\n" + // problem here (6)
+				"		return s;\n" + // no problem here
+				"	}\n" +
+				"}\n",
+				true, new NullProgressMonitor()).getWorkingCopy(new NullProgressMonitor());
+		CompilationUnit reconciled = unit.reconcile(AST.JLS8, true, null, new NullProgressMonitor());
+		IProblem[] problems = reconciled.getProblems();
+		assertProblems(problems, new String[] {
+				"Pb(910) Null type mismatch: required '@NonNull String' but the provided value is null"
+			}, new int[] { 6 });
+	}
+
+    // full build of a project with src-gen & annot-gen
+	public void testSourceFolder2() throws CoreException {
+		myCreateJavaProject("Bug509397");
+		addSourceFolderWithExternalAnnotations(this.project, "/Bug509397/src-gen", "/Bug509397/bin-gen", "/Bug509397/annot-gen");
+
+		createFileInProject("annot-gen/pgen", "CGen.eea",
+				"class pgen/CGen\n" +
+				"\n" +
+				"get\n" +
+				" (Ljava/lang/String;)Ljava/lang/String;\n" +
+				" (L1java/lang/String;)L1java/lang/String;\n");
+
+		createFileInProject("src-gen/pgen", "CGen.java",
+				"package pgen;\n" +
+				"public class CGen {\n" +
+				"	public String get(String in) { return in; }\n" +
+				"}\n");
+
+		createFileInProject("src/p", "Use.java",
+				"package p;\n" +
+				"import pgen.CGen;\n" +
+				"import org.eclipse.jdt.annotation.NonNull;\n" +
+				"public class Use {\n" +
+				"	public @NonNull String test(CGen c) {\n" +
+				"		String s = c.get(null);\n" + // problem here (6)
+				"		return s;\n" + // no problem here
+				"	}\n" +
+				"}\n");
+		this.project.getProject().build(IncrementalProjectBuilder.FULL_BUILD, null);
+		IMarker[] markers = this.project.getProject().findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_INFINITE);
+		assertMarkers("Unexpected markers",
+				"Null type mismatch: required '@NonNull String' but the provided value is null",
+				markers);
+	}
+
+    // full build of a project with src-gen & annot-gen
+    // single merged output folder
+	public void testSourceFolder2a() throws CoreException {
+		myCreateJavaProject("Bug509397");
+		addSourceFolderWithExternalAnnotations(this.project, "/Bug509397/src-gen", null, "/Bug509397/annot-gen");
+
+		createFileInProject("annot-gen/pgen", "CGen.eea",
+				"class pgen/CGen\n" +
+				"\n" +
+				"get\n" +
+				" (Ljava/lang/String;)Ljava/lang/String;\n" +
+				" (L1java/lang/String;)L1java/lang/String;\n");
+
+		createFileInProject("src-gen/pgen", "CGen.java",
+				"package pgen;\n" +
+				"public class CGen {\n" +
+				"	public String get(String in) { return in; }\n" +
+				"}\n");
+
+		createFileInProject("src/p", "Use.java",
+				"package p;\n" +
+				"import pgen.CGen;\n" +
+				"import org.eclipse.jdt.annotation.NonNull;\n" +
+				"public class Use {\n" +
+				"	public @NonNull String test(CGen c) {\n" +
+				"		String s = c.get(null);\n" + // problem here (6)
+				"		return s;\n" + // no problem here
+				"	}\n" +
+				"}\n");
+		this.project.getProject().build(IncrementalProjectBuilder.FULL_BUILD, null);
+		IMarker[] markers = this.project.getProject().findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_INFINITE);
+		assertMarkers("Unexpected markers",
+				"Null type mismatch: required '@NonNull String' but the provided value is null",
+				markers);
+	}
+	public void testMultiProject1() throws CoreException {
+		IJavaProject prj1 = null, prj2 = null;
+		myCreateJavaProject("Prj1");
+		addSourceFolderWithExternalAnnotations(this.project, "/Prj1/src-gen", null, "/Prj1/annot-gen");
+		prj1 = this.project;
+		try {
+			createFileInProject("annot-gen/pgen", "CGen.eea",
+					"class pgen/CGen\n" +
+					"\n" +
+					"get\n" +
+					" (Ljava/lang/String;)Ljava/lang/String;\n" +
+					" (L1java/lang/String;)L1java/lang/String;\n");
+
+			createFileInProject("src-gen/pgen", "CGen.java",
+					"package pgen;\n" +
+					"public class CGen {\n" +
+					"	public String get(String in) { return in; }\n" +
+					"}\n");
+			this.project.getProject().build(IncrementalProjectBuilder.FULL_BUILD, null);
+
+			myCreateJavaProject("Prj2");
+			addSourceFolderWithExternalAnnotations(this.project, "/Prj2/src-gen", null, "/Prj2/annot-gen");
+			prj2 = this.project;
+			createFileInProject("annot-gen/pgen2", "CGen2.eea",
+					"class pgen2/CGen2\n" +
+					"\n" +
+					"get2\n" +
+					" (Ljava/lang/Exception;)Ljava/lang/String;\n" +
+					" (L1java/lang/Exception;)L1java/lang/String;\n");
+
+			createFileInProject("src-gen/pgen2", "CGen2.java",
+					"package pgen2;\n" +
+					"public class CGen2 {\n" +
+					"	public String get2(Exception in) { return in.toString(); }\n" +
+					"}\n");
+			this.project.getProject().build(IncrementalProjectBuilder.FULL_BUILD, null);
+
+			myCreateJavaProject("PrjTest");
+			IClasspathEntry entry = JavaCore.newProjectEntry(
+					new Path("/Prj1"),
+					null/*access rules*/,
+					false/*combine access rules*/,
+					null,
+					false/*exported*/);
+			addClasspathEntry(this.project, entry);
+			entry = JavaCore.newProjectEntry(
+					new Path("/Prj2"),
+					null/*access rules*/,
+					false/*combine access rules*/,
+					null,
+					false/*exported*/);
+			addClasspathEntry(this.project, entry);
+			this.project.setOption(JavaCore.CORE_JAVA_BUILD_EXTERNAL_ANNOTATIONS_FROM_ALL_LOCATIONS, JavaCore.ENABLED);
+
+			createFileInProject("src/p", "Use.java",
+					"package p;\n" +
+					"import pgen.CGen;\n" +
+					"import pgen2.CGen2;\n" +
+					"import org.eclipse.jdt.annotation.NonNull;\n" +
+					"public class Use {\n" +
+					"	public @NonNull String test(CGen c) {\n" +
+					"		String s = c.get(null);\n" + // problem here (7)
+					"		return s;\n" + // no problem here
+					"	}\n" +
+					"	public @NonNull String test2(CGen2 c) {\n" +
+					"		String s = c.get2(null);\n" + // problem here (11)
+					"		return s;\n" + // no problem here
+					"	}\n" +
+					"}\n");
+			this.project.getProject().build(IncrementalProjectBuilder.FULL_BUILD, null);
+			IMarker[] markers = this.project.getProject().findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_INFINITE);
+			sortMarkers(markers);
+			assertMarkers("Unexpected markers",
+					"Null type mismatch: required '@NonNull Exception' but the provided value is null\n" +
+					"Null type mismatch: required '@NonNull String' but the provided value is null",
+					markers);
+
+			ICompilationUnit unit = JavaCore.createCompilationUnitFrom(this.project.getProject().getFile("src/p/Use.java")).getWorkingCopy(null);
+			CompilationUnit reconciled = unit.reconcile(getJLS8(), true, null, new NullProgressMonitor());
+			IProblem[] problems = reconciled.getProblems();
+			assertProblems(problems,
+				new String[] {
+					"Pb(910) Null type mismatch: required '@NonNull String' but the provided value is null",
+					"Pb(910) Null type mismatch: required '@NonNull Exception' but the provided value is null"
+				},
+				new int[] {
+					7, 11
+				});
+		} finally {
+			if (prj1 != null)
+				prj1.getProject().delete(true, true , null);
+			if (prj2 != null)
+				prj2.getProject().delete(true, true , null);
+		}
+	}
+	public void testSelfAnnotatedJars() throws CoreException, IOException {
+		// this is the "deployed" variant of testMultiProject1(), i.e, dependencies are jars, not projects
+		myCreateJavaProject("PrjTest");
+		this.project.setOption(JavaCore.CORE_JAVA_BUILD_EXTERNAL_ANNOTATIONS_FROM_ALL_LOCATIONS, JavaCore.ENABLED);
+
+		String projectLoc = this.project.getProject().getLocation().toString();
+		Util.createJar(new String[] {
+				"pgen/CGen.java",
+				"package pgen;\n" +
+				"public class CGen {\n" +
+				"	public String get(String in) { return in; }\n" +
+				"}\n"
+			},
+			new String[] {
+				"pgen/CGen.eea",
+				"class pgen/CGen\n" +
+				"\n" +
+				"get\n" +
+				" (Ljava/lang/String;)Ljava/lang/String;\n" +
+				" (L1java/lang/String;)L1java/lang/String;\n"
+			},
+			projectLoc+"/lib/prj1.jar",
+			"1.8");
+		IClasspathEntry entry = JavaCore.newLibraryEntry(
+				new Path("/PrjTest/lib/prj1.jar"),
+				null/*access rules*/,
+				null,
+				false/*exported*/);
+		addClasspathEntry(this.project, entry);
+
+		Util.createJar(new String[] {
+				"pgen2/CGen2.java",
+				"package pgen2;\n" +
+				"public class CGen2 {\n" +
+				"	public String get2(Exception in) { return in.toString(); }\n" +
+				"}\n"
+			},
+			new String[] {
+				"pgen2/CGen2.eea",
+				"class pgen2/CGen2\n" +
+				"\n" +
+				"get2\n" +
+				" (Ljava/lang/Exception;)Ljava/lang/String;\n" +
+				" (L1java/lang/Exception;)L1java/lang/String;\n",
+			},
+			projectLoc+"/lib/prj2.jar",
+			"1.8");
+		entry = JavaCore.newLibraryEntry(
+				new Path("/PrjTest/lib/prj2.jar"),
+				null/*access rules*/,
+				null,
+				false/*exported*/);
+		addClasspathEntry(this.project, entry);
+		this.project.getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
+
+		createFileInProject("src/p", "Use.java",
+				"package p;\n" +
+				"import pgen.CGen;\n" +
+				"import pgen2.CGen2;\n" +
+				"import org.eclipse.jdt.annotation.NonNull;\n" +
+				"public class Use {\n" +
+				"	public @NonNull String test(CGen c) {\n" +
+				"		String s = c.get(null);\n" + // problem here (7)
+				"		return s;\n" + // no problem here
+				"	}\n" +
+				"	public @NonNull String test2(CGen2 c) {\n" +
+				"		String s = c.get2(null);\n" + // problem here (11)
+				"		return s;\n" + // no problem here
+				"	}\n" +
+				"}\n");
+		this.project.getProject().build(IncrementalProjectBuilder.FULL_BUILD, null);
+		IMarker[] markers = this.project.getProject().findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_INFINITE);
+		sortMarkers(markers);
+		assertMarkers("Unexpected markers",
+				"Null type mismatch: required '@NonNull Exception' but the provided value is null\n" +
+				"Null type mismatch: required '@NonNull String' but the provided value is null",
+				markers);
+
+		ICompilationUnit unit = JavaCore.createCompilationUnitFrom(this.project.getProject().getFile("src/p/Use.java")).getWorkingCopy(null);
+		CompilationUnit reconciled = unit.reconcile(getJLS8(), true, null, new NullProgressMonitor());
+		IProblem[] problems = reconciled.getProblems();
+		assertProblems(problems,
+			new String[] {
+				"Pb(910) Null type mismatch: required '@NonNull String' but the provided value is null",
+				"Pb(910) Null type mismatch: required '@NonNull Exception' but the provided value is null"
+			},
+			new int[] {
+				7, 11
+			});
+
+	}
+	public void testSeparateAnnotationJar() throws CoreException, IOException {
+		// similar to selfAnnotatedJars(), but here all .eeas are deployed in a separate jar on the build path
+		myCreateJavaProject("PrjTest");
+		this.project.setOption(JavaCore.CORE_JAVA_BUILD_EXTERNAL_ANNOTATIONS_FROM_ALL_LOCATIONS, JavaCore.ENABLED);
+
+		String projectLoc = this.project.getProject().getLocation().toString();
+		Util.createJar(new String[0],
+			new String[] {
+				"pgen/CGen.eea",
+				"class pgen/CGen\n" +
+				"\n" +
+				"get\n" +
+				" (Ljava/lang/String;)Ljava/lang/String;\n" +
+				" (L1java/lang/String;)L1java/lang/String;\n",
+
+				"pgen2/CGen2.eea",
+				"class pgen2/CGen2\n" +
+				"\n" +
+				"get2\n" +
+				" (Ljava/lang/Exception;)Ljava/lang/String;\n" +
+				" (L1java/lang/Exception;)L1java/lang/String;\n",
+			},
+			projectLoc+"/lib/eeas.jar",
+			"1.8");
+		IClasspathEntry entry = JavaCore.newLibraryEntry(
+				new Path("/PrjTest/lib/eeas.jar"),
+				null/*access rules*/,
+				null,
+				false/*exported*/);
+		addClasspathEntry(this.project, entry);
+
+		Util.createJar(new String[] {
+				"pgen/CGen.java",
+				"package pgen;\n" +
+				"public class CGen {\n" +
+				"	public String get(String in) { return in; }\n" +
+				"}\n"
+			},
+			projectLoc+"/lib/prj1.jar",
+			"1.8");
+		entry = JavaCore.newLibraryEntry(
+				new Path("/PrjTest/lib/prj1.jar"),
+				null/*access rules*/,
+				null,
+				false/*exported*/);
+		addClasspathEntry(this.project, entry);
+
+		Util.createJar(new String[] {
+				"pgen2/CGen2.java",
+				"package pgen2;\n" +
+				"public class CGen2 {\n" +
+				"	public String get2(Exception in) { return in.toString(); }\n" +
+				"}\n"
+			},
+			projectLoc+"/lib/prj2.jar",
+			"1.8");
+		entry = JavaCore.newLibraryEntry(
+				new Path("/PrjTest/lib/prj2.jar"),
+				null/*access rules*/,
+				null,
+				false/*exported*/);
+		addClasspathEntry(this.project, entry);
+		this.project.getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
+
+		createFileInProject("src/p", "Use.java",
+				"package p;\n" +
+				"import pgen.CGen;\n" +
+				"import pgen2.CGen2;\n" +
+				"import org.eclipse.jdt.annotation.NonNull;\n" +
+				"public class Use {\n" +
+				"	public @NonNull String test(CGen c) {\n" +
+				"		String s = c.get(null);\n" + // problem here (7)
+				"		return s;\n" + // no problem here
+				"	}\n" +
+				"	public @NonNull String test2(CGen2 c) {\n" +
+				"		String s = c.get2(null);\n" + // problem here (11)
+				"		return s;\n" + // no problem here
+				"	}\n" +
+				"}\n");
+		this.project.getProject().build(IncrementalProjectBuilder.FULL_BUILD, null);
+		IMarker[] markers = this.project.getProject().findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_INFINITE);
+		sortMarkers(markers);
+		assertMarkers("Unexpected markers",
+				"Null type mismatch: required '@NonNull Exception' but the provided value is null\n" +
+				"Null type mismatch: required '@NonNull String' but the provided value is null",
+				markers);
+
+		ICompilationUnit unit = JavaCore.createCompilationUnitFrom(this.project.getProject().getFile("src/p/Use.java")).getWorkingCopy(null);
+		CompilationUnit reconciled = unit.reconcile(getJLS8(), true, null, new NullProgressMonitor());
+		IProblem[] problems = reconciled.getProblems();
+		assertProblems(problems,
+			new String[] {
+				"Pb(910) Null type mismatch: required '@NonNull String' but the provided value is null",
+				"Pb(910) Null type mismatch: required '@NonNull Exception' but the provided value is null"
+			},
+			new int[] {
+				7, 11
+			});
 	}
 }

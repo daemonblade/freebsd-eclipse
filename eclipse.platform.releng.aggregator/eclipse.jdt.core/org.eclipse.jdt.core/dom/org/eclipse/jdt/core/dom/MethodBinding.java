@@ -24,6 +24,7 @@ import org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedGenericMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.RawTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
+import org.eclipse.jdt.internal.compiler.lookup.SyntheticMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TagBits;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeVariableBinding;
@@ -78,6 +79,14 @@ class MethodBinding implements IMethodBinding {
 	@Override
 	public boolean isCompactConstructor() {
 		return this.binding.isCompactConstructor();
+	}
+
+	/**
+	 * @see IMethodBinding#isCanonicalConstructor()
+	 */
+	@Override
+	public boolean isCanonicalConstructor() {
+		return ((this.binding.tagBits & TagBits.IsCanonicalConstructor) != 0);
 	}
 
 	/**
@@ -195,7 +204,7 @@ class MethodBinding implements IMethodBinding {
 					paramTypes[i] = typeBinding;
 				} else {
 					// log error
-					StringBuffer message = new StringBuffer("Report method binding where a parameter is null:\n");  //$NON-NLS-1$
+					StringBuilder message = new StringBuilder("Report method binding where a parameter is null:\n");  //$NON-NLS-1$
 					message.append(toString());
 					Util.log(new IllegalArgumentException(), message.toString());
 					// report no binding since one or more parameter has no binding
@@ -598,5 +607,11 @@ class MethodBinding implements IMethodBinding {
 	@Override
 	public IVariableBinding[] getSyntheticOuterLocals() {
 		return NO_VARIABLE_BINDINGS;
+	}
+
+	@Override
+	public boolean isSyntheticRecordMethod() {
+		return ((getDeclaringClass().isRecord()) &&
+				(this.binding instanceof SyntheticMethodBinding));
 	}
 }

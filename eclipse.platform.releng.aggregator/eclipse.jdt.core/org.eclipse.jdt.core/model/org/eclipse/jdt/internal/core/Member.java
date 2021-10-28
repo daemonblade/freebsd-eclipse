@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -76,9 +76,9 @@ protected static Object convertConstant(Constant constant) {
 		case TypeIds.T_char :
 			return Character.valueOf(constant.charValue());
 		case TypeIds.T_double :
-			return new Double(constant.doubleValue());
+			return Double.valueOf(constant.doubleValue());
 		case TypeIds.T_float :
-			return new Float(constant.floatValue());
+			return Float.valueOf(constant.floatValue());
 		case TypeIds.T_int :
 			return Integer.valueOf(constant.intValue());
 		case TypeIds.T_long :
@@ -144,8 +144,8 @@ public String[] getCategories() throws JavaModelException {
  */
 @Override
 public IClassFile getClassFile() {
-	IJavaElement element = getParent();
-	while (element instanceof IMember) {
+	JavaElement element = getParent();
+	while (element instanceof Member) {
 		element= element.getParent();
 	}
 	if (element instanceof IClassFile) {
@@ -158,7 +158,7 @@ public IClassFile getClassFile() {
  */
 @Override
 public IType getDeclaringType() {
-	JavaElement parentElement = (JavaElement)getParent();
+	JavaElement parentElement = getParent();
 	if (parentElement.getElementType() == TYPE) {
 		return (IType) parentElement;
 	}
@@ -247,7 +247,7 @@ public IJavaElement getHandleFromMemento(String token, MementoTokenizer memento,
 			int flags = Integer.parseInt(memento.nextToken());
 			memento.nextToken(); // JEM_COUNT
 			if (!memento.hasMoreTokens()) return this;
-			boolean isParameter = Boolean.valueOf(memento.nextToken()).booleanValue();
+			boolean isParameter = Boolean.parseBoolean(memento.nextToken());
 			return new LocalVariable(this, varName, declarationStart, declarationEnd, nameStart, nameEnd, typeSignature, null, flags, isParameter);
 		case JEM_TYPE_PARAMETER:
 			if (!memento.hasMoreTokens()) return this;
@@ -415,7 +415,7 @@ public String readableName() {
 	IJavaElement declaringType = getDeclaringType();
 	if (declaringType != null) {
 		String declaringName = ((JavaElement) getDeclaringType()).readableName();
-		StringBuffer buffer = new StringBuffer(declaringName);
+		StringBuilder buffer = new StringBuilder(declaringName);
 		buffer.append('.');
 		buffer.append(getElementName());
 		return buffer.toString();

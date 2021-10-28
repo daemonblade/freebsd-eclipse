@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,12 +12,13 @@
  *     IBM Corporation - initial API and implementation
  *     Alex Smirnoff (alexsmr@sympatico.ca) - part of the changes to support Java-like extension
  *                                                            (see https://bugs.eclipse.org/bugs/show_bug.cgi?id=71460)
+ *     Microsoft Corporation - support custom options at compilation unit level
  *******************************************************************************/
 package org.eclipse.jdt.internal.core;
 
 import java.io.IOException;
 import java.util.*;
-
+import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jdt.core.*;
@@ -137,7 +138,7 @@ protected boolean buildStructure(OpenableElementInfo info, final IProgressMonito
 
 	boolean computeProblems = perWorkingCopyInfo != null && perWorkingCopyInfo.isActive() && project != null && JavaProject.hasJavaNature(project.getProject());
 	IProblemFactory problemFactory = new DefaultProblemFactory();
-	Map options = project == null ? JavaCore.getOptions() : project.getOptions(true);
+	Map options = this.getOptions(true);
 	if (!computeProblems) {
 		// disable task tags checking to speed up parsing
 		options.put(JavaCore.COMPILER_TASK_TAGS, ""); //$NON-NLS-1$
@@ -214,7 +215,7 @@ protected boolean buildStructure(OpenableElementInfo info, final IProgressMonito
  * DO NOT PASS TO CLIENTS
  */
 public CompilationUnit cloneCachingContents() {
-	return new CompilationUnit((PackageFragment) this.parent, this.name, this.owner) {
+	return new CompilationUnit((PackageFragment) this.getParent(), this.name, this.owner) {
 		private char[] cachedContents;
 		@Override
 		public char[] getContents() {
@@ -613,7 +614,7 @@ public IJavaElement findSharedWorkingCopy(IBufferFactory factory) {
  */
 @Override
 public ICompilationUnit findWorkingCopy(WorkingCopyOwner workingCopyOwner) {
-	CompilationUnit cu = new CompilationUnit((PackageFragment)this.parent, getElementName(), workingCopyOwner);
+	CompilationUnit cu = new CompilationUnit((PackageFragment)this.getParent(), getElementName(), workingCopyOwner);
 	if (workingCopyOwner == DefaultWorkingCopyOwner.PRIMARY) {
 		return cu;
 	} else {
@@ -650,7 +651,7 @@ public IType[] getAllTypes() throws JavaModelException {
  * @see IMember#getCompilationUnit()
  */
 @Override
-public ICompilationUnit getCompilationUnit() {
+public CompilationUnit getCompilationUnit() {
 	return this;
 }
 /**
@@ -759,12 +760,12 @@ public char[] getFileName(){
 public IJavaElement getHandleFromMemento(String token, MementoTokenizer memento, WorkingCopyOwner workingCopyOwner) {
 	switch (token.charAt(0)) {
 		case JEM_IMPORTDECLARATION:
-			JavaElement container = (JavaElement)getImportContainer();
+			JavaElement container = getImportContainer();
 			return container.getHandleFromMemento(token, memento, workingCopyOwner);
 		case JEM_PACKAGEDECLARATION:
 			if (!memento.hasMoreTokens()) return this;
 			String pkgName = memento.nextToken();
-			JavaElement pkgDecl = (JavaElement)getPackageDeclaration(pkgName);
+			JavaElement pkgDecl = getPackageDeclaration(pkgName);
 			return pkgDecl.getHandleFromMemento(memento, workingCopyOwner);
 		case JEM_TYPE:
 			if (!memento.hasMoreTokens()) return this;
@@ -791,14 +792,14 @@ protected char getHandleMementoDelimiter() {
  * @see ICompilationUnit#getImport(String)
  */
 @Override
-public IImportDeclaration getImport(String importName) {
+public ImportDeclaration getImport(String importName) {
 	return getImportContainer().getImport(importName);
 }
 /**
  * @see ICompilationUnit#getImportContainer()
  */
 @Override
-public IImportContainer getImportContainer() {
+public ImportContainer getImportContainer() {
 	return new ImportContainer(this);
 }
 
@@ -877,7 +878,7 @@ public WorkingCopyOwner getOwner() {
  * @see ICompilationUnit#getPackageDeclaration(String)
  */
 @Override
-public IPackageDeclaration getPackageDeclaration(String pkg) {
+public PackageDeclaration getPackageDeclaration(String pkg) {
 	return new PackageDeclaration(this, pkg);
 }
 /**
@@ -927,7 +928,7 @@ public ICompilationUnit getPrimary() {
 }
 
 @Override
-public IJavaElement getPrimaryElement(boolean checkOwner) {
+public JavaElement getPrimaryElement(boolean checkOwner) {
 	if (checkOwner && isPrimary()) return this;
 	return new CompilationUnit((PackageFragment)getParent(), getElementName(), DefaultWorkingCopyOwner.PRIMARY);
 }
@@ -935,7 +936,7 @@ public IJavaElement getPrimaryElement(boolean checkOwner) {
 @Override
 public IResource resource(PackageFragmentRoot root) {
 	if (root == null) return null; // working copy not in workspace
-	return ((IContainer) ((Openable) this.parent).resource(root)).getFile(new Path(getElementName()));
+	return ((IContainer) ((Openable) this.getParent()).resource(root)).getFile(new Path(getElementName()));
 }
 /**
  * @see ISourceReference#getSource()
@@ -1445,5 +1446,31 @@ public char[] getModuleName() {
 		e.printStackTrace();
 	}
 	return null;
+}
+
+@Override
+public void setOptions(Map<String, String> newOptions) {
+	Map<String, String> customOptions = newOptions == null ? null : new ConcurrentHashMap<String, String>(newOptions);
+	try {
+		this.getCompilationUnitElementInfo().setCustomOptions(customOptions);
+	} catch (JavaModelException e) {
+		// do nothing
+	}
+}
+
+@Override
+public Map<String, String> getCustomOptions() {
+	try {
+		Map<String, String> customOptions = this.getCompilationUnitElementInfo().getCustomOptions();
+		return customOptions == null ? Collections.emptyMap() : customOptions;
+	} catch (JavaModelException e) {
+		// do nothing
+	}
+
+	return Collections.emptyMap();
+}
+
+private CompilationUnitElementInfo getCompilationUnitElementInfo() throws JavaModelException {
+	return (CompilationUnitElementInfo) this.getElementInfo();
 }
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -192,7 +192,7 @@ public class WhileStatement extends Statement {
 		if ((this.bits & IsReachable) == 0) {
 			return;
 		}
-		if (this.condition != null && this.condition.containsPatternVariable()) {
+		if (containsPatternVariable()) {
 			this.condition.addPatternVariables(currentScope, codeStream);
 		}
 		int pc = codeStream.position;
@@ -275,10 +275,30 @@ public class WhileStatement extends Statement {
 
 	@Override
 	public void resolve(BlockScope scope) {
-		TypeBinding type = this.condition.resolveTypeExpecting(scope, TypeBinding.BOOLEAN);
-		this.condition.computeConversion(scope, type, type);
-		if (this.action != null)
-			this.action.resolve(scope);
+		if (containsPatternVariable()) {
+			this.condition.collectPatternVariablesToScope(null, scope);
+			LocalVariableBinding[] patternVariablesInTrueScope = this.condition.getPatternVariablesWhenTrue();
+			LocalVariableBinding[] patternVariablesInFalseScope = this.condition.getPatternVariablesWhenFalse();
+
+			TypeBinding type = this.condition.resolveTypeExpecting(scope, TypeBinding.BOOLEAN);
+			this.condition.computeConversion(scope, type, type);
+			if (this.action != null) {
+				this.action.resolveWithPatternVariablesInScope(patternVariablesInTrueScope, scope);
+				this.action.promotePatternVariablesIfApplicable(patternVariablesInFalseScope,
+						() -> !this.action.breaksOut(null));
+			}
+		} else {
+			TypeBinding type = this.condition.resolveTypeExpecting(scope, TypeBinding.BOOLEAN);
+			this.condition.computeConversion(scope, type, type);
+			if (this.action != null)
+				this.action.resolve(scope);
+		}
+
+	}
+
+	@Override
+	public boolean containsPatternVariable() {
+		return this.condition != null && this.condition.containsPatternVariable();
 	}
 
 	@Override

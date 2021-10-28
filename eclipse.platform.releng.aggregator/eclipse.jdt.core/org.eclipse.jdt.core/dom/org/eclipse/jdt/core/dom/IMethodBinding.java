@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,6 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Stephan Herrmann - Contribution for
@@ -72,9 +71,22 @@ public interface IMethodBinding extends IBinding {
 	 *
 	 * @return <code>true</code> if this is the binding for a compact constructor
 	 * in a source file and and <code>false</code> otherwise
-	 * @noreference
+	 * @since 3.26
 	 */
 	public boolean isCompactConstructor();
+
+	/**
+	 * Returns whether this binding is for a canonical constructor or not.
+	 *
+	 * <p>
+	 * This method returns <code>true</code> for canonical constructors
+	 * </p>
+	 *
+	 * @return <code>true</code> if this is the binding for a canonical constructor
+	 * and <code>false</code> otherwise
+	 * @since 3.26
+	 */
+	public boolean isCanonicalConstructor();
 
 	/**
 	 * Returns whether this binding is known to be a compiler-generated
@@ -424,5 +436,19 @@ public interface IMethodBinding extends IBinding {
 	 * @since 3.18
 	 */
 	public IVariableBinding[] getSyntheticOuterLocals();
+
+	/**
+	 * Returns if this is a compiler generated  equals(), hashCode(), toString() or any accessor
+	 * method of a Record or not.
+	 * Methods equals(), hashCode() and toString() and accessor methods of a Record do not have
+	 * AccSynthetic flag set for them even if they are compiler generated methods. To differentiate
+	 * between these above compiler generated methods and user created methods equals(), hashCode()
+	 * and toString() or accessor methods in a Record, this function can be used.
+	 *
+	 * @return <code>true</code> for compiler generated  equals(), hashCode() and toString() or any
+	 * accessor method of a Record, else it returns <code>false</code>.
+	 * @since 3.26
+	 */
+	public boolean isSyntheticRecordMethod();
 
 }

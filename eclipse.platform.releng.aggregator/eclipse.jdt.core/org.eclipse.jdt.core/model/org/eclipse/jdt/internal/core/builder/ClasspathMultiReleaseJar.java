@@ -2,6 +2,7 @@ package org.eclipse.jdt.internal.core.builder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.function.Predicate;
@@ -13,13 +14,11 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
-import org.eclipse.jdt.internal.compiler.classfmt.ExternalAnnotationDecorator;
 import org.eclipse.jdt.internal.compiler.env.AccessRuleSet;
 import org.eclipse.jdt.internal.compiler.env.IBinaryType;
 import org.eclipse.jdt.internal.compiler.env.IModule;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
-import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.ExternalAnnotationStatus;
 import org.eclipse.jdt.internal.compiler.util.SimpleSet;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.util.Util;
@@ -27,20 +26,18 @@ import org.eclipse.jdt.internal.core.util.Util;
 public class ClasspathMultiReleaseJar extends ClasspathJar {
 	private static final String META_INF_VERSIONS = "META-INF/versions/"; //$NON-NLS-1$
 	private static final int META_INF_LENGTH = META_INF_VERSIONS.length();
-	String[] supportedVersions;
+	private volatile String[] supportedVersions;
 
-	ClasspathMultiReleaseJar(IFile resource, AccessRuleSet accessRuleSet, IPath externalAnnotationPath,
+	ClasspathMultiReleaseJar(IFile resource, AccessRuleSet accessRuleSet, IPath externalAnnotationPath, Collection<ClasspathLocation> allLocationsForEEA,
 			boolean isOnModulePath, String compliance) {
-		super(resource, accessRuleSet, externalAnnotationPath, isOnModulePath);
+		super(resource, accessRuleSet, externalAnnotationPath, allLocationsForEEA, isOnModulePath);
 		this.compliance = compliance;
-		initializeVersions(this);
 	}
 
 	ClasspathMultiReleaseJar(String zipFilename, long lastModified, AccessRuleSet accessRuleSet,
 			IPath externalAnnotationPath, boolean isOnModulePath, String compliance) {
 		super(zipFilename, lastModified, accessRuleSet, externalAnnotationPath, isOnModulePath);
 		this.compliance = compliance;
-		initializeVersions(this);
 	}
 
 	public ClasspathMultiReleaseJar(ZipFile zipFile, AccessRuleSet accessRuleSet, IPath externalAnnotationPath,
@@ -64,7 +61,7 @@ public class ClasspathMultiReleaseJar extends ClasspathJar {
 		try (ZipFile file = new ZipFile(this.zipFilename)){
 			ClassFileReader classfile = null;
 			try {
-				for (String path : this.supportedVersions) {
+				for (String path : supportedVersions(file)) {
 					classfile = ClassFileReader.read(file, path.toString() + '/' + IModule.MODULE_INFO_CLASS);
 					if (classfile != null) {
 						break;
@@ -87,30 +84,28 @@ public class ClasspathMultiReleaseJar extends ClasspathJar {
 		return mod;
 	}
 
-	private static synchronized void initializeVersions(ClasspathMultiReleaseJar jar) {
-		if (jar.zipFile == null) {
-			if (org.eclipse.jdt.internal.core.JavaModelManager.ZIP_ACCESS_VERBOSE) {
-				System.out.println("(" + Thread.currentThread() + ") [ClasspathMultiReleaseJar.initializeVersions(String)] Creating ZipFile on " + jar.zipFilename); //$NON-NLS-1$	//$NON-NLS-2$
-			}
-			try {
-				jar.zipFile = new ZipFile(jar.zipFilename);
-			} catch (IOException e) {
-				return;
-			}
-			jar.closeZipFileAtEnd = true;
-		}
+	private static String[] initializeVersions(ZipFile zipFile, String compliance) {
 		int earliestJavaVersion = ClassFileConstants.MAJOR_VERSION_9;
-		long latestJDK = CompilerOptions.versionToJdkLevel(jar.compliance);
+		long latestJDK = CompilerOptions.versionToJdkLevel(compliance);
 		int latestJavaVer = (int) (latestJDK >> 16);
 		List<String> versions = new ArrayList<>();
 		for (int i = latestJavaVer; i >= earliestJavaVersion; i--) {
-			String name = META_INF_VERSIONS+ (i - 44);
-			ZipEntry entry = jar.zipFile.getEntry(name);
+			String name = META_INF_VERSIONS + (i - 44);
+			ZipEntry entry = zipFile.getEntry(name);
 			if (entry != null) {
 				versions.add(name);
 			}
 		}
-		jar.supportedVersions = versions.toArray(new String[versions.size()]);
+		return versions.toArray(new String[versions.size()]);
+	}
+
+	private String[] supportedVersions(ZipFile file) {
+		String[] versions = this.supportedVersions;
+		if (versions == null) {
+			versions = initializeVersions(file, this.compliance);
+			this.supportedVersions = versions;
+		}
+		return versions;
 	}
 
 	@Override
@@ -142,7 +137,7 @@ public class ClasspathMultiReleaseJar extends ClasspathJar {
 		if (!isPackage(qualifiedPackageName, moduleName)) {
 			return null; // most common case
 		}
-		for (String path : this.supportedVersions) {
+		for (String path : supportedVersions(this.zipFile)) {
 			String s = null;
 			try {
 				s = META_INF_VERSIONS + path + "/" + binaryFileName;  //$NON-NLS-1$
@@ -162,28 +157,7 @@ public class ClasspathMultiReleaseJar extends ClasspathJar {
 					}
 					String fileNameWithoutExtension = qualifiedBinaryFileName.substring(0,
 							qualifiedBinaryFileName.length() - SuffixConstants.SUFFIX_CLASS.length);
-					if (this.externalAnnotationPath != null) {
-						try {
-							if (this.annotationZipFile == null) {
-								this.annotationZipFile = ExternalAnnotationDecorator
-										.getAnnotationZipFile(this.externalAnnotationPath, null);
-							}
-
-							reader = ExternalAnnotationDecorator.create(reader, this.externalAnnotationPath,
-									fileNameWithoutExtension, this.annotationZipFile);
-						} catch (IOException e) {
-							// don't let error on annotations fail class reading
-						}
-						if (reader.getExternalAnnotationStatus() == ExternalAnnotationStatus.NOT_EEA_CONFIGURED) {
-							// ensure a reader that answers NO_EEA_FILE
-							reader = new ExternalAnnotationDecorator(reader, null);
-						}
-					}
-					if (this.accessRuleSet == null) {
-						return new NameEnvironmentAnswer(reader, null, modName);
-					}
-					return new NameEnvironmentAnswer(reader,
-							this.accessRuleSet.getViolatedRestriction(fileNameWithoutExtension.toCharArray()), modName);
+					return createAnswer(fileNameWithoutExtension, reader, modName);
 				}
 			} catch (IOException | ClassFormatException e) {
 				Util.log(e, "Failed to find class for: " + s + " in: " + this);  //$NON-NLS-1$ //$NON-NLS-2$

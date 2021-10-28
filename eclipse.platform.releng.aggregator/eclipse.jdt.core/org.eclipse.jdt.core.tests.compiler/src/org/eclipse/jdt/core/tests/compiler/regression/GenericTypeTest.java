@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -56,7 +56,7 @@ public class GenericTypeTest extends AbstractComparableTest {
 	// Static initializer to specify tests subset using TESTS_* static variables
 	// All specified tests which does not belong to the class are skipped...
 	static {
-//		TESTS_NAMES = new String[] { "test1277" };
+//		TESTS_NAMES = new String[] { "test0593" };
 //		TESTS_NUMBERS = new int[] { 470, 627 };
 //		TESTS_RANGE = new int[] { 1097, -1 };
 	}
@@ -5358,6 +5358,8 @@ public class GenericTypeTest extends AbstractComparableTest {
 	}
 	// reject instanceof type variable or parameterized type
 	public void test0178() {
+		if (this.complianceLevel >= ClassFileConstants.JDK16)
+			return;
 		Map customOptions = getCompilerOptions();
 		this.runNegativeTest(
 			new String[] {
@@ -5401,7 +5403,7 @@ public class GenericTypeTest extends AbstractComparableTest {
 			customOptions);
 	}
 	public void test0178a() {
-		if (this.complianceLevel < ClassFileConstants.JDK14)
+		if (this.complianceLevel < ClassFileConstants.JDK16)
 			return;
 		Map customOptions = getCompilerOptions();
 		customOptions.put(CompilerOptions.OPTION_EnablePreviews, CompilerOptions.ENABLED);
@@ -5421,7 +5423,7 @@ public class GenericTypeTest extends AbstractComparableTest {
 				"			return t;\n" +
 				"		} else 	if (t instanceof T) {\n" +
 				"			return t;\n" +
-				"		} else if (t instanceof X) { // this is allowed since Java 14 as preview feature\n" +
+				"		} else if (t instanceof X) { // this is allowed since Java 15 as preview feature\n" +
 				"			return t;\n" +
 				"		}\n" +
 				"		return null;\n" +
@@ -5434,30 +5436,15 @@ public class GenericTypeTest extends AbstractComparableTest {
 			"	    ^\n" +
 			"Type T cannot be safely cast to X<T>\n" +
 			"----------\n" +
-			"2. WARNING in X.java (at line 5)\n" +
-			"	if (t instanceof X<T>) {\n" +
-			"	                 ^\n" +
-			"You are using a preview language feature that may or may not be supported in a future release\n" +
-			"----------\n" +
-			"3. ERROR in X.java (at line 7)\n" +
+			"2. ERROR in X.java (at line 7)\n" +
 			"	} else if (t instanceof X<String>) {\n" +
 			"	           ^\n" +
 			"Type T cannot be safely cast to X<String>\n" +
 			"----------\n" +
-			"4. WARNING in X.java (at line 7)\n" +
-			"	} else if (t instanceof X<String>) {\n" +
-			"	                        ^\n" +
-			"You are using a preview language feature that may or may not be supported in a future release\n" +
-			"----------\n" +
-			"5. WARNING in X.java (at line 11)\n" +
+			"3. WARNING in X.java (at line 11)\n" +
 			"	} else 	if (t instanceof T) {\n" +
 			"	       	    ^^^^^^^^^^^^^^\n" +
 			"The expression of type T is already an instance of type T\n" +
-			"----------\n" +
-			"6. WARNING in X.java (at line 11)\n" +
-			"	} else 	if (t instanceof T) {\n" +
-			"	       	                 ^\n" +
-			"You are using a preview language feature that may or may not be supported in a future release\n" +
 			"----------\n",
 			null,
 			true,
@@ -18808,6 +18795,7 @@ X.java:6: name clash: <T#1>foo(Object) and <T#2>foo(Object) have the same erasur
 	public void test0593() {
 		Map options = getCompilerOptions();
 		options.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.IGNORE);
+		String bounds = isJRE15Plus ? "Object&Serializable&Comparable<?>&Constable" : "Object&Serializable&Comparable<?>";
 	    String xSource =
 				"import java.util.*;\n" +
 				"public class X {\n" +
@@ -18824,7 +18812,7 @@ X.java:6: name clash: <T#1>foo(Object) and <T#2>foo(Object) have the same erasur
 				"1. ERROR in X.java (at line 3)\n" +
 				"	List<Class<?>> classes1 = Arrays.asList(String.class, Boolean.class);\n" +
 				"	                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
-				"Type mismatch: cannot convert from List<Class<? extends Object&Serializable&Comparable<?>>> to List<Class<?>>\n" +
+				"Type mismatch: cannot convert from List<Class<? extends " + bounds + ">> to List<Class<?>>\n" +
 				"----------\n",
 				null,
 				true,
@@ -19590,7 +19578,56 @@ public void test0617() {
     }
 	//https://bugs.eclipse.org/bugs/show_bug.cgi?id=84973 - variation
 	public void test0618() {
-	    this.runNegativeTest(
+		String expectedError = 	this.complianceLevel < ClassFileConstants.JDK16 ?
+	            "----------\n" +
+	    		"1. ERROR in Map.java (at line 5)\n" +
+	    		"	static void foo(Entry<String> e) { } // invalid static ref\n" +
+	    		"	            ^^^^^^^^^^^^^^^^^^^^\n" +
+	    		"The method foo cannot be declared static; static methods can only be declared in a static or top level type\n" +
+	    		"----------\n" +
+	    		"2. ERROR in Map.java (at line 5)\n" +
+	    		"	static void foo(Entry<String> e) { } // invalid static ref\n" +
+	    		"	                ^^^^^\n" +
+	    		"Cannot make a static reference to the non-static type Entry\n" +
+	    		"----------\n" +
+	    		"3. ERROR in Map.java (at line 8)\n" +
+	    		"	Entry<String> entry; // invalid static ref\n" +
+	    		"	^^^^^\n" +
+	    		"Cannot make a static reference to the non-static type Entry\n" +
+	    		"----------\n" +
+	    		"4. ERROR in Map.java (at line 11)\n" +
+	    		"	void c(Map.Entry<String> e) { } // illegal \n" +
+	    		"	       ^^^^^^^^^\n" +
+	    		"The member type Map.Entry<String> must be qualified with a parameterized type, since it is not static\n" +
+	    		"----------\n" +
+	    		"5. WARNING in Map.java (at line 12)\n" +
+	    		"	void b(Entry e) { } // OK\n" +
+	    		"	       ^^^^^\n" +
+	    		"Map.Entry is a raw type. References to generic type Map<M>.Entry<E> should be parameterized\n" +
+	    		"----------\n"
+	    		:
+	            "----------\n" +
+	        	"1. ERROR in Map.java (at line 5)\n" +
+	        	"	static void foo(Entry<String> e) { } // invalid static ref\n" +
+	        	"	                ^^^^^\n" +
+	        	"Cannot make a static reference to the non-static type Entry\n" +
+	        	"----------\n" +
+	        	"2. ERROR in Map.java (at line 8)\n" +
+	        	"	Entry<String> entry; // invalid static ref\n" +
+	        	"	^^^^^\n" +
+	        	"Cannot make a static reference to the non-static type Entry\n" +
+	        	"----------\n" +
+	        	"3. ERROR in Map.java (at line 11)\n" +
+	        	"	void c(Map.Entry<String> e) { } // illegal \n" +
+	        	"	       ^^^^^^^^^\n" +
+	        	"The member type Map.Entry<String> must be qualified with a parameterized type, since it is not static\n" +
+	        	"----------\n" +
+	        	"4. WARNING in Map.java (at line 12)\n" +
+	        	"	void b(Entry e) { } // OK\n" +
+	        	"	       ^^^^^\n" +
+	        	"Map.Entry is a raw type. References to generic type Map<M>.Entry<E> should be parameterized\n" +
+	        	"----------\n";
+	        	this.runNegativeTest(
             new String[] {
                 "Map.java",
 				"class Map<M> {\n" +
@@ -19608,32 +19645,7 @@ public void test0617() {
 				"    void d(Map<Integer>.Entry<String> e) { } // OK\n" +
 				"}\n",
             },
-            "----------\n" +
-    		"1. ERROR in Map.java (at line 5)\n" +
-    		"	static void foo(Entry<String> e) { } // invalid static ref\n" +
-    		"	            ^^^^^^^^^^^^^^^^^^^^\n" +
-    		"The method foo cannot be declared static; static methods can only be declared in a static or top level type\n" +
-    		"----------\n" +
-    		"2. ERROR in Map.java (at line 5)\n" +
-    		"	static void foo(Entry<String> e) { } // invalid static ref\n" +
-    		"	                ^^^^^\n" +
-    		"Cannot make a static reference to the non-static type Entry\n" +
-    		"----------\n" +
-    		"3. ERROR in Map.java (at line 8)\n" +
-    		"	Entry<String> entry; // invalid static ref\n" +
-    		"	^^^^^\n" +
-    		"Cannot make a static reference to the non-static type Entry\n" +
-    		"----------\n" +
-    		"4. ERROR in Map.java (at line 11)\n" +
-    		"	void c(Map.Entry<String> e) { } // illegal \n" +
-    		"	       ^^^^^^^^^\n" +
-    		"The member type Map.Entry<String> must be qualified with a parameterized type, since it is not static\n" +
-    		"----------\n" +
-    		"5. WARNING in Map.java (at line 12)\n" +
-    		"	void b(Entry e) { } // OK\n" +
-    		"	       ^^^^^\n" +
-    		"Map.Entry is a raw type. References to generic type Map<M>.Entry<E> should be parameterized\n" +
-    		"----------\n");
+	    	expectedError);
 	}
 	//https://bugs.eclipse.org/bugs/show_bug.cgi?id=89440
 	public void test0619() {
@@ -26431,6 +26443,8 @@ public void test0813() {
 }
 //https://bugs.eclipse.org/bugs/show_bug.cgi?id=104695
 public void test0814() {
+	if (this.complianceLevel >= ClassFileConstants.JDK16)
+		return;
 	this.runNegativeTest(
 		new String[] {
 			"X.java",
@@ -26512,6 +26526,30 @@ public void test0815() {
 }
 //https://bugs.eclipse.org/bugs/show_bug.cgi?id=104695 - variation
 public void test0816() {
+	String expectedLog = this.complianceLevel >= ClassFileConstants.JDK16 ?
+			"----------\n" +
+			"1. ERROR in X.java (at line 4)\n" +
+			"	if (o instanceof List<E>[][]) { //incorrect too\n" +
+			"	    ^\n" +
+			"Type Object[] cannot be safely cast to List<E>[][]\n" +
+			"----------\n" +
+			"2. WARNING in X.java (at line 5)\n" +
+			"	List<E>[][] es = (List<E>[][]) o; \n" +
+			"	                 ^^^^^^^^^^^^^^^\n" +
+			"Type safety: Unchecked cast from Object[] to List<E>[][]\n" +
+			"----------\n"
+			:
+				"----------\n" +
+				"1. ERROR in X.java (at line 4)\n" +
+				"	if (o instanceof List<E>[][]) { //incorrect too\n" +
+				"	    ^^^^^^^^^^^^^^^^^^^^^^^^\n" +
+				"Cannot perform instanceof check against parameterized type List<E>[][]. Use the form List<?>[][] instead since further generic type information will be erased at runtime\n" +
+				"----------\n" +
+				"2. WARNING in X.java (at line 5)\n" +
+				"	List<E>[][] es = (List<E>[][]) o; \n" +
+				"	                 ^^^^^^^^^^^^^^^\n" +
+				"Type safety: Unchecked cast from Object[] to List<E>[][]\n" +
+				"----------\n";
 	this.runNegativeTest(
 		new String[] {
 			"X.java",
@@ -26524,20 +26562,47 @@ public void test0816() {
 			"    }\n" +
 			"}\n",
 		},
-		"----------\n" +
-		"1. ERROR in X.java (at line 4)\n" +
-		"	if (o instanceof List<E>[][]) { //incorrect too\n" +
-		"	    ^^^^^^^^^^^^^^^^^^^^^^^^\n" +
-		"Cannot perform instanceof check against parameterized type List<E>[][]. Use the form List<?>[][] instead since further generic type information will be erased at runtime\n" +
-		"----------\n" +
-		"2. WARNING in X.java (at line 5)\n" +
-		"	List<E>[][] es = (List<E>[][]) o; \n" +
-		"	                 ^^^^^^^^^^^^^^^\n" +
-		"Type safety: Unchecked cast from Object[] to List<E>[][]\n" +
-		"----------\n");
+		expectedLog
+		);
 }
 //https://bugs.eclipse.org/bugs/show_bug.cgi?id=104695 - variation
 public void test0817() {
+	String log = this.complianceLevel >= ClassFileConstants.JDK16 ?
+			"	    ^\n" +
+			"Type List cannot be safely cast to List<? extends String>\n" +
+			"----------\n" +
+			"6. WARNING in X.java (at line 18)\n" +
+			"	void foo(List[] ls) {\n" +
+			"	         ^^^^\n" +
+			"List is a raw type. References to generic type List<E> should be parameterized\n" +
+			"----------\n" +
+			"7. WARNING in X.java (at line 19)\n" +
+			"	if (ls instanceof List<?>[]) {}\n" +
+			"	    ^^^^^^^^^^^^^^^^^^^^^^^\n" +
+			"The expression of type List[] is already an instance of type List<?>\n" +
+			"----------\n" +
+			"8. ERROR in X.java (at line 20)\n" +
+			"	if (ls instanceof List<? extends String>[]) {}\n" +
+			"	    ^^\n" +
+			"Type List[] cannot be safely cast to List<? extends String>[]\n"
+			:
+				"	    ^^^^^^^^^^^^^^^^^\n" +
+				"Cannot perform instanceof check against parameterized type List<? extends String>. Use the form List<?> instead since further generic type information will be erased at runtime\n" +
+				"----------\n" +
+				"6. WARNING in X.java (at line 18)\n" +
+				"	void foo(List[] ls) {\n" +
+				"	         ^^^^\n" +
+				"List is a raw type. References to generic type List<E> should be parameterized\n" +
+				"----------\n" +
+				"7. WARNING in X.java (at line 19)\n" +
+				"	if (ls instanceof List<?>[]) {}\n" +
+				"	    ^^^^^^^^^^^^^^^^^^^^^^^\n" +
+				"The expression of type List[] is already an instance of type List<?>\n" +
+				"----------\n" +
+				"8. ERROR in X.java (at line 20)\n" +
+				"	if (ls instanceof List<? extends String>[]) {}\n" +
+				"	    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
+				"Cannot perform instanceof check against parameterized type List<? extends String>[]. Use the form List<?>[] instead since further generic type information will be erased at runtime\n";
 	this.runNegativeTest(
 			new String[] {
 				"X.java",
@@ -26587,23 +26652,7 @@ public void test0817() {
 			"----------\n" +
 			"5. ERROR in X.java (at line 16)\n" +
 			"	if (l instanceof List<? extends String>) {}\n" +
-			"	    ^^^^^^^^^^^^^^^^^\n" +
-			"Cannot perform instanceof check against parameterized type List<? extends String>. Use the form List<?> instead since further generic type information will be erased at runtime\n" +
-			"----------\n" +
-			"6. WARNING in X.java (at line 18)\n" +
-			"	void foo(List[] ls) {\n" +
-			"	         ^^^^\n" +
-			"List is a raw type. References to generic type List<E> should be parameterized\n" +
-			"----------\n" +
-			"7. WARNING in X.java (at line 19)\n" +
-			"	if (ls instanceof List<?>[]) {}\n" +
-			"	    ^^^^^^^^^^^^^^^^^^^^^^^\n" +
-			"The expression of type List[] is already an instance of type List<?>\n" +
-			"----------\n" +
-			"8. ERROR in X.java (at line 20)\n" +
-			"	if (ls instanceof List<? extends String>[]) {}\n" +
-			"	    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" +
-			"Cannot perform instanceof check against parameterized type List<? extends String>[]. Use the form List<?>[] instead since further generic type information will be erased at runtime\n" +
+			log +
 			"----------\n");
 }
 public void test0818() {
@@ -28579,6 +28628,34 @@ public void test0871() {
 		"");
 }
 public void test0872() {
+	String expectedError = this.complianceLevel < ClassFileConstants.JDK16 ?
+			"----------\n" +
+			"1. ERROR in X.java (at line 22)\n" +
+			"	M3<X>.N3<X> n = m.new N3<X>();\n" +
+			"	^^^^^^^^\n" +
+			"The member type X.M3.N3<U> cannot be qualified with a parameterized type, since it is static. Remove arguments from qualifying type X.M3<X>\n" +
+			"----------\n" +
+			"2. ERROR in X.java (at line 25)\n" +
+			"	static class N3<U> {\n" +
+			"	             ^^\n" +
+			"The member type N3 cannot be declared static; static types can only be declared in static or top level types\n" +
+			"----------\n" +
+			"3. ERROR in X.java (at line 30)\n" +
+			"	M4<X>.N4<X> n = m.new N4<X>();\n" +
+			"	^^^^^^^^\n" +
+			"The member type X.M4.N4<U> cannot be qualified with a parameterized type, since it is static. Remove arguments from qualifying type X.M4<X>\n" +
+			"----------\n" :
+			"----------\n" +
+			"1. ERROR in X.java (at line 22)\n" +
+			"	M3<X>.N3<X> n = m.new N3<X>();\n" +
+			"	^^^^^^^^\n" +
+			"The member type X.M3.N3<U> cannot be qualified with a parameterized type, since it is static. Remove arguments from qualifying type X.M3<X>\n" +
+			"----------\n" +
+			"2. ERROR in X.java (at line 30)\n" +
+			"	M4<X>.N4<X> n = m.new N4<X>();\n" +
+			"	^^^^^^^^\n" +
+			"The member type X.M4.N4<U> cannot be qualified with a parameterized type, since it is static. Remove arguments from qualifying type X.M4<X>\n" +
+			"----------\n";
 	this.runNegativeTest(
 		new String[] {
 			"X.java", // =================
@@ -28619,22 +28696,7 @@ public void test0872() {
 			"	}\n" +
 			"}\n",
 		},
-		"----------\n" +
-		"1. ERROR in X.java (at line 22)\n" +
-		"	M3<X>.N3<X> n = m.new N3<X>();\n" +
-		"	^^^^^^^^\n" +
-		"The member type X.M3.N3<U> cannot be qualified with a parameterized type, since it is static. Remove arguments from qualifying type X.M3<X>\n" +
-		"----------\n" +
-		"2. ERROR in X.java (at line 25)\n" +
-		"	static class N3<U> {\n" +
-		"	             ^^\n" +
-		"The member type N3 cannot be declared static; static types can only be declared in static or top level types\n" +
-		"----------\n" +
-		"3. ERROR in X.java (at line 30)\n" +
-		"	M4<X>.N4<X> n = m.new N4<X>();\n" +
-		"	^^^^^^^^\n" +
-		"The member type X.M4.N4<U> cannot be qualified with a parameterized type, since it is static. Remove arguments from qualifying type X.M4<X>\n" +
-		"----------\n");
+		expectedError);
 }
 public void test0873() {
 	this.runConformTest(
@@ -31981,6 +32043,12 @@ public void test0954() {
 }
 //https://bugs.eclipse.org/bugs/show_bug.cgi?id=105049
 public void test0955() {
+	String errorlog = this.complianceLevel >= ClassFileConstants.JDK16 ?
+			"	    ^\n" +
+			"Type Object cannot be safely cast to List<E>[]\n"
+				:
+				"	    ^^^^^^^^^^^^^^^^^^^^^^\n" +
+				"Cannot perform instanceof check against parameterized type List<E>[]. Use the form List<?>[] instead since further generic type information will be erased at runtime\n";
 	this.runNegativeTest(
 		new String[] {
 		"X.java", //================================
@@ -31996,8 +32064,7 @@ public void test0955() {
 		"----------\n" +
 		"1. ERROR in X.java (at line 4)\n" +
 		"	if (o instanceof List<E>[]) { //incorrect: bug 104695\n" +
-		"	    ^^^^^^^^^^^^^^^^^^^^^^\n" +
-		"Cannot perform instanceof check against parameterized type List<E>[]. Use the form List<?>[] instead since further generic type information will be erased at runtime\n" +
+		errorlog +
 		"----------\n" +
 		"2. WARNING in X.java (at line 5)\n" +
 		"	List<E>[] es= (List<E>[]) o; //unchecked\n" +
@@ -50187,6 +50254,8 @@ public void test1425() {
 }
 //https://bugs.eclipse.org/bugs/show_bug.cgi?id=258039
 public void test1426() {
+	if (this.complianceLevel >= ClassFileConstants.JDK16)
+		return;
 	this.runNegativeTest(
 			new String[] {
 				"X.java", //-----------------------------------------------------------------------
@@ -51748,6 +51817,19 @@ public void test268798a() {
 }
 //https://bugs.eclipse.org/bugs/show_bug.cgi?id=307885
 public void test1460() {
+	String log = this.complianceLevel < ClassFileConstants.JDK16 ?
+			"----------\n" +
+			"1. ERROR in Test.java (at line 9)\n" +
+			"	if(!(o instanceof MyEntry))\n" +
+			"	    ^^^^^^^^^^^^^^^^^^^^^^\n" +
+			"Cannot perform instanceof check against parameterized type Test<A>.MyEntry. Use the form Test.MyEntry instead since further generic type information will be erased at runtime\n" +
+			"----------\n" :
+				"----------\n" +
+				"1. ERROR in Test.java (at line 9)\n" +
+				"	if(!(o instanceof MyEntry))\n" +
+				"	     ^\n" +
+				"Type Object cannot be safely cast to Test<A>.MyEntry\n" +
+				"----------\n";
 	this.runNegativeTest(
 		new String[] {
 			"Test.java",
@@ -51765,13 +51847,8 @@ public void test1460() {
 			"        }\n" +
 			"    }\n" +
 			"}"
-		},
-		"----------\n" +
-		"1. ERROR in Test.java (at line 9)\n" +
-		"	if(!(o instanceof MyEntry))\n" +
-		"	    ^^^^^^^^^^^^^^^^^^^^^^\n" +
-		"Cannot perform instanceof check against parameterized type Test<A>.MyEntry. Use the form Test.MyEntry instead since further generic type information will be erased at runtime\n" +
-		"----------\n");
+		}, log
+		);
 }
 //https://bugs.eclipse.org/bugs/show_bug.cgi?id=306464
 public void test1461() {
@@ -52806,22 +52883,49 @@ public void testBug543480WithoutNullPointerExceptionDuringBytecodeGeneration() {
 	}
 }
 
-protected void assertCompileTimes(final List<Duration> shortTimes, final double factor, final List<Duration> longTimes) {
-	final double shortTimesAverage = averageExcludingBoundaries(shortTimes);
-	final double longTimesAverage = averageExcludingBoundaries(longTimes);
-	final String message = "Potential fluctuation of a performance test: average long compile time "
-			+ longTimesAverage + "ms should be less than " + factor + "x the average short compile time " + shortTimesAverage +"ms\n"
-			+ "long compile times: "+longTimes+"\n"
-			+ "short compile times: "+shortTimes;
-	assertTrue(message,longTimesAverage < factor*shortTimesAverage);
-	System.out.println(message);
+public void testBugBug571785_001() {
+	if (this.complianceLevel >= ClassFileConstants.JDK1_8) {
+		runConformTest(
+			new String[] {
+				"Test.java",
+				"import java.util.Collection;\n"+
+				"\n" +
+				"public class Test {\n" +
+				"	public static void main(String[] args) {\n" +
+				"		new testclass();\n" +
+				"	}\n" +
+				"}\n" +
+				"class testclass {\n" +
+				"	public void update(final Collection<? extends byte[]> inputs) {\n" +
+				"		inputs.forEach(this::update);\n" +
+				"	}\n" +
+				"	public void update(final byte[] input) {\n" +
+				"	}\n" +
+				"}\n"
+			});
+	}
 }
 
-protected double averageExcludingBoundaries(final List<Duration> durations) {
+protected void assertCompileTimes(final List<Duration> shortTimes, final double factor, final List<Duration> longTimes) {
+	final double shortTimesAverage = minExcludingBoundaries(shortTimes);
+	final double longTimesAverage = minExcludingBoundaries(longTimes);
+	final String message = "Potential fluctuation of a performance test: minimum long compile time "
+			+ longTimesAverage + "ms should be less than " + factor + "x the minimum short compile time " + shortTimesAverage +"ms\n"
+			+ "long compile times: "+longTimes+"\n"
+			+ "short compile times: "+shortTimes;
+	if (PERFORMANCE_ASSERTS) {
+		assertTrue(message,longTimesAverage < factor*shortTimesAverage);
+		System.out.println(message);
+	} else if (longTimesAverage >= factor*shortTimesAverage) {
+		System.out.println(message);
+	}
+}
+
+protected double minExcludingBoundaries(final List<Duration> durations) {
 	return durations.stream()
 			.filter(duration -> !duration.isExcluded)
 			.mapToLong(duration -> duration.durationMs)
-			.average().orElse(-1);
+			.min().orElse(-1);
 }
 
 protected List<Duration> compileTimesAfterWarmup(final Runnable compileTask) {
@@ -52840,10 +52944,23 @@ protected List<Duration> compileTimesAfterWarmup(final Runnable compileTask) {
 
 protected static IntFunction<Duration> duration(final Runnable runnable) {
 	return index -> {
-		final long startMs = System.currentTimeMillis();
+		java.time.Duration s00 = ProcessHandle.current().info().totalCpuDuration().get();
+		// wait for a OS scheduler slice begin to increase probability to finish within a single slice:
+		java.time.Duration s0;
+		java.lang.Thread.yield();
+		do {
+			java.lang.Thread.onSpinWait();
+			s0 = ProcessHandle.current().info().totalCpuDuration().get();
+		} while (s0.equals(s00));
+		long t0 = System.nanoTime();
 		runnable.run();
-		final long endMs = System.currentTimeMillis();
-		final long duration = endMs-startMs;
+		long t1 = System.nanoTime();
+		long tdiff = (t1 - t0) / 1000_000;
+		java.time.Duration s1 = ProcessHandle.current().info().totalCpuDuration().get();
+		java.time.Duration diff = s1.minus(s0);
+		long duration = diff.toMillis();
+		// if more then one slice we better take the OS value:
+		duration = duration == 0 ? tdiff : Math.min(duration, tdiff);
 		return new Duration(index, duration);
 	};
 }

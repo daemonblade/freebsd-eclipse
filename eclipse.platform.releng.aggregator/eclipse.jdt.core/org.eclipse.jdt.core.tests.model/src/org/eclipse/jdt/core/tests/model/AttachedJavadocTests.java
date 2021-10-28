@@ -37,6 +37,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IModularClassFile;
 import org.eclipse.jdt.core.IModuleDescription;
 import org.eclipse.jdt.core.IOrdinaryClassFile;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -1360,6 +1361,41 @@ public class AttachedJavadocTests extends ModifyingResourceTests {
 		} catch (IndexOutOfBoundsException e) {
 			assertTrue("Should not happen", false);
 		}
+	}
+	@SuppressWarnings("deprecation")
+	public void testBug574115() throws JavaModelException {
+		IClasspathEntry newEntry = JavaCore.newLibraryEntry(new Path("/AttachedJavadocProject/bug521256.jar"), null,
+				null, null, null, true);
+		this.project.setRawClasspath(new IClasspathEntry[] { newEntry }, null);
+		this.project.getResolvedClasspath(false);
+
+		IPackageFragmentRoot jarRoot = this.project
+				.getPackageFragmentRoot(getFile("/AttachedJavadocProject/bug521256.jar"));
+		IModularClassFile modularClassFile = jarRoot.getPackageFragment("").getModularClassFile();
+		// Bug574115: jdt.ui calls getType() on IOrdinaryClassFile.
+		assertFalse("wrong type", modularClassFile instanceof IOrdinaryClassFile);
+		try {
+			modularClassFile.getType(); // note: it would be better to remove the deprecated methods from interface
+										// - but its API
+			fail("UnsupportedOperationException expected");
+		} catch (UnsupportedOperationException e) {
+			// expected
+		}
+	}
+	public void testBug546945() throws JavaModelException {
+		IClasspathAttribute attribute =
+				JavaCore.newClasspathAttribute(
+						IClasspathAttribute.JAVADOC_LOCATION_ATTRIBUTE_NAME,
+						"jar:platform:/resource/AttachedJavadocProject/bug546945_doc.zip!/bug546945");
+		IClasspathEntry newEntry = JavaCore.newLibraryEntry(new Path("/AttachedJavadocProject/bug546945.jar"), null, null, null, new IClasspathAttribute[] {attribute}, true);
+		this.project.setRawClasspath(new IClasspathEntry[]{newEntry}, null);
+		this.project.getResolvedClasspath(false);
+		this.project.setOption(JavaCore.COMPILER_COMPLIANCE, "11");
+
+		IPackageFragmentRoot jarRoot = this.project.getPackageFragmentRoot(getFile("/AttachedJavadocProject/bug546945.jar"));
+		IOrdinaryClassFile classFile = jarRoot.getPackageFragment("org.eclipse.pub").getOrdinaryClassFile("API.class");
+		String javadoc = classFile.getAttachedJavadoc(new NullProgressMonitor());
+		assertNotNull("Should have a javadoc", javadoc); //$NON-NLS-1$
 	}
 }
 

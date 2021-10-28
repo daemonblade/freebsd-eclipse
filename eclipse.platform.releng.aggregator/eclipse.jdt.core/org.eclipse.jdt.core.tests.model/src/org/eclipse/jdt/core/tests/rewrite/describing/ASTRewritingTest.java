@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -7,7 +7,6 @@
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -84,9 +83,15 @@ public class ASTRewritingTest extends AbstractJavaModelTests {
 	/** @deprecated using deprecated code */
 	private final static int JLS10_INTERNAL = AST.JLS10;
 
+	/** @deprecated using deprecated code */
 	private final static int JLS14_INTERNAL = AST.JLS14;
 
-	private final static int[] JLS_LEVELS = { JLS2_INTERNAL, JLS3_INTERNAL, JLS4_INTERNAL, JLS8_INTERNAL, JLS9_INTERNAL, JLS10_INTERNAL, JLS14_INTERNAL };
+	/** @deprecated using deprecated code */
+	private final static int JLS15_INTERNAL = AST.JLS15;
+
+	private final static int JLS16_INTERNAL = AST.JLS16;
+
+	private final static int[] JLS_LEVELS = { JLS2_INTERNAL, JLS3_INTERNAL, JLS4_INTERNAL, JLS8_INTERNAL, JLS9_INTERNAL, JLS10_INTERNAL, JLS14_INTERNAL, JLS15_INTERNAL, JLS16_INTERNAL};
 
 	private static final String ONLY_AST_STRING = "_only";
 	private static final String SINCE_AST_STRING = "_since";
@@ -145,10 +150,11 @@ public class ASTRewritingTest extends AbstractJavaModelTests {
 		  suite.addTest(ASTRewritingLambdaExpressionTest.suite());
 		  suite.addTest(ASTRewritingReferenceExpressionTest.suite());
 		  suite.addTest(ASTRewritingRecordDeclarationTest.suite());
+		  suite.addTest(ASTRewritingInstanceOfPatternExpressionTest.suite());
 		  suite.addTest(SourceModifierTest.suite());
 		  suite.addTest(ImportRewriteTest.suite());
 		  suite.addTest(ImportRewrite18Test.suite());
-		  suite.addTest(ImportRewrite14Test.suite());
+		  suite.addTest(ImportRewrite_RecordTest.suite());
 
 		return suite;
 	}
@@ -219,6 +225,34 @@ public class ASTRewritingTest extends AbstractJavaModelTests {
 		this.sourceFolder = getPackageFragmentRoot("P", "src");
 	}
 
+	@SuppressWarnings("deprecation")
+	protected void setUpProjectAbove14() throws Exception {
+		if (this.apiLevel == AST_INTERNAL_JLS14 ) {
+			this.project1.setOption(JavaCore.COMPILER_COMPLIANCE, JavaCore.VERSION_14);
+			this.project1.setOption(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_14);
+			this.project1.setOption(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, JavaCore.VERSION_14);
+		}
+		setUpProjectAbove15();
+	}
+
+	@SuppressWarnings("deprecation")
+	protected void setUpProjectAbove15() throws Exception {
+		if (this.apiLevel == AST_INTERNAL_JLS15 ) {
+			this.project1.setOption(JavaCore.COMPILER_COMPLIANCE, JavaCore.VERSION_15);
+			this.project1.setOption(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_15);
+			this.project1.setOption(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, JavaCore.VERSION_15);
+		}
+		setUpProjectAbove16();
+	}
+
+	protected void setUpProjectAbove16() throws Exception {
+		if (this.apiLevel == AST_INTERNAL_JLS16 ) {
+			this.project1.setOption(JavaCore.COMPILER_COMPLIANCE, JavaCore.VERSION_16);
+			this.project1.setOption(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_16);
+			this.project1.setOption(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, JavaCore.VERSION_16);
+		}
+	}
+
 	protected IJavaProject createProject(String projectName, String complianceVersion) throws CoreException {
 		IJavaProject proj = createJavaProject(projectName, new String[] {"src"}, "bin");
 		proj.setOption(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.SPACE);
@@ -245,6 +279,15 @@ public class ASTRewritingTest extends AbstractJavaModelTests {
 	}
 	protected CompilationUnit createAST(ICompilationUnit cu, boolean resolveBindings, boolean statementsRecovery) {
 		return createAST(this.apiLevel, cu, resolveBindings, statementsRecovery);
+	}
+
+
+	protected CompilationUnit createAST(int JLSLevel, ICompilationUnit cu) {
+		ASTParser parser= ASTParser.newParser(JLSLevel);
+		parser.setSource(cu, JLSLevel);
+		parser.setResolveBindings(false);
+		parser.setStatementsRecovery(false);
+		return (CompilationUnit) parser.createAST(null);
 	}
 
 	protected CompilationUnit createAST(int JLSLevel, ICompilationUnit cu, boolean resolveBindings, boolean statementsRecovery) {

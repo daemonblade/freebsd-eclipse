@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 Andrey Loskutov and others.
+ * Copyright (c) 2020, 2021 Andrey Loskutov and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -22,6 +22,7 @@ import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -134,9 +135,11 @@ public class CtSym {
 		}
 		if (fst == null) {
 			try {
-				fst = FileSystems.newFileSystem(uri, new HashMap<>());
+				fst = FileSystems.newFileSystem(uri, new HashMap<>(), ClassLoader.getSystemClassLoader());
 			} catch (FileSystemAlreadyExistsException e) {
 				fst = FileSystems.getFileSystem(uri);
+			} catch (ProviderNotFoundException e) {
+				throw new IOException("Failed to create ct.sym file system for " + this.ctSymFile, e); //$NON-NLS-1$
 			}
 		}
 		this.fs = fst;
@@ -252,7 +255,7 @@ public class CtSym {
 			// Without this, org.eclipse.jdt.core.tests.model.ModuleBuilderTests.testConvertToModule() fails on 12+ JRE
 			path = releasePaths.get(moduleName + sep + qualifiedSignatureFileName);
 
-			// Special handling of broken module shema in java 11 for compilation with --release 10
+			// Special handling of broken module schema in java 11 for compilation with --release 10
 			if(path == null && !this.isJRE12Plus() && "A".equals(releaseCode)){ //$NON-NLS-1$
 				path = releasePaths.get(qualifiedSignatureFileName);
 			}
@@ -269,7 +272,7 @@ public class CtSym {
 		return path;
 	}
 
-	private String getModuleInJre12plus(String releaseCode, String qualifiedSignatureFileName) {
+	public String getModuleInJre12plus(String releaseCode, String qualifiedSignatureFileName) {
 		if (DISABLE_CACHE) {
 			return findModuleForFileInJre12plus(releaseCode, qualifiedSignatureFileName);
 		}

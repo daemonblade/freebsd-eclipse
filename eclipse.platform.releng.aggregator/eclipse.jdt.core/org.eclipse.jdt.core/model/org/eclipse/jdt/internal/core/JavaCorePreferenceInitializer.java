@@ -25,7 +25,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
-import org.eclipse.jdt.internal.core.nd.db.ChunkCache;
+import org.eclipse.jdt.internal.core.search.PatternSearchJob;
 
 /**
  * JavaCore eclipse preferences initializer.
@@ -70,6 +70,7 @@ public class JavaCorePreferenceInitializer extends AbstractPreferenceInitializer
 		defaultOptionsMap.put(JavaCore.CORE_JAVA_BUILD_DUPLICATE_RESOURCE, JavaCore.WARNING);
 		defaultOptionsMap.put(JavaCore.CORE_JAVA_BUILD_CLEAN_OUTPUT_FOLDER, JavaCore.CLEAN);
 		defaultOptionsMap.put(JavaCore.CORE_JAVA_BUILD_RECREATE_MODIFIED_CLASS_FILES_IN_OUTPUT_FOLDER, JavaCore.IGNORE);
+		defaultOptionsMap.put(JavaCore.CORE_JAVA_BUILD_EXTERNAL_ANNOTATIONS_FROM_ALL_LOCATIONS, JavaCore.DISABLED);
 
 		// JavaCore settings
 		defaultOptionsMap.put(JavaCore.CORE_JAVA_BUILD_ORDER, JavaCore.IGNORE);
@@ -113,9 +114,7 @@ public class JavaCorePreferenceInitializer extends AbstractPreferenceInitializer
 		defaultOptionsMap.put(JavaCore.CODEASSIST_CAMEL_CASE_MATCH, JavaCore.ENABLED);
 		defaultOptionsMap.put(JavaCore.CODEASSIST_SUBWORD_MATCH, JavaCore.ENABLED);
 		defaultOptionsMap.put(JavaCore.CODEASSIST_SUGGEST_STATIC_IMPORTS, JavaCore.ENABLED);
-		defaultOptionsMap.put(ChunkCache.CHUNK_CACHE_SIZE_MB, Double.toString(ChunkCache.CHUNK_CACHE_SIZE_MB_DEFAULT));
-		defaultOptionsMap.put(ChunkCache.CHUNK_CACHE_SIZE_PERCENT,
-				Double.toString(ChunkCache.CHUNK_CACHE_SIZE_PERCENT_DEFAULT));
+		defaultOptionsMap.put(PatternSearchJob.ENABLE_PARALLEL_SEARCH, Boolean.toString(PatternSearchJob.ENABLE_PARALLEL_SEARCH_DEFAULT));
 
 		// Time out for parameter names
 		defaultOptionsMap.put(JavaCore.TIMEOUT_FOR_PARAMETER_NAME_FROM_ATTACHED_JAVADOC, "50"); //$NON-NLS-1$

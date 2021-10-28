@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corporation and others.
+ * Copyright (c) 2016, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -31,6 +31,7 @@ import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IAccessRule;
 import org.eclipse.jdt.core.IClasspathAttribute;
@@ -706,9 +707,9 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 			IJavaProject project = setUpJavaProject("ConvertToModule");
 			Map<String, String> options = new HashMap<>();
 			// Make sure the new options map doesn't reset.
-			options.put(CompilerOptions.OPTION_Compliance, "9");
-			options.put(CompilerOptions.OPTION_Source, "9");
-			options.put(CompilerOptions.OPTION_TargetPlatform, "9");
+			options.put(CompilerOptions.OPTION_Compliance, "10");
+			options.put(CompilerOptions.OPTION_Source, "10");
+			options.put(CompilerOptions.OPTION_TargetPlatform, "10");
 			options.put(CompilerOptions.OPTION_Release, "enabled");
 			project.setOptions(options);
 			project.getProject().build(IncrementalProjectBuilder.FULL_BUILD, null);
@@ -6295,7 +6296,9 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 	}
 
 	public void testBug526054() throws Exception {
-		if (!isJRE9) return;
+		// JDK 15 has removed the only module that was not part of module default root module jdk.rmic.
+		// Hence, we no longer need this test for JDK 15 and above.
+		if (!isJRE9 || isJRE15) return;
 		ClasspathJrt.resetCaches();
 		try {
 			// jdk.rmic is not be visible to code in an unnamed module, but using requires we can see the module.
@@ -6345,6 +6348,9 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 	}
 
 	public void testBug526054b() throws Exception {
+		// JDK 15 has removed the only module that was not part of module default root module jdk.rmic.
+		// Hence, we no longer need this test for JDK 15 and above.
+		if (!isJRE9 || isJRE15) return;
 		ClasspathJrt.resetCaches();
 		try {
 			// one project can see jdk.rmic/sun.rmi.rmic
@@ -6805,6 +6811,11 @@ public class ModuleBuilderTests extends ModifyingResourceTests {
 					""
 					);
 			project1.getProject().getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, null);
+
+			// regression test for Bug 569512 - CCE in State.writeBinaryLocations:
+			IStatus saveStatus = project1.getProject().getWorkspace().save(true, null);
+			if (!saveStatus.isOK() && saveStatus.isMultiStatus())
+				throw new AssertionError(saveStatus.getChildren()[0].getException());
 
 			IMarker[] markers2 = project2.getProject().findMarkers(null, true, IResource.DEPTH_INFINITE);
 			sortMarkers(markers2);

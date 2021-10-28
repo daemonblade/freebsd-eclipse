@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 GK Software AG and others.
+ * Copyright (c) 2017, 2021 GK Software AG and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -38,6 +38,15 @@ public abstract class AbstractBatchCompilerTest extends AbstractRegressionTest {
 	}
 
 	/**
+	 * Used for preview features especially.
+	 * @param compilerVersion - CompilerOptions.version string
+	 * @return true if spec version is same as compiler version
+	 */
+	public static boolean isJREVersionEqualTo(String compilerVersion) {
+		String specVersion = System.getProperty("java.specification.version");
+		return specVersion != null && Integer.valueOf(specVersion) == Integer.valueOf(compilerVersion);
+	}
+	/**
 	 * Abstract normalizer for output comparison. This class merely embodies a
 	 * chain of responsibility, plus the signature of the method of interest
 	 * here, that is {@link #normalized(String) normalized}.
@@ -74,7 +83,7 @@ public abstract class AbstractBatchCompilerTest extends AbstractRegressionTest {
 		@Override
 		String normalized(String originalValue) {
 			String result;
-			StringBuffer normalizedValueBuffer = new StringBuffer(originalValue);
+			StringBuilder normalizedValueBuffer = new StringBuilder(originalValue);
 			int nextOccurrenceIndex;
 			while ((nextOccurrenceIndex = normalizedValueBuffer.indexOf(this.match)) != -1)
 				normalizedValueBuffer.replace(nextOccurrenceIndex,
@@ -604,6 +613,13 @@ public abstract class AbstractBatchCompilerTest extends AbstractRegressionTest {
 				&& (errCompareOK = semiNormalizedComparison(expectedErrOutputString,
 						errOutputString, outputDirNormalizer));
 		}
+		// test sanity of the test definition: did we forget to use "---OUTPUT_DIR_PLACEHOLDER---" instead of OUTPUT_DIR?
+		if (!outCompareOK) {
+			assertEquals("outputDirNormalizer should not affect expectedOutOutput", expectedOutOutputString, outputDirNormalizer.normalized(expectedOutOutputString));
+		}
+		if (!errCompareOK) {
+			assertEquals("outputDirNormalizer should not affect expectedErrOutput", expectedErrOutputString, outputDirNormalizer.normalized(expectedErrOutputString));
+		}
 		if (compileOK != shouldCompileOK || !compareOK) {
 			System.out.println(getClass().getName() + '#' + getName());
 			if (testFiles != null) {
@@ -880,7 +896,7 @@ public abstract class AbstractBatchCompilerTest extends AbstractRegressionTest {
 	}
 
 	private static boolean equals(String a, String b) {
-		StringBuffer aBuffer = new StringBuffer(a), bBuffer = new StringBuffer(b);
+		StringBuilder aBuffer = new StringBuilder(a), bBuffer = new StringBuilder(b);
 		int length = aBuffer.length(), bLength;
 		boolean result = true;
 		if (length != (bLength = bBuffer.length())) {

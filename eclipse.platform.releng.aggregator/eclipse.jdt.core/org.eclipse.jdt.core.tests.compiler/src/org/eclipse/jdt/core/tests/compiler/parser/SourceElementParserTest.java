@@ -70,19 +70,19 @@ public void acceptAnnotationTypeReference(char[] typeName, int sourcePosition) {
 public void acceptConstructorReference(char[] typeName, int argCount, int sourcePosition) {
 	if (this.currentMethod == null) {
 		if (this.currentType != null) {
-			StringBuffer buffer = new StringBuffer();
+			StringBuilder buffer = new StringBuilder();
 			buffer.append(typeName).append("(").append(argCount).append(")\n");
 			this.currentType.setDefaultConstructor(buffer.toString());
 		}
 		return;
 	}
 	if (this.currentMethod.isConstructor()) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		buffer.append(typeName).append("(").append(argCount).append(")\n");
 		this.currentMethod.setExplicitConstructorCall(buffer.toString());
 	} else {
 		if (this.currentType != null) {
-			StringBuffer buffer = new StringBuffer();
+			StringBuilder buffer = new StringBuilder();
 			buffer.append(typeName).append("(").append(argCount).append(")\n");
 			this.currentType.setDefaultConstructor(buffer.toString());
 		}
@@ -179,7 +179,7 @@ public void dietParse(String s, String testName, boolean recordLocalDeclaration)
 
 }
 public static String displayModifiers(int modifiers) {
-	StringBuffer buffer = new StringBuffer();
+	StringBuilder buffer = new StringBuilder();
 
 	if ((modifiers & ClassFileConstants.AccPublic) != 0)
 		buffer.append("public ");
@@ -246,30 +246,29 @@ public void enterConstructor(MethodInfo methodInfo) {
 	enterAbtractMethod(methodInfo);
 }
 public void enterField(FieldInfo fieldInfo) {
-	this.currentType.addField(
-		this.currentField =
-			new SourceField(
-				fieldInfo.declarationStart,
-				fieldInfo.modifiers,
-				fieldInfo.type,
-				fieldInfo.name,
-				fieldInfo.nameSourceStart,
-				fieldInfo.nameSourceEnd,
-				this.source));
-
-}
-public void enterRecordComponent(RecordComponentInfo compInfo) {
-	this.currentType.addRecordComponent(
-		this.currentRecordComp =
-			new SourceField(
-					compInfo.declarationStart,
-					compInfo.modifiers,
-					compInfo.type,
-					compInfo.name,
-					compInfo.nameSourceStart,
-					compInfo.nameSourceEnd,
-					this.source));
-
+	if (fieldInfo.isRecordComponent) {
+		this.currentType.addRecordComponent(
+				this.currentRecordComp =
+					new SourceField(
+							fieldInfo.declarationStart,
+							fieldInfo.modifiers,
+							fieldInfo.type,
+							fieldInfo.name,
+							fieldInfo.nameSourceStart,
+							fieldInfo.nameSourceEnd,
+							this.source));
+	} else {
+		this.currentType.addField(
+				this.currentField =
+				new SourceField(
+						fieldInfo.declarationStart,
+						fieldInfo.modifiers,
+						fieldInfo.type,
+						fieldInfo.name,
+						fieldInfo.nameSourceStart,
+						fieldInfo.nameSourceEnd,
+						this.source));
+	}
 }
 public void enterInitializer(int declarationSourceStart, int modifiers) {
 	this.currentType.addField(

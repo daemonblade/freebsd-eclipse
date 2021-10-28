@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -6513,7 +6513,7 @@ public void testBug311578_320754b() throws JavaModelException {
 
 /**
  * @bug 311582: [formatter] Master switch to enable/disable on/off tags
- * @test Ensure that the formatter does not take care of formatting tags by default
+ * @test Ensure that the formatter does take care of formatting tags by default
  * @see "https://bugs.eclipse.org/bugs/show_bug.cgi?id=311582"
  */
 public void testBug311582a() throws JavaModelException {
@@ -6534,12 +6534,11 @@ public void testBug311582a() throws JavaModelException {
 	formatSource(source,
 		"public class X01 {\n" +
 		"\n" +
-		"	/* disable-formatter */\n" +
-		"	void foo() {\n" +
-		"		// unformatted comment\n" +
-		"	}\n" +
-		"\n" +
-		"	/* enable-formatter */\n" +
+		"/* disable-formatter */\n" +
+		"void     foo(    )      {	\n" +
+		"				//      unformatted       comment\n" +
+		"}\n" +
+		"/* enable-formatter */\n" +
 		"	void bar() {\n" +
 		"		// formatted comment\n" +
 		"	}\n" +
@@ -6557,14 +6556,7 @@ public void testBug311582b() {
 		"				//      unformatted       area\n" +
 		"}\n" +
 		"}\n";
-	formatSource(source,
-		"/* off */\n" +
-		"public class X01 {\n" +
-		"	void foo() {\n" +
-		"		// unformatted area\n" +
-		"	}\n" +
-		"}\n"
-	);
+	formatSource(source);
 }
 
 /**
@@ -13225,5 +13217,72 @@ public void testBug565053b() {
 		"			\"new Thing()\"\n" +
 		"	);\n" +
 		"}");
+}
+/**
+ * https://bugs.eclipse.org/567714 - [15] Formatting record file moves annotation to the line of record declaration
+ */
+public void testBug567714() {
+	formatSource(
+		"@SuppressWarnings(\"preview\")\n" +
+		"@Deprecated\n" +
+		"public record X(int i) {\n" +
+		"	public X(int i) {\n" +
+		"		this.i = i;\n" +
+		"	}\n" +
+		"}");
+}
+/**
+ * https://bugs.eclipse.org/569798 - [formatter] Brace position - next line indented: bug for array within annotation
+ */
+public void testBug569798() {
+	this.formatterPrefs.brace_position_for_array_initializer = DefaultCodeFormatterConstants.NEXT_LINE_SHIFTED;
+	formatSource(
+		"class Test {\n" +
+		"	@Nullable\n" +
+		"	@SuppressWarnings(\n" +
+		"		{ \"\" })\n" +
+		"	@Something(a =\n" +
+		"		{ \"\" })\n" +
+		"	void f() {\n" +
+		"	}\n" +
+		"}"
+	);
+}
+/**
+ * https://bugs.eclipse.org/569964 - [formatter] Keep braced code on one line: problem with comments after javadoc
+ */
+public void testBug569964() {
+	this.formatterPrefs.keep_method_body_on_one_line = DefaultCodeFormatterConstants.ONE_LINE_IF_EMPTY;
+	formatSource(
+		"class Test {\n" +
+		"	/**\n" +
+		"	 * More Java doc comment\n" +
+		"	 */\n" +
+		"	// A line comment\n" +
+		"	/* package */ void nothing() {}\n" +
+		"}"
+	);
+}
+/**
+ * https://bugs.eclipse.org/570220 - [formatter] Bug for 'if' open parenthesis inside lambda body preceded by comment line
+ */
+public void testBug570220() {
+	this.formatterPrefs.brace_position_for_block = DefaultCodeFormatterConstants.NEXT_LINE_ON_WRAP;
+	formatSource(
+		"class C {\n" +
+		"	Runnable r = () -> {\n" +
+		"		//\n" +
+		"		if (true) {\n" +
+		"		}\n" +
+		"	};\n" +
+		"}");
+}
+
+public void _testBug562818() {
+	String source = "public Record   {}\n";
+	formatSource(source,
+		"public Record {\n" +
+		"}",
+		CodeFormatter.K_CLASS_BODY_DECLARATIONS);
 }
 }

@@ -3947,7 +3947,7 @@ public String toString() {
 	if (this.currentPosition <= 0)
 		return "NOT started!\n\n"+ new String(this.source); //$NON-NLS-1$
 
-	StringBuffer buffer = new StringBuffer();
+	StringBuilder buffer = new StringBuilder();
 	if (this.startPosition < 1000) {
 		buffer.append(this.source, 0, this.startPosition);
 	} else {
@@ -4263,6 +4263,7 @@ public static boolean isKeyword(int token) {
 		case TerminalTokens.TokenNameinstanceof:
 		case TerminalTokens.TokenNamelong:
 		case TerminalTokens.TokenNamenew:
+		case TerminalTokens.TokenNamenon_sealed:
 		case TerminalTokens.TokenNamenull:
 		case TerminalTokens.TokenNamenative:
 		case TerminalTokens.TokenNamepublic:

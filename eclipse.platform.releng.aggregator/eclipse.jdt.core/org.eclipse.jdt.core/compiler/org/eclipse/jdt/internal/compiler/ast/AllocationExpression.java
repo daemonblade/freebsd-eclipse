@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -551,8 +551,12 @@ void checkIllegalNullAnnotation(BlockScope scope, TypeBinding allocationType) {
 // For allocation expressions, boxing compatibility is same as vanilla compatibility, since java.lang's wrapper types are not generic.
 @Override
 public boolean isBoxingCompatibleWith(TypeBinding targetType, Scope scope) {
-	return isPolyExpression() ? false :
-		isBoxingCompatible(this.resolvedType, targetType, this, scope);
+	if (isPolyExpression())
+		return false;
+	if (this.argumentsHaveErrors || this.binding == null ||
+			!this.binding.isValidBinding() || targetType == null || scope == null)
+		return false;
+	return isBoxingCompatible(this.resolvedType, targetType, this, scope);
 }
 
 @Override
@@ -685,6 +689,10 @@ public void checkTypeArgumentRedundancy(ParameterizedTypeBinding allocationType,
 		if (TypeBinding.notEquals(inferredTypes[i], allocationType.arguments[i]))
 			return;
 	}
+	reportTypeArgumentRedundancyProblem(allocationType, scope);
+}
+
+protected void reportTypeArgumentRedundancyProblem(ParameterizedTypeBinding allocationType, final BlockScope scope) {
 	scope.problemReporter().redundantSpecificationOfTypeArguments(this.type, allocationType.arguments);
 }
 

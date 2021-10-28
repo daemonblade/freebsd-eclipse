@@ -13,8 +13,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.core.builder;
 
+import java.util.List;
+
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -32,8 +35,9 @@ char[][] exclusionPatterns; // used by builders when walking source folders
 boolean hasIndependentOutputFolder; // if output folder is not equal to any of the source folders
 public boolean ignoreOptionalProblems;
 
-ClasspathMultiDirectory(IContainer sourceFolder, IContainer binaryFolder, char[][] inclusionPatterns, char[][] exclusionPatterns, boolean ignoreOptionalProblems) {
-	super(binaryFolder, true, null, null, false /* source never an automatic module*/);
+ClasspathMultiDirectory(IContainer sourceFolder, IContainer binaryFolder, char[][] inclusionPatterns, char[][] exclusionPatterns,
+		boolean ignoreOptionalProblems, IPath externalAnnotationPath, List<ClasspathLocation> allExternalAnnotationPaths) {
+	super(binaryFolder, true, null, externalAnnotationPath, allExternalAnnotationPaths, false /* source never an automatic module*/);
 
 	this.sourceFolder = sourceFolder;
 	this.inclusionPatterns = inclusionPatterns;

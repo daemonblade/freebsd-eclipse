@@ -90,20 +90,6 @@ private boolean checkBuffers(String outputString, String errorString,
 	return didMatchExpectation;
 }
 
-private boolean checkBuffersThrowingError(String errorString, String sourceFileName, String expectedSuccessOutputString) {
-
-	if (errorString.length() > 0 && errorString.indexOf(expectedSuccessOutputString) != -1) {
-		return true;
-	}
-
-	this.failureReason =
-		"Expected error not thrown for "
-			+ sourceFileName
-			+ ":\n"
-			+ expectedSuccessOutputString;
-	return false;
-}
-
 private void compileVerifyTests(String verifierDir) {
 	String fullyQualifiedName = VerifyTests.class.getName();
 
@@ -127,6 +113,7 @@ public void execute(String className, String[] classpaths) {
 
 	launchAndRun(className, classpaths, null, null);
 }
+@SuppressWarnings("deprecation")
 @Override
 protected void finalize() throws Throwable {
 	shutDown();
@@ -516,6 +503,11 @@ private void launchVerifyTestsIfNeeded(String[] classpaths, String[] vmArguments
 							c = input.read();
 						}
 					} catch(IOException ioEx) {
+						ioEx.printStackTrace();
+					} finally {
+						try {
+							input.close();
+						} catch (IOException e) {}
 					}
 				}
 			});
@@ -530,12 +522,18 @@ private void launchVerifyTestsIfNeeded(String[] classpaths, String[] vmArguments
 							c = errorStream.read();
 						}
 					} catch(IOException ioEx) {
+						ioEx.printStackTrace();
+					} finally {
+						try {
+							errorStream.close();
+						} catch (IOException e) {}
 					}
 				}
 			});
 			outputThread.start();
 			errorThread.start();
 		} catch(TargetException e) {
+			e.printStackTrace();
 			throw new Error(e.getMessage());
 		}
 
@@ -559,6 +557,7 @@ private void launchVerifyTestsIfNeeded(String[] classpaths, String[] vmArguments
 			}
 		} while (this.socket == null && isVMRunning);
 	} catch (IOException e) {
+		e.printStackTrace();
 		throw new Error(e.getMessage());
 	}
 }
@@ -640,24 +639,6 @@ public boolean verifyClassFiles(String sourceFilePath, String className, String 
 
 	this.failureReason = null;
 	return checkBuffers(this.outputBuffer.toString(), this.errorBuffer.toString(), sourceFilePath, expectedOutputString, expectedErrorStringStart);
-}
-
-/**
- * Verify that the class files created for the given test file can be loaded and run with an expected error contained
- * in the expectedSuccessOutputString string.
- */
-public boolean verifyClassFilesThrowingError(String sourceFilePath, String className, String expectedSuccessOutputString, String[] classpaths, String[] programArguments, String[] vmArguments) {
-	this.outputBuffer = new StringBuffer();
-	this.errorBuffer = new StringBuffer();
-	if (this.reuseVM && programArguments == null) {
-		launchVerifyTestsIfNeeded(classpaths, vmArguments);
-		loadAndRun(className);
-	} else {
-		launchAndRun(className, classpaths, programArguments, vmArguments);
-	}
-
-	this.failureReason = null;
-	return checkBuffersThrowingError(this.errorBuffer.toString(), sourceFilePath, expectedSuccessOutputString);
 }
 
 /**

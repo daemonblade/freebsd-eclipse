@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -29,6 +29,7 @@ import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.env.IBinaryAnnotation;
 import org.eclipse.jdt.internal.compiler.env.IBinaryType;
+import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.JavaModelManager.PerProjectInfo;
@@ -115,7 +116,7 @@ public void codeComplete(
 	if (requestor == null) {
 		throw new IllegalArgumentException("Completion requestor cannot be null"); //$NON-NLS-1$
 	}
-	JavaProject project = (JavaProject) getJavaProject();
+	JavaProject project = getJavaProject();
 	SearchableEnvironment environment = project.newSearchableNameEnvironment(owner, requestor.isTestCodeExcluded());
 	CompletionEngine engine = new CompletionEngine(environment, requestor, project.getOptions(true), project, owner, monitor);
 
@@ -224,7 +225,7 @@ public IJavaElement[] getChildrenForCategory(String category) throws JavaModelEx
 	return NO_ELEMENTS;
 }
 protected ClassFileInfo getClassFileInfo() throws JavaModelException {
-	return (ClassFileInfo) this.parent.getElementInfo();
+	return (ClassFileInfo) this.getParent().getElementInfo();
 }
 @Override
 public IOrdinaryClassFile getClassFile() {
@@ -232,7 +233,7 @@ public IOrdinaryClassFile getClassFile() {
 }
 @Override
 public IType getDeclaringType() {
-	IOrdinaryClassFile classFile = getClassFile();
+	IClassFile classFile = getClassFile();
 	if (classFile.isOpen()) {
 		try {
 			char[] enclosingTypeName = ((IBinaryType) getElementInfo()).getEnclosingTypeName();
@@ -400,7 +401,7 @@ public IJavaElement getHandleFromMemento(String token, MementoTokenizer memento,
 					case JEM_METHOD:
 						if (!memento.hasMoreTokens()) return this;
 						String param = memento.nextToken();
-						StringBuffer buffer = new StringBuffer();
+						StringBuilder buffer = new StringBuilder();
 						while (param.length() == 1 && Signature.C_ARRAY == param.charAt(0)) { // backward compatible with 3.0 mementos
 							buffer.append(Signature.C_ARRAY);
 							if (!memento.hasMoreTokens()) return this;
@@ -494,7 +495,7 @@ public IMethod[] getMethods() throws JavaModelException {
 
 @Override
 public IPackageFragment getPackageFragment() {
-	IJavaElement parentElement = this.parent;
+	IJavaElement parentElement = this.getParent();
 	while (parentElement != null) {
 		if (parentElement.getElementType() == IJavaElement.PACKAGE_FRAGMENT) {
 			return (IPackageFragment)parentElement;
@@ -578,6 +579,21 @@ public String getSuperclassName() throws JavaModelException {
 public String[] getSuperInterfaceNames() throws JavaModelException {
 	IBinaryType info = (IBinaryType) getElementInfo();
 	char[][] names= info.getInterfaceNames();
+	int length;
+	if (names == null || (length = names.length) == 0) {
+		return CharOperation.NO_STRINGS;
+	}
+	names= ClassFile.translatedNames(names);
+	String[] strings= new String[length];
+	for (int i= 0; i < length; i++) {
+		strings[i]= new String(names[i]);
+	}
+	return strings;
+}
+@Override
+public String[] getPermittedSubtypeNames() throws JavaModelException {
+	IBinaryType info = (IBinaryType) getElementInfo();
+	char[][] names= info.getPermittedSubtypeNames();
 	int length;
 	if (names == null || (length = names.length) == 0) {
 		return CharOperation.NO_STRINGS;
@@ -736,12 +752,22 @@ public boolean isEnum() throws JavaModelException {
 
 /**
  * @see IType#isRecord()
- * @noreference This method is not intended to be referenced by clients as it is a part of Java preview feature.
+ * @since 3.26
  */
 @Override
 public boolean isRecord() throws JavaModelException {
 	IBinaryType info = (IBinaryType) getElementInfo();
 	return TypeDeclaration.kind(info.getModifiers()) == TypeDeclaration.RECORD_DECL;
+}
+/**
+ * @see IType#isSealed()
+ * @noreference This method is not intended to be referenced by clients as it is a part of Java preview feature.
+ */
+@Override
+public boolean isSealed() throws JavaModelException {
+	IBinaryType info = (IBinaryType) getElementInfo();
+	char[][] names = info.getPermittedSubtypeNames();
+	return (names != null && names.length > 0);
 }
 
 @Override
@@ -940,7 +966,7 @@ public ITypeHierarchy newTypeHierarchy(
 }
 @Override
 public JavaElement resolved(Binding binding) {
-	SourceRefElement resolvedHandle = new ResolvedBinaryType(this.parent, this.name, new String(binding.computeUniqueKey()));
+	SourceRefElement resolvedHandle = new ResolvedBinaryType(this.getParent(), this.name, new String(binding.computeUniqueKey()));
 	resolvedHandle.occurrenceCount = this.occurrenceCount;
 	return resolvedHandle;
 }
@@ -1058,6 +1084,7 @@ public JavadocContents getJavadocContents(IProgressMonitor monitor) throws JavaM
 		typeQualifiedName = getElementName();
 	}
 
+	appendModulePath(pack, pathBuffer);
 	pathBuffer.append(pack.getElementName().replace('.', '/')).append('/').append(typeQualifiedName).append(JavadocConstants.HTML_EXTENSION);
 	if (monitor != null && monitor.isCanceled()) throw new OperationCanceledException();
 	final String contents = getURLContents(baseLocation, String.valueOf(pathBuffer));
@@ -1070,5 +1097,50 @@ public JavadocContents getJavadocContents(IProgressMonitor monitor) throws JavaM
 @Override
 public boolean isLambda() {
 	return false;
+}
+
+private static void appendModulePath(IPackageFragment pack, StringBuffer buf) {
+	IModuleDescription moduleDescription= getModuleDescription(pack);
+	if (moduleDescription != null) {
+		String moduleName= moduleDescription.getElementName();
+		if (moduleName != null && moduleName.length() > 0) {
+			buf.append(moduleName);
+			buf.append('/');
+		}
+	}
+}
+
+private static IModuleDescription getModuleDescription(IPackageFragment pack) {
+	if (pack == null) {
+		return null;
+	}
+	IModuleDescription moduleDescription= null;
+	/*
+	 * The Javadoc tool for Java SE 11 uses module name in the created URL.
+	 * We can't know what format is required, so we just guess by the project's compiler compliance.
+	 */
+	IJavaProject javaProject= pack.getJavaProject();
+	if (javaProject != null && isComplianceJava11OrHigher(javaProject)) {
+		if (pack.isReadOnly()) {
+			IPackageFragmentRoot root= (IPackageFragmentRoot) pack.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
+			if (root instanceof JrtPackageFragmentRoot) {
+				moduleDescription= root.getModuleDescription();
+			}
+		} else {
+			try {
+				moduleDescription= javaProject.getModuleDescription();
+			} catch (JavaModelException e) {
+				// do nothing
+			}
+		}
+	}
+	return moduleDescription;
+}
+
+private static boolean isComplianceJava11OrHigher(IJavaProject javaProject) {
+	if (javaProject == null) {
+		return false;
+	}
+	return CompilerOptions.versionToJdkLevel(javaProject.getOption(JavaCore.COMPILER_COMPLIANCE, true)) >= ClassFileConstants.JDK11;
 }
 }
