@@ -41,10 +41,7 @@ Unpacked distfiles + up-to-date patches => **eclipse.platform.releng.aggregator*
 
 The challenge is to get a working build. Changes to
 **eclipse.platform.releng.aggregator** should be committed and pushed to
-the repo as required. At stable checkpoints, patches for the port should
-be generated with:
-
-1. `bin/generate-patches`
+the repo as required.
 
 On a successful build, `org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz` is
 generated. This can be unpacked to test the generated executable:
