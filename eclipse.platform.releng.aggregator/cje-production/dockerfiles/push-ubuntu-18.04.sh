@@ -1,6 +1,6 @@
 #!/bin/bash -x
 #*******************************************************************************
-# Copyright (c) 2020 IBM Corporation and others.
+# Copyright (c) 2021 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -15,7 +15,4 @@
 
 set -e
 
-pushd centos-gtk3-metacity/8-swtBuild
-echo "Building Centos 8 swt build image"
-docker build --pull -t eclipse/platformreleng-centos-swt-build:8 .
-popd
+docker push eclipse/platformreleng-ubuntu-gtk3-metacity:18.04

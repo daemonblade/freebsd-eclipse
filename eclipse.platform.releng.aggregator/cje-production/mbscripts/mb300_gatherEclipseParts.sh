@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #*******************************************************************************
-# Copyright (c) 2019, 2020 IBM Corporation and others.
+# Copyright (c) 2019, 2021 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -38,7 +38,7 @@ echo $PATCH_BUILD
 if [ -z $PATCH_BUILD ]; then
   REPO_DIR=$PLATFORM_REPO_DIR
 else
-  PATCH_BUILD_GENERIC=java15patch
+  PATCH_BUILD_GENERIC=java17patch
   REPO_DIR=$ECLIPSE_BUILDER_DIR/$PATCH_BUILD/eclipse.releng.repository.$PATCH_BUILD_GENERIC/target/repository
 fi
   
@@ -50,32 +50,39 @@ fi
 
 if [ -z $PATCH_BUILD ]; then
   # gather sdk
-  TARGET_PRODUCTS_DIR=$ECLIPSE_BUILDER_DIR/sdk/target/products
-  if [ -d $TARGET_PRODUCTS_DIR ]; then
-    pushd $TARGET_PRODUCTS_DIR
+  if [ -d $PLATFORM_PRODUCTS_DIR ]; then
+    pushd $PLATFORM_PRODUCTS_DIR
+    # sdk
     cp org.eclipse.sdk.ide-linux.gtk.aarch64.tar.gz $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-SDK-$BUILD_ID-linux-gtk-aarch64.tar.gz
     cp org.eclipse.sdk.ide-linux.gtk.ppc64le.tar.gz $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-SDK-$BUILD_ID-linux-gtk-ppc64le.tar.gz
     cp org.eclipse.sdk.ide-linux.gtk.x86_64.tar.gz $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-SDK-$BUILD_ID-linux-gtk-x86_64.tar.gz
     cp org.eclipse.sdk.ide-macosx.cocoa.x86_64.tar.gz $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-SDK-$BUILD_ID-macosx-cocoa-x86_64.tar.gz
     cp org.eclipse.sdk.ide-macosx.cocoa.x86_64.dmg $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-SDK-$BUILD_ID-macosx-cocoa-x86_64.dmg
+    cp org.eclipse.sdk.ide-macosx.cocoa.aarch64.tar.gz $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-SDK-$BUILD_ID-macosx-cocoa-aarch64.tar.gz
+    cp org.eclipse.sdk.ide-macosx.cocoa.aarch64.dmg $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-SDK-$BUILD_ID-macosx-cocoa-aarch64.dmg
     cp org.eclipse.sdk.ide-win32.win32.x86_64.zip $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-SDK-$BUILD_ID-win32-x86_64.zip
-    popd
-    fn-notarize-macbuild "$CJE_ROOT/$DROP_DIR/$BUILD_ID" eclipse-SDK-${BUILD_ID}-macosx-cocoa-x86_64.dmg
-  fi
-
-  # gather platform
-  TARGET_PRODUCTS_DIR=$ECLIPSE_BUILDER_DIR/platform/target/products
-  if [ -d $TARGET_PRODUCTS_DIR ]; then
-    pushd $TARGET_PRODUCTS_DIR
+    # platform
     cp org.eclipse.platform.ide-linux.gtk.aarch64.tar.gz $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-platform-$BUILD_ID-linux-gtk-aarch64.tar.gz
     cp org.eclipse.platform.ide-linux.gtk.ppc64le.tar.gz $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-platform-$BUILD_ID-linux-gtk-ppc64le.tar.gz
     cp org.eclipse.platform.ide-linux.gtk.x86_64.tar.gz $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-platform-$BUILD_ID-linux-gtk-x86_64.tar.gz
     cp org.eclipse.platform.ide-macosx.cocoa.x86_64.tar.gz $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-platform-$BUILD_ID-macosx-cocoa-x86_64.tar.gz
     cp org.eclipse.platform.ide-macosx.cocoa.x86_64.dmg $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-platform-$BUILD_ID-macosx-cocoa-x86_64.dmg
+    cp org.eclipse.platform.ide-macosx.cocoa.aarch64.tar.gz $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-platform-$BUILD_ID-macosx-cocoa-aarch64.tar.gz
+    cp org.eclipse.platform.ide-macosx.cocoa.aarch64.dmg $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-platform-$BUILD_ID-macosx-cocoa-aarch64.dmg
     cp org.eclipse.platform.ide-win32.win32.x86_64.zip $CJE_ROOT/$DROP_DIR/$BUILD_ID/eclipse-platform-$BUILD_ID-win32-x86_64.zip
     popd
-    fn-notarize-macbuild "$CJE_ROOT/$DROP_DIR/$BUILD_ID" eclipse-platform-${BUILD_ID}-macosx-cocoa-x86_64.dmg
+    chmod +x $CJE_ROOT/scripts/notarizeMacApp.sh
+    NOTARIZE_LOG_DIR=$CJE_ROOT/notarizeLog
+    mkdir -p $NOTARIZE_LOG_DIR
+    (/bin/bash $CJE_ROOT/scripts/notarizeMacApp.sh "$CJE_ROOT/$DROP_DIR/$BUILD_ID" eclipse-SDK-${BUILD_ID}-macosx-cocoa-aarch64.dmg > $NOTARIZE_LOG_DIR/sdkAarch64.log 2>&1)&
+    sleep 18s
+    (/bin/bash $CJE_ROOT/scripts/notarizeMacApp.sh "$CJE_ROOT/$DROP_DIR/$BUILD_ID" eclipse-SDK-${BUILD_ID}-macosx-cocoa-x86_64.dmg > $NOTARIZE_LOG_DIR/sdkX64.log 2>&1)&
+    sleep 18s
+    (/bin/bash $CJE_ROOT/scripts/notarizeMacApp.sh "$CJE_ROOT/$DROP_DIR/$BUILD_ID" eclipse-platform-${BUILD_ID}-macosx-cocoa-aarch64.dmg > $NOTARIZE_LOG_DIR/platformAarch64.log 2>&1)&
+    sleep 18s
+    (/bin/bash $CJE_ROOT/scripts/notarizeMacApp.sh "$CJE_ROOT/$DROP_DIR/$BUILD_ID" eclipse-platform-${BUILD_ID}-macosx-cocoa-x86_64.dmg > $NOTARIZE_LOG_DIR/platformX64.log 2>&1)&
   fi
+
 
   # gather platform sources
   TARBALL_DIR=$CJE_ROOT/$AGG_DIR/eclipse-platform-sources/target/
@@ -109,6 +116,7 @@ if [ -z $PATCH_BUILD ]; then
     popd
   fi
 
+  set -x
   # slice repos
   ANT_SCRIPT=$ECLIPSE_BUILDER_DIR/repos/buildAll.xml
   if [ -d $PLATFORM_REPO_DIR ]; then
@@ -128,6 +136,7 @@ if [ -z $PATCH_BUILD ]; then
       -v
     popd
   fi
+  set +x
 fi
 
 # gather ecj jars
@@ -222,6 +231,24 @@ $JavaCMD -jar $LAUNCHER_JAR \
   verifyCompile
 popd
 
+#wait for notarization before checksums and pages got generated.
+wait
+if [ -d $NOTARIZE_LOG_DIR ]; then
+  pushd $NOTARIZE_LOG_DIR
+  for i in $(ls *.log)
+  do
+    echo $i
+    cat $i
+  done
+fi
+
+#import gpg keys
+gpg --batch --import "${KEYRING}"
+for fpr in $(gpg --list-keys --with-colons  | awk -F: '/fpr:/ {print $10}' | sort -u);
+do
+  echo -e "5\ny\n" |  gpg --batch --command-fd 0 --expert --edit-key "${fpr}" trust;
+done
+
 # publish Eclipse
 pushd $CJE_ROOT
 ANT_SCRIPT=$ECLIPSE_BUILDER_DIR/eclipse/helper.xml
@@ -267,7 +294,7 @@ then
 
   fn-write-property COMPARATOR_ERRORS "true"
   fn-write-property COMPARATOR_ERRORS_SUBJECT "\"- Comparator Errors Found\""
-  fn-write-property COMPARATOR_ERRORS_BODY "\"Check unanticipated comparator messages:<br>    https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_ID}/buildlogs/comparatorlogs/buildtimeComparatorUnanticipated.log.txt<br><br>\""
+  fn-write-property COMPARATOR_ERRORS_BODY "\"Check unanticipated comparator messages:<br>    <a href='https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_ID}/buildlogs/comparatorlogs/buildtimeComparatorUnanticipated.log.txt'>https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_ID}/buildlogs/comparatorlogs/buildtimeComparatorUnanticipated.log.txt</a><br><br>\""
 else
   echo -e "DEBUG: comparator logSize of $logSize was not greater than comparatorLogMinimumSize of ${comparatorLogMinimumSize}"
   fn-write-property COMPARATOR_ERRORS_SUBJECT "\" \""

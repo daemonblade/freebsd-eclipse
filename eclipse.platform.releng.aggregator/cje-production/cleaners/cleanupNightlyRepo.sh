@@ -193,18 +193,20 @@ function cleanRepo ()
 workspace=$1
 remoteBase="/home/data/httpd/download.eclipse.org"
 
-eclipseIRepo="${remoteBase}/eclipse/updates/4.17-I-builds"
-eclipseSRepo="${remoteBase}/eclipse/updates/4.17milestones"
-eclipseYRepo="${remoteBase}/eclipse/updates/4.17-Y-builds"
+eclipseIRepo="${remoteBase}/eclipse/updates/4.21-I-builds"
+eclipseYRepo="${remoteBase}/eclipse/updates/4.21-Y-builds"
+eclipsePRepo="${remoteBase}/eclipse/updates/4.21-P-builds"
+eclipseBuildTools="${remoteBase}/eclipse/updates/buildtools"
 
-#doDryrun=dryrun
 doDryrun=
 # global
 declare -a reposToRemove=()
 cleanRepo $eclipseIRepo I 4 $doDryrun
 declare -a reposToRemove=()
-cleanRepo $eclipseSRepo S 2 $doDryrun
-declare -a reposToRemove=()
 cleanRepo $eclipseYRepo Y 2 $doDryrun
+declare -a reposToRemove=()
+cleanRepo $eclipsePRepo P 2 $doDryrun
+declare -a reposToRemove=()
+cleanRepo $eclipseBuildTools I 4 $doDryrun
 
 unset reposToRemove

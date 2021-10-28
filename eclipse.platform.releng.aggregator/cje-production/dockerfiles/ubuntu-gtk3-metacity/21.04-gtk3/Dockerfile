@@ -1,41 +1,39 @@
-ARG FROM_TAG="7"
-FROM centos:${FROM_TAG}
+FROM ubuntu:21.04
 
 ### user name recognition at runtime w/ an arbitrary uid - for OpenShift deployments
 COPY scripts/uid_entrypoint /usr/local/bin/uid_entrypoint
 RUN chmod u+x /usr/local/bin/uid_entrypoint && \
     chgrp 0 /usr/local/bin/uid_entrypoint && \
     chmod g=u /usr/local/bin/uid_entrypoint /etc/passwd
-### end
-
 ENTRYPOINT [ "uid_entrypoint" ]
 
-RUN yum -y update && yum -y install \
-      gtk3 \
-      tigervnc-server \
-      tigervnc \
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get install -y --no-install-recommends gpgv
+RUN apt-get update && apt upgrade -y && apt dist-upgrade -y && apt-get install -y --no-install-recommends \
+      libgtk-3-0 \
+      tigervnc-standalone-server \
+      tigervnc-common \
       metacity \
-      xorg-x11-server-utils \
-      mesa-libGL \
-      xorg-x11-fonts-misc \
-      xorg-x11-fonts-75dpi \
-      xorg-x11-fonts-Type1 \
-      xorg-x11-fonts-100dpi \
-      liberation-fonts \
-      gnu-free-fonts-common \
-      dejavu-fonts-common \
-      unzip \
-      lsof \
+      x11-xserver-utils \
+      libgl1-mesa-dri \
+      xfonts-base \
+      xfonts-scalable \
+      xfonts-100dpi \
+      xfonts-75dpi \
+      fonts-liberation \
+      fonts-liberation2 \
+      fonts-freefont-ttf \
+      fonts-dejavu \
+      fonts-dejavu-core \
+      fonts-dejavu-extra \
       wget \
       curl \
-      webkitgtk4 \
-      dbus \
-      glibc-locale-source \
-    && yum clean all
+      unzip \
+      vim \
+    && rm -rf /var/lib/apt/lists/* && apt autoremove -y
 
 ENV HOME=/home/vnc
 ENV DISPLAY :0
-RUN dbus-uuidgen --ensure
 
 RUN mkdir -p ${HOME}/.vnc && chmod -R 775 ${HOME} \
   && echo "123456" | vncpasswd -f > ${HOME}/.vnc/passwd \
@@ -44,7 +42,5 @@ RUN mkdir -p ${HOME}/.vnc && chmod -R 775 ${HOME} \
 # Create a custom vnc xstartup file
 COPY scripts/xstartup_metacity.sh ${HOME}/.vnc/xstartup.sh
 RUN chmod 755 ${HOME}/.vnc/xstartup.sh
-RUN localedef -i en_US -f UTF-8 en_US.UTF-8
-ENV LANG=en_US.UTF-8
 
 USER 10001

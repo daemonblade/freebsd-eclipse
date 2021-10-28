@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #*******************************************************************************
-# Copyright (c) 2019 IBM Corporation and others.
+# Copyright (c) 2021 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -27,7 +27,7 @@ BUILD_DIR=$CJE_ROOT/$DROP_DIR/$BUILD_ID
 mkdir $CJE_ROOT/tmp
 
 cd $REPO_DIR
-mvn --update-snapshots org.eclipse.tycho:tycho-versions-plugin:2.0.0:update-pom \
+mvn --update-snapshots org.eclipse.tycho:tycho-versions-plugin:2.4.0:update-pom \
   -Dmaven.repo.local=$LOCAL_REPO \
   -Djava.io.tmpdir=$CJE_ROOT/tmp \
   -DaggregatorBuild=true \
@@ -78,7 +78,7 @@ then
     done
     echo "</ul>" >> index.html
     echo "</html>" >> index.html
-    POM_UPDATES="Check POM Updates made by tycho's pom-updater plugin:<br>    https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_ID}/pom_updates/<br><br>"
+    POM_UPDATES="Check POM Updates made by tycho's pom-updater plugin:<br>    <a href='https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_ID}/pom_updates/'>https://download.eclipse.org/eclipse/downloads/drops4/${BUILD_ID}/pom_updates/</a><br><br>"
     POM_UPDATES_SUBJECT=" - POM Updates Required"
 fi
 popd

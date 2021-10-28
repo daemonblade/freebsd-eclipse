@@ -1,6 +1,6 @@
 #!/bin/bash -x
 #*******************************************************************************
-# Copyright (c) 2020 IBM Corporation and others.
+# Copyright (c) 2021 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -15,7 +15,4 @@
 
 set -e
 
-pushd centos-gtk3-metacity/7-swtBuild-gerrit
-echo "Building Centos 7 swt build for gerrit image"
-docker build --pull -t eclipse/platformreleng-centos-swt-build:gerrit .
-popd
+docker push eclipse/platformreleng-opensuse-gtk3-metacity:15

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #*******************************************************************************
-# Copyright (c) 2019, 2020 IBM Corporation and others.
+# Copyright (c) 2019, 2021 IBM Corporation and others.
 #
 # This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License 2.0
@@ -47,10 +47,13 @@ fi
 pushd $CJE_ROOT/$AGG_DIR
 
 # git tagging
-git commit -m "Build input for build $BUILD_ID"
-if [[ $? -eq 0 ]]
+if [ "${BUILD_TYPE}" == "I" ]
 then
-	git push origin HEAD
+	git commit -m "Build input for build $BUILD_ID"
+	if [[ $? -eq 0 ]]
+	then
+		git push origin HEAD
+	fi
 fi
 
 git submodule foreach "if grep \"^\${name}:\" ../../../streams/repositories_$PATCH_OR_BRANCH_LABEL.txt > /dev/null; then git tag $BUILD_ID; git push --verbose origin $BUILD_ID; else echo Skipping \$name; fi || :"
@@ -65,13 +68,13 @@ if [[ -n "$lastTag" ]]; then
   git log $lastTag..$BUILD_ID --date=short --format=format:"<tr><td class=\"datecell\">%cd</td><td class=\"commitcell\"><a href=\"https://git.eclipse.org/c/platform/eclipse.platform.releng.aggregator.git/commit/?id=%H\">%s</a></td><td class=\"authorcell\">%aN</td></tr>" > $tmpGitLog
   tmpFileSize=$(stat -c%s $tmpGitLog)
   if [ $tmpFileSize -ne 0 ]; then
-    echo "<table width=\"80%\"><tbody> <tr><th class=\"cell\" colspan=\"3\">Repository: eclipse.platform.releng.aggregator</th></tr>" >> $gitLogFile
+    echo "<table><tbody> <tr><th class=\"cell\" colspan=\"3\">Repository: eclipse.platform.releng.aggregator</th></tr>" >> $gitLogFile
     echo "<tr> <th class=\"datecell\">Date</th> <th class=\"commitcell\">Commit message</th> <th class=\"authorcell\">Author</th> </tr>" >> $gitLogFile
     cat $tmpGitLog >> $gitLogFile
     echo "</tbody></table><br><br>" >> $gitLogFile
     echo >> $gitLogFile
   fi
-  git submodule --quiet foreach "comp=\$(echo \$path|cut -d. -f2);git log $lastTag..$BUILD_ID --date=short --format=format:\"<tr><td class=\\\"datecell\\\">%cd</td><td class=\\\"commitcell\\\"><a href=\\\"https://git.eclipse.org/c/\$comp/\$path.git/commit/?id=%H\\\">%s</a></td><td class=\\\"authorcell\\\">%aN</td></tr>\">$tmpGitLog;FILESIZE=\$(stat -c%s $tmpGitLog);if [ \$FILESIZE -ne 0 ]; then echo \"<table width=\\\"80%\\\"><tbody> <tr><th class=\\\"cell\\\" colspan=\\\"3\\\">Repository: \$path</th></tr>\";echo \"<tr> <th class=\\\"datecell\\\">Date</th> <th class=\\\"commitcell\\\">Commit message</th> <th class=\\\"authorcell\\\">Author</th> </tr>\";cat $tmpGitLog;echo \"</tbody></table><br><br>\";echo;fi" >> $gitLogFile
+  git submodule --quiet foreach "comp=\$(echo \$path|cut -d. -f2);git log $lastTag..$BUILD_ID --date=short --format=format:\"<tr><td class=\\\"datecell\\\">%cd</td><td class=\\\"commitcell\\\"><a href=\\\"https://git.eclipse.org/c/\$comp/\$path.git/commit/?id=%H\\\">%s</a></td><td class=\\\"authorcell\\\">%aN</td></tr>\">$tmpGitLog;FILESIZE=\$(stat -c%s $tmpGitLog);if [ \$FILESIZE -ne 0 ]; then echo \"<table><tbody> <tr><th class=\\\"cell\\\" colspan=\\\"3\\\">Repository: \$path</th></tr>\";echo \"<tr> <th class=\\\"datecell\\\">Date</th> <th class=\\\"commitcell\\\">Commit message</th> <th class=\\\"authorcell\\\">Author</th> </tr>\";cat $tmpGitLog;echo \"</tbody></table><br><br>\";echo;fi" >> $gitLogFile
 else
   echo -e "\n\tGit log not generated because a reasonable previous tag could not be found." > $gitLogFile
 fi
