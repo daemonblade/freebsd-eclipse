@@ -80,6 +80,12 @@ rename_arch ()
 
 		NEWNAME=$(rename_arch ${D})
 		mv ${D} ${NEWNAME}
+
+		# Duplicate "powerpc64" into "powerpc64le"
+		case ${NEWNAME} in
+		*.powerpc64)
+			cp -rf ${NEWNAME} `echo ${NEWNAME} | sed -e 's/powerpc64/powerpc64le/'`;;
+		esac
 	done
 
 	# Fixup binary locations
