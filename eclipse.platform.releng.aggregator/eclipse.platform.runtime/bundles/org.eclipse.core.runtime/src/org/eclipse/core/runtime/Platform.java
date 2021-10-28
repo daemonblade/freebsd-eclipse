@@ -351,6 +351,14 @@ public final class Platform {
 	public static final String ARCH_X86_64 = "x86_64";//$NON-NLS-1$
 
 	/**
+	 * Constant string (value "aarch64") indicating the platform is running on an
+	 * AARCH64bit-based architecture.
+	 *
+	 * @since 3.22
+	 */
+	public static final String ARCH_AARCH64 = "aarch64";//$NON-NLS-1$
+
+	/**
 	 * Constant string (value "amd64") indicating the platform is running on an
 	 * AMD64-based architecture.
 	 *
@@ -786,17 +794,6 @@ public final class Platform {
 	 */
 	@Deprecated
 	public static Plugin getPlugin(String id) {
-		return null;
-	}
-
-	/**
-	 * As the org.eclipse.core.runtime.compatibility plug-in has been removed in
-	 * Eclipse 4.6 this method is not supported anymore.
-	 *
-	 * See the comments on {@link IPluginRegistry} and its methods for details.
-	 */
-	@Deprecated
-	public static IPluginRegistry getPluginRegistry() {
 		return null;
 	}
 
@@ -1425,6 +1422,17 @@ public final class Platform {
 	 * all bundles with that particular name and then determine the one with the
 	 * highest version. Note that clients may want to filter the results based on
 	 * the state of the bundles.
+	 * </p>
+	 * <p>
+	 * Note that looking up a Bundle by its symbolic name is less efficient than
+	 * looking up a Bundle by a class loaded by that bundle. Callers should consider
+	 * whether or not it is more appropriate to use
+	 * {@link FrameworkUtil#getBundle(Class)} instead.
+	 * </p>
+	 * <p>
+	 * Note also that if the purpose of looking up the Bundle in order to log a
+	 * message, then it would be more appropriate to use the direct
+	 * {@link #getLog(Class)} instead
 	 * </p>
 	 *
 	 * @param symbolicName the symbolic name of the bundle to be returned.

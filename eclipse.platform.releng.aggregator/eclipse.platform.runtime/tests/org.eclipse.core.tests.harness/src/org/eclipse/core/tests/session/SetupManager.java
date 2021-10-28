@@ -34,7 +34,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public class SetupManager {
-	public class SetupException extends Exception {
+	public static class SetupException extends Exception {
 		/**
 		 * All serializable objects should have a stable serialVersionUID
 		 */
@@ -311,7 +311,7 @@ public class SetupManager {
 			String value = "";
 			// now get the value. replace == by =
 			if (valueStart > -1) {
-				value = option.substring(valueStart).replaceAll("==", "=");
+				value = option.substring(valueStart).replace("==", "=");
 			}
 			result.put(key.toString(), value);
 		}

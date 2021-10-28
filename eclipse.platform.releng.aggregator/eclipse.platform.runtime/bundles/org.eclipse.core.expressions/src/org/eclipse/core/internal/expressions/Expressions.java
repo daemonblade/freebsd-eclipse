@@ -263,14 +263,14 @@ public class Expressions {
 		String value= element.getAttribute(attributeName);
 		if (value == null)
 			return false;
-		return Boolean.valueOf(value).booleanValue();
+		return Boolean.parseBoolean(value);
 	}
 
 	public static boolean getOptionalBooleanAttribute(Element element, String attributeName) {
 		String value= element.getAttribute(attributeName);
 		if (value.isEmpty())
 			return false;
-		return Boolean.valueOf(value).booleanValue();
+		return Boolean.parseBoolean(value);
 	}
 
 	//---- Argument parsing --------------------------------------------
@@ -316,12 +316,10 @@ public class Expressions {
 			if (ch == '\'') {
 				if (!inString) {
 					inString= true;
+				} else if (i + 1 < str.length() && str.charAt(i + 1) == '\'') {
+					i++;
 				} else {
-					if (i + 1 < str.length() && str.charAt(i + 1) == '\'') {
-						i++;
-					} else {
-						inString= false;
-					}
+					inString= false;
 				}
 			} else if (ch == ',' && !inString) {
 				return i;

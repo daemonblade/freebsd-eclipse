@@ -139,7 +139,7 @@ public class PlatformLogReader {
 	/**
 	 * A reconsituted exception that only contains a stack trace and a message.
 	 */
-	class FakeException extends Throwable {
+	static class FakeException extends Throwable {
 		/**
 		 * All serializable objects should have a stable serialVersionUID
 		 */
@@ -245,7 +245,7 @@ public class PlatformLogReader {
 			return "";
 		}
 		StringBuilder buffer = new StringBuilder();
-		buffer.append(currentLine.substring(KEYWORD_MESSAGE.length() + 1, currentLine.length()));
+		buffer.append(currentLine.substring(KEYWORD_MESSAGE.length() + 1));
 		currentLine = reader.readLine();
 		buffer.append(readText());
 		return buffer.toString();

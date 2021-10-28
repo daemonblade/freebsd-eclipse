@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2019 IBM Corporation and others.
+ * Copyright (c) 2003, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,10 +20,12 @@
  *     Jan Koehnlein - Fix for bug 60964 (454698)
  *     Terry Parker - Bug 457504, Publish a job group's final status to IJobChangeListeners
  *     Xored Software Inc - Fix for bug 550738
+ *     Christoph Laeubrich - remove deprecated API
  *******************************************************************************/
 package org.eclipse.core.internal.jobs;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import org.eclipse.core.internal.runtime.RuntimeLog;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.*;
@@ -50,6 +52,8 @@ import org.eclipse.osgi.util.NLS;
  */
 public class JobManager implements IJobManager, DebugOptionsListener {
 
+	private static final int NANOS_IN_MS = 1_000_000;
+
 	/**
 	 * The unique identifier constant of this plug-in.
 	 */
@@ -64,7 +68,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 	/**
 	 * Determines how often the progress monitor is checked for cancellation during the join call.
 	 */
-	private static final long MAX_WAIT_INTERVAL = 100;
+	public static final long MAX_WAIT_INTERVAL = 100;
 
 	private static final String OPTION_DEADLOCK_ERROR = PI_JOBS + "/jobs/errorondeadlock"; //$NON-NLS-1$
 	private static final String OPTION_DEBUG_BEGIN_END = PI_JOBS + "/jobs/beginend"; //$NON-NLS-1$
@@ -89,6 +93,14 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 	 * of updating it.
 	 */
 	private static JobManager instance;
+
+	/** Baseline value for current time calculations */
+	private final long originTime = System.nanoTime();
+
+	/**
+	 * Last time (relative to originTime) returned by {@link #now()}
+	 */
+	private AtomicLong currentTimeInMs;
 
 	/**
 	 * Scheduling rule used for validation of client-defined rules.
@@ -271,6 +283,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 	}
 
 	private JobManager() {
+		currentTimeInMs = new AtomicLong(lifeTimeInMs());
 		instance = this;
 		synchronized (lock) {
 			waiting = new JobQueue(false);
@@ -581,10 +594,10 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 					delay = Math.max(delay, minDelay);
 				}
 				if (delay > 0) {
-					job.setStartTime(System.currentTimeMillis() + delay);
+					job.setStartTime(now() + delay);
 					changeState(job, Job.SLEEPING);
 				} else {
-					job.setStartTime(System.currentTimeMillis() + delayFor(job.getPriority()));
+					job.setStartTime(now() + delayFor(job.getPriority()));
 					job.setWaitQueueStamp(waitQueueCounter.increment());
 					changeState(job, Job.WAITING);
 				}
@@ -860,7 +873,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 
 	protected boolean join(InternalJob job, long timeout, IProgressMonitor monitor) throws InterruptedException {
 		Assert.isLegal(timeout >= 0, "timeout should not be negative"); //$NON-NLS-1$
-		long deadline = timeout == 0 ? 0 : System.currentTimeMillis() + timeout;
+		long deadline = timeout == 0 ? 0 : now() + timeout;
 
 		Job currentJob = currentJob();
 		if (currentJob != null) {
@@ -900,7 +913,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 					throw new OperationCanceledException();
 				long remainingTime = deadline;
 				if (deadline != 0) {
-					remainingTime -= System.currentTimeMillis();
+					remainingTime -= now();
 					if (remainingTime <= 0) {
 						return false;
 					}
@@ -947,16 +960,24 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 					@Override
 					public void done(IJobChangeEvent event) {
 						//don't remove from list if job is being rescheduled
-						if (!((JobChangeEvent) event).reschedule)
+						if (!((JobChangeEvent) event).reschedule) {
 							jobs.remove(event.getJob());
+							if (jobs.isEmpty()) { // minimal notification
+								synchronized (jobs) {
+									jobs.notifyAll();
+								}
+							}
+						}
 					}
 
 					//update the list of jobs if new ones are started during the join
 					@Override
 					public void running(IJobChangeEvent event) {
 						Job job = event.getJob();
-						if (family == null || job.belongsTo(family))
+						if (family == null || job.belongsTo(family)) {
 							jobs.add(job);
+							// no notification upon increased size
+						}
 					}
 
 					//update the list of jobs if new ones are scheduled during the join
@@ -969,8 +990,10 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 						if (isSuspended())
 							return;
 						Job job = event.getJob();
-						if (family == null || job.belongsTo(family))
+						if (family == null || job.belongsTo(family)) {
 							jobs.add(job);
+							// no notification upon increased size
+						}
 					}
 				};
 				addJobChangeListener(listener);
@@ -1004,7 +1027,11 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 					throw new OperationCanceledException();
 				//notify hook to service pending syncExecs before falling asleep
 				lockManager.aboutToWait(null);
-				Thread.sleep(100);
+				synchronized (jobs) {
+					if (!jobs.isEmpty()) { // in case we missed a notify outside the synchronized block
+						jobs.wait(100);// Avoid sleep for fixed period by notify / wait
+					}
+				}
 			}
 		} finally {
 			lockManager.aboutToRelease();
@@ -1017,7 +1044,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 	boolean join(InternalJobGroup jobGroup, long timeout, IProgressMonitor monitor) throws InterruptedException, OperationCanceledException {
 		Assert.isLegal(jobGroup != null, "jobGroup should not be null"); //$NON-NLS-1$
 		Assert.isLegal(timeout >= 0, "timeout should not be negative"); //$NON-NLS-1$
-		long deadline = timeout == 0 ? 0 : System.currentTimeMillis() + timeout;
+		long deadline = timeout == 0 ? 0 : now() + timeout;
 		int jobCount;
 		synchronized (lock) {
 			jobCount = jobGroup.getActiveJobsCount();
@@ -1030,7 +1057,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 					throw new OperationCanceledException();
 				long remainingTime = deadline;
 				if (deadline != 0) {
-					remainingTime -= System.currentTimeMillis();
+					remainingTime -= now();
 					if (remainingTime <= 0) {
 						return false;
 					}
@@ -1098,7 +1125,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 			if (suspended)
 				return null;
 			// tickle the sleep queue to see if anyone wakes up
-			long now = System.currentTimeMillis();
+			long now = now();
 			InternalJob job = sleeping.peek();
 			while (job != null && job.getStartTime() < now) {
 				job.setStartTime(now + delayFor(job.getPriority()));
@@ -1140,6 +1167,33 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 		}
 	}
 
+	/**
+	 * Calculates some relative time value in milliseconds. This value does not
+	 * represent wall clock time and can only be used to compare it with another
+	 * value returned from this function, and to measure time elapsed in
+	 * millisceconds between two calls of this method. The values returned here are
+	 * supposed to be always non negative and greater or equal to previously
+	 * returned values, but they do not guarantee to grow. The values returned here
+	 * are consistent across multiple threads.
+	 *
+	 * @return current time as a result of the {@code Math.max()} function applied
+	 *         to last calculated time and current value of {@link #lifeTimeInMs()}.
+	 * @see System#nanoTime()
+	 */
+	public long now() {
+		long now = currentTimeInMs.updateAndGet(lastValue -> Math.max(lastValue, lifeTimeInMs()));
+		return now;
+	}
+
+	/**
+	 * @return time in milliseconds since creation of this
+	 *         {@codeJobManager} instance, greater or equal zero
+	 */
+	private long lifeTimeInMs() {
+		long now = Math.max(System.nanoTime() - originTime, 0);
+		return now / NANOS_IN_MS;
+	}
+
 	@Override
 	public void optionsChanged(DebugOptions options) {
 		DEBUG_TRACE = options.newDebugTrace(PI_JOBS);
@@ -1167,8 +1221,6 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 	 * @see #reportUnblocked
 	 */
 	final void reportBlocked(IProgressMonitor monitor, InternalJob blockingJob) {
-		if (!(monitor instanceof IProgressMonitorWithBlocking))
-			return;
 		IStatus reason;
 		if (blockingJob == null || blockingJob instanceof ThreadJob || blockingJob.isSystem()) {
 			reason = new Status(IStatus.INFO, JobManager.PI_JOBS, 1, JobMessages.jobs_blocked0, null);
@@ -1176,7 +1228,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 			String msg = NLS.bind(JobMessages.jobs_blocked1, blockingJob.getName());
 			reason = new JobStatus(IStatus.INFO, (Job) blockingJob, msg);
 		}
-		((IProgressMonitorWithBlocking) monitor).setBlocked(reason);
+		monitor.setBlocked(reason);
 	}
 
 	/**
@@ -1186,8 +1238,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 	 * @see #reportBlocked
 	 */
 	final void reportUnblocked(IProgressMonitor monitor) {
-		if (monitor instanceof IProgressMonitorWithBlocking)
-			((IProgressMonitorWithBlocking) monitor).clearBlocked();
+		monitor.clearBlocked();
 	}
 
 	@Override
@@ -1407,7 +1458,7 @@ public class JobManager implements IJobManager, DebugOptionsListener {
 			InternalJob next = sleeping.peek();
 			if (next == null)
 				return InternalJob.T_INFINITE;
-			return next.getStartTime() - System.currentTimeMillis();
+			return next.getStartTime() - now();
 		}
 	}
 
