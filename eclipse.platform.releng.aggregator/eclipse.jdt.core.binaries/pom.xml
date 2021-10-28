@@ -15,17 +15,16 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
   <groupId>eclipse.jdt.core</groupId>
   <artifactId>eclipse.jdt.core.binaries</artifactId>
-  <version>4.17.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
-    <tycho.scmUrl>scm:git:git://git.eclipse.org/gitroot/jdt/eclipse.jdt.core.binaries.git</tycho.scmUrl>
+    <tycho.scmUrl>scm:git:https://git.eclipse.org/r/jdt/eclipse.jdt.core.binaries.git</tycho.scmUrl>
   </properties>
 
   <!-- 
