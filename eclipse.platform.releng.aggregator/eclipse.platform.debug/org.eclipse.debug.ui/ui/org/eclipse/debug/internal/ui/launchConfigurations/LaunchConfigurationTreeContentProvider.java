@@ -93,6 +93,7 @@ public class LaunchConfigurationTreeContentProvider implements ITreeContentProvi
 						configs.add(launchConfig);
 					}
 				}
+
 				ILaunchConfiguration[] prototypes = getLaunchManager().getLaunchConfigurations(type, ILaunchConfiguration.PROTOTYPE);
 				Collections.addAll(configs, prototypes);
 				return configs.toArray(new ILaunchConfiguration[0]);

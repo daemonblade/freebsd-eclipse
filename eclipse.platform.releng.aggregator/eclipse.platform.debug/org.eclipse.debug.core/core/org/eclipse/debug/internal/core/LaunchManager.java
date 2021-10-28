@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -31,6 +31,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -283,12 +284,10 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 								if (registered != null) {
 									registered.add(fNotifierLaunches[j]);
 								}
-							} else {
-								if (registered == null) {
-									registered = new ArrayList<>(fNotifierLaunches.length);
-									for (int k = 0; k < j; k++) {
-										registered.add(fNotifierLaunches[k]);
-									}
+							} else if (registered == null) {
+								registered = new ArrayList<>(fNotifierLaunches.length);
+								for (int k = 0; k < j; k++) {
+									registered.add(fNotifierLaunches[k]);
 								}
 							}
 						}
@@ -443,7 +442,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 	 * Collects files whose extension matches the launch configuration file
 	 * extension.
 	 */
-	class ResourceProxyVisitor implements IResourceProxyVisitor {
+	static class ResourceProxyVisitor implements IResourceProxyVisitor {
 
 		private List<IResource> fList;
 
@@ -454,7 +453,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 		@Override
 		public boolean visit(IResourceProxy proxy) {
 			if (proxy.getType() == IResource.FILE) {
-				if (ILaunchConfiguration.LAUNCH_CONFIGURATION_FILE_EXTENSION.equalsIgnoreCase(proxy.requestFullPath().getFileExtension()) | ILaunchConfiguration.LAUNCH_CONFIGURATION_PROTOTYPE_FILE_EXTENSION.equalsIgnoreCase(proxy.requestFullPath().getFileExtension())) {
+				if (ILaunchConfiguration.LAUNCH_CONFIGURATION_FILE_EXTENSION.equalsIgnoreCase(proxy.requestFullPath().getFileExtension()) || ILaunchConfiguration.LAUNCH_CONFIGURATION_PROTOTYPE_FILE_EXTENSION.equalsIgnoreCase(proxy.requestFullPath().getFileExtension())) {
 					fList.add(proxy.requestResource());
 				}
 				return false;
@@ -468,7 +467,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 	 *
 	 * @since 3.3
 	 */
-	class PreferredDelegate {
+	static class PreferredDelegate {
 		private ILaunchDelegate fDelegate = null;
 		private String fTypeid = null;
 		private Set<String> fModes = null;
@@ -527,13 +526,14 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 	}
 
 	/**
-	 * Serializes a XML document into a string - encoded in UTF8 format,
-	 * with platform line separators.
+	 * Serializes a XML document into a string - encoded in UTF8 format, with
+	 * platform line separators.
 	 *
 	 * @param doc document to serialize
 	 * @return the document as a string
-	 * @throws TransformerException if an unrecoverable error occurs during the serialization
-	 * @throws IOException if the encoding attempted to be used is not supported
+	 * @throws TransformerException if an unrecoverable error occurs during the
+	 *             serialization
+	 * @throws IOException if I/O error occurs
 	 */
 	public static String serializeDocument(Document doc) throws TransformerException, IOException {
 		ByteArrayOutputStream s = new ByteArrayOutputStream();
@@ -544,7 +544,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 		DOMSource source = new DOMSource(doc);
 		StreamResult outputTarget = new StreamResult(s);
 		transformer.transform(source, outputTarget);
-		return s.toString("UTF8"); //$NON-NLS-1$
+		return s.toString(StandardCharsets.UTF_8);
 	}
 
 	/**
@@ -1118,7 +1118,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 	 *
 	 * @return all launch configuration handles
 	 */
-	private synchronized List<ILaunchConfiguration> getAllLaunchConfigurations() {
+	public synchronized List<ILaunchConfiguration> getAllLaunchConfigurations() {
 		if (fLaunchConfigurationIndex == null) {
 			try {
 				fLaunchConfigurationIndex = new ArrayList<>(20);
@@ -1364,13 +1364,11 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 					}
 				}
 
+			} else if (store != null){
+				throw createDebugException(MessageFormat.format(DebugCoreMessages.LaunchManager_does_not_exist, new Object[] {
+						config.getName(), store.toURI().toString() }), null);
 			} else {
-				if (store != null){
-					throw createDebugException(MessageFormat.format(DebugCoreMessages.LaunchManager_does_not_exist, new Object[] {
-							config.getName(), store.toURI().toString() }), null);
-				} else {
-					throw createDebugException(MessageFormat.format(DebugCoreMessages.LaunchManager_does_not_exist_no_store_found, new Object[] { config.getName() }), null);
-				}
+				throw createDebugException(MessageFormat.format(DebugCoreMessages.LaunchManager_does_not_exist_no_store_found, new Object[] { config.getName() }), null);
 			}
 		}
 		return info;
@@ -1664,7 +1662,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 		// compatibility.
 		initializePreferredDelegates();
 		for (PreferredDelegate pd : fPreferredDelegates) {
-			if(pd.getModes().equals(modes) & pd.getTypeId().equals(typeid)) {
+			if (pd.getModes().equals(modes) && pd.getTypeId().equals(typeid)) {
 				return pd.getDelegate();
 			}
 		}
@@ -2395,7 +2393,7 @@ public class LaunchManager extends PlatformObject implements ILaunchManager, IRe
 		try {
 			for (ILaunch launch : launches) {
 				for (ILaunchConfiguration config : configs) {
-					if(config.equals(launch.getLaunchConfiguration()) & launch.canTerminate()) {
+					if (config.equals(launch.getLaunchConfiguration()) && launch.canTerminate()) {
 						launch.terminate();
 					}
 				}

@@ -17,6 +17,7 @@ package org.eclipse.debug.tests;
 
 import org.eclipse.debug.tests.breakpoint.BreakpointOrderingTests;
 import org.eclipse.debug.tests.breakpoint.BreakpointTests;
+import org.eclipse.debug.tests.breakpoint.SerialExecutorTest;
 import org.eclipse.debug.tests.console.ConsoleDocumentAdapterTests;
 import org.eclipse.debug.tests.console.ConsoleManagerTests;
 import org.eclipse.debug.tests.console.ConsoleTests;
@@ -39,6 +40,7 @@ import org.eclipse.debug.tests.launching.LaunchHistoryTests;
 import org.eclipse.debug.tests.launching.LaunchManagerTests;
 import org.eclipse.debug.tests.launching.LaunchTests;
 import org.eclipse.debug.tests.launching.RefreshTabTests;
+import org.eclipse.debug.tests.logicalstructure.LogicalStructureCacheTest;
 import org.eclipse.debug.tests.sourcelookup.SourceLookupFacilityTests;
 import org.eclipse.debug.tests.statushandlers.StatusHandlerTests;
 import org.eclipse.debug.tests.stepfilters.StepFiltersTests;
@@ -68,6 +70,7 @@ import org.junit.runners.Suite;
 		// BP tests
 		BreakpointOrderingTests.class,
 		BreakpointTests.class,
+		SerialExecutorTest.class,
 		// Note: jface viewer tests were moved out of nightly tests
 		// due to frequent problems on nightly build machines.
 		// (Bug 343308).
@@ -85,7 +88,7 @@ import org.junit.runners.Suite;
 		FilterTransformTests.class,
 		ChildrenUpdateTests.class,
 		PresentationContextTests.class,
-		
+
 		// Memory view
 		MemoryRenderingTests.class,
 
@@ -122,6 +125,9 @@ import org.junit.runners.Suite;
 
 		// Launch Groups
 		LaunchGroupTests.class,
+
+		// Logical structure
+		LogicalStructureCacheTest.class,
 })
 public class AutomatedSuite {
 }

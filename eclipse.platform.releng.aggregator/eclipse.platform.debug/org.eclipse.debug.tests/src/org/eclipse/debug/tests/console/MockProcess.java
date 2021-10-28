@@ -18,9 +18,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfigurationType;
@@ -65,6 +65,12 @@ public class MockProcess extends Process {
 	private long endTime;
 	/** The simulated exit code. */
 	private int exitCode = 0;
+
+	/** The child/sub mock-processes of this mock-process. */
+	private Optional<MockProcessHandle> handle = Optional.of(new MockProcessHandle(this));
+
+	/** The delay after a call to destroy() until actual termination. */
+	private int terminationDelay = 0;
 
 	/**
 	 * Create new silent mockup process which runs for a given amount of time.
@@ -166,6 +172,15 @@ public class MockProcess extends Process {
 	}
 
 	@Override
+	public ProcessHandle toHandle() {
+		if (handle.isPresent()) {
+			return handle.get();
+		}
+		// let super implementation throw the UnsupportedOperationException
+		return super.toHandle();
+	}
+
+	@Override
 	public int waitFor() throws InterruptedException {
 		synchronized (waitForTerminationLock) {
 			while (!isTerminated()) {
@@ -179,6 +194,7 @@ public class MockProcess extends Process {
 				}
 			}
 		}
+		handle.ifPresent(MockProcessHandle::setTerminated);
 		return exitCode;
 	}
 
@@ -196,6 +212,9 @@ public class MockProcess extends Process {
 				remainingMs = timeoutMs - System.currentTimeMillis();
 			}
 		}
+		if (isTerminated()) {
+			handle.ifPresent(MockProcessHandle::setTerminated);
+		}
 		return isTerminated();
 	}
 
@@ -210,7 +229,7 @@ public class MockProcess extends Process {
 
 	@Override
 	public void destroy() {
-		destroy(0);
+		destroy(terminationDelay);
 	}
 
 	/**
@@ -223,6 +242,9 @@ public class MockProcess extends Process {
 		synchronized (waitForTerminationLock) {
 			endTime = System.currentTimeMillis() + delay;
 			waitForTerminationLock.notifyAll();
+			if (delay <= 0) {
+				handle.ifPresent(MockProcessHandle::setTerminated);
+			}
 		}
 	}
 
@@ -232,7 +254,7 @@ public class MockProcess extends Process {
 	 * @return <code>true</code> if process is terminated
 	 */
 	private boolean isTerminated() {
-		return endTime != RUN_FOREVER && System.currentTimeMillis() > endTime;
+		return endTime != RUN_FOREVER && System.currentTimeMillis() >= endTime;
 	}
 
 	/**
@@ -242,6 +264,26 @@ public class MockProcess extends Process {
 	 */
 	public void setExitValue(int exitCode) {
 		this.exitCode = exitCode;
+	}
+
+	/**
+	 * Set the {@link ProcessHandle} of the process. A null value indices that
+	 * this process does not support {@link Process#toHandle()}.
+	 *
+	 * @param handle new process handle
+	 */
+	public void setHandle(MockProcessHandle handle) {
+		this.handle = Optional.ofNullable(handle);
+	}
+
+	/**
+	 * Set the delay between a call to destroy and the termination of this
+	 * process.
+	 *
+	 * @param delay the delay after a call to destroy() until actual termination
+	 */
+	public void setTerminationDelay(int delay) {
+		this.terminationDelay = delay;
 	}
 
 	/**

@@ -76,14 +76,8 @@ public class ArgumentParsingTests extends AbstractDebugTest {
 
 		String[] splitArguments = DebugPlugin.splitArguments(commandLine);
 		assertEquals(expectedArgs.length, splitArguments.length);
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < splitArguments.length; i++) {
-			if (i > 0) {
-				sb.append(" "); //$NON-NLS-1$
-			}
-			sb.append(splitArguments[i]);
-		}
-		assertEquals(commandLine, sb.toString());
+		String sb = String.join(" ", splitArguments); //$NON-NLS-1$
+		assertEquals(commandLine, sb);
 	}
 
 	private static void runCommandLine(String commandLine, String[] arguments) throws IOException,
@@ -200,6 +194,19 @@ public class ArgumentParsingTests extends AbstractDebugTest {
 			execute1Arg("\\1"); //$NON-NLS-1$
 		} else {
 			execute1Arg("\\1", "1", "1"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		}
+	}
+
+	@Test
+	public void testRenderWindowsBackslash() throws Exception {
+		String[] arguments = {
+			"-Dfoo=\"abc\\def\\ghi\""
+		};
+		String rendered = DebugPlugin.renderArguments(arguments, null);
+		if (Platform.getOS().equals(Constants.OS_WIN32)) {
+			assertEquals("unexpected renderArguments result;", "-Dfoo=\\\"abc\\def\\ghi\\\"", rendered); //$NON-NLS-1$ //$NON-NLS-2$
+		} else {
+			assertEquals("unexpected renderArguments result;", "-Dfoo=\\\"abc\\\\def\\\\ghi\\\"", rendered); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 

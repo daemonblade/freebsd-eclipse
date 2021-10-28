@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
 <!--
-     Copyright (c) 2005, 2020 IBM Corporation and others.
+     Copyright (c) 2005, 2021 IBM Corporation and others.
 
      This program and the accompanying materials
      are made available under the terms of the Eclipse Public License 2.0
@@ -1518,6 +1518,14 @@
                id="org.eclipse.debug.ui.breakpointsView.toolbar.remove">
         </action>
         <action
+               label="%DisableAllBreakpointsAction.label"
+               icon="$nl$/icons/full/elcl16/disabled_co.png"
+               helpContextId="disable_breakpoint_action_context"
+               class="org.eclipse.debug.internal.ui.actions.breakpoints.DisableAllBreakpointsAction"
+               menubarPath="breakpointGroup"
+               id="org.eclipse.debug.ui.actions.DisableAllBreakpoint">
+        </action>
+        <action
                label="%DisableBreakpointsAction.label"
                icon="$nl$/icons/full/elcl16/disabled_co.png"
                helpContextId="disable_breakpoint_action_context"
@@ -1907,6 +1915,15 @@ M4 = Platform-specific fourth key
             id="org.eclipse.debug.ui.commands.TerminateAndRelaunch">
          <defaultHandler
                class="org.eclipse.debug.internal.ui.commands.actions.TerminateAndRelaunchHandler">
+         </defaultHandler>
+      </command>
+      <command
+            name="%ActionDefinition.terminateAll.name"
+            categoryId="org.eclipse.debug.ui.category.run"
+            description="%ActionDefinition.terminateAll.description"
+            id="org.eclipse.debug.ui.commands.TerminateAll">
+         <defaultHandler
+               class="org.eclipse.debug.internal.ui.commands.actions.TerminateAllHandler">
          </defaultHandler>
       </command>
       <command
@@ -3307,6 +3324,12 @@ M4 = Platform-specific fourth key
             uri="css/e4-light_debug_prefstyle.css">
          <themeid
                refid="org.eclipse.e4.ui.css.theme.e4_default">
+         </themeid>
+      </stylesheet>
+      <stylesheet
+            uri="css/e4-light_debug_prefstyle_system.css">
+         <themeid
+               refid="org.eclipse.e4.ui.css.theme.e4_system">
          </themeid>
       </stylesheet>
   </extension>

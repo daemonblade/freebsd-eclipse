@@ -92,6 +92,7 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.WorkbenchJob;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * The dialog used to edit and launch launch configurations.
@@ -232,6 +233,7 @@ public class LaunchConfigurationsDialog extends TitleAreaDialog implements ILaun
 	private DeletedProjectFilter fDeletedProjectFilter;
 	private LaunchConfigurationTypeFilter fLCTFilter;
 	private WorkingSetsFilter fWorkingSetsFilter;
+	private UniqueLaunchConfigurationFileFilter fUniqueLaunchConfugurationFileFilter;
 
 	/**
 	 * set of reserved names that should not be considered when generating a new name for a launch configuration
@@ -644,6 +646,8 @@ public class LaunchConfigurationsDialog extends TitleAreaDialog implements ILaun
 		if(DebugUIPlugin.getDefault().getPreferenceStore().getBoolean(IInternalDebugUIConstants.PREF_FILTER_WORKING_SETS)) {
 			filters.add(fWorkingSetsFilter);
 		}
+		fUniqueLaunchConfugurationFileFilter = new UniqueLaunchConfigurationFileFilter();
+		filters.add(fUniqueLaunchConfugurationFileFilter);
 		return filters.toArray(new ViewerFilter[filters.size()]);
 	}
 
@@ -746,7 +750,9 @@ public class LaunchConfigurationsDialog extends TitleAreaDialog implements ILaun
 	 * @return IDialogSettings
 	 */
 	protected IDialogSettings getDialogSettings() {
-		IDialogSettings settings = DebugUIPlugin.getDefault().getDialogSettings();
+		IDialogSettings settings = PlatformUI
+				.getDialogSettingsProvider(FrameworkUtil.getBundle(LaunchConfigurationDialog.class))
+				.getDialogSettings();
 		IDialogSettings section = settings.getSection(getDialogSettingsSectionName());
 		if (section == null) {
 			section = settings.addNewSection(getDialogSettingsSectionName());
@@ -1331,7 +1337,10 @@ public class LaunchConfigurationsDialog extends TitleAreaDialog implements ILaun
 	 * @since 3.13
 	 */
 	public void refreshLaunchConfigurationView() {
-		fLaunchConfigurationView.getTreeViewer().refresh();
+		LaunchConfigurationView view = fLaunchConfigurationView;
+		if (view != null) {
+			view.getTreeViewer().refresh();
+		}
 	}
 
 	/**
@@ -1649,7 +1658,7 @@ public class LaunchConfigurationsDialog extends TitleAreaDialog implements ILaun
 			@Override
 			public IStatus runInUIThread(IProgressMonitor monitor) {
 				TreeViewer viewer = fLaunchConfigurationView.getTreeViewer();
-				boolean newvalue = Boolean.valueOf(event.getNewValue().toString()).booleanValue();
+				boolean newvalue = Boolean.parseBoolean(event.getNewValue().toString());
 				if(event.getProperty().equals(IInternalDebugUIConstants.PREF_FILTER_LAUNCH_CLOSED)) {
 					updateFilter(newvalue, fClosedProjectFilter);
 				}

@@ -21,3 +21,7 @@
 {
     background-color:COLOR-WIDGET-LIGHT-SHADOW;
 }
+
+#VariablesViewer {
+    font-family: '#org-eclipse-debug-ui-VariableTextFont';
+}

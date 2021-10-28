@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -356,6 +356,21 @@ public class DebugPlugin extends Plugin {
 	public static final String ATTR_PATH = PI_DEBUG_CORE + ".ATTR_PATH"; //$NON-NLS-1$
 
 	/**
+	 * Launch configuration attribute that designates whether or not the
+	 * descendants of the {@link IProcess} associated to a launch of this
+	 * configuration should be terminated if the main-process is terminated. The
+	 * descendants (also called child- or sub-processes) of a operating system
+	 * process are the processes started by that process.
+	 *
+	 * Value is a string representing a boolean - <code>true</code> or
+	 * <code>false</code>. When unspecified, the default value is considered
+	 * <code>true</code>.
+	 *
+	 * @since 3.18
+	 */
+	public static final String ATTR_TERMINATE_DESCENDANTS = PI_DEBUG_CORE + ".TERMINATE_DESCENDANTS"; //$NON-NLS-1$
+
+	/**
 	 * The singleton debug plug-in instance.
 	 */
 	private static DebugPlugin fgDebugPlugin= null;
@@ -591,6 +606,9 @@ public class DebugPlugin extends Plugin {
 	public synchronized ILaunchManager getLaunchManager() {
 		if (fLaunchManager == null) {
 			fLaunchManager = new LaunchManager();
+			fLaunchManager.getAllLaunchConfigurations();
+			// monitor launch configuration renames for launch groups
+			fLaunchManager.addLaunchConfigurationListener(new GroupMemberChangeListener());
 		}
 		return fLaunchManager;
 	}
@@ -726,9 +744,6 @@ public class DebugPlugin extends Plugin {
 		manager.registerAdapters(actionFactory, ILaunch.class);
 		manager.registerAdapters(actionFactory, IProcess.class);
 		manager.registerAdapters(actionFactory, IDebugElement.class);
-
-		// monitor launch configuration renames for launch groups
-		getLaunchManager().addLaunchConfigurationListener(new GroupMemberChangeListener());
 	}
 
 	/**
@@ -937,12 +952,10 @@ public class DebugPlugin extends Plugin {
 					}
 				}
 				p = pb.start();
+			} else if (workingDirectory == null) {
+				p = Runtime.getRuntime().exec(cmdLine, envp);
 			} else {
-				if (workingDirectory == null) {
-					p = Runtime.getRuntime().exec(cmdLine, envp);
-				} else {
-					p = Runtime.getRuntime().exec(cmdLine, envp, workingDirectory);
-				}
+				p = Runtime.getRuntime().exec(cmdLine, envp, workingDirectory);
 			}
 		} catch (IOException e) {
 			Status status = new Status(IStatus.ERROR, getUniqueIdentifier(), ERROR, DebugCoreMessages.DebugPlugin_0, e);
@@ -1640,6 +1653,8 @@ public class DebugPlugin extends Plugin {
 					} else {
 						buf.append('\\');
 					}
+				} else if (isWin32) {
+					backslashes = 0;
 				}
 				buf.append(ch);
 			}
