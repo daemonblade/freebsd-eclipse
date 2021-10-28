@@ -47,7 +47,7 @@ public class WorkManager implements IManager {
 	 * threads that own the workspace lock must never block trying to acquire a
 	 * resource rule.
 	 */
-	class NotifyRule implements ISchedulingRule {
+	static class NotifyRule implements ISchedulingRule {
 		@Override
 		public boolean contains(ISchedulingRule rule) {
 			return (rule instanceof IResource) || rule.getClass().equals(NotifyRule.class);
@@ -67,7 +67,7 @@ public class WorkManager implements IManager {
 	/**
 	 * Indicates whether any operations have run that may require a build.
 	 */
-	private boolean hasBuildChanges = false;
+	private volatile boolean hasBuildChanges;
 	private IJobManager jobManager;
 	/**
 	 * The primary workspace lock. This lock must be held by any thread
@@ -284,7 +284,7 @@ public class WorkManager implements IManager {
 	 * Indicates if the operation that has just completed may potentially
 	 * require a build.
 	 */
-	public void setBuild(boolean hasChanges) {
+	public synchronized void setBuild(boolean hasChanges) {
 		if (hasChanges && Policy.DEBUG_BUILD_NEEDED) {
 			Policy.debug("Set build hasChanges: " + hasChanges + " hasBuildChanges: " + hasBuildChanges); //$NON-NLS-1$ //$NON-NLS-2$
 			if (!hasBuildChanges && Policy.DEBUG_BUILD_NEEDED_STACK) {

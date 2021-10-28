@@ -30,6 +30,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.internal.events.*;
 import org.eclipse.core.internal.localstore.FileSystemResourceManager;
+import org.eclipse.core.internal.preferences.PreferencesService;
 import org.eclipse.core.internal.properties.IPropertyManager;
 import org.eclipse.core.internal.properties.PropertyManager2;
 import org.eclipse.core.internal.refresh.RefreshManager;
@@ -673,7 +674,7 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 	private VertexOrder<IProject> computeFullProjectOrder() {
 		// determine the full set of accessible projects in the workspace
 		// order the set in descending alphabetical order of project name
-		SortedSet<IProject> allAccessibleProjects = new TreeSet<>((px, py) -> py.getName().compareTo(px.getName()));
+		SortedSet<IProject> allAccessibleProjects = new TreeSet<>(Comparator.comparing(IProject::getName).reversed());
 		IProject[] allProjects = getRoot().getProjects(IContainer.INCLUDE_HIDDEN);
 		// List<IProject[]> edges
 		List<IProject[]> edges = new ArrayList<>(allProjects.length);
@@ -1848,6 +1849,20 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 		}
 	}
 
+	/*
+	 * Add the project scope to the preference service's default look-up order so
+	 * people get it for free
+	 */
+	private void initializePreferenceLookupOrder() {
+		PreferencesService service = PreferencesService.getDefault();
+		String[] original = service.getDefaultDefaultLookupOrder();
+		List<String> newOrder = new ArrayList<>();
+		// put the project scope first on the list
+		newOrder.add(ProjectScope.SCOPE);
+		newOrder.addAll(Arrays.asList(original));
+		service.setDefaultDefaultLookupOrder(newOrder.toArray(new String[newOrder.size()]));
+	}
+
 	/**
 	 * A team hook hasn't been initialized. Check the extension point and
 	 * try to create a new hook if a user has one defined as an extension.
@@ -2186,6 +2201,12 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 	 * @see ResourcesPlugin#getWorkspace()
 	 */
 	public IStatus open(IProgressMonitor monitor) throws CoreException {
+		if (!localMetaArea.hasSavedWorkspace()) {
+			localMetaArea.createMetaArea();
+		}
+		PlatformURLResourceConnection.startup(getRoot().getLocation());
+		initializePreferenceLookupOrder();
+
 		// This method is not inside an operation because it is the one responsible for
 		// creating the WorkManager object (who takes care of operations).
 		String message = Messages.resources_workspaceOpen;
@@ -2353,6 +2374,13 @@ public class Workspace extends PlatformObject implements IWorkspace, ICoreConsta
 			if (Policy.DEBUG)
 				Policy.debug(msg);
 		}
+	}
+
+	/**
+	 * @return true if workspace crash in previous session was detected at startup
+	 */
+	public boolean isCrashed() {
+		return crashed;
 	}
 
 	@Override

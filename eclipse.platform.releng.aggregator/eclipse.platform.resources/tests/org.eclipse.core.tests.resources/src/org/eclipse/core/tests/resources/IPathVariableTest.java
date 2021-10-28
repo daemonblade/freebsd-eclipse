@@ -45,8 +45,8 @@ public class IPathVariableTest extends ResourceTest {
 		manager = project.getPathVariableManager();
 	}
 
-	class PathVariableChangeVerifier implements IPathVariableChangeListener {
-		class VerificationFailedException extends Exception {
+	static class PathVariableChangeVerifier implements IPathVariableChangeListener {
+		static class VerificationFailedException extends Exception {
 			/**
 			 * All serializable objects should have a stable serialVersionUID
 			 */
@@ -57,7 +57,7 @@ public class IPathVariableTest extends ResourceTest {
 			}
 		}
 
-		class Event {
+		static class Event {
 			int type;
 			String name;
 			IPath value;

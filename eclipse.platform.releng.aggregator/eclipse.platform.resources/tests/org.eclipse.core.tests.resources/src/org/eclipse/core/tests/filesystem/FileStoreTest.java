@@ -17,11 +17,19 @@ import java.io.File;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Date;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.eclipse.core.filesystem.*;
+import org.eclipse.core.filesystem.provider.FileSystem;
+import org.eclipse.core.internal.filesystem.Messages;
+import org.eclipse.core.internal.filesystem.NullFileSystem;
+import org.eclipse.core.internal.filesystem.local.LocalFile;
+import org.eclipse.core.internal.filesystem.local.LocalFileSystem;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.tests.internal.localstore.LocalStoreTest;
+import org.eclipse.osgi.util.NLS;
 
 /**
  * Basic tests for the IFileStore API
@@ -43,8 +51,8 @@ public class FileStoreTest extends LocalStoreTest {
 	}
 
 	/**
-	 * Tests behavior of IFileStore#fetchInfo when underlying file system
-	 * throws exceptions.
+	 * Tests behavior of IFileStore#fetchInfo when underlying file system throws
+	 * exceptions.
 	 */
 	public void testBrokenFetchInfo() {
 		IFileStore broken = null;
@@ -55,16 +63,16 @@ public class FileStoreTest extends LocalStoreTest {
 		} catch (URISyntaxException e) {
 			fail("0.99", e);
 		}
-		//no-arg fetch info should return non-existent file
+		// no-arg fetch info should return non-existent file
 		IFileInfo info = broken.fetchInfo();
 		assertTrue("1.0", !info.exists());
 
-		//two-arg fetchInfo should throw exception
+		// two-arg fetchInfo should throw exception
 		try {
 			info = broken.fetchInfo(EFS.NONE, getMonitor());
 			fail("2.0");
 		} catch (CoreException e) {
-			//expected
+			// expected
 		}
 	}
 
@@ -77,7 +85,7 @@ public class FileStoreTest extends LocalStoreTest {
 	private IFileStore[] getFileStoresOnTwoVolumes() {
 		IFileStore[] tempDirs = new IFileStore[2];
 
-		for (int i = 99/*c*/; i < 123/*z*/; i++) {
+		for (int i = 99/* c */; i < 123/* z */; i++) {
 			char c = (char) i;
 			try {
 				IFileStore store = getDirFileStore(c + ":/temp");
@@ -87,10 +95,10 @@ public class FileStoreTest extends LocalStoreTest {
 						tempDirs[0] = store;
 					} else {
 						tempDirs[1] = store;
-						break; //both temp dirs have been created
+						break; // both temp dirs have been created
 					}
 				}
-			} catch (CoreException e) {//ignore and go to next volume
+			} catch (CoreException e) {// ignore and go to next volume
 				continue;
 			}
 		}
@@ -104,7 +112,8 @@ public class FileStoreTest extends LocalStoreTest {
 		IFileStore[] tempDirectories = getFileStoresOnTwoVolumes();
 
 		/* test if we are in the adequate environment */
-		if (tempDirectories == null || tempDirectories.length < 2 || tempDirectories[0] == null || tempDirectories[1] == null) {
+		if (tempDirectories == null || tempDirectories.length < 2 || tempDirectories[0] == null
+				|| tempDirectories[1] == null) {
 			return;
 		}
 
@@ -139,7 +148,7 @@ public class FileStoreTest extends LocalStoreTest {
 			target.copy(destination, EFS.NONE, null);
 			fail("5.2");
 		} catch (CoreException e) {
-			//should fail
+			// should fail
 		}
 		assertTrue("5.3", !verifyTree(getTree(destination)));
 		destination.delete(EFS.NONE, null);
@@ -157,7 +166,8 @@ public class FileStoreTest extends LocalStoreTest {
 
 	public void testCopyDirectory() throws Throwable {
 		/* build scenario */
-		IFileStore temp = EFS.getFileSystem(EFS.SCHEME_FILE).getStore(getWorkspace().getRoot().getLocation().append("temp"));
+		IFileStore temp = EFS.getFileSystem(EFS.SCHEME_FILE)
+				.getStore(getWorkspace().getRoot().getLocation().append("temp"));
 		temp.mkdir(EFS.NONE, null);
 		assertTrue("1.1", temp.fetchInfo().isDirectory());
 		// create tree
@@ -180,15 +190,55 @@ public class FileStoreTest extends LocalStoreTest {
 		IFileStore child = parent.getChild("child");
 		IFileStore existing = getTempStore();
 		createFile(existing, getRandomString());
-		//try to copy when parent of destination does not exist
+		// try to copy when parent of destination does not exist
 		try {
 			existing.copy(child, EFS.NONE, getMonitor());
 			fail("1.0");
 		} catch (CoreException e) {
-			//should fail
+			// should fail
 		}
-		//destination should not exist
+		// destination should not exist
 		assertTrue("1.1", !child.fetchInfo().exists());
+	}
+
+	public void testCaseInsensitive() throws Throwable {
+		IFileStore temp = createDir(getWorkspace().getRoot().getLocation().append("temp").toString(), true);
+		boolean isCaseSensitive = temp.getFileSystem().isCaseSensitive();
+		if (isCaseSensitive) {
+			System.out.println("Skipping copy test on caseSensitive System");
+			return;
+		}
+		// create a file
+		String content = "this is just a simple content \n to a simple file \n to test a 'simple' copy";
+		IFileStore fileWithSmallName = temp.getChild("filename");
+		fileWithSmallName.delete(EFS.NONE, null);
+		createFile(fileWithSmallName, content);
+		System.out.println(fileWithSmallName.fetchInfo().getName());
+		assertTrue("1.3", fileWithSmallName.fetchInfo().exists());
+		assertTrue("1.4", compareContent(getContents(content), fileWithSmallName.openInputStream(EFS.NONE, null)));
+
+		IFileStore fileWithOtherName = temp.getChild("FILENAME");
+		System.out.println(fileWithOtherName.fetchInfo().getName());
+		// file content is already the same for both Cases:
+		assertTrue("2.0", compareContent(getContents(content), fileWithOtherName.openInputStream(EFS.NONE, null)));
+		fileWithSmallName.copy(fileWithOtherName, IResource.DEPTH_INFINITE, null); // a NOP Operation
+		// file content is still the same for both Cases:
+		assertTrue("2.1", compareContent(getContents(content), fileWithOtherName.openInputStream(EFS.NONE, null)));
+		assertTrue("3.0", fileWithOtherName.fetchInfo().exists());
+		assertTrue("3.1", fileWithSmallName.fetchInfo().exists());
+		fileWithOtherName.delete(EFS.NONE, null);
+		assertFalse("3.2", fileWithOtherName.fetchInfo().exists());
+		assertFalse("3.3", fileWithSmallName.fetchInfo().exists());
+		try {
+			fileWithSmallName.move(fileWithOtherName, EFS.NONE, null);
+			fail("4.0");
+		} catch (CoreException e) {
+			String message = NLS.bind(Messages.couldNotMove, fileWithSmallName.toString());
+			assertEquals(message, e.getMessage());
+		}
+
+		/* take out the trash */
+		temp.delete(EFS.NONE, null);
 	}
 
 	public void testCopyFile() throws Throwable {
@@ -235,7 +285,7 @@ public class FileStoreTest extends LocalStoreTest {
 		assertTrue("7.1", bigFile.fetchInfo().exists());
 		assertTrue("7.2", compareContent(getContents(sb.toString()), bigFile.openInputStream(EFS.NONE, null)));
 		IFileStore destination = temp.getChild("copy of bigFile");
-		//IProgressMonitor monitor = new LoggingProgressMonitor(System.out);
+		// IProgressMonitor monitor = new LoggingProgressMonitor(System.out);
 		IProgressMonitor monitor = getMonitor();
 		bigFile.copy(destination, EFS.NONE, monitor);
 		assertTrue("7.3", compareContent(getContents(sb.toString()), destination.openInputStream(EFS.NONE, null)));
@@ -252,7 +302,8 @@ public class FileStoreTest extends LocalStoreTest {
 		IFileStore[] tempDirectories = getFileStoresOnTwoVolumes();
 
 		/* test if we are in the adequate environment */
-		if (tempDirectories == null || tempDirectories.length < 2 || tempDirectories[0] == null || tempDirectories[1] == null) {
+		if (tempDirectories == null || tempDirectories.length < 2 || tempDirectories[0] == null
+				|| tempDirectories[1] == null) {
 			return;
 		}
 
@@ -426,7 +477,8 @@ public class FileStoreTest extends LocalStoreTest {
 		IFileStore[] tempDirectories = getFileStoresOnTwoVolumes();
 
 		/* test if we are in the adequate environment */
-		if (tempDirectories == null || tempDirectories.length < 2 || tempDirectories[0] == null || tempDirectories[1] == null) {
+		if (tempDirectories == null || tempDirectories.length < 2 || tempDirectories[0] == null
+				|| tempDirectories[1] == null) {
 			return;
 		}
 
@@ -473,31 +525,32 @@ public class FileStoreTest extends LocalStoreTest {
 		IFileStore child = parent.getChild("child");
 		IFileStore existing = getTempStore();
 		createFile(existing, getRandomString());
-		//try to move when parent of destination does not exist
+		// try to move when parent of destination does not exist
 		try {
 			existing.move(child, EFS.NONE, getMonitor());
 			fail("1.0");
 		} catch (CoreException e) {
-			//should fail
+			// should fail
 		}
-		//destination should not exist
+		// destination should not exist
 		assertTrue("1.1", !child.fetchInfo().exists());
 	}
 
 	/**
-	 * Tests public API method {@link IFileStore#putInfo(IFileInfo, int, IProgressMonitor)}.
+	 * Tests public API method
+	 * {@link IFileStore#putInfo(IFileInfo, int, IProgressMonitor)}.
 	 */
 	public void testPutInfo() {
 		IFileStore nonExisting = getTempStore();
 
-		//assert that modifying a non-existing store fails
+		// assert that modifying a non-existing store fails
 		IFileInfo info = nonExisting.fetchInfo();
 		info.setLastModified(System.currentTimeMillis());
 		try {
 			nonExisting.putInfo(info, EFS.SET_LAST_MODIFIED, getMonitor());
 			fail("1.0");
 		} catch (CoreException e) {
-			//expected
+			// expected
 		}
 		info = nonExisting.fetchInfo();
 		info.setAttribute(EFS.ATTRIBUTE_READ_ONLY, false);
@@ -505,7 +558,7 @@ public class FileStoreTest extends LocalStoreTest {
 			nonExisting.putInfo(info, EFS.SET_ATTRIBUTES, getMonitor());
 			fail("1.1");
 		} catch (CoreException e) {
-			//expected
+			// expected
 		}
 	}
 
@@ -620,5 +673,63 @@ public class FileStoreTest extends LocalStoreTest {
 		info = relativeStore.fetchInfo();
 		assertNotNull("10.0", info);
 		assertTrue("11.0", info.exists());
+	}
+
+	public void testSortOrder() {
+		IFileSystem nullfs = NullFileSystem.getInstance();
+		if (nullfs == null) {
+			nullfs = new NullFileSystem();
+			((FileSystem) nullfs).initialize(EFS.SCHEME_NULL);
+		}
+		IFileStore nabc = nullfs.getStore(new Path("/a/b/c"));
+		IFileStore nabd = nullfs.getStore(new Path("/a/b/d"));
+		assertEquals("1.0", -1, nabc.compareTo(nabd));
+		assertEquals("1.1", 0, nabc.compareTo(nabc));
+		assertEquals("1.2", 1, nabd.compareTo(nabc));
+		IFileSystem lfs = LocalFileSystem.getInstance();
+		IFileStore labc = lfs.getStore(new Path("/a/b/c"));
+		IFileStore labd = lfs.getStore(new Path("/a/b/d"));
+		assertEquals("2.0", -1, labc.compareTo(labd));
+		assertEquals("2.1", 0, labc.compareTo(labc));
+		assertEquals("2.2", 1, labd.compareTo(labc));
+		int schemeCompare = nullfs.getScheme().compareTo(lfs.getScheme());
+		assertEquals("3.0", schemeCompare, nabd.compareTo(labc));
+		assertEquals("3.1", schemeCompare, nabc.compareTo(labd));
+		assertEquals("3.2", -schemeCompare, labd.compareTo(nabc));
+		assertEquals("3.3", -schemeCompare, labc.compareTo(nabd));
+		assertEquals("4.0", 1, labc.compareTo(null));
+		assertEquals("4.1", 1, nabc.compareTo(null));
+	}
+
+	public void testSortOrderPaths() {
+		IFileSystem lfs = LocalFileSystem.getInstance();
+		boolean isWindows = java.io.File.separatorChar == '\\';
+		String prefix = isWindows ? "/D:" : "";
+		List<String> paths = List.of( //
+				"/a", //
+				"/a/", //
+				"/a/b", //
+				"/a/./c", //
+				"/a/e/../c", //
+				"/a/d", //
+				"/aa", //
+				"/b").stream().map(s -> prefix + s).collect(Collectors.toList());
+		List<String> pathsTrimmed = paths.stream().map(s -> s //
+				.replaceAll("/$", "") // remove trailing slashes
+				.replaceAll("/[^/]+/\\.\\./", "/") // collapse /a/../ to /
+				.replaceAll("/\\./", "/") // collapse /./ to /
+		).collect(Collectors.toList());
+		paths = new ArrayList<>(paths); // to get a mutable copy for shuffling
+		Collections.shuffle(paths);
+		// Test with new Path(string).getStore()
+		Stream<IFileStore> pathStores = paths.stream().map(Path::new).map(lfs::getStore);
+		List<String> sortedPathStores = pathStores.sorted(IFileStore::compareTo).map(IFileStore::toURI)
+				.map(URI::getPath).collect(Collectors.toList());
+		assertEquals("1.0 ", pathsTrimmed, sortedPathStores);
+		// Test with new LocalFile(new File(string)))
+		Stream<IFileStore> localFileStores = paths.stream().map(File::new).map(LocalFile::new);
+		List<String> sortedLocalFileStores = localFileStores.sorted(IFileStore::compareTo).map(IFileStore::toURI)
+				.map(URI::getPath).collect(Collectors.toList());
+		assertEquals("2.0 ", pathsTrimmed, sortedLocalFileStores);
 	}
 }

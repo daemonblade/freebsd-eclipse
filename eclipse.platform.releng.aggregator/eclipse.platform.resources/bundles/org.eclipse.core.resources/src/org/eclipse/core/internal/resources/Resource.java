@@ -686,6 +686,11 @@ public abstract class Resource extends PlatformObject implements IResource, ICor
 
 	@Override
 	public IMarker createMarker(String type) throws CoreException {
+		return createMarker(type, Collections.emptyMap());
+	}
+
+	@Override
+	public IMarker createMarker(String type, Map<String, ? extends Object> attributes) throws CoreException {
 		Assert.isNotNull(type);
 		final ISchedulingRule rule = workspace.getRuleFactory().markerRule(this);
 		try {
@@ -695,13 +700,13 @@ public abstract class Resource extends PlatformObject implements IResource, ICor
 			MarkerInfo info = new MarkerInfo();
 			info.setType(type);
 			info.setCreationTime(System.currentTimeMillis());
+
 			workspace.getMarkerManager().add(this, info);
-			return new Marker(this, info.getId());
+			return new Marker(this, info, attributes);
 		} finally {
 			workspace.endOperation(rule, false);
 		}
 	}
-
 	@Override
 	public IResourceProxy createProxy() {
 		ResourceProxy result = new ResourceProxy();

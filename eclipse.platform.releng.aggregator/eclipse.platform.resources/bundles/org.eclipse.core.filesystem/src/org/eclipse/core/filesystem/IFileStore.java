@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import org.eclipse.core.filesystem.provider.FileStore;
+import org.eclipse.core.internal.filesystem.FileStoreUtil;
 import org.eclipse.core.runtime.*;
 
 /**
@@ -565,4 +566,20 @@ public interface IFileStore extends IAdaptable {
 	 * @see EFS#getStore(URI)
 	 */
 	public URI toURI();
+
+	/**
+	 * Compares this store to other store of same FileSystem. Comparison has to be
+	 * based on segments, so that paths with the most segments in common will always
+	 * be adjacent. This is equivalent to the natural order on the path strings,
+	 * with the extra condition that the path separator is ordered before all other
+	 * characters. (Ex: "/foo" &lt; "/foo/zzz" &lt; "/fooaaa").
+	 *
+	 * @since org.eclipse.core.filesystem 1.9
+	 */
+	public default int compareTo(IFileStore other) {
+		if (other == null) {
+			return 1;
+		}
+		return FileStoreUtil.compareFileStore(this, other);
+	}
 }

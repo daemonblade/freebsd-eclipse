@@ -948,6 +948,38 @@ public interface IResource extends IAdaptable, ISchedulingRule {
 	IMarker createMarker(String type) throws CoreException;
 
 	/**
+	 * Creates and returns the marker with the specified type on this resource.
+	 * Marker type ids should be the id of an extension installed in the
+	 * <code>org.eclipse.core.resources.markers</code> extension point. The
+	 * specified type string must not be <code>null</code>.
+	 *
+	 * <p>
+	 * Note: default implementation is provided for backwards compatibility only and
+	 * is not optimized for performance.
+	 *
+	 * @param type       the type of the marker to create
+	 * @param attributes a map of attribute names to attribute values (key type :
+	 *                   <code>String</code> value type : <code>String</code>,
+	 *                   <code>Integer</code>, or <code>Boolean</code>) or
+	 *                   <code>null</code>
+	 * @return the handle of the new marker
+	 * @exception CoreException if this method fails. Reasons include:
+	 *                          <ul>
+	 *                          <li>This resource does not exist.</li>
+	 *                          <li>This resource is a project that is not
+	 *                          open.</li>
+	 *                          </ul>
+	 * @see IResourceRuleFactory#markerRule(IResource)
+	 *
+	 * @since 3.14
+	 */
+	default IMarker createMarker(String type, Map<String, ? extends Object> attributes) throws CoreException {
+		IMarker marker = createMarker(type);
+		marker.setAttributes(attributes);
+		return marker;
+	}
+
+	/**
 	 * Creates a resource proxy representing the current state of this resource.
 	 * <p>
 	 * Note that once a proxy has been created, it does not stay in sync

@@ -102,7 +102,7 @@ public class FileSystemResourceManagerTest extends LocalStoreTest implements ICo
 	public void testCreateFile() throws Throwable {
 		/* initialize common objects */
 		IProject project = projects[0];
-		File file = (File) project.getFile("foo");
+		File file = (File) project.getFile("testCreateFile");
 		/* common contents */
 		String originalContent = "this string should not be equal the other";
 
@@ -284,7 +284,7 @@ public class FileSystemResourceManagerTest extends LocalStoreTest implements ICo
 	public void testWriteFile() {
 		/* initialize common objects */
 		IProject project = projects[0];
-		IFile file = project.getFile("foo");
+		IFile file = project.getFile("testWriteFile");
 		ensureExistsInWorkspace(file, true);
 		/* common contents */
 		String originalContent = "this string should not be equal the other";
@@ -356,7 +356,7 @@ public class FileSystemResourceManagerTest extends LocalStoreTest implements ICo
 		}
 
 		/* test the overwrite parameter (false) */
-		ensureDoesNotExistInFileSystem(file);
+		ensureDoesNotExistInFileSystem(file); // FIXME Race Condition with asynchronous workplace refresh see Bug 571133
 		another = getContents(anotherContent);
 		try {
 			write(file, another, false, null);
@@ -369,16 +369,41 @@ public class FileSystemResourceManagerTest extends LocalStoreTest implements ICo
 		ensureDoesNotExistInWorkspace(project);
 	}
 
+	public void testWriteFile2() {
+		// Bug 571133
+		IProject project = projects[0];
+		IFile file = project.getFile("testWriteFile2");
+
+		// this file does NOT exist in workspace yet -> no ResourceInfo;
+
+		/* common contents */
+		String anotherContent = "and this string should not... well, you know...";
+		InputStream another;
+
+		another = getContents(anotherContent);
+		try {
+			write(file, another, false, null);
+			fail("5.0");
+		} catch (CoreException e) {
+			fail("6.0");
+		} catch (IllegalStateException e) {
+			// expected
+		}
+
+		/* remove trash */
+		ensureDoesNotExistInWorkspace(project);
+	}
+
 	public void testWriteFolder() throws Throwable {
 		/* initialize common objects */
 		IProject project = projects[0];
-		IFolder folder = project.getFolder("foo");
+		IFolder folder = project.getFolder("testWriteFolder");
 		ensureExistsInWorkspace(folder, true);
 		boolean ok;
 
 		/* existing file on destination */
 		ensureDoesNotExistInFileSystem(folder);
-		IFile file = project.getFile("foo");
+		IFile file = project.getFile("testWriteFolder");
 		ensureExistsInFileSystem(file);
 		/* force = true */
 		ok = false;

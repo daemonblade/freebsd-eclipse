@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2000, 2015 IBM Corporation and others.
+ *  Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  *  This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License 2.0
@@ -15,6 +15,7 @@
  *     James Blackburn (Broadcom) - [306822] Provide Context for Builder getRule()
  *     Broadcom Corporation - ongoing development
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 473427
+ *     Torbjörn Svensson (STMicroelectronics) - bug #552606
  *******************************************************************************/
 package org.eclipse.core.internal.events;
 
@@ -129,8 +130,19 @@ public class BuildManager implements ICoreConstants, IManager, ILifecycleListene
 
 	private ILock lock;
 
+	/**
+	 * {@code true} if we can exit inner build loop cycle early after
+	 * rebuildRequested is set by one build config and before following build
+	 * configs are executed. Default is {@code true}.
+	 */
+	private static final boolean EARLY_EXIT_FROM_INNER_BUILD_LOOP_ALLOWED = System
+			.getProperty("org.eclipse.core.resources.disallowEarlyInnerBuildLoopExit") == null; //$NON-NLS-1$
+
 	//used for the build cycle looping mechanism
 	private boolean rebuildRequested = false;
+
+	// Shows if we are in the parallel build loop or not
+	private boolean parallelBuild;
 
 	private final Bundle systemBundle = Platform.getBundle("org.eclipse.osgi"); //$NON-NLS-1$
 
@@ -256,6 +268,12 @@ public class BuildManager implements ICoreConstants, IManager, ILifecycleListene
 		try {
 			for (int i = 0; i < commands.length; i++) {
 				checkCanceled(trigger, monitor);
+				if (EARLY_EXIT_FROM_INNER_BUILD_LOOP_ALLOWED && rebuildRequested && !parallelBuild
+						&& workspace.isAutoBuilding()) {
+					// Don't build following configs if one of the predecessors
+					// requested rebuild anyway, just start from scratch
+					break;
+				}
 				BuildCommand command = (BuildCommand) commands[i];
 				IProgressMonitor sub = Policy.subMonitorFor(monitor, 1);
 				IncrementalProjectBuilder builder = getBuilder(buildConfiguration, command, i, status, context);
@@ -405,6 +423,7 @@ public class BuildManager implements ICoreConstants, IManager, ILifecycleListene
 	 * @return A status indicating if the build succeeded or failed
 	 */
 	public IStatus buildParallel(Digraph<IBuildConfiguration> configs, IBuildConfiguration[] requestedConfigs, int trigger, JobGroup buildJobGroup, IProgressMonitor monitor) {
+		parallelBuild = true;
 		monitor = Policy.monitorFor(monitor);
 		try {
 			monitor.beginTask(Messages.events_building_0, TOTAL_BUILD_WORK);
@@ -419,6 +438,7 @@ public class BuildManager implements ICoreConstants, IManager, ILifecycleListene
 			}
 		} finally {
 			endBuild(trigger, monitor);
+			parallelBuild = false;
 		}
 	}
 
@@ -462,6 +482,7 @@ public class BuildManager implements ICoreConstants, IManager, ILifecycleListene
 	 */
 	public IStatus build(IBuildConfiguration buildConfiguration, int trigger, String builderName, Map<String, String> args, IProgressMonitor monitor) {
 		monitor = Policy.monitorFor(monitor);
+		rebuildRequested = false;
 		if (builderName == null) {
 			IBuildContext context = new BuildContext(buildConfiguration);
 			return basicBuild(buildConfiguration, trigger, context, monitor);
@@ -830,8 +851,13 @@ public class BuildManager implements ICoreConstants, IManager, ILifecycleListene
 				//invoke the appropriate build method depending on the trigger
 				if (trigger != IncrementalProjectBuilder.CLEAN_BUILD)
 					prereqs = currentBuilder.build(trigger, args, monitor);
-				else
-					currentBuilder.clean(monitor);
+				else {
+					if (currentBuilder instanceof IIncrementalProjectBuilder2) {
+						((IIncrementalProjectBuilder2) currentBuilder).clean(args, monitor);
+					} else {
+						currentBuilder.clean(monitor);
+					}
+				}
 				if (prereqs == null)
 					prereqs = new IProject[0];
 				currentBuilder.setInterestingProjects(prereqs.clone());

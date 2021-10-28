@@ -45,11 +45,11 @@ public class LocalHistoryBrowserView extends ViewPart {
 	Action refreshAction;
 	Action doubleClickAction;
 
-	class NameSorter extends ViewerComparator {
+	static class NameSorter extends ViewerComparator {
 		// empty impl
 	}
 
-	class FileStateEditorInput implements IStorageEditorInput {
+	static class FileStateEditorInput implements IStorageEditorInput {
 		private IFileState state;
 
 		public FileStateEditorInput(IFileState state) {
@@ -95,7 +95,7 @@ public class LocalHistoryBrowserView extends ViewPart {
 		}
 	}
 
-	class Node {
+	static class Node {
 
 		Node parent;
 		String name;
@@ -201,7 +201,7 @@ public class LocalHistoryBrowserView extends ViewPart {
 		}
 	}
 
-	class ViewLabelProvider extends LabelProvider {
+	static class ViewLabelProvider extends LabelProvider {
 
 		@Override
 		public String getText(Object obj) {

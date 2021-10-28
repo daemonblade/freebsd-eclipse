@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.eclipse.core.resources; singleton:=true
-Bundle-Version: 3.13.800.qualifier
+Bundle-Version: 3.15.100.qualifier
 Bundle-Activator: org.eclipse.core.resources.ResourcesPlugin
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
@@ -11,8 +11,8 @@ Export-Package: org.eclipse.core.internal.dtree;x-internal:=true,
  org.eclipse.core.internal.localstore;x-internal:=true,
  org.eclipse.core.internal.properties;x-internal:=true,
  org.eclipse.core.internal.propertytester;x-internal:=true,
- org.eclipse.core.internal.refresh;x-internal:=true,
- org.eclipse.core.internal.resources;x-internal:=true,
+ org.eclipse.core.internal.refresh;x-friends:="org.eclipse.ui.ide.application",
+ org.eclipse.core.internal.resources;x-friends:="org.eclipse.ui.ide.application",
  org.eclipse.core.internal.resources.mapping;x-internal:=true,
  org.eclipse.core.internal.resources.projectvariables;x-internal:=true,
  org.eclipse.core.internal.resources.refresh.win32;x-internal:=true,
@@ -30,5 +30,5 @@ Require-Bundle: org.eclipse.ant.core;bundle-version="[3.1.0,4.0.0)";resolution:=
  org.eclipse.core.runtime;bundle-version="[3.12.0,4.0.0)"
 Bundle-ActivationPolicy: lazy
 Service-Component: OSGI-INF/ResourceChangeListenerRegistrar.xml
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Automatic-Module-Name: org.eclipse.core.resources

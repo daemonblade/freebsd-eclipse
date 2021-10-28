@@ -25,8 +25,7 @@ import org.eclipse.core.filesystem.*;
 import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.filesystem.provider.FileInfo;
 import org.eclipse.core.filesystem.provider.FileStore;
-import org.eclipse.core.internal.filesystem.Messages;
-import org.eclipse.core.internal.filesystem.Policy;
+import org.eclipse.core.internal.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.osgi.util.NLS;
@@ -114,7 +113,7 @@ public class LocalFile extends FileStore {
 			//two equivalent files in an environment that supports symbolic links.
 			//in these nothing needs to be copied (and doing so would likely lose data)
 			try {
-				if (source.getCanonicalFile().equals(destination.getCanonicalFile())) {
+				if (isSameFile(source, destination)) {
 					//nothing to do
 					return;
 				}
@@ -353,7 +352,7 @@ public class LocalFile extends FileStore {
 			//in these cases we NEVER want to delete anything
 			boolean sourceEqualsDest = false;
 			try {
-				sourceEqualsDest = source.getCanonicalFile().equals(destination.getCanonicalFile());
+				sourceEqualsDest = isSameFile(source, destination);
 			} catch (IOException e) {
 				String message = NLS.bind(Messages.couldNotMove, source.getAbsolutePath());
 				Policy.error(EFS.ERROR_WRITE, message, e);
@@ -395,6 +394,21 @@ public class LocalFile extends FileStore {
 			super.move(destFile, options, subMonitor.newChild(1));
 		} finally {
 			subMonitor.done();
+		}
+	}
+
+	private boolean isSameFile(File source, File destination) throws IOException {
+		try {
+			if (!destination.exists()) {
+				// avoid NoSuchFileException for performance reasons
+				return false;
+			}
+			// isSameFile is faster then using getCanonicalPath 
+			return java.nio.file.Files.isSameFile(source.toPath(), destination.toPath());
+		} catch (NoSuchFileException e) {
+			// ignore - it is the normal case that the destination does not exist.
+			// slowest path though
+			return false;
 		}
 	}
 
@@ -468,5 +482,16 @@ public class LocalFile extends FileStore {
 			this.uri = URIUtil.toURI(filePath);
 		}
 		return this.uri;
+	}
+
+	@Override
+	public int compareTo(IFileStore other) {
+		if (other instanceof LocalFile) {
+			// We can compare paths in the local file implementation, because LocalFile don't have a query string, port, or authority
+			// We use `toURI` here because it performs file normalisation e.g. /a/b/../c -> /a/c
+			// The URI is cached by the LocalFile after normalisation so this effectively results in a straight lookup
+			return FileStoreUtil.comparePathSegments(this.toURI().getPath(), ((LocalFile) other).toURI().getPath());
+		}
+		return super.compareTo(other);
 	}
 }
