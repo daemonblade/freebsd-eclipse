@@ -1,8 +1,8 @@
 pipeline {
 	options {
-		timeout(time: 390, unit: 'MINUTES')
+		timeout(time: 360, unit: 'MINUTES')
 		timestamps()
-		buildDiscarder(logRotator(numToKeepStr:'5'))
+		buildDiscarder(logRotator(numToKeepStr:'25'))
 	}
   agent {
     kubernetes {
@@ -14,15 +14,15 @@ kind: Pod
 spec:
   containers:
   - name: "jnlp"
-    image: "eclipsecbijenkins/jipp-migration-agent:4.3"
-    imagePullPolicy: "IfNotPresent"
+    image: "eclipsecbijenkins/jipp-migration-agent:latest"
+    imagePullPolicy: "Always"
     resources:
       limits:
         memory: "8192Mi"
-        cpu: "2000m"
+        cpu: "4000m"
       requests:
         memory: "6144Mi"
-        cpu: "1000m"
+        cpu: "2000m"
     securityContext:
       privileged: false
     tty: true
@@ -119,7 +119,7 @@ spec:
                   sshagent(['git.eclipse.org-bot-ssh']) {
                       dir ('eclipse.platform.releng.aggregator') {
                         sh '''
-                            git clone -b master ssh://genie.releng@git.eclipse.org:29418/platform/eclipse.platform.releng.aggregator.git
+                            git clone -b R4_21_maintenance ssh://genie.releng@git.eclipse.org:29418/platform/eclipse.platform.releng.aggregator.git
                         '''
                       }
                     }
@@ -162,24 +162,26 @@ spec:
         }
 	  stage('Swt build input') {
 	      steps {
-	          build '1-SWT-Increment_if_needed_chromium'
+	          build 'SWT-Increment_if_needed_without_chromium_maintenance'
 	      }
 	    }
 	  stage('Create Base builder'){
           steps {
               container('jnlp') {
-                  withEnv(["JAVA_HOME=${ tool 'openjdk-jdk11-latest' }"]) {
-                      withAnt(installation: 'apache-ant-latest') {
-                        sh '''
-                            cd ${WORKSPACE}/eclipse.platform.releng.aggregator/eclipse.platform.releng.aggregator/cje-production/mbscripts
-                            ./mb020_createBaseBuilder.sh $CJE_ROOT/buildproperties.shsource 2>&1 | tee $logDir/mb020_createBaseBuilder.sh.log
-                            if [[ ${PIPESTATUS[0]} -ne 0 ]]
-                            then
-                                echo "Failed in Create Base builder stage"
-                                exit 1
-                            fi
-                        '''
-                      }
+                  sshagent(['projects-storage.eclipse.org-bot-ssh']) {
+		          withEnv(["JAVA_HOME=${ tool 'openjdk-jdk11-latest' }"]) {
+		              withAnt(installation: 'apache-ant-latest', jdk: 'openjdk-jdk11-latest') {
+		                sh '''
+		                    cd ${WORKSPACE}/eclipse.platform.releng.aggregator/eclipse.platform.releng.aggregator/cje-production/mbscripts
+		                    ./mb020_createBaseBuilder.sh $CJE_ROOT/buildproperties.shsource 2>&1 | tee $logDir/mb020_createBaseBuilder.sh.log
+		                    if [[ ${PIPESTATUS[0]} -ne 0 ]]
+		                    then
+		                        echo "Failed in Create Base builder stage"
+		                        exit 1
+		                    fi
+		                '''
+		              }
+		          }
                   }
                 }
             }
@@ -314,10 +316,14 @@ spec:
             }
 		}
 	  stage('Gather Eclipse Parts'){
+	  environment {
+                KEYRING = credentials('secret-subkeys-releng.asc')
+                KEYRING_PASSPHRASE = credentials('secret-subkeys-releng.acs-passphrase')
+          }
           steps {
               container('jnlp') {
                   withEnv(["JAVA_HOME=${ tool 'openjdk-jdk11-latest' }"]) {
-                      withAnt(installation: 'apache-ant-latest') {
+                      withAnt(installation: 'apache-ant-latest', jdk: 'openjdk-jdk11-latest') {
                           sh '''
                             cd ${WORKSPACE}/eclipse.platform.releng.aggregator/eclipse.platform.releng.aggregator/cje-production/mbscripts
                             bash -x ./mb300_gatherEclipseParts.sh $CJE_ROOT/buildproperties.shsource 2>&1 | tee $logDir/mb300_gatherEclipseParts.sh.log
@@ -333,10 +339,14 @@ spec:
             }
 		}
 	  stage('Gather Equinox Parts'){
+	  environment {
+                KEYRING = credentials('secret-subkeys-releng.asc')
+                KEYRING_PASSPHRASE = credentials('secret-subkeys-releng.acs-passphrase')
+          }
           steps {
               container('jnlp') {
                   withEnv(["JAVA_HOME=${ tool 'openjdk-jdk11-latest' }"]) {
-                      withAnt(installation: 'apache-ant-latest') {
+                      withAnt(installation: 'apache-ant-latest', jdk: 'openjdk-jdk11-latest') {
                           sh '''
                             cd ${WORKSPACE}/eclipse.platform.releng.aggregator/eclipse.platform.releng.aggregator/cje-production/mbscripts
                             ./mb310_gatherEquinoxParts.sh $CJE_ROOT/buildproperties.shsource 2>&1 | tee $logDir/mb310_gatherEquinoxParts.sh.log
@@ -465,28 +475,27 @@ spec:
 	  stage('Trigger tests'){
           steps {
               container('jnlp') {
-                build job: 'ep417Y-unit-cen64-gtk3-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-                build job: 'ep417Y-unit-cen64-gtk3-java14', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-                build job: 'ep417Y-unit-cen64-gtk3-java15', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-                build job: 'ep417Y-unit-mac64-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-                build job: 'ep417Y-unit-win32-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+                build job: 'ep421Y-unit-cen64-gtk3-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+                build job: 'ep421Y-unit-cen64-gtk3-java16', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+                build job: 'ep421Y-unit-cen64-gtk3-java17', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+                build job: 'ep421Y-unit-mac64-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+                build job: 'ep421Y-unit-win32-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
                 build job: 'Start-smoke-tests', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-                build job: 'Smoke-tests-java16', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
               }
             }
 		}
 	}
 	post {
         failure {
-            emailext body: "Please go to ${BUILD_URL}/console and check the build failure.<br><br>",
+            emailext body: "Please go to <a href='${BUILD_URL}console'>${BUILD_URL}console</a> and check the build failure.<br><br>",
             subject: "${env.BUILD_VERSION} Y-Build: ${env.BUILD_IID.trim()} - BUILD FAILED", 
-            to: "jarthana@in.ibm.com sravankumarl@in.ibm.com kalyan_prasad@in.ibm.com daniel_megert@ch.ibm.com lshanmug@in.ibm.com manoj.palat@in.ibm.com niraj.modi@in.ibm.com noopur_gupta@in.ibm.com sarika.sinha@in.ibm.com vikas.chandra@in.ibm.com",
+            to: "jarthana@in.ibm.com sravankumarl@in.ibm.com kalyan_prasad@in.ibm.com lshanmug@in.ibm.com manoj.palat@in.ibm.com niraj.modi@in.ibm.com noopur_gupta@in.ibm.com sarika.sinha@in.ibm.com vikas.chandra@in.ibm.com kitlo@us.ibm.com",
             from:"genie.releng@eclipse.org"
         }
         success {
-            emailext body: "Eclipse downloads:<br>    https://download.eclipse.org/eclipse/downloads/drops4/${env.BUILD_IID.trim()}<br><br> Build logs and/or test results (eventually):<br>    https://download.eclipse.org/eclipse/downloads/drops4/${env.BUILD_IID.trim()}/testResults.php<br><br>${env.POM_UPDATES_BODY.trim()}${env.COMPARATOR_ERRORS_BODY.trim()}Software site repository:<br>    https://download.eclipse.org/eclipse/updates/4.17-Y-builds<br><br>Specific (simple) site repository:<br>    https://download.eclipse.org/eclipse/updates/4.17-Y-builds/${env.BUILD_IID.trim()}<br><br>Equinox downloads:<br>     https://download.eclipse.org/equinox/drops/${env.BUILD_IID.trim()}<br><br>", 
+            emailext body: "Eclipse downloads:<br>    <a href='https://download.eclipse.org/eclipse/downloads/drops4/${env.BUILD_IID.trim()}'>https://download.eclipse.org/eclipse/downloads/drops4/${env.BUILD_IID.trim()}</a><br><br> Build logs and/or test results (eventually):<br>    <a href='https://download.eclipse.org/eclipse/downloads/drops4/${env.BUILD_IID.trim()}/testResults.php'>https://download.eclipse.org/eclipse/downloads/drops4/${env.BUILD_IID.trim()}/testResults.php</a><br><br>${env.POM_UPDATES_BODY.trim()}${env.COMPARATOR_ERRORS_BODY.trim()}Software site repository:<br>    <a href='https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-Y-builds'>https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-Y-builds</a><br><br>Specific (simple) site repository:<br>    <a href='https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-Y-builds/${env.BUILD_IID.trim()}'>https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-Y-builds/${env.BUILD_IID.trim()}</a><br><br>Equinox downloads:<br>     <a href='https://download.eclipse.org/equinox/drops/${env.BUILD_IID.trim()}'>https://download.eclipse.org/equinox/drops/${env.BUILD_IID.trim()}</a><br><br>", 
             subject: "${env.BUILD_VERSION} Y-Build: ${env.BUILD_IID.trim()} ${env.POM_UPDATES_SUBJECT.trim()} ${env.COMPARATOR_ERRORS_SUBJECT.trim()}", 
-            to: "jarthana@in.ibm.com sravankumarl@in.ibm.com kalyan_prasad@in.ibm.com daniel_megert@ch.ibm.com lshanmug@in.ibm.com manoj.palat@in.ibm.com niraj.modi@in.ibm.com noopur_gupta@in.ibm.com sarika.sinha@in.ibm.com vikas.chandra@in.ibm.com",
+            to: "jarthana@in.ibm.com sravankumarl@in.ibm.com kalyan_prasad@in.ibm.com lshanmug@in.ibm.com manoj.palat@in.ibm.com niraj.modi@in.ibm.com noopur_gupta@in.ibm.com sarika.sinha@in.ibm.com vikas.chandra@in.ibm.com kitlo@us.ibm.com",
             from:"genie.releng@eclipse.org"
         }
 	}

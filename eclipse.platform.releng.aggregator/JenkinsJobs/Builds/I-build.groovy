@@ -14,7 +14,7 @@ kind: Pod
 spec:
   containers:
   - name: "jnlp"
-    image: "eclipsecbijenkins/jipp-migration-agent:4.3"
+    image: "eclipsecbijenkins/jipp-migration-agent:latest"
     imagePullPolicy: "Always"
     resources:
       limits:
@@ -119,7 +119,7 @@ spec:
                   sshagent(['git.eclipse.org-bot-ssh']) {
                       dir ('eclipse.platform.releng.aggregator') {
                         sh '''
-                            git clone -b master ssh://genie.releng@git.eclipse.org:29418/platform/eclipse.platform.releng.aggregator.git
+                            git clone -b R4_21_maintenance ssh://genie.releng@git.eclipse.org:29418/platform/eclipse.platform.releng.aggregator.git
                         '''
                       }
                     }
@@ -161,28 +161,30 @@ spec:
         }
 	  stage('Swt build input') {
 	      steps {
-	          build '1-SWT-Increment_if_needed_chromium'
+	          build 'SWT-Increment_if_needed_without_chromium_maintenance'
 	      }
 	    }
 	  stage('Create Base builder'){
           steps {
               container('jnlp') {
-                  withEnv(["JAVA_HOME=${ tool 'openjdk-jdk11-latest' }"]) {
-                      withAnt(installation: 'apache-ant-latest', jdk: 'openjdk-jdk11-latest') {
-                        sh '''
-                            cd ${WORKSPACE}/eclipse.platform.releng.aggregator/eclipse.platform.releng.aggregator/cje-production/mbscripts
-                            ./mb020_createBaseBuilder.sh $CJE_ROOT/buildproperties.shsource 2>&1 | tee $logDir/mb020_createBaseBuilder.sh.log
-                            if [[ ${PIPESTATUS[0]} -ne 0 ]]
-                            then
-                                echo "Failed in Create Base builder stage"
-                                exit 1
-                            fi
-                        '''
-                      }
-                  }
-                }
-            }
+		      sshagent(['projects-storage.eclipse.org-bot-ssh']) {
+		          withEnv(["JAVA_HOME=${ tool 'openjdk-jdk11-latest' }"]) {
+		              withAnt(installation: 'apache-ant-latest', jdk: 'openjdk-jdk11-latest') {
+		                sh '''
+		                    cd ${WORKSPACE}/eclipse.platform.releng.aggregator/eclipse.platform.releng.aggregator/cje-production/mbscripts
+		                    ./mb020_createBaseBuilder.sh $CJE_ROOT/buildproperties.shsource 2>&1 | tee $logDir/mb020_createBaseBuilder.sh.log
+		                    if [[ ${PIPESTATUS[0]} -ne 0 ]]
+		                    then
+		                        echo "Failed in Create Base builder stage"
+		                        exit 1
+		                    fi
+		                '''
+		              }
+		          }
+		        }
+		      }
 		}
+	  }
 	  stage('Download reference repo for repo reports'){
           steps {
               container('jnlp') {
@@ -196,7 +198,6 @@ spec:
                             exit 1
                         fi
                         cd ${WORKSPACE}
-                        scp genie.releng@projects-storage.eclipse.org:/opt/public/hipp/homes/genie.releng/*.passphrase .
                     '''
                   }
                 }
@@ -300,6 +301,10 @@ spec:
             }
 		}
 	  stage('Gather Eclipse Parts'){
+	  environment {
+                KEYRING = credentials('secret-subkeys-releng.asc')
+                KEYRING_PASSPHRASE = credentials('secret-subkeys-releng.acs-passphrase')
+          }
           steps {
               container('jnlp') {
                   withEnv(["JAVA_HOME=${ tool 'openjdk-jdk11-latest' }"]) {
@@ -319,6 +324,10 @@ spec:
             }
 		}
 	  stage('Gather Equinox Parts'){
+	  environment {
+                KEYRING = credentials('secret-subkeys-releng.asc')
+                KEYRING_PASSPHRASE = credentials('secret-subkeys-releng.acs-passphrase')
+          }
           steps {
               container('jnlp') {
                   withEnv(["JAVA_HOME=${ tool 'openjdk-jdk11-latest' }"]) {
@@ -450,25 +459,26 @@ spec:
 		}
 	  stage('Trigger tests'){
           steps {
-              build job: 'ep417I-unit-cen64-gtk3-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-              build job: 'ep417I-unit-cen64-gtk3-java14', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-              build job: 'ep417I-unit-mac64-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-              build job: 'ep417I-unit-win32-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-              build job: 'ep417I-perf-lin64-baseline', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep421I-unit-cen64-gtk3-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep421I-unit-cen64-gtk3-java16', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep421I-unit-cen64-gtk3-java17', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep421I-unit-mac64-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep421I-unit-win32-java11', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
+              build job: 'ep421I-perf-lin64-baseline', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
               build job: 'Start-smoke-tests', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
-              build job: 'Smoke-tests-java16', parameters: [string(name: 'buildId', value: "${env.BUILD_IID.trim()}")], wait: false
             }
 		}
 	}
 	post {
         failure {
-            emailext body: "Please go to ${BUILD_URL}console and check the build failure.<br><br>",
+            emailext body: "Please go to <a href='${BUILD_URL}console'>${BUILD_URL}console</a> and check the build failure.<br><br>",
             subject: "${env.BUILD_VERSION} I-Build: ${env.BUILD_IID.trim()} - BUILD FAILED", 
             to: "platform-releng-dev@eclipse.org",
             from:"genie.releng@eclipse.org"
+            archive '${CJE_ROOT}/siteDir/eclipse/downloads/drops4/${env.BUILD_IID.trim()}/gitLog.html, $CJE_ROOT/gitCache/eclipse.platform.releng.aggregator'
         }
         success {
-            emailext body: "Eclipse downloads:<br>    https://download.eclipse.org/eclipse/downloads/drops4/${env.BUILD_IID.trim()}<br><br> Build logs and/or test results (eventually):<br>    https://download.eclipse.org/eclipse/downloads/drops4/${env.BUILD_IID.trim()}/testResults.php<br><br>${env.POM_UPDATES_BODY.trim()}${env.COMPARATOR_ERRORS_BODY.trim()}Software site repository:<br>    https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-I-builds<br><br>Specific (simple) site repository:<br>    https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-I-builds/${env.BUILD_IID.trim()}<br><br>Equinox downloads:<br>     https://download.eclipse.org/equinox/drops/${env.BUILD_IID.trim()}<br><br>", 
+            emailext body: "Eclipse downloads:<br>    <a href='https://download.eclipse.org/eclipse/downloads/drops4/${env.BUILD_IID.trim()}'>https://download.eclipse.org/eclipse/downloads/drops4/${env.BUILD_IID.trim()}</a><br><br> Build logs and/or test results (eventually):<br>    <a href='https://download.eclipse.org/eclipse/downloads/drops4/${env.BUILD_IID.trim()}/testResults.php'>https://download.eclipse.org/eclipse/downloads/drops4/${env.BUILD_IID.trim()}/testResults.php</a><br><br>${env.POM_UPDATES_BODY.trim()}${env.COMPARATOR_ERRORS_BODY.trim()}Software site repository:<br>    <a href='https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-I-builds'>https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-I-builds</a><br><br>Specific (simple) site repository:<br>    <a href='https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-I-builds/${env.BUILD_IID.trim()}'>https://download.eclipse.org/eclipse/updates/${env.RELEASE_VER.trim()}-I-builds/${env.BUILD_IID.trim()}</a><br><br>Equinox downloads:<br>     <a href='https://download.eclipse.org/equinox/drops/${env.BUILD_IID.trim()}'>https://download.eclipse.org/equinox/drops/${env.BUILD_IID.trim()}</a><br><br>", 
             subject: "${env.BUILD_VERSION} I-Build: ${env.BUILD_IID.trim()} ${env.POM_UPDATES_SUBJECT.trim()} ${env.COMPARATOR_ERRORS_SUBJECT.trim()}", 
             to: "platform-releng-dev@eclipse.org",
             from:"genie.releng@eclipse.org"
