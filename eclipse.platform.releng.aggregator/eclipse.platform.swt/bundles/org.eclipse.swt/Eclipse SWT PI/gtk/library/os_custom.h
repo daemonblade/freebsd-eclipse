@@ -39,9 +39,9 @@
 #define LIB_FONTCONFIG "libfontconfig-1.dll"
 #else
 #if defined(GTK4)
-#define LIB_GTK "libgtk-4.so.0.9804.0"
+#define LIB_GTK "libgtk-4.so.1"
 // Point GDK to GTK for GTK4
-#define LIB_GDK "libgtk-4.so.0.9804.0"
+#define LIB_GDK "libgtk-4.so.1"
 #else
 #define LIB_GTK "libgtk-3.so.0"
 #define LIB_GDK "libgdk-3.so.0"
@@ -104,12 +104,6 @@ typedef struct _SwtFixedClass SwtFixedClass;
 struct _SwtFixed
 {
   GtkWidget container;
-
-  /*< private >*/
-  SwtFixedPrivate *priv;
-
-  /* Accessibility */
-  AtkObject *accessible;
 };
 
 struct _SwtFixedClass
@@ -137,14 +131,16 @@ struct _SwtFixedClass
 GType swt_fixed_get_type (void) G_GNUC_CONST;
 
 #if defined(GTK4)
-void swt_fixed_add (GtkWidget *container, GtkWidget *widget);
-void swt_fixed_remove (GtkWidget *container, GtkWidget *widget);
+void swt_fixed_add(SwtFixed* fixed, GtkWidget* widget);
+void swt_fixed_remove(SwtFixed* fixed, GtkWidget* widget);
 #endif
 void swt_fixed_restack(SwtFixed *fixed, GtkWidget *widget, GtkWidget *sibling, gboolean above);
 void swt_fixed_move(SwtFixed *fixed, GtkWidget *widget, gint x, gint y);
 void swt_fixed_resize(SwtFixed *fixed, GtkWidget *widget, gint width, gint height);
 
+#if !defined(GTK4)
 #include <gtk/gtk-a11y.h>
+#endif
 
 #define SWT_TYPE_FIXED_ACCESSIBLE      (swt_fixed_accessible_get_type ())
 #define SWT_FIXED_ACCESSIBLE(obj)      (G_TYPE_CHECK_INSTANCE_CAST ((obj), SWT_TYPE_FIXED_ACCESSIBLE, SwtFixedAccessible))
@@ -157,14 +153,11 @@ typedef struct _SwtFixedAccessibleClass SwtFixedAccessibleClass;
 #if defined(GTK4)
 struct _SwtFixedAccessible
 {
-	GtkWidgetAccessible parent;
-
 	SwtFixedAccessiblePrivate *priv;
 };
 
 struct _SwtFixedAccessibleClass
 {
-	GtkWidgetAccessibleClass parent_class;
 };
 #else
 struct _SwtFixedAccessible
@@ -181,10 +174,13 @@ struct _SwtFixedAccessibleClass
 #endif
 
 GType swt_fixed_accessible_get_type (void) G_GNUC_CONST;
+#if !defined(GTK4)
 AtkObject *swt_fixed_accessible_new (GtkWidget *widget);
 void swt_fixed_accessible_register_accessible (AtkObject *obj, gboolean is_native, GtkWidget *to_map);
+#endif
 jlong call_accessible_object_function (const char *method_name, const char *method_signature,...);
 
+void swt_set_lock_functions();
 void swt_debug_on_fatal_warnings() ;
 
 #endif /* ORG_ECLIPSE_SWT_GTK_OS_CUSTOM_H (include guard, this should be the last line) */

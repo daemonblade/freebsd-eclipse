@@ -17,6 +17,8 @@ import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class represent a selectable user interface object
@@ -40,14 +42,8 @@ import org.eclipse.swt.internal.gtk.*;
 public class ExpandItem extends Item {
 	ExpandBar parent;
 	Control control;
-	ImageList imageList;
 	long clientHandle, boxHandle, labelHandle, imageHandle;
-	boolean expanded;
-	int x, y, width, height;
-	int imageHeight, imageWidth;
-	static final int TEXT_INSET = 6;
-	static final int BORDER = 1;
-	static final int CHEVRON_SIZE = 24;
+	int width, height;
 
 /**
  * Constructs a new instance of this class given its parent
@@ -130,15 +126,31 @@ void createHandle (int index) {
 	if (handle == 0) error (SWT.ERROR_NO_HANDLES);
 	clientHandle = OS.g_object_new (display.gtk_fixed_get_type (), 0);
 	if (clientHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	GTK.gtk_container_add (handle, clientHandle);
+	if (GTK.GTK4) {
+		GTK4.gtk_expander_set_child(handle, clientHandle);
+	} else {
+		GTK3.gtk_container_add (handle, clientHandle);
+	}
 	boxHandle = gtk_box_new (GTK.GTK_ORIENTATION_HORIZONTAL, false, 4);
 	if (boxHandle == 0) error (SWT.ERROR_NO_HANDLES);
 	labelHandle = GTK.gtk_label_new (null);
 	if (labelHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	imageHandle = GTK.gtk_image_new ();
-	if (imageHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	GTK.gtk_container_add (boxHandle, imageHandle);
-	GTK.gtk_container_add (boxHandle, labelHandle);
+
+	if (GTK.GTK4) {
+		imageHandle = GTK4.gtk_picture_new();
+		if (imageHandle == 0) error(SWT.ERROR_NO_HANDLES);
+		GTK4.gtk_picture_set_can_shrink(imageHandle, false);
+
+		GTK4.gtk_box_append(boxHandle, imageHandle);
+		GTK4.gtk_box_append(boxHandle, labelHandle);
+	} else {
+		imageHandle = GTK.gtk_image_new();
+		if (imageHandle == 0) error(SWT.ERROR_NO_HANDLES);
+
+		GTK3.gtk_container_add(boxHandle, imageHandle);
+		GTK3.gtk_container_add(boxHandle, labelHandle);
+	}
+
 	GTK.gtk_expander_set_label_widget (handle, boxHandle);
 	GTK.gtk_widget_set_can_focus (handle, true);
 }
@@ -176,69 +188,6 @@ void destroyWidget () {
 	super.destroyWidget ();
 }
 
-void drawChevron (GC gc, int x, int y) {
-	int [] polyline1, polyline2;
-	if (expanded) {
-		int px = x + 4 + 5;
-		int py = y + 4 + 7;
-		polyline1 = new int [] {
-				px,py, px+1,py, px+1,py-1, px+2,py-1, px+2,py-2, px+3,py-2, px+3,py-3,
-				px+3,py-2, px+4,py-2, px+4,py-1, px+5,py-1, px+5,py, px+6,py};
-		py += 4;
-		polyline2 = new int [] {
-				px,py, px+1,py, px+1,py-1, px+2,py-1, px+2,py-2, px+3,py-2, px+3,py-3,
-				px+3,py-2, px+4,py-2, px+4,py-1,  px+5,py-1, px+5,py, px+6,py};
-	} else {
-		int px = x + 4 + 5;
-		int py = y + 4 + 4;
-		polyline1 = new int[] {
-				px,py, px+1,py, px+1,py+1, px+2,py+1, px+2,py+2, px+3,py+2, px+3,py+3,
-				px+3,py+2, px+4,py+2, px+4,py+1,  px+5,py+1, px+5,py, px+6,py};
-		py += 4;
-		polyline2 = new int [] {
-				px,py, px+1,py, px+1,py+1, px+2,py+1, px+2,py+2, px+3,py+2, px+3,py+3,
-				px+3,py+2, px+4,py+2, px+4,py+1,  px+5,py+1, px+5,py, px+6,py};
-	}
-	gc.setForeground (display.getSystemColor (SWT.COLOR_TITLE_FOREGROUND));
-	gc.drawPolyline (DPIUtil.autoScaleDown(polyline1));
-	gc.drawPolyline (DPIUtil.autoScaleDown(polyline2));
-}
-
-void drawItem (GC gc, boolean drawFocus) {
-	int headerHeight = parent.getBandHeight ();
-	Display display = getDisplay ();
-	gc.setForeground (display.getSystemColor (SWT.COLOR_TITLE_BACKGROUND));
-	gc.setBackground (display.getSystemColor (SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
-	gc.fillGradientRectangle (x, y, width, headerHeight, true);
-	if (expanded) {
-		gc.setForeground (display.getSystemColor (SWT.COLOR_TITLE_BACKGROUND_GRADIENT));
-		gc.drawLine (x, y + headerHeight, x, y + headerHeight + height - 1);
-		gc.drawLine (x, y + headerHeight + height - 1, x + width - 1, y + headerHeight + height - 1);
-		gc.drawLine (x + width - 1, y + headerHeight + height - 1, x + width - 1, y + headerHeight);
-	}
-	int drawX = x;
-	if (image != null) {
-		drawX += ExpandItem.TEXT_INSET;
-		if (imageHeight > headerHeight) {
-			gc.drawImage (image, drawX, y + headerHeight - imageHeight);
-		} else {
-			gc.drawImage (image, drawX, y + (headerHeight - imageHeight) / 2);
-		}
-		drawX += imageWidth;
-	}
-	if (text.length() > 0) {
-		drawX += ExpandItem.TEXT_INSET;
-		Point size = gc.stringExtent (text);
-		gc.setForeground (parent.getForeground ());
-		gc.drawString (text, drawX, y + (headerHeight - size.y) / 2, true);
-	}
-	int chevronSize = ExpandItem.CHEVRON_SIZE;
-	drawChevron (gc, x + width - chevronSize, y + (headerHeight - chevronSize) / 2);
-	if (drawFocus) {
-		gc.drawFocus (x + 1, y + 1, width - 2, headerHeight - 2);
-	}
-}
-
 /**
  * Returns the control that is shown when the item is expanded.
  * If no control has been set, return <code>null</code>.
@@ -266,9 +215,9 @@ public Control getControl () {
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
  * </ul>
  */
-public boolean getExpanded () {
-	checkWidget ();
-	return expanded;
+public boolean getExpanded() {
+	checkWidget();
+	return GTK.gtk_expander_get_expanded(handle);
 }
 
 /**
@@ -286,19 +235,15 @@ public int getHeaderHeight () {
 	return DPIUtil.autoScaleDown (getHeaderHeightInPixels ());
 }
 
-int getHeaderHeightInPixels () {
-	checkWidget ();
-	GtkAllocation allocation = new GtkAllocation ();
-	GTK.gtk_widget_get_allocation (handle, allocation);
-	// allocation.height normally returns the header height instead of the whole
-	// widget itself. This is to prevent situations where allocation.height actually
-	// returns the correct header height.
-	int headerHeight = allocation.height - (expanded ? height : 0);
-	if (expanded && headerHeight < 0) {
-		return allocation.height;
-	}
-	return headerHeight;
+int getHeaderHeightInPixels() {
+	checkWidget();
+
+	GtkAllocation allocation = new GtkAllocation();
+	GTK.gtk_widget_get_allocation(GTK.gtk_expander_get_label_widget(handle), allocation);
+
+	return allocation.height;
 }
+
 /**
  * Gets the height of the receiver.
  *
@@ -309,14 +254,9 @@ int getHeaderHeightInPixels () {
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
  * </ul>
  */
-public int getHeight () {
-	checkWidget ();
-	return DPIUtil.autoScaleDown(getHeightInPixels());
-}
-
-int getHeightInPixels () {
-	checkWidget ();
-	return height;
+public int getHeight() {
+	checkWidget();
+	return DPIUtil.autoScaleDown(height);
 }
 
 /**
@@ -334,38 +274,12 @@ public ExpandBar getParent () {
 	return parent;
 }
 
-int getPreferredWidth (GC gc) {
-	int width = ExpandItem.TEXT_INSET * 2 + ExpandItem.CHEVRON_SIZE;
-	if (image != null) {
-		width += ExpandItem.TEXT_INSET + imageWidth;
-	}
-	if (text.length() > 0) {
-		width += gc.stringExtent (text).x;
-	}
-	return width;
-}
-
 @Override
 long gtk_activate (long widget) {
 	Event event = new Event ();
 	event.item = this;
 	int type = GTK.gtk_expander_get_expanded (handle) ? SWT.Collapse : SWT.Expand;
 	parent.sendEvent (type, event);
-	return 0;
-}
-
-@Override
-long gtk_event (long widget, long event) {
-	if (!GTK.GTK4) return 0;
-	int eventType = GDK.gdk_event_get_event_type(event);
-	switch (eventType) {
-		case GDK.GDK4_BUTTON_PRESS: {
-			return gtk_button_press_event(widget, event);
-		}
-		case GDK.GDK4_BUTTON_RELEASE: {
-			return gtk_button_release_event(widget, event);
-		}
-	}
 	return 0;
 }
 
@@ -384,7 +298,7 @@ long gtk_focus_out_event (long widget, long event) {
 
 @Override
 long gtk_size_allocate (long widget, long allocation) {
-	parent.layoutItems (0, false);
+	parent.layoutItems();
 	return 0;
 }
 
@@ -404,25 +318,25 @@ void hookEvents () {
 	OS.g_signal_connect_closure (handle, OS.activate, display.getClosure (ACTIVATE), false);
 	OS.g_signal_connect_closure (handle, OS.activate, display.getClosure (ACTIVATE_INVERSE), true);
 	if (GTK.GTK4) {
-		OS.g_signal_connect_closure_by_id (handle, display.signalIds [EVENT], 0, display.getClosure (EVENT), false);
-	} else {
-		OS.g_signal_connect_closure_by_id (handle, display.signalIds [BUTTON_PRESS_EVENT], 0, display.getClosure (BUTTON_PRESS_EVENT), false);
-	}
-	OS.g_signal_connect_closure_by_id (handle, display.signalIds [FOCUS_OUT_EVENT], 0, display.getClosure (FOCUS_OUT_EVENT), false);
-	OS.g_signal_connect_closure (clientHandle, OS.size_allocate, display.getClosure (SIZE_ALLOCATE), true);
-	if (GTK.GTK4) {
-		long motionController = GTK.gtk_event_controller_motion_new();
-		GTK.gtk_widget_add_controller(handle, motionController);
+		long clickController = GTK4.gtk_gesture_click_new();
+		GTK4.gtk_widget_add_controller(handle, clickController);
+		OS.g_signal_connect(clickController, OS.pressed, display.gesturePressReleaseProc, GESTURE_PRESSED);
+
+		long motionController = GTK4.gtk_event_controller_motion_new();
+		GTK4.gtk_widget_add_controller(handle, motionController);
 		GTK.gtk_event_controller_set_propagation_phase(motionController, GTK.GTK_PHASE_TARGET);
 
-		long enterAddress = display.enterMotionScrollCallback.getAddress();
+		long enterAddress = display.enterMotionCallback.getAddress();
 		OS.g_signal_connect (motionController, OS.enter, enterAddress, ENTER);
-	} else {
-		OS.g_signal_connect_closure_by_id (handle, display.signalIds [ENTER_NOTIFY_EVENT], 0, display.getClosure (ENTER_NOTIFY_EVENT), false);
-	}
-}
 
-void redraw () {
+		OS.g_signal_connect(clientHandle, OS.resize, display.resizeProc, 0);
+	} else {
+		OS.g_signal_connect_closure(clientHandle, OS.size_allocate, display.getClosure(SIZE_ALLOCATE), true);
+
+		OS.g_signal_connect_closure_by_id (handle, display.signalIds [ENTER_NOTIFY_EVENT], 0, display.getClosure (ENTER_NOTIFY_EVENT), false);
+		OS.g_signal_connect_closure_by_id (handle, display.signalIds [BUTTON_PRESS_EVENT], 0, display.getClosure (BUTTON_PRESS_EVENT), false);
+		OS.g_signal_connect_closure_by_id (handle, display.signalIds [FOCUS_OUT_EVENT], 0, display.getClosure (FOCUS_OUT_EVENT), false);
+	}
 }
 
 @Override
@@ -444,13 +358,11 @@ void releaseHandle () {
 @Override
 void releaseWidget () {
 	super.releaseWidget ();
-	if (imageList != null) imageList.dispose ();
 	if (parent.lastFocus == this) parent.lastFocus = null;
-	imageList = null;
 	control = null;
 }
 
-void resizeControl (int yScroll) {
+void resizeControl () {
 	if (control != null && !control.isDisposed ()) {
 		boolean visible = GTK.gtk_expander_get_expanded (handle);
 		GtkAllocation allocation = new GtkAllocation ();
@@ -465,71 +377,47 @@ void resizeControl (int yScroll) {
 		* As of GTK3, the hierarchy is changed, this affected child-size allocation and a fix
 		* is now neccessary.
 		* See also other 454940 notes and similar fix in: 453827 */
-		int x = 0 ;
+		int x = 0;
 		int y = 0;
-
-		if (x != -1 && y != -1) {
-			int width = allocation.width;
-			int height = allocation.height;
-			/*
-			 * Focus line width is done via CSS in GTK4, and does not contribute
-			 * to the size of the widget.
-			 */
-			if (!GTK.GTK4) {
-				int [] property = new int [1];
-				GTK.gtk_widget_style_get (handle, OS.focus_line_width, property, 0);
-				y += property [0] * 2;
-				height -= property [0] * 2;
-			}
-
-			/*
-			* Feature in GTK. When the ExpandBar is resize too small the control
-			* shows up on top of the vertical scrollbar. This happen because the
-			* GtkExpander does not set the size of child smaller than the request
-			* size of its parent and because the control is not parented in the
-			* hierarchy of the GtkScrolledWindow.
-			* The fix is calculate the width ourselves when the scrollbar is visible.
-			*/
-			ScrollBar vBar = parent.verticalBar;
-			if (vBar != null) {
-				if (GTK.gtk_widget_get_visible (vBar.handle)) {
-					GTK.gtk_widget_get_allocation (parent.scrolledHandle, allocation);
-					width = allocation.width - parent.vScrollBarWidth () - 2 * parent.spacing;
-				}
-			}
-			// Bug 479242: Bound calculation is correct without needing to use yScroll in GTK3
-			/*
-			 * Bug 538114: ExpandBar has no content until resized or collapsed/expanded.
-			 * When widget is first created inside ExpandItem's control, the size is allocated
-			 * to be zero, and the widget is never shown during a layout operation, similar to
-			 * Bug 487757. The fix is to show the control before setting any bounds.
-			 */
-			if (visible) GTK.gtk_widget_show(control.topHandle ());
-			control.setBounds (x, y, width, Math.max (0, height), true, true);
+		int width = allocation.width;
+		int height = allocation.height;
+		/*
+		 * Focus line width is done via CSS in GTK4, and does not contribute
+		 * to the size of the widget.
+		 */
+		if (!GTK.GTK4) {
+			int [] property = new int [1];
+			GTK3.gtk_widget_style_get (handle, OS.focus_line_width, property, 0);
+			y += property [0] * 2;
+			height -= property [0] * 2;
 		}
+
+		/*
+		* Feature in GTK. When the ExpandBar is resize too small the control
+		* shows up on top of the vertical scrollbar. This happen because the
+		* GtkExpander does not set the size of child smaller than the request
+		* size of its parent and because the control is not parented in the
+		* hierarchy of the GtkScrolledWindow.
+		* The fix is calculate the width ourselves when the scrollbar is visible.
+		*/
+		ScrollBar vBar = parent.verticalBar;
+		if (vBar != null) {
+			if (GTK.gtk_widget_get_visible (vBar.handle)) {
+				GTK.gtk_widget_get_allocation (parent.scrolledHandle, allocation);
+				width = allocation.width - parent.vScrollBarWidth () - 2 * parent.spacing;
+			}
+		}
+		// Bug 479242: Bound calculation is correct without needing to use yScroll in GTK3
+		/*
+		 * Bug 538114: ExpandBar has no content until resized or collapsed/expanded.
+		 * When widget is first created inside ExpandItem's control, the size is allocated
+		 * to be zero, and the widget is never shown during a layout operation, similar to
+		 * Bug 487757. The fix is to show the control before setting any bounds.
+		 */
+		if (visible) GTK.gtk_widget_show(control.topHandle ());
+		control.setBounds (x, y, width, Math.max (0, height), true, true);
+
 		control.setVisible (visible);
-	}
-}
-
-void setBounds (int x, int y, int width, int height, boolean move, boolean size) {
-	redraw ();
-	int headerHeight = parent.getBandHeight ();
-	if (move) {
-		if (imageHeight > headerHeight) {
-			y += (imageHeight - headerHeight);
-		}
-		this.x = x;
-		this.y = y;
-		redraw ();
-	}
-	if (size) {
-		this.width = width;
-		this.height = height;
-		redraw ();
-	}
-	if (control != null && !control.isDisposed ()) {
-		if (move) control.setLocationInPixels (x + BORDER, y + headerHeight);
-		if (size) control.setSizeInPixels (Math.max (0, width - 2 * BORDER), Math.max (0, height - BORDER));
 	}
 }
 
@@ -555,25 +443,18 @@ public void setControl (Control control) {
 	}
 	if (this.control == control) return;
 
-
 	this.control = control;
 	if (control != null) {
-		control.setVisible (expanded);
 		//454940 ExpandBar DND fix.
 		//Reparenting on the GTK side.
 		//Proper hierachy on gtk side is required for DND to function properly.
 		//As ExpandItem's child can be created before the ExpandItem, our only
 		//option is to reparent the child upon the setControl(..) call.
 		//This is simmilar to TabFolder.
-		Control.gtk_widget_reparent (control, clientHandle ());
+		Control.gtk_widget_reparent (control, clientHandle);
 	}
-	parent.layoutItems (0, true);
+	parent.layoutItems();
 }
-
-long clientHandle () {
-	return clientHandle;
-}
-
 
 /**
  * Sets the expanded state of the receiver.
@@ -585,11 +466,10 @@ long clientHandle () {
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
  * </ul>
  */
-public void setExpanded (boolean expanded) {
-	checkWidget ();
-	this.expanded = expanded;
-	GTK.gtk_expander_set_expanded (handle, expanded);
-	parent.layoutItems (0, true);
+public void setExpanded(boolean expanded) {
+	checkWidget();
+	GTK.gtk_expander_set_expanded(handle, expanded);
+	parent.layoutItems();
 }
 
 boolean setFocus () {
@@ -606,7 +486,6 @@ boolean setFocus () {
 void setFontDescription (long font) {
 	setFontDescription (handle, font);
 	if (labelHandle != 0) setFontDescription (labelHandle, font);
-	if (imageHandle != 0) setFontDescription (imageHandle, font);
 }
 
 void setForegroundRGBA (GdkRGBA rgba) {
@@ -636,25 +515,33 @@ void setHeightInPixels (int height) {
 	if (height < 0) return;
 	this.height = height;
 	GTK.gtk_widget_set_size_request (clientHandle, -1, height);
-	parent.layoutItems (0, false);
+	parent.layoutItems();
 }
 
 @Override
 public void setImage (Image image) {
 	super.setImage (image);
-	if (imageList != null) imageList.dispose ();
-	imageList = null;
+
 	if (image != null) {
-		if (image.isDisposed ()) error (SWT.ERROR_INVALID_ARGUMENT);
-		imageList = new ImageList ();
-		imageList.add (image);
-		GTK.gtk_image_set_from_surface(imageHandle, image.surface);
+		if (image.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
+		if (GTK.GTK4) {
+			long pixbuf = ImageList.createPixbuf(image);
+			long texture = GDK.gdk_texture_new_for_pixbuf(pixbuf);
+			OS.g_object_unref(pixbuf);
+			GTK4.gtk_picture_set_paintable(imageHandle, texture);
+		} else {
+			GTK3.gtk_image_set_from_surface(imageHandle, image.surface);
+		}
 		if (text.length () == 0) GTK.gtk_widget_hide (labelHandle);
-		GTK.gtk_widget_show (imageHandle);
+		GTK.gtk_widget_show(imageHandle);
 	} else {
-		GTK.gtk_image_set_from_surface(imageHandle, 0);
-		GTK.gtk_widget_show (labelHandle);
-		GTK.gtk_widget_hide (imageHandle);
+		if (GTK.GTK4) {
+			GTK4.gtk_picture_set_paintable(imageHandle, 0);
+		} else {
+			GTK3.gtk_image_set_from_surface(imageHandle, 0);
+		}
+		GTK.gtk_widget_show(labelHandle);
+		GTK.gtk_widget_hide(imageHandle);
 	}
 }
 
@@ -664,7 +551,7 @@ void setOrientation (boolean create) {
 	if ((parent.style & SWT.RIGHT_TO_LEFT) != 0 || !create) {
 		int dir = (parent.style & SWT.RIGHT_TO_LEFT) != 0 ? GTK.GTK_TEXT_DIR_RTL : GTK.GTK_TEXT_DIR_LTR;
 		GTK.gtk_widget_set_direction (handle, dir);
-		GTK.gtk_container_forall (handle, display.setDirectionProc, dir);
+		GTK3.gtk_container_forall (handle, display.setDirectionProc, dir);
 	}
 }
 
@@ -676,22 +563,26 @@ public void setText (String string) {
 }
 
 void showWidget (int index) {
+	if (GTK.GTK4) {
+		GTK4.gtk_box_append(parent.handle, handle);
+		gtk_box_set_child_packing (parent.handle, handle, false, false, 0, GTK.GTK_PACK_START);
+	} else {
 		GTK.gtk_widget_show (handle);
 		GTK.gtk_widget_show (clientHandle);
 		if (labelHandle != 0)
 			GTK.gtk_widget_show (labelHandle);
 		if (boxHandle != 0)
 			GTK.gtk_widget_show (boxHandle);
-		GTK.gtk_container_add (parent.handle, handle);
+		GTK3.gtk_container_add (parent.handle, handle);
 		gtk_box_set_child_packing (parent.handle, handle, false, false, 0, GTK.GTK_PACK_START);
+	}
 }
 
 @Override
 long windowProc (long handle, long user_data) {
 	switch ((int)user_data) {
 		case ACTIVATE_INVERSE: {
-			expanded = GTK.gtk_expander_get_expanded (handle);
-			parent.layoutItems (0, false);
+			parent.layoutItems();
 			return 0;
 		}
 	}

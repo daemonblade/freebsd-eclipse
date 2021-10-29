@@ -19,6 +19,8 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class represent a selectable user interface
@@ -202,8 +204,13 @@ void createHandle (int index) {
 	state |= HANDLE;
 	fixedHandle = OS.g_object_new (display.gtk_fixed_get_type (), 0);
 	if (fixedHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	gtk_widget_set_has_surface_or_window (fixedHandle, true);
-	scrolledHandle = GTK.gtk_scrolled_window_new (0, 0);
+
+	if (GTK.GTK4) {
+		scrolledHandle = GTK4.gtk_scrolled_window_new();
+	} else {
+		GTK3.gtk_widget_set_has_window(fixedHandle, true);
+		scrolledHandle = GTK3.gtk_scrolled_window_new (0, 0);
+	}
 	if (scrolledHandle == 0) error (SWT.ERROR_NO_HANDLES);
 	/*
 	* Columns:
@@ -222,8 +229,14 @@ void createHandle (int index) {
 	GTK.gtk_tree_view_column_add_attribute (columnHandle, textRenderer, OS.text, TEXT_COLUMN);
 	GTK.gtk_tree_view_column_set_min_width (columnHandle, 0);
 	GTK.gtk_tree_view_insert_column (handle, columnHandle, index);
-	GTK.gtk_container_add (fixedHandle, scrolledHandle);
-	GTK.gtk_container_add (scrolledHandle, handle);
+
+	if (GTK.GTK4) {
+		OS.swt_fixed_add(fixedHandle, scrolledHandle);
+		GTK4.gtk_scrolled_window_set_child(scrolledHandle, handle);
+	} else {
+		GTK3.gtk_container_add (fixedHandle, scrolledHandle);
+		GTK3.gtk_container_add (scrolledHandle, handle);
+	}
 
 	int mode = (style & SWT.MULTI) != 0 ? GTK.GTK_SELECTION_MULTIPLE : GTK.GTK_SELECTION_BROWSE;
 	long selectionHandle = GTK.gtk_tree_view_get_selection (handle);
@@ -234,9 +247,9 @@ void createHandle (int index) {
 	GTK.gtk_scrolled_window_set_policy (scrolledHandle, hsp, vsp);
 	if ((style & SWT.BORDER) != 0) {
 		if (GTK.GTK4) {
-			GTK.gtk_scrolled_window_set_has_frame(scrolledHandle, true);
+			GTK4.gtk_scrolled_window_set_has_frame(scrolledHandle, true);
 		} else {
-			GTK.gtk_scrolled_window_set_shadow_type (scrolledHandle, GTK.GTK_SHADOW_ETCHED_IN);
+			GTK3.gtk_scrolled_window_set_shadow_type (scrolledHandle, GTK.GTK_SHADOW_ETCHED_IN);
 		}
 	}
 	/*
@@ -537,36 +550,29 @@ public int getItemHeight () {
 	return DPIUtil.autoScaleDown(getItemHeightInPixels());
 }
 
-int getItemHeightInPixels () {
+int getItemHeightInPixels() {
 	checkWidget();
-	int itemCount = GTK.gtk_tree_model_iter_n_children (modelHandle, 0);
-	long column = GTK.gtk_tree_view_get_column (handle, 0);
 
-	int height;
-	int [] w = new int [1], h = new int [1];
+	final int BASE_ITEM_PADDING = 1;
 
-	if (itemCount == 0) {
-		if (GTK.GTK4) {
-			GTK.gtk_tree_view_column_cell_get_size(column, null, null, w, h);
-		} else {
-			GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, w, h);
-		}
+	int[] h = new int [1];
+	long layout = GTK.gtk_widget_create_pango_layout(handle, Converter.wcsToMbcs(" ", true));
+	OS.pango_layout_get_pixel_size(layout, null, h);
 
-		height = h[0];
-	} else {
-		long iter = OS.g_malloc (GTK.GtkTreeIter_sizeof ());
-		GTK.gtk_tree_model_get_iter_first (modelHandle, iter);
-		GTK.gtk_tree_view_column_cell_set_cell_data (column, modelHandle, iter, false, false);
-		GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, w, h);
-		height = h[0];
+	// By default, the item has a base vertical padding around the text
+	int height = h[0] + BASE_ITEM_PADDING * 2;
 
-		OS.g_free (iter);
+	OS.g_object_unref(layout);
+
+	long column = GTK.gtk_tree_view_get_column(handle, 0);
+	long textRenderer = getTextRenderer(column);
+	int [] ypad = new int[1];
+	if (textRenderer != 0) {
+		GTK.gtk_cell_renderer_get_padding(textRenderer, null, ypad);
 	}
 
-	long textRenderer = getTextRenderer (column);
-	int [] ypad = new int[1];
-	if (textRenderer != 0) GTK.gtk_cell_renderer_get_padding(textRenderer, null, ypad);
-	height += ypad [0];
+	// Add additional top & bottom padding set by the cell renderer
+	height += ypad [0] * 2;
 
 	return height;
 }
@@ -808,7 +814,6 @@ long gtk_button_press_event (long widget, long event) {
 	 * selected, we can give the DnD handling to MOTION-NOTIFY. See Bug 503431
 	 */
 	int eventType = GDK.gdk_event_get_event_type(event);
-	eventType = fixGdkEventTypeValues(eventType);
 
 	double [] eventX = new double [1];
 	double [] eventY = new double [1];
@@ -827,7 +832,7 @@ long gtk_button_press_event (long widget, long event) {
 	if ((state & DRAG_DETECT) != 0 && hooks (SWT.DragDetect) &&
 			!OS.isX11() && eventType == GDK.GDK_BUTTON_PRESS) { // Wayland
 		// check to see if there is another event coming in that is not a double/triple click, this is to prevent Bug 514531
-		long nextEvent = gdk_event_peek ();
+		long nextEvent = GDK.gdk_event_peek();
 		if (nextEvent == 0) {
 			long [] path = new long [1];
 			long selection = GTK.gtk_tree_view_get_selection (handle);
@@ -911,17 +916,14 @@ long gtk_button_press_event (long widget, long event) {
 }
 
 @Override
-long gtk_gesture_press_event (long gesture, int n_press, double x, double y, long event) {
-	if (n_press == 1) return 0;
-	long widget = GTK.gtk_event_controller_get_widget(gesture);
-	long result = gtk_button_press_event (widget, event);
+void gtk_gesture_press_event (long gesture, int n_press, double x, double y, long event) {
+	if (n_press == 1) return;
+	super.gtk_gesture_press_event(gesture, n_press, x, y, event);
 
 	if (n_press == 2 && rowActivated) {
 		sendTreeDefaultSelection ();
 		rowActivated = false;
 	}
-
-	return result;
 }
 
 @Override
@@ -961,7 +963,7 @@ long gtk_button_release_event (long widget, long event) {
 	if (GTK.GTK4) {
 		if (eventGdkResource != gtk_widget_get_surface (handle)) return 0;
 	} else {
-		if (eventGdkResource != GTK.gtk_tree_view_get_bin_window (handle)) return 0;
+		if (eventGdkResource != GTK3.gtk_tree_view_get_bin_window (handle)) return 0;
 	}
 	/*
 	 * Feature in GTK. In multi-select tree view there is a problem with using DnD operations while also selecting multiple items.
@@ -1115,7 +1117,7 @@ public boolean isSelected (int index) {
 long paintWindow () {
 	GTK.gtk_widget_realize (handle);
 	// TODO: this function has been removed on GTK4
-	return GTK.gtk_tree_view_get_bin_window (handle);
+	return GTK3.gtk_tree_view_get_bin_window (handle);
 }
 
 @Override

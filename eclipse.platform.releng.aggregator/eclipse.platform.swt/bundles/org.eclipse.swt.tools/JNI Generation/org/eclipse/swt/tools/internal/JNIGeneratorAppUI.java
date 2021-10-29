@@ -905,7 +905,7 @@ String getPackageString() {
 }
 
 String getClassString(JNIType type) {
-	String name = type.getTypeSignature3(false);
+	String name = type.getTypeSignature3();
 	int index = name.lastIndexOf('.');
 	if (index == -1) return name;
 	return name.substring(index + 1, name.length());
@@ -913,12 +913,7 @@ String getClassString(JNIType type) {
 
 String getFlagsString(String[] flags) {
 	if (flags.length == 0) return "";
-	StringBuilder buffer = new StringBuilder();
-	for (String flag : flags) {
-		if (buffer.length() != 0) buffer.append(", ");
-		buffer.append(flag);
-	}
-	return buffer.toString();
+	return String.join(", ", flags);
 }
 
 String getMethodString(JNIMethod method) {
@@ -930,7 +925,7 @@ String getMethodString(JNIMethod method) {
 	for (int i = 0; i < params.length; i++) {
 		JNIParameter param = params[i];
 		if (i != 0) buffer.append(",");
-		String string = param.getType().getTypeSignature3(false);
+		String string = param.getType().getTypeSignature3();
 		if (string.startsWith(pkgName)) string = string.substring(pkgName.length() + 1);
 		buffer.append(string);
 	}

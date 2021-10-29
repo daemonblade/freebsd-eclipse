@@ -230,6 +230,7 @@ public class CTabFolder extends Composite {
 	Control[] controls;
 	int[] controlAlignments;
 	Rectangle[] controlRects;
+	Rectangle[] bkImageBounds;
 	Image[] controlBkImages;
 
 	int updateFlags;
@@ -1463,7 +1464,9 @@ void initAccessible() {
 				pt = getParent().toDisplay(location.x, location.y);
 			} else {
 				if (childID >= 0 && childID < items.length && items[childID].showing) {
-					location = items[childID].getBounds();
+					if (!items[childID].isDisposed()) {
+						location = items[childID].getBounds();
+					}
 				}
 				if (location != null) {
 					pt = toDisplay(location.x, location.y);
@@ -2349,7 +2352,7 @@ public void reskin(int flags) {
 public void setBackground (Color color) {
 	super.setBackground(color);
 	renderer.createAntialiasColors(); //TODO: need better caching strategy
-	updateBkImages();
+	updateBkImages(true);
 	redraw();
 }
 /**
@@ -2605,11 +2608,15 @@ void setButtonBounds() {
 				controls[i].setBounds(rects[i].x, rects[i].y, rects[i].width, headerHeight);
 			}
 		}
-		if (!changed && !rects[i].equals(controlRects[i])) changed = true;
+		if (!changed && !rects[i].equals(controlRects[i])) {
+			changed = true; // also updateBkImages after translation
+		}
 	}
 	ignoreResize = false;
 	controlRects = rects;
-	if (changed || hovering) updateBkImages();
+	if (changed || hovering) {
+		updateBkImages(false);
+	}
 }
 
 /**
@@ -2694,7 +2701,7 @@ public void setFont(Font font) {
 	// Chevron painting is cached as image and only recreated if number of hidden tabs changed.
 	// To apply the new font the cached image must be recreated with new font.
 	// Redraw request alone would only redraw the cached image with old font.
-	renderer.chevronFont = null; // renderer will pickup and adjust(!) the new font automatically
+	renderer.resetChevronFont(); // renderer will pickup and adjust(!) the new font automatically
 	updateChevronImage(true);
 	updateFolder(REDRAW);
 }
@@ -3904,8 +3911,14 @@ void runUpdate() {
 	}
 }
 
-void updateBkImages() {
+void updateBkImages(boolean colorChanged) {
 	if (controls != null && controls.length > 0) {
+		if (bkImageBounds==null) {
+			bkImageBounds=new Rectangle[controls.length];
+		}
+		if (bkImageBounds.length !=controls.length) {
+			bkImageBounds=new Rectangle[controls.length];
+		}
 		for (int i = 0; i < controls.length; i++) {
 			Control control = controls[i];
 			if (!control.isDisposed()) {
@@ -3932,13 +3945,17 @@ void updateBkImages() {
 							bounds.y = -1;
 						}
 						bounds.x = 0;
-						if (controlBkImages[i] != null) controlBkImages[i].dispose();
-						controlBkImages[i] = new Image(control.getDisplay(), bounds);
-						GC gc = new GC(controlBkImages[i]);
-						renderer.draw(CTabFolderRenderer.PART_BACKGROUND, 0, bounds, gc);
-						gc.dispose();
-						control.setBackground(null);
-						control.setBackgroundImage(controlBkImages[i]);
+						// do not redraw when only translated:
+						if (colorChanged || !bounds.equals(bkImageBounds[i])) {
+							bkImageBounds[i] = bounds;
+							if (controlBkImages[i] != null) controlBkImages[i].dispose();
+							controlBkImages[i] = new Image(control.getDisplay(), bounds);
+							GC gc = new GC(controlBkImages[i]);
+							renderer.draw(CTabFolderRenderer.PART_BACKGROUND, 0, bounds, gc);
+							gc.dispose();
+							control.setBackground(null);
+							control.setBackgroundImage(controlBkImages[i]);
+						}
 					}
 				}
 			}

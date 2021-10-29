@@ -22,6 +22,8 @@ import org.eclipse.swt.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.cairo.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * This class is the abstract superclass of all device objects,
@@ -267,16 +269,24 @@ protected void create (DeviceData data) {
  */
 public void dispose () {
 	synchronized (Device.class) {
-		if (isDisposed()) return;
-		checkDevice ();
-		release ();
-		destroy ();
-		deregister (this);
-		xDisplay = 0;
-		disposed = true;
-		if (tracking) {
-			tracking = false;
-			stopTracking();
+		try (ExceptionStash exceptions = new ExceptionStash ()) {
+			if (isDisposed ()) return;
+			checkDevice ();
+
+			try {
+				release ();
+			} catch (Error | RuntimeException ex) {
+				exceptions.stash (ex);
+			}
+
+			destroy ();
+			deregister (this);
+			xDisplay = 0;
+			disposed = true;
+			if (tracking) {
+				tracking = false;
+				stopTracking ();
+			}
 		}
 	}
 }
@@ -506,9 +516,16 @@ public FontData[] getFontList (String faceName, boolean scalable) {
 }
 
 Point getScreenDPI () {
-	long screen = GDK.gdk_screen_get_default();
-	int dpi = (int) GDK.gdk_screen_get_resolution(screen);
-	Point ptDPI = dpi == -1 ? new Point (96, 96) : new Point (dpi, dpi);
+	Point ptDPI;
+
+	if (GTK.GTK4) {
+		ptDPI = new Point (96, 96);
+	} else {
+		long screen = GDK.gdk_screen_get_default();
+		int dpi = (int) GDK.gdk_screen_get_resolution(screen);
+		ptDPI = dpi == -1 ? new Point (96, 96) : new Point (dpi, dpi);
+	}
+
 	return ptDPI;
 }
 
@@ -608,9 +625,6 @@ public boolean getWarnings () {
  * @see #create
  */
 protected void init () {
-	this.dpi = getDPI();
-	DPIUtil.setDeviceZoom (getDeviceZoom ());
-
 	if (debug) {
 		if (xDisplay != 0) {
 			/* Create the warning and error callbacks */
@@ -673,12 +687,15 @@ protected void init () {
 	OS.pango_tab_array_set_tab(emptyTab, 0, OS.PANGO_TAB_LEFT, 1);
 
 	if (GTK.GTK4) {
-		shellHandle = GTK.gtk_window_new();
+		shellHandle = GTK4.gtk_window_new();
 	} else {
-		shellHandle = GTK.gtk_window_new (GTK.GTK_WINDOW_TOPLEVEL);
+		shellHandle = GTK3.gtk_window_new (GTK.GTK_WINDOW_TOPLEVEL);
 	}
 	if (shellHandle == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 	GTK.gtk_widget_realize(shellHandle);
+
+	this.dpi = getDPI();
+	DPIUtil.setDeviceZoom (getDeviceZoom ());
 
 	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
 		double sx[] = new double[1];
@@ -697,20 +714,31 @@ protected void init () {
 
 	/* Initialize the system font slot */
 	long [] defaultFontArray = new long [1];
-	long defaultFont;
+	long defaultFont = 0;
 	long context = GTK.gtk_widget_get_style_context (shellHandle);
 	if ("ppc64le".equals(System.getProperty("os.arch"))) {
-		defaultFont = GTK.gtk_style_context_get_font (context, GTK.GTK_STATE_FLAG_NORMAL);
+		defaultFont = GTK3.gtk_style_context_get_font (context, GTK.GTK_STATE_FLAG_NORMAL);
 	} else {
-		GTK.gtk_style_context_save(context);
-		GTK.gtk_style_context_set_state(context, GTK.GTK_STATE_FLAG_NORMAL);
 		if (GTK.GTK4) {
-			GTK.gtk_style_context_get(context, GTK.gtk_style_property_font, defaultFontArray, 0);
+			long[] fontPtr = new long[1];
+			long settings = GTK.gtk_settings_get_default ();
+			OS.g_object_get (settings, GTK.gtk_style_property_font, fontPtr, 0);
+			if (fontPtr[0] != 0) {
+				int length = C.strlen(fontPtr[0]);
+				if (length != 0) {
+					byte[] fontString = new byte [length + 1];
+					C.memmove(fontString, fontPtr[0], length);
+					OS.g_free(fontPtr[0]);
+					defaultFont = OS.pango_font_description_from_string(fontString);
+				}
+			}
 		} else {
-			GTK.gtk_style_context_get(context, GTK.GTK_STATE_FLAG_NORMAL, GTK.gtk_style_property_font, defaultFontArray, 0);
+			GTK.gtk_style_context_save(context);
+			GTK.gtk_style_context_set_state(context, GTK.GTK_STATE_FLAG_NORMAL);
+			GTK3.gtk_style_context_get(context, GTK.GTK_STATE_FLAG_NORMAL, GTK.gtk_style_property_font, defaultFontArray, 0);
+			GTK.gtk_style_context_restore(context);
+			defaultFont = defaultFontArray [0];
 		}
-		GTK.gtk_style_context_restore(context);
-		defaultFont = defaultFontArray [0];
 	}
 	defaultFont = OS.pango_font_description_copy (defaultFont);
 	Point dpi = getDPI(), screenDPI = getScreenDPI();
@@ -759,8 +787,10 @@ private void overrideThemeValues () {
 
 	StringBuilder combinedCSS = new StringBuilder();
 
-	// Load functional CSS fixes. Such as keyboard functionality for some widgets.
-	combinedCSS.append(load.apply("/org/eclipse/swt/internal/gtk/swt_functional_gtk_3_20.css", true));
+	if (!GTK.GTK4) {
+		// Load functional CSS fixes. Such as keyboard functionality for some widgets.
+		combinedCSS.append(load.apply("/org/eclipse/swt/internal/gtk/swt_functional_gtk_3_20.css", true));
+	}
 
 	// By default, load CSS theme fixes to overcome things such as excessive padding that breaks SWT otherwise.
 	// Initially designed for Adwaita light/dark theme, but after investigation other themes (like Ubuntu's Ambiance + dark) seem to benefit from this also.
@@ -792,19 +822,19 @@ private void overrideThemeValues () {
 			System.err.println("SWT Warning: Override of theme values failed. Reason: could not acquire display or provider.");
 			return;
 		}
-		GTK.gtk_style_context_add_provider_for_display (display, provider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+		GTK4.gtk_style_context_add_provider_for_display (display, provider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 	} else {
 		long screen = GDK.gdk_screen_get_default();
 		if (screen == 0 || provider == 0) {
 			System.err.println("SWT Warning: Override of theme values failed. Reason: could not acquire screen or provider.");
 			return;
 		}
-		GTK.gtk_style_context_add_provider_for_screen (screen, provider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+		GTK3.gtk_style_context_add_provider_for_screen (screen, provider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 	}
 	if (GTK.GTK4) {
-		GTK.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (combinedCSS.toString(), true), -1);
+		GTK4.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (combinedCSS.toString(), true), -1);
 	} else {
-		GTK.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (combinedCSS.toString(), true), -1, null);
+		GTK3.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (combinedCSS.toString(), true), -1, null);
 	}
 }
 
@@ -953,7 +983,13 @@ static synchronized void register (Device device) {
  * @see #destroy
  */
 protected void release () {
-	if (shellHandle != 0) GTK.gtk_widget_destroy(shellHandle);
+	if (shellHandle != 0) {
+		if (GTK.GTK4) {
+			GTK4.gtk_window_destroy(shellHandle);
+		} else {
+			GTK3.gtk_widget_destroy(shellHandle);
+		}
+	}
 	shellHandle = 0;
 
 	/* Dispose the default font */
@@ -1076,7 +1112,15 @@ protected int getDeviceZoom() {
 	int dpi = 96;
 	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
 		long display = GDK.gdk_display_get_default();
-		long monitor = GDK.gdk_display_get_monitor_at_point(display, 0, 0);
+		long monitor;
+
+		if (GTK.GTK4) {
+			long surface = GTK4.gtk_native_get_surface(GTK4.gtk_widget_get_native(shellHandle));
+			monitor = GDK.gdk_display_get_monitor_at_surface(display, surface);
+		} else {
+			monitor = GDK.gdk_display_get_monitor_at_point(display, 0, 0);
+		}
+
 		int scale = GDK.gdk_monitor_get_scale_factor(monitor);
 		dpi = dpi * scale;
 	} else {
@@ -1087,6 +1131,7 @@ protected int getDeviceZoom() {
 		int scale = GDK.gdk_screen_get_monitor_scale_factor (screen, monitor_num);
 		dpi = dpi * scale;
 	}
+
 	return DPIUtil.mapDPIToZoom (dpi);
 }
 

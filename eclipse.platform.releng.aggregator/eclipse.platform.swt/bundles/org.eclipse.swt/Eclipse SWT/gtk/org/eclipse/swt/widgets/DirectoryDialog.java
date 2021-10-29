@@ -19,6 +19,8 @@ import java.io.*;
 import org.eclipse.swt.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class allow the user to navigate
@@ -155,27 +157,17 @@ String openNativeChooserDialog () {
 		if (ptr != 0) {
 			if (GTK.GTK4) {
 				long file = OS.g_file_new_for_path(buffer);
-				GTK.gtk_file_chooser_set_current_folder (handle, file, 0);
+				GTK4.gtk_file_chooser_set_current_folder (handle, file, 0);
 				OS.g_object_unref(file);
 			} else {
-				GTK.gtk_file_chooser_set_current_folder (handle, ptr);
+				GTK3.gtk_file_chooser_set_current_folder (handle, ptr);
 			}
 			OS.g_free (ptr);
 		}
 	}
-	if (message.length () > 0) {
-		byte [] buffer = Converter.wcsToMbcs (message, true);
-		long box = GTK.gtk_box_new (GTK.GTK_ORIENTATION_HORIZONTAL, 0);
-		GTK.gtk_box_set_homogeneous (box, false);
-		if (box == 0) error (SWT.ERROR_NO_HANDLES);
-		long label = GTK.gtk_label_new (buffer);
-		if (label == 0) error (SWT.ERROR_NO_HANDLES);
-		GTK.gtk_container_add (box, label);
-		GTK.gtk_widget_show (label);
-		GTK.gtk_label_set_line_wrap (label, true);
-		GTK.gtk_label_set_justify (label, GTK.GTK_JUSTIFY_CENTER);
-		GTK.gtk_file_chooser_set_extra_widget (handle, box);
-	}
+
+	GTK3setNativeDialogMessage(handle, message);
+
 	String answer = null;
 	display.addIdleProc ();
 	int signalId = 0;
@@ -184,28 +176,28 @@ String openNativeChooserDialog () {
 		signalId = OS.g_signal_lookup (OS.map, GTK.GTK_TYPE_WIDGET());
 		hookId = OS.g_signal_add_emission_hook (signalId, 0, display.emissionProc, handle, 0);
 	}
-	display.externalEventLoop = true;
-	display.sendPreExternalEventDispatchEvent ();
-	int response = GTK.gtk_native_dialog_run (handle);
-	/*
-	* This call to gdk_threads_leave() is a temporary work around
-	* to avoid deadlocks when gdk_threads_init() is called by native
-	* code outside of SWT (i.e AWT, etc). It ensures that the current
-	* thread leaves the GTK lock acquired by the function above.
-	*/
-	if (!GTK.GTK4) GDK.gdk_threads_leave();
-	display.externalEventLoop = false;
-	display.sendPostExternalEventDispatchEvent ();
+
+	int response;
+	if (GTK.GTK4) {
+		response = SyncDialogUtil.run(display, handle, true);
+	} else {
+		display.externalEventLoop = true;
+		display.sendPreExternalEventDispatchEvent ();
+		response = GTK3.gtk_native_dialog_run (handle);
+		display.externalEventLoop = false;
+		display.sendPostExternalEventDispatchEvent ();
+	}
+
 	if ((style & SWT.RIGHT_TO_LEFT) != 0) {
 		OS.g_signal_remove_emission_hook (signalId, hookId);
 	}
 	if (response == GTK.GTK_RESPONSE_ACCEPT) {
 		long path;
 		if (GTK.GTK4) {
-			long file = GTK.gtk_file_chooser_get_file (handle);
+			long file = GTK4.gtk_file_chooser_get_file (handle);
 			path = OS.g_file_get_path(file);
 		} else {
-			path = GTK.gtk_file_chooser_get_filename (handle);
+			path = GTK3.gtk_file_chooser_get_filename (handle);
 		}
 
 		if (path != 0) {
@@ -230,6 +222,34 @@ String openNativeChooserDialog () {
 	display.removeIdleProc ();
 	return answer;
 }
+
+
+/**
+ * GTK3 only function. As of GTK4, gtk_file_chooser_set_extra_widget
+ * is no longer available, and the alternatives do not allow for such
+ * flexibility to display just the message. Therefore in GTK4, there will
+ * be no message displayed in the file chooser dialog.
+ */
+void GTK3setNativeDialogMessage(long handle, String message) {
+	if (GTK.GTK4) return;
+
+	if (message.length () > 0) {
+		byte[] buffer = Converter.wcsToMbcs(message, true);
+		long box = GTK.gtk_box_new(GTK.GTK_ORIENTATION_HORIZONTAL, 0);
+		if (box == 0) error(SWT.ERROR_NO_HANDLES);
+		long label = GTK.gtk_label_new (buffer);
+		if (label == 0) error(SWT.ERROR_NO_HANDLES);
+
+		GTK3.gtk_container_add(box, label);
+		GTK.gtk_widget_show(label);
+		GTK3.gtk_label_set_line_wrap(label, true);
+
+		GTK.gtk_box_set_homogeneous(box, false);
+		GTK.gtk_label_set_justify(label, GTK.GTK_JUSTIFY_CENTER);
+		GTK3.gtk_file_chooser_set_extra_widget(handle, box);
+	}
+}
+
 /**
  * Sets the path that the dialog will use to filter
  * the directories it shows to the argument, which may

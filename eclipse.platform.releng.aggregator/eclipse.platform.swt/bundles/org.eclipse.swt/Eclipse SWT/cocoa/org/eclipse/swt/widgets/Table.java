@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -552,7 +552,16 @@ void createHandle () {
 	spacing.width = spacing.height = CELL_GAP;
 	widget.setIntercellSpacing(spacing);
 	widget.setDoubleAction(OS.sel_sendDoubleSelection);
-	if (!hasBorder()) widget.setFocusRingType(OS.NSFocusRingTypeNone);
+
+	/*
+	 * Table didn't have focus ring in SWT for years, because SWT didn't
+	 * have layer backing, and even when it gets it, there were no focus rings
+	 * due to macOS compatibility code. However, sometimes macOS misbehaves
+	 * (see for example Bug 574618 snippet test 2). On the other hand, most
+	 * macOS builtin apps don't have focus rings for Table, see for example
+	 * Activity Monitor. So just disable it in SWT as well.
+	 */
+	widget.setFocusRingType(OS.NSFocusRingTypeNone);
 
 	headerView = (NSTableHeaderView)new SWTTableHeaderView ().alloc ().init ();
 	widget.setHeaderView (null);
@@ -597,7 +606,7 @@ void createHandle () {
 	firstColumn.headerCell ().setTitle (str);
 	widget.addTableColumn (firstColumn);
 	dataCell = (NSTextFieldCell)new SWTImageTextCell ().alloc ().init ();
-	dataCell.setLineBreakMode(OS.NSLineBreakByTruncatingTail);
+	dataCell.setLineBreakMode(OS.NSLineBreakByClipping);
 	firstColumn.setDataCell (dataCell);
 	widget.setHighlightedTableColumn(null);
 	scrollView = scrollWidget;
@@ -971,7 +980,7 @@ void drawInteriorWithFrame_inView (long id, long sel, NSRect rect, long view) {
 	Color selectionBackground = null, selectionForeground = null;
 	if (isSelected && (hooksErase || hooksPaint)) {
 		selectionForeground = Color.cocoa_new(display, (hasFocus || Display.APPEARANCE.Dark == display.appAppearance) ? display.alternateSelectedControlTextColor : display.selectedControlTextColor);
-		selectionBackground = Color.cocoa_new(display, hasFocus ? display.alternateSelectedControlColor : display.secondarySelectedControlColor);
+		selectionBackground = Color.cocoa_new(display, hasFocus ? display.getAlternateSelectedControlColor() : display.getSecondarySelectedControlColor());
 	}
 
 	NSSize contentSize = super.cellSize(id, OS.sel_cellSize);
@@ -1050,17 +1059,30 @@ void drawInteriorWithFrame_inView (long id, long sel, NSRect rect, long view) {
 		if (!drawSelection && isSelected) {
 			userForeground = Color.cocoa_new(display, gc.getForeground().handle);
 		}
-		gc.dispose ();
-		context.restoreGraphicsState();
 
-		if (isDisposed ()) return;
-		if (item.isDisposed ()) return;
+		if (isDisposed () || item.isDisposed ()) {
+			gc.dispose ();
+			context.restoreGraphicsState();
+			return;
+		}
 
 		if (drawSelection) {
 			cellRect.height -= spacing.height;
-			callSuper (widget.id, OS.sel_highlightSelectionInClipRect_, cellRect);
+			/*
+			 * On BigSur, calling highlightSelectionInClipRect here draws over the full row
+			 * and not just the cellRect. This causes drawing over other cells content.
+			 * Workaround is to draw the highlight background ourselves and not call
+			 * highlightSelectionInClipRect to draw it.
+			 */
+			if (OS.isBigSurOrLater()) {
+				gc.fillRectangle((int)cellRect.x, (int)cellRect.y, (int)cellRect.width, (int)cellRect.height);
+			} else {
+				callSuper (widget.id, OS.sel_highlightSelectionInClipRect_, cellRect);
+			}
 			cellRect.height += spacing.height;
 		}
+		gc.dispose ();
+		context.restoreGraphicsState();
 	} else {
 		if (isSelected && (style & SWT.HIDE_SELECTION) != 0 && !hasFocus) {
 			userForeground = item.getForeground (columnIndex);

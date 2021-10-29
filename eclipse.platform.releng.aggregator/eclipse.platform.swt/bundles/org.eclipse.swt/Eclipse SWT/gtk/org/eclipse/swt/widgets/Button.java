@@ -19,6 +19,8 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class represent a selectable user interface object that
@@ -52,10 +54,12 @@ public class Button extends Control {
 	boolean selected, grayed;
 	/** True iff this toggle button requires special theme handling. See bug 546552.*/
 	boolean toggleButtonTheming;
-	ImageList imageList;
 	Image image;
 	String text;
 	GdkRGBA background;
+
+	Image defaultDisableImage;
+	boolean enabled = true;
 
 	static final int INNER_BORDER = 1;
 	static final int DEFAULT_BORDER = 1;
@@ -126,7 +130,7 @@ GtkBorder getBorder (byte[] border, long handle, int defaultBorder) {
 		gtk_style_context_get_border(context, stateFlag, gtkBorder);
 		return gtkBorder;
 	} else {
-		GTK.gtk_widget_style_get (handle, border, borderPtr,0);
+		GTK3.gtk_widget_style_get (handle, border, borderPtr,0);
 		if (borderPtr[0] != 0) {
 			OS.memmove (gtkBorder, borderPtr[0], GtkBorder.sizeof);
 			GTK.gtk_border_free(borderPtr[0]);
@@ -212,9 +216,9 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 		int trimWidth, trimHeight;
 		if (!GTK.GTK4) {
 			int[] focusWidth = new int[1];
-			GTK.gtk_widget_style_get (handle, OS.focus_line_width, focusWidth, 0);
+			GTK3.gtk_widget_style_get (handle, OS.focus_line_width, focusWidth, 0);
 			int[] focusPadding = new int[1];
-			GTK.gtk_widget_style_get (handle, OS.focus_padding, focusPadding, 0);
+			GTK3.gtk_widget_style_get (handle, OS.focus_padding, focusPadding, 0);
 			trimWidth = 2 * (borderWidth + focusWidth [0] + focusPadding [0]);
 		} else {
 			trimWidth = 2 * borderWidth;
@@ -223,18 +227,18 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 		int indicatorHeight = 0;
 		if ((style & (SWT.CHECK | SWT.RADIO)) != 0) {
 			if (GTK.GTK4) {
-				long icon = GTK.gtk_widget_get_first_child(handle);
+				long icon = GTK4.gtk_widget_get_first_child(handle);
 				GtkRequisition minimum = new GtkRequisition ();
 				GTK.gtk_widget_get_preferred_size(icon, minimum, null);
 				long context = GTK.gtk_widget_get_style_context(icon);
 				GtkBorder margin = new GtkBorder ();
-				GTK.gtk_style_context_get_margin(context, margin);
+				GTK4.gtk_style_context_get_margin(context, margin);
 				trimWidth += minimum.width + margin.right;
 			} else {
 				int[] indicatorSize = new int[1];
 				int[] indicatorSpacing = new int[1];
-				GTK.gtk_widget_style_get (handle, OS.indicator_size, indicatorSize, 0);
-				GTK.gtk_widget_style_get (handle, OS.indicator_spacing, indicatorSpacing, 0);
+				GTK3.gtk_widget_style_get (handle, OS.indicator_size, indicatorSize, 0);
+				GTK3.gtk_widget_style_get (handle, OS.indicator_spacing, indicatorSpacing, 0);
 				indicatorHeight = indicatorSize [0] + 2 * indicatorSpacing [0];
 				trimWidth += indicatorHeight + indicatorSpacing [0];
 			}
@@ -245,8 +249,9 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 			GtkBorder innerBorder = getBorder (OS.inner_border, handle, INNER_BORDER);
 			trimWidth += innerBorder.left + innerBorder.right;
 			trimHeight += innerBorder.top + innerBorder.bottom;
-			if (GTK.gtk_widget_get_can_default (handle)) {
-				GtkBorder defaultBorder = getBorder (OS.default_border, handle, DEFAULT_BORDER);
+			boolean canDefault = GTK.GTK4 ? GTK4.gtk_widget_get_receives_default(handle) : GTK3.gtk_widget_get_can_default(handle);
+			if (canDefault) {
+				GtkBorder defaultBorder = getBorder(OS.default_border, handle, DEFAULT_BORDER);
 				trimWidth += defaultBorder.left + defaultBorder.right;
 				trimHeight += defaultBorder.top + defaultBorder.bottom;
 			}
@@ -281,8 +286,9 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 		GTK.gtk_widget_set_size_request (boxHandle, reqWidth [0], reqHeight [0]);
 	}
 	if (wHint != SWT.DEFAULT || hHint != SWT.DEFAULT) {
-		if (GTK.gtk_widget_get_can_default (handle)) {
-			GtkBorder border = getBorder (OS.default_border, handle, DEFAULT_BORDER);
+		boolean canDefault = GTK.GTK4 ? GTK4.gtk_widget_get_receives_default(handle) : GTK3.gtk_widget_get_can_default(handle);
+		if (canDefault) {
+			GtkBorder border = getBorder(OS.default_border, handle, DEFAULT_BORDER);
 			if (wHint != SWT.DEFAULT) size.x += border.left + border.right;
 			if (hHint != SWT.DEFAULT) size.y += border.top + border.bottom;
 		}
@@ -295,9 +301,7 @@ void createHandle (int index) {
 	state |= HANDLE;
 	if ((style & (SWT.PUSH | SWT.TOGGLE)) == 0) state |= THEME_BACKGROUND;
 	int bits = SWT.ARROW | SWT.TOGGLE | SWT.CHECK | SWT.RADIO | SWT.PUSH;
-	fixedHandle = OS.g_object_new (display.gtk_fixed_get_type (), 0);
-	if (fixedHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	gtk_widget_set_has_surface_or_window (fixedHandle, true);
+
 	switch (style & bits) {
 		case SWT.ARROW:
 			byte arrowType [] = GTK.GTK_NAMED_ICON_GO_UP;
@@ -305,11 +309,22 @@ void createHandle (int index) {
 			if ((style & SWT.DOWN) != 0) arrowType = GTK.GTK_NAMED_ICON_GO_DOWN;
 			if ((style & SWT.LEFT) != 0) arrowType = GTK.GTK_NAMED_ICON_GO_PREVIOUS;
 			if ((style & SWT.RIGHT) != 0) arrowType = GTK.GTK_NAMED_ICON_GO_NEXT;
-			arrowHandle = GTK.gtk_image_new_from_icon_name (arrowType, GTK.GTK_ICON_SIZE_MENU);
-			if (arrowHandle == 0) error (SWT.ERROR_NO_HANDLES);
 
-			handle = GTK.gtk_button_new ();
-			if (handle == 0) error (SWT.ERROR_NO_HANDLES);
+			if (GTK.GTK4) {
+				handle = GTK4.gtk_button_new_from_icon_name(arrowType);
+				if (handle == 0) error (SWT.ERROR_NO_HANDLES);
+				arrowHandle = GTK4.gtk_widget_get_first_child(handle);
+				if (arrowHandle == 0) error (SWT.ERROR_NO_HANDLES);
+			} else {
+				arrowHandle = GTK3.gtk_image_new_from_icon_name(arrowType, GTK.GTK_ICON_SIZE_MENU);
+				if (arrowHandle == 0) error (SWT.ERROR_NO_HANDLES);
+				handle = GTK.gtk_button_new();
+				if (handle == 0) error (SWT.ERROR_NO_HANDLES);
+
+				// Use gtk_button_set_image() on GTK3 to prevent icons from being
+				// trimmed with smaller sized buttons; see bug 528284.
+				GTK3.gtk_button_set_image(handle, arrowHandle);
+			}
 			break;
 		case SWT.TOGGLE:
 			handle = GTK.gtk_toggle_button_new ();
@@ -339,11 +354,22 @@ void createHandle (int index) {
 			* to the same group.  This allows the visible button to be
 			* unselected.
 			*/
-			groupHandle = GTK.gtk_radio_button_new (0);
-			if (groupHandle == 0) error (SWT.ERROR_NO_HANDLES);
-			OS.g_object_ref_sink (groupHandle);
-			handle = GTK.gtk_radio_button_new (GTK.gtk_radio_button_get_group (groupHandle));
-			if (handle == 0) error (SWT.ERROR_NO_HANDLES);
+
+			if (GTK.GTK4) {
+				groupHandle = GTK.gtk_check_button_new();
+				if (groupHandle == 0) error(SWT.ERROR_NO_HANDLES);
+				OS.g_object_ref_sink(groupHandle);
+				handle = GTK.gtk_check_button_new();
+				if (handle == 0) error (SWT.ERROR_NO_HANDLES);
+				GTK4.gtk_check_button_set_group(handle, groupHandle);
+			} else {
+				groupHandle = GTK3.gtk_radio_button_new (0);
+				if (groupHandle == 0) error (SWT.ERROR_NO_HANDLES);
+				OS.g_object_ref_sink (groupHandle);
+				handle = GTK3.gtk_radio_button_new (GTK3.gtk_radio_button_get_group (groupHandle));
+				if (handle == 0) error (SWT.ERROR_NO_HANDLES);
+			}
+
 			if (Display.themeName != null) {
 				toggleButtonTheming = (GTK.GTK_VERSION >= OS.VERSION(3, 24, 11) && Display.themeName.contains("Adwaita"))
 						|| Display.themeName.contains("Yaru");
@@ -353,29 +379,52 @@ void createHandle (int index) {
 		default:
 			handle = GTK.gtk_button_new ();
 			if (handle == 0) error (SWT.ERROR_NO_HANDLES);
-			GTK.gtk_widget_set_can_default (handle, true);
+			if (!GTK.GTK4) GTK3.gtk_widget_set_can_default (handle, true);
 			break;
 	}
-	if ((style & SWT.ARROW) != 0) {
-		// Use gtk_button_set_image() on GTK3 to prevent icons from being
-		// trimmed with smaller sized buttons; see bug 528284.
-		GTK.gtk_button_set_image(handle, arrowHandle);
-	} else {
-		boxHandle = gtk_box_new (GTK.GTK_ORIENTATION_HORIZONTAL, false, 4);
-		if (boxHandle == 0) error (SWT.ERROR_NO_HANDLES);
-		labelHandle = GTK.gtk_label_new_with_mnemonic (null);
-		if (labelHandle == 0) error (SWT.ERROR_NO_HANDLES);
-		imageHandle = GTK.gtk_image_new ();
-		if (imageHandle == 0) error (SWT.ERROR_NO_HANDLES);
-		GTK.gtk_container_add (handle, boxHandle);
-		GTK.gtk_container_add (boxHandle, imageHandle);
-		GTK.gtk_container_add (boxHandle, labelHandle);
+
+	if ((style & SWT.ARROW) == 0) {
+		boxHandle = gtk_box_new(GTK.GTK_ORIENTATION_HORIZONTAL, false, 4);
+		if (boxHandle == 0) error(SWT.ERROR_NO_HANDLES);
+		labelHandle = GTK.gtk_label_new_with_mnemonic(null);
+		if (labelHandle == 0) error(SWT.ERROR_NO_HANDLES);
+
+
+		if (GTK.GTK4) {
+			imageHandle = GTK4.gtk_picture_new();
+			if (imageHandle == 0) error(SWT.ERROR_NO_HANDLES);
+
+			GTK.gtk_widget_set_parent(boxHandle, handle);
+			GTK4.gtk_box_append(boxHandle, imageHandle);
+			GTK4.gtk_box_append(boxHandle, labelHandle);
+		} else {
+			imageHandle = GTK.gtk_image_new();
+			if (imageHandle == 0) error(SWT.ERROR_NO_HANDLES);
+
+			GTK3.gtk_container_add(handle, boxHandle);
+			GTK3.gtk_container_add(boxHandle, imageHandle);
+			GTK3.gtk_container_add(boxHandle, labelHandle);
+		}
+
 		if ((style & SWT.WRAP) != 0) {
-			GTK.gtk_label_set_line_wrap (labelHandle, true);
-			GTK.gtk_label_set_line_wrap_mode (labelHandle, OS.PANGO_WRAP_WORD_CHAR);
+			if (GTK.GTK4) {
+				GTK4.gtk_label_set_wrap(labelHandle, true);
+				GTK4.gtk_label_set_wrap_mode(labelHandle, OS.PANGO_WRAP_WORD_CHAR);
+			} else {
+				GTK3.gtk_label_set_line_wrap (labelHandle, true);
+				GTK3.gtk_label_set_line_wrap_mode (labelHandle, OS.PANGO_WRAP_WORD_CHAR);
+			}
 		}
 	}
-	GTK.gtk_container_add (fixedHandle, handle);
+
+	fixedHandle = OS.g_object_new(display.gtk_fixed_get_type(), 0);
+	if (fixedHandle == 0) error(SWT.ERROR_NO_HANDLES);
+	if (GTK.GTK4) {
+		OS.swt_fixed_add(fixedHandle, handle);
+	} else {
+		GTK3.gtk_widget_set_has_window(fixedHandle, true);
+		GTK3.gtk_container_add(fixedHandle, handle);
+	}
 
 	if ((style & SWT.ARROW) != 0) return;
 	// In GTK 3 font description is inherited from parent widget which is not how SWT has always worked,
@@ -516,7 +565,12 @@ String getNameText () {
 public boolean getSelection () {
 	checkWidget ();
 	if ((style & (SWT.CHECK | SWT.RADIO | SWT.TOGGLE)) == 0) return false;
-	return GTK.gtk_toggle_button_get_active (handle);
+
+	if (GTK.GTK4 && (style & (SWT.CHECK | SWT.RADIO)) != 0) {
+		return GTK4.gtk_check_button_get_active(handle);
+	} else {
+		return GTK.gtk_toggle_button_get_active(handle);
+	}
 }
 
 /**
@@ -556,12 +610,12 @@ long gtk_clicked (long widget) {
 		}
 	} else {
 		if ((style & SWT.CHECK) != 0) {
-			if (grayed) {
-				if (GTK.gtk_toggle_button_get_active (handle)) {
-					GTK.gtk_toggle_button_set_inconsistent (handle, true);
-				} else {
-					GTK.gtk_toggle_button_set_inconsistent (handle, false);
-				}
+			if (GTK.GTK4) {
+				boolean inconsistent = grayed && GTK4.gtk_check_button_get_active(handle);
+				GTK4.gtk_check_button_set_inconsistent(handle, inconsistent);
+			} else {
+				boolean inconsistent = grayed && GTK.gtk_toggle_button_get_active(handle);
+				GTK3.gtk_toggle_button_set_inconsistent(handle, inconsistent);
 			}
 		}
 	}
@@ -618,17 +672,35 @@ long gtk_focus_out_event (long widget, long event) {
 }
 
 @Override
+boolean gtk4_key_press_event(long controller, int keyval, int keycode, int state, long event) {
+	boolean handled = super.gtk4_key_press_event(controller, keyval, keycode, state, event);
+	if (!handled) {
+		if ((style & SWT.RADIO) != 0) selected = getSelection();
+	}
+
+	return handled;
+}
+
+@Override
 long gtk_key_press_event (long widget, long event) {
 	long result = super.gtk_key_press_event (widget, event);
 	if (result != 0) return result;
-	if ((style & SWT.RADIO) != 0) selected  = getSelection ();
+	if ((style & SWT.RADIO) != 0) {
+		selected  = getSelection ();
+	}
 	return result;
 }
 
 @Override
 void hookEvents () {
 	super.hookEvents();
-	OS.g_signal_connect_closure (handle, OS.clicked, display.getClosure (CLICKED), false);
+
+	if (GTK.GTK4 && ((style & (SWT.RADIO | SWT.CHECK)) != 0)) {
+		OS.g_signal_connect_closure (handle, OS.toggled, display.getClosure (CLICKED), false);
+	} else {
+		OS.g_signal_connect_closure (handle, OS.clicked, display.getClosure (CLICKED), false);
+	}
+
 	if (labelHandle != 0) {
 		OS.g_signal_connect_closure_by_id (labelHandle, display.signalIds [MNEMONIC_ACTIVATE], 0, display.getClosure (MNEMONIC_ACTIVATE), false);
 	}
@@ -669,14 +741,21 @@ void releaseHandle () {
 }
 
 @Override
-void releaseWidget () {
-	super.releaseWidget ();
-	if (groupHandle != 0) OS.g_object_unref (groupHandle);
+void releaseWidget() {
+	super.releaseWidget();
+
+	if (GTK.GTK4) {
+		if (boxHandle != 0) GTK.gtk_widget_unparent(boxHandle);
+	}
+
+	// Release reference to hidden GtkCheckButton that allows for SWT.RADIO behavior
+	if (groupHandle != 0) OS.g_object_unref(groupHandle);
 	groupHandle = 0;
-	if (imageList != null) imageList.dispose ();
-	imageList = null;
+
 	image = null;
 	text = null;
+
+	disposeDefaultDisabledImage();
 }
 
 /**
@@ -772,7 +851,7 @@ void _setAlignment (int alignment) {
 			case SWT.LEFT: arrowType = isRTL ? GTK.GTK_NAMED_ICON_GO_NEXT : GTK.GTK_NAMED_ICON_GO_PREVIOUS; break;
 			case SWT.RIGHT: arrowType = isRTL ? GTK.GTK_NAMED_ICON_GO_PREVIOUS : GTK.GTK_NAMED_ICON_GO_NEXT; break;
 		}
-		GTK.gtk_image_set_from_icon_name (arrowHandle, arrowType, GTK.GTK_ICON_SIZE_MENU);
+		GTK3.gtk_image_set_from_icon_name (arrowHandle, arrowType, GTK.GTK_ICON_SIZE_MENU);
 		return;
 	}
 	if ((alignment & (SWT.LEFT | SWT.RIGHT | SWT.CENTER)) == 0) return;
@@ -926,7 +1005,7 @@ int setBounds (int x, int y, int width, int height, boolean move, boolean resize
 		Point sizes = resizeCalculationsGTK3(boxHandle, boxWidth, boxHeight);
 		allocation.width = sizes.x;
 		allocation.height = sizes.y;
-		GTK.gtk_widget_size_allocate (boxHandle, allocation);
+		GTK3.gtk_widget_size_allocate (boxHandle, allocation);
 	}
 	return result;
 }
@@ -938,8 +1017,20 @@ void setFontDescription (long fontDesc) {
 		return;
 	} else {
 		super.setFontDescription (fontDesc);
-		if (labelHandle != 0) setFontDescription (labelHandle, fontDesc);
-		if (imageHandle != 0) setFontDescription (imageHandle, fontDesc);
+
+		if (GTK.GTK4) {
+			if (labelHandle != 0) setFontDescription(labelHandle, fontDesc);
+		} else {
+			/*
+			 * GTK3 Workaround for bug which causes incorrect size
+			 * calculation when the button (radio/check) is set active
+			 * before setting font description.
+			 */
+			boolean selected = getSelection();
+			if (selected) setSelection(!selected);
+			if (labelHandle != 0) setFontDescription(labelHandle, fontDesc);
+			setSelection(selected);
+		}
 	}
 }
 
@@ -1022,10 +1113,13 @@ public void setGrayed (boolean grayed) {
 	checkWidget();
 	if ((style & SWT.CHECK) == 0) return;
 	this.grayed = grayed;
-	if (grayed && GTK.gtk_toggle_button_get_active (handle)) {
-		GTK.gtk_toggle_button_set_inconsistent (handle, true);
+
+	if (GTK.GTK4) {
+		boolean inconsistent = grayed && GTK4.gtk_check_button_get_active(handle);
+		GTK4.gtk_check_button_set_inconsistent(handle, inconsistent);
 	} else {
-		GTK.gtk_toggle_button_set_inconsistent (handle, false);
+		boolean inconsistent = grayed && GTK.gtk_toggle_button_get_active(handle);
+		GTK3.gtk_toggle_button_set_inconsistent(handle, inconsistent);
 	}
 }
 
@@ -1048,20 +1142,38 @@ public void setGrayed (boolean grayed) {
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
  * </ul>
  */
-public void setImage (Image image) {
-	checkWidget ();
+public void setImage(Image image) {
+	checkWidget();
 	if ((style & SWT.ARROW) != 0) return;
-	if (imageList != null) imageList.dispose ();
-	imageList = null;
-	if (image != null) {
-		if (image.isDisposed()) error (SWT.ERROR_INVALID_ARGUMENT);
-		imageList = new ImageList ();
-		imageList.add (image);
-		GTK.gtk_image_set_from_surface(imageHandle, image.surface);
-	} else {
-		GTK.gtk_image_set_from_surface(imageHandle, 0);
+	disposeDefaultDisabledImage();
+	if (!enabled && defaultDisableImage != image && defaultDisableImage != null) {
+		return;
 	}
 	this.image = image;
+	_setImage(image);
+}
+
+private void _setImage (Image image) {
+	checkWidget();
+	if ((style & SWT.ARROW) != 0) return;
+
+	if (image != null) {
+		if (image.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
+		if (GTK.GTK4) {
+			long pixbuf = ImageList.createPixbuf(image);
+			long texture = GDK.gdk_texture_new_for_pixbuf(pixbuf);
+			OS.g_object_unref(pixbuf);
+			GTK4.gtk_picture_set_paintable(imageHandle, texture);
+		} else {
+			GTK3.gtk_image_set_from_surface(imageHandle, image.surface);
+		}
+	} else {
+		if (GTK.GTK4) {
+			GTK4.gtk_picture_set_paintable(imageHandle, 0);
+		} else {
+			GTK3.gtk_image_set_from_surface(imageHandle, 0);
+		}
+	}
 	updateWidgetsVisibility();
 	_setAlignment (style);
 }
@@ -1077,8 +1189,8 @@ void setOrientation (boolean create) {
 		if (arrowHandle != 0) {
 			byte arrowType [] = (style & SWT.RIGHT_TO_LEFT) != 0 ? GTK.GTK_NAMED_ICON_GO_NEXT : GTK.GTK_NAMED_ICON_GO_PREVIOUS;
 			switch (style & (SWT.LEFT | SWT.RIGHT)) {
-				case SWT.LEFT: GTK.gtk_image_set_from_icon_name (arrowHandle, arrowType, GTK.GTK_ICON_SIZE_MENU); break;
-				case SWT.RIGHT: GTK.gtk_image_set_from_icon_name (arrowHandle, arrowType, GTK.GTK_ICON_SIZE_MENU); break;
+				case SWT.LEFT: GTK3.gtk_image_set_from_icon_name (arrowHandle, arrowType, GTK.GTK_ICON_SIZE_MENU); break;
+				case SWT.RIGHT: GTK3.gtk_image_set_from_icon_name (arrowHandle, arrowType, GTK.GTK_ICON_SIZE_MENU); break;
 			}
 		}
 	}
@@ -1104,15 +1216,30 @@ public void setSelection (boolean selected) {
 	checkWidget();
 	if ((style & (SWT.CHECK | SWT.RADIO | SWT.TOGGLE)) == 0) return;
 	OS.g_signal_handlers_block_matched (handle, OS.G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, CLICKED);
-	GTK.gtk_toggle_button_set_active (handle, selected);
+
+	if (GTK.GTK4 && (style & (SWT.CHECK | SWT.RADIO)) != 0) {
+		GTK4.gtk_check_button_set_active(handle, selected);
+	} else {
+		GTK.gtk_toggle_button_set_active(handle, selected);
+	}
+
 	if ((style & SWT.CHECK) != 0) {
-		if (selected && grayed) {
-			GTK.gtk_toggle_button_set_inconsistent (handle, true);
+		boolean inconsistent = selected && grayed;
+
+		if (GTK.GTK4) {
+			GTK4.gtk_check_button_set_inconsistent(handle, inconsistent);
 		} else {
-			GTK.gtk_toggle_button_set_inconsistent (handle, false);
+			GTK3.gtk_toggle_button_set_inconsistent(handle, inconsistent);
 		}
 	}
-	if ((style & SWT.RADIO) != 0) GTK.gtk_toggle_button_set_active (groupHandle, !selected);
+	if ((style & SWT.RADIO) != 0) {
+		if (GTK.GTK4) {
+			GTK4.gtk_check_button_set_active(groupHandle, !selected);
+		} else {
+			GTK.gtk_toggle_button_set_active (groupHandle, !selected);
+		}
+	}
+
 	OS.g_signal_handlers_unblock_matched (handle, OS.G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, CLICKED);
 }
 
@@ -1229,5 +1356,45 @@ long dpiChanged(long object, long arg0) {
 	}
 
 	return 0;
+}
+
+/**
+* Enables the receiver if the argument is <code>true</code>,
+* and disables it otherwise.
+* <p>
+* A disabled control is typically
+* not selectable from the user interface and draws with an
+* inactive or "grayed" look.
+* </p>
+*
+* @param enabled the new enabled state
+*
+* @exception SWTException <ul>
+*    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+*    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+* </ul>
+*/
+@Override
+public void setEnabled (boolean enabled) {
+	checkWidget();
+	if (this.enabled == enabled) return;
+	this.enabled = enabled;
+
+	super.setEnabled(enabled);
+
+	if (!enabled) {
+		if (defaultDisableImage == null && image != null) {
+			defaultDisableImage = new Image(getDisplay(), image, SWT.IMAGE_DISABLE);
+		}
+		_setImage(defaultDisableImage);
+	}
+	if (enabled && image != null) _setImage(image);
+}
+
+private void disposeDefaultDisabledImage() {
+	if (defaultDisableImage != null) {
+		defaultDisableImage.dispose();
+		defaultDisableImage = null;
+	}
 }
 }

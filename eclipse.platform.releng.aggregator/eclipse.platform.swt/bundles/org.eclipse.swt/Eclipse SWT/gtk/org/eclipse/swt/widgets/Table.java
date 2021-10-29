@@ -21,6 +21,8 @@ import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.cairo.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class implement a selectable user interface
@@ -88,7 +90,6 @@ public class Table extends Composite {
 	int drawState, drawFlags;
 	GdkRGBA background, foreground, drawForegroundRGBA;
 	Color headerBackground, headerForeground;
-	String headerCSSBackground, headerCSSForeground;
 	boolean ownerDraw, ignoreSize, ignoreAccessibility, pixbufSizeSet, hasChildren;
 	int maxWidth = 0;
 	int topIndex;
@@ -97,6 +98,8 @@ public class Table extends Composite {
 	int headerHeight;
 	boolean boundsChangedSinceLastDraw, headerVisible, wasScrolled;
 	boolean rowActivated;
+
+	private long headerCSSProvider;
 
 	static final int CHECKED_COLUMN = 0;
 	static final int GRAYED_COLUMN = 1;
@@ -109,7 +112,8 @@ public class Table extends Composite {
 	static final int CELL_FOREGROUND = 2;
 	static final int CELL_BACKGROUND = 3;
 	static final int CELL_FONT = 4;
-	static final int CELL_TYPES = CELL_FONT + 1;
+	static final int CELL_SURFACE = 5;
+	static final int CELL_TYPES = CELL_SURFACE + 1;
 
 /**
  * Constructs a new instance of this class given its parent
@@ -334,7 +338,7 @@ public void addSelectionListener (SelectionListener listener) {
 }
 
 int calculateWidth (long column, long iter) {
-	GTK.gtk_tree_view_column_cell_set_cell_data (column, modelHandle, iter, false, false);
+	GTK.gtk_tree_view_column_cell_set_cell_data(column, modelHandle, iter, false, false);
 
 	/*
 	* Bug in GTK.  The width calculated by gtk_tree_view_column_cell_get_size()
@@ -343,17 +347,18 @@ int calculateWidth (long column, long iter) {
 	*/
 
 	//This workaround is causing the problem Bug 459834 in GTK3. So reverting the workaround for GTK3
-	int [] width = new int [1];
+	int[] width = new int[1];
 	if (GTK.GTK4) {
-		GTK.gtk_tree_view_column_cell_get_size(column, null, null, width, null);
+		GTK4.gtk_tree_view_column_cell_get_size(column, null, null, width, null);
 	} else {
-		GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, width, null);
+		GTK3.gtk_tree_view_column_cell_get_size(column, null, null, null, width, null);
 	}
 
-	long textRenderer = getTextRenderer (column);
-	int [] xpad = new int[1];
+	long textRenderer = getTextRenderer(column);
+	int[] xpad = new int[1];
 	if (textRenderer != 0) GTK.gtk_cell_renderer_get_padding(textRenderer, xpad, null);
-	return width [0] + xpad [0]*2;
+
+	return width[0] + xpad[0] * 2;
 }
 
 /**
@@ -640,8 +645,12 @@ void createHandle (int index) {
 	state |= HANDLE;
 	fixedHandle = OS.g_object_new (display.gtk_fixed_get_type (), 0);
 	if (fixedHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	gtk_widget_set_has_surface_or_window (fixedHandle, true);
-	scrolledHandle = GTK.gtk_scrolled_window_new (0, 0);
+	if (GTK.GTK4) {
+		scrolledHandle = GTK4.gtk_scrolled_window_new();
+	} else {
+		GTK3.gtk_widget_set_has_window(fixedHandle, true);
+		scrolledHandle = GTK3.gtk_scrolled_window_new (0, 0);
+	}
 	if (scrolledHandle == 0) error (SWT.ERROR_NO_HANDLES);
 	long [] types = getColumnTypes (1);
 	modelHandle = GTK.gtk_list_store_newv (types.length, types);
@@ -654,8 +663,13 @@ void createHandle (int index) {
 		OS.g_object_ref (checkRenderer);
 	}
 	createColumn (null, 0);
-	GTK.gtk_container_add (fixedHandle, scrolledHandle);
-	GTK.gtk_container_add (scrolledHandle, handle);
+	if (GTK.GTK4) {
+		OS.swt_fixed_add(fixedHandle, scrolledHandle);
+		GTK4.gtk_scrolled_window_set_child(scrolledHandle, handle);
+	} else {
+		GTK3.gtk_container_add(fixedHandle, scrolledHandle);
+		GTK3.gtk_container_add(scrolledHandle, handle);
+	}
 
 	int mode = (style & SWT.MULTI) != 0 ? GTK.GTK_SELECTION_MULTIPLE : GTK.GTK_SELECTION_BROWSE;
 	long selectionHandle = GTK.gtk_tree_view_get_selection (handle);
@@ -666,9 +680,9 @@ void createHandle (int index) {
 	GTK.gtk_scrolled_window_set_policy (scrolledHandle, hsp, vsp);
 	if ((style & SWT.BORDER) != 0) {
 		if (GTK.GTK4) {
-			GTK.gtk_scrolled_window_set_has_frame(scrolledHandle, true);
+			GTK4.gtk_scrolled_window_set_has_frame(scrolledHandle, true);
 		} else {
-			GTK.gtk_scrolled_window_set_shadow_type (scrolledHandle, GTK.GTK_SHADOW_ETCHED_IN);
+			GTK3.gtk_scrolled_window_set_shadow_type (scrolledHandle, GTK.GTK_SHADOW_ETCHED_IN);
 		}
 	}
 	/*
@@ -695,21 +709,34 @@ void createItem (TableColumn column, int index) {
 	} else {
 		createColumn (column, index);
 	}
-	long boxHandle = gtk_box_new (GTK.GTK_ORIENTATION_HORIZONTAL, false, 3);
-	if (boxHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	long labelHandle = GTK.gtk_label_new_with_mnemonic (null);
-	if (labelHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	long imageHandle = GTK.gtk_image_new ();
-	if (imageHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	GTK.gtk_container_add (boxHandle, imageHandle);
-	GTK.gtk_container_add (boxHandle, labelHandle);
-	GTK.gtk_widget_show (boxHandle);
-	GTK.gtk_widget_show (labelHandle);
+
+	long boxHandle = gtk_box_new(GTK.GTK_ORIENTATION_HORIZONTAL, false, 3);
+	if (boxHandle == 0) error(SWT.ERROR_NO_HANDLES);
+	GTK.gtk_tree_view_column_set_widget (column.handle, boxHandle);
+
+	long labelHandle = GTK.gtk_label_new_with_mnemonic(null);
+	if (labelHandle == 0) error(SWT.ERROR_NO_HANDLES);
+	long imageHandle = GTK.gtk_image_new();
+	if (imageHandle == 0) error(SWT.ERROR_NO_HANDLES);
+
+	if (GTK.GTK4) {
+		GTK4.gtk_box_append(boxHandle, imageHandle);
+		GTK4.gtk_box_append(boxHandle, labelHandle);
+
+		GTK.gtk_widget_hide(imageHandle);
+	} else {
+		GTK3.gtk_container_add (boxHandle, imageHandle);
+		GTK3.gtk_container_add (boxHandle, labelHandle);
+
+		GTK.gtk_widget_show (boxHandle);
+		GTK.gtk_widget_show (labelHandle);
+	}
+
 	column.labelHandle = labelHandle;
 	column.imageHandle = imageHandle;
-	GTK.gtk_tree_view_column_set_widget (column.handle, boxHandle);
 	column.buttonHandle = GTK.gtk_tree_view_column_get_button(column.handle);
 	GTK.gtk_widget_set_focus_on_click(column.buttonHandle, false);
+
 	if (columnCount == columns.length) {
 		TableColumn [] newColumns = new TableColumn [columns.length + 4];
 		System.arraycopy (columns, 0, newColumns, 0, columns.length);
@@ -718,7 +745,9 @@ void createItem (TableColumn column, int index) {
 	System.arraycopy (columns, index, columns, index + 1, columnCount++ - index);
 	columns [index] = column;
 	if ((state & FONT) != 0) {
-		column.setFontDescription (getFontDescription ());
+		long fontDesc = getFontDescription ();
+		column.setFontDescription (fontDesc);
+		OS.pango_font_description_free (fontDesc);
 	}
 	if (columnCount >= 1) {
 		for (int i=0; i<itemCount; i++) {
@@ -746,6 +775,9 @@ void createItem (TableColumn column, int index) {
 			}
 		}
 	}
+
+	updateHeaderCSS();
+
 	/*
 	 * Feature in GTK. The tree view does not resize immediately if a table
 	 * column is created when the table is not visible. If the width of the
@@ -1195,47 +1227,34 @@ boolean fixAccessibility () {
 }
 
 @Override
-void fixChildren (Shell newShell, Shell oldShell, Decorations newDecorations, Decorations oldDecorations, Menu [] menus) {
-	super.fixChildren (newShell, oldShell, newDecorations, oldDecorations, menus);
-	for (int i=0; i<columnCount; i++) {
-		TableColumn column = columns [i];
-		if (column.toolTipText != null) {
-			column.setToolTipText(oldShell, null);
-			column.setToolTipText(newShell, column.toolTipText);
-		}
-	}
-}
-
-@Override
-Rectangle getClientAreaInPixels () {
-	checkWidget ();
+Rectangle getClientAreaInPixels() {
+	checkWidget();
 	if(RESIZE_ON_GETCLIENTAREA) {
-		forceResize ();
+		forceResize();
 	}
-	long clientHandle = clientHandle ();
-	GtkAllocation allocation = new GtkAllocation ();
-	GTK.gtk_widget_get_allocation (clientHandle, allocation);
+
+	long clientHandle = clientHandle();
+	GtkAllocation allocation = new GtkAllocation();
+	GTK.gtk_widget_get_allocation(clientHandle, allocation);
 	int width = (state & ZERO_WIDTH) != 0 ? 0 : allocation.width;
 	int height = (state & ZERO_HEIGHT) != 0 ? 0 : allocation.height;
+
 	Rectangle rect;
 	if (GTK.GTK4) {
-		long fixedSurface = gtk_widget_get_surface (fixedHandle);
-		long surface = gtk_widget_get_surface (clientHandle);
-		int [] surfaceX = new int [1], surfaceY = new int [1];
-		GDK.gdk_surface_get_origin (surface, surfaceX, surfaceY);
-		int [] fixedX = new int [1], fixedY = new int [1];
-		GDK.gdk_surface_get_origin (fixedSurface, fixedX, fixedY);
-		rect = new Rectangle (fixedX [0] - surfaceX [0], fixedY [0] - surfaceY [0], width, height);
+		int[] headerHeight = new int[1], headerWidth = new int[1];
+		GTK.gtk_tree_view_convert_bin_window_to_widget_coords(handle, 0, 0, headerWidth, headerHeight);
+		rect = new Rectangle(headerWidth[0], headerHeight[0], width, height);
 	} else {
-		GTK.gtk_widget_realize (handle);
-		long fixedWindow = gtk_widget_get_window (fixedHandle);
-		long binWindow = GTK.gtk_tree_view_get_bin_window (handle);
-		int [] binX = new int [1], binY = new int [1];
-		GDK.gdk_window_get_origin (binWindow, binX, binY);
-		int [] fixedX = new int [1], fixedY = new int [1];
-		GDK.gdk_window_get_origin (fixedWindow, fixedX, fixedY);
-		rect = new Rectangle (fixedX [0] - binX [0], fixedY [0] - binY [0], width, height);
+		GTK.gtk_widget_realize(handle);
+		long fixedWindow = gtk_widget_get_window(fixedHandle);
+		long binWindow = GTK3.gtk_tree_view_get_bin_window(handle);
+		int[] binX = new int[1], binY = new int[1];
+		GDK.gdk_window_get_origin(binWindow, binX, binY);
+		int[] fixedX = new int[1], fixedY = new int[1];
+		GDK.gdk_window_get_origin(fixedWindow, fixedX, fixedY);
+		rect = new Rectangle(fixedX[0] - binX[0], fixedY[0] - binY[0], width, height);
 	}
+
 	return rect;
 }
 
@@ -1247,7 +1266,7 @@ int getClientWidth () {
 		gdk_surface_get_size(surface, w, h);
 	} else {
 		GTK.gtk_widget_realize (handle);
-		gdk_window_get_size(GTK.gtk_tree_view_get_bin_window(handle), w, h);
+		gdk_window_get_size(GTK3.gtk_tree_view_get_bin_window(handle), w, h);
 	}
 	return w[0];
 }
@@ -1315,6 +1334,7 @@ long [] getColumnTypes (int columnCount) {
 	// per cell data
 	for (int i=FIRST_COLUMN; i<types.length; i+=CELL_TYPES) {
 		types [i + CELL_PIXBUF] = GDK.GDK_TYPE_PIXBUF ();
+		types [i + CELL_SURFACE] = OS.G_TYPE_LONG();
 		types [i + CELL_TEXT] = OS.G_TYPE_STRING ();
 		types [i + CELL_FOREGROUND] = GDK.GDK_TYPE_RGBA();
 		types [i + CELL_BACKGROUND] = GDK.GDK_TYPE_RGBA();
@@ -1514,44 +1534,43 @@ public int getHeaderHeight () {
 }
 
 int getHeaderHeightInPixels () {
-	checkWidget ();
-	if (!GTK.gtk_tree_view_get_headers_visible (handle)) return 0;
+	checkWidget();
+	if (!GTK.gtk_tree_view_get_headers_visible(handle)) return 0;
+
+	int height = 0;
 	if (columnCount > 0) {
 		GtkRequisition requisition = new GtkRequisition ();
-		int height = 0;
-		for (int i=0; i<columnCount; i++) {
-			long buttonHandle = columns [i].buttonHandle;
+		for (int i = 0; i < columnCount; i++) {
+			long buttonHandle = columns[i].buttonHandle;
 			if (buttonHandle != 0) {
 				if (!GTK.gtk_widget_get_visible(buttonHandle))  {
 					GTK.gtk_widget_show(buttonHandle);
-					gtk_widget_get_preferred_size (buttonHandle, requisition);
+					gtk_widget_get_preferred_size(buttonHandle, requisition);
 					GTK.gtk_widget_hide(buttonHandle);
 				} else {
-					gtk_widget_get_preferred_size (buttonHandle, requisition);
+					gtk_widget_get_preferred_size(buttonHandle, requisition);
 				}
-				height = Math.max (height, requisition.height);
+				height = Math.max(height, requisition.height);
 			}
 		}
-		return height;
-	}
-	if (GTK.GTK4) {
-		long fixedSurface = gtk_widget_get_surface (fixedHandle);
-		long surface = gtk_widget_get_surface (handle);
-		int [] surfaceY = new int [1];
-		GDK.gdk_surface_get_origin (surface, null, surfaceY);
-		int [] fixedY = new int [1];
-		GDK.gdk_surface_get_origin (fixedSurface, null, fixedY);
-		return surfaceY [0] - fixedY [0];
 	} else {
-		GTK.gtk_widget_realize (handle);
-		long fixedWindow = gtk_widget_get_window (fixedHandle);
-		long binWindow = GTK.gtk_tree_view_get_bin_window (handle);
-		int [] binY = new int [1];
-		GDK.gdk_window_get_origin (binWindow, null, binY);
-		int [] fixedY = new int [1];
-		GDK.gdk_window_get_origin (fixedWindow, null, fixedY);
-		return binY [0] - fixedY [0];
+		if (GTK.GTK4) {
+			int[] headerHeight = new int[1];
+			GTK.gtk_tree_view_convert_bin_window_to_widget_coords(handle, 0, 0, null, headerHeight);
+			height = headerHeight[0];
+		} else {
+			GTK.gtk_widget_realize (handle);
+			long fixedWindow = gtk_widget_get_window (fixedHandle);
+			long binWindow = GTK3.gtk_tree_view_get_bin_window (handle);
+			int [] binY = new int [1];
+			GDK.gdk_window_get_origin (binWindow, null, binY);
+			int [] fixedY = new int [1];
+			GDK.gdk_window_get_origin (fixedWindow, null, fixedY);
+			height = binY [0] - fixedY [0];
+		}
 	}
+
+	return height;
 }
 
 /**
@@ -1685,39 +1704,48 @@ public int getItemHeight () {
 
 int getItemHeightInPixels () {
 	checkWidget();
+	int height = 0;
+
 	if (itemCount == 0) {
-		long column = GTK.gtk_tree_view_get_column (handle, 0);
-		int [] w = new int [1], h = new int [1];
+		long column = GTK.gtk_tree_view_get_column(handle, 0);
+		int[] h = new int[1];
 		ignoreSize = true;
 		if (GTK.GTK4) {
-			GTK.gtk_tree_view_column_cell_get_size(column, null, null, w, h);
+			GTK4.gtk_tree_view_column_cell_get_size(column, null, null, null, h);
 		} else {
-			GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, w, h);
+			GTK3.gtk_tree_view_column_cell_get_size(column, null, null, null, null, h);
 		}
-		int height = h [0];
-		long textRenderer = getTextRenderer (column);
-		if (textRenderer != 0) GTK.gtk_cell_renderer_get_preferred_height_for_width (textRenderer, handle, 0, h, null);
-		height += h [0];
+
+		height = h[0];
+		long textRenderer = getTextRenderer(column);
+		if (textRenderer != 0) GTK.gtk_cell_renderer_get_preferred_height_for_width(textRenderer, handle, 0, h, null);
+		height += h[0];
 		ignoreSize = false;
-		return height;
 	} else {
-		int height = 0;
-		long iter = OS.g_malloc (GTK.GtkTreeIter_sizeof ());
-		GTK.gtk_tree_model_get_iter_first (modelHandle, iter);
-		int columnCount = Math.max (1, this.columnCount);
-		for (int i=0; i<columnCount; i++) {
-			long column = GTK.gtk_tree_view_get_column (handle, i);
-			GTK.gtk_tree_view_column_cell_set_cell_data (column, modelHandle, iter, false, false);
-			int [] w = new int [1], h = new int [1];
-			GTK.gtk_tree_view_column_cell_get_size (column, null, null, null, w, h);
-			long textRenderer = getTextRenderer (column);
-			int [] ypad = new int[1];
+		long iter = OS.g_malloc(GTK.GtkTreeIter_sizeof());
+		GTK.gtk_tree_model_get_iter_first(modelHandle, iter);
+
+		int columnCount = Math.max(1, this.columnCount);
+		for (int i = 0; i < columnCount; i++) {
+			long column = GTK.gtk_tree_view_get_column(handle, i);
+			GTK.gtk_tree_view_column_cell_set_cell_data(column, modelHandle, iter, false, false);
+			int[] h = new int[1];
+			if (GTK.GTK4) {
+				GTK4.gtk_tree_view_column_cell_get_size(column, null, null, null, h);
+			} else {
+				GTK3.gtk_tree_view_column_cell_get_size (column, null, null, null, null, h);
+			}
+
+			long textRenderer = getTextRenderer(column);
+			int[] ypad = new int[1];
 			if (textRenderer != 0) GTK.gtk_cell_renderer_get_padding(textRenderer, null, ypad);
-			height = Math.max(height, h [0] + ypad [0]);
+			height = Math.max(height, h[0] + ypad[0]);
 		}
+
 		OS.g_free (iter);
-		return height;
 	}
+
+	return height;
 }
 
 /**
@@ -2032,35 +2060,22 @@ public int getTopIndex () {
 long gtk_button_press_event (long widget, long event) {
 	double [] eventX = new double [1];
 	double [] eventY = new double [1];
-	if (GTK.GTK4) {
-		GDK.gdk_event_get_position(event, eventX, eventY);
-	} else {
-		GDK.gdk_event_get_coords(event, eventX, eventY);
-	}
+	GDK.gdk_event_get_coords(event, eventX, eventY);
 
 	int eventType = GDK.gdk_event_get_event_type(event);
-	eventType = fixGdkEventTypeValues(eventType);
 
 	int [] eventButton = new int [1];
 	int [] eventState = new int [1];
-	if (GTK.GTK4) {
-		eventButton[0] = GDK.gdk_button_event_get_button(event);
-		eventState[0] = GDK.gdk_event_get_modifier_state(event);
-	} else {
-		GDK.gdk_event_get_button(event, eventButton);
-		GDK.gdk_event_get_state(event, eventState);
-	}
+	GDK.gdk_event_get_button(event, eventButton);
+	GDK.gdk_event_get_state(event, eventState);
 
 	double [] eventRX = new double [1];
 	double [] eventRY = new double [1];
 	GDK.gdk_event_get_root_coords(event, eventRX, eventRY);
 
+
 	long eventGdkResource = gdk_event_get_surface_or_window(event);
-	if (GTK.GTK4) {
-		if (eventGdkResource != gtk_widget_get_surface (handle)) return 0;
-	} else {
-		if (eventGdkResource != GTK.gtk_tree_view_get_bin_window (handle)) return 0;
-	}
+	if (eventGdkResource != GTK3.gtk_tree_view_get_bin_window (handle)) return 0;
 
 	long result = super.gtk_button_press_event (widget, event);
 	if (result != 0) return result;
@@ -2073,7 +2088,7 @@ long gtk_button_press_event (long widget, long event) {
 	if ((state & DRAG_DETECT) != 0 && hooks (SWT.DragDetect) &&
 			!OS.isX11() && eventType == GDK.GDK_BUTTON_PRESS) { // Wayland
 		// check to see if there is another event coming in that is not a double/triple click, this is to prevent Bug 514531
-		long nextEvent = gdk_event_peek ();
+		long nextEvent = GDK.gdk_event_peek();
 		if (nextEvent == 0) {
 			long [] path = new long [1];
 			long selection = GTK.gtk_tree_view_get_selection (handle);
@@ -2156,16 +2171,16 @@ long gtk_button_press_event (long widget, long event) {
 }
 
 @Override
-long gtk_gesture_press_event (long gesture, int n_press, double x, double y, long event) {
-	if (n_press == 1) return 0;
-	long widget = GTK.gtk_event_controller_get_widget(gesture);
-	long result = gtk_button_press_event (widget, event);
+void gtk_gesture_press_event (long gesture, int n_press, double x, double y, long event) {
+	if (n_press == 1) return;
+	super.gtk_gesture_press_event(gesture, n_press, x, y, event);
+
+	// TODO: GTK4 replicate gtk_button_press_event functions
 
 	if (n_press == 2 && rowActivated) {
 		sendTreeDefaultSelection ();
 		rowActivated = false;
 	}
-	return result;
 }
 
 @Override
@@ -2269,7 +2284,7 @@ long gtk_button_release_event (long widget, long event) {
 	if (GTK.GTK4) {
 		if (eventGdkResource != gtk_widget_get_surface (handle)) return 0;
 	} else {
-		if (eventGdkResource != GTK.gtk_tree_view_get_bin_window (handle)) return 0;
+		if (eventGdkResource != GTK3.gtk_tree_view_get_bin_window (handle)) return 0;
 	}
 	// Check region since super.gtk_button_release_event() isn't called
 	lastInput.x = (int) eventX[0];
@@ -2324,7 +2339,7 @@ void drawInheritedBackground (long cairo) {
 				gdkResource = gtk_widget_get_surface(handle);
 				gdk_surface_get_size (gdkResource, width, height);
 			} else {
-				gdkResource = GTK.gtk_tree_view_get_bin_window (handle);
+				gdkResource = GTK3.gtk_tree_view_get_bin_window (handle);
 				gdk_window_get_size (gdkResource, width, height);
 			}
 			int bottom = 0;
@@ -2374,7 +2389,7 @@ long gtk_motion_notify_event (long widget, long event) {
 		if (surface != gtk_widget_get_surface(handle)) return 0;
 	} else {
 		long window = GDK.GDK_EVENT_WINDOW (event);
-		if (window != GTK.gtk_tree_view_get_bin_window (handle)) return 0;
+		if (window != GTK3.gtk_tree_view_get_bin_window (handle)) return 0;
 	}
 	return super.gtk_motion_notify_event (widget, event);
 }
@@ -2588,7 +2603,7 @@ boolean mnemonicMatch (char key) {
 long paintWindow () {
 	GTK.gtk_widget_realize (handle);
 	// TODO: this function has been removed on GTK4
-	return GTK.gtk_tree_view_get_bin_window (handle);
+	return GTK3.gtk_tree_view_get_bin_window (handle);
 }
 
 @Override
@@ -2992,7 +3007,7 @@ long rendererSnapshotProc (long cell, long snapshot, long widget, long backgroun
 	GdkRectangle gdkRectangle = new GdkRectangle ();
 	OS.memmove(gdkRectangle, background_area, GdkRectangle.sizeof);
 	Graphene.graphene_rect_init(rect, gdkRectangle.x, gdkRectangle.y, gdkRectangle.width, gdkRectangle.height);
-	long cairo = GTK.gtk_snapshot_append_cairo(snapshot, rect);
+	long cairo = GTK4.gtk_snapshot_append_cairo(snapshot, rect);
 	rendererRender (cell, cairo, snapshot, widget, background_area, cell_area, 0, flags);
 	return 0;
 }
@@ -3554,38 +3569,49 @@ void setForegroundGdkRGBA (GdkRGBA rgba) {
 public void setHeaderBackground(Color color) {
 	checkWidget();
 	if (color != null) {
-		if (color.isDisposed())
-			error(SWT.ERROR_INVALID_ARGUMENT);
-		if (color.equals(headerBackground))
-			return;
+		if (color.isDisposed())	error(SWT.ERROR_INVALID_ARGUMENT);
+		if (color.equals(headerBackground)) return;
 	}
 	headerBackground = color;
-	GdkRGBA background;
+
+	updateHeaderCSS();
+}
+
+void updateHeaderCSS() {
+	StringBuilder css = new StringBuilder("button {");
 	if (headerBackground != null) {
-		background = headerBackground.handle;
-	} else {
-		background = defaultBackground();
+		/*
+		 * Bug 571466: On some platforms & themes, the 'background-image'
+		 * css tag also needs to be set in order to change the
+		 * background color. Using 'background' tag as it overrides both
+		 * 'background-image' and 'background-color'.
+		 */
+		css.append("background: " + display.gtk_rgba_to_css_string(headerBackground.handle) + "; ");
 	}
-	// background works for 3.18 and later, background-color only as of 3.20
-	String css = "button {background: " + display.gtk_rgba_to_css_string(background) + ";}\n";
-	headerCSSBackground = css;
-	String finalCss = display.gtk_css_create_css_color_string (headerCSSBackground, headerCSSForeground, SWT.BACKGROUND);
-	for (TableColumn column : columns) {
-		if (column != null) {
-			long context = GTK.gtk_widget_get_style_context(column.buttonHandle);
-			// Create provider as we need it attached to the proper context which is not the widget one
-			long provider = GTK.gtk_css_provider_new ();
-			GTK.gtk_style_context_add_provider (context, provider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-			OS.g_object_unref (provider);
-			if (GTK.GTK4) {
-				GTK.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (finalCss, true), -1);
-			} else {
-				GTK.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (finalCss, true), -1, null);
+	if (headerForeground != null) {
+		css.append("color: " + display.gtk_rgba_to_css_string(headerForeground.handle) + "; ");
+	}
+	css.append("}\n");
+
+	if (columnCount == 0) {
+		long buttonHandle = GTK.gtk_tree_view_column_get_button(GTK.gtk_tree_view_get_column(handle, 0));
+		if (headerCSSProvider == 0) {
+			headerCSSProvider = GTK.gtk_css_provider_new();
+			GTK.gtk_style_context_add_provider(GTK.gtk_widget_get_style_context(buttonHandle), headerCSSProvider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+		}
+
+		if (GTK.GTK4) {
+			GTK4.gtk_css_provider_load_from_data(headerCSSProvider, Converter.javaStringToCString(css.toString()), -1);
+		} else {
+			GTK3.gtk_css_provider_load_from_data(headerCSSProvider, Converter.javaStringToCString(css.toString()), -1, null);
+		}
+	} else {
+		for (TableColumn column : columns) {
+			if (column != null) {
+				column.setHeaderCSS(css.toString());
 			}
-			GTK.gtk_style_context_invalidate(context);
 		}
 	}
-	// Redraw not necessary, GTK handles the CSS update.
 }
 
 /**
@@ -3607,40 +3633,15 @@ public void setHeaderBackground(Color color) {
  * </ul>
  * @since 3.106
  */
-public void setHeaderForeground (Color color) {
+public void setHeaderForeground(Color color) {
 	checkWidget();
 	if (color != null) {
-		if (color.isDisposed())
-			error(SWT.ERROR_INVALID_ARGUMENT);
-		if (color.equals(headerForeground))
-			return;
+		if (color.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
+		if (color.equals(headerForeground)) return;
 	}
 	headerForeground = color;
-	GdkRGBA foreground;
-	if (headerForeground != null) {
-		foreground = headerForeground.handle;
-	} else {
-		foreground = display.COLOR_LIST_FOREGROUND_RGBA;
-	}
-	String css = "button {color: " + display.gtk_rgba_to_css_string(foreground) + ";}";
-	headerCSSForeground = css;
-	String finalCss = display.gtk_css_create_css_color_string (headerCSSBackground, headerCSSForeground, SWT.FOREGROUND);
-	for (TableColumn column : columns) {
-		if (column != null) {
-			long context = GTK.gtk_widget_get_style_context(column.buttonHandle);
-			// Create provider as we need it attached to the proper context which is not the widget one
-			long provider = GTK.gtk_css_provider_new ();
-			GTK.gtk_style_context_add_provider (context, provider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-			OS.g_object_unref (provider);
-			if (GTK.GTK4) {
-				GTK.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (finalCss, true), -1);
-			} else {
-				GTK.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (finalCss, true), -1, null);
-			}
-			GTK.gtk_style_context_invalidate(context);
-		}
-	}
-	// Redraw not necessary, GTK handles the CSS update.
+
+	updateHeaderCSS();
 }
 
 /**
@@ -3776,12 +3777,13 @@ void setParentGdkResource (Control child) {
 	 * signal using gtk_container_propagate_draw(). See bug 531928.
 	 */
 	if (GTK.GTK4) {
-		long parentGdkSurface = eventSurface ();
-		GTK.gtk_widget_set_parent_surface (child.topHandle(), parentGdkSurface);
+		// long parentGdkSurface = eventSurface ();
+		// TODO: GTK4 no gtk_widget_set_parent_surface
+		// GTK.gtk_widget_set_parent_surface (child.topHandle(), parentGdkSurface);
 		// TODO: implement connectFixedHandleDraw with the "snapshot" signal
 	} else {
 		long parentGdkWindow = eventWindow ();
-		GTK.gtk_widget_set_parent_window (child.topHandle(), parentGdkWindow);
+		GTK3.gtk_widget_set_parent_window (child.topHandle(), parentGdkWindow);
 		hasChildren = true;
 		connectFixedHandleDraw();
 	}
@@ -4170,23 +4172,26 @@ public void showSelection () {
 @Override
 void updateScrollBarValue (ScrollBar bar) {
 	super.updateScrollBarValue (bar);
-	/*
-	*  Bug in GTK. Scrolling changes the XWindow position
-	* and makes the child widgets appear to scroll even
-	* though when queried their position is unchanged.
-	* The fix is to queue a resize event for each child to
-	* force the position to be corrected.
-	*/
-	long parentHandle = parentingHandle ();
-	long list = GTK.gtk_container_get_children (parentHandle);
-	if (list == 0) return;
-	long temp = list;
-	while (temp != 0) {
-		long widget = OS.g_list_data (temp);
-		if (widget != 0) GTK.gtk_widget_queue_resize  (widget);
-		temp = OS.g_list_next (temp);
+
+	if (!GTK.GTK4) {
+		/*
+		*  Bug in GTK. Scrolling changes the XWindow position
+		* and makes the child widgets appear to scroll even
+		* though when queried their position is unchanged.
+		* The fix is to queue a resize event for each child to
+		* force the position to be corrected.
+		*/
+		long parentHandle = parentingHandle ();
+		long list = GTK3.gtk_container_get_children (parentHandle);
+		if (list == 0) return;
+		long temp = list;
+		while (temp != 0) {
+			long widget = OS.g_list_data (temp);
+			if (widget != 0) GTK.gtk_widget_queue_resize  (widget);
+			temp = OS.g_list_next (temp);
+		}
+		OS.g_list_free (list);
 	}
-	OS.g_list_free (list);
 }
 
 @Override
@@ -4220,8 +4225,8 @@ long windowProc (long handle, long arg0, long user_data) {
 				if ((state & PARENT_BACKGROUND) != 0 || backgroundImage != null) {
 					Control control = findBackgroundControl ();
 					if (control != null) {
-						long window = GTK.gtk_tree_view_get_bin_window (handle);
-						if (window == GTK.gtk_widget_get_window(handle)) {
+						long window = GTK3.gtk_tree_view_get_bin_window (handle);
+						if (window == GTK3.gtk_widget_get_window(handle)) {
 							GdkRectangle rect = new GdkRectangle ();
 							GDK.gdk_cairo_get_clip_rectangle (arg0, rect);
 							drawBackground (control, window, arg0, rect.x, rect.y, rect.width, rect.height);
@@ -4283,6 +4288,16 @@ void checkSetDataInProcessBeforeRemoval(int start, int end) {
 					+ "At item " + i + " in range [" + start + ", " + end + ").";
 			throw new SWTException(message);
 		}
+	}
+}
+
+@Override
+public void dispose() {
+	super.dispose();
+
+	if (headerCSSProvider != 0) {
+		OS.g_object_unref(headerCSSProvider);
+		headerCSSProvider = 0;
 	}
 }
 }

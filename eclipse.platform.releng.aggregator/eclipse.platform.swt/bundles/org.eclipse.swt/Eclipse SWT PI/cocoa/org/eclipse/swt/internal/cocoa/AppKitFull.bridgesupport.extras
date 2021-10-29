@@ -2007,6 +2007,10 @@
 		<method class_method="true" selector="openPanel" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
+		<method selector="setAccessoryViewDisclosed:" swt_gen="true">
+			<arg swt_gen="true"></arg>
+			<retval swt_gen="true"></retval>
+		</method>
 		<method selector="setAllowsMultipleSelection:" swt_gen="true">
 			<arg swt_gen="true"></arg>
 			<retval swt_gen="true"></retval>
@@ -2521,15 +2525,6 @@
 		<method selector="validRequestorForSendType:returnType:" swt_gen="true">
 			<arg swt_gen="true"></arg>
 			<arg swt_gen="true"></arg>
-			<retval swt_gen="true"></retval>
-		</method>
-	</class>
-	<class name="NSRunningApplication" swt_gen="mixed">
-		<method selector="activateWithOptions:" swt_gen="true">
-			<arg swt_gen="true"></arg>
-			<retval swt_gen="true"></retval>
-		</method>
-		<method class_method="true" selector="currentApplication" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
 	</class>
@@ -3697,6 +3692,9 @@
 		<method selector="isOpaque" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
+		<method selector="layer" swt_gen="true">
+			<retval swt_gen="true"></retval>
+		</method>
 		<method selector="lockFocus" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
@@ -3981,6 +3979,9 @@
 			<arg swt_gen="true"></arg>
 			<retval swt_gen="true"></retval>
 		</method>
+		<method selector="maxSize" swt_gen="true">
+			<retval swt_gen="true"></retval>
+		</method>
 		<method class_method="true" selector="minFrameWidthWithTitle:styleMask:" swt_gen="true">
 			<arg swt_gen="true"></arg>
 			<arg swt_gen="true"></arg>
@@ -4082,6 +4083,10 @@
 			<retval swt_gen="true"></retval>
 		</method>
 		<method selector="setLevel:" swt_gen="true">
+			<arg swt_gen="true"></arg>
+			<retval swt_gen="true"></retval>
+		</method>
+		<method selector="setMaxSize:" swt_gen="true">
 			<arg swt_gen="true"></arg>
 			<retval swt_gen="true"></retval>
 		</method>
@@ -4309,6 +4314,8 @@
 	<constant name="NSFilenamesPboardType" swt_gen="true"></constant>
 	<constant name="NSFontAttributeName" swt_gen="true"></constant>
 	<constant name="NSForegroundColorAttributeName" swt_gen="true"></constant>
+	<constant name="NSImageNameCaution" swt_gen="true"></constant>
+	<constant name="NSImageNameInfo" swt_gen="true"></constant>
 	<constant name="NSLigatureAttributeName" swt_gen="true"></constant>
 	<constant name="NSLinkAttributeName" swt_gen="true"></constant>
 	<constant name="NSModalPanelRunLoopMode" swt_gen="true"></constant>
@@ -4659,6 +4666,10 @@
 			<retval></retval>
 		</method>
 		<method selector="applicationDidBecomeActive:" swt_gen="true">
+			<arg swt_gen="true"></arg>
+			<retval swt_gen="true"></retval>
+		</method>
+		<method selector="applicationDidFinishLaunching:" swt_gen="true">
 			<arg swt_gen="true"></arg>
 			<retval swt_gen="true"></retval>
 		</method>

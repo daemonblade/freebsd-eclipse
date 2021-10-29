@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -1916,7 +1916,7 @@ void setINITCOMMONCONTROLSEXFields(JNIEnv *env, jobject lpObject, INITCOMMONCONT
 typedef struct INPUT_FID_CACHE {
 	int cached;
 	jclass clazz;
-	jfieldID type;
+	jfieldID type, ki, mi;
 } INPUT_FID_CACHE;
 
 INPUT_FID_CACHE INPUTFc;
@@ -1926,6 +1926,8 @@ void cacheINPUTFields(JNIEnv *env, jobject lpObject)
 	if (INPUTFc.cached) return;
 	INPUTFc.clazz = (*env)->GetObjectClass(env, lpObject);
 	INPUTFc.type = (*env)->GetFieldID(env, INPUTFc.clazz, "type", "I");
+	INPUTFc.ki = (*env)->GetFieldID(env, INPUTFc.clazz, "ki", "Lorg/eclipse/swt/internal/win32/KEYBDINPUT;");
+	INPUTFc.mi = (*env)->GetFieldID(env, INPUTFc.clazz, "mi", "Lorg/eclipse/swt/internal/win32/MOUSEINPUT;");
 	INPUTFc.cached = 1;
 }
 
@@ -1933,6 +1935,14 @@ INPUT *getINPUTFields(JNIEnv *env, jobject lpObject, INPUT *lpStruct)
 {
 	if (!INPUTFc.cached) cacheINPUTFields(env, lpObject);
 	lpStruct->type = (*env)->GetIntField(env, lpObject, INPUTFc.type);
+	{
+	jobject lpObject1 = (*env)->GetObjectField(env, lpObject, INPUTFc.ki);
+	if (lpObject1 != NULL) getKEYBDINPUTFields(env, lpObject1, &lpStruct->ki);
+	}
+	{
+	jobject lpObject1 = (*env)->GetObjectField(env, lpObject, INPUTFc.mi);
+	if (lpObject1 != NULL) getMOUSEINPUTFields(env, lpObject1, &lpStruct->mi);
+	}
 	return lpStruct;
 }
 
@@ -1940,6 +1950,14 @@ void setINPUTFields(JNIEnv *env, jobject lpObject, INPUT *lpStruct)
 {
 	if (!INPUTFc.cached) cacheINPUTFields(env, lpObject);
 	(*env)->SetIntField(env, lpObject, INPUTFc.type, (jint)lpStruct->type);
+	{
+	jobject lpObject1 = (*env)->GetObjectField(env, lpObject, INPUTFc.ki);
+	if (lpObject1 != NULL) setKEYBDINPUTFields(env, lpObject1, &lpStruct->ki);
+	}
+	{
+	jobject lpObject1 = (*env)->GetObjectField(env, lpObject, INPUTFc.mi);
+	if (lpObject1 != NULL) setMOUSEINPUTFields(env, lpObject1, &lpStruct->mi);
+	}
 }
 #endif
 
@@ -3485,7 +3503,7 @@ void setNMREBARCHILDSIZEFields(JNIEnv *env, jobject lpObject, NMREBARCHILDSIZE *
 typedef struct NMTBCUSTOMDRAW_FID_CACHE {
 	int cached;
 	jclass clazz;
-	jfieldID nmcd, hbrMonoDither, hbrLines, hpenLines, clrText, clrMark, clrTextHighlight, clrBtnFace, clrBtnHighlight, clrHighlightHotTrack, rcText_left, rcText_top, rcText_right, rcText_bottom, nStringBkMode, nHLStringBkMode, iListGap;
+	jfieldID hbrMonoDither, hbrLines, hpenLines, clrText, clrMark, clrTextHighlight, clrBtnFace, clrBtnHighlight, clrHighlightHotTrack, rcText_left, rcText_top, rcText_right, rcText_bottom, nStringBkMode, nHLStringBkMode, iListGap;
 } NMTBCUSTOMDRAW_FID_CACHE;
 
 NMTBCUSTOMDRAW_FID_CACHE NMTBCUSTOMDRAWFc;
@@ -3495,7 +3513,6 @@ void cacheNMTBCUSTOMDRAWFields(JNIEnv *env, jobject lpObject)
 	if (NMTBCUSTOMDRAWFc.cached) return;
 	cacheNMCUSTOMDRAWFields(env, lpObject);
 	NMTBCUSTOMDRAWFc.clazz = (*env)->GetObjectClass(env, lpObject);
-	NMTBCUSTOMDRAWFc.nmcd = (*env)->GetFieldID(env, NMTBCUSTOMDRAWFc.clazz, "nmcd", "Lorg/eclipse/swt/internal/win32/NMCUSTOMDRAW;");
 	NMTBCUSTOMDRAWFc.hbrMonoDither = (*env)->GetFieldID(env, NMTBCUSTOMDRAWFc.clazz, "hbrMonoDither", "J");
 	NMTBCUSTOMDRAWFc.hbrLines = (*env)->GetFieldID(env, NMTBCUSTOMDRAWFc.clazz, "hbrLines", "J");
 	NMTBCUSTOMDRAWFc.hpenLines = (*env)->GetFieldID(env, NMTBCUSTOMDRAWFc.clazz, "hpenLines", "J");
@@ -3519,10 +3536,6 @@ NMTBCUSTOMDRAW *getNMTBCUSTOMDRAWFields(JNIEnv *env, jobject lpObject, NMTBCUSTO
 {
 	if (!NMTBCUSTOMDRAWFc.cached) cacheNMTBCUSTOMDRAWFields(env, lpObject);
 	getNMCUSTOMDRAWFields(env, lpObject, (NMCUSTOMDRAW *)lpStruct);
-	{
-	jobject lpObject1 = (*env)->GetObjectField(env, lpObject, NMTBCUSTOMDRAWFc.nmcd);
-	if (lpObject1 != NULL) getNMCUSTOMDRAWFields(env, lpObject1, &lpStruct->nmcd);
-	}
 	lpStruct->hbrMonoDither = (HBRUSH)(*env)->GetLongField(env, lpObject, NMTBCUSTOMDRAWFc.hbrMonoDither);
 	lpStruct->hbrLines = (HBRUSH)(*env)->GetLongField(env, lpObject, NMTBCUSTOMDRAWFc.hbrLines);
 	lpStruct->hpenLines = (HPEN)(*env)->GetLongField(env, lpObject, NMTBCUSTOMDRAWFc.hpenLines);
@@ -3546,10 +3559,6 @@ void setNMTBCUSTOMDRAWFields(JNIEnv *env, jobject lpObject, NMTBCUSTOMDRAW *lpSt
 {
 	if (!NMTBCUSTOMDRAWFc.cached) cacheNMTBCUSTOMDRAWFields(env, lpObject);
 	setNMCUSTOMDRAWFields(env, lpObject, (NMCUSTOMDRAW *)lpStruct);
-	{
-	jobject lpObject1 = (*env)->GetObjectField(env, lpObject, NMTBCUSTOMDRAWFc.nmcd);
-	if (lpObject1 != NULL) setNMCUSTOMDRAWFields(env, lpObject1, &lpStruct->nmcd);
-	}
 	(*env)->SetLongField(env, lpObject, NMTBCUSTOMDRAWFc.hbrMonoDither, (jlong)lpStruct->hbrMonoDither);
 	(*env)->SetLongField(env, lpObject, NMTBCUSTOMDRAWFc.hbrLines, (jlong)lpStruct->hbrLines);
 	(*env)->SetLongField(env, lpObject, NMTBCUSTOMDRAWFc.hpenLines, (jlong)lpStruct->hpenLines);
@@ -4201,140 +4210,6 @@ void setNOTIFYICONDATAFields(JNIEnv *env, jobject lpObject, NOTIFYICONDATA *lpSt
 	}
 	(*env)->SetIntField(env, lpObject, NOTIFYICONDATAFc.uVersion, (jint)lpStruct->uVersion);
 	(*env)->SetIntField(env, lpObject, NOTIFYICONDATAFc.dwInfoFlags, (jint)lpStruct->dwInfoFlags);
-}
-#endif
-
-#ifndef NO_OFNOTIFY
-typedef struct OFNOTIFY_FID_CACHE {
-	int cached;
-	jclass clazz;
-	jfieldID lpOFN, pszFile;
-} OFNOTIFY_FID_CACHE;
-
-OFNOTIFY_FID_CACHE OFNOTIFYFc;
-
-void cacheOFNOTIFYFields(JNIEnv *env, jobject lpObject)
-{
-	if (OFNOTIFYFc.cached) return;
-	cacheNMHDRFields(env, lpObject);
-	OFNOTIFYFc.clazz = (*env)->GetObjectClass(env, lpObject);
-	OFNOTIFYFc.lpOFN = (*env)->GetFieldID(env, OFNOTIFYFc.clazz, "lpOFN", "J");
-	OFNOTIFYFc.pszFile = (*env)->GetFieldID(env, OFNOTIFYFc.clazz, "pszFile", "J");
-	OFNOTIFYFc.cached = 1;
-}
-
-OFNOTIFY *getOFNOTIFYFields(JNIEnv *env, jobject lpObject, OFNOTIFY *lpStruct)
-{
-	if (!OFNOTIFYFc.cached) cacheOFNOTIFYFields(env, lpObject);
-	getNMHDRFields(env, lpObject, (NMHDR *)lpStruct);
-	lpStruct->lpOFN = (LPOPENFILENAME)(*env)->GetLongField(env, lpObject, OFNOTIFYFc.lpOFN);
-	lpStruct->pszFile = (LPTSTR)(*env)->GetLongField(env, lpObject, OFNOTIFYFc.pszFile);
-	return lpStruct;
-}
-
-void setOFNOTIFYFields(JNIEnv *env, jobject lpObject, OFNOTIFY *lpStruct)
-{
-	if (!OFNOTIFYFc.cached) cacheOFNOTIFYFields(env, lpObject);
-	setNMHDRFields(env, lpObject, (NMHDR *)lpStruct);
-	(*env)->SetLongField(env, lpObject, OFNOTIFYFc.lpOFN, (jlong)lpStruct->lpOFN);
-	(*env)->SetLongField(env, lpObject, OFNOTIFYFc.pszFile, (jlong)lpStruct->pszFile);
-}
-#endif
-
-#ifndef NO_OPENFILENAME
-typedef struct OPENFILENAME_FID_CACHE {
-	int cached;
-	jclass clazz;
-	jfieldID lStructSize, hwndOwner, hInstance, lpstrFilter, lpstrCustomFilter, nMaxCustFilter, nFilterIndex, lpstrFile, nMaxFile, lpstrFileTitle, nMaxFileTitle, lpstrInitialDir, lpstrTitle, Flags, nFileOffset, nFileExtension, lpstrDefExt, lCustData, lpfnHook, lpTemplateName, pvReserved, dwReserved, FlagsEx;
-} OPENFILENAME_FID_CACHE;
-
-OPENFILENAME_FID_CACHE OPENFILENAMEFc;
-
-void cacheOPENFILENAMEFields(JNIEnv *env, jobject lpObject)
-{
-	if (OPENFILENAMEFc.cached) return;
-	OPENFILENAMEFc.clazz = (*env)->GetObjectClass(env, lpObject);
-	OPENFILENAMEFc.lStructSize = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "lStructSize", "I");
-	OPENFILENAMEFc.hwndOwner = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "hwndOwner", "J");
-	OPENFILENAMEFc.hInstance = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "hInstance", "J");
-	OPENFILENAMEFc.lpstrFilter = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "lpstrFilter", "J");
-	OPENFILENAMEFc.lpstrCustomFilter = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "lpstrCustomFilter", "J");
-	OPENFILENAMEFc.nMaxCustFilter = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "nMaxCustFilter", "I");
-	OPENFILENAMEFc.nFilterIndex = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "nFilterIndex", "I");
-	OPENFILENAMEFc.lpstrFile = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "lpstrFile", "J");
-	OPENFILENAMEFc.nMaxFile = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "nMaxFile", "I");
-	OPENFILENAMEFc.lpstrFileTitle = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "lpstrFileTitle", "J");
-	OPENFILENAMEFc.nMaxFileTitle = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "nMaxFileTitle", "I");
-	OPENFILENAMEFc.lpstrInitialDir = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "lpstrInitialDir", "J");
-	OPENFILENAMEFc.lpstrTitle = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "lpstrTitle", "J");
-	OPENFILENAMEFc.Flags = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "Flags", "I");
-	OPENFILENAMEFc.nFileOffset = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "nFileOffset", "S");
-	OPENFILENAMEFc.nFileExtension = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "nFileExtension", "S");
-	OPENFILENAMEFc.lpstrDefExt = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "lpstrDefExt", "J");
-	OPENFILENAMEFc.lCustData = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "lCustData", "J");
-	OPENFILENAMEFc.lpfnHook = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "lpfnHook", "J");
-	OPENFILENAMEFc.lpTemplateName = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "lpTemplateName", "J");
-	OPENFILENAMEFc.pvReserved = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "pvReserved", "J");
-	OPENFILENAMEFc.dwReserved = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "dwReserved", "I");
-	OPENFILENAMEFc.FlagsEx = (*env)->GetFieldID(env, OPENFILENAMEFc.clazz, "FlagsEx", "I");
-	OPENFILENAMEFc.cached = 1;
-}
-
-OPENFILENAME *getOPENFILENAMEFields(JNIEnv *env, jobject lpObject, OPENFILENAME *lpStruct)
-{
-	if (!OPENFILENAMEFc.cached) cacheOPENFILENAMEFields(env, lpObject);
-	lpStruct->lStructSize = (*env)->GetIntField(env, lpObject, OPENFILENAMEFc.lStructSize);
-	lpStruct->hwndOwner = (HWND)(*env)->GetLongField(env, lpObject, OPENFILENAMEFc.hwndOwner);
-	lpStruct->hInstance = (HINSTANCE)(*env)->GetLongField(env, lpObject, OPENFILENAMEFc.hInstance);
-	lpStruct->lpstrFilter = (LPCTSTR)(*env)->GetLongField(env, lpObject, OPENFILENAMEFc.lpstrFilter);
-	lpStruct->lpstrCustomFilter = (LPTSTR)(*env)->GetLongField(env, lpObject, OPENFILENAMEFc.lpstrCustomFilter);
-	lpStruct->nMaxCustFilter = (*env)->GetIntField(env, lpObject, OPENFILENAMEFc.nMaxCustFilter);
-	lpStruct->nFilterIndex = (*env)->GetIntField(env, lpObject, OPENFILENAMEFc.nFilterIndex);
-	lpStruct->lpstrFile = (LPTSTR)(*env)->GetLongField(env, lpObject, OPENFILENAMEFc.lpstrFile);
-	lpStruct->nMaxFile = (*env)->GetIntField(env, lpObject, OPENFILENAMEFc.nMaxFile);
-	lpStruct->lpstrFileTitle = (LPTSTR)(*env)->GetLongField(env, lpObject, OPENFILENAMEFc.lpstrFileTitle);
-	lpStruct->nMaxFileTitle = (*env)->GetIntField(env, lpObject, OPENFILENAMEFc.nMaxFileTitle);
-	lpStruct->lpstrInitialDir = (LPCTSTR)(*env)->GetLongField(env, lpObject, OPENFILENAMEFc.lpstrInitialDir);
-	lpStruct->lpstrTitle = (LPCTSTR)(*env)->GetLongField(env, lpObject, OPENFILENAMEFc.lpstrTitle);
-	lpStruct->Flags = (*env)->GetIntField(env, lpObject, OPENFILENAMEFc.Flags);
-	lpStruct->nFileOffset = (*env)->GetShortField(env, lpObject, OPENFILENAMEFc.nFileOffset);
-	lpStruct->nFileExtension = (*env)->GetShortField(env, lpObject, OPENFILENAMEFc.nFileExtension);
-	lpStruct->lpstrDefExt = (LPCTSTR)(*env)->GetLongField(env, lpObject, OPENFILENAMEFc.lpstrDefExt);
-	lpStruct->lCustData = (*env)->GetLongField(env, lpObject, OPENFILENAMEFc.lCustData);
-	lpStruct->lpfnHook = (LPOFNHOOKPROC)(*env)->GetLongField(env, lpObject, OPENFILENAMEFc.lpfnHook);
-	lpStruct->lpTemplateName = (LPCTSTR)(*env)->GetLongField(env, lpObject, OPENFILENAMEFc.lpTemplateName);
-	lpStruct->pvReserved = (void *)(*env)->GetLongField(env, lpObject, OPENFILENAMEFc.pvReserved);
-	lpStruct->dwReserved = (*env)->GetIntField(env, lpObject, OPENFILENAMEFc.dwReserved);
-	lpStruct->FlagsEx = (*env)->GetIntField(env, lpObject, OPENFILENAMEFc.FlagsEx);
-	return lpStruct;
-}
-
-void setOPENFILENAMEFields(JNIEnv *env, jobject lpObject, OPENFILENAME *lpStruct)
-{
-	if (!OPENFILENAMEFc.cached) cacheOPENFILENAMEFields(env, lpObject);
-	(*env)->SetIntField(env, lpObject, OPENFILENAMEFc.lStructSize, (jint)lpStruct->lStructSize);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.hwndOwner, (jlong)lpStruct->hwndOwner);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.hInstance, (jlong)lpStruct->hInstance);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.lpstrFilter, (jlong)lpStruct->lpstrFilter);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.lpstrCustomFilter, (jlong)lpStruct->lpstrCustomFilter);
-	(*env)->SetIntField(env, lpObject, OPENFILENAMEFc.nMaxCustFilter, (jint)lpStruct->nMaxCustFilter);
-	(*env)->SetIntField(env, lpObject, OPENFILENAMEFc.nFilterIndex, (jint)lpStruct->nFilterIndex);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.lpstrFile, (jlong)lpStruct->lpstrFile);
-	(*env)->SetIntField(env, lpObject, OPENFILENAMEFc.nMaxFile, (jint)lpStruct->nMaxFile);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.lpstrFileTitle, (jlong)lpStruct->lpstrFileTitle);
-	(*env)->SetIntField(env, lpObject, OPENFILENAMEFc.nMaxFileTitle, (jint)lpStruct->nMaxFileTitle);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.lpstrInitialDir, (jlong)lpStruct->lpstrInitialDir);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.lpstrTitle, (jlong)lpStruct->lpstrTitle);
-	(*env)->SetIntField(env, lpObject, OPENFILENAMEFc.Flags, (jint)lpStruct->Flags);
-	(*env)->SetShortField(env, lpObject, OPENFILENAMEFc.nFileOffset, (jshort)lpStruct->nFileOffset);
-	(*env)->SetShortField(env, lpObject, OPENFILENAMEFc.nFileExtension, (jshort)lpStruct->nFileExtension);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.lpstrDefExt, (jlong)lpStruct->lpstrDefExt);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.lCustData, (jlong)lpStruct->lCustData);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.lpfnHook, (jlong)lpStruct->lpfnHook);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.lpTemplateName, (jlong)lpStruct->lpTemplateName);
-	(*env)->SetLongField(env, lpObject, OPENFILENAMEFc.pvReserved, (jlong)lpStruct->pvReserved);
-	(*env)->SetIntField(env, lpObject, OPENFILENAMEFc.dwReserved, (jint)lpStruct->dwReserved);
-	(*env)->SetIntField(env, lpObject, OPENFILENAMEFc.FlagsEx, (jint)lpStruct->FlagsEx);
 }
 #endif
 

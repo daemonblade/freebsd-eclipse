@@ -17,6 +17,8 @@ package org.eclipse.swt.widgets;
 import org.eclipse.swt.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class are used to inform or warn the user.
@@ -45,6 +47,7 @@ public class MessageBox extends Dialog {
 
 	String message = "";
 	long handle;
+
 /**
  * Constructs a new instance of this class given only its parent.
  *
@@ -142,7 +145,7 @@ public void setMessage (String string) {
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the dialog</li>
  * </ul>
  */
-public int open () {
+public int open() {
 	long parentHandle = (parent != null) ? parent.topHandle() : 0;
 	int dialogFlags = GTK.GTK_DIALOG_DESTROY_WITH_PARENT;
 	if ((style & (SWT.PRIMARY_MODAL | SWT.APPLICATION_MODAL | SWT.SYSTEM_MODAL)) != 0) {
@@ -153,78 +156,98 @@ public int open () {
 	if ((style & (SWT.ICON_QUESTION)) != 0) messageType = GTK.GTK_MESSAGE_QUESTION;
 	if ((style & (SWT.ICON_ERROR)) != 0)    messageType = GTK.GTK_MESSAGE_ERROR;
 
-	byte [] format = Converter.wcsToMbcs ("%s", true);
-	byte [] buffer = Converter.wcsToMbcs (message, true);
+	byte[] format = Converter.wcsToMbcs("%s", true);
+	byte[] buffer = Converter.wcsToMbcs(title, true);
 	handle = GTK.gtk_message_dialog_new(parentHandle, dialogFlags, messageType, 0, format, buffer);
 	if (handle == 0) error(SWT.ERROR_NO_HANDLES);
+
+	// Copy parent's icon
 	if (parentHandle != 0) {
-		long pixbufs = GTK.gtk_window_get_icon_list (parentHandle);
-		if (pixbufs != 0) {
-			GTK.gtk_window_set_icon_list (handle, pixbufs);
-			OS.g_list_free (pixbufs);
+		if (GTK.GTK4) {
+			/*
+			 * TODO: This may not work as we are setting the icon list of the GtkWindow through
+			 * GdkToplevel (which has no way of retrieving the icon list set. See bug 572200.
+			 */
+			long iconName = GTK4.gtk_window_get_icon_name(parentHandle);
+			if (iconName != 0) {
+				GTK4.gtk_window_set_icon_name(handle, iconName);
+			}
+		} else {
+			long pixbufs = GTK3.gtk_window_get_icon_list(parentHandle);
+			if (pixbufs != 0) {
+				GTK3.gtk_window_set_icon_list(handle, pixbufs);
+				OS.g_list_free (pixbufs);
+			}
 		}
 	}
-	Display display = parent != null ? parent.getDisplay (): Display.getCurrent ();
-	createButtons (display.getDismissalAlignment ());
-	buffer = Converter.wcsToMbcs(title, true);
-	GTK.gtk_window_set_title(handle,buffer);
-	display.addIdleProc ();
+
+	Display display = parent != null ? parent.getDisplay() : Display.getCurrent();
+	createButtons(display.getDismissalAlignment());
+	GTK.gtk_message_dialog_format_secondary_text(handle, format, Converter.javaStringToCString(message));
+
+	display.addIdleProc();
 	Dialog oldModal = null;
+	if (GTK.gtk_window_get_modal(handle)) {
+		oldModal = display.getModalDialog();
+		display.setModalDialog(this);
+	}
 	/*
 	* In order to allow the dialog to be modal of it's
 	* parent shells, it is required to assign the
 	* dialog to the same window group as of the shells.
 	*/
-	long group = GTK.gtk_window_get_group(0);
-	GTK.gtk_window_group_add_window (group, handle);
+	long defaultWindowGroup = GTK.gtk_window_get_group(0);
+	GTK.gtk_window_group_add_window(defaultWindowGroup, handle);
 
-	if (GTK.gtk_window_get_modal (handle)) {
-		oldModal = display.getModalDialog ();
-		display.setModalDialog (this);
-	}
 	int signalId = 0;
 	long hookId = 0;
 	if ((style & SWT.RIGHT_TO_LEFT) != 0) {
-		signalId = OS.g_signal_lookup (OS.map, GTK.GTK_TYPE_WIDGET());
-		hookId = OS.g_signal_add_emission_hook (signalId, 0, display.emissionProc, handle, 0);
+		signalId = OS.g_signal_lookup(OS.map, GTK.GTK_TYPE_WIDGET());
+		hookId = OS.g_signal_add_emission_hook(signalId, 0, display.emissionProc, handle, 0);
 	}
-	display.externalEventLoop = true;
-	display.sendPreExternalEventDispatchEvent ();
-	int response = GTK.gtk_dialog_run (handle);
-	/*
-	* This call to gdk_threads_leave() is a temporary work around
-	* to avoid deadlocks when gdk_threads_init() is called by native
-	* code outside of SWT (i.e AWT, etc). It ensures that the current
-	* thread leaves the GTK lock acquired by the function above.
-	*/
-	if (!GTK.GTK4) GDK.gdk_threads_leave();
-	display.externalEventLoop = false;
-	display.sendPostExternalEventDispatchEvent ();
+
+	int response;
+	if (GTK.GTK4) {
+		response = SyncDialogUtil.run(display, handle, false);
+	} else {
+		display.externalEventLoop = true;
+		display.sendPreExternalEventDispatchEvent();
+		response = GTK3.gtk_dialog_run(handle);
+		display.externalEventLoop = false;
+		display.sendPostExternalEventDispatchEvent();
+	}
+
 	if ((style & SWT.RIGHT_TO_LEFT) != 0) {
-		OS.g_signal_remove_emission_hook (signalId, hookId);
+		OS.g_signal_remove_emission_hook(signalId, hookId);
 	}
-	if (GTK.gtk_window_get_modal (handle)) {
-		display.setModalDialog (oldModal);
+	if (GTK.gtk_window_get_modal(handle)) {
+		display.setModalDialog(oldModal);
 	}
-	display.removeIdleProc ();
-	GTK.gtk_widget_destroy (handle);
+	display.removeIdleProc();
+
+	if (GTK.GTK4) {
+		GTK4.gtk_window_destroy(handle);
+	} else {
+		GTK3.gtk_widget_destroy(handle);
+	}
+
 	return response;
 }
 
 private void createButtons (int alignment) {
 	if (alignment == SWT.LEFT) {
-		if ((style & SWT.OK) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs ("gtk-ok", true), SWT.OK);
+		if ((style & SWT.OK) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_OK"), true), SWT.OK);
 		if ((style & SWT.ABORT) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_Abort"), true), SWT.ABORT);
 		if ((style & SWT.RETRY) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_Retry"), true), SWT.RETRY);
-		if ((style & SWT.YES) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs ("gtk-yes", true), SWT.YES);
-		if ((style & SWT.NO) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs ("gtk-no", true), SWT.NO);
+		if ((style & SWT.YES) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_Yes"), true), SWT.YES);
+		if ((style & SWT.NO) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_No"), true), SWT.NO);
 		if ((style & SWT.IGNORE) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_Ignore"), true), SWT.IGNORE);
-		if ((style & SWT.CANCEL) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs ("gtk-cancel", true), SWT.CANCEL);
+		if ((style & SWT.CANCEL) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_Cancel"), true), SWT.CANCEL);
 	} else {
-		if ((style & SWT.CANCEL) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs ("gtk-cancel", true), SWT.CANCEL);
-		if ((style & SWT.OK) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs ("gtk-ok", true), SWT.OK);
-		if ((style & SWT.NO) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs ("gtk-no", true), SWT.NO);
-		if ((style & SWT.YES) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs ("gtk-yes", true), SWT.YES);
+		if ((style & SWT.CANCEL) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_Cancel"), true), SWT.CANCEL);
+		if ((style & SWT.OK) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_OK"), true), SWT.OK);
+		if ((style & SWT.NO) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_No"), true), SWT.NO);
+		if ((style & SWT.YES) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_Yes"), true), SWT.YES);
 		if ((style & SWT.IGNORE) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_Ignore"), true), SWT.IGNORE);
 		if ((style & SWT.RETRY) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_Retry"), true), SWT.RETRY);
 		if ((style & SWT.ABORT) != 0) GTK.gtk_dialog_add_button(handle, Converter.wcsToMbcs (SWT.getMessage("SWT_Abort"), true), SWT.ABORT);
@@ -240,5 +263,4 @@ private static int checkStyle (int style) {
 	style = (style & ~mask) | SWT.OK;
 	return style;
 }
-
 }

@@ -18,6 +18,7 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
 
 /**
  * Instances of this class represent icons that can be placed on the
@@ -157,10 +158,10 @@ void createWidget (int index) {
 @Override
 void createHandle (int index) {
 	state |= HANDLE;
-	handle = GTK.gtk_status_icon_new ();
+	handle = GTK3.gtk_status_icon_new ();
 	if (handle == 0) error (SWT.ERROR_NO_HANDLES);
 	imageHandle = GTK.gtk_image_new ();
-	GTK.gtk_status_icon_set_visible (handle,true);
+	GTK3.gtk_status_icon_set_visible (handle,true);
 }
 
 @Override
@@ -253,10 +254,10 @@ long gtk_activate (long widget) {
 	* the single-click as the current event and for the double-click in the
 	* event queue.
 	*/
-	long nextEvent = gdk_event_peek ();
+	long nextEvent = GDK.gdk_event_peek();
 	if (nextEvent != 0) {
 		int nextEventType = GDK.GDK_EVENT_TYPE (nextEvent);
-		long currEvent = GTK.gtk_get_current_event ();
+		long currEvent = GTK3.gtk_get_current_event ();
 		int currEventType = 0;
 		if (currEvent != 0) {
 			currEventType = GDK.GDK_EVENT_TYPE (currEvent);
@@ -275,14 +276,10 @@ long gtk_activate (long widget) {
 @Override
 long gtk_button_press_event (long widget, long event) {
 	int eventType = GDK.gdk_event_get_event_type(event);
-	eventType = Control.fixGdkEventTypeValues(eventType);
 
 	int [] eventButton = new int [1];
-	if (GTK.GTK4) {
-		eventButton[0] = GDK.gdk_button_event_get_button(event);
-	} else {
-		GDK.gdk_event_get_button(event, eventButton);
-	}
+	GDK.gdk_event_get_button(event, eventButton);
+
 
 	if (eventType == GDK.GDK_3BUTTON_PRESS) return 0;
 	if (eventButton[0] == 3 && eventType == GDK.GDK_BUTTON_PRESS) {
@@ -298,16 +295,24 @@ long gtk_button_press_event (long widget, long event) {
 }
 
 @Override
-long gtk_gesture_press_event (long gesture, int n_press, double x, double y, long event) {
-	if (n_press == 1) return 0;
-	long widget = GTK.gtk_event_controller_get_widget(gesture);
-	long result = gtk_button_press_event (widget, event);
-
-	if (n_press == 2) {
-		sendSelectionEvent (SWT.DefaultSelection);
+void gtk_gesture_press_event(long gesture, int n_press, double x, double y, long event) {
+	switch (n_press) {
+		case 1: {
+			int eventButton = GDK.gdk_button_event_get_button(event);
+			if (eventButton == 3) {
+				sendEvent(SWT.MenuDetect);
+			} else {
+				sendEvent(SWT.Selection);
+			}
+			break;
+		}
+		case 2: {
+			sendSelectionEvent(SWT.DefaultSelection);
+			break;
+		}
+		default:
+			break;
 	}
-
-	return result;
 }
 
 @Override
@@ -348,7 +353,7 @@ void hookEvents () {
  */
 public boolean getVisible () {
 	checkWidget ();
-	return GTK.gtk_status_icon_get_visible (handle);
+	return GTK3.gtk_status_icon_get_visible (handle);
 }
 
 @Override
@@ -466,9 +471,8 @@ public void setHighlightImage (Image image) {
  */
 @Override
 public void setImage (Image image) {
-	checkWidget ();
-	if (image != null && image.isDisposed ()) error (SWT.ERROR_INVALID_ARGUMENT);
-	this.image = image;
+	super.setImage(image);
+
 	if (image != null) {
 		if (imageList == null) imageList = new ImageList ();
 		int imageIndex = imageList.indexOf (image);
@@ -477,13 +481,13 @@ public void setImage (Image image) {
 		} else {
 			imageList.put (imageIndex, image);
 		}
-		long pixbuf = imageList.getPixbuf (imageIndex);
-		GTK.gtk_status_icon_set_from_pixbuf (handle, pixbuf);
-		GTK.gtk_status_icon_set_visible (handle, true);
+		long pixbuf = ImageList.createPixbuf(image);
+		GTK3.gtk_status_icon_set_from_pixbuf (handle, pixbuf);
+		GTK3.gtk_status_icon_set_visible (handle, true);
 	} else {
 		GTK.gtk_widget_set_size_request (handle, 1, 1);
-		GTK.gtk_status_icon_set_from_pixbuf (handle, 0);
-		GTK.gtk_status_icon_set_visible (handle, false);
+		GTK3.gtk_status_icon_set_from_pixbuf (handle, 0);
+		GTK3.gtk_status_icon_set_visible (handle, false);
 	}
 }
 
@@ -540,7 +544,7 @@ public void setToolTipText (String string) {
 	if (string != null && string.length () > 0) {
 		buffer = Converter.wcsToMbcs (string, true);
 	}
-	GTK.gtk_status_icon_set_tooltip_text (handle, buffer);
+	GTK3.gtk_status_icon_set_tooltip_text (handle, buffer);
 }
 
 /**
@@ -556,7 +560,7 @@ public void setToolTipText (String string) {
  */
 public void setVisible (boolean visible) {
 	checkWidget ();
-	if(GTK.gtk_status_icon_get_visible (handle) == visible) return;
+	if(GTK3.gtk_status_icon_get_visible (handle) == visible) return;
 	if (visible) {
 		/*
 		* It is possible (but unlikely), that application
@@ -565,9 +569,9 @@ public void setVisible (boolean visible) {
 		*/
 		sendEvent (SWT.Show);
 		if (isDisposed ()) return;
-		GTK.gtk_status_icon_set_visible (handle, visible);
+		GTK3.gtk_status_icon_set_visible (handle, visible);
 	} else {
-		GTK.gtk_status_icon_set_visible (handle, visible);
+		GTK3.gtk_status_icon_set_visible (handle, visible);
 		sendEvent (SWT.Hide);
 	}
 }

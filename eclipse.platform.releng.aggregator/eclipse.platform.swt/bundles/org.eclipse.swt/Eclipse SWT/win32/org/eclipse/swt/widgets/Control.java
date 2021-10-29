@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,6 +14,8 @@
  *******************************************************************************/
 package org.eclipse.swt.widgets;
 
+
+import java.util.*;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.accessibility.*;
@@ -728,17 +730,11 @@ void checkGesture () {
 			 * Feature in Windows 7: All gestures are enabled by default except GID_ROTATE.
 			 * Enable it explicitly by calling SetGestureConfig.
 			 */
-			long hHeap = OS.GetProcessHeap ();
-			long pConfigs = OS.HeapAlloc (hHeap, OS.HEAP_ZERO_MEMORY,  GESTURECONFIG.sizeof);
-			if (pConfigs != 0) {
-				GESTURECONFIG config = new GESTURECONFIG();
-				config.dwID = OS.GID_ROTATE;
-				config.dwWant = 1;
-				config.dwBlock = 0;
-				OS.MoveMemory (pConfigs, config, GESTURECONFIG.sizeof);
-				OS.SetGestureConfig (handle, 0, 1, pConfigs, GESTURECONFIG.sizeof);
-				OS.HeapFree (hHeap, 0, pConfigs);
-			}
+			GESTURECONFIG config = new GESTURECONFIG();
+			config.dwID = OS.GID_ROTATE;
+			config.dwWant = 1;
+			config.dwBlock = 0;
+			OS.SetGestureConfig (handle, 0, 1, config, GESTURECONFIG.sizeof);
 		}
 	}
 }
@@ -975,13 +971,6 @@ void enableDrag (boolean enabled) {
 
 void maybeEnableDarkSystemTheme() {
 	maybeEnableDarkSystemTheme(handle);
-}
-
-void maybeEnableDarkSystemTheme(long handle) {
-	if (display.useDarkModeExplorerTheme) {
-		OS.AllowDarkModeForWindow(handle, true);
-		OS.SetWindowTheme(handle, Display.EXPLORER, null);
-	}
 }
 
 void enableWidget (boolean enabled) {
@@ -2998,7 +2987,7 @@ boolean sendGestureEvent (GESTUREINFO gi) {
 		case OS.GID_ZOOM:
 			type = SWT.Gesture;
 			event.detail = SWT.GESTURE_MAGNIFY;
-			int fingerDistance = OS.LODWORD (gi.ullArguments);
+			int fingerDistance = (int)gi.ullArguments;
 			if ((gi.dwFlags & OS.GF_BEGIN) != 0) {
 				event.detail = SWT.GESTURE_BEGIN;
 				display.magStartDistance = display.lastDistance = fingerDistance;
@@ -3033,7 +3022,7 @@ boolean sendGestureEvent (GESTUREINFO gi) {
 		case OS.GID_ROTATE:
 			type = SWT.Gesture;
 			event.detail = SWT.GESTURE_ROTATE;
-			double rotationInRadians = OS.GID_ROTATE_ANGLE_FROM_ARGUMENT (OS.LODWORD (gi.ullArguments));
+			double rotationInRadians = OS.GID_ROTATE_ANGLE_FROM_ARGUMENT (gi.ullArguments);
 			if ((gi.dwFlags & OS.GF_BEGIN) != 0) {
 				event.detail = SWT.GESTURE_BEGIN;
 				display.rotationAngle = rotationInRadians;
@@ -3084,8 +3073,8 @@ void sendTouchEvent (TOUCHINPUT touchInput []) {
 		if ((ti.dwFlags & OS.TOUCHEVENTF_UP) != 0) state = SWT.TOUCHSTATE_UP;
 		if ((ti.dwFlags & OS.TOUCHEVENTF_MOVE) != 0) state = SWT.TOUCHSTATE_MOVE;
 		boolean primary = (ti.dwFlags & OS.TOUCHEVENTF_PRIMARY) != 0;
-		int x = (int)OS.TOUCH_COORD_TO_PIXEL (ti.x);
-		int y = (int)OS.TOUCH_COORD_TO_PIXEL (ti.y);
+		int x = OS.TOUCH_COORD_TO_PIXEL (ti.x);
+		int y = OS.TOUCH_COORD_TO_PIXEL (ti.y);
 		touches [i] = new Touch (ti.dwID, inputSource, state, primary, x, y);
 	}
 	event.touches = touches;
@@ -3879,8 +3868,10 @@ public void setTextDirection(int textDirection) {
  */
 public void setToolTipText (String string) {
 	checkWidget ();
-	toolTipText = string;
-	setToolTipText (getShell (), string);
+	if (!Objects.equals(string, toolTipText)) {
+		toolTipText = string;
+		setToolTipText (getShell (), string);
+	}
 }
 
 void setToolTipText (Shell shell, String string) {
@@ -4577,9 +4568,12 @@ void unsubclass () {
  * to be processed before this method returns. If there
  * are no outstanding paint request, this method does
  * nothing.
- * <p>
- * Note: This method does not cause a redraw.
- * </p>
+ * <p>Note:</p>
+ * <ul>
+ * <li>This method does not cause a redraw.</li>
+ * <li>Some OS versions forcefully perform automatic deferred painting.
+ * This method does nothing in that case.</li>
+ * </ul>
  *
  * @exception SWTException <ul>
  *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>

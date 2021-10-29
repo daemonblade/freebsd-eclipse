@@ -19,6 +19,8 @@ import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.cairo.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class are used to print to a printer.
@@ -69,9 +71,14 @@ public final class Printer extends Device {
 	static boolean disablePrinting = OS.IsWin32 || System.getProperty("org.eclipse.swt.internal.gtk.disablePrinting") != null; //$NON-NLS-1$
 
 static void gtk_init() {
-	if (!GTK.gtk_init_check (new long [] {0}, null)) {
-		SWT.error (SWT.ERROR_NO_HANDLES, null, " [gtk_init_check() failed]");
+	boolean init;
+	if (GTK.GTK4) {
+		init = GTK4.gtk_init_check();
+	} else {
+		init = GTK3.gtk_init_check(new long[]{0}, null);
 	}
+
+	if (!init) SWT.error(SWT.ERROR_NO_HANDLES, null, " [gtk_init_check() failed]");
 }
 
 /**
@@ -89,13 +96,6 @@ public static PrinterData[] getPrinterList() {
 	gtk_init();
 	Callback printerCallback = new Callback(Printer.class, "GtkPrinterFunc_List", 2); //$NON-NLS-1$
 	GTK.gtk_enumerate_printers(printerCallback.getAddress(), 0, 0, true);
-	/*
-	* This call to gdk_threads_leave() is a temporary work around
-	* to avoid deadlocks when gdk_threads_init() is called by native
-	* code outside of SWT (i.e AWT, etc). It ensures that the current
-	* thread leaves the GTK lock acquired by the function above.
-	*/
-	if (!GTK.GTK4) GDK.gdk_threads_leave();
 	printerCallback.dispose ();
 	return printerList;
 }
@@ -135,13 +135,6 @@ public static PrinterData getDefaultPrinterData() {
 	gtk_init();
 	Callback printerCallback = new Callback(Printer.class, "GtkPrinterFunc_Default", 2); //$NON-NLS-1$
 	GTK.gtk_enumerate_printers(printerCallback.getAddress(), 0, 0, true);
-	/*
-	* This call to gdk_threads_leave() is a temporary work around
-	* to avoid deadlocks when gdk_threads_init() is called by native
-	* code outside of SWT (i.e AWT, etc). It ensures that the current
-	* thread leaves the GTK lock acquired by the function above.
-	*/
-	if (!GTK.GTK4) GDK.gdk_threads_leave();
 	printerCallback.dispose ();
 	return findData;
 }
@@ -160,13 +153,6 @@ static long gtkPrinterFromPrinterData(PrinterData data) {
 	findPrinter = 0;
 	findData = data;
 	GTK.gtk_enumerate_printers(printerCallback.getAddress(), 0, 0, true);
-	/*
-	* This call to gdk_threads_leave() is a temporary work around
-	* to avoid deadlocks when gdk_threads_init() is called by native
-	* code outside of SWT (i.e AWT, etc). It ensures that the current
-	* thread leaves the GTK lock acquired by the function above.
-	*/
-	if (!GTK.GTK4) GDK.gdk_threads_leave();
 	printerCallback.dispose ();
 	return findPrinter;
 }

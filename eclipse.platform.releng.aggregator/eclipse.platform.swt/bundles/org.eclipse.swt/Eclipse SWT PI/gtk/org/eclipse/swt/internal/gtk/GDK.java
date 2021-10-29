@@ -102,6 +102,7 @@ public class GDK extends OS {
 	public static final int GDK_GRAVITY_NORTH_WEST = 1;
 	public static final int GDK_Help = 0xFF6A;
 	public static final int GDK_HINT_MIN_SIZE = 1 << 1;
+	public static final int GDK_HINT_MAX_SIZE = 1 << 2;
 	public static final int GDK_Home = 0xff50;
 	public static final int GDK_INPUT_ONLY = 1;
 	public static final int GDK_INTERP_BILINEAR = 0x2;
@@ -172,7 +173,6 @@ public class GDK extends OS {
 	public static final int GDK_POINTER_MOTION_HINT_MASK = 0x8;
 	public static final int GDK_POINTER_MOTION_MASK = 0x4;
 	public static final int GDK_PROPERTY_NOTIFY = 16;
-	public static final int GDK_PROPERTY_CHANGE_MASK = 1 << 16;
 	public static final int GDK_Page_Down = 0xff56;
 	public static final int GDK_Page_Up = 0xff55;
 	public static final int GDK_Pause = 0xff13;
@@ -239,17 +239,7 @@ public class GDK extends OS {
 	/** sizeof(TYPE) for 32/64 bit support */
 	public static final native int GdkKeymapKey_sizeof();
 	public static final native int GdkRGBA_sizeof();
-	public static final native int GdkEvent_sizeof();
-	public static final native int GdkEventButton_sizeof();
-	public static final native int GdkEventCrossing_sizeof();
-	public static final native int GdkEventFocus_sizeof();
-	public static final native int GdkEventKey_sizeof();
-	public static final native int GdkEventMotion_sizeof();
-	public static final native int GdkEventWindowState_sizeof();
-	public static final native int GdkGeometry_sizeof();
 	public static final native int GdkRectangle_sizeof();
-	public static final native int GdkWindowAttr_sizeof();
-
 
 	/** Macros */
 	/** @param event cast=(GdkEvent *) */
@@ -309,16 +299,13 @@ public class GDK extends OS {
 	/* [GTK3 only, if-def'd in os.h] */
 	public static final native long gdk_atom_name(long atom);
 	/**
-	 * @param display cast=(GdkDisplay *)
-	 */
-	public static final native void gdk_display_beep(long display);
-	/**
 	 * @method flags=dynamic
 	 * @param window cast=(GdkWindow *)
 	 */
 	/* [GTK3 only, if-def'd in os.h; 3.22 deprecated, replaced] */
 	public static final native long gdk_cairo_create(long window);
 	/**
+	 * @method flags=dynamic
 	 * @param cr cast=(cairo_t *)
 	 * @param rect cast=(GdkRectangle *),flags=no_in
 	 */
@@ -349,11 +336,6 @@ public class GDK extends OS {
 	/* [GTK4 only, if-def'd in os.h] */
 	public static final native int gdk_surface_get_width(long surface);
 	/**
-	 * @param toplevel cast=(GdkToplevel *)
-	 */
-	/* [GTK4 only, if-def'd in os.h] */
-	public static final native int gdk_toplevel_get_state(long toplevel);
-	/**
 	 * @param window cast=(GdkWindow *)
 	 */
 	/* [GTK3 only, if-def'd in os.h] */
@@ -369,6 +351,18 @@ public class GDK extends OS {
 	/* [GTK4 only, if-def'd in os.h] */
 	public static final native int gdk_surface_get_height(long surface);
 	/**
+	 * @param surface cast=(GdkSurface *)
+	 * @param region cast=(cairo_region_t *)
+	 */
+	/* [GTK4 only, if-def'd in os.h] */
+	public static final native void gdk_surface_set_input_region(long surface, long region);
+	/**
+	 * @param surface cast=(GdkSurface *)
+	 * @param region cast=(cairo_region_t *)
+	 */
+	/* [GTK4 only, if-def'd in os.h] */
+	public static final native void gdk_surface_set_opaque_region(long surface, long region);
+	/**
 	 * @param cairo cast=(cairo_t *)
 	 * @param pixbuf cast=(const GdkPixbuf *)
 	 * @param pixbuf_x cast=(gdouble)
@@ -383,68 +377,40 @@ public class GDK extends OS {
 	 */
 	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gdk_cairo_set_source_window(long cairo, long window, int x, int y);
+
+
+	/* GdkCursor [GTK3 only] */
 	/**
 	 * @param display cast=(GdkDisplay *)
 	 * @param cursor_name cast=(const gchar *)
 	 */
-	/* [GTK3 only, if-def'd in os.h] */
 	public static final native long gdk_cursor_new_from_name(long display, String cursor_name);
-	/**
-	 * @param cursor_name cast=(const gchar *)
-	 * @param fallback cast=(GdkCursor *)
-	 */
-	/* [GTK4 only, if-def'd in os.h] */
-	public static final native long gdk_cursor_new_from_name(String cursor_name, long fallback);
 	/**
 	 * @param display cast=(GdkDisplay *)
 	 * @param pixbuf cast=(GdkPixbuf *)
 	 * @param x cast=(gint)
 	 * @param y cast=(gint)
 	 */
-	/* [GTK3 only, if-def'd in os.h] */
 	public static final native long gdk_cursor_new_from_pixbuf(long display, long pixbuf, int x, int y);
+
+	/* GdkCursor [GTK4 only] */
+	/**
+	 * @param cursor_name cast=(const gchar *)
+	 * @param fallback cast=(GdkCursor *)
+	 */
+	public static final native long gdk_cursor_new_from_name(String cursor_name, long fallback);
 	/**
 	 * @param texture cast=(GdkTexture *)
 	 * @param x cast=(gint)
 	 * @param y cast=(gint)
 	 * @param fallback cast=(GdkCursor *)
 	 */
-	/* [GTK4 only, if-def'd in os.h] */
 	public static final native long gdk_cursor_new_from_texture(long texture, int x, int y, long fallback);
 	/**
-	 * @param device cast=(GdkDevice *)
-	 * @param screen cast=(GdkScreen *)
-	 * @param x cast=(gint)
-	 * @param y cast=(gint)
-	 */
-	/* [GTK3 only, if-def'd in os.h] */
-	public static final native void gdk_device_warp(long device, long screen, int x, int y);
-	/**
-	 * @param device cast=(GdkDevice *)
-	 * @param x cast=(gint)
-	 * @param y cast=(gint)
-	 */
-	/* [GTK4 only, if-def'd in os.h] */
-	public static final native void gdk_device_warp(long device, int x, int y);
-	public static final native long gdk_display_get_default();
-	/**
-	 *  @param display cast=(GdkDisplay *)
-	 */
-	public static final native long gdk_display_get_default_group(long display);
-	/**
-	 *  @param display cast=(GdkDisplay *)
-	 */
-	/* [GTK4 only, if-def'd in os.h] */
-	public static final native long gdk_display_get_clipboard(long display);
-	/**
-	 *  @param display cast=(GdkDisplay *)
-	 */
-	/* [GTK4 only, if-def'd in os.h] */
-	public static final native long gdk_display_get_primary_clipboard(long display);
-	/**
 	 * @method flags=dynamic
+	 * @param display cast=(GdkDisplay *)
 	 */
-	public static final native long gdk_display_get_default_seat(long display);
+	public static final native long gdk_x11_display_get_default_group(long display);
 	/**
 	 *  @param window cast=(GdkWindow *)
 	 */
@@ -455,23 +421,7 @@ public class GDK extends OS {
 	 */
 	/* [GTK4 only, if-def'd in os.h] */
 	public static final native long gdk_surface_get_display(long surface);
-	/**
-	 * @param device cast=(GdkDevice *)
-	 * @param win_x cast=(gint *)
-	 * @param win_y cast=(gint *)
-	 */
-	/* [GTK3 only] */
-	public static final native long gdk_device_get_window_at_position(long device, int[] win_x, int[] win_y);
-	/**
-	 * @param device cast=(GdkDevice *)
-	 */
-	/* [GTK4 only] */
-	public static final native long gdk_device_get_surface_at_position(long device, double[] win_x, double[] win_y);
-	/**
-	 * @param display cast=(GdkDisplay *)
-	 */
-	/* [GTK3 only, if-def'd in os.h] */
-	public static final native boolean gdk_display_supports_cursor_color(long display);
+
 	/**
 	 * @method flags=dynamic
 	 */
@@ -558,8 +508,8 @@ public class GDK extends OS {
 	public static final native void gdk_event_unref(long event);
 	/**
 	 * @param event cast=(GdkEvent *)
-	 * @param px cast=(gdouble *)
-	 * @param py cast=(gdouble *)
+	 * @param px cast=(double *)
+	 * @param py cast=(double *)
 	 */
 	public static final native boolean gdk_event_get_position(long event, double[] px, double[] py);
 	/** @param event cast=(GdkEvent *) */
@@ -608,6 +558,7 @@ public class GDK extends OS {
 	 */
 	// TODO GTK4 function removed
 	public static final native void gdk_event_handler_set(long func, long data, long notify);
+	/* [GTK3 only, if-def'd in os.h] */
 	public static final native long gdk_event_new(int type);
 	/* [GTK3 only, if-def'd in os.h] */
 	public static final native long gdk_event_peek();
@@ -615,6 +566,7 @@ public class GDK extends OS {
 	 * @param event cast=(GdkEvent *)
 	 * @param device cast=(GdkDevice *)
 	 */
+	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gdk_event_set_device(long event, long device);
 	/** @param event cast=(GdkEvent *) */
 	/* [GTK3 only, if-def'd in os.h] */
@@ -635,15 +587,7 @@ public class GDK extends OS {
 	 */
 	/* [GTK3 only] */
 	public static final native long gdk_keymap_get_for_display(long display);
-	/**
-	 * @method flags=dynamic
-	 * @param display cast=(GdkDisplay *)
-	 * @param keyval cast=(guint)
-	 * @param keys cast=(GdkKeymapKey**)
-	 * @param n_keys cast=(gint*)
-	 */
-	/* [GTK4 only] */
-	public static final native boolean gdk_display_map_keyval(long display, int keyval, long[] keys, int[] n_keys);
+
 	/**
 	 * @method flags=dynamic
 	 * @param keymap cast=(GdkKeymap *)
@@ -680,6 +624,7 @@ public class GDK extends OS {
 	 * @param index_ranges cast=(gint *)
 	 */
 	public static final native long gdk_pango_layout_get_clip_region(long layout, int x_origin, int y_origin, int[] index_ranges, int n_ranges);
+
 	/** @param animation cast=(GdkPixbufAnimation *) */
 	public static final native boolean gdk_pixbuf_animation_is_static_image(long animation);
 	/** @param iter cast=(GdkPixbufAnimationIter *) */
@@ -687,11 +632,13 @@ public class GDK extends OS {
 	/** @param iter cast=(GdkPixbufAnimationIter *) */
 	public static final native long gdk_pixbuf_animation_iter_get_pixbuf(long iter);
 	/**
+	 * @method flags=ignore_deprecations
 	 * @param iter cast=(GdkPixbufAnimationIter *)
 	 * @param current_time cast=(const GTimeVal *)
 	 */
 	public static final native boolean gdk_pixbuf_animation_iter_advance(long iter, long current_time);
 	/**
+	 * @method flags=ignore_deprecations
 	 * @param animation cast=(GdkPixbufAnimation *)
 	 * @param start_time cast=(const GTimeVal *)
 	 */
@@ -705,11 +652,6 @@ public class GDK extends OS {
 	public static final native void gdk_pixbuf_copy_area(long src_pixbuf, int src_x, int src_y, int width, int height, long dest_pixbuf, int dest_x, int dest_y);
 	/** @param pixbuf cast=(const GdkPixbuf *) */
 	public static final native boolean gdk_pixbuf_get_has_alpha(long pixbuf);
-	/**
-	 * @param window cast=(GdkWindow *)
-	 */
-	/* [GTK3 only, if-def'd in os.h] */
-	public static final native long gdk_pixbuf_get_from_window(long window, int x, int y, int width, int height);
 	/** @param pixbuf cast=(const GdkPixbuf *) */
 	public static final native int gdk_pixbuf_get_height(long pixbuf);
 	/** @param pixbuf cast=(const GdkPixbuf *) */
@@ -778,15 +720,63 @@ public class GDK extends OS {
 	 * @param interp_type cast=(GdkInterpType)
 	 */
 	public static final native long gdk_pixbuf_scale_simple(long src, int dest_width, int dest_height, int interp_type);
+
+	/* GdkPixbuf Interaction [GTK3 only] */
 	/**
+	 * @method flags=dynamic
+	 * @param window cast=(GdkWindow *)
+	 */
+	public static final native long gdk_pixbuf_get_from_window(long window, int x, int y, int width, int height);
+
+	/* GdkPixbuf Interaction [GTK4 only] */
+	/**
+	 * @method flags=dynamic
+	 * @param texture cast=(GdkTexture *)
+	 */
+	public static final native long gdk_pixbuf_get_from_texture(long texture);
+	/**
+	 * @method flags=dynamic
+	 * @param surface cast=(cairo_surface_t *)
+	 */
+	public static final native long gdk_pixbuf_get_from_surface(long surface, int src_x, int src_y, int width, int height);
+
+
+	/* GdkDevice */
+	/**@param device cast=(GdkDevice *) */
+	public static final native long gdk_device_get_seat(long device);
+
+	/* GdkDevice [GTK3 only] */
+	/**
+	 * @method flags=dynamic
 	 * @param device cast=(GdkDevice *)
 	 */
 	public static final native long gdk_device_get_associated_device(long device);
 	/**
 	 * @method flags=dynamic
 	 * @param device cast=(GdkDevice *)
+	 * @param screen cast=(GdkScreen *)
+	 * @param x cast=(gint)
+	 * @param y cast=(gint)
 	 */
-	public static final native long gdk_device_get_seat(long device);
+	public static final native void gdk_device_warp(long device, long screen, int x, int y);
+	/**
+	 * @method flags=dynamic
+	 * @param device cast=(GdkDevice *)
+	 * @param win_x cast=(gint *)
+	 * @param win_y cast=(gint *)
+	 */
+	public static final native long gdk_device_get_window_at_position(long device, int[] win_x, int[] win_y);
+
+	/* GdkDevice [GTK4 only] */
+	/**
+	 * @method flags=dynamic
+	 * @param device cast=(GdkDevice *)
+	 * @param win_x cast=(double *)
+	 * @param win_y cast=(double *)
+	 */
+	public static final native long gdk_device_get_surface_at_position(long device, double[] win_x, double[] win_y);
+
+
 	/**
 	 * @param window cast=(GdkWindow *)
 	 * @param property cast=(GdkAtom)
@@ -815,53 +805,57 @@ public class GDK extends OS {
 	 * @param property cast=(const gchar *)
 	 */
 	public static final native long gdk_rgba_parse(GdkRGBA rgba, byte[] property);
-	/* [GTK3 only, if-def'd in os.h] */
-	public static final native long gdk_screen_get_default();
-	/**
-	 * @param screen cast=(GdkScreen *)
-	 */
-	/* [GTK3 only, if-def'd in os.h] */
-	public static final native double gdk_screen_get_resolution(long screen);
 	/**
 	 * @param clipboard cast=(GdkClipboard *)
 	 * @param provider cast=(GdkContentProvider *)
 	 */
 	/* [GTK4 only, if-def'd in os.h] */
 	public static final native long gdk_clipboard_set_content(long clipboard, long provider);
+
+
+	/* GdkDisplay */
+	/** @param display cast=(GdkDisplay *) */
+	public static final native void gdk_display_beep(long display);
 	/**
-	 * @method flags=dynamic
-	 * @param screen cast=(GdkScreen *)
-	 * @param monitor_num cast=(gint)
+	 * @param display cast=(GdkDisplay *)
+	 * @param event cast=(GdkEvent *)
 	 */
-	/* [GTK3 only, if-def'd in os.h; 3.22 deprecated, replaced] */
-	public static final native int gdk_screen_get_monitor_scale_factor(long screen, int monitor_num);
+	public static final native void gdk_display_put_event(long display, long event);
+	public static final native long gdk_display_get_default();
+	/** @method flags=dynamic */
+	public static final native long gdk_display_get_default_seat(long display);
+
+	/* GdkDisplay [GTK3 only] */
 	/**
 	 * @method flags=dynamic
+	 * @param display cast=(GdkDisplay *)
 	 */
-	public static final native int gdk_monitor_get_scale_factor(long window);
+	public static final native int gdk_display_get_n_monitors(long display);
 	/**
 	 * @method flags=dynamic
-	 * @param screen cast=(GdkScreen *)
-	 * @param x cast=(gint)
-	 * @param y cast=(gint)
+	 * @param display cast=(GdkDisplay *)
 	 */
-	/* [GTK3 only, if-def'd in os.h; 3.22 deprecated, replaced] */
-	public static final native int gdk_screen_get_monitor_at_point(long screen, int x, int y);
+	public static final native long gdk_display_get_primary_monitor(long display);
 	/**
 	 * @method flags=dynamic
-	 * @param screen cast=(GdkScreen *)
-	 * @param window cast=(GdkWindow *)
+	 * @param display cast=(GdkDisplay *)
 	 */
-	/* [GTK3 only, if-def'd in os.h; 3.22 deprecated, replaced] */
-	public static final native int gdk_screen_get_monitor_at_window(long screen, long window);
+	public static final native long gdk_display_get_monitor_at_point(long display, int x, int y);
 	/**
 	 * @method flags=dynamic
+	 * @param display cast=(GdkDisplay *)
 	 */
 	public static final native long gdk_display_get_monitor(long display, int monitor_num);
 	/**
 	 * @method flags=dynamic
+	 * @param display cast=(GdkDisplay *)
 	 */
-	public static final native long gdk_display_get_monitor_at_point(long display, int x, int y);
+	public static final native boolean gdk_display_supports_cursor_color(long display);
+	/**
+	 * @method flags=dynamic
+	 * @param display cast=(GdkDisplay *)
+	 */
+	public static final native long gdk_display_get_default_group(long display);
 	/**
 	 * @method flags=dynamic
 	 * @param display cast=(GdkDisplay *)
@@ -869,82 +863,122 @@ public class GDK extends OS {
 	 */
 	/* [GTK3 only, if-def'd in os.h] */
 	public static final native long gdk_display_get_monitor_at_window(long display, long window);
+
+	/* GdkDisplay [GTK4 only] */
+	/**
+	 * @method flags=dynamic
+	 * @param display cast=(GdkDisplay *)
+	 */
+	public static final native long gdk_display_get_monitors(long display);
+	/**
+	 * @method flags=dynamic
+	 * @param display cast=(GdkDisplay *)
+	 * @param keyval cast=(guint)
+	 * @param keys cast=(GdkKeymapKey**)
+	 * @param n_keys cast=(gint*)
+	 */
+	public static final native boolean gdk_display_map_keyval(long display, int keyval, long[] keys, int[] n_keys);
+	/**
+	 * @method flags=dynamic
+	 * @param display cast=(GdkDisplay *)
+	 */
+	public static final native boolean gdk_display_is_composited(long display);
+	/**
+	 * @method flags=dynamic
+	 * @param display cast=(GdkDisplay *)
+	 */
+	public static final native long gdk_display_get_clipboard(long display);
+	/**
+	 * @method flags=dynamic
+	 * @param display cast=(GdkDisplay *)
+	 */
+	public static final native long gdk_display_get_primary_clipboard(long display);
 	/**
 	 * @param display cast=(GdkDisplay *)
 	 * @param surface cast=(GdkSurface *)
 	 */
 	/* [GTK4 only, if-def'd in os.h] */
 	public static final native long gdk_display_get_monitor_at_surface(long display, long surface);
-	/**
-	 * @method flags=dynamic
-	 */
-	public static final native int gdk_display_get_n_monitors(long display);
-	/**
-	 * @method flags=dynamic
-	 */
-	public static final native long gdk_display_get_primary_monitor(long display);
-	/**
-	 * @param display cast=(GdkDisplay *)
-	 */
-	/* [GTK4 only, if-def'd in os.h] */
-	public static final native boolean gdk_display_is_composited(long display);
-	/** @param display cast=(GdkDisplay *) */
-	public static final native long gdk_display_peek_event(long display);
-	/**
-	 * @param display cast=(GdkDisplay *)
-	 * @param event cast=(GdkEvent *)
-	 */
-	public static final native void gdk_display_put_event(long display, long event);
-	/**
-	 * @method flags=dynamic
-	 * @param screen cast=(GdkScreen *)
-	 * @param dest flags=no_in
-	 */
-	/* [GTK3 only, if-def'd in os.h; 3.22 deprecated, replaced] */
-	public static final native void gdk_screen_get_monitor_geometry(long screen, int monitor_num, GdkRectangle dest);
+
+
+	/* GdkMonitor */
+	/** @method flags=dynamic */
+	public static final native int gdk_monitor_get_scale_factor(long window);
 	/**
 	 * @method flags=dynamic
 	 * @param dest flags=no_in
 	 */
 	public static final native void gdk_monitor_get_geometry(long monitor, GdkRectangle dest);
+
+	/* GdkMonitor [GTK3 only] */
 	/**
 	 * @method flags=dynamic
 	 * @param dest flags=no_in
 	 */
 	public static final native void gdk_monitor_get_workarea(long monitor, GdkRectangle dest);
+
+
+	/* GdkScreen [GTK3 only] */
+	/* [GTK3 only, if-def'd in os.h] */
+	public static final native long gdk_screen_get_default();
+	/** @param screen cast=(GdkScreen *) */
+	/* [GTK3 only, if-def'd in os.h] */
+	public static final native double gdk_screen_get_resolution(long screen);
+	/** @param screen cast=(GdkScreen *) */
+	/* [GTK3 only, if-def'd in os.h] */
+	public static final native boolean gdk_screen_is_composited(long screen);
+	/** @param screen cast=(GdkScreen *) */
+	/* [GTK3 only, if-def'd in os.h] */
+	public static final native long gdk_screen_get_system_visual(long screen);
+
+	/* GdkScreen [GTK3 only, if-def'd in os.h; 3.22 deprecated, replaced] */
 	/**
 	 * @method flags=dynamic
 	 * @param screen cast=(GdkScreen *)
 	 * @param dest flags=no_in
 	 */
-	/* [GTK3 only, if-def'd in os.h; 3.22 deprecated, replaced] */
+	public static final native void gdk_screen_get_monitor_geometry(long screen, int monitor_num, GdkRectangle dest);
+	/**
+	 * @method flags=dynamic
+	 * @param screen cast=(GdkScreen *)
+	 * @param dest flags=no_in
+	 */
 	public static final native void gdk_screen_get_monitor_workarea(long screen, int monitor_num, GdkRectangle dest);
 	/**
 	 * @method flags=dynamic
 	 * @param screen cast=(GdkScreen *)
 	 */
-	/* [GTK3 only, if-def'd in os.h; 3.22 deprecated, replaced] */
 	public static final native int gdk_screen_get_n_monitors(long screen);
 	/**
 	 * @method flags=dynamic
 	 * @param screen cast=(GdkScreen *)
 	 */
-	/* [GTK3 only, if-def'd in os.h; 3.22 deprecated, replaced] */
 	public static final native int gdk_screen_get_primary_monitor(long screen);
 	/**
+	 * @method flags=dynamic
 	 * @param screen cast=(GdkScreen *)
+	 * @param monitor_num cast=(gint)
 	 */
-	/* [GTK3 only, if-def'd in os.h] */
-	public static final native long gdk_screen_get_system_visual(long screen);
+	public static final native int gdk_screen_get_monitor_scale_factor(long screen, int monitor_num);
+	/**
+	 * @method flags=dynamic
+	 * @param screen cast=(GdkScreen *)
+	 * @param x cast=(gint)
+	 * @param y cast=(gint)
+	 */
+	public static final native int gdk_screen_get_monitor_at_point(long screen, int x, int y);
+	/**
+	 * @method flags=dynamic
+	 * @param screen cast=(GdkScreen *)
+	 * @param window cast=(GdkWindow *)
+	 */
+	public static final native int gdk_screen_get_monitor_at_window(long screen, long window);
+
+
 	/**
 	 * @method flags=dynamic
 	 */
 	public static final native int gdk_screen_height();
-	/**
-	 * @param screen cast=(GdkScreen *)
-	 */
-	/* [GTK3 only, if-def'd in os.h] */
-	public static final native boolean gdk_screen_is_composited(long screen);
 	/**
 	 * @method flags=dynamic
 	 */
@@ -991,7 +1025,11 @@ public class GDK extends OS {
 	 * @param length cast=(gint *)
 	 */
 	public static final native boolean gdk_x11_display_utf8_to_compound_text(long display, byte[] str, long [] encoding, int[] format, long [] ctext, int[] length);
-	/** @param str cast=(const gchar *) */
+	/**
+	 * @method flags=dynamic
+	 * @param str cast=(const gchar *)
+	 */
+	/* [GTK3 only] */
 	public static final native long gdk_utf8_to_string_target(byte[] str);
 	/**
 	 * @param display cast=(GdkDisplay *)
@@ -1000,11 +1038,38 @@ public class GDK extends OS {
 	 * @param list cast=(gchar ***)
 	 */
 	public static final native int gdk_text_property_to_utf8_list_for_display(long display, long encoding, int format, long text, int length,  long [] list);
-	/**
-	 * @param pixbuf cast=(GdkPixbuf *)
-	 */
-	/* [GTK4 only, if-def'd in os.h] */
+
+
+	/* GdkTexture [GTK4 only] */
+	/** @param pixbuf cast=(GdkPixbuf *) */
 	public static final native long gdk_texture_new_for_pixbuf(long pixbuf);
+	/**
+	 * @param file cast=(GFile *)
+	 * @param error cast=(GError **)
+	 */
+	public static final native long gdk_texture_new_from_file(long file, long error);
+	/**
+	 * @method flags=ignore_deprecations
+	 * @param function cast=(GSourceFunc)
+	 * @param data cast=(gpointer)
+	 */
+	/* [GTK3 only, if-def'd in os.h] */
+	public static final native int gdk_threads_add_idle(long function, long data);
+	/**
+	 * @method flags=ignore_deprecations
+	 * @param function cast=(GSourceFunc)
+	 * @param data cast=(gpointer)
+	 */
+	/* [GTK3 only, if-def'd in os.h] */
+	public static final native int gdk_threads_add_timeout (int interval, long function, long data);
+	/** @method flags=ignore_deprecations */
+	/* [GTK3 only, if-def'd in os.h] */
+	public static final native void gdk_threads_enter ();
+	/** @method flags=ignore_deprecations */
+	/* [GTK3 only, if-def'd in os.h] */
+	public static final native void gdk_threads_init ();
+	/** @method flags=ignore_deprecations */
+	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gdk_threads_leave ();
 	public static final native  int gdk_unicode_to_keyval(int wc);
 	/**
@@ -1039,9 +1104,6 @@ public class GDK extends OS {
 	/** @param window cast=(GdkWindow *) */
 	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gdk_window_focus(long window, int timestamp);
-	/** @param surface cast=(GdkToplevel *) */
-	/* [GTK4 only, if-def'd in os.h] */
-	public static final native void gdk_toplevel_focus(long surface, int timestamp);
 	/**
 	 * @param window cast=(GdkWindow *)
 	 * @param rect cast=(GdkRectangle *),flags=no_in
@@ -1055,13 +1117,6 @@ public class GDK extends OS {
 	 */
 	/* [GTK3 only, if-def'd in os.h] */
 	public static final native int gdk_window_get_origin(long window, int[] x, int[] y);
-	/**
-	 * @param surface cast=(GdkSurface *)
-	 * @param x cast=(gint *)
-	 * @param y cast=(gint *)
-	 */
-	/* [GTK4 only, if-def'd in os.h] */
-	public static final native int gdk_surface_get_origin(long surface, int[] x, int[] y);
 	/**
 	 * @param window cast=(GdkWindow *)
 	 * @param device cast=(GdkDevice *)
@@ -1123,25 +1178,17 @@ public class GDK extends OS {
 	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gdk_window_move_resize(long window, int x, int y, int width, int height);
 	/**
-	 * @param parent cast=(GdkWindow *)
-	 * @param attributes flags=no_out
-	 */
-	/* [GTK3 only, if-def'd in os.h] */
-	public static final native long gdk_window_new(long parent, GdkWindowAttr attributes, int attributes_mask);
-	/**
+	 * @method flags=dynamic
 	 * @param display cast=(GdkDisplay *)
 	 */
 	/* [GTK4 only, if-def'd in os.h] */
-	public static final native long gdk_surface_new_toplevel(long display, int width, int height);
+	public static final native long gdk_surface_new_toplevel(long display);
 	/** @param parent cast=(GdkSurface *) */
 	/* [GTK4 only, if-def'd in os.h] */
 	public static final native long gdk_surface_new_popup(long parent, boolean autohide);
 	/** @param window cast=(GdkWindow *) */
 	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gdk_window_lower(long window);
-	/** @param toplevel cast=(GdkToplevel *) */
-	/* [GTK4 only, if-def'd in os.h] */
-	public static final native boolean gdk_toplevel_lower(long toplevel);
 	/** @param window cast=(GdkWindow *) */
 	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gdk_window_raise(long window);
@@ -1163,6 +1210,7 @@ public class GDK extends OS {
 	/* [GTK3 only, if-def'd in os.h] */
 	public static final native void gdk_window_restack(long window, long sibling, boolean above);
 	/**
+	 * @method flags=ignore_deprecations
 	 * @param window cast=(GdkWindow *)
 	 * @param pattern cast=(cairo_pattern_t *)
 	 */

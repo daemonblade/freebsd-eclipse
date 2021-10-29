@@ -18,8 +18,11 @@ import java.util.*;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.events.*;
+import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * This class is the abstract superclass of all user interface objects.
@@ -237,7 +240,9 @@ public abstract class Widget {
 	static final int NOTIFY_STATE = 102;
 	static final int SIZE_ALLOCATE_GTK4 = 103;
 	static final int DPI_CHANGED = 104;
-	static final int LAST_SIGNAL = 105;
+	static final int NOTIFY_DEFAULT_HEIGHT = 105;
+	static final int NOTIFY_DEFAULT_WIDTH = 106;
+	static final int LAST_SIGNAL = 107;
 
 	static final String IS_ACTIVE = "org.eclipse.swt.internal.control.isactive"; //$NON-NLS-1$
 	static final String KEY_CHECK_SUBWINDOW = "org.eclipse.swt.internal.control.checksubwindow"; //$NON-NLS-1$
@@ -491,7 +496,11 @@ void destroyWidget () {
 	long topHandle = topHandle ();
 	releaseHandle ();
 	if (topHandle != 0 && (state & HANDLE) != 0) {
-		GTK.gtk_widget_destroy (topHandle);
+		if (GTK.GTK4) {
+			GTK.gtk_widget_unparent(topHandle);
+		} else {
+			GTK3.gtk_widget_destroy(topHandle);
+		}
 	}
 }
 
@@ -709,13 +718,13 @@ long gtk_activate (long widget) {
 	return 0;
 }
 
-void gtk_adjustment_get (long hAdjustment, GtkAdjustment adjustment) {
-	adjustment.lower = GTK.gtk_adjustment_get_lower (hAdjustment);
-	adjustment.upper = GTK.gtk_adjustment_get_upper (hAdjustment);
-	adjustment.page_increment = GTK.gtk_adjustment_get_page_increment (hAdjustment);
-	adjustment.step_increment = GTK.gtk_adjustment_get_step_increment (hAdjustment);
-	adjustment.page_size = GTK.gtk_adjustment_get_page_size (hAdjustment);
-	adjustment.value = GTK.gtk_adjustment_get_value (hAdjustment);
+void gtk_adjustment_get(long adjustmentHandle, GtkAdjustment adjustment) {
+	adjustment.lower = GTK.gtk_adjustment_get_lower(adjustmentHandle);
+	adjustment.upper = GTK.gtk_adjustment_get_upper(adjustmentHandle);
+	adjustment.page_increment = GTK.gtk_adjustment_get_page_increment(adjustmentHandle);
+	adjustment.step_increment = GTK.gtk_adjustment_get_step_increment(adjustmentHandle);
+	adjustment.page_size = GTK.gtk_adjustment_get_page_size(adjustmentHandle);
+	adjustment.value = GTK.gtk_adjustment_get_value(adjustmentHandle);
 }
 
 long gtk_button_press_event (long widget, long event) {
@@ -726,12 +735,90 @@ long gtk_button_release_event (long widget, long event) {
 	return 0;
 }
 
-long gtk_gesture_press_event (long gesture, int n_press, double x, double y, long event) {
-	return 0;
+/**
+ * @param gesture the corresponding controller responsible for capturing the event
+ * @param n_press how many touch/button presses happened with this one
+ * @param x the x coordinate, in widget allocation coordinates
+ * @param y the y coordinate, in widget allocation coordinates
+ * @param event the GdkEvent captured
+ */
+void gtk_gesture_press_event(long gesture, int n_press, double x, double y, long event) {}
+
+/**
+ * @param gesture the corresponding controller responsible for capturing the event
+ * @param n_press how many touch/button presses happened with this one
+ * @param x the x coordinate, in widget allocation coordinates
+ * @param y the y coordinate, in widget allocation coordinates
+ * @param event the GdkEvent captured
+ */
+void gtk_gesture_release_event(long gesture, int n_press, double x, double y, long event) {}
+
+/**
+ * @param controller the corresponding controller responsible for capturing the event
+ * @param x the x coordinate
+ * @param y the y coordinate
+ * @param event the GdkEvent captured
+ */
+void gtk4_motion_event(long controller, double x, double y, long event) {}
+
+/**
+ * @param controller the corresponding controller responsible for capturing the event
+ * @param keyval the pressed key
+ * @param keycode raw code of the pressed key
+ * @param state the bitmask, representing the state of the modifier keys and pointer buttons
+ * @param event the GdkEvent captured
+ * @return TRUE if the event has been fully/properly handled, otherwise FALSE
+ */
+boolean gtk4_key_press_event(long controller, int keyval, int keycode, int state, long event) {
+	return !sendKeyEvent(SWT.KeyDown, event);
 }
 
-long gtk_gesture_release_event (long gesture, int n_press, double x, double y, long event) {
-	return 0;
+/**
+ * @param controller the corresponding controller responsible for capturing the event
+ * @param keyval the released key
+ * @param keycode raw code of the released key
+ * @param state the bitmask, representing the state of the modifier keys and pointer buttons
+ * @param event the GdkEvent captured
+ */
+void gtk4_key_release_event(long controller, int keyval, int keycode, int state, long event) {
+	sendKeyEvent(SWT.KeyUp, event);
+}
+
+/**
+ * @param controller the corresponding controller responsible for capturing the event
+ * @param event the GdkEvent captured
+ */
+void gtk4_focus_enter_event(long controller, long event) {}
+
+/**
+ * @param controller the corresponding controller responsible for capturing the event
+ * @param event the GdkEvent captured
+ */
+void gtk4_focus_leave_event(long controller, long event) {}
+
+/**
+ * @param controller the corresponding controller responsible for capturing the event
+ * @param x x coordinate of pointer location
+ * @param y y coordinate of pointer location
+ * @param event the GdkEvent captured
+ */
+void gtk4_enter_event(long controller, double x, double y, long event) {}
+
+/**
+ * @param controller the corresponding controller responsible for capturing the event
+ * @param event the GdkEvent captured
+ */
+void gtk4_leave_event(long controller, long event) {}
+
+/**
+ * @param controller the corresponding controller responsible for capturing the event
+ * @param dx x delta
+ * @param dy y delta
+ * @param event the GdkEvent captured
+ * @return TRUE if the scroll event was handled, FALSE otherwise
+ */
+boolean gtk4_scroll_event(long controller, double dx, double dy, long event) {
+	return false;
 }
 
 long gtk_changed (long widget) {
@@ -786,10 +873,6 @@ long gtk_enter_notify_event (long widget, long event) {
 	return 0;
 }
 
-long gtk_event (long widget, long event) {
-	return 0;
-}
-
 long gtk_event_after (long widget, long event) {
 	return 0;
 }
@@ -801,6 +884,8 @@ long gtk_expand_collapse_cursor_row (long widget, long logical, long expand, lon
 long gtk_draw (long widget, long cairo) {
 	return 0;
 }
+
+void gtk4_draw(long widget, long cairo, Rectangle bounds) {}
 
 long gtk_focus (long widget, long event) {
 	return 0;
@@ -950,7 +1035,7 @@ long gtk_show (long widget) {
 	return 0;
 }
 
-long gtk_show_help (long widget, long helpType) {
+long gtk3_show_help (long widget, long helpType) {
 	return 0;
 }
 
@@ -970,7 +1055,7 @@ long gtk_style_updated (long widget) {
 	return 0;
 }
 
-long gtk_switch_page (long widget, long page, long page_num) {
+long gtk_switch_page (long notebook, long page, int page_num) {
 	return 0;
 }
 
@@ -1018,7 +1103,7 @@ long gtk_unrealize (long widget) {
 	return 0;
 }
 
-long gtk_value_changed (long adjustment) {
+long gtk_value_changed(long range) {
 	return 0;
 }
 
@@ -1239,22 +1324,32 @@ void register () {
 }
 
 void release (boolean destroy) {
-	if ((state & DISPOSE_SENT) == 0) {
-		state |= DISPOSE_SENT;
-		sendEvent (SWT.Dispose);
-	}
-	if ((state & DISPOSED) == 0) {
-		releaseChildren (destroy);
-	}
-	if ((state & RELEASED) == 0) {
-		state |= RELEASED;
-		if (destroy) {
-			releaseParent ();
-			releaseWidget ();
-			destroyWidget ();
-		} else {
-			releaseWidget ();
-			releaseHandle ();
+	try (ExceptionStash exceptions = new ExceptionStash ()) {
+		if ((state & DISPOSE_SENT) == 0) {
+			state |= DISPOSE_SENT;
+			try {
+				sendEvent (SWT.Dispose);
+			} catch (Error | RuntimeException ex) {
+				exceptions.stash (ex);
+			}
+		}
+		if ((state & DISPOSED) == 0) {
+			try {
+				releaseChildren (destroy);
+			} catch (Error | RuntimeException ex) {
+				exceptions.stash (ex);
+			}
+		}
+		if ((state & RELEASED) == 0) {
+			state |= RELEASED;
+			if (destroy) {
+				releaseParent ();
+				releaseWidget ();
+				destroyWidget ();
+			} else {
+				releaseWidget ();
+				releaseHandle ();
+			}
 		}
 	}
 }
@@ -1463,7 +1558,7 @@ boolean sendKeyEvent (int type, long event) {
 		/* TODO: GTK4 no access to key event string */
 	} else {
 		GdkEventKey gdkEvent = new GdkEventKey ();
-		OS.memmove(gdkEvent, event, GdkEventKey.sizeof);
+		GTK3.memmove(gdkEvent, event, GdkEventKey.sizeof);
 		length = gdkEvent.length;
 		string = gdkEvent.string;
 	}
@@ -1494,7 +1589,7 @@ char [] sendIMKeyEvent (int type, long event, char [] chars) {
 	int index = 0, count = 0, state = 0;
 	long ptr = 0;
 	if (event == 0) {
-		ptr = GTK.gtk_get_current_event ();
+		ptr = GTK3.gtk_get_current_event ();
 		if (ptr != 0) {
 			int eventType = GDK.gdk_event_get_event_type(ptr);
 			eventType = Control.fixGdkEventTypeValues(eventType);
@@ -1515,7 +1610,7 @@ char [] sendIMKeyEvent (int type, long event, char [] chars) {
 			}
 		} else {
 			int [] buffer = new int [1];
-			GTK.gtk_get_current_event_state (buffer);
+			GTK3.gtk_get_current_event_state (buffer);
 			state = buffer [0];
 		}
 	} else {
@@ -1563,7 +1658,7 @@ void sendSelectionEvent (int eventType, Event event, boolean send) {
 		return;
 	}
 	if (event == null) event = new Event ();
-	long ptr = GTK.gtk_get_current_event ();
+	long ptr = GTK.GTK4 ? 0 : GTK3.gtk_get_current_event ();
 	if (ptr != 0) {
 		int currentEventType = GDK.gdk_event_get_event_type(ptr);
 		currentEventType = Control.fixGdkEventTypeValues(currentEventType);
@@ -1715,19 +1810,83 @@ public void setData (String key, Object value) {
 		if (context != 0 && provider != 0) {
 			GTK.gtk_style_context_add_provider (context, provider, GTK.GTK_STYLE_PROVIDER_PRIORITY_USER);
 			if (GTK.GTK4) {
-				GTK.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs ((String) value, true), -1);
+				GTK4.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs ((String) value, true), -1);
 			} else {
-				GTK.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs ((String) value, true), -1, null);
+				GTK3.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs ((String) value, true), -1, null);
 			}
 			OS.g_object_unref (provider);
 		}
 	}
 }
 
-void setFontDescription (long widget, long font) {
-	GTK.gtk_widget_override_font (widget, font);
-	long context = GTK.gtk_widget_get_style_context (widget);
-	GTK.gtk_style_context_invalidate (context);
+/**
+ * @param fontDescription Font description in the form of
+ *                        <code>PangoFontDescription*</code>. This pointer
+ *                        will never be used by GTK after calling this
+ *                        function, so it's safe to free it as soon as the
+ *                        function completes.
+ */
+void setFontDescription(long widget, long fontDescription) {
+	if (GTK.GTK4) {
+		long styleContext = GTK.gtk_widget_get_style_context(widget);
+		long provider = GTK.gtk_css_provider_new();
+		GTK.gtk_style_context_add_provider(styleContext, provider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+		OS.g_object_unref(provider);
+
+		String css = convertPangoFontDescriptionToCss(fontDescription);
+		GTK4.gtk_css_provider_load_from_data(provider, Converter.javaStringToCString(css), -1);
+	} else {
+		// gtk_widget_override_font() copies the fields from 'fontDescription'
+		// and does not remember the pointer passed to it.
+		GTK3.gtk_widget_override_font(widget, fontDescription);
+		long context = GTK.gtk_widget_get_style_context(widget);
+		GTK3.gtk_style_context_invalidate(context);
+	}
+}
+
+String convertPangoFontDescriptionToCss(long fontDescription) {
+	String css = "* { ";
+	int fontMask = OS.pango_font_description_get_set_fields(fontDescription);
+
+	if ((fontMask & OS.PANGO_FONT_MASK_FAMILY) != 0) {
+		long fontFamily = OS.pango_font_description_get_family(fontDescription);
+		css += "font-family: \"" + Converter.cCharPtrToJavaString(fontFamily, false) + "\";";
+	}
+
+	if ((fontMask & OS.PANGO_FONT_MASK_WEIGHT) != 0) {
+		int fontWeight = OS.pango_font_description_get_weight(fontDescription);
+
+		String weightString = fontWeight < OS.PANGO_WEIGHT_BOLD ? "normal" : "bold";
+		css += "font-weight: " + weightString + ";";
+	}
+
+	if ((fontMask & OS.PANGO_FONT_MASK_STYLE) != 0) {
+		int fontStyle = OS.pango_font_description_get_style(fontDescription);
+
+		String styleString;
+		switch (fontStyle) {
+			case OS.PANGO_STYLE_NORMAL:
+				styleString = "normal";
+				break;
+			case OS.PANGO_STYLE_ITALIC:
+				styleString = "italic";
+				break;
+			default:
+				styleString = "";
+				break;
+		}
+
+		css += "font-style: " + styleString + ";";
+	}
+
+	if ((fontMask & OS.PANGO_FONT_MASK_SIZE) != 0) {
+		int fontSize = OS.pango_font_description_get_size(fontDescription);
+		css += "font-size: " + fontSize / OS.PANGO_SCALE + "pt;";
+	}
+
+	css += " } ";
+
+	return css;
 }
 
 void setButtonState (Event event, int eventButton) {
@@ -1770,7 +1929,7 @@ boolean setKeyState (Event javaEvent, long event) {
 		group = GDK.gdk_key_event_get_layout(event);
 	} else {
 		GdkEventKey gdkEvent = new GdkEventKey ();
-		OS.memmove(gdkEvent, event, GdkEventKey.sizeof);
+		GTK3.memmove(gdkEvent, event, GdkEventKey.sizeof);
 		length = gdkEvent.length;
 		string = gdkEvent.string;
 		group = gdkEvent.group;
@@ -1810,13 +1969,13 @@ boolean setKeyState (Event javaEvent, long event) {
 				short [] keyCode = new short [1];
 				if (GTK.GTK4) {
 					keyCode[0] = (short) GDK.gdk_key_event_get_keycode(event);
+					javaEvent.keyCode = keyCode[0];
 				} else {
 					GDK.gdk_event_get_keycode(event, keyCode);
-				}
-
-				if (GDK.gdk_keymap_translate_keyboard_state (keymap, keyCode[0],
-						0, group, keyval, effective_group, level, consumed_modifiers)) {
-					javaEvent.keyCode = (int) GDK.gdk_keyval_to_unicode (keyval [0]);
+					if (GDK.gdk_keymap_translate_keyboard_state (keymap, keyCode[0],
+							0, group, keyval, effective_group, level, consumed_modifiers)) {
+						javaEvent.keyCode = (int) GDK.gdk_keyval_to_unicode (keyval [0]);
+					}
 				}
 			}
 			int key = eventKeyval[0];
@@ -1920,47 +2079,28 @@ long sizeRequestProc (long handle, long arg0, long user_data) {
  * @param snapshot the actual GtkSnapshot
  */
 void snapshotToDraw (long handle, long snapshot) {
-	GtkAllocation allocation = new GtkAllocation ();
+	GtkAllocation allocation = new GtkAllocation();
 	GTK.gtk_widget_get_allocation(handle, allocation);
 	long rect = Graphene.graphene_rect_alloc();
 	Graphene.graphene_rect_init(rect, 0, 0, allocation.width, allocation.height);
-	long cairo = GTK.gtk_snapshot_append_cairo(snapshot, rect);
-	if (cairo != 0) gtk_draw(handle, cairo);
+
+	long cairo = GTK4.gtk_snapshot_append_cairo(snapshot, rect);
+	if (cairo != 0) {
+		Rectangle bounds = new Rectangle(0, 0, allocation.width, allocation.height);
+		gtk4_draw(handle, cairo, bounds);
+	}
+
 	Graphene.graphene_rect_free(rect);
-	return;
 }
 
 long gtk_widget_get_window (long widget){
 	GTK.gtk_widget_realize(widget);
-	return GTK.gtk_widget_get_window (widget);
+	return GTK3.gtk_widget_get_window (widget);
 }
 
 long gtk_widget_get_surface (long widget){
 	GTK.gtk_widget_realize(widget);
-	return GTK.gtk_native_get_surface(GTK.gtk_widget_get_native (widget));
-}
-
-void gtk_widget_set_has_surface_or_window (long widget, boolean has) {
-	if (GTK.GTK4) {
-		if (has && OS.G_OBJECT_TYPE(widget) == OS.swt_fixed_get_type()) {
-			return;
-		}
-		GTK.gtk_widget_set_has_surface(widget, has);
-	} else {
-		GTK.gtk_widget_set_has_window(widget, has);
-	}
-}
-
-boolean gtk_widget_get_has_surface_or_window (long widget) {
-	if (GTK.GTK4) {
-		return GTK.gtk_widget_get_has_surface(widget);
-	} else {
-		return GTK.gtk_widget_get_has_window(widget);
-	}
-}
-
-void gtk_widget_set_visible (long widget, boolean visible) {
-	GTK.gtk_widget_set_visible (widget, visible);
+	return GTK4.gtk_native_get_surface(GTK4.gtk_widget_get_native (widget));
 }
 
 void gdk_window_get_size (long drawable, int[] width, int[] height) {
@@ -2005,21 +2145,6 @@ long gdk_event_get_surface_or_window(long event) {
 }
 
 /**
- * Wrapper function for gdk_display_peek_event() on GTK4,
- * and gdk_event_peek() on GTK3.
- *
- * @return the GdkEvent fetched
- */
-long gdk_event_peek() {
-	if (GTK.GTK4) {
-		long display = GDK.gdk_display_get_default();
-		return GDK.gdk_display_peek_event(display);
-	} else {
-		return GDK.gdk_event_peek();
-	}
-}
-
-/**
  * Wrapper function for gdk_event_get_state()
  * @param event   pointer to the GdkEvent.
  * @return the keymask to be used with constants like
@@ -2051,10 +2176,8 @@ void gtk_box_set_child_packing (long box, long child, boolean expand, boolean fi
 			GTK.gtk_widget_set_halign(child, GTK.GTK_ALIGN_FILL);
 			GTK.gtk_widget_set_valign(child, GTK.GTK_ALIGN_FILL);
 		}
-		GTK.gtk_box_set_child_packing(box, child, pack_type);
-		OS.g_object_set(box, OS.margin, padding, 0);
 	} else {
-		GTK.gtk_box_set_child_packing(box, child, expand, fill, padding, pack_type);
+		GTK3.gtk_box_set_child_packing(box, child, expand, fill, padding, pack_type);
 	}
 }
 
@@ -2066,10 +2189,9 @@ void gtk_box_pack_end (long box, long child, boolean expand, boolean fill, int p
 			GTK.gtk_widget_set_halign(child, GTK.GTK_ALIGN_FILL);
 			GTK.gtk_widget_set_valign(child, GTK.GTK_ALIGN_FILL);
 		}
-		OS.g_object_set(box, OS.margin, padding, 0);
-		GTK.gtk_box_append(box, child);
+		GTK4.gtk_box_append(box, child);
 	} else {
-		GTK.gtk_box_pack_end(box, child, expand, fill, padding);
+		GTK3.gtk_box_pack_end(box, child, expand, fill, padding);
 	}
 }
 
@@ -2139,123 +2261,91 @@ boolean translateTraversal (int event) {
 	return false;
 }
 
-long enterMotionScrollProc (long controller, long handle, double x, double y, long user_data) {
-	long event;
-	long result = 0;
-
-	if (GTK.GTK4) {
-		event = GTK.gtk_event_controller_get_current_event(controller);
-	} else {
-		event = GTK.gtk_get_current_event();
-	}
+void enterMotionProc(long controller, double x, double y, long user_data) {
+	long event = GTK4.gtk_event_controller_get_current_event(controller);
 
 	switch ((int)user_data) {
 		case ENTER:
-			result = gtk_enter_notify_event(handle, event);
+			// Possible bug in GTK4, event = 0, therefore unable to access event information
+			gtk4_enter_event(controller, x, y, event);
 			break;
 		case MOTION:
-			result = gtk_motion_notify_event(handle, event);
+			gtk4_motion_event(controller, x, y, event);
 			break;
 		case MOTION_INVERSE:
-			result = 1;
-			break;
-		case SCROLL:
-			result = gtk_scroll_event(handle, event);
 			break;
 	}
-	gdk_event_free(event);
-	return result;
 }
 
-long focusProc (long controller, long handle, long user_data) {
-	long event;
-	long result = 0;
+boolean scrollProc(long controller, double dx, double dy, long user_data) {
+	long event = GTK4.gtk_event_controller_get_current_event(controller);
 
-	if (GTK.GTK4) {
-		event = GTK.gtk_event_controller_get_current_event(controller);
-	} else {
-		event = GTK.gtk_get_current_event();
+	switch ((int)user_data) {
+		case SCROLL:
+			return gtk4_scroll_event(controller, dx, dy, event);
 	}
+
+	return false;
+}
+
+void focusProc(long controller, long user_data) {
+	long event = GTK4.gtk_event_controller_get_current_event(controller);
 
 	switch ((int)user_data) {
 		case FOCUS_IN:
-			result = gtk_focus_in_event(handle, event);
+			gtk4_focus_enter_event(controller, event);
 			break;
 		case FOCUS_OUT:
-			result = gtk_focus_out_event(handle, event);
+			gtk4_focus_leave_event(controller, event);
 			break;
 	}
-	gdk_event_free(event);
-	return result;
 }
 
-long keyPressReleaseProc (long controller, long handle, int keyval, int keycode, int state, long user_data) {
-	long event;
-	long result = 0;
-
-	if (GTK.GTK4) {
-		event = GTK.gtk_event_controller_get_current_event(controller);
-	} else {
-		event = GTK.gtk_get_current_event();
-	}
+boolean keyPressReleaseProc(long controller, int keyval, int keycode, int state, long user_data) {
+	long event = GTK4.gtk_event_controller_get_current_event(controller);
 
 	switch ((int)user_data) {
 		case KEY_PRESSED:
-			result = gtk_key_press_event(handle, event);
-			break;
+			return gtk4_key_press_event(controller, keyval, keycode, state, event);
 		case KEY_RELEASED:
-			result = gtk_key_release_event(handle, event);
+			gtk4_key_release_event(controller, keyval, keycode, state, event);
 			break;
 	}
-	gdk_event_free(event);
-	return result;
+
+	return false;
 }
 
-long gesturePressReleaseProc (long gesture, int n_press, double x, double y, long user_data) {
-	long event;
-	long result = 0;
-
-	if (GTK.GTK4) {
-		event = GTK.gtk_event_controller_get_current_event(gesture);
-	} else {
-		event = GTK.gtk_get_current_event();
-	}
+void gesturePressReleaseProc(long gesture, int n_press, double x, double y, long user_data) {
+	long event = GTK4.gtk_event_controller_get_current_event(gesture);
 
 	switch ((int)user_data) {
 		case GESTURE_PRESSED:
-			result = gtk_gesture_press_event(gesture, n_press, x, y, event);
+			gtk_gesture_press_event(gesture, n_press, x, y, event);
 			break;
 		case GESTURE_RELEASED:
-			result = gtk_gesture_release_event(gesture, n_press, x, y, event);
+			gtk_gesture_release_event(gesture, n_press, x, y, event);
 			break;
 	}
-	gdk_event_free(event);
-	return result;
 }
 
-long leaveProc (long controller, long handle, long user_data) {
-	long event;
-	long result = 0;
-
-	if (GTK.GTK4) {
-		event = GTK.gtk_event_controller_get_current_event(controller);
-	} else {
-		event = GTK.gtk_get_current_event();
-	}
+void leaveProc(long controller, long handle, long user_data) {
+	long event = GTK4.gtk_event_controller_get_current_event(controller);
 
 	switch ((int)user_data) {
 		case LEAVE:
-			result = gtk_leave_notify_event(handle, event);
+			// Possible bug in GTK4, event = 0, therefore unable to access event information
+			gtk4_leave_event(controller, event);
 			break;
 	}
-	gdk_event_free(event);
-	return result;
 }
 
 long notifyProc (long object, long arg0, long user_data) {
 	switch ((int)user_data) {
 		case DPI_CHANGED: return dpiChanged(object, arg0);
 		case NOTIFY_STATE: return notifyState(object, arg0);
+		case NOTIFY_DEFAULT_HEIGHT:
+		case NOTIFY_DEFAULT_WIDTH:
+			return gtk_size_allocate(object, 0);
 	}
 	return 0;
 }
@@ -2286,7 +2376,7 @@ long windowProc (long handle, long user_data) {
 		case SELECT: return gtk_select (handle);
 		case SELECTION_DONE: return gtk_selection_done (handle);
 		case SHOW: return gtk_show (handle);
-		case VALUE_CHANGED: return gtk_value_changed (handle);
+		case VALUE_CHANGED: return gtk_value_changed(handle);
 		case UNMAP: return gtk_unmap (handle);
 		case UNREALIZE: return gtk_unrealize (handle);
 		default: return 0;
@@ -2312,7 +2402,6 @@ long windowProc (long handle, long arg0, long user_data) {
 		case CONFIGURE_EVENT: return gtk_configure_event (handle, arg0);
 		case DELETE_EVENT: return gtk_delete_event (handle, arg0);
 		case ENTER_NOTIFY_EVENT: return gtk_enter_notify_event (handle, arg0);
-		case EVENT: return gtk_event (handle, arg0);
 		case EVENT_AFTER: return gtk_event_after (handle, arg0);
 		case EXPOSE_EVENT: {
 			if (!GTK.GTK_IS_CONTAINER (handle)) {
@@ -2333,7 +2422,7 @@ long windowProc (long handle, long arg0, long user_data) {
 		case MOVE_FOCUS: return gtk_move_focus (handle, arg0);
 		case POPULATE_POPUP: return gtk_populate_popup (handle, arg0);
 		case SCROLL_EVENT:	return gtk_scroll_event (handle, arg0);
-		case SHOW_HELP: return gtk_show_help (handle, arg0);
+		case SHOW_HELP: return gtk3_show_help(handle, arg0);
 		case SIZE_ALLOCATE: return gtk_size_allocate (handle, arg0);
 		case TOGGLED: return gtk_toggled (handle, arg0);
 		case UNMAP_EVENT: return gtk_unmap_event (handle, arg0);
@@ -2351,12 +2440,11 @@ long windowProc (long handle, long arg0, long arg1, long user_data) {
 		case ROW_ACTIVATED: return gtk_row_activated (handle, arg0, arg1);
 		case SCROLL_CHILD: return gtk_scroll_child (handle, arg0, arg1);
 		case STATUS_ICON_POPUP_MENU: return gtk_status_icon_popup_menu (handle, arg0, arg1);
-		case SWITCH_PAGE: return gtk_switch_page (handle, arg0, arg1);
+		case SWITCH_PAGE: return gtk_switch_page(handle, arg0, (int)arg1);
 		case TEST_COLLAPSE_ROW: return gtk_test_collapse_row (handle, arg0, arg1);
 		case TEST_EXPAND_ROW: return gtk_test_expand_row(handle, arg0, arg1);
 		case ROW_INSERTED: return gtk_row_inserted (handle, arg0, arg1);
 		case ROW_HAS_CHILD_TOGGLED: return gtk_row_has_child_toggled(handle, arg0, arg1);
-		case SIZE_ALLOCATE_GTK4: return gtk_size_allocate(handle, arg0);
 		default: return 0;
 	}
 }
@@ -2403,7 +2491,7 @@ int gtk_container_get_border_width_or_margin (long handle) {
 		int marginEnd = GTK.gtk_widget_get_margin_end(handle);
 		return Math.max(Math.max(marginTop, marginBottom), Math.max(marginStart, marginEnd));
 	} else {
-		return GTK.gtk_container_get_border_width(handle);
+		return GTK3.gtk_container_get_border_width(handle);
 	}
 }
 /**
@@ -2418,8 +2506,17 @@ void gtk_container_set_border_width (long handle, int border_width) {
 		GTK.gtk_widget_set_margin_start(handle, border_width);
 		GTK.gtk_widget_set_margin_end(handle, border_width);
 	} else {
-		GTK.gtk_container_set_border_width (handle, border_width);
+		GTK3.gtk_container_set_border_width (handle, border_width);
 	}
 }
 
+void setToolTipText(long tipWidget, String string) {
+	byte[] buffer = null;
+	if (string != null && !string.isEmpty()) {
+		char[] chars = fixMnemonic(string, false, true);
+		buffer = Converter.wcsToMbcs(chars, true);
+	}
+
+	GTK.gtk_widget_set_tooltip_text(tipWidget, buffer);
+}
 }

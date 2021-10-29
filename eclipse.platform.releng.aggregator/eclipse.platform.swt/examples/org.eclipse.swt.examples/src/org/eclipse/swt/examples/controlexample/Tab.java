@@ -433,8 +433,6 @@ abstract class Tab {
 		changeButton.addSelectionListener(widgetSelectedAdapter(event -> changeFontOrColor (colorAndFontTable.getSelectionIndex())));
 		defaultsButton.addSelectionListener(widgetSelectedAdapter(e -> resetColorsAndFonts ()));
 		shell.addDisposeListener(event -> {
-			if (foregroundColor != null) foregroundColor.dispose();
-			if (backgroundColor != null) backgroundColor.dispose();
 			if (font != null) font.dispose();
 			foregroundColor = null;
 			backgroundColor = null;
@@ -1110,7 +1108,7 @@ abstract class Tab {
 					String strings[] = split(value, ',');
 					int[] ints = new int[strings.length];
 					for (int j = 0; j < strings.length; j++) {
-						ints[j] = Integer.valueOf(strings[j]).intValue();
+						ints[j] = Integer.parseInt(strings[j]);
 					}
 					parameter = new Object[] {ints};
 				} else if (typeName.equals("[C")) {

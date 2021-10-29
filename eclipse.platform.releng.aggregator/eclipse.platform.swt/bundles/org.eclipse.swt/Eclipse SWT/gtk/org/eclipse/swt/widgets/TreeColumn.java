@@ -19,6 +19,8 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class represent a column in a tree widget.
@@ -41,10 +43,11 @@ import org.eclipse.swt.internal.gtk.*;
  * @noextend This class is not intended to be subclassed by clients.
  */
 public class TreeColumn extends Item {
+	long headerButtonCSSProvider = 0;
 	long labelHandle, imageHandle, buttonHandle;
 	Tree parent;
-	int modelIndex, lastButton, lastTime, lastX, lastWidth;
-	boolean customDraw, useFixedWidth;
+	int modelIndex, lastTime, lastX, lastWidth;
+	boolean customDraw;
 	String toolTipText;
 
 /**
@@ -334,8 +337,8 @@ int getWidthInPixels () {
 	if (!GTK.gtk_tree_view_column_get_visible (handle)) {
 		return 0;
 	}
-	if (useFixedWidth) return GTK.gtk_tree_view_column_get_fixed_width (handle);
-	return GTK.gtk_tree_view_column_get_width (handle);
+
+	return GTK.gtk_tree_view_column_get_fixed_width(handle);
 }
 
 @Override
@@ -348,34 +351,32 @@ long gtk_clicked (long widget) {
 	* and testing for the double click interval.
 	*/
 	boolean doubleClick = false;
-	boolean postEvent = true;
-	long eventPtr = GTK.gtk_get_current_event ();
+	long eventPtr = GTK3.gtk_get_current_event ();
 	if (eventPtr != 0) {
-		int [] eventButton = new int [1];
-		if (GTK.GTK4) {
-			eventButton[0] = GDK.gdk_button_event_get_button(eventPtr);
-		} else {
-			GDK.gdk_event_get_button(eventPtr, eventButton);
+		int eventType = GDK.gdk_event_get_event_type(eventPtr);
+		int eventTime = GDK.gdk_event_get_time(eventPtr);
+
+		if (eventType == GDK.GDK_BUTTON_RELEASE) {
+			int clickTime = display.getDoubleClickTime();
+			if (lastTime != 0 && Math.abs(lastTime - eventTime) <= clickTime) {
+				doubleClick = true;
+			}
+			lastTime = eventTime == 0 ? 1: eventTime;
 		}
 
-		int eventType = GDK.gdk_event_get_event_type(eventPtr);
-		eventType = Control.fixGdkEventTypeValues(eventType);
-		int eventTime = GDK.gdk_event_get_time(eventPtr);
-		switch (eventType) {
-			case GDK.GDK_BUTTON_RELEASE: {
-				int clickTime = display.getDoubleClickTime ();
-				if (lastButton == eventButton[0] && lastTime != 0 && Math.abs (lastTime - eventTime) <= clickTime) {
-					doubleClick = true;
-				}
-				lastTime = eventTime == 0 ? 1: eventTime;
-				lastButton = eventButton[0];
-				break;
-			}
-		}
-		gdk_event_free (eventPtr);
+		gdk_event_free(eventPtr);
 	}
-	if (postEvent) sendSelectionEvent (doubleClick ? SWT.DefaultSelection : SWT.Selection);
+
+	sendSelectionEvent(doubleClick ? SWT.DefaultSelection : SWT.Selection);
+
 	return 0;
+}
+
+@Override
+void gtk_gesture_press_event(long gesture, int n_press, double x, double y, long event) {
+	boolean doubleClick = n_press >= 2 ? true : false;
+
+	sendSelectionEvent(doubleClick ? SWT.DefaultSelection : SWT.Selection);
 }
 
 @Override
@@ -411,7 +412,6 @@ long gtk_mnemonic_activate (long widget, long arg1) {
 
 @Override
 long gtk_size_allocate (long widget, long allocation) {
-	useFixedWidth = false;
 	GtkAllocation widgetAllocation = new GtkAllocation();
 	GTK.gtk_widget_get_allocation (widget, widgetAllocation);
 	int x = widgetAllocation.x;
@@ -429,14 +429,24 @@ long gtk_size_allocate (long widget, long allocation) {
 
 @Override
 void hookEvents () {
-	super.hookEvents ();
-	OS.g_signal_connect_closure (handle, OS.clicked, display.getClosure (CLICKED), false);
+	super.hookEvents();
+
+	if (GTK.GTK4) {
+		 long clickController = GTK4.gtk_gesture_click_new();
+		 GTK4.gtk_widget_add_controller(buttonHandle, clickController);
+		 GTK.gtk_event_controller_set_propagation_phase(clickController, GTK.GTK_PHASE_CAPTURE);
+		 OS.g_signal_connect(clickController, OS.pressed, display.gesturePressReleaseProc, GESTURE_PRESSED);
+	} else {
+		OS.g_signal_connect_closure (handle, OS.clicked, display.getClosure (CLICKED), false);
+	}
+
+
 	if (buttonHandle != 0) {
-		OS.g_signal_connect_closure_by_id (buttonHandle, display.signalIds [SIZE_ALLOCATE], 0, display.getClosure (SIZE_ALLOCATE), false);
 		if (GTK.GTK4) {
-			OS.g_signal_connect_closure_by_id (buttonHandle, display.signalIds [EVENT], 0, display.getClosure (EVENT), false);
+			//TODO: GTK4 event-after, size-allocate signals (if necessary)
 		} else {
 			OS.g_signal_connect_closure_by_id (buttonHandle, display.signalIds [EVENT_AFTER], 0, display.getClosure (EVENT_AFTER), false);
+			OS.g_signal_connect_closure_by_id (buttonHandle, display.signalIds [SIZE_ALLOCATE], 0, display.getClosure (SIZE_ALLOCATE), false);
 		}
 	}
 	if (labelHandle != 0) OS.g_signal_connect_closure_by_id (labelHandle, display.signalIds [MNEMONIC_ACTIVATE], 0, display.getClosure (MNEMONIC_ACTIVATE), false);
@@ -457,13 +467,14 @@ public void pack () {
 	checkWidget();
 	int width = 0;
 	if (buttonHandle != 0) {
-		GtkRequisition requisition = new GtkRequisition ();
 		/*
-		 * Check if the header button is hidden, otherwise GTK will
-		 * return a 1x1 size. See bug 546490.
+		 * Bug 546490: Ensure the header button is set to
+		 * true before getting preferred size of GtkTreeView
 		 */
 		boolean visible = GTK.gtk_widget_get_visible(buttonHandle);
-		if (!visible) GTK.gtk_widget_set_visible(buttonHandle, !visible);
+		if (!visible) GTK.gtk_widget_set_visible(buttonHandle, true);
+
+		GtkRequisition requisition = new GtkRequisition ();
 		gtk_widget_get_preferred_size (buttonHandle, requisition);
 		width = requisition.width;
 	}
@@ -587,7 +598,6 @@ public void setAlignment (int alignment) {
 
 void setFontDescription (long font) {
 	setFontDescription (labelHandle, font);
-	setFontDescription (imageHandle, font);
 }
 
 @Override
@@ -601,11 +611,22 @@ public void setImage (Image image) {
 		}
 		int imageIndex = headerImageList.indexOf (image);
 		if (imageIndex == -1) imageIndex = headerImageList.add (image);
-		GTK.gtk_image_set_from_surface(imageHandle, image.surface);
-		GTK.gtk_widget_show (imageHandle);
+		if (GTK.GTK4) {
+			long pixbuf = ImageList.createPixbuf(image);
+			long texture = GDK.gdk_texture_new_for_pixbuf(pixbuf);
+			OS.g_object_unref(pixbuf);
+			GTK4.gtk_image_set_from_paintable(imageHandle, texture);
+		} else {
+			GTK3.gtk_image_set_from_surface(imageHandle, headerImageList.getSurface(imageIndex));
+		}
+		GTK.gtk_widget_show(imageHandle);
 	} else {
-		GTK.gtk_image_set_from_surface(imageHandle, 0);
-		GTK.gtk_widget_hide (imageHandle);
+		if (GTK.GTK4) {
+			GTK4.gtk_image_clear(imageHandle);
+		} else {
+			GTK3.gtk_image_set_from_surface(imageHandle, 0);
+		}
+		GTK.gtk_widget_hide(imageHandle);
 	}
 }
 
@@ -641,7 +662,7 @@ void setOrientation (boolean create) {
 		if (buttonHandle != 0) {
 			int dir = (parent.style & SWT.RIGHT_TO_LEFT) != 0 ? GTK.GTK_TEXT_DIR_RTL : GTK.GTK_TEXT_DIR_LTR;
 			GTK.gtk_widget_set_direction (buttonHandle, dir);
-			GTK.gtk_container_forall (buttonHandle, display.setDirectionProc, dir);
+			GTK3.gtk_container_forall (buttonHandle, display.setDirectionProc, dir);
 		}
 	}
 }
@@ -705,15 +726,10 @@ public void setText (String string) {
  *
  * @since 3.2
  */
-public void setToolTipText (String string) {
+public void setToolTipText(String string) {
 	checkWidget();
-	Shell shell = parent._getShell ();
-	setToolTipText (shell, string);
 	toolTipText = string;
-}
-
-void setToolTipText (Shell shell, String newString) {
-	shell.setToolTipText (buttonHandle, newString);
+	setToolTipText(buttonHandle, string);
 }
 
 /**
@@ -726,18 +742,17 @@ void setToolTipText (Shell shell, String newString) {
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
  * </ul>
  */
-public void setWidth (int width) {
-	checkWidget ();
-	setWidthInPixels (DPIUtil.autoScaleUp (width));
+public void setWidth(int width) {
+	checkWidget();
+	setWidthInPixels(DPIUtil.autoScaleUp(width));
 }
 
-void setWidthInPixels (int width) {
+void setWidthInPixels(int width) {
 	checkWidget();
 	if (width < 0) return;
 	if (width == lastWidth) return;
 	if (width > 0) {
-		useFixedWidth = true;
-		GTK.gtk_tree_view_column_set_fixed_width (handle, width);
+		GTK.gtk_tree_view_column_set_fixed_width(handle, width);
 	}
 	/*
 	 * Bug in GTK.  For some reason, calling gtk_tree_view_column_set_visible()
@@ -782,6 +797,29 @@ void setWidthInPixels (int width) {
 		}
 	}
 	sendEvent (SWT.Resize);
+}
+
+void setHeaderCSS(String css) {
+	if (headerButtonCSSProvider == 0) {
+		headerButtonCSSProvider = GTK.gtk_css_provider_new();
+		GTK.gtk_style_context_add_provider(GTK.gtk_widget_get_style_context(buttonHandle), headerButtonCSSProvider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+	}
+
+	if (GTK.GTK4) {
+		GTK4.gtk_css_provider_load_from_data(headerButtonCSSProvider, Converter.javaStringToCString(css), -1);
+	} else {
+		GTK3.gtk_css_provider_load_from_data(headerButtonCSSProvider, Converter.javaStringToCString(css), -1, null);
+	}
+}
+
+@Override
+public void dispose() {
+	super.dispose();
+
+	if (headerButtonCSSProvider != 0) {
+		OS.g_object_unref(headerButtonCSSProvider);
+		headerButtonCSSProvider = 0;
+	}
 }
 
 @Override

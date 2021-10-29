@@ -100,8 +100,6 @@ public class JavadocBasher {
 		String[] targetSubdirs = new String[] { "cairo", // used by gtk
 				"cocoa",
 				// "common",
-				// "common_j2me",
-				// "common_j2se",
 				"emulated", "emulated/bidi", // used by carbon, cocoa
 				"emulated/coolbar", // used by cocoa, gtk
 				"emulated/expand", // used by cocoa
@@ -237,7 +235,7 @@ public class JavadocBasher {
 	void bashFile(final File source, final File target, File out) {
 		char[] contents = readFile(source);
 		if (contents == null) return;
-		ASTParser parser = ASTParser.newParser(AST.JLS11);
+		ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
 		final Document sourceDocument = new Document(new String(contents));
 		parser.setSource(contents);
 		CompilationUnit sourceUnit = (CompilationUnit)parser.createAST(null);

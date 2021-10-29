@@ -19,6 +19,8 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class are selectable user interface
@@ -212,40 +214,52 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 	checkWidget ();
 	if (wHint != SWT.DEFAULT && wHint < 0) wHint = 0;
 	if (hHint != SWT.DEFAULT && hHint < 0) hHint = 0;
-	GTK.gtk_widget_realize (handle);
-	long layout = GTK.gtk_entry_get_layout (GTK.GTK4 ? entryHandle : handle);
-	long hAdjustment = GTK.gtk_spin_button_get_adjustment (handle);
-	double upper = GTK.gtk_adjustment_get_upper (hAdjustment);
-	int digits = GTK.gtk_spin_button_get_digits (handle);
-	for (int i = 0; i < digits; i++) upper *= 10;
-	String string = String.valueOf ((int) upper);
-	if (digits > 0) {
-		StringBuilder buffer = new StringBuilder ();
-		buffer.append (string);
-		buffer.append (getDecimalSeparator ());
-		int count = digits - string.length ();
-		while (count >= 0) {
-			buffer.append ("0");
-			count--;
+
+	if (GTK.GTK4) {
+		GTK.gtk_widget_set_size_request(handle, wHint, hHint);
+		GtkRequisition requisition = new GtkRequisition();
+		GTK.gtk_widget_get_preferred_size(handle, requisition, null);
+		int width = wHint == SWT.DEFAULT ? requisition.width : Math.max(wHint, requisition.width);
+		int height = hHint == SWT.DEFAULT ? requisition.height : hHint;
+		Rectangle trim = computeTrimInPixels(0, 0, width, height);
+		return new Point(trim.width, trim.height);
+	} else {
+		GTK.gtk_widget_realize (handle);
+		long layout = GTK3.gtk_entry_get_layout (handle);
+		long hAdjustment = GTK.gtk_spin_button_get_adjustment (handle);
+		double upper = GTK.gtk_adjustment_get_upper (hAdjustment);
+		int digits = GTK.gtk_spin_button_get_digits (handle);
+		for (int i = 0; i < digits; i++) upper *= 10;
+		String string = String.valueOf ((int) upper);
+		if (digits > 0) {
+			StringBuilder buffer = new StringBuilder ();
+			buffer.append (string);
+			buffer.append (getDecimalSeparator ());
+			int count = digits - string.length ();
+			while (count >= 0) {
+				buffer.append ("0");
+				count--;
+			}
+			string = buffer.toString ();
 		}
-		string = buffer.toString ();
+		byte [] buffer1 = Converter.wcsToMbcs (string, false);
+		long ptr = OS.pango_layout_get_text (layout);
+		int length = C.strlen (ptr);
+		byte [] buffer2 = new byte [length];
+		C.memmove (buffer2, ptr, length);
+		OS.pango_layout_set_text (layout, buffer1, buffer1.length);
+
+		int width, height = 0 ;
+		GTK.gtk_widget_realize (handle);
+		GTK.gtk_widget_set_size_request (handle, wHint, hHint);
+		GtkRequisition requisition = new GtkRequisition ();
+		GTK.gtk_widget_get_preferred_size (handle, requisition, null);
+		width = wHint == SWT.DEFAULT ? requisition.width : Math.max(wHint, requisition.width);
+		height = hHint == SWT.DEFAULT ? requisition.height : hHint;
+		OS.pango_layout_set_text (layout, buffer2, buffer2.length);
+		Rectangle trim = computeTrimInPixels (0, 0, width, height);
+		return new Point (trim.width, trim.height);
 	}
-	byte [] buffer1 = Converter.wcsToMbcs (string, false);
-	long ptr = OS.pango_layout_get_text (layout);
-	int length = C.strlen (ptr);
-	byte [] buffer2 = new byte [length];
-	C.memmove (buffer2, ptr, length);
-	OS.pango_layout_set_text (layout, buffer1, buffer1.length);
-	int width, height = 0 ;
-	GTK.gtk_widget_realize (handle);
-	GTK.gtk_widget_set_size_request (handle, wHint, hHint);
-	GtkRequisition requisition = new GtkRequisition ();
-	GTK.gtk_widget_get_preferred_size (handle, requisition, null);
-	width = wHint == SWT.DEFAULT ? requisition.width : Math.max(wHint, requisition.width);
-	height = hHint == SWT.DEFAULT ? requisition.height : hHint;
-	OS.pango_layout_set_text (layout, buffer2, buffer2.length);
-	Rectangle trim = computeTrimInPixels (0, 0, width, height);
-	return new Point (trim.width, trim.height);
 }
 
 @Override
@@ -271,9 +285,9 @@ Rectangle computeTrimInPixels (int x, int y, int width, int height) {
 	 */
 	if (!GTK.GTK4) {
 		int [] property = new int [1];
-		GTK.gtk_widget_style_get (handle, OS.interior_focus, property, 0);
+		GTK3.gtk_widget_style_get (handle, OS.interior_focus, property, 0);
 		if (property [0] == 0) {
-			GTK.gtk_widget_style_get (handle, OS.focus_line_width, property, 0);
+			GTK3.gtk_widget_style_get (handle, OS.focus_line_width, property, 0);
 			xborder += property [0];
 			yborder += property [0];
 		}
@@ -298,7 +312,12 @@ Rectangle computeTrimInPixels (int x, int y, int width, int height) {
  */
 public void copy () {
 	checkWidget ();
-	GTK.gtk_editable_copy_clipboard (GTK.GTK4? entryHandle : handle);
+	if (GTK.GTK4) {
+		long textHandle = GTK4.gtk_widget_get_first_child(entryHandle);
+		GTK4.gtk_widget_activate_action(textHandle, OS.action_copy_clipboard, null);
+	} else {
+		GTK3.gtk_editable_copy_clipboard(handle);
+	}
 }
 
 @Override
@@ -306,16 +325,20 @@ void createHandle (int index) {
 	state |= HANDLE | MENU;
 	fixedHandle = OS.g_object_new (display.gtk_fixed_get_type (), 0);
 	if (fixedHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	gtk_widget_set_has_surface_or_window (fixedHandle, true);
 	long adjustment = GTK.gtk_adjustment_new (0, 0, 100, 1, 10, 0);
 	if (adjustment == 0) error (SWT.ERROR_NO_HANDLES);
 	handle = GTK.gtk_spin_button_new (adjustment, climbRate, 0);
 	if (handle == 0) error (SWT.ERROR_NO_HANDLES);
-	GTK.gtk_container_add (fixedHandle, handle);
+	if (DISABLE_EMOJI && GTK.GTK_VERSION >= OS.VERSION(3, 22, 20)) {
+		GTK.gtk_entry_set_input_hints(handle, GTK.GTK_INPUT_HINT_NO_EMOJI);
+	}
+
 	if (GTK.GTK4) {
-		long boxHandle = GTK.gtk_widget_get_first_child(handle);
-		long textHandle = GTK.gtk_widget_get_first_child(boxHandle);
-		entryHandle = textHandle;
+		OS.swt_fixed_add(fixedHandle, handle);
+		entryHandle = GTK4.gtk_widget_get_first_child(handle);
+	} else {
+		GTK3.gtk_widget_set_has_window(fixedHandle, true);
+		GTK3.gtk_container_add (fixedHandle, handle);
 	}
 	GTK.gtk_editable_set_editable (GTK.GTK4 ? entryHandle : handle, (style & SWT.READ_ONLY) == 0);
 	GTK.gtk_spin_button_set_wrap (handle, (style & SWT.WRAP) != 0);
@@ -339,7 +362,12 @@ void createHandle (int index) {
  */
 public void cut () {
 	checkWidget ();
-	GTK.gtk_editable_cut_clipboard (GTK.GTK4? entryHandle : handle);
+	if (GTK.GTK4) {
+		long textHandle = GTK4.gtk_widget_get_first_child(entryHandle);
+		GTK4.gtk_widget_activate_action(textHandle, OS.action_cut_clipboard, null);
+	} else {
+		GTK3.gtk_editable_cut_clipboard(handle);
+	}
 }
 
 @Override
@@ -370,13 +398,16 @@ long enterExitHandle () {
 }
 
 @Override
-boolean filterKey (int keyval, long event) {
+boolean filterKey (long event) {
 	int time = GDK.gdk_event_get_time (event);
 	if (time != lastEventTime) {
 		lastEventTime = time;
 		long imContext = imContext ();
 		if (imContext != 0) {
-			return GTK.gtk_im_context_filter_keypress (imContext, event);
+			if (GTK.GTK4)
+				return GTK4.gtk_im_context_filter_keypress (imContext, event);
+			else
+				return GTK3.gtk_im_context_filter_keypress (imContext, event);
 		}
 	}
 	gdkEventKey = event;
@@ -395,7 +426,11 @@ void fixIM () {
 	if (gdkEventKey != 0 && gdkEventKey != -1) {
 		long imContext = imContext ();
 		if (imContext != 0) {
-			GTK.gtk_im_context_filter_keypress (imContext, gdkEventKey);
+			if (GTK.GTK4)
+				GTK4.gtk_im_context_filter_keypress (imContext, gdkEventKey);
+			else
+				GTK3.gtk_im_context_filter_keypress (imContext, gdkEventKey);
+
 			gdkEventKey = -1;
 			return;
 		}
@@ -523,14 +558,23 @@ public int getSelection () {
  *
  * @since 3.4
  */
-public String getText () {
-	checkWidget ();
-	long str = GTK.gtk_entry_get_text (GTK.GTK4 ? entryHandle : handle);
-	if (str == 0) return "";
-	int length = C.strlen (str);
-	byte [] buffer = new byte [length];
-	C.memmove (buffer, str, length);
-	return new String (Converter.mbcsToWcs (buffer));
+public String getText() {
+	checkWidget();
+
+	long stringPtr;
+	if (GTK.GTK4) {
+		long bufferHandle = GTK4.gtk_text_get_buffer(entryHandle);
+		stringPtr = GTK.gtk_entry_buffer_get_text(bufferHandle);
+	} else {
+		stringPtr = GTK3.gtk_entry_get_text(handle);
+	}
+	if (stringPtr == 0) return "";
+
+	int length = C.strlen(stringPtr);
+	byte[] buffer = new byte[length];
+	C.memmove(buffer, stringPtr, length);
+
+	return new String(Converter.mbcsToWcs(buffer));
 }
 
 /**
@@ -587,13 +631,20 @@ long gtk_activate (long widget) {
 
 @Override
 long gtk_changed (long widget) {
-	long str = GTK.gtk_entry_get_text (GTK.GTK4 ? entryHandle : handle);
-	int length = C.strlen (str);
+	long stringPtr;
+	if (GTK.GTK4) {
+		long bufferHandle = GTK4.gtk_text_get_buffer(entryHandle);
+		stringPtr = GTK.gtk_entry_buffer_get_text(bufferHandle);
+	} else {
+		stringPtr = GTK3.gtk_entry_get_text(handle);
+	}
+
+	int length = C.strlen(stringPtr);
 	if (length > 0) {
 		long [] endptr = new long [1];
-		double value = OS.g_strtod (str, endptr);
+		double value = OS.g_strtod (stringPtr, endptr);
 		int valueLength = (getDigits() == 0) ? String.valueOf((int)value).length() : String.valueOf(value).length();
-		if ((endptr [0] == str + length) && valueLength == length) {
+		if ((endptr [0] == stringPtr + length) && valueLength == length) {
 			long hAdjustment = GTK.gtk_spin_button_get_adjustment (handle);
 			GtkAdjustment adjustment = new GtkAdjustment ();
 			gtk_adjustment_get (hAdjustment, adjustment);
@@ -611,7 +662,7 @@ long gtk_changed (long widget) {
 	* is to post the modify event when the user is typing.
 	*/
 	boolean keyPress = false;
-	long eventPtr = GTK.gtk_get_current_event ();
+	long eventPtr = GTK.GTK4 ? 0 : GTK3.gtk_get_current_event();
 	if (eventPtr != 0) {
 		int eventType = GDK.gdk_event_get_event_type(eventPtr);
 		eventType = fixGdkEventTypeValues(eventType);
@@ -672,7 +723,7 @@ long gtk_commit (long imContext, long text) {
 @Override
 long gtk_delete_text (long widget, long start_pos, long end_pos) {
 	if (!hooks (SWT.Verify) && !filters (SWT.Verify)) return 0;
-	long ptr = GTK.gtk_entry_get_text (GTK.GTK4 ? entryHandle : handle);
+	long ptr = GTK3.gtk_entry_get_text (GTK.GTK4 ? entryHandle : handle);
 	if (end_pos == -1) end_pos = OS.g_utf8_strlen (ptr, -1);
 	int start = (int)OS.g_utf8_offset_to_utf16_offset (ptr, start_pos);
 	int end = (int)OS.g_utf8_offset_to_utf16_offset (ptr, end_pos);
@@ -716,7 +767,7 @@ long gtk_insert_text (long widget, long new_text, long new_text_length, long pos
 	String oldText = new String (Converter.mbcsToWcs (buffer));
 	int [] pos = new int [1];
 	C.memmove (pos, position, 4);
-	long ptr = GTK.gtk_entry_get_text (GTK.GTK4 ? entryHandle : handle);
+	long ptr = GTK3.gtk_entry_get_text (GTK.GTK4 ? entryHandle : handle);
 	if (pos [0] == -1) pos [0] = (int)OS.g_utf8_strlen (ptr, -1);
 	int start = (int)OS.g_utf16_pointer_to_offset (ptr, pos [0]);
 	String newText = verifyText (oldText, start, start);
@@ -761,26 +812,39 @@ long gtk_key_press_event (long widget, long event) {
 long gtk_populate_popup (long widget, long menu) {
 	if ((style & SWT.RIGHT_TO_LEFT) != 0) {
 		GTK.gtk_widget_set_direction (menu, GTK.GTK_TEXT_DIR_RTL);
-		GTK.gtk_container_forall (menu, display.setDirectionProc, GTK.GTK_TEXT_DIR_RTL);
+		GTK3.gtk_container_forall (menu, display.setDirectionProc, GTK.GTK_TEXT_DIR_RTL);
 	}
 	return 0;
 }
 
 @Override
-long gtk_value_changed (long widget) {
-	sendSelectionEvent (SWT.Selection);
+long gtk_value_changed(long range) {
+	sendSelectionEvent(SWT.Selection);
 	return 0;
 }
 
 @Override
-void hookEvents () {
+void hookEvents() {
 	super.hookEvents();
-	OS.g_signal_connect_closure (handle, OS.changed, display.getClosure (CHANGED), true);
-	OS.g_signal_connect_closure (handle, OS.insert_text, display.getClosure (INSERT_TEXT), false);
-	OS.g_signal_connect_closure (handle, OS.delete_text, display.getClosure (DELETE_TEXT), false);
-	OS.g_signal_connect_closure (handle, OS.value_changed, display.getClosure (VALUE_CHANGED), false);
-	OS.g_signal_connect_closure (handle, OS.activate, display.getClosure (ACTIVATE), false);
-	OS.g_signal_connect_closure (handle, OS.populate_popup, display.getClosure (POPULATE_POPUP), false);
+
+	/* GtkEditable signals */
+	OS.g_signal_connect_closure(handle, OS.changed, display.getClosure(CHANGED), true);
+	OS.g_signal_connect_closure(handle, OS.insert_text, display.getClosure(INSERT_TEXT), false);
+	OS.g_signal_connect_closure(handle, OS.delete_text, display.getClosure(DELETE_TEXT), false);
+
+	/* GtkSpinButton signals */
+	OS.g_signal_connect_closure(handle, OS.value_changed, display.getClosure(VALUE_CHANGED), false);
+
+	if (GTK.GTK4) {
+		/* GtkText signals */
+		long textHandle = GTK4.gtk_widget_get_first_child(handle);
+		OS.g_signal_connect_closure(textHandle, OS.activate, display.getClosure(ACTIVATE), false);
+	} else {
+		/* GtkEntry signals */
+		OS.g_signal_connect_closure(handle, OS.activate, display.getClosure(ACTIVATE), false);
+		OS.g_signal_connect_closure(handle, OS.populate_popup, display.getClosure(POPULATE_POPUP), false);
+	}
+
 	long imContext = imContext ();
 	if (imContext != 0) {
 		OS.g_signal_connect_closure (imContext, OS.commit, display.getClosure (COMMIT), false);
@@ -825,7 +889,7 @@ long paintSurface () {
  */
 public void paste () {
 	checkWidget ();
-	GTK.gtk_editable_paste_clipboard (GTK.GTK4? entryHandle : handle);
+	GTK3.gtk_editable_paste_clipboard (GTK.GTK4? entryHandle : handle);
 }
 
 @Override
@@ -1249,7 +1313,7 @@ String verifyText (String string, int start, int end) {
 	event.text = string;
 	event.start = start;
 	event.end = end;
-	long eventPtr = GTK.gtk_get_current_event ();
+	long eventPtr = GTK3.gtk_get_current_event ();
 	if (eventPtr != 0) {
 		int type = GDK.gdk_event_get_event_type(eventPtr);
 		type = fixGdkEventTypeValues(type);

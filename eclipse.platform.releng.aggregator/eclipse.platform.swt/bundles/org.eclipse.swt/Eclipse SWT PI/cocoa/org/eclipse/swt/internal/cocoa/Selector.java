@@ -75,6 +75,10 @@ public enum Selector {
 	/** 10.12 selector */
 	, sel_setAllowsAutomaticWindowTabbing("setAllowsAutomaticWindowTabbing:")
 
+	/** 10.14 selectors */
+	, sel_selectedContentBackgroundColor("selectedContentBackgroundColor")
+	, sel_unemphasizedSelectedContentBackgroundColor("unemphasizedSelectedContentBackgroundColor")
+
 	, sel_awtAppDelegate("awtAppDelegate")
 
 	  /** This section is auto generated */
@@ -108,7 +112,6 @@ public enum Selector {
 	, sel_accessibilitySetValue_forAttribute_("accessibilitySetValue:forAttribute:")
 	, sel_action("action")
 	, sel_activateIgnoringOtherApps_("activateIgnoringOtherApps:")
-	, sel_activateWithOptions_("activateWithOptions:")
 	, sel_addAttribute_value_range_("addAttribute:value:range:")
 	, sel_addButtonWithTitle_("addButtonWithTitle:")
 	, sel_addChildWindow_ordered_("addChildWindow:ordered:")
@@ -153,6 +156,7 @@ public enum Selector {
 	, sel_application_openFile_("application:openFile:")
 	, sel_application_openFiles_("application:openFiles:")
 	, sel_applicationDidBecomeActive_("applicationDidBecomeActive:")
+	, sel_applicationDidFinishLaunching_("applicationDidFinishLaunching:")
 	, sel_applicationDidResignActive_("applicationDidResignActive:")
 	, sel_applicationDockMenu_("applicationDockMenu:")
 	, sel_applicationIconImage("applicationIconImage")
@@ -314,7 +318,6 @@ public enum Selector {
 	, sel_crosshairCursor("crosshairCursor")
 	, sel_ctrlKey("ctrlKey")
 	, sel_currentAppearance("currentAppearance")
-	, sel_currentApplication("currentApplication")
 	, sel_currentContext("currentContext")
 	, sel_currentCursor("currentCursor")
 	, sel_currentEditor("currentEditor")
@@ -556,6 +559,7 @@ public enum Selector {
 	, sel_insertItem_atIndex_("insertItem:atIndex:")
 	, sel_insertItemWithItemIdentifier_atIndex_("insertItemWithItemIdentifier:atIndex:")
 	, sel_insertItemWithObjectValue_atIndex_("insertItemWithObjectValue:atIndex:")
+	, sel_insertObject_atIndex_("insertObject:atIndex:")
 	, sel_insertTabViewItem_atIndex_("insertTabViewItem:atIndex:")
 	, sel_insertText_("insertText:")
 	, sel_insertText_replacementRange_("insertText:replacementRange:")
@@ -618,6 +622,7 @@ public enum Selector {
 	, sel_knobProportion("knobProportion")
 	, sel_knobThickness("knobThickness")
 	, sel_lastPathComponent("lastPathComponent")
+	, sel_layer("layer")
 	, sel_layoutManager("layoutManager")
 	, sel_leading("leading")
 	, sel_length("length")
@@ -646,6 +651,7 @@ public enum Selector {
 	, sel_makeKeyAndOrderFront_("makeKeyAndOrderFront:")
 	, sel_markedRange("markedRange")
 	, sel_markedTextAttributes("markedTextAttributes")
+	, sel_maxSize("maxSize")
 	, sel_maxValue("maxValue")
 	, sel_menu("menu")
 	, sel_menu_willHighlightItem_("menu:willHighlightItem:")
@@ -802,6 +808,7 @@ public enum Selector {
 	, sel_redComponent("redComponent")
 	, sel_redo("redo")
 	, sel_reflectScrolledClipView_("reflectScrolledClipView:")
+	, sel_registerDefaults_("registerDefaults:")
 	, sel_registerForDraggedTypes_("registerForDraggedTypes:")
 	, sel_release("release")
 	, sel_reload_("reload:")
@@ -909,6 +916,7 @@ public enum Selector {
 	, sel_setAcceptsMouseMovedEvents_("setAcceptsMouseMovedEvents:")
 	, sel_setAcceptsTouchEvents_("setAcceptsTouchEvents:")
 	, sel_setAccessoryView_("setAccessoryView:")
+	, sel_setAccessoryViewDisclosed_("setAccessoryViewDisclosed:")
 	, sel_setAction_("setAction:")
 	, sel_setActivationPolicy_("setActivationPolicy:")
 	, sel_setAlertStyle_("setAlertStyle:")

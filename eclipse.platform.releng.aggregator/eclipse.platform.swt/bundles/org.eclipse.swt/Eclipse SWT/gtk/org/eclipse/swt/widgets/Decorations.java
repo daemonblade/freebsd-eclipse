@@ -17,6 +17,8 @@ import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class provide the appearance and
@@ -179,23 +181,40 @@ void _setImages (Image [] images) {
 		sort (bestImages);
 		images = bestImages;
 	}
-	long pixbufs = 0;
+
+	// Allocate GList of icons
+	long icon_list = 0;
 	if (images != null) {
-		for (int i = 0; i < images.length; i++) {
-			Image image = images [i];
-			long pixbuf = ImageList.createPixbuf (image);
-			pixbufs = OS.g_list_append (pixbufs, pixbuf);
+		for (Image image : images) {
+			long pixbuf = ImageList.createPixbuf(image);
+			if (GTK.GTK4) {
+				long texture = GDK.gdk_texture_new_for_pixbuf(pixbuf);
+				OS.g_object_unref(pixbuf);
+				icon_list = OS.g_list_append(icon_list, texture);
+			} else {
+				icon_list = OS.g_list_append(icon_list, pixbuf);
+			}
 		}
 	}
-	GTK.gtk_window_set_icon_list (topHandle (), pixbufs);
-	long [] data = new long [1];
-	long temp = pixbufs;
-	while (temp != 0) {
-		C.memmove (data, temp, C.PTR_SIZEOF);
-		OS.g_object_unref (data [0]);
-		temp = OS.g_list_next (temp);
+
+	if (GTK.GTK4) {
+		/*
+		 * Set texture list to window's surface. Can no longer
+		 * use GtkWindow functions as they require a themed icon.
+		 */
+		long surface = GTK4.gtk_native_get_surface(topHandle());
+		GTK4.gdk_toplevel_set_icon_list(surface, icon_list);
+	} else {
+		GTK3.gtk_window_set_icon_list(topHandle(), icon_list);
 	}
-	if (pixbufs != 0) OS.g_list_free (pixbufs);
+
+	// Release GList
+	long temp = icon_list;
+	while (temp != 0) {
+		OS.g_object_unref(OS.g_list_data(temp));
+		temp = OS.g_list_next(temp);
+	}
+	if (icon_list != 0) OS.g_list_free(icon_list);
 }
 
 void addMenu (Menu menu) {
@@ -243,7 +262,7 @@ void createAccelGroup () {
 	if (accelGroup == 0) error (SWT.ERROR_NO_HANDLES);
 	//FIXME - what should we do for Decorations
 	long shellHandle = topHandle ();
-	GTK.gtk_window_add_accel_group (shellHandle, accelGroup);
+	GTK3.gtk_window_add_accel_group (shellHandle, accelGroup);
 }
 
 @Override
@@ -254,10 +273,10 @@ void createWidget (int index) {
 
 void destroyAccelGroup () {
 	if (accelGroup == 0) return;
+	if (menuBar != null) menuBar.removeAccelerators(accelGroup);
 	long shellHandle = topHandle ();
-	GTK.gtk_window_remove_accel_group (shellHandle, accelGroup);
-	//TEMPORARY CODE
-//	OS.g_object_unref (accelGroup);
+	GTK3.gtk_window_remove_accel_group (shellHandle, accelGroup);
+	OS.g_object_unref (accelGroup);
 	accelGroup = 0;
 }
 
@@ -576,9 +595,9 @@ public void setDefaultButton (Button button) {
 	}
 
 	if (GTK.GTK4) {
-		GTK.gtk_window_set_default_widget (topHandle(), buttonHandle);
+		GTK4.gtk_window_set_default_widget (topHandle(), buttonHandle);
 	} else {
-		GTK.gtk_window_set_default (topHandle (), buttonHandle);
+		GTK3.gtk_window_set_default (topHandle (), buttonHandle);
 	}
 }
 
@@ -807,7 +826,7 @@ boolean traverseReturn () {
 		long defaultWidget = GTK.gtk_window_get_default_widget(shellHandle);
 		return GTK.gtk_widget_activate(defaultWidget);
 	} else {
-		return GTK.gtk_window_activate_default (shellHandle);
+		return GTK3.gtk_window_activate_default (shellHandle);
 	}
 }
 

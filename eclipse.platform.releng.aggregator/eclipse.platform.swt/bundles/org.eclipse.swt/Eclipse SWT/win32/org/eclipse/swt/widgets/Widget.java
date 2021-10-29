@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -99,6 +99,9 @@ public abstract class Widget {
 	/* Bidi "auto" text direction */
 	static final int HAS_AUTO_DIRECTION = 1<<22;
 
+	/* Mouse cursor is over the widget flag */
+	static final int MOUSE_OVER = 1<<23;
+
 	/* Default size for widgets */
 	static final int DEFAULT_WIDTH	= 64;
 	static final int DEFAULT_HEIGHT	= 64;
@@ -112,7 +115,10 @@ public abstract class Widget {
 
 	/* Initialize the Common Controls DLL */
 	static {
-		OS.InitCommonControls ();
+		INITCOMMONCONTROLSEX icce = new INITCOMMONCONTROLSEX ();
+		icce.dwSize = INITCOMMONCONTROLSEX.sizeof;
+		icce.dwICC = 0xffff;
+		OS.InitCommonControlsEx (icce);
 	}
 
 /**
@@ -289,6 +295,13 @@ void checkParent (Widget parent) {
 	if (parent.isDisposed ()) error (SWT.ERROR_INVALID_ARGUMENT);
 	parent.checkWidget ();
 	parent.checkOpened ();
+}
+
+void maybeEnableDarkSystemTheme(long handle) {
+	if (display.useDarkModeExplorerTheme) {
+		OS.AllowDarkModeForWindow(handle, true);
+		OS.SetWindowTheme(handle, Display.EXPLORER, null);
+	}
 }
 
 /**
@@ -789,22 +802,32 @@ void postEvent (int eventType, Event event) {
  * @see #releaseWidget
 */
 void release (boolean destroy) {
-	if ((state & DISPOSE_SENT) == 0) {
-		state |= DISPOSE_SENT;
-		sendEvent (SWT.Dispose);
-	}
-	if ((state & DISPOSED) == 0) {
-		releaseChildren (destroy);
-	}
-	if ((state & RELEASED) == 0) {
-		state |= RELEASED;
-		if (destroy) {
-			releaseParent ();
-			releaseWidget ();
-			destroyWidget ();
-		} else {
-			releaseWidget ();
-			releaseHandle ();
+	try (ExceptionStash exceptions = new ExceptionStash ()) {
+		if ((state & DISPOSE_SENT) == 0) {
+			state |= DISPOSE_SENT;
+			try {
+				sendEvent (SWT.Dispose);
+			} catch (Error | RuntimeException ex) {
+				exceptions.stash (ex);
+			}
+		}
+		if ((state & DISPOSED) == 0) {
+			try {
+				releaseChildren (destroy);
+			} catch (Error | RuntimeException ex) {
+				exceptions.stash (ex);
+			}
+		}
+		if ((state & RELEASED) == 0) {
+			state |= RELEASED;
+			if (destroy) {
+				releaseParent ();
+				releaseWidget ();
+				destroyWidget ();
+			} else {
+				releaseWidget ();
+				releaseHandle ();
+			}
 		}
 	}
 }
@@ -2053,6 +2076,7 @@ LRESULT wmMouseHover (long hwnd, long wParam, long lParam) {
 }
 
 LRESULT wmMouseLeave (long hwnd, long wParam, long lParam) {
+	state &= ~MOUSE_OVER;
 	if (!hooks (SWT.MouseExit) && !filters (SWT.MouseExit)) return null;
 	int pos = OS.GetMessagePos ();
 	POINT pt = new POINT ();
@@ -2077,32 +2101,25 @@ LRESULT wmMouseMove (long hwnd, long wParam, long lParam) {
 		if (trackMouse || mouseEnter || mouseExit || mouseHover) {
 			TRACKMOUSEEVENT lpEventTrack = new TRACKMOUSEEVENT ();
 			lpEventTrack.cbSize = TRACKMOUSEEVENT.sizeof;
-			lpEventTrack.dwFlags = OS.TME_QUERY;
+			lpEventTrack.dwFlags = OS.TME_LEAVE | OS.TME_HOVER;
 			lpEventTrack.hwndTrack = hwnd;
 			OS.TrackMouseEvent (lpEventTrack);
-			if (lpEventTrack.dwFlags == 0) {
-				lpEventTrack.dwFlags = OS.TME_LEAVE | OS.TME_HOVER;
-				lpEventTrack.hwndTrack = hwnd;
-				OS.TrackMouseEvent (lpEventTrack);
-				if (mouseEnter) {
-					/*
-					* Force all outstanding WM_MOUSELEAVE messages to be dispatched before
-					* issuing a mouse enter.  This causes mouse exit events to be processed
-					* before mouse enter events.  Note that WM_MOUSELEAVE is posted to the
-					* event queue by TrackMouseEvent().
-					*/
-					MSG msg = new MSG ();
-					int flags = OS.PM_REMOVE | OS.PM_NOYIELD | OS.PM_QS_INPUT | OS.PM_QS_POSTMESSAGE;
-					while (OS.PeekMessage (msg, 0, OS.WM_MOUSELEAVE, OS.WM_MOUSELEAVE, flags)) {
-						OS.TranslateMessage (msg);
-						OS.DispatchMessage (msg);
-					}
-					sendMouseEvent (SWT.MouseEnter, 0, hwnd, lParam);
+			if (mouseEnter && (state & MOUSE_OVER) == 0) {
+				/*
+				 * Force all outstanding WM_MOUSELEAVE messages to be dispatched before
+				 * issuing a mouse enter.  This causes mouse exit events to be processed
+				 * before mouse enter events.  Note that WM_MOUSELEAVE is posted to the
+				 * event queue by TrackMouseEvent().
+				 */
+				MSG msg = new MSG ();
+				int flags = OS.PM_REMOVE | OS.PM_NOYIELD | OS.PM_QS_INPUT | OS.PM_QS_POSTMESSAGE;
+				while (OS.PeekMessage (msg, 0, OS.WM_MOUSELEAVE, OS.WM_MOUSELEAVE, flags)) {
+					OS.TranslateMessage (msg);
+					OS.DispatchMessage (msg);
 				}
-			} else {
-				lpEventTrack.dwFlags = OS.TME_HOVER;
-				OS.TrackMouseEvent (lpEventTrack);
+				sendMouseEvent (SWT.MouseEnter, 0, hwnd, lParam);
 			}
+			state |= MOUSE_OVER;
 		}
 		if (pos != display.lastMouse) {
 			display.lastMouse = pos;

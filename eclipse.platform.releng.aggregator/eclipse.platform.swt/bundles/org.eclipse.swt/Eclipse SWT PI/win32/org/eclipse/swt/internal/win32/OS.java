@@ -15,9 +15,9 @@
 package org.eclipse.swt.internal.win32;
 
 
-import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
-import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.*;
 
 public class OS extends C {
 	static {
@@ -462,11 +462,11 @@ public class OS extends C {
 	public static final int FLICKDIRECTION_DOWN = 6;
 	public static final int FLICKDIRECTION_DOWNRIGHT = 7;
 	public static final int FLICKDIRECTION_INVALID = 8;
-	public static final int FNERR_INVALIDFILENAME = 0x3002;
-	public static final int FNERR_BUFFERTOOSMALL = 0x3003;
+	public static final int FOS_OVERWRITEPROMPT = 0x2;
 	public static final int FOS_NOCHANGEDIR = 0x8;
 	public static final int FOS_PICKFOLDERS = 0x20;
 	public static final int FOS_FORCEFILESYSTEM = 0x40;
+	public static final int FOS_ALLOWMULTISELECT = 0x200;
 	public static final int FR_PRIVATE = 0x10;
 	public static final int FSHIFT = 0x4;
 	public static final int FVIRTKEY = 0x1;
@@ -589,8 +589,6 @@ public class OS extends C {
 	public static final int HWND_TOP = 0x0;
 	public static final int HWND_TOPMOST = 0xffffffff;
 	public static final int HWND_NOTOPMOST = -2;
-	public static final int ICC_COOL_CLASSES = 0x400;
-	public static final int ICC_DATE_CLASSES = 0x100;
 	public static final int ICON_BIG = 0x1;
 	public static final int ICON_SMALL = 0x0;
 	public static final int I_IMAGECALLBACK = -1;
@@ -979,13 +977,6 @@ public class OS extends C {
 	public static final int OBM_CHECKBOXES = 0x7ff7;
 	public static final int ODS_SELECTED = 0x1;
 	public static final int ODT_MENU = 0x1;
-	public static final int OFN_ALLOWMULTISELECT = 0x200;
-	public static final int OFN_EXPLORER = 0x80000;
-	public static final int OFN_ENABLEHOOK = 0x20;
-	public static final int OFN_ENABLESIZING = 0x800000;
-	public static final int OFN_HIDEREADONLY = 0x4;
-	public static final int OFN_NOCHANGEDIR = 0x8;
-	public static final int OFN_OVERWRITEPROMPT = 0x2;
 	public static final int OIC_BANG = 0x7F03;
 	public static final int OIC_HAND = 0x7F01;
 	public static final int OIC_INFORMATION = 0x7F04;
@@ -1208,6 +1199,8 @@ public class OS extends C {
 	public static final int SM_CYMENU = 0xf;
 	public static final int SM_CXMINTRACK = 34;
 	public static final int SM_CYMINTRACK = 35;
+	public static final int SM_CXMAXTRACK = 59;
+	public static final int SM_CYMAXTRACK = 60;
 	public static final int SM_CMOUSEBUTTONS = 43;
 	public static final int SM_CYSCREEN = 0x1;
 	public static final int SM_CYVSCROLL = 0x14;
@@ -1925,8 +1918,6 @@ public static final native int NMUPDOWN_sizeof ();
 public static final native int NONCLIENTMETRICS_sizeof ();
 /** @method flags=const */
 public static final native int NOTIFYICONDATA_V2_SIZE ();
-public static final native int OFNOTIFY_sizeof ();
-public static final native int OPENFILENAME_sizeof ();
 public static final native int OUTLINETEXTMETRIC_sizeof ();
 public static final native int PAINTSTRUCT_sizeof ();
 public static final native int POINT_sizeof ();
@@ -2231,6 +2222,7 @@ public static final void setTheme(boolean isDarkTheme) {
 	display.setData("org.eclipse.swt.internal.win32.Table.headerLineColor",    isDarkTheme ? new Color(display, 0x50, 0x50, 0x50) : null);
 	display.setData("org.eclipse.swt.internal.win32.Label.disabledForegroundColor", isDarkTheme ? new Color(display, 0x80, 0x80, 0x80) : null);
 	display.setData("org.eclipse.swt.internal.win32.Combo.useDarkTheme",       isDarkTheme);
+	display.setData("org.eclipse.swt.internal.win32.ProgressBar.useColors",    isDarkTheme);
 }
 
 public static final boolean SetWindowText (long hWnd, TCHAR lpString) {
@@ -2249,6 +2241,24 @@ public static final int UrlCreateFromPath (TCHAR pszPath, TCHAR pszURL, int[] pc
 	return UrlCreateFromPath (path, url, pcchUrl, flags);
 }
 
+/* Macros */
+
+public static final int GET_WHEEL_DELTA_WPARAM (long wParam) { return (short)HIWORD (wParam); }
+public static final int GET_X_LPARAM (long lp) { return (short)LOWORD (lp); }
+public static final int GET_Y_LPARAM (long lp) { return (short)HIWORD (lp); }
+public static final int HIWORD (long l) { return (int)l >>> 16; }
+public static final int LOWORD (long l) { return (int)l & 0xffff; }
+public static final int MAKEWORD (int l, int h) { return (l & 0xff) | ((h & 0xff) << 8); }
+public static final long MAKELPARAM (int l, int h) { return ((l & 0xffff) | (h << 16)) & 0xffffffffL; }
+public static final long MAKELRESULT (int l, int h) { return MAKELPARAM (l, h); }
+public static final long MAKEWPARAM (int l, int h) { return MAKELPARAM (l, h); }
+public static final void POINTSTOPOINT (POINT pt, long pts) { pt.x = (short)LOWORD (pts); pt.y = (short)HIWORD (pts); }
+public static final int PRIMARYLANGID (int lgid) { return lgid & 0x3ff; }
+public static final int TOUCH_COORD_TO_PIXEL (int touchCoord) { return touchCoord / 100; }
+public static int HRESULT_FROM_WIN32(int x) {
+	return x <= 0 ? x : ((x & 0x0000FFFF) | 0x80070000);
+}
+
 /** Natives */
 
 /** @param hdc cast=(HDC) */
@@ -2260,7 +2270,10 @@ public static final native int AbortDoc (long hdc);
 public static final native boolean ActivateActCtx (long hActCtx, long [] lpCookie);
 /** @param hkl cast=(HKL) */
 public static final native long ActivateKeyboardLayout(long hkl, int Flags);
-/** @param pdv cast=(PVOID) */
+/**
+ * @param lpszFilename flags=no_out
+ * @param pdv cast=(PVOID)
+ */
 public static final native int AddFontResourceEx(char[] lpszFilename, int fl, long pdv);
 public static final native boolean AdjustWindowRectEx (RECT lpRect, int dwStyle, boolean bMenu, int dwExStyle);
 /** @method flags=no_gen */
@@ -2274,14 +2287,23 @@ public static final native boolean AllowSetForegroundWindow (int dwProcessId);
 public static final native boolean AlphaBlend(long hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest, long hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc, BLENDFUNCTION blendFunction);
 /** @param hdc cast=(HDC) */
 public static final native boolean Arc (long hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect, int nXStartArc, int nYStartArc, int nXEndArc, int nYEndArc);
+/**
+ * @param pszAssoc flags=no_out
+ * @param pszExtra flags=no_out
+ * @param pcchOut cast=(DWORD *)
+ */
 public static final native int AssocQueryString (int flags, int str, char[] pszAssoc, char[] pszExtra, char[] pszOut, int[] pcchOut);
 /**
  * @param hdcTarget cast=(HDC)
+ * @param prcTarget flags=no_out
  * @param phdc cast=(HDC*)
  */
 public static final native long BeginBufferedPaint (long hdcTarget, RECT prcTarget, int dwFormat, BP_PAINTPARAMS pPaintParams, long [] phdc);
 public static final native long BeginDeferWindowPos (int nNumWindows);
-/** @param hWnd cast=(HWND) */
+/**
+ * @param hWnd cast=(HWND)
+ * @param lpPaint flags=no_in
+ */
 public static final native long BeginPaint (long hWnd, PAINTSTRUCT lpPaint);
 /**
  * @param hdcDest cast=(HDC)
@@ -2313,19 +2335,14 @@ public static final native long CharUpper (long ch);
  * @param flags cast=(UINT)
  */
 public static final native long ChildWindowFromPointEx (long hWndParent, POINT pt, int flags);
-/** @param lpcc cast=(LPCHOOSECOLORW) */
 public static final native boolean ChooseColor (CHOOSECOLOR lpcc);
-/** @param chooseFont cast=(LPCHOOSEFONTW) */
 public static final native boolean ChooseFont (CHOOSEFONT chooseFont);
 /** @param hWnd cast=(HWND) */
 public static final native boolean ClientToScreen (long hWnd, POINT lpPoint);
 public static final native boolean CloseClipboard ();
 /** @param hdc cast=(HDC) */
 public static final native long CloseEnhMetaFile (long hdc);
-/**
- * @method flags=dynamic
- * @param hGesture cast=(HGESTUREINFO)
- */
+/** @param hGesture cast=(HGESTUREINFO) */
 public static final native long CloseGestureInfoHandle (long hGesture);
 /** @param hObject cast=(HANDLE) */
 public static final native boolean CloseHandle (long hObject);
@@ -2333,10 +2350,7 @@ public static final native boolean CloseHandle (long hObject);
 public static final native boolean ClosePrinter (long hPrinter);
 /** @param hTheme cast=(HTHEME) */
 public static final native int CloseThemeData (long hTheme);
-/**
- * @method flags=dynamic
- * @param hTouchInput cast=(HTOUCHINPUT)
- */
+/** @param hTouchInput cast=(HTOUCHINPUT) */
 public static final native boolean CloseTouchInputHandle(long hTouchInput);
 public static final native int CoInternetIsFeatureEnabled (int FeatureEntry, int dwFlags);
 /** @param fEnable cast=(BOOL) */
@@ -2347,14 +2361,13 @@ public static final native int CoInternetSetFeatureEnabled (int FeatureEntry, in
  * @param hrgnSrc2 cast=(HRGN)
  */
 public static final native int CombineRgn (long hrgnDest, long hrgnSrc1, long hrgnSrc2, int fnCombineMode);
-public static final native int CommDlgExtendedError ();
 /** @param hImage cast=(HANDLE) */
 public static final native long CopyImage (long hImage, int uType, int cxDesired, int cyDesired, int fuFlags);
 /** @param cb cast=(ULONG) */
 public static final native long CoTaskMemAlloc(int cb);
 /** @param pv cast=(LPVOID) */
 public static final native void CoTaskMemFree(long pv);
-/** @param lpaccl cast=(LPACCEL) */
+/** @param lpaccl cast=(LPACCEL),flags=no_out */
 public static final native long CreateAcceleratorTable (byte [] lpaccl, int cEntries);
 /** @param pActCtx flags=no_out */
 public static final native long CreateActCtx (ACTCTX pActCtx);
@@ -2398,8 +2411,9 @@ public static final native long CreateDIBSection(long hdc, byte[] pbmi, int iUsa
 public static final native long CreateDIBSection(long hdc, long pbmi, int iUsage, long[] ppvBits, long hSection, int dwOffset);
 /**
  * @param hdcRef cast=(HDC)
- * @param lpFilename cast=(LPCWSTR)
- * @param lpDescription cast=(LPCWSTR)
+ * @param lpFilename cast=(LPCWSTR),flags=no_out
+ * @param lpRect flags=no_out
+ * @param lpDescription cast=(LPCWSTR),flags=no_out
  */
 public static final native long CreateEnhMetaFile (long hdcRef, char[] lpFilename, RECT lpRect, char[] lpDescription);
 /** @param lplf cast=(LPLOGFONTW) */
@@ -2423,8 +2437,8 @@ public static final native long CreatePopupMenu ();
  * @param lpThreadAttributes cast=(LPSECURITY_ATTRIBUTES)
  * @param lpEnvironment cast=(LPVOID)
  * @param lpCurrentDirectory cast=(LPWSTR)
- * @param lpStartupInfo cast=(LPSTARTUPINFOW)
- * @param lpProcessInformation cast=(LPPROCESS_INFORMATION)
+ * @param lpStartupInfo flags=no_out
+ * @param lpProcessInformation flags=no_in
  */
 public static final native boolean CreateProcess (long lpApplicationName, long lpCommandLine, long lpProcessAttributes, long lpThreadAttributes, boolean bInheritHandles, int dwCreationFlags, long lpEnvironment, long lpCurrentDirectory, STARTUPINFO lpStartupInfo, PROCESS_INFORMATION lpProcessInformation);
 public static final native long CreateRectRgn (int left, int top, int right, int bottom);
@@ -2437,8 +2451,8 @@ public static final native long CreateSolidBrush (int colorRef);
  */
 public static final native int CreateStreamOnHGlobal(long hGlobal, boolean fDeleteOnRelease, long[] ppstm);
 /**
- * @param lpClassName cast=(LPWSTR)
- * @param lpWindowName cast=(LPWSTR)
+ * @param lpClassName cast=(LPWSTR),flags=no_out
+ * @param lpWindowName cast=(LPWSTR),flags=no_out
  * @param hWndParent cast=(HWND)
  * @param hMenu cast=(HMENU)
  * @param hInstance cast=(HINSTANCE)
@@ -2511,9 +2525,15 @@ public static final native void DragFinish (long hDrop);
 public static final native int DragQueryFile (long hDrop, int iFile, char[] lpszFile, int cch);
 /** @param hdc cast=(HDC) */
 public static final native boolean DrawEdge (long hdc, RECT qrc, int edge, int grfFlags);
-/** @param hDC cast=(HDC) */
+/**
+ * @param hDC cast=(HDC)
+ * @param lpRect flags=no_out
+ */
 public static final native boolean DrawFocusRect (long hDC, RECT lpRect);
-/** @param hdc cast=(HDC) */
+/**
+ * @param hdc cast=(HDC)
+ * @param lprc flags=no_out
+ */
 public static final native boolean DrawFrameControl (long hdc, RECT lprc, int uType, int uState);
 /**
  * @param hdc cast=(HDC)
@@ -2531,13 +2551,15 @@ public static final native int DrawText (long hDC, char [] lpString, int nCount,
 /**
  * @param hTheme cast=(HTHEME)
  * @param hdc cast=(HDC)
- * @param pRect cast=(const RECT *)
- * @param pClipRect cast=(const RECT *)
+ * @param pRect flags=no_out
+ * @param pClipRect flags=no_out
  */
 public static final native int DrawThemeBackground (long hTheme, long hdc, int iPartId, int iStateId, RECT pRect, RECT pClipRect);
 /**
  * @param hTheme cast=(HTHEME)
  * @param hdc cast=(HDC)
+ * @param pszText flags=no_out
+ * @param pRect flags=no_out
  */
 public static final native int DrawThemeText (long hTheme, long hdc, int iPartId, int iStateId, char[] pszText, int iCharCount, int dwTextFlags, int dwTextFlags2, RECT pRect);
 /** @param hdc cast=(HDC) */
@@ -2563,11 +2585,14 @@ public static final native int EndBufferedPaint (long hBufferedPaint, boolean fU
 public static final native int EndDoc (long hdc);
 /** @param hdc cast=(HDC) */
 public static final native int EndPage (long hdc);
-/** @param hWnd cast=(HWND) */
+/**
+ * @param hWnd cast=(HWND)
+ * @param lpPaint flags=no_out
+ */
 public static final native int EndPaint (long hWnd, PAINTSTRUCT lpPaint);
 /**
  * @param hdc cast=(HDC)
- * @param lprcClip cast=(LPCRECT)
+ * @param lprcClip flags=no_out
  * @param lpfnEnum cast=(MONITORENUMPROC)
  * @param dwData cast=(LPARAM)
  */
@@ -2581,21 +2606,22 @@ public static final native boolean EnumDisplayMonitors (long hdc, RECT lprcClip,
 public static final native boolean EnumEnhMetaFile(long hdc, long hemf, long lpEnhMetaFunc, long lpData, RECT lpRect);
 /**
  * @param hdc cast=(HDC)
- * @param lpszFamily cast=(LPCWSTR)
+ * @param lpszFamily cast=(LPCWSTR),flags=no_out
  * @param lpEnumFontFamProc cast=(FONTENUMPROCW)
  * @param lParam cast=(LPARAM)
  */
 public static final native int EnumFontFamilies (long hdc, char [] lpszFamily, long lpEnumFontFamProc, long lParam);
 /**
- * @param lprc1 cast=(CONST RECT *),flags=no_out
- * @param lprc2 cast=(CONST RECT *),flags=no_out
+ * @param lprc1 flags=no_out
+ * @param lprc2 flags=no_out
  */
 public static final native boolean EqualRect (RECT lprc1, RECT lprc2);
 /** @param hdc cast=(HDC) */
 public static final native int ExcludeClipRect (long hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
+/** @param lpSrc flags=no_out */
 public static final native int ExpandEnvironmentStrings (char [] lpSrc, char [] lsDst, int nSize);
 /**
- * @param lplb cast=(CONST LOGBRUSH *)
+ * @param lplb flags=no_out
  * @param lpStyle cast=(CONST DWORD *)
  */
 public static final native long ExtCreatePen (int dwPenStyle, int dwWidth, LOGBRUSH lplb, int dwStyleCount, int[] lpStyle);
@@ -2625,14 +2651,12 @@ public static final native int ExtractIconEx (char [] lpszFile, int nIconIndex, 
 public static final native int FillRect (long hDC, RECT lprc, long hbr);
 /** @param dwLimit cast=(DWORD) */
 public static final native int GdiSetBatchLimit (int dwLimit);
-public static final native int GET_WHEEL_DELTA_WPARAM(long wParam);
-public static final native int GET_X_LPARAM(long lp);
-public static final native int GET_Y_LPARAM(long lp);
 public static final native int GetACP ();
 public static final native long GetActiveWindow ();
 /** @param hDC cast=(HDC) */
 public static final native int GetBkColor (long hDC);
 public static final native long GetCapture ();
+/** @param lpPoint flags=no_in */
 public static final native boolean GetCaretPos (POINT lpPoint);
 /**
  * @param hdc cast=(HDC)
@@ -2642,7 +2666,6 @@ public static final native boolean GetCharABCWidths (long hdc, int iFirstChar, i
 /**
  * @param hdc cast=(HDC)
  * @param lpString cast=(LPWSTR),flags=no_out critical
- * @param lpResults cast=(LPGCP_RESULTSW)
  */
 public static final native int GetCharacterPlacement (long hdc, char[] lpString, int nCount, int nMaxExtent, GCP_RESULTS lpResults, int dwFlags);
 /**
@@ -2652,18 +2675,23 @@ public static final native int GetCharacterPlacement (long hdc, char[] lpString,
 public static final native boolean GetCharWidth (long hdc, int iFirstChar, int iLastChar, int [] lpBuffer);
 /**
  * @param hInstance cast=(HINSTANCE)
- * @param lpClassName cast=(LPWSTR)
- * @param lpWndClass cast=(LPWNDCLASSW)
+ * @param lpClassName cast=(LPWSTR),flags=no_out
  */
 public static final native boolean GetClassInfo (long hInstance, char [] lpClassName, WNDCLASS lpWndClass);
 /** @param hWnd cast=(HWND) */
 public static final native int GetClassName (long hWnd, char [] lpClassName, int nMaxCount);
-/** @param hWnd cast=(HWND) */
+/**
+ * @param hWnd cast=(HWND)
+ * @param lpRect flags=no_in
+ */
 public static final native boolean GetClientRect (long hWnd, RECT lpRect);
 public static final native long GetClipboardData (int uFormat);
 /** @param lpszFormatName cast=(LPWSTR) */
 public static final native int GetClipboardFormatName (int format, char[] lpszFormatName, int cchMaxCount);
-/** @param hdc cast=(HDC) */
+/**
+ * @param hdc cast=(HDC)
+ * @param lprc flags=no_in
+ */
 public static final native int GetClipBox (long hdc, RECT lprc);
 /**
  * @param hdc cast=(HDC)
@@ -2676,7 +2704,7 @@ public static final native boolean GetComboBoxInfo (long hwndCombo, COMBOBOXINFO
 public static final native long GetCurrentObject (long hdc, int uObjectType);
 public static final native int GetCurrentProcessId ();
 public static final native int GetCurrentThreadId ();
-/** @method flags=dynamic */
+/** @param AppID cast=(PWSTR *) */
 public static final native int GetCurrentProcessExplicitAppUserModelID(long[] AppID);
 public static final native long GetCursor ();
 public static final native boolean GetCursorPos (POINT lpPoint);
@@ -2712,16 +2740,13 @@ public static final native long GetFocus ();
 /** @param hdc cast=(HDC) */
 public static final native int GetFontLanguageInfo (long hdc);
 public static final native long GetForegroundWindow ();
-/**
- * @method flags=dynamic
- * @param hGestureInfo cast=(HGESTUREINFO)
- * @param pGestureInfo cast=(PGESTUREINFO)
- */
+/** @param hGestureInfo cast=(HGESTUREINFO) */
 public static final native boolean GetGestureInfo(long hGestureInfo, GESTUREINFO pGestureInfo);
 /** @param hdc cast=(HDC) */
 public static final native int GetGraphicsMode (long hdc);
 /**
  * @param hdc cast=(HDC)
+ * @param lpstr flags=no_out
  * @param pgi cast=(LPWORD)
  */
 public static final native int GetGlyphIndices (long hdc, char[] lpstr, int c, short[] pgi, int fl);
@@ -2744,7 +2769,12 @@ public static final native boolean GetKeyboardState (byte [] lpKeyState);
 /** @param hWnd cast=(HWND) */
 public static final native long GetLastActivePopup (long hWnd);
 public static final native int GetLastError ();
-/** @param hwnd cast=(HWND) */
+/**
+ * @param hwnd cast=(HWND)
+ * @param pcrKey cast=(COLORREF *)
+ * @param pbAlpha cast=(BYTE *)
+ * @param pdwFlags cast=(DWORD *)
+ */
 public static final native boolean GetLayeredWindowAttributes (long hwnd, int [] pcrKey, byte [] pbAlpha, int [] pdwFlags);
 /** @param hdc cast=(HDC) */
 public static final native int GetLayout (long hdc);
@@ -2771,9 +2801,13 @@ public static final native boolean GetMenuItemInfo (long hMenu, int uItem, boole
 /**
  * @param hWnd cast=(HWND)
  * @param hMenu cast=(HMENU)
+ * @param lprcItem flags=no_in
  */
 public static final native boolean GetMenuItemRect (long hWnd, long hMenu, int uItem, RECT lprcItem);
-/** @param hWnd cast=(HWND) */
+/**
+ * @param lpMsg flags=no_in
+ * @param hWnd cast=(HWND)
+ */
 public static final native boolean GetMessage (MSG lpMsg, long hWnd, int wMsgFilterMin, int wMsgFilterMax);
 public static final native int GetMessagePos ();
 public static final native int GetMessageTime ();
@@ -2792,6 +2826,9 @@ public static final native int GetThemePartSize(long hTheme, long hdc, int iPart
 /**
  * @param hTheme cast=(HTHEME)
  * @param hdc cast=(HDC)
+ * @param pszText flags=no_out
+ * @param pBoundingRect flags=no_out
+ * @param pExtentRect flags=no_in
  */
 public static final native int GetThemeTextExtent (long hTheme, long hdc, int iPartId, int iStateId, char[] pszText, int iCharCount, int dwTextFlags, RECT pBoundingRect, RECT pExtentRect);
 /**
@@ -2799,12 +2836,9 @@ public static final native int GetThemeTextExtent (long hTheme, long hdc, int iP
  * @param lpFilename cast=(LPWSTR)
  */
 public static final native int GetModuleFileName (long hModule, char [] lpFilename, int inSize);
-/** @param lpModuleName cast=(LPWSTR) */
+/** @param lpModuleName cast=(LPWSTR),flags=no_out */
 public static final native long GetModuleHandle (char [] lpModuleName);
-/**
- * @param hmonitor cast=(HMONITOR)
- * @param lpmi cast=(LPMONITORINFO)
- */
+/** @param hmonitor cast=(HMONITOR) */
 public static final native boolean GetMonitorInfo (long hmonitor, MONITORINFO lpmi);
 /**
  * @param hgdiobj cast=(HGDIOBJ)
@@ -2831,8 +2865,6 @@ public static final native int GetObject (long hgdiobj, int cbBuffer, LOGFONT lp
  * @param lpvObject cast=(LPVOID),flags=no_in
  */
 public static final native int GetObject (long hgdiobj, int cbBuffer, long lpvObject);
-/** @param lpofn cast=(LPOPENFILENAMEW) */
-public static final native boolean GetOpenFileName (OPENFILENAME lpofn);
 /** @param hdc cast=(HDC) */
 public static final native int GetOutlineTextMetrics (long hdc, int cbData, OUTLINETEXTMETRIC lpOTM);
 /** @param hWnd cast=(HWND) */
@@ -2842,16 +2874,16 @@ public static final native int GetPixel (long hdc, int x, int y);
 /** @param hdc cast=(HDC) */
 public static final native int GetPolyFillMode (long hdc);
 /**
- * @param pPrinterName cast=(LPWSTR)
+ * @param pPrinterName cast=(LPWSTR),flags=no_out
  * @param phPrinter cast=(LPHANDLE)
  * @param pDefault cast=(LPPRINTER_DEFAULTSW)
  */
 public static final native boolean OpenPrinter (char[] pPrinterName, long [] phPrinter, long pDefault);
 public static final native long GetProcessHeap ();
 /**
- * @param lpAppName cast=(LPWSTR)
- * @param lpKeyName cast=(LPWSTR)
- * @param lpDefault cast=(LPWSTR)
+ * @param lpAppName cast=(LPWSTR),flags=no_out
+ * @param lpDefault cast=(LPWSTR),flags=no_out
+ * @param lpKeyName cast=(LPWSTR),flags=no_out
  * @param lpReturnedString cast=(LPWSTR)
  */
 public static final native int GetProfileString (char [] lpAppName, char [] lpKeyName, char [] lpDefault, char [] lpReturnedString, int nSize);
@@ -2877,13 +2909,10 @@ public static final native int GetRegionData (long hRgn, int dwCount, int [] lpR
 public static final native int GetRgnBox (long hrgn, RECT lprc);
 /** @param hdc cast=(HDC) */
 public static final native int GetROP2 (long hdc);
-/** @param lpofn cast=(LPOPENFILENAMEW) */
-public static final native boolean GetSaveFileName (OPENFILENAME lpofn);
 /** @param hwnd cast=(HWND) */
 public static final native boolean GetScrollBarInfo (long hwnd, int idObject, SCROLLBARINFO psbi);
 /** @param hwnd cast=(HWND) */
 public static final native boolean GetScrollInfo (long hwnd, int flags, SCROLLINFO info);
-/** @param lpStartupInfo cast=(LPSTARTUPINFOW) */
 public static final native void GetStartupInfo (STARTUPINFO lpStartupInfo);
 public static final native long GetStockObject (int fnObject);
 public static final native int GetSysColor (int nIndex);
@@ -2905,7 +2934,6 @@ public static final native boolean GetTextExtentPoint32 (long hdc, char [] lpStr
  */
 public static final native boolean GetTextMetrics (long hdc, TEXTMETRIC lptm);
 /**
- * @method flags=dynamic
  * @param hTouchInput cast=(HTOUCHINPUT)
  * @param cInputs cast=(UINT)
  * @param pTouchInputs cast=(PTOUCHINPUT)
@@ -2913,7 +2941,7 @@ public static final native boolean GetTextMetrics (long hdc, TEXTMETRIC lptm);
 public static final native boolean GetTouchInputInfo(long hTouchInput, int cInputs, long pTouchInputs, int cbSize);
 /**
  * @param hWnd cast=(HWND)
- * @param lpRect cast=(LPRECT)
+ * @param lpRect flags=no_in
  * @param bErase cast=(BOOL)
  */
 public static final native boolean GetUpdateRect (long hWnd, RECT lpRect, boolean bErase);
@@ -2955,7 +2983,7 @@ public static final native int GetWindowTextLength (long hWnd);
  */
 public static final native int GetWindowThreadProcessId (long hWnd, int [] lpdwProcessId);
 public static final native double GID_ROTATE_ANGLE_FROM_ARGUMENT(long dwArgument);
-/** @param lpString cast=(LPCWSTR) */
+/** @param lpString cast=(LPCWSTR),flags=no_out */
 public static final native int GlobalAddAtom (char [] lpString);
 public static final native long GlobalAlloc (int uFlags, int dwBytes);
 /** @param hMem cast=(HANDLE) */
@@ -2975,7 +3003,6 @@ public static final native boolean GlobalUnlock (long hMem);
  * @param dwMode cast=(ULONG)
  */
 public static final native boolean GradientFill (long hdc, long pVertex, int dwNumVertex, long pMesh, int dwNumMesh, int dwMode);
-public static final native int HIWORD(long l);
 /** @param hHeap cast=(HANDLE) */
 public static final native long HeapAlloc (long hHeap, int dwFlags, int dwBytes);
 /**
@@ -2986,7 +3013,7 @@ public static final native boolean HeapFree (long hHeap, int dwFlags, long lpMem
 /** @param hWnd cast=(HWND) */
 public static final native boolean HideCaret (long hWnd);
 /**
- * @param lpsz cast=(LPOLESTR)
+ * @param lpsz cast=(LPOLESTR),flags=no_out
  * @param lpiid cast=(LPIID)
  */
 public static final native int IIDFromString (char[] lpsz, byte[] lpiid);
@@ -3048,7 +3075,10 @@ public static final native boolean ImageList_SetIconSize (long himl, int cx, int
  * @param lpData cast=(LPVOID)
  */
 public static final native long ImmEscape (long hKL, long hIMC, int uEscape, char[] lpData);
-/** @param hIMC cast=(HIMC) */
+/**
+ * @param hIMC cast=(HIMC)
+ * @param lplf flags=no_in
+ */
 public static final native boolean ImmGetCompositionFont (long hIMC, LOGFONT lplf);
 /**
  * @param hIMC cast=(HIMC)
@@ -3084,34 +3114,43 @@ public static final native boolean ImmNotifyIME (long hIMC, int dwAction, int dw
  * @param hIMC cast=(HIMC)
  */
 public static final native boolean ImmReleaseContext (long hWnd, long hIMC);
-/** @param hIMC cast=(HIMC) */
+/**
+ * @param hIMC cast=(HIMC)
+ * @param lplf flags=no_out
+ */
 public static final native boolean ImmSetCompositionFont (long hIMC, LOGFONT lplf);
-/** @param hIMC cast=(HIMC) */
+/**
+ * @param hIMC cast=(HIMC)
+ * @param lpCompForm flags=no_out
+ */
 public static final native boolean ImmSetCompositionWindow (long hIMC, COMPOSITIONFORM lpCompForm);
-/** @param hIMC cast=(HIMC) */
+/**
+ * @param hIMC cast=(HIMC)
+ * @param lpCandidate flags=no_out
+ */
 public static final native boolean ImmSetCandidateWindow (long hIMC, CANDIDATEFORM lpCandidate);
 /** @param hIMC cast=(HIMC) */
 public static final native boolean ImmSetConversionStatus (long hIMC, int fdwConversion, int dwSentence);
 /** @param hIMC cast=(HIMC) */
 public static final native boolean ImmSetOpenStatus (long hIMC, boolean fOpen);
-public static final native void InitCommonControls ();
+/** @param lpInitCtrls flags=no_out */
 public static final native boolean InitCommonControlsEx (INITCOMMONCONTROLSEX lpInitCtrls);
 /**
  * @param hMenu cast=(HMENU)
- * @param lpmii cast=(LPMENUITEMINFOW)
+ * @param lpmii flags=no_out
  */
 public static final native boolean InsertMenuItem (long hMenu, int uItem, boolean fByPosition, MENUITEMINFO lpmii);
 /**
- * @param lpszUrl cast=(LPCWSTR)
- * @param lpszCookieName cast=(LPCWSTR)
+ * @param lpszUrl cast=(LPCWSTR),flags=no_out
+ * @param lpszCookieName cast=(LPCWSTR),flags=no_out
  * @param lpszCookieData cast=(LPWSTR)
  * @param lpdwSize cast=(LPDWORD)
  */
 public static final native boolean InternetGetCookie (char[] lpszUrl, char[] lpszCookieName, char[] lpszCookieData, int[] lpdwSize);
 /**
- * @param lpszUrl cast=(LPCWSTR)
- * @param lpszCookieName cast=(LPCWSTR)
- * @param lpszCookieData cast=(LPCWSTR)
+ * @param lpszUrl cast=(LPCWSTR),flags=no_out
+ * @param lpszCookieName cast=(LPCWSTR),flags=no_out
+ * @param lpszCookieData cast=(LPCWSTR),flags=no_out
  */
 public static final native boolean InternetSetCookie (char[] lpszUrl, char[] lpszCookieName, char[] lpszCookieData);
 /**
@@ -3142,7 +3181,6 @@ public static final native boolean IsHungAppWindow (long hWnd);
 /** @param hWnd cast=(HWND) */
 public static final native boolean IsIconic (long hWnd);
 /**
- * @method flags=dynamic
  * @param hWnd cast=(HWND)
  * @param outFlags cast=(PULONG)
  */
@@ -3185,19 +3223,12 @@ public static final native int LoadIconMetric (long hinst, long pszName, int lim
 public static final native long LoadImage (long hinst, long lpszName, int uType, int cxDesired, int cyDesired, int fuLoad);
 /** @param hMem cast=(HLOCAL) */
 public static final native long LocalFree (long hMem);
-public static final native int LODWORD (long l);
-public static final native int LOWORD (long l);
 /** @param hdc cast=(HDC) */
 public static final native boolean LPtoDP (long hdc, POINT lpPoints, int nCount);
-public static final native int MAKEWORD(int l, int h);
-public static final native long MAKEWPARAM(int l, int h);
-public static final native long MAKELPARAM(int l, int h);
-public static final native long MAKELRESULT(int l, int h);
 public static final native int MapVirtualKey (int uCode, int uMapType);
 /**
  * @param hWndFrom cast=(HWND)
  * @param hWndTo cast=(HWND)
- * @param lpPoints cast=(LPPOINT)
  */
 public static final native int MapWindowPoints (long hWndFrom, long hWndTo, POINT lpPoints, int cPoints);
 /**
@@ -3209,8 +3240,8 @@ public static final native int MapWindowPoints (long hWndFrom, long hWndTo, RECT
 public static final native boolean MessageBeep (int uType);
 /**
  * @param hWnd cast=(HWND)
- * @param lpText cast=(LPWSTR)
- * @param lpCaption cast=(LPWSTR)
+ * @param lpText cast=(LPWSTR),flags=no_out
+ * @param lpCaption cast=(LPWSTR),flags=no_out
  */
 public static final native int MessageBox (long hWnd, char [] lpText, char [] lpCaption, int uType);
 /**
@@ -3332,11 +3363,6 @@ public static final native void MoveMemory (long Destination, UDACCEL Source, in
 public static final native void MoveMemory (long Destination, NMTTDISPINFO Source, int Length);
 /**
  * @param Destination cast=(PVOID)
- * @param Source cast=(CONST VOID *)
- */
-public static final native void MoveMemory (long Destination, OPENFILENAME Source, int Length);
-/**
- * @param Destination cast=(PVOID)
  * @param Source cast=(CONST VOID *),flags=no_out
  */
 public static final native void MoveMemory (long Destination, RECT Source, int Length);
@@ -3420,16 +3446,6 @@ public static final native void MoveMemory (MEASUREITEMSTRUCT Destination, long 
  * @param Source cast=(CONST VOID *)
  */
 public static final native void MoveMemory (MINMAXINFO Destination, long Source, int Length);
-/**
- * @param Destination cast=(PVOID)
- * @param Source cast=(CONST VOID *)
- */
-public static final native void MoveMemory (OFNOTIFY Destination, long Source, int Length);
-/**
- * @param Destination cast=(PVOID)
- * @param Source cast=(CONST VOID *)
- */
-public static final native void MoveMemory (OPENFILENAME Destination, long Source, int Length);
 /**
  * @param Destination cast=(PVOID),flags=no_in
  * @param Source cast=(CONST VOID *)
@@ -3649,21 +3665,6 @@ public static final native void MoveMemory (SCRIPT_PROPERTIES Destination, long 
  * @param Destination cast=(PVOID)
  * @param Source cast=(CONST VOID *),flags=no_out
  */
-public static final native void MoveMemory (long Destination, KEYBDINPUT Source, int Length);
-/**
- * @param Destination cast=(PVOID)
- * @param Source cast=(CONST VOID *),flags=no_out
- */
-public static final native void MoveMemory (long Destination, MOUSEINPUT Source, int Length);
-/**
- * @param Destination cast=(PVOID)
- * @param Source cast=(CONST VOID *),flags=no_out
- */
-public static final native void MoveMemory (long Destination, GESTURECONFIG Source, int Length);
-/**
- * @param Destination cast=(PVOID)
- * @param Source cast=(CONST VOID *),flags=no_out
- */
 public static final native void MoveMemory (long Destination, CIDA Source, int Length);
 /**
  * @param Destination cast=(PVOID),flags=no_in
@@ -3702,19 +3703,20 @@ public static final native void OleUninitialize ();
 public static final native boolean OpenClipboard (long hWndNewOwner);
 /**
  * @param hwnd cast=(HWND)
- * @param pszClassList cast=(LPCWSTR)
+ * @param pszClassList cast=(LPCWSTR),flags=no_out
  */
 public static final native long OpenThemeData (long hwnd, char[] pszClassList);
 /** @param hdc cast=(HDC) */
 public static final native boolean PatBlt (long hdc, int x1, int x2, int w, int h, int rop);
 /** @param szfile cast=(LPCWSTR) */
 public static final native boolean PathIsExe (long szfile);
-/** @param hWnd cast=(HWND) */
+/**
+ * @param lpMsg flags=no_in
+ * @param hWnd cast=(HWND)
+ */
 public static final native boolean PeekMessage (MSG lpMsg, long hWnd, int wMsgFilterMin, int wMsgFilterMax, int wRemoveMsg);
 /** @param hdc cast=(HDC) */
 public static final native boolean Pie (long hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect, int nXStartArc, int nYStartArc, int nXEndArc, int nYEndArc);
-/** @param pt flags=struct */
-public static final native void POINTSTOPOINT(POINT pt, long pts);
 /**
  * @param hdc cast=(HDC)
  * @param points cast=(CONST POINT *),flags=no_out critical
@@ -3736,14 +3738,16 @@ public static final native boolean PostMessage (long hWnd, int Msg, long wParam,
  * @param lParam cast=(LPARAM)
  */
 public static final native boolean PostThreadMessage (int idThread, int Msg, long wParam, long lParam);
-public static final native short PRIMARYLANGID (int lgid);
-/** @param lppd cast=(LPPRINTDLGW) */
 public static final native boolean PrintDlg (PRINTDLG lppd);
 /**
  * @param hwnd cast=(HWND)
  * @param hdcBlt cast=(HDC)
  */
 public static final native boolean PrintWindow (long hwnd, long hdcBlt, int nFlags);
+/**
+ * @param pszString cast=(LPCWSTR),flags=no_out
+ * @param pkey flags=no_in
+ */
 public static final native int PSPropertyKeyFromString (char[] pszString, PROPERTYKEY pkey);
 /**
  * @param rect flags=no_out
@@ -3761,6 +3765,7 @@ public static final native boolean Rectangle (long hdc, int nLeftRect, int nTopR
 public static final native boolean RectInRegion (long hrgn, RECT lprc);
 /**
  * @param hWnd cast=(HWND)
+ * @param lprcUpdate flags=no_out
  * @param hrgnUpdate cast=(HRGN)
  */
 public static final native boolean RedrawWindow (long hWnd, RECT lprcUpdate, long hrgnUpdate, int flags);
@@ -3768,8 +3773,8 @@ public static final native boolean RedrawWindow (long hWnd, RECT lprcUpdate, lon
 public static final native int RegCloseKey (long hKey);
 /**
  * @param hKey cast=(HKEY)
- * @param lpSubKey cast=(LPWSTR)
- * @param lpClass cast=(LPWSTR)
+ * @param lpSubKey cast=(LPCWSTR),flags=no_out
+ * @param lpClass cast=(LPWSTR),flags=no_out
  * @param lpSecurityAttributes cast=(LPSECURITY_ATTRIBUTES)
  * @param phkResult cast=(PHKEY)
  * @param lpdwDisposition cast=(LPDWORD)
@@ -3777,7 +3782,7 @@ public static final native int RegCloseKey (long hKey);
 public static final native int RegCreateKeyEx (long hKey, char[] lpSubKey, int Reserved, char[] lpClass, int dwOptions, int samDesired, long lpSecurityAttributes, long[] phkResult, long[] lpdwDisposition);
 /**
  * @param hKey cast=(HKEY)
- * @param lpValueName cast=(LPWSTR)
+ * @param lpValueName cast=(LPCWSTR),flags=no_out
  */
 public static final native int RegDeleteValue (long hKey, char[] lpValueName);
 /**
@@ -3790,27 +3795,26 @@ public static final native int RegDeleteValue (long hKey, char[] lpValueName);
  * @param lpftLastWriteTime cast=(PFILETIME)
  */
 public static final native int RegEnumKeyEx (long hKey, int dwIndex, char [] lpName, int [] lpcName, int [] lpReserved, char [] lpClass, int [] lpcClass, long lpftLastWriteTime);
-/** @param lpWndClass cast=(LPWNDCLASSW) */
+/** @param lpWndClass flags=no_out */
 public static final native int RegisterClass (WNDCLASS lpWndClass);
 /**
- * @method flags=dynamic
  * @param hWnd cast=(HWND)
  * @param ulFlags cast=(ULONG)
  */
 public static final native boolean RegisterTouchWindow(long hWnd, int ulFlags);
-/** @param lpString cast=(LPWSTR) */
+/** @param lpString cast=(LPCWSTR),flags=no_out */
 public static final native int RegisterWindowMessage (char [] lpString);
-/** @param lpszFormat cast=(LPWSTR) */
+/** @param lpszFormat cast=(LPCWSTR),flags=no_out */
 public static final native int RegisterClipboardFormat (char[] lpszFormat);
 /**
  * @param hKey cast=(HKEY)
- * @param lpSubKey cast=(LPWSTR)
+ * @param lpSubKey cast=(LPCWSTR),flags=no_out
  * @param phkResult cast=(PHKEY)
  */
 public static final native int RegOpenKeyEx (long hKey, char[] lpSubKey, int ulOptions, int samDesired, long[] phkResult);
 /**
  * @param hKey cast=(HKEY)
- * @param lpValueName cast=(LPWSTR)
+ * @param lpValueName cast=(LPCWSTR),flags=no_out
  * @param lpReserved cast=(LPDWORD)
  * @param lpType cast=(LPDWORD)
  * @param lpData cast=(LPBYTE)
@@ -3819,7 +3823,7 @@ public static final native int RegOpenKeyEx (long hKey, char[] lpSubKey, int ulO
 public static final native int RegQueryValueEx (long hKey, char[] lpValueName, long lpReserved, int[] lpType, char [] lpData, int[] lpcbData);
 /**
  * @param hKey cast=(HKEY)
- * @param lpValueName cast=(LPWSTR)
+ * @param lpValueName cast=(LPCWSTR),flags=no_out
  * @param lpReserved cast=(LPDWORD)
  * @param lpType cast=(LPDWORD)
  * @param lpData cast=(LPBYTE)
@@ -3828,7 +3832,7 @@ public static final native int RegQueryValueEx (long hKey, char[] lpValueName, l
 public static final native int RegQueryValueEx (long hKey, char[] lpValueName, long lpReserved, int[] lpType, int [] lpData, int[] lpcbData);
 /**
  * @param hKey cast=(HKEY)
- * @param lpValueName cast=(LPWSTR)
+ * @param lpValueName cast=(LPCWSTR),flags=no_out
  * @param lpData cast=(const BYTE*)
  */
 public static final native int RegSetValueEx (long hKey, char[] lpValueName, int Reserved, int dwType, int[] lpData, int cbData);
@@ -3864,8 +3868,8 @@ public static final native boolean ScreenToClient (long hWnd, POINT lpPoint);
  */
 public static final native int ScriptApplyDigitSubstitution (long psds, SCRIPT_CONTROL psc, SCRIPT_STATE pss);
 /**
- * @param pwcChars cast=(const WCHAR *)
- * @param psa cast=(const SCRIPT_ANALYSIS *)
+ * @param pwcChars cast=(const WCHAR *),flags=no_out
+ * @param psa cast=(const SCRIPT_ANALYSIS *),flags=no_out
  * @param psla cast=(SCRIPT_LOGATTR *)
  */
 public static final native int ScriptBreak (char[] pwcChars, int cChars, SCRIPT_ANALYSIS psa, long psla);
@@ -3884,7 +3888,7 @@ public static final native int ScriptCacheGetHeight (long hdc, long psc, int[] t
  * @param pwLogClust cast=(const WORD *)
  * @param psva cast=(const SCRIPT_VISATTR *)
  * @param piAdvance cast=(const int *)
- * @param psa cast=(const SCRIPT_ANALYSIS *)
+ * @param psa cast=(const SCRIPT_ANALYSIS *),flags=no_out
  * @param piX cast=(int *)
  */
 public static final native int ScriptCPtoX (int iCP, boolean fTrailing, int cChars, int cGlyphs, long pwLogClust, long psva, long piAdvance, SCRIPT_ANALYSIS psa, int[] piX);
@@ -3897,7 +3901,7 @@ public static final native int ScriptFreeCache (long psc);
  */
 public static final native int ScriptGetFontProperties (long hdc, long psc, SCRIPT_FONTPROPERTIES sfp);
 /**
- * @param psa cast=(const SCRIPT_ANALYSIS *)
+ * @param psa cast=(const SCRIPT_ANALYSIS *),flags=no_out
  * @param piGlyphWidth cast=(const int *)
  * @param pwLogClust cast=(const WORD *)
  * @param psva cast=(const SCRIPT_VISATTR *)
@@ -3905,9 +3909,9 @@ public static final native int ScriptGetFontProperties (long hdc, long psc, SCRI
  */
 public static final native int ScriptGetLogicalWidths (SCRIPT_ANALYSIS psa, int cChars, int cGlyphs, long piGlyphWidth, long pwLogClust, long psva, int[] piDx);
 /**
- * @param pwcInChars cast=(const WCHAR *)
- * @param psControl cast=(const SCRIPT_CONTROL *)
- * @param psState cast=(const SCRIPT_STATE *)
+ * @param pwcInChars cast=(const WCHAR *),flags=no_out
+ * @param psControl cast=(const SCRIPT_CONTROL *),flags=no_out
+ * @param psState cast=(const SCRIPT_STATE *),flags=no_out
  * @param pItems cast=(SCRIPT_ITEM *)
  * @param pcItems cast=(int *)
  */
@@ -3919,7 +3923,7 @@ public static final native int ScriptItemize (char[] pwcInChars, int cInChars, i
  */
 public static final native int ScriptJustify (long psva, long piAdvance, int cGlyphs, int iDx, int iMinKashida, long piJustify);
 /**
- * @param pbLevel cast=(const BYTE *)
+ * @param pbLevel cast=(const BYTE *),flags=no_out
  * @param piVisualToLogical cast=(int *)
  * @param piLogicalToVisual cast=(int *)
  */
@@ -3938,14 +3942,14 @@ public static final native int ScriptPlace (long hdc, long psc, long pwGlyphs, i
 /**
  * @param hdc cast=(HDC)
  * @param psc cast=(SCRIPT_CACHE *)
- * @param pwcChars cast=(const WCHAR *)
+ * @param pwcChars cast=(const WCHAR *),flags=no_out
  * @param pwOutGlyphs cast=(WORD*)
  */
 public static final native int ScriptGetCMap (long hdc, long psc, char[] pwcChars, int cChars, int dwFlags, short[] pwOutGlyphs);
 /**
  * @param hdc cast=(HDC)
  * @param psc cast=(SCRIPT_CACHE *)
- * @param pwcChars cast=(const WCHAR *)
+ * @param pwcChars cast=(const WCHAR *),flags=no_out
  * @param psa cast=(SCRIPT_ANALYSIS *)
  * @param pwOutGlyphs cast=(WORD *)
  * @param pwLogClust cast=(WORD *)
@@ -3969,8 +3973,8 @@ public static final native int ScriptStringFree(long pssa);
 /**
  * @param hdc cast=(const HDC)
  * @param psc cast=(SCRIPT_CACHE *)
- * @param lprc cast=(const RECT *)
- * @param psa cast=(const SCRIPT_ANALYSIS *)
+ * @param lprc cast=(const RECT *),flags=no_out
+ * @param psa cast=(const SCRIPT_ANALYSIS *),flags=no_out
  * @param pwcReserved cast=(const WCHAR *)
  * @param pwGlyphs cast=(const WORD *)
  * @param piAdvance cast=(const int *)
@@ -3982,7 +3986,7 @@ public static final native int ScriptTextOut (long hdc, long psc, int x, int y, 
  * @param pwLogClust cast=(const WORD *)
  * @param psva cast=(const SCRIPT_VISATTR *)
  * @param piAdvance cast=(const int *)
- * @param psa cast=(const SCRIPT_ANALYSIS *)
+ * @param psa cast=(const SCRIPT_ANALYSIS *),flags=no_out
  * @param piCP cast=(int *)
  * @param piTrailing cast=(int *)
  */
@@ -4002,8 +4006,8 @@ public static final native int SelectClipRgn (long hdc, long hrgn);
  * @param HGDIObj cast=(HGDIOBJ)
  */
 public static final native long SelectObject (long hDC, long HGDIObj);
-/** @param pInputs cast=(LPINPUT) */
-public static final native int SendInput (int nInputs, long pInputs, int cbSize);
+/** @param pInputs flags=no_out */
+public static final native int SendInput (int nInputs, INPUT pInputs, int cbSize);
 /**
  * @param hWnd cast=(HWND)
  * @param wParam cast=(WPARAM)
@@ -4195,13 +4199,13 @@ public static final native int SetBkColor (long hdc, int colorRef);
 public static final native int SetBkMode (long hdc, int mode);
 /**
  * @param hdc cast=(HDC)
- * @param lppt cast=(LPPOINT)
+ * @param lppt flags=no_in
  */
 public static final native boolean SetBrushOrgEx (long hdc, int nXOrg, int nYOrg, POINT lppt);
 /** @param hWnd cast=(HWND) */
 public static final native long SetCapture (long hWnd);
 public static final native boolean SetCaretPos (int X, int Y);
-/** @method flags=dynamic */
+/** @param AppID flags=no_out */
 public static final native int SetCurrentProcessExplicitAppUserModelID (char[] AppID);
 /** @param hCursor cast=(HCURSOR) */
 public static final native long SetCursor (long hCursor);
@@ -4216,11 +4220,10 @@ public static final native long SetFocus (long hWnd);
 /** @param hWnd cast=(HWND) */
 public static final native boolean SetForegroundWindow (long hWnd);
 /**
- * @method flags=dynamic
  * @param hwnd cast=(HWND)
- * @param pGestureConfig cast=(PGESTURECONFIG)
+ * @param pGestureConfig flags=no_out
  */
-public static final native boolean SetGestureConfig(long hwnd, int dwReserved, int cIDs, long pGestureConfig, int cbSize);
+public static final native boolean SetGestureConfig(long hwnd, int dwReserved, int cIDs, GESTURECONFIG pGestureConfig, int cbSize);
 /** @param hdc cast=(HDC) */
 public static final native int SetGraphicsMode (long hdc, int iMode);
 /** @param hwnd cast=(HWND) */
@@ -4237,11 +4240,14 @@ public static final native int SetLayout (long hdc, int dwLayout);
 public static final native boolean SetMenu (long hWnd, long hMenu);
 /** @param hMenu cast=(HMENU) */
 public static final native boolean SetMenuDefaultItem (long hMenu, int uItem, int fByPos);
-/** @param hmenu cast=(HMENU) */
+/**
+ * @param hmenu cast=(HMENU)
+ * @param lpcmi flags=no_out
+ */
 public static final native boolean SetMenuInfo (long hmenu, MENUINFO lpcmi);
 /**
  * @param hMenu cast=(HMENU)
- * @param lpmii cast=(LPMENUITEMINFOW)
+ * @param lpmii flags=no_out
  */
 public static final native boolean SetMenuItemInfo (long hMenu, int uItem, boolean fByPosition, MENUITEMINFO lpmii);
 /** @param hdc cast=(HDC) */
@@ -4264,7 +4270,10 @@ public static final native boolean SetRect (RECT lprc, int xLeft, int yTop, int 
 public static final native boolean SetRectRgn (long hrgn, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 /** @param hdc cast=(HDC) */
 public static final native int SetROP2 (long hdc, int fnDrawMode);
-/** @param hwnd cast=(HWND) */
+/**
+ * @param hwnd cast=(HWND)
+ * @param info flags=no_out
+ */
 public static final native boolean SetScrollInfo (long hwnd, int flags, SCROLLINFO info, boolean fRedraw);
 /** @param hdc cast=(HDC) */
 public static final native int SetStretchBltMode (long hdc, int iStretchMode);
@@ -4293,7 +4302,10 @@ public static final native int SetWindowLong (long hWnd, int nIndex, int dwNewLo
 public static final native long SetWindowLongPtr (long hWnd, int nIndex, long dwNewLong);
 /** @param hdc cast=(HDC) */
 public static final native boolean SetWindowOrgEx (long hdc, int X, int Y, POINT lpPoint);
-/** @param hWnd cast=(HWND) */
+/**
+ * @param hWnd cast=(HWND)
+ * @param lpwndpl flags=no_out
+ */
 public static final native boolean SetWindowPlacement (long hWnd, WINDOWPLACEMENT lpwndpl);
 /**
  * @param hWnd cast=(HWND)
@@ -4307,13 +4319,13 @@ public static final native boolean SetWindowPos(long hWnd, long hWndInsertAfter,
 public static final native int SetWindowRgn (long hWnd, long hRgn, boolean bRedraw);
 /**
  * @param hWnd cast=(HWND)
- * @param lpString cast=(LPWSTR)
+ * @param lpString cast=(LPCWSTR),flags=no_out
  */
 public static final native boolean SetWindowText (long hWnd, char [] lpString);
 /**
  * @param hwnd cast=(HWND)
- * @param pszSubAppName cast=(LPCWSTR)
- * @param pszSubIdList cast=(LPCWSTR)
+ * @param pszSubAppName cast=(LPCWSTR),flags=no_out
+ * @param pszSubIdList cast=(LPCWSTR),flags=no_out
  */
 public static final native int SetWindowTheme (long hwnd, char [] pszSubAppName, char [] pszSubIdList);
 /**
@@ -4323,16 +4335,13 @@ public static final native int SetWindowTheme (long hwnd, char [] pszSubAppName,
 public static final native long SetWindowsHookEx (int idHook, long lpfn,  long hMod,  int dwThreadId);
 /**
  * @param hdc cast=(HDC)
- * @param lpXform cast=(XFORM *)
+ * @param lpXform cast=(XFORM *),flags=no_out
  */
 public static final native boolean SetWorldTransform(long hdc, float[] lpXform);
-/**
- * @param pszPath cast=(LPCWSTR)
- * @param psfi cast=(SHFILEINFOW *)
- */
+/** @param pszPath cast=(LPCWSTR),flags=no_out */
 public static final native long SHGetFileInfo (char [] pszPath, int dwFileAttributes, SHFILEINFO psfi, int cbFileInfo, int uFlags);
-/** @param lpExecInfo cast=(LPSHELLEXECUTEINFOW) */
 public static final native boolean ShellExecuteEx (SHELLEXECUTEINFO lpExecInfo);
+/** @param lpData flags=no_out */
 public static final native boolean Shell_NotifyIcon (int dwMessage, NOTIFYICONDATA lpData);
 /** @param hWnd cast=(HWND) */
 public static final native boolean ShowCaret (long hWnd);
@@ -4344,7 +4353,7 @@ public static final native boolean ShowScrollBar (long hWnd, int wBar, boolean b
 public static final native boolean ShowWindow (long hWnd, int nCmdShow);
 /**
  * @param hdc cast=(HDC)
- * @param lpdi cast=(LPDOCINFOW)
+ * @param lpdi flags=no_out
  */
 public static final native int StartDoc (long hdc, DOCINFO lpdi);
 /** @param hdc cast=(HDC) */
@@ -4363,7 +4372,6 @@ public static final native boolean SystemParametersInfo (int uiAction, int uiPar
  * @param pwszBuff cast=(LPWSTR)
  */
 public static final native int ToUnicode (int wVirtKey, int wScanCode, byte [] lpKeyState, char [] pwszBuff, int cchBuff, int wFlags);
-public static final native long TOUCH_COORD_TO_PIXEL(long touchCoord);
 /**
  * @param hwndTV cast=(HWND)
  * @param hitem cast=(HTREEITEM)
@@ -4399,23 +4407,24 @@ public static final native boolean TransparentBlt (long hdcDest, int nXOriginDes
 /** @param hhk cast=(HHOOK) */
 public static final native boolean UnhookWindowsHookEx (long hhk);
 /**
- * @param lpClassName cast=(LPWSTR)
+ * @param lpClassName cast=(LPCWSTR),flags=no_out
  * @param hInstance cast=(HINSTANCE)
  */
 public static final native boolean UnregisterClass (char [] lpClassName, long hInstance);
-/**
- * @method flags=dynamic
- * @param hwnd cast=(HWND)
- */
+/** @param hwnd cast=(HWND) */
 public static final native boolean UnregisterTouchWindow (long hwnd);
 /** @param hWnd cast=(HWND) */
 public static final native boolean UpdateWindow (long hWnd);
 /**
- * @param pszPath cast=(LPCWSTR)
+ * @param pszPath cast=(LPCWSTR),flags=no_out
  * @param pszURL cast=(LPWSTR)
+ * @param pcchUrl cast=(DWORD *)
  */
 public static final native int UrlCreateFromPath (char[] pszPath, char[] pszURL, int[] pcchUrl, int flags);
-/** @param hWnd cast=(HWND) */
+/**
+ * @param hWnd cast=(HWND)
+ * @param lpRect flags=no_out
+ */
 public static final native boolean ValidateRect (long hWnd, RECT lpRect);
 /** @param ch cast=(WCHAR) */
 public static final native short VkKeyScan (short ch);
@@ -4427,14 +4436,14 @@ public static final native boolean WaitMessage ();
  * @param lpDefaultChar cast=(LPCSTR)
  * @param lpUsedDefaultChar cast=(LPBOOL)
  */
-public static final native int WideCharToMultiByte (int CodePage, int dwFlags, char [] lpWideCharStr, int cchWideChar, byte [] lpMultiByteStr, int cchMultiByte, byte [] lpDefaultChar, boolean [] lpUsedDefaultChar);
+public static final native int WideCharToMultiByte (int CodePage, int dwFlags, char [] lpWideCharStr, int cchWideChar, byte [] lpMultiByteStr, int cchMultiByte, byte [] lpDefaultChar, int [] lpUsedDefaultChar);
 /**
  * @param lpWideCharStr cast=(LPCWSTR),flags=no_out critical
  * @param lpMultiByteStr cast=(LPSTR)
  * @param lpDefaultChar cast=(LPCSTR)
  * @param lpUsedDefaultChar cast=(LPBOOL)
  */
-public static final native int WideCharToMultiByte (int CodePage, int dwFlags, char [] lpWideCharStr, int cchWideChar, long lpMultiByteStr, int cchMultiByte, byte [] lpDefaultChar, boolean [] lpUsedDefaultChar);
+public static final native int WideCharToMultiByte (int CodePage, int dwFlags, char [] lpWideCharStr, int cchWideChar, long lpMultiByteStr, int cchMultiByte, byte [] lpDefaultChar, int [] lpUsedDefaultChar);
 /** @param hDC cast=(HDC) */
 public static final native long WindowFromDC (long hDC);
 /** @param lpPoint flags=struct */

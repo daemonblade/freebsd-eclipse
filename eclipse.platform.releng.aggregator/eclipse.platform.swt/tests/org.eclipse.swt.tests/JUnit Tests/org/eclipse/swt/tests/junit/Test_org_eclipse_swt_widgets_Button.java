@@ -21,13 +21,18 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.FocusAdapter;
+import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Text;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -230,16 +235,16 @@ public void test_setBackgroundRadioButton() {
 	assertEquals("getBackground not equal after setBackground for SWT.RADIO Button",
 			color, radioButton.getBackground());
 	radioButton.setBackground(null);
-	assertTrue("getBackground unchanged after setBackground(null) for SWT.RADIO Button",
-			!radioButton.getBackground().equals(color));
+	assertFalse("getBackground unchanged after setBackground(null) for SWT.RADIO Button",
+			radioButton.getBackground().equals(color));
 	color.dispose();
 	color = new Color(255, 0, 0, 0);
 	radioButton.setBackground(color);
 	assertEquals("getBackground not equal after setBackground with 0 alpha for SWT.RADIO Button",
 			color, radioButton.getBackground());
 	radioButton.setBackground(null);
-	assertTrue("getBackground unchanged after setBackground(null) with 0 alpha for SWT.RADIO Button",
-			!radioButton.getBackground().equals(color));
+	assertFalse("getBackground unchanged after setBackground(null) with 0 alpha for SWT.RADIO Button",
+			radioButton.getBackground().equals(color));
 	if ("gtk".equals(SWT.getPlatform ())) {
 		Color fg = new Color(0, 255, 0);
 		radioButton.setBackground(color);
@@ -534,5 +539,36 @@ public void test_consistency_DragDetect () {
 	consistencyEvent(5, 5, 15, 15, ConsistencyUtility.MOUSE_DRAG);
 }
 
+/** Test for Bug 381668 - NPE when disposing radio buttons right before they should gain focus */
+@Ignore(value = "Test works fine locally but fails to get correct focus on automated builds.")
+@Test
+public void test_Bug381668() throws InterruptedException {
+	button.dispose();
+	disposedIntentionally = true;
+	Text t = new Text(shell, SWT.BORDER);
+	Button r1 = new Button(shell, SWT.RADIO);
+	r1.setText("Radio 1");
+	Button r2 = new Button(shell, SWT.RADIO);
+	r2.setText("Radio 2");
+	shell.setLayout(new FillLayout(SWT.VERTICAL));
+	shell.pack();
+	shell.open();
+	shell.forceActive();
+	t.forceFocus();
+	processEvents(3000, () -> t.isFocusControl());
+	assertTrue(t.isFocusControl());
+	t.addFocusListener(new FocusAdapter() {
+		@Override
+		public void focusLost(FocusEvent e) {
+			r1.dispose();
+			r2.dispose();
+		}
+	});
+	assertFalse(r1.isDisposed());
+	assertFalse(r2.isDisposed());
+	t.traverse(SWT.TRAVERSE_TAB_NEXT);
+	assertTrue(r1.isDisposed());
+	assertTrue(r2.isDisposed());
+}
 
 }

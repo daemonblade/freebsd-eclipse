@@ -166,7 +166,7 @@ private String[] decodeLine(String line) {
 		int index = line.indexOf(DELIMITER);
 		if (index > -1) {
 			parsedLine[i] = line.substring(0, index);
-			line = line.substring(index + DELIMITER.length(), line.length());
+			line = line.substring(index + DELIMITER.length());
 		} else {
 			return null;
 		}
@@ -769,7 +769,7 @@ private void createHelpMenu(Menu menuBar) {
 /**
  * To compare entries (rows) by the given column
  */
-private class RowComparator implements Comparator<String[]> {
+private static class RowComparator implements Comparator<String[]> {
 	private int column;
 
 	/**

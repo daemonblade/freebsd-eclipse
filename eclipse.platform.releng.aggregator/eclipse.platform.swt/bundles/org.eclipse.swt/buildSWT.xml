@@ -60,6 +60,10 @@
 	<target name="check_libraries" depends="get_version">
 		<antcall target="check_fragment_libraries">
 			<param name="library_count" value="3"/>
+			<param name="fragment" value="org.eclipse.swt.cocoa.macosx.aarch64"/>
+		</antcall>
+		<antcall target="check_fragment_libraries">
+			<param name="library_count" value="3"/>
 			<param name="fragment" value="org.eclipse.swt.cocoa.macosx.x86_64"/>
 		</antcall>
 		<antcall target="check_fragment_libraries">
@@ -69,6 +73,10 @@
 		<antcall target="check_fragment_libraries">
 			<param name="library_count" value="8"/>
 			<param name="fragment" value="org.eclipse.swt.gtk.freebsd.powerpc64"/>
+		</antcall>
+		<antcall target="check_fragment_libraries">
+			<param name="library_count" value="8"/>
+			<param name="fragment" value="org.eclipse.swt.gtk.freebsd.powerpc64le"/>
 		</antcall>
 		<antcall target="check_fragment_libraries">
 			<param name="library_count" value="8"/>
@@ -83,15 +91,15 @@
 	<target name="check_fragment_libraries" depends="get_version">
 		<echo>Checking ${fragment}</echo>
 		<property name="checkdir" value="~/build/check_libraries"/>
-		<property name="library_count" value="43"/>
+		<property name="library_count" value="34"/>
 		<property name="fragment" value=""/>
-		<fileset id="match" dir="${repo.bin}/bundles/${fragment}" includes="**/org.eclipse.swt.gtk.freebsd.aarch64/**, **/org.eclipse.swt.gtk.freebsd.powerpc64/**, **/org.eclipse.swt.gtk.freebsd.amd64/**, **/org.eclipse.swt.win32.win32.x86_64/**, **/org.eclipse.swt.cocoa.macosx.*/**, **/org.eclipse.swt.browser.chromium.gtk.freebsd.amd64/**, **/org.eclipse.swt.browser.chromium.win32.win32.x86_64/**, **/org.eclipse.swt.browser.chromium.cocoa.macosx.x86_64/**">
+		<fileset id="match" dir="${repo.bin}/bundles/${fragment}" includes="**/org.eclipse.swt.gtk.freebsd.aarch64/**, **/org.eclipse.swt.gtk.freebsd.powerpc64/**, **/org.eclipse.swt.gtk.freebsd.powerpc64le/**, **/org.eclipse.swt.gtk.freebsd.amd64/**, **/org.eclipse.swt.win32.win32.x86_64/**, **/org.eclipse.swt.cocoa.macosx.aarch64/**, **/org.eclipse.swt.cocoa.macosx.x86_64/**">
 			<filename regex="[0-9][0-9][0-9][0-9]"/>
 			<filename regex="${swt_version}"/>
 			<exclude name="**/.git/**"/>
 		</fileset>
 		<echo>Matched files ${toString:match}</echo>
-		<fileset id="not_match" dir="${repo.bin}/bundles/${fragment}" includes="**/org.eclipse.swt.gtk.freebsd.aarch64/**, **/org.eclipse.swt.gtk.freebsd.powerpc64/**, **/org.eclipse.swt.gtk.freebsd.amd64/**, **/org.eclipse.swt.win32.win32.x86_64/**, **/org.eclipse.swt.cocoa.macosx.*/**, **/org.eclipse.swt.browser.chromium.gtk.freebsd.amd64/chromium-*/**, **/org.eclipse.swt.browser.chromium.win32.win32.x86_64/chromium-*/**, **/org.eclipse.swt.browser.chromium.cocoa.macosx.x86_64/chromium-*/**">
+		<fileset id="not_match" dir="${repo.bin}/bundles/${fragment}" includes="**/org.eclipse.swt.gtk.freebsd.aarch64/**, **/org.eclipse.swt.gtk.freebsd.powerpc64/**, **/org.eclipse.swt.gtk.freebsd.powerpc64le/**, **/org.eclipse.swt.gtk.freebsd.amd64/**, **/org.eclipse.swt.win32.win32.x86_64/**, **/org.eclipse.swt.cocoa.macosx.aarch64/**, **/org.eclipse.swt.cocoa.macosx.x86_64/**">
 			<filename regex="[0-9][0-9][0-9][0-9]"/>
 			<filename regex="${swt_version}" negate="true"/>
 			<exclude name="**/.git/**"/>
@@ -288,7 +296,7 @@
 		</xslt>
 		<ant antfile="${tmpdir}/copy_chromium.xml" target="copy_files"/>
 
-		<javac includeantruntime="false" srcdir="${buildDir}"></javac>
+		<javac includeantruntime="false" srcdir="${buildDir}" encoding="utf8"></javac>
 	</target>
 
 	<!-- common build tasks -->
@@ -322,6 +330,7 @@
 
 		<!-- Commit the files -->
 		<antcall target="commit_sources"/>
+		<antcall target="commit_chromium_properties"/>
 	</target>
 
 	<target name="commit_sources" depends="get_version" if="natives_changed">
@@ -334,6 +343,18 @@
 		<exec dir="${repo.src}" executable="git" failonerror="true">
 			<arg line="commit -m 'v${swt_version}'"/>
 		</exec>
+	</target>
+	
+	<target name="commit_chromium_properties" depends="get_version" if="natives_changed">
+			<exec dir="${repo.bin}" executable="git" failonerror="true">
+				<arg line="add 'bundles/org.eclipse.swt.browser.chromium.*/chromium-*/chromium.properties'"/>
+			</exec>
+			<exec dir="${repo.bin}" executable="git" failonerror="true">
+				<arg line="status"/>
+			</exec>
+			<exec dir="${repo.bin}" executable="git" failonerror="true">
+				<arg line="commit -m 'v${swt_version}'"/>
+			</exec>
 	</target>
 
 	<target name="increment_version" depends="get_version" if="natives_changed">
@@ -995,6 +1016,9 @@
 			<arg line="fetch"/>
 		</exec>
 		<exec dir="${repo.src}" executable="git" failonerror="true">
+			<arg line="status"/>
+		</exec>
+		<exec dir="${repo.src}" executable="git" failonerror="true">
 			<arg line="rebase origin/${TAG}"/>
 		</exec>
 		<exec dir="${repo.src}" executable="git" failonerror="true">
@@ -1002,6 +1026,9 @@
 		</exec>
 		<exec dir="${repo.bin}" executable="git" failonerror="true">
 			<arg line="fetch"/>
+		</exec>
+		<exec dir="${repo.bin}" executable="git" failonerror="true">
+			<arg line="status"/>
 		</exec>
 		<exec dir="${repo.bin}" executable="git" failonerror="true">
 			<arg line="rebase origin/${TAG}"/>

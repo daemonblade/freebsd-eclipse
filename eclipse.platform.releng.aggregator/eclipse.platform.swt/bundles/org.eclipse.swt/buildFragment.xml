@@ -28,7 +28,7 @@
 		<property name="destination" value="${fragmentdir}/target" />
 		<property name="javacVerbose" value="false" />
 		<property name="logExtension" value=".xml" />
-		<property name="javacRelease" value="8" />
+		<property name="javacRelease" value="11" />
 		<condition property="p2.publish.parts" value="true">
 			<istrue value="${p2.gathering}" />
 		</condition>
@@ -58,7 +58,7 @@
 		<delete dir="${temp.folder}/@dot.bin" />
 		<mkdir dir="${temp.folder}/@dot.bin" />
 		<antcall target="copy.${swt.ws}.src"/>
-		<javac destdir="${temp.folder}/@dot.bin" verbose="${javacVerbose}" debug="${debug}" failonerror="yes" release="${javacRelease}" includeantruntime="false">
+		<javac destdir="${temp.folder}/@dot.bin" verbose="${javacVerbose}" debug="${debug}" failonerror="yes" release="${javacRelease}" encoding="UTF-8" includeantruntime="false">
 			<src path="${temp.folder}/@dot.src/"/>
 			<classpath path="${dotcp}" />
 			<compilerarg line="-log '${temp.folder}'/@dot.bin${logExtension}" compiler="org.eclipse.jdt.core.JDTCompilerAdapter" />
@@ -79,6 +79,8 @@
 				<attribute name="SWT-OS" value="${swt.os}"/>
 				<attribute name="SWT-WS" value="${swt.ws}"/>
 				<attribute name="SWT-Arch" value="${arch}"/>
+				<attribute name="Implementation-Version" value="${version.suffix}"/>
+				<attribute name="Eclipse-Version" value="${eclipse.version}"/>
 			</manifest>
 		</jar>
 	</target>
@@ -119,8 +121,7 @@
 		<delete dir="${copy.src.dir}" quiet="true"/>
 		<copy todir="${copy.src.dir}" failonerror="true" overwrite="true">
 			<fileset dir="${plugindir}/Eclipse SWT/cocoa/"/>
-			<fileset dir="${plugindir}/Eclipse SWT/common/"/>
-			<fileset dir="${plugindir}/Eclipse SWT/common_j2se/" excludes="**/*._properties"/>
+			<fileset dir="${plugindir}/Eclipse SWT/common/" excludes="**/*._properties"/>
 			<fileset dir="${plugindir}/Eclipse SWT/emulated/bidi/"/>
 			<fileset dir="${plugindir}/Eclipse SWT/emulated/coolbar/"/>
 			<fileset dir="${plugindir}/Eclipse SWT/emulated/expand/"/>
@@ -152,8 +153,7 @@
 		<delete dir="${copy.src.dir}" quiet="true"/>
 		<copy todir="${copy.src.dir}" failonerror="true" overwrite="true">
 			<fileset dir="${plugindir}/Eclipse SWT/cairo/"/>
-			<fileset dir="${plugindir}/Eclipse SWT/common/"/>
-			<fileset dir="${plugindir}/Eclipse SWT/common_j2se/" excludes="**/*._properties"/>
+			<fileset dir="${plugindir}/Eclipse SWT/common/" excludes="**/*._properties"/>
 			<fileset dir="${plugindir}/Eclipse SWT/emulated/bidi/"/>
 			<fileset dir="${plugindir}/Eclipse SWT/emulated/coolbar/"/>
 			<fileset dir="${plugindir}/Eclipse SWT/emulated/taskbar/"/>
@@ -186,8 +186,7 @@
 		<property name="copy.src.dir" value="${temp.folder}/@dot.src"/>
 		<delete dir="${copy.src.dir}" quiet="true"/>
 		<copy todir="${copy.src.dir}" failonerror="true" overwrite="true">
-			<fileset dir="${plugindir}/Eclipse SWT/common/"/>
-			<fileset dir="${plugindir}/Eclipse SWT/common_j2se/" excludes="**/*._properties"/>
+			<fileset dir="${plugindir}/Eclipse SWT/common/" excludes="**/*._properties"/>
 			<fileset dir="${plugindir}/Eclipse SWT/win32/"/>
 			<fileset dir="${plugindir}/Eclipse SWT Accessibility/common/"/>
 			<fileset dir="${plugindir}/Eclipse SWT Accessibility/win32/"/>
@@ -213,7 +212,7 @@
 
 	<target name="copy.translationfiles" if="includetranslationfiles">
 		<copy todir="${copy.src.dir}" failonerror="true" overwrite="true">
-			<fileset dir="${plugindir}/Eclipse SWT/common_j2se/" includes="**/*._properties"/>
+			<fileset dir="${plugindir}/Eclipse SWT/common/" includes="**/*._properties"/>
 			<mapper type="glob" from="*._properties" to="*.properties" />
 		</copy>
 	</target>
@@ -259,9 +258,9 @@
 			<fileset dir="${build.result.folder}/@dot" includes="**" />
 		</copy>
 		<copy todir="${destination.temp.folder}/${full.name}">
-			<fileset dir="${fragmentdir}" includes="fragment.properties,about.html,about_files/,swt*.dll,libswt*.so,libswt*.sl,libswt*.a,libswt*.jnilib,libXm.so.2,webkitextensions*/libswt*.so,chromium-*/**,META-INF/" />
+			<fileset dir="${fragmentdir}" includes="fragment.properties,about.html,about_files/,swt*.dll,libswt*.so,libswt*.sl,libswt*.a,libswt*.jnilib,libXm.so.2,webkitextensions*/libswt*.so,chromium-*/**,META-INF/,WebView2Loader.dll" />
 		</copy>
-		<chmod perm="755" dir="${destination.temp.folder}/${full.name}" includes="swt*.dll,libswt*.so,libswt*.sl,libswt*.a,libswt*.jnilib,libXm.so.2,webkitextensions*/libswt*.so,chromium-*/*.so,chromium-*/*.*lib,chromium-*/*.dll,chromium-*/chromium_subp*,chromium-*/chromium_subp*.app/Contents/MacOS/chromium_subp" />
+		<chmod perm="755" dir="${destination.temp.folder}/${full.name}" includes="swt*.dll,libswt*.so,libswt*.sl,libswt*.a,libswt*.jnilib,libXm.so.2,webkitextensions*/libswt*.so,chromium-*/*.so,chromium-*/*.*lib,chromium-*/*.dll,chromium-*/chromium_subp*,chromium-*/chromium_subp*.app/Contents/MacOS/chromium_subp,WebView2Loader.dll" />
 		<eclipse.versionReplacer path="${destination.temp.folder}/${full.name}" version="${version.suffix}" />
 	</target>
 
@@ -272,7 +271,7 @@
 		<property name="includetranslationfiles" value="true" />
 		<property name="swtbasename" value="swt" />
 		<antcall target="build.jars" />
-		<jar jarfile="${build.result.folder}/${swtbasename}.jar" basedir="${fragmentdir}" update="true" includes="swt*.dll,libswt*.so,libswt*.sl,libswt*.a,libswt*.jnilib,libXm.so.2,webkitextensions*/libswt*.so,chromium-*/**" />
+		<jar jarfile="${build.result.folder}/${swtbasename}.jar" basedir="${fragmentdir}" update="true" includes="swt*.dll,libswt*.so,libswt*.sl,libswt*.a,libswt*.jnilib,libXm.so.2,webkitextensions*/libswt*.so,chromium-*/**,WebView2Loader.dll" />
 		<move file="${build.result.folder}/${swtbasename}.jar" todir="${temp.folder}/swtdownload" />
 		<delete dir="${build.result.folder}/@dot" />
 		<antcall target="build.sources" />

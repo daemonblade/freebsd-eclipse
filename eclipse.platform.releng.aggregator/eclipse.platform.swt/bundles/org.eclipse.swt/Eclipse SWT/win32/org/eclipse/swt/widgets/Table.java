@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -84,7 +84,7 @@ public class Table extends Composite {
 	TableColumn sortColumn;
 	RECT focusRect;
 	boolean [] columnVisible;
-	long headerToolTipHandle, hwndHeader;
+	long headerToolTipHandle, hwndHeader, itemToolTipHandle;
 	boolean ignoreCustomDraw, ignoreDrawForeground, ignoreDrawBackground, ignoreDrawFocus, ignoreDrawSelection, ignoreDrawHot;
 	boolean customDraw, dragStarted, explorerTheme, firstColumnImage, fixScrollWidth, tipRequested, wasSelected, wasResized, painted;
 	boolean ignoreActivate, ignoreSelect, ignoreShrink, ignoreResize, ignoreColumnMove, ignoreColumnResize, fullRowSelect, settingItemHeight;
@@ -1503,6 +1503,7 @@ void createHandle () {
 
 	/* Get the header window handle */
 	hwndHeader = OS.SendMessage (handle, OS.LVM_GETHEADER, 0, 0);
+	maybeEnableDarkSystemTheme(hwndHeader);
 
 	/* Set the checkbox image list */
 	if ((style & SWT.CHECK) != 0) {
@@ -1559,9 +1560,9 @@ void createHandle () {
 	if ((style & SWT.RIGHT_TO_LEFT) != 0) {
 		int bits2 = OS.GetWindowLong (hwndHeader, OS.GWL_EXSTYLE);
 		OS.SetWindowLong (hwndHeader, OS.GWL_EXSTYLE, bits2 | OS.WS_EX_LAYOUTRTL);
-		long hwndTooltop = OS.SendMessage (handle, OS.LVM_GETTOOLTIPS, 0, 0);
-		int bits3 = OS.GetWindowLong (hwndTooltop, OS.GWL_EXSTYLE);
-		OS.SetWindowLong (hwndTooltop, OS.GWL_EXSTYLE, bits3 | OS.WS_EX_LAYOUTRTL);
+		long hwndTooltip = OS.SendMessage (handle, OS.LVM_GETTOOLTIPS, 0, 0);
+		int bits3 = OS.GetWindowLong (hwndTooltip, OS.GWL_EXSTYLE);
+		OS.SetWindowLong (hwndTooltip, OS.GWL_EXSTYLE, bits3 | OS.WS_EX_LAYOUTRTL);
 	}
 }
 
@@ -1589,6 +1590,7 @@ void createHeaderToolTips () {
 		OS.GetModuleHandle (null),
 		null);
 	if (headerToolTipHandle == 0) error (SWT.ERROR_NO_HANDLES);
+	maybeEnableDarkSystemTheme(headerToolTipHandle);
 	/*
 	* Feature in Windows.  Despite the fact that the
 	* tool tip text contains \r\n, the tooltip will
@@ -2727,10 +2729,16 @@ public int getSelectionIndex () {
  */
 public int [] getSelectionIndices () {
 	checkWidget ();
-	int i = -1, j = 0, count = (int)OS.SendMessage (handle, OS.LVM_GETSELECTEDCOUNT, 0, 0);
+	int count = (int)OS.SendMessage (handle, OS.LVM_GETSELECTEDCOUNT, 0, 0);
 	int [] result = new int [count];
-	while ((i = (int)OS.SendMessage (handle, OS.LVM_GETNEXTITEM, i, OS.LVNI_SELECTED)) != -1) {
-		result [j++] = i;
+	int lastIndex = -1;
+	for (int i = 0; i < count; i++) {
+		lastIndex = (int)OS.SendMessage (handle, OS.LVM_GETNEXTITEM, lastIndex, OS.LVNI_SELECTED);
+		if (lastIndex == -1) {
+			break;
+		}
+
+		result[i] = lastIndex;
 	}
 	return result;
 }
@@ -3561,7 +3569,7 @@ void sendEraseItemEvent (TableItem item, NMLVCUSTOMDRAW nmcd, long lParam, Event
 					rect.right += EXPLORER_EXTRA;
 					pClipRect.right += EXPLORER_EXTRA;
 				}
-				long hTheme = OS.OpenThemeData (handle, Display.LISTVIEW);
+				long hTheme = OS.OpenThemeData (handle, Display.TREEVIEW);
 				int iStateId = selected ? OS.LISS_SELECTED : OS.LISS_HOT;
 				if (OS.GetFocus () != handle && selected && !drawHot) iStateId = OS.LISS_SELECTEDNOTFOCUS;
 				if (drawDrophilited) iStateId = OS.LISS_SELECTED;
@@ -6494,6 +6502,10 @@ LRESULT wmMeasureChild (long wParam, long lParam) {
 LRESULT wmNotify (NMHDR hdr, long wParam, long lParam) {
 	long hwndToolTip = OS.SendMessage (handle, OS.LVM_GETTOOLTIPS, 0, 0);
 	if (hdr.hwndFrom == hwndToolTip) {
+		if (hdr.hwndFrom != itemToolTipHandle) {
+			maybeEnableDarkSystemTheme(hdr.hwndFrom);
+			itemToolTipHandle = hdr.hwndFrom;
+		}
 		LRESULT result = wmNotifyToolTip (hdr, wParam, lParam);
 		if (result != null) return result;
 	}
@@ -6876,9 +6888,15 @@ LRESULT wmNotifyHeader (NMHDR hdr, long wParam, long lParam) {
 					int pixel = getHeaderBackgroundPixel();
 					if ((nmcd.uItemState & OS.CDIS_SELECTED) != 0) {
 						pixel = getDifferentColor(pixel);
-					} else if (columns[(int) nmcd.dwItemSpec] == sortColumn && sortDirection != SWT.NONE) {
-						pixel = getSlightlyDifferentColor(pixel);
 					}
+					/*
+					 * Don't change the header background color for set selected column, similar to
+					 * Windows 10 which itself does not use any different color for sort header. For
+					 * more details refer bug 536020
+					 */
+//					else if (columns[(int) nmcd.dwItemSpec] == sortColumn && sortDirection != SWT.NONE) {
+//						pixel = getSlightlyDifferentColor(pixel);
+//					}
 					long brush = OS.CreateSolidBrush(pixel);
 					OS.FillRect(nmcd.hdc, rect, brush);
 					OS.DeleteObject(brush);

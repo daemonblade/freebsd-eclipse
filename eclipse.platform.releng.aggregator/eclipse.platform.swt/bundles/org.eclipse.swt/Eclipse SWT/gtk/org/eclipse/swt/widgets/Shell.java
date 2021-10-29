@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,6 +20,8 @@ import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.cairo.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class represent the "windows"
@@ -125,7 +127,7 @@ public class Shell extends Decorations {
 	long shellHandle, tooltipsHandle, tooltipWindow, group, modalGroup;
 	boolean mapped, moved, resized, opened, fullScreen, showWithParent, modified, center;
 	int oldX, oldY, oldWidth, oldHeight;
-	int minWidth, minHeight;
+	GdkGeometry geometry;
 	Control lastActive;
 	ToolTip [] toolTips;
 	boolean ignoreFocusOut, ignoreFocusIn;
@@ -134,6 +136,8 @@ public class Shell extends Decorations {
 
 	static final int MAXIMUM_TRIM = 128;
 	static final int BORDER = 3;
+
+	private final double SHELL_TO_MONITOR_RATIO = 0.625; // Fractional: 5 / 8
 
 /**
  * Constructs a new instance of this class. This is equivalent
@@ -286,6 +290,7 @@ Shell (Display display, Shell parent, int style, long handle, boolean embedded) 
 			state |= FOREIGN_HANDLE;
 		}
 	}
+	this.geometry = new GdkGeometry();
 	reskinWidget();
 	createWidget (0);
 }
@@ -600,11 +605,11 @@ void bringToTop (boolean force) {
 			OS.XSetInputFocus (xDisplay, xWindow, OS.RevertToParent, OS.CurrentTime);
 			GDK.gdk_x11_display_error_trap_pop_ignored(gdkDisplay);
 		} else {
-			GTK.gtk_grab_add(shellHandle);
 			long gdkDisplay;
 			if (GTK.GTK4) {
 				gdkDisplay = GDK.gdk_surface_get_display(gdkResource);
 			} else {
+				GTK3.gtk_grab_add(shellHandle);
 				gdkDisplay = GDK.gdk_window_get_display(gdkResource);
 			}
 			long seat = GDK.gdk_display_get_default_seat(gdkDisplay);
@@ -625,7 +630,7 @@ void bringToTop (boolean force) {
 		}
 	} else {
 		if (GTK.GTK4) {
-			GDK.gdk_toplevel_focus (gdkResource, display.lastUserEventTime);
+			GTK4.gdk_toplevel_focus (gdkResource, display.lastUserEventTime);
 		} else {
 			GDK.gdk_window_focus (gdkResource, display.lastUserEventTime);
 		}
@@ -717,89 +722,83 @@ Rectangle computeTrimInPixels (int x, int y, int width, int height) {
 void createHandle (int index) {
 	state |= HANDLE | CANVAS;
 	if (shellHandle == 0) {
+		boolean isChildShell = parent != null;
+
 		if (handle == 0) {
 			int type = GTK.GTK_WINDOW_TOPLEVEL;
-			if (parent != null && (style & SWT.ON_TOP) != 0) type = GTK.GTK_WINDOW_POPUP;
+			if (isChildShell && (style & SWT.ON_TOP) != 0) type = GTK.GTK_WINDOW_POPUP;
 			if (GTK.GTK4) {
 				// TODO: GTK4 need to handle for GTK_WINDOW_POPUP type
-				shellHandle = GTK.gtk_window_new();
+				shellHandle = GTK4.gtk_window_new();
 			} else {
-				shellHandle = GTK.gtk_window_new (type);
+				shellHandle = GTK3.gtk_window_new(type);
 			}
 		} else {
-			shellHandle = GTK.gtk_plug_new (handle);
+			shellHandle = GTK.gtk_plug_new(handle);
 		}
-		if (shellHandle == 0) error (SWT.ERROR_NO_HANDLES);
-		if (parent != null) {
-			/*
-			 * Problems with GTK_WINDOW_POPUP attached to another GTK_WINDOW_POPUP parent
-			 * 1) Bug 530138: GTK_WINDOW_POPUP attached to a GTK_WINDOW_POPUP parent
-			 * gets positioned relatively to the GTK_WINDOW_POPUP. We want to position it
-			 * relatively to the GTK_WINDOW_TOPLEVEL surface. Fix is to set the child popup's transient
-			 * parent to the top level window.
-			 *
-			 * 2) Bug 540166: When a parent popup is destroyed, the child popup sometimes does not
-			 * get destroyed and is stuck until its transient top level parent gets destroyed.
-			 * Fix is to implement a similar gtk_window_set_destroy_with_parent with its *logical*
-			 * parent by connecting a "destroy" signal.
-			 */
-			if (!OS.isX11()) {
-				Composite topLevelParent = parent;
-				while (topLevelParent != null && (topLevelParent.style & SWT.ON_TOP) != 0) {
-					topLevelParent = parent.getParent();
-				}
-				// transient parent must be the a toplevel window to position correctly
-				if (topLevelParent != null) {
-					GTK.gtk_window_set_transient_for(shellHandle, topLevelParent.topHandle());
-				} else {
-					GTK.gtk_window_set_transient_for(shellHandle, parent.topHandle());
-				}
-				// this marks the logical parent
-				GTK.gtk_window_set_attached_to (shellHandle, parent.topHandle());
-				// implements the gtk_window_set_destroy_with_parent for the *logical* parent
-				if (parent != topLevelParent && isMappedToPopup()) {
-					parent.popupChild = this;
-				}
-			} else {
-				GTK.gtk_window_set_transient_for (shellHandle, parent.topHandle ());
-			}
-			GTK.gtk_window_set_destroy_with_parent (shellHandle, true);
-			// if child shells are minimizable, we want them to have a
-			// taskbar icon, so they can be unminimized
-			if ((style & SWT.MIN) == 0) {
-				GTK.gtk_window_set_skip_taskbar_hint(shellHandle, true);
-			}
+		if (shellHandle == 0) error(SWT.ERROR_NO_HANDLES);
 
-			/*
-			 * For systems running Metacity, by applying the dialog type hint
-			 * to a window only the close button can be placed on the title bar.
-			 * The style hints for the minimize and maximize buttons are ignored.
-			 * See bug 445456.
-			 *
-			 */
-//			if (!isUndecorated ()) {
-//				OS.gtk_window_set_type_hint (shellHandle, OS.GDK_WINDOW_TYPE_HINT_DIALOG);
-//			}
-		} else {
-			if ((style & SWT.ON_TOP) != 0) GTK.gtk_window_set_keep_above(shellHandle, true);
+		if (isChildShell) {
+			if (GTK.GTK4) {
+				GTK.gtk_window_set_transient_for(shellHandle, parent.topHandle());
+				GTK.gtk_window_set_destroy_with_parent(shellHandle, true);
+
+				// TODO: GTK4 need case for SWT.MIN
+			} else {
+				/*
+				 * Problems with GTK_WINDOW_POPUP attached to another GTK_WINDOW_POPUP parent
+				 * 1) Bug 530138: GTK_WINDOW_POPUP attached to a GTK_WINDOW_POPUP parent
+				 * gets positioned relatively to the GTK_WINDOW_POPUP. We want to position it
+				 * relatively to the GTK_WINDOW_TOPLEVEL surface. Fix is to set the child popup's transient
+				 * parent to the top level window.
+				 *
+				 * 2) Bug 540166: When a parent popup is destroyed, the child popup sometimes does not
+				 * get destroyed and is stuck until its transient top level parent gets destroyed.
+				 * Fix is to implement a similar gtk_window_set_destroy_with_parent with its *logical*
+				 * parent by connecting a "destroy" signal.
+				 */
+				if (!OS.isX11()) {
+					Composite topLevelParent = parent;
+					while (topLevelParent != null && (topLevelParent.style & SWT.ON_TOP) != 0) {
+						topLevelParent = parent.getParent();
+					}
+					// transient parent must be the a toplevel window to position correctly
+					if (topLevelParent != null) {
+						GTK.gtk_window_set_transient_for(shellHandle, topLevelParent.topHandle());
+					} else {
+						GTK.gtk_window_set_transient_for(shellHandle, parent.topHandle());
+					}
+					// this marks the logical parent
+					GTK3.gtk_window_set_attached_to(shellHandle, parent.topHandle());
+					// implements the gtk_window_set_destroy_with_parent for the *logical* parent
+					if (parent != topLevelParent && isMappedToPopup()) {
+						parent.popupChild = this;
+					}
+				} else {
+					GTK.gtk_window_set_transient_for(shellHandle, parent.topHandle ());
+				}
+				GTK.gtk_window_set_destroy_with_parent(shellHandle, true);
+				// if child shells are minimizable, we want them to have a
+				// taskbar icon, so they can be unminimized
+				if ((style & SWT.MIN) == 0) {
+					GTK3.gtk_window_set_skip_taskbar_hint(shellHandle, true);
+				}
+			}
+		} else if ((style & SWT.ON_TOP) != 0) {
+			GTK3.gtk_window_set_keep_above(shellHandle, true);
 		}
-		/*
-		* Feature in GTK.  The window size must be set when the window
-		* is created or it will not be allowed to be resized smaller that the
-		* initial size by the user.  The fix is to set the size to zero.
-		*/
+
+		GTK.gtk_window_set_title(shellHandle, new byte[1]);
 		if ((style & SWT.RESIZE) != 0) {
-			GTK.gtk_widget_set_size_request (shellHandle, 0, 0);
-			GTK.gtk_window_set_resizable (shellHandle, true);
+			GTK.gtk_window_set_resizable(shellHandle, true);
 		} else {
-			GTK.gtk_window_set_resizable (shellHandle, false);
+			GTK.gtk_window_set_resizable(shellHandle, false);
 		}
-		GTK.gtk_window_set_title (shellHandle, new byte [1]);
 		if ((style & (SWT.NO_TRIM | SWT.BORDER | SWT.SHELL_TRIM)) == 0) {
-			gtk_container_set_border_width (shellHandle, 1);
+			gtk_container_set_border_width(shellHandle, 1);
 		}
 		if ((style & SWT.TOOL) != 0) {
-			GTK.gtk_window_set_type_hint(shellHandle, GDK.GDK_WINDOW_TYPE_HINT_UTILITY);
+			GTK3.gtk_window_set_type_hint(shellHandle, GDK.GDK_WINDOW_TYPE_HINT_UTILITY);
 		}
 		if ((style & SWT.NO_TRIM) != 0) {
 			GTK.gtk_window_set_decorated(shellHandle, false);
@@ -812,29 +811,31 @@ void createHandle (int index) {
 		if (!OS.isX11() && (style & SWT.SHELL_TRIM) == 0) {
 			GTK.gtk_window_set_decorated(shellHandle, false);
 		}
-		if (isCustomResize ()) {
-			gtk_container_set_border_width (shellHandle, BORDER);
+		if (isCustomResize()) {
+			gtk_container_set_border_width(shellHandle, BORDER);
 		}
 	}
-	vboxHandle = gtk_box_new (GTK.GTK_ORIENTATION_VERTICAL, false, 0);
-	if (vboxHandle == 0) error (SWT.ERROR_NO_HANDLES);
+
 	createHandle (index, false, true);
+	vboxHandle = gtk_box_new(GTK.GTK_ORIENTATION_VERTICAL, false, 0);
+	if (vboxHandle == 0) error(SWT.ERROR_NO_HANDLES);
 	if (GTK.GTK4) {
-		GTK.gtk_box_append(vboxHandle, scrolledHandle);
+		GTK4.gtk_box_append(vboxHandle, scrolledHandle);
 	} else {
-		GTK.gtk_container_add (vboxHandle, scrolledHandle);
-		gtk_box_set_child_packing (vboxHandle, scrolledHandle, true, true, 0, GTK.GTK_PACK_END);
+		GTK3.gtk_container_add(vboxHandle, scrolledHandle);
+		gtk_box_set_child_packing(vboxHandle, scrolledHandle, true, true, 0, GTK.GTK_PACK_END);
 	}
 
-	group = GTK.gtk_window_group_new ();
-	if (group == 0) error (SWT.ERROR_NO_HANDLES);
+	group = GTK.gtk_window_group_new();
+	if (group == 0) error(SWT.ERROR_NO_HANDLES);
+
 	/*
 	* Feature in GTK.  Realizing the shell triggers a size allocate event,
 	* which may be confused for a resize event from the window manager if
 	* received too late.  The fix is to realize the window during creation
 	* to avoid confusion.
 	*/
-	GTK.gtk_widget_realize (shellHandle);
+	GTK.gtk_widget_realize(shellHandle);
 }
 
 @Override
@@ -929,15 +930,13 @@ void hookEvents () {
 	OS.g_signal_connect (shellHandle, OS.dpi_changed, display.notifyProc, Widget.DPI_CHANGED);
 
 	if (GTK.GTK4) {
-		// Replace configure-event, map-event with generic event handler
-		if (eventHandle() == 0) {
-			OS.g_signal_connect_closure_by_id (shellHandle, display.signalIds [EVENT], 0, display.getClosure (EVENT), false);
-		}
+		// TODO: GTK4 see if same signals are required in GTK4 as in GTK3, if so, will require the legacy event controller
 		// Replaced "window-state-event" with GdkSurface "notify::state", pass shellHandle as user_data
 		GTK.gtk_widget_realize(shellHandle);
 		long gdkSurface = gtk_widget_get_surface (shellHandle);
 		OS.g_signal_connect (gdkSurface, OS.notify_state, display.notifyProc, shellHandle);
-		OS.g_signal_connect_closure_by_id (shellHandle, display.signalIds [SIZE_ALLOCATE_GTK4], 0, display.getClosure (SIZE_ALLOCATE_GTK4), false);
+		OS.g_signal_connect(shellHandle, OS.notify_default_height, display.notifyProc, Widget.NOTIFY_DEFAULT_HEIGHT);
+		OS.g_signal_connect(shellHandle, OS.notify_default_width, display.notifyProc, Widget.NOTIFY_DEFAULT_WIDTH);
 	} else {
 		OS.g_signal_connect_closure_by_id (shellHandle, display.signalIds [WINDOW_STATE_EVENT], 0, display.getClosure (WINDOW_STATE_EVENT), false);
 		OS.g_signal_connect_closure_by_id (shellHandle, display.signalIds [CONFIGURE_EVENT], 0, display.getClosure (CONFIGURE_EVENT), false);
@@ -946,24 +945,24 @@ void hookEvents () {
 	}
 	if (GTK.GTK4) {
 		OS.g_signal_connect_closure (shellHandle, OS.close_request, display.getClosure (CLOSE_REQUEST), false);
-		long keyController = GTK.gtk_event_controller_key_new();
-		GTK.gtk_widget_add_controller(shellHandle, keyController);
+		long keyController = GTK4.gtk_event_controller_key_new();
+		GTK4.gtk_widget_add_controller(shellHandle, keyController);
 		GTK.gtk_event_controller_set_propagation_phase(keyController, GTK.GTK_PHASE_TARGET);
+		OS.g_signal_connect (keyController, OS.key_pressed, display.keyPressReleaseProc, KEY_PRESSED);
 
-		long keyPressReleaseAddress = display.keyPressReleaseCallback.getAddress();
-		long focusAddress = display.focusCallback.getAddress();
-		OS.g_signal_connect (keyController, OS.key_pressed, keyPressReleaseAddress, KEY_PRESSED);
-		OS.g_signal_connect (keyController, OS.focus_in, focusAddress, FOCUS_IN);
-		OS.g_signal_connect (keyController, OS.focus_out, focusAddress, FOCUS_OUT);
+		long focusController = GTK4.gtk_event_controller_focus_new();
+		GTK4.gtk_widget_add_controller(shellHandle, focusController);
+		OS.g_signal_connect(focusController, OS.enter, display.focusProc, FOCUS_IN);
+		OS.g_signal_connect(focusController, OS.leave, display.focusProc, FOCUS_OUT);
 
-		long enterLeaveController = GTK.gtk_event_controller_motion_new();
-		GTK.gtk_widget_add_controller(shellHandle, enterLeaveController);
+		long enterLeaveController = GTK4.gtk_event_controller_motion_new();
+		GTK4.gtk_widget_add_controller(shellHandle, enterLeaveController);
 
-		long enterMotionAddress = display.enterMotionScrollCallback.getAddress();
+		long enterMotionAddress = display.enterMotionCallback.getAddress();
 		OS.g_signal_connect (enterLeaveController, OS.enter, enterMotionAddress, ENTER);
 		if (isCustomResize()) {
-			long motionController = GTK.gtk_event_controller_motion_new();
-			GTK.gtk_widget_add_controller(shellHandle, motionController);
+			long motionController = GTK4.gtk_event_controller_motion_new();
+			GTK4.gtk_widget_add_controller(shellHandle, motionController);
 			GTK.gtk_event_controller_set_propagation_phase(motionController, GTK.GTK_PHASE_TARGET);
 
 			OS.g_signal_connect (motionController, OS.motion, enterMotionAddress, MOTION);
@@ -981,7 +980,7 @@ void hookEvents () {
 	if (isCustomResize ()) {
 		if (!GTK.GTK4) {
 			int mask = GDK.GDK_POINTER_MOTION_MASK | GDK.GDK_BUTTON_RELEASE_MASK | GDK.GDK_BUTTON_PRESS_MASK |  GDK.GDK_ENTER_NOTIFY_MASK | GDK.GDK_LEAVE_NOTIFY_MASK;
-			GTK.gtk_widget_add_events (shellHandle, mask);
+			GTK3.gtk_widget_add_events (shellHandle, mask);
 			OS.g_signal_connect_closure_by_id (shellHandle, display.signalIds [MOTION_NOTIFY_EVENT], 0, display.getClosure (MOTION_NOTIFY_EVENT), false);
 			OS.g_signal_connect_closure_by_id (shellHandle, display.signalIds [LEAVE_NOTIFY_EVENT], 0, display.getClosure (LEAVE_NOTIFY_EVENT), false);
 
@@ -1058,6 +1057,24 @@ long paintHandle () {
 	}
 }
 
+void fixActiveShell () {
+	// Only fix shell for SWT.ON_TOP set, see bug 568550
+	if (display.activeShell == this && (style & SWT.ON_TOP) != 0) {
+		Shell shell = null;
+		if (parent != null && parent.isVisible ()) shell = parent.getShell ();
+		if (shell == null && isUndecorated ()) {
+			Shell [] shells = display.getShells ();
+			for (int i = 0; i < shells.length; i++) {
+				if (shells [i] != null && shells [i].isVisible ()) {
+					shell = shells [i];
+					break;
+				}
+			}
+		}
+		if (shell != null) shell.bringToTop (false);
+	}
+}
+
 void fixShell (Shell newShell, Control control) {
 	if (this == newShell) return;
 	if (control == lastActive) setActiveControl (null);
@@ -1107,25 +1124,39 @@ void forceResize (int width, int height) {
 	GtkRequisition minimumSize = new GtkRequisition ();
 	GtkRequisition naturalSize = new GtkRequisition ();
 	GTK.gtk_widget_get_preferred_size (vboxHandle, minimumSize, naturalSize);
+
 	/*
 	 * Bug 535075, 536153: On Wayland, we need to set the position of the GtkBox container
 	 * relative to the shellHandle to prevent window contents rendered with offset.
 	 */
 	if (!OS.isX11()) {
-		int [] dest_x = new int[1];
-		int [] dest_y = new int[1];
-		GTK.gtk_widget_translate_coordinates(vboxHandle, shellHandle, 0, 0, dest_x, dest_y);
-		if (dest_x[0] != -1 && dest_y[0] != -1 && !isMappedToPopup()) {
-			allocation.x += dest_x[0];
-			allocation.y += dest_y[0];
+		if (GTK.GTK4) {
+			double[] window_offset_x = new double[1], window_offset_y = new double[1];
+			boolean validTranslation = GTK4.gtk_widget_translate_coordinates(vboxHandle, shellHandle, 0, 0, window_offset_x, window_offset_y);
+
+			if (validTranslation && !isMappedToPopup()) {
+				allocation.x += window_offset_x[0];
+				allocation.y += window_offset_y[0];
+				allocation.height -= window_offset_y[0];
+			}
+		} else {
+			int [] dest_x = new int[1];
+			int [] dest_y = new int[1];
+			GTK3.gtk_widget_translate_coordinates(vboxHandle, shellHandle, 0, 0, dest_x, dest_y);
+			if (dest_x[0] != -1 && dest_y[0] != -1 && !isMappedToPopup()) {
+				allocation.x += dest_x[0];
+				allocation.y += dest_y[0];
+			}
 		}
 	}
+
 	if (GTK.GTK4) {
-		GTK.gtk_widget_size_allocate (vboxHandle, allocation, -1);
+		GTK4.gtk_widget_size_allocate(vboxHandle, allocation, -1);
 	} else {
-		GTK.gtk_widget_size_allocate (vboxHandle, allocation);
+		GTK3.gtk_widget_size_allocate(vboxHandle, allocation);
 	}
-	if ((style & SWT.MIRRORED) != 0) moveChildren (clientWidth);
+
+	if ((style & SWT.MIRRORED) != 0) moveChildren(clientWidth);
 }
 
 /**
@@ -1148,7 +1179,7 @@ public int getAlpha () {
 		long display = GDK.gdk_display_get_default();
 		composited = GDK.gdk_display_is_composited(display);
 	} else {
-		long screen = GTK.gtk_widget_get_screen(shellHandle);
+		long screen = GTK3.gtk_widget_get_screen(shellHandle);
 		composited = GDK.gdk_screen_is_composited(screen);
 	}
 	if (composited) {
@@ -1212,7 +1243,11 @@ Point getLocationInPixels () {
 		setLocationInPixels(oldX, oldY);
 	}
 	int [] x = new int [1], y = new int [1];
-	GTK.gtk_window_get_position (shellHandle, x,y);
+	if (GTK.GTK4) {
+		// TODO: GTK4 GtkWindow no longer has the ability to get position
+	} else {
+		GTK3.gtk_window_get_position (shellHandle, x, y);
+	}
 	return new Point (x [0], y [0]);
 }
 
@@ -1244,8 +1279,36 @@ public Point getMinimumSize () {
 
 Point getMinimumSizeInPixels () {
 	checkWidget ();
-	int width = Math.max (1, minWidth + trimWidth ());
-	int height = Math.max (1, minHeight + trimHeight ());
+	int width = Math.max (1, geometry.min_width + trimWidth ());
+	int height = Math.max (1, geometry.min_height + trimHeight ());
+	return new Point (width, height);
+}
+
+/**
+ * Returns a point describing the maximum receiver's size. The
+ * x coordinate of the result is the maximum width of the receiver.
+ * The y coordinate of the result is the maximum height of the
+ * receiver.
+ *
+ * @return the receiver's size
+ *
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @since 3.116
+ */
+public Point getMaximumSize () {
+	checkWidget ();
+	return DPIUtil.autoScaleDown (getMaximumSizeInPixels ());
+}
+
+Point getMaximumSizeInPixels () {
+	checkWidget ();
+
+	int width = Math.min (Integer.MAX_VALUE, geometry.max_width + trimWidth ());
+	int height = Math.min (Integer.MAX_VALUE, geometry.max_height + trimHeight ());
 	return new Point (width, height);
 }
 
@@ -1362,6 +1425,7 @@ public int getImeInputMode () {
 Shell _getShell () {
 	return this;
 }
+
 /**
  * Returns an array containing all shells which are
  * descendants of the receiver.
@@ -1374,11 +1438,11 @@ Shell _getShell () {
  * </ul>
  */
 public Shell [] getShells () {
-	checkWidget();
+	checkWidget ();
 	int count = 0;
 	Shell [] shells = display.getShells ();
-	for (int i=0; i<shells.length; i++) {
-		Control shell = shells [i];
+	for (Shell activeshell : shells) {
+		Control shell = activeshell;
 		do {
 			shell = shell.getParent ();
 		} while (shell != null && shell != this);
@@ -1386,34 +1450,16 @@ public Shell [] getShells () {
 	}
 	int index = 0;
 	Shell [] result = new Shell [count];
-	for (int i=0; i<shells.length; i++) {
-		Control shell = shells [i];
+	for (Shell activeshell : shells) {
+		Control shell = activeshell;
 		do {
 			shell = shell.getParent ();
 		} while (shell != null && shell != this);
 		if (shell == this) {
-			result [index++] = shells [i];
+			result [index++] = activeshell;
 		}
 	}
 	return result;
-}
-
-@Override
-long gtk_event (long widget, long event) {
-	if (!GTK.GTK4) return 0;
-	int eventType = GDK.gdk_event_get_event_type(event);
-	switch (eventType) {
-		case GDK.GDK4_BUTTON_PRESS: {
-			return gtk_button_press_event(widget, event);
-		}
-		case GDK.GDK4_BUTTON_RELEASE: {
-			return gtk_button_release_event(widget, event);
-		}
-		case GDK.GDK4_CONFIGURE: {
-			return gtk_configure_event(widget, event);
-		}
-	}
-	return 0;
 }
 
 @Override
@@ -1428,17 +1474,13 @@ long gtk_button_press_event (long widget, long event) {
 			GDK.gdk_event_get_root_coords(event, eventRX, eventRY);
 
 			int [] eventButton = new int [1];
-			if (GTK.GTK4) {
-				eventButton[0] = GDK.gdk_button_event_get_button(event);
-			} else {
-				GDK.gdk_event_get_button(event, eventButton);
-			}
+			GDK.gdk_event_get_button(event, eventButton);
 
 			if (eventButton[0] == 1) {
 				display.resizeLocationX = eventRX[0];
 				display.resizeLocationY = eventRY[0];
 				int [] x = new int [1], y = new int [1];
-				GTK.gtk_window_get_position (shellHandle, x, y);
+				GTK3.gtk_window_get_position (shellHandle, x, y);
 				display.resizeBoundsX = x [0];
 				display.resizeBoundsY = y [0];
 				GtkAllocation allocation = new GtkAllocation ();
@@ -1454,7 +1496,7 @@ long gtk_button_press_event (long widget, long event) {
 		if (requiresUngrab()) {
 			long seat = GDK.gdk_event_get_seat(event);
 			GDK.gdk_seat_ungrab(seat);
-			GTK.gtk_grab_remove(shellHandle);
+			GTK3.gtk_grab_remove(shellHandle);
 		}
 		return 0;
 	}
@@ -1464,7 +1506,7 @@ long gtk_button_press_event (long widget, long event) {
 @Override
 long gtk_configure_event (long widget, long event) {
 	int [] x = new int [1], y = new int [1];
-	GTK.gtk_window_get_position (shellHandle, x, y);
+	GTK3.gtk_window_get_position (shellHandle, x, y);
 
 	if (!isVisible ()) {
 		return 0; //We shouldn't handle move/resize events if shell is hidden.
@@ -1592,7 +1634,7 @@ long gtk_leave_notify_event (long widget, long event) {
 
 			if ((state[0] & GDK.GDK_BUTTON1_MASK) == 0) {
 				if (GTK.GTK4) {
-					GTK.gtk_widget_set_cursor (shellHandle, 0);
+					GTK4.gtk_widget_set_cursor (shellHandle, 0);
 				} else {
 					long window = gtk_widget_get_window (shellHandle);
 					GDK.gdk_window_set_cursor (window, 0);
@@ -1647,8 +1689,8 @@ long gtk_motion_notify_event (long widget, long event) {
 				int y = display.resizeBoundsY;
 				int width = display.resizeBoundsWidth;
 				int height = display.resizeBoundsHeight;
-				int newWidth = Math.max(width - dx, Math.max(minWidth, border + border));
-				int newHeight = Math.max(height - dy, Math.max(minHeight, border + border));
+				int newWidth = Math.max(width - dx, Math.max(geometry.min_width, border + border));
+				int newHeight = Math.max(height - dy, Math.max(geometry.min_height, border + border));
 				switch (display.resizeMode) {
 					case SWT.CURSOR_SIZEW:
 						x += width - newWidth;
@@ -1665,24 +1707,24 @@ long gtk_motion_notify_event (long widget, long event) {
 						height = newHeight;
 						break;
 					case SWT.CURSOR_SIZENE:
-						width = Math.max(width + dx, Math.max(minWidth, border + border));
+						width = Math.max(width + dx, Math.max(geometry.min_width, border + border));
 						y += height - newHeight;
 						height = newHeight;
 						break;
 					case SWT.CURSOR_SIZEE:
-						width = Math.max(width + dx, Math.max(minWidth, border + border));
+						width = Math.max(width + dx, Math.max(geometry.min_width, border + border));
 						break;
 					case SWT.CURSOR_SIZESE:
-						width = Math.max(width + dx, Math.max(minWidth, border + border));
-						height = Math.max(height + dy, Math.max(minHeight, border + border));
+						width = Math.max(width + dx, Math.max(geometry.min_width, border + border));
+						height = Math.max(height + dy, Math.max(geometry.min_height, border + border));
 						break;
 					case SWT.CURSOR_SIZES:
-						height = Math.max(height + dy, Math.max(minHeight, border + border));
+						height = Math.max(height + dy, Math.max(geometry.min_height, border + border));
 						break;
 					case SWT.CURSOR_SIZESW:
 						x += width - newWidth;
 						width = newWidth;
-						height = Math.max(height + dy, Math.max(minHeight, border + border));
+						height = Math.max(height + dy, Math.max(geometry.min_height, border + border));
 						break;
 				}
 				if (x != display.resizeBoundsX || y != display.resizeBoundsY) {
@@ -1694,7 +1736,7 @@ long gtk_motion_notify_event (long widget, long event) {
 						GDK.gdk_window_move_resize (gtk_widget_get_window (shellHandle), x, y, width, height);
 					}
 				} else {
-					GTK.gtk_window_resize (shellHandle, width, height);
+					GTK3.gtk_window_resize (shellHandle, width, height);
 				}
 			} else {
 				double [] eventX = new double [1];
@@ -1709,7 +1751,7 @@ long gtk_motion_notify_event (long widget, long event) {
 				if (mode != display.resizeMode) {
 					long cursor = display.getSystemCursor(mode).handle;
 					if (GTK.GTK4) {
-						GTK.gtk_widget_set_cursor (shellHandle, cursor);
+						GTK4.gtk_widget_set_cursor (shellHandle, cursor);
 					} else {
 						long window = gtk_widget_get_window (shellHandle);
 						GDK.gdk_window_set_cursor (window, cursor);
@@ -1769,7 +1811,11 @@ long gtk_size_allocate (long widget, long allocation) {
 	int width, height;
 	int[] widthA = new int [1];
 	int[] heightA = new int [1];
-	GTK.gtk_window_get_size(shellHandle, widthA, heightA);
+	if (GTK.GTK4) {
+		GTK.gtk_window_get_default_size(shellHandle, widthA, heightA);
+	} else {
+		GTK3.gtk_window_get_size(shellHandle, widthA, heightA);
+	}
 	width = widthA[0];
 	height = heightA[0];
 
@@ -1882,14 +1928,16 @@ long gtk_realize (long widget) {
 		}
 	}
 
-	if ((style & SWT.ON_TOP) != 0) GTK.gtk_window_set_keep_above(shellHandle, true);
+	if ((style & SWT.ON_TOP) != 0) {
+		if (!GTK.GTK4) GTK3.gtk_window_set_keep_above(shellHandle, true);
+	}
 	return result;
 }
 
 @Override
 long gtk_window_state_event (long widget, long event) {
 	GdkEventWindowState gdkEvent = new GdkEventWindowState ();
-	OS.memmove (gdkEvent, event, GdkEventWindowState.sizeof);
+	GTK3.memmove (gdkEvent, event, GdkEventWindowState.sizeof);
 	minimized = (gdkEvent.new_window_state & GDK.GDK_WINDOW_STATE_ICONIFIED) != 0;
 	maximized = (gdkEvent.new_window_state & GDK.GDK_WINDOW_STATE_MAXIMIZED) != 0;
 	fullScreen = (gdkEvent.new_window_state & GDK.GDK_WINDOW_STATE_FULLSCREEN) != 0;
@@ -1908,7 +1956,7 @@ long gtk_window_state_event (long widget, long event) {
 long notifyState (long object, long arg0) {
 	// GTK4 equivalent of gtk_window_state_event
 	assert GTK.GTK4;
-	int gdkSurfaceState = GDK.gdk_toplevel_get_state (object);
+	int gdkSurfaceState = GTK4.gdk_toplevel_get_state (object);
 	minimized = (gdkSurfaceState & GDK.GDK_SURFACE_STATE_MINIMIZED) != 0;
 	maximized = (gdkSurfaceState & GDK.GDK_SURFACE_STATE_MAXIMIZED) != 0;
 	fullScreen = (gdkSurfaceState & GDK.GDK_SURFACE_STATE_FULLSCREEN) != 0;
@@ -2155,7 +2203,7 @@ public void setAlpha (int alpha) {
 		long display = GDK.gdk_display_get_default();
 		composited = GDK.gdk_display_is_composited(display);
 	} else {
-		long screen = GTK.gtk_widget_get_screen(shellHandle);
+		long screen = GTK3.gtk_widget_get_screen(shellHandle);
 		composited = GDK.gdk_screen_is_composited(screen);
 	}
 	if (composited) {
@@ -2166,15 +2214,11 @@ public void setAlpha (int alpha) {
 void resizeBounds (int width, int height, boolean notify) {
 	int border = gtk_container_get_border_width_or_margin (shellHandle);
 	if (GTK.GTK4) {
-		/* TODO: GTK4 gdk_surface_resize no longer exist & have been replaced with
-		 * gdk_toplevel_begin_resize. These functions might change the
-		 * design of resizing in GTK4 */
-
 		if (parent != null) {
 			GtkAllocation allocation = new GtkAllocation();
 			allocation.width = width;
 			allocation.height = height;
-			GTK.gtk_widget_size_allocate(shellHandle, allocation, -1);
+			GTK4.gtk_widget_size_allocate(shellHandle, allocation, -1);
 		}
 	} else {
 		if (redrawWindow != 0) {
@@ -2224,41 +2268,63 @@ int setBounds (int x, int y, int width, int height, boolean move, boolean resize
 	}
 	int result = 0;
 	if (move) {
-		int [] x_pos = new int [1], y_pos = new int [1];
-		GTK.gtk_window_get_position (shellHandle, x_pos, y_pos);
-		GTK.gtk_window_move (shellHandle, x, y);
-		/*
-		 * Bug in GTK: gtk_window_get_position () is not always up-to-date right after
-		 * gtk_window_move (). The random delays cause problems like bug 445900.
-		 *
-		 * The workaround is to wait for the position change to be processed.
-		 * The limit 1000 is an experimental value. I've seen cases where about 200
-		 * iterations were necessary.
-		 */
-		for (int i = 0; i < 1000; i++) {
-			int [] x2_pos = new int [1], y2_pos = new int [1];
-			GTK.gtk_window_get_position (shellHandle, x2_pos, y2_pos);
-			if (x2_pos[0] == x && y2_pos[0] == y) {
-				break;
+		if (!GTK.GTK4) {
+			int [] x_pos = new int [1], y_pos = new int [1];
+			GTK3.gtk_window_get_position(shellHandle, x_pos, y_pos);
+			GTK3.gtk_window_move(shellHandle, x, y);
+			/*
+			 * Bug in GTK: gtk_window_get_position () is not always up-to-date right after
+			 * gtk_window_move (). The random delays cause problems like bug 445900.
+			 *
+			 * The workaround is to wait for the position change to be processed.
+			 * The limit 1000 is an experimental value. I've seen cases where about 200
+			 * iterations were necessary.
+			 */
+			for (int i = 0; i < 1000; i++) {
+				int [] x2_pos = new int [1], y2_pos = new int [1];
+				GTK3.gtk_window_get_position(shellHandle, x2_pos, y2_pos);
+				if (x2_pos[0] == x && y2_pos[0] == y) {
+					break;
+				}
 			}
-		}
-		if (x_pos [0] != x || y_pos [0] != y) {
-			moved = true;
-			oldX = x;
-			oldY = y;
-			sendEvent (SWT.Move);
-			if (isDisposed ()) return 0;
-			result |= MOVED;
+			if (x_pos [0] != x || y_pos [0] != y) {
+				moved = true;
+				oldX = x;
+				oldY = y;
+				sendEvent(SWT.Move);
+				if (isDisposed ()) return 0;
+				result |= MOVED;
+			}
 		}
 	}
 	if (resize) {
-		width = Math.max (1, Math.max (minWidth, width - trimWidth ()));
-		height = Math.max (1, Math.max (minHeight, height - trimHeight ()));
+		width = Math.max (1, Math.max (geometry.min_width, width - trimWidth ()));
+		if (geometry.max_width > 0) {
+			width = Math.min( width, geometry.max_width);
+		}
+		height = Math.max (1, Math.max (geometry.min_height, height - trimHeight ()));
+		if (geometry.max_height > 0) {
+			height = Math.min(height, geometry.max_height);
+		}
 		/*
 		* If the shell is created without a RESIZE style bit, and the
-		* minWidth/minHeight has been set, allow the resize.
+		* minWidth/minHeight/maxWidth/maxHeight have been set, allow the resize.
 		*/
-		if ((style & SWT.RESIZE) != 0 || (minHeight != 0 || minWidth != 0)) GTK.gtk_window_resize (shellHandle, width, height);
+		if ((style & SWT.RESIZE) != 0 || (geometry.min_height != 0 || geometry.min_width != 0 || geometry.max_height != 0 || geometry.max_width != 0)) {
+			if (GTK.GTK4) {
+				/*
+				 * On GTK4, GtkWindow size includes the header bar. In order to keep window size allocation of the client area
+				 * consistent with previous versions of SWT, we need to include the header bar height in addition to the given height value.
+				 */
+				long header = GTK4.gtk_widget_get_next_sibling(GTK4.gtk_widget_get_first_child(shellHandle));
+				int[] headerNaturalHeight = new int[1];
+				GTK4.gtk_widget_measure(header, GTK.GTK_ORIENTATION_VERTICAL, 0, null, headerNaturalHeight, null, null);
+
+				GTK.gtk_window_set_default_size(shellHandle, width, height + headerNaturalHeight[0]);
+			} else {
+				GTK3.gtk_window_resize (shellHandle, width, height);
+			}
+		}
 		boolean changed = width != oldWidth || height != oldHeight;
 		if (changed) {
 			oldWidth = width;
@@ -2272,15 +2338,12 @@ int setBounds (int x, int y, int width, int height, boolean move, boolean resize
 
 @Override
 void setCursor (long cursor) {
-	if (GTK.GTK4) {
-		if (enableSurface != 0) {
-			GDK.gdk_surface_set_cursor (enableSurface, cursor);
-		}
-	} else {
+	if (!GTK.GTK4) {
 		if (enableWindow != 0) {
-			GDK.gdk_window_set_cursor (enableWindow, cursor);
+			GDK.gdk_window_set_cursor(enableWindow, cursor);
 		}
 	}
+
 	super.setCursor (cursor);
 }
 
@@ -2304,30 +2367,7 @@ public void setEnabled (boolean enabled) {
 	}
 	enableWidget (enabled);
 	if (isDisposed ()) return;
-	if (GTK.GTK4) {
-		if (enabled) {
-			if (enableSurface != 0) {
-				cleanupEnableSurface();
-			}
-		} else {
-			long parentHandle = shellHandle;
-			GTK.gtk_widget_realize (parentHandle);
-			Rectangle bounds = getBoundsInPixels ();
-			enableSurface = GDK.gdk_surface_new_popup(parentHandle, false);
-			if (enableSurface != 0) {
-				if (cursor != null) {
-					GDK.gdk_surface_set_cursor (enableSurface, cursor.handle);
-				}
-
-				GdkRectangle anchor = new GdkRectangle();
-				anchor.width = bounds.width;
-				anchor.height = bounds.height;
-
-				long layout = GDK.gdk_popup_layout_new(anchor, GDK.GDK_GRAVITY_NORTH_WEST, GDK.GDK_GRAVITY_NORTH_WEST);
-				GDK.gdk_popup_present(enableSurface, bounds.width, bounds.height, layout);
-			}
-		}
-	} else {
+	if (!GTK.GTK4) {
 		if (enabled) {
 			if (enableWindow != 0) {
 				cleanupEnableWindow();
@@ -2343,7 +2383,7 @@ public void setEnabled (boolean enabled) {
 			attributes.event_mask = (0xFFFFFFFF & ~OS.ExposureMask);
 			attributes.wclass = GDK.GDK_INPUT_ONLY;
 			attributes.window_type = GDK.GDK_WINDOW_CHILD;
-			enableWindow = GDK.gdk_window_new (window, attributes, 0);
+			enableWindow = GTK3.gdk_window_new (window, attributes, 0);
 			if (enableWindow != 0) {
 				if (cursor != null) {
 					GDK.gdk_window_set_cursor (enableWindow, cursor.handle);
@@ -2353,6 +2393,7 @@ public void setEnabled (boolean enabled) {
 			}
 		}
 	}
+
 	if (fixFocus) fixFocus (control);
 	if (enabled && display.activeShell == this) {
 		if (!restoreFocus ()) traverseGroup (false);
@@ -2368,8 +2409,9 @@ public void setEnabled (boolean enabled) {
  * to either the maximized or normal states.
  * <p>
  * Note: The result of intermixing calls to <code>setFullScreen(true)</code>,
- * <code>setMaximized(true)</code> and <code>setMinimized(true)</code> will
- * vary by platform. Typically, the behavior will match the platform user's
+ * <code>setMaximized(true)</code>, <code>setMinimized(true)</code> and
+ * <code>setMaximumSize</code> will vary by platform.
+ * Typically, the behavior will match the platform user's
  * expectations, but not always. This should be avoided if possible.
  * </p>
  *
@@ -2416,49 +2458,71 @@ public void setImeInputMode (int mode) {
 }
 
 @Override
-void setInitialBounds () {
+void setInitialBounds() {
 	int width = 0, height = 0;
+
 	if ((state & FOREIGN_HANDLE) != 0) {
 		GtkAllocation allocation = new GtkAllocation ();
 		GTK.gtk_widget_get_allocation (shellHandle, allocation);
 		width = allocation.width;
 		height = allocation.height;
 	} else {
-		GdkRectangle dest = new GdkRectangle ();
-		if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
+		GdkRectangle dest = new GdkRectangle();
+
+		if (GTK.GTK4) {
 			long display = GDK.gdk_display_get_default();
 			if (display != 0) {
-				long monitor;
-				if (GTK.GTK4) {
-					monitor = GDK.gdk_display_get_monitor_at_surface(display, paintSurface());
-				} else {
-					monitor = GDK.gdk_display_get_monitor_at_window(display, paintWindow());
-				}
+				long monitor = GDK.gdk_display_get_monitor_at_surface(display, paintSurface());
 				GDK.gdk_monitor_get_geometry(monitor, dest);
-				width = dest.width * 5 / 8;
-				height = dest.height * 5 / 8;
+				width = (int) (dest.width * SHELL_TO_MONITOR_RATIO);
+				height = (int) (dest.height * SHELL_TO_MONITOR_RATIO);
+			}
+
+			if ((style & SWT.RESIZE) != 0) {
+				/*
+				 * On GTK4, GtkWindow size includes the header bar. In order to keep window size allocation of the client area
+				 * consistent with previous versions of SWT, we need to include the header bar height in addition to the given height value.
+				 */
+				long header = GTK4.gtk_widget_get_next_sibling(GTK4.gtk_widget_get_first_child(shellHandle));
+				int[] headerNaturalHeight = new int[1];
+				GTK4.gtk_widget_measure(header, GTK.GTK_ORIENTATION_VERTICAL, 0, null, headerNaturalHeight, null, null);
+
+				GTK.gtk_window_set_default_size(shellHandle, width, height + headerNaturalHeight[0]);
 			}
 		} else {
-			long screen = GDK.gdk_screen_get_default ();
-			if (screen != 0) {
-				if (GDK.gdk_screen_get_n_monitors (screen) > 1) {
-					int monitorNumber = GDK.gdk_screen_get_monitor_at_window (screen, paintWindow ());
-					GDK.gdk_screen_get_monitor_geometry (screen, monitorNumber, dest);
-					width = dest.width * 5 / 8;
-					height = dest.height * 5 / 8;
+			if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
+				long display = GDK.gdk_display_get_default();
+				if (display != 0) {
+					long monitor = GDK.gdk_display_get_monitor_at_window(display, paintWindow());
+					GDK.gdk_monitor_get_geometry(monitor, dest);
+					width = (int) (dest.width * SHELL_TO_MONITOR_RATIO);
+					height = (int) (dest.height * SHELL_TO_MONITOR_RATIO);
+				}
+			} else {
+				long screen = GDK.gdk_screen_get_default();
+				if (screen != 0) {
+					if (GDK.gdk_screen_get_n_monitors(screen) > 1) {
+						int monitorNumber = GDK.gdk_screen_get_monitor_at_window(screen, paintWindow());
+						GDK.gdk_screen_get_monitor_geometry(screen, monitorNumber, dest);
+						width = (int) (dest.width * SHELL_TO_MONITOR_RATIO);
+						height = (int) (dest.height * SHELL_TO_MONITOR_RATIO);
+					}
 				}
 			}
-		}
-		if (width == 0 && height == 0 && !GTK.GTK4) {
-			// if the above failed, use gdk_screen_height/width as a fallback
-			width = GDK.gdk_screen_width () * 5 / 8;
-			height = GDK.gdk_screen_height () * 5 / 8;
-		}
-		if ((style & SWT.RESIZE) != 0) {
-			GTK.gtk_window_resize (shellHandle, width, height);
+
+			if (width == 0 && height == 0) {
+				// if the above failed, use gdk_screen_height/width as a fallback
+				width = (int) (GDK.gdk_screen_width() * SHELL_TO_MONITOR_RATIO);
+				height = (int) (GDK.gdk_screen_height() * SHELL_TO_MONITOR_RATIO);
+			}
+
+			if ((style & SWT.RESIZE) != 0) {
+				GTK3.gtk_window_resize(shellHandle, width, height);
+			}
 		}
 	}
-	resizeBounds (width, height, false);
+
+	resizeBounds(width, height, false);
 }
 
 @Override
@@ -2477,22 +2541,31 @@ public void setMenuBar (Menu menu) {
 	checkWidget();
 	if (menuBar == menu) return;
 	boolean both = menu != null && menuBar != null;
+
 	if (menu != null) {
-		if ((menu.style & SWT.BAR) == 0) error (SWT.ERROR_MENU_NOT_BAR);
-		if (menu.parent != this) error (SWT.ERROR_INVALID_PARENT);
+		if ((menu.style & SWT.BAR) == 0) error(SWT.ERROR_MENU_NOT_BAR);
+		if (menu.parent != this) error(SWT.ERROR_INVALID_PARENT);
 	}
+
 	if (menuBar != null) {
 		long menuHandle = menuBar.handle;
 		GTK.gtk_widget_hide (menuHandle);
-		destroyAccelGroup ();
+
+		if (!GTK.GTK4) {
+			destroyAccelGroup();
+		}
 	}
 	menuBar = menu;
 	if (menuBar != null) {
 		long menuHandle = menu.handle;
 		GTK.gtk_widget_show (menuHandle);
-		createAccelGroup ();
-		menuBar.addAccelerators (accelGroup);
+
+		if (!GTK.GTK4) {
+			createAccelGroup();
+			menuBar.addAccelerators(accelGroup);
+		}
 	}
+
 	GtkAllocation allocation = new GtkAllocation ();
 	GTK.gtk_widget_get_allocation (vboxHandle, allocation);
 	int width = allocation.width;
@@ -2510,15 +2583,15 @@ public void setMinimized (boolean minimized) {
 	}
 	if (minimized) {
 		if (GTK.GTK4) {
-			GTK.gtk_window_minimize(shellHandle);
+			GTK4.gtk_window_minimize(shellHandle);
 		} else {
-			GTK.gtk_window_iconify (shellHandle);
+			GTK3.gtk_window_iconify (shellHandle);
 		}
 	} else {
 		if (GTK.GTK4) {
-			GTK.gtk_window_unminimize(shellHandle);
+			GTK4.gtk_window_unminimize(shellHandle);
 		} else {
-			GTK.gtk_window_deiconify (shellHandle);
+			GTK3.gtk_window_deiconify (shellHandle);
 		}
 		bringToTop (false);
 	}
@@ -2546,10 +2619,13 @@ public void setMinimumSize (int width, int height) {
 
 void setMinimumSizeInPixels (int width, int height) {
 	checkWidget ();
-	GdkGeometry geometry = new GdkGeometry ();
-	minWidth = geometry.min_width = Math.max (width, trimWidth ()) - trimWidth ();
-	minHeight = geometry.min_height = Math.max (height, trimHeight ()) - trimHeight ();
-	GTK.gtk_window_set_geometry_hints (shellHandle, 0, geometry, GDK.GDK_HINT_MIN_SIZE);
+	geometry.min_width = Math.max (width, trimWidth ()) - trimWidth ();
+	geometry.min_height = Math.max (height, trimHeight ()) - trimHeight ();
+	int hint = GDK.GDK_HINT_MIN_SIZE;
+	if (geometry.max_height > 0 || geometry.max_width > 0) {
+		hint = hint | GDK.GDK_HINT_MAX_SIZE;
+	}
+	GTK3.gtk_window_set_geometry_hints (shellHandle, 0, geometry, hint);
 }
 
 /**
@@ -2578,6 +2654,75 @@ void setMinimumSizeInPixels (Point size) {
 	checkWidget ();
 	if (size == null) error (SWT.ERROR_NULL_ARGUMENT);
 	setMinimumSizeInPixels (size.x, size.y);
+}
+
+/**
+ * Sets the receiver's maximum size to the size specified by the arguments.
+ * If the new maximum size is smaller than the current size of the receiver,
+ * the receiver is resized to the new maximum size.
+ * <p>
+ * Note: The result of intermixing calls to <code>setMaximumSize</code> and
+ * <code>setFullScreen(true)</code> will vary by platform.
+ * Typically, the behavior will match the platform user's
+ * expectations, but not always. This should be avoided if possible.
+ * </p>
+ * @param width the new maximum width for the receiver
+ * @param height the new maximum height for the receiver
+ *
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @since 3.116
+ */
+public void setMaximumSize (int width, int height) {
+	checkWidget ();
+	setMaximumSize (new Point (width, height));
+}
+
+/**
+ * Sets the receiver's maximum size to the size specified by the argument.
+ * If the new maximum size is smaller than the current size of the receiver,
+ * the receiver is resized to the new maximum size.
+ * <p>
+ * Note: The result of intermixing calls to <code>setMaximumSize</code> and
+ * <code>setFullScreen(true)</code> will vary by platform.
+ * Typically, the behavior will match the platform user's
+ * expectations, but not always. This should be avoided if possible.
+ * </p>
+ * @param size the new maximum size for the receiver
+ *
+ * @exception IllegalArgumentException <ul>
+ *    <li>ERROR_NULL_ARGUMENT - if the point is null</li>
+ * </ul>
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @since 3.116
+ */
+public void setMaximumSize (Point size) {
+	checkWidget ();
+	setMaximumSizeInPixels (DPIUtil.autoScaleUp (size));
+}
+
+void setMaximumSizeInPixels (Point size) {
+	checkWidget ();
+	if (size == null) error (SWT.ERROR_NULL_ARGUMENT);
+	setMaximumSizeInPixels (size.x, size.y);
+}
+
+void setMaximumSizeInPixels (int width, int height) {
+	checkWidget ();
+	geometry.max_width = Math.max (width, trimWidth ()) - trimWidth ();
+	geometry.max_height = Math.max (height, trimHeight ()) - trimHeight ();
+	int hint = GDK.GDK_HINT_MAX_SIZE;
+	if (geometry.min_width > 0 || geometry.min_height > 0) {
+		hint = hint | GDK.GDK_HINT_MIN_SIZE;
+	}
+	GTK3.gtk_window_set_geometry_hints (shellHandle, 0, geometry, hint);
 }
 
 /**
@@ -2720,7 +2865,7 @@ public void setVisible (boolean visible) {
 		 * up in front of the full-screen window.
 		 */
 		if (parent!=null && parent.getShell().getFullScreen()) {
-			GTK.gtk_window_set_type_hint(shellHandle, GDK.GDK_WINDOW_TYPE_HINT_DIALOG);
+			GTK3.gtk_window_set_type_hint(shellHandle, GDK.GDK_WINDOW_TYPE_HINT_DIALOG);
 		}
 	} else {
 		updateModal ();
@@ -2759,10 +2904,10 @@ public void setVisible (boolean visible) {
 		 */
 		if (oldWidth == 0 && oldHeight == 0) {
 			int [] init_width = new int[1], init_height = new int[1];
-			GTK.gtk_window_get_size(shellHandle, init_width, init_height);
-			GTK.gtk_window_resize(shellHandle, 1, 1);
+			GTK3.gtk_window_get_size(shellHandle, init_width, init_height);
+			GTK3.gtk_window_resize(shellHandle, 1, 1);
 			GTK.gtk_widget_show (shellHandle);
-			GTK.gtk_window_resize(shellHandle, init_width[0], init_height[0]);
+			GTK3.gtk_window_resize(shellHandle, init_width[0], init_height[0]);
 			resizeBounds (init_width[0], init_height[0], false);
 		} else {
 			GTK.gtk_widget_show (shellHandle);
@@ -2771,15 +2916,8 @@ public void setVisible (boolean visible) {
 		 *  Feature in GTK: This handles grabbing the keyboard focus from a SWT.ON_TOP window
 		 *  if it has editable fields and is running Wayland. Refer to bug 515773.
 		 */
-		if (GTK.GTK4) {
-			if (enableSurface != 0) {
-				int width = GDK.gdk_surface_get_width(enableSurface);
-				int height = GDK.gdk_surface_get_height(enableSurface);
-				long layout = GDK.gdk_toplevel_layout_new(minWidth, minHeight);
-				GDK.gdk_toplevel_present(enableSurface, width, height, layout);
-			}
-		} else {
-			if (enableWindow != 0) GDK.gdk_window_raise (enableWindow);
+		if (!GTK.GTK4) {
+			if (enableWindow != 0) GDK.gdk_window_raise(enableWindow);
 		}
 		if (isDisposed ()) return;
 		if (!(OS.isX11() && GTK.GTK_IS_PLUG (shellHandle))) {
@@ -2807,14 +2945,11 @@ public void setVisible (boolean visible) {
 			boolean iconic = false;
 			Shell shell = parent != null ? parent.getShell() : null;
 			do {
-				/*
-				* This call to gdk_threads_leave() is a temporary work around
-				* to avoid deadlocks when gdk_threads_init() is called by native
-				* code outside of SWT (i.e AWT, etc). It ensures that the current
-				* thread leaves the GTK lock before calling the function below.
-				*/
-				if (!GTK.GTK4) GDK.gdk_threads_leave();
-				OS.g_main_context_iteration (0, false);
+				if (GTK.GTK4) {
+					OS.g_main_context_iteration (0, false);
+				} else {
+					GTK3.gtk_main_iteration_do (false);
+				}
 				if (isDisposed ()) break;
 				iconic = minimized || (shell != null && shell.minimized);
 			} while (!mapped && !iconic);
@@ -2829,7 +2964,7 @@ public void setVisible (boolean visible) {
 		mapped = true;
 
 		if ((style & mask) != 0) {
-			gdk_pointer_ungrab (GTK.gtk_widget_get_window (shellHandle), GDK.GDK_CURRENT_TIME);
+			if (!GTK.GTK4) gdk_pointer_ungrab (GTK3.gtk_widget_get_window (shellHandle), GDK.GDK_CURRENT_TIME);
 		}
 		opened = true;
 		if (!moved) {
@@ -2853,7 +2988,8 @@ public void setVisible (boolean visible) {
 			}
 		}
 	} else {
-		checkAndUnrabFocus();
+		fixActiveShell ();
+		checkAndUngrabFocus();
 		GTK.gtk_widget_hide (shellHandle);
 		sendEvent (SWT.Hide);
 	}
@@ -2891,18 +3027,26 @@ void showWidget () {
 			display.activeShell = this;
 			display.activePending = true;
 		}
-		long children = GTK.gtk_container_get_children (shellHandle), list = children;
-		while (list != 0) {
-			GTK.gtk_container_remove (shellHandle, OS.g_list_data (list));
-			list = OS.g_list_next(list);
+
+		if (GTK.GTK4) {
+			for (long child = GTK4.gtk_widget_get_first_child(shellHandle); child != 0; child = GTK4.gtk_widget_get_next_sibling(child)) {
+				GTK.gtk_widget_unparent(child);
+			}
+		} else {
+			long list = GTK3.gtk_container_get_children (shellHandle);
+			long listIterator = list;
+			while (listIterator != 0) {
+				GTK3.gtk_container_remove (shellHandle, OS.g_list_data (listIterator));
+				listIterator = OS.g_list_next(listIterator);
+			}
+			OS.g_list_free (list);
 		}
-		OS.g_list_free (list);
 	}
 
 	if (GTK.GTK4) {
-		GTK.gtk_window_set_child (shellHandle, vboxHandle);
+		GTK4.gtk_window_set_child (shellHandle, vboxHandle);
 	} else {
-		GTK.gtk_container_add (shellHandle, vboxHandle);
+		GTK3.gtk_container_add (shellHandle, vboxHandle);
 	}
 
 	if (scrolledHandle != 0) GTK.gtk_widget_show (scrolledHandle);
@@ -2913,17 +3057,18 @@ void showWidget () {
 @Override
 long sizeAllocateProc (long handle, long arg0, long user_data) {
 	int offset = 16;
-	int [] x = new int [1], y = new int [1];
+	int[] x = new int[1], y = new int[1];
 	if (GTK.GTK4) {
-		/*
-		 * TODO: calling gdk_window_get_device_position() with a 0
-		 * for the GdkWindow uses gdk_get_default_root_window(),
-		 * which doesn't exist on GTK4.
-		 */
+		double[] xDouble = new double[1], yDouble = new double[1];
+		display.getPointerPosition(xDouble, yDouble);
+
+		x[0] = (int)xDouble[0];
+		y[0] = (int)yDouble[0];
 	} else {
-		display.gdk_window_get_device_position (0, x, y, null);
+		display.getWindowPointerPosition(0, x, y, null);
 	}
-	y [0] += offset;
+
+	y[0] += offset;
 	GdkRectangle dest = new GdkRectangle ();
 	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
 		long display = GDK.gdk_display_get_default();
@@ -2946,7 +3091,7 @@ long sizeAllocateProc (long handle, long arg0, long user_data) {
 	if (y[0] + height > dest.y + dest.height) {
 		y[0] = (dest.y + dest.height) - height;
 	}
-	GTK.gtk_window_move (handle, x [0], y [0]);
+	GTK3.gtk_window_move (handle, x [0], y [0]);
 	return 0;
 }
 
@@ -3117,7 +3262,7 @@ boolean requiresUngrab () {
  * SWT.ON_TOP shells on Wayland requires gdk_seat_grab to grab keyboard/input focus,
  * the grabbed focus need to be removed when Shell is disposed/hidden.
  */
-void checkAndUnrabFocus () {
+void checkAndUngrabFocus () {
 	/*
 	 * Bug 515773, 542104: Wayland POPUP window limitations
 	 * In bringToTop(), we grabbed keyboard/pointer focus to popup shell, which needs to
@@ -3143,10 +3288,10 @@ void checkAndUnrabFocus () {
 		} else {
 			gdkResource = gtk_widget_get_window (shellHandle);
 			display = GDK.gdk_window_get_display(gdkResource);
+			GTK3.gtk_grab_remove(shellHandle);
 		}
 		long seat = GDK.gdk_display_get_default_seat(display);
 		GDK.gdk_seat_ungrab(seat);
-		GTK.gtk_grab_remove(shellHandle);
 		grabbedFocus = false;
 	}
 }
@@ -3158,7 +3303,8 @@ public void dispose () {
 	* more than once.  If this happens, fail silently.
 	*/
 	if (isDisposed()) return;
-	checkAndUnrabFocus();
+	fixActiveShell ();
+	checkAndUngrabFocus();
 	/*
 	 * Bug 540166: Dispose the popup child if any when the parent is disposed so that
 	 * it does not remain open forever.
@@ -3201,14 +3347,18 @@ Rectangle getBoundsInPixels () {
 	checkWidget ();
 	int [] x = new int [1], y = new int [1];
 	if ((state & Widget.DISPOSE_SENT) == 0) {
-		GTK.gtk_window_get_position (shellHandle, x, y);
+		if (GTK.GTK4) {
+			// TODO: GTK4 GtkWindow no longer has the ability to get position
+		} else {
+			GTK3.gtk_window_get_position (shellHandle, x, y);
+		}
 	} else {
 		if (GTK.GTK4) {
 			/* TODO: GTK4 Coordinate system is now surface relative, therefore can no longer obtain
 			 * root coordinates. Ideas include using the popup GdkSurface which allows you to get
 			 * parent relative x and y coords. */
 		} else {
-			GDK.gdk_window_get_root_origin(GTK.gtk_widget_get_window(shellHandle), x, y);
+			GDK.gdk_window_get_root_origin(GTK3.gtk_widget_get_window(shellHandle), x, y);
 		}
 	}
 	GtkAllocation allocation = new GtkAllocation ();
@@ -3267,28 +3417,6 @@ void releaseWidget () {
 	}
 }
 
-void setToolTipText (long tipWidget, String string) {
-	setToolTipText (tipWidget, tipWidget, string);
-}
-
-void setToolTipText (long rootWidget, long tipWidget, String string) {
-	byte [] buffer = null;
-	if (string != null && string.length () > 0) {
-		char [] chars = fixMnemonic (string, false, true);
-		buffer = Converter.wcsToMbcs (chars, true);
-	}
-	long oldTooltip = GTK.gtk_widget_get_tooltip_text (rootWidget);
-	boolean same = false;
-	if (buffer == null && oldTooltip == 0) {
-		same = true;
-	} else if (buffer != null && oldTooltip != 0) {
-		same = OS.strcmp (oldTooltip, buffer) == 0;
-	}
-	if (oldTooltip != 0) OS.g_free(oldTooltip);
-	if (same) return;
-
-	GTK.gtk_widget_set_tooltip_text (rootWidget, buffer);
-}
 @Override
 Point getWindowOrigin () {
 	if (!mapped) {

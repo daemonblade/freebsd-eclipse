@@ -18,6 +18,8 @@ import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * This class is the abstract superclass of all classes which
@@ -130,9 +132,9 @@ Rectangle computeTrimInPixels (int x, int y, int width, int height) {
 	if (scrolledHandle != 0) {
 		boolean hasFrame;
 		if (GTK.GTK4) {
-			hasFrame = GTK.gtk_scrolled_window_get_has_frame(scrolledHandle);
+			hasFrame = GTK4.gtk_scrolled_window_get_has_frame(scrolledHandle);
 		} else {
-			hasFrame = GTK.gtk_scrolled_window_get_shadow_type (scrolledHandle) != GTK.GTK_SHADOW_NONE;
+			hasFrame = GTK3.gtk_scrolled_window_get_shadow_type (scrolledHandle) != GTK.GTK_SHADOW_NONE;
 		}
 
 		if (hasFrame) {
@@ -218,9 +220,9 @@ int getBorderWidthInPixels () {
 
 		boolean hasFrame;
 		if (GTK.GTK4) {
-			hasFrame = GTK.gtk_scrolled_window_get_has_frame(scrolledHandle);
+			hasFrame = GTK4.gtk_scrolled_window_get_has_frame(scrolledHandle);
 		} else {
-			hasFrame = GTK.gtk_scrolled_window_get_shadow_type (scrolledHandle) != GTK.GTK_SHADOW_NONE;
+			hasFrame = GTK3.gtk_scrolled_window_get_shadow_type (scrolledHandle) != GTK.GTK_SHADOW_NONE;
 		}
 		if (hasFrame) {
 			border += getThickness (scrolledHandle).x;
@@ -324,39 +326,42 @@ public ScrollBar getVerticalBar () {
 
 @Override
 long gtk_draw (long widget, long cairo) {
-	/*
-	 * Draw events destined for an SwtFixed instance will sometimes
-	 * only be redrawing the scrollbars attached to it. GTK will send many
-	 * draw events to an SwtFixed instance if:
-	 *   1) that instance has overlay scrollbars attached to it, and
-	 *   2) the mouse has just left (leave-notify) that SwtFixed widget.
-	 *
-	 * Such extra draw events cause extra SWT.Paint events to be sent and
-	 * reduce performance. The fix is to check if the dirty region in need
-	 * of a redraw is the same region that the scroll bars occupy, and ignore
-	 * draw events that target such cases. See bug 546248.
-	 */
-	boolean overlayScrolling = !OS.GTK_OVERLAY_SCROLLING_DISABLED;
-	if (overlayScrolling && OS.G_OBJECT_TYPE(widget) == OS.swt_fixed_get_type()) {
-		if ((style & SWT.V_SCROLL) != 0 && verticalBar != null) {
-			GtkAllocation verticalBarAlloc = new GtkAllocation();
-			GTK.gtk_widget_get_allocation(verticalBar.handle, verticalBarAlloc);
-			GdkRectangle rect = new GdkRectangle();
-			GDK.gdk_cairo_get_clip_rectangle(cairo, rect);
-			if (rect.width == verticalBarAlloc.width && rect.height == verticalBarAlloc.height) {
-				return 0;
+	if (!GTK.GTK4) {
+		/*
+		 * Draw events destined for an SwtFixed instance will sometimes
+		 * only be redrawing the scrollbars attached to it. GTK will send many
+		 * draw events to an SwtFixed instance if:
+		 *   1) that instance has overlay scrollbars attached to it, and
+		 *   2) the mouse has just left (leave-notify) that SwtFixed widget.
+		 *
+		 * Such extra draw events cause extra SWT.Paint events to be sent and
+		 * reduce performance. The fix is to check if the dirty region in need
+		 * of a redraw is the same region that the scroll bars occupy, and ignore
+		 * draw events that target such cases. See bug 546248.
+		 */
+		boolean overlayScrolling = !OS.GTK_OVERLAY_SCROLLING_DISABLED;
+		if (overlayScrolling && OS.G_OBJECT_TYPE(widget) == OS.swt_fixed_get_type()) {
+			if ((style & SWT.V_SCROLL) != 0 && verticalBar != null) {
+				GtkAllocation verticalBarAlloc = new GtkAllocation();
+				GTK.gtk_widget_get_allocation(verticalBar.handle, verticalBarAlloc);
+				GdkRectangle rect = new GdkRectangle();
+				GDK.gdk_cairo_get_clip_rectangle(cairo, rect);
+				if (rect.width == verticalBarAlloc.width && rect.height == verticalBarAlloc.height) {
+					return 0;
+				}
 			}
-		}
-		if ((style & SWT.H_SCROLL) != 0 && horizontalBar != null) {
-			GtkAllocation horizontalBarAlloc = new GtkAllocation();
-			GTK.gtk_widget_get_allocation(horizontalBar.handle, horizontalBarAlloc);
-			GdkRectangle rect = new GdkRectangle();
-			GDK.gdk_cairo_get_clip_rectangle(cairo, rect);
-			if (rect.width == horizontalBarAlloc.width && rect.height == horizontalBarAlloc.height) {
-				return 0;
+			if ((style & SWT.H_SCROLL) != 0 && horizontalBar != null) {
+				GtkAllocation horizontalBarAlloc = new GtkAllocation();
+				GTK.gtk_widget_get_allocation(horizontalBar.handle, horizontalBarAlloc);
+				GdkRectangle rect = new GdkRectangle();
+				GDK.gdk_cairo_get_clip_rectangle(cairo, rect);
+				if (rect.width == horizontalBarAlloc.width && rect.height == horizontalBarAlloc.height) {
+					return 0;
+				}
 			}
 		}
 	}
+
 	return super.gtk_draw(widget, cairo);
 }
 
@@ -372,24 +377,11 @@ long gtk_scroll_event (long widget, long eventPtr) {
 	if ((state & CANVAS) != 0) {
 		ScrollBar scrollBar;
 		int [] direction = new int[1];
-		boolean fetched;
-		if (GTK.GTK4) {
-			direction[0] = GDK.gdk_scroll_event_get_direction(eventPtr);
-			fetched = direction[0] != GDK.GDK_SCROLL_SMOOTH;
-		} else {
-			fetched = GDK.gdk_event_get_scroll_direction(eventPtr, direction);
-		}
+		boolean fetched = GDK.gdk_event_get_scroll_direction(eventPtr, direction);
 
 		if (!fetched) {
 			double[] delta_x = new double[1], delta_y = new double [1];
-			boolean deltasAvailable;
-			if (GTK.GTK4) {
-				GDK.gdk_scroll_event_get_deltas(eventPtr, delta_x, delta_y);
-				// In GTK4, deltas is always available but zero when not GDK_SMOOTH_SCROLL
-				deltasAvailable = true;
-			} else {
-				deltasAvailable = GDK.gdk_event_get_scroll_deltas (eventPtr, delta_x, delta_y);
-			}
+			boolean deltasAvailable = GDK.gdk_event_get_scroll_deltas (eventPtr, delta_x, delta_y);
 
 			if (deltasAvailable) {
 				if (delta_x [0] != 0) {
@@ -506,12 +498,20 @@ void redrawWidget (int x, int y, int width, int height, boolean redrawAll, boole
 		rect.width = allocation.width;
 		rect.height = allocation.height;
 	} else {
-		int [] destX = new int [1], destY = new int [1];
-		GTK.gtk_widget_translate_coordinates (paintHandle, topHandle, x, y, destX, destY);
-		rect.x = destX [0];
-		rect.y = destY [0];
-		rect.width = Math.max (0, width);
-		rect.height = Math.max (0, height);
+		if (GTK.GTK4) {
+			double[] destX = new double[1], destY = new double[1];
+			GTK4.gtk_widget_translate_coordinates(paintHandle, topHandle, x, y, destX, destY);
+			rect.x = (int)destX[0];
+			rect.y = (int)destY[0];
+		} else {
+			int[] destX = new int[1], destY = new int[1];
+			GTK3.gtk_widget_translate_coordinates(paintHandle, topHandle, x, y, destX, destY);
+			rect.x = destX[0];
+			rect.y = destY[0];
+		}
+
+		rect.width = Math.max(0, width);
+		rect.height = Math.max(0, height);
 	}
 	if (GTK.GTK4) {
 		/* TODO: GTK4 no ability to invalidate surfaces, may need to keep track of
@@ -606,7 +606,7 @@ private Point scrollBarSize(long scrollBarHandle) {
 	gtk_widget_get_preferred_size (scrollBarHandle, requisition);
 	int [] padding = new int [1];
 	// Only GTK3 needs this, GTK4 has the size built-in via gtk_widget_get_preferred_size()
-	if (!GTK.GTK4) GTK.gtk_widget_style_get(scrolledHandle, OS.scrollbar_spacing, padding, 0);
+	if (!GTK.GTK4) GTK3.gtk_widget_style_get(scrolledHandle, OS.scrollbar_spacing, padding, 0);
 	int spacing = padding[0];
 	return new Point(requisition.width + spacing, requisition.height + spacing);
 }

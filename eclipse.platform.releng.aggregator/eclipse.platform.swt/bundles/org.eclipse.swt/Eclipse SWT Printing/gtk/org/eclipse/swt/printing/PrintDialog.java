@@ -17,6 +17,8 @@ package org.eclipse.swt.printing;
 import org.eclipse.swt.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 import org.eclipse.swt.widgets.*;
 
 /**
@@ -394,14 +396,7 @@ public PrinterData open() {
 	String key = "org.eclipse.swt.internal.gtk.externalEventLoop"; //$NON-NLS-1$
 	display.setData (key, Boolean.TRUE);
 	display.sendPreExternalEventDispatchEvent ();
-	int response = GTK.gtk_dialog_run (handle);
-	/*
-	* This call to gdk_threads_leave() is a temporary work around
-	* to avoid deadlocks when gdk_threads_init() is called by native
-	* code outside of SWT (i.e AWT, etc). It ensures that the current
-	* thread leaves the GTK lock acquired by the function above.
-	*/
-	if (!GTK.GTK4) GDK.gdk_threads_leave();
+	int response = GTK3.gtk_dialog_run (handle);
 	display.setData (key, Boolean.FALSE);
 	display.sendPostExternalEventDispatchEvent ();
 	if (GTK.gtk_window_get_modal (handle)) {
@@ -494,7 +489,11 @@ public PrinterData open() {
 		}
 	}
 	display.setData (REMOVE_IDLE_PROC_KEY, null);
-	GTK.gtk_widget_destroy (handle);
+	if (GTK.GTK4) {
+		GTK4.gtk_window_destroy(handle);
+	} else {
+		GTK3.gtk_widget_destroy(handle);
+	}
 	return data;
 }
 

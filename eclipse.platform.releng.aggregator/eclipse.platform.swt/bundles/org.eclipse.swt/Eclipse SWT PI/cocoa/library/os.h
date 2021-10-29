@@ -40,20 +40,21 @@ extern jint CPSSetProcessName(void *, jlong);
 #endif
 
 /* The structure objc_super defines "class" in i386/ppc and "super_class" in x86_64 */
-#ifdef __i386__
-#define swt_super_class class
-#elif __ppc__
-#define swt_super_class class
-#elif __x86_64__
+#ifdef __x86_64__
+#define swt_super_class super_class
+#elif __arm64__
 #define swt_super_class super_class
 #endif
 
-#ifdef __i386__
-#define STRUCT_SIZE_LIMIT 8
-#elif __ppc__
-#define STRUCT_SIZE_LIMIT 4
-#elif __x86_64__
+/* STRUCT_SIZE_LIMIT is the maximum size of struct that can be returned using registers */
+/* When sizeof(struct) is greater than this limit, objc_msgSend*_stret call is used */
+/* objc_msgSend*_stret methods are not available on arm64 architecture, so objc_msgSend* calls are always used */
+#ifdef __x86_64__
 #define STRUCT_SIZE_LIMIT 16
+#elif __arm64__
+#define STRUCT_SIZE_LIMIT 64
+#define objc_msgSendSuper_stret objc_msgSendSuper
+#define objc_msgSend_stret objc_msgSend
 #endif
 
 #ifdef DEBUG_EXCEPTIONS
@@ -72,7 +73,7 @@ extern jint CPSSetProcessName(void *, jlong);
 #define OS_NATIVE_ENTER(env, that, func) \
 	@try {  
 #define OS_NATIVE_EXIT(env, that, func) \
-	} \
+	; } \
 	@catch (NSException *nsx) { \
 		DUMP_EXCEPTION \
 	}

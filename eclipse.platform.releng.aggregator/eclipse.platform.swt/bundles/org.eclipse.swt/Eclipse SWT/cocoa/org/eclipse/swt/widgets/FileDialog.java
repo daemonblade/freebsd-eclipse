@@ -43,6 +43,7 @@ import org.eclipse.swt.internal.cocoa.*;
 public class FileDialog extends Dialog {
 	Callback callback_completion_handler;
 	Callback callback_overwrite_existing_file;
+	Callback callback_performKeyEquivalent;
 	NSSavePanel panel;
 	NSPopUpButton popup;
 	String [] filterNames = new String [0];
@@ -53,10 +54,13 @@ public class FileDialog extends Dialog {
 	SWTOpenSavePanelDelegate delegate = null;
 	int filterIndex = -1;
 	long jniRef = 0;
-	long method = 0;
-	long methodImpl = 0;
-	boolean overwrite = false;
+	long method_overwriteExistingFileCheck = 0;
+	long methodImpl_overwriteExistingFileCheck = 0;
+	long method_performKeyEquivalent = 0;
+	long methodImpl_performKeyEquivalent = 0;
 	static final char EXTENSION_SEPARATOR = ';';
+	private String selectedExtension;
+	boolean overwrite = (OS.VERSION >= OS.VERSION(10, 15, 0)) ? true : false;
 
 /**
  * Constructs a new instance of this class given only its parent.
@@ -120,17 +124,14 @@ long _overwriteExistingFileCheck (long id, long sel, long str) {
 	return 1;
 }
 
-/**
- * Appends the extension to the filename, only if the filename has no extension already.
- */
-private NSString appendExtension (NSString filename, String extension) {
-	if (filename != null && extension != null) {
-		NSString ext = filename.pathExtension();
-		if (ext == null || ext.length() == 0) {
-			filename = filename.stringByAppendingPathExtension(NSString.stringWith(extension));
-		}
+long _performKeyEquivalent (long id, long sel, long event) {
+	boolean result = false;
+	NSEvent nsEvent = new NSEvent(event);
+	NSWindow window = nsEvent.window ();
+	if (window != null) {
+		result = parent.display.performKeyEquivalent(window, nsEvent);
 	}
-	return filename;
+	return result ? 1 : 0;
 }
 
 /**
@@ -139,19 +140,10 @@ private NSString appendExtension (NSString filename, String extension) {
  */
 private NSString appendSelectedExtension (NSString filename) {
 	String extension = getSelectedExtension();
-	return appendExtension(filename, extension);
-}
-
-/**
- * Returns the filename without the extension from the full file path.
- */
-private NSString fileNameWithoutExtension (NSString filePath) {
-	NSString filename = filePath.lastPathComponent();
-	if (filename != null) {
+	if (filename != null && extension != null) {
 		NSString ext = filename.pathExtension();
-		while (ext != null && ext.length() > 0) {
-			filename = filename.stringByDeletingPathExtension();
-			ext = filename.pathExtension();
+		if (ext == null || ext.length() == 0) {
+			filename = filename.stringByAppendingPathExtension(NSString.stringWith(extension));
 		}
 	}
 	return filename;
@@ -250,26 +242,44 @@ public boolean getOverwrite () {
  * Returns null if no extension is selected or if the selected filter is * or *.*
  */
 private String getSelectedExtension () {
-	if (popup != null) {
-		filterIndex = (int)popup.indexOfSelectedItem();
-	} else {
-		filterIndex = -1;
-	}
+	return selectedExtension;
+}
+
+private NSMutableArray getSelectedExtensions () {
+	int filterIndex = popup != null ? (int)popup.indexOfSelectedItem() : -1;
 	if (filterExtensions != null && filterExtensions.length != 0) {
 		if (0 <= filterIndex && filterIndex < filterExtensions.length) {
 			String exts = filterExtensions [filterIndex];
-			int length = exts.length ();
 			int index = exts.indexOf (EXTENSION_SEPARATOR);
-			if (index == -1) index = length;
-			String filter = exts.substring (0, index).trim ();
-			if (!filter.equals ("*") && !filter.equals ("*.*")) {
-				if (filter.startsWith ("*.")) {
-					filter = filter.substring (2);
-				} else if (filter.startsWith (".")) {
-					filter = filter.substring (1);
+			String[] extensions = index != -1 ? exts.split(";") : new String[] {exts};
+
+			int length = extensions.length;
+			NSMutableArray allowedFileTypes = NSMutableArray.arrayWithCapacity(length);
+			for (int j = length - 1; j >= 0; j--) {
+				String ext = extensions[j];
+				String filter = ext.trim ();
+				if (!filter.equals ("*") && !filter.equals ("*.*")) {
+					if (filter.startsWith ("*.")) {
+						filter = filter.substring (2);
+					} else if (filter.startsWith (".")) {
+						filter = filter.substring (1);
+					}
+					selectedExtension = filter;
+					/*
+					 * Mac doesn't support multi-part extensions, use only the last part as
+					 * extension in this case.
+					 */
+					int i = filter.lastIndexOf(".");
+					if (i != -1 && ((i + 1) < filter.length())) {
+						filter = filter.substring(i + 1);
+					}
+					allowedFileTypes.insertObject(NSString.stringWith(filter), 0);
+				} else {
+					selectedExtension = null;
+					return null;
 				}
-				return filter;
 			}
+			return allowedFileTypes;
 		}
 	}
 	return null;
@@ -281,6 +291,8 @@ void handleResponse (long response) {
 	}
 	Display display = parent != null ? parent.getDisplay() : Display.getCurrent();
 	display.setModalDialog(null);
+
+	filterIndex = popup != null ? (int)popup.indexOfSelectedItem() : -1;
 
 	if (response == OS.NSFileHandlingPanelOKButton) {
 		NSString filename = panel.filename();
@@ -344,15 +356,33 @@ public String open () {
 		if (!overwrite) {
 			callback_overwrite_existing_file = new Callback(this, "_overwriteExistingFileCheck", 3);
 			long proc = callback_overwrite_existing_file.getAddress();
-			method = OS.class_getInstanceMethod(OS.class_NSSavePanel, OS.sel_overwriteExistingFileCheck);
-			if (method != 0) methodImpl = OS.method_setImplementation(method, proc);
+			method_overwriteExistingFileCheck = OS.class_getInstanceMethod(OS.class_NSSavePanel, OS.sel_overwriteExistingFileCheck);
+			if (method_overwriteExistingFileCheck != 0) {
+				methodImpl_overwriteExistingFileCheck = OS.method_setImplementation(method_overwriteExistingFileCheck, proc);
+			}
 		}
 	} else {
 		NSOpenPanel openPanel = NSOpenPanel.openPanel();
 		openPanel.setAllowsMultipleSelection((style & SWT.MULTI) != 0);
 		panel = openPanel;
 	}
+
+	callback_performKeyEquivalent = new Callback(this, "_performKeyEquivalent", 3);
+	long proc = callback_performKeyEquivalent.getAddress();
+	method_performKeyEquivalent = OS.class_getInstanceMethod(OS.class_NSSavePanel, OS.sel_performKeyEquivalent_);
+	if (method_performKeyEquivalent != 0) {
+		methodImpl_performKeyEquivalent = OS.method_setImplementation(method_performKeyEquivalent, proc);
+	}
+
 	panel.setCanCreateDirectories(true);
+	panel.setTitle(NSString.stringWith(title != null ? title : ""));
+	if (filterPath != null && filterPath.length() > 0) {
+		NSString dir = NSString.stringWith(filterPath);
+		panel.setDirectoryURL(NSURL.fileURLWithPath(dir));
+	}
+	if (fileName != null && fileName.length() > 0) {
+		panel.setNameFieldStringValue(NSString.stringWith(fileName));
+	}
 	/*
 	 * This line is intentionally commented. Don't show hidden files forcefully,
 	 * instead allow File dialog to use the system preference.
@@ -388,23 +418,18 @@ public String open () {
 		panel.setAccessoryView(widget);
 		popup = widget;
 		panel.setTreatsFilePackagesAsDirectories(shouldTreatAppAsDirectory(filterExtensions[selectionIndex]));
+		if ((style & SWT.SAVE) != 0) {
+			NSArray extensions = getSelectedExtensions();
+			if (extensions != null) panel.setAllowedFileTypes(extensions);
+			panel.setAllowsOtherFileTypes(true);
+		} else {
+			if (OS.VERSION >= OS.VERSION(10, 11, 0)) {
+				((NSOpenPanel)panel).setAccessoryViewDisclosed(true);
+			}
+		}
 	} else {
 		panel.setTreatsFilePackagesAsDirectories(false);
 	}
-	panel.setTitle(NSString.stringWith(title != null ? title : ""));
-	if (filterPath != null && filterPath.length() > 0) {
-		NSString dir = NSString.stringWith(filterPath);
-		panel.setDirectoryURL(NSURL.fileURLWithPath(dir));
-	}
-	if (fileName != null && fileName.length() > 0) {
-		panel.setNameFieldStringValue(NSString.stringWith(fileName));
-	}
-	NSString nameFieldStringValue = panel.nameFieldStringValue();
-	if (nameFieldStringValue != null) {
-		nameFieldStringValue = appendSelectedExtension(nameFieldStringValue);
-		panel.setNameFieldStringValue(nameFieldStringValue);
-	}
-
 	Display display = parent != null ? parent.getDisplay() : Display.getCurrent();
 	display.setModalDialog(this, panel);
 	if (parent != null && (style & SWT.SHEET) != 0) {
@@ -481,10 +506,19 @@ long panel_userEnteredFilename_confirmed (long id, long sel, long sender, long f
 
 void releaseHandles() {
 	if (!overwrite) {
-		if (method != 0) OS.method_setImplementation(method, methodImpl);
+		if (method_overwriteExistingFileCheck != 0) {
+			OS.method_setImplementation(method_overwriteExistingFileCheck, methodImpl_overwriteExistingFileCheck);
+		}
 		if (callback_overwrite_existing_file != null) callback_overwrite_existing_file.dispose();
 		callback_overwrite_existing_file = null;
 	}
+
+	if (method_performKeyEquivalent != 0) {
+		OS.method_setImplementation(method_performKeyEquivalent, methodImpl_performKeyEquivalent);
+	}
+	if (callback_performKeyEquivalent != null) callback_performKeyEquivalent.dispose();
+	callback_performKeyEquivalent = null;
+
 	if (callback_completion_handler != null) {
 		callback_completion_handler.dispose();
 		callback_completion_handler = null;
@@ -509,17 +543,12 @@ void sendSelection (long id, long sel, long arg) {
 		String fileTypes = filterExtensions[(int)popup.indexOfSelectedItem ()];
 		panel.setTreatsFilePackagesAsDirectories (shouldTreatAppAsDirectory (fileTypes));
 
-		/* Update the name field in the dialog with the correct extension */
+		/*
+		 * Update the allowed file types in the dialog. If extension is not hidden, this
+		 * updates the extension in the name field.
+		 */
 		if ((style & SWT.SAVE) != 0) {
-			String selectedExt = getSelectedExtension();
-			if (selectedExt != null) {
-				NSString filePath = panel.filename();
-				if (filePath != null) {
-					NSString filenameNoExt = fileNameWithoutExtension(filePath);
-					NSString filename = appendExtension(filenameNoExt, selectedExt);
-					if (filename != null) panel.setNameFieldStringValue(filename);
-				}
-			}
+			panel.setAllowedFileTypes(getSelectedExtensions());
 			return;
 		}
 	}
@@ -630,13 +659,22 @@ public void setFilterPath (String string) {
  * Sets the flag that the dialog will use to
  * determine whether to prompt the user for file
  * overwrite if the selected file already exists.
+ * <p>
+ * Note: On some platforms where suppressing the overwrite prompt
+ * is not supported, the prompt is shown even when invoked with
+ * overwrite false.
+ * </p>
  *
  * @param overwrite true if the dialog will prompt for file overwrite, false otherwise
  *
  * @since 3.4
  */
 public void setOverwrite (boolean overwrite) {
-	this.overwrite = overwrite;
+	/**
+	 * Since macOS 10.15, overwriteExistingFileCheck private method is not available.
+	 * Hence, there is no way to suppress the overwrite prompt and overwrite is always set to true.
+	 */
+	this.overwrite = (OS.VERSION >= OS.VERSION(10, 15, 0)) ? true : overwrite;
 }
 
 /**

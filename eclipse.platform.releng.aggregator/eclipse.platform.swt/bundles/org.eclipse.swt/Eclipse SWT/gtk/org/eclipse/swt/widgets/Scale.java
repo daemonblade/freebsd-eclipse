@@ -18,6 +18,7 @@ import org.eclipse.swt.*;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
 
 /**
  * Instances of the receiver represent a selectable user
@@ -130,7 +131,6 @@ void createHandle (int index) {
 	state |= HANDLE | THEME_BACKGROUND;
 	fixedHandle = OS.g_object_new (display.gtk_fixed_get_type (), 0);
 	if (fixedHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	gtk_widget_set_has_surface_or_window (fixedHandle, true);
 	long hAdjustment = GTK.gtk_adjustment_new (0, 0, 100, 1, 10, 0);
 	if (hAdjustment == 0) error (SWT.ERROR_NO_HANDLES);
 	if ((style & SWT.HORIZONTAL) != 0) {
@@ -139,7 +139,14 @@ void createHandle (int index) {
 		handle = GTK.gtk_scale_new (GTK.GTK_ORIENTATION_VERTICAL, hAdjustment);
 	}
 	if (handle == 0) error (SWT.ERROR_NO_HANDLES);
-	GTK.gtk_container_add (fixedHandle, handle);
+
+	if (GTK.GTK4) {
+		OS.swt_fixed_add(fixedHandle, handle);
+	} else {
+		GTK3.gtk_widget_set_has_window(fixedHandle, true);
+		GTK3.gtk_container_add (fixedHandle, handle);
+	}
+
 	GTK.gtk_scale_set_digits (handle, 0);
 	GTK.gtk_scale_set_draw_value (handle, false);
 }
@@ -235,8 +242,8 @@ public int getSelection () {
 }
 
 @Override
-long gtk_value_changed (long adjustment) {
-	sendSelectionEvent  (SWT.Selection);
+long gtk_value_changed(long range) {
+	sendSelectionEvent(SWT.Selection);
 	return 0;
 }
 

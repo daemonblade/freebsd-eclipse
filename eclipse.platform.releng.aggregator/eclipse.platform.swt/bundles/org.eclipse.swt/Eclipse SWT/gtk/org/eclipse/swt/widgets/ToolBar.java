@@ -14,10 +14,14 @@
 package org.eclipse.swt.widgets;
 
 
+import java.util.*;
+
 import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class support the layout of selectable
@@ -128,16 +132,22 @@ void createHandle (int index) {
 	state |= HANDLE | THEME_BACKGROUND;
 	fixedHandle = OS.g_object_new (display.gtk_fixed_get_type (), 0);
 	if (fixedHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	gtk_widget_set_has_surface_or_window (fixedHandle, true);
 
 	if (GTK.GTK4) {
 		handle = GTK.gtk_box_new(GTK.GTK_ORIENTATION_HORIZONTAL, 0);
+		GTK.gtk_widget_add_css_class(handle, Converter.javaStringToCString("toolbar"));
 	} else {
-		handle = GTK.gtk_toolbar_new ();
+		GTK3.gtk_widget_set_has_window(fixedHandle, true);
+		handle = GTK3.gtk_toolbar_new ();
 	}
 
 	if (handle == 0) error (SWT.ERROR_NO_HANDLES);
-	GTK.gtk_container_add (fixedHandle, handle);
+
+	if (GTK.GTK4) {
+		OS.swt_fixed_add(fixedHandle, handle);
+	} else {
+		GTK3.gtk_container_add (fixedHandle, handle);
+	}
 
 	/*
 	* Bug in GTK.  GTK will segment fault if gtk_widget_reparent() is called
@@ -149,7 +159,7 @@ void createHandle (int index) {
 	* tool bar preferred size is too big with GTK_ICON_SIZE_LARGE_TOOLBAR
 	* when the tool bar item has no image or text.
 	*/
-	if (!GTK.GTK4) GTK.gtk_toolbar_set_icon_size (handle, GTK.GTK_ICON_SIZE_SMALL_TOOLBAR);
+	if (!GTK.GTK4) GTK3.gtk_toolbar_set_icon_size (handle, GTK.GTK_ICON_SIZE_SMALL_TOOLBAR);
 
 	// In GTK 3 font description is inherited from parent widget which is not how SWT has always worked,
 	// reset to default font to get the usual behavior
@@ -170,9 +180,7 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 	Point size = null;
 
 	if (GTK.GTK4) {
-		/* TODO: GTK4 will require us to implement our own
-		 * overflow menu. May require the use of the "toolbar" style class
-		 * applied to the widget.  */
+		size = computeNativeSize (handle, wHint, hHint, changed);
 	} else {
 		/*
 		 * Feature in GTK. Size of toolbar is calculated incorrectly
@@ -180,9 +188,9 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 		 * to display. The fix is to disable it before the computation of
 		 * size and enable it if WRAP style is set.
 		 */
-		GTK.gtk_toolbar_set_show_arrow (handle, false);
+		GTK3.gtk_toolbar_set_show_arrow (handle, false);
 		size = computeNativeSize (handle, wHint, hHint, changed);
-		if ((style & SWT.WRAP) != 0) GTK.gtk_toolbar_set_show_arrow (handle, true);
+		if ((style & SWT.WRAP) != 0) GTK3.gtk_toolbar_set_show_arrow (handle, true);
 	}
 
 	return size;
@@ -239,21 +247,6 @@ long eventHandle () {
 @Override
 long enterExitHandle() {
 	return handle;
-}
-
-@Override
-void fixChildren (Shell newShell, Shell oldShell, Decorations newDecorations, Decorations oldDecorations, Menu [] menus) {
-	super.fixChildren (newShell, oldShell, newDecorations, oldDecorations, menus);
-	ToolItem [] items = getItems ();
-	if (toolTipText == null) {
-		for (int i = 0; i < items.length; i++) {
-			ToolItem item = items [i];
-			if (item.toolTipText != null) {
-				item.setToolTipText(oldShell, null);
-				item.setToolTipText(newShell, item.toolTipText);
-			}
-		}
-	}
 }
 
 @Override
@@ -334,10 +327,19 @@ ToolItem getItemInPixels (Point point) {
  */
 public int getItemCount () {
 	checkWidget();
-	long list = GTK.gtk_container_get_children (handle);
-	if (list == 0) return 0;
-	int itemCount = OS.g_list_length (list);
-	OS.g_list_free (list);
+
+	int itemCount = 0;
+	if (GTK.GTK4) {
+		for (long child = GTK4.gtk_widget_get_first_child(handle); child != 0; child = GTK4.gtk_widget_get_next_sibling(child)) {
+			itemCount++;
+		}
+	} else {
+		long list = GTK3.gtk_container_get_children (handle);
+		if (list == 0) return 0;
+		itemCount = OS.g_list_length (list);
+		OS.g_list_free (list);
+	}
+
 	return itemCount;
 }
 
@@ -362,26 +364,38 @@ public ToolItem [] getItems () {
 	return _getItems ();
 }
 
-ToolItem [] _getItems () {
-	long list = GTK.gtk_container_get_children (handle);
-	if (list == 0) return new ToolItem [0];
-	int count = OS.g_list_length (list);
-	ToolItem [] items = new ToolItem [count];
-	long originalList = list;
-	int index = 0;
-	for (int i=0; i<count; i++) {
-		long data = OS.g_list_data (list);
-		Widget widget = display.getWidget (data);
-		if (widget != null) items [index++] = (ToolItem) widget;
-		list = OS.g_list_next (list);
+ToolItem[] _getItems () {
+	if (GTK.GTK4) {
+		ArrayList<ToolItem> childrenList = new ArrayList<>();
+		for (long child = GTK4.gtk_widget_get_first_child(handle); child != 0; child = GTK4.gtk_widget_get_next_sibling(child)) {
+			Widget childWidget = display.getWidget(child);
+			if (childWidget != null) {
+				childrenList.add((ToolItem)childWidget);
+			}
+		}
+
+		return childrenList.toArray(new ToolItem[childrenList.size()]);
+	} else {
+		long list = GTK3.gtk_container_get_children (handle);
+		if (list == 0) return new ToolItem [0];
+		int count = OS.g_list_length (list);
+		ToolItem [] items = new ToolItem [count];
+		long originalList = list;
+		int index = 0;
+		for (int i=0; i<count; i++) {
+			long data = OS.g_list_data (list);
+			Widget widget = display.getWidget (data);
+			if (widget != null) items [index++] = (ToolItem) widget;
+			list = OS.g_list_next (list);
+		}
+		OS.g_list_free (originalList);
+		if (index != items.length) {
+			ToolItem [] newItems = new ToolItem [index];
+			System.arraycopy (items, 0, newItems, 0, index);
+			items = newItems;
+		}
+		return items;
 	}
-	OS.g_list_free (originalList);
-	if (index != items.length) {
-		ToolItem [] newItems = new ToolItem [index];
-		System.arraycopy (items, 0, newItems, 0, index);
-		items = newItems;
-	}
-	return items;
 }
 
 /**
@@ -553,7 +567,7 @@ void relayout () {
 		} else if (hasImage) {
 			type = GTK.GTK_TOOLBAR_ICONS;
 		}
-		GTK.gtk_toolbar_set_style (handle, type);
+		GTK3.gtk_toolbar_set_style (handle, type);
 	}
 }
 
@@ -600,7 +614,7 @@ void reskinChildren (int flags) {
 
 @Override
 int setBounds (int x, int y, int width, int height, boolean move, boolean resize) {
-	GTK.gtk_toolbar_set_show_arrow (handle, false);
+	if (!GTK.GTK4) GTK3.gtk_toolbar_set_show_arrow (handle, false);
 	int result = super.setBounds (x, y, width, height, move, resize);
 	if ((result & RESIZED) != 0) relayout ();
 	if ((style & SWT.WRAP) != 0) {
@@ -609,7 +623,7 @@ int setBounds (int x, int y, int width, int height, boolean move, boolean resize
 			 * overflow menu. May require the use of the "toolbar" style class
 			 * applied to the widget.  */
 		} else {
-			GTK.gtk_toolbar_set_show_arrow (handle, true);
+			GTK3.gtk_toolbar_set_show_arrow (handle, true);
 		}
 	}
 
@@ -715,15 +729,13 @@ void setOrientation (boolean create) {
 }
 
 @Override
-public void setToolTipText (String string) {
+public void setToolTipText(String string) {
 	checkWidget();
-	super.setToolTipText (string);
-	Shell shell = _getShell ();
-	ToolItem [] items = getItems ();
+	super.setToolTipText(string);
+	ToolItem[] items = getItems();
 	for (int i = 0; i < items.length; i++) {
-		String newString = string != null ? null : items [i].toolTipText;
-		shell.setToolTipText (items [i].handle, newString);
+		String newString = string != null ? null : items[i].toolTipText;
+		setToolTipText(items[i].handle, newString);
 	}
 }
-
 }

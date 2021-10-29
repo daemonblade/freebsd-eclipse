@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -17,6 +17,7 @@ package org.eclipse.swt.widgets;
 import org.eclipse.swt.*;
 import org.eclipse.swt.accessibility.*;
 import org.eclipse.swt.graphics.*;
+import org.eclipse.swt.internal.ExceptionStash;
 import org.eclipse.swt.internal.cocoa.*;
 
 /**
@@ -945,6 +946,38 @@ void pageUp(long id, long sel, long sender) {
 }
 
 @Override
+void redrawWidget(NSView view, boolean redrawChildren) {
+	super.redrawWidget(view, redrawChildren);
+	if (redrawChildren) {
+		Control[] _getChildren = _getChildren();
+		for (Control child : _getChildren) {
+			if (child != null && !child.isDisposed () && child.isVisible()) {
+				child.redrawWidget(child.view, redrawChildren);
+			}
+		}
+	}
+}
+
+@Override
+public void redraw(int x, int y, int width, int height, boolean all) {
+	super.redraw(x, y, width, height, all);
+	if (all) {
+		Control[] children = _getChildren();
+		for (Control child : children) {
+			if (child != null && !child.isDisposed () && child.isVisible()) {
+				NSRect rect = new NSRect();
+				rect.x = x;
+				rect.y = y;
+				rect.width = width;
+				rect.height = height;
+				rect = view.convertRect_toView_(rect, child.view);
+				child.redraw((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height, all);
+			}
+		}
+	}
+}
+
+@Override
 void reflectScrolledClipView (long id, long sel, long aClipView) {
 	if ((state & CANVAS) != 0) return;
 	super.reflectScrolledClipView (id, sel, aClipView);
@@ -952,14 +985,19 @@ void reflectScrolledClipView (long id, long sel, long aClipView) {
 
 @Override
 void releaseChildren (boolean destroy) {
-	Control [] children = _getChildren ();
-	for (int i=0; i<children.length; i++) {
-		Control child = children [i];
-		if (child != null && !child.isDisposed ()) {
-			child.release (false);
+	try (ExceptionStash exceptions = new ExceptionStash ()) {
+		for (Control child : _getChildren ()) {
+			if (child == null || child.isDisposed ())
+				continue;
+
+			try {
+				child.release (false);
+			} catch (Error | RuntimeException ex) {
+				exceptions.stash (ex);
+			}
 		}
+		super.releaseChildren (destroy);
 	}
-	super.releaseChildren (destroy);
 }
 
 @Override
@@ -1166,7 +1204,11 @@ boolean setTabGroupFocus () {
 	Control [] children = _getChildren ();
 	for (int i=0; i<children.length; i++) {
 		Control child = children [i];
-		if (child.isTabItem () && child.setTabItemFocus ()) return true;
+		/*
+		 * It is unlikely but possible that a child is disposed at this point, for more
+		 * details refer bug 381668.
+		 */
+		if (!child.isDisposed() && child.isTabItem () && child.setTabItemFocus ()) return true;
 	}
 	return false;
 }

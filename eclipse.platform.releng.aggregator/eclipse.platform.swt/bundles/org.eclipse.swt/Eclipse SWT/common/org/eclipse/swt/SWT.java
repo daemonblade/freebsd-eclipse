@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -258,11 +258,17 @@ public class SWT {
 	public static final int Resize = 11;
 
 	/**
-	 * The dispose event type (value is 12).
+	 * The dispose event type (value is 12).<br>
+	 * <br>
+	 * Note: {@link Display} still runs {@link Display#readAndDispatch}
+	 * after sending this event. If you want to dispose any resources,
+	 * this might cause problems. Use {@link Display#disposeExec}
+	 * instead.
 	 *
 	 * @see org.eclipse.swt.widgets.Widget#addListener
 	 * @see org.eclipse.swt.widgets.Display#addListener
 	 * @see org.eclipse.swt.widgets.Display#addFilter
+	 * @see org.eclipse.swt.widgets.Display#disposeExec
 	 * @see org.eclipse.swt.widgets.Event
 	 *
 	 * @see org.eclipse.swt.widgets.Widget#addDisposeListener
@@ -2513,14 +2519,32 @@ public class SWT {
 	/**
 	 * Style constant specifying that a Browser should use Chromium Embedded Framework
 	 * for rendering its content (value is 1&lt;&lt;17).
+	 * <p><b>Note:</b> No longer supported and ignored.</p>
 	 * <p><b>Used By:</b></p>
 	 * <ul>
 	 * <li><code>Browser</code></li>
 	 * </ul>
 	 *
 	 * @since 3.115
+	 * @deprecated Support for Chromium was limited to ancient and full of CVEs version of Chromium.
+	 * See <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=572010">bug report</a> for details
 	 */
+	@Deprecated
 	public static final int CHROMIUM = 1 << 17;
+
+	/**
+	 * Style constant specifying that a Browser should use Edge (WebView2)
+	 * for rendering its content (value is 1&lt;&lt;18).
+	 * <p>NOTE: Edge integration is experimental, it isn't a drop-in replacement
+	 * for Internet Explorer.</p>
+	 * <p><b>Used By:</b></p>
+	 * <ul>
+	 * <li><code>Browser</code></li>
+	 * </ul>
+	 *
+	 * @since 3.116
+	 */
+	public static final int EDGE = 1 << 18;
 
 	/**
 	 * Style constant for balloon behavior (value is 1&lt;&lt;12).

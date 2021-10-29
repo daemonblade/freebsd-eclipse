@@ -161,6 +161,13 @@ public void test_setDataLjava_lang_StringLjava_lang_Object() {
 
 	widget.setData("the widget", null);
 	assertNull(widget.getData("the widget"));
+
+	try {
+		widget.setData(null, null);
+		fail();
+	} catch(IllegalArgumentException e) {
+		// expected
+	}
 }
 @Test
 public void test_toString() {
@@ -209,7 +216,7 @@ protected String getTestName() {
 	String test = name.getMethodName();
 	int index = test.lastIndexOf('_');
 	if(index != -1)
-		test = test.substring(index+1, test.length());
+		test = test.substring(index+1);
 	String clss = getClassName();
 	if((!test.equals("MenuDetect") || clss.equals("Table") || test.startsWith("Chevron")) &&
 		(!test.equals("DragDetect") || clss.equals("Tree") || test.startsWith("Chevron")) &&
@@ -224,22 +231,42 @@ protected String getClassName() {
 	String clazz = getClass().getName();
 	int index = clazz.lastIndexOf('_');
 	if(index != -1)
-		clazz = clazz.substring(index+1, clazz.length());
+		clazz = clazz.substring(index+1);
 	return clazz;
 }
 
-protected void processEvents(int timeoutMs, BooleanSupplier condition) throws InterruptedException {
-	if (condition == null) {
-		condition = () -> false;
+protected void processEvents(int timeoutMs, BooleanSupplier breakCondition) throws InterruptedException {
+	if (breakCondition == null) {
+		breakCondition = () -> false;
 	}
 	long targetTimestamp = System.currentTimeMillis() + timeoutMs;
-	while (!condition.getAsBoolean()) {
+	while (!breakCondition.getAsBoolean()) {
 		if (!shell.getDisplay().readAndDispatch()) {
 			if (System.currentTimeMillis() < targetTimestamp) {
 				Thread.sleep(50);
 			} else {
 				return;
 			}
+		}
+	}
+}
+
+/**
+ * Renders the shell and process events for duration.
+ * Convenience method for debugging tests, ⚠️ should not be
+ * called for headless tests!
+ * @param shell The shell to render.
+ * @param durationMs duration in milliseconds. Method exits after duration.
+ * @throws InterruptedException
+ */
+protected void render(Shell shell, int durationMs) throws InterruptedException {
+	long timestamp = System.currentTimeMillis();
+	shell.pack();
+	shell.layout();
+	shell.setVisible(true);
+	while (System.currentTimeMillis() - timestamp < durationMs) {
+		if (!shell.getDisplay().readAndDispatch()) {
+			Thread.sleep(50);
 		}
 	}
 }

@@ -120,6 +120,7 @@ public class Display extends Device {
 
 	static String APP_NAME = "SWT"; //$NON-NLS-1$
 	static String APP_VERSION = ""; //$NON-NLS-1$
+	String appLocalDir;
 
 	/* Windows and Events */
 	Event [] eventQueue;
@@ -241,6 +242,20 @@ public class Display extends Device {
 	 */
 	static final String COMBO_USE_DARK_THEME = "org.eclipse.swt.internal.win32.Combo.useDarkTheme"; //$NON-NLS-1$
 	boolean comboUseDarkTheme = false;
+	/**
+	 * Use .setForeground() .setBackground() theme for ProgressBar.
+	 * Limitations:<br>
+	 * <ul>
+	 *   <li>Does not affect already created controls.</li>
+	 * </ul>
+	 * Side effects:
+	 * <ul>
+	 *   <li>ProgressBar's shine animation is lost.</li>
+	 * </ul>
+	 * Expects a <code>boolean</code> value.
+	 */
+	static final String PROGRESSBAR_USE_COLORS = "org.eclipse.swt.internal.win32.ProgressBar.useColors"; //$NON-NLS-1$
+	boolean progressbarUseColors = false;
 
 	/* Custom icons */
 	long hIconSearch;
@@ -291,6 +306,7 @@ public class Display extends Device {
 	static final String USE_OWNDC_KEY = "org.eclipse.swt.internal.win32.useOwnDC"; //$NON-NLS-1$
 	static final String ACCEL_KEY_HIT = "org.eclipse.swt.internal.win32.accelKeyHit"; //$NON-NLS-1$
 	static final String EXTERNAL_EVENT_LOOP_KEY = "org.eclipse.swt.internal.win32.externalEventLoop"; //$NON-NLS-1$
+	static final String APPLOCAL_DIR_KEY = "org.eclipse.swt.internal.win32.appLocalDir"; //$NON-NLS-1$
 	Thread thread;
 
 	/* Display Shutdown */
@@ -1740,6 +1756,9 @@ public Object getData (String key) {
 	if (key.equals (ACCEL_KEY_HIT)) {
 		return accelKeyHit;
 	}
+	if (key.equals (APPLOCAL_DIR_KEY)) {
+		return appLocalDir;
+	}
 	if (keys == null) return null;
 	for (int i=0; i<keys.length; i++) {
 		if (keys [i].equals (key)) return values [i];
@@ -2248,7 +2267,7 @@ public Shell [] getShells () {
 	int index = 0;
 	Shell [] result = new Shell [16];
 	for (Control control : controlTable) {
-		if (control != null && control instanceof Shell) {
+		if (control instanceof Shell) {
 			int j = 0;
 			while (j < index) {
 				if (result [j] == control) break;
@@ -2780,6 +2799,9 @@ protected void init () {
 			pList.Release ();
 		}
 	}
+
+	/* Application-specific data directory. */
+	appLocalDir = System.getenv("LOCALAPPDATA") + "\\" + Display.APP_NAME.replaceAll("[\\\\/:*?\"<>|]", "_");
 
 	/* Initialize buffered painting */
 	OS.BufferedPaintInit ();
@@ -3481,14 +3503,10 @@ public boolean post (Event event) {
 					case OS.VK_DIVIDE:
 						inputs.dwFlags |= OS.KEYEVENTF_EXTENDEDKEY;
 				}
-				long hHeap = OS.GetProcessHeap ();
-				long pInputs = OS.HeapAlloc (hHeap, OS.HEAP_ZERO_MEMORY, INPUT.sizeof);
-				OS.MoveMemory(pInputs, new int[] {OS.INPUT_KEYBOARD}, 4);
-				//TODO - DWORD type of INPUT structure aligned to 8 bytes on 64 bit
-				OS.MoveMemory (pInputs + C.PTR_SIZEOF, inputs, KEYBDINPUT.sizeof);
-				boolean result = OS.SendInput (1, pInputs, INPUT.sizeof) != 0;
-				OS.HeapFree (hHeap, 0, pInputs);
-				return result;
+				INPUT pInputs = new INPUT ();
+				pInputs.type = OS.INPUT_KEYBOARD;
+				pInputs.ki = inputs;
+				return OS.SendInput (1, pInputs, INPUT.sizeof) != 0;
 			}
 			case SWT.MouseDown:
 			case SWT.MouseMove:
@@ -3537,14 +3555,10 @@ public boolean post (Event event) {
 						}
 					}
 				}
-				long hHeap = OS.GetProcessHeap ();
-				long pInputs = OS.HeapAlloc (hHeap, OS.HEAP_ZERO_MEMORY, INPUT.sizeof);
-				OS.MoveMemory(pInputs, new int[] {OS.INPUT_MOUSE}, 4);
-				//TODO - DWORD type of INPUT structure aligned to 8 bytes on 64 bit
-				OS.MoveMemory (pInputs + C.PTR_SIZEOF, inputs, MOUSEINPUT.sizeof);
-				boolean result = OS.SendInput (1, pInputs, INPUT.sizeof) != 0;
-				OS.HeapFree (hHeap, 0, pInputs);
-				return result;
+				INPUT pInputs = new INPUT ();
+				pInputs.type = OS.INPUT_MOUSE;
+				pInputs.mi = inputs;
+				return OS.SendInput (1, pInputs, INPUT.sizeof) != 0;
 			}
 		}
 		return false;
@@ -3656,33 +3670,61 @@ static void register (Display display) {
  */
 @Override
 protected void release () {
-	sendEvent (SWT.Dispose, new Event ());
-	for (Shell shell : getShells ()) {
-		if (!shell.isDisposed ()) shell.dispose ();
-	}
-	if (tray != null) tray.dispose ();
-	tray = null;
-	if (taskBar != null) taskBar.dispose ();
-	taskBar = null;
-	while (readAndDispatch ()) {}
-	if (disposeList != null) {
-		for (Runnable next : disposeList) {
-			if (next != null) {
+	try (ExceptionStash exceptions = new ExceptionStash ()) {
+		try {
+			sendEvent (SWT.Dispose, new Event ());
+		} catch (Error | RuntimeException ex) {
+			exceptions.stash (ex);
+		}
+
+		for (Shell shell : getShells ()) {
+			try {
+				if (!shell.isDisposed ()) shell.dispose ();
+			} catch (Error | RuntimeException ex) {
+				exceptions.stash (ex);
+			}
+		}
+
+		try {
+			if (tray != null) tray.dispose ();
+		} catch (Error | RuntimeException ex) {
+			exceptions.stash (ex);
+		}
+		tray = null;
+
+		try {
+			if (taskBar != null) taskBar.dispose ();
+		} catch (Error | RuntimeException ex) {
+			exceptions.stash (ex);
+		}
+		taskBar = null;
+
+		for (;;) {
+			try {
+				if (!readAndDispatch ()) break;
+			} catch (Error | RuntimeException ex) {
+				exceptions.stash (ex);
+			}
+		}
+
+		if (disposeList != null) {
+			for (Runnable next : disposeList) {
+				if (next == null) continue;
+
 				try {
 					next.run ();
-				} catch (RuntimeException exception) {
-					runtimeExceptionHandler.accept (exception);
-				} catch (Error error) {
-					errorHandler.accept (error);
+				} catch (Error | RuntimeException ex) {
+					exceptions.stash (ex);
 				}
 			}
 		}
+		disposeList = null;
+
+		synchronizer.releaseSynchronizer ();
+		synchronizer = null;
+		releaseDisplay ();
+		super.release ();
 	}
-	disposeList = null;
-	synchronizer.releaseSynchronizer ();
-	synchronizer = null;
-	releaseDisplay ();
-	super.release ();
 }
 
 void releaseDisplay () {
@@ -4414,6 +4456,9 @@ public void setData (String key, Object value) {
 			comboUseDarkTheme = _toBoolean(value) &&
 				!disableCustomThemeTweaks &&
 				OS.IsDarkModeAvailable();
+			break;
+		case PROGRESSBAR_USE_COLORS:
+			progressbarUseColors = !disableCustomThemeTweaks && _toBoolean(value);
 			break;
 	}
 

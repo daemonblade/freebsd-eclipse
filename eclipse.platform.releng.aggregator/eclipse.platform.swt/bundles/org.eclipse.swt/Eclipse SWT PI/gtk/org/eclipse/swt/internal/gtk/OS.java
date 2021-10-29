@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others. All rights reserved.
+ * Copyright (c) 2000, 2021 IBM Corporation and others. All rights reserved.
  * The contents of this file are made available under the terms
  * of the GNU Lesser General Public License (LGPL) Version 2.1 that
  * accompanies this distribution (lgpl-v21.txt).  The LGPL is also
@@ -14,38 +14,43 @@
  *******************************************************************************/
 package org.eclipse.swt.internal.gtk;
 
-
 import java.util.*;
 
 import org.eclipse.swt.internal.*;
 
 // Common type translation table:
-// C   ->  Java
+// C            ->  Java
 // --------------------
 // Primitives:
-// int   -> int
-// guint -> long   #Reason:
-//					c : unsigned int range: 4294967295
-//                  java : int range      : 2147483647 (less than c unsigned int)
-//                  Java : long range: 9,223,372,036,854,775,807
-//				    // Note: Not to be used for pointers.
+// int          -> int
+// gint*        -> int[]
 //
-// gint* -> int[]
-// boolean   -> int  ex setenv
-// gboolean  -> boolean
+// Unsigned integer:
+// * Note that java's int is signed, which introduces difficulties
+// * for values > 0x7FFFFFFF. Java's long can fit such values, but
+// * java's long is 8 bytes, while guint is 4 bytes. For that reason,
+// * java's long CAN'T be used for pointers or arrays.
+// guint        -> int/long
+// guint*       -> int[]
+//
+// Boolean:
+// * Java's boolean is handy, but it's 1 byte, while gboolean is 4
+// * bytes. For that reason, it CAN'T be used for pointers or arrays.
+// gboolean     -> int/boolean
+// gboolean*    -> int
 //
 // Pointers:
-// gpointer -> long
-// void *   -> long
+// gpointer     -> long
+// void *       -> long
 //
 // Strings:
-// gchar *      -> long
-// const char * -> byte[]  ex setenv
-// const gchar* -> byte[]  ex g_log_remove_handler
+// gchar *      -> long    // You're responsible for allocating/deallocating memory buffer.
+// const char * -> byte[]  // Example: setenv()
+// const gchar* -> byte[]  // Example: g_log_remove_handler()
 //
 // Special types:
-// GQuark -> int
-// GError ** -> long []  ex g_filename_to_uri
+// GQuark       -> int
+// GError **    -> long[]  // Example: g_filename_to_uri()
 
 
 /**
@@ -76,7 +81,7 @@ public class OS extends C {
 	/** Initialization; load native libraries */
 	static {
 		String propertyName = "SWT_GTK4";
-		String gtk4 = getEnvironmentalVariable (propertyName);
+		String gtk4 = getEnvironmentalVariable(propertyName);
 		if (gtk4 != null && gtk4.equals("1")) {
 			try {
 				Library.loadLibrary("swt-pi4");
@@ -180,6 +185,10 @@ public class OS extends C {
 	public static final int PANGO_WEIGHT_BOLD = 0x2bc;
 	public static final int PANGO_WEIGHT_NORMAL = 0x190;
 	public static final int PANGO_WRAP_WORD_CHAR = 2;
+	public static final int PANGO_FONT_MASK_FAMILY = 1 << 0;
+	public static final int PANGO_FONT_MASK_STYLE = 1 << 1;
+	public static final int PANGO_FONT_MASK_WEIGHT = 1 << 3;
+	public static final int PANGO_FONT_MASK_SIZE = 1 << 5;
 
 	/**
 	 * GDBus Session types.
@@ -292,6 +301,7 @@ public class OS extends C {
 	public static final byte[] drag_end = ascii("drag_end");
 	public static final byte[] drag_leave = ascii("drag_leave");
 	public static final byte[] drag_motion = ascii("drag_motion");
+	public static final byte[] prepare = ascii("prepare");
 	public static final byte[] draw = ascii("draw");
 	public static final byte[] end = ascii("end");
 	public static final byte[] enter_notify_event = ascii("enter-notify-event");
@@ -319,6 +329,10 @@ public class OS extends C {
 	public static final byte[] map_event = ascii("map-event");
 	public static final byte[] mnemonic_activate = ascii("mnemonic-activate");
 	public static final byte[] month_changed = ascii("month-changed");
+	public static final byte[] next_month = ascii("next-month");
+	public static final byte[] prev_month = ascii("prev-month");
+	public static final byte[] next_year = ascii("next-year");
+	public static final byte[] prev_year = ascii("prev-year");
 	public static final byte[] motion_notify_event = ascii("motion-notify-event");
 	public static final byte[] motion = ascii("motion");
 	public static final byte[] move_cursor = ascii("move-cursor");
@@ -332,7 +346,6 @@ public class OS extends C {
 	public static final byte[] popup_menu = ascii("popup-menu");
 	public static final byte[] populate_popup = ascii("populate-popup");
 	public static final byte[] preedit_changed = ascii("preedit-changed");
-	public static final byte[] property_notify_event = ascii("property-notify-event");
 	public static final byte[] realize = ascii("realize");
 	public static final byte[] row_activated = ascii("row-activated");
 	public static final byte[] row_changed = ascii("row-changed");
@@ -348,6 +361,7 @@ public class OS extends C {
 	public static final byte[] show = ascii("show");
 	public static final byte[] show_help = ascii("show-help");
 	public static final byte[] size_allocate = ascii("size-allocate");
+	public static final byte[] resize = ascii("resize");
 	public static final byte[] start_interactive_search = ascii("start-interactive-search");
 	public static final byte[] style_updated = ascii("style-updated");
 	public static final byte[] switch_page = ascii("switch-page");
@@ -359,6 +373,10 @@ public class OS extends C {
 	public static final byte[] value_changed = ascii("value-changed");
 	public static final byte[] window_state_event = ascii("window-state-event");
 	public static final byte[] notify_state = ascii("notify::state");
+	public static final byte[] notify_default_height = ascii("notify::default-height");
+	public static final byte[] notify_default_width = ascii("notify::default-width");
+	public static final byte[] notify_theme_change = ascii("notify::gtk-application-prefer-dark-theme");
+	public static final byte[] response = ascii("response");
 
 	/** Properties */
 	public static final byte[] active = ascii("active");
@@ -395,6 +413,10 @@ public class OS extends C {
 	public static final byte[] margin_top = ascii("margin-top");
 	public static final byte[] scrollbar_spacing = ascii("scrollbar-spacing");
 
+	/** Actions */
+	public static final byte[] action_copy_clipboard = ascii("clipboard.copy");
+	public static final byte[] action_cut_clipboard = ascii("clipboard.cut");
+	public static final byte[] action_paste_clipboard = ascii("clipboard.paste");
 
 	/** CUSTOM_CODE START
 	 *
@@ -495,18 +517,18 @@ public class OS extends C {
 	public static final native void swt_fixed_resize(long fixed, long widget, int width, int height);
 
 	/**
-	 * @param container cast=(GtkWidget*)
+	 * @param container cast=(SwtFixed*)
 	 * @param widget cast=(GtkWidget*)
 	 * @category custom
 	 */
 	public static final native void swt_fixed_add(long container, long widget);
 	/**
-	 * @param container cast=(GtkWidget*)
+	 * @param container cast=(SwtFixed*)
 	 * @param widget cast=(GtkWidget*)
 	 * @category custom
 	 */
 	public static final native void swt_fixed_remove(long container, long widget);
-
+	public static final native void swt_set_lock_functions();
 	/** @param str cast=(const gchar *)
 	 * @category custom
 	 */
@@ -544,11 +566,9 @@ public class OS extends C {
 	 * Minimum Glib version requirement of gtk can be found in gtk's 'configure.ac' file, see line 'm4_define([glib_required_version],[2.*.*]).
 	 *
 	 * For reference:
-	 * Gtk3.14 has min version of glib 2.41.2
-	 * Gtk3.16 has min version of glib 2.43.4
-	 * Gtk3.18 has min version of glib 2.45.8
-	 * Gtk3.20 has min version of glib 2.45.8
 	 * Gtk3.22 has min version of glib 2.49.4
+	 * Gtk3.24 has min version of glib 2.58
+	 * Gtk4.0 has min version of glib 2.66
 	 */
 	public static final int GLIB_VERSION = VERSION(glib_major_version(), glib_minor_version(), glib_micro_version());
 
@@ -617,7 +637,7 @@ public class OS extends C {
 		String menuLocationProperty = "SWT_MENU_LOCATION_DEBUGGING";
 		String menuLocationCheck = getEnvironmentalVariable(menuLocationProperty);
 		boolean menuLocationDebuggingEnabled = false;
-		if (menuLocationCheck != null && menuLocationCheck.equals("1")) {
+		if (menuLocationCheck != null && menuLocationCheck.equals("1") && !GTK.GTK4) {
 			menuLocationDebuggingEnabled = true;
 		}
 		SWT_MENU_LOCATION_DEBUGGING = menuLocationDebuggingEnabled;
@@ -811,6 +831,8 @@ public static final native long G_TYPE_BOOLEAN();
 public static final native long G_TYPE_DOUBLE();
 /** @method flags=const */
 public static final native long G_TYPE_FLOAT();
+/** @method flags=const */
+public static final native long G_TYPE_LONG();
 /** @method flags=const */
 public static final native long G_TYPE_INT();
 /** @method flags=const */
@@ -1021,10 +1043,14 @@ public static final native void g_free(long mem);
  * @param variable cast=(const gchar *),flags=no_out
  */
 public static final native long g_getenv(byte [] variable);
-/** @param result cast=(GTimeVal *)*/
+/**
+ * @method flags=ignore_deprecations
+ * @param result cast=(GTimeVal *)
+ */
 public static final native void g_get_current_time(long result);
 public static final native long g_get_user_name();
 /**
+ * @method flags=ignore_deprecations
  * @param result cast=(GTimeVal *)
  * @param microseconds cast=(glong)
  */
@@ -1397,25 +1423,7 @@ public static final native void memmove(long dest, GTypeInfo src, int size);
  * @param src cast=(const void *),flags=no_out
  * @param size cast=(size_t)
  */
-public static final native void memmove(long dest, GtkTargetEntry src, long size);
-/**
- * @param dest cast=(void *)
- * @param src cast=(const void *),flags=no_out
- * @param size cast=(size_t)
- */
 public static final native void memmove(long dest, GdkRGBA src, long size);
-/**
- * @param dest cast=(void *)
- * @param src cast=(const void *),flags=no_out
- * @param size cast=(size_t)
- */
-public static final native void memmove(long dest, GdkEventButton src, long size);
-/**
- * @param dest cast=(void *)
- * @param src cast=(const void *),flags=no_out
- * @param size cast=(size_t)
- */
-public static final native void memmove(long dest, GdkEventKey src, long size);
 /** @param src flags=no_out */
 public static final native void memmove(long dest, GtkWidgetClass src);
 /**
@@ -1444,42 +1452,6 @@ public static final native void memmove(GdkKeymapKey dest, long src, long size);
  * @param size cast=(size_t)
  */
 public static final native void memmove(GdkRGBA dest, long src, long size);
-/**
- * @param dest cast=(void *),flags=no_in
- * @param src cast=(const void *)
- * @param size cast=(size_t)
- */
-public static final native void memmove(GdkEventButton dest, long src, long size);
-/**
- * @param dest cast=(void *),flags=no_in
- * @param src cast=(const void *)
- * @param size cast=(size_t)
- */
-public static final native void memmove(GdkEventCrossing dest, long src, long size);
-/**
- * @param dest cast=(void *),flags=no_in
- * @param src cast=(const void *)
- * @param size cast=(size_t)
- */
-public static final native void memmove(GdkEventFocus dest, long src, long size);
-/**
- * @param dest cast=(void *),flags=no_in
- * @param src cast=(const void *)
- * @param size cast=(size_t)
- */
-public static final native void memmove(GdkEventKey dest, long src, long size);
-/**
- * @param dest cast=(void *),flags=no_in
- * @param src cast=(const void *)
- * @param size cast=(size_t)
- */
-public static final native void memmove(GdkEventMotion dest, long src, long size);
-/**
- * @param dest cast=(void *),flags=no_in
- * @param src cast=(const void *)
- * @param size cast=(size_t)
- */
-public static final native void memmove(GdkEventWindowState dest, long src, long size);
 public static final native void memmove(long dest, GtkCellRendererClass src);
 public static final native void memmove(GtkCellRendererClass dest, long src);
 /**
@@ -1619,6 +1591,9 @@ public static final native void pango_context_set_base_dir(long context, int dir
  * @param language cast=(PangoLanguage *)
  */
 public static final native void pango_context_set_language(long context, long language);
+
+
+/* PangoFontDescription */
 /** @param desc cast=(PangoFontDescription *) */
 public static final native long pango_font_description_copy(long desc);
 /** @param desc cast=(PangoFontDescription *) */
@@ -1670,8 +1645,16 @@ public static final native void pango_font_description_set_weight(long desc, int
 public static final native void pango_font_description_set_variant(long desc, int variant);
 /** @param desc cast=(PangoFontDescription *) */
 public static final native long pango_font_description_to_string(long desc);
+/** @param desc cast=(PangoFontDescription *) */
+public static final native int pango_font_description_get_set_fields(long desc);
+
+
+/* PangoFontFace */
 /** @param face cast=(PangoFontFace *) */
 public static final native long pango_font_face_describe(long face);
+
+
+/* PangoFontFamily */
 /** @param family cast=(PangoFontFamily *) */
 public static final native long pango_font_family_get_name(long family);
 /**
@@ -1680,11 +1663,15 @@ public static final native long pango_font_family_get_name(long family);
  * @param n_faces cast=(int *)
  */
 public static final native void pango_font_family_list_faces(long family, long [] faces, int[] n_faces);
-/**
- * @param fontMap cast=(PangoFontMap *)
- */
+
+
+/* PangoFontMap */
+/** @param fontMap cast=(PangoFontMap *) */
 public static final native long pango_font_map_create_context(long fontMap);
 /** @param metrics cast=(PangoFontMetrics *) */
+
+
+/* PangoFontMetrics */
 public static final native int pango_font_metrics_get_approximate_char_width(long metrics);
 /** @param metrics cast=(PangoFontMetrics *) */
 public static final native int pango_font_metrics_get_ascent(long metrics);
@@ -1692,6 +1679,8 @@ public static final native int pango_font_metrics_get_ascent(long metrics);
 public static final native int pango_font_metrics_get_descent(long metrics);
 /** @param metrics cast=(PangoFontMetrics *) */
 public static final native void pango_font_metrics_unref(long metrics);
+
+/* PangoLayout */
 /** @param layout cast=(PangoLayout *) */
 public static final native void pango_layout_context_changed(long layout);
 /** @param layout cast=(PangoLayout*) */
@@ -1809,6 +1798,8 @@ public static final native void pango_layout_set_wrap(long layout, int wrap);
  * @param trailing cast=(int *)
  */
 public static final native boolean pango_layout_xy_to_index(long layout, int x, int y, int[] index, int[] trailing);
+
+
 /** @param tab_array cast=(PangoTabArray *) */
 public static final native void pango_tab_array_free(long tab_array);
 /**
@@ -2265,6 +2256,7 @@ public static final native void g_variant_unref(long value);
  */
 public static final native long g_object_ref_sink(long object);
 
+/* GDateTime */
 /**
  * @param dateTime cast=(GDateTime *)
  * @param year cast=(gint *)
@@ -2272,14 +2264,47 @@ public static final native long g_object_ref_sink(long object);
  * @param day cast=(gint *)
  */
 public static final native void g_date_time_get_ymd(long dateTime, int[] year, int[] month, int[] day);
-
+/**
+ * Ranges:
+ * year must be between 1 - 9999,
+ * month must be between 1 - 12,
+ * day must be between 1 and 28, 29, 30, 31,
+ * hour must be between 0 - 23,
+ * minute must be between 0 - 59,
+ * seconds must be between 0.0 - 60.0
+ *
+ * @param year cast=(gint)
+ * @param month cast=(gint)
+ * @param day cast=(gint)
+ * @param hour cast=(gint)
+ * @param minute cast=(gint)
+ * @param seconds cast=(gdouble)
+ */
 public static final native long g_date_time_new_local(int year, int month, int day, int hour, int minute, double seconds);
+/** @param datetime cast=(GDateTime *) */
+public static final native void g_date_time_unref(long datetime);
 
 /** @param file cast=(GFile *) */
 public static final native long g_file_get_path(long file);
 
+
 /* GMenu */
 public static final native long g_menu_new();
+/**
+ * @param label cast=(const gchar *)
+ * @param submenu cast=(GMenuModel *)
+ */
+public static final native long g_menu_item_new_submenu(byte[] label, long submenu);
+/**
+ * @param label cast=(const gchar *)
+ * @param section cast=(GMenuModel *)
+ */
+public static final native long g_menu_item_new_section(byte[] label, long section);
+/**
+ * @param label cast=(const gchar *)
+ * @param detailed_action cast=(const gchar *)
+ */
+public static final native long g_menu_item_new(byte[] label, byte[] detailed_action);
 /**
  * @param menu_item cast=(GMenuItem *)
  * @param submenu cast=(GMenuModel *)
@@ -2287,9 +2312,71 @@ public static final native long g_menu_new();
 public static final native void g_menu_item_set_submenu(long menu_item, long submenu);
 /**
  * @param menu cast=(GMenu *)
- * @param label cast=(const gchar *)
- * @param detailed_action cast=(const gchar *)
+ * @param item cast=(GMenuItem *)
  */
-public static final native void g_menu_insert(long menu, int position, long label, long detailed_action);
+public static final native void g_menu_insert_item(long menu, int position, long item);
+/** @param menu cast=(GMenu *) */
+public static final native void g_menu_remove(long menu, int position);
+/**
+ * @param menu_item cast=(GMenuItem *)
+ * @param label cast=(const gchar *)
+ */
+public static final native void g_menu_item_set_label(long menu_item, byte[] label);
+/**
+ * @param menu_item cast=(GMenuItem *)
+ * @param attribute cast=(const gchar *)
+ * @param format_string cast=(const gchar *)
+ * @param data cast=(const gchar *)
+ */
+public static final native void g_menu_item_set_attribute(long menu_item, byte[] attribute, byte[] format_string, long data);
 
+/* GSimpleActionGroup */
+public static final native long g_simple_action_group_new();
+
+/* GSimpleAction */
+/**
+ * @param name cast=(const gchar *)
+ * @param parameter_type cast=(const GVariantType *)
+ */
+public static final native long g_simple_action_new(byte[] name, long parameter_type);
+/**
+ * @param name cast=(const gchar *)
+ * @param parameter_type cast=(const GVariantType *)
+ * @param initial_state cast=(GVariant *)
+ */
+public static final native long g_simple_action_new_stateful(byte[] name, long parameter_type, long initial_state);
+/**
+ * @param simple_action cast=(GSimpleAction *)
+ * @param value cast=(GVariant *)
+ */
+public static final native void g_simple_action_set_state(long simple_action, long value);
+/** @param simple_action cast=(GSimpleAction *) */
+public static final native void g_simple_action_set_enabled(long simple_action, boolean enabled);
+
+/* GAction */
+/** @param action cast=(GAction *) */
+public static final native boolean g_action_get_enabled(long action);
+/** @param action cast=(GAction *) */
+public static final native long g_action_get_state(long action);
+
+/* GActionMap */
+/**
+ * @param action_map cast=(GActionMap *)
+ * @param action cast=(GAction *)
+ */
+public static final native void g_action_map_add_action(long action_map, long action);
+/**
+ * @param action_map cast=(GActionMap *)
+ * @param action_name cast=(const gchar *)
+ */
+public static final native void g_action_map_remove_action(long action_map, byte[] action_name);
+
+/* GListModel */
+/** @param list cast=(GListModel *) */
+public static final native int g_list_model_get_n_items(long list);
+/**
+ * @param list cast=(GListModel *)
+ * @param position cast=(guint)
+ */
+public static final native long g_list_model_get_item(long list, int position);
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -17,8 +17,10 @@ package org.eclipse.swt.tests.junit;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
@@ -59,10 +61,7 @@ import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.GlyphMetrics;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
@@ -73,6 +72,7 @@ import org.eclipse.swt.printing.Printer;
 import org.eclipse.swt.widgets.Caret;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipse.test.Screenshots;
 import org.junit.After;
@@ -165,12 +165,13 @@ private Color getColor(RGB rgb) {
 }
 // this method must not be public so that the auto-gen tool keeps it
 protected void initializeColors() {
-	colors.put(RED, new Color (RED));
-	colors.put(BLUE, new Color (BLUE));
-	colors.put(GREEN, new Color (GREEN));
-	colors.put(YELLOW, new Color (YELLOW));
-	colors.put(CYAN, new Color (CYAN));
-	colors.put(PURPLE, new Color (PURPLE));
+	Display display = Display.getDefault();
+	colors.put(RED, new Color (display, RED));
+	colors.put(BLUE, new Color (display, BLUE));
+	colors.put(GREEN, new Color (display, GREEN));
+	colors.put(YELLOW, new Color (display, YELLOW));
+	colors.put(CYAN, new Color (display, CYAN));
+	colors.put(PURPLE, new Color (display, PURPLE));
 }
 
 @Override
@@ -1817,6 +1818,28 @@ public void test_getSelectionRange() {
 }
 
 @Test
+public void test_textChangeAfterSelection() {
+	// tests https://bugs.eclipse.org/bugs/show_bug.cgi?id=562676#c5
+	shell.setLayout(new GridLayout(1, false));
+	GridData layoutData = new GridData(SWT.FILL, SWT.FILL,true, true);
+	text.setLayoutData(layoutData);
+	// requires visible shell to get locations computed
+	shell.setVisible(true);
+	// requires variable line height
+	text.setWordWrap(true);
+	text.setText(IntStream.range(1, 50).mapToObj(Integer::toString).collect(Collectors.joining("\n")));
+	int startOffset = text.getOffsetAtLine(text.getLineCount() - 1);
+	text.setSelection(startOffset, startOffset + 1);
+	text.showSelection();
+	StyledText other = new StyledText(shell, SWT.NONE);
+	other.setText(IntStream.range(1, 100).mapToObj(Integer::toString).collect(Collectors.joining("\n")));
+	StyledTextContent otherContent = other.getContent();
+	other.dispose();
+	// need setContent to reproduce bug to cascade to text.reset()
+	text.setContent(otherContent);
+}
+
+@Test
 public void test_getSelectionCount(){
 	text.setText("01234567890");
 	assertTrue(":a:", text.getSelectionCount()==0);
@@ -2283,8 +2306,10 @@ public void test_invokeActionI() {
 	assertEquals("LineL\r\n", text.getSelectionText());
 
 	text.invokeAction(ST.LINE_END);
+	assertEquals(12, text.getCaretOffset());
 	text.invokeAction(ST.SELECT_LINE_UP);
 	assertEquals("\r\nLineW", text.getSelectionText());
+	assertEquals(5, text.getCaretOffset());
 
 	text.invokeAction(ST.SELECT_LINE_START);
 	assertEquals("LineL\r\nLineW", text.getSelectionText());
@@ -2329,6 +2354,7 @@ public void test_invokeActionI() {
 	assertEquals("LineL", text.getSelectionText());
 
 	text.invokeAction(ST.SELECT_LINE_END);
+	assertEquals("LineL", text.getSelectionText());
 	text.invokeAction(ST.CUT);
 	assertEquals("\r\nLineW", text.getText());
 
@@ -4917,12 +4943,122 @@ public void test_setTopPixelI(){
 
 @Test
 public void test_verticalIndent_changeRelativeBounds() {
-	String _5000lines = IntStream.range(1, 5001).mapToObj(n -> Integer.toString(n)).collect(Collectors.joining("\n"));
+	String _5000lines = IntStream.range(1, 5001).mapToObj(Integer::toString).collect(Collectors.joining("\n"));
 	text.setText(_5000lines);
 	text.setSize(500, 200);
 	text.invokeAction(ST.TEXT_END);
 	text.setLineVerticalIndent(text.getContent().getLineCount() - 1, 10);
 	text.invokeAction(ST.TEXT_START);
+	assertEquals(0, text.getTopPixel());
+}
+
+@Test
+public void test_verticalIndent_keepsCurrentCaretAndLinePosition() {
+	text.dispose();
+	text = new StyledText(shell, SWT.V_SCROLL);
+	setWidget(text);
+	String _50lines = IntStream.range(1, 50).mapToObj(Integer::toString).collect(Collectors.joining("\n"));
+	text.setText(_50lines);
+	text.setSize(500, 200);
+	final int INDENT = 34;
+	int line = 30;
+	int offset = text.getOffsetAtLine(line);
+	text.setSelection(offset);
+	text.showSelection(); // move to somewhere in the middle of the widget
+	// then pick some line in the middle to test all cases
+	line = text.getLineIndex(text.getClientArea().height / 2);
+	offset = text.getOffsetAtLine(line);
+	text.setSelection(offset);
+	int initialTopPixel = text.getTopPixel();
+	Point caretLocation = text.getCaret().getLocation();
+	Point offsetLocation = text.getLocationAtOffset(offset);
+	ScrollBar scrollbar = text.getVerticalBar();
+	int scrollMini = scrollbar.getMinimum();
+	int scrollMaxi = scrollbar.getMaximum();
+	int scrollOffset = scrollbar.getSelection();
+
+	// on active line
+	text.setLineVerticalIndent(line, INDENT);
+	assertEquals(caretLocation, text.getCaret().getLocation());
+	assertEquals(offsetLocation, text.getLocationAtOffset(offset));
+	assertEquals("vertical scroll should have been updated", initialTopPixel + INDENT, text.getTopPixel());
+	assertEquals(scrollMini, scrollbar.getMinimum());
+	assertEquals(scrollMaxi + INDENT, scrollbar.getMaximum());
+	assertEquals(scrollOffset + INDENT, scrollbar.getSelection());
+	text.setLineVerticalIndent(line, 0);
+	assertEquals(caretLocation, text.getCaret().getLocation());
+	assertEquals(offsetLocation, text.getLocationAtOffset(offset));
+	assertEquals("vertical scroll should have been restored", initialTopPixel, text.getTopPixel());
+	assertEquals(scrollMini, scrollbar.getMinimum());
+	assertEquals(scrollMaxi, scrollbar.getMaximum());
+	assertEquals(scrollOffset, scrollbar.getSelection());
+
+	// above visible area
+	text.setLineVerticalIndent(0, INDENT);
+	assertEquals(caretLocation, text.getCaret().getLocation());
+	assertEquals(offsetLocation, text.getLocationAtOffset(offset));
+	assertEquals("vertical scroll should have been updated", initialTopPixel + INDENT, text.getTopPixel());
+	assertEquals(scrollMini, scrollbar.getMinimum());
+	assertEquals(scrollMaxi + INDENT, scrollbar.getMaximum());
+	assertEquals(scrollOffset + INDENT, scrollbar.getSelection());
+	text.setLineVerticalIndent(0, 0);
+	assertEquals(caretLocation, text.getCaret().getLocation());
+	assertEquals(offsetLocation, text.getLocationAtOffset(offset));
+	assertEquals("vertical scroll should have been updated", initialTopPixel, text.getTopPixel());
+	assertEquals(scrollMini, scrollbar.getMinimum());
+	assertEquals(scrollMaxi, scrollbar.getMaximum());
+	assertEquals(scrollOffset, scrollbar.getSelection());
+
+	//below visible area
+	int nextInvisibleLine = text.getLineIndex(text.getClientArea().height - 1) + 1;
+	text.setLineVerticalIndent(nextInvisibleLine, INDENT);
+	assertEquals(caretLocation, text.getCaret().getLocation());
+	assertEquals(offsetLocation, text.getLocationAtOffset(offset));
+	assertEquals("Vertical scroll shouldn't be modified",initialTopPixel, text.getTopPixel());
+	text.setLineVerticalIndent(nextInvisibleLine, 0);
+	assertEquals(caretLocation, text.getCaret().getLocation());
+	assertEquals(offsetLocation, text.getLocationAtOffset(offset));
+	assertEquals("Vertical scroll shouldn't be modified",initialTopPixel, text.getTopPixel());
+
+	// above active line, in visible area
+	text.setLineVerticalIndent(line - 2, INDENT);
+	assertEquals(caretLocation, text.getCaret().getLocation());
+	assertEquals(offsetLocation, text.getLocationAtOffset(offset));
+	assertEquals("Vertical scroll should have been updated",initialTopPixel + INDENT, text.getTopPixel());
+	text.setLineVerticalIndent(line - 2, 0);
+	assertEquals(caretLocation, text.getCaret().getLocation());
+	assertEquals(offsetLocation, text.getLocationAtOffset(offset));
+	assertEquals("Vertical scroll should have been restored",initialTopPixel, text.getTopPixel());
+
+	// below active line, in visible area
+	text.setLineVerticalIndent(line + 2, INDENT);
+	assertEquals(caretLocation, text.getCaret().getLocation());
+	assertEquals(offsetLocation, text.getLocationAtOffset(offset));
+	assertEquals("Vertical scroll shouldn't be modified",initialTopPixel, text.getTopPixel());
+	text.setLineVerticalIndent(line + 2, 0);
+	assertEquals(caretLocation, text.getCaret().getLocation());
+	assertEquals(offsetLocation, text.getLocationAtOffset(offset));
+	assertEquals("Vertical scroll shouldn't be modified",initialTopPixel, text.getTopPixel());
+}
+
+@Test
+public void test_notFixedLineHeightDoesntChangeLinePixelIfUnnecessary() {
+	text.dispose();
+	text = new StyledText(shell, SWT.V_SCROLL);
+	setWidget(text);
+	String _50lines = IntStream.range(1, 50).mapToObj(Integer::toString).collect(Collectors.joining("\n"));
+	text.setText(_50lines);
+	text.setSize(500, 200);
+	int line = 30;
+	int offset = text.getOffsetAtLine(line);
+	text.setSelection(offset);
+	text.showSelection();
+	int firstLinePixel = text.getLinePixel(line);
+	text.setWordWrap(true); // make non fixed line height
+	assertEquals(firstLinePixel, text.getLinePixel(line));
+	text.replaceTextRange(0, 1, "X");
+	assertEquals(0, text.getTopIndex());
+	assertEquals(0, text.getLinePixel(0));
 	assertEquals(0, text.getTopPixel());
 }
 
@@ -5080,7 +5216,7 @@ public void test_doubleClickDoesNotSelectIfDoubleClickIsDisabled() {
 }
 
 @Test
-public void test_trippleClickSelectsSentance() {
+public void test_tripleClickSelectsSentance() {
 	text.setText("Test1 Test2\nTest3 Test4");
 
 	Event event = new Event();
@@ -5094,7 +5230,7 @@ public void test_trippleClickSelectsSentance() {
 }
 
 @Test
-public void test_trippleClickOnLastLineSelectsSentance() {
+public void test_tripleClickOnLastLineSelectsSentance() {
 	text.setText("Test1 Test2\nTest3 Test4");
 
 	Event event = new Event();
@@ -5108,7 +5244,7 @@ public void test_trippleClickOnLastLineSelectsSentance() {
 }
 
 @Test
-public void test_trippleClickDoesNotSelectIfDoubleClickIsDisabled() {
+public void test_tripleClickDoesNotSelectIfDoubleClickIsDisabled() {
 	text.setText("Test1 Test2\nTest3 Test4");
 	text.setDoubleClickEnabled(false);
 
@@ -5244,7 +5380,7 @@ public void test_cutAndPasteInBlockSelection() {
 }
 
 @Test
-public void test_trippleClickInBlockSelectionSelectsLine() {
+public void test_tripleClickInBlockSelectionSelectsLine() {
 	text.setText("  Sample Test Selection  " + System.lineSeparator() + "  Sample Test Selection  "
 			+ System.lineSeparator());
 	text.setSize(1000, 1000);
@@ -5475,45 +5611,11 @@ public void test_variableToFixedLineHeight() throws InterruptedException {
  *         bounds
  */
 private boolean hasPixel(StyledText text, Color expectedColor) {
-	return hasPixel(text, expectedColor, null);
+	return SwtTestUtil.hasPixel(text, expectedColor);
 }
 
-/**
- * Check if StyledText widget contains the given color in given bounds. The
- * effective search range to find the color is the union of current widget
- * bounds and given rectangle.
- *
- * @param text widget to check
- * @param expectedColor color to find
- * @param rect          the bounds where the color is searched in. Can overlap
- *                      the text widget bounds or <code>null</code> to check the
- *                      widgets full bounds.
- * @return <code>true</code> if the given color was found in search range of
- *         text widget
- */
 private boolean hasPixel(StyledText text, Color expectedColor, Rectangle rect) {
-	GC gc = new GC(text);
-	final Image image = new Image(text.getDisplay(), text.getSize().x, text.getSize().y);
-	gc.copyArea(image, 0, 0);
-	gc.dispose();
-	ImageData imageData = image.getImageData();
-	if (rect == null) {
-		rect = new Rectangle(0, 0, image.getBounds().width, image.getBounds().height);
-	}
-	RGB expectedRGB = expectedColor.getRGB();
-	int xEnd = rect.x + rect.width;
-	int yEnd = rect.y + rect.height;
-	for (int x = Math.max(rect.x, 1); x < xEnd && x < image.getBounds().width - 1; x++) { // ignore first and last columns
-		for (int y = rect.y; y < yEnd && y < image.getBounds().height; y++) {
-			RGB pixelRGB = imageData.palette.getRGB(imageData.getPixel(x, y));
-			if (expectedRGB.equals(pixelRGB)) {
-				image.dispose();
-				return true;
-			}
-		}
-	}
-	image.dispose();
-	return false;
+	return SwtTestUtil.hasPixel(text, expectedColor, rect);
 }
 
 private String blockSelectionTestText() {
@@ -5874,6 +5976,31 @@ public void test_backspaceAndDelete() {
 
 	assertEquals(0, text.getText().length());
 }
+
+/**
+ * Bug 568033 - Splitting CRLF shall not be forbidden if already on different lines
+ */
+@Test
+public void test_replaceTextRange_isInsideCRLF() {
+	text.setText("0123\r\n6789");
+	assertThrows("Exception shall be thrown when splitting CRLF", IllegalArgumentException.class, () -> {
+		text.replaceTextRange(5, 0, "x");
+	});
+
+	assertThrows("Exception shall be thrown when splitting CRLF", IllegalArgumentException.class, () -> {
+		text.replaceTextRange(0, 5, "x");
+	});
+
+	assertThrows("Exception shall be thrown when splitting CRLF", IllegalArgumentException.class, () -> {
+		text.replaceTextRange(5, 5, "x");
+	});
+
+	// Shouldn't throw when CR/LF were already on different lines
+	text.setText("0\r2\n4");
+	text.replaceTextRange(2, 1, "");
+	text.replaceTextRange(2, 0, "2");
+}
+
 private Event keyEvent(int key, int type, Widget w) {
 	Event e = new Event();
 	e.keyCode= key;
@@ -5881,5 +6008,30 @@ private Event keyEvent(int key, int type, Widget w) {
 	e.type = type;
 	e.widget = w;
 	return e;
+}
+
+@Test
+public void test_lineUpMovesCaret() {
+	shell.setVisible(true);
+	shell.setLayout(new GridLayout(1, false));
+	text.setText("a\nb\nc");
+	text.setCaretOffset(2);
+	Point caretLocation = text.getCaret().getLocation();
+	text.invokeAction(ST.LINE_UP);
+	assertNotEquals(caretLocation, text.getCaret().getLocation());
+}
+
+
+@Test
+public void test_rangeSelectionKeepsCaret() {
+	shell.setVisible(true);
+	shell.setLayout(new GridLayout(1, false));
+	text.setText("abcdefghij\nABCDEFGHIJ\n0123456789");
+	int initialOffset = 16;
+	text.setSelection(initialOffset, initialOffset - 3);
+	assertEquals(13, text.getCaretOffset());
+	text.invokeAction(ST.SELECT_LINE_DOWN);
+	assertEquals("Selection does not start from caret", initialOffset, text.getSelection().x);
+	assertNotEquals("Selection is not left-to-right", text.getSelection().x, text.getCaretOffset());
 }
 }

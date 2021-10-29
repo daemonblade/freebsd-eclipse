@@ -15,11 +15,15 @@
 package org.eclipse.swt.dnd;
 
 
+import java.lang.reflect.*;
+
 import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.dnd.gtk.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 import org.eclipse.swt.widgets.*;
 
 /**
@@ -118,15 +122,23 @@ public class DragSource extends Widget {
 
 	static final String DEFAULT_DRAG_SOURCE_EFFECT = "DEFAULT_DRAG_SOURCE_EFFECT"; //$NON-NLS-1$
 
-	static Callback DragBegin;
-	static Callback DragGetData;
-	static Callback DragEnd;
-	static Callback DragDataDelete;
+	/* GTK4 GtkDragSource event controller signal callbacks */
+	static Callback dragBeginProc, dragPrepareProc, dragEndProc;
+
+	/* GTK3 GtkWidget drag event signal callbacks */
+	static Callback DragBegin, DragGetData, DragEnd, DragDataDelete;
+
 	static {
-		DragBegin = new Callback(DragSource.class, "DragBegin", 2); //$NON-NLS-1$
-		DragGetData = new Callback(DragSource.class, "DragGetData", 5);	 //$NON-NLS-1$
-		DragEnd = new Callback(DragSource.class, "DragEnd", 2); //$NON-NLS-1$
-		DragDataDelete = new Callback(DragSource.class, "DragDataDelete", 2); //$NON-NLS-1$
+		if (GTK.GTK4) {
+			dragBeginProc = new Callback(DragSource.class, "dragBeginProc", void.class, new Type[] { long.class, long.class });
+			dragPrepareProc = new Callback(DragSource.class, "dragPrepareProc", long.class, new Type[] { long.class, double.class, double.class });
+			dragEndProc = new Callback(DragSource.class, "dragEndProc", void.class, new Type[] { long.class, long.class, boolean.class });
+		} else {
+			DragBegin = new Callback(DragSource.class, "DragBegin", 2); //$NON-NLS-1$
+			DragGetData = new Callback(DragSource.class, "DragGetData", 5);	 //$NON-NLS-1$
+			DragEnd = new Callback(DragSource.class, "DragEnd", 2); //$NON-NLS-1$
+			DragDataDelete = new Callback(DragSource.class, "DragDataDelete", 2); //$NON-NLS-1$
+		}
 	}
 
 /**
@@ -161,53 +173,126 @@ public class DragSource extends Widget {
 public DragSource(Control control, int style) {
 	super (control, checkStyle(style));
 	this.control = control;
-	if (DragGetData == null || DragEnd == null || DragDataDelete == null) {
-		DND.error(DND.ERROR_CANNOT_INIT_DRAG);
-	}
-	if (control.getData(DND.DRAG_SOURCE_KEY) != null) {
-		DND.error(DND.ERROR_CANNOT_INIT_DRAG);
-	}
-	control.setData(DND.DRAG_SOURCE_KEY, this);
 
-	OS.g_signal_connect(control.handle, OS.drag_begin, DragBegin.getAddress(), 0);
-	OS.g_signal_connect(control.handle, OS.drag_data_get, DragGetData.getAddress(), 0);
-	OS.g_signal_connect(control.handle, OS.drag_end, DragEnd.getAddress(), 0);
-	OS.g_signal_connect(control.handle, OS.drag_data_delete, DragDataDelete.getAddress(), 0);
-
-
-
-	controlListener = event -> {
-		if (event.type == SWT.Dispose) {
-			if (!DragSource.this.isDisposed()) {
-				DragSource.this.dispose();
-			}
+	if (GTK.GTK4) {
+		if (dragBeginProc == null || dragPrepareProc == null || dragEndProc == null) {
+			DND.error(DND.ERROR_CANNOT_INIT_DRAG);
 		}
-		if (event.type == SWT.DragDetect) {
-			if (!DragSource.this.isDisposed()) {
-				DragSource.this.drag(event);
-			}
+		if (control.getData(DND.DRAG_SOURCE_KEY) != null) {
+			DND.error(DND.ERROR_CANNOT_INIT_DRAG);
 		}
-	};
-	control.addListener (SWT.Dispose, controlListener);
-	control.addListener (SWT.DragDetect, controlListener);
+		control.setData(DND.DRAG_SOURCE_KEY, this);
 
-	Object effect = control.getData(DEFAULT_DRAG_SOURCE_EFFECT);
-	if (effect instanceof DragSourceEffect) {
-		dragEffect = (DragSourceEffect) effect;
-	} else if (control instanceof Tree) {
-		dragEffect = new TreeDragSourceEffect((Tree) control);
-	} else if (control instanceof Table) {
-		dragEffect = new TableDragSourceEffect((Table) control);
-	} else if (control instanceof List) {
-		dragEffect = new ListDragSourceEffect((List) control);
+		long dragSourceController = GTK4.gtk_drag_source_new();
+		GTK4.gtk_widget_add_controller(control.handle, dragSourceController);
+
+		OS.g_signal_connect(dragSourceController, OS.drag_begin, dragBeginProc.getAddress(), 0);
+		OS.g_signal_connect(dragSourceController, OS.prepare, dragPrepareProc.getAddress(), 0);
+		OS.g_signal_connect(dragSourceController, OS.drag_end, dragEndProc.getAddress(), 0);
+
+		// Set permitted actions on the GtkDragSource
+		int actions = opToOsOp(style);
+		GTK4.gtk_drag_source_set_actions(dragSourceController, actions);
+	} else {
+		if (DragGetData == null || DragEnd == null || DragDataDelete == null) {
+			DND.error(DND.ERROR_CANNOT_INIT_DRAG);
+		}
+		if (control.getData(DND.DRAG_SOURCE_KEY) != null) {
+			DND.error(DND.ERROR_CANNOT_INIT_DRAG);
+		}
+		control.setData(DND.DRAG_SOURCE_KEY, this);
+
+		OS.g_signal_connect(control.handle, OS.drag_begin, DragBegin.getAddress(), 0);
+		OS.g_signal_connect(control.handle, OS.drag_data_get, DragGetData.getAddress(), 0);
+		OS.g_signal_connect(control.handle, OS.drag_end, DragEnd.getAddress(), 0);
+		OS.g_signal_connect(control.handle, OS.drag_data_delete, DragDataDelete.getAddress(), 0);
+
+
+
+		controlListener = event -> {
+			if (event.type == SWT.Dispose) {
+				if (!DragSource.this.isDisposed()) {
+					DragSource.this.dispose();
+				}
+			}
+			if (event.type == SWT.DragDetect) {
+				if (!DragSource.this.isDisposed()) {
+					DragSource.this.drag(event);
+				}
+			}
+		};
+		control.addListener (SWT.Dispose, controlListener);
+		control.addListener (SWT.DragDetect, controlListener);
+
+		Object effect = control.getData(DEFAULT_DRAG_SOURCE_EFFECT);
+		if (effect instanceof DragSourceEffect) {
+			dragEffect = (DragSourceEffect) effect;
+		} else if (control instanceof Tree) {
+			dragEffect = new TreeDragSourceEffect((Tree) control);
+		} else if (control instanceof Table) {
+			dragEffect = new TableDragSourceEffect((Table) control);
+		} else if (control instanceof List) {
+			dragEffect = new ListDragSourceEffect((List) control);
+		}
+
+		this.addListener(SWT.Dispose, e -> onDispose());
 	}
-
-	this.addListener(SWT.Dispose, e -> onDispose());
 }
 
 static int checkStyle (int style) {
 	if (style == SWT.NONE) return DND.DROP_MOVE;
 	return style;
+}
+
+static void dragBeginProc(long source, long drag) {
+	long widgetHandle = GTK.gtk_event_controller_get_widget(source);
+	DragSource dragSource = FindDragSource(widgetHandle);
+	if (dragSource == null) return;
+
+	dragSource.dragBeginGtk4(source);
+}
+
+void dragBeginGtk4(long source) {
+	DNDEvent event = new DNDEvent();
+	event.widget = this;
+	event.doit = true;
+	notifyListeners(DND.DragStart, event);
+	if (!event.doit || transferAgents == null || transferAgents.length == 0) return;
+
+	// If specified, setup drag icon
+	Image dragIcon = event.image;
+	if (source != 0 && dragIcon != null) {
+		long pixbuf = ImageList.createPixbuf(dragIcon);
+		long texture = GDK.gdk_texture_new_for_pixbuf(pixbuf);
+		OS.g_object_unref(pixbuf);
+		GTK4.gtk_drag_source_set_icon(source, texture, 0, 0);
+	}
+}
+
+static long dragPrepareProc(long source, double x, double y) {
+	long widgetHandle = GTK.gtk_event_controller_get_widget(source);
+	DragSource dragSource = FindDragSource(widgetHandle);
+	if (dragSource == null) return 0;
+
+	return dragSource.dragPrepare();
+}
+
+long dragPrepare() {
+	TransferData transferData = new TransferData();
+
+	DNDEvent event = new DNDEvent();
+	event.widget = this;
+	event.dataType = transferData;
+	notifyListeners(DND.DragSetData, event);
+	if (!event.doit) return 0;
+
+	// TODO: Need to return GdkContentProvider for the data given from event.data
+	// Data from event.data also has to be converted to native through the Transfer class
+	return 0;
+}
+
+static void dragEndProc(long source, long drag, boolean delete_data) {
+
 }
 
 static long DragBegin(long widget, long context){
@@ -309,9 +394,9 @@ void drag(Event dragEvent) {
 	int actions = opToOsOp(getStyle());
 	Image image = event.image;
 	long context;
-	context = GTK.gtk_drag_begin_with_coordinates(control.handle, targetList, actions, 1, 0, -1, -1);
+	context = GTK3.gtk_drag_begin_with_coordinates(control.handle, targetList, actions, 1, 0, -1, -1);
 	if (context != 0 && image != null) {
-		GTK.gtk_drag_set_icon_surface(context, image.surface);
+		GTK3.gtk_drag_set_icon_surface(context, image.surface);
 	}
 }
 
@@ -334,7 +419,7 @@ void dragBegin(long widget, long context) {
 		if (targetList == 0) return;
 		Image image = event.image;
 		if (context != 0 && image != null) {
-			GTK.gtk_drag_set_icon_surface(context, image.surface);
+			GTK3.gtk_drag_set_icon_surface(context, image.surface);
 		}
 	}
 }
@@ -351,17 +436,23 @@ void dragEnd(long widget, long context){
 	 */
 	long display;
 	if (GTK.GTK4) {
-		long surface = GTK.gtk_native_get_surface(GTK.gtk_widget_get_native (widget));
+		long surface = GTK4.gtk_native_get_surface(GTK4.gtk_widget_get_native (widget));
 		display = GDK.gdk_surface_get_display(surface);
 	} else {
-		display = GDK.gdk_window_get_display(GTK.gtk_widget_get_window(widget));
+		display = GDK.gdk_window_get_display(GTK3.gtk_widget_get_window(widget));
 	}
 	long pointer = GDK.gdk_get_pointer(display);
-	long keyboard = GDK.gdk_device_get_associated_device(pointer);
+
+	if (GTK.GTK4) {
+		//TODO: GTK4, ungrab keyboard seat if different from pointer's seat
+	} else {
+		long keyboard = GDK.gdk_device_get_associated_device(pointer);
+		long keyboard_seat = GDK.gdk_device_get_seat(keyboard);
+		GDK.gdk_seat_ungrab(keyboard_seat);
+	}
+
 	long pointer_seat = GDK.gdk_device_get_seat(pointer);
-	long keyboard_seat = GDK.gdk_device_get_seat(keyboard);
 	GDK.gdk_seat_ungrab(pointer_seat);
-	GDK.gdk_seat_ungrab(keyboard_seat);
 
 	int operation = DND.DROP_NONE;
 	if (context != 0) {
@@ -419,10 +510,10 @@ void dragEnd(long widget, long context){
 
 void dragGetData(long widget, long context, long selection_data,  int info, int time){
 	if (selection_data == 0) return;
-	int length = GTK.gtk_selection_data_get_length(selection_data);
-	int format = GTK.gtk_selection_data_get_format(selection_data);
-	long data = GTK.gtk_selection_data_get_data(selection_data);
-	long target = GTK.gtk_selection_data_get_target(selection_data);
+	int length = GTK3.gtk_selection_data_get_length(selection_data);
+	int format = GTK3.gtk_selection_data_get_format(selection_data);
+	long data = GTK3.gtk_selection_data_get_data(selection_data);
+	long target = GTK3.gtk_selection_data_get_target(selection_data);
 	if (target == 0) return;
 
 	TransferData transferData = new TransferData();
@@ -436,7 +527,6 @@ void dragGetData(long widget, long context, long selection_data,  int info, int 
 	event.time = time;
 	event.dataType = transferData;
 	notifyListeners(DND.DragSetData, event);
-
 	if (!event.doit) return;
 	Transfer transfer = null;
 	for (int i = 0; i < transferAgents.length; i++) {
@@ -449,7 +539,7 @@ void dragGetData(long widget, long context, long selection_data,  int info, int 
 	if (transfer == null) return;
 	transfer.javaToNative(event.data, transferData);
 	if (transferData.result != 1) return;
-	GTK.gtk_selection_data_set(selection_data, transferData.type, transferData.format, transferData.pValue, transferData.length);
+	GTK3.gtk_selection_data_set(selection_data, transferData.type, transferData.format, transferData.pValue, transferData.length);
 	OS.g_free(transferData.pValue);
 	return;
 }
@@ -530,7 +620,7 @@ public Transfer[] getTransfer(){
 void onDispose() {
 	if (control == null) return;
 	if (targetList != 0) {
-		GTK.gtk_target_list_unref(targetList);
+		GTK3.gtk_target_list_unref(targetList);
 	}
 	targetList = 0;
 	if (controlListener != null) {
@@ -615,41 +705,45 @@ public void setDragSourceEffect(DragSourceEffect effect) {
  * dragged from this source
  */
 public void setTransfer(Transfer... transferAgents){
-	if (targetList != 0) {
-		GTK.gtk_target_list_unref(targetList);
-		targetList = 0;
-	}
-	this.transferAgents = transferAgents;
-	if (transferAgents == null || transferAgents.length == 0) return;
+	if (GTK.GTK4) {
+		this.transferAgents = transferAgents;
+	} else {
+		if (targetList != 0) {
+			GTK3.gtk_target_list_unref(targetList);
+			targetList = 0;
+		}
+		this.transferAgents = transferAgents;
+		if (transferAgents == null || transferAgents.length == 0) return;
 
-	GtkTargetEntry[] targets = new GtkTargetEntry[0];
-	for (int i = 0; i < transferAgents.length; i++) {
-		Transfer transfer = transferAgents[i];
-		if (transfer != null) {
-			int[] typeIds = transfer.getTypeIds();
-			String[] typeNames = transfer.getTypeNames();
-			for (int j = 0; j < typeIds.length; j++) {
-				GtkTargetEntry entry = new GtkTargetEntry();
-				byte[] buffer = Converter.wcsToMbcs(typeNames[j], true);
-				entry.target = OS.g_malloc(buffer.length);
-				C.memmove(entry.target, buffer, buffer.length);
-				entry.info = typeIds[j];
-				GtkTargetEntry[] newTargets = new GtkTargetEntry[targets.length + 1];
-				System.arraycopy(targets, 0, newTargets, 0, targets.length);
-				newTargets[targets.length] = entry;
-				targets = newTargets;
+		GtkTargetEntry[] targets = new GtkTargetEntry[0];
+		for (int i = 0; i < transferAgents.length; i++) {
+			Transfer transfer = transferAgents[i];
+			if (transfer != null) {
+				int[] typeIds = transfer.getTypeIds();
+				String[] typeNames = transfer.getTypeNames();
+				for (int j = 0; j < typeIds.length; j++) {
+					GtkTargetEntry entry = new GtkTargetEntry();
+					byte[] buffer = Converter.wcsToMbcs(typeNames[j], true);
+					entry.target = OS.g_malloc(buffer.length);
+					C.memmove(entry.target, buffer, buffer.length);
+					entry.info = typeIds[j];
+					GtkTargetEntry[] newTargets = new GtkTargetEntry[targets.length + 1];
+					System.arraycopy(targets, 0, newTargets, 0, targets.length);
+					newTargets[targets.length] = entry;
+					targets = newTargets;
+				}
 			}
 		}
-	}
 
-	long pTargets = OS.g_malloc(targets.length * GtkTargetEntry.sizeof);
-	for (int i = 0; i < targets.length; i++) {
-		OS.memmove(pTargets + i*GtkTargetEntry.sizeof, targets[i], GtkTargetEntry.sizeof);
-	}
-	targetList = GTK.gtk_target_list_new(pTargets, targets.length);
+		long pTargets = OS.g_malloc(targets.length * GtkTargetEntry.sizeof);
+		for (int i = 0; i < targets.length; i++) {
+			GTK3.memmove(pTargets + i*GtkTargetEntry.sizeof, targets[i], GtkTargetEntry.sizeof);
+		}
+		targetList = GTK3.gtk_target_list_new(pTargets, targets.length);
 
-	for (int i = 0; i < targets.length; i++) {
-		OS.g_free(targets[i].target);
+		for (int i = 0; i < targets.length; i++) {
+			OS.g_free(targets[i].target);
+		}
 	}
 }
 }

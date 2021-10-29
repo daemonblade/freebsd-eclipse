@@ -19,6 +19,8 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class represent a column in a table widget.
@@ -39,6 +41,7 @@ import org.eclipse.swt.internal.gtk.*;
  * @noextend This class is not intended to be subclassed by clients.
  */
 public class TableColumn extends Item {
+	long headerButtonCSSProvider = 0;
 	long labelHandle, imageHandle, buttonHandle;
 	Table parent;
 	int modelIndex, lastButton, lastTime, lastX, lastWidth;
@@ -338,6 +341,11 @@ int getWidthInPixels () {
 
 @Override
 long gtk_clicked (long widget) {
+	if (GTK.GTK4) {
+		sendSelectionEvent(SWT.Selection);
+		return 0;
+	}
+
 	/*
 	* There is no API to get a double click on a table column.  Normally, when
 	* the mouse is double clicked, this is indicated by GDK_2BUTTON_PRESS
@@ -347,7 +355,7 @@ long gtk_clicked (long widget) {
 	*/
 	boolean doubleClick = false;
 	boolean postEvent = true;
-	long eventPtr = GTK.gtk_get_current_event ();
+	long eventPtr = GTK3.gtk_get_current_event ();
 	if (eventPtr != 0) {
 		int [] eventButton = new int [1];
 		if (GTK.GTK4) {
@@ -442,10 +450,10 @@ void hookEvents () {
 	super.hookEvents ();
 	OS.g_signal_connect_closure (handle, OS.clicked, display.getClosure (CLICKED), false);
 	if (buttonHandle != 0) {
-		OS.g_signal_connect_closure_by_id (buttonHandle, display.signalIds [SIZE_ALLOCATE], 0, display.getClosure (SIZE_ALLOCATE), false);
 		if (GTK.GTK4) {
-			OS.g_signal_connect_closure_by_id (buttonHandle, display.signalIds [EVENT], 0, display.getClosure (EVENT), false);
+			//TODO: GTK4 event-after
 		} else {
+			OS.g_signal_connect_closure_by_id (buttonHandle, display.signalIds [SIZE_ALLOCATE], 0, display.getClosure (SIZE_ALLOCATE), false);
 			OS.g_signal_connect_closure_by_id (buttonHandle, display.signalIds [EVENT_AFTER], 0, display.getClosure (EVENT_AFTER), false);
 		}
 	}
@@ -612,7 +620,6 @@ public void setAlignment (int alignment) {
 
 void setFontDescription (long font) {
 	setFontDescription (labelHandle, font);
-	setFontDescription (imageHandle, font);
 }
 
 @Override
@@ -626,11 +633,22 @@ public void setImage (Image image) {
 		}
 		int imageIndex = headerImageList.indexOf (image);
 		if (imageIndex == -1) imageIndex = headerImageList.add (image);
-		GTK.gtk_image_set_from_surface(imageHandle, image.surface);
-		GTK.gtk_widget_show (imageHandle);
+		if (GTK.GTK4) {
+			long pixbuf = ImageList.createPixbuf(image);
+			long texture = GDK.gdk_texture_new_for_pixbuf(pixbuf);
+			OS.g_object_unref(pixbuf);
+			GTK4.gtk_image_set_from_paintable(imageHandle, texture);
+		} else {
+			GTK3.gtk_image_set_from_surface(imageHandle, headerImageList.getSurface(imageIndex));
+		}
+		GTK.gtk_widget_show(imageHandle);
 	} else {
-		GTK.gtk_image_set_from_surface(imageHandle, 0);
-		GTK.gtk_widget_hide (imageHandle);
+		if (GTK.GTK4) {
+			GTK4.gtk_image_clear(imageHandle);
+		} else {
+			GTK3.gtk_image_set_from_surface(imageHandle, 0);
+		}
+		GTK.gtk_widget_hide(imageHandle);
 	}
 }
 
@@ -685,7 +703,7 @@ void setOrientation (boolean create) {
 		if (buttonHandle != 0) {
 			int dir = (parent.style & SWT.RIGHT_TO_LEFT) != 0 ? GTK.GTK_TEXT_DIR_RTL : GTK.GTK_TEXT_DIR_LTR;
 			GTK.gtk_widget_set_direction (buttonHandle, dir);
-			GTK.gtk_container_forall (buttonHandle, display.setDirectionProc, dir);
+			GTK3.gtk_container_forall (buttonHandle, display.setDirectionProc, dir);
 		}
 	}
 }
@@ -732,15 +750,11 @@ public void setText (String string) {
  *
  * @since 3.2
  */
-public void setToolTipText (String string) {
+public void setToolTipText(String string) {
 	checkWidget();
-	Shell shell = parent._getShell ();
-	setToolTipText (shell, string);
-	toolTipText = string;
-}
 
-void setToolTipText (Shell shell, String newString) {
-	shell.setToolTipText (buttonHandle, newString);
+	toolTipText = string;
+	setToolTipText(buttonHandle, string);
 }
 
 /**
@@ -809,6 +823,29 @@ void setWidthInPixels (int width) {
 		}
 	}
 	sendEvent (SWT.Resize);
+}
+
+void setHeaderCSS(String css) {
+	if (headerButtonCSSProvider == 0) {
+		headerButtonCSSProvider = GTK.gtk_css_provider_new();
+		GTK.gtk_style_context_add_provider(GTK.gtk_widget_get_style_context(buttonHandle), headerButtonCSSProvider, GTK.GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+	}
+
+	if (GTK.GTK4) {
+		GTK4.gtk_css_provider_load_from_data(headerButtonCSSProvider, Converter.javaStringToCString(css), -1);
+	} else {
+		GTK3.gtk_css_provider_load_from_data(headerButtonCSSProvider, Converter.javaStringToCString(css), -1, null);
+	}
+}
+
+@Override
+public void dispose() {
+	super.dispose();
+
+	if (headerButtonCSSProvider != 0) {
+		OS.g_object_unref(headerButtonCSSProvider);
+		headerButtonCSSProvider = 0;
+	}
 }
 
 @Override

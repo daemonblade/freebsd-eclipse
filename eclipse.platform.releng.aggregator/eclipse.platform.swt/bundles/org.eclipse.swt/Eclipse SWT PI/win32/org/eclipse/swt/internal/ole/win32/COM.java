@@ -22,7 +22,7 @@ public class COM extends OS {
 	public static final GUID CLSID_DragDropHelper = COM.IIDFromString("{4657278A-411B-11d2-839A-00C04FD918D0}"); //$NON-NLS-1$
 	public static final GUID CLSID_EnumerableObjectCollection = IIDFromString ("{2d3468c1-36a7-43b6-ac24-d3f02fd9607a}"); //$NON-NLS-1$
 	public static final GUID CLSID_FileOpenDialog = IIDFromString("{DC1C5A9C-E88A-4dde-A5A1-60F82A20AEF7}"); //$NON-NLS-1$
-	public static final GUID CLSID_FileSaveDialog = IIDFromString("{84bccd23-5fde-4cdb-aea4-af64b83d78ab}"); //$NON-NLS-1$
+	public static final GUID CLSID_FileSaveDialog = IIDFromString("{C0B4E2F3-BA21-4773-8DBA-335EC946EB8B}"); //$NON-NLS-1$
 	public static final GUID CLSID_ShellLink = IIDFromString ("{00021401-0000-0000-C000-000000000046}"); //$NON-NLS-1$
 	public static final GUID CLSID_TaskbarList = IIDFromString ("{56FDF344-FD6D-11d0-958A-006097C9A090}"); //$NON-NLS-1$
 	public static final GUID CLSID_TF_InputProcessorProfiles = IIDFromString("{33C53A50-F456-4884-B049-85FD643ECFED}"); //$NON-NLS-1$
@@ -84,6 +84,8 @@ public class COM extends OS {
 	public static final GUID IIDIViewObject2 = IIDFromString("{00000127-0000-0000-C000-000000000046}"); //$NON-NLS-1$
 	public static final GUID CGID_DocHostCommandHandler = IIDFromString("{f38bc242-b950-11d1-8918-00c04fc2c836}"); //$NON-NLS-1$
 	public static final GUID CGID_Explorer = IIDFromString("{000214D0-0000-0000-C000-000000000046}"); //$NON-NLS-1$
+	public static final GUID IID_ICoreWebView2Environment2 = IIDFromString("{41F3632B-5EF4-404F-AD82-2D606C5A9A21}"); //$NON-NLS-1$
+	public static final GUID IID_ICoreWebView2_2 = IIDFromString("{9E8F0CF8-E670-4B5E-B2BC-73E061E3184C}"); //$NON-NLS-1$
 
 	// IA2 related GUIDS
 	public static final GUID IIDIAccessible2 = IIDFromString("{E89F726E-C4F4-4c19-BB19-B647D7FA8478}"); //$NON-NLS-1$
@@ -234,6 +236,10 @@ public class COM extends OS {
 	public static final short VT_UNKNOWN = 13;
 	public static final short VT_VARIANT = 12;
 
+	public static final int COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC = 0;
+	public static final int COREWEBVIEW2_MOVE_FOCUS_REASON_NEXT = 1;
+	public static final int COREWEBVIEW2_MOVE_FOCUS_REASON_PREVIOUS = 2;
+
 	public static boolean FreeUnusedLibraries = true;
 
 private static GUID IIDFromString(String lpsz) {
@@ -247,18 +253,28 @@ private static GUID IIDFromString(String lpsz) {
 
 /** Natives */
 
-/** @param lpszProgID cast=(LPCOLESTR) */
+/**
+ * @param lpszProgID cast=(LPCOLESTR),flags=no_out
+ * @param pclsid flags=no_in
+ */
 public static final native int CLSIDFromProgID(char[] lpszProgID, GUID pclsid);
-/** @param lpsz cast=(LPOLESTR) */
+/**
+ * @param lpsz cast=(LPOLESTR),flags=no_out
+ * @param pclsid flags=no_in
+ */
 public static final native int CLSIDFromString(char[] lpsz, GUID pclsid);
 /**
+ * @param rclsid flags=no_out
  * @param pUnkOuter cast=(LPUNKNOWN)
+ * @param riid flags=no_out
  * @param ppv cast=(LPVOID *)
  */
 public static final native int CoCreateInstance(GUID rclsid, long pUnkOuter, int dwClsContext, GUID riid, long[] ppv);
 public static final native void CoFreeUnusedLibraries();
 /**
+ * @param rclsid flags=no_out
  * @param pServerInfo cast=(COSERVERINFO *)
+ * @param riid flags=no_out
  * @param ppv cast=(LPVOID *)
  */
 public static final native int CoGetClassObject(GUID rclsid, int dwClsContext, long pServerInfo, GUID riid, long[] ppv);
@@ -274,10 +290,20 @@ public static final native int CoLockObjectExternal(long pUnk, boolean fLock, bo
  * @param pdwEffect cast=(LPDWORD)
  */
 public static final native int DoDragDrop(long pDataObject, long pDropSource, int dwOKEffect, int[] pdwEffect);
-/** @param szFileName cast=(LPCWSTR) */
+/**
+ * @param szFileName cast=(LPCWSTR),flags=no_out
+ * @param clsid flags=no_in
+ */
 public static final native int GetClassFile(char[] szFileName, GUID clsid);
-/** @param lpsz cast=(LPOLESTR) */
+/**
+ * @param lpsz cast=(LPOLESTR),flags=no_out
+ * @param lpiid flags=no_in
+ */
 public static final native int IIDFromString(char[] lpsz, GUID lpiid);
+/**
+ * @param rguid1 flags=no_out
+ * @param rguid2 flags=no_out
+ */
 public static final native boolean IsEqualGUID(GUID rguid1, GUID rguid2);
 /**
  * @param Destination cast=(PVOID)
@@ -340,13 +366,19 @@ public static final native void MoveMemory(VARDESC Destination, long Source, int
  */
 public static final native void MoveMemory(VARIANT Destination, long Source, int Length);
 /**
+ * @param rclsid flags=no_out
+ * @param riid flags=no_out
+ * @param pFormatEtc flags=no_out
  * @param pClientSite cast=(IOleClientSite *)
  * @param pStg cast=(IStorage *)
  * @param ppvObject cast=(void **)
  */
 public static final native int OleCreate(GUID rclsid, GUID riid, int renderopt, FORMATETC pFormatEtc, long pClientSite, long pStg, long[] ppvObject);
 /**
- * @param lpszFileName cast=(LPCOLESTR)
+ * @param rclsid flags=no_out
+ * @param lpszFileName cast=(LPCOLESTR),flags=no_out
+ * @param riid flags=no_out
+ * @param pFormatEtc flags=no_out
  * @param pClientSite cast=(LPOLECLIENTSITE)
  * @param pStg cast=(LPSTORAGE)
  * @param ppvObj cast=(LPVOID *)
@@ -354,7 +386,7 @@ public static final native int OleCreate(GUID rclsid, GUID riid, int renderopt, 
 public static final native int OleCreateFromFile(GUID rclsid, char[] lpszFileName, GUID riid, int renderopt, FORMATETC pFormatEtc, long pClientSite, long pStg, long[] ppvObj);
 /**
  * @param hwndOwner cast=(HWND)
- * @param lpszCaption cast=(LPCOLESTR)
+ * @param lpszCaption cast=(LPCOLESTR),flags=no_out
  * @param lplpUnk cast=(LPUNKNOWN FAR*)
  * @param lpPageClsID cast=(LPCLSID)
  * @param lcid cast=(LCID)
@@ -406,7 +438,10 @@ public static final native int OleTranslateColor(int clr, long hpal, int[] pcolo
  * @param ppidl cast=(PIDLIST_ABSOLUTE *)
  */
 public static final native int PathToPIDL (char [] pszName, long [] ppidl);
-/** @param lplpszProgID cast=(LPOLESTR *) */
+/**
+ * @param clsid flags=no_out
+ * @param lplpszProgID cast=(LPOLESTR *)
+ */
 public static final native int ProgIDFromCLSID(GUID clsid, long[] lplpszProgID);
 /**
  * @param hwnd cast=(HWND)
@@ -418,25 +453,32 @@ public static final native void ReleaseStgMedium(long pmedium);
 /** @param hwnd cast=(HWND) */
 public static final native int RevokeDragDrop(long hwnd);
 /**
- * @param pszName cast=(PCWSTR)
+ * @param pszName cast=(PCWSTR),flags=no_out
  * @param pbc cast=(IBindCtx *)
- * @param riid cast=(REFIID)
+ * @param riid flags=no_out
  * @param ppv cast=(void **)
  */
 public static final native int SHCreateItemFromParsingName (char [] pszName, long pbc, GUID riid, long [] ppv);
-/** @param ppstgOpen cast=(IStorage **) */
+/**
+ * @param pwcsName cast=(const WCHAR *),flags=no_out
+ * @param ppstgOpen cast=(IStorage **)
+ */
 public static final native int StgCreateDocfile(char[] pwcsName, int grfMode, int reserved, long[] ppstgOpen);
-/** @param pwcsName cast=(const WCHAR *) */
+/** @param pInit cast=(BYTE *),flags=critical */
+public static final native long SHCreateMemStream(byte[] pInit, int cbInit);
+/** @param pwcsName cast=(const WCHAR *),flags=no_out */
 public static final native int StgIsStorageFile(char[] pwcsName);
 /**
- * @param pwcsName cast=(const WCHAR *)
+ * @param pwcsName cast=(const WCHAR *),flags=no_out
  * @param pstgPriority cast=(IStorage *)
  * @param snbExclude cast=(SNB)
  * @param ppstgOpen cast=(IStorage **)
  */
 public static final native int StgOpenStorage(char[] pwcsName, long pstgPriority, int grfMode, long snbExclude, int reserved, long[] ppstgOpen);
-/** @param sz cast=(OLECHAR *) */
+/** @param sz cast=(OLECHAR *),flags=no_out critical */
 public static final native long SysAllocString(char [] sz);
+/** @param sz cast=(OLECHAR *) */
+public static final native long SysAllocStringLen(char [] sz, int ui);
 /** @param bstr cast=(BSTR) */
 public static final native void SysFreeString(long bstr);
 /** @param bstr cast=(BSTR) */
@@ -456,6 +498,19 @@ public static final native void VariantInit(long pvarg);
 /** @param pStg cast=(IStorage *) */
 public static final native int WriteClassStg(long pStg, GUID rclsid);
 
+/**
+ * @method flags=dynamic
+ * @param browserExecutableFolder flags=no_out
+ * @param userDataFolder flags=no_out
+ */
+public static final native int CreateCoreWebView2EnvironmentWithOptions(char[] browserExecutableFolder, char[] userDataFolder, long environmentOptions, long environmentCreatedHandler);
+/** @method flags=no_gen */
+public static final native long CreateSwtWebView2Callback(ICoreWebView2SwtCallback handler);
+/** @method flags=no_gen */
+public static final native long CreateSwtWebView2Host(ICoreWebView2SwtHost host);
+/** @method flags=no_gen */
+public static final native long CreateSwtWebView2Options();
+
 public static final native int VtblCall(int fnNumber, long ppVtbl);
 public static final native int VtblCall(int fnNumber, long ppVtbl, int arg0);
 public static final native int VtblCall(int fnNumber, long ppVtbl, long arg0);
@@ -474,6 +529,7 @@ public static final native int VtblCall(int fnNumber, long ppVtbl, long arg0, lo
 public static final native int VtblCall(int fnNumber, long ppVtbl, char[] arg0);
 public static final native int VtblCall(int fnNumber, long ppVtbl, char[] arg0, int arg1);
 public static final native int VtblCall(int fnNumber, long ppVtbl, char[] arg0, long arg1);
+public static final native int VtblCall(int fnNumber, long ppVtbl, char[] arg0, long[] arg1);
 public static final native int VtblCall(int fnNumber, long ppVtbl, PROPERTYKEY arg0, long arg1);
 public static final native int VtblCall(int fnNumber, long ppVtbl, int arg0, int[] arg1);
 public static final native int VtblCall(int fnNumber, long ppVtbl, long arg0, int[] arg1);
@@ -486,6 +542,7 @@ public static final native int VtblCall(int fnNumber, long ppVtbl, POINT arg0, i
 public static final native int VtblCall(int fnNumber, long ppVtbl, char[] arg0, int arg1, int arg2, int arg3, long[] arg4);
 public static final native int VtblCall(int fnNumber, long ppVtbl, char[] arg0, long arg1, int arg2, int arg3, long[] arg4);
 public static final native int VtblCall(int fnNumber, long ppVtbl, char[] arg0, long arg1, int arg2, int arg3, int arg4, long[] arg5);
+public static final native int VtblCall(int fnNumber, long ppVtbl, char[] uri, char[] method, long l, char[] headers, long[] request);
 public static final native int VtblCall(int fnNumber, long ppVtbl, long arg0, long[] arg1);
 public static final native int VtblCall(int fnNumber, long ppVtbl, long arg0, int arg1, long[] arg2);
 public static final native int VtblCall(int fnNumber, long ppVtbl, long arg0, long arg1, long[] arg2);
@@ -519,10 +576,13 @@ public static final native int VtblCall(int fnNumber, long ppVtbl, RECT arg0);
 public static final native int VtblCall(int fnNumber, long ppVtbl, int arg0, long[] arg1, long[] arg2, int[] arg3, long[] arg4);
 public static final native int VtblCall(int fnNumber, long ppVtbl, int arg0, long[] arg1, int arg2, int[] arg3);
 public static final native int VtblCall(int fnNumber, long ppVtbl, int arg0, int arg1, int arg2, DISPPARAMS arg3, long arg4, EXCEPINFO arg5, long arg6);
-/**
- * @param arg0 flags=struct
- */
+public static final native int VtblCall(int fnNumber, long address, char[] arg0, char[] arg1, char[] arg2, char[] arg3, long[] arg4);
+public static final native int VtblCall(int fnNumber, long address, double arg0);
+
+/** @param arg0 flags=struct */
 public static final native int VtblCall(int fnNumber, long ppVtbl, RECT arg0, long arg1, long arg2);
+/** @param arg0 flags=struct */
+public static final native int VtblCall_put_Bounds(int fnNumber, long ppVtbl, RECT arg0);
 
 /** Accessibility constants */
 public static final int CHILDID_SELF = 0;
@@ -658,11 +718,12 @@ public static final int IA2_SCROLL_TYPE_ANYWHERE = 6;
 
 /**
  * @param hwnd cast=(HWND)
+ * @param riidInterface flags=no_out
  * @param ppvObject cast=(LPVOID *)
  */
 public static final native int CreateStdAccessibleObject (long hwnd, int idObject, GUID riidInterface, long[] ppvObject);
 /**
- * @method flags=dynamic
+ * @param riid flags=no_out
  * @param pAcc cast=(LPUNKNOWN)
  */
 public static final native long LresultFromObject (GUID riid, long wParam, long pAcc);

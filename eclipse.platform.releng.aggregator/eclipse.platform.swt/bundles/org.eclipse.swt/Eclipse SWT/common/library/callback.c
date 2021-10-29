@@ -31,7 +31,7 @@ static CALLBACK_DATA callbackData[MAX_CALLBACKS];
 static int callbackEnabled = 1;
 static int callbackEntryCount = 0;
 static int initialized = 0;
-static jint JNI_VERSION = 0;
+static jmethodID mid_Throwable_addSuppressed = NULL;
 
 #ifdef DEBUG_CALL_PRINTS
 	static int counter = 0;
@@ -106,6 +106,534 @@ jlong callback(int index, ...);
 
 /* Function template with 12 arguments */
 #define FN_12(index) jlong FN(index, 12) (jlong p1, jlong p2, jlong p3, jlong p4, jlong p5, jlong p6, jlong p7, jlong p8, jlong p9, jlong p10, jlong p11, jlong p12) { return callback(index, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12); }
+
+#if defined(GTK)
+#define FND(index, args) fnD##index##_##args
+
+#define NUM_DOUBLE_CALLBACKS 2
+#define FN_D_4(index) jlong FND(index, 4) (jlong p1, jdouble p2, jdouble p3, jlong p4) { return callback(index, p1, p2, p3, p4); }
+#define FN_D_5(index) jlong FND(index, 5) (jlong p1, jint p2, jdouble p3, jdouble p4, jlong p5) { return callback(index, p1, p2, p3, p4, p5); }
+
+#define FN_DOUBLE_BLOCK(args) \
+	FN_D_##args(0) \
+	FN_D_##args(1) \
+	FN_D_##args(2) \
+	FN_D_##args(3) \
+	FN_D_##args(4) \
+	FN_D_##args(5) \
+	FN_D_##args(6) \
+	FN_D_##args(7) \
+	FN_D_##args(8) \
+	FN_D_##args(9) \
+	FN_D_##args(10) \
+	FN_D_##args(11) \
+	FN_D_##args(12) \
+	FN_D_##args(13) \
+	FN_D_##args(14) \
+	FN_D_##args(15) \
+	FN_D_##args(16) \
+	FN_D_##args(17) \
+	FN_D_##args(18) \
+	FN_D_##args(19) \
+	FN_D_##args(20) \
+	FN_D_##args(21) \
+	FN_D_##args(22) \
+	FN_D_##args(23) \
+	FN_D_##args(24) \
+	FN_D_##args(25) \
+	FN_D_##args(26) \
+	FN_D_##args(27) \
+	FN_D_##args(28) \
+	FN_D_##args(29) \
+	FN_D_##args(30) \
+	FN_D_##args(31) \
+	FN_D_##args(32) \
+	FN_D_##args(33) \
+	FN_D_##args(34) \
+	FN_D_##args(35) \
+	FN_D_##args(36) \
+	FN_D_##args(37) \
+	FN_D_##args(38) \
+	FN_D_##args(39) \
+	FN_D_##args(40) \
+	FN_D_##args(41) \
+	FN_D_##args(42) \
+	FN_D_##args(43) \
+	FN_D_##args(44) \
+	FN_D_##args(45) \
+	FN_D_##args(46) \
+	FN_D_##args(47) \
+	FN_D_##args(48) \
+	FN_D_##args(49) \
+	FN_D_##args(50) \
+	FN_D_##args(51) \
+	FN_D_##args(52) \
+	FN_D_##args(53) \
+	FN_D_##args(54) \
+	FN_D_##args(55) \
+	FN_D_##args(56) \
+	FN_D_##args(57) \
+	FN_D_##args(58) \
+	FN_D_##args(59) \
+	FN_D_##args(60) \
+	FN_D_##args(61) \
+	FN_D_##args(62) \
+	FN_D_##args(63) \
+	FN_D_##args(64) \
+	FN_D_##args(65) \
+	FN_D_##args(66) \
+	FN_D_##args(67) \
+	FN_D_##args(68) \
+	FN_D_##args(69) \
+	FN_D_##args(70) \
+	FN_D_##args(71) \
+	FN_D_##args(72) \
+	FN_D_##args(73) \
+	FN_D_##args(74) \
+	FN_D_##args(75) \
+	FN_D_##args(76) \
+	FN_D_##args(77) \
+	FN_D_##args(78) \
+	FN_D_##args(79) \
+	FN_D_##args(80) \
+	FN_D_##args(81) \
+	FN_D_##args(82) \
+	FN_D_##args(83) \
+	FN_D_##args(84) \
+	FN_D_##args(85) \
+	FN_D_##args(86) \
+	FN_D_##args(87) \
+	FN_D_##args(88) \
+	FN_D_##args(89) \
+	FN_D_##args(90) \
+	FN_D_##args(91) \
+	FN_D_##args(92) \
+	FN_D_##args(93) \
+	FN_D_##args(94) \
+	FN_D_##args(95) \
+	FN_D_##args(96) \
+	FN_D_##args(97) \
+	FN_D_##args(98) \
+	FN_D_##args(99) \
+	FN_D_##args(100) \
+	FN_D_##args(101) \
+	FN_D_##args(102) \
+	FN_D_##args(103) \
+	FN_D_##args(104) \
+	FN_D_##args(105) \
+	FN_D_##args(106) \
+	FN_D_##args(107) \
+	FN_D_##args(108) \
+	FN_D_##args(109) \
+	FN_D_##args(110) \
+	FN_D_##args(111) \
+	FN_D_##args(112) \
+	FN_D_##args(113) \
+	FN_D_##args(114) \
+	FN_D_##args(115) \
+	FN_D_##args(116) \
+	FN_D_##args(117) \
+	FN_D_##args(118) \
+	FN_D_##args(119) \
+	FN_D_##args(120) \
+	FN_D_##args(121) \
+	FN_D_##args(122) \
+	FN_D_##args(123) \
+	FN_D_##args(124) \
+	FN_D_##args(125) \
+	FN_D_##args(126) \
+	FN_D_##args(127) \
+	FN_D_##args(128) \
+	FN_D_##args(129) \
+	FN_D_##args(130) \
+	FN_D_##args(131) \
+	FN_D_##args(132) \
+	FN_D_##args(133) \
+	FN_D_##args(134) \
+	FN_D_##args(135) \
+	FN_D_##args(136) \
+	FN_D_##args(137) \
+	FN_D_##args(138) \
+	FN_D_##args(139) \
+	FN_D_##args(140) \
+	FN_D_##args(141) \
+	FN_D_##args(142) \
+	FN_D_##args(143) \
+	FN_D_##args(144) \
+	FN_D_##args(145) \
+	FN_D_##args(146) \
+	FN_D_##args(147) \
+	FN_D_##args(148) \
+	FN_D_##args(149) \
+	FN_D_##args(150) \
+	FN_D_##args(151) \
+	FN_D_##args(152) \
+	FN_D_##args(153) \
+	FN_D_##args(154) \
+	FN_D_##args(155) \
+	FN_D_##args(156) \
+	FN_D_##args(157) \
+	FN_D_##args(158) \
+	FN_D_##args(159) \
+	FN_D_##args(160) \
+	FN_D_##args(161) \
+	FN_D_##args(162) \
+	FN_D_##args(163) \
+	FN_D_##args(164) \
+	FN_D_##args(165) \
+	FN_D_##args(166) \
+	FN_D_##args(167) \
+	FN_D_##args(168) \
+	FN_D_##args(169) \
+	FN_D_##args(170) \
+	FN_D_##args(171) \
+	FN_D_##args(172) \
+	FN_D_##args(173) \
+	FN_D_##args(174) \
+	FN_D_##args(175) \
+	FN_D_##args(176) \
+	FN_D_##args(177) \
+	FN_D_##args(178) \
+	FN_D_##args(179) \
+	FN_D_##args(180) \
+	FN_D_##args(181) \
+	FN_D_##args(182) \
+	FN_D_##args(183) \
+	FN_D_##args(184) \
+	FN_D_##args(185) \
+	FN_D_##args(186) \
+	FN_D_##args(187) \
+	FN_D_##args(188) \
+	FN_D_##args(189) \
+	FN_D_##args(190) \
+	FN_D_##args(191) \
+	FN_D_##args(192) \
+	FN_D_##args(193) \
+	FN_D_##args(194) \
+	FN_D_##args(195) \
+	FN_D_##args(196) \
+	FN_D_##args(197) \
+	FN_D_##args(198) \
+	FN_D_##args(199) \
+	FN_D_##args(200) \
+	FN_D_##args(201) \
+	FN_D_##args(202) \
+	FN_D_##args(203) \
+	FN_D_##args(204) \
+	FN_D_##args(205) \
+	FN_D_##args(206) \
+	FN_D_##args(207) \
+	FN_D_##args(208) \
+	FN_D_##args(209) \
+	FN_D_##args(210) \
+	FN_D_##args(211) \
+	FN_D_##args(212) \
+	FN_D_##args(213) \
+	FN_D_##args(214) \
+	FN_D_##args(215) \
+	FN_D_##args(216) \
+	FN_D_##args(217) \
+	FN_D_##args(218) \
+	FN_D_##args(219) \
+	FN_D_##args(220) \
+	FN_D_##args(221) \
+	FN_D_##args(222) \
+	FN_D_##args(223) \
+	FN_D_##args(224) \
+	FN_D_##args(225) \
+	FN_D_##args(226) \
+	FN_D_##args(227) \
+	FN_D_##args(228) \
+	FN_D_##args(229) \
+	FN_D_##args(230) \
+	FN_D_##args(231) \
+	FN_D_##args(232) \
+	FN_D_##args(233) \
+	FN_D_##args(234) \
+	FN_D_##args(235) \
+	FN_D_##args(236) \
+	FN_D_##args(237) \
+	FN_D_##args(238) \
+	FN_D_##args(239) \
+	FN_D_##args(240) \
+	FN_D_##args(241) \
+	FN_D_##args(242) \
+	FN_D_##args(243) \
+	FN_D_##args(244) \
+	FN_D_##args(245) \
+	FN_D_##args(246) \
+	FN_D_##args(247) \
+	FN_D_##args(248) \
+	FN_D_##args(249) \
+	FN_D_##args(250) \
+	FN_D_##args(251) \
+	FN_D_##args(252) \
+	FN_D_##args(253) \
+	FN_D_##args(254) \
+	FN_D_##args(255)
+
+#define FN_DOUBLE_A_BLOCK(args) { \
+	(jlong)FND(0, args), \
+	(jlong)FND(1, args), \
+	(jlong)FND(2, args), \
+	(jlong)FND(3, args), \
+	(jlong)FND(4, args), \
+	(jlong)FND(5, args), \
+	(jlong)FND(6, args), \
+	(jlong)FND(7, args), \
+	(jlong)FND(8, args), \
+	(jlong)FND(9, args), \
+	(jlong)FND(10, args), \
+	(jlong)FND(11, args), \
+	(jlong)FND(12, args), \
+	(jlong)FND(13, args), \
+	(jlong)FND(14, args), \
+	(jlong)FND(15, args), \
+	(jlong)FND(16, args), \
+	(jlong)FND(17, args), \
+	(jlong)FND(18, args), \
+	(jlong)FND(19, args), \
+	(jlong)FND(20, args), \
+	(jlong)FND(21, args), \
+	(jlong)FND(22, args), \
+	(jlong)FND(23, args), \
+	(jlong)FND(24, args), \
+	(jlong)FND(25, args), \
+	(jlong)FND(26, args), \
+	(jlong)FND(27, args), \
+	(jlong)FND(28, args), \
+	(jlong)FND(29, args), \
+	(jlong)FND(30, args), \
+	(jlong)FND(31, args), \
+	(jlong)FND(32, args), \
+	(jlong)FND(33, args), \
+	(jlong)FND(34, args), \
+	(jlong)FND(35, args), \
+	(jlong)FND(36, args), \
+	(jlong)FND(37, args), \
+	(jlong)FND(38, args), \
+	(jlong)FND(39, args), \
+	(jlong)FND(40, args), \
+	(jlong)FND(41, args), \
+	(jlong)FND(42, args), \
+	(jlong)FND(43, args), \
+	(jlong)FND(44, args), \
+	(jlong)FND(45, args), \
+	(jlong)FND(46, args), \
+	(jlong)FND(47, args), \
+	(jlong)FND(48, args), \
+	(jlong)FND(49, args), \
+	(jlong)FND(50, args), \
+	(jlong)FND(51, args), \
+	(jlong)FND(52, args), \
+	(jlong)FND(53, args), \
+	(jlong)FND(54, args), \
+	(jlong)FND(55, args), \
+	(jlong)FND(56, args), \
+	(jlong)FND(57, args), \
+	(jlong)FND(58, args), \
+	(jlong)FND(59, args), \
+	(jlong)FND(60, args), \
+	(jlong)FND(61, args), \
+	(jlong)FND(62, args), \
+	(jlong)FND(63, args), \
+	(jlong)FND(64, args), \
+	(jlong)FND(65, args), \
+	(jlong)FND(66, args), \
+	(jlong)FND(67, args), \
+	(jlong)FND(68, args), \
+	(jlong)FND(69, args), \
+	(jlong)FND(70, args), \
+	(jlong)FND(71, args), \
+	(jlong)FND(72, args), \
+	(jlong)FND(73, args), \
+	(jlong)FND(74, args), \
+	(jlong)FND(75, args), \
+	(jlong)FND(76, args), \
+	(jlong)FND(77, args), \
+	(jlong)FND(78, args), \
+	(jlong)FND(79, args), \
+	(jlong)FND(80, args), \
+	(jlong)FND(81, args), \
+	(jlong)FND(82, args), \
+	(jlong)FND(83, args), \
+	(jlong)FND(84, args), \
+	(jlong)FND(85, args), \
+	(jlong)FND(86, args), \
+	(jlong)FND(87, args), \
+	(jlong)FND(88, args), \
+	(jlong)FND(89, args), \
+	(jlong)FND(90, args), \
+	(jlong)FND(91, args), \
+	(jlong)FND(92, args), \
+	(jlong)FND(93, args), \
+	(jlong)FND(94, args), \
+	(jlong)FND(95, args), \
+	(jlong)FND(96, args), \
+	(jlong)FND(97, args), \
+	(jlong)FND(98, args), \
+	(jlong)FND(99, args), \
+	(jlong)FND(100, args), \
+	(jlong)FND(101, args), \
+	(jlong)FND(102, args), \
+	(jlong)FND(103, args), \
+	(jlong)FND(104, args), \
+	(jlong)FND(105, args), \
+	(jlong)FND(106, args), \
+	(jlong)FND(107, args), \
+	(jlong)FND(108, args), \
+	(jlong)FND(109, args), \
+	(jlong)FND(110, args), \
+	(jlong)FND(111, args), \
+	(jlong)FND(112, args), \
+	(jlong)FND(113, args), \
+	(jlong)FND(114, args), \
+	(jlong)FND(115, args), \
+	(jlong)FND(116, args), \
+	(jlong)FND(117, args), \
+	(jlong)FND(118, args), \
+	(jlong)FND(119, args), \
+	(jlong)FND(120, args), \
+	(jlong)FND(121, args), \
+	(jlong)FND(122, args), \
+	(jlong)FND(123, args), \
+	(jlong)FND(124, args), \
+	(jlong)FND(125, args), \
+	(jlong)FND(126, args), \
+	(jlong)FND(127, args), \
+	(jlong)FND(128, args), \
+	(jlong)FND(129, args), \
+	(jlong)FND(130, args), \
+	(jlong)FND(131, args), \
+	(jlong)FND(132, args), \
+	(jlong)FND(133, args), \
+	(jlong)FND(134, args), \
+	(jlong)FND(135, args), \
+	(jlong)FND(136, args), \
+	(jlong)FND(137, args), \
+	(jlong)FND(138, args), \
+	(jlong)FND(139, args), \
+	(jlong)FND(140, args), \
+	(jlong)FND(141, args), \
+	(jlong)FND(142, args), \
+	(jlong)FND(143, args), \
+	(jlong)FND(144, args), \
+	(jlong)FND(145, args), \
+	(jlong)FND(146, args), \
+	(jlong)FND(147, args), \
+	(jlong)FND(148, args), \
+	(jlong)FND(149, args), \
+	(jlong)FND(150, args), \
+	(jlong)FND(151, args), \
+	(jlong)FND(152, args), \
+	(jlong)FND(153, args), \
+	(jlong)FND(154, args), \
+	(jlong)FND(155, args), \
+	(jlong)FND(156, args), \
+	(jlong)FND(157, args), \
+	(jlong)FND(158, args), \
+	(jlong)FND(159, args), \
+	(jlong)FND(160, args), \
+	(jlong)FND(161, args), \
+	(jlong)FND(162, args), \
+	(jlong)FND(163, args), \
+	(jlong)FND(164, args), \
+	(jlong)FND(165, args), \
+	(jlong)FND(166, args), \
+	(jlong)FND(167, args), \
+	(jlong)FND(168, args), \
+	(jlong)FND(169, args), \
+	(jlong)FND(170, args), \
+	(jlong)FND(171, args), \
+	(jlong)FND(172, args), \
+	(jlong)FND(173, args), \
+	(jlong)FND(174, args), \
+	(jlong)FND(175, args), \
+	(jlong)FND(176, args), \
+	(jlong)FND(177, args), \
+	(jlong)FND(178, args), \
+	(jlong)FND(179, args), \
+	(jlong)FND(180, args), \
+	(jlong)FND(181, args), \
+	(jlong)FND(182, args), \
+	(jlong)FND(183, args), \
+	(jlong)FND(184, args), \
+	(jlong)FND(185, args), \
+	(jlong)FND(186, args), \
+	(jlong)FND(187, args), \
+	(jlong)FND(188, args), \
+	(jlong)FND(189, args), \
+	(jlong)FND(190, args), \
+	(jlong)FND(191, args), \
+	(jlong)FND(192, args), \
+	(jlong)FND(193, args), \
+	(jlong)FND(194, args), \
+	(jlong)FND(195, args), \
+	(jlong)FND(196, args), \
+	(jlong)FND(197, args), \
+	(jlong)FND(198, args), \
+	(jlong)FND(199, args), \
+	(jlong)FND(200, args), \
+	(jlong)FND(201, args), \
+	(jlong)FND(202, args), \
+	(jlong)FND(203, args), \
+	(jlong)FND(204, args), \
+	(jlong)FND(205, args), \
+	(jlong)FND(206, args), \
+	(jlong)FND(207, args), \
+	(jlong)FND(208, args), \
+	(jlong)FND(209, args), \
+	(jlong)FND(210, args), \
+	(jlong)FND(211, args), \
+	(jlong)FND(212, args), \
+	(jlong)FND(213, args), \
+	(jlong)FND(214, args), \
+	(jlong)FND(215, args), \
+	(jlong)FND(216, args), \
+	(jlong)FND(217, args), \
+	(jlong)FND(218, args), \
+	(jlong)FND(219, args), \
+	(jlong)FND(220, args), \
+	(jlong)FND(221, args), \
+	(jlong)FND(222, args), \
+	(jlong)FND(223, args), \
+	(jlong)FND(224, args), \
+	(jlong)FND(225, args), \
+	(jlong)FND(226, args), \
+	(jlong)FND(227, args), \
+	(jlong)FND(228, args), \
+	(jlong)FND(229, args), \
+	(jlong)FND(230, args), \
+	(jlong)FND(231, args), \
+	(jlong)FND(232, args), \
+	(jlong)FND(233, args), \
+	(jlong)FND(234, args), \
+	(jlong)FND(235, args), \
+	(jlong)FND(236, args), \
+	(jlong)FND(237, args), \
+	(jlong)FND(238, args), \
+	(jlong)FND(239, args), \
+	(jlong)FND(240, args), \
+	(jlong)FND(241, args), \
+	(jlong)FND(242, args), \
+	(jlong)FND(243, args), \
+	(jlong)FND(244, args), \
+	(jlong)FND(245, args), \
+	(jlong)FND(246, args), \
+	(jlong)FND(247, args), \
+	(jlong)FND(248, args), \
+	(jlong)FND(249, args), \
+	(jlong)FND(250, args), \
+	(jlong)FND(251, args), \
+	(jlong)FND(252, args), \
+	(jlong)FND(253, args), \
+	(jlong)FND(254, args), \
+	(jlong)FND(255, args), \
+},
+
+#else
+#define NUM_DOUBLE_CALLBACKS 0
+#endif
 
 /**
  * Define all functions with the specified number of arguments.
@@ -542,6 +1070,10 @@ FN_BLOCK(9)
 FN_BLOCK(10)
 FN_BLOCK(11)
 FN_BLOCK(12)
+#if defined(GTK)
+FN_DOUBLE_BLOCK(4) /* JDDJ */
+FN_DOUBLE_BLOCK(5) /* JJDDJ */
+#endif
 
 /**
  * Initialize the function pointers for the callback routines.
@@ -961,7 +1493,7 @@ FN_BLOCK(12)
 #error Invalid MAX_CALLBACKS
 #endif /* MAX_CALLBACKS == 16 */
 
-jlong fnx_array[MAX_ARGS+1][MAX_CALLBACKS] = {
+jlong fnx_array[MAX_ARGS+1+NUM_DOUBLE_CALLBACKS][MAX_CALLBACKS] = {
 	FN_A_BLOCK(0)    
 	FN_A_BLOCK(1)    
 	FN_A_BLOCK(2)    
@@ -974,8 +1506,46 @@ jlong fnx_array[MAX_ARGS+1][MAX_CALLBACKS] = {
 	FN_A_BLOCK(9)    
 	FN_A_BLOCK(10)    
 	FN_A_BLOCK(11)    
-	FN_A_BLOCK(12)    
+	FN_A_BLOCK(12)
+	#if defined(GTK)
+	FN_DOUBLE_A_BLOCK(4)
+	FN_DOUBLE_A_BLOCK(5)
+	#endif
 };
+
+void initialize_mid_Throwable_addSuppressed(JNIEnv* env)
+{
+	jclass classThrowable = NULL;
+
+	classThrowable = (*env)->FindClass(env, "java/lang/Throwable");
+	if (!classThrowable || (*env)->ExceptionCheck(env)) {
+		/* Shall never happen, but let's still try to handle it */
+		fprintf(stderr, "SWT-JNI: ERROR(%d): Failed to resolve 'java/lang/Throwable'\n", __LINE__);
+		fflush(stderr);
+		(*env)->ExceptionClear(env);
+		return;
+	}
+
+	mid_Throwable_addSuppressed = (*env)->GetMethodID(env, classThrowable, "addSuppressed", "(Ljava/lang/Throwable;)V");
+	if (!mid_Throwable_addSuppressed || (*env)->ExceptionCheck(env))
+	{
+		/* Shall never happen, but let's still try to handle it */
+		fprintf(stderr, "SWT-JNI: ERROR(%d): Failed to resolve 'addSuppressed' in 'java/lang/Throwable'\n", __LINE__);
+		fflush(stderr);
+		(*env)->ExceptionClear(env);
+		return;
+	}
+}
+
+void initialize(JNIEnv* env)
+{
+	if (initialized) return;
+
+	memset(&callbackData, 0, sizeof(callbackData));
+	initialize_mid_Throwable_addSuppressed(env);
+
+	initialized = 1;
+}
 
 /* --------------- callback class calls --------------- */
 
@@ -987,11 +1557,9 @@ JNIEXPORT jlong JNICALL CALLBACK_NATIVE(bind)
 	jclass javaClass = that;
 	const char *methodString = NULL, *sigString = NULL;
 	jlong result = 0;
-	if (JNI_VERSION == 0) JNI_VERSION = (*env)->GetVersion(env);
-	if (!initialized) {
-		memset(&callbackData, 0, sizeof(callbackData));
-		initialized = 1;
-	}
+
+	initialize(env);
+
 	if (method) methodString = (const char *) (*env)->GetStringUTFChars(env, method, NULL);
 	if (signature) sigString = (const char *) (*env)->GetStringUTFChars(env, signature, NULL);
 	if (object && methodString && sigString) {
@@ -1014,7 +1582,7 @@ JNIEXPORT jlong JNICALL CALLBACK_NATIVE(bind)
 			callbackData[i].methodID = mid;
 
 			#ifdef DEBUG_CALL_PRINTS
-				#if   defined(COCOA)
+				#if defined(COCOA)
 					callbackData[i].arg_Selector = -1;
 
 					if (!strcmp(methodString, "applicationProc") ||
@@ -1043,7 +1611,17 @@ JNIEXPORT jlong JNICALL CALLBACK_NATIVE(bind)
 				fflush(stderr);
 			#endif
 
-			result = (jlong) fnx_array[argCount][i];
+			#if defined(GTK)
+				if (strcmp(strtok((char *)sigString, ")"), "(JDDJ") == 0) {
+					result = (jlong) fnx_array[MAX_ARGS + 1][i];
+				} else if (strcmp(strtok((char *)sigString, ")"), "(JIDDJ") == 0) {
+					result = (jlong) fnx_array[MAX_ARGS + 2][i];
+				} else {
+					result = (jlong) fnx_array[argCount][i];
+				}
+			#else
+				result = (jlong) fnx_array[argCount][i];
+			#endif
 			break;
 		}
 	}
@@ -1228,7 +1806,6 @@ jlong callback(int index, ...)
 {
 	if (!callbackEnabled) return 0;
 
-	{
 	JNIEnv *env = NULL;
 	jmethodID mid = callbackData[index].methodID;
 	jobject object = callbackData[index].object;
@@ -1236,7 +1813,8 @@ jlong callback(int index, ...)
 	jboolean isArrayBased = callbackData[index].isArrayBased;
 	jint argCount = callbackData[index].argCount;
 	jlong result = callbackData[index].errorResult;
-	jthrowable ex;
+	jthrowable oldException = NULL;
+	jthrowable curException = NULL;
 	int detach = 0;
 	va_list vl;
 
@@ -1244,12 +1822,13 @@ jlong callback(int index, ...)
 
 #ifdef DEBUG_CALL_PRINTS
 	{
+		int i;
 		va_list vaCopy;
 		va_copy(vaCopy, vl);
 
 		counter++;
 		fprintf(stderr, "SWT-JNI:%*scallback[%d](", counter, "", index);
-		for (int i=0; i<argCount; i++) {
+		for (i=0; i<argCount; i++) {
 			void* arg = va_arg(vaCopy, void*);
 			int isPrinted = 0;
 
@@ -1298,23 +1877,14 @@ jlong callback(int index, ...)
 	}
 #endif
 
-#ifdef JNI_VERSION_1_2
-	if (IS_JNI_1_2) {
-		(*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_2);
-	}
-#endif
-	
-#ifdef JNI_VERSION_1_4
+	(*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_4);
+
 	if (env == NULL) {
-		if (JNI_VERSION >= JNI_VERSION_1_4) {
-			(*JVM)->AttachCurrentThreadAsDaemon(JVM, (void **)&env, NULL);
-		}
-	}
+		(*JVM)->AttachCurrentThreadAsDaemon(JVM, (void **)&env, NULL);
+#ifdef DEBUG_CALL_PRINTS
+		fprintf(stderr, "SWT-JNI: AttachCurrentThreadAsDaemon\n");
 #endif
-	
-	if (env == NULL) {
-		(*JVM)->AttachCurrentThread(JVM, (void **)&env, NULL);
-		if (IS_JNI_1_2) detach = 1;
+		detach = 1;
 	}
 	
 	/* If the current thread is not attached to the VM, it is not possible to call into the VM */
@@ -1326,14 +1896,32 @@ jlong callback(int index, ...)
 		goto noEnv;
 	}
 
-	/* If an exception has occurred in previous callbacks do not call into the VM. */
-	if ((ex = (*env)->ExceptionOccurred(env))) {
+	/*
+	 * Bug 562408: Sometimes a single native API can call multiple callbacks.
+	 * Java side of the callback might throw an exception for one of such
+	 * callbacks. The exception will stay until it can be delivered, that is,
+	 * until execution returns from native API back to Java. This leaves us
+	 * with the following options for concurrent callbacks:
+	 * 1) Do nothing
+	 *    Since the exception is still pending on JVM's thread, attempts to
+	 *    call another Java callback will just immediately terminate on the
+	 *    same exception. Hence the callback will not be executed. But caller's
+	 *    contract does not always allow callback to be silently skipped. This
+	 *    sometimes causes caller to crash JVM and/or do something weird.
+	 * 2) Early-return from this function
+	 *    This is basically the same as (1).
+	 * 3) Temporarily put the exception aside
+	 *    This allows the new callback to execute independently. Note that it
+	 *    can throw as well.
+	 * Here, option (3) is implemented.
+	 */
+	oldException = (*env)->ExceptionOccurred(env);
+	if (oldException) {
 #ifdef DEBUG_CALL_PRINTS
 		fprintf(stderr, "SWT-JNI:%*s ERROR(%d): (*env)->ExceptionOccurred()\n", counter, "", __LINE__);
 		fflush(stderr);
 #endif
-		(*env)->DeleteLocalRef(env, ex);
-		goto done;
+		(*env)->ExceptionClear(env);
 	}
 
 	/* Call into the VM. */
@@ -1370,27 +1958,71 @@ jlong callback(int index, ...)
 	}
 	ATOMIC_DEC(callbackEntryCount);
 
-done:
 	va_end(vl);
 
-	/* If an exception has occurred in Java, return the error result. */
-	if ((ex = (*env)->ExceptionOccurred(env))) {
-		(*env)->DeleteLocalRef(env, ex);
+	/* Handle exceptions in Java side of the callback */
+	curException = (*env)->ExceptionOccurred(env);
+	if (curException) {
+		if (oldException && mid_Throwable_addSuppressed) {
+			/*
+			 * Current exception needs to be cleared to be able to use
+			 * CallVoidMethod() below. That's fine because old exception will
+			 * be re-thrown soon and the current one is no longer needed.
+			 */
+			(*env)->ExceptionClear(env);
+			
+			/*
+			 * If there's an old exception already, attach the new exception as
+			 * 'Throwable.addSuppressed()' in old exception. Java has suppressed
+			 * exceptions exactly for such cases where additional exceptions
+			 * occur while delivering the first one.
+			 */
+			(*env)->CallVoidMethod(env, oldException, mid_Throwable_addSuppressed, curException);
+		}
+
+		/* See comment for DeleteLocalRef() below */
+		(*env)->DeleteLocalRef(env, curException);
+
 #ifdef DEBUG_CALL_PRINTS
 		fprintf(stderr, "SWT-JNI:%*s ERROR(%d): (*env)->ExceptionOccurred()\n", counter, "", __LINE__);
 		fflush(stderr);
 
-		/* 
+		/*
 		 * WARNING: ExceptionDescribe() also clears exception as if it never happened.
 		 * Don't do this because it changes the behavior of debugged program significantly.
-		 * (*env)->ExceptionDescribe(env);
+
+		 (*env)->ExceptionDescribe(env);
 		 */
 #endif
+
+		/*
+		 * We don't have a return value because Java side terminated with an
+		 * exception. Use a predetermined per-callback value and hope that
+		 * caller won't die on it.
+		 */
 		result = callbackData[index].errorResult;
+	}
+
+	/* Rethrow the old exception, if any */
+	if (oldException) {
+		(*env)->Throw(env, oldException);
+
+		/*
+		 * Every ExceptionOccurred() creates a new local reference, and JVM asks to
+		 * avoid having many of these at once. If there's a bunch of callbacks called
+		 * by a single native API and one of them throws exception, then every
+		 * subsequent callback will add another reference. The problem can be seen
+		 * with '-Xcheck:jni', for example with snippet for 'SWT.Arm' from Bug 562408.
+		 * The solution is to properly clean up these references.
+		 */
+		(*env)->DeleteLocalRef(env, oldException);
 	}
 
 	if (detach) {
 		(*JVM)->DetachCurrentThread(JVM);
+#ifdef DEBUG_CALL_PRINTS
+		fprintf(stderr, "SWT-JNI: DetachCurrentThread\n");
+#endif
 		env = NULL;
 	}
 
@@ -1403,7 +2035,6 @@ noEnv:
 #endif
 
 	return result;
-	}
 }
 
 /* ------------- callback class calls end --------------- */

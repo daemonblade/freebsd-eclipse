@@ -233,7 +233,7 @@ public class Display extends Device {
 	/* System Colors */
 	double [][] colors;
 	double [] alternateSelectedControlTextColor, selectedControlTextColor;
-	double [] alternateSelectedControlColor, secondarySelectedControlColor;
+	private double [] alternateSelectedControlColor, secondarySelectedControlColor;
 
 	/* Key Mappings. */
 	static int [] [] KeyTable = {
@@ -374,6 +374,10 @@ public class Display extends Device {
 			}
 			setDevice (device);
 		};
+	}
+
+	static {
+		configureSystemOptions ();
 	}
 
 /*
@@ -816,6 +820,49 @@ public void close () {
 	if (event.doit) dispose ();
 }
 
+static private void configureSystemOption (String option, boolean value) {
+	NSDictionary dictionary = NSDictionary.dictionaryWithObject (NSNumber.numberWithBool (value), NSString.stringWith (option));
+	NSUserDefaults.standardUserDefaults ().registerDefaults (dictionary);
+}
+
+static private void configureSystemOptions () {
+	/*
+	 * Most native applications are layer backed. This means that everything
+	 * painted by the application is cached for performance reasons, such as
+	 * not having to repaint everything when scrolling.
+	 *
+	 * The condition for default layer backing is being compatible with
+	 * responsive scrolling, and SWT is not compatible because it handles
+	 * 'scrollWheel:' and 'drawRect:' in 'NSScrollView'. Making SWT compatible
+	 * is not trivial.
+	 *
+	 * Requesting layer directly is possible, but I decided that it's better to
+	 * just enable system option for older macOS, because it's what happens when
+	 * using newer Java anyway.
+	 *
+	 * The workaround is to enable root layer backing. macOS 10.14 and 10.15
+	 * already enable this option if app was linked with sdk 10.14+ and
+	 * macOS 11 always enables it regardless of sdk. The option is force
+	 * enabled here in case SWT runs with java/launcher linked with older sdk.
+	 */
+	if (!OS.isBigSurOrLater ())
+		configureSystemOption ("NSViewAllowsRootLayerBacking", true);
+
+	/*
+	 * Starting with macOS 11, layer backing is always enabled. That's fine.
+	 * What is not fine however is that macOS uses "automatic" image format for
+	 * it. This means that instead of actual rendering, macOS's GC only remembers
+	 * the operations performed. This causes macOS to ignore clip rect and paint
+	 * entire visible rect whenever something changes, and that's a lot of
+	 * painting. Example: Table will now repaint all visible items when a single
+	 * item is selected/deselected. In case of owner drawn Table, this makes
+	 * things a lot slower. The workaround is to disable the "automatic" image
+	 * format.
+	 */
+	if (OS.isBigSurOrLater ())
+		configureSystemOption ("NSViewUsesAutomaticLayerBackingStores", false);
+}
+
 /**
  * Creates the device in the operating system.  If the device
  * does not have a handle, this method may do nothing depending
@@ -877,10 +924,6 @@ void createDisplay (DeviceData data) {
 		int pid = OS.getpid ();
 		long ptr = getApplicationName().UTF8String();
 		if (ptr != 0) OS.CPSSetProcessName (psn, ptr);
-		if (!isBundled ()) {
-			application.setActivationPolicy (OS.NSApplicationActivationPolicyRegular);
-			NSRunningApplication.currentApplication().activateWithOptions (OS.NSApplicationActivateIgnoringOtherApps);
-		}
 		ptr = C.getenv (ascii ("APP_ICON_" + pid));
 		if (ptr != 0) {
 			NSString path = NSString.stringWithUTF8String (ptr);
@@ -937,6 +980,7 @@ void createDisplay (DeviceData data) {
 		OS.class_addMethod(cls, OS.sel_hide_, appProc3, "@:@");
 		OS.class_addMethod(cls, OS.sel_unhideAllApplications_, appProc3, "@:@");
 		OS.class_addMethod(cls, OS.sel_applicationDidBecomeActive_, appProc3, "@:@");
+		OS.class_addMethod(cls, OS.sel_applicationDidFinishLaunching_, appProc3, "@:@");
 		OS.class_addMethod(cls, OS.sel_applicationDidResignActive_, appProc3, "@:@");
 		OS.class_addMethod(cls, OS.sel_applicationDockMenu_, appProc3, "@:@");
 		OS.class_addMethod(cls, OS.sel_application_openFile_, appProc4, "@:@@");
@@ -2000,6 +2044,12 @@ public Cursor getSystemCursor (int id) {
 	return cursors [id];
 }
 
+/**
+ * Gets the system icon using GetIconRefFromTypeInfo() which is deprecated in macOS 10.15.
+ * For BigSur and later, try to get the system image using NSImage.imageNamed().
+ *
+ * @return NSImage, the returned NSImage instance should be released (for example in Image.destroy()).
+ */
 static NSImage getSystemImageForID(int osType) {
 	long iconRef[] = new long [1];
 	OS.GetIconRefFromTypeInfo(OS.kSystemIconsCreator, osType, 0, 0, 0, iconRef);
@@ -2054,12 +2104,32 @@ public Image getSystemImage (int id) {
 		case SWT.ICON_QUESTION:
 		case SWT.ICON_WORKING: {
 			if (infoImage != null) return infoImage;
-			NSImage img = getSystemImageForID(OS.kAlertNoteIcon);
+			NSImage img;
+			if (OS.isBigSurOrLater()) {
+				img = NSImage.imageNamed(OS.NSImageNameInfo);
+				/*
+				 * retain() is required here, as img is used below to create Image object.
+				 * img will be released later in Image.destroy().
+				 */
+				img.retain();
+			} else {
+				img = getSystemImageForID(OS.kAlertNoteIcon);
+			}
 			return infoImage = Image.cocoa_new (this, SWT.ICON, img);
 		}
 		case SWT.ICON_WARNING: {
 			if (warningImage != null) return warningImage;
-			NSImage img = getSystemImageForID(OS.kAlertCautionIcon);
+			NSImage img;
+			if (OS.isBigSurOrLater()) {
+				img = NSImage.imageNamed(OS.NSImageNameCaution);
+				/*
+				 * retain() is required here, as img is used below to create Image object.
+				 * img will be released later in Image.destroy().
+				 */
+				img.retain();
+			} else {
+				img = getSystemImageForID(OS.kAlertCautionIcon);
+			}
 			return warningImage = Image.cocoa_new (this, SWT.ICON, img);
 		}
 	}
@@ -2151,6 +2221,28 @@ public TaskBar getSystemTaskBar () {
 	if (taskBar != null) return taskBar;
 	taskBar = new TaskBar (this, SWT.NONE);
 	return taskBar;
+}
+
+/**
+ * Used for selection in Table and Tree when in focus.
+ * @return Returns the system color used for the face of a selected control in a Table or Tree when in focus
+ */
+double [] getAlternateSelectedControlColor() {
+	if (alternateSelectedControlColor == null) {
+		alternateSelectedControlColor = getNSColorRGB(NSColor.alternateSelectedControlColor());
+	}
+	return alternateSelectedControlColor;
+}
+
+/**
+ * Used for selection in Table and Tree when not in focus.
+ * @return Returns the system color used for selected controls in non-key views.
+ */
+double [] getSecondarySelectedControlColor() {
+	if (secondarySelectedControlColor == null) {
+		secondarySelectedControlColor = getNSColorRGB(NSColor.secondarySelectedControlColor());
+	}
+	return secondarySelectedControlColor;
 }
 
 /**
@@ -3110,10 +3202,12 @@ void initColors () {
 	colors[SWT.COLOR_TEXT_DISABLED_BACKGROUND] = getWidgetColorRGB(SWT.COLOR_TEXT_DISABLED_BACKGROUND);
 	colors[SWT.COLOR_WIDGET_DISABLED_FOREGROUND] = getWidgetColorRGB(SWT.COLOR_WIDGET_DISABLED_FOREGROUND);
 
-	alternateSelectedControlColor = getNSColorRGB(NSColor.alternateSelectedControlColor());
 	alternateSelectedControlTextColor = getNSColorRGB(NSColor.alternateSelectedControlTextColor());
-	secondarySelectedControlColor = getNSColorRGB(NSColor.secondarySelectedControlColor());
 	selectedControlTextColor = getNSColorRGB(NSColor.selectedControlTextColor());
+
+	/* These are set in the getter */
+	alternateSelectedControlColor = null;
+	secondarySelectedControlColor = null;
 }
 
 void initFonts () {
@@ -3839,41 +3933,78 @@ static void register (Display display) {
  */
 @Override
 protected void release () {
-	disposing = true;
-	sendEvent (SWT.Dispose, new Event ());
-	Shell [] shells = getShells ();
-	for (int i=0; i<shells.length; i++) {
-		Shell shell = shells [i];
-		if (!shell.isDisposed ()) shell.dispose ();
-	}
-	if (tray != null) tray.dispose ();
-	tray = null;
-	if (taskBar != null) taskBar.dispose ();
-	taskBar = null;
-	while (readAndDispatch ()) {}
-	if (disposeList != null) {
-		for (int i=0; i<disposeList.length; i++) {
-			Runnable next = disposeList [i];
-			if (next != null) {
+	try (ExceptionStash exceptions = new ExceptionStash ()) {
+		disposing = true;
+
+		try {
+			sendEvent (SWT.Dispose, new Event ());
+		} catch (Error | RuntimeException ex) {
+			exceptions.stash (ex);
+		}
+
+		for (Shell shell : getShells ()) {
+			try {
+				if (!shell.isDisposed ()) shell.dispose ();
+			} catch (Error | RuntimeException ex) {
+				exceptions.stash (ex);
+			}
+		}
+
+		try {
+			if (tray != null) tray.dispose ();
+		} catch (Error | RuntimeException ex) {
+			exceptions.stash (ex);
+		}
+		tray = null;
+
+		try {
+			if (taskBar != null) taskBar.dispose ();
+		} catch (Error | RuntimeException ex) {
+			exceptions.stash (ex);
+		}
+		taskBar = null;
+
+		for (;;) {
+			try {
+				if (!readAndDispatch ()) break;
+			} catch (Error | RuntimeException ex) {
+				exceptions.stash (ex);
+			}
+		}
+
+		if (disposeList != null) {
+			for (Runnable next : disposeList) {
+				if (next == null) continue;
+
 				try {
 					next.run ();
-				} catch (RuntimeException exception) {
-					runtimeExceptionHandler.accept (exception);
-				} catch (Error error) {
-					errorHandler.accept (error);
+				} catch (Error | RuntimeException ex) {
+					exceptions.stash (ex);
 				}
 			}
 		}
+		disposeList = null;
+
+		synchronizer.releaseSynchronizer ();
+		synchronizer = null;
+
+		try {
+			if (appMenu != null) appMenu.dispose();
+		} catch (Error | RuntimeException ex) {
+			exceptions.stash (ex);
+		}
+		appMenu = null;
+
+		try {
+			if (appMenuBar != null) appMenuBar.dispose();
+		} catch (Error | RuntimeException ex) {
+			exceptions.stash (ex);
+		}
+		appMenuBar = null;
+
+		releaseDisplay ();
+		super.release ();
 	}
-	disposeList = null;
-	synchronizer.releaseSynchronizer ();
-	synchronizer = null;
-	if (appMenu != null) appMenu.dispose();
-	appMenu = null;
-	if (appMenuBar != null) appMenuBar.dispose();
-	appMenuBar = null;
-	releaseDisplay ();
-	super.release ();
 }
 
 void releaseDisplay () {
@@ -4120,6 +4251,13 @@ void removePopup (Menu menu) {
 	}
 }
 
+/**
+ * Resets the cached alternateSelectedControlColor and secondarySelectedControlColor.
+ */
+void resetSelectedControlColors() {
+	alternateSelectedControlColor = secondarySelectedControlColor = null;
+}
+
 boolean runAsyncMessages (boolean all) {
 	return synchronizer.runAsyncMessages (all);
 }
@@ -4299,7 +4437,8 @@ void setAppAppearance (APPEARANCE newMode) {
 	if (appearance != null && application != null) {
 		OS.objc_msgSend(application.id, OS.sel_setAppearance_, appearance.id);
 		appAppearance = newMode;
-	}
+		resetSelectedControlColors();
+	 }
 }
 
 void setWindowAppearance (NSWindow window, NSAppearance appearance) {
@@ -5388,6 +5527,13 @@ void applicationSendEvent (long id, long sel, long event) {
 	if (type != OS.NSAppKitDefined) sendEvent = false;
 }
 
+void applicationDidFinishLaunching (long id, long sel, long notification) {
+	if (!isBundled()) {
+		application.setActivationPolicy (OS.NSApplicationActivationPolicyRegular);
+		application.activateIgnoringOtherApps (true);
+	}
+}
+
 void applicationWillFinishLaunching (long id, long sel, long notification) {
 	boolean loaded = false;
 
@@ -5520,6 +5666,10 @@ static long applicationProc(long id, long sel, long arg0) {
 	switch (Selector.valueOf(sel)) {
 		case sel_sendEvent_: {
 			display.applicationSendEvent (id, sel, arg0);
+			return 0;
+		}
+		case sel_applicationDidFinishLaunching_: {
+			display.applicationDidFinishLaunching(id, sel, arg0);
 			return 0;
 		}
 		case sel_applicationWillFinishLaunching_: {
@@ -5720,11 +5870,6 @@ static long dialogProc(long id, long sel, long arg0, long arg1, long arg2) {
 	long [] jniRef = new long [1];
 	OS.object_getInstanceVariable(id, SWT_OBJECT, jniRef);
 	if (jniRef[0] == 0) return 0;
-	if (sel == OS.sel_panelDidEnd_returnCode_contextInfo_) {
-		MessageBox dialog = (MessageBox)OS.JNIGetObject(jniRef[0]);
-		if (dialog == null) return 0;
-		dialog.panelDidEnd_returnCode_contextInfo(id, sel, arg0, arg1, arg2);
-	}
 	if (sel == OS.sel_panel_userEnteredFilename_confirmed_) {
 		FileDialog dialog = (FileDialog)OS.JNIGetObject(jniRef[0]);
 		if (dialog == null) return 0;

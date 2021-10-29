@@ -20,6 +20,8 @@ import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.cairo.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class represent popup windows that are used
@@ -146,17 +148,24 @@ void configure () {
 	 */
 	Point point = getLocation();
 	boolean multipleMonitors;
-	int monitorNumber;
 	GdkRectangle dest = new GdkRectangle ();
 	if (GTK.GTK_VERSION >= OS.VERSION(3, 22, 0)) {
 		long display = GDK.gdk_display_get_default();
-		multipleMonitors = GDK.gdk_display_get_n_monitors(display) > 1;
+
+		if (GTK.GTK4) {
+			long monitorList = GDK.gdk_display_get_monitors(display);
+			multipleMonitors = OS.g_list_model_get_n_items(monitorList) > 1;
+		} else {
+			multipleMonitors = GDK.gdk_display_get_n_monitors(display) > 1;
+		}
+
+
 		long monitor = GDK.gdk_display_get_monitor_at_point(display, point.x, point.y);
 		GDK.gdk_monitor_get_geometry (monitor, dest);
 	} else {
 		long screen = GDK.gdk_screen_get_default ();
 		multipleMonitors = GDK.gdk_screen_get_n_monitors(screen) > 1;
-		monitorNumber = GDK.gdk_screen_get_monitor_at_point(screen, point.x, point.y);
+		int monitorNumber = GDK.gdk_screen_get_monitor_at_point(screen, point.x, point.y);
 		GDK.gdk_screen_get_monitor_geometry(screen, monitorNumber, dest);
 	}
 	point = getSize (dest.width / 4);
@@ -165,7 +174,7 @@ void configure () {
 	point = getLocation ();
 	int x = point.x;
 	int y = point.y;
-	GTK.gtk_window_resize (handle, w, h + TIP_HEIGHT);
+	GTK3.gtk_window_resize (handle, w, h + TIP_HEIGHT);
 	int[] polyline;
 	Rectangle bounds = display.getBounds();
 	int width = bounds != null && GTK.GTK4 ? bounds.width : GDK.gdk_screen_width();
@@ -195,7 +204,7 @@ void configure () {
 				borderPolygon[12] = w-35;
 				borderPolygon[14] = borderPolygon[16]  = w-16;
 			}
-			GTK.gtk_window_move (handle, Math.max(0, x - 17), y);
+			GTK3.gtk_window_move (handle, Math.max(0, x - 17), y);
 		} else {
 			polyline = new int[] {
 				0, 5, 1, 5, 1, 3, 3, 1,  5, 1, 5, 0,
@@ -218,7 +227,7 @@ void configure () {
 				borderPolygon[36] = borderPolygon[38] = w-17;
 				borderPolygon [40] = w-35;
 			}
-			GTK.gtk_window_move (handle, Math.max(0, x - 17), y - h - TIP_HEIGHT);
+			GTK3.gtk_window_move (handle, Math.max(0, x - 17), y - h - TIP_HEIGHT);
 		}
 	} else {
 		if (dest.height >= y + h + TIP_HEIGHT) {
@@ -244,7 +253,7 @@ void configure () {
 				borderPolygon[12] =  borderPolygon[14] = 16;
 				borderPolygon [16] = 35;
 			}
-			GTK.gtk_window_move (handle, Math.max(dest.width- w, x - w + 17), y);
+			GTK3.gtk_window_move (handle, Math.max(dest.width- w, x - w + 17), y);
 		} else {
 			polyline = new int[] {
 				0, 5, 1, 5, 1, 3, 3, 1,  5, 1, 5, 0,
@@ -267,13 +276,13 @@ void configure () {
 				borderPolygon[36] = 35;
 				borderPolygon[38] = borderPolygon [40] = 17;
 			}
-			GTK.gtk_window_move (handle, Math.max(dest.width - w, x - w + 17), y - h - TIP_HEIGHT);
+			GTK3.gtk_window_move (handle, Math.max(dest.width - w, x - w + 17), y - h - TIP_HEIGHT);
 		}
 	}
 	GTK.gtk_widget_realize(handle);
 	Region region = new Region (display);
 	region.add(DPIUtil.autoScaleDown(polyline));
-	GTK.gtk_widget_shape_combine_region (handle, region.handle);
+	GTK3.gtk_widget_shape_combine_region (handle, region.handle);
 	region.dispose ();
 }
 
@@ -281,14 +290,18 @@ void configure () {
 void createHandle (int index) {
 	if ((style & SWT.BALLOON) != 0) {
 		state |= HANDLE;
-		handle = GTK.gtk_window_new (GTK.GTK_WINDOW_POPUP);
-		Color background = display.getSystemColor (SWT.COLOR_INFO_BACKGROUND);
-		long context = GTK.gtk_widget_get_style_context (handle);
-		GdkRGBA bgRGBA = background.handle;
-		String css = "window {background-color: " + display.gtk_rgba_to_css_string(bgRGBA) + ";}";
-		gtk_css_provider_load_from_css (context, css);
-		GTK.gtk_style_context_invalidate (context);
-		GTK.gtk_window_set_type_hint (handle, GDK.GDK_WINDOW_TYPE_HINT_TOOLTIP);
+		if (GTK.GTK4) {
+			//TODO: GTK4 implementation of ToolTips
+		} else {
+			handle = GTK3.gtk_window_new (GTK.GTK_WINDOW_POPUP);
+			Color background = display.getSystemColor (SWT.COLOR_INFO_BACKGROUND);
+			long context = GTK.gtk_widget_get_style_context (handle);
+			GdkRGBA bgRGBA = background.handle;
+			String css = "window {background-color: " + display.gtk_rgba_to_css_string(bgRGBA) + ";}";
+			gtk_css_provider_load_from_css (context, css);
+			GTK3.gtk_style_context_invalidate (context);
+			GTK3.gtk_window_set_type_hint (handle, GDK.GDK_WINDOW_TYPE_HINT_TOOLTIP);
+		}
 	}
 }
 
@@ -301,9 +314,9 @@ void gtk_css_provider_load_from_css (long context, String css) {
 		OS.g_object_unref (provider);
 	}
 	if (GTK.GTK4) {
-		GTK.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (css, true), -1);
+		GTK4.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (css, true), -1);
 	} else {
-		GTK.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (css, true), -1, null);
+		GTK3.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (css, true), -1, null);
 	}
 }
 
@@ -323,9 +336,13 @@ void destroyWidget () {
 	releaseHandle ();
 	if (topHandle != 0 && (state & HANDLE) != 0) {
 		if ((style & SWT.BALLOON) != 0) {
-			GTK.gtk_widget_destroy (topHandle);
+			if (GTK.GTK4) {
+				OS.g_object_unref(topHandle);
+			} else {
+				GTK3.gtk_widget_destroy(topHandle);
+			}
 		} else {
-			OS.g_object_unref (topHandle);
+			OS.g_object_unref(topHandle);
 		}
 	}
 }
@@ -350,27 +367,31 @@ public boolean getAutoHide () {
 Point getLocation () {
 	int x = this.x;
 	int y = this.y;
+
 	if (item != null) {
 		long itemHandle = item.handle;
 		GdkRectangle area = new GdkRectangle ();
-		GTK.gtk_status_icon_get_geometry (itemHandle, 0, area, 0);
+		GTK3.gtk_status_icon_get_geometry (itemHandle, 0, area, 0);
 		x = area.x + area.width / 2;
 		y = area.y + area.height / 2;
 	}
+
 	if (x == -1 || y == -1) {
-		int [] px = new int [1], py = new int [1];
 		if (GTK.GTK4) {
-			/*
-			 * TODO: calling gdk_window_get_device_position() with a 0
-			 * for the GdkWindow uses gdk_get_default_root_window(),
-			 * which doesn't exist on GTK4.
-			 */
+			double[] px = new double[1], py = new double[1];
+			display.getPointerPosition(px, py);
+
+			x = (int)px[0];
+			y = (int)py[0];
 		} else {
-			display.gdk_window_get_device_position (0, px, py, null);
+			int[] px = new int[1], py = new int[1];
+
+			display.getWindowPointerPosition (0, px, py, null);
+			x = px[0];
+			y = py[0];
 		}
-		x = px [0];
-		y = py [0];
 	}
+
 	return new Point(x, y);
 }
 
@@ -483,21 +504,6 @@ public boolean getVisible () {
 }
 
 @Override
-long gtk_event (long widget, long event) {
-	if (!GTK.GTK4) return 0;
-	int eventType = GDK.gdk_event_get_event_type(event);
-	switch (eventType) {
-		case GDK.GDK4_BUTTON_PRESS: {
-			return gtk_button_press_event(widget, event);
-		}
-		case GDK.GDK4_BUTTON_RELEASE: {
-			return gtk_button_release_event(widget, event);
-		}
-	}
-	return 0;
-}
-
-@Override
 long gtk_button_press_event (long widget, long event) {
 	sendSelectionEvent (SWT.Selection, null, true);
 	setVisible (false);
@@ -530,12 +536,12 @@ void drawTooltip (long cairo) {
 		if (buffer != null) {
 			long iconTheme;
 			if (GTK.GTK4) {
-				iconTheme = GTK.gtk_icon_theme_get_for_display(GDK.gdk_display_get_default());
+				iconTheme = GTK4.gtk_icon_theme_get_for_display(GDK.gdk_display_get_default());
 			} else {
-				iconTheme = GTK.gtk_icon_theme_get_default();
+				iconTheme = GTK3.gtk_icon_theme_get_default();
 			}
 
-			long pixbuf = GTK.gtk_icon_theme_load_icon(iconTheme, buffer, GTK.GTK_ICON_SIZE_MENU, 0, 0);
+			long pixbuf = GTK3.gtk_icon_theme_load_icon(iconTheme, buffer, GTK.GTK_ICON_SIZE_MENU, 0, 0);
 			GDK.gdk_cairo_set_source_pixbuf(cairo, pixbuf, x, y);
 			Cairo.cairo_paint (cairo);
 			OS.g_object_unref (pixbuf);
@@ -588,7 +594,7 @@ long gtk_size_allocate (long widget, long allocation) {
 	int h = widgetAllocation.height;
 	if (dest.height < y + h) y -= h;
 	if (dest.width < x + w) x -= w;
-	GTK.gtk_window_move (widget, x, y);
+	GTK3.gtk_window_move (widget, x, y);
 	return 0;
 }
 
@@ -597,11 +603,14 @@ void hookEvents () {
 	if ((style & SWT.BALLOON) != 0) {
 		OS.g_signal_connect_closure_by_id (handle, display.signalIds [EXPOSE_EVENT], 0, display.getClosure (EXPOSE_EVENT), true);
 		OS.g_signal_connect_closure_by_id (handle, display.signalIds [EXPOSE_EVENT_INVERSE], 0, display.getClosure (EXPOSE_EVENT_INVERSE), true);
-		GTK.gtk_widget_add_events (handle, GDK.GDK_BUTTON_PRESS_MASK);
+
 		if (GTK.GTK4) {
-			OS.g_signal_connect_closure_by_id (handle, display.signalIds [EVENT], 0, display.getClosure (EVENT), false);
+			long clickController = GTK4.gtk_gesture_click_new();
+			GTK4.gtk_widget_add_controller(handle, clickController);
+			OS.g_signal_connect(clickController, OS.pressed, display.gesturePressReleaseProc, GESTURE_PRESSED);
 		} else {
-			OS.g_signal_connect_closure (handle, OS.button_press_event, display.getClosure (BUTTON_PRESS_EVENT), false);
+			GTK3.gtk_widget_add_events(handle, GDK.GDK_BUTTON_PRESS_MASK);
+			OS.g_signal_connect_closure(handle, OS.button_press_event, display.getClosure (BUTTON_PRESS_EVENT), false);
 		}
 	}
 }
@@ -848,7 +857,13 @@ public void setVisible (boolean visible) {
 			byte [] buffer = Converter.wcsToMbcs (string.toString(), true);
 			GTK.gtk_widget_set_tooltip_text(vboxHandle, buffer);
 		}
-		if (autohide) timerId = OS.g_timeout_add (DELAY, display.windowTimerProc, handle);
+		if (autohide) {
+			if (GTK.GTK4) {
+				timerId = OS.g_timeout_add (DELAY, display.windowTimerProc, handle);
+			} else {
+				timerId = GDK.gdk_threads_add_timeout (DELAY, display.windowTimerProc, handle);
+			}
+		}
 	} else {
 		if ((style & SWT.BALLOON) != 0) {
 			GTK.gtk_widget_hide (handle);

@@ -19,6 +19,8 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class are selectable user interface
@@ -155,15 +157,10 @@ void deregister () {
 	if (adjustmentHandle != 0) display.removeWidget (adjustmentHandle);
 }
 
-void destroyHandle () {
-	super.destroyWidget ();
-}
-
 @Override
 void destroyWidget () {
 	parent.destroyScrollBar (this);
 	releaseHandle ();
-	//parent.sendEvent (SWT.Resize);
 }
 
 /**
@@ -338,50 +335,58 @@ public int getThumb () {
  *
  * @since 3.6
  */
-public Rectangle getThumbBounds () {
-	checkWidget ();
+public Rectangle getThumbBounds() {
+	checkWidget();
 	return DPIUtil.autoScaleDown(getThumbBoundsInPixels());
 }
 
-Rectangle getThumbBoundsInPixels () {
+Rectangle getThumbBoundsInPixels() {
 	checkWidget();
-	int [] slider_start = new int [1], slider_end = new int [1];
-	gtk_range_get_slider_range (handle, slider_start, slider_end);
+
+	int[] slider_start = new int[1], slider_end = new int[1];
+	long rangeHandle = GTK.GTK4 ? GTK4.gtk_widget_get_first_child(handle) : handle;
+	GTK.gtk_range_get_slider_range(rangeHandle, slider_start, slider_end);
+
 	int x, y, width, height;
-	GtkAllocation allocation = new GtkAllocation ();
-	GTK.gtk_widget_get_allocation (handle, allocation);
+	GtkAllocation allocation = new GtkAllocation();
+	GTK.gtk_widget_get_allocation(rangeHandle, allocation);
 	if ((style & SWT.VERTICAL) != 0) {
 		x = allocation.x;
-		y = slider_start [0];
+		y = slider_start[0];
 		width = allocation.width;
-		height = slider_end [0] - slider_start [0];
+		height = slider_end[0] - slider_start[0];
 	} else {
-		x = slider_start [0];
+		x = slider_start[0];
 		y = allocation.y;
-		width = slider_end [0] - slider_start [0];
+		width = slider_end[0] - slider_start[0];
 		height = allocation.height;
 	}
+
 	Rectangle rect = new Rectangle(x, y, width, height);
-	int [] origin_x = new int [1], origin_y = new int [1];
 	if (GTK.GTK4) {
-		long surface = gtk_widget_get_surface (parent.scrolledHandle);
-		if (surface != 0) GDK.gdk_surface_get_origin (surface, origin_x, origin_y);
-		rect.x += origin_x [0];
-		rect.y += origin_y [0];
-		surface = gtk_widget_get_surface (parent.handle);
-		if (surface != 0) GDK.gdk_surface_get_origin (surface, origin_x, origin_y);
-		rect.x -= origin_x [0];
-		rect.y -= origin_y [0];
+		double[] origin_x = new double[1], origin_y = new double[1];
+		boolean success = GTK4.gtk_widget_translate_coordinates(parent.scrolledHandle, parent.getShell().shellHandle, 0, 0, origin_x, origin_y);
+		if (success) {
+			rect.x += origin_x[0];
+			rect.y += origin_y[0];
+		}
+		success = GTK4.gtk_widget_translate_coordinates(parent.handle, parent.getShell().shellHandle, 0, 0, origin_x, origin_y);
+		if (success) {
+			rect.x -= origin_x[0];
+			rect.y -= origin_y[0];
+		}
 	} else {
-		long window = gtk_widget_get_window (parent.scrolledHandle);
-		if (window != 0) GDK.gdk_window_get_origin (window, origin_x, origin_y);
-		rect.x += origin_x [0];
-		rect.y += origin_y [0];
-		window = gtk_widget_get_window (parent.handle);
-		if (window != 0) GDK.gdk_window_get_origin (window, origin_x, origin_y);
-		rect.x -= origin_x [0];
-		rect.y -= origin_y [0];
+		int[] origin_x = new int[1], origin_y = new int[1];
+		long window = gtk_widget_get_window(parent.scrolledHandle);
+		if (window != 0) GDK.gdk_window_get_origin(window, origin_x, origin_y);
+		rect.x += origin_x[0];
+		rect.y += origin_y[0];
+		window = gtk_widget_get_window(parent.handle);
+		if (window != 0) GDK.gdk_window_get_origin(window, origin_x, origin_y);
+		rect.x -= origin_x[0];
+		rect.y -= origin_y[0];
 	}
+
 	return rect;
 }
 
@@ -407,24 +412,26 @@ public Rectangle getThumbTrackBounds () {
 Rectangle getThumbTrackBoundsInPixels () {
 	checkWidget();
 	int x = 0, y = 0, width, height;
-	int[] has_stepper = new int[1];
-	boolean hasB = false, hasB2 = false, hasF = false, hasF2 = false;
+
 	/*
 	 * Only GTK3 scrollbars have steppers, even non-overlay scrollbars in
 	 * GTK4 do not have steppers.
 	 */
+	boolean hasB = false, hasB2 = false, hasF = false, hasF2 = false;
 	if (!GTK.GTK4) {
-		GTK.gtk_widget_style_get (handle, OS.has_backward_stepper, has_stepper, 0);
+		int[] has_stepper = new int[1];
+		GTK3.gtk_widget_style_get(handle, OS.has_backward_stepper, has_stepper, 0);
 		hasB = has_stepper[0] != 0;
-		GTK.gtk_widget_style_get (handle, OS.has_secondary_backward_stepper, has_stepper, 0);
+		GTK3.gtk_widget_style_get(handle, OS.has_secondary_backward_stepper, has_stepper, 0);
 		hasB2 = has_stepper[0] != 0;
-		GTK.gtk_widget_style_get (handle, OS.has_forward_stepper, has_stepper, 0);
+		GTK3.gtk_widget_style_get(handle, OS.has_forward_stepper, has_stepper, 0);
 		hasF = has_stepper[0] != 0;
-		GTK.gtk_widget_style_get (handle, OS.has_secondary_forward_stepper, has_stepper, 0);
+		GTK3.gtk_widget_style_get(handle, OS.has_secondary_forward_stepper, has_stepper, 0);
 		hasF2 = has_stepper[0] != 0;
 	}
-	GtkAllocation allocation = new GtkAllocation ();
-	GTK.gtk_widget_get_allocation (handle, allocation);
+
+	GtkAllocation allocation = new GtkAllocation();
+	GTK.gtk_widget_get_allocation(handle, allocation);
 	if ((style & SWT.VERTICAL) != 0) {
 		int stepperSize = allocation.width;
 		x = allocation.x;
@@ -435,9 +442,10 @@ Rectangle getThumbTrackBoundsInPixels () {
 		if (hasB2) height -= stepperSize;
 		if (hasF) height -= stepperSize;
 		if (height < 0) {
-			int [] slider_start = new int [1], slider_end = new int [1];
-			gtk_range_get_slider_range (handle, slider_start, slider_end);
-			y = slider_start [0];
+			int[] slider_start = new int[1], slider_end = new int[1];
+			long rangeHandle = GTK.GTK4 ? GTK4.gtk_widget_get_first_child(handle) : handle;
+			GTK.gtk_range_get_slider_range(rangeHandle, slider_start, slider_end);
+			y = slider_start[0];
 			height = 0;
 		}
 	} else {
@@ -450,33 +458,39 @@ Rectangle getThumbTrackBoundsInPixels () {
 		if (hasF) width -= stepperSize;
 		height = allocation.height;
 		if (width < 0) {
-			int [] slider_start = new int [1], slider_end = new int [1];
-			gtk_range_get_slider_range (handle, slider_start, slider_end);
-			x = slider_start [0];
+			int[] slider_start = new int[1], slider_end = new int[1];
+			long rangeHandle = GTK.GTK4 ? GTK4.gtk_widget_get_first_child(handle) : handle;
+			GTK.gtk_range_get_slider_range(rangeHandle, slider_start, slider_end);
+			x = slider_start[0];
 			width = 0;
 		}
 	}
+
 	Rectangle rect = new Rectangle(x, y, width, height);
-	int [] origin_x = new int [1], origin_y = new int [1];
 	if (GTK.GTK4) {
-		long surface = gtk_widget_get_surface (parent.scrolledHandle);
-		if (surface != 0) GDK.gdk_surface_get_origin (surface, origin_x, origin_y);
-		rect.x += origin_x [0];
-		rect.y += origin_y [0];
-		surface = gtk_widget_get_surface (parent.handle);
-		if (surface != 0) GDK.gdk_surface_get_origin (surface, origin_x, origin_y);
-		rect.x -= origin_x [0];
-		rect.y -= origin_y [0];
+		double[] origin_x = new double[1], origin_y = new double[1];
+		boolean success = GTK4.gtk_widget_translate_coordinates(parent.scrolledHandle, parent.getShell().shellHandle, 0, 0, origin_x, origin_y);
+		if (success) {
+			rect.x += origin_x[0];
+			rect.y += origin_y[0];
+		}
+		success = GTK4.gtk_widget_translate_coordinates(parent.handle, parent.getShell().shellHandle, 0, 0, origin_x, origin_y);
+		if (success) {
+			rect.x -= origin_x[0];
+			rect.y -= origin_y[0];
+		}
 	} else {
-		long window = gtk_widget_get_window (parent.scrolledHandle);
-		if (window != 0) GDK.gdk_window_get_origin (window, origin_x, origin_y);
-		rect.x += origin_x [0];
-		rect.y += origin_y [0];
-		window = gtk_widget_get_window (parent.handle);
-		if (window != 0) GDK.gdk_window_get_origin (window, origin_x, origin_y);
-		rect.x -= origin_x [0];
-		rect.y -= origin_y [0];
+		int[] origin_x = new int[1], origin_y = new int[1];
+		long window = gtk_widget_get_window(parent.scrolledHandle);
+		if (window != 0) GDK.gdk_window_get_origin(window, origin_x, origin_y);
+		rect.x += origin_x[0];
+		rect.y += origin_y[0];
+		window = gtk_widget_get_window(parent.handle);
+		if (window != 0) GDK.gdk_window_get_origin(window, origin_x, origin_y);
+		rect.x -= origin_x[0];
+		rect.y -= origin_y[0];
 	}
+
 	return rect;
 }
 
@@ -510,21 +524,6 @@ public boolean getVisible () {
 }
 
 @Override
-long gtk_event (long widget, long event) {
-	if (!GTK.GTK4) return 0;
-	int eventType = GDK.gdk_event_get_event_type(event);
-	switch (eventType) {
-		case GDK.GDK4_BUTTON_PRESS: {
-			return gtk_button_press_event(widget, event);
-		}
-		case GDK.GDK4_BUTTON_RELEASE: {
-			return gtk_button_release_event(widget, event);
-		}
-	}
-	return 0;
-}
-
-@Override
 long gtk_button_press_event (long widget, long eventPtr) {
 	long result = super.gtk_button_press_event (widget, eventPtr);
 	if (result != 0) return result;
@@ -539,12 +538,8 @@ boolean gtk_change_value (long widget, int scroll, double value, long user_data)
 	return false;
 }
 
-void gtk_range_get_slider_range (long widget, int [] slider_start, int [] slider_end) {
-	GTK.gtk_range_get_slider_range (widget, slider_start, slider_end);
-}
-
 @Override
-long gtk_value_changed (long adjustment) {
+long gtk_value_changed (long range) {
 	Event event = new Event ();
 	dragSent = detail == GTK.GTK_SCROLL_JUMP;
 	switch (detail) {
@@ -606,9 +601,11 @@ void hookEvents () {
 	super.hookEvents ();
 	OS.g_signal_connect_closure (adjustmentHandle, OS.value_changed, display.getClosure (VALUE_CHANGED), false);
 	if (GTK.GTK4) {
-		// GTK4: event-after replaced with generic event
-		OS.g_signal_connect_closure_by_id (handle, display.signalIds [EVENT], 0, display.getClosure (EVENT), false);
-		// GTK4: change-value moved to gtk_scroll_child in Composite
+		//TODO: GTK4 change-value moved to gtk_scroll_child in Composite, event-after
+
+		long clickGesture = GTK4.gtk_gesture_click_new();
+		GTK4.gtk_widget_add_controller(handle, clickGesture);
+		OS.g_signal_connect(clickGesture, OS.pressed, display.gesturePressReleaseProc, GESTURE_PRESSED);
 	} else {
 		OS.g_signal_connect_closure (handle, OS.change_value, display.getClosure (CHANGE_VALUE), false);
 		OS.g_signal_connect_closure_by_id (handle, display.signalIds [BUTTON_PRESS_EVENT], 0, display.getClosure (BUTTON_PRESS_EVENT), false);

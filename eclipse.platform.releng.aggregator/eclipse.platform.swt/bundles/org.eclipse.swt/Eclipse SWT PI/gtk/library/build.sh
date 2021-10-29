@@ -105,6 +105,11 @@ case $MODEL in
 		AWT_ARCH=ppc64
 		MODEL=`uname -p`
 		;;
+	"powerpc64le")
+		SWT_ARCH=ppc64le
+		AWT_ARCH=ppc64le
+		MODEL=`uname -p`
+		;;
 	*)
 		SWT_ARCH=$MODEL
 		AWT_ARCH=$MODEL
@@ -153,7 +158,7 @@ esac
 
 
 # For 64-bit CPUs, we have a switch
-if [ ${MODEL} = 'amd64' -o ${MODEL} = 'powerpc64' -o ${MODEL} = 'aarch64' ]; then
+if [ ${MODEL} = 'amd64' -o ${MODEL} = 'powerpc64' -o ${MODEL} = 'powerpc64le' -o ${MODEL} = 'aarch64' ]; then
 	SWT_PTR_CFLAGS=-DJNI64
 	if [ -d /lib64 ]; then
 		XLIB64=-L/usr/X11R6/lib64

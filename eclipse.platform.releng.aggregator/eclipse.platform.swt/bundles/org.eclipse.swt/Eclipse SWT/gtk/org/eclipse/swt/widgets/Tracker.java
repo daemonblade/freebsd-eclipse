@@ -20,6 +20,8 @@ import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.cairo.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  *  Instances of this class implement rubber banding rectangles that are
@@ -206,19 +208,21 @@ Point adjustMoveCursor () {
 	int newX = bounds.x + bounds.width / 2;
 	int newY = bounds.y;
 
-	Point point = display.mapInPixels (parent, null, newX, newY);
-	display.setCursorLocation (point);
+	Point point = display.mapInPixels(parent, null, newX, newY);
+	display.setCursorLocation(point);
 
-	int [] actualX = new int [1], actualY = new int [1], state = new int [1];
+	int[] actualX = new int[1], actualY = new int[1], state = new int[1];
 	if (GTK.GTK4) {
-		double [] actualXDouble = new double [1], actualYDouble = new double [1];
-		display.gdk_surface_get_device_position (surface, actualXDouble, actualYDouble, state);
-		actualX[0] = (int) actualXDouble[0];
-		actualY[0] = (int) actualYDouble[0];
+		double[] actualXDouble = new double[1], actualYDouble = new double[1];
+		display.getPointerPosition(actualXDouble, actualYDouble);
+
+		actualX[0] = (int)actualXDouble[0];
+		actualY[0] = (int)actualYDouble[0];
 	} else {
-		display.gdk_window_get_device_position (window, actualX, actualY, state);
+		display.getWindowPointerPosition(window, actualX, actualY, state);
 	}
-	return new Point (actualX [0], actualY [0]);
+
+	return new Point(actualX[0], actualY[0]);
 }
 
 Point adjustResizeCursor () {
@@ -251,14 +255,16 @@ Point adjustResizeCursor () {
 	 */
 	int [] actualX = new int [1], actualY = new int [1], state = new int [1];
 	if (GTK.GTK4) {
-		double [] actualXDouble = new double [1], actualYDouble = new double [1];
-		display.gdk_surface_get_device_position (surface, actualXDouble, actualYDouble, state);
-		actualX[0] = (int) actualXDouble[0];
-		actualY[0] = (int) actualYDouble[0];
+		double[] actualXDouble = new double[1], actualYDouble = new double[1];
+		display.getPointerPosition(actualXDouble, actualYDouble);
+
+		actualX[0] = (int)actualXDouble[0];
+		actualY[0] = (int)actualYDouble[0];
 	} else {
-		display.gdk_window_get_device_position (window, actualX, actualY, state);
+		display.getWindowPointerPosition(window, actualX, actualY, state);
 	}
-	return new Point (actualX [0], actualY [0]);
+
+	return new Point(actualX[0], actualY[0]);
 }
 
 
@@ -348,7 +354,7 @@ void drawRectangles (Rectangle [] rects) {
 	if (gdkResource == 0) return;
 
 	if (overlay == 0) return;
-	GTK.gtk_widget_shape_combine_region (overlay, 0);
+	GTK3.gtk_widget_shape_combine_region (overlay, 0);
 
 	// Bug 498217.
 	// As of Gtk 3.9.1, Commit a60ccd3672467efb454b121993febc36f33cbc79, off-screen GDK windows are not processed.
@@ -414,14 +420,14 @@ void drawRectangles (Rectangle [] rects) {
 		setTrackerBackground(false);
 	}
 
-	GTK.gtk_widget_shape_combine_region (overlay, region);
+	GTK3.gtk_widget_shape_combine_region (overlay, region);
 	Cairo.cairo_region_destroy (region);
 	if (GTK.GTK4) {
-		long overlaySurface = GTK.gtk_native_get_surface(GTK.gtk_widget_get_native (overlay));
+		long overlaySurface = GTK4.gtk_native_get_surface(GTK4.gtk_widget_get_native (overlay));
 		GDK.gdk_surface_hide (overlaySurface);
 		/* TODO: GTK does not provide a gdk_surface_show, probably will require use of the present api */
 	} else {
-		long overlayWindow = GTK.gtk_widget_get_window (overlay);
+		long overlayWindow = GTK3.gtk_widget_get_window (overlay);
 		GDK.gdk_window_hide (overlayWindow);
 		GDK.gdk_window_show (overlayWindow);
 	}
@@ -644,13 +650,15 @@ long gtk_motion_notify_event (long widget, long eventPtr) {
 long gtk_mouse (int eventType, long widget, long eventPtr) {
 	int [] newX = new int [1], newY = new int [1];
 	if (GTK.GTK4) {
-		double [] newXDouble = new double [1], newYDouble = new double [1];
-		display.gdk_surface_get_device_position (surface, newXDouble, newYDouble, null);
-		newX[0] = (int) newXDouble[0];
-		newY[0] = (int) newYDouble[0];
+		double[] newXDouble = new double[1], newYDouble = new double[1];
+		display.getPointerPosition(newXDouble, newYDouble);
+
+		newX[0] = (int)newXDouble[0];
+		newY[0] = (int)newYDouble[0];
 	} else {
-		display.gdk_window_get_device_position (window, newX, newY, null);
+		display.getWindowPointerPosition(window, newX, newY, null);
 	}
+
 	if (oldX != newX [0] || oldY != newY [0]) {
 		Rectangle [] oldRectangles = rectangles;
 		Rectangle [] rectsToErase = new Rectangle [rectangles.length];
@@ -796,11 +804,12 @@ public boolean open () {
 	int [] oldX = new int [1], oldY = new int [1], state = new int [1];
 	if (GTK.GTK4) {
 		double [] oldXDouble = new double [1], oldYDouble = new double [1];
-		display.gdk_surface_get_device_position (surface, oldXDouble, oldYDouble, state);
+		display.getPointerPosition(oldXDouble, oldYDouble);
+
 		oldX[0] = (int) oldXDouble[0];
 		oldY[0] = (int) oldYDouble[0];
 	} else {
-		display.gdk_window_get_device_position (window, oldX, oldY, state);
+		display.getWindowPointerPosition (window, oldX, oldY, state);
 	}
 
 	/*
@@ -837,19 +846,19 @@ public boolean open () {
 	lastCursor = this.cursor != null ? this.cursor.handle : 0;
 
 	cachedCombinedDisplayResolution = Display.getDefault().getBounds(); // In case resolution was changed during run time.
-	overlay = GTK.gtk_window_new (GTK.GTK_WINDOW_POPUP);
-	GTK.gtk_window_set_skip_taskbar_hint (overlay, true);
+	overlay = GTK3.gtk_window_new (GTK.GTK_WINDOW_POPUP);
+	GTK3.gtk_window_set_skip_taskbar_hint (overlay, true);
 	GTK.gtk_window_set_title (overlay, new byte [1]);
 	if (parent != null) GTK.gtk_window_set_transient_for(overlay, parent.topHandle());
 	GTK.gtk_widget_realize (overlay);
 	if (!GTK.GTK4) {
-		long overlayWindow = GTK.gtk_widget_get_window (overlay);
+		long overlayWindow = GTK3.gtk_widget_get_window (overlay);
 		GDK.gdk_window_set_override_redirect (overlayWindow, true);
 	}
 	setTrackerBackground(true);
 	Rectangle bounds = display.getBoundsInPixels();
-	GTK.gtk_window_move (overlay, bounds.x, bounds.y);
-	GTK.gtk_window_resize (overlay, bounds.width, bounds.height);
+	GTK3.gtk_window_move (overlay, bounds.x, bounds.y);
+	GTK3.gtk_window_resize (overlay, bounds.width, bounds.height);
 	GTK.gtk_widget_show (overlay);
 
 	/* Tracker behaves like a Dialog with its own OS event loop. */
@@ -862,14 +871,11 @@ public boolean open () {
 			display.runSkin ();
 			display.runDeferredLayouts ();
 			display.sendPreExternalEventDispatchEvent ();
-			/*
-			* This call to gdk_threads_leave() is a temporary work around
-			* to avoid deadlocks when gdk_threads_init() is called by native
-			* code outside of SWT (i.e AWT, etc). It ensures that the current
-			* thread leaves the GTK lock before calling the function below.
-			*/
-			if (!GTK.GTK4) GDK.gdk_threads_leave();
-			OS.g_main_context_iteration (0, true);
+			if (GTK.GTK4) {
+				OS.g_main_context_iteration (0, true);
+			} else {
+				GTK3.gtk_main_iteration_do (true);
+			}
 			display.sendPostExternalEventDispatchEvent ();
 			display.runAsyncMessages (false);
 		}
@@ -878,7 +884,7 @@ public boolean open () {
 	}
 	ungrab ();
 	if (overlay != 0) {
-		GTK.gtk_widget_destroy (overlay);
+		GTK3.gtk_widget_destroy (overlay);
 		overlay = 0;
 	}
 	window = 0;
@@ -910,21 +916,30 @@ private void setTrackerBackground(boolean opaque) {
 		OS.g_object_unref (provider);
 	}
 	if (GTK.GTK4) {
-		GTK.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (css, true), -1);
+		GTK4.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (css, true), -1);
 	} else {
-		GTK.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (css, true), -1, null);
+		GTK3.gtk_css_provider_load_from_data (provider, Converter.wcsToMbcs (css, true), -1, null);
+		GTK3.gtk_style_context_invalidate (context);
 	}
-	GTK.gtk_style_context_invalidate (context);
+
 	long region = Cairo.cairo_region_create ();
-	GTK.gtk_widget_shape_combine_region (overlay, region);
-	GTK.gtk_widget_input_shape_combine_region (overlay, region);
+
+	if (GTK.GTK4) {
+		//TODO: GTK4
+		//GDK.gdk_surface_set_opaque_region(context, region);
+		//GDK.gdk_surface_set_input_region(context, region);
+	} else {
+		GTK3.gtk_widget_shape_combine_region (overlay, region);
+		GTK3.gtk_widget_input_shape_combine_region (overlay, region);
+	}
+
 	Cairo.cairo_region_destroy (region);
 }
 
 boolean processEvent (long eventPtr) {
 	int eventType = GDK.gdk_event_get_event_type(eventPtr);
 	eventType = Control.fixGdkEventTypeValues(eventType);
-	long widget = GTK.gtk_get_event_widget (eventPtr);
+	long widget = GTK3.gtk_get_event_widget (eventPtr);
 	switch (eventType) {
 		case GDK.GDK_MOTION_NOTIFY: gtk_motion_notify_event (widget, eventPtr); break;
 		case GDK.GDK_BUTTON_RELEASE: gtk_button_release_event (widget, eventPtr); break;
@@ -939,7 +954,7 @@ boolean processEvent (long eventPtr) {
 			break;
 		case GDK.GDK_EXPOSE:
 			update ();
-			GTK.gtk_main_do_event (eventPtr);
+			GTK3.gtk_main_do_event (eventPtr);
 			break;
 		default:
 			return true;

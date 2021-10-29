@@ -18,6 +18,8 @@ import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class provide an etched border
@@ -170,7 +172,7 @@ void createHandle(int index) {
 
 	fixedHandle = OS.g_object_new (display.gtk_fixed_get_type (), 0);
 	if (fixedHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	gtk_widget_set_has_surface_or_window (fixedHandle, true);
+	if (!GTK.GTK4) GTK3.gtk_widget_set_has_window(fixedHandle, true);
 
 	handle = GTK.gtk_frame_new (null);
 	if (handle == 0) error (SWT.ERROR_NO_HANDLES);
@@ -186,23 +188,26 @@ void createHandle(int index) {
 	 * it can listen to events (clicking/tooltip etc.) and so that
 	 * background can be drawn on it.
 	 */
-	gtk_widget_set_has_surface_or_window (clientHandle, true);
+	if (!GTK.GTK4) GTK3.gtk_widget_set_has_window(clientHandle, true);
 
-	GTK.gtk_container_add (fixedHandle, handle);
-	GTK.gtk_container_add (handle, clientHandle);
+	if (GTK.GTK4) {
+		OS.swt_fixed_add(fixedHandle, handle);
+		GTK4.gtk_frame_set_child(handle, clientHandle);
+	} else {
+		GTK3.gtk_container_add (fixedHandle, handle);
+		GTK3.gtk_container_add (handle, clientHandle);
 
-	if (!GTK.GTK4) {
 		if ((style & SWT.SHADOW_IN) != 0) {
-			GTK.gtk_frame_set_shadow_type (handle, GTK.GTK_SHADOW_IN);
+			GTK3.gtk_frame_set_shadow_type (handle, GTK.GTK_SHADOW_IN);
 		}
 		if ((style & SWT.SHADOW_OUT) != 0) {
-			GTK.gtk_frame_set_shadow_type (handle, GTK.GTK_SHADOW_OUT);
+			GTK3.gtk_frame_set_shadow_type (handle, GTK.GTK_SHADOW_OUT);
 		}
 		if ((style & SWT.SHADOW_ETCHED_IN) != 0) {
-			GTK.gtk_frame_set_shadow_type (handle, GTK.GTK_SHADOW_ETCHED_IN);
+			GTK3.gtk_frame_set_shadow_type (handle, GTK.GTK_SHADOW_ETCHED_IN);
 		}
 		if ((style & SWT.SHADOW_ETCHED_OUT) != 0) {
-			GTK.gtk_frame_set_shadow_type (handle, GTK.GTK_SHADOW_ETCHED_OUT);
+			GTK3.gtk_frame_set_shadow_type (handle, GTK.GTK_SHADOW_ETCHED_OUT);
 		}
 	}
 
@@ -426,7 +431,7 @@ long paintHandle() {
 	/* we draw all our children on the clientHandle*/
 	long paintHandle = clientHandle;
 	while (paintHandle != topHandle) {
-		if (gtk_widget_get_has_surface_or_window (paintHandle)) break;
+		if (GTK3.gtk_widget_get_has_window(paintHandle)) break;
 		paintHandle = GTK.gtk_widget_get_parent (paintHandle);
 	}
 	return paintHandle;

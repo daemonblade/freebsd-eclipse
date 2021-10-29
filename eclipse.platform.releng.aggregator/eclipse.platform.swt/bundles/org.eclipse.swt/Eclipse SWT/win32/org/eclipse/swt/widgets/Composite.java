@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -916,12 +916,19 @@ void releaseParent () {
 
 @Override
 void releaseChildren (boolean destroy) {
-	for (Control child : _getChildren ()) {
-		if (child != null && !child.isDisposed ()) {
-			child.release (false);
+	try (ExceptionStash exceptions = new ExceptionStash ()) {
+		for (Control child : _getChildren ()) {
+			if (child == null || child.isDisposed ())
+				continue;
+
+			try {
+				child.release (false);
+			} catch (Error | RuntimeException ex) {
+				exceptions.stash (ex);
+			}
 		}
+		super.releaseChildren (destroy);
 	}
-	super.releaseChildren (destroy);
 }
 
 @Override
@@ -1179,10 +1186,14 @@ boolean setTabGroupFocus () {
 	if (takeFocus && setTabItemFocus ()) return true;
 	Control [] children = _getChildren ();
 	for (Control child : children) {
-		if (child.isTabItem () && child.setRadioFocus (true)) return true;
+		/*
+		 * It is unlikely but possible that a child is disposed at this point, for more
+		 * details refer bug 381668.
+		 */
+		if (!child.isDisposed() && child.isTabItem() && child.setRadioFocus (true)) return true;
 	}
 	for (Control child : children) {
-		if (child.isTabItem () && !child.isTabGroup () && child.setTabItemFocus ()) {
+		if (!child.isDisposed() && child.isTabItem () && !child.isTabGroup () && child.setTabItemFocus ()) {
 			return true;
 		}
 	}

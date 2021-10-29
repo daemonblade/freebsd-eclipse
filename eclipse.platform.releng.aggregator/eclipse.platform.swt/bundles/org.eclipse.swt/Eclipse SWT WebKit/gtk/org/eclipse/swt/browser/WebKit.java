@@ -28,6 +28,7 @@ import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
 import org.eclipse.swt.internal.webkit.*;
 import org.eclipse.swt.internal.webkit.GdkRectangle;
 import org.eclipse.swt.layout.*;
@@ -596,7 +597,7 @@ static long JSDOMEventProc (long arg0, long event, long user_data) {
 				}
 			}
 			if (browser != null) {
-				GTK.gtk_widget_event (browser.handle, event);
+				GTK3.gtk_widget_event (browser.handle, event);
 			}
 		}
 		return 0;
@@ -770,7 +771,24 @@ public void create (Composite parent, int style) {
 	 */
 	Webkit2AsyncToSync.setCookieBrowser(browser);
 
-	webView = WebKitGTK.webkit_web_view_new ();
+
+	Composite parentShell = parent.getParent();
+	Browser parentBrowser = null;
+	if (parentShell != null) {
+		Control[] children = parentShell.getChildren();
+		for (int i = 0; i < children.length; i++) {
+			if (children[i] instanceof Browser) {
+				parentBrowser = (Browser) children[i];
+				break;
+			}
+		}
+	}
+
+	if (parentBrowser == null) {
+		webView = WebKitGTK.webkit_web_view_new();
+	} else {
+		webView = WebKitGTK.webkit_web_view_new_with_related_view(((WebKit)parentBrowser.webBrowser).webView);
+	}
 
 	// Bug 522733 Webkit2 workaround for crash
 	//   As of Webkitgtk 2.18, webkitgtk2 crashes if the first instance of webview is not referenced when JVM shuts down.
@@ -790,7 +808,7 @@ public void create (Composite parent, int style) {
 	}
 
 	// Webkit2 Signal Documentation: https://webkitgtk.org/reference/webkit2gtk/stable/WebKitWebView.html#WebKitWebView--title
-	GTK.gtk_container_add (browser.handle, webView);
+	GTK3.gtk_container_add (browser.handle, webView);
 	OS.g_signal_connect (webView, WebKitGTK.close, Proc2.getAddress (), CLOSE_WEB_VIEW);
 	OS.g_signal_connect (webView, WebKitGTK.ready_to_show, Proc2.getAddress (), WEB_VIEW_READY);
 	OS.g_signal_connect (webView, WebKitGTK.decide_policy, Proc4.getAddress (), DECIDE_POLICY);
@@ -924,7 +942,10 @@ public boolean close () {
 //         false = blocks disposal. In Browser.java, user is told widget was not disposed.
 // See Snippet326.
 boolean close (boolean showPrompters) {
-	if (!jsEnabled) return true;
+	// don't execute any JavaScript if it's disabled or requested to get disabled
+	// we need to check jsEnabledOnNextPage here because jsEnabled is updated asynchronously
+	// and may not reflect the proper state (bug 571746 and bug 567881)
+	if (!jsEnabled || !jsEnabledOnNextPage) return true;
 
 	String message1 = Compatibility.getMessage("SWT_OnBeforeUnload_Message1"); // $NON-NLS-1$
 	String message2 = Compatibility.getMessage("SWT_OnBeforeUnload_Message2"); // $NON-NLS-1$
@@ -1410,10 +1431,8 @@ private static class Webkit2AsyncToSync {
 		Webkit2AsyncReturnObj retObj = new Webkit2AsyncReturnObj();
 		int callbackId = CallBackMap.putObject(retObj);
 		asyncFunc.accept(callbackId);
-		Display display = browser.getDisplay();
 		final Instant timeOut = Instant.now().plusMillis(ASYNC_EXEC_TIMEOUT_MS);
 		while (!browser.isDisposed()) {
-			boolean eventsDispatched = OS.g_main_context_iteration (0, false);
 			if (retObj.callbackFinished)
 				break;
 			else if (Instant.now().isAfter(timeOut)) {
@@ -1432,8 +1451,13 @@ private static class Webkit2AsyncToSync {
 				retObj.swtAsyncTimeout = true;
 				break;
 			}
-			else if (!eventsDispatched)
-				display.sleep();
+			else {
+				if (GTK.GTK4) {
+					OS.g_main_context_iteration (0, true);
+				} else {
+					GTK3.gtk_main_iteration_do (true);
+				}
+			}
 		}
 		CallBackMap.removeObject(callbackId);
 		return retObj;
@@ -1567,7 +1591,7 @@ boolean handleDOMEvent (long event, int type) {
 
 	/* key event */
 	int keyEventState = 0;
-	long eventPtr = GTK.gtk_get_current_event ();
+	long eventPtr = GTK3.gtk_get_current_event ();
 	if (eventPtr != 0) {
 		int eventType = GDK.gdk_event_get_event_type(eventPtr);
 		int [] state = new int[1];
@@ -1961,7 +1985,7 @@ void onDispose (Event e) {
 		// If you change dispose logic, to check that you haven't introduced memory leaks, test via:
 		// org.eclipse.swt.tests.junit.memoryleak.Test_Memory_Leak.test_Browser()
 		OS.g_object_ref (webView);
-		GTK.gtk_container_remove (GTK.gtk_widget_get_parent (webView), webView);
+		GTK3.gtk_container_remove (GTK.gtk_widget_get_parent (webView), webView);
 		long webViewTempRef = webView;
 		Display.getDefault().asyncExec(() -> {
 			OS.g_object_unref(webViewTempRef);
@@ -2496,7 +2520,7 @@ long webkit_load_changed (long web_view, int status, long user_data) {
 			if (firstLoad) {
 				GtkAllocation allocation = new GtkAllocation ();
 				GTK.gtk_widget_get_allocation(browser.handle, allocation);
-				GTK.gtk_widget_size_allocate(browser.handle, allocation);
+				GTK3.gtk_widget_size_allocate(browser.handle, allocation);
 				firstLoad = false;
 			}
 

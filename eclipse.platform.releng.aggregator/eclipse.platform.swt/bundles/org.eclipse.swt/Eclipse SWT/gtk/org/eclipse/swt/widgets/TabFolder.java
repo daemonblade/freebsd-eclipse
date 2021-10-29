@@ -19,6 +19,8 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class implement the notebook user interface
@@ -253,10 +255,16 @@ void createHandle (int index) {
 	state |= HANDLE;
 	fixedHandle = OS.g_object_new (display.gtk_fixed_get_type (), 0);
 	if (fixedHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	gtk_widget_set_has_surface_or_window (fixedHandle, true);
 	handle = GTK.gtk_notebook_new ();
 	if (handle == 0) error (SWT.ERROR_NO_HANDLES);
-	GTK.gtk_container_add (fixedHandle, handle);
+
+	if (GTK.GTK4) {
+		OS.swt_fixed_add(fixedHandle, handle);
+	} else {
+		GTK3.gtk_widget_set_has_window(fixedHandle, true);
+		GTK3.gtk_container_add (fixedHandle, handle);
+	}
+
 	GTK.gtk_notebook_set_show_tabs (handle, true);
 	GTK.gtk_notebook_set_scrollable (handle, true);
 	if ((style & SWT.BOTTOM) != 0) {
@@ -271,12 +279,17 @@ void createWidget (int index) {
 }
 
 void createItem (TabItem item, int index) {
-	long list = GTK.gtk_container_get_children (handle);
 	int itemCount = 0;
-	if (list != 0) {
-		itemCount = OS.g_list_length (list);
-		OS.g_list_free (list);
+	if (GTK.GTK4) {
+		itemCount = GTK.gtk_notebook_get_n_pages(handle);
+	} else {
+		long list = GTK3.gtk_container_get_children (handle);
+		if (list != 0) {
+			itemCount = OS.g_list_length (list);
+			OS.g_list_free (list);
+		}
 	}
+
 	if (!(0 <= index && index <= itemCount)) error (SWT.ERROR_INVALID_RANGE);
 	if (itemCount == items.length) {
 		TabItem [] newItems = new TabItem [items.length + 4];
@@ -289,16 +302,29 @@ void createItem (TabItem item, int index) {
 	if (labelHandle == 0) error (SWT.ERROR_NO_HANDLES);
 	long imageHandle = GTK.gtk_image_new ();
 	if (imageHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	GTK.gtk_container_add (boxHandle, imageHandle);
-	GTK.gtk_container_add (boxHandle, labelHandle);
+
+	if (GTK.GTK4) {
+		GTK4.gtk_box_append(boxHandle, imageHandle);
+		GTK4.gtk_box_append(boxHandle, labelHandle);
+	} else {
+		GTK3.gtk_container_add(boxHandle, imageHandle);
+		GTK3.gtk_container_add(boxHandle, labelHandle);
+	}
+
 	long pageHandle = OS.g_object_new (display.gtk_fixed_get_type (), 0);
 	if (pageHandle == 0) error (SWT.ERROR_NO_HANDLES);
 	OS.g_signal_handlers_block_matched (handle, OS.G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, SWITCH_PAGE);
 	GTK.gtk_notebook_insert_page (handle, pageHandle, boxHandle, index);
 	OS.g_signal_handlers_unblock_matched (handle, OS.G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, SWITCH_PAGE);
-	GTK.gtk_widget_show (boxHandle);
-	GTK.gtk_widget_show (labelHandle);
-	GTK.gtk_widget_show (pageHandle);
+
+	if (GTK.GTK4) {
+		GTK.gtk_widget_hide(imageHandle);
+	} else {
+		GTK.gtk_widget_show(boxHandle);
+		GTK.gtk_widget_show(labelHandle);
+		GTK.gtk_widget_show(pageHandle);
+	}
+
 	item.state |= HANDLE;
 	item.handle = boxHandle;
 	item.labelHandle = labelHandle;
@@ -310,7 +336,9 @@ void createItem (TabItem item, int index) {
 		item.setForegroundGdkRGBA (item.handle, getForegroundGdkRGBA());
 	}
 	if ((state & FONT) != 0) {
-		item.setFontDescription (getFontDescription());
+		long fontDesc = getFontDescription ();
+		item.setFontDescription (fontDesc);
+		OS.pango_font_description_free (fontDesc);
 	}
 	if (itemCount == 1) {
 		OS.g_signal_handlers_block_matched (handle, OS.G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, SWITCH_PAGE);
@@ -360,40 +388,56 @@ long eventHandle () {
 
 @Override
 Control[] _getChildren() {
-	Control [] directChildren = super._getChildren ();
+	Control[] directChildren = super._getChildren();
 	int directCount = directChildren.length;
-	int count = items == null ? 0 : items.length;
-	Control [] children = new Control [count + directCount];
-	int i = 0;
-	for (int j = 0; j < count; j++) {
-		TabItem tabItem = items[j];
+	int itemCount = items == null ? 0 : items.length;
+	Control[] children = new Control[itemCount + directCount];
+
+	int childrenCount = 0;
+	for (int itemIndex = 0; itemIndex < itemCount; itemIndex++) {
+		TabItem tabItem = items[itemIndex];
 		if (tabItem != null && !tabItem.isDisposed()) {
 			long parentHandle = tabItem.pageHandle;
-			long list = GTK.gtk_container_get_children (parentHandle);
-			if (list != 0) {
-				long handle = OS.g_list_data (list);
-				if (handle != 0) {
-					Widget widget = display.getWidget (handle);
-					if (widget != null && widget != this) {
-						if (widget instanceof Control) {
-							children [i++] = (Control) widget;
-						}
+
+			if (GTK.GTK4) {
+				for (long child = GTK4.gtk_widget_get_first_child(parentHandle); child != 0; child = GTK4.gtk_widget_get_next_sibling(child)) {
+					Widget childWidget = display.getWidget(child);
+					if (childWidget != null && childWidget instanceof Control && childWidget != this) {
+						children[childrenCount] = (Control)childWidget;
+						childrenCount++;
 					}
 				}
-				OS.g_list_free (list);
+			} else {
+				long list = GTK3.gtk_container_get_children (parentHandle);
+				if (list != 0) {
+					long handle = OS.g_list_data (list);
+					if (handle != 0) {
+						Widget widget = display.getWidget (handle);
+						if (widget != null && widget != this) {
+							if (widget instanceof Control) {
+								children [childrenCount++] = (Control) widget;
+							}
+						}
+					}
+					OS.g_list_free (list);
+				}
 			}
 		}
 	}
-	if (i == count + directCount) return children;
-	Control [] newChildren;
-	if (i == count) {
-		newChildren = children;
+
+	if (childrenCount == itemCount + directCount) {
+		return children;
 	} else {
-		newChildren = new Control [i + directCount];
-		System.arraycopy (children, 0, newChildren, 0, i);
+		Control[] newChildren;
+		if (childrenCount == itemCount) {
+			newChildren = children;
+		} else {
+			newChildren = new Control [childrenCount + directCount];
+			System.arraycopy (children, 0, newChildren, 0, childrenCount);
+		}
+		System.arraycopy (directChildren, 0, newChildren, childrenCount, directCount);
+		return newChildren;
 	}
-	System.arraycopy (directChildren, 0, newChildren, i, directCount);
-	return newChildren;
 }
 
 /**
@@ -414,11 +458,18 @@ Control[] _getChildren() {
 public TabItem getItem (int index) {
 	checkWidget();
 	if (!(0 <= index && index < getItemCount())) error (SWT.ERROR_INVALID_RANGE);
-	long list = GTK.gtk_container_get_children (handle);
-	if (list == 0) error (SWT.ERROR_CANNOT_GET_ITEM);
-	int itemCount = OS.g_list_length (list);
-	OS.g_list_free (list);
-	if (!(0 <= index && index < itemCount)) error (SWT.ERROR_CANNOT_GET_ITEM);
+
+	if (GTK.GTK4) {
+		long child = GTK4.gtk_widget_get_first_child(handle);
+		if (child == 0) error(SWT.ERROR_CANNOT_GET_ITEM);
+	} else {
+		long list = GTK3.gtk_container_get_children (handle);
+		if (list == 0) error (SWT.ERROR_CANNOT_GET_ITEM);
+		int itemCount = OS.g_list_length (list);
+		OS.g_list_free (list);
+		if (!(0 <= index && index < itemCount)) error (SWT.ERROR_CANNOT_GET_ITEM);
+	}
+
 	return items [index];
 }
 
@@ -443,10 +494,7 @@ public TabItem getItem (int index) {
 public TabItem getItem(Point point) {
 	checkWidget();
 	if (point == null) error (SWT.ERROR_NULL_ARGUMENT);
-	long list = GTK.gtk_container_get_children (handle);
-	if (list == 0) return null;
-	int itemCount = OS.g_list_length (list);
-	OS.g_list_free (list);
+	int itemCount = getItemCount();
 	for (int i = 0; i < itemCount; i++) {
 		TabItem item = items[i];
 		Rectangle rect = item.getBounds();
@@ -467,10 +515,17 @@ public TabItem getItem(Point point) {
  */
 public int getItemCount () {
 	checkWidget();
-	long list = GTK.gtk_container_get_children (handle);
-	if (list == 0) return 0;
-	int itemCount = OS.g_list_length (list);
-	OS.g_list_free (list);
+
+	int itemCount = 0;
+	if (GTK.GTK4) {
+		itemCount = GTK.gtk_notebook_get_n_pages(handle);
+	} else {
+		long list = GTK3.gtk_container_get_children (handle);
+		if (list == 0) return 0;
+		itemCount = OS.g_list_length (list);
+		OS.g_list_free (list);
+	}
+
 	return itemCount;
 }
 
@@ -543,25 +598,34 @@ long gtk_focus (long widget, long directionType) {
 }
 
 @Override
-long gtk_switch_page (long widget, long page, long page_num) {
-	int index = GTK.gtk_notebook_get_current_page (handle);
-	if (index != -1) {
-		Control control = items [index].getControl ();
-		if (control != null && !control.isDisposed ()) {
-			control.setVisible (false);
-		}
-	} else {
-		return 0;
-	}
-	TabItem item = items [(int)page_num];
-	Control control = item.getControl ();
-	if (control != null && !control.isDisposed ()) {
+long gtk_switch_page(long notebook, long page, int page_num) {
+	TabItem item = items[page_num];
+
+	if (GTK.GTK4) {
+		Control control = item.getControl();
 		control.setBoundsInPixels(getClientAreaInPixels());
-		control.setVisible (true);
+	} else {
+		int index = GTK.gtk_notebook_get_current_page(handle);
+		if (index != -1) {
+			Control control = items [index].getControl();
+			if (control != null && !control.isDisposed()) {
+				control.setVisible(false);
+			}
+		} else {
+			return 0;
+		}
+
+		Control control = item.getControl();
+		if (control != null && !control.isDisposed()) {
+			control.setBoundsInPixels(getClientAreaInPixels());
+			control.setVisible(true);
+		}
 	}
+
 	Event event = new Event();
 	event.item = item;
-	sendSelectionEvent (SWT.Selection, event, false);
+	sendSelectionEvent(SWT.Selection, event, false);
+
 	return 0;
 }
 
@@ -591,14 +655,16 @@ void hookEvents () {
 public int indexOf (TabItem item) {
 	checkWidget();
 	if (item == null) error (SWT.ERROR_NULL_ARGUMENT);
-	long list = GTK.gtk_container_get_children (handle);
-	if (list == 0) return -1;
-	int count = OS.g_list_length (list);
-	OS.g_list_free (list);
-	for (int i=0; i<count; i++) {
-		if (items [i] == item) return i;
+
+	int index = -1;
+	int count = getItemCount();
+	for (int i = 0; i < count; i++) {
+		if (items [i] == item) {
+			index = i;
+			break;
+		}
 	}
-	return -1;
+	return index;
 }
 
 @Override
@@ -608,12 +674,7 @@ Point minimumSize (int wHint, int hHint, boolean flushCache) {
 	for (int i=0; i<children.length; i++) {
 		Control child = children [i];
 		int index = 0;
-		int count = 0;
-		long list = GTK.gtk_container_get_children (handle);
-		if (list != 0) {
-			count = OS.g_list_length (list);
-			OS.g_list_free (list);
-		}
+		int count = getItemCount();
 		while (index < count) {
 			if (items [index].control == child) break;
 			index++;
@@ -714,14 +775,11 @@ public void removeSelectionListener (SelectionListener listener) {
 @Override
 void reskinChildren (int flags) {
 	if (items != null) {
-		long list = GTK.gtk_container_get_children (handle);
-		if (list != 0){
-			int count = OS.g_list_length (list);
-			OS.g_list_free (list);
-			for (int i=0; i<count; i++) {
-				TabItem item = items [i];
-				if (item != null) item.reskin (flags);
-			}
+		int count = getItemCount();
+
+		for (int i = 0; i < count; i++) {
+			TabItem item = items [i];
+			if (item != null) item.reskin(flags);
 		}
 	}
 	super.reskinChildren (flags);

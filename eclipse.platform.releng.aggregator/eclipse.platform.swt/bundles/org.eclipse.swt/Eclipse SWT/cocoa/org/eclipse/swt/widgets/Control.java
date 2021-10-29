@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,8 @@
  *     Stefan Xenos (Google) - bug 468854 - Add a requestLayout method to Control
  *******************************************************************************/
 package org.eclipse.swt.widgets;
+
+import java.util.*;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.accessibility.*;
@@ -81,6 +83,8 @@ public abstract class Control extends Widget implements Drawable {
 	 * Magic number comes from experience. There's no API for this value in Cocoa.
 	 */
 	static final int DEFAULT_DRAG_HYSTERESIS = 5;
+
+	static final boolean FORCE_RUN_UPDATE = Boolean.valueOf(System.getProperty("org.eclipse.swt.internal.control.forceRunUpdate"));
 
 Control () {
 	/* Do nothing */
@@ -4166,7 +4170,9 @@ public void setRedraw (boolean redraw) {
 	if (redraw) {
 		if (--drawCount == 0) {
 			invalidateVisibleRegion ();
-			redrawWidget(topView (), true);
+			NSView topView = topView ();
+			redrawWidget(topView, true);
+			if (view.id != topView.id) redrawWidget(view, true);
 		}
 	} else {
 		if (drawCount == 0) {
@@ -4348,8 +4354,10 @@ public void setTextDirection(int textDirection) {
  */
 public void setToolTipText (String string) {
 	checkWidget();
-	toolTipText = string;
-	checkToolTip (null);
+	if (!Objects.equals(string, toolTipText)) {
+		toolTipText = string;
+		checkToolTip (null);
+	}
 }
 
 /**
@@ -5120,9 +5128,12 @@ boolean traverseMnemonic (Event event) {
  * to be processed before this method returns. If there
  * are no outstanding paint request, this method does
  * nothing.
- * <p>
- * Note: This method does not cause a redraw.
- * </p>
+ * <p>Note:</p>
+ * <ul>
+ * <li>This method does not cause a redraw.</li>
+ * <li>Some OS versions forcefully perform automatic deferred painting.
+ * This method does nothing in that case.</li>
+ * </ul>
  *
  * @exception SWTException <ul>
  *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
@@ -5140,6 +5151,16 @@ public void update () {
 }
 
 boolean update (boolean all) {
+	if (!FORCE_RUN_UPDATE) {
+		/*
+		 * Bigsur seems to force the use of the Automatic Deferred Painting mechanism.
+		 * This behavior was applicable only for applications linked with 10.14, but
+		 * with BigSur it seems this is forced on all applications. So, we don't do
+		 * anything here on BigSur. Since MAC Launcher is now rebuilt using 10.14 SDK,
+		 * we don't do anything for any of the MAC versions(See Bug 574351 for details)
+		 */
+		return true;
+	}
 	if (NSGraphicsContext.currentContext() == null) {
 		if (!view.lockFocusIfCanDraw()) {
 			return false;

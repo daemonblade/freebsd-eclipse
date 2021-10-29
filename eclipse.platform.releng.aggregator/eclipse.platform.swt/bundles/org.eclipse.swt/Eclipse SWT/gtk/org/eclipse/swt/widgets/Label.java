@@ -19,6 +19,8 @@ import org.eclipse.swt.accessibility.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.gtk3.*;
+import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class represent a non-selectable
@@ -54,7 +56,6 @@ import org.eclipse.swt.internal.gtk.*;
  */
 public class Label extends Control {
 	long frameHandle, labelHandle, imageHandle, boxHandle;
-	ImageList imageList;
 	Image image;
 	String text;
 
@@ -207,6 +208,7 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 		long lang = OS.pango_context_get_language (context);
 		long font = getFontDescription ();
 		long metrics = OS.pango_context_get_metrics (context, font, lang);
+		OS.pango_font_description_free (font);
 		int ascent = OS.PANGO_PIXELS (OS.pango_font_metrics_get_ascent (metrics));
 		int descent = OS.PANGO_PIXELS (OS.pango_font_metrics_get_descent (metrics));
 		OS.pango_font_metrics_unref (metrics);
@@ -228,9 +230,11 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 @Override
 void createHandle (int index) {
 	state |= HANDLE | THEME_BACKGROUND;
-	fixedHandle = OS.g_object_new (display.gtk_fixed_get_type (), 0);
-	if (fixedHandle == 0) error (SWT.ERROR_NO_HANDLES);
-	gtk_widget_set_has_surface_or_window (fixedHandle, true);
+
+	fixedHandle = OS.g_object_new(display.gtk_fixed_get_type(), 0);
+	if (fixedHandle == 0) error(SWT.ERROR_NO_HANDLES);
+	if (!GTK.GTK4) GTK3.gtk_widget_set_has_window(fixedHandle, true);
+
 	if ((style & SWT.SEPARATOR) != 0) {
 		if ((style & SWT.HORIZONTAL)!= 0) {
 			handle = GTK.gtk_separator_new (GTK.GTK_ORIENTATION_HORIZONTAL);
@@ -246,26 +250,35 @@ void createHandle (int index) {
 		if (handle == 0) error (SWT.ERROR_NO_HANDLES);
 	} else {
 		if (GTK.GTK4) {
-			handle = gtk_box_new (GTK.GTK_ORIENTATION_HORIZONTAL, false, 0);
-		} else {
-			handle = GTK.gtk_event_box_new();
-			boxHandle = gtk_box_new (GTK.GTK_ORIENTATION_HORIZONTAL, false, 0);
-			if (boxHandle == 0) error (SWT.ERROR_NO_HANDLES);
-		}
-		if (handle == 0) error (SWT.ERROR_NO_HANDLES);
-		labelHandle = GTK.gtk_label_new_with_mnemonic (null);
-		if (labelHandle == 0) error (SWT.ERROR_NO_HANDLES);
-		imageHandle = GTK.gtk_image_new ();
-		if (imageHandle == 0) error (SWT.ERROR_NO_HANDLES);
-		if (GTK.GTK4) {
-			GTK.gtk_container_add (handle, labelHandle);
-			GTK.gtk_container_add (handle, imageHandle);
+			handle = gtk_box_new(GTK.GTK_ORIENTATION_HORIZONTAL, false, 0);
+			if (handle == 0) error(SWT.ERROR_NO_HANDLES);
+
+			labelHandle = GTK.gtk_label_new_with_mnemonic(null);
+			if (labelHandle == 0) error(SWT.ERROR_NO_HANDLES);
+
+			imageHandle = GTK4.gtk_picture_new();
+			if (imageHandle == 0) error(SWT.ERROR_NO_HANDLES);
+
+			GTK4.gtk_box_append(handle, labelHandle);
+			GTK4.gtk_box_append(handle, imageHandle);
 			gtk_box_set_child_packing(handle, labelHandle, true, true, 0, GTK.GTK_PACK_START);
 			gtk_box_set_child_packing(handle, imageHandle, true, true, 0, GTK.GTK_PACK_START);
 		} else {
-			GTK.gtk_container_add (handle, boxHandle);
-			GTK.gtk_container_add (boxHandle, labelHandle);
-			GTK.gtk_container_add (boxHandle, imageHandle);
+			handle = GTK3.gtk_event_box_new();
+			if (handle == 0) error(SWT.ERROR_NO_HANDLES);
+
+			boxHandle = gtk_box_new(GTK.GTK_ORIENTATION_HORIZONTAL, false, 0);
+			if (boxHandle == 0) error(SWT.ERROR_NO_HANDLES);
+
+			labelHandle = GTK.gtk_label_new_with_mnemonic(null);
+			if (labelHandle == 0) error(SWT.ERROR_NO_HANDLES);
+
+			imageHandle = GTK.gtk_image_new();
+			if (imageHandle == 0) error(SWT.ERROR_NO_HANDLES);
+
+			GTK3.gtk_container_add(handle, boxHandle);
+			GTK3.gtk_container_add(boxHandle, labelHandle);
+			GTK3.gtk_container_add(boxHandle, imageHandle);
 			gtk_box_set_child_packing(boxHandle, labelHandle, true, true, 0, GTK.GTK_PACK_START);
 			gtk_box_set_child_packing(boxHandle, imageHandle, true, true, 0, GTK.GTK_PACK_START);
 		}
@@ -273,16 +286,30 @@ void createHandle (int index) {
 	if ((style & SWT.BORDER) != 0) {
 		frameHandle = GTK.gtk_frame_new (null);
 		if (frameHandle == 0) error (SWT.ERROR_NO_HANDLES);
-		GTK.gtk_container_add (fixedHandle, frameHandle);
-		GTK.gtk_container_add (frameHandle, handle);
-		if (!GTK.GTK4) GTK.gtk_frame_set_shadow_type (frameHandle, GTK.GTK_SHADOW_ETCHED_IN);
+		if (GTK.GTK4) {
+			OS.swt_fixed_add(fixedHandle, frameHandle);
+			GTK4.gtk_frame_set_child(frameHandle, handle);
+		} else {
+			GTK3.gtk_container_add (fixedHandle, frameHandle);
+			GTK3.gtk_container_add (frameHandle, handle);
+			GTK3.gtk_frame_set_shadow_type (frameHandle, GTK.GTK_SHADOW_ETCHED_IN);
+		}
 	} else {
-		GTK.gtk_container_add (fixedHandle, handle);
+		if (GTK.GTK4) {
+			OS.swt_fixed_add(fixedHandle, handle);
+		} else {
+			GTK3.gtk_container_add (fixedHandle, handle);
+		}
 	}
 	if ((style & SWT.SEPARATOR) != 0) return;
 	if ((style & SWT.WRAP) != 0) {
-		GTK.gtk_label_set_line_wrap (labelHandle, true);
-		GTK.gtk_label_set_line_wrap_mode (labelHandle, OS.PANGO_WRAP_WORD_CHAR);
+		if (GTK.GTK4) {
+			GTK4.gtk_label_set_wrap(labelHandle, true);
+			GTK4.gtk_label_set_wrap_mode(labelHandle, OS.PANGO_WRAP_WORD_CHAR);
+		} else {
+			GTK3.gtk_label_set_line_wrap (labelHandle, true);
+			GTK3.gtk_label_set_line_wrap_mode (labelHandle, OS.PANGO_WRAP_WORD_CHAR);
+		}
 	}
 	// In GTK 3 font description is inherited from parent widget which is not how SWT has always worked,
 	// reset to default font to get the usual behavior
@@ -449,8 +476,6 @@ void releaseHandle () {
 @Override
 void releaseWidget () {
 	super.releaseWidget ();
-	if (imageList != null) imageList.dispose ();
-	imageList = null;
 	image = null;
 	text = null;
 }
@@ -560,7 +585,7 @@ int setBounds (int x, int y, int width, int height, boolean move, boolean resize
 		GTK.gtk_widget_get_allocation(labelHandle, allocation);
 		allocation.width = labelWidth;
 		allocation.height = labelHeight;
-		GTK.gtk_widget_size_allocate (labelHandle, allocation);
+		GTK3.gtk_widget_size_allocate (labelHandle, allocation);
 	}
 	return result;
 }
@@ -569,15 +594,16 @@ int setBounds (int x, int y, int width, int height, boolean move, boolean resize
 void setFontDescription (long font) {
 	super.setFontDescription (font);
 	if (labelHandle != 0) setFontDescription (labelHandle, font);
-	if (imageHandle != 0) setFontDescription (imageHandle, font);
 
-	// Bug 445801: Work around for computeSize not returning a different value after
-	// changing font, see https://bugzilla.gnome.org/show_bug.cgi?id=753116
-	// This updates the pango context and also clears the size request cache on the GTK side.
-	int originalDirection = (style & SWT.RIGHT_TO_LEFT) != 0 ? GTK.GTK_TEXT_DIR_RTL : GTK.GTK_TEXT_DIR_LTR;
-	int tempDirection = (style & SWT.RIGHT_TO_LEFT) != 0 ? GTK.GTK_TEXT_DIR_LTR : GTK.GTK_TEXT_DIR_RTL;
-	GTK.gtk_widget_set_direction (labelHandle, tempDirection);
-	GTK.gtk_widget_set_direction (labelHandle, originalDirection);
+	if (labelHandle != 0) {
+		// Bug 445801: Work around for computeSize not returning a different value after
+		// changing font, see https://bugzilla.gnome.org/show_bug.cgi?id=753116
+		// This updates the pango context and also clears the size request cache on the GTK side.
+		int originalDirection = (style & SWT.RIGHT_TO_LEFT) != 0 ? GTK.GTK_TEXT_DIR_RTL : GTK.GTK_TEXT_DIR_LTR;
+		int tempDirection = (style & SWT.RIGHT_TO_LEFT) != 0 ? GTK.GTK_TEXT_DIR_LTR : GTK.GTK_TEXT_DIR_RTL;
+		GTK.gtk_widget_set_direction (labelHandle, tempDirection);
+		GTK.gtk_widget_set_direction (labelHandle, originalDirection);
+	}
 }
 
 @Override
@@ -619,16 +645,23 @@ public void setImage (Image image) {
 	}
 	if ((style & SWT.SEPARATOR) != 0) return;
 	this.image = image;
-	if (imageList != null) imageList.dispose ();
-	imageList = null;
 	if (image != null) {
-		imageList = new ImageList ();
-		imageList.add (image);
-		GTK.gtk_image_set_from_surface(imageHandle, image.surface);
+		if (GTK.GTK4) {
+			long pixbuf = ImageList.createPixbuf(image);
+			long texture = GDK.gdk_texture_new_for_pixbuf(pixbuf);
+			OS.g_object_unref(pixbuf);
+			GTK4.gtk_picture_set_paintable(imageHandle, texture);
+		} else {
+			GTK3.gtk_image_set_from_surface(imageHandle, image.surface);
+		}
 		GTK.gtk_widget_hide (labelHandle);
 		GTK.gtk_widget_show (imageHandle);
 	} else {
-		GTK.gtk_image_set_from_surface(imageHandle, 0);
+		if (GTK.GTK4) {
+			GTK4.gtk_picture_set_paintable(imageHandle, 0);
+		} else {
+			GTK3.gtk_image_set_from_surface(imageHandle, 0);
+		}
 		GTK.gtk_widget_show (labelHandle);
 		GTK.gtk_widget_hide (imageHandle);
 	}
