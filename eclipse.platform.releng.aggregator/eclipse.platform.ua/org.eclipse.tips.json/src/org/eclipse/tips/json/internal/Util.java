@@ -1,9 +1,19 @@
+/*******************************************************************************
+ * Copyright (c) 2018, 2021 Remain Software and others
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     wim.jongman@remainsoftware.com - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.tips.json.internal;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.MessageFormat;
@@ -15,7 +25,6 @@ import org.osgi.framework.FrameworkUtil;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 public class Util {
 
@@ -111,24 +120,6 @@ public class Util {
 			}
 		}
 		return result;
-	}
-
-	/**
-	 * @param input the json string representation
-	 * @return the parsed json object or null if a json object could not be found in
-	 *         the string
-	 * @throws IOException
-	 */
-	public static JsonObject getJson(String input) throws IOException {
-		try (InputStream stream = new ByteArrayInputStream(input.getBytes());
-				InputStreamReader reader = new InputStreamReader(stream)) {
-			JsonElement element = new JsonParser().parse(reader);
-			if (element instanceof JsonObject) {
-				return (JsonObject) element;
-			} else {
-				return null;
-			}
-		}
 	}
 
 	/**

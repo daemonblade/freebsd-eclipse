@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Remain Software
+ * Copyright (c) 2018, 2021 Remain Software and others
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -105,8 +106,11 @@ public abstract class JsonTipProvider extends TipProvider {
 	}
 
 	private JsonObject loadJsonObject() throws IOException {
-		try (InputStream stream = fJsonUrl.openStream(); InputStreamReader reader = new InputStreamReader(stream)) {
-			Object result = new JsonParser().parse(reader);
+		// RFC 8259: https://tools.ietf.org/html/rfc8259#section-8.1
+		// Json MUST be encoded as UTF-8, unless in a closed system.
+		try (InputStream stream = fJsonUrl.openStream();
+				InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+			Object result = JsonParser.parseReader(reader);
 			if (result instanceof JsonObject) {
 				return (JsonObject) result;
 			} else {

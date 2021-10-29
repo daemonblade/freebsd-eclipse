@@ -39,17 +39,17 @@ public class ScopeRegistry {
 
 	private static List<IScopeHandle> scopes = null;
 
-	private static ScopeRegistry instance;
-
 	private boolean initialized = false;
+
+	private static class RegistryHolder {
+		static final ScopeRegistry instance = new ScopeRegistry();
+	}
 
 	private ScopeRegistry() {
 	}
 
 	public static ScopeRegistry getInstance() {
-		if (instance == null)
-			instance = new ScopeRegistry();
-		return instance;
+		return RegistryHolder.instance;
 	}
 
 	public AbstractHelpScope getScope(String id) {
@@ -190,7 +190,7 @@ public class ScopeRegistry {
 	 * returning each part of the phrase as a separate element
 	 *
 	 */
-	class ScopePhrase{
+	static class ScopePhrase{
 
 		private String phrase;
 		private int cursor;
@@ -240,7 +240,7 @@ public class ScopeRegistry {
 	 * on one Scope, or a union/intersection of scopes.
 	 *
 	 */
-	private class TempScope
+	private static class TempScope
 	{
 		public final static int SELF=0;
 		public final static int UNION=1;

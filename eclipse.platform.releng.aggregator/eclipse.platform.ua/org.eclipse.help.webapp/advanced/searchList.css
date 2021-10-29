@@ -16,6 +16,7 @@ body {
     <%=prefs.getViewBackgroundStyle()%>
 	color: WindowText;
 	font: <%=prefs.getViewFont()%>;
+	font-size: .875rem;
 	padding: 0px;
 	border: 0px;
 	margin-top: 5px;
@@ -27,6 +28,7 @@ body {
 
 table {
 	font: <%=prefs.getViewFont()%>;
+	font-size: .875rem;
 	width: 100%;
 	table-layout: fixed;
 }
@@ -94,6 +96,18 @@ a:hover {
 
 .description {
 	display: <%=data.isShowDescriptions() ? "block" : "none"%>;
+}
+.location {
+	display: <%=data.isShowLocations() ? "block" : "none"%>;
+	font-size:80%;
+	overflow:visible;
+	white-space:nowrap;
+}
+.location, .location a {
+	color:#006633;
+}
+.active .location, .active .location a {
+	color:HighlightText;
 }
 
 <%@ include file="darkTheme.css"%>

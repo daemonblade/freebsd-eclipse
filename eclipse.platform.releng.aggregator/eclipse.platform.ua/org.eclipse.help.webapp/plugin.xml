@@ -36,6 +36,11 @@
             base-name="/advanced"
             httpcontextId="help">
       </resource>
+      <resource
+            alias="/m"
+            base-name="/m"
+            httpcontextId="help">
+      </resource>
       <serviceSelector
             filter="(other.info=org.eclipse.help)">
       </serviceSelector>
@@ -120,6 +125,11 @@
       <servlet
             alias="/about.html"
             class="org.eclipse.help.internal.webapp.servlet.AboutServlet"
+            httpcontextId="help">
+      </servlet>
+      <servlet
+            alias="/m/index.js"
+            class="org.eclipse.help.internal.webapp.HelpUiJs"
             httpcontextId="help">
       </servlet>
       <servlet

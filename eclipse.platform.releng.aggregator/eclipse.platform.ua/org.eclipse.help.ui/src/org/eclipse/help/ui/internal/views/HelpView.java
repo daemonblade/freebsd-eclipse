@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.help.ui.internal.views;
 
+import static org.eclipse.jface.util.Util.isValid;
+
 import org.eclipse.help.IContext;
 import org.eclipse.help.IContextProvider;
 import org.eclipse.help.IHelpResource;
@@ -44,38 +46,26 @@ import org.eclipse.ui.forms.HyperlinkGroup;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.part.ViewPart;
 
-public class HelpView extends ViewPart implements IPartListener2,
-		ISelectionChangedListener, IPageChangedListener {
+public class HelpView extends ViewPart implements IPartListener2, ISelectionChangedListener, IPageChangedListener {
 	private FormToolkit toolkit;
 
 	private String firstPageId;
 
 	private ReusableHelpPart reusableHelpPart;
 
-	//private Hashtable pageRecs;
-
 	private IWorkbenchPart monitoredPart;
 
 	private boolean visible;
 
-	/**
-	 *
-	 */
-	public HelpView() {
-	}
-
 	@Override
 	public void createPartControl(Composite parent) {
 		toolkit = new FormToolkit(parent.getDisplay());
-		toolkit.getHyperlinkGroup().setHyperlinkUnderlineMode(
-				HyperlinkGroup.UNDERLINE_HOVER);
-		// toolkit.setBackground(toolkit.getColors().createNoContentBackground());
+		toolkit.getHyperlinkGroup().setHyperlinkUnderlineMode(HyperlinkGroup.UNDERLINE_HOVER);
 		toolkit.getColors().initializeSectionToolBarColors();
 		reusableHelpPart.createControl(parent, toolkit);
 		reusableHelpPart.setDefaultContextHelpText(Messages.HelpView_defaultText);
 		reusableHelpPart.showPage(getFirstPage());
-		PlatformUI.getWorkbench().getHelpSystem().setHelp(parent,
-			 "org.eclipse.help.ui.helpView"); //$NON-NLS-1$
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(parent, "org.eclipse.help.ui.helpView"); //$NON-NLS-1$
 		IWorkbenchWindow window = getSite().getPage().getWorkbenchWindow();
 		if (window == null)
 			return;
@@ -205,15 +195,12 @@ public class HelpView extends ViewPart implements IPartListener2,
 	}
 
 	private void updateActivePart() {
-		if (reusableHelpPart == null)
+		if (reusableHelpPart == null || !reusableHelpPart.isMonitoringContextHelp() || monitoredPart == null) {
 			return;
-		if (!reusableHelpPart.isMonitoringContextHelp())
-			return;
-		if (monitoredPart == null)
-			return;
-		Control c = monitoredPart.getSite().getShell().getDisplay()
-				.getFocusControl();
-		if (c != null && c.isDisposed() == false && visible) {
+		}
+		Control c = monitoredPart.getSite().getShell().getDisplay().getFocusControl();
+
+		if (isValid(c) && visible) {
 			IContextProvider provider = monitoredPart.getAdapter(IContextProvider.class);
 			if (provider != null)
 				reusableHelpPart.update(provider, null, monitoredPart, c, false);
@@ -272,10 +259,6 @@ public class HelpView extends ViewPart implements IPartListener2,
 	}
 
 	@Override
-	public void partInputChanged(IWorkbenchPartReference partRef) {
-	}
-
-	@Override
 	public void partOpened(IWorkbenchPartReference partRef) {
 		if (isThisPart(partRef)) {
 			visible = true;
@@ -315,11 +298,6 @@ public class HelpView extends ViewPart implements IPartListener2,
 		getSite().getShell().getDisplay().asyncExec(this::updateActivePart);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.help.ui.internal.views.BaseHelpView#getFirstPage()
-	 */
 	protected String getFirstPage() {
 		if (firstPageId!=null)
 			return firstPageId;
@@ -350,11 +328,6 @@ public class HelpView extends ViewPart implements IPartListener2,
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.help.ui.internal.views.BaseHelpView#getHelpPartStyle()
-	 */
 	protected int getHelpPartStyle() {
 		return ReusableHelpPart.getDefaultStyle();
 	}

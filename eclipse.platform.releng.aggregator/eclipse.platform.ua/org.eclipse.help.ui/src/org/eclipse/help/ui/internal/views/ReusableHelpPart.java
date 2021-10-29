@@ -102,8 +102,7 @@ import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.ILayoutExtension;
 import org.eclipse.ui.forms.widgets.ScrolledForm;
 
-public class ReusableHelpPart implements IHelpUIConstants,
-		IActivityManagerListener {
+public class ReusableHelpPart implements IHelpUIConstants, IActivityManagerListener {
 	public static final int ALL_TOPICS = 1 << 1;
 
 	public static final int CONTEXT_HELP = 1 << 2;
@@ -313,6 +312,8 @@ public class ReusableHelpPart implements IHelpUIConstants,
 		protected ArrayList<PartRec> partRecs;
 
 		private int nflexible;
+
+		private boolean updateActionBars = true;
 
 		public HelpPartPage(String id, String text) {
 			this.id = id;
@@ -531,7 +532,10 @@ public class ReusableHelpPart implements IHelpUIConstants,
 					bars.activate();
 				else
 					bars.deactivate();
-				bars.updateActionBars();
+
+				if (this.updateActionBars) {
+					bars.updateActionBars();
+				}
 			} else {
 				((SubToolBarManager) subToolBarManager).setVisible(visible);
 				if (subMenuManager != null) {
@@ -684,7 +688,7 @@ public class ReusableHelpPart implements IHelpUIConstants,
 		}
 	}
 
-	class RoleFilter extends ViewerFilter {
+	static class RoleFilter extends ViewerFilter {
 
 		@Override
 		public boolean select(Viewer viewer, Object parentElement,
@@ -697,11 +701,10 @@ public class ReusableHelpPart implements IHelpUIConstants,
 		}
 	}
 
-	class UAFilter extends ViewerFilter {
+	static class UAFilter extends ViewerFilter {
 
 		@Override
-		public boolean select(Viewer viewer, Object parentElement,
-				Object element) {
+		public boolean select(Viewer viewer, Object parentElement, Object element) {
 			return !UAContentFilter.isFiltered(element, HelpEvaluationContext.getContext());
 		}
 	}
@@ -715,8 +718,7 @@ public class ReusableHelpPart implements IHelpUIConstants,
 		history = new ReusableHelpPartHistory();
 		this.style = style;
 		ensureHelpIndexed();
-		PlatformUI.getWorkbench().getActivitySupport().getActivityManager()
-				.addActivityManagerListener(this);
+		PlatformUI.getWorkbench().getActivitySupport().getActivityManager().addActivityManagerListener(this);
 	}
 
 	/*
@@ -775,8 +777,8 @@ public class ReusableHelpPart implements IHelpUIConstants,
 		pages = new ArrayList<>();
 		// federated search page
 		HelpPartPage page = new HelpPartPage(HV_FSEARCH_PAGE,
-				Messages.ReusableHelpPart_searchPage_name,
-				IHelpUIConstants.IMAGE_HELP_SEARCH);
+	 			Messages.ReusableHelpPart_searchPage_name,
+	 			IHelpUIConstants.IMAGE_HELP_SEARCH);
 		page.setVerticalSpacing(0);
 		page.addPart(HV_SEE_ALSO, false);
 		page.addPart(HV_MISSING_CONTENT, false);
@@ -1069,8 +1071,14 @@ public class ReusableHelpPart implements IHelpUIConstants,
 			return false;
 		if (oldPage != null) {
 			oldPage.stop();
+			oldPage.updateActionBars = false;
 			oldPage.setVisible(false);
+			oldPage.updateActionBars = true;
 		}
+
+		newPage.updateActionBars = false;
+		newPage.setVisible(true);
+		newPage.updateActionBars = true;
 		mform.getForm().setText(null); //(newPage.getText());
 		mform.getForm().getForm().setSeparatorVisible(newPage.getText()!=null);
 		Image newImage=null;
@@ -1078,7 +1086,7 @@ public class ReusableHelpPart implements IHelpUIConstants,
 		//if (iconId != null)
 			//newImage = HelpUIResources.getImage(iconId);
 		mform.getForm().setImage(newImage);
-		newPage.setVisible(true);
+
 		toolBarManager.update(true);
 		currentPage = newPage;
 		if (mform.isStale())
@@ -1092,6 +1100,7 @@ public class ReusableHelpPart implements IHelpUIConstants,
 			}
 			updateNavigation();
 		}
+
 		return true;
 	}
 
@@ -1586,10 +1595,6 @@ public class ReusableHelpPart implements IHelpUIConstants,
 		}
 	}
 
-	/*
-	 * private void doOpen(Object target) { String href = getHref(target); if
-	 * (href != null) showURL(href, getShowDocumentsInPlace()); }
-	 */
 
 	private void doOpen(Object target, boolean replace) {
 		String href = getHref(target);
@@ -1600,7 +1605,6 @@ public class ReusableHelpPart implements IHelpUIConstants,
 	private void doOpenInHelp(Object target) {
 		String href = getHref(target);
 		if (href != null)
-			// WorkbenchHelp.displayHelpResource(href);
 			showURL(href, false);
 	}
 
@@ -1765,7 +1769,7 @@ public class ReusableHelpPart implements IHelpUIConstants,
 		return engineManager;
 	}
 
-	static public int getDefaultStyle() {
+	public static int getDefaultStyle() {
 		int style = ALL_TOPICS | CONTEXT_HELP | SEARCH;
 		if (ProductPreferences.getBoolean(HelpBasePlugin.getDefault(), "indexView")) { //$NON-NLS-1$
 			style |= INDEX;
@@ -1807,4 +1811,3 @@ public class ReusableHelpPart implements IHelpUIConstants,
 		mcPart.updateStatus();
 	}
 }
-

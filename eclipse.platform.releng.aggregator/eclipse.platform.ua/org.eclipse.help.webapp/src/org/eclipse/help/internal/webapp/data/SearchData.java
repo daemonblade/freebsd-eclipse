@@ -325,6 +325,20 @@ public class SearchData extends ActivitiesData {
 		return showCategories;
 	}
 
+	public boolean isShowLocations() {
+		Cookie[] cookies = request.getCookies();
+		if (cookies != null) {
+				for (int i=0;i<cookies.length;++i) {
+					if ("showLocations".equals(cookies[i].getName())) { //$NON-NLS-1$
+						return String.valueOf(true).equals(cookies[i].getValue());
+					}
+				}
+		}
+		// get default from preferences
+		return Platform.getPreferencesService().getBoolean
+				(HelpBasePlugin.PLUGIN_ID, IHelpBaseConstants.P_KEY_SHOW_SEARCH_LOCATION, true, null);
+	}
+
 	public boolean isShowDescriptions() {
 		Cookie[] cookies = request.getCookies();
 		if (cookies != null) {
@@ -705,7 +719,9 @@ public class SearchData extends ActivitiesData {
 			catOrder.put(order.get(i), Integer.valueOf(i));
 		}
 
-		Arrays.sort(toSort, (c1, c2) -> {
+		Arrays.sort(toSort, (hit1, hit2) -> {
+			IHelpResource c1 = hit1.getCategory();
+			IHelpResource c2 = hit2.getCategory();
 			if (c1 == null && c2 == null) return 0;
 			if (c1 == null) return 1;
 			if (c2 == null) return -1;
