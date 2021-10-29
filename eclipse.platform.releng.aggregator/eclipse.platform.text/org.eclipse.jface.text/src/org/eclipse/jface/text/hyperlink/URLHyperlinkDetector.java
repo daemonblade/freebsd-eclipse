@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2010 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,7 +16,6 @@ package org.eclipse.jface.text.hyperlink;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.StringTokenizer;
 
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -32,6 +31,7 @@ import org.eclipse.jface.text.Region;
  */
 public class URLHyperlinkDetector extends AbstractHyperlinkDetector {
 
+	private static final String STOP_CHARACTERS= " \t\n\r\f<>"; //$NON-NLS-1$
 
 	/**
 	 * Creates a new URL hyperlink detector.
@@ -78,6 +78,7 @@ public class URLHyperlinkDetector extends AbstractHyperlinkDetector {
 		char quote= 0;
 		int urlOffsetInLine= 0;
 		int urlLength= 0;
+		int lineEnd= line.length();
 
 		int urlSeparatorOffset= line.indexOf("://"); //$NON-NLS-1$
 		while (urlSeparatorOffset >= 0) {
@@ -94,17 +95,38 @@ public class URLHyperlinkDetector extends AbstractHyperlinkDetector {
 					quote= ch;
 			} while (Character.isUnicodeIdentifierStart(ch));
 			urlOffsetInLine++;
-
+			// Handle prefixes like "scm:https://foo": scan further back
+			if (ch == ':') {
+				int i= urlOffsetInLine - 1;
+				while (i >= 0) {
+					ch= line.charAt(i--);
+					if (ch == '"' || ch == '\'') {
+						quote= ch;
+						break;
+					}
+					if (ch != ':' && !Character.isUnicodeIdentifierStart(ch)) {
+						break;
+					}
+				}
+			}
 			// Right to "://"
-			StringTokenizer tokenizer= new StringTokenizer(line.substring(urlSeparatorOffset + 3), " \t\n\r\f<>", false); //$NON-NLS-1$
-			if (!tokenizer.hasMoreTokens())
-				return null;
+			int afterSeparator= urlSeparatorOffset + 3;
+			int end= afterSeparator;
+			while (end < lineEnd && STOP_CHARACTERS.indexOf(line.charAt(end)) < 0) {
+				end++;
+			}
+			// Remove trailing periods.
+			while (end > afterSeparator && line.charAt(end - 1) == '.') {
+				end--;
+			}
+			if (end > afterSeparator) {
+				urlLength= end - urlOffsetInLine;
+				if (offsetInLine >= urlOffsetInLine && offsetInLine <= urlOffsetInLine + urlLength) {
+					break;
+				}
+			}
 
-			urlLength= tokenizer.nextToken().length() + 3 + urlSeparatorOffset - urlOffsetInLine;
-			if (offsetInLine >= urlOffsetInLine && offsetInLine <= urlOffsetInLine + urlLength)
-				break;
-
-			urlSeparatorOffset= line.indexOf("://", urlSeparatorOffset + 1); //$NON-NLS-1$
+			urlSeparatorOffset= line.indexOf("://", afterSeparator); //$NON-NLS-1$
 		}
 
 		if (urlSeparatorOffset < 0)
@@ -122,6 +144,10 @@ public class URLHyperlinkDetector extends AbstractHyperlinkDetector {
 				endOffset= nextWhitespace;
 			if (endOffset != -1)
 				urlLength= endOffset - urlOffsetInLine;
+		}
+
+		if (urlOffsetInLine + urlLength == urlSeparatorOffset + 3) {
+			return null; // Only "scheme://"
 		}
 
 		// Set and validate URL string

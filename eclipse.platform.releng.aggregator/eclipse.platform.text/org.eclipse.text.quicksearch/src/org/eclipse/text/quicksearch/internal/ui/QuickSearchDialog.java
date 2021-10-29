@@ -114,6 +114,7 @@ import org.eclipse.ui.internal.WorkbenchImages;
 import org.eclipse.ui.internal.WorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.progress.UIJob;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * Shows a list of items to the user with a text entry field for a string
@@ -343,6 +344,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 	private static final String EMPTY_STRING = ""; //$NON-NLS-1$
 
 	private final int MAX_LINE_LEN;
+	private final int MAX_RESULTS;
 
 	private IHandlerActivation showViewHandler;
 
@@ -366,6 +368,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 
 	private IWorkbenchWindow window;
 	private Text searchIn;
+	private Label listLabel;
 
 	/**
 	 * Creates a new instance of the class.
@@ -387,6 +390,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		contentProvider = new ContentProvider();
 		selectionMode = NONE;
 		MAX_LINE_LEN = QuickSearchActivator.getDefault().getPreferences().getMaxLineLen();
+		MAX_RESULTS = QuickSearchActivator.getDefault().getPreferences().getMaxResults();
 		progressJob.setSystem(true);
 	}
 
@@ -427,7 +431,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 					TableColumn col = table.getColumn(i);
 					try {
 						if (col!=null) {
-							col.setWidth(Integer.valueOf(columnWidths[i]));
+							col.setWidth(Integer.parseInt(columnWidths[i]));
 						}
 					} catch (Throwable e) {
 						QuickSearchActivator.log(e);
@@ -758,7 +762,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		searchIn.setToolTipText(Messages.QuickSearchDialog_InTooltip);
 		GridDataFactory.fillDefaults().grab(true, false).indent(5, 0).applyTo(searchIn);
 
-		final Label listLabel = createLabels(content);
+		listLabel = createLabels(content);
 
 		sashForm = new SashForm(content, SWT.VERTICAL);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(sashForm);
@@ -1080,14 +1084,13 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 	 * @return return dialog settings for this dialog
 	 */
 	protected IDialogSettings getDialogSettings() {
-		IDialogSettings settings = IDEWorkbenchPlugin.getDefault()
-				.getDialogSettings().getSection(DIALOG_SETTINGS);
-
+		IDialogSettings dialogSettings = PlatformUI.getDialogSettingsProvider(FrameworkUtil.getBundle(IDEWorkbenchPlugin.class))
+				.getDialogSettings();
+		IDialogSettings settings = dialogSettings.getSection(DIALOG_SETTINGS);
 		if (settings == null) {
-			settings = IDEWorkbenchPlugin.getDefault().getDialogSettings()
+			settings = dialogSettings
 					.addNewSection(DIALOG_SETTINGS);
 		}
-
 		return settings;
 	}
 
@@ -1098,6 +1101,12 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		if (list != null && !list.getTable().isDisposed()) {
 			int itemCount = contentProvider.getNumberOfElements();
 			list.setItemCount(itemCount);
+			if (itemCount < MAX_RESULTS) {
+				listLabel.setText(NLS.bind(Messages.QuickSearchDialog_listLabel, itemCount));
+			} else {
+				listLabel.setText(NLS.bind(Messages.QuickSearchDialog_listLabel_limit_reached, itemCount));
+			}
+			listLabel.pack();
 			list.refresh(true, false);
 			Button openButton = getButton(OPEN_BUTTON_ID);
 			if (openButton!=null && !openButton.isDisposed()) {
@@ -1292,6 +1301,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 						contentProvider.refresh();
 					}
 				});
+				this.searcher.setMaxResults(MAX_RESULTS);
 				applyPathMatcher();
 				refreshWidgets();
 			}

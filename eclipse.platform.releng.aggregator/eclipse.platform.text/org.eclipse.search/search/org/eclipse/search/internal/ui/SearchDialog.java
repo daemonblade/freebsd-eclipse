@@ -22,6 +22,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import org.osgi.framework.FrameworkUtil;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.custom.CTabFolder;
@@ -94,7 +96,6 @@ public class SearchDialog extends ExtendedDialogWindow implements ISearchPageCon
 	// Dialog store id constants
 	private static final String DIALOG_NAME= "SearchDialog"; //$NON-NLS-1$
 	private static final String STORE_PREVIOUS_PAGE= "PREVIOUS_PAGE"; //$NON-NLS-1$
-	private static final String STORE_IS_OPEN_PREVIOUS_PAGE= "IS_OPEN_PREVIOUS_PAGE"; //$NON-NLS-1$
 
 
 	private class TabFolderLayout extends Layout {
@@ -154,7 +155,9 @@ public class SearchDialog extends ExtendedDialogWindow implements ISearchPageCon
 	private final ISelection fCurrentSelection;
 	private final String[] fCurrentEnclosingProject;
 
-	private final IDialogSettings fDialogSettings= DialogSettings.getOrCreateSection(SearchPlugin.getDefault().getDialogSettings(), DIALOG_NAME);
+	private final IDialogSettings fDialogSettings = DialogSettings.getOrCreateSection(
+			PlatformUI.getDialogSettingsProvider(FrameworkUtil.getBundle(SearchDialog.class)).getDialogSettings(),
+			DIALOG_NAME);
 
 
 	public SearchDialog(IWorkbenchWindow window, String pageId) {
@@ -165,9 +168,8 @@ public class SearchDialog extends ExtendedDialogWindow implements ISearchPageCon
 
 		fDescriptors= filterByActivities(SearchPlugin.getDefault().getEnabledSearchPageDescriptors(pageId));
 		fInitialPageId= pageId;
-
-		if (fInitialPageId == null && fDialogSettings.getBoolean(STORE_IS_OPEN_PREVIOUS_PAGE)) {
-			fInitialPageId= fDialogSettings.get(STORE_PREVIOUS_PAGE);
+		if (fInitialPageId == null && SearchPreferencePage.rememberLastUsedPage()) {
+			fInitialPageId = fDialogSettings.get(STORE_PREVIOUS_PAGE);
 		}
 
 		fPageChangeListeners= null;
@@ -335,7 +337,6 @@ public class SearchDialog extends ExtendedDialogWindow implements ISearchPageCon
 
 		ListSelectionDialog dialog = new ListSelectionDialog(getShell(), input, ArrayContentProvider.getInstance(),
 				labelProvider, message) {
-			Button fLastUsedPageButton;
 
 			@Override
 			public void create() {
@@ -353,20 +354,7 @@ public class SearchDialog extends ExtendedDialogWindow implements ISearchPageCon
 				this.getButton(IDialogConstants.DESELECT_ALL_ID).addSelectionListener(listener);
 			}
 
-			@Override
-			protected Control createDialogArea(Composite parent) {
-				Composite control= (Composite)super.createDialogArea(parent);
-				fLastUsedPageButton= new Button(control, SWT.CHECK);
-				fLastUsedPageButton.setText(SearchMessages.SearchPageSelectionDialog_rememberLastUsedPage_message);
-				fLastUsedPageButton.setSelection(fDialogSettings.getBoolean(STORE_IS_OPEN_PREVIOUS_PAGE));
-				return control;
-			}
 
-			@Override
-			protected void okPressed() {
-				fDialogSettings.put(STORE_IS_OPEN_PREVIOUS_PAGE, fLastUsedPageButton.getSelection());
-				super.okPressed();
-			}
 		};
 		dialog.setTitle(SearchMessages.SearchPageSelectionDialog_title);
 		dialog.setInitialSelections(SearchPlugin.getDefault().getEnabledSearchPageDescriptors(fInitialPageId).toArray());

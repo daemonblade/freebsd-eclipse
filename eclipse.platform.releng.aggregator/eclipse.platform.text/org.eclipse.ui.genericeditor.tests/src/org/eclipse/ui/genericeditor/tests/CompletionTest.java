@@ -14,15 +14,24 @@
 package org.eclipse.ui.genericeditor.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Test;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceRegistration;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ST;
@@ -36,8 +45,17 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Widget;
 
+import org.eclipse.core.runtime.ILog;
+import org.eclipse.core.runtime.ILogListener;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
+
 import org.eclipse.jface.text.ITextSelection;
+import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.contentassist.ICompletionProposal;
+import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
+import org.eclipse.jface.text.contentassist.IContextInformation;
+import org.eclipse.jface.text.contentassist.IContextInformationValidator;
 import org.eclipse.jface.text.tests.util.DisplayHelper;
 
 import org.eclipse.ui.genericeditor.tests.contributions.BarContentAssistProcessor;
@@ -64,6 +82,38 @@ public class CompletionTest extends AbstratGenericEditorTest {
 		checkCompletionContent(completionProposalList);
 		// TODO find a way to actually trigger completion and verify result against Editor content
 		// Assert.assertEquals("Completion didn't complete", "bars are good for a beer.", ((StyledText)editor.getAdapter(Control.class)).getText());
+	}
+
+	@Test
+	public void testDefaultContentAssistBug570488() throws Exception {
+		ILog log= Platform.getLog(Platform.getBundle("org.eclipse.jface.text"));
+		TestLogListener listener= new TestLogListener();
+		log.addLogListener(listener);
+		createAndOpenFile("Bug570488.txt", "bar 'bar'");
+		openConentAssist();
+		DisplayHelper.driveEventQueue(Display.getCurrent());
+		assertFalse("There are errors in the log", listener.messages.stream().anyMatch(s -> s.matches(IStatus.ERROR)));
+		log.removeLogListener(listener);
+	}
+
+	@Test
+	public void testCompletionService() throws Exception {
+		Bundle bundle= FrameworkUtil.getBundle(CompletionTest.class);
+		assertNotNull(bundle);
+		BundleContext bundleContext= bundle.getBundleContext();
+		assertNotNull(bundleContext);
+		MockContentAssistProcessor service= new MockContentAssistProcessor();
+		ServiceRegistration<IContentAssistProcessor> registration= bundleContext.registerService(IContentAssistProcessor.class, service,
+				new Hashtable<>(Collections.singletonMap("contentType", "org.eclipse.ui.genericeditor.tests.content-type")));
+		DisplayHelper.driveEventQueue(Display.getCurrent());
+		final Set<Shell> beforeShells= Arrays.stream(editor.getSite().getShell().getDisplay().getShells()).filter(Shell::isVisible).collect(Collectors.toSet());
+		editor.selectAndReveal(3, 0);
+		openConentAssist();
+		this.completionShell= findNewShell(beforeShells, editor.getSite().getShell().getDisplay());
+		final Table completionProposalList= findCompletionSelectionControl(completionShell);
+		checkCompletionContent(completionProposalList);
+		assertTrue("Service was not called!", service.called);
+		registration.unregister();
 	}
 
 	@Test
@@ -225,5 +275,53 @@ public class CompletionTest extends AbstratGenericEditorTest {
 		if (this.completionShell != null && !completionShell.isDisposed()) {
 			completionShell.close();
 		}
+	}
+
+	private static final class TestLogListener implements ILogListener {
+
+		List<IStatus> messages= new ArrayList<>();
+
+		@Override
+		public void logging(IStatus status, String plugin) {
+			messages.add(status);
+		}
+
+	}
+
+	private static final class MockContentAssistProcessor implements IContentAssistProcessor {
+
+		private boolean called;
+
+		@Override
+		public ICompletionProposal[] computeCompletionProposals(ITextViewer viewer, int offset) {
+			called= true;
+			return null;
+		}
+
+		@Override
+		public IContextInformation[] computeContextInformation(ITextViewer viewer, int offset) {
+			return null;
+		}
+
+		@Override
+		public char[] getCompletionProposalAutoActivationCharacters() {
+			return null;
+		}
+
+		@Override
+		public char[] getContextInformationAutoActivationCharacters() {
+			return null;
+		}
+
+		@Override
+		public String getErrorMessage() {
+			return null;
+		}
+
+		@Override
+		public IContextInformationValidator getContextInformationValidator() {
+			return null;
+		}
+
 	}
 }

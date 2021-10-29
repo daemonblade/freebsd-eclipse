@@ -149,12 +149,71 @@
             id="org.eclipse.ui.edit.text.showRulerAnnotationInformation">
       </command>
    </extension>
+   <extension point="org.eclipse.ui.commandImages">
+      <image
+            commandId="org.eclipse.ui.edit.text.folding.collapse_all"
+            disabledIcon="$nl$/icons/full/dlcl16/collapseall.png"
+            icon="$nl$/icons/full/elcl16/collapseall.png">
+      </image>
+      <image
+            commandId="org.eclipse.ui.edit.text.folding.expand_all"
+            icon="$nl$/icons/full/elcl16/expandall.png">
+      </image>
+  </extension>
    
    <extension
          point="org.eclipse.ui.handlers">
       <handler
             commandId="org.eclipse.ui.edit.text.removeTrailingWhitespace"
             class="org.eclipse.ui.internal.editors.text.RemoveTrailingWhitespaceHandler">
+      </handler>
+      <handler
+            commandId="org.eclipse.ui.edit.text.folding.collapse_all"
+            class="org.eclipse.ui.internal.editors.text.folding.CollapseAllHandler">
+         <enabledWhen>
+            <with
+                  variable="activePart">
+               <adapt
+                     type="org.eclipse.jface.text.ITextOperationTarget">
+               </adapt>
+            </with>
+         </enabledWhen>
+      </handler>
+      <handler
+            class="org.eclipse.ui.internal.editors.text.folding.CollapseHandler"
+            commandId="org.eclipse.ui.edit.text.folding.collapse">
+         <enabledWhen>
+            <with
+                  variable="activePart">
+               <adapt
+                     type="org.eclipse.jface.text.ITextOperationTarget">
+               </adapt>
+            </with>
+         </enabledWhen>
+      </handler>
+      <handler
+            class="org.eclipse.ui.internal.editors.text.folding.ExpandAllHandler"
+            commandId="org.eclipse.ui.edit.text.folding.expand_all">
+         <enabledWhen>
+            <with
+                  variable="activePart">
+               <adapt
+                     type="org.eclipse.jface.text.ITextOperationTarget">
+               </adapt>
+            </with>
+         </enabledWhen>
+      </handler>
+      <handler
+            class="org.eclipse.ui.internal.editors.text.folding.ExpandHandler"
+            commandId="org.eclipse.ui.edit.text.folding.expand">
+         <enabledWhen>
+            <with
+                  variable="activePart">
+               <adapt
+                     type="org.eclipse.jface.text.ITextOperationTarget">
+               </adapt>
+            </with>
+         </enabledWhen>
       </handler>
    </extension>
    

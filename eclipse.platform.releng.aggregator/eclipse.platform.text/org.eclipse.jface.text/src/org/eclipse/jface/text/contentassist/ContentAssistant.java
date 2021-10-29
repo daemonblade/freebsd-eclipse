@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,12 +15,15 @@
  *     Marcel Bruch, bruch@cs.tu-darmstadt.de - [content assist] Allow to re-sort proposals - https://bugs.eclipse.org/bugs/show_bug.cgi?id=350991
  *     John Glassmyer, jogl@google.com - catch Content Assist exceptions to protect navigation keys - http://bugs.eclipse.org/434901
  *     Mickael Istria (Red Hat Inc.) - [251156] Allow multiple contentAssitProviders internally & inheritance
+ *     Christoph Läubrich - Bug 508821 - [Content assist] More flexible API in IContentAssistProcessor to decide whether to auto-activate or not
+ *     						Bug 570459 - [genericeditor] Support ContentAssistProcessors to be registered as OSGi-Services
  *******************************************************************************/
 package org.eclipse.jface.text.contentassist;
 
+import static org.eclipse.jface.util.Util.isValid;
+
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -28,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTError;
@@ -112,6 +114,10 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 	 */
 	public static final String SELECT_PREVIOUS_PROPOSAL_COMMAND_ID= "org.eclipse.ui.edit.text.contentAssist.selectPreviousProposal"; //$NON-NLS-1$
 
+	enum TriggerType {
+		CONTEXT_INFORMATION,
+		COMPLETION_PROPOSAL, NONE;
+	}
 
 	/**
 	 * A generic closer class used to monitor various interface events in order to determine whether
@@ -133,7 +139,7 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 		protected void install() {
 			Control control= fContentAssistSubjectControlAdapter.getControl();
 			fControl= control;
-			if (Helper.okToUse(control)) {
+			if (isValid(control)) {
 
 				Shell shell= control.getShell();
 				fShell= shell;
@@ -158,12 +164,12 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 		protected void uninstall() {
 			Control shell= fShell;
 			fShell= null;
-			if (Helper.okToUse(shell))
+			if (isValid(shell))
 				shell.removeControlListener(this);
 
 			Control control= fControl;
 			fControl= null;
-			if (Helper.okToUse(control)) {
+			if (isValid(control)) {
 
 				control.removeMouseListener(this);
 				control.removeFocusListener(this);
@@ -210,7 +216,7 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 		@Override
 		public void focusLost(FocusEvent e) {
 			Control control= fControl;
-			if (Helper.okToUse(control)) {
+			if (isValid(control)) {
 				Display d= control.getDisplay();
 				if (d != null) {
 					d.asyncExec(() -> {
@@ -301,17 +307,6 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 				threadToStop.interrupt();
 		}
 
-		private boolean contains(char[] characters, char character) {
-			if (characters != null) {
-				for (char c : characters) {
-					if (character == c) {
-						return true;
-					}
-				}
-			}
-			return false;
-		}
-
 		@Override
 		public void keyPressed(KeyEvent e) {
 			// Only act on typed characters and ignore modifier-only events
@@ -321,24 +316,20 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 			if (e.character != 0 && (e.stateMask == SWT.ALT))
 				return;
 
+			TriggerType triggerType= getAutoActivationTriggerType(e.character);
+
 			// Only act on characters that are trigger candidates. This
 			// avoids computing the model selection on every keystroke
-			if (!isAutoActivationTriggerChar(e.character)) {
+			if (triggerType == TriggerType.NONE) {
 				stop();
 				return;
 			}
 
 			int showStyle;
-			int pos= fContentAssistSubjectControlAdapter.getSelectedRange().x;
-			char[] activation;
-
-			activation= fContentAssistSubjectControlAdapter.getCompletionProposalAutoActivationCharacters(ContentAssistant.this, pos);
-
-			if (contains(activation, e.character) && !isProposalPopupActive())
+			if (triggerType == TriggerType.COMPLETION_PROPOSAL && !isProposalPopupActive())
 				showStyle= SHOW_PROPOSALS;
 			else {
-				activation= fContentAssistSubjectControlAdapter.getContextInformationAutoActivationCharacters(ContentAssistant.this, pos);
-				if (contains(activation, e.character) && !isContextInfoPopupActive())
+				if (triggerType == TriggerType.CONTEXT_INFORMATION && !isContextInfoPopupActive())
 					showStyle= SHOW_CONTEXT_INFO;
 				else {
 					stop();
@@ -358,6 +349,8 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 		}
 
 		protected void showAssist(final int showStyle) {
+			if (fContentAssistSubjectControlAdapter == null)
+				return;
 			final Control control= fContentAssistSubjectControlAdapter.getControl();
 			if (control == null)
 				return;
@@ -444,14 +437,14 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 			switch (type) {
 				case LAYOUT_PROPOSAL_SELECTOR:
 					if (fContextType == LAYOUT_CONTEXT_SELECTOR &&
-							Helper.okToUse(fShells[LAYOUT_CONTEXT_SELECTOR])) {
+							isValid(fShells[LAYOUT_CONTEXT_SELECTOR])) {
 						// Restore event notification to the tip popup.
 						addContentAssistListener((IContentAssistListener) fPopups[LAYOUT_CONTEXT_SELECTOR], CONTEXT_SELECTOR);
 					}
 					break;
 
 				case LAYOUT_CONTEXT_SELECTOR:
-					if (Helper.okToUse(fShells[LAYOUT_PROPOSAL_SELECTOR])) {
+					if (isValid(fShells[LAYOUT_PROPOSAL_SELECTOR])) {
 						if (fProposalPopupOrientation == PROPOSAL_STACKED)
 							layout(LAYOUT_PROPOSAL_SELECTOR, getSelectionOffset());
 						// Restore event notification to the proposal popup.
@@ -461,7 +454,7 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 					break;
 
 				case LAYOUT_CONTEXT_INFO_POPUP:
-					if (Helper.okToUse(fShells[LAYOUT_PROPOSAL_SELECTOR])) {
+					if (isValid(fShells[LAYOUT_PROPOSAL_SELECTOR])) {
 						if (fContextInfoPopupOrientation == CONTEXT_INFO_BELOW)
 							layout(LAYOUT_PROPOSAL_SELECTOR, getSelectionOffset());
 					}
@@ -501,13 +494,13 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 		protected void layoutProposalSelector(int offset) {
 			if (fContextType == LAYOUT_CONTEXT_INFO_POPUP &&
 					fContextInfoPopupOrientation == CONTEXT_INFO_BELOW &&
-					Helper.okToUse(fShells[LAYOUT_CONTEXT_INFO_POPUP])) {
+					isValid(fShells[LAYOUT_CONTEXT_INFO_POPUP])) {
 				// Stack proposal selector beneath the tip box.
 				Shell shell= fShells[LAYOUT_PROPOSAL_SELECTOR];
 				Shell parent= fShells[LAYOUT_CONTEXT_INFO_POPUP];
 				shell.setLocation(getStackedLocation(shell, parent));
 			} else if (fContextType != LAYOUT_CONTEXT_SELECTOR ||
-						!Helper.okToUse(fShells[LAYOUT_CONTEXT_SELECTOR])) {
+					!isValid(fShells[LAYOUT_CONTEXT_SELECTOR])) {
 				// There are no other presentations to be concerned with,
 				// so place the proposal selector beneath the cursor line.
 				Shell shell= fShells[LAYOUT_PROPOSAL_SELECTOR];
@@ -546,7 +539,7 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 			Shell shell= fShells[LAYOUT_CONTEXT_SELECTOR];
 			shell.setBounds(computeBoundsBelowAbove(shell, shell.getSize(), offset, null));
 
-			if (Helper.okToUse(fShells[LAYOUT_PROPOSAL_SELECTOR])) {
+			if (isValid(fShells[LAYOUT_PROPOSAL_SELECTOR])) {
 				switch (fProposalPopupOrientation) {
 					case PROPOSAL_REMOVE:
 						// Remove the proposal selector.
@@ -580,7 +573,7 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 					// Place the popup beneath the cursor line.
 					Shell parent= fShells[LAYOUT_CONTEXT_INFO_POPUP];
 					parent.setBounds(computeBoundsBelowAbove(parent, parent.getSize(), offset, null));
-					if (Helper.okToUse(fShells[LAYOUT_PROPOSAL_SELECTOR])) {
+					if (isValid(fShells[LAYOUT_PROPOSAL_SELECTOR])) {
 						// Stack the proposal selector beneath the context info popup.
 						Shell shell= fShells[LAYOUT_PROPOSAL_SELECTOR];
 						shell.setLocation(getStackedLocation(shell, parent));
@@ -739,12 +732,12 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 			switch (type) {
 				case LAYOUT_PROPOSAL_SELECTOR:
 					if (fContextType == LAYOUT_CONTEXT_SELECTOR &&
-							Helper.okToUse(fShells[LAYOUT_CONTEXT_SELECTOR]))
+							isValid(fShells[LAYOUT_CONTEXT_SELECTOR]))
 						// Disable event notification to the tip selector.
 						removeContentAssistListener((IContentAssistListener) fPopups[LAYOUT_CONTEXT_SELECTOR], CONTEXT_SELECTOR);
 					break;
 				case LAYOUT_CONTEXT_SELECTOR:
-					if (Helper.okToUse(fShells[LAYOUT_PROPOSAL_SELECTOR]))
+					if (isValid(fShells[LAYOUT_PROPOSAL_SELECTOR]))
 						// Disable event notification to the proposal selector.
 						removeContentAssistListener((IContentAssistListener) fPopups[LAYOUT_PROPOSAL_SELECTOR], PROPOSAL_SELECTOR);
 					break;
@@ -1141,10 +1134,22 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 		if (processor == null) {
 			fProcessors.remove(contentType);
 		} else {
-			if (!fProcessors.containsKey(contentType)) {
-				fProcessors.put(contentType, new LinkedHashSet<>());
-			}
-			fProcessors.get(contentType).add(processor);
+			fProcessors.computeIfAbsent(contentType, key -> new LinkedHashSet<>()).add(processor);
+		}
+	}
+
+	/**
+	 * removes the given processor from all content types in this {@link ContentAssistant}
+	 *
+	 * @param processor The content-assist process to remove
+	 * @since 3.17
+	 */
+	public void removeContentAssistProcessor(IContentAssistProcessor processor) {
+		if (fProcessors == null || processor == null) {
+			return;
+		}
+		for (Set<IContentAssistProcessor> set : fProcessors.values()) {
+			set.remove(processor);
 		}
 	}
 
@@ -1185,26 +1190,28 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 	}
 
 	/**
+	 * @param c the character to check
 	 * @return whether the given char is an auto-activation trigger char
 	 * @since 3.15
 	 */
-	boolean isAutoActivationTriggerChar(char c) {
+	TriggerType getAutoActivationTriggerType(char c) {
 		if (fProcessors == null)
-			return false;
-
-		for (Set<IContentAssistProcessor> processorsForContentType : fProcessors.values()) {
-			for (IContentAssistProcessor processor : processorsForContentType) {
-				char[] triggers= processor.getCompletionProposalAutoActivationCharacters();
-				if (triggers != null && new String(triggers).indexOf(c) >= 0) {
-					return true;
-				}
-				triggers= processor.getContextInformationAutoActivationCharacters();
-				if (triggers != null && new String(triggers).indexOf(c) >= 0) {
-					return true;
-				}
+			return TriggerType.NONE;
+		int offset= fContentAssistSubjectControlAdapter.getSelectedRange().x;
+		Set<IContentAssistProcessor> processors= fContentAssistSubjectControlAdapter.getContentAssistProcessors(this, offset);
+		if (processors == null) {
+			return TriggerType.NONE;
+		}
+		for (IContentAssistProcessor processor : processors) {
+			IContentAssistProcessorExtension extension= IContentAssistProcessorExtension.adapt(processor);
+			if (extension.isCompletionProposalAutoActivation(c, fViewer, offset)) {
+				return TriggerType.COMPLETION_PROPOSAL;
+			}
+			if (extension.isContextInformationAutoActivation(c, fViewer, offset)) {
+				return TriggerType.CONTEXT_INFORMATION;
 			}
 		}
-		return false;
+		return TriggerType.NONE;
 	}
 
 	/**
@@ -1541,7 +1548,7 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 		registerHandler(SELECT_NEXT_PROPOSAL_COMMAND_ID, fProposalPopup.createProposalSelectionHandler(CompletionProposalPopup.ProposalSelectionHandler.SELECT_NEXT));
 		registerHandler(SELECT_PREVIOUS_PROPOSAL_COMMAND_ID, fProposalPopup.createProposalSelectionHandler(CompletionProposalPopup.ProposalSelectionHandler.SELECT_PREVIOUS));
 
-		if (Helper.okToUse(fContentAssistSubjectControlAdapter.getControl())) {
+		if (isValid(fContentAssistSubjectControlAdapter.getControl())) {
 			fContentAssistSubjectControlShell= fContentAssistSubjectControlAdapter.getControl().getShell();
 			fCASCSTraverseListener= e -> {
 				if (e.detail == SWT.TRAVERSE_ESCAPE && isProposalPopupActive())
@@ -1577,7 +1584,7 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 			fCloser= null;
 		}
 
-		if (Helper.okToUse(fContentAssistSubjectControlShell))
+		if (isValid(fContentAssistSubjectControlShell))
 			fContentAssistSubjectControlShell.removeTraverseListener(fCASCSTraverseListener);
 		fCASCSTraverseListener= null;
 		fContentAssistSubjectControlShell= null;
@@ -1730,7 +1737,7 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 	 */
 	private void installKeyListener() {
 		if (!fVerifyKeyListenerHooked) {
-			if (Helper.okToUse(fContentAssistSubjectControlAdapter.getControl())) {
+			if (isValid(fContentAssistSubjectControlAdapter.getControl())) {
 				fVerifyKeyListenerHooked= fContentAssistSubjectControlAdapter.prependVerifyKeyListener(fInternalListener);
 			}
 		}
@@ -1792,7 +1799,7 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 	 */
 	private void uninstallVerifyKeyListener() {
 		if (fVerifyKeyListenerHooked) {
-			if (Helper.okToUse(fContentAssistSubjectControlAdapter.getControl()))
+			if (isValid(fContentAssistSubjectControlAdapter.getControl()))
 				fContentAssistSubjectControlAdapter.removeVerifyKeyListener(fInternalListener);
 			fVerifyKeyListenerHooked= false;
 		}
@@ -1914,7 +1921,7 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 	 * @return the content-assist processors or <code>null</code> if none exists
 	 * @since 3.13
 	 */
-	private Set<IContentAssistProcessor> getProcessors(ITextViewer viewer, int offset) {
+	Set<IContentAssistProcessor> getProcessors(ITextViewer viewer, int offset) {
 		try {
 
 			IDocument document= viewer.getDocument();
@@ -1936,7 +1943,7 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 	 * @return the content-assist processors or <code>null</code> if none exists
 	 * @since 3.13
 	 */
-	private Set<IContentAssistProcessor> getProcessors(IContentAssistSubjectControl contentAssistSubjectControl, int offset) {
+	Set<IContentAssistProcessor> getProcessors(IContentAssistSubjectControl contentAssistSubjectControl, int offset) {
 		try {
 
 			IDocument document= contentAssistSubjectControl.getDocument();
@@ -2186,95 +2193,6 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 		return null;
 	}
 
-	/**
-	 * Returns the characters which when typed by the user should automatically initiate proposing
-	 * completions. The position is used to determine the appropriate content assist processor to
-	 * invoke.
-	 *
-	 * @param contentAssistSubjectControl the content assist subject control
-	 * @param offset a document offset
-	 * @return the auto activation characters
-	 * @see IContentAssistProcessor#getCompletionProposalAutoActivationCharacters()
-	 * @since 3.0
-	 */
-	char[] getCompletionProposalAutoActivationCharacters(IContentAssistSubjectControl contentAssistSubjectControl, int offset) {
-		return mergeResults(getProcessors(contentAssistSubjectControl, offset), IContentAssistProcessor::getCompletionProposalAutoActivationCharacters);
-	}
-
-	/**
-	 * Returns the characters which when typed by the user should automatically initiate proposing
-	 * completions. The position is used to determine the appropriate content assist processor to
-	 * invoke.
-	 *
-	 * @param viewer the text viewer
-	 * @param offset a document offset
-	 * @return the auto activation characters
-	 * @see IContentAssistProcessor#getCompletionProposalAutoActivationCharacters()
-	 */
-	char[] getCompletionProposalAutoActivationCharacters(ITextViewer viewer, int offset) {
-		return mergeResults(getProcessors(viewer, offset), IContentAssistProcessor::getCompletionProposalAutoActivationCharacters);
-	}
-
-	/**
-	 * Returns the characters which when typed by the user should automatically initiate the
-	 * presentation of context information. The position is used to determine the appropriate
-	 * content assist processor to invoke.
-	 *
-	 * @param viewer the text viewer
-	 * @param offset a document offset
-	 * @return the auto activation characters
-	 * @see IContentAssistProcessor#getContextInformationAutoActivationCharacters()
-	 * @since 3.0
-	 */
-	char[] getContextInformationAutoActivationCharacters(ITextViewer viewer, int offset) {
-		return mergeResults(getProcessors(viewer, offset), IContentAssistProcessor::getContextInformationAutoActivationCharacters);
-	}
-
-	/**
-	 * Returns the characters which when typed by the user should automatically initiate the
-	 * presentation of context information. The position is used to determine the appropriate
-	 * content assist processor to invoke.
-	 *
-	 * @param contentAssistSubjectControl the content assist subject control
-	 * @param offset a document offset
-	 * @return the auto activation characters
-	 * @see IContentAssistProcessor#getContextInformationAutoActivationCharacters()
-	 * @since 3.0
-	 */
-	char[] getContextInformationAutoActivationCharacters(IContentAssistSubjectControl contentAssistSubjectControl, int offset) {
-		return mergeResults(getProcessors(contentAssistSubjectControl, offset), IContentAssistProcessor::getContextInformationAutoActivationCharacters);
-	}
-
-	private char[] mergeResults(Collection<IContentAssistProcessor> processors, Function<IContentAssistProcessor, char[]> f) {
-		if (processors == null) {
-			return null;
-		}
-		char[][] arrays = processors.stream()
-			.map(f)
-			.filter(Objects::nonNull)
-			.filter(array -> array.length > 0)
-			.toArray(char[][]::new);
-		if (arrays.length == 0) {
-			return null;
-		} else if (arrays.length == 1) {
-			return arrays[0];
-		} else {
-			LinkedHashSet<Character> res = new LinkedHashSet<>();
-			for (char[] current : arrays) {
-				for (char c : current) {
-					res.add(Character.valueOf(c));
-				}
-			}
-			char[] array = new char[res.size()];
-			int index = 0;
-			for (Character c : res) {
-				array[index] = c.charValue();
-				index++;
-			}
-			return array;
-		}
-	}
-
 	@Override
 	public boolean requestWidgetToken(IWidgetTokenOwner owner) {
 		return false;
@@ -2396,7 +2314,7 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 			return null;
 
 		Rectangle maxBounds= null;
-		if (fContentAssistSubjectControl != null && Helper.okToUse(fContentAssistSubjectControl.getControl()))
+		if (fContentAssistSubjectControl != null && isValid(fContentAssistSubjectControl.getControl()))
 			maxBounds= fContentAssistSubjectControl.getControl().getDisplay().getBounds();
 		else {
 			// fallback
@@ -2802,4 +2720,5 @@ public class ContentAssistant implements IContentAssistant, IContentAssistantExt
 	boolean isAutoActivation() {
 		return fIsAutoActivated;
 	}
+
 }
