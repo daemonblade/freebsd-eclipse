@@ -7,7 +7,7 @@
 	<property name="targets" value="install"/>
 	
 	<!-- These properties are used by eclipse when exporting as Deployable plugin and fragments -->
-	<property name="version.suffix" value="3.113.0" />
+	<property name="version.suffix" value="3.117.0" />
 	
 	<condition property="plugindir" value="../../../eclipse.platform.swt/bundles/org.eclipse.swt" else="${buildDirectory}/plugins/org.eclipse.swt">
 		<available file="../../../eclipse.platform.swt/bundles/org.eclipse.swt" type="dir"/>

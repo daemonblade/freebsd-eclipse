@@ -15,17 +15,16 @@
     <parent>
         <artifactId>eclipse.platform.swt.binaries</artifactId>
         <groupId>eclipse.platform.swt.binaries</groupId>
-        <version>4.17.0-SNAPSHOT</version>
+        <version>4.21.0-SNAPSHOT</version>
         <relativePath>../../</relativePath>
     </parent>
       
     <groupId>eclipse.platform.swt.binaries</groupId>
     <artifactId>binaries-parent</artifactId>
-    <version>4.17.0-SNAPSHOT</version>
     <packaging>pom</packaging>
       
     <properties>
-        <forceContextQualifier>v20200831-1002</forceContextQualifier>
+        <forceContextQualifier>v20210906-0842</forceContextQualifier>
     </properties>
       
     <build>
@@ -79,17 +78,17 @@
                     <dependency>
                         <groupId>org.mozilla</groupId>
                         <artifactId>rhino-runtime</artifactId>
-                        <version>1.7.12</version>
+                        <version>1.7.13</version>
                     </dependency>
                     <dependency>
                         <groupId>org.apache.ant</groupId>
                         <artifactId>ant</artifactId>
-                        <version>1.10.8</version>
+                        <version>1.10.11</version>
                     </dependency>
                     <dependency>
                         <groupId>org.apache.ant</groupId>
                         <artifactId>ant-apache-bsf</artifactId>
-                        <version>1.10.8</version>
+                        <version>1.10.11</version>
                     </dependency>
                 </dependencies>
             </plugin>

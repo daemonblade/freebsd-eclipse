@@ -22,7 +22,7 @@
   </parent>
   <groupId>org.eclipse.swt</groupId>
   <artifactId>org.eclipse.swt.gtk.win32.x86_64</artifactId>
-  <version>3.109.0-SNAPSHOT</version>
+  <version>3.116.0-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 
   <properties>
@@ -75,7 +75,6 @@
                 <phase>process-resources</phase>
                 <configuration>
                   <target>
-                    <property name="machine_gtk3" value="1"/>
                     <property name="targets" value="install" />
                     <ant antfile="build.xml" target="build_libraries"/>
                   </target>
