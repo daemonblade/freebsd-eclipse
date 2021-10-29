@@ -42,7 +42,7 @@ import org.eclipse.compare.IResourceProvider;
 import org.eclipse.compare.IStreamContentAccessor;
 import org.eclipse.compare.IStreamMerger;
 import org.eclipse.compare.ITypedElement;
-import org.eclipse.compare.internal.core.ComparePlugin;
+import org.eclipse.compare.internal.core.CompareSettings;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.compare.structuremergeviewer.IStructureCreator;
 import org.eclipse.compare.structuremergeviewer.StructureDiffViewer;
@@ -285,7 +285,7 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 		debugRegistration = context.registerService(DebugOptionsListener.class, Policy.DEBUG_OPTIONS_LISTENER,
 				properties);
 
-		ComparePlugin.getDefault().setCappingDisabled(
+		CompareSettings.getDefault().setCappingDisabled(
 				getPreferenceStore().getBoolean(
 						ComparePreferencePage.CAPPING_DISABLED));
 	}
@@ -973,10 +973,8 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 		String rightType = guessType(input.getRight());
 
 		if (leftType != null || rightType != null) {
-			boolean right_text = rightType != null
-					&& ITypedElement.TEXT_TYPE.equals(rightType);
-			boolean left_text = leftType != null
-					&& ITypedElement.TEXT_TYPE.equals(leftType);
+			boolean right_text = ITypedElement.TEXT_TYPE.equals(rightType);
+			boolean left_text = ITypedElement.TEXT_TYPE.equals(leftType);
 			if ((rightType != null && !right_text)
 					|| (leftType != null && !left_text)) {
 				result.add(BINARY_TYPE);
@@ -1063,10 +1061,8 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 		String rightType= guessType(input.getRight());
 
 		if (leftType != null || rightType != null) {
-			boolean right_text = rightType != null
-					&& ITypedElement.TEXT_TYPE.equals(rightType);
-			boolean left_text = leftType != null
-					&& ITypedElement.TEXT_TYPE.equals(leftType);
+			boolean right_text = ITypedElement.TEXT_TYPE.equals(rightType);
+			boolean left_text = ITypedElement.TEXT_TYPE.equals(leftType);
 			initializeRegistries();
 			if ((rightType != null && !right_text)
 					|| (leftType != null && !left_text)) {
@@ -1499,10 +1495,8 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 		String rightType= guessType(input.getRight());
 
 		if (leftType != null || rightType != null) {
-			boolean right_text = rightType != null
-					&& ITypedElement.TEXT_TYPE.equals(rightType);
-			boolean left_text = leftType != null
-					&& ITypedElement.TEXT_TYPE.equals(leftType);
+			boolean right_text = ITypedElement.TEXT_TYPE.equals(rightType);
+			boolean left_text = ITypedElement.TEXT_TYPE.equals(leftType);
 			initializeRegistries();
 			if ((rightType != null && !right_text)
 					|| (leftType != null && !left_text)) {

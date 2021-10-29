@@ -33,12 +33,12 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.internal.ui.IHelpContextIds;
 import org.eclipse.team.internal.ui.TeamUIMessages;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.IWorkingSetManager;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ContainerCheckedTreeViewer;
 import org.eclipse.ui.dialogs.IWorkingSetSelectionDialog;
+import org.osgi.framework.FrameworkUtil;
 
 public abstract class GlobalRefreshElementSelectionPage extends WizardPage {
 
@@ -69,7 +69,7 @@ public abstract class GlobalRefreshElementSelectionPage extends WizardPage {
 
 	protected GlobalRefreshElementSelectionPage(String pageName) {
 		super(pageName);
-		IDialogSettings s = TeamUIPlugin.getPlugin().getDialogSettings();
+		IDialogSettings s = PlatformUI.getDialogSettingsProvider(FrameworkUtil.getBundle(GlobalRefreshElementSelectionPage.class)).getDialogSettings();
 		this.settings = s.getSection(STORE_SECTION);
 		if(settings == null) {
 			settings = s.addNewSection(STORE_SECTION);
@@ -245,7 +245,7 @@ public abstract class GlobalRefreshElementSelectionPage extends WizardPage {
 	 */
 	public Object[] getRootElement() {
 		TreeItem[] item = fViewer.getTree().getItems();
-		List checked = new ArrayList();
+		List<Object> checked = new ArrayList<>();
 		for (TreeItem child : item) {
 			collectCheckedItems(child, checked);
 		}
@@ -341,7 +341,7 @@ public abstract class GlobalRefreshElementSelectionPage extends WizardPage {
 
 	protected abstract boolean checkWorkingSetElements();
 
-	private void collectCheckedItems(TreeItem item, List checked) {
+	private void collectCheckedItems(TreeItem item, List<Object> checked) {
 		if(item.getChecked() && !item.getGrayed()) {
 			checked.add(item.getData());
 		} else if(item.getGrayed()) {

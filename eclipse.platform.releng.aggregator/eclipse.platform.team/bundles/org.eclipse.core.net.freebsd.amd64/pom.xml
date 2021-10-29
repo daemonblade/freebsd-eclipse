@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (c) 2012, 2015 Eclipse Foundation and others.
+  Copyright (c) 2012, 2021 Eclipse Foundation and others.
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Distribution License v1.0
   which accompanies this distribution, and is available at
@@ -14,72 +14,16 @@
   <parent>
     <artifactId>eclipse.platform.team</artifactId>
     <groupId>eclipse.platform.team</groupId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.core</groupId>
   <artifactId>org.eclipse.core.net.freebsd.amd64</artifactId>
-  <version>1.2.400-SNAPSHOT</version>
+  <version>1.2.500-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 
   <properties>
     <skipAPIAnalysis>true</skipAPIAnalysis>
   </properties>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.eclipse.tycho</groupId>
-        <artifactId>target-platform-configuration</artifactId>
-        <configuration>
-          <environments>
-            <environment>
-              <os>freebsd</os>
-              <ws>gtk</ws>
-              <arch>amd64</arch>
-            </environment>
-          </environments>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-
-  <profiles>
-    <profile>
-      <id>build-natives</id>
-      <activation>
-        <property>
-          <!-- This has to be hardcoded. Profiles are not allowed to use pom defined properties :-( -->
-          <name>native</name>
-          <value>gtk.freebsd.amd64</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>natives</id>
-                <phase>process-resources</phase>
-                <configuration>
-                  <target>
-                    <exec executable="gmake" newenvironment="false" dir="../org.eclipse.core.net/natives/unix/freebsd/"/>
-                    <copy todir=".">
-                      <fileset dir="../org.eclipse.core.net/natives/unix/freebsd/">
-                        <include name="libgnomeproxy-*.so"/>
-                      </fileset>
-                    </copy>
-                  </target>
-                </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 </project>

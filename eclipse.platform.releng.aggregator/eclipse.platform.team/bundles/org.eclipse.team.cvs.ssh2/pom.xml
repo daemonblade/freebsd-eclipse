@@ -14,11 +14,11 @@
   <parent>
     <artifactId>eclipse.platform.team</artifactId>
     <groupId>eclipse.platform.team</groupId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.team</groupId>
   <artifactId>org.eclipse.team.cvs.ssh2</artifactId>
-  <version>3.3.800-SNAPSHOT</version>
+  <version>3.4.0-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 </project>

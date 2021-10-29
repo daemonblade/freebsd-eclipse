@@ -51,6 +51,7 @@ import org.eclipse.ui.activities.WorkbenchActivityHelper;
 import org.eclipse.ui.model.AdaptableList;
 import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * The main page of the configure project wizard. It contains a table
@@ -183,7 +184,7 @@ public class ConfigureProjectWizardMainPage extends WizardPage {
 			showAllToggle.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					ArrayList all = new ArrayList(Arrays.asList(wizards.getChildren()));
+					ArrayList<Object> all = new ArrayList<>(Arrays.asList(wizards.getChildren()));
 					if(showAllToggle.getSelection()) {
 						all.addAll(Arrays.asList(disabledWizards.getChildren()));
 					}
@@ -194,7 +195,7 @@ public class ConfigureProjectWizardMainPage extends WizardPage {
 
 		if(wizards.size() == 0 && showAllToggle != null) {
 			showAllToggle.setSelection(true);
-			ArrayList all = new ArrayList(Arrays.asList(wizards.getChildren()));
+			ArrayList<Object> all = new ArrayList<>(Arrays.asList(wizards.getChildren()));
 			all.addAll(Arrays.asList(disabledWizards.getChildren()));
 			viewer.setInput(new AdaptableList(all));
 		} else {
@@ -248,7 +249,7 @@ public class ConfigureProjectWizardMainPage extends WizardPage {
 	private void initializeWizardSelection() {
 		String selectedWizardId = null;
 
-		IDialogSettings dialogSettings = TeamUIPlugin.getPlugin().getDialogSettings();
+		IDialogSettings dialogSettings = PlatformUI.getDialogSettingsProvider(FrameworkUtil.getBundle(ConfigureProjectWizardMainPage.class)).getDialogSettings();
 		this.settings = dialogSettings.getSection("ConfigureProjectWizard"); //$NON-NLS-1$
 		if (this.settings == null) {
 			this.settings = dialogSettings.addNewSection("ConfigureProjectWizard"); //$NON-NLS-1$
