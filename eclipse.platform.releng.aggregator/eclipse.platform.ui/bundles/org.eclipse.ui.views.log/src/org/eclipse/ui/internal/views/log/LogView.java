@@ -38,12 +38,14 @@ import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.e4.ui.dialogs.filteredtree.FilteredTree;
 import org.eclipse.e4.ui.dialogs.filteredtree.PatternFilter;
+import org.eclipse.equinox.log.ExtendedLogEntry;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.util.Policy;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.window.Window;
+import org.eclipse.osgi.framework.log.FrameworkLogEntry;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
@@ -186,8 +188,7 @@ public class LogView extends ViewPart implements LogListener {
 	@Override
 	public void createPartControl(Composite parent) {
 		BundleContext context = FrameworkUtil.getBundle(getClass()).getBundleContext();
-		this.logReaderServiceTracker = new ServiceTracker<LogReaderService, LogReaderService>(context,
-				LogReaderService.class, null) {
+		this.logReaderServiceTracker = new ServiceTracker<>(context, LogReaderService.class, null) {
 			@Override
 			public LogReaderService addingService(ServiceReference<LogReaderService> reference) {
 				LogReaderService service = context.getService(reference);
@@ -825,7 +826,7 @@ public class LogView extends ViewPart implements LogListener {
 		return elements.toArray(new AbstractEntry[elements.size()]);
 	}
 
-	protected void handleClear() {
+	public void handleClear() {
 		BusyIndicator.showWhile(fTree.getDisplay(), () -> {
 			elements.clear();
 			groups.clear();
@@ -1060,12 +1061,21 @@ public class LogView extends ViewPart implements LogListener {
 
 	@Override
 	public void logged(org.osgi.service.log.LogEntry input) {
-		if (!isPlatformLogOpen())
+		if (!isPlatformLogOpen()) {
 			return;
+		}
+		FrameworkLogEntry betterInput = null;
+		if (input instanceof ExtendedLogEntry) {
+			ExtendedLogEntry logEntry = (ExtendedLogEntry) input;
+			Object context = logEntry.getContext();
+			if (context instanceof FrameworkLogEntry) {
+				betterInput = (FrameworkLogEntry) context;
+			}
+		}
 
 		if (batchEntries) {
 			// create LogEntry immediately to don't loose IStatus creation date.
-			LogEntry entry = createLogEntry(input);
+			LogEntry entry = betterInput != null ? createLogEntry(betterInput) : createLogEntry(input);
 			batchedEntries.add(entry);
 			return;
 		}
@@ -1075,7 +1085,7 @@ public class LogView extends ViewPart implements LogListener {
 			asyncRefresh(true);
 			fFirstEvent = false;
 		} else {
-			LogEntry entry = createLogEntry(input);
+			LogEntry entry = betterInput != null ? createLogEntry(betterInput) : createLogEntry(input);
 
 			if (!batchedEntries.isEmpty()) {
 				// batch new entry as well, to have only one asyncRefresh()
@@ -1111,15 +1121,6 @@ public class LogView extends ViewPart implements LogListener {
 
 	private LogEntry createLogEntry(IStatus status) {
 		LogEntry entry = new LogEntry(status, currentSession);
-
-		if (status.getException() instanceof CoreException) {
-			IStatus coreStatus = ((CoreException) status.getException()).getStatus();
-			if (coreStatus != null) {
-				LogEntry childEntry = createLogEntry(coreStatus);
-				entry.addChild(childEntry);
-			}
-		}
-
 		return entry;
 	}
 
@@ -1144,6 +1145,20 @@ public class LogView extends ViewPart implements LogListener {
 		IStatus status = new Status(severity, input.getBundle().getSymbolicName(), input.getMessage(),
 				input.getException());
 		return createLogEntry(status);
+	}
+
+	private LogEntry createLogEntry(FrameworkLogEntry input) {
+		// create a status from OSGi LogEntry
+		IStatus status = new Status(input.getSeverity(), input.getEntry(), input.getMessage(), input.getThrowable());
+		LogEntry logEntry = createLogEntry(status);
+		FrameworkLogEntry[] children = input.getChildren();
+		if (children != null) {
+			for (FrameworkLogEntry child : children) {
+				LogEntry entry = createLogEntry(child);
+				logEntry.addChild(entry);
+			}
+		}
+		return logEntry;
 	}
 
 	private synchronized void pushEntry(LogEntry entry) {
@@ -1645,7 +1660,9 @@ public class LogView extends ViewPart implements LogListener {
 	 * @return the dialog settings to be used
 	 */
 	private IDialogSettings getLogSettings() {
-		IDialogSettings settings = Activator.getDefault().getDialogSettings();
+		IDialogSettings settings = PlatformUI
+				.getDialogSettingsProvider(FrameworkUtil.getBundle(LogView.class))
+				.getDialogSettings();
 		return settings.getSection(getClass().getName());
 	}
 
@@ -1722,8 +1739,10 @@ public class LogView extends ViewPart implements LogListener {
 
 	private void writeFilterSettings() {
 		IDialogSettings settings = getLogSettings();
-		if (settings == null)
-			settings = Activator.getDefault().getDialogSettings().addNewSection(getClass().getName());
+		if (settings == null) {
+			settings = PlatformUI.getDialogSettingsProvider(FrameworkUtil.getBundle(LogView.class)).getDialogSettings()
+					.addNewSection(getClass().getName());
+		}
 		settings.put(P_USE_LIMIT, fMemento.getString(P_USE_LIMIT).equals("true")); //$NON-NLS-1$
 		settings.put(P_LOG_LIMIT, fMemento.getInteger(P_LOG_LIMIT).intValue());
 		settings.put(P_LOG_INFO, fMemento.getString(P_LOG_INFO).equals("true")); //$NON-NLS-1$

@@ -82,11 +82,11 @@ import org.eclipse.ui.ide.ResourceUtil;
 import org.eclipse.ui.internal.WorkbenchMessages;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
-import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 import org.eclipse.ui.internal.ide.model.ResourceFactory;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.statushandlers.StatusManager;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * Shows a list of resources to the user with a text entry field for a string
@@ -227,10 +227,13 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 
 	@Override
 	protected IDialogSettings getDialogSettings() {
-		IDialogSettings settings = IDEWorkbenchPlugin.getDefault().getDialogSettings().getSection(DIALOG_SETTINGS);
+		IDialogSettings dialogSettings = PlatformUI
+				.getDialogSettingsProvider(FrameworkUtil.getBundle(FilteredResourcesSelectionDialog.class))
+				.getDialogSettings();
+		IDialogSettings settings = dialogSettings.getSection(DIALOG_SETTINGS);
 
 		if (settings == null) {
-			settings = IDEWorkbenchPlugin.getDefault().getDialogSettings().addNewSection(DIALOG_SETTINGS);
+			settings = dialogSettings.addNewSection(DIALOG_SETTINGS);
 		}
 
 		return settings;
@@ -539,6 +542,13 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 		progressMonitor.done();
 	}
 
+	private boolean parentIsRoot(IResource resource) {
+		if (resource.getParent() == null) {
+			return false;
+		}
+		return resource.getParent().getType() == IResource.ROOT;
+	}
+
 	/**
 	 * Sets the derived flag on the ResourceFilter instance
 	 */
@@ -619,10 +629,11 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 			}
 
 			IResource res = (IResource) element;
-
 			StringBuilder str = new StringBuilder(res.getName());
-			str.append(" - "); //$NON-NLS-1$
-			str.append(res.getParent().getFullPath().makeRelative().toString());
+			if (!parentIsRoot(res)) {
+				str.append(" - "); //$NON-NLS-1$
+				str.append(res.getParent().getFullPath().makeRelative().toString());
+			}
 
 			return str.toString();
 		}
@@ -654,15 +665,16 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 			getMatchPositions(resourceName, searchFieldString).stream()
 					.forEach(position -> str.setStyle(position.offset, position.length, boldStyler));
 
-			// Show extra package info on every element
-			str.append(" - ", StyledString.QUALIFIER_STYLER); //$NON-NLS-1$
-			str.append(resource.getParent().getFullPath().makeRelative().toString(), StyledString.QUALIFIER_STYLER);
-
+			if (!parentIsRoot(resource)) {
+				// Show extra package info on elements not in root
+				str.append(" - ", StyledString.QUALIFIER_STYLER); //$NON-NLS-1$
+				str.append(resource.getParent().getFullPath().makeRelative().toString(), StyledString.QUALIFIER_STYLER);
+			}
 			return str;
 		}
 
 		private StyledString styleResourceExtensionMatch(IResource resource, String matchingString, Styler styler) {
-			StyledString str = new StyledString(resource.getName().trim());
+			StyledString str = new StyledString(resource.getName());
 			String resourceExtension = resource.getFileExtension();
 			int lastDotIndex = matchingString.lastIndexOf('.');
 			if (lastDotIndex == -1 || resourceExtension == null) {
@@ -791,8 +803,13 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 				return super.getImage(element);
 			}
 
-			IResource parent = ((IResource) element).getParent();
-			return provider.getImage(parent);
+			final IResource resource = (IResource) element;
+
+			if (parentIsRoot(resource)) {
+				return provider.getImage(resource);
+			}
+
+			return provider.getImage(resource.getParent());
 		}
 
 		@Override
@@ -806,7 +823,7 @@ public class FilteredResourcesSelectionDialog extends FilteredItemsSelectionDial
 			if (parent.getType() == IResource.ROOT) {
 				// Get readable name for workspace root ("Workspace"), without
 				// duplicating language-specific string here.
-				return null;
+				return ((IResource) element).getName();
 			}
 
 			return parent.getFullPath().makeRelative().toString();

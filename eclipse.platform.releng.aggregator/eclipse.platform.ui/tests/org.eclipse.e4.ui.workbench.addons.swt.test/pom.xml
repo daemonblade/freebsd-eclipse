@@ -14,11 +14,11 @@
   <parent>
     <artifactId>eclipse.platform.ui.tests</artifactId>
     <groupId>eclipse.platform.ui</groupId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
   </parent>
   <groupId>org.eclipse.e4</groupId>
   <artifactId>org.eclipse.e4.ui.workbench.addons.swt.test</artifactId>
-  <version>1.3.200-SNAPSHOT</version>
+  <version>1.4.0-SNAPSHOT</version>
   <packaging>eclipse-test-plugin</packaging>
 
   <properties>
@@ -27,23 +27,23 @@
   </properties>
 
   <build>
-  	<plugins>
-  		<plugin>
-  			<groupId>org.eclipse.tycho</groupId>
-  			<artifactId>tycho-surefire-plugin</artifactId>
-  			<version>${tycho.version}</version>
-  			<configuration>
-  				<useUIHarness>true</useUIHarness>
-  				<useUIThread>true</useUIThread>
-  				<dependencies>
-					<dependency>
-						<type>eclipse-plugin</type>
-						<artifactId>org.eclipse.e4.ui.workbench.addons.swt</artifactId>
-						<version>0.0.0</version>
-					</dependency>
-  				</dependencies>
-  			</configuration>
-  		</plugin>
-  	</plugins>
+    <plugins>
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-surefire-plugin</artifactId>
+        <version>${tycho.version}</version>
+        <configuration>
+          <useUIHarness>true</useUIHarness>
+          <useUIThread>true</useUIThread>
+          <dependencies>
+          <dependency>
+            <type>eclipse-plugin</type>
+            <artifactId>org.eclipse.e4.ui.workbench.addons.swt</artifactId>
+            <version>0.0.0</version>
+          </dependency>
+          </dependencies>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 </project>

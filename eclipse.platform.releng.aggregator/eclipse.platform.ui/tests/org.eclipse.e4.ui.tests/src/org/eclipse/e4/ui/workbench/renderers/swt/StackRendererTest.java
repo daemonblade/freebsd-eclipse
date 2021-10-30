@@ -18,6 +18,8 @@ package org.eclipse.e4.ui.workbench.renderers.swt;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.InvocationHandler;
@@ -45,6 +47,7 @@ import org.eclipse.e4.ui.workbench.modeling.EModelService;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Widget;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -291,6 +294,109 @@ public class StackRendererTest {
 
 		assertTrue(toolbar1.isVisible());
 		assertFalse(toolbar2.isVisible());
+	}
+
+	@Test
+	public void testBug572598_SharedPartAndToolbarNotDisposed() {
+		MPart part = ems.createModelElement(MPart.class);
+		window.getSharedElements().add(part);
+
+		MToolBar toolbar = ems.createModelElement(MToolBar.class);
+		part.setToolbar(toolbar);
+
+		MPlaceholder ph1 = ems.createModelElement(MPlaceholder.class);
+		ph1.setRef(part);
+		partStack.getChildren().add(ph1);
+		partStack.setSelectedElement(ph1);
+
+		MPartStack partStack2 = ems.createModelElement(MPartStack.class);
+		window.getChildren().add(partStack2);
+		window.setSelectedElement(partStack2);
+
+		MPlaceholder ph2 = ems.createModelElement(MPlaceholder.class);
+		ph2.setRef(part);
+		partStack2.getChildren().add(ph2);
+		partStack2.setSelectedElement(ph2);
+
+		contextRule.createAndRunWorkbench(window);
+
+		assertNotNull(part.getWidget());
+		assertFalse(((Widget) part.getWidget()).isDisposed());
+		assertNotNull(toolbar.getWidget());
+		assertFalse(((Widget) toolbar.getWidget()).isDisposed());
+
+		// Destroy the second partstack; This should not dispose the shared elements
+		partStack2.setToBeRendered(false);
+
+		assertNotNull(part.getWidget());
+		assertFalse(((Widget) part.getWidget()).isDisposed());
+		assertNotNull(toolbar.getWidget());
+		assertFalse(((Widget) toolbar.getWidget()).isDisposed());
+	}
+
+	@Test
+	public void testBug573518_SharedPartToolbarShown1() {
+		MPart part1 = ems.createModelElement(MPart.class);
+		window.getSharedElements().add(part1);
+
+		MPart part2 = ems.createModelElement(MPart.class);
+		window.getSharedElements().add(part2);
+
+		MToolBar toolbar = ems.createModelElement(MToolBar.class);
+		part2.setToolbar(toolbar);
+
+		MPlaceholder ph1 = ems.createModelElement(MPlaceholder.class);
+		ph1.setRef(part1);
+		partStack.getChildren().add(ph1);
+		partStack.setSelectedElement(ph1);
+
+		MPlaceholder ph2 = ems.createModelElement(MPlaceholder.class);
+		ph2.setRef(part2);
+		partStack.getChildren().add(ph2);
+
+		contextRule.createAndRunWorkbench(window);
+
+		// Current reference is not pointing to ph2, toolbar is marked visible but not
+		// rendereded
+		assertTrue(toolbar.isVisible());
+		assertNull(toolbar.getWidget());
+
+		partStack.setSelectedElement(ph2);
+
+		assertTrue(toolbar.isVisible());
+		assertNotNull(toolbar.getWidget());
+	}
+
+	@Test
+	public void testBug573518_SharedPartToolbarShown2() {
+		MPart part1 = ems.createModelElement(MPart.class);
+		window.getSharedElements().add(part1);
+
+		MPart part2 = ems.createModelElement(MPart.class);
+		window.getSharedElements().add(part2);
+
+		MToolBar toolbar = ems.createModelElement(MToolBar.class);
+		part2.setToolbar(toolbar);
+
+		MPlaceholder ph1 = ems.createModelElement(MPlaceholder.class);
+		ph1.setRef(part1);
+		partStack.getChildren().add(ph1);
+		partStack.setSelectedElement(ph1);
+
+		MPlaceholder ph2 = ems.createModelElement(MPlaceholder.class);
+		ph2.setRef(part2);
+		part2.setCurSharedRef(ph2);
+		partStack.getChildren().add(ph2);
+
+		contextRule.createAndRunWorkbench(window);
+
+		assertFalse(toolbar.isVisible());
+		assertNull(toolbar.getWidget());
+
+		partStack.setSelectedElement(ph2);
+
+		assertTrue(toolbar.isVisible());
+		assertNotNull(toolbar.getWidget());
 	}
 
 	// helper functions

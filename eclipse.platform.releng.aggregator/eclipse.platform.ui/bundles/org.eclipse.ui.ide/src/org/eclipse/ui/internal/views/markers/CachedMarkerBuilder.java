@@ -15,6 +15,7 @@
 package org.eclipse.ui.internal.views.markers;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -94,16 +95,14 @@ public class CachedMarkerBuilder {
 			String categoryGroupID = m.getString(TAG_CATEGORY_GROUP);
 			if (categoryGroupID == null) {
 				setDefaultCategoryGroup(getGenerator());
+			} else if (categoryGroupID.equals(VALUE_NONE)) {
+				this.categoryGroup = null;
 			} else {
-				if (categoryGroupID.equals(VALUE_NONE)) {
-					this.categoryGroup = null;
+				MarkerGroup newGroup = getGenerator().getMarkerGroup(categoryGroupID);
+				if (newGroup == null) {
+					setDefaultCategoryGroup(getGenerator());
 				} else {
-					MarkerGroup newGroup = getGenerator().getMarkerGroup(categoryGroupID);
-					if (newGroup == null) {
-						setDefaultCategoryGroup(getGenerator());
-					} else {
-						this.categoryGroup = newGroup;
-					}
+					this.categoryGroup = newGroup;
 				}
 			}
 		}
@@ -627,9 +626,7 @@ public class CachedMarkerBuilder {
 	 * Reset change flags to false
 	 */
 	void resetChangeFlags() {
-		for (int i = 0; i < changeFlags.length; i++) {
-			this.changeFlags[i] = false;
-		}
+		Arrays.fill(this.changeFlags, false);
 	}
 
 	/**

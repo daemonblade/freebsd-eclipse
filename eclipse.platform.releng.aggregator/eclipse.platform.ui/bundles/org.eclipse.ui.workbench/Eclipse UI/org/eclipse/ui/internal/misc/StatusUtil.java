@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.internal.WorkbenchMessages;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.statushandlers.StatusManager;
@@ -36,13 +35,13 @@ public class StatusUtil {
 	/**
 	 * Answer a flat collection of the passed status and its recursive children
 	 */
-	protected static List flatten(IStatus aStatus) {
-		List result = new ArrayList();
+	protected static List<IStatus> flatten(IStatus aStatus) {
+		List<IStatus> result = new ArrayList<>();
 
 		if (aStatus.isMultiStatus()) {
 			for (IStatus status : aStatus.getChildren()) {
 				if (status.isMultiStatus()) {
-					Iterator childStatiiEnum = flatten(status).iterator();
+					Iterator<IStatus> childStatiiEnum = flatten(status).iterator();
 					while (childStatiiEnum.hasNext()) {
 						result.add(childStatiiEnum.next());
 					}
@@ -141,13 +140,13 @@ public class StatusUtil {
 	 *
 	 * Utility method for creating status.
 	 */
-	public static IStatus newStatus(List children, String message, Throwable exception) {
+	public static IStatus newStatus(List<IStatus> children, String message, Throwable exception) {
 
-		List flatStatusCollection = new ArrayList();
-		Iterator iter = children.iterator();
+		List<IStatus> flatStatusCollection = new ArrayList<>();
+		Iterator<IStatus> iter = children.iterator();
 		while (iter.hasNext()) {
-			IStatus currentStatus = (IStatus) iter.next();
-			Iterator childrenIter = flatten(currentStatus).iterator();
+			IStatus currentStatus = iter.next();
+			Iterator<IStatus> childrenIter = flatten(currentStatus).iterator();
 			while (childrenIter.hasNext()) {
 				flatStatusCollection.add(childrenIter.next());
 			}
@@ -163,7 +162,7 @@ public class StatusUtil {
 	 *
 	 * Utility method for handling status.
 	 */
-	public static void handleStatus(IStatus status, int hint, Shell shell) {
+	public static void handleStatus(IStatus status, int hint) {
 		StatusManager.getManager().handle(status, hint);
 	}
 
@@ -190,25 +189,7 @@ public class StatusUtil {
 	 *
 	 * Utility method for handling status.
 	 */
-	public static void handleStatus(String message, Throwable e, int hint, Shell shell) {
-		StatusManager.getManager().handle(newStatus(WorkbenchPlugin.PI_WORKBENCH, message, e), hint);
-	}
-
-	/**
-	 * This method must not be called outside the workbench.
-	 *
-	 * Utility method for handling status.
-	 */
 	public static void handleStatus(IStatus status, String message, int hint) {
-		StatusManager.getManager().handle(newStatus(status, message), hint);
-	}
-
-	/**
-	 * This method must not be called outside the workbench.
-	 *
-	 * Utility method for handling status.
-	 */
-	public static void handleStatus(IStatus status, String message, int hint, Shell shell) {
 		StatusManager.getManager().handle(newStatus(status, message), hint);
 	}
 
@@ -221,12 +202,4 @@ public class StatusUtil {
 		handleStatus(message, null, hint);
 	}
 
-	/**
-	 * This method must not be called outside the workbench.
-	 *
-	 * Utility method for handling status.
-	 */
-	public static void handleStatus(String message, int hint, Shell shell) {
-		handleStatus(message, null, hint);
-	}
 }

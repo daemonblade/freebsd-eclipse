@@ -23,6 +23,7 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.net.proxy.IProxyService;
@@ -60,6 +61,7 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Resource;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Listener;
@@ -81,12 +83,14 @@ import org.eclipse.ui.internal.ide.IDEWorkbenchActivityHelper;
 import org.eclipse.ui.internal.ide.IDEWorkbenchErrorHandler;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
+import org.eclipse.ui.internal.ide.StatusUtil;
 import org.eclipse.ui.internal.ide.undo.WorkspaceUndoMonitor;
 import org.eclipse.ui.internal.progress.ProgressMonitorJobsDialog;
 import org.eclipse.ui.progress.IProgressService;
 import org.eclipse.ui.statushandlers.AbstractStatusHandler;
 import org.eclipse.urischeme.AutoRegisterSchemeHandlersJob;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.Version;
 
@@ -193,6 +197,8 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 
 		PluginActionBuilder.setAllowIdeLogging(true);
 
+		initResourceTracking();
+
 		// make sure we always save and restore workspace state
 		configurer.setSaveAndRestore(true);
 
@@ -222,6 +228,33 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 		}
 
 		new AutoRegisterSchemeHandlersJob().schedule();
+	}
+
+	protected void initResourceTracking() {
+		boolean trackingEnabled = Boolean.getBoolean("org.eclipse.swt.graphics.Resource.reportNonDisposed"); //$NON-NLS-1$
+		if (trackingEnabled) {
+			Consumer<Error> reporter = createNonDisposedReporter();
+			Resource.setNonDisposeHandler(reporter);
+		}
+	}
+
+	/**
+	 * @return reporter instance for SWT leaks reporting, or {@code null} to disable
+	 *         SWT leak reporting
+	 */
+	public Consumer<Error> createNonDisposedReporter() {
+		return new IDENonDisposedReporter();
+	}
+
+	protected static class IDENonDisposedReporter implements Consumer<Error> {
+
+		@Override
+		public void accept(Error allocationStack) {
+			IDEWorkbenchPlugin.log(null,
+					StatusUtil.newStatus(IStatus.ERROR, "Not properly disposed SWT resource", //$NON-NLS-1$
+							allocationStack));
+		}
+
 	}
 
 	@Override
@@ -259,7 +292,7 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 	/**
 	 * Activate the proxy service by obtaining it.
 	 */
-	private void activateProxyService() {
+	protected void activateProxyService() {
 		Bundle bundle = Platform.getBundle("org.eclipse.ui.ide"); //$NON-NLS-1$
 		Object proxyService = null;
 		if (bundle != null) {
@@ -275,7 +308,7 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 	/**
 	 * Initialize the listener for settings changes.
 	 */
-	private void initializeSettingsChangeListener() {
+	protected void initializeSettingsChangeListener() {
 		settingsChangeListener = new Listener() {
 
 			boolean currentHighContrast = Display.getCurrent()
@@ -360,7 +393,7 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 		workbenchAdvisor = null;
 	}
 
-	private boolean isWorkspaceLocked(IWorkspace workspace) {
+	protected boolean isWorkspaceLocked(IWorkspace workspace) {
 		ISchedulingRule currentRule = Job.getJobManager().currentRule();
 		return currentRule != null && currentRule.isConflicting(workspace.getRoot());
 	}
@@ -388,7 +421,7 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 				.hasIntro();
 	}
 
-	private void refreshFromLocal() {
+	protected void refreshFromLocal() {
 		String[] commandLineArgs = Platform.getCommandLineArgs();
 		IPreferenceStore store = IDEWorkbenchPlugin.getDefault()
 				.getPreferenceStore();
@@ -405,20 +438,32 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 			}
 		}
 
-		final IContainer root = ResourcesPlugin.getWorkspace().getRoot();
-		Job job = new WorkspaceJob(IDEWorkbenchMessages.Workspace_refreshing) {
-			@Override
-			public IStatus runInWorkspace(IProgressMonitor monitor)
-					throws CoreException {
-				root.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-				return Status.OK_STATUS;
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		final IContainer root = workspace.getRoot();
+
+		// We should try to use RefreshManager which avoids multiple refresh requests
+		// for same objects
+		if (workspace instanceof Workspace) {
+			Workspace wsp = (Workspace) workspace;
+			if (!wsp.isCrashed()) {
+				// Only refresh if no crash happened before: the workspace itself
+				// triggers refresh in that case, see Workspace.open()
+				wsp.getRefreshManager().refresh(root);
 			}
-		};
-		job.setRule(root);
-		job.schedule();
+		} else {
+			Job job = new WorkspaceJob(IDEWorkbenchMessages.Workspace_refreshing) {
+				@Override
+				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+					root.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+					return Status.OK_STATUS;
+				}
+			};
+			job.setRule(root);
+			job.schedule();
+		}
 	}
 
-	private static class CancelableProgressMonitorWrapper extends
+	protected static class CancelableProgressMonitorWrapper extends
 			ProgressMonitorWrapper {
 		private double total = 0;
 		private ProgressMonitorJobsDialog dialog;
@@ -461,7 +506,7 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 		}
 	}
 
-	private static class CancelableProgressMonitorJobsDialog extends
+	protected static class CancelableProgressMonitorJobsDialog extends
 			ProgressMonitorJobsDialog {
 
 		public CancelableProgressMonitorJobsDialog(Shell parent) {
@@ -490,7 +535,7 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 	 * Locks workspace in a background thread, should not be called while
 	 * holding any workspace locks.
 	 */
-	private void disconnectFromWorkspace() {
+	protected void disconnectFromWorkspace() {
 		// save the workspace
 		final MultiStatus status = new MultiStatus(IDEWorkbenchPlugin.IDE_WORKBENCH, 1,
 				IDEWorkbenchMessages.ProblemSavingWorkbench);
@@ -562,7 +607,7 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 	 *         <code>String</code>, value type: <code>AboutInfo</code>)
 	 * @since 3.0
 	 */
-	private Map<String, AboutInfo> computeBundleGroupMap() {
+	protected Map<String, AboutInfo> computeBundleGroupMap() {
 		// use tree map to get predicable order
 		Map<String, AboutInfo> ids = new TreeMap<>();
 
@@ -602,10 +647,10 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 	/**
 	 * Updates the old features setting and returns a map of new features.
 	 */
-	private Map<String, AboutInfo> createNewBundleGroupsMap() {
+	protected Map<String, AboutInfo> createNewBundleGroupsMap() {
 		// retrieve list of installed bundle groups from last session
-		IDialogSettings settings = IDEWorkbenchPlugin.getDefault()
-				.getDialogSettings();
+		IDialogSettings settings = PlatformUI
+				.getDialogSettingsProvider(FrameworkUtil.getBundle(IDE.class)).getDialogSettings();
 		String[] previousFeaturesArray = settings.getArray(INSTALLED_FEATURES);
 
 		// get a map of currently installed bundle groups and store it for next
@@ -632,7 +677,7 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 	 * workspace directory may not be known when the preference initializer is
 	 * called.
 	 */
-	private static void setWorkspaceNameDefault() {
+	protected static void setWorkspaceNameDefault() {
 		IPreferenceStore preferences = IDEWorkbenchPlugin.getDefault().getPreferenceStore();
 		String workspaceNameDefault = preferences.getDefaultString(IDEInternalPreferences.WORKSPACE_NAME);
 		if (workspaceNameDefault != null && !workspaceNameDefault.isEmpty())
@@ -653,7 +698,7 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 	 *
 	 * @see IWorkbenchConfigurer#declareImage
 	 */
-	private void declareWorkbenchImages() {
+	protected void declareWorkbenchImages() {
 
 		final String ICONS_PATH = "$nl$/icons/full/";//$NON-NLS-1$
 		final String PATH_ELOCALTOOL = ICONS_PATH + "elcl16/"; // Enabled //$NON-NLS-1$
@@ -864,7 +909,7 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 	 *            <code>false</code> if this is not a shared image
 	 * @see IWorkbenchConfigurer#declareImage
 	 */
-	private void declareWorkbenchImage(Bundle ideBundle, String symbolicName,
+	protected void declareWorkbenchImage(Bundle ideBundle, String symbolicName,
 			String path, boolean shared) {
 		URL url = FileLocator.find(ideBundle, new Path(path), null);
 		ImageDescriptor desc = ImageDescriptor.createFromURL(url);
@@ -881,7 +926,7 @@ public class IDEWorkbenchAdvisor extends WorkbenchAdvisor {
 	 * Returns the location specified in command line when -showlocation is
 	 * defined. Otherwise returns null
 	 *
-	 * @return
+	 * @return may return null
 	 */
 	public String getCommandLineLocation() {
 		IEclipseContext context = getWorkbenchConfigurer().getWorkbench().getService(IEclipseContext.class);

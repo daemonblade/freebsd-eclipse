@@ -264,6 +264,7 @@ public class TitleAreaDialog extends TrayDialog {
 		messageLabel = new Text(parent, SWT.WRAP | SWT.READ_ONLY);
 		JFaceColors.setColors(messageLabel, foreground, background);
 		messageLabel.setText(" \n "); // two lines//$NON-NLS-1$
+		messageLabel.setEnabled(false);
 		messageLabel.setFont(JFaceResources.getDialogFont());
 		// Bug 248410 -  This snippet will only work with Windows screen readers.
 		messageLabel.getAccessible().addAccessibleAttributeListener(
@@ -479,12 +480,10 @@ public class TitleAreaDialog extends TrayDialog {
 
 		if (forceLayout) {
 			getShell().layout();
-		} else {
-			// Do not layout before the dialog area has been created
-			// to avoid incomplete calculations.
-			if (dialogArea != null)
-				workArea.getParent().layout(true);
-		}
+		} else // Do not layout before the dialog area has been created
+		// to avoid incomplete calculations.
+		if (dialogArea != null)
+			workArea.getParent().layout(true);
 
 		int messageLabelUnclippedHeight = messageLabel.computeSize(messageLabel.getSize().x - xTrim, SWT.DEFAULT, true).y;
 		boolean messageLabelClipped = messageLabelUnclippedHeight > messageLabel.getSize().y - yTrim;
@@ -621,6 +620,7 @@ public class TitleAreaDialog extends TrayDialog {
 	private void updateMessage(String newMessage) {
 		String oldMessage = messageLabel.getText();
 		messageLabel.setText(newMessage);
+		messageLabel.setEnabled(!newMessage.isBlank());
 		// Bug 248410 -  This snippet will only work with Windows screen readers.
 		messageLabel.getAccessible().sendEvent(ACC.EVENT_ATTRIBUTE_CHANGED,
 				null);

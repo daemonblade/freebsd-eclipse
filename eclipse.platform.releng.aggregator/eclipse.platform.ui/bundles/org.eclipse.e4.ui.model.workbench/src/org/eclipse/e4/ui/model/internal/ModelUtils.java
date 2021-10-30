@@ -61,7 +61,7 @@ public class ModelUtils {
 	}
 
 	public static MApplicationElement findElementById(MApplicationElement element, String id) {
-		if (id == null || id.length() == 0) {
+		if (id == null || id.isEmpty()) {
 			return null;
 		}
 		// is it me?
@@ -150,16 +150,14 @@ public class ModelUtils {
 			}
 
 			return copy;
-		} else {
-			if( elements.size() >= 1 ) {
-				if( elements.size() > 1 ) {
-					//FIXME Pass the logger
-					System.err.println("The feature is single valued but a list of values is passed in.");
-				}
-				MApplicationElement e = elements.get(0);
-				eContainer.eSet(feature, e);
-				return Collections.singletonList(e);
+		} else if( elements.size() >= 1 ) {
+			if( elements.size() > 1 ) {
+				//FIXME Pass the logger
+				System.err.println("The feature is single valued but a list of values is passed in.");
 			}
+			MApplicationElement e = elements.get(0);
+			eContainer.eSet(feature, e);
+			return Collections.singletonList(e);
 		}
 
 		return Collections.emptyList();

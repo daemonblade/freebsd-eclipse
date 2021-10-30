@@ -113,6 +113,7 @@ import org.eclipse.ui.internal.keys.show.ShowKeysUI;
 import org.eclipse.ui.internal.misc.Policy;
 import org.eclipse.ui.internal.util.Util;
 import org.eclipse.ui.keys.IBindingService;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * <p>
@@ -305,7 +306,7 @@ public class NewKeysPreferencePage extends PreferencePage implements IWorkbenchP
 
 	}
 
-	private final class ResortColumn extends SelectionAdapter {
+	private static final class ResortColumn extends SelectionAdapter {
 		private final BindingModelComparator comparator;
 		private final TreeColumn treeColumn;
 		private final TreeViewer viewer;
@@ -428,7 +429,7 @@ public class NewKeysPreferencePage extends PreferencePage implements IWorkbenchP
 		}
 	}
 
-	class ModelContentProvider implements ITreeContentProvider {
+	static class ModelContentProvider implements ITreeContentProvider {
 		@Override
 		public Object[] getChildren(Object parentElement) {
 			if (parentElement instanceof BindingModel) {
@@ -1144,10 +1145,9 @@ public class NewKeysPreferencePage extends PreferencePage implements IWorkbenchP
 	}
 
 	protected IDialogSettings getDialogSettings() {
-		IDialogSettings workbenchSettings = WorkbenchPlugin.getDefault().getDialogSettings();
-
+		IDialogSettings workbenchSettings = PlatformUI
+				.getDialogSettingsProvider(FrameworkUtil.getBundle(NewKeysPreferencePage.class)).getDialogSettings();
 		IDialogSettings settings = workbenchSettings.getSection(TAG_DIALOG_SECTION);
-
 		if (settings == null) {
 			settings = workbenchSettings.addNewSection(TAG_DIALOG_SECTION);
 		}

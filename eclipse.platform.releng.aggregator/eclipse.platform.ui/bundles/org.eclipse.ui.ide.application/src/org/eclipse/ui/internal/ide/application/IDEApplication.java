@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2018 IBM Corporation and others.
+ * Copyright (c) 2003, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -17,6 +17,8 @@
  *     Patrik Suzzi <psuzzi@gmail.com> - Bug 514355
  *******************************************************************************/
 package org.eclipse.ui.internal.ide.application;
+
+import static org.eclipse.jface.util.Util.isValid;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -207,6 +209,8 @@ public class IDEApplication implements IApplication, IExecutableExtension {
 			return EXIT_OK;
 		}
 
+		boolean force = false;
+
 		// -data "/valid/path", workspace already set
 		if (instanceLoc.isSet()) {
 			// make sure the meta data version is compatible (or the user has
@@ -254,16 +258,17 @@ public class IDEApplication implements IApplication, IExecutableExtension {
 				}
 				return EXIT_OK;
 			}
+			if (result == ReturnCode.INVALID) {
+				force = true;
+			}
 		}
 
 		// -data @noDefault or -data not specified => prompt and set
 		// -data is specified but invalid according to checkValidWorkspace(): re-launch
 		ChooseWorkspaceData launchData = new ChooseWorkspaceData(instanceLoc.getDefault());
 
-		boolean force = false;
-
 		boolean parentShellVisible = false;
-		if (isValidShell(shell)) {
+		if (isValid(shell)) {
 			parentShellVisible = shell.getVisible();
 			// bug 455162, bug 427393: hide the splash if the workspace
 			// prompt dialog should be opened
@@ -281,6 +286,11 @@ public class IDEApplication implements IApplication, IExecutableExtension {
 				} catch (OperationCanceledException e) {
 					// Chosen workspace location was not compatible, select default one
 					launchData = new ChooseWorkspaceData(instanceLoc.getDefault());
+
+					// Bug 551260: ignore 'use default location' setting on retries. If the user has
+					// no opportunity to set another location it would only fail again and again and
+					// again.
+					force = true;
 					continue;
 				}
 			}
@@ -360,15 +370,7 @@ public class IDEApplication implements IApplication, IExecutableExtension {
 		URL url = null;
 
 		do {
-			new ChooseWorkspaceDialog(shell, launchData, false, true) {
-				@Override
-				protected Shell getParentShell() {
-					// Bug 429308: Make workspace selection dialog visible
-					// in the task manager of the OS
-					return null;
-				}
-
-			}.prompt(force);
+			showChooseWorkspaceDialog(shell, launchData, force);
 
 			String instancePath = launchData.getSelection();
 			if (instancePath == null) {
@@ -422,10 +424,22 @@ public class IDEApplication implements IApplication, IExecutableExtension {
 	}
 
 	/**
-	 * @return true if the shell is not <code>null</code> and not disposed
+	 * Show the choose workspace dialog to the user (if needed).
+	 * @param shell      parentShell the parent shell for this dialog
+	 * @param launchData launchData the launch data from past launches
+	 * @param force      true if the dialog should be opened regardless of the value
+	 *                   of the show dialog checkbox
 	 */
-	static boolean isValidShell(Shell shell) {
-		return shell != null && !shell.isDisposed();
+	protected void showChooseWorkspaceDialog(Shell shell, ChooseWorkspaceData launchData, boolean force) {
+		new ChooseWorkspaceDialog(shell, launchData, false, true) {
+			@Override
+			protected Shell getParentShell() {
+				// Bug 429308: Make workspace selection dialog visible
+				// in the task manager of the OS
+				return null;
+			}
+
+		}.prompt(force);
 	}
 
 	/**
@@ -506,7 +520,7 @@ public class IDEApplication implements IApplication, IExecutableExtension {
 				}
 			};
 			// hide splash if any
-			if (isValidShell(shell)) {
+			if (isValid(shell)) {
 				shell.setVisible(false);
 			}
 

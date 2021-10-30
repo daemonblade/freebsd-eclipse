@@ -936,7 +936,7 @@ public class WorkbenchPage implements IWorkbenchPage {
 	 */
 	public WorkbenchPage(WorkbenchWindow w, IAdaptable input) throws WorkbenchException {
 		super();
-		init(w, null, input, false);
+		init(w, input);
 	}
 
 	/**
@@ -2618,11 +2618,9 @@ public class WorkbenchPage implements IWorkbenchPage {
 	 * Initialize the page.
 	 *
 	 * @param w          the parent window
-	 * @param layoutID   may be <code>null</code> if restoring from file
 	 * @param input      the page input
-	 * @param openExtras whether to process the perspective extras preference
 	 */
-	private void init(WorkbenchWindow w, String layoutID, IAdaptable input, boolean openExtras) {
+	private void init(WorkbenchWindow w, IAdaptable input) {
 		// Save args.
 		this.legacyWindow = w;
 		this.input = input;
@@ -4782,25 +4780,23 @@ public class WorkbenchPage implements IWorkbenchPage {
 								WorkbenchPlugin.log(e);
 							}
 						}
-					} else {
-						// editor already rendered, try to update its state
-						if (curMemento != null && ee.getModel().getObject() instanceof CompatibilityEditor) {
-							CompatibilityEditor ce = (CompatibilityEditor) ee.getModel().getObject();
-							if (ce.getEditor() instanceof IPersistableEditor) {
-								IPersistableEditor pe = (IPersistableEditor) ce.getEditor();
+					} else // editor already rendered, try to update its state
+					if (curMemento != null && ee.getModel().getObject() instanceof CompatibilityEditor) {
+						CompatibilityEditor ce = (CompatibilityEditor) ee.getModel().getObject();
+						if (ce.getEditor() instanceof IPersistableEditor) {
+							IPersistableEditor pe = (IPersistableEditor) ce.getEditor();
 
-								// Extract the 'editorState' from the memento
-								IMemento editorMem = curMemento.getChild(IWorkbenchConstants.TAG_EDITOR_STATE);
-								if (editorMem == null) {
-									// Must be an externally defined memento,
-									// take the second child
-									IMemento[] kids = curMemento.getChildren();
-									if (kids.length == 2)
-										editorMem = kids[1];
-								}
-								if (editorMem != null)
-									pe.restoreState(editorMem);
+							// Extract the 'editorState' from the memento
+							IMemento editorMem = curMemento.getChild(IWorkbenchConstants.TAG_EDITOR_STATE);
+							if (editorMem == null) {
+								// Must be an externally defined memento,
+								// take the second child
+								IMemento[] kids = curMemento.getChildren();
+								if (kids.length == 2)
+									editorMem = kids[1];
 							}
+							if (editorMem != null)
+								pe.restoreState(editorMem);
 						}
 					}
 				}

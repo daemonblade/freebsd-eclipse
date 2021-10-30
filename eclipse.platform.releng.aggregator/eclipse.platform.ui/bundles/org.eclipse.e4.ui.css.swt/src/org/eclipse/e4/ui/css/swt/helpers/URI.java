@@ -416,7 +416,7 @@ public final class URI
 			throw new IllegalArgumentException("non-hierarchical archive URI");
 		}
 
-		validateURI(false, scheme, opaquePart, null, false, NO_SEGMENTS, null, fragment);
+		validateURI(false, scheme, opaquePart, null, NO_SEGMENTS, null, fragment);
 		return new URI(false, scheme, opaquePart, null, false, NO_SEGMENTS, null, fragment);
 	}
 
@@ -451,7 +451,7 @@ public final class URI
 			throw new IllegalArgumentException("archive URI with no path");
 		}
 
-		validateURI(true, scheme, authority, device, false, NO_SEGMENTS, query, fragment);
+		validateURI(true, scheme, authority, device, NO_SEGMENTS, query, fragment);
 		return new URI(true, scheme, authority, device, false, NO_SEGMENTS, query, fragment);
 	}
 
@@ -487,7 +487,7 @@ public final class URI
 		}
 
 		segments = fix(segments);
-		validateURI(true, scheme, authority, device, true, segments, query, fragment);
+		validateURI(true, scheme, authority, device, segments, query, fragment);
 		return new URI(true, scheme, authority, device, true, segments, query, fragment);
 	}
 
@@ -508,7 +508,7 @@ public final class URI
 											String fragment)
 	{
 		segments = fix(segments);
-		validateURI(true, null, null, null, false, segments, query, fragment);
+		validateURI(true, null, null, null, segments, query, fragment);
 		return new URI(true, null, null, null, false, segments, query, fragment);
 	}
 
@@ -795,7 +795,7 @@ public final class URI
 			fragment = uri.substring(++i);
 		}
 
-		validateURI(hierarchical, scheme, authority, device, absolutePath, segments, query, fragment);
+		validateURI(hierarchical, scheme, authority, device, segments, query, fragment);
 		return new URI(hierarchical, scheme, authority, device, absolutePath, segments, query, fragment);
 	}
 
@@ -1051,7 +1051,7 @@ public final class URI
 	// components may be validated individually.
 	private static void validateURI(boolean hierarchical, String scheme,
 									String authority, String device,
-									boolean absolutePath, String[] segments,
+									String[] segments,
 									String query, String fragment)
 	{
 		if (!validScheme(scheme))
@@ -2101,17 +2101,13 @@ public final class URI
 				if (preserveRootParents) {
 				stack[sp++] = segment;
 			}
-			}
-			else
-			{
-				// unless we're already accumulating root parent references,
-				// parent references simply pop the last segment descended
-				if (SEGMENT_PARENT.equals(stack[sp - 1])) {
-				stack[sp++] = segment;
-			} else {
-				sp--;
-			}
-			}
+			} else // unless we're already accumulating root parent references,
+			// parent references simply pop the last segment descended
+			if (SEGMENT_PARENT.equals(stack[sp - 1])) {
+			stack[sp++] = segment;
+} else {
+			sp--;
+}
 		}
 		else if (!SEGMENT_EMPTY.equals(segment) && !SEGMENT_SELF.equals(segment))
 		{

@@ -42,6 +42,7 @@ import org.eclipse.e4.core.contexts.RunAndTrack;
 import org.eclipse.e4.core.di.annotations.Optional;
 import org.eclipse.e4.core.services.events.IEventBroker;
 import org.eclipse.e4.core.services.log.Logger;
+import org.eclipse.e4.ui.css.swt.dom.WidgetElement;
 import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.e4.ui.internal.workbench.ContributionsAnalyzer;
 import org.eclipse.e4.ui.internal.workbench.OpaqueElementUtil;
@@ -303,12 +304,10 @@ public class ToolBarManagerRenderer extends SWTPartRenderer {
 		Selector s;
 		if (v instanceof Selector) {
 			s = (Selector) v;
+		} else if (v == null || UIEvents.ALL_ELEMENT_ID.equals(v)) {
+			s = ALL_SELECTOR;
 		} else {
-			if (v == null || UIEvents.ALL_ELEMENT_ID.equals(v)) {
-				s = ALL_SELECTOR;
-			} else {
-				s = element -> v.equals(element.getElementId());
-			}
+			s = element -> v.equals(element.getElementId());
 		}
 
 		getUpdater().updateContributionItems(s);
@@ -400,7 +399,15 @@ public class ToolBarManagerRenderer extends SWTPartRenderer {
 		// CSS engine to target it
 		IStylingEngine engine = getContextForParent(element).get(IStylingEngine.class);
 		if (engine != null) {
-			engine.setId(toolbarComposite, "ToolbarComposite");//$NON-NLS-1$
+			String cssClass = WidgetElement.getCSSClass(toolbarComposite);
+			if (cssClass != null && !cssClass.isEmpty()) {
+				if (!cssClass.contains("ToolbarComposite")) {//$NON-NLS-1$
+					cssClass = cssClass + " ToolbarComposite"; //$NON-NLS-1$
+				}
+			} else {
+				cssClass = "ToolbarComposite"; //$NON-NLS-1$
+			}
+			engine.setClassname(toolbarComposite, cssClass);
 		}
 
 		final MToolBar toolbarModel = (MToolBar) element;
@@ -726,10 +733,8 @@ public class ToolBarManagerRenderer extends SWTPartRenderer {
 		if (itemModel.isVisible() && !itemModel.getTags().contains(MenuManagerRenderer.GROUP_MARKER)) {
 			marker = new Separator();
 			marker.setId(itemModel.getElementId());
-		} else {
-			if (itemModel.getElementId() != null) {
-				marker = new GroupMarker(itemModel.getElementId());
-			}
+		} else if (itemModel.getElementId() != null) {
+			marker = new GroupMarker(itemModel.getElementId());
 		}
 		if (marker != null) {
 			addToManager(parentManager, itemModel, marker);

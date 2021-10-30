@@ -238,7 +238,7 @@ public class Snippet048TreeViewerTabWithCheckboxFor3_3 {
 		display.dispose();
 	}
 
-	private class MyContentProvider implements ITreeContentProvider {
+	private static class MyContentProvider implements ITreeContentProvider {
 
 		@Override
 		public Object[] getElements(Object inputElement) {
@@ -273,7 +273,7 @@ public class Snippet048TreeViewerTabWithCheckboxFor3_3 {
 
 	}
 
-	public class MyModel {
+	public static class MyModel {
 
 		public MyModel parent;
 		public List<MyModel> child = new ArrayList<>();

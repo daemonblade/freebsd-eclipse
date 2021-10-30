@@ -1384,6 +1384,9 @@ public class CustomizePerspectiveDialog extends TrayDialog {
 			return toolbarLabel;
 		}
 		String elementId = elt.getElementId();
+		if (elementId == null) {
+			return "Unnamed element"; //$NON-NLS-1$
+		}
 		ActionSetRegistry registry = WorkbenchPlugin.getDefault().getActionSetRegistry();
 		IActionSetDescriptor findActionSet = registry.findActionSet(elementId);
 		if (findActionSet != null) {

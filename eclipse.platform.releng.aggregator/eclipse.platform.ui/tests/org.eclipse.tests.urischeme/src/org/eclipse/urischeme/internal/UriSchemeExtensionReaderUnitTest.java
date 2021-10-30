@@ -52,8 +52,7 @@ public class UriSchemeExtensionReaderUnitTest {
 
 	@Test
 	public void callsFirstOfTwoHandlersForSameScheme() throws Exception {
-		IConfigurationElement second = new ConfigurationElementMock("abc", "abc Scheme",
-				new UriSchemeHandlerSpy());
+		IConfigurationElement second = new ConfigurationElementMock("abc", "abc Scheme", new UriSchemeHandlerSpy());
 		setExtensionsInReader(configElementForAbc, second);
 
 		assertEquals(abcHandler, extensionReader.getHandlerFromExtensionPoint("abc"));
@@ -87,7 +86,7 @@ public class UriSchemeExtensionReaderUnitTest {
 		extensionReader.configurationElements = element;
 	}
 
-	private final class ConfigurationElementMock implements IConfigurationElement {
+	private static final class ConfigurationElementMock implements IConfigurationElement {
 		private final String uriScheme;
 		private final String uriSchemeDescription;
 		private final Object handler;
@@ -180,10 +179,12 @@ public class UriSchemeExtensionReaderUnitTest {
 
 		@Override
 		public String getAttribute(String name) throws InvalidRegistryObjectException {
-			if (name.equals("uriScheme"))
+			if (name.equals("uriScheme")) {
 				return uriScheme;
-			if (name.equals("uriSchemeDescription"))
+			}
+			if (name.equals("uriSchemeDescription")) {
 				return uriSchemeDescription;
+			}
 			return null;
 		}
 

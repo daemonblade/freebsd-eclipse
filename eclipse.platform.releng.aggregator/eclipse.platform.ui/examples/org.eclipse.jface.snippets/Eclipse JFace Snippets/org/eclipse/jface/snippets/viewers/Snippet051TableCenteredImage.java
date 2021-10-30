@@ -43,7 +43,7 @@ import org.eclipse.swt.widgets.TableItem;
 public class Snippet051TableCenteredImage {
 	private static Image[] images;
 
-	private abstract class CenterImageLabelProvider extends OwnerDrawLabelProvider {
+	private abstract static class CenterImageLabelProvider extends OwnerDrawLabelProvider {
 
 		@Override
 		protected void measure(Event event, Object element) {
@@ -80,7 +80,7 @@ public class Snippet051TableCenteredImage {
 		protected abstract Image getImage(Object element);
 	}
 
-	public class MyModel {
+	public static class MyModel {
 		public int counter;
 
 		public MyModel(int counter) {

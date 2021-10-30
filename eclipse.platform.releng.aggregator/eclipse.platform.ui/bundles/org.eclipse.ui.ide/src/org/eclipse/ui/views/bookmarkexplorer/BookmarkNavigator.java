@@ -80,6 +80,7 @@ import org.eclipse.ui.part.ShowInContext;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.eclipse.ui.views.navigator.ShowInNavigatorAction;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * Main class for the bookmark navigator for displaying bookmarks on resources
@@ -179,7 +180,8 @@ public class BookmarkNavigator extends ViewPart {
 			comparator.setTopPriority(column);
 			updateSortState();
 			viewer.refresh();
-			IDialogSettings workbenchSettings = getPlugin().getDialogSettings();
+			IDialogSettings workbenchSettings = PlatformUI
+					.getDialogSettingsProvider(FrameworkUtil.getBundle(BookmarkNavigator.class)).getDialogSettings();
 			IDialogSettings settings = workbenchSettings
 					.getSection("BookmarkSortState");//$NON-NLS-1$
 			if (settings == null) {
@@ -205,7 +207,8 @@ public class BookmarkNavigator extends ViewPart {
 			comparator.setTopPriorityDirection(direction);
 			updateSortState();
 			viewer.refresh();
-			IDialogSettings workbenchSettings = getPlugin().getDialogSettings();
+			IDialogSettings workbenchSettings = PlatformUI
+					.getDialogSettingsProvider(FrameworkUtil.getBundle(BookmarkNavigator.class)).getDialogSettings();
 			IDialogSettings settings = workbenchSettings
 					.getSection("BookmarkSortState");//$NON-NLS-1$
 			if (settings == null) {
@@ -307,7 +310,8 @@ public class BookmarkNavigator extends ViewPart {
 		viewer.setInput(ResourcesPlugin.getWorkspace().getRoot());
 		viewer.setComparator(comparator);
 
-		IDialogSettings workbenchSettings = getPlugin().getDialogSettings();
+		IDialogSettings workbenchSettings = PlatformUI
+				.getDialogSettingsProvider(FrameworkUtil.getBundle(BookmarkNavigator.class)).getDialogSettings();
 		IDialogSettings settings = workbenchSettings
 				.getSection("BookmarkSortState");//$NON-NLS-1$
 		comparator.restoreState(settings);
@@ -362,7 +366,7 @@ public class BookmarkNavigator extends ViewPart {
 			return adapterClass.cast((IShowInSource) () -> new ShowInContext(null, getViewer().getSelection()));
 		}
 		if (adapterClass == IShowInTargetList.class) {
-			return adapterClass.cast((IShowInTargetList) () -> new String[] { IPageLayout.ID_RES_NAV });
+			return adapterClass.cast((IShowInTargetList) () -> new String[] { IPageLayout.ID_PROJECT_EXPLORER });
 		}
 		return super.getAdapter(adapterClass);
 	}
@@ -588,7 +592,8 @@ public class BookmarkNavigator extends ViewPart {
 				}
 				updateSortState();
 				viewer.refresh();
-				IDialogSettings workbenchSettings = getPlugin()
+				IDialogSettings workbenchSettings = PlatformUI
+						.getDialogSettingsProvider(FrameworkUtil.getBundle(BookmarkNavigator.class))
 						.getDialogSettings();
 				IDialogSettings settings = workbenchSettings
 						.getSection("BookmarkSortState");//$NON-NLS-1$

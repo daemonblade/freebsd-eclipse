@@ -50,7 +50,7 @@ import org.eclipse.swt.widgets.TableItem;
  *
  */
 public class Snippet031TableViewerCustomTooltipsMultiSelection {
-	public class MyLableProvider implements ITableLabelProvider {
+	public static class MyLableProvider implements ITableLabelProvider {
 
 		@Override
 		public Image getColumnImage(Object element, int columnIndex) {
@@ -90,7 +90,7 @@ public class Snippet031TableViewerCustomTooltipsMultiSelection {
 
 	}
 
-	public class MyModel {
+	public static class MyModel {
 		public String col1, col2;
 
 		public MyModel(String c1, String c2) {
@@ -208,7 +208,7 @@ public class Snippet031TableViewerCustomTooltipsMultiSelection {
 		* exits the tooltip or so it can pass the selection event through to the table.
 	 */
 	final TooltipLabelListener tooltipLabelListener = new TooltipLabelListener();
-	final class TooltipLabelListener implements Listener {
+	static final class TooltipLabelListener implements Listener {
 		private boolean isCTRLDown(Event e) {
 			return (e.stateMask & SWT.CTRL) != 0;
 		}

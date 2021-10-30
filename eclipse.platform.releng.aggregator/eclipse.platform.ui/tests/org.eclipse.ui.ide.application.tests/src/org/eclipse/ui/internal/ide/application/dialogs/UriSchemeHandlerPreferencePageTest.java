@@ -213,14 +213,19 @@ public class UriSchemeHandlerPreferencePageTest {
 	@Test
 	public void doesNotRegistersSchemesInOperatingSystemOnApplyWhenLoading() throws Exception {
 		this.page.createContents(this.page.getShell());
-
+		waitForJob();
 		// tableItem[1] (hello1 scheme) is true (refer to members), but page is still
 		// loading
+		assertNotNull("Page is null", page);
 		page.performOk();
 
 		OperatingSystemRegistrationMock mock = (OperatingSystemRegistrationMock) page.operatingSystemRegistration;
+		assertNotNull("mock is null", mock);
+
+		assertNotNull("addedSchemes is null", mock.addedSchemes);
 		assertEquals(0, mock.addedSchemes.size());
 
+		assertNotNull("removedSchemes is null", mock.removedSchemes);
 		assertEquals(0, mock.removedSchemes.size());
 		waitForJob();
 	}
@@ -394,7 +399,7 @@ public class UriSchemeHandlerPreferencePageTest {
 		return new ExtensionReaderStub(Arrays.asList(noAppScheme, thisAppScheme, otherAppScheme));
 	}
 
-	private final class StatusManagerWrapperSpy implements IStatusManagerWrapper {
+	private static final class StatusManagerWrapperSpy implements IStatusManagerWrapper {
 		public IStatus handledStatus;
 		public int style;
 
@@ -405,7 +410,7 @@ public class UriSchemeHandlerPreferencePageTest {
 		}
 	}
 
-	private final class MessageDialogWrapperSpy implements IMessageDialogWrapper {
+	private static final class MessageDialogWrapperSpy implements IMessageDialogWrapper {
 
 		public String title;
 		public String message;
@@ -425,7 +430,7 @@ public class UriSchemeHandlerPreferencePageTest {
 		}
 	}
 
-	private final class ExtensionReaderStub implements IUriSchemeExtensionReader {
+	private static final class ExtensionReaderStub implements IUriSchemeExtensionReader {
 		public Collection<IScheme> schemes;
 
 		public ExtensionReaderStub(Collection<IScheme> schemes) {
@@ -443,7 +448,7 @@ public class UriSchemeHandlerPreferencePageTest {
 		}
 	}
 
-	private class SchemeStub implements IScheme {
+	private static class SchemeStub implements IScheme {
 
 		private String name;
 		private String description;
@@ -465,7 +470,7 @@ public class UriSchemeHandlerPreferencePageTest {
 		}
 	}
 
-	private class SchemeInformationStub implements ISchemeInformation {
+	private static class SchemeInformationStub implements ISchemeInformation {
 
 		private IScheme scheme;
 		private boolean handled;
@@ -498,7 +503,7 @@ public class UriSchemeHandlerPreferencePageTest {
 		}
 	}
 
-	private final class OperatingSystemRegistrationMock implements IOperatingSystemRegistration {
+	private static final class OperatingSystemRegistrationMock implements IOperatingSystemRegistration {
 
 		private List<ISchemeInformation> schemeInformations;
 		public Exception schemeInformationReadException = null;
@@ -541,7 +546,7 @@ public class UriSchemeHandlerPreferencePageTest {
 
 	}
 
-	private class IOExceptionWithoutStackTrace extends IOException {
+	private static class IOExceptionWithoutStackTrace extends IOException {
 
 		private static final long serialVersionUID = 1L;
 

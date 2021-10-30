@@ -46,6 +46,7 @@ import org.eclipse.ui.ide.undo.CreateMarkersOperation;
 import org.eclipse.ui.ide.undo.UpdateMarkersOperation;
 import org.eclipse.ui.ide.undo.WorkspaceUndoUtil;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * Shows the properties of a new or existing marker
@@ -521,10 +522,8 @@ public class DialogMarkerProperties extends TrayDialog {
 				return;
 			}
 			op = new CreateMarkersOperation(type, attrs, resource, getCreateOperationTitle());
-		} else {
-			if (isDirty()) {
-				op = new UpdateMarkersOperation(marker, attrs, getModifyOperationTitle(), true);
-			}
+		} else if (isDirty()) {
+			op = new UpdateMarkersOperation(marker, attrs, getModifyOperationTitle(), true);
 		}
 		if (op != null) {
 			try {
@@ -591,7 +590,8 @@ public class DialogMarkerProperties extends TrayDialog {
 
 	@Override
 	protected IDialogSettings getDialogBoundsSettings() {
-		IDialogSettings settings = IDEWorkbenchPlugin.getDefault().getDialogSettings();
+		IDialogSettings settings = PlatformUI
+				.getDialogSettingsProvider(FrameworkUtil.getBundle(DialogMarkerProperties.class)).getDialogSettings();
 		IDialogSettings section = settings.getSection(DIALOG_SETTINGS_SECTION);
 		if (section == null) {
 			section = settings.addNewSection(DIALOG_SETTINGS_SECTION);

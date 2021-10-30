@@ -20,6 +20,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
 public class CommonImages {
 
@@ -28,7 +29,7 @@ public class CommonImages {
 	static {
 		Bundle bundle = null;
 		if (Platform.isRunning()) {
-			bundle = Platform.getBundle("org.eclipse.jface.notifications");
+			bundle = FrameworkUtil.getBundle(CommonImages.class);
 		}
 		if (bundle != null) {
 			baseUrl = bundle.getEntry("/icons/"); //$NON-NLS-1$
@@ -67,10 +68,10 @@ public class CommonImages {
 	 */
 	public static Image getImage(ImageDescriptor imageDescriptor) {
 		ImageRegistry imageRegistry = getImageRegistry();
-		Image image = imageRegistry.get("" + imageDescriptor.hashCode()); //$NON-NLS-1$
+		Image image = imageRegistry.get(Integer.toString(imageDescriptor.hashCode()));
 		if (image == null) {
 			image = imageDescriptor.createImage(true);
-			imageRegistry.put("" + imageDescriptor.hashCode(), image); //$NON-NLS-1$
+			imageRegistry.put(Integer.toString(imageDescriptor.hashCode()), image);
 		}
 		return image;
 	}
@@ -88,7 +89,7 @@ public class CommonImages {
 			throw new MalformedURLException();
 		}
 
-		StringBuffer buffer = new StringBuffer(prefix);
+		StringBuilder buffer = new StringBuilder(prefix);
 		buffer.append('/');
 		buffer.append(name);
 		return new URL(baseUrl, buffer.toString());

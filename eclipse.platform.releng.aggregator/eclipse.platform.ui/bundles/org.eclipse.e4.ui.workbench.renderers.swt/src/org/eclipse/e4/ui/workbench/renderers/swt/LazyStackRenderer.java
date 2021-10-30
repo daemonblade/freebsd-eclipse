@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2020 IBM Corporation and others.
+ * Copyright (c) 2008, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -72,17 +72,19 @@ public abstract class LazyStackRenderer extends SWTPartRenderer {
 
 		Control widget = (Control) stack.getWidget();
 		widget.setRedraw(false);
+		try {
+			// Gather up the elements that are being 'hidden' by this change
+			MUIElement oldSel = (MUIElement) event.getProperty(UIEvents.EventTags.OLD_VALUE);
+			if (oldSel != null) {
+				hideElementRecursive(oldSel);
+			}
 
-		// Gather up the elements that are being 'hidden' by this change
-		MUIElement oldSel = (MUIElement) event.getProperty(UIEvents.EventTags.OLD_VALUE);
-		if (oldSel != null) {
-			hideElementRecursive(oldSel);
+			if (stack.getSelectedElement() != null) {
+				lsr.showTab(stack.getSelectedElement());
+			}
+		} finally {
+			widget.setRedraw(true);
 		}
-
-		if (stack.getSelectedElement() != null) {
-			lsr.showTab(stack.getSelectedElement());
-		}
-		widget.setRedraw(true);
 	};
 
 	public void init(IEventBroker eventBroker) {
@@ -131,6 +133,13 @@ public abstract class LazyStackRenderer extends SWTPartRenderer {
 			// Make sure that everything is hidden
 			hideElementRecursive(element);
 		}
+	}
+
+	@Override
+	public void hideChild(MElementContainer<MUIElement> parentElement, MUIElement child) {
+		super.hideChild(parentElement, child);
+
+		hideElementRecursive(child);
 	}
 
 	@Inject
@@ -225,9 +234,12 @@ public abstract class LazyStackRenderer extends SWTPartRenderer {
 			return;
 		}
 
+		// Recursively hide placeholder refs if reference is current
 		if (element instanceof MPlaceholder) {
 			MPlaceholder ph = (MPlaceholder) element;
-			element = ph.getRef();
+			if (ph.getRef() != null && ph.getRef().getCurSharedRef() == ph) {
+				hideElementRecursive(ph.getRef());
+			}
 		}
 
 		// Hide any floating windows
@@ -281,7 +293,7 @@ public abstract class LazyStackRenderer extends SWTPartRenderer {
 			}
 		}
 
-		if (element instanceof MPlaceholder && element.getWidget() != null) {
+		if (element instanceof MPlaceholder) {
 			MPlaceholder ph = (MPlaceholder) element;
 			MUIElement ref = ph.getRef();
 			ref.setCurSharedRef(ph);
@@ -289,16 +301,12 @@ public abstract class LazyStackRenderer extends SWTPartRenderer {
 			Composite phComp = (Composite) ph.getWidget();
 			Control refCtrl = (Control) ph.getRef().getWidget();
 
-			// If the parent changes we need to adjust the bounds of the child
-			// we do not call layout() because this could lead to
-			// a big amount of layout calls in unrelated places e.g. none
-			// visible children of a CTabFolder (see 460745)
-			if (refCtrl != null && refCtrl.getParent() != phComp) {
+			if (phComp != null && refCtrl != null && refCtrl.getParent() != phComp) {
 				refCtrl.setParent(phComp);
-				refCtrl.setSize(phComp.getSize());
+				refCtrl.requestLayout();
 			}
 
-			element = ref;
+			showElementRecursive(ref);
 		}
 
 		if (element instanceof MPart) {

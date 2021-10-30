@@ -337,11 +337,12 @@ public class MenuManagerRenderer extends SWTPartRenderer {
 		context.remove(MenuManagerRendererFilter.class);
 		Display display = context.get(Display.class);
 		if (display != null && !display.isDisposed() && rendererFilter != null) {
-			display.syncExec(() -> {
+			final MenuManagerRendererFilter filter = rendererFilter;
+			display.asyncExec(() -> {
 				if (!display.isDisposed()) {
-					display.removeFilter(SWT.Show, rendererFilter);
-					display.removeFilter(SWT.Hide, rendererFilter);
-					display.removeFilter(SWT.Dispose, rendererFilter);
+					display.removeFilter(SWT.Show, filter);
+					display.removeFilter(SWT.Hide, filter);
+					display.removeFilter(SWT.Dispose, filter);
 				}
 			});
 		}
@@ -527,8 +528,7 @@ public class MenuManagerRenderer extends SWTPartRenderer {
 			toContribute.clear();
 
 			for (MMenuContribution menuContribution : curList) {
-				if (!processAddition(menuModel, manager, menuContribution, existingMenuIds, existingSeparatorNames,
-						menuBar)) {
+				if (!processAddition(menuModel, manager, menuContribution, menuBar)) {
 					toContribute.add(menuContribution);
 				}
 			}
@@ -546,7 +546,7 @@ public class MenuManagerRenderer extends SWTPartRenderer {
 	 * @return true if the menuContribution was processed
 	 */
 	private boolean processAddition(MMenu menuModel, final MenuManager manager, MMenuContribution menuContribution,
-			final HashSet<String> existingMenuIds, HashSet<String> existingSeparatorNames, boolean menuBar) {
+			boolean menuBar) {
 		final ContributionRecord record = new ContributionRecord(menuModel, menuContribution, this);
 		if (!record.mergeIntoModel()) {
 			return false;
@@ -715,7 +715,7 @@ public class MenuManagerRenderer extends SWTPartRenderer {
 			processHandledItem(menuManager, itemModel);
 		} else if (childME instanceof MDirectMenuItem) {
 			MDirectMenuItem itemModel = (MDirectMenuItem) childME;
-			processDirectItem(menuManager, itemModel, null);
+			processDirectItem(menuManager, itemModel);
 		} else if (childME instanceof MMenuSeparator) {
 			MMenuSeparator sep = (MMenuSeparator) childME;
 			processSeparator(menuManager, sep);
@@ -804,9 +804,8 @@ public class MenuManagerRenderer extends SWTPartRenderer {
 	/**
 	 * @param parentManager
 	 * @param itemModel
-	 * @param id
 	 */
-	private void processDirectItem(MenuManager parentManager, MDirectMenuItem itemModel, String id) {
+	private void processDirectItem(MenuManager parentManager, MDirectMenuItem itemModel) {
 		IContributionItem ici = getContribution(itemModel);
 		if (ici != null) {
 			return;

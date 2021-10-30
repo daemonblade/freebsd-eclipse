@@ -100,6 +100,7 @@ import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.eclipse.ui.views.framelist.FrameList;
 import org.eclipse.ui.views.framelist.TreeFrame;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * Implements the Resource Navigator view.
@@ -264,7 +265,8 @@ public class ResourceNavigator extends ViewPart implements ISetSelectionTarget, 
 	 * Constructs a new resource navigator view.
 	 */
 	public ResourceNavigator() {
-		IDialogSettings viewsSettings = getPlugin().getDialogSettings();
+		IDialogSettings viewsSettings = PlatformUI
+				.getDialogSettingsProvider(FrameworkUtil.getBundle(ResourceNavigator.class)).getDialogSettings();
 
 		settings = viewsSettings.getSection(STORE_SECTION);
 		if (settings == null) {
@@ -1202,16 +1204,8 @@ public class ResourceNavigator extends ViewPart implements ISetSelectionTarget, 
 	@Override
 	public void setFiltersPreference(String[] patterns) {
 
-		StringBuilder sb = new StringBuilder();
-
-		for (int i = 0; i < patterns.length; i++) {
-			if (i != 0) {
-				sb.append(ResourcePatternFilter.COMMA_SEPARATOR);
-			}
-			sb.append(patterns[i]);
-		}
-
-		getPlugin().getPreferenceStore().setValue(ResourcePatternFilter.FILTERS_TAG, sb.toString());
+		getPlugin().getPreferenceStore().setValue(ResourcePatternFilter.FILTERS_TAG,
+				String.join(ResourcePatternFilter.COMMA_SEPARATOR, patterns));
 
 		// remove value in old workbench preference store location
 		IPreferenceStore preferenceStore = IDEWorkbenchPlugin.getDefault().getPreferenceStore();

@@ -52,6 +52,7 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.forms.events.ExpansionAdapter;
 import org.eclipse.ui.forms.events.ExpansionEvent;
 import org.eclipse.ui.forms.widgets.ExpandableComposite;
@@ -62,6 +63,7 @@ import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.preferences.ViewSettingsDialog;
 import org.eclipse.ui.views.markers.FilterConfigurationArea;
 import org.eclipse.ui.views.markers.internal.MarkerMessages;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * FiltersConfigurationDialog is the dialog for configuring the filters for the
@@ -225,15 +227,13 @@ public class FiltersConfigurationDialog extends ViewSettingsDialog {
 		if (showAll) {
 			previouslyChecked = configsTable.getCheckedElements();
 			configsTable.setAllChecked(false);
+		} else if (previouslyChecked != null && previouslyChecked.length > 0) {
+			configsTable.setCheckedElements(previouslyChecked);
 		} else {
-			if (previouslyChecked != null && previouslyChecked.length > 0) {
-				configsTable.setCheckedElements(previouslyChecked);
-			} else {
-				// make the first entry checked
-				if (filterGroups.size() > 0) {
-					Object group = filterGroups.iterator().next();
-					configsTable.setChecked(group, true);
-				}
+			// make the first entry checked
+			if (filterGroups.size() > 0) {
+				Object group = filterGroups.iterator().next();
+				configsTable.setChecked(group, true);
 			}
 		}
 	}
@@ -581,10 +581,12 @@ public class FiltersConfigurationDialog extends ViewSettingsDialog {
 	 * @return IDialogSettings
 	 */
 	private IDialogSettings getDialogSettings() {
-		IDialogSettings settings = IDEWorkbenchPlugin.getDefault()
-				.getDialogSettings().getSection(this.getClass().getName());
+		IDialogSettings dialogSettings = PlatformUI
+				.getDialogSettingsProvider(FrameworkUtil.getBundle(FiltersConfigurationDialog.class))
+				.getDialogSettings();
+		IDialogSettings settings = dialogSettings.getSection(this.getClass().getName());
 		if (settings == null) {
-			settings = IDEWorkbenchPlugin.getDefault().getDialogSettings()
+			settings = dialogSettings
 					.addNewSection(this.getClass().getName());
 		}
 		return settings;

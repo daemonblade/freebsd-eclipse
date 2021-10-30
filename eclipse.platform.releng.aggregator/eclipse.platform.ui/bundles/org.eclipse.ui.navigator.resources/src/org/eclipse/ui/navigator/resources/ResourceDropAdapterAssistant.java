@@ -128,35 +128,34 @@ public class ResourceDropAdapterAssistant extends CommonDropAdapterAssistant {
 			for (IResource res : selectedResources) {
 				if(res instanceof IProject) {
 					bProjectDrop = true;
+					break;
 				}
 			}
 			if(bProjectDrop) {
 				// drop of projects not supported on other IResources
 				// "Path for project must have only one segment."
 				message = WorkbenchNavigatorMessages.DropAdapter_canNotDropProjectIntoProject;
+			} else if (selectedResources.length == 0) {
+				message = WorkbenchNavigatorMessages.DropAdapter_dropOperationErrorOther;
 			} else {
-				if (selectedResources.length == 0) {
-					message = WorkbenchNavigatorMessages.DropAdapter_dropOperationErrorOther;
-				} else {
-					CopyFilesAndFoldersOperation operation;
-					if (aDropOperation == DND.DROP_COPY) {
-						if (Policy.DEBUG_DND) {
-							System.out
-									.println("ResourceDropAdapterAssistant.validateDrop validating COPY."); //$NON-NLS-1$
-						}
+				CopyFilesAndFoldersOperation operation;
+				if (aDropOperation == DND.DROP_COPY) {
+					if (Policy.DEBUG_DND) {
+						System.out
+								.println("ResourceDropAdapterAssistant.validateDrop validating COPY."); //$NON-NLS-1$
+					}
 
-						operation = new CopyFilesAndFoldersOperation(getShell());
-					} else {
-						if (Policy.DEBUG_DND) {
-							System.out
-									.println("ResourceDropAdapterAssistant.validateDrop validating MOVE."); //$NON-NLS-1$
-						}
-						operation = new MoveFilesAndFoldersOperation(getShell());
+					operation = new CopyFilesAndFoldersOperation(getShell());
+				} else {
+					if (Policy.DEBUG_DND) {
+						System.out
+								.println("ResourceDropAdapterAssistant.validateDrop validating MOVE."); //$NON-NLS-1$
 					}
-					if (operation.validateDestination(destination, selectedResources) != null) {
-						operation.setVirtualFolders(true);
-						message = operation.validateDestination(destination, selectedResources);
-					}
+					operation = new MoveFilesAndFoldersOperation(getShell());
+				}
+				if (operation.validateDestination(destination, selectedResources) != null) {
+					operation.setVirtualFolders(true);
+					message = operation.validateDestination(destination, selectedResources);
 				}
 			}
 		} // file import?
@@ -468,15 +467,16 @@ public class ResourceDropAdapterAssistant extends CommonDropAdapterAssistant {
 					}
 				};
 
-				if (returnStatus != null)
-					return returnStatus;
-
 				try {
 					PlatformUI.getWorkbench().getProgressService().run(false, false, checkOp);
 				} catch (InterruptedException e) {
 					return Status.CANCEL_STATUS;
 				} catch (InvocationTargetException e) {
 					return WorkbenchNavigatorPlugin.createErrorStatus(0, e.getLocalizedMessage(), e);
+				}
+
+				if (returnStatus != null) {
+					return returnStatus;
 				}
 
 				if (refactoringStatus.hasEntries()) {
@@ -501,9 +501,6 @@ public class ResourceDropAdapterAssistant extends CommonDropAdapterAssistant {
 					}
 				};
 
-				if (returnStatus != null)
-					return returnStatus;
-
 				try {
 					PlatformUI.getWorkbench().getProgressService().run(false, false, refactorOp);
 				} catch (InterruptedException e) {
@@ -512,6 +509,9 @@ public class ResourceDropAdapterAssistant extends CommonDropAdapterAssistant {
 					return WorkbenchNavigatorPlugin.createErrorStatus(0, e.getLocalizedMessage(), e);
 				}
 
+				if (returnStatus != null) {
+					return returnStatus;
+				}
 			} catch (CoreException ex) {
 				return WorkbenchNavigatorPlugin.createErrorStatus(0, ex.getLocalizedMessage(), ex);
 			} catch (OperationCanceledException e) {

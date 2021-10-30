@@ -39,7 +39,7 @@ import org.eclipse.swt.widgets.TableColumn;
 
 public class Snippet066TableViewerWithLabelDecorator {
 
-	private class Person {
+	private static class Person {
 		private final int id;
 		private final String firstName;
 		private final String lastName;
@@ -122,7 +122,7 @@ public class Snippet066TableViewerWithLabelDecorator {
 		}
 	}
 
-	private class StatusStyledLabelProvider implements IStyledLabelProvider {
+	private static class StatusStyledLabelProvider implements IStyledLabelProvider {
 
 		@Override
 		public StyledString getStyledText(Object element) {

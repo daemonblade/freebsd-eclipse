@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,6 +14,7 @@
  *     Lars Vogel <Lars.Vogel@vogella.com> - Bug 445664, 442278, 472654
  *     Andrey Loskutov <loskutov@gmx.de> - Bug 388476
  *     Patrik Suzzi - <psuzzi@gmail.com> - Bug 515265
+ *     Kit Lo - <kitlo@us.ibm.com> - Bug 572444
  *******************************************************************************/
 
 package org.eclipse.ui.internal.dialogs;
@@ -25,9 +26,11 @@ import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_O
 import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_THEME_ASSOCIATION;
 import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_THEME_ID;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -199,7 +202,8 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 			}
 			themes.add(theme);
 		}
-		themes.sort((ITheme t1, ITheme t2) -> t1.getLabel().compareTo(t2.getLabel()));
+		Collator collator = Collator.getInstance(Locale.getDefault());
+		themes.sort((ITheme t1, ITheme t2) -> collator.compare(t1.getLabel(), t2.getLabel()));
 		return themes;
 	}
 
@@ -270,7 +274,10 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 
 		IEclipsePreferences prefs = getSwtRendererPreferences();
 		prefs.putBoolean(StackRenderer.MRU_KEY, enableMru.getSelection());
+		boolean themingEnabledChanged = prefs.getBoolean(PartRenderingEngine.ENABLED_THEME_KEY, true) != themingEnabled
+				.getSelection();
 		prefs.putBoolean(PartRenderingEngine.ENABLED_THEME_KEY, themingEnabled.getSelection());
+
 		prefs.putBoolean(CTabRendering.USE_ROUND_TABS, useRoundTabs.getSelection());
 		try {
 			prefs.flush();
@@ -301,6 +308,12 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 					notificationPopUp = new NotificationPopUp(getShell().getDisplay());
 					notificationPopUp.open();
 				}
+			}
+		}
+		if (themingEnabledChanged) {
+			if (notificationPopUp == null) {
+				notificationPopUp = new NotificationPopUp(getShell().getDisplay());
+				notificationPopUp.open();
 			}
 		}
 
@@ -523,7 +536,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 			parent.setLayout(new RowLayout());
 
 			Link link = new Link(parent, SWT.WRAP);
-			link.setText(WorkbenchMessages.ThemeChangeWarningText);
+			link.setText(WorkbenchMessages.ThemeChangeWarningHyperlinkedText);
 			link.addSelectionListener(widgetSelectedAdapter(e -> PlatformUI.getWorkbench().restart(true)));
 		}
 	}

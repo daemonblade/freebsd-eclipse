@@ -84,7 +84,7 @@ public class OpenWithMenu extends ContributionItem {
 	/**
 	 * Compares the labels from two IEditorDescriptor objects
 	 */
-	private static final Comparator<IEditorDescriptor> comparer = new Comparator<IEditorDescriptor>() {
+	private static final Comparator<IEditorDescriptor> comparer = new Comparator<>() {
 		private Collator collator = Collator.getInstance();
 
 		@Override
@@ -322,8 +322,6 @@ public class OpenWithMenu extends ContributionItem {
 						: editorDescriptor.getId();
 
 				page.openEditor(new FileEditorInput(file), editorId, true, MATCH_BOTH);
-				// only remember the default editor if the open succeeds
-				IDE.setDefaultEditor(file, editorId);
 			}
 		} catch (PartInitException e) {
 			DialogUtil.openError(page.getWorkbenchWindow().getShell(),

@@ -49,7 +49,7 @@ import org.eclipse.swt.widgets.TableColumn;
 public class Snippet045TableViewerFillFromBackgroundThread {
 	private static int COUNTER = 0;
 
-	public class MyModel {
+	public static class MyModel {
 		public int counter;
 
 		public MyModel(int counter) {
@@ -62,7 +62,7 @@ public class Snippet045TableViewerFillFromBackgroundThread {
 		}
 	}
 
-	public class MyLabelProvider extends LabelProvider implements
+	public static class MyLabelProvider extends LabelProvider implements
 			ITableLabelProvider, ITableFontProvider, ITableColorProvider {
 		FontRegistry registry = new FontRegistry();
 

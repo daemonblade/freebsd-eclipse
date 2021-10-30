@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.e4.rcp"
       label="%featureName"
-      version="4.17.0.qualifier"
+      version="4.21.0.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -336,13 +336,6 @@
          unpack="false"/>
 
    <plugin
-         id="com.ibm.icu"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.equinox.preferences"
          download-size="0"
          install-size="0"
@@ -403,6 +396,16 @@
          fragment="true"/>
 
    <plugin
+         id="org.eclipse.equinox.launcher.cocoa.macosx.aarch64"
+         os="macosx"
+         ws="cocoa"
+         arch="aarch64"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"/>
+
+   <plugin
          id="org.eclipse.equinox.launcher.gtk.freebsd.powerpc64"
          os="freebsd"
          ws="gtk"
@@ -411,7 +414,17 @@
          install-size="0"
          version="0.0.0"
          fragment="true"/>
-         
+
+   <plugin
+         id="org.eclipse.equinox.launcher.gtk.freebsd.powerpc64le"
+         os="freebsd"
+         ws="gtk"
+         arch="powerpc64le"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"/>
+
    <plugin
          id="org.eclipse.equinox.launcher.gtk.freebsd.aarch64"
          os="freebsd"
@@ -421,7 +434,6 @@
          install-size="0"
          version="0.0.0"
          fragment="true"/>
-
 
    <plugin
          id="org.eclipse.equinox.launcher.gtk.freebsd.amd64"
@@ -471,7 +483,18 @@
          version="0.0.0"
          fragment="true"
          unpack="false"/>
-   
+
+   <plugin
+         id="org.eclipse.swt.gtk.freebsd.powerpc64le"
+         os="freebsd"
+         ws="gtk"
+         arch="powerpc64le"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+
    <plugin
          id="org.eclipse.swt.gtk.freebsd.aarch64"
          os="freebsd"
@@ -504,34 +527,12 @@
          version="0.0.0"
          fragment="true"
          unpack="false"/>
-         
-	<plugin
-         id="org.eclipse.swt.browser.chromium.win32.win32.x86_64"
-         os="win32"
-         ws="win32"
-         arch="x86_64"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         fragment="true"
-         unpack="false"/>
 
    <plugin
-         id="org.eclipse.swt.browser.chromium.gtk.freebsd.amd64"
-         os="freebsd"
-         ws="gtk"
-         arch="amd64"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         fragment="true"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.swt.browser.chromium.cocoa.macosx.x86_64"
+         id="org.eclipse.swt.cocoa.macosx.aarch64"
          os="macosx"
          ws="cocoa"
-         arch="x86_64"
+         arch="aarch64"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -14,17 +14,17 @@
   <parent>
     <artifactId>eclipse.platform.ui</artifactId>
     <groupId>eclipse.platform.ui</groupId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.ui</groupId>
   <artifactId>org.eclipse.ui.forms.examples</artifactId>
-  <version>3.2.400</version>
+  <version>3.3.0-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 
   <properties>
     <skipAPIAnalysis>true</skipAPIAnalysis> <!-- Not in baseline -->
     <code.ignoredWarnings>-warn:-deprecation,raw,unchecked</code.ignoredWarnings>
-  </properties>	
+  </properties>
 
 </project>
