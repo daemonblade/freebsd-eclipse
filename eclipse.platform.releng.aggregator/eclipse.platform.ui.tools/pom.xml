@@ -16,17 +16,16 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
   <groupId>org.eclipse</groupId>
   <artifactId>eclipse.platform.ui.tools</artifactId>
-  <version>4.17.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
 	<properties>
-		<tycho.scmUrl>scm:git:http://git.eclipse.org/gitroot/e4/org.eclipse.e4.tools</tycho.scmUrl>
+		<tycho.scmUrl>scm:git:https://git.eclipse.org/r/e4/org.eclipse.e4.tools.git</tycho.scmUrl>
 	</properties>
 
   <!--
