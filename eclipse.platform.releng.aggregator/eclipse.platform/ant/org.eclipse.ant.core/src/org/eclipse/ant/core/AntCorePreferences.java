@@ -81,7 +81,7 @@ import org.osgi.util.tracker.ServiceTracker;
 @SuppressWarnings("deprecation")
 public class AntCorePreferences implements IPropertyChangeListener {
 
-	class WrappedClassLoader extends ClassLoader {
+	static class WrappedClassLoader extends ClassLoader {
 		private Bundle bundle;
 
 		public WrappedClassLoader(Bundle bundle) {
@@ -606,7 +606,7 @@ public class AntCorePreferences implements IPropertyChangeListener {
 		String eclipseRuntime = element.getAttribute(AntCorePlugin.ECLIPSE_RUNTIME);
 		boolean eclipseRuntimeRequired = true;
 		if (eclipseRuntime != null) {
-			eclipseRuntimeRequired = Boolean.valueOf(eclipseRuntime).booleanValue();
+			eclipseRuntimeRequired = Boolean.parseBoolean(eclipseRuntime);
 		}
 		Iterator<AntClasspathEntry> itr = extraClasspathURLs.iterator();
 		while (itr.hasNext()) {
@@ -683,7 +683,7 @@ public class AntCorePreferences implements IPropertyChangeListener {
 	private boolean configureAntObject(IConfigurationElement element, AntObject antObject, String objectName, String errorMessage) {
 		String runtime = element.getAttribute(AntCorePlugin.ECLIPSE_RUNTIME);
 		if (runtime != null) {
-			antObject.setEclipseRuntimeRequired(Boolean.valueOf(runtime).booleanValue());
+			antObject.setEclipseRuntimeRequired(Boolean.parseBoolean(runtime));
 		}
 
 		String uri = element.getAttribute(AntCorePlugin.URI);
@@ -774,7 +774,7 @@ public class AntCorePreferences implements IPropertyChangeListener {
 		if (runningHeadless) {
 			String headless = element.getAttribute(AntCorePlugin.HEADLESS);
 			if (headless != null) {
-				boolean headlessProperty = Boolean.valueOf(headless).booleanValue();
+				boolean headlessProperty = Boolean.parseBoolean(headless);
 				if (!headlessProperty) {
 					return false;
 				}
@@ -817,7 +817,7 @@ public class AntCorePreferences implements IPropertyChangeListener {
 			defaultProperties.add(property);
 			String runtime = element.getAttribute(AntCorePlugin.ECLIPSE_RUNTIME);
 			if (runtime != null) {
-				property.setEclipseRuntimeRequired(Boolean.valueOf(runtime).booleanValue());
+				property.setEclipseRuntimeRequired(Boolean.parseBoolean(runtime));
 			}
 		}
 	}
@@ -1246,7 +1246,7 @@ public class AntCorePreferences implements IPropertyChangeListener {
 			else {
 				if (counts.get(to) == null)
 					counts.put(to, Integer.valueOf(0));
-				fromCount = fromCount == null ? Integer.valueOf(1) : new Integer(fromCount.intValue() + 1);
+				fromCount = fromCount == null ? Integer.valueOf(1) : Integer.valueOf(fromCount.intValue() + 1);
 				counts.put(from, fromCount);
 			}
 		}

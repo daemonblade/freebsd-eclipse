@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.ant.internal.core.IAntCoreConstants;
-import org.eclipse.ant.internal.ui.AntUIPlugin;
 import org.eclipse.ant.internal.ui.IAntUIHelpContextIds;
 import org.eclipse.ant.internal.ui.model.AntElementNode;
 import org.eclipse.ant.internal.ui.model.AntModelContentProvider;
@@ -54,6 +53,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
@@ -82,6 +82,7 @@ import org.eclipse.ui.part.IShowInSource;
 import org.eclipse.ui.part.ShowInContext;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.texteditor.IUpdate;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * A view which displays a hierarchical view of ant build files and allows the user to run selected targets from those files.
@@ -480,7 +481,7 @@ public class AntView extends ViewPart implements IResourceChangeListener, IShowI
 	@Override
 	public void init(IViewSite site, IMemento memento) throws PartInitException {
 		super.init(site, memento);
-		String persistedMemento = AntUIPlugin.getDefault().getDialogSettingsSection(getClass().getName()).get("memento"); //$NON-NLS-1$
+		String persistedMemento = getDialogSettingsSection(getClass().getName()).get("memento"); //$NON-NLS-1$
 		if (persistedMemento != null) {
 			try {
 				memento = XMLMemento.createReadRoot(new StringReader(persistedMemento));
@@ -493,9 +494,18 @@ public class AntView extends ViewPart implements IResourceChangeListener, IShowI
 			restoreViewerInput(memento);
 			IMemento child = memento.getChild(TAG_FILTER_INTERNAL_TARGETS);
 			if (child != null) {
-				filterInternalTargets = Boolean.valueOf(child.getString(KEY_VALUE)).booleanValue();
+				filterInternalTargets = Boolean.parseBoolean(child.getString(KEY_VALUE));
 			}
 		}
+	}
+
+	private IDialogSettings getDialogSettingsSection(String name) {
+		IDialogSettings dialogSettings = PlatformUI.getDialogSettingsProvider(FrameworkUtil.getBundle(AntView.class)).getDialogSettings();
+		IDialogSettings section = dialogSettings.getSection(name);
+		if (section == null) {
+			section = dialogSettings.addNewSection(name);
+		}
+		return section;
 	}
 
 	/**
@@ -525,9 +535,9 @@ public class AntView extends ViewPart implements IResourceChangeListener, IShowI
 				nameString = IAntCoreConstants.EMPTY_STRING;
 			}
 			project = new AntProjectNodeProxy(nameString, pathString);
-			if (errorString != null && Boolean.valueOf(errorString).booleanValue()) {
+			if (errorString != null && Boolean.parseBoolean(errorString)) {
 				project.setProblemSeverity(AntModelProblem.SEVERITY_ERROR);
-			} else if (warningString != null && Boolean.valueOf(warningString).booleanValue()) {
+			} else if (warningString != null && Boolean.parseBoolean(warningString)) {
 				project.setProblemSeverity(AntModelProblem.SEVERITY_WARNING);
 			}
 			if (defaultTarget != null) {
@@ -571,7 +581,7 @@ public class AntView extends ViewPart implements IResourceChangeListener, IShowI
 		}
 		try {
 			memento.save(writer);
-			AntUIPlugin.getDefault().getDialogSettingsSection(getClass().getName()).put("memento", writer.getBuffer().toString()); //$NON-NLS-1$
+			getDialogSettingsSection(getClass().getName()).put("memento", writer.getBuffer().toString()); //$NON-NLS-1$
 		}
 		catch (IOException e) {
 			// don't do anything. Simply don't store the settings

@@ -23,7 +23,6 @@ import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.intro.IIntroSite;
 import org.eclipse.ui.intro.config.IIntroAction;
-import org.osgi.framework.Bundle;
 
 public class LaunchUpdateIntroAction implements IIntroAction {
 
@@ -46,16 +45,12 @@ public class LaunchUpdateIntroAction implements IIntroAction {
 	boolean executeUpdateCommand(String command) {
 		ICommandService commandService = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
 		IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-		Command cmd;
-		cmd = commandService.getCommand(command);
+		Command cmd = commandService.getCommand(command);
 		ExecutionEvent executionEvent = handlerService.createExecutionEvent(cmd, null);
 		try {
 			cmd.executeWithChecks(executionEvent);
 		} catch (ExecutionException e) {
-			String bundleId = "org.eclipse.platform"; //$NON-NLS-1$
-			Bundle bundle = Platform.getBundle(bundleId);
-			if (bundle != null)
-				Platform.getLog(bundle).log(new Status(IStatus.ERROR, bundleId, "Exception executing command: " + command, e)); //$NON-NLS-1$
+			Platform.getLog(LaunchUpdateIntroAction.class).error("Exception executing command: " + command, e); //$NON-NLS-1$
 		} catch (NotDefinedException e) {
 			return false;
 		} catch (NotEnabledException e) {
