@@ -134,6 +134,9 @@ public abstract class CloseableBundleFile<E> extends BundleFile {
 					// This can throw an IO exception resulting in closed remaining true on exit
 					doOpen();
 					closed = false;
+					if (debug.DEBUG_BUNDLE_FILE_OPEN) {
+						Debug.println("OPENED bundle file - " + toString()); //$NON-NLS-1$
+					}
 				}
 			} else {
 				mruListUse();
@@ -183,6 +186,9 @@ public abstract class CloseableBundleFile<E> extends BundleFile {
 
 	@Override
 	public File getFile(String entry, boolean nativeCode) {
+		if (generation == null) {
+			return null;
+		}
 		if (!lockOpen()) {
 			return null;
 		}
@@ -356,6 +362,9 @@ public abstract class CloseableBundleFile<E> extends BundleFile {
 				doClose();
 				mruListRemove();
 				postClose();
+				if (debug.DEBUG_BUNDLE_FILE_CLOSE) {
+					Debug.println("CLOSED bundle file - " + toString()); //$NON-NLS-1$
+				}
 			}
 		} finally {
 			openLock.unlock();
@@ -550,7 +559,9 @@ public abstract class CloseableBundleFile<E> extends BundleFile {
 
 		private IOException enrichExceptionWithBaseFile(IOException e) {
 			File baseFile = getBaseFile();
-			String extraInfo = baseFile == null ? generation.getBundleInfo().getLocation() : baseFile.toString();
+			String extraInfo = baseFile == null ? //
+					generation == null ? null : generation.getBundleInfo().getLocation() : //
+					baseFile.toString();
 			return new IOException(extraInfo, e);
 		}
 	}

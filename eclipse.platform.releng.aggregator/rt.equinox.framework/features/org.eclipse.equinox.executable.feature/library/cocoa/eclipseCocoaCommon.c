@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2015 IBM Corporation and others.
+ * Copyright (c) 2006, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -29,17 +29,6 @@ char   pathSeparator = ':';
 
 static CFBundleRef javaVMBundle = NULL;
 
-int initialized = 0;
-
-static void init() {
-	if (!initialized) {
-		[[NSApplication sharedApplication] setActivationPolicy: NSApplicationActivationPolicyRegular];
-		[[NSRunningApplication currentApplication] activateWithOptions: NSApplicationActivateIgnoringOtherApps];
-		initialized= true;
-	}
-}
-
-
 /* Initialize Window System
  *
  * Initialize Cocoa.
@@ -50,9 +39,6 @@ int initWindowSystem( int* pArgc, char* argv[], int showSplash )
 	/*debug("install dir: %s\n", homeDir);*/
 	if (homeDir != NULL)
 		chdir(homeDir);
-
-	if (showSplash)
-		init();
 
 	return 0;
 }
@@ -76,15 +62,17 @@ void displayMessage(char *title, char *message)
 		free(buffer);
 		inDescription= CFStringCreateWithCString(kCFAllocatorDefault, pos+2, kCFStringEncodingUTF8);
 	} else {
-		inError= CFStringCreateWithCString(kCFAllocatorDefault, message, kCFStringEncodingUTF8);
+		inError= CFStringCreateWithCString(kCFAllocatorDefault, title, kCFStringEncodingUTF8);
+		inDescription= CFStringCreateWithCString(kCFAllocatorDefault, message, kCFStringEncodingUTF8);
 	}
 
-	init();
-
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-	NSAlert* alert = [NSAlert alertWithMessageText: (NSString*)(inDescription != nil ? inError : nil) defaultButton: nil alternateButton: nil otherButton: nil informativeTextWithFormat: (NSString*)(inDescription != nil ? inDescription : inError)];
+	NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:(NSString*)inError];
+    [alert setInformativeText:(NSString*)inDescription];
+    [alert addButtonWithTitle:@"Ok"];
 	[[alert window] setTitle: [NSString stringWithUTF8String: title]];
-	[alert setAlertStyle: NSCriticalAlertStyle];
+	[alert setAlertStyle: NSAlertStyleCritical];
 	[alert runModal];
 	[pool release];
 	CFRelease(inError);
@@ -119,7 +107,7 @@ void * loadLibrary( char * library ){
 
 	// check if it's a JVM bundle
 	if (strstr(bundle, "libjvm") && (start = strstr(bundle, "/Contents/Home/")) != NULL) {
-		start[0] = NULL;
+		start[0] = 0;
 		loadVMBundle(bundle);
 		free(bundle);
 		if (javaVMBundle) {

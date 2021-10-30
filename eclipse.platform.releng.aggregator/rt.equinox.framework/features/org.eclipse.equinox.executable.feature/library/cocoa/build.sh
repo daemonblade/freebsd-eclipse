@@ -60,12 +60,20 @@ echo "build $defaultOSArch"
 # Set up environment variables needed by the makefiles.
 PROGRAM_OUTPUT="$programOutput"
 DEFAULT_OS="$defaultOS"
-DEFAULT_OS_ARCH="$defaultOSArch"
 DEFAULT_WS="$defaultWS"
 DEPLOYMENT_TARGET=10.10
 EXEC_DIR=../../../../../rt.equinox.binaries/org.eclipse.equinox.executable
-PROGRAM_OUTPUT_DIR="$EXEC_DIR/bin/$defaultWS/$defaultOS/$defaultOSArch/Eclipse.app/Contents/MacOS"
-SDKROOT_PATH="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk"
+if [ "$defaultOSArch" == "arm64" ] || [ "$defaultOSArch" == "aarch64" ]
+then
+  SDKROOT_PATH="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+  DEFAULT_OS_ARCH="aarch64"
+  defaultOSArch="arm64"
+else
+  SDKROOT_PATH="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk"
+  DEFAULT_OS_ARCH="$defaultOSArch"
+fi
+
+PROGRAM_OUTPUT_DIR="$EXEC_DIR/bin/$defaultWS/$defaultOS/$DEFAULT_OS_ARCH/Eclipse.app/Contents/MacOS"
 
 # /System/Library/Frameworks/JavaVM.framework/Headers does not exist anymore on Yosemite
 if [ -e /System/Library/Frameworks/JavaVM.framework/Headers ]; then
@@ -74,7 +82,8 @@ else
   JAVA_HEADERS="-I$(/usr/libexec/java_home)/include -I$(/usr/libexec/java_home)/include/darwin"
 fi
 
-ARCHS="-arch x86_64"
+ARCHS="-arch $defaultOSArch"
+
 export PROGRAM_OUTPUT DEFAULT_OS DEFAULT_OS_ARCH DEFAULT_WS ARCHS PROGRAM_OUTPUT_DIR JAVA_HEADERS 
 export MACOSX_DEPLOYMENT_TARGET=$DEPLOYMENT_TARGET
 

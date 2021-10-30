@@ -3820,19 +3820,8 @@ public class StateResolverTest extends AbstractStateTest {
 	public void testSelectionPolicy() throws BundleException {
 		State state = buildEmptyState();
 		Resolver resolver = state.getResolver();
-		resolver.setSelectionPolicy(new Comparator() {
-			@Override
-			public int compare(Object o1, Object o2) {
-				if (!(o1 instanceof BaseDescription) || !(o2 instanceof BaseDescription))
-					throw new IllegalArgumentException();
-				Version v1 = null;
-				Version v2 = null;
-				v1 = ((BaseDescription) o1).getVersion();
-				v2 = ((BaseDescription) o2).getVersion();
-				// only take version in to account and use lower versions over higher ones
-				return v1.compareTo(v2);
-			}
-		});
+		// only take version into account and use lower versions over higher ones
+		resolver.setSelectionPolicy(Comparator.comparing(BaseDescription::getVersion));
 		Hashtable manifest = new Hashtable();
 		long bundleID = 0;
 		manifest.put(Constants.BUNDLE_MANIFESTVERSION, "2"); //$NON-NLS-1$
@@ -4408,6 +4397,54 @@ public class StateResolverTest extends AbstractStateTest {
 		ExportPackageDescription[] visible = state.getStateHelper().getVisiblePackages(a, StateHelper.VISIBLE_INCLUDE_EE_PACKAGES | StateHelper.VISIBLE_INCLUDE_ALL_HOST_WIRES);
 
 		assertEquals("Wrong number of visible", 2, visible.length);
+	}
+
+	public void testCycleBug570984() throws BundleException {
+		State state = buildEmptyState();
+		int bundleID = 0;
+
+		Hashtable<String, String> manifestA = new Hashtable<>();
+		manifestA.put(Constants.BUNDLE_MANIFESTVERSION, "2");
+		manifestA.put(Constants.BUNDLE_SYMBOLICNAME, "a");
+		manifestA.put(Constants.BUNDLE_VERSION, "1");
+		manifestA.put(Constants.REQUIRE_BUNDLE, "b");
+		manifestA.put(Constants.PROVIDE_CAPABILITY, "ca");
+		manifestA.put(Constants.REQUIRE_CAPABILITY, "cb");
+		BundleDescription moduleA = state.getFactory().createBundleDescription(state, manifestA,
+				manifestA.get(Constants.BUNDLE_SYMBOLICNAME), bundleID++);
+
+		Hashtable<String, String> manifestB = new Hashtable<>();
+		manifestB.put(Constants.BUNDLE_MANIFESTVERSION, "2");
+		manifestB.put(Constants.BUNDLE_SYMBOLICNAME, "b");
+		manifestB.put(Constants.BUNDLE_VERSION, "1");
+		manifestB.put(Constants.REQUIRE_BUNDLE, "a");
+		manifestB.put(Constants.PROVIDE_CAPABILITY, "cb");
+		manifestB.put(Constants.REQUIRE_CAPABILITY, "ca");
+		BundleDescription moduleB = state.getFactory().createBundleDescription(state, manifestB,
+				manifestB.get(Constants.BUNDLE_SYMBOLICNAME), bundleID++);
+
+		Hashtable<String, String> manifestBF = new Hashtable<>();
+		manifestBF.put(Constants.BUNDLE_MANIFESTVERSION, "2");
+		manifestBF.put(Constants.BUNDLE_SYMBOLICNAME, "bf");
+		manifestBF.put(Constants.BUNDLE_VERSION, "1");
+		manifestBF.put(Constants.FRAGMENT_HOST, "b");
+		manifestBF.put(Constants.IMPORT_PACKAGE, "e");
+		BundleDescription moduleBF = state.getFactory().createBundleDescription(state, manifestBF,
+				manifestBF.get(Constants.BUNDLE_SYMBOLICNAME), bundleID++);
+
+		state.addBundle(moduleA);
+		state.addBundle(moduleB);
+		state.addBundle(moduleBF);
+		state.resolve();
+		assertTrue("A is not resolved", moduleA.isResolved()); //$NON-NLS-1$
+		assertTrue("B is not resolved", moduleB.isResolved()); //$NON-NLS-1$
+		assertFalse("BF not resolved", moduleBF.isResolved()); //$NON-NLS-1$
+
+		// now try dev mode - this will trigger a StackOverflowError
+		Dictionary[] props = new Dictionary[] { new Hashtable() };
+		props[0].put("osgi.resolverMode", "development"); //$NON-NLS-1$ //$NON-NLS-2$
+		state.setPlatformProperties(props);
+		state.resolve(new BundleDescription[] { moduleA, moduleB, moduleBF }, true);
 	}
 
 	public static class CatchAllValue {

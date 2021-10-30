@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 IBM Corporation and others.
+ * Copyright (c) 2019, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -30,7 +30,6 @@ import org.eclipse.osgi.container.ModuleContainerAdaptor.ModuleEvent;
 import org.eclipse.osgi.container.ModuleRevisionBuilder;
 import org.eclipse.osgi.internal.framework.EquinoxConfiguration;
 import org.eclipse.osgi.internal.framework.EquinoxContainer.ConnectModules;
-import org.eclipse.osgi.internal.hookregistry.ActivatorHookFactory;
 import org.eclipse.osgi.internal.hookregistry.ClassLoaderHook;
 import org.eclipse.osgi.internal.hookregistry.HookConfigurator;
 import org.eclipse.osgi.internal.hookregistry.HookRegistry;
@@ -89,24 +88,21 @@ public class ConnectHookConfigurator implements HookConfigurator {
 					@Override
 					public ModuleRevisionBuilder adaptModuleRevisionBuilder(ModuleEvent operation, Module origin, ModuleRevisionBuilder builder) {
 						if (m != null) {
-							builder.getCapabilities()
-								.stream() //
-								.filter(c -> CONNECT_TAG_NAMESPACES.contains(c.getNamespace())) //
-								.forEach((c) -> {
-									c.getAttributes().compute(IdentityNamespace.CAPABILITY_TAGS_ATTRIBUTE, (k, v) -> {
-										if (v == null) {
-											return Collections.singletonList(ConnectContent.TAG_OSGI_CONNECT);
-										}
-										if (v instanceof List) {
-											@SuppressWarnings({"unchecked", "rawtypes"})
-											List<String> l = new ArrayList<>((List) v);
-											l.add(ConnectContent.TAG_OSGI_CONNECT);
-											return Collections.unmodifiableList(l);
-										}
-										// should not get here, but just recover 
-										return Arrays.asList(v, ConnectContent.TAG_OSGI_CONNECT);
-									});
-								});
+							CONNECT_TAG_NAMESPACES.stream().map(builder::getCapabilities).flatMap(List::stream)
+									.forEach(c -> c.getAttributes().compute(IdentityNamespace.CAPABILITY_TAGS_ATTRIBUTE,
+											(k, v) -> {
+												if (v == null) {
+													return Collections.singletonList(ConnectContent.TAG_OSGI_CONNECT);
+												}
+												if (v instanceof List) {
+													@SuppressWarnings({ "unchecked", "rawtypes" })
+													List<String> l = new ArrayList<>((List) v);
+													l.add(ConnectContent.TAG_OSGI_CONNECT);
+													return Collections.unmodifiableList(l);
+												}
+												// should not get here, but just recover
+												return Arrays.asList(v, ConnectContent.TAG_OSGI_CONNECT);
+											}));
 							return builder;
 						}
 						return null;
@@ -155,36 +151,32 @@ public class ConnectHookConfigurator implements HookConfigurator {
 						bundlefile = chain.getBundleFile();
 					}
 					if (bundlefile instanceof ConnectBundleFile) {
-						return ((ConnectBundleFile) bundlefile).getClassLoader().map((l) //
-						-> new DelegatingConnectClassLoader(parent, configuration, delegate, generation, l)).orElse(null);
+						return ((ConnectBundleFile) bundlefile).getClassLoader().map(
+								l -> new DelegatingConnectClassLoader(parent, configuration, delegate, generation, l)).orElse(null);
 					}
 				}
 				return null;
 			}
 		});
 
-		hookRegistry.addActivatorHookFactory(new ActivatorHookFactory() {
-
-			@Override
-			public BundleActivator createActivator() {
-				final List<BundleActivator> activators = new ArrayList<>();
-				moduleConnector.newBundleActivator().ifPresent((a) -> activators.add(a));
-				return new BundleActivator() {
-					@Override
-					public void start(BundleContext context) throws Exception {
-						for (BundleActivator activator : activators) {
-							activator.start(context);
-						}
+		hookRegistry.addActivatorHookFactory(() -> {
+			final List<BundleActivator> activators = new ArrayList<>();
+			moduleConnector.newBundleActivator().ifPresent(activators::add);
+			return new BundleActivator() {
+				@Override
+				public void start(BundleContext context) throws Exception {
+					for (BundleActivator activator : activators) {
+						activator.start(context);
 					}
+				}
 
-					@Override
-					public void stop(BundleContext context) throws Exception {
-						for (BundleActivator activator : activators) {
-							activator.stop(context);
-						}
+				@Override
+				public void stop(BundleContext context) throws Exception {
+					for (BundleActivator activator : activators) {
+						activator.stop(context);
 					}
-				};
-			}
+				}
+			};
 		});
 	}
 }

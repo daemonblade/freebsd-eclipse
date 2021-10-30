@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2020 IBM Corporation and others.
+ * Copyright (c) 2012, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.osgi.container;
 
+import static org.eclipse.osgi.internal.container.NamespaceList.WIRE;
+
 import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +27,6 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -42,6 +43,7 @@ import org.apache.felix.resolver.ResolverImpl;
 import org.eclipse.osgi.container.ModuleRequirement.DynamicModuleRequirement;
 import org.eclipse.osgi.container.namespaces.EquinoxFragmentNamespace;
 import org.eclipse.osgi.internal.container.InternalUtils;
+import org.eclipse.osgi.internal.container.NamespaceList;
 import org.eclipse.osgi.internal.debug.Debug;
 import org.eclipse.osgi.internal.framework.EquinoxConfiguration;
 import org.eclipse.osgi.internal.framework.EquinoxContainer;
@@ -77,7 +79,7 @@ import org.osgi.service.resolver.Resolver;
  * in a module {@link ModuleContainer container}.
  */
 final class ModuleResolver {
-	static final String SEPARATOR = System.getProperty("line.separator"); //$NON-NLS-1$
+	static final String SEPARATOR = System.lineSeparator();
 	static final char TAB = '\t';
 
 	private static final String OPTION_RESOLVER = EquinoxContainer.NAME + "/resolver"; //$NON-NLS-1$
@@ -177,12 +179,12 @@ final class ModuleResolver {
 
 	Map<ModuleRevision, ModuleWiring> generateDelta(Map<Resource, List<Wire>> result, Map<ModuleRevision, ModuleWiring> wiringCopy) {
 		Map<ModuleRevision, Map<ModuleCapability, List<ModuleWire>>> provided = new HashMap<>();
-		Map<ModuleRevision, List<ModuleWire>> required = new HashMap<>();
+		Map<ModuleRevision, NamespaceList<ModuleWire>> required = new HashMap<>(result.size() * 4 / 3 + 1);
 		// First populate the list of provided and required wires for revision
 		// This is done this way to share the wire object between both the provider and requirer
 		for (Map.Entry<Resource, List<Wire>> resultEntry : result.entrySet()) {
 			ModuleRevision revision = (ModuleRevision) resultEntry.getKey();
-			List<ModuleWire> requiredWires = new ArrayList<>(resultEntry.getValue().size());
+			NamespaceList.Builder<ModuleWire> requiredWires = NamespaceList.Builder.create(WIRE);
 			for (Wire wire : resultEntry.getValue()) {
 				ModuleWire moduleWire = new ModuleWire((ModuleCapability) wire.getCapability(), (ModuleRevision) wire.getProvider(), (ModuleRequirement) wire.getRequirement(), (ModuleRevision) wire.getRequirer());
 				requiredWires.add(moduleWire);
@@ -198,7 +200,7 @@ final class ModuleResolver {
 				}
 				providedWires.add(moduleWire);
 			}
-			required.put(revision, requiredWires);
+			required.put(revision, requiredWires.build());
 		}
 
 		Map<ModuleRevision, ModuleWiring> delta = new HashMap<>();
@@ -224,122 +226,94 @@ final class ModuleResolver {
 		return delta;
 	}
 
-	private ModuleWiring createNewWiring(ModuleRevision revision, Map<ModuleRevision, Map<ModuleCapability, List<ModuleWire>>> provided, Map<ModuleRevision, List<ModuleWire>> required) {
-		Map<ModuleCapability, List<ModuleWire>> providedWireMap = provided.get(revision);
-		if (providedWireMap == null)
-			providedWireMap = Collections.emptyMap();
-		List<ModuleWire> requiredWires = required.get(revision);
-		if (requiredWires == null)
-			requiredWires = Collections.emptyList();
+	private ModuleWiring createNewWiring(ModuleRevision revision, Map<ModuleRevision, Map<ModuleCapability, List<ModuleWire>>> provided, Map<ModuleRevision, NamespaceList<ModuleWire>> required) {
 
-		List<ModuleCapability> capabilities = new ArrayList<>(revision.getModuleCapabilities(null));
-		ListIterator<ModuleCapability> iCapabilities = capabilities.listIterator(capabilities.size());
-		List<ModuleRequirement> requirements = new ArrayList<>(revision.getModuleRequirements(null));
-		ListIterator<ModuleRequirement> iRequirements = requirements.listIterator(requirements.size());
+		Map<ModuleCapability, List<ModuleWire>> providedWireMap = provided.getOrDefault(revision, Collections.emptyMap());
+		NamespaceList<ModuleWire> requiredWires = required.getOrDefault(revision, NamespaceList.empty(WIRE));
+
+		NamespaceList.Builder<ModuleCapability> capabilities = revision.getCapabilities().createBuilder();
+		NamespaceList.Builder<ModuleRequirement> requirements = revision.getRequirements().createBuilder();
 
 		// if revision is a fragment remove payload requirements and capabilities
 		if ((BundleRevision.TYPE_FRAGMENT & revision.getTypes()) != 0) {
-			removePayloadContent(iCapabilities, iRequirements);
+			removePayloadContent(capabilities, requirements);
 		} else {
 			// add fragment capabilities and requirements
 			List<ModuleCapability> hostCapabilities = revision.getModuleCapabilities(HostNamespace.HOST_NAMESPACE);
 			ModuleCapability hostCapability = hostCapabilities.isEmpty() ? null : hostCapabilities.get(0);
 			if (hostCapability != null) {
-				addPayloadContent(providedWireMap.get(hostCapability), iCapabilities, iRequirements);
+				addPayloadContent(providedWireMap.get(hostCapability), capabilities, requirements);
 			}
 		}
 
-		removeNonEffectiveCapabilities(iCapabilities);
-		removeNonEffectiveRequirements(iRequirements, requiredWires);
-		Collection<String> substituted = removeSubstitutedCapabilities(iCapabilities, requiredWires);
+		removeNonEffectiveCapabilities(capabilities);
+		removeNonEffectiveRequirements(requirements, requiredWires);
+		Collection<String> substituted = removeSubstitutedCapabilities(capabilities, requiredWires);
 
-		List<ModuleWire> providedWires = new ArrayList<>();
+		NamespaceList.Builder<ModuleWire> providedWires = NamespaceList.Builder.create(WIRE);
 		addProvidedWires(providedWireMap, providedWires, capabilities);
 
 		InternalUtils.filterCapabilityPermissions(capabilities);
-		return new ModuleWiring(revision, capabilities, requirements, providedWires, requiredWires, substituted);
+		return new ModuleWiring(revision, capabilities.build(), requirements.build(), providedWires.build(),
+				requiredWires, substituted);
+
 	}
 
-	private static void removePayloadContent(ListIterator<ModuleCapability> iCapabilities, ListIterator<ModuleRequirement> iRequirements) {
-		rewind(iCapabilities);
-		while (iCapabilities.hasNext()) {
-			if (!NON_PAYLOAD_CAPABILITIES.contains(iCapabilities.next().getNamespace())) {
-				iCapabilities.remove();
-			}
-		}
+	private static void removePayloadContent(NamespaceList.Builder<ModuleCapability> capabilities,
+			NamespaceList.Builder<ModuleRequirement> requirements) {
 
-		rewind(iRequirements);
-		while (iRequirements.hasNext()) {
-			if (!NON_PAYLOAD_REQUIREMENTS.contains(iRequirements.next().getNamespace())) {
-				iRequirements.remove();
-			}
-		}
+		capabilities.removeNamespaceIf(namespace -> !NON_PAYLOAD_CAPABILITIES.contains(namespace));
+		requirements.removeNamespaceIf(namespace -> !NON_PAYLOAD_REQUIREMENTS.contains(namespace));
 	}
 
-	private static Collection<String> removeSubstitutedCapabilities(ListIterator<ModuleCapability> iCapabilities, List<ModuleWire> requiredWires) {
-		Collection<String> substituted = null;
-		for (ModuleWire moduleWire : requiredWires) {
-			if (!PackageNamespace.PACKAGE_NAMESPACE.equals(moduleWire.getCapability().getNamespace()))
-				continue;
+	private static Collection<String> removeSubstitutedCapabilities(NamespaceList.Builder<ModuleCapability> capabilities, NamespaceList<ModuleWire> requiredWires) {
+		Collection<String> substituted = new ArrayList<>();
+		for (ModuleWire moduleWire : requiredWires.getList(PackageNamespace.PACKAGE_NAMESPACE)) {
 			String packageName = (String) moduleWire.getCapability().getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE);
-			rewind(iCapabilities);
-			while (iCapabilities.hasNext()) {
-				ModuleCapability capability = iCapabilities.next();
-				if (PackageNamespace.PACKAGE_NAMESPACE.equals(capability.getNamespace())) {
-					if (packageName.equals(capability.getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE))) {
-						// found a package capability with the same name as a package that got imported
-						// this indicates a substitution
-						iCapabilities.remove();
-						if (substituted == null) {
-							substituted = new ArrayList<>();
-						}
-						if (!substituted.contains(packageName)) {
-							substituted.add(packageName);
-						}
+			capabilities.removeElementsOfNamespaceIf(PackageNamespace.PACKAGE_NAMESPACE, capability -> {
+				if (packageName.equals(capability.getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE))) {
+					// found a package capability with the same name as a package that got imported
+					// this indicates a substitution
+					if (!substituted.contains(packageName)) {
+						substituted.add(packageName);
 					}
+					return true;
 				}
-			}
+				return false;
+			});
 		}
-		return substituted == null ? Collections.<String> emptyList() : substituted;
+		return substituted.isEmpty() ? Collections.emptyList() : substituted;
 	}
 
-	private static void removeNonEffectiveRequirements(ListIterator<ModuleRequirement> iRequirements, List<ModuleWire> requiredWires) {
+	private static void removeNonEffectiveRequirements(NamespaceList.Builder<ModuleRequirement> requirements, NamespaceList<ModuleWire> requiredWires) {
 
 		Set<ModuleRequirement> wireRequirements = new HashSet<>();
-		for (ModuleWire mw : requiredWires) {
+		for (ModuleWire mw : requiredWires.getList(null)) {
 			wireRequirements.add(mw.getRequirement());
 		}
-
-		rewind(iRequirements);
-		while (iRequirements.hasNext()) {
-			ModuleRequirement requirement = iRequirements.next();
+		requirements.removeIf(requirement -> {
 			// check the effective directive;
 			Object effective = requirement.getDirectives().get(Namespace.REQUIREMENT_EFFECTIVE_DIRECTIVE);
 			if (effective != null && !Namespace.EFFECTIVE_RESOLVE.equals(effective)) {
-				iRequirements.remove();
-			} else {
-
-				if (!wireRequirements.contains(requirement)) {
-					if (!PackageNamespace.PACKAGE_NAMESPACE.equals(requirement.getNamespace())) {
-						iRequirements.remove();
-					} else {
-						Object resolution = requirement.getDirectives().get(Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE);
-						if (!PackageNamespace.RESOLUTION_DYNAMIC.equals(resolution)) {
-							iRequirements.remove();
-						}
-					}
+				return true;
+			}
+			if (!wireRequirements.contains(requirement)) {
+				if (!PackageNamespace.PACKAGE_NAMESPACE.equals(requirement.getNamespace())) {
+					return true;
+				}
+				Object resolution = requirement.getDirectives().get(Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE);
+				if (!PackageNamespace.RESOLUTION_DYNAMIC.equals(resolution)) {
+					return true;
 				}
 			}
-		}
+			return false;
+		});
 	}
 
-	void removeNonEffectiveCapabilities(ListIterator<ModuleCapability> iCapabilities) {
-		rewind(iCapabilities);
-		while (iCapabilities.hasNext()) {
-			Capability capability = iCapabilities.next();
+	void removeNonEffectiveCapabilities(Collection<ModuleCapability> capabilities) {
+		capabilities.removeIf(capability -> {
 			Object effective = capability.getDirectives().get(Namespace.CAPABILITY_EFFECTIVE_DIRECTIVE);
 			if (effective != null && !Namespace.EFFECTIVE_RESOLVE.equals(effective)) {
-				iCapabilities.remove();
 				if (DEBUG_PROVIDERS) {
 					Debug.println(new StringBuilder("RESOLVER: Capability filtered because it was not effective") //$NON-NLS-1$
 							.append(SEPARATOR).append(TAB) //
@@ -350,64 +324,41 @@ final class ModuleResolver {
 							.append(capability.getResource()) //
 							.toString());
 				}
+				return true;
 			}
-		}
+			return false;
+		});
 	}
 
-	private static void addPayloadContent(List<ModuleWire> hostWires, ListIterator<ModuleCapability> iCapabilities, ListIterator<ModuleRequirement> iRequirements) {
+	private static void addPayloadContent(List<ModuleWire> hostWires, NamespaceList.Builder<ModuleCapability> capabilities, NamespaceList.Builder<ModuleRequirement> requirements) {
 		if (hostWires == null)
 			return;
 		for (ModuleWire hostWire : hostWires) {
+
 			// add fragment capabilities
-			String currentNamespace = null;
-			List<ModuleCapability> fragmentCapabilities = hostWire.getRequirer().getModuleCapabilities(null);
-			for (ModuleCapability fragmentCapability : fragmentCapabilities) {
-				if (NON_PAYLOAD_CAPABILITIES.contains(fragmentCapability.getNamespace())) {
-					continue; // don't include, not a payload capability
-				}
-				Object effective = fragmentCapability.getDirectives().get(Namespace.CAPABILITY_EFFECTIVE_DIRECTIVE);
-				if (effective != null && !Namespace.EFFECTIVE_RESOLVE.equals(effective)) {
-					continue; // don't include, not effective
-				}
-				if (!fragmentCapability.getNamespace().equals(currentNamespace)) {
-					currentNamespace = fragmentCapability.getNamespace();
-					fastForward(iCapabilities);
-					while (iCapabilities.hasPrevious()) {
-						if (iCapabilities.previous().getNamespace().equals(currentNamespace)) {
-							iCapabilities.next(); // put position after the last one
-							break;
-						}
-					}
-				}
-				iCapabilities.add(fragmentCapability);
-			}
+			NamespaceList<ModuleCapability> fragmentCapabilities = hostWire.getRequirer().getCapabilities();
+			capabilities.addAllFiltered(fragmentCapabilities,
+
+					n -> !NON_PAYLOAD_CAPABILITIES.contains(n),
+
+					fc -> { // don't include, not effective
+						Object effective = fc.getDirectives().get(Namespace.CAPABILITY_EFFECTIVE_DIRECTIVE);
+						return effective == null || Namespace.EFFECTIVE_RESOLVE.equals(effective);
+					});
+
 			// add fragment requirements
-			currentNamespace = null;
-			List<ModuleRequirement> fragmentRequriements = hostWire.getRequirer().getModuleRequirements(null);
-			for (ModuleRequirement fragmentRequirement : fragmentRequriements) {
-				if (NON_PAYLOAD_REQUIREMENTS.contains(fragmentRequirement.getNamespace())) {
-					continue; // don't include, not a payload requirement
-				}
-				Object effective = fragmentRequirement.getDirectives().get(Namespace.REQUIREMENT_EFFECTIVE_DIRECTIVE);
-				if (effective != null && !Namespace.EFFECTIVE_RESOLVE.equals(effective)) {
-					continue; // don't include, not effective
-				}
-				if (!fragmentRequirement.getNamespace().equals(currentNamespace)) {
-					currentNamespace = fragmentRequirement.getNamespace();
-					boolean isDynamic = isDynamic(fragmentRequirement);
-					fastForward(iRequirements);
-					while (iRequirements.hasPrevious()) {
-						ModuleRequirement previous = iRequirements.previous();
-						if (previous.getNamespace().equals(currentNamespace)) {
-							if (isDynamic || !isDynamic(previous)) {
-								iRequirements.next(); // put position after the last one
-								break;
-							}
-						}
-					}
-				}
-				iRequirements.add(fragmentRequirement);
-			}
+			NamespaceList<ModuleRequirement> fragmentRequriements = hostWire.getRequirer().getRequirements();
+			requirements.addAllFilteredAfterLastMatch(fragmentRequriements,
+
+					n -> !NON_PAYLOAD_REQUIREMENTS.contains(n),
+
+					fr -> { // don't include, not effective
+						Object effective = fr.getDirectives().get(Namespace.REQUIREMENT_EFFECTIVE_DIRECTIVE);
+						return !(effective != null && !Namespace.EFFECTIVE_RESOLVE.equals(effective));
+					},
+
+					(fr, r) -> !PackageNamespace.PACKAGE_NAMESPACE.equals(fr.getNamespace()) || isDynamic(fr)
+							|| !isDynamic(r));
 		}
 	}
 
@@ -415,61 +366,24 @@ final class ModuleResolver {
 		return PackageNamespace.PACKAGE_NAMESPACE.equals(requirement.getNamespace()) && PackageNamespace.RESOLUTION_DYNAMIC.equals(requirement.getDirectives().get(Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE));
 	}
 
-	private static void addProvidedWires(Map<ModuleCapability, List<ModuleWire>> toAdd, List<ModuleWire> existing, final List<ModuleCapability> orderedCapabilities) {
+	private static void addProvidedWires(Map<ModuleCapability, List<ModuleWire>> toAdd,
+			NamespaceList.Builder<ModuleWire> existing, NamespaceList.Builder<ModuleCapability> capabilities) {
 		if (toAdd == null)
 			return;
-		int originalSize = existing.size();
-		for (ModuleCapability capability : orderedCapabilities) {
+		for (ModuleCapability capability : capabilities) {
 			List<ModuleWire> newWires = toAdd.get(capability);
 			if (newWires != null) {
 				existing.addAll(newWires);
 			}
 		}
-		if (originalSize != 0) {
-			Collections.sort(existing, new Comparator<ModuleWire>() {
-				@Override
-				public int compare(ModuleWire w1, ModuleWire w2) {
-					int index1 = orderedCapabilities.indexOf(w1.getCapability());
-					int index2 = orderedCapabilities.indexOf(w2.getCapability());
-					return index1 - index2;
-				}
-			});
-		}
 	}
 
-	private static void addRequiredWires(List<ModuleWire> toAdd, List<ModuleWire> existing, final List<ModuleRequirement> orderedRequirements) {
-		if (toAdd == null)
-			return;
-		int originalSize = existing.size();
-		existing.addAll(toAdd);
-		if (originalSize != 0) {
-			Collections.sort(existing, new Comparator<ModuleWire>() {
-				@Override
-				public int compare(ModuleWire w1, ModuleWire w2) {
-					int index1 = orderedRequirements.indexOf(w1.getRequirement());
-					int index2 = orderedRequirements.indexOf(w2.getRequirement());
-					return index1 - index2;
-				}
-			});
-		}
-	}
-
-	private static void fastForward(ListIterator<?> listIterator) {
-		while (listIterator.hasNext())
-			listIterator.next();
-	}
-
-	static void rewind(ListIterator<?> listIterator) {
-		while (listIterator.hasPrevious())
-			listIterator.previous();
-	}
-
-	private static ModuleWiring createWiringDelta(ModuleRevision revision, ModuleWiring existingWiring, Map<ModuleCapability, List<ModuleWire>> providedWireMap, List<ModuleWire> requiredWires) {
+	private static ModuleWiring createWiringDelta(ModuleRevision revision, ModuleWiring existingWiring, Map<ModuleCapability, List<ModuleWire>> providedWireMap, NamespaceList<ModuleWire> requiredWires) {
 		// No null checks are done here on the wires since this is a copy.
-		List<ModuleWire> existingProvidedWires = existingWiring.getProvidedModuleWires(null);
-		List<ModuleCapability> existingCapabilities = existingWiring.getModuleCapabilities(null);
-		List<ModuleWire> existingRequiredWires = existingWiring.getRequiredModuleWires(null);
-		List<ModuleRequirement> existingRequirements = existingWiring.getModuleRequirements(null);
+		NamespaceList.Builder<ModuleWire> existingProvidedWires = existingWiring.getProvidedWires().createBuilder();
+		NamespaceList.Builder<ModuleCapability> existingCapabilities = existingWiring.getCapabilities().createBuilder();
+		NamespaceList.Builder<ModuleWire> existingRequiredWires = existingWiring.getRequiredWires().createBuilder();
+		NamespaceList.Builder<ModuleRequirement> existingRequirements = existingWiring.getRequirements().createBuilder();
 
 		// First, add newly resolved fragment capabilities and requirements
 		if (providedWireMap != null) {
@@ -477,7 +391,7 @@ final class ModuleResolver {
 			ModuleCapability hostCapability = hostCapabilities.isEmpty() ? null : hostCapabilities.get(0);
 			List<ModuleWire> newHostWires = hostCapability == null ? null : providedWireMap.get(hostCapability);
 			if (newHostWires != null) {
-				addPayloadContent(newHostWires, existingCapabilities.listIterator(), existingRequirements.listIterator());
+				addPayloadContent(newHostWires, existingCapabilities, existingRequirements);
 			}
 		}
 
@@ -486,11 +400,13 @@ final class ModuleResolver {
 
 		// Also need to include any new required wires that may have be added for fragment hosts
 		// Also will be needed for dynamic imports
-		addRequiredWires(requiredWires, existingRequiredWires, existingRequirements);
+		if (requiredWires != null) {
+			existingRequiredWires.addAll(requiredWires);
+		}
 
 		InternalUtils.filterCapabilityPermissions(existingCapabilities);
-		return new ModuleWiring(revision, existingCapabilities, existingRequirements, existingProvidedWires,
-				existingRequiredWires, existingWiring.getSubstitutedNames());
+		return new ModuleWiring(revision, existingCapabilities.build(), existingRequirements.build(),
+				existingProvidedWires.build(), existingRequiredWires.build(), existingWiring.getSubstitutedNames());
 	}
 
 	static boolean isSingleton(ModuleRevision revision) {
@@ -549,7 +465,7 @@ final class ModuleResolver {
 			}
 
 			Map<Resource, ResolutionException> getUsesConstraintViolations() {
-				return errors == null ? Collections.<Resource, ResolutionException> emptyMap() : errors;
+				return errors == null ? Collections.emptyMap() : errors;
 			}
 
 			@Override
@@ -681,11 +597,10 @@ final class ModuleResolver {
 		}
 
 		List<Capability> filterProviders(Requirement requirement, List<ModuleCapability> candidates, boolean filterResolvedHosts) {
-			ListIterator<ModuleCapability> iCandidates = candidates.listIterator();
-			filterDisabled(iCandidates);
-			removeNonEffectiveCapabilities(iCandidates);
-			removeSubstituted(iCandidates);
-			filterPermissions((BundleRequirement) requirement, iCandidates);
+			filterDisabled(candidates);
+			removeNonEffectiveCapabilities(candidates);
+			removeSubstituted(candidates);
+			filterPermissions((BundleRequirement) requirement, candidates);
 
 			List<ModuleCapability> filteredMatches = null;
 			if (DEBUG_PROVIDERS || DEBUG_HOOKS) {
@@ -760,9 +675,8 @@ final class ModuleResolver {
 			}
 		}
 
-		private void filterPermissions(BundleRequirement requirement, ListIterator<ModuleCapability> iCandidates) {
-			rewind(iCandidates);
-			if (System.getSecurityManager() == null || !iCandidates.hasNext()) {
+		private void filterPermissions(BundleRequirement requirement, List<ModuleCapability> candidates) {
+			if (System.getSecurityManager() == null) {
 				return;
 			}
 
@@ -771,18 +685,16 @@ final class ModuleResolver {
 				return;
 			}
 
-			candidates: while (iCandidates.hasNext()) {
-				ModuleCapability candidate = iCandidates.next();
+			candidates.removeIf(candidate -> {
 				// TODO this is a hack for when a bundle imports and exports the same package
 				if (PackageNamespace.PACKAGE_NAMESPACE.equals(requirement.getNamespace())) {
 					if (requirement.getRevision().equals(candidate.getRevision())) {
-						continue candidates;
+						return false;
 					}
 				}
 				Permission requirePermission = InternalUtils.getRequirePermission(candidate);
 				Permission providePermission = InternalUtils.getProvidePermission(candidate);
 				if (!requirement.getRevision().getBundle().hasPermission(requirePermission)) {
-					iCandidates.remove();
 					if (DEBUG_PROVIDERS) {
 						Debug.println(new StringBuilder("RESOLVER: Capability filtered because requirer did not have permission") //$NON-NLS-1$
 								.append(SEPARATOR).append(TAB) //
@@ -793,8 +705,8 @@ final class ModuleResolver {
 								.append(candidate.getResource()) //
 								.toString());
 					}
+					return true;
 				} else if (!candidate.getRevision().getBundle().hasPermission(providePermission)) {
-					iCandidates.remove();
 					if (DEBUG_PROVIDERS) {
 						Debug.println(new StringBuilder("RESOLVER: Capability filtered because provider did not have permission") //$NON-NLS-1$
 								.append(SEPARATOR).append(TAB) //
@@ -805,16 +717,15 @@ final class ModuleResolver {
 								.append(candidate.getResource()) //
 								.toString());
 					}
+					return true;
 				}
-			}
+				return false;
+			});
 		}
 
-		private void filterDisabled(ListIterator<ModuleCapability> iCandidates) {
-			rewind(iCandidates);
-			while (iCandidates.hasNext()) {
-				Capability capability = iCandidates.next();
+		private void filterDisabled(List<ModuleCapability> candidates) {
+			candidates.removeIf(capability -> {
 				if (disabled.contains(capability.getResource())) {
-					iCandidates.remove();
 					if (DEBUG_PROVIDERS) {
 						Debug.println(new StringBuilder("RESOLVER: Capability filtered because it was disabled") //$NON-NLS-1$
 								.append(SEPARATOR).append(TAB) //
@@ -825,17 +736,16 @@ final class ModuleResolver {
 								.append(capability.getResource()) //
 								.toString());
 					}
+					return true;
 				}
-			}
+				return false;
+			});
 		}
 
-		private void removeSubstituted(ListIterator<ModuleCapability> iCapabilities) {
-			rewind(iCapabilities);
-			while (iCapabilities.hasNext()) {
-				ModuleCapability capability = iCapabilities.next();
+		private void removeSubstituted(List<ModuleCapability> capabilities) {
+			capabilities.removeIf(capability -> {
 				ModuleWiring wiring = wirings.get(capability.getRevision());
 				if (wiring != null && wiring.isSubtituted(capability)) {
-					iCapabilities.remove();
 					if (DEBUG_PROVIDERS) {
 						Debug.println(new StringBuilder("RESOLVER: Capability filtered because it was substituted") //$NON-NLS-1$
 								.append(SEPARATOR).append(TAB) //
@@ -846,8 +756,10 @@ final class ModuleResolver {
 								.append(capability.getResource()) //
 								.toString());
 					}
+					return true;
 				}
-			}
+				return false;
+			});
 		}
 
 		@Override
@@ -899,10 +811,10 @@ final class ModuleResolver {
 			Collection<Resource> relatedFragments = new ArrayList<>();
 			for (String hostBSN : getHostBSNs(hostCaps)) {
 				String matchFilter = "(" + EquinoxFragmentNamespace.FRAGMENT_NAMESPACE + "=" + hostBSN + ")"; //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
-				Requirement fragmentRequirement = ModuleContainer.createRequirement(EquinoxFragmentNamespace.FRAGMENT_NAMESPACE, Collections.<String, String> singletonMap(Namespace.REQUIREMENT_FILTER_DIRECTIVE, matchFilter), Collections.<String, Object> emptyMap());
+				Requirement fragmentRequirement = ModuleContainer.createRequirement(EquinoxFragmentNamespace.FRAGMENT_NAMESPACE, Collections.singletonMap(Namespace.REQUIREMENT_FILTER_DIRECTIVE, matchFilter), Collections.emptyMap());
 				List<ModuleCapability> candidates = moduleDatabase.findCapabilities(fragmentRequirement);
 				// filter out disabled fragments and singletons
-				filterDisabled(candidates.listIterator());
+				filterDisabled(candidates);
 				for (ModuleCapability candidate : candidates) {
 					ModuleRequirement hostReq = candidate.getRevision().getModuleRequirements(HostNamespace.HOST_NAMESPACE).get(0);
 					for (ModuleCapability hostCap : hostCaps) {
@@ -958,7 +870,7 @@ final class ModuleResolver {
 					if (e.getCause() instanceof BundleException) {
 						BundleException be = (BundleException) e.getCause();
 						if (be.getType() == BundleException.REJECTED_BY_HOOK) {
-							return new ModuleResolutionReport(null, Collections.<Resource, List<Entry>> emptyMap(), new ResolutionException(be));
+							return new ModuleResolutionReport(null, Collections.emptyMap(), new ResolutionException(be));
 						}
 					}
 					throw e;
@@ -1367,13 +1279,8 @@ final class ModuleResolver {
 			if (dynamicAttachableFrags.isEmpty()) {
 				return Collections.emptyMap();
 			}
-			Collections.sort(dynamicAttachableFrags, new Comparator<ModuleRevision>() {
-				@Override
-				public int compare(ModuleRevision r1, ModuleRevision r2) {
-					// we only care about versions here
-					return -(r1.getVersion().compareTo(r2.getVersion()));
-				}
-			});
+			// we only care about versions here
+			Collections.sort(dynamicAttachableFrags, Comparator.comparing(ModuleRevision::getVersion).reversed());
 
 			Map<ModuleCapability, DynamicFragments> hostDynamicFragments = new HashMap<>();
 			// first find the hosts to dynamically attach to

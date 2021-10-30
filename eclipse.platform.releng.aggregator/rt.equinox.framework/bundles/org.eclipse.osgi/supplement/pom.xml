@@ -15,13 +15,13 @@
   <parent>
     <artifactId>rt.equinox.framework</artifactId>
     <groupId>org.eclipse.equinox.framework</groupId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../../../</relativePath>
   </parent>
 
   <groupId>org.eclipse.equinox</groupId>
   <artifactId>org.eclipse.equinox.supplement</artifactId>
-  <version>1.10.0-SNAPSHOT</version>
+  <version>1.10.200-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 
 </project>

@@ -216,8 +216,10 @@ static _TCHAR* startupMsg =
 _T_ECLIPSE("The %s executable launcher was unable to locate its \n\
 companion launcher jar.");
 
+#ifdef LINUX
 static _TCHAR* gtk2Msg =
 _T_ECLIPSE("The %s executable launcher no longer supports running with GTK + 2.x. Continuing using GTK+ 3.x.");
+#endif
 
 static _TCHAR* homeMsg =
 _T_ECLIPSE("The %s executable launcher was unable to locate its \n\
@@ -270,6 +272,9 @@ home directory.");
 #define EE_HOME					_T_ECLIPSE("-Dee.home=")
 #define EE_FILENAME				_T_ECLIPSE("-Dee.filename=")
 #define EE_HOME_VAR				_T_ECLIPSE("${ee.home}")
+
+/* Splash screen names to look for when -showsplash points to a directory or plugin */
+#define SPLASH_IMAGES _T_ECLIPSE("splash.png\0" "splash.jpg\0" "splash.jpeg\0" "splash.gif\0" "splash.bmp\0" "\0")
 
 /* Define the variables to receive the option values. */
 static int     needConsole   = 0;				/* True: user wants a console	*/
@@ -1391,8 +1396,8 @@ _TCHAR* getProgramDir( )
 
 static _TCHAR* findSplash(_TCHAR* splashArg) {
 	struct _stat stats;
-	_TCHAR *ch;
-	_TCHAR *path, *prefix;
+	_TCHAR *ch, *prefix;
+	_TCHAR *path, *dir, *name;
 	size_t length;
 
 	if (splashArg == NULL)
@@ -1401,7 +1406,7 @@ static _TCHAR* findSplash(_TCHAR* splashArg) {
 	splashArg = _tcsdup(splashArg);
 	length = _tcslen(splashArg);
 	/* _tstat doesn't seem to like dirSeparators on the end */
-	while (IS_DIR_SEPARATOR(splashArg[length - 1])) {
+	while (length && IS_DIR_SEPARATOR(splashArg[length - 1])) {
 		splashArg[--length] = 0;
 	}
 
@@ -1413,48 +1418,58 @@ static _TCHAR* findSplash(_TCHAR* splashArg) {
 			return splashArg;
 		} else if (stats.st_mode & S_IFDIR) {
 			/*directory, look for splash.bmp*/
-			ch = malloc( (length + 12) * sizeof(_TCHAR));
-			_stprintf( ch, _T_ECLIPSE("%s%c%s"), splashArg, dirSeparator, _T_ECLIPSE("splash.bmp") );
+			dir = splashArg;
+			splashArg = NULL;
+		} else {
+			free(splashArg);
+			return NULL;
+		}
+	} else {
+		/* doesn't exist, separate into path & prefix and look for a /path/prefix_<version> */
+		ch = lastDirSeparator( splashArg );
+		if (ch != NULL) {
+			if (IS_ABSOLUTE(splashArg)) {
+				/*absolute path*/
+				path = _tcsdup(splashArg);
+				path[ch - splashArg] = 0;
+			} else {
+				/* relative path, prepend with programDir */
+				path = malloc( (_tcslen(programDir) + ch - splashArg + 2) * sizeof(_TCHAR));
+				*ch = 0;
+				_stprintf(path, _T_ECLIPSE("%s%c%s"), programDir, dirSeparator, splashArg);
+				*ch = dirSeparator;
+			}
+			prefix = ch + 1;
+		} else {
+			/* No separator, treat splashArg as the prefix and look in the plugins dir */
+#ifdef MACOSX
+			path = malloc( (_tcslen(programDir) + 20) * sizeof(_TCHAR));
+			_stprintf(path, _T_ECLIPSE("%s%c%s%s"), programDir, dirSeparator, _T_ECLIPSE("../Eclipse/"), _T_ECLIPSE("plugins"));
+#else
+			path = malloc( (_tcslen(programDir) + 9) * sizeof(_TCHAR));
+			_stprintf(path, _T_ECLIPSE("%s%c%s"), programDir, dirSeparator, _T_ECLIPSE("plugins"));
+#endif
+			prefix = splashArg;
+		}
+		dir = findFile(path, prefix);
+		free(path);
+		free(splashArg);
+		path = prefix = splashArg = NULL;
+	}
+
+	/* directory, look for splash image */
+	if (dir != NULL) {
+		length = _tcslen(dir);
+		for (name = SPLASH_IMAGES; *name; name += _tcslen(name) + 1) {
+			ch = malloc((length + 1 + _tcslen(name) + 1) * sizeof(_TCHAR));
+			_stprintf(ch, _T_ECLIPSE("%s%c%s"), dir, dirSeparator, name);
 			if (_tstat(ch, &stats) == 0 && (stats.st_mode & S_IFREG)) {
-				free(splashArg);
+				free(dir);
 				return ch;
 			}
 			free(ch);
 		}
-		free(splashArg);
-		return NULL;
-	}
-
-	/* doesn't exist, separate into path & prefix and look for a /path/prefix_<version> */
-	ch = lastDirSeparator( splashArg );
-	if (ch != NULL) {
-		if (IS_ABSOLUTE(splashArg))
-		{	/*absolute path*/
-			path = _tcsdup(splashArg);
-			path[ch - splashArg] = 0;
-		} else {
-			/* relative path, prepend with programDir */
-			path = malloc( (_tcslen(programDir) + ch - splashArg + 2) * sizeof(_TCHAR));
-			*ch = 0;
-			_stprintf(path, _T_ECLIPSE("%s%c%s"), programDir, dirSeparator, splashArg);
-			*ch = dirSeparator;
-		}
-		prefix = _tcsdup(ch + 1);
-	} else {
-		/* No separator, treat splashArg as the prefix and look in the plugins dir */
-		path = malloc( (_tcslen(programDir) + 9) * sizeof(_TCHAR));
-		_stprintf(path, _T_ECLIPSE("%s%c%s"), programDir, dirSeparator, _T_ECLIPSE("plugins"));
-		prefix = _tcsdup(splashArg);
-	}
-
-	ch = findFile(path, prefix);
-	free(path);
-	free(prefix);
-	free(splashArg);
-	if (ch != NULL) {
-		path = malloc((_tcslen(ch) + 12) * sizeof(_TCHAR));
-		_stprintf( path, _T_ECLIPSE("%s%c%s"), ch, dirSeparator, _T_ECLIPSE("splash.bmp") );
-		return path;
+		free(dir);
 	}
 	return NULL;
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corporation and others.
+ * Copyright (c) 2009, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -23,7 +23,6 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -267,11 +266,7 @@ public class BundleInstallUpdateTests extends AbstractBundleTests {
 			junk = null;
 		}
 
-		CollisionHook hook = new CollisionHook() {
-			public void filterCollisions(int operationType, Bundle target, Collection collisionCandidates) {
-				collisionCandidates.clear();
-			}
-		};
+		CollisionHook hook = (operationType, target, collisionCandidates) -> collisionCandidates.clear();
 		ServiceRegistration reg = OSGiTestsActivator.getContext().registerService(CollisionHook.class, hook, null);
 		try {
 			try {
@@ -437,6 +432,17 @@ public class BundleInstallUpdateTests extends AbstractBundleTests {
 		is.close();
 	}
 
+	public static Method findDeclaredMethod(Class<?> clazz, String method, Class... args) throws NoSuchMethodException {
+		do {
+			try {
+				return clazz.getDeclaredMethod(method, args);
+			} catch (NoSuchMethodException e) {
+				clazz = clazz.getSuperclass();
+			}
+		} while (clazz != null);
+		throw new NoSuchMethodException(method);
+	}
+
 	public void testEscapeZipRoot() throws IOException, BundleException, InvalidSyntaxException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		String entry1 = "../../escapedZipRoot1.txt";
 		String entry2 = "dir1/../../../escapedZipRoot2.txt";
@@ -463,8 +469,8 @@ public class BundleInstallUpdateTests extends AbstractBundleTests {
 		} catch (ClassNotFoundException e) {
 			// expected
 		}
-		ClassLoader cl = testBundle.adapt(BundleWiring.class).getClassLoader();
-		Method findLibrary = ClassLoader.class.getDeclaredMethod("findLibrary", String.class);
+		Object cl = testBundle.adapt(BundleWiring.class).getClassLoader();
+		Method findLibrary = findDeclaredMethod(cl.getClass(), "findLibrary", String.class);
 		findLibrary.setAccessible(true);
 		assertNull("Found library.", findLibrary.invoke(cl, "nativeCode"));
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2020 IBM Corporation and others.
+ * Copyright (c) 2012, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -100,12 +100,9 @@ class OSGiFrameworkHooks {
 			if (System.getSecurityManager() == null) {
 				notifyCollisionHooksPriviledged(operationType, target, shrinkable);
 			} else {
-				AccessController.doPrivileged(new PrivilegedAction<Void>() {
-					@Override
-					public Void run() {
-						notifyCollisionHooksPriviledged(operationType, target, shrinkable);
-						return null;
-					}
+				AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+					notifyCollisionHooksPriviledged(operationType, target, shrinkable);
+					return null;
 				});
 			}
 		}
@@ -116,9 +113,8 @@ class OSGiFrameworkHooks {
 			}
 			ServiceRegistry registry = container.getServiceRegistry();
 			if (registry != null) {
-				registry.notifyHooksPrivileged(CollisionHook.class, "filterCollisions", (hook, hookRegistration) -> { //$NON-NLS-1$
-					hook.filterCollisions(operationType, target, collisionCandidates);
-				});
+				registry.notifyHooksPrivileged(CollisionHook.class, "filterCollisions", //$NON-NLS-1$
+						(hook, hookRegistration) -> hook.filterCollisions(operationType, target, collisionCandidates));
 			}
 		}
 	}
@@ -168,17 +164,14 @@ class OSGiFrameworkHooks {
 		}
 
 		private ServiceReferenceImpl<ResolverHookFactory>[] getHookReferences(final ServiceRegistry registry, final BundleContextImpl context) {
-			return AccessController.doPrivileged(new PrivilegedAction<ServiceReferenceImpl<ResolverHookFactory>[]>() {
-				@Override
-				public ServiceReferenceImpl<ResolverHookFactory>[] run() {
-					try {
-						@SuppressWarnings("unchecked")
-						ServiceReferenceImpl<ResolverHookFactory>[] result = (ServiceReferenceImpl<ResolverHookFactory>[]) registry.getServiceReferences(context, ResolverHookFactory.class.getName(), null, false);
-						return result;
-					} catch (InvalidSyntaxException e) {
-						// cannot happen; no filter
-						return null;
-					}
+			return AccessController.doPrivileged((PrivilegedAction<ServiceReferenceImpl<ResolverHookFactory>[]>) () -> {
+				try {
+					@SuppressWarnings("unchecked")
+					ServiceReferenceImpl<ResolverHookFactory>[] result = (ServiceReferenceImpl<ResolverHookFactory>[]) registry.getServiceReferences(context, ResolverHookFactory.class.getName(), null, false);
+					return result;
+				} catch (InvalidSyntaxException e) {
+					// cannot happen; no filter
+					return null;
 				}
 			});
 
@@ -193,13 +186,13 @@ class OSGiFrameworkHooks {
 			Module systemModule = mContainer == null ? null : mContainer.getModule(0);
 			ServiceRegistry registry = container.getServiceRegistry();
 			if (registry == null || systemModule == null) {
-				return new CoreResolverHook(Collections.<HookReference> emptyList(), systemModule);
+				return new CoreResolverHook(Collections.emptyList(), systemModule);
 			}
 
 			BundleContextImpl context = (BundleContextImpl) EquinoxContainer.secureAction.getContext(systemModule.getBundle());
 
 			ServiceReferenceImpl<ResolverHookFactory>[] refs = getHookReferences(registry, context);
-			List<HookReference> hookRefs = refs == null ? Collections.<CoreResolverHookFactory.HookReference>emptyList()
+			List<HookReference> hookRefs = refs == null ? Collections.emptyList()
 					: new ArrayList<>(refs.length);
 			if (refs != null) {
 				for (ServiceReferenceImpl<ResolverHookFactory> hookRef : refs) {

@@ -22,6 +22,8 @@ import org.apache.felix.resolver.Logger;
 import org.apache.felix.resolver.ResolverImpl;
 import org.eclipse.osgi.internal.debug.Debug;
 import org.eclipse.osgi.internal.debug.FrameworkDebugOptions;
+import org.eclipse.osgi.internal.framework.legacy.PackageAdminImpl;
+import org.eclipse.osgi.internal.framework.legacy.StartLevelImpl;
 import org.eclipse.osgi.internal.location.EquinoxLocations;
 import org.eclipse.osgi.internal.permadmin.EquinoxSecurityManager;
 import org.eclipse.osgi.internal.permadmin.SecurityAdmin;
@@ -61,14 +63,15 @@ public class SystemBundleActivator implements BundleActivator {
 	public void start(BundleContext bc) throws Exception {
 		registrations.clear();
 		EquinoxBundle bundle = (EquinoxBundle) bc.getBundle();
+		EquinoxContainer equinoxContainer = bundle.getEquinoxContainer();
 
-		bundle.getEquinoxContainer().systemStart(bc);
+		equinoxContainer.systemStart(bc);
 
 		EquinoxConfiguration configuration = bundle.getEquinoxContainer().getConfiguration();
 		installSecurityManager(configuration);
-		bundle.getEquinoxContainer().getLogServices().start(bc);
+		equinoxContainer.getLogServices().start(bc);
 
-		urlFactoryManager = new EquinoxFactoryManager(bundle.getEquinoxContainer());
+		urlFactoryManager = new EquinoxFactoryManager(equinoxContainer);
 		urlFactoryManager.installHandlerFactories(bc);
 
 		FrameworkDebugOptions dbgOptions = (FrameworkDebugOptions) configuration.getDebugOptions();
@@ -79,14 +82,16 @@ public class SystemBundleActivator implements BundleActivator {
 		props.put(Condition.CONDITION_ID, Condition.CONDITION_ID_TRUE);
 		register(bc, Condition.class, Condition.INSTANCE, false, props);
 
-		SecurityAdmin sa = bundle.getEquinoxContainer().getStorage().getSecurityAdmin();
-		ClassLoader tccl = bundle.getEquinoxContainer().getContextFinder();
+		registerLocations(bc, equinoxContainer.getLocations());
+		register(bc, EnvironmentInfo.class, equinoxContainer.getConfiguration(), null);
+		PackageAdmin packageAdmin = new PackageAdminImpl(equinoxContainer,
+				equinoxContainer.getStorage().getModuleContainer().getFrameworkWiring());
+		register(bc, PackageAdmin.class, packageAdmin, null);
+		StartLevel startLevel = new StartLevelImpl(
+				equinoxContainer.getStorage().getModuleContainer().getFrameworkStartLevel());
+		register(bc, StartLevel.class, startLevel, null);
 
-		registerLocations(bc, bundle.getEquinoxContainer().getLocations());
-		register(bc, EnvironmentInfo.class, bundle.getEquinoxContainer().getConfiguration(), null);
-		register(bc, PackageAdmin.class, bundle.getEquinoxContainer().getPackageAdmin(), null);
-		register(bc, StartLevel.class, bundle.getEquinoxContainer().getStartLevel(), null);
-
+		SecurityAdmin sa = equinoxContainer.getStorage().getSecurityAdmin();
 		register(bc, PermissionAdmin.class, sa, null);
 		register(bc, ConditionalPermissionAdmin.class, sa, null);
 
@@ -97,6 +102,7 @@ public class SystemBundleActivator implements BundleActivator {
 
 		register(bc, DebugOptions.class, dbgOptions, null);
 
+		ClassLoader tccl = equinoxContainer.getContextFinder();
 		if (tccl != null) {
 			props.clear();
 			props.put("equinox.classloader.type", "contextClassLoader"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -127,37 +133,58 @@ public class SystemBundleActivator implements BundleActivator {
 	}
 
 	private void installSecurityManager(EquinoxConfiguration configuration) throws BundleException {
-		String securityManager = configuration.getConfiguration(Constants.FRAMEWORK_SECURITY);
-		if (System.getSecurityManager() != null && securityManager != null) {
-			throw new BundleException("Cannot specify the \"" + Constants.FRAMEWORK_SECURITY + "\" configuration property when a security manager is already installed."); //$NON-NLS-1$ //$NON-NLS-2$
+		String frameworkSecurityProp = configuration.getConfiguration(Constants.FRAMEWORK_SECURITY);
+
+		if (System.getSecurityManager() != null) {
+			if (Constants.FRAMEWORK_SECURITY_OSGI.equals(frameworkSecurityProp)) {
+				throw new BundleException("Cannot specify the \"" + Constants.FRAMEWORK_SECURITY //$NON-NLS-1$
+						+ "\" configuration property when a security manager is already installed."); //$NON-NLS-1$
+			}
+			// otherwise, never do anything if there is an existing security manager
+			return;
 		}
 
-		if (securityManager == null) {
-			securityManager = configuration.getConfiguration(EquinoxConfiguration.PROP_EQUINOX_SECURITY, configuration.getProperty("java.security.manager")); //$NON-NLS-1$
-		}
-		if (securityManager != null) {
-			SecurityManager sm = System.getSecurityManager();
-			if (sm == null) {
-				if (securityManager.length() == 0)
-					sm = new SecurityManager(); // use the default one from java
-				else if (securityManager.equals(Constants.FRAMEWORK_SECURITY_OSGI))
-					sm = new EquinoxSecurityManager(); // use an OSGi enabled manager that understands postponed conditions
-				else {
-					// try to use a specific classloader by classname
-					try {
-						Class<?> clazz = Class.forName(securityManager);
-						sm = (SecurityManager) clazz.getConstructor().newInstance();
-					} catch (Throwable t) {
-						throw new BundleException("Failed to create security manager", t); //$NON-NLS-1$
-					}
+		String javaSecurityProp = configuration.getConfiguration(EquinoxConfiguration.PROP_EQUINOX_SECURITY,
+				configuration.getProperty("java.security.manager")); //$NON-NLS-1$
+
+		SecurityManager toInstall = null;
+		if (Constants.FRAMEWORK_SECURITY_OSGI.equals(frameworkSecurityProp)) {
+			toInstall = new EquinoxSecurityManager();
+		} else if (javaSecurityProp != null) {
+			switch (javaSecurityProp) {
+			case "disallow": //$NON-NLS-1$
+			case "allow": //$NON-NLS-1$
+				// in both cases someone set the java.security.manager property but
+				// not the osgi specific security properties, just ignore
+				break;
+			case "": //$NON-NLS-1$
+			case "default": //$NON-NLS-1$
+				toInstall = new SecurityManager(); // use the default one from java
+				break;
+			default:
+				// try to use a specific classname
+				try {
+					Class<?> clazz = Class.forName(javaSecurityProp);
+					toInstall = (SecurityManager) clazz.getConstructor().newInstance();
+				} catch (Throwable t) {
+					throw new BundleException("Failed to create security manager", t); //$NON-NLS-1$
 				}
-				if (configuration.getDebug().DEBUG_SECURITY)
-					Debug.println("Setting SecurityManager to: " + sm); //$NON-NLS-1$
-				System.setSecurityManager(sm);
-				setSecurityManagner = sm;
-				return;
+				break;
 			}
 		}
+
+		if (configuration.getDebug().DEBUG_SECURITY)
+			Debug.println("Setting SecurityManager to: " + toInstall); //$NON-NLS-1$
+		try {
+			if (toInstall != null) {
+				System.setSecurityManager(toInstall);
+			}
+		} catch (UnsupportedOperationException e) {
+			throw new UnsupportedOperationException(
+					"Setting the security manager is not allowed. The java.security.manager=allow java property must be set.", //$NON-NLS-1$
+					e);
+		}
+		setSecurityManagner = toInstall;
 	}
 
 	private void registerLocations(BundleContext bc, EquinoxLocations equinoxLocations) {

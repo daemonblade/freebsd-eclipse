@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2017 IBM Corporation and others.
+ * Copyright (c) 2013, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -32,7 +32,6 @@ import org.eclipse.osgi.container.Module;
 import org.eclipse.osgi.container.ModuleContainerAdaptor.ModuleEvent;
 import org.eclipse.osgi.container.ModuleRevisionBuilder;
 import org.eclipse.osgi.container.ModuleRevisionBuilder.GenericInfo;
-import org.eclipse.osgi.internal.hookregistry.ActivatorHookFactory;
 import org.eclipse.osgi.internal.hookregistry.HookConfigurator;
 import org.eclipse.osgi.internal.hookregistry.HookRegistry;
 import org.eclipse.osgi.internal.hookregistry.StorageHookFactory;
@@ -91,9 +90,9 @@ public class TestHookConfigurator implements HookConfigurator {
 					replace.setId(5678);
 					replace.setSymbolicName("replace");
 					replace.setVersion(Version.parseVersion("1.1.1"));
-					replace.addCapability("replace", Collections.<String, String> emptyMap(), Collections.<String, Object> emptyMap());
-					replace.addCapability(IdentityNamespace.IDENTITY_NAMESPACE, Collections.<String, String> emptyMap(), Collections.<String, Object> singletonMap(IdentityNamespace.IDENTITY_NAMESPACE, "replace"));
-					replace.addCapability(BundleNamespace.BUNDLE_NAMESPACE, Collections.<String, String> emptyMap(), Collections.<String, Object> singletonMap(BundleNamespace.BUNDLE_NAMESPACE, "replace"));
+					replace.addCapability("replace", Collections.emptyMap(), Collections.emptyMap());
+					replace.addCapability(IdentityNamespace.IDENTITY_NAMESPACE, Collections.emptyMap(), Collections.singletonMap(IdentityNamespace.IDENTITY_NAMESPACE, "replace"));
+					replace.addCapability(BundleNamespace.BUNDLE_NAMESPACE, Collections.emptyMap(), Collections.singletonMap(BundleNamespace.BUNDLE_NAMESPACE, "replace"));
 					return replace;
 				}
 				if (TestHookConfigurator.adaptManifest) {
@@ -107,11 +106,9 @@ public class TestHookConfigurator implements HookConfigurator {
 					builder.addCapability("test.file.path", dirs, attrs);
 				}
 				if (TestHookConfigurator.adaptCapabilityAttribute) {
-					for (GenericInfo c : builder.getCapabilities()) {
-						if (BundleNamespace.BUNDLE_NAMESPACE.equals(c.getNamespace())) {
-							c.getAttributes().put("matching.attribute", "testAttribute");
-							c.getDirectives().put("matching.directive", "testDirective");
-						}
+					for (GenericInfo c : builder.getCapabilities(BundleNamespace.BUNDLE_NAMESPACE)) {
+						c.getAttributes().put("matching.attribute", "testAttribute");
+						c.getDirectives().put("matching.directive", "testDirective");
 					}
 				}
 				return builder;
@@ -179,21 +176,15 @@ public class TestHookConfigurator implements HookConfigurator {
 
 	public void addHooks(HookRegistry hookRegistry) {
 		hookRegistry.addStorageHookFactory(new TestStorageHookFactory());
-		hookRegistry.addActivatorHookFactory(new ActivatorHookFactory() {
+		hookRegistry.addActivatorHookFactory(() -> new BundleActivator() {
+			@Override
+			public void start(BundleContext context) throws Exception {
+				TestHelper.setBundle(context.getBundle(Constants.SYSTEM_BUNDLE_LOCATION));
+			}
 
 			@Override
-			public BundleActivator createActivator() {
-				return new BundleActivator() {
-					@Override
-					public void start(BundleContext context) throws Exception {
-						TestHelper.setBundle(context.getBundle(Constants.SYSTEM_BUNDLE_LOCATION));
-					}
-
-					@Override
-					public void stop(BundleContext context) throws Exception {
-						TestHelper.setBundle(null);
-					}
-				};
+			public void stop(BundleContext context) throws Exception {
+				TestHelper.setBundle(null);
 			}
 		});
 	}

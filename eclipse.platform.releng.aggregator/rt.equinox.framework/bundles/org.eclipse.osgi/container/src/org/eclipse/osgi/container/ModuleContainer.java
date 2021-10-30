@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2020 IBM Corporation and others.
+ * Copyright (c) 2012, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -51,6 +51,7 @@ import org.eclipse.osgi.framework.util.SecureAction;
 import org.eclipse.osgi.framework.util.ThreadInfoReport;
 import org.eclipse.osgi.internal.container.InternalUtils;
 import org.eclipse.osgi.internal.container.LockSet;
+import org.eclipse.osgi.internal.container.NamespaceList;
 import org.eclipse.osgi.internal.debug.Debug;
 import org.eclipse.osgi.internal.framework.EquinoxConfiguration;
 import org.eclipse.osgi.internal.messages.Msg;
@@ -493,7 +494,7 @@ public final class ModuleContainer implements DebugOptionsListener {
 
 	private ResolutionReport resolve(Collection<Module> triggers, boolean triggersMandatory, boolean restartTriggers) {
 		if (isRefreshingSystemModule()) {
-			return new ModuleResolutionReport(null, Collections.<Resource, List<Entry>> emptyMap(), new ResolutionException("Unable to resolve while shutting down the framework.")); //$NON-NLS-1$
+			return new ModuleResolutionReport(null, Collections.emptyMap(), new ResolutionException("Unable to resolve while shutting down the framework.")); //$NON-NLS-1$
 		}
 		ResolutionReport report = null;
 		try (ResolutionLock.Permits resolutionPermits = _resolutionLock.acquire(1)) {
@@ -504,14 +505,14 @@ public final class ModuleContainer implements DebugOptionsListener {
 					if (e.getCause() instanceof BundleException) {
 						BundleException be = (BundleException) e.getCause();
 						if (be.getType() == BundleException.REJECTED_BY_HOOK || be.getType() == BundleException.STATECHANGE_ERROR) {
-							return new ModuleResolutionReport(null, Collections.<Resource, List<Entry>> emptyMap(), new ResolutionException(be));
+							return new ModuleResolutionReport(null, Collections.emptyMap(), new ResolutionException(be));
 						}
 					}
 					throw e;
 				}
 			} while (report == null);
 		} catch (ResolutionLockException e) {
-			return new ModuleResolutionReport(null, Collections.<Resource, List<Entry>> emptyMap(), new ResolutionException("Timeout acquiring lock for resolution", e, Collections.<Requirement> emptyList())); //$NON-NLS-1$
+			return new ModuleResolutionReport(null, Collections.emptyMap(), new ResolutionException("Timeout acquiring lock for resolution", e, Collections.emptyList())); //$NON-NLS-1$
 		}
 		return report;
 	}
@@ -546,7 +547,7 @@ public final class ModuleContainer implements DebugOptionsListener {
 
 		ModuleResolutionReport report = moduleResolver.resolveDelta(triggerRevisions, triggersMandatory, unresolved, wiringClone, moduleDatabase);
 		Map<Resource, List<Wire>> resolutionResult = report.getResolutionResult();
-		Map<ModuleRevision, ModuleWiring> deltaWiring = resolutionResult == null ? Collections.<ModuleRevision, ModuleWiring> emptyMap() : moduleResolver.generateDelta(resolutionResult, wiringClone);
+		Map<ModuleRevision, ModuleWiring> deltaWiring = resolutionResult == null ? Collections.emptyMap() : moduleResolver.generateDelta(resolutionResult, wiringClone);
 		if (deltaWiring.isEmpty())
 			return report; // nothing to do
 
@@ -616,7 +617,7 @@ public final class ModuleContainer implements DebugOptionsListener {
 				for (DynamicModuleRequirement dynamicReq : dynamicReqs) {
 					ModuleResolutionReport report = moduleResolver.resolveDynamicDelta(dynamicReq, unresolved, wiringClone, moduleDatabase);
 					Map<Resource, List<Wire>> resolutionResult = report.getResolutionResult();
-					deltaWiring = resolutionResult == null ? Collections.<ModuleRevision, ModuleWiring> emptyMap() : moduleResolver.generateDelta(resolutionResult, wiringClone);
+					deltaWiring = resolutionResult == null ? Collections.emptyMap() : moduleResolver.generateDelta(resolutionResult, wiringClone);
 					if (deltaWiring.get(revision) != null) {
 						break;
 					}
@@ -655,7 +656,7 @@ public final class ModuleContainer implements DebugOptionsListener {
 				// Save the result
 				ModuleWiring wiring = deltaWiring.get(revision);
 				result = findExistingDynamicWire(wiring, dynamicPkgName);
-			} while (!applyDelta(deltaWiring, modulesResolved, Collections.<Module> emptyList(), timestamp, false, resolutionPermits));
+			} while (!applyDelta(deltaWiring, modulesResolved, Collections.emptyList(), timestamp, false, resolutionPermits));
 		} catch (ResolutionLockException e) {
 			return null;
 		}
@@ -805,9 +806,10 @@ public final class ModuleContainer implements DebugOptionsListener {
 					ModuleWiring current = wiringCopy.get(deltaEntry.getKey());
 					if (current != null) {
 						// need to update the provided capabilities, provided and required wires for currently resolved
-						current.setCapabilities(deltaEntry.getValue().getModuleCapabilities(null));
-						current.setProvidedWires(deltaEntry.getValue().getProvidedModuleWires(null));
-						current.setRequiredWires(deltaEntry.getValue().getRequiredModuleWires(null));
+						current.setCapabilities(deltaEntry.getValue().getCapabilities());
+						current.setProvidedWires(deltaEntry.getValue().getProvidedWires());
+						current.setRequirements(deltaEntry.getValue().getRequirements());
+						current.setRequiredWires(deltaEntry.getValue().getRequiredWires());
 						deltaEntry.setValue(current); // set the real wiring into the delta
 					} else {
 						ModuleRevision revision = deltaEntry.getValue().getRevision();
@@ -856,7 +858,7 @@ public final class ModuleContainer implements DebugOptionsListener {
 		}
 
 		// If there are any triggers re-start them now if requested
-		Set<Module> triggerSet = restartTriggers ? new HashSet<>(triggers) : Collections.<Module> emptySet();
+		Set<Module> triggerSet = restartTriggers ? new HashSet<>(triggers) : Collections.emptySet();
 		if (restartTriggers) {
 			for (Module module : triggers) {
 				if (module.getId() != 0 && Module.RESOLVED_SET.contains(module.getState())) {
@@ -1045,9 +1047,9 @@ public final class ModuleContainer implements DebugOptionsListener {
 					return null; // need to try again
 				// remove any wires from unresolved wirings that got removed
 				for (Map.Entry<ModuleWiring, Collection<ModuleWire>> entry : toRemoveWireLists.entrySet()) {
-					List<ModuleWire> provided = entry.getKey().getProvidedModuleWires(null);
+					NamespaceList.Builder<ModuleWire> provided = entry.getKey().getProvidedWires().createBuilder();
 					provided.removeAll(entry.getValue());
-					entry.getKey().setProvidedWires(provided);
+					entry.getKey().setProvidedWires(provided.build());
 					for (ModuleWire removedWire : entry.getValue()) {
 						// invalidate the wire
 						removedWire.invalidate();
@@ -1388,19 +1390,16 @@ public final class ModuleContainer implements DebugOptionsListener {
 			return;
 		}
 		getAdaptor().refreshedSystemModule();
-		Thread t = new Thread(new Runnable() {
-			@Override
-			public void run() {
+		Thread t = new Thread(() -> {
+			try {
+				systemModule.lockStateChange(ModuleEvent.UNRESOLVED);
 				try {
-					systemModule.lockStateChange(ModuleEvent.UNRESOLVED);
-					try {
-						systemModule.stop();
-					} finally {
-						systemModule.unlockStateChange(ModuleEvent.UNRESOLVED);
-					}
-				} catch (BundleException e) {
-					e.printStackTrace();
+					systemModule.stop();
+				} finally {
+					systemModule.unlockStateChange(ModuleEvent.UNRESOLVED);
 				}
+			} catch (BundleException e) {
+				e.printStackTrace();
 			}
 		});
 		t.start();
@@ -1413,8 +1412,8 @@ public final class ModuleContainer implements DebugOptionsListener {
 	static Requirement getIdentityRequirement(String name, Version version) {
 		version = version == null ? Version.emptyVersion : version;
 		String filter = "(&(" + IdentityNamespace.IDENTITY_NAMESPACE + "=" + name + ")(" + IdentityNamespace.CAPABILITY_VERSION_ATTRIBUTE + "=" + version.toString() + "))"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$//$NON-NLS-4$//$NON-NLS-5$
-		Map<String, String> directives = Collections.<String, String> singletonMap(Namespace.REQUIREMENT_FILTER_DIRECTIVE, filter);
-		return new ModuleRequirement(IdentityNamespace.IDENTITY_NAMESPACE, directives, Collections.<String, Object> emptyMap(), null);
+		Map<String, String> directives = Collections.singletonMap(Namespace.REQUIREMENT_FILTER_DIRECTIVE, filter);
+		return new ModuleRequirement(IdentityNamespace.IDENTITY_NAMESPACE, directives, Collections.emptyMap(), null);
 	}
 
 	class ContainerWiring implements FrameworkWiring, EventDispatcher<ContainerWiring, FrameworkListener[], Collection<Module>> {
@@ -1497,18 +1496,15 @@ public final class ModuleContainer implements DebugOptionsListener {
 		private Collection<Module> getModules(final Collection<Bundle> bundles) {
 			if (bundles == null)
 				return null;
-			return AccessController.doPrivileged(new PrivilegedAction<Collection<Module>>() {
-				@Override
-				public Collection<Module> run() {
-					Collection<Module> result = new ArrayList<>(bundles.size());
-					for (Bundle bundle : bundles) {
-						Module module = bundle.adapt(Module.class);
-						if (module == null)
-							throw new IllegalStateException("Could not adapt a bundle to a module. " + bundle); //$NON-NLS-1$
-						result.add(module);
-					}
-					return result;
+			return AccessController.doPrivileged((PrivilegedAction<Collection<Module>>) () -> {
+				Collection<Module> result = new ArrayList<>(bundles.size());
+				for (Bundle bundle : bundles) {
+					Module module = bundle.adapt(Module.class);
+					if (module == null)
+						throw new IllegalStateException("Could not adapt a bundle to a module. " + bundle); //$NON-NLS-1$
+					result.add(module);
 				}
+				return result;
 			});
 		}
 
@@ -1827,29 +1823,21 @@ public final class ModuleContainer implements DebugOptionsListener {
 			if (toStart.isEmpty()) {
 				return;
 			}
-			final Executor executor = inParallel ? adaptor.getStartLevelExecutor() : new Executor() {
-				@Override
-				public void execute(Runnable command) {
-					command.run();
-				}
-			};
+			final Executor executor = inParallel ? adaptor.getStartLevelExecutor() : Runnable::run;
 			final CountDownLatch done = new CountDownLatch(toStart.size());
 			for (final Module module : toStart) {
-				executor.execute(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							if (debugStartLevel) {
-								Debug.println("StartLevel: resuming bundle; " + ContainerStartLevel.this.toString(module) + "; with startLevel=" + toStartLevel); //$NON-NLS-1$ //$NON-NLS-2$
-							}
-							module.start(StartOptions.TRANSIENT_IF_AUTO_START, StartOptions.TRANSIENT_RESUME);
-						} catch (BundleException e) {
-							adaptor.publishContainerEvent(ContainerEvent.ERROR, module, e);
-						} catch (IllegalStateException e) {
-							// been uninstalled
-						} finally {
-							done.countDown();
+				executor.execute(() -> {
+					try {
+						if (debugStartLevel) {
+							Debug.println("StartLevel: resuming bundle; " + ContainerStartLevel.this.toString(module) + "; with startLevel=" + toStartLevel); //$NON-NLS-1$ //$NON-NLS-2$
 						}
+						module.start(StartOptions.TRANSIENT_IF_AUTO_START, StartOptions.TRANSIENT_RESUME);
+					} catch (BundleException e1) {
+						adaptor.publishContainerEvent(ContainerEvent.ERROR, module, e1);
+					} catch (IllegalStateException e2) {
+						// been uninstalled
+					} finally {
+						done.countDown();
 					}
 				});
 

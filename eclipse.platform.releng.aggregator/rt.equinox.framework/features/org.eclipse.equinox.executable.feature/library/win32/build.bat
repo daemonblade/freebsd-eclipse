@@ -1,5 +1,5 @@
 @rem *******************************************************************************
-@rem  Copyright (c) 2000, 2009 IBM Corporation and others.
+@rem  Copyright (c) 2000, 2021 IBM Corporation and others.
 @rem 
 @rem  This program and the accompanying materials
 @rem  are made available under the terms of the Eclipse Public License 2.0
@@ -40,44 +40,36 @@ IF EXIST C:\BUILD\swt-builddir set LAUNCHER_BUILDDIR=C:\BUILD\swt-builddir
 IF x.%LAUNCHER_BUILDDIR%==x. set LAUNCHER_BUILDDIR=S:\swt-builddir
 echo LAUNCHER build dir: %LAUNCHER_BUILDDIR%
 
-IF x.%1==x.x86_64 GOTO X86_64
-IF x.%1==x.ia64 GOTO IA64
+@rem Specify VisualStudio Edition: 'Community', 'Enterprise', 'Professional' etc.
+IF "x.%MSVC_EDITION%"=="x." set "MSVC_EDITION=Community"
 
-:X86
-IF x.%DEV_TOOLS%==x. set DEV_TOOLS=%LAUNCHER_BUILDDIR%
-IF x.%JAVA_HOME%==x. set JAVA_HOME=%LAUNCHER_BUILDDIR%\ibm-java2-sdk-50-win-i386
-set javaHome=%JAVA_HOME%
-if not x.%MSVC_HOME% == x. goto MAKE
-set MSVC_HOME="%LAUNCHER_BUILDDIR%\MSVCs\msvc60\VC98"
-call %MSVC_HOME%\bin\vcvars32.bat
-if not "%MSSDK%" == "" goto MAKE
-set MSSDK="%LAUNCHER_BUILDDIR%\MSSDKs\feb2003"
-call %MSSDK%\setenv.bat
-IF x.%1==x.x86 shift
-set defaultOSArch=x86
-set makefile=make_win32.mak
-GOTO MAKE
+@rem Specify VisualStudio Version: '2017' or newer '2019'
+IF "x.%MSVC_VERSION%"=="x." set "MSVC_VERSION=2019"
+
+GOTO X86_64
 
 :X86_64
 shift
 set defaultOSArch=x86_64
 set PROCESSOR_ARCHITECTURE=AMD64
-IF x.%JAVA_HOME%==x. set JAVA_HOME=%LAUNCHER_BUILDDIR%\ibm-sdk50-x86_64
-IF "x.%MSSDK%" == "x."   set MSSDK="%LAUNCHER_BUILDDIR%\MSSDKs\Windows Server 2003 SP1 SDK"
+IF NOT EXIST "%MSVC_HOME%" set "MSVC_HOME=%ProgramFiles(x86)%\Microsoft Visual Studio\%MSVC_VERSION%\BuildTools"
+IF NOT EXIST "%MSVC_HOME%" set "MSVC_HOME=%ProgramFiles(x86)%\Microsoft Visual Studio\%MSVC_VERSION%\%MSVC_EDITION%"
+IF EXIST "%MSVC_HOME%" (
+	echo "Microsoft Visual Studio %MSVC_VERSION% dir: %MSVC_HOME%"
+) ELSE (
+	echo "WARNING: Microsoft Visual Studio %MSVC_VERSION% was not found."
+	echo "     Refer steps for SWT Windows native setup: https://www.eclipse.org/swt/swt_win_native.php"
+)
+IF NOT EXIST "%JAVA_HOME%" set "JAVA_HOME=%ProgramFiles%\AdoptOpenJDK\jdk-8.0.292.10-hotspot"
+IF EXIST "%JAVA_HOME%" (
+	echo "JAVA_HOME x64: %JAVA_HOME%"
+) ELSE (
+	echo "WARNING: x64 Java JDK not found. Please set JAVA_HOME to your JDK directory."
+	echo "     Refer steps for SWT Windows native setup: https://www.eclipse.org/swt/swt_win_native.php"
+)
 set javaHome=%JAVA_HOME%
 set makefile=make_win64.mak
-call %MSSDK%\setenv /X64 /RETAIL
-GOTO MAKE
-
-:IA64
-shift
-set defaultOSArch=ia64
-set PROCESSOR_ARCHITECTURE=AMD64
-IF x.%JAVA_HOME%==x. set JAVA_HOME=%LAUNCHER_BUILDDIR%\ibm-sdk142-ia64
-IF "x.%MSSDK%" == "x."   set MSSDK="%LAUNCHER_BUILDDIR%\MSSDKs\Windows Server 2003 SP1 SDK"
-set javaHome=%JAVA_HOME%
-set makefile=make_win64_ia64.mak
-call %MSSDK%\setenv /SRV64 /RETAIL
+call "%MSVC_HOME%\VC\Auxiliary\Build\vcvarsall.bat" x64
 GOTO MAKE
 
 :MAKE 

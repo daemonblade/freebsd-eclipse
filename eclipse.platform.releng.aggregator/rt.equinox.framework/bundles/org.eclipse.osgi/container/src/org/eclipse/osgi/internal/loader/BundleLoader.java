@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2020 IBM Corporation and others.
+ * Copyright (c) 2004, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -74,12 +74,7 @@ public class BundleLoader extends ModuleLoader {
 	public final static String DEFAULT_PACKAGE = "."; //$NON-NLS-1$
 	public final static String JAVA_PACKAGE = "java."; //$NON-NLS-1$
 
-	public final static ClassContext CLASS_CONTEXT = AccessController.doPrivileged(new PrivilegedAction<ClassContext>() {
-		@Override
-		public ClassContext run() {
-			return new ClassContext();
-		}
-	});
+	public final static ClassContext CLASS_CONTEXT = AccessController.doPrivileged((PrivilegedAction<ClassContext>) ClassContext::new);
 	public final static ClassLoader FW_CLASSLOADER = getClassLoader(EquinoxContainer.class);
 
 	private static final int PRE_CLASS = 1;
@@ -174,7 +169,7 @@ public class BundleLoader extends ModuleLoader {
 		// init the provided packages set
 		exportSources = new BundleLoaderSources(this);
 		List<ModuleCapability> exports = wiring.getModuleCapabilities(PackageNamespace.PACKAGE_NAMESPACE);
-		exports = exports == null ? new ArrayList<>(0) : exports;
+		exports = exports == null ? Collections.emptyList() : exports;
 		exportedPackages = Collections.synchronizedCollection(exports.size() > 10 ? new HashSet<String>(exports.size()) : new ArrayList<String>(exports.size()));
 		initializeExports(exports, exportSources, exportedPackages);
 
@@ -183,13 +178,16 @@ public class BundleLoader extends ModuleLoader {
 
 		// initialize the required bundle wires
 		List<ModuleWire> currentRequireBundleWires = wiring.getRequiredModuleWires(BundleNamespace.BUNDLE_NAMESPACE);
-		requiredBundleWires = currentRequireBundleWires == null || currentRequireBundleWires.isEmpty() ? Collections.<ModuleWire> emptyList() : Collections.unmodifiableList(currentRequireBundleWires);
+		requiredBundleWires = currentRequireBundleWires == null || currentRequireBundleWires.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(currentRequireBundleWires);
 
 		//Initialize the policy handler
 		List<ModuleCapability> moduleDatas = wiring.getRevision().getModuleCapabilities(EquinoxModuleDataNamespace.MODULE_DATA_NAMESPACE);
 		@SuppressWarnings("unchecked")
 		List<String> buddyList = (List<String>) (moduleDatas.isEmpty() ? null : moduleDatas.get(0).getAttributes().get(EquinoxModuleDataNamespace.CAPABILITY_BUDDY_POLICY));
-		policy = buddyList != null ? new PolicyHandler(this, buddyList, container.getPackageAdmin(), container.getBootLoader()) : null;
+		policy = buddyList != null
+				? new PolicyHandler(this, buddyList, container.getStorage().getModuleContainer().getFrameworkWiring(),
+						container.getBootLoader())
+				: null;
 		if (policy != null) {
 			Module systemModule = container.getStorage().getModuleContainer().getModule(0);
 			Bundle systemBundle = systemModule.getBundle();
@@ -263,12 +261,8 @@ public class BundleLoader extends ModuleLoader {
 			result = createClassLoaderPrivledged(parent, generation.getBundleInfo().getStorage().getConfiguration(), this, generation, hooks);
 		} else {
 			final ClassLoader cl = parent;
-			result = AccessController.doPrivileged(new PrivilegedAction<ModuleClassLoader>() {
-				@Override
-				public ModuleClassLoader run() {
-					return createClassLoaderPrivledged(cl, generation.getBundleInfo().getStorage().getConfiguration(), BundleLoader.this, generation, hooks);
-				}
-			});
+			result = AccessController.doPrivileged((PrivilegedAction<ModuleClassLoader>)
+					() -> createClassLoaderPrivledged(cl, generation.getBundleInfo().getStorage().getConfiguration(), BundleLoader.this, generation, hooks));
 		}
 
 		// Synchronize on classLoaderCreatedMonitor in order to ensure hooks are called before returning.
@@ -282,15 +276,11 @@ public class BundleLoader extends ModuleLoader {
 				// only send to hooks if this thread wins in creating the class loader.
 				final ModuleClassLoader cl = result;
 				// protect with doPriv to avoid bubbling up permission checks that hooks may require
-				AccessController.doPrivileged(new PrivilegedAction<Object>() {
-					@Override
-					public Object run() {
-						for (ClassLoaderHook hook : hooks) {
-							hook.classLoaderCreated(cl);
-						}
-						return null;
+				AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+					for (ClassLoaderHook hook : hooks) {
+						hook.classLoaderCreated(cl);
 					}
-
+					return null;
 				});
 				// finally set the class loader for use after calling hooks
 				classloader = classLoaderCreated;
@@ -594,12 +584,7 @@ public class BundleLoader extends ModuleLoader {
 	private static ClassLoader getClassLoader(final Class<?> clazz) {
 		if (System.getSecurityManager() == null)
 			return clazz.getClassLoader();
-		return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-			@Override
-			public ClassLoader run() {
-				return clazz.getClassLoader();
-			}
-		});
+		return AccessController.doPrivileged((PrivilegedAction<ClassLoader>) clazz::getClassLoader);
 	}
 
 	/**
@@ -854,9 +839,9 @@ public class BundleLoader extends ModuleLoader {
 
 	public static <E> Enumeration<E> compoundEnumerations(Enumeration<E> list1, Enumeration<E> list2) {
 		if (list2 == null || !list2.hasMoreElements())
-			return list1 == null ? BundleLoader.<E> emptyEnumeration() : list1;
+			return list1 == null ? BundleLoader.emptyEnumeration() : list1;
 		if (list1 == null || !list1.hasMoreElements())
-			return list2 == null ? BundleLoader.<E> emptyEnumeration() : list2;
+			return list2 == null ? BundleLoader.emptyEnumeration() : list2;
 		List<E> compoundResults = new ArrayList<>();
 		while (list1.hasMoreElements())
 			compoundResults.add(list1.nextElement());

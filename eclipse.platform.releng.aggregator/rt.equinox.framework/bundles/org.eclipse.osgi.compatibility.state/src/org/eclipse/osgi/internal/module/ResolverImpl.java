@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2020 IBM Corporation and others.
+ * Copyright (c) 2004, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which accompanies this distribution,
@@ -423,7 +423,7 @@ public class ResolverImpl implements Resolver {
 			if (!(StateImpl.OSGI_EE_NAMESPACE.equals(requirement.getNameSpace()) || requirement.isEffective()))
 				continue;
 			{
-				if (!resolveGenericReq(requirement, new ArrayList<ResolverBundle>(0))) {
+				if (!resolveGenericReq(requirement, new ArrayList<>(0))) {
 					if (DEBUG || DEBUG_GENERICS)
 						ResolverImpl.log("** GENERICS " + requirement.getVersionConstraint().getName() + "[" + requirement.getBundleDescription() + "] failed to resolve"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					state.addResolverError(requirement.getVersionConstraint().getBundle(), ResolverError.MISSING_GENERIC_CAPABILITY, requirement.getVersionConstraint().toString(), requirement.getVersionConstraint());
@@ -1320,7 +1320,8 @@ public class ResolverImpl implements Resolver {
 			return;
 		cycleLoop: for (Iterator<ResolverBundle> iCycle = cycle.iterator(); iCycle.hasNext();) {
 			ResolverBundle cycleBundle = iCycle.next();
-			if (!cycleBundle.isResolvable()) {
+			// only clear cycles when not in dev mode
+			if (!developmentMode && !cycleBundle.isResolvable()) {
 				iCycle.remove(); // remove this bundle from the list of bundles that need re-resolved
 				continue cycleLoop;
 			}
@@ -1337,10 +1338,21 @@ public class ResolverImpl implements Resolver {
 					}
 				}
 				if (!resolverImport.isDynamic() && !resolverImport.isOptional() && resolverImport.getSelectedSupplier() == null) {
-					cycleBundle.setResolvable(false);
+					if (resolverImport.isFromFragment()) {
+						resolverImport.getBundle().setResolvable(false);
+					} else {
+						cycleBundle.setResolvable(false);
+					}
 					state.addResolverError(resolverImport.getVersionConstraint().getBundle(), ResolverError.MISSING_IMPORT_PACKAGE, resolverImport.getVersionConstraint().toString(), resolverImport.getVersionConstraint());
-					iCycle.remove();
 					continue cycleLoop;
+				}
+			}
+		}
+		// only clear cycles when not in dev mode
+		if (!developmentMode) {
+			for (Iterator<ResolverBundle> iCycle = cycle.iterator(); iCycle.hasNext();) {
+				if (!iCycle.next().isResolvable()) {
+					iCycle.remove();
 				}
 			}
 		}
@@ -2092,7 +2104,7 @@ public class ResolverImpl implements Resolver {
 			if (!requestedPackage.equals(dynamicImport.getName()))
 				return null;
 
-			if (resolveImport(dynamicImport, new ArrayList<ResolverBundle>())) {
+			if (resolveImport(dynamicImport, new ArrayList<>())) {
 				// populate the grouping checker with current imports
 				groupingChecker.populateRoots(dynamicImport.getBundle());
 				while (dynamicImport.getSelectedSupplier() != null) {

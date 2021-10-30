@@ -160,7 +160,12 @@ public class Main {
 	private static final String OVERRIDE_VMARGS = "--launcher.overrideVmargs"; //$NON-NLS-1$
 	private static final String NL = "-nl"; //$NON-NLS-1$
 	private static final String ENDSPLASH = "-endsplash"; //$NON-NLS-1$
-	private static final String SPLASH_IMAGE = "splash.bmp"; //$NON-NLS-1$
+	private static final String[] SPLASH_IMAGES = {"splash.png", //$NON-NLS-1$
+			"splash.jpg", //$NON-NLS-1$
+			"splash.jpeg", //$NON-NLS-1$
+			"splash.gif", //$NON-NLS-1$
+			"splash.bmp", //$NON-NLS-1$
+	};
 	private static final String CLEAN = "-clean"; //$NON-NLS-1$
 	private static final String NOEXIT = "-noExit"; //$NON-NLS-1$
 	private static final String OS = "-os"; //$NON-NLS-1$
@@ -233,6 +238,7 @@ public class Main {
 	private static final String USER_DIR = "@user.dir"; //$NON-NLS-1$
 	// Placeholder for hashcode of installation directory
 	private static final String INSTALL_HASH_PLACEHOLDER = "@install.hash"; //$NON-NLS-1$
+	private static final String LAUNCHER_DIR = "@launcher.dir"; //$NON-NLS-1$
 
 	// types of parent classloaders the framework can have
 	private static final String PARENT_CLASSLOADER_APP = "app"; //$NON-NLS-1$
@@ -408,14 +414,10 @@ public class Main {
 	}
 
 	private String getFragmentString(String fragmentOS, String fragmentWS, String fragmentArch) {
-		StringBuilder buffer = new StringBuilder(PLUGIN_ID);
-		buffer.append('.');
-		buffer.append(fragmentWS);
-		buffer.append('.');
-		buffer.append(fragmentOS);
+		StringJoiner buffer = new StringJoiner("."); //$NON-NLS-1$
+		buffer.add(PLUGIN_ID).add(fragmentWS).add(fragmentOS);
 		if (!(fragmentOS.equals(Constants.OS_MACOSX) && !Constants.ARCH_X86_64.equals(fragmentArch))) {
-			buffer.append('.');
-			buffer.append(fragmentArch);
+			buffer.add(fragmentArch);
 		}
 		return buffer.toString();
 	}
@@ -1964,6 +1966,12 @@ public class Main {
 		// value is not set so compute the default and set the value
 		String installArea = System.getProperty(PROP_INSTALL_AREA);
 		if (installArea != null) {
+			if (installArea.startsWith(LAUNCHER_DIR)) {
+				String launcher = System.getProperty(PROP_LAUNCHER);
+				if (launcher == null)
+					throw new IllegalStateException("Install location depends on launcher, but launcher is not defined"); //$NON-NLS-1$
+				installArea = installArea.replaceAll(LAUNCHER_DIR, new File(launcher).getParent());
+			}
 			installLocation = buildURL(installArea, true);
 			if (installLocation == null)
 				throw new IllegalStateException("Install location is invalid: " + installArea); //$NON-NLS-1$
@@ -2332,8 +2340,8 @@ public class Main {
 	 * Build an array of path suffixes based on the given NL which is suitable
 	 * for splash path searching.  The returned array contains paths in order
 	 * from most specific to most generic. So, in the FR_fr locale, it will return
-	 * "nl/fr/FR/splash.bmp", then "nl/fr/splash.bmp", and finally "splash.bmp".
-	 * (we always search the root)
+	 * candidates in "nl/fr/FR/", then "nl/fr/", and finally in the root.
+	 * Candidate names are defined in SPLASH_IMAGES and include splash.png, splash.jpg, etc.
 	 */
 	private static String[] buildNLVariants(String locale) {
 		//build list of suffixes for loading resource bundles
@@ -2341,14 +2349,18 @@ public class Main {
 		ArrayList<String> result = new ArrayList<>(4);
 		int lastSeparator;
 		while (true) {
-			result.add("nl" + File.separatorChar + nl.replace('_', File.separatorChar) + File.separatorChar + SPLASH_IMAGE); //$NON-NLS-1$
+			for (String name : SPLASH_IMAGES) {
+				result.add("nl" + File.separatorChar + nl.replace('_', File.separatorChar) + File.separatorChar + name); //$NON-NLS-1$
+			}
 			lastSeparator = nl.lastIndexOf('_');
 			if (lastSeparator == -1)
 				break;
 			nl = nl.substring(0, lastSeparator);
 		}
 		//add the empty suffix last (most general)
-		result.add(SPLASH_IMAGE);
+		for (String name : SPLASH_IMAGES) {
+			result.add(name);
+		}
 		return result.toArray(new String[result.size()]);
 	}
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2020 IBM Corporation and others.
+ * Copyright (c) 2003, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -243,12 +243,9 @@ public class BundleContextImpl implements BundleContext, EventDispatcher<Object,
 		if (System.getSecurityManager() == null) {
 			notifyFindHooksPriviledged(context, shrinkable);
 		} else {
-			AccessController.doPrivileged(new PrivilegedAction<Void>() {
-				@Override
-				public Void run() {
-					notifyFindHooksPriviledged(context, shrinkable);
-					return null;
-				}
+			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+				notifyFindHooksPriviledged(context, shrinkable);
+				return null;
 			});
 		}
 	}
@@ -257,9 +254,8 @@ public class BundleContextImpl implements BundleContext, EventDispatcher<Object,
 		if (debug.DEBUG_HOOKS) {
 			Debug.println("notifyBundleFindHooks(" + allBundles + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		container.getServiceRegistry().notifyHooksPrivileged(FindHook.class, "find", (hook, hookRegistration) -> { //$NON-NLS-1$
-			hook.find(context, allBundles);
-		});
+		container.getServiceRegistry().notifyHooksPrivileged(FindHook.class, "find", //$NON-NLS-1$
+				(hook, hookRegistration) -> hook.find(context, allBundles));
 	}
 
 	@Override
@@ -803,22 +799,19 @@ public class BundleContextImpl implements BundleContext, EventDispatcher<Object,
 	 */
 	private void startActivator(final BundleActivator bundleActivator) throws BundleException {
 		try {
-			AccessController.doPrivileged(new PrivilegedExceptionAction<Void>() {
-				@Override
-				public Void run() throws Exception {
-					if (bundleActivator != null) {
-						// make sure the context class loader is set correctly
-						Object previousTCCL = setContextFinder();
-						/* Start the bundle synchronously */
-						try {
-							bundleActivator.start(BundleContextImpl.this);
-						} finally {
-							if (previousTCCL != Boolean.FALSE)
-								Thread.currentThread().setContextClassLoader((ClassLoader) previousTCCL);
-						}
+			AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
+				if (bundleActivator != null) {
+					// make sure the context class loader is set correctly
+					Object previousTCCL = setContextFinder();
+					/* Start the bundle synchronously */
+					try {
+						bundleActivator.start(BundleContextImpl.this);
+					} finally {
+						if (previousTCCL != Boolean.FALSE)
+							Thread.currentThread().setContextClassLoader((ClassLoader) previousTCCL);
 					}
-					return null;
 				}
+				return null;
 			});
 		} catch (Throwable t) {
 			if (t instanceof PrivilegedActionException) {
@@ -860,22 +853,19 @@ public class BundleContextImpl implements BundleContext, EventDispatcher<Object,
 	protected void stop() throws BundleException {
 		try {
 			final BundleActivator bundleActivator = activator;
-			AccessController.doPrivileged(new PrivilegedExceptionAction<Void>() {
-				@Override
-				public Void run() throws Exception {
-					if (bundleActivator != null) {
-						// make sure the context class loader is set correctly
-						Object previousTCCL = setContextFinder();
-						try {
-							/* Stop the bundle synchronously */
-							bundleActivator.stop(BundleContextImpl.this);
-						} finally {
-							if (previousTCCL != Boolean.FALSE)
-								Thread.currentThread().setContextClassLoader((ClassLoader) previousTCCL);
-						}
+			AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
+				if (bundleActivator != null) {
+					// make sure the context class loader is set correctly
+					Object previousTCCL = setContextFinder();
+					try {
+						/* Stop the bundle synchronously */
+						bundleActivator.stop(BundleContextImpl.this);
+					} finally {
+						if (previousTCCL != Boolean.FALSE)
+							Thread.currentThread().setContextClassLoader((ClassLoader) previousTCCL);
 					}
-					return null;
 				}
+				return null;
 			});
 		} catch (Throwable t) {
 			if (t instanceof PrivilegedActionException) {
@@ -1063,8 +1053,7 @@ public class BundleContextImpl implements BundleContext, EventDispatcher<Object,
 		@SuppressWarnings("unchecked")
 		ServiceReference<S>[] refs = (ServiceReference<S>[]) getServiceReferences(clazz.getName(), filter);
 		if (refs == null) {
-			Collection<ServiceReference<S>> empty = Collections.<ServiceReference<S>> emptyList();
-			return empty;
+			return Collections.emptyList();
 		}
 		List<ServiceReference<S>> result = new ArrayList<>(refs.length);
 		Collections.addAll(result, refs);

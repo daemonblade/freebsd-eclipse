@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2020 IBM Corporation and others.
+ * Copyright (c) 2012, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -19,10 +19,15 @@ import java.io.InputStream;
 import java.net.URL;
 import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.Permission;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
+import java.security.SignatureException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +41,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import org.eclipse.osgi.container.Module;
 import org.eclipse.osgi.container.Module.Settings;
 import org.eclipse.osgi.container.Module.StartOptions;
@@ -51,6 +55,7 @@ import org.eclipse.osgi.container.ModuleWire;
 import org.eclipse.osgi.container.ModuleWiring;
 import org.eclipse.osgi.container.SystemModule;
 import org.eclipse.osgi.framework.log.FrameworkLogEntry;
+import org.eclipse.osgi.internal.container.InternalUtils;
 import org.eclipse.osgi.internal.debug.Debug;
 import org.eclipse.osgi.internal.loader.BundleLoader;
 import org.eclipse.osgi.internal.loader.ModuleClassLoader;
@@ -187,10 +192,11 @@ public class EquinoxBundle implements Bundle, BundleReference {
 
 			@Override
 			protected void initWorker() throws BundleException {
-				String initUUID = getEquinoxContainer().getConfiguration().setConfiguration(EquinoxConfiguration.PROP_INIT_UUID, Boolean.TRUE.toString());
+				EquinoxConfiguration config = getEquinoxContainer().getConfiguration();
+				String initUUID = config.setConfiguration(EquinoxConfiguration.PROP_INIT_UUID, Boolean.TRUE.toString());
 				if (initUUID != null) {
 					// this is not the first framework init, need to generate a new UUID
-					getEquinoxContainer().getConfiguration().setConfiguration(Constants.FRAMEWORK_UUID, UUID.randomUUID().toString());
+					config.setConfiguration(Constants.FRAMEWORK_UUID, InternalUtils.newUUID(config));
 				}
 				getEquinoxContainer().init();
 				addInitFrameworkListeners();
@@ -213,14 +219,11 @@ public class EquinoxBundle implements Bundle, BundleReference {
 					if (Module.ACTIVE_SET.contains(getState())) {
 						// TODO this still has a chance of a race condition:
 						// multiple threads could get started if stop is called over and over
-						Thread t = new Thread(new Runnable() {
-							@Override
-							public void run() {
-								try {
-									stop();
-								} catch (Throwable e) {
-									SystemBundle.this.getEquinoxContainer().getLogServices().log(EquinoxContainer.NAME, FrameworkLogEntry.ERROR, "Error stopping the framework.", e); //$NON-NLS-1$
-								}
+						Thread t = new Thread(() -> {
+							try {
+								stop();
+							} catch (Throwable e) {
+								SystemBundle.this.getEquinoxContainer().getLogServices().log(EquinoxContainer.NAME, FrameworkLogEntry.ERROR, "Error stopping the framework.", e); //$NON-NLS-1$
 							}
 						}, "Framework stop - " + getEquinoxContainer().toString()); //$NON-NLS-1$
 						t.start();
@@ -237,14 +240,11 @@ public class EquinoxBundle implements Bundle, BundleReference {
 				lockStateChange(ModuleEvent.UPDATED);
 				try {
 					if (Module.ACTIVE_SET.contains(getState())) {
-						Thread t = new Thread(new Runnable() {
-							@Override
-							public void run() {
-								try {
-									update();
-								} catch (Throwable e) {
-									SystemBundle.this.getEquinoxContainer().getLogServices().log(EquinoxContainer.NAME, FrameworkLogEntry.ERROR, "Error updating the framework.", e); //$NON-NLS-1$
-								}
+						Thread t = new Thread(() -> {
+							try {
+								update();
+							} catch (Throwable e) {
+								SystemBundle.this.getEquinoxContainer().getLogServices().log(EquinoxContainer.NAME, FrameworkLogEntry.ERROR, "Error updating the framework.", e); //$NON-NLS-1$
 							}
 						}, "Framework update - " + getEquinoxContainer().toString()); //$NON-NLS-1$
 						t.start();
@@ -356,7 +356,7 @@ public class EquinoxBundle implements Bundle, BundleReference {
 	private final Module module;
 	private final Object monitor = new Object();
 	private BundleContextImpl context;
-	private volatile SignerInfo[] signerInfos;
+	private volatile SignedContent signedContent;
 
 	private class EquinoxModule extends Module {
 
@@ -482,7 +482,7 @@ public class EquinoxBundle implements Bundle, BundleReference {
 	public void update(InputStream input) throws BundleException {
 		Storage storage = equinoxContainer.getStorage();
 		storage.update(module, input);
-		signerInfos = null;
+		signedContent = null;
 	}
 
 	@Override
@@ -637,18 +637,15 @@ public class EquinoxBundle implements Bundle, BundleReference {
 			String reportMessage = report.getResolutionReportMessage(module.getCurrentRevision());
 			equinoxContainer.getEventPublisher().publishFrameworkEvent(FrameworkEvent.ERROR, this, new BundleException(reportMessage, BundleException.RESOLVE_ERROR));
 		}
-		return AccessController.doPrivileged(new PrivilegedAction<ModuleClassLoader>() {
-			@Override
-			public ModuleClassLoader run() {
-				ModuleWiring wiring = getModule().getCurrentRevision().getWiring();
-				if (wiring != null) {
-					ModuleLoader moduleLoader = wiring.getModuleLoader();
-					if (moduleLoader instanceof BundleLoader) {
-						return ((BundleLoader) moduleLoader).getModuleClassLoader();
-					}
+		return AccessController.doPrivileged((PrivilegedAction<ModuleClassLoader>) () -> {
+			ModuleWiring wiring = getModule().getCurrentRevision().getWiring();
+			if (wiring != null) {
+				ModuleLoader moduleLoader = wiring.getModuleLoader();
+				if (moduleLoader instanceof BundleLoader) {
+					return ((BundleLoader) moduleLoader).getModuleClassLoader();
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -745,18 +742,9 @@ public class EquinoxBundle implements Bundle, BundleReference {
 
 	@Override
 	public Map<X509Certificate, List<X509Certificate>> getSignerCertificates(int signersType) {
-		SignedContentFactory factory = equinoxContainer.getSignedContentFactory();
-		if (factory == null) {
-			return Collections.emptyMap();
-		}
-
 		try {
-			SignerInfo[] infos = signerInfos;
-			if (infos == null) {
-				SignedContent signedContent = factory.getSignedContent(this);
-				infos = signedContent.getSignerInfos();
-				signerInfos = infos;
-			}
+			SignedContent current = getSignedContent();
+			SignerInfo[] infos = current == null ? null : current.getSignerInfos();
 			if (infos.length == 0)
 				return Collections.emptyMap();
 			Map<X509Certificate, List<X509Certificate>> results = new HashMap<>(infos.length);
@@ -933,17 +921,17 @@ public class EquinoxBundle implements Bundle, BundleReference {
 			if (FrameworkWiringDTO.class.equals(adapterType)) {
 				readLock();
 				try {
-					Set<BundleWiring> allWirings = new HashSet<>();
+					Set<ModuleWiring> allWirings = new HashSet<>();
 					for (Module m : module.getContainer().getModules()) {
-						for (BundleRevision revision : m.getRevisions().getRevisions()) {
-							BundleWiring wiring = revision.getWiring();
+						for (ModuleRevision revision : m.getRevisions().getModuleRevisions()) {
+							ModuleWiring wiring = revision.getWiring();
 							if (wiring != null) {
 								allWirings.add(wiring);
 							}
 						}
 					}
 					for (ModuleRevision revision : module.getContainer().getRemovalPending()) {
-						BundleWiring wiring = revision.getWiring();
+						ModuleWiring wiring = revision.getWiring();
 						if (wiring != null) {
 							allWirings.add(wiring);
 						}
@@ -963,7 +951,27 @@ public class EquinoxBundle implements Bundle, BundleReference {
 			Generation current = (Generation) module.getCurrentRevision().getRevisionInfo();
 			return (A) current.getDomain();
 		}
+		if (SignedContent.class.equals(adapterType)) {
+			return (A) getSignedContent();
+		}
 		return null;
+	}
+
+	private SignedContent getSignedContent() {
+		SignedContent current = signedContent;
+		if (current == null) {
+			SignedContentFactory factory = equinoxContainer.getSignedContentFactory();
+			if (factory == null) {
+				return null;
+			}
+			try {
+				signedContent = current = factory.getSignedContent(this);
+			} catch (InvalidKeyException | SignatureException | CertificateException | NoSuchAlgorithmException
+					| NoSuchProviderException | IOException e) {
+				return null;
+			}
+		}
+		return current;
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2020 IBM Corporation and others.
+ * Copyright (c) 2012, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -41,6 +41,8 @@ import org.eclipse.osgi.container.namespaces.EquinoxModuleDataNamespace;
 import org.eclipse.osgi.framework.util.ObjectPool;
 import org.eclipse.osgi.internal.container.Capabilities;
 import org.eclipse.osgi.internal.container.ComputeNodeOrder;
+import org.eclipse.osgi.internal.container.NamespaceList;
+import org.eclipse.osgi.internal.container.NamespaceList.Builder;
 import org.eclipse.osgi.internal.framework.EquinoxConfiguration;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
@@ -247,20 +249,18 @@ public class ModuleDatabase {
 		if ((builder.getTypes() & BundleRevision.TYPE_FRAGMENT) != 0) {
 			return null;
 		}
-		for (GenericInfo info : builder.getCapabilities()) {
-			if (EquinoxModuleDataNamespace.MODULE_DATA_NAMESPACE.equals(info.getNamespace())) {
-				if (EquinoxModuleDataNamespace.CAPABILITY_ACTIVATION_POLICY_LAZY.equals(info.getAttributes().get(EquinoxModuleDataNamespace.CAPABILITY_ACTIVATION_POLICY))) {
-					String compatibilityStartLazy = adaptor.getProperty(EquinoxConfiguration.PROP_COMPATIBILITY_START_LAZY);
-					if (compatibilityStartLazy == null || Boolean.valueOf(compatibilityStartLazy)) {
-						// TODO hack until p2 is fixed (bug 177641)
-						EnumSet<Settings> settings = EnumSet.noneOf(Settings.class);
-						settings.add(Settings.USE_ACTIVATION_POLICY);
-						settings.add(Settings.AUTO_START);
-						return settings;
-					}
+		for (GenericInfo info : builder.getCapabilities(EquinoxModuleDataNamespace.MODULE_DATA_NAMESPACE)) {
+			if (EquinoxModuleDataNamespace.CAPABILITY_ACTIVATION_POLICY_LAZY.equals(info.getAttributes().get(EquinoxModuleDataNamespace.CAPABILITY_ACTIVATION_POLICY))) {
+				String compatibilityStartLazy = adaptor.getProperty(EquinoxConfiguration.PROP_COMPATIBILITY_START_LAZY);
+				if (compatibilityStartLazy == null || Boolean.valueOf(compatibilityStartLazy)) {
+					// TODO hack until p2 is fixed (bug 177641)
+					EnumSet<Settings> settings = EnumSet.noneOf(Settings.class);
+					settings.add(Settings.USE_ACTIVATION_POLICY);
+					settings.add(Settings.AUTO_START);
+					return settings;
 				}
-				return null;
 			}
+			return null;
 		}
 		return null;
 	}
@@ -409,10 +409,9 @@ public class ModuleDatabase {
 				}
 				// remove any wires from unresolved wirings that got removed
 				for (Map.Entry<ModuleWiring, Collection<ModuleWire>> entry : toRemoveWireLists.entrySet()) {
-					List<ModuleWire> provided = entry.getKey().getProvidedModuleWires(null);
-					// No null checks; we are holding the write lock here.
+					NamespaceList.Builder<ModuleWire> provided = entry.getKey().getProvidedWires().createBuilder();
 					provided.removeAll(entry.getValue());
-					entry.getKey().setProvidedWires(provided);
+					entry.getKey().setProvidedWires(provided.build());
 					for (ModuleWire removedWire : entry.getValue()) {
 						// invalidate the wire
 						removedWire.invalidate();
@@ -501,11 +500,9 @@ public class ModuleDatabase {
 	final Map<ModuleRevision, ModuleWiring> getWiringsClone() {
 		readLock();
 		try {
-			Map<ModuleRevision, ModuleWiring> clonedWirings = new HashMap<>();
-			for (Map.Entry<ModuleRevision, ModuleWiring> entry : wirings.entrySet()) {
-				ModuleWiring wiring = new ModuleWiring(entry.getKey(), entry.getValue().getModuleCapabilities(null), entry.getValue().getModuleRequirements(null), entry.getValue().getProvidedModuleWires(null), entry.getValue().getRequiredModuleWires(null), entry.getValue().getSubstitutedNames());
-				clonedWirings.put(entry.getKey(), wiring);
-			}
+			Map<ModuleRevision, ModuleWiring> clonedWirings = new HashMap<>(wirings);
+			clonedWirings.replaceAll((r, w) -> new ModuleWiring(r, w.getCapabilities(), w.getRequirements(),
+					w.getProvidedWires(), w.getRequiredWires(), w.getSubstitutedNames()));
 			return clonedWirings;
 		} finally {
 			readUnlock();
@@ -578,12 +575,7 @@ public class ModuleDatabase {
 		if (modules.size() < 2)
 			return;
 		if (sortOptions == null || Sort.BY_ID.isContained(sortOptions) || sortOptions.length == 0) {
-			Collections.sort(modules, new Comparator<Module>() {
-				@Override
-				public int compare(Module m1, Module m2) {
-					return m1.getId().compareTo(m2.getId());
-				}
-			});
+			Collections.sort(modules, Comparator.comparing(Module::getId));
 			return;
 		}
 		// first sort by start-level
@@ -1389,25 +1381,25 @@ public class ModuleDatabase {
 				throw new NullPointerException("Could not find revision for wiring."); //$NON-NLS-1$
 
 			int numCapabilities = in.readInt();
-			List<ModuleCapability> capabilities = new ArrayList<>(numCapabilities);
+			NamespaceList.Builder<ModuleCapability> capabilities = Builder.create(NamespaceList.CAPABILITY);
 			for (int i = 0; i < numCapabilities; i++) {
 				capabilities.add((ModuleCapability) objectTable.get(in.readInt()));
 			}
 
 			int numRequirements = in.readInt();
-			List<ModuleRequirement> requirements = new ArrayList<>(numRequirements);
+			NamespaceList.Builder<ModuleRequirement> requirements = Builder.create(NamespaceList.REQUIREMENT);
 			for (int i = 0; i < numRequirements; i++) {
 				requirements.add((ModuleRequirement) objectTable.get(in.readInt()));
 			}
 
 			int numProvidedWires = in.readInt();
-			List<ModuleWire> providedWires = new ArrayList<>(numProvidedWires);
+			NamespaceList.Builder<ModuleWire> providedWires = Builder.create(NamespaceList.WIRE);
 			for (int i = 0; i < numProvidedWires; i++) {
 				providedWires.add((ModuleWire) objectTable.get(in.readInt()));
 			}
 
 			int numRequiredWires = in.readInt();
-			List<ModuleWire> requiredWires = new ArrayList<>(numRequiredWires);
+			NamespaceList.Builder<ModuleWire> requiredWires = Builder.create(NamespaceList.WIRE);
 			for (int i = 0; i < numRequiredWires; i++) {
 				requiredWires.add((ModuleWire) objectTable.get(in.readInt()));
 			}
@@ -1418,7 +1410,8 @@ public class ModuleDatabase {
 				substituted.add(readString(in, objectTable));
 			}
 
-			return new ModuleWiring(revision, capabilities, requirements, providedWires, requiredWires, substituted);
+			return new ModuleWiring(revision, capabilities.build(), requirements.build(), providedWires.build(),
+					requiredWires.build(), substituted);
 		}
 
 		private static void writeGenericInfo(String namespace, Map<String, ?> attributes, Map<String, String> directives, DataOutputStream out, Map<Object, Integer> objectTable) throws IOException {

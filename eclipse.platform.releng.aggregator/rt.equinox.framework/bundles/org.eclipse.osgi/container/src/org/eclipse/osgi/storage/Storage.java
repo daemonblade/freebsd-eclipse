@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2020 IBM Corporation and others.
+ * Copyright (c) 2012, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -30,6 +30,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
@@ -467,7 +468,7 @@ public class Storage {
 	}
 
 	private Version findFrameworkVersion() {
-		Requirement osgiPackageReq = ModuleContainer.createRequirement(PackageNamespace.PACKAGE_NAMESPACE, Collections.singletonMap(Namespace.REQUIREMENT_FILTER_DIRECTIVE, "(" + PackageNamespace.PACKAGE_NAMESPACE + "=org.osgi.framework)"), Collections.<String, String> emptyMap()); //$NON-NLS-1$ //$NON-NLS-2$
+		Requirement osgiPackageReq = ModuleContainer.createRequirement(PackageNamespace.PACKAGE_NAMESPACE, Collections.singletonMap(Namespace.REQUIREMENT_FILTER_DIRECTIVE, "(" + PackageNamespace.PACKAGE_NAMESPACE + "=org.osgi.framework)"), Collections.emptyMap()); //$NON-NLS-1$ //$NON-NLS-2$
 		Collection<BundleCapability> osgiPackages = moduleContainer.getFrameworkWiring().findProviders(osgiPackageReq);
 		for (BundleCapability packageCapability : osgiPackages) {
 			if (packageCapability.getRevision().getBundle().getBundleId() == 0) {
@@ -623,12 +624,7 @@ public class Storage {
 	private String getUpdateLocation(final Module module) {
 		if (System.getSecurityManager() == null)
 			return getUpdateLocation0(module);
-		return AccessController.doPrivileged(new PrivilegedAction<String>() {
-			@Override
-			public String run() {
-				return getUpdateLocation0(module);
-			}
-		});
+		return AccessController.doPrivileged((PrivilegedAction<String>) () -> getUpdateLocation0(module));
 	}
 
 	String getUpdateLocation0(Module module) {
@@ -649,12 +645,7 @@ public class Storage {
 			return LocationHelper.getConnection(createURL(spec));
 		}
 		try {
-			return AccessController.doPrivileged(new PrivilegedExceptionAction<URLConnection>() {
-				@Override
-				public URLConnection run() throws IOException {
-					return LocationHelper.getConnection(createURL(spec));
-				}
-			});
+			return AccessController.doPrivileged((PrivilegedExceptionAction<URLConnection>) () -> LocationHelper.getConnection(createURL(spec)));
 		} catch (PrivilegedActionException e) {
 			if (e.getException() instanceof IOException)
 				throw (IOException) e.getException();
@@ -826,11 +817,10 @@ public class Storage {
 					(generation.getContentType() == Type.CONNECT ? "" : null), //$NON-NLS-1$
 					(allowRestrictedProvides ? "" : null)); //$NON-NLS-1$
 			if ((builder.getTypes() & BundleRevision.TYPE_FRAGMENT) != 0) {
-				for (ModuleRevisionBuilder.GenericInfo reqInfo : builder.getRequirements()) {
-					if (HostNamespace.HOST_NAMESPACE.equals(reqInfo.getNamespace())) {
-						if (HostNamespace.EXTENSION_BOOTCLASSPATH.equals(reqInfo.getDirectives().get(HostNamespace.REQUIREMENT_EXTENSION_DIRECTIVE))) {
-							throw new BundleException("Boot classpath extensions are not supported.", BundleException.UNSUPPORTED_OPERATION, new UnsupportedOperationException()); //$NON-NLS-1$
-						}
+				for (ModuleRevisionBuilder.GenericInfo reqInfo : builder.getRequirements(HostNamespace.HOST_NAMESPACE)) {
+					if (HostNamespace.EXTENSION_BOOTCLASSPATH.equals(reqInfo.getDirectives().get(HostNamespace.REQUIREMENT_EXTENSION_DIRECTIVE))) {
+						throw new BundleException("Boot classpath extensions are not supported.", //$NON-NLS-1$
+								BundleException.UNSUPPORTED_OPERATION, new UnsupportedOperationException());
 					}
 				}
 			}
@@ -1003,12 +993,7 @@ public class Storage {
 		if (System.getSecurityManager() == null)
 			return getContentFile0(staged, contentType, bundleID, generationID);
 		try {
-			return AccessController.doPrivileged(new PrivilegedExceptionAction<File>() {
-				@Override
-				public File run() throws BundleException {
-					return getContentFile0(staged, contentType, bundleID, generationID);
-				}
-			});
+			return AccessController.doPrivileged((PrivilegedExceptionAction<File>) () -> getContentFile0(staged, contentType, bundleID, generationID));
 		} catch (PrivilegedActionException e) {
 			if (e.getException() instanceof BundleException)
 				throw (BundleException) e.getException();
@@ -1094,18 +1079,19 @@ public class Storage {
 		}
 
 		// if base is not null then move root to include the base
-		root = new File(root, base);
-		File result = new File(root, path);
-
-		// do the extra check to make sure the path did not escape the root path
-		try {
-			String resultCanonical = result.getCanonicalPath();
-			String rootCanonical = root.getCanonicalPath();
-			if (!resultCanonical.startsWith(rootCanonical + File.separator) && !resultCanonical.equals(rootCanonical)) {
+		File rootBase = new File(root, base);
+		File result = new File(rootBase, path);
+		if (path.contains("..")) { //$NON-NLS-1$
+			// do the extra check to make sure the path did not escape the root path
+			Path resultNormalized = result.toPath().normalize();
+			Path rootBaseNormalized = rootBase.toPath().normalize();
+			if (!resultNormalized.startsWith(rootBaseNormalized)) {
 				throw new StorageException("Invalid path: " + path); //$NON-NLS-1$
 			}
-		} catch (IOException e) {
-			throw new StorageException("Invalid path: " + path, e); //$NON-NLS-1$
+		}
+		// Additional check if it is a special device instead of a regular file.
+		if (StorageUtil.isReservedFileName(result)) {
+			throw new StorageException("Invalid filename: " + path); //$NON-NLS-1$
 		}
 		return result;
 	}
@@ -1114,12 +1100,7 @@ public class Storage {
 		if (System.getSecurityManager() == null)
 			return stageContent0(in, sourceURL);
 		try {
-			return AccessController.doPrivileged(new PrivilegedExceptionAction<File>() {
-				@Override
-				public File run() throws BundleException {
-					return stageContent0(in, sourceURL);
-				}
-			});
+			return AccessController.doPrivileged((PrivilegedExceptionAction<File>) () -> stageContent0(in, sourceURL));
 		} catch (PrivilegedActionException e) {
 			if (e.getException() instanceof BundleException)
 				throw (BundleException) e.getException();
@@ -1196,10 +1177,12 @@ public class Storage {
 				result = equinoxContainer.getConnectModules().getConnectBundleFile(connectModule, content, generation,
 						mruList, getConfiguration().getDebug());
 			} else if (isDirectory) {
-				boolean strictPath = Boolean.parseBoolean(equinoxContainer.getConfiguration().getConfiguration(EquinoxConfiguration.PROPERTY_STRICT_BUNDLE_ENTRY_PATH, Boolean.FALSE.toString()));
+				boolean strictPath = Boolean.parseBoolean(getConfiguration().getConfiguration(
+						EquinoxConfiguration.PROPERTY_STRICT_BUNDLE_ENTRY_PATH, Boolean.FALSE.toString()));
 				result = new DirBundleFile(content, strictPath);
 			} else {
-				result = new ZipBundleFile(content, generation, mruList, getConfiguration().getDebug());
+				result = new ZipBundleFile(content, generation, mruList, getConfiguration().getDebug(),
+						getConfiguration().runtimeVerifySignedBundles);
 			}
 		} catch (IOException e) {
 			throw new RuntimeException("Could not create bundle file.", e); //$NON-NLS-1$
@@ -1208,7 +1191,7 @@ public class Storage {
 	}
 
 	public BundleFile createNestedBundleFile(String nestedDir, BundleFile bundleFile, Generation generation) {
-		return createNestedBundleFile(nestedDir, bundleFile, generation, Collections.<String> emptyList());
+		return createNestedBundleFile(nestedDir, bundleFile, generation, Collections.emptyList());
 	}
 
 	public BundleFile createNestedBundleFile(String nestedDir, BundleFile bundleFile, Generation generation, Collection<String> filterPrefixes) {
@@ -1275,12 +1258,9 @@ public class Storage {
 			delete0(delete);
 		} else {
 			try {
-				AccessController.doPrivileged(new PrivilegedExceptionAction<Void>() {
-					@Override
-					public Void run() throws IOException {
-						delete0(delete);
-						return null;
-					}
+				AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
+					delete0(delete);
+					return null;
 				});
 			} catch (PrivilegedActionException e) {
 				if (e.getException() instanceof IOException)
@@ -1306,12 +1286,9 @@ public class Storage {
 			save0();
 		} else {
 			try {
-				AccessController.doPrivileged(new PrivilegedExceptionAction<Void>() {
-					@Override
-					public Void run() throws IOException {
-						save0();
-						return null;
-					}
+				AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
+					save0();
+					return null;
 				});
 			} catch (PrivilegedActionException e) {
 				if (e.getException() instanceof IOException)
@@ -1459,8 +1436,7 @@ public class Storage {
 
 			// create a temporary in memory stream so we can figure out the length
 			ByteArrayOutputStream tempBytes = new ByteArrayOutputStream();
-			DataOutputStream temp = new DataOutputStream(tempBytes);
-			try {
+			try (DataOutputStream temp = new DataOutputStream(tempBytes)) {
 				Object saveContext = factory.createSaveContext();
 				for (Generation generation : generations) {
 					if (generation.getBundleInfo().getBundleId() == 0) {
@@ -1472,8 +1448,6 @@ public class Storage {
 						hook.save(saveContext, temp);
 					}
 				}
-			} finally {
-				temp.close();
 			}
 			out.writeInt(tempBytes.size());
 			out.write(tempBytes.toByteArray());
@@ -1612,8 +1586,7 @@ public class Storage {
 			byte[] bytes = new byte[dataSize];
 			in.readFully(bytes);
 			if (factory != null) {
-				DataInputStream temp = new DataInputStream(new ByteArrayInputStream(bytes));
-				try {
+				try (DataInputStream temp = new DataInputStream(new ByteArrayInputStream(bytes))) {
 					if (factory.isCompatibleWith(version)) {
 						Object loadContext = factory.createLoadContext(version);
 						for (Generation generation : generations) {
@@ -1641,8 +1614,6 @@ public class Storage {
 					}
 				} catch (BundleException e) {
 					throw new IOException(e);
-				} finally {
-					temp.close();
 				}
 			}
 		}
@@ -1903,6 +1874,8 @@ public class Storage {
 	private String calculateVMPackages() {
 		try {
 			List<String> packages = new ArrayList<>();
+			Method classGetModule = Class.class.getMethod("getModule"); //$NON-NLS-1$
+			Object thisModule = classGetModule.invoke(getClass());
 			Class<?> moduleLayerClass = Class.forName("java.lang.ModuleLayer"); //$NON-NLS-1$
 			Method boot = moduleLayerClass.getMethod("boot"); //$NON-NLS-1$
 			Method modules = moduleLayerClass.getMethod("modules"); //$NON-NLS-1$
@@ -1919,6 +1892,12 @@ public class Storage {
 			Object bootLayer = boot.invoke(null);
 			Set<?> bootModules = (Set<?>) modules.invoke(bootLayer);
 			for (Object m : bootModules) {
+				if (m.equals(thisModule)) {
+					// Do not calculate the exports from the framework module.
+					// This is to handle the case where the framework is on the module path
+					// to avoid double exports from the system.bundles
+					continue;
+				}
 				Object descriptor = getDescriptor.invoke(m);
 				if ((Boolean) isAutomatic.invoke(descriptor)) {
 					/*

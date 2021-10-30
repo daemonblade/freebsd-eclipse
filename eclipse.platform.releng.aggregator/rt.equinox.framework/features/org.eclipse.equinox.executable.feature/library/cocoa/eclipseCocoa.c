@@ -69,14 +69,14 @@ static char * findLib(char * command);
 #define MAX_LOCATION_LENGTH 40 /* none of the jvmLocations strings should be longer than this */
 #define MAX_JVMLIB_LENGTH   15 /* none of the jvmLibs strings should be longer than this */
 static const char* jvmLocations[] = {
-	"../lib/" JAVA_ARCH "/client",
 	"../lib/" JAVA_ARCH "/server",
+	"../lib/" JAVA_ARCH "/client",
 	"../lib/client",
 	"../lib/server",
-	"../jre/lib/" JAVA_ARCH "/client",
 	"../jre/lib/" JAVA_ARCH "/server",
-	"../jre/lib/client",
+	"../jre/lib/" JAVA_ARCH "/client",
 	"../jre/lib/server",
+	"../jre/lib/client",
 	NULL
 };
 static const char* jvmLibs[] = { "libjvm.dylib", "libjvm.jnilib", "libjvm.so", NULL };
@@ -100,8 +100,6 @@ static NSWindow* window = nil;
 }
 
 + (int)show: (NSString *) featureImage {
-	[[NSApplication sharedApplication] setActivationPolicy: NSApplicationActivationPolicyRegular];
-	[[NSRunningApplication currentApplication] activateWithOptions: NSApplicationActivateIgnoringOtherApps];
 	if (window != NULL)
 		return 0; /*already showing */
 	if (featureImage == NULL)
@@ -113,11 +111,10 @@ static NSWindow* window = nil;
 	NSImage* image = [[NSImage alloc] initByReferencingFile: featureImage];
 	[featureImage release];
 	if (image != NULL) {
-		NSImageRep* imageRep = [image bestRepresentationForDevice: [[NSScreen mainScreen] deviceDescription]];
-		NSRect rect = {{0, 0}, {[imageRep pixelsWide], [imageRep pixelsHigh]}};
-		[image setSize: NSMakeSize([imageRep pixelsWide], [imageRep pixelsHigh])];
+        NSSize size = [image size];
+		NSRect rect = {{0, 0}, {size.width, size.height}};
 		[image autorelease];
-		window = [[KeyWindow alloc] initWithContentRect: rect styleMask: NSBorderlessWindowMask backing: NSBackingStoreBuffered defer: 0];
+		window = [[KeyWindow alloc] initWithContentRect: rect styleMask: NSWindowStyleMaskBorderless backing: NSBackingStoreBuffered defer: 0];
 		if (window != nil) {
 			[window center];
 			[window setBackgroundColor: [NSColor colorWithPatternImage: image]];
@@ -143,7 +140,7 @@ static NSWindow* window = nil;
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 	NSEvent* event;
 	NSApplication* application = [NSApplication sharedApplication];
-	while ((event = [application nextEventMatchingMask: NSAnyEventMask untilDate: nil inMode: NSDefaultRunLoopMode dequeue: TRUE]) != nil) {
+	while ((event = [application nextEventMatchingMask: NSEventMaskAny untilDate: nil inMode: NSDefaultRunLoopMode dequeue: TRUE]) != nil) {
 		[application sendEvent: event];
 	}
 	[pool release];
@@ -175,9 +172,7 @@ static NSWindow* window = nil;
 		CFURLRef url = NULL;
 		NSAppleEventDescriptor *desc = [event descriptorAtIndex:index], *coerceDesc;
 		if (!desc) continue;
-		if ((coerceDesc = [desc coerceToDescriptorType: typeFSRef]) != NULL) {
-			url = CFURLCreateFromFSRef(kCFAllocatorDefault, [[coerceDesc data] bytes]);
-		} else if ((coerceDesc = [desc coerceToDescriptorType: typeFileURL]) != NULL) {
+		if ((coerceDesc = [desc coerceToDescriptorType: typeFileURL]) != NULL) {
 			NSData *data = [coerceDesc data];
 			url = CFURLCreateWithBytes(kCFAllocatorDefault, [data bytes], [data length], kCFStringEncodingUTF8, NULL);
 		}
@@ -672,5 +667,5 @@ const char* getUUID() {
 _TCHAR* getFolderForApplicationData() {
 	NSString* bundleId = getCFBundleIdentifier();
 	NSString* appSupport = getApplicationSupport();
-	return [[NSString stringWithFormat:@"%@/%@_%s", appSupport, bundleId, getUUID()] UTF8String];
+	return (_TCHAR*)[[NSString stringWithFormat:@"%@/%@_%s", appSupport, bundleId, getUUID()] UTF8String];
 }

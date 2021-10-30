@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corporation and others.
+ * Copyright (c) 2012, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -110,7 +110,7 @@ public class EquinoxContainerAdaptor extends ModuleContainerAdaptor {
 		this.resolverExecutor = new AtomicLazyInitializer<>();
 		this.lazyResolverExecutorCreator = createLazyExecutorCreator( //
 				"Equinox resolver thread - " + EquinoxContainerAdaptor.this.toString(), //$NON-NLS-1$
-				resolverThreadCnt, new SynchronousQueue<Runnable>());
+				resolverThreadCnt, new SynchronousQueue<>());
 
 		// For the start-level we can safely use a growing queue because the thread feeding the
 		// start-level executor with work is a single thread and it can safely block waiting
@@ -118,45 +118,34 @@ public class EquinoxContainerAdaptor extends ModuleContainerAdaptor {
 		this.startLevelExecutor = new AtomicLazyInitializer<>();
 		this.lazyStartLevelExecutorCreator = createLazyExecutorCreator(//
 				"Equinox start level thread - " + EquinoxContainerAdaptor.this.toString(), //$NON-NLS-1$
-				startLevelThreadCnt, new LinkedBlockingQueue<Runnable>(1000));
+				startLevelThreadCnt, new LinkedBlockingQueue<>(1000));
 
 	}
 
 	private Callable<Executor> createLazyExecutorCreator(final String threadName, int threadCnt, final BlockingQueue<Runnable> queue) {
 		// use the number of processors when configured value is <=0
 		final int maxThreads = threadCnt <= 0 ? Runtime.getRuntime().availableProcessors() : threadCnt;
-		return new Callable<Executor>() {
-			@Override
-			public Executor call() throws Exception {
-				if (maxThreads == 1) {
-					// just do synchronous execution with current thread
-					return new Executor() {
-						@Override
-						public void execute(Runnable command) {
-							command.run();
-						}
-					};
-				}
-				// Always want to create core threads until max size
-				int coreThreads = maxThreads;
-				// idle timeout; make it short to get rid of threads quickly after use
-				int idleTimeout = 10;
-				// try to name the threads with useful name
-				ThreadFactory threadFactory = new ThreadFactory() {
-					@Override
-					public Thread newThread(Runnable r) {
-						Thread t = new Thread(r, threadName);
-						t.setDaemon(true);
-						return t;
-					}
-				};
-				// use a rejection policy that simply runs the task in the current thread once the max pool size is reached
-				RejectedExecutionHandler rejectHandler = new ThreadPoolExecutor.CallerRunsPolicy();
-
-				ThreadPoolExecutor executor = new ThreadPoolExecutor(coreThreads, maxThreads, idleTimeout, TimeUnit.SECONDS, queue, threadFactory, rejectHandler);
-				executor.allowCoreThreadTimeOut(true);
-				return executor;
+		return () -> {
+			if (maxThreads == 1) {
+				// just do synchronous execution with current thread
+				return Runnable::run;
 			}
+			// Always want to create core threads until max size
+			int coreThreads = maxThreads;
+			// idle timeout; make it short to get rid of threads quickly after use
+			int idleTimeout = 10;
+			// try to name the threads with useful name
+			ThreadFactory threadFactory = r -> {
+				Thread t = new Thread(r, threadName);
+				t.setDaemon(true);
+				return t;
+			};
+			// use a rejection policy that simply runs the task in the current thread once the max pool size is reached
+			RejectedExecutionHandler rejectHandler = new ThreadPoolExecutor.CallerRunsPolicy();
+
+			ThreadPoolExecutor executor = new ThreadPoolExecutor(coreThreads, maxThreads, idleTimeout, TimeUnit.SECONDS, queue, threadFactory, rejectHandler);
+			executor.allowCoreThreadTimeOut(true);
+			return executor;
 		};
 	}
 
@@ -271,7 +260,7 @@ public class EquinoxContainerAdaptor extends ModuleContainerAdaptor {
 				for (ModuleRevision revision : module.getRevisions().getModuleRevisions()) {
 					Generation generation = (Generation) revision.getRevisionInfo();
 					if (generation != null) {
-						ProtectionDomain domain = generation.getDomain();
+						ProtectionDomain domain = generation.getDomain(false);
 						if (domain != null) {
 							((BundlePermissions) domain.getPermissions()).clearPermissionCache();
 						}

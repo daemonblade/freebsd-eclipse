@@ -76,10 +76,26 @@
 		<chmod perm="755" dir="${feature.base}/macosx.cocoa.x86_64/${collectingFolder}" includes="${launcherName}" />
 		<chmod perm="755" dir="${feature.base}/macosx.cocoa.x86_64/${collectingFolder}" includes="Eclipse.app/Contents/MacOS/launcher" />
 	</target>
+	<target name="rootFilesmacosx_cocoa_aarch64">
+		<mkdir dir="${feature.base}/macosx.cocoa.aarch64/${collectingFolder}"/>
+		<copy todir="${feature.base}/macosx.cocoa.aarch64/${collectingFolder}" failonerror="true" overwrite="true">
+			<fileset dir="${basedir}/bin/cocoa/macosx/aarch64" includes="**"			/>
+		</copy>
+		<chmod perm="755" dir="${feature.base}/macosx.cocoa.aarch64/${collectingFolder}" includes="${launcherName}" />
+		<chmod perm="755" dir="${feature.base}/macosx.cocoa.aarch64/${collectingFolder}" includes="Eclipse.app/Contents/MacOS/launcher" />
+	</target>
 	<target name="rootFilesfreebsd_gtk_powerpc64">
 		<mkdir dir="${feature.base}/freebsd.gtk.powerpc64/${collectingFolder}"/>
 		<copy todir="${feature.base}/freebsd.gtk.powerpc64/${collectingFolder}" failonerror="true" overwrite="true">
 			<fileset dir="${basedir}/bin/gtk/freebsd/powerpc64" includes="**"			/>
+			<fileset dir="${basedir}/gtk_root" includes="**"			/>
+		</copy>
+		<chmod perm="755" dir="${feature.base}/freebsd.gtk.powerpc64/${collectingFolder}" includes="launcher" />
+	</target>
+	<target name="rootFilesfreebsd_gtk_powerpc64le">
+		<mkdir dir="${feature.base}/freebsd.gtk.powerpc64le/${collectingFolder}"/>
+		<copy todir="${feature.base}/freebsd.gtk.powerpc64le/${collectingFolder}" failonerror="true" overwrite="true">
+			<fileset dir="${basedir}/bin/gtk/freebsd/powerpc64le" includes="**"			/>
 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
 		</copy>
 		<chmod perm="755" dir="${feature.base}/freebsd.gtk.powerpc64/${collectingFolder}" includes="launcher" />

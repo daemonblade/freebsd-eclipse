@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corporation and others.
+ * Copyright (c) 2005, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -43,13 +43,10 @@ public class ContextFinder extends ClassLoader implements PrivilegedAction<List<
 	static ClassLoader finderClassLoader;
 	static Finder contextFinder;
 	static {
-		AccessController.doPrivileged(new PrivilegedAction<Void>() {
-			@Override
-			public Void run() {
-				finderClassLoader = ContextFinder.class.getClassLoader();
-				contextFinder = new Finder();
-				return null;
-			}
+		AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+			finderClassLoader = ContextFinder.class.getClassLoader();
+			contextFinder = new Finder();
+			return null;
 		});
 	}
 
@@ -173,7 +170,7 @@ public class ContextFinder extends ClassLoader implements PrivilegedAction<List<
 	public Enumeration<URL> getResources(String arg0) throws IOException {
 		//Shortcut cycle
 		if (startLoading(arg0) == false) {
-			return Collections.enumeration(Collections.<URL> emptyList());
+			return Collections.enumeration(Collections.emptyList());
 		}
 		try {
 			List<ClassLoader> toConsult = findClassLoaders();

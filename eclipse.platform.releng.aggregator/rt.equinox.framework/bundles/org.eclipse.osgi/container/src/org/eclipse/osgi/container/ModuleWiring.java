@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corporation and others.
+ * Copyright (c) 2012, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,19 +13,41 @@
  *******************************************************************************/
 package org.eclipse.osgi.container;
 
+import static org.eclipse.osgi.internal.container.InternalUtils.asCopy;
+import static org.eclipse.osgi.internal.container.InternalUtils.asListBundleCapability;
+import static org.eclipse.osgi.internal.container.InternalUtils.asListBundleRequirement;
+import static org.eclipse.osgi.internal.container.InternalUtils.asListBundleWire;
+import static org.eclipse.osgi.internal.container.InternalUtils.asListCapability;
+import static org.eclipse.osgi.internal.container.InternalUtils.asListRequirement;
+import static org.eclipse.osgi.internal.container.InternalUtils.asListWire;
+
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.osgi.container.ModuleRevisionBuilder.GenericInfo;
 import org.eclipse.osgi.internal.container.AtomicLazyInitializer;
-import org.eclipse.osgi.internal.container.InternalUtils;
+import org.eclipse.osgi.internal.container.NamespaceList;
 import org.osgi.framework.AdminPermission;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.namespace.HostNamespace;
 import org.osgi.framework.namespace.PackageNamespace;
-import org.osgi.framework.wiring.*;
-import org.osgi.resource.*;
+import org.osgi.framework.wiring.BundleCapability;
+import org.osgi.framework.wiring.BundleRequirement;
+import org.osgi.framework.wiring.BundleRevision;
+import org.osgi.framework.wiring.BundleWire;
+import org.osgi.framework.wiring.BundleWiring;
+import org.osgi.resource.Capability;
+import org.osgi.resource.Requirement;
+import org.osgi.resource.Wire;
 
 /**
  * An implementation of {@link BundleWiring}.
@@ -45,24 +67,26 @@ public final class ModuleWiring implements BundleWiring {
 	private static final RuntimePermission GET_CLASSLOADER_PERM = new RuntimePermission("getClassLoader"); //$NON-NLS-1$
 	private static final String DYNAMICALLY_ADDED_IMPORT_DIRECTIVE = "x.dynamically.added"; //$NON-NLS-1$
 	private final ModuleRevision revision;
-	private volatile List<ModuleCapability> capabilities;
-	private volatile List<ModuleRequirement> requirements;
+	private volatile NamespaceList<ModuleCapability> capabilities;
+	private volatile NamespaceList<ModuleRequirement> requirements;
 	private final Collection<String> substitutedPkgNames;
 	private final AtomicLazyInitializer<ModuleLoader> loader = new AtomicLazyInitializer<>();
 	private final LoaderInitializer loaderInitializer = new LoaderInitializer();
-	private volatile List<ModuleWire> providedWires;
-	private volatile List<ModuleWire> requiredWires;
+	private volatile NamespaceList<ModuleWire> providedWires;
+	private volatile NamespaceList<ModuleWire> requiredWires;
 	volatile boolean isValid = true;
 	private final AtomicReference<Set<String>> dynamicMissRef = new AtomicReference<>();
 
-	ModuleWiring(ModuleRevision revision, List<ModuleCapability> capabilities, List<ModuleRequirement> requirements, List<ModuleWire> providedWires, List<ModuleWire> requiredWires, Collection<String> substitutedPkgNames) {
+	ModuleWiring(ModuleRevision revision, NamespaceList<ModuleCapability> capabilities,
+			NamespaceList<ModuleRequirement> requirements, NamespaceList<ModuleWire> providedWires,
+			NamespaceList<ModuleWire> requiredWires, Collection<String> substitutedPkgNames) {
 		super();
 		this.revision = revision;
 		this.capabilities = capabilities;
 		this.requirements = requirements;
 		this.providedWires = providedWires;
 		this.requiredWires = requiredWires;
-		this.substitutedPkgNames = substitutedPkgNames.isEmpty() ? Collections.<String> emptyList() : substitutedPkgNames;
+		this.substitutedPkgNames = substitutedPkgNames.isEmpty() ? Collections.emptyList() : substitutedPkgNames;
 	}
 
 	@Override
@@ -91,46 +115,40 @@ public final class ModuleWiring implements BundleWiring {
 	}
 
 	/**
-	 * Returns the same result as {@link #getCapabilities(String)} except
-	 * uses type ModuleCapability.
+	 * Returns the same result as {@link #getCapabilities(String)} except uses type
+	 * ModuleCapability and the returned list is unmodifiable.
+	 * 
 	 * @param namespace the namespace
 	 * @return the capabilities
 	 * @see #getCapabilities(String)
 	 */
 	public List<ModuleCapability> getModuleCapabilities(String namespace) {
-		return getModuleCapabilities(namespace, capabilities);
-	}
-
-	private List<ModuleCapability> getModuleCapabilities(String namespace, List<ModuleCapability> allCapabilities) {
-		if (!isValid)
+		if (!isValid) {
 			return null;
-		if (namespace == null)
-			return new ArrayList<>(allCapabilities);
-		List<ModuleCapability> result = new ArrayList<>();
-		for (ModuleCapability capability : allCapabilities) {
-			if (namespace.equals(capability.getNamespace())) {
-				result.add(capability);
-			}
 		}
-		return result;
+		return capabilities.getList(namespace);
 	}
 
 	/**
-	 * Returns the same result as {@link #getRequirements(String)} except
-	 * uses type ModuleRequirement.
+	 * Returns the same result as {@link #getRequirements(String)} except uses type
+	 * ModuleRequirement and the returned list is unmodifiable.
+	 * 
 	 * @param namespace the namespace
 	 * @return the requirements
 	 * @see #getRequirements(String)
 	 */
 	public List<ModuleRequirement> getModuleRequirements(String namespace) {
-		return getModuleRequirements(namespace, requirements);
+		if (!isValid) {
+			return null;
+		}
+		return requirements.getList(namespace);
 	}
 
 	List<ModuleRequirement> getPersistentRequirements() {
-		List<ModuleRequirement> persistentRequriements = getModuleRequirements(null);
-		if (persistentRequriements == null) {
+		if (!isValid) {
 			return null;
 		}
+		List<ModuleRequirement> persistentRequriements = new ArrayList<>(requirements.getList(null));
 		for (Iterator<ModuleRequirement> iRequirements = persistentRequriements.iterator(); iRequirements.hasNext();) {
 			ModuleRequirement requirement = iRequirements.next();
 			if (PackageNamespace.PACKAGE_NAMESPACE.equals(requirement.getNamespace())) {
@@ -142,34 +160,21 @@ public final class ModuleWiring implements BundleWiring {
 		return persistentRequriements;
 	}
 
-	private List<ModuleRequirement> getModuleRequirements(String namespace, List<ModuleRequirement> allRequirements) {
-		if (!isValid)
-			return null;
-		if (namespace == null)
-			return new ArrayList<>(allRequirements);
-		List<ModuleRequirement> result = new ArrayList<>();
-		for (ModuleRequirement requirement : allRequirements) {
-			if (namespace.equals(requirement.getNamespace())) {
-				result.add(requirement);
-			}
-		}
-		return result;
-	}
-
 	@Override
 	public List<BundleCapability> getCapabilities(String namespace) {
-		return InternalUtils.asListBundleCapability(getModuleCapabilities(namespace));
+		return asCopy(asListBundleCapability(getModuleCapabilities(namespace)));
 
 	}
 
 	@Override
 	public List<BundleRequirement> getRequirements(String namespace) {
-		return InternalUtils.asListBundleRequirement(getModuleRequirements(namespace));
+		return asCopy(asListBundleRequirement(getModuleRequirements(namespace)));
 	}
 
 	/**
-	 * Returns the same result as {@link #getProvidedWires(String)} except
-	 * uses type ModuleWire.
+	 * Returns the same result as {@link #getProvidedWires(String)} except uses type
+	 * ModuleWire and the returned list is unmodifiable.
+	 * 
 	 * @param namespace the namespace
 	 * @return the wires
 	 * @see #getProvidedWires(String)
@@ -183,8 +188,9 @@ public final class ModuleWiring implements BundleWiring {
 	}
 
 	/**
-	 * Returns the same result as {@link #getRequiredWires(String)} except
-	 * uses type ModuleWire.
+	 * Returns the same result as {@link #getRequiredWires(String)} except uses type
+	 * ModuleWire and the returned list is unmodifiable.
+	 * 
 	 * @param namespace the namespace
 	 * @return the wires
 	 * @see #getRequiredWires(String)
@@ -197,11 +203,11 @@ public final class ModuleWiring implements BundleWiring {
 		return getPersistentWires(requiredWires);
 	}
 
-	private List<ModuleWire> getPersistentWires(List<ModuleWire> allWires) {
-		List<ModuleWire> persistentWires = getWires(null, allWires);
-		if (persistentWires == null) {
+	private List<ModuleWire> getPersistentWires(NamespaceList<ModuleWire> allWires) {
+		if (!isValid) {
 			return null;
 		}
+		List<ModuleWire> persistentWires = new ArrayList<>(allWires.getList(null));
 		for (Iterator<ModuleWire> iWires = persistentWires.iterator(); iWires.hasNext();) {
 			ModuleWire wire = iWires.next();
 			if (PackageNamespace.PACKAGE_NAMESPACE.equals(wire.getRequirement().getNamespace())) {
@@ -215,26 +221,19 @@ public final class ModuleWiring implements BundleWiring {
 
 	@Override
 	public List<BundleWire> getProvidedWires(String namespace) {
-		return InternalUtils.asListBundleWire(getWires(namespace, providedWires));
+		return asCopy(asListBundleWire(getWires(namespace, providedWires)));
 	}
 
 	@Override
 	public List<BundleWire> getRequiredWires(String namespace) {
-		return InternalUtils.asListBundleWire(getWires(namespace, requiredWires));
+		return asCopy(asListBundleWire(getWires(namespace, requiredWires)));
 	}
 
-	private List<ModuleWire> getWires(String namespace, List<ModuleWire> allWires) {
-		if (!isValid)
+	private List<ModuleWire> getWires(String namespace, NamespaceList<ModuleWire> wires) {
+		if (!isValid) {
 			return null;
-		if (namespace == null)
-			return new ArrayList<>(allWires);
-		List<ModuleWire> result = new ArrayList<>();
-		for (ModuleWire moduleWire : allWires) {
-			if (namespace.equals(moduleWire.getCapability().getNamespace())) {
-				result.add(moduleWire);
-			}
 		}
-		return result;
+		return wires.getList(namespace);
 	}
 
 	@Override
@@ -309,22 +308,22 @@ public final class ModuleWiring implements BundleWiring {
 
 	@Override
 	public List<Capability> getResourceCapabilities(String namespace) {
-		return InternalUtils.asListCapability(getCapabilities(namespace));
+		return asCopy(asListCapability(getModuleCapabilities(namespace)));
 	}
 
 	@Override
 	public List<Requirement> getResourceRequirements(String namespace) {
-		return InternalUtils.asListRequirement(getRequirements(namespace));
+		return asCopy(asListRequirement(getModuleRequirements(namespace)));
 	}
 
 	@Override
 	public List<Wire> getProvidedResourceWires(String namespace) {
-		return InternalUtils.asListWire(getWires(namespace, providedWires));
+		return asCopy(asListWire(getWires(namespace, providedWires)));
 	}
 
 	@Override
 	public List<Wire> getRequiredResourceWires(String namespace) {
-		return InternalUtils.asListWire(getWires(namespace, requiredWires));
+		return asCopy(asListWire(getWires(namespace, requiredWires)));
 	}
 
 	@Override
@@ -332,16 +331,20 @@ public final class ModuleWiring implements BundleWiring {
 		return revision;
 	}
 
-	void setProvidedWires(List<ModuleWire> providedWires) {
+	void setProvidedWires(NamespaceList<ModuleWire> providedWires) {
 		this.providedWires = providedWires;
 	}
 
-	void setRequiredWires(List<ModuleWire> requiredWires) {
+	void setRequiredWires(NamespaceList<ModuleWire> requiredWires) {
 		this.requiredWires = requiredWires;
 	}
 
-	void setCapabilities(List<ModuleCapability> capabilities) {
+	void setCapabilities(NamespaceList<ModuleCapability> capabilities) {
 		this.capabilities = capabilities;
+	}
+
+	void setRequirements(NamespaceList<ModuleRequirement> requirements) {
+		this.requirements = requirements;
 	}
 
 	void unload() {
@@ -412,9 +415,8 @@ public final class ModuleWiring implements BundleWiring {
 	 * @param builder the builder that defines the new dynamic imports.
 	 */
 	public void addDynamicImports(ModuleRevisionBuilder builder) {
-		List<GenericInfo> newImports = builder.getRequirements();
-		List<ModuleRequirement> newRequirements = new ArrayList<>();
-		for (GenericInfo info : newImports) {
+		NamespaceList.Builder<GenericInfo> newImports = builder.getRequirementsBuilder();
+		NamespaceList.Builder<ModuleRequirement> newRequirements = newImports.transformIntoCopy(info -> {
 			if (!PackageNamespace.PACKAGE_NAMESPACE.equals(info.getNamespace())) {
 				throw new IllegalArgumentException("Invalid namespace for package imports: " + info.getNamespace()); //$NON-NLS-1$
 			}
@@ -422,14 +424,15 @@ public final class ModuleWiring implements BundleWiring {
 			Map<String, String> directives = new HashMap<>(info.getDirectives());
 			directives.put(DYNAMICALLY_ADDED_IMPORT_DIRECTIVE, "true"); //$NON-NLS-1$
 			directives.put(PackageNamespace.REQUIREMENT_RESOLUTION_DIRECTIVE, PackageNamespace.RESOLUTION_DYNAMIC);
-			newRequirements.add(new ModuleRequirement(info.getNamespace(), directives, attributes, revision));
-		}
+			return new ModuleRequirement(info.getNamespace(), directives, attributes, revision);
+		}, NamespaceList.REQUIREMENT);
+
 		ModuleDatabase moduleDatabase = revision.getRevisions().getContainer().moduleDatabase;
 		moduleDatabase.writeLock();
 		try {
-			List<ModuleRequirement> updatedRequirements = new ArrayList<>(requirements);
-			updatedRequirements.addAll(newRequirements);
-			requirements = updatedRequirements;
+			NamespaceList.Builder<ModuleRequirement> requirmentsBuilder = requirements.createBuilder();
+			requirmentsBuilder.addAll(newRequirements);
+			requirements = requirmentsBuilder.build();
 		} finally {
 			moduleDatabase.writeUnlock();
 		}
@@ -468,15 +471,29 @@ public final class ModuleWiring implements BundleWiring {
 		}
 		// Could cache this, but seems unnecessary since it will only be used by the resolver
 		List<Wire> substitutionWires = new ArrayList<>(substitutedPkgNames.size());
-		List<ModuleWire> current = requiredWires;
+		List<ModuleWire> current = requiredWires.getList(PackageNamespace.PACKAGE_NAMESPACE);
 		for (ModuleWire wire : current) {
 			Capability cap = wire.getCapability();
-			if (PackageNamespace.PACKAGE_NAMESPACE.equals(cap.getNamespace())) {
-				if (substitutedPkgNames.contains(cap.getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE))) {
-					substitutionWires.add(wire);
-				}
+			if (substitutedPkgNames.contains(cap.getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE))) {
+				substitutionWires.add(wire);
 			}
 		}
 		return substitutionWires;
+	}
+
+	NamespaceList<ModuleCapability> getCapabilities() {
+		return capabilities;
+	}
+
+	NamespaceList<ModuleWire> getProvidedWires() {
+		return providedWires;
+	}
+
+	NamespaceList<ModuleRequirement> getRequirements() {
+		return requirements;
+	}
+
+	NamespaceList<ModuleWire> getRequiredWires() {
+		return requiredWires;
 	}
 }

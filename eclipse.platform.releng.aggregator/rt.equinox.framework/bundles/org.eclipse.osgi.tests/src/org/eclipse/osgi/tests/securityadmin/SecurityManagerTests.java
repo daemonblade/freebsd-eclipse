@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2020 IBM Corporation and others.
+ * Copyright (c) 2008, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,6 +20,7 @@ import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Policy;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -39,11 +40,15 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.PackagePermission;
 import org.osgi.framework.hooks.resolver.ResolverHook;
 import org.osgi.framework.hooks.resolver.ResolverHookFactory;
+import org.osgi.framework.namespace.ExecutionEnvironmentNamespace;
 import org.osgi.framework.namespace.PackageNamespace;
 import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRequirement;
 import org.osgi.framework.wiring.BundleRevision;
+import org.osgi.framework.wiring.FrameworkWiring;
 import org.osgi.resource.Namespace;
+import org.osgi.resource.Requirement;
+import org.osgi.resource.Resource;
 import org.osgi.service.condpermadmin.BundleLocationCondition;
 import org.osgi.service.condpermadmin.ConditionInfo;
 import org.osgi.service.condpermadmin.ConditionalPermissionAdmin;
@@ -630,37 +635,31 @@ public class SecurityManagerTests extends AbstractBundleTests {
 		BundleContext systemContext = equinox.getBundleContext();
 
 		// register a no-op resolver hook to test security
-		ResolverHookFactory dummyHook = new ResolverHookFactory() {
+		ResolverHookFactory dummyHook = triggers -> new ResolverHook() {
 
 			@Override
-			public ResolverHook begin(Collection<BundleRevision> triggers) {
-				return new ResolverHook() {
-
-					@Override
-					public void filterResolvable(Collection<BundleRevision> candidates) {
-						// nothing
-					}
-
-					@Override
-					public void filterSingletonCollisions(BundleCapability singleton, Collection<BundleCapability> collisionCandidates) {
-						// nothing
-					}
-
-					@Override
-					public void filterMatches(BundleRequirement requirement, Collection<BundleCapability> candidates) {
-						// always remove candidates for dynamic import
-						if (PackageNamespace.RESOLUTION_DYNAMIC.equals(requirement.getDirectives().get(Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE))) {
-							candidates.clear();
-						}
-					}
-
-					@Override
-					public void end() {
-						// nothing
-					}
-
-				};
+			public void filterResolvable(Collection<BundleRevision> candidates) {
+				// nothing
 			}
+
+			@Override
+			public void filterSingletonCollisions(BundleCapability singleton, Collection<BundleCapability> collisionCandidates) {
+				// nothing
+			}
+
+			@Override
+			public void filterMatches(BundleRequirement requirement, Collection<BundleCapability> candidates) {
+				// always remove candidates for dynamic import
+				if (PackageNamespace.RESOLUTION_DYNAMIC.equals(requirement.getDirectives().get(Namespace.REQUIREMENT_RESOLUTION_DIRECTIVE))) {
+					candidates.clear();
+				}
+			}
+
+			@Override
+			public void end() {
+				// nothing
+			}
+
 		};
 		systemContext.registerService(ResolverHookFactory.class, dummyHook, null);
 
@@ -686,5 +685,78 @@ public class SecurityManagerTests extends AbstractBundleTests {
 		stop(equinox);
 		assertEquals("Wrong state for SystemBundle", Bundle.RESOLVED, equinox.getState()); //$NON-NLS-1$
 		assertNull("SecurityManager is not null", System.getSecurityManager()); //$NON-NLS-1$
+	}
+
+	public void testJava12SecurityManagerAllow() {
+		doJava12SecurityManagerSetting("allow", false);
+	}
+
+	public void testJava12SecurityManagerDisallow() {
+		doJava12SecurityManagerSetting("disallow", false);
+	}
+
+	public void testJava12SecurityManagerDefault() {
+		doJava12SecurityManagerSetting("default", true);
+	}
+
+	public void testJava12SecurityManagerEmpty() {
+		doJava12SecurityManagerSetting("", true);
+	}
+
+	public void doJava12SecurityManagerSetting(String managerValue, boolean isSecurityManager) {
+		final String MANAGER_PROP = "java.security.manager";
+		String previous = System.getProperty(MANAGER_PROP);
+		try {
+			File config = OSGiTestsActivator.getContext().getDataFile(getName());
+			Map<String, Object> configuration = new HashMap<>();
+			configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
+			configuration.put(MANAGER_PROP, managerValue);
+			Equinox equinox = new Equinox(configuration);
+			try {
+				equinox.init();
+				if (isSecurityManager) {
+					assertNotNull("SecurityManager is null", System.getSecurityManager()); //$NON-NLS-1$
+				} else {
+					assertNull("SecurityManager is not null", System.getSecurityManager()); //$NON-NLS-1$
+				}
+			} catch (BundleException e) {
+				if (isSecurityManager && e.getCause() instanceof UnsupportedOperationException) {
+					FrameworkWiring wiring = getContext().getBundle(Constants.SYSTEM_BUNDLE_LOCATION).adapt(FrameworkWiring.class);
+					Collection<BundleCapability> java12 = wiring.findProviders(new Requirement() {
+						
+						@Override
+						public Resource getResource() {
+							return null;
+						}
+						
+						@Override
+						public String getNamespace() {
+							return ExecutionEnvironmentNamespace.EXECUTION_ENVIRONMENT_NAMESPACE;
+						}
+						
+						@Override
+						public Map<String, String> getDirectives() {
+							return Collections.singletonMap(Namespace.REQUIREMENT_FILTER_DIRECTIVE, "(version=12)");
+						}
+						
+						@Override
+						public Map<String, Object> getAttributes() {
+							return Collections.emptyMap();
+						}
+					});
+					assertFalse("Only allowed UnsupportedOperationException on Java 12.", java12.isEmpty());
+				} else {
+					fail("Unexpected exception on init()", e); //$NON-NLS-1$
+				}
+			} finally {
+				stopQuietly(equinox);
+			}
+		} finally {
+			if (previous == null) {
+				System.getProperties().remove(MANAGER_PROP);
+			} else {
+				System.setProperty(MANAGER_PROP, previous);
+			}
+		}
 	}
 }
