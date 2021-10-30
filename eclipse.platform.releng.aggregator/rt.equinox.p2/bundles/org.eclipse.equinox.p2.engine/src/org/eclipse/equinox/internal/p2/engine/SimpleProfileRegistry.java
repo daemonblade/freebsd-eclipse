@@ -56,6 +56,8 @@ public class SimpleProfileRegistry implements IProfileRegistry, IAgentService {
 	//Internal constant used to keep track of the newly created timestamp
 	private static final String SERVICE_SHARED_INSTALL_NEW_TIMESTAMP = IProfileRegistry.class.getName() + '_' + "NEW_SELF_TIMESTAMP"; //$NON-NLS-1$
 
+	private static long lastTimeMillis = System.currentTimeMillis();
+
 	protected final IProvisioningAgent agent;
 
 	/**
@@ -489,7 +491,8 @@ public class SimpleProfileRegistry implements IProfileRegistry, IAgentService {
 		if (profiles != null) {
 			IProfile profile = getProfile(id);
 			if (profile != null && profile.getTimestamp() == timestamp)
-				throw new ProvisionException(Messages.SimpleProfileRegistry_CannotRemoveCurrentSnapshot);
+				throw new ProvisionException(
+						NLS.bind(Messages.SimpleProfileRegistry_CannotRemoveCurrentSnapshot, profile));
 		}
 
 		File profileDirectory = getProfileFolder(id);
@@ -527,6 +530,7 @@ public class SimpleProfileRegistry implements IProfileRegistry, IAgentService {
 		// protect against NPE
 		if (profileDirectories == null) {
 			parser.getProfileMap();
+			return Collections.emptyMap();
 		}
 		for (File profileDirectorie : profileDirectories) {
 			String directoryName = profileDirectorie.getName();
@@ -587,9 +591,10 @@ public class SimpleProfileRegistry implements IProfileRegistry, IAgentService {
 		profileDirectory.mkdir();
 
 		long previousTimestamp = profile.getTimestamp();
-		long currentTimestamp = System.currentTimeMillis();
-		if (currentTimestamp <= previousTimestamp)
-			currentTimestamp = previousTimestamp + 1;
+		long currentTimestamp = currentTimeInMillis(lastTimeMillis);
+		if (currentTimestamp <= previousTimestamp) {
+			currentTimestamp = currentTimeInMillis(previousTimestamp);
+		}
 		boolean shouldGzipFile = shouldGzipFile(profile);
 		File profileFile = new File(profileDirectory, Long.toString(currentTimestamp) + (shouldGzipFile ? PROFILE_GZ_EXT : PROFILE_EXT));
 
@@ -619,6 +624,16 @@ public class SimpleProfileRegistry implements IProfileRegistry, IAgentService {
 				// ignore
 			}
 		}
+	}
+
+	/**
+	 * Returns current time in millis that is guaranteed to grow and higher as given
+	 * value
+	 */
+	private static synchronized long currentTimeInMillis(long lastCurrentTime) {
+		long newTime = Math.max(lastCurrentTime + 1, lastTimeMillis + 1);
+		lastTimeMillis = Math.max(newTime, System.currentTimeMillis());
+		return lastTimeMillis;
 	}
 
 	public void setEventBus(IProvisioningEventBus bus) {
@@ -890,7 +905,7 @@ public class SimpleProfileRegistry implements IProfileRegistry, IAgentService {
 			return false;
 		}
 
-		long currentTimestamp = (timestamps.length == 0) ? -1 : timestamps[timestamps.length - 1];
+		long currentTimestamp = timestamps[timestamps.length - 1];
 		if (profile.getTimestamp() != currentTimestamp) {
 			if (DebugHelper.DEBUG_PROFILE_REGISTRY)
 				DebugHelper.debug(PROFILE_REGISTRY, "check timestamp: expected " + profile.getTimestamp() + " but was " + currentTimestamp); //$NON-NLS-1$ //$NON-NLS-2$

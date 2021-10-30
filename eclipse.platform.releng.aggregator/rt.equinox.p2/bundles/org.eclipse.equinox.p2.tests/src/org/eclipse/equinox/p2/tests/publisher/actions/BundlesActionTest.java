@@ -218,6 +218,7 @@ public class BundlesActionTest extends ActionTest {
 		verifyArtifactRepository();
 	}
 
+	@SuppressWarnings("removal")
 	private void verifyArtifactRepository() throws Exception {
 		IArtifactKey key2 = ArtifactKey.parse("osgi.bundle,test2,1.0.0.qualifier");//$NON-NLS-1$
 		IArtifactDescriptor[] descriptors = artifactRepository.getArtifactDescriptors(key2);
@@ -446,8 +447,10 @@ public class BundlesActionTest extends ActionTest {
 	}
 
 	private void expectOtherAdviceQueries(String bundleName, Version bundleVersion) {
-		expect(publisherInfo.getAdvice(null, false, bundleName, bundleVersion, ICapabilityAdvice.class)).andReturn(Collections.EMPTY_LIST);
-		expect(publisherInfo.getAdvice(null, false, bundleName, bundleVersion, IAdditionalInstallableUnitAdvice.class)).andReturn(Collections.EMPTY_LIST);
+		expect(publisherInfo.getAdvice(null, false, bundleName, bundleVersion, ICapabilityAdvice.class))
+				.andReturn(Collections.emptyList());
+		expect(publisherInfo.getAdvice(null, false, bundleName, bundleVersion, IAdditionalInstallableUnitAdvice.class))
+				.andReturn(Collections.emptyList());
 		expect(publisherInfo.getAdvice(null, true, bundleName, bundleVersion, IBundleShapeAdvice.class)).andReturn(null);
 	}
 

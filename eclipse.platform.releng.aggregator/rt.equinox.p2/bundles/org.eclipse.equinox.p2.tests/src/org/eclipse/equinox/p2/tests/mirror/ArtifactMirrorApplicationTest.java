@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2008, 2017, 2020 IBM Corporation and others.
+ *  Copyright (c) 2008, 2017, 2021 IBM Corporation and others.
  *
  *  This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License 2.0
@@ -14,6 +14,7 @@
  *******************************************************************************/
 package org.eclipse.equinox.p2.tests.mirror;
 
+import static org.eclipse.equinox.p2.repository.artifact.IArtifactDescriptor.FORMAT_PACKED;
 import static org.junit.Assert.assertNotEquals;
 
 import java.io.File;
@@ -38,7 +39,7 @@ import org.eclipse.equinox.internal.p2.artifact.repository.simple.SimpleArtifact
 import org.eclipse.equinox.internal.p2.core.helpers.OrderedProperties;
 import org.eclipse.equinox.internal.p2.core.helpers.ServiceHelper;
 import org.eclipse.equinox.p2.core.ProvisionException;
-import org.eclipse.equinox.p2.internal.repository.comparator.MD5ArtifactComparator;
+import org.eclipse.equinox.p2.internal.repository.comparator.ArtifactChecksumComparator;
 import org.eclipse.equinox.p2.internal.repository.tools.Messages;
 import org.eclipse.equinox.p2.internal.repository.tools.MirrorApplication;
 import org.eclipse.equinox.p2.metadata.IArtifactKey;
@@ -63,6 +64,7 @@ import org.eclipse.osgi.util.NLS;
  * Test API of the basic mirror application functionality's implementation.
  */
 public class ArtifactMirrorApplicationTest extends AbstractProvisioningTest {
+	private static final String MD5_COMPARATOR = ArtifactChecksumComparator.COMPARATOR_ID + ".md5";
 	protected File destRepoLocation;
 	protected File sourceRepoLocation; //helloworldfeature
 	protected File sourceRepo2Location; //anotherfeature
@@ -881,6 +883,7 @@ public class ArtifactMirrorApplicationTest extends AbstractProvisioningTest {
 	/**
 	 * Verifies that the mirror application executes processing steps correctly
 	 */
+	@SuppressWarnings("removal")
 	public void testArtifactProcessingSteps() {
 		if (System.getProperty("java.specification.version").compareTo("14") >= 0) {
 			// Test explicitly uses pack200 artifacts which are not supported on Java 14+
@@ -900,7 +903,8 @@ public class ArtifactMirrorApplicationTest extends AbstractProvisioningTest {
 
 		for (IArtifactKey key : packedRepo.query(ArtifactKeyQuery.ALL_KEYS, null)) {
 			for (IArtifactDescriptor srcDescriptor : packedRepo.getArtifactDescriptors(key)) {
-				if (!(srcDescriptor.getProperty(IArtifactDescriptor.FORMAT) == null) && srcDescriptor.getProperty(IArtifactDescriptor.FORMAT).equals(IArtifactDescriptor.FORMAT_PACKED)) {
+				if (!(srcDescriptor.getProperty(IArtifactDescriptor.FORMAT) == null)
+						&& srcDescriptor.getProperty(IArtifactDescriptor.FORMAT).equals(FORMAT_PACKED)) {
 					//if we have a packed artifact
 					IArtifactDescriptor newDescriptor = new ArtifactDescriptor(key);
 					Map<String, String> properties = new OrderedProperties();
@@ -1107,7 +1111,9 @@ public class ArtifactMirrorApplicationTest extends AbstractProvisioningTest {
 
 		try {
 			//Set compare flag.
-			String[] args = new String[] {"-source", repo1Location.toURL().toExternalForm(), "-destination", repo2Location.toURL().toExternalForm(), "-verbose", "-compare", "-comparator", MD5ArtifactComparator.MD5_COMPARATOR_ID};
+			String[] args = new String[] { "-source", repo1Location.toURL().toExternalForm(), "-destination",
+					repo2Location.toURL().toExternalForm(), "-verbose", "-compare", "-comparator",
+					MD5_COMPARATOR };
 			//run the mirror application
 			runMirrorApplication("Running with duplicate descriptors with different md5 values", args);
 		} catch (Exception e) {
@@ -1159,7 +1165,10 @@ public class ArtifactMirrorApplicationTest extends AbstractProvisioningTest {
 
 		try {
 			//Set compareAgaist
-			String[] args = new String[] {"-source", repoLocation.toURL().toExternalForm(), "-destination", destRepoLocation.toURL().toExternalForm(), "-compareAgainst", baselineLocation.toURL().toExternalForm(), "-verbose", "-compare", "-comparator", MD5ArtifactComparator.MD5_COMPARATOR_ID};
+			String[] args = new String[] { "-source", repoLocation.toURL().toExternalForm(), "-destination",
+					destRepoLocation.toURL().toExternalForm(), "-compareAgainst",
+					baselineLocation.toURL().toExternalForm(), "-verbose", "-compare", "-comparator",
+					MD5_COMPARATOR };
 			//run the mirror application
 			runMirrorApplication("Running with baseline compare", args);
 		} catch (Exception e) {

@@ -15,26 +15,26 @@
   <parent>
     <groupId>org.eclipse.equinox.p2</groupId>
     <artifactId>rt.equinox.p2</artifactId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
   <groupId>org.eclipse.equinox</groupId>
   <artifactId>org.eclipse.equinox.p2.core.feature</artifactId>
-  <version>1.6.700-SNAPSHOT</version>
+  <version>1.6.1100-SNAPSHOT</version>
   <packaging>eclipse-feature</packaging>
 
 
   <build>
     <plugins>
       <plugin>
-        <groupId>org.eclipse.tycho.extras</groupId>
-        <artifactId>tycho-source-feature-plugin</artifactId>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-source-plugin</artifactId>
         <executions>
           <execution>
             <phase>package</phase>
-            <id>source-feature</id>
+            <id>feature-source</id>
             <goals>
-              <goal>source-feature</goal>
+              <goal>feature-source</goal>
             </goals>
             <configuration>
               <excludes>
@@ -51,7 +51,7 @@
         <version>${tycho.version}</version>
         <executions>
           <execution>
-            <id>attached-p2-metadata</id>
+            <id>attach-p2-metadata</id>
             <phase>package</phase>
             <goals>
               <goal>p2-metadata</goal>

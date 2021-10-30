@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.equinox.p2.core.feature"
       label="%featureName"
-      version="1.6.700.qualifier"
+      version="1.6.1100.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -205,6 +205,20 @@
 
    <plugin
          id="org.tukaani.xz"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.bouncycastle.bcpg"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.bouncycastle.bcprov"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2009 IBM Corporation and others.
+ * Copyright (c) 2007, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -24,8 +24,11 @@ public class JarProcessorExecutor {
 	public static class Options {
 		public String outputDir = "."; //$NON-NLS-1$
 		public String signCommand = null;
+		@Deprecated(forRemoval = true, since = "1.2.0")
 		public boolean pack = false;
+		@Deprecated(forRemoval = true, since = "1.2.0")
 		public boolean repack = false;
+		@Deprecated(forRemoval = true, since = "1.2.0")
 		public boolean unpack = false;
 		public boolean verbose = false;
 		public boolean processAll = false;
@@ -36,6 +39,7 @@ public class JarProcessorExecutor {
 	private Set<String> packExclusions = null;
 	private Set<String> signExclusions = null;
 
+	@SuppressWarnings("removal")
 	public void runJarProcessor(Options processOptions) {
 		this.options = processOptions;
 		if (options.input.isFile() && options.input.getName().endsWith(".zip")) { //$NON-NLS-1$
@@ -59,7 +63,7 @@ public class JarProcessorExecutor {
 			processor.setProcessAll(options.processAll);
 			processor.setVerbose(options.verbose);
 
-			//load options file
+			// load options file
 			Properties properties = new Properties();
 			if (options.input.isDirectory()) {
 				File packProperties = new File(options.input, "pack.properties"); //$NON-NLS-1$
@@ -90,6 +94,7 @@ public class JarProcessorExecutor {
 		}
 	}
 
+	@SuppressWarnings("removal")
 	protected FileFilter createFileFilter(Options processOptions) {
 		return processOptions.unpack ? Utils.PACK_GZ_FILTER : Utils.JAR_FILTER;
 	}
@@ -142,7 +147,8 @@ public class JarProcessorExecutor {
 		return packExclusions == null ? true : !packExclusions.contains(name);
 	}
 
-	protected void process(File input, FileFilter filter, boolean verbose, JarProcessor processor, Properties packProperties) throws FileNotFoundException {
+	protected void process(File input, FileFilter filter, boolean verbose, JarProcessor processor,
+			Properties packProperties) throws FileNotFoundException {
 		if (!input.exists())
 			throw new FileNotFoundException();
 
@@ -150,7 +156,7 @@ public class JarProcessorExecutor {
 		if (input.isDirectory()) {
 			files = input.listFiles();
 		} else if (filter.accept(input)) {
-			files = new File[] {input};
+			files = new File[] { input };
 		} else
 			return;
 		for (int i = 0; i < files.length; i++) {
@@ -190,7 +196,8 @@ public class JarProcessorExecutor {
 		}
 	}
 
-	protected void processDirectory(File input, FileFilter filter, boolean verbose, JarProcessor processor, Properties packProperties) throws FileNotFoundException {
+	protected void processDirectory(File input, FileFilter filter, boolean verbose, JarProcessor processor,
+			Properties packProperties) throws FileNotFoundException {
 		if (!input.isDirectory())
 			return;
 		String dir = processor.getWorkingDirectory();
@@ -199,19 +206,26 @@ public class JarProcessorExecutor {
 		processor.setWorkingDirectory(dir);
 	}
 
-	public void addPackUnpackStep(JarProcessor processor, Properties properties, JarProcessorExecutor.Options processOptions) {
+	@Deprecated(forRemoval = true, since = "1.2.0")
+	public void addPackUnpackStep(JarProcessor processor, Properties properties,
+			JarProcessorExecutor.Options processOptions) {
 		processor.addProcessStep(new PackUnpackStep(properties, processOptions.verbose));
 	}
 
-	public void addSignStep(JarProcessor processor, Properties properties, JarProcessorExecutor.Options processOptions) {
+	public void addSignStep(JarProcessor processor, Properties properties,
+			JarProcessorExecutor.Options processOptions) {
 		processor.addProcessStep(new SignCommandStep(properties, processOptions.signCommand, processOptions.verbose));
 	}
 
-	public void addPackStep(JarProcessor processor, Properties properties, JarProcessorExecutor.Options processOptions) {
+	@Deprecated(forRemoval = true, since = "1.2.0")
+	public void addPackStep(JarProcessor processor, Properties properties,
+			JarProcessorExecutor.Options processOptions) {
 		processor.addProcessStep(new PackStep(properties, processOptions.verbose));
 	}
 
-	public void addUnpackStep(JarProcessor processor, Properties properties, JarProcessorExecutor.Options processOptions) {
+	@Deprecated(forRemoval = true, since = "1.2.0")
+	public void addUnpackStep(JarProcessor processor, Properties properties,
+			JarProcessorExecutor.Options processOptions) {
 		processor.addProcessStep(new UnpackStep(properties, processOptions.verbose));
 	}
 }

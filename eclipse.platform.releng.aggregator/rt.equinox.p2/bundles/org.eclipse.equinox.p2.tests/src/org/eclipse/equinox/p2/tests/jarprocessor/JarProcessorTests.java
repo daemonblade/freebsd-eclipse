@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2005, 2017 IBM Corporation and others.
+ *  Copyright (c) 2005, 2021 IBM Corporation and others.
  *
  *  This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License 2.0
@@ -13,7 +13,11 @@
  *******************************************************************************/
 package org.eclipse.equinox.p2.tests.jarprocessor;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.internal.p2.jarprocessor.PackStep;
 import org.eclipse.equinox.internal.p2.jarprocessor.verifier.Verifier;
@@ -23,6 +27,7 @@ import org.eclipse.internal.provisional.equinox.p2.jarprocessor.JarProcessor;
 import org.eclipse.internal.provisional.equinox.p2.jarprocessor.JarProcessorExecutor;
 import org.eclipse.internal.provisional.equinox.p2.jarprocessor.JarProcessorExecutor.Options;
 
+@SuppressWarnings("removal")
 public class JarProcessorTests extends AbstractProvisioningTest {
 
 	public void testVerifyStep() throws Exception {
@@ -78,6 +83,7 @@ public class JarProcessorTests extends AbstractProvisioningTest {
 
 	}
 
+	@Deprecated(forRemoval = true)
 	public void testPackUnpackVerify() throws Exception {
 		if (!PackStep.canPack() || !VerifyStep.canVerify())
 			return;

@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2007, 2020 compeople AG and others.
+* Copyright (c) 2007, 2021 compeople AG and others.
 *
 * This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
@@ -16,6 +16,7 @@
 package org.eclipse.equinox.p2.tests.artifact.repository.processing;
 
 import static org.eclipse.equinox.p2.tests.AbstractProvisioningTest.getAgent;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -26,7 +27,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -44,6 +44,7 @@ import org.eclipse.equinox.p2.repository.artifact.spi.ProcessingStepDescriptor;
 import org.eclipse.equinox.p2.tests.TestActivator;
 import org.junit.Test;
 
+@SuppressWarnings("removal")
 public class ProcessingStepHandlerTest {
 
 	//	private static final int BUFFER_SIZE = 8 * 1024;
@@ -114,7 +115,7 @@ public class ProcessingStepHandlerTest {
 		try (OutputStream testStream = handler.link(steps, result, monitor)) {
 			testStream.write(new byte[] {1});
 		}
-		assertTrue(Arrays.equals(new byte[] {2}, result.toByteArray()));
+		assertArrayEquals(new byte[] { 2 }, result.toByteArray());
 	}
 
 	@Test
@@ -124,7 +125,7 @@ public class ProcessingStepHandlerTest {
 		try (OutputStream testStream = handler.link(steps, result, monitor)) {
 			testStream.write(new byte[] {1});
 		}
-		assertTrue(Arrays.equals(new byte[] {8}, result.toByteArray()));
+		assertArrayEquals(new byte[] { 8 }, result.toByteArray());
 	}
 
 	@Test
@@ -139,17 +140,14 @@ public class ProcessingStepHandlerTest {
 
 	@Test
 	public void testExecuteOneMD5VerifierPSFails() throws IOException {
-		ProcessingStep[] steps = new ProcessingStep[] {new MD5Verifier("9cbc6611f5540bd0809a388dc95a615b")};
+		ProcessingStep[] steps = new ProcessingStep[] { new MD5Verifier("9cbc6611f5540bd0809a388dc95a615b") };
 		ByteArrayOutputStream result = new ByteArrayOutputStream(10);
-		OutputStream testStream = handler.link(steps, result, monitor);
+		OutputStream testStream=handler.link(steps, result, monitor);
+		try (testStream) {
 		testStream.write("Test".getBytes());
-		try {
-			testStream.close();
-			assertEquals("Test", result.toString());
-			assertTrue((ProcessingStepHandler.checkStatus(testStream).getSeverity() == IStatus.ERROR));
-		} catch (IOException e) {
-			assertTrue(true);
 		}
+		assertEquals("Test", result.toString());
+		assertEquals(IStatus.ERROR, ProcessingStepHandler.checkStatus(testStream).getSeverity());
 	}
 
 	@Test
@@ -160,7 +158,7 @@ public class ProcessingStepHandlerTest {
 		try (OutputStream testStream = handler.link(steps, result, monitor)) {
 			testStream.write(new byte[] {1, 2, 3, 4, 5});
 		}
-		assertTrue(Arrays.equals(new byte[] {2, 4, 6, 8, 10}, result.toByteArray()));
+		assertArrayEquals(new byte[] { 2, 4, 6, 8, 10 }, result.toByteArray());
 	}
 
 	@Test
@@ -169,14 +167,11 @@ public class ProcessingStepHandlerTest {
 		ProcessingStep[] steps = new ProcessingStep[] {new MD5Verifier("af476bbaf152a4c39ca4e5c498a88aa0"), new ByteShifter(1)};
 		ByteArrayOutputStream result = new ByteArrayOutputStream(10);
 		OutputStream testStream = handler.link(steps, result, monitor);
-		testStream.write(new byte[] {1, 2, 3, 4, 5});
-		try {
-			testStream.close();
-			assertTrue(Arrays.equals(new byte[] {2, 4, 6, 8, 10}, result.toByteArray()));
-			assertTrue((ProcessingStepHandler.checkStatus(testStream).getSeverity() == IStatus.ERROR));
-		} catch (IOException e) {
-			assertTrue(true);
+		try (testStream) {
+			testStream.write(new byte[] { 1, 2, 3, 4, 5 });
 		}
+		assertArrayEquals(new byte[] { 2, 4, 6, 8, 10 }, result.toByteArray());
+		assertEquals(IStatus.ERROR, ProcessingStepHandler.checkStatus(testStream).getSeverity());
 	}
 
 	@Test
@@ -186,7 +181,7 @@ public class ProcessingStepHandlerTest {
 		try (OutputStream testStream = handler.link(steps, result, monitor)) {
 			testStream.write(new byte[] {1, 2, 3, 4, 5});
 		}
-		assertTrue(Arrays.equals(new byte[] {4, 6, 8, 10, 12}, result.toByteArray()));
+		assertArrayEquals(new byte[] { 4, 6, 8, 10, 12 }, result.toByteArray());
 	}
 
 	@Test
@@ -197,8 +192,7 @@ public class ProcessingStepHandlerTest {
 			testStream.write(new byte[] {1, 2, 3, 4, 5});
 		}
 
-		assertTrue(Arrays.equals(new byte[] {3, 5, 7, 9, 11}, result.toByteArray()));
-
+		assertArrayEquals(new byte[] { 3, 5, 7, 9, 11 }, result.toByteArray());
 	}
 
 	@Test
@@ -286,7 +280,7 @@ public class ProcessingStepHandlerTest {
 		try (OutputStream testStream = handler.link(steps, result, monitor)) {
 			testStream.write(new byte[] {1, 2, 3, 4, 5});
 		}
-		assertTrue(Arrays.equals(new byte[] {4, 6, 8, 10, 12}, result.toByteArray()));
+		assertArrayEquals(new byte[] { 4, 6, 8, 10, 12 }, result.toByteArray());
 	}
 
 	@Test
@@ -299,7 +293,7 @@ public class ProcessingStepHandlerTest {
 		try (OutputStream testStream = handler.link(steps, result, monitor)) {
 			testStream.write(new byte[] {1, 2, 3, 4, 5});
 		}
-		assertTrue(Arrays.equals(new byte[] {3, 5, 7, 9, 11}, result.toByteArray()));
+		assertArrayEquals(new byte[] { 3, 5, 7, 9, 11 }, result.toByteArray());
 	}
 
 	@Test
@@ -311,7 +305,7 @@ public class ProcessingStepHandlerTest {
 		try (OutputStream testStream = handler.createAndLink(getAgent(), descriptors, null, result, monitor)) {
 			testStream.write(new byte[] {1, 2, 3, 4, 5});
 		}
-		assertTrue(Arrays.equals(new byte[] {4, 6, 8, 10, 12}, result.toByteArray()));
+		assertArrayEquals(new byte[] { 4, 6, 8, 10, 12 }, result.toByteArray());
 	}
 
 	@Test
@@ -334,8 +328,8 @@ public class ProcessingStepHandlerTest {
 		IStatus status = ProcessingStepHandler.getStatus(testStream);
 		IStatus errStatus = ProcessingStepHandler.getStatus(testStream);
 		assertTrue(status.isOK() && errStatus.isOK());
-		assertTrue(!status.isMultiStatus());
-		assertTrue(!errStatus.isMultiStatus());
+		assertFalse(status.isMultiStatus());
+		assertFalse(errStatus.isMultiStatus());
 	}
 
 	@Test
@@ -370,7 +364,7 @@ public class ProcessingStepHandlerTest {
 		};
 
 		OutputStream testStream = handler.link(new ProcessingStep[] {info, ok, error, warning}, null, monitor);
-		assertTrue(ProcessingStepHandler.getErrorStatus(testStream).getChildren().length == 2);
-		assertTrue(ProcessingStepHandler.getStatus(testStream, true).getChildren().length == 4);
+		assertEquals(2, ProcessingStepHandler.getErrorStatus(testStream).getChildren().length);
+		assertEquals(4, ProcessingStepHandler.getStatus(testStream, true).getChildren().length);
 	}
 }
