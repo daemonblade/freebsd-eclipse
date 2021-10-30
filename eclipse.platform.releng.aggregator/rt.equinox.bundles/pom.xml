@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.17.0-SNAPSHOT</version>
+    <version>4.21.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
@@ -24,7 +24,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <tycho.scmUrl>scm:git:git://git.eclipse.org/gitroot/equinox/rt.equinox.bundles.git</tycho.scmUrl>
+    <tycho.scmUrl>scm:git:https://git.eclipse.org/r/equinox/rt.equinox.bundles.git</tycho.scmUrl>
   </properties>
 
   <!-- 
@@ -84,6 +84,7 @@
     <module>bundles/org.eclipse.equinox.security</module>
     <module>bundles/org.eclipse.equinox.security.macosx</module>
     <module>bundles/org.eclipse.equinox.security.win32.x86_64</module>
+    <module>bundles/org.eclipse.equinox.security.freebsd</module>
     <module>bundles/org.eclipse.equinox.security.freebsd.amd64</module>
     <module>bundles/org.eclipse.equinox.bidi</module>
     <module>bundles/org.eclipse.equinox.cm</module>
@@ -94,7 +95,9 @@
     <module>bundles/org.eclipse.equinox.console.tests</module>
     <module>bundles/org.eclipse.equinox.coordinator</module>
     <module>bundles/org.eclipse.equinox.device</module>
+    <!-- Module is deprecated
     <module>bundles/org.eclipse.equinox.ds</module>
+    -->
     <module>bundles/org.eclipse.equinox.event</module>
 
     <!-- Module is deprecated

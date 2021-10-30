@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -28,11 +29,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -40,6 +44,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.felix.service.command.CommandProcessor;
+import org.apache.felix.service.command.CommandSession;
 import org.apache.felix.service.command.Converter;
 import org.apache.felix.service.command.Descriptor;
 import org.apache.felix.service.command.Parameter;
@@ -61,6 +66,7 @@ import org.osgi.framework.hooks.resolver.ResolverHookFactory;
 import org.osgi.framework.namespace.BundleNamespace;
 import org.osgi.framework.namespace.HostNamespace;
 import org.osgi.framework.namespace.PackageNamespace;
+import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRequirement;
 import org.osgi.framework.wiring.BundleRevision;
@@ -75,7 +81,6 @@ import org.osgi.service.condpermadmin.ConditionalPermissionUpdate;
 import org.osgi.service.packageadmin.ExportedPackage;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.service.permissionadmin.PermissionAdmin;
-import org.osgi.service.startlevel.StartLevel;
 
 /**
  * This class provides methods to execute commands from the command line.  It registers
@@ -196,8 +201,8 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 	 *  Handle the exit command.  Exit immediately (System.exit)
 	 */
 	@Descriptor(ConsoleMsg.CONSOLE_HELP_EXIT_COMMAND_DESCRIPTION)
-	public void exit() throws Exception {
-		if (confirmStop()) {
+	public void exit(CommandSession session) throws Exception {
+		if (confirmStop(session)) {
 			System.out.println();
 			System.exit(0);
 		}
@@ -878,7 +883,7 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 			title = true;
 
 			// Get all resolved imports
-			Map<String, List<PackageSource>> packages = getPackagesInternal(wiring);
+			Map<String, Set<PackageSource>> packages = getPackagesInternal(wiring);
 			List<BundleRequirement> unresolvedImports = getUnresolvedImports(packages, wiring);
 
 			title = printImportedPackages(packages, title);
@@ -937,14 +942,14 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 	}
 
 	private List<BundleRequirement> getUnresolvedImports(
-			Map<String, List<PackageSource>> packages, BundleWiring wiring) {
+			Map<String, Set<PackageSource>> packages, BundleWiring wiring) {
 
 		// TODO need to get this information
 		return Collections.emptyList();
 	}
 
-	private boolean printImportedPackages(Map<String, List<PackageSource>> packages, boolean title) {
-		for (List<PackageSource> packageList : packages.values()) {
+	private boolean printImportedPackages(Map<String, Set<PackageSource>> packages, boolean title) {
+		for (Set<PackageSource> packageList : packages.values()) {
 			for (PackageSource packageSource : packageList) {
 				if (title) {
 					System.out.print("  "); //$NON-NLS-1$
@@ -1083,8 +1088,8 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 
 	 */
 	@Descriptor(ConsoleMsg.CONSOLE_HELP_CLOSE_COMMAND_DESCRIPTION)
-	public void close() throws Exception {
-		if (confirmStop()) {
+	public void close(CommandSession session) throws Exception {
+		if (confirmStop(session)) {
 			context.getBundle(0).stop();
 		}
 	}
@@ -1108,24 +1113,19 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 	 *
 	 *  @param bundles bundle(s) to be refreshed
 	 */
-	@SuppressWarnings("deprecation")
 	@Descriptor(ConsoleMsg.CONSOLE_HELP_REFRESH_COMMAND_DESCRIPTION)
 	public void refresh(
 			@Descriptor(ConsoleMsg.CONSOLE_HELP_REFRESH_ALL_OPTION_DESCRIPTION)
 			@Parameter(absentValue = "false", presentValue = "true", names = { "-all" })
 			boolean shouldRefreshAll,
 			@Descriptor(ConsoleMsg.CONSOLE_HELP_REFRESH_COMMAND_ARGUMENT_DESCRIPTION) Bundle... bundles) throws Exception {
-		PackageAdmin packageAdmin = activator.getPackageAdmin();
-		if (packageAdmin != null) {
-			if(bundles != null && bundles.length > 0) {
-				packageAdmin.refreshPackages(bundles);
-			} else if (shouldRefreshAll == true) {
-				packageAdmin.refreshPackages(context.getBundles());
-			} else {
-				packageAdmin.refreshPackages(null);
-			}
+		FrameworkWiring frameworkWiring = context.getBundle(Constants.SYSTEM_BUNDLE_LOCATION).adapt(FrameworkWiring.class);
+		if(bundles != null && bundles.length > 0) {
+			frameworkWiring.refreshBundles(Arrays.asList(bundles));
+		} else if (shouldRefreshAll == true) {
+			frameworkWiring.refreshBundles(Arrays.asList(context.getBundles()));
 		} else {
-			System.out.println(ConsoleMsg.CONSOLE_CAN_NOT_REFRESH_NO_PACKAGE_ADMIN_ERROR);
+			frameworkWiring.refreshBundles(null);
 		}
 	}
 
@@ -1266,7 +1266,6 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 	 *
 	 * @param arguments
 	 */
-	@SuppressWarnings("deprecation")
 	@Descriptor(ConsoleMsg.CONSOLE_HELP_SS_COMMAND_DESCRIPTION)
 	public void ss(@Descriptor(ConsoleMsg.CONSOLE_HELP_STATUS_ARGUMENT_DESCRIPTION) String... arguments) throws Exception {
 		if (context.getBundle(0).getState() == Bundle.ACTIVE) {
@@ -1322,22 +1321,22 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 				else
 					label = label + "_" + b.getVersion(); //$NON-NLS-1$
 				System.out.println(b.getBundleId() + "\t" + getStateName(b) + label); //$NON-NLS-1$
-				PackageAdmin packageAdmin = activator.getPackageAdmin();
-				if ((packageAdmin.getBundleType(b) & PackageAdmin.BUNDLE_TYPE_FRAGMENT) != 0) {
-					Bundle[] hosts = packageAdmin.getHosts(b);
-					if (hosts != null)
-						for (Bundle host : hosts) {
-							System.out.println("\t            Master=" + host.getBundleId()); //$NON-NLS-1$
+				BundleRevision revision = b.adapt(BundleRevision.class);
+				BundleWiring wiring = b.adapt(BundleWiring.class);
+				if (revision != null && wiring != null) {
+					if ((revision.getTypes() & BundleRevision.TYPE_FRAGMENT) != 0) {
+						for (BundleWire hostWire : wiring.getRequiredWires(HostNamespace.HOST_NAMESPACE)) {
+							System.out.println("\t            Master=" + hostWire.getProvider().getBundle().getBundleId()); //$NON-NLS-1$
 						}
-				} else {
-					Bundle[] fragments = packageAdmin.getFragments(b);
-					if (fragments != null) {
-						System.out.print("\t            Fragments="); //$NON-NLS-1$
-						for (int f = 0; f < fragments.length; f++) {
-							Bundle fragment = fragments[f];
-							System.out.print((f > 0 ? ", " : "") + fragment.getBundleId()); //$NON-NLS-1$ //$NON-NLS-2$
+					} else {
+						List<BundleWire> fragWires = wiring.getProvidedWires(HostNamespace.HOST_NAMESPACE);
+						if (!fragWires.isEmpty()) {
+							System.out.print("\t            Fragments="); //$NON-NLS-1$
+							Iterator<BundleWire> itr = fragWires.iterator();
+							System.out.print(itr.next().getRequirer().getBundle().getBundleId());
+							itr.forEachRemaining(w -> System.out.print(", " + w.getRequirer().getBundle().getBundleId()));
+							System.out.println();
 						}
-						System.out.println();
 					}
 				}
 			}
@@ -1486,19 +1485,15 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 	 *
 	 * @param bundle bundle to display startlevel for; if no bundle is specified, the framework startlevel is displayed
 	 */
-	@SuppressWarnings("deprecation")
 	@Descriptor(ConsoleMsg.CONSOLE_HELP_SL_COMMAND_DESCRIPTION)
 	public void sl(@Descriptor(ConsoleMsg.CONSOLE_HELP_SL_COMMAND_ARGUMENT_DESCRIPTION) Bundle... bundle) throws Exception {
-		StartLevel startLevel = activator.getStartLevel();
-		if (startLevel != null) {
-			int value = 0;
-			if (bundle == null || bundle.length == 0) { // must want framework startlevel
-				value = startLevel.getStartLevel();
-				System.out.println(NLS.bind(ConsoleMsg.STARTLEVEL_FRAMEWORK_ACTIVE_STARTLEVEL, String.valueOf(value)));
-			} else { // must want bundle startlevel
-				value = startLevel.getBundleStartLevel(bundle[0]);
-				System.out.println(NLS.bind(ConsoleMsg.STARTLEVEL_BUNDLE_STARTLEVEL, Long.valueOf(bundle[0].getBundleId()), Integer.valueOf(value)));
-			}
+		int value = 0;
+		if (bundle == null || bundle.length == 0) { // must want framework startlevel
+			value = activator.getStartLevel().getStartLevel();
+			System.out.println(NLS.bind(ConsoleMsg.STARTLEVEL_FRAMEWORK_ACTIVE_STARTLEVEL, String.valueOf(value)));
+		} else { // must want bundle startlevel
+			value = bundle[0].adapt(BundleStartLevel.class).getStartLevel();
+			System.out.println(NLS.bind(ConsoleMsg.STARTLEVEL_BUNDLE_STARTLEVEL, Long.valueOf(bundle[0].getBundleId()), Integer.valueOf(value)));
 		}
 	}
 
@@ -1507,18 +1502,14 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 	 *
 	 * @param newSL new value for the framewrok start level
 	 */
-	@SuppressWarnings("deprecation")
 	@Descriptor(ConsoleMsg.CONSOLE_HELP_SETFWSL_COMMAND_DESCRIPTION)
 	public void setfwsl(@Descriptor(ConsoleMsg.CONSOLE_HELP_SETFWSL_COMMAND_ARGUMENT_DESCRIPTION) int newSL) throws Exception {
-		StartLevel startLevel = activator.getStartLevel();
-		if (startLevel != null) {
 			try {
-				startLevel.setStartLevel(newSL);
+				activator.getStartLevel().setStartLevel(newSL);
 				System.out.println(NLS.bind(ConsoleMsg.STARTLEVEL_FRAMEWORK_ACTIVE_STARTLEVEL, String.valueOf(newSL)));
 			} catch (IllegalArgumentException e) {
 				System.out.println(e.getMessage());
 			}
-		}
 	}
 
 	/**
@@ -1527,24 +1518,20 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 	 * @param newSL new value for bundle start level
 	 * @param bundles bundles whose start value will be changed
 	 */
-	@SuppressWarnings("deprecation")
 	@Descriptor(ConsoleMsg.CONSOLE_HELP_SETBSL_COMMAND_DESCRIPTION)
 	public void setbsl(
 			@Descriptor(ConsoleMsg.CONSOLE_HELP_SETFWSL_COMMAND_ARGUMENT_DESCRIPTION)int newSL,
 			@Descriptor(ConsoleMsg.CONSOLE_HELP_SETBSL_COMMAND_ARGUMENT_DESCRIPTION) Bundle... bundles) throws Exception {
-		StartLevel startLevel = activator.getStartLevel();
-		if (startLevel != null) {
-			if (bundles == null) {
-				System.out.println(ConsoleMsg.STARTLEVEL_NO_STARTLEVEL_OR_BUNDLE_GIVEN);
-				return;
-			}
-			for (Bundle bundle : bundles) {
-				try {
-					startLevel.setBundleStartLevel(bundle, newSL);
-					System.out.println(NLS.bind(ConsoleMsg.STARTLEVEL_BUNDLE_STARTLEVEL, Long.valueOf(bundle.getBundleId()), Integer.valueOf(newSL)));
-				} catch (IllegalArgumentException e) {
-					System.out.println(e.getMessage());
-				}
+		if (bundles == null) {
+			System.out.println(ConsoleMsg.STARTLEVEL_NO_STARTLEVEL_OR_BUNDLE_GIVEN);
+			return;
+		}
+		for (Bundle bundle : bundles) {
+			try {
+				bundle.adapt(BundleStartLevel.class).setStartLevel(newSL);
+				System.out.println(NLS.bind(ConsoleMsg.STARTLEVEL_BUNDLE_STARTLEVEL, Long.valueOf(bundle.getBundleId()), Integer.valueOf(newSL)));
+			} catch (IllegalArgumentException e) {
+				System.out.println(e.getMessage());
 			}
 		}
 	}
@@ -1554,17 +1541,13 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 	 *
 	 * @param newInitialSL new value for initial start level
 	 */
-	@SuppressWarnings("deprecation")
 	@Descriptor(ConsoleMsg.CONSOLE_HELP_SETIBSL_COMMAND_DESCRIPTION)
 	public void setibsl(@Descriptor(ConsoleMsg.CONSOLE_HELP_SETFWSL_COMMAND_ARGUMENT_DESCRIPTION) int newInitialSL) throws Exception {
-		StartLevel startLevel = activator.getStartLevel();
-		if (startLevel != null) {
-			try {
-				startLevel.setInitialBundleStartLevel(newInitialSL);
-				System.out.println(NLS.bind(ConsoleMsg.STARTLEVEL_INITIAL_BUNDLE_STARTLEVEL, String.valueOf(newInitialSL)));
-			} catch (IllegalArgumentException e) {
-				System.out.println(e.getMessage());
-			}
+		try {
+			activator.getStartLevel().setInitialBundleStartLevel(newInitialSL);
+			System.out.println(NLS.bind(ConsoleMsg.STARTLEVEL_INITIAL_BUNDLE_STARTLEVEL, String.valueOf(newInitialSL)));
+		} catch (IllegalArgumentException e) {
+			System.out.println(e.getMessage());
 		}
 	}
 
@@ -1675,10 +1658,10 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 			return;
 		}
 
-		Map<String, List<PackageSource>> packages = getPackagesInternal(wiring);
-		for (List<PackageSource> packageSources : packages.values()) {
+		Map<String, Set<PackageSource>> packages = getPackagesInternal(wiring);
+		for (Set<PackageSource> packageSources : packages.values()) {
 			for (PackageSource packageSource : packageSources) {
-				printCapability("  ", packageSource.getCapability(), packageSource.getWire(), PackageNamespace.PACKAGE_NAMESPACE);
+				printCapability("  ", packageSource.getCapability(), packageSource.getWire(), PackageNamespace.CAPABILITY_VERSION_ATTRIBUTE);
 			}
 		}
 	}
@@ -1699,82 +1682,103 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 		BundleWire getWire() {
 			return wire;
 		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (o instanceof PackageSource) {
+				return Objects.equals(cap, ((PackageSource) o).cap) && Objects.equals(wire.getProvider(), ((PackageSource) o).wire.getProvider());
+			}
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return cap.hashCode() ^ wire.getProvider().hashCode();
+		}
 	}
-	private Map<String, List<PackageSource>> getPackagesInternal(BundleWiring wiring) {
-		Map<String, List<PackageSource>> packages = new TreeMap<>();
+	private Map<String, Set<PackageSource>> getPackagesInternal(BundleWiring wiring) {
+		return getPackagesInternal0(wiring, null);
+	}
+	private Map<String, Set<PackageSource>> getPackagesInternal0(BundleWiring wiring, Map<BundleWiring, Map<String, Set<PackageSource>>> allSources) {
+		if (allSources == null) {
+			allSources = new HashMap<>();
+		}
+		Map<String, Set<PackageSource>> packages = allSources.get(wiring);
+		if (packages != null) {
+			return packages;
+		}
+		packages = new TreeMap<>();
+		allSources.put(wiring, packages);
+
 		// first get the imported packages
 		List<BundleWire> packageWires = wiring.getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE);
 		Set<String> importedPackageNames = new HashSet<>();
 		for (BundleWire packageWire : packageWires) {
 			String packageName = (String) packageWire.getCapability().getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE);
 			importedPackageNames.add(packageName);
-			List<PackageSource> packageSources = new ArrayList<>();
-			packageSources.add(new PackageSource(packageWire.getCapability(), packageWire));
-			packages.put(packageName, packageSources);
+			addAggregatePackageSource(packageWire.getCapability(), packageName, packageWire, packages, allSources);
 		}
 
 		// now get packages from required bundles
 		for (BundleWire requiredWire : wiring.getRequiredWires(BundleNamespace.BUNDLE_NAMESPACE)) {
-			getRequiredBundlePackages(requiredWire, importedPackageNames, packages);
+			getRequiredBundlePackages(requiredWire, importedPackageNames, packages, allSources);
 		}
 
 		return packages;
 	}
 
-	private void getRequiredBundlePackages(BundleWire requiredWire, Set<String> importedPackageNames, Map<String, List<PackageSource>> packages) {
-			BundleWiring providerWiring = requiredWire.getProviderWiring();
-			for (BundleCapability packageCapability : providerWiring.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
-				String packageName = (String) packageCapability.getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE);
-				if (!importedPackageNames.contains(packageName)) {
-					List<PackageSource> packageSources = packages.get(packageName);
-					if (packageSources == null) {
-						packageSources = new ArrayList<>();
-						packages.put(packageName, packageSources);
-					}
-					boolean sourceFound = false;
-					for (PackageSource packageSource : packageSources) {
-						sourceFound |= packageCapability.equals(packageSource.getCapability());
-						if (sourceFound) {
-							break;
-						}
-					}
-					if (!sourceFound) {
-						packageSources.add(new PackageSource(packageCapability, requiredWire));
-					}
-				}
-			}
+	private void addAggregatePackageSource(BundleCapability packageCap, String packageName, BundleWire wire, Map<String, Set<PackageSource>> packages, Map<BundleWiring, Map<String, Set<PackageSource>>> allSources) {
+		Set<PackageSource> packageSources = packages.get(packageName);
+		if (packageSources == null) {
+			packageSources = new LinkedHashSet<>();
+			packages.put(packageName, packageSources);
+		}
+		packageSources.add(new PackageSource(packageCap, wire));
+		// source may be a split package aggregate
+		Set<PackageSource> providerSource = getPackagesInternal0(wire.getProviderWiring(), allSources).get(packageName);
+		if (providerSource != null) {
+			packageSources.addAll(providerSource);
+		}
+	}
 
-			// get substituted packages
-			Set<String> declaredPackageNames = new HashSet<>();
-			for (BundleCapability declaredPackage : providerWiring.getRevision().getDeclaredCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
+	private void getRequiredBundlePackages(BundleWire requiredWire, Set<String> importedPackageNames, Map<String, Set<PackageSource>> packages, Map<BundleWiring, Map<String, Set<PackageSource>>> allSources) {
+		BundleWiring providerWiring = requiredWire.getProviderWiring();
+		for (BundleCapability packageCapability : providerWiring.getCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
+			String packageName = (String) packageCapability.getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE);
+			// if imported then packages from required bundles do not get added
+			if (!importedPackageNames.contains(packageName)) {
+				addAggregatePackageSource(packageCapability, packageName, requiredWire, packages, allSources);
+			}
+		}
+
+		// get the declared packages
+		Set<String> declaredPackageNames = new HashSet<>();
+		for (BundleCapability declaredPackage : providerWiring.getRevision().getDeclaredCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
+			declaredPackageNames.add((String) declaredPackage.getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE));
+		}
+		// and from attached fragments
+		for (BundleWire fragmentWire : providerWiring.getProvidedWires(HostNamespace.HOST_NAMESPACE)) {
+			for (BundleCapability declaredPackage : fragmentWire.getRequirer().getDeclaredCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
 				declaredPackageNames.add((String) declaredPackage.getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE));
 			}
-			// and fragments
-			for (BundleWire fragmentWire : providerWiring.getProvidedWires(HostNamespace.HOST_NAMESPACE)) {
-				for (BundleCapability declaredPackage : fragmentWire.getRequirer().getDeclaredCapabilities(PackageNamespace.PACKAGE_NAMESPACE)) {
-					declaredPackageNames.add((String) declaredPackage.getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE));
-				}
-			}
+		}
 
-			for (BundleWire packageWire : providerWiring.getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE)) {
-				String packageName = (String) packageWire.getCapability().getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE);
-				if (declaredPackageNames.contains(packageName)) {
-					List<PackageSource> packageSources = packages.get(packageName);
-					if (packageSources == null) {
-						packageSources = new ArrayList<>();
-						packages.put(packageName, packageSources);
-					}
-					packageSources.add(new PackageSource(packageWire.getCapability(), packageWire));
-				}
+		for (BundleWire packageWire : providerWiring.getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE)) {
+			String packageName = (String) packageWire.getCapability().getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE);
+			if (!importedPackageNames.contains(packageName) && declaredPackageNames.contains(packageName)) {
+				// if the package is a declared capability AND the wiring imports the package
+				// then it is substituted
+				addAggregatePackageSource(packageWire.getCapability(), packageName, packageWire, packages, allSources);
 			}
+		}
 
-			// now get packages from re-exported requires of the required bundle
-			for (BundleWire providerBundleWire : providerWiring.getRequiredWires(BundleNamespace.BUNDLE_NAMESPACE)) {
-				String visibilityDirective = providerBundleWire.getRequirement().getDirectives().get(BundleNamespace.REQUIREMENT_VISIBILITY_DIRECTIVE);
-				if (BundleNamespace.VISIBILITY_REEXPORT.equals(visibilityDirective)) {
-					getRequiredBundlePackages(providerBundleWire, importedPackageNames, packages);
-				}
+		// now get packages from re-exported requires of the required bundle
+		for (BundleWire providerBundleWire : providerWiring.getRequiredWires(BundleNamespace.BUNDLE_NAMESPACE)) {
+			String visibilityDirective = providerBundleWire.getRequirement().getDirectives().get(BundleNamespace.REQUIREMENT_VISIBILITY_DIRECTIVE);
+			if (BundleNamespace.VISIBILITY_REEXPORT.equals(visibilityDirective)) {
+				getRequiredBundlePackages(providerBundleWire, importedPackageNames, packages, allSources);
 			}
+		}
 	}
 
 	/**
@@ -2013,16 +2017,17 @@ public class EquinoxCommandProvider implements SynchronousBundleListener {
 
 	}
 
-	private boolean confirmStop() {
-		System.out.print(ConsoleMsg.CONSOLE_STOP_MESSAGE);
-		System.out.flush();
+	private boolean confirmStop(CommandSession session) {
+		PrintStream consoleStream = session.getConsole();
+		consoleStream.print(ConsoleMsg.CONSOLE_STOP_MESSAGE);
+		consoleStream.flush();
 
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 		String reply = null;
 		try {
 			reply = reader.readLine();
 		} catch (IOException e) {
-			System.out.println(ConsoleMsg.CONSOLE_STOP_ERROR_READ_CONFIRMATION);
+			consoleStream.println(ConsoleMsg.CONSOLE_STOP_ERROR_READ_CONFIRMATION);
 		}
 
 		if (reply != null) {

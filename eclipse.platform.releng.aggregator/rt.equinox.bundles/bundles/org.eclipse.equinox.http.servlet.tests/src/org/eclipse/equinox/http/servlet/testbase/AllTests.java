@@ -19,6 +19,7 @@ import org.eclipse.equinox.http.servlet.tests.Bug562440_Test;
 import org.eclipse.equinox.http.servlet.tests.Bug562843_2_Test;
 import org.eclipse.equinox.http.servlet.tests.Bug562843_Test;
 import org.eclipse.equinox.http.servlet.tests.Bug564747_Test;
+import org.eclipse.equinox.http.servlet.tests.Bug569406_Test;
 import org.eclipse.equinox.http.servlet.tests.ContextHelperCustomizerTests;
 import org.eclipse.equinox.http.servlet.tests.DispatchingTest;
 import org.eclipse.equinox.http.servlet.tests.PreprocessorTestCase;
@@ -26,6 +27,7 @@ import org.eclipse.equinox.http.servlet.tests.ServletTest;
 import org.eclipse.equinox.http.servlet.tests.TestHttpServiceAndErrorPage;
 import org.eclipse.equinox.http.servlet.tests.TestHttpServiceAndNamedServlet;
 import org.eclipse.equinox.http.servlet.tests.TestUpload;
+import org.eclipse.equinox.http.servlet.tests.TestUploadWithParameter;
 import org.eclipse.equinox.http.servlet.tests.Test_140_11_3;
 import org.eclipse.equinox.http.servlet.tests.Test_140_2_17to22;
 import org.eclipse.equinox.http.servlet.tests.Test_140_2_26to27;
@@ -99,12 +101,14 @@ import org.junit.runners.Suite.SuiteClasses;
 	TestHttpServiceAndErrorPage.class,
 	TestHttpServiceAndNamedServlet.class,
 	TestUpload.class,
+	TestUploadWithParameter.class,
 	ContextHelperCustomizerTests.class,
 	Bug500783_Test.class,
 	Bug562843_Test.class,
 	Bug562843_2_Test.class,
 	Bug564747_Test.class,
-	Bug562440_Test.class
+	Bug562440_Test.class,
+	Bug569406_Test.class
 })
 public class AllTests {
 	// see @SuiteClasses

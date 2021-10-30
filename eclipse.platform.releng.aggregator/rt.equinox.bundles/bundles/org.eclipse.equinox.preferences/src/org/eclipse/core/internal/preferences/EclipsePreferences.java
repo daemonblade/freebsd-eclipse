@@ -1154,7 +1154,7 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 		if (path == null)
 			return EMPTY_STRING;
 		if (path.length() > 0 && path.charAt(0) == IPath.SEPARATOR)
-			result = path.length() == 0 ? EMPTY_STRING : path.substring(1);
+			result = path.substring(1);
 		return result;
 	}
 
@@ -1217,7 +1217,7 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 	}
 
 	public String toDeepDebugString() {
-		final StringBuffer buffer = new StringBuffer();
+		final StringBuilder buffer = new StringBuilder();
 		IPreferenceNodeVisitor visitor = (IEclipsePreferences node) -> {
 			buffer.append(node);
 			buffer.append('\n');

@@ -611,9 +611,6 @@ public class ExtensionRegistry implements IExtensionRegistry, IDynamicExtensionR
 		int[] existingExtensions = extPoint.getRawChildren();
 		int[] newExtensions = RegistryObjectManager.EMPTY_INT_ARRAY;
 		if (existingExtensions.length > 1) {
-			if (existingExtensions.length == 1)
-				newExtensions = RegistryObjectManager.EMPTY_INT_ARRAY;
-
 			newExtensions = new int[existingExtensions.length - 1];
 			for (int i = 0, j = 0; i < existingExtensions.length; i++)
 				if (existingExtensions[i] != extension.getObjectId())
@@ -994,7 +991,7 @@ public class ExtensionRegistry implements IExtensionRegistry, IDynamicExtensionR
 	}
 
 	// The pair of values we store in the event queue
-	private class QueueElement {
+	private static class QueueElement {
 		Object[] listenerInfos;
 		Map<String, ?> scheduledDeltas;
 
@@ -1140,6 +1137,7 @@ public class ExtensionRegistry implements IExtensionRegistry, IDynamicExtensionR
 		if (identifier == null) {
 			String message = NLS.bind(RegistryMessages.create_failedExtensionPoint, label);
 			log(new Status(IStatus.ERROR, RegistryMessages.OWNER_NAME, 0, message, null));
+			throw new NullPointerException(message);
 		}
 		if (schemaReference == null)
 			schemaReference = ""; //$NON-NLS-1$

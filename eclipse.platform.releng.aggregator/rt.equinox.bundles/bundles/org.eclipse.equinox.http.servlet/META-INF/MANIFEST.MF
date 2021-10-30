@@ -3,10 +3,10 @@ Bundle-ManifestVersion: 2
 Bundle-Name: %bundleName
 Bundle-Vendor: %providerName
 Bundle-SymbolicName: org.eclipse.equinox.http.servlet
-Bundle-Version: 1.6.600.qualifier
+Bundle-Version: 1.7.100.qualifier
 Bundle-Activator: org.eclipse.equinox.http.servlet.internal.Activator
 Bundle-Localization: plugin
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: org.eclipse.equinox.http.servlet;version="1.2.0",
  org.eclipse.equinox.http.servlet.context;version="1.0.0";x-internal:=true,
  org.eclipse.equinox.http.servlet.session;version="1.0.0";x-internal:=true,
@@ -29,8 +29,6 @@ Import-Package: org.apache.commons.fileupload;version="[1.2.2, 2.0.0)";resolutio
  org.osgi.service.http.whiteboard;version="[1.1,1.2)",
  org.osgi.service.log;version="[1.4,2)",
  org.osgi.util.tracker;version="[1.5,2.0)"
-Comment-Header: Both Eclipse-LazyStart and Bundle-ActivationPolicy are specified for compatibility with 3.2
-Eclipse-LazyStart: true
 Bundle-ActivationPolicy: lazy
 Provide-Capability: osgi.implementation;
   osgi.implementation="osgi.http";

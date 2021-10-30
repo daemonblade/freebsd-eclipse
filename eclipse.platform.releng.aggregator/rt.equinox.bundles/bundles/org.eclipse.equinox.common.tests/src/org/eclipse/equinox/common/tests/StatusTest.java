@@ -14,6 +14,8 @@
  *******************************************************************************/
 package org.eclipse.equinox.common.tests;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -130,7 +132,7 @@ public class StatusTest extends CoreTest {
 		assertEquals("org.eclipse.equinox.common.tests", new Status(IStatus.WARNING, StatusTest.class, "").getPlugin());
 		assertEquals("org.eclipse.equinox.common", new Status(IStatus.ERROR, IStatus.class, "", null).getPlugin());
 		assertEquals("java.lang.String", new Status(IStatus.WARNING, String.class, 0, "", null).getPlugin());
-		assertEquals("org.eclipse.core.runtime.Status", new Status(IStatus.WARNING, (Class<?>) null, "").getPlugin());
+		assertEquals("unknown", new Status(IStatus.WARNING, (Class<?>) null, "").getPlugin());
 		assertEquals(TestClass.class.getName(),
 				new Status(IStatus.WARNING, installNoBSNBundle().loadClass(TestClass.class.getName()), "").getPlugin());
 	}
@@ -139,7 +141,7 @@ public class StatusTest extends CoreTest {
 		assertEquals("org.eclipse.equinox.common", new MultiStatus(IStatus.class, 0, "").getPlugin());
 		assertEquals("org.eclipse.equinox.common.tests", new MultiStatus(StatusTest.class, 0, "").getPlugin());
 		assertEquals("java.lang.String", new MultiStatus(String.class, 0, new Status[0], "", null).getPlugin());
-		assertEquals("org.eclipse.core.runtime.MultiStatus", new MultiStatus((Class<?>) null, 0, "").getPlugin());
+		assertEquals("unknown", new MultiStatus((Class<?>) null, 0, "").getPlugin());
 		assertEquals(TestClass.class.getName(),
 				new MultiStatus(installNoBSNBundle().loadClass(TestClass.class.getName()), 0, "").getPlugin());
 	}
@@ -232,6 +234,57 @@ public class StatusTest extends CoreTest {
 		multistatus2.merge(multistatus2.getChildren()[2]);
 		assertTrue("3.1", multistatus2.getChildren().length == 9);
 
+	}
+
+	public void testInfo() {
+		IStatus info = Status.info("message");
+		assertEquals(IStatus.INFO, info.getSeverity());
+		assertEquals("message", info.getMessage());
+		assertEquals(IStatus.OK, info.getCode());
+		assertEquals("org.eclipse.equinox.common.tests", info.getPlugin());
+		assertNull(info.getException());
+		assertArrayEquals(new IStatus[] {}, info.getChildren());
+	}
+
+	public void testWarning() {
+		IStatus warning = Status.warning("message");
+		assertEquals(IStatus.WARNING, warning.getSeverity());
+		assertEquals("message", warning.getMessage());
+		assertEquals(IStatus.OK, warning.getCode());
+		assertEquals("org.eclipse.equinox.common.tests", warning.getPlugin());
+		assertNull(warning.getException());
+		assertArrayEquals(new IStatus[] {}, warning.getChildren());
+	}
+
+	public void testWarningWithException() {
+
+		Status warningWithException = Status.warning("message", new Exception("exception"));
+		assertEquals(IStatus.WARNING, warningWithException.getSeverity());
+		assertEquals("message", warningWithException.getMessage());
+		assertEquals(IStatus.OK, warningWithException.getCode());
+		assertEquals("org.eclipse.equinox.common.tests", warningWithException.getPlugin());
+		assertEquals("exception", warningWithException.getException().getMessage());
+		assertArrayEquals(new IStatus[] {}, warningWithException.getChildren());
+	}
+
+	public void testError() {
+		IStatus error = Status.error("message");
+		assertEquals(IStatus.ERROR, error.getSeverity());
+		assertEquals("message", error.getMessage());
+		assertEquals(IStatus.OK, error.getCode());
+		assertEquals("org.eclipse.equinox.common.tests", error.getPlugin());
+		assertNull(error.getException());
+		assertArrayEquals(new IStatus[] {}, error.getChildren());
+	}
+
+	public void testErrorWithException() {
+		IStatus errorWithException = Status.error("message", new Exception("exception"));
+		assertEquals(IStatus.ERROR, errorWithException.getSeverity());
+		assertEquals("message", errorWithException.getMessage());
+		assertEquals(IStatus.OK, errorWithException.getCode());
+		assertEquals("org.eclipse.equinox.common.tests", errorWithException.getPlugin());
+		assertEquals("exception", errorWithException.getException().getMessage());
+		assertArrayEquals(new IStatus[] {}, errorWithException.getChildren());
 	}
 
 }

@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.equinox.core.feature"
       label="%featureName"
-      version="1.12.0.qualifier"
+      version="1.13.300.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -38,13 +38,6 @@
 
    <plugin
          id="org.eclipse.equinox.common"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.equinox.ds"
          download-size="0"
          install-size="0"
          version="0.0.0"

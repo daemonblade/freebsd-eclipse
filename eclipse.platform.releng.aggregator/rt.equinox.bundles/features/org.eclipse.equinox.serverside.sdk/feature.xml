@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.equinox.serverside.sdk"
       label="%featureName"
-      version="3.20.0.qualifier"
+      version="3.23.100.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -32,7 +32,7 @@
          version="0.0.0"/>
 
    <plugin
-         id="javax.servlet"
+         id="jakarta.servlet-api"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -53,7 +53,7 @@
          unpack="false"/>
 
    <plugin
-         id="javax.servlet.source"
+         id="jakarta.servlet-api.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -158,20 +158,6 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.jetty.continuation"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.jetty.continuation.source"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.jetty.http"
          download-size="0"
          install-size="0"
@@ -250,6 +236,20 @@
 
    <plugin
          id="org.eclipse.jetty.util.source"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.jetty.util.ajax"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.jetty.util.ajax.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
