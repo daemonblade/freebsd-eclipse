@@ -1,7 +1,7 @@
 diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/testManifest.xml eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/testManifest.xml
 --- eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/testManifest.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/testManifest.xml	0000-00-00 00:00:00.000000000 +0000
-@@ -8,16 +8,16 @@
+@@ -8,16 +8,20 @@
          fileName="eclipse-SDK-${BUILD_ID}-win32-x86_64.zip"></platform>
        <platform
          id="SLG264"
@@ -16,6 +16,10 @@ diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/tes
 +        name="FreeBSD (64 bit version for Power PC)"
 +        fileName="eclipse-SDK-${BUILD_ID}-freebsd-gtk-powerpc64.tar.gz"></platform>
        <platform
++        id="SLG2PPC64BE"
++        name="FreeBSD (64 bit version for Power PC LE)"
++        fileName="eclipse-SDK-${BUILD_ID}-freebsd-gtk-powerpc64le.tar.gz"></platform>
++      <platform
          id="SLG2AARCH64"
 -        name="Linux (64 bit version for AArch64)"
 -        fileName="eclipse-SDK-${BUILD_ID}-linux-gtk-aarch64.tar.gz"></platform>
@@ -24,7 +28,7 @@ diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/tes
        <platform
          id="SMCC64"
          name="Mac OSX (64 bit version)"
-@@ -74,16 +74,16 @@
+@@ -71,16 +75,16 @@
          fileName="eclipse-platform-${BUILD_ID}-win32-x86_64.zip"></platform>
        <platform
          id="PLG264"
@@ -47,7 +51,7 @@ diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse/publishingFiles/tes
        <platform
          id="PMCC64"
          name="Mac OSX (64 bit version)"
-@@ -158,16 +158,16 @@
+@@ -113,16 +117,16 @@
          fileName="swt-${BUILD_ID}-win32-win32-x86_64.zip"></platform>
        <platform
          id="SWTLG64"
@@ -85,10 +89,82 @@ diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse-junit-tests/pom.xml
              </environment>
              <environment>
                <os>win32</os>
+diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/platform.product eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/platform.product
+--- eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/platform.product	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/platform.product	0000-00-00 00:00:00.000000000 +0000
+@@ -18,7 +18,7 @@
+    <splash
+       location="org.eclipse.platform" />
+    <launcher name="eclipse">
+-      <linux icon="icons/icon.xpm"/>
++      <freebsd icon="icons/icon.xpm"/>
+       <macosx icon="icons/Eclipse.icns"/>
+       <win useIco="false">
+          <bmp/>
+diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/platform.sdk.product eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/platform.sdk.product
+--- eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/platform.sdk.product	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/platform.sdk.product	0000-00-00 00:00:00.000000000 +0000
+@@ -18,7 +18,7 @@
+    <splash
+       location="org.eclipse.platform" />
+    <launcher name="eclipse">
+-      <linux icon="icons/icon.xpm"/>
++      <freebsd icon="icons/icon.xpm"/>
+       <macosx icon="icons/Eclipse.icns"/>
+       <win useIco="false">
+          <bmp/>
+diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/pom.xml eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/pom.xml
+--- eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/pom.xml	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/pom.xml	0000-00-00 00:00:00.000000000 +0000
+@@ -402,7 +402,7 @@
+             <configuration>
+               <formats>
+                 <win32>zip</win32>
+-                <linux>tar.gz</linux>
++                <freebsd>tar.gz</freebsd>
+                 <macosx>tar.gz</macosx>
+               </formats>
+             </configuration>
+diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/rcp.product eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/rcp.product
+--- eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/rcp.product	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/rcp.product	0000-00-00 00:00:00.000000000 +0000
+@@ -16,7 +16,7 @@
+    </launcherArgs>
+ 
+    <launcher name="eclipse">
+-      <linux icon="icons/icon.xpm"/>
++      <freebsd icon="icons/icon.xpm"/>
+       <macosx icon="icons/Eclipse.icns"/>
+       <win useIco="false">
+          <bmp/>
+diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/rcp.sdk.product eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/rcp.sdk.product
+--- eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/rcp.sdk.product	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/rcp.sdk.product	0000-00-00 00:00:00.000000000 +0000
+@@ -18,7 +18,7 @@
+    <windowImages/>
+ 
+    <launcher name="eclipse">
+-      <linux icon="icons/icon.xpm"/>
++      <freebsd icon="icons/icon.xpm"/>
+       <macosx icon="icons/Eclipse.icns"/>
+       <win useIco="false">
+          <bmp/>
+diff -ru eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/sdk.product eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/sdk.product
+--- eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/sdk.product	0000-00-00 00:00:00.000000000 +0000
++++ eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/sdk.product	0000-00-00 00:00:00.000000000 +0000
+@@ -18,7 +18,7 @@
+    <splash
+       location="org.eclipse.platform" />
+    <launcher name="eclipse">
+-      <linux icon="icons/icon.xpm"/>
++      <freebsd icon="icons/icon.xpm"/>
+       <macosx icon="icons/Eclipse.icns"/>
+       <win useIco="false">
+          <bmp/>
 diff -ru eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml
 --- eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equinox-launchers/build.xml	0000-00-00 00:00:00.000000000 +0000
-@@ -14,9 +14,9 @@
+@@ -14,9 +14,10 @@
    <target name="equinoxlaunchers">
      <property name="archiveRoot" value="launchers" />
      <buildRepos os="win32" ws="win32" arch="x86_64" archiveName="${archiveRoot}-win32.win32.x86_64.${buildId}.zip" />
@@ -97,10 +173,11 @@ diff -ru eclipse.platform.releng.tychoeclipsebuilder/equinox/buildConfigs/equino
 -  	<buildRepos os="linux" ws="gtk" arch="aarch64" archiveName="${archiveRoot}-linux.gtk.aarch64.${buildId}.tar.gz" />
 +    <buildRepos os="freebsd" ws="gtk" arch="amd64" archiveName="${archiveRoot}-freebsd.gtk.amd64.${buildId}.tar.gz" />
 +    <buildRepos os="freebsd" ws="gtk" arch="powerpc64" archiveName="${archiveRoot}-freebsd.gtk.powerpc64.${buildId}.tar.gz" />
++    <buildRepos os="freebsd" ws="gtk" arch="powerpc64le" archiveName="${archiveRoot}-freebsd.gtk.powerpc64le.${buildId}.tar.gz" />
 +  	<buildRepos os="freebsd" ws="gtk" arch="aarch64" archiveName="${archiveRoot}-freebsd.gtk.aarch64.${buildId}.tar.gz" />
      <buildRepos os="macosx" ws="cocoa" arch="x86_64" archiveName="${archiveRoot}-macosx.cocoa.x86_64.${buildId}.tar.gz" />
+     <buildRepos os="macosx" ws="cocoa" arch="aarch64" archiveName="${archiveRoot}-macosx.cocoa.aarch64.${buildId}.tar.gz" />
    </target>
- 
 diff -ru eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/EclipseRTOSGiStarterKit.product eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/EclipseRTOSGiStarterKit.product
 --- eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/EclipseRTOSGiStarterKit.product	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/EclipseRTOSGiStarterKit.product	0000-00-00 00:00:00.000000000 +0000
@@ -128,7 +205,7 @@ diff -ru eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/
              </environment>
              <environment>
                <os>win32</os>
-@@ -92,7 +92,7 @@
+@@ -97,7 +97,7 @@
              <configuration>
                <formats>
                  <win32>zip</win32>
@@ -137,71 +214,23 @@ diff -ru eclipse.platform.releng.tychoeclipsebuilder/equinox.starterkit.product/
                  <macosx>tar.gz</macosx>
                </formats>
              </configuration>
-diff -ru eclipse.platform.releng.tychoeclipsebuilder/platform/platform.product eclipse.platform.releng.tychoeclipsebuilder/platform/platform.product
---- eclipse.platform.releng.tychoeclipsebuilder/platform/platform.product	0000-00-00 00:00:00.000000000 +0000
-+++ eclipse.platform.releng.tychoeclipsebuilder/platform/platform.product	0000-00-00 00:00:00.000000000 +0000
-@@ -18,7 +18,7 @@
-    <splash
-       location="org.eclipse.platform" />
-    <launcher name="eclipse">
--      <linux icon="icons/icon.xpm"/>
-+      <freebsd icon="icons/icon.xpm"/>
-       <macosx icon="icons/Eclipse.icns"/>
-       <win useIco="false">
-          <bmp/>
-diff -ru eclipse.platform.releng.tychoeclipsebuilder/platform/pom.xml eclipse.platform.releng.tychoeclipsebuilder/platform/pom.xml
---- eclipse.platform.releng.tychoeclipsebuilder/platform/pom.xml	0000-00-00 00:00:00.000000000 +0000
-+++ eclipse.platform.releng.tychoeclipsebuilder/platform/pom.xml	0000-00-00 00:00:00.000000000 +0000
-@@ -79,7 +79,7 @@
-             <configuration>
-               <formats>
-                 <win32>zip</win32>
--                <linux>tar.gz</linux>
-+                <freebsd>tar.gz</freebsd>
-                 <macosx>tar.gz</macosx>
-               </formats>
-             </configuration>
-diff -ru eclipse.platform.releng.tychoeclipsebuilder/platform.sdk/platform.sdk.product eclipse.platform.releng.tychoeclipsebuilder/platform.sdk/platform.sdk.product
---- eclipse.platform.releng.tychoeclipsebuilder/platform.sdk/platform.sdk.product	0000-00-00 00:00:00.000000000 +0000
-+++ eclipse.platform.releng.tychoeclipsebuilder/platform.sdk/platform.sdk.product	0000-00-00 00:00:00.000000000 +0000
-@@ -18,7 +18,7 @@
-    <splash
-       location="org.eclipse.platform" />
-    <launcher name="eclipse">
--      <linux icon="icons/icon.xpm"/>
-+      <freebsd icon="icons/icon.xpm"/>
-       <macosx icon="icons/Eclipse.icns"/>
-       <win useIco="false">
-          <bmp/>
 diff -ru eclipse.platform.releng.tychoeclipsebuilder/pom.xml eclipse.platform.releng.tychoeclipsebuilder/pom.xml
 --- eclipse.platform.releng.tychoeclipsebuilder/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/pom.xml	0000-00-00 00:00:00.000000000 +0000
-@@ -36,7 +36,9 @@
-     <module>platform</module>
-     <module>platform.sdk</module>
-     <module>sdk</module>
-+	<!-- disabled
+@@ -31,7 +31,9 @@
+     <module>rcp.config</module>
+     <module>equinox.starterkit.product</module>
+     <module>equinox-sdk</module>
++<!-- disabled
      <module>eclipse-junit-tests</module>
      <module>eclipse.platform.repository</module>
-+	  -->
++-->
    </modules>
  </project>
-diff -ru eclipse.platform.releng.tychoeclipsebuilder/rcp/rcp.product eclipse.platform.releng.tychoeclipsebuilder/rcp/rcp.product
---- eclipse.platform.releng.tychoeclipsebuilder/rcp/rcp.product	0000-00-00 00:00:00.000000000 +0000
-+++ eclipse.platform.releng.tychoeclipsebuilder/rcp/rcp.product	0000-00-00 00:00:00.000000000 +0000
-@@ -16,7 +16,7 @@
-    </launcherArgs>
- 
-    <launcher name="eclipse">
--      <linux icon="icons/icon.xpm"/>
-+      <freebsd icon="icons/icon.xpm"/>
-       <macosx icon="icons/Eclipse.icns"/>
-       <win useIco="false">
-          <bmp/>
 diff -ru eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties
 --- eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties	0000-00-00 00:00:00.000000000 +0000
-@@ -29,14 +29,14 @@
+@@ -32,14 +32,17 @@
  #root.win32.win32.x86=file:executables/win32.win32.x86/eclipsec.exe
  #root.win32.win32.x86_64=file:executables/win32.win32.x86_64/eclipsec.exe
  
@@ -212,49 +241,16 @@ diff -ru eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties
  
 -root.linux.gtk.aarch64=rootfiles/linux.gtk.aarch64,../../rt.equinox.binaries/org.eclipse.equinox.executable/bin/gtk/linux/aarch64
 -root.linux.gtk.aarch64.permissions.755=eclipse
-+root.freebsd.gtk.aarch64=rootfiles/freebsd.gtk.aarch64,../../rt.equinox.binaries/org.eclipse.equinox.executable/bin/gtk/freebsd/aarch64
-+root.freebsd.gtk.aarch64.permissions.755=eclipse
++root.freebsd.gtk.powerpc64le=rootfiles/freebsd.gtk.powerpc64le,../../rt.equinox.binaries/org.eclipse.equinox.executable/bin/gtk/freebsd/powerpc64le
++root.freebsd.gtk.powerpc64le.permissions.755=eclipse
  
 -root.linux.gtk.x86_64=rootfiles/linux.gtk.x86_64,../../rt.equinox.binaries/org.eclipse.equinox.executable/bin/gtk/linux/x86_64
 -root.linux.gtk.x86_64.permissions.755=eclipse
++root.freebsd.gtk.aarch64=rootfiles/freebsd.gtk.aarch64,../../rt.equinox.binaries/org.eclipse.equinox.executable/bin/gtk/freebsd/aarch64
++root.freebsd.gtk.aarch64.permissions.755=eclipse
++
 +root.freebsd.gtk.amd64=rootfiles/freebsd.gtk.amd64,../../rt.equinox.binaries/org.eclipse.equinox.executable/bin/gtk/freebsd/amd64
 +root.freebsd.gtk.amd64.permissions.755=eclipse
  
  bin.includes = feature.properties
  
-diff -ru eclipse.platform.releng.tychoeclipsebuilder/rcp.sdk/rcp.sdk.product eclipse.platform.releng.tychoeclipsebuilder/rcp.sdk/rcp.sdk.product
---- eclipse.platform.releng.tychoeclipsebuilder/rcp.sdk/rcp.sdk.product	0000-00-00 00:00:00.000000000 +0000
-+++ eclipse.platform.releng.tychoeclipsebuilder/rcp.sdk/rcp.sdk.product	0000-00-00 00:00:00.000000000 +0000
-@@ -18,7 +18,7 @@
-    <windowImages/>
- 
-    <launcher name="eclipse">
--      <linux icon="icons/icon.xpm"/>
-+      <freebsd icon="icons/icon.xpm"/>
-       <macosx icon="icons/Eclipse.icns"/>
-       <win useIco="false">
-          <bmp/>
-diff -ru eclipse.platform.releng.tychoeclipsebuilder/sdk/pom.xml eclipse.platform.releng.tychoeclipsebuilder/sdk/pom.xml
---- eclipse.platform.releng.tychoeclipsebuilder/sdk/pom.xml	0000-00-00 00:00:00.000000000 +0000
-+++ eclipse.platform.releng.tychoeclipsebuilder/sdk/pom.xml	0000-00-00 00:00:00.000000000 +0000
-@@ -77,7 +77,7 @@
-             <configuration>
-               <formats>
-                 <win32>zip</win32>
--                <linux>tar.gz</linux>
-+                <freebsd>tar.gz</freebsd>
-                 <macosx>tar.gz</macosx>
-               </formats>
-             </configuration>
-diff -ru eclipse.platform.releng.tychoeclipsebuilder/sdk/sdk.product eclipse.platform.releng.tychoeclipsebuilder/sdk/sdk.product
---- eclipse.platform.releng.tychoeclipsebuilder/sdk/sdk.product	0000-00-00 00:00:00.000000000 +0000
-+++ eclipse.platform.releng.tychoeclipsebuilder/sdk/sdk.product	0000-00-00 00:00:00.000000000 +0000
-@@ -18,7 +18,7 @@
-    <splash
-       location="org.eclipse.platform" />
-    <launcher name="eclipse">
--      <linux icon="icons/icon.xpm"/>
-+      <freebsd icon="icons/icon.xpm"/>
-       <macosx icon="icons/Eclipse.icns"/>
-       <win useIco="false">
-          <bmp/>
