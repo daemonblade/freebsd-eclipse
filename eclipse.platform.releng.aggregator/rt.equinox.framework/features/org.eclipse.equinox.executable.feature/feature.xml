@@ -61,7 +61,17 @@
          install-size="0"
          version="0.0.0"
          fragment="true"/>
-         
+
+   <plugin
+         id="org.eclipse.equinox.launcher.gtk.freebsd.powerpc64le"
+         os="freebsd"
+         ws="gtk"
+         arch="powerpc64le"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"/>
+
    <plugin
          id="org.eclipse.equinox.launcher.gtk.freebsd.aarch64"
          os="freebsd"
