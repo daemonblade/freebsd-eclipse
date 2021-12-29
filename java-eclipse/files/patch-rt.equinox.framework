@@ -208,7 +208,7 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/bu
 diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/feature.xml rt.equinox.framework/features/org.eclipse.equinox.executable.feature/feature.xml
 --- rt.equinox.framework/features/org.eclipse.equinox.executable.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.framework/features/org.eclipse.equinox.executable.feature/feature.xml	0000-00-00 00:00:00.000000000 +0000
-@@ -53,18 +53,18 @@
+@@ -53,19 +53,29 @@
           fragment="true"/>
  
     <plugin
@@ -223,16 +223,28 @@ diff -ru rt.equinox.framework/features/org.eclipse.equinox.executable.feature/fe
           install-size="0"
           version="0.0.0"
           fragment="true"/>
-          
+-         
++
     <plugin
 -         id="org.eclipse.equinox.launcher.gtk.linux.aarch64"
 -         os="linux"
-+         id="org.eclipse.equinox.launcher.gtk.freebsd.aarch64"
++         id="org.eclipse.equinox.launcher.gtk.freebsd.powerpc64le"
 +         os="freebsd"
           ws="gtk"
++         arch="powerpc64le"
++         download-size="0"
++         install-size="0"
++         version="0.0.0"
++         fragment="true"/>
++
++   <plugin
++         id="org.eclipse.equinox.launcher.gtk.freebsd.aarch64"
++         os="freebsd"
++         ws="gtk"
           arch="aarch64"
           download-size="0"
-@@ -73,10 +73,10 @@
+          install-size="0"
+@@ -73,10 +83,10 @@
           fragment="true"/>
  
     <plugin

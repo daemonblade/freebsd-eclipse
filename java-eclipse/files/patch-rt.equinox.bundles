@@ -40,6 +40,14 @@ diff -ru rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/M
 +Eclipse-PlatformFilter: (& (osgi.os=freebsd) (osgi.arch=amd64))
 +Automatic-Module-Name: org.eclipse.equinox.security.freebsd.amd64
  Eclipse-BundleShape: dir
+diff -ru rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/META-INF/p2.inf rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/META-INF/p2.inf
+--- rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/META-INF/p2.inf	0000-00-00 00:00:00.000000000 +0000
++++ rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/META-INF/p2.inf	0000-00-00 00:00:00.000000000 +0000
+@@ -1,2 +1,2 @@
+ requires.0.namespace=org.eclipse.equinox.p2.iu
+-requires.0.name=org.eclipse.equinox.security.linux
+\ No newline at end of file
++requires.0.name=org.eclipse.equinox.security.freebsd
 diff -ru rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/pom.xml rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/pom.xml
 --- rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ rt.equinox.bundles/bundles/org.eclipse.equinox.security.freebsd.amd64/pom.xml	0000-00-00 00:00:00.000000000 +0000
