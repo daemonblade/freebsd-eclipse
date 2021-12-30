@@ -282,7 +282,7 @@ diff -ru eclipse.platform.resources/bundles/org.eclipse.core.filesystem.freebsd.
 diff -ru eclipse.platform.resources/pom.xml eclipse.platform.resources/pom.xml
 --- eclipse.platform.resources/pom.xml	0000-00-00 00:00:00.000000000 +0000
 +++ eclipse.platform.resources/pom.xml	0000-00-00 00:00:00.000000000 +0000
-@@ -52,9 +52,9 @@
+@@ -52,9 +52,10 @@
  
    <modules>
      <module>bundles/org.eclipse.core.filesystem</module>
@@ -291,6 +291,7 @@ diff -ru eclipse.platform.resources/pom.xml eclipse.platform.resources/pom.xml
 -    <module>bundles/org.eclipse.core.filesystem.linux.x86_64</module>
 +    <module>bundles/org.eclipse.core.filesystem.freebsd.aarch64</module>
 +    <module>bundles/org.eclipse.core.filesystem.freebsd.powerpc64</module>
++    <module>bundles/org.eclipse.core.filesystem.freebsd.powerpc64le</module>
 +    <module>bundles/org.eclipse.core.filesystem.freebsd.amd64</module>
      <module>bundles/org.eclipse.core.filesystem.macosx</module>
      <module>bundles/org.eclipse.core.filesystem.win32.x86_64</module>
