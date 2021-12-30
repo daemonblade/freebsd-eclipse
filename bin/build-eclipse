@@ -26,6 +26,7 @@ SUBDIRS="
 	org.eclipse.equinox.launcher.gtk.freebsd.aarch64
 	org.eclipse.equinox.launcher.gtk.freebsd.amd64
 	org.eclipse.equinox.launcher.gtk.freebsd.powerpc64
+	org.eclipse.equinox.launcher.gtk.freebsd.powerpc64le
 	org.eclipse.equinox.launcher.win32.win32.x86_64"
 for D in ${SUBDIRS}
 do
@@ -37,6 +38,7 @@ EXECS="
 	gtk/freebsd/aarch64/eclipse
 	gtk/freebsd/amd64/eclipse
 	gtk/freebsd/powerpc64/eclipse
+	gtk/freebsd/powerpc64le/eclipse
 	cocoa/macosx/x86_64/Eclipse.app/Contents/MacOS/eclipse
 	win32/win32/x86_64/eclipse.exe
 	win32/win32/x86_64/eclipsec.exe"
