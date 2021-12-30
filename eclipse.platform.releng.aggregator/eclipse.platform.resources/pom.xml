@@ -54,6 +54,7 @@
     <module>bundles/org.eclipse.core.filesystem</module>
     <module>bundles/org.eclipse.core.filesystem.freebsd.aarch64</module>
     <module>bundles/org.eclipse.core.filesystem.freebsd.powerpc64</module>
+    <module>bundles/org.eclipse.core.filesystem.freebsd.powerpc64le</module>
     <module>bundles/org.eclipse.core.filesystem.freebsd.amd64</module>
     <module>bundles/org.eclipse.core.filesystem.macosx</module>
     <module>bundles/org.eclipse.core.filesystem.win32.x86_64</module>
