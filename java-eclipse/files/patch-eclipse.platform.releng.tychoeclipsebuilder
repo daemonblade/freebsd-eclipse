@@ -223,8 +223,8 @@ diff -ru eclipse.platform.releng.tychoeclipsebuilder/pom.xml eclipse.platform.re
      <module>equinox-sdk</module>
 +<!-- disabled
      <module>eclipse-junit-tests</module>
-     <module>eclipse.platform.repository</module>
 +-->
+     <module>eclipse.platform.repository</module>
    </modules>
  </project>
 diff -ru eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties eclipse.platform.releng.tychoeclipsebuilder/rcp.config/build.properties
