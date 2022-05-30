@@ -45,8 +45,7 @@ DISTFILES+=	${M:C/.*\///}-${ECLIPSE_SUFX}:${M:C/[\.\/]//g}
 CEF_FILE=	cef_binary_3.3071.1649.g98725e6_linux64_minimal
 MASTER_SITES+=	http://opensource.spotify.com/cefbuilds/:spotify \
 		https://github.com/${GH_ACCOUNT}/${GH_PROJECT}/releases/download/${PORTVERSION}/:github
-DISTFILES+=	${CEF_FILE}.tar.bz2:spotify \
-		cargo-repo.${ECLIPSE_TAG}.tbz:github
+DISTFILES+=	${CEF_FILE}.tar.bz2:spotify
 
 DIST_SUBDIR=	${PORTNAME}
 
@@ -59,7 +58,6 @@ ONLY_FOR_ARCHS=	aarch64 amd64 powerpc64 powerpc64le
 
 BUILD_DEPENDS=	git:devel/git-lite \
 		${LOCALBASE}/share/java/maven/bin/mvn:devel/maven \
-		rustc:lang/rust \
 		zip:archivers/zip
 LIB_DEPENDS=	libsecret-1.so:security/libsecret \
 		libwebkit2gtk-4.0.so:www/webkit2-gtk3
