@@ -2,12 +2,12 @@
 # $FreeBSD$
 
 PORTNAME=	eclipse
-PORTVERSION=	4.18
+PORTVERSION=	4.21
 CATEGORIES=	java devel
 
 # Update to eclipse.platform.releng.aggregator.git git-tag on git.eclipse.org
-ECLIPSE_TAG=	R4_18
-ECLIPSE_TSTAMP=	20201217-0940
+ECLIPSE_TAG=	R4_21
+ECLIPSE_TSTAMP=	20210915-1206
 
 ECLIPSE_SUFX=	${ECLIPSE_TAG}.tar.xz
 ECLIPSE_MODULES=jdt/eclipse.jdt \
@@ -43,7 +43,7 @@ DISTFILES+=	${M:C/.*\///}-${ECLIPSE_SUFX}:${M:C/[\.\/]//g}
 .endfor
 
 CEF_FILE=	cef_binary_3.3071.1649.g98725e6_linux64_minimal
-MASTER_SITES+=	http://opensource.spotify.com/cefbuilds/:spotify \
+MASTER_SITES+=	https://cef-builds.spotifycdn.com/:spotify \
 		https://github.com/${GH_ACCOUNT}/${GH_PROJECT}/releases/download/${PORTVERSION}/:github
 DISTFILES+=	${CEF_FILE}.tar.bz2:spotify
 
