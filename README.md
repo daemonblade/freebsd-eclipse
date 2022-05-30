@@ -75,4 +75,3 @@ The following modules have been disabled as they involve maven repository
 updates or are uncompilable tests.
 * tests/org.eclipse.swt.tests.gtk
 * eclipse-junit-tests
-* eclipse.platform.repository

@@ -76,7 +76,7 @@ export CARGO_HOME=$(realpath ${CARGO_REPO})
 # Link result back to top
 #
 TGZ="org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz"
-RESULT="${TOP_MODULE}/eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/${TGZ}"
+RESULT="${TOP_MODULE}/eclipse.platform.releng.aggregator/eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/target/products/${TGZ}"
 rm -f ${TGZ}
 if [ -e ${RESULT} ]
 then
