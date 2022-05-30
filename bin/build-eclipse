@@ -57,10 +57,6 @@ MAVEN_REPO="maven-repo.${ECLIPSE_TAG}"
 mkdir -p ${MAVEN_REPO}
 REPO_PATH=$(realpath ${MAVEN_REPO})
 
-CARGO_REPO="cargo-repo.${ECLIPSE_TAG}"
-mkdir -p ${CARGO_REPO}
-export CARGO_HOME=$(realpath ${CARGO_REPO})
-
 (
 	cd ${TOP_MODULE}
 	mvn $* \
@@ -76,9 +72,11 @@ export CARGO_HOME=$(realpath ${CARGO_REPO})
 # Link result back to top
 #
 TGZ="org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz"
-RESULT="${TOP_MODULE}/eclipse.platform.releng.aggregator/eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/target/products/${TGZ}"
+RESULT="${TOP_MODULE}/eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/target/products/${TGZ}"
 rm -f ${TGZ}
 if [ -e ${RESULT} ]
 then
 	ln ${RESULT} .
+else
+	echo "ERROR: ${RESULT} not found"
 fi

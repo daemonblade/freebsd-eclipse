@@ -81,14 +81,14 @@ DESKTOP_ENTRIES="Eclipse" \
 
 SUB_FILES=	${PORTNAME}
 
-MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME} CARGO_HOME=${WRKDIR}/cargo-repo.${ECLIPSE_TAG}
+MAVEN_ENV=	MAVEN_OPTS=-Xmx1024m CC=${CC} JAVA_HOME=${JAVA_HOME} HOME=${WRKDIR}/githome
 MAVEN_ECLIPSE=	-Dmaven.repo.local=${WRKDIR}/${GH_PROJECT}-${PORTVERSION} \
 		-Dlocal.cefsource=${WRKDIR}/${CEF_FILE} \
 		-Dlocal.patchfiles=${FILESDIR} \
 		-Dnative=gtk.freebsd.${ARCH} \
 		-DforceContextQualifier=v${ECLIPSE_TSTAMP}
 
-ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/sdk/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
+ECLIPSE_RESULT=	eclipse.platform.releng.tychoeclipsebuilder/eclipse.platform.repository/target/products/org.eclipse.sdk.ide-freebsd.gtk.${ARCH}.tar.gz
 
 # Let's abuse this to get to the right place.
 WRKSRC_SUBDIR=	../eclipse.platform.releng.aggregator-${ECLIPSE_TAG}
