@@ -1,34 +1,34 @@
 #
 # Configuration
 #
-ECLIPSE_TAG="R4_21"
+ECLIPSE_TAG="S4_24_0_RC2a"
 
-ECLIPSE_TOP="platform/eclipse.platform.releng.aggregator"
+ECLIPSE_TOP="eclipse-platform/eclipse.platform.releng.aggregator"
 ECLIPSE_MODULES="
-	jdt/eclipse.jdt
-	jdt/eclipse.jdt.core
-	jdt/eclipse.jdt.core.binaries
-	jdt/eclipse.jdt.debug
-	jdt/eclipse.jdt.ui
-	pde/eclipse.pde.build
-	pde/eclipse.pde.ui
-	platform/eclipse.platform
-	platform/eclipse.platform.common
-	platform/eclipse.platform.debug
-	platform/eclipse.platform.releng
-	platform/eclipse.platform.resources
-	platform/eclipse.platform.runtime
-	platform/eclipse.platform.swt
-	platform/eclipse.platform.swt.binaries
-	platform/eclipse.platform.team
-	platform/eclipse.platform.text
-	platform/eclipse.platform.ua
-	platform/eclipse.platform.ui
-	platform/eclipse.platform.ui.tools
-	equinox/rt.equinox.binaries
-	equinox/rt.equinox.bundles
-	equinox/rt.equinox.framework
-	equinox/rt.equinox.p2"
+	eclipse-jdt/eclipse.jdt
+	eclipse-jdt/eclipse.jdt.core
+	eclipse-jdt/eclipse.jdt.core.binaries
+	eclipse-jdt/eclipse.jdt.debug
+	eclipse-jdt/eclipse.jdt.ui
+	eclipse-pde/eclipse.pde.build
+	eclipse-pde/eclipse.pde.ui
+	eclipse-platform/eclipse.platform
+	eclipse-platform/eclipse.platform.common
+	eclipse-platform/eclipse.platform.debug
+	eclipse-platform/eclipse.platform.releng
+	eclipse-platform/eclipse.platform.resources
+	eclipse-platform/eclipse.platform.runtime
+	eclipse-platform/eclipse.platform.swt
+	eclipse-platform/eclipse.platform.swt.binaries
+	eclipse-platform/eclipse.platform.team
+	eclipse-platform/eclipse.platform.text
+	eclipse-platform/eclipse.platform.ua
+	eclipse-platform/eclipse.platform.ui
+	eclipse-platform/eclipse.platform.ui.tools
+	eclipse-equinox/rt.equinox.binaries
+	eclipse-equinox/rt.equinox.bundles
+	eclipse-equinox/rt.equinox.framework
+	eclipse-equinox/rt.equinox.p2"
 
 PATCH_DIR="java-eclipse/files"
 PATCHED_DIRS="
