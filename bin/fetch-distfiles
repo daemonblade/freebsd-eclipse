@@ -1,9 +1,9 @@
 #!/bin/sh
-set -x
+#set -x
 #
 # Copy distfiles from git.eclipse.org
 #
-HTTP_BASE="https://github.com"
+HTTP_BASE="https://codeload.github.com"
 
 if [ ! -x bin/$(basename $0) ]
 then
@@ -23,7 +23,7 @@ do
 		echo "INFO: ${PROJECT}/${FILE} present."
 	else
 		echo "INFO: Fetching ${PROJECT}/${FILE}"
-		fetch --retry $* -o distfiles/${FILE} ${HTTP_BASE}/${M}/archive/refs/tags/${ECLIPSE_TAG}.tar.gz
+		fetch --retry $* -o distfiles/${FILE} ${HTTP_BASE}/${M}/tar.gz/${ECLIPSE_TAG}?dummy=/
 	fi
 done
 
