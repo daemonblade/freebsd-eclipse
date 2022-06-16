@@ -1,7 +1,7 @@
 #
 # Configuration
 #
-ECLIPSE_TAG="S4_24_0_RC2a"
+ECLIPSE_TAG="R4_24"
 
 ECLIPSE_TOP="eclipse-platform/eclipse.platform.releng.aggregator"
 ECLIPSE_MODULES="
@@ -10,8 +10,7 @@ ECLIPSE_MODULES="
 	eclipse-jdt/eclipse.jdt.core.binaries
 	eclipse-jdt/eclipse.jdt.debug
 	eclipse-jdt/eclipse.jdt.ui
-	eclipse-pde/eclipse.pde.build
-	eclipse-pde/eclipse.pde.ui
+	eclipse-pde/eclipse.pde
 	eclipse-platform/eclipse.platform
 	eclipse-platform/eclipse.platform.common
 	eclipse-platform/eclipse.platform.debug
@@ -28,7 +27,7 @@ ECLIPSE_MODULES="
 	eclipse-equinox/rt.equinox.binaries
 	eclipse-equinox/rt.equinox.bundles
 	eclipse-equinox/rt.equinox.framework
-	eclipse-equinox/rt.equinox.p2"
+	eclipse-equinox/p2"
 
 PATCH_DIR="java-eclipse/files"
 PATCHED_DIRS="
