@@ -26,15 +26,17 @@ BASELINE=".baseline.${AGGR_MODULE}"
 
 echo "INFO: Unpacking ${ECLIPSE_TOP}"
 rm -rf ${AGGR_MODULE} ${BASELINE}
-tar xf distfiles/${AGGR_MODULE}-${ECLIPSE_TAG}.tar.xz
+tar xf distfiles/${AGGR_MODULE}-${ECLIPSE_TAG}.tar.gz
 mv ${AGGR_MODULE}-${ECLIPSE_TAG} ${AGGR_MODULE}
 
 for M in ${ECLIPSE_MODULES}
 do
-	MODULE=$(basename $M)
+	MODULE=$(basename $M | cut -f1 -d:)
+	DEST=$(basename $M | cut -f2 -d:)
+
 	SNAP="${MODULE}-${ECLIPSE_TAG}"
-	SUBDIR="${AGGR_MODULE}/${MODULE}"
-	ARCHIVE="distfiles/${SNAP}.tar.xz"
+	SUBDIR="${AGGR_MODULE}/${DEST}"
+	ARCHIVE="distfiles/${SNAP}.tar.gz"
 
 	if [ ! -r ${ARCHIVE} ]
 	then

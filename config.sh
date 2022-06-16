@@ -16,7 +16,6 @@ ECLIPSE_MODULES="
 	eclipse-platform/eclipse.platform.debug
 	eclipse-platform/eclipse.platform.releng
 	eclipse-platform/eclipse.platform.resources
-	eclipse-platform/eclipse.platform.runtime
 	eclipse-platform/eclipse.platform.swt
 	eclipse-platform/eclipse.platform.swt.binaries
 	eclipse-platform/eclipse.platform.team
@@ -24,10 +23,11 @@ ECLIPSE_MODULES="
 	eclipse-platform/eclipse.platform.ua
 	eclipse-platform/eclipse.platform.ui
 	eclipse-platform/eclipse.platform.ui.tools
-	eclipse-equinox/rt.equinox.binaries
-	eclipse-equinox/rt.equinox.bundles
-	eclipse-equinox/rt.equinox.framework
-	eclipse-equinox/p2"
+	eclipse-equinox/equinox.binaries:rt.equinox.binaries
+	eclipse-equinox/equinox.bundles:rt.equinox.bundles
+	eclipse-equinox/equinox.framework:rt.equinox.framework
+	eclipse-equinox/p2:rt.equinox.p2"
+#	eclipse-platform/eclipse.platform.runtime
 
 PATCH_DIR="java-eclipse/files"
 PATCHED_DIRS="
