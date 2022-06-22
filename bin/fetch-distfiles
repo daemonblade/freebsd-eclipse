@@ -23,7 +23,7 @@ do
 		echo "INFO: ${PROJECT}/${FILE} present."
 	else
 		echo "INFO: Fetching ${PROJECT}/${FILE}"
-		fetch --retry $* -o distfiles/${FILE} ${HTTP_BASE}/${M}/tar.gz/${ECLIPSE_TAG}?dummy=/
+		fetch --retry $* -o distfiles/${FILE} ${HTTP_BASE}/${PROJECT}/${REPO}/tar.gz/${ECLIPSE_TAG}?dummy=/
 	fi
 done
 
