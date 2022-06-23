@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2017 TwelveTone LLC and others.
+ * Copyright (c) 2014, 2022 TwelveTone LLC and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -378,7 +378,7 @@ public class ListTab implements IViewEObjects {
 
 		tabItem.setImage(resourcePool.getImageUnchecked(ResourceProvider.IMG_Widgets_table_obj));
 
-		final ToolBar toolBar = new ToolBar(composite, SWT.FLAT | SWT.NO_FOCUS);
+		final ToolBar toolBar = new ToolBar(composite, SWT.FLAT);
 		toolBar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 
 		{
@@ -477,7 +477,7 @@ public class ListTab implements IViewEObjects {
 		{
 			final E4ToolItemMenu tiCommands = new E4ToolItemMenu(toolBar, context);
 			tiCommands.getToolItem().setImage(imageCache.create("/icons/full/obj16/command.gif")); //$NON-NLS-1$
-
+			tiCommands.getToolItem().setText(Messages.ListTab_more + ELIPSIS);
 			final ArrayList<String> commandIds = new ArrayList<>();
 			commandIds.add("org.eclipse.e4.tools.emf.ui.command.mark_duplicate_attributes"); //$NON-NLS-1$
 			commandIds.add("org.eclipse.e4.tools.emf.ui.command.mark_duplicate_ids"); //$NON-NLS-1$
@@ -520,7 +520,7 @@ public class ListTab implements IViewEObjects {
 		});
 
 		colGoXmi = new TableViewerColumn(tvResults, SWT.NONE);
-		colGoXmi.getColumn().setText(Messages.ListTab_col_go);
+		colGoXmi.getColumn().setText(Messages.ListTab_col_go2);
 		requiredColumns.put("GoXmi", colGoXmi.getColumn()); //$NON-NLS-1$
 		colGoXmi.setLabelProvider(new ColumnLabelProvider() {
 			@Override
@@ -582,7 +582,7 @@ public class ListTab implements IViewEObjects {
 		app.getContext().set("org.eclipse.e4.tools.active-object-viewer", this); //$NON-NLS-1$
 
 		final EAttributeTableViewerColumn colId = new EAttributeTableViewerColumn(tvResults,
-				"elementId", "elementId", context); //$NON-NLS-1$//$NON-NLS-2$
+				Messages.ListTab_elementId, "elementId", context); //$NON-NLS-1$
 		defaultColumns.put("elementId", colId); //$NON-NLS-1$
 
 		final EAttributeTableViewerColumn colLabel = new EAttributeTableViewerColumn_Markable(tvResults,

@@ -5,13 +5,13 @@
 	<parent>
 		<groupId>org.eclipse</groupId>
 		<artifactId>eclipse.platform.ui.tools</artifactId>
-		<version>4.21.0-SNAPSHOT</version>
+		<version>4.24.0-SNAPSHOT</version>
 		<relativePath>../../</relativePath>
 	</parent>
 
 	<groupId>eclipse.platform.ui.tool</groupId>
 	<artifactId>org.eclipse.e4.tools.test</artifactId>
-	<version>1.1.100-SNAPSHOT</version>
+	<version>1.2.0-SNAPSHOT</version>
 
 	<packaging>eclipse-test-plugin</packaging>
 

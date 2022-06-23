@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2018 BestSolution.at and others.
+ * Copyright (c) 2010, 2022 BestSolution.at and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -246,6 +246,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.ui.forms.widgets.ExpandableComposite;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.Section;
 
@@ -288,6 +289,7 @@ public class ModelEditor implements IGotoObject {
 	public static final int TAB_FORM = 0;
 	public static final int TAB_XMI = 1;
 	public static final int TAB_LIST = 2;
+	final String key = "org.eclipse.e4.tools.active-object-viewer"; //$NON-NLS-1$
 
 
 
@@ -485,22 +487,18 @@ public class ModelEditor implements IGotoObject {
 			public void widgetSelected(SelectionEvent e) {
 				if (editorTabFolder.getSelectionIndex() == getTabIndex(tabItemXmi)) {
 					emfDocumentProvider.updateFromEMF();
+					gotoEObject(TAB_XMI, null);
 				}
-			}
-		});
-
-		editorTabFolder.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
 				// When the list tab is visible, register the IViewEObjects
 				// interface
 				// This allows external commands to interact with the view.
 				// Eventually, all 3 tabs, or even the ModelEditor itself, could
 				// implement the interface.
-				final String key = "org.eclipse.e4.tools.active-object-viewer"; //$NON-NLS-1$
-				if (listTab != null && editorTabFolder.getSelectionIndex() == getTabIndex(listTab.getTabItem())) {
+				else if (listTab != null && editorTabFolder.getSelectionIndex() == getTabIndex(listTab.getTabItem())) {
+					gotoEObject(TAB_LIST, null);
 					app.getContext().set(key, listTab);
 				} else {
+					gotoEObject(TAB_FORM, null);
 					app.getContext().set(key, null);
 				}
 			}
@@ -513,7 +511,7 @@ public class ModelEditor implements IGotoObject {
 	 * @param tabItem
 	 * @return The index of the tab item. Should never return -1.
 	 */
-	static public int getTabIndex(CTabItem tabItem) {
+	public static int getTabIndex(CTabItem tabItem) {
 		return Arrays.asList(tabItem.getParent().getItems()).indexOf(tabItem);
 	}
 
@@ -556,8 +554,7 @@ public class ModelEditor implements IGotoObject {
 		childContext.set(EMFDocumentResourceMediator.class, emfDocumentProvider);
 		childContext.set(IEclipsePreferences.class, preferences);
 		childContext.set(IResourcePool.class, resourcePool);
-		final XmiTab ret = ContextInjectionFactory.make(XmiTab.class, childContext);
-		return ret;
+		return ContextInjectionFactory.make(XmiTab.class, childContext);
 	}
 
 	private Composite createFormTab(Composite composite) {
@@ -567,7 +564,7 @@ public class ModelEditor implements IGotoObject {
 
 		FormToolkit toolkit = new FormToolkit(form.getDisplay());
 
-		headerContainer = toolkit.createSection(form, Section.TITLE_BAR);
+		headerContainer = toolkit.createSection(form, ExpandableComposite.TITLE_BAR);
 		headerContainer.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL));
 
 		// Composite for storing the data
@@ -590,7 +587,7 @@ public class ModelEditor implements IGotoObject {
 							list.add((EObject) o);
 						}
 					}
-					if (list.isEmpty() == false) {
+					if (!list.isEmpty()) {
 						final Command cmd = DeleteCommand.create(modelProvider.getEditingDomain(), list);
 						if (cmd.canExecute()) {
 							modelProvider.getEditingDomain().getCommandStack().execute(cmd);
@@ -648,7 +645,7 @@ public class ModelEditor implements IGotoObject {
 				if (s.getFirstElement() instanceof VirtualEntry) {
 					actions = getEditor(((VirtualEntry<?, ?>) s.getFirstElement()).getId())
 							.getActions(s.getFirstElement());
-					if (actions.size() > 0) {
+					if (!actions.isEmpty()) {
 						final MenuManager addMenu1 = new MenuManager(messages.ModelEditor_AddChild);
 						for (final Action a1 : actions) {
 							addSeparator = true;
@@ -659,7 +656,7 @@ public class ModelEditor implements IGotoObject {
 
 					actions = getEditor(((VirtualEntry<?, ?>) s.getFirstElement()).getId())
 							.getActionsImport(s.getFirstElement());
-					if (actions.size() > 0) {
+					if (!actions.isEmpty()) {
 						final MenuManager menu1 = new MenuManager(messages.ModelEditor_Import3x);
 						for (final Action a2 : actions) {
 							addSeparator = true;
@@ -684,7 +681,7 @@ public class ModelEditor implements IGotoObject {
 						actions = new ArrayList<>();
 					}
 
-					if (actions.size() > 0) {
+					if (!actions.isEmpty()) {
 						final MenuManager addMenu2 = new MenuManager(messages.ModelEditor_AddChild);
 						for (final Action a3 : actions) {
 							addSeparator = true;
@@ -700,7 +697,7 @@ public class ModelEditor implements IGotoObject {
 						actions = new ArrayList<>();
 					}
 
-					if (actions.size() > 0) {
+					if (!actions.isEmpty()) {
 						// TODO WIM - extract nls
 						final MenuManager menu2 = new MenuManager(messages.ModelEditor_Import3x);
 						for (final Action a4 : actions) {
@@ -1066,10 +1063,10 @@ public class ModelEditor implements IGotoObject {
 		}
 		final TreeViewer viewer = tempViewer;
 
-		final FontDescriptor italicFontDescriptor = FontDescriptor.createFrom(viewer.getControl().getFont())
-				.setStyle(SWT.ITALIC);
+		final FontDescriptor fontDescriptor = FontDescriptor.createFrom(viewer.getControl().getFont())
+				.setStyle(SWT.NORMAL);
 		viewer.setLabelProvider(new DelegatingStyledCellLabelProvider(
-				new ComponentLabelProvider(this, messages, italicFontDescriptor)));
+				new ComponentLabelProvider(this, messages, fontDescriptor)));
 		final ObservableListTreeContentProvider<Object> contentProvider = new ObservableListTreeContentProvider<>(
 				new ObservableFactoryImpl(), new TreeStructureAdvisor<>() {
 				});
@@ -1224,7 +1221,7 @@ public class ModelEditor implements IGotoObject {
 						continue;
 					}
 					if (!tabContributions.containsKey(contribElem)) {
-						tabContributions.put(contribElem, new ArrayList<AbstractElementEditorContribution>());
+						tabContributions.put(contribElem, new ArrayList<>());
 					}
 					final List<AbstractElementEditorContribution> res = tabContributions.get(contribElem);
 					res.add(contribution);
@@ -1722,7 +1719,7 @@ public class ModelEditor implements IGotoObject {
 			IStructuredSelection structuredSelection = (IStructuredSelection) viewer.getSelection();
 			List<EObject> toCopy = new ArrayList<>();
 			for (Object obj : structuredSelection.toList()) {
-				if (obj != null && obj instanceof EObject) {
+				if (obj instanceof EObject) {
 					EObject copy = EcoreUtil.copy((EObject) obj);
 					toCopy.add(copy);
 				}
@@ -1754,7 +1751,7 @@ public class ModelEditor implements IGotoObject {
 			Collection<EObject> objectsToCut = new ArrayList<>();
 			final Clipboard clip = new Clipboard(viewer.getControl().getDisplay());
 			for (Object o : ((IStructuredSelection) viewer.getSelection()).toList()) {
-				if (o != null && o instanceof EObject) {
+				if (o instanceof EObject) {
 					objectsToCut.add((EObject) o);
 				}
 			}
@@ -2091,9 +2088,43 @@ public class ModelEditor implements IGotoObject {
 
 	@Override
 	public void gotoEObject(int targetHint, EObject object) {
+		// Try to find current selection if any
 		if (object == null) {
-			// do nothing
-		} else {
+			switch (targetHint) {
+			case TAB_FORM:
+				if (app.getContext().get(key) == listTab) {
+					Iterator<EObject> it = listTab.getSelectedEObjects().iterator();
+					if (it.hasNext()) {
+						object = it.next();
+					}
+				}
+				break;
+			case TAB_XMI:
+				if (app.getContext().get(key) == listTab) {
+					Iterator<EObject> it = listTab.getSelectedEObjects().iterator();
+					if (it.hasNext()) {
+						object = it.next();
+					}
+				} else if (app.getContext().get(key) == null) {
+					final Object parent = ((IStructuredSelection) viewer.getSelection()).getFirstElement();
+					if (parent instanceof EObject) {
+						object = (EObject) parent;
+					}
+				}
+				break;
+			case TAB_LIST:
+				if (app.getContext().get(key) == null) {
+					final Object parent = ((IStructuredSelection) viewer.getSelection()).getFirstElement();
+					if (parent instanceof EObject) {
+						object = (EObject) parent;
+					}
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		if (object != null) {
 			switch (targetHint) {
 			case TAB_FORM:
 				// make sure tree node has been instantiated

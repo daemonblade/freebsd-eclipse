@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010-2016 BestSolution.at and others.
+ * Copyright (c) 2010-2022 BestSolution.at and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -112,6 +112,7 @@ public class Messages {
 	public static String ModelTooling_Common_FindEllipsis;
 	public String ModelTooling_Common_TabDefault;
 	public String ModelTooling_Common_TabSupplementary;
+	public static String ModelTooling_XMIID;
 	public String ModelEditor_AddChild;
 	public String ModelEditor_Move;
 	public String ModelEditor_Cut;
@@ -796,6 +797,8 @@ public class Messages {
 	public String ListTab_col_item;
 	public String ListTab_col_label;
 	public String ListTab_col_go;
+	public String ListTab_col_go2;
+	public String ListTab_elementId;
 
 	public String ListTab_addColumn;
 	public String ListTab_filterByAttribute;
@@ -803,6 +806,7 @@ public class Messages {
 	public String ListTab_mark;
 	public String ListTab_markAttribute;
 	public String ListTab_removeFilter;
+	public String ListTab_more;
 	public String ListTab_resetColumns;
 	public String ListTab_selectAnAttribute;
 	public String ListTab_selectAType;
@@ -820,4 +824,12 @@ public class Messages {
 	public String CompositePartEditor_SelectedElement;
 	public String CompositePartEditor_Controls;
 
+	public String ItemType_Push;
+	public String ItemType_Check;
+	public String ItemType_Radio;
+
+	public String SideValue_Bottom;
+	public String SideValue_Left;
+	public String SideValue_Right;
+	public String SideValue_Top;
 }
