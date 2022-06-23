@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Red Hat Inc. and others.
+ * Copyright (c) 2016, 2021 Red Hat Inc. and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,37 +20,57 @@ package org.eclipse.ui.internal.genericeditor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.filebuffers.FileBuffers;
 import org.eclipse.core.filebuffers.ITextFileBuffer;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.text.AbstractReusableInformationControlCreator;
 import org.eclipse.jface.text.DefaultInformationControl;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentPartitioningListener;
+import org.eclipse.jface.text.IInformationControl;
+import org.eclipse.jface.text.IInformationControlCreator;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextHover;
+import org.eclipse.jface.text.ITextHoverExtension;
+import org.eclipse.jface.text.ITextHoverExtension2;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
 import org.eclipse.jface.text.contentassist.IContentAssistant;
+import org.eclipse.jface.text.information.IInformationPresenter;
+import org.eclipse.jface.text.information.IInformationProvider;
+import org.eclipse.jface.text.information.IInformationProviderExtension;
+import org.eclipse.jface.text.information.IInformationProviderExtension2;
+import org.eclipse.jface.text.information.InformationPresenter;
 import org.eclipse.jface.text.presentation.IPresentationReconciler;
 import org.eclipse.jface.text.quickassist.IQuickAssistAssistant;
 import org.eclipse.jface.text.quickassist.IQuickAssistProcessor;
 import org.eclipse.jface.text.quickassist.QuickAssistAssistant;
 import org.eclipse.jface.text.reconciler.IReconciler;
 import org.eclipse.jface.text.source.ISourceViewer;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
 import org.eclipse.ui.internal.editors.text.EditorsPlugin;
 import org.eclipse.ui.internal.genericeditor.folding.DefaultFoldingReconciler;
+import org.eclipse.ui.internal.genericeditor.hover.CompositeInformationControlCreator;
 import org.eclipse.ui.internal.genericeditor.hover.CompositeTextHover;
 import org.eclipse.ui.internal.genericeditor.markers.MarkerResoltionQuickAssistProcessor;
 import org.eclipse.ui.texteditor.ITextEditor;
@@ -67,7 +87,8 @@ public final class ExtensionBasedTextViewerConfiguration extends TextSourceViewe
 		implements IDocumentPartitioningListener {
 
 	private ITextEditor editor;
-	private Set<IContentType> contentTypes;
+	private Set<IContentType> resolvedContentTypes;
+	private Set<IContentType> fallbackContentTypes = Set.of();
 	private IDocument document;
 
 	private GenericEditorContentAssistant contentAssistant;
@@ -82,39 +103,57 @@ public final class ExtensionBasedTextViewerConfiguration extends TextSourceViewe
 		this.editor = editor;
 	}
 
-	Set<IContentType> getContentTypes(ITextViewer viewer) {
-		if (this.contentTypes == null) {
-			this.contentTypes = new LinkedHashSet<>();
-			String fileName = null;
-			fileName = getCurrentFileName(viewer);
-			if (fileName == null) {
-				return Collections.emptySet();
+	public Set<IContentType> getContentTypes(IDocument document) {
+		if (this.resolvedContentTypes != null) {
+			return this.resolvedContentTypes;
+		}
+		this.resolvedContentTypes = new LinkedHashSet<>();
+		ITextFileBuffer buffer = getCurrentBuffer(document);
+		if (buffer != null) {
+			try {
+				IContentType contentType = buffer.getContentType();
+				if (contentType != null) {
+					this.resolvedContentTypes.add(contentType);
+				}
+			} catch (CoreException ex) {
+				GenericEditorPlugin.getDefault().getLog()
+						.log(new Status(IStatus.ERROR, GenericEditorPlugin.BUNDLE_ID, ex.getMessage(), ex));
 			}
+		}
+		String fileName = getCurrentFileName(document);
+		if (fileName != null) {
 			Queue<IContentType> types = new LinkedList<>(
 					Arrays.asList(Platform.getContentTypeManager().findContentTypesFor(fileName)));
 			while (!types.isEmpty()) {
 				IContentType type = types.poll();
-				this.contentTypes.add(type);
+				this.resolvedContentTypes.add(type);
 				IContentType parent = type.getBaseType();
 				if (parent != null) {
 					types.add(parent);
 				}
 			}
 		}
-		return this.contentTypes;
+		return this.resolvedContentTypes.isEmpty() ? fallbackContentTypes : resolvedContentTypes;
 	}
 
-	private String getCurrentFileName(ITextViewer viewer) {
+	private static ITextFileBuffer getCurrentBuffer(IDocument document) {
+		if (document != null) {
+			return FileBuffers.getTextFileBufferManager().getTextFileBuffer(document);
+		}
+		return null;
+	}
+
+	private String getCurrentFileName(IDocument document) {
 		String fileName = null;
 		if (this.editor != null) {
 			fileName = editor.getEditorInput().getName();
 		}
 		if (fileName == null) {
-			IDocument viewerDocument = viewer.getDocument();
-			if (viewerDocument != null) {
-				ITextFileBuffer buffer = FileBuffers.getTextFileBufferManager().getTextFileBuffer(viewerDocument);
-				if (buffer != null) {
-					fileName = buffer.getLocation().lastSegment();
+			ITextFileBuffer buffer = getCurrentBuffer(document);
+			if (buffer != null) {
+				IPath path = buffer.getLocation();
+				if (path != null) {
+					fileName = path.lastSegment();
 				}
 			}
 		}
@@ -124,7 +163,7 @@ public final class ExtensionBasedTextViewerConfiguration extends TextSourceViewe
 	@Override
 	public ITextHover getTextHover(ISourceViewer sourceViewer, String contentType) {
 		List<ITextHover> hovers = GenericEditorPlugin.getDefault().getHoverRegistry().getAvailableHovers(sourceViewer,
-				editor, getContentTypes(sourceViewer));
+				editor, getContentTypes(sourceViewer.getDocument()));
 		if (hovers == null || hovers.isEmpty()) {
 			return null;
 		} else if (hovers.size() == 1) {
@@ -140,7 +179,7 @@ public final class ExtensionBasedTextViewerConfiguration extends TextSourceViewe
 		ContentTypeRelatedExtensionTracker<IContentAssistProcessor> contentAssistProcessorTracker = new ContentTypeRelatedExtensionTracker<>(
 				GenericEditorPlugin.getDefault().getBundle().getBundleContext(), IContentAssistProcessor.class,
 				sourceViewer.getTextWidget().getDisplay());
-		Set<IContentType> types = getContentTypes(sourceViewer);
+		Set<IContentType> types = getContentTypes(sourceViewer.getDocument());
 		contentAssistant = new GenericEditorContentAssistant(contentAssistProcessorTracker,
 				registry.getContentAssistProcessors(sourceViewer, editor, types), types);
 		if (this.document != null) {
@@ -154,7 +193,7 @@ public final class ExtensionBasedTextViewerConfiguration extends TextSourceViewe
 	public IPresentationReconciler getPresentationReconciler(ISourceViewer sourceViewer) {
 		PresentationReconcilerRegistry registry = GenericEditorPlugin.getDefault().getPresentationReconcilerRegistry();
 		List<IPresentationReconciler> reconciliers = registry.getPresentationReconcilers(sourceViewer, editor,
-				getContentTypes(sourceViewer));
+				getContentTypes(sourceViewer.getDocument()));
 		if (!reconciliers.isEmpty()) {
 			return reconciliers.get(0);
 		}
@@ -193,7 +232,7 @@ public final class ExtensionBasedTextViewerConfiguration extends TextSourceViewe
 		List<IQuickAssistProcessor> quickAssistProcessors = new ArrayList<>();
 		quickAssistProcessors.add(new MarkerResoltionQuickAssistProcessor());
 		quickAssistProcessors.addAll(GenericEditorPlugin.getDefault().getQuickAssistProcessorRegistry()
-				.getQuickAssistProcessors(sourceViewer, editor, getContentTypes(sourceViewer)));
+				.getQuickAssistProcessors(sourceViewer, editor, getContentTypes(sourceViewer.getDocument())));
 		CompositeQuickAssistProcessor compQuickAssistProcessor = new CompositeQuickAssistProcessor(
 				quickAssistProcessors);
 		quickAssistAssistant.setQuickAssistProcessor(compQuickAssistProcessor);
@@ -207,10 +246,11 @@ public final class ExtensionBasedTextViewerConfiguration extends TextSourceViewe
 	@Override
 	public IReconciler getReconciler(ISourceViewer sourceViewer) {
 		ReconcilerRegistry registry = GenericEditorPlugin.getDefault().getReconcilerRegistry();
-		List<IReconciler> reconcilers = registry.getReconcilers(sourceViewer, editor, getContentTypes(sourceViewer));
+		List<IReconciler> reconcilers = registry.getReconcilers(sourceViewer, editor,
+				getContentTypes(sourceViewer.getDocument()));
 		// Fill with highlight reconcilers
 		List<IReconciler> highlightReconcilers = registry.getHighlightReconcilers(sourceViewer, editor,
-				getContentTypes(sourceViewer));
+				getContentTypes(sourceViewer.getDocument()));
 		if (!highlightReconcilers.isEmpty()) {
 			reconcilers.addAll(highlightReconcilers);
 		} else {
@@ -218,7 +258,7 @@ public final class ExtensionBasedTextViewerConfiguration extends TextSourceViewe
 		}
 		// Fill with folding reconcilers
 		List<IReconciler> foldingReconcilers = registry.getFoldingReconcilers(sourceViewer, editor,
-				getContentTypes(sourceViewer));
+				getContentTypes(sourceViewer.getDocument()));
 		if (!foldingReconcilers.isEmpty()) {
 			reconcilers.addAll(foldingReconcilers);
 		} else {
@@ -235,7 +275,7 @@ public final class ExtensionBasedTextViewerConfiguration extends TextSourceViewe
 	public IAutoEditStrategy[] getAutoEditStrategies(ISourceViewer sourceViewer, String contentType) {
 		AutoEditStrategyRegistry registry = GenericEditorPlugin.getDefault().getAutoEditStrategyRegistry();
 		List<IAutoEditStrategy> editStrategies = registry.getAutoEditStrategies(sourceViewer, editor,
-				getContentTypes(sourceViewer));
+				getContentTypes(sourceViewer.getDocument()));
 		if (!editStrategies.isEmpty()) {
 			return editStrategies.toArray(new IAutoEditStrategy[editStrategies.size()]);
 		}
@@ -249,4 +289,116 @@ public final class ExtensionBasedTextViewerConfiguration extends TextSourceViewe
 		return targets;
 	}
 
+	@Override
+	public IInformationPresenter getInformationPresenter(ISourceViewer sourceViewer) {
+		// Register information provider
+		List<ITextHover> hovers = GenericEditorPlugin.getDefault().getHoverRegistry().getAvailableHovers(sourceViewer,
+				editor, getContentTypes(sourceViewer.getDocument()));
+
+		InformationPresenter presenter = new InformationPresenter(new CompositeInformationControlCreator(hovers));
+		// By default the InformationPresented is set to take the focus when visible,
+		// which makes the Browser to overtake all the focus/mouse etc. control over the
+		// 'org.eclipse.jface.text.information.InformationPresenter.Closer`.
+		// As we want to make t possible to close the information presenter by clicking
+		// outside of the information control or resizing the editor etc. - we need to
+		// disable such focus overtake by calling `takesFocusWhenVisible(false)` on the
+		// presenter.
+		//
+		presenter.takesFocusWhenVisible(false);
+		presenter.setDocumentPartitioning(getConfiguredDocumentPartitioning(sourceViewer));
+
+		IInformationProvider provider = new ExtensionBaseInformationProvider(hovers);
+		// Register information provider
+		if (hovers != null && !hovers.isEmpty()) {
+			for (String contentType : getConfiguredContentTypes(sourceViewer)) {
+				presenter.setInformationProvider(provider, contentType);
+			}
+		}
+
+		// sizes: see org.eclipse.jface.text.TextViewer.TEXT_HOVER_*_CHARS
+		presenter.setSizeConstraints(100, 12, false, true);
+		return presenter;
+	}
+
+	class ExtensionBaseInformationProvider
+			implements IInformationProvider, IInformationProviderExtension, IInformationProviderExtension2 {
+		List<ITextHover> fHovers;
+		private LinkedHashMap<ITextHover, Object> currentHovers;
+
+		ExtensionBaseInformationProvider(List<ITextHover> hovers) {
+			this.fHovers = hovers;
+		}
+
+		@Override
+		public Object getInformation2(ITextViewer textViewer, IRegion subject) {
+			currentHovers = new LinkedHashMap<>();
+			for (ITextHover hover : this.fHovers) {
+				Object res = hover instanceof ITextHoverExtension2
+						? ((ITextHoverExtension2) hover).getHoverInfo2(textViewer, subject)
+						: hover.getHoverInfo(textViewer, subject);
+				if (res != null) {
+					currentHovers.put(hover, res);
+				}
+			}
+			if (currentHovers.isEmpty()) {
+				return null;
+			} else if (currentHovers.size() == 1) {
+				return currentHovers.values().iterator().next();
+			}
+			return currentHovers;
+		}
+
+		@Override
+		public IRegion getSubject(ITextViewer textViewer, int offset) {
+			IRegion res = null;
+			for (ITextHover hover : this.fHovers) {
+				IRegion region = hover.getHoverRegion(textViewer, offset);
+				if (region != null) {
+					if (res == null) {
+						res = region;
+					} else {
+						int startOffset = Math.max(res.getOffset(), region.getOffset());
+						int endOffset = Math.min(res.getOffset() + res.getLength(),
+								region.getOffset() + region.getLength());
+						res = new Region(startOffset, endOffset - startOffset);
+					}
+				}
+			}
+			return res;
+		}
+
+		@Override
+		public String getInformation(ITextViewer textViewer, IRegion subject) {
+			return this.fHovers.stream().map(hover -> hover.getHoverInfo(textViewer, subject)).filter(Objects::nonNull)
+					.collect(Collectors.joining("\n")); //$NON-NLS-1$
+		}
+
+		@Override
+		public IInformationControlCreator getInformationPresenterControlCreator() {
+			if (this.currentHovers == null || this.currentHovers.isEmpty()) {
+				return null;
+			} else if (currentHovers.size() == 1) {
+				ITextHover hover = this.currentHovers.keySet().iterator().next();
+				return hover instanceof ITextHoverExtension ? ((ITextHoverExtension) hover).getHoverControlCreator()
+						: new AbstractReusableInformationControlCreator() {
+							@Override
+							protected IInformationControl doCreateInformationControl(Shell parent) {
+								return new DefaultInformationControl(parent);
+							};
+						};
+			} else {
+				return new CompositeInformationControlCreator(new ArrayList<>(this.currentHovers.keySet()));
+			}
+		}
+	}
+
+	/**
+	 * Set content-types that will be considered is no content-type can be deduced
+	 * from the document (eg document is not backed by a FileBuffer)
+	 * 
+	 * @param contentTypes
+	 */
+	public void setFallbackContentTypes(Set<IContentType> contentTypes) {
+		this.fallbackContentTypes = (contentTypes == null ? Set.of() : contentTypes);
+	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -22,11 +22,13 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -84,6 +86,11 @@ public class TextSearchVisitor {
 	private static final int NUMBER_OF_LOGICAL_THREADS= Runtime.getRuntime().availableProcessors();
 	private static final int FILES_PER_JOB= 50;
 	private static final int MAX_JOBS_COUNT= 100;
+	/**
+	 * Just any number such that the most source files will fit in. And not too
+	 * big to avoid out of memory.
+	 **/
+	private static final int MAX_BUFFER_LENGTH = 999_999; // max 2MB.
 
 	public static class ReusableMatchAccess extends TextSearchMatchAccess {
 
@@ -232,6 +239,7 @@ public class TextSearchVisitor {
 							break;
 						}
 					}
+					fCollector.flushMatches(file);
 				} else {
 					if (charsequenceForPreviousLocation != null) {
 						try {
@@ -316,6 +324,33 @@ public class TextSearchVisitor {
 		fIsLightweightAutoRefresh= Platform.getPreferencesService().getBoolean(ResourcesPlugin.PI_RESOURCES, ResourcesPlugin.PREF_LIGHTWEIGHT_AUTO_REFRESH, false, null);
 	}
 
+	/**
+	 * Just a record pair to avoid multiple file.getLocation() calls during
+	 * sort.
+	 **/
+	private static final class FileWithCachedLocation {
+		private final IFile file;
+		private final String location; // cached
+
+		private static Comparator<String> NULLS_FIRST = Comparator.nullsFirst(Comparator.naturalOrder());
+		private static Comparator<FileWithCachedLocation> BY_LOCATION = Comparator
+				.comparing(FileWithCachedLocation::getLocation, NULLS_FIRST);
+
+		FileWithCachedLocation(IFile file) {
+			this.file = file;
+			IPath path = file.getLocation(); // invokes slow OS operation
+			this.location = path == null ? null : path.toString();
+		}
+
+		String getLocation() {
+			return location;
+		}
+
+		IFile getFile() {
+			return file;
+		}
+	}
+
 	public IStatus search(IFile[] files, IProgressMonitor monitor) {
 		if (files.length == 0) {
 			return fStatus;
@@ -387,26 +422,13 @@ public class TextSearchVisitor {
 				fCollector.beginReporting();
 				Map<IFile, IDocument> documentsInEditors= PlatformUI.isWorkbenchRunning() ? evalNonFileBufferDocuments() : Collections.emptyMap();
 				int filesPerJob = Math.max(1, files.length / jobCount);
-				IFile[] filesByLocation= new IFile[files.length];
-				System.arraycopy(files, 0, filesByLocation, 0, files.length);
 				// Sorting files to search by location allows to more easily reuse
 				// search results from one file to the other when they have same location
-				Arrays.sort(filesByLocation, (o1, o2) -> {
-					if (o1 == o2) {
-						return 0;
-					}
-					if (o1.getLocation() == o2.getLocation()) {
-						return 0;
-					}
-					if (o1.getLocation() == null) {
-						return +1;
-					}
-					if (o2.getLocation() == null) {
-						return -1;
-					}
-					return o1.getLocation().toString().compareTo(o2.getLocation().toString());
-				});
-				for (int first= 0; first < filesByLocation.length; first += filesPerJob) {
+				IFile[] filesByLocation = Arrays.stream(files).map(FileWithCachedLocation::new)
+						.sorted(FileWithCachedLocation.BY_LOCATION)
+						.map(FileWithCachedLocation::getFile)
+						.collect(Collectors.toList()).toArray(IFile[]::new);
+				for (int first = 0; first < filesByLocation.length; first += filesPerJob) {
 					int end= Math.min(filesByLocation.length, first + filesPerJob);
 					Job job= new TextSearchJob(filesByLocation, first, end, documentsInEditors);
 					job.setJobGroup(jobGroup);
@@ -516,6 +538,16 @@ public class TextSearchVisitor {
 
 	private List<TextSearchMatchAccess> locateMatches(IFile file, CharSequence searchInput, Matcher matcher, IProgressMonitor monitor) throws CoreException {
 		List<TextSearchMatchAccess> occurences= null;
+		if (searchInput.length() < MAX_BUFFER_LENGTH) {
+			// cache the sequence in a single array
+			String converted = searchInput.toString();
+			if (converted.length() != searchInput.length()) {
+				throw new CoreException(Status.error( //
+						searchInput.getClass().getName() + " does not proper implement CharSequence.toString()", //$NON-NLS-1$
+						new IllegalArgumentException("wrong length"))); //$NON-NLS-1$
+			}
+			searchInput = converted;
+		}
 		matcher.reset(searchInput);
 		int k= 0;
 		while (matcher.find()) {

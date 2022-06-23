@@ -126,10 +126,30 @@ class InlinedAnnotationDrawingStrategy implements IDrawingStrategy {
 	 */
 	private static void draw(LineContentAnnotation annotation, GC gc, StyledText textWidget, int widgetOffset, int length,
 			Color color) {
-		if (annotation.drawRightToPreviousChar(widgetOffset)) {
+		if (annotation.isEndOfLine(widgetOffset)) {
+			drawAfterLine(annotation, gc, textWidget, widgetOffset, length, color);
+		} else if (annotation.drawRightToPreviousChar(widgetOffset)) {
 			drawAsRightOfPreviousCharacter(annotation, gc, textWidget, widgetOffset, length, color);
 		} else {
 			drawAsLeftOf1stCharacter(annotation, gc, textWidget, widgetOffset, length, color);
+		}
+	}
+
+	private static void drawAfterLine(LineContentAnnotation annotation, GC gc, StyledText textWidget, int widgetOffset, int length, Color color) {
+		if (gc == null) {
+			return;
+		}
+		if (textWidget.getCharCount() == 0) {
+			annotation.draw(gc, textWidget, widgetOffset, length, color, 0, 0);
+		} else {
+			int line= textWidget.getLineAtOffset(widgetOffset);
+			int lineEndOffset= (line == textWidget.getLineCount() - 1) ? //
+					textWidget.getCharCount() - 1 : //
+					textWidget.getOffsetAtLine(line + 1) - 1;
+			Rectangle bounds= textWidget.getTextBounds(lineEndOffset, lineEndOffset);
+			int lineEndX= bounds.x + bounds.width + gc.stringExtent("   ").x; //$NON-NLS-1$
+			annotation.setLocation(lineEndX, textWidget.getLinePixel(line) + textWidget.getLineVerticalIndent(line));
+			annotation.draw(gc, textWidget, widgetOffset, length, color, lineEndX, textWidget.getLinePixel(line) + textWidget.getLineVerticalIndent(line));
 		}
 	}
 
@@ -182,7 +202,7 @@ class InlinedAnnotationDrawingStrategy implements IDrawingStrategy {
 					// END TO REMOVE
 
 					// Annotation takes place, add GlyphMetrics width to the style
-					StyleRange newStyle= annotation.updateStyle(style);
+					StyleRange newStyle= annotation.updateStyle(style, gc.getFontMetrics());
 					if (newStyle != null) {
 						textWidget.setStyleRange(newStyle);
 						return;
@@ -265,7 +285,7 @@ class InlinedAnnotationDrawingStrategy implements IDrawingStrategy {
 				// END TO REMOVE
 
 				// Annotation takes place, add GlyphMetrics width to the style
-				StyleRange newStyle= annotation.updateStyle(style);
+				StyleRange newStyle= annotation.updateStyle(style, gc.getFontMetrics());
 				if (newStyle != null) {
 					textWidget.setStyleRange(newStyle);
 					return;

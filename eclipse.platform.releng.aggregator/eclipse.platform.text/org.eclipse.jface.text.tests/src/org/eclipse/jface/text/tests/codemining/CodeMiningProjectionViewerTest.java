@@ -13,10 +13,15 @@
  */
 package org.eclipse.jface.text.tests.codemining;
 
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -28,6 +33,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
 
 import org.eclipse.core.runtime.ILog;
@@ -38,18 +45,24 @@ import org.eclipse.core.runtime.Platform;
 
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.codemining.ICodeMining;
 import org.eclipse.jface.text.codemining.ICodeMiningProvider;
 import org.eclipse.jface.text.codemining.LineContentCodeMining;
+import org.eclipse.jface.text.contentassist.ContentAssistant;
+import org.eclipse.jface.text.contentassist.IContentAssistant;
 import org.eclipse.jface.text.source.AnnotationPainter;
 import org.eclipse.jface.text.source.IAnnotationAccess;
 import org.eclipse.jface.text.source.ISharedTextColors;
+import org.eclipse.jface.text.source.ISourceViewer;
+import org.eclipse.jface.text.source.SourceViewerConfiguration;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotation;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotationModel;
 import org.eclipse.jface.text.source.projection.ProjectionSupport;
 import org.eclipse.jface.text.source.projection.ProjectionViewer;
+import org.eclipse.jface.text.tests.contentassist.BarContentAssistProcessor;
 import org.eclipse.jface.text.tests.source.inlined.LineContentBoundsDrawingTest.AccessAllAnnoations;
 import org.eclipse.jface.text.tests.util.DisplayHelper;
 
@@ -82,7 +95,11 @@ public class CodeMiningProjectionViewerTest {
 
 	@Before
 	public void setUp() {
-		fParent= new Shell();
+		Shell[] shells= Display.getDefault().getShells();
+		for (Shell shell : shells) {
+			shell.dispose();
+		}
+		fParent= new Shell(SWT.ON_TOP);
 		fParent.setSize(500, 200);
 		fParent.setLayout(new FillLayout());
 		fViewer= new ProjectionViewer(fParent, null, null, false, SWT.NONE);
@@ -106,6 +123,30 @@ public class CodeMiningProjectionViewerTest {
 	@After
 	public void tearDown() {
 		fParent.dispose();
+	}
+
+	protected List<Shell> getCurrentShells() {
+		return Arrays.stream(fParent.getDisplay().getShells())
+				.filter(Shell::isVisible)
+				.collect(Collectors.toList());
+	}
+
+	protected List<Shell> findNewShells(Collection<Shell> beforeShells) {
+		return Arrays.stream(fParent.getDisplay().getShells())
+				.filter(Shell::isVisible)
+				.filter(shell -> !beforeShells.contains(shell))
+				.collect(Collectors.toList());
+	}
+
+	protected Shell findNewShell(Collection<Shell> beforeShells) {
+		DisplayHelper.sleep(fParent.getDisplay(), 100);
+		List<Shell> afterShells= findNewShells(beforeShells);
+		if (afterShells.isEmpty()) {
+			DisplayHelper.sleep(fParent.getDisplay(), 1000);
+		}
+		afterShells= findNewShells(beforeShells);
+		assertTrue("No new shell found, existing: " + beforeShells, afterShells.size() > beforeShells.size());
+		return afterShells.get(0);
 	}
 
 	@Test
@@ -139,5 +180,53 @@ public class CodeMiningProjectionViewerTest {
 				log.removeLogListener(logListener);
 			}
 		}
+	}
+
+	@Test
+	public void testCodeMiningDoesntAlterFocus() {
+		fViewer.configure(new SourceViewerConfiguration() {
+			@Override
+			public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
+				ContentAssistant contentAssistant= new ContentAssistant(true);
+				contentAssistant.addContentAssistProcessor(new BarContentAssistProcessor("1hi"), IDocument.DEFAULT_CONTENT_TYPE);
+				contentAssistant.addContentAssistProcessor(new BarContentAssistProcessor("1hello"), IDocument.DEFAULT_CONTENT_TYPE);
+				contentAssistant.setShowEmptyList(true);
+				return contentAssistant;
+			}
+		});
+		final List<Shell> beforeShells= getCurrentShells();
+		fViewer.setCodeMiningProviders(new ICodeMiningProvider[] {
+				new DelayedEchoCodeMiningProvider()
+		});
+		fViewer.getDocument().set("1a\n2a\n3a\n4a\n5a\n6a\n");
+		fParent.setSize(200, 4 * fViewer.getTextWidget().getLineHeight());
+		//fParent.pack(true);
+		fParent.open();
+		DisplayHelper.driveEventQueue(fParent.getDisplay());
+		// ensure ViewportGuard is initialized
+		fViewer.getControl().notifyListeners(SWT.KeyUp, new Event());
+		fViewer.setSelectedRange(1, 0);
+		fViewer.doOperation(ISourceViewer.CONTENTASSIST_PROPOSALS);
+		Display display= fParent.getDisplay();
+		assertTrue(new DisplayHelper() {
+			@Override
+			protected boolean condition() {
+				return display.getShells().length > beforeShells.size();
+			}
+		}.waitForCondition(display, 1000));
+		Shell completionShell= findNewShell(beforeShells);
+		// ↓ showing codeminings changing viewport while completion popup is open
+		fViewer.updateCodeMinings();
+		assertTrue(new DisplayHelper() {
+			@Override
+			protected boolean condition() {
+				return fViewer.getTextWidget().getLineVerticalIndent(0) > 0;
+			}
+		}.waitForCondition(display, 3000));
+		Event e= new Event();
+		e.widget= fViewer.getTextWidget();
+		e.keyCode= SWT.ARROW_DOWN;
+		fViewer.getTextWidget().notifyListeners(SWT.KeyDown, e);
+		assertTrue(completionShell.isVisible());
 	}
 }

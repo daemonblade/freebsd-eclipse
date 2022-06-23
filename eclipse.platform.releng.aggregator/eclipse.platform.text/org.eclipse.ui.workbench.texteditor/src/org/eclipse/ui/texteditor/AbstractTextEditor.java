@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.osgi.framework.Bundle;
@@ -88,6 +89,7 @@ import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
@@ -131,6 +133,7 @@ import org.eclipse.jface.text.IFindReplaceTarget;
 import org.eclipse.jface.text.IFindReplaceTargetExtension;
 import org.eclipse.jface.text.IInformationControlCreator;
 import org.eclipse.jface.text.IMarkRegionTarget;
+import org.eclipse.jface.text.IMultiTextSelection;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.IRewriteTarget;
 import org.eclipse.jface.text.ISelectionValidator;
@@ -1190,72 +1193,68 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			StyledText st= fSourceViewer.getTextWidget();
 			if (st == null || st.isDisposed())
 				return;
-			int caretOffset= st.getCaretOffset();
-			int lineNumber= st.getLineAtOffset(caretOffset);
-			int lineOffset= st.getOffsetAtLine(lineNumber);
+			boolean caretAtBeginningOfSelection = st.getCaretOffset() == st.getSelection().x;
+			Point firstSelection = st.getSelection();
+			int[] ranges = st.getSelectionRanges();
+			List<Point> newSelection = new ArrayList<>(ranges.length / 2);
+			for (int j = 0; j < ranges.length; j += 2) {
+				int offset = ranges[j];
+				int length = ranges[j + 1];
+				int caretOffset = caretAtBeginningOfSelection ? offset : offset + length;
+				int lineNumber = st.getLineAtOffset(caretOffset);
+				int lineOffset = st.getOffsetAtLine(lineNumber);
+				int lineLength;
+				int caretOffsetInDocument;
+				final IDocument document = fSourceViewer.getDocument();
 
-			int lineLength;
-			int caretOffsetInDocument;
-			final IDocument document= fSourceViewer.getDocument();
+				try {
+					caretOffsetInDocument = widgetOffset2ModelOffset(fSourceViewer, caretOffset);
+					lineLength = document.getLineInformationOfOffset(caretOffsetInDocument).getLength();
+				} catch (BadLocationException ex) {
+					return;
+				}
+				int lineEndOffset = lineOffset + lineLength;
 
-			try {
-				caretOffsetInDocument= widgetOffset2ModelOffset(fSourceViewer, caretOffset);
-				lineLength= document.getLineInformationOfOffset(caretOffsetInDocument).getLength();
-			} catch (BadLocationException ex) {
-				return;
-			}
-			int lineEndOffset= lineOffset + lineLength;
+				int delta = lineEndOffset - st.getCharCount();
+				if (delta > 0) {
+					lineEndOffset -= delta;
+					lineLength -= delta;
+				}
+				String line = ""; //$NON-NLS-1$
+				if (lineLength > 0)
+					line = st.getText(lineOffset, lineEndOffset - 1);
 
-			int delta= lineEndOffset - st.getCharCount();
-			if (delta > 0) {
-				lineEndOffset -= delta;
-				lineLength -= delta;
-			}
+				// Remember current selection
+				Point oldSelection = new Point(offset, offset + length);
 
-			String line= ""; //$NON-NLS-1$
-			if (lineLength > 0)
-				line= st.getText(lineOffset, lineEndOffset - 1);
+				// The new caret position
+				int newCaretOffset = -1;
 
-			// Remember current selection
-			Point oldSelection= st.getSelection();
-
-			// The new caret position
-			int newCaretOffset= -1;
-
-			if (isSmartHomeEndEnabled) {
-				// Compute the line end offset
-				int i= getLineEndPosition(document, line, lineLength, caretOffsetInDocument);
-
-				if (caretOffset - lineOffset == i)
+				if (isSmartHomeEndEnabled) {
+					// Compute the line end offset
+					int i = getLineEndPosition(document, line, lineLength, caretOffsetInDocument);
+					newCaretOffset = (caretOffset - lineOffset == i) ? lineEndOffset : lineOffset + i;
+				} else if (caretOffset < lineEndOffset) {
 					// to end of line
-					newCaretOffset= lineEndOffset;
-				else
-					// to end of text
-					newCaretOffset= lineOffset + i;
+					newCaretOffset = lineEndOffset;
+				}
 
-			} else {
+				if (newCaretOffset == -1) {
+					newCaretOffset = caretOffset;
+				}
 
-				if (caretOffset < lineEndOffset)
-					// to end of line
-					newCaretOffset= lineEndOffset;
+				newSelection.add(new Point(
+						fDoSelect ? (caretOffset < oldSelection.y ? oldSelection.y : oldSelection.x) : newCaretOffset,
+						newCaretOffset));
 
 			}
-
-			if (newCaretOffset == -1)
-				newCaretOffset= caretOffset;
-			else
-				st.setCaretOffset(newCaretOffset);
-
-			st.setCaretOffset(newCaretOffset);
-			if (fDoSelect) {
-				if (caretOffset < oldSelection.y)
-					st.setSelection(oldSelection.y, newCaretOffset);
-				else
-					st.setSelection(oldSelection.x, newCaretOffset);
-			} else
-				st.setSelection(newCaretOffset);
-
-			fireSelectionChanged(oldSelection);
+			st.setSelectionRanges(newSelection.stream().flatMapToInt(
+					p -> IntStream.of(p.x, p.y - p.x))
+					.toArray());
+			if (newSelection.size() == 1) {
+				st.showSelection();
+			}
+			fireSelectionChanged(firstSelection);
 		}
 	}
 
@@ -1326,70 +1325,58 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			StyledText st= fSourceViewer.getTextWidget();
 			if (st == null || st.isDisposed())
 				return;
+			boolean caretAtBeginningOfSelection = st.getCaretOffset() == st.getSelection().x;
+			Point firstSelection = st.getSelection();
+			int[] ranges = st.getSelectionRanges();
+			List<Point> newSelection = new ArrayList<>(ranges.length / 2);
+			for (int j = 0; j < ranges.length; j += 2) {
+				int offset = ranges[j];
+				int length = ranges[j + 1];
+				int caretOffset = caretAtBeginningOfSelection ? offset : offset + length;
+				int lineNumber = st.getLineAtOffset(caretOffset);
+				int lineOffset = st.getOffsetAtLine(lineNumber);
+				int lineLength;
+				int caretOffsetInDocument;
+				final IDocument document = fSourceViewer.getDocument();
 
-			int caretOffset= st.getCaretOffset();
-			int lineNumber= st.getLineAtOffset(caretOffset);
-			int lineOffset= st.getOffsetAtLine(lineNumber);
+				try {
+					caretOffsetInDocument = widgetOffset2ModelOffset(fSourceViewer, caretOffset);
+					lineLength = document.getLineInformationOfOffset(caretOffsetInDocument).getLength();
+				} catch (BadLocationException ex) {
+					return;
+				}
 
-			int lineLength;
-			int caretOffsetInDocument;
-			final IDocument document= fSourceViewer.getDocument();
+				String line = ""; //$NON-NLS-1$
+				if (lineLength > 0) {
+					int end = lineOffset + lineLength - 1;
+					end = Math.min(end, st.getCharCount() - 1);
+					line = st.getText(lineOffset, end);
+				}
 
-			try {
-				caretOffsetInDocument= widgetOffset2ModelOffset(fSourceViewer, caretOffset);
-				lineLength= document.getLineInformationOfOffset(caretOffsetInDocument).getLength();
-			} catch (BadLocationException ex) {
-				return;
-			}
+				// The new caret position
+				int newCaretOffset = -1;
 
-			String line= ""; //$NON-NLS-1$
-			if (lineLength > 0) {
-				int end= lineOffset + lineLength - 1;
-				end= Math.min(end, st.getCharCount() -1);
-				line= st.getText(lineOffset, end);
-			}
-
-			// Remember current selection
-			Point oldSelection= st.getSelection();
-
-			// The new caret position
-			int newCaretOffset= -1;
-
-			if (isSmartHomeEndEnabled) {
-
-				// Compute the line start offset
-				int index= getLineStartPosition(document, line, lineLength, caretOffsetInDocument);
-
-				if (caretOffset - lineOffset == index)
+				if (isSmartHomeEndEnabled) {
+					// Compute the line start offset
+					int index = getLineStartPosition(document, line, lineLength, caretOffsetInDocument);
+					newCaretOffset = (caretOffset - lineOffset == index) ? lineOffset : lineOffset + index;
+				} else if (caretOffset >= lineOffset) {
 					// to beginning of line
-					newCaretOffset= lineOffset;
-				else
-					// to beginning of text
-					newCaretOffset= lineOffset + index;
+					newCaretOffset = lineOffset;
+				}
 
-			} else {
-
-				if (caretOffset > lineOffset)
-					// to beginning of line
-					newCaretOffset= lineOffset;
+				newSelection.add(
+						new Point(fDoSelect ? (caretAtBeginningOfSelection ? offset + length : offset) : newCaretOffset,
+								newCaretOffset));
 			}
-
-			if (newCaretOffset == -1)
-				newCaretOffset= caretOffset;
-			else
-				st.setCaretOffset(newCaretOffset);
-
-			if (fDoSelect) {
-				if (caretOffset < oldSelection.y)
-					st.setSelection(oldSelection.y, newCaretOffset);
-				else
-					st.setSelection(oldSelection.x, newCaretOffset);
-			} else
-				st.setSelection(newCaretOffset);
-
-			fireSelectionChanged(oldSelection);
+			st.setSelectionRanges(newSelection.stream().flatMapToInt(
+					p -> IntStream.of(p.x, p.y - p.x))
+					.toArray());
+			if (newSelection.size() == 1) {
+				st.showSelection();
+			}
+			fireSelectionChanged(firstSelection);
 		}
-
 	}
 
 	/**
@@ -2944,7 +2931,9 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 	 * @since 2.1
 	 */
 	protected void doSetSelection(ISelection selection) {
-		if (selection instanceof ITextSelection) {
+		if (selection instanceof IMultiTextSelection && ((IMultiTextSelection) selection).getRegions().length > 1) {
+			getSourceViewer().getSelectionProvider().setSelection(selection);
+		} else if (selection instanceof ITextSelection) {
 			ITextSelection textSelection= (ITextSelection) selection;
 			selectAndReveal(textSelection.getOffset(), textSelection.getLength());
 		}
@@ -3964,7 +3953,7 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 			Color color= createColor(store, PREFERENCE_COLOR_FIND_SCOPE, styledText.getDisplay());
 
 			IFindReplaceTarget target= viewer.getFindReplaceTarget();
-			if (target != null && target instanceof IFindReplaceTargetExtension)
+			if (target instanceof IFindReplaceTargetExtension)
 				((IFindReplaceTargetExtension) target).setScopeHighlightColor(color);
 
 		}
@@ -4908,6 +4897,10 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 
 		} catch (CoreException x) {
 			IStatus status= x.getStatus();
+			if (status != null && status.getSeverity() == IStatus.CANCEL) {
+				// bug 577511 - do not ignore cancel:
+				throw new OperationCanceledException();
+			}
 			if (status == null || status.getSeverity() != IStatus.CANCEL) {
 				Bundle bundle= Platform.getBundle(PlatformUI.PLUGIN_ID);
 				ILog log= Platform.getLog(bundle);
@@ -7111,6 +7104,10 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		/** The cached document. */
 		private IDocument fDocument;
 
+		/** for debug only. see Bug 569286 **/
+		private Exception disconnectStack;
+		private boolean disconnectStackShown;
+
 		/**
 		 * Creates a new savable for this text editor.
 		 *
@@ -7128,7 +7125,12 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 		 */
 		public void disconnectEditor() {
 			getAdapter(IDocument.class); // make sure the document is cached
-			fTextEditor= null;
+			if (disconnectStack == null && !disconnectStackShown) {
+				disconnectStack = new IllegalStateException(
+						"Disconnected before saving. Please post stacktrace to https://bugs.eclipse.org/bugs/show_bug.cgi?id=569286 " //$NON-NLS-1$
+								+ fTextEditor.getClass().getName() + " " + getName()); //$NON-NLS-1$
+			}
+			fTextEditor = null;
 		}
 
 		@Override
@@ -7148,31 +7150,41 @@ public abstract class AbstractTextEditor extends EditorPart implements ITextEdit
 
 		@Override
 		public void doSave(IProgressMonitor monitor) throws CoreException {
-			try {
-				fTextEditor.doSave(monitor);
-			} catch (NullPointerException e) {
+			ITextEditor textEditor = fTextEditor;
+			if (textEditor == null) { // disconnected Editor - for example due to disposed
 				// This should not happen. Code added to handle the below bug.
-				// https://bugs.eclipse.org/bugs/show_bug.cgi?id=550336
-				Bundle bundle = Platform.getBundle(PlatformUI.PLUGIN_ID);
-				ILog log = Platform.getLog(bundle);
-				Status status = new Status(IStatus.ERROR, TextEditorPlugin.PLUGIN_ID, null, e);
-				log.log(status);
+				// https://bugs.eclipse.org/bugs/show_bug.cgi?id=569286
+				if (disconnectStack != null && !disconnectStackShown) {
+					Bundle bundle = Platform.getBundle(PlatformUI.PLUGIN_ID);
+					ILog log = Platform.getLog(bundle);
+					disconnectStack.addSuppressed(new IllegalStateException("doSave after disconnect")); //$NON-NLS-1$
+					Status status = new Status(IStatus.ERROR, TextEditorPlugin.PLUGIN_ID, null, disconnectStack);
+					log.log(status);
+					disconnectStackShown = true; // shut up
+				}
+				return;
 			}
+			textEditor.doSave(monitor);
 		}
 
 		@Override
 		public boolean isDirty() {
-			try {
-				return fTextEditor.isDirty();
-			} catch (NullPointerException e) {
+			ITextEditor textEditor = fTextEditor;
+			if (textEditor == null) { // disconnected Editor - for example due to disposed
 				// This should not happen. Code added to handle the below bug.
-				// https://bugs.eclipse.org/bugs/show_bug.cgi?id=550336
-				Bundle bundle = Platform.getBundle(PlatformUI.PLUGIN_ID);
-				ILog log = Platform.getLog(bundle);
-				Status status = new Status(IStatus.ERROR, TextEditorPlugin.PLUGIN_ID, null, e);
-				log.log(status);
+				// https://bugs.eclipse.org/bugs/show_bug.cgi?id=569286
+				if (disconnectStack != null && !disconnectStackShown) {
+					Bundle bundle = Platform.getBundle(PlatformUI.PLUGIN_ID);
+					ILog log = Platform.getLog(bundle);
+					disconnectStack.addSuppressed(new IllegalStateException("isDirty check after disconnect")); //$NON-NLS-1$
+					Status status = new Status(IStatus.ERROR, TextEditorPlugin.PLUGIN_ID, disconnectStack.getMessage(),
+							disconnectStack);
+					log.log(status);
+					disconnectStackShown = true; // shut up
+				}
 				return false;
 			}
+			return textEditor.isDirty();
 		}
 
 		/*

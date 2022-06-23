@@ -262,13 +262,6 @@
 	</extension>
 		
 	<extension point="org.eclipse.ui.views">
-		<view
-		   id="org.eclipse.search.SearchResultView"
-		   name="%searchResultViewName"
-		   category="org.eclipse.ui"
-		   class="org.eclipse.search.internal.ui.SearchResultView"
-		   icon="$nl$/icons/full/eview16/searchres.png">
-		</view>
       	<view
             name="%newSearchResultViewName"
             icon="$nl$/icons/full/eview16/searchres.png"
@@ -382,14 +375,6 @@
 	     </specification>
 	</extension>
 	
-	<extension point="org.eclipse.core.runtime.adapters">
-		<factory 
-			class="org.eclipse.search.internal.ui.SearchResultViewEntryAdapterFactory" 
-			adaptableType="org.eclipse.search.ui.ISearchResultViewEntry">
-				<adapter type="org.eclipse.core.resources.IResource"/>
-				<adapter type="org.eclipse.core.resources.IMarker"/>
-		</factory>
-	</extension>
  <extension
        point="org.eclipse.core.runtime.preferences">
     <initializer class="org.eclipse.search.internal.ui.SearchPreferenceInitializer"/>
