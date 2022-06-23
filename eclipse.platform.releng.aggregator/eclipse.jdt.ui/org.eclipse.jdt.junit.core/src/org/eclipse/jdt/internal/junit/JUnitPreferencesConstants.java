@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,7 +15,6 @@
 package org.eclipse.jdt.internal.junit;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -125,6 +124,16 @@ public class JUnitPreferencesConstants {
 	public static final String JUNIT_PLATFORM_SUITE_API_JAVADOC= JUnitCorePlugin.PLUGIN_ID + ".junit5.platform.suite.api.javadoclocation"; //$NON-NLS-1$
 
 	/**
+	 * Javadoc location for org.junit.platform.suite.engine (JUnit 5)
+	 */
+	public static final String JUNIT_PLATFORM_SUITE_ENGINE_JAVADOC= JUnitCorePlugin.PLUGIN_ID + ".junit5.platform.suite.engine.javadoclocation"; //$NON-NLS-1$
+
+	/**
+	 * Javadoc location for org.junit.platform.suite.commons (JUnit 5)
+	 */
+	public static final String JUNIT_PLATFORM_SUITE_COMMONS_JAVADOC= JUnitCorePlugin.PLUGIN_ID + ".junit5.platform.suite.commons.javadoclocation"; //$NON-NLS-1$
+
+	/**
 	 * Javadoc location for org.junit.vintage.engine (JUnit 5)
 	 */
 	public static final String JUNIT_VINTAGE_ENGINE_JAVADOC= JUnitCorePlugin.PLUGIN_ID + ".junit5.vintage.engine.javadoclocation"; //$NON-NLS-1$
@@ -164,8 +173,8 @@ public class JUnitPreferencesConstants {
 	 *
 	 * @return list
 	 */
-	public static List<String> createDefaultStackFiltersList() {
-		return Arrays.asList(fgDefaultFilterPatterns);
+	public static String[] createDefaultStackFiltersList() {
+		return fgDefaultFilterPatterns;
 	}
 
 	/**

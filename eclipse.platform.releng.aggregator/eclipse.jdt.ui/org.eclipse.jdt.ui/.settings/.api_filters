@@ -112,15 +112,6 @@
             </message_arguments>
         </filter>
     </resource>
-    <resource path="ui/org/eclipse/jdt/internal/ui/javaeditor/SemanticHighlightingReconciler.java" type="org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingReconciler$PositionCollector">
-        <filter comment="This is a Java 15 preview feature" id="640712815">
-            <message_arguments>
-                <message_argument value="TypeDeclaration"/>
-                <message_argument value="PositionCollector"/>
-                <message_argument value="getRestrictedIdentifierStartPosition()"/>
-            </message_arguments>
-        </filter>
-    </resource>
     <resource path="ui/org/eclipse/jdt/internal/ui/text/JavaOutlineInformationControl.java" type="org.eclipse.jdt.internal.ui.text.JavaOutlineInformationControl$OutlineTreeViewer">
         <filter id="571473929">
             <message_arguments>
@@ -191,6 +182,39 @@
             <message_arguments>
                 <message_argument value="ITextEditorActionDefinitionIds"/>
                 <message_argument value="IJavaEditorActionDefinitionIds"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="ui/org/eclipse/jdt/ui/wizards/NewRecordWizardPage.java" type="org.eclipse.jdt.ui.wizards.NewRecordWizardPage">
+        <filter comment="this was not an api( in a noreference class), so can be removed" id="338792546">
+            <message_arguments>
+                <message_argument value="org.eclipse.jdt.ui.wizards.NewRecordWizardPage"/>
+                <message_argument value="setMethodStubSelection(boolean, boolean)"/>
+            </message_arguments>
+        </filter>
+        <filter comment="@since not required for overridden methods" id="1143996420">
+            <message_arguments>
+                <message_argument value="createControl(Composite)"/>
+            </message_arguments>
+        </filter>
+    </resource>
+    <resource path="ui/org/eclipse/jdt/ui/wizards/NewTypeWizardPage.java" type="org.eclipse.jdt.ui.wizards.NewTypeWizardPage">
+        <filter id="336658481">
+            <message_arguments>
+                <message_argument value="org.eclipse.jdt.ui.wizards.NewTypeWizardPage"/>
+                <message_argument value="SEALEDMODIFIERS"/>
+            </message_arguments>
+        </filter>
+        <filter id="336658481">
+            <message_arguments>
+                <message_argument value="org.eclipse.jdt.ui.wizards.NewTypeWizardPage"/>
+                <message_argument value="fSealedModifierStatus"/>
+            </message_arguments>
+        </filter>
+        <filter id="336658481">
+            <message_arguments>
+                <message_argument value="org.eclipse.jdt.ui.wizards.NewTypeWizardPage"/>
+                <message_argument value="fSealedSuperClassStatus"/>
             </message_arguments>
         </filter>
     </resource>

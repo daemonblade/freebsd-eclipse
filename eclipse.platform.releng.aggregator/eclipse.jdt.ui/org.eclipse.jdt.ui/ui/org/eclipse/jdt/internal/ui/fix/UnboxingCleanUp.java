@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Fabrice TIERCELIN and others.
+ * Copyright (c) 2019, 2022 Fabrice TIERCELIN and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -23,11 +23,18 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.text.edits.TextEditGroup;
 
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.CastExpression;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.ParenthesizedExpression;
+import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
+import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
@@ -88,6 +95,7 @@ public class UnboxingCleanUp extends AbstractMultiFix {
 		bld.append("Integer integerObject = Integer.MAX_VALUE;\n"); //$NON-NLS-1$
 		bld.append("Character cObject = Character.MAX_VALUE;\n"); //$NON-NLS-1$
 		bld.append("\n"); //$NON-NLS-1$
+
 		if (isEnabled(CleanUpConstants.USE_UNBOXING)) {
 			bld.append("int i = integerObject;\n"); //$NON-NLS-1$
 			bld.append("char c = cObject;\n"); //$NON-NLS-1$
@@ -109,27 +117,81 @@ public class UnboxingCleanUp extends AbstractMultiFix {
 
 		unit.accept(new ASTVisitor() {
 			@Override
-			public boolean visit(MethodInvocation node) {
-				if (node.getExpression() != null) {
-					ITypeBinding nodeBinding= node.getExpression().resolveTypeBinding();
-					if (nodeBinding != null	&& nodeBinding.isClass()
-							&& (ASTNodes.usesGivenSignature(node, Boolean.class.getCanonicalName(), BOOLEAN_VALUE)
-									|| ASTNodes.usesGivenSignature(node, Byte.class.getCanonicalName(), BYTE_VALUE)
-									|| ASTNodes.usesGivenSignature(node, Character.class.getCanonicalName(), CHAR_VALUE)
-									|| ASTNodes.usesGivenSignature(node, Short.class.getCanonicalName(), SHORT_VALUE)
-									|| ASTNodes.usesGivenSignature(node, Integer.class.getCanonicalName(), INT_VALUE)
-									|| ASTNodes.usesGivenSignature(node, Long.class.getCanonicalName(), LONG_VALUE)
-									|| ASTNodes.usesGivenSignature(node, Float.class.getCanonicalName(), FLOAT_VALUE)
-									|| ASTNodes.usesGivenSignature(node, Double.class.getCanonicalName(), DOUBLE_VALUE))) {
-						final ITypeBinding actualResultType= ASTNodes.getTargetType(node);
+			public boolean visit(MethodInvocation visited) {
+				ASTNode parent= visited.getParent();
+				while (parent != null && parent instanceof ParenthesizedExpression) {
+					parent= parent.getParent();
+				}
+				if (parent instanceof CastExpression) {
+					return true;
+				}
+				if (visited.getExpression() != null) {
+					ITypeBinding nodeBinding= visited.getExpression().resolveTypeBinding();
 
-						if (actualResultType != null && actualResultType.isAssignmentCompatible(node.resolveTypeBinding())) {
-							rewriteOperations.add(new UnboxingOperation(node));
+					if (nodeBinding != null	&& nodeBinding.isClass()
+							&& (ASTNodes.usesGivenSignature(visited, Boolean.class.getCanonicalName(), BOOLEAN_VALUE)
+									|| ASTNodes.usesGivenSignature(visited, Byte.class.getCanonicalName(), BYTE_VALUE)
+									|| ASTNodes.usesGivenSignature(visited, Character.class.getCanonicalName(), CHAR_VALUE)
+									|| ASTNodes.usesGivenSignature(visited, Short.class.getCanonicalName(), SHORT_VALUE)
+									|| ASTNodes.usesGivenSignature(visited, Integer.class.getCanonicalName(), INT_VALUE)
+									|| ASTNodes.usesGivenSignature(visited, Long.class.getCanonicalName(), LONG_VALUE)
+									|| ASTNodes.usesGivenSignature(visited, Float.class.getCanonicalName(), FLOAT_VALUE)
+									|| ASTNodes.usesGivenSignature(visited, Double.class.getCanonicalName(), DOUBLE_VALUE))) {
+						final ITypeBinding actualResultType= ASTNodes.getTargetType(visited);
+
+						if (actualResultType != null && actualResultType.isAssignmentCompatible(visited.resolveTypeBinding())) {
+							parent= visited.getParent();
+
+							if (parent instanceof ClassInstanceCreation
+									&& visited.getLocationInParent() == ClassInstanceCreation.ARGUMENTS_PROPERTY) {
+								ClassInstanceCreation classInstanceCreation= (ClassInstanceCreation) parent;
+
+								if (hasConflictingMethodOrConstructor(visited, classInstanceCreation.resolveConstructorBinding(), classInstanceCreation.arguments())) {
+									return true;
+								}
+							} else if (parent instanceof MethodInvocation
+									&& visited.getLocationInParent() == MethodInvocation.ARGUMENTS_PROPERTY) {
+								MethodInvocation methodInvocation= (MethodInvocation) parent;
+
+								if (hasConflictingMethodOrConstructor(visited, methodInvocation.resolveMethodBinding(), methodInvocation.arguments())) {
+									return true;
+								}
+							} else if (parent instanceof SuperMethodInvocation
+									&& visited.getLocationInParent() == SuperMethodInvocation.ARGUMENTS_PROPERTY) {
+								SuperMethodInvocation superMethodInvocation= (SuperMethodInvocation) parent;
+
+								if (hasConflictingMethodOrConstructor(visited, superMethodInvocation.resolveMethodBinding(), superMethodInvocation.arguments())) {
+									return true;
+								}
+							} else if (parent instanceof SuperConstructorInvocation
+									&& visited.getLocationInParent() == SuperConstructorInvocation.ARGUMENTS_PROPERTY) {
+								SuperConstructorInvocation superConstructorInvocation= (SuperConstructorInvocation) parent;
+
+								if (hasConflictingMethodOrConstructor(visited, superConstructorInvocation.resolveConstructorBinding(), superConstructorInvocation.arguments())) {
+									return true;
+								}
+							}
+
+							rewriteOperations.add(new UnboxingOperation(visited));
 							return false;
 						}
 					}
 				}
+
 				return true;
+			}
+
+			private boolean hasConflictingMethodOrConstructor(final MethodInvocation visited, final IMethodBinding binding, final List<Expression> arguments) {
+				int argumentIndex= arguments.indexOf(visited);
+
+				if (argumentIndex < 0 || binding.getParameterTypes().length <= argumentIndex) {
+					return true;
+				}
+
+				ITypeBinding[] argumentTypes= binding.getParameterTypes().clone();
+				argumentTypes[argumentIndex]= visited.getExpression().resolveTypeBinding();
+
+				return ASTNodes.hasConflictingMethodOrConstructor(visited.getParent(), binding, argumentTypes);
 			}
 		});
 

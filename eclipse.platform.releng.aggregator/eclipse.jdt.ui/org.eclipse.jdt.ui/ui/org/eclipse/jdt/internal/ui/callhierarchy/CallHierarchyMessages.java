@@ -74,12 +74,14 @@ public final class CallHierarchyMessages extends NLS {
 	public static String CallHierarchyContentProvider_searchError_title;
 	public static String CallHierarchyContentProvider_searchError_message;
 	public static String CallHierarchyLabelProvider_constructor_label;
+	public static String CallHierarchyLabelProvider_declaration_label;
 	public static String CallHierarchyLabelProvider_expandWithConstructorsAction_realCallers;
 	public static String CallHierarchyLabelProvider_root;
 	public static String CallHierarchyLabelProvider_searchCanceled;
 	public static String CallHierarchyLabelProvider_noMethodSelected;
 	public static String CallHierarchyLabelProvider_updatePending;
 	public static String CallHierarchyLabelProvider_matches;
+	public static String CallHierarchyLabelProvider_potential;
 	public static String CallHierarchyViewPart_empty;
 	public static String CallHierarchyViewPart_callsToConstructors;
 	public static String CallHierarchyViewPart_callsToField;

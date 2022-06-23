@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2021 IBM Corporation and others.
+ * Copyright (c) 2020, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -763,6 +763,123 @@ public class CleanUpTest1d8 extends CleanUpTestCase {
 	}
 
 	@Test
+	public void testConvertToLambdaNoRenameLocals() throws CoreException {
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
+		String original= ""
+				+ "package test;\n"
+				+ "\n"
+				+ "interface FI {\n"
+				+ "    void doIt(String p);\n"
+				+ "}\n"
+				+ "public class C1 {\n"
+				+ "    public void foo() {\n"
+				+ "        FI fi= new FI() {\n"
+				+ "            @Override\n"
+				+ "            public void doIt(String e) {\n"
+				+ "                if (e != null) {\n"
+				+ "                    int i= 0;\n"
+				+ "                    System.out.println(i);\n"
+				+ "                } else {\n"
+				+ "                    int i= 0;\n"
+				+ "                    System.out.println(i);\n"
+				+ "                }\n"
+				+ "            }\n"
+				+ "        };\n"
+				+ "    }\n"
+				+ "}\n";
+
+		String fixed= ""
+				+ "package test;\n"
+				+ "\n"
+				+ "interface FI {\n"
+				+ "    void doIt(String p);\n"
+				+ "}\n"
+				+ "public class C1 {\n"
+				+ "    public void foo() {\n"
+				+ "        FI fi= e -> {\n"
+				+ "            if (e != null) {\n"
+				+ "                int i= 0;\n"
+				+ "                System.out.println(i);\n"
+				+ "            } else {\n"
+				+ "                int i= 0;\n"
+				+ "                System.out.println(i);\n"
+				+ "            }\n"
+				+ "        };\n"
+				+ "    }\n"
+				+ "}\n";
+
+		enable(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES);
+		enable(CleanUpConstants.USE_LAMBDA);
+		ICompilationUnit cu= pack.createCompilationUnit("C1.java", original, false, null);
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { fixed }, null);
+	}
+
+	@Test
+	public void testConvertToLambdaWithRenameLocals() throws CoreException {
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test", false, null);
+		String original= ""
+				+ "package test1;\n"
+				+ "interface FI {\n"
+				+ "    void doIt(String p);\n"
+				+ "}\n"
+				+ "public class C1 {\n"
+				+ "    public void foo() {\n"
+				+ "        int i= 33;\n"
+				+ "        FI fi = new FI() {\n"
+				+ "            @Override\n"
+				+ "            public void doIt(String e) {\n"
+				+ "                FI fi = new FI() {\n"
+				+ "                    @Override\n"
+				+ "                    public void doIt(String e) {\n"
+				+ "                        int i1= 37;\n"
+				+ "                        if (e != null) {\n"
+				+ "                            int i = 0;\n"
+				+ "                            System.out.println(i);\n"
+				+ "                        } else {\n"
+				+ "                            int i = 0;\n"
+				+ "                            System.out.println(i);\n"
+				+ "                        }\n"
+				+ "                    }\n"
+				+ "                };\n"
+				+ "            }\n"
+				+ "        };\n"
+				+ "    }\n"
+				+ "}\n";
+
+
+		String fixed= ""
+				+ "package test1;\n"
+				+ "interface FI {\n"
+				+ "    void doIt(String p);\n"
+				+ "}\n"
+				+ "public class C1 {\n"
+				+ "    public void foo() {\n"
+				+ "        int i= 33;\n"
+				+ "        FI fi = e -> {\n"
+				+ "            FI fi1 = e1 -> {\n"
+				+ "                int i1= 37;\n"
+				+ "                if (e1 != null) {\n"
+				+ "                    int i2 = 0;\n"
+				+ "                    System.out.println(i2);\n"
+				+ "                } else {\n"
+				+ "                    int i3 = 0;\n"
+				+ "                    System.out.println(i3);\n"
+				+ "                }\n"
+				+ "            };\n"
+				+ "        };\n"
+				+ "    }\n"
+				+ "}\n";
+
+		enable(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES);
+		enable(CleanUpConstants.USE_LAMBDA);
+		ICompilationUnit cu= pack.createCompilationUnit("C1.java", original, false, null);
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { fixed }, null);
+
+	}
+
+	@Test
 	public void testConvertToLambdaWithMethodAnnotations() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test", false, null);
 		String sample= "" //
@@ -1471,6 +1588,80 @@ public class CleanUpTest1d8 extends CleanUpTestCase {
 		enable(CleanUpConstants.SIMPLIFY_LAMBDA_EXPRESSION_AND_METHOD_REF);
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu });
+	}
+
+	@Test
+	public void testBug579393() throws Exception {
+		// Given
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
+		String given= "" //
+				+ "import java.util.stream.Stream;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public static void main(String[] args) {\n" //
+				+ "        new A() {\n" //
+				+ "        };\n" //
+				+ "        get();\n" //
+				+ "        System.out.println(\"done\");\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static A get(B<?>... sources) {\n" //
+				+ "        return Stream.of(sources)\n" //
+				+ "                .map(B::getT)\n" //
+				+ "                .filter(x -> x.exists_testOpen())\n"  //
+				+ "                .findFirst()\n"  //
+				+ "                .orElse(null);\n" //
+			    + "    }\n" //
+			    + "\n" //
+			    + "    public interface B<T extends A> extends A {\n" //
+				+ "        T getT();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public interface A {\n" //
+				+ "        default boolean exists_testOpen() {\n" //
+				+ "            return true;\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		String expected= "" //
+				+ "import java.util.stream.Stream;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public static void main(String[] args) {\n" //
+				+ "        new A() {\n" //
+				+ "        };\n" //
+				+ "        get();\n" //
+				+ "        System.out.println(\"done\");\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static A get(B<?>... sources) {\n" //
+				+ "        return Stream.of(sources)\n" //
+				+ "                .map(B::getT)\n" //
+				+ "                .filter(A::exists_testOpen)\n"  //
+				+ "                .findFirst()\n"  //
+				+ "                .orElse(null);\n" //
+			    + "    }\n" //
+			    + "\n" //
+			    + "    public interface B<T extends A> extends A {\n" //
+				+ "        T getT();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public interface A {\n" //
+				+ "        default boolean exists_testOpen() {\n" //
+				+ "            return true;\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		// When
+		ICompilationUnit cu= pack.createCompilationUnit("E.java", given, false, null);
+		enable(CleanUpConstants.SIMPLIFY_LAMBDA_EXPRESSION_AND_METHOD_REF);
+
+		// Then
+		assertNotEquals("The class must be changed", given, expected);
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { expected },
+				new HashSet<>(Arrays.asList(MultiFixMessages.LambdaExpressionAndMethodRefCleanUp_description)));
 	}
 
 	@Test
@@ -2435,6 +2626,74 @@ public class CleanUpTest1d8 extends CleanUpTestCase {
 				+ "        return concatenation.toString();\n" //
 				+ "    }\n" //
 				+ "\n" //
+				+ "    public String refactorConcatenationWithCharVariable(String[] titles, char delimiter) {\n" //
+				+ "        boolean isFirst = true;\n" //
+				+ "        StringBuilder concatenation = new StringBuilder();\n" //
+				+ "\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (String title : titles) {\n" //
+				+ "            if (isFirst) {\n" //
+				+ "                isFirst = false;\n" //
+				+ "            } else {\n" //
+				+ "                concatenation.append(delimiter);\n" //
+				+ "            }\n" //
+				+ "            concatenation.append(title);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return concatenation.toString();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public String refactorConcatenationWithCharacterWrapper(String[] titles, Character delimiter) {\n" //
+				+ "        boolean isFirst = true;\n" //
+				+ "        StringBuilder concatenation = new StringBuilder();\n" //
+				+ "\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (String title : titles) {\n" //
+				+ "            if (isFirst) {\n" //
+				+ "                isFirst = false;\n" //
+				+ "            } else {\n" //
+				+ "                concatenation.append(delimiter);\n" //
+				+ "            }\n" //
+				+ "            concatenation.append(title);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return concatenation.toString();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public String refactorConcatenationWithEscapedChar(String[] titles) {\n" //
+				+ "        boolean isFirst = true;\n" //
+				+ "        StringBuilder concatenation = new StringBuilder();\n" //
+				+ "\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (String title : titles) {\n" //
+				+ "            if (isFirst) {\n" //
+				+ "                isFirst = false;\n" //
+				+ "            } else {\n" //
+				+ "                concatenation.append('\\n');\n" //
+				+ "            }\n" //
+				+ "            concatenation.append(title);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return concatenation.toString();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public String refactorConcatenationWithInt(String[] titles) {\n" //
+				+ "        boolean isFirst = true;\n" //
+				+ "        StringBuilder concatenation = new StringBuilder();\n" //
+				+ "\n" //
+				+ "        // Keep this comment\n" //
+				+ "        for (String title : titles) {\n" //
+				+ "            if (isFirst) {\n" //
+				+ "                isFirst = false;\n" //
+				+ "            } else {\n" //
+				+ "                concatenation.append(123);\n" //
+				+ "            }\n" //
+				+ "            concatenation.append(title);\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return concatenation.toString();\n" //
+				+ "    }\n" //
+				+ "\n" //
 				+ "    public String refactorConcatenationWithHardCodedDelimiter(String[] texts) {\n" //
 				+ "        boolean isFirst = true;\n" //
 				+ "        StringBuilder concatenation = new StringBuilder();\n" //
@@ -2871,7 +3130,43 @@ public class CleanUpTest1d8 extends CleanUpTestCase {
 				+ "        \n" //
 				+ "\n" //
 				+ "        // Keep this comment\n" //
-				+ "        String concatenation = String.join(String.valueOf(','), titles);\n" //
+				+ "        String concatenation = String.join(\",\", titles);\n" //
+				+ "\n" //
+				+ "        return concatenation;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public String refactorConcatenationWithCharVariable(String[] titles, char delimiter) {\n" //
+				+ "        \n" //
+				+ "\n" //
+				+ "        // Keep this comment\n" //
+				+ "        String concatenation = String.join(String.valueOf(delimiter), titles);\n" //
+				+ "\n" //
+				+ "        return concatenation;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public String refactorConcatenationWithCharacterWrapper(String[] titles, Character delimiter) {\n" //
+				+ "        \n" //
+				+ "\n" //
+				+ "        // Keep this comment\n" //
+				+ "        String concatenation = String.join(String.valueOf(delimiter), titles);\n" //
+				+ "\n" //
+				+ "        return concatenation;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public String refactorConcatenationWithEscapedChar(String[] titles) {\n" //
+				+ "        \n" //
+				+ "\n" //
+				+ "        // Keep this comment\n" //
+				+ "        String concatenation = String.join(\"\\n\", titles);\n" //
+				+ "\n" //
+				+ "        return concatenation;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public String refactorConcatenationWithInt(String[] titles) {\n" //
+				+ "        \n" //
+				+ "\n" //
+				+ "        // Keep this comment\n" //
+				+ "        String concatenation = String.join(String.valueOf(123), titles);\n" //
 				+ "\n" //
 				+ "        return concatenation;\n" //
 				+ "    }\n" //

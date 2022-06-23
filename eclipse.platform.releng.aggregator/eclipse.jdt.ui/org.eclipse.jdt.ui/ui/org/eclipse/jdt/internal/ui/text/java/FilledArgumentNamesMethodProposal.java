@@ -27,8 +27,6 @@ import org.eclipse.jface.text.link.LinkedModeUI;
 import org.eclipse.jface.text.link.LinkedPosition;
 import org.eclipse.jface.text.link.LinkedPositionGroup;
 
-import org.eclipse.ui.IEditorPart;
-
 import org.eclipse.ui.texteditor.link.EditorLinkedModeUI;
 
 import org.eclipse.jdt.core.CompletionProposal;
@@ -37,6 +35,7 @@ import org.eclipse.jdt.ui.text.java.JavaContentAssistInvocationContext;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorHighlightingSynchronizer;
+import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor;
 
 /**
@@ -71,7 +70,7 @@ public class FilledArgumentNamesMethodProposal extends JavaMethodCompletionPropo
 				}
 
 				model.forceInstall();
-				JavaEditor editor= getJavaEditor();
+				JavaEditor editor= EditorUtility.getActiveJavaEditor();
 				if (editor != null) {
 					model.addLinkingListener(new EditorHighlightingSynchronizer(editor));
 				}
@@ -149,20 +148,6 @@ public class FilledArgumentNamesMethodProposal extends JavaMethodCompletionPropo
 			buffer.append(SEMICOLON);
 
 		return buffer.toString();
-	}
-
-	/**
-	 * Returns the currently active java editor, or <code>null</code> if it
-	 * cannot be determined.
-	 *
-	 * @return  the currently active java editor, or <code>null</code>
-	 */
-	private JavaEditor getJavaEditor() {
-		IEditorPart part= JavaPlugin.getActivePage().getActiveEditor();
-		if (part instanceof JavaEditor)
-			return (JavaEditor) part;
-		else
-			return null;
 	}
 
 	/*

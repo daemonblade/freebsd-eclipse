@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corporation and others.
+ * Copyright (c) 2018, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -97,6 +97,7 @@ public class CleanUpConstantsOptions extends CleanUpConstants {
 		options.setOption(REMOVE_UNUSED_CODE_PRIVATE_CONSTRUCTORS, CleanUpOptions.TRUE);
 		options.setOption(REMOVE_UNUSED_CODE_PRIVATE_FELDS, CleanUpOptions.TRUE);
 		options.setOption(REMOVE_UNUSED_CODE_PRIVATE_METHODS, CleanUpOptions.TRUE);
+		options.setOption(REMOVE_UNUSED_CODE_METHOD_PARAMETERS, CleanUpOptions.FALSE);
 		options.setOption(REMOVE_UNUSED_CODE_PRIVATE_TYPES, CleanUpOptions.TRUE);
 		options.setOption(REMOVE_UNUSED_CODE_LOCAL_VARIABLES, CleanUpOptions.FALSE);
 
@@ -119,6 +120,7 @@ public class CleanUpConstantsOptions extends CleanUpConstants {
 		options.setOption(COLLECTION_CLONING, CleanUpOptions.FALSE);
 		options.setOption(MAP_CLONING, CleanUpOptions.FALSE);
 		options.setOption(OVERRIDDEN_ASSIGNMENT, CleanUpOptions.FALSE);
+		options.setOption(OVERRIDDEN_ASSIGNMENT_MOVE_DECL, CleanUpOptions.TRUE);
 		options.setOption(REMOVE_REDUNDANT_MODIFIERS, CleanUpOptions.FALSE);
 		options.setOption(RAISE_EMBEDDED_IF, CleanUpOptions.FALSE);
 		options.setOption(REMOVE_REDUNDANT_SEMICOLONS, CleanUpOptions.TRUE);
@@ -185,6 +187,7 @@ public class CleanUpConstantsOptions extends CleanUpConstants {
 		options.setOption(COMPARING_ON_CRITERIA, CleanUpOptions.FALSE);
 		options.setOption(JOIN, CleanUpOptions.FALSE);
 		options.setOption(TRY_WITH_RESOURCE, CleanUpOptions.FALSE);
+		options.setOption(STRINGCONCAT_TO_TEXTBLOCK, CleanUpOptions.FALSE);
 		options.setOption(MULTI_CATCH, CleanUpOptions.FALSE);
 		options.setOption(REMOVE_REDUNDANT_TYPE_ARGUMENTS, CleanUpOptions.TRUE);
 		options.setOption(USE_AUTOBOXING, CleanUpOptions.FALSE);
@@ -194,7 +197,7 @@ public class CleanUpConstantsOptions extends CleanUpConstants {
 		options.setOption(CONSTANTS_FOR_SYSTEM_PROPERTY_LINE_SEPARATOR, CleanUpOptions.FALSE);
 		options.setOption(CONSTANTS_FOR_SYSTEM_PROPERTY_PATH_SEPARATOR, CleanUpOptions.FALSE);
 		options.setOption(CONSTANTS_FOR_SYSTEM_PROPERTY_FILE_ENCODING, CleanUpOptions.FALSE);
-		options.setOption(CONSTANTS_FOR_SYSTEM_PROPERTY_BOOLEAN, CleanUpOptions.FALSE);
+		options.setOption(CONSTANTS_FOR_SYSTEM_PROPERTY_BOXED, CleanUpOptions.FALSE);
 
 		options.setOption(CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED, CleanUpOptions.TRUE);
 		options.setOption(CONTROL_STATEMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED, CleanUpOptions.TRUE);
@@ -274,6 +277,7 @@ public class CleanUpConstantsOptions extends CleanUpConstants {
 		options.setOption(REMOVE_UNUSED_CODE_PRIVATE_CONSTRUCTORS, CleanUpOptions.TRUE);
 		options.setOption(REMOVE_UNUSED_CODE_PRIVATE_FELDS, CleanUpOptions.TRUE);
 		options.setOption(REMOVE_UNUSED_CODE_PRIVATE_METHODS, CleanUpOptions.TRUE);
+		options.setOption(REMOVE_UNUSED_CODE_METHOD_PARAMETERS, CleanUpOptions.FALSE);
 		options.setOption(REMOVE_UNUSED_CODE_PRIVATE_TYPES, CleanUpOptions.TRUE);
 		options.setOption(REMOVE_UNUSED_CODE_LOCAL_VARIABLES, CleanUpOptions.FALSE);
 
@@ -296,6 +300,7 @@ public class CleanUpConstantsOptions extends CleanUpConstants {
 		options.setOption(COLLECTION_CLONING, CleanUpOptions.FALSE);
 		options.setOption(MAP_CLONING, CleanUpOptions.FALSE);
 		options.setOption(OVERRIDDEN_ASSIGNMENT, CleanUpOptions.FALSE);
+		options.setOption(OVERRIDDEN_ASSIGNMENT_MOVE_DECL, CleanUpOptions.TRUE);
 		options.setOption(REMOVE_REDUNDANT_MODIFIERS, CleanUpOptions.FALSE);
 		options.setOption(RAISE_EMBEDDED_IF, CleanUpOptions.FALSE);
 		options.setOption(REMOVE_REDUNDANT_SEMICOLONS, CleanUpOptions.FALSE);
@@ -364,6 +369,7 @@ public class CleanUpConstantsOptions extends CleanUpConstants {
 		options.setOption(COMPARING_ON_CRITERIA, CleanUpOptions.FALSE);
 		options.setOption(JOIN, CleanUpOptions.FALSE);
 		options.setOption(TRY_WITH_RESOURCE, CleanUpOptions.FALSE);
+		options.setOption(STRINGCONCAT_TO_TEXTBLOCK, CleanUpOptions.FALSE);
 		options.setOption(MULTI_CATCH, CleanUpOptions.FALSE);
 		options.setOption(REMOVE_REDUNDANT_TYPE_ARGUMENTS, CleanUpOptions.FALSE);
 		options.setOption(USE_AUTOBOXING, CleanUpOptions.FALSE);
@@ -373,7 +379,7 @@ public class CleanUpConstantsOptions extends CleanUpConstants {
 		options.setOption(CONSTANTS_FOR_SYSTEM_PROPERTY_LINE_SEPARATOR, CleanUpOptions.FALSE);
 		options.setOption(CONSTANTS_FOR_SYSTEM_PROPERTY_PATH_SEPARATOR, CleanUpOptions.FALSE);
 		options.setOption(CONSTANTS_FOR_SYSTEM_PROPERTY_FILE_ENCODING, CleanUpOptions.FALSE);
-		options.setOption(CONSTANTS_FOR_SYSTEM_PROPERTY_BOOLEAN, CleanUpOptions.FALSE);
+		options.setOption(CONSTANTS_FOR_SYSTEM_PROPERTY_BOXED, CleanUpOptions.FALSE);
 
 		options.setOption(CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED, CleanUpOptions.FALSE);
 		options.setOption(CONTROL_STATEMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED, CleanUpOptions.FALSE);

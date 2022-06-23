@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -146,6 +146,7 @@ public class CleanUpMessages extends NLS {
 	public static String UnnecessaryCodeTabPage_CheckboxName_CollectionCloning;
 	public static String UnnecessaryCodeTabPage_CheckboxName_MapCloning;
 	public static String UnnecessaryCodeTabPage_CheckboxName_OverriddenAssignment;
+	public static String UnnecessaryCodeTabPage_CheckboxName_MoveDeclaration;
 	public static String UnnecessaryCodeTabPage_CheckboxName_RedundantModifiers;
 	public static String UnnecessaryCodeTabPage_CheckboxName_RedundantModifiers_description;
 	public static String UnnecessaryCodeTabPage_CheckboxName_EmbeddedIf;
@@ -165,6 +166,7 @@ public class CleanUpMessages extends NLS {
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnusedLocalVariables;
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnusedMembers;
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnusedMethods;
+	public static String UnnecessaryCodeTabPage_CheckboxName_UnusedParameters;
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnusedTypes;
 	public static String UnnecessaryCodeTabPage_GroupName_UnnecessaryCode;
 	public static String UnnecessaryCodeTabPage_GroupName_UnusedCode;
@@ -191,6 +193,9 @@ public class CleanUpMessages extends NLS {
 
 	public static String JavaFeatureTabPage_GroupName_Java16;
 	public static String JavaFeatureTabPage_CheckboxName_PatternMatchingForInstanceof;
+
+	public static String JavaFeatureTabPage_GroupName_Java15;
+	public static String JavaFeatureTabPage_CheckboxName_StringConcatToTextBlock;
 
 	public static String JavaFeatureTabPage_GroupName_Java14;
 	public static String JavaFeatureTabPage_CheckboxName_ConvertToSwitchExpressions;
@@ -228,7 +233,7 @@ public class CleanUpMessages extends NLS {
 	public static String JavaFeatureTabPage_CheckboxName_ConstantsForSystemProperty_PathSeparator;
 	public static String JavaFeatureTabPage_CheckboxName_ConstantsForSystemProperty_LineSeparator;
 	public static String JavaFeatureTabPage_CheckboxName_ConstantsForSystemProperty_FileEncoding;
-	public static String JavaFeatureTabPage_CheckboxName_ConstantsForSystemProperty_BooleanProperty;
+	public static String JavaFeatureTabPage_CheckboxName_ConstantsForSystemProperty_BoxedTypeProperty;
 
 	static {
 		// initialize resource bundle

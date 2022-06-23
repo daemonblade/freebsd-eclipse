@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corporation and others.
+ * Copyright (c) 2019, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -1229,6 +1229,75 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 	}
 
 	@Test
+	public void testJava50ForLoopBug578910() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "import java.util.Iterator;\n" //
+				+ "import java.util.Map;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "\n" //
+				+ "    public void foo(Map<String, String> extensionMap) {\n" //
+				+ "	       for (Iterator<String> iterator = extensionMap.keySet().iterator(); iterator.hasNext();) {\n" //
+				+ "	   	       try {\n" //
+				+ "	               String expression = iterator.next();\n" //
+				+ "	               System.out.println(expression);\n" //
+				+ "	           } catch (Exception e) {\n" //
+				+ "	           }\n" //
+				+ "	       }\n" //
+				+ "	       int j = 7;\n" //
+				+ "	       for (Iterator<String> iterator = extensionMap.keySet().iterator(); iterator.hasNext();) {\n" //
+				+ "	           do {\n" //
+				+ "	               String expression = iterator.next();\n" //
+				+ "	               System.out.println(expression);\n" //
+				+ "	           } while (j-- > 0);\n" //
+				+ "	       }\n" //
+				+ "	       for (Iterator<String> iterator = extensionMap.keySet().iterator(); iterator.hasNext();) {\n" //
+				+ "	           String expression = null;\n" //
+				+ "	           if (extensionMap != null) {\n" //
+				+ "	               expression = iterator.next();\n" //
+				+ "            }\n" //
+				+ "	           System.out.println(expression);\n" //
+				+ "	       }\n" //
+				+ "    }\n" //
+				+ "}";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "import java.util.Map;\n" //
+				+ "\n" //
+				+ "public class E1 {\n" //
+				+ "\n" //
+				+ "    public void foo(Map<String, String> extensionMap) {\n" //
+				+ "	       for (String expression : extensionMap.keySet()) {\n" //
+				+ "	   	       try {\n" //
+				+ "	               System.out.println(expression);\n" //
+				+ "	           } catch (Exception e) {\n" //
+				+ "	           }\n" //
+				+ "	       }\n" //
+				+ "	       int j = 7;\n" //
+				+ "	       for (String expression : extensionMap.keySet()) {\n" //
+				+ "	           do {\n" //
+				+ "	               System.out.println(expression);\n" //
+				+ "	           } while (j-- > 0);\n" //
+				+ "	       }\n" //
+				+ "	       for (String expression : extensionMap.keySet()) {\n" //
+				+ "	           if (extensionMap != null) {\n" //
+				+ "            }\n" //
+				+ "	           System.out.println(expression);\n" //
+				+ "	       }\n" //
+				+ "    }\n" //
+				+ "}";
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
+	}
+
+	@Test
 	public void testBug550726() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		String sample= "" //
@@ -2343,12 +2412,30 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 	}
 
 	@Test
-	public void testDoNotUseAutoboxingOnString() throws Exception {
+	public void testDoNotUseAutoboxing() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		String sample= "" //
 				+ "package test1;\n" //
 				+ "\n" //
+				+ "import java.util.List;\n" //
+				+ "\n" //
 				+ "public class E1 {\n" //
+				+ "    public static int dummyMethod(Byte byObject) {\n" //
+				+ "        return 1;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static int dummyMethod(byte byPrimitive) {\n" //
+				+ "        return 2;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void doNotCleanupOnConflictingMethod(byte byPrimitive) {\n" //
+				+ "        dummyMethod(Byte.valueOf(byPrimitive));\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void doNotCleanupOnOverloadedMethod(List<Integer> integers, int notAnIndex) {\n" //
+				+ "        integers.remove(Integer.valueOf(notAnIndex));\n" //
+				+ "    }\n" //
+				+ "\n" //
 				+ "    public static void doNotUseAutoboxingOnString() {\n" //
 				+ "        Integer i = Integer.valueOf(\"1\");\n" //
 				+ "        Long l = Long.valueOf(\"1\");\n" //
@@ -2612,6 +2699,22 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "package test1;\n" //
 				+ "\n" //
 				+ "public class E1 {\n" //
+				+ "    public static int dummyMethod(Byte byObject) {\n" //
+				+ "        return 1;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static int dummyMethod(byte byPrimitive) {\n" //
+				+ "        return 2;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void doNotCleanupOnConflictingMethod(Byte byObject) {\n" //
+				+ "        dummyMethod(byObject.byteValue());\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void doNotCleanupOnOverloadedMethod(StringBuilder builder, Character optimizedObject) {\n" //
+				+ "        builder.append(optimizedObject.charValue());\n" //
+				+ "    }\n" //
+				+ "\n" //
 				+ "    public static void doNotUseUnboxingOnNarrowingType(Character cObject, Byte byObject,\n" //
 				+ "            Integer iObject, Short sObject, Float fObject) {\n" //
 				+ "        int c = cObject.charValue();\n" //
@@ -2619,6 +2722,16 @@ public class CleanUpTest1d5 extends CleanUpTestCase {
 				+ "        long i = iObject.intValue();\n" //
 				+ "        int s = sObject.shortValue();\n" //
 				+ "        double f = fObject.floatValue();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static void doNotUseUnboxingOnCastCalls(Character cObject, Byte byObject,\n" //
+				+ "            Integer iObject, Short sObject, Float fObject, Object unknown) {\n" //
+				+ "        int c = (int)cObject.charValue();\n" //
+				+ "        int by = (int)byObject.byteValue();\n" //
+				+ "        long i = (long)iObject.intValue();\n" //
+				+ "        int s = (int)sObject.shortValue();\n" //
+				+ "        double f = (double)fObject.floatValue();\n" //
+				+ "        byte b = (byte)((Integer)unknown).intValue();\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public static void doNotUseUnboxingWhenTypesDontMatch(Byte byObject,\n" //

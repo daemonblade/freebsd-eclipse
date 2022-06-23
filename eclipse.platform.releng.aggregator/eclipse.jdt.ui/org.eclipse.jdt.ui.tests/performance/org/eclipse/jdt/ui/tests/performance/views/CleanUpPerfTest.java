@@ -232,6 +232,7 @@ public class CleanUpPerfTest extends JdtPerformanceTestCaseCommon {
 		node.put(CleanUpConstants.REMOVE_UNUSED_CODE_PRIVATE_CONSTRUCTORS, CleanUpOptions.TRUE);
 		node.put(CleanUpConstants.REMOVE_UNUSED_CODE_PRIVATE_FELDS, CleanUpOptions.TRUE);
 		node.put(CleanUpConstants.REMOVE_UNUSED_CODE_PRIVATE_METHODS, CleanUpOptions.TRUE);
+		node.put(CleanUpConstants.REMOVE_UNUSED_CODE_METHOD_PARAMETERS, CleanUpOptions.TRUE);
 		node.put(CleanUpConstants.REMOVE_UNUSED_CODE_PRIVATE_TYPES, CleanUpOptions.TRUE);
 		node.put(CleanUpConstants.REMOVE_UNUSED_CODE_LOCAL_VARIABLES, CleanUpOptions.TRUE);
 
@@ -249,7 +250,7 @@ public class CleanUpPerfTest extends JdtPerformanceTestCaseCommon {
 		node.put(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_LINE_SEPARATOR, CleanUpOptions.TRUE);
 		node.put(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_PATH_SEPARATOR, CleanUpOptions.TRUE);
 		node.put(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_FILE_ENCODING, CleanUpOptions.TRUE);
-		node.put(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_BOOLEAN, CleanUpOptions.TRUE);
+		node.put(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_BOXED, CleanUpOptions.TRUE);
 
 		storeSettings(node);
 
@@ -450,6 +451,7 @@ public class CleanUpPerfTest extends JdtPerformanceTestCaseCommon {
 		node.put(CleanUpConstants.REMOVE_UNUSED_CODE_PRIVATE_CONSTRUCTORS, CleanUpOptions.TRUE);
 		node.put(CleanUpConstants.REMOVE_UNUSED_CODE_PRIVATE_FELDS, CleanUpOptions.TRUE);
 		node.put(CleanUpConstants.REMOVE_UNUSED_CODE_PRIVATE_METHODS, CleanUpOptions.TRUE);
+		node.put(CleanUpConstants.REMOVE_UNUSED_CODE_METHOD_PARAMETERS, CleanUpOptions.TRUE);
 		node.put(CleanUpConstants.REMOVE_UNUSED_CODE_PRIVATE_TYPES, CleanUpOptions.TRUE);
 		node.put(CleanUpConstants.REMOVE_UNUSED_CODE_LOCAL_VARIABLES, CleanUpOptions.TRUE);
 
@@ -555,7 +557,7 @@ public class CleanUpPerfTest extends JdtPerformanceTestCaseCommon {
 		node.put(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_PATH_SEPARATOR, CleanUpOptions.TRUE);
 		node.put(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_FILE_ENCODING, CleanUpOptions.TRUE);
 		node.put(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_LINE_SEPARATOR, CleanUpOptions.TRUE);
-		node.put(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_BOOLEAN, CleanUpOptions.TRUE);
+		node.put(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_BOXED, CleanUpOptions.TRUE);
 
 		storeSettings(node);
 

@@ -33,7 +33,6 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.ui.JavaElementLabels;
 
 public class RenameMethodUserInterfaceStarter extends RenameUserInterfaceStarter {
-
 	@Override
 	public boolean activate(Refactoring refactoring, Shell parent, int saveMode) throws CoreException {
 		RenameVirtualMethodProcessor processor= refactoring.getAdapter(RenameVirtualMethodProcessor.class);

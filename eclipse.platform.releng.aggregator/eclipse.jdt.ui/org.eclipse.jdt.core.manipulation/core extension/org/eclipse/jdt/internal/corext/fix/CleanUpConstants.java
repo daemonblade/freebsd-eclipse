@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -1110,7 +1110,8 @@ public class CleanUpConstants {
 	public static final String CONSTANTS_FOR_SYSTEM_PROPERTY_LINE_SEPARATOR= "cleanup.system_property_line_separator"; //$NON-NLS-1$
 
 	/**
-	 * Replace <code>Boolean.parseBoolean(System.getProperty("arbitrarykey"))</code> by<p>
+	 * Replace Boolean/Long/Integer conversions using System properties to methods designed
+	 * for the purpose.  For example, replace: <p><code>Boolean.parseBoolean(System.getProperty("arbitrarykey"))</code></p> by<p>
 	 * <code>Boolean.getBoolean("arbitrarykey")</code>
 	 * <p>
 	 * Possible values: {TRUE, FALSE}
@@ -1120,7 +1121,8 @@ public class CleanUpConstants {
 	 * @see CleanUpOptionsCore#FALSE
 	 * @since 4.20
 	 */
-	public static final String CONSTANTS_FOR_SYSTEM_PROPERTY_BOOLEAN= "cleanup.system_property_boolean"; //$NON-NLS-1$
+	public static final String CONSTANTS_FOR_SYSTEM_PROPERTY_BOXED= "cleanup.system_property_boolean"; //$NON-NLS-1$
+
 	/**
 	 * Replaces Boolean.TRUE/Boolean.FALSE by true/false when used as primitive.
 	 * <p>
@@ -1214,7 +1216,7 @@ public class CleanUpConstants {
 	 * Replaces StringBuffer by StringBuilder.
 	 *
 	 * For detailed setting use<br>
-	 * {@link #STRINGBUILDER_FOR_LOCAL_VARS_ONLY}<br>
+	 * {@link #STRINGBUFFER_TO_STRINGBUILDER_FOR_LOCALS}<br>
 	 * <p>
 	 * Possible values: {TRUE, FALSE}
 	 * <p>
@@ -1224,6 +1226,16 @@ public class CleanUpConstants {
 	 * @since 4.21
 	 */
 	public static final String STRINGBUFFER_TO_STRINGBUILDER= "cleanup.stringbuffer_to_stringbuilder"; //$NON-NLS-1$
+
+	/**
+	 * Replaces String concatenation by Text Block for Java 15 and higher.
+	 *
+	 * @see CleanUpOptionsCore#TRUE
+	 * @see CleanUpOptionsCore#FALSE
+	 * @since 4.22
+	 */
+
+	public static final String STRINGCONCAT_TO_TEXTBLOCK= "cleanup.stringconcat_to_textblock"; //$NON-NLS-1$
 
 	/**
 	 * Only replace local var StringBuffer uses with StringBuilder.
@@ -1344,6 +1356,21 @@ public class CleanUpConstants {
 	 * @since 3.3
 	 */
 	public static final String REMOVE_UNUSED_CODE_PRIVATE_METHODS= "cleanup.remove_unused_private_methods"; //$NON-NLS-1$
+
+	/**
+	 * Removes unused parameters for private methods. <br>
+	 *
+	 * <br>
+	 * Possible values: {TRUE, FALSE}<br>
+	 *
+	 * <br>
+	 *
+	 * @see CleanUpOptionsCore#TRUE
+	 * @see CleanUpOptionsCore#FALSE
+	 * @since 3.3
+	 */
+	public static final String REMOVE_UNUSED_CODE_METHOD_PARAMETERS= "cleanup.remove_unused_method_parameters"; //$NON-NLS-1$
+
 
 	/**
 	 * Removes unused local variables. <br>
@@ -1753,6 +1780,19 @@ public class CleanUpConstants {
 	 * @since 4.18
 	 */
 	public static final String OVERRIDDEN_ASSIGNMENT= "cleanup.overridden_assignment"; //$NON-NLS-1$
+
+	/**
+	 * Move the declaration of the variable to the location of the overriding assignment
+	 * if necessary.
+	 * <p>
+	 * Possible values: {TRUE, FALSE}
+	 * <p>
+	 *
+	 * @see CleanUpOptionsCore#TRUE
+	 * @see CleanUpOptionsCore#FALSE
+	 * @since 4.18
+	 */
+	public static final String OVERRIDDEN_ASSIGNMENT_MOVE_DECL= "cleanup.overridden_assignment_move_decl"; //$NON-NLS-1$
 
 	/**
 	 * Removes redundant semicolons.<br>

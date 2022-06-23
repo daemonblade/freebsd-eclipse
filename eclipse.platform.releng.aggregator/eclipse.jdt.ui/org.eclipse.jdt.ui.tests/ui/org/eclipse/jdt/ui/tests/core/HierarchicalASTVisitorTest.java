@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.Assert;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.AbstractTagElement;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnnotatableType;
 import org.eclipse.jdt.core.dom.Annotation;
@@ -39,6 +40,7 @@ import org.eclipse.jdt.core.dom.MethodReference;
 import org.eclipse.jdt.core.dom.ModuleDirective;
 import org.eclipse.jdt.core.dom.ModulePackageAccess;
 import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.Pattern;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
@@ -126,6 +128,24 @@ public class HierarchicalASTVisitorTest {
 		}
 		@SuppressWarnings("unused") // called reflectively
 		public void superEndVisit(AbstractTypeDeclaration node) {
+			super.visit(node);
+		}
+
+		@Override
+		public boolean visit(AbstractTagElement node) {
+			registerCall(AbstractTagElement.class);
+			return false;
+		}
+		@SuppressWarnings("unused") // called reflectively
+		public void superVisit(AbstractTagElement node) {
+			super.visit(node);
+		}
+		@Override
+		public void endVisit(AbstractTagElement node) {
+			registerCall(AbstractTagElement.class);
+		}
+		@SuppressWarnings("unused") // called reflectively
+		public void superEndVisit(AbstractTagElement node) {
 			super.visit(node);
 		}
 
@@ -255,6 +275,23 @@ public class HierarchicalASTVisitorTest {
 			super.visit(node);
 		}
 
+		@Override
+		public boolean visit(Pattern node) {
+			registerCall(Pattern.class);
+			return false;
+		}
+		@SuppressWarnings("unused") // called reflectively
+		public void superVisit(Pattern node) {
+			super.visit(node);
+		}
+		@Override
+		public void endVisit(Pattern node) {
+			registerCall(Pattern.class);
+		}
+		@SuppressWarnings("unused") // called reflectively
+		public void superEndVisit(Pattern node) {
+			super.visit(node);
+		}
 
 		@Override
 		public boolean visit(Statement node) {

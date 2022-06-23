@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -144,6 +144,9 @@ public final class NewWizardMessages extends NLS {
 	public static String NewTypeWizardPage_modifiers_abstract;
 	public static String NewTypeWizardPage_modifiers_final;
 	public static String NewTypeWizardPage_modifiers_static;
+	public static String NewTypeWizardPage_modifiers_sealed;
+	public static String NewTypeWizardPage_modifiers_non_sealed;
+	public static String NewTypeWizardPage_none_label;
 	public static String NewTypeWizardPage_addcomment_label;
 	public static String NewTypeWizardPage_addcomment_description;
 	public static String NewTypeWizardPage_addcomment_description2;
@@ -156,6 +159,8 @@ public final class NewWizardMessages extends NLS {
 	public static String NewTypeWizardPage_warning_TypeNameDiscouraged;
 	public static String NewTypeWizardPage_error_TypeParameters;
 	public static String NewTypeWizardPage_error_InvalidSuperClassName;
+	public static String NewTypeWizardPage_error_InvalidSuperClassRecord;
+	public static String NewTypeWizardPage_error_InvalidFinalSuperClass;
 	public static String NewTypeWizardPage_error_SuperClassNotParameterized;
 	public static String NewTypeWizardPage_error_InvalidSuperInterfaceName;
 	public static String NewTypeWizardPage_error_SuperInterfaceNotParameterized;
@@ -163,6 +168,15 @@ public final class NewWizardMessages extends NLS {
 	public static String NewTypeWizardPage_error_TypeNameFiltered;
 	public static String NewTypeWizardPage_error_PackageNameFiltered;
 	public static String NewTypeWizardPage_error_PackageIsVirtual;
+	public static String NewTypeWizardPage_error_class_SealedSuperClassInDifferentModule;
+	public static String NewTypeWizardPage_error_class_SealedSuperClassInDifferentPackage;
+	public static String NewTypeWizardPage_error_class_SealedSuperClassInDifferentProject;
+	public static String NewTypeWizardPage_error_class_SealedSuperInterfaceInDifferentModule;
+	public static String NewTypeWizardPage_error_class_SealedSuperInterfaceInDifferentPackage;
+	public static String NewTypeWizardPage_error_class_SealedSuperInterfaceInDifferentProject;
+	public static String NewTypeWizardPage_error_interface_SealedSuperInterfaceInDifferentModule;
+	public static String NewTypeWizardPage_error_interface_SealedSuperInterfaceInDifferentPackage;
+	public static String NewTypeWizardPage_error_interface_SealedSuperInterfaceInDifferentProject;
 	public static String NewTypeWizardPage_configure_templates_message;
 	public static String NewTypeWizardPage_configure_templates_title;
 	public static String NewTypeWizardPage_SuperClassDialog_title;
@@ -172,6 +186,9 @@ public final class NewWizardMessages extends NLS {
 	public static String NewTypeWizardPage_InterfacesDialog_message;
 	public static String NewTypeWizardPage_operationdesc;
 	public static String NewTypeWizardPage_error_uri_location_unkown;
+	public static String NewTypeWizardPage_error_SealedFinalNonSealedClass_extend_superclass_notSelected_message;
+	public static String NewTypeWizardPage_error_SealedFinalNonSealedClass_implement_superinterface_notSelected_message;
+	public static String NewTypeWizardPage_error_SealedFinalNonSealedInterface_extend_superinterface_notSelected_message;
 
 	public static String OutputLocation_DotAsLocation;
 	public static String OutputLocation_SettingsAsLocation;
@@ -204,6 +221,7 @@ public final class NewWizardMessages extends NLS {
 	public static String NewEnumCreationWizard_title;
 	public static String NewEnumWizardPage_title;
 	public static String NewEnumWizardPage_description;
+	public static String NewEnumWizardPage_error_invalidTypeParameters;
 
 	public static String NewAnnotationCreationWizard_title;
 	public static String NewAnnotationWizardPage_add_documented;
@@ -211,6 +229,7 @@ public final class NewWizardMessages extends NLS {
 	public static String NewAnnotationWizardPage_add_target;
 	public static String NewAnnotationWizardPage_title;
 	public static String NewAnnotationWizardPage_description;
+	public static String NewAnnotationWizardPage_error_invalidTypeParameters;
 
 	public static String JavaCapabilityConfigurationPage_title;
 	public static String JavaCapabilityConfigurationPage_description;

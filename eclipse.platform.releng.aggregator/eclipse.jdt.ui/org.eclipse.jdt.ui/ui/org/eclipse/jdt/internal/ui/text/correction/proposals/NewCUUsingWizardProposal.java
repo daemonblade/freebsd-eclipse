@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -67,10 +67,13 @@ import org.eclipse.jdt.ui.wizards.NewAnnotationWizardPage;
 import org.eclipse.jdt.ui.wizards.NewClassWizardPage;
 import org.eclipse.jdt.ui.wizards.NewEnumWizardPage;
 import org.eclipse.jdt.ui.wizards.NewInterfaceWizardPage;
+import org.eclipse.jdt.ui.wizards.NewRecordWizardPage;
 import org.eclipse.jdt.ui.wizards.NewTypeWizardPage;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
+import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
+import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor;
 import org.eclipse.jdt.internal.ui.text.correction.CorrectionMessages;
 import org.eclipse.jdt.internal.ui.text.correction.UnresolvedElementsSubProcessor;
 import org.eclipse.jdt.internal.ui.util.ASTHelper;
@@ -80,6 +83,7 @@ import org.eclipse.jdt.internal.ui.wizards.NewClassCreationWizard;
 import org.eclipse.jdt.internal.ui.wizards.NewElementWizard;
 import org.eclipse.jdt.internal.ui.wizards.NewEnumCreationWizard;
 import org.eclipse.jdt.internal.ui.wizards.NewInterfaceCreationWizard;
+import org.eclipse.jdt.internal.ui.wizards.NewRecordCreationWizard;
 
 
 /**
@@ -96,6 +100,7 @@ public class NewCUUsingWizardProposal extends ChangeCorrectionProposal {
 	public static final int K_INTERFACE= 2;
 	public static final int K_ENUM= 3;
 	public static final int K_ANNOTATION= 4;
+	public static final int K_RECORD= 5;
 
 	private Name fNode;
 	private ICompilationUnit fCompilationUnit;
@@ -103,10 +108,16 @@ public class NewCUUsingWizardProposal extends ChangeCorrectionProposal {
 	private IJavaElement fTypeContainer; // IType or IPackageFragment
 	private String fTypeNameWithParameters;
 	private IType fCreatedType;
+	private ITypeBinding fSuperType;
 
 	private boolean fShowDialog;
+	private boolean fCallSemanticHighlightingReconciler;
 
 	public NewCUUsingWizardProposal(ICompilationUnit cu, Name node, int typeKind, IJavaElement typeContainer, int severity) {
+		this(cu, node, typeKind, typeContainer, null, severity, false);
+	}
+
+	public NewCUUsingWizardProposal(ICompilationUnit cu, Name node, int typeKind, IJavaElement typeContainer, ITypeBinding superType, int severity, boolean callSemanticHighlightingReconciler) {
 		super("", null, severity, null); //$NON-NLS-1$
 
 		fCompilationUnit= cu;
@@ -116,8 +127,9 @@ public class NewCUUsingWizardProposal extends ChangeCorrectionProposal {
 		if (fNode != null) {
 			fTypeNameWithParameters= getTypeName(typeKind, node);
 		}
-
+		fSuperType = superType;
 		fCreatedType= null;
+		fCallSemanticHighlightingReconciler= callSemanticHighlightingReconciler;
 
 		String containerName;
 		if (fNode != null) {
@@ -151,7 +163,11 @@ public class NewCUUsingWizardProposal extends ChangeCorrectionProposal {
 						}
 					}
 				} else {
-					setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewclass_inpackage_description, containerLabel));
+					if (isInnerType) {
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewinnerclass_description, containerLabel));
+					} else {
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewclass_inpackage_description, containerLabel));
+					}
 				}
 				break;
 			case K_INTERFACE:
@@ -171,7 +187,11 @@ public class NewCUUsingWizardProposal extends ChangeCorrectionProposal {
 						}
 					}
 				} else {
-					setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewinterface_inpackage_description, containerLabel));
+					if (isInnerType) {
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewinnerinterface_description, containerLabel));
+					} else {
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewinterface_inpackage_description, containerLabel));
+					}
 				}
 				break;
 			case K_ENUM:
@@ -212,6 +232,30 @@ public class NewCUUsingWizardProposal extends ChangeCorrectionProposal {
 					}
 				} else {
 					setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewannotation_inpackage_description, containerLabel));
+				}
+				break;
+			case K_RECORD:
+				setImage(JavaPluginImages.get(JavaPluginImages.IMG_OBJS_RECORD));
+				if (fNode != null) {
+					if (isInnerType) {
+						if (containerName.length() == 0) {
+							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinnerrecord_description, typeLabel));
+						} else {
+							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinnerrecord_intype_description, new String[] { typeLabel, containerLabel }));
+						}
+					} else {
+						if (containerName.length() == 0) {
+							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createrecord_description, typeLabel));
+						} else {
+							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createrecord_inpackage_description, new String[] { typeLabel, containerLabel }));
+						}
+					}
+				} else {
+					if (isInnerType) {
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewinnerrecord_description, containerLabel));
+					} else {
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewrecord_inpackage_description, containerLabel));
+					}
 				}
 				break;
 			default:
@@ -295,6 +339,12 @@ public class NewCUUsingWizardProposal extends ChangeCorrectionProposal {
 				}
 			}
 			fCreatedType= createdType;
+			if (fCallSemanticHighlightingReconciler) {
+				JavaEditor javaEditor= EditorUtility.getActiveJavaEditor();
+				if (javaEditor != null) {
+					javaEditor.refreshSemanticHighlighting();
+				}
+			}
 		}
 
 	}
@@ -331,6 +381,12 @@ public class NewCUUsingWizardProposal extends ChangeCorrectionProposal {
 				configureWizardPage(page);
 				return new NewAnnotationCreationWizard(page, true);
 			}
+			case K_RECORD: {
+				NewRecordWizardPage page= new NewRecordWizardPage();
+				page.init(selection);
+				configureWizardPage(page);
+				return new NewRecordCreationWizard(page, true);
+			}
 		}
 		throw new IllegalArgumentException();
 	}
@@ -364,7 +420,20 @@ public class NewCUUsingWizardProposal extends ChangeCorrectionProposal {
 	 * @param page the wizard page.
 	 */
 	private void fillInWizardPageSuperTypes(NewTypeWizardPage page) {
-		if (fNode != null) {
+		if (fSuperType != null) {
+			if (fSuperType.isArray()) {
+				fSuperType= fSuperType.getElementType();
+			}
+			if (fSuperType.isTopLevel() || fSuperType.isMember()) {
+				if (fSuperType.isClass() && (fTypeKind == K_CLASS)) {
+					page.setSuperClass(fSuperType, true);
+				} else if (fSuperType.isInterface()) {
+					List<ITypeBinding> superInterfaces= new ArrayList<>();
+					superInterfaces.add(fSuperType);
+					page.setSuperInterfacesList(superInterfaces, true);
+				}
+			}
+		} else if (fNode != null) {
 			ITypeBinding type= getPossibleSuperTypeBinding(fNode);
 			type= Bindings.normalizeTypeBinding(type);
 			if (type != null) {
@@ -373,11 +442,11 @@ public class NewCUUsingWizardProposal extends ChangeCorrectionProposal {
 				}
 				if (type.isTopLevel() || type.isMember()) {
 					if (type.isClass() && (fTypeKind == K_CLASS)) {
-						page.setSuperClass(type.getQualifiedName(), true);
+						page.setSuperClass(type, true);
 					} else if (type.isInterface()) {
-						List<String> superInterfaces= new ArrayList<>();
-						superInterfaces.add(type.getQualifiedName());
-						page.setSuperInterfaces(superInterfaces, true);
+						List<ITypeBinding> superInterfaces= new ArrayList<>();
+						superInterfaces.add(type);
+						page.setSuperInterfacesList(superInterfaces, true);
 					}
 				}
 			}
@@ -487,7 +556,13 @@ public class NewCUUsingWizardProposal extends ChangeCorrectionProposal {
 			nameToHTML(fTypeNameWithParameters, buf);
 		}
 
-		ITypeBinding superclass= getPossibleSuperTypeBinding(fNode);
+		ITypeBinding superclass= null;
+		if (fSuperType == null) {
+			superclass= getPossibleSuperTypeBinding(fNode);
+		} else {
+			superclass= fSuperType;
+		}
+
 		if (superclass != null) {
 			if (superclass.isClass()) {
 				if (fTypeKind == K_CLASS) {

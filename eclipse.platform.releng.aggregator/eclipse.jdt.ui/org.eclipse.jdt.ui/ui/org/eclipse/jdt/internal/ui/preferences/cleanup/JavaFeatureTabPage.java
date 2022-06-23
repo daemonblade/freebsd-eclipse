@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 IBM Corporation and others.
+ * Copyright (c) 2020, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -31,6 +31,7 @@ import org.eclipse.jdt.internal.ui.fix.LambdaExpressionsCleanUp;
 import org.eclipse.jdt.internal.ui.fix.MultiCatchCleanUp;
 import org.eclipse.jdt.internal.ui.fix.ObjectsEqualsCleanUp;
 import org.eclipse.jdt.internal.ui.fix.PatternMatchingForInstanceofCleanUp;
+import org.eclipse.jdt.internal.ui.fix.StringConcatToTextBlockCleanUp;
 import org.eclipse.jdt.internal.ui.fix.SwitchExpressionsCleanUp;
 import org.eclipse.jdt.internal.ui.fix.TryWithResourceCleanUp;
 import org.eclipse.jdt.internal.ui.fix.TypeParametersCleanUp;
@@ -50,6 +51,7 @@ public final class JavaFeatureTabPage extends AbstractCleanUpTabPage {
 				new ComparingOnCriteriaCleanUp(values),
 				new JoinCleanUp(values),
 				new TryWithResourceCleanUp(values),
+				new StringConcatToTextBlockCleanUp(values),
 				new MultiCatchCleanUp(values),
 				new TypeParametersCleanUp(values),
 				new HashCleanUp(values),
@@ -67,6 +69,10 @@ public final class JavaFeatureTabPage extends AbstractCleanUpTabPage {
 
 		CheckboxPreference patternMatchingForInstanceof= createCheckboxPref(java16Group, numColumns, CleanUpMessages.JavaFeatureTabPage_CheckboxName_PatternMatchingForInstanceof, CleanUpConstants.USE_PATTERN_MATCHING_FOR_INSTANCEOF, CleanUpModifyDialog.FALSE_TRUE);
 		registerPreference(patternMatchingForInstanceof);
+
+		Group java15Group= createGroup(numColumns, composite, CleanUpMessages.JavaFeatureTabPage_GroupName_Java15);
+		CheckboxPreference stringConcatToTextBlock= createCheckboxPref(java15Group, numColumns, CleanUpMessages.JavaFeatureTabPage_CheckboxName_StringConcatToTextBlock, CleanUpConstants.STRINGCONCAT_TO_TEXTBLOCK, CleanUpModifyDialog.FALSE_TRUE);
+		registerPreference(stringConcatToTextBlock);
 
 		Group java14Group= createGroup(numColumns, composite, CleanUpMessages.JavaFeatureTabPage_GroupName_Java14);
 
@@ -118,8 +124,8 @@ public final class JavaFeatureTabPage extends AbstractCleanUpTabPage {
 		CheckboxPreference systemconstantsLineSeparator= createCheckboxPref(java1d7Group, 1, CleanUpMessages.JavaFeatureTabPage_CheckboxName_ConstantsForSystemProperty_LineSeparator, CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_LINE_SEPARATOR, CleanUpModifyDialog.FALSE_TRUE);
 		intent(java1d7Group);
 		CheckboxPreference systemconstantsFileEncoding= createCheckboxPref(java1d7Group, 1, CleanUpMessages.JavaFeatureTabPage_CheckboxName_ConstantsForSystemProperty_FileEncoding, CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_FILE_ENCODING, CleanUpModifyDialog.FALSE_TRUE);
-		CheckboxPreference systemconstantsBooleanProperty= createCheckboxPref(java1d7Group, 1, CleanUpMessages.JavaFeatureTabPage_CheckboxName_ConstantsForSystemProperty_BooleanProperty, CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_BOOLEAN, CleanUpModifyDialog.FALSE_TRUE);
-		registerSlavePreference(systemconstants, new CheckboxPreference[] {systemconstantsFileSeparator,systemconstantsPathSeparator,systemconstantsLineSeparator,systemconstantsFileEncoding,systemconstantsBooleanProperty});
+		CheckboxPreference systemconstantsBoxedTypeProperty= createCheckboxPref(java1d7Group, 1, CleanUpMessages.JavaFeatureTabPage_CheckboxName_ConstantsForSystemProperty_BoxedTypeProperty, CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_BOXED, CleanUpModifyDialog.FALSE_TRUE);
+		registerSlavePreference(systemconstants, new CheckboxPreference[] {systemconstantsFileSeparator,systemconstantsPathSeparator,systemconstantsLineSeparator,systemconstantsFileEncoding,systemconstantsBoxedTypeProperty});
 
 		Group java1d5Group= createGroup(numColumns, composite, CleanUpMessages.JavaFeatureTabPage_GroupName_Java1d5);
 

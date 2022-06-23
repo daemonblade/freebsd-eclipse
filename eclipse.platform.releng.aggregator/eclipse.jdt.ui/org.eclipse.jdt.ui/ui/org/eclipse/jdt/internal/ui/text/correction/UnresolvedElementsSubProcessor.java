@@ -20,13 +20,13 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Optional;
 
 import org.osgi.framework.Bundle;
 
@@ -162,6 +162,7 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.NewAnnotationMember
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewCUUsingWizardProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewMethodCorrectionProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrectionProposal;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.QualifyTypeProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RenameNodeCorrectionProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposal;
 import org.eclipse.jdt.internal.ui.viewsupport.BindingLabelProvider;
@@ -774,13 +775,11 @@ public class UnresolvedElementsSubProcessor {
 
 	private static void addCopyAnnotationsJarProposal(final ICompilationUnit cu, final Name name, final String fullyQualifiedName, Bundle annotationsBundle, Collection<ICommandAccess> proposals) {
 		final IJavaProject javaProject= cu.getJavaProject();
-		final File bundleFile;
-		try {
-			bundleFile= FileLocator.getBundleFile(annotationsBundle);
-		} catch (IOException e) {
-			JavaPlugin.log(e);
+		Optional<File> bundleFileLocation= FileLocator.getBundleFileLocation(annotationsBundle);
+		if (bundleFileLocation.isEmpty()) {
 			return;
 		}
+		File bundleFile= bundleFileLocation.get();
 		if (!bundleFile.isFile() || !bundleFile.canRead())
 			return; // we only support a JAR'd bundle, so this won't work in the runtime if you have org.eclipse.jdt.annotation in source.
 
@@ -970,6 +969,20 @@ public class UnresolvedElementsSubProcessor {
 
 		ASTRewriteCorrectionProposal proposal;
 		if (importRewrite != null && node.isSimpleName() && simpleName.equals(((SimpleName) node).getIdentifier())) { // import only
+			// check first that we aren't doing an import of a nested class in this cu - bug 321464
+			// in which case we should just change the reference to a qualified name
+			try {
+				IType[] types= cu.getAllTypes();
+				for (IType type : types) {
+					if (type.getFullyQualifiedName('.').equals(fullName)) {
+						String label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_change_to_qualified_description, fullName);
+						proposal= new QualifyTypeProposal(label, cu, relevance + 100, (SimpleName)node, fullName);
+						return proposal;
+					}
+				}
+			} catch (JavaModelException e) {
+				return null;
+			}
 			// import only
 			String[] arg= { BasicElementLabels.getJavaElementName(simpleName), BasicElementLabels.getJavaElementName(packName) };
 			String label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_importtype_description, arg);
@@ -1089,6 +1102,9 @@ public class UnresolvedElementsSubProcessor {
 
 					if ((kind & TypeKinds.CLASSES) != 0) {
 						proposals.add(new NewCUUsingWizardProposal(cu, node, NewCUUsingWizardProposal.K_CLASS, enclosing, rel+3));
+						if (canUseRecord(cu.getJavaProject(), refNode)) {
+							proposals.add(new NewCUUsingWizardProposal(cu, node, NewCUUsingWizardProposal.K_RECORD, enclosing, rel + 3));
+						}
 					}
 					if ((kind & TypeKinds.INTERFACES) != 0) {
 						proposals.add(new NewCUUsingWizardProposal(cu, node, NewCUUsingWizardProposal.K_INTERFACE, enclosing, rel+2));
@@ -1136,6 +1152,27 @@ public class UnresolvedElementsSubProcessor {
 				}
 			}
 		}
+	}
+
+	private static boolean canUseRecord(IJavaProject project, Name refNode) {
+		boolean canUseRecord= false;
+		if (project != null
+				&& JavaModelUtil.is16OrHigher(project)
+				&& refNode != null) {
+			canUseRecord= true;
+			Type type= ASTNodes.getParent(refNode, Type.class);
+			TypeDeclaration typeDecl= ASTNodes.getParent(refNode, TypeDeclaration.class);
+			if (type != null && typeDecl != null) {
+				StructuralPropertyDescriptor locationInParent= type.getLocationInParent();
+				if (locationInParent == TypeDeclaration.SUPERCLASS_TYPE_PROPERTY) {
+					canUseRecord= false;
+				} else if (locationInParent == TypeDeclaration.PERMITS_TYPES_PROPERTY
+						&& !typeDecl.isInterface()) {
+					canUseRecord= false;
+				}
+			}
+		}
+		return canUseRecord;
 	}
 
 	public static void addRequiresModuleProposals(ICompilationUnit cu, Name node, int relevance, Collection<ICommandAccess> proposals, boolean isOnDemand) throws CoreException {

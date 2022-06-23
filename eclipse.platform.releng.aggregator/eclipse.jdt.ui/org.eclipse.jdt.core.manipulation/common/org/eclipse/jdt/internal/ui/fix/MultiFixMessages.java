@@ -58,6 +58,7 @@ public class MultiFixMessages extends NLS {
 	public static String UnusedCodeMultiFix_RemoveUnusedType_description;
 	public static String UnusedCodeMultiFix_RemoveUnusedConstructor_description;
 	public static String UnusedCodeMultiFix_RemoveUnusedMethod_description;
+	public static String UnusedCodeMultiFix_RemoveUnusedParameter_description;
 	public static String UnusedCodeMultiFix_RemoveUnusedImport_description;
 	public static String UnusedCodeCleanUp_RemoveUnusedCasts_description;
 
@@ -199,6 +200,7 @@ public class MultiFixMessages extends NLS {
 	public static String MultiCatchCleanUp_description;
 	public static String ConstantsCleanUp_description;
 	public static String StringBufferToStringBuilderCleanUp_description;
+	public static String StringConcatToTextBlockCleanUp_description;
 	public static String StringBuilderForLocalVarsOnlyCleanUp_description;
 
 	static {

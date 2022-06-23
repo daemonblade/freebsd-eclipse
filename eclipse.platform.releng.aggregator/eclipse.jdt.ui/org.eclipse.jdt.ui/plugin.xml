@@ -125,6 +125,7 @@
 
             <adapter type="org.eclipse.jdt.internal.ui.IResourceLocator"/>
             <adapter type="org.eclipse.team.ui.history.IHistoryPageSource"/>
+            <adapter type="org.eclipse.core.resources.IProject"/>
 		</factory>
 
 		<factory
@@ -569,6 +570,7 @@
             name="%perspectiveName"
             icon="$nl$/icons/full/eview16/jperspective.png"
             class="org.eclipse.jdt.internal.ui.JavaPerspectiveFactory"
+            defaultShowIn="org.eclipse.jdt.ui.PackageExplorer"
             id="org.eclipse.jdt.ui.JavaPerspective">
          <description>
             %java.perspective.description
@@ -7175,15 +7177,20 @@
             id="org.eclipse.jdt.ui.cleanup.stringbuilder"
             runAfter="org.eclipse.jdt.ui.cleanup.static_inner_class">
       </cleanUp>
-       <cleanUp
+      <cleanUp
             class="org.eclipse.jdt.internal.ui.fix.StringBufferToStringBuilderCleanUp"
             id="org.eclipse.jdt.ui.cleanup.stringbuffertostringbuilder"
             runAfter="org.eclipse.jdt.ui.cleanup.stringbuilder">
       </cleanUp>
       <cleanUp
+            class="org.eclipse.jdt.internal.ui.fix.StringConcatToTextBlockCleanUp"
+            id="org.eclipse.jdt.ui.cleanup.stringconcattotextblock"
+            runAfter="org.eclipse.jdt.ui.cleanup.stringbuffertostringbuilder">
+      </cleanUp>
+      <cleanUp
             class="org.eclipse.jdt.internal.ui.fix.PlainReplacementCleanUp"
             id="org.eclipse.jdt.ui.cleanup.plain_replacement"
-            runAfter="org.eclipse.jdt.ui.cleanup.stringbuffertostringbuilder">
+            runAfter="org.eclipse.jdt.ui.cleanup.stringconcattotextblock">
       </cleanUp>
       <cleanUp
             class="org.eclipse.jdt.internal.ui.fix.UseStringIsBlankCleanUp"
@@ -7791,5 +7798,12 @@
            needsSortingAfterFiltering="false"
            requiresUIThread="false">
      </javaCompletionProposalComputer>
+  </extension>
+  <extension
+        point="org.eclipse.core.contenttype.contentTypes">
+     <file-association
+           content-type="org.eclipse.jdt.core.javaClass"
+           file-extensions="class without source">
+     </file-association>
   </extension>
 </plugin>

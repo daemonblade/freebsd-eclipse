@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -54,6 +54,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -142,7 +143,7 @@ import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.dom.TypeRules;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
-import org.eclipse.jdt.internal.corext.fix.CodeStyleFix;
+import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.Java50Fix;
 import org.eclipse.jdt.internal.corext.fix.StringFix;
@@ -198,6 +199,7 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionPro
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedNamesAssistProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.MissingAnnotationAttributesProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ModifierChangeCorrectionProposal;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.NewCUUsingWizardProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewMethodCorrectionProposal;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewProviderMethodDeclaration;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrectionProposal;
@@ -639,7 +641,7 @@ public class LocalCorrectionsSubProcessor {
 	 * Fix instance accesses and indirect (static) accesses to static fields/methods
 	 */
 	public static void addCorrectAccessToStaticProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
-		IProposableFix fix= CodeStyleFix.createIndirectAccessToStaticFix(context.getASTRoot(), problem);
+		IProposableFix fix= CodeStyleFixCore.createIndirectAccessToStaticFix(context.getASTRoot(), (IProblemLocationCore)problem);
 		if (fix != null) {
 			Image image= JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
 			Map<String, String> options= new HashMap<>();
@@ -651,7 +653,7 @@ public class LocalCorrectionsSubProcessor {
 			return;
 		}
 
-		IProposableFix[] fixes= CodeStyleFix.createNonStaticAccessFixes(context.getASTRoot(), problem);
+		IProposableFix[] fixes= CodeStyleFixCore.createNonStaticAccessFixes(context.getASTRoot(), (IProblemLocationCore)problem);
 		if (fixes != null) {
 			IProposableFix fix1= fixes[0];
 			Image image= JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
@@ -799,8 +801,7 @@ public class LocalCorrectionsSubProcessor {
 				return;
 			}
 			Type type= vds.getType();
-			ITypeBinding binding= null;
-			binding= type == null ? null : type.resolveBinding();
+			ITypeBinding binding= type == null ? null : type.resolveBinding();
 			if (binding == null) {
 				return;
 			}
@@ -914,6 +915,7 @@ public class LocalCorrectionsSubProcessor {
 		}
 
 		if (problemId == IProblem.ArgumentIsNeverUsed) {
+			addProposal(context, proposals, UnusedCodeFix.createUnusedParameterFix(context.getASTRoot(), problem));
 			JavadocTagsSubProcessor.getUnusedAndUndocumentedParameterOrExceptionProposals(context, problem, proposals);
 		}
 
@@ -1048,7 +1050,7 @@ public class LocalCorrectionsSubProcessor {
 	}
 
 	public static void addUnqualifiedFieldAccessProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
-		IProposableFix fix= CodeStyleFix.createAddFieldQualifierFix(context.getASTRoot(), problem);
+		IProposableFix fix= CodeStyleFixCore.createAddFieldQualifierFix(context.getASTRoot(), (IProblemLocationCore) problem);
 		if (fix != null) {
 			Image image= JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
 			Map<String, String> options= new HashMap<>();
@@ -1303,6 +1305,52 @@ public class LocalCorrectionsSubProcessor {
 			ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.CHANGE_CLASS_TO_INTERFACE, image);
 			proposals.add(proposal);
 		}
+	}
+
+	public static void createNewTypeAsPermittedSubTypeProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals, int relevance) throws JavaModelException {
+		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
+		if (selectedNode == null) {
+			return;
+		}
+		if (!ASTHelper.isSealedTypeSupportedInAST(selectedNode.getAST())) {
+			return;
+		}
+
+		if (selectedNode.getParent() instanceof TypeDeclaration) {
+			selectedNode= selectedNode.getParent();
+		}
+		if (!(selectedNode instanceof TypeDeclaration)){
+			return;
+		}
+		TypeDeclaration type= (TypeDeclaration) selectedNode;
+		IJavaElement sealedTypeElement= null;
+		ITypeBinding typeBinding= type.resolveBinding();
+		if (typeBinding != null) {
+			sealedTypeElement= typeBinding.getJavaElement();
+		}
+		if (!(sealedTypeElement instanceof IType)) {
+			return;
+		}
+		IType sealedType= (IType) sealedTypeElement;
+		if (sealedType.isBinary() || !sealedType.isSealed()) {
+			return;
+		}
+		ICompilationUnit compilationUnit= sealedType.getCompilationUnit();
+		CompilationUnitRewrite cuRewrite= new CompilationUnitRewrite(compilationUnit);
+		TypeDeclaration declaration= ASTNodeSearchUtil.getTypeDeclarationNode(sealedType, cuRewrite.getRoot());
+		if (declaration == null) {
+			return;
+		}
+		IPackageFragment fragment= sealedType.getPackageFragment();
+
+		if (sealedType.isInterface()) {
+			proposals.add(new NewCUUsingWizardProposal(compilationUnit, null, NewCUUsingWizardProposal.K_INTERFACE, fragment, typeBinding, relevance + 4, true));
+			proposals.add(new NewCUUsingWizardProposal(compilationUnit, null, NewCUUsingWizardProposal.K_INTERFACE, sealedTypeElement,  typeBinding, relevance + 4, false));
+			proposals.add(new NewCUUsingWizardProposal(compilationUnit, null, NewCUUsingWizardProposal.K_RECORD, fragment,  typeBinding, relevance + 5, true));
+			proposals.add(new NewCUUsingWizardProposal(compilationUnit, null, NewCUUsingWizardProposal.K_RECORD, sealedTypeElement,  typeBinding, relevance + 5, false));
+		}
+		proposals.add(new NewCUUsingWizardProposal(compilationUnit, null, NewCUUsingWizardProposal.K_CLASS, fragment,  typeBinding, relevance + 6, true));
+		proposals.add(new NewCUUsingWizardProposal(compilationUnit, null, NewCUUsingWizardProposal.K_CLASS, sealedTypeElement,  typeBinding, relevance + 6, false));
 	}
 
 	public static void addTypeAsPermittedSubTypeProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws JavaModelException {
@@ -2440,6 +2488,18 @@ public class LocalCorrectionsSubProcessor {
 		ASTNode coveringNode= problem.getCoveringNode(context.getASTRoot());
 		if (coveringNode != null) {
 			QuickAssistProcessor.getGenerateForLoopProposals(context, coveringNode, null, proposals);
+		}
+	}
+
+	public static void getTryWithResourceProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
+		ASTNode coveringNode= problem.getCoveringNode(context.getASTRoot());
+		if (coveringNode != null) {
+			try {
+				ArrayList<ASTNode> coveredNodes= AdvancedQuickAssistProcessor.getFullyCoveredNodes(context, coveringNode);
+				QuickAssistProcessor.getTryWithResourceProposals(context, coveringNode, coveredNodes, proposals);
+			} catch (IllegalArgumentException | CoreException e) {
+				// do nothing
+			}
 		}
 	}
 

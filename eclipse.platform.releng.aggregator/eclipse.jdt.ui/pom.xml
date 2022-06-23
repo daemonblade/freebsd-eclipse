@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.21.0-SNAPSHOT</version>
+    <version>4.24.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
@@ -24,7 +24,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <tycho.scmUrl>scm:git:https://git.eclipse.org/r/jdt/eclipse.jdt.ui.git</tycho.scmUrl>
+    <tycho.scmUrl>scm:git:https://github.com/eclipse-jdt/eclipse.jdt.ui.git</tycho.scmUrl>
   </properties>
 
   <!-- 
@@ -47,26 +47,6 @@
           <url>https://repo.eclipse.org/content/repositories/eclipse/</url>
         </repository>
       </repositories>
-      <build>
-      	<plugins>
-      		<plugin>
-      			<groupId>org.eclipse.tycho.extras</groupId>
-      			<artifactId>tycho-p2-extras-plugin</artifactId>
-      			<version>${tycho.version}</version>
-      			<executions>
-      				<execution> <!-- Checks versions are properly bumped from one stream to the other -->
-      					<id>compare-attached-artifacts-with-release</id>
-      					<goals>
-      						<goal>compare-version-with-baselines</goal>
-      					</goals>
-      					<configuration>
-      						<skip>true</skip>
-      					</configuration>
-      				</execution>
-      			</executions>
-      		</plugin>
-      	</plugins>
-      </build>
     </profile>
   </profiles>
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021 Fabrice TIERCELIN and others.
+ * Copyright (c) 2021, 2022 Fabrice TIERCELIN and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -190,6 +190,13 @@ public class ReduceIndentationCleanUp extends AbstractMultiFix {
 		unit.accept(new ASTVisitor() {
 			@Override
 			public boolean visit(final IfStatement visited) {
+				// The parsing crashes when there are two embedded lone ifs with an end of line comment at the right of the statement
+				// So we disable the rule on double lone if
+				if (!(visited.getElseStatement() instanceof Block)
+						&& !ASTNodes.canHaveSiblings(visited)) {
+					return true;
+				}
+
 				if (visited.getElseStatement() != null && !ASTNodes.isInElse(visited)) {
 					if (ASTNodes.fallsThrough(visited.getThenStatement())) {
 						if (ASTNodes.fallsThrough(visited.getElseStatement())) {
@@ -268,7 +275,7 @@ public class ReduceIndentationCleanUp extends AbstractMultiFix {
 				moveTarget= listRewrite.createMoveTarget(statementsToMove.get(0), statementsToMove.get(statementsToMove.size() - 1));
 			}
 
-			rewrite.replace(visited.getExpression(), ASTNodes.getUnparenthesedExpression(ASTNodeFactory.negate(ast, rewrite, visited.getExpression(), true)), group);
+			rewrite.replace(visited.getExpression(), ASTNodeFactory.negateAndUnwrap(ast, rewrite, visited.getExpression(), true, true), group);
 			ASTNodes.replaceButKeepComment(rewrite, visited.getThenStatement(), ASTNodes.createMoveTarget(rewrite, visited.getElseStatement()), group);
 
 			if (!statementsToMove.isEmpty()) {

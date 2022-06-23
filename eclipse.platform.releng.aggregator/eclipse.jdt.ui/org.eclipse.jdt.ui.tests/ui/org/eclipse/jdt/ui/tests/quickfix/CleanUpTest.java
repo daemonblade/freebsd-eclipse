@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -77,6 +77,7 @@ import org.eclipse.jdt.internal.ui.fix.AbstractCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.Java50CleanUp;
 import org.eclipse.jdt.internal.ui.fix.MultiFixMessages;
 import org.eclipse.jdt.internal.ui.fix.PlainReplacementCleanUpCore;
+import org.eclipse.jdt.internal.ui.fix.PrimitiveRatherThanWrapperCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.RedundantModifiersCleanUp;
 import org.eclipse.jdt.internal.ui.fix.UnimplementedCodeCleanUp;
 import org.eclipse.jdt.internal.ui.text.correction.ProblemLocation;
@@ -864,6 +865,238 @@ public class CleanUpTest extends CleanUpTestCase {
 	}
 
 	@Test
+	public void testUnusedCode12() throws Exception {
+		// don't clean up parameters in public methods
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "public class E1 {\n"
+				+ "	   public void bla() {\n"
+				+ "        foo(83);\n"
+				+ "    }\n" //
+				+ "    private void foo(int zoz) {\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		String expected1= "" //
+				+ "package test1;\n" //
+				+ "public class E1 {\n"
+				+ "	   public void bla() {\n"
+				+ "        foo();\n"
+				+ "    }\n" //
+				+ "    private void foo() {\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		sample= "" //
+				+ "package test1;\n"
+				+ "class E3 {\n"
+				+ "    protected void foo(int subu, Object[] gork) {\n"
+				+ "        System.out.println(gork.length + subu);\n"
+				+ "    }\n"
+				+ "}\n" //
+				+ "public class E2 extends E3 {\n"
+				+ "	   public void bla() {\n"
+				+ "        foo(null, 83, null);\n"
+				+ "    }\n" //
+				+ "    private void foo(String bubu, int zoz, Object... gork) {\n" //
+				+ "        System.out.println(gork.length + bubu.length());\n"
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu2= pack1.createCompilationUnit("E2.java", sample, false, null);
+
+		String expected2= "" //
+				+ "package test1;\n" //
+				+ "class E3 {\n"
+				+ "    protected void foo(int subu, Object[] gork) {\n"
+				+ "        System.out.println(gork.length + subu);\n"
+				+ "    }\n"
+				+ "}\n" //
+				+ "public class E2 extends E3 {\n"
+				+ "	   public void bla() {\n"
+				+ "        foo1(null, null);\n"
+				+ "    }\n" //
+				+ "    private void foo1(String bubu, Object... gork) {\n" //
+				+ "        System.out.println(gork.length + bubu.length());\n"
+				+ "    }\n" //
+				+ "}\n";
+
+
+		sample = ""
+				+ "package test1;\n"
+				+ "\n"
+				+ "public class E4<K> {\n"
+				+ "	\n"
+				+ "	private <T> void foo(int one, K kay, int two, T tee) {\n"
+				+ "		System.out.println(one + two);\n"
+				+ "	}\n"
+				+ "}\n";
+		ICompilationUnit cu3= pack1.createCompilationUnit("E4.java", sample, false, null);
+
+		String expected3= ""
+				+ "package test1;\n"
+				+ "\n"
+				+ "public class E4<K> {\n"
+				+ "	\n"
+				+ "	private <T> void foo(int one, int two) {\n"
+				+ "		System.out.println(one + two);\n"
+				+ "	}\n"
+				+ "}\n";
+
+		enable(CleanUpConstants.REMOVE_UNUSED_CODE_METHOD_PARAMETERS);
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1, cu2, cu3}, new String[] {expected1, expected2, expected3}, null);
+	}
+
+	@Test
+	public void testUnusedCodeBug578906_1() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "import java.util.Iterator;\n" //
+				+ "import java.util.List;\n" //
+				+ "public class E1 {\n" //
+				+ "    public void foo(List<String> resultHints, List<String> results) {\n" //
+				+ "        Iterator<String> it = results.iterator();\n" //
+				+ "        for (int j = resultHints.size();it.hasNext();j++) {\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNUSED_CODE_LOCAL_VARIABLES);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "import java.util.Iterator;\n" //
+				+ "import java.util.List;\n" //
+				+ "public class E1 {\n" //
+				+ "    public void foo(List<String> resultHints, List<String> results) {\n" //
+				+ "        Iterator<String> it = results.iterator();\n" //
+				+ "        for (resultHints.size();it.hasNext();) {\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1}, null);
+	}
+
+	@Test
+	public void testUnusedCodeBug578906_2() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "import java.util.Iterator;\n" //
+				+ "import java.util.List;\n" //
+				+ "public class E1 {\n" //
+				+ "    public void foo(List<String> resultHints, List<String> results) {\n" //
+				+ "        Iterator<String> it = results.iterator();\n" //
+				+ "        for (int j = resultHints.size() + resultHints.hashCode();it.hasNext();j++) {\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNUSED_CODE_LOCAL_VARIABLES);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "import java.util.Iterator;\n" //
+				+ "import java.util.List;\n" //
+				+ "public class E1 {\n" //
+				+ "    public void foo(List<String> resultHints, List<String> results) {\n" //
+				+ "        Iterator<String> it = results.iterator();\n" //
+				+ "        for (resultHints.size(), resultHints.hashCode();it.hasNext();) {\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1}, null);
+	}
+
+
+	@Test
+	public void testUnusedCodeBug578169() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "public class E1 {\n" //
+				+ "    static class Point {\n" //
+				+ "        int x, y;\n" //
+		        + "        public int getX() {\n" //
+		        + "            return x;\n" //
+		        + "        }\n" //
+		        + "    }\n" //
+		        + "\n" //
+		        + "    static class Rect {\n" //
+		        + "        Point loc;\n" //
+		        + "        int w, h;\n" //
+		        + "        public Point getLoc() {\n" //
+		        + "            return loc;\n" //
+		        + "        }\n" //
+		        + "    }\n" //
+		        + "\n" //
+		        + "    Rect getRect() {\n" //
+		        + "        return new Rect();\n" //
+		        + "    }\n" //
+		        + "\n" //
+		        + "    void test() {\n" //
+		        + "        int x;\n" //
+		        + "        int y;\n" //
+		        + "        int z;\n" //
+		        + "        int k = getRect().loc.getX();\n" //
+		        + "        x = getRect().getLoc().x;\n" //
+		        + "        y = getRect().loc.y;\n" //
+		        + "        System.out.println(y);\n" //
+		        + "        z = getRect().loc.x;\n" //
+		        + "        k = getRect().loc.getX();\n" //
+		        + "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNUSED_CODE_LOCAL_VARIABLES);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "public class E1 {\n" //
+				+ "    static class Point {\n" //
+				+ "        int x, y;\n" //
+		        + "        public int getX() {\n" //
+		        + "            return x;\n" //
+		        + "        }\n" //
+		        + "    }\n" //
+		        + "\n" //
+		        + "    static class Rect {\n" //
+		        + "        Point loc;\n" //
+		        + "        int w, h;\n" //
+		        + "        public Point getLoc() {\n" //
+		        + "            return loc;\n" //
+		        + "        }\n" //
+		        + "    }\n" //
+		        + "\n" //
+		        + "    Rect getRect() {\n" //
+		        + "        return new Rect();\n" //
+		        + "    }\n" //
+		        + "\n" //
+		        + "    void test() {\n" //
+		        + "        int y;\n" //
+		        + "        getRect().loc.getX();\n" //
+		        + "        getRect().getLoc();\n" //
+		        + "        y = getRect().loc.y;\n" //
+		        + "        System.out.println(y);\n" //
+		        + "        getRect();\n" //
+		        + "        getRect().loc.getX();\n" //
+		        + "    }\n" //
+				+ "}\n";
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1}, null);
+	}
+
+	@Test
 	public void testUnusedCodeBug123766() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		String sample= "" //
@@ -988,6 +1221,37 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "public class E1 {\n" //
 				+ "    public void foo() {\n" //
 				+ "        new Random();\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
+	}
+
+	@Test
+	public void testUnusedCodeBug578911() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public void foo(Integer o1, Integer o2) {\n" //
+				+ "        o1 = (Integer)o1;\n" //
+				+ "        o2 = (((Integer)o2));\n" //
+				+ "        o1 = (Integer)o2;\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
+
+		enable(CleanUpConstants.REMOVE_UNNECESSARY_CASTS);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public void foo(Integer o1, Integer o2) {\n" //
+				+ "        o1 = o2;\n" //
 				+ "    }\n" //
 				+ "}\n";
 		String expected1= sample;
@@ -3395,6 +3659,36 @@ public class CleanUpTest extends CleanUpTestCase {
 	}
 
 	@Test
+	public void testCodeStyleBug579044() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "class E1 {public static String FOO = \"FOO\";}\n";
+		pack1.createCompilationUnit("E1.java", sample, false, null);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "public class E2 extends E1 {}\n";
+		pack1.createCompilationUnit("E2.java", sample, false, null);
+
+		IPackageFragment pack2= fSourceFolder.createPackageFragment("test2", false, null);
+		sample= "" //
+				+ "package test2;\n" //
+				+ "import test1.E2;\n" //
+				+ "public class E3 {\n" //
+				+ "    public String foo() {\n" //
+				+ "        return E2.FOO;\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack2.createCompilationUnit("E3.java", sample, false, null);
+
+		enable(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS);
+		enable(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_SUBTYPE_ACCESS);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] {cu1});
+	}
+
+	@Test
 	public void testCodeStyleBug189398() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		String sample= "" //
@@ -4866,6 +5160,17 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        Float f3 = new Float(dObject);\n" //
 				+ "    }\n" //
 				+ "\n" //
+				+ "    public static void parsedByStringAutoboxedToPrimitive() {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        byte by = new Byte(\"42\");\n" //
+				+ "        boolean bo = new Boolean(\"true\");\n" //
+				+ "        double d = new Double(\"42\");\n" //
+				+ "        float f = new Float(\"42\");\n" //
+				+ "        long l = new Long(\"42\");\n" //
+				+ "        short s = new Short(\"42\");\n" //
+				+ "        int i = new Integer(\"42\");\n" //
+				+ "    }\n" //
+				+ "\n" //
 				+ "    public static void removeUnnecessaryObjectCreation() {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        new Byte(\"0\").byteValue();\n" //
@@ -4957,6 +5262,17 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        Float f3 = dObject.floatValue();\n" //
 				+ "    }\n" //
 				+ "\n" //
+				+ "    public static void parsedByStringAutoboxedToPrimitive() {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        byte by = Byte.valueOf(\"42\");\n" //
+				+ "        boolean bo = Boolean.valueOf(\"true\");\n" //
+				+ "        double d = Double.valueOf(\"42\");\n" //
+				+ "        float f = Float.valueOf(\"42\");\n" //
+				+ "        long l = Long.valueOf(\"42\");\n" //
+				+ "        short s = Short.valueOf(\"42\");\n" //
+				+ "        int i = Integer.valueOf(\"42\");\n" //
+				+ "    }\n" //
+				+ "\n" //
 				+ "    public static void removeUnnecessaryObjectCreation() {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        Byte.valueOf(\"0\").byteValue();\n" //
@@ -5020,6 +5336,8 @@ public class CleanUpTest extends CleanUpTestCase {
 						MultiFixMessages.ValueOfRatherThanInstantiationCleanup_description_valueof)));
 	}
 
+
+
 	@Test
 	public void testDoNotUseValueOfRatherThanInstantiation() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
@@ -5038,6 +5356,40 @@ public class CleanUpTest extends CleanUpTestCase {
 		enable(CleanUpConstants.VALUEOF_RATHER_THAN_INSTANTIATION);
 
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu });
+	}
+
+	@Test
+	public void testValueOfRatherThanInstantiationBug578917() throws Exception {
+		// Given
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
+		String given= "" //
+				+ "package test1;\n"
+				+ "\n" //
+				+ "public class E {\n"
+				+ "    public static void replaceWrapperConstructorsWithValueOf() {\n"
+				+ "        double k= 33;\n"
+				+ "        Float f= new Float(((k= (4 * 3f / 72d))))"
+				+ "    }\n"
+				+ "}\n";
+
+		String expected= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public static void replaceWrapperConstructorsWithValueOf() {\n"
+				+ "        double k= 33;\n"
+				+ "        Float f= Float.valueOf((float) (k= (4 * 3f / 72d)))" //
+				+ "    }\n" //
+				+ "}\n";
+
+		// When
+		ICompilationUnit cu= pack.createCompilationUnit("E.java", given, false, null);
+		enable(CleanUpConstants.VALUEOF_RATHER_THAN_INSTANTIATION);
+
+		// Then
+		assertNotEquals("The class must be changed", given, expected);
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { expected },
+				new HashSet<>(Arrays.asList(MultiFixMessages.ValueOfRatherThanInstantiationCleanup_description_float_with_float_value)));
 	}
 
 	@Test
@@ -6420,14 +6772,14 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "    public void replaceReassignedWrapper() {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        Character reassignedCharacter = Character.MIN_VALUE;\n" //
-				+ "        reassignedCharacter = 123;\n" //
+				+ "        reassignedCharacter = 'a';\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public void replaceMultiReassignedWrapper() {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        Character multiReassignedCharacter = Character.MIN_VALUE;\n" //
-				+ "        multiReassignedCharacter = 123;\n" //
-				+ "        multiReassignedCharacter = 456;\n" //
+				+ "        multiReassignedCharacter = 'a';\n" //
+				+ "        multiReassignedCharacter = 'b';\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public void replaceAssignedWrapper() {\n" //
@@ -6636,14 +6988,14 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "    public void replaceReassignedWrapper() {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        char reassignedCharacter = Character.MIN_VALUE;\n" //
-				+ "        reassignedCharacter = 123;\n" //
+				+ "        reassignedCharacter = 'a';\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public void replaceMultiReassignedWrapper() {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        char multiReassignedCharacter = Character.MIN_VALUE;\n" //
-				+ "        multiReassignedCharacter = 123;\n" //
-				+ "        multiReassignedCharacter = 456;\n" //
+				+ "        multiReassignedCharacter = 'a';\n" //
+				+ "        multiReassignedCharacter = 'b';\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public void replaceAssignedWrapper() {\n" //
@@ -10243,6 +10595,42 @@ public class CleanUpTest extends CleanUpTestCase {
 	}
 
 	@Test
+	public void testPrimitiveRatherThanWrapperPreview() throws Exception {
+		String previewHeader= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public void preview(int i) {\n";
+		String previewFooter= "" //
+				+ "    }\n" //
+				+ "}\n";
+		AbstractCleanUpCore cleanUp= new PrimitiveRatherThanWrapperCleanUpCore() {
+			@Override
+			protected boolean isEnabled(String key) {
+				return false;
+			}
+		};
+		String given= previewHeader + cleanUp.getPreview() + previewFooter;
+		cleanUp= new PrimitiveRatherThanWrapperCleanUpCore() {
+			@Override
+			protected boolean isEnabled(String key) {
+				return true;
+			}
+		};
+		String expected= previewHeader + cleanUp.getPreview() + previewFooter;
+
+		// When
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
+		ICompilationUnit cu= pack.createCompilationUnit("E.java", given, false, null);
+		enable(CleanUpConstants.PRIMITIVE_RATHER_THAN_WRAPPER);
+
+		// Then
+		assertNotEquals("The class must be changed", given, expected);
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { expected },
+				new HashSet<>(Arrays.asList(MultiFixMessages.PrimitiveRatherThanWrapperCleanUp_description)));
+	}
+
+	@Test
 	public void testEvaluateNullable() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		String input= "" //
@@ -10962,51 +11350,120 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "import java.util.List;\n" //
 				+ "\n" //
 				+ "public class E {\n" //
-				+ "    private static int staticField = 0;\n" //
-				+ "\n" //
-				+ "    public void replaceDuplicateConditionsWithPrimitiveTypes(boolean repeatedBoolean, boolean isValid, boolean isActive) {\n" //
+				+ "    public void replaceDuplicateConditionsWithPrimitiveTypes(boolean repeatedBoolean, boolean thenExpression, boolean elseExpression) {\n" //
 				+ "        // Keep this comment\n" //
-				+ "        boolean newBoolean1 = repeatedBoolean && isValid || repeatedBoolean && isActive;\n" //
-				+ "        boolean newBoolean2 = repeatedBoolean && !isValid || repeatedBoolean && isActive;\n" //
-				+ "        boolean newBoolean3 = repeatedBoolean && isValid || repeatedBoolean && !isActive;\n" //
-				+ "        boolean newBoolean4 = repeatedBoolean && !isValid || repeatedBoolean && !isActive;\n" //
-				+ "        boolean newBoolean5 = !repeatedBoolean && isValid || !repeatedBoolean && isActive;\n" //
-				+ "        boolean newBoolean6 = !repeatedBoolean && !isValid || !repeatedBoolean && isActive;\n" //
-				+ "        boolean newBoolean7 = !repeatedBoolean && isValid || !repeatedBoolean && !isActive;\n" //
-				+ "        boolean newBoolean8 = !repeatedBoolean && !isValid || !repeatedBoolean && !isActive;\n" //
+				+ "        boolean newBoolean1 = repeatedBoolean && thenExpression || repeatedBoolean && elseExpression;\n" //
+				+ "        boolean newBoolean2 = repeatedBoolean && !thenExpression || repeatedBoolean && elseExpression;\n" //
+				+ "        boolean newBoolean3 = repeatedBoolean && thenExpression || repeatedBoolean && !elseExpression;\n" //
+				+ "        boolean newBoolean4 = repeatedBoolean && !thenExpression || repeatedBoolean && !elseExpression;\n" //
+				+ "        boolean newBoolean5 = !repeatedBoolean && thenExpression || !repeatedBoolean && elseExpression;\n" //
+				+ "        boolean newBoolean6 = !repeatedBoolean && !thenExpression || !repeatedBoolean && elseExpression;\n" //
+				+ "        boolean newBoolean7 = !repeatedBoolean && thenExpression || !repeatedBoolean && !elseExpression;\n" //
+				+ "        boolean newBoolean8 = !repeatedBoolean && !thenExpression || !repeatedBoolean && !elseExpression;\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public void replaceDuplicateConditionsWithEagerOperator(boolean repeatedBoolean, boolean isValid, boolean isEnable) {\n" //
+				+ "    public void replaceDuplicateConditionsWithPermutedExpressions(boolean repeatedExpression, boolean thenExpression, boolean elseExpression) {\n" //
 				+ "        // Keep this comment\n" //
-				+ "        boolean newBoolean1 = repeatedBoolean & isValid | repeatedBoolean & isEnable;\n" //
-				+ "        boolean newBoolean2 = repeatedBoolean & !isValid | repeatedBoolean & isEnable;\n" //
-				+ "        boolean newBoolean3 = repeatedBoolean & isValid | repeatedBoolean & !isEnable;\n" //
-				+ "        boolean newBoolean4 = repeatedBoolean & !isValid | repeatedBoolean & !isEnable;\n" //
-				+ "        boolean newBoolean5 = !repeatedBoolean & isValid | !repeatedBoolean & isEnable;\n" //
-				+ "        boolean newBoolean6 = !repeatedBoolean & !isValid | !repeatedBoolean & isEnable;\n" //
-				+ "        boolean newBoolean7 = !repeatedBoolean & isValid | !repeatedBoolean & !isEnable;\n" //
-				+ "        boolean newBoolean8 = !repeatedBoolean & !isValid | !repeatedBoolean & !isEnable;\n" //
+				+ "        boolean newBoolean1 = repeatedExpression && thenExpression || elseExpression && repeatedExpression;\n" //
+				+ "        boolean newBoolean2 = repeatedExpression && !thenExpression || elseExpression && repeatedExpression;\n" //
+				+ "        boolean newBoolean3 = repeatedExpression && thenExpression || !elseExpression && repeatedExpression;\n" //
+				+ "        boolean newBoolean4 = repeatedExpression && !thenExpression || !elseExpression && repeatedExpression;\n" //
+				+ "        boolean newBoolean5 = !repeatedExpression && thenExpression || elseExpression && !repeatedExpression;\n" //
+				+ "        boolean newBoolean6 = !repeatedExpression && !thenExpression || elseExpression && !repeatedExpression;\n" //
+				+ "        boolean newBoolean7 = !repeatedExpression && thenExpression || !elseExpression && !repeatedExpression;\n" //
+				+ "        boolean newBoolean8 = !repeatedExpression && !thenExpression || !elseExpression && !repeatedExpression;\n" //
+				+ "\n" //
+				+ "        newBoolean1 = thenExpression && repeatedExpression || repeatedExpression && elseExpression;\n" //
+				+ "        newBoolean2 = !thenExpression && repeatedExpression || repeatedExpression && elseExpression;\n" //
+				+ "        newBoolean3 = thenExpression && repeatedExpression || repeatedExpression && !elseExpression;\n" //
+				+ "        newBoolean4 = !thenExpression && repeatedExpression || repeatedExpression && !elseExpression;\n" //
+				+ "        newBoolean5 = !repeatedExpression && thenExpression || !repeatedExpression && elseExpression;\n" //
+				+ "        newBoolean6 = !repeatedExpression && !thenExpression || !repeatedExpression && elseExpression;\n" //
+				+ "        newBoolean7 = !repeatedExpression && thenExpression || !repeatedExpression && !elseExpression;\n" //
+				+ "        newBoolean8 = !repeatedExpression && !thenExpression || !repeatedExpression && !elseExpression;\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public void replaceDuplicateConditionsWithPermutedBooleans(boolean repeatedBoolean, boolean isValid, boolean isActive) {\n" //
+				+ "    public void replaceDuplicateConditionsOnConditionalAndExpression(boolean repeatedBoolean, boolean thenExpression, boolean elseExpression) {\n" //
 				+ "        // Keep this comment\n" //
-				+ "        boolean newBoolean1 = repeatedBoolean && isValid || isActive && repeatedBoolean;\n" //
-				+ "        boolean newBoolean2 = repeatedBoolean && !isValid || isActive && repeatedBoolean;\n" //
-				+ "        boolean newBoolean3 = repeatedBoolean && isValid || !isActive && repeatedBoolean;\n" //
-				+ "        boolean newBoolean4 = repeatedBoolean && !isValid || !isActive && repeatedBoolean;\n" //
-				+ "        boolean newBoolean5 = !repeatedBoolean && isValid || isActive && !repeatedBoolean;\n" //
-				+ "        boolean newBoolean6 = !repeatedBoolean && !isValid || isActive && !repeatedBoolean;\n" //
-				+ "        boolean newBoolean7 = !repeatedBoolean && isValid || !isActive && !repeatedBoolean;\n" //
-				+ "        boolean newBoolean8 = !repeatedBoolean && !isValid || !isActive && !repeatedBoolean;\n" //
+				+ "        boolean newBoolean1 = (repeatedBoolean || thenExpression) && (repeatedBoolean || elseExpression);\n" //
+				+ "        boolean newBoolean2 = (repeatedBoolean || !thenExpression) && (repeatedBoolean || elseExpression);\n" //
+				+ "        boolean newBoolean3 = (repeatedBoolean || thenExpression) && (repeatedBoolean || !elseExpression);\n" //
+				+ "        boolean newBoolean4 = (repeatedBoolean || !thenExpression) && (repeatedBoolean || !elseExpression);\n" //
+				+ "        boolean newBoolean5 = (!repeatedBoolean || thenExpression) && (!repeatedBoolean || elseExpression);\n" //
+				+ "        boolean newBoolean6 = (!repeatedBoolean || !thenExpression) && (!repeatedBoolean || elseExpression);\n" //
+				+ "        boolean newBoolean7 = (!repeatedBoolean || thenExpression) && (!repeatedBoolean || !elseExpression);\n" //
+				+ "        boolean newBoolean8 = (!repeatedBoolean || !thenExpression) && (!repeatedBoolean || !elseExpression);\n" //
+				+ "    }\n" //
 				+ "\n" //
-				+ "        newBoolean1 = isValid && repeatedBoolean || repeatedBoolean && isActive;\n" //
-				+ "        newBoolean2 = !isValid && repeatedBoolean || repeatedBoolean && isActive;\n" //
-				+ "        newBoolean3 = isValid && repeatedBoolean || repeatedBoolean && !isActive;\n" //
-				+ "        newBoolean4 = !isValid && repeatedBoolean || repeatedBoolean && !isActive;\n" //
-				+ "        newBoolean5 = !repeatedBoolean && isValid || !repeatedBoolean && isActive;\n" //
-				+ "        newBoolean6 = !repeatedBoolean && !isValid || !repeatedBoolean && isActive;\n" //
-				+ "        newBoolean7 = !repeatedBoolean && isValid || !repeatedBoolean && !isActive;\n" //
-				+ "        newBoolean8 = !repeatedBoolean && !isValid || !repeatedBoolean && !isActive;\n" //
+				+ "    public void replaceDuplicateConditionsWithEagerOperator(boolean repeatedBoolean, boolean thenExpression, boolean elseExpression) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = repeatedBoolean & thenExpression | repeatedBoolean & elseExpression;\n" //
+				+ "        boolean newBoolean2 = repeatedBoolean & !thenExpression | repeatedBoolean & elseExpression;\n" //
+				+ "        boolean newBoolean3 = repeatedBoolean & thenExpression | repeatedBoolean & !elseExpression;\n" //
+				+ "        boolean newBoolean4 = repeatedBoolean & !thenExpression | repeatedBoolean & !elseExpression;\n" //
+				+ "        boolean newBoolean5 = !repeatedBoolean & thenExpression | !repeatedBoolean & elseExpression;\n" //
+				+ "        boolean newBoolean6 = !repeatedBoolean & !thenExpression | !repeatedBoolean & elseExpression;\n" //
+				+ "        boolean newBoolean7 = !repeatedBoolean & thenExpression | !repeatedBoolean & !elseExpression;\n" //
+				+ "        boolean newBoolean8 = !repeatedBoolean & !thenExpression | !repeatedBoolean & !elseExpression;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceDuplicateConditionsOnEagerAndExpression(boolean repeatedBoolean, boolean thenExpression, boolean elseExpression) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = (repeatedBoolean | thenExpression) & (repeatedBoolean | elseExpression);\n" //
+				+ "        boolean newBoolean2 = (repeatedBoolean | !thenExpression) & (repeatedBoolean | elseExpression);\n" //
+				+ "        boolean newBoolean3 = (repeatedBoolean | thenExpression) & (repeatedBoolean | !elseExpression);\n" //
+				+ "        boolean newBoolean4 = (repeatedBoolean | !thenExpression) & (repeatedBoolean | !elseExpression);\n" //
+				+ "        boolean newBoolean5 = (!repeatedBoolean | thenExpression) & (!repeatedBoolean | elseExpression);\n" //
+				+ "        boolean newBoolean6 = (!repeatedBoolean | !thenExpression) & (!repeatedBoolean | elseExpression);\n" //
+				+ "        boolean newBoolean7 = (!repeatedBoolean | thenExpression) & (!repeatedBoolean | !elseExpression);\n" //
+				+ "        boolean newBoolean8 = (!repeatedBoolean | !thenExpression) & (!repeatedBoolean | !elseExpression);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public boolean replaceDuplicateConditionsWithWrapperAtTheStart(boolean factor, Boolean thenExpression, boolean elseExpression) {\n" //
+				+ "        return thenExpression && factor || factor && elseExpression;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public boolean replaceDuplicateConditionsWithWrapperAtTheEnd(boolean factor, boolean thenExpression, Boolean elseExpression) {\n" //
+				+ "        return thenExpression & factor | factor & elseExpression;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceDuplicateConditionsWithActiveExpressionAtFirstPosition(int i1, int i2, int i3, int i4, int i5, int i6) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = (!(i3 == i4++) && (i1 == i2)) || ((i1 == i2) && (i5 == i6));\n" //
+				+ "        boolean newBoolean2 = (!(i3 == ++i4) && (i1 == i2)) || ((i1 == i2) && (i5 == i6));\n" //
+				+ "        boolean newBoolean3 = (!(i3 == i4--) && (i1 == i2)) || ((i1 == i2) && (i5 == i6));\n" //
+				+ "        boolean newBoolean4 = (!(i3 == --i4) && (i1 == i2)) || ((i1 == i2) && (i5 == i6));\n" //
+				+ "\n" //
+				+ "        boolean newBoolean5 = ((i3 == i4++) && (i1 == i2)) || ((i1 == i2) && !(i5 == i6));\n" //
+				+ "        boolean newBoolean6 = ((i3 == ++i4) && (i1 == i2)) || ((i1 == i2) && !(i5 == i6));\n" //
+				+ "        boolean newBoolean7 = ((i3 == i4--) && (i1 == i2)) || ((i1 == i2) && !(i5 == i6));\n" //
+				+ "        boolean newBoolean8 = ((i3 == --i4) && (i1 == i2)) || ((i1 == i2) && !(i5 == i6));\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceDuplicateConditionsOnEagerActiveExpression(int i1, int i2, int i3, int i4, int i5, int i6) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = ((i1 == i2) & !(i3 == i4)) | ((i1 == i2) & (i5 == i6++));\n" //
+				+ "        boolean newBoolean2 = ((i1 == i2) & !(i3 == i4)) | ((i1 == i2) & (i5 == ++i6));\n" //
+				+ "        boolean newBoolean3 = ((i1 == i2) & !(i3 == i4)) | ((i1 == i2) & (i5 == i6--));\n" //
+				+ "        boolean newBoolean4 = ((i1 == i2) & !(i3 == i4)) | ((i1 == i2) & (i5 == --i6));\n" //
+				+ "\n" //
+				+ "        boolean newBoolean5 = ((i1 == i2) & (i3 == i4)) | ((i1 == i2) & !(i5 == i6++));\n" //
+				+ "        boolean newBoolean6 = ((i1 == i2) & (i3 == i4)) | ((i1 == i2) & !(i5 == ++i6));\n" //
+				+ "        boolean newBoolean7 = ((i1 == i2) & (i3 == i4)) | ((i1 == i2) & !(i5 == i6--));\n" //
+				+ "        boolean newBoolean8 = ((i1 == i2) & (i3 == i4)) | ((i1 == i2) & !(i5 == --i6));\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void moveDuplicateExpressionOnTheLeftWithFinalEagerActiveExpression(int i1, int i2, int i3, int i4, int i5, int i6) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = (!(i3 == i4) & (i1 == i2)) | ((i1 == i2) & (i5 == i6++));\n" //
+				+ "        boolean newBoolean2 = (!(i3 == i4) & (i1 == i2)) | ((i1 == i2) & (i5 == ++i6));\n" //
+				+ "        boolean newBoolean3 = (!(i3 == i4) & (i1 == i2)) | ((i1 == i2) & (i5 == i6--));\n" //
+				+ "        boolean newBoolean4 = (!(i3 == i4) & (i1 == i2)) | ((i1 == i2) & (i5 == --i6));\n" //
+				+ "\n" //
+				+ "        boolean newBoolean5 = ((i3 == i4) & (i1 == i2)) | ((i1 == i2) & !(i5 == i6++));\n" //
+				+ "        boolean newBoolean6 = ((i3 == i4) & (i1 == i2)) | ((i1 == i2) & !(i5 == ++i6));\n" //
+				+ "        boolean newBoolean7 = ((i3 == i4) & (i1 == i2)) | ((i1 == i2) & !(i5 == i6--));\n" //
+				+ "        boolean newBoolean8 = ((i3 == i4) & (i1 == i2)) | ((i1 == i2) & !(i5 == --i6));\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public void replaceDuplicateConditionsWithExpressions(int i1, int i2, int i3, int i4, int i5, int i6) {\n" //
@@ -11034,51 +11491,120 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "import java.util.List;\n" //
 				+ "\n" //
 				+ "public class E {\n" //
-				+ "    private static int staticField = 0;\n" //
-				+ "\n" //
-				+ "    public void replaceDuplicateConditionsWithPrimitiveTypes(boolean repeatedBoolean, boolean isValid, boolean isActive) {\n" //
+				+ "    public void replaceDuplicateConditionsWithPrimitiveTypes(boolean repeatedBoolean, boolean thenExpression, boolean elseExpression) {\n" //
 				+ "        // Keep this comment\n" //
-				+ "        boolean newBoolean1 = (repeatedBoolean && (isValid || isActive));\n" //
-				+ "        boolean newBoolean2 = (repeatedBoolean && (!isValid || isActive));\n" //
-				+ "        boolean newBoolean3 = (repeatedBoolean && (isValid || !isActive));\n" //
-				+ "        boolean newBoolean4 = (repeatedBoolean && (!isValid || !isActive));\n" //
-				+ "        boolean newBoolean5 = (!repeatedBoolean && (isValid || isActive));\n" //
-				+ "        boolean newBoolean6 = (!repeatedBoolean && (!isValid || isActive));\n" //
-				+ "        boolean newBoolean7 = (!repeatedBoolean && (isValid || !isActive));\n" //
-				+ "        boolean newBoolean8 = (!repeatedBoolean && (!isValid || !isActive));\n" //
+				+ "        boolean newBoolean1 = (repeatedBoolean && (thenExpression || elseExpression));\n" //
+				+ "        boolean newBoolean2 = (repeatedBoolean && (!thenExpression || elseExpression));\n" //
+				+ "        boolean newBoolean3 = (repeatedBoolean && (thenExpression || !elseExpression));\n" //
+				+ "        boolean newBoolean4 = (repeatedBoolean && (!thenExpression || !elseExpression));\n" //
+				+ "        boolean newBoolean5 = (!repeatedBoolean && (thenExpression || elseExpression));\n" //
+				+ "        boolean newBoolean6 = (!repeatedBoolean && (!thenExpression || elseExpression));\n" //
+				+ "        boolean newBoolean7 = (!repeatedBoolean && (thenExpression || !elseExpression));\n" //
+				+ "        boolean newBoolean8 = (!repeatedBoolean && (!thenExpression || !elseExpression));\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public void replaceDuplicateConditionsWithEagerOperator(boolean repeatedBoolean, boolean isValid, boolean isEnable) {\n" //
+				+ "    public void replaceDuplicateConditionsWithPermutedExpressions(boolean repeatedExpression, boolean thenExpression, boolean elseExpression) {\n" //
 				+ "        // Keep this comment\n" //
-				+ "        boolean newBoolean1 = (repeatedBoolean & (isValid | isEnable));\n" //
-				+ "        boolean newBoolean2 = (repeatedBoolean & (!isValid | isEnable));\n" //
-				+ "        boolean newBoolean3 = (repeatedBoolean & (isValid | !isEnable));\n" //
-				+ "        boolean newBoolean4 = (repeatedBoolean & (!isValid | !isEnable));\n" //
-				+ "        boolean newBoolean5 = (!repeatedBoolean & (isValid | isEnable));\n" //
-				+ "        boolean newBoolean6 = (!repeatedBoolean & (!isValid | isEnable));\n" //
-				+ "        boolean newBoolean7 = (!repeatedBoolean & (isValid | !isEnable));\n" //
-				+ "        boolean newBoolean8 = (!repeatedBoolean & (!isValid | !isEnable));\n" //
+				+ "        boolean newBoolean1 = ((thenExpression || elseExpression) && repeatedExpression);\n" //
+				+ "        boolean newBoolean2 = ((!thenExpression || elseExpression) && repeatedExpression);\n" //
+				+ "        boolean newBoolean3 = ((thenExpression || !elseExpression) && repeatedExpression);\n" //
+				+ "        boolean newBoolean4 = ((!thenExpression || !elseExpression) && repeatedExpression);\n" //
+				+ "        boolean newBoolean5 = ((thenExpression || elseExpression) && !repeatedExpression);\n" //
+				+ "        boolean newBoolean6 = ((!thenExpression || elseExpression) && !repeatedExpression);\n" //
+				+ "        boolean newBoolean7 = ((thenExpression || !elseExpression) && !repeatedExpression);\n" //
+				+ "        boolean newBoolean8 = ((!thenExpression || !elseExpression) && !repeatedExpression);\n" //
+				+ "\n" //
+				+ "        newBoolean1 = (repeatedExpression && (thenExpression || elseExpression));\n" //
+				+ "        newBoolean2 = (repeatedExpression && (!thenExpression || elseExpression));\n" //
+				+ "        newBoolean3 = (repeatedExpression && (thenExpression || !elseExpression));\n" //
+				+ "        newBoolean4 = (repeatedExpression && (!thenExpression || !elseExpression));\n" //
+				+ "        newBoolean5 = (!repeatedExpression && (thenExpression || elseExpression));\n" //
+				+ "        newBoolean6 = (!repeatedExpression && (!thenExpression || elseExpression));\n" //
+				+ "        newBoolean7 = (!repeatedExpression && (thenExpression || !elseExpression));\n" //
+				+ "        newBoolean8 = (!repeatedExpression && (!thenExpression || !elseExpression));\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public void replaceDuplicateConditionsWithPermutedBooleans(boolean repeatedBoolean, boolean isValid, boolean isActive) {\n" //
+				+ "    public void replaceDuplicateConditionsOnConditionalAndExpression(boolean repeatedBoolean, boolean thenExpression, boolean elseExpression) {\n" //
 				+ "        // Keep this comment\n" //
-				+ "        boolean newBoolean1 = (repeatedBoolean && (isValid || isActive));\n" //
-				+ "        boolean newBoolean2 = (repeatedBoolean && (!isValid || isActive));\n" //
-				+ "        boolean newBoolean3 = (repeatedBoolean && (isValid || !isActive));\n" //
-				+ "        boolean newBoolean4 = (repeatedBoolean && (!isValid || !isActive));\n" //
-				+ "        boolean newBoolean5 = (!repeatedBoolean && (isValid || isActive));\n" //
-				+ "        boolean newBoolean6 = (!repeatedBoolean && (!isValid || isActive));\n" //
-				+ "        boolean newBoolean7 = (!repeatedBoolean && (isValid || !isActive));\n" //
-				+ "        boolean newBoolean8 = (!repeatedBoolean && (!isValid || !isActive));\n" //
+				+ "        boolean newBoolean1 = (repeatedBoolean || (thenExpression && elseExpression));\n" //
+				+ "        boolean newBoolean2 = (repeatedBoolean || (!thenExpression && elseExpression));\n" //
+				+ "        boolean newBoolean3 = (repeatedBoolean || (thenExpression && !elseExpression));\n" //
+				+ "        boolean newBoolean4 = (repeatedBoolean || (!thenExpression && !elseExpression));\n" //
+				+ "        boolean newBoolean5 = (!repeatedBoolean || (thenExpression && elseExpression));\n" //
+				+ "        boolean newBoolean6 = (!repeatedBoolean || (!thenExpression && elseExpression));\n" //
+				+ "        boolean newBoolean7 = (!repeatedBoolean || (thenExpression && !elseExpression));\n" //
+				+ "        boolean newBoolean8 = (!repeatedBoolean || (!thenExpression && !elseExpression));\n" //
+				+ "    }\n" //
 				+ "\n" //
-				+ "        newBoolean1 = (repeatedBoolean && (isValid || isActive));\n" //
-				+ "        newBoolean2 = (repeatedBoolean && (!isValid || isActive));\n" //
-				+ "        newBoolean3 = (repeatedBoolean && (isValid || !isActive));\n" //
-				+ "        newBoolean4 = (repeatedBoolean && (!isValid || !isActive));\n" //
-				+ "        newBoolean5 = (!repeatedBoolean && (isValid || isActive));\n" //
-				+ "        newBoolean6 = (!repeatedBoolean && (!isValid || isActive));\n" //
-				+ "        newBoolean7 = (!repeatedBoolean && (isValid || !isActive));\n" //
-				+ "        newBoolean8 = (!repeatedBoolean && (!isValid || !isActive));\n" //
+				+ "    public void replaceDuplicateConditionsWithEagerOperator(boolean repeatedBoolean, boolean thenExpression, boolean elseExpression) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = (repeatedBoolean & (thenExpression | elseExpression));\n" //
+				+ "        boolean newBoolean2 = (repeatedBoolean & (!thenExpression | elseExpression));\n" //
+				+ "        boolean newBoolean3 = (repeatedBoolean & (thenExpression | !elseExpression));\n" //
+				+ "        boolean newBoolean4 = (repeatedBoolean & (!thenExpression | !elseExpression));\n" //
+				+ "        boolean newBoolean5 = (!repeatedBoolean & (thenExpression | elseExpression));\n" //
+				+ "        boolean newBoolean6 = (!repeatedBoolean & (!thenExpression | elseExpression));\n" //
+				+ "        boolean newBoolean7 = (!repeatedBoolean & (thenExpression | !elseExpression));\n" //
+				+ "        boolean newBoolean8 = (!repeatedBoolean & (!thenExpression | !elseExpression));\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceDuplicateConditionsOnEagerAndExpression(boolean repeatedBoolean, boolean thenExpression, boolean elseExpression) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = (repeatedBoolean | (thenExpression & elseExpression));\n" //
+				+ "        boolean newBoolean2 = (repeatedBoolean | (!thenExpression & elseExpression));\n" //
+				+ "        boolean newBoolean3 = (repeatedBoolean | (thenExpression & !elseExpression));\n" //
+				+ "        boolean newBoolean4 = (repeatedBoolean | (!thenExpression & !elseExpression));\n" //
+				+ "        boolean newBoolean5 = (!repeatedBoolean | (thenExpression & elseExpression));\n" //
+				+ "        boolean newBoolean6 = (!repeatedBoolean | (!thenExpression & elseExpression));\n" //
+				+ "        boolean newBoolean7 = (!repeatedBoolean | (thenExpression & !elseExpression));\n" //
+				+ "        boolean newBoolean8 = (!repeatedBoolean | (!thenExpression & !elseExpression));\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public boolean replaceDuplicateConditionsWithWrapperAtTheStart(boolean factor, Boolean thenExpression, boolean elseExpression) {\n" //
+				+ "        return ((thenExpression || elseExpression) && factor);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public boolean replaceDuplicateConditionsWithWrapperAtTheEnd(boolean factor, boolean thenExpression, Boolean elseExpression) {\n" //
+				+ "        return (factor & (thenExpression | elseExpression));\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceDuplicateConditionsWithActiveExpressionAtFirstPosition(int i1, int i2, int i3, int i4, int i5, int i6) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = ((!(i3 == i4++) || (i5 == i6)) && (i1 == i2));\n" //
+				+ "        boolean newBoolean2 = ((!(i3 == ++i4) || (i5 == i6)) && (i1 == i2));\n" //
+				+ "        boolean newBoolean3 = ((!(i3 == i4--) || (i5 == i6)) && (i1 == i2));\n" //
+				+ "        boolean newBoolean4 = ((!(i3 == --i4) || (i5 == i6)) && (i1 == i2));\n" //
+				+ "\n" //
+				+ "        boolean newBoolean5 = (((i3 == i4++) || !(i5 == i6)) && (i1 == i2));\n" //
+				+ "        boolean newBoolean6 = (((i3 == ++i4) || !(i5 == i6)) && (i1 == i2));\n" //
+				+ "        boolean newBoolean7 = (((i3 == i4--) || !(i5 == i6)) && (i1 == i2));\n" //
+				+ "        boolean newBoolean8 = (((i3 == --i4) || !(i5 == i6)) && (i1 == i2));\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void replaceDuplicateConditionsOnEagerActiveExpression(int i1, int i2, int i3, int i4, int i5, int i6) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = ((i1 == i2) & (!(i3 == i4) | (i5 == i6++)));\n" //
+				+ "        boolean newBoolean2 = ((i1 == i2) & (!(i3 == i4) | (i5 == ++i6)));\n" //
+				+ "        boolean newBoolean3 = ((i1 == i2) & (!(i3 == i4) | (i5 == i6--)));\n" //
+				+ "        boolean newBoolean4 = ((i1 == i2) & (!(i3 == i4) | (i5 == --i6)));\n" //
+				+ "\n" //
+				+ "        boolean newBoolean5 = ((i1 == i2) & ((i3 == i4) | !(i5 == i6++)));\n" //
+				+ "        boolean newBoolean6 = ((i1 == i2) & ((i3 == i4) | !(i5 == ++i6)));\n" //
+				+ "        boolean newBoolean7 = ((i1 == i2) & ((i3 == i4) | !(i5 == i6--)));\n" //
+				+ "        boolean newBoolean8 = ((i1 == i2) & ((i3 == i4) | !(i5 == --i6)));\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void moveDuplicateExpressionOnTheLeftWithFinalEagerActiveExpression(int i1, int i2, int i3, int i4, int i5, int i6) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean newBoolean1 = ((i1 == i2) & (!(i3 == i4) | (i5 == i6++)));\n" //
+				+ "        boolean newBoolean2 = ((i1 == i2) & (!(i3 == i4) | (i5 == ++i6)));\n" //
+				+ "        boolean newBoolean3 = ((i1 == i2) & (!(i3 == i4) | (i5 == i6--)));\n" //
+				+ "        boolean newBoolean4 = ((i1 == i2) & (!(i3 == i4) | (i5 == --i6)));\n" //
+				+ "\n" //
+				+ "        boolean newBoolean5 = ((i1 == i2) & ((i3 == i4) | !(i5 == i6++)));\n" //
+				+ "        boolean newBoolean6 = ((i1 == i2) & ((i3 == i4) | !(i5 == ++i6)));\n" //
+				+ "        boolean newBoolean7 = ((i1 == i2) & ((i3 == i4) | !(i5 == i6--)));\n" //
+				+ "        boolean newBoolean8 = ((i1 == i2) & ((i3 == i4) | !(i5 == --i6)));\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public void replaceDuplicateConditionsWithExpressions(int i1, int i2, int i3, int i4, int i5, int i6) {\n" //
@@ -11113,15 +11639,15 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "public class E {\n" //
 				+ "    private static int staticField = 0;\n" //
 				+ "\n" //
-				+ "    public boolean doNoRefactorFailingCode(boolean b1, boolean[] b2, boolean b3) {\n" //
-				+ "        return b2[-1] && b1 || b3 && b1;\n" //
+				+ "    public boolean doNoRefactorFailingCode(boolean factor, boolean thenExpression, boolean[] elseCrashingExpression) {\n" //
+				+ "        return thenExpression && factor || elseCrashingExpression[-1] && factor;\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public boolean doNoReplaceDuplicateConditionsWithOtherCondition(boolean b1, boolean b2, boolean b3, boolean b4) {\n" //
-				+ "        return b1 && b2 || b1 && b3 && b4;\n" //
+				+ "    public boolean doNotRefactorWithOtherCondition(boolean factor, boolean thenExpression, boolean elseExpression, boolean extendedOperand) {\n" //
+				+ "        return factor && thenExpression || factor && elseExpression && extendedOperand;\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public void doNoReplaceDuplicateConditionsWithOtherOperandBefore(boolean b1, boolean b2, boolean b3, boolean unrelevantCondition) {\n" //
+				+ "    public void doNotRefactorWithOtherOperandBefore(boolean b1, boolean b2, boolean b3, boolean unrelevantCondition) {\n" //
 				+ "        boolean newBoolean1 = unrelevantCondition || (b1 && b2) || (!b1 && b3);\n" //
 				+ "        boolean newBoolean2 = unrelevantCondition || (b1 && !b2) || (b3 && !b1);\n" //
 				+ "        boolean newBoolean3 = unrelevantCondition || (b1 && b2) || (!b3 && !b1);\n" //
@@ -11132,7 +11658,7 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        boolean newBoolean8 = unrelevantCondition || (!b1 && !b2) || (!b3 && b1);\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public void doNoReplaceDuplicateConditionsWithOtherOperandAfter(boolean b1, boolean b2, boolean b3, boolean unrelevantCondition) {\n" //
+				+ "    public void doNotRefactorWithOtherOperandAfter(boolean b1, boolean b2, boolean b3, boolean unrelevantCondition) {\n" //
 				+ "        boolean newBoolean1 = (b1 && b2) || (!b1 && b3) || unrelevantCondition;\n" //
 				+ "        boolean newBoolean2 = (b1 && !b2) || (b3 && !b1) || unrelevantCondition;\n" //
 				+ "        boolean newBoolean3 = (b1 && b2) || (!b3 && !b1) || unrelevantCondition;\n" //
@@ -11143,18 +11669,26 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        boolean newBoolean8 = (!b1 && !b2) || (!b3 && b1) || unrelevantCondition;\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public boolean doNoReplaceDuplicateConditionsWithWrappers(Boolean b1, Boolean b2, Boolean b3) {\n" //
-				+ "        return b1 && b2 || b1 && b3;\n" //
+				+ "    public boolean doNotRefactorWithWrapperFactor(Boolean factor, boolean thenExpression, boolean elseExpression) {\n" //
+				+ "        return factor & thenExpression | factor & elseExpression;\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public void doNotReplaceDuplicateConditionsWithMethods(List<String> myList) {\n" //
+				+ "    public boolean doNotRefactorWithWrapperInTheMiddle(boolean factor, Boolean thenExpression, boolean elseExpression) {\n" //
+				+ "        return factor & thenExpression | factor & elseExpression;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public boolean doNotRefactorWithLazyWrapperAtTheEnd(boolean factor, boolean thenExpression, Boolean elseExpression) {\n" //
+				+ "        return thenExpression && factor || factor && elseExpression;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotRefactorWithMethods(List<String> myList) {\n" //
 				+ "        boolean newBoolean1 = myList.remove(\"lorem\") && !myList.remove(\"foo\") || myList.remove(\"lorem\")\n" //
 				+ "                && myList.remove(\"ipsum\");\n" //
 				+ "        boolean newBoolean2 = myList.remove(\"lorem\") && myList.remove(\"bar\") || myList.remove(\"lorem\")\n" //
 				+ "                && !myList.remove(\"ipsum\");\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public void doNotReplaceDuplicateConditionsWithIncrements(int i1, int i2, int i3, int i4, int i5, int i6) {\n" //
+				+ "    public void doNotRefactorWithIncrements(int i1, int i2, int i3, int i4, int i5, int i6) {\n" //
 				+ "        boolean newBoolean1 = (i1 == i2) && !(i3 == i4++) || (i1 == i2) && (i5 == i6++);\n" //
 				+ "        boolean newBoolean2 = (i1 == i2) && !(i3 == ++i4) || (i1 == i2) && (i5 == ++i6);\n" //
 				+ "        boolean newBoolean3 = (i1 == i2) && !(i3 == i4--) || (i1 == i2) && (i5 == i6--);\n" //
@@ -11166,7 +11700,31 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        boolean newBoolean8 = (i1 == i2) && (i3 == --i4) || (i1 == i2) && !(i5 == --i6);\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public void doNotReplaceDuplicateConditionsWithAssignments(int i1, int i2, boolean b1, boolean b2, boolean b3) {\n" //
+				+ "    public void doNotReplaceActiveDuplicateConditions(int i1, int i2, int i3, int i4, int i5, int i6) {\n" //
+				+ "        boolean newBoolean1 = (i1 == i2++) & !(i3 == i4) | (i1 == i2++) & (i5 == i6);\n" //
+				+ "        boolean newBoolean2 = (i1 == ++i2) & !(i3 == i4) | (i1 == ++i2) & (i5 == i6);\n" //
+				+ "        boolean newBoolean3 = (i1 == i2--) & !(i3 == i4) | (i1 == i2--) & (i5 == i6);\n" //
+				+ "        boolean newBoolean4 = (i1 == --i2) & !(i3 == i4) | (i1 == --i2) & (i5 == i6);\n" //
+				+ "\n" //
+				+ "        boolean newBoolean5 = (i1 == i2++) & (i3 == i4) || (i1 == i2++) & !(i5 == i6);\n" //
+				+ "        boolean newBoolean6 = (i1 == ++i2) & (i3 == i4) || (i1 == ++i2) & !(i5 == i6);\n" //
+				+ "        boolean newBoolean7 = (i1 == i2--) & (i3 == i4) || (i1 == i2--) & !(i5 == i6);\n" //
+				+ "        boolean newBoolean8 = (i1 == --i2) & (i3 == i4) || (i1 == --i2) & !(i5 == i6);\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public boolean doNotRefactorWithSideEffectDueToThenExpression(int i1, int i2, int i3, int i4, int i5) {\n" //
+				+ "        return ((i1 == i2) & (i3 == i2++)) | ((i1 == i2) & (i5 == i4));\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public boolean doNotRefactorWithSideEffectDueToElseExpression(int i1, int i2, int i3, int i4, int i5) {\n" //
+				+ "        return ((i1 == i2) & (i3 == i4)) | ((i5 == i2++) & (i1 == i2));\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public boolean doNotRefactorWithSideEffectDueToElseExpressionToo(int i1, int i2, int i3, int i4, int i5) {\n" //
+				+ "        return ((i3 == i4) & (i1 == i2)) | ((i5 == i2++) & (i1 == i2));\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void doNotRefactorWithAssignments(int i1, int i2, boolean b1, boolean b2, boolean b3) {\n" //
 				+ "        boolean newBoolean1 = (i1 == i2) && !(b1 = b2) || (i1 == i2) && (b1 = b3);\n" //
 				+ "        boolean newBoolean2 = (i1 == i2) && (b1 = b2) || (i1 == i2) && !(b1 = b3);\n" //
 				+ "    }\n" //
@@ -11177,7 +11735,7 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        }\n" //
 				+ "    }\n" //
 				+ "\n" //
-				+ "    public void doNotReplaceDuplicateConditionsWithInstanciations(Boolean b1) {\n" //
+				+ "    public void doNotRefactorWithInstantiation(boolean b1) {\n" //
 				+ "        boolean newBoolean1 = b1 && !(new SideEffect() instanceof SideEffect)\n" //
 				+ "                || b1 && new SideEffect() instanceof Object;\n" //
 				+ "        boolean newBoolean2 = b1 && new SideEffect() instanceof SideEffect\n" //
@@ -11477,6 +12035,7 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        boolean newBoolean2 = (i1 == i2) && (i3 <= i4) || !(i1 == i2) && !(i4 >= i3);\n" //
 				+ "        boolean newBoolean3 = (i1 == i2) && (i3 != i4) || (i2 != i1) && (i3 == i4);\n" //
 				+ "        boolean newBoolean4 = (i1 == i2) && (i3 < i4) || (i1 != i2) && (i4 <= i3);\n" //
+				+ "        boolean newBoolean5 = (i1 == i2 && i3 != i4) || (i2 != i1 && i3 == i4);\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public void replaceDuplicateConditionsWithFields() {\n" //
@@ -11545,6 +12104,7 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        boolean newBoolean2 = (i1 == i2) == (i3 <= i4);\n" //
 				+ "        boolean newBoolean3 = (i1 == i2) == (i3 != i4);\n" //
 				+ "        boolean newBoolean4 = (i1 == i2) == (i3 < i4);\n" //
+				+ "        boolean newBoolean5 = (i1 == i2) == (i3 != i4);\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public void replaceDuplicateConditionsWithFields() {\n" //
@@ -16860,6 +17420,7 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "    public long removeInitForLong() {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        long reassignedVar = 0;\n" //
+				+ "        System.out.println();\n" //
 				+ "        reassignedVar = System.currentTimeMillis();\n" //
 				+ "        return reassignedVar;\n" //
 				+ "    }\n" //
@@ -16867,6 +17428,7 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "    public String removeInitForString() {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        String reassignedVar = \"\";\n" //
+				+ "        System.out.println();\n" //
 				+ "        reassignedVar = File.pathSeparator;\n" //
 				+ "        return reassignedVar;\n" //
 				+ "    }\n" //
@@ -16881,6 +17443,8 @@ public class CleanUpTest extends CleanUpTestCase {
 		ICompilationUnit cu= pack.createCompilationUnit("E.java", input, false, null);
 
 		enable(CleanUpConstants.OVERRIDDEN_ASSIGNMENT);
+		disable(CleanUpConstants.OVERRIDDEN_ASSIGNMENT_MOVE_DECL);
+		disable(CleanUpConstants.REMOVE_REDUNDANT_SEMICOLONS);
 
 		String output= "" //
 				+ "package test1;\n" //
@@ -16890,29 +17454,67 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "public class E {\n" //
 				+ "    public boolean removeUselessInitialization() {\n" //
 				+ "        // Keep this comment\n" //
-				+ "        boolean reassignedVar;\n" //
-				+ "        reassignedVar = \"\\n\".equals(File.pathSeparator);\n" //
+				+ "        boolean reassignedVar = \"\\n\".equals(File.pathSeparator);\n" //
 				+ "        return reassignedVar;\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public long removeInitForLong() {\n" //
 				+ "        // Keep this comment\n" //
 				+ "        long reassignedVar;\n" //
+				+ "        System.out.println();\n" //
 				+ "        reassignedVar = System.currentTimeMillis();\n" //
 				+ "        return reassignedVar;\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public String removeInitForString() {\n" //
 				+ "        // Keep this comment\n" //
-				+ "        String reassignedVar;\n" //
-				+ "        reassignedVar = File.pathSeparator;\n" //
+				+ "        String reassignedVar = File.pathSeparator;\n" //
+				+ "        System.out.println();\n" //
 				+ "        return reassignedVar;\n" //
 				+ "    }\n" //
 				+ "\n" //
 				+ "    public boolean removePassiveInitialization(int i) {\n" //
 				+ "        // Keep this comment\n" //
-				+ "        boolean reassignedPassiveVar;\n" //
-				+ "        reassignedPassiveVar = \"\\n\".equals(File.pathSeparator);\n" //
+				+ "        boolean reassignedPassiveVar = \"\\n\".equals(File.pathSeparator);\n" //
+				+ "        return reassignedPassiveVar;\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { output },
+				new HashSet<>(Arrays.asList(MultiFixMessages.OverriddenAssignmentCleanUp_description)));
+		enable(CleanUpConstants.OVERRIDDEN_ASSIGNMENT_MOVE_DECL);
+		disable(CleanUpConstants.REMOVE_REDUNDANT_SEMICOLONS);
+
+		output= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "import java.io.File;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public boolean removeUselessInitialization() {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean reassignedVar = \"\\n\".equals(File.pathSeparator);\n" //
+				+ "        return reassignedVar;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public long removeInitForLong() {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        long reassignedVar;\n" //
+				+ "        System.out.println();\n" //
+				+ "        reassignedVar = System.currentTimeMillis();\n" //
+				+ "        return reassignedVar;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public String removeInitForString() {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        String reassignedVar = File.pathSeparator;\n" //
+				+ "        System.out.println();\n" //
+				+ "        return reassignedVar;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public boolean removePassiveInitialization(int i) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        boolean reassignedPassiveVar = \"\\n\".equals(File.pathSeparator);\n" //
 				+ "        return reassignedPassiveVar;\n" //
 				+ "    }\n" //
 				+ "}\n";
@@ -17737,6 +18339,17 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        return -1;\n" //
 				+ "    }\n" //
 				+ "\n" //
+				+ "    public int reduceWithUnbrackettedThenAndParent(boolean isValid, boolean isActive) {\n" //
+				+ "        if (isValid)\n" //
+				+ "            if (isActive)\n" //
+				+ "                return 0; // This kind of comment is correctly handled\n" //
+				+ "            else {\n" //
+				+ "                System.out.println(\"Valid and active\");\n" //
+				+ "            }\n" //
+				+ "\n" //
+				+ "        return -1;\n" //
+				+ "    }\n" //
+				+ "\n" //
 				+ "    public int refactorElseInSwitch(int discriminant, boolean isVisible) {\n" //
 				+ "        switch (discriminant) {\n" //
 				+ "        case 0:\n" //
@@ -17882,6 +18495,16 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "            return;\n" //
 				+ "        } else {\n" //
 				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public void refactorNegativeCondition(Date date) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (!(date != null)) {\n" //
+				+ "            System.out.println(\"null args: we should not be here\");\n" //
+				+ "        } else {\n" //
+				+ "            return;\n" //
+				+ "        }\n" //
+				+ "        return;\n" //
 				+ "    }\n" //
 				+ "}\n";
 
@@ -18044,6 +18667,16 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        return -1;\n" //
 				+ "    }\n" //
 				+ "\n" //
+				+ "    public int reduceWithUnbrackettedThenAndParent(boolean isValid, boolean isActive) {\n" //
+				+ "        if (isValid) {\n" //
+				+ "            if (isActive)\n" //
+				+ "                return 0; // This kind of comment is correctly handled\n" //
+				+ "            System.out.println(\"Valid and active\");\n" //
+				+ "        }\n" //
+				+ "\n" //
+				+ "        return -1;\n" //
+				+ "    }\n" //
+				+ "\n" //
 				+ "    public int refactorElseInSwitch(int discriminant, boolean isVisible) {\n" //
 				+ "        switch (discriminant) {\n" //
 				+ "        case 0:\n" //
@@ -18180,6 +18813,15 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "            return;\n" //
 				+ "        }\n" //
 				+ "    }\n" //
+				+ "\n" //
+				+ "    public void refactorNegativeCondition(Date date) {\n" //
+				+ "        // Keep this comment\n" //
+				+ "        if (date != null) {\n" //
+				+ "            return;\n" //
+				+ "        }\n" //
+				+ "        System.out.println(\"null args: we should not be here\");\n" //
+				+ "        return;\n" //
+				+ "    }\n" //
 				+ "}\n";
 
 		// When
@@ -18243,6 +18885,16 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        }\n" //
 				+ "\n" //
 				+ "        return i;\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public int doNotRefactorWithUnbrackettedNodeAndParent(boolean isValid, boolean isActive) {\n" //
+				+ "        if (isValid)\n" //
+				+ "            if (isActive) {\n" //
+				+ "                System.out.println(\"Valid and active\");\n" //
+				+ "            } else\n" //
+				+ "                return 0; // This kind of comment is badly handled\n" //
+				+ "\n" //
+				+ "        return -1;\n" //
 				+ "    }\n" //
 				+ "}\n";
 		ICompilationUnit cu= pack.createCompilationUnit("E.java", sample, false, null);
@@ -18389,6 +19041,58 @@ public class CleanUpTest extends CleanUpTestCase {
 		String expected1= sample;
 
 		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected1 }, null);
+	}
+
+	@Test
+	public void testAddParenthesesBug578081() throws Exception {
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "public class E {\n" //
+				+ "    void foo(int i) {\n" //
+				+ "        if (i == 0 || i == 1 /* i is 0 or 1 */) // if comment\n" //
+				+ "            /* additional if comment */\n"
+				+ "            System.out.println(i);\n" //
+				+ "        \n" //
+				+ "        while (i > 0 && i < 10 /* i gt 0 and lt 10 */) // while comment\n" //
+				+ "            /* additional while comment */\n"
+				+ "            System.out.println(1);\n" //
+				+ "        \n" //
+				+ "        boolean b= i != -1 && i > 10 && i < 100 || i > 20;\n" //
+				+ "        \n" //
+				+ "        do ; while (i > 5 && b || i < 100 && i > 90);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
+
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS);
+		enable(CleanUpConstants.CONTROL_STATEMENTS_USE_BLOCKS_ALWAYS);
+
+		sample= "" //
+				+ "package test1;\n" //
+				+ "public class E {\n" //
+				+ "    void foo(int i) {\n" //
+				+ "        if (i == 0 || i == 1 /* i is 0 or 1 */) { // if comment\n" //
+				+ "        \t/* additional if comment */\n"
+				+ "        \tSystem.out.println(i);\n" //
+				+ "        }\n" //
+				+ "        \n" //
+				+ "        while (i > 0 && i < 10 /* i gt 0 and lt 10 */) { // while comment\n" //
+				+ "        \t/* additional while comment */\n"
+				+ "        \tSystem.out.println(1);\n" //
+				+ "        }\n" //
+				+ "        \n" //
+				+ "        boolean b= i != -1 && i > 10 && i < 100 || i > 20;\n" //
+				+ "        \n" //
+				+ "        do {\n" //
+				+ "            ;\n" //
+				+ "        } while (i > 5 && b || i < 100 && i > 90);\n" //
+				+ "    }\n" //
+				+ "}\n";
+		String expected1= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] {cu1}, new String[] {expected1}, null);
 	}
 
 	@Test
@@ -21105,7 +21809,24 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "import java.util.jar.Attributes.Name;\n" //
 				+ "import java.util.List;\n" //
 				+ "\n" //
-				+ "public class E {\n" //
+				+ "public final class E {\n" //
+				+ "    public RefactorThisInnerClass keepInnerInstanciation() {\n" //
+				+ "        return new RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public RefactorThisInnerClass rewriteInnerInstanciation() {\n" //
+				+ "        return this.new RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public RefactorThisInnerClass rewriteQualifiedInnerInstanciation() {\n" //
+				+ "        return test1.E.this.new RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static RefactorThisInnerClass rewriteInnerInstanciationOnTopLevelObject() {\n" //
+				+ "        E object = new E();\n" //
+				+ "        return object.new RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
 				+ "    public class RefactorThisInnerClass {\n" //
 				+ "        int i;\n" //
 				+ "\n" //
@@ -21307,7 +22028,24 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "import java.util.jar.Attributes.Name;\n" //
 				+ "import java.util.List;\n" //
 				+ "\n" //
-				+ "public class E {\n" //
+				+ "public final class E {\n" //
+				+ "    public RefactorThisInnerClass keepInnerInstanciation() {\n" //
+				+ "        return new RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public RefactorThisInnerClass rewriteInnerInstanciation() {\n" //
+				+ "        return new RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public RefactorThisInnerClass rewriteQualifiedInnerInstanciation() {\n" //
+				+ "        return new test1.E.RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public static RefactorThisInnerClass rewriteInnerInstanciationOnTopLevelObject() {\n" //
+				+ "        E object = new E();\n" //
+				+ "        return new test1.E.RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
 				+ "    public static class RefactorThisInnerClass {\n" //
 				+ "        int i;\n" //
 				+ "\n" //
@@ -21509,6 +22247,118 @@ public class CleanUpTest extends CleanUpTestCase {
 	}
 
 	@Test
+	public void testStaticInnerClassOnGenricTopLevelClass() throws Exception {
+		// Given
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
+		String given= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E<T> {\n" //
+				+ "    public RefactorThisInnerClass rewriteInnerInstanciationOnTopLevelObject(E<String> parameterizedObject) {\n" //
+				+ "        return parameterizedObject.new RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    private class RefactorThisInnerClass {\n" //
+				+ "        int i;\n" //
+				+ "\n" //
+				+ "        public boolean anotherMethod() {\n" //
+				+ "            return true;\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		String expected= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E<T> {\n" //
+				+ "    public RefactorThisInnerClass rewriteInnerInstanciationOnTopLevelObject(E<String> parameterizedObject) {\n" //
+				+ "        return new test1.E.RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    private static class RefactorThisInnerClass {\n" //
+				+ "        int i;\n" //
+				+ "\n" //
+				+ "        public boolean anotherMethod() {\n" //
+				+ "            return true;\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		// When
+		ICompilationUnit cu= pack.createCompilationUnit("E.java", given, false, null);
+		enable(CleanUpConstants.STATIC_INNER_CLASS);
+
+		// Then
+		assertNotEquals("The class must be changed", given, expected);
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { expected },
+				new HashSet<>(Arrays.asList(MultiFixMessages.StaticInnerClassCleanUp_description)));
+	}
+
+	@Test
+	public void testStaticInnerClassOnPrivateInnerClass() throws Exception {
+		// Given
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
+		String given= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public RefactorThisInnerClass keepInnerInstanciation() {\n" //
+				+ "        return new RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public RefactorThisInnerClass rewriteInnerInstanciation() {\n" //
+				+ "        return this.new RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public RefactorThisInnerClass rewriteQualifiedInnerInstanciation() {\n" //
+				+ "        return test1.E.this.new RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    private class RefactorThisInnerClass {\n" //
+				+ "        int i;\n" //
+				+ "\n" //
+				+ "        public boolean anotherMethod() {\n" //
+				+ "            return true;\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		String expected= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E {\n" //
+				+ "    public RefactorThisInnerClass keepInnerInstanciation() {\n" //
+				+ "        return new RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public RefactorThisInnerClass rewriteInnerInstanciation() {\n" //
+				+ "        return new RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public RefactorThisInnerClass rewriteQualifiedInnerInstanciation() {\n" //
+				+ "        return new test1.E.RefactorThisInnerClass();\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    private static class RefactorThisInnerClass {\n" //
+				+ "        int i;\n" //
+				+ "\n" //
+				+ "        public boolean anotherMethod() {\n" //
+				+ "            return true;\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}\n";
+
+		// When
+		ICompilationUnit cu= pack.createCompilationUnit("E.java", given, false, null);
+		enable(CleanUpConstants.STATIC_INNER_CLASS);
+
+		// Then
+		assertNotEquals("The class must be changed", given, expected);
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu }, new String[] { expected },
+				new HashSet<>(Arrays.asList(MultiFixMessages.StaticInnerClassCleanUp_description)));
+	}
+
+	@Test
 	public void testDoNotUseStaticInnerClass() throws Exception {
 		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
 		String sample= "" //
@@ -21517,7 +22367,7 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "import java.sql.DriverPropertyInfo;\n" //
 				+ "import org.junit.jupiter.api.Nested;\n" //
 				+ "\n" //
-				+ "public class E<T> {\n" //
+				+ "public final class E<T> {\n" //
 				+ "    public interface DoNotRefactorInnerInterface {\n" //
 				+ "        boolean anotherMethod();\n" //
 				+ "    }\n" //
@@ -21627,6 +22477,26 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "    @Nested\n" //
 				+ "    public class DoNotRefactorInnerClassWithJunitNestedAnnotation {\n" //
 				+ "        public int a;\n" //
+				+ "    }\n" //
+				+ "}\n";
+		ICompilationUnit cu= pack.createCompilationUnit("E.java", sample, false, null);
+
+		enable(CleanUpConstants.STATIC_INNER_CLASS);
+
+		assertRefactoringHasNoChange(new ICompilationUnit[] { cu });
+	}
+
+	@Test
+	public void testDoNotUseStaticInnerClassOnNotFinalTopLevelClass() throws Exception {
+		IPackageFragment pack= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= "" //
+				+ "package test1;\n" //
+				+ "\n" //
+				+ "public class E<T> {\n" //
+				+ "    public class DoNotRefactorInnerInheritableClass {\n" //
+				+ "        boolean anotherMethod() {\n" //
+				+ "            return true;\n" //
+				+ "        }\n" //
 				+ "    }\n" //
 				+ "}\n";
 		ICompilationUnit cu= pack.createCompilationUnit("E.java", sample, false, null);
@@ -27242,6 +28112,20 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        System.out.println(\"out:\"+lsp); //$NON-NLS-1$\n" //
 				+ "        Boolean value = Boolean.parseBoolean(System.getProperty(\"arbitrarykey\")); //$NON-NLS-1$\n" //
 				+ "        System.out.println(\"out:\"+value); //$NON-NLS-1$\n" //
+				+ "        Boolean value2 = Boolean.parseBoolean(System.getProperty(\"arbitrarykey\",\"false\")); //$NON-NLS-1$ //$NON-NLS-2$\n" //
+				+ "        System.out.println(\"out:\"+value2); //$NON-NLS-1$\n" //
+				+ "        Integer intvalue = Integer.parseInt(System.getProperty(\"arbitrarykey\")); //$NON-NLS-1$\n" //
+				+ "        System.out.println(\"out:\"+intvalue); //$NON-NLS-1$\n" //
+				+ "        Integer intvalue2 = Integer.parseInt(System.getProperty(\"arbitrarykey\",\"0\")); //$NON-NLS-1$ //$NON-NLS-2$\n" //
+				+ "        System.out.println(\"out:\"+intvalue2); //$NON-NLS-1$\n" //
+				+ "        Integer intvalue3 = Integer.parseInt(System.getProperty(\"arbitrarykey\",\"15\")); //$NON-NLS-1$ //$NON-NLS-2$\n" //
+				+ "        System.out.println(\"out:\"+intvalue3); //$NON-NLS-1$\n" //
+				+ "        Long longvalue = Long.parseLong(System.getProperty(\"arbitrarykey\")); //$NON-NLS-1$\n" //
+				+ "        System.out.println(\"out:\"+longvalue); //$NON-NLS-1$\n" //
+				+ "        Long longvalue2 = Long.parseLong(System.getProperty(\"arbitrarykey\",\"0\")); //$NON-NLS-1$ //$NON-NLS-2$\n" //
+				+ "        System.out.println(\"out:\"+longvalue2); //$NON-NLS-1$\n" //
+				+ "        Long longvalue3 = Long.parseLong(System.getProperty(\"arbitrarykey\",\"15\")); //$NON-NLS-1$ //$NON-NLS-2$\n" //
+				+ "        System.out.println(\"out:\"+longvalue3); //$NON-NLS-1$\n" //
 				+ "    }\n" //
 				+ "}\n";
 
@@ -27265,6 +28149,20 @@ public class CleanUpTest extends CleanUpTestCase {
 				+ "        System.out.println(\"out:\"+lsp); //$NON-NLS-1$\n" //
 				+ "        Boolean value = Boolean.getBoolean(\"arbitrarykey\"); //$NON-NLS-1$\n" //
 				+ "        System.out.println(\"out:\"+value); //$NON-NLS-1$\n" //
+				+ "        Boolean value2 = Boolean.getBoolean(\"arbitrarykey\"); //$NON-NLS-1$\n" //
+				+ "        System.out.println(\"out:\"+value2); //$NON-NLS-1$\n" //
+				+ "        Integer intvalue = Integer.getInteger(\"arbitrarykey\"); //$NON-NLS-1$\n" //
+				+ "        System.out.println(\"out:\"+intvalue); //$NON-NLS-1$\n" //
+				+ "        Integer intvalue2 = Integer.getInteger(\"arbitrarykey\"); //$NON-NLS-1$\n" //
+				+ "        System.out.println(\"out:\"+intvalue2); //$NON-NLS-1$\n" //
+				+ "        Integer intvalue3 = Integer.getInteger(\"arbitrarykey\", 15); //$NON-NLS-1$\n" //
+				+ "        System.out.println(\"out:\"+intvalue3); //$NON-NLS-1$\n" //
+				+ "        Long longvalue = Long.getLong(\"arbitrarykey\"); //$NON-NLS-1$\n" //
+				+ "        System.out.println(\"out:\"+longvalue); //$NON-NLS-1$\n" //
+				+ "        Long longvalue2 = Long.getLong(\"arbitrarykey\"); //$NON-NLS-1$\n" //
+				+ "        System.out.println(\"out:\"+longvalue2); //$NON-NLS-1$\n" //
+				+ "        Long longvalue3 = Long.getLong(\"arbitrarykey\", 15); //$NON-NLS-1$\n" //
+				+ "        System.out.println(\"out:\"+longvalue3); //$NON-NLS-1$\n" //
 				+ "    }\n" //
 				+ "}\n";
 
@@ -27275,7 +28173,7 @@ public class CleanUpTest extends CleanUpTestCase {
 		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_PATH_SEPARATOR);
 		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_LINE_SEPARATOR);
 		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_FILE_ENCODING);
-		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_BOOLEAN);
+		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_BOXED);
 
 		// Then
 		assertNotEquals("The class must be changed", given, expected);
@@ -27284,7 +28182,9 @@ public class CleanUpTest extends CleanUpTestCase {
 						Messages.format(ConstantsCleanUp_description,UpdateProperty.PATH_SEPARATOR.toString()),
 						Messages.format(ConstantsCleanUp_description,UpdateProperty.LINE_SEPARATOR.toString()),
 						Messages.format(ConstantsCleanUp_description,UpdateProperty.FILE_ENCODING.toString()),
-						Messages.format(ConstantsCleanUp_description,UpdateProperty.BOOLEAN_PROPERTY.toString()))));
+						Messages.format(ConstantsCleanUp_description,UpdateProperty.BOOLEAN_PROPERTY.toString()),
+						Messages.format(ConstantsCleanUp_description,UpdateProperty.INTEGER_PROPERTY.toString()),
+						Messages.format(ConstantsCleanUp_description,UpdateProperty.LONG_PROPERTY.toString()))));
 	}
 
 	@Test
@@ -27336,7 +28236,7 @@ public class CleanUpTest extends CleanUpTestCase {
 		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_PATH_SEPARATOR);
 		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_LINE_SEPARATOR);
 		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_FILE_ENCODING);
-		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_BOOLEAN);
+		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_BOXED);
 
 		// Then
 		assertNotEquals("The class must be changed", given, expected);
@@ -27371,7 +28271,7 @@ public class CleanUpTest extends CleanUpTestCase {
 		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_PATH_SEPARATOR);
 		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_LINE_SEPARATOR);
 		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_FILE_ENCODING);
-		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_BOOLEAN);
+		enable(CleanUpConstants.CONSTANTS_FOR_SYSTEM_PROPERTY_BOXED);
 
 		// Then
 		assertRefactoringHasNoChange(new ICompilationUnit[] { cu });
@@ -27655,5 +28555,56 @@ public class CleanUpTest extends CleanUpTestCase {
 				new HashSet<>(Arrays.asList(new String[] {
 						Messages.format(FixMessages.CodeStyleFix_QualifyWithThis_description, new Object[] {"field", "this"})
 				})));
+	}
+
+	@Test
+	public void testRemoveParenthesesBug438266_1() throws Exception {
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= ""
+				+ "package test1;\n" //
+				+ "public class E {\n"
+				+ "    public static void main(String[] args) {\n"
+				+ "        Integer b = (Integer) (-1);\n"
+				+ "        System.out.println(b);\n"
+				+ "    }\n"
+				+ "}";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
+
+		enable(CleanUpConstants.EXPRESSIONS_USE_PARENTHESES);
+		enable(CleanUpConstants.EXPRESSIONS_USE_PARENTHESES_NEVER);
+
+		String expected= sample;
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected }, null);
+	}
+
+	@Test
+	public void testRemoveParenthesesBug438266_2() throws Exception {
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String sample= ""
+				+ "package test1;\n" //
+				+ "public class E {\n"
+				+ "    public static void main(String[] args) {\n"
+				+ "        Integer b = (int) (-1);\n"
+				+ "        System.out.println(b);\n"
+				+ "    }\n"
+				+ "}";
+		ICompilationUnit cu1= pack1.createCompilationUnit("E.java", sample, false, null);
+
+		enable(CleanUpConstants.EXPRESSIONS_USE_PARENTHESES);
+		enable(CleanUpConstants.EXPRESSIONS_USE_PARENTHESES_NEVER);
+
+		String expected= ""
+				+ "package test1;\n" //
+				+ "public class E {\n"
+				+ "    public static void main(String[] args) {\n"
+				+ "        Integer b = (int) -1;\n"
+				+ "        System.out.println(b);\n"
+				+ "    }\n"
+				+ "}";
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected }, null);
 	}
 }

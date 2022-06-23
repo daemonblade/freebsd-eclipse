@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
+import java.util.Optional;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
@@ -105,16 +106,17 @@ public class BuildPathSupport {
 					return null;
 				}
 				resolvedVersion = bestMatch.getVersion().toString();
-				try {
-					if (bundleRoot == null) {
-						return new Path(FileLocator.getBundleFile(bestMatch).getAbsolutePath());
-					} else { // need the exploded jar
-						URL rootUrl= bestMatch.getEntry("/"); //$NON-NLS-1$
+				if (bundleRoot == null) {
+					Optional<File> bundleFile= FileLocator.getBundleFileLocation(bestMatch);
+					return bundleFile.isPresent() ? new Path(bundleFile.get().getAbsolutePath()) : null;
+				} else { // need the exploded jar
+					URL rootUrl= bestMatch.getEntry("/"); //$NON-NLS-1$
+					try {
 						URL fileRootUrl= FileLocator.toFileURL(rootUrl);
 						return new Path(fileRootUrl.getPath());
+					} catch (IOException ex) {
+						JUnitCorePlugin.log(ex);
 					}
-				} catch (IOException ex) {
-					JUnitCorePlugin.log(ex);
 				}
 			}
 			return null;
@@ -339,6 +341,14 @@ public class BuildPathSupport {
 			"org.junit.platform.suite.api", new VersionRange("[1.0.0,2.0.0)"), null, "org.junit.platform.suite.api_1.*.jar", "org.junit.platform.suite.api.source", "", //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$//$NON-NLS-4$//$NON-NLS-5$
 			JUnitPreferencesConstants.JUNIT_PLATFORM_SUITE_API_JAVADOC);
 
+	public static final JUnitPluginDescription JUNIT_PLATFORM_SUITE_ENGINE_PLUGIN= new JUnitPluginDescription(
+			"org.junit.platform.suite.engine", new VersionRange("[1.0.0,2.0.0)"), null, "org.junit.platform.suite.engine_1.*.jar", "org.junit.platform.suite.engine.source", "", //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$//$NON-NLS-4$//$NON-NLS-5$
+			JUnitPreferencesConstants.JUNIT_PLATFORM_SUITE_ENGINE_JAVADOC);
+
+	public static final JUnitPluginDescription JUNIT_PLATFORM_SUITE_COMMONS_PLUGIN= new JUnitPluginDescription(
+			"org.junit.platform.suite.commons", new VersionRange("[1.0.0,2.0.0)"), null, "org.junit.platform.suite.commons_1.*.jar", "org.junit.platform.suite.commons.source", "", //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$//$NON-NLS-4$//$NON-NLS-5$
+			JUnitPreferencesConstants.JUNIT_PLATFORM_SUITE_COMMONS_JAVADOC);
+
 	public static final JUnitPluginDescription JUNIT_VINTAGE_ENGINE_PLUGIN= new JUnitPluginDescription(
 			"org.junit.vintage.engine", new VersionRange("[4.12.0,6.0.0)"), null, "org.junit.vintage.engine_5.*.jar", "org.junit.vintage.engine.source", "", //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$//$NON-NLS-4$//$NON-NLS-5$
 			JUnitPreferencesConstants.JUNIT_VINTAGE_ENGINE_JAVADOC);
@@ -474,6 +484,20 @@ public class BuildPathSupport {
 	 */
 	public static IClasspathEntry getJUnitPlatformSuiteApiLibraryEntry() {
 		return JUNIT_PLATFORM_SUITE_API_PLUGIN.getLibraryEntry();
+	}
+
+	/**
+	 * @return the org.junit.platform.suite.api library, or <code>null</code> if not available
+	 */
+	public static IClasspathEntry getJUnitPlatformSuiteEngineLibraryEntry() {
+		return JUNIT_PLATFORM_SUITE_ENGINE_PLUGIN.getLibraryEntry();
+	}
+
+	/**
+	 * @return the org.junit.platform.suite.commons library, or <code>null</code> if not available
+	 */
+	public static IClasspathEntry getJUnitPlatformSuiteCommonsLibraryEntry() {
+		return JUNIT_PLATFORM_SUITE_COMMONS_PLUGIN.getLibraryEntry();
 	}
 
 	/**

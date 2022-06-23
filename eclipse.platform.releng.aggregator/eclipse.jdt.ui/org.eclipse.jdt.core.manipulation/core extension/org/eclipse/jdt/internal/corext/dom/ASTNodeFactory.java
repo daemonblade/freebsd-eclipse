@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -36,6 +36,7 @@ import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.InfixExpression.Operator;
 import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NodeFinder;
@@ -43,6 +44,7 @@ import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.PrimitiveType;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -187,6 +189,31 @@ public class ASTNodeFactory {
 	 * @return the negated expression, as move or copy
 	 */
 	public static Expression negate(final AST ast, final ASTRewrite rewrite, final Expression booleanExpression, final boolean isMove) {
+		return negateAndUnwrap(ast, rewrite, booleanExpression, isMove, false);
+	}
+
+	/**
+	 * Negates the provided expression and applies the provided copy operation on
+	 * the returned expression and unwraps parentheses of result (e.g. !(x > 2) => x > 2:
+	 *
+	 * isValid  =>  !isValid
+	 * !isValid =>  isValid
+	 * true                           =>  false
+	 * false                          =>  true
+	 * i > 0                          =>  i <= 0
+	 * isValid || isEnabled           =>  !isValid && !isEnabled
+	 * !isValid || !isEnabled         =>  isValid && isEnabled
+	 * isValid ? (i > 0) : !isEnabled =>  isValid ? (i <= 0) : isEnabled
+	 *
+	 * @param ast The AST to create the resulting node with.
+	 * @param rewrite the rewrite
+	 * @param booleanExpression the expression to negate
+	 * @param isMove False if the returned nodes need to be new nodes
+	 * @param unWrap True if the expression being negated should remove parentheses of result
+	 * @return the negated expression, as move or copy
+	 */
+	public static Expression negateAndUnwrap(final AST ast, final ASTRewrite rewrite, final Expression booleanExpression,
+			final boolean isMove, final boolean unWrap) {
 		Expression unparenthesedExpression= ASTNodes.getUnparenthesedExpression(booleanExpression);
 
 		if (unparenthesedExpression instanceof PrefixExpression) {
@@ -200,6 +227,10 @@ public class ASTNodeFactory {
 					return negate(ast, rewrite, otherPrefixExpression.getOperand(), isMove);
 				}
 
+				if (unWrap) {
+					otherExpression= ASTNodes.getUnparenthesedExpression(otherExpression);
+				}
+
 				return isMove ? ASTNodes.createMoveTarget(rewrite, otherExpression) : ((Expression) rewrite.createCopyTarget(otherExpression));
 			}
 		} else if (unparenthesedExpression instanceof InfixExpression) {
@@ -207,7 +238,7 @@ public class ASTNodeFactory {
 			InfixExpression.Operator negatedOperator= ASTNodes.negatedInfixOperator(booleanOperation.getOperator());
 
 			if (negatedOperator != null) {
-				return getNegatedOperation(ast, rewrite, booleanOperation, negatedOperator, isMove);
+				return getNegatedOperation(ast, rewrite, booleanOperation, negatedOperator, isMove, unWrap);
 			}
 		} else if (unparenthesedExpression instanceof ConditionalExpression) {
 			ConditionalExpression aConditionalExpression= (ConditionalExpression) unparenthesedExpression;
@@ -232,7 +263,8 @@ public class ASTNodeFactory {
 		return not(ast, (Expression) rewrite.createCopyTarget(unparenthesedExpression));
 	}
 
-	private static Expression getNegatedOperation(final AST ast, final ASTRewrite rewrite, final InfixExpression booleanOperation, final InfixExpression.Operator negatedOperator, final boolean isMove) {
+	private static Expression getNegatedOperation(final AST ast, final ASTRewrite rewrite, final InfixExpression booleanOperation, final InfixExpression.Operator negatedOperator,
+			final boolean isMove, final boolean unWrap) {
 		List<Expression> allOperands= ASTNodes.allOperands(booleanOperation);
 		List<Expression> allTargetOperands;
 
@@ -270,6 +302,10 @@ public class ASTNodeFactory {
 		newInfixExpression.setRightOperand(allTargetOperands.remove(0));
 		newInfixExpression.extendedOperands().addAll(allTargetOperands);
 
+		if (unWrap) {
+			return newInfixExpression;
+		}
+		// otherwise, put parentheses around expression
 		ParenthesizedExpression parenthesizedExpression= ast.newParenthesizedExpression();
 		parenthesizedExpression.setExpression(newInfixExpression);
 		return parenthesizedExpression;
@@ -504,7 +540,8 @@ public class ASTNodeFactory {
 	 * @param ast The AST to create the expression for
 	 * @param type The type of the returned expression
 	 * @param extraDimensions Extra dimensions to the type
-	 * @return the Null-literal for reference types, a boolean-literal for a boolean type, a number
+	 * @return {@code Optional.empty()} if the type is {@code java.util.Optional},
+	 * the Null-literal for reference types, a boolean-literal for a boolean type, a number
 	 * literal for primitive types or <code>null</code> if the type is void.
 	 */
 	public static Expression newDefaultExpression(AST ast, Type type, int extraDimensions) {
@@ -518,6 +555,61 @@ public class ASTNodeFactory {
 				return ast.newNumberLiteral("0"); //$NON-NLS-1$
 			}
 		}
+		if (extraDimensions == 0 && type.isParameterizedType()) {
+			// if the requested type is of type "java.util.Optional" don't return "null"
+			ParameterizedType parameterizedType= (ParameterizedType) type;
+			Type outerType= parameterizedType.getType();
+
+			if (outerType instanceof SimpleType) {
+				SimpleType simpleType= (SimpleType) outerType;
+				Name name= simpleType.getName();
+				String fqn= name.getFullyQualifiedName();
+				if ("java.util.Optional".equals(fqn)) { //$NON-NLS-1$
+					MethodInvocation emptyCall= ast.newMethodInvocation();
+					emptyCall.setExpression(ASTNodeFactory.newName(ast, name.getFullyQualifiedName()));
+					emptyCall.setName(ast.newSimpleName("empty")); //$NON-NLS-1$
+					return emptyCall;
+				}
+			}
+		}
+		return ast.newNullLiteral();
+	}
+
+	/**
+	 * Returns an expression that is assignable to the given type. <code>null</code> is
+	 * returned if the type is the 'void' type.
+	 *
+	 * @param ast The AST to create the expression for
+	 * @param type The type of the returned expression
+	 * @param importedTypeBinding The binding of the return type that has been added to imports
+	 * @param extraDimensions Extra dimensions to the type
+	 * @return {@code Optional.empty()} if the type is {@code java.util.Optional},
+	 * the Null-literal for reference types, a boolean-literal for a boolean type, a number
+	 * literal for primitive types or <code>null</code> if the type is void.
+	 */
+	public static Expression newDefaultExpression(AST ast, Type type, ITypeBinding importedTypeBinding, int extraDimensions) {
+		if (extraDimensions == 0 && type.isPrimitiveType()) {
+			PrimitiveType primitiveType= (PrimitiveType) type;
+			if (primitiveType.getPrimitiveTypeCode() == PrimitiveType.BOOLEAN) {
+				return ast.newBooleanLiteral(false);
+			} else if (primitiveType.getPrimitiveTypeCode() == PrimitiveType.VOID) {
+				return null;
+			} else {
+				return ast.newNumberLiteral("0"); //$NON-NLS-1$
+			}
+		}
+		if (extraDimensions == 0 && type.isParameterizedType()) {
+			// if the requested type is of type "java.util.Optional" don't return "null"
+			if (importedTypeBinding != null) {
+				String name= importedTypeBinding.getErasure().getQualifiedName();
+				if ("java.util.Optional".equals(name)) { //$NON-NLS-1$
+					MethodInvocation emptyCall= ast.newMethodInvocation();
+					emptyCall.setExpression(ASTNodeFactory.newName(ast, "Optional")); //$NON-NLS-1$
+					emptyCall.setName(ast.newSimpleName("empty")); //$NON-NLS-1$
+					return emptyCall;
+				}
+			}
+		}
 		return ast.newNullLiteral();
 	}
 
@@ -527,7 +619,8 @@ public class ASTNodeFactory {
 	 *
 	 * @param ast The AST to create the expression for
 	 * @param type The type binding to which the returned expression is compatible to
-	 * @return the Null-literal for reference types, a boolean-literal for a boolean type, a number
+	 * @return {@code Optional.empty()} if the type is {@code java.util.Optional},
+	 * the Null-literal for reference types, a boolean-literal for a boolean type, a number
 	 * literal for primitive types or <code>null</code> if the type is void.
 	 */
 	public static Expression newDefaultExpression(AST ast, ITypeBinding type) {
@@ -545,6 +638,14 @@ public class ASTNodeFactory {
 			}
 			if (nomatch) {
 				return ast.newNumberLiteral("0");//$NON-NLS-1$
+			}
+		} else {
+			String name= type.getErasure().getQualifiedName();
+			if ("java.util.Optional".equals(name)) { //$NON-NLS-1$
+				MethodInvocation emptyCall= ast.newMethodInvocation();
+				emptyCall.setExpression(ASTNodeFactory.newName(ast, name));
+				emptyCall.setName(ast.newSimpleName("empty")); //$NON-NLS-1$
+				return emptyCall;
 			}
 		}
 		return ast.newNullLiteral();

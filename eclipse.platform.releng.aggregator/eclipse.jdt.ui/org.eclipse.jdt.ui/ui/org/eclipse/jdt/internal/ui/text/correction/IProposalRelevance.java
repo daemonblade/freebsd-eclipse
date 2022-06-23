@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2021 IBM Corporation and others.
+ * Copyright (c) 2012, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -137,6 +137,7 @@ public interface IProposalRelevance {
 	int CONVERT_TO_LAMBDA_EXPRESSION= 6;
 	int CONVERT_METHOD_REFERENCE_TO_LAMBDA= 6;
 	int CONVERT_TO_METHOD_REFERENCE= 6;
+	int CREATE_NEW_SUB_TYPE= 5;
 
 	int ADD_ALL_MISSING_TAGS= 5;
 	int QUALIFY_INNER_TYPE_NAME= 5;
@@ -200,6 +201,7 @@ public interface IProposalRelevance {
 	int OVERRIDE_DEFAULT_METHOD= 5;
 	int CREATE_JUNIT_TEST_CASE= 5;
 	int CREATE_IMPLEMENTATION_FROM_INTERFACE= 5;
+	int CONVERT_TO_TEXT_BLOCK= 5;
 
 	int ADD_MISSING_TAG= 4;
 	int INSERT_FALL_THROUGH= 4;
@@ -226,6 +228,7 @@ public interface IProposalRelevance {
 	int CHANGE_LAMBDA_BODY_TO_BLOCK= 3;
 	int CHANGE_LAMBDA_BODY_TO_EXPRESSION= 3;
 	int ADD_INFERRED_LAMBDA_PARAMETER_TYPES= 3;
+	int EXTRACT_LAMBDA_BODY_TO_METHOD= 3;
 
 	int ASSIGN_ALL_PARAMS_TO_NEW_FIELDS= 2;
 	int CONVERT_TO_INDEXED_FOR_LOOP= 2;
@@ -292,6 +295,7 @@ public interface IProposalRelevance {
 	int RETURN_ALLOCATED_OBJECT_VOID= 1;
 	int CONVERT_TO_IF_RETURN= 1;
 	int DO_WHILE_RATHER_THAN_WHILE= 1;
+	int ADD_STATIC_FAVORITE= 1;
 
 	int CONVERT_TO_MESSAGE_FORMAT= 0;
 	int COPY_ANNOTATION_JAR= 0;

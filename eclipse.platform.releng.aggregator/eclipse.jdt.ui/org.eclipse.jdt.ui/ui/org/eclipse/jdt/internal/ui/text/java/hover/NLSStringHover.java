@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -47,6 +47,8 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -169,7 +171,23 @@ public class NLSStringHover extends AbstractJavaEditorTextHover {
 			identifier= ((StringLiteral)node).getLiteralValue();
 		} else if (!usedFullyQualifiedName && node.getLocationInParent() == QualifiedName.NAME_PROPERTY) {
 			identifier= ((SimpleName)node).getIdentifier();
-		} else {
+			IBinding nodeBinding= ((SimpleName)node).resolveBinding();
+			if (nodeBinding != null) {
+				if (nodeBinding instanceof IVariableBinding && ((IVariableBinding)nodeBinding).isField()) {
+					ITypeBinding nodeDeclaringType= ((IVariableBinding)nodeBinding).getDeclaringClass();
+					if (nodeDeclaringType != null) {
+						ITypeBinding superClass= nodeDeclaringType.getSuperclass();
+						if (superClass != null) {
+							String superClassName= superClass.getQualifiedName();
+							if (!"org.eclipse.osgi.util.NLS".equals(superClassName)) { //$NON-NLS-1$
+								identifier= null;
+							}
+						}
+					}
+				}
+			}
+		}
+		if (identifier == null) {
 			try {
 				if (containingClassBinding == null)
 					return null;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -219,6 +219,8 @@ public final class PreferencesMessages extends NLS {
 	public static String JavaEditorPreferencePage_smartAutoIndentAfterNewLine;
 	public static String JavaEditorColoringConfigurationBlock_link;
 	public static String JavaBasePreferencePage_openTypeHierarchy;
+	public static String JavaBasePreferencePage_openCallHierarchy;
+	public static String JavaBasePreferencePage_showCalleeImplementations;
 	public static String JavaBasePreferencePage_inView;
 	public static String JavaBasePreferencePage_inPerspective;
 	public static String JavaEditorPreferencePage_quickassist_lightbulb;
@@ -840,6 +842,8 @@ public final class PreferencesMessages extends NLS {
 	public static String ComplianceConfigurationBlock_version_14;
 	public static String ComplianceConfigurationBlock_version_15;
 	public static String ComplianceConfigurationBlock_version_16;
+	public static String ComplianceConfigurationBlock_version_17;
+	public static String ComplianceConfigurationBlock_version_18;
 	public static String ComplianceConfigurationBlock_versionCLDC11;
 	public static String ComplianceConfigurationBlock_src_greater_compliance;
 	public static String ComplianceConfigurationBlock_classfile_greater_compliance;

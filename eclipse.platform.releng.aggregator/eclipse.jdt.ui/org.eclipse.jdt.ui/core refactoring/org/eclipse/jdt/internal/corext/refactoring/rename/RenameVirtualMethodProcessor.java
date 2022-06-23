@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Nikolay Metchev <nikolaymetchev@gmail.com> - [rename] https://bugs.eclipse.org/99622
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.refactoring.rename;
 
@@ -90,15 +91,15 @@ public class RenameVirtualMethodProcessor extends RenameMethodProcessor {
 		setMethodsToRename(ripples);
 	}
 
-	public IMethod getOriginalMethod() {
-		return fOriginalMethod;
-	}
-
 	private ITypeHierarchy getCachedHierarchy(IType declaring, IProgressMonitor monitor) throws JavaModelException {
 		if (fCachedHierarchy != null && declaring.equals(fCachedHierarchy.getType()))
 			return fCachedHierarchy;
 		fCachedHierarchy= declaring.newTypeHierarchy(new SubProgressMonitor(monitor, 1));
 		return fCachedHierarchy;
+	}
+
+	public IMethod getOriginalMethod() {
+		return fOriginalMethod;
 	}
 
 	@Override

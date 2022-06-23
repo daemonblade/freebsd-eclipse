@@ -361,7 +361,7 @@ public final class StubUtility2Core {
 
 			String bodyStatement= ""; //$NON-NLS-1$
 			if (Modifier.isAbstract(modifiers)) {
-				Expression expression= ASTNodeFactory.newDefaultExpression(ast, decl.getReturnType2(), decl.getExtraDimensions());
+				Expression expression= ASTNodeFactory.newDefaultExpression(ast, decl.getReturnType2(), bindingReturnType, decl.getExtraDimensions());
 				if (expression != null) {
 					ReturnStatement returnStatement= ast.newReturnStatement();
 					returnStatement.setExpression(expression);
@@ -826,7 +826,8 @@ public final class StubUtility2Core {
 
 		for (IMethodBinding curr : typeBinding.getDeclaredMethods()) {
 			int modifiers= curr.getModifiers();
-			if (!curr.isConstructor() && !Modifier.isStatic(modifiers) && !Modifier.isPrivate(modifiers)) {
+			if (!curr.isConstructor() && !Modifier.isStatic(modifiers) && !Modifier.isPrivate(modifiers)
+					&& !curr.isSyntheticRecordMethod()) {
 				allMethods.add(curr);
 			}
 		}

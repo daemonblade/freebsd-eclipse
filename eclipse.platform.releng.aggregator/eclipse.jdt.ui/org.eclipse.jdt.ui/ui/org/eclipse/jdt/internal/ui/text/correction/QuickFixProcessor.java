@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -134,6 +134,7 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.SealedNotDirectSuperClass:
 			case IProblem.SealedSuperClassDoesNotPermit:
 			case IProblem.SealedSuperInterfaceDoesNotPermit:
+			case IProblem.SealedSealedTypeMissingPermits:
 			case IProblem.Task:
 			case IProblem.UnusedMethodDeclaredThrownException:
 			case IProblem.UnusedConstructorDeclaredThrownException:
@@ -320,6 +321,8 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.FeatureNotSupported:
 			case IProblem.SwitchExpressionsReturnWithinSwitchExpression:
 			case IProblem.DanglingReference:
+			case IProblem.UnclosedCloseable:
+			case IProblem.PotentiallyUnclosedCloseable:
 				return true;
 			default:
 				return SuppressWarningsSubProcessor.hasSuppressWarningsProposal(cu.getJavaProject(), problemId)
@@ -481,6 +484,9 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.SealedSuperClassDoesNotPermit:
 			case IProblem.SealedSuperInterfaceDoesNotPermit:
 				LocalCorrectionsSubProcessor.addTypeAsPermittedSubTypeProposal(context, problem, proposals);
+				break;
+			case IProblem.SealedSealedTypeMissingPermits:
+				LocalCorrectionsSubProcessor.createNewTypeAsPermittedSubTypeProposal(context, problem, proposals, IProposalRelevance.CREATE_NEW_SUB_TYPE);
 				break;
 			case IProblem.StaticMethodRequested:
 			case IProblem.NonStaticFieldFromStaticInvocation:
@@ -903,6 +909,10 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.SwitchExpressionsReturnWithinSwitchExpression:
 				ReturnTypeSubProcessor.replaceReturnWithYieldStatementProposals(context, problem, proposals);
 				break;
+			case IProblem.UnclosedCloseable:
+			case IProblem.PotentiallyUnclosedCloseable:
+				LocalCorrectionsSubProcessor.getTryWithResourceProposals(context, problem, proposals);
+			    break;
 			default:
 		}
 		if (JavaModelUtil.is50OrHigher(context.getCompilationUnit().getJavaProject())) {

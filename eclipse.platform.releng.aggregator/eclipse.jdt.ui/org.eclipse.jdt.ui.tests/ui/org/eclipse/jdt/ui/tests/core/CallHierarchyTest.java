@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,10 +16,13 @@ package org.eclipse.jdt.ui.tests.core;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
@@ -36,6 +39,8 @@ import org.eclipse.jdt.internal.corext.callhierarchy.CallHierarchy;
 import org.eclipse.jdt.internal.corext.callhierarchy.MethodWrapper;
 
 import org.eclipse.jdt.ui.tests.callhierarchy.CallHierarchyTestHelper;
+
+import org.eclipse.jdt.internal.ui.JavaPlugin;
 
 public class CallHierarchyTest {
     private static final String[] EMPTY= new String[0];
@@ -466,6 +471,60 @@ public class CallHierarchyTest {
         calls= wrapper.getCalls(new NullProgressMonitor());
         MethodWrapper recursiveMethod2Wrapper= helper.findMethodWrapper(helper.getRecursiveMethod2(), calls);
         assertEquals("Wrong line number", 12, recursiveMethod2Wrapper.getMethodCall().getFirstCallLocation().getLineNumber());
+    }
+
+    @Test
+    public void recordConstructorCallers() throws Exception {
+        helper.createRecordClasses();
+
+        checkCalls(helper.getType1().getType("OneRecord"), helper.getMethod1(), helper.getMethod2(), helper.getType1().getType("OneRecord").getMethod("OneRecord", EMPTY));
+        checkCalls(helper.getType1().getType("OneRecord").getMethod("OneRecord", EMPTY), helper.getMethod2());
+    }
+
+    @Test
+    public void implementingCallees_onInterfaces() throws Exception {
+    	JavaPlugin.getDefault().getPreferenceStore().setValue("PREF_USE_IMPLEMENTORS", true);
+    	helper.createCalleeClasses();
+
+        IMethod method= helper.getCalleeMethod();
+
+        MethodWrapper wrapper= getSingleCalleeRoot(method);
+
+        MethodWrapper[] firstLevel= wrapper.getCalls(new NullProgressMonitor());
+        assertNotNull(firstLevel);
+        assertEquals(1, firstLevel.length);
+        helper.assertCalls(Arrays.asList(helper.getFooMethod()), firstLevel);
+
+        MethodWrapper[] secondLevel= firstLevel[0].getCalls(new NullProgressMonitor());
+        assertNotNull(secondLevel);
+        assertEquals(2, secondLevel.length);
+        helper.assertCalls(Arrays.asList(helper.getFooImplMethod_A(), helper.getFooImplMethod_B()), secondLevel);
+    }
+
+    @Test
+    public void implementingCallees_onAbstractMethods() throws Exception {
+    	JavaPlugin.getDefault().getPreferenceStore().setValue("PREF_USE_IMPLEMENTORS", true);
+        helper.createCalleeClasses();
+
+        IMethod method= helper.getAbsCalleeMethod();
+
+        MethodWrapper wrapper= getSingleCalleeRoot(method);
+
+        MethodWrapper[] firstLevel= wrapper.getCalls(new NullProgressMonitor());
+        assertNotNull(firstLevel);
+        assertEquals(1, firstLevel.length);
+        helper.assertCalls(Arrays.asList(helper.getAbsFooMethod()), firstLevel);
+
+        MethodWrapper[] secondLevel= firstLevel[0].getCalls(new NullProgressMonitor());
+        assertNotNull(secondLevel);
+        assertEquals(2, secondLevel.length);
+        helper.assertCalls(Arrays.asList(helper.getAbsI1FooMethod(), helper.getAbsI2FooMethod()), secondLevel);
+    }
+
+    private void checkCalls(IMember memberToCheck, IMethod... expectedCallers) {
+        MethodWrapper[] methodWrappers = CallHierarchy.getDefault().getCallerRoots(new IMember[] { memberToCheck });
+        MethodWrapper[] callers = methodWrappers[0].getCalls(new NullProgressMonitor());
+        helper.assertCalls(List.of(expectedCallers), callers);
     }
 
     private void assertRecursive(MethodWrapper[] callResults, boolean shouldBeRecursive) {
