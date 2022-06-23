@@ -37,7 +37,7 @@ do
 	then
 		TAG="${ECLIPSE_TAG}"
 	fi
-	DEST=$(basename $M | cut -f2 -d:)
+	DEST=$(basename $M | cut -f2 -d: | cut -f1 -d@)
 
 	SNAP="${MODULE}-${TAG}"
 	SUBDIR="${AGGR_MODULE}/${DEST}"
