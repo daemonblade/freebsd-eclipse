@@ -24,6 +24,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -735,6 +736,9 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 	public static Image getImage(IAdaptable adaptable) {
 		if (adaptable != null) {
 			IWorkbenchAdapter o= Adapters.adapt(adaptable, IWorkbenchAdapter.class);
+			if (o == null) {
+				return null;
+			}
 			ImageDescriptor id= o.getImageDescriptor(adaptable);
 			if (id != null) {
 				Image image= fgImages2.get(id);
@@ -906,7 +910,7 @@ public final class CompareUIPlugin extends AbstractUIPlugin {
 		}
 
 		ArrayList<CompareFilterDescriptor> list = new ArrayList<>(result);
-		Collections.sort(list, (left, right) -> left.getFilterId().compareTo(right.getFilterId()));
+		Collections.sort(list, Comparator.comparing(CompareFilterDescriptor::getFilterId));
 
 		return result.toArray(new CompareFilterDescriptor[result.size()]);
 	}

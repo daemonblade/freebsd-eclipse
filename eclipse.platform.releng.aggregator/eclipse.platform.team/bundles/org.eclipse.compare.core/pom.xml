@@ -14,11 +14,11 @@
   <parent>
     <artifactId>eclipse.platform.team</artifactId>
     <groupId>eclipse.platform.team</groupId>
-    <version>4.21.0-SNAPSHOT</version>
+    <version>4.24.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.compare</groupId>
   <artifactId>org.eclipse.compare.core</artifactId>
-  <version>3.6.1000-SNAPSHOT</version>
+  <version>3.7.0-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
 </project>

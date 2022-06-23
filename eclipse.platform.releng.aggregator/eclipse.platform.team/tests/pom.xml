@@ -14,7 +14,7 @@
   <parent>
     <groupId>eclipse.platform.team</groupId>
     <artifactId>eclipse.platform.team</artifactId>
-    <version>4.21.0-SNAPSHOT</version>
+    <version>4.24.0-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
   <artifactId>eclipse.platform.team.tests</artifactId>
@@ -26,7 +26,6 @@
     <module>org.eclipse.compare.tests</module>
     <module>org.eclipse.core.tests.net</module>
     <module>org.eclipse.jsch.tests</module>
-    <module>org.eclipse.team.tests.cvs.core</module>
     <module>org.eclipse.team.tests.core</module>
   </modules>
 </project>

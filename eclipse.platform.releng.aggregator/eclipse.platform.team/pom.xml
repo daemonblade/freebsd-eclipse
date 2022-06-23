@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.21.0-SNAPSHOT</version>
+    <version>4.24.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
@@ -24,7 +24,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <tycho.scmUrl>scm:git:https://git.eclipse.org/r/platform/eclipse.platform.team.git</tycho.scmUrl>
+    <tycho.scmUrl>scm:git:https://github.com/eclipse-platform/eclipse.platform.team.git</tycho.scmUrl>
     <code.ignoredWarnings>-warn:-deprecation,raw,unchecked,warningToken</code.ignoredWarnings>
   </properties>
 
@@ -55,14 +55,10 @@
     <module>bundles/org.eclipse.compare</module>
     <module>bundles/org.eclipse.compare.win32</module>
     <module>bundles/org.eclipse.compare.core</module>
-    <module>bundles/org.eclipse.cvs</module>
     <module>bundles/org.eclipse.core.net</module>
     <module>bundles/org.eclipse.jsch.core</module>
     <module>bundles/org.eclipse.jsch.ui</module>
     <module>bundles/org.eclipse.team.core</module>
-    <module>bundles/org.eclipse.team.cvs.core</module>
-    <module>bundles/org.eclipse.team.cvs.ssh2</module>
-    <module>bundles/org.eclipse.team.cvs.ui</module>
     <module>bundles/org.eclipse.team.ui</module>
     <module>bundles/org.eclipse.team.genericeditor.diff.extension</module>
     <module>bundles/org.eclipse.ui.net</module>
@@ -70,11 +66,9 @@
     <module>examples/org.eclipse.compare.examples.xml</module>
     <module>examples/org.eclipse.team.examples.filesystem</module>
 
-    <module>features/org.eclipse.cvs-feature</module>
-
     <!-- fragments -->
     <module>bundles/org.eclipse.core.net.freebsd</module>
-    <module>bundles/org.eclipse.core.net.freebsd.amd64</module>
+    <module>bundles/org.eclipse.core.net.win32</module>
     <module>bundles/org.eclipse.core.net.win32.x86_64</module>
     <module>tests</module>
    
