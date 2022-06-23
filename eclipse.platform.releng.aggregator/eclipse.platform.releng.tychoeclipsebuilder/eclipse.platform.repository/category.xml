@@ -12,8 +12,6 @@
    <feature id="org.eclipse.rcp.configuration" version="0.0.0"/>
    <feature id="org.eclipse.equinox.executable" version="0.0.0"/>
    <feature id="org.eclipse.sdk" version="0.0.0"/>
-   <feature id="org.eclipse.cvs" version="0.0.0"/>
-   <feature id="org.eclipse.cvs.source" version="0.0.0"/>
    <feature id="org.eclipse.e4.core.tools.feature.source" version="0.0.0"/>
    <feature id="org.eclipse.pde.api.tools.ee.feature" version="0.0.0"/>
    <feature id="org.eclipse.pde.unittest.junit" version="0.0.0"/>
@@ -24,16 +22,22 @@
    <feature id="org.eclipse.jdt.ui.unittest.junit.feature.source" version="0.0.0"/>
    <feature id="org.eclipse.emf.common" version="0.0.0"/>
    <feature id="org.eclipse.emf.ecore" version="0.0.0"/>
+   <feature id="org.eclipse.emf.edit" version="0.0.0"/>
+   <feature id="org.eclipse.emf.databinding" version="0.0.0"/>
+   <feature id="org.eclipse.emf.databinding.edit" version="0.0.0"/>
    <feature id="org.eclipse.emf.common.source" version="0.0.0"/>
    <feature id="org.eclipse.emf.ecore.source" version="0.0.0"/>
+   <feature id="org.eclipse.emf.edit.source" version="0.0.0"/>
+   <feature id="org.eclipse.emf.databinding.source" version="0.0.0"/>
+   <feature id="org.eclipse.emf.databinding.edit.source" version="0.0.0"/>
    <feature id="org.eclipse.ecf.core.feature" version="0.0.0"/>
    <feature id="org.eclipse.ecf.core.feature.source" version="0.0.0"/>
    <feature id="org.eclipse.ecf.core.ssl.feature" version="0.0.0"/>
    <feature id="org.eclipse.ecf.core.ssl.feature.source" version="0.0.0"/>
    <feature id="org.eclipse.ecf.filetransfer.feature" version="0.0.0"/>
    <feature id="org.eclipse.ecf.filetransfer.feature.source" version="0.0.0"/>
-   <feature id="org.eclipse.ecf.filetransfer.httpclient45.feature" version="0.0.0"/>
-   <feature id="org.eclipse.ecf.filetransfer.httpclient45.feature.source" version="0.0.0"/>
+   <feature id="org.eclipse.ecf.filetransfer.httpclient5.feature" version="0.0.0"/>
+   <feature id="org.eclipse.ecf.filetransfer.httpclient5.feature.source" version="0.0.0"/>
    <feature id="org.eclipse.ecf.filetransfer.ssl.feature" version="0.0.0"/>
    <feature id="org.eclipse.ecf.filetransfer.ssl.feature.source" version="0.0.0"/>
    <bundle id="org.eclipse.jdt.core.compiler.batch" version="0.0.0"/>

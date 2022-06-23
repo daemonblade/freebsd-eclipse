@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <topLevel>
   <zipTypes>
+    <zipType name="Eclipse Repository">
+      <platform
+        id="REPO"
+        name="&lt;img src = &quot;repo.gif&quot; alt=&quot;p2 Repository&quot; /> All"
+        fileName="repository-${BUILD_ID}.zip"></platform>
+    </zipType>
+
     <zipType name="Eclipse SDK">
       <platform
         id="SWX8664"
@@ -52,20 +59,6 @@
         id="JT"
         name="All"
         fileName="eclipse-Automated-Tests-${BUILD_ID}.zip"></platform>
-    </zipType>
-
-    <zipType name="RCP Runtime Binary">
-      <platform
-        id="RCPR"
-        name="&lt;img src = &quot;repo.gif&quot; alt=&quot;RCP Repo&quot; /> RCP Runtime Repo "
-        fileName="org.eclipse.rcp-${BUILD_ID}.zip"></platform>
-    </zipType>
-
-    <zipType name="RCP SDK">
-      <platform
-        id="RCPSR"
-        name="&lt;img src = &quot;repo.gif&quot; alt=&quot;RCP Source Repo&quot; /> RCP Source Repo "
-        fileName="org.eclipse.rcp.source-${BUILD_ID}.zip"></platform>
     </zipType>
 
     <zipType name="Platform Runtime Binary">
