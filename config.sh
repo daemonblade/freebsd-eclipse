@@ -27,7 +27,7 @@ ECLIPSE_MODULES="
 	eclipse-equinox/equinox.bundles:rt.equinox.bundles
 	eclipse-equinox/equinox.framework:rt.equinox.framework
 	eclipse-equinox/p2:rt.equinox.p2"
-#	eclipse-platform/eclipse.platform.runtime
+#	eclipse-platform/eclipse.platform.runtime@fd42b6e331
 
 PATCH_DIR="java-eclipse/files"
 PATCHED_DIRS="
