@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2020 IBM Corporation and others.
+ * Copyright (c) 2013, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,20 +13,19 @@
  *******************************************************************************/
 package org.eclipse.osgi.tests.hooks.framework;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
+@RunWith(Suite.class)
+@Suite.SuiteClasses({ //
+		StorageHookTests.class, //
+		ClassLoaderHookTests.class, //
+		BundleFileWrapperFactoryHookTests.class, //
+		ContextFinderTests.class, //
+		DevClassPathWithExtensionTests.class, //
+		EmbeddedEquinoxWithURLInClassLoadTests.class, //
+		ActivatorOrderTest.class, //
+		DevClassPathDuplicateTests.class //
+})
 public class AllFrameworkHookTests {
-	public static Test suite() {
-		TestSuite suite = new TestSuite(AllFrameworkHookTests.class.getName());
-		suite.addTest(new TestSuite(StorageHookTests.class));
-		suite.addTest(new TestSuite(ClassLoaderHookTests.class));
-		suite.addTest(new TestSuite(BundleFileWrapperFactoryHookTests.class));
-		suite.addTest(new TestSuite(ContextFinderTests.class));
-		suite.addTest(new TestSuite(DevClassPathWithExtensionTests.class));
-		suite.addTest(new TestSuite(EmbeddedEquinoxWithURLInClassLoadTests.class));
-		suite.addTest(new TestSuite(ActivatorOrderTest.class));
-		suite.addTest(new TestSuite(DevClassPathDuplicateTests.class));
-		return suite;
-	}
 }

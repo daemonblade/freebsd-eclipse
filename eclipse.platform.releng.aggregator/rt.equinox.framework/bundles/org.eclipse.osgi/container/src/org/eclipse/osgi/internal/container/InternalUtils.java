@@ -15,11 +15,14 @@ package org.eclipse.osgi.internal.container;
 
 import java.security.Permission;
 import java.security.SecureRandom;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.RandomAccess;
 import java.util.UUID;
 import org.eclipse.osgi.internal.framework.EquinoxConfiguration;
 import org.osgi.framework.Bundle;
@@ -30,118 +33,88 @@ import org.osgi.framework.namespace.BundleNamespace;
 import org.osgi.framework.namespace.HostNamespace;
 import org.osgi.framework.namespace.PackageNamespace;
 import org.osgi.framework.wiring.BundleCapability;
-import org.osgi.framework.wiring.BundleRequirement;
-import org.osgi.framework.wiring.BundleRevision;
-import org.osgi.framework.wiring.BundleWire;
-import org.osgi.framework.wiring.BundleWiring;
-import org.osgi.resource.Capability;
-import org.osgi.resource.Requirement;
-import org.osgi.resource.Resource;
-import org.osgi.resource.Wire;
 
 public class InternalUtils {
 
-	public static <T> List<T> asCopy(List<T> list) {
-		return new ArrayList<>(list);
+	/**
+	 * Returns a mutable wrapped around the given list, that creates a copy of the
+	 * given list only if the list is about to be modified.
+	 * <p>
+	 * This method assumes that the given List is immutable and a
+	 * {@link RandomAccess} list.
+	 * </p>
+	 * 
+	 * @param list the list to be copied.
+	 * @return an effectively mutable and lazy copy of the given list.
+	 */
+	public static <T> List<T> asCopy(List<? extends T> list) {
+		if (list == null) {
+			return null;
+		}
+		if (!(list instanceof RandomAccess)) {
+			throw new IllegalArgumentException("Only RandomAccess lists are supported"); //$NON-NLS-1$
+		}
+		return new CopyOnFirstWriteList<>(list);
+	}
+
+	private static final class CopyOnFirstWriteList<T> extends AbstractList<T> implements RandomAccess {
+		private List<T> copy;
+		private boolean copied = false;
+
+		CopyOnFirstWriteList(List<? extends T> list) {
+			copy = asList(list);
+		}
+
+		@Override
+		public T get(int index) {
+			return copy.get(index);
+		}
+
+		@Override
+		public int size() {
+			return copy.size();
+		}
+
+		@Override
+		public void add(int index, T element) {
+			ensureCopied();
+			copy.add(index, element);
+			modCount++;
+		}
+
+		@Override
+		public T remove(int index) {
+			ensureCopied();
+			T removed = copy.remove(index);
+			modCount++;
+			return removed;
+		}
+
+		@Override
+		public T set(int index, T element) {
+			ensureCopied();
+			T set = copy.set(index, element);
+			modCount++;
+			return set;
+		}
+
+		private void ensureCopied() {
+			if (!copied) {
+				copy = new ArrayList<>(copy);
+				copied = true;
+			}
+		}
 	}
 
 	/**
-	 * Coerce the generic type of a list from List<BundleCapability>
-	 * to List<Capability>
+	 * Coerce the generic type of a list from List<? extends T> to List<T>
+	 * 
 	 * @param l List to be coerced.
 	 * @return l coerced to List<Capability>
 	 */
 	@SuppressWarnings("unchecked")
-	public static List<Capability> asListCapability(List<? extends Capability> l) {
-		return (List<Capability>) l;
-	}
-
-	/**
-	 * Coerce the generic type of a list from List<BundleRequirement>
-	 * to List<Requirement>
-	 * @param l List to be coerced.
-	 * @return l coerced to List<Requirement>
-	 */
-	@SuppressWarnings("unchecked")
-	public static List<Requirement> asListRequirement(List<? extends Requirement> l) {
-		return (List<Requirement>) l;
-	}
-
-	/**
-	 * Coerce the generic type of a list from List<? extends BundleCapability>
-	 * to List<BundleCapability>
-	 * @param l List to be coerced.
-	 * @return l coerced to List<BundleCapability>
-	 */
-	@SuppressWarnings("unchecked")
-	public static List<BundleCapability> asListBundleCapability(List<? extends BundleCapability> l) {
-		return (List<BundleCapability>) l;
-	}
-
-	/**
-	 * Coerce the generic type of a list from List<? extends BundleRequirement>
-	 * to List<BundleRequirement>
-	 * @param l List to be coerced.
-	 * @return l coerced to List<BundleRequirement>
-	 */
-	@SuppressWarnings("unchecked")
-	public static List<BundleRequirement> asListBundleRequirement(List<? extends BundleRequirement> l) {
-		return (List<BundleRequirement>) l;
-	}
-
-	/**
-	 * Coerce the generic type of a list from List<? extends BundleWire>
-	 * to List<BundleWire>
-	 * @param l List to be coerced.
-	 * @return l coerced to List<BundleWire>
-	 */
-	@SuppressWarnings("unchecked")
-	public static List<BundleWire> asListBundleWire(List<? extends BundleWire> l) {
-		return (List<BundleWire>) l;
-	}
-
-	/**
-	 * Coerce the generic type of a list from List<? extends BundleWire>
-	 * to List<BundleWire>
-	 * @param l List to be coerced.
-	 * @return l coerced to List<BundleWire>
-	 */
-	@SuppressWarnings("unchecked")
-	public static List<Wire> asListWire(List<? extends Wire> l) {
-		return (List<Wire>) l;
-	}
-
-	/**
-	 * Coerce the generic type of a list from List<? extends BundleRevision>
-	 * to List<BundleRevision>
-	 * @param l List to be coerced.
-	 * @return l coerced to List<BundleRevision>
-	 */
-	@SuppressWarnings("unchecked")
-	public static List<BundleRevision> asListBundleRevision(List<? extends BundleRevision> l) {
-		return (List<BundleRevision>) l;
-	}
-
-	/**
-	 * Coerce the generic type of a collection from Collection<? extends Resource>
-	 * to Collection<Resource>
-	 * @param c List to be coerced.
-	 * @return c coerced to Collection<Resource>
-	 */
-	@SuppressWarnings("unchecked")
-	public static Collection<Resource> asCollectionResource(Collection<? extends Resource> c) {
-		return (Collection<Resource>) c;
-	}
-
-	/**
-	 * Coerce the generic type of a collection from Collection<? extends BundleWiring>
-	 * to Collection<BundleWiring>
-	 * @param c List to be coerced.
-	 * @return c coerced to Collection<BundleWiring>
-	 */
-	@SuppressWarnings("unchecked")
-	public static Collection<BundleWiring> asCollectionBundleWiring(Collection<? extends BundleWiring> c) {
-		return (Collection<BundleWiring>) c;
+	public static <T> List<T> asList(List<? extends T> l) {
+		return (List<T>) l;
 	}
 
 	public static void filterCapabilityPermissions(Collection<? extends BundleCapability> capabilities) {
@@ -227,4 +200,17 @@ public class InternalUtils {
 		return new UUID(mostSignificantBits, leastSignificantBits).toString();
 	}
 
+	public static <E> Enumeration<E> asEnumeration(Iterator<E> it) {
+		return new Enumeration<E>() {
+			@Override
+			public boolean hasMoreElements() {
+				return it.hasNext();
+			}
+
+			@Override
+			public E nextElement() {
+				return it.next();
+			}
+		};
+	}
 }

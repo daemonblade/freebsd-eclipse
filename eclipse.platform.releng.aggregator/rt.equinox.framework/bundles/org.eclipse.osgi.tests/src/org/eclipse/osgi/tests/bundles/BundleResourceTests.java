@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2013 IBM Corporation and others.
+ * Copyright (c) 2010, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,12 +15,13 @@ package org.eclipse.osgi.tests.bundles;
 
 import java.net.URL;
 import java.util.Enumeration;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.core.tests.harness.CoreTest;
 import org.eclipse.osgi.service.environment.EnvironmentInfo;
 import org.eclipse.osgi.tests.OSGiTestsActivator;
-import org.osgi.framework.*;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleException;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 
 public class BundleResourceTests extends CoreTest {
 	private BundleInstaller installer;
@@ -35,10 +36,6 @@ public class BundleResourceTests extends CoreTest {
 
 	protected void tearDown() throws Exception {
 		installer.shutdown();
-	}
-
-	public static Test suite() {
-		return new TestSuite(BundleResourceTests.class);
 	}
 
 	public void testBug320546_01() throws Exception {
@@ -67,6 +64,12 @@ public class BundleResourceTests extends CoreTest {
 		assertNull("found resource!", paths);
 		paths = bundle.getEntryPaths("folder/..");
 		assertNotNull("Did not find resource!", paths);
+	}
+
+	public void testBreakOutDirBundle() throws Exception {
+		Bundle bundle = installer.installBundle("test"); //$NON-NLS-1$
+		URL result = bundle.getEntry("../testout/file.txt");
+		assertNull("Found resource!", result);
 	}
 
 	public void testBug395274() throws Exception {

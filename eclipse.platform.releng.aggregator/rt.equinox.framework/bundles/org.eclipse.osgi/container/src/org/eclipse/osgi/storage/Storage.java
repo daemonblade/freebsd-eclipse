@@ -10,7 +10,8 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
- *      Christoph Laeubrich - Bug 527175 - Storage#getSystemContent() should first make the file absolute
+ *     Christoph Laeubrich - Bug 527175 - Storage#getSystemContent() should first make the file absolute
+ *     Hannes Wellmann - Bug 577432 - Speed up and improve file processing in Storage
  *******************************************************************************/
 package org.eclipse.osgi.storage;
 
@@ -22,7 +23,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -30,6 +30,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -47,11 +48,12 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 import org.eclipse.core.runtime.adaptor.EclipseStarter;
 import org.eclipse.osgi.container.Module;
 import org.eclipse.osgi.container.ModuleCapability;
@@ -64,10 +66,12 @@ import org.eclipse.osgi.container.ModuleWire;
 import org.eclipse.osgi.container.ModuleWiring;
 import org.eclipse.osgi.container.builders.OSGiManifestBuilderFactory;
 import org.eclipse.osgi.container.namespaces.EclipsePlatformNamespace;
+import org.eclipse.osgi.framework.internal.reliablefile.ReliableFile;
 import org.eclipse.osgi.framework.log.FrameworkLogEntry;
 import org.eclipse.osgi.framework.util.FilePath;
 import org.eclipse.osgi.framework.util.ObjectPool;
 import org.eclipse.osgi.framework.util.SecureAction;
+import org.eclipse.osgi.internal.container.InternalUtils;
 import org.eclipse.osgi.internal.debug.Debug;
 import org.eclipse.osgi.internal.framework.EquinoxConfiguration;
 import org.eclipse.osgi.internal.framework.EquinoxContainer;
@@ -183,7 +187,8 @@ public class Storage {
 		storage.checkSystemBundle(cachedInfo);
 		storage.refreshStaleBundles();
 		storage.installExtensions();
-		// TODO hack to make sure all bundles are in UNINSTALLED state before system bundle init is called
+		// TODO hack to make sure all bundles are in UNINSTALLED state before system
+		// bundle init is called
 		storage.getModuleContainer().setInitialModuleStates();
 		return storage;
 	}
@@ -1111,7 +1116,7 @@ public class Storage {
 	File stageContent0(InputStream in, URL sourceURL) throws BundleException {
 		File outFile = null;
 		try {
-			outFile = File.createTempFile(BUNDLE_FILE_NAME, ".tmp", childRoot); //$NON-NLS-1$
+			outFile = ReliableFile.createTempFile(BUNDLE_FILE_NAME, ".tmp", childRoot); //$NON-NLS-1$
 			String protocol = sourceURL == null ? null : sourceURL.getProtocol();
 
 			if ("file".equals(protocol)) { //$NON-NLS-1$
@@ -1120,10 +1125,8 @@ public class Storage {
 				if (inFile.isDirectory()) {
 					// need to delete the outFile because it is not a directory
 					outFile.delete();
-					StorageUtil.copyDir(inFile, outFile);
-				} else {
-					StorageUtil.readFile(in, outFile);
 				}
+				StorageUtil.copy(inFile, outFile);
 			} else {
 				StorageUtil.readFile(in, outFile);
 			}
@@ -1236,15 +1239,11 @@ public class Storage {
 			File delete = new File(target, DELETE_FLAG);
 			// and the directory is marked for delete
 			if (delete.exists()) {
-				// if rm fails to delete the directory and .delete was removed
-				if (!StorageUtil.rm(target, getConfiguration().getDebug().DEBUG_STORAGE) && !delete.exists()) {
-					try {
-						// recreate .delete
-						FileOutputStream out = new FileOutputStream(delete);
-						out.close();
-					} catch (IOException e) {
-						if (getConfiguration().getDebug().DEBUG_STORAGE)
-							Debug.println("Unable to write " + delete.getPath() + ": " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+				try {
+					deleteFlaggedDirectory(target);
+				} catch (IOException e) {
+					if (getConfiguration().getDebug().DEBUG_STORAGE) {
+						Debug.println("Unable to write " + delete.getPath() + ": " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
 					}
 				}
 			} else {
@@ -1255,11 +1254,11 @@ public class Storage {
 
 	void delete(final File delete) throws IOException {
 		if (System.getSecurityManager() == null) {
-			delete0(delete);
+			deleteFlaggedDirectory(delete);
 		} else {
 			try {
 				AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
-					delete0(delete);
+					deleteFlaggedDirectory(delete);
 					return null;
 				});
 			} catch (PrivilegedActionException e) {
@@ -1270,11 +1269,9 @@ public class Storage {
 		}
 	}
 
-	void delete0(File delete) throws IOException {
+	private void deleteFlaggedDirectory(File delete) throws IOException {
 		if (!StorageUtil.rm(delete, getConfiguration().getDebug().DEBUG_STORAGE)) {
-			/* create .delete */
-			FileOutputStream out = new FileOutputStream(new File(delete, DELETE_FLAG));
-			out.close();
+			ensureDeleteFlagFileExists(delete.toPath());
 		}
 	}
 
@@ -1993,50 +1990,10 @@ public class Storage {
 		// return null if no entries found
 		if (pathList.size() == 0)
 			return null;
-		// create an enumeration to enumerate the pathList
-		final String[] pathArray = pathList.toArray(new String[pathList.size()]);
-		final Generation[] generationArray = generations.toArray(new Generation[generations.size()]);
-		return new Enumeration<URL>() {
-			private int curPathIndex = 0;
-			private int curDataIndex = 0;
-			private URL nextElement = null;
-
-			@Override
-			public boolean hasMoreElements() {
-				if (nextElement != null)
-					return true;
-				getNextElement();
-				return nextElement != null;
-			}
-
-			@Override
-			public URL nextElement() {
-				if (!hasMoreElements())
-					throw new NoSuchElementException();
-				URL result = nextElement;
-				// force the next element search
-				getNextElement();
-				return result;
-			}
-
-			private void getNextElement() {
-				nextElement = null;
-				if (curPathIndex >= pathArray.length)
-					// reached the end of the pathArray; no more elements
-					return;
-				while (nextElement == null && curPathIndex < pathArray.length) {
-					String curPath = pathArray[curPathIndex];
-					// search the generation until we have searched them all
-					while (nextElement == null && curDataIndex < generationArray.length)
-						nextElement = generationArray[curDataIndex++].getEntry(curPath);
-					// we have searched all datas then advance to the next path
-					if (curDataIndex >= generationArray.length) {
-						curPathIndex++;
-						curDataIndex = 0;
-					}
-				}
-			}
-		};
+		// create an enumeration to enumerate the pathList (generations must not change)
+		Stream<URL> entries = pathList.stream().flatMap(p -> generations.stream().map(g -> g.getEntry(p)))
+				.filter(Objects::nonNull);
+		return InternalUtils.asEnumeration(entries.iterator());
 	}
 
 	/**
@@ -2136,11 +2093,8 @@ public class Storage {
 	private static LinkedHashSet<String> listEntryPaths(BundleFile bundleFile, String path, Filter patternFilter, Hashtable<String, String> patternProps, int options, LinkedHashSet<String> pathList) {
 		if (pathList == null)
 			pathList = new LinkedHashSet<>();
-		Enumeration<String> entryPaths;
-		if ((options & BundleWiring.FINDENTRIES_RECURSE) != 0)
-			entryPaths = bundleFile.getEntryPaths(path, true);
-		else
-			entryPaths = bundleFile.getEntryPaths(path);
+		boolean recurse = (options & BundleWiring.FINDENTRIES_RECURSE) != 0;
+		Enumeration<String> entryPaths = bundleFile.getEntryPaths(path, recurse);
 		if (entryPaths == null)
 			return pathList;
 		while (entryPaths.hasMoreElements()) {
@@ -2204,21 +2158,15 @@ public class Storage {
 			bundleTempDir.deleteOnExit();
 			// This is just a safeguard incase the VM is terminated unexpectantly, it also looks like deleteOnExit cannot really work because
 			// the VM likely will still have a lock on the lib file at the time of VM exit.
-			File deleteFlag = new File(libTempDir, DELETE_FLAG);
-			if (!deleteFlag.exists()) {
-				// need to create a delete flag to force removal the temp libraries
-				try {
-					FileOutputStream out = new FileOutputStream(deleteFlag);
-					out.close();
-				} catch (IOException e) {
-					// do nothing; that would mean we did not make the temp dir successfully
-				}
+			try { // need to create a delete flag to force removal the temp libraries
+				ensureDeleteFlagFileExists(libTempDir.toPath());
+			} catch (IOException e) {
+				// do nothing; that would mean we did not make the temp dir successfully
 			}
 		}
 		// copy the library file
 		try {
-			InputStream in = new FileInputStream(realLib);
-			StorageUtil.readFile(in, libTempFile);
+			StorageUtil.copy(realLib, libTempFile);
 			// set permissions if needed
 			setPermissions(libTempFile);
 			libTempFile.deleteOnExit(); // this probably will not work because the VM will probably have the lib locked at exit
@@ -2227,6 +2175,13 @@ public class Storage {
 		} catch (IOException e) {
 			equinoxContainer.getLogServices().log(EquinoxContainer.NAME, FrameworkLogEntry.ERROR, e.getMessage(), e);
 			return null;
+		}
+	}
+
+	private static void ensureDeleteFlagFileExists(Path directory) throws IOException {
+		Path deleteFlag = directory.resolve(DELETE_FLAG);
+		if (!Files.exists(deleteFlag) ) {
+			Files.createFile(deleteFlag);
 		}
 	}
 

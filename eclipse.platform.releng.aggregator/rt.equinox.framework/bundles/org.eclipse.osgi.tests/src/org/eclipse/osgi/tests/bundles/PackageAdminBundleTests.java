@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2021 IBM Corporation and others.
+ * Copyright (c) 2007, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,17 +13,31 @@
  *******************************************************************************/
 package org.eclipse.osgi.tests.bundles;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
-import java.util.*;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import org.eclipse.osgi.tests.OSGiTestsActivator;
-import org.osgi.framework.*;
+import org.junit.Test;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleEvent;
+import org.osgi.framework.BundleException;
+import org.osgi.framework.Constants;
+import org.osgi.framework.ServiceRegistration;
+import org.osgi.framework.SynchronousBundleListener;
+import org.osgi.framework.Version;
 import org.osgi.framework.hooks.resolver.ResolverHook;
 import org.osgi.framework.hooks.resolver.ResolverHookFactory;
-import org.osgi.framework.wiring.*;
+import org.osgi.framework.wiring.BundleCapability;
+import org.osgi.framework.wiring.BundleRequirement;
+import org.osgi.framework.wiring.BundleRevision;
+import org.osgi.framework.wiring.FrameworkWiring;
 import org.osgi.service.packageadmin.ExportedPackage;
 import org.osgi.service.packageadmin.PackageAdmin;
 
@@ -60,7 +74,7 @@ public class PackageAdminBundleTests extends AbstractBundleTests {
 		public synchronized void bundleChanged(BundleEvent event) {
 			BundleEvent expected = expectedEvents.size() == 0 ? null : (BundleEvent) expectedEvents.remove(0);
 			try {
-				assertEquals("Compare results: " + i, expected, event);
+				assertEqualEvent("Compare results: " + i, expected, event);
 			} catch (Throwable t) {
 				failures.add(t);
 			} finally {
@@ -75,10 +89,7 @@ public class PackageAdminBundleTests extends AbstractBundleTests {
 		}
 	}
 
-	public static Test suite() {
-		return new TestSuite(PackageAdminBundleTests.class);
-	}
-
+	@Test
 	public void testBundleEvents01() throws Exception {
 		Bundle chainTest = installer.installBundle("chain.test"); //$NON-NLS-1$
 		Bundle chainTestA = installer.installBundle("chain.test.a"); //$NON-NLS-1$
@@ -108,6 +119,7 @@ public class PackageAdminBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testBundleEvents02() throws Exception {
 		Bundle chainTest = installer.installBundle("chain.test"); //$NON-NLS-1$
 		Bundle chainTestA = installer.installBundle("chain.test.a"); //$NON-NLS-1$
@@ -153,63 +165,58 @@ public class PackageAdminBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testBug259903() throws Exception {
 		Bundle bug259903a = installer.installBundle("test.bug259903.a"); //$NON-NLS-1$
 		Bundle bug259903b = installer.installBundle("test.bug259903.b"); //$NON-NLS-1$
 		Bundle bug259903c = installer.installBundle("test.bug259903.c"); //$NON-NLS-1$
 
-		try {
-			installer.resolveBundles(new Bundle[] {bug259903a, bug259903b, bug259903c});
-			bug259903c.start();
-			bug259903a.uninstall();
-			installer.installBundle("test.bug259903.a.update"); //$NON-NLS-1$
-			installer.refreshPackages(new Bundle[] {bug259903a});
-			Object[] expectedEvents = new Object[] {new BundleEvent(BundleEvent.STOPPED, bug259903c)};
-			Object[] actualEvents = simpleResults.getResults(expectedEvents.length);
-			compareResults(expectedEvents, actualEvents);
-		} catch (Exception e) {
-			fail("Unexpected exception", e); //$NON-NLS-1$
-		}
+		installer.resolveBundles(new Bundle[] { bug259903a, bug259903b, bug259903c });
+		bug259903c.start();
+		bug259903a.uninstall();
+		installer.installBundle("test.bug259903.a.update"); //$NON-NLS-1$
+		installer.refreshPackages(new Bundle[] { bug259903a });
+		Object[] expectedEvents = new Object[] { new BundleEvent(BundleEvent.STOPPED, bug259903c) };
+		Object[] actualEvents = simpleResults.getResults(expectedEvents.length);
+		compareResults(expectedEvents, actualEvents);
 	}
 
+	@Test
 	public void testBug287636() throws Exception {
 		Bundle bug287636a = installer.installBundle("test.bug287636.a1"); //$NON-NLS-1$
 		Bundle bug287636b = installer.installBundle("test.bug287636.b"); //$NON-NLS-1$
-		try {
-			bug287636a.start();
-			bug287636b.start();
-			assertTrue("Bundles are not resolved", installer.resolveBundles(new Bundle[] {bug287636a, bug287636b})); //$NON-NLS-1$
-			ExportedPackage ep = installer.getPackageAdmin().getExportedPackage("test.bug287636.a"); //$NON-NLS-1$
-			assertNotNull("Could not find exported package", ep); //$NON-NLS-1$
-			assertEquals("Wrong version", new Version(1, 0, 0), ep.getVersion()); //$NON-NLS-1$
-			// update bundle to export new 1.1.0 version of the pacakge
-			String updateLocation = installer.getBundleLocation("test.bug287636.a2"); //$NON-NLS-1$
-			bug287636a.update(new URL(updateLocation).openStream());
-			bug287636b.update();
-			updateLocation = installer.getBundleLocation("test.bug287636.a1"); //$NON-NLS-1$
-			bug287636a.update(new URL(updateLocation).openStream());
-			bug287636b.update();
-			updateLocation = installer.getBundleLocation("test.bug287636.a2"); //$NON-NLS-1$
-			bug287636a.update(new URL(updateLocation).openStream());
-			bug287636b.update();
-			installer.refreshPackages(null);
-			ep = installer.getPackageAdmin().getExportedPackage("test.bug287636.a"); //$NON-NLS-1$
+		bug287636a.start();
+		bug287636b.start();
+		assertTrue("Bundles are not resolved", installer.resolveBundles(new Bundle[] { bug287636a, bug287636b })); //$NON-NLS-1$
+		ExportedPackage ep = installer.getPackageAdmin().getExportedPackage("test.bug287636.a"); //$NON-NLS-1$
+		assertNotNull("Could not find exported package", ep); //$NON-NLS-1$
+		assertEquals("Wrong version", new Version(1, 0, 0), ep.getVersion()); //$NON-NLS-1$
+		// update bundle to export new 1.1.0 version of the pacakge
+		String updateLocation = installer.getBundleLocation("test.bug287636.a2"); //$NON-NLS-1$
+		bug287636a.update(new URL(updateLocation).openStream());
+		bug287636b.update();
+		updateLocation = installer.getBundleLocation("test.bug287636.a1"); //$NON-NLS-1$
+		bug287636a.update(new URL(updateLocation).openStream());
+		bug287636b.update();
+		updateLocation = installer.getBundleLocation("test.bug287636.a2"); //$NON-NLS-1$
+		bug287636a.update(new URL(updateLocation).openStream());
+		bug287636b.update();
+		installer.refreshPackages(null);
+		ep = installer.getPackageAdmin().getExportedPackage("test.bug287636.a"); //$NON-NLS-1$
 
-			assertNotNull("Could not find exported package", ep); //$NON-NLS-1$
-			assertEquals("Wrong version", new Version(1, 1, 0), ep.getVersion()); //$NON-NLS-1$
-			ExportedPackage eps[] = installer.getPackageAdmin().getExportedPackages("test.bug287636.a"); //$NON-NLS-1$
-			assertNotNull("Could not find exported package", eps); //$NON-NLS-1$
-			assertEquals("Wrong number of exports", 1, eps.length); //$NON-NLS-1$
-			assertEquals("Wrong version", new Version(1, 1, 0), eps[0].getVersion()); //$NON-NLS-1$
-			eps = installer.getPackageAdmin().getExportedPackages(bug287636a);
-			assertNotNull("Could not find exported package", eps); //$NON-NLS-1$
-			assertEquals("Wrong number of exports", 1, eps.length); //$NON-NLS-1$
-			assertEquals("Wrong version", new Version(1, 1, 0), eps[0].getVersion()); //$NON-NLS-1$
-		} catch (Exception e) {
-			fail("Unexpected exception", e); //$NON-NLS-1$
-		}
+		assertNotNull("Could not find exported package", ep); //$NON-NLS-1$
+		assertEquals("Wrong version", new Version(1, 1, 0), ep.getVersion()); //$NON-NLS-1$
+		ExportedPackage eps[] = installer.getPackageAdmin().getExportedPackages("test.bug287636.a"); //$NON-NLS-1$
+		assertNotNull("Could not find exported package", eps); //$NON-NLS-1$
+		assertEquals("Wrong number of exports", 1, eps.length); //$NON-NLS-1$
+		assertEquals("Wrong version", new Version(1, 1, 0), eps[0].getVersion()); //$NON-NLS-1$
+		eps = installer.getPackageAdmin().getExportedPackages(bug287636a);
+		assertNotNull("Could not find exported package", eps); //$NON-NLS-1$
+		assertEquals("Wrong number of exports", 1, eps.length); //$NON-NLS-1$
+		assertEquals("Wrong version", new Version(1, 1, 0), eps[0].getVersion()); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testBug289719() throws Exception {
 		Bundle bug259903a = installer.installBundle("test.bug259903.a"); //$NON-NLS-1$
 		Bundle bug259903b = installer.installBundle("test.bug259903.b"); //$NON-NLS-1$
@@ -232,8 +239,7 @@ public class PackageAdminBundleTests extends AbstractBundleTests {
 			Thread.sleep(500);
 			installer.refreshPackages(new Bundle[] {bug259903a});
 			Throwable[] results = testListener.getFailures();
-			if (results.length > 0)
-				fail(getMessage(results));
+			assertEquals(getMessage(results), 0, results.length);
 
 			expectedEvents = new BundleEvent[] {new BundleEvent(BundleEvent.STOPPING, bug259903c), new BundleEvent(BundleEvent.STOPPED, bug259903c), new BundleEvent(BundleEvent.STOPPING, bug259903b), new BundleEvent(BundleEvent.STOPPED, bug259903b), new BundleEvent(BundleEvent.STOPPING, bug259903a), new BundleEvent(BundleEvent.STOPPED, bug259903a), new BundleEvent(BundleEvent.UNRESOLVED, bug259903c), new BundleEvent(BundleEvent.UNRESOLVED, bug259903b), new BundleEvent(BundleEvent.UNRESOLVED, bug259903a), new BundleEvent(BundleEvent.RESOLVED, bug259903a), new BundleEvent(BundleEvent.RESOLVED, bug259903b), new BundleEvent(BundleEvent.RESOLVED, bug259903c), new BundleEvent(BundleEvent.STARTING, bug259903a), new BundleEvent(BundleEvent.STARTED, bug259903a),
 					new BundleEvent(BundleEvent.STARTING, bug259903b), new BundleEvent(BundleEvent.STARTED, bug259903b), new BundleEvent(BundleEvent.STARTING, bug259903c), new BundleEvent(BundleEvent.STARTED, bug259903c)};
@@ -245,16 +251,14 @@ public class PackageAdminBundleTests extends AbstractBundleTests {
 			Thread.sleep(500);
 			installer.refreshPackages(new Bundle[] {bug259903a});
 			results = testListener.getFailures();
-			if (results.length > 0)
-				fail(getMessage(results));
+			assertEquals(getMessage(results), 0, results.length);
 
-		} catch (Exception e) {
-			fail("Unexpected exception", e); //$NON-NLS-1$
 		} finally {
 			OSGiTestsActivator.getContext().removeBundleListener(testListener);
 		}
 	}
 
+	@Test
 	public void testBug415447() {
 		PackageAdmin pa = installer.getPackageAdmin();
 		Bundle[] systemBundles = pa.getBundles(Constants.SYSTEM_BUNDLE_SYMBOLICNAME, null);
@@ -263,6 +267,7 @@ public class PackageAdminBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong system bundle found.", OSGiTestsActivator.getContext().getBundle(Constants.SYSTEM_BUNDLE_LOCATION), systemBundles[0]);
 	}
 
+	@Test
 	public void testUninstallWhileResolving() throws BundleException {
 		ServiceRegistration<ResolverHookFactory> resolverHookReg = getContext().registerService(ResolverHookFactory.class, triggers -> new ResolverHook() {
 

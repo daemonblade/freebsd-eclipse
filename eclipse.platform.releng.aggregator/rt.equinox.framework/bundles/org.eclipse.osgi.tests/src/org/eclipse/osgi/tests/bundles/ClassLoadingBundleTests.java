@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2021 IBM Corporation and others.
+ * Copyright (c) 2006, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,15 @@
  *******************************************************************************/
 package org.eclipse.osgi.tests.bundles;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -20,7 +29,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -42,12 +50,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.stream.Collectors;
 import junit.framework.AssertionFailedError;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.osgi.internal.loader.BundleLoader;
 import org.eclipse.osgi.internal.loader.ModuleClassLoader;
 import org.eclipse.osgi.tests.OSGiTestsActivator;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleEvent;
 import org.osgi.framework.BundleException;
@@ -75,10 +84,8 @@ import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.service.startlevel.StartLevel;
 
 public class ClassLoadingBundleTests extends AbstractBundleTests {
-	public static Test suite() {
-		return new TestSuite(ClassLoadingBundleTests.class);
-	}
 
+	@Test
 	public void testSimple() throws Exception {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		test.start();
@@ -96,6 +103,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		compareResults(expectedEvents, actualEvents);
 	}
 
+	@Test
 	public void testLoadTriggerClass() throws Exception {
 		Bundle chainTest = installer.installBundle("chain.test"); //$NON-NLS-1$
 		Bundle chainTestA = installer.installBundle("chain.test.a"); //$NON-NLS-1$
@@ -114,6 +122,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong state", Bundle.ACTIVE, chainTestA.getState()); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testChainDepedencies() throws Exception {
 		Bundle chainTest = installer.installBundle("chain.test"); //$NON-NLS-1$
 		Bundle chainTestA = installer.installBundle("chain.test.a"); //$NON-NLS-1$
@@ -138,6 +147,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		compareResults(expectedEvents, actualEvents);
 	}
 
+	@Test
 	public void testMultiChainDepedencies01() throws Exception {
 		Bundle chainTest = installer.installBundle("chain.test"); //$NON-NLS-1$
 		Bundle chainTestA = installer.installBundle("chain.test.a"); //$NON-NLS-1$
@@ -172,6 +182,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		compareResults(expectedEvents, actualEvents);
 	}
 
+	@Test
 	public void testMultiChainDepedencies02() throws Exception {
 		Bundle chainTestA = installer.installBundle("chain.test.a"); //$NON-NLS-1$
 		Bundle chainTestB = installer.installBundle("chain.test.b"); //$NON-NLS-1$
@@ -221,6 +232,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		compareResults(expectedEvents, actualEvents);
 	}
 
+	@Test
 	public void testBug300692_01() throws BundleException {
 		Bundle chainTest = installer.installBundle("chain.test"); //$NON-NLS-1$
 		Bundle chainTestA = installer.installBundle("chain.test.a"); //$NON-NLS-1$
@@ -286,6 +298,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testBug300692_02() throws BundleException {
 		Bundle chainTest = installer.installBundle("chain.test"); //$NON-NLS-1$
 		Bundle chainTestA = installer.installBundle("chain.test.a"); //$NON-NLS-1$
@@ -354,6 +367,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testBug408629() throws BundleException {
 		Bundle chainTest = installer.installBundle("chain.test"); //$NON-NLS-1$
 		Bundle chainTestA = installer.installBundle("chain.test.a"); //$NON-NLS-1$
@@ -446,6 +460,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testClassCircularityError() throws Exception {
 		Bundle circularityTest = installer.installBundle("circularity.test"); //$NON-NLS-1$
 		Bundle circularityTestA = installer.installBundle("circularity.test.a"); //$NON-NLS-1$
@@ -458,19 +473,17 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		compareResults(expectedEvents, actualEvents);
 	}
 
+	@Test
 	public void testFragmentPackageAccess() throws Exception {
 		Bundle hostA = installer.installBundle("fragment.test.attach.host.a"); //$NON-NLS-1$
 		Bundle fragA = installer.installBundle("fragment.test.attach.frag.a"); //$NON-NLS-1$
 		assertTrue("Host/Frag resolve", installer.resolveBundles(new Bundle[] {hostA, fragA})); //$NON-NLS-1$
 
 		ITestRunner testRunner = (ITestRunner) hostA.loadClass("fragment.test.attach.host.a.internal.test.TestPackageAccess").newInstance(); //$NON-NLS-1$
-		try {
-			testRunner.testIt();
-		} catch (Exception e) {
-			fail("Failed package access test: " + e.getMessage()); //$NON-NLS-1$
-		}
+		testRunner.testIt();
 	}
 
+	@Test
 	public void testFragmentMultiHost() throws Exception {
 		Bundle hostA1 = installer.installBundle("fragment.test.attach.host.a"); //$NON-NLS-1$
 		Bundle hostA2 = installer.installBundle("fragment.test.attach.host.a.v2"); //$NON-NLS-1$
@@ -482,16 +495,13 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		runTestRunner(hostA2, "fragment.test.attach.host.a.internal.test.TestPackageAccess2"); //$NON-NLS-1$
 	}
 
-	private void runTestRunner(Bundle host, String classname) {
-		try {
-			ITestRunner testRunner = (ITestRunner) host.loadClass(classname).newInstance();
-			testRunner.testIt();
-		} catch (Exception e) {
-			fail("Failed package access test", e); //$NON-NLS-1$
-		}
+	private void runTestRunner(Bundle host, String classname) throws Exception {
+		ITestRunner testRunner = (ITestRunner) host.loadClass(classname).newInstance();
+		testRunner.testIt();
 
 	}
 
+	@Test
 	public void testFragmentExportPackage() throws Exception {
 		Bundle hostA = installer.installBundle("fragment.test.attach.host.a"); //$NON-NLS-1$
 		assertTrue("Host resolve", installer.resolveBundles(new Bundle[] {hostA})); //$NON-NLS-1$
@@ -502,13 +512,11 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		Bundle fragB = installer.installBundle("fragment.test.attach.frag.b"); //$NON-NLS-1$
 		Bundle hostARequire = installer.installBundle("fragment.test.attach.host.a.require"); //$NON-NLS-1$
 		assertTrue("RequireA/Frag", installer.resolveBundles(new Bundle[] {hostARequire, fragB})); //$NON-NLS-1$
-		try {
-			hostARequire.loadClass("fragment.test.attach.frag.b.Test"); //$NON-NLS-1$
-		} catch (ClassNotFoundException e) {
-			fail("Unexpected class loading exception", e); //$NON-NLS-1$
-		}
+
+		hostARequire.loadClass("fragment.test.attach.frag.b.Test"); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testLegacyLazyStart() throws Exception {
 		Bundle legacy = installer.installBundle("legacy.lazystart"); //$NON-NLS-1$
 		Bundle legacyA = installer.installBundle("legacy.lazystart.a"); //$NON-NLS-1$
@@ -539,6 +547,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		compareResults(expectedEvents, actualEvents);
 	}
 
+	@Test
 	public void testLegacyLoadActivation() throws Exception {
 		// test that calling loadClass from a non-lazy start bundle does not activate the bundle
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
@@ -565,6 +574,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong state for lazy bundle.", Bundle.STARTING, legacyA.getState());
 	}
 
+	@Test
 	public void testOSGiLazyStart() throws Exception {
 		Bundle osgi = installer.installBundle("osgi.lazystart"); //$NON-NLS-1$
 		Bundle osgiA = installer.installBundle("osgi.lazystart.a"); //$NON-NLS-1$
@@ -595,6 +605,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		compareResults(expectedEvents, actualEvents);
 	}
 
+	@Test
 	public void testOSGiLazyStartDelay() throws Exception {
 		final Bundle osgiD = installer.installBundle("osgi.lazystart.d"); //$NON-NLS-1$
 		final Bundle osgiE = installer.installBundle("osgi.lazystart.e"); //$NON-NLS-1$
@@ -617,6 +628,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertTrue("Starting of test bundle was too short: " + endTime, endTime > 3000);
 	}
 
+	@Test
 	public void testStartTransientByLoadClass() throws Exception {
 		// install a bundle and set its start-level high, then crank up the framework start-level.  This should result in no events
 		Bundle osgiA = installer.installBundle("osgi.lazystart.a"); //$NON-NLS-1$
@@ -694,6 +706,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		compareResults(expectedEvents, actualEvents);
 	}
 
+	@Test
 	public void testStartTransient() throws Exception {
 		// install a bundle and set its start-level high, then crank up the framework start-level.  This should result in no events
 		Bundle osgiA = installer.installBundle("osgi.lazystart.a"); //$NON-NLS-1$
@@ -771,16 +784,14 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		compareResults(expectedEvents, actualEvents);
 	}
 
+	@Test
 	public void testStartResolve() throws Exception {
 		// install a bundle and set its start-level high, then crank up the framework start-level.  This should result in no events
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		StartLevel startLevel = installer.getStartLevel();
 		startLevel.setBundleStartLevel(test, startLevel.getStartLevel() + 10);
-		try {
-			test.start();
-		} catch (BundleException e) {
-			fail("Unexpected exception", e); //$NON-NLS-1$
-		}
+		test.start();
+
 		assertEquals("Wrong state", Bundle.INSTALLED, test.getState()); //$NON-NLS-1$
 		startLevel.setStartLevel(startLevel.getStartLevel() + 15);
 		Object[] expectedFrameworkEvents = new Object[1];
@@ -790,6 +801,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong state", Bundle.ACTIVE, test.getState()); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testStopTransient() throws Exception {
 		Bundle osgiA = installer.installBundle("osgi.lazystart.a"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {osgiA});
@@ -870,6 +882,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		compareResults(expectedEvents, actualEvents);
 	}
 
+	@Test
 	public void testBug258659_01() throws Exception {
 		// install a bundle
 		Bundle osgiA = installer.installBundle("osgi.lazystart.a"); //$NON-NLS-1$
@@ -893,6 +906,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testBug258659_02() throws Exception {
 		// install a bundle
 		Bundle osgiA = installer.installBundle("osgi.lazystart.a"); //$NON-NLS-1$
@@ -917,6 +931,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testBug258659_03() throws Exception {
 		// install a bundle
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
@@ -941,6 +956,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testBug258659_04() throws Exception {
 		// install a bundle
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
@@ -970,6 +986,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testBug213791() throws Exception {
 		// install a bundle and call start(START_ACTIVATION_POLICY) twice
 		Bundle osgiA = installer.installBundle("osgi.lazystart.a"); //$NON-NLS-1$
@@ -994,6 +1011,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 
 	}
 
+	@Test
 	public void testThreadLock() throws Exception {
 		Bundle threadLockTest = installer.installBundle("thread.locktest"); //$NON-NLS-1$
 		threadLockTest.loadClass("thread.locktest.ATest"); //$NON-NLS-1$
@@ -1006,6 +1024,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 
 	}
 
+	@Test
 	public void testURLsBug164077() throws Exception {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {test});
@@ -1056,6 +1075,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testEntryURLEqualsHashCode() throws Exception {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {test});
@@ -1073,6 +1093,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("hashcode equals 3.1", testEntry4.hashCode(), testEntry3.hashCode()); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testResourceURLEqualsHashCode() throws Exception {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {test});
@@ -1090,6 +1111,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("hashcode equals 3.1", testResource4.hashCode(), testResource3.hashCode()); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testGetEntryDir01() throws BundleException {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {test});
@@ -1117,6 +1139,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 
 	}
 
+	@Test
 	public void testGetResourceDir01() throws BundleException {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {test});
@@ -1144,6 +1167,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 
 	}
 
+	@Test
 	public void testBootGetResources01() throws Exception {
 		if (System.getProperty(Constants.FRAMEWORK_BOOTDELEGATION) != null)
 			return; // cannot really test this if this property is set
@@ -1161,6 +1185,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("host id", test.getBundleId(), bundleId); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testBootGetResources02() throws Exception {
 		// properly test bug 375783 when used as a parent class loader
 		// This will fail on the IBM VM (see bug 409314)
@@ -1185,6 +1210,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		cl.close();
 	}
 
+	@Test
 	public void testMultipleGetResources01() throws Exception {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		// test that we can get multiple resources from a bundle
@@ -1198,6 +1224,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("stuff resource", "stuff classpath", readURL((URL) resourceURLs.get(1))); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testMultipleGetResources01a() throws Exception {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		// test that we can get multiple resources from a bundle
@@ -1217,6 +1244,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		cl.close();
 	}
 
+	@Test
 	public void testMultipleGetResources02() throws Exception {
 		installer.installBundle("test"); //$NON-NLS-1$
 		Bundle test2 = installer.installBundle("test2"); //$NON-NLS-1$
@@ -1233,6 +1261,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("stuff resource", "stuff classpath test2", readURL((URL) resourceURLs.get(3))); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testMultipleGetResources03() throws Exception {
 		installer.installBundle("test"); //$NON-NLS-1$
 		Bundle test2 = installer.installBundle("test2"); //$NON-NLS-1$
@@ -1250,6 +1279,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("stuff resource", "stuff classpath test2", readURL(new URL((URL) resourceURLs.get(3), "resource1"))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
+	@Test
 	public void testListResources() throws BundleException {
 		installer.installBundle("test"); //$NON-NLS-1$
 		Bundle test2 = installer.installBundle("test2"); //$NON-NLS-1$
@@ -1264,6 +1294,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertTrue("could not find resource", resources.contains("data/resource2"));
 	}
 
+	@Test
 	public void testURLExternalFormat01() throws Exception {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		// test the external format of bundle entry URLs
@@ -1275,6 +1306,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("root resource", "root classpath", readURL(entryCopy)); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testURLExternalFormat02() throws Exception {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		// test the external format of bundle entry URLs
@@ -1286,81 +1318,56 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("root resource", "root classpath", readURL(entryCopy)); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	public void testURLExternalFormat03() throws BundleException {
+	@Test
+	public void testURLExternalFormat03() throws Exception {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		// test the external format of bundle resource URLs
 		URL entry = test.getEntry("data/resource1"); //$NON-NLS-1$
 		assertNotNull("entry", entry); //$NON-NLS-1$
-		URI uri1 = null;
-		URI uri2 = null;
-		URI uri3 = null;
-		try {
-			uri1 = new URI(entry.getProtocol(), null, entry.getHost(), entry.getPort(), entry.getPath(), null, entry.getQuery());
-			uri2 = new URI(entry.getProtocol(), entry.getHost(), entry.getPath(), entry.getQuery());
-			uri3 = new URI(entry.toExternalForm());
-		} catch (URISyntaxException e) {
-			fail("Unexpected URI exception", e); //$NON-NLS-1$
-		}
-		URL url1 = null;
-		URL url2 = null;
-		URL url3 = null;
-		URL url4 = null;
-		try {
-			url1 = uri1.toURL();
-			url2 = uri2.toURL();
-			url3 = uri3.toURL();
-			url4 = new URL(uri1.toString());
-		} catch (MalformedURLException e) {
-			fail("Unexpected URL exception", e); //$NON-NLS-1$
-		}
+		URI uri1 = new URI(entry.getProtocol(), null, entry.getHost(), entry.getPort(), entry.getPath(), null, entry.getQuery());
+		URI uri2 = new URI(entry.getProtocol(), entry.getHost(), entry.getPath(), entry.getQuery());
+		URI uri3 = new URI(entry.toExternalForm());
+
+		URL url1 = uri1.toURL();
+		URL url2 = uri2.toURL();
+		URL url3 = uri3.toURL();
+		URL url4 = new URL(uri1.toString());
 		checkURL("root classpath", entry, url1); //$NON-NLS-1$
 		checkURL("root classpath", entry, url2); //$NON-NLS-1$
 		checkURL("root classpath", entry, url3); //$NON-NLS-1$
 		checkURL("root classpath", entry, url4); //$NON-NLS-1$
 	}
 
-	public void testURLExternalFormat04() throws BundleException {
+	@Test
+	public void testURLExternalFormat04() throws Exception {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		// test the external format of bundle resource URLs
 		URL entry = test.getResource("data/resource1"); //$NON-NLS-1$
 		assertNotNull("entry", entry); //$NON-NLS-1$
-		URI uri1 = null;
-		URI uri2 = null;
-		URI uri3 = null;
-		try {
-			uri1 = new URI(entry.getProtocol(), null, entry.getHost(), entry.getPort(), entry.getPath(), null, entry.getQuery());
-			uri2 = new URI(entry.getProtocol(), entry.getHost(), entry.getPath(), entry.getQuery());
-			uri3 = new URI(entry.toExternalForm());
-		} catch (URISyntaxException e) {
-			fail("Unexpected URI exception", e); //$NON-NLS-1$
-		}
-		URL url1 = null;
-		URL url2 = null;
-		URL url3 = null;
-		URL url4 = null;
-		try {
-			url1 = uri1.toURL();
-			url2 = uri2.toURL();
-			url3 = uri3.toURL();
-			url4 = new URL(uri1.toString());
-		} catch (MalformedURLException e) {
-			fail("Unexpected URL exception", e); //$NON-NLS-1$
-		}
+		URI uri1 = new URI(entry.getProtocol(), null, entry.getHost(), entry.getPort(), entry.getPath(), null, entry.getQuery());
+		URI uri2 = new URI(entry.getProtocol(), entry.getHost(), entry.getPath(), entry.getQuery());
+		URI uri3 = new URI(entry.toExternalForm());
+		URL url1 = uri1.toURL();
+		URL url2 = uri2.toURL();
+		URL url3 = uri3.toURL();
+		URL url4 = new URL(uri1.toString());
 		checkURL("root classpath", entry, url1); //$NON-NLS-1$
 		checkURL("root classpath", entry, url2); //$NON-NLS-1$
 		checkURL("root classpath", entry, url3); //$NON-NLS-1$
 		checkURL("root classpath", entry, url4); //$NON-NLS-1$
 	}
 
-	private void checkURL(String content, URL orig, URL copy) {
+	private void checkURL(String content, URL orig, URL copy) throws Exception {
 		assertEquals("external format", orig.toExternalForm(), copy.toExternalForm()); //$NON-NLS-1$
 		assertEquals(content, content, readURL(copy));
 	}
 
+	@Test
 	public void testURI() throws URISyntaxException {
 		new URI("bundleentry", "1", "/test", null); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
+	@Test
 	public void testMultipleExportFragments01() throws Exception {
 		Bundle host = installer.installBundle("host.multiple.exports"); //$NON-NLS-1$
 		Bundle frag = installer.installBundle("frag.multiple.exports"); //$NON-NLS-1$
@@ -1386,6 +1393,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("Check export name", "host.multiple.exports.onlyone", ((BundleCapability) packageCapabilities.get(3)).getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE)); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testMultipleExportFragments02() throws Exception {
 		Bundle host = installer.installBundle("host.multiple.exports"); //$NON-NLS-1$
 		Bundle frag = installer.installBundle("frag.multiple.exports"); //$NON-NLS-1$
@@ -1400,9 +1408,10 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		expectedEvents[2] = "success"; //$NON-NLS-1$
 		expectedEvents[3] = "success"; //$NON-NLS-1$
 		Object[] actualEvents = simpleResults.getResults(4);
-		compareResults(expectedEvents, actualEvents);
+		assertArrayEquals(expectedEvents, actualEvents);
 	}
 
+	@Test
 	public void testMultipleExportFragments03() throws Exception {
 		Bundle host = installer.installBundle("host.multiple.exports"); //$NON-NLS-1$
 		Bundle frag = installer.installBundle("frag.multiple.exports"); //$NON-NLS-1$
@@ -1417,10 +1426,12 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		expectedEvents[2] = "host.multiple.exports.PrivateClass1"; //$NON-NLS-1$
 		expectedEvents[3] = "host.multiple.exports.PrivateClass2"; //$NON-NLS-1$
 		Object[] actualEvents = simpleResults.getResults(4);
-		compareResults(expectedEvents, actualEvents);
+		assertArrayEquals(expectedEvents, actualEvents);
 	}
 
-	public void disableTestXFriends() throws Exception {
+	@Test
+	@Ignore
+	public void testXFriends() throws Exception {
 		// TODO this will fail since we don't have strict mode in the new framework
 		try {
 			Bundle test1 = installer.installBundle("xfriends.test1"); //$NON-NLS-1$
@@ -1443,6 +1454,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testImporterExporter01() throws BundleException {
 		Bundle importerExporter1 = installer.installBundle("exporter.importer1"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {importerExporter1});
@@ -1476,6 +1488,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong importer", importerExporter2, newImporters[0]); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testImporterExporter02() throws BundleException {
 		Bundle importerExporter3 = installer.installBundle("exporter.importer3"); //$NON-NLS-1$
 		Bundle importerExporter4 = installer.installBundle("exporter.importer4"); //$NON-NLS-1$
@@ -1484,13 +1497,10 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		importerExporter3.start();
 		importerExporter3.stop();
 		importerExporter3.update();
-		try {
-			importerExporter3.start();
-		} catch (Throwable t) {
-			fail("Unexpected exception", t); //$NON-NLS-1$
-		}
+		importerExporter3.start();
 	}
 
+	@Test
 	public void testUninstallInUse01() throws BundleException {
 		if (getContext().getServiceReference("org.eclipse.equinox.region.RegionDigraph") != null) {
 			System.out.println("Cannot test uninstall in use with RegionDigraph service");
@@ -1510,6 +1520,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong exporter.", iExporter1, bImports.get(0).getProvider());
 	}
 
+	@Test
 	public void testBug207847() throws BundleException {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {test});
@@ -1530,17 +1541,15 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertTrue("frag5 is not resolved", (frag5.getState() & Bundle.RESOLVED) != 0); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testBug235958() throws BundleException {
 		Bundle testX = installer.installBundle("test.bug235958.x"); //$NON-NLS-1$
 		Bundle testY = installer.installBundle("test.bug235958.y"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {testX, testY});
-		try {
-			testX.start();
-		} catch (Exception e) {
-			fail("Unexpected Exception", e); //$NON-NLS-1$
-		}
+		testX.start();
 	}
 
+	@Test
 	public void testBuddyClassLoadingRegistered1() throws Exception {
 		Bundle registeredA = installer.installBundle("buddy.registered.a"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {registeredA});
@@ -1568,6 +1577,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertTrue("buddy.registered.a.test2", texts.contains("buddy.registered.a.test2")); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testBuddyClassLoadingRegistered2() throws Exception {
 		Bundle registeredA = installer.installBundle("buddy.registered.a"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {registeredA});
@@ -1590,40 +1600,87 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("buddy.registered.a.test2", "buddy.registered.a.test2", readURL(testFile)); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testBuddyClassLoadingRegistered3() throws Exception {
 		Bundle registeredA = installer.installBundle("buddy.registered.a"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {registeredA});
-		try {
-			registeredA.loadClass("buddy.registered.a.test1.ATest"); //$NON-NLS-1$
-			fail("expected ClassNotFoundException"); //$NON-NLS-1$
-		} catch (ClassNotFoundException e) {
-			// expected
-		}
-		try {
-			registeredA.loadClass("buddy.registered.a.test2.ATest"); //$NON-NLS-1$
-			fail("expected ClassNotFoundException"); //$NON-NLS-1$
-		} catch (ClassNotFoundException e) {
-			// expected
-		}
+
+		assertThrows(ClassNotFoundException.class, () -> registeredA.loadClass("buddy.registered.a.test1.ATest"));
+		assertThrows(ClassNotFoundException.class, () -> registeredA.loadClass("buddy.registered.a.test2.ATest"));
+
 		Bundle registeredATest1 = installer.installBundle("buddy.registered.a.test1"); //$NON-NLS-1$
 		Bundle registeredATest2 = installer.installBundle("buddy.registered.a.test2"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {registeredATest1, registeredATest2});
 
-		try {
-			Class testClass = registeredA.loadClass("buddy.registered.a.test1.ATest"); //$NON-NLS-1$
-			assertNotNull("testClass", testClass); //$NON-NLS-1$
-		} catch (ClassNotFoundException e) {
-			fail("Unexpected ClassNotFoundException", e); //$NON-NLS-1$
-		}
-
-		try {
-			Class testClass = registeredA.loadClass("buddy.registered.a.test2.ATest"); //$NON-NLS-1$
-			assertNotNull("testClass", testClass); //$NON-NLS-1$
-		} catch (ClassNotFoundException e) {
-			fail("Unexpected ClassNotFoundException", e); //$NON-NLS-1$
-		}
+		assertNotNull("Class buddy.registered.a.test1.ATest", registeredA.loadClass("buddy.registered.a.test1.ATest"));
+		assertNotNull("Class buddy.registered.a.test2.ATest", registeredA.loadClass("buddy.registered.a.test2.ATest"));
 	}
 
+	@Test
+	public void testBuddyClassLoadingRegisteredListResources() throws Exception {
+		Bundle registeredA = installer.installBundle("buddy.registered.a");
+		installer.resolveBundles(new Bundle[] { registeredA });
+
+		Bundle registeredATest1 = installer.installBundle("buddy.registered.a.test1");
+		Bundle registeredATest2 = installer.installBundle("buddy.registered.a.test2");
+		installer.resolveBundles(new Bundle[] { registeredATest1, registeredATest2 });
+
+		Collection<String> result = registeredA.adapt(BundleWiring.class).listResources("resources", "*",
+				BundleWiring.LISTRESOURCES_RECURSE);
+		assertEquals("Wrong number of resources listed: " + result, 3, result.size());
+		assertTrue("resources/test.txt", result.contains("resources/test.txt"));
+		assertTrue("resources/test1.txt", result.contains("resources/test1.txt"));
+		assertTrue("resources/test2.txt", result.contains("resources/test2.txt"));
+
+		result = registeredA.adapt(BundleWiring.class).listResources("resources", "*",
+				BundleWiring.LISTRESOURCES_LOCAL | BundleWiring.LISTRESOURCES_RECURSE);
+		assertEquals("Wrong number of resources listed: " + result, 1, result.size());
+		assertTrue("resources/test.txt", result.contains("resources/test.txt"));
+
+		result = registeredA.adapt(BundleWiring.class).listResources("buddy/registered/a", "*.class",
+				BundleWiring.LISTRESOURCES_RECURSE);
+		assertEquals("Wrong number of resources listed: " + result, 2, result.size());
+		assertTrue("buddy/registered/a/test1/ATest.class", result.contains("buddy/registered/a/test1/ATest.class"));
+		assertTrue("buddy/registered/a/test2/ATest.class", result.contains("buddy/registered/a/test2/ATest.class"));
+
+		result = registeredA.adapt(BundleWiring.class).listResources("", this.getClass().getSimpleName() + ".class",
+				BundleWiring.LISTRESOURCES_RECURSE);
+		assertEquals("Wrong number of resources listed: " + result, 1, result.size());
+	}
+
+	@Test
+	public void testBuddyClassLoadingDependentListResources() throws Exception {
+		Bundle registeredA = installer.installBundle("buddy.dependent.a");
+		installer.resolveBundles(new Bundle[] { registeredA });
+
+		Bundle registeredATest1 = installer.installBundle("buddy.dependent.a.test1");
+		Bundle registeredATest2 = installer.installBundle("buddy.dependent.a.test2");
+		installer.resolveBundles(new Bundle[] { registeredATest1, registeredATest2 });
+
+		Collection<String> result = registeredA.adapt(BundleWiring.class).listResources("resources", "*",
+				BundleWiring.LISTRESOURCES_RECURSE);
+		assertEquals("Wrong number of resources listed: " + result, 3, result.size());
+		assertTrue("resources/test.txt", result.contains("resources/test.txt"));
+		assertTrue("resources/test1.txt", result.contains("resources/test1.txt"));
+		assertTrue("resources/test2.txt", result.contains("resources/test2.txt"));
+
+		result = registeredA.adapt(BundleWiring.class).listResources("resources", "*",
+				BundleWiring.LISTRESOURCES_LOCAL | BundleWiring.LISTRESOURCES_RECURSE);
+		assertEquals("Wrong number of resources listed: " + result, 1, result.size());
+		assertTrue("resources/test.txt", result.contains("resources/test.txt"));
+
+		result = registeredA.adapt(BundleWiring.class).listResources("buddy/dependent/a", "*.class",
+				BundleWiring.LISTRESOURCES_RECURSE);
+		assertEquals("Wrong number of resources listed: " + result, 2, result.size());
+		assertTrue("buddy/dependent/a/test1/ATest.class", result.contains("buddy/dependent/a/test1/ATest.class"));
+		assertTrue("buddy/dependent/a/test2/ATest.class", result.contains("buddy/dependent/a/test2/ATest.class"));
+
+		result = registeredA.adapt(BundleWiring.class).listResources("", this.getClass().getSimpleName() + ".class",
+				BundleWiring.LISTRESOURCES_RECURSE);
+		assertEquals("Wrong number of resources listed: " + result, 1, result.size());
+	}
+
+	@Test
 	public void testBuddyClassLoadingDependent1() throws Exception {
 		Bundle dependentA = installer.installBundle("buddy.dependent.a"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {dependentA});
@@ -1649,6 +1706,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertTrue("buddy.dependent.a.test2", texts.contains("buddy.dependent.a.test2")); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testBuddyClassLoadingDependent2() throws Exception {
 		Bundle dependentA = installer.installBundle("buddy.dependent.a"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {dependentA});
@@ -1671,42 +1729,23 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("buddy.dependent.a.test2", "buddy.dependent.a.test2", readURL(testFile)); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testBuddyClassLoadingDependent3() throws Exception {
 		Bundle dependentA = installer.installBundle("buddy.dependent.a"); //$NON-NLS-1$
-		installer.resolveBundles(new Bundle[] {dependentA});
+		installer.resolveBundles(new Bundle[] { dependentA });
 
-		try {
-			dependentA.loadClass("buddy.dependent.a.test1.ATest"); //$NON-NLS-1$
-			fail("expected ClassNotFoundException"); //$NON-NLS-1$
-		} catch (ClassNotFoundException e) {
-			// expected
-		}
-
-		try {
-			dependentA.loadClass("buddy.dependent.a.test2.ATest"); //$NON-NLS-1$
-			fail("expected ClassNotFoundException"); //$NON-NLS-1$
-		} catch (ClassNotFoundException e) {
-			// expected
-		}
+		assertThrows(ClassNotFoundException.class, () -> dependentA.loadClass("buddy.dependent.a.test1.ATest"));
+		assertThrows(ClassNotFoundException.class, () -> dependentA.loadClass("buddy.dependent.a.test2.ATest"));
 
 		Bundle dependentATest1 = installer.installBundle("buddy.dependent.a.test1"); //$NON-NLS-1$
 		Bundle dependentATest2 = installer.installBundle("buddy.dependent.a.test2"); //$NON-NLS-1$
-		installer.resolveBundles(new Bundle[] {dependentATest1, dependentATest2});
+		installer.resolveBundles(new Bundle[] { dependentATest1, dependentATest2 });
 
-		try {
-			Class testClass = dependentA.loadClass("buddy.dependent.a.test1.ATest"); //$NON-NLS-1$
-			assertNotNull("testClass", testClass); //$NON-NLS-1$
-		} catch (ClassNotFoundException e) {
-			fail("Unexpected ClassNotFoundException", e); //$NON-NLS-1$
-		}
-		try {
-			Class testClass = dependentA.loadClass("buddy.dependent.a.test2.ATest"); //$NON-NLS-1$
-			assertNotNull("testClass", testClass); //$NON-NLS-1$
-		} catch (ClassNotFoundException e) {
-			fail("Unexpected ClassNotFoundException", e); //$NON-NLS-1$
-		}
+		assertNotNull("Class buddy.dependent.a.test1.ATest", dependentA.loadClass("buddy.dependent.a.test1.ATest"));
+		assertNotNull("Class buddy.dependent.a.test2.ATest", dependentA.loadClass("buddy.dependent.a.test2.ATest"));
 	}
 
+	@Test
 	public void testBuddyClassLoadingInvalid() throws Exception {
 		Bundle invalidA = installer.installBundle("buddy.invalid.a"); //$NON-NLS-1$
 		installer.resolveBundles(new Bundle[] {invalidA});
@@ -1718,6 +1757,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testBuddyClassloadingBug438904() throws Exception {
 		Bundle host = installer.installBundle("test.bug438904.host");
 		Bundle frag = installer.installBundle("test.bug438904.frag");
@@ -1727,28 +1767,22 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		global.loadClass("test.bug438904.frag.Test2");
 	}
 
+	@Test
 	public void testBuddyClassLoadingGlobalNotFound() throws Exception {
 		Bundle global = installer.installBundle("test.bug438904.global");
 
-		try {
-			global.loadClass("does.not.exist.Test");
-			fail("Expected class not found exception.");
-		} catch (ClassNotFoundException e) {
-			// expected
-		}
+		assertThrows(ClassNotFoundException.class, () -> global.loadClass("does.not.exist.Test"));
 		assertNull("Expected null resource found.", global.getResource("does/not/exist/Test.txt"));
 	}
 
+	@Test
 	public void testBuddyClassLoadingGlobalFound() throws Exception {
 		Bundle global = installer.installBundle("test.bug438904.global");
 
-		try {
-			global.loadClass("org.osgi.framework.Bundle");
-		} catch (ClassNotFoundException e) {
-			fail("Unexpected class not found exception.");
-		}
+		global.loadClass("org.osgi.framework.Bundle");
 	}
 
+	@Test
 	public void testUnitTestForcompoundEnumerations() {
 		Enumeration<Object> result = BundleLoader.compoundEnumerations(null, Collections.emptyEnumeration());
 		assertNotNull("Null result.", result);
@@ -1767,6 +1801,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertFalse("Found elements.", result.hasMoreElements());
 	}
 
+	@Test
 	public void testBundleClassLoaderEmptyGetResources() throws Exception {
 		final ClassLoader bundleClassLoader = getClass().getClassLoader();
 		// Using a resource we know does not exist
@@ -1786,6 +1821,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertFalse("Resources has elements.", testResources.hasMoreElements());
 	}
 
+	@Test
 	public void testBundleReference01() throws Exception {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		Class clazz = test.loadClass("test1.Activator"); //$NON-NLS-1$
@@ -1793,15 +1829,16 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong bundle", test, bundle); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testBundleReference02() throws Exception {
 		Bundle test = installer.installBundle("test"); //$NON-NLS-1$
 		Class clazz = test.loadClass("test1.Activator"); //$NON-NLS-1$
 		ClassLoader cl = clazz.getClassLoader();
-		if (!(cl instanceof BundleReference))
-			fail("ClassLoader is not of type BundleReference"); //$NON-NLS-1$
+		assertTrue("ClassLoader is not of type BundleReference", cl instanceof BundleReference);
 		assertEquals("Wrong bundle", test, ((BundleReference) cl).getBundle()); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testResolveURLRelativeBundleResourceWithPort() throws Exception {
 		URL directory = new URL("bundleresource://82:1/dictionaries/"); //$NON-NLS-1$
 		assertEquals(1, directory.getPort());
@@ -1810,16 +1847,14 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals(1, resource.getPort());
 	}
 
-	public void testManifestPackageSpec() {
-		try {
-			Bundle test = installer.installBundle("test.manifestpackage"); //$NON-NLS-1$
-			test.start();
-		} catch (Exception e) {
-			fail("Unexpected exception", e); //$NON-NLS-1$
-		}
+	@Test
+	public void testManifestPackageSpec() throws BundleException {
+		Bundle test = installer.installBundle("test.manifestpackage"); //$NON-NLS-1$
+		test.start();
 	}
 
-	public void testArrayTypeLoad() {
+	@Test
+	public void testArrayTypeLoad() throws ClassNotFoundException {
 		doTestArrayTypeLoad("[B"); //$NON-NLS-1$
 		doTestArrayTypeLoad("[C"); //$NON-NLS-1$
 		doTestArrayTypeLoad("[D"); //$NON-NLS-1$
@@ -1833,51 +1868,33 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		doTestArrayTypeLoad("[[Lorg.eclipse.osgi.tests.bundles.ArrayTest;"); //$NON-NLS-1$
 	}
 
-	public void testSystemBundleGetResources01() {
+	@Test
+	public void testSystemBundleGetResources01() throws IOException {
 		Bundle systemBundle = OSGiTestsActivator.getContext().getBundle(0);
-		Enumeration resources = null;
-		try {
-			resources = systemBundle.getResources("systembundle.properties");
-		} catch (IOException e) {
-			fail("Failed to get resources", e);
-		}
-		assertNotNull("Resources is null", resources);
+		assertNotNull("Resources is null", systemBundle.getResources("systembundle.properties"));
 	}
 
-	public void testSystemBundleGetResources02() {
+	@Test
+	public void testSystemBundleGetResources02() throws IOException {
 		Bundle systemBundle = OSGiTestsActivator.getContext().getBundle(0);
-		Enumeration resources = null;
-		try {
-			resources = systemBundle.getResources("java/lang/test.resource");
-		} catch (IOException e) {
-			fail("Failed to get resources", e);
-		}
-		assertNull("Resources is not null", resources);
+		assertNull("Resources is not null", systemBundle.getResources("java/lang/test.resource"));
 	}
 
-	public void testBug299921() {
+	@Test
+	public void testBug299921() throws Exception {
 		ClassLoader cl = this.getClass().getClassLoader();
-		Enumeration resources = null;
-		try {
-			Method findMethod = BundleInstallUpdateTests.findDeclaredMethod(cl.getClass(), "findResources",
-					String.class);
-			findMethod.setAccessible(true);
+		Method findMethod = BundleInstallUpdateTests.findDeclaredMethod(cl.getClass(), "findResources", String.class);
+		findMethod.setAccessible(true);
 
-			resources = (Enumeration) findMethod.invoke(cl, new Object[] {"test/doesnotexist.txt"});
-		} catch (Exception e) {
-			fail("Unexpected error calling getResources", e);
-		}
+		Enumeration resources = (Enumeration) findMethod.invoke(cl, "test/doesnotexist.txt");
 		assertNotNull("Should not be null", resources);
 		assertFalse("Found resources!", resources.hasMoreElements());
-		try {
-			resources = cl.getResources("test/doesnotexist.txt");
-		} catch (IOException e) {
-			fail("Unexpected IOException", e);
-		}
+		resources = cl.getResources("test/doesnotexist.txt");
 		assertNotNull("Should not be null", resources);
 		assertFalse("Found resources!", resources.hasMoreElements());
 	}
 
+	@Test
 	public void testBug306181() throws BundleException {
 		StartLevel sl = installer.getStartLevel();
 		int origSL = sl.getStartLevel();
@@ -1916,7 +1933,8 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
-	public void testBug348805() {
+	@Test
+	public void testBug348805() throws BundleException {
 		final boolean[] endCalled = {false};
 		ResolverHookFactory error = triggers -> new ResolverHook() {
 			public void filterSingletonCollisions(BundleCapability singleton, Collection collisionCandidates) {
@@ -1938,22 +1956,16 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		ServiceRegistration reg = OSGiTestsActivator.getContext().registerService(ResolverHookFactory.class, error, null);
 		try {
 			Bundle test = installer.installBundle("test"); //$NON-NLS-1$
-			try {
-				test.start();
-				fail("Should not be able to start this bundle");
-			} catch (BundleException e) {
-				// expected
-				assertEquals("Wrong exception type.", BundleException.REJECTED_BY_HOOK, e.getType());
-			}
-		} catch (BundleException e) {
-			fail("Unexpected install fail", e);
+			BundleException e = assertThrows(BundleException.class, () -> test.start());
+			assertEquals("Wrong exception type.", BundleException.REJECTED_BY_HOOK, e.getType());
 		} finally {
 			reg.unregister();
 		}
 		assertTrue("end is not called", endCalled[0]);
 	}
 
-	public void testBug348806() {
+	@Test
+	public void testBug348806() throws BundleException {
 		ResolverHookFactory error = triggers -> new ResolverHook() {
 			public void filterSingletonCollisions(BundleCapability singleton, Collection collisionCandidates) {
 				// Nothing
@@ -1974,21 +1986,15 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		ServiceRegistration reg = OSGiTestsActivator.getContext().registerService(ResolverHookFactory.class, error, null);
 		try {
 			Bundle test = installer.installBundle("test"); //$NON-NLS-1$
-			try {
-				test.start();
-				fail("Should not be able to start this bundle");
-			} catch (BundleException e) {
-				// expected
-				assertEquals("Wrong exception type.", BundleException.REJECTED_BY_HOOK, e.getType());
-			}
-		} catch (BundleException e) {
-			fail("Unexpected install fail", e);
+			BundleException e = assertThrows(BundleException.class, () -> test.start());
+			assertEquals("Wrong exception type.", BundleException.REJECTED_BY_HOOK, e.getType());
 		} finally {
 			reg.unregister();
 		}
 	}
 
-	public void testBug370258_beginException() {
+	@Test
+	public void testBug370258_beginException() throws BundleException {
 		final boolean[] endCalled = {false};
 		ResolverHookFactory endHook = triggers -> new ResolverHook() {
 			public void filterSingletonCollisions(BundleCapability singleton, Collection collisionCandidates) {
@@ -2015,15 +2021,8 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		ServiceRegistration errorReg = OSGiTestsActivator.getContext().registerService(ResolverHookFactory.class, error, null);
 		try {
 			Bundle test = installer.installBundle("test"); //$NON-NLS-1$
-			try {
-				test.start();
-				fail("Should not be able to start this bundle");
-			} catch (BundleException e) {
-				// expected
-				assertEquals("Wrong exception type.", BundleException.REJECTED_BY_HOOK, e.getType());
-			}
-		} catch (BundleException e) {
-			fail("Unexpected install fail", e);
+			BundleException e = assertThrows(BundleException.class, () -> test.start());
+			assertEquals("Wrong exception type.", BundleException.REJECTED_BY_HOOK, e.getType());
 		} finally {
 			errorReg.unregister();
 			endReg.unregister();
@@ -2031,7 +2030,8 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertTrue("end is not called", endCalled[0]);
 	}
 
-	public void testBug370258_endException() {
+	@Test
+	public void testBug370258_endException() throws BundleException {
 		final boolean[] endCalled = {false};
 		ResolverHookFactory endHook = triggers -> new ResolverHook() {
 			public void filterSingletonCollisions(BundleCapability singleton, Collection collisionCandidates) {
@@ -2072,15 +2072,8 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		ServiceRegistration endReg = OSGiTestsActivator.getContext().registerService(ResolverHookFactory.class, endHook, null);
 		try {
 			Bundle test = installer.installBundle("test"); //$NON-NLS-1$
-			try {
-				test.start();
-				fail("Should not be able to start this bundle");
-			} catch (BundleException e) {
-				// expected
-				assertEquals("Wrong exception type.", BundleException.REJECTED_BY_HOOK, e.getType());
-			}
-		} catch (BundleException e) {
-			fail("Unexpected install fail", e);
+			BundleException e = assertThrows(BundleException.class, () -> test.start());
+			assertEquals("Wrong exception type.", BundleException.REJECTED_BY_HOOK, e.getType());
 		} finally {
 			errorReg.unregister();
 			endReg.unregister();
@@ -2088,47 +2081,28 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertTrue("end is not called", endCalled[0]);
 	}
 
+	@Test
 	public void testLoadClassUnresolved() throws Exception {
 		Bundle chainTest = installer.installBundle("chain.test"); //$NON-NLS-1$
-		assertFalse("Should not resolve bundle: " + chainTest, installer.resolveBundles(new Bundle[] {chainTest}));
-		try {
-			fail("Should not be able to load class: " + chainTest.loadClass("chain.test.TestSingleChain")); //$NON-NLS-1$
-		} catch (ClassNotFoundException e) {
-			// expected
-		}
+		assertFalse("Should not resolve bundle: " + chainTest, installer.resolveBundles(new Bundle[] { chainTest }));
+		assertThrows("Should not be able to load class: chain.test.TestSingleChain", ClassNotFoundException.class,
+				() -> chainTest.loadClass("chain.test.TestSingleChain"));
 
 	}
 
-	private void doTestArrayTypeLoad(String name) {
-		try {
-			Class arrayType = OSGiTestsActivator.getContext().getBundle().loadClass(name);
-			assertNotNull("Null class", arrayType); //$NON-NLS-1$
-			assertTrue("Class is not an array: " + arrayType, arrayType.isArray()); //$NON-NLS-1$
-		} catch (ClassNotFoundException e) {
-			fail("Unexpected exception", e); //$NON-NLS-1$
+	private void doTestArrayTypeLoad(String name) throws ClassNotFoundException {
+		Class<?> arrayType = OSGiTestsActivator.getBundle().loadClass(name);
+		assertNotNull("Null class", arrayType); //$NON-NLS-1$
+		assertTrue("Class is not an array: " + arrayType, arrayType.isArray()); //$NON-NLS-1$
+	}
+
+	private String readURL(URL url) throws IOException {
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
+			return reader.lines().collect(Collectors.joining("\n"));
 		}
 	}
 
-	private String readURL(URL url) {
-		StringBuilder sb = new StringBuilder();
-		try {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
-			try {
-				for (String line = reader.readLine(); line != null;) {
-					sb.append(line);
-					line = reader.readLine();
-					if (line != null)
-						sb.append('\n');
-				}
-			} finally {
-				reader.close();
-			}
-		} catch (IOException e) {
-			fail("Unexpected exception reading url: " + url.toExternalForm(), e); //$NON-NLS-1$
-		}
-		return sb.toString();
-	}
-
+	@Test
 	public void testDefaultLocalUninstall() throws Exception {
 		Bundle test = installer.installBundle("security.a"); //$NON-NLS-1$
 		test.uninstall();
@@ -2137,7 +2111,9 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong bundle name header.", "default", bundleName);
 	}
 
-	public void testBug490902() throws BundleException, InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+	@Test
+	public void testBug490902() throws BundleException, InterruptedException, ClassNotFoundException,
+			InstantiationException, IllegalAccessException {
 		final Bundle a1 = installer.installBundle("test.bug490902.a");
 		final Bundle b1 = installer.installBundle("test.bug490902.b");
 		installer.resolveBundles(new Bundle[] {a1, b1});
@@ -2191,6 +2167,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testRecursiveWeavingHookFactory() {
 		final ThreadLocal<Boolean> testThread = new ThreadLocal<Boolean>() {
 			@Override
@@ -2265,6 +2242,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testLoaderUninstalledBundle() throws BundleException, IOException {
 		String testResourcePath = "testResource";
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
@@ -2304,6 +2282,7 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		compareResults(expectedFrameworkEvents, actualFrameworkEvents);
 	}
 
+	@Test
 	public void testStaleLoaderNPE() throws BundleException, IOException, ClassNotFoundException, InterruptedException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName()); //$NON-NLS-1$
 		config.mkdirs();
@@ -2357,21 +2336,13 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		ClassLoader importerCL = importerWiring.getClassLoader();
 		ClassLoader requirerCL = requirerWiring.getClassLoader();
 
-		try {
-			importerCL.loadClass("export1.SomeClass");
-			fail("Expecting LinkageError.");
-		} catch (LinkageError e) {
-			// expected; the class is invalid
-		}
+		assertThrows(LinkageError.class, () -> importerCL.loadClass("export1.SomeClass"));
+
 		URL export3Resource = importerCL.getResource("export3/resource.txt");
 		assertNotNull("Missing resource.", export3Resource);
 
-		try {
-			requirerCL.loadClass("export1.SomeClass");
-			fail("Expecting LinkageError.");
-		} catch (LinkageError e) {
-			// expected; the class is invalid
-		}
+		assertThrows(LinkageError.class, () -> requirerCL.loadClass("export1.SomeClass"));
+
 		export3Resource = requirerCL.getResource("export3/resource.txt");
 		assertNotNull("Missing resource.", export3Resource);
 
@@ -2386,27 +2357,18 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 			}
 		});
 
-		try {
-			importerCL.loadClass("export2.SomeClass");
-			fail("Expecting LinkageError.");
-		} catch (LinkageError e) {
-			// expected; the class is invalid
-			// NOTE the import sources are calculated at loader creating time
-			// which happened before the refresh
-		}
+		assertThrows(LinkageError.class, () -> importerCL.loadClass("export2.SomeClass"));
+		// NOTE the import sources are calculated at loader creating time which happened
+		// before the refresh
+
 		URL export4Resource = importerCL.getResource("export4/resource.txt");
 		// Note that import sources are calculated at loader creating time
 		// which happened before the refresh
 		assertNotNull("Missing resource.", export4Resource);
 
-		try {
-			requirerCL.loadClass("export2.SomeClass");
-			fail("Expecting ClassNotFoundException.");
-		} catch (ClassNotFoundException e) {
-			// expected; the wire is invalid
-			// NOTE the require sources are calculated lazily but now
-			// the wire is invalid after the refresh
-		}
+		assertThrows(ClassNotFoundException.class, () -> requirerCL.loadClass("export2.SomeClass"));
+		// NOTE the require sources are calculated lazily but now the wire is invalid
+		// after the refresh
 
 		export4Resource = requirerCL.getResource("export4/resource.txt");
 		assertNull("Found resource from invalid wire.", export4Resource);
@@ -2423,7 +2385,8 @@ public class ClassLoadingBundleTests extends AbstractBundleTests {
 		assertNull("Found more events.", events.poll(1, TimeUnit.SECONDS));
 	}
 
-	public void testBug565522FragmentClasspath() throws IOException, BundleException {
+	@Test
+	public void testBug565522FragmentClasspath() throws Exception {
 		ByteArrayOutputStream libResourceJarBytes1 = new ByteArrayOutputStream();
 		try (JarOutputStream libResourceJar = new JarOutputStream(libResourceJarBytes1)) {
 			libResourceJar.putNextEntry(new JarEntry("META-INF/"));

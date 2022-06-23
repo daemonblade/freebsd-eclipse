@@ -14,12 +14,6 @@
 package org.eclipse.osgi.container;
 
 import static org.eclipse.osgi.internal.container.InternalUtils.asCopy;
-import static org.eclipse.osgi.internal.container.InternalUtils.asListBundleCapability;
-import static org.eclipse.osgi.internal.container.InternalUtils.asListBundleRequirement;
-import static org.eclipse.osgi.internal.container.InternalUtils.asListBundleWire;
-import static org.eclipse.osgi.internal.container.InternalUtils.asListCapability;
-import static org.eclipse.osgi.internal.container.InternalUtils.asListRequirement;
-import static org.eclipse.osgi.internal.container.InternalUtils.asListWire;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -162,13 +156,13 @@ public final class ModuleWiring implements BundleWiring {
 
 	@Override
 	public List<BundleCapability> getCapabilities(String namespace) {
-		return asCopy(asListBundleCapability(getModuleCapabilities(namespace)));
+		return asCopy(getModuleCapabilities(namespace));
 
 	}
 
 	@Override
 	public List<BundleRequirement> getRequirements(String namespace) {
-		return asCopy(asListBundleRequirement(getModuleRequirements(namespace)));
+		return asCopy(getModuleRequirements(namespace));
 	}
 
 	/**
@@ -221,12 +215,12 @@ public final class ModuleWiring implements BundleWiring {
 
 	@Override
 	public List<BundleWire> getProvidedWires(String namespace) {
-		return asCopy(asListBundleWire(getWires(namespace, providedWires)));
+		return asCopy(getWires(namespace, providedWires));
 	}
 
 	@Override
 	public List<BundleWire> getRequiredWires(String namespace) {
-		return asCopy(asListBundleWire(getWires(namespace, requiredWires)));
+		return asCopy(getWires(namespace, requiredWires));
 	}
 
 	private List<ModuleWire> getWires(String namespace, NamespaceList<ModuleWire> wires) {
@@ -308,22 +302,22 @@ public final class ModuleWiring implements BundleWiring {
 
 	@Override
 	public List<Capability> getResourceCapabilities(String namespace) {
-		return asCopy(asListCapability(getModuleCapabilities(namespace)));
+		return asCopy(getModuleCapabilities(namespace));
 	}
 
 	@Override
 	public List<Requirement> getResourceRequirements(String namespace) {
-		return asCopy(asListRequirement(getModuleRequirements(namespace)));
+		return asCopy(getModuleRequirements(namespace));
 	}
 
 	@Override
 	public List<Wire> getProvidedResourceWires(String namespace) {
-		return asCopy(asListWire(getWires(namespace, providedWires)));
+		return asCopy(getWires(namespace, providedWires));
 	}
 
 	@Override
 	public List<Wire> getRequiredResourceWires(String namespace) {
-		return asCopy(asListWire(getWires(namespace, requiredWires)));
+		return asCopy(getWires(namespace, requiredWires));
 	}
 
 	@Override
@@ -428,14 +422,21 @@ public final class ModuleWiring implements BundleWiring {
 		}, NamespaceList.REQUIREMENT);
 
 		ModuleDatabase moduleDatabase = revision.getRevisions().getContainer().moduleDatabase;
-		moduleDatabase.writeLock();
-		try {
+		// Use the writeLockOperation to atomically update the revision timestamps
+		// This is necessary to make sure any in flight resolve operations are using the
+		// latest wiring data and avoids them overwriting the requirements incorrectly.
+		moduleDatabase.writeLockOperation(true, () -> {
 			NamespaceList.Builder<ModuleRequirement> requirmentsBuilder = requirements.createBuilder();
 			requirmentsBuilder.addAll(newRequirements);
 			requirements = requirmentsBuilder.build();
-		} finally {
-			moduleDatabase.writeUnlock();
-		}
+			// clear out miss cache when adding new dynamic imports.
+			dynamicMissRef.updateAndGet((s) -> {
+				if (s != null) {
+					s.clear();
+				}
+				return s;
+			});
+		});
 	}
 
 	void addDynamicPackageMiss(String packageName) {

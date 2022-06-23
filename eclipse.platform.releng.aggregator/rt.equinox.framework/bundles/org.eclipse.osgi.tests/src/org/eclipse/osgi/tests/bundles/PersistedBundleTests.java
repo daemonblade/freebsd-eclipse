@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,10 +13,12 @@
  *******************************************************************************/
 package org.eclipse.osgi.tests.bundles;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import java.util.Map;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.osgi.launch.Equinox;
+import org.junit.Test;
 
 /*
  * The framework must persist data according to the value of the
@@ -36,24 +38,11 @@ public class PersistedBundleTests extends AbstractBundleTests {
 	private static final String NO_PERSISTENCE = "-1";
 	private static final String PERIODIC_PERSISTENCE = "4000";
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
-
-	@Override
-	protected void tearDown() throws Exception {
-		super.tearDown();
-	}
-
-	public static Test suite() {
-		return new TestSuite(PersistedBundleTests.class);
-	}
-
 	/*
 	 * Test that a value of zero for eclipse.stateSaveDelayInterval results in
 	 * immediate persistence.
 	 */
+	@Test
 	public void testImmediatePersistence() throws Exception {
 		Map<String, Object> configuration = createConfiguration();
 		configuration.put(ECLIPSE_STATESAVEDELAYINTERVAL, IMMEDIATE_PERSISTENCE);
@@ -78,6 +67,7 @@ public class PersistedBundleTests extends AbstractBundleTests {
 	 * Test that a negative value for eclipse.stateSaveDelayInterval results in
 	 * no persistence.
 	 */
+	@Test
 	public void testNoPersistence() throws Exception {
 		Map<String, Object> configuration = createConfiguration();
 		configuration.put(ECLIPSE_STATESAVEDELAYINTERVAL, NO_PERSISTENCE);
@@ -111,6 +101,7 @@ public class PersistedBundleTests extends AbstractBundleTests {
 	 * Test that a positive value for eclipse.stateSaveDelayInterval results in
 	 * periodic persistence.
 	 */
+	@Test
 	public void testPeriodicPersistence() throws Exception {
 		// Specify periodic persistence in the configuration.
 		Map<String, Object> configuration = createConfiguration();

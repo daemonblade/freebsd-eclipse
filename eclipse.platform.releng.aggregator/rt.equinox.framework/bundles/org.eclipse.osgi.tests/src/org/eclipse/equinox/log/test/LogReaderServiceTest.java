@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2021 IBM Corporation and others.
+ * Copyright (c) 2007, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,6 +11,12 @@
  * Contributors: IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.equinox.log.test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.util.Enumeration;
@@ -30,6 +36,7 @@ import org.eclipse.osgi.internal.framework.EquinoxConfiguration;
 import org.eclipse.osgi.launch.Equinox;
 import org.eclipse.osgi.tests.OSGiTestsActivator;
 import org.eclipse.osgi.tests.bundles.AbstractBundleTests;
+import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleEvent;
 import org.osgi.framework.BundleException;
@@ -58,12 +65,8 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 	LoggerContext rootLoggerContext;
 	Map<String, LogLevel> rootLogLevels;
 
-	public LogReaderServiceTest(String name) {
-		setName(name);
-	}
-
 	@Override
-	protected void setUp() throws Exception {
+	public void setUp() throws Exception {
 		super.setUp();
 		logReference = OSGiTestsActivator.getContext().getServiceReference(LogService.class.getName());
 		readerReference = OSGiTestsActivator.getContext().getServiceReference(LogReaderService.class.getName());
@@ -82,7 +85,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 	}
 
 	@Override
-	protected void tearDown() throws Exception {
+	public void tearDown() throws Exception {
 		rootLoggerContext.setLogLevels(rootLogLevels);
 		OSGiTestsActivator.getContext().ungetService(loggerAdminReference);
 		OSGiTestsActivator.getContext().ungetService(logReference);
@@ -90,6 +93,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		super.tearDown();
 	}
 
+	@Test
 	public void testaddListener() throws Exception {
 		TestListener listener = new TestListener();
 		reader.addLogListener(listener);
@@ -97,6 +101,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		assertTrue(listener.getEntryX().getLevel() == LogService.LOG_INFO);
 	}
 
+	@Test
 	public void testaddListenerTwice() throws Exception {
 		TestListener listener = new TestListener();
 		reader.addLogListener(listener);
@@ -105,15 +110,12 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		assertTrue(listener.getEntryX().getLevel() == LogService.LOG_INFO);
 	}
 
+	@Test
 	public void testaddNullListener() throws Exception {
-		try {
-			reader.addLogListener(null);
-		} catch (IllegalArgumentException t) {
-			return;
-		}
-		fail();
+		assertThrows(IllegalArgumentException.class, () -> reader.addLogListener(null));
 	}
 
+	@Test
 	public void testBadListener() throws Exception {
 		LogListener listener = new LogListener() {
 			public synchronized void logged(LogEntry entry) {
@@ -129,13 +131,14 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testLogEntry() throws Exception {
 		TestListener listener = new TestListener();
 		reader.addLogListener(listener);
 		long timeBeforeLog = System.currentTimeMillis();
 		log.log(logReference, LogService.LOG_INFO, "info", new Throwable("test")); //$NON-NLS-1$ //$NON-NLS-2$
 		LogEntry entry = listener.getEntryX();
-		assertTrue(entry.getBundle() == OSGiTestsActivator.getContext().getBundle());
+		assertTrue(entry.getBundle() == OSGiTestsActivator.getBundle());
 		assertTrue(entry.getMessage().equals("info")); //$NON-NLS-1$
 		assertTrue(entry.getException().getMessage().equals("test")); //$NON-NLS-1$
 		assertTrue(entry.getServiceReference() == logReference);
@@ -143,6 +146,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		assertTrue(entry.getLevel() == LogService.LOG_INFO);
 	}
 
+	@Test
 	public void testLogBundleEventInfo() throws Exception {
 		// this is just a bundle that is harmless to start/stop
 		Bundle testBundle = installer.installBundle("test.logging.a"); //$NON-NLS-1$
@@ -157,6 +161,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		assertTrue("Wrong context: " + entry.getContext(), entry.getContext() instanceof BundleEvent);
 	}
 
+	@Test
 	public void testLogBundleEventSynchronous() throws Exception {
 		// this is just a bundle that is harmless to start/stop
 		final Bundle testBundle = installer.installBundle("test.logging.a"); //$NON-NLS-1$
@@ -173,6 +178,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 
 	}
 
+	@Test
 	public void testLogServiceEventInfo() throws Exception {
 		TestListener listener = new TestListener();
 		reader.addLogListener(listener);
@@ -183,6 +189,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		assertTrue("Wrong context: " + entry.getContext(), entry.getContext() instanceof ServiceEvent);
 	}
 
+	@Test
 	public void testLogServiceEventDebug() throws Exception {
 		ServiceRegistration registration = OSGiTestsActivator.getContext().registerService(Object.class.getName(), new Object(), null);
 
@@ -195,6 +202,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		assertTrue("Wrong context: " + entry.getContext(), entry.getContext() instanceof ServiceEvent);
 	}
 
+	@Test
 	public void testLogFrameworkEvent() throws Exception {
 		Bundle testBundle = installer.installBundle("test.logging.a"); //$NON-NLS-1$
 		final AtomicReference<LogEntry> logEntry = new AtomicReference<>();
@@ -219,6 +227,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		assertEquals("Wrong logger name.", "Events.Framework." + entry.getBundle().getSymbolicName(), entry.getLoggerName());
 	}
 
+	@Test
 	public void testLogFrameworkEventType() throws Exception {
 		final List<LogEntry> events = new CopyOnWriteArrayList<>();
 		final CountDownLatch countDown = new CountDownLatch(3);
@@ -246,6 +255,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 
 	}
 
+	@Test
 	public void testLogHistory1() throws BundleException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
 		Map<String, Object> configuration = new HashMap<>();
@@ -280,6 +290,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testLogHistory2() throws BundleException {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
 		Map<String, Object> configuration = new HashMap<>();
@@ -316,6 +327,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		return count;
 	}
 
+	@Test
 	public void testLoggerContextSetLogLevelsWithBundleInstalledAndLogger() throws Exception {
 		Bundle bundle = null;
 		String loggerName = "test.logger";
@@ -341,6 +353,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testLoggerContextSetLogLevelsWithBundleInstalledAndNoLogger() throws Exception {
 		Bundle bundle = null;
 		String loggerName = "test.logger";
@@ -365,6 +378,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testLoggerContextSetLogLevelsWithoutBundleAndLogger() throws Exception {
 		Bundle bundle = null;
 		String loggerName = "test.logger";
@@ -432,6 +446,7 @@ public class LogReaderServiceTest extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testBundleEventsLogged() throws Exception {
 		String testBundleLoc = installer.getBundleLocation("test.logging.a");
 		TestListener listener = new TestListener(testBundleLoc);

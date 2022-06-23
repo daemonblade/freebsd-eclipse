@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Core OSGi Tests
 Bundle-SymbolicName: org.eclipse.osgi.tests;singleton:=true
-Bundle-Version: 3.16.400.qualifier
+Bundle-Version: 3.16.700.qualifier
 Bundle-Vendor: Eclipse.org
 Require-Bundle: 
  org.eclipse.core.runtime,
@@ -10,7 +10,6 @@ Require-Bundle:
  org.eclipse.test.performance,
  org.junit
 Bundle-ActivationPolicy: lazy
-Bundle-Activator: org.eclipse.osgi.tests.OSGiTestsActivator
 Import-Package: org.osgi.service.event; resolution:="optional"
 Export-Package: org.eclipse.osgi.tests.bundles,
  org.eclipse.osgi.tests.appadmin

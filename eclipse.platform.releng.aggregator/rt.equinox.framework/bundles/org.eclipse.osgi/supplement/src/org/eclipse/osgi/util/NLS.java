@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2021 IBM Corporation and others.
+ * Copyright (c) 2005, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -64,7 +64,12 @@ public abstract class NLS {
 	private static String[] nlSuffixes;
 	private static final String PROP_WARNINGS = "osgi.nls.warnings"; //$NON-NLS-1$
 	private static final String IGNORE = "ignore"; //$NON-NLS-1$
-	private static final boolean ignoreWarnings = AccessController.doPrivileged((PrivilegedAction<Boolean>) () -> IGNORE.equals(System.getProperty(PROP_WARNINGS)));
+	private static final boolean ignoreWarnings = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+		@Override
+		public Boolean run() {
+			return IGNORE.equals(System.getProperty(PROP_WARNINGS));
+		}
+	});
 
 	/*
 	 * NOTE do not change the name of this field; it is set by the Framework using reflection
@@ -147,9 +152,12 @@ public abstract class NLS {
 			load(baseName, clazz);
 			return;
 		}
-		AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-			load(baseName, clazz);
-			return null;
+		AccessController.doPrivileged(new PrivilegedAction<Void>() {
+			@Override
+			public Void run() {
+				load(baseName, clazz);
+				return null;
+			}
 		});
 	}
 
@@ -253,6 +261,10 @@ public abstract class NLS {
 			int lastSeparator;
 			while (true) {
 				result.add('_' + nl + EXTENSION);
+				String additional = getAdditionalSuffix(nl);
+				if (additional != null) {
+					result.add('_' + additional + EXTENSION);
+				}
 				lastSeparator = nl.lastIndexOf('_');
 				if (lastSeparator == -1)
 					break;
@@ -267,6 +279,23 @@ public abstract class NLS {
 		for (int i = 0; i < variants.length; i++)
 			variants[i] = root + nlSuffixes[i];
 		return variants;
+	}
+
+	/*
+	 * This is a fix due to https://bugs.eclipse.org/bugs/show_bug.cgi?id=579215
+	 * Ideally, this needs to be removed once the Eclipse minimum support moves to Java 17
+	 */
+	private static String getAdditionalSuffix(String nl) {
+		String additional = null;
+		if (nl != null) {
+			if ("he".equals(nl)) { //$NON-NLS-1$
+				additional = "iw"; //$NON-NLS-1$
+			} else if (nl.startsWith("he_")) { //$NON-NLS-1$
+				additional = "iw_" + nl.substring(3); //$NON-NLS-1$
+			}
+		}
+
+		return additional;
 	}
 
 	private static void computeMissingMessages(String bundleName, Class<?> clazz, Map<Object, Object> fieldMap, Field[] fieldArray, boolean isAccessible) {

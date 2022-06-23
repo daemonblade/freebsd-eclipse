@@ -36,6 +36,7 @@ import org.eclipse.osgi.framework.eventmgr.ListenerQueue;
 import org.eclipse.osgi.internal.debug.Debug;
 import org.eclipse.osgi.internal.framework.BundleContextImpl;
 import org.eclipse.osgi.internal.framework.EquinoxContainer;
+import org.eclipse.osgi.internal.framework.FilterImpl;
 import org.eclipse.osgi.internal.messages.Msg;
 import org.eclipse.osgi.storage.BundleInfo.Generation;
 import org.eclipse.osgi.util.NLS;
@@ -872,9 +873,12 @@ public class ServiceRegistry {
 		if (System.getSecurityManager() == null) {
 			publishServiceEventPrivileged(event);
 		} else {
-			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-				publishServiceEventPrivileged(event);
-				return null;
+			AccessController.doPrivileged(new PrivilegedAction<Void>() {
+				@Override
+				public Void run() {
+					publishServiceEventPrivileged(event);
+					return null;
+				}
 			});
 		}
 	}
@@ -1069,8 +1073,24 @@ public class ServiceRegistry {
 	private List<ServiceRegistrationImpl<?>> lookupServiceRegistrations(String clazz, Filter filter) {
 		List<ServiceRegistrationImpl<?>> result;
 		synchronized (this) {
-			if (clazz == null) { /* all services */
-				result = allPublishedServices;
+			if (clazz == null) {
+				if (filter instanceof FilterImpl) {
+					// check if we can determine the clazz from the filter
+					String filterObjectClazz = ((FilterImpl) filter).getRequiredObjectClass();
+					if (filterObjectClazz != null) {
+						result = publishedServicesByClass.get(filterObjectClazz);
+						if (((FilterImpl) filter).getChildren().isEmpty()) {
+							// this is a simple (objectClass=serviceClass) filter;
+							// no need to evaluate the filter
+							filter = null;
+						}
+					} else {
+					  result = allPublishedServices;
+					}
+				} else {
+					// have to check all services
+					result = allPublishedServices;
+				}
 			} else {
 				/* services registered under the class name */
 				result = publishedServicesByClass.get(clazz);
@@ -1177,7 +1197,12 @@ public class ServiceRegistry {
 	 * @return The name of the class that is not satisfied by the service object.
 	 */
 	static String checkServiceClass(final String[] clazzes, final Object serviceObject) {
-		ClassLoader cl = AccessController.doPrivileged((PrivilegedAction<ClassLoader>) () -> serviceObject.getClass().getClassLoader());
+		ClassLoader cl = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+			@Override
+			public ClassLoader run() {
+				return serviceObject.getClass().getClassLoader();
+			}
+		});
 		for (int i = 0, len = clazzes.length; i < len; i++) {
 			try {
 				Class<?> serviceClazz = cl == null ? Class.forName(clazzes[i]) : cl.loadClass(clazzes[i]);
@@ -1230,9 +1255,12 @@ public class ServiceRegistry {
 		if (System.getSecurityManager() == null) {
 			notifyFindHooksPrivileged(context, clazz, filterstring, allservices, result);
 		} else {
-			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-				notifyFindHooksPrivileged(context, clazz, filterstring, allservices, result);
-				return null;
+			AccessController.doPrivileged(new PrivilegedAction<Void>() {
+				@Override
+				public Void run() {
+					notifyFindHooksPrivileged(context, clazz, filterstring, allservices, result);
+					return null;
+				}
 			});
 		}
 	}
@@ -1342,9 +1370,12 @@ public class ServiceRegistry {
 		if (System.getSecurityManager() == null) {
 			notifyNewListenerHookPrivileged(registration);
 		} else {
-			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-				notifyNewListenerHookPrivileged(registration);
-				return null;
+			AccessController.doPrivileged(new PrivilegedAction<Void>() {
+				@Override
+				public Void run() {
+					notifyNewListenerHookPrivileged(registration);
+					return null;
+				}
 			});
 		}
 
@@ -1387,9 +1418,12 @@ public class ServiceRegistry {
 		if (System.getSecurityManager() == null) {
 			notifyListenerHooksPrivileged(listeners, added);
 		} else {
-			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-				notifyListenerHooksPrivileged(listeners, added);
-				return null;
+			AccessController.doPrivileged(new PrivilegedAction<Void>() {
+				@Override
+				public Void run() {
+					notifyListenerHooksPrivileged(listeners, added);
+					return null;
+				}
 			});
 		}
 

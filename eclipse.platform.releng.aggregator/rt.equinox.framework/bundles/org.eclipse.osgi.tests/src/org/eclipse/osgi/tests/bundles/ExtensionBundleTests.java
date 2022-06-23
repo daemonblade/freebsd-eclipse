@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2016 IBM Corporation and others.
+ * Copyright (c) 2007, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,11 +13,14 @@
  *******************************************************************************/
 package org.eclipse.osgi.tests.bundles;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.namespace.ExecutionEnvironmentNamespace;
@@ -26,12 +29,10 @@ import org.osgi.framework.wiring.BundleWire;
 import org.osgi.framework.wiring.BundleWiring;
 
 public class ExtensionBundleTests extends AbstractBundleTests {
-	public static Test suite() {
-		return new TestSuite(ExtensionBundleTests.class);
-	}
 
 	public static List<String> events = new ArrayList<>();
 
+	@Test
 	public void testFrameworkExtension01() throws Exception {
 		Bundle fwkext = installer.installBundle("ext.framework.a", false); //$NON-NLS-1$
 		Bundle importer = installer.installBundle("ext.framework.a.importer"); //$NON-NLS-1$
@@ -45,6 +46,7 @@ public class ExtensionBundleTests extends AbstractBundleTests {
 		assertEquals("1.2", "success", results[1]); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testFrameworkExtension02() throws Exception {
 		Bundle fwkext = installer.installBundle("ext.framework.a", false); //$NON-NLS-1$
 		Bundle importer = installer.installBundle("ext.framework.a.requires"); //$NON-NLS-1$
@@ -58,6 +60,7 @@ public class ExtensionBundleTests extends AbstractBundleTests {
 		assertEquals("1.2", "success", results[1]); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testExtClasspathExtension01() throws Exception {
 		Bundle fwkext = installer.installBundle("ext.extclasspath.a", false); //$NON-NLS-1$
 		Bundle importer = installer.installBundle("ext.extclasspath.a.importer"); //$NON-NLS-1$
@@ -71,13 +74,9 @@ public class ExtensionBundleTests extends AbstractBundleTests {
 		assertEquals("1.2", "success", results[1]); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	public void testExtensionBundleWithRequireCapabilityOsgiEeInstalls() {
-		Bundle b = null;
-		try {
-			b = installer.installBundle("ext.framework.osgiee.b", false);
-		} catch (BundleException e) {
-			fail("Extension bundle with Require-Capability only in osgi.ee. namespace failed to install", e);
-		}
+	@Test
+	public void testExtensionBundleWithRequireCapabilityOsgiEeInstalls() throws BundleException {
+		Bundle b = installer.installBundle("ext.framework.osgiee.b", false);
 		assertTrue("Could not resolve bundle: " + b, installer.resolveBundles(new Bundle[] {b}));
 		BundleWiring wiring = b.adapt(BundleWiring.class);
 		assertNotNull("No wiring for bundle: " + b, wiring);
@@ -89,6 +88,7 @@ public class ExtensionBundleTests extends AbstractBundleTests {
 		assertEquals("Wrong provider for osgi.ee: " + eeWire.getProvider().getBundle(), 0, eeWire.getProvider().getBundle().getBundleId());
 	}
 
+	@Test
 	public void testActivatorOrder() throws Exception {
 		Bundle b = installer.installBundle("ext.framework.a", false);
 		Bundle bImp = installer.installBundle("ext.framework.a.importer");

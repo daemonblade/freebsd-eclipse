@@ -43,10 +43,13 @@ public class ContextFinder extends ClassLoader implements PrivilegedAction<List<
 	static ClassLoader finderClassLoader;
 	static Finder contextFinder;
 	static {
-		AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-			finderClassLoader = ContextFinder.class.getClassLoader();
-			contextFinder = new Finder();
-			return null;
+		AccessController.doPrivileged(new PrivilegedAction<Void>() {
+			@Override
+			public Void run() {
+				finderClassLoader = ContextFinder.class.getClassLoader();
+				contextFinder = new Finder();
+				return null;
+			}
 		});
 	}
 
@@ -169,8 +172,8 @@ public class ContextFinder extends ClassLoader implements PrivilegedAction<List<
 	@Override
 	public Enumeration<URL> getResources(String arg0) throws IOException {
 		//Shortcut cycle
-		if (startLoading(arg0) == false) {
-			return Collections.enumeration(Collections.emptyList());
+		if (!startLoading(arg0)) {
+			return Collections.emptyEnumeration();
 		}
 		try {
 			List<ClassLoader> toConsult = findClassLoaders();

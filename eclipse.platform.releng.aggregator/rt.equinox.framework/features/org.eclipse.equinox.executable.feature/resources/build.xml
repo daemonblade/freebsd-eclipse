@@ -98,7 +98,7 @@
 			<fileset dir="${basedir}/bin/gtk/freebsd/powerpc64le" includes="**"			/>
 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
 		</copy>
-		<chmod perm="755" dir="${feature.base}/freebsd.gtk.powerpc64/${collectingFolder}" includes="launcher" />
+		<chmod perm="755" dir="${feature.base}/freebsd.gtk.powerpc64le/${collectingFolder}" includes="launcher" />
 	</target>
     <target name="rootFilesfreebsd_gtk_aarch64">
 		<mkdir dir="${feature.base}/freebsd.gtk.aarch64/${collectingFolder}"/>
@@ -115,6 +115,14 @@
 			<fileset dir="${basedir}/gtk_root" includes="**"			/>
 		</copy>
 		<chmod perm="755" dir="${feature.base}/freebsd.gtk.amd64/${collectingFolder}" includes="launcher" />
+	</target>
+	<target name="rootFileslinux_gtk_loongarch64">
+		<mkdir dir="${feature.base}/linux.gtk.loongarch64/${collectingFolder}"/>
+		<copy todir="${feature.base}/linux.gtk.loongarch64/${collectingFolder}" failonerror="true" overwrite="true">
+			<fileset dir="${basedir}/bin/gtk/linux/loongarch64" includes="**"			/>
+			<fileset dir="${basedir}/gtk_root" includes="**"			/>
+		</copy>
+		<chmod perm="755" dir="${feature.base}/linux.gtk.loongarch64/${collectingFolder}" includes="launcher" />
 	</target>
 	<target name="rootFileslinux_gtk_ia64">
 		<mkdir dir="${feature.base}/linux.gtk.ia64/${collectingFolder}"/>

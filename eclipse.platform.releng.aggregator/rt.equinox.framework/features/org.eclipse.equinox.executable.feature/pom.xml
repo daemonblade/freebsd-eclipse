@@ -14,12 +14,12 @@
   <parent>
     <artifactId>rt.equinox.framework</artifactId>
     <groupId>org.eclipse.equinox.framework</groupId>
-    <version>4.21.0-SNAPSHOT</version>
+    <version>4.24.0-SNAPSHOT</version>
     <relativePath>../../</relativePath>
   </parent>
   <groupId>org.eclipse.equinox.feature</groupId>
   <artifactId>org.eclipse.equinox.executable</artifactId>
-  <version>3.8.1300-SNAPSHOT</version>
+  <version>3.8.1700-SNAPSHOT</version>
   <packaging>eclipse-feature</packaging>
 
   <build>
@@ -119,7 +119,7 @@
                     <!-- We need to get binary bits from binary repo -->
                     <!-- If local binaries had been built, copy will not overwrite
                       them -->
-                    <echo message="Copy eclipse binaries to launcher binaries"/>
+                    <echo message="Copy eclipse binaries to launcher binaries" level="info"/>
                     <copy todir="bin" verbose="true" includeEmptyDirs="false" failonerror="true">
                       <fileset dir="${rt.equinox.binaries.loc}/org.eclipse.equinox.executable/bin/">
                         <include name="cocoa/macosx/x86_64/**/*"/>

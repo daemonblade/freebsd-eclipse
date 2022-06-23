@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corporation and others.
+ * Copyright (c) 2018, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,10 @@
  *******************************************************************************/
 package org.eclipse.osgi.tests.bundles;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -22,10 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.osgi.launch.Equinox;
 import org.eclipse.osgi.tests.OSGiTestsActivator;
+import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -41,22 +44,19 @@ public class ImportJavaSEPackagesTests extends AbstractBundleTests {
 	private static final String JAVA_UTIL = "java.util";
 	private static String originalSpecVersion;
 
-	public static Test suite() {
-		return new TestSuite(ImportJavaSEPackagesTests.class);
-	}
-
 	@Override
-	protected void setUp() throws Exception {
+	public void setUp() throws Exception {
 		super.setUp();
 		originalSpecVersion = System.getProperty("java.specification.version");
 	}
 
 	@Override
-	protected void tearDown() throws Exception {
+	public void tearDown() throws Exception {
 		super.tearDown();
 		System.setProperty("java.specification.version", originalSpecVersion);
 	}
 
+	@Test
 	public void testExportPackageCannotContainJavaPackages() throws Exception {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
 		Map<String, String> headers = new HashMap<>();
@@ -67,12 +67,12 @@ public class ImportJavaSEPackagesTests extends AbstractBundleTests {
 		File bundle = SystemBundleTests.createBundle(config, getName(), headers);
 		Equinox equinox = new Equinox(Collections.singletonMap(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath()));
 		try {
-			equinox.start();
-			BundleContext systemContext = equinox.getBundleContext();
-			Bundle testBundle = systemContext.installBundle(bundle.toURI().toString());
-			testBundle.start();
-			fail("Failed to test Export-Package header");
-		} catch (BundleException e) {
+			BundleException e = assertThrows(BundleException.class, () -> {
+				equinox.start();
+				BundleContext systemContext = equinox.getBundleContext();
+				Bundle testBundle = systemContext.installBundle(bundle.toURI().toString());
+				testBundle.start();
+			});
 			assertEquals("It should throw a bundle exception of type manifest error", BundleException.MANIFEST_ERROR, e.getType());
 			assertTrue("It should throw a Bundle Exception stating Invalid manifest header Export-Package", e.getMessage().contains("Cannot specify java.* packages in Export headers"));
 		} finally {
@@ -81,6 +81,7 @@ public class ImportJavaSEPackagesTests extends AbstractBundleTests {
 
 	}
 
+	@Test
 	public void testImportPackageCanContainJavaPackages() throws Exception {
 		File config = OSGiTestsActivator.getContext().getDataFile(getName());
 		Map<String, String> headers = new HashMap<>();
@@ -100,13 +101,12 @@ public class ImportJavaSEPackagesTests extends AbstractBundleTests {
 			List<BundleWire> pkgWires = testBundle.adapt(BundleWiring.class).getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE);
 			assertEquals("Wrong number of package requiremens: ", 1, pkgWires.size());
 			assertEquals("Wrong package found: " + pkgWires.get(0), JAVA_LANG, pkgWires.get(0).getCapability().getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE));
-		} catch (BundleException e) {
-			fail("Failed to test Import-Package header");
 		} finally {
 			stopQuietly(equinox);
 		}
 	}
 
+	@Test
 	public void testSystemPackages() throws Exception {
 		Map<Integer, Integer> packagesPerVersion = new HashMap<>();
 		packagesPerVersion.put(8, 63);
@@ -201,8 +201,6 @@ public class ImportJavaSEPackagesTests extends AbstractBundleTests {
 			String systemPackages = testBundle.getBundleContext().getProperty(Constants.FRAMEWORK_SYSTEMPACKAGES);
 			assertTrue("System packages should include java.lang packages", systemPackages.contains(JAVA_LANG));
 			assertTrue("System packages should include java.util packages", systemPackages.contains(JAVA_UTIL));
-		} catch (BundleException e) {
-			fail("Failed to test System packages");
 		} finally {
 			stopQuietly(equinox);
 		}

@@ -74,7 +74,12 @@ public class BundleLoader extends ModuleLoader {
 	public final static String DEFAULT_PACKAGE = "."; //$NON-NLS-1$
 	public final static String JAVA_PACKAGE = "java."; //$NON-NLS-1$
 
-	public final static ClassContext CLASS_CONTEXT = AccessController.doPrivileged((PrivilegedAction<ClassContext>) ClassContext::new);
+	public final static ClassContext CLASS_CONTEXT = AccessController.doPrivileged(new PrivilegedAction<ClassContext>() {
+		@Override
+		public ClassContext run() {
+			return new ClassContext();
+		}
+	});
 	public final static ClassLoader FW_CLASSLOADER = getClassLoader(EquinoxContainer.class);
 
 	private static final int PRE_CLASS = 1;
@@ -85,10 +90,6 @@ public class BundleLoader extends ModuleLoader {
 	private static final int POST_RESOURCES = 6;
 
 	private static final Pattern PACKAGENAME_FILTER = Pattern.compile("\\(osgi.wiring.package\\s*=\\s*([^)]+)\\)"); //$NON-NLS-1$
-
-	// TODO needed instead of using Collections.emptyEnumertion until we no longer support Java 6
-	@SuppressWarnings("rawtypes")
-	private final static Enumeration EMPTY_ENUMERATION = Collections.enumeration(Collections.emptyList());
 
 	private final ModuleWiring wiring;
 	private final EquinoxContainer container;
@@ -261,8 +262,12 @@ public class BundleLoader extends ModuleLoader {
 			result = createClassLoaderPrivledged(parent, generation.getBundleInfo().getStorage().getConfiguration(), this, generation, hooks);
 		} else {
 			final ClassLoader cl = parent;
-			result = AccessController.doPrivileged((PrivilegedAction<ModuleClassLoader>)
-					() -> createClassLoaderPrivledged(cl, generation.getBundleInfo().getStorage().getConfiguration(), BundleLoader.this, generation, hooks));
+			result = AccessController.doPrivileged(new PrivilegedAction<ModuleClassLoader>() {
+				@Override
+				public ModuleClassLoader run() {
+					return createClassLoaderPrivledged(cl, generation.getBundleInfo().getStorage().getConfiguration(), BundleLoader.this, generation, hooks);
+				}
+			});
 		}
 
 		// Synchronize on classLoaderCreatedMonitor in order to ensure hooks are called before returning.
@@ -276,11 +281,15 @@ public class BundleLoader extends ModuleLoader {
 				// only send to hooks if this thread wins in creating the class loader.
 				final ModuleClassLoader cl = result;
 				// protect with doPriv to avoid bubbling up permission checks that hooks may require
-				AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
-					for (ClassLoaderHook hook : hooks) {
-						hook.classLoaderCreated(cl);
+				AccessController.doPrivileged(new PrivilegedAction<Object>() {
+					@Override
+					public Object run() {
+						for (ClassLoaderHook hook : hooks) {
+							hook.classLoaderCreated(cl);
+						}
+						return null;
 					}
-					return null;
+
 				});
 				// finally set the class loader for use after calling hooks
 				classloader = classLoaderCreated;
@@ -404,8 +413,34 @@ public class BundleLoader extends ModuleLoader {
 	 * Finds the class for a bundle.  This method is used for delegation by the bundle's classloader.
 	 */
 	public Class<?> findClass(String name) throws ClassNotFoundException {
+		return findClass0(name, true, true);
+	}
 
-		if (parent != null && name.startsWith(JAVA_PACKAGE)) {
+	// useful outside of the framework to do no exception delegation
+	// but have it search parent for bootdelegation
+	public Class<?> findClassNoException(String name) {
+		try {
+			return findClass0(name, true, false);
+		} catch (ClassNotFoundException e) {
+			// should rarely happen
+			// e.g. when a lazy activation fails to start a bundle
+			return null;
+		}
+	}
+
+	public Class<?> findClassNoParentNoException(String name) {
+		try {
+			return findClass0(name, false, false);
+		} catch (ClassNotFoundException e) {
+			// should rarely happen
+			// e.g. when a lazy activation fails to start a bundle
+			return null;
+		}
+	}
+
+	private Class<?> findClass0(String name, boolean parentDelegation, boolean generateException)
+			throws ClassNotFoundException {
+		if (parentDelegation && parent != null && name.startsWith(JAVA_PACKAGE)) {
 			// 1) if startsWith "java." delegate to parent and terminate search
 			// we want to throw ClassNotFoundExceptions if a java.* class cannot be loaded from the parent.
 			return parent.loadClass(name);
@@ -417,7 +452,7 @@ public class BundleLoader extends ModuleLoader {
 		String pkgName = getPackageName(name);
 		boolean bootDelegation = false;
 		// follow the OSGi delegation model
-		if (parent != null && container.isBootDelegationPackage(pkgName)) {
+		if (parentDelegation && parent != null && container.isBootDelegationPackage(pkgName)) {
 			// 2) if part of the bootdelegation list then delegate to parent and continue of failure
 			try {
 				return parent.loadClass(name);
@@ -429,8 +464,6 @@ public class BundleLoader extends ModuleLoader {
 		Class<?> result = null;
 		try {
 			result = (Class<?>) searchHooks(name, PRE_CLASS);
-		} catch (ClassNotFoundException e) {
-			throw e;
 		} catch (FileNotFoundException e) {
 			// will not happen
 		}
@@ -451,7 +484,7 @@ public class BundleLoader extends ModuleLoader {
 			}
 			if (result != null)
 				return result;
-			throw new ClassNotFoundException(name + " cannot be found by " + this); //$NON-NLS-1$
+			return generateException(name, generateException);
 		}
 		// 4) search the required bundles
 		source = findRequiredSource(pkgName, null);
@@ -474,16 +507,13 @@ public class BundleLoader extends ModuleLoader {
 				result = source.loadClass(name);
 				if (result != null)
 					return result;
-				// must throw CNFE if dynamic import source does not have the class
-				throw new ClassNotFoundException(name + " cannot be found by " + this); //$NON-NLS-1$
+				return generateException(name, generateException);
 			}
 		}
 
 		if (result == null)
 			try {
 				result = (Class<?>) searchHooks(name, POST_CLASS);
-			} catch (ClassNotFoundException e) {
-				throw e;
 			} catch (FileNotFoundException e) {
 				// will not happen
 			}
@@ -494,7 +524,7 @@ public class BundleLoader extends ModuleLoader {
 			return result;
 		// hack to support backwards compatibility for bootdelegation
 		// or last resort; do class context trick to work around VM bugs
-		if (parent != null && !bootDelegation
+		if (parentDelegation && parent != null && !bootDelegation
 				&& ((container.getConfiguration().compatibilityBootDelegation) || isRequestFromVM())) {
 			// we don't need to continue if a CNFE is thrown here.
 			try {
@@ -503,7 +533,19 @@ public class BundleLoader extends ModuleLoader {
 				// we want to generate our own exception below
 			}
 		}
-		throw new ClassNotFoundException(name + " cannot be found by " + this); //$NON-NLS-1$
+		return generateException(name, generateException);
+	}
+
+	private Class<?> generateException(String name, boolean generate) throws ClassNotFoundException {
+		if (generate) {
+			ClassNotFoundException e = new ClassNotFoundException(name + " cannot be found by " + this); //$NON-NLS-1$
+			if (debug.DEBUG_LOADER) {
+				Debug.println("BundleLoader[" + this + "].loadClass(" + name + ") failed."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				Debug.printStackTrace(e);
+			}
+			throw e;
+		}
+		return null;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -584,7 +626,12 @@ public class BundleLoader extends ModuleLoader {
 	private static ClassLoader getClassLoader(final Class<?> clazz) {
 		if (System.getSecurityManager() == null)
 			return clazz.getClassLoader();
-		return AccessController.doPrivileged((PrivilegedAction<ClassLoader>) clazz::getClassLoader);
+		return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+			@Override
+			public ClassLoader run() {
+				return clazz.getClassLoader();
+			}
+		});
 	}
 
 	/**
@@ -685,7 +732,7 @@ public class BundleLoader extends ModuleLoader {
 		if ((name.length() > 1) && (name.charAt(0) == '/')) /* if name has a leading slash */
 			name = name.substring(1); /* remove leading slash before search */
 		String pkgName = getResourcePackageName(name);
-		Enumeration<URL> result = emptyEnumeration();
+		Enumeration<URL> result = Collections.emptyEnumeration();
 		boolean bootDelegation = false;
 		// follow the OSGi delegation model
 		// First check the parent classloader for system resources, if it is a java resource.
@@ -829,6 +876,10 @@ public class BundleLoader extends ModuleLoader {
 			if (!importedPackages.contains(resourcePkg) && !result.contains(resource))
 				result.add(resource);
 		}
+		// finally search the policy; but only if not localSearch
+		if (!localSearch && policy != null) {
+			policy.doBuddyListResourceLoading(result, path, filePattern, options);
+		}
 		return result;
 	}
 
@@ -839,23 +890,16 @@ public class BundleLoader extends ModuleLoader {
 
 	public static <E> Enumeration<E> compoundEnumerations(Enumeration<E> list1, Enumeration<E> list2) {
 		if (list2 == null || !list2.hasMoreElements())
-			return list1 == null ? BundleLoader.emptyEnumeration() : list1;
+			return list1 == null ? Collections.emptyEnumeration() : list1;
 		if (list1 == null || !list1.hasMoreElements())
-			return list2 == null ? BundleLoader.emptyEnumeration() : list2;
-		List<E> compoundResults = new ArrayList<>();
-		while (list1.hasMoreElements())
-			compoundResults.add(list1.nextElement());
+			return list2 == null ? Collections.emptyEnumeration() : list2;
+		List<E> compoundResults = Collections.list(list1);
 		while (list2.hasMoreElements()) {
 			E item = list2.nextElement();
 			if (!compoundResults.contains(item)) //don't add duplicates
 				compoundResults.add(item);
 		}
 		return Collections.enumeration(compoundResults);
-	}
-
-	@SuppressWarnings("unchecked")
-	private static <E> Enumeration<E> emptyEnumeration() {
-		return EMPTY_ENUMERATION;
 	}
 
 	/**
@@ -1107,8 +1151,6 @@ public class BundleLoader extends ModuleLoader {
 		}
 
 		if (dynamicImports.size() > 0) {
-			addDynamicImportPackage(dynamicImports.toArray(new String[dynamicImports.size()]));
-
 			Map<String, String> dynamicImportMap = new HashMap<>();
 			dynamicImportMap.put(Constants.DYNAMICIMPORT_PACKAGE, importSpec.toString());
 
@@ -1118,7 +1160,10 @@ public class BundleLoader extends ModuleLoader {
 			} catch (BundleException e) {
 				throw new RuntimeException(e);
 			}
-
+			// Add the dynamic imports to the loader second to be sure the requirement
+			// gets added to the wiring first. This avoids issues if another
+			// thread tries to dynamic resolve before all is done here.
+			addDynamicImportPackage(dynamicImports.toArray(new String[dynamicImports.size()]));
 		}
 	}
 

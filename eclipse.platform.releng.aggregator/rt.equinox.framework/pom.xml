@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.21.0-SNAPSHOT</version>
+    <version>4.24.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
@@ -24,7 +24,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <tycho.scmUrl>scm:git:https://git.eclipse.org/r/equinox/rt.equinox.framework.git</tycho.scmUrl>
+    <tycho.scmUrl>scm:git:https://github.com/eclipse-equinox/equinox.binaries.git</tycho.scmUrl>
     <!-- location of rt.equinox.binaries project -->
     <!-- required by: org.eclipse.equinox.feature:org.eclipse.equinox.executable -->
     <!-- required by: org.eclipse.equinox.framework:launcher-binary-parent -->
@@ -53,15 +53,15 @@
       </repositories>
     </profile>
     <profile>
-      <id>build-native-launchers-gtk.freebsd.armv7</id>
+      <id>build-native-launchers-gtk.freebsd.arm</id>
       <activation>
 	<property>
 	  <name>native</name>
-	  <value>gtk.freebsd.armv7</value>
+	  <value>gtk.freebsd.arm</value>
         </property>
       </activation>
       <modules>
-	<module>bundles/org.eclipse.equinox.launcher.gtk.freebsd.armv7</module>
+	<module>bundles/org.eclipse.equinox.launcher.gtk.freebsd.arm</module>
       </modules>
     </profile>
     <profile>
@@ -74,6 +74,18 @@
       </activation>
       <modules>
 	<module>bundles/org.eclipse.equinox.launcher.gtk.freebsd.aarch64</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>build-native-launchers-gtk.linux.loongarch64</id>
+      <activation>
+	<property>
+	  <name>native</name>
+	  <value>gtk.linux.loongarch64</value>
+        </property>
+      </activation>
+      <modules>
+	<module>bundles/org.eclipse.equinox.launcher.gtk.linux.loongarch64</module>
       </modules>
     </profile>
   </profiles>

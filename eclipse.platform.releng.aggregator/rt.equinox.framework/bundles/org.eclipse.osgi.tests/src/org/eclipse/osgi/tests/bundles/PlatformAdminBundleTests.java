@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2021 IBM Corporation and others.
+ * Copyright (c) 2007, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,12 +13,18 @@
  *******************************************************************************/
 package org.eclipse.osgi.tests.bundles;
 
+import static org.hamcrest.CoreMatchers.either;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.osgi.service.resolver.BundleDescription;
 import org.eclipse.osgi.service.resolver.ExportPackageDescription;
 import org.eclipse.osgi.service.resolver.ImportPackageSpecification;
@@ -26,6 +32,9 @@ import org.eclipse.osgi.service.resolver.PlatformAdmin;
 import org.eclipse.osgi.service.resolver.State;
 import org.eclipse.osgi.service.resolver.VersionConstraint;
 import org.eclipse.osgi.tests.OSGiTestsActivator;
+import org.hamcrest.MatcherAssert;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.FrameworkEvent;
@@ -35,10 +44,8 @@ import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.framework.wiring.FrameworkWiring;
 
 public class PlatformAdminBundleTests extends AbstractBundleTests {
-	public static Test suite() {
-		return new TestSuite(PlatformAdminBundleTests.class);
-	}
 
+	@Test
 	public void testInstallUninstallBundle() throws BundleException {
 		PlatformAdmin pa = installer.getPlatformAdmin();
 		// get system state first to ensure it does not have the test bundle
@@ -56,7 +63,8 @@ public class PlatformAdminBundleTests extends AbstractBundleTests {
 		assertNull("Should not find bundle.", testDesc);
 	}
 
-	public void testResolveRefresh() throws BundleException {
+	@Test
+	public void testResolveRefresh() throws Exception {
 		PlatformAdmin pa = installer.getPlatformAdmin();
 		State systemState = pa.getState(false);
 
@@ -64,7 +72,8 @@ public class PlatformAdminBundleTests extends AbstractBundleTests {
 		Bundle chainTestB = installer.installBundle("chain.test.b");
 		Bundle chainTestC = installer.installBundle("chain.test.c");
 		Bundle chainTestD = installer.installBundle("chain.test.d");
-		assertTrue("Could not resolve bundles.", getContext().getBundle(0).adapt(FrameworkWiring.class).resolveBundles(Arrays.asList(chainTestA, chainTestB, chainTestC, chainTestD)));
+		assertTrue("Could not resolve bundles.", getContext().getBundle(0).adapt(FrameworkWiring.class)
+				.resolveBundles(Arrays.asList(chainTestA, chainTestB, chainTestC, chainTestD)));
 
 		BundleDescription testADesc = systemState.getBundle(chainTestA.getBundleId());
 		BundleDescription testBDesc = systemState.getBundle(chainTestB.getBundleId());
@@ -81,17 +90,12 @@ public class PlatformAdminBundleTests extends AbstractBundleTests {
 		assertTrue("testCDesc is not resolved!!", testDDesc.isResolved());
 
 		chainTestD.uninstall();
-		installer.refreshPackages(new Bundle[] {chainTestD});
+		installer.refreshPackages(new Bundle[] { chainTestD });
 
 		if (testADesc.isResolved()) {
 			// This is a hack to wait some time to allow package admin event to be fired
 			// to all listeners.
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-				fail("Test got interrupted.", e);
-			}
+			Thread.sleep(1000);
 		}
 
 		assertFalse("testADesc is resolved!!", testADesc.isResolved());
@@ -99,11 +103,13 @@ public class PlatformAdminBundleTests extends AbstractBundleTests {
 		assertFalse("testCDesc is resolved!!", testCDesc.isResolved());
 	}
 
-	public void disableTestUnresolvedLeaves01() throws Exception {
+	@Test
+	@Ignore
+	public void testUnresolvedLeaves01() throws Exception {
 		Bundle chainTestA = installer.installBundle("chain.test.a");
 		Bundle chainTestB = installer.installBundle("chain.test.b");
 		Bundle chainTestC = installer.installBundle("chain.test.c");
-		Bundle[] allBundles = new Bundle[] {chainTestA, chainTestB, chainTestC};
+		Bundle[] allBundles = new Bundle[] { chainTestA, chainTestB, chainTestC };
 
 		PlatformAdmin pa = installer.getPlatformAdmin();
 		State systemState = pa.getState(false);
@@ -120,17 +126,21 @@ public class PlatformAdminBundleTests extends AbstractBundleTests {
 		assertFalse("testCDesc is resolved!!", testCDesc.isResolved());
 
 		// ok finally we can start testing!!
-		VersionConstraint[] unsatifiedLeaves = pa.getStateHelper().getUnsatisfiedLeaves(new BundleDescription[] {testADesc});
+		VersionConstraint[] unsatifiedLeaves = pa.getStateHelper()
+				.getUnsatisfiedLeaves(new BundleDescription[] { testADesc });
 		assertNotNull("Unsatified constraints is null!!", unsatifiedLeaves);
 		assertEquals("Wrong number of constraints!!", 2, unsatifiedLeaves.length);
 		for (int i = 0; i < unsatifiedLeaves.length; i++) {
-			assertTrue("Constraint type is not import package: " + unsatifiedLeaves[i], unsatifiedLeaves[i] instanceof ImportPackageSpecification);
+			assertTrue("Constraint type is not import package: " + unsatifiedLeaves[i],
+					unsatifiedLeaves[i] instanceof ImportPackageSpecification);
 			assertEquals("Package name is wrong: " + i, "chain.test.d", unsatifiedLeaves[i].getName());
-			if (unsatifiedLeaves[i].getBundle() != testBDesc && unsatifiedLeaves[i].getBundle() != testCDesc)
-				fail("Wrong bundle for the constraint: " + unsatifiedLeaves[i].getBundle());
+
+			MatcherAssert.assertThat("Wrong bundle for the constraint: " + unsatifiedLeaves[i].getBundle(),
+					unsatifiedLeaves[i].getBundle(), either(is(testBDesc)).or(is(testCDesc)));
 		}
 	}
 
+	@Test
 	public void testR3Bundle() throws BundleException, InvalidSyntaxException {
 		PlatformAdmin pa = installer.getPlatformAdmin();
 		State systemState = pa.getState(false);
@@ -148,6 +158,7 @@ public class PlatformAdminBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testNativeCodeFilterWithSpecialChars() throws BundleException, InterruptedException {
 		final AtomicReference<FrameworkEvent> error = new AtomicReference<>();
 		final CountDownLatch errorCnt = new CountDownLatch(1);
@@ -173,6 +184,7 @@ public class PlatformAdminBundleTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testTimestamp() throws BundleException {
 		PlatformAdmin pa = installer.getPlatformAdmin();
 		// get system state first to ensure it does not have the test bundle

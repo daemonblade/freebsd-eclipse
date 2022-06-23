@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2021 IBM Corporation and others.
+ * Copyright (c) 2010, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,13 +13,16 @@
  *******************************************************************************/
 package org.eclipse.osgi.tests.bundles;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 import junit.framework.AssertionFailedError;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.core.internal.runtime.RuntimeLog;
 import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.ILogListener;
@@ -33,6 +36,7 @@ import org.eclipse.equinox.log.LogFilter;
 import org.eclipse.equinox.log.Logger;
 import org.eclipse.osgi.framework.log.FrameworkLog;
 import org.eclipse.osgi.framework.log.FrameworkLogEntry;
+import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -48,10 +52,6 @@ import org.osgi.service.log.LogService;
 
 public class LoggingTests extends AbstractBundleTests {
 	static final String EQUINOX_LOGGER = "org.eclipse.equinox.logger";
-
-	public static Test suite() {
-		return new TestSuite(LoggingTests.class);
-	}
 
 	class LogServiceReference {
 		private final ServiceReference logRef;
@@ -184,6 +184,7 @@ public class LoggingTests extends AbstractBundleTests {
 		return new LogServiceReference(logRef, logService, readerRef, readerService, fwkLogRef, fwkLog);
 	}
 
+	@Test
 	public void testLogService() throws BundleException {
 		// Tests listeners at all levels when logged with the LogService
 		Bundle testBundle = installer.installBundle("test.logging.a"); //$NON-NLS-1$
@@ -238,6 +239,7 @@ public class LoggingTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testPluginILog() throws BundleException {
 		// Tests listeners at all levels when logged with a plugin ILog
 		Bundle testBundle = installer.installBundle("test.logging.a"); //$NON-NLS-1$
@@ -277,6 +279,7 @@ public class LoggingTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testRuntimeLog() throws BundleException {
 		// Tests listeners at all levels when logged with the RuntimeLog
 		Bundle testBundle = installer.installBundle("test.logging.a"); //$NON-NLS-1$
@@ -316,6 +319,7 @@ public class LoggingTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testFrameworkLog() throws BundleException {
 		// Tests listeners at all levels when logged with the FrameworkLog
 		Bundle testBundle = installer.installBundle("test.logging.a"); //$NON-NLS-1$
@@ -369,6 +373,7 @@ public class LoggingTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testEventAdminAdapter1() {
 		ServiceReference eventRef = getContext().getServiceReference(EventAdmin.class.getName());
 		assertNotNull("No eventAdmin.", eventRef);
@@ -406,6 +411,7 @@ public class LoggingTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testEventAdminAdapter2() {
 		ServiceReference eventRef = getContext().getServiceReference(EventAdmin.class.getName());
 		assertNotNull("No eventAdmin.", eventRef);
@@ -442,6 +448,7 @@ public class LoggingTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testBug347183() throws BundleException {
 		// test recursive logging
 		final Bundle testBundle = installer.installBundle("test.logging.a"); //$NON-NLS-1$

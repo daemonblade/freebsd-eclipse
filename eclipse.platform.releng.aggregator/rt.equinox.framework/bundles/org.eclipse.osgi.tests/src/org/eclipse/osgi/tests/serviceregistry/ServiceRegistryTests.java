@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2021 IBM Corporation and others.
+ * Copyright (c) 2008, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,28 +13,46 @@
  *******************************************************************************/
 package org.eclipse.osgi.tests.serviceregistry;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.osgi.tests.OSGiTestsActivator;
 import org.eclipse.osgi.tests.bundles.AbstractBundleTests;
 import org.eclipse.osgi.tests.util.MapDictionary;
-import org.osgi.framework.*;
+import org.junit.Test;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkEvent;
+import org.osgi.framework.FrameworkListener;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceEvent;
+import org.osgi.framework.ServiceFactory;
+import org.osgi.framework.ServiceListener;
+import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 
 public class ServiceRegistryTests extends AbstractBundleTests {
-	public static Test suite() {
-		TestSuite suite = new TestSuite(ServiceRegistryTests.class.getName());
-		suite.addTest(new TestSuite(ServiceRegistryTests.class));
-		suite.addTest(ServiceExceptionTests.suite());
-		suite.addTest(ServiceHookTests.suite());
-		suite.addTest(ServiceTrackerTests.suite());
-		return suite;
-	}
 
-	public void testServiceListener01() {
+	@Test
+	public void testServiceListener01() throws InvalidSyntaxException {
 		final String testMethodName = getName();
 		// simple ServiceListener test
 		Runnable runIt = () -> {
@@ -57,11 +75,8 @@ public class ServiceRegistryTests extends AbstractBundleTests {
 					break;
 			}
 		};
-		try {
-			OSGiTestsActivator.getContext().addServiceListener(testListener, "(&(objectclass=java.lang.Runnable)(" + testMethodName.toLowerCase() + "=true))"); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (InvalidSyntaxException e) {
-			fail("filter error", e); //$NON-NLS-1$
-		}
+		OSGiTestsActivator.getContext().addServiceListener(testListener, "(&(objectclass=java.lang.Runnable)(" + testMethodName.toLowerCase() + "=true))"); //$NON-NLS-1$ //$NON-NLS-2$
+
 		ServiceRegistration reg = null;
 		try {
 			// register service which matches
@@ -125,7 +140,8 @@ public class ServiceRegistryTests extends AbstractBundleTests {
 		}
 	}
 
-	public void testServiceListener02() {
+	@Test
+	public void testServiceListener02() throws InvalidSyntaxException {
 		final String testMethodName = getName();
 		// simple ServiceListener test
 		Runnable runIt = () -> {
@@ -148,11 +164,8 @@ public class ServiceRegistryTests extends AbstractBundleTests {
 					break;
 			}
 		};
-		try {
-			OSGiTestsActivator.getContext().addServiceListener(testListener, "(&(objectclass=java.lang.Runnable)(" + testMethodName.toLowerCase() + "=true))"); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (InvalidSyntaxException e) {
-			fail("filter error", e); //$NON-NLS-1$
-		}
+		OSGiTestsActivator.getContext().addServiceListener(testListener, "(&(objectclass=java.lang.Runnable)(" + testMethodName.toLowerCase() + "=true))"); //$NON-NLS-1$ //$NON-NLS-2$
+
 		ServiceRegistration reg = null;
 		try {
 			// register service which does not match
@@ -216,7 +229,8 @@ public class ServiceRegistryTests extends AbstractBundleTests {
 		}
 	}
 
-	public void testServiceListener03() {
+	@Test
+	public void testServiceListener03() throws InvalidSyntaxException {
 		final String testMethodName = getName();
 		// simple ServiceListener test
 		Runnable runIt = () -> {
@@ -239,11 +253,7 @@ public class ServiceRegistryTests extends AbstractBundleTests {
 					break;
 			}
 		};
-		try {
-			OSGiTestsActivator.getContext().addServiceListener(testListener, "(&(objectclass=java.lang.Runnable)(" + testMethodName.toLowerCase() + "=true))"); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (InvalidSyntaxException e) {
-			fail("filter error", e); //$NON-NLS-1$
-		}
+		OSGiTestsActivator.getContext().addServiceListener(testListener, "(&(objectclass=java.lang.Runnable)(" + testMethodName.toLowerCase() + "=true))"); //$NON-NLS-1$ //$NON-NLS-2$
 		ServiceRegistration reg1 = null;
 		ServiceRegistration reg2 = null;
 		try {
@@ -342,6 +352,7 @@ public class ServiceRegistryTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testServiceOrdering01() {
 		final String testMethodName = getName();
 		// test that getServiceReference returns the proper service
@@ -377,20 +388,20 @@ public class ServiceRegistryTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testDuplicateObjectClass() {
 		ServiceRegistration reg = null;
 		try {
 			reg = OSGiTestsActivator.getContext().registerService(new String[] {Runnable.class.getName(), Object.class.getName(), Object.class.getName()}, (Runnable) () -> {
 				// nothing
 			}, null);
-		} catch (Throwable t) {
-			fail("Failed to register service with duplicate objectClass names", t); //$NON-NLS-1$
 		} finally {
 			if (reg != null)
 				reg.unregister();
 		}
 	}
 
+	@Test
 	public void testServiceReferenceCompare01() {
 		final String testMethodName = getName();
 		// test that getServiceReference returns the proper service
@@ -444,6 +455,7 @@ public class ServiceRegistryTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testModifiedRanking() {
 		Runnable runIt = () -> {
 			// nothing
@@ -468,10 +480,11 @@ public class ServiceRegistryTests extends AbstractBundleTests {
 		}
 	}
 
-	public void testInvalidRanking() {
+	@Test
+	public void testInvalidRanking() throws InterruptedException {
 		final CountDownLatch warning = new CountDownLatch(1);
 		FrameworkListener warningListener = event -> {
-			if (FrameworkEvent.WARNING == event.getType() && OSGiTestsActivator.getContext().getBundle().equals(event.getBundle())) {
+			if (FrameworkEvent.WARNING == event.getType() && OSGiTestsActivator.getBundle().equals(event.getBundle())) {
 				warning.countDown();
 			}
 		};
@@ -491,15 +504,10 @@ public class ServiceRegistryTests extends AbstractBundleTests {
 			}
 			OSGiTestsActivator.getContext().removeFrameworkListener(warningListener);
 		}
-
-		try {
-			assertTrue("Timeout waiting for the warning.", warning.await(5, TimeUnit.SECONDS));
-		} catch (InterruptedException e) {
-			fail("Interrupted.", e);
-		}
-
+		assertTrue("Timeout waiting for the warning.", warning.await(5, TimeUnit.SECONDS));
 	}
 
+	@Test
 	public void testNullValue() throws InvalidSyntaxException {
 		ServiceRegistration reg = null;
 		try {
@@ -517,6 +525,7 @@ public class ServiceRegistryTests extends AbstractBundleTests {
 		}
 	}
 
+	@Test
 	public void testNullKey() throws InvalidSyntaxException {
 		ServiceRegistration reg = null;
 		try {
@@ -530,6 +539,149 @@ public class ServiceRegistryTests extends AbstractBundleTests {
 			if (reg != null)
 				reg.unregister();
 		}
+	}
+
+	@Test
+	public void testWrongServiceFactoryObject() throws InterruptedException {
+		AtomicReference<String> errorMsg = new AtomicReference<>();
+		CountDownLatch gotEvent = new CountDownLatch(1);
+		FrameworkListener fwkListener = (e) -> {
+			if (e.getType() == FrameworkEvent.ERROR && e.getThrowable() != null) {
+				errorMsg.set(e.getThrowable().getMessage());
+				gotEvent.countDown();
+			}
+		};
+		ServiceRegistration<Runnable> reg = OSGiTestsActivator.getContext().registerService(Runnable.class,
+				new ServiceFactory() {
+
+					@Override
+					public Object getService(Bundle bundle, ServiceRegistration registration) {
+						return "Wrong object!!";
+					}
+
+					@Override
+					public void ungetService(Bundle bundle, ServiceRegistration registration, Object service) {
+					}
+
+				}, null);
+		OSGiTestsActivator.getContext().addFrameworkListener(fwkListener);
+		try {
+			ServiceReference<Runnable> ref = reg.getReference();
+			Runnable service = OSGiTestsActivator.getContext().getService(ref);
+			assertNull(service);
+			gotEvent.await(30, TimeUnit.SECONDS);
+			assertNotNull(errorMsg.get());
+			assertTrue("Wrong error message: " + errorMsg.get(), errorMsg.get().contains(String.class.getName()));
+		} finally {
+			OSGiTestsActivator.getContext().removeFrameworkListener(fwkListener);
+			reg.unregister();
+		}
+	}
+
+	static class TestObjectClassOptimizationService implements Runnable, Callable<Void> {
+		@Override
+		public Void call() throws Exception {
+			return null;
+		}
+
+		@Override
+		public void run() {
+
+		}
+	}
+
+	@Test
+	public void testFilterObjectClassOptimization() throws InvalidSyntaxException {
+		final String TEST_KEY = "test.key";
+		Collection<ServiceRegistration<?>> registrations = new ArrayList<>();
+		BundleContext bc = OSGiTestsActivator.getContext();
+		try {
+			ServiceRegistration<?> allObjectClass_noServiceProp = registerFilteredService( //
+					bc, registrations, new TestObjectClassOptimizationService(), //
+					Collections.<String, Object>emptyMap(), //
+					Runnable.class, Callable.class, Object.class);
+			ServiceRegistration<?> allObjectClass_withServiceProp = registerFilteredService( //
+					bc, registrations, new TestObjectClassOptimizationService(), //
+					Collections.singletonMap(TEST_KEY, Boolean.TRUE), //
+					Runnable.class, Callable.class, Object.class);
+			ServiceRegistration<?> callableObjectClass_noServiceProp = registerFilteredService( //
+					bc, registrations, new TestObjectClassOptimizationService(), //
+					Collections.<String, Object>emptyMap(), //
+					Callable.class);
+			ServiceRegistration<?> callableObjectClass_withServiceProp = registerFilteredService( //
+					bc, registrations, new TestObjectClassOptimizationService(), //
+					Collections.singletonMap(TEST_KEY, Boolean.TRUE), //
+					Callable.class);
+
+			// NOT OPTIMIZED
+			validateFoundServices(bc, "(" + TEST_KEY + "=*)", //
+					allObjectClass_withServiceProp, callableObjectClass_withServiceProp);
+			// NOT OPTIMIZED
+			validateFoundServices(bc, "(|(objectClass=nothing.Service)(" + TEST_KEY + "=*))",
+					allObjectClass_withServiceProp, callableObjectClass_withServiceProp);
+			// OPTIMIZED
+			validateFoundServices(bc, "(objectClass=" + Runnable.class.getName() + ")", //
+					allObjectClass_withServiceProp, allObjectClass_noServiceProp);
+			// OPTIMIZED
+			validateFoundServices(bc, "(objectClass=" + Callable.class.getName() + ")", //
+					allObjectClass_noServiceProp, allObjectClass_withServiceProp, callableObjectClass_noServiceProp,
+					callableObjectClass_withServiceProp);
+			// OPTIMIZED
+			validateFoundServices(bc, "(&(objectClass=" + Callable.class.getName() + ")(" + TEST_KEY + "=*))", //
+					allObjectClass_withServiceProp, callableObjectClass_withServiceProp);
+			// NOT OPTIMIZED
+			validateFoundServices(bc, "(|(objectClass=" + Callable.class.getName() + ")(" + TEST_KEY + "=*))",
+					allObjectClass_withServiceProp, allObjectClass_noServiceProp, callableObjectClass_withServiceProp,
+					callableObjectClass_noServiceProp);
+			// NOTE that this filter is considered too complex and is not optimized
+			validateFoundServices(bc,
+					"(&(&(objectClass=" + Callable.class.getName() + ")(!(objectClass=" + Runnable.class.getName()
+							+ ")))(" + TEST_KEY + "=*))", //
+					callableObjectClass_withServiceProp);
+			// NOTE this filter is NOT considered too complex and optimizes lookup of
+			// Callable
+			validateFoundServices(bc,
+					"(&(objectClass=" + Callable.class.getName() + ")(!(objectClass=" + Runnable.class.getName()
+							+ ")))", //
+					callableObjectClass_withServiceProp, callableObjectClass_noServiceProp);
+			// NOTE this filter is NOT considered too complex and optimizes lookup of
+			// Callable
+			validateFoundServices(bc,
+					"(&(!(objectClass=" + Runnable.class.getName() + "))(objectClass=" + Callable.class.getName()
+							+ "))", //
+					callableObjectClass_withServiceProp, callableObjectClass_noServiceProp);
+		} finally {
+			registrations.forEach(ServiceRegistration::unregister);
+		}
+	}
+
+	private void validateFoundServices(BundleContext bc, String filter, ServiceRegistration<?>... expectedRegs)
+			throws InvalidSyntaxException {
+		ServiceReference<?>[] foundArray = bc.getServiceReferences((String) null, filter);
+		List<ServiceReference<?>> found = foundArray == null ? Collections.emptyList() : Arrays.asList(foundArray);
+		assertEquals("Wrong number of services found: " + found, expectedRegs.length, found.size());
+		for (ServiceRegistration<?> expected : expectedRegs) {
+			assertTrue("Wrong services found: " + found, found.contains(expected.getReference()));
+		}
+
+	}
+
+	private ServiceRegistration<?> registerFilteredService( //
+			BundleContext bc, //
+			Collection<ServiceRegistration<?>> registrations, //
+			TestObjectClassOptimizationService testObjectClassOptimizationService, //
+			Map<String, ?> props, Class<?>... clazzes) {
+		if (clazzes == null) {
+			fail();
+		}
+		String[] clazzNames = new String[clazzes.length];
+		for (int i = 0; i < clazzes.length; i++) {
+			clazzNames[i] = clazzes[i].getName();
+		}
+		ServiceRegistration<?> reg = bc.registerService(clazzNames, testObjectClassOptimizationService,
+				FrameworkUtil.asDictionary(props));
+		registrations.add(reg);
+		return reg;
 	}
 
 	private void clearResults(boolean[] results) {

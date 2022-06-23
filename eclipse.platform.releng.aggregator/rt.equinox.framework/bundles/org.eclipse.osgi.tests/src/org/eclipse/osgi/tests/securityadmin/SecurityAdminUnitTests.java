@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2020 IBM Corporation and others.
+ * Copyright (c) 2008, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,12 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.osgi.tests.securityadmin;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import ext.framework.b.TestCondition;
 import java.io.File;
@@ -31,11 +37,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.osgi.launch.Equinox;
 import org.eclipse.osgi.tests.OSGiTestsActivator;
 import org.eclipse.osgi.tests.bundles.AbstractBundleTests;
+import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
@@ -77,17 +82,13 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 	//private static final ConditionInfo POST_NOTMUT_SAT = new ConditionInfo("ext.framework.b.TestCondition", new String[] {"POST_NOTMUT_SAT", "true", "false", "true"}); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 	//private static final ConditionInfo POST_NOTMUT_NOTSAT = new ConditionInfo("ext.framework.b.TestCondition", new String[] {"POST_NOTMUT_NOTSAT", "true", "false", "false"}); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
-	public static Test suite() {
-		return new TestSuite(SecurityAdminUnitTests.class);
-	}
-
 	private Policy previousPolicy;
 	private Equinox equinox;
 	private ConditionalPermissionAdmin cpa;
 	private PermissionAdmin pa;
 
 	@Override
-	protected void setUp() throws Exception {
+	public void setUp() throws Exception {
 		previousPolicy = Policy.getPolicy();
 		final Permission allPermission = new AllPermission();
 		final PermissionCollection allPermissions = new PermissionCollection() {
@@ -144,36 +145,30 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		configuration.put(Constants.FRAMEWORK_STORAGE, config.getAbsolutePath());
 		configuration.put(Constants.FRAMEWORK_SECURITY, Constants.FRAMEWORK_SECURITY_OSGI);
 		equinox = new Equinox(configuration);
-		try {
-			equinox.init();
-		} catch (BundleException e) {
-			fail("Unexpected exception on init()", e); //$NON-NLS-1$
-		}
+		equinox.init();
 		cpa = equinox.getBundleContext().getService(equinox.getBundleContext().getServiceReference(ConditionalPermissionAdmin.class));
 		pa = equinox.getBundleContext().getService(equinox.getBundleContext().getServiceReference(PermissionAdmin.class));
 		super.setUp();
 	}
 
 	@Override
-	protected void tearDown() throws Exception {
-		try {
-			equinox.stop();
-		} catch (BundleException e) {
-			fail("Unexpected exception on stop()", e); //$NON-NLS-1$
-		}
+	public void tearDown() throws Exception {
+		equinox.stop();
 		if (System.getSecurityManager() != null)
 			System.setSecurityManager(null);
 		Policy.setPolicy(previousPolicy);
 		super.tearDown();
 	}
 
-	public void testCreateDomain() {
+	@Test
+	public void testCreateDomain() throws BundleException {
 		Bundle test = installTestBundle(TEST_BUNDLE);
 		AccessControlContext acc = test.adapt(AccessControlContext.class);
 		testPermission(acc, new AllPermission(), true);
 	}
 
-	public void testLocationPermission01() {
+	@Test
+	public void testLocationPermission01() throws BundleException {
 		Bundle test = installTestBundle(TEST_BUNDLE);
 		AccessControlContext acc = test.adapt(AccessControlContext.class);
 		pa.setPermissions(test.getLocation(), READONLY_INFOS);
@@ -189,7 +184,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testPermission(acc, new AllPermission(), true);
 	}
 
-	public void testLocationPermission02() {
+	@Test
+	public void testLocationPermission02() throws BundleException {
 		Bundle test = installTestBundle(TEST_BUNDLE);
 		AccessControlContext acc = test.adapt(AccessControlContext.class);
 		pa.setPermissions(test.getLocation(), READWRITE_INFOS);
@@ -205,7 +201,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testPermission(acc, new AllPermission(), true);
 	}
 
-	public void testLocationPermission03() {
+	@Test
+	public void testLocationPermission03() throws BundleException {
 		Bundle test = installTestBundle(TEST_BUNDLE);
 		AccessControlContext acc = test.adapt(AccessControlContext.class);
 
@@ -239,7 +236,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 
 	}
 
-	public void testDefaultPermissions01() {
+	@Test
+	public void testDefaultPermissions01() throws BundleException {
 		Bundle test = installTestBundle(TEST_BUNDLE);
 		AccessControlContext acc = test.adapt(AccessControlContext.class);
 		pa.setDefaultPermissions(READONLY_INFOS);
@@ -254,7 +252,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testPermission(acc, new AllPermission(), true);
 	}
 
-	public void testDefaultPermissions02() {
+	@Test
+	public void testDefaultPermissions02() throws BundleException {
 		Bundle test = installTestBundle(TEST_BUNDLE);
 		AccessControlContext acc = test.adapt(AccessControlContext.class);
 		pa.setDefaultPermissions(READONLY_INFOS);
@@ -280,7 +279,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testPermission(acc, new AllPermission(), true);
 	}
 
-	public void testNotLocationCondition01() {
+	@Test
+	public void testNotLocationCondition01() throws BundleException {
 		Bundle test = installTestBundle(TEST_BUNDLE);
 		AccessControlContext acc = test.adapt(AccessControlContext.class);
 
@@ -293,7 +293,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testPermission(acc, new SocketPermission("localhost", "accept"), true); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	public void testNotLocationCondition02() {
+	@Test
+	public void testNotLocationCondition02() throws BundleException {
 		Bundle test = installTestBundle(TEST_BUNDLE);
 		AccessControlContext acc = test.adapt(AccessControlContext.class);
 
@@ -306,7 +307,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testPermission(acc, new SocketPermission("localhost", "accept"), true); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	public void testMultipleLocationConditions01() {
+	@Test
+	public void testMultipleLocationConditions01() throws BundleException {
 		Bundle test = installTestBundle(TEST_BUNDLE);
 		AccessControlContext acc = test.adapt(AccessControlContext.class);
 
@@ -328,7 +330,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testPermission(acc, new FilePermission("test", "read"), true); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	public void testMultipleLocationConditions02() {
+	@Test
+	public void testMultipleLocationConditions02() throws BundleException {
 		Bundle test = installTestBundle(TEST_BUNDLE);
 		AccessControlContext pd = test.adapt(AccessControlContext.class);
 
@@ -360,6 +363,7 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testPermission(pd, new FilePermission("test", "read"), true); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testUpdate01() {
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
 		List rows = update.getConditionalPermissionInfos();
@@ -367,7 +371,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		assertTrue("failed to commit", update.commit()); //$NON-NLS-1$
 	}
 
-	public void testUpdate02() {
+	@Test
+	public void testUpdate02() throws BundleException {
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
 		List rows = update.getConditionalPermissionInfos();
 		ConditionalPermissionInfo info = cpa.newConditionalPermissionInfo(null, ALLLOCATION_CONDS, READONLY_INFOS, ConditionalPermissionInfo.ALLOW);
@@ -389,7 +394,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testPermission(acc, new AllPermission(), true);
 	}
 
-	public void testUpdate03() {
+	@Test
+	public void testUpdate03() throws BundleException {
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
 		List rows = update.getConditionalPermissionInfos();
 		ConditionalPermissionInfo info1 = cpa.newConditionalPermissionInfo(null, ALLLOCATION_CONDS, READWRITE_INFOS, ConditionalPermissionInfo.DENY);
@@ -421,7 +427,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testPermission(acc, new AllPermission(), true);
 	}
 
-	public void testUpdate04() {
+	@Test
+	public void testUpdate04() throws BundleException {
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
 		List rows = update.getConditionalPermissionInfos();
 		ConditionalPermissionInfo info1 = cpa.newConditionalPermissionInfo(null, ALLLOCATION_CONDS, READWRITE_INFOS, ConditionalPermissionInfo.DENY);
@@ -457,7 +464,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testPermission(acc, new AllPermission(), true);
 	}
 
-	public void testSecurityManager01() {
+	@Test
+	public void testSecurityManager01() throws BundleException {
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
 		List rows = update.getConditionalPermissionInfos();
 		ConditionalPermissionInfo info = cpa.newConditionalPermissionInfo(null, ALLLOCATION_CONDS, READONLY_INFOS, ConditionalPermissionInfo.ALLOW);
@@ -480,7 +488,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testSMPermission(pds, new AllPermission(), true);
 	}
 
-	public void testPostponedConditions01() {
+	@Test
+	public void testPostponedConditions01() throws BundleException {
 		installConditionBundle();
 		TestCondition.clearConditions();
 		Bundle test1 = installTestBundle(TEST_BUNDLE);
@@ -533,7 +542,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testSMPermission(pds, new FilePermission("test", "read"), false); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	public void testPostponedConditions02() {
+	@Test
+	public void testPostponedConditions02() throws BundleException {
 		installConditionBundle();
 		TestCondition.clearConditions();
 
@@ -571,7 +581,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testSMPermission(pds, new FilePermission("test", "read"), false); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	public void testPostponedConditions03() {
+	@Test
+	public void testPostponedConditions03() throws BundleException {
 		installConditionBundle();
 		TestCondition.clearConditions();
 
@@ -608,7 +619,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testSMPermission(pds, new FilePermission("test", "read"), true); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	public void testPostponedConditions04() {
+	@Test
+	public void testPostponedConditions04() throws BundleException {
 		installConditionBundle();
 		TestCondition.clearConditions();
 
@@ -645,7 +657,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testSMPermission(pds, new FilePermission("test", "read"), false); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	public void testPostponedConditions05() {
+	@Test
+	public void testPostponedConditions05() throws BundleException {
 		installConditionBundle();
 		TestCondition.clearConditions();
 
@@ -681,7 +694,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testSMPermission(pds, new FilePermission("test", "read"), true); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	public void testMutableConditions() {
+	@Test
+	public void testMutableConditions() throws BundleException {
 		installConditionBundle();
 		TestCondition.clearConditions();
 
@@ -723,6 +737,7 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 
 	}
 
+	@Test
 	public void testAccessControlContext01() {
 		// test single row with signer condition
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
@@ -731,19 +746,11 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		assertTrue("failed to commit", update.commit()); //$NON-NLS-1$
 
 		AccessControlContext acc = cpa.getAccessControlContext(new String[] {"cn=t1,c=FR;cn=test1,c=US"}); //$NON-NLS-1$
-		try {
-			acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
-		try {
-			acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (AccessControlException e) {
-			fail("Unexpected AccessControlExcetpion", e); //$NON-NLS-1$
-		}
+		assertThrows(AccessControlException.class, () -> acc.checkPermission(new FilePermission("test", "write")));
+		acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testAccessControlContext01a() {
 		// test single row with signer condition
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
@@ -752,19 +759,11 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		assertTrue("failed to commit", update.commit()); //$NON-NLS-1$
 
 		AccessControlContext acc = cpa.getAccessControlContext(new String[] {"cn=test1,c=US"}); //$NON-NLS-1$
-		try {
-			acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
-		try {
-			acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (AccessControlException e) {
-			fail("Unexpected AccessControlExcetpion", e); //$NON-NLS-1$
-		}
+		assertThrows(AccessControlException.class, () -> acc.checkPermission(new FilePermission("test", "write")));
+		acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testAccessControlContext02() {
 		// test with DENY row
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
@@ -775,19 +774,12 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		assertTrue("failed to commit", update.commit()); //$NON-NLS-1$
 
 		AccessControlContext acc = cpa.getAccessControlContext(new String[] {"cn=t1,c=FR;cn=test1,c=US"}); //$NON-NLS-1$
-		try {
-			acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
-		try {
-			acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (AccessControlException e) {
-			fail("Unexpected AccessControlExcetpion", e); //$NON-NLS-1$
-		}
+
+		assertThrows(AccessControlException.class, () -> acc.checkPermission(new FilePermission("test", "write")));
+		acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testAccessControlContext03() {
 		// test multiple signer conditions
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
@@ -796,37 +788,19 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		assertTrue("failed to commit", update.commit()); //$NON-NLS-1$
 
 		AccessControlContext acc = cpa.getAccessControlContext(new String[] {"cn=t1,c=FR;cn=test2,c=US"}); //$NON-NLS-1$
-		try {
-			acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
-		try {
-			acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
+		assertThrows(AccessControlException.class, () -> acc.checkPermission(new FilePermission("test", "write")));
+		assertThrows(AccessControlException.class, () -> acc.checkPermission(new FilePermission("test", "read")));
 
 		update = cpa.newConditionalPermissionUpdate();
 		rows = update.getConditionalPermissionInfos();
 		rows.add(cpa.newConditionalPermissionInfo(null, new ConditionInfo[] {SIGNER_CONDITION2}, READONLY_INFOS, ConditionalPermissionInfo.ALLOW));
 		assertTrue("failed to commit", update.commit()); //$NON-NLS-1$
-		acc = cpa.getAccessControlContext(new String[] {"cn=t1,c=FR;cn=test2,c=US"}); //$NON-NLS-1$
-		try {
-			acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
-		try {
-			acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (AccessControlException e) {
-			fail("Unexpected AccessControlExcetpion", e); //$NON-NLS-1$
-		}
+		AccessControlContext acc2 = cpa.getAccessControlContext(new String[] { "cn=t1,c=FR;cn=test2,c=US" }); //$NON-NLS-1$
+		assertThrows(AccessControlException.class, () -> acc2.checkPermission(new FilePermission("test", "write")));
+		acc2.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testAccessControlContext04() {
 		// test multiple signer conditions
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
@@ -836,59 +810,30 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		assertTrue("failed to commit", update.commit()); //$NON-NLS-1$
 
 		AccessControlContext acc = cpa.getAccessControlContext(new String[] {"cn=t1,c=FR;cn=test2,c=US"}); //$NON-NLS-1$
-		try {
-			acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
-		try {
-			acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
+		assertThrows(AccessControlException.class, () -> acc.checkPermission(new FilePermission("test", "write")));
+		assertThrows(AccessControlException.class, () -> acc.checkPermission(new FilePermission("test", "read")));
 
-		acc = cpa.getAccessControlContext(new String[] {"cn=t1,c=FR;cn=test1,c=US", "cn=t1,c=FR;cn=test2,c=US"}); //$NON-NLS-1$ //$NON-NLS-2$
-		try {
-			acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (AccessControlException e) {
-			fail("Unexpected AccessControlExcetpion", e); //$NON-NLS-1$
-		}
-		try {
-			acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (AccessControlException e) {
-			fail("Unexpected AccessControlExcetpion", e); //$NON-NLS-1$
-		}
+		AccessControlContext acc2 = cpa.getAccessControlContext(new String[] { "cn=t1,c=FR;cn=test1,c=US", "cn=t1,c=FR;cn=test2,c=US" }); //$NON-NLS-1$ //$NON-NLS-2$
+		acc2.checkPermission(new FilePermission("test", "write"));
+		acc2.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	@Test
 	public void testAccessControlContext05() {
 		// test with empty rows
-		AccessControlContext acc = cpa.getAccessControlContext(new String[] {"cn=t1,c=FR;cn=test2,c=US"}); //$NON-NLS-1$
-		try {
-			acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
-			acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
-			acc.checkPermission(new AllPermission());
-		} catch (AccessControlException e) {
-			fail("Unexpected AccessControlExcetpion", e); //$NON-NLS-1$
-		}
+		AccessControlContext acc = cpa.getAccessControlContext(new String[] { "cn=t1,c=FR;cn=test2,c=US" }); //$NON-NLS-1$
+		acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
+		acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
+		acc.checkPermission(new AllPermission());
 		// set the default permissions
 		pa.setDefaultPermissions(READWRITE_INFOS);
-		acc = cpa.getAccessControlContext(new String[] {"cn=t1,c=FR;cn=test2,c=US"}); //$NON-NLS-1$
-		try {
-			acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
-			acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (AccessControlException e) {
-			fail("Unexpected AccessControlExcetpion", e); //$NON-NLS-1$
-		}
-		try {
-			acc.checkPermission(new AllPermission());
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
+		AccessControlContext acc2 = cpa.getAccessControlContext(new String[] { "cn=t1,c=FR;cn=test2,c=US" }); //$NON-NLS-1$
+		acc2.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
+		acc2.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
+		assertThrows(AccessControlException.class, () -> acc2.checkPermission(new AllPermission()));
 	}
 
+	@Test
 	public void testAccessControlContext06() {
 		// test with empty condition rows
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
@@ -897,20 +842,12 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		rows.add(cpa.newConditionalPermissionInfo(null, new ConditionInfo[] {SIGNER_CONDITION1}, READWRITE_INFOS, ConditionalPermissionInfo.ALLOW));
 		assertTrue("failed to commit", update.commit()); //$NON-NLS-1$
 
-		AccessControlContext acc = cpa.getAccessControlContext(new String[] {"cn=t1,c=FR;cn=test2,c=US"}); //$NON-NLS-1$
-		try {
-			acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (AccessControlException e) {
-			fail("Unexpected AccessControlExcetpion", e); //$NON-NLS-1$
-		}
-		try {
-			acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
+		AccessControlContext acc = cpa.getAccessControlContext(new String[] { "cn=t1,c=FR;cn=test2,c=US" }); //$NON-NLS-1$
+		acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
+		assertThrows(AccessControlException.class, () -> acc.checkPermission(new FilePermission("test", "write")));
 	}
 
+	@Test
 	public void testAccessControlContext07() {
 		// test ! signer condition
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
@@ -918,33 +855,15 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		rows.add(cpa.newConditionalPermissionInfo(null, new ConditionInfo[] {NOT_SIGNER_CONDITION1}, READONLY_INFOS, ConditionalPermissionInfo.ALLOW));
 		assertTrue("failed to commit", update.commit()); //$NON-NLS-1$
 		AccessControlContext acc = cpa.getAccessControlContext(new String[] {"cn=t1,c=FR;cn=test1,c=US"}); //$NON-NLS-1$
-		try {
-			acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
-		try {
-			acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
+		assertThrows(AccessControlException.class, () -> acc.checkPermission(new FilePermission("test", "write")));
+		assertThrows(AccessControlException.class, () -> acc.checkPermission(new FilePermission("test", "read")));
 
-		acc = cpa.getAccessControlContext(new String[] {"cn=t1,c=FR;cn=test2,c=US"}); //$NON-NLS-1$
-		try {
-			acc.checkPermission(new FilePermission("test", "write")); //$NON-NLS-1$ //$NON-NLS-2$
-			fail("expecting AccessControlExcetpion"); //$NON-NLS-1$
-		} catch (AccessControlException e) {
-			// expected
-		}
-		try {
-			acc.checkPermission(new FilePermission("test", "read")); //$NON-NLS-1$ //$NON-NLS-2$
-		} catch (AccessControlException e) {
-			fail("Unexpected AccessControlExcetpion", e); //$NON-NLS-1$
-		}
+		AccessControlContext acc2 = cpa.getAccessControlContext(new String[] { "cn=t1,c=FR;cn=test2,c=US" });
+		assertThrows(AccessControlException.class, () -> acc2.checkPermission(new FilePermission("test", "write")));
+		acc2.checkPermission(new FilePermission("test", "read"));
 	}
 
+	@Test
 	public void testEncodingInfos01() throws Exception {
 		String info1 = "ALLOW { [Test1] (Type1 \"name1\" \"action1\") } \"name1\""; //$NON-NLS-1$
 		String info2 = "ALLOW { [Test2] (Type2 \"name2\" \"action2\") } \"name2\""; //$NON-NLS-1$
@@ -983,6 +902,7 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		assertTrue("Info lists are not equal", updateInfos.equals(infos)); //$NON-NLS-1$
 	}
 
+	@Test
 	public void testEncodingInfos02() {
 
 		ConditionInfo cond1 = new ConditionInfo("Test1", new String[] {"arg1", "arg2"}); //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$
@@ -1053,14 +973,16 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 
 	}
 
-	public void testBug286307() {
+	@Test
+	public void testBug286307() throws BundleException {
 		Bundle test = installTestBundle("test.bug286307");
 		AccessControlContext acc = test.adapt(AccessControlContext.class);
 		testPermission(acc, new FilePermission("test", "read"), true);
 		testPermission(acc, new AllPermission(), false);
 	}
 
-	public void testRelativeFilePermission() {
+	@Test
+	public void testRelativeFilePermission() throws BundleException {
 		Bundle test = installTestBundle(TEST_BUNDLE);
 		File dataArea = test.getDataFile("");
 		File testFile = new File(dataArea, "testFile.txt");
@@ -1160,6 +1082,7 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		testPermission(acc, new FilePermission(relativeExecutable.getAbsolutePath(), "execute"), true);
 	}
 
+	@Test
 	public void testPermissionCheckCache() { // takes ~6sec
 		// test single row with signer condition
 		ConditionalPermissionUpdate update = cpa.newConditionalPermissionUpdate();
@@ -1171,14 +1094,8 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		AccessControlContext acc = cpa.getAccessControlContext(new String[] { "cn=t1,c=FR;cn=test1,c=US" }); //$NON-NLS-1$
 
 		for (int i = 0; i < 10000000; i++) {
-			try {
-				acc.checkPermission(new FilePermission("test" + i, "read")); //$NON-NLS-1$ //$NON-NLS-2$
-			} catch (AccessControlException e) {
-				System.out.println("i=" + i);
-				fail("Unexpected AccessControlException at i=" + i, e); //$NON-NLS-1$
-			}
+			acc.checkPermission(new FilePermission("test" + i, "read")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-
 	}
 
 	private void checkInfos(ConditionalPermissionInfo testInfo1, ConditionalPermissionInfo testInfo2) {
@@ -1187,47 +1104,23 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 	}
 
 	private void checkBadInfo(String encoded) {
-		try {
-			cpa.newConditionalPermissionInfo(encoded);
-			fail("Expecting fail with bad info: " + encoded); //$NON-NLS-1$
-		} catch (IllegalArgumentException e) {
-			// expected
-		}
+		assertThrows(IllegalArgumentException.class, () -> cpa.newConditionalPermissionInfo(encoded));
 	}
 
 	private ConditionalPermissionInfo checkGoodInfo(String encoded) {
-		try {
-			return cpa.newConditionalPermissionInfo(encoded);
-		} catch (IllegalArgumentException e) {
-			fail("Unexpected failure with good info: " + encoded, e); //$NON-NLS-1$
-		}
-		return null;
+		return cpa.newConditionalPermissionInfo(encoded);
 	}
 
 	private void testSMPermission(ProtectionDomain[] pds, Permission permission, boolean expectedToPass) {
-		AccessControlContext acc = new AccessControlContext(pds);
-		try {
-			SecurityManager sm = System.getSecurityManager();
-			sm.checkPermission(permission, acc);
-			if (!expectedToPass)
-				fail("test should not have the permission " + permission); //$NON-NLS-1$
-		} catch (SecurityException e) {
-			if (expectedToPass)
-				fail("test should have the permission " + permission); //$NON-NLS-1$
-		}
+		testPermission(new AccessControlContext(pds), permission, expectedToPass);
 	}
 
 	private void testPermission(AccessControlContext acc, Permission permission, boolean expectedToPass) {
-		try {
-			SecurityManager sm = System.getSecurityManager();
+		SecurityManager sm = System.getSecurityManager();
+		if (expectedToPass) {
 			sm.checkPermission(permission, acc);
-			if (!expectedToPass) {
-				fail("test should not have the permission " + permission); //$NON-NLS-1$
-			}
-		} catch (AccessControlException e) {
-			if (expectedToPass) {
-				fail("test should have the permission " + permission); //$NON-NLS-1$
-			}
+		} else {
+			assertThrows(SecurityException.class, () -> sm.checkPermission(permission, acc));
 		}
 	}
 
@@ -1236,23 +1129,13 @@ public class SecurityAdminUnitTests extends AbstractBundleTests {
 		return new ConditionInfo[] {new ConditionInfo("org.osgi.service.condpermadmin.BundleLocationCondition", args)}; //$NON-NLS-1$
 	}
 
-	private Bundle installTestBundle(String name) {
-		try {
-			String location = installer.getBundleLocation(name);
-			return equinox.getBundleContext().installBundle(location);
-		} catch (BundleException e) {
-			fail("failed to install bundle: " + name, e); //$NON-NLS-1$
-		}
-		return null;
+	private Bundle installTestBundle(String name) throws BundleException {
+		String location = installer.getBundleLocation(name);
+		return equinox.getBundleContext().installBundle(location);
 	}
 
-	private void installConditionBundle() {
-		try {
-			Bundle bundle = installer.installBundle("ext.framework.b", false); //$NON-NLS-1$
-			installer.resolveBundles(new Bundle[] {bundle});
-
-		} catch (BundleException e) {
-			fail("failed to install bundle", e); //$NON-NLS-1$
-		}
+	private void installConditionBundle() throws BundleException {
+		Bundle bundle = installer.installBundle("ext.framework.b", false); //$NON-NLS-1$
+		installer.resolveBundles(new Bundle[] { bundle });
 	}
 }

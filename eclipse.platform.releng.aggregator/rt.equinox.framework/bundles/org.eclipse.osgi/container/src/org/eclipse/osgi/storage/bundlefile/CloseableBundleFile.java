@@ -73,17 +73,20 @@ public abstract class CloseableBundleFile<E> extends BundleFile {
 	 * @return true if the bundle file is open and locked
 	 */
 	protected boolean lockOpen() {
+		openLock.lock();
 		try {
-			open(true);
+			internalOpen();
 			return true;
-		} catch (IOException e) {
+		} catch (Throwable e) {
+			// always unlock on any throwable
+			openLock.unlock();
 			if (generation != null) {
 				ModuleRevision r = generation.getRevision();
 				if (r != null) {
 					ContainerEvent eventType = ContainerEvent.ERROR;
 					// If the revision has been removed from the list of revisions then it has been deleted
 					// because the bundle has been uninstalled or updated
-					if (!r.getRevisions().getModuleRevisions().contains(r)) {
+					if (e instanceof IOException && !r.getRevisions().getModuleRevisions().contains(r)) {
 						// instead of filling the log with errors about missing files from
 						// uninstalled/updated bundles just give it an info level
 						eventType = ContainerEvent.INFO;
@@ -91,7 +94,11 @@ public abstract class CloseableBundleFile<E> extends BundleFile {
 					generation.getBundleInfo().getStorage().getAdaptor().publishContainerEvent(eventType, r.getRevisions().getModule(), e);
 				}
 			}
-			// TODO not sure if throwing a runtime exception is better
+			if (!(e instanceof IOException)) {
+				// throw any unexpected exceptions
+				EquinoxContainer.sneakyThrow(e);
+			}
+			// TODO For IOException, not sure if throwing a runtime exception is better
 			// throw new RuntimeException("Failed to open bundle file.", e);
 			return false;
 		}
@@ -105,46 +112,39 @@ public abstract class CloseableBundleFile<E> extends BundleFile {
 	}
 
 	/**
-	 * Opens this bundle file.
-	 * @param keepLock true if the open lock should be retained
-	 * @throws IOException
+	 * Internal method that does the work to open this bundle file. Must hold the
+	 * openLock while calling this method.
+	 * 
 	 */
-	private void open(boolean keepLock) throws IOException {
-		openLock.lock();
-		try {
-			if (closed) {
-				boolean needBackPressure = mruListAdd();
-				if (needBackPressure) {
-					// release lock before applying back pressure
-					openLock.unlock();
-					try {
-						mruListApplyBackPressure();
-					} finally {
-						// get lock back after back pressure
-						openLock.lock();
-					}
-				}
-				// check close again after getting open lock again
-				if (closed) {
-					// always add again if back pressure was applied in case
-					// the bundle file got removed while releasing the open lock
-					if (needBackPressure) {
-						mruListAdd();
-					}
-					// This can throw an IO exception resulting in closed remaining true on exit
-					doOpen();
-					closed = false;
-					if (debug.DEBUG_BUNDLE_FILE_OPEN) {
-						Debug.println("OPENED bundle file - " + toString()); //$NON-NLS-1$
-					}
-				}
-			} else {
-				mruListUse();
-			}
-		} finally {
-			if (!keepLock || closed) {
+	private void internalOpen() throws IOException {
+		if (closed) {
+			boolean needBackPressure = mruListAdd();
+			if (needBackPressure) {
+				// release lock before applying back pressure
 				openLock.unlock();
+				try {
+					mruListApplyBackPressure();
+				} finally {
+					// get lock back after back pressure
+					openLock.lock();
+				}
 			}
+			// check close again after getting open lock again
+			if (closed) {
+				// always add again if back pressure was applied in case
+				// the bundle file got removed while releasing the open lock
+				if (needBackPressure) {
+					mruListAdd();
+				}
+				// This can throw an IO exception resulting in closed remaining true on exit
+				doOpen();
+				closed = false;
+				if (debug.DEBUG_BUNDLE_FILE_OPEN) {
+					Debug.println("OPENED bundle file - " + toString()); //$NON-NLS-1$
+				}
+			}
+		} else {
+			mruListUse();
 		}
 	}
 
@@ -417,7 +417,12 @@ public abstract class CloseableBundleFile<E> extends BundleFile {
 
 	@Override
 	public void open() throws IOException {
-		open(false);
+		openLock.lock();
+		try {
+			internalOpen();
+		} finally {
+			openLock.unlock();
+		}
 	}
 
 	void incrementReference() {

@@ -20,7 +20,11 @@ import org.eclipse.osgi.internal.debug.Debug;
 import org.eclipse.osgi.internal.framework.BundleContextImpl;
 import org.eclipse.osgi.internal.messages.Msg;
 import org.eclipse.osgi.util.NLS;
-import org.osgi.framework.*;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkEvent;
+import org.osgi.framework.ServiceException;
+import org.osgi.framework.ServiceFactory;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * This class represents the use of a service by a bundle. One is created for each
@@ -210,7 +214,12 @@ public class ServiceFactoryUse<S> extends ServiceUse<S> {
 	S factoryGetService() {
 		final S service;
 		try {
-			service = AccessController.doPrivileged((PrivilegedAction<S>) () -> factory.getService(context.getBundleImpl(), registration));
+			service = AccessController.doPrivileged(new PrivilegedAction<S>() {
+				@Override
+				public S run() {
+					return factory.getService(context.getBundleImpl(), registration);
+				}
+			});
 		} catch (Throwable t) {
 			if (debug.DEBUG_SERVICES) {
 				Debug.println(factory + ".getService() exception: " + t.getMessage()); //$NON-NLS-1$
@@ -239,7 +248,11 @@ public class ServiceFactoryUse<S> extends ServiceUse<S> {
 			if (debug.DEBUG_SERVICES) {
 				Debug.println("Service object is not an instanceof " + invalidService); //$NON-NLS-1$
 			}
-			ServiceException se = new ServiceException(NLS.bind(Msg.SERVICE_FACTORY_NOT_INSTANCEOF_CLASS_EXCEPTION, factory.getClass().getName(), invalidService), ServiceException.FACTORY_ERROR);
+			ServiceException se = new ServiceException(
+					NLS.bind(Msg.SERVICE_FACTORY_NOT_INSTANCEOF_CLASS_EXCEPTION,
+							new Object[] { factory.getClass().getName(), service.getClass().getName(),
+									invalidService }),
+					ServiceException.FACTORY_ERROR);
 			context.getContainer().getEventPublisher().publishFrameworkEvent(FrameworkEvent.ERROR, registration.getBundle(), se);
 			return null;
 		}
@@ -254,9 +267,12 @@ public class ServiceFactoryUse<S> extends ServiceUse<S> {
 	/* @GuardedBy("this") */
 	void factoryUngetService(final S service) {
 		try {
-			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-				factory.ungetService(context.getBundleImpl(), registration, service);
-				return null;
+			AccessController.doPrivileged(new PrivilegedAction<Void>() {
+				@Override
+				public Void run() {
+					factory.ungetService(context.getBundleImpl(), registration, service);
+					return null;
+				}
 			});
 		} catch (Throwable t) {
 			if (debug.DEBUG_SERVICES) {

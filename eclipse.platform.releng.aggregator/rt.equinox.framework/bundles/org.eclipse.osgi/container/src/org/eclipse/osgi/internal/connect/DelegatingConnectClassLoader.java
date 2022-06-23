@@ -40,7 +40,7 @@ public class DelegatingConnectClassLoader extends EquinoxClassLoader {
 	@Override
 	public Class<?> findLocalClass(String classname) throws ClassNotFoundException {
 		if (connectClassLoader == null) {
-			throw new ClassNotFoundException();
+			return null;
 		}
 		return connectClassLoader.loadClass(classname);
 	}
@@ -56,12 +56,12 @@ public class DelegatingConnectClassLoader extends EquinoxClassLoader {
 	@Override
 	public Enumeration<URL> findLocalResources(String resource) {
 		if (connectClassLoader == null) {
-			return Collections.enumeration(Collections.emptyList());
+			return Collections.emptyEnumeration();
 		}
 		try {
 			return connectClassLoader.getResources(resource);
 		} catch (IOException e) {
-			return Collections.enumeration(Collections.emptyList());
+			return Collections.emptyEnumeration();
 		}
 	}
 }

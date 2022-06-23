@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corporation and others.
+ * Copyright (c) 2009, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -36,8 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.core.tests.harness.CoreTest;
 import org.eclipse.osgi.internal.debug.FrameworkDebugOptions;
 import org.eclipse.osgi.internal.debug.FrameworkDebugTraceEntry;
@@ -49,9 +47,6 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 
 public class DebugOptionsTestCase extends CoreTest {
-	public static Test suite() {
-		return new TestSuite(DebugOptionsTestCase.class);
-	}
 
 	DebugOptions debugOptions;
 	ServiceReference ref;
@@ -104,7 +99,7 @@ public class DebugOptionsTestCase extends CoreTest {
 	 */
 	public void testTracingEntry01() {
 
-		String bundleName = OSGiTestsActivator.getContext().getBundle().getSymbolicName();
+		String bundleName = OSGiTestsActivator.getBundle().getSymbolicName();
 		String optionPath = "/debug"; //$NON-NLS-1$
 		String message = "Test message"; //$NON-NLS-1$
 		FrameworkDebugTraceEntry traceEntry = new FrameworkDebugTraceEntry(bundleName, optionPath, message, null);
@@ -139,7 +134,7 @@ public class DebugOptionsTestCase extends CoreTest {
 
 	static class Runner2 {
 		public FrameworkDebugTraceEntry run() {
-			String bundleName = OSGiTestsActivator.getContext().getBundle().getSymbolicName();
+			String bundleName = OSGiTestsActivator.getBundle().getSymbolicName();
 			String optionPath = "/debug"; //$NON-NLS-1$
 			String message = "Test message"; //$NON-NLS-1$
 			String tracingClass = this.getClass().getName();
@@ -880,6 +875,46 @@ public class DebugOptionsTestCase extends CoreTest {
 		assertNull("throwable should be null", traceOutput[1].getThrowableText()); //$NON-NLS-1$
 		// delete the trace file
 		traceFile.delete();
+	}
+
+	public void testEntryExitWithBracesInArgs() throws InvalidTraceEntry {
+		FrameworkDebugOptions fwDebugOptions = (FrameworkDebugOptions) debugOptions;
+		final File traceFile = OSGiTestsActivator.getContext().getDataFile(getName() + ".trace"); //$NON-NLS-1$
+		TestDebugTrace debugTrace = this.createDebugTrace(traceFile);
+		TraceEntry[] traceOutput = null;
+
+		debugTrace.traceEntry("/debug", new String[] { "test0 {data: stuff;}" });
+		debugTrace.traceEntry("/debug", "test1 {data: stuff;}");
+		debugTrace.traceExit("/debug", "test2 {data: stuff;}");
+
+		debugTrace.traceEntry("/notset", new String[] { "test-unexpected {data: stuff;}" });
+		debugTrace.traceEntry("/notset", "test-unexpected {data: stuff;}");
+		debugTrace.traceExit("/notset", "test-unexpected {data: stuff;}");
+
+		fwDebugOptions.setVerbose(false);
+		debugTrace.traceEntry("/debug", new String[] { "test3 {data: stuff;}" });
+		debugTrace.traceEntry("/debug", "test4 {data: stuff;}");
+		debugTrace.traceExit("/debug", "test5 {data: stuff;}");
+		traceOutput = readTraceFile(traceFile); // Note: this call will also delete the trace file
+
+		assertEquals("Wrong number of trace entries", 6, traceOutput.length);
+		assertEquals("Trace message is not correct", "Entering method with parameters: (test0 {data: stuff;})",
+				traceOutput[0].getMessage());
+		assertEquals("Trace message is not correct", "Entering method with parameters: (test1 {data: stuff;})",
+				traceOutput[1].getMessage());
+		assertEquals("Trace message is not correct", "Exiting method with result: test2 {data: stuff;}",
+				traceOutput[2].getMessage());
+		assertEquals("Trace message is not correct",
+				"Entering method org.eclipse.osgi.tests.debugoptions.DebugOptionsTestCase#testEntryExitWithBracesInArgs with parameters: (test3 {data: stuff;})",
+				traceOutput[3].getMessage());
+		assertEquals("Trace message is not correct",
+				"Entering method org.eclipse.osgi.tests.debugoptions.DebugOptionsTestCase#testEntryExitWithBracesInArgs with parameters: (test4 {data: stuff;})",
+				traceOutput[4].getMessage());
+		assertEquals("Trace message is not correct",
+				"Exiting method org.eclipse.osgi.tests.debugoptions.DebugOptionsTestCase#testEntryExitWithBracesInArgs with result: test5 {data: stuff;}",
+				traceOutput[5].getMessage());
+
+		fwDebugOptions.setVerbose(true);
 	}
 
 	/**

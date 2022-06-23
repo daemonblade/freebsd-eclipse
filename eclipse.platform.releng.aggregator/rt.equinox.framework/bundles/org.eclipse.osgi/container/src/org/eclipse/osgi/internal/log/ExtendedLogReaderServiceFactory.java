@@ -57,10 +57,12 @@ public class ExtendedLogReaderServiceFactory implements ServiceFactory<ExtendedL
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private static final Enumeration<LogEntry> EMPTY_ENUMERATION = Collections.enumeration(Collections.EMPTY_LIST);
-
-	static final LogFilter NULL_LOGGER_FILTER = (b, loggerName, logLevel) -> true;
+	static final LogFilter NULL_LOGGER_FILTER = new LogFilter() {
+		@Override
+		public boolean isLoggable(Bundle b, String loggerName, int logLevel) {
+			return true;
+		}
+	};
 
 	private static final LogFilter[] ALWAYS_LOG = new LogFilter[0];
 
@@ -146,7 +148,12 @@ public class ExtendedLogReaderServiceFactory implements ServiceFactory<ExtendedL
 
 	boolean isLoggable(final Bundle bundle, final String name, final int level) {
 		if (System.getSecurityManager() != null) {
-			return AccessController.doPrivileged((PrivilegedAction<Boolean>) () -> isLoggablePrivileged(bundle, name, level));
+			return AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+				@Override
+				public Boolean run() {
+					return isLoggablePrivileged(bundle, name, level);
+				}
+			});
 		}
 		return isLoggablePrivileged(bundle, name, level);
 	}
@@ -204,9 +211,12 @@ public class ExtendedLogReaderServiceFactory implements ServiceFactory<ExtendedL
 
 	void log(final Bundle bundle, final String name, final StackTraceElement stackTraceElement, final Object context, final LogLevel logLevelEnum, final int level, final String message, final ServiceReference<?> ref, final Throwable exception) {
 		if (System.getSecurityManager() != null) {
-			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-				logPrivileged(bundle, name, stackTraceElement, context, logLevelEnum, level, message, ref, exception);
-				return null;
+			AccessController.doPrivileged(new PrivilegedAction<Void>() {
+				@Override
+				public Void run() {
+					logPrivileged(bundle, name, stackTraceElement, context, logLevelEnum, level, message, ref, exception);
+					return null;
+				}
 			});
 		} else {
 			logPrivileged(bundle, name, stackTraceElement, context, logLevelEnum, level, message, ref, exception);
@@ -311,7 +321,7 @@ public class ExtendedLogReaderServiceFactory implements ServiceFactory<ExtendedL
 
 	Enumeration<LogEntry> getLog() {
 		if (history == null) {
-			return EMPTY_ENUMERATION;
+			return Collections.emptyEnumeration();
 		}
 		synchronized (history) {
 			return Collections.enumeration(new ArrayList<>(history));

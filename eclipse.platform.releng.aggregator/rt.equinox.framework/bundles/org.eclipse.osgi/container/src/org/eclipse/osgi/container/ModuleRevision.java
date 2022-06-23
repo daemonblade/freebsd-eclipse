@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import org.eclipse.osgi.container.ModuleRevisionBuilder.GenericInfo;
 import org.eclipse.osgi.container.namespaces.EquinoxModuleDataNamespace;
 import org.eclipse.osgi.internal.container.InternalUtils;
@@ -57,10 +58,12 @@ public final class ModuleRevision implements BundleRevision {
 	}
 
 	private NamespaceList<ModuleCapability> createCapabilities(NamespaceList.Builder<GenericInfo> capabilityInfos) {
-		return capabilityInfos.transformIntoCopy(i -> {
-			Map<String, String> directives = i.mutable ? copyUnmodifiableMap(i.directives) : i.directives;
-			Map<String, Object> attributes = i.mutable ? copyUnmodifiableMap(i.attributes) : i.attributes;
-			return new ModuleCapability(i.namespace, directives, attributes, this);
+		return capabilityInfos.transformIntoCopy(new Function<GenericInfo, ModuleCapability>()  {
+			public ModuleCapability apply(GenericInfo i) {
+				Map<String, String> directives = i.mutable ? copyUnmodifiableMap(i.directives) : i.directives;
+				Map<String, Object> attributes = i.mutable ? copyUnmodifiableMap(i.attributes) : i.attributes;
+				return new ModuleCapability(i.namespace, directives, attributes, ModuleRevision.this);
+			}
 		}, NamespaceList.CAPABILITY).build();
 	}
 
@@ -77,8 +80,11 @@ public final class ModuleRevision implements BundleRevision {
 	}
 
 	private NamespaceList<ModuleRequirement> createRequirements(NamespaceList.Builder<GenericInfo> infos) {
-		return infos.transformIntoCopy(i -> new ModuleRequirement(i.namespace, i.directives, i.attributes, this),
-				NamespaceList.REQUIREMENT).build();
+		return infos.transformIntoCopy(new Function<GenericInfo, ModuleRequirement>()  {
+			public ModuleRequirement apply(GenericInfo i) {
+				return new ModuleRequirement(i.namespace, i.directives, i.attributes, ModuleRevision.this);
+			}
+		}, NamespaceList.REQUIREMENT).build();
 	}
 
 	@Override
@@ -98,12 +104,12 @@ public final class ModuleRevision implements BundleRevision {
 
 	@Override
 	public List<BundleCapability> getDeclaredCapabilities(String namespace) {
-		return InternalUtils.asListBundleCapability(getModuleCapabilities(namespace));
+		return InternalUtils.asList(getModuleCapabilities(namespace));
 	}
 
 	@Override
 	public List<BundleRequirement> getDeclaredRequirements(String namespace) {
-		return InternalUtils.asListBundleRequirement(getModuleRequirements(namespace));
+		return InternalUtils.asList(getModuleRequirements(namespace));
 	}
 
 	/**
@@ -138,12 +144,12 @@ public final class ModuleRevision implements BundleRevision {
 
 	@Override
 	public List<Capability> getCapabilities(String namespace) {
-		return InternalUtils.asListCapability(getDeclaredCapabilities(namespace));
+		return InternalUtils.asList(getDeclaredCapabilities(namespace));
 	}
 
 	@Override
 	public List<Requirement> getRequirements(String namespace) {
-		return InternalUtils.asListRequirement(getDeclaredRequirements(namespace));
+		return InternalUtils.asList(getDeclaredRequirements(namespace));
 	}
 
 	/**

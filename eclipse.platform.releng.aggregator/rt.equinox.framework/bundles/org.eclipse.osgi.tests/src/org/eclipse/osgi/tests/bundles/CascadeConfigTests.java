@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2020 IBM Corporation and others.
+ * Copyright (c) 2008, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,16 +13,20 @@
  *******************************************************************************/
 package org.eclipse.osgi.tests.bundles;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.eclipse.osgi.launch.Equinox;
 import org.eclipse.osgi.tests.OSGiTestsActivator;
+import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -30,10 +34,8 @@ import org.osgi.framework.launch.Framework;
 import org.osgi.framework.wiring.FrameworkWiring;
 
 public class CascadeConfigTests extends AbstractBundleTests {
-	public static Test suite() {
-		return new TestSuite(CascadeConfigTests.class);
-	}
 
+	@Test
 	public void testCascadeConfigBundleInstall() throws Exception {
 		// First create a framework with the 'parent' configuration
 		File configParent = OSGiTestsActivator.getContext().getDataFile(getName() + "_parent");
@@ -89,6 +91,7 @@ public class CascadeConfigTests extends AbstractBundleTests {
 		stop(equinox);
 	}
 
+	@Test
 	public void testCascadeConfigDataArea() throws Exception {
 		// First create a framework with the 'parent' configuration
 		File configParent = OSGiTestsActivator.getContext().getDataFile(getName() + "_parent");
@@ -145,6 +148,7 @@ public class CascadeConfigTests extends AbstractBundleTests {
 		stop(equinox);
 	}
 
+	@Test
 	public void testCascadeConfigIni() throws Exception {
 		// First create a framework with the 'parent' configuration
 		File configParent = OSGiTestsActivator.getContext().getDataFile(getName() + "_parent");
