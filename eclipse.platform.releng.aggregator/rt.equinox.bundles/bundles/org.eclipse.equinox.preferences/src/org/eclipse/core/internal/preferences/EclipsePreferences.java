@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2015 IBM Corporation and others.
+ * Copyright (c) 2004, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,10 +13,15 @@
  *     Julian Chen - fix for bug #92572, jclRM
  *     Jan-Ove Weichel (janove.weichel@vogella.com) - bug 474359
  *     InterSystems Corporation - bug 444188
+ *     Hannes Wellmann - Leverage Java-NIO to write preferences
  *******************************************************************************/
 package org.eclipse.core.internal.preferences;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import org.eclipse.core.internal.runtime.RuntimeLog;
 import org.eclipse.core.runtime.*;
@@ -42,7 +47,6 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 
 	public static final String DEFAULT_PREFERENCES_DIRNAME = ".settings"; //$NON-NLS-1$
 	public static final String PREFS_FILE_EXTENSION = "prefs"; //$NON-NLS-1$
-	protected static final IEclipsePreferences[] EMPTY_NODE_ARRAY = new IEclipsePreferences[0];
 	protected static final String[] EMPTY_STRING_ARRAY = new String[0];
 	private static final String FALSE = "false"; //$NON-NLS-1$
 	private static final String TRUE = "true"; //$NON-NLS-1$
@@ -51,6 +55,7 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 	protected static final String PATH_SEPARATOR = String.valueOf(IPath.SEPARATOR);
 	protected static final String DOUBLE_SLASH = "//"; //$NON-NLS-1$
 	protected static final String EMPTY_STRING = ""; //$NON-NLS-1$
+	private static final String BACKUP_FILE_EXTENSION = ".bak"; //$NON-NLS-1$
 
 	private String cachedPath;
 	protected ImmutableMap properties = ImmutableMap.EMPTY;
@@ -73,7 +78,7 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 	public static boolean DEBUG_PREFERENCE_SET = false;
 	public static boolean DEBUG_PREFERENCE_GET = false;
 
-	protected final static String debugPluginName = "org.eclipse.equinox.preferences"; //$NON-NLS-1$
+	protected static final String debugPluginName = "org.eclipse.equinox.preferences"; //$NON-NLS-1$
 
 	static {
 		DEBUG_PREFERENCE_GENERAL = PreferencesOSGiUtils.getDefault().getBooleanDebugOption(debugPluginName + "/general", false); //$NON-NLS-1$
@@ -115,8 +120,7 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 	public void accept(IPreferenceNodeVisitor visitor) throws BackingStoreException {
 		if (!visitor.visit(this))
 			return;
-		IEclipsePreferences[] toVisit = getChildren(true);
-		for (IEclipsePreferences p : toVisit) {
+		for (IEclipsePreferences p : getChildren(true)) {
 			p.accept(visitor);
 		}
 	}
@@ -183,9 +187,10 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 
 	protected String[] internalChildNames() {
 		synchronized (childAndPropertyLock) {
-			if (children == null || children.size() == 0)
+			if (children == null || children.isEmpty()) {
 				return EMPTY_STRING_ARRAY;
-			return children.keySet().toArray(EMPTY_STRING_ARRAY);
+			}
+			return children.keySet().toArray(String[]::new);
 		}
 	}
 
@@ -207,26 +212,24 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 		makeDirty();
 	}
 
-	protected String[] computeChildren(IPath root) {
-		if (root == null)
-			return EMPTY_STRING_ARRAY;
+	protected List<String> computeChildren(IPath root) {
+		if (root == null) {
+			return List.of();
+		}
 		IPath dir = root.append(DEFAULT_PREFERENCES_DIRNAME);
-		final ArrayList<String> result = new ArrayList<>();
-		final String extension = '.' + PREFS_FILE_EXTENSION;
-		File file = dir.toFile();
-		File[] totalFiles = file.listFiles();
+		List<String> result = new ArrayList<>();
+		String extension = '.' + PREFS_FILE_EXTENSION;
+		File[] totalFiles = dir.toFile().listFiles();
 		if (totalFiles != null) {
 			for (File totalFile : totalFiles) {
-				if (totalFile.isFile()) {
-					String filename = totalFile.getName();
-					if (filename.endsWith(extension)) {
-						String shortName = filename.substring(0, filename.length() - extension.length());
-						result.add(shortName);
-					}
+				String filename = totalFile.getName();
+				if (filename.endsWith(extension) && totalFile.isFile()) {
+					String shortName = filename.substring(0, filename.length() - extension.length());
+					result.add(shortName);
 				}
 			}
 		}
-		return result.toArray(EMPTY_STRING_ARRAY);
+		return result;
 	}
 
 	protected IPath computeLocation(IPath root, String qualifier) {
@@ -270,41 +273,36 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 	 * puts in the file.
 	 */
 	protected static void write(Properties properties, IPath location) throws BackingStoreException {
-		// create the parent directories if they don't exist
-		File parentFile = location.toFile().getParentFile();
-		if (parentFile == null)
+		Path preferenceFile = location.toFile().toPath();
+		Path parentFile = preferenceFile.getParent();
+		if (parentFile == null) {
 			return;
-		parentFile.mkdirs();
-
-		OutputStream output = null;
+		}
 		try {
-			output = new SafeFileOutputStream(new File(location.toOSString()));
-			output.write(removeTimestampFromTable(properties).getBytes("UTF-8")); //$NON-NLS-1$
-			output.flush();
+			Files.createDirectories(parentFile);
+			String fileContent = removeTimestampFromTable(properties);
+			if (Files.exists(preferenceFile)) {
+				// Write new file content to a temporary file first to not loose the old content
+				// in case of a failure. If everything goes OK, it is moved to the right place.
+				Path tmp = preferenceFile.resolveSibling(preferenceFile.getFileName() + BACKUP_FILE_EXTENSION);
+				Files.writeString(tmp, fileContent, StandardCharsets.UTF_8);
+				Files.move(tmp, preferenceFile, StandardCopyOption.REPLACE_EXISTING);
+			} else {
+				Files.writeString(preferenceFile, fileContent, StandardCharsets.UTF_8);
+			}
 		} catch (IOException e) {
 			String message = NLS.bind(PrefsMessages.preferences_saveException, location);
 			log(new Status(IStatus.ERROR, PrefsMessages.OWNER_NAME, IStatus.ERROR, message, e));
 			throw new BackingStoreException(message, e);
-		} finally {
-			if (output != null)
-				try {
-					output.close();
-				} catch (IOException e) {
-					// ignore
-				}
 		}
 	}
 
 	protected static String removeTimestampFromTable(Properties properties) throws IOException {
 		// store the properties in a string and then skip the first line (date/timestamp)
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		try {
-			properties.store(output, null);
-		} finally {
-			output.close();
-		}
-		String string = output.toString("UTF-8"); //$NON-NLS-1$
-		String separator = System.getProperty("line.separator"); //$NON-NLS-1$
+		properties.store(output, null);
+		String string = output.toString(StandardCharsets.UTF_8);
+		String separator = System.lineSeparator();
 		return string.substring(string.indexOf(separator) + separator.length());
 	}
 
@@ -366,7 +364,6 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 			return result;
 		try {
 			result.setLoading(true);
-			result.loadLegacy();
 			result.load();
 			result.loaded();
 			result.flush();
@@ -410,8 +407,7 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 
 		// if this node or a parent is not the load level, then flush the children
 		if (loadLevel == null) {
-			String[] childrenNames = childrenNames();
-			for (String childrenName : childrenNames) {
+			for (String childrenName : childrenNames()) {
 				node(childrenName).flush();
 			}
 			return null;
@@ -495,15 +491,15 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 	/**
 	 * Thread safe way to obtain all children of this node. Never returns null.
 	 */
-	protected IEclipsePreferences[] getChildren(boolean create) {
-		ArrayList<IEclipsePreferences> result = new ArrayList<>();
-		String[] names = internalChildNames();
-		for (String n : names) {
+	private List<IEclipsePreferences> getChildren(boolean create) {
+		List<IEclipsePreferences> result = new ArrayList<>();
+		for (String n : internalChildNames()) {
 			IEclipsePreferences child = getChild(n, null, create);
-			if (child != null)
+			if (child != null) {
 				result.add(child);
+			}
 		}
-		return result.toArray(EMPTY_NODE_ARRAY);
+		return result;
 	}
 
 
@@ -688,10 +684,8 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 	protected static Properties loadProperties(IPath location) throws BackingStoreException {
 		if (DEBUG_PREFERENCE_GENERAL)
 			PrefsMessages.message("Loading preferences from file: " + location); //$NON-NLS-1$
-		InputStream input = null;
 		Properties result = new Properties();
-		try {
-			input = new SafeFileInputStream(location.toFile());
+		try (InputStream input = getSaveInputStream(location)) {
 			result.load(input);
 		} catch (FileNotFoundException e) {
 			// file doesn't exist but that's ok.
@@ -706,16 +700,18 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 			String message = NLS.bind(PrefsMessages.preferences_loadException, location);
 			log(new Status(IStatus.INFO, PrefsMessages.OWNER_NAME, IStatus.INFO, message, e));
 			throw new BackingStoreException(message, e);
-		} finally {
-			if (input != null)
-				try {
-					input.close();
-				} catch (IOException e) {
-					// ignore
-				}
 		}
 		return result;
 	}
+
+	private static InputStream getSaveInputStream(IPath location) throws IOException {
+		File target = location.toFile().getAbsoluteFile();
+		if (!target.exists()) {
+			target = new File(target + BACKUP_FILE_EXTENSION);
+		}
+		return new FileInputStream(target);
+	}
+
 
 	protected void load(IPath location) throws BackingStoreException {
 		if (location == null) {
@@ -733,10 +729,6 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 		} else {
 			descriptor.loaded(absolutePath());
 		}
-	}
-
-	protected void loadLegacy() {
-		// sub-classes to over-ride if necessary
 	}
 
 	public static void log(IStatus status) {
@@ -977,8 +969,7 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 			removed = true;
 			parent.removeNode(this);
 		}
-		IEclipsePreferences[] childNodes = getChildren(false);
-		for (IEclipsePreferences childNode : childNodes) {
+		for (IEclipsePreferences childNode : getChildren(false)) {
 			try {
 				childNode.removeNode();
 			}catch (IllegalStateException e) {
@@ -1090,8 +1081,7 @@ public class EclipsePreferences implements IEclipsePreferences, IScope {
 			temp = properties;
 		}
 		temp.shareStrings(pool);
-		IEclipsePreferences[] myChildren = getChildren(false);
-		for (IEclipsePreferences child : myChildren) {
+		for (IEclipsePreferences child : getChildren(false)) {
 			if (child instanceof EclipsePreferences) {
 				((EclipsePreferences) child).shareStrings(pool);
 			}

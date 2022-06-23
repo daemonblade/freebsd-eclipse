@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (c) 2012, 2018 Eclipse Foundation.
+  Copyright (c) 2012, 2022 Eclipse Foundation.
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Distribution License v1.0
   which accompanies this distribution, and is available at
@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.eclipse</groupId>
     <artifactId>eclipse-platform-parent</artifactId>
-    <version>4.21.0-SNAPSHOT</version>
+    <version>4.24.0-SNAPSHOT</version>
     <relativePath>../eclipse-platform-parent</relativePath>
   </parent>
 
@@ -24,7 +24,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <tycho.scmUrl>scm:git:https://git.eclipse.org/r/equinox/rt.equinox.bundles.git</tycho.scmUrl>
+    <tycho.scmUrl>scm:git:https://github.com/eclipse-equinox/rt.equinox.bundles.git</tycho.scmUrl>
   </properties>
 
   <!-- 
@@ -57,15 +57,9 @@
     <module>features/org.eclipse.equinox.sdk</module>
     <module>features/org.eclipse.equinox.server.core</module>
     <module>features/org.eclipse.equinox.server.jetty</module>
-    <module>features/org.eclipse.equinox.server.p2</module>
     <module>features/org.eclipse.equinox.core.sdk</module>
 
-<!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=348045
-    <module>features/org.eclipse.equinox.server.servletbridge</module>
--->
-
     <module>features/org.eclipse.equinox.server.simple</module>
-    <module>features/org.eclipse.equinox.serverside.sdk</module>
     <module>bundles/org.eclipse.equinox.bidi.tests</module>
     <module>bundles/org.eclipse.equinox.cm.test</module>
     <module>bundles/org.eclipse.equinox.common.tests</module>
@@ -85,7 +79,6 @@
     <module>bundles/org.eclipse.equinox.security.macosx</module>
     <module>bundles/org.eclipse.equinox.security.win32.x86_64</module>
     <module>bundles/org.eclipse.equinox.security.freebsd</module>
-    <module>bundles/org.eclipse.equinox.security.freebsd.amd64</module>
     <module>bundles/org.eclipse.equinox.bidi</module>
     <module>bundles/org.eclipse.equinox.cm</module>
     <module>bundles/org.eclipse.equinox.console</module>
@@ -95,16 +88,8 @@
     <module>bundles/org.eclipse.equinox.console.tests</module>
     <module>bundles/org.eclipse.equinox.coordinator</module>
     <module>bundles/org.eclipse.equinox.device</module>
-    <!-- Module is deprecated
-    <module>bundles/org.eclipse.equinox.ds</module>
-    -->
     <module>bundles/org.eclipse.equinox.event</module>
 
-    <!-- Module is deprecated
-         https://bugs.eclipse.org/bugs/show_bug.cgi?id=389050
-    <module>bundles/org.eclipse.equinox.http</module>
-    -->
-    
     <module>bundles/org.eclipse.equinox.http.jetty</module>
     <module>bundles/org.eclipse.equinox.http.registry</module>
     <module>bundles/org.eclipse.equinox.http.servlet</module>
@@ -117,11 +102,6 @@
     <module>bundles/org.eclipse.equinox.region</module>
     <module>bundles/org.eclipse.equinox.servletbridge</module>
 
-<!-- https://bugs.eclipse.org/bugs/show_bug.cgi?id=348045
-    <module>bundles/org.eclipse.equinox.servletbridge.extensionbundle</module>
--->
-
-    <module>bundles/org.eclipse.equinox.servletbridge.template</module>
     <module>bundles/org.eclipse.equinox.slf4j.stub</module>
     <module>bundles/org.eclipse.equinox.transforms.hook</module>
     <module>bundles/org.eclipse.equinox.transforms.xslt</module>
@@ -130,5 +110,35 @@
     <module>bundles/org.eclipse.equinox.weaving.caching.j9</module>
     <module>bundles/org.eclipse.equinox.weaving.hook</module>
   </modules>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>feature-source</id>
+            <goals>
+              <goal>feature-source</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-p2-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-p2-metadata</id>
+            <phase>package</phase>
+            <goals>
+              <goal>p2-metadata</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

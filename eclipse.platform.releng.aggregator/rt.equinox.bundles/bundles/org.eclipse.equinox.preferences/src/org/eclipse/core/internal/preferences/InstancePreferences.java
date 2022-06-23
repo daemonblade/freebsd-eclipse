@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2015 IBM Corporation and others.
+ * Copyright (c) 2004, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,11 +13,9 @@
  *******************************************************************************/
 package org.eclipse.core.internal.preferences;
 
-import java.io.*;
 import java.util.*;
 import org.eclipse.core.internal.runtime.MetaDataKeeper;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.osgi.service.datalocation.Location;
 
@@ -84,96 +82,6 @@ public class InstancePreferences extends EclipsePreferences {
 		loadedNodes.add(name());
 	}
 
-	/**
-	 * Load the Eclipse 2.1 preferences for the given bundle. If a file
-	 * doesn't exist then assume that conversion has already occurred
-	 * and do nothing.
-	 */
-	@Override
-	protected void loadLegacy() {
-		IPath path = new Path(absolutePath());
-		if (path.segmentCount() != 2)
-			return;
-		// If we are running with -data=@none we won't have an instance location.
-		if (PreferencesOSGiUtils.getDefault().getInstanceLocation() == null) {
-			if (EclipsePreferences.DEBUG_PREFERENCE_GENERAL)
-				PrefsMessages.message("Cannot load Legacy plug-in preferences since instance location is not set."); //$NON-NLS-1$
-			return;
-		}
-		String bundleName = path.segment(1);
-		// the preferences file is located in the plug-in's state area at a well-known name
-		// don't need to create the directory if there are no preferences to load
-		File prefFile = null;
-		Location instanceLocation = PreferencesOSGiUtils.getDefault().getInstanceLocation();
-		if (instanceLocation != null && instanceLocation.isSet())
-			prefFile = MetaDataKeeper.getMetaArea().getPreferenceLocation(bundleName, false).toFile();
-		if (prefFile == null) {
-			if (EclipsePreferences.DEBUG_PREFERENCE_GENERAL)
-				PrefsMessages.message("Cannot load legacy values because instance location is not set."); //$NON-NLS-1$
-			return;
-		}
-		if (!prefFile.exists()) {
-			// no preference file - that's fine
-			if (EclipsePreferences.DEBUG_PREFERENCE_GENERAL)
-				PrefsMessages.message("Legacy plug-in preference file not found: " + prefFile); //$NON-NLS-1$
-			return;
-		}
-
-		if (EclipsePreferences.DEBUG_PREFERENCE_GENERAL)
-			PrefsMessages.message("Loading legacy preferences from " + prefFile); //$NON-NLS-1$
-
-		// load preferences from file
-		InputStream input = null;
-		Properties values = new Properties();
-		try {
-			input = new BufferedInputStream(new FileInputStream(prefFile));
-			values.load(input);
-		} catch (IOException e) {
-			// problems loading preference store - quietly ignore
-			if (EclipsePreferences.DEBUG_PREFERENCE_GENERAL)
-				PrefsMessages.message("IOException encountered loading legacy preference file " + prefFile); //$NON-NLS-1$
-			return;
-		} catch (IllegalArgumentException e) {
-			// problems loading preference store - quietly ignore
-			if (EclipsePreferences.DEBUG_PREFERENCE_GENERAL)
-				PrefsMessages.message("IllegalArgumentException encountered loading legacy preference file " + prefFile); //$NON-NLS-1$
-			return;
-		} finally {
-			if (input != null) {
-				try {
-					input.close();
-				} catch (IOException e) {
-					// ignore problems with close
-					if (EclipsePreferences.DEBUG_PREFERENCE_GENERAL) {
-						PrefsMessages.message("IOException encountered closing legacy preference file " + prefFile); //$NON-NLS-1$
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-
-		// Store values in the preferences object
-		for (Object propName : values.keySet()) {
-			String key = (String) propName;
-			String value = values.getProperty(key);
-			// value shouldn't be null but check just in case...
-			if (value != null) {
-				if (EclipsePreferences.DEBUG_PREFERENCE_GENERAL)
-					PrefsMessages.message("Loaded legacy preference: " + key + " -> " + value); //$NON-NLS-1$ //$NON-NLS-2$
-				// call these 2 methods rather than #put() so we don't send out unnecessary notification
-				Object oldValue = internalPut(key, value);
-				if (!value.equals(oldValue))
-					makeDirty();
-			}
-		}
-
-		// Delete the old file so we don't try and load it next time.
-		if (!prefFile.delete())
-			//Only print out message in failure case if we are debugging.
-			if (EclipsePreferences.DEBUG_PREFERENCE_GENERAL)
-				PrefsMessages.message("Unable to delete legacy preferences file: " + prefFile); //$NON-NLS-1$
-	}
-
 	@Override
 	protected IPath getLocation() {
 		if (location == null)
@@ -209,8 +117,7 @@ public class InstancePreferences extends EclipsePreferences {
 			return;
 		try {
 			synchronized (this) {
-				String[] names = computeChildren(getBaseLocation());
-				for (String n : names) {
+				for (String n : computeChildren(getBaseLocation())) {
 					addChild(n, null);
 				}
 			}

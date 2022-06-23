@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.equinox.compendium.sdk"
       label="%featureName"
-      version="3.22.100.qualifier"
+      version="3.22.300.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -118,6 +118,20 @@
          unpack="false"/>
 
    <plugin
+         id="org.osgi.service.prefs"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.osgi.service.prefs.source"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
          id="org.eclipse.equinox.useradmin"
          download-size="0"
          install-size="0"
@@ -140,6 +154,20 @@
 
    <plugin
          id="org.apache.felix.scr.source"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.osgi.service.coordinator"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.osgi.service.coordinator.source"
          download-size="0"
          install-size="0"
          version="0.0.0"
