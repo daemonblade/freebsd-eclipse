@@ -13,9 +13,8 @@
  *******************************************************************************/
 package org.eclipse.equinox.internal.p2.ui;
 
-import org.eclipse.equinox.p2.core.UIServices;
-
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
+import org.eclipse.equinox.p2.core.UIServices;
 import org.eclipse.equinox.p2.core.spi.IAgentServiceFactory;
 
 /**
@@ -26,7 +25,7 @@ public class ServiceUIComponent implements IAgentServiceFactory {
 
 	@Override
 	public Object createService(IProvisioningAgent agent) {
-		return new ValidationDialogServiceUI();
+		return new ValidationDialogServiceUI(agent);
 	}
 
 }

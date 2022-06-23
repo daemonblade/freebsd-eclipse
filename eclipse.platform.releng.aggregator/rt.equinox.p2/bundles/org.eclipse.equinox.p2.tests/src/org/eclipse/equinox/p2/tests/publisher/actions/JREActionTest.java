@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2021 Code 9 and others.
+ * Copyright (c) 2008, 2022 Code 9 and others.
  *
  * This
  * program and the accompanying materials are made available under the terms of
@@ -16,17 +16,15 @@
  ******************************************************************************/
 package org.eclipse.equinox.p2.tests.publisher.actions;
 
-import static org.easymock.EasyMock.expect;
 import static org.eclipse.equinox.p2.tests.publisher.actions.StatusMatchers.errorStatus;
 import static org.eclipse.equinox.p2.tests.publisher.actions.StatusMatchers.okStatus;
 import static org.eclipse.equinox.p2.tests.publisher.actions.StatusMatchers.statusWithMessageWhich;
-import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -216,7 +214,7 @@ public class JREActionTest extends ActionTest {
 		// check provided capabilities
 		Collection<IProvidedCapability> fooProvidedCapabilities = foo.getProvidedCapabilities();
 		int expected = expectedProvidedPackages + expectedProvidedEEs;
-		assertThat(fooProvidedCapabilities.size(), anyOf(is(expected), greaterThan(expected)));
+		assertTrue(fooProvidedCapabilities.size() >= expected);
 	}
 
 	private void verifyConfigIU(String id, Version jreVersion) {
@@ -276,7 +274,7 @@ public class JREActionTest extends ActionTest {
 
 	@Override
 	protected void insertPublisherInfoBehavior() {
-		expect(publisherInfo.getArtifactRepository()).andReturn(artifactRepository).anyTimes();
-		expect(publisherInfo.getArtifactOptions()).andReturn(IPublisherInfo.A_PUBLISH).anyTimes();
+		when(publisherInfo.getArtifactRepository()).thenReturn(artifactRepository);
+		when(publisherInfo.getArtifactOptions()).thenReturn(IPublisherInfo.A_PUBLISH);
 	}
 }

@@ -23,7 +23,6 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.core.runtime.*;
-import org.eclipse.equinox.internal.p2.artifact.processors.pgp.PGPSignatureVerifier;
 import org.eclipse.equinox.internal.p2.artifact.repository.simple.SimpleArtifactDescriptor;
 import org.eclipse.equinox.internal.p2.core.helpers.LogHelper;
 import org.eclipse.equinox.internal.p2.repository.Transport;
@@ -47,6 +46,13 @@ public class MirrorRequest extends ArtifactRequest {
 	 * related to transport, but rather a problem with the processing step.
 	 */
 	public static final int ARTIFACT_PROCESSING_ERROR = 2;
+
+	/**
+	 * A boolean property controlling whether reporting download statistics is
+	 * enabled.
+	 */
+	public static final boolean DOWNLOAD_STATS_ENABLED = !"false" //$NON-NLS-1$
+			.equals(Activator.getContext().getProperty("eclipse.p2.reportDownloadStatistics")); //$NON-NLS-1$
 
 	/**
 	 * Maximum number of times a request for a single artifact should be tried
@@ -201,14 +207,6 @@ public class MirrorRequest extends ArtifactRequest {
 			((ArtifactDescriptor) destinationDescriptor).addProperties(targetDescriptorProperties);
 		if (targetRepositoryProperties != null && destinationDescriptor instanceof SimpleArtifactDescriptor)
 			((SimpleArtifactDescriptor) destinationDescriptor).addRepositoryProperties(targetRepositoryProperties);
-		if (isCanonical && destinationDescriptor instanceof ArtifactDescriptor) {
-			// keep some safety properties
-			if (sourceDescriptor.getProperty(PGPSignatureVerifier.PGP_SIGNATURES_PROPERTY_NAME) != null) {
-				((ArtifactDescriptor) destinationDescriptor)
-						.addProperties(Map.of(PGPSignatureVerifier.PGP_SIGNATURES_PROPERTY_NAME,
-								sourceDescriptor.getProperty(PGPSignatureVerifier.PGP_SIGNATURES_PROPERTY_NAME)));
-			}
-		}
 		return destinationDescriptor;
 	}
 
@@ -254,6 +252,9 @@ public class MirrorRequest extends ArtifactRequest {
 	 * Collect download statistics, if specified by the descriptor and the source repository
 	 */
 	private void collectStats(IArtifactDescriptor sourceDescriptor, IProgressMonitor monitor) {
+		if (!DOWNLOAD_STATS_ENABLED) {
+			return;
+		}
 		final String statsProperty = sourceDescriptor.getProperty(PROP_DOWNLOAD_STATS);
 		if (statsProperty == null)
 			return;

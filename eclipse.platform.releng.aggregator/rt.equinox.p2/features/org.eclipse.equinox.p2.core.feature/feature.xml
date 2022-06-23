@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.equinox.p2.core.feature"
       label="%featureName"
-      version="1.6.1100.qualifier"
+      version="1.6.1400.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -23,7 +23,7 @@
       <import feature="org.eclipse.ecf.core.feature" version="1.4.0" match="compatible"/>
       <import feature="org.eclipse.ecf.core.ssl.feature" version="1.1.0" match="compatible"/>
       <import feature="org.eclipse.ecf.filetransfer.feature" version="3.13.7" match="compatible"/>
-      <import feature="org.eclipse.ecf.filetransfer.httpclient45.feature" version="1.0.0" match="compatible"/>
+      <import feature="org.eclipse.ecf.filetransfer.httpclient5.feature" version="1.0.0" match="compatible"/>
       <import feature="org.eclipse.ecf.filetransfer.ssl.feature" version="1.1.0" match="compatible"/>
    </requires>
 
@@ -112,20 +112,6 @@
          unpack="false"/>
 
    <plugin
-         id="org.sat4j.core"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.sat4j.pb"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.equinox.frameworkadmin"
          download-size="0"
          install-size="0"
@@ -141,6 +127,13 @@
 
    <plugin
          id="org.eclipse.equinox.preferences"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.osgi.service.prefs"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -184,7 +177,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.equinox.security.freebsd.amd64"
+         id="org.eclipse.equinox.security.freebsd"
          os="freebsd"
          arch="amd64"
          download-size="0"

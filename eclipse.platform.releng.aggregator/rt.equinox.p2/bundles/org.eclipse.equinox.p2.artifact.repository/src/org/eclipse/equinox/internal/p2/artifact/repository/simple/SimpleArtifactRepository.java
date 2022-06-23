@@ -29,10 +29,12 @@ import java.util.jar.JarOutputStream;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.equinox.internal.p2.artifact.processors.checksum.ChecksumUtilities;
+import org.eclipse.equinox.internal.p2.artifact.processors.checksum.ChecksumVerifier;
 import org.eclipse.equinox.internal.p2.artifact.processors.pgp.PGPSignatureVerifier;
 import org.eclipse.equinox.internal.p2.artifact.repository.*;
 import org.eclipse.equinox.internal.p2.artifact.repository.Messages;
 import org.eclipse.equinox.internal.p2.core.helpers.FileUtils;
+import org.eclipse.equinox.internal.p2.core.helpers.LogHelper;
 import org.eclipse.equinox.internal.p2.metadata.ArtifactKey;
 import org.eclipse.equinox.internal.p2.metadata.expression.CompoundIterator;
 import org.eclipse.equinox.internal.p2.metadata.index.IndexProvider;
@@ -119,7 +121,7 @@ public class SimpleArtifactRepository extends AbstractArtifactRepository impleme
 
 	private long cacheTimestamp = 0l;
 
-	public class ArtifactOutputStream extends OutputStream implements IStateful {
+	public class ArtifactOutputStream extends OutputStream implements IStateful, IAdaptable {
 		private boolean closed;
 		private long count = 0;
 		private IArtifactDescriptor descriptor;
@@ -202,6 +204,14 @@ public class SimpleArtifactRepository extends AbstractArtifactRepository impleme
 
 		public void setFirstLink(OutputStream value) {
 			firstLink = value;
+		}
+
+		@Override
+		public <T> T getAdapter(Class<T> adapter) {
+			if (adapter.isInstance(descriptor)) {
+				return adapter.cast(descriptor);
+			}
+			return null;
 		}
 	}
 
@@ -502,7 +512,13 @@ public class SimpleArtifactRepository extends AbstractArtifactRepository impleme
 			steps.add(new ZipVerifierStep());
 
 		Set<String> skipChecksums = DOWNLOAD_MD5_CHECKSUM_ENABLED ? Collections.emptySet() : Collections.singleton(ChecksumHelper.MD5);
-		addChecksumVerifiers(descriptor, steps, skipChecksums, IArtifactDescriptor.DOWNLOAD_CHECKSUM);
+		ArrayList<ProcessingStep> downloadChecksumSteps = new ArrayList<>();
+		addChecksumVerifiers(descriptor, downloadChecksumSteps, skipChecksums, IArtifactDescriptor.DOWNLOAD_CHECKSUM);
+		if (downloadChecksumSteps.isEmpty() && !isLocal()) {
+			LogHelper.log(new Status(IStatus.WARNING, Activator.ID,
+					NLS.bind(Messages.noDigestAlgorithmToVerifyDownload, descriptor.getArtifactKey())));
+		}
+		steps.addAll(downloadChecksumSteps);
 
 		// Add steps here if needed
 		if (steps.isEmpty())
@@ -514,7 +530,8 @@ public class SimpleArtifactRepository extends AbstractArtifactRepository impleme
 
 	private void addChecksumVerifiers(IArtifactDescriptor descriptor, ArrayList<ProcessingStep> steps, Set<String> skipChecksums, String property) {
 		if (CHECKSUMS_ENABLED) {
-			Collection<ProcessingStep> checksumVerifiers = ChecksumUtilities.getChecksumVerifiers(descriptor, property, skipChecksums);
+			Collection<ChecksumVerifier> checksumVerifiers = ChecksumUtilities.getChecksumVerifiers(descriptor,
+					property, skipChecksums);
 			steps.addAll(checksumVerifiers);
 		}
 	}

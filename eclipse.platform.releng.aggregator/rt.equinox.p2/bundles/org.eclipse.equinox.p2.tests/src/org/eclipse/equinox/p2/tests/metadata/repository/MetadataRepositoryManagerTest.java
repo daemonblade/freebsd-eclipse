@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Copyright (c) 2007, 2018 IBM Corporation and others.
+ *  Copyright (c) 2007, 2021 IBM Corporation and others.
  *
  *  This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,8 @@
  *     Red Hat Inc. - Bug 460967
  *******************************************************************************/
 package org.eclipse.equinox.p2.tests.metadata.repository;
+
+import static org.junit.Assert.assertNotEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -379,23 +381,20 @@ public class MetadataRepositoryManagerTest extends AbstractProvisioningTest {
 	 * cache is updated when it becomes stale.
 	 */
 	public void testMetadataCachingRemoteRepo() throws URISyntaxException, ProvisionException {
-		URI repoLocation = new URI("http://download.eclipse.org/eclipse/updates/3.4milestones/");
+		URI repoLocation = new URI("https://download.eclipse.org/eclipse/updates/4.21/R-4.21-202109060500/");
 		if (!repoAvailable(repoLocation))
 			return;
 		IAgentLocation agentLocation = ServiceHelper.getService(TestActivator.getContext(), IAgentLocation.class);
-		URI dataArea = agentLocation.getDataArea("org.eclipse.equinox.p2.metadata.repository/cache/");
+		URI dataArea = agentLocation.getDataArea("org.eclipse.equinox.p2.repository/cache/");
 		File dataAreaFile = URIUtil.toFile(dataArea);
-		File cacheFileXML = new File(dataAreaFile, "content" + repoLocation.hashCode() + ".xml");
-		File cacheFileJAR = new File(dataAreaFile, "content" + repoLocation.hashCode() + ".jar");
-		File cacheFile;
+		File cacheFile = new File(dataAreaFile,
+				Integer.toString(URIUtil.append(repoLocation, "content.xml.xz").hashCode())); // as implemented in
+																							// XZedSimpleMetadataRepository
+																							// and CacheManager
 
 		// load a remote repository and check that a local cache was created
 		manager.loadRepository(repoLocation, null);
-		assertTrue("Cache file was not created.", cacheFileXML.exists() || cacheFileJAR.exists());
-		if (cacheFileXML.exists())
-			cacheFile = cacheFileXML;
-		else
-			cacheFile = cacheFileJAR;
+		assertTrue("Cache file was not created.", cacheFile.exists());
 
 		// modify the last modified date to be older than the remote file
 		cacheFile.setLastModified(0);
@@ -403,7 +402,7 @@ public class MetadataRepositoryManagerTest extends AbstractProvisioningTest {
 		manager.removeRepository(repoLocation);
 		manager.loadRepository(repoLocation, null);
 		long lastModified = cacheFile.lastModified();
-		assertTrue(0 != lastModified);
+		assertNotEquals(0, lastModified);
 
 		// reload the repository and check that the cache was not updated
 		manager.loadRepository(repoLocation, null);
@@ -505,9 +504,9 @@ public class MetadataRepositoryManagerTest extends AbstractProvisioningTest {
 			getEventBus().removeListener(referenceCollector);
 		}
 		assertEquals("1.0", 4, references.size());
-		assertTrue("1.1", references.contains(new URI("http://download.eclipse.org/url/with/spaces/a%20b")));
+		assertTrue("1.1", references.contains(new URI("https://download.eclipse.org/url/with/spaces/a%20b")));
 		assertTrue("1.2", references.contains(new URI("file:/c:/tmp/url%20with%20spaces/")));
-		assertTrue("1.3", references.contains(new URI("http://download.eclipse.org/uri/with/spaces/a%20b")));
+		assertTrue("1.3", references.contains(new URI("https://download.eclipse.org/uri/with/spaces/a%20b")));
 		assertTrue("1.4", references.contains(new URI("file:/c:/tmp/uri%20with%20spaces/")));
 	}
 
@@ -560,7 +559,7 @@ public class MetadataRepositoryManagerTest extends AbstractProvisioningTest {
 		try {
 			IMetadataRepository repoSlash = manager.loadRepository(locationSlash, null);
 			IMetadataRepository repoNoSlash = manager.loadRepository(locationNoSlash, null);
-			assertTrue("1.0", repoNoSlash == repoSlash);
+			assertSame("1.0", repoNoSlash, repoSlash);
 		} catch (ProvisionException e) {
 			fail("1.99", e);
 		}

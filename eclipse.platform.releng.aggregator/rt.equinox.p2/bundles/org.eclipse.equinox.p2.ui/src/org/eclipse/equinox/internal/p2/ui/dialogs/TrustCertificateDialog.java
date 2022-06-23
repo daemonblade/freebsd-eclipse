@@ -17,66 +17,704 @@ package org.eclipse.equinox.internal.p2.ui.dialogs;
 import static org.eclipse.swt.events.SelectionListener.widgetSelectedAdapter;
 
 import java.io.*;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.security.cert.*;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.openpgp.PGPPublicKey;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.equinox.internal.p2.ui.ProvUIActivator;
-import org.eclipse.equinox.internal.p2.ui.ProvUIMessages;
+import org.eclipse.core.runtime.*;
+import org.eclipse.equinox.internal.p2.ui.*;
 import org.eclipse.equinox.internal.p2.ui.viewers.CertificateLabelProvider;
 import org.eclipse.equinox.internal.provisional.security.ui.X500PrincipalHelper;
-import org.eclipse.equinox.internal.provisional.security.ui.X509CertificateViewDialog;
+import org.eclipse.equinox.p2.metadata.IArtifactKey;
+import org.eclipse.equinox.p2.repository.spi.PGPPublicKeyService;
+import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.layout.TableColumnLayout;
+import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.util.Policy;
 import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.widgets.LabelFactory;
+import org.eclipse.jface.widgets.WidgetFactory;
+import org.eclipse.jface.window.Window;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.dnd.*;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.SelectionDialog;
 
 /**
  * A dialog that displays a certificate chain and asks the user if they trust
- * the certificate providers.
+ * the certificate providers. It also supports prompting about unsigned content.
  */
 public class TrustCertificateDialog extends SelectionDialog {
+	private static final String EXPORT_FILTER_PATH = "exportFilterPath"; //$NON-NLS-1$
 
-	private Object inputElement;
-	private IStructuredContentProvider contentProvider;
-
-	private static final int SIZING_SELECTION_WIDGET_HEIGHT = 250;
-	private static final int SIZING_SELECTION_WIDGET_WIDTH = 300;
-
-	CheckboxTableViewer listViewer;
+	private CheckboxTableViewer certifcateViewer;
 
 	private TreeViewer certificateChainViewer;
-	protected TreeNode parentElement;
-	protected Object selectedCertificate;
+
+	private CheckboxTableViewer artifactViewer;
+
 	private Button detailsButton;
+
+	private Button exportButton;
+
+	private boolean rememberSelectedSigners = true;
+
+	private boolean trustAlways;
+
+	private final Map<TreeNode, List<IArtifactKey>> artifactMap = new LinkedHashMap<>();
 
 	public TrustCertificateDialog(Shell parentShell, Object input) {
 		super(parentShell);
-		inputElement = input;
-		this.contentProvider = new TreeNodeContentProvider();
+
+		setShellStyle(SWT.DIALOG_TRIM | SWT.MODELESS | SWT.RESIZE | SWT.MAX | getDefaultOrientation());
+
+		if (input instanceof TreeNode[]) {
+			for (TreeNode node : (TreeNode[]) input) {
+				IArtifactKey[] associatedArtifacts = null;
+				if (node instanceof IAdaptable) {
+					associatedArtifacts = ((IAdaptable) node).getAdapter(IArtifactKey[].class);
+				}
+				artifactMap.put(node, associatedArtifacts == null ? List.of() : Arrays.asList(associatedArtifacts));
+			}
+		}
+
 		setTitle(ProvUIMessages.TrustCertificateDialog_Title);
-		setMessage(ProvUIMessages.TrustCertificateDialog_Message);
-		setShellStyle(SWT.DIALOG_TRIM | SWT.MODELESS | SWT.RESIZE | getDefaultOrientation());
+
+		boolean unsignedContent = artifactMap.keySet().stream().map(TreeNode::getValue).anyMatch(Objects::isNull);
+		boolean pgpContent = containsInstance(input, PGPPublicKey.class);
+		boolean certifcateContent = containsInstance(input, Certificate.class);
+
+		List<String> messages = new ArrayList<>();
+		if (certifcateContent || pgpContent) {
+			messages.add(ProvUIMessages.TrustCertificateDialog_Message);
+		}
+		if (unsignedContent) {
+			messages.add(ProvUIMessages.TrustCertificateDialog_MessageUnsigned);
+		}
+		if (certifcateContent || pgpContent) {
+			messages.add(ProvUIMessages.TrustCertificateDialog_MessageNameWarning);
+		}
+		if (pgpContent) {
+			messages.add(ProvUIMessages.TrustCertificateDialog_MessagePGP);
+		}
+		setMessage(String.join("  ", messages)); //$NON-NLS-1$
+
+		if (PlatformUI.isWorkbenchRunning()) {
+			PlatformUI.getWorkbench().getHelpSystem().setHelp(parentShell, IProvHelpContextIds.TRUST_DIALOG);
+		}
+	}
+
+	public boolean isRememberSelectedSigners() {
+		return rememberSelectedSigners;
+	}
+
+	public boolean isTrustAlways() {
+		return trustAlways;
+	}
+
+	@Override
+	protected Label createMessageArea(Composite composite) {
+		// Ensure that the message supports wrapping for a long text message.
+		GridData data = new GridData(SWT.FILL, SWT.FILL, true, false);
+		data.widthHint = convertWidthInCharsToPixels(120);
+		LabelFactory factory = WidgetFactory.label(SWT.WRAP).font(composite.getFont()).layoutData(data);
+		if (getMessage() != null) {
+			factory.text(getMessage());
+		}
+		return factory.create(composite);
+	}
+
+	@Override
+	protected Control createDialogArea(Composite parent) {
+		Composite mainComposite = (Composite) super.createDialogArea(parent);
+		Dialog.applyDialogFont(mainComposite);
+		initializeDialogUnits(mainComposite);
+
+		createMessageArea(mainComposite);
+
+		SashForm sashForm = new SashForm(mainComposite, SWT.VERTICAL);
+		sashForm.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+		createCertificateViewerArea(createSashFormArea(sashForm));
+
+		// Create this area only if we have keys or certificates.
+		boolean containsCertificates = containsInstance(artifactMap.keySet(), PGPPublicKey.class)
+				|| containsInstance(artifactMap.keySet(), Certificate.class);
+		if (containsCertificates) {
+			createCertficateChainViewerArea(createSashFormArea(sashForm));
+		}
+
+		// Sort the set of all artifacts and create the lower area only if there are
+		// artifacts.
+		Comparator<Object> comparator = Policy.getComparator();
+		Set<IArtifactKey> artifacts = artifactMap.values().stream().flatMap(Collection::stream)
+				.collect(Collectors.toCollection(() -> new TreeSet<>((a1, a2) -> {
+					int result = comparator.compare(a1.getId(), a2.getId());
+					if (result == 0) {
+						result = a1.getVersion().compareTo(a2.getVersion());
+						if (result == 0) {
+							result = a1.getClassifier().compareTo(a2.getClassifier());
+						}
+					}
+					return result;
+				})));
+		if (!artifacts.isEmpty()) {
+			crreateArtifactViewerArea(createSashFormArea(sashForm), artifacts);
+		}
+
+		// Set weights based on the children's preferred size.
+		Control[] children = sashForm.getChildren();
+		int[] weights = new int[children.length];
+		for (int i = 0; i < children.length; ++i) {
+			weights[i] = children[i].computeSize(SWT.DEFAULT, SWT.DEFAULT, false).y;
+		}
+		sashForm.setWeights(weights);
+
+		if (!getInitialElementSelections().isEmpty()) {
+			checkInitialSelections();
+		}
+
+		if (!artifactMap.isEmpty()) {
+			certifcateViewer.setSelection(new StructuredSelection(artifactMap.keySet().iterator().next()));
+		}
+
+		return mainComposite;
+	}
+
+	@Override
+	protected void createButtonsForButtonBar(Composite parent) {
+		createButton(parent, IDialogConstants.OK_ID, ProvUIMessages.TrustCertificateDialog_AcceptSelectedButtonLabel,
+				true);
+		createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
+		updateOkButton();
+	}
+
+	private void createButtons(Composite composite) {
+		Composite buttonComposite = new Composite(composite, SWT.NONE);
+		buttonComposite.setLayout(new RowLayout());
+
+		detailsButton = new Button(buttonComposite, SWT.NONE);
+		detailsButton.setText(ProvUIMessages.TrustCertificateDialog_Details);
+		detailsButton.addSelectionListener(new SelectionListener() {
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				X509Certificate cert = getInstance(certificateChainViewer.getSelection(), X509Certificate.class);
+				if (cert != null) {
+					CertificateLabelProvider.openDialog(getShell(), cert);
+				}
+			}
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				widgetDefaultSelected(e);
+			}
+		});
+
+		exportButton = new Button(buttonComposite, SWT.NONE);
+		exportButton.setText(ProvUIMessages.TrustCertificateDialog_Export);
+		exportButton.addSelectionListener(new SelectionListener() {
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				ISelection selection = certificateChainViewer.getSelection();
+				X509Certificate cert = getInstance(selection, X509Certificate.class);
+				PGPPublicKey key = getInstance(selection, PGPPublicKey.class);
+				if (cert != null || key != null) {
+					FileDialog destination = new FileDialog(exportButton.getShell(), SWT.SAVE);
+					destination.setFilterPath(getFilterPath(EXPORT_FILTER_PATH));
+					destination.setText(ProvUIMessages.TrustCertificateDialog_Export);
+					if (cert != null) {
+						destination.setFilterExtensions(new String[] { "*.der" }); //$NON-NLS-1$
+						destination.setFileName(cert.getSerialNumber().toString() + ".der"); //$NON-NLS-1$
+						String path = destination.open();
+						setFilterPath(EXPORT_FILTER_PATH, destination.getFilterPath());
+						if (path == null) {
+							return;
+						}
+						File destinationFile = new File(path);
+						try (FileOutputStream output = new FileOutputStream(destinationFile)) {
+							output.write(cert.getEncoded());
+						} catch (IOException | CertificateEncodingException ex) {
+							ProvUIActivator.getDefault().getLog()
+									.log(new Status(IStatus.ERROR, ProvUIActivator.PLUGIN_ID, ex.getMessage(), ex));
+						}
+					} else {
+						destination.setFilterExtensions(new String[] { "*.asc" }); //$NON-NLS-1$
+						destination.setFileName(userFriendlyFingerPrint(key) + ".asc"); //$NON-NLS-1$
+						String path = destination.open();
+						setFilterPath(EXPORT_FILTER_PATH, destination.getFilterPath());
+						if (path == null) {
+							return;
+						}
+						File destinationFile = new File(path);
+						try (OutputStream output = new ArmoredOutputStream(new FileOutputStream(destinationFile))) {
+							key.encode(output);
+						} catch (IOException ex) {
+							ProvUIActivator.getDefault().getLog()
+									.log(new Status(IStatus.ERROR, ProvUIActivator.PLUGIN_ID, ex.getMessage(), ex));
+						}
+					}
+				}
+			}
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				widgetDefaultSelected(e);
+			}
+		});
+	}
+
+	private Composite createSashFormArea(SashForm sashForm) {
+		Composite composite = new Composite(sashForm, SWT.NONE);
+		GridLayout layout = new GridLayout();
+		layout.marginHeight = 0;
+		layout.marginWidth = 0;
+		layout.verticalSpacing = convertVerticalDLUsToPixels(IDialogConstants.VERTICAL_SPACING);
+		layout.horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
+		composite.setLayout(layout);
+		return composite;
+	}
+
+	private void createCertificateViewerArea(Composite composite) {
+
+		TableColumnLayout tableColumnLayout = new TableColumnLayout(true);
+		Composite tableComposite = WidgetFactory.composite(SWT.NONE)
+				.layoutData(new GridData(SWT.FILL, SWT.FILL, true, true)).layout(tableColumnLayout).create(composite);
+		Table table = WidgetFactory
+				.table(SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION | SWT.CHECK)
+				.headerVisible(true).linesVisible(true).font(composite.getFont()).create(tableComposite);
+		certifcateViewer = new CheckboxTableViewer(table);
+		certifcateViewer.setContentProvider(new TreeNodeContentProvider());
+
+		GridData data = new GridData(GridData.FILL_BOTH);
+		data.heightHint = convertHeightInCharsToPixels(Math.min(artifactMap.keySet().size() + 2, 6)) * 3 / 2;
+		data.widthHint = convertWidthInCharsToPixels(120);
+		tableComposite.setLayoutData(data);
+
+		// This column is packed later.
+		TableViewerColumn typeColumn = createColumn(certifcateViewer, ProvUIMessages.TrustCertificateDialog_ObjectType,
+				new PGPOrX509ColumnLabelProvider(key -> "PGP", cert -> "x509", //$NON-NLS-1$ //$NON-NLS-2$
+						ProvUIMessages.TrustCertificateDialog_Unsigned),
+				tableColumnLayout, 1);
+
+		createColumn(certifcateViewer, ProvUIMessages.TrustCertificateDialog_Id,
+				new PGPOrX509ColumnLabelProvider(TrustCertificateDialog::userFriendlyFingerPrint,
+						cert -> cert.getSerialNumber().toString(), ProvUIMessages.TrustCertificateDialog_NotApplicable),
+				tableColumnLayout, 10);
+
+		createColumn(certifcateViewer, ProvUIMessages.TrustCertificateDialog_Name,
+				new PGPOrX509ColumnLabelProvider(pgp -> {
+					java.util.List<String> users = new ArrayList<>();
+					pgp.getUserIDs().forEachRemaining(users::add);
+					return String.join(", ", users); //$NON-NLS-1$
+				}, x509 -> {
+					X500PrincipalHelper principalHelper = new X500PrincipalHelper(x509.getSubjectX500Principal());
+					return principalHelper.getCN() + "; " + principalHelper.getOU() + "; " //$NON-NLS-1$ //$NON-NLS-2$
+							+ principalHelper.getO();
+				}, ProvUIMessages.TrustCertificateDialog_Unknown), tableColumnLayout, 15);
+
+		createColumn(certifcateViewer, ProvUIMessages.TrustCertificateDialog_dates,
+				new PGPOrX509ColumnLabelProvider(pgp -> {
+					if (pgp.getCreationTime().after(Date.from(Instant.now()))) {
+						return NLS.bind(ProvUIMessages.TrustCertificateDialog_NotYetValidStartDate,
+								pgp.getCreationTime());
+					}
+					long validSeconds = pgp.getValidSeconds();
+					if (validSeconds == 0) {
+						return ProvUIMessages.TrustCertificateDialog_valid;
+					}
+					Instant expires = pgp.getCreationTime().toInstant().plus(validSeconds, ChronoUnit.SECONDS);
+					return expires.isBefore(Instant.now())
+							? NLS.bind(ProvUIMessages.TrustCertificateDialog_expiredSince, expires)
+							: NLS.bind(ProvUIMessages.TrustCertificateDialog_validExpires, expires);
+				}, x509 -> {
+					try {
+						x509.checkValidity();
+						return ProvUIMessages.TrustCertificateDialog_valid;
+					} catch (CertificateExpiredException expired) {
+						return ProvUIMessages.TrustCertificateDialog_expired;
+					} catch (CertificateNotYetValidException notYetValid) {
+						return ProvUIMessages.TrustCertificateDialog_notYetValid;
+					}
+				}, ProvUIMessages.TrustCertificateDialog_NotApplicable), tableColumnLayout, 10);
+
+		createMenu(certifcateViewer);
+
+		addSelectionButtons(composite);
+
+		certifcateViewer.addDoubleClickListener(e -> {
+			StructuredSelection selection = (StructuredSelection) e.getSelection();
+			X509Certificate cert = getInstance(selection, X509Certificate.class);
+			if (cert != null) {
+				// create and open dialog for certificate chain
+				CertificateLabelProvider.openDialog(getShell(), cert);
+			}
+		});
+
+		certifcateViewer.addSelectionChangedListener(e -> {
+			if (certificateChainViewer != null) {
+				TreeNode treeNode = getInstance(e.getSelection(), TreeNode.class);
+				if (treeNode != null) {
+					certificateChainViewer.setInput(new TreeNode[] { treeNode });
+					certificateChainViewer.setSelection(new StructuredSelection(treeNode));
+				} else {
+					certificateChainViewer.setInput(new TreeNode[] {});
+				}
+			}
+
+			updateOkButton();
+		});
+
+		certifcateViewer.setInput(artifactMap.keySet().toArray(TreeNode[]::new));
+
+		typeColumn.getColumn().pack();
+	}
+
+	private void createCertficateChainViewerArea(Composite composite) {
+		certificateChainViewer = new TreeViewer(composite, SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		int treeSize = artifactMap.keySet().stream().map(TrustCertificateDialog::computeTreeSize)
+				.max(Integer::compareTo).orElse(0);
+		data.heightHint = convertHeightInCharsToPixels(Math.min(treeSize, 5));
+		data.widthHint = convertWidthInCharsToPixels(120);
+		certificateChainViewer.getTree().setLayoutData(data);
+
+		certificateChainViewer.setAutoExpandLevel(3);
+		certificateChainViewer.setContentProvider(new TreeNodeContentProvider());
+		certificateChainViewer.setLabelProvider(new CertificateLabelProvider() {
+			@Override
+			public String getText(Object element) {
+				if (element instanceof TreeNode) {
+					Object o = ((TreeNode) element).getValue();
+					if (o instanceof PGPPublicKey) {
+						PGPPublicKey key = (PGPPublicKey) o;
+						String userFriendlyFingerPrint = userFriendlyFingerPrint(key);
+						java.util.List<String> users = new ArrayList<>();
+						key.getUserIDs().forEachRemaining(users::add);
+						String userIDs = String.join(", ", users); //$NON-NLS-1$
+						if (!userIDs.isEmpty()) {
+							return userFriendlyFingerPrint + " [" + userIDs + "]"; //$NON-NLS-1$//$NON-NLS-2$
+						}
+						return userFriendlyFingerPrint;
+					} else if (o == null) {
+						return ProvUIMessages.TrustCertificateDialog_Unsigned;
+					}
+				}
+
+				return super.getText(element);
+			}
+		});
+
+		certificateChainViewer.addSelectionChangedListener(event -> {
+			ISelection selection = event.getSelection();
+			boolean containsCertificate = containsInstance(selection, X509Certificate.class);
+			detailsButton.setEnabled(containsCertificate);
+			exportButton.setEnabled(containsCertificate || containsInstance(selection, PGPPublicKey.class));
+		});
+
+		createMenu(certificateChainViewer);
+
+		createButtons(composite);
+	}
+
+	private void crreateArtifactViewerArea(Composite composite, Set<IArtifactKey> artifacts) {
+		TableColumnLayout tableColumnLayout = new TableColumnLayout(true);
+		Composite tableComposite = WidgetFactory.composite(SWT.NONE)
+				.layoutData(new GridData(SWT.FILL, SWT.FILL, true, true)).layout(tableColumnLayout).create(composite);
+		Table table = WidgetFactory.table(SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION)
+				.headerVisible(true).linesVisible(true).font(composite.getFont()).create(tableComposite);
+		artifactViewer = new CheckboxTableViewer(table);
+		artifactViewer.setContentProvider(ArrayContentProvider.getInstance());
+
+		GridData data = new GridData(GridData.FILL_BOTH);
+		data.heightHint = convertHeightInCharsToPixels(Math.min(artifacts.size() + 1, 10)) * 3 / 2;
+		data.widthHint = convertWidthInCharsToPixels(120);
+		tableComposite.setLayoutData(data);
+
+		Font font = table.getFont();
+		FontData[] fontDatas = font.getFontData();
+		for (FontData fontData : fontDatas) {
+			fontData.setStyle(fontData.getStyle() | SWT.BOLD);
+		}
+		Font boldFont = new Font(table.getDisplay(), fontDatas);
+		composite.addDisposeListener(e -> boldFont.dispose());
+
+		Function<IArtifactKey, Font> fontProvider = e -> {
+			for (Object object : certifcateViewer.getCheckedElements()) {
+				List<IArtifactKey> list = artifactMap.get(object);
+				if (list != null && list.contains(e)) {
+					return boldFont;
+				}
+			}
+			return null;
+		};
+
+		certifcateViewer.addCheckStateListener(e -> artifactViewer.refresh(true));
+
+		artifactViewer.addPostSelectionChangedListener(e -> {
+			if (table.isFocusControl()) {
+				List<?> selection = e.getStructuredSelection().toList();
+				List<TreeNode> newSelection = new ArrayList<>();
+				LOOP: for (Map.Entry<TreeNode, List<IArtifactKey>> entry : artifactMap.entrySet()) {
+					List<IArtifactKey> value = entry.getValue();
+					if (value != null) {
+						for (IArtifactKey key : value) {
+							if (selection.contains(key)) {
+								newSelection.add(entry.getKey());
+								continue LOOP;
+							}
+						}
+					}
+				}
+
+				certifcateViewer.setSelection(new StructuredSelection(newSelection), true);
+			}
+		});
+
+		certifcateViewer.addPostSelectionChangedListener(e -> {
+			if (!table.isFocusControl()) {
+				Set<IArtifactKey> associatedArtifacts = new LinkedHashSet<>();
+				for (Object object : e.getStructuredSelection()) {
+					List<IArtifactKey> list = artifactMap.get(object);
+					if (list != null) {
+						associatedArtifacts.addAll(list);
+					}
+				}
+
+				artifactViewer.setSelection(new StructuredSelection(associatedArtifacts.toArray()), true);
+
+				// Reorder the artifacts so that the selected ones are first.
+				LinkedHashSet<IArtifactKey> newInput = new LinkedHashSet<>(artifacts);
+				newInput.retainAll(associatedArtifacts);
+				newInput.addAll(artifacts);
+				artifactViewer.setInput(newInput);
+
+				artifactViewer.setSelection(new StructuredSelection(associatedArtifacts.toArray()), true);
+			}
+		});
+
+		TableViewerColumn classifierColumn = createColumn(artifactViewer,
+				ProvUIMessages.TrustCertificateDialog_Classifier,
+				new ArtifactLabelProvider(a -> a.getClassifier(), fontProvider), tableColumnLayout, 1);
+		createColumn(artifactViewer, ProvUIMessages.TrustCertificateDialog_ArtifactId,
+				new ArtifactLabelProvider(a -> a.getId(), fontProvider), tableColumnLayout, 10);
+		createColumn(artifactViewer, ProvUIMessages.TrustCertificateDialog_Version,
+				new ArtifactLabelProvider(a -> a.getVersion().toString(), fontProvider), tableColumnLayout, 10);
+
+		artifactViewer.setInput(artifacts);
+
+		classifierColumn.getColumn().pack();
+	}
+
+	private void createMenu(StructuredViewer viewer) {
+		Control control = viewer.getControl();
+		Menu menu = new Menu(control);
+		control.setMenu(menu);
+		MenuItem item = new MenuItem(menu, SWT.PUSH);
+		item.setText(ProvUIMessages.TrustCertificateDialog_CopyFingerprint);
+		item.addSelectionListener(widgetSelectedAdapter(e -> {
+			PGPPublicKey key = getInstance(viewer.getSelection(), PGPPublicKey.class);
+			if (key != null) {
+				Clipboard clipboard = new Clipboard(getShell().getDisplay());
+				clipboard.setContents(new Object[] { userFriendlyFingerPrint(key) },
+						new Transfer[] { TextTransfer.getInstance() });
+				clipboard.dispose();
+			}
+		}));
+		viewer.addSelectionChangedListener(
+				e -> item.setEnabled(containsInstance(e.getSelection(), PGPPublicKey.class)));
+	}
+
+	private TableViewerColumn createColumn(TableViewer tableViewer, String text, ColumnLabelProvider labelProvider,
+			TableColumnLayout tableColumnLayout, int columnWeight) {
+		TableViewerColumn column = new TableViewerColumn(tableViewer, SWT.NONE);
+		column.getColumn().setText(text);
+		column.setLabelProvider(labelProvider);
+		tableColumnLayout.setColumnData(column.getColumn(), new ColumnWeightData(columnWeight));
+		return column;
+	}
+
+	/**
+	 * Visually checks the previously-specified elements in this dialog's list
+	 * viewer.
+	 */
+	private void checkInitialSelections() {
+		Iterator<?> itemsToCheck = getInitialElementSelections().iterator();
+		while (itemsToCheck.hasNext()) {
+			certifcateViewer.setChecked(itemsToCheck.next(), true);
+			if (artifactViewer != null) {
+				artifactViewer.refresh(true);
+			}
+		}
+	}
+
+	/**
+	 * Add the selection and deselection buttons to the dialog.
+	 *
+	 * @param composite org.eclipse.swt.widgets.Composite
+	 */
+	private void addSelectionButtons(Composite composite) {
+		int horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
+
+		Composite buttonArea = new Composite(composite, SWT.NONE);
+		GridLayout buttonAreaLayout = new GridLayout();
+		buttonAreaLayout.numColumns = 2;
+		buttonAreaLayout.marginWidth = 0;
+		buttonAreaLayout.horizontalSpacing = horizontalSpacing;
+		buttonArea.setLayout(buttonAreaLayout);
+		buttonArea.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+		Composite leftButtonArea = new Composite(buttonArea, SWT.NONE);
+		GridLayout leftButtonAreaLayout = new GridLayout();
+		leftButtonAreaLayout.numColumns = 0;
+		leftButtonAreaLayout.marginWidth = 0;
+		leftButtonAreaLayout.horizontalSpacing = horizontalSpacing;
+		leftButtonArea.setLayout(leftButtonAreaLayout);
+		leftButtonArea.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, true, false));
+
+		if (containsInstance(artifactMap.keySet(), PGPPublicKey.class)
+				|| containsInstance(artifactMap.keySet(), Certificate.class)) {
+			Button rememberSelectionButton = createCheckButton(leftButtonArea,
+					ProvUIMessages.TrustCertificateDialog_RememberSigners);
+			rememberSelectionButton.setSelection(rememberSelectedSigners);
+			rememberSelectionButton.addSelectionListener(widgetSelectedAdapter(e -> {
+				rememberSelectedSigners = rememberSelectionButton.getSelection();
+			}));
+		}
+
+		Button trustAlwaysButton = createCheckButton(leftButtonArea, ProvUIMessages.TrustCertificateDialog_AlwaysTrust);
+		trustAlwaysButton.addSelectionListener(widgetSelectedAdapter(e -> {
+			if (trustAlwaysButton.getSelection()) {
+				// Prompt the user to ensure they really understand what they've chosen, the
+				// risk, and where the preference is stored if they wish to change it in the
+				// future. Also ensure that the default button is no so that they must
+				// explicitly click the yes button, not just hit enter.
+				MessageDialog messageDialog = new MessageDialog(getShell(),
+						ProvUIMessages.TrustCertificateDialog_AlwaysTrustConfirmationTitle, null,
+						ProvUIMessages.TrustCertificateDialog_AlwaysTrustConfirmationMessage, MessageDialog.QUESTION,
+						new String[] { ProvUIMessages.TrustCertificateDialog_AlwaysTrustYes,
+								ProvUIMessages.TrustCertificateDialog_AlwaysTrustNo },
+						1) {
+					@Override
+					public Image getImage() {
+						return getWarningImage();
+					}
+				};
+				int result = messageDialog.open();
+				if (result != Window.OK) {
+					// Restore the checkbox state.
+					trustAlwaysButton.setSelection(false);
+				} else {
+					certifcateViewer.setAllChecked(true);
+					if (artifactViewer != null) {
+						artifactViewer.refresh(true);
+					}
+					updateOkButton();
+				}
+			}
+			trustAlways = trustAlwaysButton.getSelection();
+		}));
+
+		Composite rightButtonArea = new Composite(buttonArea, SWT.NONE);
+		GridLayout rightButtonAreaLayout = new GridLayout();
+		rightButtonAreaLayout.numColumns = 0;
+		rightButtonAreaLayout.marginWidth = 0;
+		rightButtonAreaLayout.horizontalSpacing = horizontalSpacing;
+		rightButtonArea.setLayout(rightButtonAreaLayout);
+		rightButtonArea.setLayoutData(new GridData(SWT.END, SWT.TOP, true, false));
+
+		Button selectButton = createButton(rightButtonArea, IDialogConstants.SELECT_ALL_ID,
+				ProvUIMessages.TrustCertificateDialog_SelectAll, false);
+		selectButton.addSelectionListener(widgetSelectedAdapter(e -> {
+			certifcateViewer.setAllChecked(true);
+			if (artifactViewer != null) {
+				artifactViewer.refresh(true);
+			}
+			updateOkButton();
+		}));
+
+		Button deselectButton = createButton(rightButtonArea, IDialogConstants.DESELECT_ALL_ID,
+				ProvUIMessages.TrustCertificateDialog_DeselectAll, false);
+		deselectButton.addSelectionListener(widgetSelectedAdapter(e -> {
+			certifcateViewer.setAllChecked(false);
+			if (artifactViewer != null) {
+				artifactViewer.refresh(true);
+			}
+			updateOkButton();
+		}));
+	}
+
+	protected Button createCheckButton(Composite parent, String label) {
+		((GridLayout) parent.getLayout()).numColumns++;
+		Button button = WidgetFactory.button(SWT.CHECK).text(label).font(JFaceResources.getDialogFont()).create(parent);
+		setButtonLayoutData(button);
+		return button;
+	}
+
+	private String getFilterPath(String key) {
+		IDialogSettings dialogSettings = DialogSettings
+				.getOrCreateSection(ProvUIActivator.getDefault().getDialogSettings(), getClass().getName());
+		String filterPath = dialogSettings.get(key);
+		if (filterPath == null) {
+			filterPath = System.getProperty("user.home"); //$NON-NLS-1$
+		}
+		return filterPath;
+	}
+
+	private void setFilterPath(String key, String filterPath) {
+		if (filterPath != null) {
+			IDialogSettings dialogSettings = DialogSettings
+					.getOrCreateSection(ProvUIActivator.getDefault().getDialogSettings(), getClass().getName());
+			dialogSettings.put(key, filterPath);
+		}
+	}
+
+	private void updateOkButton() {
+		Button okButton = getOkButton();
+		if (okButton != null) {
+			certifcateViewer.getCheckedElements();
+			Object[] checkedElements = certifcateViewer.getCheckedElements();
+			Set<IArtifactKey> artifacts = artifactMap.values().stream().flatMap(Collection::stream)
+					.collect(Collectors.toSet());
+			if (artifacts.isEmpty()) {
+				okButton.setEnabled(checkedElements.length > 0);
+			} else {
+				for (Object checkElement : checkedElements) {
+					artifacts.removeAll(artifactMap.get(checkElement));
+				}
+				okButton.setEnabled(artifacts.isEmpty());
+			}
+		}
+	}
+
+	@Override
+	protected void okPressed() {
+		setResult(Arrays.asList(certifcateViewer.getCheckedElements()));
+		super.okPressed();
 	}
 
 	private static class PGPOrX509ColumnLabelProvider extends ColumnLabelProvider {
 		private Function<PGPPublicKey, String> pgpMap;
 		private Function<X509Certificate, String> x509map;
+		private String unsignedValue;
 
 		public PGPOrX509ColumnLabelProvider(Function<PGPPublicKey, String> pgpMap,
-				Function<X509Certificate, String> x509map) {
+				Function<X509Certificate, String> x509map, String unsignedValue) {
 			this.pgpMap = pgpMap;
 			this.x509map = x509map;
+			this.unsignedValue = unsignedValue;
 		}
 
 		@Override
@@ -90,278 +728,77 @@ public class TrustCertificateDialog extends SelectionDialog {
 			if (element instanceof X509Certificate) {
 				return x509map.apply((X509Certificate) element);
 			}
+
+			if (element == null) {
+				return unsignedValue;
+			}
 			return super.getText(element);
 		}
 	}
 
-	@Override
-	protected Control createDialogArea(Composite parent) {
-		Composite composite = createUpperDialogArea(parent);
-		certificateChainViewer = new TreeViewer(composite, SWT.BORDER);
-		GridLayout layout = new GridLayout();
-		certificateChainViewer.getTree().setLayout(layout);
-		GridData data = new GridData(GridData.FILL_BOTH);
-		data.grabExcessHorizontalSpace = true;
-		certificateChainViewer.getTree().setLayoutData(data);
-		certificateChainViewer.setAutoExpandLevel(AbstractTreeViewer.ALL_LEVELS);
-		certificateChainViewer.setContentProvider(new TreeNodeContentProvider());
-		certificateChainViewer.setLabelProvider(new CertificateLabelProvider());
-		certificateChainViewer.addSelectionChangedListener(getChainSelectionListener());
-		if (inputElement instanceof Object[]) {
-			ISelection selection = null;
-			Object[] nodes = (Object[]) inputElement;
-			if (nodes.length > 0) {
-				selection = new StructuredSelection(nodes[0]);
-				certificateChainViewer.setInput(new TreeNode[] { (TreeNode) nodes[0] });
-				selectedCertificate = nodes[0];
-			}
-			listViewer.setSelection(selection);
-		}
-		listViewer.addDoubleClickListener(getDoubleClickListener());
-		listViewer.addSelectionChangedListener(getParentSelectionListener());
-		createButtons(composite);
-		detailsButton.setEnabled(selectedCertificate instanceof X509Certificate);
-		return composite;
-	}
+	private static class ArtifactLabelProvider extends ColumnLabelProvider {
+		private Function<IArtifactKey, String> labelProvider;
+		private Function<IArtifactKey, Font> fontProvider;
 
-	@Override
-	protected void createButtonsForButtonBar(Composite parent) {
-		createButton(parent, IDialogConstants.OK_ID, ProvUIMessages.TrustCertificateDialog_AcceptSelectedButtonLabel,
-				true);
-		createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
-		super.getOkButton().setEnabled(false);
-	}
-
-	private void createButtons(Composite composite) {
-		Composite buttonComposite = new Composite(composite, SWT.NONE);
-		buttonComposite.setLayout(new RowLayout());
-		// Details button to view certificate chain
-		detailsButton = new Button(buttonComposite, SWT.NONE);
-		detailsButton.setText(ProvUIMessages.TrustCertificateDialog_Details);
-		detailsButton.addSelectionListener(new SelectionListener() {
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				Object o = selectedCertificate;
-				if (selectedCertificate instanceof TreeNode) {
-					o = ((TreeNode) selectedCertificate).getValue();
-				}
-				if (o instanceof X509Certificate) {
-					X509Certificate cert = (X509Certificate) o;
-					X509CertificateViewDialog certificateDialog = new X509CertificateViewDialog(getShell(), cert);
-					certificateDialog.open();
-				}
-			}
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				widgetDefaultSelected(e);
-			}
-		});
-
-		Button exportButton = new Button(buttonComposite, SWT.NONE);
-		exportButton.setText(ProvUIMessages.TrustCertificateDialog_Export);
-		exportButton.addSelectionListener(new SelectionListener() {
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				Object o = selectedCertificate;
-				if (selectedCertificate instanceof TreeNode) {
-					o = ((TreeNode) selectedCertificate).getValue();
-				}
-				FileDialog destination = new FileDialog(detailsButton.getShell(), SWT.SAVE);
-				destination.setText(ProvUIMessages.TrustCertificateDialog_Export);
-				if (o instanceof X509Certificate) {
-					X509Certificate cert = (X509Certificate) o;
-					destination.setFilterExtensions(new String[] { "*.der" }); //$NON-NLS-1$
-					destination.setFileName(cert.getSerialNumber().toString() + ".der"); //$NON-NLS-1$
-					String path = destination.open();
-					if (path == null) {
-						return;
-					}
-					File destinationFile = new File(path);
-					try (FileOutputStream output = new FileOutputStream(destinationFile)) {
-						output.write(cert.getEncoded());
-					} catch (IOException | CertificateEncodingException ex) {
-						ProvUIActivator.getDefault().getLog()
-								.log(new Status(IStatus.ERROR, ProvUIActivator.PLUGIN_ID, ex.getMessage(), ex));
-					}
-				} else if (o instanceof PGPPublicKey) {
-					PGPPublicKey key = (PGPPublicKey) o;
-					destination.setFilterExtensions(new String[] { "*.asc" }); //$NON-NLS-1$
-					destination.setFileName(key.getKeyID() + ".asc"); //$NON-NLS-1$
-					String path = destination.open();
-					if (path == null) {
-						return;
-					}
-					File destinationFile = new File(path);
-					try (OutputStream output = new ArmoredOutputStream(new FileOutputStream(destinationFile))) {
-						output.write(key.getEncoded());
-					} catch (IOException ex) {
-						ProvUIActivator.getDefault().getLog()
-								.log(new Status(IStatus.ERROR, ProvUIActivator.PLUGIN_ID, ex.getMessage(), ex));
-					}
-				}
-			}
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				widgetDefaultSelected(e);
-			}
-
-		});
-	}
-
-	private Composite createUpperDialogArea(Composite parent) {
-		Composite composite = (Composite) super.createDialogArea(parent);
-		initializeDialogUnits(composite);
-		createMessageArea(composite);
-
-		listViewer = CheckboxTableViewer.newCheckList(composite, SWT.BORDER);
-		GridData data = new GridData(GridData.FILL_BOTH);
-		data.heightHint = SIZING_SELECTION_WIDGET_HEIGHT;
-		data.widthHint = SIZING_SELECTION_WIDGET_WIDTH;
-		listViewer.getTable().setLayoutData(data);
-
-		listViewer.setContentProvider(contentProvider);
-		TableViewerColumn typeColumn = new TableViewerColumn(listViewer, SWT.NONE);
-		typeColumn.getColumn().setWidth(80);
-		typeColumn.getColumn().setText(ProvUIMessages.TrustCertificateDialog_ObjectType);
-		typeColumn.setLabelProvider(new PGPOrX509ColumnLabelProvider(key -> "PGP", cert -> "x509")); //$NON-NLS-1$ //$NON-NLS-2$
-		TableViewerColumn idColumn = new TableViewerColumn(listViewer, SWT.NONE);
-		idColumn.getColumn().setWidth(200);
-		idColumn.getColumn().setText(ProvUIMessages.TrustCertificateDialog_Id);
-		idColumn.setLabelProvider(new PGPOrX509ColumnLabelProvider(key -> Long.toString(key.getKeyID()),
-				cert -> cert.getSerialNumber().toString()));
-		TableViewerColumn signerColumn = new TableViewerColumn(listViewer, SWT.NONE);
-		signerColumn.getColumn().setText(ProvUIMessages.TrustCertificateDialog_Name);
-		signerColumn.getColumn().setWidth(400);
-		signerColumn.setLabelProvider(new PGPOrX509ColumnLabelProvider(pgp -> {
-			java.util.List<String> users = new ArrayList<>();
-			pgp.getUserIDs().forEachRemaining(users::add);
-			return String.join(",", users); //$NON-NLS-1$
-		}, x509 -> {
-			X500PrincipalHelper principalHelper = new X500PrincipalHelper(x509.getSubjectX500Principal());
-			return principalHelper.getCN() + "; " + principalHelper.getOU() + "; " //$NON-NLS-1$ //$NON-NLS-2$
-					+ principalHelper.getO();
-		}));
-		listViewer.getTable().setHeaderVisible(true);
-
-		addSelectionButtons(composite);
-
-		listViewer.setInput(inputElement);
-
-		if (!getInitialElementSelections().isEmpty()) {
-			checkInitialSelections();
+		public ArtifactLabelProvider(Function<IArtifactKey, String> labelProvider,
+				Function<IArtifactKey, Font> fontProvider) {
+			this.labelProvider = labelProvider;
+			this.fontProvider = fontProvider;
 		}
 
-		Dialog.applyDialogFont(composite);
+		@Override
+		public String getText(Object element) {
+			return labelProvider.apply((IArtifactKey) element);
+		}
 
-		return composite;
-	}
-
-	/**
-	 * Visually checks the previously-specified elements in this dialog's list
-	 * viewer.
-	 */
-	private void checkInitialSelections() {
-		Iterator<?> itemsToCheck = getInitialElementSelections().iterator();
-		while (itemsToCheck.hasNext()) {
-			listViewer.setChecked(itemsToCheck.next(), true);
+		@Override
+		public Font getFont(Object element) {
+			return fontProvider.apply((IArtifactKey) element);
 		}
 	}
 
-	/**
-	 * Add the selection and deselection buttons to the dialog.
-	 *
-	 * @param composite org.eclipse.swt.widgets.Composite
-	 */
-	private void addSelectionButtons(Composite composite) {
-		Composite buttonComposite = new Composite(composite, SWT.NONE);
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 0;
-		layout.marginWidth = 0;
-		layout.horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
-		buttonComposite.setLayout(layout);
-		buttonComposite.setLayoutData(new GridData(SWT.END, SWT.TOP, true, false));
-
-		Button selectButton = createButton(buttonComposite, IDialogConstants.SELECT_ALL_ID,
-				ProvUIMessages.TrustCertificateDialog_SelectAll, false);
-
-		SelectionListener listener = widgetSelectedAdapter(e -> {
-			listViewer.setAllChecked(true);
-			getOkButton().setEnabled(true);
-		});
-		selectButton.addSelectionListener(listener);
-
-		Button deselectButton = createButton(buttonComposite, IDialogConstants.DESELECT_ALL_ID,
-				ProvUIMessages.TrustCertificateDialog_DeselectAll, false);
-
-		listener = widgetSelectedAdapter(e -> {
-			listViewer.setAllChecked(false);
-			getOkButton().setEnabled(false);
-		});
-		deselectButton.addSelectionListener(listener);
-	}
-
-	private ISelectionChangedListener getChainSelectionListener() {
-		return event -> {
-			ISelection selection = event.getSelection();
-			if (selection instanceof StructuredSelection) {
-				selectedCertificate = ((StructuredSelection) selection).getFirstElement();
-				detailsButton.setEnabled(selectedCertificate instanceof X509Certificate);
-			}
-		};
-	}
-
-	public TreeViewer getCertificateChainViewer() {
-		return certificateChainViewer;
-	}
-
-	private IDoubleClickListener getDoubleClickListener() {
-		return event -> {
-			StructuredSelection selection = (StructuredSelection) event.getSelection();
-			Object selectedElement = selection.getFirstElement();
-			if (selectedElement instanceof TreeNode) {
-				TreeNode treeNode = (TreeNode) selectedElement;
-				// create and open dialog for certificate chain
-				X509CertificateViewDialog certificateViewDialog = new X509CertificateViewDialog(getShell(),
-						(X509Certificate) treeNode.getValue());
-				certificateViewDialog.open();
-			}
-		};
-	}
-
-	private ISelectionChangedListener getParentSelectionListener() {
-		return event -> {
-			ISelection selection = event.getSelection();
-			if (selection instanceof StructuredSelection) {
-				TreeNode firstElement = (TreeNode) ((StructuredSelection) selection).getFirstElement();
-				getCertificateChainViewer().setInput(new TreeNode[] { firstElement });
-				getOkButton().setEnabled(listViewer.getChecked(firstElement));
-				getCertificateChainViewer().refresh();
-			}
-		};
-	}
-
-	/**
-	 * The <code>ListSelectionDialog</code> implementation of this
-	 * <code>Dialog</code> method builds a list of the selected elements for later
-	 * retrieval by the client and closes this dialog.
-	 */
-	@Override
-	protected void okPressed() {
-		// Get the input children.
-		Object[] children = contentProvider.getElements(inputElement);
-
-		// Build a list of selected children.
+	private static int computeTreeSize(TreeNode node) {
+		int count = 1;
+		TreeNode[] children = node.getChildren();
 		if (children != null) {
-			ArrayList<Object> list = new ArrayList<>();
-			for (Object element : children) {
-				if (listViewer.getChecked(element)) {
-					list.add(element);
+			for (TreeNode child : children) {
+				count += computeTreeSize(child);
+			}
+		}
+		return count;
+	}
+
+	private static <T> T getInstance(Object element, Class<T> type) {
+		if (type.isInstance(element)) {
+			return type.cast(element);
+		} else if (element instanceof Iterable) {
+			for (Object object : ((Iterable<?>) element)) {
+				T instance = getInstance(object, type);
+				if (instance != null) {
+					return instance;
 				}
 			}
-			setResult(list);
+		} else if (element instanceof TreeNode) {
+			return getInstance(((TreeNode) element).getValue(), type);
+		} else if (element instanceof TreeNode[]) {
+			for (TreeNode child : (TreeNode[]) element) {
+				T instance = getInstance(child, type);
+				if (instance != null) {
+					return instance;
+				}
+			}
 		}
-		super.okPressed();
+		return null;
+	}
+
+	private static boolean containsInstance(Object element, Class<?> type) {
+		return getInstance(element, type) != null;
+	}
+
+	private static String userFriendlyFingerPrint(PGPPublicKey key) {
+		if (key == null) {
+			return null;
+		}
+		return PGPPublicKeyService.toHexFingerprint(key);
 	}
 }

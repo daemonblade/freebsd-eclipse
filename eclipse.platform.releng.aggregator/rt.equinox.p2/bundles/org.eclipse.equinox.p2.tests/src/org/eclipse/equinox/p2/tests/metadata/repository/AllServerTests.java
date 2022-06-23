@@ -17,11 +17,18 @@ package org.eclipse.equinox.p2.tests.metadata.repository;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.security.cert.Certificate;
+import java.util.Collections;
 import java.util.Hashtable;
-import junit.framework.*;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
 import org.eclipse.equinox.p2.core.UIServices;
 import org.eclipse.equinox.p2.tests.TestActivator;
-import org.osgi.framework.*;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
+import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.packageadmin.PackageAdmin;
 
 /**
@@ -30,7 +37,6 @@ import org.osgi.service.packageadmin.PackageAdmin;
  */
 public class AllServerTests extends TestCase {
 
-	private static final String BUNDLE_TESTSERVER = "org.eclipse.equinox.p2.testserver";
 	private static final String BUNDLE_EQUINOX_HTTP = "org.eclipse.equinox.http";
 	public static final String PROP_TESTSERVER_PORT = "org.osgi.service.http.port";
 
@@ -105,7 +111,6 @@ public class AllServerTests extends TestCase {
 
 		// Make sure these are not running
 		stopTransient(pkgAdmin, BUNDLE_EQUINOX_HTTP);
-		stopTransient(pkgAdmin, BUNDLE_TESTSERVER);
 
 		// Get an available port and assign it the "org.osgi.service.http.port" property. The
 		// server will listen to this port and all tests use it to connect.
@@ -114,8 +119,6 @@ public class AllServerTests extends TestCase {
 		// Now start them again (with our property settings)
 		if (!startTransient(pkgAdmin, BUNDLE_EQUINOX_HTTP))
 			throw new IllegalStateException("Unable to start bundle " + BUNDLE_EQUINOX_HTTP);
-		if (!startTransient(pkgAdmin, BUNDLE_TESTSERVER))
-			throw new IllegalStateException("Unable to start bundle " + BUNDLE_TESTSERVER);
 
 		// We must ensure that our IServiceUI service wins because the SDK registers one declaratively
 		Hashtable<String, Integer> properties = new Hashtable<>(1);
@@ -129,7 +132,6 @@ public class AllServerTests extends TestCase {
 		BundleContext context = TestActivator.getContext();
 		certificateUIRegistration.unregister();
 		PackageAdmin pkgAdmin = context.getService(packageAdminRef);
-		stopTransient(pkgAdmin, BUNDLE_TESTSERVER);
 		stopTransient(pkgAdmin, BUNDLE_EQUINOX_HTTP);
 		context.ungetService(packageAdminRef);
 		setUpCounter = 0;
@@ -186,7 +188,7 @@ public class AllServerTests extends TestCase {
 		 */
 		@Override
 		public TrustInfo getTrustInfo(Certificate[][] untrustedChain, String[] unsignedDetail) {
-			return new TrustInfo(null, false, true);
+			return new TrustInfo(Collections.emptyList(), Collections.emptyList(), false, true);
 		}
 	}
 }

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %bundleName
 Bundle-SymbolicName: org.eclipse.equinox.p2.ui;singleton:=true
-Bundle-Version: 2.7.200.qualifier
+Bundle-Version: 2.7.500.qualifier
 Bundle-Activator: org.eclipse.equinox.internal.p2.ui.ProvUIActivator
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
@@ -19,6 +19,7 @@ Export-Package: org.eclipse.equinox.internal.p2.ui;
  org.eclipse.equinox.internal.p2.ui.dialogs;
   x-friends:="org.eclipse.equinox.p2.ui.admin,
    org.eclipse.equinox.p2.ui.sdk.scheduler,
+   org.eclipse.equinox.p2.ui.sdk,
    org.eclipse.pde.ui,
    org.eclipse.equinox.p2.ui.importexport",
  org.eclipse.equinox.internal.p2.ui.model;
@@ -28,7 +29,7 @@ Export-Package: org.eclipse.equinox.internal.p2.ui;
    org.eclipse.equinox.p2.ui.sdk,
    org.eclipse.equinox.p2.ui.importexport",
  org.eclipse.equinox.internal.p2.ui.query;x-friends:="org.eclipse.equinox.internal.p2.ui.analysis,org.eclipse.equinox.p2.ui.admin",
- org.eclipse.equinox.internal.p2.ui.viewers;x-friends:="org.eclipse.equinox.p2.ui.admin,org.eclipse.equinox.p2.ui.sdk.scheduler,org.eclipse.equinox.p2.ui.importexport",
+ org.eclipse.equinox.internal.p2.ui.viewers;x-friends:="org.eclipse.equinox.p2.ui.admin,org.eclipse.equinox.p2.ui.sdk,org.eclipse.equinox.p2.ui.sdk.scheduler,org.eclipse.equinox.p2.ui.importexport",
  org.eclipse.equinox.p2.ui;version="2.6.0"
 Require-Bundle: org.eclipse.ui;bundle-version="3.107.0",
  org.eclipse.core.runtime;bundle-version="[3.18.0,4.0.0)",
@@ -39,9 +40,11 @@ Import-Package: javax.xml.parsers,
  org.bouncycastle.bcpg;version="1.65.0",
  org.bouncycastle.openpgp;version="1.65.0",
  org.bouncycastle.util;version="1.65.1",
+ org.eclipse.equinox.internal.p2.artifact.processors.pgp,
  org.eclipse.equinox.internal.p2.artifact.repository,
  org.eclipse.equinox.internal.p2.core.helpers,
  org.eclipse.equinox.internal.p2.director,
+ org.eclipse.equinox.internal.p2.extensionlocation,
  org.eclipse.equinox.internal.p2.metadata,
  org.eclipse.equinox.internal.p2.metadata.repository,
  org.eclipse.equinox.internal.p2.operations,
@@ -60,7 +63,9 @@ Import-Package: javax.xml.parsers,
  org.eclipse.equinox.p2.query;version="[2.0.0,3.0.0)",
  org.eclipse.equinox.p2.repository;version="[2.0.0,3.0.0)",
  org.eclipse.equinox.p2.repository.artifact;version="[2.0.0,3.0.0)",
+ org.eclipse.equinox.p2.repository.artifact.spi;version="[2.0.0,3.0.0)",
  org.eclipse.equinox.p2.repository.metadata;version="[2.0.0,3.0.0)",
+ org.eclipse.equinox.p2.repository.spi;version="2.0.0",
  org.osgi.framework;version="1.6.0",
  org.osgi.service.packageadmin;version="1.2.0",
  org.w3c.dom,

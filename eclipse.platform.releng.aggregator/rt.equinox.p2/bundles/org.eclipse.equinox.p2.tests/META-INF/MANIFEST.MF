@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.eclipse.equinox.p2.tests;singleton:=true
-Bundle-Version: 1.8.400.qualifier
+Bundle-Version: 1.8.700.qualifier
 Bundle-ClassPath: .
 Bundle-Activator: org.eclipse.equinox.p2.tests.TestActivator
 Bundle-Vendor: %providerName
@@ -26,7 +26,6 @@ Require-Bundle: org.eclipse.equinox.frameworkadmin,
  org.eclipse.core.tests.harness;bundle-version="3.4.0",
  org.eclipse.core.runtime;bundle-version="3.4.0",
  org.eclipse.equinox.p2.publisher;bundle-version="1.0.0",
- org.easymock;bundle-version="2.4.0",
  org.eclipse.equinox.frameworkadmin.test;bundle-version="1.0.0",
  org.junit;bundle-version="4.8.0",
  org.hamcrest.core;bundle-version="1.3.0",
@@ -46,7 +45,7 @@ Require-Bundle: org.eclipse.equinox.frameworkadmin,
  org.eclipse.ecf.filetransfer;bundle-version="4.0.0",
  org.eclipse.ecf.identity;bundle-version="3.1.0",
  org.eclipse.ecf.provider.filetransfer;bundle-version="3.1.0",
- org.eclipse.ecf.provider.filetransfer.httpclient45,
+ org.eclipse.ecf.provider.filetransfer.httpclient5,
  org.eclipse.equinox.p2.reconciler.dropins;bundle-version="1.1.0",
  org.eclipse.ant.core;bundle-version="3.2.200",
  org.apache.ant;bundle-version="1.7.1",
@@ -55,7 +54,8 @@ Require-Bundle: org.eclipse.equinox.frameworkadmin,
  org.eclipse.equinox.p2.operations;bundle-version="2.1.0",
  org.eclipse.equinox.p2.ui.sdk.scheduler,
  org.eclipse.equinox.p2.artifact.repository;bundle-version="[1.3.0,2.0.0)",
- org.hamcrest.library;bundle-version="1.3.0"
+ org.mockito.mockito-core,
+ net.bytebuddy.byte-buddy
 Eclipse-RegisterBuddy: org.eclipse.equinox.p2.artifact.repository
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Eclipse-BundleShape: dir
@@ -113,5 +113,6 @@ Import-Package: org.eclipse.ant.core,
  org.eclipse.osgi.util;version="1.1.0",
  org.osgi.framework;version="1.3.0",
  org.osgi.service.packageadmin;version="1.2.0",
- org.osgi.util.tracker;version="1.3.0"
+ org.osgi.util.tracker;version="1.3.0",
+ org.bouncycastle.openpgp
 Automatic-Module-Name: org.eclipse.equinox.p2.tests

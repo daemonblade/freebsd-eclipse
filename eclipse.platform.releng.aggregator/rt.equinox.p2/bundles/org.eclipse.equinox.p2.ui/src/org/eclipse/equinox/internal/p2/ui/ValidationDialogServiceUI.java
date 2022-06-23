@@ -14,19 +14,29 @@
  *******************************************************************************/
 package org.eclipse.equinox.internal.p2.ui;
 
+import java.io.File;
 import java.net.URL;
 import java.security.cert.Certificate;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.equinox.internal.p2.ui.dialogs.TrustCertificateDialog;
 import org.eclipse.equinox.internal.p2.ui.dialogs.UserValidationDialog;
+import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.core.UIServices;
+import org.eclipse.equinox.p2.metadata.IArtifactKey;
+import org.eclipse.equinox.p2.repository.artifact.spi.IArtifactUIServices;
+import org.eclipse.equinox.p2.repository.spi.PGPPublicKeyService;
 import org.eclipse.equinox.p2.ui.LoadMetadataRepositoryJob;
 import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.viewers.TreeNode;
+import org.eclipse.jface.window.IShellProvider;
 import org.eclipse.jface.window.Window;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
@@ -40,16 +50,45 @@ import org.eclipse.ui.PlatformUI;
  * declaration is made in the serviceui_component.xml file.
  *
  */
-public class ValidationDialogServiceUI extends UIServices {
+public class ValidationDialogServiceUI extends UIServices implements IArtifactUIServices {
+
+	private final IProvisioningAgent agent;
+
+	private Display display;
+
+	private Consumer<String> linkHandler = link -> {
+		if (PlatformUI.isWorkbenchRunning()) {
+			try {
+				URL url = new URL(link);
+				PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(url);
+			} catch (Exception x) {
+				ProvUIActivator.getDefault().getLog()
+						.log(new Status(IStatus.ERROR, ProvUIActivator.PLUGIN_ID, x.getMessage(), x));
+			}
+		}
+	};
+
+	private IShellProvider shellProvider = () -> ProvUI.getDefaultParentShell();
+
+	public ValidationDialogServiceUI() {
+		this(null);
+	}
+
+	public ValidationDialogServiceUI(IProvisioningAgent agent) {
+		this.agent = agent;
+	}
 
 	static final class MessageDialogWithLink extends MessageDialog {
 		private final String linkText;
+		private final Consumer<String> linkOpener;
 
 		MessageDialogWithLink(Shell parentShell, String dialogTitle, Image dialogTitleImage, String dialogMessage,
-				int dialogImageType, String[] dialogButtonLabels, int defaultIndex, String linkText) {
+				int dialogImageType, String[] dialogButtonLabels, int defaultIndex, String linkText,
+				Consumer<String> linkOpener) {
 			super(parentShell, dialogTitle, dialogTitleImage, dialogMessage, dialogImageType, dialogButtonLabels,
 					defaultIndex);
 			this.linkText = linkText;
+			this.linkOpener = linkOpener;
 		}
 
 		@Override
@@ -60,13 +99,7 @@ public class ValidationDialogServiceUI extends UIServices {
 			Link link = new Link(parent, SWT.NONE);
 			link.setText(linkText);
 			link.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
-				try {
-					URL url = new URL(e.text);
-					PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(url);
-				} catch (Exception x) {
-					ProvUIActivator.getDefault().getLog().log(//
-							new Status(IStatus.ERROR, ProvUIActivator.PLUGIN_ID, x.getMessage(), x));
-				}
+				linkOpener.accept(e.text);
 			}));
 			return link;
 		}
@@ -96,8 +129,8 @@ public class ValidationDialogServiceUI extends UIServices {
 
 		final AuthenticationInfo[] result = new AuthenticationInfo[1];
 		if (!suppressAuthentication() && !isHeadless()) {
-			PlatformUI.getWorkbench().getDisplay().syncExec(() -> {
-				Shell shell = ProvUI.getDefaultParentShell();
+			getDisplay().syncExec(() -> {
+				Shell shell = shellProvider.getShell();
 				String message = NLS.bind(ProvUIMessages.ServiceUI_LoginDetails, location);
 				UserValidationDialog dialog = new UserValidationDialog(shell, ProvUIMessages.ServiceUI_LoginRequired,
 						null, message);
@@ -141,10 +174,10 @@ public class ValidationDialogServiceUI extends UIServices {
 		// detail should be trusted
 		if (!isHeadless() && unsignedDetail != null && unsignedDetail.length > 0) {
 			final boolean[] result = new boolean[] { false };
-			PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
+			getDisplay().syncExec(new Runnable() {
 				@Override
 				public void run() {
-					Shell shell = ProvUI.getDefaultParentShell();
+					Shell shell = shellProvider.getShell();
 					OkCancelErrorDialog dialog = new OkCancelErrorDialog(shell, ProvUIMessages.ServiceUI_warning_title,
 							null, createStatus(), IStatus.WARNING);
 					result[0] = dialog.open() == IDialogConstants.OK_ID;
@@ -169,17 +202,46 @@ public class ValidationDialogServiceUI extends UIServices {
 		// We've established trust for unsigned content, now examine the untrusted
 		// chains
 		if (!isHeadless() && (untrustedChains.length > 0 || !untrustedPublicKeys.isEmpty())) {
-			final TrustCertificateDialog[] dialog = new TrustCertificateDialog[1];
-			final TreeNode[] input = createTreeNodes(untrustedChains, untrustedPublicKeys);
-			PlatformUI.getWorkbench().getDisplay().syncExec(() -> {
-				Shell shell = ProvUI.getDefaultParentShell();
-				TrustCertificateDialog trustCertificateDialog = new TrustCertificateDialog(shell, input);
-				dialog[0] = trustCertificateDialog;
-				trustCertificateDialog.open();
-			});
-			persistTrust = true;
-			if (dialog[0].getResult() != null) {
-				for (Object o : dialog[0].getResult()) {
+			return getTrustInfo(
+					Arrays.stream(untrustedChains).collect(
+							Collectors.toMap(Arrays::asList, it -> Set.of(), (e1, e2) -> e1, LinkedHashMap::new)),
+					untrustedPublicKeys.stream().collect(
+							Collectors.toMap(Function.identity(), it -> Set.of(), (e1, e2) -> e1, LinkedHashMap::new)),
+					null, null);
+
+		}
+
+		return new TrustInfo(trustedCertificates, trustedKeys, persistTrust, trustUnsigned);
+	}
+
+	@Override
+	public TrustInfo getTrustInfo(Map<List<Certificate>, Set<IArtifactKey>> untrustedCertificates,
+			Map<PGPPublicKey, Set<IArtifactKey>> untrustedPGPKeys, //
+			Set<IArtifactKey> unsignedArtifacts, //
+			Map<IArtifactKey, File> artifacts) {
+		boolean trustUnsigned = true;
+		AtomicBoolean persistTrust = new AtomicBoolean();
+		AtomicBoolean trustAlways = new AtomicBoolean();
+		List<Certificate> trustedCertificates = new ArrayList<>();
+		List<PGPPublicKey> trustedKeys = new ArrayList<>();
+		if (!isHeadless()) {
+			TreeNode[] input = createTreeNodes(untrustedCertificates, untrustedPGPKeys, unsignedArtifacts, artifacts);
+			if (input.length != 0) {
+				trustUnsigned = unsignedArtifacts == null || unsignedArtifacts.isEmpty();
+				List<Object> result = new ArrayList<>();
+				getDisplay().syncExec(() -> {
+					Shell shell = shellProvider.getShell();
+					TrustCertificateDialog trustCertificateDialog = new TrustCertificateDialog(shell, input);
+					if (trustCertificateDialog.open() == Window.OK) {
+						Object[] dialogResult = trustCertificateDialog.getResult();
+						if (dialogResult != null) {
+							result.addAll(Arrays.asList(dialogResult));
+						}
+						persistTrust.set(trustCertificateDialog.isRememberSelectedSigners());
+						trustAlways.set(trustCertificateDialog.isTrustAlways());
+					}
+				});
+				for (Object o : result) {
 					if (o instanceof TreeNode) {
 						o = ((TreeNode) o).getValue();
 					}
@@ -187,40 +249,93 @@ public class ValidationDialogServiceUI extends UIServices {
 						trustedCertificates.add((Certificate) o);
 					} else if (o instanceof PGPPublicKey) {
 						trustedKeys.add((PGPPublicKey) o);
+					} else if (o == null) {
+						trustUnsigned = true;
 					}
 				}
 			}
 		}
-		return new TrustInfo(trustedCertificates, trustedKeys, persistTrust, trustUnsigned);
+
+		return new TrustInfo(trustedCertificates, trustedKeys, persistTrust.get(), trustUnsigned, trustAlways.get());
 	}
 
-	private TreeNode[] createTreeNodes(Certificate[][] certificates, Collection<PGPPublicKey> untrustedPublicKeys) {
-		TreeNode[] children = new TreeNode[certificates.length + untrustedPublicKeys.size()];
-		int i = 0;
-		for (i = 0; i < certificates.length; i++) {
-			TreeNode head = new TreeNode(certificates[i][0]);
-			TreeNode parent = head;
-			children[i] = head;
-			for (int j = 0; j < certificates[i].length; j++) {
-				TreeNode node = new TreeNode(certificates[i][j]);
-				node.setParent(parent);
-				parent.setChildren(new TreeNode[] { node });
-				parent = node;
+	private TreeNode[] createTreeNodes(Map<List<Certificate>, Set<IArtifactKey>> untrustedCertificates,
+			Map<PGPPublicKey, Set<IArtifactKey>> untrustedPGPKeys, //
+			Set<IArtifactKey> unsignedArtifacts, //
+			Map<IArtifactKey, File> artifacts) {
+
+		List<ExtendedTreeNode> children = new ArrayList<>();
+		if (untrustedCertificates != null && !untrustedCertificates.isEmpty()) {
+			for (Map.Entry<List<Certificate>, Set<IArtifactKey>> entry : untrustedCertificates.entrySet()) {
+				ExtendedTreeNode parent = null;
+				List<Certificate> key = entry.getKey();
+				Set<IArtifactKey> associatedArtifacts = entry.getValue();
+				for (Certificate certificate : key) {
+					ExtendedTreeNode node = new ExtendedTreeNode(certificate, associatedArtifacts);
+					if (parent == null) {
+						children.add(node);
+					} else {
+						node.setParent(parent);
+						parent.setChildren(new TreeNode[] { node });
+					}
+					parent = node;
+				}
 			}
 		}
-		for (PGPPublicKey key : untrustedPublicKeys) {
-			children[i] = new TreeNode(key);
-			i++;
+
+		if (untrustedPGPKeys != null && !untrustedPGPKeys.isEmpty()) {
+			PGPPublicKeyService keyService = agent == null ? null : agent.getService(PGPPublicKeyService.class);
+			for (Map.Entry<PGPPublicKey, Set<IArtifactKey>> entry : untrustedPGPKeys.entrySet()) {
+				PGPPublicKey key = entry.getKey();
+				Set<IArtifactKey> associatedArtifacts = entry.getValue();
+				ExtendedTreeNode node = new ExtendedTreeNode(key, associatedArtifacts);
+				children.add(node);
+				expandChildren(node, key, keyService, new HashSet<>(), Integer.getInteger("p2.pgp.trust.depth", 3)); //$NON-NLS-1$
+			}
 		}
-		return children;
+
+		if (unsignedArtifacts != null && !unsignedArtifacts.isEmpty()) {
+			ExtendedTreeNode node = new ExtendedTreeNode(null, unsignedArtifacts);
+			children.add(node);
+
+		}
+
+		return children.toArray(TreeNode[]::new);
+	}
+
+	private void expandChildren(TreeNode result, PGPPublicKey key, PGPPublicKeyService keyService,
+			Set<PGPPublicKey> visited, int remainingDepth) {
+		if (keyService != null && remainingDepth > 0 && visited.add(key)) {
+			Set<PGPPublicKey> certifications = keyService.getVerifiedCertifications(key);
+			if (certifications != null && !certifications.isEmpty()) {
+				List<TreeNode> children = new ArrayList<>();
+				for (PGPPublicKey certifyingKey : certifications) {
+					if (visited.add(certifyingKey)) {
+						TreeNode treeNode = new TreeNode(certifyingKey);
+						children.add(treeNode);
+					}
+				}
+
+				if (!children.isEmpty()) {
+					result.setChildren(children.toArray(TreeNode[]::new));
+					children.forEach(child -> {
+						child.setParent(result);
+						PGPPublicKey certifyingKey = (PGPPublicKey) child.getValue();
+						visited.remove(certifyingKey);
+						expandChildren(child, certifyingKey, keyService, visited, remainingDepth - 1);
+						visited.add(certifyingKey);
+					});
+				}
+			}
+		}
 	}
 
 	@Override
 	public AuthenticationInfo getUsernamePassword(final String location, final AuthenticationInfo previousInfo) {
 		final AuthenticationInfo[] result = new AuthenticationInfo[1];
 		if (!suppressAuthentication() && !isHeadless()) {
-			PlatformUI.getWorkbench().getDisplay().syncExec(() -> {
-				Shell shell = ProvUI.getDefaultParentShell();
+			getDisplay().syncExec(() -> {
+				Shell shell = shellProvider.getShell();
 				String message = null;
 				if (previousInfo.saveResult())
 					message = NLS.bind(ProvUIMessages.ProvUIMessages_SavedNotAccepted_EnterFor_0, location);
@@ -246,18 +361,131 @@ public class ValidationDialogServiceUI extends UIServices {
 			super.showInformationMessage(title, text, linkText);
 			return;
 		}
-		PlatformUI.getWorkbench().getDisplay().syncExec(() -> {
-			MessageDialog dialog = new MessageDialogWithLink(ProvUI.getDefaultParentShell(), title, null, text,
-					MessageDialog.INFORMATION, new String[] { IDialogConstants.OK_LABEL }, 0, linkText);
+		getDisplay().syncExec(() -> {
+			MessageDialog dialog = new MessageDialogWithLink(shellProvider.getShell(), title, null, text,
+					MessageDialog.INFORMATION, new String[] { IDialogConstants.OK_LABEL }, 0, linkText, linkHandler);
 			dialog.open();
 		});
+	}
+
+	/**
+	 * Returns a handler (used by
+	 * {@link #showInformationMessage(String, String, String)}) to open a link in an
+	 * external browser.
+	 *
+	 * @return a handler to open a link in an external browser.
+	 *
+	 * @since 2.7.400
+	 */
+	public Consumer<String> getLinkHandler() {
+		return linkHandler;
+	}
+
+	/**
+	 * Sets the handler used by
+	 * {@link #showInformationMessage(String, String, String)} to open a link in an
+	 * external browser.
+	 *
+	 * @param linkHandler the handler for opening links in an external browser.
+	 *
+	 * @since 2.7.400
+	 */
+	public void setLinkHandler(Consumer<String> linkHandler) {
+		this.linkHandler = linkHandler;
+	}
+
+	/**
+	 * Returns a shell that is appropriate to use as the parent for a modal dialog
+	 * about to be opened.
+	 *
+	 * @return a shell that is appropriate to use as the parent for a modal dialog
+	 *         about to be opened.
+	 *
+	 * @see ProvUI#getDefaultParentShell()
+	 *
+	 * @since 2.7.400
+	 */
+	public IShellProvider getShellProvider() {
+		return shellProvider;
+	}
+
+	/**
+	 * Set the provider that yields a shell that is appropriate to use as the parent
+	 * for a modal dialog about to be opened.
+	 *
+	 * @param shellProvider the provider of a shell that is appropriate to use as
+	 *                      the parent for a modal dialog about to be opened.
+	 */
+	public void setShellProvider(IShellProvider shellProvider) {
+		this.shellProvider = shellProvider;
+	}
+
+	/**
+	 * Returns the display of the workbench or the display set by
+	 * {@link #setDisplay(Display)} in a non-workbench application.
+	 *
+	 * @since 2.7.400
+	 */
+	public Display getDisplay() {
+		if (display == null && PlatformUI.isWorkbenchRunning()) {
+			display = PlatformUI.getWorkbench().getDisplay();
+		}
+		return display;
+	}
+
+	/**
+	 * Can be called once to set the display in a non-workbench application.
+	 *
+	 * @throws IllegalStateException if there is a workbench running or the display
+	 *                               has already been set differently.
+	 *
+	 * @since 2.7.400
+	 */
+	public void setDisplay(Display display) {
+		if (this.display != null && this.display != display) {
+			throw new IllegalStateException("Cannot change the display"); //$NON-NLS-1$
+		}
+		this.display = display;
 	}
 
 	private boolean isHeadless() {
 		// If there is no UI available and we are still the IServiceUI,
 		// assume that the operation should proceed. See
 		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=291049
-		return !PlatformUI.isWorkbenchRunning();
+		//
+		// But we shouldn't just assume that no workbench mean no display and no head.
+		// It should be possible to reuse this class in an application without a
+		// workbench, e.g., the Eclipse Installer.
+		return getDisplay() == null;
+	}
+
+	private static class ExtendedTreeNode extends TreeNode implements IAdaptable {
+		private final Set<IArtifactKey> artifacts;
+
+		public ExtendedTreeNode(Object value) {
+			super(value);
+			artifacts = null;
+		}
+
+		public ExtendedTreeNode(Object value, Set<IArtifactKey> artifacts) {
+			super(value);
+			this.artifacts = artifacts;
+		}
+
+		@Override
+		public <T> T getAdapter(Class<T> adapter) {
+			if (adapter.isInstance(this)) {
+				return adapter.cast(this);
+			}
+			if (adapter.isInstance(getValue())) {
+				return adapter.cast(value);
+			}
+			if (adapter == IArtifactKey[].class && artifacts != null) {
+				return adapter.cast(artifacts.toArray(IArtifactKey[]::new));
+			}
+
+			return null;
+		}
 	}
 
 }

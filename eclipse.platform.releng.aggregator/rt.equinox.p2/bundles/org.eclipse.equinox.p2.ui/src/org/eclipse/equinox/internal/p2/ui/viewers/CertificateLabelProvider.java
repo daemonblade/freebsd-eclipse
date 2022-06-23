@@ -14,10 +14,11 @@
 package org.eclipse.equinox.internal.p2.ui.viewers;
 
 import java.security.cert.X509Certificate;
-import org.bouncycastle.openpgp.PGPPublicKey;
 import org.eclipse.equinox.internal.provisional.security.ui.X500PrincipalHelper;
+import org.eclipse.equinox.internal.provisional.security.ui.X509CertificateViewDialog;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Shell;
 
 /**
  * A label provider that displays X509 certificates.
@@ -35,31 +36,10 @@ public class CertificateLabelProvider implements ILabelProvider {
 			Object o = ((TreeNode) element).getValue();
 			if (o instanceof X509Certificate) {
 				X509Certificate cert = (X509Certificate) o;
-				X500PrincipalHelper principalHelper = new X500PrincipalHelper(cert.getSubjectX500Principal());
-				return principalHelper.getCN() + "; " + principalHelper.getOU() + "; " //$NON-NLS-1$ //$NON-NLS-2$
-						+ principalHelper.getO();
-			} else if (o instanceof PGPPublicKey) {
-				return userFriendlyFingerPrint((PGPPublicKey) o);
+				return getText(cert);
 			}
 		}
 		return ""; //$NON-NLS-1$
-	}
-
-	private String userFriendlyFingerPrint(PGPPublicKey key) {
-		if (key == null) {
-			return null;
-		}
-		StringBuilder builder = new StringBuilder();
-		boolean spaceSuffix = false;
-		for (byte b : key.getFingerprint()) {
-			builder.append(String.format("%02X", Byte.toUnsignedInt(b))); //$NON-NLS-1$
-			if (spaceSuffix) {
-				builder.append(' ');
-			}
-			spaceSuffix = !spaceSuffix;
-		}
-		builder.deleteCharAt(builder.length() - 1);
-		return builder.toString();
 	}
 
 	@Override
@@ -82,4 +62,23 @@ public class CertificateLabelProvider implements ILabelProvider {
 		// do nothing
 	}
 
+	/**
+	 * Returns a string that can be used as readable label for a certificate. This
+	 * hides the internal implementation classes needed to produce this label.
+	 */
+	public static String getText(X509Certificate cert) {
+		X500PrincipalHelper principalHelper = new X500PrincipalHelper(cert.getSubjectX500Principal());
+		return principalHelper.getCN() + "; " + principalHelper.getOU() + "; " //$NON-NLS-1$ //$NON-NLS-2$
+				+ principalHelper.getO();
+	}
+
+	/**
+	 * Opens a dialog to present detailed information about a certificate. This
+	 * hides the internal implementation classes needed open this dialog.
+	 */
+	public static void openDialog(Shell shell, X509Certificate cert) {
+		// create and open dialog for certificate chain
+		X509CertificateViewDialog certificateViewDialog = new X509CertificateViewDialog(shell, cert);
+		certificateViewDialog.open();
+	}
 }

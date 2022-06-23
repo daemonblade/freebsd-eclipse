@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.stream.Stream;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -271,9 +272,11 @@ public class SimpleBackupStore implements IBackupStore {
 			throw new IllegalArgumentException(NLS.bind(Messages.BackupStore_not_a_directory, file.getAbsolutePath()));
 		}
 
-		if (Files.list(path).count() > 0) {
-			throw new IllegalArgumentException(
-					NLS.bind(Messages.BackupStore_directory_not_empty, file.getAbsolutePath()));
+		try (Stream<Path> s = Files.list(path)) {
+			if (s.findAny().isPresent()) {
+				throw new IllegalArgumentException(
+						NLS.bind(Messages.BackupStore_directory_not_empty, file.getAbsolutePath()));
+			}
 		}
 
 		return moveDirToBackup(path);
@@ -505,12 +508,13 @@ public class SimpleBackupStore implements IBackupStore {
 	}
 
 	/**
-	 * Makes sure a directory exists in the backup store without touching the original directory content
+	 * Makes sure a directory exists in the backup store without touching the
+	 * original directory content
 	 * 
 	 * @param path
 	 * 
-	 * @return false if the directory is already created in the backup store, false if a placeholder had
-	 *         to be created and backed up.
+	 * @return false if the directory is already created in the backup store, false
+	 *         if a placeholder had to be created and backed up.
 	 * 
 	 * @throws IOException
 	 */
@@ -587,14 +591,15 @@ public class SimpleBackupStore implements IBackupStore {
 					NLS.bind(Messages.BackupStore_file_directory_mismatch, buPathDir.toAbsolutePath()), e);
 		}
 
-		try {
-			move(path, buPath);
-		} catch (IOException e) {
-			// TODO Log exception?
-			if (!isEclipseExe(path)) {
-				throw e;
-			}
-
+		move(path, buPath);
+		if (isEclipseExe(path) && Files.isRegularFile(path)) {
+			// The original is the launcher executable and it still exists at the original
+			// location although the move succeeded.
+			// This happens when it is the Windows executable that is locked because it's
+			// running and we are attempting to move it to a different drive.
+			// In this case the target will exist as a copy, so we should delete it.
+			// Then backup in place which will necessarily be on the same drive.
+			Files.delete(buPath);
 			Path inPlaceBuPath = toInPlaceBackupPath(path);
 			move(path, inPlaceBuPath);
 			buInPlace.add(inPlaceBuPath);
@@ -695,12 +700,11 @@ public class SimpleBackupStore implements IBackupStore {
 				try {
 					Files.delete(buDir);
 				} catch (DirectoryNotEmptyException e) {
-					String children = Files.list(buDir)
-							.map(p -> p.relativize(buDir))
-							.map(Path::toString)
-							.collect(joining(",")); //$NON-NLS-1$
-					unrestorable.put(buDir, new IOException(String.format(
-							"Directory %s not empty: %s", buDir, children, e))); //$NON-NLS-1$
+					try (Stream<Path> s = Files.list(buDir)) {
+						String children = s.map(p -> p.relativize(buDir)).map(Path::toString).collect(joining(",")); //$NON-NLS-1$
+						unrestorable.put(buDir,
+								new IOException(String.format("Directory %s not empty: %s", buDir, children, e))); //$NON-NLS-1$
+					}
 				} catch (IOException e) {
 					unrestorable.put(buDir, e);
 				}

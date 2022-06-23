@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2017 IBM Corporation and others.
+ * Copyright (c) 2006, 2022 IBM Corporation and others.
  * The code, documentation and other materials contained herein have been
  * licensed under the Eclipse Public License - v 1.0 by the copyright holder
  * listed above, as the Initial Contributor under such license. The text of
@@ -8,6 +8,7 @@
  * Contributors
  * 	IBM Corporation - Initial API and implementation.
  *  Cloudsmith Inc - Implementation
+ *  Christoph Läubrich - Issue #6 - Deprecate Transport.download(URI, OutputStream, long, IProgressMonitor)
  ******************************************************************************/
 
 package org.eclipse.equinox.internal.p2.transport.ecf;
@@ -69,8 +70,7 @@ public class RepositoryTransport extends Transport {
 	}
 
 	@Override
-	public IStatus download(URI toDownload, OutputStream target, long startPos, IProgressMonitor monitor) {
-
+	public IStatus download(URI toDownload, OutputStream target, IProgressMonitor monitor) {
 		boolean promptUser = false;
 		boolean useJREHttp = false;
 		AuthenticationInfo loginDetails = null;
@@ -104,7 +104,7 @@ public class RepositoryTransport extends Transport {
 							eventBus.addListener(listener);
 						}
 					}
-					reader.readInto(toDownload, target, startPos, monitor);
+					reader.readInto(toDownload, target, -1, monitor);
 				} finally {
 					if (eventBus != null) {
 						eventBus.removeListener(listener);
@@ -159,11 +159,6 @@ public class RepositoryTransport extends Transport {
 				ProvisionException.REPOSITORY_FAILED_AUTHENTICATION, //
 				NLS.bind(Messages.UnableToRead_0_TooManyAttempts, toDownload), null);
 		return statusOn(target, status, null);
-	}
-
-	@Override
-	public IStatus download(URI toDownload, OutputStream target, IProgressMonitor monitor) {
-		return download(toDownload, target, -1, monitor);
 	}
 
 	@Override
@@ -278,7 +273,8 @@ public class RepositoryTransport extends Transport {
 			return true;
 		else if (t instanceof SocketException)
 			return true;
-		else if (t instanceof IncomingFileTransferException && ((IncomingFileTransferException) t).getErrorCode() == 503)
+		else if (t instanceof IncomingFileTransferException
+				&& ((IncomingFileTransferException) t).getErrorCode() == 503)
 			return true;
 		return false;
 	}
@@ -293,33 +289,26 @@ public class RepositoryTransport extends Transport {
 
 	public static DownloadStatus forException(Throwable t, URI toDownload) {
 		if (isForgiveableException(t)) {
-			String value = System.getProperty(TIMEOUT_RETRY);
-			if (value != null) {
-				try {
-					int retry = Integer.valueOf(value).intValue();
-					if (retry > 0) {
-						Integer retryCount = null;
-						if (socketExceptionRetry == null) {
-							socketExceptionRetry = new HashMap<>();
-							retryCount = Integer.valueOf(1);
-						} else {
-							Integer alreadyRetryCount = socketExceptionRetry.get(toDownload);
-							if (alreadyRetryCount == null)
-								retryCount = Integer.valueOf(1);
-							else if (alreadyRetryCount.intValue() < retry) {
-								retryCount = Integer.valueOf(alreadyRetryCount.intValue() + 1);
-							}
-						}
-						if (retryCount != null && retryCount.intValue() <= retry) {
-							socketExceptionRetry.put(toDownload, retryCount);
-							return new DownloadStatus(IStatus.ERROR, Activator.ID, IArtifactRepository.CODE_RETRY,
-									NLS.bind(Messages.connection_to_0_failed_on_1_retry_attempt_2, new String[] {
-											toDownload.toString(), t.getMessage(), retryCount.toString() }),
-									t);
-						}
+			int retry = Integer.getInteger(TIMEOUT_RETRY, 0);
+			if (retry > 0) {
+				Integer retryCount = null;
+				if (socketExceptionRetry == null) {
+					socketExceptionRetry = new HashMap<>();
+					retryCount = Integer.valueOf(1);
+				} else {
+					Integer alreadyRetryCount = socketExceptionRetry.get(toDownload);
+					if (alreadyRetryCount == null)
+						retryCount = Integer.valueOf(1);
+					else if (alreadyRetryCount.intValue() < retry) {
+						retryCount = Integer.valueOf(alreadyRetryCount.intValue() + 1);
 					}
-				} catch (NumberFormatException e) {
-					// ignore
+				}
+				if (retryCount != null && retryCount.intValue() <= retry) {
+					socketExceptionRetry.put(toDownload, retryCount);
+					return new DownloadStatus(IStatus.ERROR, Activator.ID, IArtifactRepository.CODE_RETRY,
+							NLS.bind(Messages.connection_to_0_failed_on_1_retry_attempt_2,
+									new String[] { toDownload.toString(), t.getMessage(), retryCount.toString() }),
+							t);
 				}
 			}
 		}

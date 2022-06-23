@@ -41,7 +41,8 @@ public class TransferTest extends AbstractProvisioningTest {
 		} catch (BundleException e) {
 			fail("1.5", e);
 		}
-		final URI toDownload = new URI("http://download.eclipse.org/eclipse/updates/4.11/R-4.11-201903070500/plugins/javax.servlet.jsp_2.2.0.v201112011158.jar.pack.gz");
+		final URI toDownload = new URI(
+				"https://download.eclipse.org/eclipse/updates/4.11/R-4.11-201903070500/plugins/javax.servlet.jsp_2.2.0.v201112011158.jar.pack.gz");
 		IStatus s = getTransport().download(toDownload, fos, new NullProgressMonitor());
 		assertOK("2.0", s);
 		int httpSize = -1;
@@ -56,7 +57,9 @@ public class TransferTest extends AbstractProvisioningTest {
 		try {
 			fos.close();
 			if (f != null) {
-				String[] ecfPlugins = new String[] {"org.eclipse.ecf", "org.eclipse.ecf.identity", "org.eclipse.ecf.filetransfer", "org.eclipse.ecf.provider.filetransfer", "org.eclipse.ecf.provider.filetransfer.httpclient45"};
+				String[] ecfPlugins = new String[] { "org.eclipse.ecf", "org.eclipse.ecf.identity",
+						"org.eclipse.ecf.filetransfer", "org.eclipse.ecf.provider.filetransfer",
+						"org.eclipse.ecf.provider.filetransfer.httpclient5" };
 				StringBuilder buffer = new StringBuilder();
 				for (String ecfPlugin : ecfPlugins) {
 					Bundle bundle = Platform.getBundle(ecfPlugin);

@@ -11,12 +11,14 @@
 package org.eclipse.equinox.internal.p2.artifact.processors.pgp;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map.Entry;
 import org.bouncycastle.bcpg.ArmoredInputStream;
 import org.bouncycastle.openpgp.*;
 import org.bouncycastle.openpgp.bc.BcPGPObjectFactory;
-import org.bouncycastle.openpgp.bc.BcPGPPublicKeyRingCollection;
+import org.bouncycastle.openpgp.operator.PGPContentVerifier;
+import org.bouncycastle.openpgp.operator.PGPContentVerifierBuilder;
 import org.bouncycastle.openpgp.operator.bc.BcPGPContentVerifierBuilderProvider;
 import org.eclipse.core.runtime.*;
 import org.eclipse.equinox.internal.p2.artifact.repository.Activator;
@@ -24,12 +26,15 @@ import org.eclipse.equinox.internal.p2.core.helpers.LogHelper;
 import org.eclipse.equinox.internal.provisional.p2.artifact.repository.processing.ProcessingStep;
 import org.eclipse.equinox.p2.core.IProvisioningAgent;
 import org.eclipse.equinox.p2.repository.artifact.*;
+import org.eclipse.equinox.p2.repository.artifact.spi.ArtifactDescriptor;
+import org.eclipse.equinox.p2.repository.spi.PGPPublicKeyService;
 import org.eclipse.osgi.util.NLS;
 
 /**
- * This processing step verifies PGP signatures are correct (ie artifact was not
- * tampered during fetch). Note that is does <b>not</b> deal with trust. Dealing
- * with trusted signers is done as part of CheckTrust touchpoint and phase.
+ * This processing step verifies PGP signatures are correct (i.e., the artifact
+ * was not tampered during fetch). Note that is does <b>not</b> deal with trust.
+ * Dealing with trusted signers is done as part of CheckTrust and touchpoint
+ * phase.
  */
 public final class PGPSignatureVerifier extends ProcessingStep {
 
@@ -40,25 +45,34 @@ public final class PGPSignatureVerifier extends ProcessingStep {
 	 */
 	public static final String ID = "org.eclipse.equinox.p2.processing.PGPSignatureCheck"; //$NON-NLS-1$
 
-	private static Map<Long, PGPPublicKey> knownKeys = new HashMap<>();
-
 	public static final String PGP_SIGNER_KEYS_PROPERTY_NAME = "pgp.publicKeys"; //$NON-NLS-1$
+
 	public static final String PGP_SIGNATURES_PROPERTY_NAME = "pgp.signatures"; //$NON-NLS-1$
-	private Collection<PGPSignature> signaturesToVerify;
+
+	private PGPPublicKeyService keyService;
+
+	private IArtifactDescriptor sourceDescriptor;
+
+	private Map<PGPSignature, List<PGPContentVerifier>> signaturesToVerify = new LinkedHashMap<>();
+
+	private Map<PGPContentVerifier, PGPPublicKey> verifierKeys = new LinkedHashMap<>();
+
+	private List<OutputStream> signatureVerifiers = new ArrayList<>();
 
 	public PGPSignatureVerifier() {
 		super();
 		link(nullOutputStream(), new NullProgressMonitor()); // this is convenience for tests
 	}
 
-	private static Collection<PGPSignature> getSignatures(IArtifactDescriptor artifact)
+	public static Collection<PGPSignature> getSignatures(IArtifactDescriptor artifact)
 			throws IOException, PGPException {
 		String signatureText = unnormalizedPGPProperty(artifact.getProperty(PGP_SIGNATURES_PROPERTY_NAME));
 		if (signatureText == null) {
 			return Collections.emptyList();
 		}
 		List<PGPSignature> res = new ArrayList<>();
-		try (InputStream in = new ArmoredInputStream(new ByteArrayInputStream(signatureText.getBytes()))) {
+		try (InputStream in = new ArmoredInputStream(
+				new ByteArrayInputStream(signatureText.getBytes(StandardCharsets.US_ASCII)))) {
 			PGPObjectFactory pgpFactory = new BcPGPObjectFactory(in);
 			Object o = pgpFactory.nextObject();
 			PGPSignatureList signatureList = new PGPSignatureList(new PGPSignature[0]);
@@ -74,43 +88,74 @@ public final class PGPSignatureVerifier extends ProcessingStep {
 		return res;
 	}
 
+	public static PGPPublicKeyStore getKeys(IArtifactDescriptor artifact) {
+		PGPPublicKeyStore keyStore = new PGPPublicKeyStore();
+		String keyText = artifact.getProperty(PGPSignatureVerifier.PGP_SIGNER_KEYS_PROPERTY_NAME);
+		PGPPublicKeyStore.readPublicKeys(keyText).stream().forEach(keyStore::addKey);
+		return keyStore;
+	}
+
 	@Override
 	public void initialize(IProvisioningAgent agent, IProcessingStepDescriptor descriptor,
 			IArtifactDescriptor context) {
 		super.initialize(agent, descriptor, context);
+
+		sourceDescriptor = context;
+		keyService = agent.getService(PGPPublicKeyService.class);
+
 //		1. verify declared public keys have signature from a trusted key, if so, add to KeyStore
-//		2. verify artifact signature matches signture of given keys, and at least 1 of this key is trusted
+//		2. verify artifact signature matches signature of given keys, and at least 1 of this key is trusted
 		String signatureText = unnormalizedPGPProperty(context.getProperty(PGP_SIGNATURES_PROPERTY_NAME));
 		if (signatureText == null) {
 			setStatus(Status.OK_STATUS);
 			return;
 		}
+
+		Collection<PGPSignature> signatures;
 		try {
-			signaturesToVerify = getSignatures(context);
+			signatures = getSignatures(context);
 		} catch (Exception ex) {
 			setStatus(new Status(IStatus.ERROR, Activator.ID, Messages.Error_CouldNotLoadSignature, ex));
 			return;
 		}
-		if (signaturesToVerify.isEmpty()) {
+
+		if (signatures.isEmpty()) {
 			setStatus(Status.OK_STATUS);
 			return;
 		}
 
 		IArtifactRepository repository = context.getRepository();
-		knownKeys.putAll(readPublicKeys(context.getProperty(PGP_SIGNER_KEYS_PROPERTY_NAME),
-				repository != null ? repository.getProperty(PGP_SIGNER_KEYS_PROPERTY_NAME) : null));
-		for (PGPSignature signature : signaturesToVerify) {
-			PGPPublicKey publicKey = knownKeys.get(signature.getKeyID());
-			if (publicKey == null) {
-				setStatus(new Status(IStatus.ERROR, Activator.ID,
-						NLS.bind(Messages.Error_publicKeyNotFound, signature.getKeyID())));
-				return;
-			}
-			try {
-				signature.init(new BcPGPContentVerifierBuilderProvider(), publicKey);
-			} catch (PGPException ex) {
-				setStatus(new Status(IStatus.ERROR, Activator.ID, ex.getMessage(), ex));
-				return;
+
+		PGPPublicKeyStore.readPublicKeys(context.getProperty(PGP_SIGNER_KEYS_PROPERTY_NAME))
+				.forEach(keyService::addKey);
+		if (repository != null) {
+			PGPPublicKeyStore.readPublicKeys(repository.getProperty(PGP_SIGNER_KEYS_PROPERTY_NAME))
+					.forEach(keyService::addKey);
+		}
+
+		for (PGPSignature signature : signatures) {
+			long keyID = signature.getKeyID();
+			Collection<PGPPublicKey> keys = keyService.getKeys(keyID);
+			if (keys.isEmpty()) {
+				LogHelper.log(new Status(IStatus.WARNING, Activator.ID,
+						NLS.bind(Messages.Warning_publicKeyNotFound, PGPPublicKeyService.toHex(keyID),
+								context.getArtifactKey().getId())));
+			} else {
+				try {
+					PGPContentVerifierBuilder verifierBuilder = new BcPGPContentVerifierBuilderProvider()
+							.get(signature.getKeyAlgorithm(), signature.getHashAlgorithm());
+					List<PGPContentVerifier> verifiers = new ArrayList<>();
+					signaturesToVerify.put(signature, verifiers);
+					for (PGPPublicKey key : keys) {
+						PGPContentVerifier verifier = verifierBuilder.build(key);
+						verifierKeys.put(verifier, key);
+						verifiers.add(verifier);
+						signatureVerifiers.add(verifier.getOutputStream());
+					}
+				} catch (PGPException ex) {
+					setStatus(new Status(IStatus.ERROR, Activator.ID, ex.getMessage(), ex));
+					return;
+				}
 			}
 		}
 	}
@@ -119,114 +164,112 @@ public final class PGPSignatureVerifier extends ProcessingStep {
 	 * See // https://www.w3.org/TR/1998/REC-xml-19980210#AVNormalize, newlines
 	 * replaced by spaces by parser, needs to be restored
 	 *
-	 * @param context
-	 * @param pgpSignaturesPropertyName
+	 * @param armoredPGPBlock the PGP block, in armored form
 	 * @return fixed PGP armored blocks
 	 */
-	private static String unnormalizedPGPProperty(String value) {
-		if (value == null) {
+	static String unnormalizedPGPProperty(String armoredPGPBlock) {
+		if (armoredPGPBlock == null) {
 			return null;
 		}
-		if (value.contains("\n") || value.contains("\r")) { //$NON-NLS-1$ //$NON-NLS-2$
-			return value;
+		if (armoredPGPBlock.contains("\n") || armoredPGPBlock.contains("\r")) { //$NON-NLS-1$ //$NON-NLS-2$
+			return armoredPGPBlock;
 		}
-		return value.replace(' ', '\n').replace("-----BEGIN\nPGP\nSIGNATURE-----", "-----BEGIN PGP SIGNATURE-----") //$NON-NLS-1$ //$NON-NLS-2$
+		return armoredPGPBlock.replace(' ', '\n')
+				.replace("-----BEGIN\nPGP\nSIGNATURE-----", "-----BEGIN PGP SIGNATURE-----") //$NON-NLS-1$ //$NON-NLS-2$
 				.replace("-----END\nPGP\nSIGNATURE-----", "-----END PGP SIGNATURE-----") //$NON-NLS-1$ //$NON-NLS-2$
 				.replace("-----BEGIN\nPGP\nPUBLIC\nKEY\nBLOCK-----", "-----BEGIN PGP PUBLIC KEY BLOCK-----") //$NON-NLS-1$ //$NON-NLS-2$
 				.replace("-----END\nPGP\nPUBLIC\nKEY\nBLOCK-----", "-----END PGP PUBLIC KEY BLOCK-----"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	private static Map<Long, PGPPublicKey> readPublicKeys(String armoredPublicKeyring) {
-		if (armoredPublicKeyring == null) {
-			return Collections.emptyMap();
-		}
-		Map<Long, PGPPublicKey> res = new HashMap<>();
-		try (InputStream stream = PGPUtil
-				.getDecoderStream(new ByteArrayInputStream(unnormalizedPGPProperty(armoredPublicKeyring).getBytes()))) {
-			PGPPublicKeyRingCollection pgpPub = new BcPGPPublicKeyRingCollection(stream);
-
-			pgpPub.getKeyRings().forEachRemaining(kRing ->
-				kRing.getPublicKeys().forEachRemaining(key -> res.put(key.getKeyID(), key))
-			);
-		} catch (IOException | PGPException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.ID, e.getMessage(), e));
-		}
-		return res;
-
-	}
-
-	private Map<Long, PGPPublicKey> readPublicKeys(String... armoredPublicKeys) {
-		Map<Long, PGPPublicKey> keys = new HashMap<>();
-		for (String armoredKey : armoredPublicKeys) {
-			if (armoredKey != null) {
-				keys.putAll(readPublicKeys(armoredKey));
-			}
-		}
-		return keys;
-	}
-
 	@Override
-	public void write(int b) {
-		if (signaturesToVerify != null) {
-			signaturesToVerify.iterator().forEachRemaining(signature -> signature.update((byte) b));
-		}
-
-	}
-
-	@Override
-	public void write(byte[] b) throws IOException {
+	public void write(int b) throws IOException {
 		getDestination().write(b);
-		if (signaturesToVerify != null) {
-			signaturesToVerify.iterator().forEachRemaining(signature -> signature.update(b));
+		for (OutputStream verifier : signatureVerifiers) {
+			verifier.write(b);
 		}
 	}
 
 	@Override
 	public void write(byte[] b, int off, int len) throws IOException {
 		getDestination().write(b, off, len);
-		if (signaturesToVerify != null) {
-			signaturesToVerify.iterator().forEachRemaining(signature -> signature.update(b, off, len));
+		for (OutputStream verifier : signatureVerifiers) {
+			verifier.write(b, off, len);
 		}
 	}
 
 	@Override
-	public void close() {
-		if (!getStatus().isOK()) {
-			return;
-		}
-		if (signaturesToVerify == null || signaturesToVerify.isEmpty()) {
-			return;
-		}
-		Iterator<PGPSignature> iterator = signaturesToVerify.iterator();
-		while (iterator.hasNext()) {
-			PGPSignature signature = iterator.next();
-			try {
-				if (!signature.verify()) {
+	public void close() throws IOException {
+		try {
+			if (!getStatus().isOK()) {
+				return;
+			}
+
+			if (signaturesToVerify.isEmpty()) {
+				return;
+			}
+
+			PGPPublicKeyStore keyStore = new PGPPublicKeyStore();
+			for (Entry<PGPSignature, List<PGPContentVerifier>> entry : signaturesToVerify.entrySet()) {
+				PGPSignature signature = entry.getKey();
+				List<PGPContentVerifier> verifiers = entry.getValue();
+				boolean verified = false;
+				for (PGPContentVerifier verifier : verifiers) {
+					try {
+						verifier.getOutputStream().write(signature.getSignatureTrailer());
+						if (verifier.verify(signature.getSignature())) {
+							PGPPublicKey verifyingKey = verifierKeys.get(verifier);
+							if (!Boolean.FALSE.toString()
+									.equalsIgnoreCase(System.getProperty("p2.pgp.verifyExpiration"))) { //$NON-NLS-1$
+								if (PGPPublicKeyService.compareSignatureTimeToKeyValidityTime(signature,
+										verifyingKey) != 0) {
+									LogHelper.log(new Status(IStatus.WARNING, Activator.ID,
+											NLS.bind(Messages.Error_SignatureAfterKeyExpiration, PGPPublicKeyService
+													.toHexFingerprint(verifyingKey))));
+								}
+							}
+
+							if (!Boolean.FALSE.toString()
+									.equalsIgnoreCase(System.getProperty("p2.pgp.verifyRevocation"))) { //$NON-NLS-1$
+								if (!keyService.isCreatedBeforeRevocation(signature, verifyingKey)) {
+									setStatus(new Status(IStatus.ERROR, Activator.ID,
+											NLS.bind(Messages.Error_SignatureAfterKeyRevocation, PGPPublicKeyService
+													.toHexFingerprint(verifyingKey))));
+									return;
+								}
+							}
+
+							keyStore.addKey(verifyingKey);
+							verified = true;
+							break;
+						}
+					} catch (PGPException ex) {
+						LogHelper.log(new Status(IStatus.ERROR, Activator.ID, ex.getMessage(), ex));
+					}
+				}
+
+				if (!verified) {
 					setStatus(new Status(IStatus.ERROR, Activator.ID, Messages.Error_SignatureAndFileDontMatch));
 					return;
 				}
-			} catch (PGPException ex) {
-				setStatus(new Status(IStatus.ERROR, Activator.ID, ex.getMessage(), ex));
-				return;
 			}
+
+			// Update the destination artifact descriptor with the signatures that have been
+			// verified and the keys used for that verification.
+			OutputStream destination = getDestination();
+			if (destination instanceof IAdaptable) {
+				ArtifactDescriptor destinationDescriptor = ((IAdaptable) destination)
+						.getAdapter(ArtifactDescriptor.class);
+				destinationDescriptor.setProperty(PGP_SIGNATURES_PROPERTY_NAME,
+						sourceDescriptor.getProperty(PGP_SIGNATURES_PROPERTY_NAME));
+				destinationDescriptor.setProperty(PGP_SIGNER_KEYS_PROPERTY_NAME, keyStore.toArmoredString());
+			}
+
+			setStatus(Status.OK_STATUS);
+		} finally
+
+		{
+			super.close();
 		}
-		setStatus(Status.OK_STATUS);
 	}
 
-	public static Collection<PGPPublicKey> getSigners(IArtifactDescriptor artifact) {
-		try {
-			return getSignatures(artifact).stream() //
-					.mapToLong(PGPSignature::getKeyID) //
-					.mapToObj(Long::valueOf) //
-					.map(knownKeys::get) //
-					.filter(Objects::nonNull).collect(Collectors.toSet());
-		} catch (IOException | PGPException e) {
-			LogHelper.log(new Status(IStatus.ERROR, Activator.ID, e.getMessage(), e));
-			return Collections.emptyList();
-		}
-	}
-
-	public static void discardKnownKeys() {
-		knownKeys.clear();
-	}
 }
