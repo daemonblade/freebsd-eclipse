@@ -11,6 +11,9 @@ distfiles
 /*.tar.gz
 /eclipse
 
+# port update
+*.rej
+
 # Generated
 *.o
 *.so

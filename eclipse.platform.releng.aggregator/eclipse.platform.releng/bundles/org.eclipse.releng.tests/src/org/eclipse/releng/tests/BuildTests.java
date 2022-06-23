@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -17,6 +17,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -327,34 +328,31 @@ public class BuildTests {
 
 	}
 
-	public static final List<String> REQUIRED_FEATURE_FILES_EPL2 = Arrays
-			.asList(new String[] { "epl-2.0.html", "feature.properties", "feature.xml", "license.html" });
+	public static final List<String> REQUIRED_FEATURE_FILES_EPL2 = List.of("epl-2.0.html", "feature.properties",
+			"feature.xml", "license.html");
 	public static final String REQUIRED_FEATURE_SUFFIX = "";
 
-	public static final List<String> REQUIRED_PLUGIN_FILES = Arrays
-			.asList(new String[] { "about.html", "plugin.properties", "plugin.xml" });
+	public static final List<String> REQUIRED_PLUGIN_FILES = List.of("about.html", "plugin.properties", "plugin.xml");
 	public static final String REQUIRED_PLUGIN_SUFFIX = ".jar";
 
-	public static final List<String> REQUIRED_FEATURE_PLUGIN_FILES = Arrays.asList(new String[] { "about.html",
-			"about.ini", "about.mappings", "about.properties", "plugin.properties", "plugin.xml" });
+	public static final List<String> REQUIRED_FEATURE_PLUGIN_FILES = List.of("about.html", "about.ini",
+			"about.mappings", "about.properties", "plugin.properties", "plugin.xml");
 	public static final String REQUIRED_FEATURE_PLUGIN_SUFFIX = ".gif";
 
-	public static final List<String> REQUIRED_FRAGMENT_FILES = Arrays.asList(new String[] { "fragment.xml" });
+	public static final List<String> REQUIRED_FRAGMENT_FILES = List.of("fragment.xml");
 	public static final String REQUIRED_FRAGMENT_SUFFIX = "";
 
-	public static final List<String> REQUIRED_SWT_FRAGMENT_FILES = Arrays
-			.asList(new String[] { "fragment.properties" });
+	public static final List<String> REQUIRED_SWT_FRAGMENT_FILES = List.of("fragment.properties");
 	public static final String REQUIRED_SWT_FRAGMENT_SUFFIX = "";
 
-	public static final List<String> REQUIRED_SOURCE_FILES = Arrays.asList(new String[] { "about.html" });
+	public static final List<String> REQUIRED_SOURCE_FILES = List.of("about.html");
 	public static final String REQUIRED_SOURCE_SUFFIX = ".zip";
 
-	public static final List<String> REQUIRED_BUNDLE_FILES = Arrays.asList(new String[] { "about.html" });
+	public static final List<String> REQUIRED_BUNDLE_FILES = List.of("about.html");
 	public static final String REQUIRED_BUNDLE_MANIFEST = "MANIFEST.MF";
 	public static final String REQUIRED_BUNDLE_SUFFIX = ".jar";
 
-	public static final List<String> SUFFIX_EXEMPT_LIST = Arrays
-			.asList(new String[] { "org.eclipse.swt", "org.apache.ant" });
+	public static final List<String> SUFFIX_EXEMPT_LIST = List.of("org.eclipse.swt", "org.apache.ant");
 
 	public static final int PLUGIN_COUNT  = 84; // - 20; // Note this number
 	// must include non-shipping
@@ -378,6 +376,7 @@ public class BuildTests {
 	}
 	@Test
 	public void testFeatureFiles() {
+		assumeFalse(isMavenRun());
 		List<String> result = new ArrayList<>();
 		String installDir = Platform.getInstallLocation().getURL().getPath();
 
@@ -397,14 +396,21 @@ public class BuildTests {
 		}
 		assertTrue("Feature directory missing required files: " + aString, result.isEmpty());
 	}
+
+	/**
+	 * Verifies all bundles starting with org.eclipse (with listed exceptions) to
+	 * contain e.g. about.html and other recommended files.
+	 */
 	@Test
 	public void testPluginFiles() {
+		assumeFalse(isMavenRun());
 		List<String> result = new ArrayList<>();
 		String installDir = Platform.getInstallLocation().getURL().getPath();
 		File pluginDir = new File(installDir, "plugins");
 		for (File aPlugin : pluginDir.listFiles()) {
-			if (!aPlugin.getName().contains("test") && !aPlugin.getName().contains("org.eclipse.jetty")
-					&& !aPlugin.getName().contains("jakarta") && !aPlugin.getName().contains("slf4j.api")) {
+			if (!aPlugin.getName().contains("test") && aPlugin.getName().startsWith("org.eclipse")
+					&& !aPlugin.getName().contains("org.eclipse.jetty")
+					&& !aPlugin.getName().contains("org.eclipse.ecf")) {
 				if (!testPluginFile(aPlugin)) {
 					result.add(aPlugin.getPath());
 				}
@@ -418,6 +424,10 @@ public class BuildTests {
 			}
 		}
 		assertTrue("Plugin directory missing required files: " + aString, result.isEmpty());
+	}
+
+	private boolean isMavenRun() {
+		return System.getenv("MAVEN_CMD_LINE_ARGS") != null;
 	}
 
 	private boolean testPluginFile(File aPlugin) {
@@ -470,7 +480,6 @@ public class BuildTests {
 				list.add(_enum.nextElement().toString());
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		if (!list.containsAll(requiredFiles)) {
@@ -570,6 +579,7 @@ public class BuildTests {
 	}
 	@Test
 	public void testJavadocLogs() throws Exception {
+		assumeFalse(isMavenRun());
 		String javadocUrls = System.getProperty("RELENGTEST.JAVADOC.URLS");
 		// Skip this test if there are no logs to check
 		if (javadocUrls == null) {
@@ -588,10 +598,10 @@ public class BuildTests {
 
 		JavadocLog javadocLog = new JavadocLog(javadocLogs);
 		String message = "javadoc errors and/or warnings in: \n";
-		boolean problemLogsExist = javadocLog.logs.size() > 0;
+		boolean problemLogsExist = !javadocLog.logs.isEmpty();
 		if (problemLogsExist) {
 			for (int i = 0; i < javadocLog.logs.size(); i++)
-				message = message.concat(javadocLog.logs.get(i).toString() + "\n");
+				message = message.concat(javadocLog.logs.get(i) + "\n");
 		}
 		message = message.concat("See the javadoc logs linked from the test results page for details");
 		assertTrue(message, !problemLogsExist);
@@ -636,7 +646,7 @@ public class BuildTests {
 		assertTrue(
 				"Either file (url) does not exist (build may have been removed?), or HTTP response does not contain content length. urlOfFile: "
 						+ urlOfFile,
-				(!(-1 == nBytes)));
+				(-1 != nBytes));
 		assertFalse("dirtReport file has increased in size, indicating a regression. See " + urlOfFile, nBytes > MAX_ALLOWED_BYTES);
 		assertFalse(
 				"Good news! dirtReport file has decreased in size, compared to standard, so the standardDirtReport.txt file should be replaced with the one at "
@@ -648,7 +658,7 @@ public class BuildTests {
 
 	@Test
 	public void testJarSign() throws Exception {
-
+		assumeFalse(isMavenRun());
 		String buildId = System.getProperty("buildId");
 		assertNotNull("buildId property must be specified for testJarSign test", buildId);
 		String downloadHost = "download.eclipse.org";
@@ -661,7 +671,7 @@ public class BuildTests {
 		// nBytes will be -1 if the file doesn't exist
 		// it will be more than 3 if there are unsigned jars. (atlear jar extention will be listed
 
-		assertTrue("Some bundles are unsigned please refer  " + urlOfFile, ((2 > nBytes)));
+		assertTrue("Some bundles are unsigned please refer  " + urlOfFile, (2 > nBytes));
 	}
 
 	private String getDownloadHost() {
@@ -683,6 +693,7 @@ public class BuildTests {
 	}
 	@Test
 	public void testComparatorLogSize() throws Exception {
+		assumeFalse(isMavenRun());
 		final boolean DEBUG_TEST = true;
 		// MAX_ALLOWED_BYTES will never be 'zero', even if no unexpected comparator warnings, because the
 		// report always contains some information, such as identifying which build it was for.
@@ -690,39 +701,33 @@ public class BuildTests {
 		// "hard code" nominal values, to make sure
 		// there is no regressions, which would be implied by a report larger
 		// than that nominal value.
-		long MAX_ALLOWED_BYTES = 312;
+		long MAX_ALLOWED_BYTES = 319;
 		String buildId = System.getProperty("buildId");
 		assertNotNull("buildId property must be specified for testComparatorLogSize test", buildId);
-		String buildType = buildId.substring(0, 1);
 		// Comparator logs are not generated for N builds
-		if (!buildType.equals("N")) {
-			String downloadHost = getDownloadHost();
-			String urlOfFile = "https://" + downloadHost + "/eclipse/downloads/drops4/"
-					+ buildId
-					+ "/buildlogs/comparatorlogs/buildtimeComparatorUnanticipated.log.txt";
-			URL logURL = new URL(urlOfFile);
+		String downloadHost = getDownloadHost();
+		String urlOfFile = "https://" + downloadHost + "/eclipse/downloads/drops4/" + buildId
+				+ "/buildlogs/comparatorlogs/buildtimeComparatorUnanticipated.log.txt";
+		URL logURL = new URL(urlOfFile);
 
-			URLConnection urlConnection = logURL.openConnection();
-			// urlConnection.connect();
-			long nBytes = urlConnection.getContentLength();
-			if (DEBUG_TEST) {
-				System.out.println("Debug info for testComparatorLogSize");
-				System.out.println("Debug: nBytes: " + nBytes);
-				printHeaders(urlConnection);
-			}
-			// if find "response does not contain length, on a regular basis, for
-			// some servers, will have to read contents.
-			assertTrue(
-					"Either file (url) does not exist, or HTTP response does not contain content length. urlOfFile: " + urlOfFile,
-					(!(-1 == nBytes)));
-			assertTrue("Unanticipated comparator log file has increased in size, indicating a regression. See " + urlOfFile,
-					nBytes <= MAX_ALLOWED_BYTES);
-			if (MAX_ALLOWED_BYTES > (nBytes + 20)) {
-				System.out.println("WARNING: MAX_ALLOWED_BYTES was larger than bytes found, by " + (MAX_ALLOWED_BYTES - nBytes)
-						+ ", which may indicate MAX_ALLOWED_BYTES needs to be lowered, to catch regressions.");
-			}
-		} else {
-			System.out.println("noComparatorTestsForNBuilds");
+		URLConnection urlConnection = logURL.openConnection();
+		// urlConnection.connect();
+		long nBytes = urlConnection.getContentLength();
+		if (DEBUG_TEST) {
+			System.out.println("Debug info for testComparatorLogSize");
+			System.out.println("Debug: nBytes: " + nBytes);
+			printHeaders(urlConnection);
+		}
+		// if find "response does not contain length, on a regular basis, for
+		// some servers, will have to read contents.
+		assertTrue("Either file (url) does not exist, or HTTP response does not contain content length. urlOfFile: "
+				+ urlOfFile, (-1 != nBytes));
+		assertTrue("Unanticipated comparator log file has increased in size, indicating a regression. See " + urlOfFile,
+				nBytes <= MAX_ALLOWED_BYTES);
+		if (MAX_ALLOWED_BYTES > (nBytes + 20)) {
+			System.out.println(
+					"WARNING: MAX_ALLOWED_BYTES was larger than bytes found, by " + (MAX_ALLOWED_BYTES - nBytes)
+							+ ", which may indicate MAX_ALLOWED_BYTES needs to be lowered, to catch regressions.");
 		}
 	}
 
@@ -744,8 +749,8 @@ public class BuildTests {
 					String tmp;
 					while ((tmp = in.readLine()) != null) {
 						tmp = tmp.toLowerCase();
-						if (tmp.indexOf(JAVADOC_ERROR) != -1 || tmp.indexOf(JAVADOC_WARNING) != -1
-								|| tmp.indexOf(JAVADOC_JAVA) != -1) {
+						if (tmp.contains(JAVADOC_ERROR) || tmp.contains(JAVADOC_WARNING)
+								|| tmp.contains(JAVADOC_JAVA)) {
 							String fileName = new File(javadocLog.getFile()).getName();
 							if (!logs.contains(fileName))
 								logs.add(fileName);

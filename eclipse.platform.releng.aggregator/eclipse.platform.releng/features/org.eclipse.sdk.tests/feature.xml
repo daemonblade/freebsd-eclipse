@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.sdk.tests"
       label="%featureName"
-      version="4.21.0.qualifier"
+      version="4.24.0.qualifier"
       provider-name="%providerName"
       license-feature="org.eclipse.license"
       license-feature-version="0.0.0">
@@ -373,12 +373,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.team.tests.cvs.core"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.team.tests.core"
          download-size="0"
          install-size="0"
@@ -428,7 +422,7 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.apache.commons.fileupload"
+         id="org.apache.commons.commons-fileupload"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -497,22 +491,8 @@
          version="0.0.0"
          unpack="false"/>
 
-   <plugin
-         id="org.hamcrest.integration"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.hamcrest.library"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
     <plugin
-         id="org.mockito"
+         id="org.mockito.mockito-core"
          download-size="0"
          install-size="0"
          version="0.0.0"
